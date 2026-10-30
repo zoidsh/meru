@@ -21,18 +21,24 @@ let contextMenuLabels: Labels = {};
 
 mock.module("@electron-toolkit/utils", () => ({ is: { dev: false }, platform }));
 
+const electronApp = { name: "Meru", on: () => {} };
+
+const electronMenu = {
+  buildFromTemplate: (template: MenuItemConstructorOptions[]) => {
+    builtTemplate = template;
+
+    return { on: () => {} };
+  },
+  setApplicationMenu: () => {},
+};
+
 mock.module("electron", () => ({
-  app: { name: "Meru", on: () => {} },
+  default: { app: electronApp, Menu: electronMenu },
+  app: electronApp,
   BrowserWindow: { getFocusedWindow: () => null },
   dialog: {},
-  Menu: {
-    buildFromTemplate: (template: MenuItemConstructorOptions[]) => {
-      builtTemplate = template;
-
-      return { on: () => {} };
-    },
-    setApplicationMenu: () => {},
-  },
+  Menu: electronMenu,
+  nativeTheme: {},
   shell: {},
 }));
 
@@ -72,7 +78,7 @@ mock.module("@/lib/log", () => ({ log: {} }));
 
 mock.module("@/lib/relaunch", () => ({ relaunchApp: () => {} }));
 
-mock.module("@/main", () => ({ main: { window: {}, location: "/" } }));
+mock.module("@/main", () => ({ main: { window: { isVisible: () => true }, location: "/" } }));
 
 mock.module("@/updater", () => ({ appUpdater: { isUpdateSupported: () => true } }));
 
@@ -94,6 +100,8 @@ const { AppMenu } = await import("./menu");
 
 const { setupWindowContextMenu } = await import("./context-menu");
 
+const { AppTray } = await import("./tray");
+
 const PLATFORM_CONTEXTS: PlatformContext[] = ["macOS", "Windows", "Linux"];
 
 /** The menu's labels each platform words its own way, as each one shows them. */
@@ -110,6 +118,7 @@ const MENU_MESSAGES = [
   "Paste and Match Style",
   "Select All",
   "View",
+  "Quit {appName}",
 ];
 
 const CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
@@ -194,6 +203,20 @@ describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
       expect(labels).toContain(markedTranslation("macOS", MACOS_ONLY_MENU_MESSAGE));
     } else {
       expect(labels).not.toContain(markedTranslation("macOS", MACOS_ONLY_MENU_MESSAGE));
+    }
+  });
+
+  test("the tray's Quit on macOS is the application menu's macOS message", () => {
+    new AppTray().createOrUpdateContextMenu();
+
+    const labels = collectLabels(builtTemplate);
+
+    const macOSQuit = markedTranslation("macOS", "Quit Meru");
+
+    if (context === "macOS") {
+      expect(labels).toContain(macOSQuit);
+    } else {
+      expect(labels).not.toContain(macOSQuit);
     }
   });
 

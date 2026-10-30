@@ -2307,7 +2307,20 @@ msgstr "Quit"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Quit {appName}"
+msgstr "Quit {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
 #: packages/app/tray.ts
+msgctxt "macOS"
+msgid "Quit {appName}"
+msgstr "Quit {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Quit {appName}"
 msgstr "Quit {appName}"
 

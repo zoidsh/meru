@@ -1,0 +1,260 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: pl\n"
+
+# fault: banned:uaktualnienie
+# fault: pinned:update
+#: packages/renderer/routes/settings/general.tsx
+msgid "Update available"
+msgstr "Dostępne uaktualnienie"
+
+# fault: banned:pasek-tytulowy
+# fault: pinned:titlebar
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Titlebar"
+msgstr "Pasek tytułowy"
+
+# fault: banned:lacze
+# fault: pinned:link
+#: packages/app/context-menu.ts
+msgid "Copy Message Link"
+msgstr "Kopiuj łącze do wiadomości"
+
+# fault: banned:restart
+# fault: pinned:restart
+#: packages/renderer/routes/settings/general.tsx
+msgid "Restart now"
+msgstr "Zrestartuj teraz"
+
+# fault: banned:katalog
+# fault: pinned:folder
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Open folder when done"
+msgstr "Otwórz katalog po zakończeniu"
+
+# fault: banned:lowercase-pronoun
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru keeps this account signed in but doesn't load it."
+msgstr "Meru utrzymuje twoje konto zalogowane, ale go nie wczytuje."
+
+# fault: banned:formal-address
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Are you sure you want to delete this message?"
+msgstr "Czy Pan na pewno chce usunąć tę wiadomość?"
+
+# fault: banned:quotes
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "Usunąć \"{label}\"?"
+
+# fault: banned:one-letter-word
+#: packages/app/workspace-apps.ts
+msgid "Open in app"
+msgstr "Otwórz w aplikacji"
+
+# fault: banned:unit-space
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "30 minutes"
+msgstr "30 minut"
+
+# fault: banned:three-dots
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Search…"
+msgstr "Szukaj..."
+
+# fault: banned:ellipsis-space
+#: packages/app/menu.ts
+msgid "Find…"
+msgstr "Znajdź …"
+
+# fault: banned:apology
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Couldn't add the account."
+msgstr "Niestety nie można dodać konta."
+
+# fault: pinned:download-history
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Pobrane pliki"
+
+# fault: pinned:bookmark
+#: packages/renderer/components/bookmarks.tsx
+msgid "No bookmarks yet"
+msgstr "Brak ulubionych"
+
+# fault: pinned:notification
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Show a notification when a download finishes."
+msgstr "Pokaż komunikat po zakończeniu pobierania."
+
+# fault: pinned:extension
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Extensions"
+msgstr "Dodatki"
+
+# fault: pinned:tab-strip
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Narrow the tab strip"
+msgstr "Zwęź listwę kart"
+
+# fault: pinned:do-not-disturb
+#: packages/renderer/components/do-not-disturb-button.tsx
+msgid "Turn Do Not Disturb on"
+msgstr "Włącz tryb cichy"
+
+# fault: pinned:button
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show width button"
+msgstr "Pokaż suwak szerokości"
+
+# fault: pinned:password-manager
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Password managers"
+msgstr "Programy do haseł"
+
+# fault: pinned:passkey
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Only passkeys created in Meru work here."
+msgstr "Tutaj działają tylko passkeye utworzone przez Meru."
+
+# fault: pinned:default-browser
+#: packages/app/context-menu.ts
+msgid "Open in Default Browser"
+msgstr "Otwórz w przeglądarce systemowej"
+
+# fault: pinned:menu-bar
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "Ikona w menu"
+
+# fault: pinned:verification-code
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "Verification codes"
+msgstr "Kody potwierdzające"
+
+# fault: pinned:device-label
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Etykieta urządzenia"
+
+# fault: pinned:spellcheck
+#: packages/renderer/routes/settings/spellchecker.tsx
+msgid "Spellchecker"
+msgstr "Korektor pisowni"
+
+# fault: pinned:dark-theme
+#: packages/renderer/routes/settings/gmail.tsx
+msgid "Extend dark theme"
+msgstr "Rozszerz tryb ciemny"
+
+# fault: pinned:trusted-hosts
+#: packages/renderer/routes/settings/general.tsx
+msgid "Trusted hosts"
+msgstr "Bezpieczne hosty"
+
+# fault: pinned:release-channel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "Wersja wydań"
+
+# fault: pinned:clipboard
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "Copy codes to clipboard"
+msgstr "Kopiuj kody do pamięci"
+
+# fault: pinned:save
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Save"
+msgstr "Zachowaj"
+
+# fault: pinned:saved-search
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Add saved search"
+msgstr "Dodaj wyszukiwanie"
+
+# fault: pinned:upgrade
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Kup Meru Pro"
+
+# fault: pinned:gmail-label
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "Znacznik"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Zamknij powiadomienie"
+
+# fault: pinned:unread-badge
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Pokaż licznik nieprzeczytanych"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Etykieta"
+
+# fault: pinned:out-of-office
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Otwórz ustawienia Gmaila, aby wyłączyć odpowiedź urlopową"
+
+# fault: pinned:multiple-inboxes
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Kilka skrzynek"
+
+# fault: pinned:notify
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Informuj dla"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Len"
+
+# fault: platform-word:File
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "File"
+msgstr "Archiwum"
+
+# fault: access-key:inline
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "Wytnij"
+
+# fault: catalog:placeholder dropped
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Delete {label}?"
+msgstr "Usunąć?"
+
+# fault: pinned:system-settings
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Włącz to także w Preferencjach systemowych."
+
+# fault: pinned:dock
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Ikona w doku"
+
+# fault: banned:lowercase-pronoun
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru signs you out of this account."
+msgstr "Meru wyloguje cię z tego konta."
+
+# fault: banned:lowercase-ci
+#: packages/renderer/routes/settings/license.tsx
+msgid "Meru reminds you before your trial ends."
+msgstr "Meru przypomni ci o końcu okresu próbnego."

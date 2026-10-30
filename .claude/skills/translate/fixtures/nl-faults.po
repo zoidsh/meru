@@ -1,0 +1,249 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: nl\n"
+
+# fault: banned:bladwijzer
+# fault: pinned:bookmark
+#: packages/renderer/components/bookmarks.tsx
+msgid "No bookmarks yet"
+msgstr "Nog geen bladwijzers"
+
+# fault: banned:notificatie
+# fault: pinned:notification
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Show a notification when a download finishes."
+msgstr "Toon een notificatie wanneer een download klaar is."
+
+# fault: banned:bewaren
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Where downloaded files are saved."
+msgstr "Waar gedownloade bestanden worden bewaard."
+
+# fault: banned:vastmaken
+# fault: pinned:pin
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Maak vast"
+
+# fault: banned:bijwerken
+# fault: pinned:update
+#: packages/app/extensions.ts
+msgid "{name} updated to {version}"
+msgstr "{name} bijgewerkt naar {version}"
+
+# fault: banned:u
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Are you sure you want to delete this message?"
+msgstr "Weet u zeker dat u dit bericht wilt verwijderen?"
+
+# fault: banned:quotes
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "Verwijder \"{label}\"?"
+
+# fault: banned:three-dots
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Search…"
+msgstr "Zoek..."
+
+# fault: banned:ellipsis-space
+#: packages/app/menu.ts
+msgid "Find…"
+msgstr "Zoek …"
+
+# fault: banned:apology
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Couldn't add the account."
+msgstr "Het account kan helaas niet worden toegevoegd."
+
+# fault: pinned:download-history
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Downloadoverzicht"
+
+# fault: pinned:extension
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Extensions"
+msgstr "Uitbreidingen"
+
+# fault: pinned:tab-strip
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Narrow the tab strip"
+msgstr "Maak de tabbalk smaller"
+
+# fault: pinned:do-not-disturb
+#: packages/renderer/components/do-not-disturb-button.tsx
+msgid "Turn Do Not Disturb on"
+msgstr "Zet Stilte aan"
+
+# fault: pinned:button
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show width button"
+msgstr "Toon breedteschakelaar"
+
+# fault: pinned:password-manager
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Password managers"
+msgstr "Wachtwoordbeheerders"
+
+# fault: pinned:passkey
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Only passkeys created in Meru work here."
+msgstr "Alleen passkeys die in Meru zijn gemaakt, werken hier."
+
+# fault: pinned:default-browser
+#: packages/app/context-menu.ts
+msgid "Open in Default Browser"
+msgstr "Open in standaardwebbrowser"
+
+# fault: pinned:restart
+#: packages/renderer/routes/settings/general.tsx
+msgid "Restart now"
+msgstr "Herstart nu"
+
+# fault: pinned:titlebar
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Titlebar"
+msgstr "Kopbalk"
+
+# fault: pinned:menu-bar
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "Pictogram in de menuregel"
+
+# fault: pinned:verification-code
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "Verification codes"
+msgstr "Bevestigingscodes"
+
+# fault: pinned:device-label
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Apparaatlabel"
+
+# fault: pinned:spellcheck
+#: packages/renderer/routes/settings/spellchecker.tsx
+msgid "Spellchecker"
+msgstr "Spellingchecker"
+
+# fault: pinned:dark-theme
+#: packages/renderer/routes/settings/gmail.tsx
+msgid "Extend dark theme"
+msgstr "Breid donkere modus uit"
+
+# fault: pinned:trusted-hosts
+#: packages/renderer/routes/settings/general.tsx
+msgid "Trusted hosts"
+msgstr "Betrouwbare hosts"
+
+# fault: pinned:release-channel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Release channel"
+msgstr "Releaseversie"
+
+# fault: pinned:phishing-protection
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Bescherming tegen oplichting"
+
+# fault: pinned:clipboard
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "Copy codes to clipboard"
+msgstr "Kopieer codes naar plakbord"
+
+# fault: pinned:folder
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Open folder when done"
+msgstr "Open directory na afloop"
+
+# fault: pinned:save
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Save"
+msgstr "Opslaan"
+
+# fault: pinned:saved-search
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Add saved search"
+msgstr "Voeg zoekopdracht toe"
+
+# fault: pinned:edit
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Edit account"
+msgstr "Wijzig account"
+
+# fault: pinned:upgrade
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Koop Meru Pro"
+
+# fault: pinned:gmail-label
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "Etiket"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Sluit melding"
+
+# fault: pinned:unread-badge
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Toon aantal ongelezen"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Label"
+
+# fault: pinned:out-of-office
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Open Gmail-instellingen om het vakantiebericht uit te zetten"
+
+# fault: pinned:multiple-inboxes
+#: packages/renderer/routes/settings/general.tsx
+msgid "Multiple inboxes"
+msgstr "Meervoudige inbox"
+
+# fault: pinned:notify
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Waarschuw voor"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linnen"
+
+# fault: platform-word:File
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "File"
+msgstr "Bestand"
+
+# fault: access-key:inline
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "Knippen"
+
+# fault: catalog:placeholder dropped
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Delete {label}?"
+msgstr "Verwijderen?"
+
+# fault: pinned:system-settings
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Zet de optie ook aan in Systeemvoorkeuren."
+
+# fault: pinned:dock
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "dockpictogram"

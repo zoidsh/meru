@@ -2,10 +2,955 @@
   "platformWords": {
     "severity": "wrong",
     "reason": "An entry with a platform msgctxt takes that platform's word from the style sheet's Platform words table.",
-    "entries": []
+    "entries": [
+      {
+        "row": "File",
+        "msgctxt": "macOS",
+        "msgid": "File",
+        "msgstr": "Arkiv"
+      },
+      {
+        "row": "File",
+        "msgctxt": "Windows",
+        "msgid": "File",
+        "msgstr": "Arkiv"
+      },
+      {
+        "row": "File",
+        "msgctxt": "Linux",
+        "msgid": "File",
+        "msgstr": "Fil"
+      },
+      {
+        "row": "View",
+        "msgctxt": "macOS",
+        "msgid": "View",
+        "msgstr": "Innehåll"
+      },
+      {
+        "row": "View",
+        "msgctxt": "Windows",
+        "msgid": "View",
+        "msgstr": "Visa"
+      },
+      {
+        "row": "View",
+        "msgctxt": "Linux",
+        "msgid": "View",
+        "msgstr": "Vy"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "macOS",
+        "msgid": "Undo",
+        "msgstr": "Ångra"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "Windows",
+        "msgid": "Undo",
+        "msgstr": "Ångra"
+      },
+      {
+        "row": "Undo",
+        "msgctxt": "Linux",
+        "msgid": "Undo",
+        "msgstr": "Ångra"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "macOS",
+        "msgid": "Redo",
+        "msgstr": "Gör om"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "Windows",
+        "msgid": "Redo",
+        "msgstr": "Gör om"
+      },
+      {
+        "row": "Redo",
+        "msgctxt": "Linux",
+        "msgid": "Redo",
+        "msgstr": "Gör om"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "macOS",
+        "msgid": "Cut",
+        "msgstr": "Klipp ut"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Windows",
+        "msgid": "Cut",
+        "msgstr": "Klipp ut"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Linux",
+        "msgid": "Cut",
+        "msgstr": "Klipp ut"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "macOS",
+        "msgid": "Cu&t",
+        "msgstr": "Klipp ut"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Windows",
+        "msgid": "Cu&t",
+        "msgstr": "Klipp ut"
+      },
+      {
+        "row": "Cut, `Cu&t`",
+        "msgctxt": "Linux",
+        "msgid": "Cu&t",
+        "msgstr": "Klipp ut"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "macOS",
+        "msgid": "Paste",
+        "msgstr": "Klistra in"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Windows",
+        "msgid": "Paste",
+        "msgstr": "Klistra in"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Linux",
+        "msgid": "Paste",
+        "msgstr": "Klistra in"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "macOS",
+        "msgid": "&Paste",
+        "msgstr": "Klistra in"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Windows",
+        "msgid": "&Paste",
+        "msgstr": "Klistra in"
+      },
+      {
+        "row": "Paste, `&Paste`",
+        "msgctxt": "Linux",
+        "msgid": "&Paste",
+        "msgstr": "Klistra in"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "macOS",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Klistra in och matcha stilen"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "Windows",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Klistra in och matcha formatet"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "Linux",
+        "msgid": "Paste and Match Style",
+        "msgstr": "Klistra in och matcha stilen"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "macOS",
+        "msgid": "Paste and &Match Style",
+        "msgstr": "Klistra in och matcha stilen"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "Windows",
+        "msgid": "Paste and &Match Style",
+        "msgstr": "Klistra in och matcha formatet"
+      },
+      {
+        "row": "Paste and Match Style, `Paste and &Match Style`",
+        "msgctxt": "Linux",
+        "msgid": "Paste and &Match Style",
+        "msgstr": "Klistra in och matcha stilen"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "macOS",
+        "msgid": "Select All",
+        "msgstr": "Markera allt"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Windows",
+        "msgid": "Select All",
+        "msgstr": "Markera allt"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Linux",
+        "msgid": "Select All",
+        "msgstr": "Markera allt"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Windows",
+        "msgid": "Select &All",
+        "msgstr": "Markera allt"
+      },
+      {
+        "row": "Select All, `Select &All`",
+        "msgctxt": "Linux",
+        "msgid": "Select &All",
+        "msgstr": "Markera allt"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "macOS",
+        "msgid": "About {appName}",
+        "msgstr": "Om {appName}"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "Windows",
+        "msgid": "About {appName}",
+        "msgstr": "Om {appName}"
+      },
+      {
+        "row": "About {appName}",
+        "msgctxt": "Linux",
+        "msgid": "About {appName}",
+        "msgstr": "Om {appName}"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "macOS",
+        "msgid": "Check for Updates…",
+        "msgstr": "Leta efter uppdateringar…"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "Windows",
+        "msgid": "Check for Updates…",
+        "msgstr": "Sök efter uppdateringar…"
+      },
+      {
+        "row": "Check for Updates…",
+        "msgctxt": "Linux",
+        "msgid": "Check for Updates…",
+        "msgstr": "Sök efter uppdateringar…"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "macOS",
+        "msgid": "Settings",
+        "msgstr": "Inställningar…"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "Windows",
+        "msgid": "Settings",
+        "msgstr": "Inställningar"
+      },
+      {
+        "row": "Settings, the app-menu item",
+        "msgctxt": "Linux",
+        "msgid": "Settings",
+        "msgstr": "Inställningar"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "macOS",
+        "msgid": "Compose",
+        "msgstr": "Nytt mejl"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "Windows",
+        "msgid": "Compose",
+        "msgstr": "Nytt e-postmeddelande"
+      },
+      {
+        "row": "Compose, the File menu item",
+        "msgctxt": "Linux",
+        "msgid": "Compose",
+        "msgstr": "Nytt meddelande"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "macOS",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Spara bild som…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Windows",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Spara bild som…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Linux",
+        "msgid": "Sa&ve Image As…",
+        "msgstr": "Spara bild som…"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "macOS",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Spara som"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Windows",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Spara som"
+      },
+      {
+        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
+        "msgctxt": "Linux",
+        "msgid": "Show Save As dialog before downloading",
+        "contains": "Spara som"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "macOS",
+        "msgid": "Export",
+        "msgstr": "Exportera"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "Windows",
+        "msgid": "Export",
+        "msgstr": "Exportera"
+      },
+      {
+        "row": "Export, the save dialog's button",
+        "msgctxt": "Linux",
+        "msgid": "Export",
+        "msgstr": "Exportera"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "macOS",
+        "msgid": "Shift",
+        "msgstr": "Skift"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "Windows",
+        "msgid": "Shift",
+        "msgstr": "Skift"
+      },
+      {
+        "row": "Shift, the key",
+        "msgctxt": "Linux",
+        "msgid": "Shift",
+        "msgstr": "Skift"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "macOS",
+        "msgid": "Show Meru",
+        "msgstr": "Visa Meru"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Show Meru",
+        "msgstr": "Visa Meru"
+      },
+      {
+        "row": "Show Meru, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Show Meru",
+        "msgstr": "Visa Meru"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "macOS",
+        "msgid": "Hide Meru",
+        "msgstr": "Göm Meru"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Hide Meru",
+        "msgstr": "Dölj Meru"
+      },
+      {
+        "row": "Hide Meru, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Hide Meru",
+        "msgstr": "Dölj Meru"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Enable system tray icon",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Enable system tray icon",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "System tray icon",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "System tray icon",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Choose the color of the system tray icon.",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Choose the color of the system tray icon.",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Show the application icon in the system tray.",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Show the application icon in the system tray.",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Windows",
+        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
+        "contains": "systemfält"
+      },
+      {
+        "row": "System tray, in the Appearance settings",
+        "msgctxt": "Linux",
+        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
+        "contains": "systemfält"
+      },
+      {
+        "row": "Hide {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Hide {appName}",
+        "msgstr": "Göm {appName}"
+      },
+      {
+        "row": "Hide Others",
+        "msgctxt": "macOS",
+        "msgid": "Hide Others",
+        "msgstr": "Göm övriga"
+      },
+      {
+        "row": "Show All",
+        "msgctxt": "macOS",
+        "msgid": "Show All",
+        "msgstr": "Visa alla"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Quit {appName}",
+        "msgstr": "Avsluta {appName}"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Windows",
+        "msgid": "Quit {appName}",
+        "msgstr": "Avsluta {appName}"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Linux",
+        "msgid": "Quit {appName}",
+        "msgstr": "Avsluta {appName}"
+      },
+      {
+        "row": "Close Window",
+        "msgctxt": "macOS",
+        "msgid": "Close Window",
+        "msgstr": "Stäng fönster"
+      },
+      {
+        "row": "Window, the menu",
+        "msgctxt": "macOS",
+        "msgid": "Window",
+        "msgstr": "Fönster"
+      },
+      {
+        "row": "Minimize",
+        "msgctxt": "macOS",
+        "msgid": "Minimize",
+        "msgstr": "Minimera"
+      },
+      {
+        "row": "Zoom, the window",
+        "msgctxt": "macOS",
+        "msgid": "Zoom",
+        "msgstr": "Zooma"
+      },
+      {
+        "row": "Bring All to Front",
+        "msgctxt": "macOS",
+        "msgid": "Bring All to Front",
+        "msgstr": "Lägg alla överst"
+      },
+      {
+        "row": "Speech",
+        "msgctxt": "macOS",
+        "msgid": "Speech",
+        "msgstr": "Tal"
+      },
+      {
+        "row": "Start Speaking",
+        "msgctxt": "macOS",
+        "msgid": "Start Speaking",
+        "msgstr": "Börja tala"
+      },
+      {
+        "row": "Stop Speaking",
+        "msgctxt": "macOS",
+        "msgid": "Stop Speaking",
+        "msgstr": "Sluta tala"
+      },
+      {
+        "row": "Look Up “{selection}”",
+        "msgctxt": "macOS",
+        "msgid": "Look Up “{selection}”",
+        "msgstr": "Slå upp ”{selection}”"
+      },
+      {
+        "row": "Show in Finder",
+        "msgctxt": "macOS",
+        "msgid": "Show in Finder",
+        "msgstr": "Visa i Finder"
+      }
+    ]
   },
-  "banned": [],
-  "pinned": [],
-  "accessKeys": null,
+  "banned": [
+    {
+      "id": "notis",
+      "pattern": "(?<!\\p{L})[Nn]otis\\p{L}*",
+      "severity": "wrong",
+      "reason": "A notification is an avisering, as Chrome writes it, never Apple's notis (Chrome: 123 messages, none the other way); notis is for a macOS label only.",
+      "allow": {
+        "contexts": ["macOS"]
+      }
+    },
+    {
+      "id": "hamtning",
+      "pattern": "[Hh]ämtning",
+      "severity": "wrong",
+      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them, never Apple's hämtning (Chrome: 269 messages, none the other way).",
+      "allow": {
+        "contexts": ["macOS"]
+      }
+    },
+    {
+      "id": "mejl",
+      "pattern": "[Mm]ejl",
+      "severity": "wrong",
+      "reason": "An email is an e-postmeddelande, as Chrome writes it, never Apple's mejl (Chrome: 60 messages, none the other way); mejl is for a macOS label only.",
+      "allow": {
+        "contexts": ["macOS"]
+      }
+    },
+    {
+      "id": "gom",
+      "pattern": "(?<!\\p{L})[Gg]öm(?:d|da|t|s|mer|ma|des)?(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "Hiding is dölja, as Chrome writes it: Dölj (Chrome: 47 messages, none the other way); Göm is Apple's word, for a macOS label only.",
+      "allow": {
+        "contexts": ["macOS"]
+      }
+    },
+    {
+      "id": "nala",
+      "pattern": "[Nn]åla",
+      "severity": "wrong",
+      "reason": "Pinning is fästa, as Chrome writes it: Fäst, fäst flik (Chrome: 100 messages, none with nåla fast)."
+    },
+    {
+      "id": "ni",
+      "pattern": "(?<!\\p{L})[Nn]i(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "The user is du, never ni (Chrome writes du in 2,659 messages, ni in none)."
+    },
+    {
+      "id": "quotes",
+      "pattern": "[\"“„]",
+      "severity": "wrong",
+      "reason": "Quotation marks are ”…” (U+201D on both sides), as Chrome writes them."
+    },
+    {
+      "id": "three-dots",
+      "pattern": "\\.\\.\\.",
+      "severity": "wrong",
+      "reason": "An ellipsis is one character, …, never three full stops."
+    },
+    {
+      "id": "ellipsis-space",
+      "pattern": "[ \\u00a0]…",
+      "severity": "wrong",
+      "reason": "An ellipsis follows the word without a space: Inställningar…"
+    },
+    {
+      "id": "apology",
+      "pattern": "(?<!\\p{L})(?:[Tt]yvärr|[Uu]rsäkta)(?!\\p{L})",
+      "severity": "style",
+      "reason": "Say what happened, without Tyvärr or Ursäkta."
+    }
+  ],
+  "pinned": [
+    {
+      "id": "download-history",
+      "msgidPattern": "\\bdownload history\\b",
+      "expect": "[Nn]edladdningshistorik",
+      "severity": "wrong",
+      "reason": "The download history is the nedladdningshistorik, as Chrome writes it, never Apple's hämtningshistorik (glossary, Chrome: 10 messages of 10)."
+    },
+    {
+      "id": "download",
+      "msgidPattern": "\\bdownload",
+      "expect": "[Nn]edladd|[Ll]add\\p{L}* ned",
+      "severity": "doubtful",
+      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them (Chrome: 269 messages of 282, none with hämta)."
+    },
+    {
+      "id": "bookmark",
+      "msgidPattern": "\\bbookmarks?\\b",
+      "expect": "[Bb]okmärk",
+      "severity": "wrong",
+      "reason": "A bookmark is a bokmärke (glossary, Chrome: 197 messages of 197)."
+    },
+    {
+      "id": "notification",
+      "msgidPattern": "(?!Notifications$).*\\bnotifications?\\b",
+      "expect": "[Aa]viser",
+      "severity": "wrong",
+      "reason": "A notification is an avisering, as Chrome writes it (glossary, Chrome: 123 messages of 126, none with notis). The bare Notifications is also the toasts' region, under the toast rule."
+    },
+    {
+      "id": "extension",
+      "msgidPattern": "\\bextensions?\\b",
+      "expect": "[Tt]illägg",
+      "severity": "wrong",
+      "reason": "An extension is a tillägg (glossary, Chrome: 394 messages of 400)."
+    },
+    {
+      "id": "tab-strip",
+      "msgidPattern": "\\btab strip\\b",
+      "expect": "[Ff]likhuvud",
+      "severity": "wrong",
+      "reason": "The tab strip is the flikhuvud, as Chrome writes it (glossary, Chrome: 8 messages of 8)."
+    },
+    {
+      "id": "do-not-disturb",
+      "msgidPattern": "\\bdo not disturb\\b",
+      "expect": "Stör ej",
+      "severity": "wrong",
+      "reason": "Do Not Disturb is Stör ej (glossary, Apple's, and Chrome's in 5 messages of 6, 1 with Stör inte)."
+    },
+    {
+      "id": "button",
+      "msgidPattern": "\\bbuttons?\\b",
+      "expect": "[Kk]napp",
+      "severity": "doubtful",
+      "reason": "An on-screen button is a knapp, as Chrome writes it (glossary, Chrome: 109 messages of 111)."
+    },
+    {
+      "id": "password-manager",
+      "msgidPattern": "\\bpassword managers?\\b",
+      "expect": "[Ll]ösenordshanter",
+      "severity": "doubtful",
+      "reason": "A password manager is a lösenordshanterare, as Chrome writes it (Chrome: 84 messages of 85)."
+    },
+    {
+      "id": "passkey",
+      "msgidPattern": "\\bpasskeys?\\b",
+      "expect": "(?<!\\p{L})[Nn]yck",
+      "severity": "doubtful",
+      "reason": "A passkey is a nyckel, as Chrome writes it (Chrome: 101 messages of 101)."
+    },
+    {
+      "id": "default-browser",
+      "msgidPattern": "\\bdefault browser\\b",
+      "expect": "[Ss]tandardwebbläsare",
+      "severity": "doubtful",
+      "reason": "The default browser is the standardwebbläsare, as Chrome writes it (Chrome: 35 messages of 35)."
+    },
+    {
+      "id": "update",
+      "msgidPattern": "\\bupdat(?:e|es|ed|ing)\\b",
+      "expect": "[Uu]ppdater",
+      "severity": "doubtful",
+      "reason": "An update is an uppdatering (Chrome: 333 messages of 335)."
+    },
+    {
+      "id": "restart",
+      "msgidPattern": "\\brestart",
+      "expect": "[Ss]tart\\p{L}* om|[Oo]mstart",
+      "severity": "doubtful",
+      "reason": "Restarting is starta om, as Chrome writes it (Chrome: 138 messages of 146)."
+    },
+    {
+      "id": "reload",
+      "msgidPattern": "\\breload\\b",
+      "expect": "[Ll]äs\\p{L}* in|[Ii]nläsning",
+      "severity": "doubtful",
+      "reason": "Reloading is läsa in igen, as Chrome writes it, not Apple's Uppdatera, which is Meru's word for an update (Chrome: 20 messages of 30)."
+    },
+    {
+      "id": "titlebar",
+      "msgidPattern": "\\btitle ?bar\\b",
+      "expect": "[Nn]amnlist",
+      "severity": "doubtful",
+      "reason": "The titlebar is the namnlist (glossary, Chrome: 5 messages of 5)."
+    },
+    {
+      "id": "menu-bar",
+      "msgidPattern": "\\bmenu bar\\b",
+      "expect": "[Mm]enyrad",
+      "severity": "doubtful",
+      "reason": "The menu bar is the menyrad (glossary, Chrome: 8 messages of 9)."
+    },
+    {
+      "id": "verification-code",
+      "msgidPattern": "\\bverification codes?\\b",
+      "expect": "[Vv]erifieringskod",
+      "severity": "doubtful",
+      "reason": "A verification code is a verifieringskod (glossary, Chrome: 8 messages of 8)."
+    },
+    {
+      "id": "device-label",
+      "msgidPattern": "\\bdevice label\\b",
+      "expect": "[Ee]nhetsnamn",
+      "severity": "doubtful",
+      "reason": "A device label is an enhetsnamn, Chrome's word for a device name (glossary, Chrome: 8 messages of 12)."
+    },
+    {
+      "id": "spellcheck",
+      "msgidPattern": "\\bspell ?check",
+      "expect": "[Ss]tavningskontroll",
+      "severity": "doubtful",
+      "reason": "Spellchecking is stavningskontroll (glossary, Chrome: 23 messages of 24)."
+    },
+    {
+      "id": "dark-theme",
+      "msgidPattern": "\\bdark theme\\b",
+      "expect": "[Mm]örk\\p{L}* tema",
+      "severity": "doubtful",
+      "reason": "The dark theme is the mörkt tema (glossary, Chrome: 5 messages of 5)."
+    },
+    {
+      "id": "trusted-hosts",
+      "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
+      "expect": "[Bb]etro",
+      "severity": "doubtful",
+      "reason": "Trusted hosts are betrodda värdar, untrusted ones ej betrodda värdar (glossary, Chrome: 16 messages of 22 write betrodd)."
+    },
+    {
+      "id": "release-channel",
+      "msgidPattern": "\\bchannel\\b",
+      "expect": "[Kk]anal",
+      "severity": "doubtful",
+      "reason": "A release channel is a kanal: uppdateringskanal, betakanal (glossary, Chrome: 11 messages of 11)."
+    },
+    {
+      "id": "phishing-protection",
+      "msgidPattern": "\\bphishing protection\\b",
+      "expect": "[Nn]ätfiske",
+      "severity": "doubtful",
+      "reason": "Phishing protection is skydd mot nätfiske, as Chrome writes it (glossary, Chrome: 6 messages of 7, none with phishing)."
+    },
+    {
+      "id": "clipboard",
+      "msgidPattern": "\\bclipboard\\b",
+      "expect": "[Uu]rklipp",
+      "severity": "doubtful",
+      "reason": "The clipboard is urklipp, as Chrome writes it (Chrome: 41 messages of 41)."
+    },
+    {
+      "id": "folder",
+      "msgidPattern": "\\bfolders?\\b",
+      "expect": "[Mm]app",
+      "severity": "doubtful",
+      "reason": "A folder is a mapp, as Chrome writes it (Chrome: 76 messages of 79)."
+    },
+    {
+      "id": "pin",
+      "msgidPattern": "^Pin$|\\b(?:un)?pinned\\b",
+      "expect": "[Ff]äst",
+      "severity": "doubtful",
+      "reason": "Pinning is fästa, as Chrome writes it: Fäst, fäst flik (glossary, Chrome: 100 messages, none with nåla fast)."
+    },
+    {
+      "id": "upgrade",
+      "msgidPattern": "\\bupgrade\\b",
+      "expect": "[Uu]ppgrader",
+      "severity": "wrong",
+      "reason": "Reaching Pro is Uppgradera, in buttons and prose alike, never a word for purchase (glossary)."
+    },
+    {
+      "id": "gmail-label",
+      "msgctxt": "Gmail label",
+      "msgidPattern": "\\blabel\\b",
+      "expect": "[Ee]tikett",
+      "severity": "wrong",
+      "reason": "A Gmail label is Gmail's etikett (glossary)."
+    },
+    {
+      "id": "toast",
+      "msgidPattern": "\\btoasts?\\b",
+      "expect": "[Ii]nforut",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an inforuta, kept apart from a notification, avisering."
+    },
+    {
+      "id": "toast",
+      "msgctxt": "toasts",
+      "msgid": "Notifications",
+      "expect": "[Ii]nforut",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an inforuta, kept apart from a notification, avisering."
+    },
+    {
+      "id": "toast",
+      "msgctxt": null,
+      "msgid": "Notifications",
+      "origin": "packages/preload-gmail/",
+      "expect": "[Ii]nforut",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: a toast is an inforuta, kept apart from a notification, avisering."
+    },
+    {
+      "id": "unread-badge",
+      "msgctxt": null,
+      "msgidPattern": "\\bunread badges?\\b",
+      "expect": "[Bb]rick",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the unread badge is the symbolbricka för olästa."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": null,
+      "msgid": "Label",
+      "expect": "[Nn]amn",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its namn, apart from Gmail's etikett."
+    },
+    {
+      "id": "meru-label",
+      "msgctxt": "saved search",
+      "msgid": "Enter a label",
+      "expect": "[Nn]amn",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its namn, apart from Gmail's etikett."
+    },
+    {
+      "id": "out-of-office",
+      "msgidPattern": "\\bout of office\\b",
+      "expect": "[Ff]rånvaromeddelande",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: out of office is Gmail's frånvaromeddelande."
+    },
+    {
+      "id": "multiple-inboxes",
+      "msgidPattern": "\\bmultiple inboxes\\b",
+      "expect": "[Ff]lera inkorgar",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's flera inkorgar."
+    },
+    {
+      "id": "notify",
+      "msgidPattern": "\\bnotify\\b",
+      "expect": "[Aa]viser",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: to notify is avisera, beside avisering."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Breeze",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Bris$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linen."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Chime",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Klockspel$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linen."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Duet",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Duett$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linen."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Knock",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Knack$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linen."
+    },
+    {
+      "id": "sound-name",
+      "msgid": "Linen",
+      "origin": "packages/renderer/lib/notifications/",
+      "expect": "^Linen$",
+      "severity": "doubtful",
+      "reason": "Glossary, agent-chosen: the notification sounds are Bris, Klockspel, Duett, Knack and Linen."
+    },
+    {
+      "id": "system-settings",
+      "msgidPattern": "\\bSystem Settings\\b",
+      "expect": "Systeminställningar",
+      "severity": "wrong",
+      "reason": "System Settings is Apple's Systeminställningar, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+    },
+    {
+      "id": "dock",
+      "msgidPattern": "\\bdock\\b",
+      "expect": "Dock",
+      "severity": "doubtful",
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+    }
+  ],
+  "accessKeys": {
+    "style": "inline",
+    "severity": "wrong",
+    "reason": "A label whose English has an & keeps one & inline, before a letter of the Swedish word; a macOS label drops it."
+  },
   "families": []
 }

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { checkCatalogs, readCatalog } from "../.claude/skills/translate/check";
-import { loadSidecar } from "../.claude/skills/translate/rules";
+import { LANGUAGES_DIR, loadSidecar } from "../.claude/skills/translate/rules";
 
 /*
  * Lives here rather than beside the script because `bun test` never looks
@@ -21,14 +21,47 @@ function key(msgctxt: string | null, msgid: string, rule: string) {
   return `${msgctxt ?? ""}|${msgid}|${rule}`;
 }
 
+function localeOf(fixture: string) {
+  return fixture.replace(/-(?:clean|faults)\.po$/u, "");
+}
+
+async function localesWithRules() {
+  const locales = (await readdir(LANGUAGES_DIR))
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => file.slice(0, -".json".length));
+
+  const withRules: string[] = [];
+
+  for (const locale of locales) {
+    const sidecar = await loadSidecar(locale);
+
+    if (
+      sidecar.platformWords.entries.length > 0 ||
+      sidecar.banned.length > 0 ||
+      sidecar.pinned.length > 0 ||
+      sidecar.accessKeys !== null ||
+      sidecar.families.length > 0
+    ) {
+      withRules.push(locale);
+    }
+  }
+
+  return withRules;
+}
+
 describe("check.ts", () => {
-  test("has a clean fixture and a faults fixture for each locale with rules", () => {
-    expect(fixtures.sort()).toEqual(["de-clean.po", "de-faults.po", "ja-clean.po", "ja-faults.po"]);
+  test("has a clean fixture and a faults fixture for each locale with rules", async () => {
+    const expected = (await localesWithRules()).flatMap((locale) => [
+      `${locale}-clean.po`,
+      `${locale}-faults.po`,
+    ]);
+
+    expect(fixtures.sort()).toEqual(expected.sort());
   });
 
   for (const fixture of fixtures) {
     test(`finds exactly the faults planted in ${fixture}`, async () => {
-      const locale = fixture.split("-")[0] as string;
+      const locale = localeOf(fixture);
 
       const fixturePath = path.join(FIXTURES_DIR, fixture);
 
