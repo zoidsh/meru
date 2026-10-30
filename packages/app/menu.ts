@@ -185,11 +185,11 @@ export class AppMenu {
     };
 
     const zoomIn = () => {
-      getActiveZoomTarget()?.zoomIn();
+      getActiveZoomTarget()?.zoom("in");
     };
 
     const zoomOut = () => {
-      getActiveZoomTarget()?.zoomOut();
+      getActiveZoomTarget()?.zoom("out");
     };
 
     const selectedAccount = accounts.getSelectedAccount();
