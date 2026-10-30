@@ -25,9 +25,9 @@ _Paramètres_, Chrome's word, in Meru's own copy: the window, its title and ever
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the French word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `&Copy` _&Copier_, `C&opy Image Address` _C&opier l’adresse de l’image_, `Paste and &Match Style` _Coller et adapter la &mise en forme_ on Windows. Where the word lacks the letter: `Cu&t` _Co&uper_, as GNOME marks it.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the French word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The labels whose word has the English letter claim it first, in menu order; the rest then take their first free letter, in menu order.
 
-The page and text-field context menu shows these together, with these letters: _&Ajouter au dictionnaire_, _&Rechercher avec Google_, _Co&uper_, _&Copier_, _Coll&er_, _Coller et adapter la &mise en forme_ (Windows) or _Coller et adapter le &style_ (Linux), _Sélectionner &tout_ (Windows) or _&Tout sélectionner_ (Linux), _Enregistrer l’&image sous…_, _Copier le lie&n_, _Copier l’ima&ge_, _C&opier l’adresse de l’image_.
+The page and text-field context menu, by that policy, on Windows: `&Learn Spelling` _&Ajouter au dictionnaire_, `&Search with Google` _&Rechercher avec Google_, `Cu&t` _Co&uper_, `&Copy` _&Copier_, `&Paste` _Co&ller_, `Paste and &Match Style` _Coller et adapter la &mise en forme_, `Select &All` _&Sélectionner tout_, `Sa&ve Image As…` _&Enregistrer l’image sous…_, `Copy Lin&k` _Co&pier le lien_, `Cop&y Image` _Cop&ier l’image_, `C&opy Image Address` _C&opier l’adresse de l’image_. On Linux, where its words differ: `Paste and &Match Style` _Coll&er et adapter le style_, `Select &All` _&Tout sélectionner_, `Sa&ve Image As…` _E&nregistrer l’image sous…_.
 
 ## Plural categories
 

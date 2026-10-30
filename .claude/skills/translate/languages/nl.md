@@ -25,7 +25,9 @@ _Instellingen_. The app-menu item with `msgctxt` `macOS` is _Instellingen…_, a
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Dutch word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `&Paste` _&Plakken_, `Select &All` _&Alles selecteren_, `Paste and &Match Style` _Plakken en op&maak aanpassen_ on Windows. Where the word lacks the letter: `Cu&t` _K&nippen_, `Sa&ve Image As…` _A&fbeelding opslaan als…_, and on Linux _Plakken en s&tijl aanpassen_, which has no M.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Dutch word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The labels whose word has the English letter claim it first, in menu order; the rest then take their first free letter, in menu order.
+
+The page and text-field context menu, by that policy, on Windows: `&Learn Spelling` _&Toevoegen aan woordenboek_, `&Search with Google` _&Zoeken met Google_, `Cu&t` _K&nippen_, `&Copy` _Kop&iëren_, `&Paste` _&Plakken_, `Paste and &Match Style` _Plakken en op&maak aanpassen_, `Select &All` _&Alles selecteren_, `Sa&ve Image As…` _A&fbeelding opslaan als…_, `Copy Lin&k` _Lin&k kopiëren_, `Cop&y Image` _Af&beelding kopiëren_, `C&opy Image Address` _Adres van afbeelding k&opiëren_. On Linux, where its words differ: `Paste and &Match Style` _P&lakken en stijl aanpassen_.
 
 ## Plural categories
 

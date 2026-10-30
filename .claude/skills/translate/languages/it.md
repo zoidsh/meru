@@ -25,9 +25,9 @@ _Impostazioni_. The app-menu item with `msgctxt` `macOS` is _Impostazioni…_, a
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Italian word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `Cu&t` _&Taglia_, `Select &All` _Selezion&a tutto_, `Sa&ve Image As…` _Sal&va immagine con nome…_, `Paste and &Match Style` _Incolla e adegua la for&mattazione_ on Windows. Where the word lacks the letter: `&Paste` _&Incolla_, as GNOME marks it.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Italian word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The labels whose word has the English letter claim it first, in menu order; the rest then take their first free letter, in menu order.
 
-The page and text-field context menu shows these together, with these letters: _Aggiungi a&l dizionario_, _Ce&rca con Google_, _&Taglia_, _&Copia_, _&Incolla_, _Incolla e adegua la for&mattazione_ (Windows) or _Incolla e adegua lo &stile_ (Linux), _Selezion&a tutto_, _Sal&va immagine con nome…_, _Copia lin&k_, _Copia imma&gine_, _C&opia l’indirizzo dell’immagine_.
+The page and text-field context menu, by that policy, on Windows: `&Learn Spelling` _Aggiungi a&l dizionario_, `&Search with Google` _C&erca con Google_, `Cu&t` _&Taglia_, `&Copy` _&Copia_, `&Paste` _&Incolla_, `Paste and &Match Style` _Incolla e adegua la for&mattazione_, `Select &All` _Selezion&a tutto_, `Sa&ve Image As…` _Sal&va immagine con nome…_, `Copy Lin&k` _Copia lin&k_, `Cop&y Image` _Co&pia immagine_, `C&opy Image Address` _C&opia l’indirizzo dell’immagine_. On Linux, where its words differ: `Paste and &Match Style` _I&ncolla e adegua lo stile_.
 
 ## Plural categories
 

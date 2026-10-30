@@ -25,7 +25,9 @@ _Ustawienia_. The app-menu item with `msgctxt` `macOS` is _Ustawienia…_, as Ap
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Polish word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. For example `Cu&t` _Wy&tnij_, `Select &All` _Z&aznacz wszystko_, `Paste and &Match Style` _Wklej i dopasuj for&mat_ on Windows. Where the word lacks the letter: `&Paste` _&Wklej_, `Sa&ve Image As…` _Zapisz o&braz jako…_, and on Linux _Wklej i &dopasuj styl_, which has no M.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Polish word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The labels whose word has the English letter claim it first, in menu order; the rest then take their first free letter, in menu order.
+
+The page and text-field context menu, by that policy, on Windows: `&Learn Spelling` _&Dodaj do słownika_, `&Search with Google` _Wy&szukaj w Google_, `Cu&t` _Wy&tnij_, `&Copy` _Ko&piuj_, `&Paste` _&Wklej_, `Paste and &Match Style` _Wklej i dopasuj for&mat_, `Select &All` _Z&aznacz wszystko_, `Sa&ve Image As…` _&Zapisz obraz jako…_, `Copy Lin&k` _&Kopiuj link_, `Cop&y Image` _Kop&iuj grafikę_, `C&opy Image Address` _K&opiuj adres obrazu_. On Linux, where its words differ: `Paste and &Match Style` _Wk&lej i dopasuj styl_.
 
 ## Plural categories
 

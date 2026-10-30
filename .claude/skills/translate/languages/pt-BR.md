@@ -25,12 +25,9 @@ _Configurações_, Chrome's word, in Meru's own copy: the window, its title and 
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Portuguese word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The context menu's labels, with their keys, the same on Windows and Linux except where noted:
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Portuguese word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The labels whose word has the English letter claim it first, in menu order; the rest then take their first free letter, in menu order.
 
-- `Cu&t` _Recor&tar_, `&Copy` _&Copiar_, `&Paste` _Co&lar_, `Select &All` _Selecion&ar Tudo_
-- `Paste and &Match Style` _Colar com a &Mesma Formatação_ on Windows, _Colar com o &Mesmo Estilo_ on Linux
-- `&Learn Spelling` _Ap&render Ortografia_, `&Search with Google` _Pe&squisar com o Google_
-- `Sa&ve Image As…` _Sal&var Imagem Como…_, `Copy Lin&k` _Copiar Lin&k_, `Cop&y Image` _Copiar &Imagem_, `C&opy Image Address` _C&opiar Endereço da Imagem_
+The page and text-field context menu, by that policy, on Windows: `&Learn Spelling` _A&prender Ortografia_, `&Search with Google` _Pe&squisar com o Google_, `Cu&t` _Recor&tar_, `&Copy` _&Copiar_, `&Paste` _Co&lar_, `Paste and &Match Style` _Colar co&m a Mesma Formatação_, `Select &All` _Selecion&ar Tudo_, `Sa&ve Image As…` _Sal&var Imagem Como…_, `Copy Lin&k` _Copiar Lin&k_, `Cop&y Image` _Cop&iar Imagem_, `C&opy Image Address` _C&opiar Endereço da Imagem_. On Linux, where its words differ: `Paste and &Match Style` _Colar co&m o Mesmo Estilo_.
 
 ## Plural categories
 
