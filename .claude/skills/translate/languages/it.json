@@ -631,7 +631,7 @@
       "id": "recent-downloads",
       "msgidPattern": "\\brecent download history\\b",
       "expect": "download recenti",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The recent download history popup is Cronologia dei download recenti, as Chrome writes it (Chrome: 2 messages)."
     },
     {
@@ -681,21 +681,21 @@
       "id": "update",
       "msgidPattern": "\\bupdates?\\b",
       "expect": "[Aa]ggiorn",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "An update is an aggiornamento, and to update is aggiornare, as Chrome writes them (Chrome: 264 of 265 messages)."
     },
     {
       "id": "restart",
       "msgidPattern": "\\brestarts?\\b",
       "expect": "[Rr]iavvi",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Restarting is riavviare, a restart a riavvio, as Chrome writes them (Chrome: 65 of 69 messages)."
     },
     {
       "id": "reload",
       "msgidPattern": "\\breload\\b",
       "expect": "[Rr]icaric",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Reloading is ricaricare, as Chrome writes it (Chrome: 28 of 30 messages)."
     },
     {
@@ -709,35 +709,35 @@
       "id": "trusted-hosts",
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "attendibil",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A trusted host is an host attendibile, as Chrome writes trusted (Chrome: 18 of 22 messages, 3 with affidabile)."
     },
     {
       "id": "developer-tools",
       "msgid": "Developer Tools",
       "expect": "^Strumenti per sviluppatori$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Developer Tools is Strumenti per sviluppatori, as Chrome writes it (Chrome: 5 of 5 messages)."
     },
     {
       "id": "learn-more",
       "msgidPattern": "\\blearn more\\b",
       "expect": "[Ss]copri di più",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Learn more is Scopri di più, as Chrome writes it (Chrome: 176 of 213 messages, 35 with Ulteriori informazioni)."
     },
     {
       "id": "pin",
       "msgid": "Pin",
       "expect": "^Fissa$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The tab context menu's Pin is Fissa, as Chrome writes it."
     },
     {
       "id": "unpin",
       "msgid": "Unpin",
       "expect": "^Stacca$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The tab context menu's Unpin is Stacca, as Chrome writes it (Chrome: 16 of 20 messages, 3 with Sblocca)."
     },
     {
@@ -751,7 +751,7 @@
       "id": "clipboard",
       "msgidPattern": "\\bclipboard\\b",
       "expect": "appunti",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The clipboard is gli appunti, as Chrome writes it (Chrome: 39 of 41 messages)."
     },
     {
@@ -765,21 +765,21 @@
       "id": "button",
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "[Pp]ulsant",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "An on-screen button is a pulsante, as Chrome writes it; tasto is a key or a hardware button (Chrome: 94 of 111 messages)."
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "barra dei menu",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The macOS menu bar is the barra dei menu, as Apple and Chrome write it (Chrome: 9 of 9 messages)."
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "[Cc]anal[ei]",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A release channel is a canale: canale di aggiornamento, canale beta, as Chrome writes it (Chrome: 10 of 11 messages)."
     },
     {
@@ -793,7 +793,7 @@
       "id": "dock",
       "msgidPattern": "\\bdock\\b",
       "expect": "Dock",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],

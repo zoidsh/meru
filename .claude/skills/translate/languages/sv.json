@@ -637,7 +637,7 @@
       "id": "download",
       "msgidPattern": "\\bdownload",
       "expect": "[Nn]edladd|[Ll]add\\p{L}* ned",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them (Chrome: 269 messages of 282, none with hämta)."
     },
     {
@@ -679,133 +679,133 @@
       "id": "button",
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "[Kk]napp",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "An on-screen button is a knapp, as Chrome writes it (glossary, Chrome: 109 messages of 111)."
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Ll]ösenordshanter",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A password manager is a lösenordshanterare, as Chrome writes it (Chrome: 84 messages of 85)."
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "(?<!\\p{L})[Nn]yck",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A passkey is a nyckel, as Chrome writes it (Chrome: 101 messages of 101)."
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "[Ss]tandardwebbläsare",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The default browser is the standardwebbläsare, as Chrome writes it (Chrome: 35 messages of 35)."
     },
     {
       "id": "update",
       "msgidPattern": "\\bupdat(?:e|es|ed|ing)\\b",
       "expect": "[Uu]ppdater",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "An update is an uppdatering (Chrome: 333 messages of 335)."
     },
     {
       "id": "restart",
       "msgidPattern": "\\brestart",
       "expect": "[Ss]tart\\p{L}* om|[Oo]mstart",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Restarting is starta om, as Chrome writes it (Chrome: 138 messages of 146)."
     },
     {
       "id": "reload",
       "msgidPattern": "\\breload\\b",
       "expect": "[Ll]äs\\p{L}* in|[Ii]nläsning",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Reloading is läsa in igen, as Chrome writes it, not Apple's Uppdatera, which is Meru's word for an update (Chrome: 20 messages of 30)."
     },
     {
       "id": "titlebar",
       "msgidPattern": "\\btitle ?bar\\b",
       "expect": "[Nn]amnlist",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The titlebar is the namnlist (glossary, Chrome: 5 messages of 5)."
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "[Mm]enyrad",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The menu bar is the menyrad (glossary, Chrome: 8 messages of 9)."
     },
     {
       "id": "verification-code",
       "msgidPattern": "\\bverification codes?\\b",
       "expect": "[Vv]erifieringskod",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A verification code is a verifieringskod (glossary, Chrome: 8 messages of 8)."
     },
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Ee]nhetsnamn",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A device label is an enhetsnamn, Chrome's word for a device name (glossary, Chrome: 8 messages of 12)."
     },
     {
       "id": "spellcheck",
       "msgidPattern": "\\bspell ?check",
       "expect": "[Ss]tavningskontroll",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Spellchecking is stavningskontroll (glossary, Chrome: 23 messages of 24)."
     },
     {
       "id": "dark-theme",
       "msgidPattern": "\\bdark theme\\b",
       "expect": "[Mm]örk\\p{L}* tema",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The dark theme is the mörkt tema (glossary, Chrome: 5 messages of 5)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "[Bb]etro",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Trusted hosts are betrodda värdar, untrusted ones ej betrodda värdar (glossary, Chrome: 16 messages of 22 write betrodd)."
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "[Kk]anal",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A release channel is a kanal: uppdateringskanal, betakanal (glossary, Chrome: 11 messages of 11)."
     },
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "[Nn]ätfiske",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Phishing protection is skydd mot nätfiske, as Chrome writes it (glossary, Chrome: 6 messages of 7, none with phishing)."
     },
     {
       "id": "clipboard",
       "msgidPattern": "\\bclipboard\\b",
       "expect": "[Uu]rklipp",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The clipboard is urklipp, as Chrome writes it (Chrome: 41 messages of 41)."
     },
     {
       "id": "folder",
       "msgidPattern": "\\bfolders?\\b",
       "expect": "[Mm]app",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A folder is a mapp, as Chrome writes it (Chrome: 76 messages of 79)."
     },
     {
       "id": "pin",
       "msgidPattern": "^Pin$|\\b(?:un)?pinned\\b",
       "expect": "[Ff]äst",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Pinning is fästa, as Chrome writes it: Fäst, fäst flik (glossary, Chrome: 100 messages, none with nåla fast)."
     },
     {
@@ -943,7 +943,7 @@
       "id": "dock",
       "msgidPattern": "\\bdock\\b",
       "expect": "Dock",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],

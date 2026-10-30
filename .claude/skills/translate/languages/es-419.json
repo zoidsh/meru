@@ -597,19 +597,19 @@
     {
       "id": "enlace",
       "pattern": "(?<!\\p{L})[Ee]nlaces?(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A link is a vínculo in Latin America. Chrome: vínculo in 160 of 190 messages for link, enlace in 1."
     },
     {
       "id": "marcador",
       "pattern": "(?<!\\p{L})[Mm]arcador(?:es)?(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A bookmark is a favorito in Latin America. Chrome: favorito in 185 of 197 messages for bookmark, marcador in 12."
     },
     {
       "id": "recargar",
       "pattern": "(?<!\\p{L})[Rr]ecarg\\p{L}*",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Reloading is volver a cargar. Chrome: volver a cargar in 29 of 30 messages for reload, recargar in none."
     },
     {
@@ -627,7 +627,7 @@
     {
       "id": "three-periods",
       "pattern": "\\.\\.\\.",
-      "severity": "style",
+      "severity": "wrong",
       "reason": "An ellipsis is the one character …, as Apple writes it, never three periods; Chrome's three periods are its own style."
     },
     {
@@ -657,7 +657,7 @@
       "id": "bookmark",
       "msgidPattern": "\\bbookmarks?\\b",
       "expect": "[Ff]avorito",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A bookmark is a favorito. Chrome: 185 of 197 messages for bookmark."
     },
     {
@@ -671,14 +671,14 @@
       "id": "extension",
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtensi[oó]n",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "An extension is an extensión. Chrome: 396 of 400 messages."
     },
     {
       "id": "close-other-tabs",
       "msgid": "Close Other Tabs",
       "expect": "^Cerrar las demás pestañas$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Close Other Tabs is Cerrar las demás pestañas, as Chrome writes its tab menu item (both of its messages)."
     },
     {
@@ -686,56 +686,56 @@
       "msgctxt": null,
       "msgidPattern": "\\bdelet(?:e|es|ed)\\b",
       "expect": "[Bb]orr",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Deleting is borrar in Meru's own copy. Chrome: borrar in 179 of 205 messages for delete, eliminar in 22. Gmail's Delete action, msgctxt Gmail action, keeps Gmail's Eliminar."
     },
     {
       "id": "remove",
       "msgidPattern": "^Remove\\b(?! from history)",
       "expect": "[Qq]uitar",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Removing something from a list is quitar. Chrome: quitar in 151 of 179 messages for remove, eliminar in 13; Remove from history keeps Chrome's eliminar."
     },
     {
       "id": "learn-more",
       "msgidPattern": "\\blearn more\\b",
       "expect": "[Mm]ás información",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Learn more is Más información. Chrome: 170 of 213 messages, Obtén in 35."
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Aa]dministrador(?:es)? de contraseñas",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A password manager is an administrador de contraseñas. Chrome: 78 of 84 messages."
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "[Ll]laves? de acceso",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A passkey is a llave de acceso. Chrome: 91 of 101 messages, clave de acceso in 10."
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "navegador predeterminado",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The default browser is the navegador predeterminado. Chrome: 34 of 35 messages."
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "[Bb]arra de pestañas",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The tab strip is the barra de pestañas. Chrome: 6 of 8 messages."
     },
     {
       "id": "launcher",
       "msgidPattern": "\\blauncher\\b",
       "expect": "[Ss]elector",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The launcher is the selector, as Chrome names its launcher (its one Launcher label)."
     },
     {
@@ -749,35 +749,35 @@
       "id": "restart",
       "msgidPattern": "\\brestarts?\\b",
       "expect": "[Rr]einici",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Restarting is reiniciar. Chrome: 61 of 67 messages for restart."
     },
     {
       "id": "update",
       "msgidPattern": "\\bupdates?\\b",
       "expect": "[Aa]ctualiz",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "An update is an actualización. Chrome: 257 of 265 messages."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "de confianza",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A trusted host is a host de confianza. Chrome: de confianza is its most common form, in 13 of 22 messages for trusted."
     },
     {
       "id": "spellchecker",
       "msgidPattern": "\\bspell ?check",
       "expect": "[Cc]orrector ortográfico",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The spellchecker is the corrector ortográfico. Chrome: 18 of 24 messages for spellcheck."
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "[Bb]arra de menús",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The macOS menu bar is the barra de menús, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar); Chrome's barra de menú is not followed."
     },
     {
@@ -791,7 +791,7 @@
       "id": "dock",
       "msgidPattern": "\\bdock\\b",
       "expect": "Dock",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],

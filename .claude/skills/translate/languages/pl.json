@@ -576,19 +576,19 @@
     {
       "id": "lacze",
       "pattern": "(?<!\\p{L})[Łł]ącz(?:e|em|u|a)(?!\\p{L})",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A link is a link, as Chrome writes it, never Apple's łącze (Chrome: 161 messages, none the other way)."
     },
     {
       "id": "restart",
       "pattern": "(?<!\\p{L})[Zz]?[Rr]estart\\p{L}*",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Restarting is uruchomić ponownie, as Chrome writes it: Uruchom ponownie (Chrome: 140 messages, 2 the other way)."
     },
     {
       "id": "katalog",
       "pattern": "(?<!\\p{L})[Kk]atalog\\p{L}*",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A folder is a folder, as Chrome writes it, never katalog (Chrome: 78 messages, none the other way)."
     },
     {
@@ -612,13 +612,13 @@
     {
       "id": "one-letter-word",
       "pattern": "(?<![\\p{L}\\p{N}])[wiozauWIOZAU] (?=[\\p{L}\\p{N}{])",
-      "severity": "style",
+      "severity": "wrong",
       "reason": "A one-letter word is joined to the next by a no-break space (U+00A0), as Chrome and Apple write it: w Gmailu (Chrome: 4,295 messages, 705 with a plain space)."
     },
     {
       "id": "unit-space",
       "pattern": "(?<=[\\p{N}#}]) (?=(?:sekund\\p{L}*|minut\\p{L}*|godzin\\p{L}*|dni|dzień|dnia|tygodni\\p{L}*|tydzień|miesi\\p{L}*|lat|lata|rok\\p{L}*|[kKMGT]B)(?!\\p{L}))",
-      "severity": "style",
+      "severity": "wrong",
       "reason": "A number and its unit are joined by a no-break space (U+00A0), as Chrome writes them: 5 minut, # dni (Chrome: 86 messages, 24 with a plain space)."
     },
     {
@@ -687,35 +687,35 @@
       "id": "titlebar",
       "msgidPattern": "\\btitle ?bar\\b",
       "expect": "[Pp]as\\p{L}* tytułu",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The titlebar is the pasek tytułu, as Chrome writes it (glossary, Chrome: 5 messages of 5)."
     },
     {
       "id": "button",
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "[Pp]rzycisk",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "An on-screen button is a przycisk, as Chrome writes it (glossary, Chrome: 111 messages of 111)."
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Mm]enedżer\\p{L}* haseł",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A password manager is a menedżer haseł, as Chrome writes it (Chrome: 85 messages of 85)."
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "[Kk]lucz\\p{L}* dostępu",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A passkey is a klucz dostępu, as Chrome writes it (Chrome: 84 messages, 1 with passkey)."
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "[Dd]omyśln\\p{L}* przeglądar|[Pp]rzeglądar\\p{L}* domyśln",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The default browser is the domyślna przeglądarka, as Chrome writes it (Chrome: 35 messages of 35)."
     },
     {
@@ -723,84 +723,84 @@
       "msgctxt": null,
       "msgidPattern": "\\bupdat(?:e|es|ed|ing)\\b",
       "expect": "[Aa]ktualiz",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "An update is an aktualizacja, and updating is aktualizować, as Chrome writes them (Chrome: 321 messages of 335, none with uaktualnienie). A platform label takes its platform's word instead."
     },
     {
       "id": "restart",
       "msgidPattern": "\\brestart",
       "expect": "[Pp]onown",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Restarting is uruchomić ponownie, as Chrome writes it: Uruchom ponownie, po ponownym uruchomieniu (Chrome: 140 messages, 2 with restart)."
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "[Pp]as\\p{L}* menu",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The menu bar is the pasek menu (glossary, Chrome: 9 messages of 9)."
     },
     {
       "id": "verification-code",
       "msgidPattern": "\\bverification codes?\\b",
       "expect": "[Kk]od\\p{L}* weryfikacyjn",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A verification code is a kod weryfikacyjny (glossary, Chrome: 8 messages of 8)."
     },
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]azw\\p{L}* urządzenia",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A device label is a nazwa urządzenia, Chrome's words for a device name (glossary, Chrome: 10 messages of 12)."
     },
     {
       "id": "spellcheck",
       "msgidPattern": "\\bspell ?check",
       "expect": "[Ss]prawdzani\\p{L}* pisowni",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Spellchecking is sprawdzanie pisowni (glossary, Chrome: 23 messages of 24)."
     },
     {
       "id": "dark-theme",
       "msgidPattern": "\\bdark theme\\b",
       "expect": "[Cc]iemn\\p{L}* motyw|[Mm]otyw\\p{L}* ciemn",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The dark theme is the ciemny motyw (glossary, Chrome: 5 messages of 5)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "[Zz]aufan",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Trusted hosts are zaufane hosty, untrusted ones niezaufane hosty (glossary, Chrome: 19 messages of 22 write zaufany)."
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "[Kk]anał",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A release channel is a kanał: kanał aktualizacji, kanał beta (glossary, Chrome: 8 messages of 11)."
     },
     {
       "id": "link",
       "msgidPattern": "\\blinks?\\b",
       "expect": "[Ll]ink",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A link is a link, as Chrome writes it (Chrome: 161 messages of 174, none with łącze)."
     },
     {
       "id": "clipboard",
       "msgidPattern": "\\bclipboard\\b",
       "expect": "[Ss]chow",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The clipboard is the schowek, as Chrome writes it (Chrome: 41 messages of 41)."
     },
     {
       "id": "folder",
       "msgidPattern": "\\bfolders?\\b",
       "expect": "[Ff]older",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A folder is a folder, as Chrome writes it (Chrome: 78 messages of 79)."
     },
     {
@@ -808,14 +808,14 @@
       "msgctxt": null,
       "msgid": "Save",
       "expect": "^Zapisz$",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "Save is Zapisz, as Chrome writes it, not Apple's Zachowaj (Chrome: 605 messages, 1 with zachować)."
     },
     {
       "id": "saved-search",
       "msgidPattern": "\\bsaved search(?:es)?\\b",
       "expect": "[Zz]apisan",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "A saved search is a zapisane wyszukiwanie (glossary, Chrome writes zapisać in 605 messages, zachować in 1)."
     },
     {
@@ -953,7 +953,7 @@
       "id": "dock",
       "msgidPattern": "\\bdock\\b",
       "expect": "Dock",
-      "severity": "doubtful",
+      "severity": "wrong",
       "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
     }
   ],
