@@ -235,9 +235,13 @@ class Accounts {
    * focus call below is synchronous, so the click still wins against it.
    */
   focusActiveView({ blurRenderer = true }: { blurRenderer?: boolean } = {}) {
+    const isStayingBehind = main.shouldStayBehindUntilFocused && !main.window.isFocused();
+
     // It covers the whole window, so the keys belong to it until it closes.
     if (whatsNew.isOpen) {
-      whatsNew.focus();
+      if (!isStayingBehind) {
+        whatsNew.focus();
+      }
 
       return;
     }
@@ -273,7 +277,7 @@ class Accounts {
     // On macOS `webContents.focus()` also focuses its window, which activates
     // the app. The window's own focus listener calls this again once it is
     // brought forward, so the view still gets the keys then.
-    if (main.shouldStayBehindUntilFocused && !main.window.isFocused()) {
+    if (isStayingBehind) {
       return;
     }
 

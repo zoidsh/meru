@@ -53,27 +53,21 @@ test.beforeEach(async () => {
   }
 });
 
-/** Whichever page of the app is showing the stubbed release. */
+function findReleaseNotesPage() {
+  return meru.app.windows().find((page) => page.url().includes("release-notes.html"));
+}
+
+/** The release notes page, once it shows the stubbed release. */
 async function openWhatsNew() {
   expect(await meru.runMenuCommand("What's New")).toBe(true);
 
-  let releaseNotesPage: Page | undefined;
+  await expect.poll(findReleaseNotesPage).toBeDefined();
 
-  await expect
-    .poll(async () => {
-      for (const page of meru.app.windows()) {
-        if (await page.getByText("v99.0.0").isVisible()) {
-          releaseNotesPage = page;
+  const releaseNotesPage = findReleaseNotesPage() as Page;
 
-          return true;
-        }
-      }
+  await expect(releaseNotesPage.getByText("v99.0.0")).toBeVisible();
 
-      return false;
-    })
-    .toBe(true);
-
-  return releaseNotesPage as Page;
+  return releaseNotesPage;
 }
 
 function readOpenPageUrls() {
