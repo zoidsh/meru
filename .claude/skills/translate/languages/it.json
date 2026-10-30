@@ -613,6 +613,12 @@
       "reason": "The user is tu, with tuo, tua and ti, never Lei."
     },
     {
+      "id": "unit-space",
+      "pattern": "(?<=[\\p{N}#}])[\\u00a0\\u202f](?=(?:secondi?|minuti?|ore|ora|giorni?|settimane?|mesi?|anni?|[kKMGT]B)(?!\\p{L}))",
+      "severity": "wrong",
+      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minuti, # giorni (Chrome: 172 messages with a unit, none with a no-break space)."
+    },
+    {
       "id": "apology",
       "pattern": "(?<!\\p{L})(?:[Ss]piacenti|[Cc]i dispiace)(?!\\p{L})",
       "severity": "style",

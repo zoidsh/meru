@@ -41,7 +41,7 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro, in Latin letters, never katakan
 ## Traps
 
 - **Punctuation follows Apple.** The comma is the full-width 、 (U+3001) and the full stop the full-width 。 (U+3002), never a half-width `,` or `.` in Japanese text. A question or exclamation mark is the half-width `?` or `!`, never ？ or ！. Quotation marks are “” (U+201C, U+201D), never 「」 or straight `"…"`. The ellipsis on a label is … as in 設定…
-- **No spaces around Latin text or numbers.** _Meru Proにアップグレード_, _3個のタブ_, _Gmailの設定_; never _Meru Pro にアップグレード_.
+- **No spaces around Latin text or numbers.** _Meru Proにアップグレード_, _3個のタブ_, _Gmailの設定_; never _Meru Pro にアップグレード_. A number joins its unit the same way, _5分_: Chrome writes a space there (174 messages with a unit), but spacing is grammar, which follows Apple.
 - **No plain-form sentences.** です/ます throughout, as above.
 - **House katakana.** Whether a loanword ends in ー follows Chrome, word by word, on every platform: ブラウザ, フォルダ, コンピュータ and エディタ without it, ユーザー, サーバー and マネージャー with it. Apple spells the first four the same way, so a `macOS` label needs no exception. The `long-vowel` rules in `ja.json` are the table: one per word, each banning the other spelling and giving Chrome's count as its source. A word the table lacks takes the form Chrome uses most; name it in your reply so it can be added. A Gmail term such as フィルタ keeps Gmail's spelling. A window in Meru's own copy is ウィンドウ, never ウインドウ; a `macOS` label takes Apple's ウインドウ, as in ウインドウを閉じる. An extension is 拡張機能, as Chrome writes it, never 機能拡張. The tab strip is タブバー, as Chrome writes it.
 - **Placeholders.** Particles follow the placeholder (_{name}のアカウント_), and Japanese word order often moves it; keep every placeholder exactly as written.

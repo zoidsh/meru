@@ -292,3 +292,8 @@ msgstr "Etichetta del dispositivo"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Phishing protection"
 msgstr "Protezione dalle truffe"
+
+# fault: banned:unit-space
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 minuti"

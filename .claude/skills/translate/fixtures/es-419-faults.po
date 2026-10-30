@@ -258,3 +258,13 @@ msgstr "Protección contra suplantación"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Release channel"
 msgstr "Versión de lanzamiento"
+
+# fault: banned:ellipsis-space
+#: packages/renderer/components/emoji-picker-button.tsx
+msgid "Search…"
+msgstr "Buscar …"
+
+# fault: banned:unit-space
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 minutos"

@@ -631,6 +631,18 @@
       "reason": "An ellipsis is the one character …, as Apple writes it, never three periods; Chrome's three periods are its own style."
     },
     {
+      "id": "ellipsis-space",
+      "pattern": "[ \\u00a0\\u202f]…",
+      "severity": "wrong",
+      "reason": "The ellipsis follows the word with no space, as Apple writes it (and Chrome, which never spaces it)."
+    },
+    {
+      "id": "unit-space",
+      "pattern": "(?<=[\\p{N}#}])[\\u00a0\\u202f](?=(?:segundos?|minutos?|horas?|días?|semanas?|mes|meses|años?|[kKMGT]B)(?!\\p{L}))",
+      "severity": "wrong",
+      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minutos, # días (Chrome: 116 messages with a unit, 56 with a no-break space)."
+    },
+    {
       "id": "apology",
       "pattern": "(?<!\\p{L})(?:[Ll]o sentimos|[Pp]or favor|[Dd]isculp\\p{L}*|[Ll]amentablemente)(?!\\p{L})",
       "severity": "style",

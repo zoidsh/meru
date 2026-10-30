@@ -619,6 +619,12 @@
       "reason": "An ellipsis follows the word without a space: Inställningar…"
     },
     {
+      "id": "unit-space",
+      "pattern": "(?<=[\\p{N}#}])[\\u00a0\\u202f](?=(?:sekunder?|minuter?|timmar?|timme|dagar?|dag|veckor?|vecka|månader?|månad|år|[kKMGT]B)(?!\\p{L}))",
+      "severity": "wrong",
+      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minuter, # dagar (Chrome: 147 messages with a unit, 20 with a no-break space)."
+    },
+    {
       "id": "apology",
       "pattern": "(?<!\\p{L})(?:[Tt]yvärr|[Uu]rsäkta)(?!\\p{L})",
       "severity": "style",

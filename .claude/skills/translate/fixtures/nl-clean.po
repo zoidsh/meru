@@ -186,3 +186,7 @@ msgstr "Zet inactieve tabbladen in winterslaap"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
 msgstr "Linnen"
+
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 minuten"

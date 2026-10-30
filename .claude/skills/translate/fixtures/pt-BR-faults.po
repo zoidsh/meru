@@ -245,3 +245,13 @@ msgstr "Proteção Contra Golpes"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Release channel"
 msgstr "Versão de Lançamento"
+
+# fault: banned:ellipsis-space
+#: packages/renderer/components/emoji-picker-button.tsx
+msgid "Search…"
+msgstr "Pesquisar …"
+
+# fault: banned:unit-space
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 minutos"

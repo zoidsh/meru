@@ -43,8 +43,8 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro.
 ## Traps
 
 - **Spain's vocabulary and tense.** _ordenador_, _introducir_, _Añadir_; the perfect for a recent past: _No se ha podido …_. Never Latin America's _computadora_, _ingresar_, _Agregar_ or _No se pudo …_. Chrome's Spanish agrees on every one.
-- **Punctuation.** A question or exclamation opens with ¿ or ¡. Quotation marks are “…” (U+201C, U+201D), as Apple writes them, never straight `"…"`, which Chrome uses, or «…». The ellipsis is the single character …, never three periods.
-- **Numbers and units.** A plain space joins a number to its unit, as Chrome writes it: _5 minutos_, _# días_.
+- **Punctuation.** A question or exclamation opens with ¿ or ¡. Quotation marks are “…” (U+201C, U+201D), as Apple writes them, never straight `"…"`, which Chrome uses, or «…». The ellipsis is the single character …, straight after the word with no space, never three periods.
+- **Numbers and units.** A plain space parts a number from its unit, as Chrome writes it, never a no-break space: _5 minutos_, _# días_.
 - **Placeholders and articles.** _el_, _la_ and _del_ change with the value. Put the placeholder after a noun (_la cuenta {name}_).
 - **Gendered forms.** Rewrite around the person rather than use _o/a_ or _@_.
 - **House words, as Chrome writes them.** A link is an _enlace_, never a _vínculo_. A bookmark is a _marcador_. An extension is an _extensión_. An app is an _aplicación_, never an _app_ outside Apple's own `macOS` labels: _aplicación de Workspace_. To pin a tab is _fijar_ and to unpin it _desfijar_, never _anclar_. To reload is _volver a cargar_, never _recargar_. To remove something from a list is _quitar_ (_Quitar cuenta_); to delete it for good is _eliminar_. The download history is the _historial de descargas_, the tab strip the _barra de pestañas_, the launcher the _menú de aplicaciones_, the default browser the _navegador predeterminado_, a password manager a _gestor de contraseñas_ and a passkey a _llave de acceso_. Restarting is _reiniciar_ and an update an _actualización_. The `es.json` rules beside this sheet give Chrome's count for each.

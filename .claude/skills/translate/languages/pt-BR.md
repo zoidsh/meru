@@ -43,8 +43,8 @@ Gmail, Google Workspace, Meru, Meru Pro and Pro. They take Portuguese articles o
 ## Traps
 
 - **Brazilian, not European.** _arquivo_, _tela_, _baixar_, _usuário_, gerund (_Baixando…_); never _ficheiro_, _ecrã_, _transferir_, _utilizador_ or _a baixar_. Chrome's Brazilian Portuguese agrees on every one.
-- **Punctuation.** Quotation marks are “…” (U+201C, U+201D), as Apple writes them, never straight `"…"`, which Chrome mostly uses. The ellipsis is the single character …, never three periods.
-- **Numbers and units.** A plain space joins a number to its unit, as Chrome writes it: _5 minutos_, _# dias_.
+- **Punctuation.** Quotation marks are “…” (U+201C, U+201D), as Apple writes them, never straight `"…"`, which Chrome mostly uses. The ellipsis is the single character …, straight after the word with no space, never three periods.
+- **Numbers and units.** A plain space parts a number from its unit, as Chrome writes it, never a no-break space: _5 minutos_, _# dias_.
 - **Placeholders and articles.** _o_, _a_, _do_ and _da_ change with the value. Put the placeholder after a noun (_a conta {name}_).
 - **Gendered forms.** Rewrite around the person rather than use _o(a)_.
 - **House words, as Chrome writes them.** A tab is a _guia_, never an _aba_: _Fechar Guia_, _guias verticais_, the tab strip the _barra de guias_. To delete is _excluir_. To pin a tab is _fixar_ and to unpin it _liberar_. To quit is _sair_ (_Sair_); the app menu's Quit is an OS label, Apple's _Encerrar {appName}_ on macOS. To search is _pesquisar_ and a search a _pesquisa_ (_pesquisa salva_), never _buscar_ or _busca_ outside Apple's own `macOS` labels. An email is an _e-mail_, with the hyphen. A bookmark is a _favorito_, an extension an _extensão_, a link a _link_, a website a _site_. The download history is the _histórico de downloads_, the launcher the _iniciador_, the default browser the _navegador padrão_, a password manager a _gerenciador de senhas_ and a passkey a _chave de acesso_. Restarting is _reiniciar_ and an update an _atualização_. The `pt-BR.json` rules beside this sheet give Chrome's count for each.

@@ -252,3 +252,8 @@ msgstr "dockpictogram"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
 msgstr "Zet inactieve tabbladen in slaapstand"
+
+# fault: banned:unit-space
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 minuten"

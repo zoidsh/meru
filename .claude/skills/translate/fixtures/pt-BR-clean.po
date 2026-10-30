@@ -260,3 +260,11 @@ msgstr "Proteção Contra Phishing"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Release channel"
 msgstr "Canal de Versões"
+
+#: packages/renderer/components/emoji-picker-button.tsx
+msgid "Search…"
+msgstr "Pesquisar…"
+
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 minutos"

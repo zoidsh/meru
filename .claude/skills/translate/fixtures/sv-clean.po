@@ -186,3 +186,7 @@ msgstr "Försätt inaktiva flikar i dvala"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
 msgstr "Linne"
+
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 minuter"
