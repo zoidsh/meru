@@ -809,7 +809,10 @@ class Accounts {
     );
   }
 
-  sendTabsChangedToRenderer() {
+  // The renderer registers its listeners only on its first load, so a send before then is lost.
+  async sendTabsChangedToRenderer() {
+    await main.rendererReady;
+
     if (main.window.isDestroyed()) {
       return;
     }
@@ -824,7 +827,9 @@ class Accounts {
     );
   }
 
-  sendAccountsChangedToRenderer() {
+  async sendAccountsChangedToRenderer() {
+    await main.rendererReady;
+
     if (main.window.isDestroyed()) {
       return;
     }
