@@ -124,7 +124,11 @@ export class WorkspaceApp {
 
   static tryFromWebContents(webContents: WebContents) {
     for (const instance of WorkspaceApp.instances.values()) {
-      if (instance._window?.webContents.id === webContents.id) {
+      if (
+        instance._window &&
+        !instance._window.isDestroyed() &&
+        instance._window.webContents.id === webContents.id
+      ) {
         return instance;
       }
     }
@@ -542,6 +546,8 @@ export class WorkspaceApp {
 
   private viewDestroyed = false;
 
+  private lastUrl = "";
+
   private isClosing = false;
 
   private htmlFullscreen = false;
@@ -745,9 +751,11 @@ export class WorkspaceApp {
 
     this.isClosing = true;
 
-    this.account.instance.tabs.handleWindowedTabClosed(this);
-
-    this.teardown();
+    try {
+      this.account.instance.tabs.handleWindowedTabClosed(this);
+    } finally {
+      this.teardown();
+    }
   };
 
   private setupApp() {
@@ -774,6 +782,7 @@ export class WorkspaceApp {
 
   private registerViewListeners() {
     this.view.webContents.on("did-navigate", this.handleDidNavigate);
+    this.view.webContents.on("did-navigate-in-page", this.handleDidNavigateInPage);
     this.view.webContents.on("will-redirect", this.handleGoogleRedirect);
     this.view.webContents.on("page-title-updated", this.handlePageTitleUpdated);
     this.view.webContents.on("enter-html-full-screen", this.handleEnterHtmlFullscreen);
@@ -911,9 +920,17 @@ export class WorkspaceApp {
   }
 
   private handleDidNavigate = (_event: Electron.Event, url: string) => {
+    this.lastUrl = url;
+
     this.updateAppFromNavigation(url);
 
     WorkspaceApp.handleNavigate(url, this.account.instance.session);
+  };
+
+  private handleDidNavigateInPage = (_event: Electron.Event, url: string, isMainFrame: boolean) => {
+    if (isMainFrame) {
+      this.lastUrl = url;
+    }
   };
 
   private handleGoogleRedirect = (event: Electron.Event, url: string) => {
@@ -944,7 +961,11 @@ export class WorkspaceApp {
    * for a fresh view to be restored onto. It is what a tab takes with it into
    * hibernation, so waking it lands on the page it left, scrolled where it was.
    */
-  get restorableNavigationHistory(): RestoreOptions {
+  get restorableNavigationHistory(): RestoreOptions | undefined {
+    if (this.viewDestroyed) {
+      return undefined;
+    }
+
     return {
       entries: this.view.webContents.navigationHistory.getAllEntries(),
       index: this.view.webContents.navigationHistory.getActiveIndex(),
@@ -1160,7 +1181,11 @@ export class WorkspaceApp {
   }
 
   get url() {
-    return this.view.webContents.getURL() || (this.app ? getWorkspaceAppUrl(this.app) : "");
+    // A destroyed view's `webContents` is gone, and a windowed tab is read for
+    // its URL as its window closes after the page closed itself
+    const url = this.viewDestroyed ? this.lastUrl : this.view.webContents.getURL();
+
+    return url || (this.app ? getWorkspaceAppUrl(this.app) : "");
   }
 
   copyUrl() {
