@@ -132,8 +132,9 @@ export async function selectAccountFromMenu(meru: UnattachedApp, label: string) 
 
 /**
  * Minimizes the window and restores it, which runs the app's `restore` handler.
- * Skips the test where nothing minimizes the window: CI's Linux runs under xvfb
- * with no window manager, and there neither call does anything.
+ * Skips the test on Linux when nothing minimizes the window: CI runs it under
+ * xvfb with no window manager, and there neither call does anything. Anywhere
+ * else a window that stays up fails the test.
  */
 export async function minimizeAndRestore(meru: UnattachedApp, accountIds: string[]) {
   await meru.evaluate(({ BrowserWindow }) => {
@@ -151,7 +152,12 @@ export async function minimizeAndRestore(meru: UnattachedApp, accountIds: string
     .then(() => true)
     .catch(() => false);
 
-  test.skip(!minimized, "the window manager did not minimize the window");
+  test.skip(
+    !minimized && process.platform === "linux",
+    "the window manager did not minimize the window",
+  );
+
+  expect(minimized, "the window minimized").toBe(true);
 
   await expectAllHidden(meru, accountIds);
 
