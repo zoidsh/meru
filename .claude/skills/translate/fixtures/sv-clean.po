@@ -133,7 +133,7 @@ msgstr "Inforutor"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Visa symbolbricka för olästa"
+msgstr "Visa märke för olästa"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Chime"
@@ -141,7 +141,7 @@ msgstr "Klockspel"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify when updates are available"
-msgstr "Avisera när uppdateringar finns"
+msgstr "Meddela när uppdateringar finns"
 
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "Pin"
@@ -222,3 +222,7 @@ msgstr "Hämta appen"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Use a security key such as Ni2 or Ni+"
 msgstr "Använd en säkerhetsnyckel som Ni2 eller Ni+"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Meddela för"

@@ -162,7 +162,7 @@ msgstr "Label eingeben"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Kennzeichen für ungelesene E-Mails anzeigen"
+msgstr "Badge für ungelesene E-Mails anzeigen"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Chime"
@@ -227,3 +227,11 @@ msgstr "Duett"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "Klopfen"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Gmail-Einstellungen öffnen, um die automatische Antwort zu deaktivieren"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Benachrichtigen für"

@@ -632,9 +632,9 @@
     },
     {
       "id": "ungelesen-kennzeichen",
-      "pattern": "Ungelesen-Kennzeichen",
+      "pattern": "Ungelesen-(?:Kennzeichen|Badge)",
       "severity": "wrong",
-      "reason": "The unread badge is Kennzeichen für ungelesene E-Mails (glossary, agent-chosen), never the coined Ungelesen-Kennzeichen."
+      "reason": "The unread badge is the Badge für ungelesene E-Mails, never a coined Ungelesen-Badge or Ungelesen-Kennzeichen (glossary, agent-chosen)."
     },
     {
       "id": "sie",
@@ -687,7 +687,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Uu]pgrade auf Meru Pro|[Aa]uf Meru Pro upgrade",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: upgrading to Pro is Auf Meru Pro upgraden, ein Upgrade auf Meru Pro in a sentence, the loan German software uses for a paid tier, as Gmail's own Upgraden for Google's paid storage. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
+      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: Upgrade/upgraden: 4 of 7 (Firefox, VS Code, Android, Microsoft)); never a word for purchase."
     },
     {
       "id": "upgrade",
@@ -696,7 +696,7 @@
       "origin": "packages/renderer/",
       "expect": "[Uu]pgrade",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Upgrade, Meru's Upgrade wording without its object (glossary, agent-chosen: the loan German software uses for a paid tier, as Gmail's own Upgraden for Google's paid storage)."
+      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: Upgrade/upgraden: 4 of 7 (Firefox, VS Code, Android, Microsoft))."
     },
     {
       "id": "gmail-label",
@@ -711,7 +711,7 @@
       "msgidPattern": "\\btoasts?\\b",
       "expect": "Hinweis",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is Hinweis, kept apart from a notification."
     },
     {
       "id": "toast",
@@ -719,7 +719,7 @@
       "msgid": "Notifications",
       "expect": "Hinweis",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is Hinweis, kept apart from a notification."
     },
     {
       "id": "toast",
@@ -728,15 +728,15 @@
       "origin": "packages/preload-gmail/",
       "expect": "Hinweis",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is Hinweis, kept apart from a notification."
     },
     {
       "id": "unread-badge",
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
-      "expect": "Kennzeichen",
+      "expect": "Badge",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a badge is a Kennzeichen; the unread badge is Kennzeichen für ungelesene E-Mails."
+      "reason": "Glossary, agent-chosen (Badge: 2 of 7 (Microsoft, Apple))."
     },
     {
       "id": "tab-strip",
@@ -751,7 +751,7 @@
       "msgid": "Label",
       "expect": "Name",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its Name, apart from Gmail's Label."
+      "reason": "Glossary, agent-chosen (Name: 7 of 7)."
     },
     {
       "id": "meru-label",
@@ -759,7 +759,7 @@
       "msgid": "Enter a label",
       "expect": "Name",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its Name, apart from Gmail's Label."
+      "reason": "Glossary, agent-chosen (Name: 7 of 7)."
     },
     {
       "id": "device-label",
@@ -792,23 +792,23 @@
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
-      "expect": "Abwesenheitsnotiz",
+      "expect": "[Aa]utomatische[n ]* Antwort",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: out of office is Gmail's Abwesenheitsnotiz."
+      "reason": "Glossary, agent-chosen (automatische Antwort: 2 of 7 (Thunderbird, Microsoft))."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Mm]ehrere\\p{L}* Posteingäng",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's Mehrere Posteingänge."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are Gmail's Mehrere Posteingänge."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Bb]enachrichtig",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: to notify is benachrichtigen, beside Benachrichtigung."
+      "reason": "Glossary, agent-chosen (benachrichtigen: 7 of 7)."
     },
     {
       "id": "sound-name",
@@ -816,7 +816,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brise$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -824,7 +824,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klangspiel$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -832,7 +832,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duett$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -840,7 +840,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klopfen$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -848,7 +848,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Leinen$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "system-settings",

@@ -848,7 +848,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Uu]pgrade\\p{L}* naar Meru Pro",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: upgrading to Pro is Upgrade naar Meru Pro, as Gmail's Upgraden for Google's paid storage. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
+      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: upgrade/upgraden: 4 of 7 (Thunderbird, Firefox, Android, Microsoft)); never a word for purchase."
     },
     {
       "id": "upgrade",
@@ -857,7 +857,7 @@
       "origin": "packages/renderer/",
       "expect": "[Uu]pgrade",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Upgrade, Meru's Upgrade wording without its object (glossary, agent-chosen: as Gmail's Upgraden for Google's paid storage)."
+      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: upgrade/upgraden: 4 of 7 (Thunderbird, Firefox, Android, Microsoft))."
     },
     {
       "id": "gmail-label",
@@ -872,7 +872,7 @@
       "msgidPattern": "\\btoasts?\\b",
       "expect": "[Mm]ededeling",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is a mededeling, kept apart from a notification, melding."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a mededeling, kept apart from a notification, melding."
     },
     {
       "id": "toast",
@@ -880,7 +880,7 @@
       "msgid": "Notifications",
       "expect": "[Mm]ededeling",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is a mededeling, kept apart from a notification, melding."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a mededeling, kept apart from a notification, melding."
     },
     {
       "id": "toast",
@@ -889,7 +889,7 @@
       "origin": "packages/preload-gmail/",
       "expect": "[Mm]ededeling",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is a mededeling, kept apart from a notification, melding."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a mededeling, kept apart from a notification, melding."
     },
     {
       "id": "unread-badge",
@@ -897,7 +897,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Bb]adge",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is the badge voor ongelezen e-mails."
+      "reason": "Glossary, agent-chosen (badge: 5 of 7 (Thunderbird, Android, LibreOffice, Microsoft, Apple))."
     },
     {
       "id": "meru-label",
@@ -905,7 +905,7 @@
       "msgid": "Label",
       "expect": "[Nn]aam",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its naam, apart from Gmail's label."
+      "reason": "Glossary, agent-chosen (naam: 6 of 7)."
     },
     {
       "id": "meru-label",
@@ -913,28 +913,28 @@
       "msgid": "Enter a label",
       "expect": "[Nn]aam",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its naam, apart from Gmail's label."
+      "reason": "Glossary, agent-chosen (naam: 6 of 7)."
     },
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
       "expect": "[Aa]fwezigheid",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: out of office is Gmail's automatisch antwoord bij afwezigheid."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Thunderbird automatisch antwoord, Microsoft afwezigheid, Apple a tie."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Mm]eerdere inboxen",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's meerdere inboxen."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are Gmail's meerdere inboxen."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Mm]eld",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: to notify is melden, beside melding."
+      "reason": "Glossary, agent-chosen (melden: 4 of 7 (Android, LibreOffice, Microsoft, Apple))."
     },
     {
       "id": "sound-name",
@@ -942,7 +942,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Bries$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -950,7 +950,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klokkenspel$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -958,7 +958,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duet$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -966,7 +966,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klop$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -974,7 +974,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Linnen$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German."
     },
     {
       "id": "system-settings",

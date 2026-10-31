@@ -332,7 +332,7 @@ msgstr "Plusieurs boîtes"
 # fault: pinned:notify
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify for"
-msgstr "Notifier pour"
+msgstr "M’avertir pour"
 
 # fault: pinned:sound-name
 #: packages/renderer/lib/notifications/index.ts

@@ -207,7 +207,7 @@ msgstr "Cerrar aviso"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Mostrar indicador de no leídos"
+msgstr "Mostrar insignia de no leídos"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Label"

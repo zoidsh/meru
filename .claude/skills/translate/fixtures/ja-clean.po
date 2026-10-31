@@ -192,3 +192,7 @@ msgstr "リネン"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "ランチャー内"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Gmailの設定を開いて不在をオフにする"

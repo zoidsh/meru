@@ -215,7 +215,7 @@ msgstr "Flerinkorg"
 # fault: pinned:notify
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify for"
-msgstr "Meddela för"
+msgstr "Avisera för"
 
 # fault: pinned:sound-name
 #: packages/renderer/lib/notifications/index.ts

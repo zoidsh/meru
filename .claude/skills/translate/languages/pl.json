@@ -592,9 +592,10 @@
       "id": "uaktualnienie",
       "pattern": "[Uu]aktualni",
       "severity": "wrong",
-      "reason": "An update is an aktualizacja, as Chrome writes it; uaktualnienie is Apple's word, for a macOS label only (Chrome writes the banned form in 2 messages).",
+      "reason": "An update is an aktualizacja, as Chrome writes it; uaktualnienie is Apple's word, for a macOS label only (Chrome writes the banned form in 2 messages); upgrading is uaktualnić, the apps' word (glossary).",
       "allow": {
-        "contexts": ["macOS"]
+        "contexts": ["macOS"],
+        "msgidPattern": "\\bupgrade\\b"
       }
     },
     {
@@ -851,18 +852,18 @@
     {
       "id": "upgrade",
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
-      "expect": "[Pp]rzej\\p{L}* na Meru Pro",
+      "expect": "[Uu]aktualni\\p{L}* do Meru Pro",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: upgrading to Pro is Przejdź na Meru Pro, the usual Polish for moving to a paid plan, as in Przejdź na Premium; Gmail's Zmień na większy pakiet names a storage plan, not a tier. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
+      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
       "msgctxt": null,
       "msgid": "Upgrade",
       "origin": "packages/renderer/",
-      "expect": "[Pp]rzejdź na",
+      "expect": "[Uu]aktualnij do Pro",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Przejdź na Pro, Meru's Upgrade wording without its object (glossary, agent-chosen: the usual Polish for moving to a paid plan, as in Przejdź na Premium; Gmail's Zmień na większy pakiet names a storage plan, not a tier)."
+      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple))."
     },
     {
       "id": "gmail-label",
@@ -877,7 +878,7 @@
       "msgidPattern": "\\btoasts?\\b",
       "expect": "[Kk]omunikat",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is a komunikat, kept apart from a notification, powiadomienie."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a komunikat, kept apart from a notification, powiadomienie."
     },
     {
       "id": "toast",
@@ -885,7 +886,7 @@
       "msgid": "Notifications",
       "expect": "[Kk]omunikat",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is a komunikat, kept apart from a notification, powiadomienie."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a komunikat, kept apart from a notification, powiadomienie."
     },
     {
       "id": "toast",
@@ -894,7 +895,7 @@
       "origin": "packages/preload-gmail/",
       "expect": "[Kk]omunikat",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is a komunikat, kept apart from a notification, powiadomienie."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a komunikat, kept apart from a notification, powiadomienie."
     },
     {
       "id": "unread-badge",
@@ -902,7 +903,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Pp]lakietk",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is the plakietka z liczbą nieprzeczytanych."
+      "reason": "Glossary, agent-chosen (plakietka: 4 of 7 (Thunderbird, Android, LibreOffice, Apple))."
     },
     {
       "id": "meru-label",
@@ -910,7 +911,7 @@
       "msgid": "Label",
       "expect": "[Nn]azw",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nazwa, apart from Gmail's etykieta."
+      "reason": "Glossary, agent-chosen (nazwa: 7 of 7)."
     },
     {
       "id": "meru-label",
@@ -918,28 +919,28 @@
       "msgid": "Enter a label",
       "expect": "[Nn]azw",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nazwa, apart from Gmail's etykieta."
+      "reason": "Glossary, agent-chosen (nazwa: 7 of 7)."
     },
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
       "expect": "[Aa]utoodpowied",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: out of office is Gmail's autoodpowiedź."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Microsoft nieobecność, Apple poza biurem, Thunderbird a tie."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Ww]iele skrzynek odbiorczych",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's wiele skrzynek odbiorczych."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are Gmail's wiele skrzynek odbiorczych."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Pp]owiadam",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: to notify is powiadamiać, beside powiadomienie."
+      "reason": "Glossary, agent-chosen (powiadamiać: 7 of 7)."
     },
     {
       "id": "sound-name",
@@ -947,7 +948,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Bryza$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -955,7 +956,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Dzwonek$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -963,7 +964,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duet$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -971,7 +972,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Pukanie$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
@@ -979,7 +980,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Len$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German."
     },
     {
       "id": "system-settings",

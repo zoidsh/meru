@@ -831,7 +831,7 @@
       "msgidPattern": "\\btoasts?\\b",
       "expect": "[Aa]vvis[oi]",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avviso, kept apart from a notification, notifica."
     },
     {
       "id": "toast",
@@ -839,7 +839,7 @@
       "msgid": "Notifications",
       "expect": "[Aa]vvis[oi]",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avviso, kept apart from a notification, notifica."
     },
     {
       "id": "toast",
@@ -848,7 +848,7 @@
       "origin": "packages/preload-gmail/",
       "expect": "[Aa]vvis[oi]",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is an avviso, kept apart from a notification, notifica."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avviso, kept apart from a notification, notifica."
     },
     {
       "id": "unread-badge",
@@ -856,7 +856,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Bb]adge",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is the badge delle email non lette."
+      "reason": "Glossary, agent-chosen (badge: 3 of 7 (Android, LibreOffice, Apple))."
     },
     {
       "id": "meru-label",
@@ -864,7 +864,7 @@
       "msgid": "Label",
       "expect": "(?<!\\p{L})[Nn]ome(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nome, apart from Gmail's etichetta."
+      "reason": "Glossary, agent-chosen (nome: 7 of 7)."
     },
     {
       "id": "meru-label",
@@ -872,28 +872,28 @@
       "msgid": "Enter a label",
       "expect": "(?<!\\p{L})[Nn]ome(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its nome, apart from Gmail's etichetta."
+      "reason": "Glossary, agent-chosen (nome: 7 of 7)."
     },
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
       "expect": "[Rr]isposta automatica",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: out of office is risposta automatica, until Gmail's own word is read."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Thunderbird risposta automatica, Microsoft fuori sede, Apple assenza."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Pp]osta in arrivo multipla",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: multiple inboxes are Posta in arrivo multipla, until Gmail's own word is read."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are Posta in arrivo multipla, until Gmail's own word is read."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Nn]otific",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: to notify is notificare, the verb of notifica, never avvisare, which reads as the toast's avviso."
+      "reason": "Glossary, agent-chosen (notificare: 5 of 7 (Thunderbird, VS Code, Android, LibreOffice, Microsoft))."
     },
     {
       "id": "sound-name",
@@ -901,7 +901,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brezza$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
       "id": "sound-name",
@@ -909,7 +909,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Rintocco$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
       "id": "sound-name",
@@ -917,7 +917,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duetto$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
       "id": "sound-name",
@@ -925,7 +925,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Bussata$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
       "id": "sound-name",
@@ -933,7 +933,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Lino$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brezza, Rintocco, Duetto, Bussata and Lino."
     },
     {
       "id": "device-label",
@@ -959,18 +959,18 @@
     {
       "id": "upgrade",
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
-      "expect": "upgrade a Meru Pro",
+      "expect": "[Aa]ggiorn\\p{L}* a Meru Pro",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: upgrading to Pro is Esegui l’upgrade a Meru Pro, fai l’upgrade a Meru Pro in a sentence, as Gmail's Fai l’upgrade for Google's paid storage. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
+      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
       "msgctxt": null,
       "msgid": "Upgrade",
       "origin": "packages/renderer/",
-      "expect": "upgrade",
+      "expect": "[Aa]ggiorn\\p{L}* a Pro",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Esegui l’upgrade, Meru's Upgrade wording without its object (glossary, agent-chosen: as Gmail's Fai l’upgrade for Google's paid storage)."
+      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))."
     },
     {
       "id": "launcher",

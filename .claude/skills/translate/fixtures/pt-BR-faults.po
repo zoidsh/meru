@@ -204,7 +204,7 @@ msgstr "Fechar Notificação"
 # fault: pinned:unread-badge
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Mostrar Selo de Não Lidos"
+msgstr "Mostrar Indicador de Não Lidos"
 
 # fault: pinned:meru-label
 #: packages/renderer/routes/settings/accounts.tsx

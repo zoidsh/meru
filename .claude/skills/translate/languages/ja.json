@@ -785,7 +785,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "Meru Proにアップグレード",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: upgrading to Pro is Meru Proにアップグレード, as Gmail's アップグレード for Google's paid storage. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
+      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
@@ -794,7 +794,7 @@
       "origin": "packages/renderer/",
       "expect": "アップグレード",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is アップグレード, Meru's Upgrade wording without its object (glossary, agent-chosen: as Gmail's アップグレード for Google's paid storage)."
+      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))."
     },
     {
       "id": "gmail-label",
@@ -809,7 +809,7 @@
       "msgidPattern": "\\btoasts?\\b",
       "expect": "お知らせ",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is お知らせ, kept apart from a notification, 通知."
     },
     {
       "id": "toast",
@@ -817,7 +817,7 @@
       "msgid": "Notifications",
       "expect": "お知らせ",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is お知らせ, kept apart from a notification, 通知."
     },
     {
       "id": "toast",
@@ -826,7 +826,7 @@
       "origin": "packages/preload-gmail/",
       "expect": "お知らせ",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is お知らせ, kept apart from a notification, 通知."
     },
     {
       "id": "button",
@@ -841,7 +841,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "未読バッジ",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is 未読バッジ."
+      "reason": "Glossary, agent-chosen (バッジ: 4 of 7 (Thunderbird, Android, Microsoft, Apple))."
     },
     {
       "id": "tab-strip",
@@ -856,7 +856,7 @@
       "msgid": "Label",
       "expect": "名前",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its 名前, apart from Gmail's ラベル."
+      "reason": "Glossary, agent-chosen (名前: 7 of 7)."
     },
     {
       "id": "meru-label",
@@ -864,7 +864,7 @@
       "msgid": "Enter a label",
       "expect": "名前",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its 名前, apart from Gmail's ラベル."
+      "reason": "Glossary, agent-chosen (名前: 7 of 7)."
     },
     {
       "id": "device-label",
@@ -897,23 +897,23 @@
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
-      "expect": "不在通知",
+      "expect": "不在",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: out of office is Gmail's 不在通知."
+      "reason": "Glossary, agent-chosen (不在: 2 of 7 (Thunderbird, Apple))."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "マルチ受信トレイ",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's マルチ受信トレイ."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are Gmail's マルチ受信トレイ."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "通知",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: to notify is 通知する."
+      "reason": "Glossary, agent-chosen (通知: 7 of 7)."
     },
     {
       "id": "sound-name",
@@ -921,7 +921,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^ブリーズ$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "sound-name",
@@ -929,7 +929,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^チャイム$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "sound-name",
@@ -937,7 +937,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^デュエット$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "sound-name",
@@ -945,7 +945,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^ノック$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "sound-name",
@@ -953,7 +953,7 @@
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^リネン$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "system-settings",

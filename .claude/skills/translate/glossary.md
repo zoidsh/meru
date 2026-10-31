@@ -12,11 +12,11 @@ Every word here and in a style sheet comes from the first of these sources that 
 4. **Meru's own copy**, everything else, takes:
    1. Chrome's word where Chrome has the term, read from Chromium's translations at the Chromium version of the repository's Electron;
    2. a recorded call of the user's, which overrides Chrome only as a named exception with its reason; there are none now;
-   3. otherwise the best-practice word for the language, researched in Microsoft's and GNOME's style guides and terminology and the language's major software localizations, with Apple's word as evidence but never as the authority.
+   3. otherwise the word most commonly used for the concept in popular apps in that language, counted across a fixed set with one vote each: Thunderbird, Firefox, VS Code, Android (AOSP's Settings, SystemUI, framework, Messaging and Email), LibreOffice, the Microsoft Terminology Collection and Apple's macOS apps (this Mac's `.loctable`s, one app's vote, not an authority). Each app's vote is the word it uses most in its messages that have the concept, a message counting once, for the candidate it matches longest; the word with most votes wins. When the vote ties, or fewer than 3 of the 7 have the concept, nothing is guessed: the word stays as it is, marked unresolved, until a speaker settles it.
 
-Apple is a source only for the operating system's words in step 1. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says.
+Apple is the authority only for the operating system's words in step 1; in step 4c its macOS apps are one vote of seven. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says.
 
-Each word carries its source in brackets: **(Chrome n/N)**, Chrome's word in n of the N messages that have the term, counted in Chromium 156's `generated_resources`, `components_strings` and `ui_strings` translations. Every count, here and in the sidecars, is taken one way: N is the messages whose English has the term, matched by the sidecar pin's `msgidPattern` (or its `msgid` as a whole word) where a pin holds the word, and n is those whose translation matches the pin's `expect`, without its anchors and ignoring case; a term Meru alone has, such as a device label, is counted by the Chrome term its word comes from, and a pin on Meru's own phrase or label form by the word it is built on. A ban's count is the messages whose translation has its banned form; **(Apple …)**, **(Microsoft …)** or **(GNOME …)** for an operating system's word, cited as the style sheet's Platform words cite it; **(Gmail …)**; **(Google)**; or **(agent-chosen: reason)**, a word picked by the last step, which a speaker's review replaces. Use an agent-chosen word like any other.
+Each word carries its source in brackets: **(Chrome n/N)**, Chrome's word in n of the N messages that have the term, counted in Chromium 156's `generated_resources`, `components_strings` and `ui_strings` translations. Every count, here and in the sidecars, is taken one way: N is the messages whose English has the term, matched by the sidecar pin's `msgidPattern` (or its `msgid` as a whole word) where a pin holds the word, and n is those whose translation matches the pin's `expect`, without its anchors and ignoring case; a term Meru alone has, such as a device label, is counted by the Chrome term its word comes from, and a pin on Meru's own phrase or label form by the word it is built on. A ban's count is the messages whose translation has its banned form; **(Apple …)**, **(Microsoft …)** or **(GNOME …)** for an operating system's word, cited as the style sheet's Platform words cite it; **(Gmail …)**; **(Google)**; **(agent-chosen: word: n of 7 (apps))**, the last step's tally; or **(agent-chosen, unresolved by the app count: …)**, with each app's word, for a tie or a concept fewer than 3 apps have. A speaker's review replaces either. Use an agent-chosen word like any other.
 
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
 
@@ -86,18 +86,18 @@ A tab kept in the strip's upper section. _Pin_ and _Unpin_ are the context-menu 
 
 ## Unified inbox
 
-The page listing new mail across every account. A description, so lower case inside a sentence; the page title capitalizes its first word. Meru's own feature, built on Gmail's word for the inbox.
+The page listing new mail across every account. A description, so lower case inside a sentence; the page title capitalizes its first word. Meru's own feature, built on Gmail's word for the inbox. The phrase is unresolved by the app count: of the seven apps only Thunderbird (gruppierte Ordner) and Android (kombinierte Ansicht) have a merged inbox, so each language keeps its phrase until a speaker settles it.
 
-- de: gemeinsamer Posteingang (Gmail's _Posteingang_; agent-chosen: _gemeinsam_ reads as one inbox for several accounts)
-- fr: boîte de réception unifiée (Gmail's _boîte de réception_; agent-chosen: _unifiée_ is the usual French for a merged inbox)
-- it: posta in arrivo unificata (Gmail's _Posta in arrivo_; agent-chosen: _unificata_ is the usual Italian for a merged inbox)
-- es: bandeja de entrada unificada (Gmail's _bandeja de entrada_; agent-chosen: _unificada_ is the usual Spanish for a merged inbox)
-- es-419: bandeja de entrada unificada (Gmail's _bandeja de entrada_; agent-chosen: as for es)
-- pt-BR: caixa de entrada unificada (Gmail's _Caixa de entrada_; agent-chosen: _unificada_ is the usual Portuguese for a merged inbox)
-- nl: gecombineerde inbox (Gmail's _inbox_; agent-chosen: _gecombineerd_ is the usual Dutch for a merged inbox)
-- pl: wspólna skrzynka odbiorcza (agent-chosen: Gmail's folder _Odebrane_ reads badly as a feature, so the phrase builds on _skrzynka odbiorcza_, the inbox in Polish mail software)
-- sv: samlad inkorg (Gmail's _inkorg_; agent-chosen: _samlad_ is the usual Swedish for a merged inbox)
-- ja: 統合受信トレイ (Gmail's 受信トレイ; agent-chosen: 統合 is the usual Japanese for a merged inbox)
+- de: gemeinsamer Posteingang (Gmail's _Posteingang_; agent-chosen, unresolved by the app count)
+- fr: boîte de réception unifiée (Gmail's _boîte de réception_; agent-chosen, unresolved by the app count)
+- it: posta in arrivo unificata (Gmail's _Posta in arrivo_; agent-chosen, unresolved by the app count)
+- es: bandeja de entrada unificada (Gmail's _bandeja de entrada_; agent-chosen, unresolved by the app count)
+- es-419: bandeja de entrada unificada (Gmail's _bandeja de entrada_; agent-chosen, unresolved by the app count)
+- pt-BR: caixa de entrada unificada (Gmail's _Caixa de entrada_; agent-chosen, unresolved by the app count)
+- nl: gecombineerde inbox (Gmail's _inbox_; agent-chosen, unresolved by the app count)
+- pl: wspólna skrzynka odbiorcza (agent-chosen, unresolved by the app count)
+- sv: samlad inkorg (Gmail's _inkorg_; agent-chosen, unresolved by the app count)
+- ja: 統合受信トレイ (Gmail's 受信トレイ; agent-chosen, unresolved by the app count)
 
 ## Do Not Disturb
 
@@ -129,18 +129,20 @@ A timed or indefinite hold on notifications. A part of the operating system, so 
 
 ## Notification hours
 
-The time windows outside which no notification is shown. The interface reads _Notification times_; one window is a _time window_. Built on the word for notification above; Chrome has neither term.
+The time windows outside which no notification is shown. The interface reads _Notification times_; one window is a _time window_. Built on the word for notification above; the window is the apps' word for a time window, counted in their messages with _time window_, _slot_, _range_ or _frame_.
 
-- de: Benachrichtigungszeiten; a window is a _Zeitfenster_ (agent-chosen: the compound on Benachrichtigung, and _Zeitfenster_, German's word for a slot of time)
-- fr: horaires des notifications; a window is a _plage horaire_ (agent-chosen: _plage horaire_, French's word for a slot of time)
-- it: orari delle notifiche; a window is una _fascia oraria_ (agent-chosen: _fascia oraria_, Italian's word for a slot of time)
-- es: horario de notificaciones; a window is una _franja horaria_ (agent-chosen: _franja horaria_, Spain's word for a slot of time)
-- es-419: horario de notificaciones; a window is un _intervalo de tiempo_ (agent-chosen: _intervalo de tiempo_, the Latin American wording)
-- pt-BR: horários de notificação; a window is um _intervalo de horário_ (agent-chosen: _intervalo de horário_, Brazil's wording for a slot of time)
-- nl: meldingstijden; a window is een _tijdvak_ (agent-chosen: the compound on melding, and _tijdvak_, Dutch's word for a slot of time)
-- pl: godziny powiadomień; a window is _przedział czasu_ (agent-chosen: _przedział czasu_, Polish's word for a slot of time)
-- sv: aviseringstider; a window is ett _tidsfönster_ (agent-chosen: the compound on avisering, and _tidsfönster_, Swedish's word for a slot of time)
-- ja: 通知時間帯; a window is 時間帯 (agent-chosen: 時間帯, Japanese's word for a slot of time)
+- de: Benachrichtigungszeiten; a window is a _Zeitfenster_ (agent-chosen: Zeitfenster: 2 of 7 (VS Code, Microsoft))
+- fr: horaires des notifications; a window is a _plage horaire_ (agent-chosen, unresolved by the app count: Thunderbird and Microsoft tie créneau and intervalle, Firefox writes intervalle, Apple période)
+- it: orari delle notifiche; a window is un _intervallo_ (agent-chosen: intervallo: 5 of 7 (Thunderbird, Firefox, LibreOffice, Microsoft, Apple))
+- es: horario de notificaciones; a window is un _intervalo_ (agent-chosen: intervalo: 3 of 7 (Thunderbird, Firefox, Apple))
+- es-419: horario de notificaciones; a window is un _intervalo de tiempo_ (agent-chosen: intervalo de tiempo: 3 of 7 (Thunderbird, Firefox, Apple))
+- pt-BR: horários de notificação; a window is um _intervalo de horário_ (agent-chosen: intervalo de horário: 4 of 7 (Firefox, LibreOffice, Microsoft, Apple))
+- nl: meldingstijden; a window is een _periode_ (agent-chosen: periode: 2 of 7 (Thunderbird, Firefox))
+- pl: godziny powiadomień; a window is _okres_ (agent-chosen: okres: 2 of 7 (Thunderbird, Firefox))
+- sv: aviseringstider; a window is ett _tidsintervall_ (agent-chosen: tidsintervall: 4 of 7 (Thunderbird, Firefox, Microsoft, Apple))
+- ja: 通知時間帯; a window is 時間帯 (agent-chosen, unresolved by the app count: Firefox and VS Code write 期間, Microsoft and Apple 時間帯, Thunderbird ties them)
+
+The compounds for _Notification times_ are built on Chrome's notification word and are not counted.
 
 ## Hibernation, Hibernate
 
@@ -174,18 +176,18 @@ A Google Workspace site opened as a tab or window. _Workspace_ stays English. Th
 
 ## App links tab
 
-The one tab per app that every link to that app opens in. The badge setting reads _Show app links badge_. Built on Chrome's words for tab, link and app; the phrase is agent-chosen, since Chrome has no such tab.
+The one tab per app that every link to that app opens in. The badge setting reads _Show app links badge_. Built on Chrome's words for tab, link and app; none of the seven apps has such a tab, so the phrase is not counted and stays agent-chosen.
 
-- de: Tab für App-Links (agent-chosen: Chrome's _Tab_ and _Link_)
-- fr: onglet des liens d’appli (agent-chosen: Chrome's _onglet_, _lien_ and _appli_)
-- it: scheda dei link dell’app (agent-chosen: Chrome's _scheda_, _link_ and _app_)
-- es: pestaña de enlaces de la aplicación (agent-chosen: Chrome's _pestaña_, _enlace_ and _aplicación_)
-- es-419: pestaña de vínculos de la app (agent-chosen: Chrome's _pestaña_, _vínculo_ and _app_)
-- pt-BR: guia de links do app (agent-chosen: Chrome's _guia_, _link_ and _app_)
-- nl: tabblad voor app-links (agent-chosen: Chrome's _tabblad_, _link_ and _app_)
-- pl: karta linków aplikacji (agent-chosen: Chrome's _karta_, _link_ and _aplikacja_)
-- sv: flik för applänkar (agent-chosen: Chrome's _flik_, _länk_ and _app_)
-- ja: アプリリンク用タブ (agent-chosen: Chrome's タブ, リンク and アプリ)
+- de: Tab für App-Links (agent-chosen, not countable: Chrome's _Tab_ and _Link_)
+- fr: onglet des liens d’appli (agent-chosen, not countable: Chrome's _onglet_, _lien_ and _appli_)
+- it: scheda dei link dell’app (agent-chosen, not countable: Chrome's _scheda_, _link_ and _app_)
+- es: pestaña de enlaces de la aplicación (agent-chosen, not countable: Chrome's _pestaña_, _enlace_ and _aplicación_)
+- es-419: pestaña de vínculos de la app (agent-chosen, not countable: Chrome's _pestaña_, _vínculo_ and _app_)
+- pt-BR: guia de links do app (agent-chosen, not countable: Chrome's _guia_, _link_ and _app_)
+- nl: tabblad voor app-links (agent-chosen, not countable: Chrome's _tabblad_, _link_ and _app_)
+- pl: karta linków aplikacji (agent-chosen, not countable: Chrome's _karta_, _link_ and _aplikacja_)
+- sv: flik för applänkar (agent-chosen, not countable: Chrome's _flik_, _länk_ and _app_)
+- ja: アプリリンク用タブ (agent-chosen, not countable: Chrome's タブ, リンク and アプリ)
 
 ## Saved search
 
@@ -245,7 +247,7 @@ The strip down the left edge of the window. Chrome writes the term in 2 messages
 - nl: verticale tabbladen (Chrome 2/2)
 - pl: karty pionowe (Chrome 2/2)
 - sv: vertikala flikar (Chrome 2/2)
-- ja: 縦型タブ (agent-chosen: Chrome's two messages word it as a sentence, not a name; 縦型 is the usual Japanese for an upright layout, with Chrome's タブ)
+- ja: 縦型タブ (agent-chosen, unresolved by the app count: only Firefox and Microsoft have vertical tabs, both as 垂直タブ)
 
 ## Titlebar
 
@@ -376,41 +378,41 @@ The pinned tab's context-menu item deciding whether it comes back as a view at s
 - es-419: Cargar al iniciar (Chrome's _iniciar_ 8/10)
 - pt-BR: Carregar ao Iniciar (Chrome's _iniciar_ 10/10)
 - nl: Laad bij opstarten (Chrome's _opstarten_ 8/10)
-- pl: Wczytuj przy uruchomieniu (Chrome's _uruchomienie_ 3/10; agent-chosen phrase: _przy uruchomieniu_ is the usual Polish for at startup)
+- pl: Wczytuj podczas uruchamiania (Chrome's _uruchomienie_ 3/10; agent-chosen phrase: podczas uruchamiania: 2 of 7 (Firefox, LibreOffice), counted in the apps' messages with _on startup_ or _at launch_)
 - sv: Läs in vid start (Chrome's _start_ 10/10)
 - ja: 起動時に読み込む (Chrome's 起動時 9/10)
 
 ## Upgrade
 
-Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_. Chrome's _upgrade to_ moves Chromebooks and sites to something newer, never a paid tier, so it is no source here: every wording is agent-chosen, by how the language's software and Gmail's own Upgrade button word a paid upgrade.
+Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_. Chrome's _upgrade to_ moves Chromebooks and sites to something newer, so it is no source; the apps' word is counted in their messages with _upgrade_. Only VS Code and Apple word a paid upgrade, too few to count on their own, so the count is of upgrading in general.
 
-- de: Upgrade; _Auf Meru Pro upgraden_. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (agent-chosen: the loan German software uses for a paid tier, as Gmail's Upgraden; the noun in a sentence)
-- fr: Passer à Meru Pro (agent-chosen: the usual French for moving to a paid plan, as in _Passer à Premium_)
-- it: Esegui l’upgrade a Meru Pro; in a sentence _fai l’upgrade a Meru Pro_ (agent-chosen: as Gmail's _Fai l’upgrade_ for Google's paid storage)
-- es: Cambiar a Meru Pro (agent-chosen: as Gmail's _Cambiar a plan superior_ for Google's paid storage)
-- es-419: Actualizar a Meru Pro (agent-chosen: as Gmail's _Actualizar_ for Google's paid storage)
-- pt-BR: Fazer Upgrade para o Meru Pro (agent-chosen: as Gmail's _Fazer upgrade_ for Google's paid storage)
-- nl: Upgrade naar Meru Pro (agent-chosen: as Gmail's _Upgraden_ for Google's paid storage)
-- pl: Przejdź na Meru Pro (agent-chosen: the usual Polish for moving to a paid plan, as in _Przejdź na Premium_; Gmail's _Zmień na większy pakiet_ names a storage plan)
-- sv: Uppgradera till Meru Pro (agent-chosen: as Gmail's _Uppgradera_ for Google's paid storage)
-- ja: Meru Proにアップグレード. In a sentence, the same verb: _Meru Proにアップグレードすると、アカウントをさらに追加できます_ (agent-chosen: as Gmail's アップグレード for Google's paid storage)
+- de: Upgrade; _Auf Meru Pro upgraden_. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (agent-chosen: Upgrade/upgraden: 4 of 7 (Firefox, VS Code, Android, Microsoft))
+- fr: Mettre à niveau vers Meru Pro (agent-chosen: mettre à niveau: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
+- it: Aggiorna a Meru Pro (agent-chosen: aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
+- es: Actualizar a Meru Pro (agent-chosen: actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
+- es-419: Actualizar a Meru Pro (agent-chosen: actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
+- pt-BR: Atualizar para o Meru Pro (agent-chosen: atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
+- nl: Upgrade naar Meru Pro (agent-chosen: upgrade/upgraden: 4 of 7 (Thunderbird, Firefox, Android, Microsoft))
+- pl: Uaktualnij do Meru Pro (agent-chosen: uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple))
+- sv: Uppgradera till Meru Pro (agent-chosen: uppgradera: 5 of 7 (Thunderbird, Firefox, Android, Microsoft, Apple))
+- ja: Meru Proにアップグレード. In a sentence, the same verb: _Meru Proにアップグレードすると、アカウントをさらに追加できます_ (agent-chosen: アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
 
-The standalone _Upgrade_ label, a button beside the license, is the same wording without its object: de _Upgrade_, fr _Passer à Pro_, it _Esegui l’upgrade_, es _Cambiar a Pro_, es-419 _Actualizar a Pro_, pt-BR _Fazer Upgrade_, nl _Upgrade_, pl _Przejdź na Pro_, sv _Uppgradera_, ja アップグレード (agent-chosen, as above).
+The standalone _Upgrade_ label, a button beside the license, is the same verb toward Pro: de _Upgrade_, fr _Mettre à niveau_, it _Aggiorna a Pro_, es _Actualizar a Pro_, es-419 _Actualizar a Pro_, pt-BR _Atualizar para o Pro_, nl _Upgrade_, pl _Uaktualnij do Pro_, sv _Uppgradera_, ja アップグレード (agent-chosen, by the count above). Where the verb is also the language's word for updating (it, es, es-419, pt-BR), the object _a Pro_ keeps it apart from an update.
 
 ## License key, Trial, Device
 
-Chrome has no license key or trial; the device is Chrome's word.
+The device is Chrome's word. The license key is unresolved by the app count: only Microsoft has one, as a product key. The trial is the apps' word, counted in their messages with _trial_.
 
-- de: Lizenzschlüssel; Testzeitraum; Gerät (Chrome 981/1011; the first two agent-chosen: the usual German for a software license and its trial)
-- fr: clé de licence; période d’essai; appareil (Chrome 959/1011; the first two agent-chosen: the usual French for a software license and its trial)
-- it: chiave di licenza; periodo di prova; dispositivo (Chrome 983/1011; the first two agent-chosen: the usual Italian for a software license and its trial)
-- es: clave de licencia; periodo de prueba; dispositivo (Chrome 985/1011; the first two agent-chosen: the usual Spanish for a software license and its trial)
-- es-419: clave de licencia; período de prueba; dispositivo (Chrome 983/1011; the first two agent-chosen: as for es, with the Latin American accent on _período_)
-- pt-BR: chave de licença; período de avaliação; dispositivo (Chrome 976/1010; the first two agent-chosen: the usual Brazilian Portuguese for a software license and its trial)
-- nl: licentiesleutel; proefperiode; apparaat (Chrome 984/1011; the first two agent-chosen: the usual Dutch for a software license and its trial)
-- pl: klucz licencyjny; okres próbny; urządzenie (Chrome 997/1011; the first two agent-chosen: the usual Polish for a software license and its trial)
-- sv: licensnyckel; provperiod; enhet (Chrome 983/1011; the first two agent-chosen: the usual Swedish for a software license and its trial)
-- ja: ライセンスキー; 試用期間; デバイス (Chrome 984/1011; the first two agent-chosen: the usual Japanese for a software license and its trial)
+- de: Lizenzschlüssel; Testversion; Gerät (Chrome 981/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: Testversion: 2 of 7 (Firefox, Microsoft))
+- fr: clé de licence; essai; appareil (Chrome 959/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: essai: 3 of 7 (Firefox, VS Code, Apple))
+- it: chiave di licenza; periodo di prova; dispositivo (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen, unresolved by the app count: Firefox and Apple write prova, VS Code and Microsoft versione di valutazione)
+- es: clave de licencia; prueba; dispositivo (Chrome 985/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: prueba: 3 of 7 (Firefox, VS Code, Microsoft))
+- es-419: clave de licencia; prueba; dispositivo (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: prueba: 4 of 7 (Firefox, VS Code, Microsoft, Apple))
+- pt-BR: chave de licença; período de avaliação; dispositivo (Chrome 976/1010; license key agent-chosen, unresolved by the app count; trial agent-chosen: período de avaliação: 3 of 7 (VS Code, Microsoft, Apple))
+- nl: licentiesleutel; proefabonnement; apparaat (Chrome 984/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: proefabonnement: 2 of 7 (Microsoft, Apple))
+- pl: klucz licencyjny; okres próbny; urządzenie (Chrome 997/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen, unresolved by the app count: Firefox and Apple write okres próbny, VS Code and Microsoft wersja próbna)
+- sv: licensnyckel; provperiod; enhet (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: provperiod: 2 of 7 (Firefox, Apple))
+- ja: ライセンスキー; 試用期間; デバイス (Chrome 984/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen, unresolved by the app count: Firefox and Apple write トライアル, VS Code and Microsoft 試用)
 
 ## Download history
 
@@ -429,18 +431,18 @@ Counted in Chrome's messages with _download history_; where a language pins the 
 
 ## Dark theme, Blocker, Spellchecker
 
-The dark theme is Chrome's _Dark theme_ label; Chrome has no blocker; the spellchecker is counted in its 23 messages with _spell check_.
+The dark theme is Chrome's _Dark theme_ label; the blocker is the apps' word, counted in their messages with _blocker_ or _content blocking_; the spellchecker is counted in its 23 messages with _spell check_.
 
-- de: dunkles Design (Chrome 1/1); Blocker (agent-chosen: the English loan German software keeps); Rechtschreibprüfung (Chrome 22/23)
-- fr: thème sombre (Chrome 1/1); bloqueur (agent-chosen: the usual French for a content blocker); correcteur orthographique (Chrome 21/23)
-- it: tema scuro (Chrome 1/1); blocco contenuti (agent-chosen: the usual Italian for a content blocker); controllo ortografico (Chrome 22/23)
-- es: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: the usual Spanish for a content blocker); corrector ortográfico (Chrome 14/23)
-- es-419: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: as for es); corrector ortográfico (Chrome 21/23)
-- pt-BR: tema escuro (Chrome 1/1); bloqueador (agent-chosen: the usual Portuguese for a content blocker); verificação ortográfica (Chrome 20/23)
-- nl: donker thema (Chrome 1/1); blokkering (agent-chosen: the usual Dutch for a content blocker); spellingcontrole (Chrome 22/23)
-- pl: ciemny motyw (Chrome 1/1); blokowanie (agent-chosen: the usual Polish for blocking content); sprawdzanie pisowni (Chrome 22/23)
-- sv: mörkt tema (Chrome 1/1); blockerare (agent-chosen: the usual Swedish for a content blocker); stavningskontroll (Chrome 22/23)
-- ja: ダークモード (Chrome 1/1); ブロッカー (agent-chosen: the loan Japanese software uses); スペルチェック (Chrome 22/23)
+- de: dunkles Design (Chrome 1/1); Blocker (agent-chosen: Blocker: 2 of 7 (Firefox, Microsoft)); Rechtschreibprüfung (Chrome 22/23)
+- fr: thème sombre (Chrome 1/1); bloqueur (agent-chosen: bloqueur: 2 of 7 (Firefox, Microsoft)); correcteur orthographique (Chrome 21/23)
+- it: tema scuro (Chrome 1/1); blocco contenuti (agent-chosen: blocco contenuti: 3 of 7 (Thunderbird, Firefox, Microsoft)); controllo ortografico (Chrome 22/23)
+- es: tema oscuro (Chrome 1/1); bloqueador (agent-chosen, unresolved by the app count: Firefox ties bloqueador and bloqueo, Thunderbird writes bloqueo, Microsoft bloqueador); corrector ortográfico (Chrome 14/23)
+- es-419: tema oscuro (Chrome 1/1); bloqueador (agent-chosen, unresolved by the app count: as for es); corrector ortográfico (Chrome 21/23)
+- pt-BR: tema escuro (Chrome 1/1); bloqueador (agent-chosen: bloqueador: 2 of 7 (Firefox, Microsoft)); verificação ortográfica (Chrome 20/23)
+- nl: donker thema (Chrome 1/1); blokkering (agent-chosen: blokkering: 3 of 7 (Thunderbird, Firefox, Microsoft)); spellingcontrole (Chrome 22/23)
+- pl: ciemny motyw (Chrome 1/1); blokowanie (agent-chosen: blokowanie: 3 of 7 (Thunderbird, Firefox, Microsoft)); sprawdzanie pisowni (Chrome 22/23)
+- sv: mörkt tema (Chrome 1/1); blockering (agent-chosen: blockering: 3 of 7 (Thunderbird, Firefox, Microsoft)); stavningskontroll (Chrome 22/23)
+- ja: ダークモード (Chrome 1/1); ブロッカー (agent-chosen, unresolved by the app count: only Firefox writes ブロッカー and Microsoft ブロック); スペルチェック (Chrome 22/23)
 
 ## Keyboard keys
 
@@ -459,46 +461,46 @@ A key named in a sentence, such as the Workspace apps Mode setting's _hold Cmd_ 
 
 ## Toast
 
-A brief message Meru shows over its window or over Gmail, such as the one after a setting changes, and the region the toasts appear in, which the interface reads as _Notifications_ with `msgctxt` `toasts`. Chrome has no word for one. Never the word for a system [notification](#notification), and in each language clearly apart from it.
+A brief message Meru shows over its window or over Gmail, such as the one after a setting changes, and the region the toasts appear in, which the interface reads as _Notifications_ with `msgctxt` `toasts`. Chrome has no word for one, and the app count leaves it unresolved by the app count: only VS Code and Microsoft have the concept, and both mostly call it a notification or a popup. Never the word for a system [notification](#notification), and in each language clearly apart from it.
 
-- de: Hinweis, plural Hinweise (_Hinweis schließen_) (agent-chosen: a short notice, apart from Benachrichtigung)
-- fr: avis (_Fermer l’avis_), never _notification_ (agent-chosen: a short notice, apart from notification)
-- it: avviso, plural avvisi (_Chiudi avviso_), never _notifica_ (agent-chosen: a short notice, apart from notifica; to notify is therefore _notificare_, never _avvisare_)
-- es: aviso, plural avisos (_Cerrar aviso_), never _notificación_ (agent-chosen: a short notice, apart from notificación)
-- es-419: aviso, plural avisos (_Cerrar aviso_), never _notificación_ (agent-chosen: as for es)
-- pt-BR: aviso, plural avisos (_Fechar Aviso_), never _notificação_ (agent-chosen: a short notice, apart from notificação)
-- nl: mededeling, plural mededelingen (_Sluit mededeling_), never _melding_ (agent-chosen: a short notice, apart from melding)
-- pl: komunikat, plural komunikaty (_Zamknij komunikat_), never _powiadomienie_ (agent-chosen: a short message, apart from powiadomienie)
-- sv: inforuta, plural inforutor (_Stäng inforuta_), never _avisering_ (agent-chosen: a small information box, apart from avisering)
-- ja: お知らせ (お知らせを閉じる), never 通知 (agent-chosen: a notice, apart from 通知)
+- de: Hinweis, plural Hinweise (_Hinweis schließen_) (agent-chosen, unresolved by the app count: VS Code ties Benachrichtigung and Popup, Microsoft writes Popup)
+- fr: avis (_Fermer l’avis_), never _notification_ (agent-chosen, unresolved by the app count: VS Code ties notification and toast, Microsoft writes toast)
+- it: avviso, plural avvisi (_Chiudi avviso_), never _notifica_ (agent-chosen, unresolved by the app count: VS Code ties avviso, notifica and popup, Microsoft avviso and popup)
+- es: aviso, plural avisos (_Cerrar aviso_), never _notificación_ (agent-chosen, unresolved by the app count: VS Code and Microsoft write notificación)
+- es-419: aviso, plural avisos (_Cerrar aviso_), never _notificación_ (agent-chosen, unresolved by the app count: VS Code and Microsoft write notificación)
+- pt-BR: aviso, plural avisos (_Fechar Aviso_), never _notificação_ (agent-chosen, unresolved by the app count: VS Code and Microsoft write notificação)
+- nl: mededeling, plural mededelingen (_Sluit mededeling_), never _melding_ (agent-chosen, unresolved by the app count: only Microsoft, pop-up)
+- pl: komunikat, plural komunikaty (_Zamknij komunikat_), never _powiadomienie_ (agent-chosen, unresolved by the app count: VS Code ties powiadomienie and wyskakujące, Microsoft writes powiadomienie)
+- sv: inforuta, plural inforutor (_Stäng inforuta_), never _avisering_ (agent-chosen, unresolved by the app count: only Microsoft, popup)
+- ja: お知らせ (お知らせを閉じる), never 通知 (agent-chosen, unresolved by the app count: VS Code ties 通知 and トースト, Microsoft writes トースト)
 
 ## Unread badge
 
-The count on an account, a tab or the dock icon for its unread emails: _Show unread badge_, _Unread badge_. Chrome has no word for one; the operating systems' own badge words were weighed as evidence only.
+The count on an account, a tab or the dock icon for its unread emails: _Show unread badge_, _Unread badge_. Chrome has no word for one, so it takes the apps' word for a badge, counted in their messages with _badge_ (work and ID badges left out).
 
-- de: Kennzeichen; in full _Kennzeichen für ungelesene E-Mails_ (_Kennzeichen für ungelesene E-Mails anzeigen_), never the coined _Ungelesen-Kennzeichen_ (agent-chosen: a mark on an icon, spelled out with what it counts)
-- fr: pastille; in full _pastille des e-mails non lus_ (_Afficher la pastille des e-mails non lus_) (agent-chosen: the round mark French software puts on an icon)
-- it: badge; in full _badge delle email non lette_ (_Mostra il badge delle email non lette_) (agent-chosen: the loan Italian software uses)
-- es: indicador de no leídos (_Mostrar indicador de no leídos_) (agent-chosen: says what it shows; Apple's _Globos_ names a balloon)
-- es-419: indicador de no leídos (_Mostrar indicador de no leídos_) (agent-chosen: as for es; Apple's _Contadores_ names any counter)
-- pt-BR: indicador de não lidos (_Mostrar Indicador de Não Lidos_) (agent-chosen: says what it shows, and apart from the toast's _aviso_)
-- nl: badge; in full _badge voor ongelezen e-mails_ (_Toon badge voor ongelezen e-mails_) (agent-chosen: the loan Dutch software uses)
-- pl: plakietka; in full _plakietka z liczbą nieprzeczytanych_ (_Pokaż plakietkę z liczbą nieprzeczytanych_) (agent-chosen: the small tag Polish software puts on an icon)
-- sv: symbolbricka; in full _symbolbricka för olästa_ (_Visa symbolbricka för olästa_) (agent-chosen: the tag Swedish software puts on an icon, joined to symbol so it reads as the icon's)
-- ja: 未読バッジ (未読バッジを表示) (agent-chosen: the loan Japanese software uses, with 未読)
+- de: Badge, das; in full _Badge für ungelesene E-Mails_ (_Badge für ungelesene E-Mails anzeigen_), never the coined _Ungelesen-Badge_ (agent-chosen: Badge: 2 of 7 (Microsoft, Apple); Thunderbird writes Zähler)
+- fr: badge; in full _badge des e-mails non lus_ (_Afficher le badge des e-mails non lus_) (agent-chosen: badge: 4 of 7 (Thunderbird, Android, LibreOffice, Microsoft); Apple writes pastille)
+- it: badge; in full _badge delle email non lette_ (_Mostra il badge delle email non lette_) (agent-chosen: badge: 3 of 7 (Android, LibreOffice, Apple))
+- es: insignia; in full _insignia de no leídos_ (_Mostrar insignia de no leídos_) (agent-chosen: insignia: 3 of 7 (Thunderbird, Android, LibreOffice))
+- es-419: insignia; in full _insignia de no leídos_ (_Mostrar insignia de no leídos_) (agent-chosen: insignia: 3 of 7 (Thunderbird, Android, LibreOffice))
+- pt-BR: selo; in full _selo de não lidos_ (_Mostrar Selo de Não Lidos_) (agent-chosen: selo: 2 of 7 (Android, Microsoft); Thunderbird writes emblema, Apple aviso)
+- nl: badge; in full _badge voor ongelezen e-mails_ (_Toon badge voor ongelezen e-mails_) (agent-chosen: badge: 5 of 7 (Thunderbird, Android, LibreOffice, Microsoft, Apple))
+- pl: plakietka; in full _plakietka z liczbą nieprzeczytanych_ (_Pokaż plakietkę z liczbą nieprzeczytanych_) (agent-chosen: plakietka: 4 of 7 (Thunderbird, Android, LibreOffice, Apple))
+- sv: märke; in full _märke för olästa_ (_Visa märke för olästa_) (agent-chosen: märke: 3 of 7 (Thunderbird, Android, Microsoft))
+- ja: 未読バッジ (未読バッジを表示) (agent-chosen: バッジ: 4 of 7 (Thunderbird, Android, Microsoft, Apple), with 未読)
 
-The badge on an account's row in Settings, `msgctxt` `account row badge`, sits on a row that cannot wrap, so it takes the shortest form, the language's plain word for unread (agent-chosen):
+The badge on an account's row in Settings, `msgctxt` `account row badge`, sits on a row that cannot wrap, so it takes the shortest form, the apps' word for unread, counted in their messages with _unread_:
 
-- de: Ungelesen
-- fr: Non lus
-- it: Non lette
-- es: No leídos
-- es-419: No leídos
-- pt-BR: Não lidos
-- nl: Ongelezen
-- pl: Nieprzeczytane
-- sv: Olästa
-- ja: 未読
+- de: Ungelesen (agent-chosen: ungelesen: 5 of 7 (Thunderbird, VS Code, Android, Microsoft, Apple))
+- fr: Non lus (agent-chosen: non lu: 5 of 7 (Thunderbird, VS Code, Android, Microsoft, Apple))
+- it: Non lette (agent-chosen: non letto: 5 of 7 (Thunderbird, VS Code, Android, Microsoft, Apple))
+- es: No leídos (agent-chosen: no leído: 5 of 7 (Thunderbird, VS Code, Android, Microsoft, Apple))
+- es-419: No leídos (agent-chosen: no leído: 5 of 7 (Thunderbird, VS Code, Android, Microsoft, Apple))
+- pt-BR: Não lidos (agent-chosen: não lido: 4 of 7 (Thunderbird, VS Code, Microsoft, Apple))
+- nl: Ongelezen (agent-chosen: ongelezen: 4 of 7 (Thunderbird, Android, Microsoft, Apple))
+- pl: Nieprzeczytane (agent-chosen: nieprzeczytane: 5 of 7 (Thunderbird, VS Code, Android, Microsoft, Apple))
+- sv: Olästa (agent-chosen: oläst: 4 of 7 (Thunderbird, Android, Microsoft, Apple))
+- ja: 未読 (agent-chosen: 未読: 5 of 7 (Thunderbird, VS Code, Android, Microsoft, Apple))
 
 ## Tab strip
 
@@ -517,18 +519,18 @@ The tabs within an account, which Workspace apps' New windows mode leaves out: _
 
 ## Label, Meru's
 
-The name Meru shows for an account or a saved search, in its _Label_ field and _Enter a label_ with `msgctxt` `saved search`. Never Gmail's label, which is under [Starred, Snooze, Label](#starred-snooze-label) and carries `msgctxt` `Gmail label`. It is a display name, so it takes Chrome's word for a name, in its 7 _Name_ labels; calling it a name rather than a label is agent-chosen, to keep it apart from Gmail's.
+The name Meru shows for an account or a saved search, in its _Label_ field and _Enter a label_ with `msgctxt` `saved search`. Never Gmail's label, which is under [Starred, Snooze, Label](#starred-snooze-label) and carries `msgctxt` `Gmail label`. It is a display name, so it takes the apps' word for a _Name_ field, counted in their messages that are _Name_ alone.
 
-- de: Name (_Namen eingeben_) (agent-chosen, with Chrome's _Name_ 6/7)
-- fr: nom (_Saisir un nom_) (agent-chosen, with Chrome's _Nom_ 7/7)
-- it: nome (_Inserisci un nome_) (agent-chosen, with Chrome's _Nome_ 7/7)
-- es: nombre (_Introduce un nombre_) (agent-chosen, with Chrome's _Nombre_ 7/7)
-- es-419: nombre (_Ingresa un nombre_) (agent-chosen, with Chrome's _Nombre_ 7/7)
-- pt-BR: nome (_Digite um nome_) (agent-chosen, with Chrome's _Nome_ 7/7)
-- nl: naam (_Voer een naam in_) (agent-chosen, with Chrome's _Naam_ 7/7)
-- pl: nazwa (_Wpisz nazwę_) (agent-chosen, with Chrome's _Nazwa_ 4/7)
-- sv: namn (_Ange ett namn_) (agent-chosen, with Chrome's _Namn_ 7/7)
-- ja: 名前 (名前を入力) (agent-chosen, with Chrome's 名前 7/7)
+- de: Name (_Namen eingeben_) (agent-chosen: Name: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- fr: nom (_Saisir un nom_) (agent-chosen: nom: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- it: nome (_Inserisci un nome_) (agent-chosen: nome: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- es: nombre (_Introduce un nombre_) (agent-chosen: nombre: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- es-419: nombre (_Ingresa un nombre_) (agent-chosen: nombre: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- pt-BR: nome (_Digite um nome_) (agent-chosen: nome: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- nl: naam (_Voer een naam in_) (agent-chosen: naam: 6 of 7 (Thunderbird, Firefox, Android, LibreOffice, Microsoft, Apple))
+- pl: nazwa (_Wpisz nazwę_) (agent-chosen: nazwa: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- sv: namn (_Ange ett namn_) (agent-chosen: namn: 6 of 7 (Thunderbird, Firefox, Android, LibreOffice, Microsoft, Apple))
+- ja: 名前 (名前を入力) (agent-chosen: 名前: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
 
 ## Device label
 
@@ -549,16 +551,16 @@ The name this computer goes by among the devices using a license key. Chrome's w
 
 Which releases Meru updates to, Stable or [Beta](#experimental-beta): _Release channel_, _Switch to the beta channel?_ Chrome's word for a channel, in its 11 messages with _channel_; the compounds are agent-chosen where Chrome has none.
 
-- de: Update-Kanal; _Beta-Kanal_ (_Zum Beta-Kanal wechseln?_) (Chrome's _Kanal_ 10/11; agent-chosen compounds: German joins them with a hyphen)
+- de: Update-Kanal; _Beta-Kanal_ (_Zum Beta-Kanal wechseln?_) (Chrome's _Kanal_ 10/11; compounds agent-chosen: Update-Kanal: 2 of 7 (Thunderbird, Firefox))
 - fr: version de mise à jour; _version bêta_ (_Passer à la version bêta ?_, with a no-break space before ?) (Chrome 10/11)
 - it: canale di aggiornamento; _canale beta_ (_Passare al canale beta?_) (Chrome 11/11)
 - es: canal de versiones; _canal beta_ (_¿Cambiar al canal beta?_) (Chrome's _canal_ 11/11)
 - es-419: canal de versiones; _canal beta_ (_¿Cambiar al canal beta?_) (Chrome's _canal_ 11/11)
 - pt-BR: canal de versões; _canal beta_ (_Mudar para o canal beta?_) (Chrome's _canal_ 11/11)
-- nl: updatekanaal; _bètakanaal_ (_Overschakelen naar het bètakanaal?_) (Chrome's _kanaal_ 10/11 and _Bèta_; agent-chosen compounds: Dutch closes them up)
+- nl: updatekanaal; _bètakanaal_ (_Overschakelen naar het bètakanaal?_) (Chrome's _kanaal_ 10/11 and _Bèta_; compounds agent-chosen: updatekanaal: 2 of 7 (Thunderbird, Firefox))
 - pl: kanał aktualizacji; _kanał beta_ (_Przełączyć na kanał beta?_) (Chrome's _kanał_ 8/11)
-- sv: uppdateringskanal; _betakanal_ (_Vill du byta till betakanalen?_) (Chrome's _kanal_ 11/11; agent-chosen compounds: Swedish closes them up)
-- ja: リリースチャンネル; ベータチャンネル (ベータチャンネルに切り替えますか?) (Chrome's チャンネル 11/11; agent-chosen compounds: リリース names what the channel delivers)
+- sv: uppdateringskanal; _betakanal_ (_Vill du byta till betakanalen?_) (Chrome's _kanal_ 11/11; compounds agent-chosen: uppdateringskanal: 2 of 7 (Thunderbird, Firefox))
+- ja: リリースチャンネル; ベータチャンネル (ベータチャンネルに切り替えますか?) (Chrome's チャンネル 11/11; compounds agent-chosen, unresolved by the app count: Thunderbird and Firefox write チャンネル in their own compounds)
 
 ## Trusted hosts
 
@@ -585,25 +587,25 @@ Chrome's word for phishing, in its 4 messages with it; the protection phrase is 
 - es: protección contra phishing (Chrome's _phishing_ 4/4)
 - es-419: protección contra phishing (Chrome's _phishing_ 4/4)
 - pt-BR: proteção contra phishing (Chrome's _phishing_ 4/4)
-- nl: phishingbescherming (Chrome's _phishing_ 4/4; agent-chosen compound: Dutch closes it up)
+- nl: phishingbescherming (Chrome's _phishing_ 4/4; compound agent-chosen, unresolved by the app count: only Microsoft, phishingfilter)
 - pl: ochrona przed wyłudzaniem informacji (Chrome's _wyłudzanie informacji_ 3/4, _phishing_ 1)
 - sv: skydd mot nätfiske (Chrome's _nätfiske_ 4/4)
 - ja: フィッシング対策 (Chrome's フィッシング 4/4)
 
 ## Notify
 
-The verb beside [Notification](#notification): _Notify when updates are available_, _Notify for_. Chrome's _notify_ means telling Google something, not sending the user a notification, so it is no source here; each language takes the verb of its notification word.
+The verb beside [Notification](#notification): _Notify when updates are available_, _Notify for_. Chrome's _notify_ means telling Google something, so it is no source; the apps' word is counted in their messages with _notify_.
 
-- de: benachrichtigen (_Bei verfügbaren Updates benachrichtigen_) (agent-chosen: the verb of Benachrichtigung)
-- fr: avertir (_M’avertir quand des mises à jour sont disponibles_) (agent-chosen: _notifier_ is stiff in French, and _avertir_ is the usual verb for alerting the user)
-- it: notificare (_Notifica quando sono disponibili aggiornamenti_) (agent-chosen: the verb of notifica, and never _avvisare_, which would read as the toast's avviso)
-- es: notificar (_Notificar cuando haya actualizaciones_) (agent-chosen: the verb of notificación)
-- es-419: notificar (_Notificar cuando haya actualizaciones_) (agent-chosen: the verb of notificación)
-- pt-BR: notificar (_Notificar Quando Houver Atualizações_) (agent-chosen: the verb of notificação)
-- nl: melden (_Meld wanneer er updates beschikbaar zijn_) (agent-chosen: the verb of melding)
-- pl: powiadamiać (_Powiadamiaj o dostępnych aktualizacjach_) (agent-chosen: the verb of powiadomienie)
-- sv: avisera (_Avisera när uppdateringar finns_) (agent-chosen: the verb of avisering)
-- ja: 通知する (アップデートが利用可能になったら通知) (agent-chosen: the verb of 通知)
+- de: benachrichtigen (_Bei verfügbaren Updates benachrichtigen_) (agent-chosen: benachrichtigen: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- fr: notifier (_Notifier quand des mises à jour sont disponibles_) (agent-chosen: notifier: 3 of 7 (VS Code, Android, Microsoft); Thunderbird writes informer, LibreOffice avertir, Apple prévenir, Firefox ties avertir and informer)
+- it: notificare (_Notifica quando sono disponibili aggiornamenti_), never _avvisare_, which would read as the toast's avviso (agent-chosen: notificare: 5 of 7 (Thunderbird, VS Code, Android, LibreOffice, Microsoft))
+- es: notificar (_Notificar cuando haya actualizaciones_) (agent-chosen: notificar: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- es-419: notificar (_Notificar cuando haya actualizaciones_) (agent-chosen: notificar: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- pt-BR: notificar (_Notificar Quando Houver Atualizações_) (agent-chosen: notificar: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- nl: melden (_Meld wanneer er updates beschikbaar zijn_) (agent-chosen: melden: 4 of 7 (Android, LibreOffice, Microsoft, Apple))
+- pl: powiadamiać (_Powiadamiaj o dostępnych aktualizacjach_) (agent-chosen: powiadamiać: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- sv: meddela (_Meddela när uppdateringar finns_) (agent-chosen: meddela: 6 of 7 (Thunderbird, Firefox, Android, LibreOffice, Microsoft, Apple))
+- ja: 通知する (アップデートが利用可能になったら通知) (agent-chosen: 通知: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
 
 ## Move
 
@@ -622,18 +624,18 @@ Moving a tab, an email, an attachment or a file: _Move to New Window_, _Move att
 
 ## Sound names
 
-The notification sounds Breeze, Chime, Duet, Knock and Linen, picked in Settings. Chrome has none of them. They are names, each translated by what one hears, Linen too, as the user settled for German: a sound named after a fabric keeps the fabric's word.
+The notification sounds Breeze, Chime, Duet, Knock and Linen, picked in Settings. Chrome has none of them, and the app count leaves them unresolved by the app count: no name is in more than two of the seven apps (Apple's Brise and Leinen, LibreOffice's Windspiel and Breeze, Microsoft's Duet as a product name). They are names, each translated by what one hears, Linen too, as the user settled for German.
 
-- de: Brise, Klangspiel, Duett, Klopfen, Leinen (agent-chosen: the user's _Leinen_ for German is the model for the rest)
-- fr: Brise, Carillon, Duo, Toc-toc, Lin (agent-chosen: what one hears, and the fabric's word)
-- it: Brezza, Rintocco, Duetto, Bussata, Lino (agent-chosen: what one hears, and the fabric's word)
-- es: Brisa, Campanilla, Dúo, Golpe, Lino (agent-chosen: what one hears, and the fabric's word)
-- es-419: Brisa, Campanilla, Dúo, Golpe, Lino (agent-chosen: as for es)
-- pt-BR: Brisa, Sino, Dueto, Batida, Linho (agent-chosen: what one hears, and the fabric's word)
-- nl: Bries, Klokkenspel, Duet, Klop, Linnen (agent-chosen: what one hears, and the fabric's word)
-- pl: Bryza, Dzwonek, Duet, Pukanie, Len (agent-chosen: what one hears, and the fabric's word)
-- sv: Bris, Klockspel, Duett, Knack, Linne (agent-chosen: what one hears, and the fabric's word)
-- ja: ブリーズ, チャイム, デュエット, ノック, リネン (agent-chosen: the katakana loans Japanese uses for each)
+- de: Brise, Klangspiel, Duett, Klopfen, Leinen (agent-chosen, unresolved by the app count; Leinen the user's call)
+- fr: Brise, Carillon, Duo, Toc-toc, Lin (agent-chosen, unresolved by the app count)
+- it: Brezza, Rintocco, Duetto, Bussata, Lino (agent-chosen, unresolved by the app count)
+- es: Brisa, Campanilla, Dúo, Golpe, Lino (agent-chosen, unresolved by the app count)
+- es-419: Brisa, Campanilla, Dúo, Golpe, Lino (agent-chosen, unresolved by the app count)
+- pt-BR: Brisa, Sino, Dueto, Batida, Linho (agent-chosen, unresolved by the app count)
+- nl: Bries, Klokkenspel, Duet, Klop, Linnen (agent-chosen, unresolved by the app count)
+- pl: Bryza, Dzwonek, Duet, Pukanie, Len (agent-chosen, unresolved by the app count)
+- sv: Bris, Klockspel, Duett, Knack, Linne (agent-chosen, unresolved by the app count)
+- ja: ブリーズ, チャイム, デュエット, ノック, リネン (agent-chosen, unresolved by the app count)
 
 ## Button
 
@@ -815,18 +817,18 @@ _View entire message_ is the link under a message Gmail has clipped, and _Upgrad
 
 ### Out of office, Multiple inboxes
 
-Gmail's vacation responder, as in _Open Gmail settings to turn off out of office_, and the inbox type with several sections. Gmail's terms, so Gmail's words by step 2, but not yet read from Gmail's interface: until they are, these stand in.
+Gmail's vacation responder, as in _Open Gmail settings to turn off out of office_, and the inbox type with several sections. Gmail's terms, so Gmail's words by step 2, but not yet read from Gmail's interface; until they are, out of office takes the apps' word, counted in their messages with _out of office_, _vacation response_ or _automatic reply_. No app has multiple inboxes, so that term is unresolved by the app count.
 
-- de: Abwesenheitsnotiz; mehrere Posteingänge (agent-chosen: Gmail's words not yet read)
-- fr: réponse automatique d’absence; boîtes de réception multiples (agent-chosen: Gmail's words not yet read)
-- it: risposta automatica; Posta in arrivo multipla (agent-chosen: Gmail's words not yet read)
-- es: respuesta automática; varias bandejas de entrada (agent-chosen: Gmail's words not yet read)
-- es-419: respuesta automática; varias bandejas de entrada (agent-chosen: Gmail's words not yet read)
-- pt-BR: resposta automática; várias caixas de entrada (agent-chosen: Gmail's words not yet read)
-- nl: automatisch antwoord bij afwezigheid; meerdere inboxen (agent-chosen: Gmail's words not yet read)
-- pl: autoodpowiedź; wiele skrzynek odbiorczych (agent-chosen: Gmail's words not yet read)
-- sv: frånvaromeddelande; flera inkorgar (agent-chosen: Gmail's words not yet read)
-- ja: 不在通知; マルチ受信トレイ (agent-chosen: Gmail's words not yet read)
+- de: automatische Antwort; mehrere Posteingänge (out of office agent-chosen: automatische Antwort: 2 of 7 (Thunderbird, Microsoft); multiple inboxes agent-chosen, unresolved by the app count)
+- fr: réponse automatique d’absence; boîtes de réception multiples (out of office agent-chosen: réponse automatique d'absence: 2 of 7 (Microsoft, Apple); multiple inboxes agent-chosen, unresolved by the app count)
+- it: risposta automatica; Posta in arrivo multipla (agent-chosen, unresolved by the app count: Thunderbird writes risposta automatica, Microsoft fuori sede, Apple assenza)
+- es: fuera de la oficina; varias bandejas de entrada (out of office agent-chosen: fuera de la oficina: 2 of 7 (Thunderbird, Microsoft); multiple inboxes agent-chosen, unresolved by the app count)
+- es-419: respuesta automática; varias bandejas de entrada (agent-chosen, unresolved by the app count: Microsoft writes fuera de la oficina, Apple respuesta automática, Thunderbird ties them)
+- pt-BR: resposta automática; várias caixas de entrada (out of office agent-chosen: resposta automática: 2 of 7 (Microsoft, Apple); multiple inboxes agent-chosen, unresolved by the app count)
+- nl: automatisch antwoord bij afwezigheid; meerdere inboxen (agent-chosen, unresolved by the app count: Thunderbird writes automatisch antwoord, Microsoft afwezigheid, Apple ties them)
+- pl: autoodpowiedź; wiele skrzynek odbiorczych (agent-chosen, unresolved by the app count: Microsoft writes nieobecność, Apple poza biurem, Thunderbird ties nieobecność and automatyczna odpowiedź)
+- sv: frånvaromeddelande; flera inkorgar (agent-chosen, unresolved by the app count: only Microsoft, frånvarande, and Thunderbird, a tie)
+- ja: 不在; マルチ受信トレイ (out of office agent-chosen: 不在: 2 of 7 (Thunderbird, Apple); multiple inboxes agent-chosen, unresolved by the app count)
 
 ## 1Password's words
 

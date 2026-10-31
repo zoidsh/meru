@@ -131,6 +131,7 @@ msgid "Close toast"
 msgstr "Toast schließen"
 
 # fault: banned:ungelesen-kennzeichen
+# fault: pinned:unread-badge
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Unread badge"
 msgstr "Ungelesen-Kennzeichen"

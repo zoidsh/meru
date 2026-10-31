@@ -244,7 +244,7 @@ msgstr "Rendre inactifs les onglets inutilisés"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Passer à Meru Pro"
+msgstr "Mettre à niveau vers Meru Pro"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
@@ -252,7 +252,7 @@ msgstr "Fermer l’avis"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Afficher la pastille des e-mails non lus"
+msgstr "Afficher le badge des e-mails non lus"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Label"
@@ -268,7 +268,7 @@ msgstr "Boîtes de réception multiples"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify for"
-msgstr "M’avertir pour"
+msgstr "Notifier pour"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
@@ -280,7 +280,7 @@ msgstr "Nom de l’appareil"
 
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
-msgstr "Passer à Pro"
+msgstr "Mettre à niveau"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
