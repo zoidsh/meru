@@ -37,12 +37,12 @@ msgstr "{EXAMPLE_HEX_COLOR}または{EXAMPLE_RGB_COLOR}"
 #. extensionName is a password manager extension's name
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "{extensionName} runs on Google's sign-in pages only. Add a site to run it there too, such as your company's single sign-on provider. Sites apply after a restart."
-msgstr "{extensionName}はGoogleのログインページでのみ動作します。会社のシングルサインオンプロバイダーなど、ほかのサイトでも動作させるにはサイトを追加してください。サイトは再起動後に反映されます。"
+msgstr "{extensionName}はGoogleのログインページでのみ動作します。会社のシングルサインオンプロバイダなど、ほかのサイトでも動作させるにはサイトを追加してください。サイトは再起動後に反映されます。"
 
 #. Title of the dialog when more than one extension failed to update
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "{failedCount, plural, one {Couldn't update # extension} other {Couldn't update # extensions}}"
-msgstr "{failedCount, plural, other {#個の機能拡張をアップデートできませんでした}}"
+msgstr "{failedCount, plural, other {#個の拡張機能をアップデートできませんでした}}"
 
 #. name is the name of a browser extension, such as Bitwarden
 #: packages/app/lib/extension-window.ts
@@ -126,7 +126,7 @@ msgstr "{trialDaysLeft, plural, other {Meru Proの試用期間中です。残り
 #. Dialog asking to confirm switching the Workspace apps Mode setting to New windows, which says more when Workspace app tabs are open, when pinned apps load on launch, or both
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "{workspaceAppsInUse, select, both {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart. Pinned apps set to load on launch open as windows the next time you start Meru.} openTabs {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart.} loadOnLaunch {Workspace apps open in their own window from now on. Pinned apps set to load on launch open as windows the next time you start Meru.} other {Workspace apps open in their own window from now on.}}"
-msgstr "{workspaceAppsInUse, select, both {今後、Workspaceアプリは専用のウィンドウで開きます。すでに開いているタブはそのまま残り、タブストリップはそれらのタブを閉じた後か、再起動後に非表示になります。起動時に読み込むよう設定された固定アプリは、次回Meruを起動したときにウィンドウで開きます。} openTabs {今後、Workspaceアプリは専用のウィンドウで開きます。すでに開いているタブはそのまま残り、タブストリップはそれらのタブを閉じた後か、再起動後に非表示になります。} loadOnLaunch {今後、Workspaceアプリは専用のウィンドウで開きます。起動時に読み込むよう設定された固定アプリは、次回Meruを起動したときにウィンドウで開きます。} other {今後、Workspaceアプリは専用のウィンドウで開きます。}}"
+msgstr "{workspaceAppsInUse, select, both {今後、Workspaceアプリは専用のウィンドウで開きます。すでに開いているタブはそのまま残り、タブバーはそれらのタブを閉じた後か、再起動後に非表示になります。起動時に読み込むよう設定された固定アプリは、次回Meruを起動したときにウィンドウで開きます。} openTabs {今後、Workspaceアプリは専用のウィンドウで開きます。すでに開いているタブはそのまま残り、タブバーはそれらのタブを閉じた後か、再起動後に非表示になります。} loadOnLaunch {今後、Workspaceアプリは専用のウィンドウで開きます。起動時に読み込むよう設定された固定アプリは、次回Meruを起動したときにウィンドウで開きます。} other {今後、Workspaceアプリは専用のウィンドウで開きます。}}"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -155,24 +155,6 @@ msgstr "ペースト"
 msgctxt "Windows"
 msgid "&Paste"
 msgstr "貼り付け(&P)"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "Linux"
-msgid "&Paste And Match Style"
-msgstr "貼り付けてスタイルを合わせる(&P)"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "macOS"
-msgid "&Paste And Match Style"
-msgstr "ペーストしてスタイルを合わせる"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "Windows"
-msgid "&Paste And Match Style"
-msgstr "貼り付けて書式を合わせる(&P)"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -326,11 +308,11 @@ msgstr "<0>{allowlistEntry}</0>を1行として追加してから、保存して
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Add a passkey to your Google account from its security settings inside Meru, then sign in with Touch ID — no password manager extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and filling passwords still needs a password manager."
-msgstr "Meru内でGoogleアカウントのセキュリティ設定からパスキーを追加すると、Touch IDでログインできます。パスワードマネージャーの機能拡張をインストールする必要がないため、Meruは高速で軽量なままです。iCloudのパスキーはここでは使用できません。また、パスワードの入力には引き続きパスワードマネージャーが必要です。"
+msgstr "Meru内でGoogleアカウントのセキュリティ設定からパスキーを追加すると、Touch IDでログインできます。パスワードマネージャーの拡張機能をインストールする必要がないため、Meruは高速で軽量なままです。iCloudのパスキーはここでは使用できません。また、パスワードの入力には引き続きパスワードマネージャーが必要です。"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Add a passkey to your Google account from its security settings inside Meru, then sign in with Windows Hello — no password manager extension to install, so Meru stays fast and light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and filling passwords still needs a password manager."
-msgstr "Meru内でGoogleアカウントのセキュリティ設定からパスキーを追加すると、Windows Helloでログインできます。パスワードマネージャーの機能拡張をインストールする必要がないため、Meruは高速で軽量なままです。Chrome、Googleパスワードマネージャー、スマートフォンのパスキーはここでは使用できません。また、パスワードの入力には引き続きパスワードマネージャーが必要です。"
+msgstr "Meru内でGoogleアカウントのセキュリティ設定からパスキーを追加すると、Windows Helloでログインできます。パスワードマネージャーの拡張機能をインストールする必要がないため、Meruは高速で軽量なままです。Chrome、Googleパスワードマネージャー、スマートフォンのパスキーはここでは使用できません。また、パスワードの入力には引き続きパスワードマネージャーが必要です。"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Add account"
@@ -423,7 +405,7 @@ msgid "Application version"
 msgstr "アプリケーションのバージョン"
 
 #. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Archive"
@@ -487,11 +469,11 @@ msgstr "戻る"
 #: packages/renderer/components/maturity-field-badge.tsx
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Beta"
-msgstr "ベータ"
+msgstr "ベータ版"
 
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Beta releases are unfinished builds of upcoming versions. They can contain bugs and break in ways a stable release won't. You can switch back to the stable channel at any time."
-msgstr "ベータ版は、今後のバージョンの未完成のビルドです。バグが含まれていたり、安定版では起こらない問題が発生したりする可能性があります。安定版チャンネルにはいつでも戻すことができます。"
+msgstr "ベータ版は、今後のバージョンの未完成のビルドです。バグが含まれていたり、Stable版では起こらない問題が発生したりする可能性があります。Stableチャンネルにはいつでも戻すことができます。"
 
 #. Option of a label color's Text color setting
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
@@ -643,7 +625,7 @@ msgstr "<0>{installFolder}</0>内のMeruを選択してください。"
 #. Applications is the macOS folder, so use the name the Finder shows in that language
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Choose Meru in the Applications folder."
-msgstr "“アプリケーション”フォルダー内のMeruを選択してください。"
+msgstr "“アプリケーション”フォルダ内のMeruを選択してください。"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgctxt "Linux"
@@ -723,7 +705,7 @@ msgstr "ページ内検索を閉じる"
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
 msgid "Close Other Tabs"
-msgstr "その他のタブを閉じる"
+msgstr "他のタブをすべて閉じる"
 
 #: packages/renderer/components/app-main.tsx
 msgid "Close settings"
@@ -868,7 +850,7 @@ msgstr "ライセンスキーをアクティベートできませんでした。
 
 #: packages/renderer/routes/settings/about.tsx
 msgid "Couldn't export the logs."
-msgstr "ログを書き出せませんでした。"
+msgstr "ログをエクスポートできませんでした。"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Couldn't install {extensionName}"
@@ -877,7 +859,7 @@ msgstr "{extensionName}をインストールできませんでした"
 #. errorMessage is the technical reason, left untranslated
 #: packages/app/lib/extension-swap.ts
 msgid "Couldn't install the extension: {errorMessage}"
-msgstr "機能拡張をインストールできませんでした: {errorMessage}"
+msgstr "拡張機能をインストールできませんでした: {errorMessage}"
 
 #: packages/renderer/routes/settings/version-history.tsx
 msgid "Couldn't load what's new"
@@ -899,7 +881,7 @@ msgstr "{extensionName}をアンインストールできませんでした"
 #. errorMessage is the technical reason, left untranslated
 #: packages/app/ipc.ts
 msgid "Couldn't uninstall the extension: {errorMessage}"
-msgstr "機能拡張をアンインストールできませんでした: {errorMessage}"
+msgstr "拡張機能をアンインストールできませんでした: {errorMessage}"
 
 #. failedName is an extension's name, shown when only that one failed to update
 #: packages/renderer/routes/settings/extensions.tsx
@@ -908,7 +890,7 @@ msgstr "{failedName}をアップデートできませんでした"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Couldn't update extensions"
-msgstr "機能拡張をアップデートできませんでした"
+msgstr "拡張機能をアップデートできませんでした"
 
 #: packages/app/license-key.ts
 msgid "Couldn't validate the license key."
@@ -1147,7 +1129,7 @@ msgstr "Dockアイコンを有効にする"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Enable extensions"
-msgstr "機能拡張を有効にする"
+msgstr "拡張機能を有効にする"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Enable menu bar icon"
@@ -1208,8 +1190,9 @@ msgstr "購入後にメールアドレスに送信されたライセンスキー
 msgid "Excluded apps"
 msgstr "除外するアプリ"
 
-#. Tray menu item that quits Meru, as Windows names it
+#. Tray menu item that quits Meru
 #: packages/app/tray.ts
+msgctxt "Windows"
 msgid "Exit"
 msgstr "終了"
 
@@ -1221,7 +1204,7 @@ msgstr "展開"
 #. Badge beside a setting whose feature isn't stable yet
 #: packages/renderer/components/maturity-field-badge.tsx
 msgid "Experimental"
-msgstr "実験的"
+msgstr "試験運用版"
 
 #. Button in the save dialog that exports Meru's log file
 #: packages/app/ipc.ts
@@ -1243,16 +1226,16 @@ msgstr "エクスポート"
 
 #: packages/renderer/routes/settings/about.tsx
 msgid "Export logs"
-msgstr "ログを書き出す"
+msgstr "ログをエクスポート"
 
 #: packages/renderer/routes/settings/about.tsx
 msgid "Export the application logs to a file, to diagnose a problem or to share with support."
-msgstr "問題の診断やサポートとの共有のために、アプリケーションのログをファイルに書き出します。"
+msgstr "問題の診断やサポートとの共有のために、アプリケーションのログをファイルにエクスポートします。"
 
 #. Dark theme is Gmail's own theme of that name
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Extend dark theme"
-msgstr "ダークテーマを拡張"
+msgstr "ダークテーマをメールにも適用"
 
 #. Dark theme is Gmail's own theme of that name, and dark the name of its setting, so both follow Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -1261,20 +1244,20 @@ msgstr "Gmailのダークテーマをメールと作成ウィンドウにも適�
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Extension support is still being tested and may not work as reliably as the rest of Meru. To help make it stable, report any issues."
-msgstr "機能拡張のサポートはまだテスト中のため、Meruのほかの機能ほど安定して動作しない可能性があります。安定化に向けて、問題があれば報告してください。"
+msgstr "拡張機能のサポートはまだテスト中のため、Meruのほかの機能ほど安定して動作しない可能性があります。安定化に向けて、問題があれば報告してください。"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
 msgid "Extensions"
-msgstr "機能拡張"
+msgstr "拡張機能"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Extensions add features to Meru, like filling passwords on the Google sign-in page. Turn one on below and Meru installs the official version from the Chrome Web Store. Extensions start after a restart, and every account shares one copy, so you sign in to an extension once."
-msgstr "機能拡張を使うと、Googleのログインページでのパスワード入力など、Meruに機能を追加できます。下で機能拡張をオンにすると、MeruがChromeウェブストアから公式版をインストールします。機能拡張は再起動後に起動し、すべてのアカウントで1つのコピーを共有するため、機能拡張へのログインは1回で済みます。"
+msgstr "拡張機能を使うと、Googleのログインページでのパスワード入力など、Meruに機能を追加できます。下で拡張機能をオンにすると、MeruがChromeウェブストアから公式版をインストールします。拡張機能は再起動後に起動し、すべてのアカウントで1つのコピーを共有するため、拡張機能へのログインは1回で済みます。"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Extensions are in testing"
-msgstr "機能拡張はテスト中です"
+msgstr "拡張機能はテスト中です"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1410,16 +1393,16 @@ msgstr "ヘルプ"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate after"
-msgstr "休止までの時間"
+msgstr "非アクティブにするまでの時間"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "アイドル状態のタブを休止"
+msgstr "アイドル状態のタブを非アクティブにする"
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
 msgid "Hibernate When Idle"
-msgstr "アイドル時に休止"
+msgstr "アイドル時に非アクティブにする"
 
 #. Option of the Window controls setting: whether the titlebar shows the close, minimize and maximize buttons
 #: packages/renderer/routes/settings/appearance.tsx
@@ -1516,17 +1499,17 @@ msgstr "タイトルバーでのランチャーアプリの表示方法です。
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
-msgstr "タブが使用されないまま休止するまでの時間です。アクティブなタブ、専用のウィンドウで開いているタブ、オーディオを再生中のタブは休止しません。"
+msgstr "タブが使用されないまま非アクティブになるまでの時間です。アクティブなタブ、専用のウィンドウで開いているタブ、オーディオを再生中のタブは非アクティブになりません。"
 
 #. Auto quotes this setting's option and Reset Width the sidebar's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How wide the vertical tabs sidebar is. Auto switches between narrow and wide based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide for that account until Meru quits, leaving this setting as it is. Right-click the sidebar and choose Reset Width to hand it back."
-msgstr "縦型タブのサイドバーの幅です。“自動”では、開いているタブに応じて狭い幅と広い幅を切り替えます。サイドバー下部のボタンは、この設定を変えずに、Meruを終了するまでそのアカウントの幅を狭い幅と広い幅で切り替えます。この設定に戻すには、サイドバーを右クリックして“幅をリセット”を選択してください。"
+msgstr "垂直タブのサイドバーの幅です。“自動”では、開いているタブに応じて狭い幅と広い幅を切り替えます。サイドバー下部のボタンは、この設定を変えずに、Meruを終了するまでそのアカウントの幅を狭い幅と広い幅で切り替えます。この設定に戻すには、サイドバーを右クリックして“幅をリセット”を選択してください。"
 
 #. Tabs and New windows quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How Workspace apps open. Tabs, the default, opens them in the main window. New windows gives each one its own window with no tab strip. In Tabs, hold <0>{backgroundTabKey}</0> to open a background tab or <1>{newWindowKey}</1> to open a new window."
-msgstr "Workspaceアプリの開き方です。デフォルトの“タブ”では、メインウィンドウで開きます。“新しいウィンドウ”では、タブストリップのない専用のウィンドウでそれぞれ開きます。“タブ”で<0>{backgroundTabKey}</0>キーを押しながら開くとバックグラウンドのタブで、<1>{newWindowKey}</1>キーを押しながら開くと新しいウィンドウで開きます。"
+msgstr "Workspaceアプリの開き方です。デフォルトの“タブ”では、メインウィンドウで開きます。“新しいウィンドウ”では、タブバーのない専用のウィンドウでそれぞれ開きます。“タブ”で<0>{backgroundTabKey}</0>キーを押しながら開くとバックグラウンドのタブで、<1>{newWindowKey}</1>キーを押しながら開くと新しいウィンドウで開きます。"
 
 #. Option of the Notify for setting: a notification only for the emails Gmail marks as important. Important is Gmail's word for them, so it follows Gmail's word in this language
 #: packages/renderer/routes/settings/notifications.tsx
@@ -1561,7 +1544,7 @@ msgstr "インディゴ"
 #. Context menu item that opens the developer tools on the element clicked
 #: packages/app/context-menu.ts
 msgid "Inspect Element"
-msgstr "要素の詳細を表示"
+msgstr "検証"
 
 #. Screen reader label of the switch that installs the extension
 #: packages/renderer/routes/settings/extensions.tsx
@@ -1670,7 +1653,7 @@ msgstr "リネン"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Linux has no system passkey support, so a password manager extension is the only way to sign in to Google with a passkey in Meru."
-msgstr "Linuxはシステムでパスキーに対応していないため、Meruでパスキーを使ってGoogleにログインするには、パスワードマネージャーの機能拡張が必要です。"
+msgstr "Linuxはシステムでパスキーに対応していないため、Meruでパスキーを使ってGoogleにログインするには、パスワードマネージャーの拡張機能が必要です。"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "List Workspace apps that are open in their own window alongside the tabs, so the sidebar is an overview of everything open. Click one to bring its window forward."
@@ -1711,7 +1694,7 @@ msgstr "アカウントを管理"
 msgid "Mark as read"
 msgstr "既読にする"
 
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 msgid "Mark as Read"
 msgstr "既読にする"
@@ -1721,7 +1704,7 @@ msgstr "既読にする"
 msgid "Mark as spam"
 msgstr "迷惑メールとして報告"
 
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 msgid "Mark as Spam"
 msgstr "迷惑メールとして報告"
@@ -1764,7 +1747,7 @@ msgstr "Meru {version}は最新バージョンです。"
 
 #: packages/app/url.ts
 msgid "Meru can't open this link in a browser."
-msgstr "Meruはこのリンクをブラウザーで開けません。"
+msgstr "Meruはこのリンクをブラウザで開けません。"
 
 #: packages/app/license-key.ts
 msgid "Meru can't reach the internet. Connect and try again."
@@ -1781,11 +1764,11 @@ msgstr "Meruはアップデートを確認できませんでした。"
 
 #: packages/app/ipc.ts
 msgid "Meru doesn't know this extension."
-msgstr "Meruはこの機能拡張を認識できません。"
+msgstr "Meruはこの拡張機能を認識できません。"
 
 #: packages/app/ipc.ts
 msgid "Meru doesn't offer this extension."
-msgstr "Meruはこの機能拡張を提供していません。"
+msgstr "Meruはこの拡張機能を提供していません。"
 
 #: packages/app/dialogs.ts
 msgid "Meru installs it when you quit."
@@ -1797,7 +1780,7 @@ msgstr "Meruがデフォルトのメールクライアントに設定されて�
 
 #: packages/app/url.ts
 msgid "Meru is set as your default browser, so there's no other browser to open it in. Choose another default browser to open links outside Meru."
-msgstr "Meruがデフォルトのブラウザーに設定されているため、リンクを開くほかのブラウザーがありません。Meruの外でリンクを開くには、別のブラウザーをデフォルトに設定してください。"
+msgstr "Meruがデフォルトのブラウザに設定されているため、リンクを開くほかのブラウザがありません。Meruの外でリンクを開くには、別のブラウザをデフォルトに設定してください。"
 
 #: packages/app/dialogs.ts
 msgid "Meru is up to date."
@@ -1817,7 +1800,7 @@ msgstr "Meru Proの機能はMeruを終了するまで使用できます。その
 
 #: packages/app/ipc.ts
 msgid "Meru Pro is required to install extensions. Upgrade to Meru Pro to continue."
-msgstr "機能拡張をインストールするにはMeru Proが必要です。続けるには、Meru Proにアップグレードしてください。"
+msgstr "拡張機能をインストールするにはMeru Proが必要です。続けるには、Meru Proにアップグレードしてください。"
 
 #: packages/app/protocol/index.ts
 msgid "Meru Pro is required to open links sent to Meru."
@@ -1837,11 +1820,11 @@ msgstr "Touch IDでログインするにはMeru Proが必要です。"
 
 #: packages/app/ipc.ts
 msgid "Meru Pro is required to update extensions. Upgrade to Meru Pro to continue."
-msgstr "機能拡張をアップデートするにはMeru Proが必要です。続けるには、Meru Proにアップグレードしてください。"
+msgstr "拡張機能をアップデートするにはMeru Proが必要です。続けるには、Meru Proにアップグレードしてください。"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Meru Pro lets you add a passkey to your Google account from its security settings inside Meru, then sign in with Touch ID — no password manager extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and filling passwords still needs a password manager."
-msgstr "Meru Proでは、Meru内でGoogleアカウントのセキュリティ設定からパスキーを追加して、Touch IDでログインできます。パスワードマネージャーの機能拡張をインストールする必要がないため、Meruは高速で軽量なままです。iCloudのパスキーはここでは使用できません。また、パスワードの入力には引き続きパスワードマネージャーが必要です。"
+msgstr "Meru Proでは、Meru内でGoogleアカウントのセキュリティ設定からパスキーを追加して、Touch IDでログインできます。パスワードマネージャーの拡張機能をインストールする必要がないため、Meruは高速で軽量なままです。iCloudのパスキーはここでは使用できません。また、パスワードの入力には引き続きパスワードマネージャーが必要です。"
 
 #. Badge beside a setting that needs a Meru Pro license
 #: packages/renderer/components/license-key-required-field-badge.tsx
@@ -1850,7 +1833,7 @@ msgstr "Meru Proが必要"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Meru signs out of this account and clears its data from this computer, including saved tabs and bookmarks. Your Gmail account isn't affected."
-msgstr "Meruはこのアカウントからログアウトし、保存したタブやブックマークを含むデータをこのコンピューターから消去します。Gmailアカウント自体には影響しません。"
+msgstr "Meruはこのアカウントからログアウトし、保存したタブやブックマークを含むデータをこのコンピュータから消去します。Gmailアカウント自体には影響しません。"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1915,7 +1898,7 @@ msgstr "狭い"
 
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "Narrow the tab strip"
-msgstr "タブストリップを狭くする"
+msgstr "タブバーを狭くする"
 
 #. Heading of the Settings section about going back and forward between pages
 #: packages/renderer/routes/settings/general.tsx
@@ -2011,7 +1994,7 @@ msgstr "通知"
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "お知らせ"
+msgstr "トースト"
 
 #. Setting that picks which new emails show a notification
 #: packages/renderer/routes/settings/notifications.tsx
@@ -2022,9 +2005,25 @@ msgstr "通知の対象"
 msgid "Notify when updates are available"
 msgstr "アップデートが利用可能になったら通知"
 
-#: packages/app/dialogs.ts
-#: packages/app/workspace-app.ts
 #: packages/renderer/routes/settings/extensions.tsx
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "Linux"
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "macOS"
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "Windows"
 msgid "OK"
 msgstr "OK"
 
@@ -2078,7 +2077,7 @@ msgstr "ファイルを開く"
 
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Open folder when done"
-msgstr "完了したらフォルダーを開く"
+msgstr "完了したらフォルダを開く"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open Gmail settings to turn off out of office"
@@ -2092,17 +2091,17 @@ msgstr "アプリで開く"
 #: packages/app/context-menu.ts
 #: packages/app/ipc.ts
 msgid "Open in Default Browser"
-msgstr "デフォルトのブラウザーで開く"
+msgstr "デフォルトのブラウザで開く"
 
 #. Button that opens the user styles file in the default text editor
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Open in editor"
-msgstr "エディターで開く"
+msgstr "エディタで開く"
 
 #. Button that shows the user styles file in its folder
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Open in folder"
-msgstr "フォルダーで表示"
+msgstr "フォルダで表示"
 
 #: packages/app/url.ts
 msgid "Open link"
@@ -2124,15 +2123,15 @@ msgstr "返信と転送をメッセージの下ではなく、新しいウィン
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Open the browser allowlist in an editor with root permissions."
-msgstr "root権限のあるエディターで、ブラウザーの許可リストを開いてください。"
+msgstr "root権限のあるエディタで、ブラウザの許可リストを開いてください。"
 
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Open the folder containing the file when a download finishes."
-msgstr "ダウンロードが完了したら、ファイルを含むフォルダーを開きます。"
+msgstr "ダウンロードが完了したら、ファイルを含むフォルダを開きます。"
 
 #: packages/app/url.ts
 msgid "Open this link in your default browser?"
-msgstr "このリンクをデフォルトのブラウザーで開きますか?"
+msgstr "このリンクをデフォルトのブラウザで開きますか?"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open unified inbox"
@@ -2150,7 +2149,7 @@ msgstr "Workspaceアプリを開く"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Open Workspace apps in the app instead of the external browser."
-msgstr "Workspaceアプリを外部ブラウザーではなくアプリ内で開きます。"
+msgstr "Workspaceアプリを外部ブラウザではなくアプリ内で開きます。"
 
 #: packages/renderer/routes/settings/about.tsx
 msgid "Operating system"
@@ -2201,6 +2200,24 @@ msgstr "ペースト"
 msgctxt "Windows"
 msgid "Paste"
 msgstr "貼り付け"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Paste and &Match Style"
+msgstr "貼り付けてスタイルを合わせる(&M)"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Paste and &Match Style"
+msgstr "ペーストしてスタイルを合わせる"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Paste and &Match Style"
+msgstr "貼り付けて書式を合わせる(&M)"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -2282,7 +2299,7 @@ msgstr "Proの試用期間は残り1日未満"
 
 #: packages/renderer/routes/settings/phishing-protection.tsx
 msgid "Prompt for confirmation before opening links from untrusted hosts in your browser."
-msgstr "信頼されていないホストからのリンクをブラウザーで開く前に確認します。"
+msgstr "信頼されていないホストからのリンクをブラウザで開く前に確認します。"
 
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
@@ -2298,16 +2315,33 @@ msgstr "検索条件"
 #. Dialog button that quits Meru
 #. Dialog button that quits Meru
 #. Dialog button that quits Meru
-#. Tray menu item that quits Meru
 #: packages/app/license-key.ts
-#: packages/app/tray.ts
 #: packages/app/trial.ts
+msgid "Quit"
+msgstr "終了"
+
+#. Tray menu item that quits Meru
+#: packages/app/tray.ts
+msgctxt "Linux"
 msgid "Quit"
 msgstr "終了"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Quit {appName}"
+msgstr "{appName}を終了"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
 #: packages/app/tray.ts
+msgctxt "macOS"
+msgid "Quit {appName}"
+msgstr "{appName}を終了"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Quit {appName}"
 msgstr "{appName}を終了"
 
@@ -2521,7 +2555,7 @@ msgstr "1ページあたりの行数"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Run the installed extensions. Turning this off stops them without uninstalling them."
-msgstr "インストールした機能拡張を実行します。オフにすると、機能拡張はアンインストールされずに停止します。"
+msgstr "インストールした拡張機能を実行します。オフにすると、拡張機能はアンインストールされずに停止します。"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -2626,11 +2660,11 @@ msgstr "絵文字を選択…"
 #. Browser and Add Browser are in 1Password's settings, so use the words 1Password shows in that language
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Select Browser, then select Add Browser."
-msgstr "“ブラウザー”を選択してから、“ブラウザーを追加”を選択してください。"
+msgstr "“ブラウザ”を選択してから、“ブラウザを追加”を選択してください。"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Select first unread account on click"
-msgstr "クリック時に最初の未読アカウントを選択"
+msgstr "クリック時に未読メールがある最初のアカウントを選択"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -2662,7 +2696,7 @@ msgstr "通知で再生するサウンドを選択します。"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Select the Workspace apps that open in the external browser instead of the app."
-msgstr "アプリ内ではなく外部ブラウザーで開くWorkspaceアプリを選択します。"
+msgstr "アプリ内ではなく外部ブラウザで開くWorkspaceアプリを選択します。"
 
 #. Settings is the item in the 1Password app, so use the word 1Password shows in that language
 #: packages/renderer/routes/settings/extensions.tsx
@@ -2675,8 +2709,8 @@ msgid "Selected tabs"
 msgstr "選択したタブ"
 
 #: packages/renderer/routes/settings/advanced.tsx
-msgid "Send a custom user agent for the Gmail and Workspace apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
-msgstr "デフォルトのユーザーエージェントでは動作しないGmailとWorkspaceアプリの機能のために、カスタムのユーザーエージェントを送信します。一部の問題が解決する一方で、別の問題が起きることもあるため、アプリが不安定になった場合はオフにしてください。"
+msgid "Send a user agent that names Meru and Electron, instead of the one Chromium sends. Google can treat the app differently with it, so turn it on only to rule out the user agent as the cause of a problem."
+msgstr "Chromiumが送信するユーザーエージェントの代わりに、MeruとElectronの名前を含むユーザーエージェントを送信します。これによりGoogleがアプリを異なる方法で扱う場合があるため、ユーザーエージェントが問題の原因かどうかを確かめるときにのみオンにしてください。"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Set Meru as the default mail client to handle email links and related protocols."
@@ -2821,7 +2855,7 @@ msgstr "Finderに表示"
 #: packages/renderer/components/download-history.tsx
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Show in folder"
-msgstr "フォルダーで表示"
+msgstr "フォルダで表示"
 
 #. Button on the download notification that shows the file in the file manager
 #: packages/app/downloads.ts
@@ -3014,7 +3048,7 @@ msgstr "パスキーとWindows HelloでGoogleにログイン"
 
 #: packages/app/workspace-app.ts
 msgid "Sign in with your password or another available second factor. If the account has no password, add one at myaccount.google.com in a browser first, then sign in here."
-msgstr "パスワードまたは利用可能なほかの2段階認証の方法でログインしてください。アカウントにパスワードがない場合は、先にブラウザーでmyaccount.google.comからパスワードを追加してから、ここでログインしてください。"
+msgstr "パスワードまたは利用可能なほかの2段階認証の方法でログインしてください。アカウントにパスワードがない場合は、先にブラウザでmyaccount.google.comからパスワードを追加してから、ここでログインしてください。"
 
 #: packages/app/workspace-app.ts
 msgid "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way."
@@ -3060,7 +3094,7 @@ msgstr "スペルチェック"
 #. Option of the Release channel setting: which releases Meru updates to
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Stable"
-msgstr "安定版"
+msgstr "Stable"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -3070,7 +3104,7 @@ msgstr "読み上げを開始"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Start the application automatically when you log in to your computer."
-msgstr "コンピューターにログインしたときに、アプリケーションを自動的に起動します。"
+msgstr "コンピュータにログインしたときに、アプリケーションを自動的に起動します。"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Start the application minimized."
@@ -3107,7 +3141,7 @@ msgstr "トラックパッドを2本指で左右にスワイプして、戻っ�
 #. Button that confirms moving to the beta release channel
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Switch to beta"
-msgstr "ベータに切り替える"
+msgstr "ベータ版に切り替える"
 
 #. Button that confirms switching the Mode setting to its New windows option, matching that option's wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -3166,11 +3200,11 @@ msgstr "文字色"
 
 #: packages/app/lib/extension-window.ts
 msgid "The extension is running, but Meru can't open a window for it."
-msgstr "機能拡張は実行中ですが、Meruでそのウィンドウを開けません。"
+msgstr "拡張機能は実行中ですが、Meruでそのウィンドウを開けません。"
 
 #: packages/app/lib/extension-window.ts
 msgid "The extension starts after Meru restarts. Restart Meru, then try again."
-msgstr "機能拡張はMeruの再起動後に起動します。Meruを再起動してから、もう一度お試しください。"
+msgstr "拡張機能はMeruの再起動後に起動します。Meruを再起動してから、もう一度お試しください。"
 
 #: packages/renderer/routes/settings/version-history.tsx
 msgid "The release notes come from GitHub. Check your connection, then try again."
@@ -3266,7 +3300,7 @@ msgstr "信頼するホスト"
 #. Button that loads the release notes again after they failed to load
 #: packages/renderer/routes/settings/version-history.tsx
 msgid "Try again"
-msgstr "やり直す"
+msgstr "もう一度試す"
 
 #: packages/app/dialogs.ts
 msgid "Try again later."
@@ -3332,7 +3366,7 @@ msgstr "統合受信トレイ"
 #. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Unpinned tabs leaves your pinned tabs loaded, and Selected tabs hibernates nothing until you mark a tab. Whichever you pick, a single tab can opt in or out with Hibernate When Idle in its context menu."
-msgstr "使用されていないタブをアンロードして、タブが使用しているメモリを解放します。休止したタブはサイドバー内の位置を保ち、クリックすると前回のページで再び読み込まれます。“固定されていないタブ”では固定タブを読み込んだままにし、“選択したタブ”ではタブを指定するまで何も休止しません。どれを選んでも、タブのコンテキストメニューの“アイドル時に休止”で、個々のタブを対象に含めたり外したりできます。"
+msgstr "使用されていないタブをアンロードして、タブが使用しているメモリを解放します。アクティブでないタブはサイドバー内の位置を保ち、クリックすると前回のページで再び読み込まれます。“固定されていないタブ”では固定タブを読み込んだままにし、“選択したタブ”ではタブを指定するまでどのタブも非アクティブにしません。どれを選んでも、タブのコンテキストメニューの“アイドル時に非アクティブにする”で、個々のタブを対象に含めたり外したりできます。"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Unlock Meru Pro for professional features and commercial use. Your upgrade supports ongoing development."
@@ -3341,17 +3375,23 @@ msgstr "Meru Proでは、プロ向けの機能と商用利用が可能になり�
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
 msgid "Unpin"
-msgstr "固定解除"
+msgstr "固定を解除"
 
 #. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
 #: packages/shared/workspace-apps.ts
 msgid "Unpinned tabs"
 msgstr "固定されていないタブ"
 
-#. Switch, and a badge on the account, for showing the account's unread badge
+#. Switch for showing the account's unread badge
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Unread badge"
 msgstr "未読バッジ"
+
+#. Badge on an account's row in Settings when its unread badge is on: a short badge on a row that cannot wrap; keep it as short as possible
+#: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account row badge"
+msgid "Unread badge"
+msgstr "未読"
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Unread count preference"
@@ -3369,12 +3409,12 @@ msgstr "アップデートが利用可能"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Update extensions"
-msgstr "機能拡張をアップデート"
+msgstr "拡張機能をアップデート"
 
 #. Titlebar button that shows the details of an update Meru downloaded but couldn't verify
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Update not verified"
-msgstr "アップデートが未検証"
+msgstr "未検証のアップデート"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
@@ -3425,8 +3465,8 @@ msgid "Upgrade to Meru Pro to unlock all options"
 msgstr "Meru Proにアップグレードすると、すべてのオプションを利用できます"
 
 #: packages/renderer/routes/settings/advanced.tsx
-msgid "Use custom user agent"
-msgstr "カスタムのユーザーエージェントを使用"
+msgid "Use default user agent"
+msgstr "デフォルトのユーザーエージェントを使用"
 
 #. Setting that shares the screen through the operating system's own picker
 #: packages/renderer/routes/settings/advanced.tsx
@@ -3459,7 +3499,7 @@ msgstr "バージョン{installedVersion}"
 #. Heading of the settings for the vertical tabs sidebar
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Vertical tabs"
-msgstr "縦型タブ"
+msgstr "垂直タブ"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -3527,7 +3567,7 @@ msgstr "ダウンロードしたファイルの保存先です。"
 #. Auto, Sidebar and Titlebar quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown. Sidebar keeps them there and holds the sidebar open even with a single tab, and Titlebar keeps them in the titlebar at all times."
-msgstr "ランチャーとブックマークボタンの配置です。“自動”では、縦型タブのサイドバーが表示されている間はサイドバーの下部に移動します。“サイドバー”では常にサイドバーに配置し、タブが1つだけでもサイドバーを開いたままにします。“タイトルバー”では常にタイトルバーに配置します。"
+msgstr "ランチャーとブックマークボタンの配置です。“自動”では、垂直タブのサイドバーが表示されている間はサイドバーの下部に移動します。“サイドバー”では常にサイドバーに配置し、タブが1つだけでもサイドバーを開いたままにします。“タイトルバー”では常にタイトルバーに配置します。"
 
 #: packages/app/protocol/index.ts
 msgid "Which account should compose this email?"
@@ -3549,7 +3589,7 @@ msgstr "広い"
 
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "Widen the tab strip"
-msgstr "タブストリップを広くする"
+msgstr "タブバーを広くする"
 
 #. Setting for how wide the vertical tabs sidebar is
 #: packages/renderer/routes/settings/workspace-apps.tsx

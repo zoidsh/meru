@@ -9,7 +9,7 @@ msgstr ""
 
 #: packages/app/lib/extension-swap.ts
 msgid "{conflictName} is off, but some of its files may be left in Meru. {extensionName} wasn't installed. Turn it on to try again."
-msgstr "{conflictName} ist deaktiviert, aber einige Dateien davon sind möglicherweise noch in Meru vorhanden. {extensionName} wurde nicht installiert. Aktiviere {extensionName} erneut, um es noch einmal zu versuchen."
+msgstr "{conflictName} ist deaktiviert, aber einige Dateien davon sind möglicherweise noch in Meru vorhanden. {extensionName} wurde nicht installiert. Aktiviere {extensionName}, um es noch einmal zu versuchen."
 
 #: packages/app/lib/extension-swap.ts
 msgid "{conflictName} is still on, and {extensionName} wasn't installed."
@@ -22,12 +22,12 @@ msgstr "{conflictName} wurde deaktiviert, und du bist in Meru davon abgemeldet."
 #. On Linux, a finished download's notification acts when clicked; elsewhere, through its button
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "{downloadNotificationAction, select, click {Choose what clicking the notification does.} other {Choose what the notification's button does.}}"
-msgstr "{downloadNotificationAction, select, click {Lege fest, was ein Klick auf die Benachrichtigung bewirkt.} other {Lege fest, was die Schaltfläche der Benachrichtigung bewirkt.}}"
+msgstr "{downloadNotificationAction, select, click {Lege fest, was ein Klick auf die Benachrichtigung bewirkt.} other {Lege fest, was der Button der Benachrichtigung bewirkt.}}"
 
 #. Setting that picks what a finished download's notification does: on Linux, clicking it; elsewhere, its button
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "{downloadNotificationAction, select, click {On click} other {Button}}"
-msgstr "{downloadNotificationAction, select, click {Beim Klicken} other {Schaltfläche}}"
+msgstr "{downloadNotificationAction, select, click {Beim Klicken} other {Button}}"
 
 #. Placeholder of the Color field, giving two example colors: a hex code and an rgb() value
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
@@ -117,26 +117,26 @@ msgstr "{target, select, window {{appLabel}-Links in diesem Fenster öffnen} oth
 #. Titlebar badge counting the whole days left in the Meru Pro trial
 #: packages/renderer/components/app-titlebar.tsx
 msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
-msgstr "{trialDaysLeft, plural, one {Pro-Testzeitraum endet in # Tag} other {Pro-Testzeitraum endet in # Tagen}}"
+msgstr "{trialDaysLeft, plural, one {Pro-Testzeitraum endet in # Tag} other {Pro-Testzeitraum endet in # Tagen}}"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "{trialDaysLeft, plural, one {You're using a Meru Pro trial with # day left.} other {You're using a Meru Pro trial with # days left.}}"
-msgstr "{trialDaysLeft, plural, one {Du nutzt den Testzeitraum von Meru Pro. Er läuft noch # Tag.} other {Du nutzt den Testzeitraum von Meru Pro. Er läuft noch # Tage.}}"
+msgstr "{trialDaysLeft, plural, one {Du nutzt den Testzeitraum von Meru Pro. Er läuft noch # Tag.} other {Du nutzt den Testzeitraum von Meru Pro. Er läuft noch # Tage.}}"
 
 #. Dialog asking to confirm switching the Workspace apps Mode setting to New windows, which says more when Workspace app tabs are open, when pinned apps load on launch, or both
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "{workspaceAppsInUse, select, both {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart. Pinned apps set to load on launch open as windows the next time you start Meru.} openTabs {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart.} loadOnLaunch {Workspace apps open in their own window from now on. Pinned apps set to load on launch open as windows the next time you start Meru.} other {Workspace apps open in their own window from now on.}}"
-msgstr "{workspaceAppsInUse, select, both {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Bereits geöffnete Tabs bleiben, wie sie sind, und die Tableiste wird ausgeblendet, sobald du sie schließt, oder nach einem Neustart. Fixierte Apps, die beim Start laden, öffnen sich beim nächsten Start von Meru als Fenster.} openTabs {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Bereits geöffnete Tabs bleiben, wie sie sind, und die Tableiste wird ausgeblendet, sobald du sie schließt, oder nach einem Neustart.} loadOnLaunch {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Fixierte Apps, die beim Start laden, öffnen sich beim nächsten Start von Meru als Fenster.} other {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster.}}"
+msgstr "{workspaceAppsInUse, select, both {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Bereits geöffnete Tabs bleiben, wie sie sind, und die Tableiste wird ausgeblendet, sobald du diese Tabs schließt, oder nach einem Neustart. Angepinnte Apps, die beim Start geladen werden, öffnen sich beim nächsten Start von Meru als Fenster.} openTabs {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Bereits geöffnete Tabs bleiben, wie sie sind, und die Tableiste wird ausgeblendet, sobald du diese Tabs schließt, oder nach einem Neustart.} loadOnLaunch {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Angepinnte Apps, die beim Start geladen werden, öffnen sich beim nächsten Start von Meru als Fenster.} other {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster.}}"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "&Copy"
-msgstr "&Kopieren"
+msgstr "Ko&pieren"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "&Learn Spelling"
-msgstr "Schreibweise &lernen"
+msgstr "&Zum Wörterbuch hinzufügen"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -158,101 +158,83 @@ msgstr "&Einfügen"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
-msgctxt "Linux"
-msgid "&Paste And Match Style"
-msgstr "Einfügen und Stil an&passen"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "macOS"
-msgid "&Paste And Match Style"
-msgstr "Einsetzen und Stil anpassen"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
-msgctxt "Windows"
-msgid "&Paste And Match Style"
-msgstr "Einfügen und Format an&passen"
-
-#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
-#: packages/app/context-menu.ts
 msgid "&Search with Google"
-msgstr "Mit &Google suchen"
+msgstr "Mit Google &suchen"
 
 #. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
 #: packages/shared/workspace-apps.ts
 msgid "1 hour"
-msgstr "1 Stunde"
+msgstr "1 Stunde"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "1 Hour"
-msgstr "1 Stunde"
+msgstr "1 Stunde"
 
 #. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
 #: packages/shared/workspace-apps.ts
 msgid "1 minute"
-msgstr "1 Minute"
+msgstr "1 Minute"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "10 Minutes"
-msgstr "10 Minuten"
+msgstr "10 Minuten"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "12 Hours"
-msgstr "12 Stunden"
+msgstr "12 Stunden"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "15 Minutes"
-msgstr "15 Minuten"
+msgstr "15 Minuten"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "2 Hours"
-msgstr "2 Stunden"
+msgstr "2 Stunden"
 
 #. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
 #: packages/shared/workspace-apps.ts
 msgid "3 hours"
-msgstr "3 Stunden"
+msgstr "3 Stunden"
 
 #. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
 #: packages/shared/workspace-apps.ts
 msgid "30 minutes"
-msgstr "30 Minuten"
+msgstr "30 Minuten"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "30 Minutes"
-msgstr "30 Minuten"
+msgstr "30 Minuten"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "4 Hours"
-msgstr "4 Stunden"
+msgstr "4 Stunden"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
-msgstr "5 Minuten"
+msgstr "5 Minuten"
 
 #. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
 #: packages/shared/workspace-apps.ts
 msgid "6 hours"
-msgstr "6 Stunden"
+msgstr "6 Stunden"
 
 #. How long Do Not Disturb keeps notifications silenced, in its menu
 #: packages/app/do-not-disturb.ts
 msgid "8 Hours"
-msgstr "8 Stunden"
+msgstr "8 Stunden"
 
 #. Copy names the button on the verification code notification, so it matches that button's label
 #: packages/renderer/routes/settings/verification-codes.tsx
 msgid "A notification shows the code either way. Press its Copy button to copy the code yourself."
-msgstr "Eine Benachrichtigung zeigt den Code in jedem Fall an. Klicke dort auf „Kopieren“, um den Code selbst zu kopieren."
+msgstr "Eine Benachrichtigung zeigt den Code in jedem Fall an. Klicke dort auf den Button „Kopieren“, um den Code selbst zu kopieren."
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -317,7 +299,7 @@ msgstr "Hinzufügen"
 #. Screen reader label of the button that puts a Workspace app in the launcher; label is the app's name
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Add {label} to launcher"
-msgstr "{label} zum Starter hinzufügen"
+msgstr "{label} zum Launcher hinzufügen"
 
 #. allowlistEntry is the line to add to 1Password's list of allowed browsers, which stays as it is
 #: packages/renderer/routes/settings/extensions.tsx
@@ -355,7 +337,7 @@ msgstr "Zeitfenster hinzufügen"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Add Workspace apps to the launcher on the right of the titlebar."
-msgstr "Füge dem Starter rechts in der Titelleiste Workspace-Apps hinzu."
+msgstr "Füge dem Launcher rechts in der Titelleiste Workspace-Apps hinzu."
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Add your own CSS to personalize the Gmail interface further. Changes take effect after a restart."
@@ -423,7 +405,7 @@ msgid "Application version"
 msgstr "App-Version"
 
 #. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Archive"
@@ -432,7 +414,7 @@ msgstr "Archivieren"
 #. Option of the When to copy setting: when a detected verification code is copied to the clipboard
 #: packages/shared/verification-codes.ts
 msgid "As soon as it arrives"
-msgstr "Sobald er eingeht"
+msgstr "Sobald der Code eingeht"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -815,7 +797,7 @@ msgstr "Konversation"
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "Cop&y Image"
-msgstr "&Bild kopieren"
+msgstr "Bi&ld kopieren"
 
 #: packages/app/gmail/index.ts
 msgid "Copied verification code {verificationCode}"
@@ -844,7 +826,7 @@ msgstr "E-Mail-Adresse kopieren"
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "Copy Lin&k"
-msgstr "Link kop&ieren"
+msgstr "Lin&k kopieren"
 
 #: packages/app/url.ts
 msgid "Copy link"
@@ -927,7 +909,7 @@ msgstr "Strg"
 #: packages/app/context-menu.ts
 msgctxt "Linux"
 msgid "Cu&t"
-msgstr "&Ausschneiden"
+msgstr "A&usschneiden"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -939,7 +921,7 @@ msgstr "Ausschneiden"
 #: packages/app/context-menu.ts
 msgctxt "Windows"
 msgid "Cu&t"
-msgstr "&Ausschneiden"
+msgstr "A&usschneiden"
 
 #. Badge on the release notes of the version that is running
 #: packages/renderer/routes/settings/version-history.tsx
@@ -1208,8 +1190,9 @@ msgstr "Gib den Lizenzschlüssel ein, der dir nach dem Kauf per E-Mail zugeschic
 msgid "Excluded apps"
 msgstr "Ausgeschlossene Apps"
 
-#. Tray menu item that quits Meru, as Windows names it
+#. Tray menu item that quits Meru
 #: packages/app/tray.ts
+msgctxt "Windows"
 msgid "Exit"
 msgstr "Beenden"
 
@@ -1301,7 +1284,7 @@ msgstr "Datei verschoben oder gelöscht"
 
 #: packages/renderer/components/download-history.tsx
 msgid "Files you download appear here for 30 days."
-msgstr "Heruntergeladene Dateien werden hier 30 Tage lang angezeigt."
+msgstr "Heruntergeladene Dateien werden hier 30 Tage lang angezeigt."
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Filling passwords and passkeys needs the 1Password desktop app, because Meru stores no vault data of its own. Trust Meru in 1Password's settings to connect the two."
@@ -1310,7 +1293,7 @@ msgstr "Zum Ausfüllen von Passwörtern und Passkeys ist die 1Password-Desktop-A
 #. Description of a password manager extension in Settings. Google Account is Google's name for the account, so use Google's own word for it in that language
 #: packages/renderer/lib/extension-descriptions.ts
 msgid "Fills and generates passwords and passkeys for your Google Account. Needs the 1Password desktop app, connected to Meru."
-msgstr "Füllt Passwörter und Passkeys für dein Google-Konto aus und erstellt sie. Benötigt die 1Password-Desktop-App, verbunden mit Meru."
+msgstr "Füllt Passwörter und Passkeys für dein Google-Konto aus und erstellt sie. Benötigt die mit Meru verbundene 1Password-Desktop-App."
 
 #. Description of a password manager extension in Settings. Google Account is Google's name for the account, so use Google's own word for it in that language
 #: packages/renderer/lib/extension-descriptions.ts
@@ -1410,16 +1393,16 @@ msgstr "Hilfe"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate after"
-msgstr "Ruhezustand nach"
+msgstr "Inaktiv machen nach"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
-msgstr "Inaktive Tabs in den Ruhezustand versetzen"
+msgstr "Unbenutzte Tabs inaktiv machen"
 
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
 msgid "Hibernate When Idle"
-msgstr "Ruhezustand bei Inaktivität"
+msgstr "Inaktiv machen, wenn unbenutzt"
 
 #. Option of the Window controls setting: whether the titlebar shows the close, minimize and maximize buttons
 #: packages/renderer/routes/settings/appearance.tsx
@@ -1497,12 +1480,12 @@ msgstr "Die Werbebanner oben in der Nachrichtenliste ausblenden, etwa das Upgrad
 #. Upgrade is the label of Gmail's own button, so it is written as Gmail writes it, not as Meru Pro's Upgrade
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Hide the Upgrade button in Gmail."
-msgstr "Die Schaltfläche „Upgraden“ in Gmail ausblenden."
+msgstr "Den Button „Upgraden“ in Gmail ausblenden."
 
 #. The upgrade button is Gmail's own Upgrade button, so it follows Gmail's word for it, not Meru Pro's
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Hide upgrade button"
-msgstr "Schaltfläche „Upgraden“ ausblenden"
+msgstr "Button „Upgraden“ ausblenden"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1512,16 +1495,16 @@ msgstr "Verlauf"
 #. Auto, Collapsed and Expanded quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons."
-msgstr "Wie die Apps im Starter in der Titelleiste angezeigt werden. „Automatisch“ zeigt bis zu drei Apps als einzelne Schaltflächen und klappt sie bei mehr ein. „Eingeklappt“ fasst sie immer hinter einer Schaltfläche zusammen, und „Ausgeklappt“ zeigt sie immer als einzelne Schaltflächen."
+msgstr "Wie die Apps im Launcher in der Titelleiste angezeigt werden. „Automatisch“ zeigt bis zu drei Apps als einzelne Buttons und klappt sie bei mehr ein. „Eingeklappt“ fasst sie immer hinter einem Button zusammen, und „Ausgeklappt“ zeigt sie immer als einzelne Buttons."
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
-msgstr "Wie lange ein Tab unbenutzt bleiben muss, bevor er in den Ruhezustand versetzt wird. Der aktive Tab, Tabs in einem eigenen Fenster und Tabs, die Audio abspielen, bleiben unberührt."
+msgstr "Wie lange ein Tab unbenutzt bleiben muss, bevor er inaktiv wird. Der aktive Tab, Tabs in einem eigenen Fenster und Tabs, die Audio abspielen, bleiben unberührt."
 
 #. Auto quotes this setting's option and Reset Width the sidebar's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How wide the vertical tabs sidebar is. Auto switches between narrow and wide based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide for that account until Meru quits, leaving this setting as it is. Right-click the sidebar and choose Reset Width to hand it back."
-msgstr "Wie breit die Seitenleiste mit den vertikalen Tabs ist. „Automatisch“ wechselt je nach geöffneten Tabs zwischen schmal und breit. Die Schaltfläche unten in der Seitenleiste wechselt für dieses Konto zwischen schmal und breit, bis Meru beendet wird, und lässt diese Einstellung unverändert. Klicke mit der rechten Maustaste auf die Seitenleiste und wähle „Breite zurücksetzen“, um die Breite wieder dieser Einstellung zu überlassen."
+msgstr "Wie breit die Seitenleiste mit den vertikalen Tabs ist. „Automatisch“ wechselt je nach geöffneten Tabs zwischen schmal und breit. Der Button unten in der Seitenleiste wechselt für dieses Konto zwischen schmal und breit, bis Meru beendet wird, und lässt diese Einstellung unverändert. Klicke mit der rechten Maustaste auf die Seitenleiste und wähle „Breite zurücksetzen“, um die Breite wieder dieser Einstellung zu überlassen."
 
 #. Tabs and New windows quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -1536,7 +1519,7 @@ msgstr "Nur wichtige"
 #. Heading of the Workspace apps already in the launcher
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
-msgstr "Im Starter"
+msgstr "Im Launcher"
 
 #. Heading of the Gmail page's section about Gmail's inbox; Inbox follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -1628,16 +1611,16 @@ msgstr "Minimiert starten"
 #. Heading of the settings for the Workspace apps launcher and the bookmarks button
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Launcher and bookmarks"
-msgstr "Starter und Lesezeichen"
+msgstr "Launcher und Lesezeichen"
 
 #. Setting that picks the Workspace apps in the launcher
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Launcher apps"
-msgstr "Apps im Starter"
+msgstr "Apps im Launcher"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Launcher display"
-msgstr "Anzeige des Starters"
+msgstr "Anzeige des Launchers"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
@@ -1711,7 +1694,7 @@ msgstr "Konten verwalten"
 msgid "Mark as read"
 msgstr "Als gelesen markieren"
 
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 msgid "Mark as Read"
 msgstr "Als gelesen markieren"
@@ -1721,7 +1704,7 @@ msgstr "Als gelesen markieren"
 msgid "Mark as spam"
 msgstr "Als Spam markieren"
 
-#. Button on a new email notification
+#. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 msgid "Mark as Spam"
 msgstr "Als Spam markieren"
@@ -1756,7 +1739,7 @@ msgstr "Meru {version} ist verfügbar."
 
 #: packages/app/dialogs.ts
 msgid "Meru {version} is the last version that runs on macOS {macOSVersion}. Newer versions need macOS 13 or later, so Meru won't check for updates on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
-msgstr "Meru {version} ist die letzte Version, die unter macOS {macOSVersion} läuft. Neuere Versionen benötigen macOS 13 oder neuer, daher sucht Meru auf diesem Mac nicht nach Updates. Diese Version funktioniert weiterhin, erhält aber keine weiteren Korrekturen, auch keine Sicherheitskorrekturen. Die langfristige Nutzung erfolgt daher auf eigenes Risiko."
+msgstr "Meru {version} ist die letzte Version, die unter macOS {macOSVersion} läuft. Neuere Versionen benötigen macOS 13 oder neuer, daher sucht Meru auf diesem Mac nicht nach Updates. Diese Version funktioniert weiterhin, erhält aber keine weiteren Korrekturen, auch keine Sicherheitskorrekturen. Wenn du sie langfristig nutzt, tust du das daher auf eigenes Risiko."
 
 #: packages/app/dialogs.ts
 msgid "Meru {version} is the latest version."
@@ -1948,7 +1931,7 @@ msgstr "Keine zusätzlichen Sprachen ausgewählt"
 #. Available quotes the heading of the apps that can be added, so it matches that heading's wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "No apps in the launcher yet. Add one from Available."
-msgstr "Noch keine Apps im Starter. Füge eine aus „Verfügbar“ hinzu."
+msgstr "Noch keine Apps im Launcher. Füge eine aus „Verfügbar“ hinzu."
 
 #: packages/renderer/bookmarks.tsx
 msgid "No bookmarks yet"
@@ -2011,7 +1994,7 @@ msgstr "Benachrichtigungen"
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "Hinweise"
+msgstr "Popups"
 
 #. Setting that picks which new emails show a notification
 #: packages/renderer/routes/settings/notifications.tsx
@@ -2022,9 +2005,25 @@ msgstr "Benachrichtigen bei"
 msgid "Notify when updates are available"
 msgstr "Bei verfügbaren Updates benachrichtigen"
 
-#: packages/app/dialogs.ts
-#: packages/app/workspace-app.ts
 #: packages/renderer/routes/settings/extensions.tsx
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "Linux"
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "macOS"
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "Windows"
 msgid "OK"
 msgstr "OK"
 
@@ -2092,7 +2091,7 @@ msgstr "In App öffnen"
 #: packages/app/context-menu.ts
 #: packages/app/ipc.ts
 msgid "Open in Default Browser"
-msgstr "In Standardbrowser öffnen"
+msgstr "Im Standardbrowser öffnen"
 
 #. Button that opens the user styles file in the default text editor
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -2202,6 +2201,24 @@ msgctxt "Windows"
 msgid "Paste"
 msgstr "Einfügen"
 
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Paste and &Match Style"
+msgstr "E&infügen und Stil anpassen"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Paste and &Match Style"
+msgstr "Einsetzen und Stil anpassen"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Paste and &Match Style"
+msgstr "Einfügen und For&mat anpassen"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "Linux"
@@ -2241,7 +2258,7 @@ msgstr "Emoji auswählen"
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
 msgid "Pin"
-msgstr "Fixieren"
+msgstr "Anpinnen"
 
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
@@ -2298,16 +2315,33 @@ msgstr "Suchanfrage"
 #. Dialog button that quits Meru
 #. Dialog button that quits Meru
 #. Dialog button that quits Meru
-#. Tray menu item that quits Meru
 #: packages/app/license-key.ts
-#: packages/app/tray.ts
 #: packages/app/trial.ts
+msgid "Quit"
+msgstr "Beenden"
+
+#. Tray menu item that quits Meru
+#: packages/app/tray.ts
+msgctxt "Linux"
 msgid "Quit"
 msgstr "Beenden"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Quit {appName}"
+msgstr "{appName} beenden"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
 #: packages/app/tray.ts
+msgctxt "macOS"
+msgid "Quit {appName}"
+msgstr "{appName} beenden"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Quit {appName}"
 msgstr "{appName} beenden"
 
@@ -2321,7 +2355,7 @@ msgstr "Benachrichtigungen erhalten, wenn Updates verfügbar sind."
 
 #: packages/renderer/recent-download-history.tsx
 msgid "Recent download history"
-msgstr "Aktueller Downloadverlauf"
+msgstr "Letzte Downloads"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Recolor Gmail labels by their exact name. The text color defaults to whatever contrasts with the background, and can be set to white or black instead."
@@ -2374,7 +2408,7 @@ msgstr "Entfernen"
 #. Screen reader label of the button that takes a Workspace app out of the launcher; label is the app's name
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Remove {label} from launcher"
-msgstr "{label} aus dem Starter entfernen"
+msgstr "{label} aus dem Launcher entfernen"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove {label}?"
@@ -2508,7 +2542,7 @@ msgstr "Jetzt neu starten"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Restrict minimum window size"
-msgstr "Mindestgröße des Fensters begrenzen"
+msgstr "Mindestgröße für das Fenster festlegen"
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Reverse conversation"
@@ -2527,7 +2561,7 @@ msgstr "Die installierten Erweiterungen ausführen. Ist diese Option aus, werden
 #: packages/app/context-menu.ts
 msgctxt "Linux"
 msgid "Sa&ve Image As…"
-msgstr "Bild &speichern unter …"
+msgstr "&Bild speichern unter …"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -2539,7 +2573,7 @@ msgstr "Bild sichern unter …"
 #: packages/app/context-menu.ts
 msgctxt "Windows"
 msgid "Sa&ve Image As…"
-msgstr "Bild &speichern unter …"
+msgstr "&Bild speichern unter …"
 
 #. Button that saves the account's changes in the dialog
 #. Button that saves the device label
@@ -2588,13 +2622,13 @@ msgstr "Auswählen"
 #: packages/app/context-menu.ts
 msgctxt "Linux"
 msgid "Select &All"
-msgstr "Alles aus&wählen"
+msgstr "&Alles auswählen"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgctxt "Windows"
 msgid "Select &All"
-msgstr "Alles &markieren"
+msgstr "&Alles markieren"
 
 #: packages/renderer/routes/settings/languages.tsx
 msgid "Select additional languages for spellchecking alongside the system language."
@@ -2630,7 +2664,7 @@ msgstr "Wähle „Browser“ und dann „Browser hinzufügen“."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Select first unread account on click"
-msgstr "Beim Klicken erstes ungelesenes Konto auswählen"
+msgstr "Beim Klicken erstes Konto mit ungelesenen E-Mails auswählen"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -2675,8 +2709,8 @@ msgid "Selected tabs"
 msgstr "Ausgewählte Tabs"
 
 #: packages/renderer/routes/settings/advanced.tsx
-msgid "Send a custom user agent for the Gmail and Workspace apps features that don't work with the default one. It resolves some problems and can cause others, so turn it off if the app becomes unstable."
-msgstr "Für Funktionen von Gmail und Workspace-Apps, die mit dem Standard-User-Agent nicht funktionieren, einen eigenen User-Agent senden. Das behebt manche Probleme und kann andere verursachen, also deaktiviere die Option, wenn die App instabil wird."
+msgid "Send a user agent that names Meru and Electron, instead of the one Chromium sends. Google can treat the app differently with it, so turn it on only to rule out the user agent as the cause of a problem."
+msgstr "Einen User-Agent senden, der Meru und Electron nennt, statt des User-Agents, den Chromium sendet. Google kann die App damit anders behandeln, also aktiviere die Option nur, um den User-Agent als Ursache eines Problems auszuschließen."
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Set Meru as the default mail client to handle email links and related protocols."
@@ -2791,11 +2825,11 @@ msgstr "Lesezeichen anzeigen"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show bookmarks button"
-msgstr "Lesezeichen-Schaltfläche anzeigen"
+msgstr "Lesezeichen-Button anzeigen"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show Do Not Disturb button"
-msgstr "Schaltfläche „Nicht stören“ anzeigen"
+msgstr "Button „Nicht stören“ anzeigen"
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show email conversations in reverse order, with the latest message at the top."
@@ -2871,7 +2905,7 @@ msgstr "Benachrichtigungen von Workspace-Apps wie Calendar, Meet und Chat anzeig
 #: packages/renderer/components/app-titlebar.tsx
 #: packages/renderer/workspace-app.tsx
 msgid "Show recent download history"
-msgstr "Aktuellen Downloadverlauf anzeigen"
+msgstr "Letzte Downloads anzeigen"
 
 #. Save As names the operating system's dialog that asks where to save a file
 #: packages/renderer/routes/settings/downloads.tsx
@@ -2945,25 +2979,25 @@ msgstr "Das App-Symbol im Infobereich anzeigen."
 #. Reset Width quotes the sidebar's context menu item and Width the setting above, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above."
-msgstr "Die Schaltfläche unten in der Seitenleiste anzeigen, die zwischen schmal und breit wechselt. Ist diese Option aus, verwende „Breite zurücksetzen“ im Kontextmenü der Seitenleiste oder die Einstellung „Breite“ oben."
+msgstr "Den Button unten in der Seitenleiste anzeigen, der zwischen schmal und breit wechselt. Ist diese Option aus, verwende „Breite zurücksetzen“ im Kontextmenü der Seitenleiste oder die Einstellung „Breite“ oben."
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show the button that opens bookmarks."
-msgstr "Die Schaltfläche anzeigen, die die Lesezeichen öffnet."
+msgstr "Den Button anzeigen, der die Lesezeichen öffnet."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show the button that turns Do Not Disturb on and off. Turning this off also turns Do Not Disturb off."
-msgstr "Die Schaltfläche anzeigen, mit der „Nicht stören“ ein- und ausgeschaltet wird. Wenn du diese Option deaktivierst, wird auch „Nicht stören“ ausgeschaltet."
+msgstr "Den Button anzeigen, mit dem „Nicht stören“ ein- und ausgeschaltet wird. Wenn du diese Option deaktivierst, wird auch „Nicht stören“ ausgeschaltet."
 
 #. Automatic is this setting's first option; dwm, i3 and sway are window managers
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show the close, minimize and maximize buttons in the titlebar. Automatic hides them on window managers without decorations, such as dwm, i3 and sway."
-msgstr "Die Schaltflächen zum Schließen, Minimieren und Maximieren in der Titelleiste anzeigen. „Automatisch“ blendet sie bei Fenstermanagern ohne Fensterdekorationen aus, etwa dwm, i3 und sway."
+msgstr "Die Buttons zum Schließen, Minimieren und Maximieren in der Titelleiste anzeigen. „Automatisch“ blendet sie bei Fenstermanagern ohne Fensterdekorationen aus, etwa dwm, i3 und sway."
 
 #. ••• is the label of Gmail's button that shows trimmed content, kept as is
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show the quoted text Gmail hides behind the ••• button."
-msgstr "Den zitierten Text anzeigen, den Gmail hinter der Schaltfläche ••• verbirgt."
+msgstr "Den zitierten Text anzeigen, den Gmail hinter dem Button ••• verbirgt."
 
 #. When another tab is active quotes this setting's option, so it matches that option's wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -2993,7 +3027,7 @@ msgstr "Anzahl ungelesener E-Mails anzeigen"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show width button"
-msgstr "Schaltfläche für Breite anzeigen"
+msgstr "Button für Breite anzeigen"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show windows"
@@ -3102,7 +3136,7 @@ msgstr "Zwischen Seiten blättern"
 #. The second Swipe between pages names the macOS setting of that name in System Settings, so it follows Apple's wording for it
 #: packages/renderer/routes/settings/general.tsx
 msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Streiche mit zwei Fingern auf einem Trackpad nach links oder rechts, um zurück- oder vorwärtszugehen. „Zwischen Seiten blättern“ muss auch in den Systemeinstellungen aktiviert sein."
+msgstr "Streiche mit zwei Fingern auf einem Trackpad nach links oder rechts, um zurück- oder vorwärtszugehen. „Mit Streichen Seiten blättern“ muss auch in den Systemeinstellungen aktiviert sein."
 
 #. Button that confirms moving to the beta release channel
 #: packages/renderer/routes/settings/updates.tsx
@@ -3332,7 +3366,7 @@ msgstr "Gemeinsamer Posteingang"
 #. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Unload tabs that have been sitting unused, giving back the memory they hold. A hibernated tab keeps its place in the sidebar and loads again when you click it, on the page you left. Unpinned tabs leaves your pinned tabs loaded, and Selected tabs hibernates nothing until you mark a tab. Whichever you pick, a single tab can opt in or out with Hibernate When Idle in its context menu."
-msgstr "Tabs entladen, die eine Zeit lang unbenutzt waren, um den belegten Speicher freizugeben. Ein Tab im Ruhezustand behält seinen Platz in der Seitenleiste und lädt wieder, wenn du ihn anklickst – auf der Seite, auf der du warst. „Nicht fixierte Tabs“ lässt deine fixierten Tabs geladen, und „Ausgewählte Tabs“ versetzt nichts in den Ruhezustand, bis du einen Tab markierst. Unabhängig von deiner Wahl kann ein einzelner Tab über „Ruhezustand bei Inaktivität“ in seinem Kontextmenü ein- oder ausgeschlossen werden."
+msgstr "Tabs entladen, die eine Zeit lang unbenutzt waren, um den belegten Speicher freizugeben. Ein inaktiver Tab behält seinen Platz in der Seitenleiste und lädt wieder, wenn du ihn anklickst – auf der Seite, auf der du warst. „Nicht angepinnte Tabs“ lässt deine angepinnten Tabs geladen, und „Ausgewählte Tabs“ macht keinen Tab inaktiv, bis du einen Tab markierst. Unabhängig von deiner Wahl kann ein einzelner Tab über „Inaktiv machen, wenn unbenutzt“ in seinem Kontextmenü ein- oder ausgeschlossen werden."
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Unlock Meru Pro for professional features and commercial use. Your upgrade supports ongoing development."
@@ -3346,12 +3380,18 @@ msgstr "Loslösen"
 #. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
 #: packages/shared/workspace-apps.ts
 msgid "Unpinned tabs"
-msgstr "Nicht fixierte Tabs"
+msgstr "Nicht angepinnte Tabs"
 
-#. Switch, and a badge on the account, for showing the account's unread badge
+#. Switch for showing the account's unread badge
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Unread badge"
 msgstr "Kennzeichen für ungelesene E-Mails"
+
+#. Badge on an account's row in Settings when its unread badge is on: a short badge on a row that cannot wrap; keep it as short as possible
+#: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account row badge"
+msgid "Unread badge"
+msgstr "Ungelesen"
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Unread count preference"
@@ -3383,7 +3423,7 @@ msgstr "Updates"
 
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Updates need macOS 13 or later, so Meru won't check for them on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
-msgstr "Updates benötigen macOS 13 oder neuer, daher sucht Meru auf diesem Mac nicht danach. Diese Version funktioniert weiterhin, erhält aber keine weiteren Korrekturen, auch keine Sicherheitskorrekturen. Die langfristige Nutzung erfolgt daher auf eigenes Risiko."
+msgstr "Updates benötigen macOS 13 oder neuer, daher sucht Meru auf diesem Mac nicht danach. Diese Version funktioniert weiterhin, erhält aber keine weiteren Korrekturen, auch keine Sicherheitskorrekturen. Wenn du sie langfristig nutzt, tust du das daher auf eigenes Risiko."
 
 #. Button on the License page in Settings, which opens Meru Pro's pricing page
 #. Button on the License page in Settings, which opens Meru Pro's pricing page
@@ -3425,8 +3465,8 @@ msgid "Upgrade to Meru Pro to unlock all options"
 msgstr "Mit einem Upgrade auf Meru Pro schaltest du alle Optionen frei"
 
 #: packages/renderer/routes/settings/advanced.tsx
-msgid "Use custom user agent"
-msgstr "Eigenen User-Agent verwenden"
+msgid "Use default user agent"
+msgstr "Standard-User-Agent verwenden"
 
 #. Setting that shares the screen through the operating system's own picker
 #: packages/renderer/routes/settings/advanced.tsx
@@ -3527,7 +3567,7 @@ msgstr "Wo heruntergeladene Dateien gespeichert werden."
 #. Auto, Sidebar and Titlebar quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown. Sidebar keeps them there and holds the sidebar open even with a single tab, and Titlebar keeps them in the titlebar at all times."
-msgstr "Wo der Starter und die Lesezeichen-Schaltfläche sitzen. „Automatisch“ verschiebt sie an das untere Ende der Seitenleiste mit den vertikalen Tabs, solange diese angezeigt wird. „Seitenleiste“ belässt sie dort und hält die Seitenleiste auch bei einem einzigen Tab offen, und „Titelleiste“ belässt sie immer in der Titelleiste."
+msgstr "Wo der Launcher und der Lesezeichen-Button sitzen. „Automatisch“ verschiebt sie an das untere Ende der Seitenleiste mit den vertikalen Tabs, solange diese angezeigt wird. „Seitenleiste“ belässt sie dort und hält die Seitenleiste auch bei einem einzigen Tab offen, und „Titelleiste“ belässt sie immer in der Titelleiste."
 
 #: packages/app/protocol/index.ts
 msgid "Which account should compose this email?"
