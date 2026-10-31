@@ -865,9 +865,9 @@
       "id": "unread-badge",
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
-      "expect": "[Ii]nsignia",
+      "expect": "[Cc]ontador",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (insignia: 3 of 7 (Thunderbird, Android, LibreOffice))."
+      "reason": "Glossary, agent-chosen: the unread badge is contador, counted as Meru uses it, an unread count on an app icon (the apps tie; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (punto); the most direct match is Apple's unread badge, contador de mensajes no leídos)."
     },
     {
       "id": "meru-label",

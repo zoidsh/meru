@@ -841,7 +841,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "未読バッジ",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (バッジ: 4 of 7 (Thunderbird, Android, Microsoft, Apple))."
+      "reason": "Glossary, agent-chosen: the unread badge is バッジ, counted as Meru uses it, an unread count on an app icon (バッジ: 3 of 7 (Thunderbird, Microsoft, Apple))."
     },
     {
       "id": "tab-strip",

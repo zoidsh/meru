@@ -846,7 +846,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Ss]elo",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (selo: 2 of 7 (Android, Microsoft))."
+      "reason": "Glossary, agent-chosen: the unread badge is selo, counted as Meru uses it, an unread count on an app icon (unresolved by the app count: the apps tie, Thunderbird emblema, Microsoft selo, Apple aviso; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (ponto); Apple's direct unread badge, aviso de mensagens não lidas, is pt-BR's toast word, so selo stays)."
     },
     {
       "id": "meru-label",

@@ -897,7 +897,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Bb]adge",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (badge: 5 of 7 (Thunderbird, Android, LibreOffice, Microsoft, Apple))."
+      "reason": "Glossary, agent-chosen: the unread badge is badge, counted as Meru uses it, an unread count on an app icon (badge: 3 of 7 (Thunderbird, Microsoft, Apple))."
     },
     {
       "id": "meru-label",

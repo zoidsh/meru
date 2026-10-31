@@ -634,7 +634,7 @@
       "id": "ungelesen-kennzeichen",
       "pattern": "Ungelesen-(?:Kennzeichen|Badge)",
       "severity": "wrong",
-      "reason": "The unread badge is the Badge für ungelesene E-Mails, never a coined Ungelesen-Badge or Ungelesen-Kennzeichen (glossary, agent-chosen)."
+      "reason": "The unread badge is the Kennzeichen für ungelesene E-Mails, never a coined Ungelesen-Kennzeichen or Ungelesen-Badge (glossary, agent-chosen)."
     },
     {
       "id": "sie",
@@ -734,9 +734,9 @@
       "id": "unread-badge",
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
-      "expect": "Badge",
+      "expect": "Kennzeichen",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (Badge: 2 of 7 (Microsoft, Apple))."
+      "reason": "Glossary, agent-chosen: the unread badge is Kennzeichen, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird Zähler, Microsoft Badge, Apple Kennzeichen; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (Benachrichtigungspunkt); the most direct match is Apple's unread badge, Kennzeichen für ungelesene Mails)."
     },
     {
       "id": "tab-strip",

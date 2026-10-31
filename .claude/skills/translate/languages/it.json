@@ -856,7 +856,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Bb]adge",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (badge: 3 of 7 (Android, LibreOffice, Apple))."
+      "reason": "Glossary, agent-chosen: the unread badge is badge, counted as Meru uses it, an unread count on an app icon (badge: 2 of 7 (Microsoft, Apple), thin; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (indicatore di notifica); Apple's Badge application icon, Badge sull’icona dell’app, is a direct match)."
     },
     {
       "id": "meru-label",

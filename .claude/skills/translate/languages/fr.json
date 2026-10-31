@@ -884,9 +884,9 @@
       "id": "unread-badge",
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
-      "expect": "[Bb]adge",
+      "expect": "[Pp]astille",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (badge: 4 of 7 (Thunderbird, Android, LibreOffice, Microsoft))."
+      "reason": "Glossary, agent-chosen: the unread badge is pastille, counted as Meru uses it, an unread count on an app icon (pastille: 2 of 7 (Thunderbird, Apple), thin; Android's own wording agrees (pastille de notification); the most direct matches, Thunderbird's App icon badge and Apple's unread badge, are both pastille)."
     },
     {
       "id": "meru-label",

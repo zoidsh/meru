@@ -252,7 +252,7 @@ msgstr "Fermer l’avis"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Afficher le badge des e-mails non lus"
+msgstr "Afficher la pastille des e-mails non lus"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Label"

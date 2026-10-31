@@ -162,7 +162,7 @@ msgstr "Label eingeben"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Badge für ungelesene E-Mails anzeigen"
+msgstr "Kennzeichen für ungelesene E-Mails anzeigen"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Chime"

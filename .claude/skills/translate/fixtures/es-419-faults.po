@@ -229,7 +229,7 @@ msgstr "Cerrar notificación"
 # fault: pinned:unread-badge
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Mostrar contador de no leídos"
+msgstr "Mostrar insignia de no leídos"
 
 # fault: pinned:meru-label
 #: packages/renderer/routes/settings/accounts.tsx

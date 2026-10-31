@@ -902,7 +902,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Pp]lakietk",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (plakietka: 4 of 7 (Thunderbird, Android, LibreOffice, Apple))."
+      "reason": "Glossary, agent-chosen: the unread badge is plakietka, counted as Meru uses it, an unread count on an app icon (plakietka: 2 of 7 (Thunderbird, Apple), thin; the most direct match is Apple's unread badge, plakietka nieprzeczytanych)."
     },
     {
       "id": "meru-label",

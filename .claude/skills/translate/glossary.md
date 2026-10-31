@@ -138,7 +138,7 @@ The time windows outside which no notification is shown. The interface reads _No
 - es-419: horario de notificaciones; a window is un _intervalo de tiempo_ (agent-chosen: intervalo de tiempo: 3 of 7 (Thunderbird, Firefox, Apple))
 - pt-BR: horários de notificação; a window is um _intervalo de horário_ (agent-chosen: intervalo de horário: 4 of 7 (Firefox, LibreOffice, Microsoft, Apple))
 - nl: meldingstijden; a window is een _periode_ (agent-chosen: periode: 2 of 7 (Thunderbird, Firefox))
-- pl: godziny powiadomień; a window is _okres_ (agent-chosen: okres: 2 of 7 (Thunderbird, Firefox))
+- pl: godziny powiadomień; a window is _przedział czasu_ (agent-chosen: okres: 2 of 7 (Thunderbird, Firefox), thin, so Google's wording decides, przedział twice and okres once in Google Calendar Help's appointment-schedule page)
 - sv: aviseringstider; a window is ett _tidsintervall_ (agent-chosen: tidsintervall: 4 of 7 (Thunderbird, Firefox, Microsoft, Apple))
 - ja: 通知時間帯; a window is 時間帯 (agent-chosen: the apps tie, Firefox and VS Code 期間, Microsoft and Apple 時間帯; Google's wording breaks it, 時間帯 4 times, 期間 2 and 時間枠 1 in Google Calendar Help, "Create an appointment schedule" (support.google.com/calendar/answer/10729749))
 
@@ -403,15 +403,15 @@ The standalone _Upgrade_ label, a button beside the license, is Gmail's word tow
 
 The device is Chrome's word. The license key is unresolved by the app count: only Microsoft has one, as a product key. The trial is the apps' word, counted in their messages with _trial_.
 
-- de: Lizenzschlüssel; Testversion; Gerät (Chrome 981/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: Testversion: 2 of 7 (Firefox, Microsoft))
+- de: Lizenzschlüssel; Testzeitraum; Gerät (Chrome 981/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: Testversion: 2 of 7 (Firefox, Microsoft), thin, so Google's wording decides, Testzeitraum 23 times and Testversion once in Google Workspace's free-trial page (support.google.com/a/answer/6388094))
 - fr: clé de licence; essai; appareil (Chrome 959/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: essai: 3 of 7 (Firefox, VS Code, Apple))
 - it: chiave di licenza; prova; dispositivo (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: the apps tie, Firefox and Apple prova, VS Code and Microsoft versione di valutazione; Google's wording breaks it, prova 29 times and valutazione none in Google Workspace Help, "About your Google Workspace free trial" (support.google.com/a/answer/6388094), as in _prova senza costi_)
 - es: clave de licencia; prueba; dispositivo (Chrome 985/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: prueba: 3 of 7 (Firefox, VS Code, Microsoft))
 - es-419: clave de licencia; prueba; dispositivo (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: prueba: 4 of 7 (Firefox, VS Code, Microsoft, Apple))
 - pt-BR: chave de licença; período de avaliação; dispositivo (Chrome 976/1010; license key agent-chosen, unresolved by the app count; trial agent-chosen: período de avaliação: 3 of 7 (VS Code, Microsoft, Apple))
-- nl: licentiesleutel; proefabonnement; apparaat (Chrome 984/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: proefabonnement: 2 of 7 (Microsoft, Apple))
+- nl: licentiesleutel; proefperiode; apparaat (Chrome 984/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: proefabonnement: 2 of 7 (Microsoft, Apple), thin, so Google's wording decides, proefperiode 28 times and proefabonnement once in Google Workspace's free-trial page (support.google.com/a/answer/6388094))
 - pl: klucz licencyjny; okres próbny; urządzenie (Chrome 997/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: the apps tie, Firefox and Apple okres próbny, VS Code and Microsoft wersja próbna; Google's wording breaks it, _bezpłatny okres próbny_ in Google Workspace Help, "About your Google Workspace free trial" (support.google.com/a/answer/6388094))
-- sv: licensnyckel; provperiod; enhet (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: provperiod: 2 of 7 (Firefox, Apple))
+- sv: licensnyckel; provperiod; enhet (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: provperiod: 2 of 7 (Firefox, Apple), thin, and Google's wording agrees, provperiod 23 times in Google Workspace's free-trial page (support.google.com/a/answer/6388094))
 - ja: ライセンスキー; 試用期間; デバイス (Chrome 984/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: the apps tie, Firefox and Apple トライアル, VS Code and Microsoft 試用; Google's wording breaks it, 試用 29 times and トライアル 4 in Google Workspace Help, "About your Google Workspace free trial" (support.google.com/a/answer/6388094), as in 試用期間中)
 
 ## Download history
@@ -434,7 +434,7 @@ Counted in Chrome's messages with _download history_; where a language pins the 
 The dark theme is Chrome's _Dark theme_ label (1/1), which the seven apps' count backs in it, es, es-419 and ja (3 to 6 of 7) and not in fr (mode sombre 4 of 7), nl (donkere modus 3), pl (tryb ciemny 4) and sv (mörkt läge 4), with de and pt-BR tied; Chrome's word stands by step 4a; the blocker is the apps' word, counted in their messages with _blocker_ or _content blocking_; the spellchecker is counted in its 23 messages with _spell check_.
 
 - de: dunkles Design (Chrome 1/1); Blocker (agent-chosen: Blocker: 2 of 7 (Firefox, Microsoft)); Rechtschreibprüfung (Chrome 22/23)
-- fr: thème sombre (Chrome 1/1); bloqueur (agent-chosen: bloqueur: 2 of 7 (Firefox, Microsoft)); correcteur orthographique (Chrome 21/23)
+- fr: thème sombre (Chrome 1/1); blocage (agent-chosen: bloqueur: 2 of 7 (Firefox, Microsoft), thin, so Google's wording decides, blocage in Chrome Help's pop-up page and bloqueur nowhere); correcteur orthographique (Chrome 21/23)
 - it: tema scuro (Chrome 1/1); blocco contenuti (agent-chosen: blocco contenuti: 3 of 7 (Thunderbird, Firefox, Microsoft)); controllo ortografico (Chrome 22/23)
 - es: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: the apps tie, Firefox between bloqueador and bloqueo, Thunderbird bloqueo, Microsoft bloqueador; Google's wording breaks it, bloqueador in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); corrector ortográfico (Chrome 14/23)
 - es-419: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: as for es, bloqueador in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); corrector ortográfico (Chrome 21/23)
@@ -476,18 +476,18 @@ A brief message Meru shows over its window or over Gmail, such as the one after 
 
 ## Unread badge
 
-The count on an account, a tab or the dock icon for its unread emails: _Show unread badge_, _Unread badge_. Chrome has no word for one, so it takes the apps' word for a badge, counted in their messages with _badge_ (work and ID badges left out).
+The count on an account, a tab or the dock icon for its unread emails: _Show unread badge_, _Unread badge_. Chrome has no word for one, so it takes the apps' word, counted in Meru's own sense: their messages for an app-icon, unread or notification badge. Where that count is thin or tied, Google's own wording would decide, but Android calls its notification badge a dot, with no count, so the most direct match decides: Apple's _unread badge_ or Thunderbird's _App icon badge_.
 
-- de: Badge, das; in full _Badge für ungelesene E-Mails_ (_Badge für ungelesene E-Mails anzeigen_), never the coined _Ungelesen-Badge_ (agent-chosen: Badge: 2 of 7 (Microsoft, Apple); Thunderbird writes Zähler)
-- fr: badge; in full _badge des e-mails non lus_ (_Afficher le badge des e-mails non lus_) (agent-chosen: badge: 4 of 7 (Thunderbird, Android, LibreOffice, Microsoft); Apple writes pastille)
-- it: badge; in full _badge delle email non lette_ (_Mostra il badge delle email non lette_) (agent-chosen: badge: 3 of 7 (Android, LibreOffice, Apple))
-- es: insignia; in full _insignia de no leídos_ (_Mostrar insignia de no leídos_) (agent-chosen: insignia: 3 of 7 (Thunderbird, Android, LibreOffice))
-- es-419: insignia; in full _insignia de no leídos_ (_Mostrar insignia de no leídos_) (agent-chosen: insignia: 3 of 7 (Thunderbird, Android, LibreOffice))
-- pt-BR: selo; in full _selo de não lidos_ (_Mostrar Selo de Não Lidos_) (agent-chosen: selo: 2 of 7 (Android, Microsoft); Thunderbird writes emblema, Apple aviso)
-- nl: badge; in full _badge voor ongelezen e-mails_ (_Toon badge voor ongelezen e-mails_) (agent-chosen: badge: 5 of 7 (Thunderbird, Android, LibreOffice, Microsoft, Apple))
-- pl: plakietka; in full _plakietka z liczbą nieprzeczytanych_ (_Pokaż plakietkę z liczbą nieprzeczytanych_) (agent-chosen: plakietka: 4 of 7 (Thunderbird, Android, LibreOffice, Apple))
-- sv: märke; in full _märke för olästa_ (_Visa märke för olästa_) (agent-chosen: märke: 3 of 7 (Thunderbird, Android, Microsoft))
-- ja: 未読バッジ (未読バッジを表示) (agent-chosen: バッジ: 4 of 7 (Thunderbird, Android, Microsoft, Apple), with 未読)
+- de: Kennzeichen; in full _Kennzeichen für ungelesene E-Mails_ (_Kennzeichen für ungelesene E-Mails anzeigen_) (agent-chosen: the apps tie, Thunderbird Zähler, Microsoft Badge, Apple Kennzeichen; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (Benachrichtigungspunkt); the most direct match is Apple's _unread badge_, Kennzeichen für ungelesene Mails)
+- fr: pastille; in full _pastille des e-mails non lus_ (_Afficher la pastille des e-mails non lus_) (agent-chosen: pastille: 2 of 7 (Thunderbird, Apple), thin; Android's own wording agrees (pastille de notification); the most direct matches, Thunderbird's _App icon badge_ and Apple's _unread badge_, are both pastille)
+- it: badge; in full _badge delle email non lette_ (_Mostra il badge delle email non lette_) (agent-chosen: badge: 2 of 7 (Microsoft, Apple), thin; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (indicatore di notifica); Apple's _Badge application icon_, Badge sull’icona dell’app, is a direct match)
+- es: insignia; in full _insignia de no leídos_ (_Mostrar insignia de no leídos_) (agent-chosen: insignia: 1 of 7 (Thunderbird), thin; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count; Thunderbird's _App icon badge_, Insignia del icono de la aplicación, is the direct match)
+- es-419: contador; in full _contador de no leídos_ (_Mostrar contador de no leídos_) (agent-chosen: the apps tie; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (punto); the most direct match is Apple's _unread badge_, contador de mensajes no leídos)
+- pt-BR: selo; in full _selo de não lidos_ (_Mostrar Selo de Não Lidos_) (agent-chosen: unresolved by the app count: the apps tie, Thunderbird emblema, Microsoft selo, Apple aviso; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (ponto); Apple's direct _unread badge_, aviso de mensagens não lidas, is pt-BR's toast word, so selo stays)
+- nl: badge; in full _badge voor ongelezen e-mails_ (_Toon badge voor ongelezen e-mails_) (agent-chosen: badge: 3 of 7 (Thunderbird, Microsoft, Apple))
+- pl: plakietka; in full _plakietka z liczbą nieprzeczytanych_ (_Pokaż plakietkę z liczbą nieprzeczytanych_) (agent-chosen: plakietka: 2 of 7 (Thunderbird, Apple), thin; the most direct match is Apple's _unread badge_, plakietka nieprzeczytanych)
+- sv: bricka; in full _bricka för olästa_ (_Visa bricka för olästa_) (agent-chosen: the apps tie, Thunderbird märke, Microsoft aktivitetsikon, Apple bricka; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (prick); the most direct match is Apple's _unread badge_, oläst-bricka)
+- ja: 未読バッジ (未読バッジを表示) (agent-chosen: バッジ: 3 of 7 (Thunderbird, Microsoft, Apple), with 未読)
 
 The badge on an account's row in Settings, `msgctxt` `account row badge`, sits on a row that cannot wrap, so it takes the shortest form, the apps' word for unread, counted in their messages with _unread_:
 

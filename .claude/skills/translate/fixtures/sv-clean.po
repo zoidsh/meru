@@ -133,7 +133,7 @@ msgstr "Inforutor"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
-msgstr "Visa märke för olästa"
+msgstr "Visa bricka för olästa"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Chime"

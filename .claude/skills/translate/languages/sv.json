@@ -897,9 +897,9 @@
       "id": "unread-badge",
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
-      "expect": "[Mm]ärke",
+      "expect": "[Bb]rick",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (märke: 3 of 7 (Thunderbird, Android, Microsoft))."
+      "reason": "Glossary, agent-chosen: the unread badge is bricka, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird märke, Microsoft aktivitetsikon, Apple bricka; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (prick); the most direct match is Apple's unread badge, oläst-bricka)."
     },
     {
       "id": "meru-label",

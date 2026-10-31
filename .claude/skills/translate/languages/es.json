@@ -851,7 +851,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Ii]nsignia",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (insignia: 3 of 7 (Thunderbird, Android, LibreOffice))."
+      "reason": "Glossary, agent-chosen: the unread badge is insignia, counted as Meru uses it, an unread count on an app icon (insignia: 1 of 7 (Thunderbird), thin; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count; Thunderbird's App icon badge, Insignia del icono de la aplicación, is the direct match)."
     },
     {
       "id": "meru-label",
