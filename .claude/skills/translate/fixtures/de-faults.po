@@ -28,10 +28,18 @@ msgstr "Sichern"
 msgid "Show bookmarks button"
 msgstr "Lesezeichen-Taste anzeigen"
 
+# fault: banned:schaltflaeche
 # fault: pinned:button
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show width button"
 msgstr "Breiten-Schaltfläche anzeigen"
+
+# A -schaltfläche compound is caught as well as the standalone word.
+# fault: banned:schaltflaeche
+# fault: pinned:button
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "A notification shows the code either way. Press its Copy button to copy the code yourself."
+msgstr "Eine Benachrichtigung zeigt den Code so oder so. Drücke ihre Kopierschaltfläche, um den Code selbst zu kopieren."
 
 # A license key is a Lizenzschlüssel, so the English's key allows no Taste.
 # fault: banned:taste

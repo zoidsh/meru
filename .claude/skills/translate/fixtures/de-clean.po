@@ -215,3 +215,7 @@ msgstr "„Nicht stören“ ausschalten"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Upgrade"
+
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "A notification shows the code either way. Press its Copy button to copy the code yourself."
+msgstr "Eine Benachrichtigung zeigt den Code so oder so. Drücke ihren Kopieren-Button, um den Code selbst zu kopieren."

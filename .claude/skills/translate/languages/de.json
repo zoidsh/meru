@@ -586,6 +586,12 @@
       }
     },
     {
+      "id": "schaltflaeche",
+      "pattern": "[Ss]chaltfläche",
+      "severity": "wrong",
+      "reason": "An on-screen button is a Button, standalone and in a compound: Lesezeichen-Button, never Schaltfläche or a -schaltfläche compound (Chrome: Button in 102 of 141 messages for button; in compounds, Button 12 times, such as Scroll-Buttons and Feedback-Button, schaltfläche 3, such as Installationsschaltfläche)."
+    },
+    {
       "id": "bewegen",
       "pattern": "(?<!\\p{L})[Bb]eweg(?:en|e|st|t|te|ten|ter|tes)?(?!\\p{L})",
       "severity": "doubtful",
