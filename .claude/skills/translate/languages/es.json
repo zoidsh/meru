@@ -560,6 +560,24 @@
         "msgctxt": "macOS",
         "msgid": "Show in Finder",
         "msgstr": "Mostrar en el Finder"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "macOS",
+        "msgid": "OK",
+        "msgstr": "Aceptar"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "Windows",
+        "msgid": "OK",
+        "msgstr": "Aceptar"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "Linux",
+        "msgid": "OK",
+        "msgstr": "Aceptar"
       }
     ]
   },

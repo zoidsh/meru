@@ -1,5 +1,7 @@
+import { platform } from "@electron-toolkit/utils";
 import { select, t } from "@lingui/core/macro";
 import { WEBSITE_URL } from "@meru/shared/constants";
+import { byPlatform } from "@meru/shared/platform";
 import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
 import { app, dialog, type MessageBoxOptions } from "electron";
 import { relaunchApp } from "@/lib/relaunch";
@@ -8,16 +10,17 @@ import { main } from "./main";
 import { openExternalUrl } from "./url";
 
 /**
- * A native dialog's OK takes the operating system's word, which in some
- * languages differs from the OK that Meru's own pages draw, so the two are
- * separate messages.
+ * A native dialog's OK takes each operating system's word, which in some
+ * languages differs from the OK that Meru's own pages draw.
  */
 export function getNativeOkLabel() {
-  return t({
-    message: "OK",
-    context: "native dialog",
-    comment: "The OK button of a native dialog",
+  // lingui-set comment="The OK button of a native dialog"
+  return byPlatform(platform, {
+    macOS: t({ message: "OK", context: "macOS" }),
+    windows: t({ message: "OK", context: "Windows" }),
+    linux: t({ message: "OK", context: "Linux" }),
   });
+  // lingui-reset
 }
 
 export async function showRestartDialog() {

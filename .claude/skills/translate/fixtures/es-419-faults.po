@@ -82,11 +82,17 @@ msgstr "Más información..."
 msgid "Meru can't open this link in a browser."
 msgstr "Lo sentimos, Meru no puede abrir este vínculo en un navegador."
 
-# fault: pinned:ok-button
+# fault: platform-word:OK, a native dialog's button
 #: packages/app/dialogs.ts
-msgctxt "native dialog"
+msgctxt "macOS"
 msgid "OK"
 msgstr "Aceptar"
+
+# fault: platform-word:OK, a native dialog's button
+#: packages/app/dialogs.ts
+msgctxt "Windows"
+msgid "OK"
+msgstr "OK"
 
 # fault: pinned:ok-button
 #: packages/renderer/routes/settings/extensions.tsx

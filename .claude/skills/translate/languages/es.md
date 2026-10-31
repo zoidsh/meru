@@ -13,7 +13,7 @@ _tú_, with _tu_ and _te_: _¿Seguro que quieres …?_, _tu cuenta_. Never _voso
 
 ## Buttons and menu items
 
-The infinitive: _Responder_, _Eliminar_, _Guardar_, _Cancelar_, _Aceptar_, _Cerrar pestaña_. The confirming button is _Aceptar_, not _OK_, both on a button Meru draws (Chrome) and in a native dialog, `msgctxt` `native dialog`, where Apple's AppKit writes _Aceptar_ too.
+The infinitive: _Responder_, _Eliminar_, _Guardar_, _Cancelar_, _Aceptar_, _Cerrar pestaña_. The confirming button is _Aceptar_, not _OK_, both on a button Meru draws (Chrome) and in a native dialog, whose OK has a platform `msgctxt` and takes [its platform's word](#platform-words), _Aceptar_ on all three.
 
 ## Capitalization
 
@@ -104,3 +104,4 @@ Sources: **AppKit** and **Mail** are the `.loctable` files in `/System/Library/F
 | Stop Speaking                                        | _Detener locución_ (Mail `MainMenu` `1537.title`)                                                                                                  | macOS only                                                                                                                                 | macOS only                                                                                                   |
 | Look Up “{selection}”                                | _Consultar “{selection}”_ (AppKit `MenuCommands` `Look Up \U201C%@\U201D`)                                                                         | macOS only                                                                                                                                 | macOS only                                                                                                   |
 | Show in Finder                                       | _Mostrar en el Finder_ (Mail `Preferences` `ShowExtensionApplicationInFinder`)                                                                     | macOS only                                                                                                                                 | macOS only                                                                                                   |
+| OK, a native dialog's button                         | _Aceptar_ (AppKit `Common` `OK`)                                                                                                                   | _Aceptar_, inferred: no Microsoft term is cited here; Spanish Windows dialogs read Aceptar                                                 | _Aceptar_, inferred from GTK's stock \_Aceptar, not read here                                                |

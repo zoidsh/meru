@@ -79,8 +79,9 @@ msgid "Meru can't open this link in a browser."
 msgstr "Lo sentimos, Meru no puede abrir este enlace en un navegador."
 
 # fault: pinned:ok-button
+# fault: platform-word:OK, a native dialog's button
 #: packages/app/dialogs.ts
-msgctxt "native dialog"
+msgctxt "macOS"
 msgid "OK"
 msgstr "OK"
 

@@ -2011,7 +2011,19 @@ msgstr "OK"
 
 #. The OK button of a native dialog
 #: packages/app/dialogs.ts
-msgctxt "native dialog"
+msgctxt "Linux"
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "macOS"
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "Windows"
 msgid "OK"
 msgstr "OK"
 

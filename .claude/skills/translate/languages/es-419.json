@@ -560,6 +560,24 @@
         "msgctxt": "macOS",
         "msgid": "Show in Finder",
         "msgstr": "Mostrar en el Finder"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "macOS",
+        "msgid": "OK",
+        "msgstr": "OK"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "Windows",
+        "msgid": "OK",
+        "msgstr": "Aceptar"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "Linux",
+        "msgid": "OK",
+        "msgstr": "Aceptar"
       }
     ]
   },
@@ -677,14 +695,6 @@
       "expect": "^Aceptar$",
       "severity": "wrong",
       "reason": "A button Meru draws reads Aceptar, as Chrome writes OK (Chrome: 6 of its 7 OK labels)."
-    },
-    {
-      "id": "ok-button",
-      "msgctxt": "native dialog",
-      "msgid": "OK",
-      "expect": "^OK$",
-      "severity": "wrong",
-      "reason": "A native dialog's OK is the operating system's word: Apple's OK on macOS (AppKit Common OK). The native dialogs share one message on every platform, so it takes macOS's word for now."
     },
     {
       "id": "bookmark",
