@@ -776,12 +776,6 @@
       "pattern": "インターフェース",
       "severity": "wrong",
       "reason": "A user interface is インターフェイス, never インターフェース (agent-chosen: インターフェイス: 5 of 7 (Apple, Firefox, LibreOffice, Microsoft, VS Code); Chrome has the word only for a network interface)."
-    },
-    {
-      "id": "zoom",
-      "pattern": "拡大率",
-      "severity": "wrong",
-      "reason": "A page's zoom is ズーム and its zoom level ズームレベル, as Chrome writes them, never 拡大率 (Chrome writes the banned form in none of its messages)."
     }
   ],
   "pinned": [

@@ -375,7 +375,6 @@ msgstr "起動ツール内"
 msgid "Add your own CSS to personalize the Gmail interface further."
 msgstr "独自のCSSを追加して、Gmailのインターフェースをさらにカスタマイズします。"
 
-# fault: banned:zoom
 # fault: pinned:zoom
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Persist zoom"
