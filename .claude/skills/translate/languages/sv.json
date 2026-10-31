@@ -997,6 +997,13 @@
       "expect": "[Ii]naktiv",
       "severity": "wrong",
       "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiv flik (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "[Aa]ppstartare",
+      "severity": "wrong",
+      "reason": "The launcher is the appstartare, as Chrome names ChromeOS's (Chrome: 12 of 20 messages)."
     }
   ],
   "accessKeys": {

@@ -994,6 +994,13 @@
       "expect": "[Pp]asser à",
       "severity": "wrong",
       "reason": "The standalone Upgrade label is Passer à Pro, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "[Ll]anceur",
+      "severity": "wrong",
+      "reason": "The launcher is the lanceur, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
     }
   ],
   "accessKeys": {

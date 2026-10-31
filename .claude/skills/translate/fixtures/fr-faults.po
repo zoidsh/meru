@@ -385,3 +385,8 @@ msgstr "duo"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "toc-toc"
+
+# fault: pinned:launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "Dans le menu des applis"

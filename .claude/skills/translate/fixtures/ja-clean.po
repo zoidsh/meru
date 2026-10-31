@@ -188,3 +188,7 @@ msgstr "ノック"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
 msgstr "リネン"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "ランチャー内"

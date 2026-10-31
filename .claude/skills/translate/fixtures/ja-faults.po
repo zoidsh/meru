@@ -363,3 +363,8 @@ msgstr "エクスプローラ名"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
 msgstr "Linen"
+
+# fault: pinned:launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "起動ツール内"

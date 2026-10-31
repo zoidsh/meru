@@ -210,3 +210,7 @@ msgstr "Duett"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "Knack"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "I appstartaren"

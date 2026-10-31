@@ -989,6 +989,13 @@
       "expect": "おやすみモード",
       "severity": "wrong",
       "reason": "Do Not Disturb is おやすみモード, Apple's name for macOS's own feature, in Meru's own copy too."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "ランチャー",
+      "severity": "wrong",
+      "reason": "The launcher is the ランチャー, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
     }
   ],
   "accessKeys": {

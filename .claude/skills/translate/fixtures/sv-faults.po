@@ -305,3 +305,8 @@ msgstr "duett"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "knack"
+
+# fault: pinned:launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "I startprogrammet"
