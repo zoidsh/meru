@@ -321,3 +321,8 @@ msgstr "Ochrona przed phishingiem"
 #: packages/app/context-menu.ts
 msgid "Copy Lin&k"
 msgstr "Kopiuj &adres"
+
+# fault: banned:formal-address
+#: packages/renderer/routes/settings/general.tsx
+msgid "We'll send you a code."
+msgstr "Wyślemy do Panów kod."
