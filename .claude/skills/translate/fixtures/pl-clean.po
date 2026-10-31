@@ -227,3 +227,7 @@ msgstr "Ochrona przed wyłudzaniem informacji"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open Gmail settings to turn off out of office"
 msgstr "Otwórz ustawienia Gmaila, aby wyłączyć wiadomość o nieobecności"
+
+#: packages/app/context-menu.ts
+msgid "Copy Lin&k"
+msgstr "Kopiuj lin&k"
