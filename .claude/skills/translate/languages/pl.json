@@ -922,7 +922,7 @@
     },
     {
       "id": "out-of-office",
-      "msgidPattern": "\\bout of office\\b",
+      "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "[Ww]iadomoś\\p{L}* o[ \\u00a0]nieobecności",
       "severity": "wrong",
       "reason": "Out of office is Gmail's own vacation responder, wiadomość o nieobecności, as Gmail Help names its setting (Wiadomość o nieobecności włączona; support.google.com/mail/answer/25922)."

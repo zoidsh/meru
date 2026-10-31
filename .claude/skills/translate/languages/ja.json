@@ -896,7 +896,7 @@
     },
     {
       "id": "out-of-office",
-      "msgidPattern": "\\bout of office\\b",
+      "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "不在通知",
       "severity": "wrong",
       "reason": "Out of office is Gmail's own vacation responder, 不在通知, as Gmail Help names its setting (不在通知 ON; support.google.com/mail/answer/25922)."

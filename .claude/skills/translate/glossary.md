@@ -92,7 +92,7 @@ The page listing new mail across every account. A description, so lower case ins
 - fr: boîte de réception unifiée (Gmail's _boîte de réception_; agent-chosen, unresolved by the app count)
 - it: posta in arrivo unificata (Gmail's _Posta in arrivo_; agent-chosen, unresolved by the app count)
 - es: bandeja de entrada unificada (Gmail's _bandeja de entrada_; agent-chosen, unresolved by the app count)
-- es-419: bandeja de entrada unificada (Gmail's _bandeja de entrada_; agent-chosen, unresolved by the app count)
+- es-419: bandeja de Recibidos unificada (Gmail's _Recibidos_, as in its _Múltiples bandejas de Recibidos_; agent-chosen, unresolved by the app count)
 - pt-BR: caixa de entrada unificada (Gmail's _Caixa de entrada_; agent-chosen, unresolved by the app count)
 - nl: gecombineerde inbox (Gmail's _inbox_; agent-chosen, unresolved by the app count)
 - pl: wspólna skrzynka odbiorcza (agent-chosen, unresolved by the app count)
@@ -266,7 +266,7 @@ The strip across the top of the window.
 
 ## Sidebar
 
-The column down the side of the window that holds the vertical tabs. Chrome names one in its _Toggle sidebar_ (1/1); its _side panel_ is a different thing, a panel beside the page. The seven apps' count agrees in eight languages (fr, it, es, es-419, pt-BR, nl, sv, ja, 3 to 5 of 7) and differs in two: German apps write Sidebar (3 of 7: Thunderbird, Firefox, Microsoft; Seitenleiste 2: LibreOffice, Apple) and Polish ties panel boczny (Firefox, LibreOffice) and pasek boczny (Microsoft, Apple). Chrome's word stands by step 4a.
+The column down the side of the window that holds the vertical tabs. Chrome names one in its _Toggle sidebar_ (1/1); its _side panel_ is a different thing, a panel beside the page. The seven apps' count, each distinct message once, agrees in eight languages (fr, it, es, es-419, pt-BR, nl, sv, ja, 3 to 5 of 7) and differs in two: German apps write Sidebar (3 of 7: Thunderbird, Firefox, Microsoft; Seitenleiste 2: LibreOffice, Apple) and Polish ties panel boczny (Firefox, LibreOffice) and pasek boczny (Microsoft, Apple). Chrome's word stands by step 4a.
 
 - de: Seitenleiste (Chrome 1/1)
 - fr: barre latérale (Chrome 1/1)
@@ -378,7 +378,7 @@ The pinned tab's context-menu item deciding whether it comes back as a view at s
 - es-419: Cargar al iniciar (Chrome's _iniciar_ 8/10)
 - pt-BR: Carregar ao Iniciar (Chrome's _iniciar_ 10/10)
 - nl: Laad bij opstarten (Chrome's _opstarten_ 8/10)
-- pl: Wczytuj podczas uruchamiania (Chrome's _uruchomienie_ 3/10; agent-chosen phrase: podczas uruchamiania: 2 of 7 (Firefox, LibreOffice), counted in the apps' messages with _on startup_ or _at launch_)
+- pl: Wczytuj podczas uruchamiania (Chrome's _uruchomienie_ 3/10; agent-chosen phrase: podczas uruchamiania: 3 of 7 (Thunderbird, Firefox, LibreOffice), counted in the apps' messages with _on startup_ or _at launch_)
 - sv: Läs in vid start (Chrome's _start_ 10/10)
 - ja: 起動時に読み込む (Chrome's 起動時 9/10)
 
@@ -391,7 +391,7 @@ Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_. 
 - it: Fai l’upgrade a Meru Pro (Gmail's _Fai l’upgrade_; the apps' count, secondary: aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
 - es: Cambiar a Meru Pro (Gmail's _Cambiar a plan superior_; the apps' count, secondary: actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
 - es-419: Actualizar a Meru Pro (Gmail's _Actualizar_; the apps' count, secondary: actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
-- pt-BR: Fazer Upgrade para o Meru Pro (Gmail's _Fazer upgrade_; the apps' count, secondary: atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
+- pt-BR: Fazer Upgrade para o Meru Pro (Gmail's _Fazer upgrade_; the apps' count, secondary: atualizar: 4 of 7 (Thunderbird, Firefox, Microsoft, Apple))
 - nl: Upgrade naar Meru Pro (Gmail's _Upgraden_; the apps' count, secondary: upgrade/upgraden: 4 of 7 (Thunderbird, Firefox, Android, Microsoft))
 - pl: Zmień na Meru Pro (Gmail's _Zmień na większy pakiet_; the apps' count, secondary: uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple))
 - sv: Uppgradera till Meru Pro (Gmail's _Uppgradera_; the apps' count, secondary: uppgradera: 5 of 7 (Thunderbird, Firefox, Android, Microsoft, Apple))
@@ -431,14 +431,14 @@ Counted in Chrome's messages with _download history_; where a language pins the 
 
 ## Dark theme, Blocker, Spellchecker
 
-The dark theme is Chrome's _Dark theme_ label (1/1), which the seven apps' count backs in it, es, es-419 and ja (3 to 6 of 7) and not in fr (mode sombre 4 of 7), nl (donkere modus 3), pl (tryb ciemny 4) and sv (mörkt läge 4), with de and pt-BR tied; Chrome's word stands by step 4a; the blocker is the apps' word, counted in their messages with _blocker_ or _content blocking_; the spellchecker is counted in its 23 messages with _spell check_.
+The dark theme is Chrome's _Dark theme_ label (1/1), which the seven apps' count backs in pt-BR and ja (3 and 5 of 7) and not in de (dunkler Modus 3 of 7), fr (mode sombre 3), es-419 (modo oscuro 3) and sv (mörkt läge 3), with it, es, nl and pl tied; Chrome's word stands by step 4a; Chrome's word stands by step 4a; the blocker is the apps' word, counted in their messages with _blocker_ or _content blocking_; the spellchecker is counted in its 23 messages with _spell check_.
 
 - de: dunkles Design (Chrome 1/1); Blocker (agent-chosen: Blocker: 2 of 7 (Firefox, Microsoft)); Rechtschreibprüfung (Chrome 22/23)
 - fr: thème sombre (Chrome 1/1); blocage (agent-chosen: bloqueur: 2 of 7 (Firefox, Microsoft), thin, so Google's wording decides, blocage in Chrome Help's pop-up page and bloqueur nowhere); correcteur orthographique (Chrome 21/23)
 - it: tema scuro (Chrome 1/1); blocco contenuti (agent-chosen: blocco contenuti: 3 of 7 (Thunderbird, Firefox, Microsoft)); controllo ortografico (Chrome 22/23)
-- es: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: the apps tie, Firefox between bloqueador and bloqueo, Thunderbird bloqueo, Microsoft bloqueador; Google's wording breaks it, bloqueador in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); corrector ortográfico (Chrome 14/23)
-- es-419: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: as for es, bloqueador in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); corrector ortográfico (Chrome 21/23)
-- pt-BR: tema escuro (Chrome 1/1); bloqueador (agent-chosen: bloqueador: 2 of 7 (Firefox, Microsoft)); verificação ortográfica (Chrome 20/23)
+- es: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: bloqueo: 2 of 7 (Thunderbird, Firefox), thin; Google's wording decides, bloqueador in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); corrector ortográfico (Chrome 14/23)
+- es-419: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: as for es, bloqueo 2 of 7, thin, and Google's bloqueador in Chrome Help decides); corrector ortográfico (Chrome 21/23)
+- pt-BR: tema escuro (Chrome 1/1); bloqueador (agent-chosen: the apps tie, Thunderbird bloqueio, Firefox and Microsoft between bloqueador and bloqueio; Google's Chrome Help ties too; the direct matches decide, Microsoft's _pop-up blocker_, bloqueador de pop-ups, and Firefox's _Cookie Banner Blocker_); verificação ortográfica (Chrome 20/23)
 - nl: donker thema (Chrome 1/1); blokkering (agent-chosen: blokkering: 3 of 7 (Thunderbird, Firefox, Microsoft)); spellingcontrole (Chrome 22/23)
 - pl: ciemny motyw (Chrome 1/1); blokowanie (agent-chosen: blokowanie: 3 of 7 (Thunderbird, Firefox, Microsoft)); sprawdzanie pisowni (Chrome 22/23)
 - sv: mörkt tema (Chrome 1/1); blockering (agent-chosen: blockering: 3 of 7 (Thunderbird, Firefox, Microsoft)); stavningskontroll (Chrome 22/23)
@@ -596,7 +596,7 @@ Chrome's word for phishing, in its 4 messages with it; the protection phrase is 
 
 The verb beside [Notification](#notification): _Notify when updates are available_, _Notify for_. Chrome's _notify_ means telling Google something, so it is no source; the apps' word is counted in their messages with _notify_.
 
-- de: benachrichtigen (_Bei verfügbaren Updates benachrichtigen_) (agent-chosen: benachrichtigen: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))
+- de: benachrichtigen (_Bei verfügbaren Updates benachrichtigen_) (agent-chosen: benachrichtigen: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
 - fr: notifier (_Notifier quand des mises à jour sont disponibles_) (agent-chosen: notifier: 3 of 7 (VS Code, Android, Microsoft); Thunderbird writes informer, LibreOffice avertir, Apple prévenir, Firefox ties avertir and informer)
 - it: notificare (_Notifica quando sono disponibili aggiornamenti_), never _avvisare_, which would read as the toast's avviso (agent-chosen: notificare: 5 of 7 (Thunderbird, VS Code, Android, LibreOffice, Microsoft))
 - es: notificar (_Notificar cuando haya actualizaciones_) (agent-chosen: notificar: 7 of 7 (Thunderbird, Firefox, VS Code, Android, LibreOffice, Microsoft, Apple))

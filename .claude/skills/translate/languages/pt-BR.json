@@ -866,7 +866,7 @@
     },
     {
       "id": "out-of-office",
-      "msgidPattern": "\\bout of office\\b",
+      "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "[Rr]esposta [Aa]utomática de [Ff]érias",
       "severity": "wrong",
       "reason": "Out of office is Gmail's own vacation responder, resposta automática de férias, as Gmail Help names its setting (Resposta automática de férias ativada; support.google.com/mail/answer/25922)."
@@ -958,7 +958,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Uu]pgrade para o Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro is Fazer Upgrade para o Meru Pro, with Gmail's own Upgrade wording for Google's paid storage, Fazer upgrade, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
+      "reason": "Upgrading to Pro is Fazer Upgrade para o Meru Pro, with Gmail's own Upgrade wording for Google's paid storage, Fazer upgrade, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (atualizar: 4 of 7 (Thunderbird, Firefox, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
@@ -967,7 +967,7 @@
       "origin": "packages/renderer/",
       "expect": "[Ff]azer [Uu]pgrade",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Fazer Upgrade, Gmail's own Upgrade wording for Google's paid storage, Fazer upgrade (glossary); the seven apps' word for upgrading in general is secondary (atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))."
+      "reason": "The standalone Upgrade label is Fazer Upgrade, Gmail's own Upgrade wording for Google's paid storage, Fazer upgrade (glossary); the seven apps' word for upgrading in general is secondary (atualizar: 4 of 7 (Thunderbird, Firefox, Microsoft, Apple))."
     }
   ],
   "accessKeys": {

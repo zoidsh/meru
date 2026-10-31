@@ -791,7 +791,7 @@
     },
     {
       "id": "out-of-office",
-      "msgidPattern": "\\bout of office\\b",
+      "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "Abwesenheitsnotiz",
       "severity": "wrong",
       "reason": "Out of office is Gmail's own vacation responder, Abwesenheitsnotiz, as Gmail Help names its setting (Abwesenheitsnotiz aktiviert; support.google.com/mail/answer/25922)."
@@ -808,7 +808,7 @@
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Bb]enachrichtig",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (benachrichtigen: 7 of 7)."
+      "reason": "Glossary, agent-chosen (benachrichtigen: 6 of 7)."
     },
     {
       "id": "sound-name",

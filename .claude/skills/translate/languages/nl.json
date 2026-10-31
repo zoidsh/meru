@@ -917,7 +917,7 @@
     },
     {
       "id": "out-of-office",
-      "msgidPattern": "\\bout of office\\b",
+      "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "[Aa]utomatisch antwoord",
       "severity": "wrong",
       "reason": "Out of office is Gmail's own vacation responder, automatisch antwoord, as Gmail Help names its setting (Automatisch antwoord staat aan; support.google.com/mail/answer/25922)."
