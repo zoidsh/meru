@@ -35,7 +35,7 @@ Several worktrees run it at once, with nothing to pass. The renderer serves on t
 
 A run with `--background`, or with `MERU_BACKGROUND=1` in its environment, which `.claude/settings.json` sets for every Claude Code session in the repository, opens behind whatever is in front, coming forward only when someone brings it there, such as through Settings in its menu. Every end-to-end launch sets `MERU_TEST_BACKGROUND`, under which the app on macOS can never be activated, whatever a test asks of it; drive it over CDP, never by raising it.
 
-Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types`, `bun test --isolate` and, after touching a string, `i18n:check` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
+Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types`, `bun run test` and, after touching a string, `i18n:check` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
 End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name. Every launch's account views load a page the suite serves itself, which `MERU_TEST_GMAIL_URL` points them at, so only the tests on a signed-in profile reach Gmail.
 

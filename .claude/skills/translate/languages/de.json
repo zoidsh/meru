@@ -394,6 +394,18 @@
         "msgstr": "Meru verbergen"
       },
       {
+        "row": "Quit, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Exit",
+        "msgstr": "Beenden"
+      },
+      {
+        "row": "Quit, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Quit",
+        "msgstr": "Beenden"
+      },
+      {
         "row": "System tray, in the Appearance settings",
         "msgctxt": "Windows",
         "msgid": "Enable system tray icon",
@@ -472,6 +484,24 @@
         "msgstr": "Alle einblenden"
       },
       {
+        "row": "Quit {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName} beenden"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Windows",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName} beenden"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Linux",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName} beenden"
+      },
+      {
         "row": "Close Window",
         "msgctxt": "macOS",
         "msgid": "Close Window",
@@ -530,6 +560,24 @@
         "msgctxt": "macOS",
         "msgid": "Show in Finder",
         "msgstr": "Im Finder zeigen"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "macOS",
+        "msgid": "OK",
+        "msgstr": "OK"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "Windows",
+        "msgid": "OK",
+        "msgstr": "OK"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "Linux",
+        "msgid": "OK",
+        "msgstr": "OK"
       }
     ]
   },
@@ -547,7 +595,7 @@
       "id": "account",
       "pattern": "(?<![\\p{L}\\p{N}./@])Accounts?(?![\\p{L}\\p{N}])",
       "severity": "wrong",
-      "reason": "An account is Konto, plural Konten, as in Google-Konto; never Account."
+      "reason": "An account is Konto, plural Konten, as Chrome writes it, as in Google-Konto; never Account (Chrome writes the banned form in 1 message)."
     },
     {
       "id": "sichern",
@@ -562,10 +610,16 @@
       "id": "taste",
       "pattern": "(?<!(?:Control|Ctrl|Strg|Alt|Fn|Esc|Option|Cmd|Tab|Shift|Umschalt|Enter|Eingabe|Windows|Befehls)-)(?<!\\p{L})Tasten?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "An on-screen button is Schaltfläche; a standalone Taste reads as a keyboard key. Key names such as Umschalttaste are fine.",
+      "reason": "An on-screen button is a Button; a standalone Taste reads as a keyboard key or a mouse button, as Chrome keeps it. Key names such as Umschalttaste are fine (Chrome writes the banned form in 81 messages).",
       "allow": {
         "msgidPattern": "\\bkeyboard\\b|(?<!license )\\bkeys?\\b"
       }
+    },
+    {
+      "id": "schaltflaeche",
+      "pattern": "[Ss]chaltfläche",
+      "severity": "wrong",
+      "reason": "An on-screen button is a Button, standalone and in a compound: Lesezeichen-Button, never Schaltfläche or a -schaltfläche compound (Chrome writes the banned form in 3 messages, all compounds such as Installationsschaltfläche, and compounds Button 12 times, such as Scroll-Buttons and Feedback-Button)."
     },
     {
       "id": "bewegen",
@@ -578,9 +632,9 @@
     },
     {
       "id": "ungelesen-kennzeichen",
-      "pattern": "Ungelesen-Kennzeichen",
-      "severity": "doubtful",
-      "reason": "The unread badge is Kennzeichen für ungelesene E-Mails (glossary, agent-chosen), never the coined Ungelesen-Kennzeichen."
+      "pattern": "Ungelesen-(?:Kennzeichen|Badge)",
+      "severity": "wrong",
+      "reason": "The unread badge is the Kennzeichen für ungelesene E-Mails, never a coined Ungelesen-Kennzeichen or Ungelesen-Badge (glossary, agent-chosen)."
     },
     {
       "id": "sie",
@@ -597,8 +651,8 @@
     {
       "id": "unit-space",
       "pattern": "(?<=[\\p{N}#}]) (?=(?:Sekunden?|Minuten?|Stunden?|Tag(?:e|en)?|Wochen?|Monat(?:e|en)?|Jahr(?:e|en)?|[kKMGT]B)(?!\\p{L}))",
-      "severity": "style",
-      "reason": "A number and its unit are joined by a no-break space (U+00A0), as Chrome writes them: 5 Minuten, # Tage."
+      "severity": "wrong",
+      "reason": "A number and its unit are joined by a no-break space (U+00A0), as Chrome writes them: 5 Minuten, # Tage (Chrome writes the banned form in 25 messages)."
     },
     {
       "id": "english-quotes",
@@ -619,21 +673,30 @@
       "msgidPattern": "(?<!recent )\\bdownload history\\b",
       "expect": "Downloadverlauf",
       "severity": "wrong",
-      "reason": "The download history page is Downloadverlauf, in its title and in Close download history and Full download history (glossary)."
+      "reason": "The download history page is Downloadverlauf, in its title and in Close download history and Full download history, as Chrome writes it (Chrome: 8 of 8 messages)."
     },
     {
       "id": "recent-downloads",
       "msgidPattern": "\\brecent download history\\b",
       "expect": "Letzte Downloads",
-      "severity": "doubtful",
-      "reason": "The recent download history popup is Letzte Downloads, as in Letzte Downloads anzeigen (glossary), never Aktueller Downloadverlauf."
+      "severity": "wrong",
+      "reason": "The recent download history popup is Letzte Downloads, as in Letzte Downloads anzeigen, never Aktueller Downloadverlauf (the user's call, from Chrome's Letzte Downloads)."
     },
     {
       "id": "upgrade",
-      "msgidPattern": "\\bupgrade\\b",
+      "msgidPattern": "\\bupgrade to Meru Pro\\b",
+      "expect": "[Uu]pgrade auf Meru Pro|[Aa]uf Meru Pro upgrade",
+      "severity": "wrong",
+      "reason": "Upgrading to Pro is Auf Meru Pro upgraden, with Gmail's own Upgrade wording for Google's paid storage, Upgraden, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (Upgrade/upgraden: 4 of 7 (Firefox, VS Code, Android, Microsoft)); never a word for purchase."
+    },
+    {
+      "id": "upgrade",
+      "msgctxt": null,
+      "msgid": "Upgrade",
+      "origin": "packages/renderer/",
       "expect": "[Uu]pgrade",
       "severity": "wrong",
-      "reason": "Reaching Pro is an Upgrade, in buttons and prose alike, never a word for purchase (glossary)."
+      "reason": "The standalone Upgrade label is Upgrade, Gmail's own Upgrade wording for Google's paid storage, Upgraden (glossary); the seven apps' word for upgrading in general is secondary (Upgrade/upgraden: 4 of 7 (Firefox, VS Code, Android, Microsoft))."
     },
     {
       "id": "gmail-label",
@@ -646,146 +709,209 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "Hinweis",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+      "expect": "Popup",
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen: a toast is Popup, never the notification word Benachrichtigung (by step 4c's direct match: Microsoft's toast notification is Popup, Popupbenachrichtigung, Banner and Benachrichtigungsbanner; the forms with Benachrichtigung are out, and Popup remains)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "Hinweis",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+      "expect": "Popup",
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen: a toast is Popup, never the notification word Benachrichtigung (by step 4c's direct match: Microsoft's toast notification is Popup, Popupbenachrichtigung, Banner and Benachrichtigungsbanner; the forms with Benachrichtigung are out, and Popup remains)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "Hinweis",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a toast is Hinweis, kept apart from a notification."
+      "expect": "Popup",
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen: a toast is Popup, never the notification word Benachrichtigung (by step 4c's direct match: Microsoft's toast notification is Popup, Popupbenachrichtigung, Banner and Benachrichtigungsbanner; the forms with Benachrichtigung are out, and Popup remains)."
     },
     {
       "id": "unread-badge",
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "Kennzeichen",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a badge is a Kennzeichen; the unread badge is Kennzeichen für ungelesene E-Mails."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen: the unread badge is Kennzeichen, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird Zähler, Microsoft Badge, Apple Kennzeichen; Google has no word for a count; the most direct match is Apple's unread badge, Kennzeichen für ungelesene Mails)."
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "Tableiste",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the tab strip is Tableiste."
+      "severity": "wrong",
+      "reason": "The tab strip is the Tableiste, as Chrome writes it (Chrome: 6 of 7 messages)."
     },
     {
       "id": "meru-label",
       "msgctxt": null,
       "msgid": "Label",
       "expect": "Name",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its Name, apart from Gmail's Label."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen (Name: 7 of 7)."
     },
     {
       "id": "meru-label",
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "Name",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its Name, apart from Gmail's Label."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen (Name: 7 of 7)."
     },
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "Gerätename",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a device label is Gerätename."
+      "severity": "wrong",
+      "reason": "A device label is a Gerätename, Chrome's word for a device name (Chrome: 11 of 11 messages)."
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "Kanal",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a release channel is a Kanal: Update-Kanal, Beta-Kanal."
+      "severity": "wrong",
+      "reason": "A release channel is a Kanal: Update-Kanal, Beta-Kanal, with Chrome's Kanal (Chrome: 10 of 11 messages)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "[Vv]ertrauenswürdig",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: trusted hosts are vertrauenswürdige Hosts."
+      "severity": "wrong",
+      "reason": "Trusted hosts are vertrauenswürdige Hosts, as Chrome writes trusted (Chrome: 20 of 22 messages)."
     },
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "Phishing-Schutz",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: phishing protection is Phishing-Schutz."
+      "severity": "wrong",
+      "reason": "Phishing protection is Phishing-Schutz, with Chrome's Phishing (Chrome: 4 of 4 messages)."
     },
     {
       "id": "out-of-office",
-      "msgidPattern": "\\bout of office\\b",
+      "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "Abwesenheitsnotiz",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: out of office is Gmail's Abwesenheitsnotiz."
+      "severity": "wrong",
+      "reason": "Out of office is Gmail's own vacation responder, Abwesenheitsnotiz, as Gmail Help names its setting (Abwesenheitsnotiz aktiviert; support.google.com/mail/answer/25922)."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Mm]ehrere\\p{L}* Posteingäng",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's Mehrere Posteingänge."
+      "severity": "wrong",
+      "reason": "Multiple inboxes is Gmail's own inbox type, mehrere Posteingänge, as Gmail Help names it (support.google.com/mail/answer/9694882)."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Bb]enachrichtig",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: to notify is benachrichtigen, beside Benachrichtigung."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen (benachrichtigen: 6 of 7)."
     },
     {
       "id": "sound-name",
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brise$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klangspiel$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Duett$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Klopfen$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
     },
     {
       "id": "sound-name",
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
-      "expect": "^Linen$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are Brise, Klangspiel, Duett, Klopfen and Linen."
+      "expect": "^Leinen$",
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German."
+    },
+    {
+      "id": "system-settings",
+      "msgidPattern": "\\bSystem Settings\\b",
+      "expect": "Systemeinstellungen",
+      "severity": "wrong",
+      "reason": "System Settings is Apple's Systemeinstellungen, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+    },
+    {
+      "id": "dock",
+      "msgidPattern": "\\bdock\\b",
+      "expect": "Dock",
+      "severity": "wrong",
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+    },
+    {
+      "id": "hibernation",
+      "msgidPattern": "\\bhibernat",
+      "expect": "[Ii]naktiv",
+      "severity": "wrong",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiver Tab, never the systems' Sleep word (Chrome: 8 of 8 messages)."
+    },
+    {
+      "id": "button",
+      "msgidPattern": "\\bbuttons?\\b",
+      "expect": "[Bb]utton",
+      "severity": "wrong",
+      "reason": "An on-screen button is a Button, as Chrome writes it: Lesezeichen-Button (Chrome: 102 of 141 messages)."
+    },
+    {
+      "id": "pin",
+      "msgid": "Pin",
+      "expect": "^Anpinnen$",
+      "severity": "wrong",
+      "reason": "The tab context menu's Pin is Anpinnen, as Chrome writes it: Tab anpinnen, angepinnter Tab (Chrome: 16 of 16 messages)."
+    },
+    {
+      "id": "unpin",
+      "msgid": "Unpin",
+      "expect": "^Loslösen$",
+      "severity": "wrong",
+      "reason": "The tab context menu's Unpin is Loslösen, as Chrome writes it."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "Launcher",
+      "severity": "wrong",
+      "reason": "The launcher is the Launcher, as Chrome names ChromeOS's (Chrome: 18 of 20 messages)."
+    },
+    {
+      "id": "menu-bar",
+      "msgidPattern": "\\bmenu bar\\b",
+      "expect": "Menüleiste",
+      "severity": "wrong",
+      "reason": "The macOS menu bar is the Menüleiste, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar)."
+    },
+    {
+      "id": "do-not-disturb",
+      "msgidPattern": "\\bdo not disturb\\b",
+      "expect": "Nicht stören",
+      "severity": "wrong",
+      "reason": "Do Not Disturb is Nicht stören, Apple's name for macOS's own feature, in Meru's own copy too."
     }
   ],
   "accessKeys": {
