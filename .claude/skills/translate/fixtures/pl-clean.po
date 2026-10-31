@@ -137,16 +137,16 @@ msgstr "Przenieś do nowego okna"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "Zamknij baner"
+msgstr "Zamknij komunikat"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr "Banery"
+msgstr "Komunikaty"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "Banery"
+msgstr "Komunikaty"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"

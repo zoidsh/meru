@@ -875,26 +875,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "[Bb]aner",
+      "expect": "[Kk]omunikat",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is baner, never the notification word powiadomienie (by step 4c's direct match: Microsoft's toast notification is wyskakujące powiadomienie, baner and transparent powiadomienia; the forms with powiadomienie are out, and baner remains)."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Microsoft's toast notification is wyskakujące powiadomienie, baner and transparent powiadomienia; the forms with powiadomienie are out, and baner is a banner form, no direct match for a toast; nothing remains, so the existing komunikat stays; never powiadomienie."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "[Bb]aner",
+      "expect": "[Kk]omunikat",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is baner, never the notification word powiadomienie (by step 4c's direct match: Microsoft's toast notification is wyskakujące powiadomienie, baner and transparent powiadomienia; the forms with powiadomienie are out, and baner remains)."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Microsoft's toast notification is wyskakujące powiadomienie, baner and transparent powiadomienia; the forms with powiadomienie are out, and baner is a banner form, no direct match for a toast; nothing remains, so the existing komunikat stays; never powiadomienie."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "[Bb]aner",
+      "expect": "[Kk]omunikat",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is baner, never the notification word powiadomienie (by step 4c's direct match: Microsoft's toast notification is wyskakujące powiadomienie, baner and transparent powiadomienia; the forms with powiadomienie are out, and baner remains)."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Microsoft's toast notification is wyskakujące powiadomienie, baner and transparent powiadomienia; the forms with powiadomienie are out, and baner is a banner form, no direct match for a toast; nothing remains, so the existing komunikat stays; never powiadomienie."
     },
     {
       "id": "unread-badge",
