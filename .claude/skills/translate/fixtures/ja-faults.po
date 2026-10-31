@@ -211,3 +211,155 @@ msgstr "通知停止をオフにする"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "購入"
+
+# fault: pinned:toast
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "通知"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "通知"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "ラベルを入力"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Breeze"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duet"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Knock"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 1"
+msgstr "ブラウザー"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 2"
+msgstr "フォルダー"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 3"
+msgstr "コンピューター"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 4"
+msgstr "エディター"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 5"
+msgstr "プロバイダー"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 6"
+msgstr "プリンター"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 7"
+msgstr "ビューアー"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 8"
+msgstr "ドライバー"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 9"
+msgstr "パラメーター"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 10"
+msgstr "セキュリティー"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 11"
+msgstr "カテゴリー"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 12"
+msgstr "メモリー"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 13"
+msgstr "ユーザ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 14"
+msgstr "サーバ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 15"
+msgstr "マネージャ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 16"
+msgstr "デベロッパ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 17"
+msgstr "ランチャ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 18"
+msgstr "センタ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 19"
+msgstr "リーダ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 20"
+msgstr "ヘッダ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 21"
+msgstr "フッタ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 22"
+msgstr "トラッカ名"
+
+# fault: banned:long-vowel
+#: packages/renderer/routes/settings/general.tsx
+msgid "Long vowel sample 23"
+msgstr "エクスプローラ名"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linen"

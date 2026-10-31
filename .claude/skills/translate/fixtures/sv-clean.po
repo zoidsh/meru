@@ -198,3 +198,15 @@ msgstr "Skaffa appen"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Uppgradera"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Bris"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duett"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Knack"

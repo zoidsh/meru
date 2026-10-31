@@ -306,3 +306,40 @@ msgstr "Nel launcher"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Acquista"
+
+# fault: pinned:toast
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Notifiche"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Notifiche"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Inserisci un’etichetta"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "brezza"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "rintocco"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "duetto"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "bussata"

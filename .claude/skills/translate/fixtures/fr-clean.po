@@ -281,3 +281,33 @@ msgstr "Nom de l’appareil"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Passer à Pro"
+
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Avis"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Avis"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Saisir un nom"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Brise"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "Carillon"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duo"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Toc-toc"

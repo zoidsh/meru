@@ -268,3 +268,40 @@ msgstr "Hämta appen"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Köp"
+
+# fault: pinned:toast
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Aviseringar"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Aviseringar"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Ange en etikett"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "bris"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "klockspel"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "duett"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "knack"

@@ -272,3 +272,40 @@ msgstr "Navigatiekolom"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Koop"
+
+# fault: pinned:toast
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Meldingen"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Meldingen"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Voer een label in"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "bries"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "klokkenspel"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "duet"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "klop"

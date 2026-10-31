@@ -234,3 +234,40 @@ msgstr "Ruhemodus ausschalten"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Kaufen"
+
+# fault: pinned:toast
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Label eingeben"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "brise"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "klangspiel"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "duett"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "klopfen"

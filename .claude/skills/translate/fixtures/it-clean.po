@@ -252,3 +252,33 @@ msgstr "In Avvio app"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Esegui l’upgrade"
+
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Avvisi"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Avvisi"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Inserisci un nome"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Brezza"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "Rintocco"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duetto"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Bussata"

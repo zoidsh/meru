@@ -88,6 +88,61 @@ describe("check.ts", () => {
     });
   }
 
+  /*
+   * Rules share ids, such as a language's five sound-name pins, so a planted
+   * fault per id could leave all but one of them untested. Each banned and
+   * pinned rule runs alone here and must catch a fault planted for its id.
+   */
+  for (const locale of new Set(fixtures.map(localeOf))) {
+    test(`each banned and pinned rule of ${locale} catches a planted fault of its own`, async () => {
+      const fixturePath = path.join(FIXTURES_DIR, `${locale}-faults.po`);
+
+      const catalog = await readCatalog(locale, fixturePath);
+
+      const plantedFor = (entry: (typeof catalog)[string], fault: string) =>
+        (entry.extra as { translatorComments?: string[] }).translatorComments?.includes(
+          `${FAULT_PREFIX}${fault}`,
+        ) ?? false;
+
+      const sidecar = await loadSidecar(locale);
+
+      const rules = [
+        ...sidecar.banned.map((rule, index) => ({ kind: "banned" as const, rule, index })),
+        ...sidecar.pinned.map((rule, index) => ({ kind: "pinned" as const, rule, index })),
+      ];
+
+      const untested = rules.flatMap(({ kind, rule, index }) => {
+        const report = checkCatalogs(
+          locale,
+          {
+            ...sidecar,
+            platformWords: { ...sidecar.platformWords, entries: [] },
+            banned: kind === "banned" ? [rule] : [],
+            pinned: kind === "pinned" ? [rule] : [],
+            accessKeys: null,
+            families: [],
+          },
+          [{ path: fixturePath, catalog }],
+        );
+
+        const caught = report.findings.some(
+          (finding) =>
+            finding.rule === kind &&
+            Object.values(catalog).some(
+              (entry) =>
+                (entry.context ?? null) === finding.msgctxt &&
+                entry.message === finding.msgid &&
+                plantedFor(entry, `${kind}:${rule.id}`),
+            ),
+        );
+
+        return caught ? [] : [`${kind}[${index}] ${rule.id}`];
+      });
+
+      expect(untested).toEqual([]);
+    });
+  }
+
   describe("exit code", () => {
     const ROOT = path.join(import.meta.dir, "..");
 

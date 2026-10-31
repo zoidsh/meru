@@ -163,3 +163,28 @@ msgstr "おやすみモードをオフにする"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "アップグレード"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "お知らせ"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "名前を入力"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "ブリーズ"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "デュエット"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "ノック"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "リネン"

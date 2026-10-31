@@ -210,3 +210,15 @@ msgstr "Typ U+00A0 voor een vaste spatie"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Upgrade"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Bries"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duet"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Klop"

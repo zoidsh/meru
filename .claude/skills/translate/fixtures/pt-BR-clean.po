@@ -272,3 +272,33 @@ msgstr "5 minutos"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Fazer Upgrade"
+
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Avisos"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Avisos"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Digite um Nome"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Brisa"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "Sino"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Dueto"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Batida"

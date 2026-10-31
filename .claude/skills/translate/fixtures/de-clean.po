@@ -125,10 +125,6 @@ msgstr "„{label}“ entfernen?"
 msgid "Are you sure you want to delete this message?"
 msgstr "Möchtest du diese Nachricht wirklich löschen?"
 
-#: packages/renderer/components/app-titlebar.tsx
-msgid "{count, plural, one {# tab} other {# tabs}}"
-msgstr "{count, plural, one {# Tab} other {# Tabs}}"
-
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "Move to New Window"
 msgstr "In neues Fenster verschieben"
@@ -219,3 +215,15 @@ msgstr "Upgrade"
 #: packages/renderer/routes/settings/verification-codes.tsx
 msgid "A notification shows the code either way. Press its Copy button to copy the code yourself."
 msgstr "Eine Benachrichtigung zeigt den Code so oder so. Drücke ihren Kopieren-Button, um den Code selbst zu kopieren."
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Brise"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duett"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Klopfen"

@@ -207,3 +207,15 @@ msgstr "W menu z aplikacjami"
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
 msgstr "Przejdź na Pro"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Bryza"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duet"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Pukanie"
