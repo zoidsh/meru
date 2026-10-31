@@ -96,9 +96,9 @@ msgctxt "macOS"
 msgid "Shift"
 msgstr "Umschalttaste"
 
-#: packages/renderer/routes/settings/appearance.tsx
+#: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show bookmarks button"
-msgstr "Lesezeichen-Schaltfläche anzeigen"
+msgstr "Lesezeichen-Button anzeigen"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hold the Control key to open it in the background."
@@ -125,10 +125,6 @@ msgstr "„{label}“ entfernen?"
 msgid "Are you sure you want to delete this message?"
 msgstr "Möchtest du diese Nachricht wirklich löschen?"
 
-#: packages/renderer/components/app-titlebar.tsx
-msgid "{count, plural, one {# tab} other {# tabs}}"
-msgstr "{count, plural, one {# Tab} other {# Tabs}}"
-
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "Move to New Window"
 msgstr "In neues Fenster verschieben"
@@ -139,16 +135,16 @@ msgstr "{label} bewegen, um die Reihenfolge zu ändern"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "Hinweis schließen"
+msgstr "Popup schließen"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr "Hinweise"
+msgstr "Popups"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "Hinweise"
+msgstr "Popups"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Label"
@@ -175,3 +171,67 @@ msgstr "Klangspiel"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify when updates are available"
 msgstr "Bei verfügbaren Updates benachrichtigen"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Aktiviere das auch in den Systemeinstellungen."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Dock-Symbol"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Unbenutzte Tabs inaktiv machen"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Leinen"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Anpinnen"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Unpin"
+msgstr "Loslösen"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "Im Launcher"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "Menüleistensymbol"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb off"
+msgstr "„Nicht stören“ ausschalten"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Upgrade"
+
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "A notification shows the code either way. Press its Copy button to copy the code yourself."
+msgstr "Eine Benachrichtigung zeigt den Code so oder so. Drücke ihren Kopieren-Button, um den Code selbst zu kopieren."
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Brise"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duett"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Klopfen"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Gmail-Einstellungen öffnen, um die Abwesenheitsnotiz zu deaktivieren"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify for"
+msgstr "Benachrichtigen für"

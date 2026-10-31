@@ -96,12 +96,12 @@ msgstr "{count, plural, other {#個のタブ}}"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "お知らせを閉じる"
+msgstr "トーストを閉じる"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "お知らせ"
+msgstr "トースト"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Label"
@@ -139,3 +139,60 @@ msgstr "タブバーを狭くする"
 msgctxt "account row badge"
 msgid "Unread badge"
 msgstr "未読"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "システム設定でもオンにしてください。"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Dockアイコン"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "使われていないタブを非アクティブにする"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "メニューバーのアイコン"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb off"
+msgstr "おやすみモードをオフにする"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "アップグレード"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "トースト"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "名前を入力"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "ブリーズ"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "デュエット"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "ノック"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "リネン"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "ランチャー内"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Gmailの設定を開いて不在通知をオフにする"

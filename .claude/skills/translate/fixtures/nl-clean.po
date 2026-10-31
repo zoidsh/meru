@@ -1,0 +1,228 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: nl\n"
+
+# Apple's Bewaar is allowed in a macOS label.
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "macOS"
+msgid "Show Save As dialog before downloading"
+msgstr "Toon het dialoogvenster ‘Bewaar als’ voor het downloaden"
+
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "Windows"
+msgid "Show Save As dialog before downloading"
+msgstr "Toon het dialoogvenster ‘Opslaan als’ voor het downloaden"
+
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Downloadgeschiedenis"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Show recent download history"
+msgstr "Toon recente downloadgeschiedenis"
+
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "File"
+msgstr "Archief"
+
+#: packages/app/menu.ts
+msgctxt "Windows"
+msgid "File"
+msgstr "Bestand"
+
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Settings"
+msgstr "Instellingen…"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Cu&t"
+msgstr "Knip"
+
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "Cu&t"
+msgstr "K&nippen"
+
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Sa&ve Image As…"
+msgstr "A&fbeelding opslaan als…"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Look Up “{selection}”"
+msgstr "Zoek ‘{selection}’ op"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "macOS"
+msgid "Shift"
+msgstr "Shift"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "Windows"
+msgid "Enable system tray icon"
+msgstr "Schakel systeemvakpictogram in"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show bookmarks button"
+msgstr "Toon bookmarkknop"
+
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Show a notification when a download finishes."
+msgstr "Toon een melding wanneer een download klaar is."
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro"
+msgstr "Upgrade naar Meru Pro"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Label"
+msgstr "Label"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "Gmail label"
+msgid "Enter a label"
+msgstr "Voer een label in"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Label"
+msgstr "Naam"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Voer een naam in"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "Verwijder ‘{label}’?"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Are you sure you want to delete this message?"
+msgstr "Weet je zeker dat je dit bericht wilt verwijderen?"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{count, plural, one {# tab} other {# tabs}}"
+msgstr "{count, plural, one {# tabblad} other {# tabbladen}}"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Move to New Window"
+msgstr "Verplaats naar nieuw venster"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Sluit pop-up"
+
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Pop-ups"
+
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Pop-ups"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Show unread badge"
+msgstr "Toon badge voor ongelezen e-mails"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "Klokkenspel"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Notify when updates are available"
+msgstr "Meld wanneer er updates beschikbaar zijn"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Save"
+msgstr "Sla op"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Edit saved search"
+msgstr "Bewerk opgeslagen zoekopdracht"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Zet vast"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Unpinned tabs"
+msgstr "Niet-vastgezette tabbladen"
+
+# An apostrophe inside a word is not a quotation mark.
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe between pages"
+msgstr "Swipe tussen pagina's"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Restart Meru to apply the changes."
+msgstr "Start Meru opnieuw om de wijzigingen toe te passen."
+
+#: packages/app/menu.ts
+msgid "Find…"
+msgstr "Zoek…"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Zet de optie ook aan in Systeeminstellingen."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Dock-pictogram"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Maak ongebruikte tabbladen inactief"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Linnen"
+
+#: packages/app/do-not-disturb.ts
+msgid "5 Minutes"
+msgstr "5 minuten"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "In launcher"
+
+#: packages/shared/workspace-apps.ts
+msgid "Sidebar"
+msgstr "Zijbalk"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Use a U2F security key"
+msgstr "Gebruik een U2F-beveiligingssleutel"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Type U+00A0 for a no-break space"
+msgstr "Typ U+00A0 voor een vaste spatie"
+
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Upgrade"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "Bries"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "Duet"
+
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "Klop"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Open Gmail-instellingen om het automatisch antwoord uit te zetten"

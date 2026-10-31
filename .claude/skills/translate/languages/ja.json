@@ -394,6 +394,18 @@
         "msgstr": "Meruを隠す"
       },
       {
+        "row": "Quit, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Exit",
+        "msgstr": "終了"
+      },
+      {
+        "row": "Quit, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Quit",
+        "msgstr": "終了"
+      },
+      {
         "row": "System tray, in the Appearance settings",
         "msgctxt": "Windows",
         "msgid": "Enable system tray icon",
@@ -472,6 +484,24 @@
         "msgstr": "すべてを表示"
       },
       {
+        "row": "Quit {appName}",
+        "msgctxt": "macOS",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName}を終了"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Windows",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName}を終了"
+      },
+      {
+        "row": "Quit {appName}",
+        "msgctxt": "Linux",
+        "msgid": "Quit {appName}",
+        "msgstr": "{appName}を終了"
+      },
+      {
         "row": "Close Window",
         "msgctxt": "macOS",
         "msgid": "Close Window",
@@ -530,6 +560,24 @@
         "msgctxt": "macOS",
         "msgid": "Show in Finder",
         "msgstr": "Finderに表示"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "macOS",
+        "msgid": "OK",
+        "msgstr": "OK"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "Windows",
+        "msgid": "OK",
+        "msgstr": "OK"
+      },
+      {
+        "row": "OK, a native dialog's button",
+        "msgctxt": "Linux",
+        "msgid": "OK",
+        "msgstr": "OK"
       }
     ]
   },
@@ -547,145 +595,145 @@
       "id": "long-vowel",
       "pattern": "ブラウザー",
       "severity": "wrong",
-      "reason": "Chrome writes ブラウザ, without ー, never ブラウザー (Chrome: 198 messages, none the other way)."
+      "reason": "Chrome writes ブラウザ, without ー, never ブラウザー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "フォルダー",
       "severity": "wrong",
-      "reason": "Chrome writes フォルダ, without ー, never フォルダー (Chrome: 110 messages, none the other way)."
+      "reason": "Chrome writes フォルダ, without ー, never フォルダー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "コンピューター",
       "severity": "wrong",
-      "reason": "Chrome writes コンピュータ, without ー, never コンピューター (Chrome: 10 messages, none the other way)."
+      "reason": "Chrome writes コンピュータ, without ー, never コンピューター (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "エディター",
       "severity": "wrong",
-      "reason": "Chrome writes エディタ, without ー, never エディター (Chrome: 10 messages, none the other way)."
+      "reason": "Chrome writes エディタ, without ー, never エディター (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "プロバイダー",
       "severity": "wrong",
-      "reason": "Chrome writes プロバイダ, without ー, never プロバイダー (Chrome: 28 messages, none the other way)."
+      "reason": "Chrome writes プロバイダ, without ー, never プロバイダー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "プリンター",
       "severity": "wrong",
-      "reason": "Chrome writes プリンタ, without ー, never プリンター (Chrome: 87 messages, none the other way)."
+      "reason": "Chrome writes プリンタ, without ー, never プリンター (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "ビューアー",
       "severity": "wrong",
-      "reason": "Chrome writes ビューア, without ー, never ビューアー (Chrome: 7 messages, none the other way)."
+      "reason": "Chrome writes ビューア, without ー, never ビューアー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "ドライバー",
       "severity": "wrong",
-      "reason": "Chrome writes ドライバ, without ー, never ドライバー (Chrome: 1 message, none the other way)."
+      "reason": "Chrome writes ドライバ, without ー, never ドライバー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "パラメーター",
       "severity": "wrong",
-      "reason": "Chrome writes パラメータ, without ー, never パラメーター (Chrome: 4 messages, none the other way)."
+      "reason": "Chrome writes パラメータ, without ー, never パラメーター (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "セキュリティー",
       "severity": "wrong",
-      "reason": "Chrome writes セキュリティ, without ー, never セキュリティー (Chrome: 218 messages, none the other way)."
+      "reason": "Chrome writes セキュリティ, without ー, never セキュリティー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "カテゴリー",
       "severity": "wrong",
-      "reason": "Chrome writes カテゴリ, without ー, never カテゴリー (Chrome: 2 messages, none the other way)."
+      "reason": "Chrome writes カテゴリ, without ー, never カテゴリー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "メモリー",
       "severity": "wrong",
-      "reason": "Chrome writes メモリ, without ー, never メモリー (Chrome: 51 messages, 1 the other way)."
+      "reason": "Chrome writes メモリ, without ー, never メモリー (Chrome writes the banned form in 1 message)."
     },
     {
       "id": "long-vowel",
       "pattern": "ユーザ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes ユーザー, with ー, never ユーザ (Chrome: 339 messages, none the other way)."
+      "reason": "Chrome writes ユーザー, with ー, never ユーザ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "サーバ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes サーバー, with ー, never サーバ (Chrome: 114 messages, none the other way)."
+      "reason": "Chrome writes サーバー, with ー, never サーバ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "マネージャ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes マネージャー, with ー, never マネージャ (Chrome: 93 messages, 6 the other way)."
+      "reason": "Chrome writes マネージャー, with ー, never マネージャ (Chrome writes the banned form in 5 messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "デベロッパ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes デベロッパー, with ー, never デベロッパ (Chrome: 32 messages, none the other way)."
+      "reason": "Chrome writes デベロッパー, with ー, never デベロッパ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "ランチャ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes ランチャー, with ー, never ランチャ (Chrome: 21 messages, none the other way)."
+      "reason": "Chrome writes ランチャー, with ー, never ランチャ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "センタ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes センター, with ー, never センタ (Chrome: 10 messages, none the other way)."
+      "reason": "Chrome writes センター, with ー, never センタ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "リーダ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes リーダー, with ー, never リーダ (Chrome: 14 messages, none the other way)."
+      "reason": "Chrome writes リーダー, with ー, never リーダ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "ヘッダ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes ヘッダー, with ー, never ヘッダ (Chrome: 5 messages, none the other way)."
+      "reason": "Chrome writes ヘッダー, with ー, never ヘッダ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "フッタ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes フッター, with ー, never フッタ (Chrome: 4 messages, none the other way)."
+      "reason": "Chrome writes フッター, with ー, never フッタ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "トラッカ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes トラッカー, with ー, never トラッカ (Chrome: 2 messages, none the other way)."
+      "reason": "Chrome writes トラッカー, with ー, never トラッカ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "エクスプローラ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes エクスプローラー, with ー, never エクスプローラ (Chrome: 1 message, none the other way)."
+      "reason": "Chrome writes エクスプローラー, with ー, never エクスプローラ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "kinou-kakuchou",
       "pattern": "機能拡張",
       "severity": "wrong",
-      "reason": "An extension is 拡張機能, as Chrome writes it, never 機能拡張 (Chrome: 395 messages, none the other way)."
+      "reason": "An extension is 拡張機能, as Chrome writes it, never 機能拡張 (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "anata",
@@ -730,14 +778,23 @@
       "msgidPattern": "\\bdownload history\\b",
       "expect": "ダウンロード履歴",
       "severity": "wrong",
-      "reason": "The download history is ダウンロード履歴 (glossary)."
+      "reason": "The download history is ダウンロード履歴, as Chrome writes it (Chrome: 10 of 10 messages)."
     },
     {
       "id": "upgrade",
-      "msgidPattern": "\\bupgrade\\b",
+      "msgidPattern": "\\bupgrade to Meru Pro\\b",
+      "expect": "Meru Proにアップグレード",
+      "severity": "wrong",
+      "reason": "Upgrading to Pro is Meru Proにアップグレード, with Gmail's own Upgrade wording for Google's paid storage, アップグレード, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)); never a word for purchase."
+    },
+    {
+      "id": "upgrade",
+      "msgctxt": null,
+      "msgid": "Upgrade",
+      "origin": "packages/renderer/",
       "expect": "アップグレード",
       "severity": "wrong",
-      "reason": "Reaching Pro is アップグレード, in buttons and prose alike, never a word for purchase (glossary)."
+      "reason": "The standalone Upgrade label is アップグレード, Gmail's own Upgrade wording for Google's paid storage, アップグレード (glossary); the seven apps' word for upgrading in general is secondary (アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))."
     },
     {
       "id": "gmail-label",
@@ -750,153 +807,195 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "お知らせ",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+      "expect": "トースト",
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "お知らせ",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+      "expect": "トースト",
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "お知らせ",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a toast is お知らせ, kept apart from a notification, 通知."
+      "expect": "トースト",
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
     },
     {
       "id": "button",
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "ボタン",
-      "severity": "doubtful",
-      "reason": "An on-screen button is ボタン (glossary)."
+      "severity": "wrong",
+      "reason": "An on-screen button is a ボタン, as Chrome writes it (Chrome: 141 of 141 messages)."
     },
     {
       "id": "unread-badge",
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "未読バッジ",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the unread badge is 未読バッジ."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen: the unread badge is バッジ, counted as Meru uses it, an unread count on an app icon (バッジ: 3 of 7 (Thunderbird, Microsoft, Apple))."
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "タブバー",
       "severity": "wrong",
-      "reason": "The tab strip is タブバー, as Chrome writes it (glossary, Chrome: 10 messages, among them IDS_TAB_STRIP_BUTTON_TOOLTIP, none with タブストリップ)."
+      "reason": "The tab strip is タブバー, as Chrome writes it (Chrome: 7 of 7 messages)."
     },
     {
       "id": "meru-label",
       "msgctxt": null,
       "msgid": "Label",
       "expect": "名前",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its 名前, apart from Gmail's ラベル."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen (名前: 7 of 7)."
     },
     {
       "id": "meru-label",
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "名前",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: Meru's label for an account or saved search is its 名前, apart from Gmail's ラベル."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen (名前: 7 of 7)."
     },
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "デバイス名",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a device label is デバイス名."
+      "severity": "wrong",
+      "reason": "A device label is デバイス名, Chrome's word for a device name (Chrome: 10 of 11 messages)."
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "チャンネル",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: a release channel is チャンネル: リリースチャンネル, ベータチャンネル."
+      "severity": "wrong",
+      "reason": "A release channel is a チャンネル: リリースチャンネル, ベータチャンネル, with Chrome's チャンネル (Chrome: 11 of 11 messages)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "信頼するホスト",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: trusted hosts are 信頼するホスト."
+      "severity": "wrong",
+      "reason": "Trusted hosts are 信頼するホスト, with Chrome's 信頼 (Chrome: 22 of 22 messages)."
     },
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "フィッシング対策",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: phishing protection is フィッシング対策."
+      "severity": "wrong",
+      "reason": "Phishing protection is フィッシング対策, with Chrome's フィッシング (Chrome: 4 of 4 messages)."
     },
     {
       "id": "out-of-office",
-      "msgidPattern": "\\bout of office\\b",
+      "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "不在通知",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: out of office is Gmail's 不在通知."
+      "severity": "wrong",
+      "reason": "Out of office is Gmail's own vacation responder, 不在通知, as Gmail Help names its setting (不在通知 ON; support.google.com/mail/answer/25922)."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "マルチ受信トレイ",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: multiple inboxes are Gmail's マルチ受信トレイ."
+      "severity": "wrong",
+      "reason": "Multiple inboxes is Gmail's own inbox type, マルチ受信トレイ, as Gmail Help names it (support.google.com/mail/answer/9694882)."
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "通知",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: to notify is 通知する."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen (通知: 7 of 7)."
     },
     {
       "id": "sound-name",
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^ブリーズ$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "sound-name",
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^チャイム$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "sound-name",
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^デュエット$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "sound-name",
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^ノック$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
     },
     {
       "id": "sound-name",
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^リネン$",
-      "severity": "doubtful",
-      "reason": "Glossary, agent-chosen: the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "severity": "wrong",
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+    },
+    {
+      "id": "system-settings",
+      "msgidPattern": "\\bSystem Settings\\b",
+      "expect": "システム設定",
+      "severity": "wrong",
+      "reason": "System Settings is Apple's システム設定, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+    },
+    {
+      "id": "dock",
+      "msgidPattern": "\\bdock\\b",
+      "expect": "Dock",
+      "severity": "wrong",
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+    },
+    {
+      "id": "hibernation",
+      "msgidPattern": "\\bhibernat",
+      "expect": "アクティブでない|非アクティブ",
+      "severity": "wrong",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's アクティブでない, as in アクティブでないタブ, never the systems' Sleep word (Chrome: 8 of 8 messages)."
+    },
+    {
+      "id": "menu-bar",
+      "msgidPattern": "\\bmenu bar\\b",
+      "expect": "メニューバー",
+      "severity": "wrong",
+      "reason": "The macOS menu bar is the メニューバー, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar)."
+    },
+    {
+      "id": "do-not-disturb",
+      "msgidPattern": "\\bdo not disturb\\b",
+      "expect": "おやすみモード",
+      "severity": "wrong",
+      "reason": "Do Not Disturb is おやすみモード, Apple's name for macOS's own feature, in Meru's own copy too."
+    },
+    {
+      "id": "launcher",
+      "msgidPattern": "\\blauncher\\b",
+      "expect": "ランチャー",
+      "severity": "wrong",
+      "reason": "The launcher is the ランチャー, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
     }
   ],
   "accessKeys": {

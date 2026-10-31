@@ -29,7 +29,7 @@ import { accounts } from "./accounts";
 import { navigateOnSwipe } from "./active-view";
 import { bookmarks } from "./bookmarks";
 import { config } from "./config";
-import { openProUpgradeUrl } from "./dialogs";
+import { getNativeOkLabel, openProUpgradeUrl } from "./dialogs";
 import { extensions } from "./extensions";
 import { ipc } from "./ipc";
 import { copyText } from "./lib/clipboard";
@@ -237,7 +237,7 @@ export class WorkspaceApp {
       type: "info",
       message,
       detail,
-      buttons: touchIdRequiresUpgrade ? [t`Upgrade to Meru Pro`, t`Cancel`] : [t`OK`],
+      buttons: touchIdRequiresUpgrade ? [t`Upgrade to Meru Pro`, t`Cancel`] : [getNativeOkLabel()],
       defaultId: 0,
       cancelId: touchIdRequiresUpgrade ? 1 : 0,
       checkboxLabel: t`Don't show again`,

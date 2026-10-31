@@ -9,6 +9,20 @@ Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `p
 
 **Human-reviewed languages: `de`.** A person reads the doubtful and style findings of these. Every other locale is reviewed by agents alone, so step 4 has the translator apply those findings itself and adds the second pass.
 
+## Where a word comes from
+
+Every word in every language comes from the first of these sources that has it, and the glossary, the style sheets and the sidecars say which:
+
+1. The operating system's own words, meaning its labels (File, Paste, Quit, Save As…) and the names of its parts (menu bar, Dock, Finder, System Settings, Do Not Disturb, system tray), come from the platform showing them: Apple on macOS, Microsoft on Windows, GNOME on Linux.
+2. Gmail's own terms take Gmail's word in that language.
+3. Google's names take Google's word; the Workspace apps' names stay English.
+4. Meru's own copy takes, in order:
+   1. (4a) Chrome's word where Chrome has the term;
+   2. (4b) a recorded call of the user's, which overrides Chrome only as a named exception with its reason; there are none now;
+   3. (4c) otherwise the word most commonly used for that concept in popular apps in that language, counted across a fixed set with one vote each: Thunderbird, Firefox (Mozilla's l10n repositories), VS Code (`microsoft/vscode-loc`), Android (AOSP's `values-<lang>/strings.xml` of core apps such as Settings, SystemUI, Messaging and Email), LibreOffice (its translations repository), the Microsoft Terminology Collection (the TBX) and Apple's macOS apps (this Mac's `.loctable`s; one vote, counted as an app, not as an authority). The concept is counted as Meru uses it, in the narrowest sense that matches, such as an unread count on an app icon for a badge, never a looser sense that mixes in another meaning. Each distinct message counts once, for the candidate word it matches longest, and each app's vote is the word it uses most; the word with most votes wins, marked `agent-chosen` with its tally, such as _Hinweis: 4 of 7 (Thunderbird, Firefox, Android, Microsoft)_. A word that another of Meru's concepts already uses in that language, such as its word for a notification, a toast, a badge or an update, is out of the vote and of the direct match below, and so is a message it matches longest. A direct match names the same thing Meru shows: a banner or strip form (Banner, baner, bannière, faixa, tira) is none for a toast, a transient message in the window, and Meru keeps its banner word for Gmail's banners. When two concepts compete for one word, the concept decided by stronger evidence keeps it and the other takes its next step, unless the stronger one has a free word at its own step, when neither has to lose: in Brazilian Portuguese the toast, weaker and unresolved, keeps its existing aviso, and the badge takes Thunderbird's free direct match, emblema. When the winner has 2 votes or fewer, the vote ties, or fewer than 3 of the 7 have the concept, the fallback is, in this order: Google's own wording for the concept (Gmail, Google One, Google Workspace, Google Calendar, Chrome or Android Help, with `hl=<tag>`), then the counted word in the app message that matches Meru's concept most directly, and only if nothing remains, the existing word, marked unresolved with each app's word, for a speaker to settle.
+
+Apple is never the authority for a word in Meru's own copy; its macOS apps are one vote of seven in step 4c. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says. A rule backed by Chrome or by a call of the user's is `wrong` in every sidecar; An agent-chosen word is `wrong` too, since the glossary is the decision and nobody reads the doubtful findings of most languages; `doubtful` is for a heuristic a person should judge. The glossary's opening section says how each source is cited.
+
 ## Before you start
 
 - `CLAUDE_CODE_EFFORT_LEVEL` overrides the `effort` in the agents' frontmatter, and `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` their `model`. Run `printenv CLAUDE_CODE_EFFORT_LEVEL CLAUDE_CODE_SUBAGENT_MODEL_FORCE`; if either prints a value, stop and tell the user to start the session again without it, such as `env -u CLAUDE_CODE_EFFORT_LEVEL claude`.
@@ -113,15 +127,17 @@ Leave the catalogs uncommitted: the translations land in the same commit as the 
 
 ## Adding a language
 
-A language ships once it is in five places:
+A language ships once it is in seven places:
 
 1. `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts`, which `lingui.config.ts` reads as its locales.
 2. The `catalogs` record in `packages/shared/i18n/index.ts`, importing `messages` from `./locales/<tag>`.
 3. The dayjs locale import in `packages/renderer/lib/date.ts`, `dayjs/locale/<name>` with the name `getDayjsLocale` gives the tag, such as `es-mx` for `es-419`.
 4. The `catalogs` record in `packages/preload-gmail/i18n.ts`, importing from its own `./locales/<tag>`.
-5. The style sheet `.claude/skills/translate/languages/<tag>.md`.
+5. The style sheet `.claude/skills/translate/languages/<tag>.md`, its words taken by the [source order](#where-a-word-comes-from), and the language's line in every glossary entry.
+6. The sidecar `languages/<tag>.json`, which `check.ts` needs to run at all: the Platform words table's rows, the banned words, the pinned terms and the access-key style. `scripts/translate-rules.test.ts` holds its platform words to the style sheet's table.
+7. The fixtures `fixtures/<tag>-clean.po`, the wording every rule allows, and `fixtures/<tag>-faults.po`, a planted fault for each rule, marked `# fault: <rule>:<id>`. `scripts/translate-check.test.ts` fails for a sidecar with rules and no fixtures, and for a fixture whose findings differ from what it plants.
 
-Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: `i18n:compile` makes the `.ts` modules those imports name from the locale's `.po` files, and only extract creates those. Then run this skill to translate the new catalogs.
+Edit the tags first and run `bun run i18n:extract` before adding the two catalog imports: `i18n:compile` makes the `.ts` modules those imports name from the locale's `.po` files, and only extract creates those. Run `bun test --isolate scripts/translate-*.test.ts` once the sidecar and fixtures are in. Then run this skill to translate the new catalogs.
 
 ## Changing a rule
 

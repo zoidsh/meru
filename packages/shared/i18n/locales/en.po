@@ -1190,8 +1190,9 @@ msgstr "Enter the license key sent to your email address after your purchase."
 msgid "Excluded apps"
 msgstr "Excluded apps"
 
-#. Tray menu item that quits Meru, as Windows names it
+#. Tray menu item that quits Meru
 #: packages/app/tray.ts
+msgctxt "Windows"
 msgid "Exit"
 msgstr "Exit"
 
@@ -2004,9 +2005,25 @@ msgstr "Notify for"
 msgid "Notify when updates are available"
 msgstr "Notify when updates are available"
 
-#: packages/app/dialogs.ts
-#: packages/app/workspace-app.ts
 #: packages/renderer/routes/settings/extensions.tsx
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "Linux"
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "macOS"
+msgid "OK"
+msgstr "OK"
+
+#. The OK button of a native dialog
+#: packages/app/dialogs.ts
+msgctxt "Windows"
 msgid "OK"
 msgstr "OK"
 
@@ -2298,16 +2315,33 @@ msgstr "Query"
 #. Dialog button that quits Meru
 #. Dialog button that quits Meru
 #. Dialog button that quits Meru
-#. Tray menu item that quits Meru
 #: packages/app/license-key.ts
-#: packages/app/tray.ts
 #: packages/app/trial.ts
+msgid "Quit"
+msgstr "Quit"
+
+#. Tray menu item that quits Meru
+#: packages/app/tray.ts
+msgctxt "Linux"
 msgid "Quit"
 msgstr "Quit"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Quit {appName}"
+msgstr "Quit {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
 #: packages/app/tray.ts
+msgctxt "macOS"
+msgid "Quit {appName}"
+msgstr "Quit {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Quit {appName}"
 msgstr "Quit {appName}"
 
