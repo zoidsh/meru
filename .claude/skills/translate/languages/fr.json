@@ -584,12 +584,11 @@
   "banned": [
     {
       "id": "reglages",
-      "pattern": "(?<!\\p{L})[Rr]églages?(?!\\p{L})",
+      "pattern": "(?<!\\p{L})[Rr]églages?(?!\\p{L})(?![ \\u00a0]Système(?!\\p{L}))",
       "severity": "wrong",
-      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it. Réglages is Apple's word, for a macOS label such as the app menu's Réglages… and for macOS's own Réglages Système (Chrome writes the banned form in 12 messages).",
+      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it. Réglages is Apple's word in two places only: the macOS app menu's Réglages… (AppKit MenuCommands Settings\\U2026) and macOS's own Réglages Système (System Settings InfoPlist CFBundleDisplayName) (Chrome writes the banned form in 12 messages).",
       "allow": {
-        "contexts": ["macOS"],
-        "msgidPattern": "\\bSystem Settings\\b"
+        "entries": [{ "msgctxt": "macOS", "msgid": "Settings" }]
       }
     },
     {

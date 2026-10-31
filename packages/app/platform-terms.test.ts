@@ -4,43 +4,17 @@ import { generateMessageId } from "@lingui/message-utils/generateMessageId";
 import { i18n } from "@meru/shared/i18n";
 import type { MenuItemConstructorOptions } from "electron";
 import type { Labels } from "electron-context-menu";
-
-const platform = { isMacOS: false, isWindows: false, isLinux: false };
-
-type PlatformContext = "macOS" | "Windows" | "Linux";
-
-function setPlatform(context: PlatformContext) {
-  platform.isMacOS = context === "macOS";
-  platform.isWindows = context === "Windows";
-  platform.isLinux = context === "Linux";
-}
-
-let builtTemplate: MenuItemConstructorOptions[] = [];
+import {
+  built,
+  mockMenuDependencies,
+  PLATFORM_CONTEXTS,
+  type PlatformContext,
+  setPlatform,
+} from "./test/menu-mocks";
 
 let contextMenuLabels: Labels = {};
 
-mock.module("@electron-toolkit/utils", () => ({ is: { dev: false }, platform }));
-
-const electronApp = { name: "Meru", on: () => {} };
-
-const electronMenu = {
-  buildFromTemplate: (template: MenuItemConstructorOptions[]) => {
-    builtTemplate = template;
-
-    return { on: () => {} };
-  },
-  setApplicationMenu: () => {},
-};
-
-mock.module("electron", () => ({
-  default: { app: electronApp, Menu: electronMenu },
-  app: electronApp,
-  BrowserWindow: { getFocusedWindow: () => null },
-  dialog: {},
-  Menu: electronMenu,
-  nativeTheme: {},
-  shell: {},
-}));
+mockMenuDependencies();
 
 mock.module("electron-context-menu", () => ({
   default: (options: { labels: Labels }) => {
@@ -48,61 +22,11 @@ mock.module("electron-context-menu", () => ({
   },
 }));
 
-const gmailTab = { id: "gmail", pinned: true };
-
-mock.module("@/accounts", () => ({
-  accounts: {
-    getAccounts: () => [],
-    getSelectedAccount: () => ({
-      instance: {
-        tabs: { activeTab: gmailTab, activeTabId: gmailTab.id },
-        gmail: { userEmail: undefined, messageId: undefined, view: { webContents: {} } },
-      },
-    }),
-  },
-}));
-
-mock.module("@/active-view", () => ({ getActiveView: () => ({}) }));
-
-mock.module("@/config", () => ({ config: { get: () => false, onDidChange: () => {} } }));
-
-mock.module("@/dialogs", () => ({ showRestartDialog: () => {} }));
-
-mock.module("@/downloads", () => ({ downloads: {} }));
-
-mock.module("@/ipc", () => ({ ipc: {} }));
-
-mock.module("@/lib/clipboard", () => ({ copyText: () => {} }));
-
-mock.module("@/lib/log", () => ({ log: {} }));
-
-mock.module("@/lib/relaunch", () => ({ relaunchApp: () => {} }));
-
-mock.module("@/main", () => ({ main: { window: { isVisible: () => true }, location: "/" } }));
-
-mock.module("@/updater", () => ({ appUpdater: { isUpdateSupported: () => true } }));
-
-mock.module("@/url", () => ({ openExternalUrl: () => {} }));
-
-mock.module("@/workspace-app", () => ({
-  WorkspaceApp: class {
-    static tryFromWebContents() {
-      return undefined;
-    }
-  },
-}));
-
-mock.module("@/lib/deep-link", () => ({ createMeruMessageUrl: () => "" }));
-
-mock.module("@/license-key", () => ({ licenseKey: { isValid: false } }));
-
 const { AppMenu } = await import("./menu");
 
 const { setupWindowContextMenu } = await import("./context-menu");
 
 const { AppTray } = await import("./tray");
-
-const PLATFORM_CONTEXTS: PlatformContext[] = ["macOS", "Windows", "Linux"];
 
 /** The menu's labels each platform words its own way, as each one shows them. */
 const MENU_MESSAGES = [
@@ -187,7 +111,7 @@ describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
   test("the application menu uses the platform's message for each OS label", () => {
     new AppMenu().createMenu();
 
-    const labels = collectLabels(builtTemplate);
+    const labels = collectLabels(built.template);
 
     for (const message of MENU_MESSAGES) {
       expect(labels).toContain(markedTranslation(context, message.replace("{appName}", "Meru")));
@@ -205,7 +129,7 @@ describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
   test("a menu only macOS shows takes the macOS message", () => {
     new AppMenu().createMenu();
 
-    const labels = collectLabels(builtTemplate);
+    const labels = collectLabels(built.template);
 
     if (context === "macOS") {
       expect(labels).toContain(markedTranslation("macOS", MACOS_ONLY_MENU_MESSAGE));
@@ -217,7 +141,7 @@ describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
   test("the tray's Quit is the platform's message, with its English unchanged", () => {
     new AppTray().createOrUpdateContextMenu();
 
-    const labels = collectLabels(builtTemplate);
+    const labels = collectLabels(built.template);
 
     for (const quitContext of PLATFORM_CONTEXTS) {
       const quit = markedTranslation(

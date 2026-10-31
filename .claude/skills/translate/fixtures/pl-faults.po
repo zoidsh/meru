@@ -315,3 +315,16 @@ msgstr "pukanie"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Phishing protection"
 msgstr "Ochrona przed phishingiem"
+
+# The English's access key is ignored too, so the link pin picks up Copy Lin&k,
+# and the translation's, so the ban reads łącze.
+# fault: pinned:link
+# fault: banned:lacze
+#: packages/app/context-menu.ts
+msgid "Copy Lin&k"
+msgstr "Kopiuj łą&cze"
+
+# fault: banned:formal-address
+#: packages/renderer/routes/settings/general.tsx
+msgid "We'll send you a code."
+msgstr "Wyślemy do Panów kod."

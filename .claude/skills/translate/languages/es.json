@@ -608,12 +608,11 @@
     },
     {
       "id": "ajustes",
-      "pattern": "(?<!\\p{L})[Aa]justes(?!\\p{L})",
+      "pattern": "(?<!\\p{L})[Aa]justes(?!\\p{L})(?![ \\u00a0]del[ \\u00a0]Sistema(?!\\p{L}))",
       "severity": "wrong",
-      "reason": "Settings is Configuración in Meru's own copy, as Chrome writes it. Ajustes is Apple's word, for a macOS label such as the app menu's Ajustes… and for macOS's own Ajustes del Sistema (Chrome writes the banned form in 143 messages).",
+      "reason": "Settings is Configuración in Meru's own copy, as Chrome writes it. Ajustes is Apple's word in two places only: the macOS app menu's Ajustes… (AppKit MenuCommands Settings\\U2026) and macOS's own Ajustes del Sistema (System Settings InfoPlist CFBundleDisplayName) (Chrome writes the banned form in 143 messages).",
       "allow": {
-        "contexts": ["macOS"],
-        "msgidPattern": "\\bSystem Settings\\b"
+        "entries": [{ "msgctxt": "macOS", "msgid": "Settings" }]
       }
     },
     {

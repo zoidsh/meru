@@ -171,10 +171,12 @@ msgstr "Recortar"
 msgid "Delete {label}?"
 msgstr "Excluir?"
 
+# Ajustes without do Sistema is not the app's name.
 # fault: pinned:system-settings
+# fault: banned:ajustes
 #: packages/renderer/routes/settings/general.tsx
 msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Ative também a opção em Configurações do Sistema."
+msgstr "Ative também a opção nos Ajustes."
 
 # fault: pinned:dock
 #: packages/renderer/routes/settings/appearance.tsx
@@ -297,3 +299,10 @@ msgstr "dueto"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "batida"
+
+# Ajustes names only the macOS Settings menu item and Ajustes do Sistema.
+# fault: banned:ajustes
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "macOS"
+msgid "Show Save As dialog before downloading"
+msgstr "Mostrar a caixa de diálogo Salvar Como antes de baixar (ajustes de downloads)"

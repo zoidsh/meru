@@ -629,7 +629,7 @@
     },
     {
       "id": "formal-address",
-      "pattern": "(?<!\\p{L})(?:Pan|Pani|Panu|Panią|Pana|Państwo|Państwa|Państwu|Państwem)(?!\\p{L})",
+      "pattern": "(?<!\\p{L})(?:Pan|Pani|Panu|Panią|Pana|Panów|Państwo|Państwa|Państwu|Państwem)(?!\\p{L})",
       "severity": "wrong",
       "reason": "The user is addressed informally, never as Pan, Pani or Państwo."
     },
