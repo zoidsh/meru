@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { formatter } from "@lingui/format-po";
 import {
   applyTranslations,
+  blindCatalogs,
   type Catalog,
   dumpCatalogs,
+  pairBackTranslations,
   sliceGlossary,
 } from "../.claude/skills/translate/collect";
 
@@ -213,6 +215,60 @@ Columns: msgctxt | msgid | msgstr | comments | origins. "-" is no msgctxt. "[mul
 `);
 
     expect({ total, multiOrigin }).toEqual({ total: 6, multiOrigin: 1 });
+  });
+});
+
+describe("blindCatalogs", () => {
+  test("lists only an opaque key and the translation, keeping the source apart", async () => {
+    const catalog = `${HEADER}
+#. Toast once a message has been sent
+#: packages/preload-gmail/ipc.ts
+msgctxt "toast"
+msgid "Message sent"
+msgstr "Nachricht gesendet"
+
+#: packages/app/menu.ts
+msgid "{count} unread"
+msgstr "{count} ungelesen"
+
+#: packages/app/menu.ts
+msgid "Untranslated"
+msgstr ""
+
+#~ msgid "Preferences"
+#~ msgstr "Einstellungen"
+`;
+
+    const { blind, sources } = blindCatalogs([
+      { name: "app", catalog: (await po.parse(catalog, context)) as Catalog },
+    ]);
+
+    expect(blind).toEqual([
+      { key: "e1", msgstr: "Nachricht gesendet" },
+      { key: "e2", msgstr: "{count} ungelesen" },
+    ]);
+
+    expect(sources).toEqual({
+      e1: {
+        catalog: "app",
+        msgctxt: "toast",
+        msgid: "Message sent",
+        comments: ["Toast once a message has been sent"],
+      },
+      e2: { catalog: "app", msgid: "{count} unread", comments: [] },
+    });
+
+    const paired = pairBackTranslations(sources, { e1: "Message sent", e3: "Stray" });
+
+    expect(paired.text)
+      .toBe(`Columns: key | msgctxt | English source | back-translation | comments. "-" is no msgctxt.
+e1 | "toast" | "Message sent" | "Message sent" | Toast once a message has been sent
+`);
+
+    expect({ missing: paired.missing, unknown: paired.unknown }).toEqual({
+      missing: ["e2"],
+      unknown: ["e3"],
+    });
   });
 });
 

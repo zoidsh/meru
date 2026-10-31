@@ -17,7 +17,9 @@ import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
  * with that locale's slice of the glossary beside it, so an agent reads one
  * language rather than every one. `<tag> --apply <json>` writes translations
  * into a locale's catalogs, and `--dump <tag> --out <dir>` writes its whole
- * catalog for review.
+ * catalog for review. `--blind <tag> --out <dir>` writes a locale's
+ * translations without their English for back-translation, and `--pair <tag>
+ * --out <dir>` puts the back-translations beside the English for the judge.
  */
 
 type Entry = {
@@ -601,15 +603,7 @@ async function dump(config: LinguiConfigNormalized, locale: string, out: string 
     throw new Error(`--dump takes a locale, one of ${config.locales.join(", ")}, and --out <dir>.`);
   }
 
-  const catalogs = await Promise.all(
-    catalogFiles(config, locale).map(async ({ name, absolute, relative }) => ({
-      name,
-      relative,
-      catalog: await parse(await Bun.file(absolute).text(), locale, config.sourceLocale, relative),
-    })),
-  );
-
-  const { text, total, multiOrigin } = dumpCatalogs(locale, catalogs);
+  const { text, total, multiOrigin } = dumpCatalogs(locale, await readCatalogs(config, locale));
 
   const dumpPath = path.join(out, `${locale}.dump.txt`);
 
@@ -618,6 +612,154 @@ async function dump(config: LinguiConfigNormalized, locale: string, out: string 
   await Bun.write(dumpPath, text);
 
   console.log(`${dumpPath}: ${total} entries, ${multiOrigin} used in more than one file`);
+}
+
+export type BlindSource = {
+  catalog: string;
+  msgctxt?: string;
+  msgid: string;
+  comments: string[];
+};
+
+/*
+ * A back-translator that sees the English, its comment or even its origin
+ * file can write the English back rather than what the translation says, so
+ * the blind list holds only an opaque key and the msgstr. What the key stands
+ * for goes to a separate file that only the pairing step reads.
+ */
+export function blindCatalogs(catalogs: { name: string; catalog: Catalog }[]) {
+  const blind: { key: string; msgstr: string }[] = [];
+
+  const sources: Record<string, BlindSource> = {};
+
+  for (const { name, catalog } of catalogs) {
+    for (const [id, entry] of Object.entries(catalog)) {
+      if (entry.obsolete || !entry.translation) {
+        continue;
+      }
+
+      const key = `e${blind.length + 1}`;
+
+      blind.push({ key, msgstr: entry.translation });
+
+      sources[key] = {
+        catalog: name,
+        ...(entry.context === undefined ? {} : { msgctxt: entry.context }),
+        msgid: entry.message ?? id,
+        comments: entry.comments ?? [],
+      };
+    }
+  }
+
+  return { blind, sources };
+}
+
+export function pairBackTranslations(
+  sources: Record<string, BlindSource>,
+  backTranslations: Record<string, string>,
+) {
+  const missing = Object.keys(sources).filter((key) => !(key in backTranslations));
+
+  const unknown = Object.keys(backTranslations).filter((key) => !(key in sources));
+
+  const lines = Object.entries(sources)
+    .filter(([key]) => key in backTranslations)
+    .map(([key, { msgctxt, msgid, comments }]) =>
+      [
+        key,
+        msgctxt === undefined ? "-" : JSON.stringify(msgctxt),
+        JSON.stringify(msgid),
+        JSON.stringify(backTranslations[key]),
+        comments.join(" / "),
+      ].join(" | "),
+    );
+
+  return {
+    text: `${[
+      'Columns: key | msgctxt | English source | back-translation | comments. "-" is no msgctxt.',
+      ...lines,
+    ].join("\n")}\n`,
+    missing,
+    unknown,
+  };
+}
+
+async function readCatalogs(config: LinguiConfigNormalized, locale: string) {
+  return Promise.all(
+    catalogFiles(config, locale).map(async ({ name, absolute, relative }) => ({
+      name,
+      relative,
+      catalog: await parse(await Bun.file(absolute).text(), locale, config.sourceLocale, relative),
+    })),
+  );
+}
+
+function checkLocale(config: LinguiConfigNormalized, option: string, locale: string, out?: string) {
+  const tags = config.locales.filter((tag) => tag !== config.sourceLocale);
+
+  if (!out || !tags.includes(locale)) {
+    throw new Error(`--${option} takes a locale, one of ${tags.join(", ")}, and --out <dir>.`);
+  }
+
+  return out;
+}
+
+async function blind(config: LinguiConfigNormalized, locale: string, out: string | undefined) {
+  const dir = checkLocale(config, "blind", locale, out);
+
+  const { blind: entries, sources } = blindCatalogs(await readCatalogs(config, locale));
+
+  const blindPath = path.join(dir, `${locale}.blind.json`);
+
+  const sourcesPath = path.join(dir, `${locale}.blind-sources.json`);
+
+  await mkdir(dir, { recursive: true });
+
+  await Bun.write(blindPath, `${JSON.stringify(entries, null, 2)}\n`);
+
+  await Bun.write(sourcesPath, `${JSON.stringify(sources, null, 2)}\n`);
+
+  console.log(`${blindPath}: ${entries.length} entries; their sources in ${sourcesPath}`);
+}
+
+async function pair(config: LinguiConfigNormalized, locale: string, out: string | undefined) {
+  const dir = checkLocale(config, "pair", locale, out);
+
+  const sources = (await Bun.file(path.join(dir, `${locale}.blind-sources.json`)).json()) as Record<
+    string,
+    BlindSource
+  >;
+
+  const backTranslations: Record<string, string> = {};
+
+  for await (const file of new Bun.Glob(`${locale}.back.*.json`).scan(dir)) {
+    if (/^\.back\.\d+\.json$/.test(file.slice(locale.length))) {
+      Object.assign(backTranslations, await Bun.file(path.join(dir, file)).json());
+    }
+  }
+
+  const { text, missing, unknown } = pairBackTranslations(sources, backTranslations);
+
+  const pairsPath = path.join(dir, `${locale}.pairs.txt`);
+
+  await Bun.write(pairsPath, text);
+
+  console.log(
+    `${pairsPath}: ${Object.keys(sources).length - missing.length} of ${Object.keys(sources).length} entries paired`,
+  );
+
+  if (missing.length > 0 || unknown.length > 0) {
+    console.error(
+      [
+        missing.length > 0 ? `No back-translation for ${missing.join(", ")}.` : "",
+        unknown.length > 0 ? `Back-translations for unknown keys ${unknown.join(", ")}.` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+
+    process.exitCode = 1;
+  }
 }
 
 async function collect(
@@ -787,9 +929,23 @@ async function run() {
       out: { type: "string" },
       apply: { type: "string" },
       dump: { type: "string" },
+      blind: { type: "string" },
+      pair: { type: "string" },
     },
     allowPositionals: true,
   });
+
+  if (values.blind) {
+    await blind(config, values.blind, values.out);
+
+    return;
+  }
+
+  if (values.pair) {
+    await pair(config, values.pair, values.out);
+
+    return;
+  }
 
   if (values.apply) {
     await apply(config, values.apply, positionals);

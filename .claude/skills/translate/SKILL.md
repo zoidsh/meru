@@ -5,7 +5,7 @@ description: Translate Meru's interface strings into every shipped language, wit
 
 # Translate
 
-Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then runs the checks CI runs. Each locale gets its own `translator` agent, which writes the translations, and its own `translation-reviewer` agent, which checks them; a locale no person reviews also gets a `translation-second-reviewer`, a cold second pass. All three are in `.claude/agents`. Their guidance is beside this file: `glossary.md` and `languages/<tag>.md`.
+Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then runs the checks CI runs. Each locale gets its own `translator` agent, which writes the translations, and its own `translation-reviewer` agent, which checks them; a locale no person reviews also gets a `translation-second-reviewer`, a cold second pass. All three are in `.claude/agents`, beside the `back-translator` and `back-translation-judge` of the [back-translation trial](#back-translation-on-trial). Their guidance is beside this file: `glossary.md` and `languages/<tag>.md`.
 
 **Human-reviewed languages: none.** A person reads the doubtful and style findings of a language on this list. Every locale not on it is reviewed by agents alone, so step 4 has the translator apply those findings itself and adds the second pass.
 
@@ -94,6 +94,18 @@ For a locale not on the human-reviewed list, once the loop above has closed it o
 3. **One more fix round.** When `<tag>.second-review.json` has `wrong` findings, send them to the translator as a fix list, built as in the loop above, run `check.ts` again, and continue the second reviewer with `SendMessage` to re-review only those entries against a fresh dump. That is the only round: a `wrong` finding still open after it goes to the report, as in the loop above. The second pass's doubtful and style findings go to the report.
 
 For a human-reviewed locale, nothing here runs: its doubtful and style findings stay for the person. The user can ask for the second pass on one too; then run step 2 and step 3 alone.
+
+### Back-translation, on trial
+
+Run this only when the user asks for it. It is on trial on German and Japanese, measured before it becomes a step. An agent that never sees the English translates each finished string back into English, and a judge lists the entries whose back-translation means something other than the English. It runs after the second pass, on the catalogs as they then stand.
+
+1. Run `bun .claude/skills/translate/collect.ts --blind <tag> --out <scratchpad>/translate`. It writes `<tag>.blind.json`, each translated entry as an opaque key and its msgstr and nothing else, and `<tag>.blind-sources.json`, what each key stands for. No back-translator ever gets the sources file.
+2. Split `<tag>.blind.json` into batches of about 150 entries and spawn one `back-translator` per batch, all in one message. Its prompt holds the batch itself, pasted as JSON, since the agent has only `Write` and can read no file, and its output path `<scratchpad>/translate/<tag>.back.<n>.json`. Say nothing in it about the English, the locale's rules or what the trial looks for.
+3. Run `bun .claude/skills/translate/collect.ts --pair <tag> --out <scratchpad>/translate`, which writes `<tag>.pairs.txt`, each key with its msgctxt, English, back-translation and comments. It exits 1 naming the keys no batch answered; spawn one more `back-translator` for those.
+4. Spawn one `back-translation-judge` with the path of `<tag>.pairs.txt` and the output path `<scratchpad>/translate/<tag>.judge.json`.
+5. Look each finding's key up in `<tag>.blind-sources.json` for its catalog, msgctxt and msgid, and send the translator the `wrong` and `doubtful` findings as one fix list. It fixes each real difference in meaning with the smallest edit and says why for each it leaves. Run `check.ts` again; a `wrong` finding there goes back to it as one fix.
+
+The report gives the judge's counts by severity, every finding fixed or left with the reason, and the trial's cost and minutes per locale.
 
 ## 5. Check
 
