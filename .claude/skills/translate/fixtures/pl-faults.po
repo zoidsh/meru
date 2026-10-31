@@ -310,3 +310,8 @@ msgstr "duet"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "pukanie"
+
+# fault: pinned:phishing
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Ochrona przed phishingiem"

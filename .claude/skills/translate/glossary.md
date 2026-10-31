@@ -586,7 +586,7 @@ Chrome's word for phishing, in its 4 messages with it; the protection phrase is 
 - es-419: protección contra phishing (Chrome's _phishing_ 4/4)
 - pt-BR: proteção contra phishing (Chrome's _phishing_ 4/4)
 - nl: phishingbescherming (Chrome's _phishing_ 4/4; agent-chosen compound: Dutch closes it up)
-- pl: ochrona przed phishingiem (agent-chosen: Chrome writes _phishing_ in 1 of 4 and _wyłudzanie informacji_ in the rest, and _phishing_ is the term Polish security software names)
+- pl: ochrona przed wyłudzaniem informacji (Chrome's _wyłudzanie informacji_ 3/4, _phishing_ 1)
 - sv: skydd mot nätfiske (Chrome's _nätfiske_ 4/4)
 - ja: フィッシング対策 (Chrome's フィッシング 4/4)
 

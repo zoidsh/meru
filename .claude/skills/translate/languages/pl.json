@@ -1008,6 +1008,13 @@
       "expect": "[Mm]enu z[ \\u00a0]aplikacjami",
       "severity": "wrong",
       "reason": "The launcher is the menu z aplikacjami, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
+    },
+    {
+      "id": "phishing",
+      "msgidPattern": "\\bphishing\\b",
+      "expect": "[Ww]yłudz",
+      "severity": "wrong",
+      "reason": "Phishing is wyłudzanie informacji, as Chrome writes it: ochrona przed wyłudzaniem informacji (Chrome: 3 of 4 messages for phishing, phishing in 1)."
     }
   ],
   "accessKeys": {

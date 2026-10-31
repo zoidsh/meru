@@ -219,3 +219,7 @@ msgstr "Duet"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "Pukanie"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Phishing protection"
+msgstr "Ochrona przed wyłudzaniem informacji"
