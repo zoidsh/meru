@@ -727,7 +727,7 @@ msgstr "Das Schreibfenster nach dem Senden schließen."
 
 #: packages/renderer/components/app-main.tsx
 msgid "Close unified inbox"
-msgstr "Gemeinsamen Posteingang schließen"
+msgstr "Kombinierten Posteingang schließen"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1147,7 +1147,7 @@ msgstr "Symbol im Infobereich aktivieren"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
-msgstr "Gemeinsamen Posteingang aktivieren"
+msgstr "Kombinierten Posteingang aktivieren"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Enter a color"
@@ -2135,7 +2135,7 @@ msgstr "Diesen Link in deinem Standardbrowser öffnen?"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open unified inbox"
-msgstr "Gemeinsamen Posteingang öffnen"
+msgstr "Kombinierten Posteingang öffnen"
 
 #. Button that opens the Settings app of Windows at its default apps, named as Microsoft names it
 #: packages/renderer/routes/settings/general.tsx
@@ -2804,7 +2804,7 @@ msgstr "Alle einblenden"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show all unread messages from every account in a single unified inbox."
-msgstr "Alle ungelesenen Nachrichten aller Konten in einem gemeinsamen Posteingang anzeigen."
+msgstr "Alle ungelesenen Nachrichten aller Konten in einem kombinierten Posteingang anzeigen."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show an unread badge on the dock icon when there are unread emails."
@@ -2940,7 +2940,7 @@ msgstr "Absendersymbole anzeigen"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show sender icons next to the senders in the unified inbox."
-msgstr "Absendersymbole neben den Absendern im gemeinsamen Posteingang anzeigen."
+msgstr "Absendersymbole neben den Absendern im kombinierten Posteingang anzeigen."
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show sender icons next to the senders in your inbox."
@@ -3212,7 +3212,7 @@ msgstr "Die Versionshinweise kommen von GitHub. Überprüfe deine Verbindung und
 
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "The unified inbox shows every unread message from your accounts in one place. A message leaves the list after you read it."
-msgstr "Der gemeinsame Posteingang zeigt alle ungelesenen Nachrichten deiner Konten an einem Ort. Eine Nachricht verschwindet aus der Liste, sobald du sie gelesen hast."
+msgstr "Der kombinierte Posteingang zeigt alle ungelesenen Nachrichten deiner Konten an einem Ort. Eine Nachricht verschwindet aus der Liste, sobald du sie gelesen hast."
 
 #. Setting that picks a light or dark appearance
 #: packages/renderer/routes/settings/appearance.tsx
@@ -3356,12 +3356,12 @@ msgstr "Rückgängig machen"
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Unified inbox"
-msgstr "Gemeinsamer Posteingang"
+msgstr "Kombinierter Posteingang"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Unified Inbox"
-msgstr "Gemeinsamer Posteingang"
+msgstr "Kombinierter Posteingang"
 
 #. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -3619,7 +3619,7 @@ msgstr "Fenster"
 #. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
-msgstr "Lege bei einem Posteingang mit Kategorien fest, welche Kategorien auf neue E-Mails für Benachrichtigungen überwacht und in den gemeinsamen Posteingang aufgenommen werden."
+msgstr "Lege bei einem Posteingang mit Kategorien fest, welche Kategorien auf neue E-Mails für Benachrichtigungen überwacht und in den kombinierten Posteingang aufgenommen werden."
 
 #. Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx

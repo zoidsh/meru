@@ -912,6 +912,13 @@
       "expect": "Nicht stören",
       "severity": "wrong",
       "reason": "Do Not Disturb is Nicht stören, Apple's name for macOS's own feature, in Meru's own copy too."
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "[Kk]ombinierte[nrs]? Posteingang",
+      "severity": "wrong",
+      "reason": "The unified inbox is the kombinierter Posteingang, one view of every account's inbox, after Android Email's Kombinierte Ansicht for its Combined view; gemeinsamer Posteingang reads as a mailbox shared with other people (agent-chosen, unresolved by the app count)."
     }
   ],
   "accessKeys": {

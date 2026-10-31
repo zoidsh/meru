@@ -271,3 +271,8 @@ msgstr "duett"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "klopfen"
+
+# fault: pinned:unified-inbox
+#: packages/renderer/routes/settings/unified-inbox.tsx
+msgid "Enable unified inbox"
+msgstr "Gemeinsamen Posteingang aktivieren"

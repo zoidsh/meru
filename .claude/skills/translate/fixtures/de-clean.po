@@ -235,3 +235,7 @@ msgstr "Gmail-Einstellungen öffnen, um die Abwesenheitsnotiz zu deaktivieren"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify for"
 msgstr "Benachrichtigen für"
+
+#: packages/renderer/routes/settings/unified-inbox.tsx
+msgid "Enable unified inbox"
+msgstr "Kombinierten Posteingang aktivieren"

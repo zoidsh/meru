@@ -88,14 +88,14 @@ A tab kept in the strip's upper section. _Pin_ and _Unpin_ are the context-menu 
 
 The page listing new mail across every account. A description, so lower case inside a sentence; the page title capitalizes its first word. Meru's own feature, built on Gmail's word for the inbox. The phrase is unresolved by the app count: of the seven apps only Thunderbird (gruppierte Ordner) and Android (kombinierte Ansicht) have a merged inbox, so each language keeps its phrase until a speaker settles it.
 
-- de: gemeinsamer Posteingang (Gmail's _Posteingang_; agent-chosen, unresolved by the app count)
+- de: kombinierter Posteingang (Gmail's _Posteingang_; Android Email's _Kombinierte Ansicht_ for its Combined view, the direct match, since _gemeinsamer Posteingang_ reads as a mailbox shared with other people; agent-chosen, unresolved by the app count)
 - fr: boîte de réception unifiée (Gmail's _boîte de réception_; agent-chosen, unresolved by the app count)
 - it: posta in arrivo unificata (Gmail's _Posta in arrivo_; agent-chosen, unresolved by the app count)
 - es: bandeja de entrada unificada (Gmail's _bandeja de entrada_; agent-chosen, unresolved by the app count)
 - es-419: bandeja de Recibidos unificada (Gmail's _Recibidos_, as in its _Múltiples bandejas de Recibidos_; agent-chosen, unresolved by the app count)
 - pt-BR: caixa de entrada unificada (Gmail's _Caixa de entrada_; agent-chosen, unresolved by the app count)
 - nl: gecombineerde inbox (Gmail's _inbox_; agent-chosen, unresolved by the app count)
-- pl: wspólna skrzynka odbiorcza (agent-chosen, unresolved by the app count)
+- pl: łączona skrzynka odbiorcza (Android Email's _Widok łączony_ for its Combined view, the direct match, since _wspólna skrzynka odbiorcza_ reads as a mailbox shared with other people; agent-chosen, unresolved by the app count)
 - sv: samlad inkorg (Gmail's _inkorg_; agent-chosen, unresolved by the app count)
 - ja: 統合受信トレイ (Gmail's 受信トレイ; agent-chosen, unresolved by the app count)
 
