@@ -1190,6 +1190,12 @@ msgstr "Enter the license key sent to your email address after your purchase."
 msgid "Excluded apps"
 msgstr "Excluded apps"
 
+#. Tray menu item that quits Meru
+#: packages/app/tray.ts
+msgctxt "Windows"
+msgid "Exit"
+msgstr "Exit"
+
 #. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar
 #: packages/shared/workspace-apps.ts
 msgid "Expanded"
@@ -2302,9 +2308,14 @@ msgstr "Query"
 msgid "Quit"
 msgstr "Quit"
 
+#. Tray menu item that quits Meru
+#: packages/app/tray.ts
+msgctxt "Linux"
+msgid "Quit"
+msgstr "Quit"
+
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
-#: packages/app/tray.ts
 msgctxt "Linux"
 msgid "Quit {appName}"
 msgstr "Quit {appName}"
@@ -2318,7 +2329,6 @@ msgstr "Quit {appName}"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
-#: packages/app/tray.ts
 msgctxt "Windows"
 msgid "Quit {appName}"
 msgstr "Quit {appName}"

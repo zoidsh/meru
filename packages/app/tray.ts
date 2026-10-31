@@ -143,8 +143,12 @@ export class AppTray {
 
     return byPlatform(platform, {
       macOS: t({ message: `Quit ${appName}`, context: "macOS" }),
-      windows: t({ message: `Quit ${appName}`, context: "Windows" }),
-      linux: t({ message: `Quit ${appName}`, context: "Linux" }),
+      windows: t({
+        message: "Exit",
+        context: "Windows",
+        comment: "Tray menu item that quits Meru",
+      }),
+      linux: t({ message: "Quit", context: "Linux", comment: "Tray menu item that quits Meru" }),
     });
   }
 

@@ -394,6 +394,18 @@
         "msgstr": "Ocultar Meru"
       },
       {
+        "row": "Quit, the tray item",
+        "msgctxt": "Windows",
+        "msgid": "Exit",
+        "msgstr": "Sair"
+      },
+      {
+        "row": "Quit, the tray item",
+        "msgctxt": "Linux",
+        "msgid": "Quit",
+        "msgstr": "Sair"
+      },
+      {
         "row": "System tray, in the Appearance settings",
         "msgctxt": "Windows",
         "msgid": "Enable system tray icon",
