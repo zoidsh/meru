@@ -61,6 +61,9 @@ export type PlatformWord = z.infer<typeof platformWord>;
  * Picks entries by their English. A `msgctxt` of null means an entry without
  * one, and a missing `msgctxt` any. `origin` is a path prefix of a source file,
  * for a msgid that means one thing in the Gmail preload and another in the app.
+ * A pattern, here and in a banned rule's `allow`, reads the English without its
+ * access key, as banned and pinned patterns read the translation, since `&` can
+ * split a word.
  */
 const selector = {
   msgid: z.string().optional(),

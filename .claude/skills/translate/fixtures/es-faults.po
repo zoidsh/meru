@@ -303,3 +303,10 @@ msgstr "dúo"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "golpe"
+
+# An access key inside a banned word still shows the word.
+# fault: banned:anclar
+# fault: access-key:inline
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Unpin"
+msgstr "Desan&clar"

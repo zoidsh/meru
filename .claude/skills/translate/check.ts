@@ -36,6 +36,8 @@ type Entry = {
   key: string;
   msgctxt: string | null;
   msgid: string;
+  /** The English as a reader sees it, without its access key. */
+  msgidText: string;
   msgstr: string;
   origins: string[];
 };
@@ -60,6 +62,7 @@ function toEntries(catalogPath: string, catalog: Catalog) {
             key,
             msgctxt: entry.context ?? null,
             msgid: entry.message ?? key,
+            msgidText: withoutAccessKey(entry.message ?? key),
             msgstr: entry.translation,
             origins: (entry.origin ?? []).map(([file]) => file),
           },
@@ -140,16 +143,21 @@ function matchesSelector(
 ) {
   return (
     (selector.msgid === undefined || entry.msgid === selector.msgid) &&
-    (selector.msgidPattern === undefined || regex(selector.msgidPattern, "i").test(entry.msgid)) &&
+    (selector.msgidPattern === undefined ||
+      regex(selector.msgidPattern, "i").test(entry.msgidText)) &&
     (selector.msgctxt === undefined || entry.msgctxt === selector.msgctxt) &&
     (selector.origin === undefined ||
       entry.origins.some((origin) => origin.startsWith(selector.origin as string)))
   );
 }
 
-/** `&` before a character, or Japanese's `(&X)`, which the access-key rule checks. */
-function withoutAccessKey(msgstr: string) {
-  return msgstr.replace(/\(&[^)]\)/gu, "").replace(/&(?=\S)/gu, "");
+/*
+ * A label as Electron shows it: the access key, an `&` before a character or
+ * Japanese's `(&X)`, is dropped, and `&&` is a literal ampersand. Where the key
+ * sits is the translator's choice, which the access-key rule checks.
+ */
+function withoutAccessKey(label: string) {
+  return label.replace(/\(&[^)&]\)/gu, "").replace(/&(&|(?=\S))/gu, "$1");
 }
 
 function sourceAccessKey(msgid: string) {
@@ -220,7 +228,7 @@ export function checkCatalogs(
   };
 
   for (const entry of entries) {
-    const text = visibleText(entry.msgstr);
+    const text = withoutAccessKey(visibleText(entry.msgstr));
 
     for (const banned of sidecar.banned) {
       const allow = banned.allow;
@@ -228,7 +236,7 @@ export function checkCatalogs(
       if (
         (entry.msgctxt !== null && allow?.contexts?.includes(entry.msgctxt)) ||
         allow?.msgids?.includes(entry.msgid) ||
-        (allow?.msgidPattern !== undefined && regex(allow.msgidPattern, "i").test(entry.msgid))
+        (allow?.msgidPattern !== undefined && regex(allow.msgidPattern, "i").test(entry.msgidText))
       ) {
         continue;
       }

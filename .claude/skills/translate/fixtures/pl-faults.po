@@ -315,3 +315,9 @@ msgstr "pukanie"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Phishing protection"
 msgstr "Ochrona przed phishingiem"
+
+# The English's access key is ignored too, so the link pin picks up Copy Lin&k.
+# fault: pinned:link
+#: packages/app/context-menu.ts
+msgid "Copy Lin&k"
+msgstr "Kopiuj &adres"
