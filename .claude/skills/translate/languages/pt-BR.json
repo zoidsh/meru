@@ -819,26 +819,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "[Ff]aixas?",
+      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is faixa, never the notification word notificação (by step 4c's direct match: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa remains)."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa de navegação is Microsoft's word for a banner strip, not a message shown in a window, so it is no direct match; nothing remains, so the existing aviso stays; never notificação."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "[Ff]aixas?",
+      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is faixa, never the notification word notificação (by step 4c's direct match: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa remains)."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa de navegação is Microsoft's word for a banner strip, not a message shown in a window, so it is no direct match; nothing remains, so the existing aviso stays; never notificação."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "[Ff]aixas?",
+      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is faixa, never the notification word notificação (by step 4c's direct match: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa remains)."
+      "reason": "Glossary, agent-chosen, unresolved by the app count: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa de navegação is Microsoft's word for a banner strip, not a message shown in a window, so it is no direct match; nothing remains, so the existing aviso stays; never notificação."
     },
     {
       "id": "unread-badge",

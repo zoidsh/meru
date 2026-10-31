@@ -223,7 +223,7 @@ msgstr "Fazer Upgrade para o Meru Pro"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "Fechar Faixa"
+msgstr "Fechar Aviso"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
@@ -276,11 +276,11 @@ msgstr "Fazer Upgrade"
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "Faixas"
+msgstr "Avisos"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr "Faixas"
+msgstr "Avisos"
 
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgctxt "saved search"
