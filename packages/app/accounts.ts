@@ -17,6 +17,7 @@ import { resolveViewFocusTarget } from "./lib/view-focus";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { isWindowedTab } from "./tabs";
+import { whatsNew } from "./whats-new";
 import { WorkspaceApp } from "./workspace-app";
 
 const HIBERNATION_SWEEP_INTERVAL = ms("1m");
@@ -234,6 +235,17 @@ class Accounts {
    * focus call below is synchronous, so the click still wins against it.
    */
   focusActiveView({ blurRenderer = true }: { blurRenderer?: boolean } = {}) {
+    const isStayingBehind = main.shouldStayBehindUntilFocused && !main.window.isFocused();
+
+    // It covers the whole window, so the keys belong to it until it closes.
+    if (whatsNew.isOpen) {
+      if (!isStayingBehind) {
+        whatsNew.focus();
+      }
+
+      return;
+    }
+
     const { instance } = this.getSelectedAccount();
 
     const activeTab = instance.tabs.activeTab;
@@ -265,7 +277,7 @@ class Accounts {
     // On macOS `webContents.focus()` also focuses its window, which activates
     // the app. The window's own focus listener calls this again once it is
     // brought forward, so the view still gets the keys then.
-    if (main.shouldStayBehindUntilFocused && !main.window.isFocused()) {
+    if (isStayingBehind) {
       return;
     }
 
