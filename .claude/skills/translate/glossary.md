@@ -384,20 +384,20 @@ The pinned tab's context-menu item deciding whether it comes back as a view at s
 
 ## Upgrade
 
-Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_. Chrome's _upgrade to_ moves Chromebooks and sites to something newer, so it is no source; the apps' word is counted in their messages with _upgrade_. Only VS Code and Apple word a paid upgrade, too few to count on their own, so the count is of upgrading in general.
+Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_. Meru's Upgrade is a paid tier, and the closest evidence for that is Gmail's own Upgrade button for Google's paid storage, a Google product's paid tier shown beside Meru, under [View entire message, Upgrade](#view-entire-message-upgrade); every language takes Gmail's word. The seven apps' count is of upgrading in general, which mixes in software updates, so it stands only as secondary evidence.
 
-- de: Upgrade; _Auf Meru Pro upgraden_. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (agent-chosen: Upgrade/upgraden: 4 of 7 (Firefox, VS Code, Android, Microsoft))
-- fr: Mettre à niveau vers Meru Pro (agent-chosen: mettre à niveau: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
-- it: Aggiorna a Meru Pro (agent-chosen: aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
-- es: Actualizar a Meru Pro (agent-chosen: actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
-- es-419: Actualizar a Meru Pro (agent-chosen: actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
-- pt-BR: Atualizar para o Meru Pro (agent-chosen: atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
-- nl: Upgrade naar Meru Pro (agent-chosen: upgrade/upgraden: 4 of 7 (Thunderbird, Firefox, Android, Microsoft))
-- pl: Uaktualnij do Meru Pro (agent-chosen: uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple))
-- sv: Uppgradera till Meru Pro (agent-chosen: uppgradera: 5 of 7 (Thunderbird, Firefox, Android, Microsoft, Apple))
-- ja: Meru Proにアップグレード. In a sentence, the same verb: _Meru Proにアップグレードすると、アカウントをさらに追加できます_ (agent-chosen: アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
+- de: Auf Meru Pro upgraden. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (Gmail's _Upgraden_; the apps' count, secondary: Upgrade/upgraden: 4 of 7 (Firefox, VS Code, Android, Microsoft))
+- fr: Mettre à niveau vers Meru Pro (Gmail's _Mettre à niveau_; the apps' count, secondary: mettre à niveau: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
+- it: Fai l’upgrade a Meru Pro (Gmail's _Fai l’upgrade_; the apps' count, secondary: aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
+- es: Cambiar a Meru Pro (Gmail's _Cambiar a plan superior_; the apps' count, secondary: actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
+- es-419: Actualizar a Meru Pro (Gmail's _Actualizar_; the apps' count, secondary: actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
+- pt-BR: Fazer Upgrade para o Meru Pro (Gmail's _Fazer upgrade_; the apps' count, secondary: atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))
+- nl: Upgrade naar Meru Pro (Gmail's _Upgraden_; the apps' count, secondary: upgrade/upgraden: 4 of 7 (Thunderbird, Firefox, Android, Microsoft))
+- pl: Zmień na Meru Pro (Gmail's _Zmień na większy pakiet_; the apps' count, secondary: uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple))
+- sv: Uppgradera till Meru Pro (Gmail's _Uppgradera_; the apps' count, secondary: uppgradera: 5 of 7 (Thunderbird, Firefox, Android, Microsoft, Apple))
+- ja: Meru Proにアップグレード. In a sentence, the same verb: _Meru Proにアップグレードすると、アカウントをさらに追加できます_ (Gmail's _アップグレード_; the apps' count, secondary: アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))
 
-The standalone _Upgrade_ label, a button beside the license, is the same verb toward Pro: de _Upgrade_, fr _Mettre à niveau_, it _Aggiorna a Pro_, es _Actualizar a Pro_, es-419 _Actualizar a Pro_, pt-BR _Atualizar para o Pro_, nl _Upgrade_, pl _Uaktualnij do Pro_, sv _Uppgradera_, ja アップグレード (agent-chosen, by the count above). Where the verb is also the language's word for updating (it, es, es-419, pt-BR), the object _a Pro_ keeps it apart from an update.
+The standalone _Upgrade_ label, a button beside the license, is Gmail's word toward Pro: de _Upgrade_, fr _Mettre à niveau_, it _Fai l’upgrade_, es _Cambiar a Pro_, es-419 _Actualizar a Pro_, pt-BR _Fazer Upgrade_, nl _Upgrade_, pl _Zmień na Pro_, sv _Uppgradera_, ja _アップグレード_ (Gmail's, as above).
 
 ## License key, Trial, Device
 

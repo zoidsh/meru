@@ -219,7 +219,7 @@ msgstr "Deixar Guias sem Uso Inativas"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Atualizar para o Meru Pro"
+msgstr "Fazer Upgrade para o Meru Pro"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
@@ -271,7 +271,7 @@ msgstr "5 minutos"
 
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
-msgstr "Atualizar para o Pro"
+msgstr "Fazer Upgrade"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"

@@ -86,7 +86,7 @@ msgstr "Kopiuj link do wiadomości"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Uaktualnij do Meru Pro"
+msgstr "Zmień na Meru Pro"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgctxt "Gmail label"
@@ -206,7 +206,7 @@ msgstr "W menu z aplikacjami"
 
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
-msgstr "Uaktualnij do Pro"
+msgstr "Zmień na Pro"
 
 #: packages/renderer/lib/notifications/index.ts
 msgid "Breeze"

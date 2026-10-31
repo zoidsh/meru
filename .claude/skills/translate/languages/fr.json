@@ -984,7 +984,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "à niveau vers Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: mettre à niveau: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
+      "reason": "Upgrading to Pro is Mettre à niveau vers Meru Pro, with Gmail's own Upgrade wording for Google's paid storage, Mettre à niveau, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (mettre à niveau: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
@@ -993,7 +993,7 @@
       "origin": "packages/renderer/",
       "expect": "[Mm]ettre à niveau",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: mettre à niveau: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))."
+      "reason": "The standalone Upgrade label is Mettre à niveau, Gmail's own Upgrade wording for Google's paid storage, Mettre à niveau (glossary); the seven apps' word for upgrading in general is secondary (mettre à niveau: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))."
     },
     {
       "id": "launcher",

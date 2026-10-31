@@ -956,18 +956,18 @@
     {
       "id": "upgrade",
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
-      "expect": "[Aa]tualiz\\p{L}* para o Meru Pro",
+      "expect": "[Uu]pgrade para o Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
+      "reason": "Upgrading to Pro is Fazer Upgrade para o Meru Pro, with Gmail's own Upgrade wording for Google's paid storage, Fazer upgrade, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
       "msgctxt": null,
       "msgid": "Upgrade",
       "origin": "packages/renderer/",
-      "expect": "[Aa]tualizar para o Pro",
+      "expect": "[Ff]azer [Uu]pgrade",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))."
+      "reason": "The standalone Upgrade label is Fazer Upgrade, Gmail's own Upgrade wording for Google's paid storage, Fazer upgrade (glossary); the seven apps' word for upgrading in general is secondary (atualizar: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))."
     }
   ],
   "accessKeys": {

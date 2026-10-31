@@ -959,18 +959,18 @@
     {
       "id": "upgrade",
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
-      "expect": "[Aa]ggiorn\\p{L}* a Meru Pro",
+      "expect": "l’upgrade a Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
+      "reason": "Upgrading to Pro is Fai l’upgrade a Meru Pro, with Gmail's own Upgrade wording for Google's paid storage, Fai l’upgrade, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
       "msgctxt": null,
       "msgid": "Upgrade",
       "origin": "packages/renderer/",
-      "expect": "[Aa]ggiorn\\p{L}* a Pro",
+      "expect": "[Ff]ai l’upgrade",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))."
+      "reason": "The standalone Upgrade label is Fai l’upgrade, Gmail's own Upgrade wording for Google's paid storage, Fai l’upgrade (glossary); the seven apps' word for upgrading in general is secondary (aggiornare: 5 of 7 (Thunderbird, Firefox, VS Code, Microsoft, Apple))."
     },
     {
       "id": "launcher",

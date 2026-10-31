@@ -592,10 +592,9 @@
       "id": "uaktualnienie",
       "pattern": "[Uu]aktualni",
       "severity": "wrong",
-      "reason": "An update is an aktualizacja, as Chrome writes it; uaktualnienie is Apple's word, for a macOS label only (Chrome writes the banned form in 2 messages); upgrading is uaktualnić, the apps' word (glossary).",
+      "reason": "An update is an aktualizacja, as Chrome writes it; uaktualnienie is Apple's word, for a macOS label only (Chrome writes the banned form in 2 messages).",
       "allow": {
-        "contexts": ["macOS"],
-        "msgidPattern": "\\bupgrade\\b"
+        "contexts": ["macOS"]
       }
     },
     {
@@ -852,18 +851,18 @@
     {
       "id": "upgrade",
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
-      "expect": "[Uu]aktualni\\p{L}* do Meru Pro",
+      "expect": "[Zz]mie\\p{L}* na Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
+      "reason": "Upgrading to Pro is Zmień na Meru Pro, with Gmail's own Upgrade wording for Google's paid storage, Zmień na większy pakiet, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
       "msgctxt": null,
       "msgid": "Upgrade",
       "origin": "packages/renderer/",
-      "expect": "[Uu]aktualnij do Pro",
+      "expect": "[Zz]mień na Pro",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple))."
+      "reason": "The standalone Upgrade label is Zmień na Pro, Gmail's own Upgrade wording for Google's paid storage, Zmień na większy pakiet (glossary); the seven apps' word for upgrading in general is secondary (uaktualnić: 4 of 7 (Firefox, VS Code, Microsoft, Apple))."
     },
     {
       "id": "gmail-label",

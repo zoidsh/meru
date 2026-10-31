@@ -233,7 +233,7 @@ msgstr "Inactivar pestañas sin usar"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Actualizar a Meru Pro"
+msgstr "Cambiar a Meru Pro"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
@@ -285,7 +285,7 @@ msgstr "5 minutos"
 
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
-msgstr "Actualizar a Pro"
+msgstr "Cambiar a Pro"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"

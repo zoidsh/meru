@@ -785,7 +785,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "Meru Proにアップグレード",
       "severity": "wrong",
-      "reason": "Upgrading to Pro takes the apps' word for upgrading (glossary, agent-chosen: アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)); never a word for purchase."
+      "reason": "Upgrading to Pro is Meru Proにアップグレード, with Gmail's own Upgrade wording for Google's paid storage, アップグレード, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)); never a word for purchase."
     },
     {
       "id": "upgrade",
@@ -794,7 +794,7 @@
       "origin": "packages/renderer/",
       "expect": "アップグレード",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Meru's Upgrade verb toward Pro (glossary, agent-chosen: アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))."
+      "reason": "The standalone Upgrade label is アップグレード, Gmail's own Upgrade wording for Google's paid storage, アップグレード (glossary); the seven apps' word for upgrading in general is secondary (アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))."
     },
     {
       "id": "gmail-label",

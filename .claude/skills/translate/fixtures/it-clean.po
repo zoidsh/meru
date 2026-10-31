@@ -203,7 +203,7 @@ msgstr "Rendi inattive le schede inutilizzate"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Aggiorna a Meru Pro"
+msgstr "Fai l’upgrade a Meru Pro"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
@@ -251,7 +251,7 @@ msgstr "In Avvio app"
 
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade"
-msgstr "Aggiorna a Pro"
+msgstr "Fai l’upgrade"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
