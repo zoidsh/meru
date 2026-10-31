@@ -214,3 +214,7 @@ msgstr "Knack"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "I appstartaren"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Get the app"
+msgstr "Hämta appen"

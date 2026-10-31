@@ -259,10 +259,6 @@ msgstr "Försätt oanvända flikar i dvala"
 msgid "5 Minutes"
 msgstr "5 minuter"
 
-# fault: banned:hamta
-#: packages/renderer/routes/settings/general.tsx
-msgid "Get the app"
-msgstr "Hämta appen"
 
 # fault: pinned:upgrade
 #: packages/renderer/components/license-key-required-banner.tsx

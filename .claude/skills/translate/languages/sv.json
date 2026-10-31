@@ -595,9 +595,10 @@
       "id": "hamta",
       "pattern": "(?<!\\p{L})[Hh]ämt\\p{L}*",
       "severity": "wrong",
-      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them, never hämta or hämtning (Chrome: 269 messages, none the other way).",
+      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them, never hämta or hämtning (Chrome: ladda ned or nedladdning in 187 of 224 messages for download, hämta in 1, Hämta flera filer). Fetching something that is not a download, such as a page or a code, can be hämta.",
       "allow": {
-        "contexts": ["macOS"]
+        "contexts": ["macOS"],
+        "msgidPattern": "^(?!.*\\bdownload)"
       }
     },
     {
