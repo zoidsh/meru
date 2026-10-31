@@ -25,7 +25,7 @@ _Inställningar_. The app-menu item with `msgctxt` `macOS` is _Inställningar…
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Swedish word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The labels whose word has the English letter claim it first, in menu order; the rest then take their first free letter, in menu order.
+An `&` in the English marks the access key on Windows and Linux. Keep one `&` inline, before a letter of the Swedish word: the English letter where the word has it, else the first free letter, one no other label in the same menu uses. macOS drops the `&`. The labels whose word has the English letter claim it first, in menu order; the rest then take their first free letter, in menu order. `packages/app/access-keys.test.ts` holds every catalog to this: it builds each menu and context menu Windows and Linux show, and fails when two items in one menu share a letter.
 
 The page and text-field context menu, by that policy, on Windows: `&Learn Spelling` _&Lägg till i ordlistan_, `&Search with Google` _&Sök med Google_, `Cu&t` _Klipp u&t_, `&Copy` _Ko&piera_, `&Paste` _Kl&istra in_, `Paste and &Match Style` _Klistra in och &matcha formatet_, `Select &All` _M&arkera allt_, `Sa&ve Image As…` _Spa&ra bild som…_, `Copy Lin&k` _&Kopiera länk_, `Cop&y Image` _Kopi&era bild_, `C&opy Image Address` _K&opiera bildadress_. On Linux, where its words differ: `Paste and &Match Style` _Klistra in och &matcha stilen_.
 
