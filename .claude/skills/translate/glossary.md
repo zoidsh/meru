@@ -16,7 +16,7 @@ Every word here and in a style sheet comes from the first of these sources that 
 
 Apple is the authority only for the operating system's words in step 1; in step 4c its macOS apps are one vote of seven. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says.
 
-Each word carries its source in brackets: **(Chrome n/N)**, Chrome's word in n of the N messages that have the term, counted in Chromium 156's `generated_resources`, `components_strings` and `ui_strings` translations. Every count, here and in the sidecars, is taken one way: N is the messages whose English has the term, matched by the sidecar pin's `msgidPattern` (or its `msgid` as a whole word) where a pin holds the word, and n is those whose translation matches the pin's `expect`, without its anchors and ignoring case; a term Meru alone has, such as a device label, is counted by the Chrome term its word comes from, and a pin on Meru's own phrase or label form by the word it is built on. A ban's count is the messages whose translation has its banned form; **(Apple …)**, **(Microsoft …)** or **(GNOME …)** for an operating system's word, cited as the style sheet's Platform words cite it; **(Gmail …)**; **(Google)**; **(agent-chosen: word: n of 7 (apps))**, the last step's tally; or **(agent-chosen, unresolved by the app count: …)**, with each app's word, for a tie or a concept fewer than 3 apps have. A speaker's review replaces either. Use an agent-chosen word like any other.
+Each word carries its source in brackets: **(Chrome n/N)**, Chrome's word in n of the N messages that have the term, counted in Chromium 156's `generated_resources`, `components_strings` and `ui_strings` translations. When the apps' vote ties, or fewer than 3 of the 7 have the concept, Google's own wording for the same concept breaks it, from Gmail, Google One, Google Workspace, Google Calendar or Chrome Help with `hl=<tag>`, and failing that the existing word stays, marked unresolved. Every count, here and in the sidecars, is taken one way: N is the messages whose English has the term, matched by the sidecar pin's `msgidPattern` (or its `msgid` as a whole word) where a pin holds the word, and n is those whose translation matches the pin's `expect`, without its anchors and ignoring case; a term Meru alone has, such as a device label, is counted by the Chrome term its word comes from, and a pin on Meru's own phrase or label form by the word it is built on. A ban's count is the messages whose translation has its banned form; **(Apple …)**, **(Microsoft …)** or **(GNOME …)** for an operating system's word, cited as the style sheet's Platform words cite it; **(Gmail …)**; **(Google)**; **(agent-chosen: word: n of 7 (apps))**, the last step's tally; or **(agent-chosen, unresolved by the app count: …)**, with each app's word, for a tie or a concept fewer than 3 apps have. A speaker's review replaces either. Use an agent-chosen word like any other.
 
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
 
@@ -132,7 +132,7 @@ A timed or indefinite hold on notifications. A part of the operating system, so 
 The time windows outside which no notification is shown. The interface reads _Notification times_; one window is a _time window_. Built on the word for notification above; the window is the apps' word for a time window, counted in their messages with _time window_, _slot_, _range_ or _frame_.
 
 - de: Benachrichtigungszeiten; a window is a _Zeitfenster_ (agent-chosen: Zeitfenster: 2 of 7 (VS Code, Microsoft))
-- fr: horaires des notifications; a window is a _plage horaire_ (agent-chosen, unresolved by the app count: Thunderbird and Microsoft tie créneau and intervalle, Firefox writes intervalle, Apple période)
+- fr: horaires des notifications; a window is a _créneau horaire_ (agent-chosen: the apps tie, Thunderbird and Microsoft between créneau and intervalle, Firefox intervalle, Apple période; Google's wording breaks it, créneau 4 times and période 2 in Google Calendar Help, "Create an appointment schedule" (support.google.com/calendar/answer/10729749))
 - it: orari delle notifiche; a window is un _intervallo_ (agent-chosen: intervallo: 5 of 7 (Thunderbird, Firefox, LibreOffice, Microsoft, Apple))
 - es: horario de notificaciones; a window is un _intervalo_ (agent-chosen: intervalo: 3 of 7 (Thunderbird, Firefox, Apple))
 - es-419: horario de notificaciones; a window is un _intervalo de tiempo_ (agent-chosen: intervalo de tiempo: 3 of 7 (Thunderbird, Firefox, Apple))
@@ -140,7 +140,7 @@ The time windows outside which no notification is shown. The interface reads _No
 - nl: meldingstijden; a window is een _periode_ (agent-chosen: periode: 2 of 7 (Thunderbird, Firefox))
 - pl: godziny powiadomień; a window is _okres_ (agent-chosen: okres: 2 of 7 (Thunderbird, Firefox))
 - sv: aviseringstider; a window is ett _tidsintervall_ (agent-chosen: tidsintervall: 4 of 7 (Thunderbird, Firefox, Microsoft, Apple))
-- ja: 通知時間帯; a window is 時間帯 (agent-chosen, unresolved by the app count: Firefox and VS Code write 期間, Microsoft and Apple 時間帯, Thunderbird ties them)
+- ja: 通知時間帯; a window is 時間帯 (agent-chosen: the apps tie, Firefox and VS Code 期間, Microsoft and Apple 時間帯; Google's wording breaks it, 時間帯 4 times, 期間 2 and 時間枠 1 in Google Calendar Help, "Create an appointment schedule" (support.google.com/calendar/answer/10729749))
 
 The compounds for _Notification times_ are built on Chrome's notification word and are not counted.
 
@@ -247,7 +247,7 @@ The strip down the left edge of the window. Chrome writes the term in 2 messages
 - nl: verticale tabbladen (Chrome 2/2)
 - pl: karty pionowe (Chrome 2/2)
 - sv: vertikala flikar (Chrome 2/2)
-- ja: 縦型タブ (agent-chosen, unresolved by the app count: only Firefox and Microsoft have vertical tabs, both as 垂直タブ)
+- ja: 垂直タブ (Chrome 1/1, in its _Vertical tab strip_, 垂直タブバー; Firefox and Microsoft write 垂直タブ too)
 
 ## Titlebar
 
@@ -405,14 +405,14 @@ The device is Chrome's word. The license key is unresolved by the app count: onl
 
 - de: Lizenzschlüssel; Testversion; Gerät (Chrome 981/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: Testversion: 2 of 7 (Firefox, Microsoft))
 - fr: clé de licence; essai; appareil (Chrome 959/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: essai: 3 of 7 (Firefox, VS Code, Apple))
-- it: chiave di licenza; periodo di prova; dispositivo (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen, unresolved by the app count: Firefox and Apple write prova, VS Code and Microsoft versione di valutazione)
+- it: chiave di licenza; prova; dispositivo (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: the apps tie, Firefox and Apple prova, VS Code and Microsoft versione di valutazione; Google's wording breaks it, prova 29 times and valutazione none in Google Workspace Help, "About your Google Workspace free trial" (support.google.com/a/answer/6388094), as in _prova senza costi_)
 - es: clave de licencia; prueba; dispositivo (Chrome 985/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: prueba: 3 of 7 (Firefox, VS Code, Microsoft))
 - es-419: clave de licencia; prueba; dispositivo (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: prueba: 4 of 7 (Firefox, VS Code, Microsoft, Apple))
 - pt-BR: chave de licença; período de avaliação; dispositivo (Chrome 976/1010; license key agent-chosen, unresolved by the app count; trial agent-chosen: período de avaliação: 3 of 7 (VS Code, Microsoft, Apple))
 - nl: licentiesleutel; proefabonnement; apparaat (Chrome 984/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: proefabonnement: 2 of 7 (Microsoft, Apple))
-- pl: klucz licencyjny; okres próbny; urządzenie (Chrome 997/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen, unresolved by the app count: Firefox and Apple write okres próbny, VS Code and Microsoft wersja próbna)
+- pl: klucz licencyjny; okres próbny; urządzenie (Chrome 997/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: the apps tie, Firefox and Apple okres próbny, VS Code and Microsoft wersja próbna; Google's wording breaks it, _bezpłatny okres próbny_ in Google Workspace Help, "About your Google Workspace free trial" (support.google.com/a/answer/6388094))
 - sv: licensnyckel; provperiod; enhet (Chrome 983/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: provperiod: 2 of 7 (Firefox, Apple))
-- ja: ライセンスキー; 試用期間; デバイス (Chrome 984/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen, unresolved by the app count: Firefox and Apple write トライアル, VS Code and Microsoft 試用)
+- ja: ライセンスキー; 試用期間; デバイス (Chrome 984/1011; license key agent-chosen, unresolved by the app count; trial agent-chosen: the apps tie, Firefox and Apple トライアル, VS Code and Microsoft 試用; Google's wording breaks it, 試用 29 times and トライアル 4 in Google Workspace Help, "About your Google Workspace free trial" (support.google.com/a/answer/6388094), as in 試用期間中)
 
 ## Download history
 
@@ -436,13 +436,13 @@ The dark theme is Chrome's _Dark theme_ label; the blocker is the apps' word, co
 - de: dunkles Design (Chrome 1/1); Blocker (agent-chosen: Blocker: 2 of 7 (Firefox, Microsoft)); Rechtschreibprüfung (Chrome 22/23)
 - fr: thème sombre (Chrome 1/1); bloqueur (agent-chosen: bloqueur: 2 of 7 (Firefox, Microsoft)); correcteur orthographique (Chrome 21/23)
 - it: tema scuro (Chrome 1/1); blocco contenuti (agent-chosen: blocco contenuti: 3 of 7 (Thunderbird, Firefox, Microsoft)); controllo ortografico (Chrome 22/23)
-- es: tema oscuro (Chrome 1/1); bloqueador (agent-chosen, unresolved by the app count: Firefox ties bloqueador and bloqueo, Thunderbird writes bloqueo, Microsoft bloqueador); corrector ortográfico (Chrome 14/23)
-- es-419: tema oscuro (Chrome 1/1); bloqueador (agent-chosen, unresolved by the app count: as for es); corrector ortográfico (Chrome 21/23)
+- es: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: the apps tie, Firefox between bloqueador and bloqueo, Thunderbird bloqueo, Microsoft bloqueador; Google's wording breaks it, bloqueador in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); corrector ortográfico (Chrome 14/23)
+- es-419: tema oscuro (Chrome 1/1); bloqueador (agent-chosen: as for es, bloqueador in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); corrector ortográfico (Chrome 21/23)
 - pt-BR: tema escuro (Chrome 1/1); bloqueador (agent-chosen: bloqueador: 2 of 7 (Firefox, Microsoft)); verificação ortográfica (Chrome 20/23)
 - nl: donker thema (Chrome 1/1); blokkering (agent-chosen: blokkering: 3 of 7 (Thunderbird, Firefox, Microsoft)); spellingcontrole (Chrome 22/23)
 - pl: ciemny motyw (Chrome 1/1); blokowanie (agent-chosen: blokowanie: 3 of 7 (Thunderbird, Firefox, Microsoft)); sprawdzanie pisowni (Chrome 22/23)
 - sv: mörkt tema (Chrome 1/1); blockering (agent-chosen: blockering: 3 of 7 (Thunderbird, Firefox, Microsoft)); stavningskontroll (Chrome 22/23)
-- ja: ダークモード (Chrome 1/1); ブロッカー (agent-chosen, unresolved by the app count: only Firefox writes ブロッカー and Microsoft ブロック); スペルチェック (Chrome 22/23)
+- ja: ダークモード (Chrome 1/1); ブロッカー (agent-chosen: fewer than 3 apps have the concept, Firefox ブロッカー and Microsoft ブロック; Google's wording settles it, ブロッカー in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); スペルチェック (Chrome 22/23)
 
 ## Keyboard keys
 
