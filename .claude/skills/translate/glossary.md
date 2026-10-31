@@ -236,7 +236,7 @@ The titlebar or sidebar dropdown that opens a workspace app. Chrome's word is Ch
 
 ## Vertical tabs
 
-The strip down the left edge of the window. Chrome writes the term in 2 messages.
+The strip down the left edge of the window. Chrome writes the term in 2 messages; the seven apps' count backs every word where 3 apps have the concept (fr, it, pt-BR, nl, pl, 3 of 7: Firefox, LibreOffice, Microsoft), and Firefox and Microsoft agree in the rest.
 
 - de: vertikale Tabs (Chrome 2/2)
 - fr: onglets verticaux (Chrome 1/2)
@@ -266,7 +266,7 @@ The strip across the top of the window.
 
 ## Sidebar
 
-The column down the side of the window that holds the vertical tabs. Chrome names one in its _Toggle sidebar_ (1/1); its _side panel_ is a different thing, a panel beside the page.
+The column down the side of the window that holds the vertical tabs. Chrome names one in its _Toggle sidebar_ (1/1); its _side panel_ is a different thing, a panel beside the page. The seven apps' count agrees in eight languages (fr, it, es, es-419, pt-BR, nl, sv, ja, 3 to 5 of 7) and differs in two: German apps write Sidebar (3 of 7: Thunderbird, Firefox, Microsoft; Seitenleiste 2: LibreOffice, Apple) and Polish ties panel boczny (Firefox, LibreOffice) and pasek boczny (Microsoft, Apple). Chrome's word stands by step 4a.
 
 - de: Seitenleiste (Chrome 1/1)
 - fr: barre latérale (Chrome 1/1)
@@ -431,7 +431,7 @@ Counted in Chrome's messages with _download history_; where a language pins the 
 
 ## Dark theme, Blocker, Spellchecker
 
-The dark theme is Chrome's _Dark theme_ label; the blocker is the apps' word, counted in their messages with _blocker_ or _content blocking_; the spellchecker is counted in its 23 messages with _spell check_.
+The dark theme is Chrome's _Dark theme_ label (1/1), which the seven apps' count backs in it, es, es-419 and ja (3 to 6 of 7) and not in fr (mode sombre 4 of 7), nl (donkere modus 3), pl (tryb ciemny 4) and sv (mörkt läge 4), with de and pt-BR tied; Chrome's word stands by step 4a; the blocker is the apps' word, counted in their messages with _blocker_ or _content blocking_; the spellchecker is counted in its 23 messages with _spell check_.
 
 - de: dunkles Design (Chrome 1/1); Blocker (agent-chosen: Blocker: 2 of 7 (Firefox, Microsoft)); Rechtschreibprüfung (Chrome 22/23)
 - fr: thème sombre (Chrome 1/1); bloqueur (agent-chosen: bloqueur: 2 of 7 (Firefox, Microsoft)); correcteur orthographique (Chrome 21/23)
@@ -446,7 +446,7 @@ The dark theme is Chrome's _Dark theme_ label; the blocker is the apps' word, co
 
 ## Keyboard keys
 
-A key named in a sentence, such as the Workspace apps Mode setting's _hold Cmd_ or _Ctrl_ and _Shift_. The keys are the operating system's, so they take its names. The source writes the short form printed on keys, so keep a short form where the language has one: Cmd and Option on macOS, Ctrl, Shift and Alt on Windows and Linux. Cmd and Ctrl are separate messages already, and Shift carries a platform `msgctxt`: `macOS` takes Apple's name, `Windows` Microsoft's and `Linux` GNOME's, from the style sheet's Platform words where it has them. Sources: **Apple** is "Mac keyboard shortcuts" (support.apple.com/<locale>/102650), which names each key with its short form in brackets; **Microsoft** is "Keyboard shortcuts in Windows" (support.microsoft.com/<locale>/windows/keyboard-shortcuts-in-windows-dcc61a57-8ff0-cffe-9796-cb9706c75eec). Each line gives Apple's Command, Shift, Option and Control, then Microsoft's Ctrl, Shift and Alt.
+A key named in a sentence, such as the Workspace apps Mode setting's _hold Cmd_ or _Ctrl_ and _Shift_. The keys are the operating system's, so they take its names. The source writes the short form printed on keys, so keep a short form where the language has one: Cmd and Option on macOS, Ctrl, Shift and Alt on Windows and Linux. Cmd and Ctrl are separate messages already, and Shift carries a platform `msgctxt`: `macOS` takes Apple's name, `Windows` Microsoft's and `Linux` GNOME's, from the style sheet's Platform words where it has them. Sources: **Apple** is "Mac keyboard shortcuts" (support.apple.com/<locale>/102650), which names each key with its short form in brackets; **Microsoft** is "Keyboard shortcuts in Windows" (support.microsoft.com/<locale>/windows/keyboard-shortcuts-in-windows-dcc61a57-8ff0-cffe-9796-cb9706c75eec). Each line gives Apple's Command, Shift, Option and Control, then Microsoft's Ctrl, Shift and Alt, each checked against both pages in its language.
 
 - de: Apple Befehlstaste (Cmd), Umschalttaste, Wahltaste (Alt), Control-Taste (Ctrl); Microsoft Strg, Umschalt, Alt (Microsoft writes them in capitals, STRG and UMSCHALT)
 - fr: Apple Commande (Cmd), Maj, Option (Alt), Contrôle (Ctrl); Microsoft Ctrl, Maj, Alt
