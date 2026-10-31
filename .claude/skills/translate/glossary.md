@@ -639,7 +639,7 @@ The notification sounds Breeze, Chime, Duet, Knock and Linen, picked in Settings
 
 A button drawn on screen, such as the bookmarks button, the width button or Gmail's Upgrade button, never a key on the keyboard, which is under [Keyboard keys](#keyboard-keys). Counted in Chrome's 141 messages with _button_.
 
-- de: Button (_Lesezeichen-Button_) (Chrome 102/141; _Schaltfläche_ 3, all in compounds, where Chrome writes Button 12 times). Never _Schaltfläche_, alone or in a compound. Never a standalone _Taste_, which Chrome keeps for a key or a mouse button (_Maustaste_); a key name such as _Umschalttaste_ keeps it.
+- de: Button, der, plural Buttons; a compound takes a hyphen: _der Lesezeichen-Button_, _der Installations-Button_ (Chrome 102/141; _Schaltfläche_ 3, all in compounds, where Chrome writes Button 12 times). Never _Schaltfläche_, alone or in a compound. Never a standalone _Taste_, which Chrome keeps for a key or a mouse button (_Maustaste_); a key name such as _Umschalttaste_ keeps it.
 - fr: bouton (_bouton des favoris_) (Chrome 141/141); a key on the keyboard is a _touche_
 - it: pulsante (_pulsante dei preferiti_) (Chrome 124/141); a key on the keyboard, or a hardware button, is a _tasto_
 - es: botón (_botón de marcadores_) (Chrome 141/141)
