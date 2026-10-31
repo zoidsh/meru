@@ -23,9 +23,23 @@ msgstr "Sichern"
 
 # A standalone Taste for an on-screen button reads as a keyboard key.
 # fault: banned:taste
-#: packages/renderer/routes/settings/appearance.tsx
+# fault: pinned:button
+#: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show bookmarks button"
 msgstr "Lesezeichen-Taste anzeigen"
+
+# fault: banned:schaltflaeche
+# fault: pinned:button
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show width button"
+msgstr "Breiten-Schaltfläche anzeigen"
+
+# A -schaltfläche compound is caught as well as the standalone word.
+# fault: banned:schaltflaeche
+# fault: pinned:button
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "A notification shows the code either way. Press its Copy button to copy the code yourself."
+msgstr "Eine Benachrichtigung zeigt den Code so oder so. Drücke ihre Kopierschaltfläche, um den Code selbst zu kopieren."
 
 # A license key is a Lizenzschlüssel, so the English's key allows no Taste.
 # fault: banned:taste
@@ -81,7 +95,7 @@ msgstr "{trialDaysLeft, plural, one {Pro-Testzeitraum endet in # Tag} other {Pro
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro"
-msgstr "Meru Pro kaufen"
+msgstr "Upgrade für Meru Pro"
 
 # fault: pinned:gmail-label
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
@@ -174,4 +188,86 @@ msgstr "Melden für"
 # fault: pinned:sound-name
 #: packages/renderer/lib/notifications/index.ts
 msgid "Linen"
-msgstr "Leinen"
+msgstr "Linen"
+
+# fault: pinned:system-settings
+#: packages/renderer/routes/settings/general.tsx
+msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
+msgstr "Aktiviere das auch in den Systempräferenzen."
+
+# fault: pinned:dock
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Dock icon"
+msgstr "Symbol im dock"
+
+# fault: pinned:hibernation
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Unbenutzte Tabs in den Winterschlaf versetzen"
+
+# fault: pinned:pin
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Pin"
+msgstr "Fixieren"
+
+# fault: pinned:unpin
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "Unpin"
+msgstr "Lösen"
+
+# fault: pinned:launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "Im Starter"
+
+# fault: pinned:menu-bar
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Menu bar icon"
+msgstr "Menüzeilensymbol"
+
+# fault: pinned:do-not-disturb
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Turn Do Not Disturb off"
+msgstr "Ruhemodus ausschalten"
+
+# fault: pinned:upgrade
+#: packages/renderer/components/license-key-required-banner.tsx
+msgid "Upgrade"
+msgstr "Kaufen"
+
+# fault: pinned:toast
+#: packages/renderer/components/app-toaster.tsx
+msgctxt "toasts"
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+# fault: pinned:toast
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+# fault: pinned:meru-label
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgctxt "saved search"
+msgid "Enter a label"
+msgstr "Label eingeben"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Breeze"
+msgstr "brise"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Chime"
+msgstr "klangspiel"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Duet"
+msgstr "duett"
+
+# fault: pinned:sound-name
+#: packages/renderer/lib/notifications/index.ts
+msgid "Knock"
+msgstr "klopfen"
