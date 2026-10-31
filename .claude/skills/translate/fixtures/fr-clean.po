@@ -315,3 +315,7 @@ msgstr "Toc-toc"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "Dans le lanceur"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Use a security key such as Te2 or Ta+"
+msgstr "Utilisez une clé de sécurité comme Te2 ou Ta+"

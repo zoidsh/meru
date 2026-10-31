@@ -218,3 +218,7 @@ msgstr "I appstartaren"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Get the app"
 msgstr "Hämta appen"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Use a security key such as Ni2 or Ni+"
+msgstr "Använd en säkerhetsnyckel som Ni2 eller Ni+"
