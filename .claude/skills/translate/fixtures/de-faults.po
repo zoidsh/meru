@@ -276,3 +276,8 @@ msgstr "klopfen"
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
 msgstr "Gemeinsamen Posteingang aktivieren"
+
+# fault: pinned:user-agent
+#: packages/renderer/routes/settings/advanced.tsx
+msgid "Use default user agent"
+msgstr "Standard-Benutzeragent verwenden"

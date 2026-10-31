@@ -652,6 +652,13 @@ A button drawn on screen, such as the bookmarks button, the width button or Gmai
 - sv: knapp (_bokmärkesknapp_) (Chrome 139/141)
 - ja: ボタン (ブックマークボタン) (Chrome 141/141)
 
+## User agent
+
+The string a browser sends to name itself, in the Advanced settings. A language without a line takes Chrome's word.
+
+- de: User-Agent (Chrome 1/1)
+- ja: ユーザーエージェント (Chrome 1/1, ユーザー エージェント without its space, as the style sheet spaces katakana)
+
 ## Gmail's words
 
 What Gmail itself shows for the things a Meru string can name, by step 2 of the source order. Folder names keep Gmail's capitalization. Sources, all Gmail Help with `hl=<tag>`: **shortcuts** is "Keyboard shortcuts for Gmail" (support.google.com/mail/answer/6594), **undo send** is "Undo sending" (answer/2819488), **spam** is "Mark or unmark Spam" (answer/1366858), **trash** is "Delete or recover deleted Gmail messages" (answer/7401), **categories** is "Add or remove inbox categories & tabs" (answer/3055016) and **importance** is "Importance markers in Gmail" (answer/186543).

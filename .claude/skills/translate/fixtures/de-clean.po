@@ -239,3 +239,7 @@ msgstr "Benachrichtigen für"
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
 msgstr "Kombinierten Posteingang aktivieren"
+
+#: packages/renderer/routes/settings/advanced.tsx
+msgid "Use default user agent"
+msgstr "Standard-User-Agent verwenden"

@@ -919,6 +919,13 @@
       "expect": "[Kk]ombinierte[nrs]? Posteingang",
       "severity": "wrong",
       "reason": "The unified inbox is the kombinierter Posteingang, one view of every account's inbox, after Android Email's Kombinierte Ansicht for its Combined view; gemeinsamer Posteingang reads as a mailbox shared with other people (agent-chosen, unresolved by the app count)."
+    },
+    {
+      "id": "user-agent",
+      "msgidPattern": "\\buser agents?\\b",
+      "expect": "User-Agent",
+      "severity": "wrong",
+      "reason": "A user agent is the User-Agent, as Chrome writes it (Chrome: 1 of 1 message)."
     }
   ],
   "accessKeys": {

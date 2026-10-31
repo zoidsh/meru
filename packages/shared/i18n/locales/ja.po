@@ -967,7 +967,7 @@ msgstr "デフォルトのダウンロード先"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Default mail client"
-msgstr "デフォルトのメールクライアント"
+msgstr "既定のメールクライアント"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1776,11 +1776,11 @@ msgstr "Meruの終了時にインストールされます。"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Meru is set as the default mail client."
-msgstr "Meruがデフォルトのメールクライアントに設定されています。"
+msgstr "Meruが既定のメールクライアントに設定されています。"
 
 #: packages/app/url.ts
 msgid "Meru is set as your default browser, so there's no other browser to open it in. Choose another default browser to open links outside Meru."
-msgstr "Meruがデフォルトのブラウザに設定されているため、リンクを開くほかのブラウザがありません。Meruの外でリンクを開くには、別のブラウザをデフォルトに設定してください。"
+msgstr "Meruが既定のブラウザに設定されているため、リンクを開くほかのブラウザがありません。Meruの外でリンクを開くには、別のブラウザを既定に設定してください。"
 
 #: packages/app/dialogs.ts
 msgid "Meru is up to date."
@@ -1812,7 +1812,7 @@ msgstr "Meruのリンクを開くにはMeru Proが必要です。"
 
 #: packages/app/protocol/index.ts
 msgid "Meru Pro is required to set Meru as the default mail client."
-msgstr "Meruをデフォルトのメールクライアントに設定するにはMeru Proが必要です。"
+msgstr "Meruを既定のメールクライアントに設定するにはMeru Proが必要です。"
 
 #: packages/app/workspace-app.ts
 msgid "Meru Pro is required to sign in with Touch ID."
@@ -2091,7 +2091,7 @@ msgstr "アプリで開く"
 #: packages/app/context-menu.ts
 #: packages/app/ipc.ts
 msgid "Open in Default Browser"
-msgstr "デフォルトのブラウザで開く"
+msgstr "既定のブラウザで開く"
 
 #. Button that opens the user styles file in the default text editor
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -2131,7 +2131,7 @@ msgstr "ダウンロードが完了したら、ファイルを含むフォルダ
 
 #: packages/app/url.ts
 msgid "Open this link in your default browser?"
-msgstr "このリンクをデフォルトのブラウザで開きますか?"
+msgstr "このリンクを既定のブラウザで開きますか?"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open unified inbox"
@@ -2239,7 +2239,7 @@ msgstr "貼り付けて書式を合わせる"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Persist zoom"
-msgstr "拡大率を保持"
+msgstr "ズームを保持"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
@@ -2396,7 +2396,7 @@ msgstr "ページを再読み込み"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Remember the zoom level of Workspace apps across restarts. Each app keeps its own zoom level, shared by all its tabs and windows."
-msgstr "再起動後もWorkspaceアプリの拡大率を保持します。拡大率はアプリごとに保持され、そのアプリのすべてのタブとウィンドウで共有されます。"
+msgstr "再起動後もWorkspaceアプリのズームレベルを保持します。ズームレベルはアプリごとに保持され、そのアプリのすべてのタブとウィンドウで共有されます。"
 
 #. Button that removes a host from the trusted hosts
 #. Button that removes a site from the extension's sites
@@ -2714,7 +2714,7 @@ msgstr "Chromiumが送信するユーザーエージェントの代わりに、M
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Set Meru as the default mail client to handle email links and related protocols."
-msgstr "Meruをデフォルトのメールクライアントに設定して、メールのリンクと関連するプロトコルを処理します。"
+msgstr "Meruを既定のメールクライアントに設定して、メールのリンクと関連するプロトコルを処理します。"
 
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Set the time windows when notifications are active. Outside them, notifications stay silent. Leave the list empty to allow notifications at any time."
