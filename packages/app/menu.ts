@@ -348,7 +348,11 @@ export class AppMenu {
           },
           ...(platform.isMacOS ? macOSAppHideItems : []),
           {
-            label: t`Quit ${appName}`,
+            label: byPlatform(platform, {
+              macOS: t({ message: `Quit ${appName}`, context: "macOS" }),
+              windows: t({ message: `Quit ${appName}`, context: "Windows" }),
+              linux: t({ message: `Quit ${appName}`, context: "Linux" }),
+            }),
             accelerator: "CommandOrControl+Q",
             click: () => {
               app.quit();
