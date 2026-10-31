@@ -5,5 +5,5 @@
       "@/*": ["./*"]
     }
   },
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts", "test/**"]
 }

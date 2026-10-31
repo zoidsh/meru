@@ -229,10 +229,12 @@ msgctxt "macOS"
 msgid "Look Up “{selection}”"
 msgstr "Rechercher « {selection} »"
 
+# Réglages names only the macOS Settings menu item and Réglages Système.
+# fault: banned:reglages
 #: packages/renderer/routes/settings/downloads.tsx
 msgctxt "macOS"
 msgid "Show Save As dialog before downloading"
-msgstr "Afficher la fenêtre « Enregistrer sous » avant de télécharger"
+msgstr "Afficher la fenêtre « Enregistrer sous » avant de télécharger (réglage par défaut)"
 
 #: packages/app/context-menu.ts
 msgid "Copy Email Address"
@@ -269,10 +271,12 @@ msgstr "Obtenir les applis Google"
 msgid "Settings"
 msgstr "Réglages"
 
+# Réglages without Système is not the app's name.
 # fault: pinned:system-settings
+# fault: banned:reglages
 #: packages/renderer/routes/settings/general.tsx
 msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Activez aussi l’option dans Paramètres système."
+msgstr "Activez aussi l’option dans les Réglages."
 
 # fault: pinned:dock
 #: packages/renderer/routes/settings/appearance.tsx

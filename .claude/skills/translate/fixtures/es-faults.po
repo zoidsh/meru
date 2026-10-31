@@ -182,10 +182,12 @@ msgstr "Cortar"
 msgid "Delete {label}?"
 msgstr "¿Eliminar?"
 
+# Ajustes without del Sistema is not the app's name.
 # fault: pinned:system-settings
+# fault: banned:ajustes
 #: packages/renderer/routes/settings/general.tsx
 msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Activa también la opción en Configuración del Sistema."
+msgstr "Activa también la opción en Ajustes."
 
 # fault: pinned:dock
 #: packages/renderer/routes/settings/appearance.tsx
@@ -303,3 +305,23 @@ msgstr "dúo"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "golpe"
+
+# An access key inside a banned word still shows the word.
+# fault: banned:vinculo
+#: packages/app/context-menu.ts
+msgid "Copy Lin&k"
+msgstr "Copiar vín&culo"
+
+# Ajustes names only the macOS Settings menu item and Ajustes del Sistema.
+# fault: banned:ajustes
+#: packages/renderer/routes/settings/downloads.tsx
+msgctxt "macOS"
+msgid "Show Save As dialog before downloading"
+msgstr "Mostrar el cuadro de diálogo Guardar como antes de descargar (ajustes de descargas)"
+
+# The English marks no access key, so this & is literal, as in AT&T: the
+# access-key rule reports it, and the app ban never reads across it.
+# fault: access-key:inline
+#: packages/renderer/routes/settings/general.tsx
+msgid "Get the apps"
+msgstr "Obtener las aplicaciones de Ap&ps"

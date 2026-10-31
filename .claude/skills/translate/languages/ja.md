@@ -25,7 +25,7 @@ None. Latin words inside Japanese keep their own capitals (Gmail, Meru Pro).
 
 ## Access keys
 
-An `&` in the English marks the access key on Windows and Linux. The key is the English letter where the word has it, else the first free letter, one no other label in the same menu uses; Japanese words have no Latin letter to mark, so the English letter always applies, written as a suffix: a label shown there ends in `(&X)`, the letter upper-case, after the word and before a trailing ellipsis: `Cu&t` 切り取り(&T), `Sa&ve Image As…` 名前を付けて画像を保存(&V)…. No space before the parenthesis.
+An `&` in the English marks the access key on Windows and Linux. The key is the English letter where the word has it, else the first free letter, one no other label in the same menu uses; Japanese words have no Latin letter to mark, so the English letter always applies, written as a suffix: a label shown there ends in `(&X)`, the letter upper-case, after the word and before a trailing ellipsis: `Cu&t` 切り取り(&T), `Sa&ve Image As…` 名前を付けて画像を保存(&V)…. No space before the parenthesis. `packages/app/access-keys.test.ts` holds every catalog to this: it builds each menu and context menu Windows and Linux show, and fails when two items in one menu share a letter.
 
 - A label with `msgctxt` `macOS` carries no access key: drop the `&`.
 - A label with `&` and no platform context shows on every platform, so it takes `(&X)` too; macOS hides it, since Chromium strips a `(&X)` from every menu label there (`l10n_util::FixUpWindowsStyleLabel`).

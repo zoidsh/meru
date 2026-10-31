@@ -152,6 +152,8 @@ export default defineConfig({
       excludeFiles: [
         "**/*.test.{ts,tsx}",
         "**/*.e2e.ts",
+        // Helpers shared by the tests.
+        "packages/app/test/**",
         // Files whose strings are data: blocked hosts, SVG ids, window manager
         // names, system paths and attribute values.
         "packages/app/blocker/hosts.ts",
