@@ -586,7 +586,7 @@
       "id": "reglages",
       "pattern": "(?<!\\p{L})[Rr]églages?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it (Chrome: 390 of 417 messages for settings, 18 with réglages). Réglages is Apple's word, for a macOS label such as the app menu's Réglages… and for macOS's own Réglages Système.",
+      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it. Réglages is Apple's word, for a macOS label such as the app menu's Réglages… and for macOS's own Réglages Système (Chrome writes the banned form in 12 messages).",
       "allow": {
         "contexts": ["macOS"],
         "msgidPattern": "\\bSystem Settings\\b"
@@ -596,49 +596,49 @@
       "id": "signet",
       "pattern": "(?<!\\p{L})[Ss]ignets?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "A bookmark is a favori, plural favoris, as Chrome writes it, never a signet (Chrome: 200 messages, none with signet)."
+      "reason": "A bookmark is a favori, plural favoris, as Chrome writes it, never a signet (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "app",
       "pattern": "(?<![\\p{L}\\p{N}./@{-])[Aa]pps?(?![\\p{L}\\p{N}}-])",
       "severity": "wrong",
-      "reason": "An app is an appli, plural applis, as Chrome writes it, or in full an application; never app (Chrome: 368 messages with appli, 3 with app)."
+      "reason": "An app is an appli, plural applis, as Chrome writes it, or in full an application; never app (Chrome writes the banned form in 3 messages)."
     },
     {
       "id": "email",
       "pattern": "(?<![\\p{L}\\p{N}{-])[Ee]mails?(?![\\p{L}\\p{N}}-])",
       "severity": "wrong",
-      "reason": "An email is an e-mail, with the hyphen, as Chrome writes it (Chrome: 57 messages, none with email)."
+      "reason": "An email is an e-mail, with the hyphen, as Chrome writes it (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "site-web",
       "pattern": "(?<!\\p{L})[Ss]ites? web(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Chrome writes site Web, with a capital W (Chrome: 109 messages, 1 with site web)."
+      "reason": "Chrome writes site Web, with a capital W (Chrome writes the banned form in 1 message)."
     },
     {
       "id": "presse-papier",
       "pattern": "(?<!\\p{L})[Pp]resse-papier(?!s)",
       "severity": "wrong",
-      "reason": "The clipboard is the presse-papiers, as Chrome writes it (Chrome: 37 messages, 3 with presse-papier)."
+      "reason": "The clipboard is the presse-papiers, as Chrome writes it (Chrome writes the banned form in 3 messages)."
     },
     {
       "id": "ellipsis",
       "pattern": "\\.\\.\\.|[ \\u00a0\\u202f]…",
       "severity": "wrong",
-      "reason": "An ellipsis is … (U+2026) straight after the word, as Apple and Chrome write it (Chrome: 208 messages, 1 with a space before it)."
+      "reason": "An ellipsis is … (U+2026) straight after the word, as Apple and Chrome write it (Chrome writes the banned form in 118 messages)."
     },
     {
       "id": "punctuation-space",
       "pattern": "(?<!\\u00a0)[;?!]|(?<![\\u00a0\\p{N}]):(?!//)",
       "severity": "wrong",
-      "reason": "A no-break space (U+00A0) goes before : ; ? and !, as Chrome writes it: Voulez-vous vraiment … ? (Chrome: 428 messages with ?, 566 with :, 10 of them with a plain space before :)."
+      "reason": "A no-break space (U+00A0) goes before : ; ? and !, as Chrome writes it: Voulez-vous vraiment … ? (Chrome writes the banned form in 25 messages)."
     },
     {
       "id": "unit-space",
       "pattern": "(?<=[\\p{N}#}]) (?=(?:secondes?|minutes?|heures?|jours?|semaines?|mois|ans|[kKMGT]o|%)(?!\\p{L}))|(?<=[\\p{N}#}])%",
       "severity": "wrong",
-      "reason": "A number and its unit, or %, are joined by a no-break space (U+00A0), as Chrome writes them: 5 minutes, # jours, 50 % (Chrome: 150 messages with a unit, 1 with a plain space, and 37 with %)."
+      "reason": "A number and its unit, or %, are joined by a no-break space (U+00A0), as Chrome writes them: 5 minutes, # jours, 50 % (Chrome writes the banned form in 1 message)."
     },
     {
       "id": "quotes",
@@ -678,21 +678,21 @@
       "msgctxt": null,
       "expect": "^Paramètres$",
       "severity": "wrong",
-      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it (Chrome: 390 of 417 messages for settings)."
+      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it (Chrome: 415 of 436 messages)."
     },
     {
       "id": "download-history",
       "msgidPattern": "(?<!recent )\\bdownload history\\b",
       "expect": "[Hh]istorique (?:complet )?des téléchargements",
       "severity": "wrong",
-      "reason": "The download history is historique des téléchargements, as Chrome writes it, in its title and in Close download history and Full download history (Chrome: 8 messages)."
+      "reason": "The download history is historique des téléchargements, as Chrome writes it, in its title and in Close download history and Full download history (Chrome: 8 of 8 messages)."
     },
     {
       "id": "recent-downloads",
       "msgidPattern": "\\brecent download history\\b",
       "expect": "téléchargements récents",
       "severity": "wrong",
-      "reason": "The recent download history popup is Historique des téléchargements récents, as Chrome writes it (Chrome: 2 messages)."
+      "reason": "The recent download history popup is Historique des téléchargements récents, as Chrome writes it (Chrome: 2 of 2 messages)."
     },
     {
       "id": "gmail-label",
@@ -707,77 +707,77 @@
       "msgidPattern": "\\bbookmarks?\\b",
       "expect": "[Ff]avori",
       "severity": "wrong",
-      "reason": "A bookmark is a favori, as Chrome writes it (Chrome: 200 of 208 messages)."
+      "reason": "A bookmark is a favori, as Chrome writes it (Chrome: 163 of 163 messages)."
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "barre d’onglets",
       "severity": "wrong",
-      "reason": "The tab strip is the barre d’onglets, as Chrome writes it (Chrome: 8 of 8 messages)."
+      "reason": "The tab strip is the barre d’onglets, as Chrome writes it (Chrome: 7 of 7 messages)."
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "navigateur par défaut",
       "severity": "wrong",
-      "reason": "The default browser is the navigateur par défaut, as Chrome writes it (Chrome: 34 of 35 messages)."
+      "reason": "The default browser is the navigateur par défaut, as Chrome writes it (Chrome: 11 of 11 messages)."
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Gg]estionnaires? de mots de passe",
       "severity": "wrong",
-      "reason": "A password manager is a gestionnaire de mots de passe, as Chrome writes it (Chrome: 83 of 85 messages)."
+      "reason": "A password manager is a gestionnaire de mots de passe, as Chrome writes it (Chrome: 76 of 77 messages)."
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "[Cc]lés? d’accès",
       "severity": "wrong",
-      "reason": "A passkey is a clé d’accès, as Chrome writes it (Chrome: 97 of 101 messages)."
+      "reason": "A passkey is a clé d’accès, as Chrome writes it (Chrome: 102 of 106 messages)."
     },
     {
       "id": "update",
       "msgidPattern": "\\bupdates?\\b",
       "expect": "à jour",
       "severity": "wrong",
-      "reason": "An update is a mise à jour, and to update is mettre à jour, as Chrome writes them (Chrome: 236 of 265 messages)."
+      "reason": "An update is a mise à jour, and to update is mettre à jour, as Chrome writes them (Chrome: 165 of 192 messages)."
     },
     {
       "id": "restart",
       "msgidPattern": "\\brestarts?\\b",
       "expect": "[Rr]edémarr",
       "severity": "wrong",
-      "reason": "Restarting is redémarrer, a restart a redémarrage, as Chrome writes them (Chrome: 65 of 69 messages, 4 with relancer)."
+      "reason": "Restarting is redémarrer, a restart a redémarrage, as Chrome writes them (Chrome: 43 of 46 messages)."
     },
     {
       "id": "reload",
       "msgidPattern": "\\breload\\b",
       "expect": "[Aa]ctualis",
       "severity": "wrong",
-      "reason": "Reloading is actualiser, as Chrome writes it: Actualiser, Actualisation forcée; never Apple's recharger (Chrome: 28 of 30 messages, none with recharger)."
+      "reason": "Reloading is actualiser, as Chrome writes it: Actualiser, Actualisation forcée; never Apple's recharger (Chrome: 30 of 32 messages)."
     },
     {
       "id": "verification-code",
       "msgidPattern": "\\bverification codes?\\b",
       "expect": "[Cc]odes? de validation",
       "severity": "wrong",
-      "reason": "A verification code is a code de validation, as Chrome writes it (Chrome: 8 of 8 messages, none with code de vérification)."
+      "reason": "A verification code is a code de validation, as Chrome writes it (Chrome: 7 of 7 messages)."
     },
     {
       "id": "phishing",
       "msgidPattern": "\\bphishing\\b",
       "expect": "hameçonnage",
       "severity": "wrong",
-      "reason": "Phishing is hameçonnage, as Chrome writes it: protection contre l’hameçonnage (Chrome: 5 of 7 messages, 2 with phishing)."
+      "reason": "Phishing is hameçonnage, as Chrome writes it: protection contre l’hameçonnage (Chrome: 4 of 4 messages)."
     },
     {
       "id": "learn-more",
       "msgidPattern": "\\blearn more\\b",
       "expect": "[Ee]n savoir plus",
       "severity": "wrong",
-      "reason": "Learn more is En savoir plus, as Chrome writes it (Chrome: 207 of 213 messages)."
+      "reason": "Learn more is En savoir plus, as Chrome writes it (Chrome: 189 of 193 messages)."
     },
     {
       "id": "pin",
@@ -791,21 +791,21 @@
       "msgid": "Unpin",
       "expect": "^Retirer$",
       "severity": "wrong",
-      "reason": "The tab context menu's Unpin is Retirer, as Chrome writes it (Chrome: 19 of 20 messages, none with Ne plus épingler)."
+      "reason": "The tab context menu's Unpin is Retirer, as Chrome writes it (Chrome: 22 of 23 messages)."
     },
     {
       "id": "extension",
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtension",
       "severity": "wrong",
-      "reason": "An extension is an extension (Chrome: 396 of 400 messages)."
+      "reason": "An extension is an extension (Chrome: 308 of 308 messages)."
     },
     {
       "id": "clipboard",
       "msgidPattern": "\\bclipboard\\b",
       "expect": "presse-papiers",
       "severity": "wrong",
-      "reason": "The clipboard is the presse-papiers, as Chrome writes it (Chrome: 37 of 41 messages)."
+      "reason": "The clipboard is the presse-papiers, as Chrome writes it (Chrome: 41 of 44 messages)."
     },
     {
       "id": "do-not-disturb",
@@ -819,7 +819,7 @@
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "[Bb]outon",
       "severity": "wrong",
-      "reason": "An on-screen button is a bouton, as Chrome writes it (Chrome: 111 of 111 messages)."
+      "reason": "An on-screen button is a bouton, as Chrome writes it (Chrome: 141 of 141 messages)."
     },
     {
       "id": "menu-bar",
@@ -833,7 +833,7 @@
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "approuvé",
       "severity": "wrong",
-      "reason": "A trusted host is an hôte approuvé, as Chrome writes trusted (Chrome: 14 of 22 messages, 7 with fiable)."
+      "reason": "A trusted host is an hôte approuvé, as Chrome writes trusted (Chrome: 14 of 22 messages)."
     },
     {
       "id": "release-channel",
@@ -970,14 +970,14 @@
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]om de l’appareil",
       "severity": "wrong",
-      "reason": "A device label is the nom de l’appareil, Chrome's words for a device name (Chrome: 6 of 11 messages for device name)."
+      "reason": "A device label is the nom de l’appareil, Chrome's words for a device name (Chrome: 6 of 11 messages)."
     },
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nacti",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactif, as in Onglet inactif (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactif, as in Onglet inactif, never the systems' Sleep word (Chrome: 8 of 8 messages)."
     },
     {
       "id": "upgrade",

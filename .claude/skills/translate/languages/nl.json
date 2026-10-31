@@ -586,19 +586,19 @@
       "id": "bladwijzer",
       "pattern": "[Bb]ladwijzer",
       "severity": "wrong",
-      "reason": "A bookmark is a bookmark, as Chrome writes it, never Apple's bladwijzer (Chrome: 195 messages, 2 the other way)."
+      "reason": "A bookmark is a bookmark, as Chrome writes it, never Apple's bladwijzer (Chrome writes the banned form in 2 messages)."
     },
     {
       "id": "notificatie",
       "pattern": "[Nn]otificatie",
       "severity": "wrong",
-      "reason": "A notification is a melding, as Chrome and Apple write it, never notificatie (Chrome: 126 messages, none the other way)."
+      "reason": "A notification is a melding, as Chrome and Apple write it, never notificatie (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "bewaren",
       "pattern": "(?<!\\p{L})(?:[Bb]ewaar\\p{L}*|[Bb]ewaard\\p{L}*)",
       "severity": "wrong",
-      "reason": "Saving is opslaan, as Chrome writes it: Sla op, opgeslagen (Chrome: 553 messages, 9 the other way, all of them its own macOS menu labels). Bewaar is Apple's word, for a macOS label only.",
+      "reason": "Saving is opslaan, as Chrome writes it: Sla op, opgeslagen. Bewaar is Apple's word, for a macOS label only (Chrome writes the banned form in 14 messages).",
       "allow": {
         "contexts": ["macOS"]
       }
@@ -607,19 +607,19 @@
       "id": "vastmaken",
       "pattern": "(?<!\\p{L})(?:[Vv]astgemaakt\\p{L}*|[Vv]astmaken|[Mm]aak (?:\\p{L}+ )?vast)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Pinning is vastzetten, as Chrome writes it: Zet vast, vastgezet tabblad (Chrome: 68 messages, none the other way); vastmaken is Apple's word."
+      "reason": "Pinning is vastzetten, as Chrome writes it: Zet vast, vastgezet tabblad; vastmaken is Apple's word (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "bijwerken",
       "pattern": "[Bb]ijwerk|[Bb]ijgewerkt",
       "severity": "wrong",
-      "reason": "Updating is updaten, with update for the noun, as Chrome writes it (Chrome: 327 messages, 3 the other way)."
+      "reason": "Updating is updaten, with update for the noun, as Chrome writes it (Chrome writes the banned form in 7 messages)."
     },
     {
       "id": "u",
       "pattern": "(?<![\\p{L}\\p{N}+])(?:[Uu]|[Uu]w)(?![\\p{L}\\p{N}+])",
       "severity": "wrong",
-      "reason": "The user is je, with jouw or je, never u or uw (Chrome writes je in 3,646 messages, u or uw in 1)."
+      "reason": "The user is je, with jouw or je, never u or uw (Chrome writes the banned form in 8 messages)."
     },
     {
       "id": "quotes",
@@ -643,7 +643,7 @@
       "id": "unit-space",
       "pattern": "(?<=[\\p{N}#}])[\\u00a0\\u202f](?=(?:seconden?|minuten?|minuut|uur|uren|dagen?|weken?|week|maanden?|maand|jaar|jaren|[kKMGT]B)(?!\\p{L}))",
       "severity": "wrong",
-      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minuten, # dagen (Chrome: 166 messages with a unit, 8 with a no-break space)."
+      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minuten, # dagen (Chrome writes the banned form in 9 messages)."
     },
     {
       "id": "apology",
@@ -658,161 +658,161 @@
       "msgidPattern": "\\bdownload history\\b",
       "expect": "[Dd]ownloadgeschiedenis",
       "severity": "wrong",
-      "reason": "The download history is downloadgeschiedenis, as Chrome writes it (glossary, Chrome: 10 messages of 10)."
+      "reason": "The download history is downloadgeschiedenis, as Chrome writes it (Chrome: 10 of 10 messages)."
     },
     {
       "id": "bookmark",
       "msgidPattern": "\\bbookmarks?\\b",
       "expect": "[Bb]ookmark",
       "severity": "wrong",
-      "reason": "A bookmark is a bookmark, as Chrome writes it (glossary, Chrome: 195 messages of 197)."
+      "reason": "A bookmark is a bookmark, as Chrome writes it (Chrome: 161 of 163 messages)."
     },
     {
       "id": "notification",
       "msgidPattern": "(?!Notifications$).*\\bnotifications?\\b",
       "expect": "[Mm]elding",
       "severity": "wrong",
-      "reason": "A notification is a melding (glossary, Chrome: 126 messages of 126). The bare Notifications is also the toasts' region, under the toast rule."
+      "reason": "A notification is a melding. The bare Notifications is also the toasts' region, under the toast rule (Chrome: 127 of 127 messages)."
     },
     {
       "id": "extension",
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtensie",
       "severity": "wrong",
-      "reason": "An extension is an extensie (glossary, Chrome: 394 messages of 400)."
+      "reason": "An extension is an extensie (Chrome: 303 of 308 messages)."
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "[Tt]abbladstrook",
       "severity": "wrong",
-      "reason": "The tab strip is the tabbladstrook, as Chrome writes it (glossary, Chrome: 8 messages of 8)."
+      "reason": "The tab strip is the tabbladstrook, as Chrome writes it (Chrome: 7 of 7 messages)."
     },
     {
       "id": "do-not-disturb",
       "msgidPattern": "\\bdo not disturb\\b",
       "expect": "Niet storen",
       "severity": "wrong",
-      "reason": "Do Not Disturb is Niet storen (glossary, Apple's, and Chrome's in 6 messages of 6)."
+      "reason": "Do Not Disturb is Niet storen (Chrome: 6 of 6 messages)."
     },
     {
       "id": "button",
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "[Kk]nop",
       "severity": "wrong",
-      "reason": "An on-screen button is a knop, as Chrome writes it (glossary, Chrome: 111 messages of 111)."
+      "reason": "An on-screen button is a knop, as Chrome writes it (Chrome: 141 of 141 messages)."
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Ww]achtwoordmanager",
       "severity": "wrong",
-      "reason": "A password manager is a wachtwoordmanager, as Chrome writes it (Chrome: 85 messages of 85)."
+      "reason": "A password manager is a wachtwoordmanager, as Chrome writes it (Chrome: 77 of 77 messages)."
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "[Tt]oegangssleutel",
       "severity": "wrong",
-      "reason": "A passkey is a toegangssleutel, as Chrome writes it (Chrome: 84 messages, 1 with passkey)."
+      "reason": "A passkey is a toegangssleutel, as Chrome writes it (Chrome: 89 of 106 messages)."
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "[Ss]tandaardbrowser",
       "severity": "wrong",
-      "reason": "The default browser is the standaardbrowser, as Chrome writes it (Chrome: 35 messages of 35)."
+      "reason": "The default browser is the standaardbrowser, as Chrome writes it (Chrome: 11 of 11 messages)."
     },
     {
       "id": "update",
       "msgidPattern": "\\bupdat(?:e|es|ed|ing)\\b",
       "expect": "[Uu]pdat|üpdat",
       "severity": "wrong",
-      "reason": "An update is an update, and updating is updaten, as Chrome writes them (Chrome: 327 messages, 3 with bijwerken)."
+      "reason": "An update is an update, and updating is updaten, as Chrome writes them (Chrome: 229 of 234 messages)."
     },
     {
       "id": "restart",
       "msgidPattern": "\\brestart",
       "expect": "[Oo]pnieuw",
       "severity": "wrong",
-      "reason": "Restarting is opnieuw starten, as Chrome writes it most: Start Meru opnieuw (Chrome: 73 messages, 26 with herstarten)."
+      "reason": "Restarting is opnieuw starten, as Chrome writes it most: Start Meru opnieuw (Chrome: 47 of 47 messages)."
     },
     {
       "id": "titlebar",
       "msgidPattern": "\\btitle ?bar\\b",
       "expect": "[Tt]itelbalk",
       "severity": "wrong",
-      "reason": "The titlebar is the titelbalk (glossary, Chrome: 5 messages of 5)."
+      "reason": "The titlebar is the titelbalk (Chrome: 5 of 5 messages)."
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "[Mm]enubalk",
       "severity": "wrong",
-      "reason": "The menu bar is the menubalk (glossary, Chrome: 9 messages of 9)."
+      "reason": "The menu bar is the menubalk (Chrome: 3 of 3 messages)."
     },
     {
       "id": "verification-code",
       "msgidPattern": "\\bverification codes?\\b",
       "expect": "[Vv]erificatiecode",
       "severity": "wrong",
-      "reason": "A verification code is a verificatiecode (glossary, Chrome: 8 messages of 8)."
+      "reason": "A verification code is a verificatiecode (Chrome: 7 of 7 messages)."
     },
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Aa]pparaatna(?:a)?m",
       "severity": "wrong",
-      "reason": "A device label is an apparaatnaam, Chrome's word for a device name (glossary, Chrome: 9 messages of 12)."
+      "reason": "A device label is an apparaatnaam, Chrome's word for a device name (Chrome: 9 of 11 messages)."
     },
     {
       "id": "spellcheck",
       "msgidPattern": "\\bspell ?check",
       "expect": "[Ss]pellingcontrole",
       "severity": "wrong",
-      "reason": "Spellchecking is spellingcontrole (glossary, Chrome: 23 messages of 24)."
+      "reason": "Spellchecking is spellingcontrole (Chrome: 22 of 23 messages)."
     },
     {
       "id": "dark-theme",
       "msgidPattern": "\\bdark theme\\b",
       "expect": "[Dd]onker\\p{L}* thema",
       "severity": "wrong",
-      "reason": "The dark theme is the donker thema (glossary, Chrome: 5 messages of 5)."
+      "reason": "The dark theme is the donker thema (Chrome: 5 of 5 messages)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "[Vv]ertrouwd",
       "severity": "wrong",
-      "reason": "Trusted hosts are vertrouwde hosts, untrusted ones niet-vertrouwde hosts (glossary, Chrome: 21 messages of 22 write vertrouwd)."
+      "reason": "Trusted hosts are vertrouwde hosts, untrusted ones niet-vertrouwde hosts (Chrome: 21 of 22 messages)."
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "[Kk]anaal",
       "severity": "wrong",
-      "reason": "A release channel is a kanaal: updatekanaal, bètakanaal (glossary, Chrome: 10 messages of 11)."
+      "reason": "A release channel is a kanaal: updatekanaal, bètakanaal (Chrome: 10 of 11 messages)."
     },
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "[Pp]hishing",
       "severity": "wrong",
-      "reason": "Phishing protection is phishingbescherming; Chrome keeps phishing (glossary, Chrome: 7 messages of 7)."
+      "reason": "Phishing protection is phishingbescherming; Chrome keeps phishing (Chrome: 4 of 4 messages)."
     },
     {
       "id": "clipboard",
       "msgidPattern": "\\bclipboard\\b",
       "expect": "[Kk]lembord",
       "severity": "wrong",
-      "reason": "The clipboard is the klembord, as Chrome writes it (Chrome: 41 messages of 41)."
+      "reason": "The clipboard is the klembord, as Chrome writes it (Chrome: 44 of 44 messages)."
     },
     {
       "id": "folder",
       "msgidPattern": "\\bfolders?\\b",
       "expect": "[Mm]ap",
       "severity": "wrong",
-      "reason": "A folder is a map, as Chrome writes it (Chrome: 75 messages of 79)."
+      "reason": "A folder is a map, as Chrome writes it (Chrome: 104 of 106 messages)."
     },
     {
       "id": "save",
@@ -820,28 +820,28 @@
       "msgid": "Save",
       "expect": "^Sla op$",
       "severity": "wrong",
-      "reason": "Save is Sla op, Chrome's opslaan in this sheet's imperative (Chrome: 553 messages, 9 with bewaren)."
+      "reason": "Save is Sla op, Chrome's opslaan in this sheet's imperative (Chrome: 211 of 298 messages)."
     },
     {
       "id": "saved-search",
       "msgidPattern": "\\bsaved search(?:es)?\\b",
       "expect": "[Oo]pgeslagen zoekopdracht",
       "severity": "wrong",
-      "reason": "A saved search is an opgeslagen zoekopdracht (glossary, Chrome writes opgeslagen in 553 messages, bewaard in 9)."
+      "reason": "A saved search is an opgeslagen zoekopdracht (Chrome: 466 of 561 messages)."
     },
     {
       "id": "edit",
       "msgidPattern": "^Edit\\b",
       "expect": "[Bb]ewerk",
       "severity": "wrong",
-      "reason": "Edit is Bewerk, Chrome's bewerken in this sheet's imperative (Chrome: 57 messages of 59, 1 with Apple's wijzigen)."
+      "reason": "Edit is Bewerk, Chrome's bewerken in this sheet's imperative (Chrome: 62 of 64 messages)."
     },
     {
       "id": "pin",
       "msgidPattern": "^Pin$|\\b(?:un)?pinned\\b",
       "expect": "[Vv]ast(?:ge)?ze?t|[Zz]et (?:\\p{L}+ )?vast",
       "severity": "wrong",
-      "reason": "Pinning is vastzetten, as Chrome writes it: Zet vast, vastgezet tabblad (glossary, Chrome: 68 messages, none with vastmaken)."
+      "reason": "Pinning is vastzetten, as Chrome writes it: Zet vast, vastgezet tabblad (Chrome: 17 of 21 messages)."
     },
     {
       "id": "upgrade",
@@ -995,7 +995,7 @@
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nactie",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactief, as in Inactief tabblad (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactief, as in Inactief tabblad, never the systems' Sleep word (Chrome: 8 of 8 messages)."
     },
     {
       "id": "launcher",
@@ -1009,7 +1009,7 @@
       "msgidPattern": "\\bsidebar\\b",
       "expect": "[Zz]ijbalk",
       "severity": "wrong",
-      "reason": "The sidebar is the zijbalk, as Chrome writes it in Toggle sidebar (Chrome: 1 of 1 message); Chrome's zijvenster is its side panel, a different thing."
+      "reason": "The sidebar is the zijbalk, as Chrome writes it in Toggle sidebar; Chrome's zijvenster is its side panel, a different thing (Chrome: 1 of 1 message)."
     }
   ],
   "accessKeys": {

@@ -586,31 +586,31 @@
       "id": "usted",
       "pattern": "(?<!\\p{L})(?:[Uu]sted(?:es)?|[Vv]osotr[oa]s|[Vv]uestr[oa]s?)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "The user is tú, never usted or vosotros. Chrome: tú in 2,617 of the 3,778 messages that address the user, usted in none."
+      "reason": "The user is tú, never usted or vosotros (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "computadora",
       "pattern": "(?<!\\p{L})[Cc]omputadoras?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "A computer is an ordenador in Spain. Chrome: ordenador in 80 of 82 messages, computadora in none."
+      "reason": "A computer is an ordenador in Spain (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "agregar",
       "pattern": "(?<!\\p{L})[Aa]greg(?:a|ar|ad[oa]s?|ue|uen|as|an|ando)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Adding is añadir in Spain. Chrome: añadir in 290 of 299 messages for add, agregar in none."
+      "reason": "Adding is añadir in Spain (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "ingresar",
       "pattern": "(?<!\\p{L})[Ii]ngres(?:a|ar|ad[oa]s?|e|en|as|an|ando)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Entering text is introducir in Spain. Chrome: introducir in 84 of 147 messages for enter, ingresar in none."
+      "reason": "Entering text is introducir in Spain (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "ajustes",
       "pattern": "(?<!\\p{L})[Aa]justes(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Settings is Configuración in Meru's own copy, as Chrome writes it (Chrome: 270 of 417 messages for settings, 133 with ajustes). Ajustes is Apple's word, for a macOS label such as the app menu's Ajustes… and for macOS's own Ajustes del Sistema.",
+      "reason": "Settings is Configuración in Meru's own copy, as Chrome writes it. Ajustes is Apple's word, for a macOS label such as the app menu's Ajustes… and for macOS's own Ajustes del Sistema (Chrome writes the banned form in 143 messages).",
       "allow": {
         "contexts": ["macOS"],
         "msgidPattern": "\\bSystem Settings\\b"
@@ -620,19 +620,19 @@
       "id": "no-se-pudo",
       "pattern": "[Nn]o se pudo",
       "severity": "wrong",
-      "reason": "A recent failure takes the perfect in Spain: No se ha podido. Chrome: No se ha podido in 97 of 144 messages for couldn't, No se pudo in none."
+      "reason": "A recent failure takes the perfect in Spain: No se ha podido (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "anclar",
       "pattern": "(?<!\\p{L})(?:[Dd]es)?[Aa]ncl(?:a|ar|ad[oa]s?|e|en|as|an)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Pinning a tab is fijar and unpinning desfijar, as Chrome writes them: fijar in 44 messages for pin, desfijar in 17 of 20 for unpin, anclar in none."
+      "reason": "Pinning a tab is fijar and unpinning desfijar, as Chrome writes them: fijar in 44 messages for pin, desfijar in 17 of 20 for unpin, anclar in none (Chrome writes the banned form in 1 message)."
     },
     {
       "id": "app",
       "pattern": "(?<!\\p{L})[Aa]pps?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "An app is an aplicación in Spain, as Chrome writes it: aplicación in 527 of 566 messages for app, app in 23. Apple's apps stays in a macOS label such as Ocultar otras apps.",
+      "reason": "An app is an aplicación in Spain, as Chrome writes it: aplicación in 527 of 566 messages for app, app in 23. Apple's apps stays in a macOS label such as Ocultar otras apps (Chrome writes the banned form in 25 messages).",
       "allow": {
         "contexts": ["macOS"]
       }
@@ -641,13 +641,13 @@
       "id": "vinculo",
       "pattern": "(?<!\\p{L})[Vv]ínculos?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "A link is an enlace in Spain. Chrome: enlace in 161 of 190 messages for link, vínculo in none."
+      "reason": "A link is an enlace in Spain (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "recargar",
       "pattern": "(?<!\\p{L})[Rr]ecarg\\p{L}*",
       "severity": "wrong",
-      "reason": "Reloading is volver a cargar. Chrome: volver a cargar in 25 of 30 messages for reload, recargar in 1."
+      "reason": "Reloading is volver a cargar (Chrome writes the banned form in 2 messages)."
     },
     {
       "id": "inverted-marks",
@@ -659,7 +659,7 @@
       "id": "quotes",
       "pattern": "[\"«»]",
       "severity": "wrong",
-      "reason": "Quotation marks are “…” (U+201C, U+201D), as Apple writes them, never straight quotes or «»; Chrome's straight quotes (205 messages) are its own style."
+      "reason": "Quotation marks are “…” (U+201C, U+201D), as Apple writes them, never straight quotes or «»; Chrome's straight quotes (205 messages) are its own style (Chrome writes the banned form in 169 messages)."
     },
     {
       "id": "three-periods",
@@ -677,7 +677,7 @@
       "id": "unit-space",
       "pattern": "(?<=[\\p{N}#}])[\\u00a0\\u202f](?=(?:segundos?|minutos?|horas?|días?|semanas?|mes|meses|años?|[kKMGT]B)(?!\\p{L}))",
       "severity": "wrong",
-      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minutos, # días (Chrome: 144 messages with a unit, 26 with a no-break space)."
+      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minutos, # días (Chrome writes the banned form in 19 messages)."
     },
     {
       "id": "apology",
@@ -693,35 +693,35 @@
       "msgctxt": null,
       "expect": "^Configuración$",
       "severity": "wrong",
-      "reason": "Settings is Configuración in Meru's own copy, as Chrome writes it (Chrome: 270 of 417 messages for settings)."
+      "reason": "Settings is Configuración in Meru's own copy, as Chrome writes it (Chrome: 299 of 436 messages)."
     },
     {
       "id": "ok-button",
       "msgid": "OK",
       "expect": "^Aceptar$",
       "severity": "wrong",
-      "reason": "OK is Aceptar, both on a button Meru draws, as Chrome writes it (6 of its 7 OK labels), and in a native dialog, as Apple's AppKit Common OK gives it."
+      "reason": "OK is Aceptar, both on a button Meru draws, as Chrome writes it (6 of its 7 OK labels), and in a native dialog, as Apple's AppKit Common OK gives it (Chrome: 6 of 7 messages)."
     },
     {
       "id": "bookmark",
       "msgidPattern": "\\bbookmarks?\\b",
       "expect": "[Mm]arcador",
       "severity": "wrong",
-      "reason": "A bookmark is a marcador. Chrome: 197 of 197 messages for bookmark."
+      "reason": "A bookmark is a marcador (Chrome: 163 of 163 messages)."
     },
     {
       "id": "download-history",
       "msgidPattern": "\\bdownload history\\b",
       "expect": "[Hh]istorial de descargas",
       "severity": "wrong",
-      "reason": "The download history is the historial de descargas, also in Recent download history. Chrome: 10 of 10 messages."
+      "reason": "The download history is the historial de descargas, also in Recent download history (Chrome: 10 of 10 messages)."
     },
     {
       "id": "extension",
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtensi[oó]n",
       "severity": "wrong",
-      "reason": "An extension is an extensión. Chrome: 395 of 400 messages."
+      "reason": "An extension is an extensión (Chrome: 307 of 308 messages)."
     },
     {
       "id": "close-other-tabs",
@@ -735,70 +735,70 @@
       "msgidPattern": "^Remove\\b(?! from history)",
       "expect": "[Qq]uitar",
       "severity": "wrong",
-      "reason": "Removing something from a list is quitar. Chrome: quitar in 51 of 109 labels that start with Remove, eliminar in 23; Remove from history keeps Chrome's eliminar."
+      "reason": "Removing something from a list is quitar; Remove from history keeps Chrome's eliminar (Chrome: 68 of 101 messages)."
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Gg]estor(?:es)? de contraseñas",
       "severity": "wrong",
-      "reason": "A password manager is a gestor de contraseñas. Chrome: 85 of 85 messages."
+      "reason": "A password manager is a gestor de contraseñas (Chrome: 77 of 77 messages)."
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "[Ll]laves? de acceso",
       "severity": "wrong",
-      "reason": "A passkey is a llave de acceso. Chrome: 100 of 101 messages."
+      "reason": "A passkey is a llave de acceso (Chrome: 105 of 106 messages)."
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "navegador predeterminado",
       "severity": "wrong",
-      "reason": "The default browser is the navegador predeterminado. Chrome: 34 of 35 messages."
+      "reason": "The default browser is the navegador predeterminado (Chrome: 11 of 11 messages)."
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "[Bb]arra de pestañas",
       "severity": "wrong",
-      "reason": "The tab strip is the barra de pestañas. Chrome: 6 of 8 messages."
+      "reason": "The tab strip is the barra de pestañas (Chrome: 7 of 7 messages)."
     },
     {
       "id": "launcher",
       "msgidPattern": "\\blauncher\\b",
       "expect": "[Mm]enú de aplicaciones",
       "severity": "wrong",
-      "reason": "The launcher is the menú de aplicaciones. Chrome: 21 of 22 messages."
+      "reason": "The launcher is the menú de aplicaciones (Chrome: 19 of 20 messages)."
     },
     {
       "id": "do-not-disturb",
       "msgidPattern": "\\bdo not disturb\\b",
       "expect": "No molestar",
       "severity": "wrong",
-      "reason": "Do Not Disturb is No molestar. Chrome: 6 of 6 messages, as Apple writes it."
+      "reason": "Do Not Disturb is No molestar (Chrome: 6 of 6 messages)."
     },
     {
       "id": "restart",
       "msgidPattern": "\\brestarts?\\b",
       "expect": "[Rr]einici",
       "severity": "wrong",
-      "reason": "Restarting is reiniciar. Chrome: 64 of 67 messages for restart."
+      "reason": "Restarting is reiniciar (Chrome: 43 of 46 messages)."
     },
     {
       "id": "update",
       "msgidPattern": "\\bupdates?\\b",
       "expect": "[Aa]ctualiz",
       "severity": "wrong",
-      "reason": "An update is an actualización. Chrome: 249 of 265 messages."
+      "reason": "An update is an actualización (Chrome: 176 of 192 messages)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "de confianza",
       "severity": "wrong",
-      "reason": "A trusted host is a host de confianza. Chrome: de confianza is its most common form, in 9 of 22 messages for trusted."
+      "reason": "A trusted host is a host de confianza (Chrome: 10 of 22 messages)."
     },
     {
       "id": "menu-bar",
@@ -935,7 +935,7 @@
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]ombre del dispositivo",
       "severity": "wrong",
-      "reason": "A device label is the nombre del dispositivo, Chrome's words for a device name (Chrome: 6 of 11 messages for device name)."
+      "reason": "A device label is the nombre del dispositivo, Chrome's words for a device name (Chrome: 6 of 11 messages)."
     },
     {
       "id": "phishing-protection",
@@ -956,7 +956,7 @@
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nactiv",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactiva, as in Pestaña inactiva (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactiva, as in Pestaña inactiva, never the systems' Sleep word (Chrome: 8 of 8 messages)."
     },
     {
       "id": "upgrade",

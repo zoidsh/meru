@@ -16,7 +16,7 @@ Every word here and in a style sheet comes from the first of these sources that 
 
 Apple is a source only for the operating system's words in step 1. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says.
 
-Each word carries its source in brackets: **(Chrome n/N)**, Chrome's word in n of the N messages that have the term, counted in Chromium 156's `generated_resources`, `components_strings` and `ui_strings` translations; **(Apple …)**, **(Microsoft …)** or **(GNOME …)** for an operating system's word, cited as the style sheet's Platform words cite it; **(Gmail …)**; **(Google)**; or **(agent-chosen: reason)**, a word picked by the last step, which a speaker's review replaces. Use an agent-chosen word like any other.
+Each word carries its source in brackets: **(Chrome n/N)**, Chrome's word in n of the N messages that have the term, counted in Chromium 156's `generated_resources`, `components_strings` and `ui_strings` translations. Every count, here and in the sidecars, is taken one way: N is the messages whose English has the term, matched by the sidecar pin's `msgidPattern` (or its `msgid` as a whole word) where a pin holds the word, and n is those whose translation matches the pin's `expect`, without its anchors and ignoring case; a term Meru alone has, such as a device label, is counted by the Chrome term its word comes from, and a pin on Meru's own phrase or label form by the word it is built on. A ban's count is the messages whose translation has its banned form; **(Apple …)**, **(Microsoft …)** or **(GNOME …)** for an operating system's word, cited as the style sheet's Platform words cite it; **(Gmail …)**; **(Google)**; or **(agent-chosen: reason)**, a word picked by the last step, which a speaker's review replaces. Use an agent-chosen word like any other.
 
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
 
@@ -33,7 +33,7 @@ The window and Meru's own copy, also the Settings section of the language's styl
 - it: Impostazioni (Chrome 431/436); the macOS menu item _Impostazioni…_ (Apple)
 - es: Configuración (Chrome 299/436, ajustes in the rest); the macOS menu item _Ajustes…_ (Apple)
 - es-419: Configuración (Chrome 428/436); the macOS menu item _Configuración…_ (Apple)
-- pt-BR: Configurações (Chrome 421/436); the macOS menu item _Ajustes…_ (Apple)
+- pt-BR: Configurações (Chrome 419/436); the macOS menu item _Ajustes…_ (Apple)
 - nl: Instellingen (Chrome 431/436); the macOS menu item _Instellingen…_ (Apple)
 - pl: Ustawienia (Chrome 430/436); the macOS menu item _Ustawienia…_ (Apple)
 - sv: Inställningar (Chrome 431/436); the macOS menu item _Inställningar…_ (Apple)
@@ -122,9 +122,9 @@ A timed or indefinite hold on notifications. A part of the operating system, so 
 - es: notificación (Chrome 132/132)
 - es-419: notificación (Chrome 132/132)
 - pt-BR: notificação (Chrome 132/132)
-- nl: melding (Chrome 132/132), never _notificatie_
-- pl: powiadomienie (Chrome 130/132)
-- sv: avisering, plural aviseringar (Chrome 129/132). Never _notis_, which only a `macOS` label keeps.
+- nl: melding (Chrome 127/127), never _notificatie_
+- pl: powiadomienie (Chrome 125/127)
+- sv: avisering, plural aviseringar (Chrome 124/127). Never _notis_, which only a `macOS` label keeps.
 - ja: 通知 (Chrome 130/132)
 
 ## Notification hours
@@ -155,7 +155,7 @@ Unloading an idle tab to give back its memory, keeping it in the list: _Hibernat
 - nl: inactief; _Inactief tabblad_, _inactief maken_ (Chrome 8/8), never _slaapstand_
 - pl: nieaktywna; _Karta nieaktywna_, _ustawić jako nieaktywną_ (Chrome 8/8)
 - sv: inaktiv; _Inaktiv flik_, _göra inaktiv_ (Chrome 8/8), never _viloläge_
-- ja: アクティブでない, 非アクティブ; アクティブでないタブ, 非アクティブにする (Chrome 7/8)
+- ja: アクティブでない, 非アクティブ; アクティブでないタブ, 非アクティブにする (Chrome 8/8)
 
 ## Workspace app
 
@@ -228,8 +228,8 @@ The titlebar or sidebar dropdown that opens a workspace app. Chrome's word is Ch
 - es-419: selector (Chrome 17/20)
 - pt-BR: iniciador (Chrome's _Launcher_ label, 2/2; its launcher key is the _tecla de acesso rápido_)
 - nl: launcher (Chrome 20/20)
-- pl: menu z aplikacjami (Chrome 19/20)
-- sv: appstartare (Chrome 12/20)
+- pl: menu z aplikacjami (Chrome 17/20)
+- sv: appstartare (Chrome 11/20)
 - ja: ランチャー (Chrome 19/20)
 
 ## Vertical tabs
@@ -258,7 +258,7 @@ The strip across the top of the window.
 - es-419: barra de título (Chrome 5/5)
 - pt-BR: barra de título (Chrome 5/5)
 - nl: titelbalk (Chrome 5/5)
-- pl: pasek tytułu (Chrome 4/5), never _pasek tytułowy_
+- pl: pasek tytułu (Chrome 5/5), never _pasek tytułowy_
 - sv: namnlist (Chrome 5/5)
 - ja: タイトルバー (Chrome 4/5)
 
@@ -344,7 +344,7 @@ A Chrome extension from Meru's list.
 - it: estensione (Chrome 306/308)
 - es: extensión (Chrome 307/308)
 - es-419: extensión (Chrome 308/308)
-- pt-BR: extensão (Chrome 307/307)
+- pt-BR: extensão (Chrome 302/307)
 - nl: extensie (Chrome 303/308)
 - pl: rozszerzenie (Chrome 304/308)
 - sv: tillägg (Chrome 302/308)
@@ -414,11 +414,11 @@ Chrome has no license key or trial; the device is Chrome's word.
 
 ## Download history
 
-Counted in Chrome's 10 messages with _download history_.
+Counted in Chrome's messages with _download history_; where a language pins the page and the recent popup apart, the page's count leaves out _recent download history_.
 
-- de: Downloadverlauf for the page, in _Download history_, _Full download history_ and _Close download history_ (Chrome 10/10); the recent download history popup is _Letzte Downloads_ (_Letzte Downloads anzeigen_), never _Aktueller Downloadverlauf_ (the user's call, from Chrome's _Letzte Downloads_)
-- fr: historique des téléchargements, in _Historique complet des téléchargements_ and _Fermer l’historique des téléchargements_ (Chrome 7/10); the recent download history popup is _Historique des téléchargements récents_ (Chrome)
-- it: cronologia dei download; the page's title _Cronologia download_ (Chrome 10/10); the recent download history popup is _Cronologia dei download recenti_ (Chrome)
+- de: Downloadverlauf for the page, in _Download history_, _Full download history_ and _Close download history_ (Chrome 8/8); the recent download history popup is _Letzte Downloads_ (_Letzte Downloads anzeigen_), never _Aktueller Downloadverlauf_ (the user's call, from Chrome's _Letzte Downloads_)
+- fr: historique des téléchargements, in _Historique complet des téléchargements_ and _Fermer l’historique des téléchargements_ (Chrome 8/8); the recent download history popup is _Historique des téléchargements récents_ (Chrome)
+- it: cronologia dei download; the page's title _Cronologia download_ (Chrome 8/8); the recent download history popup is _Cronologia dei download recenti_ (Chrome)
 - es: historial de descargas (Chrome 10/10), also in _Historial de descargas recientes_
 - es-419: historial de descargas (Chrome 10/10), also in _Historial de descargas recientes_
 - pt-BR: histórico de downloads (Chrome 8/10), also in _Histórico de downloads recentes_
@@ -502,18 +502,18 @@ The badge on an account's row in Settings, `msgctxt` `account row badge`, sits o
 
 ## Tab strip
 
-The tabs within an account, which Workspace apps' New windows mode leaves out: _Narrow the tab strip_. Counted in Chrome's 9 messages with _tab strip_.
+The tabs within an account, which Workspace apps' New windows mode leaves out: _Narrow the tab strip_. Counted in Chrome's 7 messages with _tab strip_.
 
-- de: Tableiste (_Tableiste verschmälern_) (Chrome 8/9)
-- fr: barre d’onglets (_Réduire la barre d’onglets_) (Chrome 9/9)
-- it: tabstrip, feminine (_Restringi la tabstrip_) (Chrome 9/9)
-- es: barra de pestañas (_Estrechar la barra de pestañas_) (Chrome 9/9)
-- es-419: barra de pestañas (_Estrechar la barra de pestañas_) (Chrome 9/9)
-- pt-BR: barra de guias (_Estreitar a Barra de Guias_) (Chrome 7/9)
-- nl: tabbladstrook (_Maak de tabbladstrook smaller_) (Chrome 9/9)
-- pl: pasek kart (_Zwęź pasek kart_) (Chrome 9/9)
-- sv: flikhuvud (_Gör flikhuvudet smalare_) (Chrome 9/9)
-- ja: タブバー (タブバーを狭くする) (Chrome 9/9), never タブストリップ
+- de: Tableiste (_Tableiste verschmälern_) (Chrome 6/7)
+- fr: barre d’onglets (_Réduire la barre d’onglets_) (Chrome 7/7)
+- it: tabstrip, feminine (_Restringi la tabstrip_) (Chrome 7/7)
+- es: barra de pestañas (_Estrechar la barra de pestañas_) (Chrome 7/7)
+- es-419: barra de pestañas (_Estrechar la barra de pestañas_) (Chrome 7/7)
+- pt-BR: barra de guias (_Estreitar a Barra de Guias_) (Chrome 7/7)
+- nl: tabbladstrook (_Maak de tabbladstrook smaller_) (Chrome 7/7)
+- pl: pasek kart (_Zwęź pasek kart_) (Chrome 7/7)
+- sv: flikhuvud (_Gör flikhuvudet smalare_) (Chrome 7/7)
+- ja: タブバー (タブバーを狭くする) (Chrome 7/7), never タブストリップ
 
 ## Label, Meru's
 
@@ -555,7 +555,7 @@ Which releases Meru updates to, Stable or [Beta](#experimental-beta): _Release c
 - es: canal de versiones; _canal beta_ (_¿Cambiar al canal beta?_) (Chrome's _canal_ 11/11)
 - es-419: canal de versiones; _canal beta_ (_¿Cambiar al canal beta?_) (Chrome's _canal_ 11/11)
 - pt-BR: canal de versões; _canal beta_ (_Mudar para o canal beta?_) (Chrome's _canal_ 11/11)
-- nl: updatekanaal; _bètakanaal_ (_Overschakelen naar het bètakanaal?_) (Chrome's _kanaal_ 11/11 and _Bèta_; agent-chosen compounds: Dutch closes them up)
+- nl: updatekanaal; _bètakanaal_ (_Overschakelen naar het bètakanaal?_) (Chrome's _kanaal_ 10/11 and _Bèta_; agent-chosen compounds: Dutch closes them up)
 - pl: kanał aktualizacji; _kanał beta_ (_Przełączyć na kanał beta?_) (Chrome's _kanał_ 8/11)
 - sv: uppdateringskanal; _betakanal_ (_Vill du byta till betakanalen?_) (Chrome's _kanal_ 11/11; agent-chosen compounds: Swedish closes them up)
 - ja: リリースチャンネル; ベータチャンネル (ベータチャンネルに切り替えますか?) (Chrome's チャンネル 11/11; agent-chosen compounds: リリース names what the channel delivers)

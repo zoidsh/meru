@@ -586,7 +586,7 @@
       "id": "notis",
       "pattern": "(?<!\\p{L})[Nn]otis\\p{L}*",
       "severity": "wrong",
-      "reason": "A notification is an avisering, as Chrome writes it, never Apple's notis (Chrome: 123 messages, none the other way); notis is for a macOS label only.",
+      "reason": "A notification is an avisering, as Chrome writes it, never Apple's notis; notis is for a macOS label only (Chrome writes the banned form in none of its messages).",
       "allow": {
         "contexts": ["macOS"]
       }
@@ -595,7 +595,7 @@
       "id": "hamta",
       "pattern": "(?<!\\p{L})[Hh]ämt\\p{L}*",
       "severity": "wrong",
-      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them, never hämta or hämtning (Chrome: ladda ned or nedladdning in 187 of 224 messages for download, hämta in 1, Hämta flera filer). Fetching something that is not a download, such as a page or a code, can be hämta.",
+      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them, never hämta or hämtning. Fetching something that is not a download, such as a page or a code, can be hämta (Chrome writes the banned form in 32 messages).",
       "allow": {
         "contexts": ["macOS"],
         "msgidPattern": "^(?!.*\\bdownload)"
@@ -605,7 +605,7 @@
       "id": "mejl",
       "pattern": "[Mm]ejl",
       "severity": "wrong",
-      "reason": "An email is an e-postmeddelande, as Chrome writes it, never Apple's mejl (Chrome: 60 messages, none the other way); mejl is for a macOS label only.",
+      "reason": "An email is an e-postmeddelande, as Chrome writes it, never Apple's mejl; mejl is for a macOS label only (Chrome writes the banned form in none of its messages).",
       "allow": {
         "contexts": ["macOS"]
       }
@@ -614,7 +614,7 @@
       "id": "gom",
       "pattern": "(?<!\\p{L})[Gg]öm(?:d|da|t|s|mer|ma|des)?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Hiding is dölja, as Chrome writes it: Dölj (Chrome: 47 messages, none the other way); Göm is Apple's word, for a macOS label only.",
+      "reason": "Hiding is dölja, as Chrome writes it: Dölj; Göm is Apple's word, for a macOS label only (Chrome writes the banned form in none of its messages).",
       "allow": {
         "contexts": ["macOS"]
       }
@@ -623,13 +623,13 @@
       "id": "nala",
       "pattern": "[Nn]åla",
       "severity": "wrong",
-      "reason": "Pinning is fästa, as Chrome writes it: Fäst, fäst flik (Chrome: 100 messages, none with nåla fast)."
+      "reason": "Pinning is fästa, as Chrome writes it: Fäst, fäst flik (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "ni",
       "pattern": "(?<![\\p{L}\\p{N}+])[Nn]i(?![\\p{L}\\p{N}+])",
       "severity": "wrong",
-      "reason": "The user is du, never ni (Chrome writes du in 2,659 messages, ni in none)."
+      "reason": "The user is du, never ni (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "quotes",
@@ -653,7 +653,7 @@
       "id": "unit-space",
       "pattern": "(?<=[\\p{N}#}])[\\u00a0\\u202f](?=(?:sekunder?|minuter?|timmar?|timme|dagar?|dag|veckor?|vecka|månader?|månad|år|[kKMGT]B)(?!\\p{L}))",
       "severity": "wrong",
-      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minuter, # dagar (Chrome: 147 messages with a unit, 20 with a no-break space)."
+      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minuter, # dagar (Chrome writes the banned form in 17 messages)."
     },
     {
       "id": "apology",
@@ -668,182 +668,182 @@
       "msgidPattern": "\\bdownload history\\b",
       "expect": "[Nn]edladdningshistorik",
       "severity": "wrong",
-      "reason": "The download history is the nedladdningshistorik, as Chrome writes it, never Apple's hämtningshistorik (glossary, Chrome: 10 messages of 10)."
+      "reason": "The download history is the nedladdningshistorik, as Chrome writes it, never Apple's hämtningshistorik (Chrome: 10 of 10 messages)."
     },
     {
       "id": "download",
       "msgidPattern": "\\bdownload",
       "expect": "[Nn]edladd|[Ll]add\\p{L}* ned",
       "severity": "wrong",
-      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them (Chrome: 269 messages of 282, none with hämta)."
+      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them (Chrome: 216 of 228 messages)."
     },
     {
       "id": "bookmark",
       "msgidPattern": "\\bbookmarks?\\b",
       "expect": "[Bb]okmärk",
       "severity": "wrong",
-      "reason": "A bookmark is a bokmärke (glossary, Chrome: 197 messages of 197)."
+      "reason": "A bookmark is a bokmärke (Chrome: 163 of 163 messages)."
     },
     {
       "id": "notification",
       "msgidPattern": "(?!Notifications$).*\\bnotifications?\\b",
       "expect": "[Aa]viser",
       "severity": "wrong",
-      "reason": "A notification is an avisering, as Chrome writes it (glossary, Chrome: 123 messages of 126, none with notis). The bare Notifications is also the toasts' region, under the toast rule."
+      "reason": "A notification is an avisering, as Chrome writes it. The bare Notifications is also the toasts' region, under the toast rule (Chrome: 124 of 127 messages)."
     },
     {
       "id": "extension",
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Tt]illägg",
       "severity": "wrong",
-      "reason": "An extension is a tillägg (glossary, Chrome: 394 messages of 400)."
+      "reason": "An extension is a tillägg (Chrome: 302 of 308 messages)."
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "[Ff]likhuvud",
       "severity": "wrong",
-      "reason": "The tab strip is the flikhuvud, as Chrome writes it (glossary, Chrome: 8 messages of 8)."
+      "reason": "The tab strip is the flikhuvud, as Chrome writes it (Chrome: 7 of 7 messages)."
     },
     {
       "id": "do-not-disturb",
       "msgidPattern": "\\bdo not disturb\\b",
       "expect": "Stör ej",
       "severity": "wrong",
-      "reason": "Do Not Disturb is Stör ej (glossary, Apple's, and Chrome's in 5 messages of 6, 1 with Stör inte)."
+      "reason": "Do Not Disturb is Stör ej (Chrome: 5 of 6 messages)."
     },
     {
       "id": "button",
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "[Kk]napp",
       "severity": "wrong",
-      "reason": "An on-screen button is a knapp, as Chrome writes it (glossary, Chrome: 109 messages of 111)."
+      "reason": "An on-screen button is a knapp, as Chrome writes it (Chrome: 139 of 141 messages)."
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Ll]ösenordshanter",
       "severity": "wrong",
-      "reason": "A password manager is a lösenordshanterare, as Chrome writes it (Chrome: 84 messages of 85)."
+      "reason": "A password manager is a lösenordshanterare, as Chrome writes it (Chrome: 76 of 77 messages)."
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "(?<!\\p{L})[Nn]yck",
       "severity": "wrong",
-      "reason": "A passkey is a nyckel, as Chrome writes it (Chrome: 101 messages of 101)."
+      "reason": "A passkey is a nyckel, as Chrome writes it (Chrome: 106 of 106 messages)."
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "[Ss]tandardwebbläsare",
       "severity": "wrong",
-      "reason": "The default browser is the standardwebbläsare, as Chrome writes it (Chrome: 35 messages of 35)."
+      "reason": "The default browser is the standardwebbläsare, as Chrome writes it (Chrome: 11 of 11 messages)."
     },
     {
       "id": "update",
       "msgidPattern": "\\bupdat(?:e|es|ed|ing)\\b",
       "expect": "[Uu]ppdater",
       "severity": "wrong",
-      "reason": "An update is an uppdatering (Chrome: 333 messages of 335)."
+      "reason": "An update is an uppdatering (Chrome: 233 of 234 messages)."
     },
     {
       "id": "restart",
       "msgidPattern": "\\brestart",
       "expect": "[Ss]tart\\p{L}* om|[Oo]mstart",
       "severity": "wrong",
-      "reason": "Restarting is starta om, as Chrome writes it (Chrome: 138 messages of 146)."
+      "reason": "Restarting is starta om, as Chrome writes it (Chrome: 44 of 47 messages)."
     },
     {
       "id": "reload",
       "msgidPattern": "\\breload\\b",
       "expect": "[Ll]äs\\p{L}* in|[Ii]nläsning",
       "severity": "wrong",
-      "reason": "Reloading is läsa in igen, as Chrome writes it, not Apple's Uppdatera, which is Meru's word for an update (Chrome: 20 messages of 30)."
+      "reason": "Reloading is läsa in igen, as Chrome writes it, not Apple's Uppdatera, which is Meru's word for an update (Chrome: 25 of 32 messages)."
     },
     {
       "id": "titlebar",
       "msgidPattern": "\\btitle ?bar\\b",
       "expect": "[Nn]amnlist",
       "severity": "wrong",
-      "reason": "The titlebar is the namnlist (glossary, Chrome: 5 messages of 5)."
+      "reason": "The titlebar is the namnlist (Chrome: 5 of 5 messages)."
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "[Mm]enyrad",
       "severity": "wrong",
-      "reason": "The menu bar is the menyrad (glossary, Chrome: 8 messages of 9)."
+      "reason": "The menu bar is the menyrad (Chrome: 2 of 3 messages)."
     },
     {
       "id": "verification-code",
       "msgidPattern": "\\bverification codes?\\b",
       "expect": "[Vv]erifieringskod",
       "severity": "wrong",
-      "reason": "A verification code is a verifieringskod (glossary, Chrome: 8 messages of 8)."
+      "reason": "A verification code is a verifieringskod (Chrome: 7 of 7 messages)."
     },
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Ee]nhetsnamn",
       "severity": "wrong",
-      "reason": "A device label is an enhetsnamn, Chrome's word for a device name (glossary, Chrome: 8 messages of 12)."
+      "reason": "A device label is an enhetsnamn, Chrome's word for a device name (Chrome: 7 of 11 messages)."
     },
     {
       "id": "spellcheck",
       "msgidPattern": "\\bspell ?check",
       "expect": "[Ss]tavningskontroll",
       "severity": "wrong",
-      "reason": "Spellchecking is stavningskontroll (glossary, Chrome: 23 messages of 24)."
+      "reason": "Spellchecking is stavningskontroll (Chrome: 22 of 23 messages)."
     },
     {
       "id": "dark-theme",
       "msgidPattern": "\\bdark theme\\b",
       "expect": "[Mm]örk\\p{L}* tema",
       "severity": "wrong",
-      "reason": "The dark theme is the mörkt tema (glossary, Chrome: 5 messages of 5)."
+      "reason": "The dark theme is the mörkt tema (Chrome: 5 of 5 messages)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "[Bb]etro",
       "severity": "wrong",
-      "reason": "Trusted hosts are betrodda värdar, untrusted ones ej betrodda värdar (glossary, Chrome: 16 messages of 22 write betrodd)."
+      "reason": "Trusted hosts are betrodda värdar, untrusted ones ej betrodda värdar (Chrome: 16 of 22 messages)."
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "[Kk]anal",
       "severity": "wrong",
-      "reason": "A release channel is a kanal: uppdateringskanal, betakanal (glossary, Chrome: 11 messages of 11)."
+      "reason": "A release channel is a kanal: uppdateringskanal, betakanal (Chrome: 11 of 11 messages)."
     },
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "[Nn]ätfiske",
       "severity": "wrong",
-      "reason": "Phishing protection is skydd mot nätfiske, as Chrome writes it (glossary, Chrome: 6 messages of 7, none with phishing)."
+      "reason": "Phishing protection is skydd mot nätfiske, as Chrome writes it (Chrome: 4 of 4 messages)."
     },
     {
       "id": "clipboard",
       "msgidPattern": "\\bclipboard\\b",
       "expect": "[Uu]rklipp",
       "severity": "wrong",
-      "reason": "The clipboard is urklipp, as Chrome writes it (Chrome: 41 messages of 41)."
+      "reason": "The clipboard is urklipp, as Chrome writes it (Chrome: 44 of 44 messages)."
     },
     {
       "id": "folder",
       "msgidPattern": "\\bfolders?\\b",
       "expect": "[Mm]app",
       "severity": "wrong",
-      "reason": "A folder is a mapp, as Chrome writes it (Chrome: 76 messages of 79)."
+      "reason": "A folder is a mapp, as Chrome writes it (Chrome: 103 of 106 messages)."
     },
     {
       "id": "pin",
       "msgidPattern": "^Pin$|\\b(?:un)?pinned\\b",
       "expect": "[Ff]äst",
       "severity": "wrong",
-      "reason": "Pinning is fästa, as Chrome writes it: Fäst, fäst flik (glossary, Chrome: 100 messages, none with nåla fast)."
+      "reason": "Pinning is fästa, as Chrome writes it: Fäst, fäst flik (Chrome: 15 of 21 messages)."
     },
     {
       "id": "upgrade",
@@ -997,14 +997,14 @@
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]naktiv",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiv flik (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiv flik, never the systems' Sleep word (Chrome: 8 of 8 messages)."
     },
     {
       "id": "launcher",
       "msgidPattern": "\\blauncher\\b",
       "expect": "[Aa]ppstartare",
       "severity": "wrong",
-      "reason": "The launcher is the appstartare, as Chrome names ChromeOS's (Chrome: 12 of 20 messages)."
+      "reason": "The launcher is the appstartare, as Chrome names ChromeOS's (Chrome: 11 of 20 messages)."
     }
   ],
   "accessKeys": {

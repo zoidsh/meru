@@ -595,145 +595,145 @@
       "id": "long-vowel",
       "pattern": "ブラウザー",
       "severity": "wrong",
-      "reason": "Chrome writes ブラウザ, without ー, never ブラウザー (Chrome: 198 messages, none the other way)."
+      "reason": "Chrome writes ブラウザ, without ー, never ブラウザー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "フォルダー",
       "severity": "wrong",
-      "reason": "Chrome writes フォルダ, without ー, never フォルダー (Chrome: 110 messages, none the other way)."
+      "reason": "Chrome writes フォルダ, without ー, never フォルダー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "コンピューター",
       "severity": "wrong",
-      "reason": "Chrome writes コンピュータ, without ー, never コンピューター (Chrome: 10 messages, none the other way)."
+      "reason": "Chrome writes コンピュータ, without ー, never コンピューター (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "エディター",
       "severity": "wrong",
-      "reason": "Chrome writes エディタ, without ー, never エディター (Chrome: 10 messages, none the other way)."
+      "reason": "Chrome writes エディタ, without ー, never エディター (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "プロバイダー",
       "severity": "wrong",
-      "reason": "Chrome writes プロバイダ, without ー, never プロバイダー (Chrome: 28 messages, none the other way)."
+      "reason": "Chrome writes プロバイダ, without ー, never プロバイダー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "プリンター",
       "severity": "wrong",
-      "reason": "Chrome writes プリンタ, without ー, never プリンター (Chrome: 87 messages, none the other way)."
+      "reason": "Chrome writes プリンタ, without ー, never プリンター (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "ビューアー",
       "severity": "wrong",
-      "reason": "Chrome writes ビューア, without ー, never ビューアー (Chrome: 7 messages, none the other way)."
+      "reason": "Chrome writes ビューア, without ー, never ビューアー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "ドライバー",
       "severity": "wrong",
-      "reason": "Chrome writes ドライバ, without ー, never ドライバー (Chrome: 1 message, none the other way)."
+      "reason": "Chrome writes ドライバ, without ー, never ドライバー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "パラメーター",
       "severity": "wrong",
-      "reason": "Chrome writes パラメータ, without ー, never パラメーター (Chrome: 4 messages, none the other way)."
+      "reason": "Chrome writes パラメータ, without ー, never パラメーター (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "セキュリティー",
       "severity": "wrong",
-      "reason": "Chrome writes セキュリティ, without ー, never セキュリティー (Chrome: 218 messages, none the other way)."
+      "reason": "Chrome writes セキュリティ, without ー, never セキュリティー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "カテゴリー",
       "severity": "wrong",
-      "reason": "Chrome writes カテゴリ, without ー, never カテゴリー (Chrome: 2 messages, none the other way)."
+      "reason": "Chrome writes カテゴリ, without ー, never カテゴリー (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "メモリー",
       "severity": "wrong",
-      "reason": "Chrome writes メモリ, without ー, never メモリー (Chrome: 51 messages, 1 the other way)."
+      "reason": "Chrome writes メモリ, without ー, never メモリー (Chrome writes the banned form in 1 message)."
     },
     {
       "id": "long-vowel",
       "pattern": "ユーザ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes ユーザー, with ー, never ユーザ (Chrome: 339 messages, none the other way)."
+      "reason": "Chrome writes ユーザー, with ー, never ユーザ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "サーバ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes サーバー, with ー, never サーバ (Chrome: 114 messages, none the other way)."
+      "reason": "Chrome writes サーバー, with ー, never サーバ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "マネージャ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes マネージャー, with ー, never マネージャ (Chrome: 93 messages, 6 the other way)."
+      "reason": "Chrome writes マネージャー, with ー, never マネージャ (Chrome writes the banned form in 5 messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "デベロッパ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes デベロッパー, with ー, never デベロッパ (Chrome: 32 messages, none the other way)."
+      "reason": "Chrome writes デベロッパー, with ー, never デベロッパ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "ランチャ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes ランチャー, with ー, never ランチャ (Chrome: 21 messages, none the other way)."
+      "reason": "Chrome writes ランチャー, with ー, never ランチャ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "センタ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes センター, with ー, never センタ (Chrome: 10 messages, none the other way)."
+      "reason": "Chrome writes センター, with ー, never センタ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "リーダ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes リーダー, with ー, never リーダ (Chrome: 14 messages, none the other way)."
+      "reason": "Chrome writes リーダー, with ー, never リーダ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "ヘッダ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes ヘッダー, with ー, never ヘッダ (Chrome: 5 messages, none the other way)."
+      "reason": "Chrome writes ヘッダー, with ー, never ヘッダ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "フッタ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes フッター, with ー, never フッタ (Chrome: 4 messages, none the other way)."
+      "reason": "Chrome writes フッター, with ー, never フッタ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "トラッカ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes トラッカー, with ー, never トラッカ (Chrome: 2 messages, none the other way)."
+      "reason": "Chrome writes トラッカー, with ー, never トラッカ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "long-vowel",
       "pattern": "エクスプローラ(?!ー)",
       "severity": "wrong",
-      "reason": "Chrome writes エクスプローラー, with ー, never エクスプローラ (Chrome: 1 message, none the other way)."
+      "reason": "Chrome writes エクスプローラー, with ー, never エクスプローラ (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "kinou-kakuchou",
       "pattern": "機能拡張",
       "severity": "wrong",
-      "reason": "An extension is 拡張機能, as Chrome writes it, never 機能拡張 (Chrome: 395 messages, none the other way)."
+      "reason": "An extension is 拡張機能, as Chrome writes it, never 機能拡張 (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "anata",
@@ -833,7 +833,7 @@
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "ボタン",
       "severity": "wrong",
-      "reason": "An on-screen button is a ボタン, as Chrome writes it (Chrome: 141 of 141 messages for button)."
+      "reason": "An on-screen button is a ボタン, as Chrome writes it (Chrome: 141 of 141 messages)."
     },
     {
       "id": "unread-badge",
@@ -848,7 +848,7 @@
       "msgidPattern": "\\btab strip\\b",
       "expect": "タブバー",
       "severity": "wrong",
-      "reason": "The tab strip is タブバー, as Chrome writes it (glossary, Chrome: 10 messages, among them IDS_TAB_STRIP_BUTTON_TOOLTIP, none with タブストリップ)."
+      "reason": "The tab strip is タブバー, as Chrome writes it (Chrome: 7 of 7 messages)."
     },
     {
       "id": "meru-label",
@@ -871,21 +871,21 @@
       "msgidPattern": "\\bdevice label\\b",
       "expect": "デバイス名",
       "severity": "wrong",
-      "reason": "A device label is デバイス名, Chrome's word for a device name (Chrome: 10 of 11 messages for device name)."
+      "reason": "A device label is デバイス名, Chrome's word for a device name (Chrome: 10 of 11 messages)."
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "チャンネル",
       "severity": "wrong",
-      "reason": "A release channel is a チャンネル: リリースチャンネル, ベータチャンネル, with Chrome's チャンネル (Chrome: 11 of 11 messages for channel)."
+      "reason": "A release channel is a チャンネル: リリースチャンネル, ベータチャンネル, with Chrome's チャンネル (Chrome: 11 of 11 messages)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "信頼するホスト",
       "severity": "wrong",
-      "reason": "Trusted hosts are 信頼するホスト, with Chrome's 信頼 (Chrome: 22 of 22 messages for trusted)."
+      "reason": "Trusted hosts are 信頼するホスト, with Chrome's 信頼 (Chrome: 22 of 22 messages)."
     },
     {
       "id": "phishing-protection",
@@ -974,7 +974,7 @@
       "msgidPattern": "\\bhibernat",
       "expect": "アクティブでない|非アクティブ",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's アクティブでない, as in アクティブでないタブ (Chrome: 7 of 8 messages for inactive tab), never the systems' Sleep word."
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's アクティブでない, as in アクティブでないタブ, never the systems' Sleep word (Chrome: 8 of 8 messages)."
     },
     {
       "id": "menu-bar",

@@ -586,25 +586,25 @@
       "id": "tu",
       "pattern": "(?<!\\p{L})(?:[Tt]u|[Tt]eus?|[Tt]uas?|[Cc]ontigo|queres|tens|podes)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "The user is você, never tu or its verb forms. Chrome: você in 2,641 of the 3,779 messages that address the user, tu in 2."
+      "reason": "The user is você, never tu or its verb forms (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "aba",
       "pattern": "(?<!\\p{L})[Aa]bas?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "A tab is a guia, as Chrome writes it: guia in 797 of 824 messages for tab, aba in 3."
+      "reason": "A tab is a guia, as Chrome writes it: guia in 797 of 824 messages for tab, aba in 3 (Chrome writes the banned form in 3 messages)."
     },
     {
       "id": "european",
       "pattern": "(?<!\\p{L})(?:[Ff]icheiros?|[Ee]crãs?|[Uu]tilizador(?:es)?|[Tt]ransferi\\p{L}*)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Brazilian, not European: arquivo, tela, usuário, baixar. Chrome: arquivo in 519 of 530 messages for file, tela in 227 of 230 for screen, usuário in 52 of 57 for user, none with the European word."
+      "reason": "Brazilian, not European: arquivo, tela, usuário, baixar (Chrome writes the banned form in 20 messages)."
     },
     {
       "id": "busca",
       "pattern": "(?<!\\p{L})[Bb]usca(?:r|s|da|do)?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Searching is pesquisar and a search a pesquisa. Chrome: pesquisar in 399 of 406 messages for search, buscar in 1. Apple's Buscar Atualizações stays in a macOS label.",
+      "reason": "Searching is pesquisar and a search a pesquisa. Apple's Buscar Atualizações stays in a macOS label (Chrome writes the banned form in 26 messages).",
       "allow": {
         "contexts": ["macOS"]
       }
@@ -613,7 +613,7 @@
       "id": "email",
       "pattern": "(?<![\\p{L}{-])[Ee]mails?(?!\\p{L})",
       "severity": "wrong",
-      "reason": "An email is an e-mail, with the hyphen. Chrome: e-mail in 61 of 111 messages for email, email in none. Microsoft's Novo Email stays in a Windows label.",
+      "reason": "An email is an e-mail, with the hyphen. Microsoft's Novo Email stays in a Windows label (Chrome writes the banned form in none of its messages).",
       "allow": {
         "contexts": ["Windows"]
       }
@@ -622,7 +622,7 @@
       "id": "ajustes",
       "pattern": "(?<!\\p{L})[Aa]justes(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Settings is Configurações in Meru's own copy, as Chrome writes it (Chrome: 393 of 418 messages for settings, 14 with ajustes). Ajustes is Apple's word, for a macOS label such as the app menu's Ajustes… and for macOS's own Ajustes do Sistema.",
+      "reason": "Settings is Configurações in Meru's own copy, as Chrome writes it. Ajustes is Apple's word, for a macOS label such as the app menu's Ajustes… and for macOS's own Ajustes do Sistema (Chrome writes the banned form in 3 messages).",
       "allow": {
         "contexts": ["macOS"],
         "msgidPattern": "\\bSystem Settings\\b"
@@ -632,7 +632,7 @@
       "id": "quotes",
       "pattern": "[\"«»]",
       "severity": "wrong",
-      "reason": "Quotation marks are “…” (U+201C, U+201D), as Apple writes them, never straight quotes or «»; Chrome's straight quotes (424 messages, against 20 with “”) are its own style."
+      "reason": "Quotation marks are “…” (U+201C, U+201D), as Apple writes them, never straight quotes or «»; Chrome's straight quotes (424 messages, against 20 with “”) are its own style (Chrome writes the banned form in 420 messages)."
     },
     {
       "id": "three-periods",
@@ -650,7 +650,7 @@
       "id": "unit-space",
       "pattern": "(?<=[\\p{N}#}])[\\u00a0\\u202f](?=(?:segundos?|minutos?|horas?|dias?|semanas?|mês|meses|anos?|[kKMGT]B)(?!\\p{L}))",
       "severity": "wrong",
-      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minutos, # dias (Chrome: 202 messages with a unit, none with a no-break space)."
+      "reason": "A number and its unit are parted by a plain space, as Chrome writes them: 5 minutos, # dias (Chrome writes the banned form in none of its messages)."
     },
     {
       "id": "apology",
@@ -673,14 +673,14 @@
       "msgctxt": null,
       "expect": "^Configurações$",
       "severity": "wrong",
-      "reason": "Settings is Configurações in Meru's own copy, as Chrome writes it (Chrome: 393 of 418 messages for settings)."
+      "reason": "Settings is Configurações in Meru's own copy, as Chrome writes it (Chrome: 419 of 436 messages)."
     },
     {
       "id": "delete",
       "msgidPattern": "\\bdelet(?:e|es|ed)\\b",
       "expect": "[Ee]xclu",
       "severity": "wrong",
-      "reason": "Deleting is excluir, as Chrome and Gmail write it. Chrome: excluir in 204 of 205 messages for delete, apagar in none."
+      "reason": "Deleting is excluir, as Chrome and Gmail write it (Chrome: 263 of 265 messages)."
     },
     {
       "id": "quit",
@@ -688,35 +688,35 @@
       "msgctxt": null,
       "expect": "^Sai",
       "severity": "wrong",
-      "reason": "Quitting is sair in Meru's own copy, such as the dialogs' Quit button. Chrome: sair in 6 of 7 messages for quit, encerrar only in its macOS app menu, where Quit {appName} is a macOS label and takes Apple's Encerrar."
+      "reason": "Quitting is sair in Meru's own copy, such as the dialogs' Quit button; Chrome's encerrar is only its macOS app menu, where Quit {appName} is a macOS label and takes Apple's Encerrar (Chrome: 2 of 3 messages)."
     },
     {
       "id": "unpin",
       "msgid": "Unpin",
       "expect": "^Liberar",
       "severity": "wrong",
-      "reason": "Unpinning is liberar. Chrome: liberar in 13 of 20 messages for unpin, desafixar in 7, all of them in prose."
+      "reason": "Unpinning is liberar (Chrome: 12 of 23 messages)."
     },
     {
       "id": "bookmark",
       "msgidPattern": "\\bbookmarks?\\b",
       "expect": "[Ff]avorito",
       "severity": "wrong",
-      "reason": "A bookmark is a favorito. Chrome: 194 of 197 messages for bookmark."
+      "reason": "A bookmark is a favorito (Chrome: 160 of 163 messages)."
     },
     {
       "id": "download-history",
       "msgidPattern": "\\bdownload history\\b",
       "expect": "[Hh]istórico de [Dd]ownloads",
       "severity": "wrong",
-      "reason": "The download history is the histórico de downloads, also in Recent download history. Chrome: 8 of 10 messages."
+      "reason": "The download history is the histórico de downloads, also in Recent download history (Chrome: 8 of 10 messages)."
     },
     {
       "id": "extension",
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtens[ãõ]",
       "severity": "wrong",
-      "reason": "An extension is an extensão. Chrome: 395 of 399 messages."
+      "reason": "An extension is an extensão (Chrome: 302 of 307 messages)."
     },
     {
       "id": "close-other-tabs",
@@ -730,35 +730,35 @@
       "msgidPattern": "\\bsaved search(?:es)?\\b",
       "expect": "[Pp]esquisas? [Ss]alvas?",
       "severity": "wrong",
-      "reason": "A saved search is a pesquisa salva. Chrome: pesquisa in 399 of 406 messages for search."
+      "reason": "A saved search is a pesquisa salva (Chrome: 546 of 561 messages)."
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Gg]erenciador(?:es)? de [Ss]enhas",
       "severity": "wrong",
-      "reason": "A password manager is a gerenciador de senhas. Chrome: 63 of 85 messages."
+      "reason": "A password manager is a gerenciador de senhas (Chrome: 77 of 77 messages)."
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "[Cc]haves? de [Aa]cesso",
       "severity": "wrong",
-      "reason": "A passkey is a chave de acesso. Chrome: 88 of 101 messages."
+      "reason": "A passkey is a chave de acesso (Chrome: 93 of 106 messages)."
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "[Nn]avegador [Pp]adrão",
       "severity": "wrong",
-      "reason": "The default browser is the navegador padrão. Chrome: 32 of 35 messages."
+      "reason": "The default browser is the navegador padrão (Chrome: 11 of 11 messages)."
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "[Bb]arra de [Gg]uias",
       "severity": "wrong",
-      "reason": "The tab strip is the barra de guias. Chrome: 8 of 8 messages."
+      "reason": "The tab strip is the barra de guias (Chrome: 7 of 7 messages)."
     },
     {
       "id": "launcher",
@@ -772,35 +772,35 @@
       "msgidPattern": "\\brestarts?\\b",
       "expect": "[Rr]einici",
       "severity": "wrong",
-      "reason": "Restarting is reiniciar. Chrome: 139 of 139 messages for restart and relaunch."
+      "reason": "Restarting is reiniciar (Chrome: 46 of 46 messages)."
     },
     {
       "id": "update",
       "msgidPattern": "\\bupdates?\\b",
       "expect": "[Aa]tualiza",
       "severity": "wrong",
-      "reason": "An update is an atualização. Chrome: 242 of 265 messages."
+      "reason": "An update is an atualização (Chrome: 174 of 192 messages)."
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "[Cc]onfiáve",
       "severity": "wrong",
-      "reason": "A trusted host is a host confiável. Chrome: confiável in 20 of 22 messages for trusted."
+      "reason": "A trusted host is a host confiável (Chrome: 21 of 22 messages)."
     },
     {
       "id": "spellchecker",
       "msgidPattern": "\\bspell ?check",
       "expect": "[Vv]erificação [Oo]rtográfica",
       "severity": "wrong",
-      "reason": "The spellchecker is the verificação ortográfica. Chrome: 15 of 24 messages for spellcheck, corretor ortográfico in 2."
+      "reason": "The spellchecker is the verificação ortográfica (Chrome: 20 of 23 messages)."
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "[Bb]arra de [Mm]enus",
       "severity": "wrong",
-      "reason": "The macOS menu bar is the barra de menus. Chrome: 8 of 9 messages."
+      "reason": "The macOS menu bar is the barra de menus (Chrome: 2 of 3 messages)."
     },
     {
       "id": "system-settings",
@@ -930,7 +930,7 @@
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]ome do [Dd]ispositivo",
       "severity": "wrong",
-      "reason": "A device label is the nome do dispositivo, Chrome's words for a device name (Chrome: 8 of 11 messages for device name)."
+      "reason": "A device label is the nome do dispositivo, Chrome's words for a device name (Chrome: 8 of 11 messages)."
     },
     {
       "id": "phishing-protection",
@@ -951,7 +951,7 @@
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nativ",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inativa, as in Guia inativa (Chrome: 8 of 8 messages for inactive tab), never the systems' Sleep word."
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inativa, as in Guia inativa, never the systems' Sleep word (Chrome: 8 of 8 messages)."
     },
     {
       "id": "upgrade",
