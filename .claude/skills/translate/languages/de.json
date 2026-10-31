@@ -687,7 +687,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Uu]pgrade auf Meru Pro|[Aa]uf Meru Pro upgrade",
       "severity": "wrong",
-      "reason": "Upgrading to Pro is Auf Meru Pro upgraden, and in a sentence ein Upgrade auf Meru Pro, with Chrome's noun Upgrade (Chrome: Durch dieses Upgrade; the verb agent-chosen)."
+      "reason": "Glossary, agent-chosen: upgrading to Pro is Auf Meru Pro upgraden, ein Upgrade auf Meru Pro in a sentence, the loan German software uses for a paid tier, as Gmail's own Upgraden for Google's paid storage. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
     },
     {
       "id": "upgrade",
@@ -696,7 +696,7 @@
       "origin": "packages/renderer/",
       "expect": "[Uu]pgrade",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Upgrade, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+      "reason": "The standalone Upgrade label is Upgrade, Meru's Upgrade wording without its object (glossary, agent-chosen: the loan German software uses for a paid tier, as Gmail's own Upgraden for Google's paid storage)."
     },
     {
       "id": "gmail-label",

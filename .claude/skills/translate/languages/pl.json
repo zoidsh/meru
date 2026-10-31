@@ -853,7 +853,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Pp]rzej\\p{L}* na Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro is Przejdź na Meru Pro, as Chrome words upgrading to something newer (Chrome: 6 of 8 messages for upgrade to, przejdź na)."
+      "reason": "Glossary, agent-chosen: upgrading to Pro is Przejdź na Meru Pro, the usual Polish for moving to a paid plan, as in Przejdź na Premium; Gmail's Zmień na większy pakiet names a storage plan, not a tier. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
     },
     {
       "id": "upgrade",
@@ -862,7 +862,7 @@
       "origin": "packages/renderer/",
       "expect": "[Pp]rzejdź na",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Przejdź na Pro, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+      "reason": "The standalone Upgrade label is Przejdź na Pro, Meru's Upgrade wording without its object (glossary, agent-chosen: the usual Polish for moving to a paid plan, as in Przejdź na Premium; Gmail's Zmień na większy pakiet names a storage plan, not a tier)."
     },
     {
       "id": "gmail-label",

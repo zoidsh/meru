@@ -382,20 +382,20 @@ The pinned tab's context-menu item deciding whether it comes back as a view at s
 
 ## Upgrade
 
-Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_. Chrome's wording for upgrading to something newer, in its 8 messages with _upgrade to_.
+Reaching Pro, in buttons and prose alike. Never a word for _purchase_ or _buy_. Chrome's _upgrade to_ moves Chromebooks and sites to something newer, never a paid tier, so it is no source here: every wording is agent-chosen, by how the language's software and Gmail's own Upgrade button word a paid upgrade.
 
-- de: Upgrade; _Auf Meru Pro upgraden_. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (Chrome's noun _Upgrade_, in _Durch dieses Upgrade_; Chrome words the verb around it, with _umstellen_, so the verb _upgraden_ is agent-chosen: the noun's verb, which German software writes)
-- fr: Passer à Meru Pro (Chrome 6/8, _passez à_)
-- it: Esegui l’upgrade a Meru Pro; in a sentence _fai l’upgrade a Meru Pro_ (Chrome 7/8, _esegui l’upgrade_, _fare l’upgrade a_)
-- es: Cambiar a Meru Pro (Chrome 5/8, _cambia este modelo_, _cambie a HTTPS_)
-- es-419: Actualizar a Meru Pro (Chrome 5/8, _actualice a HTTPS_)
-- pt-BR: Fazer Upgrade para o Meru Pro (Chrome 4/8, _faça upgrade para_)
-- nl: Upgrade naar Meru Pro (Chrome 5/8, _Upgrade naar een nieuwer model_)
-- pl: Przejdź na Meru Pro (Chrome 6/8, _przejdź na nowszy model_)
-- sv: Uppgradera till Meru Pro (Chrome 6/8, _Uppgradera till en nyare modell_)
-- ja: Meru Proにアップグレード. In a sentence, the same verb: _Meru Proにアップグレードすると、アカウントをさらに追加できます_ (Chrome 6/8, 新しいモデルにアップグレード)
+- de: Upgrade; _Auf Meru Pro upgraden_. In a sentence, the noun: _ein Upgrade auf Meru Pro_, as in _Mit einem Upgrade auf Meru Pro kannst du weitere Konten hinzufügen._ (agent-chosen: the loan German software uses for a paid tier, as Gmail's Upgraden; the noun in a sentence)
+- fr: Passer à Meru Pro (agent-chosen: the usual French for moving to a paid plan, as in _Passer à Premium_)
+- it: Esegui l’upgrade a Meru Pro; in a sentence _fai l’upgrade a Meru Pro_ (agent-chosen: as Gmail's _Fai l’upgrade_ for Google's paid storage)
+- es: Cambiar a Meru Pro (agent-chosen: as Gmail's _Cambiar a plan superior_ for Google's paid storage)
+- es-419: Actualizar a Meru Pro (agent-chosen: as Gmail's _Actualizar_ for Google's paid storage)
+- pt-BR: Fazer Upgrade para o Meru Pro (agent-chosen: as Gmail's _Fazer upgrade_ for Google's paid storage)
+- nl: Upgrade naar Meru Pro (agent-chosen: as Gmail's _Upgraden_ for Google's paid storage)
+- pl: Przejdź na Meru Pro (agent-chosen: the usual Polish for moving to a paid plan, as in _Przejdź na Premium_; Gmail's _Zmień na większy pakiet_ names a storage plan)
+- sv: Uppgradera till Meru Pro (agent-chosen: as Gmail's _Uppgradera_ for Google's paid storage)
+- ja: Meru Proにアップグレード. In a sentence, the same verb: _Meru Proにアップグレードすると、アカウントをさらに追加できます_ (agent-chosen: as Gmail's アップグレード for Google's paid storage)
 
-The standalone _Upgrade_ label, a button beside the license, is the same wording without its object: de _Upgrade_, fr _Passer à Pro_, it _Esegui l’upgrade_, es _Cambiar a Pro_, es-419 _Actualizar a Pro_, pt-BR _Fazer Upgrade_, nl _Upgrade_, pl _Przejdź na Pro_, sv _Uppgradera_, ja アップグレード (Chrome's wording above).
+The standalone _Upgrade_ label, a button beside the license, is the same wording without its object: de _Upgrade_, fr _Passer à Pro_, it _Esegui l’upgrade_, es _Cambiar a Pro_, es-419 _Actualizar a Pro_, pt-BR _Fazer Upgrade_, nl _Upgrade_, pl _Przejdź na Pro_, sv _Uppgradera_, ja アップグレード (agent-chosen, as above).
 
 ## License key, Trial, Device
 

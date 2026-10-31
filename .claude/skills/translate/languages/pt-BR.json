@@ -958,7 +958,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Uu]pgrade para o Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro is Fazer Upgrade para o Meru Pro, as Chrome words upgrading to something newer (Chrome: 4 of 8 messages for upgrade to, faça upgrade para)."
+      "reason": "Glossary, agent-chosen: upgrading to Pro is Fazer Upgrade para o Meru Pro, as Gmail's Fazer upgrade for Google's paid storage. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
     },
     {
       "id": "upgrade",
@@ -967,7 +967,7 @@
       "origin": "packages/renderer/",
       "expect": "[Uu]pgrade",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Fazer Upgrade, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+      "reason": "The standalone Upgrade label is Fazer Upgrade, Meru's Upgrade wording without its object (glossary, agent-chosen: as Gmail's Fazer upgrade for Google's paid storage)."
     }
   ],
   "accessKeys": {

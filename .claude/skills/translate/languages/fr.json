@@ -984,7 +984,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Pp]ass\\p{L}* à Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro is Passer à Meru Pro, as Chrome words upgrading to something newer (Chrome: 6 of 8 messages for upgrade to, passez à)."
+      "reason": "Glossary, agent-chosen: upgrading to Pro is Passer à Meru Pro, the usual French for moving to a paid plan, as in Passer à Premium. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
     },
     {
       "id": "upgrade",
@@ -993,7 +993,7 @@
       "origin": "packages/renderer/",
       "expect": "[Pp]asser à",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Passer à Pro, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+      "reason": "The standalone Upgrade label is Passer à Pro, Meru's Upgrade wording without its object (glossary, agent-chosen: the usual French for moving to a paid plan, as in Passer à Premium)."
     },
     {
       "id": "launcher",

@@ -848,7 +848,7 @@
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Uu]pgrade\\p{L}* naar Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro is Upgrade naar Meru Pro, as Chrome words upgrading to something newer (Chrome: 5 of 8 messages for upgrade to)."
+      "reason": "Glossary, agent-chosen: upgrading to Pro is Upgrade naar Meru Pro, as Gmail's Upgraden for Google's paid storage. Chrome upgrades only Chromebooks and HTTPS, never a paid tier."
     },
     {
       "id": "upgrade",
@@ -857,7 +857,7 @@
       "origin": "packages/renderer/",
       "expect": "[Uu]pgrade",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Upgrade, Meru's Upgrade wording without its object (glossary, from Chrome's upgrade to)."
+      "reason": "The standalone Upgrade label is Upgrade, Meru's Upgrade wording without its object (glossary, agent-chosen: as Gmail's Upgraden for Google's paid storage)."
     },
     {
       "id": "gmail-label",
