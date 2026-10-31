@@ -21,18 +21,24 @@ let contextMenuLabels: Labels = {};
 
 mock.module("@electron-toolkit/utils", () => ({ is: { dev: false }, platform }));
 
+const electronApp = { name: "Meru", on: () => {} };
+
+const electronMenu = {
+  buildFromTemplate: (template: MenuItemConstructorOptions[]) => {
+    builtTemplate = template;
+
+    return { on: () => {} };
+  },
+  setApplicationMenu: () => {},
+};
+
 mock.module("electron", () => ({
-  app: { name: "Meru", on: () => {} },
+  default: { app: electronApp, Menu: electronMenu },
+  app: electronApp,
   BrowserWindow: { getFocusedWindow: () => null },
   dialog: {},
-  Menu: {
-    buildFromTemplate: (template: MenuItemConstructorOptions[]) => {
-      builtTemplate = template;
-
-      return { on: () => {} };
-    },
-    setApplicationMenu: () => {},
-  },
+  Menu: electronMenu,
+  nativeTheme: {},
   shell: {},
 }));
 
@@ -72,7 +78,7 @@ mock.module("@/lib/log", () => ({ log: {} }));
 
 mock.module("@/lib/relaunch", () => ({ relaunchApp: () => {} }));
 
-mock.module("@/main", () => ({ main: { window: {}, location: "/" } }));
+mock.module("@/main", () => ({ main: { window: { isVisible: () => true }, location: "/" } }));
 
 mock.module("@/updater", () => ({ appUpdater: { isUpdateSupported: () => true } }));
 
@@ -94,6 +100,8 @@ const { AppMenu } = await import("./menu");
 
 const { setupWindowContextMenu } = await import("./context-menu");
 
+const { AppTray } = await import("./tray");
+
 const PLATFORM_CONTEXTS: PlatformContext[] = ["macOS", "Windows", "Linux"];
 
 /** The menu's labels each platform words its own way, as each one shows them. */
@@ -110,6 +118,7 @@ const MENU_MESSAGES = [
   "Paste and Match Style",
   "Select All",
   "View",
+  "Quit {appName}",
 ];
 
 const CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
@@ -127,6 +136,13 @@ const NON_MACOS_CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
   selectAll: "Select &All",
 };
 
+/** The tray's Quit: the menu's message on macOS, and Windows' Exit and Linux's Quit, each in its own English. */
+const TRAY_QUIT_MESSAGES: Record<PlatformContext, string> = {
+  macOS: "Quit {appName}",
+  Windows: "Exit",
+  Linux: "Quit",
+};
+
 function markedTranslation(context: PlatformContext, message: string) {
   return `[${context}] ${message}`;
 }
@@ -136,6 +152,7 @@ function activatePlatformMarkedCatalog() {
   const messages = [
     ...MENU_MESSAGES,
     MACOS_ONLY_MENU_MESSAGE,
+    ...Object.values(TRAY_QUIT_MESSAGES),
     ...Object.values(CONTEXT_MENU_MESSAGES),
     ...Object.values(NON_MACOS_CONTEXT_MENU_MESSAGES),
   ].filter((message) => message !== undefined);
@@ -194,6 +211,25 @@ describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
       expect(labels).toContain(markedTranslation("macOS", MACOS_ONLY_MENU_MESSAGE));
     } else {
       expect(labels).not.toContain(markedTranslation("macOS", MACOS_ONLY_MENU_MESSAGE));
+    }
+  });
+
+  test("the tray's Quit is the platform's message, with its English unchanged", () => {
+    new AppTray().createOrUpdateContextMenu();
+
+    const labels = collectLabels(builtTemplate);
+
+    for (const quitContext of PLATFORM_CONTEXTS) {
+      const quit = markedTranslation(
+        quitContext,
+        TRAY_QUIT_MESSAGES[quitContext].replace("{appName}", "Meru"),
+      );
+
+      if (quitContext === context) {
+        expect(labels).toContain(quit);
+      } else {
+        expect(labels).not.toContain(quit);
+      }
     }
   });
 
