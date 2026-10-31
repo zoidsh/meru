@@ -918,16 +918,16 @@
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
-      "expect": "[Aa]fwezigheid",
+      "expect": "[Aa]utomatisch antwoord",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count: Thunderbird automatisch antwoord, Microsoft afwezigheid, Apple a tie."
+      "reason": "Out of office is Gmail's own vacation responder, automatisch antwoord, as Gmail Help names its setting (Automatisch antwoord staat aan; support.google.com/mail/answer/25922)."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Mm]eerdere inboxen",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are Gmail's meerdere inboxen."
+      "reason": "Multiple inboxes is Gmail's own inbox type, meerdere inboxen, as Gmail Help names it (support.google.com/mail/answer/9694882)."
     },
     {
       "id": "notify",

@@ -877,16 +877,16 @@
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
-      "expect": "[Rr]isposta automatica",
+      "expect": "[Rr]isponditore automatico",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count: Thunderbird risposta automatica, Microsoft fuori sede, Apple assenza."
+      "reason": "Out of office is Gmail's own vacation responder, risponditore automatico, as Gmail Help names its setting (Attiva risponditore automatico; support.google.com/mail/answer/25922)."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Pp]osta in arrivo multipla",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are Posta in arrivo multipla, until Gmail's own word is read."
+      "reason": "Multiple inboxes is Gmail's own inbox type, Posta in arrivo multipla, as Gmail Help names it (support.google.com/mail/answer/9694882)."
     },
     {
       "id": "notify",

@@ -219,7 +219,7 @@ msgstr "Abre la configuración de Gmail para desactivar la respuesta automática
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Multiple inboxes"
-msgstr "Varias bandejas de entrada"
+msgstr "Múltiples bandejas de Recibidos"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify for"

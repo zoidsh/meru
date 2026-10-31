@@ -260,11 +260,11 @@ msgstr "Nom"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open Gmail settings to turn off out of office"
-msgstr "Ouvrez les paramètres Gmail pour désactiver la réponse automatique d’absence"
+msgstr "Ouvrez les paramètres Gmail pour désactiver la réponse automatique"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Multiple inboxes"
-msgstr "Boîtes de réception multiples"
+msgstr "Plusieurs boîtes de réception"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify for"

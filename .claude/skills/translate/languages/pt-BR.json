@@ -867,16 +867,16 @@
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
-      "expect": "[Rr]esposta [Aa]utomática",
+      "expect": "[Rr]esposta [Aa]utomática de [Ff]érias",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (resposta automática: 2 of 7 (Microsoft, Apple))."
+      "reason": "Out of office is Gmail's own vacation responder, resposta automática de férias, as Gmail Help names its setting (Resposta automática de férias ativada; support.google.com/mail/answer/25922)."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Vv]árias [Cc]aixas de [Ee]ntrada",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are várias caixas de entrada, until Gmail's own word is read."
+      "reason": "Multiple inboxes is Gmail's own inbox type, várias caixas de entrada, as Gmail Help names it (support.google.com/mail/answer/9694882)."
     },
     {
       "id": "notify",

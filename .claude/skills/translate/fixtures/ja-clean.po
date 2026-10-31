@@ -195,4 +195,4 @@ msgstr "ランチャー内"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open Gmail settings to turn off out of office"
-msgstr "Gmailの設定を開いて不在をオフにする"
+msgstr "Gmailの設定を開いて不在通知をオフにする"

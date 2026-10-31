@@ -222,3 +222,7 @@ msgstr "Duet"
 #: packages/renderer/lib/notifications/index.ts
 msgid "Knock"
 msgstr "Klop"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Open Gmail-instellingen om het automatisch antwoord uit te zetten"

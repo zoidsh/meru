@@ -792,16 +792,16 @@
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout of office\\b",
-      "expect": "[Aa]utomatische[n ]* Antwort",
+      "expect": "Abwesenheitsnotiz",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (automatische Antwort: 2 of 7 (Thunderbird, Microsoft))."
+      "reason": "Out of office is Gmail's own vacation responder, Abwesenheitsnotiz, as Gmail Help names its setting (Abwesenheitsnotiz aktiviert; support.google.com/mail/answer/25922)."
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Mm]ehrere\\p{L}* Posteingäng",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no app has the concept): multiple inboxes are Gmail's Mehrere Posteingänge."
+      "reason": "Multiple inboxes is Gmail's own inbox type, mehrere Posteingänge, as Gmail Help names it (support.google.com/mail/answer/9694882)."
     },
     {
       "id": "notify",

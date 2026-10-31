@@ -230,7 +230,7 @@ msgstr "Klopfen"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open Gmail settings to turn off out of office"
-msgstr "Gmail-Einstellungen öffnen, um die automatische Antwort zu deaktivieren"
+msgstr "Gmail-Einstellungen öffnen, um die Abwesenheitsnotiz zu deaktivieren"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify for"

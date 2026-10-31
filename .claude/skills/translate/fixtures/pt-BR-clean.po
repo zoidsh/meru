@@ -235,7 +235,7 @@ msgstr "Nome"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open Gmail settings to turn off out of office"
-msgstr "Abra as configurações do Gmail para desativar a resposta automática"
+msgstr "Abra as configurações do Gmail para desativar a resposta automática de férias"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Multiple inboxes"

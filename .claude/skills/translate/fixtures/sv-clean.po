@@ -226,3 +226,7 @@ msgstr "Använd en säkerhetsnyckel som Ni2 eller Ni+"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify for"
 msgstr "Meddela för"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Open Gmail settings to turn off out of office"
+msgstr "Öppna Gmail-inställningarna för att stänga av autosvaret"

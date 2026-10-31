@@ -817,18 +817,18 @@ _View entire message_ is the link under a message Gmail has clipped, and _Upgrad
 
 ### Out of office, Multiple inboxes
 
-Gmail's vacation responder, as in _Open Gmail settings to turn off out of office_, and the inbox type with several sections. Gmail's terms, so Gmail's words by step 2, but not yet read from Gmail's interface; until they are, out of office takes the apps' word, counted in their messages with _out of office_, _vacation response_ or _automatic reply_. No app has multiple inboxes, so that term is unresolved by the app count.
+Gmail's vacation responder, as in _Open Gmail settings to turn off out of office_, and the inbox type with several sections. Gmail's own features, so Gmail's words by step 2, as Gmail Help names the settings: **vacation responder** is "Send automatic replies when you're out" (support.google.com/mail/answer/25922), **multiple inboxes** "Manage your emails with multiple inboxes" (answer/9694882), both with `hl=<tag>`.
 
-- de: automatische Antwort; mehrere Posteingänge (out of office agent-chosen: automatische Antwort: 2 of 7 (Thunderbird, Microsoft); multiple inboxes agent-chosen, unresolved by the app count)
-- fr: réponse automatique d’absence; boîtes de réception multiples (out of office agent-chosen: réponse automatique d'absence: 2 of 7 (Microsoft, Apple); multiple inboxes agent-chosen, unresolved by the app count)
-- it: risposta automatica; Posta in arrivo multipla (agent-chosen, unresolved by the app count: Thunderbird writes risposta automatica, Microsoft fuori sede, Apple assenza)
-- es: fuera de la oficina; varias bandejas de entrada (out of office agent-chosen: fuera de la oficina: 2 of 7 (Thunderbird, Microsoft); multiple inboxes agent-chosen, unresolved by the app count)
-- es-419: respuesta automática; varias bandejas de entrada (agent-chosen, unresolved by the app count: Microsoft writes fuera de la oficina, Apple respuesta automática, Thunderbird ties them)
-- pt-BR: resposta automática; várias caixas de entrada (out of office agent-chosen: resposta automática: 2 of 7 (Microsoft, Apple); multiple inboxes agent-chosen, unresolved by the app count)
-- nl: automatisch antwoord bij afwezigheid; meerdere inboxen (agent-chosen, unresolved by the app count: Thunderbird writes automatisch antwoord, Microsoft afwezigheid, Apple ties them)
-- pl: autoodpowiedź; wiele skrzynek odbiorczych (agent-chosen, unresolved by the app count: Microsoft writes nieobecność, Apple poza biurem, Thunderbird ties nieobecność and automatyczna odpowiedź)
-- sv: frånvaromeddelande; flera inkorgar (agent-chosen, unresolved by the app count: only Microsoft, frånvarande, and Thunderbird, a tie)
-- ja: 不在; マルチ受信トレイ (out of office agent-chosen: 不在: 2 of 7 (Thunderbird, Apple); multiple inboxes agent-chosen, unresolved by the app count)
+- de: Abwesenheitsnotiz; mehrere Posteingänge (Gmail, vacation responder: _Abwesenheitsnotiz aktiviert_; multiple inboxes)
+- fr: réponse automatique; plusieurs boîtes de réception (Gmail, vacation responder: _Réponse automatique activée_; multiple inboxes)
+- it: risponditore automatico; Posta in arrivo multipla (Gmail, vacation responder: _Attiva risponditore automatico_; multiple inboxes)
+- es: respuesta automática; varias bandejas de entrada (Gmail, vacation responder: _Respuesta automática activada_; multiple inboxes)
+- es-419: respuesta automática; múltiples bandejas de Recibidos (Gmail, vacation responder: _Respuesta automática activada_; multiple inboxes)
+- pt-BR: resposta automática de férias; várias caixas de entrada (Gmail, vacation responder: _Resposta automática de férias ativada_; multiple inboxes)
+- nl: automatisch antwoord; meerdere inboxen (Gmail, vacation responder: _Automatisch antwoord staat aan_; multiple inboxes)
+- pl: wiadomość o nieobecności; wiele skrzynek odbiorczych (Gmail, vacation responder: _Wiadomość o nieobecności włączona_; multiple inboxes)
+- sv: autosvar; flera inkorgar (Gmail, vacation responder: _Autosvar på_; multiple inboxes)
+- ja: 不在通知; マルチ受信トレイ (Gmail, vacation responder: _不在通知 ON_; multiple inboxes)
 
 ## 1Password's words
 
