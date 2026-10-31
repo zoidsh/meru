@@ -62,7 +62,9 @@ function toEntries(catalogPath: string, catalog: Catalog) {
             key,
             msgctxt: entry.context ?? null,
             msgid: entry.message ?? key,
-            msgidText: withoutAccessKey(entry.message ?? key),
+            msgidText: sourceAccessKey(entry.message ?? key)
+              ? withoutAccessKey(entry.message ?? key)
+              : (entry.message ?? key),
             msgstr: entry.translation,
             origins: (entry.origin ?? []).map(([file]) => file),
           },
@@ -164,6 +166,15 @@ function sourceAccessKey(msgid: string) {
   return /&(\S)/u.exec(msgid)?.[1];
 }
 
+/*
+ * The translation as a reader sees it. Only a label whose English marks an
+ * access key, shown where access keys are, has one to drop; any other `&` is
+ * literal, as in Q&A.
+ */
+function translationText(entry: Entry, text: string) {
+  return entry.msgctxt !== MACOS && sourceAccessKey(entry.msgid) ? withoutAccessKey(text) : text;
+}
+
 function accessKeyProblem(entry: Entry, style: "inline" | "suffix") {
   const ampersands = entry.msgstr.split("&").length - 1;
 
@@ -228,7 +239,7 @@ export function checkCatalogs(
   };
 
   for (const entry of entries) {
-    const text = withoutAccessKey(visibleText(entry.msgstr));
+    const text = translationText(entry, visibleText(entry.msgstr));
 
     for (const banned of sidecar.banned) {
       const allow = banned.allow;
@@ -292,7 +303,7 @@ export function checkCatalogs(
 
     platformEntriesFound++;
 
-    const text = withoutAccessKey(entry.msgstr);
+    const text = translationText(entry, entry.msgstr);
 
     const isRight = "msgstr" in word ? text === word.msgstr : text.includes(word.contains);
 

@@ -394,11 +394,3 @@ msgstr "toc-toc"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "Dans le menu des applis"
-
-# An access key inside a banned word still shows the word.
-# fault: banned:signet
-# fault: pinned:bookmark
-# fault: access-key:inline
-#: packages/renderer/components/bookmarks.tsx
-msgid "Bookmark"
-msgstr "Si&gnet"
