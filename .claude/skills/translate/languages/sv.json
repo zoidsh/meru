@@ -872,26 +872,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "[Ii]nforut",
+      "expect": "[Pp]opup",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an inforuta, kept apart from a notification, avisering."
+      "reason": "Glossary, agent-chosen: a toast is popup, never the notification word avisering (by step 4c's direct match: Microsoft's toast notification is popup, popup-meddelande and aviseringsbanderoll; the form with avisering is out, and popup remains)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "[Ii]nforut",
+      "expect": "[Pp]opup",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an inforuta, kept apart from a notification, avisering."
+      "reason": "Glossary, agent-chosen: a toast is popup, never the notification word avisering (by step 4c's direct match: Microsoft's toast notification is popup, popup-meddelande and aviseringsbanderoll; the form with avisering is out, and popup remains)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "[Ii]nforut",
+      "expect": "[Pp]opup",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an inforuta, kept apart from a notification, avisering."
+      "reason": "Glossary, agent-chosen: a toast is popup, never the notification word avisering (by step 4c's direct match: Microsoft's toast notification is popup, popup-meddelande and aviseringsbanderoll; the form with avisering is out, and popup remains)."
     },
     {
       "id": "unread-badge",
@@ -899,7 +899,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Bb]rick",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is bricka, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird märke, Microsoft aktivitetsikon, Apple bricka; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (prick); the most direct match is Apple's unread badge, oläst-bricka)."
+      "reason": "Glossary, agent-chosen: the unread badge is bricka, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird märke, Microsoft aktivitetsikon, Apple bricka; Google has no word for a count; the most direct match is Apple's unread badge, oläst-bricka)."
     },
     {
       "id": "meru-label",

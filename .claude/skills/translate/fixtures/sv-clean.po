@@ -120,16 +120,16 @@ msgstr "Flytta till nytt fönster"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "Stäng inforuta"
+msgstr "Stäng popup"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr "Inforutor"
+msgstr "Popup-meddelanden"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "Inforutor"
+msgstr "Popup-meddelanden"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"

@@ -135,16 +135,16 @@ msgstr "{label} bewegen, um die Reihenfolge zu ändern"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "Hinweis schließen"
+msgstr "Popup schließen"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr "Hinweise"
+msgstr "Popups"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "Hinweise"
+msgstr "Popups"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Label"

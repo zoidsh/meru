@@ -840,26 +840,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificación."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificación."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificación."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish)."
     },
     {
       "id": "unread-badge",
@@ -867,7 +867,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Cc]ontador",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is contador, counted as Meru uses it, an unread count on an app icon (the apps tie; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (punto); the most direct match is Apple's unread badge, contador de mensajes no leídos)."
+      "reason": "Glossary, agent-chosen: the unread badge is contador, counted as Meru uses it, an unread count on an app icon (the apps tie; Google has no word for a count; the most direct match is Apple's unread badge, contador de mensajes no leídos)."
     },
     {
       "id": "meru-label",

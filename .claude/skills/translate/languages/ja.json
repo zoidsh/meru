@@ -807,26 +807,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "お知らせ",
+      "expect": "トースト",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is お知らせ, kept apart from a notification, 通知."
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "お知らせ",
+      "expect": "トースト",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is お知らせ, kept apart from a notification, 通知."
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "お知らせ",
+      "expect": "トースト",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is お知らせ, kept apart from a notification, 通知."
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
     },
     {
       "id": "button",

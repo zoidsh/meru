@@ -824,26 +824,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificación."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: Microsoft's toast notification is notificación del sistema, mensaje emergente, tira and banner de notificación; the forms with notificación are out, and mensaje emergente remains)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificación."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: Microsoft's toast notification is notificación del sistema, mensaje emergente, tira and banner de notificación; the forms with notificación are out, and mensaje emergente remains)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificación."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: Microsoft's toast notification is notificación del sistema, mensaje emergente, tira and banner de notificación; the forms with notificación are out, and mensaje emergente remains)."
     },
     {
       "id": "unread-badge",
@@ -851,7 +851,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Ii]nsignia",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is insignia, counted as Meru uses it, an unread count on an app icon (insignia: 1 of 7 (Thunderbird), thin; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count; Thunderbird's App icon badge, Insignia del icono de la aplicación, is the direct match)."
+      "reason": "Glossary, agent-chosen: the unread badge is insignia, counted as Meru uses it, an unread count on an app icon (insignia: 1 of 7 (Thunderbird), thin; Google has no word for a count; Thunderbird's App icon badge, Insignia del icono de la aplicación, is the direct match)."
     },
     {
       "id": "meru-label",

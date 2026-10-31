@@ -237,7 +237,7 @@ msgstr "Cambiar a Meru Pro"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "Cerrar aviso"
+msgstr "Cerrar mensaje emergente"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"
@@ -290,11 +290,11 @@ msgstr "Cambiar a Pro"
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "Avisos"
+msgstr "Mensajes emergentes"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr "Avisos"
+msgstr "Mensajes emergentes"
 
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgctxt "saved search"

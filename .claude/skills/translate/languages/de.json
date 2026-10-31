@@ -709,26 +709,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "Hinweis",
+      "expect": "Popup",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is Hinweis, kept apart from a notification."
+      "reason": "Glossary, agent-chosen: a toast is Popup, never the notification word Benachrichtigung (by step 4c's direct match: Microsoft's toast notification is Popup, Popupbenachrichtigung, Banner and Benachrichtigungsbanner; the forms with Benachrichtigung are out, and Popup remains)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "Hinweis",
+      "expect": "Popup",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is Hinweis, kept apart from a notification."
+      "reason": "Glossary, agent-chosen: a toast is Popup, never the notification word Benachrichtigung (by step 4c's direct match: Microsoft's toast notification is Popup, Popupbenachrichtigung, Banner and Benachrichtigungsbanner; the forms with Benachrichtigung are out, and Popup remains)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "Hinweis",
+      "expect": "Popup",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is Hinweis, kept apart from a notification."
+      "reason": "Glossary, agent-chosen: a toast is Popup, never the notification word Benachrichtigung (by step 4c's direct match: Microsoft's toast notification is Popup, Popupbenachrichtigung, Banner and Benachrichtigungsbanner; the forms with Benachrichtigung are out, and Popup remains)."
     },
     {
       "id": "unread-badge",
@@ -736,7 +736,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "Kennzeichen",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is Kennzeichen, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird Zähler, Microsoft Badge, Apple Kennzeichen; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (Benachrichtigungspunkt); the most direct match is Apple's unread badge, Kennzeichen für ungelesene Mails)."
+      "reason": "Glossary, agent-chosen: the unread badge is Kennzeichen, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird Zähler, Microsoft Badge, Apple Kennzeichen; Google has no word for a count; the most direct match is Apple's unread badge, Kennzeichen für ungelesene Mails)."
     },
     {
       "id": "tab-strip",

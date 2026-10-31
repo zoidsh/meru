@@ -119,16 +119,16 @@ msgstr "Verplaats naar nieuw venster"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "Sluit mededeling"
+msgstr "Sluit pop-up"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr "Mededelingen"
+msgstr "Pop-ups"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "Mededelingen"
+msgstr "Pop-ups"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Show unread badge"

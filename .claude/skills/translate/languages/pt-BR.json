@@ -819,34 +819,34 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Ff]aixas?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificação."
+      "reason": "Glossary, agent-chosen: a toast is faixa, never the notification word notificação (by step 4c's direct match: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa remains)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Ff]aixas?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificação."
+      "reason": "Glossary, agent-chosen: a toast is faixa, never the notification word notificação (by step 4c's direct match: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa remains)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "(?<!\\p{L})[Aa]visos?(?!\\p{L})",
+      "expect": "[Ff]aixas?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an aviso, kept apart from a notification, notificação."
+      "reason": "Glossary, agent-chosen: a toast is faixa, never the notification word notificação (by step 4c's direct match: Microsoft's toast notification is notificação do sistema, barra de notificação and faixa de navegação; the forms with notificação are out, and faixa remains)."
     },
     {
       "id": "unread-badge",
       "msgctxt": null,
       "msgidPattern": "\\bunread badges?\\b",
-      "expect": "[Ss]elo",
+      "expect": "[Ee]mblema",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is selo, counted as Meru uses it, an unread count on an app icon (unresolved by the app count: the apps tie, Thunderbird emblema, Microsoft selo, Apple aviso; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (ponto); Apple's direct unread badge, aviso de mensagens não lidas, is pt-BR's toast word, so selo stays)."
+      "reason": "Glossary, agent-chosen: the unread badge is emblema, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird emblema and Microsoft selo once Apple's aviso is out as the toast word it was; Google has no word for a count; Thunderbird's direct Badge app icon with, Ícone de emblema do aplicativo, decides)."
     },
     {
       "id": "meru-label",

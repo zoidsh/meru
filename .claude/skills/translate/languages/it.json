@@ -831,7 +831,7 @@
       "msgidPattern": "\\btoasts?\\b",
       "expect": "[Aa]vvis[oi]",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avviso, kept apart from a notification, notifica."
+      "reason": "Glossary, agent-chosen: a toast is avviso, never the notification word notifica (by step 4c's direct match: Microsoft's toast notification is avviso popup, notifica di tipo avviso popup, banner and banner di notifica; the forms with notifica are out, and avviso popup remains)."
     },
     {
       "id": "toast",
@@ -839,7 +839,7 @@
       "msgid": "Notifications",
       "expect": "[Aa]vvis[oi]",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avviso, kept apart from a notification, notifica."
+      "reason": "Glossary, agent-chosen: a toast is avviso, never the notification word notifica (by step 4c's direct match: Microsoft's toast notification is avviso popup, notifica di tipo avviso popup, banner and banner di notifica; the forms with notifica are out, and avviso popup remains)."
     },
     {
       "id": "toast",
@@ -848,7 +848,7 @@
       "origin": "packages/preload-gmail/",
       "expect": "[Aa]vvis[oi]",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avviso, kept apart from a notification, notifica."
+      "reason": "Glossary, agent-chosen: a toast is avviso, never the notification word notifica (by step 4c's direct match: Microsoft's toast notification is avviso popup, notifica di tipo avviso popup, banner and banner di notifica; the forms with notifica are out, and avviso popup remains)."
     },
     {
       "id": "unread-badge",
@@ -856,7 +856,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Bb]adge",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is badge, counted as Meru uses it, an unread count on an app icon (badge: 2 of 7 (Microsoft, Apple), thin; Android calls its notification badge a dot, which carries no count, so Google has no word for an unread count (indicatore di notifica); Apple's Badge application icon, Badge sull’icona dell’app, is a direct match)."
+      "reason": "Glossary, agent-chosen: the unread badge is badge, counted as Meru uses it, an unread count on an app icon (badge: 2 of 7 (Microsoft, Apple), thin; Google has no word for a count; Apple's Badge application icon, Badge sull’icona dell’app, is a direct match)."
     },
     {
       "id": "meru-label",

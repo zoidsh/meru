@@ -870,26 +870,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "[Mm]ededeling",
+      "expect": "[Pp]op-up",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a mededeling, kept apart from a notification, melding."
+      "reason": "Glossary, agent-chosen: a toast is pop-up, never the notification word melding (by step 4c's direct match: Microsoft's toast notification is pop-up, pop-upmelding, banner and meldingsbanner; the forms with melding are out, and pop-up remains)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "[Mm]ededeling",
+      "expect": "[Pp]op-up",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a mededeling, kept apart from a notification, melding."
+      "reason": "Glossary, agent-chosen: a toast is pop-up, never the notification word melding (by step 4c's direct match: Microsoft's toast notification is pop-up, pop-upmelding, banner and meldingsbanner; the forms with melding are out, and pop-up remains)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "[Mm]ededeling",
+      "expect": "[Pp]op-up",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is a mededeling, kept apart from a notification, melding."
+      "reason": "Glossary, agent-chosen: a toast is pop-up, never the notification word melding (by step 4c's direct match: Microsoft's toast notification is pop-up, pop-upmelding, banner and meldingsbanner; the forms with melding are out, and pop-up remains)."
     },
     {
       "id": "unread-badge",

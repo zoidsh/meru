@@ -859,26 +859,26 @@
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
-      "expect": "(?<!\\p{L})[Aa]vis(?!\\p{L})",
+      "expect": "[Tt]oast",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avis, kept apart from a notification, notification."
+      "reason": "Glossary, agent-chosen: a toast is toast, never the notification word notification (by step 4c's direct match: Microsoft's toast notification is toast, notification toast, bannière and bannière de notification; the forms with notification are out, and toast remains)."
     },
     {
       "id": "toast",
       "msgctxt": "toasts",
       "msgid": "Notifications",
-      "expect": "(?<!\\p{L})[Aa]vis(?!\\p{L})",
+      "expect": "[Tt]oast",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avis, kept apart from a notification, notification."
+      "reason": "Glossary, agent-chosen: a toast is toast, never the notification word notification (by step 4c's direct match: Microsoft's toast notification is toast, notification toast, bannière and bannière de notification; the forms with notification are out, and toast remains)."
     },
     {
       "id": "toast",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
-      "expect": "(?<!\\p{L})[Aa]vis(?!\\p{L})",
+      "expect": "[Tt]oast",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (only VS Code and Microsoft have the concept): a toast is an avis, kept apart from a notification, notification."
+      "reason": "Glossary, agent-chosen: a toast is toast, never the notification word notification (by step 4c's direct match: Microsoft's toast notification is toast, notification toast, bannière and bannière de notification; the forms with notification are out, and toast remains)."
     },
     {
       "id": "unread-badge",
@@ -886,7 +886,7 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Pp]astille",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is pastille, counted as Meru uses it, an unread count on an app icon (pastille: 2 of 7 (Thunderbird, Apple), thin; Android's own wording agrees (pastille de notification); the most direct matches, Thunderbird's App icon badge and Apple's unread badge, are both pastille)."
+      "reason": "Glossary, agent-chosen: the unread badge is pastille, counted as Meru uses it, an unread count on an app icon (pastille: 2 of 7 (Thunderbird, Apple), thin; Google has no word for a count; the direct matches decide, Thunderbird's App icon badge, Pastille de l’icône de l’application, and Apple's unread badge, pastille Non lu)."
     },
     {
       "id": "meru-label",

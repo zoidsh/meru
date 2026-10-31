@@ -96,12 +96,12 @@ msgstr "{count, plural, other {#個のタブ}}"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Close toast"
-msgstr "お知らせを閉じる"
+msgstr "トーストを閉じる"
 
 #: packages/renderer/components/app-toaster.tsx
 msgctxt "toasts"
 msgid "Notifications"
-msgstr "お知らせ"
+msgstr "トースト"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Label"
@@ -166,7 +166,7 @@ msgstr "アップグレード"
 
 #: packages/preload-gmail/ipc.ts
 msgid "Notifications"
-msgstr "お知らせ"
+msgstr "トースト"
 
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgctxt "saved search"
