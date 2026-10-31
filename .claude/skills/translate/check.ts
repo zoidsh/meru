@@ -236,6 +236,9 @@ export function checkCatalogs(
       if (
         (entry.msgctxt !== null && allow?.contexts?.includes(entry.msgctxt)) ||
         allow?.msgids?.includes(entry.msgid) ||
+        allow?.entries?.some(
+          (allowed) => allowed.msgctxt === entry.msgctxt && allowed.msgid === entry.msgid,
+        ) ||
         (allow?.msgidPattern !== undefined && regex(allow.msgidPattern, "i").test(entry.msgidText))
       ) {
         continue;

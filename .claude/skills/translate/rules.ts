@@ -83,6 +83,10 @@ const banned = z
         contexts: z.array(z.string()).optional(),
         msgids: z.array(z.string()).optional(),
         msgidPattern: pattern.optional(),
+        // One message in one context, such as the macOS Settings menu item.
+        entries: z
+          .array(z.object({ msgctxt: z.string().nullable(), msgid: z.string() }).strict())
+          .optional(),
       })
       .strict()
       .optional(),
