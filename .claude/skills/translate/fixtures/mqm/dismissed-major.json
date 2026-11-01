@@ -1,0 +1,23 @@
+[
+  {
+    "catalog": "app",
+    "msgctxt": "macOS",
+    "msgid": "Quit {appName}",
+    "msgstr": "{appName} beenden",
+    "category": "accuracy/mistranslation",
+    "severity": "major",
+    "reason": "Planted: the meaning changed.",
+    "correction": "{appName} beenden",
+    "dismissed": "Planted: packages/app/menu.ts shows the translation is right."
+  },
+  {
+    "catalog": "app",
+    "msgctxt": null,
+    "msgid": "{action, select, click {On click} other {Button}}",
+    "msgstr": "{action, select, click {Beim Klicken} other {Button}}",
+    "category": "fluency/unidiomatic",
+    "severity": "minor",
+    "reason": "Planted: a short label reads better as a noun.",
+    "correction": "{action, select, click {Klick} other {Button}}"
+  }
+]

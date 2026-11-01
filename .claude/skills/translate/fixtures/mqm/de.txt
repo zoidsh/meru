@@ -1,0 +1,18 @@
+## de
+
+### app: packages/shared/i18n/locales/de.po
+
+- msgid: "Quit {appName}"
+  msgctxt: "macOS"
+  comment: App menu item that quits the app
+  origin: packages/app/menu.ts
+  status: untranslated
+- msgid: "{action, select, click {On click} other {Button}}"
+  origin: packages/renderer/routes/settings/downloads.tsx
+  status: untranslated
+
+### preload-gmail: packages/preload-gmail/locales/de.po
+
+- msgid: "Move to Trash"
+  origin: packages/preload-gmail/trash.ts
+  status: fuzzy, current translation "In den Papierkorb"

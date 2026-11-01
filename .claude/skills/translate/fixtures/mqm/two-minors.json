@@ -1,0 +1,23 @@
+[
+  {
+    "catalog": "app",
+    "msgctxt": null,
+    "msgid": "{action, select, click {On click} other {Button}}",
+    "msgstr": "{action, select, click {Beim Klicken} other {Button}}",
+    "category": "fluency/unidiomatic",
+    "severity": "minor",
+    "reason": "Planted: a short label reads better as a noun.",
+    "correction": "{action, select, click {Klick} other {Button}}"
+  },
+  {
+    "catalog": "preload-gmail",
+    "msgctxt": null,
+    "msgid": "Move to Trash",
+    "msgstr": "In den Papierkorb verschieben",
+    "category": "terminology",
+    "severity": "minor",
+    "reason": "Planted: Gmail's own word for the action.",
+    "correction": "In den Papierkorb",
+    "source": "Gmail"
+  }
+]

@@ -107,7 +107,7 @@ function appendText(tokens: CompiledMessage, parts: string[]) {
  * keyword. A placeholder stays as `{name}`, which spacing rules treat as Latin
  * text, and each select or plural branch starts a line of its own.
  */
-function visibleText(msgstr: string) {
+export function visibleText(msgstr: string) {
   try {
     const parts: string[] = [];
 
