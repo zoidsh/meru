@@ -1,6 +1,6 @@
 ---
 name: translation-mqm-reviewer
-description: Assesses one locale's translation in Meru's PO catalogs with MQM, cold, from the dump, the style sheet, the sidecar and the glossary slice alone, and writes one finding per error, with its category, severity and correction, to a JSON file that `mqm.ts` scores. Spawned by the /translate skill as its final step, fresh for every round.
+description: Assesses one locale's translation in Meru's PO catalogs with MQM, cold, from the dump, the style sheet, the sidecar and the glossary slice alone, and writes one finding per error, with its category, severity and correction, to a JSON file that `mqm.ts` scores. Spawned by the /translate skill as its final step, three at once and fresh for every round.
 tools: Read, Grep, Glob, Bash, Write
 model: claude-fable-5-1
 effort: medium
@@ -16,11 +16,11 @@ Paths, from the `/translate` skill:
 - for a partial run only, the list `<locale>.assess.txt`, which names the entries to assess; their current msgstr is in the dump;
 - the style sheet `.claude/skills/translate/languages/<locale>.md` and its sidecar `languages/<locale>.json`;
 - the glossary slice `<locale>.glossary.md`, with the full `glossary.md` too when the skill says the slice skipped lines;
-- the output path for your findings, `<dir>/<locale>.mqm.json`.
+- the output path for your findings, such as `<dir>/<locale>.mqm.2.json`.
 
 The source is the repository: read the line an entry's origin names whenever its comment leaves the use unclear.
 
-Read nothing else from the run. Earlier reviews, `check.ts` reports, translator notes and earlier MQM files exist, and an assessment that reads them sees what they saw: never open a `*.review.json`, `*.check.json`, `*.mqm.json` other than the one you write, or anything else in the output directory but the files named above, and never run `check.ts` or `mqm.ts`. Never read `.claude/skills/translate/SKILL.md`, `mqm.ts` or `check.ts` either: they hold the gate and how your findings are scored, and an assessment that knows the threshold drifts toward it.
+Read nothing else from the run. Earlier reviews, `check.ts` reports, translator notes and earlier MQM files exist, and an assessment that reads them sees what they saw: never open a `*.review.json`, a `*.check.json`, any MQM findings file but the one you write, such as another reviewer's assessing the same entries beside you, or anything else in the output directory but the files named above, and never run `check.ts` or `mqm.ts`. Never read `.claude/skills/translate/SKILL.md`, `mqm.ts` or `check.ts` either: they hold the gate and how your findings are scored, and an assessment that knows the threshold drifts toward it.
 
 ## How you assess
 
