@@ -1,10 +1,17 @@
 import { i18n, type Messages } from "@lingui/core";
 import { messages as de } from "./locales/de";
 import { messages as en } from "./locales/en";
+import { messages as pseudo } from "./locales/en-XA";
 import { messages as ja } from "./locales/ja";
-import { CATALOG_TAGS, type CatalogTag } from "./tags";
+import { CATALOG_TAGS, type CatalogTag, type LocaleTag, PSEUDO_LOCALE } from "./tags";
 
-export { CATALOG_TAGS, type CatalogTag, SHIPPED_CATALOG_TAGS } from "./tags";
+export {
+  CATALOG_TAGS,
+  type CatalogTag,
+  type LocaleTag,
+  PSEUDO_LOCALE,
+  SHIPPED_CATALOG_TAGS,
+} from "./tags";
 
 /**
  * Each language named in itself, because `Intl.DisplayNames` gives lowercase
@@ -30,10 +37,21 @@ export const CATALOG_NAMES: Record<CatalogTag, string> = {
  * until they ship. English is always there, which is what makes it the floor
  * every other lookup falls to.
  */
-const catalogs: { en: Messages } & Partial<Record<CatalogTag, Messages>> = { en, de, ja };
+const catalogs: { en: Messages } & Partial<Record<LocaleTag, Messages>> = {
+  en,
+  de,
+  ja,
+  // The build inlines the variable, so a shipped bundle drops the pseudo-locale
+  // with this branch.
+  ...(process.env.MERU_PSEUDO_LOCALE_CATALOG ? { [PSEUDO_LOCALE]: pseudo } : {}),
+};
 
 export function isCatalogTag(value: string): value is CatalogTag {
   return (CATALOG_TAGS as readonly string[]).includes(value);
+}
+
+export function isLocaleTag(value: string): value is LocaleTag {
+  return value === PSEUDO_LOCALE || isCatalogTag(value);
 }
 
 /**
@@ -98,9 +116,13 @@ export function resolveLocale(
 }
 
 /** dayjs names its locales its own way, and lowercases every region. */
-export function getDayjsLocale(tag: CatalogTag) {
+export function getDayjsLocale(tag: LocaleTag) {
   if (tag === "es-419") {
     return "es-mx";
+  }
+
+  if (tag === PSEUDO_LOCALE) {
+    return "en";
   }
 
   return tag.toLowerCase();
@@ -111,7 +133,7 @@ export function getDayjsLocale(tag: CatalogTag) {
  * plural rules over English messages would pick the wrong forms. Returns the
  * tag it activated.
  */
-export function activateLocale(tag: CatalogTag): CatalogTag {
+export function activateLocale(tag: LocaleTag): LocaleTag {
   const messages = catalogs[tag];
 
   if (messages) {

@@ -98,6 +98,10 @@ describe("getDayjsLocale", () => {
     expect(getDayjsLocale("en")).toBe("en");
     expect(getDayjsLocale("ja")).toBe("ja");
   });
+
+  test("formats the pseudo-locale's dates as English", () => {
+    expect(getDayjsLocale("en-XA")).toBe("en");
+  });
 });
 
 describe("activateLocale", () => {

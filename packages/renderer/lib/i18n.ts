@@ -1,4 +1,4 @@
-import { activateLocale, isCatalogTag } from "@meru/shared/i18n";
+import { activateLocale, isLocaleTag } from "@meru/shared/i18n";
 import { setDayjsLocale } from "./date";
 import { localeSearchParam } from "./search-params";
 
@@ -9,7 +9,7 @@ import { localeSearchParam } from "./search-params";
  * without an IPC round trip, and `"system"` never has to be resolved here.
  */
 export function initLocale() {
-  const locale = localeSearchParam && isCatalogTag(localeSearchParam) ? localeSearchParam : "en";
+  const locale = localeSearchParam && isLocaleTag(localeSearchParam) ? localeSearchParam : "en";
 
   setDayjsLocale(locale);
 

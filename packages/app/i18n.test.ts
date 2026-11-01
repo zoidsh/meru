@@ -10,8 +10,9 @@ let preferredSystemLanguages: string[] = [];
  */
 mock.module("@meru/shared/i18n", () => ({
   SHIPPED_CATALOG_TAGS: ["en", "de", "fr"],
+  PSEUDO_LOCALE: "en-XA",
   resolveLocale: (languages: string[]) => languages[0] ?? "en",
-  activateLocale: (tag: string) => (tag === "de" ? "de" : "en"),
+  activateLocale: (tag: string) => (tag === "de" || tag === "en-XA" ? tag : "en"),
 }));
 
 mock.module("electron", () => ({
@@ -29,6 +30,10 @@ describe("appI18n.locale", () => {
     language = "system";
 
     preferredSystemLanguages = [];
+
+    delete process.env.MERU_PSEUDO_LOCALE_CATALOG;
+
+    delete process.env.MERU_PSEUDO_LOCALE;
   });
 
   test("is English before init", () => {
@@ -61,5 +66,27 @@ describe("appI18n.locale", () => {
     appI18n.init();
 
     expect(appI18n.locale).toBe("en");
+  });
+
+  test("is the pseudo-locale over the chosen language when asked for in a build that carries it", () => {
+    language = "de";
+
+    process.env.MERU_PSEUDO_LOCALE_CATALOG = "1";
+
+    process.env.MERU_PSEUDO_LOCALE = "1";
+
+    appI18n.init();
+
+    expect(appI18n.locale).toBe("en-XA");
+  });
+
+  test("ignores a request for the pseudo-locale in a build without it", () => {
+    language = "de";
+
+    process.env.MERU_PSEUDO_LOCALE = "1";
+
+    appI18n.init();
+
+    expect(appI18n.locale).toBe("de");
   });
 });
