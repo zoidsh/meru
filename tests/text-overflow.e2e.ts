@@ -16,10 +16,15 @@
  * - an ancestor with `overflow` hidden or clipped on an axis, which is also what
  *   `text-overflow: ellipsis` and line clamping need, when the text reaches past
  *   that ancestor's padding box on that axis by more than a pixel;
- * - never past a scroll container, by its role: on an axis whose `overflow` is
- *   `auto` or `scroll` the box is meant to hold more than it shows, as the
- *   settings page, the sidebar and the account row do, so the walk up stops
- *   there for that axis; nor past the document's root and body;
+ * - a scroll container on an axis it is not meant to scroll, which cuts text
+ *   off as surely as `hidden` does: a Base UI scroll area scrolls only the axes
+ *   it has a scrollbar for, vertical unless it was given a horizontal one;
+ * - never past a scroll container on an axis it is meant to scroll, decided by
+ *   its role as `readScrollAxes` says, as the settings page and sidebar do
+ *   downwards and the account row sideways, so the walk up stops there for that
+ *   axis;
+ * - the window's own edges, for text no box cut off, on every axis nothing
+ *   scrolls;
  * - never a visually hidden element, by its role: a clipping box of a pixel or
  *   less is a screen reader's label, clipped on purpose;
  * - never text inside an element marked `data-truncated`, a value the
@@ -98,9 +103,30 @@ function readOverflows(meru: MeruApp) {
       return parts.join(" > ");
     };
 
-    const clips = (value: string) => value === "hidden" || value === "clip";
-
     const scrolls = (value: string) => value === "auto" || value === "scroll";
+
+    /*
+     * The axes a scroll container is meant to scroll, by its role rather than by
+     * its computed `overflow`. A Base UI viewport computes as scrolling both ways
+     * but offers a scrollbar for each axis it scrolls, and only a vertical one
+     * unless a horizontal one is added, so text pushed past its right edge is
+     * cut off rather than scrolled to. Anything else scrolls the axes its own
+     * `overflow` names, as the titlebar's account row does sideways.
+     */
+    const readScrollAxes = (element: Element, style: CSSStyleDeclaration) => {
+      if (element.matches('[data-slot="scroll-area-viewport"]')) {
+        return {
+          x: Boolean(
+            element.parentElement?.querySelector(
+              ':scope > [data-slot="scroll-area-scrollbar"][data-orientation="horizontal"]',
+            ),
+          ),
+          y: true,
+        };
+      }
+
+      return { x: scrolls(style.overflowX), y: scrolls(style.overflowY) };
+    };
 
     const overflows: Overflow[] = [];
 
@@ -139,9 +165,34 @@ function readOverflows(meru: MeruApp) {
         bottom: Math.max(...rects.map((rect) => rect.bottom)),
       };
 
+      /** How far the text reaches past a box on each axis still being checked. */
+      const measure = (
+        box: { left: number; top: number; width: number; height: number },
+        axes: { x: boolean; y: boolean },
+      ) => ({
+        horizontal: axes.x
+          ? Math.max(box.left - textBox.left, textBox.right - (box.left + box.width))
+          : 0,
+        vertical: axes.y
+          ? Math.max(box.top - textBox.top, textBox.bottom - (box.top + box.height))
+          : 0,
+      });
+
+      const report = (clippedBy: string, { horizontal, vertical }: ReturnType<typeof measure>) => {
+        overflows.push({
+          text,
+          element: describeElement(parent),
+          clippedBy,
+          horizontal: Math.round(Math.max(horizontal, 0)),
+          vertical: Math.round(Math.max(vertical, 0)),
+        });
+      };
+
       let isCheckingX = true;
 
       let isCheckingY = true;
+
+      let isReported = false;
 
       for (
         let ancestor: Element | null = parent;
@@ -153,13 +204,17 @@ function readOverflows(meru: MeruApp) {
       ) {
         const style = getComputedStyle(ancestor);
 
-        const clipsX = isCheckingX && clips(style.overflowX);
+        const scrollAxes = readScrollAxes(ancestor, style);
 
-        const clipsY = isCheckingY && clips(style.overflowY);
+        isCheckingX &&= !scrollAxes.x;
 
-        isCheckingX &&= !scrolls(style.overflowX);
+        isCheckingY &&= !scrollAxes.y;
 
-        isCheckingY &&= !scrolls(style.overflowY);
+        // Whatever does not show its overflow cuts it off: `hidden` and `clip`,
+        // and a scroll container on an axis it is not meant to scroll.
+        const clipsX = isCheckingX && style.overflowX !== "visible";
+
+        const clipsY = isCheckingY && style.overflowY !== "visible";
 
         if (!clipsX && !clipsY) {
           continue;
@@ -168,37 +223,39 @@ function readOverflows(meru: MeruApp) {
         const box = ancestor.getBoundingClientRect();
 
         if (box.width <= 1 || box.height <= 1) {
+          isReported = true;
+
           break;
         }
 
-        const paddingLeft = box.left + ancestor.clientLeft;
+        const reach = measure(
+          {
+            left: box.left + ancestor.clientLeft,
+            top: box.top + ancestor.clientTop,
+            width: ancestor.clientWidth,
+            height: ancestor.clientHeight,
+          },
+          { x: clipsX, y: clipsY },
+        );
 
-        const paddingTop = box.top + ancestor.clientTop;
+        if (reach.horizontal > 1 || reach.vertical > 1) {
+          report(describeElement(ancestor), reach);
 
-        const horizontal = clipsX
-          ? Math.max(
-              paddingLeft - textBox.left,
-              textBox.right - (paddingLeft + ancestor.clientWidth),
-            )
-          : 0;
-
-        const vertical = clipsY
-          ? Math.max(
-              paddingTop - textBox.top,
-              textBox.bottom - (paddingTop + ancestor.clientHeight),
-            )
-          : 0;
-
-        if (horizontal > 1 || vertical > 1) {
-          overflows.push({
-            text,
-            element: describeElement(parent),
-            clippedBy: describeElement(ancestor),
-            horizontal: Math.round(Math.max(horizontal, 0)),
-            vertical: Math.round(Math.max(vertical, 0)),
-          });
+          isReported = true;
 
           break;
+        }
+      }
+
+      // The window cuts off whatever no box did, on the axes nothing scrolls.
+      if (!isReported && (isCheckingX || isCheckingY)) {
+        const reach = measure(
+          { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight },
+          { x: isCheckingX, y: isCheckingY },
+        );
+
+        if (reach.horizontal > 1 || reach.vertical > 1) {
+          report("the window", reach);
         }
       }
     }
