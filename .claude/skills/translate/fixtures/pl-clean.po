@@ -231,3 +231,7 @@ msgstr "Otwórz ustawienia Gmaila, aby wyłączyć wiadomość o nieobecności"
 #: packages/app/context-menu.ts
 msgid "Copy Lin&k"
 msgstr "Kopiuj lin&k"
+
+#: packages/renderer/routes/settings/unified-inbox.tsx
+msgid "Enable unified inbox"
+msgstr "Włącz łączoną skrzynkę odbiorczą"
