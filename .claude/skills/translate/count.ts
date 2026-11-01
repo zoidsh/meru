@@ -1,15 +1,17 @@
 import { parseArgs } from "node:util";
 import { CORPUS_DIR, type Pair, readCorpus } from "./corpus";
-import { type BannedRule, loadSidecar, type PinnedRule } from "./rules";
+import { type BannedRule, loadSidecar, type PinnedRule, withoutAccessKey } from "./rules";
 
 /*
  * A Chrome count, taken as `source-order.md` says the glossary and the
  * sidecars cite one: N is Chrome's messages whose English has the term, by the
- * pin's `msgidPattern` or its `msgid` as a whole word, ignoring case, and n
- * those of them whose translation matches the pin's `expect` without its
- * anchors, ignoring case and reading Chrome's straight apostrophe as the
- * curly one the style sheets write. A ban's count is the messages whose
- * translation has the banned form, as Chrome writes it.
+ * pin's `countEnglish`, its `msgidPattern` or its `msgid` as a whole word, and
+ * n those of them whose translation matches the pin's `countExpect` or its
+ * `expect` without its anchors. Both sides are read without their access keys,
+ * since `&` can split a word, ignoring case unless told otherwise, and with
+ * Chrome's straight apostrophe as the curly one the style sheets write. A
+ * ban's count is the messages whose translation has the banned form, as Chrome
+ * writes it.
  */
 
 export type Count = { n: number; total: number; matched: Pair[] };
@@ -22,34 +24,45 @@ export function withoutAnchors(pattern: string) {
   return pattern.replace(/^\^/u, "").replace(/(?<!\\)\$$/u, "");
 }
 
-export function englishOf(rule: Pick<PinnedRule, "msgid" | "msgidPattern">) {
-  if (rule.msgidPattern !== undefined) {
-    return new RegExp(rule.msgidPattern, "iu");
-  }
+export function englishOf(
+  rule: Pick<PinnedRule, "msgid" | "msgidPattern" | "countEnglish">,
+  flags = "iu",
+) {
+  const pattern =
+    rule.countEnglish ??
+    rule.msgidPattern ??
+    `(?<![\\p{L}\\p{N}])${escape(rule.msgid ?? "")}(?![\\p{L}\\p{N}])`;
 
-  return new RegExp(`(?<![\\p{L}\\p{N}])${escape(rule.msgid ?? "")}(?![\\p{L}\\p{N}])`, "iu");
+  return new RegExp(pattern, flags);
 }
 
 const straightApostrophes = (text: string) => text.replaceAll("’", "'");
 
 export function chromeCount(pairs: Pair[], english: RegExp, expect: RegExp): Count {
-  const matched = pairs.filter(([source]) => english.test(source));
+  const matched = pairs.filter(([source]) => english.test(withoutAccessKey(source)));
 
   const translated = new RegExp(straightApostrophes(expect.source), expect.flags);
 
   return {
-    n: matched.filter(([, translation]) => translated.test(straightApostrophes(translation)))
-      .length,
+    n: matched.filter(([, translation]) =>
+      translated.test(straightApostrophes(withoutAccessKey(translation))),
+    ).length,
     total: matched.length,
     matched,
   };
 }
 
-export function pinCount(rule: PinnedRule, pairs: Pair[], override: { english?: string } = {}) {
+export function pinCount(
+  rule: PinnedRule,
+  pairs: Pair[],
+  override: { english?: string; caseSensitive?: boolean } = {},
+) {
+  const flags = override.caseSensitive ? "u" : "iu";
+
   return chromeCount(
     pairs,
-    override.english === undefined ? englishOf(rule) : new RegExp(override.english, "iu"),
-    new RegExp(withoutAnchors(rule.expect), "iu"),
+    override.english === undefined ? englishOf(rule, flags) : new RegExp(override.english, flags),
+    new RegExp(rule.countExpect ?? withoutAnchors(rule.expect), flags),
   );
 }
 
@@ -75,14 +88,15 @@ export function citedCount(reason: string) {
   return ban ? { n: ban[1] === "none of its" ? 0 : Number(ban[1]) } : undefined;
 }
 
-const USAGE = `Usage: bun .claude/skills/translate/count.ts <tag> [<rule id>…] [--english <regex>] [--expect <regex>] [--show]
+const USAGE = `Usage: bun .claude/skills/translate/count.ts <tag> [<rule id>…] [--english <regex>] [--expect <regex>] [--case] [--show]
 
 Counts Chrome's messages for each pin or ban of languages/<tag>.json named, or
 every one without ids, in .cache/translate/corpus/chrome.<tag>.jsonl, which
 corpus.ts --source chrome <tag> writes, and prints each beside the count its
 reason cites. --english counts a pin by the Chrome term its word comes from
-rather than its msgidPattern; with --expect and no rule id, it counts an
-ad hoc term. --show lists the messages a pin's count matched.`;
+rather than its countEnglish or msgidPattern; with --expect and no rule id, it
+counts an ad hoc term. --case counts case-sensitively. --show lists the
+messages a pin's count matched.`;
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -90,6 +104,7 @@ async function main() {
     options: {
       english: { type: "string" },
       expect: { type: "string" },
+      case: { type: "boolean" },
       show: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
@@ -122,10 +137,12 @@ async function main() {
   };
 
   if (ids.length === 0 && values.english !== undefined && values.expect !== undefined) {
+    const flags = values.case ? "u" : "iu";
+
     const count = chromeCount(
       pairs,
-      new RegExp(values.english, "iu"),
-      new RegExp(values.expect, "iu"),
+      new RegExp(values.english, flags),
+      new RegExp(values.expect, flags),
     );
 
     console.log(
@@ -142,7 +159,10 @@ async function main() {
   const named = (id: string) => ids.length === 0 || ids.includes(id);
 
   for (const rule of sidecar.pinned.filter(({ id }) => named(id))) {
-    const count = pinCount(rule, pairs, { english: values.english });
+    const count = pinCount(rule, pairs, {
+      english: values.english,
+      caseSensitive: values.case,
+    });
 
     const cited = citedCount(rule.reason);
 

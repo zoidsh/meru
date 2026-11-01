@@ -11,7 +11,7 @@ Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `p
 
 Every word in every language comes from the first source in the order [source-order.md](source-order.md) gives, from the operating system's own words to the seven-app vote, and the glossary, the style sheets and the sidecars cite which. Read it before ruling on a word.
 
-A Chrome count or a seven-app vote is frozen once a glossary entry or a sidecar reason cites it: recount only when a rule is disputed, or when an Electron upgrade changes Chromium's wording for the term. [counting.md](counting.md) says how to take one again with `corpus.ts`, `count.ts` and `vote.ts`.
+A Chrome count or a seven-app vote is frozen once a glossary entry or a sidecar reason cites it: recount only when a rule is disputed, when an Electron upgrade changes Chromium's wording for the term, or when a change to the counting scripts changes what they count. [counting.md](counting.md) says how to take one again with `corpus.ts`, `count.ts` and `vote.ts`.
 
 ## Before you start
 
@@ -128,7 +128,11 @@ Leave the catalogs uncommitted: the translations land in the same commit as the 
 
 ## Changing a rule
 
-A decision recorded in a sidecar, `languages/<tag>.json`, carries its own test: a pin's `example` holds the wording it allows and a fault it catches, and for every other rule `fixtures/<tag>-clean.po` holds the wording it allows and `fixtures/<tag>-faults.po` a planted fault, which `scripts/translate-check.test.ts` holds the rules against. Keep a hand-written fixture entry only for what an example can't say, such as a ban's allowance or a fault that trips two rules at once. Changing a decision means changing the style sheet, the glossary, the sidecar and, for a ban, the fixtures together, then running `bun test --isolate scripts/translate-*.test.ts`. A platform word changes in the sidecar alone, and `platform-table.ts` rewrites the style sheet's table from it.
+A decision recorded in a sidecar, `languages/<tag>.json`, carries its own test: a pin's `example` holds the wording it allows and a fault it catches, and for every other rule `fixtures/<tag>-clean.po` holds the wording it allows and `fixtures/<tag>-faults.po` a planted fault, which `scripts/translate-check.test.ts` holds the rules against. Keep a hand-written fixture entry only for what an example can't say, such as a ban's allowance or a fault that trips two rules at once, and add it with `bun .claude/skills/translate/fixture.ts <tag> clean|faults --msgid <English> --msgstr <translation> [--msgctxt <context>] [--origin <path>] [--fault <rule>:<id>]`, which keeps the blank line before it and the newline after it that `scripts/translate-fixtures.test.ts` checks every fixture for. Changing a decision means changing the style sheet, the glossary, the sidecar and, for a ban, the fixtures together, then running `bunx oxfmt .claude/skills/translate/languages/<tag>.json`, since a sidecar written by hand rarely matches the formatter and CI's `fmt:check` fails on it, and `bun test --isolate scripts/translate-*.test.ts`. A platform word changes in the sidecar alone, and `platform-table.ts` rewrites the style sheet's table from it.
+
+## Splitting a message
+
+When one msgid serves several labels that a language has to tell apart, such as an Auto whose adjective agrees with each setting's noun, the code gives each its own `context`, and extract would make each context a new, untranslated entry in every locale. Before extract, run `bun .claude/skills/translate/split-message.ts --msgid <English> --context <msgctxt>…`, with `--from <msgctxt>` when the shared entry has a context of its own. It copies the shared entry's translation into a fuzzy entry for each new context, in every locale's catalogs, so the next run's translators and reviewers only check that each still agrees with its context. Then run step 1's extract, which keeps those entries and drops the shared one once no code uses it.
 
 ## Beyond a run
 

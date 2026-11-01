@@ -51,6 +51,8 @@ export type VoteResult = {
   cite: string;
   votes: Partial<Record<App, AppVote>>;
   messages: Partial<Record<App, { total: number; counts: Record<string, number> }>>;
+  // Each app's messages by the candidate each matched longest, excluded words included.
+  matched: Partial<Record<App, Record<string, Pair[]>>>;
 };
 
 /** Words by count, most first, a tie keeping the order the words were first counted in. */
@@ -77,6 +79,8 @@ export function vote(
 
   const messages: VoteResult["messages"] = {};
 
+  const matched: VoteResult["matched"] = {};
+
   for (const app of APPS) {
     const seen = new Set<string>();
 
@@ -94,7 +98,11 @@ export function vote(
 
     const counts = new Map<string, number>();
 
-    for (const [, translation] of hits) {
+    const byWord: Record<string, Pair[]> = {};
+
+    for (const hit of hits) {
+      const [, translation] = hit;
+
       let best: { length: number; word: string } | undefined;
 
       for (const [word, regex] of candidates) {
@@ -108,9 +116,17 @@ export function vote(
         }
       }
 
-      if (best && !excluded.has(best.word)) {
-        counts.set(best.word, (counts.get(best.word) ?? 0) + 1);
+      if (best) {
+        (byWord[best.word] ??= []).push(hit);
+
+        if (!excluded.has(best.word)) {
+          counts.set(best.word, (counts.get(best.word) ?? 0) + 1);
+        }
       }
+    }
+
+    if (Object.keys(byWord).length > 0) {
+      matched[app] = byWord;
     }
 
     const order = ranked(counts);
@@ -162,6 +178,7 @@ export function vote(
     cite: top ? `${top[0]}: ${top[1]} of 7 (${voters.join(", ")})` : "",
     votes,
     messages,
+    matched,
   };
 }
 
@@ -179,12 +196,42 @@ export function formatVotes(votes: VoteResult["votes"]) {
   }).join("; ");
 }
 
-const USAGE = `Usage: bun .claude/skills/translate/vote.ts [--concepts <file>] [--corpus <dir>] [--detail] <tag>… [-- <concept>…]
+/*
+ * Each app's matched messages under each candidate, most first and the words
+ * out of the vote last, so the source order's most direct match can be read
+ * off without searching the corpora.
+ */
+export function formatMatched(matched: VoteResult["matched"], excluded: string[] = []) {
+  return APPS.flatMap((app) => {
+    const byWord = matched[app];
+
+    if (!byWord) {
+      return [];
+    }
+
+    const words = Object.entries(byWord).sort(
+      ([a, aPairs], [b, bPairs]) =>
+        Number(excluded.includes(a)) - Number(excluded.includes(b)) ||
+        bPairs.length - aPairs.length,
+    );
+
+    return [
+      `    ${APP_NAMES[app]}:`,
+      ...words.flatMap(([word, pairs]) => [
+        `      ${word} (${pairs.length}${excluded.includes(word) ? ", excluded" : ""}):`,
+        ...pairs.map(([english, translation]) => `        ${english} => ${translation}`),
+      ]),
+    ];
+  });
+}
+
+const USAGE = `Usage: bun .claude/skills/translate/vote.ts [--concepts <file>] [--corpus <dir>] [--detail] [--show] <tag>… [-- <concept>…]
 
 Runs the seven-app vote for every concept of vote-concepts.json, or those
 named after --, in each language given, over the corpora corpus.ts writes
 to .cache/translate/corpus. Prints each result as the glossary cites it, with
-its status and every app's vote; --detail adds each app's message counts.`;
+its status and every app's vote; --detail adds each app's message counts, and
+--show each app's messages under the candidate each counted for.`;
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -193,6 +240,7 @@ async function main() {
       concepts: { type: "string" },
       corpus: { type: "string" },
       detail: { type: "boolean" },
+      show: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -240,6 +288,12 @@ async function main() {
           console.log(
             `    ${APP_NAMES[app]}: ${detail?.total ?? 0} messages ${JSON.stringify(detail?.counts ?? {})}`,
           );
+        }
+      }
+
+      if (values.show) {
+        for (const line of formatMatched(result.matched, item.exclude?.[tag])) {
+          console.log(line);
         }
       }
     }
