@@ -18,7 +18,9 @@ export default defineConfig({
     prepend: "[",
     append: "]",
     extend: 0.4,
-    // Spaces would collapse to one in rendered text and pad nothing.
-    extendCharacter: "~",
+    // Spaces alone would collapse to one in rendered text and pad nothing, and
+    // an unbroken run could never wrap, so the padding is groups a line can
+    // break between, as real words are.
+    extendCharacter: "~~~ ",
   },
 });
