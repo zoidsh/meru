@@ -1060,6 +1060,14 @@
       "expect": "^Réinitialiser",
       "severity": "wrong",
       "reason": "Resetting Meru is Réinitialiser, in the menu item, the dialog's question and its button, as Chrome writes Reset (Chrome 5/5 exact Reset in its macOS locale.pak), never Rétablir, which is Redo."
+    },
+    {
+      "id": "edit-menu",
+      "msgid": "Edit",
+      "msgctxt": null,
+      "expect": "^Édition$",
+      "severity": "wrong",
+      "reason": "The Edit menu's title, which has no platform msgctxt, takes Chrome's menu word, Édition: the Edit title of Chrome's menu bar, in the block with Fichier, Présentation, Historique, Fenêtre and Aide (Chrome 1/1 for the menu title; 1 of its 12 exact Edit messages in its macOS locale.pak, the other 11 being Edit buttons, Modifier). The action Edit stays Modifier."
     }
   ],
   "accessKeys": {

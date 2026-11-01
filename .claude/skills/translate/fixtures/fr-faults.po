@@ -439,3 +439,10 @@ msgstr "Suivant"
 #: packages/app/menu.ts
 msgid "Reset Meru to its original state?"
 msgstr "Rétablir l’état d’origine de Meru ?"
+
+# The action's word for the menu's title.
+# fault: pinned:edit-menu
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Edit"
+msgstr "Modifier"

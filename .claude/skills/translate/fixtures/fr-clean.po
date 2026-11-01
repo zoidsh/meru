@@ -351,3 +351,8 @@ msgstr "Avancer"
 #: packages/app/menu.ts
 msgid "Reset App"
 msgstr "Réinitialiser l’application"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Edit"
+msgstr "Édition"
