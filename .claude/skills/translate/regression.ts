@@ -5,6 +5,8 @@ import { type Catalog, dumpCatalogs, parse, sliceGlossary } from "./collect";
 import {
   type AgreedFinding,
   CATEGORIES,
+  describe,
+  keyOf,
   type MqmFinding,
   type MqmSeverity,
   RANK,
@@ -52,18 +54,6 @@ export type RegressionSet = {
   expectations: Expectation[];
   accepted: number;
 };
-
-function keyOf({
-  catalog,
-  msgctxt,
-  msgid,
-}: {
-  catalog: string;
-  msgctxt: string | null;
-  msgid: string;
-}) {
-  return `${catalog}\u0004${msgctxt ?? ""}\u0004${msgid}`;
-}
 
 function translatorComments(entry: Catalog[string]) {
   return (entry.extra as { translatorComments?: string[] } | undefined)?.translatorComments ?? [];
@@ -256,7 +246,7 @@ export function scoreRegression({
 
   return {
     combined: measure(
-      `${runs.length === 1 ? "1 run" : `${runs.length} runs, agreed`}`,
+      runs.length === 1 ? "1 run" : `${runs.length} runs, agreed`,
       set,
       combined.result.findings satisfies AgreedFinding[],
       combined.result.score,
@@ -302,9 +292,6 @@ export function formatRegression(
   ];
 
   const lines = [`## ${locale}`, "", ...rows.map((cells) => `| ${cells.join(" | ")} |`)];
-
-  const describe = ({ msgctxt, msgid }: { msgctxt: string | null; msgid: string }) =>
-    `${msgctxt === null ? "" : `${JSON.stringify(msgctxt)} `}${JSON.stringify(msgid)}`;
 
   for (const [title, items] of [
     [

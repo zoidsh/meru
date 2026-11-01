@@ -83,11 +83,11 @@ export function countWords(msgid: string) {
     .filter(Boolean).length;
 }
 
-function keyOf({ catalog, msgctxt, msgid }: AssessedEntry) {
+export function keyOf({ catalog, msgctxt, msgid }: AssessedEntry) {
   return `${catalog}\u0004${msgctxt ?? ""}\u0004${msgid}`;
 }
 
-function describe({ catalog, msgctxt, msgid }: AssessedEntry) {
+export function describe({ catalog, msgctxt, msgid }: AssessedEntry) {
   return `${catalog}: ${msgctxt === null ? "" : `${JSON.stringify(msgctxt)} `}${JSON.stringify(msgid)}`;
 }
 
