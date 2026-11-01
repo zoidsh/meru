@@ -335,7 +335,7 @@ class Ipc {
             ]
           : []),
         {
-          label: "Copy Link",
+          label: "Copy URL",
           click: () => {
             workspaceApp.copyUrl();
           },
@@ -488,7 +488,7 @@ class Ipc {
           type: "separator",
         },
         {
-          label: "Copy Link",
+          label: "Copy URL",
           click: () => {
             if (tab instanceof WorkspaceApp) {
               tab.copyUrl();

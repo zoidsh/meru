@@ -83,7 +83,8 @@ describe("context menu in a Workspace app view", () => {
       linkURL: "https://example.com/",
     });
 
-    expect(labels).toContain("Copy Link");
+    expect(labels).toContain("Copy Link Address");
+    expect(labels).toContain("Copy URL");
     expect(labels.filter((label, index) => labels.indexOf(label) !== index)).toEqual([]);
   });
 });
