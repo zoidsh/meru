@@ -30,6 +30,8 @@ The path of an entry file, `<locale>.txt`, listing the entries for your locale; 
 
 The comment and the context are what tell you what a short string is: a button, a menu item, an accessible name, a fragment of a longer sentence. When an entry is still ambiguous, read the line in the source file it comes from.
 
+Never read `.claude/skills/translate/regression.ts` or anything under `.claude/skills/translate/regression/`, and leave them out of every search: the set there holds deliberately wrong translations of real entries, which would pass for prior art.
+
 ## How you edit
 
 - Write your translations into the catalogs with the skill's script, never by editing a PO file and never with a PO editor of your own. Put them in a JSON file beside your entry file, an array with one object per entry, then run `bun .claude/skills/translate/collect.ts <locale> --apply <file>`:
