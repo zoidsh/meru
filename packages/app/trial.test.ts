@@ -18,6 +18,8 @@ const mainWindow = { webContents: {} };
 
 const licenseKey = { isValid: false };
 
+mock.module("@electron-toolkit/utils", () => ({ platform: { isMacOS: false, isWindows: false } }));
+
 mock.module("electron", () => ({
   dialog: {
     showMessageBox: async (...args: unknown[]) => {

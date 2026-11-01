@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { parse } from "../.claude/skills/translate/collect";
-import { formatSharedMessages, sharedMessages } from "../.claude/skills/translate/shared-messages";
+import {
+  formatSharedMessages,
+  menuSharedMessages,
+  sharedMessages,
+} from "../.claude/skills/translate/shared-messages";
 
 const CATALOG = `msgid ""
 msgstr ""
@@ -54,6 +58,39 @@ describe("shared-messages.ts", () => {
       "  #. Option of the Theme setting",
       "  #. Option of the system tray icon's Color setting",
       "  #: packages/renderer/routes/settings/appearance.tsx",
+    ]);
+  });
+
+  test("--menus lists a msgid the menu bar and a popup menu both use, even under one comment", async () => {
+    const catalog = await parse(
+      `msgid ""
+msgstr ""
+"Language: en\\n"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/ipc.ts
+#: packages/app/menu.ts
+msgid "Reopen Closed Tab"
+msgstr "Reopen Closed Tab"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Zoom In"
+msgstr "Zoom In"
+
+#: packages/app/context-menu.ts
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Cut"
+msgstr "Cut"
+`,
+      "en",
+      "en",
+      "en.po",
+    );
+
+    expect(menuSharedMessages("app", catalog).map(({ msgid }) => msgid)).toEqual([
+      "Reopen Closed Tab",
     ]);
   });
 });

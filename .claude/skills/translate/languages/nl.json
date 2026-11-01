@@ -52,6 +52,30 @@
         ]
       },
       {
+        "row": "Edit, the menu",
+        "macOS": [
+          {
+            "word": "Wijzig",
+            "source": "(Mail `MainMenu` `42.title`)",
+            "labels": ["Edit"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Bewerken",
+            "source": "(TBX `9433_179566_1103955` _menu Bewerken_, the Edit menu)",
+            "labels": ["Edit"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Bewerken",
+            "source": "(gnome-text-editor `shortcut window` `Editing`, the group of editing commands: gtk4 has no `_Edit`, GTK's Edit menu, in this language)",
+            "labels": ["Edit"]
+          }
+        ]
+      },
+      {
         "row": "Undo",
         "macOS": [
           {
@@ -124,6 +148,30 @@
         ]
       },
       {
+        "row": "Copy, the Edit menu item",
+        "macOS": [
+          {
+            "word": "Kopieer",
+            "source": "(AppKit `MenuCommands` `Copy`)",
+            "labels": ["Copy"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Kopiëren",
+            "source": "(TBX `11991_39848_39866`)",
+            "labels": ["Copy"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Kopiëren",
+            "source": "(gtk4 `_Copy`)",
+            "labels": ["Copy"]
+          }
+        ]
+      },
+      {
         "row": "Paste, `&Paste`",
         "macOS": [
           {
@@ -192,6 +240,30 @@
             "word": "Alles selecteren",
             "source": "(gtk4 `Select _All`)",
             "labels": ["Select All", "Select &All"]
+          }
+        ]
+      },
+      {
+        "row": "Delete, the Edit menu item",
+        "macOS": [
+          {
+            "word": "Verwijder",
+            "source": "(AppKit `MenuCommands` `Delete`)",
+            "labels": ["Delete"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Verwijderen",
+            "source": "(TBX `5396_185654_346716`)",
+            "labels": ["Delete"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Verwijderen",
+            "source": "(gtk4 `_Delete`)",
+            "labels": ["Delete"]
           }
         ]
       },
@@ -445,6 +517,24 @@
         ]
       },
       {
+        "row": "Quit, a native dialog's button",
+        "macOS": [
+          {
+            "word": "Stop",
+            "source": "(AppKit `Document` `Quit`)",
+            "labels": ["Quit"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Afsluiten",
+            "source": "(TBX `9679_334563_1103965` _afsluiten_, to close a program, as a label)",
+            "labels": ["Quit"]
+          }
+        ],
+        "Linux": "one message with the tray item's Quit, its word above"
+      },
+      {
         "row": "System tray, in the Appearance settings",
         "macOS": "macOS shows the menu bar instead: _menubalk_",
         "Windows": [
@@ -677,6 +767,78 @@
             "labels": ["OK"]
           }
         ]
+      },
+      {
+        "row": "Learn Spelling, `&Learn Spelling`",
+        "macOS": [
+          {
+            "word": "Voeg spelling toe",
+            "source": "(WebKit `Localizable` `Learn Spelling`)",
+            "labels": ["&Learn Spelling"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Search with Google, `&Search with Google`",
+        "macOS": [
+          {
+            "word": "Zoeken met Google",
+            "source": "(WebKit `Localizable` `Search with %@`)",
+            "labels": ["&Search with Google"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Copy, `&Copy`",
+        "macOS": [
+          {
+            "word": "Kopieer",
+            "source": "(WebKit `Localizable` `Copy`)",
+            "labels": ["&Copy"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Copy Link Address, `Copy Link Addr&ess`",
+        "macOS": [
+          {
+            "word": "Kopieer link",
+            "source": "(WebKit `Localizable` `Copy Link`, Safari's item for a link)",
+            "labels": ["Copy Link Addr&ess"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Copy Image, `Cop&y Image`",
+        "macOS": [
+          {
+            "word": "Kopieer afbeelding",
+            "source": "(WebKit `Localizable` `Copy Image`)",
+            "labels": ["Cop&y Image"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Copy Image Address, `C&opy Image Address`",
+        "macOS": [
+          {
+            "word": "Kopieer adres van afbeelding",
+            "source": "inferred from WebKit `Localizable` `Copy Image` and Mail `Alerts` `CopyAddress`, _Kopieer adres_",
+            "labels": ["C&opy Image Address"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
       }
     ]
   },
@@ -792,7 +954,7 @@
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtensie",
       "severity": "wrong",
-      "reason": "An extension is an extensie (Chrome: 303 of 308 messages).",
+      "reason": "An extension is an extensie (Chrome 303/304 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Extensions",
         "fault": "Uitbreidingen"
@@ -923,8 +1085,9 @@
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Aa]pparaatna(?:a)?m",
+      "countEnglish": "\\bdevice name\\b",
       "severity": "wrong",
-      "reason": "A device label is an apparaatnaam, Chrome's word for a device name (Chrome: 9 of 11 messages).",
+      "reason": "A device label is an apparaatnaam, Chrome's word for a device name (Chrome 9/11 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Device label",
         "fault": "Apparaatlabel"
@@ -956,8 +1119,9 @@
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "[Vv]ertrouwd",
+      "countEnglish": "\\btrusted\\b",
       "severity": "wrong",
-      "reason": "Trusted hosts are vertrouwde hosts, untrusted ones niet-vertrouwde hosts (Chrome: 21 of 22 messages).",
+      "reason": "Trusted hosts are vertrouwde hosts, untrusted ones niet-vertrouwde hosts, as Chrome writes trusted (Chrome 21/22 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Trusted hosts",
         "fault": "Betrouwbare hosts"
@@ -978,8 +1142,9 @@
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "[Pp]hishing",
+      "countEnglish": "\\bphishing\\b",
       "severity": "wrong",
-      "reason": "Phishing protection is phishingbescherming; Chrome keeps phishing (Chrome: 4 of 4 messages).",
+      "reason": "Phishing protection is phishingbescherming; Chrome keeps phishing (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Phishing protection",
         "fault": "Bescherming tegen oplichting"
@@ -1001,7 +1166,7 @@
       "msgidPattern": "\\bfolders?\\b",
       "expect": "[Mm]ap",
       "severity": "wrong",
-      "reason": "A folder is a map, as Chrome writes it (Chrome: 104 of 106 messages).",
+      "reason": "A folder is a map, as Chrome writes it (Chrome 104/104 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Open folder when done",
         "fault": "Open directory na afloop"
@@ -1012,8 +1177,10 @@
       "msgctxt": null,
       "msgid": "Save",
       "expect": "^Sla op$",
+      "countEnglish": "^Save$",
+      "countExpect": "^Opslaan$",
       "severity": "wrong",
-      "reason": "Save is Sla op, Chrome's opslaan in this sheet's imperative (Chrome: 211 of 298 messages).",
+      "reason": "Save is Sla op, Chrome's Opslaan in this sheet's imperative (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "fault": "Opslaan"
       }
@@ -1022,8 +1189,10 @@
       "id": "saved-search",
       "msgidPattern": "\\bsaved search(?:es)?\\b",
       "expect": "[Oo]pgeslagen zoekopdracht",
+      "countEnglish": "\\bsaved\\b",
+      "countExpect": "[Oo]pgeslagen",
       "severity": "wrong",
-      "reason": "A saved search is an opgeslagen zoekopdracht (Chrome: 466 of 561 messages).",
+      "reason": "A saved search is an opgeslagen zoekopdracht, with Chrome's opgeslagen for saved (Chrome 281/289 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Add saved search",
         "fault": "Voeg zoekopdracht toe"
@@ -1031,10 +1200,11 @@
     },
     {
       "id": "edit",
+      "msgctxt": null,
       "msgidPattern": "^Edit\\b",
       "expect": "[Bb]ewerk",
       "severity": "wrong",
-      "reason": "Edit is Bewerk, Chrome's bewerken in this sheet's imperative (Chrome: 62 of 64 messages).",
+      "reason": "Edit is Bewerk, Chrome's bewerken in this sheet's imperative (Chrome 64/66 in Chromium 156.0.8078.49's .xtb files); the Edit menu, a platform label, takes its platform's word instead.",
       "example": {
         "msgid": "Edit account",
         "fault": "Wijzig account"
@@ -1045,11 +1215,11 @@
       "msgidPattern": "^Pin$|\\b(?:un)?pinned\\b",
       "expect": "[Vv]ast(?:ge)?ze?t|[Zz]et (?:\\p{L}+ )?vast",
       "severity": "wrong",
-      "reason": "Pinning is vastzetten, as Chrome writes it: Zet vast, vastgezet tabblad (Chrome: 17 of 21 messages).",
+      "reason": "Pinning is vastzetten, as Chrome writes it: Vastzetten in the tab context menu, vastgezet tabblad (Chrome: 17 of 21 messages).",
       "example": {
         "msgid": "Pin",
-        "clean": "Zet vast",
-        "fault": "Maak vast"
+        "clean": "Vastzetten",
+        "fault": "Vastmaken"
       }
     },
     {
@@ -1261,8 +1431,8 @@
       "reason": "System Settings is Apple's Systeeminstellingen, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "Zet de optie ook aan in Systeeminstellingen.",
-        "fault": "Zet de optie ook aan in Systeemvoorkeuren."
+        "clean": "Veeg met twee vingers naar links of rechts op een trackpad om terug of vooruit te gaan. ‘Vegen tussen pagina's’ moet ook aanstaan in Systeeminstellingen.",
+        "fault": "Veeg met twee vingers naar links of rechts op een trackpad om terug of vooruit te gaan. ‘Vegen tussen pagina's’ moet ook aanstaan in Systeemvoorkeuren."
       }
     },
     {
@@ -1281,8 +1451,9 @@
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nactie",
+      "countEnglish": "\\binactive tabs?\\b",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactief, as in Inactief tabblad, never the systems' Sleep word (Chrome: 8 of 8 messages).",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactief, as in Inactief tabblad, never the systems' Sleep word (Chrome 8/8 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Hibernate idle tabs",
         "clean": "Maak ongebruikte tabbladen inactief",
@@ -1294,7 +1465,7 @@
       "msgidPattern": "\\blauncher\\b",
       "expect": "[Ll]auncher",
       "severity": "wrong",
-      "reason": "The launcher is the launcher, as Chrome names ChromeOS's (Chrome: 20 of 20 messages).",
+      "reason": "The launcher is the launcher, as Chrome names ChromeOS's (Chrome 19/19 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "In launcher",
         "clean": "In launcher",
@@ -1314,6 +1485,18 @@
       }
     },
     {
+      "id": "file-manager",
+      "msgidPattern": "\\bfile manager\\b",
+      "expect": "[Bb]estandsbeheer\\b",
+      "severity": "wrong",
+      "reason": "The file manager shows only on Linux, so it takes GNOME's word, bestandsbeheer, as Files writes it (GNOME, nautilus `_Open in File Manager`, _Openen met bestandsbeheer_), never bestandsbeheerder or the English file manager.",
+      "example": {
+        "msgid": "Show in your file manager",
+        "clean": "Toon in bestandsbeheer",
+        "fault": "Toon in je bestandsbeheerder"
+      }
+    },
+    {
       "id": "meru-portal",
       "msgidPattern": "\\bMeru Portal\\b",
       "expect": "Meru Portal",
@@ -1321,8 +1504,246 @@
       "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
       "example": {
         "msgid": "Open Meru Portal",
-        "clean": "Meru Portal",
-        "fault": "Meru-portal openen"
+        "clean": "Open Meru Portal",
+        "fault": "Open Meru-portal"
+      }
+    },
+    {
+      "id": "auto-width",
+      "msgid": "Auto",
+      "msgctxt": "width",
+      "expect": "^Auto$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Width setting's Auto is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files); Dutch's adjective takes no agreement with the setting's noun, and Chrome's Automatisch is its Automatic, never its Auto.",
+      "example": {
+        "fault": "Automatisch"
+      }
+    },
+    {
+      "id": "auto-placement",
+      "msgid": "Auto",
+      "msgctxt": "placement",
+      "expect": "^Auto$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Placement setting's Auto is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files); Dutch's adjective takes no agreement with the setting's noun, and Chrome's Automatisch is its Automatic, never its Auto.",
+      "example": {
+        "fault": "Automatisch"
+      }
+    },
+    {
+      "id": "auto-launcher-display",
+      "msgid": "Auto",
+      "msgctxt": "launcher display",
+      "expect": "^Auto$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Launcher display setting's Auto is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files); Dutch's adjective takes no agreement with the setting's noun, and Chrome's Automatisch is its Automatic, never its Auto.",
+      "example": {
+        "fault": "Automatische weergave"
+      }
+    },
+    {
+      "id": "auto-text-color",
+      "msgid": "Auto",
+      "msgctxt": "text color",
+      "expect": "^Auto$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Text color setting's Auto is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files); Dutch's adjective takes no agreement with the setting's noun, and Chrome's Automatisch is its Automatic, never its Auto.",
+      "example": {
+        "fault": "Automatisch"
+      }
+    },
+    {
+      "id": "none-account-color",
+      "msgid": "None",
+      "msgctxt": "account color",
+      "expect": "^Geen$",
+      "countEnglish": "^None$",
+      "severity": "wrong",
+      "reason": "An account without a color shows Geen, as Chrome writes it (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files); Dutch's Geen takes no agreement with the noun it stands for.",
+      "example": {
+        "fault": "Geen kleur"
+      }
+    },
+    {
+      "id": "none-excluded-apps",
+      "msgid": "None",
+      "msgctxt": "excluded apps",
+      "expect": "^Geen$",
+      "countEnglish": "^None$",
+      "severity": "wrong",
+      "reason": "The Excluded apps field with nothing excluded shows Geen, as Chrome writes it (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files); Dutch's Geen takes no agreement with the noun it stands for.",
+      "example": {
+        "fault": "Niets"
+      }
+    },
+    {
+      "id": "width",
+      "msgidPattern": "\\bwidth\\b",
+      "expect": "[Bb]reedte",
+      "severity": "wrong",
+      "reason": "Width is breedte, as Chrome writes it (Chrome 5/5 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "msgid": "Width",
+        "clean": "Breedte",
+        "fault": "Wijdte"
+      }
+    },
+    {
+      "id": "wide",
+      "msgid": "Wide",
+      "expect": "^Breed$",
+      "countEnglish": "\\bnow \\{\\} wide\\b",
+      "countExpect": "\\bbreed\\b",
+      "severity": "wrong",
+      "reason": "The Width setting's Wide option is Breed, as Chrome writes the width of a part of its window, a tab strip, a window or a view now {} wide (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files), never Wijd: Chrome's plain Wide and Very wide, Wijd and Erg wijd, are Reading mode's letter spacing (IDS_READING_MODE_SPACING_COMBOBOX_WIDE), not a size. The apps agree (agent-chosen: breed: 4 of 7 (Thunderbird, Firefox, LibreOffice, Apple)). Breed is not Width's breedte, so the select never shows its label as one of its options.",
+      "example": {
+        "fault": "Wijd"
+      }
+    },
+    {
+      "id": "narrow",
+      "msgid": "Narrow",
+      "expect": "^Smal$",
+      "severity": "wrong",
+      "reason": "The Width setting's Narrow option is Smal. Chrome has no Narrow (Chrome 0/0), and of the apps only LibreOffice has one, Smal, beside its Wide, Breed (agent-chosen, unresolved by the app count: LibreOffice smal, the others none; Google's own wording was not checked).",
+      "example": {
+        "fault": "Nauw"
+      }
+    },
+    {
+      "id": "app-links-badge",
+      "msgidPattern": "\\bapp links badge\\b",
+      "expect": "[Bb]adge",
+      "severity": "wrong",
+      "reason": "The app links badge marks a tab rather than counting anything, and Dutch's badge names a badge of either kind, so it takes the unread badge's word, badge; Chrome has no word for a badge (Chrome 0/0), and the apps' word for a badge that marks is badge (agent-chosen: badge: 4 of 7 (Android, LibreOffice, Microsoft, Apple)), never markering.",
+      "example": {
+        "msgid": "Show app links badge",
+        "clean": "Toon badge voor app-links",
+        "fault": "Toon markering voor app-links"
+      }
+    },
+    {
+      "id": "auto-in-sentences",
+      "msgidPattern": "\\bAuto (?:expands|switches|moves)\\b",
+      "expect": "(?<!\\p{L})Auto(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "A description that names a setting's Auto option names it as the select shows it, Auto, never Automatisch (the auto pins).",
+      "example": {
+        "msgid": "How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons.",
+        "clean": "Hoe launcher-apps in de titelbalk worden getoond. Auto toont tot drie apps als afzonderlijke knoppen en vouwt ze daarboven samen. Samengevouwen houdt ze altijd achter één knop, en Uitgevouwen toont ze altijd als afzonderlijke knoppen.",
+        "fault": "Hoe launcher-apps in de titelbalk worden getoond. Automatisch toont tot drie apps als afzonderlijke knoppen en vouwt ze daarboven samen. Samengevouwen houdt ze altijd achter één knop, en Uitgevouwen toont ze altijd als afzonderlijke knoppen."
+      }
+    },
+    {
+      "id": "wide-in-sentences",
+      "msgidPattern": "\\bnarrow and wide\\b",
+      "expect": "smal en breed",
+      "severity": "wrong",
+      "reason": "A sentence that names the Width setting's options names them as the select shows them, Smal and Breed, so wide is breed there too, never wijd (the narrow and wide pins).",
+      "example": {
+        "msgid": "Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above.",
+        "clean": "Toon de knop onder in de zijbalk waarmee je wisselt tussen smal en breed. Als dit uit staat, gebruik je Breedte resetten in het contextmenu van de zijbalk of de instelling Breedte hierboven.",
+        "fault": "Toon de knop onder in de zijbalk waarmee je wisselt tussen smal en wijd. Als dit uit staat, gebruik je Breedte resetten in het contextmenu van de zijbalk of de instelling Breedte hierboven."
+      }
+    },
+    {
+      "id": "teal",
+      "msgid": "Teal",
+      "expect": "^Blauwgroen$",
+      "countEnglish": "\\bteal\\b",
+      "countExpect": "blauwgroen",
+      "severity": "wrong",
+      "reason": "The account color Teal is Blauwgroen, as Chrome writes teal in Light teal, Dark teal and its default teal avatar (Chrome 3/4 in Chromium 156.0.8078.49's .xtb files; the fourth, Light teal and white, is Lichtdonkergroen/wit). Chrome comes before the apps' groenblauw: 2 of 7 (Microsoft, Apple).",
+      "example": {
+        "fault": "Groenblauw"
+      }
+    },
+    {
+      "id": "show-option",
+      "msgid": "Show",
+      "msgctxt": null,
+      "expect": "^Tonen$",
+      "countEnglish": "^Show$",
+      "severity": "wrong",
+      "reason": "A select option that names an action is Chrome's infinitive, so Window controls' Show is Tonen (Chrome 1/1 in Chromium 156.0.8078.49's .xtb files), never a button's Toon.",
+      "example": {
+        "fault": "Toon"
+      }
+    },
+    {
+      "id": "hide-option",
+      "msgid": "Hide",
+      "msgctxt": null,
+      "expect": "^Verbergen$",
+      "countEnglish": "^Hide$",
+      "severity": "wrong",
+      "reason": "A select option that names an action is Chrome's infinitive, so Window controls' Hide is Verbergen (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never a button's Verberg.",
+      "example": {
+        "fault": "Verberg"
+      }
+    },
+    {
+      "id": "zoom-in",
+      "msgid": "Zoom In",
+      "expect": "^Zoom in$",
+      "countEnglish": "^Zoom In$",
+      "countExpect": "^Inzoomen$",
+      "severity": "wrong",
+      "reason": "The View menu's Zoom In is Zoom in, Chrome's View menu item Zoom &In, Inzoomen, in this sheet's imperative (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files, the menu item and the sentence-case Zoom in; the title-case Zoom In is Groter), never Groter.",
+      "example": {
+        "fault": "Groter"
+      }
+    },
+    {
+      "id": "zoom-out",
+      "msgid": "Zoom Out",
+      "expect": "^Zoom uit$",
+      "countEnglish": "^Zoom Out$",
+      "countExpect": "^Uitzoomen$",
+      "severity": "wrong",
+      "reason": "The View menu's Zoom Out is Zoom uit, Chrome's View menu item Zoom &Out, Uitzoomen, in this sheet's imperative (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files, the menu item and the sentence-case Zoom out; the title-case Zoom Out is Kleiner), never Kleiner.",
+      "example": {
+        "fault": "Kleiner"
+      }
+    },
+    {
+      "id": "actual-size",
+      "msgid": "Actual Size",
+      "expect": "^Werkelijke grootte$",
+      "countEnglish": "^Actual Size$",
+      "countExpect": "^Werkelijke grootte$",
+      "severity": "wrong",
+      "reason": "The View menu's Actual Size is Werkelijke grootte, as Chrome's View menu item A&ctual Size writes it (Chrome 1/3 in Chromium 156.0.8078.49's .xtb files; the title-case Actual Size is Normaal and the sentence-case Actual size Werkelijk formaat), never Normaal.",
+      "example": {
+        "fault": "Normaal"
+      }
+    },
+    {
+      "id": "emerald",
+      "msgid": "Emerald",
+      "expect": "^Smaragd$",
+      "severity": "wrong",
+      "reason": "The account color Emerald is Smaragd, Apple's Emerald, the app message whose English is the color's name alone: Chrome has no Emerald (Chrome 0/0) and the vote is too thin (agent-chosen: smaragd: 1 of 7 (Apple), fewer than 3 apps).",
+      "example": {
+        "fault": "Smaragdgroen"
+      }
+    },
+    {
+      "id": "security-updates",
+      "msgidPattern": "\\bsecurity fixes\\b",
+      "expect": "beveiligingsupdates",
+      "countEnglish": "\\bsecurity updates?\\b",
+      "countExpect": "beveiligingsupdate",
+      "severity": "wrong",
+      "reason": "Fixes, security fixes among them, are updates and beveiligingsupdates, as Chrome writes security updates (Chrome 10/10 in Chromium 156.0.8078.49's .xtb files), never fixes or beveiligingsfixes, which neither Chrome nor Apple writes.",
+      "example": {
+        "msgid": "Updates need macOS 13 or later, so Meru won't check for them on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk.",
+        "clean": "Updates vereisen macOS 13 of nieuwer, dus Meru controleert op deze Mac niet op updates. Deze versie blijft werken, maar krijgt geen updates meer, ook geen beveiligingsupdates, dus als je deze versie lang blijft gebruiken, is dat op eigen risico.",
+        "fault": "Updates vereisen macOS 13 of nieuwer, dus Meru controleert op deze Mac niet op updates. Deze versie blijft werken, maar krijgt geen verdere fixes meer, ook geen beveiligingsfixes, dus als je deze versie lang blijft gebruiken, is dat op eigen risico."
       }
     }
   ],
