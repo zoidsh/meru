@@ -6,6 +6,7 @@ import {
   countWords,
   formatEntryList,
   parseEntryFile,
+  resolveBase,
   scoreLocale,
   uniqueEntries,
 } from "../.claude/skills/translate/mqm";
@@ -122,6 +123,19 @@ describe("changedEntries", () => {
       { catalog: "app", msgctxt: null, msgid: "Settings" },
       trash,
     ]);
+  });
+});
+
+describe("resolveBase", () => {
+  test("compares against HEAD without a base, and the merge base with one", () => {
+    expect(resolveBase(undefined)).toBe("HEAD");
+    expect(resolveBase("origin/beta", () => "abc123")).toBe("abc123");
+  });
+
+  test("refuses a base with no merge base rather than fall back to HEAD", () => {
+    expect(() => resolveBase("origin/missing", () => undefined)).toThrow(
+      "--base origin/missing has no merge base with HEAD; fetch it or pass another ref.",
+    );
   });
 });
 

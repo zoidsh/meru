@@ -167,6 +167,24 @@ export function changedEntries(
   return changed;
 }
 
+/*
+ * An unresolved `--base` is an error rather than a fallback to HEAD, which would
+ * drop the branch's committed changes from the list and shrink the gate unseen.
+ */
+export function resolveBase(base: string | undefined, resolve = mergeBase) {
+  if (base === undefined) {
+    return "HEAD";
+  }
+
+  const ref = resolve(base);
+
+  if (!ref) {
+    throw new Error(`--base ${base} has no merge base with HEAD; fetch it or pass another ref.`);
+  }
+
+  return ref;
+}
+
 export function uniqueEntries(entries: AssessedEntry[]) {
   return [...new Map(entries.map((entry) => [keyOf(entry), entry])).values()];
 }
@@ -497,7 +515,7 @@ async function run() {
 
       const listed = (await entryFile.exists()) ? parseEntryFile(await entryFile.text()) : [];
 
-      const earlierRef = mergeBase(values.base ?? "HEAD") ?? "HEAD";
+      const earlierRef = resolveBase(values.base);
 
       const earlier = await Promise.all(
         catalogFiles(config, locale).map(async ({ name, relative }) => {
