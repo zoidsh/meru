@@ -1,6 +1,6 @@
 import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { accountColorsMap } from "@meru/shared/accounts";
+import { accountColorsMap, getAccountLabel } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, WEBSITE_URL } from "@meru/shared/constants";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountInstances } from "@meru/shared/schemas";
@@ -753,7 +753,7 @@ export function AppTitlebar() {
           />
         )}
         {account.gmail.outOfOffice && isLicenseKeyValid && <BriefcaseIcon />}
-        {account.config.label}
+        {getAccountLabel(account.config.label)}
         {account.gmail.attentionRequired && <CircleAlertIcon className="text-yellow-400" />}
         {!account.gmail.attentionRequired &&
         config["accounts.unreadBadge"] &&

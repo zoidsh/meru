@@ -1,3 +1,4 @@
+import { DEFAULT_ACCOUNT_LABEL } from "./accounts";
 import type { Config } from "./types";
 
 export const DEFAULT_WINDOW_STATE_BOUNDS = {
@@ -35,7 +36,7 @@ export function createDefaultConfig({
     accounts: [
       {
         id: accountId,
-        label: "Default",
+        label: DEFAULT_ACCOUNT_LABEL,
         color: null,
         selected: true,
         notifications: true,

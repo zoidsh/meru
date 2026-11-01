@@ -1,6 +1,28 @@
 import type { MessageDescriptor } from "@lingui/core";
-import { msg } from "@lingui/core/macro";
+import { msg, t } from "@lingui/core/macro";
 import type { accountColors } from "./schemas";
+
+/** What `createDefaultConfig` names the first account, which the config keeps in English. */
+export const DEFAULT_ACCOUNT_LABEL = "Default";
+
+/**
+ * The label to show for an account. The seeded label is translated as it is
+ * drawn rather than stored translated, so it needs no config migration and
+ * follows a change of language. A user who typed "Default" themselves sees the
+ * translation too, which is indistinguishable and harmless.
+ */
+export function getAccountLabel(label: string) {
+  if (label === DEFAULT_ACCOUNT_LABEL) {
+    return t({
+      message: "Default",
+      context: "account label",
+      comment:
+        "Name of the first account until the user renames it, shown wherever accounts are listed",
+    });
+  }
+
+  return label;
+}
 
 // lingui-set comment="A color an account can be marked with, in the account form's Color picker"
 export const accountColorsMap: Record<

@@ -962,6 +962,12 @@ msgstr "Cyan"
 msgid "Dark"
 msgstr "Dunkel"
 
+#. Name of the first account until the user renames it, shown wherever accounts are listed
+#: packages/shared/accounts.ts
+msgctxt "account label"
+msgid "Default"
+msgstr "Standard"
+
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Default download location"
 msgstr "Speicherort für Downloads"

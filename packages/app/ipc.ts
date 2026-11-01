@@ -4,6 +4,7 @@ import { IpcEmitter, IpcListener } from "@electron-toolkit/typed-ipc/main";
 import { platform } from "@electron-toolkit/utils";
 import { select, t } from "@lingui/core/macro";
 import { isExtensionId } from "@meru/electron-extensions";
+import { getAccountLabel } from "@meru/shared/accounts";
 import { MAX_RECENT_DOWNLOAD_HISTORY_ITEMS } from "@meru/shared/constants";
 import { curatedExtensions, isCuratedExtensionId } from "@meru/shared/extensions";
 import { getWorkspaceAppUrl } from "@meru/shared/google";
@@ -883,7 +884,7 @@ class Ipc {
       let notificationTitle = workspaceAppLabel ?? notification.title;
 
       if (hasMultipleAccounts) {
-        notificationTitle = `[${notifyingWorkspaceApp.account.config.label}] ${notificationTitle}`;
+        notificationTitle = `[${getAccountLabel(notifyingWorkspaceApp.account.config.label)}] ${notificationTitle}`;
       }
 
       let subtitle: string | undefined;

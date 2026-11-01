@@ -1,3 +1,4 @@
+import { getAccountLabel } from "@meru/shared/accounts";
 import type { GmailInboxMessage } from "@meru/shared/gmail";
 import { ms } from "@meru/shared/ms";
 import { ipc } from "@meru/shared/renderer/ipc";
@@ -109,7 +110,7 @@ export function useUnifiedInbox() {
           (data[account.config.id] ?? []).map((mail) => ({
             account: {
               id: account.config.id,
-              label: account.config.label,
+              label: getAccountLabel(account.config.label),
               color: account.config.color,
             },
             ...mail,
