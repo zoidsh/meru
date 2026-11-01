@@ -1,13 +1,19 @@
 import { i18n, type Messages } from "@lingui/core";
 import { GMAIL_PRELOAD_LOCALE_ARGUMENT } from "@meru/shared/gmail";
 import { type CatalogTag, SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n/tags";
+import { messages as de } from "./locales/de";
 import { messages as en } from "./locales/en";
+import { messages as ja } from "./locales/ja";
 
 /*
  * Imports the tags alone, never `@meru/shared/i18n`, whose runtime brings the
  * whole app's catalogs into every Gmail view.
  */
-export const catalogs: { en: Messages } & Partial<Record<CatalogTag, Messages>> = { en };
+export const catalogs: { en: Messages } & Partial<Record<CatalogTag, Messages>> = {
+  en,
+  de,
+  ja,
+};
 
 const LOCALE_ARGUMENT_PREFIX = `${GMAIL_PRELOAD_LOCALE_ARGUMENT}=`;
 

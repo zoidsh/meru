@@ -770,6 +770,24 @@
       "pattern": "すみません|申し訳ありません",
       "severity": "style",
       "reason": "Say what happened, without すみません or 申し訳ありません."
+    },
+    {
+      "id": "interface",
+      "pattern": "インターフェース",
+      "severity": "wrong",
+      "reason": "A user interface is インターフェイス, never インターフェース (agent-chosen: インターフェイス: 5 of 7 (Apple, Firefox, LibreOffice, Microsoft, VS Code); Chrome has the word only for a network interface)."
+    },
+    {
+      "id": "website",
+      "pattern": "Webサイト",
+      "severity": "wrong",
+      "reason": "A website is ウェブサイト, as Chrome writes it, never Webサイト (Chrome writes the banned form in none of its messages)."
+    },
+    {
+      "id": "em-dash",
+      "pattern": "\\S—|—\\S",
+      "severity": "wrong",
+      "reason": "An em dash has a space on each side, as Apple's Japanese strings write it: %@ — インスペクタ (30 of the 31 distinct strings in this Mac's Japanese .loctables with an em dash between text)."
     }
   ],
   "pinned": [
@@ -996,6 +1014,71 @@
       "expect": "ランチャー",
       "severity": "wrong",
       "reason": "The launcher is the ランチャー, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
+    },
+    {
+      "id": "zoom",
+      "msgidPattern": "\\bzoom\\b(?! (in|out)\\b)",
+      "msgctxt": null,
+      "expect": "ズーム",
+      "severity": "wrong",
+      "reason": "A page's zoom is ズーム and its zoom level ズームレベル, as Chrome writes them (Chrome: 5 of 6 messages with zoom level); Zoom In and Zoom Out keep Chrome's 拡大 and 縮小."
+    },
+    {
+      "id": "default-app",
+      "msgidPattern": "\\bdefault (web )?browser\\b|\\bdefault mail client\\b",
+      "expect": "既定",
+      "severity": "wrong",
+      "reason": "The system's default browser or mail client is 既定の…, as Chrome writes it: Chrome を既定のブラウザに設定 (Chrome: 10 of 11 messages with default browser)."
+    },
+    {
+      "id": "default",
+      "msgidPattern": "\\bdefaults?\\b(?! (web )?browser\\b| mail client\\b)",
+      "expect": "デフォルト",
+      "severity": "wrong",
+      "reason": "Any other default is デフォルト, as Chrome writes it (Chrome: 90 of 98 messages with default, outside default browser)."
+    },
+    {
+      "id": "user-agent",
+      "msgidPattern": "\\buser agents?\\b",
+      "expect": "ユーザーエージェント",
+      "severity": "wrong",
+      "reason": "A user agent is ユーザーエージェント, Chrome's ユーザー エージェント without its space (Chrome: 1 of 1 message)."
+    },
+    {
+      "id": "export",
+      "msgidPattern": "\\bexport\\b",
+      "msgctxt": null,
+      "expect": "エクスポート",
+      "severity": "wrong",
+      "reason": "Export is エクスポート in Meru's own copy, as Chrome writes it (Chrome: 16 of 16 messages); the macOS label keeps Apple's 書き出す."
+    },
+    {
+      "id": "inspect-element",
+      "msgid": "Inspect Element",
+      "expect": "^検証$",
+      "severity": "wrong",
+      "reason": "Inspect Element is 検証, as Chrome's page context menu writes it (Chrome: 4 of 4 messages)."
+    },
+    {
+      "id": "website",
+      "msgidPattern": "\\bwebsites?\\b",
+      "expect": "ウェブサイト",
+      "severity": "wrong",
+      "reason": "A website is ウェブサイト, as Chrome writes it (Chrome: 118 of 125 messages)."
+    },
+    {
+      "id": "hard-reload",
+      "msgid": "Hard Reload",
+      "expect": "^ハード再読み込み$",
+      "severity": "wrong",
+      "reason": "Hard Reload is ハード再読み込み, as Chrome writes it (Chrome: 2 of 2 messages)."
+    },
+    {
+      "id": "yellow",
+      "msgid": "Yellow",
+      "expect": "^黄$",
+      "severity": "wrong",
+      "reason": "Yellow is 黄, as Chrome writes it, the tab-group colour included, beside the other bare-kanji colours (Chrome: 2 of 2 messages)."
     }
   ],
   "accessKeys": {
