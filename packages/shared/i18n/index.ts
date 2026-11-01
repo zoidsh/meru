@@ -41,6 +41,7 @@ export type CatalogLoaders = Partial<Record<LocaleTag, () => Promise<{ messages:
 const catalogLoaders: CatalogLoaders = {
   de: () => import("./locales/de"),
   fr: () => import("./locales/fr"),
+  it: () => import("./locales/it"),
   ja: () => import("./locales/ja"),
   // The build inlines the variable, so a shipped bundle drops the pseudo-locale
   // with this branch.

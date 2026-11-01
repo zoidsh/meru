@@ -45,7 +45,15 @@ const EXAMPLE_RGB_COLOR = "rgb(26, 115, 232)";
 
 // lingui-set comment="Option of a label color's Text color setting"
 const textColorItems: { value: GmailLabelTextColor; label: MessageDescriptor }[] = [
-  { value: "auto", label: msg`Auto` },
+  {
+    value: "auto",
+    label: msg({
+      message: "Auto",
+      context: "text color",
+      comment:
+        "Option of a label color's Text color setting; agrees with the word for color where the language genders it",
+    }),
+  },
   { value: "white", label: msg`White` },
   { value: "black", label: msg`Black` },
 ];

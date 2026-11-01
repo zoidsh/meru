@@ -64,7 +64,12 @@ const LAUNCHER_EXPANDED_APPS_THRESHOLD = 3;
 
 // lingui-set comment="Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar"
 export const workspaceAppsLauncherDisplays = {
-  auto: msg`Auto`,
+  auto: msg({
+    message: "Auto",
+    context: "launcher display",
+    comment:
+      "Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar; agrees with the word for display where the language genders it",
+  }),
   collapsed: msg`Collapsed`,
   expanded: msg`Expanded`,
 } as const;
@@ -85,7 +90,12 @@ export function resolveWorkspaceAppsLauncherDisplay(
 
 // lingui-set comment="Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit"
 export const launcherAndBookmarksPlacements = {
-  auto: msg`Auto`,
+  auto: msg({
+    message: "Auto",
+    context: "placement",
+    comment:
+      "Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit; agrees with the word for placement where the language genders it",
+  }),
   sidebar: msg`Sidebar`,
   titlebar: msg`Titlebar`,
 } as const;

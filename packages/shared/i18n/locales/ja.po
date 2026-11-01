@@ -426,13 +426,27 @@ msgstr "質問する…"
 msgid "Ask where to save each file before it downloads."
 msgstr "ダウンロードする前に、ファイルごとに保存先を確認します。"
 
-#. Option of a label color's Text color setting
-#. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar
-#. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit
-#. Option of the Width setting for the vertical tabs sidebar
-#: packages/renderer/routes/settings/gmail/label-colors.tsx
-#: packages/shared/tabs.ts
+#. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar; agrees with the word for display where the language genders it
 #: packages/shared/workspace-apps.ts
+msgctxt "launcher display"
+msgid "Auto"
+msgstr "自動"
+
+#. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit; agrees with the word for placement where the language genders it
+#: packages/shared/workspace-apps.ts
+msgctxt "placement"
+msgid "Auto"
+msgstr "自動"
+
+#. Option of a label color's Text color setting; agrees with the word for color where the language genders it
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "text color"
+msgid "Auto"
+msgstr "自動"
+
+#. Option of the Width setting for the vertical tabs sidebar; agrees with the word for width where the language genders it
+#: packages/shared/tabs.ts
+msgctxt "width"
 msgid "Auto"
 msgstr "自動"
 
@@ -1970,10 +1984,15 @@ msgstr "信頼するホストはまだありません。リンクの確認ダイ
 msgid "No unread messages"
 msgstr "未読メッセージはありません"
 
-#. The Excluded apps field when no Workspace app is excluded
-#. The account's color when no color is picked
+#. The account's color when no color is picked; agrees with the word for color where the language genders it
 #: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account color"
+msgid "None"
+msgstr "なし"
+
+#. The Excluded apps field when no Workspace app is excluded; agrees with the word for apps where the language genders it
 #: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "excluded apps"
 msgid "None"
 msgstr "なし"
 
