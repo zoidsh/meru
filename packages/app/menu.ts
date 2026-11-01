@@ -415,7 +415,11 @@ export class AppMenu {
         ],
       },
       {
-        label: t`Edit`,
+        label: byPlatform(platform, {
+          macOS: t({ message: "Edit", context: "macOS" }),
+          windows: t({ message: "Edit", context: "Windows" }),
+          linux: t({ message: "Edit", context: "Linux" }),
+        }),
         role: "editMenu",
         submenu: [
           {
@@ -446,7 +450,11 @@ export class AppMenu {
             role: "cut",
           },
           {
-            label: t`Copy`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Copy", context: "macOS" }),
+              windows: t({ message: "Copy", context: "Windows" }),
+              linux: t({ message: "Copy", context: "Linux" }),
+            }),
             role: "copy",
           },
           {
@@ -470,7 +478,11 @@ export class AppMenu {
             acceleratorWorksWhenHidden: platform.isMacOS,
           },
           {
-            label: t`Delete`,
+            label: byPlatform(platform, {
+              macOS: t({ message: "Delete", context: "macOS" }),
+              windows: t({ message: "Delete", context: "Windows" }),
+              linux: t({ message: "Delete", context: "Linux" }),
+            }),
             role: "delete",
           },
           {

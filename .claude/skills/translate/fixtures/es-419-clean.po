@@ -142,3 +142,8 @@ msgstr "Selecciona el tema de la app."
 
 msgid "Choose Meru in the Applications folder."
 msgstr "Elige Meru en la carpeta Aplicaciones."
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Copy Link Addr&ess"
+msgstr "Copiar enlace"

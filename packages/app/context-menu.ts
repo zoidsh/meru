@@ -22,19 +22,23 @@ const SELECTION_PLACEHOLDER = "{selection}";
 function getDefaultItemLabels(): Labels {
   // lingui-set comment="An item in the context menu of a page or a text field; & marks the access key on Windows and Linux"
   return {
-    learnSpelling: t`&Learn Spelling`,
+    learnSpelling: platform.isMacOS
+      ? t({ message: "&Learn Spelling", context: "macOS" })
+      : t`&Learn Spelling`,
     lookUpSelection: t({
       message: `Look Up “${ph({ selection: SELECTION_PLACEHOLDER })}”`,
       context: "macOS",
       comment: "Context menu item on macOS; selection is the selected text",
     }),
-    searchWithGoogle: t`&Search with Google`,
+    searchWithGoogle: platform.isMacOS
+      ? t({ message: "&Search with Google", context: "macOS" })
+      : t`&Search with Google`,
     cut: byPlatform(platform, {
       macOS: t({ message: "Cu&t", context: "macOS" }),
       windows: t({ message: "Cu&t", context: "Windows" }),
       linux: t({ message: "Cu&t", context: "Linux" }),
     }),
-    copy: t`&Copy`,
+    copy: platform.isMacOS ? t({ message: "&Copy", context: "macOS" }) : t`&Copy`,
     paste: byPlatform(platform, {
       macOS: t({ message: "&Paste", context: "macOS" }),
       windows: t({ message: "&Paste", context: "Windows" }),
@@ -56,13 +60,21 @@ function getDefaultItemLabels(): Labels {
       windows: t({ message: "Sa&ve Image As…", context: "Windows" }),
       linux: t({ message: "Sa&ve Image As…", context: "Linux" }),
     }),
-    copyLink: t({
-      message: "Copy Link Addr&ess",
-      comment:
-        "Context menu item that copies the address of the clicked link; & marks the access key on Windows and Linux",
-    }),
-    copyImage: t`Cop&y Image`,
-    copyImageAddress: t`C&opy Image Address`,
+    copyLink: platform.isMacOS
+      ? t({
+          message: "Copy Link Addr&ess",
+          context: "macOS",
+          comment: "Context menu item that copies the address of the clicked link",
+        })
+      : t({
+          message: "Copy Link Addr&ess",
+          comment:
+            "Context menu item that copies the address of the clicked link; & marks the access key on Windows and Linux",
+        }),
+    copyImage: platform.isMacOS ? t({ message: "Cop&y Image", context: "macOS" }) : t`Cop&y Image`,
+    copyImageAddress: platform.isMacOS
+      ? t({ message: "C&opy Image Address", context: "macOS" })
+      : t`C&opy Image Address`,
     copyEmailAddress: t`Copy Email Address`,
     noGuessesFound: t({
       message: "No Guesses Found",
@@ -98,13 +110,13 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
 
           menuItems.push(
             {
-              label: t`Copy Message Link`,
+              label: t({ message: "Copy Message Link", context: "context menu" }),
               click: () => {
                 copyText(meruMessageUrl);
               },
             },
             {
-              label: t`Share`,
+              label: t({ message: "Share", context: "context menu" }),
               role: "shareMenu",
               sharingItem: {
                 urls: [meruMessageUrl],

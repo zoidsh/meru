@@ -21,6 +21,7 @@ mock.module("@electron-toolkit/utils", () => ({
       return isDev;
     },
   },
+  platform: { isMacOS: false, isWindows: false },
 }));
 
 mock.module("electron", () => ({

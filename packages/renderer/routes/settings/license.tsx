@@ -275,7 +275,12 @@ export function LicenseSettings() {
                           }
                         }}
                       >
-                        <Trans comment="Menu item that copies the license key">Copy</Trans>
+                        <Trans
+                          context="context menu"
+                          comment="Menu item that copies the license key"
+                        >
+                          Copy
+                        </Trans>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {

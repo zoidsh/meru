@@ -656,6 +656,12 @@
         "todas as caixas de entrada": "todas as caixas de entrada",
         "unificada": "unificad",
         "combinada": "combinad"
+      },
+      "nl": {
+        "gecombineerde inbox": "gecombineerd",
+        "samengevoegde mappen": "samengevoegd",
+        "verenigde inbox": "verenigd",
+        "alle inboxen": "alle inbox"
       }
     }
   },
@@ -734,6 +740,11 @@
         "podczas uruchamiania": "podczas uruchamiania|podczas uruchomienia",
         "przy starcie": "przy starcie",
         "po uruchomieniu": "po uruchomieniu"
+      },
+      "nl": {
+        "bij opstarten": "bij (het )?opstarten",
+        "tijdens opstarten": "tijdens (het )?opstarten",
+        "bij starten": "bij (het )?starten"
       }
     }
   },
@@ -914,6 +925,12 @@
         "emblema": "emblema",
         "aviso": "\\baviso",
         "indicador": "indicador"
+      },
+      "nl": {
+        "badge": "badge",
+        "markering": "markering",
+        "aantal": "\\baantal\\b",
+        "teller": "teller"
       }
     },
     "exclude": {
@@ -945,13 +962,20 @@
         "âmbar": "\\b[âa]mbar\\b",
         "amarelo": "amarel",
         "laranja": "laranja"
+      },
+      "nl": {
+        "amber": "amber",
+        "barnsteen": "barnsteen",
+        "oranje": "oranje",
+        "geel": "\\bge(?:el|le)\\b"
       }
     },
     "exclude": {
       "it": ["giallo", "arancione"],
       "es": ["amarillo", "naranja"],
       "es-419": ["amarillo", "naranja"],
-      "pt-BR": ["amarelo", "laranja"]
+      "pt-BR": ["amarelo", "laranja"],
+      "nl": ["oranje", "geel"]
     }
   },
   {
@@ -973,13 +997,18 @@
       "pt-BR": {
         "esmeralda": "esmerald",
         "verde": "\\bverde"
+      },
+      "nl": {
+        "smaragd": "smaragd",
+        "groen": "groen"
       }
     },
     "exclude": {
       "it": ["verde"],
       "es": ["verde"],
       "es-419": ["verde"],
-      "pt-BR": ["verde"]
+      "pt-BR": ["verde"],
+      "nl": ["groen"]
     }
   },
   {
@@ -1008,13 +1037,20 @@
         "anil": "\\banil\\b",
         "azul": "\\bazul",
         "violeta": "violeta"
+      },
+      "nl": {
+        "indigo": "indigo",
+        "blauw": "blauw",
+        "violet": "violet",
+        "paars": "paars"
       }
     },
     "exclude": {
       "it": ["blu", "viola"],
       "es": ["azul", "violeta"],
       "es-419": ["azul", "violeta"],
-      "pt-BR": ["azul", "violeta"]
+      "pt-BR": ["azul", "violeta"],
+      "nl": ["blauw", "violet", "paars"]
     }
   },
   {
@@ -1050,13 +1086,22 @@
         "céu": "\\bc[ée]u\\b",
         "azul": "\\bazul",
         "ciano": "\\bciano"
+      },
+      "nl": {
+        "hemelsblauw": "hemelsblauw",
+        "lichtblauw": "lichtblauw",
+        "hemel": "\\bhemel\\b",
+        "lucht": "\\blucht\\b",
+        "blauw": "blauw",
+        "cyaan": "cyaan"
       }
     },
     "exclude": {
       "it": ["blu", "ciano"],
       "es": ["azul", "cian"],
       "es-419": ["azul", "cian"],
-      "pt-BR": ["azul", "ciano"]
+      "pt-BR": ["azul", "ciano"],
+      "nl": ["blauw", "cyaan"]
     }
   },
   {
@@ -1104,13 +1149,23 @@
         "verde": "\\bverde",
         "azul": "\\bazul",
         "ciano": "\\bciano"
+      },
+      "nl": {
+        "blauwgroen": "blauwgroen",
+        "groenblauw": "groenblauw",
+        "turquoise": "turquoise",
+        "petrol": "petrol",
+        "groen": "groen",
+        "blauw": "blauw",
+        "cyaan": "cyaan"
       }
     },
     "exclude": {
       "it": ["ciano", "verde", "blu"],
       "es": ["verde", "azul", "cian"],
       "es-419": ["verde", "azul", "cian"],
-      "pt-BR": ["verde", "azul", "ciano"]
+      "pt-BR": ["verde", "azul", "ciano"],
+      "nl": ["groen", "blauw", "cyaan"]
     }
   },
   {
@@ -1133,6 +1188,10 @@
         "amplo": "\\bampl[oa]s?\\b",
         "espaçado": "\\bespa[çc]ad[oa]s?\\b",
         "grande-angular": "grande[- ]angular"
+      },
+      "nl": {
+        "breed": "\\bbre(?:ed|de)\\b",
+        "wijd": "\\bwijde?\\b"
       }
     },
     "exclude": {
@@ -1163,6 +1222,13 @@
         "badge": "\\bbadges?\\b",
         "aviso": "\\bavisos?\\b",
         "contador": "contador"
+      },
+      "nl": {
+        "badge": "badge",
+        "markering": "markering",
+        "embleem": "embleem",
+        "insigne": "insigne",
+        "teller": "teller"
       }
     },
     "exclude": {

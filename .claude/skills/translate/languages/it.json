@@ -52,6 +52,30 @@
         ]
       },
       {
+        "row": "Edit, the menu",
+        "macOS": [
+          {
+            "word": "Modifica",
+            "source": "(Mail `MainMenu` `42.title`)",
+            "labels": ["Edit"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Modifica",
+            "source": "(TBX `9433_179566_179570` _menu Modifica_, the Edit menu)",
+            "labels": ["Edit"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Modifica",
+            "source": "(gnome-text-editor `shortcut window` `Editing`, the group of editing commands: gtk4 has no `_Edit`, GTK's Edit menu, in this language)",
+            "labels": ["Edit"]
+          }
+        ]
+      },
+      {
         "row": "Undo",
         "macOS": [
           {
@@ -124,6 +148,30 @@
         ]
       },
       {
+        "row": "Copy, the Edit menu item",
+        "macOS": [
+          {
+            "word": "Copia",
+            "source": "(AppKit `MenuCommands` `Copy`)",
+            "labels": ["Copy"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Copia",
+            "source": "(TBX `11991_39848_39853` _copiare_, as an imperative label)",
+            "labels": ["Copy"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Copia",
+            "source": "(gtk4 `_Copy`)",
+            "labels": ["Copy"]
+          }
+        ]
+      },
+      {
         "row": "Paste, `&Paste`",
         "macOS": [
           {
@@ -192,6 +240,30 @@
             "word": "Seleziona tutto",
             "source": "(gtk4 `Select _All`)",
             "labels": ["Select All", "Select &All"]
+          }
+        ]
+      },
+      {
+        "row": "Delete, the Edit menu item",
+        "macOS": [
+          {
+            "word": "Elimina",
+            "source": "(AppKit `MenuCommands` `Delete`)",
+            "labels": ["Delete"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Elimina",
+            "source": "(TBX `5396_185654_185655`)",
+            "labels": ["Delete"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Elimina",
+            "source": "(gtk4 `_Delete`)",
+            "labels": ["Delete"]
           }
         ]
       },
@@ -445,6 +517,24 @@
         ]
       },
       {
+        "row": "Quit, a native dialog's button",
+        "macOS": [
+          {
+            "word": "Esci",
+            "source": "(AppKit `Document` `Quit`)",
+            "labels": ["Quit"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Esci",
+            "source": "(TBX `9679_334563_335580` _uscire_, to close a program, as a label)",
+            "labels": ["Quit"]
+          }
+        ],
+        "Linux": "one message with the tray item's Quit, its word above"
+      },
+      {
         "row": "System tray, in the Appearance settings",
         "macOS": "macOS shows the menu bar instead: _barra dei menu_",
         "Windows": [
@@ -677,6 +767,78 @@
             "labels": ["OK"]
           }
         ]
+      },
+      {
+        "row": "Learn Spelling, `&Learn Spelling`",
+        "macOS": [
+          {
+            "word": "Aggiungi parola",
+            "source": "(WebKit `Localizable` `Learn Spelling`)",
+            "labels": ["&Learn Spelling"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Search with Google, `&Search with Google`",
+        "macOS": [
+          {
+            "word": "Cerca con Google",
+            "source": "(WebKit `Localizable` `Search with %@`)",
+            "labels": ["&Search with Google"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Copy, `&Copy`",
+        "macOS": [
+          {
+            "word": "Copia",
+            "source": "(WebKit `Localizable` `Copy`)",
+            "labels": ["&Copy"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Copy Link Address, `Copy Link Addr&ess`",
+        "macOS": [
+          {
+            "word": "Copia link",
+            "source": "(WebKit `Localizable` `Copy Link`, Safari's item for a link)",
+            "labels": ["Copy Link Addr&ess"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Copy Image, `Cop&y Image`",
+        "macOS": [
+          {
+            "word": "Copia immagine",
+            "source": "(WebKit `Localizable` `Copy Image`)",
+            "labels": ["Cop&y Image"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Copy Image Address, `C&opy Image Address`",
+        "macOS": [
+          {
+            "word": "Copia indirizzo immagine",
+            "source": "inferred from WebKit `Localizable` `Copy Image` and Mail `Alerts` `CopyAddress`, _Copia indirizzo_",
+            "labels": ["C&opy Image Address"]
+          }
+        ],
+        "Windows": "the house word, with its access key",
+        "Linux": "the house word, with its access key"
       }
     ]
   },
