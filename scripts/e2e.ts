@@ -57,13 +57,17 @@ if (!process.env.MERU_EXECUTABLE && !process.env.MERU_SKIP_BUILD) {
       // listening on", which it gets by passing `--inspect=0`, so the shipped
       // build's `enableNodeCliInspectArguments: false` would hang every test.
       // The suite therefore drives a build that differs from a release in that
-      // one fuse, and in nothing else: a config override merges into the
-      // `electronFuses` block rather than replacing it.
+      // one fuse and in carrying the pseudo-locale, and in nothing else: a
+      // config override merges into the `electronFuses` block rather than
+      // replacing it.
       "-c.electronFuses.enableNodeCliInspectArguments=true",
     ],
-    // Signing and notarising would only slow down an app launched in place, so
-    // a run under `op run --env-file .env.signing.op` builds unsigned.
-    Object.fromEntries(SIGNING_ENV_VARS.mac.map((name) => [name, undefined])),
+    {
+      // Signing and notarising would only slow down an app launched in place,
+      // so a run under `op run --env-file .env.signing.op` builds unsigned.
+      ...Object.fromEntries(SIGNING_ENV_VARS.mac.map((name) => [name, undefined])),
+      MERU_PSEUDO_LOCALE_CATALOG: "1",
+    },
   );
 
   if (buildStatus !== 0) {

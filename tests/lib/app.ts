@@ -435,8 +435,12 @@ export type MeruApp = {
   readonly app: ElectronApplication;
   readonly renderer: Page;
   readonly userDataDir: string;
-  /** Runs a menu command the way the menu bar would, and reports whether it was there. */
-  runMenuCommand(label: string): Promise<boolean>;
+  /**
+   * Runs a menu command the way the menu bar would, and reports whether it was
+   * there. Found by its label, or by its accelerator, which is the same in
+   * every interface language.
+   */
+  runMenuCommand(command: string | { accelerator: string }): Promise<boolean>;
   /**
    * Quits through the menu, and resolves with the main process's exit code, or
    * null when it has not exited within the close timeout.
@@ -661,11 +665,15 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
         throw error;
       }
     },
-    runMenuCommand(label) {
-      return current().app.evaluate(({ Menu }, commandLabel) => {
+    runMenuCommand(command) {
+      return current().app.evaluate(({ Menu }, wanted) => {
         const find = (menuItems: Electron.MenuItem[]): Electron.MenuItem | undefined => {
           for (const menuItem of menuItems) {
-            if (menuItem.label === commandLabel) {
+            if (
+              typeof wanted === "string"
+                ? menuItem.label === wanted
+                : menuItem.accelerator === wanted.accelerator
+            ) {
               return menuItem;
             }
 
@@ -695,7 +703,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
         }
 
         return Boolean(menuItem);
-      }, label);
+      }, command);
     },
     async quit() {
       const { mainProcess } = current();
@@ -712,7 +720,8 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
       // The menu bar is the way in, and the only one the app offers. Setting the
       // fragment by hand would reach the same page while proving nothing about
       // whether anyone could get there.
-      expect(await this.runMenuCommand("Settings")).toBe(true);
+      // By accelerator, so a launch in any interface language finds it.
+      expect(await this.runMenuCommand({ accelerator: "CommandOrControl+," })).toBe(true);
 
       const navigation = currentRenderer().getByTestId("settings-nav");
 

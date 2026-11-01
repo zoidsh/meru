@@ -60,7 +60,14 @@ function DiagnosticInfo() {
         <Item key={label} variant="muted">
           <ItemContent className="min-w-0">
             <ItemTitle>{label}</ItemTitle>
-            <ItemDescription className="truncate">{value}</ItemDescription>
+            {/*
+             * `data-truncated` marks the ellipsis as meant: the Device ID is
+             * longer than any row, and the copy button beside it gives the
+             * whole value. The text overflow test skips what carries it.
+             */}
+            <ItemDescription className="truncate" data-truncated>
+              {value}
+            </ItemDescription>
           </ItemContent>
           <ItemActions>
             <CopyButton value={value} />
