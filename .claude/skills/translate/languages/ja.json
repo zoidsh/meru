@@ -1079,6 +1079,27 @@
       "expect": "^黄$",
       "severity": "wrong",
       "reason": "Yellow is 黄, as Chrome writes it, the tab-group colour included, beside the other bare-kanji colours (Chrome: 2 of 2 messages)."
+    },
+    {
+      "id": "reopen-closed-tab",
+      "msgid": "Reopen Closed Tab",
+      "expect": "^閉じたタブを開く$",
+      "severity": "wrong",
+      "reason": "Reopen Closed Tab is 閉じたタブを開く, as Chrome writes it, without 再度 (Chrome: 2 of 2 messages)."
+    },
+    {
+      "id": "show-in-folder",
+      "msgidPattern": "^(?:show|open) in folder$",
+      "expect": "^フォルダを開く$",
+      "severity": "wrong",
+      "reason": "Showing a file in its folder is フォルダを開く, as Chrome writes it (Chrome: 3 of 4 messages; the other, Show in Folder, is フォルダで表示)."
+    },
+    {
+      "id": "clear-all",
+      "msgid": "Clear all",
+      "expect": "^すべて削除$",
+      "severity": "wrong",
+      "reason": "Clear all, which empties the download history, is すべて削除, as Chrome's downloads page writes it (Chrome: 1 of 1 messages, IDS_DOWNLOAD_LINK_CLEAR_ALL)."
     }
   ],
   "accessKeys": {
