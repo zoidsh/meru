@@ -239,7 +239,12 @@ export function parseDtd(text: string) {
   );
 }
 
-/** An Android `strings.xml`'s strings by name, markup and escapes taken out. */
+/*
+ * An Android `strings.xml`'s strings by name, markup and escapes taken out.
+ * AOSP's translations wrap every string in a pair of unescaped quotes, which
+ * Android drops, and a candidate anchored to the whole message never matches
+ * a translation that still has them.
+ */
 export function parseAndroidStrings(text: string) {
   const out = new Map<string, string>();
 
@@ -247,6 +252,8 @@ export function parseAndroidStrings(text: string) {
     out.set(
       name as string,
       unescapeXml((value as string).replace(/<[^>]+>/gu, ""))
+        .trim()
+        .replace(/^"(.*)(?<!\\)"$/su, "$1")
         .replace(/\\'/gu, "'")
         .replace(/\\"/gu, '"'),
     );
@@ -337,11 +344,20 @@ function aligned(english: Map<string, string>, translated: Map<string, string>):
   });
 }
 
+export class HttpError extends Error {
+  constructor(
+    url: string,
+    readonly status: number,
+  ) {
+    super(`${url}: HTTP ${status}`);
+  }
+}
+
 async function fetchText(url: string) {
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(`${url}: HTTP ${response.status}`);
+    throw new HttpError(url, response.status);
   }
 
   return response.text();
@@ -538,29 +554,81 @@ const ANDROID_FILES: [string, string][] = [
   ["platform/packages/apps/Email", "res/values{}/strings.xml"],
 ];
 
-async function android(tag: string) {
+/*
+ * AOSP keeps Brazilian Portuguese in `values-pt`, European in `values-pt-rPT`,
+ * and only some apps have a `values-pt-rBR` besides.
+ */
+const ANDROID_FALLBACKS: Record<string, string[]> = { "-pt-rBR": ["-pt"] };
+
+/** Reads one of AOSP's files by repository and path, throwing an `HttpError` when it has none. */
+export type AndroidReader = (repo: string, file: string) => Promise<string>;
+
+/*
+ * Every AOSP app's strings for a tag. An app without the language, under its
+ * own suffix or a fallback, is skipped with a warning rather than failing the
+ * whole corpus, so one missing file never costs the other apps their vote.
+ */
+export async function androidPairs(
+  tag: string,
+  read: AndroidReader,
+  warn: (message: string) => void = console.warn,
+) {
   const suffix = CODES.android[tag];
 
   if (!suffix) {
     return [];
   }
 
+  const suffixes = [suffix, ...(ANDROID_FALLBACKS[suffix] ?? [])];
+
+  // The first of the paths that exists, or undefined when AOSP has none of them.
+  const first = async (repo: string, files: string[]) => {
+    for (const file of files) {
+      try {
+        return await read(repo, file);
+      } catch (error) {
+        if (!(error instanceof HttpError && error.status === 404)) {
+          throw error;
+        }
+      }
+    }
+
+    return undefined;
+  };
+
   const pairs: Pair[] = [];
 
   for (const [repo, file] of ANDROID_FILES) {
-    const read = (values: string) =>
-      cached(
-        `android/${repo.replaceAll("/", "_")}/${file.replace("{}", values).replaceAll("/", "_")}`,
-        `https://android.googlesource.com/${repo}/+/refs/heads/main/${file.replace("{}", values)}?format=TEXT`,
-        (base64) => Buffer.from(base64, "base64").toString("utf8"),
+    const englishFile = file.replace("{}", "");
+
+    const translatedFiles = suffixes.map((candidate) => file.replace("{}", candidate));
+
+    const english = await first(repo, [englishFile]);
+
+    const translated = english === undefined ? undefined : await first(repo, translatedFiles);
+
+    if (english === undefined || translated === undefined) {
+      warn(
+        `android ${tag}: ${repo} has no ${english === undefined ? englishFile : translatedFiles.join(" or ")}; skipping it`,
       );
 
-    pairs.push(
-      ...aligned(parseAndroidStrings(await read("")), parseAndroidStrings(await read(suffix))),
-    );
+      continue;
+    }
+
+    pairs.push(...aligned(parseAndroidStrings(english), parseAndroidStrings(translated)));
   }
 
   return pairs;
+}
+
+function android(tag: string) {
+  return androidPairs(tag, (repo, file) =>
+    cached(
+      `android/${repo.replaceAll("/", "_")}/${file.replaceAll("/", "_")}`,
+      `https://android.googlesource.com/${repo}/+/refs/heads/main/${file}?format=TEXT`,
+      (base64) => Buffer.from(base64, "base64").toString("utf8"),
+    ),
+  );
 }
 
 async function libreoffice(tag: string) {
@@ -740,7 +808,8 @@ Fetches what a Chrome count and the seven-app vote read into .cache/translate,
 and writes corpus/<source>.<tag>.jsonl for each: chrome, at the Chromium version
 of node_modules' Electron, and ${APPS.join(", ")}. Without --source it
 builds them all. A corpus already built is kept unless --refresh is given; the
-downloads behind it are kept either way.`;
+downloads behind it are kept either way. A source that fails is skipped with a
+warning, the others still built, and the run exits 1.`;
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -774,6 +843,9 @@ async function main() {
 
   await mkdir(CORPUS_DIR, { recursive: true });
 
+  // A source that fails is skipped so the rest still build, and the exit code says so.
+  const failed: string[] = [];
+
   for (const tag of positionals) {
     for (const source of sources) {
       const out = path.join(CORPUS_DIR, `${source}.${tag}.jsonl`);
@@ -794,7 +866,21 @@ async function main() {
         continue;
       }
 
-      const pairs = (await buildCorpus(source, tag, chromium))
+      let fetched: Pair[];
+
+      try {
+        fetched = await buildCorpus(source, tag, chromium);
+      } catch (error) {
+        failed.push(`${source} ${tag}`);
+
+        console.warn(
+          `${source} ${tag}: skipped, ${error instanceof Error ? error.message : String(error)}`,
+        );
+
+        continue;
+      }
+
+      const pairs = fetched
         .map(([english, translation]): Pair => [english.trim(), translation.trim()])
         .filter(([english, translation]) => english && translation);
 
@@ -809,6 +895,12 @@ async function main() {
 
       console.log(`${source} ${tag}: ${pairs.length} pairs in ${out}`);
     }
+  }
+
+  if (failed.length > 0) {
+    console.error(`Not built: ${failed.join(", ")}`);
+
+    process.exit(1);
   }
 }
 

@@ -225,13 +225,21 @@ export function formatMatched(matched: VoteResult["matched"], excluded: string[]
   });
 }
 
+/** The concepts with no candidate words for a language, which a vote there can't take. */
+export function conceptsLacking(concepts: Concept[], tag: string) {
+  return concepts.filter((item) => !item.candidates[tag]).map((item) => item.concept);
+}
+
 const USAGE = `Usage: bun .claude/skills/translate/vote.ts [--concepts <file>] [--corpus <dir>] [--detail] [--show] <tag>… [-- <concept>…]
+       bun .claude/skills/translate/vote.ts --missing <tag>…
 
 Runs the seven-app vote for every concept of vote-concepts.json, or those
 named after --, in each language given, over the corpora corpus.ts writes
 to .cache/translate/corpus. Prints each result as the glossary cites it, with
 its status and every app's vote; --detail adds each app's message counts, and
---show each app's messages under the candidate each counted for.`;
+--show each app's messages under the candidate each counted for. --missing
+lists, without voting, each concept that has no candidate words for a
+language, and exits 1 when any has none.`;
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -241,6 +249,7 @@ async function main() {
       corpus: { type: "string" },
       detail: { type: "boolean" },
       show: { type: "boolean" },
+      missing: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -260,6 +269,18 @@ async function main() {
   const concepts = conceptsSchema
     .parse(await Bun.file(values.concepts ?? CONCEPTS_PATH).json())
     .filter((item) => named.length === 0 || named.includes(item.concept));
+
+  if (values.missing) {
+    const lacking = tags.flatMap((tag) =>
+      conceptsLacking(concepts, tag).map((name) => `${tag}: ${name}`),
+    );
+
+    for (const line of lacking) {
+      console.log(line);
+    }
+
+    process.exit(lacking.length > 0 ? 1 : 0);
+  }
 
   const dir = values.corpus ?? CORPUS_DIR;
 

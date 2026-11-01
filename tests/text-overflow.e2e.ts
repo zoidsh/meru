@@ -8,8 +8,14 @@
  * German runs about a third longer than English and the pseudo-locale is padded
  * by 40%, so a badge, a button or a sidebar item sized around the English string
  * clips or truncates in them while English looks right. Only screenshots catch
- * that otherwise. English itself has no case: the pseudo-locale is English
- * padded wider in every message, so a layout that fits it fits English.
+ * that otherwise. English itself has no case, since the pseudo-locale covers
+ * all it would catch: every message is English with each letter accented,
+ * bracketed and padded, never shorter and its longest unbroken run never
+ * shorter, since the padding joins the first and last words; it runs on the
+ * same seeded account, whose address label has nowhere to break, and the same
+ * trial badge states; `Intl` formats its dates, numbers and plurals as
+ * English; and nothing in the renderer styles or branches on plain `en`. So
+ * a layout that fits it fits English.
  *
  * Each case walks the titlebar, in every state of the trial badge, and every
  * settings page the sidebar lists, at the width the window opens at and at its

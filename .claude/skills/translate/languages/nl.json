@@ -295,8 +295,8 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "macOS": [
           {
-            "word": "Bewaar als…",
-            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "word": "Bewaar als",
+            "source": "(AppKit `Document` `Save As\\U2026`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -319,8 +319,8 @@
         ],
         "Linux": [
           {
-            "word": "Opslaan als…",
-            "source": "(gedit `Save _As…`)",
+            "word": "Opslaan als",
+            "source": "(gedit `Save _As…`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -1306,7 +1306,7 @@
       "msgidPattern": "\\bsidebar\\b",
       "expect": "[Zz]ijbalk",
       "severity": "wrong",
-      "reason": "The sidebar is the zijbalk, as Chrome writes it in Toggle sidebar; Chrome's zijvenster is its side panel, a different thing (Chrome: 1 of 1 message).",
+      "reason": "The sidebar is the zijbalk, as Chrome writes it in Toggle sidebar; Chrome's zijvenster is its side panel, a different thing (Chrome 1/1 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Sidebar",
         "clean": "Zijbalk",

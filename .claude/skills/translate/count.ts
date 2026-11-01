@@ -97,7 +97,63 @@ export function citedCount(reason: string) {
   return ban ? { n: ban[1] === "none of its" ? 0 : Number(ban[1]) } : undefined;
 }
 
-const USAGE = `Usage: bun .claude/skills/translate/count.ts <tag> [<rule id>…] [--english <regex>] [--expect <regex>] [--case] [--keep-access-keys] [--show]
+export type CountLine = { text: string; differs: boolean; count?: Count };
+
+/** Each pin's and ban's line as `count.ts <tag>` prints it, and whether its cited count differs. */
+export function countLines(
+  tag: string,
+  sidecar: { pinned: PinnedRule[]; banned: BannedRule[] },
+  pairs: Pair[],
+  options: {
+    ids?: string[];
+    english?: string;
+    caseSensitive?: boolean;
+    keepAccessKeys?: boolean;
+  } = {},
+): CountLine[] {
+  const named = (id: string) => !options.ids?.length || options.ids.includes(id);
+
+  const pins = sidecar.pinned
+    .filter(({ id }) => named(id))
+    .map((rule): CountLine => {
+      const count = pinCount(rule, pairs, options);
+
+      const cited = citedCount(rule.reason);
+
+      const citedText =
+        cited?.total === undefined ? "cites none" : `cites ${cited.n}/${cited.total}`;
+
+      const differs =
+        cited?.total !== undefined && (cited.total !== count.total || cited.n !== count.n);
+
+      return {
+        text: `${tag} pinned:${rule.id}: Chrome ${count.n}/${count.total}, ${citedText}${differs ? " (differs)" : ""}`,
+        differs,
+        count,
+      };
+    });
+
+  const bans = sidecar.banned
+    .filter(({ id }) => named(id))
+    .map((rule): CountLine => {
+      const n = banCount(rule, pairs);
+
+      const cited = citedCount(rule.reason);
+
+      const citedText = cited === undefined ? "cites none" : `cites ${cited.n}`;
+
+      const differs = cited !== undefined && cited.n !== n;
+
+      return {
+        text: `${tag} banned:${rule.id}: Chrome writes it in ${n}, ${citedText}${differs ? " (differs)" : ""}`,
+        differs,
+      };
+    });
+
+  return [...pins, ...bans];
+}
+
+const USAGE = `Usage: bun .claude/skills/translate/count.ts <tag> [<rule id>…] [--english <regex>] [--expect <regex>] [--case] [--keep-access-keys] [--show] [--check]
 
 Counts Chrome's messages for each pin or ban of languages/<tag>.json named, or
 every one without ids, in .cache/translate/corpus/chrome.<tag>.jsonl, which
@@ -107,7 +163,8 @@ rather than its countEnglish or msgidPattern; with --expect and no rule id, it
 counts an ad hoc term. --case counts case-sensitively. --keep-access-keys
 reads both sides with their & access keys, as a pin's countKeepAccessKeys
 does, to tell a menu item such as &Edit from a plain Edit. --show lists the
-messages a pin's count matched.`;
+messages a pin's count matched. --check exits 1 when any count printed
+differs from the one its reason cites.`;
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -118,6 +175,7 @@ async function main() {
       case: { type: "boolean" },
       "keep-access-keys": { type: "boolean" },
       show: { type: "boolean" },
+      check: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -167,40 +225,23 @@ async function main() {
     return;
   }
 
-  const sidecar = await loadSidecar(tag);
+  const lines = countLines(tag, await loadSidecar(tag), pairs, {
+    ids,
+    english: values.english,
+    caseSensitive: values.case,
+    keepAccessKeys: values["keep-access-keys"],
+  });
 
-  const named = (id: string) => ids.length === 0 || ids.includes(id);
+  for (const { text, count } of lines) {
+    console.log(text);
 
-  for (const rule of sidecar.pinned.filter(({ id }) => named(id))) {
-    const count = pinCount(rule, pairs, {
-      english: values.english,
-      caseSensitive: values.case,
-      keepAccessKeys: values["keep-access-keys"],
-    });
-
-    const cited = citedCount(rule.reason);
-
-    const citedText = cited?.total === undefined ? "cites none" : `cites ${cited.n}/${cited.total}`;
-
-    const same = cited?.total === count.total && cited.n === count.n;
-
-    console.log(
-      `${tag} pinned:${rule.id}: Chrome ${count.n}/${count.total}, ${citedText}${cited?.total === undefined || same ? "" : " (differs)"}`,
-    );
-
-    show(count);
+    if (count) {
+      show(count);
+    }
   }
 
-  for (const rule of sidecar.banned.filter(({ id }) => named(id))) {
-    const n = banCount(rule, pairs);
-
-    const cited = citedCount(rule.reason);
-
-    const citedText = cited === undefined ? "cites none" : `cites ${cited.n}`;
-
-    console.log(
-      `${tag} banned:${rule.id}: Chrome writes it in ${n}, ${citedText}${cited === undefined || cited.n === n ? "" : " (differs)"}`,
-    );
+  if (values.check && lines.some(({ differs }) => differs)) {
+    process.exit(1);
   }
 }
 

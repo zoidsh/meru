@@ -114,6 +114,25 @@ describe("language sidecars", () => {
 
         expect(covered).toEqual(await sourcePlatformEntries());
       });
+
+      // A table row that settles a sentence is copied into one, where a menu's ellipsis never belongs.
+      test("a platform word that settles a sentence has no menu ellipsis", async () => {
+        const sidecar = await loadSidecar(locale);
+
+        const withEllipsis = sidecar.platformWords.rows.flatMap((row) =>
+          PLATFORMS.flatMap((platform) => {
+            const cell = row[platform];
+
+            return typeof cell === "string"
+              ? []
+              : cell
+                  .filter(({ word, sentences = [] }) => sentences.length > 0 && word.endsWith("…"))
+                  .map(({ word }) => `${row.row} (${platform}): ${word}`);
+          }),
+        );
+
+        expect(withEllipsis).toEqual([]);
+      });
     });
   }
 });

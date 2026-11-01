@@ -1,6 +1,6 @@
 # Glossary
 
-One fixed translation per term and catalog. Use it every time the term appears, inflected as the sentence needs, and never a synonym. Where a term is missing here, find its word by the source order below, and say in your summary which word you chose and where it came from, so it can be added.
+One fixed translation per term and catalog. Use it every time the term appears, inflected as the sentence needs, and never a synonym. Where a term is missing here, find its word by the source order below, and say in your summary which word you chose and where it came from, so it can be added. A line that reads _decided in the language's run_ is such a term: its word is never another term's, however near, until a run settles it.
 
 ## Where a word comes from
 
@@ -177,10 +177,18 @@ The one tab per app that every link to that app opens in. The badge setting read
 - sv: flik för applänkar (agent-chosen, not countable: Chrome's _flik_, _länk_ and _app_)
 - ja: アプリリンク用タブ (agent-chosen, not countable: Chrome's タブ, リンク and アプリ)
 
-The badge that marks it, in _Show app links badge_, takes the word for a badge under [Unread badge](#unread-badge). A language without a line takes its unread badge's word.
+The badge that marks it, in _Show app links badge_. It marks a tab rather than counting, so the word for a badge under [Unread badge](#unread-badge) holds only where it names a badge of either kind, and every language has a line of its own.
 
+- de: Kennzeichen (_Kennzeichen für App-Links anzeigen_), the unread badge's word
 - fr: pastille (_Afficher la pastille de l’onglet des liens d’appli_), the unread badge's word, never _indicateur_
+- it: badge (_Mostra il badge della scheda dei link dell’app_), the unread badge's word
+- es: insignia (_Mostrar insignia de enlaces de la aplicación_), the unread badge's word
 - es-419: distintivo (_Mostrar distintivo de la pestaña de vínculos de la app_), never the unread badge's _contador_, since this badge marks a tab rather than counting (Chrome 0/0; agent-chosen: distintivo: 3 of 7 (VS Code, Microsoft, Apple), with _contador_ out of the vote; _insignia_ 2 of 7 (Android, LibreOffice))
+- pt-BR: decided in the language's run
+- nl: decided in the language's run
+- pl: decided in the language's run
+- sv: decided in the language's run
+- ja: バッジ (アプリリンク用タブのバッジを表示), the unread badge's word
 
 ## Saved search
 
