@@ -49,12 +49,18 @@ export function seedAccount({
   selected = true,
   savedTabs = [],
   disabled,
+  notifications = true,
+  unreadBadge = true,
+  unifiedInbox = true,
 }: {
   id: string;
   label: string;
   selected?: boolean;
   savedTabs?: SavedTab[];
   disabled?: boolean;
+  notifications?: boolean;
+  unreadBadge?: boolean;
+  unifiedInbox?: boolean;
 }): AccountConfig {
   return {
     id,
@@ -64,11 +70,11 @@ export function seedAccount({
     // Left out entirely unless a test names it, so the seeded config matches
     // what an account written before the switch existed looks like.
     ...(disabled === undefined ? {} : { disabled }),
-    notifications: true,
+    notifications,
     gmail: {
-      unreadBadge: true,
+      unreadBadge,
       delegatedAccountId: null,
-      unifiedInbox: true,
+      unifiedInbox,
     },
     workspaceApps: {
       savedTabs,

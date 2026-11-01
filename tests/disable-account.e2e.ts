@@ -129,7 +129,12 @@ function readAccount(meru: MeruApp, accountId: string) {
 test.describe("with the second account disabled", () => {
   const meru = useProApp({
     accounts: [
-      seedAccount({ id: "first-account", label: "Personal" }),
+      seedAccount({
+        id: "first-account",
+        label: "Personal",
+        notifications: false,
+        unreadBadge: false,
+      }),
       seedAccount({ id: "second-account", label: "Work", selected: false, disabled: true }),
     ],
   });
@@ -164,6 +169,11 @@ test.describe("with the second account disabled", () => {
     await expect(accountItems.nth(1).getByText("Disabled", { exact: true })).toBeVisible();
 
     await expect(accountItems.nth(0).getByText("Disabled", { exact: true })).toHaveCount(0);
+
+    // Personal has Unified inbox as its only switch on. The badge row is drawn
+    // only when one of its badges is, so a row whose condition missed that
+    // switch would hide its badge here and nowhere else.
+    await expect(accountItems.nth(0).getByText("Unified inbox", { exact: true })).toBeVisible();
   });
 
   test("it can be removed, without an instance to remove it through", async () => {
