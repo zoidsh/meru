@@ -1,0 +1,12 @@
+[
+  {
+    "catalog": "app",
+    "msgctxt": "macOS",
+    "msgid": "Quit {appName}",
+    "msgstr": "{appName} beenden",
+    "category": "accuracy/mistranslation",
+    "severity": "major",
+    "reason": "Planted: the meaning changed.",
+    "correction": "{appName} beenden"
+  }
+]
