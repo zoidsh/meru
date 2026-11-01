@@ -5,6 +5,13 @@
 
 @source "../shared/**/*.{ts,tsx}";
 
+/* Japanese has no spaces, so without phrase detection Chromium wraps between any two characters, mid-word. */
+@layer base {
+  :root:lang(ja) {
+    word-break: auto-phrase;
+  }
+}
+
 @utility scrollbar-none {
   scrollbar-width: none;
 
