@@ -136,8 +136,20 @@ msgstr "&Copiar"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "&Copy"
+msgstr "Copiar"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
 msgid "&Learn Spelling"
 msgstr "A&prender Ortografia"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "&Learn Spelling"
+msgstr "Aprender Ortografia"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -161,6 +173,12 @@ msgstr "Co&lar"
 #: packages/app/context-menu.ts
 msgid "&Search with Google"
 msgstr "Pe&squisar com o Google"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "&Search with Google"
+msgstr "Pesquisar com Google"
 
 #. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
 #: packages/shared/workspace-apps.ts
@@ -527,10 +545,14 @@ msgstr "Azul"
 
 #. Button that bookmarks the page on display
 #. Button that bookmarks the page on display
-#. Context menu item that bookmarks the tab
-#: packages/app/ipc.ts
 #: packages/renderer/components/vertical-tabs.tsx
 #: packages/renderer/workspace-app.tsx
+msgid "Bookmark"
+msgstr "Adicionar aos Favoritos"
+
+#. Context menu item that bookmarks the tab
+#: packages/app/ipc.ts
+msgctxt "context menu"
 msgid "Bookmark"
 msgstr "Adicionar aos Favoritos"
 
@@ -560,6 +582,12 @@ msgstr "Trazer Todas para a Frente"
 #: packages/app/context-menu.ts
 msgid "C&opy Image Address"
 msgstr "C&opiar Endereço da Imagem"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "C&opy Image Address"
+msgstr "Copiar Endereço da Imagem"
 
 #. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
 #: packages/app/dialogs.ts
@@ -691,9 +719,13 @@ msgstr "Limpar Cor"
 msgid "Close"
 msgstr "Fechar"
 
-#. Button on a tab in the vertical tabs strip that closes the tab
 #. Context menu item that closes the tab
 #: packages/app/ipc.ts
+msgctxt "context menu"
+msgid "Close"
+msgstr "Fechar"
+
+#. Button on a tab in the vertical tabs strip that closes the tab
 #: packages/renderer/components/vertical-tabs.tsx
 msgctxt "tab"
 msgid "Close"
@@ -814,18 +846,44 @@ msgstr "Conversa"
 msgid "Cop&y Image"
 msgstr "Cop&iar Imagem"
 
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Cop&y Image"
+msgstr "Copiar Imagem"
+
 #: packages/app/gmail/index.ts
 msgid "Copied verification code {verificationCode}"
 msgstr "Código de verificação {verificationCode} copiado"
 
-#. A menu or a menu item in Meru's menu bar
 #. Button on a notification that copies the verification code
-#. Menu item that copies the license key
 #. Screen reader label of an icon button that copies the value beside it
 #: packages/app/gmail/index.ts
-#: packages/app/menu.ts
 #: packages/renderer/components/copy-button.tsx
+msgid "Copy"
+msgstr "Copiar"
+
+#. Menu item that copies the license key
 #: packages/renderer/routes/settings/license.tsx
+msgctxt "context menu"
+msgid "Copy"
+msgstr "Copiar"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Copy"
+msgstr "Copiar"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Copy"
+msgstr "Copiar"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Copy"
 msgstr "Copiar"
 
@@ -847,9 +905,19 @@ msgstr "Copiar Link"
 msgid "Copy Link Addr&ess"
 msgstr "Copiar &Endereço do Link"
 
-#. A menu or a menu item in Meru's menu bar
+#. Context menu item that copies the address of the clicked link
 #: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Copy Link Addr&ess"
+msgstr "Copiar Link"
+
+#. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgid "Copy Message Link"
+msgstr "Copiar Link da Mensagem"
+
+#: packages/app/context-menu.ts
+msgctxt "context menu"
 msgid "Copy Message Link"
 msgstr "Copiar Link da Mensagem"
 
@@ -995,16 +1063,29 @@ msgstr "Local de download padrão"
 msgid "Default mail client"
 msgstr "Cliente de e-mail padrão"
 
-#. A menu or a menu item in Meru's menu bar
-#: packages/app/menu.ts
-msgid "Delete"
-msgstr "Excluir"
-
 #. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
 #. Button on a new email notification. A Gmail action, so it follows Gmail's word for it, under Gmail's words in the glossary
 #: packages/app/gmail/index.ts
 #: packages/renderer/routes/unified-inbox.tsx
 msgctxt "Gmail action"
+msgid "Delete"
+msgstr "Excluir"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Delete"
+msgstr "Excluir"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Delete"
+msgstr "Apagar"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Delete"
 msgstr "Excluir"
 
@@ -1115,6 +1196,19 @@ msgstr "Duplicar"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Edit"
+msgstr "Editar"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Edit"
+msgstr "Editar"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Edit"
 msgstr "Editar"
 
@@ -2078,9 +2172,13 @@ msgid "Only when you ask"
 msgstr "Somente quando você pedir"
 
 #. Button on the download notification that opens the file
-#. Context menu item that loads an unloaded tab
 #: packages/app/downloads.ts
+msgid "Open"
+msgstr "Abrir"
+
+#. Context menu item that loads an unloaded tab
 #: packages/app/ipc.ts
+msgctxt "context menu"
 msgid "Open"
 msgstr "Abrir"
 
@@ -2348,17 +2446,22 @@ msgid "Query"
 msgstr "Consulta"
 
 #. Dialog button that quits Meru
-#. Dialog button that quits Meru
-#. Dialog button that quits Meru
-#. Dialog button that quits Meru
-#: packages/app/license-key.ts
-#: packages/app/trial.ts
+#. Tray menu item that quits Meru
+#: packages/app/lib/native-quit-label.ts
+#: packages/app/tray.ts
+msgctxt "Linux"
 msgid "Quit"
 msgstr "Sair"
 
-#. Tray menu item that quits Meru
-#: packages/app/tray.ts
-msgctxt "Linux"
+#. Dialog button that quits Meru
+#: packages/app/lib/native-quit-label.ts
+msgctxt "macOS"
+msgid "Quit"
+msgstr "Encerrar"
+
+#. Dialog button that quits Meru
+#: packages/app/lib/native-quit-label.ts
+msgctxt "Windows"
 msgid "Quit"
 msgstr "Sair"
 
@@ -2420,9 +2523,13 @@ msgid "Release channel"
 msgstr "Canal de versões"
 
 #. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Reload"
+msgstr "Recarregar"
+
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/ipc.ts
-#: packages/app/menu.ts
+msgctxt "context menu"
 msgid "Reload"
 msgstr "Recarregar"
 
@@ -2492,8 +2599,12 @@ msgid "Render with the GPU. This can improve performance, and can also cause com
 msgstr "Renderizar com a GPU. Isso pode melhorar o desempenho, mas também pode causar problemas de compatibilidade em alguns sistemas."
 
 #. A menu or a menu item in Meru's menu bar
-#: packages/app/ipc.ts
 #: packages/app/menu.ts
+msgid "Reopen Closed Tab"
+msgstr "Reabrir Guia Fechada"
+
+#: packages/app/ipc.ts
+msgctxt "context menu"
 msgid "Reopen Closed Tab"
 msgstr "Reabrir Guia Fechada"
 
@@ -2790,8 +2901,12 @@ msgstr "Configurações"
 
 #. A menu or a menu item in Meru's menu bar
 #. A menu or a menu item in Meru's menu bar
-#: packages/app/context-menu.ts
 #: packages/app/menu.ts
+msgid "Share"
+msgstr "Compartilhar"
+
+#: packages/app/context-menu.ts
+msgctxt "context menu"
 msgid "Share"
 msgstr "Compartilhar"
 

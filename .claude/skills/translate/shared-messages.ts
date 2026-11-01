@@ -35,6 +35,42 @@ export function sharedMessages(name: string, catalog: Catalog): SharedMessage[] 
   });
 }
 
+/*
+ * The menu bar and the menus a click pops up can take different label forms,
+ * as Dutch writes the menu bar's items in the imperative and its context
+ * menus in Chrome's infinitive. One msgid both use can carry a single comment,
+ * which the list above never shows, so these are read from where the message
+ * is used as well.
+ */
+const MENU_BAR_FILES = ["packages/app/menu.ts"];
+
+const POPUP_MENU_FILES = ["packages/app/context-menu.ts", "packages/app/ipc.ts"];
+
+/** Each msgid without a context that the menu bar and a context or popup menu both use. */
+export function menuSharedMessages(name: string, catalog: Catalog): SharedMessage[] {
+  return Object.entries(catalog).flatMap(([id, entry]) => {
+    if (entry.obsolete || entry.context !== undefined) {
+      return [];
+    }
+
+    const comments = [...new Set(entry.comments ?? [])];
+
+    const references = [...new Set((entry.origin ?? []).map(([file]) => file))];
+
+    const inMenuBar =
+      references.some((file) => MENU_BAR_FILES.includes(file)) ||
+      comments.some((comment) => /\bmenu bar\b/iu.test(comment));
+
+    const inPopupMenu =
+      references.some((file) => POPUP_MENU_FILES.includes(file)) ||
+      comments.some((comment) => /\bcontext menu\b|\bpopup menu\b/iu.test(comment));
+
+    return inMenuBar && inPopupMenu
+      ? [{ catalog: name, msgid: entry.message ?? id, comments, references }]
+      : [];
+  });
+}
+
 export function formatSharedMessages(messages: SharedMessage[]) {
   return messages.flatMap(({ catalog, msgid, comments, references }) => [
     `${catalog} ${JSON.stringify(msgid)}`,
@@ -43,16 +79,21 @@ export function formatSharedMessages(messages: SharedMessage[]) {
   ]);
 }
 
-const USAGE = `Usage: bun .claude/skills/translate/shared-messages.ts [--json]
+const USAGE = `Usage: bun .claude/skills/translate/shared-messages.ts [--menus] [--json]
 
 Lists every msgid without a msgctxt in the English catalogs that more than one
 #. comment describes, with its comments and references, so the lead can split
-those a new language can't share before its first run. --json prints them as a
-JSON array instead.`;
+those a new language can't share before its first run. --menus lists instead
+every msgid without a msgctxt that the menu bar and a context or popup menu
+both use, whatever its comments. --json prints them as a JSON array instead.`;
 
 async function main() {
   const { values } = parseArgs({
-    options: { json: { type: "boolean" }, help: { type: "boolean", short: "h" } },
+    options: {
+      json: { type: "boolean" },
+      menus: { type: "boolean" },
+      help: { type: "boolean", short: "h" },
+    },
   });
 
   if (values.help) {
@@ -73,7 +114,7 @@ async function main() {
       file.relative,
     );
 
-    messages.push(...sharedMessages(file.name, catalog));
+    messages.push(...(values.menus ? menuSharedMessages : sharedMessages)(file.name, catalog));
   }
 
   console.log(

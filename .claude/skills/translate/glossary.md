@@ -67,7 +67,7 @@ A tab kept in the strip's upper section. _Pin_ and _Unpin_ are the context-menu 
 - es: pestaña fija; _Fijar_, _Desfijar_ (Chrome 16/16; _Fijar pestaña_, _Desfijar_), never _anclar_
 - es-419: pestaña fija; _Fijar_, _Dejar de fijar_ (Chrome 8/16, _fijada_ 4; _Fijar pestaña_, _Dejar de fijar_), never _anclar_
 - pt-BR: guia fixada; _Fixar_, _Liberar_ (Chrome 16/16; _Fixar Guia_, _Liberar guia_)
-- nl: vastgezet tabblad; _Zet vast_, _Maak los_ (Chrome 16/16; _Tabblad vastzetten_, _Losmaken_, in this sheet's imperative), never _vastmaken_
+- nl: vastgezet tabblad; _Vastzetten_, _Losmaken_ in the tab context menu, Chrome's infinitive as every context-menu item takes it (Chrome 16/16; _Tabblad vastzetten_, _Losmaken_), never _vastmaken_
 - pl: przypięta karta; _Przypnij_, _Odepnij_ (Chrome 15/16; _Przypnij kartę_, _Odepnij_)
 - sv: fäst flik; _Fäst_, _Lossa_ (Chrome 14/16; _Fäst flik_, _Lossa_), never _nåla fast_
 - ja: 固定タブ; 固定, 固定を解除 (Chrome 16/16; タブを固定, 固定を解除)
@@ -185,7 +185,7 @@ The badge that marks it, in _Show app links badge_. It marks a tab rather than c
 - es: insignia (_Mostrar insignia de enlaces de la aplicación_), the unread badge's word
 - es-419: distintivo (_Mostrar distintivo de la pestaña de vínculos de la app_), never the unread badge's _contador_, since this badge marks a tab rather than counting (Chrome 0/0; agent-chosen: distintivo: 3 of 7 (VS Code, Microsoft, Apple), with _contador_ out of the vote; _insignia_ 2 of 7 (Android, LibreOffice))
 - pt-BR: selo (_Mostrar selo da guia de links do app_), never the unread badge's _emblema_ or the toast's _aviso_, since this badge marks a tab rather than counting (Chrome 0/0; agent-chosen: selo: 3 of 7 (VS Code, Android, Microsoft), with _emblema_ and _aviso_ out of the vote)
-- nl: decided in the language's run
+- nl: badge (_Toon badge voor app-links_), the unread badge's word, which names a badge of either kind and counts nothing, never _markering_ (Chrome 0/0; agent-chosen: badge: 4 of 7 (Android, LibreOffice, Microsoft, Apple), Thunderbird tied between badge and markering)
 - pl: decided in the language's run
 - sv: decided in the language's run
 - ja: バッジ (アプリリンク用タブのバッジを表示), the unread badge's word
@@ -200,7 +200,7 @@ A named Gmail query an account keeps. Built on Chrome's words for save and searc
 - es: búsqueda guardada (Chrome's _guardar_ 570/593, _búsqueda_ 350/356)
 - es-419: búsqueda guardada (Chrome's _guardar_ 563/593, _búsqueda_ 349/356)
 - pt-BR: pesquisa salva (Chrome's _salvar_ 578/593, _pesquisa_ 346/356), never _busca_
-- nl: opgeslagen zoekopdracht (Chrome's _opslaan_ 505/593, _zoeken_ 350/356); _Bewaar_ only in a `macOS` label
+- nl: opgeslagen zoekopdracht (Chrome's _opgeslagen_ 281/289 for _saved_, its _zoek_ 345/348 for _search_ or _searches_); _Bewaar_ only in a `macOS` label
 - pl: zapisane wyszukiwanie (Chrome's _zapisać_ 576/593, _wyszukiwanie_ 348/356)
 - sv: sparad sökning (Chrome's _spara_ 591/593, _sökning_ 352/356)
 - ja: 保存した検索 (Chrome's 保存 582/593, 検索 351/356)
@@ -230,7 +230,7 @@ The titlebar or sidebar dropdown that opens a workspace app. Chrome's word is Ch
 - es: menú de aplicaciones (Chrome 19/19)
 - es-419: selector (Chrome 17/19)
 - pt-BR: iniciador (Chrome's _Launcher_ label, 2/2; its launcher key is the _tecla de acesso rápido_)
-- nl: launcher (Chrome 20/20)
+- nl: launcher (Chrome 19/19)
 - pl: menu z aplikacjami (Chrome 17/20)
 - sv: appstartare (Chrome 11/20)
 - ja: ランチャー (Chrome 19/19)
@@ -348,7 +348,7 @@ A Chrome extension from Meru's list.
 - es: extensión (Chrome 303/304)
 - es-419: extensión (Chrome 304/304)
 - pt-BR: extensão (Chrome 302/303)
-- nl: extensie (Chrome 303/308)
+- nl: extensie (Chrome 303/304)
 - pl: rozszerzenie (Chrome 304/308)
 - sv: tillägg (Chrome 302/308)
 - ja: 拡張機能 (Chrome 299/308), never 機能拡張
@@ -378,7 +378,7 @@ The pinned tab's context-menu item deciding whether it comes back as a view at s
 - es: Cargar al iniciar (Chrome's _iniciar_ 8/10)
 - es-419: Cargar al iniciar (Chrome's _iniciar_ 8/10)
 - pt-BR: Carregar ao Iniciar (Chrome's _iniciar_ 10/10)
-- nl: Laad bij opstarten (Chrome's _opstarten_ 8/10)
+- nl: Laden bij opstarten, a tab context-menu item in Chrome's infinitive (Chrome's _opstarten_ 8/10)
 - pl: Wczytuj podczas uruchamiania (Chrome's _uruchomienie_ 3/10; agent-chosen phrase: podczas uruchamiania: 3 of 7 (Thunderbird, Firefox, LibreOffice), counted in the apps' messages with _on startup_ or _at launch_)
 - sv: Läs in vid start (Chrome's _start_ 10/10)
 - ja: 起動時に読み込む (Chrome's 起動時 9/10)
@@ -663,6 +663,7 @@ The string a browser sends to name itself, in the Advanced settings. A language 
 - es: user-agent, hyphenated (_un user-agent_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files), never _agente de usuario_
 - es-419: usuario-agente, hyphenated (_un usuario-agente_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: agente do usuário (_o agente do usuário_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
+- nl: user-agent (_Gebruik standaard-user-agent_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
 
 ## Google Password Manager
 
@@ -673,6 +674,7 @@ Google's password manager, named in the passkey help: _Passkeys from Chrome, Goo
 - es: Gestor de contraseñas de Google, capitalized as a name (Google, Chrome 63/63, Chromium 156.0.8078.49's .xtb files)
 - es-419: Administrador de contraseñas de Google, capitalized as a name (Google, Chrome 59/63, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: Gerenciador de senhas do Google, capitalized as a name, with its article outside it (_do Gerenciador de senhas do Google_) (Google, Chrome 61/63, Chromium 156.0.8078.49's .xtb files)
+- nl: Google Wachtwoordmanager, capitalized as a name (Google, Chrome 63/63, Chromium 156.0.8078.49's .xtb files)
 
 ## File manager
 
@@ -682,6 +684,7 @@ Linux's file manager, named on the download notification: _Show in your file man
 - es: gestor de archivos (_Mostrar en tu gestor de archivos_) (GNOME, nautilus metainfo `default file manager`, _gestor de archivos predeterminado_)
 - es-419: gestor de archivos (GNOME, nautilus metainfo `default file manager`, _gestor de archivos predeterminado_; GNOME has one Spanish)
 - pt-BR: gerenciador de arquivos (_Mostrar no Gerenciador de Arquivos_) (GNOME, nautilus metainfo `default file manager`, _gerenciador de arquivos padrão_; its `_Open in File Manager` writes _gestor de arquivos_, the European word)
+- nl: bestandsbeheer (_Toon in bestandsbeheer_) (GNOME, nautilus `_Open in File Manager`, _Openen met bestandsbeheer_), never _bestandsbeheerder_
 
 ## Back, Forward
 
@@ -692,6 +695,7 @@ Navigating the current view's history: the menu's _Back_ and _Forward_ and the t
 - es: Atrás, Adelante; _Ir atrás_, _Ir adelante_. Meru's Back and Go back are a navigation command, so they take Chrome's View menu item `&Back`, _&Atrás_, the narrowest-sense match, by the rule the zoom items follow, rather than the majority _Volver_ (Chrome 2/5 for _Back_ and _Go back_, Chromium 156.0.8078.49's .xtb files: the View menu item `&Back` and a lower-case _back_; the other 3, Chrome's plain _Back_ twice and _Go back_, are _Volver_; 3/4 for _Forward_, the other the mail `&Forward`, _&Reenviar_)
 - es-419: Atrás, Adelante; _Ir atrás_, _Ir adelante_ (Chrome 4/5 for _Back_ and _Go back_, the other _Go back_ as _Ir atrás_; 3/4 for _Forward_, the other the mail `&Forward`, _&Reenviar_, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: Voltar, Avançar (Chrome 5/5 for _Back_ and _Go back_, 4/4 for _Forward_, Chromium 156.0.8078.49's .xtb files)
+- nl: Terug, Vooruit (Chrome 4/5 for _Back_ and _Go back_, 4/4 for _Forward_, Chromium 156.0.8078.49's .xtb files)
 
 ## Reset
 
@@ -702,12 +706,14 @@ Erasing Meru's data and starting over: _Reset App_, the dialog's _Reset_ button 
 - es: Restablecer (_Restablecer aplicación_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
 - es-419: Restablecer (_Restablecer app_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: Redefinir (_Redefinir App_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
+- nl: Reset (_Reset app_), Chrome's _Resetten_ in this sheet's imperative (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
 
 ## Account colors
 
 The colors an account can be marked with, where Chrome names the same color. Counted in Chromium 156.0.8078.49's `.xtb` files, in its color names, the messages that are exactly the color's English name. A language without a line takes Chrome's word.
 
 - fr: Purple _Violet_ (Chrome 2/2), Violet _Mauve_ (Chrome 1/1), never _Pourpre_
+- nl: Teal _Blauwgroen_, never _Groenblauw_: Chrome has no message that is exactly _Teal_, but writes teal as _blauwgroen_ in _Light teal_, _Dark teal_ and its default teal avatar (Chrome 3/4 in Chromium 156.0.8078.49's .xtb files, the fourth _Light teal and white_, _Lichtdonkergroen/wit_), which comes before the apps' vote (groenblauw: 2 of 7 (Microsoft, Apple)); the colors Chrome has no name for (Chrome 0/0 each), each vote too thin, so each takes the app message whose English is the color's name alone: Amber _Amber_ (LibreOffice's _Amber_; agent-chosen: amber: 1 of 7 (LibreOffice), fewer than 3 apps), Emerald _Smaragd_ (Apple's _Emerald_; agent-chosen: smaragd: 1 of 7 (Apple), fewer than 3 apps), never _Smaragdgroen_, Indigo _Indigo_ (LibreOffice's and Apple's _Indigo_; agent-chosen: indigo: 2 of 7 (LibreOffice, Apple), fewer than 3 apps), Sky _Hemelsblauw_ (LibreOffice's and Apple's _Sky Blue_, since their bare _Sky_, _Hemel_ and _Lucht_, is the sky; agent-chosen: hemelsblauw: 2 of 7 (LibreOffice, Apple), fewer than 3 apps); Google's own wording for the four was not checked
 - it: Violet _Lilla_ (Chrome 1/1), Lime _Giallo-verde_ (Chrome 1/1), never _Violetto_; the colors Chrome has no name for (Chrome 0/0 each), each vote too thin, so each takes the app message whose English is the color's name alone: Amber _Ambra_ (LibreOffice's _Amber_; agent-chosen: ambra: 2 of 7 (Android, LibreOffice), fewer than 3 apps), Emerald _Smeraldo_ (Apple's _Emerald_; agent-chosen: smeraldo: 1 of 7 (Apple), fewer than 3 apps), Indigo _Indaco_ (LibreOffice's and Apple's _Indigo_; agent-chosen: indaco: 2 of 7 (LibreOffice, Apple), fewer than 3 apps), Sky _Celeste_ (LibreOffice's and Apple's _Sky Blue_, since their bare _Sky_, _Cielo_, is the sky; agent-chosen: celeste: 2 of 7 (LibreOffice, Apple), fewer than 3 apps), never _Azzurro_, Teal _Verde acqua_ (Thunderbird's _Teal_ and Microsoft's _teal_, beside LibreOffice's _Foglia di tè_ and Apple's three words; agent-chosen: verde acqua: 2 of 7 (Thunderbird, Microsoft), with Apple tied); Google's own wording for the five was not checked
 - es: Purple _Morado_ (Chrome 2/2), Violet _Violeta_ (Chrome 1/1), Lime _Lima_ (Chrome 1/1); the colors Chrome has no name for (Chrome 0/0 each): Amber _Ámbar_ (agent-chosen: ámbar: 3 of 7 (Android, LibreOffice, Apple)), Teal _Verde azulado_ (agent-chosen: verde azulado: 3 of 7 (Thunderbird, Microsoft, Apple)), and, each vote too thin, the app message whose English is the color's name alone: Emerald _Esmeralda_ (Apple's _Emerald_; agent-chosen: esmeralda: 1 of 7 (Apple), fewer than 3 apps), Indigo _Índigo_ (agent-chosen, unresolved by the app count: LibreOffice's _Indigo_ is _Añil_, Apple's _Índigo_; Índigo kept as the run wrote it), Sky _Celeste_ (LibreOffice's _Sky blue_, _Azul celeste_; agent-chosen, unresolved by the app count: LibreOffice celeste, Apple azul cielo, both bare _Sky_ the sky's _Cielo_); Google's own wording for the five was not checked
 - es-419: Purple _Púrpura_ (Chrome 2/2), Violet _Violeta_ (Chrome 1/1), Lime _Verde lima_ (Chrome 1/1); the colors Chrome has no name for (Chrome 0/0 each): Amber _Ámbar_ (agent-chosen: ámbar: 3 of 7 (Android, LibreOffice, Apple)), Teal _Verde azulado_ (agent-chosen: verde azulado: 3 of 7 (Thunderbird, Microsoft, Apple)), and, each vote too thin: Emerald _Esmeralda_ (Apple's _Emerald_; agent-chosen: esmeralda: 1 of 7 (Apple), fewer than 3 apps), Indigo _Índigo_ (agent-chosen, unresolved by the app count: LibreOffice's _Indigo_ is _Añil_, Apple's _Índigo_), Sky _Celeste_ (agent-chosen: celeste: 2 of 7 (LibreOffice, Apple), fewer than 3 apps); Google's own wording for the five was not checked
@@ -720,6 +726,7 @@ The page context menu's item that opens the developer tools on the element click
 - fr: Inspecter (Chrome 2/2), never _Inspecter l’élément_
 - it: Ispeziona (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Ispeziona elemento_
 - pt-BR: Inspecionar (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Inspecionar Elemento_
+- nl: Inspecteren, a context-menu item in Chrome's infinitive (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Element inspecteren_
 
 ## Help
 
@@ -729,6 +736,7 @@ The menu that holds Meru's help and its links. Counted in the messages that are 
 - es: Ayuda (Chrome 5/5, Chromium 156.0.8078.49's .xtb files)
 - es-419: Ayuda (Chrome 5/5, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: Ajuda (Chrome 5/5, Chromium 156.0.8078.49's .xtb files)
+- nl: Help (Chrome 3/5, Chromium 156.0.8078.49's .xtb files: the menu titles `&Help` and `H&elp` and one plain _Help_; the other two plain _Help_ are _Hulp_)
 
 ## Auto
 
@@ -738,12 +746,14 @@ The option that lets Meru decide, in the Width, Placement, Launcher display and 
 - fr: Auto (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Automatique_
 - it: Automatica for the Width (_la larghezza_), Placement (_la posizione_) and Launcher display (_la visualizzazione_), Automatico for the Text color (_il colore_), Chrome's _Automatico_ agreeing with each (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Auto_
 - pt-BR: Automática for the Width (_a largura_), Launcher display (_a exibição_) and Text color (_a cor_), Automático for the Placement (_o posicionamento_, Chrome's _placement_ 1/1), Chrome's _Automática_ agreeing with each (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Auto_
+- nl: Auto in all four (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), since a Dutch adjective takes no agreement with the setting's noun; never _Automatisch_, which is Chrome's _Automatic_ (Chrome 1/1)
 
 ## None
 
 The value a field shows when nothing is picked, in the account's Color field and the Excluded apps field, each its own message by `msgctxt` so a gendered language agrees with that field's noun. Counted in the messages that are exactly _None_. A language without a line takes Chrome's word.
 
 - pt-BR: Nenhuma for the account color (_a cor_), Nenhum for the excluded apps (_os apps_), Chrome's _Nenhum_ and _Nenhuma_ agreeing with each (Chrome 3/3, Chromium 156.0.8078.49's .xtb files)
+- nl: Geen in both (Chrome 3/3, Chromium 156.0.8078.49's .xtb files), which takes no agreement
 
 ## Zoom In, Zoom Out, Actual Size
 
@@ -753,6 +763,7 @@ The View menu's zoom items, which are not platform words: no platform's View men
 - es: Ampliar, Reducir zoom, Tamaño real (Chrome 2/3 for _Zoom In_, 1/3 for _Zoom Out_, 3/3 for _Actual Size_, Chromium 156.0.8078.49's .xtb files: the View menu items `Zoom &In`, `Zoom &Out` and `A&ctual Size`, _&Ampliar_, _&Reducir zoom_ and _Tamaño &real_; the title-case _Zoom Out_ is _Alejar_ and the sentence-case _Zoom in_ and _Zoom out_ are _Acercar_ and _Reducir_)
 - es-419: Acercar, Alejar, Tamaño real (Chrome 3/3 each, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: Aumentar Zoom, Diminuir Zoom, Tamanho Real (Chrome 2/3 for _Zoom In_ and _Zoom Out_, 3/3 for _Actual Size_, Chromium 156.0.8078.49's .xtb files: the View menu items `Zoom &In`, `Zoom &Out` and `A&ctual Size`, _Aumentar z&oom_, _Diminuir &zoom_ and _&Tamanho real_; the title-case _Zoom In_ and _Zoom Out_ are _Aproximar_ and _Afastar_)
+- nl: Zoom in, Zoom uit, Werkelijke grootte, Chrome's View menu items `Zoom &In`, `Zoom &Out` and `A&ctual Size`, _&Inzoomen_, _Uitz&oomen_ and _We&rkelijke grootte_, in this sheet's imperative (Chrome 2/3 for _Zoom In_ and _Zoom Out_, the menu items and the sentence-case labels, 1/3 for _Actual Size_, Chromium 156.0.8078.49's .xtb files; the title-case _Zoom In_, _Zoom Out_ and _Actual Size_ are _Groter_, _Kleiner_ and _Normaal_, the sentence-case _Actual size_ _Werkelijk formaat_), never _Groter_ and _Kleiner_
 
 ## Logs
 
@@ -761,6 +772,7 @@ The files Meru writes to diagnose a problem: _Logs_, _Export logs_, _View Logs_.
 - es: registros (_Exportar registros_) (Chrome 47/54, Chromium 156.0.8078.49's .xtb files)
 - es-419: registros (_Exportar registros_) (Chrome 47/54, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: registros (_Exportar Registros_) (Chrome 44/54, Chromium 156.0.8078.49's .xtb files)
+- nl: logboeken (_Exporteer logboeken_) (Chrome 40/54, Chromium 156.0.8078.49's .xtb files)
 
 ## Support
 
@@ -769,6 +781,7 @@ Meru's support, which a license error asks the user to contact: _contact support
 - es: equipo de asistencia (_ponte en contacto con el equipo de asistencia_) (Chrome 1/1 for _support team_, Chromium 156.0.8078.49's .xtb files)
 - es-419: equipo de asistencia (_comunícate con el equipo de asistencia_) (Chrome 1/1 for _support team_, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: suporte (_entre em contato com o suporte_) (Chrome 1/1 for _support team_, _equipe de suporte de TI_, Chromium 156.0.8078.49's .xtb files)
+- nl: het supportteam (_neem contact op met het supportteam_) (Chrome 1/1 for _support team_, _IT-supportteam_, Chromium 156.0.8078.49's .xtb files), its _IT-_ dropped
 
 ## Wide, Narrow
 
@@ -777,6 +790,7 @@ The Width setting's options for the vertical tabs sidebar. A language whose word
 - es: Estrecho, Amplio, never _Ancho_, by a recorded call: Chrome's one _Wide_, _Ancho_, is Width's own word here, and a select can't show its label as one of its values (agent-chosen, unresolved by the app count: amplio: 2 of 7 (Thunderbird, LibreOffice), with Width's _Ancho_ out of the vote; LibreOffice pairs _Estrechos_ and _Amplios_)
 - es-419: Estrecho, Amplio, never _Ancho_, by the same recorded call (agent-chosen, unresolved by the app count: amplio: 2 of 7 (Thunderbird, LibreOffice), with Width's _Ancho_ out of the vote)
 - pt-BR: Estreita, Larga, agreeing with Width's _a largura_ (Chrome 4/5), never _Espaçadas_ or _Ampla_, by a recorded call: Chrome's one _Wide_, _Espaçadas_, names spacing, not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: largo: 2 of 7 (Thunderbird, Firefox), thin, taken by the same call; LibreOffice _amplo_, Apple _grande-angular_); a sentence names them _estreita e larga_
+- nl: Smal, Breed, never _Wijd_. Width is _breedte_ (Chrome 5/5, Chromium 156.0.8078.49's .xtb files), and Chrome writes the width of a part of its window as _{} breed_ (Chrome 3/3 for _now {} wide_, Chromium 156.0.8078.49's .xtb files); its one _Wide_, _Wijd_, is Reading mode's letter spacing, not a size (the apps agree: breed: 4 of 7 (Thunderbird, Firefox, LibreOffice, Apple)). Narrow has no Chrome word (Chrome 0/0), so it is _Smal_, Breed's direct antonym, with one vote (agent-chosen, unresolved by the app count: smal: 1 of 7 (LibreOffice), beside its _Breed_; Google's own wording was not checked). In a sentence the pair is _smal en breed_
 
 ## Gmail's words
 
@@ -963,6 +977,7 @@ The quoted and repeated text Gmail folds behind its ••• button, as in _Alw
 - es: contenido reducido (Gmail, _Mostrar contenido reducido_), never _recortado_
 - es-419: contenido acortado (Gmail, _Mostrar contenido acortado_), never _recortado_
 - pt-BR: conteúdo cortado (Gmail, _Mostrar conteúdo cortado_), never _conteúdo reduzido_
+- nl: ingekorte content (Gmail, _Ingekorte content tonen_; _Toon ingekorte content altijd_)
 
 ## 1Password's words
 

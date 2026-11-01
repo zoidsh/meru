@@ -486,7 +486,7 @@ class Ipc {
             ]
           : []),
         {
-          label: t`Reload`,
+          label: t({ message: "Reload", context: "context menu" }),
           enabled: tab instanceof WorkspaceApp,
           click: () => {
             if (tab instanceof WorkspaceApp) {
@@ -581,7 +581,11 @@ class Ipc {
               {
                 label: bookmarks.isBookmarked(accountId, tab.url)
                   ? t`Remove Bookmark`
-                  : t({ message: "Bookmark", comment: "Context menu item that bookmarks the tab" }),
+                  : t({
+                      message: "Bookmark",
+                      context: "context menu",
+                      comment: "Context menu item that bookmarks the tab",
+                    }),
                 click: () => {
                   bookmarks.toggle(accountId, {
                     app: tabApp,
@@ -666,6 +670,7 @@ class Ipc {
               {
                 label: t({
                   message: "Open",
+                  context: "context menu",
                   comment: "Context menu item that loads an unloaded tab",
                 }),
                 click: () => {
@@ -686,7 +691,7 @@ class Ipc {
               {
                 label: t({
                   message: "Close",
-                  context: "tab",
+                  context: "context menu",
                   comment: "Context menu item that closes the tab",
                 }),
                 click: () => {
@@ -729,7 +734,7 @@ class Ipc {
 
       Menu.buildFromTemplate([
         {
-          label: t`Reopen Closed Tab`,
+          label: t({ message: "Reopen Closed Tab", context: "context menu" }),
           enabled: account.instance.tabs.hasRecentlyClosedTabs,
           click: () => {
             if (account.instance.tabs.reopenClosedTab() && account.config.selected) {

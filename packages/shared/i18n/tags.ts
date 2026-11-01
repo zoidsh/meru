@@ -33,6 +33,7 @@ export const SHIPPED_CATALOG_TAGS: readonly CatalogTag[] = [
   "es",
   "es-419",
   "pt-BR",
+  "nl",
   "ja",
 ];
 

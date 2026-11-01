@@ -8,6 +8,7 @@ import { apiClient, apiFallbackClient } from "./api-client";
 import { config } from "./config";
 import { ipc } from "./ipc";
 import { log } from "./lib/log";
+import { getNativeQuitLabel } from "./lib/native-quit-label";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { openExternalUrl } from "./url";
@@ -63,7 +64,7 @@ class Trial {
           : t`Meru can't reach the internet. Connect, then restart Meru to try again.`,
         buttons: [
           t({ message: "Restart", comment: "Dialog button that restarts Meru" }),
-          t({ message: "Quit", comment: "Dialog button that quits Meru" }),
+          getNativeQuitLabel(),
         ],
         defaultId: 0,
         cancelId: 1,
@@ -83,11 +84,7 @@ class Trial {
         type: "info",
         message: t`Your Meru Pro trial has ended.`,
         detail: t`Upgrade to Meru Pro to keep every feature, or continue with the free version.`,
-        buttons: [
-          t`Upgrade to Meru Pro`,
-          t`Continue with the free version`,
-          t({ message: "Quit", comment: "Dialog button that quits Meru" }),
-        ],
+        buttons: [t`Upgrade to Meru Pro`, t`Continue with the free version`, getNativeQuitLabel()],
         defaultId: 0,
         cancelId: 2,
       });

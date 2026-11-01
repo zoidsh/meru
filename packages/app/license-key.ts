@@ -4,6 +4,7 @@ import isOnline from "is-online";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { getMachineId } from "@/lib/machine-id";
+import { getNativeQuitLabel } from "@/lib/native-quit-label";
 import { relaunchApp } from "@/lib/relaunch";
 import { apiClient, apiFallbackClient } from "./api-client";
 import { log } from "./lib/log";
@@ -178,7 +179,7 @@ class LicenseKey {
               message: "Remove and restart",
               comment: "Button that removes the license key from Meru and restarts it",
             }),
-            t({ message: "Quit", comment: "Dialog button that quits Meru" }),
+            getNativeQuitLabel(),
           ],
           defaultId: 0,
           cancelId: 1,
@@ -215,7 +216,7 @@ class LicenseKey {
             : t`Meru can't reach the internet. Connect, then restart Meru to try again.`,
           buttons: [
             t({ message: "Restart", comment: "Dialog button that restarts Meru" }),
-            t({ message: "Quit", comment: "Dialog button that quits Meru" }),
+            getNativeQuitLabel(),
           ],
           defaultId: 0,
           cancelId: 1,
