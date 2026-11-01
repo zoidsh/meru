@@ -1,6 +1,7 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { t } from "@lingui/core/macro";
+import { getAccountLabel } from "@meru/shared/accounts";
 import { byPlatform } from "@meru/shared/platform";
 import Electron, { nativeTheme } from "electron";
 import { accounts } from "@/accounts";
@@ -179,8 +180,10 @@ export class AppTray {
       ...accounts.getAccounts().map(({ config, instance }) => {
         const unreadCount = instance.gmail.store.getState().unreadCount;
 
+        const label = getAccountLabel(config.label);
+
         return {
-          label: unreadCount ? `${config.label} (${unreadCount})` : config.label,
+          label: unreadCount ? `${label} (${unreadCount})` : label,
           click: () => {
             accounts.selectAccount(config.id);
 

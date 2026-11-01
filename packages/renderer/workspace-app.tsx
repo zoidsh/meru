@@ -1,4 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
+import { getAccountLabel } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { SupportedWorkspaceApp, WorkspaceAppBookmarkState } from "@meru/shared/workspace-apps";
 import { cn } from "@meru/ui/lib/utils";
@@ -220,7 +221,7 @@ function WorkspaceApp() {
           <NavigationControls workspaceAppId={workspaceAppId} />
         </TitlebarButtonGroup>
         {hasMultipleAccounts && account && (
-          <AccountBadge label={account.label} color={account.color} />
+          <AccountBadge label={getAccountLabel(account.label)} color={account.color} />
         )}
         <div className="flex items-center gap-1">
           {workspaceApp && <WorkspaceAppIcon app={workspaceApp} className="size-3.5" />}
