@@ -33,8 +33,10 @@ const pattern = z.string().min(1).refine(isPattern, { message: "not a valid regu
 /*
  * One word a platform uses, as the style sheet's Platform words table shows it
  * with its source: `labels` are the msgids whose whole translation is the
- * word, and `sentences` those whose translation contains it, a trailing
- * ellipsis aside. Both are compared with the catalog's access key taken out,
+ * word, and `sentences` those whose translation contains it. A word that
+ * settles a sentence is its sentence form, without a menu item's ellipsis,
+ * since the table shows it to be copied into the sentence. Both are compared
+ * with the catalog's access key taken out,
  * an `&` before a character or Japanese's `(&X)`, since where the key sits is
  * the translator's choice and the `accessKeys` rule checks it.
  */
@@ -257,7 +259,7 @@ export function platformEntries(sidecar: Sidecar): PlatformEntry[] {
           row: row.row,
           msgctxt: platform,
           msgid,
-          contains: word.replace(/[\s\u00a0]*…$/u, ""),
+          contains: word,
         })),
       ]);
     }),

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { checkCatalogs, readCatalog } from "../.claude/skills/translate/check";
+import { checkCatalogs, pinMentions, readCatalog } from "../.claude/skills/translate/check";
 import {
   LANGUAGES_DIR,
   loadSidecar,
@@ -267,5 +267,36 @@ describe("check.ts", () => {
     test("is 2 for --shipped with a locale", () => {
       expect(exitCodeOf("--shipped", "--locale", "de")).toBe(2);
     });
+  });
+
+  test("lists the other entries whose English names a pin's word, beside the pins that hold them", async () => {
+    const catalog = await parseCatalog(
+      [
+        'msgid ""',
+        'msgstr ""',
+        '"Language: es\\n"',
+        "",
+        'msgid "Wide"',
+        'msgstr "Amplio"',
+        "",
+        'msgid "Switches between narrow and wide."',
+        'msgstr "Cambia entre estrecho y amplio."',
+        "",
+        'msgid "Keeps the sidebar wide."',
+        'msgstr "Mantiene la barra lateral ancha."',
+        "",
+        'msgid "Widescreen"',
+        'msgstr "Panorámico"',
+        "",
+      ].join("\n"),
+      { locale: "es", sourceLocale: "en", filename: "es.po" },
+    );
+
+    const mentions = pinMentions(await loadSidecar("es"), [{ path: "es.po", catalog }], "wide");
+
+    expect(mentions.map(({ msgid, pinnedBy }) => [msgid, pinnedBy])).toEqual([
+      ["Switches between narrow and wide.", ["wide-in-sentences"]],
+      ["Keeps the sidebar wide.", []],
+    ]);
   });
 });

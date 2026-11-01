@@ -295,8 +295,8 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "macOS": [
           {
-            "word": "Zachowaj jako…",
-            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "word": "Zachowaj jako",
+            "source": "(AppKit `Document` `Save As\\U2026`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -319,8 +319,8 @@
         ],
         "Linux": [
           {
-            "word": "Zapisz jako…",
-            "source": "(gedit `Save _As…`)",
+            "word": "Zapisz jako",
+            "source": "(gedit `Save _As…`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -1042,7 +1042,7 @@
       "msgidPattern": "\\bsaved search(?:es)?\\b",
       "expect": "[Zz]apisan",
       "severity": "wrong",
-      "reason": "A saved search is a zapisane wyszukiwanie (Chrome: 1 of 1 message).",
+      "reason": "A saved search is a zapisane wyszukiwanie (Chrome 1/1 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Add saved search",
         "fault": "Dodaj wyszukiwanie"

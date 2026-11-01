@@ -184,3 +184,33 @@ describe("catalogs", () => {
     expect(translate(TRIAL_DAYS_LEFT, { daysLeft: 1.5 })).toBe("Zostało 1,5 dnia okresu próbnego");
   });
 });
+
+// `tests/text-overflow.e2e.ts` gives English no case of its own on the strength of this.
+describe("pseudo-locale", () => {
+  const text = (message: unknown) =>
+    Array.isArray(message)
+      ? message.filter((part): part is string => typeof part === "string").join("{}")
+      : String(message);
+
+  const longestRun = (message: string) =>
+    Math.max(0, ...message.split(/\s+/u).map((run) => [...run].length));
+
+  test("is no shorter than English in any message, nor in its longest unbroken run", async () => {
+    const { messages: english } = await import("./locales/en");
+
+    const { messages: pseudo } = await import("./locales/en-XA");
+
+    const shorter = Object.entries(english).flatMap(([id, message]) => {
+      const source = text(message);
+
+      const padded = text(pseudo[id]);
+
+      return [...padded].length < [...source].length || longestRun(padded) < longestRun(source)
+        ? [`${source} => ${padded}`]
+        : [];
+    });
+
+    expect(Object.keys(pseudo).length).toBe(Object.keys(english).length);
+    expect(shorter).toEqual([]);
+  });
+});

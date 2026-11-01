@@ -295,8 +295,8 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "macOS": [
           {
-            "word": "Sichern unter …",
-            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "word": "Sichern unter",
+            "source": "(AppKit `Document` `Save As\\U2026`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -319,8 +319,8 @@
         ],
         "Linux": [
           {
-            "word": "Speichern unter …",
-            "source": "(gedit `Save _As…`)",
+            "word": "Speichern unter",
+            "source": "(gedit `Save _As…`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -1176,7 +1176,7 @@
       "msgidPattern": "\\buser agents?\\b",
       "expect": "User-Agent",
       "severity": "wrong",
-      "reason": "A user agent is the User-Agent, as Chrome writes it (Chrome: 1 of 1 message).",
+      "reason": "A user agent is the User-Agent, as Chrome writes it (Chrome 1/1 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Use default user agent",
         "clean": "Standard-User-Agent verwenden",
