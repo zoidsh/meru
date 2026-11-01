@@ -18,12 +18,11 @@ export { type AssessedEntry, changedEntries };
 
 /*
  * Scores a locale's MQM review, the findings of each independent run, so no
- * agent does the arithmetic. Each error costs its severity's points, the score
- * is 100 × (1 − points / source words), and the gate fails on any critical or
- * major error most runs agree on, and in a full run on a median score under 99
- * too: over the few words of a partial run a score means little. A finding the
- * orchestrator dismissed, with its reason, counts toward neither and is listed
- * instead.
+ * agent does the arithmetic. Each error costs its severity's points and the
+ * score, 100 × (1 − points / source words), is reported, never gated on. The
+ * gate blocks on every critical or major error any run reports until the
+ * orchestrator dismisses it, with its reason, or it is applied, the catalog no
+ * longer holding the translation the runs assessed.
  */
 
 export const SEVERITIES = ["critical", "major", "minor"] as const;
@@ -45,8 +44,6 @@ export const CATEGORIES = [
   "style",
   "locale-conventions",
 ] as const;
-
-export const PASSING_SCORE = 99;
 
 export type MqmFinding = {
   catalog: string;
@@ -149,6 +146,22 @@ export function resolveBase(base: string = DEFAULT_BASE, resolve = mergeBase) {
   return ref;
 }
 
+/*
+ * A correction is scored like any other translation, and the translator's
+ * corrections can reach past the entries the findings named, such as a fix
+ * `check.ts` asked for after a new pin.
+ */
+export function correctedEntries(
+  catalogs: { name: string; catalog: Catalog }[],
+  assessed: Map<string, string>,
+) {
+  return [...liveEntries(catalogs).entries()].flatMap(([key, { msgstr, ...entry }]) => {
+    const read = assessed.get(key);
+
+    return read !== undefined && read !== msgstr ? [entry] : [];
+  });
+}
+
 export function uniqueEntries(entries: AssessedEntry[]) {
   return [...new Map(entries.map((entry) => [keyOf(entry), entry])).values()];
 }
@@ -226,18 +239,7 @@ function validateFinding(item: unknown, index: number) {
  * Every finding must name an assessed entry: one outside the set would
  * otherwise vanish from the score, and a mistyped msgid is how that happens.
  */
-export function scoreLocale({
-  locale,
-  catalogs,
-  findings,
-  entries,
-}: {
-  locale: string;
-  catalogs: { name: string; catalog: Catalog }[];
-  findings: unknown;
-  /** The entries a partial run assessed; without them, every live entry is. */
-  entries?: AssessedEntry[];
-}): { result?: MqmResult; errors: string[] } {
+export function liveEntries(catalogs: { name: string; catalog: Catalog }[]) {
   const live = new Map<string, AssessedEntry & { msgstr: string }>();
 
   for (const { name, catalog } of catalogs) {
@@ -254,18 +256,83 @@ export function scoreLocale({
     }
   }
 
+  return live;
+}
+
+const JSON_STRING = String.raw`"(?:[^"\\]|\\.)*"`;
+
+const DUMP_ENTRY = new RegExp(
+  String.raw`^(?:\[multi\] )?(-|${JSON_STRING}) \| (${JSON_STRING}) \| (${JSON_STRING})`,
+  "u",
+);
+
+/*
+ * The dump is what the reviewers read, so its msgstr, not the catalog's, is
+ * the translation a round assessed; a catalog that differs from it has had a
+ * correction since.
+ */
+export function parseDump(text: string) {
+  const assessed = new Map<string, string>();
+
+  let catalog: string | undefined;
+
+  for (const line of text.split("\n")) {
+    const heading = /^## ([^:\s]+): /u.exec(line);
+
+    if (heading) {
+      catalog = heading[1];
+
+      continue;
+    }
+
+    const entry = catalog === undefined ? null : DUMP_ENTRY.exec(line);
+
+    if (catalog !== undefined && entry) {
+      const [, msgctxt = "-", msgid = '""', msgstr = '""'] = entry;
+
+      assessed.set(
+        keyOf({
+          catalog,
+          msgctxt: msgctxt === "-" ? null : JSON.parse(msgctxt),
+          msgid: JSON.parse(msgid),
+        }),
+        JSON.parse(msgstr),
+      );
+    }
+  }
+
+  return assessed;
+}
+
+export function scoreLocale({
+  locale,
+  catalogs,
+  findings,
+  entries,
+  assessed,
+}: {
+  locale: string;
+  catalogs: { name: string; catalog: Catalog }[];
+  findings: unknown;
+  /** The entries a partial run assessed; without them, every live entry is. */
+  entries?: AssessedEntry[];
+  /** Each entry's msgstr as the runs read it, from `parseDump`; without it, the catalog's. */
+  assessed?: Map<string, string>;
+}): { result?: MqmResult; errors: string[] } {
+  const live = liveEntries(catalogs);
+
   const errors: string[] = [];
 
-  let assessed = [...live.values()];
+  let inScope = [...live.values()];
 
   if (entries) {
-    assessed = [];
+    inScope = [];
 
     for (const entry of entries) {
       const found = live.get(keyOf(entry));
 
       if (found) {
-        assessed.push(found);
+        inScope.push(found);
       } else {
         errors.push(`The entry file lists ${describe(entry)}, which no catalog holds.`);
       }
@@ -282,18 +349,20 @@ export function scoreLocale({
     return { errors };
   }
 
-  const assessedByKey = new Map(assessed.map((entry) => [keyOf(entry), entry]));
+  const assessedByKey = new Map(inScope.map((entry) => [keyOf(entry), entry]));
 
   const warnings: string[] = [];
 
   for (const finding of findings as MqmFinding[]) {
     const entry = assessedByKey.get(keyOf(finding));
 
+    const read = assessed?.get(keyOf(finding)) ?? entry?.msgstr;
+
     if (!entry) {
       errors.push(`A finding names ${describe(finding)}, which this run didn't assess.`);
-    } else if (entry.msgstr !== finding.msgstr) {
+    } else if (read !== finding.msgstr) {
       warnings.push(
-        `A finding on ${describe(finding)} quotes ${JSON.stringify(finding.msgstr)}, but the catalog holds ${JSON.stringify(entry.msgstr)}.`,
+        `A finding on ${describe(finding)} quotes ${JSON.stringify(finding.msgstr)}, but the run assessed ${JSON.stringify(read)}.`,
       );
     }
   }
@@ -306,7 +375,7 @@ export function scoreLocale({
 
   const dismissed = (findings as MqmFinding[]).filter(({ dismissed }) => dismissed !== undefined);
 
-  const words = assessed.reduce((total, { msgid }) => total + countWords(msgid), 0);
+  const words = inScope.reduce((total, { msgid }) => total + countWords(msgid), 0);
 
   const counts = countSeverities(scored);
 
@@ -318,11 +387,11 @@ export function scoreLocale({
     result: {
       locale,
       partial,
-      entries: assessed.length,
+      entries: inScope.length,
       words,
       counts,
       ...scoring,
-      passes: passesGate(counts, scoring.score, partial),
+      passes: passesGate(counts),
       findings: scored,
       dismissed,
       warnings,
@@ -351,8 +420,8 @@ function scoreOf(penalty: number, words: number) {
   return { penalty, score: 100 * (1 - ratio), perThousand: 1000 * ratio };
 }
 
-function passesGate(counts: Record<MqmSeverity, number>, score: number, partial: boolean) {
-  return counts.critical === 0 && counts.major === 0 && (partial || score >= PASSING_SCORE);
+function passesGate(counts: Record<MqmSeverity, number>) {
+  return counts.critical === 0 && counts.major === 0;
 }
 
 function median(values: number[]) {
@@ -367,66 +436,60 @@ function median(values: number[]) {
 
 export const RANK: Record<MqmSeverity, number> = { minor: 1, major: 2, critical: 3 };
 
-export type AgreedFinding = MqmFinding & { agreement: number; runs: number };
+export type RunFinding = MqmFinding & { run: string };
 
-export type EntryAgreement = {
-  entry: AssessedEntry;
-  /** Each run's most severe finding on the entry, undefined where the run has none. */
-  perRun: (MqmFinding | undefined)[];
-  agreed?: AgreedFinding;
+/** An entry's findings across the runs, at the most severe any run reports. */
+export type EntryFinding = MqmFinding & {
+  /** How many runs report the entry at this severity, not how many agree on one error. */
+  runsAtSeverity: number;
+  runs: number;
+  /** The catalog no longer holds the translation the runs assessed. */
+  applied: boolean;
+  /** Every run's finding on the entry, the most severe first. */
+  all: RunFinding[];
 };
 
+export function blocks(finding: EntryFinding) {
+  return RANK[finding.severity] >= RANK.major && !finding.applied;
+}
+
 /*
- * An LLM judge over-flags and varies from run to run, so an error counts only
- * when most runs see it: an entry takes the median of the runs' severities, a
- * run without a finding counting as none, which for three runs is the highest
- * severity at least two report at or above. Runs are matched by entry, not by
- * category, since two runs often file one error under different categories.
+ * Every finding any run reports counts: measured on the regression sets, a
+ * vote between runs dropped real catches and never a false positive, so the
+ * orchestrator rules on each critical or major one instead. Runs are matched
+ * by entry, not by category, since two runs often file one error under
+ * different categories.
  */
-export function agreeOnEntries(runs: MqmFinding[][]) {
-  const byEntry = new Map<string, EntryAgreement>();
+export function mergeRuns(
+  runs: { name: string; findings: MqmFinding[] }[],
+  isApplied: (entry: AssessedEntry) => boolean = () => false,
+) {
+  const byEntry = new Map<string, RunFinding[]>();
 
-  for (const [index, findings] of runs.entries()) {
+  for (const { name, findings } of runs) {
     for (const finding of findings) {
-      const key = keyOf(finding);
-
-      const agreement = byEntry.get(key) ?? {
-        entry: { catalog: finding.catalog, msgctxt: finding.msgctxt, msgid: finding.msgid },
-        perRun: runs.map(() => undefined),
-      };
-
-      const current = agreement.perRun[index];
-
-      if (!current || RANK[finding.severity] > RANK[current.severity]) {
-        agreement.perRun[index] = finding;
-      }
-
-      byEntry.set(key, agreement);
+      byEntry.set(keyOf(finding), [
+        ...(byEntry.get(keyOf(finding)) ?? []),
+        { ...finding, run: name },
+      ]);
     }
   }
 
-  const needed = Math.floor(runs.length / 2) + 1;
+  return [...byEntry.values()].map((all): EntryFinding => {
+    const sorted = [...all].sort((a, b) => RANK[b.severity] - RANK[a.severity]);
 
-  for (const agreement of byEntry.values()) {
-    const reported = agreement.perRun.filter((finding) => finding !== undefined);
+    const [{ run: _run, ...top }] = sorted as [RunFinding, ...RunFinding[]];
 
-    const atLeast = (severity: MqmSeverity) =>
-      reported.filter((finding) => RANK[finding.severity] >= RANK[severity]);
-
-    const severity = SEVERITIES.find((candidate) => atLeast(candidate).length >= needed);
-
-    const representative = reported.find((finding) => finding.severity === severity);
-
-    if (severity && representative) {
-      agreement.agreed = {
-        ...representative,
-        agreement: atLeast(severity).length,
-        runs: runs.length,
-      };
-    }
-  }
-
-  return [...byEntry.values()];
+    return {
+      ...top,
+      runsAtSeverity: new Set(
+        sorted.filter(({ severity }) => severity === top.severity).map(({ run }) => run),
+      ).size,
+      runs: runs.length,
+      applied: isApplied(top),
+      all: sorted,
+    };
+  });
 }
 
 export type RunScore = {
@@ -436,34 +499,36 @@ export type RunScore = {
   score: number;
 };
 
-export type MqmRunsResult = Omit<MqmResult, "findings"> & {
-  findings: AgreedFinding[];
-  /** Findings above their entry's agreed severity, which no majority shares: listed, never counted. */
-  single: (MqmFinding & { run: string })[];
+export type MqmRunsResult = Omit<MqmResult, "findings" | "dismissed"> & {
+  findings: EntryFinding[];
+  dismissed: RunFinding[];
   runs: RunScore[];
 };
 
 /*
- * Scores each run on its own, then counts only what most runs agree on. The
- * score is the median run's, so one lenient or harsh run moves it no more than
- * a finding only it reports moves the gate. A dismissal is the orchestrator's
- * ruling on an entry, so one written in any run's file takes that entry out of
- * every run. One run alone scores as `scoreLocale` does.
+ * Scores each run on its own and reports the median run's score, so one
+ * lenient or harsh run moves it least. A dismissal is the orchestrator's
+ * ruling on one finding and removes that finding alone: another run's finding
+ * on the same entry can name a different error, and every critical or major
+ * has to be ruled on by itself. One run alone scores as `scoreLocale` does.
  */
 export function scoreRuns({
   locale,
   catalogs,
   runs,
   entries,
+  assessed,
 }: {
   locale: string;
   catalogs: { name: string; catalog: Catalog }[];
   runs: { name: string; findings: unknown }[];
   entries?: AssessedEntry[];
+  /** Each entry's msgstr as the runs read it, from `parseDump`; without it, nothing counts as applied. */
+  assessed?: Map<string, string>;
 }): { result?: MqmRunsResult; errors: string[] } {
   const scored = runs.map(({ name, findings }) => ({
     name,
-    ...scoreLocale({ locale, catalogs, findings, entries }),
+    ...scoreLocale({ locale, catalogs, findings, entries, assessed }),
   }));
 
   const errors = scored.flatMap(({ name, errors }) => errors.map((error) => `${name}: ${error}`));
@@ -476,59 +541,34 @@ export function scoreRuns({
     return { errors: errors.length > 0 ? errors : ["No findings file to score."] };
   }
 
-  /* Each dismissed entry is listed with the dismissals of the first run that has any, so one written into every run's file is listed once. */
-  const dismissedByEntry = new Map<string, { run: string; findings: MqmFinding[] }>();
+  const live = results.map(({ name, result }) => ({ name, findings: result.findings }));
 
-  for (const { name, result } of results) {
-    for (const finding of result.dismissed) {
-      const listed = dismissedByEntry.get(keyOf(finding)) ?? { run: name, findings: [] };
+  const { words } = first.result;
 
-      if (listed.run === name) {
-        dismissedByEntry.set(keyOf(finding), {
-          run: name,
-          findings: [...listed.findings, finding],
-        });
-      }
-    }
-  }
-
-  const live = results.map(({ result }) =>
-    result.findings.filter((finding) => !dismissedByEntry.has(keyOf(finding))),
-  );
-
-  const { words, partial } = first.result;
-
-  const runScores = results.map(({ name }, index) => {
-    const counts = countSeverities(live[index] ?? []);
+  const runScores = live.map(({ name, findings }) => {
+    const counts = countSeverities(findings);
 
     return { name, counts, ...scoreOf(penaltyOf(counts), words) };
   });
 
-  const agreements = agreeOnEntries(live);
+  const current = liveEntries(catalogs);
 
-  const findings = agreements.flatMap(({ agreed }) => (agreed ? [agreed] : []));
+  const findings = mergeRuns(live, (entry) => {
+    const read = assessed?.get(keyOf(entry));
 
-  const single = agreements.flatMap(({ perRun, agreed }) =>
-    perRun.flatMap((finding, index) =>
-      finding && (!agreed || RANK[finding.severity] > RANK[agreed.severity])
-        ? [{ ...finding, run: results[index]?.name ?? "" }]
-        : [],
-    ),
-  );
-
-  const counts = countSeverities(findings);
-
-  const scoring = scoreOf(median(runScores.map(({ penalty }) => penalty)), words);
+    return read !== undefined && read !== current.get(keyOf(entry))?.msgstr;
+  });
 
   return {
     result: {
       ...first.result,
-      counts,
-      ...scoring,
-      passes: passesGate(counts, scoring.score, partial),
+      counts: countSeverities(findings),
+      ...scoreOf(median(runScores.map(({ penalty }) => penalty)), words),
+      passes: !findings.some(blocks),
       findings,
-      single,
-      dismissed: [...dismissedByEntry.values()].flatMap(({ findings }) => findings),
+      dismissed: results.flatMap(({ name, result }) =>
+        result.dismissed.map((finding) => ({ ...finding, run: name })),
+      ),
       runs: runScores,
       warnings: results.flatMap(({ name, result }) =>
         result.warnings.map((warning) => `${name}: ${warning}`),
@@ -550,7 +590,7 @@ export function formatTable(results: MqmRunsResult[]) {
       "Minor",
       "Dismissed",
       "Points",
-      "Score",
+      "Median score",
       "Per 1,000 words",
       "Run scores",
       "Gate",
@@ -583,32 +623,40 @@ export function formatTable(results: MqmRunsResult[]) {
       result.score.toFixed(2),
       result.perThousand.toFixed(1),
       result.runs.map(({ score }) => score.toFixed(2)).join(" / "),
-      result.passes ? "pass" : "FAIL",
+      result.passes ? "pass" : `BLOCKED, ${result.findings.filter(blocks).length} open`,
     ]),
   ];
 
   return rows.map((cells) => `| ${cells.join(" | ")} |`).join("\n");
 }
 
-function formatFinding(finding: MqmFinding & { agreement?: number; runs?: number; run?: string }) {
+function formatFinding(
+  finding: MqmFinding & { runsAtSeverity?: number; runs?: number; run?: string },
+) {
   const tally =
-    finding.runs && finding.runs > 1 ? ` (${finding.agreement} of ${finding.runs} runs)` : "";
+    finding.runs && finding.runs > 1
+      ? ` (${finding.runsAtSeverity} of ${finding.runs} runs at this severity)`
+      : "";
 
   return `- ${finding.severity} ${finding.category}${finding.unsure ? " (unsure)" : ""}${tally}${finding.run ? ` (${finding.run})` : ""}: ${describe(finding)} ${JSON.stringify(finding.msgstr)} → ${JSON.stringify(finding.correction)}${finding.source ? ` [${finding.source}]` : ""}${finding.dismissed ? `\n  dismissed: ${finding.dismissed}` : ""}`;
 }
 
-function formatFindings(result: MqmRunsResult) {
+export function formatFindings(result: MqmRunsResult) {
   const lines: string[] = [];
+
+  const open = result.findings.filter(({ applied }) => !applied);
 
   for (const [title, findings] of [
     [
-      "critical and major, to fix and score again",
-      result.findings.filter(({ severity }) => severity !== "minor"),
+      "critical and major, blocking until each is applied or dismissed",
+      open
+        .filter(blocks)
+        .flatMap(({ all }) => all.filter((finding) => RANK[finding.severity] >= RANK.major)),
     ],
-    ["minor", result.findings.filter(({ severity }) => severity === "minor")],
-    ["term-level, to settle in the sidecar", result.findings.filter(({ source }) => source)],
-    ["single-run, not counted, to consider", result.single],
-    ["dismissed, left out of the score", result.dismissed],
+    ["minor, to correct", open.filter(({ severity }) => severity === "minor")],
+    ["term-level, to settle in the sidecar", open.filter(({ source }) => source)],
+    ["applied since the runs assessed them", result.findings.filter(({ applied }) => applied)],
+    ["dismissed, each left out of its run's score and the gate", result.dismissed],
   ] as const) {
     if (findings.length > 0) {
       lines.push(`${result.locale}, ${title}:`, ...findings.map(formatFinding));
@@ -659,18 +707,26 @@ export async function readRuns(dir: string, locale: string) {
 
 const USAGE = `Usage: bun .claude/skills/translate/mqm.ts --dir <dir> [--partial] <tag>…
        bun .claude/skills/translate/mqm.ts --dir <dir> --list [--base <ref>] <tag>…
+       bun .claude/skills/translate/mqm.ts --dir <dir> --corrected <tag>…
 
 Scores each locale's MQM findings against its catalogs: the runs
-<dir>/<tag>.mqm.<run>.json, counting what most of them agree on, or one run's
-<dir>/<tag>.mqm.json. Writes the agreed findings, the ones to correct, to
-<dir>/<tag>.mqm.agreed.json. A full run assesses every live entry of both
+<dir>/<tag>.mqm.<run>.json, every finding of any run counting, or one run's
+<dir>/<tag>.mqm.json. The score is the median run's and is reported only; a
+critical or major finding blocks until it is dismissed in a run's file or
+applied, the catalog no longer holding what <dir>/<tag>.dump.txt showed the
+runs. Writes the findings still open, one per entry with every run's, to
+<dir>/<tag>.mqm.corrections.json. A full run assesses every live entry of both
 catalogs; with --partial, only the entries in <dir>/<tag>.assess.txt.
 
 --list writes <dir>/<tag>.assess.txt for a partial run: the entries collect.ts
 listed in <dir>/<tag>.txt, and every other entry whose translation differs from
 the catalog at the merge base with --base (beta by default).
 
-Exit codes: 0 every locale passes, 1 a locale fails the gate, 2 the input is invalid.`;
+--corrected writes <dir>/<tag>.assess.txt for scoring the corrections: every
+entry whose translation differs from <dir>/<tag>.dump.txt, which must still be
+the dump the runs read.
+
+Exit codes: 0 every locale passes, 1 a locale is blocked, 2 the input is invalid.`;
 
 async function run() {
   const { values, positionals } = parseArgs({
@@ -678,6 +734,7 @@ async function run() {
       dir: { type: "string" },
       partial: { type: "boolean" },
       list: { type: "boolean" },
+      corrected: { type: "boolean" },
       base: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
@@ -752,13 +809,29 @@ async function run() {
       continue;
     }
 
+    if (values.corrected) {
+      const entries = correctedEntries(
+        catalogs,
+        parseDump(await Bun.file(path.join(values.dir, `${locale}.dump.txt`)).text()),
+      );
+
+      await Bun.write(assessPath, formatEntryList(locale, entries));
+
+      console.log(`${assessPath}: ${entries.length} corrected entries to assess`);
+
+      continue;
+    }
+
     const entries = values.partial ? parseEntryFile(await Bun.file(assessPath).text()) : undefined;
+
+    const dump = Bun.file(path.join(values.dir, `${locale}.dump.txt`));
 
     const scored = scoreRuns({
       locale,
       catalogs,
       runs: await readRuns(values.dir, locale),
       entries,
+      assessed: (await dump.exists()) ? parseDump(await dump.text()) : undefined,
     });
 
     errors.push(...scored.errors.map((error) => `${locale}: ${error}`));
@@ -767,8 +840,12 @@ async function run() {
       results.push(scored.result);
 
       await Bun.write(
-        path.join(values.dir, `${locale}.mqm.agreed.json`),
-        `${JSON.stringify(scored.result.findings, null, 2)}\n`,
+        path.join(values.dir, `${locale}.mqm.corrections.json`),
+        `${JSON.stringify(
+          scored.result.findings.filter(({ applied }) => !applied),
+          null,
+          2,
+        )}\n`,
       );
     }
   }
@@ -779,7 +856,7 @@ async function run() {
     process.exit(2);
   }
 
-  if (values.list) {
+  if (values.list || values.corrected) {
     return;
   }
 
