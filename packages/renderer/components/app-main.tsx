@@ -43,18 +43,19 @@ export function AppMain() {
     <div className="relative flex flex-1 bg-sidebar">
       <ScrollArea
         className={cn(
-          "relative flex-1 overflow-hidden border bg-background dark:border-none",
+          "@container relative flex-1 overflow-hidden border bg-background dark:border-none",
           !isFullWidthRoute && "m-4 rounded-xl",
         )}
       >
+        {/* Below its full width a column keeps 5rem a side, which clears the close button. */}
         <div
           className={cn(
             "mx-auto py-8",
             matchUnifiedInboxRoute
-              ? "w-6xl px-8"
+              ? "w-full max-w-6xl px-20 @6xl:px-8"
               : matchDownloadHistoryRoute
                 ? "max-w-2xl px-8"
-                : "w-3xl px-28",
+                : "w-full max-w-3xl px-20 @3xl:px-28",
           )}
         >
           <Route path="/unified-inbox" component={UnifiedInbox} />
