@@ -13,7 +13,7 @@ You assess Meru's interface translation into one language with MQM (Multidimensi
 Paths, from the `/translate` skill:
 
 - the dump `<locale>.dump.txt`, every entry of both catalogs with its `msgctxt`, msgid, msgstr, `#.` comments and origins, grouped by the source file it comes from, with `[multi]` before an entry whose one msgid is used in more than one file;
-- for a partial run only, the entry file `<locale>.txt`, which names the entries to assess; their current msgstr is in the dump;
+- for a partial run only, the list `<locale>.assess.txt`, which names the entries to assess; their current msgstr is in the dump;
 - the style sheet `.claude/skills/translate/languages/<locale>.md` and its sidecar `languages/<locale>.json`;
 - the glossary slice `<locale>.glossary.md`, with the full `glossary.md` too when the skill says the slice skipped lines;
 - the output path for your findings, `<dir>/<locale>.mqm.json`.
@@ -24,7 +24,7 @@ Read nothing else from the run. Earlier reviews, `check.ts` reports, translator 
 
 ## How you assess
 
-Read the style sheet, the sidecar and the glossary slice in full first: they are the conventions you judge against, including the glossary's source order, under "Where a word comes from". Then read the dump in batches, one `###` origin heading at a time, using `Read` with an offset and limit. In a full run, assess every entry; in a partial run, assess only the entries the entry file names, and read the rest of the dump only for consistency with them.
+Read the style sheet, the sidecar and the glossary slice in full first: they are the conventions you judge against, including the glossary's source order, under "Where a word comes from". Then read the dump in batches, one `###` origin heading at a time, using `Read` with an offset and limit. In a full run, assess every entry; in a partial run, assess only the entries the list names, and read the rest of the dump only for consistency with them.
 
 Judge against the project's conventions and its source order, never your own taste. A word the glossary, the sidecar or the style sheet settles is right even where you would choose another; a wording that differs from yours without an error is not a finding. When a convention itself looks wrong, say so in your reply, not as a finding.
 

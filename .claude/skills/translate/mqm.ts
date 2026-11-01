@@ -2,7 +2,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { getConfig } from "@lingui/conf";
 import { visibleText } from "./check";
-import { type Catalog, catalogFiles, parse } from "./collect";
+import { type Catalog, catalogFiles, mergeBase, parse, readAtRef } from "./collect";
 
 /*
  * Scores a locale's MQM review, `<dir>/<tag>.mqm.json`, so no agent does the
@@ -122,6 +122,73 @@ export function parseEntryFile(text: string) {
   }
 
   return entries;
+}
+
+/*
+ * A partial run's translator writes more than the new and fuzzy entries: a
+ * `check.ts` fix or a new pin can rewrite an older one, and that rewrite needs
+ * assessing as much as a new string does.
+ */
+export function changedEntries(
+  catalogs: { name: string; catalog: Catalog }[],
+  earlier: { name: string; catalog: Catalog }[],
+) {
+  const changed: AssessedEntry[] = [];
+
+  for (const { name, catalog } of catalogs) {
+    const before = new Map(
+      Object.entries(earlier.find((other) => other.name === name)?.catalog ?? {}).map(
+        ([id, entry]) => [
+          keyOf({ catalog: name, msgctxt: entry.context ?? null, msgid: entry.message ?? id }),
+          entry,
+        ],
+      ),
+    );
+
+    for (const [id, entry] of Object.entries(catalog)) {
+      const assessed = {
+        catalog: name,
+        msgctxt: entry.context ?? null,
+        msgid: entry.message ?? id,
+      };
+
+      const previous = before.get(keyOf(assessed));
+
+      if (
+        !entry.obsolete &&
+        entry.translation &&
+        (!previous || previous.obsolete || previous.translation !== entry.translation)
+      ) {
+        changed.push(assessed);
+      }
+    }
+  }
+
+  return changed;
+}
+
+export function uniqueEntries(entries: AssessedEntry[]) {
+  return [...new Map(entries.map((entry) => [keyOf(entry), entry])).values()];
+}
+
+/** The entry file's format, so `parseEntryFile` reads the list back. */
+export function formatEntryList(locale: string, entries: AssessedEntry[]) {
+  const sections = [`## ${locale}`];
+
+  for (const catalog of new Set(entries.map((entry) => entry.catalog))) {
+    const lines = entries
+      .filter((entry) => entry.catalog === catalog)
+      .map(({ msgctxt, msgid }) =>
+        [
+          `- msgid: ${JSON.stringify(msgid)}`,
+          ...(msgctxt === null ? [] : [`  msgctxt: ${JSON.stringify(msgctxt)}`]),
+        ].join("\n"),
+      );
+
+    sections.push(`### ${catalog}: entries to assess\n\n${lines.join("\n")}`);
+  }
+
+  return `${sections.join("\n\n")}\n`;
 }
 
 function validateFinding(item: unknown, index: number) {
@@ -360,10 +427,15 @@ function formatFindings(result: MqmResult) {
 }
 
 const USAGE = `Usage: bun .claude/skills/translate/mqm.ts --dir <dir> [--partial] <tag>…
+       bun .claude/skills/translate/mqm.ts --dir <dir> --list [--base <ref>] <tag>…
 
 Scores each locale's MQM findings, <dir>/<tag>.mqm.json, against its catalogs.
 A full run assesses every live entry of both catalogs; with --partial, only the
-entries collect.ts listed in <dir>/<tag>.txt.
+entries in <dir>/<tag>.assess.txt.
+
+--list writes <dir>/<tag>.assess.txt for a partial run: the entries collect.ts
+listed in <dir>/<tag>.txt, and every other entry whose translation differs from
+the catalog at the merge base with --base (HEAD by default).
 
 Exit codes: 0 every locale passes, 1 a locale fails the gate, 2 the input is invalid.`;
 
@@ -372,6 +444,8 @@ async function run() {
     options: {
       dir: { type: "string" },
       partial: { type: "boolean" },
+      list: { type: "boolean" },
+      base: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
     allowPositionals: true,
@@ -416,9 +490,36 @@ async function run() {
       })),
     );
 
-    const entries = values.partial
-      ? parseEntryFile(await Bun.file(path.join(values.dir, `${locale}.txt`)).text())
-      : undefined;
+    const assessPath = path.join(values.dir, `${locale}.assess.txt`);
+
+    if (values.list) {
+      const entryFile = Bun.file(path.join(values.dir, `${locale}.txt`));
+
+      const listed = (await entryFile.exists()) ? parseEntryFile(await entryFile.text()) : [];
+
+      const earlierRef = mergeBase(values.base ?? "HEAD") ?? "HEAD";
+
+      const earlier = await Promise.all(
+        catalogFiles(config, locale).map(async ({ name, relative }) => {
+          const text = readAtRef(earlierRef, relative);
+
+          return {
+            name,
+            catalog: text ? await parse(text, locale, config.sourceLocale, relative) : {},
+          };
+        }),
+      );
+
+      const entries = uniqueEntries([...listed, ...changedEntries(catalogs, earlier)]);
+
+      await Bun.write(assessPath, formatEntryList(locale, entries));
+
+      console.log(`${assessPath}: ${entries.length} entries to assess`);
+
+      continue;
+    }
+
+    const entries = values.partial ? parseEntryFile(await Bun.file(assessPath).text()) : undefined;
 
     const scored = scoreLocale({
       locale,
@@ -438,6 +539,10 @@ async function run() {
     console.error(errors.join("\n"));
 
     process.exit(2);
+  }
+
+  if (values.list) {
+    return;
   }
 
   console.log(formatTable(results));

@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import path from "node:path";
 import { parse } from "../.claude/skills/translate/collect";
-import { countWords, parseEntryFile, scoreLocale } from "../.claude/skills/translate/mqm";
+import {
+  changedEntries,
+  countWords,
+  formatEntryList,
+  parseEntryFile,
+  scoreLocale,
+  uniqueEntries,
+} from "../.claude/skills/translate/mqm";
 
 /*
  * Lives here rather than beside the script because `bun test` never looks
@@ -60,6 +67,60 @@ describe("parseEntryFile", () => {
         msgid: "{action, select, click {On click} other {Button}}",
       },
       { catalog: "preload-gmail", msgctxt: null, msgid: "Move to Trash" },
+    ]);
+  });
+});
+
+describe("changedEntries", () => {
+  test("lists each live entry whose translation is new or differs, and no other", async () => {
+    const earlier = await catalogs();
+
+    const [current, preloadGmail] = await catalogs();
+
+    if (!current || !preloadGmail) {
+      throw new Error("The fixtures hold two catalogs.");
+    }
+
+    const app = current.catalog;
+
+    const settings = Object.values(app).find(({ message }) => message === "Settings");
+
+    if (!settings) {
+      throw new Error("The app fixture holds Settings.");
+    }
+
+    settings.translation = "Optionen";
+
+    app["new-id"] = { message: "New", translation: "Neu" };
+
+    app["empty-id"] = { message: "Empty", translation: "" };
+
+    expect(changedEntries([current, preloadGmail], earlier)).toEqual([
+      { catalog: "app", msgctxt: null, msgid: "Settings" },
+      { catalog: "app", msgctxt: null, msgid: "New" },
+    ]);
+  });
+
+  test("a partial run's list, written and read back, holds the entry file's and the changed entries once each", async () => {
+    const listed = parseEntryFile(await fixture("de.txt").text());
+
+    const entries = uniqueEntries([
+      ...listed,
+      { catalog: "app", msgctxt: null, msgid: "Settings" },
+      { catalog: "preload-gmail", msgctxt: null, msgid: "Move to Trash" },
+    ]);
+
+    const [quit, action, trash] = listed;
+
+    if (!quit || !action || !trash) {
+      throw new Error("The entry file fixture holds three entries.");
+    }
+
+    expect(parseEntryFile(formatEntryList("de", entries))).toEqual([
+      quit,
+      action,
+      { catalog: "app", msgctxt: null, msgid: "Settings" },
+      trash,
     ]);
   });
 });

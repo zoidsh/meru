@@ -136,13 +136,13 @@ export async function parse(text: string, locale: string, sourceLocale: string, 
   return (await po.parse(text, { locale, sourceLocale, filename })) as Catalog;
 }
 
-function readAtRef(ref: string, file: string) {
+export function readAtRef(ref: string, file: string) {
   const result = Bun.spawnSync(["git", "show", `${ref}:${file}`], { stderr: "ignore" });
 
   return result.success ? result.stdout.toString() : undefined;
 }
 
-function mergeBase(ref: string) {
+export function mergeBase(ref: string) {
   const result = Bun.spawnSync(["git", "merge-base", "HEAD", ref], { stderr: "ignore" });
 
   return result.success ? result.stdout.toString().trim() : undefined;
