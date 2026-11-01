@@ -319,3 +319,15 @@ msgstr "Dans le lanceur"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Use a security key such as Te2 or Ta+"
 msgstr "Utilisez une clé de sécurité comme Te2 ou Ta+"
+
+#: packages/app/context-menu.ts
+msgid "Inspect Element"
+msgstr "Inspecter"
+
+#: packages/shared/accounts.ts
+msgid "Purple"
+msgstr "Violet"
+
+#: packages/shared/accounts.ts
+msgid "Violet"
+msgstr "Mauve"

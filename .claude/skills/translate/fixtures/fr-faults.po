@@ -394,3 +394,18 @@ msgstr "toc-toc"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "Dans le menu des applis"
+
+# fault: pinned:inspect-element
+#: packages/app/context-menu.ts
+msgid "Inspect Element"
+msgstr "Inspecter l’élément"
+
+# fault: pinned:color-purple
+#: packages/shared/accounts.ts
+msgid "Purple"
+msgstr "Pourpre"
+
+# fault: pinned:color-violet
+#: packages/shared/accounts.ts
+msgid "Violet"
+msgstr "Violet"

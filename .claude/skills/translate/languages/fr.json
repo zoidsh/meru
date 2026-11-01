@@ -1000,6 +1000,29 @@
       "expect": "[Ll]anceur",
       "severity": "wrong",
       "reason": "The launcher is the lanceur, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
+    },
+    {
+      "id": "inspect-element",
+      "msgid": "Inspect Element",
+      "expect": "^Inspecter$",
+      "severity": "wrong",
+      "reason": "Inspect Element is Inspecter, as Chrome's page context menu writes its Inspect item."
+    },
+    {
+      "id": "color-purple",
+      "msgid": "Purple",
+      "msgctxt": null,
+      "expect": "^Violet$",
+      "severity": "wrong",
+      "reason": "The account color Purple is Violet, as Chrome writes Purple in its tab group and color names; Chrome's Violet is Mauve."
+    },
+    {
+      "id": "color-violet",
+      "msgid": "Violet",
+      "msgctxt": null,
+      "expect": "^Mauve$",
+      "severity": "wrong",
+      "reason": "The account color Violet is Mauve, as Chrome writes Violet in its color names, since Chrome's Purple is Violet."
     }
   ],
   "accessKeys": {
