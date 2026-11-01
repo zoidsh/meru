@@ -1,3 +1,4 @@
+import { platform } from "@electron-toolkit/utils";
 import {
   type BrowserWindow,
   type MenuItemConstructorOptions,
@@ -42,12 +43,18 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
                 copyText(meruMessageUrl);
               },
             },
-            {
-              role: "shareMenu",
-              sharingItem: {
-                urls: [meruMessageUrl],
-              },
-            },
+            // `sharingItem` and the `shareMenu` role are macOS-only, and a role
+            // ignores `click`, so elsewhere a Share item would have nothing to do.
+            ...(platform.isMacOS
+              ? [
+                  {
+                    role: "shareMenu" as const,
+                    sharingItem: {
+                      urls: [meruMessageUrl],
+                    },
+                  },
+                ]
+              : []),
             {
               type: "separator",
             },

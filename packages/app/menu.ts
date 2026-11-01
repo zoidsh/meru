@@ -253,6 +253,21 @@ export class AppMenu {
       messageId &&
       createMeruMessageUrl(userEmail, messageId);
 
+    // `sharingItem` and the `shareMenu` role are macOS-only, and a role ignores
+    // `click`, so elsewhere a Share item would have nothing to do.
+    const macOSShareMessageItem: MenuItemConstructorOptions = copyOrShareMessageLink
+      ? {
+          role: "shareMenu",
+          sharingItem: {
+            urls: [copyOrShareMessageLink],
+          },
+        }
+      : {
+          label: "Share",
+          enabled: false,
+          submenu: [],
+        };
+
     const isFindInPageEnabled =
       Boolean(focusedWindow && WorkspaceApp.tryFromWebContents(focusedWindow.webContents)) ||
       main.location === "/";
@@ -513,18 +528,7 @@ export class AppMenu {
               }
             },
           },
-          copyOrShareMessageLink
-            ? {
-                role: "shareMenu",
-                sharingItem: {
-                  urls: [copyOrShareMessageLink],
-                },
-              }
-            : {
-                label: "Share",
-                enabled: false,
-                submenu: [],
-              },
+          ...(platform.isMacOS ? [macOSShareMessageItem] : []),
         ],
       },
       {
