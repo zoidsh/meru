@@ -4,6 +4,7 @@ import { type LocaleTag, PSEUDO_LOCALE, SHIPPED_CATALOG_TAGS } from "@meru/share
 import { messages as de } from "./locales/de";
 import { messages as en } from "./locales/en";
 import { messages as pseudo } from "./locales/en-XA";
+import { messages as fr } from "./locales/fr";
 import { messages as ja } from "./locales/ja";
 
 /*
@@ -13,6 +14,7 @@ import { messages as ja } from "./locales/ja";
 export const catalogs: { en: Messages } & Partial<Record<LocaleTag, Messages>> = {
   en,
   de,
+  fr,
   ja,
   // The build inlines the variable, so a shipped bundle drops the pseudo-locale
   // with this branch.

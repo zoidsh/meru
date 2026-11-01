@@ -394,3 +394,55 @@ msgstr "toc-toc"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "Dans le menu des applis"
+
+# fault: pinned:inspect-element
+#: packages/app/context-menu.ts
+msgid "Inspect Element"
+msgstr "Inspecter l’élément"
+
+# fault: pinned:color-purple
+#: packages/shared/accounts.ts
+msgid "Purple"
+msgstr "Pourpre"
+
+# fault: pinned:color-violet
+#: packages/shared/accounts.ts
+msgid "Violet"
+msgstr "Violet"
+
+# Google's name without its de.
+# fault: pinned:google-password-manager
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add a passkey to your Google account from its security settings inside Meru, then sign in with Windows Hello — no password manager extension to install, so Meru stays fast and light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and filling passwords still needs a password manager."
+msgstr "Ajoutez une clé d’accès à votre compte Google depuis ses paramètres de sécurité dans Meru, puis connectez-vous avec Windows Hello. Aucune extension de gestionnaire de mots de passe à installer : Meru reste rapide et léger. Les clés d’accès de Chrome, du Gestionnaire de mots de passe Google ou de votre téléphone ne fonctionnent pas ici, et le remplissage des mots de passe nécessite toujours un gestionnaire de mots de passe."
+
+# The first run's indicateur, for the unread badge's pastille.
+# fault: pinned:app-links-badge
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show app links badge"
+msgstr "Afficher l’indicateur de l’onglet des liens d’appli"
+
+# The first run's menu word, beside the titlebar's Retour.
+# fault: pinned:back
+#: packages/renderer/components/titlebar.tsx
+msgid "Go back"
+msgstr "Précédent"
+
+# The first run's menu word, beside the titlebar's Avancer.
+# fault: pinned:forward
+#: packages/app/menu.ts
+msgid "Forward"
+msgstr "Suivant"
+
+# The first run's question, against its own Réinitialiser button.
+# fault: pinned:reset
+#: packages/app/menu.ts
+msgid "Reset Meru to its original state?"
+msgstr "Rétablir l’état d’origine de Meru ?"
+
+# The action's word for the menu's title.
+# fault: pinned:edit-menu
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Edit"
+msgstr "Modifier"

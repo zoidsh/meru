@@ -169,9 +169,14 @@ export function AppSidebar() {
                   onClick={() => {
                     navigate(path);
                   }}
-                  className={cn("w-full justify-start font-normal", {
-                    "text-muted-foreground hover:text-muted-foreground": location !== path,
-                  })}
+                  // A label too long for the strip wraps rather than clipping;
+                  // min-h-8 and py-1 keep a one-line item at the Button's h-8.
+                  className={cn(
+                    "h-auto min-h-8 w-full justify-start py-1 text-left font-normal wrap-anywhere whitespace-normal",
+                    {
+                      "text-muted-foreground hover:text-muted-foreground": location !== path,
+                    },
+                  )}
                   variant={location === path ? "secondary" : "ghost"}
                 >
                   {typeof label === "string" ? label : t(label)}

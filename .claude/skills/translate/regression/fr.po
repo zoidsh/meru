@@ -1,0 +1,389 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: fr\n"
+
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Violet"
+msgstr "Mauve"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Back"
+msgstr "Retour"
+
+#: packages/renderer/components/titlebar.tsx
+msgid "Go forward"
+msgstr "Avancer"
+
+#. Button in the Reset App dialog that erases Meru's data
+#: packages/app/menu.ts
+msgid "Reset"
+msgstr "Réinitialiser"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Reset App"
+msgstr "Réinitialiser l’application"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Unpin"
+msgstr "Retirer"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Edit"
+msgstr "Édition"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Edit account"
+msgstr "Modifier le compte"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove account"
+msgstr "Supprimer le compte"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Settings"
+msgstr "Réglages…"
+
+#. A menu or a menu item in Meru's menu bar
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+#: packages/app/menu.ts
+msgid "Reload"
+msgstr "Actualiser"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Rendre inactifs les onglets inutilisés"
+
+#. Heading of the Workspace apps already in the launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "Dans le lanceur"
+
+#: packages/renderer/routes/settings/updates.tsx
+msgid "Release channel"
+msgstr "Version de mise à jour"
+
+#. Context menu item that copies the address of the clicked link; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Copy Link Addr&ess"
+msgstr "Co&pier l’adresse du lien"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "&Paste"
+msgstr "Co&ller"
+
+#. Badge on an account's row in Settings when its unread badge is on: a short badge on a row that cannot wrap; keep it as short as possible
+#: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account row badge"
+msgid "Unread badge"
+msgstr "Non lus"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show unread badges"
+msgstr "Afficher les pastilles des e-mails non lus"
+
+#: packages/app/trial.ts
+msgid "Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade."
+msgstr "Les fonctionnalités de Meru Pro restent actives jusqu’à ce que vous quittiez Meru. Meru passe ensuite à la version gratuite, sauf si vous effectuez une mise à niveau."
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Scroll accounts right"
+msgstr "Faire défiler les comptes vers la droite"
+
+#: packages/app/trial.ts
+msgid "Couldn't validate your Meru Pro trial."
+msgstr "Impossible de valider votre essai de Meru Pro."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Restrict minimum window size"
+msgstr "Limiter la taille minimale de la fenêtre"
+
+#: packages/renderer/recent-download-history.tsx
+msgid "Recent download history"
+msgstr "Historique des téléchargements récents"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show width button"
+msgstr "Afficher le bouton de largeur"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Add account"
+msgstr "Ajouter un compte"
+
+#. Name of a notification sound, picked in Settings
+#: packages/renderer/lib/notifications/index.ts
+msgid "Linen"
+msgstr "Lin"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Change license key"
+msgstr "Modifier la clé de licence"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#. Switch, and a badge on the account, for including the account in the unified inbox
+#. Title of the unified inbox page
+#: packages/renderer/lib/settings-pages.ts
+#: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Unified inbox"
+msgstr "Boîte de réception unifiée"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show unread badge"
+msgstr "Afficher la pastille des e-mails non lus"
+
+#. Button that picks another folder for downloads
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Change…"
+msgstr "Modifier…"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Edit Config"
+msgstr "Modifier la configuration"
+
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgid "Edit label color"
+msgstr "Modifier la couleur de libellé"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Redo"
+msgstr "Rétablir"
+
+#. Title of the Settings window, in its titlebar
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Settings"
+msgstr "Paramètres"
+
+# catalog: preload-gmail
+#. Button in the message-sent toast, which recalls the message
+#: packages/preload-gmail/ipc.ts
+msgctxt "button"
+msgid "Undo"
+msgstr "Annuler"
+
+# catalog: preload-gmail
+#. Toast in the Gmail view once a message has been sent
+#: packages/preload-gmail/ipc.ts
+msgid "Message sent"
+msgstr "Message envoyé"
+
+# catalog: preload-gmail
+#. Accessible name of the region Meru's own toasts appear in
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Toasts"
+
+# expect: accuracy/mistranslation|fluency/unidiomatic minor
+# real: the French run's pronoun, fixed by its reviewer; à sa place reads as in place of the new window or tab, not the tab in quotes
+# hard
+#. appLinksTabTitle is the title of the tab that opens the links today; appLabel is the name of a Google Workspace app, such as Docs or Sheets
+#: packages/app/dialogs.ts
+msgid "{target, select, window {“{appLinksTabTitle}” currently opens all {appLabel} links. This window will open them instead.} other {“{appLinksTabTitle}” currently opens all {appLabel} links. This tab will open them instead.}}"
+msgstr "{target, select, window {« {appLinksTabTitle} » ouvre actuellement tous les liens {appLabel}. Cette fenêtre les ouvrira à sa place.} other {« {appLinksTabTitle} » ouvre actuellement tous les liens {appLabel}. Cet onglet les ouvrira à sa place.}}"
+
+# expect: fluency/unidiomatic minor
+# real: an MQM minor of the French run; à vos risques is a truncated à vos risques et périls
+# hard
+#: packages/app/dialogs.ts
+msgid "Meru {version} is the last version that runs on macOS {macOSVersion}. Newer versions need macOS 13 or later, so Meru won't check for updates on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
+msgstr "Meru {version} est la dernière version compatible avec macOS {macOSVersion}. Les versions plus récentes nécessitent macOS 13 ou version ultérieure, Meru ne recherchera donc pas de mises à jour sur ce Mac. Cette version continue de fonctionner, mais ne reçoit plus aucun correctif, y compris de sécurité ; son utilisation à long terme se fait donc à vos risques."
+
+# expect: fluency/unidiomatic|accuracy/mistranslation minor
+# real: the French run's calque, fixed by its reviewer; a site does not apply itself
+# hard
+#. extensionName is a password manager extension's name
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "{extensionName} runs on Google's sign-in pages only. Add a site to run it there too, such as your company's single sign-on provider. Sites apply after a restart."
+msgstr "{extensionName} ne s’exécute que sur les pages de connexion de Google. Ajoutez un site pour l’y exécuter aussi, comme le fournisseur d’authentification unique de votre entreprise. Les sites s’appliquent après un redémarrage."
+
+# expect: fluency/unidiomatic minor
+# real: an MQM minor of the French run; à vos risques is a truncated à vos risques et périls
+# hard
+#: packages/renderer/routes/settings/updates.tsx
+msgid "Updates need macOS 13 or later, so Meru won't check for them on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
+msgstr "Les mises à jour nécessitent macOS 13 ou version ultérieure, Meru ne les recherchera donc pas sur ce Mac. Cette version continue de fonctionner, mais ne reçoit plus aucun correctif, y compris de sécurité ; son utilisation à long terme se fait donc à vos risques."
+
+# expect: fluency/grammar|accuracy/mistranslation minor
+# planted: the plural branches swapped, # jours for one and # jour for many and other
+# hard
+#: packages/renderer/routes/settings/license.tsx
+msgid "{trialDaysLeft, plural, one {You're using a Meru Pro trial with # day left.} other {You're using a Meru Pro trial with # days left.}}"
+msgstr "{trialDaysLeft, plural, one {Vous utilisez un essai de Meru Pro qui se termine dans # jours.} many {Vous utilisez un essai de Meru Pro qui se termine dans # jour.} other {Vous utilisez un essai de Meru Pro qui se termine dans # jour.}}"
+
+# expect: terminology minor
+# real: the French run's menu pair Précédent and Suivant, which the review found beside the titlebar's Retour and Avancer; Chrome's are Retour and Avancer
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Forward"
+msgstr "Suivant"
+
+# expect: terminology minor
+# real: the other half of the French run's two pairs; Chrome's Back is Retour
+#: packages/renderer/components/titlebar.tsx
+msgid "Go back"
+msgstr "Précédent"
+
+# expect: terminology|accuracy/mistranslation minor
+# real: an MQM minor of the French run; Chrome's Purple is Violet, now a pin
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Purple"
+msgstr "Pourpre"
+
+# expect: terminology minor
+# real: the French run's indicateur, which the lead settled as the unread badge's pastille
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show app links badge"
+msgstr "Afficher l’indicateur de l’onglet des liens d’appli"
+
+# expect: terminology minor
+# real: the French run's Rétablir, fixed by its reviewer; the dialog's button and the menu item say Réinitialiser
+#: packages/app/menu.ts
+msgid "Reset Meru to its original state?"
+msgstr "Rétablir l’état d’origine de Meru ?"
+
+# expect: style minor
+# real: the French run's titlebar badge, fixed by its reviewer; far longer than the tight label needs
+#. Titlebar badge counting the whole days left in the Meru Pro trial
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
+msgstr "{trialDaysLeft, plural, one {L’essai Pro se termine dans # jour} many {L’essai Pro se termine dans # jours} other {L’essai Pro se termine dans # jours}}"
+
+# expect: accuracy/omission minor
+# real: an MQM minor of the French run, all three runs; Redémarrer drops now, which the button sets against Plus tard
+#. Titlebar button that restarts Meru to install a downloaded update
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Restart now"
+msgstr "Redémarrer"
+
+# expect: accuracy/mistranslation|fluency/unidiomatic minor
+# real: the French run's Signaler, fixed by its reviewer; it reads as reporting the tab, not marking it
+# hard
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Mark the tab that opens all of an app's links, set from the tab's context menu. With this off, the tab still takes the links, and its tooltip still says so."
+msgstr "Signaler l’onglet qui ouvre tous les liens d’une appli, défini depuis le menu contextuel de l’onglet. Si cette option est désactivée, l’onglet reçoit toujours les liens et son info-bulle l’indique toujours."
+
+# expect: style|terminology|fluency/punctuation minor
+# real: the French run's touch Appuyez and its unquoted button label, fixed by its reviewer
+#. Copy names the button on the verification code notification, so it matches that button's label
+#: packages/renderer/routes/settings/verification-codes.tsx
+msgid "A notification shows the code either way. Press its Copy button to copy the code yourself."
+msgstr "Une notification affiche le code dans tous les cas. Appuyez sur son bouton Copier pour copier le code vous-même."
+
+# expect: accuracy/mistranslation critical
+# planted: a button that says the opposite of what it does
+#: packages/renderer/routes/settings/license.tsx
+msgid "Activate license key"
+msgstr "Désactiver la clé de licence"
+
+# expect: accuracy/mistranslation major
+# planted: wrong meaning, the opposite direction
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Scroll accounts left"
+msgstr "Faire défiler les comptes vers la droite"
+
+# expect: accuracy/addition major
+# planted: addition; clearing cookies would sign every account out
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Clear Cache"
+msgstr "Vider le cache et les cookies"
+
+# expect: accuracy/omission|accuracy/addition|accuracy/mistranslation critical
+# planted: a broken placeholder, translated
+#. origin is the scheme and host of a website, such as https://example.com
+#: packages/app/url.ts
+msgid "Trust all links on {origin}"
+msgstr "Approuver tous les liens de {origine}"
+
+# expect: accuracy/omission|accuracy/mistranslation critical
+# planted: a broken tag, the closing </0> dropped
+#. allowlistEntry is the line to add to 1Password's list of allowed browsers, which stays as it is
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add <0>{allowlistEntry}</0> on its own line, then save."
+msgstr "Ajoutez <0>{allowlistEntry} sur une ligne distincte, puis enregistrez."
+
+# expect: fluency/punctuation|locale-conventions minor
+# planted: straight quotation marks for « »
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show Do Not Disturb button"
+msgstr "Afficher le bouton \"Ne pas déranger\""
+
+# expect: style minor
+# planted: tu for the style sheet's vous
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Enter a search query"
+msgstr "Saisis une requête de recherche"
+
+# expect: accuracy/mistranslation major
+# planted: near miss, current for default
+# hard
+#: packages/renderer/routes/settings/general.tsx
+msgid "Meru is set as the default mail client."
+msgstr "Meru est défini comme client de messagerie actuel."
+
+# expect: accuracy/mistranslation|accuracy/addition major
+# planted: scope widened from the compose window to every window
+# hard
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Close compose window after send"
+msgstr "Fermer toutes les fenêtres après l’envoi"
+
+# expect: accuracy/addition|accuracy/mistranslation minor
+# planted: scope narrowed to PDF files
+# hard
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Where downloaded files are saved."
+msgstr "Emplacement où sont enregistrés les fichiers PDF téléchargés."
+
+# expect: fluency/unidiomatic|accuracy/mistranslation minor
+# planted: a calque of done for Chrome's OK
+# hard
+#. Button that closes the dialog of an extension's sites
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Done"
+msgstr "Fait"
+
+# expect: accuracy/omission minor
+# planted: the deadline dropped, before your trial ends
+# hard
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro before your trial ends to keep using all features."
+msgstr "Mettez à niveau vers Meru Pro pour continuer à utiliser toutes les fonctionnalités."
+
+# expect: accuracy/mistranslation|accuracy/omission major
+# planted: the negation dropped, which inverts the option
+# hard
+#. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
+#: packages/shared/workspace-apps.ts
+msgid "Unpinned tabs"
+msgstr "Onglets épinglés"
+
+# expect: fluency/spelling minor
+# planted: a typo
+# hard
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Historique des téléchargemnets"
+
+# expect: style minor
+# planted: a switch label as an imperative sentence, against the style sheet's label form
+#: packages/renderer/routes/settings/license.tsx
+msgid "Show license key"
+msgstr "Affichez la clé de licence"

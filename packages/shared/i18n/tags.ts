@@ -25,7 +25,7 @@ export type CatalogTag = (typeof CATALOG_TAGS)[number];
  * The catalogs this build ships, which is what the picker offers, what the
  * system languages are matched against and what Lingui extracts and compiles.
  */
-export const SHIPPED_CATALOG_TAGS: readonly CatalogTag[] = ["en", "de", "ja"];
+export const SHIPPED_CATALOG_TAGS: readonly CatalogTag[] = ["en", "de", "fr", "ja"];
 
 /**
  * Every message in English, accented, padded and bracketed, compiled from the
