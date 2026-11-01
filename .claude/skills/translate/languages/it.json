@@ -800,7 +800,7 @@
       "reason": "A bookmark is a preferito, as Chrome writes it: Preferiti, Aggiungi ai preferiti (Chrome: 158 of 163 messages).",
       "example": {
         "msgid": "No bookmarks yet",
-        "clean": "Nessun preferito",
+        "clean": "Ancora nessun preferito",
         "fault": "Nessun segnalibro"
       }
     },
@@ -1035,7 +1035,7 @@
       "reason": "System Settings is Apple's Impostazioni di Sistema, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "Attiva l’opzione anche in Impostazioni di Sistema.",
+        "clean": "Scorri a sinistra o a destra con due dita sul trackpad per andare indietro o avanti. Anche Scorri tra le pagine deve essere attivo in Impostazioni di Sistema.",
         "fault": "Attiva l’opzione anche in Preferenze di Sistema."
       }
     },
@@ -1580,7 +1580,7 @@
       "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
       "example": {
         "msgid": "Open Meru Portal",
-        "clean": "Meru Portal",
+        "clean": "Apri il Meru Portal",
         "fault": "Apri il portale Meru"
       }
     }

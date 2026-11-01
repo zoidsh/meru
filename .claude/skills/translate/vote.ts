@@ -1,7 +1,17 @@
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { z } from "zod";
-import { APP_NAMES, APPS, type App, CORPUS_DIR, type Pair, readCorpus } from "./corpus";
+import {
+  APP_NAMES,
+  APPS,
+  type App,
+  CORPUS_DIR,
+  hasLanguage,
+  type Pair,
+  readCorpus,
+  TAGS,
+  unknownTags,
+} from "./corpus";
 
 /*
  * The seven-app vote of the source order's step 4c, over the corpora
@@ -266,6 +276,14 @@ async function main() {
     process.exit(values.help ? 0 : 2);
   }
 
+  const strangers = unknownTags(tags);
+
+  if (strangers.length > 0) {
+    console.error(`Unknown tag ${strangers.join(", ")}; use ${TAGS.join(", ")}.`);
+
+    process.exit(2);
+  }
+
   const concepts = conceptsSchema
     .parse(await Bun.file(values.concepts ?? CONCEPTS_PATH).json())
     .filter((item) => named.length === 0 || named.includes(item.concept));
@@ -291,8 +309,16 @@ async function main() {
 
     const missing = APPS.filter((app) => corpora[app].length === 0);
 
-    if (missing.length > 0) {
-      console.error(`${tag}: no corpus for ${missing.join(", ")}; corpus.ts ${tag} builds them.`);
+    const absent = missing.filter((app) => !hasLanguage(app, tag));
+
+    const unbuilt = missing.filter((app) => hasLanguage(app, tag));
+
+    for (const app of absent) {
+      console.error(`${tag}: no ${APP_NAMES[app]} translation for ${tag}`);
+    }
+
+    if (unbuilt.length > 0) {
+      console.error(`${tag}: no corpus for ${unbuilt.join(", ")}; corpus.ts ${tag} builds them.`);
     }
 
     for (const item of concepts.filter((candidate) => candidate.candidates[tag])) {
