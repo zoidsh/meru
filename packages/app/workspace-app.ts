@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { platform } from "@electron-toolkit/utils";
 import { select, t } from "@lingui/core/macro";
+import { getAccountLabel } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT, GOOGLE_ACCOUNTS_URL } from "@meru/shared/constants";
 import { curatedExtensions } from "@meru/shared/extensions";
 import { getWorkspaceAppFromUrl, getWorkspaceAppUrl } from "@meru/shared/google";
@@ -1018,7 +1019,9 @@ export class WorkspaceApp {
     }
 
     const accountLabelPrefix =
-      accounts.getAccountConfigs().length > 1 ? `[${this.account.config.label}] ` : "";
+      accounts.getAccountConfigs().length > 1
+        ? `[${getAccountLabel(this.account.config.label)}] `
+        : "";
 
     this.window.setTitle(`${accountLabelPrefix}${this.title} - ${app.name}`);
   }

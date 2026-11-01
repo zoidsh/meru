@@ -1,6 +1,7 @@
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import { t } from "@lingui/core/macro";
+import { getAccountLabel } from "@meru/shared/accounts";
 import { app, dialog } from "electron";
 import { accounts } from "@/accounts";
 import { showProUpgradeDialog } from "@/dialogs";
@@ -76,7 +77,10 @@ async function promptForAccount(message: string) {
   const { response } = await dialog.showMessageBox(main.window, {
     type: "question",
     message,
-    buttons: [...accountConfigs.map((accountConfig) => accountConfig.label), t`Cancel`],
+    buttons: [
+      ...accountConfigs.map((accountConfig) => getAccountLabel(accountConfig.label)),
+      t`Cancel`,
+    ],
     cancelId,
   });
 

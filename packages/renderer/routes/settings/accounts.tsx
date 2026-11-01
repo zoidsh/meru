@@ -3,7 +3,7 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { msg } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { accountColorsMap } from "@meru/shared/accounts";
+import { accountColorsMap, getAccountLabel } from "@meru/shared/accounts";
 import { ipc } from "@meru/shared/renderer/ipc";
 import type { AccountConfig } from "@meru/shared/schemas";
 import { type AccountConfigInput, accountConfigInputSchema } from "@meru/shared/schemas";
@@ -382,6 +382,8 @@ function EditAccountButton({
 
   const { t } = useLingui();
 
+  const label = getAccountLabel(account.label);
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger
@@ -398,11 +400,14 @@ function EditAccountButton({
           </DialogTitle>
         </DialogHeader>
         <AccountForm
-          account={account}
+          account={{ ...account, label }}
           onSubmit={(values) => {
             ipc.main.send("accounts.updateAccount", {
               ...account,
               ...values,
+              // The field shows the seeded label translated, and saving it
+              // unchanged keeps the English the config holds.
+              label: values.label === label ? account.label : values.label,
               gmail: { ...account.gmail, ...values.gmail },
             });
 
@@ -447,7 +452,7 @@ function SortableAccountItem({
 
   const { t } = useLingui();
 
-  const { label } = account;
+  const label = getAccountLabel(account.label);
 
   return (
     <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
@@ -469,7 +474,7 @@ function SortableAccountItem({
               account.color ? `${accountColorsMap[account.color].className}` : "border",
             )}
           />
-          {account.label}
+          {label}
         </ItemTitle>
         {(account.disabled ||
           account.gmail.unreadBadge ||
