@@ -1023,6 +1023,13 @@
       "expect": "^Mauve$",
       "severity": "wrong",
       "reason": "The account color Violet is Mauve, as Chrome writes Violet in its color names, since Chrome's Purple is Violet."
+    },
+    {
+      "id": "google-password-manager",
+      "msgidPattern": "\\bGoogle Password Manager\\b",
+      "expect": "Gestionnaire de mots de passe de Google",
+      "severity": "wrong",
+      "reason": "Google Password Manager is Google's own name, Gestionnaire de mots de passe de Google, as its Help writes it (support.google.com/accounts/answer/6208650?hl=fr) and Chrome in 56 of 68 messages (Chrome 156's macOS locale.pak)."
     }
   ],
   "accessKeys": {

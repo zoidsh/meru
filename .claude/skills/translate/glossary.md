@@ -663,6 +663,12 @@ The string a browser sends to name itself, in the Advanced settings. A language 
 - de: User-Agent (Chrome 1/1)
 - ja: ユーザーエージェント (Chrome 1/1, ユーザー エージェント without its space, as the style sheet spaces katakana)
 
+## Google Password Manager
+
+Google's password manager, named in the passkey help: _Passkeys from Chrome, Google Password Manager, or your phone don't work here_. Google's name, so Google's word, read from its own Help; Chrome's count is counted in Chrome 156's macOS `locale.pak`, in the messages with _Google Password Manager_. A language without a line takes Google's name.
+
+- fr: Gestionnaire de mots de passe de Google, capitalized as a name, with its article outside it (_du Gestionnaire de mots de passe de Google_) (Google, Help "Premiers pas avec le Gestionnaire de mots de passe de Google" (support.google.com/accounts/answer/6208650?hl=fr); Chrome 56/68), never _Gestionnaire de mots de passe Google_
+
 ## Back, Forward
 
 Navigating the current view's history: the menu's _Back_ and _Forward_ and the titlebar's _Go back_ and _Go forward_, one pair of words for both. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Back_, _Go back_ or _Forward_; Chrome has no _Go forward_. A language without a line takes Chrome's word.
