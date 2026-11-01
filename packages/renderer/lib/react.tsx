@@ -7,11 +7,12 @@ import { initLocale } from "./i18n";
 import { queryClient } from "./react-query";
 import { initTheme } from "./theme";
 
-export function renderApp(App: React.ComponentType) {
+export async function renderApp(App: React.ComponentType) {
   initTheme();
 
-  // Before the provider mounts: it renders nothing until a catalog is active.
-  initLocale();
+  // Awaited before the first render, so that the first paint is already in the
+  // page's language rather than English swapped out once its catalog arrives.
+  await initLocale();
 
   const rootElement = document.getElementById("root");
 

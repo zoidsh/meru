@@ -8,12 +8,12 @@ import { localeSearchParam } from "./search-params";
  * other first-paint values already travel. A page therefore renders translated
  * without an IPC round trip, and `"system"` never has to be resolved here.
  */
-export function initLocale() {
+export async function initLocale() {
   const locale = localeSearchParam && isLocaleTag(localeSearchParam) ? localeSearchParam : "en";
 
   setDayjsLocale(locale);
 
-  activateLocale(locale);
+  await activateLocale(locale);
 
   // Japanese needs it to pick Japanese glyphs over Chinese ones for the
   // characters the two scripts share.

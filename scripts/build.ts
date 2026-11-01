@@ -448,7 +448,11 @@ function buildAppFiles() {
       },
     }).then((bundle) =>
       bundle.write({
-        file: path.join(process.cwd(), "build-js", "app.js"),
+        dir: path.join(process.cwd(), "build-js"),
+        entryFileNames: "app.js",
+        // Each catalog is its own chunk, required only for the language a start
+        // resolves to.
+        chunkFileNames: "app-chunks/[name]-[hash].js",
         format: "cjs",
         minify: appBundleMinify,
       }),

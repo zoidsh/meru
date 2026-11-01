@@ -21,8 +21,8 @@ function activateGermanFixture() {
   });
 }
 
-afterEach(() => {
-  activateLocale("en");
+afterEach(async () => {
+  await activateLocale("en");
 });
 
 describe("getAccountLabel", () => {
