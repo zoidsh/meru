@@ -335,3 +335,19 @@ msgstr "Mauve"
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Add a passkey to your Google account from its security settings inside Meru, then sign in with Windows Hello — no password manager extension to install, so Meru stays fast and light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and filling passwords still needs a password manager."
 msgstr "Ajoutez une clé d’accès à votre compte Google depuis ses paramètres de sécurité dans Meru, puis connectez-vous avec Windows Hello. Aucune extension de gestionnaire de mots de passe à installer : Meru reste rapide et léger. Les clés d’accès de Chrome, du Gestionnaire de mots de passe de Google ou de votre téléphone ne fonctionnent pas ici, et le remplissage des mots de passe nécessite toujours un gestionnaire de mots de passe."
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show app links badge"
+msgstr "Afficher la pastille de l’onglet des liens d’appli"
+
+#: packages/app/menu.ts
+msgid "Back"
+msgstr "Retour"
+
+#: packages/renderer/components/titlebar.tsx
+msgid "Go forward"
+msgstr "Avancer"
+
+#: packages/app/menu.ts
+msgid "Reset App"
+msgstr "Réinitialiser l’application"

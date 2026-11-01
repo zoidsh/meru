@@ -1030,6 +1030,36 @@
       "expect": "Gestionnaire de mots de passe de Google",
       "severity": "wrong",
       "reason": "Google Password Manager is Google's own name, Gestionnaire de mots de passe de Google, as its Help writes it (support.google.com/accounts/answer/6208650?hl=fr) and Chrome in 56 of 68 messages (Chrome 156's macOS locale.pak)."
+    },
+    {
+      "id": "app-links-badge",
+      "msgidPattern": "app links badge",
+      "expect": "[Pp]astille",
+      "severity": "wrong",
+      "reason": "The app links badge is the pastille, the unread badge's word (glossary, Unread badge); Chrome has no word for a badge (Chrome 0 messages in its macOS locale.pak), never indicateur."
+    },
+    {
+      "id": "back",
+      "msgidPattern": "^(Go )?[Bb]ack$",
+      "msgctxt": null,
+      "expect": "^Retour$",
+      "severity": "wrong",
+      "reason": "Back and Go back are Retour, as Chrome writes them (Chrome 21/21 in its macOS locale.pak), never Précédent."
+    },
+    {
+      "id": "forward",
+      "msgidPattern": "^(Go )?[Ff]orward$",
+      "msgctxt": null,
+      "expect": "^Avancer$",
+      "severity": "wrong",
+      "reason": "Forward and Go forward are Avancer, as Chrome writes Forward (Chrome 3/3 in its macOS locale.pak; it has no Go forward), never Suivant."
+    },
+    {
+      "id": "reset",
+      "msgidPattern": "^Reset( App$| Meru\\b|$)",
+      "expect": "^Réinitialiser",
+      "severity": "wrong",
+      "reason": "Resetting Meru is Réinitialiser, in the menu item, the dialog's question and its button, as Chrome writes Reset (Chrome 5/5 exact Reset in its macOS locale.pak), never Rétablir, which is Redo."
     }
   ],
   "accessKeys": {
