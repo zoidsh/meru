@@ -55,7 +55,7 @@ Say what happened, without _leider_, _Entschuldigung_ or _Bitte_: _Das Konto kon
 House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are two words, as Chrome writes them: Remove account never reads as deleting it. The labels:
 
 - Cancel _Abbrechen_, OK _OK_, Close _Schließen_, Delete _Löschen_, Remove _Entfernen_, Add _Hinzufügen_, Save _Speichern_, Edit _Bearbeiten_, Open _Öffnen_, Show _Anzeigen_, Hide _Ausblenden_, Quit _Beenden_, Reload _Neu laden_, Try Again _Erneut versuchen_, Learn More… _Weitere Informationen …_
-- Close Tab _Tab schließen_, Close Other Tabs _Andere Tabs schließen_, Pin Tab _Tab anpinnen_, Show Sidebar _Seitenleiste einblenden_, as Chrome's Show side panel, Copy Link _Link kopieren_, Mark as Read _Als gelesen markieren_
+- Close Tab _Tab schließen_, Close Other Tabs _Andere Tabs schließen_, Pin Tab _Tab anpinnen_, Show Sidebar _Seitenleiste einblenden_, as Chrome's Show side panel, Copy Link _Link kopieren_, Mark as Read _Als gelesen markieren_, Inspect Element _Untersuchen_, as Chrome's Inspect
 - _Möchtest du diese Nachricht wirklich löschen?_ (Are you sure you want to delete this message?)
 - _Du kannst Anhänge nicht bewegen, solange sie nicht geladen wurden. Möchtest du diesen Anhang laden?_
 

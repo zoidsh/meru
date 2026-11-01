@@ -243,3 +243,7 @@ msgstr "Kombinierten Posteingang aktivieren"
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Use default user agent"
 msgstr "Standard-User-Agent verwenden"
+
+#: packages/app/context-menu.ts
+msgid "Inspect Element"
+msgstr "Untersuchen"

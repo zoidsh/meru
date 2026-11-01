@@ -926,6 +926,13 @@
       "expect": "User-Agent",
       "severity": "wrong",
       "reason": "A user agent is the User-Agent, as Chrome writes it (Chrome: 1 of 1 message)."
+    },
+    {
+      "id": "inspect-element",
+      "msgid": "Inspect Element",
+      "expect": "^Untersuchen$",
+      "severity": "wrong",
+      "reason": "Inspect Element is Untersuchen, as Chrome's page context menu writes its Inspect item."
     }
   ],
   "accessKeys": {

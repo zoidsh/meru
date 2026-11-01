@@ -473,7 +473,7 @@ msgstr "Beta"
 
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Beta releases are unfinished builds of upcoming versions. They can contain bugs and break in ways a stable release won't. You can switch back to the stable channel at any time."
-msgstr "Beta-Versionen sind unfertige Builds kommender Versionen. Sie können Fehler enthalten und auf eine Weise versagen, wie es eine stabile Version nicht tut. Du kannst jederzeit zum stabilen Kanal zurückwechseln."
+msgstr "Beta-Versionen sind unfertige Builds kommender Versionen. Sie können Fehler enthalten und Probleme verursachen, die in einer stabilen Version nicht auftreten. Du kannst jederzeit zum stabilen Kanal zurückwechseln."
 
 #. Option of a label color's Text color setting
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
@@ -1495,7 +1495,7 @@ msgstr "Verlauf"
 #. Auto, Collapsed and Expanded quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons."
-msgstr "Wie die Apps im Launcher in der Titelleiste angezeigt werden. „Automatisch“ zeigt bis zu drei Apps als einzelne Buttons und klappt sie bei mehr ein. „Eingeklappt“ fasst sie immer hinter einem Button zusammen, und „Ausgeklappt“ zeigt sie immer als einzelne Buttons."
+msgstr "Wie die Apps im Launcher in der Titelleiste angezeigt werden. „Automatisch“ zeigt bis zu drei Apps als einzelne Buttons und klappt sie bei mehr als drei ein. „Eingeklappt“ fasst sie immer hinter einem Button zusammen, und „Ausgeklappt“ zeigt sie immer als einzelne Buttons."
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
@@ -1544,7 +1544,7 @@ msgstr "Indigo"
 #. Context menu item that opens the developer tools on the element clicked
 #: packages/app/context-menu.ts
 msgid "Inspect Element"
-msgstr "Element untersuchen"
+msgstr "Untersuchen"
 
 #. Screen reader label of the switch that installs the extension
 #: packages/renderer/routes/settings/extensions.tsx
@@ -3558,7 +3558,7 @@ msgstr "Wenn ein anderer Tab aktiv ist"
 
 #: packages/renderer/routes/settings/verification-codes.tsx
 msgid "When to copy"
-msgstr "Zeitpunkt des Kopierens"
+msgstr "Wann kopieren"
 
 #: packages/renderer/routes/settings/downloads.tsx
 msgid "Where downloaded files are saved."

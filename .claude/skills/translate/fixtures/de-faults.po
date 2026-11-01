@@ -281,3 +281,8 @@ msgstr "Gemeinsamen Posteingang aktivieren"
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Use default user agent"
 msgstr "Standard-Benutzeragent verwenden"
+
+# fault: pinned:inspect-element
+#: packages/app/context-menu.ts
+msgid "Inspect Element"
+msgstr "Element untersuchen"
