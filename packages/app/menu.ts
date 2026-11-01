@@ -1,5 +1,6 @@
 import { is, platform } from "@electron-toolkit/utils";
 import { t } from "@lingui/core/macro";
+import { getAccountLabel } from "@meru/shared/accounts";
 import { GITHUB_REPO_URL, WEBSITE_URL } from "@meru/shared/constants";
 import { byPlatform } from "@meru/shared/platform";
 import { getTabSection, getVisibleVerticalTabs, GMAIL_TAB_ID } from "@meru/shared/tabs";
@@ -716,7 +717,7 @@ export class AppMenu {
         label: t`Accounts`,
         submenu: [
           ...allAccounts.map((account, index) => ({
-            label: account.config.label,
+            label: getAccountLabel(account.config.label),
             click: () => {
               accounts.selectAccount(account.config.id);
 
