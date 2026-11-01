@@ -254,6 +254,10 @@ msgstr "フォルダを開く"
 msgid "Open in folder"
 msgstr "フォルダを開く"
 
+#: packages/renderer/routes/download-history.tsx
+msgid "Clear all"
+msgstr "すべて削除"
+
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "{tabTitle} — opens {appName} links"
 msgstr "{tabTitle} — {appName}のリンクを開きます"

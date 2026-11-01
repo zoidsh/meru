@@ -655,7 +655,7 @@ msgstr "受け取るリリースを選択します。ベータチャンネルで
 #. Button that clears the whole download history
 #: packages/renderer/routes/download-history.tsx
 msgid "Clear all"
-msgstr "すべて消去"
+msgstr "すべて削除"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts

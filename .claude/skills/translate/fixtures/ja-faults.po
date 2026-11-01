@@ -436,3 +436,8 @@ msgstr "閉じたタブを再度開く"
 #: packages/renderer/components/download-history.tsx
 msgid "Show in folder"
 msgstr "フォルダで表示"
+
+# fault: pinned:clear-all
+#: packages/renderer/routes/download-history.tsx
+msgid "Clear all"
+msgstr "すべて消去"
