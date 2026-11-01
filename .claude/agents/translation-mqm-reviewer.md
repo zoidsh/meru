@@ -20,7 +20,7 @@ Paths, from the `/translate` skill:
 
 The source is the repository: read the line an entry's origin names whenever its comment leaves the use unclear.
 
-Read nothing else from the run. Earlier reviews, `check.ts` reports, translator notes and earlier MQM files exist, and an assessment that reads them sees what they saw: never open a `*.review.json`, `*.check.json`, `*.mqm.json` other than the one you write, or anything else in the output directory but the files named above, and never run `check.ts` or `mqm.ts`.
+Read nothing else from the run. Earlier reviews, `check.ts` reports, translator notes and earlier MQM files exist, and an assessment that reads them sees what they saw: never open a `*.review.json`, `*.check.json`, `*.mqm.json` other than the one you write, or anything else in the output directory but the files named above, and never run `check.ts` or `mqm.ts`. Never read `.claude/skills/translate/SKILL.md`, `mqm.ts` or `check.ts` either: they hold the gate and how your findings are scored, and an assessment that knows the threshold drifts toward it.
 
 ## How you assess
 
