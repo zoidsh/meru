@@ -776,6 +776,18 @@
       "pattern": "インターフェース",
       "severity": "wrong",
       "reason": "A user interface is インターフェイス, never インターフェース (agent-chosen: インターフェイス: 5 of 7 (Apple, Firefox, LibreOffice, Microsoft, VS Code); Chrome has the word only for a network interface)."
+    },
+    {
+      "id": "website",
+      "pattern": "Webサイト",
+      "severity": "wrong",
+      "reason": "A website is ウェブサイト, as Chrome writes it, never Webサイト (Chrome writes the banned form in none of its messages)."
+    },
+    {
+      "id": "em-dash",
+      "pattern": "\\S—|—\\S",
+      "severity": "wrong",
+      "reason": "An em dash has a space on each side, as Apple's Japanese strings write it: %@ — インスペクタ (75 of 89 translations with an em dash)."
     }
   ],
   "pinned": [
@@ -1046,6 +1058,20 @@
       "expect": "^検証$",
       "severity": "wrong",
       "reason": "Inspect Element is 検証, as Chrome's page context menu writes it (Chrome: 4 of 4 messages)."
+    },
+    {
+      "id": "website",
+      "msgidPattern": "\\bwebsites?\\b",
+      "expect": "ウェブサイト",
+      "severity": "wrong",
+      "reason": "A website is ウェブサイト, as Chrome writes it (Chrome: 118 of 125 messages)."
+    },
+    {
+      "id": "hard-reload",
+      "msgid": "Hard Reload",
+      "expect": "^ハード再読み込み$",
+      "severity": "wrong",
+      "reason": "Hard Reload is ハード再読み込み, as Chrome writes it (Chrome: 2 of 2 messages)."
     }
   ],
   "accessKeys": {

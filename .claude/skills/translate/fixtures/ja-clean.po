@@ -233,3 +233,15 @@ msgstr "書き出す"
 #: packages/app/context-menu.ts
 msgid "Inspect Element"
 msgstr "検証"
+
+#: packages/app/menu.ts
+msgid "Website"
+msgstr "ウェブサイト"
+
+#: packages/app/menu.ts
+msgid "Hard Reload"
+msgstr "ハード再読み込み"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "{tabTitle} — opens {appName} links"
+msgstr "{tabTitle} — {appName}のリンクを開きます"

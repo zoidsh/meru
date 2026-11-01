@@ -663,7 +663,7 @@ msgstr "キャッシュを消去"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Clear color"
-msgstr "色を消去"
+msgstr "色をクリア"
 
 #. Button that closes the bookmarks popup
 #. Button that closes the recent download history popup
@@ -1075,7 +1075,7 @@ msgstr "ダウンロード"
 #: packages/renderer/routes/settings/saved-searches.tsx
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Drag {label} to reorder"
-msgstr "ドラッグして{label}を並べ替え"
+msgstr "{label}をドラッグして並べ替え"
 
 #. Name of a notification sound, picked in Settings
 #: packages/renderer/lib/notifications/index.ts
@@ -1179,7 +1179,7 @@ msgstr "有効なhex、rgb、rgbaの色を入力してください"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Enter a website address, like {exampleSite}."
-msgstr "{exampleSite}のようなWebサイトのアドレスを入力してください。"
+msgstr "{exampleSite}のようなウェブサイトのアドレスを入力してください。"
 
 #: packages/renderer/routes/settings/license.tsx
 msgid "Enter the license key sent to your email address after your purchase."
@@ -1235,7 +1235,7 @@ msgstr "問題の診断やサポートとの共有のために、アプリケー
 #. Dark theme is Gmail's own theme of that name
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Extend dark theme"
-msgstr "ダークテーマをメールにも適用"
+msgstr "ダークテーマの適用範囲を拡張"
 
 #. Dark theme is Gmail's own theme of that name, and dark the name of its setting, so both follow Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -1380,7 +1380,7 @@ msgstr "緑"
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Hard Reload"
-msgstr "強制再読み込み"
+msgstr "ハード再読み込み"
 
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Hardware acceleration"
@@ -3537,7 +3537,7 @@ msgstr "音量{percent}"
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Website"
-msgstr "Webサイト"
+msgstr "ウェブサイト"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Titlebar button beside a downloaded update that opens the version history
@@ -3643,7 +3643,7 @@ msgstr "Workspaceアプリ"
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
 msgid "Yellow"
-msgstr "黄"
+msgstr "黄色"
 
 #. Accessible description of the unread badge on Meru's taskbar button on Windows
 #: packages/app/ipc.ts

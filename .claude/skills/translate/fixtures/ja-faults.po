@@ -404,3 +404,19 @@ msgstr "ログを書き出す"
 #: packages/app/context-menu.ts
 msgid "Inspect Element"
 msgstr "要素を検証"
+
+# fault: banned:website
+# fault: pinned:website
+#: packages/app/menu.ts
+msgid "Website"
+msgstr "Webサイト"
+
+# fault: pinned:hard-reload
+#: packages/app/menu.ts
+msgid "Hard Reload"
+msgstr "強制再読み込み"
+
+# fault: banned:em-dash
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "{tabTitle} — opens {appName} links"
+msgstr "{tabTitle}—{appName}のリンクを開きます"
