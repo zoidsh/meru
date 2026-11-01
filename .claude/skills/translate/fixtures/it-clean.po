@@ -99,3 +99,11 @@ msgstr "Mostra la cronologia dei download recenti"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuti"
+
+#: packages/app/menu.ts
+msgid "Remove Bookmark"
+msgstr "Rimuovi dai preferiti"
+
+#: packages/renderer/components/bookmarks.tsx
+msgid "Bookmarks"
+msgstr "Preferiti"

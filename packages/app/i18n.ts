@@ -45,6 +45,7 @@ function resolveAppLocale(): LocaleTag {
 export const gmailCatalogLoaders: CatalogLoaders = {
   de: () => import("@meru/preload-gmail/locales/de"),
   fr: () => import("@meru/preload-gmail/locales/fr"),
+  it: () => import("@meru/preload-gmail/locales/it"),
   ja: () => import("@meru/preload-gmail/locales/ja"),
   ...(process.env.MERU_PSEUDO_LOCALE_CATALOG
     ? { [PSEUDO_LOCALE]: () => import("@meru/preload-gmail/locales/en-XA") }

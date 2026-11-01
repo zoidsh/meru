@@ -150,7 +150,9 @@ export function WorkspaceAppsSettings() {
 
   const noExcludedAppsLabel = t({
     message: "None",
-    comment: "The Excluded apps field when no Workspace app is excluded",
+    context: "excluded apps",
+    comment:
+      "The Excluded apps field when no Workspace app is excluded; agrees with the word for apps where the language genders it",
   });
 
   const visibleExcludedApps = listFormat.format(visibleExcludedAppLabels);

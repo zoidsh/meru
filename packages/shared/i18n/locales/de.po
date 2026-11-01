@@ -426,15 +426,29 @@ msgstr "Frage stellen …"
 msgid "Ask where to save each file before it downloads."
 msgstr "Vor jedem Download fragen, wo die Datei gespeichert werden soll."
 
-#. Option of a label color's Text color setting
-#. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar
-#. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit
-#. Option of the Width setting for the vertical tabs sidebar
-#: packages/renderer/routes/settings/gmail/label-colors.tsx
-#: packages/shared/tabs.ts
+#. Option of the Launcher display setting: how the Workspace apps launcher shows its apps in the titlebar; agrees with the word for display where the language genders it
 #: packages/shared/workspace-apps.ts
+msgctxt "launcher display"
 msgid "Auto"
-msgstr "Automatisch"
+msgstr "Auto"
+
+#. Option of the Placement setting: where the Workspace apps launcher and the bookmarks button sit; agrees with the word for placement where the language genders it
+#: packages/shared/workspace-apps.ts
+msgctxt "placement"
+msgid "Auto"
+msgstr "Auto"
+
+#. Option of a label color's Text color setting; agrees with the word for color where the language genders it
+#: packages/renderer/routes/settings/gmail/label-colors.tsx
+msgctxt "text color"
+msgid "Auto"
+msgstr "Auto"
+
+#. Option of the Width setting for the vertical tabs sidebar; agrees with the word for width where the language genders it
+#: packages/shared/tabs.ts
+msgctxt "width"
+msgid "Auto"
+msgstr "Auto"
 
 #. Option of the Window controls setting: whether the titlebar shows the close, minimize and maximize buttons
 #: packages/renderer/routes/settings/appearance.tsx
@@ -1502,7 +1516,7 @@ msgstr "Verlauf"
 #. Auto, Collapsed and Expanded quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons."
-msgstr "Wie die Apps im Launcher in der Titelleiste angezeigt werden. „Automatisch“ zeigt bis zu drei Apps als einzelne Buttons und klappt sie bei mehr als drei ein. „Eingeklappt“ fasst sie immer hinter einem Button zusammen, und „Ausgeklappt“ zeigt sie immer als einzelne Buttons."
+msgstr "Wie die Apps im Launcher in der Titelleiste angezeigt werden. „Auto“ zeigt bis zu drei Apps als einzelne Buttons und klappt sie bei mehr als drei ein. „Eingeklappt“ fasst sie immer hinter einem Button zusammen, und „Ausgeklappt“ zeigt sie immer als einzelne Buttons."
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How long a tab has to go unused before it hibernates. The active tab, tabs in their own window, and tabs playing audio are left alone."
@@ -1511,7 +1525,7 @@ msgstr "Wie lange ein Tab unbenutzt bleiben muss, bevor er inaktiv wird. Der akt
 #. Auto quotes this setting's option and Reset Width the sidebar's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "How wide the vertical tabs sidebar is. Auto switches between narrow and wide based on the open tabs. The button at the bottom of the sidebar switches between narrow and wide for that account until Meru quits, leaving this setting as it is. Right-click the sidebar and choose Reset Width to hand it back."
-msgstr "Wie breit die Seitenleiste mit den vertikalen Tabs ist. „Automatisch“ wechselt je nach geöffneten Tabs zwischen schmal und breit. Der Button unten in der Seitenleiste wechselt für dieses Konto zwischen schmal und breit, bis Meru beendet wird, und lässt diese Einstellung unverändert. Klicke mit der rechten Maustaste auf die Seitenleiste und wähle „Breite zurücksetzen“, um die Breite wieder dieser Einstellung zu überlassen."
+msgstr "Wie breit die Seitenleiste mit den vertikalen Tabs ist. „Auto“ wechselt je nach geöffneten Tabs zwischen schmal und breit. Der Button unten in der Seitenleiste wechselt für dieses Konto zwischen schmal und breit, bis Meru beendet wird, und lässt diese Einstellung unverändert. Klicke mit der rechten Maustaste auf die Seitenleiste und wähle „Breite zurücksetzen“, um die Breite wieder dieser Einstellung zu überlassen."
 
 #. Tabs and New windows quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -1970,10 +1984,15 @@ msgstr "Noch keine vertrauenswürdigen Hosts. Wenn du in der Abfrage vor einem L
 msgid "No unread messages"
 msgstr "Keine ungelesenen Nachrichten"
 
-#. The Excluded apps field when no Workspace app is excluded
-#. The account's color when no color is picked
+#. The account's color when no color is picked; agrees with the word for color where the language genders it
 #: packages/renderer/routes/settings/accounts.tsx
+msgctxt "account color"
+msgid "None"
+msgstr "Keine"
+
+#. The Excluded apps field when no Workspace app is excluded; agrees with the word for apps where the language genders it
 #: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "excluded apps"
 msgid "None"
 msgstr "Keine"
 
@@ -3574,7 +3593,7 @@ msgstr "Wo heruntergeladene Dateien gespeichert werden."
 #. Auto, Sidebar and Titlebar quote this setting's options, so they match those options' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown. Sidebar keeps them there and holds the sidebar open even with a single tab, and Titlebar keeps them in the titlebar at all times."
-msgstr "Wo der Launcher und der Lesezeichen-Button sitzen. „Automatisch“ verschiebt sie an das untere Ende der Seitenleiste mit den vertikalen Tabs, solange diese angezeigt wird. „Seitenleiste“ belässt sie dort und hält die Seitenleiste auch bei einem einzigen Tab offen, und „Titelleiste“ belässt sie immer in der Titelleiste."
+msgstr "Wo der Launcher und der Lesezeichen-Button sitzen. „Auto“ verschiebt sie an das untere Ende der Seitenleiste mit den vertikalen Tabs, solange diese angezeigt wird. „Seitenleiste“ belässt sie dort und hält die Seitenleiste auch bei einem einzigen Tab offen, und „Titelleiste“ belässt sie immer in der Titelleiste."
 
 #: packages/app/protocol/index.ts
 msgid "Which account should compose this email?"

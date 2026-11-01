@@ -694,6 +694,12 @@
       "reason": "A bookmark is a preferito, plural preferiti, as Chrome writes it (Chrome writes the banned form in 6 messages)."
     },
     {
+      "id": "preferiti-capital",
+      "pattern": "(?<=[\\p{L}’]\\s)Preferit[oi](?!\\p{L})",
+      "severity": "wrong",
+      "reason": "Inside a sentence the bookmarks are preferiti, lower case, a common noun even as the place they are kept in, as Chrome writes them (ai preferiti 21 times to ai Preferiti once); only a label's first word takes the capital, Preferiti (Chrome writes the banned form in 17 messages)."
+    },
+    {
       "id": "e-mail",
       "pattern": "(?<!\\p{L})[Ee]-mail(?!\\p{L})",
       "severity": "wrong",
@@ -791,7 +797,7 @@
       "msgidPattern": "\\bbookmarks?\\b",
       "expect": "[Pp]referit",
       "severity": "wrong",
-      "reason": "A bookmark is a preferito, as Chrome writes it: Preferiti, Aggiungi ai Preferiti (Chrome: 158 of 163 messages).",
+      "reason": "A bookmark is a preferito, as Chrome writes it: Preferiti, Aggiungi ai preferiti (Chrome: 158 of 163 messages).",
       "example": {
         "msgid": "No bookmarks yet",
         "clean": "Nessun preferito",
@@ -1280,6 +1286,274 @@
         "msgid": "In launcher",
         "clean": "In Avvio app",
         "fault": "Nel launcher"
+      }
+    },
+    {
+      "id": "hard-reload",
+      "msgid": "Hard Reload",
+      "expect": "^Ricaricamento manuale$",
+      "severity": "wrong",
+      "reason": "Hard Reload is Ricaricamento manuale, as Chrome writes it (Chrome: 1 of 2 messages; the other, Empty cache and hard reload, is Svuota la cache e ricarica manualmente); never Ricaricamento forzato.",
+      "example": {
+        "fault": "Ricaricamento forzato"
+      }
+    },
+    {
+      "id": "not-now",
+      "msgid": "Not now",
+      "expect": "^Non adesso$",
+      "severity": "wrong",
+      "reason": "Not now is Non adesso, as Chrome writes it (Chrome: 4 of 4 messages); never Non ora.",
+      "example": {
+        "fault": "Non ora"
+      }
+    },
+    {
+      "id": "user-agent",
+      "msgidPattern": "\\buser agent\\b",
+      "expect": "user-agent",
+      "severity": "wrong",
+      "reason": "The user agent is user-agent, hyphenated, as Chrome writes it (Chrome: 1 of 1 messages).",
+      "example": {
+        "msgid": "Use default user agent",
+        "clean": "Usa lo user-agent predefinito",
+        "fault": "Usa lo user agent predefinito"
+      }
+    },
+    {
+      "id": "violet",
+      "msgid": "Violet",
+      "expect": "^Lilla$",
+      "severity": "wrong",
+      "reason": "The account color Violet is Lilla, as Chrome names it, beside Viola for Purple (Chrome: 1 of 1 messages); never Violetto.",
+      "example": {
+        "fault": "Violetto"
+      }
+    },
+    {
+      "id": "lime",
+      "msgid": "Lime",
+      "expect": "^Giallo-verde$",
+      "severity": "wrong",
+      "reason": "The account color Lime is Giallo-verde, as Chrome names it (Chrome: 1 of 1 messages).",
+      "example": {
+        "fault": "Lime"
+      }
+    },
+    {
+      "id": "color-amber",
+      "msgid": "Amber",
+      "expect": "^Ambra$",
+      "severity": "wrong",
+      "reason": "The account color Amber is Ambra, as LibreOffice names the color (agent-chosen: ambra: 2 of 7 (Android, LibreOffice), fewer than 3 apps; Chrome has no Amber).",
+      "example": {
+        "fault": "Ambrato"
+      }
+    },
+    {
+      "id": "color-emerald",
+      "msgid": "Emerald",
+      "expect": "^Smeraldo$",
+      "severity": "wrong",
+      "reason": "The account color Emerald is Smeraldo, as Apple names the color (agent-chosen: smeraldo: 1 of 7 (Apple), fewer than 3 apps; Chrome has no Emerald).",
+      "example": {
+        "fault": "Verde smeraldo"
+      }
+    },
+    {
+      "id": "color-indigo",
+      "msgid": "Indigo",
+      "expect": "^Indaco$",
+      "severity": "wrong",
+      "reason": "The account color Indigo is Indaco, as LibreOffice and Apple name the color (agent-chosen: indaco: 2 of 7 (LibreOffice, Apple), fewer than 3 apps; Chrome has no Indigo).",
+      "example": {
+        "fault": "Indigo"
+      }
+    },
+    {
+      "id": "color-sky",
+      "msgid": "Sky",
+      "expect": "^Celeste$",
+      "severity": "wrong",
+      "reason": "The account color Sky is Celeste, as LibreOffice and Apple name Sky Blue (agent-chosen: celeste: 2 of 7 (LibreOffice, Apple), fewer than 3 apps; Chrome has no Sky); never Azzurro or Cielo.",
+      "example": {
+        "fault": "Azzurro"
+      }
+    },
+    {
+      "id": "color-teal",
+      "msgid": "Teal",
+      "expect": "^Verde acqua$",
+      "severity": "wrong",
+      "reason": "The account color Teal is Verde acqua, as Thunderbird and Microsoft name it (agent-chosen: verde acqua: 2 of 7 (Thunderbird, Microsoft), with Apple tied; Chrome has no Teal); never Foglia di tè.",
+      "example": {
+        "fault": "Foglia di tè"
+      }
+    },
+    {
+      "id": "zoom-in",
+      "msgid": "Zoom In",
+      "expect": "^Ingrandisci$",
+      "severity": "wrong",
+      "reason": "The View menu's Zoom In is Ingrandisci, as Chrome writes its title-case menu item (Chrome 1/2 in Chromium 156.0.8078.49's .xtb files; the other, the sentence-case Zoom in, is Aumenta lo zoom).",
+      "example": {
+        "fault": "Aumenta lo zoom"
+      }
+    },
+    {
+      "id": "zoom-out",
+      "msgid": "Zoom Out",
+      "expect": "^Riduci$",
+      "severity": "wrong",
+      "reason": "The View menu's Zoom Out is Riduci, as Chrome writes its title-case menu item (Chrome 1/2 in Chromium 156.0.8078.49's .xtb files; the other, the sentence-case Zoom out, is Diminuisci lo zoom).",
+      "example": {
+        "fault": "Diminuisci lo zoom"
+      }
+    },
+    {
+      "id": "actual-size",
+      "msgid": "Actual Size",
+      "expect": "^Dimensioni reali$",
+      "severity": "wrong",
+      "reason": "The View menu's Actual Size is Dimensioni reali, as Chrome writes its title-case menu item (Chrome 1/2 in Chromium 156.0.8078.49's .xtb files; the other, the sentence-case Actual size, is Dimensioni effettive).",
+      "example": {
+        "fault": "Dimensioni effettive"
+      }
+    },
+    {
+      "id": "back",
+      "msgidPattern": "^(Go )?[Bb]ack$",
+      "msgctxt": null,
+      "expect": "^Indietro$",
+      "severity": "wrong",
+      "reason": "Back and Go back are Indietro, as Chrome writes them (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files), never Torna indietro.",
+      "example": {
+        "msgid": "Go back",
+        "fault": "Torna indietro"
+      }
+    },
+    {
+      "id": "forward",
+      "msgidPattern": "^(Go )?[Ff]orward$",
+      "msgctxt": null,
+      "expect": "^Avanti$",
+      "severity": "wrong",
+      "reason": "Forward and Go forward are Avanti, as Chrome writes Forward (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files; it has no Go forward), never Vai avanti.",
+      "example": {
+        "msgid": "Go forward",
+        "fault": "Vai avanti"
+      }
+    },
+    {
+      "id": "reset",
+      "msgidPattern": "^Reset( App)?$",
+      "expect": "^Reimposta",
+      "severity": "wrong",
+      "reason": "Resetting Meru is Reimposta, in the menu item and the dialog's button, as Chrome writes Reset (Chrome 1/1 exact Reset in Chromium 156.0.8078.49's .xtb files), never Ripristina, which is Redo on macOS.",
+      "example": {
+        "msgid": "Reset App",
+        "clean": "Reimposta app",
+        "fault": "Ripristina app"
+      }
+    },
+    {
+      "id": "edit-menu",
+      "msgid": "Edit",
+      "msgctxt": null,
+      "expect": "^Modifica$",
+      "severity": "wrong",
+      "reason": "The Edit menu's title, which has no platform msgctxt, takes Chrome's menu word, Modifica: the Edit title of Chrome's menu bar, the message French writes Édition, is Modifica, as is the Edit action (Chrome: 122 of 123 messages for Edit as a word in Chromium 156.0.8078.49's .xtb files), never Modifiche.",
+      "example": {
+        "fault": "Modifiche"
+      }
+    },
+    {
+      "id": "auto-width",
+      "msgid": "Auto",
+      "msgctxt": "width",
+      "expect": "^Automatica$",
+      "severity": "wrong",
+      "reason": "The Width setting's Auto is Automatica, Chrome's Automatico agreeing with la larghezza (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
+      "example": {
+        "fault": "Automatico"
+      }
+    },
+    {
+      "id": "auto-placement",
+      "msgid": "Auto",
+      "msgctxt": "placement",
+      "expect": "^Automatica$",
+      "severity": "wrong",
+      "reason": "The Placement setting's Auto is Automatica, Chrome's Automatico agreeing with la posizione (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
+      "example": {
+        "fault": "Auto"
+      }
+    },
+    {
+      "id": "auto-launcher-display",
+      "msgid": "Auto",
+      "msgctxt": "launcher display",
+      "expect": "^Automatica$",
+      "severity": "wrong",
+      "reason": "The Launcher display setting's Auto is Automatica, Chrome's Automatico agreeing with la visualizzazione (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
+      "example": {
+        "fault": "Automatico"
+      }
+    },
+    {
+      "id": "auto-text-color",
+      "msgid": "Auto",
+      "msgctxt": "text color",
+      "expect": "^Automatico$",
+      "severity": "wrong",
+      "reason": "The Text color setting's Auto is Automatico, as Chrome writes it, agreeing with il colore (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
+      "example": {
+        "fault": "Automatica"
+      }
+    },
+    {
+      "id": "inspect-element",
+      "msgid": "Inspect Element",
+      "expect": "^Ispeziona$",
+      "severity": "wrong",
+      "reason": "Inspect Element is Ispeziona, as Chrome's page context menu writes its Inspect item (Chrome 1/1 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "fault": "Ispeziona elemento"
+      }
+    },
+    {
+      "id": "help",
+      "msgid": "Help",
+      "msgctxt": null,
+      "expect": "^Guida$",
+      "severity": "wrong",
+      "reason": "The Help menu is Guida, as Chrome writes Help (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files, the other Aiuto), never Aiuto.",
+      "example": {
+        "fault": "Aiuto"
+      }
+    },
+    {
+      "id": "google-password-manager",
+      "msgidPattern": "\\bGoogle Password Manager\\b",
+      "expect": "Gestore delle password di Google",
+      "severity": "wrong",
+      "reason": "Google Password Manager is Google's own name, Gestore delle password di Google, as Chrome writes it (Chrome: 63 of 63 messages, Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "msgid": "Add a passkey to your Google account from its security settings inside Meru, then sign in with Windows Hello — no password manager extension to install, so Meru stays fast and light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and filling passwords still needs a password manager.",
+        "clean": "Aggiungi una passkey al tuo account Google dalle sue impostazioni di sicurezza in Meru, poi accedi con Windows Hello — nessuna estensione di un gestore delle password da installare, così Meru resta veloce e leggero. Le passkey di Chrome, del Gestore delle password di Google o del tuo telefono qui non funzionano e per compilare le password serve comunque un gestore delle password.",
+        "fault": "Aggiungi una passkey al tuo account Google dalle sue impostazioni di sicurezza in Meru, poi accedi con Windows Hello — nessuna estensione di un gestore delle password da installare, così Meru resta veloce e leggero. Le passkey di Chrome, del Gestore password Google o del tuo telefono qui non funzionano e per compilare le password serve comunque un gestore delle password."
+      }
+    },
+    {
+      "id": "file-manager",
+      "msgidPattern": "\\bfile manager\\b",
+      "expect": "[Gg]estore file",
+      "severity": "wrong",
+      "reason": "The file manager shows only on Linux, so it takes GNOME's word, gestore file, as Files writes it (GNOME, nautilus `_Open in File Manager`, _Apri nel gestore file_), never the English file manager.",
+      "example": {
+        "msgid": "Show in your file manager",
+        "clean": "Mostra nel gestore file",
+        "fault": "Mostra nel file manager"
       }
     }
   ],

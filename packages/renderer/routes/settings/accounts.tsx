@@ -155,7 +155,9 @@ function AccountForm({
                           if (!value) {
                             return t({
                               message: "None",
-                              comment: "The account's color when no color is picked",
+                              context: "account color",
+                              comment:
+                                "The account's color when no color is picked; agrees with the word for color where the language genders it",
                             });
                           }
 
