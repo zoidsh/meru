@@ -1,0 +1,283 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. Title of the window that picks a screen or a window to share in a Google Meet call
+#: packages/app/account.ts
+msgid "Choose what to share"
+msgstr "共有する内容を選択"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "&Search with Google"
+msgstr "Googleで検索(&S)"
+
+#. appLabel is the name of a Google Workspace app, such as Docs or Sheets
+#: packages/app/dialogs.ts
+msgid "{target, select, window {Open {appLabel} links in this window?} other {Open {appLabel} links in this tab?}}"
+msgstr "{target, select, window {{appLabel}のリンクをこのウィンドウで開きますか?} other {{appLabel}のリンクをこのタブで開きますか?}}"
+
+#: packages/app/downloads.ts
+msgid "Downloaded {fileName}"
+msgstr "{fileName}をダウンロードしました"
+
+#: packages/app/gmail/index.ts
+msgid "Copied verification code {verificationCode}"
+msgstr "確認コード{verificationCode}をコピーしました"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Move to New Window"
+msgstr "新しいウィンドウに移動"
+
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/ipc.ts
+msgid "Unpin"
+msgstr "固定を解除"
+
+#. name is the name of a browser extension, such as Bitwarden
+#: packages/app/lib/extension-swap.ts
+msgid "{name} is still on."
+msgstr "{name}はオンのままです。"
+
+#: packages/app/license-key.ts
+msgid "This license key is invalid. Contact support if you need help."
+msgstr "このライセンスキーは無効です。サポートが必要な場合はお問い合わせください。"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
+msgid "About {appName}"
+msgstr "{appName}のバージョン情報"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Find…"
+msgstr "検索…"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Manage Accounts"
+msgstr "アカウントを管理"
+
+#: packages/app/menu.ts
+msgid "This signs out of every account and clears all settings and data on this device. It can't be undone."
+msgstr "すべてのアカウントからログアウトし、このデバイス上のすべての設定とデータを消去します。この操作は取り消せません。"
+
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Scroll accounts right"
+msgstr "アカウントを右にスクロール"
+
+#: packages/renderer/components/download-history.tsx
+msgid "Files you download appear here for 30 days."
+msgstr "ダウンロードしたファイルは30日間ここに表示されます。"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove {label}?"
+msgstr "{label}を削除しますか?"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Restrict minimum window size"
+msgstr "ウィンドウの最小サイズを制限"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Couldn't uninstall {extensionName}"
+msgstr "{extensionName}をアンインストールできませんでした"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Run the installed extensions. Turning this off stops them without uninstalling them."
+msgstr "インストールした拡張機能を実行します。オフにすると、拡張機能はアンインストールされずに停止します。"
+
+#. The out-of-office banner is the one Gmail shows while an out-of-office reply is on, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide out-of-office banner"
+msgstr "不在通知のバナーを非表示"
+
+#. Option of the Categories to monitor setting. Primary is Gmail's inbox category of that name, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Primary only"
+msgstr "メインのみ"
+
+#. Spellchecker languages chosen beyond the system language, counted once there are more than two to name
+#: packages/renderer/routes/settings/languages.tsx
+msgid "{selectedCount, plural, one {# additional language} other {# additional languages}}"
+msgstr "{selectedCount, plural, other {#個の追加言語}}"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Play a sound when showing a notification."
+msgstr "通知を表示するときにサウンドを再生します。"
+
+#. Sits between a start time field and an end time field, as in 09:00 to 17:00
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "to"
+msgstr "〜"
+
+#: packages/renderer/routes/settings/unified-inbox.tsx
+msgid "Show all unread messages from every account in a single unified inbox."
+msgstr "すべてのアカウントの未読メッセージを1つの統合受信トレイに表示します。"
+
+#. Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Ctrl"
+msgstr "Ctrl"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Persist zoom"
+msgstr "ズームを保持"
+
+#. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Mark as read"
+msgstr "既読にする"
+
+#. Titlebar badge counting the whole days left in the Meru Pro trial
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
+msgstr "{trialDaysLeft, plural, other {Proの試用期間は残り#日}}"
+
+#: packages/app/trial.ts
+msgid "Your Meru Pro trial has ended."
+msgstr "Meru Proの試用期間が終了しました。"
+
+#. installFolder is the folder Meru is installed in on Windows, which stays as it is
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Choose Meru in <0>{installFolder}</0>."
+msgstr "<0>{installFolder}</0>内のMeruを選択してください。"
+
+# catalog: preload-gmail
+#. Button in the message-sent toast, which recalls the message
+#: packages/preload-gmail/ipc.ts
+msgctxt "button"
+msgid "Undo"
+msgstr "取り消し"
+
+
+# expect: accuracy/mistranslation major
+# real: run 2's 未読アカウント, fixed in #1246 and the planted proof of #1247
+# few-shot
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Select first unread account on click"
+msgstr "クリック時に最初の未読アカウントを選択"
+
+# expect: terminology minor
+# real: an MQM minor fixed in #1246; Chrome writes ウェブサイト
+# few-shot
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Website"
+msgstr "Webサイト"
+
+# expect: terminology minor
+# real: an MQM minor fixed in #1247; Chrome writes 閉じたタブを開く
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/ipc.ts
+#: packages/app/menu.ts
+msgid "Reopen Closed Tab"
+msgstr "閉じたタブを再度開く"
+
+# expect: terminology minor
+# real: an MQM minor fixed in #1247; Chrome writes フォルダを開く
+#. Button in the download history that shows the file in the file manager
+#. Option of what a finished download's notification does
+#: packages/renderer/components/download-history.tsx
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "Show in folder"
+msgstr "フォルダで表示"
+
+# expect: terminology minor
+# real: an MQM minor fixed in #1247; Chrome's downloads page writes すべて削除
+#. Button that clears the whole download history
+#: packages/renderer/routes/download-history.tsx
+msgid "Clear all"
+msgstr "すべて消去"
+
+# expect: accuracy/mistranslation|accuracy/omission|fluency/unidiomatic minor
+# real: an MQM minor fixed in #1247; 1行として loses on its own line
+#. allowlistEntry is the line to add to 1Password's list of allowed browsers, which stays as it is
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add <0>{allowlistEntry}</0> on its own line, then save."
+msgstr "<0>{allowlistEntry}</0>を1行として追加してから、保存してください。"
+
+# expect: terminology minor
+# real: an MQM minor fixed in #1246; Chrome writes ハード再読み込み
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Hard Reload"
+msgstr "強制再読み込み"
+
+# expect: terminology minor
+# real: an MQM minor fixed in #1246; Chrome writes 黄 beside the other bare-kanji colours
+#. A color an account can be marked with, in the account form's Color picker
+#: packages/shared/accounts.ts
+msgid "Yellow"
+msgstr "黄色"
+
+# expect: fluency/punctuation|locale-conventions minor
+# real: an MQM minor fixed in #1246; an em dash takes a space on each side
+#. Tooltip of the tab every link to a Google Workspace app opens in. tabTitle is the page's title; appName is the app's English name, such as Calendar
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "{tabTitle} — opens {appName} links"
+msgstr "{tabTitle}—{appName}のリンクを開きます"
+
+# expect: terminology minor
+# after #1246's fix round, which banned 機能拡張 for Chrome's 拡張機能
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Extensions"
+msgstr "機能拡張"
+
+# expect: terminology|fluency/spelling minor
+# after #1246's fix round, which banned the long-vowel ブラウザー
+#. An item in the context menu of a Google Workspace app's tab
+#: packages/app/context-menu.ts
+#: packages/app/ipc.ts
+msgid "Open in Default Browser"
+msgstr "既定のブラウザーで開く"
+
+# expect: accuracy/mistranslation major
+# planted: wrong meaning, the opposite direction
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Scroll accounts left"
+msgstr "アカウントを右にスクロール"
+
+# expect: accuracy/mistranslation critical
+# planted: a button that says the opposite of what it does
+#: packages/renderer/routes/settings/license.tsx
+msgid "Activate license key"
+msgstr "ライセンスキーを無効化"
+
+# expect: accuracy/omission major
+# planted: omission of unless you upgrade
+#: packages/app/trial.ts
+msgid "Meru Pro features stay on until you quit Meru. After that, Meru continues with the free version unless you upgrade."
+msgstr "Meruを終了するまでMeru Proの機能はオンのままです。その後、Meruは無料版で動作します。"
+
+# expect: accuracy/addition major
+# planted: addition; clearing cookies would sign every account out
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Clear Cache"
+msgstr "キャッシュとCookieを消去"
+
+# expect: accuracy/omission|accuracy/addition|accuracy/mistranslation critical
+# planted: a broken placeholder, translated
+#. origin is the scheme and host of a website, such as https://example.com
+#: packages/app/url.ts
+msgid "Trust all links on {origin}"
+msgstr "{オリジン}のすべてのリンクを信頼"
+
+# expect: fluency/punctuation|locale-conventions minor
+# planted: 「」 for the style sheet's “”, and quotes the shipped label has none of
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show Do Not Disturb button"
+msgstr "「おやすみモード」ボタンを表示"
+
+# expect: style minor
+# planted: the pronoun あなた, which the style sheet bans
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Enter a search query"
+msgstr "あなたの検索条件を入力してください"

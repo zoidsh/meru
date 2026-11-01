@@ -154,3 +154,13 @@ Edit the tags first and run `bun run i18n:extract` before adding the two catalog
 ## Changing a rule
 
 A decision recorded in a sidecar, `languages/<tag>.json`, is encoded in `check.ts`'s fixtures as well: `fixtures/<tag>-clean.po` holds the wording it allows and `fixtures/<tag>-faults.po` a planted fault for each rule, which `scripts/translate-check.test.ts` holds the rules against. Changing a decision means changing the style sheet, the glossary, the sidecar and the fixtures together, then running `bun test --isolate scripts/translate-*.test.ts`.
+
+## Measuring the MQM reviewers
+
+Each shipped language has a regression set, `regression/<tag>.po`, outside the real catalogs: about 30 entries whose shipped translation was accepted, and about 15 known-bad ones, each marked `# expect: <category>[|<category>] <minimum severity>`. The known-bad ones are real errors earlier runs made, such as 未読アカウント, Webサイト and Schaltfläche, and planted ones covering wrong meaning, omission, addition, terminology, locale conventions, style and a broken placeholder or tag; `# few-shot` marks the ones the reviewer's prompt shows as examples. `regression.ts` measures step 6 on them: it writes a dump of the set, without its marks, runs three `translation-mqm-reviewer`s on it headless, as a full run, and reports recall per severity, how many known-bad entries the runs agree on at their severity or above, with and without the few-shot ones, the false positives on the accepted entries, and each run's own numbers.
+
+```sh
+bun .claude/skills/translate/regression.ts run --dir <scratchpad>/regression de ja
+```
+
+`prepare` writes the inputs and prints the three reviewer commands instead, and `score` scores findings files already in the directory. It needs the agents, so it never runs in CI. Run it after any change to the reviewer's prompt, its model or effort, or this step, and record its tables in the pull request, set beside the last recorded result. A new language gets its set when it ships: entries from its shipped catalog, and its own real errors once runs have made some. `scripts/translate-regression.test.ts` holds the sets' shape and the scoring.
