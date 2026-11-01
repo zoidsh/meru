@@ -6,6 +6,7 @@ import dayjsPrimitive from "dayjs";
 // rest follow.
 import "dayjs/locale/de";
 import "dayjs/locale/en";
+import "dayjs/locale/fr";
 import "dayjs/locale/ja";
 import calendar from "dayjs/plugin/calendar";
 import isToday from "dayjs/plugin/isToday";

@@ -189,6 +189,10 @@ The one tab per app that every link to that app opens in. The badge setting read
 - sv: flik för applänkar (agent-chosen, not countable: Chrome's _flik_, _länk_ and _app_)
 - ja: アプリリンク用タブ (agent-chosen, not countable: Chrome's タブ, リンク and アプリ)
 
+The badge that marks it, in _Show app links badge_, takes the word for a badge under [Unread badge](#unread-badge). A language without a line takes its unread badge's word.
+
+- fr: pastille (_Afficher la pastille de l’onglet des liens d’appli_), the unread badge's word, never _indicateur_
+
 ## Saved search
 
 A named Gmail query an account keeps. Built on Chrome's words for save and search, in the messages with _save_ (N 593) and _search_ (N 356).
@@ -658,6 +662,36 @@ The string a browser sends to name itself, in the Advanced settings. A language 
 
 - de: User-Agent (Chrome 1/1)
 - ja: ユーザーエージェント (Chrome 1/1, ユーザー エージェント without its space, as the style sheet spaces katakana)
+
+## Google Password Manager
+
+Google's password manager, named in the passkey help: _Passkeys from Chrome, Google Password Manager, or your phone don't work here_. Google's name, so Google's word, read from its own Help; Chrome's count is counted in Chrome 156's macOS `locale.pak`, in the messages with _Google Password Manager_. A language without a line takes Google's name.
+
+- fr: Gestionnaire de mots de passe de Google, capitalized as a name, with its article outside it (_du Gestionnaire de mots de passe de Google_) (Google, Help "Premiers pas avec le Gestionnaire de mots de passe de Google" (support.google.com/accounts/answer/6208650?hl=fr); Chrome 56/68), never _Gestionnaire de mots de passe Google_
+
+## Back, Forward
+
+Navigating the current view's history: the menu's _Back_ and _Forward_ and the titlebar's _Go back_ and _Go forward_, one pair of words for both. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Back_, _Go back_ or _Forward_; Chrome has no _Go forward_. A language without a line takes Chrome's word.
+
+- fr: Retour, Avancer (Chrome 21/21 for _Back_ and _Go back_, 3/3 for _Forward_), never _Précédent_ and _Suivant_
+
+## Reset
+
+Erasing Meru's data and starting over: _Reset App_, the dialog's _Reset_ button and its question. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Reset_. A language without a line takes Chrome's word.
+
+- fr: Réinitialiser (_Réinitialiser l’application_) (Chrome 5/5), never _Rétablir_, which is Redo
+
+## Account colors
+
+The colors an account can be marked with, where Chrome names the same color. Counted in Chrome 156's macOS `locale.pak`, in its color names, the messages that are exactly the color's English name. A language without a line takes Chrome's word.
+
+- fr: Purple _Violet_ (Chrome 1/1), Violet _Mauve_ (Chrome 1/1), never _Pourpre_
+
+## Inspect Element
+
+The page context menu's item that opens the developer tools on the element clicked, as Chrome's _Inspect_ item. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Inspect_. A language without a line takes Chrome's word.
+
+- fr: Inspecter (Chrome 1/1), never _Inspecter l’élément_
 
 ## Gmail's words
 
