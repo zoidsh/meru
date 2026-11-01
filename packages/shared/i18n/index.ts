@@ -44,6 +44,7 @@ const catalogLoaders: CatalogLoaders = {
   it: () => import("./locales/it"),
   es: () => import("./locales/es"),
   "es-419": () => import("./locales/es-419"),
+  "pt-BR": () => import("./locales/pt-BR"),
   ja: () => import("./locales/ja"),
   // The build inlines the variable, so a shipped bundle drops the pseudo-locale
   // with this branch.

@@ -380,6 +380,7 @@ export function NotificationsSettings() {
                       value: "showInFolder",
                       label: t({
                         message: "Show in folder",
+                        context: "download action",
                         comment: "Option of what a finished download's notification does",
                       }),
                     },

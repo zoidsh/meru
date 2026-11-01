@@ -1080,6 +1080,18 @@
       }
     },
     {
+      "id": "trimmed-content",
+      "msgidPattern": "\\btrimmed content\\b",
+      "expect": "[Cc]ontenido reducido",
+      "severity": "wrong",
+      "reason": "Trimmed content is Gmail's contenido reducido, as Gmail Help names the ••• button, Mostrar contenido reducido (support.google.com/mail/answer/11468381?hl=es), never recortado.",
+      "example": {
+        "msgid": "Always show trimmed content",
+        "clean": "Mostrar siempre el contenido reducido",
+        "fault": "Mostrar siempre el contenido recortado"
+      }
+    },
+    {
       "id": "out-of-office",
       "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "[Rr]espuesta automática",

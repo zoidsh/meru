@@ -38,8 +38,24 @@ const themeItems = [
 
 // lingui-set comment="Option of the system tray icon's Color setting"
 const systemTrayIconColorItems = [
-  { value: "light", label: msg`Light` },
-  { value: "dark", label: msg`Dark` },
+  {
+    value: "light",
+    label: msg({
+      message: "Light",
+      context: "tray icon color",
+      comment:
+        "Option of the system tray icon's Color setting; agrees with the word for color where the language genders it",
+    }),
+  },
+  {
+    value: "dark",
+    label: msg({
+      message: "Dark",
+      context: "tray icon color",
+      comment:
+        "Option of the system tray icon's Color setting; agrees with the word for color where the language genders it",
+    }),
+  },
   { value: "system", label: msg`System` },
 ];
 // lingui-reset
