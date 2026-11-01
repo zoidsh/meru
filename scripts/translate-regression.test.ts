@@ -13,7 +13,7 @@ import {
  * inside a dot directory such as `.claude`.
  */
 
-const LOCALES = ["de", "ja"];
+const LOCALES = ["de", "ja", "fr"];
 
 const sets = Object.fromEntries(
   await Promise.all(LOCALES.map(async (locale) => [locale, await loadRegressionSet(locale)])),
