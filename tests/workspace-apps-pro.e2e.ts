@@ -162,9 +162,20 @@ test("a saved tab is restored into a child view of its own", async () => {
 
   expect(restoredViews).toHaveLength(1);
 
-  // The view really loaded the page, rather than being attached with a URL set
-  // on it: a title only exists once a document has parsed.
-  expect(restoredViews[0]?.title).toBe(RESTORED_PAGE_TITLE);
+  /*
+   * The view really loaded the page, rather than being attached with a URL set
+   * on it: a title only exists once a document has parsed. Polled, because the
+   * URL commits before the document parses, and until then the title reads as
+   * the URL. Re-read as every view at that URL, so the count above holds here
+   * too.
+   */
+  await expect
+    .poll(async () =>
+      (await readViews(meru))
+        .filter((view) => view.url === server.pageUrl(RESTORED_PAGE_TITLE))
+        .map((view) => view.title),
+    )
+    .toEqual([RESTORED_PAGE_TITLE]);
 
   /*
    * And the strip is showing the page's title rather than the one the tab was
