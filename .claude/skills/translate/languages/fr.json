@@ -1308,6 +1308,19 @@
       }
     },
     {
+      "id": "tray-icon-light",
+      "msgid": "Light",
+      "msgctxt": "tray icon color",
+      "expect": "^Claire$",
+      "countEnglish": "^Light$",
+      "countExpect": "^Clair$",
+      "severity": "wrong",
+      "reason": "The system tray icon's Light is Claire, Chrome's Clair agreeing with la couleur (Chrome 3/4 in Chromium 156.0.8078.49's .xtb files); the Theme setting's Light stays Clair, agreeing with le thème, and Sombre serves both.",
+      "example": {
+        "fault": "Clair"
+      }
+    },
+    {
       "id": "auto",
       "msgid": "Auto",
       "expect": "^Auto$",

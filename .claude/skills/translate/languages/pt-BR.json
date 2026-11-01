@@ -721,9 +721,14 @@
       "id": "ajustes",
       "pattern": "(?<!\\p{L})[Aa]justes(?!\\p{L})(?![ \\u00a0]do[ \\u00a0]Sistema(?!\\p{L}))",
       "severity": "wrong",
-      "reason": "Settings is Configurações in Meru's own copy, as Chrome writes it. Ajustes is Apple's word in two places only: the macOS app menu's Ajustes… (AppKit MenuCommands Settings\\U2026) and macOS's own Ajustes do Sistema (TranslationAPIExtension.appex Localizable SYSTEM_SETTINGS) (Chrome writes the banned form in 3 messages).",
+      "reason": "Settings is Configurações in Meru's own copy, as Chrome writes it. Ajustes is Apple's word in two places only: the macOS app menu's Ajustes… (AppKit MenuCommands Settings\\U2026) and macOS's own Ajustes do Sistema (TranslationAPIExtension.appex Localizable SYSTEM_SETTINGS) (Chrome writes the banned form in none of its messages).",
       "allow": {
-        "entries": [{ "msgctxt": "macOS", "msgid": "Settings" }]
+        "entries": [
+          {
+            "msgctxt": "macOS",
+            "msgid": "Settings"
+          }
+        ]
       }
     },
     {
@@ -776,7 +781,7 @@
       "msgctxt": null,
       "expect": "^Configurações$",
       "severity": "wrong",
-      "reason": "Settings is Configurações in Meru's own copy, as Chrome writes it (Chrome: 419 of 436 messages).",
+      "reason": "Settings is Configurações in Meru's own copy, as Chrome writes it (Chrome: 420 of 432 messages).",
       "example": {
         "fault": "Ajustes"
       }
@@ -845,7 +850,7 @@
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtens[ãõ]",
       "severity": "wrong",
-      "reason": "An extension is an extensão (Chrome: 302 of 307 messages).",
+      "reason": "An extension is an extensão (Chrome: 302 of 303 messages).",
       "example": {
         "msgid": "Extensions",
         "clean": "Extensões",
@@ -866,12 +871,14 @@
       "id": "saved-search",
       "msgidPattern": "\\bsaved search(?:es)?\\b",
       "expect": "[Pp]esquisas? [Ss]alvas?",
+      "countEnglish": "\\bsearch",
+      "countExpect": "[Pp]esquis",
       "severity": "wrong",
-      "reason": "A saved search is a pesquisa salva (Chrome: 546 of 561 messages).",
+      "reason": "A saved search is a pesquisa salva, built on Chrome's pesquisa for a search, never busca (Chrome: 346 of 356 messages).",
       "example": {
         "msgid": "Saved searches",
-        "clean": "Pesquisas Salvas",
-        "fault": "Pesquisas Guardadas"
+        "clean": "Pesquisas salvas",
+        "fault": "Pesquisas guardadas"
       }
     },
     {
@@ -882,8 +889,8 @@
       "reason": "A password manager is a gerenciador de senhas (Chrome: 77 of 77 messages).",
       "example": {
         "msgid": "Password managers",
-        "clean": "Gerenciadores de Senhas",
-        "fault": "Gestores de Senhas"
+        "clean": "Gerenciadores de senhas",
+        "fault": "Gestores de senhas"
       }
     },
     {
@@ -962,6 +969,7 @@
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "[Cc]onfiáve",
+      "countEnglish": "\\btrusted\\b",
       "severity": "wrong",
       "reason": "A trusted host is a host confiável (Chrome: 21 of 22 messages).",
       "example": {
@@ -1002,8 +1010,19 @@
       "reason": "System Settings is Apple's Ajustes do Sistema, the name of macOS's own app, in Meru's own copy too (TranslationAPIExtension.appex Localizable SYSTEM_SETTINGS).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "Deslize dois dedos para a esquerda ou para a direita em um trackpad para voltar ou avançar. A opção Passar Entre Páginas também precisa estar ativada nos Ajustes do Sistema.",
+        "clean": "Deslize dois dedos para a esquerda ou para a direita em um trackpad para voltar ou avançar. A opção Alternar entre páginas também precisa estar ativada nos Ajustes do Sistema.",
         "fault": "Ative também a opção nos Ajustes."
+      }
+    },
+    {
+      "id": "inspect-element",
+      "msgid": "Inspect Element",
+      "expect": "^Inspecionar$",
+      "countEnglish": "^Inspect$",
+      "severity": "wrong",
+      "reason": "Inspect Element is Inspecionar, as Chrome's page context menu writes its Inspect item (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "fault": "Inspecionar Elemento"
       }
     },
     {
@@ -1064,8 +1083,8 @@
       "reason": "Glossary, agent-chosen: the unread badge is emblema, counted as Meru uses it, an unread count on an app icon (the apps tie, Thunderbird emblema and Microsoft selo once Apple's aviso is out as the toast word it was; Google has no word for a count; Thunderbird's direct Badge app icon with, Ícone de emblema do aplicativo, decides).",
       "example": {
         "msgid": "Show unread badge",
-        "clean": "Mostrar Emblema de Não Lidos",
-        "fault": "Mostrar Indicador de Não Lidos"
+        "clean": "Mostrar emblema de não lidos",
+        "fault": "Mostrar indicador de não lidos"
       }
     },
     {
@@ -1088,8 +1107,8 @@
       "severity": "wrong",
       "reason": "Glossary, agent-chosen (nome: 7 of 7).",
       "example": {
-        "clean": "Digite um Nome",
-        "fault": "Digite um Marcador"
+        "clean": "Digite um nome",
+        "fault": "Digite um marcador"
       }
     },
     {
@@ -1112,8 +1131,8 @@
       "reason": "Multiple inboxes is Gmail's own inbox type, várias caixas de entrada, as Gmail Help names it (support.google.com/mail/answer/9694882).",
       "example": {
         "msgid": "Multiple inboxes",
-        "clean": "Várias Caixas de Entrada",
-        "fault": "Caixas Múltiplas"
+        "clean": "Várias caixas de entrada",
+        "fault": "Caixas múltiplas"
       }
     },
     {
@@ -1124,8 +1143,8 @@
       "reason": "Glossary, agent-chosen (notificar: 7 of 7).",
       "example": {
         "msgid": "Notify for",
-        "clean": "Notificar Sobre",
-        "fault": "Avisar Sobre"
+        "clean": "Notificar sobre",
+        "fault": "Avisar sobre"
       }
     },
     {
@@ -1187,24 +1206,26 @@
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]ome do [Dd]ispositivo",
+      "countEnglish": "\\bdevice name\\b",
       "severity": "wrong",
       "reason": "A device label is the nome do dispositivo, Chrome's words for a device name (Chrome: 8 of 11 messages).",
       "example": {
         "msgid": "Device label",
-        "clean": "Nome do Dispositivo",
-        "fault": "Rótulo do Dispositivo"
+        "clean": "Nome do dispositivo",
+        "fault": "Rótulo do dispositivo"
       }
     },
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "[Pp]hishing",
+      "countEnglish": "\\bphishing\\b",
       "severity": "wrong",
       "reason": "Phishing protection is proteção contra phishing, with Chrome's phishing (Chrome: 4 of 4 messages).",
       "example": {
         "msgid": "Phishing protection",
-        "clean": "Proteção Contra Phishing",
-        "fault": "Proteção Contra Golpes"
+        "clean": "Proteção contra phishing",
+        "fault": "Proteção contra golpes"
       }
     },
     {
@@ -1215,20 +1236,21 @@
       "reason": "A release channel is a canal: canal de versões, canal beta, as Chrome writes channel (Chrome: 11 of 11 messages).",
       "example": {
         "msgid": "Release channel",
-        "clean": "Canal de Versões",
-        "fault": "Versão de Lançamento"
+        "clean": "Canal de versões",
+        "fault": "Versão de lançamento"
       }
     },
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nativ",
+      "countEnglish": "\\binactive tabs?\\b",
       "severity": "wrong",
       "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inativa, as in Guia inativa, never the systems' Sleep word (Chrome: 8 of 8 messages).",
       "example": {
         "msgid": "Hibernate idle tabs",
-        "clean": "Deixar Guias sem Uso Inativas",
-        "fault": "Hibernar Guias sem Uso"
+        "clean": "Deixar guias sem uso inativas",
+        "fault": "Hibernar guias sem uso"
       }
     },
     {
@@ -1266,6 +1288,290 @@
         "msgid": "Open Meru Portal",
         "clean": "Meru Portal",
         "fault": "Abrir o Portal do Meru"
+      }
+    },
+    {
+      "id": "wide",
+      "msgid": "Wide",
+      "expect": "^Larga$",
+      "severity": "wrong",
+      "reason": "The Width setting's Wide option is Larga, agreeing with a largura, by a recorded call (source order 4b; Tim delegates language judgment to the lead): Chrome's one Wide, Espaçadas, names spacing, not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: largo: 2 of 7 (Thunderbird, Firefox), thin, taken by the same call).",
+      "example": {
+        "clean": "Larga",
+        "fault": "Espaçadas"
+      }
+    },
+    {
+      "id": "narrow",
+      "msgid": "Narrow",
+      "expect": "^Estreita$",
+      "severity": "wrong",
+      "reason": "The Width setting's Narrow option is Estreita, agreeing with a largura and pairing with Larga, by the same recorded call as the wide pin; Chrome has no Narrow option of its own.",
+      "example": {
+        "clean": "Estreita",
+        "fault": "Estreito"
+      }
+    },
+    {
+      "id": "wide-in-sentences",
+      "msgidPattern": "\\bnarrow and wide\\b",
+      "expect": "estreita e larga",
+      "severity": "wrong",
+      "reason": "A sentence that names the Width setting's options names them as the select shows them, Estreita and Larga (the wide and narrow pins).",
+      "example": {
+        "msgid": "Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above.",
+        "clean": "Mostrar o botão na parte inferior da barra lateral que alterna entre estreita e larga. Com esta opção desativada, use Redefinir Largura no menu de contexto da barra lateral ou a configuração Largura acima.",
+        "fault": "Mostrar o botão na parte inferior da barra lateral que alterna entre estreita e ampla. Com esta opção desativada, use Redefinir Largura no menu de contexto da barra lateral ou a configuração Largura acima."
+      }
+    },
+    {
+      "id": "placement",
+      "msgid": "Placement",
+      "expect": "^Posicionamento$",
+      "countEnglish": "\\bplacement\\b",
+      "countExpect": "[Pp]osicionamento",
+      "severity": "wrong",
+      "reason": "The Placement setting is Posicionamento, as Chrome writes placement (Chrome 1/1 in Chromium 156.0.8078.49's .xtb files), never Chrome's posição for a position.",
+      "example": {
+        "clean": "Posicionamento",
+        "fault": "Posição"
+      }
+    },
+    {
+      "id": "auto-width",
+      "msgid": "Auto",
+      "msgctxt": "width",
+      "expect": "^Automática$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Width setting's Auto is Automática, as Chrome writes it, agreeing with a largura (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
+      "example": {
+        "fault": "Automático"
+      }
+    },
+    {
+      "id": "auto-placement",
+      "msgid": "Auto",
+      "msgctxt": "placement",
+      "expect": "^Automático$",
+      "countEnglish": "^Auto$",
+      "countExpect": "^Automática$",
+      "severity": "wrong",
+      "reason": "The Placement setting's Auto is Automático, Chrome's Automática agreeing with o posicionamento (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
+      "example": {
+        "fault": "Automática"
+      }
+    },
+    {
+      "id": "auto-launcher-display",
+      "msgid": "Auto",
+      "msgctxt": "launcher display",
+      "expect": "^Automática$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Launcher display setting's Auto is Automática, as Chrome writes it, agreeing with a exibição (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
+      "example": {
+        "fault": "Auto"
+      }
+    },
+    {
+      "id": "auto-text-color",
+      "msgid": "Auto",
+      "msgctxt": "text color",
+      "expect": "^Automática$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Text color setting's Auto is Automática, as Chrome writes it, agreeing with a cor (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
+      "example": {
+        "fault": "Automático"
+      }
+    },
+    {
+      "id": "none-account-color",
+      "msgid": "None",
+      "msgctxt": "account color",
+      "expect": "^Nenhuma$",
+      "countEnglish": "^None$",
+      "countExpect": "^Nenhuma?$",
+      "severity": "wrong",
+      "reason": "The account's color when none is picked is Nenhuma, Chrome's Nenhum and Nenhuma agreeing with a cor (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "fault": "Nenhum"
+      }
+    },
+    {
+      "id": "none-excluded-apps",
+      "msgid": "None",
+      "msgctxt": "excluded apps",
+      "expect": "^Nenhum$",
+      "countEnglish": "^None$",
+      "countExpect": "^Nenhuma?$",
+      "severity": "wrong",
+      "reason": "The Excluded apps field with no app excluded is Nenhum, Chrome's Nenhum and Nenhuma agreeing with os apps (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "fault": "Nenhuma"
+      }
+    },
+    {
+      "id": "zoom-in",
+      "msgid": "Zoom In",
+      "expect": "^Aumentar Zoom$",
+      "countEnglish": "^Zoom In$",
+      "severity": "wrong",
+      "reason": "The View menu's Zoom In is Aumentar Zoom, as Chrome's View menu item Zoom &In writes it, in this sheet's title case (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files; the other, a title-case Zoom In, is Aproximar).",
+      "example": {
+        "clean": "Aumentar Zoom",
+        "fault": "Aproximar"
+      }
+    },
+    {
+      "id": "zoom-out",
+      "msgid": "Zoom Out",
+      "expect": "^Diminuir Zoom$",
+      "countEnglish": "^Zoom Out$",
+      "severity": "wrong",
+      "reason": "The View menu's Zoom Out is Diminuir Zoom, as Chrome's View menu item Zoom &Out writes it, in this sheet's title case (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files; the other, a title-case Zoom Out, is Afastar).",
+      "example": {
+        "clean": "Diminuir Zoom",
+        "fault": "Afastar"
+      }
+    },
+    {
+      "id": "actual-size",
+      "msgid": "Actual Size",
+      "expect": "^Tamanho Real$",
+      "countEnglish": "^Actual Size$",
+      "severity": "wrong",
+      "reason": "The View menu's Actual Size is Tamanho Real, as Chrome writes it, in this sheet's title case (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "clean": "Tamanho Real",
+        "fault": "Tamanho Original"
+      }
+    },
+    {
+      "id": "launch",
+      "msgidPattern": "^Launch\\b",
+      "expect": "^Inici",
+      "countEnglish": "\\blaunch(?:es|ed|ing)?\\b",
+      "countExpect": "\\binici",
+      "severity": "wrong",
+      "reason": "Launching Meru is iniciar, as Chrome writes launch and its own Start app when you sign in, Iniciar app ao fazer login (Chrome: 9 of 12 messages), never abrir.",
+      "example": {
+        "msgid": "Launch at login",
+        "clean": "Iniciar ao fazer login",
+        "fault": "Abrir ao fazer login"
+      }
+    },
+    {
+      "id": "tray-icon-light",
+      "msgid": "Light",
+      "msgctxt": "tray icon color",
+      "expect": "^Clara$",
+      "countEnglish": "^Light$",
+      "countExpect": "^Claro$",
+      "severity": "wrong",
+      "reason": "The system tray icon's Light is Clara, Chrome's Claro agreeing with a cor (Chrome 3/4 in Chromium 156.0.8078.49's .xtb files); the Theme setting's Light stays Claro, agreeing with o tema.",
+      "example": {
+        "fault": "Claro"
+      }
+    },
+    {
+      "id": "tray-icon-dark",
+      "msgid": "Dark",
+      "msgctxt": "tray icon color",
+      "expect": "^Escura$",
+      "countEnglish": "^Dark$",
+      "countExpect": "^Escuro$",
+      "severity": "wrong",
+      "reason": "The system tray icon's Dark is Escura, Chrome's Escuro agreeing with a cor (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files); the Theme setting's Dark stays Escuro, agreeing with o tema.",
+      "example": {
+        "fault": "Escuro"
+      }
+    },
+    {
+      "id": "download-action-show-in-folder",
+      "msgid": "Show in folder",
+      "msgctxt": "download action",
+      "expect": "^Mostrar na pasta$",
+      "severity": "wrong",
+      "reason": "The download notification's Show in folder is a select option, so it is sentence style beside Abrir arquivo (style sheet, Capitalization); the download history's tooltip of the same English names an icon button and stays Mostrar na Pasta.",
+      "example": {
+        "fault": "Mostrar na Pasta"
+      }
+    },
+    {
+      "id": "launch-in-sentences",
+      "msgidPattern": "^Start the application\\b",
+      "expect": "^Iniciar",
+      "countEnglish": "^Start app when you sign in$",
+      "countExpect": "^Iniciar app ao fazer login$",
+      "severity": "wrong",
+      "reason": "A Launch setting's description starts the app with iniciar too, as Chrome's own Start app when you sign in, Iniciar app ao fazer login (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never abrir (the launch pin).",
+      "example": {
+        "msgid": "Start the application automatically when you log in to your computer.",
+        "clean": "Iniciar o app automaticamente quando você fizer login no computador.",
+        "fault": "Abrir o app automaticamente quando você fizer login no computador."
+      }
+    },
+    {
+      "id": "build",
+      "msgidPattern": "\\bbuilds?\\b",
+      "expect": "[Vv]ers[ãõ]",
+      "countExpect": "\\bvers[ãõ]",
+      "severity": "wrong",
+      "reason": "A build is a versão, as Chrome writes it (Chrome: 8 of 11 messages), never build.",
+      "example": {
+        "msgid": "Beta releases are unfinished builds of upcoming versions. They can contain bugs and break in ways a stable release won't. You can switch back to the stable channel at any time.",
+        "clean": "As versões beta são versões inacabadas das próximas atualizações. Elas podem conter bugs e falhar de formas que uma versão estável não falharia. Você pode voltar ao canal estável a qualquer momento.",
+        "fault": "As betas são builds inacabados das próximas atualizações. Elas podem conter bugs e falhar de formas que uma estável não falharia. Você pode voltar ao canal estável a qualquer momento."
+      }
+    },
+    {
+      "id": "file-explorer",
+      "msgidPattern": "\\bFile Explorer\\b",
+      "expect": "Explorador de Arquivos",
+      "severity": "wrong",
+      "reason": "File Explorer is Windows's own app, so it takes Microsoft's name, Explorador de Arquivos (TBX `11280_1707188_1713255`); the message has no Windows msgctxt, so a pin holds it rather than a Platform words row.",
+      "example": {
+        "msgid": "Show in File Explorer",
+        "clean": "Mostrar no Explorador de Arquivos",
+        "fault": "Mostrar no Gerenciador de Arquivos"
+      }
+    },
+    {
+      "id": "windows-settings",
+      "msgidPattern": "\\bWindows Settings\\b",
+      "expect": "Configurações do Windows",
+      "severity": "wrong",
+      "reason": "Windows Settings is Windows's own Settings app, so it takes Microsoft's name, Configurações (TBX `37873_2167202_2167758`, the app where people find Windows and device settings), as Configurações do Windows; the messages have no Windows msgctxt, so a pin holds them rather than a Platform words row.",
+      "example": {
+        "msgid": "Open Windows Settings",
+        "clean": "Abrir Configurações do Windows",
+        "fault": "Abrir Definições do Windows"
+      }
+    },
+    {
+      "id": "trimmed-content",
+      "msgidPattern": "\\btrimmed content\\b",
+      "expect": "[Cc]onteúdo [Cc]ortado",
+      "severity": "wrong",
+      "reason": "Trimmed content is Gmail's conteúdo cortado, as Gmail Help names the ••• button, Mostrar conteúdo cortado (support.google.com/mail/answer/11468381 and support.google.com/a/users/answer/9259856, hl=pt-BR).",
+      "example": {
+        "msgid": "Always show trimmed content",
+        "clean": "Sempre mostrar o conteúdo cortado",
+        "fault": "Sempre mostrar o conteúdo reduzido"
+      }
+    },
+    {
+      "id": "app-links-badge",
+      "msgidPattern": "\\bapp links badge\\b",
+      "expect": "[Ss]elo",
+      "severity": "wrong",
+      "reason": "The app links badge marks a tab rather than counting anything, so it is a selo, never the unread badge's emblema or the toast's aviso; Chrome has no word for a badge (Chrome 0/0), and the apps' word for a badge that marks, with emblema and aviso out of the vote, is selo (agent-chosen: selo: 3 of 7 (VS Code, Android, Microsoft)).",
+      "example": {
+        "msgid": "Show app links badge",
+        "clean": "Mostrar selo da guia de links do app",
+        "fault": "Mostrar emblema da guia de links do app"
       }
     }
   ],
