@@ -367,6 +367,13 @@ function SortableAccountItem({
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: account.id, index, disabled });
 
+  const badges = [
+    account.disabled && "Disabled",
+    account.gmail.unreadBadge && "Unread badge",
+    account.gmail.unifiedInbox && "Unified inbox",
+    account.notifications && "Notifications",
+  ].filter((badge) => typeof badge === "string");
+
   return (
     <Item ref={ref} className={isDragging ? "opacity-50" : undefined} variant="muted">
       <Button
@@ -389,12 +396,13 @@ function SortableAccountItem({
           />
           {account.label}
         </ItemTitle>
-        {(account.disabled || account.gmail.unreadBadge || account.notifications) && (
+        {badges.length > 0 && (
           <div className="flex gap-2">
-            {account.disabled && <Badge variant="outline">Disabled</Badge>}
-            {account.gmail.unreadBadge && <Badge variant="outline">Unread badge</Badge>}
-            {account.gmail.unifiedInbox && <Badge variant="outline">Unified inbox</Badge>}
-            {account.notifications && <Badge variant="outline">Notifications</Badge>}
+            {badges.map((badge) => (
+              <Badge key={badge} variant="outline">
+                {badge}
+              </Badge>
+            ))}
           </div>
         )}
       </ItemContent>
