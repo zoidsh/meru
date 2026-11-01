@@ -132,7 +132,7 @@ function assignPriorArt(pending: [string, Entry][], candidates: [string, Entry][
   return assigned;
 }
 
-async function parse(text: string, locale: string, sourceLocale: string, filename: string) {
+export async function parse(text: string, locale: string, sourceLocale: string, filename: string) {
   return (await po.parse(text, { locale, sourceLocale, filename })) as Catalog;
 }
 
@@ -417,7 +417,7 @@ const CATALOG_NAMES: Record<string, string> = {
   "packages/preload-gmail/locales/{locale}": "preload-gmail",
 };
 
-function catalogFiles(config: LinguiConfigNormalized, locale: string) {
+export function catalogFiles(config: LinguiConfigNormalized, locale: string) {
   return config.catalogs.map((catalogConfig) => {
     const template = path.relative(config.rootDir, catalogConfig.path);
 
