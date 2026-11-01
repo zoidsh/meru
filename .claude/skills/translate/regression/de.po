@@ -309,7 +309,6 @@ msgstr "Mindestgröße begrenzen"
 # expect: terminology|accuracy/mistranslation|fluency/unidiomatic minor
 # check: pinned:recent-downloads
 # real: run 2's calque, which a download history pin forced; settled as Letzte Downloads, now a pin
-# hard
 #: packages/renderer/recent-download-history.tsx
 msgid "Recent download history"
 msgstr "Aktueller Downloadverlauf"
@@ -353,7 +352,6 @@ msgstr "Getan"
 # expect: style minor
 # check: banned:sie
 # planted: register, Sie and Ihr in a sentence
-# hard
 #: packages/renderer/routes/settings/license.tsx
 msgid "Upgrade to Meru Pro before your trial ends to keep using all features."
 msgstr "Mit einem Upgrade auf Meru Pro vor Ende Ihres Testzeitraums können Sie weiterhin alle Funktionen nutzen."
@@ -376,7 +374,6 @@ msgstr "{trialDaysLeft, plural, one {Du nutzt den Testzeitraum von Meru Pro. Er 
 # expect: fluency/spelling minor
 # check: pinned:download-history
 # planted: a typo
-# hard
 #: packages/renderer/routes/download-history.tsx
 msgid "Download history"
 msgstr "Downlaodverlauf"
