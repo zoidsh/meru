@@ -133,8 +133,8 @@ describe("changedEntries", () => {
 });
 
 describe("resolveBase", () => {
-  test("compares against HEAD without a base, and the merge base with one", () => {
-    expect(resolveBase(undefined)).toBe("HEAD");
+  test("compares against the merge base with beta without a base, and with the base given", () => {
+    expect(resolveBase(undefined, (ref) => `merge base with ${ref}`)).toBe("merge base with beta");
     expect(resolveBase("origin/beta", () => "abc123")).toBe("abc123");
   });
 

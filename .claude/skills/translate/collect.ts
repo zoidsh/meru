@@ -11,7 +11,9 @@ import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
  * translation of the English it replaces when one can be found. A changed
  * English is a new entry, so the old one is only obsolete in the catalog, or
  * gone from it once `extract --clean` has run, which is why the catalog is also
- * read as `HEAD` and as the merge base with `--base` have it.
+ * read as `HEAD` and as the merge base with `--base` have it. When nothing is
+ * untranslated or fuzzy, it lists every translation changed since that merge
+ * base instead, since a translation edited by hand still needs its review.
  *
  * With `--out <dir>`, each locale's list goes to `<dir>/<tag>.txt` instead,
  * with that locale's slice of the glossary beside it, so an agent reads one
@@ -142,10 +144,79 @@ export function readAtRef(ref: string, file: string) {
   return result.success ? result.stdout.toString() : undefined;
 }
 
-export function mergeBase(ref: string) {
-  const result = Bun.spawnSync(["git", "merge-base", "HEAD", ref], { stderr: "ignore" });
+/** The branch a translation run merges into when `--base` names none. */
+export const DEFAULT_BASE = "beta";
+
+function gitOutput(...args: string[]) {
+  const result = Bun.spawnSync(["git", ...args], { stderr: "ignore" });
 
   return result.success ? result.stdout.toString().trim() : undefined;
+}
+
+/*
+ * A branch and its remote-tracking twin, such as `beta` and `origin/beta`, can
+ * disagree: a worktree rebased onto a local `beta` newer than the last fetch
+ * forks from a commit `origin/beta` doesn't hold, and after a fetch the stale
+ * one is the local branch. Of the two merge bases, the one nearest HEAD is
+ * where the branch itself starts; the older would count the target's own
+ * commits as the branch's changes.
+ */
+export function mergeBase(ref: string) {
+  const twin = ref.startsWith("origin/") ? ref.slice("origin/".length) : `origin/${ref}`;
+
+  let newest: string | undefined;
+
+  for (const candidate of [ref, twin]) {
+    const commit = gitOutput("merge-base", "HEAD", candidate);
+
+    if (
+      commit &&
+      (!newest ||
+        (commit !== newest &&
+          gitOutput("merge-base", "--is-ancestor", newest, commit) !== undefined))
+    ) {
+      newest = commit;
+    }
+  }
+
+  return newest;
+}
+
+export type AssessedEntry = { catalog: string; msgctxt: string | null; msgid: string };
+
+/** Every live, translated entry whose translation is new since `earlier` or differs from it. */
+export function translationChanges(catalog: Catalog, earlier: Catalog) {
+  const before = new Map(Object.entries(earlier).map(([id, entry]) => [keyOf(id, entry), entry]));
+
+  return Object.entries(catalog).flatMap(([id, entry]) => {
+    const previous = before.get(keyOf(id, entry));
+
+    return !entry.obsolete &&
+      entry.translation &&
+      (!previous || previous.obsolete || previous.translation !== entry.translation)
+      ? [{ id, entry, previous: previous?.obsolete ? undefined : previous }]
+      : [];
+  });
+}
+
+/*
+ * A partial run's translator writes more than the new and fuzzy entries: a
+ * `check.ts` fix or a new pin can rewrite an older one, and that rewrite needs
+ * assessing as much as a new string does.
+ */
+export function changedEntries(
+  catalogs: { name: string; catalog: Catalog }[],
+  earlier: { name: string; catalog: Catalog }[],
+): AssessedEntry[] {
+  return catalogs.flatMap(({ name, catalog }) =>
+    translationChanges(catalog, earlier.find((other) => other.name === name)?.catalog ?? {}).map(
+      ({ id, entry }) => ({
+        catalog: name,
+        msgctxt: entry.context ?? null,
+        msgid: entry.message ?? id,
+      }),
+    ),
+  );
 }
 
 const GLOSSARY_PATH = path.join(import.meta.dir, "glossary.md");
@@ -620,18 +691,141 @@ async function dump(config: LinguiConfigNormalized, locale: string, out: string 
   console.log(`${dumpPath}: ${total} entries, ${multiOrigin} used in more than one file`);
 }
 
+function formatEntry(id: string, entry: Entry, status: string, priorArt?: PriorArt) {
+  return [
+    `- msgid: ${JSON.stringify(entry.message ?? id)}`,
+    entry.context ? `  msgctxt: ${JSON.stringify(entry.context)}` : undefined,
+    ...(entry.comments ?? []).map((comment) => `  comment: ${comment}`),
+    ...(entry.origin ?? []).map(([origin]) => `  origin: ${origin}`),
+    `  status: ${status}`,
+    priorArt
+      ? `  prior art (${priorArt.match}): ${JSON.stringify(priorArt.source)} was ${JSON.stringify(priorArt.translation)}`
+      : undefined,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function readCatalogAt(ref: string, locale: string, sourceLocale: string, relative: string) {
+  const text = readAtRef(ref, relative);
+
+  return text ? await parse(text, locale, sourceLocale, relative) : undefined;
+}
+
+export type LocaleCatalog = {
+  name: string;
+  relative: string;
+  /** Undefined when the catalog file is missing. */
+  catalog: Catalog | undefined;
+  /** The catalog at HEAD and at the merge base, where prior art comes from. */
+  earlier: Catalog[];
+  /** The catalog at the merge base, or undefined when the base didn't resolve. */
+  atBase: Catalog | undefined;
+};
+
+export type LocaleList =
+  | { kind: "translate" | "review"; sections: string[]; count: number }
+  | { kind: "none" | "unknown" };
+
+/*
+ * Decided per locale: one with entries to translate gets those, and one with
+ * none gets every translation changed since the merge base for review, so a
+ * hand edit in one language is reviewed even while another is being
+ * translated. Without a merge base, a locale with nothing to translate is
+ * `unknown`, never `none`, since what changed can't be told.
+ */
+export function listLocale(catalogs: LocaleCatalog[], base: string): LocaleList {
+  const sections: string[] = [];
+
+  let count = 0;
+
+  for (const { name, relative, catalog, earlier } of catalogs) {
+    if (!catalog) {
+      sections.push(`### ${name}: ${relative}\n\nMissing; run \`bun run i18n:extract\` first.`);
+
+      continue;
+    }
+
+    const live = Object.entries(catalog).filter(([, entry]) => !entry.obsolete);
+
+    const liveSources = new Set(live.map(([id, entry]) => keyOf(id, entry)));
+
+    const candidates = Object.entries(catalog).filter(
+      ([, entry]) => entry.obsolete && entry.translation,
+    );
+
+    for (const [id, entry] of earlier.flatMap((other) => Object.entries(other))) {
+      const key = keyOf(id, entry);
+
+      if (!entry.obsolete && entry.translation && !liveSources.has(key)) {
+        liveSources.add(key);
+        candidates.push([id, entry]);
+      }
+    }
+
+    const pending = live.filter(
+      ([, entry]) => !entry.translation || entry.extra?.flags?.includes("fuzzy"),
+    );
+
+    if (pending.length === 0) {
+      continue;
+    }
+
+    count += pending.length;
+
+    const priorArtById = assignPriorArt(pending, candidates);
+
+    const lines = pending.map(([id, entry]) =>
+      formatEntry(
+        id,
+        entry,
+        entry.translation
+          ? `fuzzy, current translation ${JSON.stringify(entry.translation)}`
+          : "untranslated",
+        priorArtById.get(id),
+      ),
+    );
+
+    sections.push(`### ${name}: ${relative}\n\n${lines.join("\n")}`);
+  }
+
+  if (sections.length > 0) {
+    return { kind: "translate", sections, count };
+  }
+
+  for (const { name, relative, catalog, atBase } of catalogs) {
+    if (!atBase) {
+      return { kind: "unknown" };
+    }
+
+    const changes = translationChanges(catalog ?? {}, atBase);
+
+    if (changes.length === 0) {
+      continue;
+    }
+
+    count += changes.length;
+
+    const lines = changes.map(({ id, entry, previous }) =>
+      formatEntry(
+        id,
+        entry,
+        `changed since ${base}, current translation ${JSON.stringify(entry.translation)}, ${previous?.translation ? `was ${JSON.stringify(previous.translation)}` : "new"}`,
+      ),
+    );
+
+    sections.push(`### ${name}: ${relative}\n\n${lines.join("\n")}`);
+  }
+
+  return sections.length > 0 ? { kind: "review", sections, count } : { kind: "none" };
+}
+
 async function collect(
   config: LinguiConfigNormalized,
-  { base, out }: { base?: string; out?: string },
+  { base = DEFAULT_BASE, out }: { base?: string; out?: string },
   requested: string[],
 ) {
-  const baseCommit = base ? mergeBase(base) : undefined;
-
-  if (base && !baseCommit) {
-    console.error(
-      `Warning: --base ${base} has no merge base with HEAD, so prior art comes from HEAD alone. Fetch it or pass another ref.`,
-    );
-  }
+  const baseCommit = mergeBase(base);
 
   const refs = [...new Set(["HEAD", baseCommit])].filter((ref): ref is string => Boolean(ref));
 
@@ -646,101 +840,45 @@ async function collect(
     return;
   }
 
-  let pendingTotal = 0;
-
-  let missingTotal = 0;
-
   let glossary: string | undefined;
 
   let glossaryWarned = false;
 
+  const byKind = { translate: [], review: [], none: [], unknown: [] } as Record<
+    LocaleList["kind"],
+    string[]
+  >;
+
   for (const locale of locales) {
-    const sections: string[] = [];
+    const catalogs = await Promise.all(
+      catalogFiles(config, locale).map(async ({ name, absolute, relative }) => {
+        const file = Bun.file(absolute);
 
-    for (const { name, absolute, relative } of catalogFiles(config, locale)) {
-      const file = Bun.file(absolute);
+        const read = (ref: string) => readCatalogAt(ref, locale, config.sourceLocale, relative);
 
-      if (!(await file.exists())) {
-        sections.push(`### ${name}: ${relative}\n\nMissing; run \`bun run i18n:extract\` first.`);
+        return {
+          name,
+          relative,
+          catalog: (await file.exists())
+            ? await parse(await file.text(), locale, config.sourceLocale, relative)
+            : undefined,
+          earlier: (await Promise.all(refs.map(read))).filter(
+            (catalog): catalog is Catalog => catalog !== undefined,
+          ),
+          atBase: baseCommit ? ((await read(baseCommit)) ?? {}) : undefined,
+        };
+      }),
+    );
 
-        missingTotal++;
+    const list = listLocale(catalogs, base);
 
-        continue;
-      }
+    byKind[list.kind].push(locale);
 
-      const catalog = await parse(await file.text(), locale, config.sourceLocale, relative);
-
-      const live = Object.entries(catalog).filter(([, entry]) => !entry.obsolete);
-
-      const liveSources = new Set(live.map(([id, entry]) => keyOf(id, entry)));
-
-      const candidates = Object.entries(catalog).filter(
-        ([, entry]) => entry.obsolete && entry.translation,
-      );
-
-      for (const ref of refs) {
-        const text = readAtRef(ref, relative);
-
-        if (!text) {
-          continue;
-        }
-
-        const earlier = await parse(text, locale, config.sourceLocale, relative);
-
-        for (const [id, entry] of Object.entries(earlier)) {
-          const key = keyOf(id, entry);
-
-          if (!entry.obsolete && entry.translation && !liveSources.has(key)) {
-            liveSources.add(key);
-            candidates.push([id, entry]);
-          }
-        }
-      }
-
-      const pending = live.filter(
-        ([, entry]) => !entry.translation || entry.extra?.flags?.includes("fuzzy"),
-      );
-
-      if (pending.length === 0) {
-        continue;
-      }
-
-      pendingTotal += pending.length;
-
-      const priorArtById = assignPriorArt(pending, candidates);
-
-      const lines = pending.map(([id, entry]) => {
-        const status = entry.translation
-          ? `fuzzy, current translation ${JSON.stringify(entry.translation)}`
-          : "untranslated";
-
-        const fields = [
-          `- msgid: ${JSON.stringify(entry.message ?? id)}`,
-          entry.context ? `  msgctxt: ${JSON.stringify(entry.context)}` : undefined,
-          ...(entry.comments ?? []).map((comment) => `  comment: ${comment}`),
-          ...(entry.origin ?? []).map(([origin]) => `  origin: ${origin}`),
-          `  status: ${status}`,
-        ];
-
-        const priorArt = priorArtById.get(id);
-
-        if (priorArt) {
-          fields.push(
-            `  prior art (${priorArt.match}): ${JSON.stringify(priorArt.source)} was ${JSON.stringify(priorArt.translation)}`,
-          );
-        }
-
-        return fields.filter(Boolean).join("\n");
-      });
-
-      sections.push(`### ${name}: ${relative}\n\n${lines.join("\n")}`);
-    }
-
-    if (sections.length === 0) {
+    if (!("sections" in list)) {
       continue;
     }
 
-    const section = `## ${locale}\n\n${sections.join("\n\n")}\n`;
+    const section = `## ${locale}\n\n${list.sections.join("\n\n")}\n`;
 
     if (!out) {
       console.log(section);
@@ -770,11 +908,28 @@ async function collect(
 
     await Bun.write(glossaryPath, slice.text);
 
-    console.log(`${locale}: ${entriesPath} ${glossaryPath}`);
+    console.log(`${locale} (${list.kind}, ${list.count} entries): ${entriesPath} ${glossaryPath}`);
   }
 
-  if (pendingTotal === 0 && missingTotal === 0) {
-    console.log(`Nothing to translate in ${locales.join(", ")}.`);
+  if (!baseCommit) {
+    console.error(
+      `${byKind.unknown.length > 0 ? "Error" : "Warning"}: --base ${base} has no merge base with HEAD, so prior art comes from HEAD alone${byKind.unknown.length > 0 ? `, and what changed in ${byKind.unknown.join(", ")} can't be listed for review` : ""}. Fetch it or pass another ref.`,
+    );
+  }
+
+  const summary = [
+    byKind.translate.length > 0 && `To translate: ${byKind.translate.join(", ")}.`,
+    byKind.review.length > 0 &&
+      `To review only, as a partial run of translations changed since ${base}: ${byKind.review.join(", ")}.`,
+    byKind.none.length > 0 && `Nothing to translate or review in ${byKind.none.join(", ")}.`,
+  ].filter(Boolean);
+
+  if (summary.length > 0) {
+    console.log(summary.join("\n"));
+  }
+
+  if (byKind.unknown.length > 0) {
+    process.exitCode = 2;
   }
 }
 

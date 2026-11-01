@@ -2,6 +2,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { getConfig } from "@lingui/conf";
 import { type CompiledMessage, compileMessageOrThrow } from "@lingui/message-utils/compileMessage";
+import { SHIPPED_CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
 import { findCatalogProblems, parseCatalog } from "../../../scripts/i18n-check";
 import { loadSidecar, type Severity, type Sidecar } from "./rules";
 
@@ -416,19 +417,45 @@ function summarize(report: Report) {
   return lines.join("\n");
 }
 
-const USAGE = `Usage: bun .claude/skills/translate/check.ts --locale <tag> [--catalog <path.po>]…
+const USAGE = `Usage: bun .claude/skills/translate/check.ts --locale <tag> [--catalog <path.po>]… [--strict]
+       bun .claude/skills/translate/check.ts --shipped [--strict]
 
 Checks a locale's catalogs against .claude/skills/translate/languages/<tag>.json.
 Without --catalog, it reads both of the locale's catalogs from lingui.config.ts.
-Prints the report as JSON on stdout and a summary on stderr.
+Prints the report as JSON on stdout and a summary on stderr. --shipped checks
+every shipped locale but English and prints an array of reports.
 
-Exit codes: 0 no wrong finding, 1 a wrong finding, 2 the check could not run.`;
+Exit codes: 0 no wrong finding, 1 a wrong finding, or any finding with --strict,
+2 the check could not run.`;
+
+async function checkLocale(
+  config: ReturnType<typeof getConfig>,
+  locale: string,
+  catalogPaths: string[] | undefined,
+) {
+  const paths =
+    catalogPaths ??
+    config.catalogs.map((catalogConfig) =>
+      path.relative(process.cwd(), `${catalogConfig.path.replace("{locale}", locale)}.po`),
+    );
+
+  const catalogs = await Promise.all(
+    paths.map(async (catalogPath) => ({
+      path: catalogPath,
+      catalog: await readCatalog(locale, catalogPath),
+    })),
+  );
+
+  return checkCatalogs(locale, await loadSidecar(locale), catalogs);
+}
 
 async function run() {
   const { values } = parseArgs({
     options: {
       locale: { type: "string" },
       catalog: { type: "string", multiple: true },
+      shipped: { type: "boolean" },
+      strict: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -439,35 +466,33 @@ async function run() {
     return;
   }
 
-  if (!values.locale) {
+  if (values.shipped ? values.locale || values.catalog : !values.locale) {
     console.error(USAGE);
 
     process.exit(2);
   }
 
-  const locale = values.locale;
+  const locales = values.locale
+    ? [values.locale]
+    : SHIPPED_CATALOG_TAGS.filter((tag) => tag !== "en");
 
   const config = getConfig();
 
-  const catalogPaths =
-    values.catalog ??
-    config.catalogs.map((catalogConfig) =>
-      path.relative(process.cwd(), `${catalogConfig.path.replace("{locale}", locale)}.po`),
-    );
-
-  const catalogs = await Promise.all(
-    catalogPaths.map(async (catalogPath) => ({
-      path: catalogPath,
-      catalog: await readCatalog(locale, catalogPath),
-    })),
+  const reports = await Promise.all(
+    locales.map((locale) => checkLocale(config, locale, values.catalog)),
   );
 
-  const report = checkCatalogs(locale, await loadSidecar(locale), catalogs);
+  console.log(JSON.stringify(values.shipped ? reports : reports[0], null, 2));
 
-  console.log(JSON.stringify(report, null, 2));
-  console.error(summarize(report));
+  for (const report of reports) {
+    console.error(summarize(report));
+  }
 
-  if (report.findings.some((finding) => finding.severity === "wrong")) {
+  const findings = reports.flatMap((report) => report.findings);
+
+  if (
+    values.strict ? findings.length > 0 : findings.some((finding) => finding.severity === "wrong")
+  ) {
     process.exit(1);
   }
 }

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { readdir } from "node:fs/promises";
+import { mkdtemp, readdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { checkCatalogs, readCatalog } from "../.claude/skills/translate/check";
 import { LANGUAGES_DIR, loadSidecar } from "../.claude/skills/translate/rules";
@@ -184,6 +185,24 @@ describe("check.ts", () => {
 
     test("is 0 for --help", () => {
       expect(exitCodeOf("--help")).toBe(0);
+    });
+
+    test("is 1 with --strict for a finding that isn't wrong, and 0 without", async () => {
+      const dir = await mkdtemp(path.join(tmpdir(), "translate-check-"));
+
+      const catalogPath = path.join(dir, "de.po");
+
+      await Bun.write(
+        catalogPath,
+        'msgid ""\nmsgstr ""\n"Language: de\\n"\n\nmsgid "Couldn\'t add the account."\nmsgstr "Das Konto konnte leider nicht hinzugefügt werden."\n',
+      );
+
+      expect(exitCodeOf("--locale", "de", "--catalog", catalogPath)).toBe(0);
+      expect(exitCodeOf("--locale", "de", "--catalog", catalogPath, "--strict")).toBe(1);
+    });
+
+    test("is 2 for --shipped with a locale", () => {
+      expect(exitCodeOf("--shipped", "--locale", "de")).toBe(2);
     });
   });
 });

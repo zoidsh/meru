@@ -1,10 +1,16 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { formatter } from "@lingui/format-po";
 import {
   applyTranslations,
   type Catalog,
   dumpCatalogs,
+  listLocale,
+  mergeBase,
   sliceGlossary,
+  translationChanges,
 } from "../.claude/skills/translate/collect";
 
 /*
@@ -285,5 +291,144 @@ The window.
       'glossary.md:29: skipped "| --- | --- |"',
       'glossary.md:31: skipped "```"',
     ]);
+  });
+});
+
+describe("listLocale", () => {
+  const atBase: Catalog = {
+    a: { message: "Settings", translation: "Einstellungen" },
+    b: { message: "Quit", translation: "Beenden" },
+  };
+
+  const locale = (catalog: Catalog, base: Catalog | null = atBase) => [
+    {
+      name: "app",
+      relative: "packages/shared/i18n/locales/de.po",
+      catalog,
+      earlier: base ? [base] : [],
+      atBase: base ?? undefined,
+    },
+  ];
+
+  test("decides each locale on its own: entries to translate, or else its changed translations to review", () => {
+    const translating = listLocale(
+      locale({ ...atBase, c: { message: "New", translation: "" } }),
+      "beta",
+    );
+
+    const reviewing = listLocale(
+      locale({ ...atBase, a: { message: "Settings", translation: "Optionen" } }),
+      "beta",
+    );
+
+    expect(translating).toMatchObject({ kind: "translate", count: 1 });
+    expect(translating.kind === "translate" && translating.sections.join()).toContain(
+      'msgid: "New"\n  status: untranslated',
+    );
+
+    expect(reviewing).toMatchObject({ kind: "review", count: 1 });
+    expect(reviewing.kind === "review" && reviewing.sections.join()).toContain(
+      'status: changed since beta, current translation "Optionen", was "Einstellungen"',
+    );
+  });
+
+  test("has nothing to do only when nothing changed, and can't tell without a merge base", () => {
+    expect(listLocale(locale(atBase), "beta")).toEqual({ kind: "none" });
+    expect(listLocale(locale(atBase, null), "beta")).toEqual({ kind: "unknown" });
+  });
+});
+
+describe("translationChanges", () => {
+  test("lists each live translation that is new or differs, with what it was", () => {
+    const earlier: Catalog = {
+      a: { message: "Settings", translation: "Einstellungen" },
+      b: { message: "Quit", translation: "Beenden" },
+      c: { message: "Back", translation: "Zurück", obsolete: true },
+    };
+
+    const current: Catalog = {
+      a: { message: "Settings", translation: "Optionen" },
+      b: { message: "Quit", translation: "Beenden" },
+      c: { message: "Back", translation: "Zurück" },
+      d: { message: "New", translation: "Neu" },
+      e: { message: "Empty", translation: "" },
+      f: { message: "Gone", translation: "Weg", obsolete: true },
+    };
+
+    expect(
+      translationChanges(current, earlier).map(({ id, previous }) => [id, previous?.translation]),
+    ).toEqual([
+      ["a", "Einstellungen"],
+      ["c", undefined],
+      ["d", undefined],
+    ]);
+  });
+});
+
+describe("mergeBase", () => {
+  /*
+   * A repository where `beta` moved on after the last fetch and the feature
+   * branch was rebased onto it, so `origin/beta` is stale.
+   */
+  async function repository() {
+    const dir = await mkdtemp(path.join(tmpdir(), "translate-merge-base-"));
+
+    const run = (...args: string[]) => {
+      const result = Bun.spawnSync(["git", ...args], { cwd: dir, stderr: "pipe" });
+
+      if (!result.success) {
+        throw new Error(`git ${args.join(" ")}: ${result.stderr.toString()}`);
+      }
+
+      return result.stdout.toString().trim();
+    };
+
+    const commit = (message: string) => {
+      run(
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.com",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--allow-empty",
+        "-q",
+        "-m",
+        message,
+      );
+
+      return run("rev-parse", "HEAD");
+    };
+
+    run("init", "-q", "-b", "beta");
+
+    const fetched = commit("fetched");
+
+    run("update-ref", "refs/remotes/origin/beta", fetched);
+
+    const rebasedOnto = commit("beta after the fetch");
+
+    run("checkout", "-q", "-b", "feature");
+
+    commit("feature");
+
+    return { dir, rebasedOnto };
+  }
+
+  test("takes the merge base nearest HEAD, whichever of a branch and its remote twin is newer", async () => {
+    const { dir, rebasedOnto } = await repository();
+
+    const cwd = process.cwd();
+
+    process.chdir(dir);
+
+    try {
+      expect(mergeBase("origin/beta")).toBe(rebasedOnto);
+      expect(mergeBase("beta")).toBe(rebasedOnto);
+      expect(mergeBase("missing")).toBeUndefined();
+    } finally {
+      process.chdir(cwd);
+    }
   });
 });
