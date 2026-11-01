@@ -1,0 +1,40 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: de\n"
+
+#: packages/renderer/routes/settings.tsx
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "{count, plural, one {# unread email} other {# unread emails}}"
+msgstr "{count, plural, one {# ungelesene E-Mail} other {# ungelesene E-Mails}}"
+
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "{action, select, click {On click} other {Button}}"
+msgstr "{action, select, click {Beim Klicken} other {Button}}"
+
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add <0>{entry}</0> on its own line, then save."
+msgstr "Füge <0>{entry}</0> in einer eigenen Zeile hinzu und speichere dann."
+
+#. App menu item that quits the app
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Quit {appName}"
+msgstr "{appName} beenden"
+
+#: packages/renderer/routes/settings/updates.tsx
+msgid "Beta releases are unfinished builds of upcoming versions. They can contain bugs and break in ways a stable release won't. You can switch back to the stable channel at any time."
+msgstr "Beta-Versionen sind unfertige Builds kommender Versionen. Sie können Fehler enthalten und Probleme verursachen, die in einer stabilen Version nicht auftreten. Du kannst jederzeit zum stabilen Kanal zurückwechseln."
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "How launcher apps are shown in the titlebar. Auto expands up to three apps into individual buttons and collapses beyond that. Collapsed always keeps them behind a single button, and Expanded always shows them as individual buttons."
+msgstr "Wie Launcher-Apps in der Titelleiste angezeigt werden. Automatisch zeigt bis zu drei Apps als einzelne Buttons und klappt sie bei mehr als drei ein. Eingeklappt zeigt sie immer hinter einem einzigen Button, Ausgeklappt immer als einzelne Buttons."
+
+#~ msgid "Select first unread account on click"
+#~ msgstr "Beim Klicken das erste ungelesene Konto auswählen"

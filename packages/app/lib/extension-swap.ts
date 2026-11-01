@@ -98,7 +98,11 @@ export async function installExtensionReplacingConflicts(
           }),
           isStillOn
             ? t`${conflictName} is still on, and ${extensionName} wasn't installed.`
-            : t`${conflictName} is off, but some of its files may be left in Meru. ${extensionName} wasn't installed. Turn it on to try again.`,
+            : t({
+                message: `${conflictName} is off, but some of its files may be left in Meru. ${extensionName} wasn't installed. Turn it on to try again.`,
+                comment:
+                  "conflictName and extensionName are extensions' names. “it” is extensionName, the extension being turned on: turning it on again retries the swap, since conflictName is already off",
+              }),
         ].join("\n\n"),
         { cause: error },
       );

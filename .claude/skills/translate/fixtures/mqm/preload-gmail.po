@@ -1,0 +1,15 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: de\n"
+
+#: packages/preload-gmail/trash.ts
+msgid "Move to Trash"
+msgstr "In den Papierkorb verschieben"
+
+#: packages/preload-gmail/links.ts
+msgid "Meru couldn't open the link because the page it points to is no longer available in this account."
+msgstr "Meru konnte den Link nicht öffnen, weil die Seite, auf die er verweist, in diesem Konto nicht mehr verfügbar ist."
