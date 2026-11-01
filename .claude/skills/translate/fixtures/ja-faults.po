@@ -18,6 +18,7 @@ msgstr "ブラウザーで開く"
 
 # A macOS label takes Chrome's spelling too, which is Apple's.
 # fault: banned:long-vowel
+# fault: pinned:show-in-folder
 #: packages/app/menu.ts
 msgctxt "macOS"
 msgid "Open in folder"
@@ -425,3 +426,13 @@ msgstr "{tabTitle}—{appName}のリンクを開きます"
 #: packages/shared/accounts.ts
 msgid "Yellow"
 msgstr "黄色"
+
+# fault: pinned:reopen-closed-tab
+#: packages/app/menu.ts
+msgid "Reopen Closed Tab"
+msgstr "閉じたタブを再度開く"
+
+# fault: pinned:show-in-folder
+#: packages/renderer/components/download-history.tsx
+msgid "Show in folder"
+msgstr "フォルダで表示"

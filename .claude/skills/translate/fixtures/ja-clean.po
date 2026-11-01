@@ -242,6 +242,18 @@ msgstr "ウェブサイト"
 msgid "Hard Reload"
 msgstr "ハード再読み込み"
 
+#: packages/app/menu.ts
+msgid "Reopen Closed Tab"
+msgstr "閉じたタブを開く"
+
+#: packages/renderer/components/download-history.tsx
+msgid "Show in folder"
+msgstr "フォルダを開く"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Open in folder"
+msgstr "フォルダを開く"
+
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "{tabTitle} — opens {appName} links"
 msgstr "{tabTitle} — {appName}のリンクを開きます"

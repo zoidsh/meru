@@ -305,7 +305,7 @@ msgstr "{label}をランチャーに追加"
 #. allowlistEntry is the line to add to 1Password's list of allowed browsers, which stays as it is
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Add <0>{allowlistEntry}</0> on its own line, then save."
-msgstr "<0>{allowlistEntry}</0>を1行として追加してから、保存してください。"
+msgstr "<0>{allowlistEntry}</0>を独立した1行として追加してから、保存してください。"
 
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Add a passkey to your Google account from its security settings inside Meru, then sign in with Touch ID — no password manager extension to install, so Meru stays fast and light. iCloud passkeys don't work here, and filling passwords still needs a password manager."
@@ -2102,7 +2102,7 @@ msgstr "エディタで開く"
 #. Button that shows the user styles file in its folder
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Open in folder"
-msgstr "フォルダで表示"
+msgstr "フォルダを開く"
 
 #: packages/app/url.ts
 msgid "Open link"
@@ -2460,7 +2460,7 @@ msgstr "GPUでレンダリングします。パフォーマンスが向上する
 #: packages/app/ipc.ts
 #: packages/app/menu.ts
 msgid "Reopen Closed Tab"
-msgstr "閉じたタブを再度開く"
+msgstr "閉じたタブを開く"
 
 #. Button that turns on a password manager extension in place of the one that is on
 #: packages/renderer/routes/settings/extensions.tsx
@@ -2856,7 +2856,7 @@ msgstr "Finderに表示"
 #: packages/renderer/components/download-history.tsx
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Show in folder"
-msgstr "フォルダで表示"
+msgstr "フォルダを開く"
 
 #. Button on the download notification that shows the file in the file manager
 #: packages/app/downloads.ts
