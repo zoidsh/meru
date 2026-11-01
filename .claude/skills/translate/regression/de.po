@@ -184,6 +184,8 @@ msgid "Select first unread account on click"
 msgstr "Beim Klicken das erste ungelesene Konto auswählen"
 
 # expect: terminology minor
+# check: banned:schaltflaeche
+# check: pinned:button
 # after #1246's fix round, which banned Schaltfläche for Button
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show width button"
@@ -196,6 +198,7 @@ msgid "Couldn't validate your Meru Pro trial."
 msgstr "Deine Testversion von Meru Pro konnte nicht überprüft werden."
 
 # expect: terminology minor
+# check: pinned:inspect-element
 # real: an MQM minor fixed in #1246; Chrome's item is Untersuchen
 #. Context menu item that opens the developer tools on the element clicked
 #: packages/app/context-menu.ts
@@ -203,6 +206,7 @@ msgid "Inspect Element"
 msgstr "Element untersuchen"
 
 # expect: terminology|accuracy/mistranslation minor
+# check: pinned:sound-name
 # after the Leinen call: the glossary names the sound Leinen; Leinwand is a canvas
 #. Name of a notification sound, picked in Settings
 #: packages/renderer/lib/notifications/index.ts
@@ -210,18 +214,22 @@ msgid "Linen"
 msgstr "Leinwand"
 
 # expect: terminology minor
+# check: pinned:hibernation
 # after #1246's fix round, which took Chrome's inaktiv for a hibernated tab
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hibernate idle tabs"
 msgstr "Unbenutzte Tabs in den Ruhezustand versetzen"
 
 # expect: terminology minor
+# check: banned:account
 # after the ban on Account, for Chrome's Konto
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Add account"
 msgstr "Account hinzufügen"
 
 # expect: terminology minor
+# check: banned:ungelesen-kennzeichen
+# check: pinned:unread-badge
 # after the ban on the coined Ungelesen-Badge, for the glossary's Kennzeichen für ungelesene E-Mails
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show unread badges"
@@ -253,6 +261,8 @@ msgid "Clear Cache"
 msgstr "Cache und Cookies leeren"
 
 # expect: accuracy/omission|accuracy/addition|accuracy/mistranslation critical
+# check: catalog:placeholder dropped
+# check: catalog:placeholder invented
 # planted: a broken placeholder, translated
 #. origin is the scheme and host of a website, such as https://example.com
 #: packages/app/url.ts
@@ -260,6 +270,7 @@ msgid "Trust all links on {origin}"
 msgstr "Allen Links auf {Ursprung} vertrauen"
 
 # expect: accuracy/omission|accuracy/mistranslation critical
+# check: catalog:tag dropped
 # planted: a broken tag, the closing </0> dropped
 #. allowlistEntry is the line to add to 1Password's list of allowed browsers, which stays as it is
 #: packages/renderer/routes/settings/extensions.tsx
@@ -267,12 +278,14 @@ msgid "Add <0>{allowlistEntry}</0> on its own line, then save."
 msgstr "Füge <0>{allowlistEntry} in einer eigenen Zeile hinzu und speichere dann."
 
 # expect: fluency/punctuation|locale-conventions minor
+# check: banned:english-quotes
 # planted: straight quotation marks for „…“
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show Do Not Disturb button"
 msgstr "Button \"Nicht stören\" anzeigen"
 
 # expect: style minor
+# check: banned:sie
 # planted: Sie for the style sheet's du
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Enter a search query"
@@ -294,6 +307,7 @@ msgid "Restrict minimum window size"
 msgstr "Mindestgröße begrenzen"
 
 # expect: terminology|accuracy/mistranslation|fluency/unidiomatic minor
+# check: pinned:recent-downloads
 # real: run 2's calque, which a download history pin forced; settled as Letzte Downloads, now a pin
 # hard
 #: packages/renderer/recent-download-history.tsx
@@ -337,6 +351,7 @@ msgid "Done"
 msgstr "Getan"
 
 # expect: style minor
+# check: banned:sie
 # planted: register, Sie and Ihr in a sentence
 # hard
 #: packages/renderer/routes/settings/license.tsx
@@ -359,6 +374,7 @@ msgid "{trialDaysLeft, plural, one {You're using a Meru Pro trial with # day lef
 msgstr "{trialDaysLeft, plural, one {Du nutzt den Testzeitraum von Meru Pro. Er läuft noch # Tage.} other {Du nutzt den Testzeitraum von Meru Pro. Er läuft noch # Tag.}}"
 
 # expect: fluency/spelling minor
+# check: pinned:download-history
 # planted: a typo
 # hard
 #: packages/renderer/routes/download-history.tsx

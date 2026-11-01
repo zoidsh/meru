@@ -32,6 +32,10 @@ jobs:
   # push's, because a superseded run is cancelled before it finishes. A rename
   # counts its old path too, so a source file renamed to markdown still runs.
   #
+  # The translate skill sits under .claude but is what check.ts and the
+  # translate tests read, its rules, style sheets and glossary included, so a
+  # change to it sets `translate`, which runs every job but e2e.
+  #
   # No permissions block: release.yml calls this workflow with a token that
   # holds no pull-requests scope, and a called job asking for more than its
   # caller has rejects the whole release run before it starts. The repository
@@ -40,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.files.outputs.code }}
+      translate: ${{ steps.files.outputs.translate }}
     steps:
       - id: files
         env:
@@ -47,11 +52,14 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
         run: |
           code=true
+          translate=true
           if [ -n "$PR" ] && files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)'); then
             echo "$files"
             echo "$files" | grep -qvE '\.md$|^\.claude/|^LICENSE$' || code=false
+            echo "$files" | grep -qE '^\.claude/skills/translate/' || translate=false
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "translate=$translate" >> "$GITHUB_OUTPUT"
   fmt:
     runs-on: ubuntu-latest
     steps:
@@ -61,20 +69,22 @@ jobs:
       - run: bun run fmt:check
   lint:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.translate == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run lint
-  # The three catalog checks, in the order they answer: whether the committed
-  # PO is what `lingui extract` would write, whether anything is untranslated,
-  # and whether a translation drifted from its source in a way Lingui itself
-  # does not look at.
+  # The catalog checks, in the order they answer: whether the committed PO is
+  # what `lingui extract` would write, whether anything is untranslated,
+  # whether a translation drifted from its source in a way Lingui itself does
+  # not look at, and whether it breaks a rule of its language's sidecar. The
+  # last fails on any finding, doubtful and style ones too, since nothing in
+  # CI reads them later.
   i18n:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.translate == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -84,9 +94,10 @@ jobs:
       - run: bunx lingui check sync --clean --workers 1
       - run: bunx lingui check missing --mode catalog --verbose --workers 1
       - run: bun run i18n:check
+      - run: bun .claude/skills/translate/check.ts --shipped --strict
   types:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.translate == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -95,7 +106,7 @@ jobs:
       - run: bun run types:ci
   test:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.translate == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

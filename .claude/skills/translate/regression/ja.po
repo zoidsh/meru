@@ -183,6 +183,8 @@ msgid "Select first unread account on click"
 msgstr "クリック時に最初の未読アカウントを選択"
 
 # expect: terminology minor
+# check: banned:website
+# check: pinned:website
 # real: an MQM minor fixed in #1246; Chrome writes ウェブサイト
 # few-shot
 #. A menu or a menu item in Meru's menu bar
@@ -191,6 +193,7 @@ msgid "Website"
 msgstr "Webサイト"
 
 # expect: terminology minor
+# check: pinned:reopen-closed-tab
 # real: an MQM minor fixed in #1247; Chrome writes 閉じたタブを開く
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/ipc.ts
@@ -199,6 +202,7 @@ msgid "Reopen Closed Tab"
 msgstr "閉じたタブを再度開く"
 
 # expect: terminology minor
+# check: pinned:show-in-folder
 # real: an MQM minor fixed in #1247; Chrome writes フォルダを開く
 #. Button in the download history that shows the file in the file manager
 #. Option of what a finished download's notification does
@@ -208,6 +212,7 @@ msgid "Show in folder"
 msgstr "フォルダで表示"
 
 # expect: terminology minor
+# check: pinned:clear-all
 # real: an MQM minor fixed in #1247; Chrome's downloads page writes すべて削除
 #. Button that clears the whole download history
 #: packages/renderer/routes/download-history.tsx
@@ -222,6 +227,7 @@ msgid "Add <0>{allowlistEntry}</0> on its own line, then save."
 msgstr "<0>{allowlistEntry}</0>を1行として追加してから、保存してください。"
 
 # expect: terminology minor
+# check: pinned:hard-reload
 # real: an MQM minor fixed in #1246; Chrome writes ハード再読み込み
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -229,6 +235,7 @@ msgid "Hard Reload"
 msgstr "強制再読み込み"
 
 # expect: terminology minor
+# check: pinned:yellow
 # real: an MQM minor fixed in #1246; Chrome writes 黄 beside the other bare-kanji colours
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
@@ -236,6 +243,7 @@ msgid "Yellow"
 msgstr "黄色"
 
 # expect: fluency/punctuation|locale-conventions minor
+# check: banned:em-dash
 # real: an MQM minor fixed in #1246; an em dash takes a space on each side
 #. Tooltip of the tab every link to a Google Workspace app opens in. tabTitle is the page's title; appName is the app's English name, such as Calendar
 #: packages/renderer/components/vertical-tabs.tsx
@@ -243,6 +251,7 @@ msgid "{tabTitle} — opens {appName} links"
 msgstr "{tabTitle}—{appName}のリンクを開きます"
 
 # expect: terminology minor
+# check: banned:kinou-kakuchou
 # after #1246's fix round, which banned 機能拡張 for Chrome's 拡張機能
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts
@@ -250,6 +259,7 @@ msgid "Extensions"
 msgstr "機能拡張"
 
 # expect: terminology|fluency/spelling minor
+# check: banned:long-vowel
 # after #1246's fix round, which banned the long-vowel ブラウザー
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/context-menu.ts
@@ -283,6 +293,8 @@ msgid "Clear Cache"
 msgstr "キャッシュとCookieを消去"
 
 # expect: accuracy/omission|accuracy/addition|accuracy/mistranslation critical
+# check: catalog:placeholder dropped
+# check: catalog:placeholder invented
 # planted: a broken placeholder, translated
 #. origin is the scheme and host of a website, such as https://example.com
 #: packages/app/url.ts
@@ -290,12 +302,14 @@ msgid "Trust all links on {origin}"
 msgstr "{オリジン}のすべてのリンクを信頼"
 
 # expect: fluency/punctuation|locale-conventions minor
+# check: banned:quotes
 # planted: 「」 for the style sheet's “”, and quotes the shipped label has none of
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show Do Not Disturb button"
 msgstr "「おやすみモード」ボタンを表示"
 
 # expect: style minor
+# check: banned:anata
 # planted: the pronoun あなた, which the style sheet bans
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Enter a search query"
@@ -331,6 +345,7 @@ msgid "Where downloaded files are saved."
 msgstr "ダウンロードしたPDFファイルの保存先です。"
 
 # expect: fluency/unidiomatic|terminology|accuracy/mistranslation minor
+# check: pinned:download-history
 # planted: a calque, history as 歴史 for the log Chrome calls 履歴
 # hard
 #: packages/renderer/recent-download-history.tsx
@@ -361,6 +376,7 @@ msgid "{target, select, window {New {appLabel} Window} other {New {appLabel} Tab
 msgstr "{target, select, window {新しい{appLabel}タブ} other {新しい{appLabel}ウィンドウ}}"
 
 # expect: fluency/spelling minor
+# check: pinned:download-history
 # planted: a typo, 暦 for 歴
 # hard
 #: packages/renderer/routes/download-history.tsx
@@ -375,6 +391,7 @@ msgid "Show license key"
 msgstr "ライセンスキーを表示します"
 
 # expect: accuracy/mistranslation|terminology major
+# check: pinned:default-app
 # planted: near miss, current for default; the default-app pin covers 既定
 # hard
 #: packages/renderer/routes/settings/general.tsx
