@@ -2823,7 +2823,7 @@ msgstr "Afficher le nombre d’e-mails non lus à côté de l’icône de la bar
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Show app links badge"
-msgstr "Afficher l’indicateur de l’onglet des liens d’appli"
+msgstr "Afficher la pastille de l’onglet des liens d’appli"
 
 #: packages/renderer/components/app-titlebar.tsx
 #: packages/renderer/components/vertical-tabs.tsx

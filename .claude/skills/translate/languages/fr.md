@@ -55,7 +55,7 @@ Say what happened, without _Désolé_ or _Veuillez_: _Impossible d’ajouter le 
 
 House words for everyday actions, as Chrome writes its labels, in this sheet's label form. A string that names something Gmail also shows, such as the Undo button in the message-sent toast, takes Gmail's word from the glossary instead, and an entry with a platform `msgctxt` takes [its platform's word](#platform-words). Delete and Remove are one word, _Supprimer_, as Chrome writes both. The labels:
 
-- Cancel _Annuler_, OK _OK_, Close _Fermer_, Delete _Supprimer_, Remove _Supprimer_, Add _Ajouter_, Save _Enregistrer_, Edit _Modifier_, Open _Ouvrir_, Show _Afficher_, Hide _Masquer_, Quit _Quitter_, Reload _Actualiser_, Try Again _Réessayer_, Learn More… _En savoir plus…_
+- Cancel _Annuler_, OK _OK_, Close _Fermer_, Delete _Supprimer_, Remove _Supprimer_, Add _Ajouter_, Save _Enregistrer_, Edit _Modifier_ as an action, while the Edit menu's title is _Édition_, Chrome's menu word, Open _Ouvrir_, Show _Afficher_, Hide _Masquer_, Quit _Quitter_, Reload _Actualiser_, Try Again _Réessayer_, Learn More… _En savoir plus…_
 - Close Tab _Fermer l’onglet_, Close Other Tabs _Fermer les autres onglets_, Pin Tab _Épingler l’onglet_, Show Sidebar _Afficher la barre latérale_, Copy Link _Copier le lien_, Mark as Read _Marquer comme lu_, Developer Tools _Outils pour les développeurs_
 - _Souhaitez-vous vraiment supprimer ce message ?_ (Are you sure you want to delete this message?)
 - _Il est impossible de glisser des pièces jointes qui n’ont pas été téléchargées. Souhaitez-vous télécharger cette pièce jointe ?_
