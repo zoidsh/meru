@@ -47,3 +47,4 @@ This file is the draft of the next release, written one line at a time as work l
 - **Meru Pro:** A Workspace apps window that closes itself closes cleanly, instead of showing an error that keeps coming back
 - **Meru Pro:** A pinned Workspace app tab whose page closes itself stays in the tab strip, ready to open again, instead of disappearing for good; an unpinned one comes back with `Reopen Closed Tab`
 - **Meru Pro:** When the Workspace app tab in front closes itself, Gmail comes to the front, instead of another tab's page showing while Gmail is selected
+- Settings and the unified inbox fit a narrow window, instead of cutting off their switches, buttons and close button at the right edge
