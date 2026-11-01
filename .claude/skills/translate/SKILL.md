@@ -7,7 +7,7 @@ description: Translate Meru's interface strings into every shipped language, wit
 
 Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then runs the checks CI runs. Each locale gets its own `translator` agent, which writes the translations, and its own `translation-reviewer` agent, which checks them; a locale no person reviews also gets a `translation-second-reviewer`, a cold second pass. All three are in `.claude/agents`. Their guidance is beside this file: `glossary.md` and `languages/<tag>.md`.
 
-**Human-reviewed languages: `de`.** A person reads the doubtful and style findings of these. Every other locale is reviewed by agents alone, so step 4 has the translator apply those findings itself and adds the second pass.
+**Human-reviewed languages: none.** A person reads the doubtful and style findings of a language on this list. Every locale not on it is reviewed by agents alone, so step 4 has the translator apply those findings itself and adds the second pass.
 
 ## Where a word comes from
 
