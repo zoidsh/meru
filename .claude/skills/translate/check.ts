@@ -4,7 +4,13 @@ import { getConfig } from "@lingui/conf";
 import { type CompiledMessage, compileMessageOrThrow } from "@lingui/message-utils/compileMessage";
 import { SHIPPED_CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
 import { findCatalogProblems, parseCatalog } from "../../../scripts/i18n-check";
-import { loadSidecar, platformEntries, type Severity, type Sidecar } from "./rules";
+import {
+  loadSidecar,
+  platformEntries,
+  type Severity,
+  type Sidecar,
+  withoutAccessKey,
+} from "./rules";
 
 /*
  * Holds a locale's catalogs against its sidecar, `languages/<tag>.json`: banned
@@ -152,15 +158,6 @@ function matchesSelector(
     (selector.origin === undefined ||
       entry.origins.some((origin) => origin.startsWith(selector.origin as string)))
   );
-}
-
-/*
- * A label as Electron shows it: the access key, an `&` before a character or
- * Japanese's `(&X)`, is dropped, and `&&` is a literal ampersand. Where the key
- * sits is the translator's choice, which the access-key rule checks.
- */
-function withoutAccessKey(label: string) {
-  return label.replace(/\(&[^)&]\)/gu, "").replace(/&(&|(?=\S))/gu, "$1");
 }
 
 function sourceAccessKey(msgid: string) {

@@ -776,7 +776,7 @@
       "msgctxt": null,
       "expect": "^Paramètres$",
       "severity": "wrong",
-      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it (Chrome: 415 of 431 messages in Chromium 156.0.8078.49's .xtb files).",
+      "reason": "Settings is Paramètres in Meru's own copy, as Chrome writes it (Chrome: 416 of 432 messages in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "fault": "Réglages"
       }
@@ -1034,6 +1034,7 @@
       "id": "trusted-hosts",
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "approuvé",
+      "countEnglish": "\\btrusted\\b",
       "severity": "wrong",
       "reason": "A trusted host is an hôte approuvé, as Chrome writes trusted (Chrome: 14 of 22 messages).",
       "example": {
@@ -1247,6 +1248,7 @@
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]om de l’appareil",
+      "countEnglish": "\\bdevice name\\b",
       "severity": "wrong",
       "reason": "A device label is the nom de l’appareil, Chrome's words for a device name (Chrome: 6 of 11 messages).",
       "example": {
@@ -1259,6 +1261,7 @@
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nacti",
+      "countEnglish": "\\binactive tabs?\\b",
       "severity": "wrong",
       "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactif, as in Onglet inactif, never the systems' Sleep word (Chrome: 8 of 8 messages).",
       "example": {
@@ -1308,6 +1311,7 @@
       "id": "auto",
       "msgid": "Auto",
       "expect": "^Auto$",
+      "countEnglish": "^Auto$",
       "severity": "wrong",
       "reason": "A setting's Auto option is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Automatique.",
       "example": {
@@ -1319,8 +1323,9 @@
       "id": "inspect-element",
       "msgid": "Inspect Element",
       "expect": "^Inspecter$",
+      "countEnglish": "^Inspect$",
       "severity": "wrong",
-      "reason": "Inspect Element is Inspecter, as Chrome's page context menu writes its Inspect item.",
+      "reason": "Inspect Element is Inspecter, as Chrome's page context menu writes its Inspect item (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "fault": "Inspecter l’élément"
       }
@@ -1377,7 +1382,7 @@
       "msgctxt": null,
       "expect": "^Retour$",
       "severity": "wrong",
-      "reason": "Back and Go back are Retour, as Chrome writes them (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files), never Précédent.",
+      "reason": "Back and Go back are Retour, as Chrome writes them (Chrome 5/5 in Chromium 156.0.8078.49's .xtb files), never Précédent.",
       "example": {
         "msgid": "Go back",
         "fault": "Précédent"
@@ -1389,7 +1394,7 @@
       "msgctxt": null,
       "expect": "^Avancer$",
       "severity": "wrong",
-      "reason": "Forward and Go forward are Avancer, as Chrome writes Forward (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files, the other a lowercase forward it writes suivant; it has no Go forward), never Suivant.",
+      "reason": "Forward and Go forward are Avancer, as Chrome writes Forward (Chrome 3/4 in Chromium 156.0.8078.49's .xtb files, the other a lowercase forward it writes suivant; it has no Go forward), never Suivant.",
       "example": {
         "msgid": "Forward",
         "fault": "Suivant"

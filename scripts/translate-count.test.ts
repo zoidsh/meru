@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 import {
   APPS,
+  CORPUS_DIR,
+  electronChromium,
   type Pair,
   parseAndroidStrings,
   parseDtd,
@@ -15,7 +18,13 @@ import {
 } from "../.claude/skills/translate/corpus";
 import { banCount, citedCount, pinCount, withoutAnchors } from "../.claude/skills/translate/count";
 import { loadSidecar } from "../.claude/skills/translate/rules";
-import { CONCEPTS_PATH, conceptsSchema, pattern, vote } from "../.claude/skills/translate/vote";
+import {
+  CONCEPTS_PATH,
+  conceptsSchema,
+  formatMatched,
+  pattern,
+  vote,
+} from "../.claude/skills/translate/vote";
 
 /*
  * Lives here rather than beside the scripts because `bun test` never looks
@@ -39,6 +48,17 @@ async function frenchPin(id: string) {
 
   return rule;
 }
+
+// The real corpus is in .cache only once corpus.ts has fetched it, which CI never does.
+const cachedCorpora = await Promise.all(
+  (await readdir(path.join(TRANSLATE_DIR, "languages")))
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => file.replace(/\.json$/u, ""))
+    .map(
+      async (tag) =>
+        [tag, await Bun.file(path.join(CORPUS_DIR, `chrome.${tag}.jsonl`)).exists()] as const,
+    ),
+);
 
 describe("count.ts", () => {
   test("reproduces the French release channel's recorded Chrome count from a fixture corpus", async () => {
@@ -85,6 +105,66 @@ describe("count.ts", () => {
     expect(pinCount(rule, pairs).n).toBe(2);
     expect(pinCount(rule, pairs, { english: "^Site" }).total).toBe(1);
   });
+
+  test("counts a pin by its countEnglish, an exact Chrome message, in place of its msgid", async () => {
+    const rule = { ...(await frenchPin("settings")), countEnglish: "^Settings$" };
+
+    const pairs: Pair[] = [
+      ["Settings", "Paramètres"],
+      ["&Settings", "&Paramètres"],
+      ["Open settings", "Ouvrir les paramètres"],
+    ];
+
+    expect([pinCount(rule, pairs).n, pinCount(rule, pairs).total]).toEqual([2, 2]);
+    expect(pinCount(rule, pairs, { english: "settings" }).total).toBe(3);
+  });
+
+  test("reads a single access key off both sides, and a doubled one as a literal ampersand", async () => {
+    const rule = await frenchPin("settings");
+
+    const pairs: Pair[] = [
+      ["Setti&ngs", "Param&ètres"],
+      ["Settings(&S)", "Paramètres(&P)"],
+      ["Settings && more", "Paramètres && plus"],
+    ];
+
+    expect(pinCount({ ...rule, countEnglish: "^Settings$" }, pairs)).toMatchObject({
+      n: 2,
+      total: 2,
+    });
+    expect(pinCount({ ...rule, countEnglish: "^Settings & more$" }, pairs).total).toBe(1);
+  });
+
+  test("counts case-sensitively when told", async () => {
+    const rule = { ...(await frenchPin("settings")), countEnglish: "^Settings$" };
+
+    const pairs: Pair[] = [
+      ["Settings", "Paramètres"],
+      ["settings", "paramètres"],
+    ];
+
+    expect(pinCount(rule, pairs).total).toBe(2);
+    expect(pinCount(rule, pairs, { caseSensitive: true })).toMatchObject({ n: 1, total: 1 });
+  });
+
+  for (const [tag, cached] of cachedCorpora) {
+    test.skipIf(!cached)(
+      `${tag}: a pin's countEnglish or countExpect reproduces the count its reason cites`,
+      async () => {
+        const pairs = await readCorpus(CORPUS_DIR, "chrome", tag);
+
+        for (const rule of (await loadSidecar(tag)).pinned) {
+          if (rule.countEnglish !== undefined || rule.countExpect !== undefined) {
+            const count = pinCount(rule, pairs);
+
+            expect({ n: count.n, total: count.total }, rule.id).toEqual(
+              citedCount(rule.reason) as { n: number; total: number },
+            );
+          }
+        }
+      },
+    );
+  }
 
   test("counts a ban by the messages whose translation has the banned form", async () => {
     const rule = (await loadSidecar("fr")).banned.find((candidate) => candidate.id === "signet");
@@ -163,6 +243,37 @@ describe("vote.ts", () => {
     expect(result.status).toBe("fewer than 3 apps");
   });
 
+  test("keeps each app's messages under the candidate each counted for", () => {
+    const concept = {
+      concept: "toast",
+      english: "\\btoasts?\\b",
+      candidates: { fr: { toast: "toast", notification: "notification" } },
+      exclude: { fr: ["notification"] },
+    };
+
+    const result = vote(concept, "fr", {
+      microsoft: [
+        ["toast notification", "notification toast"],
+        ["toast", "toast"],
+        ["toast", "toast"],
+      ],
+    });
+
+    expect(result.matched).toEqual({
+      microsoft: {
+        notification: [["toast notification", "notification toast"]],
+        toast: [["toast", "toast"]],
+      },
+    });
+    expect(formatMatched(result.matched, ["notification"])).toEqual([
+      "    Microsoft:",
+      "      toast (1):",
+      "        toast => toast",
+      "      notification (1, excluded):",
+      "        toast notification => notification toast",
+    ]);
+  });
+
   test("gives `\\b` the letters with accents as word characters", () => {
     expect(pattern("\\bavis\\b").test("Un avis")).toBe(true);
     expect(pattern("\\bavis\\b").test("Avisé")).toBe(false);
@@ -174,6 +285,30 @@ describe("vote.ts", () => {
         expect(Object.keys(candidates).length, `${concept.concept} ${tag}`).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("corpus.ts", () => {
+  const run = (exitCode: number | null, stdout = "", signalCode: string | null = null) => ({
+    exitCode,
+    signalCode,
+    stdout,
+    stderr: "",
+  });
+
+  test("reads Electron's Chromium version again when the first read fails", () => {
+    const results = [run(null, "", "SIGKILL"), run(0, "156.0.8078.49\n")];
+
+    expect(electronChromium(() => results.shift() ?? run(1))).toBe("156.0.8078.49");
+    expect(results).toEqual([]);
+  });
+
+  test("names each failed read's exit code or signal", () => {
+    const results = [run(null, "", "SIGKILL"), run(1)];
+
+    expect(() => electronChromium(() => results.shift() ?? run(1))).toThrow(
+      /signal SIGKILL.*exit code 1/su,
+    );
   });
 });
 

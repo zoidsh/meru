@@ -17,7 +17,7 @@ Every word here follows the source order in `.claude/skills/translate/source-ord
 The window and Meru's own copy, also the Settings section of the language's style sheet. The app-menu item has a platform `msgctxt`: on macOS it is AppKit's word with AppKit's ellipsis, named below, and on Windows and Linux the platform's word, from the style sheet.
 
 - de: Einstellungen (Chrome 430/436); the macOS menu item _Einstellungen …_ with a no-break space before the ellipsis (Apple)
-- fr: Paramètres (Chrome 415/431, Chromium 156.0.8078.49's .xtb files); the macOS menu item _Réglages…_ (Apple)
+- fr: Paramètres (Chrome 416/432, Chromium 156.0.8078.49's .xtb files); the macOS menu item _Réglages…_ (Apple)
 - it: Impostazioni (Chrome 431/436); the macOS menu item _Impostazioni…_ (Apple)
 - es: Configuración (Chrome 299/436, ajustes in the rest); the macOS menu item _Ajustes…_ (Apple)
 - es-419: Configuración (Chrome 428/436); the macOS menu item _Configuración…_ (Apple)
@@ -215,16 +215,16 @@ A saved URL for an account, opened from the bookmarks popup.
 
 The titlebar or sidebar dropdown that opens a workspace app. Chrome's word is ChromeOS's launcher, which opens apps as Meru's does.
 
-- de: Launcher (Chrome 18/20)
+- de: Launcher (Chrome 17/19)
 - fr: lanceur (Chrome 19/19, Chromium 156.0.8078.49's .xtb files)
-- it: Avvio app (Chrome 19/20), capitalized as Chrome writes the name
+- it: Avvio app (Chrome 19/19), capitalized as Chrome writes the name
 - es: menú de aplicaciones (Chrome 19/20)
 - es-419: selector (Chrome 17/20)
 - pt-BR: iniciador (Chrome's _Launcher_ label, 2/2; its launcher key is the _tecla de acesso rápido_)
 - nl: launcher (Chrome 20/20)
 - pl: menu z aplikacjami (Chrome 17/20)
 - sv: appstartare (Chrome 11/20)
-- ja: ランチャー (Chrome 19/20)
+- ja: ランチャー (Chrome 19/19)
 
 ## Vertical tabs
 
@@ -335,7 +335,7 @@ A Chrome extension from Meru's list.
 
 - de: Erweiterung (Chrome 300/308)
 - fr: extension (Chrome 304/304, Chromium 156.0.8078.49's .xtb files)
-- it: estensione (Chrome 306/308)
+- it: estensione (Chrome 303/304)
 - es: extensión (Chrome 307/308)
 - es-419: extensión (Chrome 308/308)
 - pt-BR: extensão (Chrome 302/307)
@@ -654,7 +654,7 @@ The string a browser sends to name itself, in the Advanced settings. A language 
 
 ## Google Password Manager
 
-Google's password manager, named in the passkey help: _Passkeys from Chrome, Google Password Manager, or your phone don't work here_. Google's name, so Google's word, read from its own Help; Chrome's count is counted in Chrome 156's macOS `locale.pak`, in the messages with _Google Password Manager_. A language without a line takes Google's name.
+Google's password manager, named in the passkey help: _Passkeys from Chrome, Google Password Manager, or your phone don't work here_. Google's name, so Google's word, read from its own Help; Chrome's count is counted in Chromium 156.0.8078.49's `.xtb` files, in the messages with _Google Password Manager_. A language without a line takes Google's name.
 
 - fr: Gestionnaire de mots de passe de Google, capitalized as a name, with its article outside it (_du Gestionnaire de mots de passe de Google_) (Google, Help "Premiers pas avec le Gestionnaire de mots de passe de Google" (support.google.com/accounts/answer/6208650?hl=fr); Chrome 58/63, Chromium 156.0.8078.49's .xtb files), never _Gestionnaire de mots de passe Google_
 - it: Gestore delle password di Google, capitalized as a name, with its article outside it (_del Gestore delle password di Google_) (Google, Chrome 63/63, Chromium 156.0.8078.49's .xtb files), never _Gestore password Google_
@@ -667,37 +667,37 @@ Linux's file manager, named on the download notification: _Show in your file man
 
 ## Back, Forward
 
-Navigating the current view's history: the menu's _Back_ and _Forward_ and the titlebar's _Go back_ and _Go forward_, one pair of words for both. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Back_, _Go back_ or _Forward_; Chrome has no _Go forward_. A language without a line takes Chrome's word.
+Navigating the current view's history: the menu's _Back_ and _Forward_ and the titlebar's _Go back_ and _Go forward_, one pair of words for both. Counted in Chromium 156.0.8078.49's `.xtb` files, in the messages that are exactly _Back_, _Go back_ or _Forward_; Chrome has no _Go forward_. A language without a line takes Chrome's word.
 
-- fr: Retour, Avancer (Chrome 4/4 for _Back_ and _Go back_, 2/3 for _Forward_, Chromium 156.0.8078.49's .xtb files), never _Précédent_ and _Suivant_
-- it: Indietro, Avanti (Chrome 4/4 for _Back_ and _Go back_, 3/3 for _Forward_, Chromium 156.0.8078.49's .xtb files)
+- fr: Retour, Avancer (Chrome 5/5 for _Back_ and _Go back_, 3/4 for _Forward_, Chromium 156.0.8078.49's .xtb files), never _Précédent_ and _Suivant_
+- it: Indietro, Avanti (Chrome 5/5 for _Back_ and _Go back_, 4/4 for _Forward_, Chromium 156.0.8078.49's .xtb files)
 
 ## Reset
 
-Erasing Meru's data and starting over: _Reset App_, the dialog's _Reset_ button and its question. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Reset_. A language without a line takes Chrome's word.
+Erasing Meru's data and starting over: _Reset App_, the dialog's _Reset_ button and its question. Counted in Chromium 156.0.8078.49's `.xtb` files, in the messages that are exactly _Reset_. A language without a line takes Chrome's word.
 
 - fr: Réinitialiser (_Réinitialiser l’application_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files), never _Rétablir_, which is Redo
 - it: Reimposta (_Reimposta app_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
 
 ## Account colors
 
-The colors an account can be marked with, where Chrome names the same color. Counted in Chrome 156's macOS `locale.pak`, in its color names, the messages that are exactly the color's English name. A language without a line takes Chrome's word.
+The colors an account can be marked with, where Chrome names the same color. Counted in Chromium 156.0.8078.49's `.xtb` files, in its color names, the messages that are exactly the color's English name. A language without a line takes Chrome's word.
 
-- fr: Purple _Violet_ (Chrome 1/1), Violet _Mauve_ (Chrome 1/1), never _Pourpre_
+- fr: Purple _Violet_ (Chrome 2/2), Violet _Mauve_ (Chrome 1/1), never _Pourpre_
 - it: Violet _Lilla_ (Chrome 1/1), Lime _Giallo-verde_ (Chrome 1/1), never _Violetto_; the colors Chrome has no name for (Chrome 0/0 each), each vote too thin, so each takes the app message whose English is the color's name alone: Amber _Ambra_ (LibreOffice's _Amber_; agent-chosen: ambra: 2 of 7 (Android, LibreOffice), fewer than 3 apps), Emerald _Smeraldo_ (Apple's _Emerald_; agent-chosen: smeraldo: 1 of 7 (Apple), fewer than 3 apps), Indigo _Indaco_ (LibreOffice's and Apple's _Indigo_; agent-chosen: indaco: 2 of 7 (LibreOffice, Apple), fewer than 3 apps), Sky _Celeste_ (LibreOffice's and Apple's _Sky Blue_, since their bare _Sky_, _Cielo_, is the sky; agent-chosen: celeste: 2 of 7 (LibreOffice, Apple), fewer than 3 apps), never _Azzurro_, Teal _Verde acqua_ (Thunderbird's _Teal_ and Microsoft's _teal_, beside LibreOffice's _Foglia di tè_ and Apple's three words; agent-chosen: verde acqua: 2 of 7 (Thunderbird, Microsoft), with Apple tied); Google's own wording for the five was not checked
 
 ## Inspect Element
 
-The page context menu's item that opens the developer tools on the element clicked, as Chrome's _Inspect_ item. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Inspect_. A language without a line takes Chrome's word.
+The page context menu's item that opens the developer tools on the element clicked, as Chrome's _Inspect_ item. Counted in Chromium 156.0.8078.49's `.xtb` files, in the messages that are exactly _Inspect_. A language without a line takes Chrome's word.
 
-- fr: Inspecter (Chrome 1/1), never _Inspecter l’élément_
-- it: Ispeziona (Chrome 1/1, Chromium 156.0.8078.49's .xtb files), never _Ispeziona elemento_
+- fr: Inspecter (Chrome 2/2), never _Inspecter l’élément_
+- it: Ispeziona (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Ispeziona elemento_
 
 ## Help
 
 The menu that holds Meru's help and its links. Counted in the messages that are exactly _Help_. A language without a line takes Chrome's word.
 
-- it: Guida (Chrome 2/3, Chromium 156.0.8078.49's .xtb files, the other _Aiuto_)
+- it: Guida (Chrome 4/5, Chromium 156.0.8078.49's .xtb files, the other _Aiuto_)
 
 ## Auto
 
@@ -711,7 +711,7 @@ The option that lets Meru decide, in the Width, Placement, Launcher display and 
 
 The View menu's zoom items, which are not platform words: no platform's View menu in the style sheets' tables names them. Counted in the messages that are exactly _Zoom In_, _Zoom Out_ or _Actual Size_, in either case; where Chrome writes its title-case menu item and its sentence-case label differently, the menu item's word wins, since Meru's are menu items. A language without a line takes Chrome's word.
 
-- it: Ingrandisci, Riduci, Dimensioni reali (Chrome 1/2 each, Chromium 156.0.8078.49's .xtb files: the title-case menu items _Zoom In_, _Zoom Out_ and _Actual Size_; the sentence-case _Zoom in_, _Zoom out_ and _Actual size_ are _Aumenta lo zoom_, _Diminuisci lo zoom_ and _Dimensioni effettive_)
+- it: Ingrandisci, Riduci, Dimensioni effettive (Chrome 2/3 each, Chromium 156.0.8078.49's .xtb files: the View menu items `Zoom &In`, `Zoom &Out` and `A&ctual Size`; the sentence-case _Zoom in_ and _Zoom out_ are _Aumenta lo zoom_ and _Diminuisci lo zoom_, and a plain _Actual Size_ outside the menu is _Dimensioni reali_)
 
 ## Gmail's words
 
