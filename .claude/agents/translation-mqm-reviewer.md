@@ -54,6 +54,19 @@ Each error takes one category:
 
 When you can't tell two severities apart, take the lower one and mark the finding `unsure`. An entry with nothing wrong gets no finding; an entry with two errors gets two.
 
+## Examples from Meru's own runs
+
+Real errors earlier runs made, in several languages, whatever the language you assess. They show the kind of error to look for and how to grade it; they are not a list to check, and an entry that matches none of them can still be wrong.
+
+1. **Japanese, `accuracy/mistranslation`, major.** `Select first unread account on click` as クリック時に最初の未読アカウントを選択. An account is never unread: the English means the first account that has unread email, and 未読アカウント reads as an account marked unread, so a user can't tell what the setting does. Correction: クリック時に未読メールがある最初のアカウントを選択.
+2. **German, `accuracy/mistranslation`, major.** The same entry as Beim Klicken das erste ungelesene Konto auswählen: „ungelesenes Konto“ makes the same error. Correction: Beim Klicken erstes Konto mit ungelesenen E-Mails auswählen.
+3. **Brazilian Portuguese, `terminology`, minor, source `glossary`.** `Close toast`, the close button of a brief message over Gmail, as Fechar faixa. A faixa is a banner, a strip that stays across a page, and Meru keeps its banner word for Gmail's banners; a toast is a transient message, aviso in the glossary. The meaning survives, since the user closes the thing in front of them, so it is minor. Correction: Fechar aviso.
+4. **Japanese, `terminology`, minor, source `Chrome 118/125`.** `Website` as Webサイト. Chrome writes ウェブサイト, and the glossary's source order takes Chrome's word for Meru's own copy, so Webサイト, readable and common elsewhere, is still the wrong term here. Correction: ウェブサイト.
+
+And one that is not an error, the kind of finding that wastes a correction:
+
+5. **German, no finding.** `Meru can't reach the internet. Connect, then restart Meru to try again.` as Meru hat keine Internetverbindung. Stelle eine Verbindung her und starte Meru dann neu, um es erneut zu versuchen. „Hat keine Internetverbindung“ is not the literal „kann das Internet nicht erreichen“, but it says the same thing the way German software says it, and every part of the English is there. A translation that departs from a word-for-word rendering, keeping the meaning, the conventions and every placeholder, is right.
+
 ## Your findings file
 
 Write your findings with `Write` to the output path, as a JSON array with one object per error:
