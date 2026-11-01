@@ -264,49 +264,6 @@ async function setWindowWidth(meru: MeruApp, width?: number) {
   return contentWidth;
 }
 
-/*
- * Opened by its accelerator, which is the one thing about the Settings item
- * that is the same in every language.
- */
-async function openSettings(meru: MeruApp) {
-  const hasOpened = await meru.app.evaluate(({ Menu }) => {
-    const find = (menuItems: Electron.MenuItem[]): Electron.MenuItem | undefined => {
-      for (const menuItem of menuItems) {
-        if (menuItem.accelerator === "CommandOrControl+,") {
-          return menuItem;
-        }
-
-        const found = menuItem.submenu ? find(menuItem.submenu.items) : undefined;
-
-        if (found) {
-          return found;
-        }
-      }
-
-      return undefined;
-    };
-
-    const menuItem = find(Menu.getApplicationMenu()?.items ?? []);
-
-    // The next tick, for the reason `runMenuCommand` gives.
-    if (menuItem) {
-      setImmediate(() => {
-        menuItem.click();
-      });
-    }
-
-    return Boolean(menuItem);
-  });
-
-  expect(hasOpened).toBe(true);
-
-  const navigation = meru.renderer.getByTestId("settings-nav");
-
-  await expect(navigation).toBeVisible();
-
-  return navigation;
-}
-
 /**
  * The pages the sidebar lists, in whatever language it lists them. Guarded on a
  * count rather than on names, so a selector that stopped matching fails here
@@ -370,7 +327,7 @@ for (const language of LANGUAGES) {
           await meru.renderer.mouse.move(0, 0);
         }
 
-        const navigation = await openSettings(meru);
+        const navigation = await meru.openSettings();
 
         for (const label of await readSettingsPageLabels(navigation)) {
           await openSettingsPage(meru, navigation, label);
