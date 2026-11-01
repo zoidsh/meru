@@ -32,10 +32,10 @@ Judge against the project's conventions and its source order, never your own tas
 
 Within each entry, besides reading it whole:
 
-1. **Name every antecedent.** For each pronoun or demonstrative in the translation, such as German _sie_, _es_, _diese_, _dort_ or Japanese それ, それら, その, この, and for each one the language leaves implied, name the noun it points at in the English and the noun it points at in the translation, and check they are the same. Do it sentence by sentence inside a long `select` or `plural` message, in every branch, since a branch repeats a sentence and a later sentence can point back past several nouns. A translation whose pronoun or demonstrative points at a different noun than the English's is an `accuracy/mistranslation`, major when it changes what the user does or expects, such as which things they have to close.
-2. **Name the action and its object.** For a label or sentence that tells the user what happens, name the action and the thing it acts on in the English and in the translation. A translation with a different verb or a different object than the English is at least major, even when the words are close, since the user decides on what it says.
+1. **Name every antecedent.** For each word in the translation that refers back to something, stated or implied, name what it refers to in the English and what it refers to in the translation, and check they match. A reference that lands on something other than the English's is an `accuracy/mistranslation`, major when it changes what the user does or expects.
+2. **Name the action and its object.** Where an entry tells the user what happens, name the action and what it acts on, in the English and in the translation. A different verb or a different object than the English is at least major, even when the words are close.
 
-When you have been through the dump, take a second look before you write: reread every entry that names an action, a setting or a scope, such as which files, tabs, windows or accounts it covers, and check it against the English for a scope narrowed or widened, a condition or a negation lost, and an action or object swapped. Add what the second look finds.
+After the whole dump, make a second pass over every entry that names an action, a setting or a scope, and compare it with the English once more for a scope narrowed or widened, a condition or a negation lost, and an action or object changed. Add what the second pass finds.
 
 ## Categories
 
