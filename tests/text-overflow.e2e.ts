@@ -43,6 +43,7 @@ import { PSEUDO_LOCALE, SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n/tags";
 import type { Config } from "@meru/shared/types";
 import { expect, type Locator, test } from "@playwright/test";
 import { type MeruApp, useApp } from "./lib/app";
+import { setMinimumWindowWidth } from "./lib/page-fit";
 import { openSettingsPage } from "./lib/settings";
 
 type Overflow = {
@@ -391,34 +392,6 @@ function setTrialState(meru: MeruApp, state: (typeof TRIAL_STATES)[number]) {
 }
 
 /**
- * Sets the window's width, the minimum one when none is given, and waits for
- * the renderer to have laid out at it.
- */
-async function setWindowWidth(meru: MeruApp, width?: number) {
-  const contentWidth = await meru.app.evaluate(({ BrowserWindow }, requestedWidth) => {
-    const window = BrowserWindow.getAllWindows().find((candidate) =>
-      candidate.webContents.getURL().includes("main.html"),
-    );
-
-    if (!window) {
-      throw new Error("The main window is not open");
-    }
-
-    const [minimumWidth = 0] = window.getMinimumSize();
-
-    const [, height = 0] = window.getSize();
-
-    window.setSize(requestedWidth ?? minimumWidth, height);
-
-    return window.getContentSize()[0];
-  }, width);
-
-  await expect.poll(() => meru.renderer.evaluate(() => window.innerWidth)).toBe(contentWidth);
-
-  return contentWidth;
-}
-
-/**
  * The pages the sidebar lists, in whatever language it lists them. Guarded on a
  * count rather than on names, so a selector that stopped matching fails here
  * instead of every case passing having checked nothing.
@@ -452,7 +425,7 @@ for (const language of LANGUAGES) {
           .toBe(language.tag);
 
         const windowWidth = width.isMinimum
-          ? await setWindowWidth(meru)
+          ? await setMinimumWindowWidth(meru)
           : await meru.renderer.evaluate(() => window.innerWidth);
 
         const findings: string[] = [];
