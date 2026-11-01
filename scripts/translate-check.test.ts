@@ -3,7 +3,15 @@ import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { checkCatalogs, readCatalog } from "../.claude/skills/translate/check";
-import { LANGUAGES_DIR, loadSidecar } from "../.claude/skills/translate/rules";
+import {
+  LANGUAGES_DIR,
+  loadSidecar,
+  type PinExample,
+  pinExamples,
+  platformEntries,
+  type Sidecar,
+} from "../.claude/skills/translate/rules";
+import { parseCatalog } from "./i18n-check";
 
 /*
  * Lives here rather than beside the script because `bun test` never looks
@@ -37,7 +45,7 @@ async function localesWithRules() {
     const sidecar = await loadSidecar(locale);
 
     if (
-      sidecar.platformWords.entries.length > 0 ||
+      platformEntries(sidecar).length > 0 ||
       sidecar.banned.length > 0 ||
       sidecar.pinned.length > 0 ||
       sidecar.accessKeys !== null ||
@@ -48,6 +56,55 @@ async function localesWithRules() {
   }
 
   return withRules;
+}
+
+/** A catalog of one entry, as a PO file would give it to `check.ts`. */
+function exampleCatalog(locale: string, example: PinExample, msgstr: string) {
+  const lines = [
+    'msgid ""',
+    'msgstr ""',
+    `"Language: ${locale}\\n"`,
+    "",
+    ...(example.origin ? [`#: ${example.origin}`] : []),
+    ...(example.msgctxt === null ? [] : [`msgctxt ${JSON.stringify(example.msgctxt)}`]),
+    `msgid ${JSON.stringify(example.msgid)}`,
+    `msgstr ${JSON.stringify(msgstr)}`,
+    "",
+  ];
+
+  return parseCatalog(lines.join("\n"), { locale, sourceLocale: "en", filename: "example.po" });
+}
+
+/*
+ * Each pin's example, run against every rule of the sidecar: its allowed
+ * wording must pass them all, and its fault must be caught by the pin, so a
+ * pin needs no entry in the fixtures.
+ */
+async function pinExampleProblems(locale: string, sidecar: Sidecar) {
+  const problems: string[] = [];
+
+  for (const example of pinExamples(sidecar)) {
+    const findingsFor = async (msgstr: string) =>
+      checkCatalogs(locale, sidecar, [
+        { path: "example.po", catalog: await exampleCatalog(locale, example, msgstr) },
+      ]).findings.map((finding) => `${finding.rule}:${finding.id}`);
+
+    if (example.clean !== undefined) {
+      const found = await findingsFor(example.clean);
+
+      if (found.length > 0) {
+        problems.push(
+          `${example.id}: the allowed “${example.clean}” has findings ${found.join(", ")}`,
+        );
+      }
+    }
+
+    if (!(await findingsFor(example.fault)).includes(`pinned:${example.id}`)) {
+      problems.push(`${example.id}: the fault “${example.fault}” is not caught`);
+    }
+  }
+
+  return problems;
 }
 
 describe("check.ts", () => {
@@ -90,59 +147,65 @@ describe("check.ts", () => {
   }
 
   /*
-   * Rules share ids, such as a language's five sound-name pins, so a planted
-   * fault per id could leave all but one of them untested. Each banned and
-   * pinned rule runs alone here and must catch a fault planted for its id.
+   * Every rule id is a sidecar's own, so a fixture that finds exactly its
+   * planted faults has caught each rule that has a mark; this keeps any ban
+   * from having none. A pin's fault is its own example, below.
    */
   for (const locale of new Set(fixtures.map(localeOf))) {
-    test(`each banned and pinned rule of ${locale} catches a planted fault of its own`, async () => {
-      const fixturePath = path.join(FIXTURES_DIR, `${locale}-faults.po`);
+    test(`each pinned rule of ${locale} allows its example's wording and catches its fault`, async () => {
+      expect(await pinExampleProblems(locale, await loadSidecar(locale))).toEqual([]);
+    });
 
-      const catalog = await readCatalog(locale, fixturePath);
+    test(`each banned rule of ${locale} has a planted fault`, async () => {
+      const catalog = await readCatalog(locale, path.join(FIXTURES_DIR, `${locale}-faults.po`));
 
-      const plantedFor = (entry: (typeof catalog)[string], fault: string) =>
-        (entry.extra as { translatorComments?: string[] }).translatorComments?.includes(
-          `${FAULT_PREFIX}${fault}`,
-        ) ?? false;
+      const planted = new Set(
+        Object.values(catalog).flatMap(
+          (entry) =>
+            (entry.extra as { translatorComments?: string[] }).translatorComments
+              ?.filter((comment) => comment.startsWith(FAULT_PREFIX))
+              .map((comment) => comment.slice(FAULT_PREFIX.length)) ?? [],
+        ),
+      );
 
       const sidecar = await loadSidecar(locale);
 
-      const rules = [
-        ...sidecar.banned.map((rule, index) => ({ kind: "banned" as const, rule, index })),
-        ...sidecar.pinned.map((rule, index) => ({ kind: "pinned" as const, rule, index })),
-      ];
+      const unplanted = sidecar.banned
+        .map((rule) => `banned:${rule.id}`)
+        .filter((fault) => !planted.has(fault));
 
-      const untested = rules.flatMap(({ kind, rule, index }) => {
-        const report = checkCatalogs(
-          locale,
-          {
-            ...sidecar,
-            platformWords: { ...sidecar.platformWords, entries: [] },
-            banned: kind === "banned" ? [rule] : [],
-            pinned: kind === "pinned" ? [rule] : [],
-            accessKeys: null,
-            families: [],
-          },
-          [{ path: fixturePath, catalog }],
-        );
-
-        const caught = report.findings.some(
-          (finding) =>
-            finding.rule === kind &&
-            Object.values(catalog).some(
-              (entry) =>
-                (entry.context ?? null) === finding.msgctxt &&
-                entry.message === finding.msgid &&
-                plantedFor(entry, `${kind}:${rule.id}`),
-            ),
-        );
-
-        return caught ? [] : [`${kind}[${index}] ${rule.id}`];
-      });
-
-      expect(untested).toEqual([]);
+      expect(unplanted).toEqual([]);
     });
   }
+
+  async function withSettingsExample(change: Partial<Sidecar["pinned"][number]["example"]>) {
+    const sidecar = await loadSidecar("fr");
+
+    const settings = sidecar.pinned.find((rule) => rule.id === "settings");
+
+    if (!settings) {
+      throw new Error("fr.json has no settings pin");
+    }
+
+    return {
+      ...sidecar,
+      pinned: [{ ...settings, example: { ...settings.example, ...change } }],
+    };
+  }
+
+  test("a pin whose recorded fault its expect allows is caught", async () => {
+    expect(
+      await pinExampleProblems("fr", await withSettingsExample({ fault: "Paramètres" })),
+    ).toEqual(["settings: the fault “Paramètres” is not caught"]);
+  });
+
+  test("a pin whose allowed wording another rule rejects is caught", async () => {
+    expect(
+      await pinExampleProblems("fr", await withSettingsExample({ clean: "Paramètres..." })),
+    ).toEqual([
+      "settings: the allowed “Paramètres...” has findings banned:ellipsis, pinned:settings",
+    ]);
+  });
 
   describe("exit code", () => {
     const ROOT = path.join(import.meta.dir, "..");

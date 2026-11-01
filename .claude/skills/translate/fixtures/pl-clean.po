@@ -28,10 +28,6 @@ msgctxt "Windows"
 msgid "Check for Updates…"
 msgstr "Sprawdź aktualizacje…"
 
-#: packages/renderer/routes/download-history.tsx
-msgid "Download history"
-msgstr "Historia pobierania"
-
 #: packages/renderer/components/downloads.tsx
 msgid "Recent download history"
 msgstr "Najnowsza historia pobierania"
@@ -80,32 +76,10 @@ msgstr "Włącz ikonę w obszarze powiadomień"
 msgid "Show bookmarks button"
 msgstr "Pokaż przycisk zakładek"
 
-#: packages/app/context-menu.ts
-msgid "Copy Message Link"
-msgstr "Kopiuj link do wiadomości"
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Zmień na Meru Pro"
-
-#: packages/renderer/routes/settings/gmail/label-colors.tsx
-msgctxt "Gmail label"
-msgid "Label"
-msgstr "Etykieta"
-
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgctxt "Gmail label"
 msgid "Enter a label"
 msgstr "Wpisz etykietę"
-
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "Nazwa"
-
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "Wpisz nazwę"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove {label}?"
@@ -135,34 +109,9 @@ msgstr "{trialDaysLeft, plural, one {Okres próbny Pro kończy się za # dzień
 msgid "Move to New Window"
 msgstr "Przenieś do nowego okna"
 
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "Zamknij komunikat"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "Komunikaty"
-
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "Komunikaty"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Show unread badge"
-msgstr "Pokaż plakietkę z liczbą nieprzeczytanych"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "Dzwonek"
-
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify when updates are available"
 msgstr "Powiadamiaj o dostępnych aktualizacjach"
-
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgid "Save"
-msgstr "Zapisz"
 
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Edit saved search"
@@ -184,54 +133,6 @@ msgstr "Otwórz w aplikacji"
 msgid "Show in folder"
 msgstr "Pokaż w folderze"
 
-#: packages/renderer/routes/settings/general.tsx
-msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Włącz to także w Ustawieniach systemowych."
-
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "Ikona w Docku"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "Ustaw nieużywane karty jako nieaktywne"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "Len"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "In launcher"
-msgstr "W menu z aplikacjami"
-
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "Zmień na Pro"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "Bryza"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "Duet"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "Pukanie"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Phishing protection"
-msgstr "Ochrona przed wyłudzaniem informacji"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Otwórz ustawienia Gmaila, aby wyłączyć wiadomość o nieobecności"
-
 #: packages/app/context-menu.ts
 msgid "Copy Lin&k"
 msgstr "Kopiuj lin&k"
-
-#: packages/renderer/routes/settings/unified-inbox.tsx
-msgid "Enable unified inbox"
-msgstr "Włącz łączoną skrzynkę odbiorczą"

@@ -293,6 +293,50 @@ export function sliceGlossary(
   };
 }
 
+const SOURCE_ORDER_PATH = path.join(import.meta.dir, "source-order.md");
+
+const SOURCE_ORDER_HEADING = "## Where a word comes from";
+
+/*
+ * The glossary links to `source-order.md` rather than restating it, but an
+ * agent reads its slice from the scratch directory, where no link resolves, so
+ * the slice carries the file in place of the paragraph that links to it, its
+ * headings one level down.
+ */
+export function withSourceOrder(slice: string, sourceOrder: string) {
+  const start = slice.indexOf(`${SOURCE_ORDER_HEADING}\n`);
+
+  if (start === -1) {
+    throw new Error(`glossary.md has no "${SOURCE_ORDER_HEADING}" section`);
+  }
+
+  const next = slice.indexOf("\n## ", start + SOURCE_ORDER_HEADING.length);
+
+  const section = slice.slice(start, next === -1 ? undefined : next);
+
+  const pointer = section
+    .split("\n\n")
+    .map((paragraph) => paragraph.trimEnd())
+    .find((paragraph) => paragraph.includes("source-order.md"));
+
+  if (pointer === undefined) {
+    throw new Error(
+      `glossary.md's "${SOURCE_ORDER_HEADING}" section has no link to source-order.md`,
+    );
+  }
+
+  const pointerStart = start + section.indexOf(pointer);
+
+  const pointerEnd = pointerStart + pointer.length;
+
+  const body = sourceOrder
+    .replace(/^# .*\n+/u, "")
+    .replace(/^## /gmu, "### ")
+    .trim();
+
+  return `${slice.slice(0, pointerStart)}${body}${slice.slice(pointerEnd)}`;
+}
+
 export type Translation = { msgctxt?: string; msgid: string; msgstr: string };
 
 type PoEntry = {
@@ -842,6 +886,8 @@ async function collect(
 
   let glossary: string | undefined;
 
+  let sourceOrder: string | undefined;
+
   let glossaryWarned = false;
 
   const byKind = { translate: [], review: [], none: [], unknown: [] } as Record<
@@ -892,6 +938,8 @@ async function collect(
 
     glossary ??= await Bun.file(GLOSSARY_PATH).text();
 
+    sourceOrder ??= await Bun.file(SOURCE_ORDER_PATH).text();
+
     const slice = sliceGlossary(glossary, locale);
 
     if (!glossaryWarned) {
@@ -906,7 +954,7 @@ async function collect(
 
     await Bun.write(entriesPath, section);
 
-    await Bun.write(glossaryPath, slice.text);
+    await Bun.write(glossaryPath, withSourceOrder(slice.text, sourceOrder));
 
     console.log(`${locale} (${list.kind}, ${list.count} entries): ${entriesPath} ${glossaryPath}`);
   }

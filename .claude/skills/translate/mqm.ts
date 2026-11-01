@@ -638,7 +638,10 @@ function formatFinding(
       ? ` (${finding.runsAtSeverity} of ${finding.runs} runs at this severity)`
       : "";
 
-  return `- ${finding.severity} ${finding.category}${finding.unsure ? " (unsure)" : ""}${tally}${finding.run ? ` (${finding.run})` : ""}: ${describe(finding)} ${JSON.stringify(finding.msgstr)} → ${JSON.stringify(finding.correction)}${finding.source ? ` [${finding.source}]` : ""}${finding.dismissed ? `\n  dismissed: ${finding.dismissed}` : ""}`;
+  // A critical or major is ruled on, which takes the reviewer's reason, not only its correction.
+  const reason = RANK[finding.severity] >= RANK.major ? `\n  reason: ${finding.reason}` : "";
+
+  return `- ${finding.severity} ${finding.category}${finding.unsure ? " (unsure)" : ""}${tally}${finding.run ? ` (${finding.run})` : ""}: ${describe(finding)} ${JSON.stringify(finding.msgstr)} → ${JSON.stringify(finding.correction)}${finding.source ? ` [${finding.source}]` : ""}${reason}${finding.dismissed ? `\n  dismissed: ${finding.dismissed}` : ""}`;
 }
 
 export function formatFindings(result: MqmRunsResult) {

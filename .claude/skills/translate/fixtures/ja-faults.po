@@ -11,31 +11,31 @@ msgstr ""
 msgid "Open in a new window"
 msgstr "新しいウインドウで開く"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-browser
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open in browser"
 msgstr "ブラウザーで開く"
 
 # A macOS label takes Chrome's spelling too, which is Apple's.
-# fault: banned:long-vowel
+# fault: banned:long-vowel-folder
 # fault: pinned:show-in-folder
 #: packages/app/menu.ts
 msgctxt "macOS"
 msgid "Open in folder"
 msgstr "フォルダーで開く"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-user
 # fault: pinned:user-agent
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "User agent"
 msgstr "ユーザエージェント"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-manager
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Only one password manager can be on at a time."
 msgstr "一度にオンにできるパスワードマネージャは1つだけです。"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-editor
 #: packages/app/lib/browser-allowlist.ts
 msgid "Open the browser allowlist in an editor with root permissions."
 msgstr "root権限でエディターを使って、許可リストを開いてください。"
@@ -65,31 +65,10 @@ msgstr "「{query}」を検索"
 msgid "Couldn't add the account."
 msgstr "アカウントを追加できませんでした."
 
-# fault: pinned:upgrade
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Meru Proをアップグレード"
-
 # fault: banned:apology
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Something went wrong."
 msgstr "申し訳ありません。問題が発生しました。"
-
-# fault: pinned:download-history
-#: packages/renderer/components/downloads.tsx
-msgid "Recent download history"
-msgstr "最近のダウンロード"
-
-# fault: pinned:gmail-label
-#: packages/renderer/routes/settings/gmail/label-colors.tsx
-msgctxt "Gmail label"
-msgid "Label"
-msgstr "タグ"
-
-# fault: pinned:button
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Show bookmarks button"
-msgstr "ブックマークキーを表示"
 
 # fault: platform-word:Undo
 #: packages/app/menu.ts
@@ -118,329 +97,142 @@ msgstr "Shift"
 msgid "{count, plural, one {# tab} other {# tabs}}"
 msgstr "{count, plural, one {#個のタブ} other {#個のタブ}}"
 
-# fault: pinned:toast
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "通知を閉じる"
-
-# fault: pinned:unread-badge
-#: packages/renderer/routes/settings/general.tsx
-msgid "Show unread badge"
-msgstr "未読数を表示"
-
-# fault: pinned:tab-strip
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Narrow the tab strip"
-msgstr "タブストリップを狭くする"
-
-# fault: pinned:meru-label
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "ラベル"
-
-# fault: pinned:device-label
-#: packages/renderer/routes/settings/license.tsx
-msgid "Device label"
-msgstr "デバイスラベル"
-
-# fault: pinned:release-channel
-#: packages/renderer/routes/settings/general.tsx
-msgid "Release channel"
-msgstr "リリース経路"
-
-# fault: pinned:trusted-hosts
-#: packages/renderer/routes/settings/general.tsx
-msgid "Trusted hosts"
-msgstr "安全なホスト"
-
-# fault: pinned:phishing-protection
-#: packages/renderer/routes/settings/general.tsx
-msgid "Phishing protection"
-msgstr "フィッシング保護"
-
-# fault: pinned:out-of-office
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Gmailの設定を開いて休暇応答をオフにする"
-
-# fault: pinned:multiple-inboxes
-#: packages/renderer/routes/settings/general.tsx
-msgid "Multiple inboxes"
-msgstr "複数の受信トレイ"
-
-# fault: pinned:notify
-#: packages/renderer/routes/settings/general.tsx
-msgid "Notify for"
-msgstr "知らせる対象"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "鐘"
-
-# fault: pinned:system-settings
-#: packages/renderer/routes/settings/general.tsx
-msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "システム環境設定でもオンにしてください。"
-
-# fault: pinned:dock
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "ドックアイコン"
-
-# fault: pinned:hibernation
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "使われていないタブを休止"
-
 # fault: banned:latin-spacing
 # fault: pinned:upgrade
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Upgrade to Meru Pro to add more accounts"
 msgstr "Meru Pro にアップグレードしてアカウントを追加"
 
-# fault: pinned:menu-bar
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Menu bar icon"
-msgstr "メニュー列のアイコン"
-
-# fault: pinned:do-not-disturb
-#: packages/renderer/components/app-titlebar.tsx
-msgid "Turn Do Not Disturb off"
-msgstr "通知停止をオフにする"
-
-# fault: pinned:upgrade
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "購入"
-
-# fault: pinned:toast
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "通知"
-
-# fault: pinned:toast
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "通知"
-
-# fault: pinned:meru-label
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "ラベルを入力"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "Breeze"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "Duet"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "Knock"
-
-# fault: banned:long-vowel
+# fault: banned:long-vowel-browser
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 1"
 msgstr "ブラウザー"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-folder
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 2"
 msgstr "フォルダー"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-computer
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 3"
 msgstr "コンピューター"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-editor
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 4"
 msgstr "エディター"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-provider
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 5"
 msgstr "プロバイダー"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-printer
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 6"
 msgstr "プリンター"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-viewer
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 7"
 msgstr "ビューアー"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-driver
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 8"
 msgstr "ドライバー"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-parameter
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 9"
 msgstr "パラメーター"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-security
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 10"
 msgstr "セキュリティー"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-category
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 11"
 msgstr "カテゴリー"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-memory
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 12"
 msgstr "メモリー"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-user
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 13"
 msgstr "ユーザ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-server
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 14"
 msgstr "サーバ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-manager
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 15"
 msgstr "マネージャ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-developer
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 16"
 msgstr "デベロッパ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-launcher
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 17"
 msgstr "ランチャ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-center
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 18"
 msgstr "センタ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-reader
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 19"
 msgstr "リーダ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-header
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 20"
 msgstr "ヘッダ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-footer
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 21"
 msgstr "フッタ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-tracker
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 22"
 msgstr "トラッカ名"
 
-# fault: banned:long-vowel
+# fault: banned:long-vowel-explorer
 #: packages/renderer/routes/settings/general.tsx
 msgid "Long vowel sample 23"
 msgstr "エクスプローラ名"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "Linen"
-
-# fault: pinned:launcher
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "In launcher"
-msgstr "起動ツール内"
 
 # fault: banned:interface
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Add your own CSS to personalize the Gmail interface further."
 msgstr "独自のCSSを追加して、Gmailのインターフェースをさらにカスタマイズします。"
 
-# fault: pinned:zoom
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Persist zoom"
-msgstr "拡大率を保持"
-
-# fault: pinned:default-app
-#: packages/app/url.ts
-msgid "Open this link in your default browser?"
-msgstr "このリンクをデフォルトのブラウザで開きますか?"
-
-# fault: pinned:default
-#: packages/renderer/routes/settings/downloads.tsx
-msgid "Default download location"
-msgstr "既定のダウンロード先"
-
-# fault: pinned:user-agent
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Send a user agent that names Meru."
-msgstr "Meruの名前を含むUAを送信します。"
-
-# fault: pinned:export
-#: packages/renderer/routes/settings/about.tsx
-msgid "Export logs"
-msgstr "ログを書き出す"
-
-# fault: pinned:inspect-element
-#: packages/app/context-menu.ts
-msgid "Inspect Element"
-msgstr "要素を検証"
-
-# fault: banned:website
+# fault: banned:website-latin
 # fault: pinned:website
 #: packages/app/menu.ts
 msgid "Website"
 msgstr "Webサイト"
 
-# fault: pinned:hard-reload
-#: packages/app/menu.ts
-msgid "Hard Reload"
-msgstr "強制再読み込み"
-
 # fault: banned:em-dash
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "{tabTitle} — opens {appName} links"
 msgstr "{tabTitle}—{appName}のリンクを開きます"
-
-# fault: pinned:yellow
-#: packages/shared/accounts.ts
-msgid "Yellow"
-msgstr "黄色"
-
-# fault: pinned:reopen-closed-tab
-#: packages/app/menu.ts
-msgid "Reopen Closed Tab"
-msgstr "閉じたタブを再度開く"
-
-# fault: pinned:show-in-folder
-#: packages/renderer/components/download-history.tsx
-msgid "Show in folder"
-msgstr "フォルダで表示"
-
-# fault: pinned:clear-all
-#: packages/renderer/routes/download-history.tsx
-msgid "Clear all"
-msgstr "すべて消去"
 
 # fault: banned:range-mark
 #: packages/renderer/routes/settings/notifications.tsx

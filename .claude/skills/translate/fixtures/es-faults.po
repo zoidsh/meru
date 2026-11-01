@@ -85,85 +85,10 @@ msgctxt "macOS"
 msgid "OK"
 msgstr "OK"
 
-# fault: pinned:bookmark
-#: packages/renderer/components/bookmarks.tsx
-msgid "Bookmarks"
-msgstr "Favoritos"
-
-# fault: pinned:download-history
-#: packages/renderer/recent-download-history.tsx
-msgid "Full download history"
-msgstr "Todas las descargas"
-
-# fault: pinned:extension
-#: packages/renderer/routes/settings/extensions.tsx
-msgid "Extensions"
-msgstr "Complementos"
-
-# fault: pinned:close-other-tabs
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Close Other Tabs"
-msgstr "Cerrar el resto de pestañas"
-
-# fault: pinned:remove
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Remove account"
-msgstr "Eliminar cuenta"
-
-# fault: pinned:password-manager
-#: packages/renderer/routes/settings/extensions.tsx
-msgid "Password managers"
-msgstr "Administradores de contraseñas"
-
-# fault: pinned:passkey
-#: packages/renderer/routes/settings/passkeys.tsx
-msgid "Only passkeys created in Meru work here."
-msgstr "Aquí solo funcionan las claves de acceso creadas en Meru."
-
-# fault: pinned:default-browser
-#: packages/app/context-menu.ts
-msgid "Open in Default Browser"
-msgstr "Abrir en el navegador por defecto"
-
-# fault: pinned:tab-strip
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Narrow the tab strip"
-msgstr "Estrechar la tira de pestañas"
-
-# fault: pinned:launcher
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "In launcher"
-msgstr "En el lanzador"
-
 # fault: banned:app
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Launcher apps"
 msgstr "Apps del menú de aplicaciones"
-
-# fault: pinned:do-not-disturb
-#: packages/app/tray.ts
-msgid "Turn Do Not Disturb on"
-msgstr "Activar No interrumpir"
-
-# fault: pinned:restart
-#: packages/app/updater.ts
-msgid "Restart now"
-msgstr "Volver a arrancar ahora"
-
-# fault: pinned:update
-#: packages/renderer/routes/settings/general.tsx
-msgid "Check for updates automatically"
-msgstr "Buscar novedades automáticamente"
-
-# fault: pinned:trusted-hosts
-#: packages/renderer/routes/settings/general.tsx
-msgid "Trusted hosts"
-msgstr "Hosts fiables"
-
-# fault: pinned:menu-bar
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Menu bar icon"
-msgstr "Icono de la barra de menú"
 
 # fault: platform-word:File
 #: packages/app/menu.ts
@@ -189,71 +114,6 @@ msgstr "¿Eliminar?"
 msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
 msgstr "Activa también la opción en Ajustes."
 
-# fault: pinned:dock
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "Icono del dock"
-
-# fault: pinned:hibernation
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "Hibernar pestañas sin usar"
-
-# fault: pinned:upgrade
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Mejorar a Meru Pro"
-
-# fault: pinned:toast
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "Cerrar notificación"
-
-# fault: pinned:unread-badge
-#: packages/renderer/routes/settings/general.tsx
-msgid "Show unread badge"
-msgstr "Mostrar globo de no leídos"
-
-# fault: pinned:meru-label
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "Etiqueta"
-
-# fault: pinned:out-of-office
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Abre la configuración de Gmail para desactivar fuera de la oficina"
-
-# fault: pinned:multiple-inboxes
-#: packages/renderer/routes/settings/general.tsx
-msgid "Multiple inboxes"
-msgstr "Bandejas múltiples"
-
-# fault: pinned:notify
-#: packages/renderer/routes/settings/general.tsx
-msgid "Notify for"
-msgstr "Avisar sobre"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "Linen"
-
-# fault: pinned:device-label
-#: packages/renderer/routes/settings/license.tsx
-msgid "Device label"
-msgstr "Etiqueta del dispositivo"
-
-# fault: pinned:phishing-protection
-#: packages/renderer/routes/settings/general.tsx
-msgid "Phishing protection"
-msgstr "Protección contra suplantación"
-
-# fault: pinned:release-channel
-#: packages/renderer/routes/settings/general.tsx
-msgid "Release channel"
-msgstr "Versión de lanzamiento"
-
 # fault: banned:ellipsis-space
 #: packages/renderer/components/emoji-picker-button.tsx
 msgid "Search…"
@@ -263,48 +123,6 @@ msgstr "Buscar …"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minutos"
-
-# fault: pinned:upgrade
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "Comprar"
-
-# fault: pinned:toast
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "Notificaciones"
-
-# fault: pinned:toast
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "Notificaciones"
-
-# fault: pinned:meru-label
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "Introduce una etiqueta"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "brisa"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "campanilla"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "dúo"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "golpe"
 
 # An access key inside a banned word still shows the word.
 # fault: banned:vinculo

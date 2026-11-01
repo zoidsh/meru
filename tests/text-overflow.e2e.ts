@@ -3,12 +3,13 @@
 // renderer's own layout back out of it.
 
 /*
- * Text that doesn't fit, in every shipped language and the pseudo-locale.
+ * Text that doesn't fit, in every shipped translation and the pseudo-locale.
  *
  * German runs about a third longer than English and the pseudo-locale is padded
  * by 40%, so a badge, a button or a sidebar item sized around the English string
  * clips or truncates in them while English looks right. Only screenshots catch
- * that otherwise.
+ * that otherwise. English itself has no case: the pseudo-locale is English
+ * padded wider in every message, so a layout that fits it fits English.
  *
  * Each case walks the titlebar, in every state of the trial badge, and every
  * settings page the sidebar lists, at the width the window opens at and at its
@@ -405,7 +406,11 @@ async function readSettingsPageLabels(navigation: Locator) {
 }
 
 const LANGUAGES: { tag: string; seedConfig: Partial<Config>; env: Record<string, string> }[] = [
-  ...SHIPPED_CATALOG_TAGS.map((tag) => ({ tag, seedConfig: { "app.language": tag }, env: {} })),
+  ...SHIPPED_CATALOG_TAGS.filter((tag) => tag !== "en").map((tag) => ({
+    tag,
+    seedConfig: { "app.language": tag },
+    env: {},
+  })),
   { tag: PSEUDO_LOCALE, seedConfig: {}, env: { MERU_PSEUDO_LOCALE: "1" } },
 ];
 

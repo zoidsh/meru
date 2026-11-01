@@ -70,14 +70,6 @@ msgctxt "Linux"
 msgid "Shift"
 msgstr "Shift"
 
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Show bookmarks button"
-msgstr "ブックマークボタンを表示"
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Meru Proにアップグレード"
-
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove {label}?"
 msgstr "{label}を削除しますか?"
@@ -86,38 +78,9 @@ msgstr "{label}を削除しますか?"
 msgid "Couldn't add the account."
 msgstr "アカウントを追加できませんでした。"
 
-#: packages/renderer/components/downloads.tsx
-msgid "Recent download history"
-msgstr "最近のダウンロード履歴"
-
 #: packages/renderer/components/app-titlebar.tsx
 msgid "{count, plural, one {# tab} other {# tabs}}"
 msgstr "{count, plural, other {#個のタブ}}"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "トーストを閉じる"
-
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "トースト"
-
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "名前"
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Device label"
-msgstr "デバイス名"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "チャイム"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Multiple inboxes"
-msgstr "マルチ受信トレイ"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "User agent"
@@ -131,140 +94,35 @@ msgstr "一度にオンにできるパスワードマネージャーは1つだ�
 msgid "Open the browser allowlist in an editor with root permissions."
 msgstr "root権限でエディタを使って、許可リストを開いてください。"
 
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Narrow the tab strip"
-msgstr "タブバーを狭くする"
-
 #: packages/renderer/routes/settings/accounts.tsx
 msgctxt "account row badge"
 msgid "Unread badge"
 msgstr "未読"
 
-#: packages/renderer/routes/settings/general.tsx
-msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "システム設定でもオンにしてください。"
-
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "Dockアイコン"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "使われていないタブを非アクティブにする"
-
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Menu bar icon"
-msgstr "メニューバーのアイコン"
-
-#: packages/renderer/components/app-titlebar.tsx
-msgid "Turn Do Not Disturb off"
-msgstr "おやすみモードをオフにする"
-
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "アップグレード"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "トースト"
-
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "名前を入力"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "ブリーズ"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "デュエット"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "ノック"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "リネン"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "In launcher"
-msgstr "ランチャー内"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Gmailの設定を開いて不在通知をオフにする"
-
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Add your own CSS to personalize the Gmail interface further."
 msgstr "独自のCSSを追加して、Gmailのインターフェイスをさらにカスタマイズします。"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Persist zoom"
-msgstr "ズームを保持"
 
 #: packages/app/menu.ts
 msgid "Zoom In"
 msgstr "拡大"
 
-#: packages/app/url.ts
-msgid "Open this link in your default browser?"
-msgstr "このリンクを既定のブラウザで開きますか?"
-
-#: packages/renderer/routes/settings/downloads.tsx
-msgid "Default download location"
-msgstr "デフォルトのダウンロード先"
-
 #: packages/renderer/routes/settings/advanced.tsx
 msgid "Use default user agent"
 msgstr "デフォルトのユーザーエージェントを使用"
-
-#: packages/renderer/routes/settings/about.tsx
-msgid "Export logs"
-msgstr "ログをエクスポート"
 
 #: packages/app/ipc.ts
 msgctxt "macOS"
 msgid "Export"
 msgstr "書き出す"
 
-#: packages/app/context-menu.ts
-msgid "Inspect Element"
-msgstr "検証"
-
-#: packages/app/menu.ts
-msgid "Website"
-msgstr "ウェブサイト"
-
-#: packages/app/menu.ts
-msgid "Hard Reload"
-msgstr "ハード再読み込み"
-
-#: packages/app/menu.ts
-msgid "Reopen Closed Tab"
-msgstr "閉じたタブを開く"
-
-#: packages/renderer/components/download-history.tsx
-msgid "Show in folder"
-msgstr "フォルダを開く"
-
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Open in folder"
 msgstr "フォルダを開く"
 
-#: packages/renderer/routes/download-history.tsx
-msgid "Clear all"
-msgstr "すべて削除"
-
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "{tabTitle} — opens {appName} links"
 msgstr "{tabTitle} — {appName}のリンクを開きます"
-
-#: packages/shared/accounts.ts
-msgid "Yellow"
-msgstr "黄"
 
 #. Sits between a start time field and an end time field, as in 09:00 to 17:00
 #: packages/renderer/routes/settings/notifications.tsx

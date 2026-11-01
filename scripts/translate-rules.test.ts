@@ -2,12 +2,18 @@ import { describe, expect, test } from "bun:test";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import {
+  readGeneratedTable,
+  renderPlatformTable,
+  tableCells,
+} from "../.claude/skills/translate/platform-table";
+import {
+  duplicateRuleIds,
   LANGUAGES_DIR,
   loadSidecar,
   PLATFORMS,
-  type PlatformTableRow,
-  type PlatformWord,
-  readPlatformTable,
+  platformEntries,
+  sidecarPath,
+  sidecarSchema,
   styleSheetPath,
 } from "../.claude/skills/translate/rules";
 import { parseCatalog } from "./i18n-check";
@@ -25,54 +31,6 @@ const SOURCE_CATALOGS = [
 const locales = (await readdir(LANGUAGES_DIR))
   .filter((file) => file.endsWith(".md"))
   .map((file) => file.slice(0, -".md".length));
-
-function withoutEllipsis(word: string) {
-  return word.replace(/[\s ]*…$/u, "");
-}
-
-function expectedWord(word: PlatformWord) {
-  return "msgstr" in word ? word.msgstr : word.contains;
-}
-
-function isWordOf(word: PlatformWord, tableWord: string) {
-  return "msgstr" in word
-    ? word.msgstr === tableWord
-    : word.contains === withoutEllipsis(tableWord);
-}
-
-/** Every disagreement between a Platform words table and its sidecar, both ways. */
-function platformDrift(rows: PlatformTableRow[], words: PlatformWord[]) {
-  const drift: string[] = [];
-
-  for (const word of words) {
-    const row = rows.find((candidate) => candidate.english === word.row);
-
-    if (!row) {
-      drift.push(`sidecar row “${word.row}” is not in the table`);
-    } else if (!row.words[word.msgctxt].some((tableWord) => isWordOf(word, tableWord))) {
-      drift.push(
-        `sidecar ${word.msgctxt} “${word.msgid}” expects “${expectedWord(word)}”, which the table's “${word.row}” cell does not give: ${JSON.stringify(row.words[word.msgctxt])}`,
-      );
-    }
-  }
-
-  for (const row of rows) {
-    for (const platform of PLATFORMS) {
-      for (const tableWord of row.words[platform]) {
-        const isUsed = words.some(
-          (word) =>
-            word.row === row.english && word.msgctxt === platform && isWordOf(word, tableWord),
-        );
-
-        if (!isUsed) {
-          drift.push(`table “${row.english}” ${platform} “${tableWord}” is in no sidecar entry`);
-        }
-      }
-    }
-  }
-
-  return drift;
-}
 
 async function sourcePlatformEntries() {
   const keys: string[] = [];
@@ -103,26 +61,56 @@ describe("language sidecars", () => {
     expect(sidecars.sort()).toEqual([...locales].sort());
   });
 
+  test("a table that differs from its sidecar's rows by one word is caught", async () => {
+    const sidecar = await loadSidecar("fr");
+
+    const changed = {
+      ...sidecar,
+      platformWords: {
+        ...sidecar.platformWords,
+        rows: sidecar.platformWords.rows.map((row, index) =>
+          index === 0 ? { ...row, Linux: [{ word: "Dossier", labels: ["File"] }] } : row,
+        ),
+      },
+    };
+
+    const table = readGeneratedTable(await Bun.file(styleSheetPath("fr")).text(), "fr") ?? [];
+
+    expect(tableCells(table)).not.toEqual(tableCells(renderPlatformTable(changed)));
+  });
+
+  test("a sidecar that gives two rules one id does not load", async () => {
+    const sidecar = await Bun.file(sidecarPath("fr")).json();
+
+    const planted = { ...sidecar, pinned: [...sidecar.pinned, { ...sidecar.pinned[0] }] };
+
+    expect(duplicateRuleIds(planted)).toEqual([sidecar.pinned[0].id]);
+    expect(sidecarSchema.safeParse(planted).success).toBe(false);
+  });
+
   for (const locale of locales) {
     describe(locale, () => {
-      test("the sidecar agrees with the style sheet's Platform words table", async () => {
-        const rows = readPlatformTable(await Bun.file(styleSheetPath(locale)).text());
+      test("gives every rule an id of its own", async () => {
+        expect(duplicateRuleIds(await Bun.file(sidecarPath(locale)).json())).toEqual([]);
+      });
 
-        const sidecar = await loadSidecar(locale);
+      test("the style sheet's Platform words table is the one its sidecar writes", async () => {
+        const table = readGeneratedTable(await Bun.file(styleSheetPath(locale)).text(), locale);
 
-        expect(platformDrift(rows, sidecar.platformWords.entries)).toEqual([]);
+        expect(table, "the table's markers").toBeDefined();
+        expect(tableCells(table ?? [])).toEqual(
+          tableCells(renderPlatformTable(await loadSidecar(locale))),
+        );
       });
 
       test("a filled sidecar covers every platform entry in the source catalogs, and no other", async () => {
-        const sidecar = await loadSidecar(locale);
+        const entries = platformEntries(await loadSidecar(locale));
 
-        if (sidecar.platformWords.entries.length === 0) {
+        if (entries.length === 0) {
           return;
         }
 
-        const covered = [
-          ...new Set(sidecar.platformWords.entries.map((word) => `${word.msgctxt} ${word.msgid}`)),
-        ].sort();
+        const covered = [...new Set(entries.map((word) => `${word.msgctxt} ${word.msgid}`))].sort();
 
         expect(covered).toEqual(await sourcePlatformEntries());
       });
