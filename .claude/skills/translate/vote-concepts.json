@@ -615,6 +615,12 @@
         "Aktualisierungskanal": "aktualisierungskanal",
         "Kanal": "kanal"
       },
+      "pt-BR": {
+        "canal de atualização": "canal de atualiza[çc]",
+        "canal de versões": "canal de vers[õo]es",
+        "canal beta": "canal beta",
+        "canal": "\\bcanal\\b"
+      },
       "nl": {
         "updatekanaal": "updatekanaal",
         "bètakanaal": "b[èe]takanaal",
@@ -642,6 +648,14 @@
         "kombinierte Ansicht": "kombinier",
         "gruppierte Ordner": "gruppiert",
         "alle Posteingänge": "alle posteing"
+      },
+      "pt-BR": {
+        "caixa de entrada unificada": "caixas? de entrada unificadas?",
+        "pastas unificadas": "pastas unificadas",
+        "visualização combinada": "visualiza[çc][ãa]o combinada",
+        "todas as caixas de entrada": "todas as caixas de entrada",
+        "unificada": "unificad",
+        "combinada": "combinad"
       }
     }
   },
@@ -707,6 +721,14 @@
     "concept": "at startup",
     "english": "\\b(on|at) (startup|start-up|launch)\\b",
     "candidates": {
+      "pt-BR": {
+        "ao iniciar": "\\bao iniciar",
+        "na inicialização": "\\bna inicializa[çc][ãa]o",
+        "durante a inicialização": "durante a inicializa[çc][ãa]o",
+        "ao inicializar": "\\bao inicializar",
+        "ao abrir": "\\bao abrir",
+        "no início": "\\bno in[íi]cio"
+      },
       "pl": {
         "przy uruchomieniu": "przy uruchomieniu",
         "podczas uruchamiania": "podczas uruchamiania|podczas uruchomienia",
@@ -776,6 +798,11 @@
     "concept": "phishing protection",
     "english": "\\bphishing (protection|filter)|\\b(protection|protect\\w*) (against|from) phishing",
     "candidates": {
+      "pt-BR": {
+        "proteção contra phishing": "prote[çc][ãa]o contra (?:o )?phishing",
+        "filtro de phishing": "filtro (?:de|contra|anti-?) ?phishing",
+        "antiphishing": "anti-?phishing"
+      },
       "nl": {
         "phishingbescherming": "phishingbescherming",
         "bescherming tegen phishing": "bescherming tegen phishing",
@@ -913,12 +940,18 @@
         "ámbar": "ámbar",
         "amarillo": "amarill",
         "naranja": "naranja"
+      },
+      "pt-BR": {
+        "âmbar": "\\b[âa]mbar\\b",
+        "amarelo": "amarel",
+        "laranja": "laranja"
       }
     },
     "exclude": {
       "it": ["giallo", "arancione"],
       "es": ["amarillo", "naranja"],
-      "es-419": ["amarillo", "naranja"]
+      "es-419": ["amarillo", "naranja"],
+      "pt-BR": ["amarelo", "laranja"]
     }
   },
   {
@@ -936,12 +969,17 @@
       "es-419": {
         "esmeralda": "esmerald",
         "verde": "verde"
+      },
+      "pt-BR": {
+        "esmeralda": "esmerald",
+        "verde": "\\bverde"
       }
     },
     "exclude": {
       "it": ["verde"],
       "es": ["verde"],
-      "es-419": ["verde"]
+      "es-419": ["verde"],
+      "pt-BR": ["verde"]
     }
   },
   {
@@ -964,12 +1002,19 @@
         "añil": "añil",
         "azul": "\\bazul",
         "violeta": "violeta"
+      },
+      "pt-BR": {
+        "índigo": "\\b[íi]ndigo",
+        "anil": "\\banil\\b",
+        "azul": "\\bazul",
+        "violeta": "violeta"
       }
     },
     "exclude": {
       "it": ["blu", "viola"],
       "es": ["azul", "violeta"],
-      "es-419": ["azul", "violeta"]
+      "es-419": ["azul", "violeta"],
+      "pt-BR": ["azul", "violeta"]
     }
   },
   {
@@ -997,12 +1042,21 @@
         "cielo": "cielo",
         "azul": "\\bazul",
         "cian": "\\bcian"
+      },
+      "pt-BR": {
+        "celeste": "celeste",
+        "azul-celeste": "azul[- ]celeste",
+        "azul-céu": "azul[- ]c[ée]u\\b",
+        "céu": "\\bc[ée]u\\b",
+        "azul": "\\bazul",
+        "ciano": "\\bciano"
       }
     },
     "exclude": {
       "it": ["blu", "ciano"],
       "es": ["azul", "cian"],
-      "es-419": ["azul", "cian"]
+      "es-419": ["azul", "cian"],
+      "pt-BR": ["azul", "ciano"]
     }
   },
   {
@@ -1040,12 +1094,23 @@
         "verde": "verde",
         "azul": "\\bazul",
         "cian": "\\bcian"
+      },
+      "pt-BR": {
+        "verde-azulado": "verde[- ]azulad",
+        "azul-petróleo": "azul[- ]petr[óo]leo",
+        "verde-água": "verde[- ][áa]gua",
+        "turquesa": "turquesa",
+        "verde acinzentado": "verde[- ]acinzentad",
+        "verde": "\\bverde",
+        "azul": "\\bazul",
+        "ciano": "\\bciano"
       }
     },
     "exclude": {
       "it": ["ciano", "verde", "blu"],
       "es": ["verde", "azul", "cian"],
-      "es-419": ["verde", "azul", "cian"]
+      "es-419": ["verde", "azul", "cian"],
+      "pt-BR": ["verde", "azul", "ciano"]
     }
   },
   {
@@ -1061,11 +1126,19 @@
         "ancho": "\\banch[oa]s?\\b",
         "amplio": "\\bampli[oa]s?\\b",
         "panorámico": "\\bpanorámic[oa]s?\\b"
+      },
+      "pt-BR": {
+        "largo": "\\blarg[oa]s?\\b",
+        "largura": "\\blargura",
+        "amplo": "\\bampl[oa]s?\\b",
+        "espaçado": "\\bespa[çc]ad[oa]s?\\b",
+        "grande-angular": "grande[- ]angular"
       }
     },
     "exclude": {
       "es": ["ancho"],
-      "es-419": ["ancho"]
+      "es-419": ["ancho"],
+      "pt-BR": ["largura"]
     }
   },
   {
@@ -1080,10 +1153,21 @@
         "contador": "contador",
         "badge": "badge",
         "gafete": "gafete"
+      },
+      "pt-BR": {
+        "emblema": "emblema",
+        "selo": "\\bselos?\\b",
+        "indicador": "indicador",
+        "distintivo": "distintivo",
+        "crachá": "crach[áa]",
+        "badge": "\\bbadges?\\b",
+        "aviso": "\\bavisos?\\b",
+        "contador": "contador"
       }
     },
     "exclude": {
-      "es-419": ["contador"]
+      "es-419": ["contador"],
+      "pt-BR": ["emblema", "aviso"]
     }
   }
 ]

@@ -971,8 +971,13 @@ msgid "Cyan"
 msgstr "シアン"
 
 #. Option of the Theme setting
-#. Option of the system tray icon's Color setting
 #: packages/renderer/routes/settings/appearance.tsx
+msgid "Dark"
+msgstr "ダーク"
+
+#. Option of the system tray icon's Color setting; agrees with the word for color where the language genders it
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "tray icon color"
 msgid "Dark"
 msgstr "ダーク"
 
@@ -1657,8 +1662,13 @@ msgid "License key activated."
 msgstr "ライセンスキーをアクティベートしました。"
 
 #. Option of the Theme setting
-#. Option of the system tray icon's Color setting
 #: packages/renderer/routes/settings/appearance.tsx
+msgid "Light"
+msgstr "ライト"
+
+#. Option of the system tray icon's Color setting; agrees with the word for color where the language genders it
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "tray icon color"
 msgid "Light"
 msgstr "ライト"
 
@@ -2877,9 +2887,13 @@ msgid "Show in Finder"
 msgstr "Finderに表示"
 
 #. Button in the download history that shows the file in the file manager
-#. Option of what a finished download's notification does
 #: packages/renderer/components/download-history.tsx
+msgid "Show in folder"
+msgstr "フォルダを開く"
+
+#. Option of what a finished download's notification does
 #: packages/renderer/routes/settings/notifications.tsx
+msgctxt "download action"
 msgid "Show in folder"
 msgstr "フォルダを開く"
 

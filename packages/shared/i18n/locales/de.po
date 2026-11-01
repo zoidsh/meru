@@ -971,8 +971,13 @@ msgid "Cyan"
 msgstr "Cyan"
 
 #. Option of the Theme setting
-#. Option of the system tray icon's Color setting
 #: packages/renderer/routes/settings/appearance.tsx
+msgid "Dark"
+msgstr "Dunkel"
+
+#. Option of the system tray icon's Color setting; agrees with the word for color where the language genders it
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "tray icon color"
 msgid "Dark"
 msgstr "Dunkel"
 
@@ -1657,8 +1662,13 @@ msgid "License key activated."
 msgstr "Lizenzschlüssel aktiviert."
 
 #. Option of the Theme setting
-#. Option of the system tray icon's Color setting
 #: packages/renderer/routes/settings/appearance.tsx
+msgid "Light"
+msgstr "Hell"
+
+#. Option of the system tray icon's Color setting; agrees with the word for color where the language genders it
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "tray icon color"
 msgid "Light"
 msgstr "Hell"
 
@@ -2877,9 +2887,13 @@ msgid "Show in Finder"
 msgstr "Im Finder zeigen"
 
 #. Button in the download history that shows the file in the file manager
-#. Option of what a finished download's notification does
 #: packages/renderer/components/download-history.tsx
+msgid "Show in folder"
+msgstr "Im Ordner anzeigen"
+
+#. Option of what a finished download's notification does
 #: packages/renderer/routes/settings/notifications.tsx
+msgctxt "download action"
 msgid "Show in folder"
 msgstr "Im Ordner anzeigen"
 
