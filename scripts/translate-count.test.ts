@@ -2,9 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import {
+  androidPairs,
   APPS,
   CORPUS_DIR,
   electronChromium,
+  HttpError,
   type Pair,
   parseAndroidStrings,
   parseDtd,
@@ -16,10 +18,18 @@ import {
   readCorpus,
   unpseudo,
 } from "../.claude/skills/translate/corpus";
-import { banCount, citedCount, pinCount, withoutAnchors } from "../.claude/skills/translate/count";
+import {
+  banCount,
+  citedCount,
+  countLines,
+  pinCount,
+  withoutAnchors,
+} from "../.claude/skills/translate/count";
 import { loadSidecar } from "../.claude/skills/translate/rules";
 import {
+  type Concept,
   CONCEPTS_PATH,
+  conceptsLacking,
   conceptsSchema,
   formatMatched,
   pattern,
@@ -194,6 +204,25 @@ describe("count.ts", () => {
     ).toBe(1);
   });
 
+  // A citation count.ts can't read prints "cites none", so --check would pass it unchecked.
+  test("reads every Chrome count a sidecar's reason cites", async () => {
+    const citesACount = /\(Chrome\b[^)]*\d|\bChrome:? (?:in )?\d+ ?(?:of|\/) ?\d+|banned form in/u;
+
+    const unread: string[] = [];
+
+    for (const [tag] of cachedCorpora) {
+      const sidecar = await loadSidecar(tag);
+
+      for (const rule of [...sidecar.pinned, ...sidecar.banned]) {
+        if (citesACount.test(rule.reason) && citedCount(rule.reason) === undefined) {
+          unread.push(`${tag} ${rule.id}: ${rule.reason}`);
+        }
+      }
+    }
+
+    expect(unread).toEqual([]);
+  });
+
   test("reads a cited count in each form the sidecars write it", () => {
     expect(citedCount("as Chrome writes it (Chrome: 415 of 436 messages).")).toEqual({
       n: 415,
@@ -204,6 +233,34 @@ describe("count.ts", () => {
     expect(citedCount("(Chrome writes the banned form in none of its messages)")).toEqual({ n: 0 });
     expect(citedCount("(Chrome writes the banned form in 1 message)")).toEqual({ n: 1 });
     expect(citedCount("Glossary, agent-chosen.")).toBeUndefined();
+  });
+
+  test("marks a pin or ban whose count differs from the one its reason cites, for --check", async () => {
+    const sidecar = await loadSidecar("fr");
+
+    const pin = await frenchPin("release-channel");
+
+    const pairs = await readCorpus(FIXTURES, "chrome", "fr");
+
+    const lines = (rule: typeof pin) => countLines("fr", { pinned: [rule], banned: [] }, pairs);
+
+    expect(lines(pin).map(({ differs }) => differs)).toEqual([false]);
+    expect(lines({ ...pin, reason: "Glossary (Chrome: 9 of 11 messages)." })[0]?.text).toEndWith(
+      "(differs)",
+    );
+    expect(lines({ ...pin, reason: "Glossary, agent-chosen." })[0]).toMatchObject({
+      differs: false,
+    });
+
+    const ban = sidecar.banned.find((candidate) => candidate.id === "signet");
+
+    if (!ban) {
+      throw new Error("fr.json has no signet ban");
+    }
+
+    expect(
+      countLines("fr", { pinned: [], banned: [ban] }, [["Bookmarks", "Signets"]])[0],
+    ).toMatchObject({ differs: true });
   });
 
   test("takes only the anchors off an expect", () => {
@@ -292,6 +349,16 @@ describe("vote.ts", () => {
     expect(pattern("\\bavis\\b").test("Avisé")).toBe(false);
   });
 
+  test("lists the concepts that have no candidate words for a language", () => {
+    const sample: Concept[] = [
+      { concept: "notify", english: "notif", candidates: { fr: { notifier: "notifi" } } },
+      { concept: "toast", english: "toast", candidates: { de: { Hinweis: "hinweis" } } },
+    ];
+
+    expect(conceptsLacking(sample, "fr")).toEqual(["toast"]);
+    expect(conceptsLacking(sample, "sv")).toEqual(["notify", "toast"]);
+  });
+
   test("every concept names a candidate in a language it is voted in", () => {
     for (const concept of concepts) {
       for (const [tag, candidates] of Object.entries(concept.candidates)) {
@@ -322,6 +389,72 @@ describe("corpus.ts", () => {
     expect(() => electronChromium(() => results.shift() ?? run(1))).toThrow(
       /signal SIGKILL.*exit code 1/su,
     );
+  });
+});
+
+describe("corpus.ts android", () => {
+  const strings = (value: string) => `<string name="remove">${value}</string>`;
+
+  /** AOSP as a map of repository and path to file, every other file a 404. */
+  const reader = (files: Record<string, string>) => async (repo: string, file: string) => {
+    const text = files[`${repo} ${file}`];
+
+    if (text === undefined) {
+      throw new HttpError(`${repo}/${file}`, 404);
+    }
+
+    return text;
+  };
+
+  const english = {
+    "platform/packages/apps/Settings res/values/strings.xml": strings("Remove"),
+    "platform/packages/apps/Messaging res/values/strings.xml": strings("Remove"),
+  };
+
+  test("reads Brazilian Portuguese from values-pt where an app has no values-pt-rBR", async () => {
+    const pairs = await androidPairs(
+      "pt-BR",
+      reader({
+        ...english,
+        "platform/packages/apps/Settings res/values-pt-rBR/strings.xml": strings('"Remover"'),
+        "platform/packages/apps/Settings res/values-pt/strings.xml": strings('"Excluir"'),
+        "platform/packages/apps/Messaging res/values-pt/strings.xml": strings('"Remover"'),
+      }),
+      () => undefined,
+    );
+
+    expect(pairs).toEqual([
+      ["Remove", "Remover"],
+      ["Remove", "Remover"],
+    ]);
+  });
+
+  test("skips an app without the language, with a warning, and keeps the others", async () => {
+    const warnings: string[] = [];
+
+    const pairs = await androidPairs(
+      "pt-BR",
+      reader({
+        ...english,
+        "platform/packages/apps/Settings res/values-pt/strings.xml": strings('"Remover"'),
+      }),
+      (message) => warnings.push(message),
+    );
+
+    expect(pairs).toEqual([["Remove", "Remover"]]);
+    expect(warnings).toEqual(
+      expect.arrayContaining([
+        "android pt-BR: platform/packages/apps/Messaging has no res/values-pt-rBR/strings.xml or res/values-pt/strings.xml; skipping it",
+      ]),
+    );
+  });
+
+  test("still fails on an error other than a missing file", async () => {
+    const failing = async () => {
+      throw new HttpError("android.googlesource.com", 503);
+    };
+
+    await expect(androidPairs("de", failing, () => undefined)).rejects.toThrow("HTTP 503");
   });
 });
 
@@ -358,6 +491,24 @@ describe("corpus.ts parsers", () => {
         '<string name="open" translatable="true">Open <b>it</b>, don\\\'t &amp; go</string>',
       ),
     ]).toEqual([["open", "Open it, don't & go"]]);
+  });
+
+  test("Android strings without the pair of quotes a translation is wrapped in", () => {
+    expect([
+      ...parseAndroidStrings(
+        [
+          '<string name="remove" msgid="1">"Quitar"</string>',
+          '<string name="quoted">"\\"Sí\\""</string>',
+          '<string name="apostrophe">"l\\\'app"</string>',
+          '<string name="inner">Say \\"hi\\"</string>',
+        ].join("\n"),
+      ),
+    ]).toEqual([
+      ["remove", "Quitar"],
+      ["quoted", '"Sí"'],
+      ["apostrophe", "l'app"],
+      ["inner", 'Say "hi"'],
+    ]);
   });
 
   test("PO pairs with continued lines and escapes", () => {

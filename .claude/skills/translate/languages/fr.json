@@ -295,8 +295,8 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "macOS": [
           {
-            "word": "Enregistrer sous…",
-            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "word": "Enregistrer sous",
+            "source": "(AppKit `Document` `Save As\\U2026`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -319,8 +319,8 @@
         ],
         "Linux": [
           {
-            "word": "Enregistrer sous…",
-            "source": "(gnome-text-editor `Save _As…`)",
+            "word": "Enregistrer sous",
+            "source": "(gnome-text-editor `Save _As…`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -1369,7 +1369,7 @@
       "msgidPattern": "app links badge",
       "expect": "[Pp]astille",
       "severity": "wrong",
-      "reason": "The app links badge is the pastille, the unread badge's word (glossary, Unread badge); Chrome has no word for a badge (Chrome 0 messages in its macOS locale.pak), never indicateur.",
+      "reason": "The app links badge is the pastille, the unread badge's word (glossary, Unread badge); Chrome has no word for a badge (Chrome 0/0 in Chromium 156.0.8078.49's .xtb files), never indicateur.",
       "example": {
         "msgid": "Show app links badge",
         "clean": "Afficher la pastille de l’onglet des liens d’appli",

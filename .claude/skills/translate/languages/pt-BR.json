@@ -295,8 +295,8 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "macOS": [
           {
-            "word": "Salvar Como…",
-            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "word": "Salvar Como",
+            "source": "(AppKit `Document` `Save As\\U2026`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -319,8 +319,8 @@
         ],
         "Linux": [
           {
-            "word": "Salvar Como…",
-            "source": "(gedit `Save _As…`, title-cased)",
+            "word": "Salvar Como",
+            "source": "(gedit `Save _As…`, title-cased, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {

@@ -295,8 +295,8 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "macOS": [
           {
-            "word": "別名で保存…",
-            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "word": "別名で保存",
+            "source": "(AppKit `Document` `Save As\\U2026`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -319,8 +319,8 @@
         ],
         "Linux": [
           {
-            "word": "名前を付けて保存…",
-            "source": "(gedit `Save _As…`)",
+            "word": "名前を付けて保存",
+            "source": "(gedit `Save _As…`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -1297,8 +1297,9 @@
       "id": "user-agent",
       "msgidPattern": "\\buser agents?\\b",
       "expect": "ユーザーエージェント",
+      "countExpect": "ユーザー エージェント",
       "severity": "wrong",
-      "reason": "A user agent is ユーザーエージェント, Chrome's ユーザー エージェント without its space (Chrome: 1 of 1 message).",
+      "reason": "A user agent is ユーザーエージェント, Chrome's ユーザー エージェント without its space (Chrome 1/1 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "msgid": "Send a user agent that names Meru.",
         "fault": "Meruの名前を含むUAを送信します。"

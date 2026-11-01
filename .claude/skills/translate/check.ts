@@ -4,6 +4,7 @@ import { getConfig } from "@lingui/conf";
 import { type CompiledMessage, compileMessageOrThrow } from "@lingui/message-utils/compileMessage";
 import { SHIPPED_CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
 import { findCatalogProblems, parseCatalog } from "../../../scripts/i18n-check";
+import { englishOf } from "./count";
 import {
   loadSidecar,
   platformEntries,
@@ -205,6 +206,48 @@ function accessKeyProblem(entry: Entry, style: "inline" | "suffix") {
 
 function isInCase(text: string, letterCase: "lower" | "capitalized") {
   return letterCase === "lower" ? text === text.toLowerCase() : /^\p{Lu}/u.test(text);
+}
+
+export type Mention = {
+  catalog: string;
+  msgctxt: string | null;
+  msgid: string;
+  msgstr: string;
+  /** The other pins that already hold this entry's wording. */
+  pinnedBy: string[];
+};
+
+/*
+ * A pin that overrides an option's word leaves every sentence naming that
+ * option on the old word unless a pin of its own holds it, as Spanish's Wide
+ * did in three descriptions. Lists each other entry whose English has the
+ * pin's msgid as a whole word, beside the pins that already select it.
+ */
+export function pinMentions(
+  sidecar: Sidecar,
+  catalogs: { path: string; catalog: Catalog }[],
+  pinId: string,
+): Mention[] {
+  const pin = sidecar.pinned.find(({ id }) => id === pinId);
+
+  if (!pin?.msgid) {
+    throw new Error(`no pin ${pinId} with a msgid in this sidecar`);
+  }
+
+  const word = englishOf({ msgid: pin.msgid });
+
+  return catalogs
+    .flatMap(({ path: catalogPath, catalog }) => toEntries(catalogPath, catalog))
+    .filter((entry) => !matchesSelector(entry, pin) && word.test(entry.msgidText))
+    .map((entry) => ({
+      catalog: entry.catalog,
+      msgctxt: entry.msgctxt,
+      msgid: entry.msgid,
+      msgstr: entry.msgstr,
+      pinnedBy: sidecar.pinned
+        .filter((other) => other.id !== pin.id && matchesSelector(entry, other))
+        .map(({ id }) => id),
+    }));
 }
 
 /** Every finding for one locale's catalogs against its sidecar. */
@@ -418,16 +461,19 @@ function summarize(report: Report) {
 
 const USAGE = `Usage: bun .claude/skills/translate/check.ts --locale <tag> [--catalog <path.po>]… [--strict]
        bun .claude/skills/translate/check.ts --shipped [--strict]
+       bun .claude/skills/translate/check.ts --locale <tag> --mentions <pin id>
 
 Checks a locale's catalogs against .claude/skills/translate/languages/<tag>.json.
 Without --catalog, it reads both of the locale's catalogs from lingui.config.ts.
 Prints the report as JSON on stdout and a summary on stderr. --shipped checks
-every shipped locale but English and prints an array of reports.
+every shipped locale but English and prints an array of reports. --mentions
+lists instead, as JSON, every other entry whose English has that pin's msgid
+as a whole word, with its translation and the pins that already select it.
 
 Exit codes: 0 no wrong finding, 1 a wrong finding, or any finding with --strict,
 2 the check could not run.`;
 
-async function checkLocale(
+async function catalogsOf(
   config: ReturnType<typeof getConfig>,
   locale: string,
   catalogPaths: string[] | undefined,
@@ -438,14 +484,24 @@ async function checkLocale(
       path.relative(process.cwd(), `${catalogConfig.path.replace("{locale}", locale)}.po`),
     );
 
-  const catalogs = await Promise.all(
+  return Promise.all(
     paths.map(async (catalogPath) => ({
       path: catalogPath,
       catalog: await readCatalog(locale, catalogPath),
     })),
   );
+}
 
-  return checkCatalogs(locale, await loadSidecar(locale), catalogs);
+async function checkLocale(
+  config: ReturnType<typeof getConfig>,
+  locale: string,
+  catalogPaths: string[] | undefined,
+) {
+  return checkCatalogs(
+    locale,
+    await loadSidecar(locale),
+    await catalogsOf(config, locale, catalogPaths),
+  );
 }
 
 async function run() {
@@ -455,12 +511,27 @@ async function run() {
       catalog: { type: "string", multiple: true },
       shipped: { type: "boolean" },
       strict: { type: "boolean" },
+      mentions: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
 
   if (values.help) {
     console.log(USAGE);
+
+    return;
+  }
+
+  if (values.mentions !== undefined && values.locale) {
+    const catalogs = await catalogsOf(getConfig(), values.locale, values.catalog);
+
+    console.log(
+      JSON.stringify(
+        pinMentions(await loadSidecar(values.locale), catalogs, values.mentions),
+        null,
+        2,
+      ),
+    );
 
     return;
   }

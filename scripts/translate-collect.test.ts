@@ -13,6 +13,7 @@ import {
   translationChanges,
   withSourceOrder,
 } from "../.claude/skills/translate/collect";
+import { CATALOG_TAGS } from "../packages/shared/i18n/tags";
 
 /*
  * Lives here rather than beside the script because `bun test` never looks
@@ -224,6 +225,22 @@ Columns: msgctxt | msgid | msgstr | comments | origins. "-" is no msgctxt. "[mul
 });
 
 describe("sliceGlossary", () => {
+  test("gives every language its own line for the app links badge, never another badge's word", async () => {
+    const glossary = await Bun.file(
+      path.join(import.meta.dir, "../.claude/skills/translate/glossary.md"),
+    ).text();
+
+    for (const tag of CATALOG_TAGS.filter((candidate) => candidate !== "en")) {
+      const { text } = sliceGlossary(glossary, tag);
+
+      const badge = /^The badge that marks it, in _Show app links badge_.*?(?=^## )/msu.exec(
+        text,
+      )?.[0];
+
+      expect(badge, tag).toMatch(new RegExp(`^- ${tag}: \\S`, "mu"));
+    }
+  });
+
   const GLOSSARY = `# Glossary
 
 One fixed word per term.
