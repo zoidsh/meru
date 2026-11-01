@@ -387,7 +387,6 @@ msgstr "Onglets épinglés"
 # expect: fluency/spelling minor
 # check: pinned:download-history
 # planted: a typo
-# hard
 #: packages/renderer/routes/download-history.tsx
 msgid "Download history"
 msgstr "Historique des téléchargemnets"

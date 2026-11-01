@@ -2,11 +2,16 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { parse } from "../.claude/skills/translate/collect";
+import { dumpCatalogs, parse } from "../.claude/skills/translate/collect";
 import {
+  blocks,
   changedEntries,
+  correctedEntries,
+  formatFindings,
   countWords,
   formatEntryList,
+  keyOf,
+  parseDump,
   parseEntryFile,
   type MqmFinding,
   type MqmSeverity,
@@ -20,7 +25,7 @@ import {
 /*
  * Lives here rather than beside the script because `bun test` never looks
  * inside a dot directory such as `.claude`. The fixture catalogs hold 109
- * source words, so one minor error passes at 99.08 and two fail at 98.17.
+ * source words, so one minor error scores 99.08 and two 98.17.
  */
 
 const FIXTURES_DIR = path.join(import.meta.dir, "../.claude/skills/translate/fixtures/mqm");
@@ -169,12 +174,12 @@ describe("scoreLocale", () => {
     expect(result?.passes).toBe(true);
   });
 
-  test("enough minor errors to score under 99 fail a full run", async () => {
+  test("a full run scoring under 99 on minor errors alone passes, the score reported only", async () => {
     const { result } = await score("two-minors.json");
 
     expect(result?.penalty).toBe(2);
     expect(result?.score).toBeLessThan(99);
-    expect(result?.passes).toBe(false);
+    expect(result?.passes).toBe(true);
   });
 
   test("one major error fails a full run", async () => {
@@ -328,103 +333,250 @@ function finding(
   };
 }
 
-async function scoreThree(runs: MqmFinding[][], { partial = false } = {}) {
+async function scoreThree(
+  runs: MqmFinding[][],
+  { partial = false, assessed }: { partial?: boolean; assessed?: Map<string, string> } = {},
+) {
   return scoreRuns({
     locale: "de",
     catalogs: await catalogs(),
     runs: runs.map((findings, index) => ({ name: `de.mqm.${index + 1}.json`, findings })),
     entries: partial ? parseEntryFile(await fixture("de.txt").text()) : undefined,
+    assessed,
   });
 }
 
+/** The fixture catalogs' dump, as a round's reviewers read it, with `changes` as msgstrs since overwritten. */
+async function assessedWith(changes: Record<string, string> = {}) {
+  const assessed = parseDump(
+    dumpCatalogs(
+      "de",
+      (await catalogs()).map((catalog) => ({ ...catalog, relative: `${catalog.name}.po` })),
+    ).text,
+  );
+
+  for (const [msgid, msgstr] of Object.entries(changes)) {
+    assessed.set(keyOf(finding(msgid, "minor")), msgstr);
+  }
+
+  return assessed;
+}
+
+describe("parseDump", () => {
+  test("reads back every live entry's msgstr from the dump the reviewers read", async () => {
+    const assessed = await assessedWith();
+
+    expect(assessed.size).toBe(9);
+    expect(assessed.get(keyOf(finding("Settings", "minor")))).toBe("Einstellungen");
+    expect(assessed.get(keyOf({ catalog: "app", msgctxt: "macOS", msgid: "Quit {appName}" }))).toBe(
+      "{appName} beenden",
+    );
+    expect(assessed.get(keyOf(finding("Move to Trash", "minor")))).toBe(
+      "In den Papierkorb verschieben",
+    );
+  });
+});
+
+describe("correctedEntries", () => {
+  test("lists the entries whose translation changed since the dump the runs read, and no other", async () => {
+    const assessed = await assessedWith({
+      Settings: "Optionen",
+      "Move to Trash": "In den Papierkorb",
+    });
+
+    expect(correctedEntries(await catalogs(), assessed)).toEqual([
+      { catalog: "app", msgctxt: null, msgid: "Settings" },
+      { catalog: "preload-gmail", msgctxt: null, msgid: "Move to Trash" },
+    ]);
+    expect(correctedEntries(await catalogs(), await assessedWith())).toEqual([]);
+  });
+
+  test("an empty list, written and read back, holds no entry", () => {
+    expect(parseEntryFile(formatEntryList("de", []))).toEqual([]);
+  });
+});
+
 describe("scoreRuns", () => {
-  test("a major only one of three runs reports is listed as single-run and passes the gate", async () => {
+  test("a major only one of three runs reports blocks the gate", async () => {
     const { result, errors } = await scoreThree([[finding("Settings", "major")], [], []]);
 
     expect(errors).toEqual([]);
-    expect(result?.counts).toEqual({ critical: 0, major: 0, minor: 0 });
-    expect(result?.findings).toEqual([]);
-    expect(result?.single.map(({ msgid, severity }) => [msgid, severity])).toEqual([
-      ["Settings", "major"],
+    expect(result?.counts).toEqual({ critical: 0, major: 1, minor: 0 });
+    expect(
+      result?.findings.map(({ msgid, severity, runsAtSeverity }) => [
+        msgid,
+        severity,
+        runsAtSeverity,
+      ]),
+    ).toEqual([["Settings", "major", 1]]);
+    expect(result?.findings.filter(blocks)).toHaveLength(1);
+    expect(result?.passes).toBe(false);
+  });
+
+  test("a minor only one run reports is listed for correction and doesn't block", async () => {
+    const { result } = await scoreThree([[], [], [finding("Move to Trash", "minor")]]);
+
+    expect(result?.findings.map(({ msgid, severity }) => [msgid, severity])).toEqual([
+      ["Move to Trash", "minor"],
     ]);
     expect(result?.passes).toBe(true);
   });
 
-  test("a major two of three runs agree on fails the gate", async () => {
+  test("dismissing a single-run major unblocks the gate", async () => {
     const { result } = await scoreThree([
-      [finding("Settings", "major")],
-      [finding("Settings", "major")],
+      [finding("Settings", "major", { dismissed: "Planted: Chrome 9/9 writes Einstellungen." })],
+      [],
       [],
     ]);
 
-    expect(result?.counts).toEqual({ critical: 0, major: 1, minor: 0 });
-    expect(result?.findings.map(({ msgid, agreement }) => [msgid, agreement])).toEqual([
-      ["Settings", 2],
+    expect(result?.findings).toEqual([]);
+    expect(result?.dismissed.map(({ msgid }) => msgid)).toEqual(["Settings"]);
+    expect(result?.passes).toBe(true);
+  });
+
+  test("a major whose entry changed since the runs assessed it is applied and no longer blocks", async () => {
+    const { result } = await scoreThree([[finding("Settings", "major")], [], []], {
+      assessed: await assessedWith({ Settings: "Optionen" }),
+    });
+
+    expect(result?.findings.map(({ msgid, applied }) => [msgid, applied])).toEqual([
+      ["Settings", true],
     ]);
-    expect(result?.single).toEqual([]);
+    expect(result?.passes).toBe(true);
+  });
+
+  test("a major whose entry is as the runs assessed it still blocks", async () => {
+    const { result } = await scoreThree([[finding("Settings", "major")], [], []], {
+      assessed: await assessedWith(),
+    });
+
+    expect(result?.findings.map(({ applied }) => applied)).toEqual([false]);
     expect(result?.passes).toBe(false);
   });
 
-  test("an entry takes the median of the three runs' severities", async () => {
+  test("an entry takes the most severe finding any run reports, and keeps every run's", async () => {
     const { result } = await scoreThree([
       [finding("Settings", "critical"), finding("Move to Trash", "major")],
       [finding("Settings", "major"), finding("Move to Trash", "minor")],
       [finding("Move to Trash", "minor")],
     ]);
 
-    expect(result?.counts).toEqual({ critical: 0, major: 1, minor: 1 });
-    expect(result?.findings.map(({ msgid, severity }) => [msgid, severity])).toEqual([
-      ["Settings", "major"],
-      ["Move to Trash", "minor"],
-    ]);
-    expect(result?.single.map(({ msgid, severity }) => [msgid, severity])).toEqual([
-      ["Settings", "critical"],
-      ["Move to Trash", "major"],
+    expect(result?.counts).toEqual({ critical: 1, major: 1, minor: 0 });
+    expect(
+      result?.findings.map(({ msgid, severity, runsAtSeverity, all }) => [
+        msgid,
+        severity,
+        runsAtSeverity,
+        all.map(({ run, severity }) => `${run} ${severity}`),
+      ]),
+    ).toEqual([
+      ["Settings", "critical", 1, ["de.mqm.1.json critical", "de.mqm.2.json major"]],
+      [
+        "Move to Trash",
+        "major",
+        1,
+        ["de.mqm.1.json major", "de.mqm.2.json minor", "de.mqm.3.json minor"],
+      ],
     ]);
   });
 
-  test("an entry two runs flag at all counts as minor, even when one calls it major", async () => {
-    const { result } = await scoreThree([
-      [finding("Settings", "major")],
-      [finding("Settings", "minor")],
-      [],
-    ]);
-
-    expect(result?.counts).toEqual({ critical: 0, major: 0, minor: 1 });
-    expect(result?.passes).toBe(true);
-  });
-
-  test("scores each run on its own and takes the median score", async () => {
+  test("scores each run on its own and reports the median, which doesn't gate", async () => {
     const { result } = await scoreThree([
       [finding("Settings", "minor"), finding("Move to Trash", "minor")],
       [],
-      [finding("Settings", "major")],
+      [finding("Settings", "minor")],
     ]);
 
     expect(result?.runs.map(({ name, penalty }) => [name, penalty])).toEqual([
       ["de.mqm.1.json", 2],
       ["de.mqm.2.json", 0],
-      ["de.mqm.3.json", 5],
+      ["de.mqm.3.json", 1],
     ]);
-    expect(result?.penalty).toBe(2);
-    expect(result?.score).toBeCloseTo(100 * (1 - 2 / 109), 6);
-    expect(result?.passes).toBe(false);
+    expect(result?.penalty).toBe(1);
+    expect(result?.score).toBeCloseTo(100 * (1 - 1 / 109), 6);
+    expect(result?.passes).toBe(true);
   });
 
-  test("a dismissal on an entry in one run's file leaves the entry out of every run", async () => {
+  test("a dismissal removes the one finding it is written on, in its own run", async () => {
+    const dismissed = "Planted: the code shows it right.";
+
     const { result } = await scoreThree([
-      [finding("Settings", "major", { dismissed: "Planted: the code shows it right." })],
-      [finding("Settings", "major")],
-      [finding("Settings", "minor")],
+      [finding("Settings", "major", { dismissed })],
+      [finding("Settings", "major", { dismissed })],
+      [finding("Settings", "minor", { dismissed })],
     ]);
 
     expect(result?.counts).toEqual({ critical: 0, major: 0, minor: 0 });
     expect(result?.runs.map(({ penalty }) => penalty)).toEqual([0, 0, 0]);
-    expect(result?.dismissed.map(({ msgid, dismissed }) => [msgid, dismissed])).toEqual([
-      ["Settings", "Planted: the code shows it right."],
+    expect(result?.dismissed.map(({ run, severity }) => [run, severity])).toEqual([
+      ["de.mqm.1.json", "major"],
+      ["de.mqm.2.json", "major"],
+      ["de.mqm.3.json", "minor"],
     ]);
-    expect(result?.single).toEqual([]);
     expect(result?.passes).toBe(true);
+  });
+
+  test("dismissing run 1's major leaves run 2's different major on the entry blocking", async () => {
+    const { result } = await scoreThree([
+      [
+        finding("Settings", "major", {
+          reason: "Planted: wrong word.",
+          dismissed: "Planted: Chrome writes it.",
+        }),
+      ],
+      [finding("Settings", "major", { reason: "Planted: wrong object." })],
+      [],
+    ]);
+
+    expect(result?.dismissed.map(({ run, reason }) => [run, reason])).toEqual([
+      ["de.mqm.1.json", "Planted: wrong word."],
+    ]);
+    expect(
+      result?.findings.map(({ severity, all }) => [severity, all.map(({ run }) => run)]),
+    ).toEqual([["major", ["de.mqm.2.json"]]]);
+    expect(result?.runs.map(({ penalty }) => penalty)).toEqual([0, 5, 0]);
+    expect(result?.passes).toBe(false);
+  });
+
+  test("prints every run's blocking finding on an entry, and every finding a dismissal removed", async () => {
+    const { result } = await scoreThree([
+      [finding("Settings", "major", { reason: "Planted: wrong word.", correction: "Optionen" })],
+      [finding("Settings", "critical", { reason: "Planted: wrong object.", correction: "Konto" })],
+      [
+        finding("Settings", "major", {
+          correction: "Voreinstellungen",
+          dismissed: "Planted: Chrome writes Einstellungen.",
+        }),
+      ],
+    ]);
+
+    if (!result) {
+      throw new Error("The planted runs score.");
+    }
+
+    const text = formatFindings(result);
+
+    expect(text).toContain("critical accuracy/mistranslation (de.mqm.2.json)");
+    expect(text).toContain("major accuracy/mistranslation (de.mqm.1.json)");
+    expect(text).toContain('→ "Optionen"');
+    expect(text).toContain('→ "Konto"');
+    expect(text).toContain("dismissed: Planted: Chrome writes Einstellungen.");
+    expect(text).toContain('→ "Voreinstellungen"');
+  });
+
+  test("a dismissed minor leaves a critical on the same entry blocking", async () => {
+    const { result } = await scoreThree([
+      [
+        finding("Settings", "minor", { dismissed: "Planted: the style sheet allows it." }),
+        finding("Settings", "critical"),
+      ],
+      [],
+      [],
+    ]);
+
+    expect(result?.dismissed.map(({ severity }) => severity)).toEqual(["minor"]);
+    expect(result?.findings.map(({ severity }) => severity)).toEqual(["critical"]);
+    expect(result?.passes).toBe(false);
   });
 
   test("one findings file scores as it always has", async () => {
@@ -444,7 +596,6 @@ describe("scoreRuns", () => {
       score: single.result?.score,
       passes: single.result?.passes,
       dismissed: single.result?.dismissed,
-      single: [],
     });
   });
 
@@ -461,7 +612,7 @@ describe("scoreRuns", () => {
     ]);
   });
 
-  test("a partial run gates on agreed majors alone, an entry with two errors in a run taking the higher", async () => {
+  test("a partial run blocks on a single run's major, an entry with two errors in a run taking the higher", async () => {
     const quit = { msgctxt: "macOS", msgid: "Quit {appName}", msgstr: "{appName} beenden" };
 
     const { result } = await scoreThree(
@@ -473,8 +624,13 @@ describe("scoreRuns", () => {
       { partial: true },
     );
 
-    expect(result).toMatchObject({ partial: true, counts: { critical: 0, major: 0, minor: 1 } });
-    expect(result?.passes).toBe(true);
+    expect(result).toMatchObject({ partial: true, counts: { critical: 0, major: 1, minor: 0 } });
+    expect(result?.findings[0]?.all.map(({ severity }) => severity)).toEqual([
+      "major",
+      "minor",
+      "minor",
+    ]);
+    expect(result?.passes).toBe(false);
   });
 });
 

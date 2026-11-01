@@ -347,7 +347,6 @@ msgstr "ダウンロードしたPDFファイルの保存先です。"
 # expect: fluency/unidiomatic|terminology|accuracy/mistranslation minor
 # check: pinned:download-history
 # planted: a calque, history as 歴史 for the log Chrome calls 履歴
-# hard
 #: packages/renderer/recent-download-history.tsx
 msgid "Recent download history"
 msgstr "最近のダウンロードの歴史"
@@ -378,7 +377,6 @@ msgstr "{target, select, window {新しい{appLabel}タブ} other {新しい{app
 # expect: fluency/spelling minor
 # check: pinned:download-history
 # planted: a typo, 暦 for 歴
-# hard
 #: packages/renderer/routes/download-history.tsx
 msgid "Download history"
 msgstr "ダウンロード履暦"
@@ -393,7 +391,6 @@ msgstr "ライセンスキーを表示します"
 # expect: accuracy/mistranslation|terminology major
 # check: pinned:default-app
 # planted: near miss, current for default; the default-app pin covers 既定
-# hard
 #: packages/renderer/routes/settings/general.tsx
 msgid "Meru is set as the default mail client."
 msgstr "Meruが現在のメールクライアントに設定されています。"

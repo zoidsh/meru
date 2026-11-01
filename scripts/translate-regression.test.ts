@@ -4,10 +4,15 @@ import { checkCatalogs, readCatalog } from "../.claude/skills/translate/check";
 import { dumpCatalogs } from "../.claude/skills/translate/collect";
 import type { MqmFinding, MqmSeverity } from "../.claude/skills/translate/mqm";
 import {
+  checkFlags,
+  checkInput,
   type Expectation,
+  formatRange,
   loadRegressionSet,
   type RegressionSet,
+  regressionRange,
   scoreRegression,
+  scoreReview,
 } from "../.claude/skills/translate/regression";
 import { loadSidecar } from "../.claude/skills/translate/rules";
 
@@ -76,10 +81,10 @@ describe("the regression sets", () => {
       );
     });
 
-    test(`${locale} holds about 10 hard entries, which no sidecar rule names`, () => {
+    test(`${locale} holds at least 8 hard entries, a sanity floor rather than a quality bar, which grows as runs make real errors worth keeping`, () => {
       expect(
         (sets[locale] as RegressionSet).expectations.filter(({ hard }) => hard).length,
-      ).toBeGreaterThanOrEqual(10);
+      ).toBeGreaterThanOrEqual(8);
     });
 
     /*
@@ -107,6 +112,26 @@ describe("the regression sets", () => {
       expect(
         report.findings.map(({ msgid, rule, id }) => `${msgid}: ${rule}:${id}`).sort(),
       ).toEqual(planted.sort());
+    });
+
+    /*
+     * The test above holds every check.ts finding to a `# check:` mark, so a
+     * hard entry without one is an error no rule catches.
+     */
+    test(`${locale}'s hard entries are ones no check.ts rule catches`, async () => {
+      const catalog = await readCatalog(locale, path.join(REGRESSION_DIR, `${locale}.po`));
+
+      expect(
+        Object.entries(catalog).flatMap(([id, entry]) => {
+          const comments =
+            (entry.extra as { translatorComments?: string[] }).translatorComments ?? [];
+
+          return comments.includes("hard") &&
+            comments.some((comment) => comment.startsWith(CHECK_PREFIX))
+            ? [entry.message ?? id]
+            : [];
+        }),
+      ).toEqual([]);
     });
 
     test(`${locale}'s dump, which the reviewers read, holds none of the answers`, () => {
@@ -140,7 +165,7 @@ describe("scoreRegression", () => {
     ]);
   });
 
-  test("counts recall per expected severity under the two-of-three rule", () => {
+  test("counts recall per expected severity, a catch by any run counting", () => {
     const critical = knownBad.filter(({ severity }) => severity === "critical");
 
     const [first, ...others] = critical;
@@ -165,9 +190,12 @@ describe("scoreRegression", () => {
       ],
     });
 
-    expect(combined?.recall.critical).toEqual({ expected: critical.length, caught: 1 });
+    expect(combined?.recall.critical).toEqual({
+      expected: critical.length,
+      caught: critical.length,
+    });
     expect(combined?.recall.major.caught).toBe(0);
-    expect(combined?.missed).toHaveLength(knownBad.length - 1);
+    expect(combined?.missed).toHaveLength(knownBad.length - critical.length);
     expect(runs.map(({ recall }) => recall.critical.caught)).toEqual([1, critical.length, 0]);
   });
 
@@ -181,7 +209,7 @@ describe("scoreRegression", () => {
     const { combined } = scoreRegression({
       locale: "de",
       set: de,
-      runs: [[finding(de, major, "minor")], [finding(de, major, "major")], []].map(
+      runs: [[finding(de, major, "minor")], [finding(de, major, "minor")], []].map(
         (findings, index) => ({
           name: String(index + 1),
           findings,
@@ -198,21 +226,8 @@ describe("scoreRegression", () => {
     ).toEqual([[major.msgid, "minor"]]);
   });
 
-  test("a finding on an accepted entry is a false positive only when two runs agree, and each run shows its own", () => {
+  test("a finding any run files on an accepted entry is a false positive, and each run shows its own", () => {
     const { combined, runs } = scoreRegression({
-      locale: "de",
-      set: de,
-      runs: [
-        { name: "1", findings: [finding(de, accepted, "minor")] },
-        { name: "2", findings: [] },
-        { name: "3", findings: [] },
-      ],
-    });
-
-    expect(combined?.falsePositives).toEqual([]);
-    expect(runs.map(({ falsePositives }) => falsePositives.length)).toEqual([1, 0, 0]);
-
-    const agreed = scoreRegression({
       locale: "de",
       set: de,
       runs: [
@@ -222,10 +237,11 @@ describe("scoreRegression", () => {
       ],
     });
 
-    expect(agreed.combined?.falsePositives.map(({ msgid, severity }) => [msgid, severity])).toEqual(
-      [["Persist zoom", "minor"]],
-    );
-    expect(agreed.combined?.accepted).toBe(de.accepted);
+    expect(combined?.falsePositives.map(({ msgid, severity }) => [msgid, severity])).toEqual([
+      ["Persist zoom", "major"],
+    ]);
+    expect(runs.map(({ falsePositives }) => falsePositives.length)).toEqual([1, 1, 0]);
+    expect(combined?.accepted).toBe(de.accepted);
   });
 
   test("leaves the reviewer prompt's own examples out of the second recall", () => {
@@ -275,7 +291,7 @@ describe("scoreRegression", () => {
     expect(combined?.total.caught).toBe(hard.length);
   });
 
-  test("shows what the two-of-three rule dropped, a lone catch and a lone false positive", () => {
+  test("shows how many runs made each catch and filed each false positive", () => {
     const [first, second] = knownBad;
 
     if (!first || !second) {
@@ -300,7 +316,130 @@ describe("scoreRegression", () => {
     });
 
     expect(agreement?.catchesByRuns).toEqual([knownBad.length - 2, 1, 0, 1]);
-    expect(agreement?.droppedCatches.map(({ msgid }) => msgid)).toEqual([second.msgid]);
-    expect(agreement?.droppedFalsePositives.map(({ msgid }) => msgid)).toEqual(["Persist zoom"]);
+    expect(agreement?.falsePositivesByRuns).toEqual([de.accepted - 1, 1, 0, 0]);
+  });
+});
+
+describe("regressionRange", () => {
+  function measurement(findings: MqmFinding[]) {
+    const { combined } = scoreRegression({
+      locale: "de",
+      set: de,
+      runs: [findings, [], []].map((run, index) => ({ name: String(index + 1), findings: run })),
+    });
+
+    if (!combined) {
+      throw new Error("The planted findings score.");
+    }
+
+    return combined;
+  }
+
+  test("reports each measurement and the range between them", () => {
+    const all = catchAll();
+
+    const first = measurement(all);
+
+    const second = measurement([...all.slice(3), finding(de, accepted, "minor")]);
+
+    const range = regressionRange([first, second]);
+
+    expect(range.total).toEqual({
+      min: knownBad.length - 3,
+      max: knownBad.length,
+      of: knownBad.length,
+    });
+    expect(range.falsePositives).toEqual({ min: 0, max: 1, of: de.accepted });
+
+    const table = formatRange("de", [first, second]);
+
+    expect(table).toContain(`| Range |`);
+    expect(table).toContain(`${knownBad.length - 3}–${knownBad.length}/${knownBad.length}`);
+    expect(table).not.toContain("One measurement only");
+  });
+
+  test("labels a lone measurement as single", () => {
+    const only = measurement(catchAll());
+
+    expect(regressionRange([only]).total).toEqual({
+      min: knownBad.length,
+      max: knownBad.length,
+      of: knownBad.length,
+    });
+    expect(formatRange("de", [only])).toContain("One measurement only");
+  });
+});
+
+describe("scoreReview", () => {
+  const review = (entry: Pick<Expectation, "catalog" | "msgctxt" | "msgid">, severity: string) => ({
+    catalog: entry.catalog,
+    msgctxt: entry.msgctxt,
+    msgid: entry.msgid,
+    msgstr: msgstrOf(de, entry),
+    severity,
+    reason: "Planted.",
+    suggestion: "Planted.",
+  });
+
+  const serious = knownBad.filter(({ severity }) => severity !== "minor");
+
+  test("any finding on a known-bad entry catches it, whatever its kind, and one on an accepted entry is a false positive", () => {
+    const { result, errors } = scoreReview(
+      de,
+      [
+        ...serious.map((expectation) => review(expectation, "wrong")),
+        ...knownBad
+          .filter(({ severity }) => severity === "minor")
+          .map((expectation) => review(expectation, "improve")),
+        review(accepted, "improve"),
+      ],
+      [],
+    );
+
+    expect(errors).toEqual([]);
+    expect(result?.reviewer.total).toEqual({ expected: knownBad.length, caught: knownBad.length });
+    expect(result?.reviewer.categoryMatches).toBeUndefined();
+    expect(result?.reviewer.falsePositives.map(({ msgid, kind }) => [msgid, kind])).toEqual([
+      ["Persist zoom", "reviewer improve"],
+    ]);
+    expect(result?.breaches).toEqual({ caught: serious.length, asWrong: serious.length });
+  });
+
+  test("a critical or major entry caught only as improve isn't re-reviewed", () => {
+    const { result } = scoreReview(
+      de,
+      serious.map((expectation) => review(expectation, "improve")),
+      [],
+    );
+
+    expect(result?.breaches).toEqual({ caught: serious.length, asWrong: 0 });
+  });
+
+  test("adds every check.ts finding to the reviewer's, as step 4 sends them to the translator", async () => {
+    const check = checkFlags(checkCatalogs("de", await loadSidecar("de"), checkInput(de)));
+
+    const { result } = scoreReview(de, [], check);
+
+    expect(check.length).toBeGreaterThan(0);
+    expect(result?.reviewer.total.caught).toBe(0);
+    expect(result?.withCheck.total.caught).toBeGreaterThan(0);
+    expect(result?.withCheck.total.caught).toBeLessThan(knownBad.length);
+  });
+
+  test("refuses a finding on an entry the set lacks, or of an unknown kind", () => {
+    const { result, errors } = scoreReview(
+      de,
+      [
+        { ...review(accepted, "improve"), msgid: "Nothing like this" },
+        review(accepted, "doubtful"),
+      ],
+      [],
+    );
+
+    expect(result).toBeUndefined();
+    expect(errors).toEqual([
+      `A finding names app: "Nothing like this", which the set doesn't hold.`,
+      `Item 1 has severity "doubtful"; use wrong, improve.`,
+    ]);
   });
 });
