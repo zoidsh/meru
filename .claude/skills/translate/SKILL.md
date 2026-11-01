@@ -165,8 +165,15 @@ bun .claude/skills/translate/regression.ts run --dir <scratchpad>/regression de 
 
 `prepare` writes the inputs and prints the three reviewer commands instead, and `score` scores findings files already in the directory. It needs the agents, so it never runs in CI. Run it after any change to the reviewer's prompt, its model or effort, or this step, and record its tables in the pull request, set beside the last recorded result. Known reviewer weaknesses the set shows, which a translator or the lead watches for, since the gate can miss them:
 
-- A pronoun that points at the wrong noun inside a long `select` or `plural` message, such as German _sie_ for tabs read as the apps: one run in three catches it, so the agreement rule drops it.
-- A translation that swaps the object for a wider one, such as the user's Google account where the English means the account in Meru, is graded a minor addition, not the major change of object it is.
+- A pronoun or demonstrative that points at the wrong noun inside a long `select` message, such as German _sie_ or Japanese それらのアプリ for the tabs, read as the apps: no run catches it, in either language.
+- A translation that swaps the object for a wider one, such as the user's Google account where the English means the account in Meru, is graded a minor addition by every run, not the major change of object it is.
 - A loss of nuance inside a sentence with a tag, such as Japanese 1行として for "on its own line", is missed by every run.
+
+The recorded result for the reviewer prompt as it stands, three runs per language:
+
+| Agreed | Critical | Major | Minor | Recall |  Hard | False positives |
+| ------ | -------: | ----: | ----: | -----: | ----: | --------------: |
+| de     |      3/3 |   8/8 | 17/18 |  28/29 | 12/13 |            0/36 |
+| ja     |      2/2 |   8/9 | 16/18 |  26/29 |  9/11 |            0/36 |
 
 A new language gets its set when it ships: entries from its shipped catalog, and its own real errors once runs have made some. `scripts/translate-regression.test.ts` holds the sets' shape and the scoring.
