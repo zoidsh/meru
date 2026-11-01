@@ -60,9 +60,9 @@ export type Report = {
 
 const MACOS = "macOS";
 
-function toEntries(catalogPath: string, catalog: Catalog) {
+function toEntries(catalogPath: string, catalog: Catalog, untranslated = false) {
   return Object.entries(catalog).flatMap(([key, entry]: [string, CatalogEntry]): Entry[] =>
-    entry.obsolete || !entry.translation
+    entry.obsolete || (!entry.translation && !untranslated)
       ? []
       : [
           {
@@ -73,7 +73,7 @@ function toEntries(catalogPath: string, catalog: Catalog) {
             msgidText: sourceAccessKey(entry.message ?? key)
               ? withoutAccessKey(entry.message ?? key)
               : (entry.message ?? key),
-            msgstr: entry.translation,
+            msgstr: entry.translation ?? "",
             origins: (entry.origin ?? []).map(([file]) => file),
           },
         ],
@@ -215,13 +215,17 @@ export type Mention = {
   msgstr: string;
   /** The other pins that already hold this entry's wording. */
   pinnedBy: string[];
+  /** Set when the entry has no translation yet, as every entry of a language being added. */
+  untranslated?: true;
 };
 
 /*
  * A pin that overrides an option's word leaves every sentence naming that
  * option on the old word unless a pin of its own holds it, as Spanish's Wide
  * did in three descriptions. Lists each other entry whose English has the
- * pin's msgid as a whole word, beside the pins that already select it.
+ * pin's msgid as a whole word, or matches its msgidPattern, beside the pins
+ * that already select it. Untranslated entries are listed too, since a
+ * language being added has nothing translated when its pins are written.
  */
 export function pinMentions(
   sidecar: Sidecar,
@@ -230,14 +234,14 @@ export function pinMentions(
 ): Mention[] {
   const pin = sidecar.pinned.find(({ id }) => id === pinId);
 
-  if (!pin?.msgid) {
-    throw new Error(`no pin ${pinId} with a msgid in this sidecar`);
+  if (!pin) {
+    throw new Error(`no pin ${pinId} in this sidecar`);
   }
 
-  const word = englishOf({ msgid: pin.msgid });
+  const word = englishOf({ msgid: pin.msgid, msgidPattern: pin.msgidPattern });
 
   return catalogs
-    .flatMap(({ path: catalogPath, catalog }) => toEntries(catalogPath, catalog))
+    .flatMap(({ path: catalogPath, catalog }) => toEntries(catalogPath, catalog, true))
     .filter((entry) => !matchesSelector(entry, pin) && word.test(entry.msgidText))
     .map((entry) => ({
       catalog: entry.catalog,
@@ -247,6 +251,7 @@ export function pinMentions(
       pinnedBy: sidecar.pinned
         .filter((other) => other.id !== pin.id && matchesSelector(entry, other))
         .map(({ id }) => id),
+      ...(entry.msgstr ? {} : { untranslated: true as const }),
     }));
 }
 
@@ -468,7 +473,8 @@ Without --catalog, it reads both of the locale's catalogs from lingui.config.ts.
 Prints the report as JSON on stdout and a summary on stderr. --shipped checks
 every shipped locale but English and prints an array of reports. --mentions
 lists instead, as JSON, every other entry whose English has that pin's msgid
-as a whole word, with its translation and the pins that already select it.
+as a whole word, or matches its msgidPattern, with its translation, or
+"untranslated": true when it has none, and the pins that already select it.
 
 Exit codes: 0 no wrong finding, 1 a wrong finding, or any finding with --strict,
 2 the check could not run.`;
@@ -520,6 +526,12 @@ async function run() {
     console.log(USAGE);
 
     return;
+  }
+
+  if (values.mentions !== undefined && (values.shipped || !values.locale)) {
+    console.error("--mentions takes one --locale, never --shipped.");
+
+    process.exit(2);
   }
 
   if (values.mentions !== undefined && values.locale) {

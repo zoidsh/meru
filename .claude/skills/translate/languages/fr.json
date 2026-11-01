@@ -826,7 +826,7 @@
       "reason": "A bookmark is a favori, as Chrome writes it (Chrome: 163 of 163 messages).",
       "example": {
         "msgid": "No bookmarks yet",
-        "clean": "Aucun favori",
+        "clean": "Aucun favori pour l’instant",
         "fault": "Aucun signet"
       }
     },
@@ -1063,7 +1063,7 @@
       "reason": "System Settings is Apple's Réglages Système, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "Balayez vers la gauche ou la droite avec deux doigts sur un trackpad pour reculer ou avancer. L’option Balayer entre les pages doit aussi être activée dans Réglages Système.",
+        "clean": "Balayez vers la gauche ou la droite avec deux doigts sur un trackpad pour revenir en arrière ou avancer. L’option « Balayer entre les pages » doit aussi être activée dans Réglages Système.",
         "fault": "Activez aussi l’option dans les Réglages."
       }
     },
@@ -1161,7 +1161,7 @@
       "reason": "Out of office is Gmail's own vacation responder, réponse automatique, as Gmail Help names its setting (Réponse automatique activée; support.google.com/mail/answer/25922).",
       "example": {
         "msgid": "Open Gmail settings to turn off out of office",
-        "clean": "Ouvrez les paramètres Gmail pour désactiver la réponse automatique",
+        "clean": "Ouvrir les paramètres de Gmail pour désactiver la réponse automatique",
         "fault": "Ouvrez les paramètres Gmail pour désactiver le message de vacances"
       }
     },
@@ -1443,7 +1443,7 @@
       "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
       "example": {
         "msgid": "Open Meru Portal",
-        "clean": "Meru Portal",
+        "clean": "Ouvrir Meru Portal",
         "fault": "Ouvrir le portail Meru"
       }
     }

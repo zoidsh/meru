@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { CORPUS_DIR, type Pair, readCorpus } from "./corpus";
+import { CORPUS_DIR, type Pair, readCorpus, type Source, SOURCE_NAMES, SOURCES } from "./corpus";
 import { type BannedRule, loadSidecar, type PinnedRule, withoutAccessKey } from "./rules";
 
 /*
@@ -154,6 +154,7 @@ export function countLines(
 }
 
 const USAGE = `Usage: bun .claude/skills/translate/count.ts <tag> [<rule id>…] [--english <regex>] [--expect <regex>] [--case] [--keep-access-keys] [--show] [--check]
+       bun .claude/skills/translate/count.ts <tag> --source <name> --english <regex> --expect <regex> [--case] [--show]
 
 Counts Chrome's messages for each pin or ban of languages/<tag>.json named, or
 every one without ids, in .cache/translate/corpus/chrome.<tag>.jsonl, which
@@ -164,7 +165,9 @@ counts an ad hoc term. --case counts case-sensitively. --keep-access-keys
 reads both sides with their & access keys, as a pin's countKeepAccessKeys
 does, to tell a menu item such as &Edit from a plain Edit. --show lists the
 messages a pin's count matched. --check exits 1 when any count printed
-differs from the one its reason cites.`;
+differs from the one its reason cites. --source counts an ad hoc term in
+another corpus, such as gnome for a Linux platform word; pins and bans cite
+Chrome alone.`;
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -176,6 +179,7 @@ async function main() {
       "keep-access-keys": { type: "boolean" },
       show: { type: "boolean" },
       check: { type: "boolean" },
+      source: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -188,11 +192,27 @@ async function main() {
     process.exit(values.help ? 0 : 2);
   }
 
-  const pairs = await readCorpus(CORPUS_DIR, "chrome", tag);
+  const source = (values.source ?? "chrome") as Source;
+
+  const adHoc = ids.length === 0 && values.english !== undefined && values.expect !== undefined;
+
+  if (!SOURCES.includes(source) || (source !== "chrome" && !adHoc)) {
+    console.error(
+      SOURCES.includes(source)
+        ? "--source other than chrome counts an ad hoc term: give --english and --expect, and no rule id."
+        : `Unknown source ${source}; use ${SOURCES.join(", ")}.`,
+    );
+
+    process.exit(2);
+  }
+
+  const name = SOURCE_NAMES[source];
+
+  const pairs = await readCorpus(CORPUS_DIR, source, tag);
 
   if (pairs.length === 0) {
     console.error(
-      `No Chrome corpus for ${tag}; run bun .claude/skills/translate/corpus.ts --source chrome ${tag}`,
+      `No ${name} corpus for ${tag}; run bun .claude/skills/translate/corpus.ts --source ${source} ${tag}`,
     );
 
     process.exit(2);
@@ -206,18 +226,18 @@ async function main() {
     }
   };
 
-  if (ids.length === 0 && values.english !== undefined && values.expect !== undefined) {
+  if (adHoc) {
     const flags = values.case ? "u" : "iu";
 
     const count = chromeCount(
       pairs,
-      new RegExp(values.english, flags),
-      new RegExp(values.expect, flags),
+      new RegExp(values.english as string, flags),
+      new RegExp(values.expect as string, flags),
       values["keep-access-keys"],
     );
 
     console.log(
-      `${tag} /${values.english}/ → /${values.expect}/: Chrome ${count.n}/${count.total}`,
+      `${tag} /${values.english}/ → /${values.expect}/: ${name} ${count.n}/${count.total}`,
     );
 
     show(count);

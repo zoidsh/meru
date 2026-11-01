@@ -267,6 +267,11 @@ describe("check.ts", () => {
     test("is 2 for --shipped with a locale", () => {
       expect(exitCodeOf("--shipped", "--locale", "de")).toBe(2);
     });
+
+    test("is 2 for --mentions with --shipped or without a locale", () => {
+      expect(exitCodeOf("--shipped", "--mentions", "gmail-label")).toBe(2);
+      expect(exitCodeOf("--mentions", "gmail-label")).toBe(2);
+    });
   });
 
   test("lists the other entries whose English names a pin's word, beside the pins that hold them", async () => {
@@ -297,6 +302,44 @@ describe("check.ts", () => {
     expect(mentions.map(({ msgid, pinnedBy }) => [msgid, pinnedBy])).toEqual([
       ["Switches between narrow and wide.", ["wide-in-sentences"]],
       ["Keeps the sidebar wide.", []],
+    ]);
+  });
+
+  test("lists a msgidPattern pin's mentions by its pattern, untranslated ones marked", async () => {
+    const catalog = await parseCatalog(
+      [
+        'msgid ""',
+        'msgstr ""',
+        '"Language: de\\n"',
+        "",
+        'msgctxt "Gmail label"',
+        'msgid "Label"',
+        'msgstr "Label"',
+        "",
+        'msgid "Color a label"',
+        'msgstr "Ein Label einfärben"',
+        "",
+        'msgid "Remove label"',
+        'msgstr ""',
+        "",
+        'msgid "Labelled"',
+        'msgstr ""',
+        "",
+      ].join("\n"),
+      { locale: "de", sourceLocale: "en", filename: "de.po" },
+    );
+
+    const mentions = pinMentions(
+      await loadSidecar("de"),
+      [{ path: "de.po", catalog }],
+      "gmail-label",
+    );
+
+    expect(
+      mentions.map(({ msgid, msgstr, untranslated }) => [msgid, msgstr, untranslated]),
+    ).toEqual([
+      ["Color a label", "Ein Label einfärben", undefined],
+      ["Remove label", "", true],
     ]);
   });
 });
