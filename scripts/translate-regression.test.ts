@@ -21,7 +21,7 @@ const sets = Object.fromEntries(
 
 function msgstrOf(
   set: RegressionSet,
-  { catalog, msgctxt, msgid }: Omit<Expectation, "categories" | "severity" | "fewShot">,
+  { catalog, msgctxt, msgid }: Pick<Expectation, "catalog" | "msgctxt" | "msgid">,
 ) {
   const entry = Object.values(
     set.catalogs.find(({ name }) => name === catalog)?.catalog ?? {},
@@ -69,10 +69,16 @@ describe("the regression sets", () => {
       );
     });
 
+    test(`${locale} holds about 10 hard entries, which no sidecar rule names`, () => {
+      expect(
+        (sets[locale] as RegressionSet).expectations.filter(({ hard }) => hard).length,
+      ).toBeGreaterThanOrEqual(10);
+    });
+
     test(`${locale}'s dump, which the reviewers read, holds none of the answers`, () => {
       const { text } = dumpCatalogs(locale, (sets[locale] as RegressionSet).catalogs);
 
-      expect(text).not.toMatch(/expect:|planted|few-shot|real:/u);
+      expect(text).not.toMatch(/expect:|planted|few-shot|real:|# hard/u);
     });
   }
 });
@@ -217,5 +223,50 @@ describe("scoreRegression", () => {
 
     expect(combined).toBeUndefined();
     expect(errors).toEqual(["de.mqm.1.json: The findings file must hold a JSON array."]);
+  });
+
+  test("counts the hard entries' recall on its own", () => {
+    const hard = knownBad.filter((expectation) => expectation.hard);
+
+    const { combined } = scoreRegression({
+      locale: "de",
+      set: de,
+      runs: [1, 2, 3].map((run) => ({
+        name: String(run),
+        findings: hard.map((expectation) => finding(de, expectation, expectation.severity)),
+      })),
+    });
+
+    expect(combined?.hard).toEqual({ expected: hard.length, caught: hard.length });
+    expect(combined?.total.caught).toBe(hard.length);
+  });
+
+  test("shows what the two-of-three rule dropped, a lone catch and a lone false positive", () => {
+    const [first, second] = knownBad;
+
+    if (!first || !second) {
+      throw new Error("The de set holds two known-bad entries.");
+    }
+
+    const { agreement } = scoreRegression({
+      locale: "de",
+      set: de,
+      runs: [
+        {
+          name: "1",
+          findings: [
+            finding(de, first, first.severity),
+            finding(de, second, second.severity),
+            finding(de, accepted, "minor"),
+          ],
+        },
+        { name: "2", findings: [finding(de, first, first.severity)] },
+        { name: "3", findings: [finding(de, first, first.severity)] },
+      ],
+    });
+
+    expect(agreement?.catchesByRuns).toEqual([knownBad.length - 2, 1, 0, 1]);
+    expect(agreement?.droppedCatches.map(({ msgid }) => msgid)).toEqual([second.msgid]);
+    expect(agreement?.droppedFalsePositives.map(({ msgid }) => msgid)).toEqual(["Persist zoom"]);
   });
 });

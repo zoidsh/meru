@@ -35,6 +35,8 @@ const CATALOG_PREFIX = "catalog: ";
 
 const FEW_SHOT = "few-shot";
 
+const HARD = "hard";
+
 export const RUNS = 3;
 
 type Category = (typeof CATEGORIES)[number];
@@ -47,6 +49,8 @@ export type Expectation = {
   severity: MqmSeverity;
   /** One of the reviewer prompt's own examples, so catching it says less. */
   fewShot: boolean;
+  /** An error no sidecar rule names, which the reviewer has to read for. */
+  hard: boolean;
 };
 
 export type RegressionSet = {
@@ -123,6 +127,7 @@ export async function loadRegressionSet(
       categories: parsedCategories,
       severity: severity as MqmSeverity,
       fewShot: comments.includes(FEW_SHOT),
+      hard: comments.includes(HARD),
     });
   }
 
@@ -145,6 +150,7 @@ export type RegressionScore = {
   total: Recall;
   /** The same, leaving out the entries the reviewer prompt shows as examples. */
   withoutFewShot: Recall;
+  hard: Recall;
   /** Caught entries whose finding names one of the expected categories. */
   categoryMatches: number;
   missed: Expectation[];
@@ -173,6 +179,8 @@ function measure(
 
   const withoutFewShot = { expected: 0, caught: 0 };
 
+  const hard = { expected: 0, caught: 0 };
+
   const missed: Expectation[] = [];
 
   const underGraded: RegressionScore["underGraded"] = [];
@@ -188,6 +196,7 @@ function measure(
       recall[expectation.severity],
       total,
       ...(expectation.fewShot ? [] : [withoutFewShot]),
+      ...(expectation.hard ? [hard] : []),
     ]) {
       tally.expected++;
 
@@ -210,6 +219,7 @@ function measure(
     recall,
     total,
     withoutFewShot,
+    hard,
     categoryMatches,
     missed,
     underGraded,
@@ -231,7 +241,12 @@ export function scoreRegression({
   locale: string;
   set: RegressionSet;
   runs: { name: string; findings: unknown }[];
-}): { combined?: RegressionScore; runs: RegressionScore[]; errors: string[] } {
+}): {
+  combined?: RegressionScore;
+  runs: RegressionScore[];
+  agreement?: RegressionAgreement;
+  errors: string[];
+} {
   const combined = scoreRuns({ locale, catalogs: set.catalogs, runs });
 
   if (!combined.result) {
@@ -244,16 +259,69 @@ export function scoreRegression({
     return measure(run.name, set, result?.findings ?? [], result?.score ?? 0);
   });
 
+  const agreed = measure(
+    runs.length === 1 ? "1 run" : `${runs.length} runs, agreed`,
+    set,
+    combined.result.findings satisfies AgreedFinding[],
+    combined.result.score,
+  );
+
   return {
-    combined: measure(
-      runs.length === 1 ? "1 run" : `${runs.length} runs, agreed`,
-      set,
-      combined.result.findings satisfies AgreedFinding[],
-      combined.result.score,
-    ),
+    combined: agreed,
     runs: perRun,
+    agreement: agreementOf(set, agreed, perRun),
     errors: [],
   };
+}
+
+export type RegressionAgreement = {
+  /** Index n: the known-bad entries exactly n runs caught at their severity. */
+  catchesByRuns: number[];
+  /** Caught by some run but not by the agreed result: what the two-of-three rule cost. */
+  droppedCatches: Expectation[];
+  /** Filed on an accepted entry by some run but not agreed: what the rule saved. */
+  droppedFalsePositives: MqmFinding[];
+};
+
+/*
+ * Shows the two-of-three rule at work: how many runs caught each known-bad
+ * entry, and what the rule dropped on each side.
+ */
+function agreementOf(
+  set: RegressionSet,
+  agreed: RegressionScore,
+  runs: RegressionScore[],
+): RegressionAgreement {
+  const caughtBy = (score: RegressionScore, expectation: Expectation) =>
+    !score.missed.includes(expectation) &&
+    !score.underGraded.some((graded) => graded.expectation === expectation);
+
+  const catchesByRuns = Array.from({ length: runs.length + 1 }, () => 0);
+
+  const droppedCatches: Expectation[] = [];
+
+  for (const expectation of set.expectations) {
+    const count = runs.filter((run) => caughtBy(run, expectation)).length;
+
+    catchesByRuns[count] = (catchesByRuns[count] ?? 0) + 1;
+
+    if (count > 0 && !caughtBy(agreed, expectation)) {
+      droppedCatches.push(expectation);
+    }
+  }
+
+  const agreedKeys = new Set(agreed.falsePositives.map(keyOf));
+
+  const droppedFalsePositives = [
+    ...new Map(
+      runs
+        .flatMap((run) => run.falsePositives)
+        .filter((finding) => !agreedKeys.has(keyOf(finding)))
+        .map((finding) => [keyOf(finding), finding]),
+    ).values(),
+  ];
+
+  return { catchesByRuns, droppedCatches, droppedFalsePositives };
 }
 
 function ratio({ caught, expected }: Recall) {
@@ -264,6 +332,7 @@ export function formatRegression(
   locale: string,
   combined: RegressionScore,
   runs: RegressionScore[],
+  agreement?: RegressionAgreement,
 ) {
   const rows = [
     [
@@ -273,11 +342,12 @@ export function formatRegression(
       "Minor",
       "Recall",
       "Without few-shot",
+      "Hard",
       "Category matches",
       "False positives",
       "Score",
     ],
-    ["---", "---:", "---:", "---:", "---:", "---:", "---:", "---:", "---:"],
+    ["---", "---:", "---:", "---:", "---:", "---:", "---:", "---:", "---:", "---:"],
     ...[combined, ...(runs.length > 1 ? runs : [])].map((result) => [
       result.name,
       ratio(result.recall.critical),
@@ -285,6 +355,7 @@ export function formatRegression(
       ratio(result.recall.minor),
       `${ratio(result.total)} (${((100 * result.total.caught) / Math.max(result.total.expected, 1)).toFixed(0)}%)`,
       ratio(result.withoutFewShot),
+      ratio(result.hard),
       `${result.categoryMatches}/${result.total.caught}`,
       `${result.falsePositives.length}/${result.accepted}`,
       result.score.toFixed(2),
@@ -293,7 +364,28 @@ export function formatRegression(
 
   const lines = [`## ${locale}`, "", ...rows.map((cells) => `| ${cells.join(" | ")} |`)];
 
+  if (agreement && runs.length > 1) {
+    lines.push(
+      "",
+      `Known-bad entries caught by ${agreement.catchesByRuns.map((count, runCount) => `${runCount} runs: ${count}`).join(", ")}.`,
+    );
+  }
+
   for (const [title, items] of [
+    [
+      "caught by a single run, dropped by the agreement rule",
+      (agreement?.droppedCatches ?? []).map(
+        (expectation) =>
+          `- ${describe(expectation)}: expected ${expectation.categories.join("|")} ${expectation.severity}`,
+      ),
+    ],
+    [
+      "false positives a single run filed, dropped by the agreement rule",
+      (agreement?.droppedFalsePositives ?? []).map(
+        (finding) =>
+          `- ${finding.severity} ${finding.category}: ${describe(finding)} ${JSON.stringify(finding.msgstr)} → ${JSON.stringify(finding.correction)}: ${finding.reason}`,
+      ),
+    ],
     [
       "missed",
       combined.missed.map(
@@ -390,7 +482,7 @@ function reviewerEnv() {
 }
 
 async function score(locale: string, dir: string) {
-  const { combined, runs, errors } = scoreRegression({
+  const { combined, runs, agreement, errors } = scoreRegression({
     locale,
     set: await loadRegressionSet(locale),
     runs: await readRuns(dir, locale),
@@ -400,7 +492,7 @@ async function score(locale: string, dir: string) {
     throw new Error(errors.map((error) => `${locale}: ${error}`).join("\n"));
   }
 
-  console.log(`${formatRegression(locale, combined, runs)}\n`);
+  console.log(`${formatRegression(locale, combined, runs, agreement)}\n`);
 }
 
 const USAGE = `Usage: bun .claude/skills/translate/regression.ts prepare --dir <dir> <tag>…

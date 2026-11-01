@@ -80,10 +80,6 @@ msgstr "Heruntergeladene Dateien werden hier 30 Tage lang angezeigt."
 msgid "Remove {label}?"
 msgstr "{label} entfernen?"
 
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Restrict minimum window size"
-msgstr "Mindestgröße für das Fenster festlegen"
-
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Couldn't uninstall {extensionName}"
 msgstr "{extensionName} konnte nicht deinstalliert werden"
@@ -155,6 +151,30 @@ msgctxt "button"
 msgid "Undo"
 msgstr "Rückgängig machen"
 
+
+#. The upgrade button is Gmail's own Upgrade button, so it follows Gmail's word for it, not Meru Pro's
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide upgrade button"
+msgstr "Button „Upgraden“ ausblenden"
+
+#. Option of the Unread count preference setting. Inbox is Gmail's folder of that name, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Inbox only"
+msgstr "Nur Posteingang"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate after"
+msgstr "Inaktiv machen nach"
+
+#. Dialog button that dismisses the end-of-trial message
+#: packages/app/trial.ts
+msgid "Not now"
+msgstr "Jetzt nicht"
+
+#. Tooltip of the tab every link to a Google Workspace app opens in. tabTitle is the page's title; appName is the app's English name, such as Calendar
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "{tabTitle} — opens {appName} links"
+msgstr "{tabTitle} – öffnet {appName}-Links"
 
 # expect: accuracy/mistranslation major
 # real: the cold second pass of #1246 caught it; an account isn't unread
@@ -257,3 +277,97 @@ msgstr "Button \"Nicht stören\" anzeigen"
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Enter a search query"
 msgstr "Geben Sie eine Suchanfrage ein"
+
+# expect: accuracy/mistranslation|fluency/grammar|accuracy/omission minor
+# real: run 2's pronoun, fixed by its reviewer; sie reads as the apps, not the tabs
+# hard
+#. Dialog asking to confirm switching the Workspace apps Mode setting to New windows, which says more when Workspace app tabs are open, when pinned apps load on launch, or both
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "{workspaceAppsInUse, select, both {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart. Pinned apps set to load on launch open as windows the next time you start Meru.} openTabs {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart.} loadOnLaunch {Workspace apps open in their own window from now on. Pinned apps set to load on launch open as windows the next time you start Meru.} other {Workspace apps open in their own window from now on.}}"
+msgstr "{workspaceAppsInUse, select, both {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Bereits geöffnete Tabs bleiben, wie sie sind, und die Tableiste wird ausgeblendet, sobald du sie schließt, oder nach einem Neustart. Angepinnte Apps, die beim Start geladen werden, öffnen sich beim nächsten Start von Meru als Fenster.} openTabs {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Bereits geöffnete Tabs bleiben, wie sie sind, und die Tableiste wird ausgeblendet, sobald du sie schließt, oder nach einem Neustart.} loadOnLaunch {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster. Angepinnte Apps, die beim Start geladen werden, öffnen sich beim nächsten Start von Meru als Fenster.} other {Workspace-Apps öffnen sich ab jetzt in einem eigenen Fenster.}}"
+
+# expect: accuracy/mistranslation|accuracy/omission|fluency/unidiomatic minor
+# real: run 1's label; it limits the minimum size, and loses the window
+# hard
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Restrict minimum window size"
+msgstr "Mindestgröße begrenzen"
+
+# expect: terminology|accuracy/mistranslation|fluency/unidiomatic minor
+# real: run 2's calque, which a download history pin forced; settled as Letzte Downloads, now a pin
+# hard
+#: packages/renderer/recent-download-history.tsx
+msgid "Recent download history"
+msgstr "Aktueller Downloadverlauf"
+
+# expect: accuracy/mistranslation major
+# planted: near miss, current for default
+# hard
+#: packages/renderer/routes/settings/general.tsx
+msgid "Meru is set as the default mail client."
+msgstr "Meru ist als aktuelle E-Mail-App festgelegt."
+
+# expect: accuracy/mistranslation major
+# planted: near miss, delete for remove; it reads as deleting the Google account
+# hard
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove account"
+msgstr "Konto löschen"
+
+# expect: accuracy/mistranslation|accuracy/addition major
+# planted: scope widened from the compose window to every window
+# hard
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Close compose window after send"
+msgstr "Alle Fenster nach dem Senden schließen"
+
+# expect: accuracy/addition|accuracy/mistranslation minor
+# planted: scope narrowed to PDF files
+# hard
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Where downloaded files are saved."
+msgstr "Wo heruntergeladene PDF-Dateien gespeichert werden."
+
+# expect: fluency/unidiomatic|accuracy/mistranslation minor
+# planted: a calque of done for the button's Fertig
+# hard
+#. Button that closes the dialog of an extension's sites
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Done"
+msgstr "Getan"
+
+# expect: style minor
+# planted: register, Sie and Ihr in a sentence
+# hard
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro before your trial ends to keep using all features."
+msgstr "Mit einem Upgrade auf Meru Pro vor Ende Ihres Testzeitraums können Sie weiterhin alle Funktionen nutzen."
+
+# expect: accuracy/mistranslation|accuracy/omission major
+# planted: the negation dropped, which inverts the option
+# hard
+#. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
+#: packages/shared/workspace-apps.ts
+msgid "Unpinned tabs"
+msgstr "Angepinnte Tabs"
+
+# expect: fluency/grammar minor
+# planted: the plural branches swapped, # Tage for one and # Tag for other
+# hard
+#: packages/renderer/routes/settings/license.tsx
+msgid "{trialDaysLeft, plural, one {You're using a Meru Pro trial with # day left.} other {You're using a Meru Pro trial with # days left.}}"
+msgstr "{trialDaysLeft, plural, one {Du nutzt den Testzeitraum von Meru Pro. Er läuft noch # Tage.} other {Du nutzt den Testzeitraum von Meru Pro. Er läuft noch # Tag.}}"
+
+# expect: fluency/spelling minor
+# planted: a typo
+# hard
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Downlaodverlauf"
+
+# expect: style minor
+# planted: a switch label as an imperative sentence, against the style sheet's label form
+# hard
+#: packages/renderer/routes/settings/license.tsx
+msgid "Show license key"
+msgstr "Zeige den Lizenzschlüssel an"

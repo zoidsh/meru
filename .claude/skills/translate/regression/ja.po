@@ -80,10 +80,6 @@ msgstr "ダウンロードしたファイルは30日間ここに表示されま�
 msgid "Remove {label}?"
 msgstr "{label}を削除しますか?"
 
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Restrict minimum window size"
-msgstr "ウィンドウの最小サイズを制限"
-
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Couldn't uninstall {extensionName}"
 msgstr "{extensionName}をアンインストールできませんでした"
@@ -155,6 +151,29 @@ msgctxt "button"
 msgid "Undo"
 msgstr "取り消し"
 
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Restrict minimum window size"
+msgstr "ウィンドウの最小サイズを制限"
+
+#. The upgrade button is Gmail's own Upgrade button, so it follows Gmail's word for it, not Meru Pro's
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide upgrade button"
+msgstr "アップグレードボタンを非表示"
+
+#. Option of the Unread count preference setting. Inbox is Gmail's folder of that name, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Inbox only"
+msgstr "受信トレイのみ"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate after"
+msgstr "非アクティブにするまでの時間"
+
+#. Dialog button that dismisses the end-of-trial message
+#: packages/app/trial.ts
+msgid "Not now"
+msgstr "今はしない"
 
 # expect: accuracy/mistranslation major
 # real: run 2's 未読アカウント, fixed in #1246 and the planted proof of #1247
@@ -281,3 +300,83 @@ msgstr "「おやすみモード」ボタンを表示"
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Enter a search query"
 msgstr "あなたの検索条件を入力してください"
+
+# expect: accuracy/mistranslation minor
+# after run 2's German pronoun: them pointed at the apps instead of the tabs
+# hard
+#. Dialog asking to confirm switching the Workspace apps Mode setting to New windows, which says more when Workspace app tabs are open, when pinned apps load on launch, or both
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "{workspaceAppsInUse, select, both {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart. Pinned apps set to load on launch open as windows the next time you start Meru.} openTabs {Workspace apps open in their own window from now on. The tabs you already have open stay as they are, and the tab strip hides after you close them, or after a restart.} loadOnLaunch {Workspace apps open in their own window from now on. Pinned apps set to load on launch open as windows the next time you start Meru.} other {Workspace apps open in their own window from now on.}}"
+msgstr "{workspaceAppsInUse, select, both {今後、Workspaceアプリは専用のウィンドウで開きます。すでに開いているタブはそのまま残り、タブバーはそれらのアプリを閉じた後か、再起動後に非表示になります。起動時に読み込むよう設定された固定アプリは、次回Meruを起動したときにウィンドウで開きます。} openTabs {今後、Workspaceアプリは専用のウィンドウで開きます。すでに開いているタブはそのまま残り、タブバーはそれらのアプリを閉じた後か、再起動後に非表示になります。} loadOnLaunch {今後、Workspaceアプリは専用のウィンドウで開きます。起動時に読み込むよう設定された固定アプリは、次回Meruを起動したときにウィンドウで開きます。} other {今後、Workspaceアプリは専用のウィンドウで開きます。}}"
+
+# expect: accuracy/mistranslation|accuracy/addition major
+# planted: near miss; removing the account from Meru reads as deleting the Google account
+# hard
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove account"
+msgstr "Googleアカウントを削除"
+
+# expect: accuracy/mistranslation|accuracy/addition major
+# planted: scope widened from the compose window to every window
+# hard
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Close compose window after send"
+msgstr "送信後にすべてのウィンドウを閉じる"
+
+# expect: accuracy/addition|accuracy/mistranslation minor
+# planted: scope narrowed to PDF files
+# hard
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Where downloaded files are saved."
+msgstr "ダウンロードしたPDFファイルの保存先です。"
+
+# expect: fluency/unidiomatic|terminology|accuracy/mistranslation minor
+# planted: a calque, history as 歴史 for the log Chrome calls 履歴
+# hard
+#: packages/renderer/recent-download-history.tsx
+msgid "Recent download history"
+msgstr "最近のダウンロードの歴史"
+
+# expect: style minor
+# planted: register, the plain form where the style sheet's sentences take です and ます
+# hard
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro before your trial ends to keep using all features."
+msgstr "すべての機能を引き続き使用するには、試用期間が終了する前にMeru Proにアップグレードする必要がある。"
+
+# expect: accuracy/mistranslation|accuracy/omission major
+# planted: the negation dropped, so the button says the opposite
+# hard
+#: packages/app/dialogs.ts
+#: packages/app/workspace-app.ts
+msgid "Don't show again"
+msgstr "今後も表示する"
+
+# expect: accuracy/mistranslation major
+# planted: the select branches swapped, a window item that opens a tab
+# hard
+#. Tab context menu item; appLabel is the name of a Google Workspace app, such as Docs or Sheets
+#: packages/app/ipc.ts
+msgid "{target, select, window {New {appLabel} Window} other {New {appLabel} Tab}}"
+msgstr "{target, select, window {新しい{appLabel}タブ} other {新しい{appLabel}ウィンドウ}}"
+
+# expect: fluency/spelling minor
+# planted: a typo, 暦 for 歴
+# hard
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "ダウンロード履暦"
+
+# expect: style minor
+# planted: a switch label as a sentence, against the style sheet's label form
+# hard
+#: packages/renderer/routes/settings/license.tsx
+msgid "Show license key"
+msgstr "ライセンスキーを表示します"
+
+# expect: accuracy/mistranslation|terminology major
+# planted: near miss, current for default; the default-app pin covers 既定
+# hard
+#: packages/renderer/routes/settings/general.tsx
+msgid "Meru is set as the default mail client."
+msgstr "Meruが現在のメールクライアントに設定されています。"
