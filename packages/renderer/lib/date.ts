@@ -1,4 +1,4 @@
-import { type CatalogTag, getDayjsLocale } from "@meru/shared/i18n";
+import { getDayjsLocale, type LocaleTag } from "@meru/shared/i18n";
 import dayjsPrimitive from "dayjs";
 // One side-effect import per shipped catalog, because dayjs registers a locale
 // by loading its module and a bundle has nothing to fetch one from at runtime.
@@ -19,7 +19,7 @@ dayjsPrimitive.extend(isToday);
 
 export const dayjs = dayjsPrimitive;
 
-export function setDayjsLocale(tag: CatalogTag) {
+export function setDayjsLocale(tag: LocaleTag) {
   dayjsPrimitive.locale(getDayjsLocale(tag));
 }
 

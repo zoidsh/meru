@@ -249,13 +249,37 @@ async function buildSwipeNavigationAddon() {
   }
 }
 
+/*
+ * Inlined into every bundle, the renderer's included, in development runs too,
+ * so the pseudo-locale's catalogs are carried by every development build and by
+ * a production build only when `MERU_PSEUDO_LOCALE_CATALOG` is set, which the
+ * end-to-end suite's build sets. A shipped build reads it as empty and drops
+ * the catalogs with the code that reads them.
+ */
+const pseudoLocaleCatalogDefine = {
+  "process.env.MERU_PSEUDO_LOCALE_CATALOG": JSON.stringify(
+    args.values.dev || process.env.MERU_PSEUDO_LOCALE_CATALOG ? "1" : "",
+  ),
+};
+
+/*
+ * Lingui compiles a catalog to a top-level `JSON.parse`, which a bundler cannot
+ * know is pure, so a catalog nothing reads would otherwise still be parsed and
+ * shipped.
+ */
+const treeshake = {
+  moduleSideEffects: [{ test: /[\\/]locales[\\/][\w-]+\.ts$/, sideEffects: false }],
+};
+
 function buildAppFiles() {
   const rolldownOptions = defineRolldownConfig({
     external: ["electron"],
     plugins: [linguiMacro()],
+    treeshake,
     transform: {
       define: !args.values.dev
         ? {
+            ...pseudoLocaleCatalogDefine,
             "process.env.NODE_ENV": JSON.stringify("production"),
             /*
              * Defined whether or not it is set, unlike the team id below. A
@@ -280,7 +304,7 @@ function buildAppFiles() {
                 }
               : {}),
           }
-        : undefined,
+        : pseudoLocaleCatalogDefine,
     },
   });
 
@@ -459,6 +483,7 @@ async function buildRenderer(rendererName: string, port: number) {
     root: rendererRoot,
     base: "./",
     plugins: [viteReact(), viteTailwindcss(), ...viteLingui({ macroTransform: true })],
+    define: pseudoLocaleCatalogDefine,
     resolve: {
       tsconfigPaths: true,
     },
@@ -471,6 +496,7 @@ async function buildRenderer(rendererName: string, port: number) {
       target: browserTarget,
       rollupOptions: {
         input: pageFileNames.map((pageFileName) => path.join(rendererRoot, pageFileName)),
+        treeshake,
       },
     },
     clearScreen: false,
