@@ -903,10 +903,22 @@
         "ambrato": "ambrat",
         "giallo": "giall",
         "arancione": "arancio"
+      },
+      "es": {
+        "ámbar": "ámbar",
+        "amarillo": "amarill",
+        "naranja": "naranja"
+      },
+      "es-419": {
+        "ámbar": "ámbar",
+        "amarillo": "amarill",
+        "naranja": "naranja"
       }
     },
     "exclude": {
-      "it": ["giallo", "arancione"]
+      "it": ["giallo", "arancione"],
+      "es": ["amarillo", "naranja"],
+      "es-419": ["amarillo", "naranja"]
     }
   },
   {
@@ -916,10 +928,20 @@
       "it": {
         "smeraldo": "smerald",
         "verde": "verd"
+      },
+      "es": {
+        "esmeralda": "esmerald",
+        "verde": "verde"
+      },
+      "es-419": {
+        "esmeralda": "esmerald",
+        "verde": "verde"
       }
     },
     "exclude": {
-      "it": ["verde"]
+      "it": ["verde"],
+      "es": ["verde"],
+      "es-419": ["verde"]
     }
   },
   {
@@ -930,10 +952,24 @@
         "indaco": "indaco",
         "blu": "\\bblu\\b",
         "viola": "viola"
+      },
+      "es": {
+        "índigo": "[íi]ndigo",
+        "añil": "añil",
+        "azul": "\\bazul",
+        "violeta": "violeta"
+      },
+      "es-419": {
+        "índigo": "[íi]ndigo",
+        "añil": "añil",
+        "azul": "\\bazul",
+        "violeta": "violeta"
       }
     },
     "exclude": {
-      "it": ["blu", "viola"]
+      "it": ["blu", "viola"],
+      "es": ["azul", "violeta"],
+      "es-419": ["azul", "violeta"]
     }
   },
   {
@@ -947,10 +983,26 @@
         "cielo": "cielo",
         "blu": "\\bblu\\b",
         "ciano": "ciano"
+      },
+      "es": {
+        "celeste": "celeste",
+        "azul cielo": "azul cielo",
+        "cielo": "cielo",
+        "azul": "\\bazul",
+        "cian": "\\bcian"
+      },
+      "es-419": {
+        "celeste": "celeste",
+        "azul cielo": "azul cielo",
+        "cielo": "cielo",
+        "azul": "\\bazul",
+        "cian": "\\bcian"
       }
     },
     "exclude": {
-      "it": ["blu", "ciano"]
+      "it": ["blu", "ciano"],
+      "es": ["azul", "cian"],
+      "es-419": ["azul", "cian"]
     }
   },
   {
@@ -968,10 +1020,70 @@
         "ciano": "ciano",
         "verde": "verd",
         "blu": "\\bblu\\b"
+      },
+      "es": {
+        "verde azulado": "verde azulad",
+        "azul verdoso": "azul verdos",
+        "turquesa": "turquesa",
+        "cerceta": "cerceta",
+        "verde petróleo": "verde petr[oó]leo",
+        "verde": "verde",
+        "azul": "\\bazul",
+        "cian": "\\bcian"
+      },
+      "es-419": {
+        "verde azulado": "verde azulad",
+        "azul verdoso": "azul verdos",
+        "turquesa": "turquesa",
+        "cerceta": "cerceta",
+        "verde petróleo": "verde petr[oó]leo",
+        "verde": "verde",
+        "azul": "\\bazul",
+        "cian": "\\bcian"
       }
     },
     "exclude": {
-      "it": ["ciano", "verde", "blu"]
+      "it": ["ciano", "verde", "blu"],
+      "es": ["verde", "azul", "cian"],
+      "es-419": ["verde", "azul", "cian"]
+    }
+  },
+  {
+    "concept": "wide (a UI element's size)",
+    "english": "^wide$|\\bwide view\\b",
+    "candidates": {
+      "es": {
+        "ancho": "\\banch[oa]s?\\b",
+        "amplio": "\\bampli[oa]s?\\b",
+        "panorámico": "\\bpanorámic[oa]s?\\b"
+      },
+      "es-419": {
+        "ancho": "\\banch[oa]s?\\b",
+        "amplio": "\\bampli[oa]s?\\b",
+        "panorámico": "\\bpanorámic[oa]s?\\b"
+      }
+    },
+    "exclude": {
+      "es": ["ancho"],
+      "es-419": ["ancho"]
+    }
+  },
+  {
+    "concept": "badge (a marker, not a count)",
+    "english": "\\bbadges?\\b",
+    "englishNot": "\\b(work|security|employee|achievement|gift|recommended)\\b|ID badge|\\b(unread|counts?|numbers?|notifications?)\\b",
+    "candidates": {
+      "es-419": {
+        "indicador": "indicador",
+        "insignia": "insignia",
+        "distintivo": "distintivo",
+        "contador": "contador",
+        "badge": "badge",
+        "gafete": "gafete"
+      }
+    },
+    "exclude": {
+      "es-419": ["contador"]
     }
   }
 ]

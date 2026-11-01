@@ -136,3 +136,9 @@ msgstr "Buscar…"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minutos"
+
+msgid "Select the application theme."
+msgstr "Selecciona el tema de la app."
+
+msgid "Choose Meru in the Applications folder."
+msgstr "Elige Meru en la carpeta Aplicaciones."

@@ -1,0 +1,29 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-01 18:47+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: es-419\n"
+
+#. Accessible name of the close button on a brief notification Meru shows over Gmail
+#: packages/preload-gmail/ipc.ts
+msgid "Close toast"
+msgstr "Cerrar mensaje emergente"
+
+#. Toast in the Gmail view once a message has been sent
+#: packages/preload-gmail/ipc.ts
+msgid "Message sent"
+msgstr "Se envió el mensaje"
+
+#. Accessible name of the region Meru's own toasts appear in
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Mensajes emergentes"
+
+#. Button in the message-sent toast, which recalls the message
+#: packages/preload-gmail/ipc.ts
+msgctxt "button"
+msgid "Undo"
+msgstr "Deshacer"

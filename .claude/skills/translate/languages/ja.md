@@ -36,7 +36,7 @@ An `&` in the English marks the access key on Windows and Linux. The key is the 
 
 ## Terms that stay English
 
-Gmail, Google Workspace, Meru, Meru Pro and Pro, in Latin letters, never katakana.
+Gmail, Google Workspace, Meru, Meru Pro, Meru Portal and Pro, in Latin letters, never katakana.
 
 ## Traps
 

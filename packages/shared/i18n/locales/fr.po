@@ -2140,7 +2140,7 @@ msgstr "Ouvrir les liens ici"
 
 #: packages/app/license-key.ts
 msgid "Open Meru Portal"
-msgstr "Ouvrir le portail Meru"
+msgstr "Ouvrir Meru Portal"
 
 #. A pop-out is Gmail's own name for a reply in its own window, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx
@@ -3279,7 +3279,7 @@ msgstr "Cette clé de licence a expiré. Utilisez une autre clé de licence ou c
 
 #: packages/app/license-key.ts
 msgid "This license key is activated on the maximum number of devices. Remove one in the Meru Portal, or contact support."
-msgstr "Cette clé de licence est activée sur le nombre maximal d’appareils. Supprimez-en un dans le portail Meru ou contactez l’assistance."
+msgstr "Cette clé de licence est activée sur le nombre maximal d’appareils. Supprimez-en un sur Meru Portal ou contactez l’assistance."
 
 #: packages/app/license-key.ts
 msgid "This license key is invalid. Contact support if you need help."
