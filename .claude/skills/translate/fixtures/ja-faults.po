@@ -420,3 +420,8 @@ msgstr "強制再読み込み"
 #: packages/renderer/components/vertical-tabs.tsx
 msgid "{tabTitle} — opens {appName} links"
 msgstr "{tabTitle}—{appName}のリンクを開きます"
+
+# fault: pinned:yellow
+#: packages/shared/accounts.ts
+msgid "Yellow"
+msgstr "黄色"

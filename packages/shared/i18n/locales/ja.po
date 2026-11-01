@@ -3643,7 +3643,7 @@ msgstr "Workspaceアプリ"
 #. A color an account can be marked with, in the account form's Color picker
 #: packages/shared/accounts.ts
 msgid "Yellow"
-msgstr "黄色"
+msgstr "黄"
 
 #. Accessible description of the unread badge on Meru's taskbar button on Windows
 #: packages/app/ipc.ts

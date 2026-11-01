@@ -787,7 +787,7 @@
       "id": "em-dash",
       "pattern": "\\S—|—\\S",
       "severity": "wrong",
-      "reason": "An em dash has a space on each side, as Apple's Japanese strings write it: %@ — インスペクタ (75 of 89 translations with an em dash)."
+      "reason": "An em dash has a space on each side, as Apple's Japanese strings write it: %@ — インスペクタ (30 of the 31 distinct strings in this Mac's Japanese .loctables with an em dash between text)."
     }
   ],
   "pinned": [
@@ -1072,6 +1072,13 @@
       "expect": "^ハード再読み込み$",
       "severity": "wrong",
       "reason": "Hard Reload is ハード再読み込み, as Chrome writes it (Chrome: 2 of 2 messages)."
+    },
+    {
+      "id": "yellow",
+      "msgid": "Yellow",
+      "expect": "^黄$",
+      "severity": "wrong",
+      "reason": "Yellow is 黄, as Chrome writes it, the tab-group colour included, beside the other bare-kanji colours (Chrome: 2 of 2 messages)."
     }
   ],
   "accessKeys": {
