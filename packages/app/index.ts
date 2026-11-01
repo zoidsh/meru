@@ -139,7 +139,7 @@ async function init() {
 
   await app.whenReady();
 
-  appI18n.init();
+  await appI18n.init();
 
   licenseKey.init();
 

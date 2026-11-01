@@ -10,7 +10,6 @@ import {
   createGmailDelegatedAccountUrl,
   GMAIL_DELEGATED_ACCOUNT_URL_REGEXP,
   GMAIL_PRELOAD_ARGUMENTS,
-  GMAIL_PRELOAD_LOCALE_ARGUMENT,
   type GmailAction,
   type GmailInboxMessage,
   diffInboxFeed,
@@ -278,7 +277,7 @@ export class Gmail {
     delegatedAccountId: string | null;
     extensionsLoaded?: Promise<void>;
   }) {
-    const additionalArguments = [`${GMAIL_PRELOAD_LOCALE_ARGUMENT}=${appI18n.locale}`];
+    const additionalArguments = [...appI18n.gmailPreloadArguments];
 
     if (config.get("gmail.hideGmailLogo")) {
       additionalArguments.push(GMAIL_PRELOAD_ARGUMENTS.hideGmailLogo);

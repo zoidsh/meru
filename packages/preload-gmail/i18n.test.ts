@@ -1,25 +1,36 @@
-import { describe, expect, test } from "bun:test";
-import { SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n/tags";
-import { catalogs, getPreloadLocale } from "./i18n";
+import { describe, expect, spyOn, test } from "bun:test";
+import { getPreloadCatalog } from "./i18n";
+import { messages as en } from "./locales/en";
 
-describe("catalogs", () => {
-  test("has a catalog for every shipped tag", () => {
-    for (const tag of SHIPPED_CATALOG_TAGS) {
-      expect(catalogs[tag]).toBeDefined();
-    }
+describe("getPreloadCatalog", () => {
+  test("takes the catalog main passed in the argument", () => {
+    const catalog = { locale: "de", messages: { a1b2c3: ["Nachricht gesendet"] } };
+
+    expect(
+      getPreloadCatalog([
+        "electron",
+        `--meru-locale=${encodeURIComponent(JSON.stringify(catalog))}`,
+      ]),
+    ).toEqual(catalog);
   });
-});
 
-describe("getPreloadLocale", () => {
-  test("takes a shipped tag from the argument", () => {
-    expect(getPreloadLocale(["electron", "--meru-locale=de"], ["en", "de"])).toBe("de");
-  });
+  test("falls back to English for an argument that doesn't parse", () => {
+    const consoleError = spyOn(console, "error").mockImplementation(() => {});
 
-  test("falls back to English for a tag this build doesn't ship", () => {
-    expect(getPreloadLocale(["electron", "--meru-locale=de"], ["en"])).toBe("en");
+    expect(getPreloadCatalog(["electron", "--meru-locale=%7Bnot-json"])).toEqual({
+      locale: "en",
+      messages: en,
+    });
+
+    expect(consoleError).toHaveBeenCalledTimes(1);
+
+    consoleError.mockRestore();
   });
 
   test("falls back to English without the argument", () => {
-    expect(getPreloadLocale(["electron", "--meru-hide-gmail-logo"], ["en", "de"])).toBe("en");
+    expect(getPreloadCatalog(["electron", "--meru-hide-gmail-logo"])).toEqual({
+      locale: "en",
+      messages: en,
+    });
   });
 });

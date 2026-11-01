@@ -1,48 +1,39 @@
 import { i18n, type Messages } from "@lingui/core";
 import { GMAIL_PRELOAD_LOCALE_ARGUMENT } from "@meru/shared/gmail";
-import { type LocaleTag, PSEUDO_LOCALE, SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n/tags";
-import { messages as de } from "./locales/de";
 import { messages as en } from "./locales/en";
-import { messages as pseudo } from "./locales/en-XA";
-import { messages as fr } from "./locales/fr";
-import { messages as ja } from "./locales/ja";
-
-/*
- * Imports the tags alone, never `@meru/shared/i18n`, whose runtime brings the
- * whole app's catalogs into every Gmail view.
- */
-export const catalogs: { en: Messages } & Partial<Record<LocaleTag, Messages>> = {
-  en,
-  de,
-  fr,
-  ja,
-  // The build inlines the variable, so a shipped bundle drops the pseudo-locale
-  // with this branch.
-  ...(process.env.MERU_PSEUDO_LOCALE_CATALOG ? { [PSEUDO_LOCALE]: pseudo } : {}),
-};
 
 const LOCALE_ARGUMENT_PREFIX = `${GMAIL_PRELOAD_LOCALE_ARGUMENT}=`;
 
-/** The tag main resolved for the app, or English for one this build doesn't ship. */
-export function getPreloadLocale(
-  argv: readonly string[],
-  shippedTags: readonly LocaleTag[],
-): LocaleTag {
+export type PreloadCatalog = { locale: string; messages: Messages };
+
+/**
+ * The catalog main passed in the argument, or English without one or for one
+ * that doesn't parse.
+ *
+ * The preload is sandboxed and bundled into one file, so it has no chunk to
+ * load a catalog from at runtime. Main loads this view's catalog for the
+ * language it resolved and passes it along instead, which leaves English as the
+ * only catalog in the bundle.
+ */
+export function getPreloadCatalog(argv: readonly string[]): PreloadCatalog {
   const value = argv
     .find((argument) => argument.startsWith(LOCALE_ARGUMENT_PREFIX))
     ?.slice(LOCALE_ARGUMENT_PREFIX.length);
 
-  return shippedTags.find((tag) => tag === value) ?? "en";
+  if (value) {
+    // A throw here would take every Gmail feature down with the preload.
+    try {
+      return JSON.parse(decodeURIComponent(value)) as PreloadCatalog;
+    } catch (error) {
+      console.error("Failed to read the Gmail catalog; falling back to English", error);
+    }
+  }
+
+  return { locale: "en", messages: en };
 }
 
 /*
  * Main resolves the language once at startup, before the first Gmail view, so
  * activating on load is all a view ever needs.
  */
-const locale = getPreloadLocale(process.argv, [...SHIPPED_CATALOG_TAGS, PSEUDO_LOCALE]);
-
-const messages = catalogs[locale];
-
-// English whole for a tag without a catalog here, since another locale's
-// plural rules over English messages would pick the wrong forms.
-i18n.loadAndActivate(messages ? { locale, messages } : { locale: "en", messages: catalogs.en });
+i18n.loadAndActivate(getPreloadCatalog(process.argv));
