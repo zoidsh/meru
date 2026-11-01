@@ -35,7 +35,7 @@ The page and text-field context menu, by that policy, on Windows: `&Learn Spelli
 
 ## Terms that stay English
 
-Gmail, Google Workspace, Meru, Meru Pro and Pro. A compound joins with a hyphen: _Gmail-instellingen_, _Workspace-app_.
+Gmail, Google Workspace, Meru, Meru Pro, Meru Portal and Pro. A compound joins with a hyphen: _Gmail-instellingen_, _Workspace-app_.
 
 ## Traps
 

@@ -35,7 +35,7 @@ The page and text-field context menu, by that policy, on Windows: `&Learn Spelli
 
 ## Terms that stay English
 
-Gmail, Google Workspace, Meru, Meru Pro and Pro. They decline only where Polish would decline a foreign name in running text (_w Gmailu_); in a label, keep the bare name.
+Gmail, Google Workspace, Meru, Meru Pro, Meru Portal and Pro. They decline only where Polish would decline a foreign name in running text (_w Gmailu_); in a label, keep the bare name.
 
 ## Traps
 

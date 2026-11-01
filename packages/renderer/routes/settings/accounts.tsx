@@ -468,21 +468,23 @@ function SortableAccountItem({
       >
         <GripVerticalIcon />
       </Button>
-      <ItemContent className={cn("gap-2", account.disabled && "opacity-60")}>
-        <ItemTitle>
+      {/* Shrinkable, so long badges wrap inside the content rather than push the actions under the handle. */}
+      <ItemContent className={cn("min-w-0 gap-2", account.disabled && "opacity-60")}>
+        <ItemTitle className="min-w-0">
           <div
             className={cn(
-              "size-2 rounded-full",
+              "size-2 shrink-0 rounded-full",
               account.color ? `${accountColorsMap[account.color].className}` : "border",
             )}
           />
-          {label}
+          {/* A label such as an address has nowhere to break, and would otherwise run under the actions. */}
+          <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
         </ItemTitle>
         {(account.disabled ||
           account.gmail.unreadBadge ||
           account.gmail.unifiedInbox ||
           account.notifications) && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {account.disabled && <Badge variant="outline">{t(accountOptionLabels.disabled)}</Badge>}
             {account.gmail.unreadBadge && <Badge variant="outline">{t(unreadBadgeRowLabel)}</Badge>}
             {account.gmail.unifiedInbox && (

@@ -35,7 +35,7 @@ The page and text-field context menu, by that policy, on Windows: `&Learn Spelli
 
 ## Terms that stay English
 
-Gmail, Google Workspace, Meru, Meru Pro and Pro. They take French articles outside the word: _le compte Gmail_, _passer à Meru Pro_.
+Gmail, Google Workspace, Meru, Meru Pro, Meru Portal and Pro. They take French articles outside the word: _le compte Gmail_, _passer à Meru Pro_.
 
 ## Traps
 

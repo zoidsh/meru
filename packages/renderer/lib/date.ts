@@ -6,6 +6,8 @@ import dayjsPrimitive from "dayjs";
 // rest follow.
 import "dayjs/locale/de";
 import "dayjs/locale/en";
+import "dayjs/locale/es";
+import "dayjs/locale/es-mx";
 import "dayjs/locale/fr";
 import "dayjs/locale/it";
 import "dayjs/locale/ja";

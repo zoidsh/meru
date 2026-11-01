@@ -8,7 +8,9 @@ import { type BannedRule, loadSidecar, type PinnedRule, withoutAccessKey } from 
  * pin's `countEnglish`, its `msgidPattern` or its `msgid` as a whole word, and
  * n those of them whose translation matches the pin's `countExpect` or its
  * `expect` without its anchors. Both sides are read without their access keys,
- * since `&` can split a word, ignoring case unless told otherwise, and with
+ * since `&` can split a word, unless the pin or the caller keeps them to tell a
+ * menu item such as `&Edit` from a plain Edit, ignoring case unless told
+ * otherwise, and with
  * Chrome's straight apostrophe as the curly one the style sheets write. A
  * ban's count is the messages whose translation has the banned form, as Chrome
  * writes it.
@@ -38,15 +40,21 @@ export function englishOf(
 
 const straightApostrophes = (text: string) => text.replaceAll("’", "'");
 
-export function chromeCount(pairs: Pair[], english: RegExp, expect: RegExp): Count {
-  const matched = pairs.filter(([source]) => english.test(withoutAccessKey(source)));
+export function chromeCount(
+  pairs: Pair[],
+  english: RegExp,
+  expect: RegExp,
+  keepAccessKeys = false,
+): Count {
+  const read = keepAccessKeys ? (text: string) => text : withoutAccessKey;
+
+  const matched = pairs.filter(([source]) => english.test(read(source)));
 
   const translated = new RegExp(straightApostrophes(expect.source), expect.flags);
 
   return {
-    n: matched.filter(([, translation]) =>
-      translated.test(straightApostrophes(withoutAccessKey(translation))),
-    ).length,
+    n: matched.filter(([, translation]) => translated.test(straightApostrophes(read(translation))))
+      .length,
     total: matched.length,
     matched,
   };
@@ -55,7 +63,7 @@ export function chromeCount(pairs: Pair[], english: RegExp, expect: RegExp): Cou
 export function pinCount(
   rule: PinnedRule,
   pairs: Pair[],
-  override: { english?: string; caseSensitive?: boolean } = {},
+  override: { english?: string; caseSensitive?: boolean; keepAccessKeys?: boolean } = {},
 ) {
   const flags = override.caseSensitive ? "u" : "iu";
 
@@ -63,6 +71,7 @@ export function pinCount(
     pairs,
     override.english === undefined ? englishOf(rule, flags) : new RegExp(override.english, flags),
     new RegExp(rule.countExpect ?? withoutAnchors(rule.expect), flags),
+    override.keepAccessKeys ?? rule.countKeepAccessKeys ?? false,
   );
 }
 
@@ -88,14 +97,16 @@ export function citedCount(reason: string) {
   return ban ? { n: ban[1] === "none of its" ? 0 : Number(ban[1]) } : undefined;
 }
 
-const USAGE = `Usage: bun .claude/skills/translate/count.ts <tag> [<rule id>…] [--english <regex>] [--expect <regex>] [--case] [--show]
+const USAGE = `Usage: bun .claude/skills/translate/count.ts <tag> [<rule id>…] [--english <regex>] [--expect <regex>] [--case] [--keep-access-keys] [--show]
 
 Counts Chrome's messages for each pin or ban of languages/<tag>.json named, or
 every one without ids, in .cache/translate/corpus/chrome.<tag>.jsonl, which
 corpus.ts --source chrome <tag> writes, and prints each beside the count its
 reason cites. --english counts a pin by the Chrome term its word comes from
 rather than its countEnglish or msgidPattern; with --expect and no rule id, it
-counts an ad hoc term. --case counts case-sensitively. --show lists the
+counts an ad hoc term. --case counts case-sensitively. --keep-access-keys
+reads both sides with their & access keys, as a pin's countKeepAccessKeys
+does, to tell a menu item such as &Edit from a plain Edit. --show lists the
 messages a pin's count matched.`;
 
 async function main() {
@@ -105,6 +116,7 @@ async function main() {
       english: { type: "string" },
       expect: { type: "string" },
       case: { type: "boolean" },
+      "keep-access-keys": { type: "boolean" },
       show: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
@@ -143,6 +155,7 @@ async function main() {
       pairs,
       new RegExp(values.english, flags),
       new RegExp(values.expect, flags),
+      values["keep-access-keys"],
     );
 
     console.log(
@@ -162,6 +175,7 @@ async function main() {
     const count = pinCount(rule, pairs, {
       english: values.english,
       caseSensitive: values.case,
+      keepAccessKeys: values["keep-access-keys"],
     });
 
     const cited = citedCount(rule.reason);

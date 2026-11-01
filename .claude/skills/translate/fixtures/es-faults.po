@@ -54,6 +54,7 @@ msgid "Copy link"
 msgstr "Copiar vínculo"
 
 # fault: banned:recargar
+# fault: pinned:hard-reload
 #: packages/app/menu.ts
 msgid "Hard Reload"
 msgstr "Recargar de manera forzada"

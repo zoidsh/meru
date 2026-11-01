@@ -295,8 +295,8 @@
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
         "macOS": [
           {
-            "word": "Guardar como…",
-            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "word": "Guardar como",
+            "source": "(AppKit `Document` `Save As\\U2026`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -319,8 +319,8 @@
         ],
         "Linux": [
           {
-            "word": "Guardar como…",
-            "source": "(gedit `Save _As…`)",
+            "word": "Guardar como",
+            "source": "(gedit `Save _As…`, its ellipsis dropped where a sentence names the dialog)",
             "sentences": ["Show Save As dialog before downloading"]
           },
           {
@@ -776,6 +776,12 @@
       "pattern": "(?<!\\p{L})(?:[Ll]o sentimos|[Pp]or favor|[Dd]isculp\\p{L}*|[Ll]amentablemente)(?!\\p{L})",
       "severity": "style",
       "reason": "Say what happened, without Lo sentimos or Por favor."
+    },
+    {
+      "id": "aplicacion",
+      "pattern": "(?<!\\p{L})[Aa]plicaci[oó]n(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "An app is an app, as Chrome writes it (423 of its 459 messages with app) and Gmail does (la app de Gmail, Gmail Help hl=es-419), never aplicación, also where the English says the application for Meru itself, the same thing; only macOS's Applications folder keeps Apple's plural, Aplicaciones (Chrome writes the banned form in 41 messages)."
     }
   ],
   "pinned": [
@@ -785,7 +791,7 @@
       "msgctxt": null,
       "expect": "^Configuración$",
       "severity": "wrong",
-      "reason": "Settings is Configuración, as Chrome writes it (Chrome: 428 of 436 messages).",
+      "reason": "Settings is Configuración, as Chrome writes it (Chrome: 429 of 432 messages).",
       "example": {
         "fault": "Preferencias"
       }
@@ -795,6 +801,7 @@
       "msgctxt": null,
       "msgid": "OK",
       "expect": "^Aceptar$",
+      "countEnglish": "^OK$",
       "severity": "wrong",
       "reason": "A button Meru draws reads Aceptar, as Chrome writes OK (Chrome: 6 of 7 messages).",
       "example": {
@@ -829,7 +836,7 @@
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtensi[oó]n",
       "severity": "wrong",
-      "reason": "An extension is an extensión (Chrome: 308 of 308 messages).",
+      "reason": "An extension is an extensión (Chrome: 304 of 304 messages).",
       "example": {
         "msgid": "Extensions",
         "clean": "Extensiones",
@@ -864,7 +871,7 @@
       "msgidPattern": "^Remove\\b(?! from history)",
       "expect": "[Qq]uitar",
       "severity": "wrong",
-      "reason": "Removing something from a list is quitar; Remove from history keeps Chrome's eliminar (Chrome: 88 of 101 messages).",
+      "reason": "Removing something from a list is quitar; Remove from history keeps Chrome's eliminar (Chrome: 90 of 103 messages).",
       "example": {
         "msgid": "Remove account",
         "fault": "Eliminar cuenta"
@@ -978,6 +985,7 @@
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "de confianza",
+      "countEnglish": "\\btrusted\\b",
       "severity": "wrong",
       "reason": "A trusted host is a host de confianza (Chrome: 13 of 22 messages).",
       "example": {
@@ -1203,6 +1211,7 @@
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]ombre del dispositivo",
+      "countEnglish": "\\bdevice name\\b",
       "severity": "wrong",
       "reason": "A device label is the nombre del dispositivo, Chrome's words for a device name (Chrome: 5 of 11 messages).",
       "example": {
@@ -1215,6 +1224,7 @@
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "[Pp]hishing",
+      "countEnglish": "\\bphishing\\b",
       "severity": "wrong",
       "reason": "Phishing protection is protección contra phishing, with Chrome's phishing (Chrome: 4 of 4 messages).",
       "example": {
@@ -1239,6 +1249,7 @@
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nactiv",
+      "countEnglish": "\\binactive tabs?\\b",
       "severity": "wrong",
       "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactiva, as in Pestaña inactiva, never the systems' Sleep word (Chrome: 8 of 8 messages).",
       "example": {
@@ -1270,6 +1281,157 @@
       "example": {
         "clean": "Actualizar a Pro",
         "fault": "Mejorar"
+      }
+    },
+    {
+      "id": "inspect-element",
+      "msgctxt": null,
+      "msgid": "Inspect Element",
+      "expect": "^Inspeccionar elemento$",
+      "countEnglish": "^Inspect$",
+      "countExpect": "^Inspeccionar$",
+      "severity": "wrong",
+      "reason": "Chrome's Inspect is Inspeccionar (Chrome 2/2 for the exact Inspect, Chromium 156.0.8078.49's .xtb files; its Inspect elements is Analizar elementos, 3/3), so the item keeps the element the English names.",
+      "example": {
+        "clean": "Inspeccionar elemento",
+        "fault": "Inspeccionar"
+      }
+    },
+    {
+      "id": "appearance",
+      "msgctxt": null,
+      "msgid": "Appearance",
+      "expect": "^Diseño$",
+      "countEnglish": "^Appearance$",
+      "severity": "wrong",
+      "reason": "Chrome's Appearance (Chrome 1/1).",
+      "example": {
+        "clean": "Diseño",
+        "fault": "Apariencia"
+      }
+    },
+    {
+      "id": "stop-loading",
+      "msgctxt": null,
+      "msgid": "Stop loading",
+      "expect": "^Interrumpir",
+      "countEnglish": "^Stop(?: loading this page)?$",
+      "severity": "wrong",
+      "reason": "Chrome's stop button and Stop loading this page take Interrumpir (Chrome 3/3: Stop, &Stop and Stop loading this page); Detener is es's word.",
+      "example": {
+        "clean": "Interrumpir carga",
+        "fault": "Detener carga"
+      }
+    },
+    {
+      "id": "edit-menu",
+      "msgctxt": null,
+      "msgid": "Edit",
+      "origin": "packages/app/menu.ts",
+      "expect": "^Edición$",
+      "countEnglish": "^&Edit$",
+      "countExpect": "^&Edición$",
+      "countKeepAccessKeys": true,
+      "severity": "wrong",
+      "reason": "The menu bar's Edit menu is Chrome's menu-bar title &Edit, &Edición (Chrome 1/1 for &Edit, counted with its access key, in Chromium 156.0.8078.49's .xtb files); Editar, under Common labels, is the action.",
+      "example": {
+        "clean": "Edición",
+        "fault": "Editar"
+      }
+    },
+    {
+      "id": "width",
+      "msgidPattern": "\\bwidth\\b",
+      "expect": "(?<!\\p{L})[Aa]ncho(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "Chrome writes width as ancho (Chrome 5/5), never anchura, so the setting is masculine: its Auto is Automático and its Narrow Estrecho.",
+      "example": {
+        "msgid": "Reset Width",
+        "clean": "Restablecer ancho",
+        "fault": "Restablecer anchura"
+      }
+    },
+    {
+      "id": "wide",
+      "msgid": "Wide",
+      "expect": "^Amplio$",
+      "severity": "wrong",
+      "reason": "The Width setting's Wide option is Amplio, never Ancho, by a recorded call (source order 4b; Tim delegates language judgment to the lead): Chrome's Ancho is Width's own word here, and a select can't show its label as one of its values. Amplio is the apps' word with Width's Ancho out of the vote (agent-chosen, unresolved by the app count: amplio: 2 of 7 (Thunderbird, LibreOffice)), and pairs with Estrecho, as LibreOffice's Estrechos and Amplios do.",
+      "example": {
+        "clean": "Amplio",
+        "fault": "Ancho"
+      }
+    },
+    {
+      "id": "wide-in-sentences",
+      "msgidPattern": "\\bnarrow and wide\\b",
+      "expect": "estrecho y amplio",
+      "severity": "wrong",
+      "reason": "A sentence that names the Width setting's options names them as the select shows them, Estrecho and Amplio, so Wide is amplio there too, never ancho (the wide pin).",
+      "example": {
+        "msgid": "Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above.",
+        "clean": "Muestra el botón de la parte inferior de la barra lateral que alterna entre estrecho y amplio. Si esta opción está desactivada, usa Restablecer ancho en el menú contextual de la barra lateral o la configuración Ancho de arriba.",
+        "fault": "Muestra el botón de la parte inferior de la barra lateral que alterna entre estrecho y ancho. Si esta opción está desactivada, usa Restablecer ancho en el menú contextual de la barra lateral o la configuración Ancho de arriba."
+      }
+    },
+    {
+      "id": "zoom-in",
+      "msgid": "Zoom In",
+      "expect": "^Acercar$",
+      "countEnglish": "^Zoom In$",
+      "severity": "wrong",
+      "reason": "The View menu's Zoom In is Acercar, as Chrome writes it (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "clean": "Acercar",
+        "fault": "Ampliar"
+      }
+    },
+    {
+      "id": "zoom-out",
+      "msgid": "Zoom Out",
+      "expect": "^Alejar$",
+      "countEnglish": "^Zoom Out$",
+      "severity": "wrong",
+      "reason": "The View menu's Zoom Out is Alejar, as Chrome writes it (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "clean": "Alejar",
+        "fault": "Reducir"
+      }
+    },
+    {
+      "id": "actual-size",
+      "msgid": "Actual Size",
+      "expect": "^Tamaño real$",
+      "countEnglish": "^Actual Size$",
+      "severity": "wrong",
+      "reason": "The View menu's Actual Size is Tamaño real, as Chrome writes it (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "clean": "Tamaño real",
+        "fault": "Tamaño original"
+      }
+    },
+    {
+      "id": "meru-portal",
+      "msgidPattern": "\\bMeru Portal\\b",
+      "expect": "Meru Portal",
+      "severity": "wrong",
+      "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
+      "example": {
+        "msgid": "Open Meru Portal",
+        "clean": "Meru Portal",
+        "fault": "Abrir el portal de Meru"
+      }
+    },
+    {
+      "id": "app-links-badge",
+      "msgidPattern": "\\bapp links badge\\b",
+      "expect": "[Dd]istintivo",
+      "severity": "wrong",
+      "reason": "The app links badge marks a tab rather than counting anything, so it is a distintivo, never the unread badge's contador; Chrome has no word for a badge (Chrome 0/0), and the apps' word for a badge that marks, with contador out of the vote, is distintivo (agent-chosen: distintivo: 3 of 7 (VS Code, Microsoft, Apple)).",
+      "example": {
+        "msgid": "Show app links badge",
+        "clean": "Mostrar distintivo de la pestaña de vínculos de la app",
+        "fault": "Mostrar contador de la pestaña de vínculos de la app"
       }
     }
   ],

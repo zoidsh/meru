@@ -115,3 +115,7 @@ msgstr "Buscar …"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minutos"
+
+# fault: banned:aplicacion
+msgid "Select the application theme."
+msgstr "Selecciona el tema de la aplicación."

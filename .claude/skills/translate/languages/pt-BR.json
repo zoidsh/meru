@@ -1255,6 +1255,18 @@
         "clean": "Fazer Upgrade",
         "fault": "Comprar"
       }
+    },
+    {
+      "id": "meru-portal",
+      "msgidPattern": "\\bMeru Portal\\b",
+      "expect": "Meru Portal",
+      "severity": "wrong",
+      "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
+      "example": {
+        "msgid": "Open Meru Portal",
+        "clean": "Meru Portal",
+        "fault": "Abrir o Portal do Meru"
+      }
     }
   ],
   "accessKeys": {
