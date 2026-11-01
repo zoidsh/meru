@@ -4,6 +4,7 @@ import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg, t } from "@lingui/core/macro";
+import { getAccountLabel } from "@meru/shared/accounts";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import {
   createGmailDelegatedAccountUrl,
@@ -997,10 +998,10 @@ export class Gmail {
 
         if (config.get("notifications.showSender")) {
           notificationTitle = hasMultipleAccounts
-            ? `[${account.config.label}] ${newMail.author.name}`
+            ? `[${getAccountLabel(account.config.label)}] ${newMail.author.name}`
             : newMail.author.name;
         } else {
-          notificationTitle = account.config.label;
+          notificationTitle = getAccountLabel(account.config.label);
         }
 
         let subtitle: string | undefined;
