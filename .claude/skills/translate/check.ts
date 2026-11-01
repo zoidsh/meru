@@ -4,7 +4,7 @@ import { getConfig } from "@lingui/conf";
 import { type CompiledMessage, compileMessageOrThrow } from "@lingui/message-utils/compileMessage";
 import { SHIPPED_CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
 import { findCatalogProblems, parseCatalog } from "../../../scripts/i18n-check";
-import { loadSidecar, type Severity, type Sidecar } from "./rules";
+import { loadSidecar, platformEntries, type Severity, type Sidecar } from "./rules";
 
 /*
  * Holds a locale's catalogs against its sidecar, `languages/<tag>.json`: banned
@@ -295,7 +295,9 @@ export function checkCatalogs(
 
   let platformEntriesFound = 0;
 
-  for (const word of sidecar.platformWords.entries) {
+  const platformWords = platformEntries(sidecar);
+
+  for (const word of platformWords) {
     const entry = byKey.get(keyOf(word.msgctxt, word.msgid));
 
     if (!entry) {
@@ -379,7 +381,7 @@ export function checkCatalogs(
     locale,
     catalogs: catalogs.map(({ path: catalogPath }) => catalogPath),
     platformWords: {
-      expected: sidecar.platformWords.entries.length,
+      expected: platformWords.length,
       inCatalogs: platformEntriesFound,
     },
     counts,

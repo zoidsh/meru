@@ -6,10 +6,6 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: fr\n"
 
-#: packages/renderer/components/bookmarks.tsx
-msgid "No bookmarks yet"
-msgstr "Aucun favori"
-
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open app"
 msgstr "Ouvrir l’appli"
@@ -21,10 +17,6 @@ msgstr "Nouveaux e-mails"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Enter a website address, like {exampleSite}."
 msgstr "Saisissez l’adresse d’un site Web, par exemple {exampleSite}."
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Copy the code to your clipboard."
-msgstr "Copier le code dans le presse-papiers."
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Learn More…"
@@ -66,94 +58,9 @@ msgstr "Voulez-vous vraiment supprimer ce message ?"
 msgid "Couldn't add the account."
 msgstr "Impossible d’ajouter le compte."
 
-#: packages/renderer/routes/download-history.tsx
-msgid "Download history"
-msgstr "Historique des téléchargements"
-
 #: packages/renderer/components/downloads.tsx
 msgid "Full download history"
 msgstr "Historique complet des téléchargements"
-
-#: packages/renderer/components/downloads.tsx
-msgid "Recent download history"
-msgstr "Historique des téléchargements récents"
-
-#: packages/renderer/routes/settings/gmail/label-colors.tsx
-msgctxt "Gmail label"
-msgid "Label"
-msgstr "Libellé"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Narrow the tab strip"
-msgstr "Réduire la barre d’onglets"
-
-#: packages/app/context-menu.ts
-msgid "Open in Default Browser"
-msgstr "Ouvrir dans le navigateur par défaut"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Password managers"
-msgstr "Gestionnaires de mots de passe"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Only passkeys created in Meru work here."
-msgstr "Seules les clés d’accès créées dans Meru fonctionnent ici."
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Updates"
-msgstr "Mises à jour"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Restart now"
-msgstr "Redémarrer maintenant"
-
-#: packages/app/menu.ts
-msgid "Reload"
-msgstr "Actualiser"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Copied verification code {verificationCode}"
-msgstr "Code de validation {verificationCode} copié"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Phishing protection"
-msgstr "Protection contre l’hameçonnage"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Learn more"
-msgstr "En savoir plus"
-
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Pin"
-msgstr "Épingler"
-
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Unpin"
-msgstr "Retirer"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Enable extensions"
-msgstr "Activer les extensions"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Do Not Disturb"
-msgstr "Ne pas déranger"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Show bookmarks button"
-msgstr "Afficher le bouton des favoris"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Menu bar icon"
-msgstr "Icône de la barre des menus"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Trusted hosts"
-msgstr "Hôtes approuvés"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Release channel"
-msgstr "Version de mise à jour"
 
 #: packages/app/menu.ts
 msgctxt "Windows"
@@ -217,128 +124,18 @@ msgstr "Afficher l’historique des téléchargements récents"
 msgid "Get the apps"
 msgstr "Obtenir les applis Google"
 
-#: packages/renderer/components/app-titlebar.tsx
-msgid "Settings"
-msgstr "Paramètres"
-
 #: packages/app/menu.ts
 msgctxt "macOS"
 msgid "Settings"
 msgstr "Réglages…"
 
 #: packages/renderer/routes/settings/general.tsx
-msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Balayez vers la gauche ou la droite avec deux doigts sur un trackpad pour reculer ou avancer. L’option Balayer entre les pages doit aussi être activée dans Réglages Système."
-
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "Icône du Dock"
-
-#: packages/renderer/routes/settings/general.tsx
 msgid "Website"
 msgstr "Site Web"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "Rendre inactifs les onglets inutilisés"
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Mettre à niveau vers Meru Pro"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "Fermer le toast"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Show unread badge"
-msgstr "Afficher la pastille des e-mails non lus"
-
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "Nom"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Ouvrez les paramètres Gmail pour désactiver la réponse automatique"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Multiple inboxes"
-msgstr "Plusieurs boîtes de réception"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Notify for"
-msgstr "Notifier pour"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "Lin"
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Device label"
-msgstr "Nom de l’appareil"
-
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "Mettre à niveau"
-
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "Toasts"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "Toasts"
-
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "Saisir un nom"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "Brise"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "Carillon"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "Duo"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "Toc-toc"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "In launcher"
-msgstr "Dans le lanceur"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Use a security key such as Te2 or Ta+"
 msgstr "Utilisez une clé de sécurité comme Te2 ou Ta+"
-
-#: packages/app/context-menu.ts
-msgid "Inspect Element"
-msgstr "Inspecter"
-
-#: packages/shared/accounts.ts
-msgid "Purple"
-msgstr "Violet"
-
-#: packages/shared/accounts.ts
-msgid "Violet"
-msgstr "Mauve"
-
-#: packages/renderer/routes/settings/extensions.tsx
-msgid "Add a passkey to your Google account from its security settings inside Meru, then sign in with Windows Hello — no password manager extension to install, so Meru stays fast and light. Passkeys from Chrome, Google Password Manager, or your phone don't work here, and filling passwords still needs a password manager."
-msgstr "Ajoutez une clé d’accès à votre compte Google depuis ses paramètres de sécurité dans Meru, puis connectez-vous avec Windows Hello. Aucune extension de gestionnaire de mots de passe à installer : Meru reste rapide et léger. Les clés d’accès de Chrome, du Gestionnaire de mots de passe de Google ou de votre téléphone ne fonctionnent pas ici, et le remplissage des mots de passe nécessite toujours un gestionnaire de mots de passe."
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Show app links badge"
-msgstr "Afficher la pastille de l’onglet des liens d’appli"
 
 #: packages/app/menu.ts
 msgid "Back"
@@ -351,8 +148,3 @@ msgstr "Avancer"
 #: packages/app/menu.ts
 msgid "Reset App"
 msgstr "Réinitialiser l’application"
-
-#. A menu or a menu item in Meru's menu bar
-#: packages/app/menu.ts
-msgid "Edit"
-msgstr "Édition"

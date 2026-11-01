@@ -3,9 +3,9 @@ import { z } from "zod";
 
 /*
  * The machine-readable half of a style sheet, `languages/<tag>.json`, which
- * `check.ts` holds a catalog against. The Markdown stays the source of prose
- * and citations; `rules.test.ts` keeps its Platform words table and this file
- * in step.
+ * `check.ts` holds a catalog against. The Markdown is the source of prose and
+ * citations, except for its Platform words table, which `platform-table.ts`
+ * writes from the sidecar's rows.
  */
 
 export const PLATFORMS = ["macOS", "Windows", "Linux"] as const;
@@ -31,31 +31,36 @@ function isPattern(source: string) {
 const pattern = z.string().min(1).refine(isPattern, { message: "not a valid regular expression" });
 
 /*
- * `msgstr` is the whole expected translation and `contains` the platform's word
- * inside a sentence. Both are compared with the catalog's access key taken out,
+ * One word a platform uses, as the style sheet's Platform words table shows it
+ * with its source: `labels` are the msgids whose whole translation is the
+ * word, and `sentences` those whose translation contains it, a trailing
+ * ellipsis aside. Both are compared with the catalog's access key taken out,
  * an `&` before a character or Japanese's `(&X)`, since where the key sits is
  * the translator's choice and the `accessKeys` rule checks it.
  */
-const platformWord = z.union([
-  z
-    .object({
-      row: z.string(),
-      msgctxt: z.enum(PLATFORMS),
-      msgid: z.string(),
-      msgstr: z.string(),
-    })
-    .strict(),
-  z
-    .object({
-      row: z.string(),
-      msgctxt: z.enum(PLATFORMS),
-      msgid: z.string(),
-      contains: z.string(),
-    })
-    .strict(),
-]);
+const platformWord = z
+  .object({
+    word: z.string(),
+    source: z.string().optional(),
+    labels: z.array(z.string()).optional(),
+    sentences: z.array(z.string()).optional(),
+  })
+  .strict();
 
-export type PlatformWord = z.infer<typeof platformWord>;
+/** A cell with no word, such as "macOS only", is the note the table shows. */
+const platformCell = z.union([z.string(), z.array(platformWord).min(1)]);
+
+const platformRow = z
+  .object({ row: z.string(), macOS: platformCell, Windows: platformCell, Linux: platformCell })
+  .strict();
+
+export type PlatformRow = z.infer<typeof platformRow>;
+
+/** One entry a platform word settles, as `check.ts` holds a catalog to it. */
+export type PlatformEntry = { row: string; msgctxt: Platform; msgid: string } & (
+  | { msgstr: string }
+  | { contains: string }
+);
 
 /*
  * Picks entries by their English. A `msgctxt` of null means an entry without
@@ -95,6 +100,21 @@ const banned = z
 
 export type BannedRule = z.infer<typeof banned>;
 
+/*
+ * An entry the pin picks, with the wording it allows and a fault it catches,
+ * which `scripts/translate-check.test.ts` runs every rule against. The entry
+ * takes the rule's own msgid and msgctxt unless it names them, and `clean`
+ * defaults to an `expect` that is one literal word, such as `^Paramètres$`.
+ */
+const example = z
+  .object({
+    msgid: z.string().optional(),
+    msgctxt: z.string().nullable().optional(),
+    clean: z.string().optional(),
+    fault: z.string(),
+  })
+  .strict();
+
 const pinned = z
   .object({
     id: z.string(),
@@ -102,10 +122,14 @@ const pinned = z
     expect: pattern,
     severity,
     reason: z.string(),
+    example,
   })
   .strict()
   .refine((rule) => rule.msgid !== undefined || rule.msgidPattern !== undefined, {
     message: "a pinned rule needs msgid or msgidPattern",
+  })
+  .refine((rule) => rule.msgid !== undefined || rule.example.msgid !== undefined, {
+    message: "a pinned rule picked by msgidPattern needs its example's msgid",
   });
 
 export type PinnedRule = z.infer<typeof pinned>;
@@ -143,15 +167,43 @@ export type FamilyRule = z.infer<typeof family>;
 
 export const sidecarSchema = z
   .object({
-    platformWords: z
-      .object({ severity, reason: z.string(), entries: z.array(platformWord) })
-      .strict(),
+    platformWords: z.object({ severity, reason: z.string(), rows: z.array(platformRow) }).strict(),
     banned: z.array(banned),
     pinned: z.array(pinned),
     accessKeys: accessKeys.nullable(),
     families: z.array(family),
   })
-  .strict();
+  .strict()
+  .superRefine((sidecar, context) => {
+    for (const id of duplicateRuleIds(sidecar)) {
+      context.addIssue({ code: "custom", message: `rule id “${id}” is used more than once` });
+    }
+  });
+
+/*
+ * A finding names its rule by id, and so do a fixture's `# fault:` marks and a
+ * regression set's `# check:` marks, so two rules sharing one can each hide
+ * the other's untested fault.
+ */
+export function duplicateRuleIds(sidecar: {
+  banned: { id: string }[];
+  pinned: { id: string }[];
+  families: { id: string }[];
+}) {
+  const seen = new Set<string>();
+
+  const duplicates = new Set<string>();
+
+  for (const { id } of [...sidecar.banned, ...sidecar.pinned, ...sidecar.families]) {
+    if (seen.has(id)) {
+      duplicates.add(id);
+    }
+
+    seen.add(id);
+  }
+
+  return [...duplicates];
+}
 
 export type Sidecar = z.infer<typeof sidecarSchema>;
 
@@ -167,70 +219,51 @@ export async function loadSidecar(locale: string) {
   return sidecarSchema.parse(await Bun.file(sidecarPath(locale)).json());
 }
 
-export type PlatformTableRow = {
-  english: string;
-  words: Record<Platform, string[]>;
+/** Every entry the Platform words rows settle, in table order. */
+export function platformEntries(sidecar: Sidecar): PlatformEntry[] {
+  return sidecar.platformWords.rows.flatMap((row) =>
+    PLATFORMS.flatMap((platform) => {
+      const cell = row[platform];
+
+      if (typeof cell === "string") {
+        return [];
+      }
+
+      return cell.flatMap(({ word, labels = [], sentences = [] }) => [
+        ...labels.map((msgid) => ({ row: row.row, msgctxt: platform, msgid, msgstr: word })),
+        ...sentences.map((msgid) => ({
+          row: row.row,
+          msgctxt: platform,
+          msgid,
+          contains: word.replace(/[\s\u00a0]*…$/u, ""),
+        })),
+      ]);
+    }),
+  );
+}
+
+export type PinExample = {
+  id: string;
+  msgctxt: string | null;
+  msgid: string;
+  origin: string | undefined;
+  clean: string | undefined;
+  fault: string;
 };
 
-/*
- * The tables write a plain space before an ellipsis where the catalogs, as the
- * style sheet says, have a no-break space.
- */
-export function toCatalogForm(word: string) {
-  return word.replace(/ …/gu, "\u00a0…");
+/** The word an `expect` such as `^Paramètres$` allows, when it allows only one. */
+function literalExpect(expect: string) {
+  return /^\^([^\\^$.*+?()[\]{}|]*)\$$/u.exec(expect)?.[1];
 }
 
-/** A cell's words, each the italic span that opens a `; `-separated part. */
-function cellWords(cell: string) {
-  const masked = cell.replace(/`[^`]*`/gu, (code) => "§".repeat(code.length));
-
-  const parts: string[] = [];
-
-  let depth = 0;
-
-  let start = 0;
-
-  for (let index = 0; index < masked.length; index++) {
-    const character = masked[index];
-
-    if (character === "(") {
-      depth++;
-    } else if (character === ")") {
-      depth--;
-    } else if (character === ";" && depth === 0) {
-      parts.push(masked.slice(start, index));
-
-      start = index + 1;
-    }
-  }
-
-  parts.push(masked.slice(start));
-
-  return parts.flatMap((part) => {
-    const word = /^_(.+?)_(?=[\s,;)]|$)/u.exec(part.trim())?.[1];
-
-    return word ? [toCatalogForm(word)] : [];
-  });
-}
-
-/** The rows of a style sheet's Platform words table, empty where it has none. */
-export function readPlatformTable(markdown: string): PlatformTableRow[] {
-  const section = markdown.split(/^## /mu).find((part) => part.startsWith("Platform words"));
-
-  if (!section) {
-    return [];
-  }
-
-  const lines = section.split("\n").filter((line) => line.startsWith("|"));
-
-  return lines.slice(2).map((line) => {
-    const [english = "", ...cells] = line.split("|").slice(1, -1);
-
-    return {
-      english: english.trim(),
-      words: Object.fromEntries(
-        PLATFORMS.map((platform, index) => [platform, cellWords(cells[index] ?? "")]),
-      ) as Record<Platform, string[]>,
-    };
-  });
+/** Each pin's example as the entry it stands for, every default filled in. */
+export function pinExamples(sidecar: Sidecar): PinExample[] {
+  return sidecar.pinned.map((rule) => ({
+    id: rule.id,
+    msgctxt: rule.example.msgctxt !== undefined ? rule.example.msgctxt : (rule.msgctxt ?? null),
+    msgid: rule.example.msgid ?? (rule.msgid as string),
+    origin: rule.origin,
+    clean: rule.example.clean ?? literalExpect(rule.expect),
+    fault: rule.example.fault,
+  }));
 }

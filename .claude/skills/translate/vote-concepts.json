@@ -1,0 +1,896 @@
+[
+  {
+    "concept": "toast",
+    "english": "\\btoasts?\\b",
+    "englishNot": "bread|butter|sandwich|slice|loaf|food|probab",
+    "candidates": {
+      "de": {
+        "Hinweis": "hinweis",
+        "Benachrichtigung": "benachrichtigung",
+        "Popup": "popup|pop-up",
+        "Toast": "toast",
+        "Banner": "banner"
+      },
+      "fr": {
+        "avis": "\\bavis\\b",
+        "notification": "notification",
+        "toast": "toast",
+        "bannière": "banni[èe]re",
+        "fenêtre contextuelle": "contextuelle"
+      },
+      "it": {
+        "avviso": "avvis",
+        "notifica": "notific",
+        "popup": "popup|pop-up",
+        "toast": "toast",
+        "banner": "banner"
+      },
+      "es": {
+        "aviso": "\\bavisos?\\b",
+        "notificación": "notificaci",
+        "mensaje": "mensaje",
+        "toast": "toast",
+        "emergente": "emergente"
+      },
+      "es-419": {
+        "aviso": "\\bavisos?\\b",
+        "notificación": "notificaci",
+        "mensaje": "mensaje",
+        "toast": "toast",
+        "emergente": "emergente"
+      },
+      "pt-BR": {
+        "aviso": "\\bavisos?\\b",
+        "notificação": "notifica[çc]",
+        "toast": "toast",
+        "mensagem": "mensagem",
+        "faixa": "faixa",
+        "pop-up": "pop-?up"
+      },
+      "nl": {
+        "mededeling": "mededeling",
+        "melding": "melding",
+        "pop-up": "pop-?up",
+        "toast": "toast",
+        "banner": "banner"
+      },
+      "pl": {
+        "komunikat": "komunikat",
+        "powiadomienie": "powiadomie",
+        "wyskakujące": "wyskakuj",
+        "toast": "toast",
+        "baner": "baner"
+      },
+      "sv": {
+        "inforuta": "inforut",
+        "avisering": "aviser",
+        "popup": "popup|popup-",
+        "meddelande": "meddelande",
+        "toast": "toast",
+        "banderoll": "banderoll"
+      },
+      "ja": {
+        "お知らせ": "お知らせ",
+        "通知": "通知",
+        "トースト": "トースト",
+        "バナー": "バナー",
+        "ポップアップ": "ポップアップ"
+      }
+    },
+    "exclude": {
+      "de": ["Benachrichtigung"],
+      "fr": ["notification"],
+      "it": ["notifica"],
+      "es": ["notificación"],
+      "es-419": ["notificación"],
+      "pt-BR": ["notificação"],
+      "nl": ["melding"],
+      "pl": ["powiadomienie"],
+      "sv": ["avisering"],
+      "ja": ["通知"]
+    }
+  },
+  {
+    "concept": "badge",
+    "english": "\\bbadges?\\b",
+    "englishNot": "\\b(work|security|employee|achievement|gift|recommended)\\b|ID badge",
+    "candidates": {
+      "de": {
+        "Kennzeichen": "kennzeichen",
+        "Badge": "badge",
+        "Abzeichen": "abzeichen",
+        "Zähler": "zähler",
+        "Plakette": "plakette"
+      },
+      "fr": {
+        "pastille": "pastille",
+        "badge": "badge",
+        "insigne": "insigne",
+        "compteur": "compteur"
+      },
+      "it": {
+        "badge": "badge",
+        "contrassegno": "contrassegn",
+        "indicatore": "indicator",
+        "notifica": "notific"
+      },
+      "es": {
+        "indicador": "indicador",
+        "insignia": "insignia",
+        "distintivo": "distintivo",
+        "globo": "globo",
+        "contador": "contador"
+      },
+      "es-419": {
+        "indicador": "indicador",
+        "insignia": "insignia",
+        "distintivo": "distintivo",
+        "contador": "contador",
+        "badge": "badge",
+        "gafete": "gafete"
+      },
+      "pt-BR": {
+        "indicador": "indicador",
+        "emblema": "emblema",
+        "selo": "\\bselo",
+        "aviso": "\\baviso",
+        "crachá": "crach",
+        "badge": "badge"
+      },
+      "nl": {
+        "badge": "badge",
+        "markering": "markering",
+        "teller": "teller"
+      },
+      "pl": {
+        "plakietka": "plakiet",
+        "znaczek": "znacz",
+        "wskaźnik": "wskaźnik",
+        "licznik": "licznik"
+      },
+      "sv": {
+        "bricka": "brick",
+        "märke": "märke",
+        "symbol": "symbol",
+        "aktivitetsikon": "aktivitetsikon"
+      },
+      "ja": {
+        "バッジ": "バッジ",
+        "記章": "記章"
+      }
+    }
+  },
+  {
+    "concept": "unread",
+    "english": "\\bunread\\b",
+    "candidates": {
+      "de": {
+        "ungelesen": "ungelesen"
+      },
+      "fr": {
+        "non lu": "non[- ]lu"
+      },
+      "it": {
+        "non letto": "non lett|da leggere"
+      },
+      "es": {
+        "no leído": "no le[íi]d|sin leer"
+      },
+      "es-419": {
+        "no leído": "no le[íi]d|sin leer"
+      },
+      "pt-BR": {
+        "não lido": "n[ãa]o lid"
+      },
+      "nl": {
+        "ongelezen": "ongelezen"
+      },
+      "pl": {
+        "nieprzeczytane": "nieprzeczytan"
+      },
+      "sv": {
+        "oläst": "oläst"
+      },
+      "ja": {
+        "未読": "未読"
+      }
+    }
+  },
+  {
+    "concept": "upgrade",
+    "english": "\\bupgrad",
+    "candidates": {
+      "de": {
+        "Upgrade/upgraden": "upgrade",
+        "aktualisieren": "aktualisier",
+        "umstellen": "umstell"
+      },
+      "fr": {
+        "passer à": "pass(er|ez) à",
+        "mettre à niveau": "niveau",
+        "mettre à jour": "à jour"
+      },
+      "it": {
+        "upgrade": "upgrade",
+        "aggiornare": "aggiorn",
+        "passa a": "passa(re)? a\\b"
+      },
+      "es": {
+        "actualizar": "actualiz",
+        "mejorar": "mejor",
+        "cambiar a": "cambi\\w* a\\b",
+        "ampliar": "ampli"
+      },
+      "es-419": {
+        "actualizar": "actualiz",
+        "mejorar": "mejor",
+        "cambiar a": "cambi\\w* a\\b",
+        "ampliar": "ampli"
+      },
+      "pt-BR": {
+        "upgrade": "upgrade",
+        "atualizar": "atualiz",
+        "mudar para": "mud\\w* para"
+      },
+      "nl": {
+        "upgrade/upgraden": "upgrad",
+        "bijwerken": "bijwerk|bijgewerkt",
+        "overstappen": "overstap"
+      },
+      "pl": {
+        "uaktualnić": "uaktualni",
+        "aktualizować": "\\baktualiz",
+        "przejść na": "przej\\w* na\\b",
+        "ulepszyć": "ulepsz"
+      },
+      "sv": {
+        "uppgradera": "uppgrader",
+        "uppdatera": "uppdater"
+      },
+      "ja": {
+        "アップグレード": "アップグレード",
+        "更新": "更新"
+      }
+    }
+  },
+  {
+    "concept": "notify",
+    "english": "\\bnotify\\b",
+    "candidates": {
+      "de": {
+        "benachrichtigen": "benachrichtig",
+        "informieren": "informier",
+        "mitteilen": "mitteil"
+      },
+      "fr": {
+        "avertir": "avert",
+        "notifier": "notifi",
+        "prévenir": "préven",
+        "informer": "inform"
+      },
+      "it": {
+        "notificare": "notific",
+        "avvisare": "avvis",
+        "informare": "inform"
+      },
+      "es": {
+        "notificar": "notific",
+        "avisar": "avis",
+        "informar": "inform"
+      },
+      "es-419": {
+        "notificar": "notific",
+        "avisar": "avis",
+        "informar": "inform"
+      },
+      "pt-BR": {
+        "notificar": "notific",
+        "avisar": "avis",
+        "informar": "inform"
+      },
+      "nl": {
+        "melden": "meld",
+        "waarschuwen": "waarschuw",
+        "op de hoogte": "hoogte"
+      },
+      "pl": {
+        "powiadamiać": "powiadam|powiadom",
+        "informować": "informow"
+      },
+      "sv": {
+        "avisera": "aviser",
+        "meddela": "meddela",
+        "informera": "informer"
+      },
+      "ja": {
+        "通知": "通知",
+        "知らせ": "知らせ"
+      }
+    }
+  },
+  {
+    "concept": "meru-label (a name)",
+    "english": "^name:?$",
+    "candidates": {
+      "de": {
+        "Name": "name",
+        "Bezeichnung": "bezeichnung"
+      },
+      "fr": {
+        "nom": "\\bnom\\b",
+        "libellé": "libellé"
+      },
+      "it": {
+        "nome": "\\bnome\\b",
+        "etichetta": "etichett"
+      },
+      "es": {
+        "nombre": "nombre",
+        "etiqueta": "etiqueta"
+      },
+      "es-419": {
+        "nombre": "nombre",
+        "etiqueta": "etiqueta"
+      },
+      "pt-BR": {
+        "nome": "\\bnome\\b",
+        "rótulo": "rótulo"
+      },
+      "nl": {
+        "naam": "naam",
+        "label": "label"
+      },
+      "pl": {
+        "nazwa": "nazw",
+        "etykieta": "etykiet"
+      },
+      "sv": {
+        "namn": "namn",
+        "etikett": "etikett"
+      },
+      "ja": {
+        "名前": "名前",
+        "ラベル": "ラベル"
+      }
+    }
+  },
+  {
+    "concept": "trial",
+    "english": "\\btrial\\b",
+    "englishNot": "probabilit|success|binom|experiment",
+    "candidates": {
+      "de": {
+        "Testzeitraum": "testzeitraum",
+        "Testversion": "testversion",
+        "Probeabo": "probeabo",
+        "Testphase": "testphase",
+        "Probezeit": "probezeit"
+      },
+      "fr": {
+        "période d'essai": "période d.essai",
+        "essai": "essai",
+        "version d'évaluation": "évaluation"
+      },
+      "it": {
+        "periodo di prova": "periodo di prova",
+        "prova": "prova",
+        "versione di valutazione": "valutazione"
+      },
+      "es": {
+        "periodo de prueba": "per[íi]odo de prueba",
+        "prueba": "prueba",
+        "versión de evaluación": "evaluaci"
+      },
+      "es-419": {
+        "período de prueba": "per[íi]odo de prueba",
+        "prueba": "prueba",
+        "versión de evaluación": "evaluaci"
+      },
+      "pt-BR": {
+        "período de avaliação": "avalia",
+        "teste": "teste",
+        "experimental": "experiment"
+      },
+      "nl": {
+        "proefperiode": "proefperiode",
+        "proefabonnement": "proefabonnement",
+        "proefversie": "proefversie",
+        "evaluatie": "evaluatie"
+      },
+      "pl": {
+        "okres próbny": "okres próbn",
+        "wersja próbna": "wersj\\w* próbn",
+        "próbny": "próbn",
+        "wersja testowa": "testow"
+      },
+      "sv": {
+        "provperiod": "provperiod",
+        "prov": "prov",
+        "utvärdering": "utvärder"
+      },
+      "ja": {
+        "試用期間": "試用期間",
+        "試用": "試用",
+        "トライアル": "トライアル",
+        "評価版": "評価版"
+      }
+    }
+  },
+  {
+    "concept": "license key",
+    "english": "\\blicen[cs]e key\\b|\\bproduct key\\b",
+    "candidates": {
+      "de": {
+        "Lizenzschlüssel": "lizenzschlüssel",
+        "Produktschlüssel": "produktschlüssel"
+      },
+      "fr": {
+        "clé de licence": "clé de licence",
+        "clé de produit": "clé de produit|clé produit"
+      },
+      "it": {
+        "chiave di licenza": "chiave di licenza",
+        "codice Product Key": "product key"
+      },
+      "es": {
+        "clave de licencia": "clave de licencia",
+        "clave de producto": "clave de producto"
+      },
+      "es-419": {
+        "clave de licencia": "clave de licencia",
+        "clave de producto": "clave de producto"
+      },
+      "pt-BR": {
+        "chave de licença": "chave de licen",
+        "chave do produto": "chave do produto|chave de produto"
+      },
+      "nl": {
+        "licentiesleutel": "licentiesleutel",
+        "productcode": "productcode|productsleutel"
+      },
+      "pl": {
+        "klucz licencyjny": "klucz\\w* licencyjn",
+        "klucz produktu": "klucz\\w* produktu"
+      },
+      "sv": {
+        "licensnyckel": "licensnyckel",
+        "produktnyckel": "produktnyckel"
+      },
+      "ja": {
+        "ライセンスキー": "ライセンス ?キー",
+        "プロダクトキー": "プロダクト ?キー"
+      }
+    }
+  },
+  {
+    "concept": "blocker",
+    "english": "\\b\\w*blockers?\\b|\\bcontent block",
+    "candidates": {
+      "de": {
+        "Blocker": "blocker",
+        "Blockierung": "blockierung"
+      },
+      "fr": {
+        "bloqueur": "bloqueur",
+        "blocage": "blocage"
+      },
+      "it": {
+        "blocco contenuti": "blocco",
+        "bloccatore": "bloccator",
+        "blocker": "blocker"
+      },
+      "es": {
+        "bloqueador": "bloqueador",
+        "bloqueo": "bloqueo"
+      },
+      "es-419": {
+        "bloqueador": "bloqueador",
+        "bloqueo": "bloqueo"
+      },
+      "pt-BR": {
+        "bloqueador": "bloqueador",
+        "bloqueio": "bloqueio"
+      },
+      "nl": {
+        "blokkering": "blokkering",
+        "blokkeerder": "blokkeerder",
+        "blocker": "blocker"
+      },
+      "pl": {
+        "blokowanie": "blokowani",
+        "bloker": "bloker"
+      },
+      "sv": {
+        "blockerare": "blockerare",
+        "blockering": "blockering"
+      },
+      "ja": {
+        "ブロッカー": "ブロッカー",
+        "ブロック": "ブロック"
+      }
+    }
+  },
+  {
+    "concept": "out of office",
+    "english": "\\bout[- ]of[- ](the[- ])?office\\b|\\bvacation (respon|repl|message)|\\bauto(matic)?[- ]?repl",
+    "candidates": {
+      "de": {
+        "Abwesenheitsnotiz": "abwesenheitsnotiz",
+        "Abwesenheitsnachricht": "abwesenheitsnachricht",
+        "automatische Antwort": "automatische antwort",
+        "abwesend": "abwesend"
+      },
+      "fr": {
+        "réponse automatique d'absence": "absence",
+        "réponse automatique": "réponse automatique",
+        "absent du bureau": "absent"
+      },
+      "it": {
+        "risposta automatica": "risposta automatica|risposte automatiche",
+        "fuori sede": "fuori sede",
+        "assenza": "assen"
+      },
+      "es": {
+        "respuesta automática": "respuesta automática|respuestas automáticas",
+        "fuera de la oficina": "fuera de la oficina",
+        "ausencia": "ausen"
+      },
+      "es-419": {
+        "respuesta automática": "respuesta automática|respuestas automáticas",
+        "fuera de la oficina": "fuera de la oficina",
+        "ausencia": "ausen"
+      },
+      "pt-BR": {
+        "resposta automática": "resposta automática|respostas automáticas",
+        "fora do escritório": "fora do escritório",
+        "ausência": "ausên"
+      },
+      "nl": {
+        "automatisch antwoord": "automatisch\\w* antwoord",
+        "afwezigheid": "afwezig"
+      },
+      "pl": {
+        "autoodpowiedź": "autoodpowied",
+        "automatyczna odpowiedź": "automatyczn\\w* odpowied",
+        "poza biurem": "poza biurem",
+        "nieobecność": "nieobecn"
+      },
+      "sv": {
+        "frånvaromeddelande": "frånvaromeddelande",
+        "autosvar": "autosvar|automatiskt svar",
+        "frånvarande": "frånvar"
+      },
+      "ja": {
+        "不在通知": "不在通知",
+        "自動応答": "自動応答",
+        "不在": "不在"
+      }
+    }
+  },
+  {
+    "concept": "vertical tabs",
+    "english": "\\bvertical tabs?\\b",
+    "candidates": {
+      "de": {
+        "vertikale Tabs": "vertikale\\w* tab"
+      },
+      "fr": {
+        "onglets verticaux": "onglets verticaux|verticale"
+      },
+      "it": {
+        "schede verticali": "schede verticali|verticale"
+      },
+      "es": {
+        "pestañas verticales": "verticales?"
+      },
+      "es-419": {
+        "pestañas verticales": "verticales?"
+      },
+      "pt-BR": {
+        "guias verticais": "verticais|vertical"
+      },
+      "nl": {
+        "verticale tabbladen": "verticale"
+      },
+      "pl": {
+        "karty pionowe": "pionow"
+      },
+      "sv": {
+        "vertikala flikar": "vertikal|lodrät"
+      },
+      "ja": {
+        "垂直タブ": "垂直",
+        "縦型タブ": "縦型",
+        "縦タブ": "縦タブ"
+      }
+    }
+  },
+  {
+    "concept": "update channel",
+    "english": "\\b(update|release|beta) channel\\b",
+    "candidates": {
+      "de": {
+        "Update-Kanal": "update-kanal",
+        "Updatekanal": "updatekanal",
+        "Aktualisierungskanal": "aktualisierungskanal",
+        "Kanal": "kanal"
+      },
+      "nl": {
+        "updatekanaal": "updatekanaal",
+        "bètakanaal": "b[èe]takanaal",
+        "kanaal": "kanaal"
+      },
+      "sv": {
+        "uppdateringskanal": "uppdateringskanal",
+        "betakanal": "betakanal",
+        "kanal": "kanal"
+      },
+      "ja": {
+        "リリースチャンネル": "リリース ?チャンネル",
+        "更新チャネル": "更新 ?チャネル|アップデート ?チャネル",
+        "チャンネル": "チャンネル",
+        "チャネル": "チャネル"
+      }
+    }
+  },
+  {
+    "concept": "unified inbox",
+    "english": "\\bunified (inbox|folders?)\\b|\\bcombined (inbox|view)\\b|\\ball inboxes\\b",
+    "candidates": {
+      "de": {
+        "gemeinsamer Posteingang": "gemeinsam",
+        "kombinierte Ansicht": "kombinier",
+        "gruppierte Ordner": "gruppiert",
+        "alle Posteingänge": "alle posteing"
+      }
+    }
+  },
+  {
+    "concept": "time window",
+    "english": "\\btime (window|slot|range|frame)s?\\b",
+    "candidates": {
+      "de": {
+        "Zeitfenster": "zeitfenster",
+        "Zeitraum": "zeitraum",
+        "Zeitspanne": "zeitspanne"
+      },
+      "fr": {
+        "plage horaire": "plage horaire",
+        "période": "période",
+        "intervalle": "intervalle",
+        "créneau": "créneau"
+      },
+      "it": {
+        "fascia oraria": "fascia oraria",
+        "intervallo": "intervallo",
+        "periodo": "periodo"
+      },
+      "es": {
+        "franja horaria": "franja horaria",
+        "intervalo": "intervalo",
+        "periodo": "per[íi]odo"
+      },
+      "es-419": {
+        "intervalo de tiempo": "intervalo",
+        "franja horaria": "franja horaria",
+        "período": "per[íi]odo"
+      },
+      "pt-BR": {
+        "intervalo de horário": "intervalo",
+        "período": "período",
+        "janela de tempo": "janela"
+      },
+      "nl": {
+        "tijdvak": "tijdvak",
+        "tijdsbestek": "tijdsbestek",
+        "periode": "periode",
+        "tijdvenster": "tijdvenster"
+      },
+      "pl": {
+        "przedział czasu": "przedział",
+        "okres": "okres",
+        "zakres czasu": "zakres"
+      },
+      "sv": {
+        "tidsfönster": "tidsfönster",
+        "tidsperiod": "tidsperiod",
+        "tidsintervall": "tidsintervall"
+      },
+      "ja": {
+        "時間帯": "時間帯",
+        "期間": "期間",
+        "時間枠": "時間枠"
+      }
+    }
+  },
+  {
+    "concept": "at startup",
+    "english": "\\b(on|at) (startup|start-up|launch)\\b",
+    "candidates": {
+      "pl": {
+        "przy uruchomieniu": "przy uruchomieniu",
+        "podczas uruchamiania": "podczas uruchamiania|podczas uruchomienia",
+        "przy starcie": "przy starcie",
+        "po uruchomieniu": "po uruchomieniu"
+      }
+    }
+  },
+  {
+    "concept": "upgrade (paid tier)",
+    "english": "\\bupgrad\\w*\\b.*\\b(plans?|pro|premium|storage|icloud|subscription|copilot|tier|edition)\\b|\\b(plans?|pro|premium|storage|subscription|edition)\\b.*\\bupgrad",
+    "candidates": {
+      "de": {
+        "Upgrade/upgraden": "upgrade",
+        "aktualisieren": "aktualisier",
+        "umstellen": "umstell"
+      },
+      "fr": {
+        "passer à": "pass(er|ez) à",
+        "mettre à niveau": "niveau",
+        "mettre à jour": "à jour"
+      },
+      "it": {
+        "upgrade": "upgrade",
+        "aggiornare": "aggiorn",
+        "passa a": "passa(re)? a\\b"
+      },
+      "es": {
+        "actualizar": "actualiz",
+        "mejorar": "mejor",
+        "cambiar a": "cambi\\w* a\\b",
+        "ampliar": "ampli"
+      },
+      "es-419": {
+        "actualizar": "actualiz",
+        "mejorar": "mejor",
+        "cambiar a": "cambi\\w* a\\b",
+        "ampliar": "ampli"
+      },
+      "pt-BR": {
+        "upgrade": "upgrade",
+        "atualizar": "atualiz",
+        "mudar para": "mud\\w* para"
+      },
+      "nl": {
+        "upgrade/upgraden": "upgrad",
+        "bijwerken": "bijwerk|bijgewerkt",
+        "overstappen": "overstap"
+      },
+      "pl": {
+        "uaktualnić": "uaktualni",
+        "aktualizować": "\\baktualiz",
+        "przejść na": "przej\\w* na\\b",
+        "ulepszyć": "ulepsz"
+      },
+      "sv": {
+        "uppgradera": "uppgrader",
+        "uppdatera": "uppdater"
+      },
+      "ja": {
+        "アップグレード": "アップグレード",
+        "更新": "更新"
+      }
+    }
+  },
+  {
+    "concept": "phishing protection",
+    "english": "\\bphishing (protection|filter)|\\b(protection|protect\\w*) (against|from) phishing",
+    "candidates": {
+      "nl": {
+        "phishingbescherming": "phishingbescherming",
+        "bescherming tegen phishing": "bescherming tegen phishing",
+        "phishingfilter": "phishingfilter"
+      }
+    }
+  },
+  {
+    "concept": "sidebar",
+    "english": "\\bside ?bar\\b",
+    "candidates": {
+      "de": {
+        "Seitenleiste": "seitenleiste",
+        "Sidebar": "sidebar",
+        "Seitenbereich": "seitenbereich"
+      },
+      "fr": {
+        "barre latérale": "barre latérale",
+        "panneau latéral": "panneau latéral"
+      },
+      "it": {
+        "barra laterale": "barra laterale",
+        "pannello laterale": "pannello laterale|riquadro laterale"
+      },
+      "es": {
+        "barra lateral": "barra lateral",
+        "panel lateral": "panel lateral"
+      },
+      "es-419": {
+        "barra lateral": "barra lateral",
+        "panel lateral": "panel lateral"
+      },
+      "pt-BR": {
+        "barra lateral": "barra lateral",
+        "painel lateral": "painel lateral"
+      },
+      "nl": {
+        "zijbalk": "zijbalk",
+        "zijpaneel": "zijpaneel|zijvenster",
+        "navigatiekolom": "navigatiekolom"
+      },
+      "pl": {
+        "pasek boczny": "pas\\w* boczn",
+        "panel boczny": "panel\\w* boczn"
+      },
+      "sv": {
+        "sidofält": "sidofält",
+        "sidopanel": "sidopanel"
+      },
+      "ja": {
+        "サイドバー": "サイドバー",
+        "サイドパネル": "サイドパネル"
+      }
+    }
+  },
+  {
+    "concept": "dark theme",
+    "english": "\\bdark (theme|mode|appearance)\\b",
+    "candidates": {
+      "de": {
+        "dunkles Design": "dunkle\\w* design",
+        "dunkler Modus": "dunkle\\w* modus",
+        "Dunkelmodus": "dunkelmodus"
+      },
+      "fr": {
+        "thème sombre": "thème sombre",
+        "mode sombre": "mode sombre"
+      },
+      "it": {
+        "tema scuro": "tema scuro",
+        "modalità scura": "modalità scura"
+      },
+      "es": {
+        "tema oscuro": "tema oscuro",
+        "modo oscuro": "modo oscuro"
+      },
+      "es-419": {
+        "tema oscuro": "tema oscuro",
+        "modo oscuro": "modo oscuro"
+      },
+      "pt-BR": {
+        "tema escuro": "tema escuro",
+        "modo escuro": "modo escuro"
+      },
+      "nl": {
+        "donker thema": "donker\\w* thema",
+        "donkere modus": "donkere modus"
+      },
+      "pl": {
+        "ciemny motyw": "ciemn\\w* motyw|motyw\\w* ciemn",
+        "tryb ciemny": "tryb\\w* ciemn|ciemn\\w* tryb"
+      },
+      "sv": {
+        "mörkt tema": "mörk\\w* tema",
+        "mörkt läge": "mörk\\w* läge"
+      },
+      "ja": {
+        "ダークモード": "ダーク ?モード",
+        "ダークテーマ": "ダーク ?テーマ"
+      }
+    }
+  },
+  {
+    "concept": "app badge",
+    "english": "\\b(app(lication)?|icon|unread|notification|dock|taskbar)\\b.*\\bbadges?\\b|\\bbadges?\\b.*\\b(app(lication)?|icon|unread|notification)\\b|^badges?$",
+    "candidates": {
+      "pt-BR": {
+        "selo": "\\bselo",
+        "emblema": "emblema",
+        "aviso": "\\baviso",
+        "indicador": "indicador"
+      }
+    },
+    "exclude": {
+      "pt-BR": ["aviso"]
+    }
+  }
+]

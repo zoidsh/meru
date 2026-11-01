@@ -2,582 +2,681 @@
   "platformWords": {
     "severity": "wrong",
     "reason": "An entry with a platform msgctxt takes that platform's word from the style sheet's Platform words table.",
-    "entries": [
+    "rows": [
       {
         "row": "File",
-        "msgctxt": "macOS",
-        "msgid": "File",
-        "msgstr": "ファイル"
-      },
-      {
-        "row": "File",
-        "msgctxt": "Windows",
-        "msgid": "File",
-        "msgstr": "ファイル"
-      },
-      {
-        "row": "File",
-        "msgctxt": "Linux",
-        "msgid": "File",
-        "msgstr": "ファイル"
+        "macOS": [
+          {
+            "word": "ファイル",
+            "source": "(AppKit `MenuCommands` `File`)",
+            "labels": ["File"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "ファイル",
+            "source": "(TBX `7285_185699_185706`)",
+            "labels": ["File"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "ファイル",
+            "source": "(gtk4 `File`)",
+            "labels": ["File"]
+          }
+        ]
       },
       {
         "row": "View",
-        "msgctxt": "macOS",
-        "msgid": "View",
-        "msgstr": "表示"
-      },
-      {
-        "row": "View",
-        "msgctxt": "Windows",
-        "msgid": "View",
-        "msgstr": "表示"
-      },
-      {
-        "row": "View",
-        "msgctxt": "Linux",
-        "msgid": "View",
-        "msgstr": "表示"
-      },
-      {
-        "row": "Undo",
-        "msgctxt": "macOS",
-        "msgid": "Undo",
-        "msgstr": "取り消す"
-      },
-      {
-        "row": "Undo",
-        "msgctxt": "Windows",
-        "msgid": "Undo",
-        "msgstr": "元に戻す"
+        "macOS": [
+          {
+            "word": "表示",
+            "source": "(AppKit `MenuCommands` `View`)",
+            "labels": ["View"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "表示",
+            "source": "(TBX `9201_185833_185840`)",
+            "labels": ["View"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "表示",
+            "source": "(nautilus `shortcuts dialog` `View`)",
+            "labels": ["View"]
+          }
+        ]
       },
       {
         "row": "Undo",
-        "msgctxt": "Linux",
-        "msgid": "Undo",
-        "msgstr": "元に戻す"
+        "macOS": [
+          {
+            "word": "取り消す",
+            "source": "(Mail `MainMenu` `281.title`)",
+            "labels": ["Undo"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "元に戻す",
+            "source": "(TBX `5274_168784_168791`)",
+            "labels": ["Undo"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "元に戻す",
+            "source": "(gtk4 `_Undo`)",
+            "labels": ["Undo"]
+          }
+        ]
       },
       {
         "row": "Redo",
-        "msgctxt": "macOS",
-        "msgid": "Redo",
-        "msgstr": "やり直す"
-      },
-      {
-        "row": "Redo",
-        "msgctxt": "Windows",
-        "msgid": "Redo",
-        "msgstr": "やり直し"
-      },
-      {
-        "row": "Redo",
-        "msgctxt": "Linux",
-        "msgid": "Redo",
-        "msgstr": "やり直す"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "macOS",
-        "msgid": "Cut",
-        "msgstr": "カット"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "Windows",
-        "msgid": "Cut",
-        "msgstr": "切り取り"
+        "macOS": [
+          {
+            "word": "やり直す",
+            "source": "(Mail `MainMenu` `282.title`)",
+            "labels": ["Redo"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "やり直し",
+            "source": "(TBX `10268_169412_169417`)",
+            "labels": ["Redo"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "やり直す",
+            "source": "(gtk4 `_Redo`)",
+            "labels": ["Redo"]
+          }
+        ]
       },
       {
         "row": "Cut, `Cu&t`",
-        "msgctxt": "Linux",
-        "msgid": "Cut",
-        "msgstr": "切り取り"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "macOS",
-        "msgid": "Cu&t",
-        "msgstr": "カット"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "Windows",
-        "msgid": "Cu&t",
-        "msgstr": "切り取り"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "Linux",
-        "msgid": "Cu&t",
-        "msgstr": "切り取り"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "macOS",
-        "msgid": "Paste",
-        "msgstr": "ペースト"
+        "macOS": [
+          {
+            "word": "カット",
+            "source": "(AppKit `MenuCommands` `Cut`)",
+            "labels": ["Cut", "Cu&t"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "切り取り",
+            "source": "(TBX `1735_41913_41920`)",
+            "labels": ["Cut", "Cu&t"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "切り取り",
+            "source": "(gtk4 `Cu_t`)",
+            "labels": ["Cut", "Cu&t"]
+          }
+        ]
       },
       {
         "row": "Paste, `&Paste`",
-        "msgctxt": "Windows",
-        "msgid": "Paste",
-        "msgstr": "貼り付け"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "Linux",
-        "msgid": "Paste",
-        "msgstr": "貼り付け"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "macOS",
-        "msgid": "&Paste",
-        "msgstr": "ペースト"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "Windows",
-        "msgid": "&Paste",
-        "msgstr": "貼り付け"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "Linux",
-        "msgid": "&Paste",
-        "msgstr": "貼り付け"
+        "macOS": [
+          {
+            "word": "ペースト",
+            "source": "(AppKit `MenuCommands` `Paste`)",
+            "labels": ["Paste", "&Paste"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "貼り付け",
+            "source": "(TBX `11068_91030_91036`)",
+            "labels": ["Paste", "&Paste"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "貼り付け",
+            "source": "(gtk4 `_Paste`)",
+            "labels": ["Paste", "&Paste"]
+          }
+        ]
       },
       {
         "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "macOS",
-        "msgid": "Paste and Match Style",
-        "msgstr": "ペーストしてスタイルを合わせる"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "Windows",
-        "msgid": "Paste and Match Style",
-        "msgstr": "貼り付けて書式を合わせる"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "Linux",
-        "msgid": "Paste and Match Style",
-        "msgstr": "貼り付けてスタイルを合わせる"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "macOS",
-        "msgid": "Paste and &Match Style",
-        "msgstr": "ペーストしてスタイルを合わせる"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "Windows",
-        "msgid": "Paste and &Match Style",
-        "msgstr": "貼り付けて書式を合わせる"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "Linux",
-        "msgid": "Paste and &Match Style",
-        "msgstr": "貼り付けてスタイルを合わせる"
+        "macOS": [
+          {
+            "word": "ペーストしてスタイルを合わせる",
+            "source": "(AppKit `MenuCommands` `Paste and Match Style`)",
+            "labels": ["Paste and Match Style", "Paste and &Match Style"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "貼り付けて書式を合わせる",
+            "source": "inferred from TBX `11068_91030_91036`",
+            "labels": ["Paste and Match Style", "Paste and &Match Style"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "貼り付けてスタイルを合わせる",
+            "source": "inferred from gtk4 `_Paste`",
+            "labels": ["Paste and Match Style", "Paste and &Match Style"]
+          }
+        ]
       },
       {
         "row": "Select All, `Select &All`",
-        "msgctxt": "macOS",
-        "msgid": "Select All",
-        "msgstr": "すべてを選択"
-      },
-      {
-        "row": "Select All, `Select &All`",
-        "msgctxt": "Windows",
-        "msgid": "Select All",
-        "msgstr": "すべて選択"
-      },
-      {
-        "row": "Select All, `Select &All`",
-        "msgctxt": "Linux",
-        "msgid": "Select All",
-        "msgstr": "すべて選択"
-      },
-      {
-        "row": "Select All, `Select &All`",
-        "msgctxt": "Windows",
-        "msgid": "Select &All",
-        "msgstr": "すべて選択"
-      },
-      {
-        "row": "Select All, `Select &All`",
-        "msgctxt": "Linux",
-        "msgid": "Select &All",
-        "msgstr": "すべて選択"
+        "macOS": [
+          {
+            "word": "すべてを選択",
+            "source": "(AppKit `MenuCommands` `Select All`)",
+            "labels": ["Select All"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "すべて選択",
+            "source": "(TBX `10476_185277_185284`)",
+            "labels": ["Select All", "Select &All"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "すべて選択",
+            "source": "(gtk4 `Select _All`)",
+            "labels": ["Select All", "Select &All"]
+          }
+        ]
       },
       {
         "row": "About {appName}",
-        "msgctxt": "macOS",
-        "msgid": "About {appName}",
-        "msgstr": "{appName}について"
-      },
-      {
-        "row": "About {appName}",
-        "msgctxt": "Windows",
-        "msgid": "About {appName}",
-        "msgstr": "{appName}のバージョン情報"
-      },
-      {
-        "row": "About {appName}",
-        "msgctxt": "Linux",
-        "msgid": "About {appName}",
-        "msgstr": "{appName}について"
-      },
-      {
-        "row": "Check for Updates…",
-        "msgctxt": "macOS",
-        "msgid": "Check for Updates…",
-        "msgstr": "アップデートを確認…"
-      },
-      {
-        "row": "Check for Updates…",
-        "msgctxt": "Windows",
-        "msgid": "Check for Updates…",
-        "msgstr": "更新プログラムの確認…"
+        "macOS": [
+          {
+            "word": "{appName}について",
+            "source": "(Mail `MainMenu` `628.title`, メールについて)",
+            "labels": ["About {appName}"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "{appName}のバージョン情報",
+            "source": "inferred from TBX `6036_211259_486275` バージョン情報, the About menu item",
+            "labels": ["About {appName}"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "{appName}について",
+            "source": "(gtk4 `About %s`, written there with a space this sheet drops)",
+            "labels": ["About {appName}"]
+          }
+        ]
       },
       {
         "row": "Check for Updates…",
-        "msgctxt": "Linux",
-        "msgid": "Check for Updates…",
-        "msgstr": "更新を確認…"
+        "macOS": [
+          {
+            "word": "アップデートを確認…",
+            "source": "(Software Update `Check for Updates`)",
+            "labels": ["Check for Updates…"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "更新プログラムの確認…",
+            "source": "inferred from TBX `14473_3621_3629` 更新プログラム and `4233_30878_2717480` 確認する",
+            "labels": ["Check for Updates…"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "更新を確認…",
+            "source": "inferred from gtk4 `Show Graphic Updates`, グラフィックの更新を表示する",
+            "labels": ["Check for Updates…"]
+          }
+        ]
       },
       {
         "row": "Settings, the app-menu item",
-        "msgctxt": "macOS",
-        "msgid": "Settings",
-        "msgstr": "設定…"
-      },
-      {
-        "row": "Settings, the app-menu item",
-        "msgctxt": "Windows",
-        "msgid": "Settings",
-        "msgstr": "設定"
-      },
-      {
-        "row": "Settings, the app-menu item",
-        "msgctxt": "Linux",
-        "msgid": "Settings",
-        "msgstr": "設定"
-      },
-      {
-        "row": "Compose, the File menu item",
-        "msgctxt": "macOS",
-        "msgid": "Compose",
-        "msgstr": "新規メッセージ"
-      },
-      {
-        "row": "Compose, the File menu item",
-        "msgctxt": "Windows",
-        "msgid": "Compose",
-        "msgstr": "新しいメール"
+        "macOS": [
+          {
+            "word": "設定…",
+            "source": "(AppKit `MenuCommands` `Settings\\U2026`)",
+            "labels": ["Settings"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "設定",
+            "source": "(TBX `21910_780478_1049442`)",
+            "labels": ["Settings"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "設定",
+            "source": "(gtk4 `Settings`)",
+            "labels": ["Settings"]
+          }
+        ]
       },
       {
         "row": "Compose, the File menu item",
-        "msgctxt": "Linux",
-        "msgid": "Compose",
-        "msgstr": "新しいメール"
+        "macOS": [
+          {
+            "word": "新規メッセージ",
+            "source": "(Mail `MainMenu` `374.title`, New Message)",
+            "labels": ["Compose"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "新しいメール",
+            "source": "inferred: TBX `34677_1998714_2002236` gives 新着メール, which is mail received",
+            "labels": ["Compose"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "新しいメール",
+            "source": "inferred from nautilus `New _Window`, 新しいウィンドウ",
+            "labels": ["Compose"]
+          }
+        ]
       },
       {
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "macOS",
-        "msgid": "Sa&ve Image As…",
-        "msgstr": "画像を別名で保存…"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "Windows",
-        "msgid": "Sa&ve Image As…",
-        "msgstr": "名前を付けて画像を保存…"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "Linux",
-        "msgid": "Sa&ve Image As…",
-        "msgstr": "名前を付けて画像を保存…"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "macOS",
-        "msgid": "Show Save As dialog before downloading",
-        "contains": "別名で保存"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "Windows",
-        "msgid": "Show Save As dialog before downloading",
-        "contains": "名前を付けて保存"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "Linux",
-        "msgid": "Show Save As dialog before downloading",
-        "contains": "名前を付けて保存"
+        "macOS": [
+          {
+            "word": "別名で保存…",
+            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "sentences": ["Show Save As dialog before downloading"]
+          },
+          {
+            "word": "画像を別名で保存…",
+            "source": "inferred with Mail `Localizable` `CopyImageMenuItem`, 画像をコピー",
+            "labels": ["Sa&ve Image As…"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "名前を付けて保存",
+            "source": "(TBX `12985_534974_536198`)",
+            "sentences": ["Show Save As dialog before downloading"]
+          },
+          {
+            "word": "名前を付けて画像を保存…",
+            "source": "inferred with TBX `1294_64520_373217` 画像",
+            "labels": ["Sa&ve Image As…"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "名前を付けて保存…",
+            "source": "(gedit `Save _As…`)",
+            "sentences": ["Show Save As dialog before downloading"]
+          },
+          {
+            "word": "名前を付けて画像を保存…",
+            "source": "inferred",
+            "labels": ["Sa&ve Image As…"]
+          }
+        ]
       },
       {
         "row": "Export, the save dialog's button",
-        "msgctxt": "macOS",
-        "msgid": "Export",
-        "msgstr": "書き出す"
-      },
-      {
-        "row": "Export, the save dialog's button",
-        "msgctxt": "Windows",
-        "msgid": "Export",
-        "msgstr": "エクスポート"
-      },
-      {
-        "row": "Export, the save dialog's button",
-        "msgctxt": "Linux",
-        "msgid": "Export",
-        "msgstr": "エクスポート"
-      },
-      {
-        "row": "Shift, the key",
-        "msgctxt": "macOS",
-        "msgid": "Shift",
-        "msgstr": "shift"
-      },
-      {
-        "row": "Shift, the key",
-        "msgctxt": "Windows",
-        "msgid": "Shift",
-        "msgstr": "Shift"
+        "macOS": [
+          {
+            "word": "書き出す",
+            "source": "(AppKit `Document` `Export`)",
+            "labels": ["Export"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "エクスポート",
+            "source": "(TBX `7948_52504_52511`)",
+            "labels": ["Export"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "エクスポート",
+            "source": "inferred: no GNOME source has it",
+            "labels": ["Export"]
+          }
+        ]
       },
       {
         "row": "Shift, the key",
-        "msgctxt": "Linux",
-        "msgid": "Shift",
-        "msgstr": "Shift"
+        "macOS": [
+          {
+            "word": "shift",
+            "source": "lower case (AppKit `FunctionKeyNames` `Shift`)",
+            "labels": ["Shift"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Shift",
+            "source": "(TBX `3412_112291_112299`, Shift キー, with キー only in running prose)",
+            "labels": ["Shift"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Shift",
+            "source": "(gtk4 `keyboard label` `Shift`)",
+            "labels": ["Shift"]
+          }
+        ]
       },
       {
         "row": "Show Meru, the tray item",
-        "msgctxt": "macOS",
-        "msgid": "Show Meru",
-        "msgstr": "Meruを表示"
-      },
-      {
-        "row": "Show Meru, the tray item",
-        "msgctxt": "Windows",
-        "msgid": "Show Meru",
-        "msgstr": "Meruを表示"
-      },
-      {
-        "row": "Show Meru, the tray item",
-        "msgctxt": "Linux",
-        "msgid": "Show Meru",
-        "msgstr": "Meruを表示"
-      },
-      {
-        "row": "Hide Meru, the tray item",
-        "msgctxt": "macOS",
-        "msgid": "Hide Meru",
-        "msgstr": "Meruを非表示"
-      },
-      {
-        "row": "Hide Meru, the tray item",
-        "msgctxt": "Windows",
-        "msgid": "Hide Meru",
-        "msgstr": "Meruを非表示"
+        "macOS": [
+          {
+            "word": "Meruを表示",
+            "source": "(AppKit `Common` `Show`, 表示)",
+            "labels": ["Show Meru"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Meruを表示",
+            "source": "(TBX `19508_660023_2731321` 表示する)",
+            "labels": ["Show Meru"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Meruを表示",
+            "source": "(gtk4 `Show`, 表示)",
+            "labels": ["Show Meru"]
+          }
+        ]
       },
       {
         "row": "Hide Meru, the tray item",
-        "msgctxt": "Linux",
-        "msgid": "Hide Meru",
-        "msgstr": "Meruを隠す"
+        "macOS": [
+          {
+            "word": "Meruを非表示",
+            "source": "(Mail `MainMenu` `632.title`, メールを非表示)",
+            "labels": ["Hide Meru"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Meruを非表示",
+            "source": "(TBX `20202_719546_778268` 非表示にする)",
+            "labels": ["Hide Meru"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Meruを隠す",
+            "source": "(gtk4 `Hide %s`, from GTK's macOS app menu)",
+            "labels": ["Hide Meru"]
+          }
+        ]
       },
       {
         "row": "Quit, the tray item",
-        "msgctxt": "Windows",
-        "msgid": "Exit",
-        "msgstr": "終了"
-      },
-      {
-        "row": "Quit, the tray item",
-        "msgctxt": "Linux",
-        "msgid": "Quit",
-        "msgstr": "終了"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "Enable system tray icon",
-        "contains": "通知領域"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "Enable system tray icon",
-        "contains": "システムトレイ"
+        "macOS": "macOS shows the menu's Quit {appName}",
+        "Windows": [
+          {
+            "word": "終了",
+            "source": "(TBX `11976_185681_185688`, the Exit item of a taskbar icon's menu)",
+            "labels": ["Exit"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "終了",
+            "source": "inferred from gtk4 `Quit %s`, _%s を終了_: GTK has no standalone Quit, and the Microsoft Terminology Collection is no Linux source",
+            "labels": ["Quit"]
+          }
+        ]
       },
       {
         "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "System tray icon",
-        "contains": "通知領域"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "System tray icon",
-        "contains": "システムトレイ"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "Choose the color of the system tray icon.",
-        "contains": "通知領域"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "Choose the color of the system tray icon.",
-        "contains": "システムトレイ"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "Show the application icon in the system tray.",
-        "contains": "通知領域"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "Show the application icon in the system tray.",
-        "contains": "システムトレイ"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
-        "contains": "通知領域"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
-        "contains": "システムトレイ"
+        "macOS": "macOS shows the menu bar instead: メニューバー",
+        "Windows": [
+          {
+            "word": "通知領域",
+            "source": "(TBX `10299_85657_85667`, notification area)",
+            "sentences": [
+              "Enable system tray icon",
+              "System tray icon",
+              "Choose the color of the system tray icon.",
+              "Show the application icon in the system tray.",
+              "Automatically select the first account with unread emails when clicking the system tray icon."
+            ]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "システムトレイ",
+            "source": "inferred: GNOME has no tray; TBX `55084_3122863_3122924` gives システム トレイ for the system tray",
+            "sentences": [
+              "Enable system tray icon",
+              "System tray icon",
+              "Choose the color of the system tray icon.",
+              "Show the application icon in the system tray.",
+              "Automatically select the first account with unread emails when clicking the system tray icon."
+            ]
+          }
+        ]
       },
       {
         "row": "Hide {appName}",
-        "msgctxt": "macOS",
-        "msgid": "Hide {appName}",
-        "msgstr": "{appName}を非表示"
+        "macOS": [
+          {
+            "word": "{appName}を非表示",
+            "source": "(Mail `MainMenu` `632.title`, メールを非表示)",
+            "labels": ["Hide {appName}"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Hide Others",
-        "msgctxt": "macOS",
-        "msgid": "Hide Others",
-        "msgstr": "ほかを非表示"
+        "macOS": [
+          {
+            "word": "ほかを非表示",
+            "source": "(Mail `MainMenu` `622.title`)",
+            "labels": ["Hide Others"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Show All",
-        "msgctxt": "macOS",
-        "msgid": "Show All",
-        "msgstr": "すべてを表示"
+        "macOS": [
+          {
+            "word": "すべてを表示",
+            "source": "(Mail `MainMenu` `625.title`)",
+            "labels": ["Show All"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Quit {appName}",
-        "msgctxt": "macOS",
-        "msgid": "Quit {appName}",
-        "msgstr": "{appName}を終了"
-      },
-      {
-        "row": "Quit {appName}",
-        "msgctxt": "Windows",
-        "msgid": "Quit {appName}",
-        "msgstr": "{appName}を終了"
-      },
-      {
-        "row": "Quit {appName}",
-        "msgctxt": "Linux",
-        "msgid": "Quit {appName}",
-        "msgstr": "{appName}を終了"
+        "macOS": [
+          {
+            "word": "{appName}を終了",
+            "source": "(Mail `MainMenu` `631.title`, メールを終了)",
+            "labels": ["Quit {appName}"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "{appName}を終了",
+            "source": "inferred from TBX `9679_334563_486367` 終了する, to close a program",
+            "labels": ["Quit {appName}"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "{appName}を終了",
+            "source": "(gtk4 `Quit %s`, written there with a space this sheet drops)",
+            "labels": ["Quit {appName}"]
+          }
+        ]
       },
       {
         "row": "Close Window",
-        "msgctxt": "macOS",
-        "msgid": "Close Window",
-        "msgstr": "ウインドウを閉じる"
+        "macOS": [
+          {
+            "word": "ウインドウを閉じる",
+            "source": "(AppKit `MenuCommands` `Close Window`)",
+            "labels": ["Close Window"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Window, the menu",
-        "msgctxt": "macOS",
-        "msgid": "Window",
-        "msgstr": "ウインドウ"
+        "macOS": [
+          {
+            "word": "ウインドウ",
+            "source": "(AppKit `MenuCommands` `Window`)",
+            "labels": ["Window"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Minimize",
-        "msgctxt": "macOS",
-        "msgid": "Minimize",
-        "msgstr": "しまう"
+        "macOS": [
+          {
+            "word": "しまう",
+            "source": "(AppKit `MenuCommands` `Minimize`; Dictionary and Screen Sharing `MainMenu` `23.title`)",
+            "labels": ["Minimize"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Zoom, the window",
-        "msgctxt": "macOS",
-        "msgid": "Zoom",
-        "msgstr": "拡大/縮小"
+        "macOS": [
+          {
+            "word": "拡大/縮小",
+            "source": "(Mail `MainMenu` `295.title`)",
+            "labels": ["Zoom"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Bring All to Front",
-        "msgctxt": "macOS",
-        "msgid": "Bring All to Front",
-        "msgstr": "すべてを手前に移動"
+        "macOS": [
+          {
+            "word": "すべてを手前に移動",
+            "source": "(AppKit `MenuCommands` `Bring All to Front`)",
+            "labels": ["Bring All to Front"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Speech",
-        "msgctxt": "macOS",
-        "msgid": "Speech",
-        "msgstr": "スピーチ"
+        "macOS": [
+          {
+            "word": "スピーチ",
+            "source": "(Mail `MainMenu` `1535.title`)",
+            "labels": ["Speech"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Start Speaking",
-        "msgctxt": "macOS",
-        "msgid": "Start Speaking",
-        "msgstr": "読み上げを開始"
+        "macOS": [
+          {
+            "word": "読み上げを開始",
+            "source": "(Mail `MainMenu` `1536.title`)",
+            "labels": ["Start Speaking"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Stop Speaking",
-        "msgctxt": "macOS",
-        "msgid": "Stop Speaking",
-        "msgstr": "読み上げを停止"
+        "macOS": [
+          {
+            "word": "読み上げを停止",
+            "source": "(Mail `MainMenu` `1537.title`)",
+            "labels": ["Stop Speaking"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Look Up “{selection}”",
-        "msgctxt": "macOS",
-        "msgid": "Look Up “{selection}”",
-        "msgstr": "“{selection}”を調べる"
+        "macOS": [
+          {
+            "word": "“{selection}”を調べる",
+            "source": "(AppKit `MenuCommands` `Look Up \\U201C%@\\U201D`)",
+            "labels": ["Look Up “{selection}”"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Show in Finder",
-        "msgctxt": "macOS",
-        "msgid": "Show in Finder",
-        "msgstr": "Finderに表示"
+        "macOS": [
+          {
+            "word": "Finderに表示",
+            "source": "(Mail `Preferences` `ShowExtensionApplicationInFinder`)",
+            "labels": ["Show in Finder"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "OK, a native dialog's button",
-        "msgctxt": "macOS",
-        "msgid": "OK",
-        "msgstr": "OK"
-      },
-      {
-        "row": "OK, a native dialog's button",
-        "msgctxt": "Windows",
-        "msgid": "OK",
-        "msgstr": "OK"
-      },
-      {
-        "row": "OK, a native dialog's button",
-        "msgctxt": "Linux",
-        "msgid": "OK",
-        "msgstr": "OK"
+        "macOS": [
+          {
+            "word": "OK",
+            "source": "(AppKit `Common` `OK`)",
+            "labels": ["OK"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "OK",
+            "source": "(TBX `43243_2447290_2448313`, the dialog button)",
+            "labels": ["OK"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "OK",
+            "source": "(gtk4 `_OK`, written `OK(_O)`, its access key dropped)",
+            "labels": ["OK"]
+          }
+        ]
       }
     ]
   },
@@ -592,139 +691,139 @@
       }
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-browser",
       "pattern": "ブラウザー",
       "severity": "wrong",
       "reason": "Chrome writes ブラウザ, without ー, never ブラウザー (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-folder",
       "pattern": "フォルダー",
       "severity": "wrong",
       "reason": "Chrome writes フォルダ, without ー, never フォルダー (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-computer",
       "pattern": "コンピューター",
       "severity": "wrong",
       "reason": "Chrome writes コンピュータ, without ー, never コンピューター (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-editor",
       "pattern": "エディター",
       "severity": "wrong",
       "reason": "Chrome writes エディタ, without ー, never エディター (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-provider",
       "pattern": "プロバイダー",
       "severity": "wrong",
       "reason": "Chrome writes プロバイダ, without ー, never プロバイダー (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-printer",
       "pattern": "プリンター",
       "severity": "wrong",
       "reason": "Chrome writes プリンタ, without ー, never プリンター (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-viewer",
       "pattern": "ビューアー",
       "severity": "wrong",
       "reason": "Chrome writes ビューア, without ー, never ビューアー (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-driver",
       "pattern": "ドライバー",
       "severity": "wrong",
       "reason": "Chrome writes ドライバ, without ー, never ドライバー (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-parameter",
       "pattern": "パラメーター",
       "severity": "wrong",
       "reason": "Chrome writes パラメータ, without ー, never パラメーター (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-security",
       "pattern": "セキュリティー",
       "severity": "wrong",
       "reason": "Chrome writes セキュリティ, without ー, never セキュリティー (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-category",
       "pattern": "カテゴリー",
       "severity": "wrong",
       "reason": "Chrome writes カテゴリ, without ー, never カテゴリー (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-memory",
       "pattern": "メモリー",
       "severity": "wrong",
       "reason": "Chrome writes メモリ, without ー, never メモリー (Chrome writes the banned form in 1 message)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-user",
       "pattern": "ユーザ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes ユーザー, with ー, never ユーザ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-server",
       "pattern": "サーバ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes サーバー, with ー, never サーバ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-manager",
       "pattern": "マネージャ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes マネージャー, with ー, never マネージャ (Chrome writes the banned form in 5 messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-developer",
       "pattern": "デベロッパ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes デベロッパー, with ー, never デベロッパ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-launcher",
       "pattern": "ランチャ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes ランチャー, with ー, never ランチャ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-center",
       "pattern": "センタ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes センター, with ー, never センタ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-reader",
       "pattern": "リーダ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes リーダー, with ー, never リーダ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-header",
       "pattern": "ヘッダ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes ヘッダー, with ー, never ヘッダ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-footer",
       "pattern": "フッタ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes フッター, with ー, never フッタ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-tracker",
       "pattern": "トラッカ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes トラッカー, with ー, never トラッカ (Chrome writes the banned form in none of its messages)."
     },
     {
-      "id": "long-vowel",
+      "id": "long-vowel-explorer",
       "pattern": "エクスプローラ(?!ー)",
       "severity": "wrong",
       "reason": "Chrome writes エクスプローラー, with ー, never エクスプローラ (Chrome writes the banned form in none of its messages)."
@@ -778,7 +877,7 @@
       "reason": "A user interface is インターフェイス, never インターフェース (agent-chosen: インターフェイス: 5 of 7 (Apple, Firefox, LibreOffice, Microsoft, VS Code); Chrome has the word only for a network interface)."
     },
     {
-      "id": "website",
+      "id": "website-latin",
       "pattern": "Webサイト",
       "severity": "wrong",
       "reason": "A website is ウェブサイト, as Chrome writes it, never Webサイト (Chrome writes the banned form in none of its messages)."
@@ -802,23 +901,37 @@
       "msgidPattern": "\\bdownload history\\b",
       "expect": "ダウンロード履歴",
       "severity": "wrong",
-      "reason": "The download history is ダウンロード履歴, as Chrome writes it (Chrome: 10 of 10 messages)."
+      "reason": "The download history is ダウンロード履歴, as Chrome writes it (Chrome: 10 of 10 messages).",
+      "example": {
+        "msgid": "Recent download history",
+        "clean": "最近のダウンロード履歴",
+        "fault": "最近のダウンロード"
+      }
     },
     {
       "id": "upgrade",
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "Meru Proにアップグレード",
       "severity": "wrong",
-      "reason": "Upgrading to Pro is Meru Proにアップグレード, with Gmail's own Upgrade wording for Google's paid storage, アップグレード, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)); never a word for purchase."
+      "reason": "Upgrading to Pro is Meru Proにアップグレード, with Gmail's own Upgrade wording for Google's paid storage, アップグレード, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)); never a word for purchase.",
+      "example": {
+        "msgid": "Upgrade to Meru Pro",
+        "clean": "Meru Proにアップグレード",
+        "fault": "Meru Proをアップグレード"
+      }
     },
     {
-      "id": "upgrade",
+      "id": "upgrade-label",
       "msgctxt": null,
       "msgid": "Upgrade",
       "origin": "packages/renderer/",
       "expect": "アップグレード",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is アップグレード, Gmail's own Upgrade wording for Google's paid storage, アップグレード (glossary); the seven apps' word for upgrading in general is secondary (アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))."
+      "reason": "The standalone Upgrade label is アップグレード, Gmail's own Upgrade wording for Google's paid storage, アップグレード (glossary); the seven apps' word for upgrading in general is secondary (アップグレード: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)).",
+      "example": {
+        "clean": "アップグレード",
+        "fault": "購入"
+      }
     },
     {
       "id": "gmail-label",
@@ -826,38 +939,60 @@
       "msgidPattern": "\\blabel\\b",
       "expect": "ラベル",
       "severity": "wrong",
-      "reason": "A Gmail label is Gmail's ラベル (glossary)."
+      "reason": "A Gmail label is Gmail's ラベル (glossary).",
+      "example": {
+        "msgid": "Label",
+        "fault": "タグ"
+      }
     },
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
       "expect": "トースト",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト).",
+      "example": {
+        "msgid": "Close toast",
+        "clean": "トーストを閉じる",
+        "fault": "通知を閉じる"
+      }
     },
     {
-      "id": "toast",
+      "id": "toast-heading",
       "msgctxt": "toasts",
       "msgid": "Notifications",
       "expect": "トースト",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト).",
+      "example": {
+        "clean": "トースト",
+        "fault": "通知"
+      }
     },
     {
-      "id": "toast",
+      "id": "toast-heading-gmail",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
       "expect": "トースト",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト)."
+      "reason": "Glossary, agent-chosen: a toast is トースト, never the notification word 通知 (by step 4c's direct match: トースト: 2 of 7 (VS Code, Microsoft), thin; Microsoft's toast notification is トースト and トースト通知, and VS Code's notification toasts are 通知トースト, all with トースト).",
+      "example": {
+        "clean": "トースト",
+        "fault": "通知"
+      }
     },
     {
       "id": "button",
       "msgidPattern": "\\bbuttons?\\b",
       "expect": "ボタン",
       "severity": "wrong",
-      "reason": "An on-screen button is a ボタン, as Chrome writes it (Chrome: 141 of 141 messages)."
+      "reason": "An on-screen button is a ボタン, as Chrome writes it (Chrome: 141 of 141 messages).",
+      "example": {
+        "msgid": "Show bookmarks button",
+        "clean": "ブックマークボタンを表示",
+        "fault": "ブックマークキーを表示"
+      }
     },
     {
       "id": "unread-badge",
@@ -865,14 +1000,23 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "未読バッジ",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is バッジ, counted as Meru uses it, an unread count on an app icon (バッジ: 3 of 7 (Thunderbird, Microsoft, Apple))."
+      "reason": "Glossary, agent-chosen: the unread badge is バッジ, counted as Meru uses it, an unread count on an app icon (バッジ: 3 of 7 (Thunderbird, Microsoft, Apple)).",
+      "example": {
+        "msgid": "Show unread badge",
+        "fault": "未読数を表示"
+      }
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "タブバー",
       "severity": "wrong",
-      "reason": "The tab strip is タブバー, as Chrome writes it (Chrome: 7 of 7 messages)."
+      "reason": "The tab strip is タブバー, as Chrome writes it (Chrome: 7 of 7 messages).",
+      "example": {
+        "msgid": "Narrow the tab strip",
+        "clean": "タブバーを狭くする",
+        "fault": "タブストリップを狭くする"
+      }
     },
     {
       "id": "meru-label",
@@ -880,146 +1024,230 @@
       "msgid": "Label",
       "expect": "名前",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (名前: 7 of 7)."
+      "reason": "Glossary, agent-chosen (名前: 7 of 7).",
+      "example": {
+        "clean": "名前",
+        "fault": "ラベル"
+      }
     },
     {
-      "id": "meru-label",
+      "id": "meru-label-prompt",
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "名前",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (名前: 7 of 7)."
+      "reason": "Glossary, agent-chosen (名前: 7 of 7).",
+      "example": {
+        "clean": "名前を入力",
+        "fault": "ラベルを入力"
+      }
     },
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "デバイス名",
       "severity": "wrong",
-      "reason": "A device label is デバイス名, Chrome's word for a device name (Chrome: 10 of 11 messages)."
+      "reason": "A device label is デバイス名, Chrome's word for a device name (Chrome: 10 of 11 messages).",
+      "example": {
+        "msgid": "Device label",
+        "clean": "デバイス名",
+        "fault": "デバイスラベル"
+      }
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "チャンネル",
       "severity": "wrong",
-      "reason": "A release channel is a チャンネル: リリースチャンネル, ベータチャンネル, with Chrome's チャンネル (Chrome: 11 of 11 messages)."
+      "reason": "A release channel is a チャンネル: リリースチャンネル, ベータチャンネル, with Chrome's チャンネル (Chrome: 11 of 11 messages).",
+      "example": {
+        "msgid": "Release channel",
+        "fault": "リリース経路"
+      }
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "信頼するホスト",
       "severity": "wrong",
-      "reason": "Trusted hosts are 信頼するホスト, with Chrome's 信頼 (Chrome: 22 of 22 messages)."
+      "reason": "Trusted hosts are 信頼するホスト, with Chrome's 信頼 (Chrome: 22 of 22 messages).",
+      "example": {
+        "msgid": "Trusted hosts",
+        "fault": "安全なホスト"
+      }
     },
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "フィッシング対策",
       "severity": "wrong",
-      "reason": "Phishing protection is フィッシング対策, with Chrome's フィッシング (Chrome: 4 of 4 messages)."
+      "reason": "Phishing protection is フィッシング対策, with Chrome's フィッシング (Chrome: 4 of 4 messages).",
+      "example": {
+        "msgid": "Phishing protection",
+        "fault": "フィッシング保護"
+      }
     },
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "不在通知",
       "severity": "wrong",
-      "reason": "Out of office is Gmail's own vacation responder, 不在通知, as Gmail Help names its setting (不在通知 ON; support.google.com/mail/answer/25922)."
+      "reason": "Out of office is Gmail's own vacation responder, 不在通知, as Gmail Help names its setting (不在通知 ON; support.google.com/mail/answer/25922).",
+      "example": {
+        "msgid": "Open Gmail settings to turn off out of office",
+        "clean": "Gmailの設定を開いて不在通知をオフにする",
+        "fault": "Gmailの設定を開いて休暇応答をオフにする"
+      }
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "マルチ受信トレイ",
       "severity": "wrong",
-      "reason": "Multiple inboxes is Gmail's own inbox type, マルチ受信トレイ, as Gmail Help names it (support.google.com/mail/answer/9694882)."
+      "reason": "Multiple inboxes is Gmail's own inbox type, マルチ受信トレイ, as Gmail Help names it (support.google.com/mail/answer/9694882).",
+      "example": {
+        "msgid": "Multiple inboxes",
+        "clean": "マルチ受信トレイ",
+        "fault": "複数の受信トレイ"
+      }
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "通知",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (通知: 7 of 7)."
+      "reason": "Glossary, agent-chosen (通知: 7 of 7).",
+      "example": {
+        "msgid": "Notify for",
+        "fault": "知らせる対象"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-breeze",
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^ブリーズ$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン.",
+      "example": {
+        "fault": "Breeze"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-chime",
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^チャイム$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン.",
+      "example": {
+        "fault": "鐘"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-duet",
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^デュエット$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン.",
+      "example": {
+        "fault": "Duet"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-knock",
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^ノック$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン.",
+      "example": {
+        "fault": "Knock"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-linen",
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^リネン$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are ブリーズ, チャイム, デュエット, ノック and リネン.",
+      "example": {
+        "fault": "Linen"
+      }
     },
     {
       "id": "system-settings",
       "msgidPattern": "\\bSystem Settings\\b",
       "expect": "システム設定",
       "severity": "wrong",
-      "reason": "System Settings is Apple's システム設定, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+      "reason": "System Settings is Apple's システム設定, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
+      "example": {
+        "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
+        "clean": "システム設定でもオンにしてください。",
+        "fault": "システム環境設定でもオンにしてください。"
+      }
     },
     {
       "id": "dock",
       "msgidPattern": "\\bdock\\b",
       "expect": "Dock",
       "severity": "wrong",
-      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock).",
+      "example": {
+        "msgid": "Dock icon",
+        "clean": "Dockアイコン",
+        "fault": "ドックアイコン"
+      }
     },
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "アクティブでない|非アクティブ",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's アクティブでない, as in アクティブでないタブ, never the systems' Sleep word (Chrome: 8 of 8 messages)."
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's アクティブでない, as in アクティブでないタブ, never the systems' Sleep word (Chrome: 8 of 8 messages).",
+      "example": {
+        "msgid": "Hibernate idle tabs",
+        "clean": "使われていないタブを非アクティブにする",
+        "fault": "使われていないタブを休止"
+      }
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "メニューバー",
       "severity": "wrong",
-      "reason": "The macOS menu bar is the メニューバー, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar)."
+      "reason": "The macOS menu bar is the メニューバー, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar).",
+      "example": {
+        "msgid": "Menu bar icon",
+        "clean": "メニューバーのアイコン",
+        "fault": "メニュー列のアイコン"
+      }
     },
     {
       "id": "do-not-disturb",
       "msgidPattern": "\\bdo not disturb\\b",
       "expect": "おやすみモード",
       "severity": "wrong",
-      "reason": "Do Not Disturb is おやすみモード, Apple's name for macOS's own feature, in Meru's own copy too."
+      "reason": "Do Not Disturb is おやすみモード, Apple's name for macOS's own feature, in Meru's own copy too.",
+      "example": {
+        "msgid": "Turn Do Not Disturb off",
+        "clean": "おやすみモードをオフにする",
+        "fault": "通知停止をオフにする"
+      }
     },
     {
       "id": "launcher",
       "msgidPattern": "\\blauncher\\b",
       "expect": "ランチャー",
       "severity": "wrong",
-      "reason": "The launcher is the ランチャー, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
+      "reason": "The launcher is the ランチャー, as Chrome names ChromeOS's (Chrome: 19 of 20 messages).",
+      "example": {
+        "msgid": "In launcher",
+        "clean": "ランチャー内",
+        "fault": "起動ツール内"
+      }
     },
     {
       "id": "zoom",
@@ -1027,28 +1255,47 @@
       "msgctxt": null,
       "expect": "ズーム",
       "severity": "wrong",
-      "reason": "A page's zoom is ズーム and its zoom level ズームレベル, as Chrome writes them (Chrome: 5 of 6 messages with zoom level); Zoom In and Zoom Out keep Chrome's 拡大 and 縮小."
+      "reason": "A page's zoom is ズーム and its zoom level ズームレベル, as Chrome writes them (Chrome: 5 of 6 messages with zoom level); Zoom In and Zoom Out keep Chrome's 拡大 and 縮小.",
+      "example": {
+        "msgid": "Persist zoom",
+        "clean": "ズームを保持",
+        "fault": "拡大率を保持"
+      }
     },
     {
       "id": "default-app",
       "msgidPattern": "\\bdefault (web )?browser\\b|\\bdefault mail client\\b",
       "expect": "既定",
       "severity": "wrong",
-      "reason": "The system's default browser or mail client is 既定の…, as Chrome writes it: Chrome を既定のブラウザに設定 (Chrome: 10 of 11 messages with default browser)."
+      "reason": "The system's default browser or mail client is 既定の…, as Chrome writes it: Chrome を既定のブラウザに設定 (Chrome: 10 of 11 messages with default browser).",
+      "example": {
+        "msgid": "Open this link in your default browser?",
+        "clean": "このリンクを既定のブラウザで開きますか?",
+        "fault": "このリンクをデフォルトのブラウザで開きますか?"
+      }
     },
     {
       "id": "default",
       "msgidPattern": "\\bdefaults?\\b(?! (web )?browser\\b| mail client\\b)",
       "expect": "デフォルト",
       "severity": "wrong",
-      "reason": "Any other default is デフォルト, as Chrome writes it (Chrome: 90 of 98 messages with default, outside default browser)."
+      "reason": "Any other default is デフォルト, as Chrome writes it (Chrome: 90 of 98 messages with default, outside default browser).",
+      "example": {
+        "msgid": "Default download location",
+        "clean": "デフォルトのダウンロード先",
+        "fault": "既定のダウンロード先"
+      }
     },
     {
       "id": "user-agent",
       "msgidPattern": "\\buser agents?\\b",
       "expect": "ユーザーエージェント",
       "severity": "wrong",
-      "reason": "A user agent is ユーザーエージェント, Chrome's ユーザー エージェント without its space (Chrome: 1 of 1 message)."
+      "reason": "A user agent is ユーザーエージェント, Chrome's ユーザー エージェント without its space (Chrome: 1 of 1 message).",
+      "example": {
+        "msgid": "Send a user agent that names Meru.",
+        "fault": "Meruの名前を含むUAを送信します。"
+      }
     },
     {
       "id": "export",
@@ -1056,56 +1303,85 @@
       "msgctxt": null,
       "expect": "エクスポート",
       "severity": "wrong",
-      "reason": "Export is エクスポート in Meru's own copy, as Chrome writes it (Chrome: 16 of 16 messages); the macOS label keeps Apple's 書き出す."
+      "reason": "Export is エクスポート in Meru's own copy, as Chrome writes it (Chrome: 16 of 16 messages); the macOS label keeps Apple's 書き出す.",
+      "example": {
+        "msgid": "Export logs",
+        "clean": "ログをエクスポート",
+        "fault": "ログを書き出す"
+      }
     },
     {
       "id": "inspect-element",
       "msgid": "Inspect Element",
       "expect": "^検証$",
       "severity": "wrong",
-      "reason": "Inspect Element is 検証, as Chrome's page context menu writes it (Chrome: 4 of 4 messages)."
+      "reason": "Inspect Element is 検証, as Chrome's page context menu writes it (Chrome: 4 of 4 messages).",
+      "example": {
+        "fault": "要素を検証"
+      }
     },
     {
       "id": "website",
       "msgidPattern": "\\bwebsites?\\b",
       "expect": "ウェブサイト",
       "severity": "wrong",
-      "reason": "A website is ウェブサイト, as Chrome writes it (Chrome: 118 of 125 messages)."
+      "reason": "A website is ウェブサイト, as Chrome writes it (Chrome: 118 of 125 messages).",
+      "example": {
+        "msgid": "Website",
+        "clean": "ウェブサイト",
+        "fault": "Webサイト"
+      }
     },
     {
       "id": "hard-reload",
       "msgid": "Hard Reload",
       "expect": "^ハード再読み込み$",
       "severity": "wrong",
-      "reason": "Hard Reload is ハード再読み込み, as Chrome writes it (Chrome: 2 of 2 messages)."
+      "reason": "Hard Reload is ハード再読み込み, as Chrome writes it (Chrome: 2 of 2 messages).",
+      "example": {
+        "fault": "強制再読み込み"
+      }
     },
     {
       "id": "yellow",
       "msgid": "Yellow",
       "expect": "^黄$",
       "severity": "wrong",
-      "reason": "Yellow is 黄, as Chrome writes it, the tab-group colour included, beside the other bare-kanji colours (Chrome: 2 of 2 messages)."
+      "reason": "Yellow is 黄, as Chrome writes it, the tab-group colour included, beside the other bare-kanji colours (Chrome: 2 of 2 messages).",
+      "example": {
+        "fault": "黄色"
+      }
     },
     {
       "id": "reopen-closed-tab",
       "msgid": "Reopen Closed Tab",
       "expect": "^閉じたタブを開く$",
       "severity": "wrong",
-      "reason": "Reopen Closed Tab is 閉じたタブを開く, as Chrome writes it, without 再度 (Chrome: 2 of 2 messages)."
+      "reason": "Reopen Closed Tab is 閉じたタブを開く, as Chrome writes it, without 再度 (Chrome: 2 of 2 messages).",
+      "example": {
+        "fault": "閉じたタブを再度開く"
+      }
     },
     {
       "id": "show-in-folder",
       "msgidPattern": "^(?:show|open) in folder$",
       "expect": "^フォルダを開く$",
       "severity": "wrong",
-      "reason": "Showing a file in its folder is フォルダを開く, as Chrome writes it (Chrome: 3 of 4 messages; the other, Show in Folder, is フォルダで表示)."
+      "reason": "Showing a file in its folder is フォルダを開く, as Chrome writes it (Chrome: 3 of 4 messages; the other, Show in Folder, is フォルダで表示).",
+      "example": {
+        "msgid": "Show in folder",
+        "fault": "フォルダで表示"
+      }
     },
     {
       "id": "clear-all",
       "msgid": "Clear all",
       "expect": "^すべて削除$",
       "severity": "wrong",
-      "reason": "Clear all, which empties the download history, is すべて削除, as Chrome's downloads page writes it (Chrome: 1 of 1 messages, IDS_DOWNLOAD_LINK_CLEAR_ALL)."
+      "reason": "Clear all, which empties the download history, is すべて削除, as Chrome's downloads page writes it (Chrome: 1 of 1 messages, IDS_DOWNLOAD_LINK_CLEAR_ALL).",
+      "example": {
+        "fault": "すべて消去"
+      }
     }
   ],
   "accessKeys": {

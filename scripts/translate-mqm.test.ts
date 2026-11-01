@@ -564,6 +564,25 @@ describe("scoreRuns", () => {
     expect(text).toContain('→ "Voreinstellungen"');
   });
 
+  test("prints each blocking finding's reason under it, and no minor's", async () => {
+    const { result } = await scoreThree([
+      [finding("Settings", "major", { reason: "Planted: names the wrong window." })],
+      [finding("Move to Trash", "minor", { reason: "Planted: a little long." })],
+      [],
+    ]);
+
+    if (!result) {
+      throw new Error("The planted runs score.");
+    }
+
+    const lines = formatFindings(result).split("\n");
+
+    const major = lines.findIndex((line) => line.startsWith("- major"));
+
+    expect(lines[major + 1]).toBe("  reason: Planted: names the wrong window.");
+    expect(lines.join("\n")).not.toContain("Planted: a little long.");
+  });
+
   test("a dismissed minor leaves a critical on the same entry blocking", async () => {
     const { result } = await scoreThree([
       [

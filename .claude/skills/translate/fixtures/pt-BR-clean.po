@@ -30,14 +30,6 @@ msgstr "Novos e-mails"
 msgid "Gmail Settings"
 msgstr "Configurações do Gmail"
 
-#: packages/renderer/components/app-titlebar.tsx
-msgid "Settings"
-msgstr "Configurações"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Deslize dois dedos para a esquerda ou para a direita em um trackpad para voltar ou avançar. A opção Passar Entre Páginas também precisa estar ativada nos Ajustes do Sistema."
-
 #: packages/app/menu.ts
 msgctxt "macOS"
 msgid "Settings"
@@ -76,18 +68,10 @@ msgstr "Saiba Mais…"
 msgid "Couldn't add the account."
 msgstr "Não foi possível adicionar a conta."
 
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgid "Delete saved search"
-msgstr "Excluir Pesquisa Salva"
-
 #: packages/renderer/routes/unified-inbox.tsx
 msgctxt "Gmail action"
 msgid "Delete"
 msgstr "Excluir"
-
-#: packages/app/trial.ts
-msgid "Quit"
-msgstr "Sair"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
@@ -107,69 +91,9 @@ msgstr "Saia do 1Password."
 msgid "Pin"
 msgstr "Fixar"
 
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Unpin"
-msgstr "Liberar"
-
-#: packages/renderer/components/bookmarks.tsx
-msgid "Bookmarks"
-msgstr "Favoritos"
-
 #: packages/renderer/routes/download-history.tsx
 msgid "Download history"
 msgstr "Histórico de downloads"
-
-#: packages/renderer/routes/settings/extensions.tsx
-msgid "Extensions"
-msgstr "Extensões"
-
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Close Other Tabs"
-msgstr "Fechar Outras Guias"
-
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgid "Saved searches"
-msgstr "Pesquisas Salvas"
-
-#: packages/renderer/routes/settings/extensions.tsx
-msgid "Password managers"
-msgstr "Gerenciadores de Senhas"
-
-#: packages/renderer/routes/settings/passkeys.tsx
-msgid "Only passkeys created in Meru work here."
-msgstr "Somente as chaves de acesso criadas no Meru funcionam aqui."
-
-#: packages/app/context-menu.ts
-msgid "Open in Default Browser"
-msgstr "Abrir no Navegador Padrão"
-
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Narrow the tab strip"
-msgstr "Estreitar a Barra de Guias"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Launcher apps"
-msgstr "Apps do iniciador"
-
-#: packages/app/updater.ts
-msgid "Restart now"
-msgstr "Reiniciar Agora"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Check for updates automatically"
-msgstr "Verificar atualizações automaticamente"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Trusted hosts"
-msgstr "Hosts confiáveis"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Spellchecker"
-msgstr "Verificação ortográfica"
-
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Menu bar icon"
-msgstr "Ícone da barra de menus"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
@@ -205,62 +129,6 @@ msgstr "Ícone da bandeja do sistema"
 msgid "{count, plural, one {# tab} other {# tabs}}"
 msgstr "{count, plural, one {# guia} many {# guias} other {# guias}}"
 
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "Ícone do Dock"
-
-#: packages/app/tray.ts
-msgid "Turn Do Not Disturb on"
-msgstr "Ativar Não Perturbe"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "Deixar Guias sem Uso Inativas"
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Fazer Upgrade para o Meru Pro"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "Fechar Aviso"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Show unread badge"
-msgstr "Mostrar Emblema de Não Lidos"
-
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "Nome"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Abra as configurações do Gmail para desativar a resposta automática de férias"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Multiple inboxes"
-msgstr "Várias Caixas de Entrada"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Notify for"
-msgstr "Notificar Sobre"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "Linho"
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Device label"
-msgstr "Nome do Dispositivo"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Phishing protection"
-msgstr "Proteção Contra Phishing"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Release channel"
-msgstr "Canal de Versões"
-
 #: packages/renderer/components/emoji-picker-button.tsx
 msgid "Search…"
 msgstr "Pesquisar…"
@@ -268,37 +136,3 @@ msgstr "Pesquisar…"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minutos"
-
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "Fazer Upgrade"
-
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "Avisos"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "Avisos"
-
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "Digite um Nome"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "Brisa"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "Sino"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "Dueto"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "Batida"

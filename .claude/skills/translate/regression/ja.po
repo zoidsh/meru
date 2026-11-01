@@ -183,7 +183,7 @@ msgid "Select first unread account on click"
 msgstr "クリック時に最初の未読アカウントを選択"
 
 # expect: terminology minor
-# check: banned:website
+# check: banned:website-latin
 # check: pinned:website
 # real: an MQM minor fixed in #1246; Chrome writes ウェブサイト
 # few-shot
@@ -259,7 +259,7 @@ msgid "Extensions"
 msgstr "機能拡張"
 
 # expect: terminology|fluency/spelling minor
-# check: banned:long-vowel
+# check: banned:long-vowel-browser
 # after #1246's fix round, which banned the long-vowel ブラウザー
 #. An item in the context menu of a Google Workspace app's tab
 #: packages/app/context-menu.ts
