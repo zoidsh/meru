@@ -21,7 +21,10 @@
  *   settings page, the sidebar and the account row do, so the walk up stops
  *   there for that axis; nor past the document's root and body;
  * - never a visually hidden element, by its role: a clipping box of a pixel or
- *   less is a screen reader's label, clipped on purpose.
+ *   less is a screen reader's label, clipped on purpose;
+ * - never text inside an element marked `data-truncated`, a value the
+ *   interface cuts short on purpose and offers whole another way, such as the
+ *   Device ID beside its copy button.
  *
  * Text hidden by `display`, `visibility` or zero opacity is not checked, which
  * is why the trial badge is hovered: its "Upgrade to Meru Pro" side shows only
@@ -109,6 +112,7 @@ function readOverflows(meru: MeruApp) {
       if (
         !text ||
         !parent ||
+        parent.closest("[data-truncated]") ||
         !parent.checkVisibility({ opacityProperty: true, visibilityProperty: true })
       ) {
         continue;
