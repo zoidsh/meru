@@ -17,6 +17,9 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
     showSaveImageAs: true,
     showInspectElement: false,
     showCopyEmailAddress: true,
+    labels: {
+      copyLink: "Copy Link Addr&ess",
+    },
     append: (_defaultActions, parameters) => {
       const menuItems: MenuItemConstructorOptions[] = [];
 
@@ -55,7 +58,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
       if (window !== selectedAccount.instance.gmail.view) {
         menuItems.push(
           {
-            label: "Copy Link",
+            label: "Copy URL",
             click: () => {
               copyText(window.webContents.getURL());
             },
