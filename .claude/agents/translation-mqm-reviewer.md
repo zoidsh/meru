@@ -90,7 +90,7 @@ Write your findings with `Write` to the output path, as a JSON array with one ob
 - `source` is required on a term-level finding, one a glossary word or the source order should settle, and absent on any other. It names where the correct word comes from: a Chrome count such as `Chrome 9/9`, a platform (`Apple`, `Microsoft`, `GNOME`), `Gmail`, or `glossary`. The skill turns each term-level finding into a pin or a ban in the sidecar.
 - `unsure: true` marks a finding you are less sure of, whether of the error or of its severity; say why in `reason`.
 
-Write `[]` when there are no errors. Any scratch file goes in the directory of your output path, never `/tmp`.
+Never write a `dismissed` field; the skill adds it to a finding it has shown false. Write `[]` when there are no errors. Any scratch file goes in the directory of your output path, never `/tmp`.
 
 ## Your reply
 

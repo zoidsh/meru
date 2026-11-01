@@ -104,6 +104,43 @@ describe("scoreLocale", () => {
     expect(result?.passes).toBe(false);
   });
 
+  test("leaves a dismissed finding out of the score and the gate, and lists it", async () => {
+    const { result } = await score("dismissed-major.json");
+
+    expect(result?.counts).toEqual({ critical: 0, major: 0, minor: 1 });
+    expect(result?.penalty).toBe(1);
+    expect(result?.passes).toBe(true);
+    expect(result?.findings.map(({ msgid }) => msgid)).toEqual([
+      "{action, select, click {On click} other {Button}}",
+    ]);
+    expect(result?.dismissed.map(({ msgid, dismissed }) => [msgid, dismissed])).toEqual([
+      ["Quit {appName}", "Planted: packages/app/menu.ts shows the translation is right."],
+    ]);
+  });
+
+  test("refuses a dismissal without a reason", async () => {
+    const { result, errors } = scoreLocale({
+      locale: "de",
+      catalogs: await catalogs(),
+      findings: [
+        {
+          catalog: "app",
+          msgctxt: null,
+          msgid: "Settings",
+          msgstr: "Einstellungen",
+          category: "terminology",
+          severity: "major",
+          reason: "",
+          correction: "Optionen",
+          dismissed: " ",
+        },
+      ],
+    });
+
+    expect(result).toBeUndefined();
+    expect(errors).toEqual(["Item 0 is dismissed without a reason."]);
+  });
+
   test("a partial run scores only the listed entries and ignores the score", async () => {
     const { result } = await score("two-minors.json", { partial: true });
 

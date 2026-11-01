@@ -9,7 +9,8 @@ import { type Catalog, catalogFiles, parse } from "./collect";
  * arithmetic. Each error costs its severity's points, the score is
  * 100 × (1 − points / source words), and the gate fails on any critical or
  * major error, and in a full run on a score under 99 too: over the few words of
- * a partial run a score means little.
+ * a partial run a score means little. A finding the orchestrator dismissed, with
+ * its reason, counts toward neither and is listed instead.
  */
 
 export const SEVERITIES = ["critical", "major", "minor"] as const;
@@ -45,6 +46,8 @@ export type MqmFinding = {
   correction: string;
   source?: string;
   unsure?: boolean;
+  /** Written by the skill's orchestrator, never the reviewer: why the finding doesn't stand. */
+  dismissed?: string;
 };
 
 export type AssessedEntry = { catalog: string; msgctxt: string | null; msgid: string };
@@ -60,6 +63,7 @@ export type MqmResult = {
   perThousand: number;
   passes: boolean;
   findings: MqmFinding[];
+  dismissed: MqmFinding[];
   warnings: string[];
 };
 
@@ -159,6 +163,13 @@ function validateFinding(item: unknown, index: number) {
     problems.push(`Item ${index} has an unsure that isn't a boolean.`);
   }
 
+  if (
+    record.dismissed !== undefined &&
+    (typeof record.dismissed !== "string" || record.dismissed.trim() === "")
+  ) {
+    problems.push(`Item ${index} is dismissed without a reason.`);
+  }
+
   return problems;
 }
 
@@ -242,9 +253,13 @@ export function scoreLocale({
     return { errors };
   }
 
+  const scored = (findings as MqmFinding[]).filter(({ dismissed }) => dismissed === undefined);
+
+  const dismissed = (findings as MqmFinding[]).filter(({ dismissed }) => dismissed !== undefined);
+
   const counts: Record<MqmSeverity, number> = { critical: 0, major: 0, minor: 0 };
 
-  for (const finding of findings as MqmFinding[]) {
+  for (const finding of scored) {
     counts[finding.severity]++;
   }
 
@@ -272,7 +287,8 @@ export function scoreLocale({
       score,
       perThousand: 1000 * ratio,
       passes: counts.critical === 0 && counts.major === 0 && (partial || score >= PASSING_SCORE),
-      findings: findings as MqmFinding[],
+      findings: scored,
+      dismissed,
       warnings,
     },
     errors,
@@ -289,12 +305,13 @@ export function formatTable(results: MqmResult[]) {
       "Critical",
       "Major",
       "Minor",
+      "Dismissed",
       "Points",
       "Score",
       "Per 1,000 words",
       "Gate",
     ],
-    ["---", "---", "---:", "---:", "---:", "---:", "---:", "---:", "---:", "---:", "---"],
+    ["---", "---", "---:", "---:", "---:", "---:", "---:", "---:", "---:", "---:", "---:", "---"],
     ...results.map((result) => [
       result.locale,
       result.partial ? "partial" : "full",
@@ -303,6 +320,7 @@ export function formatTable(results: MqmResult[]) {
       String(result.counts.critical),
       String(result.counts.major),
       String(result.counts.minor),
+      String(result.dismissed.length),
       String(result.penalty),
       result.score.toFixed(2),
       result.perThousand.toFixed(1),
@@ -323,6 +341,7 @@ function formatFindings(result: MqmResult) {
   for (const [title, findings] of [
     ["critical and major, to fix and score again", blocking],
     ["term-level, to settle in the sidecar", terms],
+    ["dismissed, left out of the score", result.dismissed],
   ] as const) {
     if (findings.length === 0) {
       continue;
@@ -332,7 +351,7 @@ function formatFindings(result: MqmResult) {
 
     for (const finding of findings) {
       lines.push(
-        `- ${finding.severity} ${finding.category}${finding.unsure ? " (unsure)" : ""}: ${describe(finding)} ${JSON.stringify(finding.msgstr)} → ${JSON.stringify(finding.correction)}${finding.source ? ` [${finding.source}]` : ""}`,
+        `- ${finding.severity} ${finding.category}${finding.unsure ? " (unsure)" : ""}: ${describe(finding)} ${JSON.stringify(finding.msgstr)} → ${JSON.stringify(finding.correction)}${finding.source ? ` [${finding.source}]` : ""}${finding.dismissed ? `\n  dismissed: ${finding.dismissed}` : ""}`,
       );
     }
   }
