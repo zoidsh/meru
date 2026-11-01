@@ -35,7 +35,7 @@ The page and text-field context menu, by that policy, on Windows: `&Learn Spelli
 
 ## Terms that stay English
 
-Gmail, Google Workspace, Meru, Meru Pro and Pro. They take Portuguese articles outside the word: _o Gmail_, _o Meru Pro_.
+Gmail, Google Workspace, Meru, Meru Pro, Meru Portal and Pro. They take Portuguese articles outside the word: _o Gmail_, _o Meru Pro_.
 
 ## Traps
 

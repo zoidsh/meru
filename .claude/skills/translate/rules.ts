@@ -136,6 +136,12 @@ const pinned = z
      */
     countEnglish: pattern.optional(),
     countExpect: pattern.optional(),
+    /*
+     * Counts with the access keys left in, for a reason that cites a menu item
+     * by its `&`, such as `&Edit`, which reads the same as a plain Edit once
+     * the key is gone.
+     */
+    countKeepAccessKeys: z.literal(true).optional(),
     severity,
     reason: z.string(),
     example,

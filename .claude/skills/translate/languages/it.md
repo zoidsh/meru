@@ -35,7 +35,7 @@ The page and text-field context menu, by that policy, on Windows: `&Learn Spelli
 
 ## Terms that stay English
 
-Gmail, Google Workspace, Meru, Meru Pro and Pro. _account_ is also invariable, as Apple and Chrome write it: _l’account_, _gli account_, never _accounts_. So are _app_ (_le app_), _email_, _passkey_, _host_ and _download_.
+Gmail, Google Workspace, Meru, Meru Pro, Meru Portal and Pro. _account_ is also invariable, as Apple and Chrome write it: _l’account_, _gli account_, never _accounts_. So are _app_ (_le app_), _email_, _passkey_, _host_ and _download_.
 
 Meru names itself _Meru_, masculine (_Meru resta veloce e leggero_, _Avvia Meru ridotto a icona_), in a Settings description too, where the English says the application or the app: _Mostra l’icona di Meru nel Dock_, _Seleziona il tema di Meru_, never _l’app_, as the catalog's Settings descriptions already name it in 32 messages to _l’app_'s 13. _app_ stays for other apps, such as 1Password's desktop app or the Workspace apps, and in a short label, such as _Versione dell’app_.
 

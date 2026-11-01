@@ -135,6 +135,19 @@ describe("count.ts", () => {
     expect(pinCount({ ...rule, countEnglish: "^Settings & more$" }, pairs).total).toBe(1);
   });
 
+  test("keeps the access keys, by the pin or when told, to tell a menu item from a plain label", async () => {
+    const rule = { ...(await frenchPin("settings")), countEnglish: "^&Edit$" };
+
+    const pairs: Pair[] = [
+      ["&Edit", "&Édition"],
+      ["Edit", "Modifier"],
+    ];
+
+    expect(pinCount(rule, pairs).total).toBe(0);
+    expect(pinCount(rule, pairs, { keepAccessKeys: true }).total).toBe(1);
+    expect(pinCount({ ...rule, countKeepAccessKeys: true }, pairs).total).toBe(1);
+  });
+
   test("counts case-sensitively when told", async () => {
     const rule = { ...(await frenchPin("settings")), countEnglish: "^Settings$" };
 

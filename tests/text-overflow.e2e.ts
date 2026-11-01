@@ -38,11 +38,13 @@
  *
  * The titlebar is also checked for running out of room, which its badge and
  * controls show by colliding rather than clipping; `readTitlebarCollisions`
- * says how.
+ * says how. A sortable row, such as an account's, runs out of room by pushing
+ * its actions under its drag handle; `readSortableRowBreaks` says how.
  */
 import { PSEUDO_LOCALE, SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n/tags";
 import type { Config } from "@meru/shared/types";
 import { expect, type Locator, test } from "@playwright/test";
+import { seedAccount } from "./lib/accounts";
 import { type MeruApp, useApp } from "./lib/app";
 import { setMinimumWindowWidth } from "./lib/page-fit";
 import { openSettingsPage } from "./lib/settings";
@@ -359,6 +361,74 @@ function readTitlebarCollisions(meru: MeruApp) {
   });
 }
 
+/*
+ * A sortable row, such as an account on the Accounts page, keeps its drag
+ * handle, its label and its actions on one line, however long its badges are,
+ * and its title ends before its actions start, however long its label.
+ * The row is a wrapping flex container, so content wider than what is left of
+ * the line used to push the actions onto a line of their own, under the handle.
+ * The first line runs from the top of the handle or the content, whichever is
+ * higher, to the bottom of whichever is lower.
+ */
+function readSortableRowBreaks(meru: MeruApp) {
+  return meru.renderer.evaluate(() => {
+    const breaks: string[] = [];
+
+    for (const row of document.querySelectorAll('[data-slot="item"]')) {
+      const handle = row.querySelector(":scope > .cursor-grab");
+
+      const content = row.querySelector(':scope > [data-slot="item-content"]');
+
+      const action = row.querySelector(':scope > [data-slot="item-actions"] button');
+
+      if (!handle || !content || !action) {
+        continue;
+      }
+
+      const handleBox = handle.getBoundingClientRect();
+
+      const contentBox = content.getBoundingClientRect();
+
+      const actionBox = action.getBoundingClientRect();
+
+      const lineTop = Math.min(handleBox.top, contentBox.top);
+
+      const lineBottom = Math.max(handleBox.bottom, contentBox.bottom);
+
+      const label = (content.textContent ?? "").trim().slice(0, 60);
+
+      if (
+        actionBox.top < lineTop - 0.5 ||
+        actionBox.bottom > lineBottom + 0.5 ||
+        actionBox.left < contentBox.right - 0.5
+      ) {
+        breaks.push(
+          `row "${label}": its first action sits at ${Math.round(actionBox.left)},${Math.round(actionBox.top)}, off the line its handle and content share (${Math.round(lineTop)}–${Math.round(lineBottom)}, content ending at x ${Math.round(contentBox.right)})`,
+        );
+      }
+
+      // The title's text rather than its box: a word with nowhere to break runs past a box that stays put.
+      const title = content.querySelector('[data-slot="item-title"]');
+
+      if (title) {
+        const range = document.createRange();
+
+        range.selectNodeContents(title);
+
+        const textRight = Math.max(...Array.from(range.getClientRects(), (rect) => rect.right));
+
+        if (textRight > actionBox.left + 0.5) {
+          breaks.push(
+            `row "${label}": its title runs to x ${Math.round(textRight)}, past its first action at x ${Math.round(actionBox.left)}`,
+          );
+        }
+      }
+    }
+
+    return breaks;
+  });
+}
+
 function formatOverflow(where: string, overflow: Overflow) {
   const by = [
     overflow.horizontal > 1 ? `${overflow.horizontal}px across` : "",
@@ -405,13 +475,25 @@ async function readSettingsPageLabels(navigation: Locator) {
   return labels;
 }
 
+/*
+ * An account labelled with an address that has nowhere to break, which a row
+ * has to wrap inside its own column rather than run under its actions.
+ */
+const ACCOUNTS = [
+  seedAccount({
+    id: "account-1",
+    label:
+      "averyveryverylongemailaddresswithoutanyspaces.first.last@example-company-domain-name.com",
+  }),
+];
+
 const LANGUAGES: { tag: string; seedConfig: Partial<Config>; env: Record<string, string> }[] = [
   ...SHIPPED_CATALOG_TAGS.filter((tag) => tag !== "en").map((tag) => ({
     tag,
-    seedConfig: { "app.language": tag },
+    seedConfig: { "app.language": tag, accounts: ACCOUNTS },
     env: {},
   })),
-  { tag: PSEUDO_LOCALE, seedConfig: {}, env: { MERU_PSEUDO_LOCALE: "1" } },
+  { tag: PSEUDO_LOCALE, seedConfig: { accounts: ACCOUNTS }, env: { MERU_PSEUDO_LOCALE: "1" } },
 ];
 
 const WIDTHS = [
@@ -469,6 +551,10 @@ for (const language of LANGUAGES) {
           await openSettingsPage(meru, navigation, label);
 
           await check(`settings "${label}"`);
+
+          for (const rowBreak of await readSortableRowBreaks(meru)) {
+            findings.push(`${language.tag} ${windowWidth}px settings "${label}": ${rowBreak}`);
+          }
         }
 
         expect(findings, "text clipped by its box").toEqual([]);
