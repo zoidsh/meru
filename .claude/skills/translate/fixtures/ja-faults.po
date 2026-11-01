@@ -441,3 +441,8 @@ msgstr "フォルダで表示"
 #: packages/renderer/routes/download-history.tsx
 msgid "Clear all"
 msgstr "すべて消去"
+
+# fault: banned:range-mark
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "to"
+msgstr "～"

@@ -18,6 +18,8 @@ Paths, from the `/translate` skill:
 - the style sheet `.claude/skills/translate/languages/<locale>.md`, its sidecar `languages/<locale>.json`, and the glossary slice `<locale>.glossary.md`, with the full `glossary.md` too when the skill says the slice skipped lines;
 - the output path for your findings, such as `<scratch>/<locale>.review.json`.
 
+Never read `.claude/skills/translate/regression.ts` or anything under `.claude/skills/translate/regression/`, and leave them out of every search: the set there holds deliberately wrong translations of real entries, marked with the errors they hold, and is how the MQM reviewers are measured.
+
 ## Before you review
 
 Read the style sheet, the sidecar and the glossary slice in full. Then read the `check.ts` report: each finding there is already found. Confirm or dismiss each one, giving the reason for a dismissal, such as an allowlisted compound the sidecar misses, and never repeat a confirmed one in your findings. That holds per finding, not per entry: a different problem in an entry `check.ts` flagged is still a finding of yours.

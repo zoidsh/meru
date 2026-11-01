@@ -788,6 +788,12 @@
       "pattern": "\\S—|—\\S",
       "severity": "wrong",
       "reason": "An em dash has a space on each side, as Apple's Japanese strings write it: %@ — インスペクタ (30 of the 31 distinct strings in this Mac's Japanese .loctables with an em dash between text)."
+    },
+    {
+      "id": "range-mark",
+      "pattern": "～",
+      "severity": "wrong",
+      "reason": "A range between two values, such as 09:00〜17:00, takes the wave dash 〜 (U+301C), as Apple's Japanese strings write it, never the full-width tilde ～ (U+FF5E): 107 of the 119 distinct strings in this Mac's Japanese .loctables with either mark between two values take 〜. Chrome writes ～ (15 of 15), but a mark is punctuation, which follows Apple."
     }
   ],
   "pinned": [
