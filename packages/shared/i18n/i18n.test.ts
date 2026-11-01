@@ -112,16 +112,16 @@ describe("activateLocale", () => {
     expect(translate("Settings")).toBe("Settings");
   });
 
-  test("activates the catalog this build ships", () => {
-    activateLocale("en");
+  test("activates the catalog this build ships", async () => {
+    await activateLocale("en");
 
     expect(i18n.locale).toBe("en");
     expect(translate("Settings")).toBe("Settings");
   });
 
-  test("has a catalog for every shipped tag", () => {
+  test("has a catalog for every shipped tag", async () => {
     for (const tag of SHIPPED_CATALOG_TAGS) {
-      activateLocale(tag);
+      await activateLocale(tag);
 
       expect(i18n.locale).toBe(tag);
     }
@@ -129,8 +129,8 @@ describe("activateLocale", () => {
 
   // `activateLocale` reads the compiled catalogs, not a list it is passed, so
   // the example is a tag that is never a catalog's.
-  test("activates English, plural rules included, for a tag whose catalog is not in this build", () => {
-    activateLocale("xx" as CatalogTag);
+  test("activates English, plural rules included, for a tag whose catalog is not in this build", async () => {
+    await activateLocale("xx" as CatalogTag);
 
     expect(i18n.locale).toBe("en");
     expect(translate("Settings")).toBe("Settings");
@@ -138,12 +138,12 @@ describe("activateLocale", () => {
 });
 
 describe("catalogs", () => {
-  test("switches the messages a translation is read from", () => {
+  test("switches the messages a translation is read from", async () => {
     activateFixtureCatalog("de", { Settings: "Einstellungen" });
 
     expect(translate("Settings")).toBe("Einstellungen");
 
-    activateLocale("en");
+    await activateLocale("en");
 
     expect(translate("Settings")).toBe("Settings");
   });

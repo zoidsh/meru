@@ -65,7 +65,7 @@ export const GMAIL_PRELOAD_ARGUMENTS = {
   composeWindow: "--meru-gmail-compose-window",
 };
 
-/** Carries the app's language to the Gmail preload, as `--meru-locale=<tag>`. */
+/** Carries the Gmail preload's catalog, as `--meru-locale=<URI-encoded JSON>`. */
 export const GMAIL_PRELOAD_LOCALE_ARGUMENT = "--meru-locale";
 
 export function createGmailDelegatedAccountUrl(delegatedAccountId: string) {

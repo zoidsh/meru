@@ -1,9 +1,5 @@
 import { i18n, type Messages } from "@lingui/core";
-import { messages as de } from "./locales/de";
 import { messages as en } from "./locales/en";
-import { messages as pseudo } from "./locales/en-XA";
-import { messages as fr } from "./locales/fr";
-import { messages as ja } from "./locales/ja";
 import { CATALOG_TAGS, type CatalogTag, type LocaleTag, PSEUDO_LOCALE } from "./tags";
 
 export {
@@ -35,17 +31,22 @@ export const CATALOG_NAMES: Record<CatalogTag, string> = {
 
 /*
  * Only a shipped catalog is compiled, so the rest are absent from the bundle
- * until they ship. English is always there, which is what makes it the floor
- * every other lookup falls to.
+ * until they ship. Each one is a chunk of its own, so a process parses only the
+ * language it shows. English is in the bundle itself, which is what makes it
+ * the floor every other lookup falls to.
  */
-const catalogs: { en: Messages } & Partial<Record<LocaleTag, Messages>> = {
-  en,
-  de,
-  fr,
-  ja,
+/** Each catalog a build carries beyond English, loaded when it is activated. */
+export type CatalogLoaders = Partial<Record<LocaleTag, () => Promise<{ messages: Messages }>>>;
+
+const catalogLoaders: CatalogLoaders = {
+  de: () => import("./locales/de"),
+  fr: () => import("./locales/fr"),
+  ja: () => import("./locales/ja"),
   // The build inlines the variable, so a shipped bundle drops the pseudo-locale
   // with this branch.
-  ...(process.env.MERU_PSEUDO_LOCALE_CATALOG ? { [PSEUDO_LOCALE]: pseudo } : {}),
+  ...(process.env.MERU_PSEUDO_LOCALE_CATALOG
+    ? { [PSEUDO_LOCALE]: () => import("./locales/en-XA") }
+    : {}),
 };
 
 export function isCatalogTag(value: string): value is CatalogTag {
@@ -131,20 +132,30 @@ export function getDayjsLocale(tag: LocaleTag) {
 }
 
 /**
- * A tag without a catalog activates English whole, since another locale's
- * plural rules over English messages would pick the wrong forms. Returns the
- * tag it activated.
+ * A tag without a catalog, or whose catalog fails to load, activates English
+ * whole, since another locale's plural rules over English messages would pick
+ * the wrong forms. Resolves with the tag it activated.
+ *
+ * A failed load never rejects: main awaits this before it opens its window and
+ * the renderer before its first render, so a rejection would leave no window or
+ * a blank one rather than an English one.
  */
-export function activateLocale(tag: LocaleTag): LocaleTag {
-  const messages = catalogs[tag];
+export async function activateLocale(tag: LocaleTag): Promise<LocaleTag> {
+  const loadCatalog = catalogLoaders[tag];
 
-  if (messages) {
-    i18n.loadAndActivate({ locale: tag, messages });
+  if (loadCatalog) {
+    try {
+      const { messages } = await loadCatalog();
 
-    return tag;
+      i18n.loadAndActivate({ locale: tag, messages });
+
+      return tag;
+    } catch (error) {
+      console.error(`Failed to load the ${tag} catalog; falling back to English`, error);
+    }
   }
 
-  i18n.loadAndActivate({ locale: "en", messages: catalogs.en });
+  i18n.loadAndActivate({ locale: "en", messages: en });
 
   return "en";
 }
@@ -153,6 +164,6 @@ export function activateLocale(tag: LocaleTag): LocaleTag {
  * A macro call throws while no locale is active, and main runs some code before
  * it resolves the user's language, so English is active from the start.
  */
-activateLocale("en");
+i18n.loadAndActivate({ locale: "en", messages: en });
 
 export { i18n };

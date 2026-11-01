@@ -139,9 +139,9 @@ Leave the catalogs uncommitted: the translations land in the same commit as the 
 A language ships once it is in seven places:
 
 1. `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts`, which `lingui.config.ts` reads as its locales.
-2. The `catalogs` record in `packages/shared/i18n/index.ts`, importing `messages` from `./locales/<tag>`.
+2. The `catalogLoaders` record in `packages/shared/i18n/index.ts`, `<tag>: () => import("./locales/<tag>")`, so the catalog is a chunk of its own that only a start in that language loads.
 3. The dayjs locale import in `packages/renderer/lib/date.ts`, `dayjs/locale/<name>` with the name `getDayjsLocale` gives the tag, such as `es-mx` for `es-419`.
-4. The `catalogs` record in `packages/preload-gmail/i18n.ts`, importing from its own `./locales/<tag>`.
+4. The `gmailCatalogLoaders` record in `packages/app/i18n.ts`, importing the Gmail preload's own `@meru/preload-gmail/locales/<tag>`. Main loads it and hands its messages to the sandboxed preload, which bundles English alone.
 5. The style sheet `.claude/skills/translate/languages/<tag>.md`, its words taken by the [source order](#where-a-word-comes-from), and the language's line in every glossary entry.
 6. The sidecar `languages/<tag>.json`, which `check.ts` needs to run at all: the Platform words table's rows, the banned words, the pinned terms and the access-key style. `scripts/translate-rules.test.ts` holds its platform words to the style sheet's table.
 7. The fixtures `fixtures/<tag>-clean.po`, the wording every rule allows, and `fixtures/<tag>-faults.po`, a planted fault for each rule, marked `# fault: <rule>:<id>`. `scripts/translate-check.test.ts` fails for a sidecar with rules and no fixtures, and for a fixture whose findings differ from what it plants.
