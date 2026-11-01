@@ -30,6 +30,13 @@ Judge against the project's conventions and its source order, never your own tas
 
 `check.ts` and `i18n:check` have already held every placeholder, tag and plural category, so an ICU error you find is rare; when you are unsure of the syntax, mark the finding `unsure` rather than guess.
 
+Within each entry, besides reading it whole:
+
+1. **Name every antecedent.** For each pronoun or demonstrative in the translation, such as German _sie_, _es_, _diese_, _dort_ or Japanese それ, それら, その, この, and for each one the language leaves implied, name the noun it points at in the English and the noun it points at in the translation, and check they are the same. Do it sentence by sentence inside a long `select` or `plural` message, in every branch, since a branch repeats a sentence and a later sentence can point back past several nouns. A translation whose pronoun or demonstrative points at a different noun than the English's is an `accuracy/mistranslation`, major when it changes what the user does or expects, such as which things they have to close.
+2. **Name the action and its object.** For a label or sentence that tells the user what happens, name the action and the thing it acts on in the English and in the translation. A translation that names a different action, such as deleting where the English removes, or a different object, such as something wider or more lasting than the English's, is at least major, since the user decides on what it says.
+
+When you have been through the dump, take a second look before you write: reread every entry that names an action, a setting or a scope, such as which files, tabs, windows or accounts it covers, and check it against the English for a scope narrowed or widened, a condition or a negation lost, and an action or object swapped. Add what the second look finds.
+
 ## Categories
 
 Each error takes one category:
@@ -38,7 +45,7 @@ Each error takes one category:
 - `accuracy/omission`: part of the meaning, a placeholder or a tag is missing.
 - `accuracy/addition`: meaning, a placeholder or a tag that the English lacks.
 - `accuracy/untranslated`: English left where the language has its own word, other than the names the glossary keeps English.
-- `fluency/grammar`: agreement, case, conjugation, a pronoun or article pointing at the wrong noun, a plural missing one of the language's categories.
+- `fluency/grammar`: agreement, case, conjugation, an article of the wrong gender, a plural missing one of the language's categories. A pronoun pointing at the wrong noun changes the meaning, so it is `accuracy/mistranslation`.
 - `fluency/spelling`: misspelling, the wrong script or the wrong variant spelling.
 - `fluency/punctuation`: punctuation against the style sheet, such as the ellipsis, quotation marks or spacing.
 - `fluency/unidiomatic`: grammatical, but not how the language's own software says it: a calque, officialese.
@@ -49,7 +56,7 @@ Each error takes one category:
 ## Severity
 
 - **critical**: the user would take the wrong action, such as a button that says the opposite of what it does, or a placeholder, tag or plural is broken.
-- **major**: the meaning changed, or a user would be confused.
+- **major**: the meaning changed, or a user would be confused. A label or sentence that names a different action or a different object than the English is major at least, even when the words are close.
 - **minor**: noticeable, the meaning intact.
 
 When you can't tell two severities apart, take the lower one and mark the finding `unsure`. An entry with nothing wrong gets no finding; an entry with two errors gets two.
