@@ -29,6 +29,10 @@
  * Text hidden by `display`, `visibility` or zero opacity is not checked, which
  * is why the trial badge is hovered: its "Upgrade to Meru Pro" side shows only
  * then.
+ *
+ * The titlebar is also checked for running out of room, which its badge and
+ * controls show by colliding rather than clipping; `readTitlebarCollisions`
+ * says how.
  */
 import { PSEUDO_LOCALE, SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n/tags";
 import type { Config } from "@meru/shared/types";
@@ -203,6 +207,99 @@ function readOverflows(meru: MeruApp) {
   });
 }
 
+/**
+ * What a titlebar that has run out of room does instead of clipping: its
+ * controls and labels land on top of each other, or its row runs past its
+ * edges. A badge that only grows is neither.
+ *
+ * The items are the outermost visible controls and runs of text, so a button
+ * and its own label are one item. Whatever sits inside a scroll container is
+ * left out, by its role: the account row is made to slide under the controls
+ * pinned over its right end.
+ */
+function readTitlebarCollisions(meru: MeruApp) {
+  return meru.renderer.evaluate(() => {
+    // The titlebar is the drag region the trial badge sits in.
+    const titlebar = document.querySelector('a[href$="#pricing"]')?.closest(".draggable");
+
+    if (!titlebar) {
+      throw new Error("The titlebar is not showing the trial badge");
+    }
+
+    const titlebarBox = titlebar.getBoundingClientRect();
+
+    const isInScrollContainer = (element: Element) => {
+      for (
+        let ancestor = element.parentElement;
+        ancestor && ancestor !== titlebar;
+        ancestor = ancestor.parentElement
+      ) {
+        const { overflowX } = getComputedStyle(ancestor);
+
+        if (overflowX === "auto" || overflowX === "scroll") {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    const hasOwnText = (element: Element) =>
+      Array.from(element.childNodes).some(
+        (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+      );
+
+    const candidates = Array.from(titlebar.querySelectorAll("*")).filter(
+      (element) =>
+        (element.matches('button, a, input, [role="button"], [data-slot="badge"]') ||
+          hasOwnText(element)) &&
+        element.checkVisibility({ opacityProperty: true, visibilityProperty: true }) &&
+        !isInScrollContainer(element),
+    );
+
+    const items = candidates.filter(
+      (element) => !candidates.some((other) => other !== element && other.contains(element)),
+    );
+
+    const describe = (element: Element) =>
+      `${element.tagName.toLowerCase()} "${(element.textContent?.trim() || element.getAttribute("title") || element.getAttribute("aria-label") || "").slice(0, 60)}"`;
+
+    const boxes = items.map((element) => ({ element, box: element.getBoundingClientRect() }));
+
+    const collisions: string[] = [];
+
+    for (const { element, box } of boxes) {
+      const outside = Math.max(titlebarBox.left - box.left, box.right - titlebarBox.right);
+
+      if (outside > 1) {
+        collisions.push(`${describe(element)} runs ${Math.round(outside)}px past the titlebar`);
+      }
+    }
+
+    for (const [index, { element, box }] of boxes.entries()) {
+      for (const { element: other, box: otherBox } of boxes.slice(index + 1)) {
+        const across = Math.min(box.right, otherBox.right) - Math.max(box.left, otherBox.left);
+
+        const down = Math.min(box.bottom, otherBox.bottom) - Math.max(box.top, otherBox.top);
+
+        if (across > 1 && down > 1) {
+          collisions.push(
+            `${describe(element)} overlaps ${describe(other)} by ${Math.round(across)}px`,
+          );
+        }
+      }
+    }
+
+    const row = titlebar.firstElementChild;
+
+    if (row && row.scrollWidth > row.clientWidth + 1) {
+      collisions.push(`the titlebar row overflows by ${row.scrollWidth - row.clientWidth}px`);
+    }
+
+    return collisions;
+  });
+}
+
 function formatOverflow(where: string, overflow: Overflow) {
   const by = [
     overflow.horizontal > 1 ? `${overflow.horizontal}px across` : "",
@@ -319,6 +416,10 @@ for (const language of LANGUAGES) {
           const where = `titlebar, trial ${JSON.stringify(state)}`;
 
           await check(where);
+
+          for (const collision of await readTitlebarCollisions(meru)) {
+            findings.push(`${language.tag} ${windowWidth}px ${where}: ${collision}`);
+          }
 
           await trialBadge.hover();
 
