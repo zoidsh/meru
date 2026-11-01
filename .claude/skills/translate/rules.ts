@@ -63,6 +63,15 @@ export type PlatformEntry = { row: string; msgctxt: Platform; msgid: string } & 
 );
 
 /*
+ * A label as Electron shows it: the access key, an `&` before a character or
+ * Japanese's `(&X)`, is dropped, and `&&` is a literal ampersand. Where the key
+ * sits is the translator's choice, which the access-key rule checks.
+ */
+export function withoutAccessKey(label: string) {
+  return label.replace(/\(&[^)&]\)/gu, "").replace(/&(&|(?=\S))/gu, "$1");
+}
+
+/*
  * Picks entries by their English. A `msgctxt` of null means an entry without
  * one, and a missing `msgctxt` any. `origin` is a path prefix of a source file,
  * for a msgid that means one thing in the Gmail preload and another in the app.
@@ -120,6 +129,13 @@ const pinned = z
     id: z.string(),
     ...selector,
     expect: pattern,
+    /*
+     * The Chrome English and translation `count.ts` counts in place of the
+     * msgid and `expect`, for a reason that cites an exact Chrome message or
+     * the Chrome word a label form is built on.
+     */
+    countEnglish: pattern.optional(),
+    countExpect: pattern.optional(),
     severity,
     reason: z.string(),
     example,

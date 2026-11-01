@@ -904,6 +904,7 @@
       "id": "trusted-hosts",
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "attendibil",
+      "countEnglish": "\\btrusted\\b",
       "severity": "wrong",
       "reason": "A trusted host is an host attendibile, as Chrome writes trusted (Chrome: 19 of 22 messages).",
       "example": {
@@ -959,7 +960,7 @@
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]stension",
       "severity": "wrong",
-      "reason": "An extension is an estensione (Chrome: 306 of 308 messages).",
+      "reason": "An extension is an estensione (Chrome: 303 of 304 messages).",
       "example": {
         "msgid": "Enable extensions",
         "clean": "Attiva le estensioni",
@@ -1219,6 +1220,7 @@
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]ome del dispositivo",
+      "countEnglish": "\\bdevice name\\b",
       "severity": "wrong",
       "reason": "A device label is the nome del dispositivo, Chrome's words for a device name (Chrome: 4 of 11 messages).",
       "example": {
@@ -1231,6 +1233,7 @@
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "[Pp]hishing",
+      "countEnglish": "\\bphishing\\b",
       "severity": "wrong",
       "reason": "Phishing protection is protezione dal phishing, with Chrome's phishing (Chrome: 4 of 4 messages).",
       "example": {
@@ -1243,6 +1246,7 @@
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Nn]on attiv|[Ii]nattiv",
+      "countEnglish": "\\binactive tabs?\\b",
       "severity": "wrong",
       "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inattiva, as in Scheda non attiva, never the systems' Sleep word (Chrome: 8 of 8 messages).",
       "example": {
@@ -1281,7 +1285,7 @@
       "msgidPattern": "\\blauncher\\b",
       "expect": "[Aa]vvio app",
       "severity": "wrong",
-      "reason": "The launcher is Avvio app, as Chrome names ChromeOS's (Chrome: 19 of 20 messages).",
+      "reason": "The launcher is Avvio app, as Chrome names ChromeOS's (Chrome: 19 of 19 messages).",
       "example": {
         "msgid": "In launcher",
         "clean": "In Avvio app",
@@ -1394,8 +1398,9 @@
       "id": "zoom-in",
       "msgid": "Zoom In",
       "expect": "^Ingrandisci$",
+      "countEnglish": "^Zoom In$",
       "severity": "wrong",
-      "reason": "The View menu's Zoom In is Ingrandisci, as Chrome writes its title-case menu item (Chrome 1/2 in Chromium 156.0.8078.49's .xtb files; the other, the sentence-case Zoom in, is Aumenta lo zoom).",
+      "reason": "The View menu's Zoom In is Ingrandisci, as Chrome writes its title-case menu item (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files; the other, the sentence-case Zoom in, is Aumenta lo zoom).",
       "example": {
         "fault": "Aumenta lo zoom"
       }
@@ -1404,8 +1409,9 @@
       "id": "zoom-out",
       "msgid": "Zoom Out",
       "expect": "^Riduci$",
+      "countEnglish": "^Zoom Out$",
       "severity": "wrong",
-      "reason": "The View menu's Zoom Out is Riduci, as Chrome writes its title-case menu item (Chrome 1/2 in Chromium 156.0.8078.49's .xtb files; the other, the sentence-case Zoom out, is Diminuisci lo zoom).",
+      "reason": "The View menu's Zoom Out is Riduci, as Chrome writes its title-case menu item (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files; the other, the sentence-case Zoom out, is Diminuisci lo zoom).",
       "example": {
         "fault": "Diminuisci lo zoom"
       }
@@ -1413,11 +1419,12 @@
     {
       "id": "actual-size",
       "msgid": "Actual Size",
-      "expect": "^Dimensioni reali$",
+      "expect": "^Dimensioni effettive$",
+      "countEnglish": "^Actual Size$",
       "severity": "wrong",
-      "reason": "The View menu's Actual Size is Dimensioni reali, as Chrome writes its title-case menu item (Chrome 1/2 in Chromium 156.0.8078.49's .xtb files; the other, the sentence-case Actual size, is Dimensioni effettive).",
+      "reason": "The View menu's Actual Size is Dimensioni effettive, as Chrome's own View menu item writes it, A&ctual Size => D&imensioni effettive (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files; the other, a plain Actual Size outside the menu, is Dimensioni reali).",
       "example": {
-        "fault": "Dimensioni effettive"
+        "fault": "Dimensioni reali"
       }
     },
     {
@@ -1426,7 +1433,7 @@
       "msgctxt": null,
       "expect": "^Indietro$",
       "severity": "wrong",
-      "reason": "Back and Go back are Indietro, as Chrome writes them (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files), never Torna indietro.",
+      "reason": "Back and Go back are Indietro, as Chrome writes them (Chrome 5/5 in Chromium 156.0.8078.49's .xtb files), never Torna indietro.",
       "example": {
         "msgid": "Go back",
         "fault": "Torna indietro"
@@ -1438,7 +1445,7 @@
       "msgctxt": null,
       "expect": "^Avanti$",
       "severity": "wrong",
-      "reason": "Forward and Go forward are Avanti, as Chrome writes Forward (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files; it has no Go forward), never Vai avanti.",
+      "reason": "Forward and Go forward are Avanti, as Chrome writes Forward (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files; it has no Go forward), never Vai avanti.",
       "example": {
         "msgid": "Go forward",
         "fault": "Vai avanti"
@@ -1472,6 +1479,8 @@
       "msgid": "Auto",
       "msgctxt": "width",
       "expect": "^Automatica$",
+      "countEnglish": "^Auto$",
+      "countExpect": "^Automatico$",
       "severity": "wrong",
       "reason": "The Width setting's Auto is Automatica, Chrome's Automatico agreeing with la larghezza (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
       "example": {
@@ -1483,6 +1492,8 @@
       "msgid": "Auto",
       "msgctxt": "placement",
       "expect": "^Automatica$",
+      "countEnglish": "^Auto$",
+      "countExpect": "^Automatico$",
       "severity": "wrong",
       "reason": "The Placement setting's Auto is Automatica, Chrome's Automatico agreeing with la posizione (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
       "example": {
@@ -1494,6 +1505,8 @@
       "msgid": "Auto",
       "msgctxt": "launcher display",
       "expect": "^Automatica$",
+      "countEnglish": "^Auto$",
+      "countExpect": "^Automatico$",
       "severity": "wrong",
       "reason": "The Launcher display setting's Auto is Automatica, Chrome's Automatico agreeing with la visualizzazione (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
       "example": {
@@ -1505,6 +1518,7 @@
       "msgid": "Auto",
       "msgctxt": "text color",
       "expect": "^Automatico$",
+      "countEnglish": "^Auto$",
       "severity": "wrong",
       "reason": "The Text color setting's Auto is Automatico, as Chrome writes it, agreeing with il colore (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Auto.",
       "example": {
@@ -1515,8 +1529,9 @@
       "id": "inspect-element",
       "msgid": "Inspect Element",
       "expect": "^Ispeziona$",
+      "countEnglish": "^Inspect$",
       "severity": "wrong",
-      "reason": "Inspect Element is Ispeziona, as Chrome's page context menu writes its Inspect item (Chrome 1/1 in Chromium 156.0.8078.49's .xtb files).",
+      "reason": "Inspect Element is Ispeziona, as Chrome's page context menu writes its Inspect item (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files).",
       "example": {
         "fault": "Ispeziona elemento"
       }
@@ -1526,8 +1541,9 @@
       "msgid": "Help",
       "msgctxt": null,
       "expect": "^Guida$",
+      "countEnglish": "^Help$",
       "severity": "wrong",
-      "reason": "The Help menu is Guida, as Chrome writes Help (Chrome 2/3 in Chromium 156.0.8078.49's .xtb files, the other Aiuto), never Aiuto.",
+      "reason": "The Help menu is Guida, as Chrome writes Help (Chrome 4/5 in Chromium 156.0.8078.49's .xtb files, the other Aiuto), never Aiuto.",
       "example": {
         "fault": "Aiuto"
       }

@@ -282,7 +282,7 @@ msgstr "Attiva chiave di licenza"
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Actual Size"
-msgstr "Dimensioni reali"
+msgstr "Dimensioni effettive"
 
 #. Button that adds the account in the dialog
 #. Button that adds the label color in the dialog

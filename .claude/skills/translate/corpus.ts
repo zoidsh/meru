@@ -665,25 +665,53 @@ async function apple(tag: string) {
   return pairs;
 }
 
-/** The Chromium version of the Electron in `node_modules`, which the counts are pinned to. */
-export function electronChromium() {
-  const electron = path.join(ROOT, "node_modules/.bin/electron");
+type ElectronRun = {
+  exitCode: number | null;
+  signalCode: string | null;
+  stdout: string;
+  stderr: string;
+};
 
-  const result = Bun.spawnSync([electron, "-p", "process.versions.chrome"], {
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+function askElectron(): ElectronRun {
+  const result = Bun.spawnSync(
+    [path.join(ROOT, "node_modules/.bin/electron"), "-p", "process.versions.chrome"],
+    { env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" }, stdout: "pipe", stderr: "pipe" },
+  );
 
-  const version = result.stdout.toString().trim();
+  return {
+    exitCode: result.exitCode,
+    signalCode: result.signalCode ?? null,
+    stdout: result.stdout.toString(),
+    stderr: result.stderr.toString(),
+  };
+}
 
-  if (result.exitCode !== 0 || !/^\d+\.\d+\.\d+\.\d+$/u.test(version)) {
-    throw new Error(
-      `Couldn't read Electron's Chromium version; run bun install first. ${result.stderr}`,
-    );
+/*
+ * The Chromium version of the Electron in `node_modules`, which the counts are
+ * pinned to. The first launch after an install has failed with nothing on
+ * stderr and the next succeeded, so a failed read is tried once more.
+ */
+export function electronChromium(ask: () => ElectronRun = askElectron) {
+  const failures: string[] = [];
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = ask();
+
+    const version = result.stdout.trim();
+
+    if (result.exitCode === 0 && /^\d+\.\d+\.\d+\.\d+$/u.test(version)) {
+      return version;
+    }
+
+    const how =
+      result.signalCode === null ? `exit code ${result.exitCode}` : `signal ${result.signalCode}`;
+
+    failures.push(`${how}${result.stderr.trim() ? `: ${result.stderr.trim()}` : ""}`);
   }
 
-  return version;
+  throw new Error(
+    `Couldn't read Electron's Chromium version (${failures.join("; then ")}); run bun install first.`,
+  );
 }
 
 export async function buildCorpus(source: Source, tag: string, chromium: string) {

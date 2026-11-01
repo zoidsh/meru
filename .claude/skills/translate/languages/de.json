@@ -918,6 +918,7 @@
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "Gerätename",
+      "countEnglish": "\\bdevice name\\b",
       "severity": "wrong",
       "reason": "A device label is a Gerätename, Chrome's word for a device name (Chrome: 11 of 11 messages).",
       "example": {
@@ -940,6 +941,7 @@
       "id": "trusted-hosts",
       "msgidPattern": "\\btrusted hosts?\\b",
       "expect": "[Vv]ertrauenswürdig",
+      "countEnglish": "\\btrusted\\b",
       "severity": "wrong",
       "reason": "Trusted hosts are vertrauenswürdige Hosts, as Chrome writes trusted (Chrome: 20 of 22 messages).",
       "example": {
@@ -951,6 +953,8 @@
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "Phishing-Schutz",
+      "countEnglish": "\\bphishing\\b",
+      "countExpect": "Phishing",
       "severity": "wrong",
       "reason": "Phishing protection is Phishing-Schutz, with Chrome's Phishing (Chrome: 4 of 4 messages).",
       "example": {
@@ -1076,6 +1080,7 @@
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]naktiv",
+      "countEnglish": "\\binactive tabs?\\b",
       "severity": "wrong",
       "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiver Tab, never the systems' Sleep word (Chrome: 8 of 8 messages).",
       "example": {
@@ -1100,6 +1105,8 @@
       "id": "pin",
       "msgid": "Pin",
       "expect": "^Anpinnen$",
+      "countEnglish": "\\bpinned\\b",
+      "countExpect": "angepinnt",
       "severity": "wrong",
       "reason": "The tab context menu's Pin is Anpinnen, as Chrome writes it: Tab anpinnen, angepinnter Tab (Chrome: 16 of 16 messages).",
       "example": {
@@ -1121,7 +1128,7 @@
       "msgidPattern": "\\blauncher\\b",
       "expect": "Launcher",
       "severity": "wrong",
-      "reason": "The launcher is the Launcher, as Chrome names ChromeOS's (Chrome: 18 of 20 messages).",
+      "reason": "The launcher is the Launcher, as Chrome names ChromeOS's (Chrome: 17 of 19 messages).",
       "example": {
         "msgid": "In launcher",
         "clean": "Im Launcher",
@@ -1180,6 +1187,7 @@
       "id": "auto",
       "msgid": "Auto",
       "expect": "^Auto$",
+      "countEnglish": "^Auto$",
       "severity": "wrong",
       "reason": "A setting's Auto option is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Automatisch, which is Chrome's Automatic.",
       "example": {

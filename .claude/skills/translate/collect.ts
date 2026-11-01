@@ -346,6 +346,7 @@ type PoEntry = {
   flags?: { line: number; values: string[] };
   msgstrStart: number;
   msgstrEnd: number;
+  msgstr: string;
 };
 
 function append<K, V>(map: Map<K, V[]>, key: K, value: V) {
@@ -381,8 +382,34 @@ function readString(lines: string[], start: number) {
   return { value, next };
 }
 
+export type NewPoEntry = {
+  comments?: string[];
+  msgctxt?: string;
+  msgid: string;
+  msgstr: string;
+};
+
+/*
+ * The PO text with each entry appended one blank line after the last and a
+ * final newline, its strings written the way Lingui's formatter writes them.
+ */
+export function appendPoEntries(text: string, entries: NewPoEntry[]) {
+  const blocks = entries.map(({ comments = [], msgctxt, msgid, msgstr }) =>
+    [
+      ...comments,
+      ...(msgctxt === undefined
+        ? []
+        : formatKeyword("msgctxt", msgctxt, undefined, { foldLength: 0 })),
+      ...formatKeyword("msgid", msgid, undefined, { foldLength: 0 }),
+      ...formatKeyword("msgstr", msgstr, undefined, { foldLength: 0 }),
+    ].join("\n"),
+  );
+
+  return `${[text.replace(/\n*$/u, ""), ...blocks].join("\n\n")}\n`;
+}
+
 /** The live entries of a PO file, by line, skipping the header and obsolete `#~` entries. */
-function poEntries(lines: string[]) {
+export function poEntries(lines: string[]) {
   const entries: PoEntry[] = [];
 
   let entry: Partial<PoEntry> = {};
@@ -415,6 +442,7 @@ function poEntries(lines: string[]) {
       } else {
         entry.msgstrStart = index;
         entry.msgstrEnd = next;
+        entry.msgstr = value;
       }
 
       index = next;
