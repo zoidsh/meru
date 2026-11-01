@@ -328,3 +328,8 @@ msgstr "Kopiuj łą&cze"
 #: packages/renderer/routes/settings/general.tsx
 msgid "We'll send you a code."
 msgstr "Wyślemy do Panów kod."
+
+# fault: pinned:unified-inbox
+#: packages/renderer/routes/settings/unified-inbox.tsx
+msgid "Enable unified inbox"
+msgstr "Włącz wspólną skrzynkę odbiorczą"

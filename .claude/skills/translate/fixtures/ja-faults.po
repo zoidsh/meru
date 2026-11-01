@@ -24,6 +24,7 @@ msgid "Open in folder"
 msgstr "フォルダーで開く"
 
 # fault: banned:long-vowel
+# fault: pinned:user-agent
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "User agent"
 msgstr "ユーザエージェント"
@@ -368,3 +369,59 @@ msgstr "Linen"
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "In launcher"
 msgstr "起動ツール内"
+
+# fault: banned:interface
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Add your own CSS to personalize the Gmail interface further."
+msgstr "独自のCSSを追加して、Gmailのインターフェースをさらにカスタマイズします。"
+
+# fault: pinned:zoom
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Persist zoom"
+msgstr "拡大率を保持"
+
+# fault: pinned:default-app
+#: packages/app/url.ts
+msgid "Open this link in your default browser?"
+msgstr "このリンクをデフォルトのブラウザで開きますか?"
+
+# fault: pinned:default
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Default download location"
+msgstr "既定のダウンロード先"
+
+# fault: pinned:user-agent
+#: packages/renderer/routes/settings/advanced.tsx
+msgid "Send a user agent that names Meru."
+msgstr "Meruの名前を含むUAを送信します。"
+
+# fault: pinned:export
+#: packages/renderer/routes/settings/about.tsx
+msgid "Export logs"
+msgstr "ログを書き出す"
+
+# fault: pinned:inspect-element
+#: packages/app/context-menu.ts
+msgid "Inspect Element"
+msgstr "要素を検証"
+
+# fault: banned:website
+# fault: pinned:website
+#: packages/app/menu.ts
+msgid "Website"
+msgstr "Webサイト"
+
+# fault: pinned:hard-reload
+#: packages/app/menu.ts
+msgid "Hard Reload"
+msgstr "強制再読み込み"
+
+# fault: banned:em-dash
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "{tabTitle} — opens {appName} links"
+msgstr "{tabTitle}—{appName}のリンクを開きます"
+
+# fault: pinned:yellow
+#: packages/shared/accounts.ts
+msgid "Yellow"
+msgstr "黄色"
