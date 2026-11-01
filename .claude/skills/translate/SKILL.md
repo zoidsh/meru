@@ -1,13 +1,13 @@
 ---
 name: translate
-description: Translate Meru's interface strings into every shipped language, with a translator and a reviewer agent per locale. Use after wrapping or changing a user-visible string, when CI's catalog checks report untranslated entries, or when asked to translate the catalogs.
+description: Translate Meru's interface strings into every shipped language, with a translator, a reviewer and an MQM reviewer agent per locale. Use after wrapping or changing a user-visible string, when CI's catalog checks report untranslated entries, or when asked to translate the catalogs.
 ---
 
 # Translate
 
-Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then runs the checks CI runs. Each locale gets its own `translator` agent, which writes the translations, and its own `translation-reviewer` agent, which checks them; a locale no person reviews also gets a `translation-second-reviewer`, a cold second pass. All three are in `.claude/agents`. Their guidance is beside this file: `glossary.md` and `languages/<tag>.md`.
+Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then runs the checks CI runs. Each locale gets its own `translator` agent, which writes the translations, its own `translation-reviewer` agent, which checks them, and, as the final step, a fresh `translation-mqm-reviewer` agent, which assesses the result with MQM for `mqm.ts` to score and gate. All three are in `.claude/agents`. Their guidance is beside this file: `glossary.md` and `languages/<tag>.md`.
 
-**Human-reviewed languages: none.** A person reads the doubtful and style findings of a language on this list. Every locale not on it is reviewed by agents alone, so step 4 has the translator apply those findings itself and adds the second pass.
+**Human-reviewed languages: none.** A person reads the doubtful and style findings of a language on this list. Every locale not on it is reviewed by agents alone, so step 4 has the translator apply those findings itself.
 
 ## Where a word comes from
 
@@ -76,24 +76,13 @@ Keep its agent ID too. Its findings come in three tiers. Only `wrong` enters the
 
 Never ask the reviewer to rule on anything else. The translator's own unsure choices, listed in its reply, go to the report for the user, and so do product questions from either agent, such as how a platform behaves or whether a label needs an access key: anything that isn't wording.
 
-If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the fix list and the translator's previous reply. A new `translation-second-reviewer` gets its original prompt and the fix list only, never the translator's reply, so it stays cold.
+If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the fix list and the translator's previous reply.
 
 ### A locale no person reviews
 
-For a locale not on the human-reviewed list, once the loop above has closed it or reached its cap:
+For a locale not on the human-reviewed list, once the loop above has closed it or reached its cap, continue the translator with `SendMessage`, passing the path of `<tag>.review.json` and telling it to apply its doubtful and style findings. It applies every one that carries a `suggestion` unless it disagrees, and says why for each it leaves. A finding whose `msgstr` no longer matches the entry's translation was written before a fix in the loop; the translator skips it or merges it by hand, never writing the suggestion over the fix, and says so. Then run `check.ts` again into `<tag>.check.json`; a `wrong` finding there goes back to the translator as one fix, outside the round count, since it comes from a suggestion rather than a review.
 
-1. **Apply suggestions.** Continue the translator with `SendMessage`, passing the path of `<tag>.review.json` and telling it to apply its doubtful and style findings. It applies every one that carries a `suggestion` unless it disagrees, and says why for each it leaves. A finding whose `msgstr` no longer matches the entry's translation was written before a fix in the loop; the translator skips it or merges it by hand, never writing the suggestion over the fix, and says so. Then run `check.ts` again into `<tag>.check.json`; a `wrong` finding there goes back to the translator as one fix, outside the round count, since it comes from a suggestion rather than a review.
-2. **Second pass.** Run `bun .claude/skills/translate/collect.ts --dump <tag> --out <scratchpad>/translate` again, so the dump holds the catalogs as they now stand, and spawn one `translation-second-reviewer` for the locale. It is cold: its prompt carries the locale tag, the Lingui docs instruction and only these paths, never `<tag>.review.json`, `<tag>.check.json` or anything the translator said:
-   - the dump `<tag>.dump.txt`;
-   - the style sheet `languages/<tag>.md` and its sidecar `languages/<tag>.json`;
-   - the glossary slice `<tag>.glossary.md`, plus `glossary.md` when step 2 warned about skipped lines;
-   - the output path `<scratchpad>/translate/<tag>.second-review.json`.
-
-   It reads the source itself, by each entry's origin.
-
-3. **One more fix round.** When `<tag>.second-review.json` has `wrong` findings, send them to the translator as a fix list, built as in the loop above, run `check.ts` again, and continue the second reviewer with `SendMessage` to re-review only those entries against a fresh dump. That is the only round: a `wrong` finding still open after it goes to the report, as in the loop above. The second pass's doubtful and style findings go to the report.
-
-For a human-reviewed locale, nothing here runs: its doubtful and style findings stay for the person. The user can ask for the second pass on one too; then run step 2 and step 3 alone.
+For a human-reviewed locale, this doesn't run: its doubtful and style findings stay for the person.
 
 ## 5. Check
 
@@ -110,18 +99,38 @@ bun .claude/skills/translate/check.ts --locale <tag>
 
 The first drops the obsolete entries the translators used as prior art. A failure names its entry and locale, and so does a `wrong` finding from `check.ts`, which fails the run the same way: send it to that locale's translator as one more finding, then run the checks again. If it still fails, report it rather than retry. A `check.ts` exit of 2 is a crash; report it, never retry it. Two `wrong` findings from `check.ts` don't go to a translator: one the reviewer dismissed in step 4 doesn't fail the run and stays in the report's dismissed list, since it points at a sidecar rule to fix; one in a locale no translator worked on this run goes straight to the report.
 
-## 6. Report
+## 6. MQM
+
+The final step assesses each locale a translator worked on this run, or that the user asks to have assessed, with MQM (Multidimensional Quality Metrics): a fresh `translation-mqm-reviewer` lists every error with a category, a severity and a correction, and `mqm.ts` scores them. Each error costs points, minor 1, major 5 and critical 25; the score is 100 × (1 − points / source words), the words being the English's, counted as `mqm.ts` documents.
+
+A run is full for a locale when step 2's entry file listed every entry of its catalogs, as in its first translation, or when the user asks for the whole catalog; it is partial otherwise, such as a pull request adding a few strings. A full run assesses every entry and passes with no critical or major error and a score of at least 99. A partial run assesses only the entries step 2 listed, from `<tag>.txt`, and passes with no critical or major error, since a score over a few words means little.
+
+1. **Assess.** Run `bun .claude/skills/translate/collect.ts --dump <tag> --out <scratchpad>/translate`, so the dump holds the catalogs as they now stand. Spawn one `translation-mqm-reviewer` per locale, all in one message. Each is cold: its prompt carries the locale tag, whether the run is full or partial, and only these paths, never a `*.review.json`, a `*.check.json`, an earlier `*.mqm.json` or anything an agent said:
+   - the dump `<tag>.dump.txt`;
+   - for a partial run, the entry file `<tag>.txt`;
+   - the style sheet `languages/<tag>.md` and its sidecar `languages/<tag>.json`;
+   - the glossary slice `<tag>.glossary.md`, plus `glossary.md` when step 2 warned about skipped lines;
+   - the output path `<scratchpad>/translate/<tag>.mqm.json`.
+2. **Score.** Run `bun .claude/skills/translate/mqm.ts --dir <scratchpad>/translate <tag>…`, with `--partial` for a partial run, and keep its output, a table per locale with the findings to act on. It exits 1 when a locale fails the gate, which is a result, not a failure. Exit 2 means a findings file it can't score, such as a finding that names no assessed entry: continue that reviewer with `SendMessage` and the errors, to correct the names alone, and score again.
+3. **Correct.** Continue each locale's translator with `SendMessage`, passing the path of `<tag>.mqm.json` and telling it to apply every correction. It says why for each it leaves, citing the style sheet, the sidecar or the glossary.
+4. **Settle terms.** A finding that carries a `source` is term-level: a word the glossary or the source order should settle. In the same run, make it a rule, as [Changing a rule](#changing-a-rule) says: a pin or a ban in `languages/<tag>.json`, the word in the style sheet or the glossary, the allowed wording in `fixtures/<tag>-clean.po` and a planted fault in `fixtures/<tag>-faults.po`; then run `bun test --isolate scripts/translate-*.test.ts` and `check.ts --locale <tag>`, and send any `wrong` finding to the translator. A term-level finding that contradicts a rule already in the sidecar goes to the report instead, since the rule came from the source order.
+5. **Score again.** When a locale failed the gate, rename its `<tag>.mqm.json` to `<tag>.mqm.<round>.json`, starting at 1, and run steps 1 to 4 again for that locale with a new `translation-mqm-reviewer`, never a continued one, so it judges the corrected catalogs cold. Stop after two rounds of scoring again. A critical or major finding still open then goes to the report, with the reviewer's reason and the translator's answer, and the locale fails the run; it is never forced through by editing the catalog yourself.
+
+Then run step 5's checks again, since the corrections changed the catalogs.
+
+## 7. Report
 
 Per locale, say:
 
 - how many entries were translated, how many review rounds they took, and the `wrong` findings fixed and still open, each open one with its msgid, the problem, the suggested fix and the translator's answer;
 - the counts of `doubtful` and `style` findings, and the path of `<tag>.review.json` that holds them;
-- for a locale no person reviews: how many suggestions the translator applied, each one it left with its reason, the second pass's counts by severity with the path of `<tag>.second-review.json`, its `wrong` findings fixed and still open, and its doubtful and style findings, each with its msgid, reason and suggestion;
+- for a locale no person reviews: how many suggestions the translator applied, and each one it left with its reason;
+- the MQM table from `mqm.ts`, its score, points per 1,000 words and critical, major and minor counts, for every round, with whether the run was full or partial; how many corrections the translator applied and each one it left with its reason; each critical or major finding still open; each term-level finding with the rule it became, or why it didn't; and where the MQM reviewer said it was less sure;
 - the translator's unsure choices, as its reply lists them, and the product questions from either agent;
 - each `check.ts` finding the reviewer dismissed, with its reason;
 - every term a translator chose that the glossary lacks, so it can be added to `glossary.md`.
 
-Say that the `<tag>.review.json` files of the human-reviewed locales are the human review set: the reviewer's doubtful and style findings, which no agent has fixed. Say that the second pass can run for those locales too, if the user asks. Then show the output of the checks in step 5.
+Say that the `<tag>.review.json` files of the human-reviewed locales are the human review set: the reviewer's doubtful and style findings, which no agent has fixed. Then show the output of the checks in step 5, as they ran last.
 
 Leave the catalogs uncommitted: the translations land in the same commit as the strings they translate.
 
