@@ -55,7 +55,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
       if (window !== selectedAccount.instance.gmail.view) {
         menuItems.push(
           {
-            label: "Copy Link",
+            label: "Copy Page Link",
             click: () => {
               copyText(window.webContents.getURL());
             },
