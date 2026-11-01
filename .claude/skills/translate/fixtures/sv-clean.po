@@ -28,10 +28,6 @@ msgctxt "macOS"
 msgid "Show Save As dialog before downloading"
 msgstr "Visa dialogrutan ”Spara som” före nedladdning"
 
-#: packages/renderer/routes/download-history.tsx
-msgid "Download history"
-msgstr "Nedladdningshistorik"
-
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Show recent download history"
 msgstr "Visa senaste nedladdningshistoriken"
@@ -75,32 +71,10 @@ msgstr "Aktivera ikonen i systemfältet"
 msgid "Show bookmarks button"
 msgstr "Visa bokmärkesknappen"
 
-#: packages/renderer/routes/settings/downloads.tsx
-msgid "Show a notification when a download finishes."
-msgstr "Visa en avisering när en nedladdning är klar."
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Uppgradera till Meru Pro"
-
-#: packages/renderer/routes/settings/gmail/label-colors.tsx
-msgctxt "Gmail label"
-msgid "Label"
-msgstr "Etikett"
-
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgctxt "Gmail label"
 msgid "Enter a label"
 msgstr "Ange en etikett"
-
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "Namn"
-
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "Ange ett namn"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove {label}?"
@@ -118,34 +92,9 @@ msgstr "{count, plural, one {# flik} other {# flikar}}"
 msgid "Move to New Window"
 msgstr "Flytta till nytt fönster"
 
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "Stäng popup"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "Popup-meddelanden"
-
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "Popup-meddelanden"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Show unread badge"
-msgstr "Visa bricka för olästa"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "Klockspel"
-
 #: packages/renderer/routes/settings/general.tsx
 msgid "Notify when updates are available"
 msgstr "Meddela när uppdateringar finns"
-
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Pin"
-msgstr "Fäst"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Unpinned tabs"
@@ -167,26 +116,6 @@ msgstr "Sök…"
 msgid "Mark email as read after copying"
 msgstr "Markera e-postmeddelandet som läst efter kopiering"
 
-#: packages/renderer/routes/settings/general.tsx
-msgid "Phishing protection"
-msgstr "Skydd mot nätfiske"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Aktivera även alternativet i Systeminställningar."
-
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "Dockikon"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "Gör oanvända flikar inaktiva"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "Linne"
-
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuter"
@@ -195,26 +124,6 @@ msgstr "5 minuter"
 msgid "Get the app"
 msgstr "Skaffa appen"
 
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "Uppgradera"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "Bris"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "Duett"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "Knack"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "In launcher"
-msgstr "I appstartaren"
-
 #: packages/renderer/routes/settings/general.tsx
 msgid "Get the app"
 msgstr "Hämta appen"
@@ -222,11 +131,3 @@ msgstr "Hämta appen"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Use a security key such as Ni2 or Ni+"
 msgstr "Använd en säkerhetsnyckel som Ni2 eller Ni+"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Notify for"
-msgstr "Meddela för"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Öppna Gmail-inställningarna för att stänga av autosvaret"

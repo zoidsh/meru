@@ -11,6 +11,7 @@ import {
   mergeBase,
   sliceGlossary,
   translationChanges,
+  withSourceOrder,
 } from "../.claude/skills/translate/collect";
 
 /*
@@ -291,6 +292,39 @@ The window.
       'glossary.md:29: skipped "| --- | --- |"',
       'glossary.md:31: skipped "```"',
     ]);
+  });
+});
+
+describe("withSourceOrder", () => {
+  test("puts the source order in place of the paragraph that links to it, keeping the rest", () => {
+    const slice =
+      "# Glossary\n\n## Where a word comes from\n\nCapitals are the base form.\n\nSee source-order.md.\n\n## Tab\n\n- ja: タブ\n";
+
+    const sourceOrder =
+      "# Where a word comes from\n\n1. The system's.\n\n## How a source is cited\n\nIn brackets.\n";
+
+    expect(withSourceOrder(slice, sourceOrder)).toBe(
+      "# Glossary\n\n## Where a word comes from\n\nCapitals are the base form.\n\n1. The system's.\n\n### How a source is cited\n\nIn brackets.\n\n## Tab\n\n- ja: タブ\n",
+    );
+  });
+
+  test("gives the real slice the source order in full and no link in its place", async () => {
+    const translateDir = path.join(import.meta.dir, "../.claude/skills/translate");
+
+    const sourceOrder = await Bun.file(path.join(translateDir, "source-order.md")).text();
+
+    const { text } = sliceGlossary(
+      await Bun.file(path.join(translateDir, "glossary.md")).text(),
+      "fr",
+    );
+
+    const slice = withSourceOrder(text, sourceOrder);
+
+    expect(slice).toContain(
+      sourceOrder.split("\n").find((line) => line.includes("(4c)")) ?? "(4c)",
+    );
+    expect(slice).not.toContain("in place of this paragraph");
+    expect(slice).toContain("Capitalization below is the base form inside a sentence.");
   });
 });
 

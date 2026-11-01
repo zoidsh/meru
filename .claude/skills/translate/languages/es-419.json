@@ -2,582 +2,681 @@
   "platformWords": {
     "severity": "wrong",
     "reason": "An entry with a platform msgctxt takes that platform's word from the style sheet's Platform words table.",
-    "entries": [
+    "rows": [
       {
         "row": "File",
-        "msgctxt": "macOS",
-        "msgid": "File",
-        "msgstr": "Archivo"
-      },
-      {
-        "row": "File",
-        "msgctxt": "Windows",
-        "msgid": "File",
-        "msgstr": "Archivo"
-      },
-      {
-        "row": "File",
-        "msgctxt": "Linux",
-        "msgid": "File",
-        "msgstr": "Archivo"
+        "macOS": [
+          {
+            "word": "Archivo",
+            "source": "(AppKit `MenuCommands` `File`)",
+            "labels": ["File"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Archivo",
+            "source": "(TBX `7285_185699_185707`)",
+            "labels": ["File"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Archivo",
+            "source": "(gtk4 `File`)",
+            "labels": ["File"]
+          }
+        ]
       },
       {
         "row": "View",
-        "msgctxt": "macOS",
-        "msgid": "View",
-        "msgstr": "Visualización"
-      },
-      {
-        "row": "View",
-        "msgctxt": "Windows",
-        "msgid": "View",
-        "msgstr": "Vista"
-      },
-      {
-        "row": "View",
-        "msgctxt": "Linux",
-        "msgid": "View",
-        "msgstr": "Ver"
-      },
-      {
-        "row": "Undo",
-        "msgctxt": "macOS",
-        "msgid": "Undo",
-        "msgstr": "Deshacer"
-      },
-      {
-        "row": "Undo",
-        "msgctxt": "Windows",
-        "msgid": "Undo",
-        "msgstr": "Deshacer"
+        "macOS": [
+          {
+            "word": "Visualización",
+            "source": "(AppKit `MenuCommands` `View`)",
+            "labels": ["View"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Vista",
+            "source": "(TBX `9201_185833_185841`)",
+            "labels": ["View"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Ver",
+            "source": "(nautilus `shortcuts dialog` `View`)",
+            "labels": ["View"]
+          }
+        ]
       },
       {
         "row": "Undo",
-        "msgctxt": "Linux",
-        "msgid": "Undo",
-        "msgstr": "Deshacer"
+        "macOS": [
+          {
+            "word": "Deshacer",
+            "source": "(Mail `MainMenu` `281.title`)",
+            "labels": ["Undo"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Deshacer",
+            "source": "(TBX `5274_168784_2136512`)",
+            "labels": ["Undo"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Deshacer",
+            "source": "(gtk4 `_Undo`)",
+            "labels": ["Undo"]
+          }
+        ]
       },
       {
         "row": "Redo",
-        "msgctxt": "macOS",
-        "msgid": "Redo",
-        "msgstr": "Rehacer"
-      },
-      {
-        "row": "Redo",
-        "msgctxt": "Windows",
-        "msgid": "Redo",
-        "msgstr": "Rehacer"
-      },
-      {
-        "row": "Redo",
-        "msgctxt": "Linux",
-        "msgid": "Redo",
-        "msgstr": "Rehacer"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "macOS",
-        "msgid": "Cut",
-        "msgstr": "Cortar"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "Windows",
-        "msgid": "Cut",
-        "msgstr": "Cortar"
+        "macOS": [
+          {
+            "word": "Rehacer",
+            "source": "(Mail `MainMenu` `282.title`)",
+            "labels": ["Redo"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Rehacer",
+            "source": "(TBX `10268_169412_1135238`)",
+            "labels": ["Redo"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Rehacer",
+            "source": "(gtk4 `_Redo`)",
+            "labels": ["Redo"]
+          }
+        ]
       },
       {
         "row": "Cut, `Cu&t`",
-        "msgctxt": "Linux",
-        "msgid": "Cut",
-        "msgstr": "Cortar"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "macOS",
-        "msgid": "Cu&t",
-        "msgstr": "Cortar"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "Windows",
-        "msgid": "Cu&t",
-        "msgstr": "Cortar"
-      },
-      {
-        "row": "Cut, `Cu&t`",
-        "msgctxt": "Linux",
-        "msgid": "Cu&t",
-        "msgstr": "Cortar"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "macOS",
-        "msgid": "Paste",
-        "msgstr": "Pegar"
+        "macOS": [
+          {
+            "word": "Cortar",
+            "source": "(AppKit `MenuCommands` `Cut`)",
+            "labels": ["Cut", "Cu&t"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Cortar",
+            "source": "(TBX `1735_41913_41914`)",
+            "labels": ["Cut", "Cu&t"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Cortar",
+            "source": "(gtk4 `Cu_t`)",
+            "labels": ["Cut", "Cu&t"]
+          }
+        ]
       },
       {
         "row": "Paste, `&Paste`",
-        "msgctxt": "Windows",
-        "msgid": "Paste",
-        "msgstr": "Pegar"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "Linux",
-        "msgid": "Paste",
-        "msgstr": "Pegar"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "macOS",
-        "msgid": "&Paste",
-        "msgstr": "Pegar"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "Windows",
-        "msgid": "&Paste",
-        "msgstr": "Pegar"
-      },
-      {
-        "row": "Paste, `&Paste`",
-        "msgctxt": "Linux",
-        "msgid": "&Paste",
-        "msgstr": "Pegar"
+        "macOS": [
+          {
+            "word": "Pegar",
+            "source": "(AppKit `MenuCommands` `Paste`)",
+            "labels": ["Paste", "&Paste"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Pegar",
+            "source": "(TBX `11068_91030_2135145`)",
+            "labels": ["Paste", "&Paste"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Pegar",
+            "source": "(gtk4 `_Paste`)",
+            "labels": ["Paste", "&Paste"]
+          }
+        ]
       },
       {
         "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "macOS",
-        "msgid": "Paste and Match Style",
-        "msgstr": "Pegar con el mismo estilo"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "Windows",
-        "msgid": "Paste and Match Style",
-        "msgstr": "Pegar con el mismo formato"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "Linux",
-        "msgid": "Paste and Match Style",
-        "msgstr": "Pegar con el mismo estilo"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "macOS",
-        "msgid": "Paste and &Match Style",
-        "msgstr": "Pegar con el mismo estilo"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "Windows",
-        "msgid": "Paste and &Match Style",
-        "msgstr": "Pegar con el mismo formato"
-      },
-      {
-        "row": "Paste and Match Style, `Paste and &Match Style`",
-        "msgctxt": "Linux",
-        "msgid": "Paste and &Match Style",
-        "msgstr": "Pegar con el mismo estilo"
+        "macOS": [
+          {
+            "word": "Pegar con el mismo estilo",
+            "source": "(AppKit `MenuCommands` `Paste and Match Style`)",
+            "labels": ["Paste and Match Style", "Paste and &Match Style"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Pegar con el mismo formato",
+            "source": "inferred from TBX `11068_91030_2135145`",
+            "labels": ["Paste and Match Style", "Paste and &Match Style"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Pegar con el mismo estilo",
+            "source": "inferred from gtk4 `_Paste`",
+            "labels": ["Paste and Match Style", "Paste and &Match Style"]
+          }
+        ]
       },
       {
         "row": "Select All, `Select &All`",
-        "msgctxt": "macOS",
-        "msgid": "Select All",
-        "msgstr": "Seleccionar todo"
-      },
-      {
-        "row": "Select All, `Select &All`",
-        "msgctxt": "Windows",
-        "msgid": "Select All",
-        "msgstr": "Seleccionar todo"
-      },
-      {
-        "row": "Select All, `Select &All`",
-        "msgctxt": "Linux",
-        "msgid": "Select All",
-        "msgstr": "Seleccionar todo"
-      },
-      {
-        "row": "Select All, `Select &All`",
-        "msgctxt": "Windows",
-        "msgid": "Select &All",
-        "msgstr": "Seleccionar todo"
-      },
-      {
-        "row": "Select All, `Select &All`",
-        "msgctxt": "Linux",
-        "msgid": "Select &All",
-        "msgstr": "Seleccionar todo"
+        "macOS": [
+          {
+            "word": "Seleccionar todo",
+            "source": "(AppKit `MenuCommands` `Select All`)",
+            "labels": ["Select All"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Seleccionar todo",
+            "source": "(TBX `10476_185277_185285`)",
+            "labels": ["Select All", "Select &All"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Seleccionar todo",
+            "source": "(gtk4 `Select _All`)",
+            "labels": ["Select All", "Select &All"]
+          }
+        ]
       },
       {
         "row": "About {appName}",
-        "msgctxt": "macOS",
-        "msgid": "About {appName}",
-        "msgstr": "Acerca de {appName}"
-      },
-      {
-        "row": "About {appName}",
-        "msgctxt": "Windows",
-        "msgid": "About {appName}",
-        "msgstr": "Acerca de {appName}"
-      },
-      {
-        "row": "About {appName}",
-        "msgctxt": "Linux",
-        "msgid": "About {appName}",
-        "msgstr": "Acerca de {appName}"
-      },
-      {
-        "row": "Check for Updates…",
-        "msgctxt": "macOS",
-        "msgid": "Check for Updates…",
-        "msgstr": "Buscar actualizaciones…"
-      },
-      {
-        "row": "Check for Updates…",
-        "msgctxt": "Windows",
-        "msgid": "Check for Updates…",
-        "msgstr": "Buscar actualizaciones…"
+        "macOS": [
+          {
+            "word": "Acerca de {appName}",
+            "source": "(Mail `MainMenu` `628.title`, _Acerca de Mail_)",
+            "labels": ["About {appName}"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Acerca de {appName}",
+            "source": "inferred from TBX `6036_211259_363244` _Acerca de_, the About menu item",
+            "labels": ["About {appName}"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Acerca de {appName}",
+            "source": "(gtk4 `About %s`)",
+            "labels": ["About {appName}"]
+          }
+        ]
       },
       {
         "row": "Check for Updates…",
-        "msgctxt": "Linux",
-        "msgid": "Check for Updates…",
-        "msgstr": "Buscar actualizaciones…"
+        "macOS": [
+          {
+            "word": "Buscar actualizaciones…",
+            "source": "(Software Update `Check for Updates`)",
+            "labels": ["Check for Updates…"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Buscar actualizaciones…",
+            "source": "inferred from TBX `14473_3621_3623` _actualización_",
+            "labels": ["Check for Updates…"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Buscar actualizaciones…",
+            "source": "inferred from gtk4 `Show Graphic Updates`, _Mostrar actualizaciones de gráficos_",
+            "labels": ["Check for Updates…"]
+          }
+        ]
       },
       {
         "row": "Settings, the app-menu item",
-        "msgctxt": "macOS",
-        "msgid": "Settings",
-        "msgstr": "Configuración…"
-      },
-      {
-        "row": "Settings, the app-menu item",
-        "msgctxt": "Windows",
-        "msgid": "Settings",
-        "msgstr": "Configuración"
-      },
-      {
-        "row": "Settings, the app-menu item",
-        "msgctxt": "Linux",
-        "msgid": "Settings",
-        "msgstr": "Configuración"
-      },
-      {
-        "row": "Compose, the File menu item",
-        "msgctxt": "macOS",
-        "msgid": "Compose",
-        "msgstr": "Nuevo mensaje"
-      },
-      {
-        "row": "Compose, the File menu item",
-        "msgctxt": "Windows",
-        "msgid": "Compose",
-        "msgstr": "Nuevo correo electrónico"
+        "macOS": [
+          {
+            "word": "Configuración…",
+            "source": "(AppKit `MenuCommands` `Settings\\U2026`)",
+            "labels": ["Settings"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Configuración",
+            "source": "(TBX `21910_780478_1053585`)",
+            "labels": ["Settings"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Configuración",
+            "source": "(gtk4 `Settings`)",
+            "labels": ["Settings"]
+          }
+        ]
       },
       {
         "row": "Compose, the File menu item",
-        "msgctxt": "Linux",
-        "msgid": "Compose",
-        "msgstr": "Mensaje nuevo"
+        "macOS": [
+          {
+            "word": "Nuevo mensaje",
+            "source": "(Mail `MainMenu` `374.title`, New Message)",
+            "labels": ["Compose"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Nuevo correo electrónico",
+            "source": "inferred: TBX `34677_1998714_2001762` gives _correo nuevo_ for mail received",
+            "labels": ["Compose"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Mensaje nuevo",
+            "source": "inferred from nautilus `New _Window`, _Ventana nueva_",
+            "labels": ["Compose"]
+          }
+        ]
       },
       {
         "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "macOS",
-        "msgid": "Sa&ve Image As…",
-        "msgstr": "Guardar imagen como…"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "Windows",
-        "msgid": "Sa&ve Image As…",
-        "msgstr": "Guardar imagen como…"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "Linux",
-        "msgid": "Sa&ve Image As…",
-        "msgstr": "Guardar imagen como…"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "macOS",
-        "msgid": "Show Save As dialog before downloading",
-        "contains": "Guardar como"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "Windows",
-        "msgid": "Show Save As dialog before downloading",
-        "contains": "Guardar como"
-      },
-      {
-        "row": "Save As, in `Sa&ve Image As…` and the Save As dialog",
-        "msgctxt": "Linux",
-        "msgid": "Show Save As dialog before downloading",
-        "contains": "Guardar como"
+        "macOS": [
+          {
+            "word": "Guardar como…",
+            "source": "(AppKit `Document` `Save As\\U2026`)",
+            "sentences": ["Show Save As dialog before downloading"]
+          },
+          {
+            "word": "Guardar imagen como…",
+            "source": "inferred with Mail `Localizable` `CopyImageMenuItem`, _Copiar imagen_",
+            "labels": ["Sa&ve Image As…"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Guardar como",
+            "source": "(TBX `12985_534974_536952`)",
+            "sentences": ["Show Save As dialog before downloading"]
+          },
+          {
+            "word": "Guardar imagen como…",
+            "source": "inferred with TBX `1294_64520_64521` _imagen_",
+            "labels": ["Sa&ve Image As…"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Guardar como…",
+            "source": "(gedit `Save _As…`)",
+            "sentences": ["Show Save As dialog before downloading"]
+          },
+          {
+            "word": "Guardar imagen como…",
+            "source": "inferred",
+            "labels": ["Sa&ve Image As…"]
+          }
+        ]
       },
       {
         "row": "Export, the save dialog's button",
-        "msgctxt": "macOS",
-        "msgid": "Export",
-        "msgstr": "Exportar"
-      },
-      {
-        "row": "Export, the save dialog's button",
-        "msgctxt": "Windows",
-        "msgid": "Export",
-        "msgstr": "Exportar"
-      },
-      {
-        "row": "Export, the save dialog's button",
-        "msgctxt": "Linux",
-        "msgid": "Export",
-        "msgstr": "Exportar"
-      },
-      {
-        "row": "Shift, the key",
-        "msgctxt": "macOS",
-        "msgid": "Shift",
-        "msgstr": "Mayúsculas"
-      },
-      {
-        "row": "Shift, the key",
-        "msgctxt": "Windows",
-        "msgid": "Shift",
-        "msgstr": "Mayús"
+        "macOS": [
+          {
+            "word": "Exportar",
+            "source": "(AppKit `Document` `Export`)",
+            "labels": ["Export"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Exportar",
+            "source": "(TBX `7948_52504_52505`)",
+            "labels": ["Export"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Exportar",
+            "source": "inferred: no GNOME source has it",
+            "labels": ["Export"]
+          }
+        ]
       },
       {
         "row": "Shift, the key",
-        "msgctxt": "Linux",
-        "msgid": "Shift",
-        "msgstr": "Mayús"
+        "macOS": [
+          {
+            "word": "Mayúsculas",
+            "source": "(AppKit `FunctionKeyNames` `Shift`)",
+            "labels": ["Shift"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Mayús",
+            "source": "(TBX `3412_112291_2145255`, _tecla Mayús_, short as the glossary's Keyboard keys gives it)",
+            "labels": ["Shift"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Mayús",
+            "source": "(gtk4 `keyboard label` `Shift`)",
+            "labels": ["Shift"]
+          }
+        ]
       },
       {
         "row": "Show Meru, the tray item",
-        "msgctxt": "macOS",
-        "msgid": "Show Meru",
-        "msgstr": "Mostrar Meru"
-      },
-      {
-        "row": "Show Meru, the tray item",
-        "msgctxt": "Windows",
-        "msgid": "Show Meru",
-        "msgstr": "Mostrar Meru"
-      },
-      {
-        "row": "Show Meru, the tray item",
-        "msgctxt": "Linux",
-        "msgid": "Show Meru",
-        "msgstr": "Mostrar Meru"
-      },
-      {
-        "row": "Hide Meru, the tray item",
-        "msgctxt": "macOS",
-        "msgid": "Hide Meru",
-        "msgstr": "Ocultar Meru"
-      },
-      {
-        "row": "Hide Meru, the tray item",
-        "msgctxt": "Windows",
-        "msgid": "Hide Meru",
-        "msgstr": "Ocultar Meru"
+        "macOS": [
+          {
+            "word": "Mostrar Meru",
+            "source": "(AppKit `Common` `Show`, _Mostrar_)",
+            "labels": ["Show Meru"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Mostrar Meru",
+            "source": "(TBX `19508_660023_2723639` _mostrar_)",
+            "labels": ["Show Meru"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Mostrar Meru",
+            "source": "(gtk4 `Show`, _Mostrar_)",
+            "labels": ["Show Meru"]
+          }
+        ]
       },
       {
         "row": "Hide Meru, the tray item",
-        "msgctxt": "Linux",
-        "msgid": "Hide Meru",
-        "msgstr": "Ocultar Meru"
+        "macOS": [
+          {
+            "word": "Ocultar Meru",
+            "source": "(Mail `MainMenu` `632.title`, _Ocultar Mail_)",
+            "labels": ["Hide Meru"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Ocultar Meru",
+            "source": "(TBX `20202_719546_771004` _ocultar_)",
+            "labels": ["Hide Meru"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Ocultar Meru",
+            "source": "(gtk4 `Hide %s`, from GTK's macOS app menu)",
+            "labels": ["Hide Meru"]
+          }
+        ]
       },
       {
         "row": "Quit, the tray item",
-        "msgctxt": "Windows",
-        "msgid": "Exit",
-        "msgstr": "Salir"
-      },
-      {
-        "row": "Quit, the tray item",
-        "msgctxt": "Linux",
-        "msgid": "Quit",
-        "msgstr": "Salir"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "Enable system tray icon",
-        "contains": "bandeja del sistema"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "Enable system tray icon",
-        "contains": "bandeja del sistema"
+        "macOS": "macOS shows the menu's Quit {appName}",
+        "Windows": [
+          {
+            "word": "Salir",
+            "source": "(TBX `11976_185681_185689`, the Exit item of a taskbar icon's menu)",
+            "labels": ["Exit"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Salir",
+            "source": "inferred from gtk4 `Quit %s` in GNOME's `es`, _Salir de %s_: GTK has no standalone Quit, and the Microsoft Terminology Collection is no Linux source",
+            "labels": ["Quit"]
+          }
+        ]
       },
       {
         "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "System tray icon",
-        "contains": "bandeja del sistema"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "System tray icon",
-        "contains": "bandeja del sistema"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "Choose the color of the system tray icon.",
-        "contains": "bandeja del sistema"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "Choose the color of the system tray icon.",
-        "contains": "bandeja del sistema"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "Show the application icon in the system tray.",
-        "contains": "bandeja del sistema"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "Show the application icon in the system tray.",
-        "contains": "bandeja del sistema"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Windows",
-        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
-        "contains": "bandeja del sistema"
-      },
-      {
-        "row": "System tray, in the Appearance settings",
-        "msgctxt": "Linux",
-        "msgid": "Automatically select the first account with unread emails when clicking the system tray icon.",
-        "contains": "bandeja del sistema"
+        "macOS": "macOS shows the menu bar instead: barra de menús",
+        "Windows": [
+          {
+            "word": "bandeja del sistema",
+            "source": "(TBX `55084_3122863_3122961`, system tray; `10299_85657_85659` gives área de notificación for the notification area)",
+            "sentences": [
+              "Enable system tray icon",
+              "System tray icon",
+              "Choose the color of the system tray icon.",
+              "Show the application icon in the system tray.",
+              "Automatically select the first account with unread emails when clicking the system tray icon."
+            ]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "bandeja del sistema",
+            "source": "inferred: GNOME has no tray; TBX `55084_3122863_3122961` gives it for the system tray",
+            "sentences": [
+              "Enable system tray icon",
+              "System tray icon",
+              "Choose the color of the system tray icon.",
+              "Show the application icon in the system tray.",
+              "Automatically select the first account with unread emails when clicking the system tray icon."
+            ]
+          }
+        ]
       },
       {
         "row": "Hide {appName}",
-        "msgctxt": "macOS",
-        "msgid": "Hide {appName}",
-        "msgstr": "Ocultar {appName}"
+        "macOS": [
+          {
+            "word": "Ocultar {appName}",
+            "source": "(Mail `MainMenu` `632.title`, _Ocultar Mail_)",
+            "labels": ["Hide {appName}"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Hide Others",
-        "msgctxt": "macOS",
-        "msgid": "Hide Others",
-        "msgstr": "Ocultar otros"
+        "macOS": [
+          {
+            "word": "Ocultar otros",
+            "source": "(Mail `MainMenu` `622.title`)",
+            "labels": ["Hide Others"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Show All",
-        "msgctxt": "macOS",
-        "msgid": "Show All",
-        "msgstr": "Mostrar todo"
+        "macOS": [
+          {
+            "word": "Mostrar todo",
+            "source": "(Mail `MainMenu` `625.title`)",
+            "labels": ["Show All"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Quit {appName}",
-        "msgctxt": "macOS",
-        "msgid": "Quit {appName}",
-        "msgstr": "Salir de {appName}"
-      },
-      {
-        "row": "Quit {appName}",
-        "msgctxt": "Windows",
-        "msgid": "Quit {appName}",
-        "msgstr": "Salir de {appName}"
-      },
-      {
-        "row": "Quit {appName}",
-        "msgctxt": "Linux",
-        "msgid": "Quit {appName}",
-        "msgstr": "Salir de {appName}"
+        "macOS": [
+          {
+            "word": "Salir de {appName}",
+            "source": "(Mail `MainMenu` `631.title`, _Salir de Mail_)",
+            "labels": ["Quit {appName}"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Salir de {appName}",
+            "source": "inferred from TBX `9679_334563_770653` _salir_, to close a program",
+            "labels": ["Quit {appName}"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Salir de {appName}",
+            "source": "(gtk4 `Quit %s`, from GNOME's `es`)",
+            "labels": ["Quit {appName}"]
+          }
+        ]
       },
       {
         "row": "Close Window",
-        "msgctxt": "macOS",
-        "msgid": "Close Window",
-        "msgstr": "Cerrar ventana"
+        "macOS": [
+          {
+            "word": "Cerrar ventana",
+            "source": "(AppKit `MenuCommands` `Close Window`)",
+            "labels": ["Close Window"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Window, the menu",
-        "msgctxt": "macOS",
-        "msgid": "Window",
-        "msgstr": "Ventana"
+        "macOS": [
+          {
+            "word": "Ventana",
+            "source": "(AppKit `MenuCommands` `Window`)",
+            "labels": ["Window"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Minimize",
-        "msgctxt": "macOS",
-        "msgid": "Minimize",
-        "msgstr": "Minimizar"
+        "macOS": [
+          {
+            "word": "Minimizar",
+            "source": "(AppKit `MenuCommands` `Minimize`; Dictionary and Screen Sharing `MainMenu` `23.title`)",
+            "labels": ["Minimize"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Zoom, the window",
-        "msgctxt": "macOS",
-        "msgid": "Zoom",
-        "msgstr": "Maximizar"
+        "macOS": [
+          {
+            "word": "Maximizar",
+            "source": "(Mail `MainMenu` `295.title`)",
+            "labels": ["Zoom"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Bring All to Front",
-        "msgctxt": "macOS",
-        "msgid": "Bring All to Front",
-        "msgstr": "Traer todo al frente"
+        "macOS": [
+          {
+            "word": "Traer todo al frente",
+            "source": "(AppKit `MenuCommands` `Bring All to Front`)",
+            "labels": ["Bring All to Front"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Speech",
-        "msgctxt": "macOS",
-        "msgid": "Speech",
-        "msgstr": "Lectura"
+        "macOS": [
+          {
+            "word": "Lectura",
+            "source": "(Mail `MainMenu` `1535.title`)",
+            "labels": ["Speech"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Start Speaking",
-        "msgctxt": "macOS",
-        "msgid": "Start Speaking",
-        "msgstr": "Iniciar lectura"
+        "macOS": [
+          {
+            "word": "Iniciar lectura",
+            "source": "(Mail `MainMenu` `1536.title`)",
+            "labels": ["Start Speaking"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Stop Speaking",
-        "msgctxt": "macOS",
-        "msgid": "Stop Speaking",
-        "msgstr": "Detener lectura"
+        "macOS": [
+          {
+            "word": "Detener lectura",
+            "source": "(Mail `MainMenu` `1537.title`)",
+            "labels": ["Stop Speaking"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Look Up “{selection}”",
-        "msgctxt": "macOS",
-        "msgid": "Look Up “{selection}”",
-        "msgstr": "Consultar “{selection}”"
+        "macOS": [
+          {
+            "word": "Consultar “{selection}”",
+            "source": "(AppKit `MenuCommands` `Look Up \\U201C%@\\U201D`)",
+            "labels": ["Look Up “{selection}”"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "Show in Finder",
-        "msgctxt": "macOS",
-        "msgid": "Show in Finder",
-        "msgstr": "Mostrar en el Finder"
+        "macOS": [
+          {
+            "word": "Mostrar en el Finder",
+            "source": "(Mail `Preferences` `ShowExtensionApplicationInFinder`)",
+            "labels": ["Show in Finder"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
       },
       {
         "row": "OK, a native dialog's button",
-        "msgctxt": "macOS",
-        "msgid": "OK",
-        "msgstr": "OK"
-      },
-      {
-        "row": "OK, a native dialog's button",
-        "msgctxt": "Windows",
-        "msgid": "OK",
-        "msgstr": "Aceptar"
-      },
-      {
-        "row": "OK, a native dialog's button",
-        "msgctxt": "Linux",
-        "msgid": "OK",
-        "msgstr": "Aceptar"
+        "macOS": [
+          {
+            "word": "OK",
+            "source": "(AppKit `Common` `OK`)",
+            "labels": ["OK"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Aceptar",
+            "source": "(TBX `43243_2447290_2518578`, the dialog button)",
+            "labels": ["OK"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Aceptar",
+            "source": "(gtk4 `_OK` in GNOME's `es`, its access key dropped)",
+            "labels": ["OK"]
+          }
+        ]
       }
     ]
   },
@@ -686,7 +785,10 @@
       "msgctxt": null,
       "expect": "^Configuración$",
       "severity": "wrong",
-      "reason": "Settings is Configuración, as Chrome writes it (Chrome: 428 of 436 messages)."
+      "reason": "Settings is Configuración, as Chrome writes it (Chrome: 428 of 436 messages).",
+      "example": {
+        "fault": "Preferencias"
+      }
     },
     {
       "id": "ok-button",
@@ -694,35 +796,55 @@
       "msgid": "OK",
       "expect": "^Aceptar$",
       "severity": "wrong",
-      "reason": "A button Meru draws reads Aceptar, as Chrome writes OK (Chrome: 6 of 7 messages)."
+      "reason": "A button Meru draws reads Aceptar, as Chrome writes OK (Chrome: 6 of 7 messages).",
+      "example": {
+        "fault": "OK"
+      }
     },
     {
       "id": "bookmark",
       "msgidPattern": "\\bbookmarks?\\b",
       "expect": "[Ff]avorito",
       "severity": "wrong",
-      "reason": "A bookmark is a favorito (Chrome: 151 of 163 messages)."
+      "reason": "A bookmark is a favorito (Chrome: 151 of 163 messages).",
+      "example": {
+        "msgid": "No bookmarks yet",
+        "clean": "Aún no hay favoritos",
+        "fault": "Aún no hay marcadores"
+      }
     },
     {
       "id": "download-history",
       "msgidPattern": "\\bdownload history\\b",
       "expect": "[Hh]istorial de descargas",
       "severity": "wrong",
-      "reason": "The download history is the historial de descargas, also in Recent download history (Chrome: 10 of 10 messages)."
+      "reason": "The download history is the historial de descargas, also in Recent download history (Chrome: 10 of 10 messages).",
+      "example": {
+        "msgid": "Full download history",
+        "fault": "Todas las descargas"
+      }
     },
     {
       "id": "extension",
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Ee]xtensi[oó]n",
       "severity": "wrong",
-      "reason": "An extension is an extensión (Chrome: 308 of 308 messages)."
+      "reason": "An extension is an extensión (Chrome: 308 of 308 messages).",
+      "example": {
+        "msgid": "Extensions",
+        "clean": "Extensiones",
+        "fault": "Complementos"
+      }
     },
     {
       "id": "close-other-tabs",
       "msgid": "Close Other Tabs",
       "expect": "^Cerrar las demás pestañas$",
       "severity": "wrong",
-      "reason": "Close Other Tabs is Cerrar las demás pestañas, as Chrome writes its tab menu item (both of its messages)."
+      "reason": "Close Other Tabs is Cerrar las demás pestañas, as Chrome writes its tab menu item (both of its messages).",
+      "example": {
+        "fault": "Cerrar las otras pestañas"
+      }
     },
     {
       "id": "delete",
@@ -730,136 +852,224 @@
       "msgidPattern": "\\bdelet(?:e|es|ed)\\b",
       "expect": "[Bb]orr",
       "severity": "wrong",
-      "reason": "Deleting is borrar in Meru's own copy. Gmail's Delete action, msgctxt Gmail action, keeps Gmail's Eliminar (Chrome: 241 of 265 messages)."
+      "reason": "Deleting is borrar in Meru's own copy. Gmail's Delete action, msgctxt Gmail action, keeps Gmail's Eliminar (Chrome: 241 of 265 messages).",
+      "example": {
+        "msgid": "Delete saved search",
+        "clean": "Borrar búsqueda guardada",
+        "fault": "Eliminar búsqueda guardada"
+      }
     },
     {
       "id": "remove",
       "msgidPattern": "^Remove\\b(?! from history)",
       "expect": "[Qq]uitar",
       "severity": "wrong",
-      "reason": "Removing something from a list is quitar; Remove from history keeps Chrome's eliminar (Chrome: 88 of 101 messages)."
+      "reason": "Removing something from a list is quitar; Remove from history keeps Chrome's eliminar (Chrome: 88 of 101 messages).",
+      "example": {
+        "msgid": "Remove account",
+        "fault": "Eliminar cuenta"
+      }
     },
     {
       "id": "learn-more",
       "msgidPattern": "\\blearn more\\b",
       "expect": "[Mm]ás información",
       "severity": "wrong",
-      "reason": "Learn more is Más información (Chrome: 193 of 193 messages)."
+      "reason": "Learn more is Más información (Chrome: 193 of 193 messages).",
+      "example": {
+        "msgid": "Learn more",
+        "fault": "Obtén detalles"
+      }
     },
     {
       "id": "password-manager",
       "msgidPattern": "\\bpassword managers?\\b",
       "expect": "[Aa]dministrador(?:es)? de contraseñas",
       "severity": "wrong",
-      "reason": "A password manager is an administrador de contraseñas (Chrome: 74 of 77 messages)."
+      "reason": "A password manager is an administrador de contraseñas (Chrome: 74 of 77 messages).",
+      "example": {
+        "msgid": "Password managers",
+        "clean": "Administradores de contraseñas",
+        "fault": "Gestores de contraseñas"
+      }
     },
     {
       "id": "passkey",
       "msgidPattern": "\\bpasskeys?\\b",
       "expect": "[Ll]laves? de acceso",
       "severity": "wrong",
-      "reason": "A passkey is a llave de acceso (Chrome: 96 of 106 messages)."
+      "reason": "A passkey is a llave de acceso (Chrome: 96 of 106 messages).",
+      "example": {
+        "msgid": "Only passkeys created in Meru work here.",
+        "clean": "Aquí solo funcionan las llaves de acceso creadas en Meru.",
+        "fault": "Aquí solo funcionan las claves de acceso creadas en Meru."
+      }
     },
     {
       "id": "default-browser",
       "msgidPattern": "\\bdefault browser\\b",
       "expect": "navegador predeterminado",
       "severity": "wrong",
-      "reason": "The default browser is the navegador predeterminado (Chrome: 11 of 11 messages)."
+      "reason": "The default browser is the navegador predeterminado (Chrome: 11 of 11 messages).",
+      "example": {
+        "msgid": "Open in Default Browser",
+        "clean": "Abrir en el navegador predeterminado",
+        "fault": "Abrir en el navegador por defecto"
+      }
     },
     {
       "id": "tab-strip",
       "msgidPattern": "\\btab strip\\b",
       "expect": "[Bb]arra de pestañas",
       "severity": "wrong",
-      "reason": "The tab strip is the barra de pestañas (Chrome: 7 of 7 messages)."
+      "reason": "The tab strip is the barra de pestañas (Chrome: 7 of 7 messages).",
+      "example": {
+        "msgid": "Narrow the tab strip",
+        "clean": "Estrechar la barra de pestañas",
+        "fault": "Estrechar la tira de pestañas"
+      }
     },
     {
       "id": "launcher",
       "msgidPattern": "\\blauncher\\b",
       "expect": "[Ss]elector",
       "severity": "wrong",
-      "reason": "The launcher is the selector, as Chrome names its launcher (its one Launcher label)."
+      "reason": "The launcher is the selector, as Chrome names its launcher (its one Launcher label).",
+      "example": {
+        "msgid": "Launcher apps",
+        "fault": "Apps del lanzador"
+      }
     },
     {
       "id": "do-not-disturb",
       "msgidPattern": "\\bdo not disturb\\b",
       "expect": "No molestar",
       "severity": "wrong",
-      "reason": "Do Not Disturb is No molestar, Apple's name for its Focus mode, as in every language (DoNotDisturb.framework Localizable MODE_NAME_DEFAULT); Chrome's No interrumpir is not followed."
+      "reason": "Do Not Disturb is No molestar, Apple's name for its Focus mode, as in every language (DoNotDisturb.framework Localizable MODE_NAME_DEFAULT); Chrome's No interrumpir is not followed.",
+      "example": {
+        "msgid": "Turn Do Not Disturb on",
+        "clean": "Activar No molestar",
+        "fault": "Activar No interrumpir"
+      }
     },
     {
       "id": "restart",
       "msgidPattern": "\\brestarts?\\b",
       "expect": "[Rr]einici",
       "severity": "wrong",
-      "reason": "Restarting is reiniciar (Chrome: 41 of 46 messages)."
+      "reason": "Restarting is reiniciar (Chrome: 41 of 46 messages).",
+      "example": {
+        "msgid": "Restart now",
+        "fault": "Volver a arrancar ahora"
+      }
     },
     {
       "id": "update",
       "msgidPattern": "\\bupdates?\\b",
       "expect": "[Aa]ctualiz",
       "severity": "wrong",
-      "reason": "An update is an actualización (Chrome: 184 of 192 messages)."
+      "reason": "An update is an actualización (Chrome: 184 of 192 messages).",
+      "example": {
+        "msgid": "Check for updates automatically",
+        "fault": "Buscar novedades automáticamente"
+      }
     },
     {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "de confianza",
       "severity": "wrong",
-      "reason": "A trusted host is a host de confianza (Chrome: 13 of 22 messages)."
+      "reason": "A trusted host is a host de confianza (Chrome: 13 of 22 messages).",
+      "example": {
+        "msgid": "Trusted hosts",
+        "clean": "Hosts de confianza",
+        "fault": "Hosts fiables"
+      }
     },
     {
       "id": "spellchecker",
       "msgidPattern": "\\bspell ?check",
       "expect": "[Cc]orrector ortográfico",
       "severity": "wrong",
-      "reason": "The spellchecker is the corrector ortográfico (Chrome: 21 of 23 messages)."
+      "reason": "The spellchecker is the corrector ortográfico (Chrome: 21 of 23 messages).",
+      "example": {
+        "msgid": "Spellchecker",
+        "clean": "Corrector ortográfico",
+        "fault": "Revisión ortográfica"
+      }
     },
     {
       "id": "menu-bar",
       "msgidPattern": "\\bmenu bar\\b",
       "expect": "[Bb]arra de menús",
       "severity": "wrong",
-      "reason": "The macOS menu bar is the barra de menús, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar); Chrome's barra de menú is not followed."
+      "reason": "The macOS menu bar is the barra de menús, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar); Chrome's barra de menú is not followed.",
+      "example": {
+        "msgid": "Menu bar icon",
+        "clean": "Ícono de la barra de menús",
+        "fault": "Ícono de la barra de menú"
+      }
     },
     {
       "id": "system-settings",
       "msgidPattern": "\\bSystem Settings\\b",
       "expect": "Configuración del Sistema",
       "severity": "wrong",
-      "reason": "System Settings is Apple's Configuración del Sistema, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName)."
+      "reason": "System Settings is Apple's Configuración del Sistema, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
+      "example": {
+        "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
+        "clean": "Activa también la opción en Configuración del Sistema.",
+        "fault": "Activa también la opción en Preferencias del Sistema."
+      }
     },
     {
       "id": "dock",
       "msgidPattern": "\\bdock\\b",
       "expect": "Dock",
       "severity": "wrong",
-      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock)."
+      "reason": "The Dock is Apple's Dock, with its capital, in Meru's own copy too (DesktopSettings.appex Localizable Dock).",
+      "example": {
+        "msgid": "Dock icon",
+        "clean": "Ícono del Dock",
+        "fault": "Ícono del dock"
+      }
     },
     {
       "id": "toast",
       "msgidPattern": "\\btoasts?\\b",
       "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish)."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish).",
+      "example": {
+        "msgid": "Close toast",
+        "clean": "Cerrar mensaje emergente",
+        "fault": "Cerrar notificación"
+      }
     },
     {
-      "id": "toast",
+      "id": "toast-heading",
       "msgctxt": "toasts",
       "msgid": "Notifications",
       "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish)."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish).",
+      "example": {
+        "clean": "Mensajes emergentes",
+        "fault": "Notificaciones"
+      }
     },
     {
-      "id": "toast",
+      "id": "toast-heading-gmail",
       "msgctxt": null,
       "msgid": "Notifications",
       "origin": "packages/preload-gmail/",
       "expect": "[Mm]ensajes? emergentes?",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish)."
+      "reason": "Glossary, agent-chosen: a toast is mensaje emergente, never the notification word notificación (by step 4c's direct match: as for es, Microsoft's one Spanish).",
+      "example": {
+        "clean": "Mensajes emergentes",
+        "fault": "Notificaciones"
+      }
     },
     {
       "id": "unread-badge",
@@ -867,7 +1077,12 @@
       "msgidPattern": "\\bunread badges?\\b",
       "expect": "[Cc]ontador",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen: the unread badge is contador, counted as Meru uses it, an unread count on an app icon (the apps tie; Google has no word for a count; the most direct match is Apple's unread badge, contador de mensajes no leídos)."
+      "reason": "Glossary, agent-chosen: the unread badge is contador, counted as Meru uses it, an unread count on an app icon (the apps tie; Google has no word for a count; the most direct match is Apple's unread badge, contador de mensajes no leídos).",
+      "example": {
+        "msgid": "Show unread badge",
+        "clean": "Mostrar contador de no leídos",
+        "fault": "Mostrar insignia de no leídos"
+      }
     },
     {
       "id": "meru-label",
@@ -875,120 +1090,187 @@
       "msgid": "Label",
       "expect": "(?<!\\p{L})[Nn]ombre(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (nombre: 7 of 7)."
+      "reason": "Glossary, agent-chosen (nombre: 7 of 7).",
+      "example": {
+        "clean": "Nombre",
+        "fault": "Etiqueta"
+      }
     },
     {
-      "id": "meru-label",
+      "id": "meru-label-prompt",
       "msgctxt": "saved search",
       "msgid": "Enter a label",
       "expect": "(?<!\\p{L})[Nn]ombre(?!\\p{L})",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (nombre: 7 of 7)."
+      "reason": "Glossary, agent-chosen (nombre: 7 of 7).",
+      "example": {
+        "clean": "Ingresa un nombre",
+        "fault": "Ingresa una etiqueta"
+      }
     },
     {
       "id": "out-of-office",
       "msgidPattern": "\\bout[- ]of[- ]office\\b",
       "expect": "[Rr]espuesta automática",
       "severity": "wrong",
-      "reason": "Out of office is Gmail's own vacation responder, respuesta automática, as Gmail Help names its setting (Respuesta automática activada; support.google.com/mail/answer/25922)."
+      "reason": "Out of office is Gmail's own vacation responder, respuesta automática, as Gmail Help names its setting (Respuesta automática activada; support.google.com/mail/answer/25922).",
+      "example": {
+        "msgid": "Open Gmail settings to turn off out of office",
+        "clean": "Abre la configuración de Gmail para desactivar la respuesta automática",
+        "fault": "Abre la configuración de Gmail para desactivar el mensaje de vacaciones"
+      }
     },
     {
       "id": "multiple-inboxes",
       "msgidPattern": "\\bmultiple inboxes\\b",
       "expect": "[Mm]últiples bandejas de [Rr]ecibidos",
       "severity": "wrong",
-      "reason": "Multiple inboxes is Gmail's own inbox type, múltiples bandejas de Recibidos, as Gmail Help names it (support.google.com/mail/answer/9694882)."
+      "reason": "Multiple inboxes is Gmail's own inbox type, múltiples bandejas de Recibidos, as Gmail Help names it (support.google.com/mail/answer/9694882).",
+      "example": {
+        "msgid": "Multiple inboxes",
+        "clean": "Múltiples bandejas de Recibidos",
+        "fault": "Bandejas múltiples"
+      }
     },
     {
       "id": "notify",
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Nn]otific",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (notificar: 7 of 7)."
+      "reason": "Glossary, agent-chosen (notificar: 7 of 7).",
+      "example": {
+        "msgid": "Notify for",
+        "clean": "Notificar sobre",
+        "fault": "Avisar sobre"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-breeze",
       "msgid": "Breeze",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Brisa$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino.",
+      "example": {
+        "fault": "brisa"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-chime",
       "msgid": "Chime",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Campanilla$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino.",
+      "example": {
+        "fault": "campanilla"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-duet",
       "msgid": "Duet",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Dúo$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino.",
+      "example": {
+        "fault": "dúo"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-knock",
       "msgid": "Knock",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Golpe$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino.",
+      "example": {
+        "fault": "golpe"
+      }
     },
     {
-      "id": "sound-name",
+      "id": "sound-linen",
       "msgid": "Linen",
       "origin": "packages/renderer/lib/notifications/",
       "expect": "^Lino$",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino."
+      "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brisa, Campanilla, Dúo, Golpe and Lino.",
+      "example": {
+        "fault": "Linen"
+      }
     },
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]ombre del dispositivo",
       "severity": "wrong",
-      "reason": "A device label is the nombre del dispositivo, Chrome's words for a device name (Chrome: 5 of 11 messages)."
+      "reason": "A device label is the nombre del dispositivo, Chrome's words for a device name (Chrome: 5 of 11 messages).",
+      "example": {
+        "msgid": "Device label",
+        "clean": "Nombre del dispositivo",
+        "fault": "Etiqueta del dispositivo"
+      }
     },
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
       "expect": "[Pp]hishing",
       "severity": "wrong",
-      "reason": "Phishing protection is protección contra phishing, with Chrome's phishing (Chrome: 4 of 4 messages)."
+      "reason": "Phishing protection is protección contra phishing, with Chrome's phishing (Chrome: 4 of 4 messages).",
+      "example": {
+        "msgid": "Phishing protection",
+        "clean": "Protección contra phishing",
+        "fault": "Protección contra suplantación"
+      }
     },
     {
       "id": "release-channel",
       "msgidPattern": "\\bchannel\\b",
       "expect": "[Cc]anal",
       "severity": "wrong",
-      "reason": "A release channel is a canal: canal de versiones, canal beta, as Chrome writes channel (Chrome: 11 of 11 messages)."
+      "reason": "A release channel is a canal: canal de versiones, canal beta, as Chrome writes channel (Chrome: 11 of 11 messages).",
+      "example": {
+        "msgid": "Release channel",
+        "clean": "Canal de versiones",
+        "fault": "Versión de lanzamiento"
+      }
     },
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Ii]nactiv",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactiva, as in Pestaña inactiva, never the systems' Sleep word (Chrome: 8 of 8 messages)."
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inactiva, as in Pestaña inactiva, never the systems' Sleep word (Chrome: 8 of 8 messages).",
+      "example": {
+        "msgid": "Hibernate idle tabs",
+        "clean": "Volver inactivas las pestañas sin usar",
+        "fault": "Hibernar pestañas sin usar"
+      }
     },
     {
       "id": "upgrade",
       "msgidPattern": "\\bupgrade to Meru Pro\\b",
       "expect": "[Aa]ctualic?\\p{L}* a Meru Pro",
       "severity": "wrong",
-      "reason": "Upgrading to Pro is Actualizar a Meru Pro, with Gmail's own Upgrade wording for Google's paid storage, Actualizar, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)); never a word for purchase."
+      "reason": "Upgrading to Pro is Actualizar a Meru Pro, with Gmail's own Upgrade wording for Google's paid storage, Actualizar, a Google product's paid tier shown beside Meru (glossary); the seven apps' word for upgrading in general is secondary (actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)); never a word for purchase.",
+      "example": {
+        "msgid": "Upgrade to Meru Pro",
+        "clean": "Actualizar a Meru Pro",
+        "fault": "Mejorar a Meru Pro"
+      }
     },
     {
-      "id": "upgrade",
+      "id": "upgrade-label",
       "msgctxt": null,
       "msgid": "Upgrade",
       "origin": "packages/renderer/",
       "expect": "[Aa]ctualizar a Pro",
       "severity": "wrong",
-      "reason": "The standalone Upgrade label is Actualizar a Pro, Gmail's own Upgrade wording for Google's paid storage, Actualizar (glossary); the seven apps' word for upgrading in general is secondary (actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple))."
+      "reason": "The standalone Upgrade label is Actualizar a Pro, Gmail's own Upgrade wording for Google's paid storage, Actualizar (glossary); the seven apps' word for upgrading in general is secondary (actualizar: 6 of 7 (Thunderbird, Firefox, VS Code, Android, Microsoft, Apple)).",
+      "example": {
+        "clean": "Actualizar a Pro",
+        "fault": "Mejorar"
+      }
     }
   ],
   "accessKeys": {

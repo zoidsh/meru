@@ -28,17 +28,9 @@ msgctxt "Windows"
 msgid "Show Save As dialog before downloading"
 msgstr "Vor dem Download den Dialog „Speichern unter“ anzeigen"
 
-#: packages/renderer/components/downloads.tsx
-msgid "Recent download history"
-msgstr "Letzte Downloads"
-
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Show recent download history"
 msgstr "Letzte Downloads anzeigen"
-
-#: packages/renderer/routes/download-history.tsx
-msgid "Download history"
-msgstr "Downloadverlauf"
 
 #: packages/renderer/recent-download-history.tsx
 msgid "Full download history"
@@ -97,25 +89,12 @@ msgid "Shift"
 msgstr "Umschalttaste"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Show bookmarks button"
-msgstr "Lesezeichen-Button anzeigen"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hold the Control key to open it in the background."
 msgstr "Halte die Control-Taste gedrückt, um ihn im Hintergrund zu öffnen."
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Hold Shift to open it in a new window."
 msgstr "Halte die Shift-Taste gedrückt, um ihn in einem neuen Fenster zu öffnen."
-
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Auf Meru Pro upgraden"
-
-#: packages/renderer/routes/settings/gmail/label-colors.tsx
-msgctxt "Gmail label"
-msgid "Label"
-msgstr "Label"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove {label}?"
@@ -133,117 +112,15 @@ msgstr "In neues Fenster verschieben"
 msgid "Drag {label} to reorder"
 msgstr "{label} bewegen, um die Reihenfolge zu ändern"
 
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "Popup schließen"
-
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "Popups"
-
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "Popups"
-
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "Name"
-
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "Namen eingeben"
-
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgctxt "Gmail label"
 msgid "Enter a label"
 msgstr "Label eingeben"
 
 #: packages/renderer/routes/settings/general.tsx
-msgid "Show unread badge"
-msgstr "Kennzeichen für ungelesene E-Mails anzeigen"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "Klangspiel"
-
-#: packages/renderer/routes/settings/general.tsx
 msgid "Notify when updates are available"
 msgstr "Bei verfügbaren Updates benachrichtigen"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Aktiviere das auch in den Systemeinstellungen."
-
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "Dock-Symbol"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "Unbenutzte Tabs inaktiv machen"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "Leinen"
-
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Pin"
-msgstr "Anpinnen"
-
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Unpin"
-msgstr "Loslösen"
-
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "In launcher"
-msgstr "Im Launcher"
-
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Menu bar icon"
-msgstr "Menüleistensymbol"
-
-#: packages/renderer/components/app-titlebar.tsx
-msgid "Turn Do Not Disturb off"
-msgstr "„Nicht stören“ ausschalten"
-
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "Upgrade"
 
 #: packages/renderer/routes/settings/verification-codes.tsx
 msgid "A notification shows the code either way. Press its Copy button to copy the code yourself."
 msgstr "Eine Benachrichtigung zeigt den Code so oder so. Drücke ihren Kopieren-Button, um den Code selbst zu kopieren."
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "Brise"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "Duett"
-
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "Klopfen"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Gmail-Einstellungen öffnen, um die Abwesenheitsnotiz zu deaktivieren"
-
-#: packages/renderer/routes/settings/general.tsx
-msgid "Notify for"
-msgstr "Benachrichtigen für"
-
-#: packages/renderer/routes/settings/unified-inbox.tsx
-msgid "Enable unified inbox"
-msgstr "Kombinierten Posteingang aktivieren"
-
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Use default user agent"
-msgstr "Standard-User-Agent verwenden"
-
-#: packages/app/context-menu.ts
-msgid "Inspect Element"
-msgstr "Untersuchen"

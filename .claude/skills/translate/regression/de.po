@@ -206,7 +206,7 @@ msgid "Inspect Element"
 msgstr "Element untersuchen"
 
 # expect: terminology|accuracy/mistranslation minor
-# check: pinned:sound-name
+# check: pinned:sound-linen
 # after the Leinen call: the glossary names the sound Leinen; Leinwand is a canvas
 #. Name of a notification sound, picked in Settings
 #: packages/renderer/lib/notifications/index.ts

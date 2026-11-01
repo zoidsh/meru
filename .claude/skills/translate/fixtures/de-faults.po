@@ -68,19 +68,9 @@ msgid "Couldn't add the account."
 msgstr "Das Konto konnte leider nicht hinzugefügt werden."
 
 # fault: pinned:download-history
-#: packages/renderer/routes/download-history.tsx
-msgid "Download history"
-msgstr "Download-Verlauf"
-
-# fault: pinned:download-history
 #: packages/renderer/recent-download-history.tsx
 msgid "Full download history"
 msgstr "Alle Downloads"
-
-# fault: pinned:recent-downloads
-#: packages/renderer/recent-download-history.tsx
-msgid "Recent download history"
-msgstr "Aktueller Downloadverlauf"
 
 # fault: banned:unit-space
 #: packages/renderer/routes/settings/notifications.tsx
@@ -91,17 +81,6 @@ msgstr "30 Minuten"
 #: packages/renderer/routes/settings/license.tsx
 msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
 msgstr "{trialDaysLeft, plural, one {Pro-Testzeitraum endet in # Tag} other {Pro-Testzeitraum endet in # Tagen}}"
-
-# fault: pinned:upgrade
-#: packages/renderer/routes/settings/license.tsx
-msgid "Upgrade to Meru Pro"
-msgstr "Upgrade für Meru Pro"
-
-# fault: pinned:gmail-label
-#: packages/renderer/routes/settings/gmail/label-colors.tsx
-msgctxt "Gmail label"
-msgid "Label"
-msgstr "Etikett"
 
 # fault: platform-word:File
 #: packages/app/menu.ts
@@ -125,164 +104,7 @@ msgstr "Löschen?"
 msgid "Move to New Window"
 msgstr "In neues Fenster bewegen"
 
-# fault: pinned:toast
-#: packages/preload-gmail/ipc.ts
-msgid "Close toast"
-msgstr "Toast schließen"
-
 # fault: banned:ungelesen-kennzeichen
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Unread badge"
 msgstr "Ungelesen-Kennzeichen"
-
-# fault: pinned:unread-badge
-#: packages/renderer/routes/settings/general.tsx
-msgid "Show unread badge"
-msgstr "Ungelesene anzeigen"
-
-# fault: pinned:tab-strip
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Narrow the tab strip"
-msgstr "Tabs verschmälern"
-
-# fault: pinned:meru-label
-#: packages/renderer/routes/settings/accounts.tsx
-msgid "Label"
-msgstr "Label"
-
-# fault: pinned:device-label
-#: packages/renderer/routes/settings/license.tsx
-msgid "Device label"
-msgstr "Gerätebezeichnung"
-
-# fault: pinned:release-channel
-#: packages/renderer/routes/settings/general.tsx
-msgid "Release channel"
-msgstr "Update-Version"
-
-# fault: pinned:trusted-hosts
-#: packages/renderer/routes/settings/general.tsx
-msgid "Trusted hosts"
-msgstr "Bekannte Hosts"
-
-# fault: pinned:phishing-protection
-#: packages/renderer/routes/settings/general.tsx
-msgid "Phishing protection"
-msgstr "Phishing-Abwehr"
-
-# fault: pinned:out-of-office
-#: packages/renderer/routes/settings/general.tsx
-msgid "Open Gmail settings to turn off out of office"
-msgstr "Gmail-Einstellungen öffnen, um die Urlaubsantwort zu deaktivieren"
-
-# fault: pinned:multiple-inboxes
-#: packages/renderer/routes/settings/general.tsx
-msgid "Multiple inboxes"
-msgstr "Mehrfach-Posteingang"
-
-# fault: pinned:notify
-#: packages/renderer/routes/settings/general.tsx
-msgid "Notify for"
-msgstr "Melden für"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Linen"
-msgstr "Linen"
-
-# fault: pinned:system-settings
-#: packages/renderer/routes/settings/general.tsx
-msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Aktiviere das auch in den Systempräferenzen."
-
-# fault: pinned:dock
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Dock icon"
-msgstr "Symbol im dock"
-
-# fault: pinned:hibernation
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "Hibernate idle tabs"
-msgstr "Unbenutzte Tabs in den Winterschlaf versetzen"
-
-# fault: pinned:pin
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Pin"
-msgstr "Fixieren"
-
-# fault: pinned:unpin
-#: packages/renderer/components/vertical-tabs.tsx
-msgid "Unpin"
-msgstr "Lösen"
-
-# fault: pinned:launcher
-#: packages/renderer/routes/settings/workspace-apps.tsx
-msgid "In launcher"
-msgstr "Im Starter"
-
-# fault: pinned:menu-bar
-#: packages/renderer/routes/settings/appearance.tsx
-msgid "Menu bar icon"
-msgstr "Menüzeilensymbol"
-
-# fault: pinned:do-not-disturb
-#: packages/renderer/components/app-titlebar.tsx
-msgid "Turn Do Not Disturb off"
-msgstr "Ruhemodus ausschalten"
-
-# fault: pinned:upgrade
-#: packages/renderer/components/license-key-required-banner.tsx
-msgid "Upgrade"
-msgstr "Kaufen"
-
-# fault: pinned:toast
-#: packages/renderer/components/app-toaster.tsx
-msgctxt "toasts"
-msgid "Notifications"
-msgstr "Benachrichtigungen"
-
-# fault: pinned:toast
-#: packages/preload-gmail/ipc.ts
-msgid "Notifications"
-msgstr "Benachrichtigungen"
-
-# fault: pinned:meru-label
-#: packages/renderer/routes/settings/saved-searches.tsx
-msgctxt "saved search"
-msgid "Enter a label"
-msgstr "Label eingeben"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Breeze"
-msgstr "brise"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Chime"
-msgstr "klangspiel"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Duet"
-msgstr "duett"
-
-# fault: pinned:sound-name
-#: packages/renderer/lib/notifications/index.ts
-msgid "Knock"
-msgstr "klopfen"
-
-# fault: pinned:unified-inbox
-#: packages/renderer/routes/settings/unified-inbox.tsx
-msgid "Enable unified inbox"
-msgstr "Gemeinsamen Posteingang aktivieren"
-
-# fault: pinned:user-agent
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Use default user agent"
-msgstr "Standard-Benutzeragent verwenden"
-
-# fault: pinned:inspect-element
-#: packages/app/context-menu.ts
-msgid "Inspect Element"
-msgstr "Element untersuchen"

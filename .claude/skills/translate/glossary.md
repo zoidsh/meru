@@ -4,21 +4,9 @@ One fixed translation per term and catalog. Use it every time the term appears, 
 
 ## Where a word comes from
 
-Every word here and in a style sheet comes from the first of these sources that has it, and says which:
-
-1. **The operating system's own words**, its labels (File, Paste, Quit, Save As…) and the names of its parts (menu bar, Dock, Finder, System Settings, Do Not Disturb, system tray), come from the platform showing them: Apple on macOS, Microsoft on Windows, GNOME on Linux. An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is such a label, and takes its word from the style sheet's Platform words (Apple Mail's for a mail menu item). A part only macOS has, such as the menu bar or the Dock, takes Apple's name in Meru's own copy too.
-2. **Gmail's own terms** take Gmail's word in that language: a folder, a Gmail action, the text of a toast over Gmail, so the two read the same side by side. The words are under [Gmail's words](#gmails-words) and [Move email to Trash](#move-email-to-trash); a Gmail term missing there takes Gmail's own word too. Gmail's register does not come with it: the style sheet's address form still applies, so German keeps _du_ where Gmail writes _Sie_.
-3. **Google's names** take Google's word. The Workspace apps' names stay English, under [Terms that stay English](#terms-that-stay-english).
-4. **Meru's own copy**, everything else, takes:
-   1. Chrome's word where Chrome has the term, read from Chromium's translations at the Chromium version of the repository's Electron;
-   2. a recorded call of the user's, which overrides Chrome only as a named exception with its reason; there are none now;
-   3. otherwise the word most commonly used for the concept in popular apps in that language, counted as SKILL.md's step 4c says: seven apps with one vote each, the concept in Meru's own narrowest sense, each distinct message once for its longest match, no word another of Meru's concepts uses, and, for a thin, tied or missing count, Google's own wording, then the most direct app match, then the existing word marked unresolved.
-
-Apple is the authority only for the operating system's words in step 1; in step 4c its macOS apps are one vote of seven. Grammar is not a word: address form, capitalization, label form, punctuation and the ellipsis follow Apple's conventions for each language, as its style sheet says.
-
-Each word carries its source in brackets: **(Chrome n/N)**, Chrome's word in n of the N messages that have the term, counted in Chromium 156's `generated_resources`, `components_strings` and `ui_strings` translations. Every count, here and in the sidecars, is taken one way: N is the messages whose English has the term, matched by the sidecar pin's `msgidPattern` (or its `msgid` as a whole word) where a pin holds the word, and n is those whose translation matches the pin's `expect`, without its anchors and ignoring case; a term Meru alone has, such as a device label, is counted by the Chrome term its word comes from, and a pin on Meru's own phrase or label form by the word it is built on. A ban's count is the messages whose translation has its banned form; **(Apple …)**, **(Microsoft …)** or **(GNOME …)** for an operating system's word, cited as the style sheet's Platform words cite it; **(Gmail …)**; **(Google)**; **(agent-chosen: word: n of 7 (apps))**, the last step's tally; or **(agent-chosen, unresolved by the app count: …)**, with each app's word, for a tie or a concept fewer than 3 apps have. A speaker's review replaces either. Use an agent-chosen word like any other.
-
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
+
+Every word here follows the source order in `.claude/skills/translate/source-order.md`, which also says how each word cites its source. The slice `collect.ts` writes for one locale carries that file in full in place of this paragraph.
 
 ## Terms that stay English
 
@@ -29,7 +17,7 @@ Capitalization below is the base form inside a sentence. A label takes its langu
 The window and Meru's own copy, also the Settings section of the language's style sheet. The app-menu item has a platform `msgctxt`: on macOS it is AppKit's word with AppKit's ellipsis, named below, and on Windows and Linux the platform's word, from the style sheet.
 
 - de: Einstellungen (Chrome 430/436); the macOS menu item _Einstellungen …_ with a no-break space before the ellipsis (Apple)
-- fr: Paramètres (Chrome 415/436); the macOS menu item _Réglages…_ (Apple)
+- fr: Paramètres (Chrome 415/431, Chromium 156.0.8078.49's .xtb files); the macOS menu item _Réglages…_ (Apple)
 - it: Impostazioni (Chrome 431/436); the macOS menu item _Impostazioni…_ (Apple)
 - es: Configuración (Chrome 299/436, ajustes in the rest); the macOS menu item _Ajustes…_ (Apple)
 - es-419: Configuración (Chrome 428/436); the macOS menu item _Configuración…_ (Apple)
@@ -74,7 +62,7 @@ An entry in an account's vertical tabs strip.
 A tab kept in the strip's upper section. _Pin_ and _Unpin_ are the context-menu actions; _Unpinned tabs_ is a hibernation option. The counts are of the messages with _pinned_; the labels are Chrome's tab context menu's _Pin tab_ and _Unpin_.
 
 - de: angepinnter Tab; _Anpinnen_, _Loslösen_ (Chrome 16/16; _Tab anpinnen_, _Loslösen_)
-- fr: onglet épinglé; _Épingler_, _Retirer_ (Chrome 16/16; _Épingler l’onglet_, _Retirer_)
+- fr: onglet épinglé; _Épingler_, _Retirer_ (Chrome 4/4 for a pinned tab and 22/23 for _Unpin_, Chromium 156.0.8078.49's .xtb files; _Épingler l’onglet_, _Retirer_)
 - it: scheda fissata; _Fissa_, _Stacca_ (Chrome 13/16; _Fissa scheda_, _Stacca_)
 - es: pestaña fija; _Fijar_, _Desfijar_ (Chrome 16/16; _Fijar pestaña_, _Desfijar_), never _anclar_
 - es-419: pestaña fija; _Fijar_, _Dejar de fijar_ (Chrome 8/16, _fijada_ 4; _Fijar pestaña_, _Dejar de fijar_), never _anclar_
@@ -228,7 +216,7 @@ A saved URL for an account, opened from the bookmarks popup.
 The titlebar or sidebar dropdown that opens a workspace app. Chrome's word is ChromeOS's launcher, which opens apps as Meru's does.
 
 - de: Launcher (Chrome 18/20)
-- fr: lanceur (Chrome 19/20)
+- fr: lanceur (Chrome 19/19, Chromium 156.0.8078.49's .xtb files)
 - it: Avvio app (Chrome 19/20), capitalized as Chrome writes the name
 - es: menú de aplicaciones (Chrome 19/20)
 - es-419: selector (Chrome 17/20)
@@ -346,7 +334,7 @@ The verification-codes switch. It names Gmail's own folder, so _Trash_ takes Gma
 A Chrome extension from Meru's list.
 
 - de: Erweiterung (Chrome 300/308)
-- fr: extension (Chrome 308/308)
+- fr: extension (Chrome 304/304, Chromium 156.0.8078.49's .xtb files)
 - it: estensione (Chrome 306/308)
 - es: extensión (Chrome 307/308)
 - es-419: extensión (Chrome 308/308)
@@ -667,19 +655,19 @@ The string a browser sends to name itself, in the Advanced settings. A language 
 
 Google's password manager, named in the passkey help: _Passkeys from Chrome, Google Password Manager, or your phone don't work here_. Google's name, so Google's word, read from its own Help; Chrome's count is counted in Chrome 156's macOS `locale.pak`, in the messages with _Google Password Manager_. A language without a line takes Google's name.
 
-- fr: Gestionnaire de mots de passe de Google, capitalized as a name, with its article outside it (_du Gestionnaire de mots de passe de Google_) (Google, Help "Premiers pas avec le Gestionnaire de mots de passe de Google" (support.google.com/accounts/answer/6208650?hl=fr); Chrome 56/68), never _Gestionnaire de mots de passe Google_
+- fr: Gestionnaire de mots de passe de Google, capitalized as a name, with its article outside it (_du Gestionnaire de mots de passe de Google_) (Google, Help "Premiers pas avec le Gestionnaire de mots de passe de Google" (support.google.com/accounts/answer/6208650?hl=fr); Chrome 58/63, Chromium 156.0.8078.49's .xtb files), never _Gestionnaire de mots de passe Google_
 
 ## Back, Forward
 
 Navigating the current view's history: the menu's _Back_ and _Forward_ and the titlebar's _Go back_ and _Go forward_, one pair of words for both. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Back_, _Go back_ or _Forward_; Chrome has no _Go forward_. A language without a line takes Chrome's word.
 
-- fr: Retour, Avancer (Chrome 21/21 for _Back_ and _Go back_, 3/3 for _Forward_), never _Précédent_ and _Suivant_
+- fr: Retour, Avancer (Chrome 4/4 for _Back_ and _Go back_, 2/3 for _Forward_, Chromium 156.0.8078.49's .xtb files), never _Précédent_ and _Suivant_
 
 ## Reset
 
 Erasing Meru's data and starting over: _Reset App_, the dialog's _Reset_ button and its question. Counted in Chrome 156's macOS `locale.pak`, in the messages that are exactly _Reset_. A language without a line takes Chrome's word.
 
-- fr: Réinitialiser (_Réinitialiser l’application_) (Chrome 5/5), never _Rétablir_, which is Redo
+- fr: Réinitialiser (_Réinitialiser l’application_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files), never _Rétablir_, which is Redo
 
 ## Account colors
 
