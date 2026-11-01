@@ -1038,7 +1038,7 @@
       "severity": "wrong",
       "reason": "Glossary, agent-chosen (名前: 7 of 7).",
       "example": {
-        "clean": "名前を入力",
+        "clean": "名前を入力してください",
         "fault": "ラベルを入力"
       }
     },
@@ -1190,7 +1190,7 @@
       "reason": "System Settings is Apple's システム設定, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "システム設定でもオンにしてください。",
+        "clean": "トラックパッドを2本指で左右にスワイプして、戻ったり進んだりします。システム設定の“ページ間をスワイプ”もオンにする必要があります。",
         "fault": "システム環境設定でもオンにしてください。"
       }
     },
@@ -1215,7 +1215,7 @@
       "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's アクティブでない, as in アクティブでないタブ, never the systems' Sleep word (Chrome: 8 of 8 messages).",
       "example": {
         "msgid": "Hibernate idle tabs",
-        "clean": "使われていないタブを非アクティブにする",
+        "clean": "アイドル状態のタブを非アクティブにする",
         "fault": "使われていないタブを休止"
       }
     },
@@ -1227,7 +1227,7 @@
       "reason": "The macOS menu bar is the メニューバー, Apple's name for its own interface, in Meru's own copy too (ControlCenterSettings.appex Localizable Show in Menu Bar).",
       "example": {
         "msgid": "Menu bar icon",
-        "clean": "メニューバーのアイコン",
+        "clean": "メニューバーアイコン",
         "fault": "メニュー列のアイコン"
       }
     },
@@ -1403,7 +1403,7 @@
       "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
       "example": {
         "msgid": "Open Meru Portal",
-        "clean": "Meru Portal",
+        "clean": "Meru Portalを開く",
         "fault": "Meruポータルを開く"
       }
     }

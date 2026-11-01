@@ -1,6 +1,9 @@
+import { readdirSync } from "node:fs";
 import { mkdir, readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
+import { LANGUAGES_DIR } from "./rules";
 
 /*
  * Fetches the translations a Chrome count and the seven-app vote read, as
@@ -41,7 +44,11 @@ export const APP_NAMES: Record<App, string> = {
   apple: "Apple",
 };
 
-export const SOURCES = ["chrome", ...APPS] as const;
+/*
+ * GNOME is the operating system's own words on Linux, the source order's step
+ * 1, so it is counted like Chrome but never votes.
+ */
+export const SOURCES = ["chrome", ...APPS, "gnome"] as const;
 
 export type Source = (typeof SOURCES)[number];
 
@@ -135,9 +142,47 @@ const CODES: Record<Exclude<Source, "apple">, Record<string, string>> = {
     sv: "SWEDISH",
     ja: "JAPANESE",
   },
+  gnome: {
+    de: "de",
+    fr: "fr",
+    it: "it",
+    es: "es",
+    "es-419": "es",
+    "pt-BR": "pt_BR",
+    nl: "nl",
+    pl: "pl",
+    sv: "sv",
+    ja: "ja",
+  },
 };
 
 const APPLE_CODES: Record<string, string> = { "es-419": "es_419", "pt-BR": "pt_BR" };
+
+/** Every tag Meru has a catalog or a sidecar for, English, the source, aside. */
+export const TAGS = [
+  ...new Set([
+    ...CATALOG_TAGS,
+    ...readdirSync(LANGUAGES_DIR)
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => file.slice(0, -".json".length)),
+  ]),
+].filter((tag) => tag !== "en");
+
+/** The tags of `tags` that aren't Meru's, which a caller refuses rather than read as empty. */
+export function unknownTags(tags: string[]) {
+  return tags.filter((tag) => !TAGS.includes(tag));
+}
+
+/** Whether a source has the language at all, so a missing corpus is never one to build. */
+export function hasLanguage(source: Source, tag: string) {
+  return source === "apple" ? TAGS.includes(tag) : CODES[source][tag] !== undefined;
+}
+
+export const SOURCE_NAMES: Record<Source, string> = {
+  chrome: "Chrome",
+  ...APP_NAMES,
+  gnome: "GNOME",
+};
 
 export async function readCorpus(dir: string, source: Source, tag: string): Promise<Pair[]> {
   const file = Bun.file(path.join(dir, `${source}.${tag}.jsonl`));
@@ -239,6 +284,8 @@ export function parseDtd(text: string) {
   );
 }
 
+const ANDROID_ESCAPES: Record<string, string> = { n: "\n", t: "\t" };
+
 /*
  * An Android `strings.xml`'s strings by name, markup and escapes taken out.
  * AOSP's translations wrap every string in a pair of unescaped quotes, which
@@ -254,15 +301,22 @@ export function parseAndroidStrings(text: string) {
       unescapeXml((value as string).replace(/<[^>]+>/gu, ""))
         .trim()
         .replace(/^"(.*)(?<!\\)"$/su, "$1")
-        .replace(/\\'/gu, "'")
-        .replace(/\\"/gu, '"'),
+        .replace(/\\(u[\dA-Fa-f]{4}|.)/gsu, (_, escape: string) =>
+          escape.length === 5
+            ? String.fromCodePoint(Number.parseInt(escape.slice(1), 16))
+            : (ANDROID_ESCAPES[escape] ?? escape),
+        ),
     );
   }
 
   return out;
 }
 
-/** A PO file's msgid and msgstr pairs, header and empty translations included. */
+/*
+ * A PO file's msgid and msgstr pairs, header and empty translations included.
+ * A fuzzy entry is left out: it is a guess no translator has reviewed, which
+ * the app never shows, so it has no vote.
+ */
 export function parsePo(text: string): Pair[] {
   const unquote = (lines: string) =>
     [...lines.matchAll(/"((?:[^"\\]|\\.)*)"/gu)]
@@ -274,6 +328,10 @@ export function parsePo(text: string): Pair[] {
       .join("");
 
   return text.split("\n\n").flatMap((block): Pair[] => {
+    if (/^#,.*\bfuzzy\b/mu.test(block)) {
+      return [];
+    }
+
     const id = /^msgid ("(?:[^"\\]|\\.)*"(?:\n"(?:[^"\\]|\\.)*")*)/mu.exec(block)?.[1];
 
     const str = /^msgstr ("(?:[^"\\]|\\.)*"(?:\n"(?:[^"\\]|\\.)*")*)/mu.exec(block)?.[1];
@@ -412,7 +470,8 @@ async function filesUnder(dir: string): Promise<string[]> {
 
   return entries
     .filter((entry) => entry.isFile())
-    .map((entry) => path.relative(dir, path.join(entry.parentPath, entry.name)));
+    .map((entry) => path.relative(dir, path.join(entry.parentPath, entry.name)))
+    .sort();
 }
 
 const MOZILLA_PARSERS: [string, (text: string) => Map<string, string>][] = [
@@ -560,6 +619,19 @@ const ANDROID_FILES: [string, string][] = [
  */
 const ANDROID_FALLBACKS: Record<string, string[]> = { "-pt-rBR": ["-pt"] };
 
+/** The text `read` gives, or undefined when its file is missing. */
+async function unlessMissing(read: () => Promise<string>) {
+  try {
+    return await read();
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) {
+      return undefined;
+    }
+
+    throw error;
+  }
+}
+
 /** Reads one of AOSP's files by repository and path, throwing an `HttpError` when it has none. */
 export type AndroidReader = (repo: string, file: string) => Promise<string>;
 
@@ -584,12 +656,10 @@ export async function androidPairs(
   // The first of the paths that exists, or undefined when AOSP has none of them.
   const first = async (repo: string, files: string[]) => {
     for (const file of files) {
-      try {
-        return await read(repo, file);
-      } catch (error) {
-        if (!(error instanceof HttpError && error.status === 404)) {
-          throw error;
-        }
+      const text = await unlessMissing(() => read(repo, file));
+
+      if (text !== undefined) {
+        return text;
       }
     }
 
@@ -651,6 +721,53 @@ async function libreoffice(tag: string) {
   }
 
   return pairs;
+}
+
+/** GNOME's toolkit and the core apps whose words Linux users see around Meru. */
+export const GNOME_PROJECTS = ["gtk", "nautilus", "gnome-text-editor", "gnome-control-center"];
+
+/** Reads one GNOME project's PO file for a GNOME language code, throwing an `HttpError` when it has none. */
+export type GnomeReader = (project: string, code: string) => Promise<string>;
+
+/*
+ * Every GNOME project's translations for a tag. A project without the
+ * language is skipped with a warning, as an Android app is.
+ */
+export async function gnomePairs(
+  tag: string,
+  read: GnomeReader,
+  warn: (message: string) => void = console.warn,
+) {
+  const code = CODES.gnome[tag];
+
+  if (!code) {
+    return [];
+  }
+
+  const pairs: Pair[] = [];
+
+  for (const project of GNOME_PROJECTS) {
+    const text = await unlessMissing(() => read(project, code));
+
+    if (text === undefined) {
+      warn(`gnome ${tag}: ${project} has no po/${code}.po; skipping it`);
+
+      continue;
+    }
+
+    pairs.push(...parsePo(text).filter(([english]) => english !== ""));
+  }
+
+  return pairs;
+}
+
+function gnome(tag: string) {
+  return gnomePairs(tag, (project, code) =>
+    cached(
+      `gnome/${project}.${code}.po`,
+      `https://gitlab.gnome.org/GNOME/${project}/-/raw/main/po/${code}.po`,
+    ),
+  );
 }
 
 const TBX_ZIP =
@@ -799,14 +916,17 @@ export async function buildCorpus(source: Source, tag: string, chromium: string)
       return microsoft(tag);
     case "apple":
       return apple(tag);
+    case "gnome":
+      return gnome(tag);
   }
 }
 
 const USAGE = `Usage: bun .claude/skills/translate/corpus.ts [--source <name>]… [--refresh] <tag>…
 
-Fetches what a Chrome count and the seven-app vote read into .cache/translate,
-and writes corpus/<source>.<tag>.jsonl for each: chrome, at the Chromium version
-of node_modules' Electron, and ${APPS.join(", ")}. Without --source it
+Fetches what a Chrome count, a GNOME count and the seven-app vote read into
+.cache/translate, and writes corpus/<source>.<tag>.jsonl for each: chrome, at
+the Chromium version of node_modules' Electron, ${APPS.join(", ")}, and gnome,
+GNOME's ${GNOME_PROJECTS.join(", ")} translations. Without --source it
 builds them all. A corpus already built is kept unless --refresh is given; the
 downloads behind it are kept either way. A source that fails is skipped with a
 warning, the others still built, and the run exits 1.`;
@@ -825,6 +945,14 @@ async function main() {
     console.log(USAGE);
 
     process.exit(values.help ? 0 : 2);
+  }
+
+  const strangers = unknownTags(positionals);
+
+  if (strangers.length > 0) {
+    console.error(`Unknown tag ${strangers.join(", ")}; use ${TAGS.join(", ")}.`);
+
+    process.exit(2);
   }
 
   const sources = (values.source ?? SOURCES) as Source[];
@@ -859,6 +987,12 @@ async function main() {
           (await Bun.file(stamp)
             .text()
             .catch(() => undefined)) === chromium);
+
+      if (!hasLanguage(source, tag)) {
+        console.log(`${source} ${tag}: no ${SOURCE_NAMES[source]} translation for ${tag}`);
+
+        continue;
+      }
 
       if (built && !values.refresh) {
         console.log(`${source} ${tag}: kept ${out} (${(await stat(out)).size} bytes)`);

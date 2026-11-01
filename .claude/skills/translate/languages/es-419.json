@@ -1026,7 +1026,7 @@
       "reason": "System Settings is Apple's Configuración del Sistema, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "Activa también la opción en Configuración del Sistema.",
+        "clean": "Desliza dos dedos hacia la izquierda o la derecha en un panel táctil para ir atrás o adelante. La opción Deslizar entre páginas también debe estar activada en Configuración del Sistema.",
         "fault": "Activa también la opción en Preferencias del Sistema."
       }
     },
@@ -1430,7 +1430,7 @@
       "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
       "example": {
         "msgid": "Open Meru Portal",
-        "clean": "Meru Portal",
+        "clean": "Abrir Meru Portal",
         "fault": "Abrir el portal de Meru"
       }
     },

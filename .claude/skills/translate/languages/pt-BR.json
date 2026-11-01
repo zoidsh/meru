@@ -1286,7 +1286,7 @@
       "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
       "example": {
         "msgid": "Open Meru Portal",
-        "clean": "Meru Portal",
+        "clean": "Abrir o Meru Portal",
         "fault": "Abrir o Portal do Meru"
       }
     },
