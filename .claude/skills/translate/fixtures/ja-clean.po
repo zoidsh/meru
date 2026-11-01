@@ -265,3 +265,8 @@ msgstr "{tabTitle} — {appName}のリンクを開きます"
 #: packages/shared/accounts.ts
 msgid "Yellow"
 msgstr "黄"
+
+#. Sits between a start time field and an end time field, as in 09:00 to 17:00
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "to"
+msgstr "〜"

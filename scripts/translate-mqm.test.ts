@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { parse } from "../.claude/skills/translate/collect";
 import {
@@ -6,8 +8,12 @@ import {
   countWords,
   formatEntryList,
   parseEntryFile,
+  type MqmFinding,
+  type MqmSeverity,
+  readRuns,
   resolveBase,
   scoreLocale,
+  scoreRuns,
   uniqueEntries,
 } from "../.claude/skills/translate/mqm";
 
@@ -294,5 +300,220 @@ describe("scoreLocale", () => {
     });
 
     expect(result?.warnings).toHaveLength(1);
+  });
+});
+
+function finding(
+  msgid: string,
+  severity: MqmSeverity,
+  overrides: Partial<MqmFinding> = {},
+): MqmFinding {
+  const msgstr: Record<string, string> = {
+    Settings: "Einstellungen",
+    "Move to Trash": "In den Papierkorb verschieben",
+    "Add <0>{entry}</0> on its own line, then save.":
+      "Füge <0>{entry}</0> in einer eigenen Zeile hinzu und speichere dann.",
+  };
+
+  return {
+    catalog: msgid === "Move to Trash" ? "preload-gmail" : "app",
+    msgctxt: null,
+    msgid,
+    msgstr: msgstr[msgid] ?? "",
+    category: "accuracy/mistranslation",
+    severity,
+    reason: "Planted.",
+    correction: "Planted.",
+    ...overrides,
+  };
+}
+
+async function scoreThree(runs: MqmFinding[][], { partial = false } = {}) {
+  return scoreRuns({
+    locale: "de",
+    catalogs: await catalogs(),
+    runs: runs.map((findings, index) => ({ name: `de.mqm.${index + 1}.json`, findings })),
+    entries: partial ? parseEntryFile(await fixture("de.txt").text()) : undefined,
+  });
+}
+
+describe("scoreRuns", () => {
+  test("a major only one of three runs reports is listed as single-run and passes the gate", async () => {
+    const { result, errors } = await scoreThree([[finding("Settings", "major")], [], []]);
+
+    expect(errors).toEqual([]);
+    expect(result?.counts).toEqual({ critical: 0, major: 0, minor: 0 });
+    expect(result?.findings).toEqual([]);
+    expect(result?.single.map(({ msgid, severity }) => [msgid, severity])).toEqual([
+      ["Settings", "major"],
+    ]);
+    expect(result?.passes).toBe(true);
+  });
+
+  test("a major two of three runs agree on fails the gate", async () => {
+    const { result } = await scoreThree([
+      [finding("Settings", "major")],
+      [finding("Settings", "major")],
+      [],
+    ]);
+
+    expect(result?.counts).toEqual({ critical: 0, major: 1, minor: 0 });
+    expect(result?.findings.map(({ msgid, agreement }) => [msgid, agreement])).toEqual([
+      ["Settings", 2],
+    ]);
+    expect(result?.single).toEqual([]);
+    expect(result?.passes).toBe(false);
+  });
+
+  test("an entry takes the median of the three runs' severities", async () => {
+    const { result } = await scoreThree([
+      [finding("Settings", "critical"), finding("Move to Trash", "major")],
+      [finding("Settings", "major"), finding("Move to Trash", "minor")],
+      [finding("Move to Trash", "minor")],
+    ]);
+
+    expect(result?.counts).toEqual({ critical: 0, major: 1, minor: 1 });
+    expect(result?.findings.map(({ msgid, severity }) => [msgid, severity])).toEqual([
+      ["Settings", "major"],
+      ["Move to Trash", "minor"],
+    ]);
+    expect(result?.single.map(({ msgid, severity }) => [msgid, severity])).toEqual([
+      ["Settings", "critical"],
+      ["Move to Trash", "major"],
+    ]);
+  });
+
+  test("an entry two runs flag at all counts as minor, even when one calls it major", async () => {
+    const { result } = await scoreThree([
+      [finding("Settings", "major")],
+      [finding("Settings", "minor")],
+      [],
+    ]);
+
+    expect(result?.counts).toEqual({ critical: 0, major: 0, minor: 1 });
+    expect(result?.passes).toBe(true);
+  });
+
+  test("scores each run on its own and takes the median score", async () => {
+    const { result } = await scoreThree([
+      [finding("Settings", "minor"), finding("Move to Trash", "minor")],
+      [],
+      [finding("Settings", "major")],
+    ]);
+
+    expect(result?.runs.map(({ name, penalty }) => [name, penalty])).toEqual([
+      ["de.mqm.1.json", 2],
+      ["de.mqm.2.json", 0],
+      ["de.mqm.3.json", 5],
+    ]);
+    expect(result?.penalty).toBe(2);
+    expect(result?.score).toBeCloseTo(100 * (1 - 2 / 109), 6);
+    expect(result?.passes).toBe(false);
+  });
+
+  test("a dismissal on an entry in one run's file leaves the entry out of every run", async () => {
+    const { result } = await scoreThree([
+      [finding("Settings", "major", { dismissed: "Planted: the code shows it right." })],
+      [finding("Settings", "major")],
+      [finding("Settings", "minor")],
+    ]);
+
+    expect(result?.counts).toEqual({ critical: 0, major: 0, minor: 0 });
+    expect(result?.runs.map(({ penalty }) => penalty)).toEqual([0, 0, 0]);
+    expect(result?.dismissed.map(({ msgid, dismissed }) => [msgid, dismissed])).toEqual([
+      ["Settings", "Planted: the code shows it right."],
+    ]);
+    expect(result?.single).toEqual([]);
+    expect(result?.passes).toBe(true);
+  });
+
+  test("one findings file scores as it always has", async () => {
+    const findings = await fixture("dismissed-major.json").json();
+
+    const single = scoreLocale({ locale: "de", catalogs: await catalogs(), findings });
+
+    const { result } = scoreRuns({
+      locale: "de",
+      catalogs: await catalogs(),
+      runs: [{ name: "de.mqm.json", findings }],
+    });
+
+    expect(result).toMatchObject({
+      counts: single.result?.counts,
+      penalty: single.result?.penalty,
+      score: single.result?.score,
+      passes: single.result?.passes,
+      dismissed: single.result?.dismissed,
+      single: [],
+    });
+  });
+
+  test("names the run whose file is invalid", async () => {
+    const { result, errors } = await scoreThree([
+      [],
+      [finding("Settings", "minor", { msgid: "Nothing like this" })],
+      [],
+    ]);
+
+    expect(result).toBeUndefined();
+    expect(errors).toEqual([
+      `de.mqm.2.json: A finding names app: "Nothing like this", which this run didn't assess.`,
+    ]);
+  });
+
+  test("a partial run gates on agreed majors alone, an entry with two errors in a run taking the higher", async () => {
+    const quit = { msgctxt: "macOS", msgid: "Quit {appName}", msgstr: "{appName} beenden" };
+
+    const { result } = await scoreThree(
+      [
+        [finding("Settings", "minor", quit), finding("Settings", "major", quit)],
+        [finding("Settings", "minor", quit)],
+        [],
+      ],
+      { partial: true },
+    );
+
+    expect(result).toMatchObject({ partial: true, counts: { critical: 0, major: 0, minor: 1 } });
+    expect(result?.passes).toBe(true);
+  });
+});
+
+describe("readRuns", () => {
+  async function dirWith(files: string[]) {
+    const dir = await mkdtemp(path.join(tmpdir(), "mqm-runs-"));
+
+    await Promise.all(files.map((file) => Bun.write(path.join(dir, file), "[]")));
+
+    return dir;
+  }
+
+  test("reads a round's run files in run order, and nothing else of the locale's", async () => {
+    const dir = await dirWith([
+      "de.mqm.10.json",
+      "de.mqm.2.json",
+      "de.mqm.1.json",
+      "de.mqm.agreed.json",
+      "de.round1.mqm.1.json",
+      "ja.mqm.1.json",
+    ]);
+
+    expect((await readRuns(dir, "de")).map(({ name }) => name)).toEqual([
+      "de.mqm.1.json",
+      "de.mqm.2.json",
+      "de.mqm.10.json",
+    ]);
+  });
+
+  test("reads one run's file alone", async () => {
+    const dir = await dirWith(["de.mqm.json", "de.mqm.agreed.json"]);
+
+    expect(await readRuns(dir, "de")).toEqual([{ name: "de.mqm.json", findings: [] }]);
+  });
+
+  test("refuses a directory with both forms, or neither", async () => {
+    await expect(readRuns(await dirWith(["de.mqm.json", "de.mqm.1.json"]), "de")).rejects.toThrow(
+      "move one set aside",
+    );
+    await expect(readRuns(await dirWith([]), "de")).rejects.toThrow("holds no de.mqm.json");
   });
 });
