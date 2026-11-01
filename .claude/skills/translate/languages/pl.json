@@ -1015,6 +1015,13 @@
       "expect": "[Ww]yłudz",
       "severity": "wrong",
       "reason": "Phishing is wyłudzanie informacji, as Chrome writes it: ochrona przed wyłudzaniem informacji (Chrome: 3 of 4 messages)."
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "[Łł]ączon\\p{L}* skrzyn\\p{L}* odbiorcz",
+      "severity": "wrong",
+      "reason": "The unified inbox is the łączona skrzynka odbiorcza, one view of every account's inbox, after Android Email's Widok łączony for its Combined view; wspólna skrzynka odbiorcza reads as a mailbox shared with other people (agent-chosen, unresolved by the app count)."
     }
   ],
   "accessKeys": {

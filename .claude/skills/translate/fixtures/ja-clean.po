@@ -196,3 +196,56 @@ msgstr "ランチャー内"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Open Gmail settings to turn off out of office"
 msgstr "Gmailの設定を開いて不在通知をオフにする"
+
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Add your own CSS to personalize the Gmail interface further."
+msgstr "独自のCSSを追加して、Gmailのインターフェイスをさらにカスタマイズします。"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Persist zoom"
+msgstr "ズームを保持"
+
+#: packages/app/menu.ts
+msgid "Zoom In"
+msgstr "拡大"
+
+#: packages/app/url.ts
+msgid "Open this link in your default browser?"
+msgstr "このリンクを既定のブラウザで開きますか?"
+
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Default download location"
+msgstr "デフォルトのダウンロード先"
+
+#: packages/renderer/routes/settings/advanced.tsx
+msgid "Use default user agent"
+msgstr "デフォルトのユーザーエージェントを使用"
+
+#: packages/renderer/routes/settings/about.tsx
+msgid "Export logs"
+msgstr "ログをエクスポート"
+
+#: packages/app/ipc.ts
+msgctxt "macOS"
+msgid "Export"
+msgstr "書き出す"
+
+#: packages/app/context-menu.ts
+msgid "Inspect Element"
+msgstr "検証"
+
+#: packages/app/menu.ts
+msgid "Website"
+msgstr "ウェブサイト"
+
+#: packages/app/menu.ts
+msgid "Hard Reload"
+msgstr "ハード再読み込み"
+
+#: packages/renderer/components/vertical-tabs.tsx
+msgid "{tabTitle} — opens {appName} links"
+msgstr "{tabTitle} — {appName}のリンクを開きます"
+
+#: packages/shared/accounts.ts
+msgid "Yellow"
+msgstr "黄"

@@ -1,5 +1,7 @@
 import { i18n, type Messages } from "@lingui/core";
+import { messages as de } from "./locales/de";
 import { messages as en } from "./locales/en";
+import { messages as ja } from "./locales/ja";
 import { CATALOG_TAGS, type CatalogTag } from "./tags";
 
 export { CATALOG_TAGS, type CatalogTag, SHIPPED_CATALOG_TAGS } from "./tags";
@@ -28,7 +30,7 @@ export const CATALOG_NAMES: Record<CatalogTag, string> = {
  * until they ship. English is always there, which is what makes it the floor
  * every other lookup falls to.
  */
-const catalogs: { en: Messages } & Partial<Record<CatalogTag, Messages>> = { en };
+const catalogs: { en: Messages } & Partial<Record<CatalogTag, Messages>> = { en, de, ja };
 
 export function isCatalogTag(value: string): value is CatalogTag {
   return (CATALOG_TAGS as readonly string[]).includes(value);
