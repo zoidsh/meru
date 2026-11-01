@@ -1305,6 +1305,17 @@
       }
     },
     {
+      "id": "auto",
+      "msgid": "Auto",
+      "expect": "^Auto$",
+      "severity": "wrong",
+      "reason": "A setting's Auto option is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files), never Automatique.",
+      "example": {
+        "msgctxt": "width",
+        "fault": "Automatique"
+      }
+    },
+    {
       "id": "inspect-element",
       "msgid": "Inspect Element",
       "expect": "^Inspecter$",

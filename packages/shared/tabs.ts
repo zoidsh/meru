@@ -11,7 +11,12 @@ export const GMAIL_TAB_ID = "gmail";
 
 // lingui-set comment="Option of the Width setting for the vertical tabs sidebar"
 export const verticalTabsWidths = {
-  auto: msg`Auto`,
+  auto: msg({
+    message: "Auto",
+    context: "width",
+    comment:
+      "Option of the Width setting for the vertical tabs sidebar; agrees with the word for width where the language genders it",
+  }),
   narrow: msg`Narrow`,
   wide: msg`Wide`,
 } as const;

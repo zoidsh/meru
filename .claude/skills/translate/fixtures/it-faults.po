@@ -120,3 +120,8 @@ msgstr "Mostra la cronologia dei download recenti"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuti"
+
+# fault: banned:preferiti-capital
+#: packages/app/menu.ts
+msgid "Remove Bookmark"
+msgstr "Rimuovi dai Preferiti"

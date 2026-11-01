@@ -892,5 +892,86 @@
     "exclude": {
       "pt-BR": ["aviso"]
     }
+  },
+  {
+    "concept": "amber (account color)",
+    "english": "\\bamber\\b",
+    "englishNot": "\\balerts?\\b",
+    "candidates": {
+      "it": {
+        "ambra": "ambra",
+        "ambrato": "ambrat",
+        "giallo": "giall",
+        "arancione": "arancio"
+      }
+    },
+    "exclude": {
+      "it": ["giallo", "arancione"]
+    }
+  },
+  {
+    "concept": "emerald (account color)",
+    "english": "\\bemerald\\b",
+    "candidates": {
+      "it": {
+        "smeraldo": "smerald",
+        "verde": "verd"
+      }
+    },
+    "exclude": {
+      "it": ["verde"]
+    }
+  },
+  {
+    "concept": "indigo (account color)",
+    "english": "\\bindigo\\b",
+    "candidates": {
+      "it": {
+        "indaco": "indaco",
+        "blu": "\\bblu\\b",
+        "viola": "viola"
+      }
+    },
+    "exclude": {
+      "it": ["blu", "viola"]
+    }
+  },
+  {
+    "concept": "sky (account color)",
+    "english": "\\bsky[- ]?blue\\b|^sky$",
+    "candidates": {
+      "it": {
+        "azzurro": "azzurr",
+        "celeste": "celest",
+        "blu cielo": "blu cielo",
+        "cielo": "cielo",
+        "blu": "\\bblu\\b",
+        "ciano": "ciano"
+      }
+    },
+    "exclude": {
+      "it": ["blu", "ciano"]
+    }
+  },
+  {
+    "concept": "teal (account color)",
+    "english": "\\bteal\\b",
+    "candidates": {
+      "it": {
+        "verde acqua": "verde acqua",
+        "foglia di tè": "foglia di t[èe]",
+        "turchese": "turches",
+        "ottanio": "ottanio",
+        "verde petrolio": "verde petrolio",
+        "grigio verde": "grigio verde",
+        "azzurro": "azzurr",
+        "ciano": "ciano",
+        "verde": "verd",
+        "blu": "\\bblu\\b"
+      }
+    },
+    "exclude": {
+      "it": ["ciano", "verde", "blu"]
+    }
   }
 ]
