@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import path from "node:path";
+import { checkCatalogs, readCatalog } from "../.claude/skills/translate/check";
 import { dumpCatalogs } from "../.claude/skills/translate/collect";
 import type { MqmFinding, MqmSeverity } from "../.claude/skills/translate/mqm";
 import {
@@ -7,6 +9,7 @@ import {
   type RegressionSet,
   scoreRegression,
 } from "../.claude/skills/translate/regression";
+import { loadSidecar } from "../.claude/skills/translate/rules";
 
 /*
  * Lives here rather than beside the script because `bun test` never looks
@@ -14,6 +17,10 @@ import {
  */
 
 const LOCALES = ["de", "ja", "fr"];
+
+const CHECK_PREFIX = "check: ";
+
+const REGRESSION_DIR = path.join(import.meta.dir, "../.claude/skills/translate/regression");
 
 const sets = Object.fromEntries(
   await Promise.all(LOCALES.map(async (locale) => [locale, await loadRegressionSet(locale)])),
@@ -73,6 +80,33 @@ describe("the regression sets", () => {
       expect(
         (sets[locale] as RegressionSet).expectations.filter(({ hard }) => hard).length,
       ).toBeGreaterThanOrEqual(10);
+    });
+
+    /*
+     * A known-bad entry marks each check.ts finding its planted error gives as
+     * `# check: <rule>:<id>`, so a finding nothing planted, such as a no-break
+     * space lost when the entry was copied, fails here rather than handing the
+     * reviewers a second error to find.
+     */
+    test(`${locale}'s check.ts findings are exactly the ones its known-bad entries plant`, async () => {
+      const file = path.join(REGRESSION_DIR, `${locale}.po`);
+
+      const catalog = await readCatalog(locale, file);
+
+      const planted = Object.entries(catalog).flatMap(([id, entry]) => {
+        const comments =
+          (entry.extra as { translatorComments?: string[] }).translatorComments ?? [];
+
+        return comments
+          .filter((comment) => comment.startsWith(CHECK_PREFIX))
+          .map((comment) => `${entry.message ?? id}: ${comment.slice(CHECK_PREFIX.length)}`);
+      });
+
+      const report = checkCatalogs(locale, await loadSidecar(locale), [{ path: file, catalog }]);
+
+      expect(
+        report.findings.map(({ msgid, rule, id }) => `${msgid}: ${rule}:${id}`).sort(),
+      ).toEqual(planted.sort());
     });
 
     test(`${locale}'s dump, which the reviewers read, holds none of the answers`, () => {

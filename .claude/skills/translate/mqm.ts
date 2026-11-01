@@ -3,7 +3,18 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { getConfig } from "@lingui/conf";
 import { visibleText } from "./check";
-import { type Catalog, catalogFiles, mergeBase, parse, readAtRef } from "./collect";
+import {
+  type AssessedEntry,
+  type Catalog,
+  catalogFiles,
+  changedEntries,
+  DEFAULT_BASE,
+  mergeBase,
+  parse,
+  readAtRef,
+} from "./collect";
+
+export { type AssessedEntry, changedEntries };
 
 /*
  * Scores a locale's MQM review, the findings of each independent run, so no
@@ -51,8 +62,6 @@ export type MqmFinding = {
   /** Written by the skill's orchestrator, never the reviewer: why the finding doesn't stand. */
   dismissed?: string;
 };
-
-export type AssessedEntry = { catalog: string; msgctxt: string | null; msgid: string };
 
 export type MqmResult = {
   locale: string;
@@ -127,57 +136,10 @@ export function parseEntryFile(text: string) {
 }
 
 /*
- * A partial run's translator writes more than the new and fuzzy entries: a
- * `check.ts` fix or a new pin can rewrite an older one, and that rewrite needs
- * assessing as much as a new string does.
- */
-export function changedEntries(
-  catalogs: { name: string; catalog: Catalog }[],
-  earlier: { name: string; catalog: Catalog }[],
-) {
-  const changed: AssessedEntry[] = [];
-
-  for (const { name, catalog } of catalogs) {
-    const before = new Map(
-      Object.entries(earlier.find((other) => other.name === name)?.catalog ?? {}).map(
-        ([id, entry]) => [
-          keyOf({ catalog: name, msgctxt: entry.context ?? null, msgid: entry.message ?? id }),
-          entry,
-        ],
-      ),
-    );
-
-    for (const [id, entry] of Object.entries(catalog)) {
-      const assessed = {
-        catalog: name,
-        msgctxt: entry.context ?? null,
-        msgid: entry.message ?? id,
-      };
-
-      const previous = before.get(keyOf(assessed));
-
-      if (
-        !entry.obsolete &&
-        entry.translation &&
-        (!previous || previous.obsolete || previous.translation !== entry.translation)
-      ) {
-        changed.push(assessed);
-      }
-    }
-  }
-
-  return changed;
-}
-
-/*
  * An unresolved `--base` is an error rather than a fallback to HEAD, which would
  * drop the branch's committed changes from the list and shrink the gate unseen.
  */
-export function resolveBase(base: string | undefined, resolve = mergeBase) {
-  if (base === undefined) {
-    return "HEAD";
-  }
-
+export function resolveBase(base: string = DEFAULT_BASE, resolve = mergeBase) {
   const ref = resolve(base);
 
   if (!ref) {
@@ -706,7 +668,7 @@ catalogs; with --partial, only the entries in <dir>/<tag>.assess.txt.
 
 --list writes <dir>/<tag>.assess.txt for a partial run: the entries collect.ts
 listed in <dir>/<tag>.txt, and every other entry whose translation differs from
-the catalog at the merge base with --base (HEAD by default).
+the catalog at the merge base with --base (beta by default).
 
 Exit codes: 0 every locale passes, 1 a locale fails the gate, 2 the input is invalid.`;
 
