@@ -1000,6 +1000,74 @@
       "expect": "[Ll]anceur",
       "severity": "wrong",
       "reason": "The launcher is the lanceur, as Chrome names ChromeOS's (Chrome: 19 of 20 messages)."
+    },
+    {
+      "id": "inspect-element",
+      "msgid": "Inspect Element",
+      "expect": "^Inspecter$",
+      "severity": "wrong",
+      "reason": "Inspect Element is Inspecter, as Chrome's page context menu writes its Inspect item."
+    },
+    {
+      "id": "color-purple",
+      "msgid": "Purple",
+      "msgctxt": null,
+      "expect": "^Violet$",
+      "severity": "wrong",
+      "reason": "The account color Purple is Violet, as Chrome writes Purple in its tab group and color names; Chrome's Violet is Mauve."
+    },
+    {
+      "id": "color-violet",
+      "msgid": "Violet",
+      "msgctxt": null,
+      "expect": "^Mauve$",
+      "severity": "wrong",
+      "reason": "The account color Violet is Mauve, as Chrome writes Violet in its color names, since Chrome's Purple is Violet."
+    },
+    {
+      "id": "google-password-manager",
+      "msgidPattern": "\\bGoogle Password Manager\\b",
+      "expect": "Gestionnaire de mots de passe de Google",
+      "severity": "wrong",
+      "reason": "Google Password Manager is Google's own name, Gestionnaire de mots de passe de Google, as its Help writes it (support.google.com/accounts/answer/6208650?hl=fr) and Chrome in 56 of 68 messages (Chrome 156's macOS locale.pak)."
+    },
+    {
+      "id": "app-links-badge",
+      "msgidPattern": "app links badge",
+      "expect": "[Pp]astille",
+      "severity": "wrong",
+      "reason": "The app links badge is the pastille, the unread badge's word (glossary, Unread badge); Chrome has no word for a badge (Chrome 0 messages in its macOS locale.pak), never indicateur."
+    },
+    {
+      "id": "back",
+      "msgidPattern": "^(Go )?[Bb]ack$",
+      "msgctxt": null,
+      "expect": "^Retour$",
+      "severity": "wrong",
+      "reason": "Back and Go back are Retour, as Chrome writes them (Chrome 21/21 in its macOS locale.pak), never Précédent."
+    },
+    {
+      "id": "forward",
+      "msgidPattern": "^(Go )?[Ff]orward$",
+      "msgctxt": null,
+      "expect": "^Avancer$",
+      "severity": "wrong",
+      "reason": "Forward and Go forward are Avancer, as Chrome writes Forward (Chrome 3/3 in its macOS locale.pak; it has no Go forward), never Suivant."
+    },
+    {
+      "id": "reset",
+      "msgidPattern": "^Reset( App$| Meru\\b|$)",
+      "expect": "^Réinitialiser",
+      "severity": "wrong",
+      "reason": "Resetting Meru is Réinitialiser, in the menu item, the dialog's question and its button, as Chrome writes Reset (Chrome 5/5 exact Reset in its macOS locale.pak), never Rétablir, which is Redo."
+    },
+    {
+      "id": "edit-menu",
+      "msgid": "Edit",
+      "msgctxt": null,
+      "expect": "^Édition$",
+      "severity": "wrong",
+      "reason": "The Edit menu's title, which has no platform msgctxt, takes Chrome's menu word, Édition: the Edit title of Chrome's menu bar, in the block with Fichier, Présentation, Historique, Fenêtre and Aide (Chrome 1/1 for the menu title; 1 of its 12 exact Edit messages in its macOS locale.pak, the other 11 being Edit buttons, Modifier). The action Edit stays Modifier."
     }
   ],
   "accessKeys": {

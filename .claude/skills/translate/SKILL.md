@@ -160,14 +160,16 @@ A decision recorded in a sidecar, `languages/<tag>.json`, is encoded in `check.t
 Each shipped language has a regression set, `regression/<tag>.po`, outside the real catalogs: about 35 entries whose shipped translation was accepted, some of them correct translations that look wrong, such as Gmail's own words or a pinned term, and about 30 known-bad ones, each marked `# expect: <category>[|<category>] <minimum severity>`. The known-bad ones are real errors earlier runs made, such as 未読アカウント, Webサイト, Schaltfläche and „sobald du sie schließt“, and planted ones covering wrong meaning, omission, addition, terminology, locale conventions, style and a broken placeholder or tag. About 10 per language, marked `# hard`, are errors no sidecar rule names, which the reviewer has to read for: a near-miss meaning, such as a pronoun pointing at the wrong noun, a scope narrowed or widened, current for default or delete for remove; a calque; a wrong register; a dropped negation; swapped plural or select branches; a typo; a sentence where the style sheet wants a label. `# few-shot` marks the ones the reviewer's prompt shows as examples. `regression.ts` measures step 6 on them: it writes a dump of the set, without its marks, runs three `translation-mqm-reviewer`s on it headless, as a full run, and reports recall per severity, how many known-bad entries the runs agree on at their severity or above, with and without the few-shot ones and for the hard ones alone, the false positives on the accepted entries, and each run's own numbers. It also shows the agreement rule at work: how many known-bad entries zero, one, two or three runs caught, the catches a single run made that the rule dropped, and the false positives it dropped.
 
 ```sh
-bun .claude/skills/translate/regression.ts run --dir <scratchpad>/regression de ja
+bun .claude/skills/translate/regression.ts run --dir <scratchpad>/regression de ja fr
 ```
 
 `prepare` writes the inputs and prints the three reviewer commands instead, and `score` scores findings files already in the directory. It needs the agents, so it never runs in CI. Run it after any change to the reviewer's prompt, its model or effort, or this step, and record its tables in the pull request, set beside the last recorded result. Known reviewer weaknesses the set shows, which a translator or the lead watches for, since the gate can miss them:
 
-- A pronoun or demonstrative that points at the wrong noun inside a long `select` message, such as German _sie_ or Japanese それらのアプリ for the tabs, read as the apps: no run catches it, in either language.
+- A pronoun or demonstrative that points at the wrong noun inside a long `select` message, such as German _sie_ or Japanese それらのアプリ for the tabs, read as the apps, or French _à sa place_, read as the new window or tab rather than the one named: no run catches it in German or Japanese, and one run of three in French, which the agreement rule drops.
 - A translation that swaps the object for a wider one, such as the user's Google account where the English means the account in Meru, is graded a minor addition by every run, not the major change of object it is.
 - A loss of nuance inside a sentence with a tag, such as Japanese 1行として for "on its own line", is missed by every run.
+- A style or idiom minor inside a long sentence: French _à vos risques_ cut short of _à vos risques et périls_ is caught by one run of three, and the calque _Les sites s’appliquent_ and the touch verb _Appuyez_ with an unquoted button label, where a desktop click is _Cliquez sur son bouton « Copier »_, by none.
+- A tight label far longer than it needs to be, such as the French trial badge _L’essai Pro se termine dans # jours_ for _Fin de l’essai Pro dans # jours_: one run of three.
 
 The recorded result for the reviewer prompt as it stands, three runs per language:
 
@@ -175,5 +177,6 @@ The recorded result for the reviewer prompt as it stands, three runs per languag
 | ------ | -------: | ----: | ----: | -----: | ----: | --------------: |
 | de     |      3/3 |   8/8 | 17/18 |  28/29 | 12/13 |            0/36 |
 | ja     |      2/2 |   8/9 | 16/18 |  26/29 |  9/11 |            0/36 |
+| fr     |      3/3 |   5/5 | 15/21 |  23/29 |  9/13 |            0/37 |
 
 A new language gets its set when it ships: entries from its shipped catalog, and its own real errors once runs have made some. `scripts/translate-regression.test.ts` holds the sets' shape and the scoring.
