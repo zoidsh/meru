@@ -197,12 +197,12 @@ msgstr "Toasts"
 msgid "{target, select, window {“{appLinksTabTitle}” currently opens all {appLabel} links. This window will open them instead.} other {“{appLinksTabTitle}” currently opens all {appLabel} links. This tab will open them instead.}}"
 msgstr "{target, select, window {« {appLinksTabTitle} » ouvre actuellement tous les liens {appLabel}. Cette fenêtre les ouvrira à sa place.} other {« {appLinksTabTitle} » ouvre actuellement tous les liens {appLabel}. Cet onglet les ouvrira à sa place.}}"
 
-# expect: accuracy/mistranslation|fluency/unidiomatic|accuracy/omission minor
-# real: the French run's Connectez-vous, fixed by its reviewer; alone it reads as signing in, not connecting to the internet
+# expect: fluency/unidiomatic minor
+# real: an MQM minor of the French run; à vos risques is a truncated à vos risques et périls
 # hard
-#: packages/app/license-key.ts
-msgid "Meru can't reach the internet. Connect and try again."
-msgstr "Meru ne parvient pas à accéder à Internet. Connectez-vous, puis réessayez."
+#: packages/app/dialogs.ts
+msgid "Meru {version} is the last version that runs on macOS {macOSVersion}. Newer versions need macOS 13 or later, so Meru won't check for updates on this Mac. This version keeps working, but it gets no further fixes, security fixes included, so using it long term is at your own risk."
+msgstr "Meru {version} est la dernière version compatible avec macOS {macOSVersion}. Les versions plus récentes nécessitent macOS 13 ou version ultérieure, Meru ne recherchera donc pas de mises à jour sur ce Mac. Cette version continue de fonctionner, mais ne reçoit plus aucun correctif, y compris de sécurité ; son utilisation à long terme se fait donc à vos risques."
 
 # expect: fluency/unidiomatic|accuracy/mistranslation minor
 # real: the French run's calque, fixed by its reviewer; a site does not apply itself
