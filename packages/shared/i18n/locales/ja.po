@@ -7,6 +7,7 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: ja\n"
 
+#. conflictName and extensionName are extensions' names. “it” is extensionName, the extension being turned on: turning it on again retries the swap, since conflictName is already off
 #: packages/app/lib/extension-swap.ts
 msgid "{conflictName} is off, but some of its files may be left in Meru. {extensionName} wasn't installed. Turn it on to try again."
 msgstr "{conflictName}はオフになりましたが、一部のファイルがMeruに残っている可能性があります。{extensionName}はインストールされませんでした。もう一度試すには、{extensionName}をオンにしてください。"
