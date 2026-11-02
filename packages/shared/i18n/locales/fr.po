@@ -799,7 +799,7 @@ msgstr "Fermer la fenêtre de rédaction après l’envoi d’un message."
 
 #: packages/renderer/components/app-main.tsx
 msgid "Close unified inbox"
-msgstr "Fermer la boîte de réception unifiée"
+msgstr "Fermer Toutes les boîtes"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1292,7 +1292,7 @@ msgstr "Activer l’icône de la zone de notification"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
-msgstr "Activer la boîte de réception unifiée"
+msgstr "Activer Toutes les boîtes"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Enter a color"
@@ -2307,7 +2307,7 @@ msgstr "Ouvrir ce lien dans votre navigateur par défaut ?"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open unified inbox"
-msgstr "Ouvrir la boîte de réception unifiée"
+msgstr "Ouvrir Toutes les boîtes"
 
 #. Button that opens the Settings app of Windows at its default apps, named as Microsoft names it
 #: packages/renderer/routes/settings/general.tsx
@@ -2999,7 +2999,7 @@ msgstr "Tout afficher"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show all unread messages from every account in a single unified inbox."
-msgstr "Afficher tous les messages non lus de tous les comptes dans une seule boîte de réception unifiée."
+msgstr "Afficher tous les messages non lus de tous les comptes réunis dans Toutes les boîtes."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show an unread badge on the dock icon when there are unread emails."
@@ -3139,7 +3139,7 @@ msgstr "Afficher les icônes des expéditeurs"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show sender icons next to the senders in the unified inbox."
-msgstr "Afficher les icônes des expéditeurs à côté de leur nom dans la boîte de réception unifiée."
+msgstr "Afficher les icônes des expéditeurs à côté de leur nom dans Toutes les boîtes."
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show sender icons next to the senders in your inbox."
@@ -3411,7 +3411,7 @@ msgstr "Les notes de version proviennent de GitHub. Vérifiez votre connexion, p
 
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "The unified inbox shows every unread message from your accounts in one place. A message leaves the list after you read it."
-msgstr "La boîte de réception unifiée regroupe tous les messages non lus de vos comptes. Un message disparaît de la liste une fois lu."
+msgstr "Dans Toutes les boîtes, tous les messages non lus de vos comptes sont regroupés. Un message disparaît de la liste une fois lu."
 
 #. Setting that picks a light or dark appearance
 #: packages/renderer/routes/settings/appearance.tsx
@@ -3555,12 +3555,12 @@ msgstr "Annuler"
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Unified inbox"
-msgstr "Boîte de réception unifiée"
+msgstr "Toutes les boîtes"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Unified Inbox"
-msgstr "Boîte de réception unifiée"
+msgstr "Toutes les boîtes"
 
 #. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -3818,7 +3818,7 @@ msgstr "Fenêtres"
 #. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
-msgstr "Avec une boîte de réception classée par catégories, choisir les catégories surveillées pour les notifications de nouveaux e-mails et incluses dans la boîte de réception unifiée."
+msgstr "Avec une boîte de réception classée par catégories, choisir les catégories surveillées pour les notifications de nouveaux e-mails et incluses dans Toutes les boîtes."
 
 #. Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx

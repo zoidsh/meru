@@ -1646,6 +1646,18 @@
         "clean": "Meru Portalを開く",
         "fault": "Meruポータルを開く"
       }
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "すべての受信トレイ",
+      "severity": "wrong",
+      "reason": "The unified inbox is すべての受信トレイ, the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=ja), quoted “…” inside a description; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording, never 統合受信トレイ (glossary, Unified inbox).",
+      "example": {
+        "msgid": "Open unified inbox",
+        "clean": "すべての受信トレイを開く",
+        "fault": "統合受信トレイを開く"
+      }
     }
   ],
   "accessKeys": {

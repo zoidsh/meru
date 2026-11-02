@@ -1847,6 +1847,18 @@
         "clean": "Recarregamento Forçado",
         "fault": "Forçar Recarregamento"
       }
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "Todas as Caixas de [Ee]ntrada",
+      "severity": "wrong",
+      "reason": "The unified inbox is Todas as Caixas de entrada, the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=pt-BR), in title case in menu items and buttons, Google's casing elsewhere; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording, never caixa de entrada unificada (glossary, Unified inbox).",
+      "example": {
+        "msgid": "Open unified inbox",
+        "clean": "Abrir Todas as Caixas de Entrada",
+        "fault": "Abrir Caixa de Entrada Unificada"
+      }
     }
   ],
   "accessKeys": {

@@ -799,7 +799,7 @@ msgstr "Fechar a janela de nova mensagem depois que você enviar."
 
 #: packages/renderer/components/app-main.tsx
 msgid "Close unified inbox"
-msgstr "Fechar Caixa de Entrada Unificada"
+msgstr "Fechar Todas as Caixas de Entrada"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1292,7 +1292,7 @@ msgstr "Ativar ícone da bandeja do sistema"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
-msgstr "Ativar caixa de entrada unificada"
+msgstr "Ativar Todas as Caixas de entrada"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Enter a color"
@@ -2307,7 +2307,7 @@ msgstr "Abrir este link no seu navegador padrão?"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open unified inbox"
-msgstr "Abrir Caixa de Entrada Unificada"
+msgstr "Abrir Todas as Caixas de Entrada"
 
 #. Button that opens the Settings app of Windows at its default apps, named as Microsoft names it
 #: packages/renderer/routes/settings/general.tsx
@@ -2999,7 +2999,7 @@ msgstr "Mostrar Tudo"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show all unread messages from every account in a single unified inbox."
-msgstr "Mostrar todas as mensagens não lidas de todas as contas em uma única caixa de entrada unificada."
+msgstr "Mostrar todas as mensagens não lidas de todas as contas reunidas em Todas as Caixas de entrada."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show an unread badge on the dock icon when there are unread emails."
@@ -3139,7 +3139,7 @@ msgstr "Mostrar ícones dos remetentes"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show sender icons next to the senders in the unified inbox."
-msgstr "Mostrar ícones ao lado dos remetentes na caixa de entrada unificada."
+msgstr "Mostrar ícones ao lado dos remetentes em Todas as Caixas de entrada."
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show sender icons next to the senders in your inbox."
@@ -3411,7 +3411,7 @@ msgstr "As notas da versão vêm do GitHub. Verifique sua conexão e tente novam
 
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "The unified inbox shows every unread message from your accounts in one place. A message leaves the list after you read it."
-msgstr "A caixa de entrada unificada mostra todas as mensagens não lidas das suas contas em um só lugar. Uma mensagem sai da lista depois que você a lê."
+msgstr "Em Todas as Caixas de entrada, você vê todas as mensagens não lidas das suas contas em um só lugar. Uma mensagem sai da lista depois que você a lê."
 
 #. Setting that picks a light or dark appearance
 #: packages/renderer/routes/settings/appearance.tsx
@@ -3555,12 +3555,12 @@ msgstr "Desfazer"
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Unified inbox"
-msgstr "Caixa de entrada unificada"
+msgstr "Todas as Caixas de entrada"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Unified Inbox"
-msgstr "Caixa de Entrada Unificada"
+msgstr "Todas as Caixas de Entrada"
 
 #. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -3818,7 +3818,7 @@ msgstr "Janelas"
 #. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
-msgstr "Se a sua caixa de entrada usa categorias, escolher quais categorias são monitoradas para as notificações de novos e-mails e incluídas na caixa de entrada unificada."
+msgstr "Se a sua caixa de entrada usa categorias, escolher quais categorias são monitoradas para as notificações de novos e-mails e incluídas em Todas as Caixas de entrada."
 
 #. Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx

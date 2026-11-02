@@ -1421,13 +1421,13 @@
     {
       "id": "unified-inbox",
       "msgidPattern": "\\bunified inbox\\b",
-      "expect": "[Kk]ombinierte[nrs]? Posteingang",
+      "expect": "Alle Posteingänge",
       "severity": "wrong",
-      "reason": "The unified inbox is the kombinierter Posteingang, one view of every account's inbox, after Android Email's Kombinierte Ansicht for its Combined view; gemeinsamer Posteingang reads as a mailbox shared with other people (agent-chosen, unresolved by the app count).",
+      "reason": "The unified inbox is Alle Posteingänge, the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=de), capitalized as a view's name and quoted „…“ inside a sentence, as „Nicht stören“ is; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording, never kombinierter Posteingang (glossary, Unified inbox).",
       "example": {
-        "msgid": "Enable unified inbox",
-        "clean": "Kombinierten Posteingang aktivieren",
-        "fault": "Gemeinsamen Posteingang aktivieren"
+        "msgid": "Open unified inbox",
+        "clean": "„Alle Posteingänge“ öffnen",
+        "fault": "Kombinierten Posteingang öffnen"
       }
     },
     {

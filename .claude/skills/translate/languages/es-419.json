@@ -1697,6 +1697,18 @@
         "clean": "Mostrar distintivo de la pestaña de vínculos de la app",
         "fault": "Mostrar contador de la pestaña de vínculos de la app"
       }
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "Recibidos \\(todos\\)",
+      "severity": "wrong",
+      "reason": "The unified inbox is Recibidos (todos), the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=es-419), capitalized as a view's name, with its parenthesis; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording, never bandeja de Recibidos unificada (glossary, Unified inbox).",
+      "example": {
+        "msgid": "Open unified inbox",
+        "clean": "Abrir Recibidos (todos)",
+        "fault": "Abrir bandeja de Recibidos unificada"
+      }
     }
   ],
   "accessKeys": {

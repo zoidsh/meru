@@ -1823,6 +1823,18 @@
         "clean": "Apri il Meru Portal",
         "fault": "Apri il portale Meru"
       }
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "Tutte le caselle",
+      "severity": "wrong",
+      "reason": "The unified inbox is Tutte le caselle, the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=it), capitalized as a view's name; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording, never posta in arrivo unificata (glossary, Unified inbox).",
+      "example": {
+        "msgid": "Open unified inbox",
+        "clean": "Apri Tutte le caselle",
+        "fault": "Apri la posta in arrivo unificata"
+      }
     }
   ],
   "accessKeys": {

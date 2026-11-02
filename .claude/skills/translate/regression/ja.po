@@ -114,7 +114,7 @@ msgstr "〜"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show all unread messages from every account in a single unified inbox."
-msgstr "すべてのアカウントの未読メッセージを1つの統合受信トレイに表示します。"
+msgstr "すべてのアカウントの未読メッセージを“すべての受信トレイ”にまとめて表示します。"
 
 #. Name of a keyboard key, as printed on keyboards in that language, e.g. German Windows keyboards print Strg for Ctrl
 #: packages/renderer/routes/settings/workspace-apps.tsx
