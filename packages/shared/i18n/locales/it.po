@@ -799,7 +799,7 @@ msgstr "Chiudi la finestra di scrittura dopo aver inviato l’email."
 
 #: packages/renderer/components/app-main.tsx
 msgid "Close unified inbox"
-msgstr "Chiudi la posta in arrivo unificata"
+msgstr "Chiudi Tutte le caselle"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1292,7 +1292,7 @@ msgstr "Attiva l’icona nell’area di notifica"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
-msgstr "Attiva la posta in arrivo unificata"
+msgstr "Attiva Tutte le caselle"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Enter a color"
@@ -2307,7 +2307,7 @@ msgstr "Vuoi aprire questo link nel browser predefinito?"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open unified inbox"
-msgstr "Apri la posta in arrivo unificata"
+msgstr "Apri Tutte le caselle"
 
 #. Button that opens the Settings app of Windows at its default apps, named as Microsoft names it
 #: packages/renderer/routes/settings/general.tsx
@@ -2999,7 +2999,7 @@ msgstr "Mostra tutte"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show all unread messages from every account in a single unified inbox."
-msgstr "Mostra tutti i messaggi non letti di ogni account in un’unica posta in arrivo unificata."
+msgstr "Mostra tutti i messaggi non letti di ogni account riuniti in Tutte le caselle."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show an unread badge on the dock icon when there are unread emails."
@@ -3139,7 +3139,7 @@ msgstr "Mostra le icone dei mittenti"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show sender icons next to the senders in the unified inbox."
-msgstr "Mostra le icone accanto ai mittenti nella posta in arrivo unificata."
+msgstr "Mostra le icone accanto ai mittenti in Tutte le caselle."
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show sender icons next to the senders in your inbox."
@@ -3411,7 +3411,7 @@ msgstr "Le note di rilascio provengono da GitHub. Controlla la connessione, poi 
 
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "The unified inbox shows every unread message from your accounts in one place. A message leaves the list after you read it."
-msgstr "La posta in arrivo unificata mostra in un unico posto tutti i messaggi non letti dei tuoi account. Un messaggio esce dall’elenco dopo che l’hai letto."
+msgstr "In Tutte le caselle trovi in un unico posto tutti i messaggi non letti dei tuoi account. Un messaggio esce dall’elenco dopo che l’hai letto."
 
 #. Setting that picks a light or dark appearance
 #: packages/renderer/routes/settings/appearance.tsx
@@ -3555,12 +3555,12 @@ msgstr "Annulla"
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Unified inbox"
-msgstr "Posta in arrivo unificata"
+msgstr "Tutte le caselle"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Unified Inbox"
-msgstr "Posta in arrivo unificata"
+msgstr "Tutte le caselle"
 
 #. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -3818,7 +3818,7 @@ msgstr "Finestre"
 #. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
-msgstr "Con la Posta in arrivo suddivisa in categorie, scegli quali categorie monitorare per le notifiche di nuove email e includere nella posta in arrivo unificata."
+msgstr "Con la Posta in arrivo suddivisa in categorie, scegli quali categorie monitorare per le notifiche di nuove email e includere in Tutte le caselle."
 
 #. Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx

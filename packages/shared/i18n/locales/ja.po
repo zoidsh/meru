@@ -799,7 +799,7 @@ msgstr "送信後に作成ウィンドウを閉じます。"
 
 #: packages/renderer/components/app-main.tsx
 msgid "Close unified inbox"
-msgstr "統合受信トレイを閉じる"
+msgstr "すべての受信トレイを閉じる"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1292,7 +1292,7 @@ msgstr "通知領域アイコンを有効にする"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
-msgstr "統合受信トレイを有効にする"
+msgstr "すべての受信トレイを有効にする"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Enter a color"
@@ -2307,7 +2307,7 @@ msgstr "このリンクを既定のブラウザで開きますか?"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open unified inbox"
-msgstr "統合受信トレイを開く"
+msgstr "すべての受信トレイを開く"
 
 #. Button that opens the Settings app of Windows at its default apps, named as Microsoft names it
 #: packages/renderer/routes/settings/general.tsx
@@ -2999,7 +2999,7 @@ msgstr "すべてを表示"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show all unread messages from every account in a single unified inbox."
-msgstr "すべてのアカウントの未読メッセージを1つの統合受信トレイに表示します。"
+msgstr "すべてのアカウントの未読メッセージを“すべての受信トレイ”にまとめて表示します。"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show an unread badge on the dock icon when there are unread emails."
@@ -3139,7 +3139,7 @@ msgstr "送信者のアイコンを表示"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show sender icons next to the senders in the unified inbox."
-msgstr "統合受信トレイで、送信者の横にアイコンを表示します。"
+msgstr "“すべての受信トレイ”で、送信者の横にアイコンを表示します。"
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show sender icons next to the senders in your inbox."
@@ -3411,7 +3411,7 @@ msgstr "リリースノートはGitHubから取得されます。接続を確認
 
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "The unified inbox shows every unread message from your accounts in one place. A message leaves the list after you read it."
-msgstr "統合受信トレイには、すべてのアカウントの未読メッセージがまとめて表示されます。メッセージは読むとリストから消えます。"
+msgstr "“すべての受信トレイ”には、すべてのアカウントの未読メッセージがまとめて表示されます。メッセージは読むとリストから消えます。"
 
 #. Setting that picks a light or dark appearance
 #: packages/renderer/routes/settings/appearance.tsx
@@ -3555,12 +3555,12 @@ msgstr "元に戻す"
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Unified inbox"
-msgstr "統合受信トレイ"
+msgstr "すべての受信トレイ"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Unified Inbox"
-msgstr "統合受信トレイ"
+msgstr "すべての受信トレイ"
 
 #. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -3818,7 +3818,7 @@ msgstr "ウィンドウ"
 #. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
-msgstr "カテゴリ別の受信トレイを使用している場合は、新着メールの通知の対象とし、統合受信トレイに含めるカテゴリを選択します。"
+msgstr "カテゴリ別の受信トレイを使用している場合は、新着メールの通知の対象とし、“すべての受信トレイ”に含めるカテゴリを選択します。"
 
 #. Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx

@@ -1584,13 +1584,13 @@
     {
       "id": "unified-inbox",
       "msgidPattern": "\\bunified inbox\\b",
-      "expect": "[Łł]ączon\\p{L}* skrzyn\\p{L}* odbiorcz",
+      "expect": "Wszystki\\p{L}* skrzyn\\p{L}* odbiorcz",
       "severity": "wrong",
-      "reason": "The unified inbox is the łączona skrzynka odbiorcza, one view of every account's inbox, after Android Email's Widok łączony for its Combined view; wspólna skrzynka odbiorcza reads as a mailbox shared with other people (agent-chosen, unresolved by the app count).",
+      "reason": "The unified inbox is Wszystkie skrzynki odbiorcze, the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=pl), capitalized as a view's name and declined, as we Wszystkich skrzynkach odbiorczych; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording, never łączona skrzynka odbiorcza (glossary, Unified inbox).",
       "example": {
-        "msgid": "Enable unified inbox",
-        "clean": "Włącz łączoną skrzynkę odbiorczą",
-        "fault": "Włącz wspólną skrzynkę odbiorczą"
+        "msgid": "Open unified inbox",
+        "clean": "Otwórz Wszystkie skrzynki odbiorcze",
+        "fault": "Otwórz łączoną skrzynkę odbiorczą"
       }
     },
     {

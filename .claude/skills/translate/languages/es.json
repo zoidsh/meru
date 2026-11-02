@@ -1629,6 +1629,18 @@
         "clean": "Abrir Meru Portal",
         "fault": "Abrir el portal de Meru"
       }
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "Todas las bandejas",
+      "severity": "wrong",
+      "reason": "The unified inbox is Todas las bandejas, the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=es), capitalized as a view's name; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording, never bandeja de entrada unificada (glossary, Unified inbox).",
+      "example": {
+        "msgid": "Open unified inbox",
+        "clean": "Abrir Todas las bandejas",
+        "fault": "Abrir bandeja de entrada unificada"
+      }
     }
   ],
   "accessKeys": {

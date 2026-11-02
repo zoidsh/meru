@@ -74,18 +74,18 @@ A tab kept in the strip's upper section. _Pin_ and _Unpin_ are the context-menu 
 
 ## Unified inbox
 
-The page listing new mail across every account. A description, so lower case inside a sentence; the page title capitalizes its first word. Meru's own feature, built on Gmail's word for the inbox. The phrase is unresolved by the app count: of the seven apps only Thunderbird (gruppierte Ordner) and Android (kombinierte Ansicht) have a merged inbox, so each language keeps its phrase until a speaker settles it.
+The page listing new mail across every account. Meru's own feature. The phrase is unresolved by the app count: of the seven apps only Thunderbird (gruppierte Ordner) and Android (kombinierte Ansicht) have a merged inbox. So each language takes the source order's next fallback, Google's wording: the Gmail app's name for its own every-account inbox, English _All inboxes_, from Gmail Help answer/6078445 (https://support.google.com/mail/answer/6078445?hl=<tag>), unless that name is another Gmail concept's, such as its All Mail folder in "Archive Gmail messages" (https://support.google.com/mail/answer/6576?hl=<tag>). It is a view's name, so it keeps Google's capitalization inside a sentence too.
 
-- de: kombinierter Posteingang (Gmail's _Posteingang_; Android Email's _Kombinierte Ansicht_ for its Combined view, the direct match, since _gemeinsamer Posteingang_ reads as a mailbox shared with other people; agent-chosen, unresolved by the app count)
-- fr: boîte de réception unifiée (Gmail's _boîte de réception_; agent-chosen, unresolved by the app count)
-- it: posta in arrivo unificata (Gmail's _Posta in arrivo_; agent-chosen, unresolved by the app count)
-- es: bandeja de entrada unificada (Gmail's _bandeja de entrada_; agent-chosen, unresolved by the app count)
-- es-419: bandeja de Recibidos unificada (Gmail's _Recibidos_, as in its _Múltiples bandejas de Recibidos_; agent-chosen, unresolved by the app count)
-- pt-BR: caixa de entrada unificada (Gmail's _Caixa de entrada_; agent-chosen, unresolved by the app count)
-- nl: gecombineerde inbox (Gmail's _inbox_; agent-chosen, unresolved by the app count)
-- pl: łączona skrzynka odbiorcza (Android Email's _Widok łączony_ for its Combined view, the direct match, since _wspólna skrzynka odbiorcza_ reads as a mailbox shared with other people; agent-chosen, unresolved by the app count)
+- de: Alle Posteingänge, quoted „…“ inside a sentence, as „Nicht stören“ is (Google: the Gmail app's _Alle Posteingänge_, its every-account inbox, in Gmail Help answer/6078445 `hl=de`, taken by the source order's fallback since the app count leaves it unresolved; never _kombinierter Posteingang_)
+- fr: Toutes les boîtes (Google: the Gmail app's _Toutes les boîtes_, its every-account inbox, in Gmail Help answer/6078445 `hl=fr`, taken by the source order's fallback since the app count leaves it unresolved; never _boîte de réception unifiée_)
+- it: Tutte le caselle (Google: the Gmail app's _Tutte le caselle_, its every-account inbox, in Gmail Help answer/6078445 `hl=it`, taken by the source order's fallback since the app count leaves it unresolved; never _posta in arrivo unificata_)
+- es: Todas las bandejas (Google: the Gmail app's _Todas las bandejas_, its every-account inbox, in Gmail Help answer/6078445 `hl=es`, taken by the source order's fallback since the app count leaves it unresolved; never _bandeja de entrada unificada_)
+- es-419: Recibidos (todos), with its parenthesis (Google: the Gmail app's _Recibidos (todos)_, its every-account inbox, in Gmail Help answer/6078445 `hl=es-419`, taken by the source order's fallback since the app count leaves it unresolved; never _bandeja de Recibidos unificada_)
+- pt-BR: Todas as Caixas de entrada, title case in menu items and buttons, Google's casing elsewhere (Google: the Gmail app's _Todas as Caixas de entrada_, its every-account inbox, in Gmail Help answer/6078445 `hl=pt-BR`, taken by the source order's fallback since the app count leaves it unresolved; never _caixa de entrada unificada_)
+- nl: gecombineerde inbox (Gmail's _inbox_; agent-chosen, unresolved by the app count; Google's wording checked: the Gmail app's every-account view is _Alle e-mail_ in https://support.google.com/mail/answer/6078445?hl=nl, Gmail's All Mail folder name in https://support.google.com/mail/answer/6576?hl=nl, so it is out)
+- pl: Wszystkie skrzynki odbiorcze, declined inside a sentence, as _we Wszystkich skrzynkach odbiorczych_ (Google: the Gmail app's _Wszystkie skrzynki odbiorcze_, its every-account inbox, in Gmail Help answer/6078445 `hl=pl`, taken by the source order's fallback since the app count leaves it unresolved; never _łączona skrzynka odbiorcza_)
 - sv: Alla inkorgar, capitalized as the name of Gmail's view (Google: the Gmail app's _Alla inkorgar_, its every-account inbox, in Gmail Help answer/6078445 `hl=sv`, taken by the source order's fallback since the app count leaves it unresolved)
-- ja: 統合受信トレイ (Gmail's 受信トレイ; agent-chosen, unresolved by the app count)
+- ja: すべての受信トレイ, quoted “…” inside a description (Google: the Gmail app's すべての受信トレイ, its every-account inbox, in Gmail Help answer/6078445 `hl=ja`, taken by the source order's fallback since the app count leaves it unresolved; never 統合受信トレイ)
 
 ## Do Not Disturb
 

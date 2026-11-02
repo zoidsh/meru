@@ -1691,6 +1691,18 @@
         "clean": "Ouvrir Meru Portal",
         "fault": "Ouvrir le portail Meru"
       }
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "Toutes les boîtes",
+      "severity": "wrong",
+      "reason": "The unified inbox is Toutes les boîtes, the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=fr), capitalized as a view's name; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording, never boîte de réception unifiée (glossary, Unified inbox).",
+      "example": {
+        "msgid": "Open unified inbox",
+        "clean": "Ouvrir Toutes les boîtes",
+        "fault": "Ouvrir la boîte de réception unifiée"
+      }
     }
   ],
   "accessKeys": {

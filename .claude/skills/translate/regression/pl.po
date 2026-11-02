@@ -110,7 +110,7 @@ msgstr "Pokaż plakietkę karty linków aplikacji"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
-msgstr "Włącz łączoną skrzynkę odbiorczą"
+msgstr "Włącz Wszystkie skrzynki odbiorcze"
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #: packages/renderer/lib/settings-pages.ts

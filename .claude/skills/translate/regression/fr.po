@@ -139,7 +139,7 @@ msgstr "Modifier la clé de licence"
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Unified inbox"
-msgstr "Boîte de réception unifiée"
+msgstr "Toutes les boîtes"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show unread badge"

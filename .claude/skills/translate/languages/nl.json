@@ -1827,6 +1827,18 @@
         "clean": "Updates vereisen macOS 13 of nieuwer, dus Meru controleert op deze Mac niet op updates. Deze versie blijft werken, maar krijgt geen updates meer, ook geen beveiligingsupdates, dus als je deze versie lang blijft gebruiken, is dat op eigen risico.",
         "fault": "Updates vereisen macOS 13 of nieuwer, dus Meru controleert op deze Mac niet op updates. Deze versie blijft werken, maar krijgt geen verdere fixes meer, ook geen beveiligingsfixes, dus als je deze versie lang blijft gebruiken, is dat op eigen risico."
       }
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "[Gg]ecombineerde inbox",
+      "severity": "wrong",
+      "reason": "The unified inbox is the gecombineerde inbox, after Gmail's inbox (agent-chosen, unresolved by the app count). Google's wording checked: the Gmail app's every-account view is Alle e-mail (Gmail Help answer/6078445, hl=nl), which is Gmail's All Mail folder name (answer/6576, hl=nl), so it is out (glossary, Unified inbox).",
+      "example": {
+        "msgid": "Open unified inbox",
+        "clean": "Open gecombineerde inbox",
+        "fault": "Open Alle e-mail"
+      }
     }
   ],
   "accessKeys": {

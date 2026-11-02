@@ -799,7 +799,7 @@ msgstr "Cierra la ventana de redacción después de enviar."
 
 #: packages/renderer/components/app-main.tsx
 msgid "Close unified inbox"
-msgstr "Cerrar bandeja de Recibidos unificada"
+msgstr "Cerrar Recibidos (todos)"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1292,7 +1292,7 @@ msgstr "Habilitar ícono de la bandeja del sistema"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Enable unified inbox"
-msgstr "Habilitar bandeja de Recibidos unificada"
+msgstr "Habilitar Recibidos (todos)"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Enter a color"
@@ -2307,7 +2307,7 @@ msgstr "¿Abrir este vínculo en tu navegador predeterminado?"
 
 #: packages/renderer/components/app-titlebar.tsx
 msgid "Open unified inbox"
-msgstr "Abrir bandeja de Recibidos unificada"
+msgstr "Abrir Recibidos (todos)"
 
 #. Button that opens the Settings app of Windows at its default apps, named as Microsoft names it
 #: packages/renderer/routes/settings/general.tsx
@@ -2999,7 +2999,7 @@ msgstr "Mostrar todo"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show all unread messages from every account in a single unified inbox."
-msgstr "Muestra todos los mensajes sin leer de todas las cuentas en una sola bandeja de Recibidos unificada."
+msgstr "Muestra todos los mensajes sin leer de todas las cuentas reunidos en Recibidos (todos)."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Show an unread badge on the dock icon when there are unread emails."
@@ -3139,7 +3139,7 @@ msgstr "Mostrar íconos de remitentes"
 
 #: packages/renderer/routes/settings/unified-inbox.tsx
 msgid "Show sender icons next to the senders in the unified inbox."
-msgstr "Muestra íconos junto a los remitentes en la bandeja de Recibidos unificada."
+msgstr "Muestra íconos junto a los remitentes en Recibidos (todos)."
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Show sender icons next to the senders in your inbox."
@@ -3411,7 +3411,7 @@ msgstr "Las notas de la versión provienen de GitHub. Revisa tu conexión y vuel
 
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "The unified inbox shows every unread message from your accounts in one place. A message leaves the list after you read it."
-msgstr "La bandeja de Recibidos unificada muestra todos los mensajes sin leer de tus cuentas en un solo lugar. Un mensaje sale de la lista después de que lo lees."
+msgstr "En Recibidos (todos) se muestran todos los mensajes sin leer de tus cuentas en un solo lugar. Un mensaje sale de la lista después de que lo lees."
 
 #. Setting that picks a light or dark appearance
 #: packages/renderer/routes/settings/appearance.tsx
@@ -3555,12 +3555,12 @@ msgstr "Deshacer"
 #: packages/renderer/routes/settings/accounts.tsx
 #: packages/renderer/routes/unified-inbox.tsx
 msgid "Unified inbox"
-msgstr "Bandeja de Recibidos unificada"
+msgstr "Recibidos (todos)"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Unified Inbox"
-msgstr "Bandeja de Recibidos unificada"
+msgstr "Recibidos (todos)"
 
 #. Unpinned tabs and Selected tabs quote this setting's options and Hibernate When Idle the tab's context menu item, so they match those messages' wording
 #: packages/renderer/routes/settings/workspace-apps.tsx
@@ -3818,7 +3818,7 @@ msgstr "Ventanas"
 #. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
-msgstr "Con Recibidos por categorías, elige qué categorías se supervisan para las notificaciones de correos nuevos y se incluyen en la bandeja de Recibidos unificada."
+msgstr "Con Recibidos por categorías, elige qué categorías se supervisan para las notificaciones de correos nuevos y se incluyen en Recibidos (todos)."
 
 #. Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx
