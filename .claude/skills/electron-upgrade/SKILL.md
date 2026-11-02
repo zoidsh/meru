@@ -25,7 +25,7 @@ A version named in the brief must pass the same rules: run the script, and take 
 
 - In a worktree of its own, off `origin/main`, then `bun install --frozen-lockfile`.
 - Print the installed Electron with `node -p 'require("electron/package.json").version'` before and after the bump, and read the built app's own versions too. A worktree's `node_modules` can hold a different Electron from the lock, so the proof states the version that ran, not the one declared. CDP `/json/version` does not show it, since Meru's user agent drops the `Electron/` token. On any platform, launch the build with `--remote-debugging-port=0` and evaluate `window.electron.process.versions` in the `main.html` target, which the renderer preload exposes and which works on a release build too; the VM docs' `cdp.py` is a client for it. The `test:e2e` build leaves the inspect fuse on, so `--inspect=0` also lets `process.versions` be read in the main process. On macOS, `CFBundleVersion` in `Contents/Frameworks/Electron Framework.framework/Resources/Info.plist` reads it without launching.
-- Before the bump, take the baseline in the same session: `bun test --isolate` and `op run --env-file .env.e2e.op -- bun run test:e2e`, with their counts. Never compare against a remembered number.
+- Before the bump, take the baseline in the same session: `bun run test` and `op run --env-file .env.e2e.op -- bun run test:e2e`, with their counts. Never compare against a remembered number.
 
 ## Assess
 
@@ -52,7 +52,7 @@ A version named in the brief must pass the same rules: run the script, and take 
 
 ## Check
 
-- `bun run fmt:check`, `bun run lint`, `bun run types`, `bun test --isolate`, and `op run --env-file .env.e2e.op -- bun run test:e2e`. Compare the counts with the baseline; a new failure or skip is a finding, not noise.
+- `bun run fmt:check`, `bun run lint`, `bun run types`, `bun run test`, and `op run --env-file .env.e2e.op -- bun run test:e2e`. Compare the counts with the baseline; a new failure or skip is a finding, not noise.
 - CI runs the end-to-end suite on macOS, Windows and Linux, so whatever an end-to-end test covers is proven on all three there.
 
 ## The VM round
