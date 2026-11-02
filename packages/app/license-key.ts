@@ -4,6 +4,7 @@ import isOnline from "is-online";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { getMachineId } from "@/lib/machine-id";
+import { getNativeCancelLabel } from "@/lib/native-cancel-label";
 import { getNativeQuitLabel } from "@/lib/native-quit-label";
 import { relaunchApp } from "@/lib/relaunch";
 import { apiClient, apiFallbackClient } from "./api-client";
@@ -76,7 +77,7 @@ class LicenseKey {
         if (error.code === "MAX_DEVICE_ACTIVATIONS_REACHED") {
           const { response } = await this.showActivationError({
             detail: t`This license key is activated on the maximum number of devices. Remove one in the Meru Portal, or contact support.`,
-            buttons: [t`Open Meru Portal`, t`Cancel`],
+            buttons: [t`Open Meru Portal`, getNativeCancelLabel()],
             defaultId: 0,
             cancelId: 1,
           });

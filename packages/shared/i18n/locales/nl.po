@@ -590,12 +590,6 @@ msgid "C&opy Image Address"
 msgstr "Kopieer adres van afbeelding"
 
 #. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
-#: packages/app/dialogs.ts
-#: packages/app/license-key.ts
-#: packages/app/menu.ts
-#: packages/app/protocol/index.ts
-#: packages/app/url.ts
-#: packages/app/workspace-app.ts
 #: packages/renderer/components/config-select-field.tsx
 #: packages/renderer/desktop-sources.tsx
 #: packages/renderer/routes/settings/accounts.tsx
@@ -605,6 +599,24 @@ msgstr "Kopieer adres van afbeelding"
 #: packages/renderer/routes/settings/saved-searches.tsx
 msgid "Cancel"
 msgstr "Annuleer"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "Linux"
+msgid "Cancel"
+msgstr "Annuleren"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "macOS"
+msgid "Cancel"
+msgstr "Annuleer"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "Windows"
+msgid "Cancel"
+msgstr "Annuleren"
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Categories to monitor"
@@ -725,6 +737,12 @@ msgctxt "context menu"
 msgid "Close"
 msgstr "Sluiten"
 
+#. File menu item that closes the window
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Close"
+msgstr "Sluiten"
+
 #. Button on a tab in the vertical tabs strip that closes the tab
 #: packages/renderer/components/vertical-tabs.tsx
 msgctxt "tab"
@@ -733,9 +751,9 @@ msgstr "Sluit"
 
 #. File menu item that closes the window
 #: packages/app/menu.ts
-msgctxt "window"
+msgctxt "Windows"
 msgid "Close"
-msgstr "Sluit"
+msgstr "Sluiten"
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Close compose window after send"
@@ -1508,6 +1526,19 @@ msgstr "Hardwareversnelling"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Help"
+msgstr "Hulp"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Help"
+msgstr "Help"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Help"
 msgstr "Help"
 
@@ -2900,7 +2931,6 @@ msgid "Settings"
 msgstr "Instellingen"
 
 #. A menu or a menu item in Meru's menu bar
-#. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Share"
 msgstr "Deel"
@@ -2909,6 +2939,13 @@ msgstr "Deel"
 msgctxt "context menu"
 msgid "Share"
 msgstr "Delen"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/context-menu.ts
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Share"
+msgstr "Deel"
 
 #. Button of the screen sharing picker that shares the window or screen picked
 #: packages/renderer/desktop-sources.tsx

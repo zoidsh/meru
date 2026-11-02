@@ -13,6 +13,7 @@ import { downloads } from "@/downloads";
 import { ipc } from "@/ipc";
 import { copyText } from "@/lib/clipboard";
 import { log } from "@/lib/log";
+import { getNativeCancelLabel } from "@/lib/native-cancel-label";
 import { relaunchApp } from "@/lib/relaunch";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
@@ -132,6 +133,9 @@ export class AppMenu {
       windows: t({ message: "Paste and Match Style", context: "Windows" }),
       linux: t({ message: "Paste and Match Style", context: "Linux" }),
     });
+
+    // Only macOS has the system share menu the shareMenu role shows.
+    const shareLabel = platform.isMacOS ? t({ message: "Share", context: "macOS" }) : t`Share`;
 
     // Zoom and Bring All to Front are macOS-only roles, and the Window menu
     // itself is a macOS convention, so the whole menu ships on macOS alone.
@@ -402,13 +406,19 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: platform.isMacOS
-              ? t({ message: "Close Window", context: "macOS" })
-              : t({
-                  message: "Close",
-                  context: "window",
-                  comment: "File menu item that closes the window",
-                }),
+            label: byPlatform(platform, {
+              macOS: t({ message: "Close Window", context: "macOS" }),
+              windows: t({
+                message: "Close",
+                context: "Windows",
+                comment: "File menu item that closes the window",
+              }),
+              linux: t({
+                message: "Close",
+                context: "Linux",
+                comment: "File menu item that closes the window",
+              }),
+            }),
             role: "close",
           },
           ...(platform.isMacOS ? [] : [nonMacOSMinimizeItem]),
@@ -637,14 +647,14 @@ export class AppMenu {
           },
           copyOrShareMessageLink
             ? {
-                label: t`Share`,
+                label: shareLabel,
                 role: "shareMenu",
                 sharingItem: {
                   urls: [copyOrShareMessageLink],
                 },
               }
             : {
-                label: t`Share`,
+                label: shareLabel,
                 enabled: false,
                 submenu: [],
               },
@@ -801,7 +811,11 @@ export class AppMenu {
       },
       ...(platform.isMacOS ? macOSWindowMenuItems : []),
       {
-        label: t`Help`,
+        label: byPlatform(platform, {
+          macOS: t({ message: "Help", context: "macOS" }),
+          windows: t({ message: "Help", context: "Windows" }),
+          linux: t({ message: "Help", context: "Linux" }),
+        }),
         role: "help",
         submenu: [
           {
@@ -900,7 +914,7 @@ export class AppMenu {
                   const { response } = await dialog.showMessageBox({
                     type: "warning",
                     buttons: [
-                      t`Cancel`,
+                      getNativeCancelLabel(),
                       t({
                         message: "Reset",
                         comment: "Button in the Reset App dialog that erases Meru's data",

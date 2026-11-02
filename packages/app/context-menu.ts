@@ -116,7 +116,9 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
               },
             },
             {
-              label: t({ message: "Share", context: "context menu" }),
+              label: platform.isMacOS
+                ? t({ message: "Share", context: "macOS" })
+                : t({ message: "Share", context: "context menu" }),
               role: "shareMenu",
               sharingItem: {
                 urls: [meruMessageUrl],

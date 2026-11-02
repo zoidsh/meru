@@ -1,0 +1,8 @@
+{"bundle":"AppKit","table":"AccessibilityImageDescriptions","key":"NSCopyTemplate","english":"copy","translation":"Kopieer"}
+{"bundle":"AppKit","table":"MenuCommands","key":"Copy","english":"Copy","translation":"Kopieer"}
+{"bundle":"AppKit","table":"MenuCommands","key":"Check for Updates…","english":"Check for Updates…","translation":"Zoek naar updates…"}
+{"bundle":"AppKit","table":"MenuCommands","key":"Copy Style","english":"Copy Style","translation":"Kopieer stijl"}
+{"bundle":"AppKit","table":"FunctionKeyNames","key":"Help","english":"Help","translation":"Help-toets"}
+{"bundle":"Mail","table":"MainMenu","key":"25.title","english":"Copy","translation":"Kopieer"}
+{"bundle":"Mail","table":"MainMenu","key":"631.title","english":"Quit Mail","translation":"Stop Mail"}
+{"bundle":"WebKit","table":"Localizable","key":"Copy (context menu item)","english":"COPY","translation":"Kopiëren"}

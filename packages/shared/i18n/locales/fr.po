@@ -360,7 +360,7 @@ msgstr "Ajouter des applis Workspace au lanceur, à droite de la barre de titre.
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Add your own CSS to personalize the Gmail interface further. Changes take effect after a restart."
-msgstr "Ajoutez votre propre CSS pour personnaliser davantage l’interface de Gmail. Les modifications prennent effet après un redémarrage."
+msgstr "Ajouter votre propre CSS pour personnaliser davantage l’interface de Gmail. Les modifications prennent effet après un redémarrage."
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Heading of the Gmail page's section for settings most people leave alone
@@ -590,12 +590,6 @@ msgid "C&opy Image Address"
 msgstr "Copier l’adresse de l’image"
 
 #. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
-#: packages/app/dialogs.ts
-#: packages/app/license-key.ts
-#: packages/app/menu.ts
-#: packages/app/protocol/index.ts
-#: packages/app/url.ts
-#: packages/app/workspace-app.ts
 #: packages/renderer/components/config-select-field.tsx
 #: packages/renderer/desktop-sources.tsx
 #: packages/renderer/routes/settings/accounts.tsx
@@ -603,6 +597,24 @@ msgstr "Copier l’adresse de l’image"
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 #: packages/renderer/routes/settings/license.tsx
 #: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Cancel"
+msgstr "Annuler"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "Linux"
+msgid "Cancel"
+msgstr "Annuler"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "macOS"
+msgid "Cancel"
+msgstr "Annuler"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "Windows"
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -725,6 +737,12 @@ msgctxt "context menu"
 msgid "Close"
 msgstr "Fermer"
 
+#. File menu item that closes the window
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Close"
+msgstr "Fermer"
+
 #. Button on a tab in the vertical tabs strip that closes the tab
 #: packages/renderer/components/vertical-tabs.tsx
 msgctxt "tab"
@@ -733,7 +751,7 @@ msgstr "Fermer"
 
 #. File menu item that closes the window
 #: packages/app/menu.ts
-msgctxt "window"
+msgctxt "Windows"
 msgid "Close"
 msgstr "Fermer"
 
@@ -1508,6 +1526,19 @@ msgstr "Accélération matérielle"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Help"
+msgstr "Aide"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Help"
+msgstr "Aide"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Help"
 msgstr "Aide"
 
@@ -2900,13 +2931,19 @@ msgid "Settings"
 msgstr "Paramètres"
 
 #. A menu or a menu item in Meru's menu bar
-#. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Share"
 msgstr "Partager"
 
 #: packages/app/context-menu.ts
 msgctxt "context menu"
+msgid "Share"
+msgstr "Partager"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/context-menu.ts
+#: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Share"
 msgstr "Partager"
 

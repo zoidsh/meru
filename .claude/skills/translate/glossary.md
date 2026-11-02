@@ -730,13 +730,7 @@ The page context menu's item that opens the developer tools on the element click
 
 ## Help
 
-The menu that holds Meru's help and its links. Counted in the messages that are exactly _Help_. A language without a line takes Chrome's word.
-
-- it: Guida (Chrome 4/5, Chromium 156.0.8078.49's .xtb files, the other _Aiuto_)
-- es: Ayuda (Chrome 5/5, Chromium 156.0.8078.49's .xtb files)
-- es-419: Ayuda (Chrome 5/5, Chromium 156.0.8078.49's .xtb files)
-- pt-BR: Ajuda (Chrome 5/5, Chromium 156.0.8078.49's .xtb files)
-- nl: Help (Chrome 3/5, Chromium 156.0.8078.49's .xtb files: the menu titles `&Help` and `H&elp` and one plain _Help_; the other two plain _Help_ are _Hulp_)
+The menu that holds Meru's help and its links. It is the operating system's own menu, so its `macOS`, `Windows` and `Linux` messages take each platform's word from the style sheet's Platform words, row _Help, the menu_, as the source order's first step says, not Chrome's: Italian's macOS and Linux menu is Apple's and GNOME's _Aiuto_, its Windows menu Microsoft's _Guida_.
 
 ## Auto
 

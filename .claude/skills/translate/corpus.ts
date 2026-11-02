@@ -173,6 +173,11 @@ export function unknownTags(tags: string[]) {
   return tags.filter((tag) => !TAGS.includes(tag));
 }
 
+/** A source's name for a Meru tag, or undefined when it lacks the language. */
+export function sourceCode(source: Exclude<Source, "apple">, tag: string): string | undefined {
+  return CODES[source][tag];
+}
+
 /** Whether a source has the language at all, so a missing corpus is never one to build. */
 export function hasLanguage(source: Source, tag: string) {
   return source === "apple" ? TAGS.includes(tag) : CODES[source][tag] !== undefined;
@@ -312,12 +317,15 @@ export function parseAndroidStrings(text: string) {
   return out;
 }
 
+/** One PO entry, its `msgctxt` kept, as `platform-word.ts` cites a GNOME message by it. */
+export type PoEntry = { msgctxt?: string; msgid: string; msgstr: string };
+
 /*
- * A PO file's msgid and msgstr pairs, header and empty translations included.
- * A fuzzy entry is left out: it is a guess no translator has reviewed, which
- * the app never shows, so it has no vote.
+ * A PO file's entries, header and empty translations included. A fuzzy entry
+ * is left out: it is a guess no translator has reviewed, which the app never
+ * shows, so it has no vote.
  */
-export function parsePo(text: string): Pair[] {
+export function parsePoEntries(text: string): PoEntry[] {
   const unquote = (lines: string) =>
     [...lines.matchAll(/"((?:[^"\\]|\\.)*)"/gu)]
       .map(([, part]) =>
@@ -327,24 +335,48 @@ export function parsePo(text: string): Pair[] {
       )
       .join("");
 
-  return text.split("\n\n").flatMap((block): Pair[] => {
+  const field = (block: string, name: string) =>
+    new RegExp(`^${name} ("(?:[^"\\\\]|\\\\.)*"(?:\\n"(?:[^"\\\\]|\\\\.)*")*)`, "mu").exec(
+      block,
+    )?.[1];
+
+  return text.split("\n\n").flatMap((block): PoEntry[] => {
     if (/^#,.*\bfuzzy\b/mu.test(block)) {
       return [];
     }
 
-    const id = /^msgid ("(?:[^"\\]|\\.)*"(?:\n"(?:[^"\\]|\\.)*")*)/mu.exec(block)?.[1];
+    const id = field(block, "msgid");
 
-    const str = /^msgstr ("(?:[^"\\]|\\.)*"(?:\n"(?:[^"\\]|\\.)*")*)/mu.exec(block)?.[1];
+    const str = field(block, "msgstr");
 
-    return id === undefined || str === undefined ? [] : [[unquote(id), unquote(str)]];
+    if (id === undefined || str === undefined) {
+      return [];
+    }
+
+    const context = field(block, "msgctxt");
+
+    return [
+      {
+        ...(context === undefined ? {} : { msgctxt: unquote(context) }),
+        msgid: unquote(id),
+        msgstr: unquote(str),
+      },
+    ];
   });
 }
 
-/** Every English term of a Microsoft TBX with each of its translations. */
-export function parseTbx(text: string): Pair[] {
-  const pairs: Pair[] = [];
+/** A PO file's msgid and msgstr pairs. */
+export function parsePo(text: string): Pair[] {
+  return parsePoEntries(text).map(({ msgid, msgstr }): Pair => [msgid, msgstr]);
+}
 
-  for (const [, body] of text.matchAll(/<termEntry [^>]*>(.*?)<\/termEntry>/gsu)) {
+/** One concept of a Microsoft TBX: its id, its English definition, and its terms. */
+export type TbxEntry = { id: string; definition?: string; english: string[]; translated: string[] };
+
+export function parseTbxEntries(text: string): TbxEntry[] {
+  const entries: TbxEntry[] = [];
+
+  for (const [, id, body] of text.matchAll(/<termEntry id="([^"]*)"[^>]*>(.*?)<\/termEntry>/gsu)) {
     const sets = [...(body as string).matchAll(/<langSet xml:lang="([^"]+)">(.*?)<\/langSet>/gsu)];
 
     const termsOf = (set: string) =>
@@ -352,20 +384,30 @@ export function parseTbx(text: string): Pair[] {
         unescapeXml(term as string),
       );
 
-    const english = sets
-      .filter(([, lang]) => lang === "en-US")
-      .flatMap(([, , set]) => termsOf(set as string));
+    const english = sets.filter(([, lang]) => lang === "en-US");
 
-    const translated = sets
-      .filter(([, lang]) => lang !== "en-US")
-      .flatMap(([, , set]) => termsOf(set as string));
+    const definition = english
+      .map(([, , set]) => /<descrip type="definition">(.*?)<\/descrip>/su.exec(set as string)?.[1])
+      .find((text) => text !== undefined);
 
-    for (const term of english) {
-      pairs.push(...translated.map((translation): Pair => [term, translation]));
-    }
+    entries.push({
+      id: id as string,
+      ...(definition === undefined ? {} : { definition: unescapeXml(definition) }),
+      english: english.flatMap(([, , set]) => termsOf(set as string)),
+      translated: sets
+        .filter(([, lang]) => lang !== "en-US")
+        .flatMap(([, , set]) => termsOf(set as string)),
+    });
   }
 
-  return pairs;
+  return entries;
+}
+
+/** Every English term of a Microsoft TBX with each of its translations. */
+export function parseTbx(text: string): Pair[] {
+  return parseTbxEntries(text).flatMap(({ english, translated }) =>
+    english.flatMap((term) => translated.map((translation): Pair => [term, translation])),
+  );
 }
 
 /*
@@ -761,32 +803,45 @@ export async function gnomePairs(
   return pairs;
 }
 
-function gnome(tag: string) {
-  return gnomePairs(tag, (project, code) =>
-    cached(
-      `gnome/${project}.${code}.po`,
-      `https://gitlab.gnome.org/GNOME/${project}/-/raw/main/po/${code}.po`,
-    ),
+/** GNOME's PO file for a project, downloaded once into the raw cache. */
+export const readGnomePo: GnomeReader = (project, code) =>
+  cached(
+    `gnome/${project}.${code}.po`,
+    `https://gitlab.gnome.org/GNOME/${project}/-/raw/main/po/${code}.po`,
   );
+
+function gnome(tag: string) {
+  return gnomePairs(tag, readGnomePo);
 }
 
 const TBX_ZIP =
   "https://download.microsoft.com/download/b/2/d/b2db7a7c-8d33-47f3-b2c1-ee5e6445cf45/MicrosoftTermCollection.zip";
 
-async function microsoft(tag: string) {
+/*
+ * The path of a tag's TBX, or undefined when Microsoft has no such language.
+ * Every language Meru has is unpacked at once, so a later lookup in another
+ * one finds it already there.
+ */
+export async function tbxPath(tag: string) {
   const name = CODES.microsoft[tag];
 
   if (!name) {
-    return [];
+    return undefined;
   }
 
   const dir = path.join(RAW_DIR, "microsoft");
 
   const zip = path.join(dir, "MicrosoftTermCollection.zip");
 
-  const tbx = path.join(dir, `${name}.tbx`);
+  const missing: string[] = [];
 
-  if (!(await Bun.file(tbx).exists())) {
+  for (const file of new Set(Object.values(CODES.microsoft).map((code) => `${code}.tbx`))) {
+    if (!(await Bun.file(path.join(dir, file)).exists())) {
+      missing.push(file);
+    }
+  }
+
+  if (missing.length > 0) {
     if (!(await Bun.file(zip).exists())) {
       const response = await fetch(TBX_ZIP);
 
@@ -797,10 +852,28 @@ async function microsoft(tag: string) {
       await Bun.write(zip, response);
     }
 
-    run(["unzip", "-o", "-q", zip, `${name}.tbx`, "-d", dir], dir);
+    run(["unzip", "-o", "-q", zip, ...missing, "-d", dir], dir);
   }
 
-  return parseTbx(await Bun.file(tbx).text());
+  return path.join(dir, `${name}.tbx`);
+}
+
+async function microsoft(tag: string) {
+  const tbx = await tbxPath(tag);
+
+  return tbx === undefined ? [] : parseTbx(await Bun.file(tbx).text());
+}
+
+type Plist = Record<string, Record<string, unknown>>;
+
+/** A property list as JSON, or undefined when `plutil` can't read it. */
+function readPlist(file: string): Plist | undefined {
+  const result = Bun.spawnSync(["plutil", "-convert", "json", "-o", "-", file], {
+    stdout: "pipe",
+    stderr: "ignore",
+  });
+
+  return result.exitCode === 0 ? JSON.parse(result.stdout.toString()) : undefined;
 }
 
 /** This Mac's own `.loctable`s, its apps' and settings', which only macOS has. */
@@ -819,19 +892,11 @@ async function apple(tag: string) {
 
   for (const root of roots) {
     for (const file of (await filesUnder(root)).filter((name) => name.endsWith(".loctable"))) {
-      const result = Bun.spawnSync(
-        ["plutil", "-convert", "json", "-o", "-", path.join(root, file)],
-        {
-          stdout: "pipe",
-          stderr: "ignore",
-        },
-      );
+      const tables = readPlist(path.join(root, file));
 
-      if (result.exitCode !== 0) {
+      if (tables === undefined) {
         continue;
       }
-
-      const tables: Record<string, Record<string, unknown>> = JSON.parse(result.stdout.toString());
 
       const english = tables.en ?? tables.Base ?? {};
 
@@ -848,6 +913,112 @@ async function apple(tag: string) {
   }
 
   return pairs;
+}
+
+/** One string of an Apple bundle, by the bundle, table and key a style sheet cites it with. */
+export type AppleString = {
+  bundle: string;
+  table: string;
+  key: string;
+  english: string;
+  translation: string;
+};
+
+/*
+ * The bundles a platform row takes its macOS words from, by the names the
+ * style sheets cite. AppKit and Mail keep every language of a table in one
+ * `.loctable`; WebKit's page context menu is WebCore's `Localizable.strings`,
+ * one `<language>.lproj` each.
+ */
+export const APPLE_BUNDLES = [
+  {
+    name: "AppKit",
+    dir: "/System/Library/Frameworks/AppKit.framework/Versions/C/Resources",
+    layout: "loctable",
+  },
+  { name: "Mail", dir: "/System/Applications/Mail.app/Contents/Resources", layout: "loctable" },
+  {
+    name: "WebKit",
+    dir: "/System/Library/Frameworks/WebKit.framework/Versions/A/Frameworks/WebCore.framework/Versions/A/Resources",
+    layout: "lproj",
+  },
+] as const;
+
+// An `.lproj` names Brazilian Portuguese `pt`, and Portugal's `pt_PT`.
+const APPLE_LPROJ_CODES: Record<string, string> = { "es-419": "es_419", "pt-BR": "pt" };
+
+function appleBundleStrings(bundle: (typeof APPLE_BUNDLES)[number], tag: string): AppleString[] {
+  const strings: AppleString[] = [];
+
+  const add = (table: string, english: object, translated: object) => {
+    for (const [key, value] of Object.entries(english)) {
+      const translation: unknown = (translated as Record<string, unknown>)[key];
+
+      if (typeof value === "string" && typeof translation === "string") {
+        strings.push({ bundle: bundle.name, table, key, english: value, translation });
+      }
+    }
+  };
+
+  if (bundle.layout === "loctable") {
+    const code = APPLE_CODES[tag] ?? tag;
+
+    for (const file of readdirSync(bundle.dir).filter((name) => name.endsWith(".loctable"))) {
+      const tables = readPlist(path.join(bundle.dir, file));
+
+      add(
+        file.slice(0, -".loctable".length),
+        tables?.en ?? tables?.Base ?? {},
+        tables?.[code] ?? {},
+      );
+    }
+
+    return strings;
+  }
+
+  const code = APPLE_LPROJ_CODES[tag] ?? tag;
+
+  const englishDir = path.join(bundle.dir, "en.lproj");
+
+  for (const file of readdirSync(englishDir).filter((name) => name.endsWith(".strings"))) {
+    add(
+      file.slice(0, -".strings".length),
+      readPlist(path.join(englishDir, file)) ?? {},
+      readPlist(path.join(bundle.dir, `${code}.lproj`, file)) ?? {},
+    );
+  }
+
+  return strings;
+}
+
+/*
+ * The strings of `APPLE_BUNDLES` in a tag's language, read from this Mac once
+ * and kept in the raw cache, where a lookup on another machine finds them
+ * once the cache is copied there.
+ */
+export async function appleStrings(tag: string): Promise<AppleString[]> {
+  const cache = path.join(RAW_DIR, "apple", `${tag}.jsonl`);
+
+  const file = Bun.file(cache);
+
+  if (await file.exists()) {
+    return (await file.text())
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as AppleString);
+  }
+
+  if (process.platform !== "darwin") {
+    throw new Error(
+      `only macOS has Apple's tables, and ${path.relative(ROOT, cache)} isn't in the cache`,
+    );
+  }
+
+  const strings = APPLE_BUNDLES.flatMap((bundle) => appleBundleStrings(bundle, tag));
+
+  await Bun.write(file, strings.map((string) => JSON.stringify(string)).join("\n") + "\n");
+
+  return strings;
 }
 
 type ElectronRun = {

@@ -14,6 +14,7 @@ import {
   resolveRoutableUrl,
   upgradeToHttps,
 } from "@/lib/deep-link";
+import { getNativeCancelLabel } from "@/lib/native-cancel-label";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { isWindowsDefaultMailClient } from "./windows-mail-client";
@@ -79,7 +80,7 @@ async function promptForAccount(message: string) {
     message,
     buttons: [
       ...accountConfigs.map((accountConfig) => getAccountLabel(accountConfig.label)),
-      t`Cancel`,
+      getNativeCancelLabel(),
     ],
     cancelId,
   });
