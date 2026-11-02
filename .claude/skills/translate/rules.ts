@@ -1,3 +1,4 @@
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 
@@ -107,12 +108,26 @@ const allow = z
 
 export type Allow = z.infer<typeof allow>;
 
+/*
+ * A rule that rests on a lead's recorded call, source order 4b, or on an
+ * exception to the source order, rather than on a source alone, so
+ * `check.ts --calls` can list every decision a speaker might revisit.
+ */
+const call = z
+  .object({
+    reason: z.string().regex(/^[^\n]+$/u, { message: "a call's reason is one line" }),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, { message: "a call's date is YYYY-MM-DD" }),
+  })
+  .strict()
+  .optional();
+
 const banned = z
   .object({
     id: z.string(),
     pattern,
     severity,
     reason: z.string(),
+    call,
     allow,
   })
   .strict();
@@ -154,6 +169,7 @@ const pinned = z
     countKeepAccessKeys: z.literal(true).optional(),
     severity,
     reason: z.string(),
+    call,
     allow,
     example,
   })
@@ -242,6 +258,14 @@ export type Sidecar = z.infer<typeof sidecarSchema>;
 
 export function sidecarPath(locale: string) {
   return path.join(LANGUAGES_DIR, `${locale}.json`);
+}
+
+/** Every language with a sidecar, shipped or not, in tag order. */
+export async function sidecarTags() {
+  return (await readdir(LANGUAGES_DIR))
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => file.slice(0, -".json".length))
+    .sort();
 }
 
 export function styleSheetPath(locale: string) {

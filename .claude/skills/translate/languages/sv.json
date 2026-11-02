@@ -1167,6 +1167,10 @@
       "expect": "^Läs in igen utan cache$",
       "severity": "wrong",
       "reason": "Hard Reload is Läs in igen utan cache, by a recorded call (source order 4b; Tim delegates language judgment to the lead): Chrome's one Hard Reload is the noun Hård inläsning, and sv.md's binding label forms give a menu bar item the imperative, so the item takes Chrome's Läs in igen, the reload pin's word, and says what makes it hard (Chrome: 0 of 1 messages).",
+      "call": {
+        "reason": "Läs in igen utan cache over Chrome's noun Hård inläsning, since a menu bar item takes the imperative.",
+        "date": "2026-11-02"
+      },
       "example": {
         "fault": "Hård inläsning"
       }
@@ -1518,6 +1522,10 @@
       "expect": "^Linne$",
       "severity": "wrong",
       "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bris, Klockspel, Duett, Knack and Linne, Linen translated as the user settled for German.",
+      "call": {
+        "reason": "Linen is translated, as Linne, following the user's call for German.",
+        "date": "2026-10-31"
+      },
       "example": {
         "fault": "Linen"
       }
@@ -1593,6 +1601,10 @@
       "expect": "^Bakåt$",
       "severity": "wrong",
       "reason": "Back and Go back are Bakåt, by a recorded call (source order 4b; Tim delegates language judgment to the lead): Meru's Back is a navigation command, so it takes Chrome's View menu item &Back, &Bakåt, the narrowest-sense match, as Spanish and Dutch do, rather than Chrome's majority Föregående, a wizard's Previous (Chrome: 1 of 1 messages for &Back; the plain Back and Go back are Föregående 3 of 5).",
+      "call": {
+        "reason": "Bakåt, Chrome's View menu &Back, over its majority Föregående, which is a wizard's Previous.",
+        "date": "2026-11-02"
+      },
       "example": {
         "msgid": "Go back",
         "fault": "Föregående"

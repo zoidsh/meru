@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtemp, readdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { checkCatalogs, readCatalog } from "../.claude/skills/translate/check";
 import { dumpCatalogs } from "../.claude/skills/translate/collect";
@@ -441,5 +443,33 @@ describe("scoreReview", () => {
       `A finding names app: "Nothing like this", which the set doesn't hold.`,
       `Item 1 has severity "doubtful"; use wrong, improve.`,
     ]);
+  });
+});
+
+describe("TRANSLATE_SCRATCH", () => {
+  async function prepareInScratch(...args: string[]) {
+    const scratch = await mkdtemp(path.join(tmpdir(), "translate-scratch-"));
+
+    const result = Bun.spawnSync(
+      ["bun", ".claude/skills/translate/regression.ts", "prepare", ...args, "de"],
+      {
+        cwd: path.join(import.meta.dir, ".."),
+        env: { ...process.env, TRANSLATE_SCRATCH: scratch },
+        stdout: "ignore",
+        stderr: "pipe",
+      },
+    );
+
+    expect(result.stderr.toString()).toBe("");
+
+    return readdir(scratch);
+  }
+
+  test("is where prepare writes when --dir is left out", async () => {
+    expect(await prepareInScratch()).toEqual(["regression"]);
+  });
+
+  test("keeps the pipeline reviewer's measurement apart from the MQM reviewers'", async () => {
+    expect(await prepareInScratch("--agent", "reviewer")).toEqual(["regression-reviewer"]);
   });
 });

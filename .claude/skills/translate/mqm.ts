@@ -12,6 +12,7 @@ import {
   mergeBase,
   parse,
   readAtRef,
+  scratchDir,
 } from "./collect";
 
 export { type AssessedEntry, changedEntries };
@@ -729,6 +730,8 @@ the catalog at the merge base with --base (beta by default).
 entry whose translation differs from <dir>/<tag>.dump.txt, which must still be
 the dump the runs read.
 
+--dir defaults to $TRANSLATE_SCRATCH/translate when that is set.
+
 Exit codes: 0 every locale passes, 1 a locale is blocked, 2 the input is invalid.`;
 
 async function run() {
@@ -750,7 +753,9 @@ async function run() {
     return;
   }
 
-  if (!values.dir || positionals.length === 0) {
+  const dir = values.dir ?? scratchDir();
+
+  if (!dir || positionals.length === 0) {
     console.error(USAGE);
 
     process.exit(2);
@@ -783,10 +788,10 @@ async function run() {
       })),
     );
 
-    const assessPath = path.join(values.dir, `${locale}.assess.txt`);
+    const assessPath = path.join(dir, `${locale}.assess.txt`);
 
     if (values.list) {
-      const entryFile = Bun.file(path.join(values.dir, `${locale}.txt`));
+      const entryFile = Bun.file(path.join(dir, `${locale}.txt`));
 
       const listed = (await entryFile.exists()) ? parseEntryFile(await entryFile.text()) : [];
 
@@ -815,7 +820,7 @@ async function run() {
     if (values.corrected) {
       const entries = correctedEntries(
         catalogs,
-        parseDump(await Bun.file(path.join(values.dir, `${locale}.dump.txt`)).text()),
+        parseDump(await Bun.file(path.join(dir, `${locale}.dump.txt`)).text()),
       );
 
       await Bun.write(assessPath, formatEntryList(locale, entries));
@@ -827,12 +832,12 @@ async function run() {
 
     const entries = values.partial ? parseEntryFile(await Bun.file(assessPath).text()) : undefined;
 
-    const dump = Bun.file(path.join(values.dir, `${locale}.dump.txt`));
+    const dump = Bun.file(path.join(dir, `${locale}.dump.txt`));
 
     const scored = scoreRuns({
       locale,
       catalogs,
-      runs: await readRuns(values.dir, locale),
+      runs: await readRuns(dir, locale),
       entries,
       assessed: (await dump.exists()) ? parseDump(await dump.text()) : undefined,
     });
@@ -843,7 +848,7 @@ async function run() {
       results.push(scored.result);
 
       await Bun.write(
-        path.join(values.dir, `${locale}.mqm.corrections.json`),
+        path.join(dir, `${locale}.mqm.corrections.json`),
         `${JSON.stringify(
           scored.result.findings.filter(({ applied }) => !applied),
           null,

@@ -19,7 +19,8 @@ import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
  * with that locale's slice of the glossary beside it, so an agent reads one
  * language rather than every one. `<tag> --apply <json>` writes translations
  * into a locale's catalogs, and `--dump <tag> --out <dir>` writes its whole
- * catalog for review.
+ * catalog for review. `--out` defaults to `$TRANSLATE_SCRATCH/translate` when
+ * that is set.
  */
 
 type Entry = {
@@ -146,6 +147,16 @@ export function readAtRef(ref: string, file: string) {
 
 /** The branch a translation run merges into when `--base` names none. */
 export const DEFAULT_BASE = "beta";
+
+/**
+ * A lead that launches a headless run sets `TRANSLATE_SCRATCH`, so the run's
+ * files land beside its own instead of in a directory the run makes up.
+ */
+export function scratchDir(name = "translate") {
+  const scratch = process.env.TRANSLATE_SCRATCH;
+
+  return scratch ? path.join(scratch, name) : undefined;
+}
 
 function gitOutput(...args: string[]) {
   const result = Bun.spawnSync(["git", ...args], { stderr: "ignore" });
@@ -1029,12 +1040,12 @@ async function run() {
   }
 
   if (values.dump) {
-    await dump(config, values.dump, values.out);
+    await dump(config, values.dump, values.out ?? scratchDir());
 
     return;
   }
 
-  await collect(config, values, positionals);
+  await collect(config, { ...values, out: values.out ?? scratchDir() }, positionals);
 }
 
 if (import.meta.main) {

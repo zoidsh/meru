@@ -1512,6 +1512,10 @@
       "expect": "^Len$",
       "severity": "wrong",
       "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bryza, Dzwonek, Duet, Pukanie and Len, Linen translated as the user settled for German.",
+      "call": {
+        "reason": "Linen is translated, as Len, following the user's call for German.",
+        "date": "2026-10-31"
+      },
       "example": {
         "fault": "Linen"
       }
@@ -1885,6 +1889,10 @@
       "countExpect": "^Klient$",
       "severity": "wrong",
       "reason": "A user agent is a klient użytkownika, built on Chrome's Klient (Chrome: 1 of 1 messages, User agent, Klient), by the lead's recorded call (source order 4b; Tim delegates these calls to the lead): Chrome's one message renders the bare term, Klient, which in Meru's sentences, Wysyłaj klienta…, loses its meaning and collides with Domyślny klient poczty; klient użytkownika is built on Chrome's word and names the concept. Never the bare klient, nor the apps' agent użytkownika.",
+      "call": {
+        "reason": "Klient użytkownika, built on Chrome's Klient, since the bare Klient names no user agent in Meru's sentences and collides with Domyślny klient poczty.",
+        "date": "2026-11-02"
+      },
       "example": {
         "msgid": "Use default user agent",
         "clean": "Używaj domyślnego klienta użytkownika",

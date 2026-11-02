@@ -2,7 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { checkCatalogs, pinMentions, readCatalog } from "../.claude/skills/translate/check";
+import {
+  callLines,
+  checkCatalogs,
+  pinMentions,
+  readCatalog,
+  unresolvedLines,
+} from "../.claude/skills/translate/check";
 import {
   LANGUAGES_DIR,
   loadSidecar,
@@ -268,6 +274,16 @@ describe("check.ts", () => {
       expect(exitCodeOf("--shipped", "--locale", "de")).toBe(2);
     });
 
+    test("is 0 for --calls, with or without a locale", () => {
+      expect(exitCodeOf("--calls")).toBe(0);
+      expect(exitCodeOf("--calls", "--locale", "sv")).toBe(0);
+    });
+
+    test("is 0 for --unresolved, with or without a locale", () => {
+      expect(exitCodeOf("--unresolved")).toBe(0);
+      expect(exitCodeOf("--unresolved", "--locale", "sv")).toBe(0);
+    });
+
     test("is 2 for --mentions with --shipped or without a locale", () => {
       expect(exitCodeOf("--shipped", "--mentions", "gmail-label")).toBe(2);
       expect(exitCodeOf("--mentions", "gmail-label")).toBe(2);
@@ -340,6 +356,82 @@ describe("check.ts", () => {
     ).toEqual([
       ["Color a label", "Ein Label einfärben", undefined],
       ["Remove label", "", true],
+    ]);
+  });
+
+  test("lists the rules that carry a recorded call, and only those", async () => {
+    const sidecar = await loadSidecar("sv");
+
+    const lines = callLines(sidecar);
+
+    expect(lines).toContain(
+      `pinned back (2026-11-02): ${sidecar.pinned.find(({ id }) => id === "back")?.call?.reason}`,
+    );
+    expect(lines).toHaveLength(
+      [...sidecar.banned, ...sidecar.pinned].filter((rule) => rule.call).length,
+    );
+    expect(callLines({ ...sidecar, banned: [], pinned: [] })).toEqual([]);
+  });
+
+  test("lists every word left unresolved, rules that share one together, and those since settled apart", async () => {
+    const sidecar = await loadSidecar("sv");
+
+    const [first] = sidecar.pinned;
+
+    if (!first) {
+      throw new Error("sv has no pin");
+    }
+
+    const rule = { ...first, call: undefined };
+
+    const planted: Sidecar = {
+      ...sidecar,
+      banned: [],
+      pinned: [
+        { ...rule, id: "a", reason: "Chrome has it. Agent-chosen, unresolved by the app count." },
+        { ...rule, id: "b", reason: "Agent-chosen, unresolved by the app count. Pairs with a." },
+        { ...rule, id: "c", reason: "Chrome has it (Chrome 2/2)." },
+        {
+          ...rule,
+          id: "d",
+          reason: "Agent-chosen, unresolved by the app count.",
+          call: { reason: "The lead picked it.", date: "2026-11-02" },
+        },
+        {
+          ...rule,
+          id: "e",
+          reason: "The app count leaves it unresolved, so the fallback takes Google's wording.",
+        },
+      ],
+    };
+
+    const styleSheet = [
+      "## Words",
+      "",
+      "- **Vault.** Its vault is _valv_ (agent-chosen, unresolved: the support site refused the fetch).",
+      "- **Link.** A link is a _länk_.",
+    ].join("\n");
+
+    const glossary = [
+      "## License key",
+      "",
+      "- de: Lizenzschlüssel (agent-chosen, unresolved by the app count)",
+      "- sv: licensnyckel (agent-chosen, unresolved by the app count)",
+      "",
+      "## Width",
+      "",
+      "- sv: Bred, by a recorded call (agent-chosen, unresolved by the app count)",
+      "- sv: Smal (agent-chosen)",
+    ].join("\n");
+
+    expect(unresolvedLines("sv", planted, styleSheet, glossary)).toEqual([
+      "pinned a, b: Agent-chosen, unresolved by the app count.",
+      "style sheet: **Vault.** Its vault is _valv_ (agent-chosen, unresolved: the support site refused the fetch).",
+      "glossary, License key: licensnyckel (agent-chosen, unresolved by the app count)",
+      "settled by fallback or call:",
+      "  pinned d: Agent-chosen, unresolved by the app count.",
+      "  pinned e: The app count leaves it unresolved, so the fallback takes Google's wording.",
+      "  glossary, Width: Bred, by a recorded call (agent-chosen, unresolved by the app count)",
     ]);
   });
 });
