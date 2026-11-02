@@ -49,3 +49,4 @@ This file is the draft of the next release, written one line at a time as work l
 - **Meru Pro:** When the Workspace app tab in front closes itself, Gmail comes to the front, instead of another tab's page showing while Gmail is selected
 - Settings and the unified inbox fit a narrow window, instead of cutting off their switches, buttons and close button at the right edge
 - `Settings… → Accounts` shows the `Unified inbox` badge on an account that has only that switch on, instead of showing no badges at all
+- **Meru Pro:** On Windows and Linux, the `Message` menu and the context menu on an open message leave out `Share`, which only macOS offers, instead of showing a `Share` item that did nothing
