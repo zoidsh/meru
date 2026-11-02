@@ -15,6 +15,18 @@ No pronoun for the user: never あなた. Statements end in です or ます, re
 
 A noun or a short verb phrase, as Apple writes them: 返信, 削除, 保存, キャンセル, 開封済みにする, タブを閉じる. No です/ます and no closing 。 in a label.
 
+## Label forms
+
+The form and case each kind of label takes, decided before the language's first run. Every label of a kind takes its form, whatever its English does; the examples are the catalog's own.
+
+- **Button:** A noun or a short verb phrase, with no です/ます and no closing 。: キャンセル, 保存, タブを閉じる.
+- **Menu bar item:** A noun or a short verb phrase, as a button: 再読み込み, 次のタブを選択, アカウントを管理.
+- **Context or popup menu item:** A noun or a short verb phrase, as a button: URLをコピー, 他のタブをすべて閉じる, 既定のブラウザで開く.
+- **Select option:** A noun, an adverb or a plain-form verb: 表示, 非表示, 常に, しない, 狭い.
+- **Checkbox or switch label:** A noun phrase or a plain-form verb phrase, with no です/ます: ウィンドウを表示, 完了したらフォルダを開く, 広告をブロック.
+- **Setting description:** The polite form, ending in 。: ダウンロードが完了したら、ファイルを含むフォルダを開きます。 One that says what the setting holds ends in です, and an instruction takes ～してください.
+- **OS label:** Its platform's word from [Platform words](#platform-words), as its source writes it: ペースト on macOS, 貼り付け on Windows and Linux.
+
 ## Capitalization
 
 None. Latin words inside Japanese keep their own capitals (Gmail, Meru Pro).
@@ -116,5 +128,9 @@ Sources: **AppKit** and **Mail** are the `.loctable` files in `/System/Library/F
 | Copy Link Address, `Copy Link Addr&ess`              | _リンクをコピー_ (WebKit `Localizable` `Copy Link`, Safari's item for a link)                                                                                                                     | the house word, with its access key                                                                                   | the house word, with its access key                                                                                                        |
 | Copy Image, `Cop&y Image`                            | _画像をコピー_ (WebKit `Localizable` `Copy Image`)                                                                                                                                                | the house word, with its access key                                                                                   | the house word, with its access key                                                                                                        |
 | Copy Image Address, `C&opy Image Address`            | _画像アドレスをコピー_, inferred from WebKit `Localizable` `Copy Image` and Mail `Alerts` `CopyAddress`, _アドレスをコピー_                                                                       | the house word, with its access key                                                                                   | the house word, with its access key                                                                                                        |
+| Help, the menu                                       | _ヘルプ_ (AppKit `MenuCommands` `Help`)                                                                                                                                                           | _ヘルプ_ (TBX `13846_61010_61021`)                                                                                    | _ヘルプ_ (nautilus `_Help`)                                                                                                                |
+| Close, the File menu item                            | macOS shows Close Window                                                                                                                                                                          | _閉じる_ (TBX `26514_1275570_1319617`)                                                                                | _閉じる_ (gtk4 `_Close`)                                                                                                                   |
+| Share, the share menu                                | _共有_ (AppKit `MenuCommands` `Share`)                                                                                                                                                            | macOS only                                                                                                            | macOS only                                                                                                                                 |
+| Cancel, a native dialog's button                     | _キャンセル_ (AppKit `Common` `Cancel`)                                                                                                                                                           | _キャンセル_ (TBX `20151_705248_720290`)                                                                              | _キャンセル_ (gtk4 `_Cancel`)                                                                                                              |
 
 <!-- End of the generated table. -->

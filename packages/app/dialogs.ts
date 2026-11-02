@@ -4,6 +4,7 @@ import { WEBSITE_URL } from "@meru/shared/constants";
 import { byPlatform } from "@meru/shared/platform";
 import { type SupportedWorkspaceApp, workspaceApps } from "@meru/shared/workspace-apps";
 import { app, dialog, type MessageBoxOptions } from "electron";
+import { getNativeCancelLabel } from "@/lib/native-cancel-label";
 import { relaunchApp } from "@/lib/relaunch";
 import { config } from "./config";
 import { main } from "./main";
@@ -129,7 +130,7 @@ export async function confirmAppLinksTabHandover(
         message: "Open links here",
         comment: "Button that makes this tab or window the one that opens the app's links",
       }),
-      t`Cancel`,
+      getNativeCancelLabel(),
     ],
     message: t({
       message: select(target, {
@@ -160,7 +161,7 @@ export function openProUpgradeUrl() {
 export async function showProUpgradeDialog(message: string) {
   const { response } = await dialog.showMessageBox(main.window, {
     type: "warning",
-    buttons: [t`Upgrade to Meru Pro`, t`Cancel`],
+    buttons: [t`Upgrade to Meru Pro`, getNativeCancelLabel()],
     message,
     defaultId: 0,
     cancelId: 1,

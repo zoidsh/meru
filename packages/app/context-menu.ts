@@ -120,7 +120,7 @@ export function setupWindowContextMenu(window: BrowserWindow | WebContentsView) 
             ...(platform.isMacOS
               ? [
                   {
-                    label: t({ message: "Share", context: "context menu" }),
+                    label: t({ message: "Share", context: "macOS" }),
                     role: "shareMenu" as const,
                     sharingItem: {
                       urls: [meruMessageUrl],

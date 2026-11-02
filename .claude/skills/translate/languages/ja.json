@@ -839,6 +839,84 @@
         ],
         "Windows": "the house word, with its access key",
         "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Help, the menu",
+        "macOS": [
+          {
+            "word": "ヘルプ",
+            "source": "(AppKit `MenuCommands` `Help`)",
+            "labels": ["Help"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "ヘルプ",
+            "source": "(TBX `13846_61010_61021`)",
+            "labels": ["Help"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "ヘルプ",
+            "source": "(nautilus `_Help`)",
+            "labels": ["Help"]
+          }
+        ]
+      },
+      {
+        "row": "Close, the File menu item",
+        "macOS": "macOS shows Close Window",
+        "Windows": [
+          {
+            "word": "閉じる",
+            "source": "(TBX `26514_1275570_1319617`)",
+            "labels": ["Close"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "閉じる",
+            "source": "(gtk4 `_Close`)",
+            "labels": ["Close"]
+          }
+        ]
+      },
+      {
+        "row": "Share, the share menu",
+        "macOS": [
+          {
+            "word": "共有",
+            "source": "(AppKit `MenuCommands` `Share`)",
+            "labels": ["Share"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
+      },
+      {
+        "row": "Cancel, a native dialog's button",
+        "macOS": [
+          {
+            "word": "キャンセル",
+            "source": "(AppKit `Common` `Cancel`)",
+            "labels": ["Cancel"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "キャンセル",
+            "source": "(TBX `20151_705248_720290`)",
+            "labels": ["Cancel"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "キャンセル",
+            "source": "(gtk4 `_Cancel`)",
+            "labels": ["Cancel"]
+          }
+        ]
       }
     ]
   },

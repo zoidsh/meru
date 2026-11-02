@@ -2,6 +2,7 @@ import { t } from "@lingui/core/macro";
 import { dialog, shell } from "electron";
 import { config } from "@/config";
 import { copyText } from "./lib/clipboard";
+import { getNativeCancelLabel } from "./lib/native-cancel-label";
 import { licenseKey } from "./license-key";
 import { getIsDefaultBrowser } from "./protocol/default-browser";
 
@@ -28,7 +29,7 @@ export async function openExternalUrl(
     if (!options?.skipTrustedHostCheck && !trustedHosts.includes(origin)) {
       const { response, checkboxChecked } = await dialog.showMessageBox({
         type: "info",
-        buttons: [t`Open link`, t`Copy link`, t`Cancel`],
+        buttons: [t`Open link`, t`Copy link`, getNativeCancelLabel()],
         message: t`Open this link in your default browser?`,
         checkboxLabel: t({
           message: `Trust all links on ${origin}`,
@@ -61,7 +62,7 @@ export async function openExternalUrl(
   if (await getIsDefaultBrowser()) {
     const { response } = await dialog.showMessageBox({
       type: "info",
-      buttons: [t`Copy link`, t`Cancel`],
+      buttons: [t`Copy link`, getNativeCancelLabel()],
       message: t`Meru can't open this link in a browser.`,
       detail: t`Meru is set as your default browser, so there's no other browser to open it in. Choose another default browser to open links outside Meru.`,
       defaultId: 0,

@@ -839,6 +839,84 @@
         ],
         "Windows": "the house word, with its access key",
         "Linux": "the house word, with its access key"
+      },
+      {
+        "row": "Help, the menu",
+        "macOS": [
+          {
+            "word": "Ayuda",
+            "source": "(AppKit `MenuCommands` `Help`)",
+            "labels": ["Help"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Ayuda",
+            "source": "(TBX `13846_61010_61012`)",
+            "labels": ["Help"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Ayuda",
+            "source": "(nautilus `_Help`)",
+            "labels": ["Help"]
+          }
+        ]
+      },
+      {
+        "row": "Close, the File menu item",
+        "macOS": "macOS shows Close Window",
+        "Windows": [
+          {
+            "word": "Cerrar",
+            "source": "(TBX `26514_1275570_1322402`)",
+            "labels": ["Close"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Cerrar",
+            "source": "(gtk4 `_Close`)",
+            "labels": ["Close"]
+          }
+        ]
+      },
+      {
+        "row": "Share, the share menu",
+        "macOS": [
+          {
+            "word": "Compartir",
+            "source": "(AppKit `MenuCommands` `Share`)",
+            "labels": ["Share"]
+          }
+        ],
+        "Windows": "macOS only",
+        "Linux": "macOS only"
+      },
+      {
+        "row": "Cancel, a native dialog's button",
+        "macOS": [
+          {
+            "word": "Cancelar",
+            "source": "(AppKit `Common` `Cancel`)",
+            "labels": ["Cancel"]
+          }
+        ],
+        "Windows": [
+          {
+            "word": "Cancelar",
+            "source": "(TBX `20151_705248_718451`)",
+            "labels": ["Cancel"]
+          }
+        ],
+        "Linux": [
+          {
+            "word": "Cancelar",
+            "source": "(gtk4 `_Cancel`)",
+            "labels": ["Cancel"]
+          }
+        ]
       }
     ]
   },
