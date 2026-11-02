@@ -118,14 +118,19 @@ function appendText(tokens: CompiledMessage, parts: string[]) {
  */
 export function visibleText(msgstr: string) {
   try {
-    const parts: string[] = [];
-
-    appendText(compileMessageOrThrow(msgstr), parts);
-
-    return parts.join("");
+    return compiledText(compileMessageOrThrow(msgstr));
   } catch {
     return msgstr;
   }
+}
+
+/** The words a reader sees in an already compiled message, as `visibleText` gives them. */
+export function compiledText(tokens: CompiledMessage) {
+  const parts: string[] = [];
+
+  appendText(tokens, parts);
+
+  return parts.join("");
 }
 
 const compiledPatterns = new Map<string, RegExp>();
