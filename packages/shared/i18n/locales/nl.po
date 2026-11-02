@@ -2893,10 +2893,6 @@ msgstr "Selecteer je account boven in de zijbalk en selecteer daarna Instellinge
 msgid "Selected tabs"
 msgstr "Geselecteerde tabbladen"
 
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Send a user agent that names Meru and Electron, instead of the one Chromium sends. Google can treat the app differently with it, so turn it on only to rule out the user agent as the cause of a problem."
-msgstr "Stuur een user-agent die Meru en Electron noemt, in plaats van die van Chromium. Google kan de app daardoor anders behandelen, dus zet dit alleen aan om de user-agent uit te sluiten als oorzaak van een probleem."
-
 #: packages/renderer/routes/settings/general.tsx
 msgid "Set Meru as the default mail client to handle email links and related protocols."
 msgstr "Stel Meru in als standaard-e-mailclient om e-maillinks en verwante protocollen te verwerken."
@@ -3653,10 +3649,6 @@ msgstr "Upgrade naar Meru Pro om alle functies te blijven gebruiken."
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade to Meru Pro to unlock all options"
 msgstr "Upgrade naar Meru Pro om alle opties te ontgrendelen"
-
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Use default user agent"
-msgstr "Gebruik standaard-user-agent"
 
 #. Setting that shares the screen through the operating system's own picker
 #: packages/renderer/routes/settings/advanced.tsx

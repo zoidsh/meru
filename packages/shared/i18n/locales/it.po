@@ -2893,10 +2893,6 @@ msgstr "Seleziona il tuo account in cima alla barra laterale, poi seleziona Impo
 msgid "Selected tabs"
 msgstr "Schede selezionate"
 
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Send a user agent that names Meru and Electron, instead of the one Chromium sends. Google can treat the app differently with it, so turn it on only to rule out the user agent as the cause of a problem."
-msgstr "Invia uno user-agent che indica Meru ed Electron, anziché quello inviato da Chromium. Google può trattare Meru in modo diverso con questo user-agent, quindi attivalo solo per escludere che lo user-agent sia la causa di un problema."
-
 #: packages/renderer/routes/settings/general.tsx
 msgid "Set Meru as the default mail client to handle email links and related protocols."
 msgstr "Imposta Meru come client di posta predefinito per gestire i link email e i protocolli correlati."
@@ -3653,10 +3649,6 @@ msgstr "Fai l’upgrade a Meru Pro per continuare a usare tutte le funzionalità
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade to Meru Pro to unlock all options"
 msgstr "Fai l’upgrade a Meru Pro per sbloccare tutte le opzioni"
-
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Use default user agent"
-msgstr "Usa lo user-agent predefinito"
 
 #. Setting that shares the screen through the operating system's own picker
 #: packages/renderer/routes/settings/advanced.tsx

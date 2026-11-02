@@ -51,12 +51,6 @@ export function AdvancedSettings() {
                 configKey="app.hardwareAcceleration"
                 restartRequired
               />
-              <ConfigSwitchField
-                label={t`Use default user agent`}
-                description={t`Send a user agent that names Meru and Electron, instead of the one Chromium sends. Google can treat the app differently with it, so turn it on only to rule out the user agent as the cause of a problem.`}
-                configKey="app.defaultUserAgent"
-                restartRequired
-              />
             </FieldGroup>
           </FieldSet>
         </FieldGroup>

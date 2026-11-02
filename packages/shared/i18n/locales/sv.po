@@ -2893,10 +2893,6 @@ msgstr "Välj ditt konto högst upp i sidofältet och välj sedan Settings."
 msgid "Selected tabs"
 msgstr "Valda flikar"
 
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Send a user agent that names Meru and Electron, instead of the one Chromium sends. Google can treat the app differently with it, so turn it on only to rule out the user agent as the cause of a problem."
-msgstr "Skicka en användaragent som namnger Meru och Electron i stället för den som Chromium skickar. Google kan behandla appen annorlunda med den, så aktivera det här bara för att utesluta användaragenten som orsak till ett problem."
-
 #: packages/renderer/routes/settings/general.tsx
 msgid "Set Meru as the default mail client to handle email links and related protocols."
 msgstr "Ställ in Meru som standardklient för e-post för att hantera e-postlänkar och relaterade protokoll."
@@ -3653,10 +3649,6 @@ msgstr "Uppgradera till Meru Pro för att fortsätta använda alla funktioner."
 #: packages/renderer/components/license-key-required-banner.tsx
 msgid "Upgrade to Meru Pro to unlock all options"
 msgstr "Uppgradera till Meru Pro för att låsa upp alla alternativ"
-
-#: packages/renderer/routes/settings/advanced.tsx
-msgid "Use default user agent"
-msgstr "Använd standardanvändaragent"
 
 #. Setting that shares the screen through the operating system's own picker
 #: packages/renderer/routes/settings/advanced.tsx
