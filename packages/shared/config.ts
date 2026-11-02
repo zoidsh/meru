@@ -59,7 +59,6 @@ export function createDefaultConfig({
     resetApp: false,
     theme: "system",
     licenseKey: null,
-    "app.defaultUserAgent": false,
     "dock.enabled": true,
     "dock.unreadBadge": true,
     "externalLinks.confirm": true,
