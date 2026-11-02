@@ -131,6 +131,7 @@ msgstr "{workspaceAppsInUse, select, both {今後、Workspaceアプリは専用�
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "Linux"
 msgid "&Copy"
 msgstr "コピー(&C)"
 
@@ -139,6 +140,12 @@ msgstr "コピー(&C)"
 msgctxt "macOS"
 msgid "&Copy"
 msgstr "コピー"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "&Copy"
+msgstr "コピー(&C)"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts

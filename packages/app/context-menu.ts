@@ -38,7 +38,11 @@ function getDefaultItemLabels(): Labels {
       windows: t({ message: "Cu&t", context: "Windows" }),
       linux: t({ message: "Cu&t", context: "Linux" }),
     }),
-    copy: platform.isMacOS ? t({ message: "&Copy", context: "macOS" }) : t`&Copy`,
+    copy: byPlatform(platform, {
+      macOS: t({ message: "&Copy", context: "macOS" }),
+      windows: t({ message: "&Copy", context: "Windows" }),
+      linux: t({ message: "&Copy", context: "Linux" }),
+    }),
     paste: byPlatform(platform, {
       macOS: t({ message: "&Paste", context: "macOS" }),
       windows: t({ message: "&Paste", context: "Windows" }),

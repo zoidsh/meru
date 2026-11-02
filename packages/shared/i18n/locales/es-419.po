@@ -131,6 +131,7 @@ msgstr "{workspaceAppsInUse, select, both {A partir de ahora, las apps de Worksp
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "Linux"
 msgid "&Copy"
 msgstr "&Copiar"
 
@@ -139,6 +140,12 @@ msgstr "&Copiar"
 msgctxt "macOS"
 msgid "&Copy"
 msgstr "Copiar"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "&Copy"
+msgstr "&Copiar"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -3328,7 +3335,7 @@ msgstr "Deslizar entre páginas"
 #. The second Swipe between pages names the macOS setting of that name in System Settings, so it follows Apple's wording for it
 #: packages/renderer/routes/settings/general.tsx
 msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Desliza dos dedos hacia la izquierda o la derecha en un panel táctil para ir atrás o adelante. La opción Deslizar entre páginas también debe estar activada en Configuración del Sistema."
+msgstr "Desliza dos dedos hacia la izquierda o la derecha en un panel táctil para ir atrás o adelante. La opción “Cambiar de página” también debe estar activada en Configuración del Sistema."
 
 #. Button that confirms moving to the beta release channel
 #: packages/renderer/routes/settings/updates.tsx

@@ -160,14 +160,14 @@
           {
             "word": "Kopiuj",
             "source": "(TBX `11991_39848_39859` _kopiować_, as an imperative)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ],
         "Linux": [
           {
             "word": "Skopiuj",
             "source": "(gtk4 `_Copy`)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ]
       },
@@ -784,7 +784,7 @@
         "row": "Search with Google, `&Search with Google`",
         "macOS": [
           {
-            "word": "Szukaj w Google",
+            "word": "Szukaj w Google",
             "source": "(WebKit `Localizable` `Search with %@`)",
             "labels": ["&Search with Google"]
           }
@@ -801,8 +801,8 @@
             "labels": ["&Copy"]
           }
         ],
-        "Windows": "the house word, with its access key",
-        "Linux": "the house word, with its access key"
+        "Windows": "the Edit menu item's word, with its access key",
+        "Linux": "the Edit menu item's word, with its access key"
       },
       {
         "row": "Copy Link Address, `Copy Link Addr&ess`",
@@ -946,7 +946,15 @@
       "id": "lacze",
       "pattern": "(?<!\\p{L})[Łł]ącz(?:e|em|u|a)(?!\\p{L})",
       "severity": "wrong",
-      "reason": "A link is a link, as Chrome writes it, never Apple's łącze (Chrome writes the banned form in none of its messages)."
+      "reason": "A link is a link, as Chrome writes it, never Apple's łącze (Chrome writes the banned form in none of its messages). The macOS context menu's Copy Link Address keeps WebKit's Kopiuj łącze, its platform word.",
+      "allow": {
+        "entries": [
+          {
+            "msgctxt": "macOS",
+            "msgid": "Copy Link Addr&ess"
+          }
+        ]
+      }
     },
     {
       "id": "restart-calque",
@@ -1049,7 +1057,7 @@
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Rr]ozszerze",
       "severity": "wrong",
-      "reason": "An extension is a rozszerzenie (Chrome: 304 of 308 messages).",
+      "reason": "An extension is a rozszerzenie (Chrome: 303 of 304 messages; the one left is the URL chrome://extensions).",
       "example": {
         "msgid": "Extensions",
         "fault": "Dodatki"
@@ -1181,6 +1189,7 @@
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
       "expect": "[Nn]azw\\p{L}* urządzenia",
+      "countEnglish": "\\bdevice name\\b",
       "severity": "wrong",
       "reason": "A device label is a nazwa urządzenia, Chrome's words for a device name (Chrome: 10 of 11 messages).",
       "example": {
@@ -1214,8 +1223,9 @@
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
       "expect": "[Zz]aufan",
+      "countEnglish": "\\btrusted\\b",
       "severity": "wrong",
-      "reason": "Trusted hosts are zaufane hosty, untrusted ones niezaufane hosty (Chrome: 19 of 22 messages).",
+      "reason": "Trusted hosts are zaufane hosty, untrusted ones niezaufane hosty, as Chrome writes trusted (Chrome: 19 of 22 messages).",
       "example": {
         "msgid": "Trusted hosts",
         "fault": "Bezpieczne hosty"
@@ -1237,7 +1247,15 @@
       "msgidPattern": "\\blinks?\\b",
       "expect": "[Ll]ink",
       "severity": "wrong",
-      "reason": "A link is a link, as Chrome writes it (Chrome: 164 of 170 messages).",
+      "reason": "A link is a link, as Chrome writes it (Chrome: 158 of 164 messages; the six left are the verb, to link data or an account, połączyć). The macOS context menu's Copy Link Address keeps WebKit's Kopiuj łącze, its platform word.",
+      "allow": {
+        "entries": [
+          {
+            "msgctxt": "macOS",
+            "msgid": "Copy Link Addr&ess"
+          }
+        ]
+      },
       "example": {
         "msgid": "Copy Message Link",
         "clean": "Kopiuj link do wiadomości",
@@ -1260,7 +1278,7 @@
       "msgidPattern": "\\bfolders?\\b",
       "expect": "[Ff]older",
       "severity": "wrong",
-      "reason": "A folder is a folder, as Chrome writes it (Chrome: 106 of 106 messages).",
+      "reason": "A folder is a folder, as Chrome writes it (Chrome: 104 of 104 messages).",
       "example": {
         "msgid": "Open folder when done",
         "fault": "Otwórz katalog po zakończeniu"
@@ -1271,8 +1289,9 @@
       "msgctxt": null,
       "msgid": "Save",
       "expect": "^Zapisz$",
+      "countEnglish": "^Save$",
       "severity": "wrong",
-      "reason": "Save is Zapisz, as Chrome writes it, not Apple's Zachowaj (Chrome: 287 of 298 messages).",
+      "reason": "Save is Zapisz, as Chrome writes its Save button, not Apple's Zachowaj (Chrome: 2 of 2 messages).",
       "example": {
         "fault": "Zachowaj"
       }
@@ -1428,10 +1447,18 @@
       "msgidPattern": "\\bnotify\\b",
       "expect": "[Pp]owiadam",
       "severity": "wrong",
-      "reason": "Glossary, agent-chosen (powiadamiać: 7 of 7).",
+      "reason": "Glossary, agent-chosen (powiadamiać: 7 of 7). The Notify for setting's label is a noun phrase instead (the notify-for pin), since its options follow it.",
+      "allow": {
+        "entries": [
+          {
+            "msgctxt": null,
+            "msgid": "Notify for"
+          }
+        ]
+      },
       "example": {
-        "msgid": "Notify for",
-        "fault": "Informuj dla"
+        "msgid": "Notify when updates are available",
+        "fault": "Informuj o dostępnych aktualizacjach"
       }
     },
     {
@@ -1497,7 +1524,7 @@
       "reason": "System Settings is Apple's Ustawienia systemowe, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "Włącz to także w Ustawieniach systemowych.",
+        "clean": "Przesuń dwoma palcami w lewo lub w prawo na gładziku, aby przejść wstecz lub dalej. W Ustawieniach systemowych musi być też włączona opcja Zmiana strony przesunięciem.",
         "fault": "Włącz to także w Preferencjach systemowych."
       }
     },
@@ -1517,11 +1544,12 @@
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
       "expect": "[Nn]ieaktywn",
+      "countEnglish": "\\binactive tabs?\\b",
       "severity": "wrong",
       "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's nieaktywna, as in Karta nieaktywna, never the systems' Sleep word (Chrome: 8 of 8 messages).",
       "example": {
         "msgid": "Hibernate idle tabs",
-        "clean": "Ustaw nieużywane karty jako nieaktywne",
+        "clean": "Ustawiaj nieużywane karty jako nieaktywne",
         "fault": "Hibernuj nieużywane karty"
       }
     },
@@ -1530,7 +1558,7 @@
       "msgidPattern": "\\blauncher\\b",
       "expect": "[Mm]enu z[ \\u00a0]aplikacjami",
       "severity": "wrong",
-      "reason": "The launcher is the menu z aplikacjami, as Chrome names ChromeOS's (Chrome: 17 of 20 messages).",
+      "reason": "The launcher is the menu z aplikacjami, as Chrome names ChromeOS's (Chrome: 17 of 19 messages; the two left are program uruchamiający).",
       "example": {
         "msgid": "In launcher",
         "clean": "W menu z aplikacjami",
@@ -1569,8 +1597,313 @@
       "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
       "example": {
         "msgid": "Open Meru Portal",
-        "clean": "Meru Portal",
+        "clean": "Otwórz Meru Portal",
         "fault": "Otwórz portal Meru"
+      }
+    },
+    {
+      "id": "auto-width",
+      "msgid": "Auto",
+      "msgctxt": "width",
+      "expect": "^Automatycznie$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Width setting's Auto is Automatycznie, as Chrome writes Auto (Chrome: 2 of 2 messages): an adverb, so it agrees with no noun and reads the same beside szerokość as in every other setting, never an adjective agreeing with it or the English Auto.",
+      "example": {
+        "fault": "Automatyczna"
+      }
+    },
+    {
+      "id": "auto-placement",
+      "msgid": "Auto",
+      "msgctxt": "placement",
+      "expect": "^Automatycznie$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Placement setting's Auto is Automatycznie, as Chrome writes Auto (Chrome: 2 of 2 messages): an adverb, so it agrees with no noun and reads the same beside umieszczenie as in every other setting, never an adjective agreeing with it or the English Auto.",
+      "example": {
+        "fault": "Automatyczne"
+      }
+    },
+    {
+      "id": "auto-launcher-display",
+      "msgid": "Auto",
+      "msgctxt": "launcher display",
+      "expect": "^Automatycznie$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Launcher display setting's Auto is Automatycznie, as Chrome writes Auto (Chrome: 2 of 2 messages): an adverb, so it agrees with no noun and reads the same beside wyświetlanie as in every other setting, never an adjective agreeing with it or the English Auto.",
+      "example": {
+        "fault": "Auto"
+      }
+    },
+    {
+      "id": "auto-text-color",
+      "msgid": "Auto",
+      "msgctxt": "text color",
+      "expect": "^Automatycznie$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Text color setting's Auto is Automatycznie, as Chrome writes Auto (Chrome: 2 of 2 messages): an adverb, so it agrees with no noun and reads the same beside kolor as in every other setting, never an adjective agreeing with it or the English Auto.",
+      "example": {
+        "fault": "Automatyczny"
+      }
+    },
+    {
+      "id": "none-account-color",
+      "msgid": "None",
+      "msgctxt": "account color",
+      "expect": "^Brak$",
+      "countEnglish": "^None$",
+      "severity": "wrong",
+      "reason": "The account's color when none is picked is Brak, as Chrome writes None (Chrome: 3 of 3 messages): a noun, so it agrees with no noun, never Żaden agreeing with kolor.",
+      "example": {
+        "fault": "Żaden"
+      }
+    },
+    {
+      "id": "none-excluded-apps",
+      "msgid": "None",
+      "msgctxt": "excluded apps",
+      "expect": "^Brak$",
+      "countEnglish": "^None$",
+      "severity": "wrong",
+      "reason": "The Excluded apps field with no app excluded is Brak, as Chrome writes None (Chrome: 3 of 3 messages): a noun, so it agrees with no noun, never Żadne agreeing with aplikacje.",
+      "example": {
+        "fault": "Żadne"
+      }
+    },
+    {
+      "id": "tray-icon-light",
+      "msgid": "Light",
+      "msgctxt": "tray icon color",
+      "expect": "^Jasny$",
+      "countEnglish": "^Light$",
+      "severity": "wrong",
+      "reason": "The system tray icon's Light is Jasny, as Chrome writes Light (Chrome: 3 of 4 messages; the one left, Mała, is a font weight), agreeing with kolor, as the Theme setting's Jasny agrees with motyw; never Jasna, agreeing with the icon, ikona.",
+      "example": {
+        "fault": "Jasna"
+      }
+    },
+    {
+      "id": "tray-icon-dark",
+      "msgid": "Dark",
+      "msgctxt": "tray icon color",
+      "expect": "^Ciemny$",
+      "countEnglish": "^Dark$",
+      "severity": "wrong",
+      "reason": "The system tray icon's Dark is Ciemny, as Chrome writes Dark (Chrome: 3 of 4 messages; the one left is Ciemna), agreeing with kolor, as the Theme setting's Ciemny agrees with motyw; never Ciemna, agreeing with the icon, ikona.",
+      "example": {
+        "fault": "Ciemna"
+      }
+    },
+    {
+      "id": "download-action-show-in-folder",
+      "msgid": "Show in folder",
+      "msgctxt": "download action",
+      "expect": "^Pokaż w[ \\u00a0]folderze$",
+      "countEnglish": "^Show in folder$",
+      "countExpect": "^Pokaż w[ \\u00a0]folderze$",
+      "severity": "wrong",
+      "reason": "The download notification's Show in folder is Pokaż w folderze, as Chrome writes it (Chrome: 4 of 4 messages); a Polish label is sentence style, so it reads the same as the download history's button of the same English, never Otwórz folder, which opens the folder rather than showing the file in it.",
+      "example": {
+        "fault": "Otwórz folder"
+      }
+    },
+    {
+      "id": "width",
+      "msgid": "Width",
+      "expect": "^Szerokość$",
+      "countEnglish": "\\bwidth\\b",
+      "countExpect": "[Ss]zerokoś",
+      "severity": "wrong",
+      "reason": "The vertical tabs sidebar's Width setting is Szerokość, as Chrome writes width (Chrome: 5 of 5 messages).",
+      "example": {
+        "fault": "Rozmiar"
+      }
+    },
+    {
+      "id": "wide",
+      "msgid": "Wide",
+      "expect": "^Szeroka$",
+      "severity": "wrong",
+      "reason": "The Width setting's Wide option is Szeroka, agreeing with szerokość: Chrome's one Wide, Szeroko, is Reading mode's letter spacing (IDS_READING_MODE_SPACING_COMBOBOX_WIDE, beside Bardzo szeroko), not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: szeroki: 4 of 7 (Thunderbird, Firefox, LibreOffice, Apple), with Width's szerokość out of the vote). It shares a root with the setting's label but is not its word, so the select never shows its label as an option.",
+      "example": {
+        "fault": "Szeroko"
+      }
+    },
+    {
+      "id": "narrow",
+      "msgid": "Narrow",
+      "expect": "^Wąska$",
+      "severity": "wrong",
+      "reason": "The Width setting's Narrow option is Wąska, agreeing with szerokość and pairing with Szeroka (the wide pin); Chrome has no Narrow option of its own.",
+      "example": {
+        "fault": "Wąski"
+      }
+    },
+    {
+      "id": "wide-in-sentences",
+      "msgidPattern": "\\bnarrow and wide\\b",
+      "expect": "[Ww]ąsk(?:ą|a|iej) (?:a|i)[ \\u00a0]szerok(?:ą|a|iej)",
+      "severity": "wrong",
+      "reason": "A sentence that names the Width setting's options names them as the select shows them, agreeing with szerokość: między wąską a szeroką (the wide and narrow pins).",
+      "example": {
+        "msgid": "Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above.",
+        "clean": "Pokaż u dołu paska bocznego przycisk, który przełącza jego szerokość między wąską a szeroką. Gdy ta opcja jest wyłączona, użyj polecenia Resetuj szerokość w menu kontekstowym paska bocznego lub ustawienia Szerokość powyżej.",
+        "fault": "Pokaż u dołu paska bocznego przycisk, który przełącza go między wąskim a szerokim. Gdy ta opcja jest wyłączona, użyj polecenia Resetuj szerokość w menu kontekstowym paska bocznego lub ustawienia Szerokość powyżej."
+      }
+    },
+    {
+      "id": "app-links-badge",
+      "msgidPattern": "\\bapp links badge\\b",
+      "expect": "[Pp]lakietk",
+      "severity": "wrong",
+      "reason": "The app links badge marks a tab rather than counting anything, so it takes the apps' word for a badge that marks, plakietka, which names a badge of either kind and counts nothing, as the unread badge's plakietka z liczbą nieprzeczytanych spells its count out; Chrome has no word for a badge (Chrome 0/0), never the counter licznik (agent-chosen: plakietka: 4 of 7 (Thunderbird, Android, LibreOffice, Apple)).",
+      "example": {
+        "msgid": "Show app links badge",
+        "clean": "Pokaż plakietkę karty linków aplikacji",
+        "fault": "Pokaż licznik karty linków aplikacji"
+      }
+    },
+    {
+      "id": "auto-in-sentences",
+      "msgidPattern": "\\bAuto (?:expands|switches|moves)\\b",
+      "expect": "Automatycznie",
+      "severity": "wrong",
+      "reason": "A sentence that names a setting's Auto option names it as the select shows it, Automatycznie (the auto pins), as its translator comment asks.",
+      "example": {
+        "msgid": "Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown. Sidebar keeps them there and holds the sidebar open even with a single tab, and Titlebar keeps them in the titlebar at all times.",
+        "clean": "Gdzie znajdują się menu z aplikacjami i przycisk zakładek. Opcja Automatycznie przenosi je na dół paska bocznego z kartami pionowymi, gdy jest on widoczny. Opcja Pasek boczny trzyma je tam i nie zamyka paska bocznego nawet przy jednej karcie, a opcja Pasek tytułu zawsze trzyma je na pasku tytułu.",
+        "fault": "Gdzie znajdują się menu z aplikacjami i przycisk zakładek. Tryb automatyczny przenosi je na dół paska bocznego z kartami pionowymi, gdy jest on widoczny. Opcja Pasek boczny trzyma je tam i nie zamyka paska bocznego nawet przy jednej karcie, a opcja Pasek tytułu zawsze trzyma je na pasku tytułu."
+      }
+    },
+    {
+      "id": "show-in-folder",
+      "msgid": "Show in folder",
+      "msgctxt": null,
+      "expect": "^Pokaż w[ \\u00a0]folderze$",
+      "countEnglish": "^Show in folder$",
+      "countExpect": "^Pokaż w[ \\u00a0]folderze$",
+      "severity": "wrong",
+      "reason": "The download history's Show in folder button is Pokaż w folderze, as Chrome writes it (Chrome: 4 of 4 messages), the same words as the download notification's option (the download-action-show-in-folder pin).",
+      "example": {
+        "fault": "Otwórz folder"
+      }
+    },
+    {
+      "id": "width-in-sentences",
+      "msgidPattern": "\\b[Ww]idth\\b",
+      "expect": "[Ss]zerokoś",
+      "countEnglish": "\\bwidth\\b",
+      "countExpect": "[Ss]zerokoś",
+      "severity": "wrong",
+      "reason": "Every message that names the sidebar's width, the Reset Width item, the width button and the Width setting among them, names it szerokość, as Chrome writes width (Chrome: 5 of 5 messages).",
+      "example": {
+        "msgid": "Show width button",
+        "clean": "Pokaż przycisk szerokości",
+        "fault": "Pokaż przycisk rozmiaru"
+      }
+    },
+    {
+      "id": "hibernate-after",
+      "msgctxt": null,
+      "msgid": "Hibernate after",
+      "expect": "^Czas do ustawienia karty jako nieaktywnej$",
+      "severity": "wrong",
+      "reason": "The Hibernate after setting is a noun phrase, Czas do ustawienia karty jako nieaktywnej, so its nominative options, 30 minut and 1 godzina, read as its value; po would need them in the locative, po 30 minutach, which an option can't take. Chrome has no such duration setting to follow, and writes its tab settings as noun phrases, as Wygląd nieaktywnych kart.",
+      "example": {
+        "fault": "Ustawiaj jako nieaktywne po"
+      }
+    },
+    {
+      "id": "notify-for",
+      "msgctxt": null,
+      "msgid": "Notify for",
+      "expect": "^Zakres powiadomień$",
+      "severity": "wrong",
+      "reason": "The Notify for setting is a noun phrase, Zakres powiadomień, as Chrome names its notification settings with the noun's genitive, Ustawienia powiadomień, so its nominative options, Wszystkie nowe e-maile and Tylko ważne, read as its value; Powiadamiaj o would need them in the locative. Chrome has no setting of its own that picks which notifications show.",
+      "example": {
+        "fault": "Powiadamiaj o"
+      }
+    },
+    {
+      "id": "release-stable",
+      "msgctxt": null,
+      "msgid": "Stable",
+      "expect": "^Stabilny$",
+      "countEnglish": "^Stable$",
+      "severity": "wrong",
+      "reason": "The Release channel setting's Stable is Stabilny, as Chrome writes its capitalized Stable (Chrome: 1 of 2 messages; the other, a lower-case stable, is stabilna), agreeing with kanał aktualizacji, as a sentence's kanał stabilny does; Beta stays Beta, a noun that agrees with nothing.",
+      "example": {
+        "fault": "Stabilna"
+      }
+    },
+    {
+      "id": "emoji",
+      "msgidPattern": "\\bemoji\\b",
+      "expect": "[Ee]motikon",
+      "severity": "wrong",
+      "reason": "An emoji is an emotikon, as Chrome writes it (Chrome: 4 of 4 messages).",
+      "example": {
+        "msgid": "Pick emoji",
+        "clean": "Wybierz emotikon",
+        "fault": "Wybierz emoji"
+      }
+    },
+    {
+      "id": "logs",
+      "msgidPattern": "\\blogs\\b|^View Logs$|^Logs$",
+      "expect": "(?<!\\p{L})[Ll]og",
+      "countEnglish": "\\blogs?\\b",
+      "severity": "wrong",
+      "reason": "Logs are logi, as Chrome writes them more often than dziennik (Chrome: 26 of 54 messages, dziennik in 22).",
+      "example": {
+        "msgid": "Export logs",
+        "clean": "Eksportuj logi",
+        "fault": "Eksportuj dzienniki"
+      }
+    },
+    {
+      "id": "hard-reload",
+      "msgctxt": null,
+      "msgid": "Hard Reload",
+      "expect": "^Wymuś ponowne załadowanie$",
+      "countEnglish": "^Hard Reload$",
+      "severity": "wrong",
+      "reason": "Chrome's own Hard Reload (Chrome 1/1).",
+      "example": {
+        "clean": "Wymuś ponowne załadowanie",
+        "fault": "Wymuś odświeżenie"
+      }
+    },
+    {
+      "id": "user-agent",
+      "msgidPattern": "\\buser agent\\b",
+      "expect": "[Kk]lient(?:a|em)? użytkownika",
+      "countEnglish": "\\buser[- ]agent\\b",
+      "countExpect": "^Klient$",
+      "severity": "wrong",
+      "reason": "A user agent is a klient użytkownika, built on Chrome's Klient (Chrome: 1 of 1 messages, User agent, Klient), by the lead's recorded call (source order 4b; Tim delegates these calls to the lead): Chrome's one message renders the bare term, Klient, which in Meru's sentences, Wysyłaj klienta…, loses its meaning and collides with Domyślny klient poczty; klient użytkownika is built on Chrome's word and names the concept. Never the bare klient, nor the apps' agent użytkownika.",
+      "example": {
+        "msgid": "Use default user agent",
+        "clean": "Używaj domyślnego klienta użytkownika",
+        "fault": "Używaj domyślnego klienta"
+      }
+    },
+    {
+      "id": "inspect-element",
+      "msgctxt": null,
+      "msgid": "Inspect Element",
+      "expect": "^Zbadaj element$",
+      "countEnglish": "^I&nspect$",
+      "countExpect": "^&Zbadaj$",
+      "countKeepAccessKeys": true,
+      "severity": "wrong",
+      "reason": "Inspect Element is a context-menu item, so it takes Chrome's context-menu I&nspect, Zbadaj (Chrome 1/1), never its plain Inspect, Sprawdź.",
+      "example": {
+        "clean": "Zbadaj element",
+        "fault": "Sprawdź element"
       }
     }
   ],

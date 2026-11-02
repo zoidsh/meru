@@ -160,14 +160,14 @@
           {
             "word": "Copiar",
             "source": "(TBX `11991_39848_39849`)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ],
         "Linux": [
           {
             "word": "Copiar",
             "source": "(gtk4 `_Copy`)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ]
       },
@@ -801,8 +801,8 @@
             "labels": ["&Copy"]
           }
         ],
-        "Windows": "the house word, with its access key",
-        "Linux": "the house word, with its access key"
+        "Windows": "the Edit menu item's word, with its access key",
+        "Linux": "the Edit menu item's word, with its access key"
       },
       {
         "row": "Copy Link Address, `Copy Link Addr&ess`",
@@ -1234,7 +1234,7 @@
       "reason": "System Settings is Apple's Ajustes del Sistema, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "Desliza dos dedos hacia la izquierda o la derecha en un trackpad para retroceder o avanzar. “Deslizar entre páginas” también debe estar activado en Ajustes del Sistema.",
+        "clean": "Desliza dos dedos hacia la izquierda o la derecha en un trackpad para retroceder o avanzar. “Pasar de página” también debe estar activado en Ajustes del Sistema.",
         "fault": "Activa también la opción en Ajustes."
       }
     },

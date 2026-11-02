@@ -6,6 +6,7 @@ import { SHIPPED_CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
 import { findCatalogProblems, parseCatalog } from "../../../scripts/i18n-check";
 import { englishOf } from "./count";
 import {
+  type Allow,
   loadSidecar,
   platformEntries,
   type Severity,
@@ -161,6 +162,17 @@ function matchesSelector(
   );
 }
 
+function isAllowed(entry: Entry, allow: Allow) {
+  return (
+    (entry.msgctxt !== null && allow?.contexts?.includes(entry.msgctxt)) ||
+    allow?.msgids?.includes(entry.msgid) ||
+    allow?.entries?.some(
+      (allowed) => allowed.msgctxt === entry.msgctxt && allowed.msgid === entry.msgid,
+    ) ||
+    (allow?.msgidPattern !== undefined && regex(allow.msgidPattern, "i").test(entry.msgidText))
+  );
+}
+
 function sourceAccessKey(msgid: string) {
   return /&(\S)/u.exec(msgid)?.[1];
 }
@@ -288,16 +300,7 @@ export function checkCatalogs(
     const text = translationText(entry, visibleText(entry.msgstr));
 
     for (const banned of sidecar.banned) {
-      const allow = banned.allow;
-
-      if (
-        (entry.msgctxt !== null && allow?.contexts?.includes(entry.msgctxt)) ||
-        allow?.msgids?.includes(entry.msgid) ||
-        allow?.entries?.some(
-          (allowed) => allowed.msgctxt === entry.msgctxt && allowed.msgid === entry.msgid,
-        ) ||
-        (allow?.msgidPattern !== undefined && regex(allow.msgidPattern, "i").test(entry.msgidText))
-      ) {
+      if (isAllowed(entry, banned.allow)) {
         continue;
       }
 
@@ -314,7 +317,11 @@ export function checkCatalogs(
     }
 
     for (const pinned of sidecar.pinned) {
-      if (matchesSelector(entry, pinned) && !regex(pinned.expect).test(text)) {
+      if (
+        matchesSelector(entry, pinned) &&
+        !isAllowed(entry, pinned.allow) &&
+        !regex(pinned.expect).test(text)
+      ) {
         report(entry, "pinned", {
           id: pinned.id,
           severity: pinned.severity,

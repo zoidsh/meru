@@ -1,0 +1,419 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: pl\n"
+
+#. Option of the Width setting for the vertical tabs sidebar; agrees with the word for width where the language genders it
+#: packages/shared/tabs.ts
+msgctxt "width"
+msgid "Auto"
+msgstr "Automatycznie"
+
+#. The Excluded apps field when no Workspace app is excluded; agrees with the word for apps where the language genders it
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgctxt "excluded apps"
+msgid "None"
+msgstr "Brak"
+
+#. Setting for how wide the vertical tabs sidebar is
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Width"
+msgstr "Szerokość"
+
+#. Option of the Width setting for the vertical tabs sidebar
+#: packages/shared/tabs.ts
+msgid "Wide"
+msgstr "Szeroka"
+
+#. Option of the Width setting for the vertical tabs sidebar
+#: packages/shared/tabs.ts
+msgid "Narrow"
+msgstr "Wąska"
+
+#. Option of the system tray icon's Color setting; agrees with the word for color where the language genders it
+#: packages/renderer/routes/settings/appearance.tsx
+msgctxt "tray icon color"
+msgid "Light"
+msgstr "Jasny"
+
+#. Option of what a finished download's notification does
+#: packages/renderer/routes/settings/notifications.tsx
+msgctxt "download action"
+msgid "Show in folder"
+msgstr "Pokaż w folderze"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "About {appName}"
+msgstr "{appName}…"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Check for Updates…"
+msgstr "Sprawdź uaktualnienia…"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Sa&ve Image As…"
+msgstr "Zachowaj obraz jako…"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Linux"
+msgid "Paste and &Match Style"
+msgstr "Wk&lej i dopasuj styl"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Quit {appName}"
+msgstr "Zakończ aplikację {appName}"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Hide {appName}"
+msgstr "Ukryj {appName}"
+
+#. Context menu item that copies the address of the clicked link; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "Copy Link Addr&ess"
+msgstr "Kopiuj adr&es linku"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgid "&Learn Spelling"
+msgstr "&Dodaj do słownika"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Hibernate idle tabs"
+msgstr "Ustawiaj nieużywane karty jako nieaktywne"
+
+#. Heading of the Workspace apps already in the launcher
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "In launcher"
+msgstr "W menu z aplikacjami"
+
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show unread badge"
+msgstr "Pokaż plakietkę z liczbą nieprzeczytanych"
+
+#: packages/renderer/routes/settings/workspace-apps.tsx
+msgid "Show app links badge"
+msgstr "Pokaż plakietkę karty linków aplikacji"
+
+#: packages/renderer/routes/settings/unified-inbox.tsx
+msgid "Enable unified inbox"
+msgstr "Włącz łączoną skrzynkę odbiorczą"
+
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Phishing protection"
+msgstr "Ochrona przed wyłudzaniem informacji"
+
+#: packages/renderer/routes/settings/phishing-protection.tsx
+msgid "Trusted hosts"
+msgstr "Zaufane hosty"
+
+#. Field for the name this computer goes by among the devices using the license key
+#: packages/renderer/routes/settings/license.tsx
+msgid "Device label"
+msgstr "Nazwa urządzenia"
+
+#. Field for the name Meru shows for the account
+#. Field for the name Meru shows for the saved search
+#: packages/renderer/routes/settings/accounts.tsx
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Label"
+msgstr "Nazwa"
+
+# catalog: preload-gmail
+#. Accessible name of the region Meru's own toasts appear in
+#: packages/preload-gmail/ipc.ts
+msgid "Notifications"
+msgstr "Komunikaty"
+
+# catalog: preload-gmail
+#. Button in the message-sent toast, which recalls the message
+#: packages/preload-gmail/ipc.ts
+msgctxt "button"
+msgid "Undo"
+msgstr "Cofnij"
+
+#: packages/renderer/routes/settings/updates.tsx
+msgid "Release channel"
+msgstr "Kanał aktualizacji"
+
+#. Titlebar badge counting the whole days left in the Meru Pro trial
+#: packages/renderer/components/app-titlebar.tsx
+msgid "{trialDaysLeft, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
+msgstr "{trialDaysLeft, plural, one {Okres próbny Pro kończy się za # dzień} few {Okres próbny Pro kończy się za # dni} many {Okres próbny Pro kończy się za # dni} other {Okres próbny Pro kończy się za # dnia}}"
+
+#. Button on the toast after a setting changes, which restarts Meru now
+#. Dialog button that restarts Meru
+#. Dialog button that restarts Meru
+#. Dialog button that restarts Meru
+#. Dialog button that restarts Meru
+#. Dialog button that restarts Meru
+#: packages/app/dialogs.ts
+#: packages/app/license-key.ts
+#: packages/app/trial.ts
+#: packages/renderer/lib/toast.ts
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Restart"
+msgstr "Uruchom ponownie"
+
+#. Dark theme is Gmail's own theme of that name
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Extend dark theme"
+msgstr "Rozszerz ciemny motyw"
+
+#. The out-of-office banner is the one Gmail shows while an out-of-office reply is on, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide out-of-office banner"
+msgstr "Ukryj baner wiadomości o nieobecności"
+
+#: packages/renderer/routes/settings/general.tsx
+msgid "Default mail client"
+msgstr "Domyślny klient poczty"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Close Tab"
+msgstr "Zamknij kartę"
+
+#: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Delete {label}?"
+msgstr "Usunąć zapisane wyszukiwanie {label}?"
+
+#: packages/app/gmail/index.ts
+msgid "Copied verification code {verificationCode}"
+msgstr "Skopiowano kod weryfikacyjny {verificationCode}"
+
+#: packages/renderer/routes/settings/license.tsx
+msgid "Your Meru Pro trial has ended. Meru Pro features stay on until you quit Meru."
+msgstr "Twój okres próbny Meru Pro się zakończył. Funkcje Meru Pro pozostaną włączone do zakończenia działania Meru."
+
+# expect: accuracy/mistranslation major
+# planted: near miss, current for default
+# hard
+#: packages/renderer/routes/settings/general.tsx
+msgid "Meru is set as the default mail client."
+msgstr "Meru jest ustawiony jako bieżący klient poczty e-mail."
+
+# expect: fluency/grammar|style minor
+# planted: the perfective imperative of a one-off button for a setting that checks again and again, which takes the imperfective Sprawdzaj
+# hard
+#: packages/renderer/routes/settings/updates.tsx
+msgid "Check for updates automatically"
+msgstr "Sprawdź aktualizacje automatycznie"
+
+# expect: fluency/grammar minor
+# planted: the few and many branches swapped, # dodatkowych języków for 2 to 4 and # dodatkowe języki for 5 and more
+# hard
+#. Spellchecker languages chosen beyond the system language, counted once there are more than two to name
+#: packages/renderer/routes/settings/languages.tsx
+msgid "{selectedCount, plural, one {# additional language} other {# additional languages}}"
+msgstr "{selectedCount, plural, one {# dodatkowy język} few {# dodatkowych języków} many {# dodatkowe języki} other {# dodatkowego języka}}"
+
+# expect: style|fluency/grammar minor
+# planted: a past tense that genders the user, zostałeś wylogowany, where the style sheet wants an impersonal form such as nastąpiło wylogowanie
+# hard
+#: packages/app/lib/extension-swap.ts
+msgid "{conflictName} was turned off, and you're signed out of it in Meru."
+msgstr "Rozszerzenie {conflictName} zostało wyłączone i zostałeś z niego wylogowany w Meru."
+
+# expect: accuracy/mistranslation|accuracy/addition major
+# planted: scope widened from the compose window to every window
+# hard
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Close compose window after send"
+msgstr "Zamykaj wszystkie okna po wysłaniu"
+
+# expect: accuracy/mistranslation minor
+# planted: the place narrowed, the top of the message list for the top of the window
+# hard
+#. The out-of-office banner is the one Gmail shows while an out-of-office reply is on, so it follows Gmail's word for it
+#: packages/renderer/routes/settings/gmail/index.tsx
+msgid "Hide the out-of-office banner at the top of the window."
+msgstr "Ukryj baner wiadomości o nieobecności u góry listy wiadomości."
+
+# expect: accuracy/mistranslation|accuracy/omission major
+# planted: the negation dropped, which inverts the option
+# hard
+#. Option of the Hibernate idle tabs setting: which Workspace app tabs are unloaded when idle
+#: packages/shared/workspace-apps.ts
+msgid "Unpinned tabs"
+msgstr "Przypięte karty"
+
+# expect: accuracy/mistranslation major
+# planted: the opposite action, unread for read
+# hard
+#. Button on a message in the unified inbox. A Gmail action, so it follows Gmail's word for it
+#: packages/renderer/routes/unified-inbox.tsx
+msgid "Mark as read"
+msgstr "Oznacz jako nieprzeczytane"
+
+# expect: accuracy/mistranslation major
+# planted: the select branches swapped, the window asking about this tab and the tab about this window
+# hard
+#. appLabel is the name of a Google Workspace app, such as Docs or Sheets
+#: packages/app/dialogs.ts
+msgid "{target, select, window {Open {appLabel} links in this window?} other {Open {appLabel} links in this tab?}}"
+msgstr "{target, select, window {Otwierać linki aplikacji {appLabel} w tej karcie?} other {Otwierać linki aplikacji {appLabel} w tym oknie?}}"
+
+# expect: fluency/unidiomatic|terminology minor
+# planted: a calque of done for Chrome's Gotowe
+# hard
+#. Button that closes the dialog of an extension's sites
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Done"
+msgstr "Zrobione"
+
+# expect: fluency/grammar minor
+# planted: the imperfective imperative on a one-off button, which takes the perfective Uruchom
+# hard
+#. Titlebar button that restarts Meru to install a downloaded update
+#: packages/renderer/components/app-titlebar.tsx
+msgid "Restart now"
+msgstr "Uruchamiaj ponownie teraz"
+
+# expect: accuracy/omission minor
+# planted: the deadline dropped, before your trial ends
+# hard
+#: packages/renderer/routes/settings/license.tsx
+msgid "Upgrade to Meru Pro before your trial ends to keep using all features."
+msgstr "Zmień na Meru Pro, aby nadal korzystać ze wszystkich funkcji."
+
+# expect: fluency/grammar minor
+# planted: a singular verb, pojawi się, for the plural subject pliki
+# hard
+#: packages/renderer/components/download-history.tsx
+msgid "Files you download appear here for 30 days."
+msgstr "Pobrane pliki pojawi się tutaj przez 30 dni."
+
+# expect: accuracy/mistranslation critical
+# planted: a button that says the opposite of what it does
+#: packages/renderer/routes/settings/license.tsx
+msgid "Activate license key"
+msgstr "Dezaktywuj klucz licencyjny"
+
+# expect: accuracy/addition major
+# planted: addition; clearing cookies would sign every account out
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Clear Cache"
+msgstr "Wyczyść pamięć podręczną i pliki cookie"
+
+# expect: accuracy/omission|accuracy/addition|accuracy/mistranslation critical
+# check: catalog:placeholder dropped
+# check: catalog:placeholder invented
+# planted: a broken placeholder, translated
+#. origin is the scheme and host of a website, such as https://example.com
+#: packages/app/url.ts
+msgid "Trust all links on {origin}"
+msgstr "Ufaj wszystkim linkom z {pochodzenie}"
+
+# expect: accuracy/omission|accuracy/mistranslation critical
+# check: catalog:tag dropped
+# planted: a broken tag, the closing </0> dropped
+#. allowlistEntry is the line to add to 1Password's list of allowed browsers, which stays as it is
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Add <0>{allowlistEntry}</0> on its own line, then save."
+msgstr "Dodaj <0>{allowlistEntry} w osobnym wierszu, a potem zapisz."
+
+# expect: fluency/punctuation|locale-conventions minor
+# check: banned:quotes
+# planted: straight quotation marks for „ ”
+#: packages/renderer/routes/settings/appearance.tsx
+msgid "Show Do Not Disturb button"
+msgstr "Pokaż przycisk \"Nie przeszkadzać\""
+
+# expect: style minor
+# check: banned:formal-address
+# planted: the formal Pan for the style sheet's Ty
+#: packages/renderer/routes/settings/license.tsx
+msgid "Enter the license key sent to your email address after your purchase."
+msgstr "Wpisz klucz licencyjny wysłany na adres e-mail Pana po zakupie."
+
+# expect: style minor
+# check: banned:lowercase-pronoun
+# planted: a lowercase twojego, where the style sheet capitalizes the pronoun
+#: packages/renderer/routes/settings/language-field.tsx
+msgid "Gmail and Google apps follow your Google account's language."
+msgstr "Gmail i aplikacje Google używają języka twojego konta Google."
+
+# expect: locale-conventions|fluency/punctuation minor
+# check: banned:one-letter-word
+# planted: an ordinary space after the one-letter w, which can end a line
+#. Applications is the macOS folder, so use the name the Finder shows in that language
+#: packages/renderer/routes/settings/extensions.tsx
+msgid "Choose Meru in the Applications folder."
+msgstr "Wybierz Meru w folderze Aplikacje."
+
+# expect: locale-conventions minor
+# check: banned:unit-space
+# planted: an ordinary space between the number and its unit
+#. Option of the Hibernate after setting: how long a tab goes unused before it hibernates
+#: packages/shared/workspace-apps.ts
+msgid "30 minutes"
+msgstr "30 minut"
+
+# expect: fluency/punctuation minor
+# check: banned:three-dots
+# planted: three dots for the ellipsis
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgid "Find…"
+msgstr "Znajdź..."
+
+# expect: terminology|style minor
+# check: banned:restart-calque
+# planted: the colloquial calque zrestartuj beside the sentence's own uruchomić ponownie
+#. name is the name of a browser extension, such as Bitwarden
+#: packages/app/lib/extension-window.ts
+msgid "{name} starts after Meru restarts. Restart Meru, then try again."
+msgstr "{name} uruchomi się po ponownym uruchomieniu Meru. Zrestartuj Meru, a potem spróbuj ponownie."
+
+# expect: terminology minor
+# check: banned:katalog
+# check: pinned:folder
+# planted: katalog for Chrome's folder
+#: packages/renderer/routes/settings/downloads.tsx
+msgid "Open folder when done"
+msgstr "Otwórz katalog po zakończeniu"
+
+# expect: terminology minor
+# check: banned:uaktualnienie
+# check: pinned:update
+# planted: Apple's uaktualnienie, a macOS label's word, in Meru's own copy
+#: packages/app/dialogs.ts
+msgid "Meru couldn't check for updates."
+msgstr "Meru nie może sprawdzić dostępności uaktualnień."
+
+# expect: accuracy/untranslated major
+# planted: left in English
+#: packages/renderer/routes/settings/advanced.tsx
+msgid "Hardware acceleration"
+msgstr "Hardware acceleration"
+
+# expect: fluency/spelling minor
+# check: pinned:download-history
+# planted: a typo
+#: packages/renderer/routes/download-history.tsx
+msgid "Download history"
+msgstr "Historia pobieranai"
+
+# expect: terminology minor
+# check: pinned:extension
+# planted: Firefox's Dodatki for Chrome's rozszerzenia
+#. A page of Settings, named in the settings sidebar and as the page's title
+#: packages/renderer/lib/settings-pages.ts
+msgid "Extensions"
+msgstr "Dodatki"
