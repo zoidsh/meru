@@ -1016,10 +1016,10 @@
     },
     {
       "id": "download",
-      "msgidPattern": "\\bdownload",
+      "msgidPattern": "(?<!\\{)\\bdownload|(?<=\\{)download(?![\\p{L}\\p{N}_]*\\s*[,}])",
       "expect": "[Nn]edladd|[Ll]add\\p{L}* ned",
       "severity": "wrong",
-      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them (Chrome: 216 of 228 messages).",
+      "reason": "Downloading is ladda ned, a download a nedladdning, as Chrome writes them (Chrome: 216 of 224 messages).",
       "example": {
         "msgid": "Download history",
         "clean": "Nedladdningshistorik",
@@ -1054,7 +1054,7 @@
       "msgidPattern": "\\bextensions?\\b",
       "expect": "[Tt]illägg",
       "severity": "wrong",
-      "reason": "An extension is a tillägg (Chrome: 302 of 308 messages).",
+      "reason": "An extension is a tillägg (Chrome: 302 of 304 messages).",
       "example": {
         "msgid": "Extensions",
         "fault": "Utökningar"
@@ -1160,6 +1160,18 @@
       }
     },
     {
+      "id": "hard-reload",
+      "msgid": "Hard Reload",
+      "countEnglish": "^Hard reload$",
+      "countExpect": "^Läs in igen",
+      "expect": "^Läs in igen utan cache$",
+      "severity": "wrong",
+      "reason": "Hard Reload is Läs in igen utan cache, by a recorded call (source order 4b; Tim delegates language judgment to the lead): Chrome's one Hard Reload is the noun Hård inläsning, and sv.md's binding label forms give a menu bar item the imperative, so the item takes Chrome's Läs in igen, the reload pin's word, and says what makes it hard (Chrome: 0 of 1 messages).",
+      "example": {
+        "fault": "Hård inläsning"
+      }
+    },
+    {
       "id": "titlebar",
       "msgidPattern": "\\btitle ?bar\\b",
       "expect": "[Nn]amnlist",
@@ -1195,9 +1207,10 @@
     {
       "id": "device-label",
       "msgidPattern": "\\bdevice label\\b",
+      "countEnglish": "\\bdevice name\\b",
       "expect": "[Ee]nhetsnamn",
       "severity": "wrong",
-      "reason": "A device label is an enhetsnamn, Chrome's word for a device name (Chrome: 7 of 11 messages).",
+      "reason": "A device label is an enhetsnamn, Chrome's word for a device name, counted in Chrome's device name messages, the rest writing enhetens namn (Chrome: 7 of 11 messages).",
       "example": {
         "msgid": "Device label",
         "fault": "Enhetsetikett"
@@ -1226,11 +1239,24 @@
       }
     },
     {
+      "id": "gmail-dark-option",
+      "msgidPattern": "\\bGmail's theme has to be set to dark\\b",
+      "expect": "inställt på Mörkt\\.",
+      "severity": "wrong",
+      "reason": "Gmail's theme picker names its dark option Mörkt, under Tema (Gmail Help, answer/112508, hl=sv, desktop: Öppna avsnittet Tema … Välj Mörkt för mörkt tema), so a sentence that asks for it quotes Gmail's option as Gmail shows it.",
+      "example": {
+        "msgid": "Extend Gmail's own dark theme to emails and the compose window. Gmail's theme has to be set to dark. The feature is in beta, so report anything it gets wrong.",
+        "clean": "Utöka Gmails eget mörka tema till e-postmeddelanden och skrivfönstret. Gmails tema måste vara inställt på Mörkt. Funktionen är i betaversion, så rapportera allt som blir fel.",
+        "fault": "Utöka Gmails eget mörka tema till e-postmeddelanden och skrivfönstret. Gmails tema måste vara inställt på mörkt. Funktionen är i betaversion, så rapportera allt som blir fel."
+      }
+    },
+    {
       "id": "trusted-hosts",
       "msgidPattern": "\\b(?:un)?trusted hosts?\\b",
+      "countEnglish": "\\btrusted\\b",
       "expect": "[Bb]etro",
       "severity": "wrong",
-      "reason": "Trusted hosts are betrodda värdar, untrusted ones ej betrodda värdar (Chrome: 16 of 22 messages).",
+      "reason": "Trusted hosts are betrodda värdar, untrusted ones ej betrodda värdar, with Chrome's betrodd for trusted (Chrome: 16 of 22 messages).",
       "example": {
         "msgid": "Trusted hosts",
         "fault": "Pålitliga värdar"
@@ -1250,9 +1276,10 @@
     {
       "id": "phishing-protection",
       "msgidPattern": "\\bphishing protection\\b",
+      "countEnglish": "\\bphishing\\b",
       "expect": "[Nn]ätfiske",
       "severity": "wrong",
-      "reason": "Phishing protection is skydd mot nätfiske, as Chrome writes it (Chrome: 4 of 4 messages).",
+      "reason": "Phishing protection is skydd mot nätfiske, with Chrome's nätfiske for phishing (Chrome: 4 of 4 messages).",
       "example": {
         "msgid": "Phishing protection",
         "clean": "Skydd mot nätfiske",
@@ -1275,7 +1302,7 @@
       "msgidPattern": "\\bfolders?\\b",
       "expect": "[Mm]app",
       "severity": "wrong",
-      "reason": "A folder is a mapp, as Chrome writes it (Chrome: 103 of 106 messages).",
+      "reason": "A folder is a mapp, as Chrome writes it (Chrome: 103 of 104 messages).",
       "example": {
         "msgid": "Open folder when done",
         "fault": "Öppna katalogen när det är klart"
@@ -1503,8 +1530,8 @@
       "reason": "System Settings is Apple's Systeminställningar, the name of macOS's own app, in Meru's own copy too (System Settings InfoPlist CFBundleDisplayName).",
       "example": {
         "msgid": "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings.",
-        "clean": "Aktivera även alternativet i Systeminställningar.",
-        "fault": "Aktivera även alternativet i Systempreferenser."
+        "clean": "Svep åt vänster eller höger med två fingrar på en styrplatta för att gå bakåt eller framåt. Svep mellan sidor måste också vara på i Systeminställningar.",
+        "fault": "Svep åt vänster eller höger med två fingrar på en styrplatta för att gå bakåt eller framåt. Svep mellan sidor måste också vara på i Systempreferenser."
       }
     },
     {
@@ -1522,9 +1549,10 @@
     {
       "id": "hibernation",
       "msgidPattern": "\\bhibernat",
+      "countEnglish": "\\binactive tabs?\\b",
       "expect": "[Ii]naktiv",
       "severity": "wrong",
-      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiv flik, never the systems' Sleep word (Chrome: 8 of 8 messages).",
+      "reason": "A hibernated tab is what Chrome's Memory Saver calls an inactive tab, so it takes Chrome's inaktiv, as in Inaktiv flik, never the systems' Sleep word, counted in Chrome's inactive tab messages (Chrome: 8 of 8 messages).",
       "example": {
         "msgid": "Hibernate idle tabs",
         "clean": "Gör oanvända flikar inaktiva",
@@ -1536,7 +1564,7 @@
       "msgidPattern": "\\blauncher\\b",
       "expect": "[Aa]ppstartare",
       "severity": "wrong",
-      "reason": "The launcher is the appstartare, as Chrome names ChromeOS's (Chrome: 11 of 20 messages).",
+      "reason": "The launcher is the appstartare, as Chrome names ChromeOS's; Chrome's bare Launcher labels name the launcher key, starttangent, not the launcher (Chrome: 11 of 19 messages).",
       "example": {
         "msgid": "In launcher",
         "clean": "I appstartaren",
@@ -1551,8 +1579,321 @@
       "reason": "Meru Portal is the name of Meru's account site, portal.meru.so, like Meru Pro, so it stays English, with only the article the language gives a product name (glossary, Terms that stay English).",
       "example": {
         "msgid": "Open Meru Portal",
-        "clean": "Meru Portal",
+        "clean": "Öppna Meru Portal",
         "fault": "Öppna Meru-portalen"
+      }
+    },
+    {
+      "id": "back",
+      "msgidPattern": "^(Go )?[Bb]ack$",
+      "msgctxt": null,
+      "countEnglish": "^&Back$",
+      "countExpect": "^&Bakåt$",
+      "countKeepAccessKeys": true,
+      "expect": "^Bakåt$",
+      "severity": "wrong",
+      "reason": "Back and Go back are Bakåt, by a recorded call (source order 4b; Tim delegates language judgment to the lead): Meru's Back is a navigation command, so it takes Chrome's View menu item &Back, &Bakåt, the narrowest-sense match, as Spanish and Dutch do, rather than Chrome's majority Föregående, a wizard's Previous (Chrome: 1 of 1 messages for &Back; the plain Back and Go back are Föregående 3 of 5).",
+      "example": {
+        "msgid": "Go back",
+        "fault": "Föregående"
+      }
+    },
+    {
+      "id": "forward",
+      "msgidPattern": "^(Go )?[Ff]orward$",
+      "msgctxt": null,
+      "expect": "^Framåt$",
+      "severity": "wrong",
+      "reason": "Forward and Go forward are Framåt, as Chrome writes Forward; it has no Go forward (Chrome: 4 of 4 messages).",
+      "example": {
+        "msgid": "Go forward",
+        "fault": "Gå framåt"
+      }
+    },
+    {
+      "id": "done",
+      "msgid": "Done",
+      "countEnglish": "^Done$",
+      "msgctxt": null,
+      "expect": "^Klart$",
+      "severity": "wrong",
+      "reason": "Done is Klart, as Chrome writes it (Chrome: 3 of 3 messages), never Klar.",
+      "example": {
+        "msgid": "Done",
+        "fault": "Klar"
+      }
+    },
+    {
+      "id": "scroll",
+      "msgidPattern": "\\bscroll",
+      "expect": "[Ss]crolla",
+      "severity": "wrong",
+      "reason": "Scrolling is scrolla, as Chrome writes it, against rulla in 3 (Chrome: 27 of 51 messages).",
+      "example": {
+        "msgid": "Scroll accounts left",
+        "fault": "Rulla konton åt vänster"
+      }
+    },
+    {
+      "id": "emerald",
+      "msgid": "Emerald",
+      "expect": "^Smaragd$",
+      "severity": "wrong",
+      "reason": "The account color Emerald is Smaragd, Apple's Emerald, the app message whose English is the color's name alone: Chrome has no Emerald (Chrome 0/0), the vote is too thin (agent-chosen: smaragd: 1 of 7 (Apple), fewer than 3 apps) and Google names no such color.",
+      "example": {
+        "msgid": "Emerald",
+        "fault": "Smaragdgrön"
+      }
+    },
+    {
+      "id": "inspect-element",
+      "msgid": "Inspect Element",
+      "countEnglish": "^Inspect elements?$",
+      "expect": "^Inspektera element$",
+      "severity": "wrong",
+      "reason": "Inspect Element is Inspektera element: Chrome's exact Inspect splits 1-1, so its messages that are exactly Inspect Element(s) decide (Chrome: 3 of 3 messages).",
+      "example": {
+        "msgid": "Inspect Element",
+        "fault": "Kontrollera element"
+      }
+    },
+    {
+      "id": "unified-inbox",
+      "msgidPattern": "\\bunified inbox\\b",
+      "expect": "Alla inkorgar",
+      "severity": "wrong",
+      "reason": "The unified inbox is Alla inkorgar, the Gmail app's name for its every-account inbox (Gmail Help answer/6078445, hl=sv), capitalized as a view's name; the app count leaves the concept unresolved, so the source order's fallback takes Google's wording (glossary, Unified inbox).",
+      "example": {
+        "msgid": "Open unified inbox",
+        "clean": "Öppna Alla inkorgar",
+        "fault": "Öppna samlad inkorg"
+      }
+    },
+    {
+      "id": "auto-launcher-display",
+      "msgid": "Auto",
+      "msgctxt": "launcher display",
+      "expect": "^Auto$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Launcher display setting's Auto is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files); the clipped form takes no agreement, so it reads the same beside every setting's noun, never Automatisk or Automatiskt.",
+      "example": {
+        "fault": "Automatisk"
+      }
+    },
+    {
+      "id": "auto-placement",
+      "msgid": "Auto",
+      "msgctxt": "placement",
+      "expect": "^Auto$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Placement setting's Auto is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files); the clipped form takes no agreement, so it reads the same beside every setting's noun, never Automatisk or Automatiskt.",
+      "example": {
+        "fault": "Automatisk"
+      }
+    },
+    {
+      "id": "auto-width",
+      "msgid": "Auto",
+      "msgctxt": "width",
+      "expect": "^Auto$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Width setting's Auto is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files); the clipped form takes no agreement, so it reads the same beside every setting's noun, never Automatisk or Automatiskt.",
+      "example": {
+        "fault": "Automatisk"
+      }
+    },
+    {
+      "id": "auto-text-color",
+      "msgid": "Auto",
+      "msgctxt": "text color",
+      "expect": "^Auto$",
+      "countEnglish": "^Auto$",
+      "severity": "wrong",
+      "reason": "The Text color setting's Auto is Auto, as Chrome writes it (Chrome 2/2 in Chromium 156.0.8078.49's .xtb files); the clipped form takes no agreement, so it reads the same beside every setting's noun, never Automatisk or Automatiskt.",
+      "example": {
+        "fault": "Automatisk"
+      }
+    },
+    {
+      "id": "auto-in-sentences",
+      "msgidPattern": "\\bAuto (?:expands|switches|moves)\\b",
+      "expect": "(?<!\\p{L})Auto(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "A description that names a setting's Auto option names it as the select shows it, Auto (the auto pins), never Automatiskt.",
+      "example": {
+        "msgid": "Where the launcher and the bookmarks button sit. Auto moves them to the bottom of the vertical tabs sidebar while it is shown. Sidebar keeps them there and holds the sidebar open even with a single tab, and Titlebar keeps them in the titlebar at all times.",
+        "clean": "Var appstartaren och bokmärkesknappen sitter. Auto flyttar dem längst ned i sidofältet med vertikala flikar när det visas. Sidofält håller dem där och sidofältet öppet även med en enda flik, och Namnlist håller dem alltid i namnlisten.",
+        "fault": "Var appstartaren och bokmärkesknappen sitter. Automatiskt flyttar dem längst ned i sidofältet med vertikala flikar när det visas. Sidofält håller dem där och sidofältet öppet även med en enda flik, och Namnlist håller dem alltid i namnlisten."
+      }
+    },
+    {
+      "id": "none-account-color",
+      "msgid": "None",
+      "msgctxt": "account color",
+      "expect": "^Ingen$",
+      "countEnglish": "^None$",
+      "countExpect": "^Ing(?:en|et|a)$",
+      "severity": "wrong",
+      "reason": "The account's color when none is picked is Ingen, Chrome's Inga agreeing with en färg (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files, each Inga).",
+      "example": {
+        "fault": "Inget"
+      }
+    },
+    {
+      "id": "none-excluded-apps",
+      "msgid": "None",
+      "msgctxt": "excluded apps",
+      "expect": "^Inga$",
+      "countEnglish": "^None$",
+      "countExpect": "^Ing(?:en|et|a)$",
+      "severity": "wrong",
+      "reason": "The Excluded apps field with no app excluded is Inga, as Chrome writes it, the plural agreeing with appar (Chrome 3/3 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "fault": "Ingen"
+      }
+    },
+    {
+      "id": "tray-icon-light",
+      "msgid": "Light",
+      "msgctxt": "tray icon color",
+      "expect": "^Ljus$",
+      "countEnglish": "^Light$",
+      "countExpect": "^Ljust?$",
+      "severity": "wrong",
+      "reason": "The system tray icon's Light is Ljus, Chrome's Ljust agreeing with en färg (Chrome 3/4 in Chromium 156.0.8078.49's .xtb files, the fourth Lätt, a weight); the Theme setting's Light stays Ljust, agreeing with ett tema.",
+      "example": {
+        "fault": "Ljust"
+      }
+    },
+    {
+      "id": "tray-icon-dark",
+      "msgid": "Dark",
+      "msgctxt": "tray icon color",
+      "expect": "^Mörk$",
+      "countEnglish": "^Dark$",
+      "countExpect": "^Mörkt?$",
+      "severity": "wrong",
+      "reason": "The system tray icon's Dark is Mörk, Chrome's Mörk and Mörkt agreeing with en färg (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files); the Theme setting's Dark stays Mörkt, agreeing with ett tema.",
+      "example": {
+        "fault": "Mörkt"
+      }
+    },
+    {
+      "id": "theme-light",
+      "msgid": "Light",
+      "msgctxt": null,
+      "expect": "^Ljust$",
+      "countEnglish": "^Light$",
+      "severity": "wrong",
+      "reason": "The Theme setting's Light is Ljust, as Chrome writes it, agreeing with ett tema (Chrome 3/4 in Chromium 156.0.8078.49's .xtb files, the fourth Lätt, a weight); the system tray icon's Light is Ljus, agreeing with en färg.",
+      "example": {
+        "fault": "Ljus"
+      }
+    },
+    {
+      "id": "theme-dark",
+      "msgid": "Dark",
+      "msgctxt": null,
+      "expect": "^Mörkt$",
+      "countEnglish": "^Dark$",
+      "countExpect": "^Mörkt?$",
+      "severity": "wrong",
+      "reason": "The Theme setting's Dark is Mörkt, Chrome's Mörk and Mörkt agreeing with ett tema (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files); the system tray icon's Dark is Mörk, agreeing with en färg.",
+      "example": {
+        "fault": "Mörk"
+      }
+    },
+    {
+      "id": "download-action-show-in-folder",
+      "msgid": "Show in folder",
+      "msgctxt": "download action",
+      "expect": "^Visa i mapp$",
+      "severity": "wrong",
+      "reason": "The download notification's Show in folder is Visa i mapp, as Chrome writes it (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files, its title-case Show in Folder included); sentence style needs no other form for a select option, so the download history's button of the same English reads the same.",
+      "example": {
+        "fault": "Visa i mappen"
+      }
+    },
+    {
+      "id": "show-in-folder",
+      "msgid": "Show in folder",
+      "msgctxt": null,
+      "expect": "^Visa i mapp$",
+      "severity": "wrong",
+      "reason": "The download history's Show in folder button is Visa i mapp, as Chrome writes it (Chrome 4/4 in Chromium 156.0.8078.49's .xtb files), the same words as the download notification's option.",
+      "example": {
+        "fault": "Visa i Finder"
+      }
+    },
+    {
+      "id": "width",
+      "msgid": "Width",
+      "expect": "^Bredd$",
+      "countEnglish": "\\bwidth\\b",
+      "countExpect": "[Bb]redd",
+      "severity": "wrong",
+      "reason": "The Width setting is Bredd, as Chrome writes width (Chrome 5/5 in Chromium 156.0.8078.49's .xtb files).",
+      "example": {
+        "fault": "Storlek"
+      }
+    },
+    {
+      "id": "width-in-labels",
+      "msgidPattern": "\\bwidth\\b",
+      "expect": "[Bb]redd",
+      "severity": "wrong",
+      "reason": "Every label and sentence that names the Width setting or its button names it bredd, as the width pin does (Chrome 5/5 in Chromium 156.0.8078.49's .xtb files), as in Återställ bredd.",
+      "example": {
+        "msgid": "Reset Width",
+        "clean": "Återställ bredd",
+        "fault": "Återställ storlek"
+      }
+    },
+    {
+      "id": "wide",
+      "msgid": "Wide",
+      "expect": "^Bred$",
+      "severity": "wrong",
+      "reason": "The Width setting's Wide option is Bred, agreeing with en bredd, and never equal to Width's own Bredd. Chrome's one Wide is Reading mode's letter spacing, beside Very wide, Mycket brett, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: bred: 3 of 7 (Thunderbird, Firefox, LibreOffice), with Width's bredd out of the vote).",
+      "example": {
+        "fault": "Brett"
+      }
+    },
+    {
+      "id": "narrow",
+      "msgid": "Narrow",
+      "expect": "^Smal$",
+      "severity": "wrong",
+      "reason": "The Width setting's Narrow option is Smal, agreeing with en bredd and pairing with Bred; Chrome has no Narrow (Chrome 0/0), so the most direct app message decides: LibreOffice's Narrow, Smal, paired with its Wide, Bred (agent-chosen).",
+      "example": {
+        "fault": "Smalt"
+      }
+    },
+    {
+      "id": "wide-in-sentences",
+      "msgidPattern": "\\bnarrow and wide\\b",
+      "expect": "(?<!\\p{L})smal och bred(?!\\p{L})",
+      "severity": "wrong",
+      "reason": "A sentence that names the Width setting's options names them as the select shows them, Smal and Bred (the wide and narrow pins), never agreeing with sidofältet as smalt och brett.",
+      "example": {
+        "msgid": "Show the button at the bottom of the sidebar that switches between narrow and wide. With this off, use Reset Width from the sidebar's context menu or the Width setting above.",
+        "clean": "Visa knappen längst ned i sidofältet som växlar mellan smal och bred. Om det här är av använder du Återställ bredd i sidofältets snabbmeny eller inställningen Bredd ovan.",
+        "fault": "Visa knappen längst ned i sidofältet som växlar mellan smalt och brett. Om det här är av använder du Återställ bredd i sidofältets snabbmeny eller inställningen Bredd ovan."
+      }
+    },
+    {
+      "id": "app-links-badge",
+      "msgidPattern": "\\bapp links badge\\b",
+      "expect": "(?<!\\p{L})[Mm]ärke",
+      "severity": "wrong",
+      "reason": "The app links badge marks a tab rather than counting anything, so it is a märke, never the unread badge's bricka; Chrome has no word for a badge (Chrome 0/0), and the apps' word for a badge that marks, with bricka out of the vote, is märke (agent-chosen: märke: 4 of 7 (Thunderbird, Android, Microsoft, Apple)).",
+      "example": {
+        "msgid": "Show app links badge",
+        "clean": "Visa märke på fliken för applänkar",
+        "fault": "Visa bricka på fliken för applänkar"
       }
     }
   ],

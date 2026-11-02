@@ -131,3 +131,7 @@ msgstr "Hämta appen"
 #: packages/renderer/routes/settings/general.tsx
 msgid "Use a security key such as Ni2 or Ni+"
 msgstr "Använd en säkerhetsnyckel som Ni2 eller Ni+"
+
+#: packages/renderer/routes/settings/notifications.tsx
+msgid "{downloadNotificationAction, select, click {On click} other {Button}}"
+msgstr "{downloadNotificationAction, select, click {Vid klick} other {Knapp}}"

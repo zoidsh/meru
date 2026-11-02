@@ -51,6 +51,7 @@ export const gmailCatalogLoaders: CatalogLoaders = {
   "pt-BR": () => import("@meru/preload-gmail/locales/pt-BR"),
   nl: () => import("@meru/preload-gmail/locales/nl"),
   pl: () => import("@meru/preload-gmail/locales/pl"),
+  sv: () => import("@meru/preload-gmail/locales/sv"),
   ja: () => import("@meru/preload-gmail/locales/ja"),
   ...(process.env.MERU_PSEUDO_LOCALE_CATALOG
     ? { [PSEUDO_LOCALE]: () => import("@meru/preload-gmail/locales/en-XA") }

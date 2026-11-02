@@ -87,3 +87,7 @@ msgstr "Radera?"
 #: packages/app/do-not-disturb.ts
 msgid "5 Minutes"
 msgstr "5 minuter"
+
+# fault: pinned:download
+msgid "{count, plural, one {Downloading # file} other {Downloading # files}}"
+msgstr "{count, plural, one {Tar emot # fil} other {Tar emot # filer}}"

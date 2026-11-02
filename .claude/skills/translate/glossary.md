@@ -84,7 +84,7 @@ The page listing new mail across every account. A description, so lower case ins
 - pt-BR: caixa de entrada unificada (Gmail's _Caixa de entrada_; agent-chosen, unresolved by the app count)
 - nl: gecombineerde inbox (Gmail's _inbox_; agent-chosen, unresolved by the app count)
 - pl: łączona skrzynka odbiorcza (Android Email's _Widok łączony_ for its Combined view, the direct match, since _wspólna skrzynka odbiorcza_ reads as a mailbox shared with other people; agent-chosen, unresolved by the app count)
-- sv: samlad inkorg (Gmail's _inkorg_; agent-chosen, unresolved by the app count)
+- sv: Alla inkorgar, capitalized as the name of Gmail's view (Google: the Gmail app's _Alla inkorgar_, its every-account inbox, in Gmail Help answer/6078445 `hl=sv`, taken by the source order's fallback since the app count leaves it unresolved)
 - ja: 統合受信トレイ (Gmail's 受信トレイ; agent-chosen, unresolved by the app count)
 
 ## Do Not Disturb
@@ -187,7 +187,7 @@ The badge that marks it, in _Show app links badge_. It marks a tab rather than c
 - pt-BR: selo (_Mostrar selo da guia de links do app_), never the unread badge's _emblema_ or the toast's _aviso_, since this badge marks a tab rather than counting (Chrome 0/0; agent-chosen: selo: 3 of 7 (VS Code, Android, Microsoft), with _emblema_ and _aviso_ out of the vote)
 - nl: badge (_Toon badge voor app-links_), the unread badge's word, which names a badge of either kind and counts nothing, never _markering_ (Chrome 0/0; agent-chosen: badge: 4 of 7 (Android, LibreOffice, Microsoft, Apple), Thunderbird tied between badge and markering)
 - pl: plakietka (_Pokaż plakietkę karty linków aplikacji_), the unread badge's word, which names a badge of either kind and counts nothing, the unread badge spelling its count out as _z liczbą nieprzeczytanych_; never the counter _licznik_ (Chrome 0/0; agent-chosen: plakietka: 4 of 7 (Thunderbird, Android, LibreOffice, Apple), VS Code and Microsoft _znaczek_)
-- sv: decided in the language's run
+- sv: märke (_Visa märke på fliken för applänkar_), never the unread badge's _bricka_, since this badge marks a tab rather than counting (Chrome 0/0; agent-chosen: märke: 4 of 7 (Thunderbird, Android, Microsoft, Apple), with _bricka_ out of the vote)
 - ja: バッジ (アプリリンク用タブのバッジを表示), the unread badge's word
 
 ## Saved search
@@ -232,7 +232,7 @@ The titlebar or sidebar dropdown that opens a workspace app. Chrome's word is Ch
 - pt-BR: iniciador (Chrome's _Launcher_ label, 2/2; its launcher key is the _tecla de acesso rápido_)
 - nl: launcher (Chrome 19/19)
 - pl: menu z aplikacjami (Chrome 17/19)
-- sv: appstartare (Chrome 11/20)
+- sv: appstartare (Chrome 11/19)
 - ja: ランチャー (Chrome 19/19)
 
 ## Vertical tabs
@@ -350,7 +350,7 @@ A Chrome extension from Meru's list.
 - pt-BR: extensão (Chrome 302/303)
 - nl: extensie (Chrome 303/304)
 - pl: rozszerzenie (Chrome 303/304)
-- sv: tillägg (Chrome 302/308)
+- sv: tillägg (Chrome 302/304)
 - ja: 拡張機能 (Chrome 299/308), never 機能拡張
 
 ## Experimental, Beta
@@ -442,7 +442,7 @@ The dark theme is Chrome's _Dark theme_ label (1/1), which the seven apps' count
 - pt-BR: tema escuro (Chrome 1/1); bloqueador (agent-chosen: the apps tie, Thunderbird bloqueio, Firefox and Microsoft between bloqueador and bloqueio; Google's Chrome Help ties too; the direct matches decide, Microsoft's _pop-up blocker_, bloqueador de pop-ups, and Firefox's _Cookie Banner Blocker_); verificação ortográfica (Chrome 20/23)
 - nl: donker thema (Chrome 1/1); blokkering (agent-chosen: blokkering: 3 of 7 (Thunderbird, Firefox, Microsoft)); spellingcontrole (Chrome 22/23)
 - pl: ciemny motyw (Chrome 1/1); blokowanie (agent-chosen: blokowanie: 3 of 7 (Thunderbird, Firefox, Microsoft)); sprawdzanie pisowni (Chrome 22/23)
-- sv: mörkt tema (Chrome 1/1); blockering (agent-chosen: blockering: 3 of 7 (Thunderbird, Firefox, Microsoft)); stavningskontroll (Chrome 22/23)
+- sv: mörkt tema (Chrome 1/1), and Gmail's own dark option _Mörkt_ under _Tema_, quoted as Gmail shows it (_Gmails tema måste vara inställt på Mörkt._; Gmail Help answer/112508, `hl=sv`); blockering (agent-chosen: blockering: 3 of 7 (Thunderbird, Firefox, Microsoft)); stavningskontroll (Chrome 22/23)
 - ja: ダークモード (Chrome 1/1); ブロッカー (agent-chosen: fewer than 3 apps have the concept, Firefox ブロッカー and Microsoft ブロック; Google's wording settles it, ブロッカー in Chrome Help, "Block or allow pop-ups in Chrome" (support.google.com/chrome/answer/95472)); スペルチェック (Chrome 22/23)
 
 ## Keyboard keys
@@ -590,7 +590,7 @@ Chrome's word for phishing, in its 4 messages with it; the protection phrase is 
 - pt-BR: proteção contra phishing (Chrome's _phishing_ 4/4)
 - nl: phishingbescherming (Chrome's _phishing_ 4/4; compound agent-chosen, unresolved by the app count: only Microsoft, phishingfilter)
 - pl: ochrona przed wyłudzaniem informacji (Chrome's _wyłudzanie informacji_ 3/4, _phishing_ 1)
-- sv: skydd mot nätfiske (Chrome's _nätfiske_ 4/4)
+- sv: skydd mot nätfiske (Chrome's _nätfiske_ 4/4), Google's own phrase (Chrome Help answer/99020, `hl=sv`: _skydd mot nätfiske och skadlig programvara_)
 - ja: フィッシング対策 (Chrome's フィッシング 4/4)
 
 ## Notify
@@ -697,6 +697,7 @@ Navigating the current view's history: the menu's _Back_ and _Forward_ and the t
 - es-419: Atrás, Adelante; _Ir atrás_, _Ir adelante_ (Chrome 4/5 for _Back_ and _Go back_, the other _Go back_ as _Ir atrás_; 3/4 for _Forward_, the other the mail `&Forward`, _&Reenviar_, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: Voltar, Avançar (Chrome 5/5 for _Back_ and _Go back_, 4/4 for _Forward_, Chromium 156.0.8078.49's .xtb files)
 - nl: Terug, Vooruit (Chrome 4/5 for _Back_ and _Go back_, 4/4 for _Forward_, Chromium 156.0.8078.49's .xtb files)
+- sv: Bakåt, Framåt, for _Go back_ and _Go forward_ too. Meru's Back and Go back are a navigation command, so they take Chrome's View menu item `&Back`, _&Bakåt_, the narrowest-sense match, as Spanish does, rather than the majority _Föregående_, a wizard's Previous (Chrome 1/1 for `&Back`, Chromium 156.0.8078.49's .xtb files; the plain _Back_ twice and _Go back_ are _Föregående_, 3/5; 4/4 for _Forward_), never _Föregående_
 
 ## Reset
 
@@ -719,6 +720,7 @@ The colors an account can be marked with, where Chrome names the same color. Cou
 - es: Purple _Morado_ (Chrome 2/2), Violet _Violeta_ (Chrome 1/1), Lime _Lima_ (Chrome 1/1); the colors Chrome has no name for (Chrome 0/0 each): Amber _Ámbar_ (agent-chosen: ámbar: 3 of 7 (Android, LibreOffice, Apple)), Teal _Verde azulado_ (agent-chosen: verde azulado: 3 of 7 (Thunderbird, Microsoft, Apple)), and, each vote too thin, the app message whose English is the color's name alone: Emerald _Esmeralda_ (Apple's _Emerald_; agent-chosen: esmeralda: 1 of 7 (Apple), fewer than 3 apps), Indigo _Índigo_ (agent-chosen, unresolved by the app count: LibreOffice's _Indigo_ is _Añil_, Apple's _Índigo_; Índigo kept as the run wrote it), Sky _Celeste_ (LibreOffice's _Sky blue_, _Azul celeste_; agent-chosen, unresolved by the app count: LibreOffice celeste, Apple azul cielo, both bare _Sky_ the sky's _Cielo_); Google's own wording for the five was not checked
 - es-419: Purple _Púrpura_ (Chrome 2/2), Violet _Violeta_ (Chrome 1/1), Lime _Verde lima_ (Chrome 1/1); the colors Chrome has no name for (Chrome 0/0 each): Amber _Ámbar_ (agent-chosen: ámbar: 3 of 7 (Android, LibreOffice, Apple)), Teal _Verde azulado_ (agent-chosen: verde azulado: 3 of 7 (Thunderbird, Microsoft, Apple)), and, each vote too thin: Emerald _Esmeralda_ (Apple's _Emerald_; agent-chosen: esmeralda: 1 of 7 (Apple), fewer than 3 apps), Indigo _Índigo_ (agent-chosen, unresolved by the app count: LibreOffice's _Indigo_ is _Añil_, Apple's _Índigo_), Sky _Celeste_ (agent-chosen: celeste: 2 of 7 (LibreOffice, Apple), fewer than 3 apps); Google's own wording for the five was not checked
 - pt-BR: Purple _Roxo_ (Chrome 2/2), Violet _Violeta_ (Chrome 1/1), Lime _Verde-limão_ (Chrome 1/1), Fuchsia _Fúcsia_ (Chrome 1/1); the colors Chrome has no name for (Chrome 0/0 each), each vote too thin, so each takes the app message whose English is the color's name alone: Amber _Âmbar_ (Android's _amber_ and LibreOffice's _Amber_; agent-chosen: âmbar: 2 of 7 (Android, LibreOffice), fewer than 3 apps), Emerald _Esmeralda_ (Apple's _Emerald_; agent-chosen: esmeralda: 1 of 7 (Apple), fewer than 3 apps), Indigo _Índigo_ (LibreOffice's and Apple's _Indigo_; agent-chosen: índigo: 2 of 7 (LibreOffice, Apple), fewer than 3 apps), Sky _Azul-celeste_ (LibreOffice's _Sky blue_ and Apple's _Sky Blue_, since their bare _Sky_, _Céu_, is the sky; agent-chosen: celeste: 1 of 7 (LibreOffice), fewer than 3 apps, with Apple azul-celeste), never _Celeste_ alone, Teal _Verde-azulado_ (Thunderbird's _Teal_ and Microsoft's _teal_, beside LibreOffice's _Turquesa_ and Apple's _Verde Acinzentado_; agent-chosen: verde-azulado: 2 of 7 (Thunderbird, Microsoft)), never Chrome's _Azul-petróleo_, its _Dark teal_; Google's own wording for the five was not checked
+- sv: Teal _Blågrön_ (agent-chosen: blågrön: 3 of 7 (Thunderbird, LibreOffice, Microsoft)); Google names none of the other four, and Chrome has no name for them (Chrome 0/0 each), each vote too thin, so each takes the app message whose English is the color's name alone: Amber _Bärnstensgul_ (LibreOffice's _Amber_; agent-chosen: bärnsten: 1 of 7 (LibreOffice), a tie), Emerald _Smaragd_ (Apple's _Emerald_; agent-chosen: smaragd: 1 of 7 (Apple), fewer than 3 apps), never _Smaragdgrön_, Indigo _Indigo_ (LibreOffice's and Apple's _Indigo_; agent-chosen: indigo: 2 of 7 (LibreOffice, Apple), fewer than 3 apps), Sky _Himmelsblå_ (Apple's _Sky Blue_, since LibreOffice's bare _Sky_, _Himmel_, is the sky; agent-chosen: himmelsblå: 1 of 7 (Apple), fewer than 3 apps)
 
 ## Inspect Element
 
@@ -728,6 +730,7 @@ The page context menu's item that opens the developer tools on the element click
 - it: Ispeziona (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Ispeziona elemento_
 - pt-BR: Inspecionar (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Inspecionar Elemento_
 - nl: Inspecteren, a context-menu item in Chrome's infinitive (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Element inspecteren_
+- sv: Inspektera element. Chrome's exact _Inspect_ splits 1–1 between _Kontrollera_ and _Inspektera_, so the narrower messages that are exactly _Inspect Element(s)_ decide (Chrome 3/3, Chromium 156.0.8078.49's .xtb files), never _Kontrollera element_
 
 ## Help
 
@@ -743,6 +746,7 @@ The option that lets Meru decide, in the Width, Placement, Launcher display and 
 - pt-BR: Automática for the Width (_a largura_), Launcher display (_a exibição_) and Text color (_a cor_), Automático for the Placement (_o posicionamento_, Chrome's _placement_ 1/1), Chrome's _Automática_ agreeing with each (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Auto_
 - nl: Auto in all four (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), since a Dutch adjective takes no agreement with the setting's noun; never _Automatisch_, which is Chrome's _Automatic_ (Chrome 1/1)
 - pl: Automatycznie in all four (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), an adverb, so it agrees with none of _szerokość_, _umieszczenie_, _wyświetlanie_ or _kolor_; a sentence quotes it as _opcja Automatycznie_; never an adjective such as _Automatyczna_, nor _Auto_
+- sv: Auto for the Width (_en bredd_), Placement (_en placering_), Launcher display (_en visning_) and Text color (_en textfärg_), as Chrome writes it (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), a clipped form that takes no agreement, never _Automatisk_ or _Automatiskt_; a description names it _Auto_ too
 
 ## None
 
@@ -751,18 +755,21 @@ The value a field shows when nothing is picked, in the account's Color field and
 - pt-BR: Nenhuma for the account color (_a cor_), Nenhum for the excluded apps (_os apps_), Chrome's _Nenhum_ and _Nenhuma_ agreeing with each (Chrome 3/3, Chromium 156.0.8078.49's .xtb files)
 - nl: Geen in both (Chrome 3/3, Chromium 156.0.8078.49's .xtb files), which takes no agreement
 - pl: Brak in both (Chrome 3/3, Chromium 156.0.8078.49's .xtb files), a noun, so it agrees with neither _kolor_ nor _aplikacje_; never _Żaden_ or _Żadne_
+- sv: Ingen for the account color (_en färg_), Inga for the excluded apps (_appar_), Chrome's _Inga_ agreeing with each (Chrome 3/3, Chromium 156.0.8078.49's .xtb files), never _Inget_
 
 ## Light, Dark, the tray icon's color
 
 The system tray icon's Color setting's options, `msgctxt` `tray icon color`, apart from the Theme setting's Light and Dark so a gendered language agrees with each setting's noun. Counted in the messages that are exactly _Light_ or _Dark_. A language without a line takes Chrome's word, as its Theme does.
 
 - pl: Jasny, Ciemny, agreeing with _kolor_, as the Theme's Jasny and Ciemny agree with _motyw_ (Chrome 3/4 each, Chromium 156.0.8078.49's .xtb files; the one _Light_ left is _Mała_, a font weight, the one _Dark_ left _Ciemna_), never _Jasna_ or _Ciemna_, agreeing with _ikona_
+- sv: Ljust, Mörkt for the Theme (_ett tema_), Ljus, Mörk for the tray icon (_en färg_), Chrome's _Ljust_ (Chrome 3/4, the fourth _Lätt_, a weight) and _Mörk_ or _Mörkt_ (Chrome 4/4) agreeing with each, Chromium 156.0.8078.49's .xtb files
 
 ## Show in folder
 
 The download history's button and the download notification's option, `msgctxt` `download action`, that show a finished download in its folder. Counted in the messages that are exactly _Show in folder_, in either case. A language without a line takes Chrome's word.
 
 - pl: Pokaż w folderze for both, since a Polish label is sentence style (Chrome 4/4, Chromium 156.0.8078.49's .xtb files), never _Otwórz folder_, which opens the folder rather than showing the file
+- sv: Visa i mapp for both (Chrome 4/4, Chromium 156.0.8078.49's .xtb files), never _Visa i mappen_
 
 ## Zoom In, Zoom Out, Actual Size
 
@@ -801,6 +808,7 @@ The Width setting's options for the vertical tabs sidebar. A language whose word
 - pt-BR: Estreita, Larga, agreeing with Width's _a largura_ (Chrome 4/5), never _Espaçadas_ or _Ampla_, by a recorded call: Chrome's one _Wide_, _Espaçadas_, names spacing, not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: largo: 2 of 7 (Thunderbird, Firefox), thin, taken by the same call; LibreOffice _amplo_, Apple _grande-angular_); a sentence names them _estreita e larga_
 - nl: Smal, Breed, never _Wijd_. Width is _breedte_ (Chrome 5/5, Chromium 156.0.8078.49's .xtb files), and Chrome writes the width of a part of its window as _{} breed_ (Chrome 3/3 for _now {} wide_, Chromium 156.0.8078.49's .xtb files); its one _Wide_, _Wijd_, is Reading mode's letter spacing, not a size (the apps agree: breed: 4 of 7 (Thunderbird, Firefox, LibreOffice, Apple)). Narrow has no Chrome word (Chrome 0/0), so it is _Smal_, Breed's direct antonym, with one vote (agent-chosen, unresolved by the app count: smal: 1 of 7 (LibreOffice), beside its _Breed_; Google's own wording was not checked). In a sentence the pair is _smal en breed_
 - pl: Wąska, Szeroka, agreeing with Width's _szerokość_ (Chrome 5/5 for _width_, Chromium 156.0.8078.49's .xtb files), never Chrome's _Szeroko_: Chrome's one _Wide_ is Reading mode's letter spacing (`IDS_READING_MODE_SPACING_COMBOBOX_WIDE`, beside _Bardzo szeroko_), not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: szeroki: 4 of 7 (Thunderbird, Firefox, LibreOffice, Apple), with Width's _szerokość_ out of the vote); _Szeroka_ shares a root with the label but is not its word; Chrome has no _Narrow_, and _wąski_ is szeroki's antonym; a sentence names them _między wąską a szeroką_
+- sv: Smal, Bred, agreeing with Width's _Bredd_ (Chrome 5/5), an option one letter short of its label but never equal to it, never _Smalt_ or _Brett_; Chrome's one _Wide_, _Bred_, is Reading mode's letter spacing beside _Very wide_, _Mycket brett_, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: bred: 3 of 7 (Thunderbird, Firefox, LibreOffice), with Width's _bredd_ out of the vote); Chrome has no _Narrow_ (Chrome 0/0), so LibreOffice's _Narrow_, _Smal_, paired with its _Wide_, _Bred_, decides; a sentence names them _smal och bred_, as the select shows them
 
 ## Gmail's words
 
