@@ -626,6 +626,12 @@
         "bètakanaal": "b[èe]takanaal",
         "kanaal": "kanaal"
       },
+      "pl": {
+        "kanał aktualizacji": "kanał\\p{L}* aktualizacji",
+        "kanał wydań": "kanał\\p{L}* wyda",
+        "kanał beta": "kanał\\p{L}* beta",
+        "kanał": "\\bkanał"
+      },
       "sv": {
         "uppdateringskanal": "uppdateringskanal",
         "betakanal": "betakanal",
@@ -662,6 +668,15 @@
         "samengevoegde mappen": "samengevoegd",
         "verenigde inbox": "verenigd",
         "alle inboxen": "alle inbox"
+      },
+      "pl": {
+        "łączona skrzynka odbiorcza": "łączon\\p{L}* skrzyn",
+        "wspólna skrzynka odbiorcza": "wspóln\\p{L}* skrzyn",
+        "wszystkie skrzynki odbiorcze": "wszystkie skrzynki odbiorcze",
+        "pogrupowane foldery": "pogrupowan",
+        "widok łączony": "widok\\p{L}* łączon",
+        "zbiorcza": "zbiorcz",
+        "łączona": "łączon"
       }
     }
   },
@@ -818,6 +833,13 @@
         "phishingbescherming": "phishingbescherming",
         "bescherming tegen phishing": "bescherming tegen phishing",
         "phishingfilter": "phishingfilter"
+      },
+      "pl": {
+        "ochrona przed wyłudzaniem informacji": "ochron\\p{L}* przed wyłudz",
+        "ochrona przed phishingiem": "ochron\\p{L}* przed phishing",
+        "filtr witryn wyłudzających informacje": "filtr\\p{L}* (?:witryn )?wyłudz",
+        "filtr phishingu": "filtr\\p{L}* (?:anty-?)?phishing",
+        "antyphishing": "anty-?phishing"
       }
     }
   },
@@ -931,6 +953,13 @@
         "markering": "markering",
         "aantal": "\\baantal\\b",
         "teller": "teller"
+      },
+      "pl": {
+        "plakietka": "plakiet",
+        "znaczek": "\\bznacz(?:ek|k)",
+        "znacznik": "\\bznacznik",
+        "wskaźnik": "wskaźnik",
+        "licznik": "licznik"
       }
     },
     "exclude": {
@@ -968,6 +997,11 @@
         "barnsteen": "barnsteen",
         "oranje": "oranje",
         "geel": "\\bge(?:el|le)\\b"
+      },
+      "pl": {
+        "bursztynowy": "bursztyn",
+        "pomarańczowy": "pomarańcz",
+        "żółty": "\\bżółt"
       }
     },
     "exclude": {
@@ -975,7 +1009,8 @@
       "es": ["amarillo", "naranja"],
       "es-419": ["amarillo", "naranja"],
       "pt-BR": ["amarelo", "laranja"],
-      "nl": ["oranje", "geel"]
+      "nl": ["oranje", "geel"],
+      "pl": ["pomarańczowy", "żółty"]
     }
   },
   {
@@ -1001,6 +1036,10 @@
       "nl": {
         "smaragd": "smaragd",
         "groen": "groen"
+      },
+      "pl": {
+        "szmaragdowy": "szmaragd",
+        "zielony": "\\bzielon"
       }
     },
     "exclude": {
@@ -1008,7 +1047,8 @@
       "es": ["verde"],
       "es-419": ["verde"],
       "pt-BR": ["verde"],
-      "nl": ["groen"]
+      "nl": ["groen"],
+      "pl": ["zielony"]
     }
   },
   {
@@ -1043,6 +1083,12 @@
         "blauw": "blauw",
         "violet": "violet",
         "paars": "paars"
+      },
+      "pl": {
+        "indygo": "\\bind[yi]go\\b",
+        "granatowy": "granatow",
+        "niebieski": "niebiesk",
+        "fioletowy": "fiolet"
       }
     },
     "exclude": {
@@ -1050,7 +1096,8 @@
       "es": ["azul", "violeta"],
       "es-419": ["azul", "violeta"],
       "pt-BR": ["azul", "violeta"],
-      "nl": ["blauw", "violet", "paars"]
+      "nl": ["blauw", "violet", "paars"],
+      "pl": ["niebieski", "fioletowy"]
     }
   },
   {
@@ -1094,6 +1141,13 @@
         "lucht": "\\blucht\\b",
         "blauw": "blauw",
         "cyaan": "cyaan"
+      },
+      "pl": {
+        "błękitny": "błękit",
+        "lazurowy": "lazur",
+        "niebo": "\\bnieb(?:o|a|ie)\\b",
+        "niebieski": "niebiesk",
+        "cyjan": "\\bcyjan"
       }
     },
     "exclude": {
@@ -1101,7 +1155,8 @@
       "es": ["azul", "cian"],
       "es-419": ["azul", "cian"],
       "pt-BR": ["azul", "ciano"],
-      "nl": ["blauw", "cyaan"]
+      "nl": ["blauw", "cyaan"],
+      "pl": ["niebieski", "cyjan"]
     }
   },
   {
@@ -1158,6 +1213,14 @@
         "groen": "groen",
         "blauw": "blauw",
         "cyaan": "cyaan"
+      },
+      "pl": {
+        "morski": "morsk",
+        "turkusowy": "turkus",
+        "zielononiebieski": "zielono-?niebiesk",
+        "zielony": "\\bzielon",
+        "niebieski": "\\bniebiesk",
+        "cyjan": "\\bcyjan"
       }
     },
     "exclude": {
@@ -1165,7 +1228,8 @@
       "es": ["verde", "azul", "cian"],
       "es-419": ["verde", "azul", "cian"],
       "pt-BR": ["verde", "azul", "ciano"],
-      "nl": ["groen", "blauw", "cyaan"]
+      "nl": ["groen", "blauw", "cyaan"],
+      "pl": ["zielony", "niebieski", "cyjan"]
     }
   },
   {
@@ -1192,12 +1256,19 @@
       "nl": {
         "breed": "\\bbre(?:ed|de)\\b",
         "wijd": "\\bwijde?\\b"
+      },
+      "pl": {
+        "szeroki": "\\bszerok(?:i|a|ie|o|iego|iej|ich)\\b",
+        "szerokość": "\\bszerokoś",
+        "panoramiczny": "panoramiczn",
+        "rozległy": "rozleg"
       }
     },
     "exclude": {
       "es": ["ancho"],
       "es-419": ["ancho"],
-      "pt-BR": ["largura"]
+      "pt-BR": ["largura"],
+      "pl": ["szerokość"]
     }
   },
   {
@@ -1229,6 +1300,16 @@
         "embleem": "embleem",
         "insigne": "insigne",
         "teller": "teller"
+      },
+      "pl": {
+        "plakietka": "plakiet",
+        "znaczek": "\\bznacz(?:ek|k)",
+        "znacznik": "\\bznacznik",
+        "wskaźnik": "wskaźnik",
+        "odznaka": "odznak",
+        "oznaczenie": "\\boznacze",
+        "licznik": "licznik",
+        "badge": "\\bbadges?\\b"
       }
     },
     "exclude": {

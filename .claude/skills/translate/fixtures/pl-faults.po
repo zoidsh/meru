@@ -103,13 +103,13 @@ msgstr "Meru wyloguje cię z tego konta."
 msgid "Meru reminds you before your trial ends."
 msgstr "Meru przypomni ci o końcu okresu próbnego."
 
-# The English's access key is ignored too, so the link pin picks up Copy Lin&k,
-# and the translation's, so the ban reads łącze.
+# The English's access key is ignored too, so the link pin picks up Copy Link
+# Addr&ess, and the translation's, so the ban reads łącza.
 # fault: pinned:link
 # fault: banned:lacze
 #: packages/app/context-menu.ts
-msgid "Copy Lin&k"
-msgstr "Kopiuj łą&cze"
+msgid "Copy Link Addr&ess"
+msgstr "Kopiuj adres łą&cza"
 
 # fault: banned:formal-address
 #: packages/renderer/routes/settings/general.tsx

@@ -23,7 +23,7 @@ msgstr "A extensão {conflictName} foi desativada, e você saiu da conta dela no
 #. On Linux, a finished download's notification acts when clicked; elsewhere, through its button
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "{downloadNotificationAction, select, click {Choose what clicking the notification does.} other {Choose what the notification's button does.}}"
-msgstr "{downloadNotificationAction, select, click {Escolha o que acontece ao clicar na notificação.} other {Escolha o que o botão da notificação faz.}}"
+msgstr "{downloadNotificationAction, select, click {Escolher o que acontece ao clicar na notificação.} other {Escolher o que o botão da notificação faz.}}"
 
 #. Setting that picks what a finished download's notification does: on Linux, clicking it; elsewhere, its button
 #: packages/renderer/routes/settings/notifications.tsx
@@ -131,6 +131,7 @@ msgstr "{workspaceAppsInUse, select, both {A partir de agora, os apps do Workspa
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "Linux"
 msgid "&Copy"
 msgstr "&Copiar"
 
@@ -139,6 +140,12 @@ msgstr "&Copiar"
 msgctxt "macOS"
 msgid "&Copy"
 msgstr "Copiar"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "&Copy"
+msgstr "&Copiar"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts

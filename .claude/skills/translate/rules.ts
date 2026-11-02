@@ -77,7 +77,7 @@ export function withoutAccessKey(label: string) {
  * Picks entries by their English. A `msgctxt` of null means an entry without
  * one, and a missing `msgctxt` any. `origin` is a path prefix of a source file,
  * for a msgid that means one thing in the Gmail preload and another in the app.
- * A pattern, here and in a banned rule's `allow`, reads the English without its
+ * A pattern, here and in a rule's `allow`, reads the English without its
  * access key, as banned and pinned patterns read the translation, since `&` can
  * split a word.
  */
@@ -88,24 +88,32 @@ const selector = {
   origin: z.string().optional(),
 };
 
+/*
+ * Entries a banned or pinned rule leaves alone, such as a macOS label whose
+ * platform word is the form the rule bans elsewhere.
+ */
+const allow = z
+  .object({
+    contexts: z.array(z.string()).optional(),
+    msgids: z.array(z.string()).optional(),
+    msgidPattern: pattern.optional(),
+    // One message in one context, such as the macOS Settings menu item.
+    entries: z
+      .array(z.object({ msgctxt: z.string().nullable(), msgid: z.string() }).strict())
+      .optional(),
+  })
+  .strict()
+  .optional();
+
+export type Allow = z.infer<typeof allow>;
+
 const banned = z
   .object({
     id: z.string(),
     pattern,
     severity,
     reason: z.string(),
-    allow: z
-      .object({
-        contexts: z.array(z.string()).optional(),
-        msgids: z.array(z.string()).optional(),
-        msgidPattern: pattern.optional(),
-        // One message in one context, such as the macOS Settings menu item.
-        entries: z
-          .array(z.object({ msgctxt: z.string().nullable(), msgid: z.string() }).strict())
-          .optional(),
-      })
-      .strict()
-      .optional(),
+    allow,
   })
   .strict();
 
@@ -146,6 +154,7 @@ const pinned = z
     countKeepAccessKeys: z.literal(true).optional(),
     severity,
     reason: z.string(),
+    allow,
     example,
   })
   .strict()

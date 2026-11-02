@@ -160,14 +160,14 @@
           {
             "word": "Kopieren",
             "source": "(TBX `11991_39848_39846`)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ],
         "Linux": [
           {
             "word": "Kopieren",
             "source": "(gtk4 `_Copy`)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ]
       },
@@ -801,8 +801,8 @@
             "labels": ["&Copy"]
           }
         ],
-        "Windows": "the house word, with its access key",
-        "Linux": "the house word, with its access key"
+        "Windows": "the Edit menu item's word, with its access key",
+        "Linux": "the Edit menu item's word, with its access key"
       },
       {
         "row": "Copy Link Address, `Copy Link Addr&ess`",
@@ -1233,8 +1233,19 @@
       "reason": "Glossary, agent-chosen (benachrichtigen: 6 of 7).",
       "example": {
         "msgid": "Notify for",
-        "clean": "Benachrichtigen bei",
+        "clean": "Benachrichtigungen für",
         "fault": "Melden für"
+      }
+    },
+    {
+      "id": "notify-for",
+      "msgctxt": null,
+      "msgid": "Notify for",
+      "expect": "^Benachrichtigungen für$",
+      "severity": "wrong",
+      "reason": "The Notify for setting is Benachrichtigungen für, whose für takes the accusative plural, the same as the nominative of its options, Alle neuen E-Mails and Nur wichtige; bei would need the dative, bei allen neuen E-Mails. Chrome has no setting of its own that picks which notifications show.",
+      "example": {
+        "fault": "Benachrichtigen bei"
       }
     },
     {

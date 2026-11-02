@@ -186,7 +186,7 @@ The badge that marks it, in _Show app links badge_. It marks a tab rather than c
 - es-419: distintivo (_Mostrar distintivo de la pestaña de vínculos de la app_), never the unread badge's _contador_, since this badge marks a tab rather than counting (Chrome 0/0; agent-chosen: distintivo: 3 of 7 (VS Code, Microsoft, Apple), with _contador_ out of the vote; _insignia_ 2 of 7 (Android, LibreOffice))
 - pt-BR: selo (_Mostrar selo da guia de links do app_), never the unread badge's _emblema_ or the toast's _aviso_, since this badge marks a tab rather than counting (Chrome 0/0; agent-chosen: selo: 3 of 7 (VS Code, Android, Microsoft), with _emblema_ and _aviso_ out of the vote)
 - nl: badge (_Toon badge voor app-links_), the unread badge's word, which names a badge of either kind and counts nothing, never _markering_ (Chrome 0/0; agent-chosen: badge: 4 of 7 (Android, LibreOffice, Microsoft, Apple), Thunderbird tied between badge and markering)
-- pl: decided in the language's run
+- pl: plakietka (_Pokaż plakietkę karty linków aplikacji_), the unread badge's word, which names a badge of either kind and counts nothing, the unread badge spelling its count out as _z liczbą nieprzeczytanych_; never the counter _licznik_ (Chrome 0/0; agent-chosen: plakietka: 4 of 7 (Thunderbird, Android, LibreOffice, Apple), VS Code and Microsoft _znaczek_)
 - sv: decided in the language's run
 - ja: バッジ (アプリリンク用タブのバッジを表示), the unread badge's word
 
@@ -231,7 +231,7 @@ The titlebar or sidebar dropdown that opens a workspace app. Chrome's word is Ch
 - es-419: selector (Chrome 17/19)
 - pt-BR: iniciador (Chrome's _Launcher_ label, 2/2; its launcher key is the _tecla de acesso rápido_)
 - nl: launcher (Chrome 19/19)
-- pl: menu z aplikacjami (Chrome 17/20)
+- pl: menu z aplikacjami (Chrome 17/19)
 - sv: appstartare (Chrome 11/20)
 - ja: ランチャー (Chrome 19/19)
 
@@ -349,7 +349,7 @@ A Chrome extension from Meru's list.
 - es-419: extensión (Chrome 304/304)
 - pt-BR: extensão (Chrome 302/303)
 - nl: extensie (Chrome 303/304)
-- pl: rozszerzenie (Chrome 304/308)
+- pl: rozszerzenie (Chrome 303/304)
 - sv: tillägg (Chrome 302/308)
 - ja: 拡張機能 (Chrome 299/308), never 機能拡張
 
@@ -664,6 +664,7 @@ The string a browser sends to name itself, in the Advanced settings. A language 
 - es-419: usuario-agente, hyphenated (_un usuario-agente_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
 - pt-BR: agente do usuário (_o agente do usuário_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
 - nl: user-agent (_Gebruik standaard-user-agent_) (Chrome 1/1, Chromium 156.0.8078.49's .xtb files)
+- pl: klient użytkownika (_Używaj domyślnego klienta użytkownika_), built on Chrome's _Klient_ (Chrome 1/1, Chromium 156.0.8078.49's .xtb files), by a recorded call: Chrome's bare _Klient_ loses its meaning in Meru's sentences (_Wysyłaj klienta…_) and collides with _Domyślny klient poczty_; never the bare _klient_ or _agent użytkownika_
 
 ## Google Password Manager
 
@@ -741,6 +742,7 @@ The option that lets Meru decide, in the Width, Placement, Launcher display and 
 - it: Automatica for the Width (_la larghezza_), Placement (_la posizione_) and Launcher display (_la visualizzazione_), Automatico for the Text color (_il colore_), Chrome's _Automatico_ agreeing with each (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Auto_
 - pt-BR: Automática for the Width (_a largura_), Launcher display (_a exibição_) and Text color (_a cor_), Automático for the Placement (_o posicionamento_, Chrome's _placement_ 1/1), Chrome's _Automática_ agreeing with each (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), never _Auto_
 - nl: Auto in all four (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), since a Dutch adjective takes no agreement with the setting's noun; never _Automatisch_, which is Chrome's _Automatic_ (Chrome 1/1)
+- pl: Automatycznie in all four (Chrome 2/2, Chromium 156.0.8078.49's .xtb files), an adverb, so it agrees with none of _szerokość_, _umieszczenie_, _wyświetlanie_ or _kolor_; a sentence quotes it as _opcja Automatycznie_; never an adjective such as _Automatyczna_, nor _Auto_
 
 ## None
 
@@ -748,6 +750,19 @@ The value a field shows when nothing is picked, in the account's Color field and
 
 - pt-BR: Nenhuma for the account color (_a cor_), Nenhum for the excluded apps (_os apps_), Chrome's _Nenhum_ and _Nenhuma_ agreeing with each (Chrome 3/3, Chromium 156.0.8078.49's .xtb files)
 - nl: Geen in both (Chrome 3/3, Chromium 156.0.8078.49's .xtb files), which takes no agreement
+- pl: Brak in both (Chrome 3/3, Chromium 156.0.8078.49's .xtb files), a noun, so it agrees with neither _kolor_ nor _aplikacje_; never _Żaden_ or _Żadne_
+
+## Light, Dark, the tray icon's color
+
+The system tray icon's Color setting's options, `msgctxt` `tray icon color`, apart from the Theme setting's Light and Dark so a gendered language agrees with each setting's noun. Counted in the messages that are exactly _Light_ or _Dark_. A language without a line takes Chrome's word, as its Theme does.
+
+- pl: Jasny, Ciemny, agreeing with _kolor_, as the Theme's Jasny and Ciemny agree with _motyw_ (Chrome 3/4 each, Chromium 156.0.8078.49's .xtb files; the one _Light_ left is _Mała_, a font weight, the one _Dark_ left _Ciemna_), never _Jasna_ or _Ciemna_, agreeing with _ikona_
+
+## Show in folder
+
+The download history's button and the download notification's option, `msgctxt` `download action`, that show a finished download in its folder. Counted in the messages that are exactly _Show in folder_, in either case. A language without a line takes Chrome's word.
+
+- pl: Pokaż w folderze for both, since a Polish label is sentence style (Chrome 4/4, Chromium 156.0.8078.49's .xtb files), never _Otwórz folder_, which opens the folder rather than showing the file
 
 ## Zoom In, Zoom Out, Actual Size
 
@@ -785,6 +800,7 @@ The Width setting's options for the vertical tabs sidebar. A language whose word
 - es-419: Estrecho, Amplio, never _Ancho_, by the same recorded call (agent-chosen, unresolved by the app count: amplio: 2 of 7 (Thunderbird, LibreOffice), with Width's _Ancho_ out of the vote)
 - pt-BR: Estreita, Larga, agreeing with Width's _a largura_ (Chrome 4/5), never _Espaçadas_ or _Ampla_, by a recorded call: Chrome's one _Wide_, _Espaçadas_, names spacing, not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: largo: 2 of 7 (Thunderbird, Firefox), thin, taken by the same call; LibreOffice _amplo_, Apple _grande-angular_); a sentence names them _estreita e larga_
 - nl: Smal, Breed, never _Wijd_. Width is _breedte_ (Chrome 5/5, Chromium 156.0.8078.49's .xtb files), and Chrome writes the width of a part of its window as _{} breed_ (Chrome 3/3 for _now {} wide_, Chromium 156.0.8078.49's .xtb files); its one _Wide_, _Wijd_, is Reading mode's letter spacing, not a size (the apps agree: breed: 4 of 7 (Thunderbird, Firefox, LibreOffice, Apple)). Narrow has no Chrome word (Chrome 0/0), so it is _Smal_, Breed's direct antonym, with one vote (agent-chosen, unresolved by the app count: smal: 1 of 7 (LibreOffice), beside its _Breed_; Google's own wording was not checked). In a sentence the pair is _smal en breed_
+- pl: Wąska, Szeroka, agreeing with Width's _szerokość_ (Chrome 5/5 for _width_, Chromium 156.0.8078.49's .xtb files), never Chrome's _Szeroko_: Chrome's one _Wide_ is Reading mode's letter spacing (`IDS_READING_MODE_SPACING_COMBOBOX_WIDE`, beside _Bardzo szeroko_), not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: szeroki: 4 of 7 (Thunderbird, Firefox, LibreOffice, Apple), with Width's _szerokość_ out of the vote); _Szeroka_ shares a root with the label but is not its word; Chrome has no _Narrow_, and _wąski_ is szeroki's antonym; a sentence names them _między wąską a szeroką_
 
 ## Gmail's words
 
@@ -972,6 +988,7 @@ The quoted and repeated text Gmail folds behind its ••• button, as in _Alw
 - es-419: contenido acortado (Gmail, _Mostrar contenido acortado_), never _recortado_
 - pt-BR: conteúdo cortado (Gmail, _Mostrar conteúdo cortado_), never _conteúdo reduzido_
 - nl: ingekorte content (Gmail, _Ingekorte content tonen_; _Toon ingekorte content altijd_)
+- pl: skrócona treść (Gmail, _Pokaż skróconą treść_), never _przycięta treść_
 
 ## 1Password's words
 

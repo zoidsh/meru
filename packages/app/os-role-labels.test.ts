@@ -126,18 +126,11 @@ const CONTEXT_MENU_ROLES: (keyof Labels)[] = [
 /** Native dialogs' buttons the operating system names, by their English. */
 const OS_DIALOG_BUTTONS = new Set(["OK", "Cancel", "Quit", "Close", "Yes", "No"]);
 
-// `scripts/translate-rules.test.ts` fails once a language's house word for it differs from Microsoft's or GNOME's.
-const COPY_IS_THE_OS_WORD =
-  "The page context menu's Copy is the house word with its access key, which in every shipped language is Microsoft's and GNOME's word for Copy too";
-
 /*
  * Labels left platform-neutral on purpose, each with why, as
  * `<where> <platform> <msgid>`.
  */
-const ALLOWED: Record<string, string> = {
-  "context menu Windows &Copy": COPY_IS_THE_OS_WORD,
-  "context menu Linux &Copy": COPY_IS_THE_OS_WORD,
-};
+const ALLOWED: Record<string, string> = {};
 
 type Message = { msgid: string; context: string | undefined };
 
