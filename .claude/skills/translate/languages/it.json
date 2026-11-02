@@ -160,14 +160,14 @@
           {
             "word": "Copia",
             "source": "(TBX `11991_39848_39853` _copiare_, as an imperative label)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ],
         "Linux": [
           {
             "word": "Copia",
             "source": "(gtk4 `_Copy`)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ]
       },
@@ -801,8 +801,8 @@
             "labels": ["&Copy"]
           }
         ],
-        "Windows": "the house word, with its access key",
-        "Linux": "the house word, with its access key"
+        "Windows": "the Edit menu item's word, with its access key",
+        "Linux": "the Edit menu item's word, with its access key"
       },
       {
         "row": "Copy Link Address, `Copy Link Addr&ess`",

@@ -15,7 +15,6 @@ import {
   sidecarPath,
   sidecarSchema,
   styleSheetPath,
-  withoutAccessKey,
 } from "../.claude/skills/translate/rules";
 import { type CatalogTag, SHIPPED_CATALOG_TAGS } from "../packages/shared/i18n/tags";
 import { parseCatalog } from "./i18n-check";
@@ -367,31 +366,8 @@ describe("language sidecars", () => {
         expect(missing).toEqual([]);
       });
 
-      /*
-       * `packages/app/os-role-labels.test.ts` lets the page context menu's
-       * `&Copy` go without a Windows or Linux context because its house word is
-       * Microsoft's and GNOME's word; a language where it isn't needs the split.
-       */
-      test("the page context menu's house Copy is Windows' and Linux's word for Copy", async () => {
-        const catalogPath = path.join(
-          import.meta.dir,
-          `../packages/shared/i18n/locales/${locale}.po`,
-        );
-
-        if (!(await Bun.file(catalogPath).exists())) {
-          return;
-        }
-
-        const catalog = await parseCatalog(await Bun.file(catalogPath).text(), {
-          locale,
-          sourceLocale: "en",
-          filename: catalogPath,
-        });
-
-        const house = Object.entries(catalog).find(
-          ([id, entry]) => (entry.message ?? id) === "&Copy" && !entry.context,
-        )?.[1].translation;
-
+      // Polish's Edit-menu Copy is Kopiuj on Windows and Skopiuj on Linux, so no one word could serve the context menu on both.
+      test("the page context menu's Copy takes the Edit menu's word for Copy on Windows and Linux", async () => {
         const rows = (await loadSidecar(locale)).platformWords.rows;
 
         const wordsFor = (msgid: string) =>
@@ -407,12 +383,8 @@ describe("language sidecars", () => {
             }),
           );
 
-        expect(house, "the catalog's &Copy").toBeTruthy();
-        expect(wordsFor("&Copy"), "a Windows or Linux word for &Copy").toEqual([]);
-        expect(wordsFor("Copy")).toEqual([
-          `Windows ${withoutAccessKey(house ?? "")}`,
-          `Linux ${withoutAccessKey(house ?? "")}`,
-        ]);
+        expect(wordsFor("&Copy")).toHaveLength(2);
+        expect(wordsFor("&Copy")).toEqual(wordsFor("Copy"));
       });
 
       // A table row that settles a sentence is copied into one, where a menu's ellipsis never belongs.

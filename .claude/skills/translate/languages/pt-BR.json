@@ -160,14 +160,14 @@
           {
             "word": "Copiar",
             "source": "(TBX `11991_39848_39867`)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ],
         "Linux": [
           {
             "word": "Copiar",
             "source": "(gtk4 `_Copy`)",
-            "labels": ["Copy"]
+            "labels": ["Copy", "&Copy"]
           }
         ]
       },
@@ -801,8 +801,8 @@
             "labels": ["&Copy"]
           }
         ],
-        "Windows": "the house word, with its access key",
-        "Linux": "the house word, with its access key"
+        "Windows": "the Edit menu item's word, with its access key",
+        "Linux": "the Edit menu item's word, with its access key"
       },
       {
         "row": "Copy Link Address, `Copy Link Addr&ess`",
@@ -1824,6 +1824,20 @@
         "msgid": "Show app links badge",
         "clean": "Mostrar selo da guia de links do app",
         "fault": "Mostrar emblema da guia de links do app"
+      }
+    },
+    {
+      "id": "hard-reload",
+      "msgctxt": null,
+      "msgid": "Hard Reload",
+      "expect": "^Recarregamento Forçado$",
+      "countEnglish": "^Hard Reload$",
+      "countExpect": "recarregamento forçado",
+      "severity": "wrong",
+      "reason": "Chrome's own Hard Reload, Recarregamento forçado, kept as Chrome's noun phrase in the menu bar's title case rather than recast as an infinitive (Chrome 1/1).",
+      "example": {
+        "clean": "Recarregamento Forçado",
+        "fault": "Forçar Recarregamento"
       }
     }
   ],

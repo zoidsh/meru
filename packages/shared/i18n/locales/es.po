@@ -23,7 +23,7 @@ msgstr "Se ha desactivado {conflictName} y se ha cerrado tu sesión en ella en M
 #. On Linux, a finished download's notification acts when clicked; elsewhere, through its button
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "{downloadNotificationAction, select, click {Choose what clicking the notification does.} other {Choose what the notification's button does.}}"
-msgstr "{downloadNotificationAction, select, click {Elige qué ocurre al hacer clic en la notificación.} other {Elige qué hace el botón de la notificación.}}"
+msgstr "{downloadNotificationAction, select, click {Elegir qué ocurre al hacer clic en la notificación.} other {Elegir qué hace el botón de la notificación.}}"
 
 #. Setting that picks what a finished download's notification does: on Linux, clicking it; elsewhere, its button
 #: packages/renderer/routes/settings/notifications.tsx
@@ -131,6 +131,7 @@ msgstr "{workspaceAppsInUse, select, both {A partir de ahora, las aplicaciones d
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
+msgctxt "Linux"
 msgid "&Copy"
 msgstr "&Copiar"
 
@@ -139,6 +140,12 @@ msgstr "&Copiar"
 msgctxt "macOS"
 msgid "&Copy"
 msgstr "Copiar"
+
+#. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
+#: packages/app/context-menu.ts
+msgctxt "Windows"
+msgid "&Copy"
+msgstr "&Copiar"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -1928,7 +1935,7 @@ msgstr "Meru no ofrece esta extensión."
 
 #: packages/app/dialogs.ts
 msgid "Meru installs it when you quit."
-msgstr "Meru la instalará cuando salgas."
+msgstr "Meru instalará esta versión cuando salgas."
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Meru is set as the default mail client."
@@ -3328,7 +3335,7 @@ msgstr "Deslizar entre páginas"
 #. The second Swipe between pages names the macOS setting of that name in System Settings, so it follows Apple's wording for it
 #: packages/renderer/routes/settings/general.tsx
 msgid "Swipe left or right with two fingers on a trackpad to go back or forward. Swipe between pages must also be on in System Settings."
-msgstr "Desliza dos dedos hacia la izquierda o la derecha en un trackpad para retroceder o avanzar. “Deslizar entre páginas” también debe estar activado en Ajustes del Sistema."
+msgstr "Desliza dos dedos hacia la izquierda o la derecha en un trackpad para retroceder o avanzar. “Pasar de página” también debe estar activado en Ajustes del Sistema."
 
 #. Button that confirms moving to the beta release channel
 #: packages/renderer/routes/settings/updates.tsx

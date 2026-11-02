@@ -134,5 +134,10 @@ msgid "Show in folder"
 msgstr "Pokaż w folderze"
 
 #: packages/app/context-menu.ts
-msgid "Copy Lin&k"
-msgstr "Kopiuj lin&k"
+msgid "Copy Link Addr&ess"
+msgstr "Kopiuj adr&es linku"
+
+#: packages/app/context-menu.ts
+msgctxt "macOS"
+msgid "Copy Link Addr&ess"
+msgstr "Kopiuj łącze"

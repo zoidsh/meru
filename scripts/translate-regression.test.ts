@@ -21,7 +21,7 @@ import { loadSidecar } from "../.claude/skills/translate/rules";
  * inside a dot directory such as `.claude`.
  */
 
-const LOCALES = ["de", "ja", "fr"];
+const LOCALES = ["de", "ja", "fr", "pl"];
 
 const CHECK_PREFIX = "check: ";
 
