@@ -14,6 +14,7 @@ import "dayjs/locale/ja";
 import "dayjs/locale/nl";
 import "dayjs/locale/pl";
 import "dayjs/locale/pt-br";
+import "dayjs/locale/sv";
 import calendar from "dayjs/plugin/calendar";
 import isToday from "dayjs/plugin/isToday";
 import localizedFormat from "dayjs/plugin/localizedFormat";

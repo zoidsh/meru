@@ -677,6 +677,13 @@
         "widok łączony": "widok\\p{L}* łączon",
         "zbiorcza": "zbiorcz",
         "łączona": "łączon"
+      },
+      "sv": {
+        "samlad inkorg": "samlad\\w* inkorg",
+        "gemensam inkorg": "gemensam\\w* inkorg",
+        "sammanförda mappar": "sammanf[öo]rd",
+        "kombinerad vy": "kombinerad",
+        "alla inkorgar": "alla inkorgar"
       }
     }
   },
@@ -760,6 +767,13 @@
         "bij opstarten": "bij (het )?opstarten",
         "tijdens opstarten": "tijdens (het )?opstarten",
         "bij starten": "bij (het )?starten"
+      },
+      "sv": {
+        "vid start": "\\bvid start\\b",
+        "vid uppstart": "\\bvid uppstart",
+        "vid programstart": "\\bvid programstart",
+        "vid öppning": "\\bvid öppning",
+        "vid inloggning": "\\bvid inloggning"
       }
     }
   },
@@ -840,6 +854,13 @@
         "filtr witryn wyłudzających informacje": "filtr\\p{L}* (?:witryn )?wyłudz",
         "filtr phishingu": "filtr\\p{L}* (?:anty-?)?phishing",
         "antyphishing": "anty-?phishing"
+      },
+      "sv": {
+        "skydd mot nätfiske": "skydd\\w* mot nätfiske",
+        "nätfiskefilter": "nätfiskefilter",
+        "nätfiskeskydd": "nätfiskeskydd",
+        "skydd mot phishing": "skydd\\w* mot phishing",
+        "phishingfilter": "phishingfilter"
       }
     }
   },
@@ -960,6 +981,13 @@
         "znacznik": "\\bznacznik",
         "wskaźnik": "wskaźnik",
         "licznik": "licznik"
+      },
+      "sv": {
+        "bricka": "brick",
+        "märke": "märke",
+        "aktivitetsikon": "aktivitetsikon",
+        "emblem": "emblem",
+        "symbol": "symbol"
       }
     },
     "exclude": {
@@ -1002,6 +1030,11 @@
         "bursztynowy": "bursztyn",
         "pomarańczowy": "pomarańcz",
         "żółty": "\\bżółt"
+      },
+      "sv": {
+        "bärnsten": "bärnsten",
+        "gul": "\\bgul",
+        "orange": "orange"
       }
     },
     "exclude": {
@@ -1040,6 +1073,10 @@
       "pl": {
         "szmaragdowy": "szmaragd",
         "zielony": "\\bzielon"
+      },
+      "sv": {
+        "smaragd": "smaragd",
+        "grön": "\\bgrön"
       }
     },
     "exclude": {
@@ -1089,6 +1126,11 @@
         "granatowy": "granatow",
         "niebieski": "niebiesk",
         "fioletowy": "fiolet"
+      },
+      "sv": {
+        "indigo": "indigo",
+        "blå": "\\bblå",
+        "violett": "violett|lila"
       }
     },
     "exclude": {
@@ -1148,6 +1190,13 @@
         "niebo": "\\bnieb(?:o|a|ie)\\b",
         "niebieski": "niebiesk",
         "cyjan": "\\bcyjan"
+      },
+      "sv": {
+        "himmelsblå": "himmelsbl[åa]",
+        "ljusblå": "ljusbl[åa]",
+        "himmel": "\\bhimmel\\b",
+        "blå": "\\bbl[åa]",
+        "cyan": "\\bcyan"
       }
     },
     "exclude": {
@@ -1221,6 +1270,14 @@
         "zielony": "\\bzielon",
         "niebieski": "\\bniebiesk",
         "cyjan": "\\bcyjan"
+      },
+      "sv": {
+        "blågrön": "blågrön",
+        "turkos": "turkos",
+        "petrol": "petrol",
+        "teal": "\\bteal\\b",
+        "grön": "\\bgrön",
+        "blå": "\\bblå"
       }
     },
     "exclude": {
@@ -1262,13 +1319,21 @@
         "szerokość": "\\bszerokoś",
         "panoramiczny": "panoramiczn",
         "rozległy": "rozleg"
+      },
+      "sv": {
+        "bred": "\\bbred[at]?\\b",
+        "vid": "\\bvid[at]\\b",
+        "stor": "\\bstor[at]?\\b",
+        "vidvinkel": "vidvinkel",
+        "bredd": "\\bbredd"
       }
     },
     "exclude": {
       "es": ["ancho"],
       "es-419": ["ancho"],
       "pt-BR": ["largura"],
-      "pl": ["szerokość"]
+      "pl": ["szerokość"],
+      "sv": ["bredd"]
     }
   },
   {
@@ -1310,11 +1375,21 @@
         "oznaczenie": "\\boznacze",
         "licznik": "licznik",
         "badge": "\\bbadges?\\b"
+      },
+      "sv": {
+        "märke": "märke",
+        "emblem": "emblem",
+        "bricka": "brick",
+        "ikon": "\\bikon",
+        "skylt": "skylt",
+        "etikett": "etikett",
+        "aktivitetsikon": "aktivitetsikon"
       }
     },
     "exclude": {
       "es-419": ["contador"],
-      "pt-BR": ["emblema", "aviso"]
+      "pt-BR": ["emblema", "aviso"],
+      "sv": ["bricka"]
     }
   }
 ]
