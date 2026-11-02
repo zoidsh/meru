@@ -692,3 +692,18 @@ describe("readRuns", () => {
     await expect(readRuns(await dirWith([]), "de")).rejects.toThrow("holds no de.mqm.json");
   });
 });
+
+describe("TRANSLATE_SCRATCH", () => {
+  test("is where the runs are read from when --dir is left out", async () => {
+    const scratch = await mkdtemp(path.join(tmpdir(), "translate-scratch-"));
+
+    const result = Bun.spawnSync(["bun", ".claude/skills/translate/mqm.ts", "sv"], {
+      cwd: path.join(import.meta.dir, ".."),
+      env: { ...process.env, TRANSLATE_SCRATCH: scratch },
+      stdout: "ignore",
+      stderr: "pipe",
+    });
+
+    expect(result.stderr.toString()).toContain(path.join(scratch, "translate"));
+  });
+});

@@ -11,6 +11,8 @@ import {
   platformEntries,
   type Severity,
   type Sidecar,
+  sidecarTags,
+  styleSheetPath,
   withoutAccessKey,
 } from "./rules";
 
@@ -476,9 +478,117 @@ function summarize(report: Report) {
   return lines.join("\n");
 }
 
+/** Every rule that carries a lead's recorded call, one line each. */
+export function callLines(sidecar: Sidecar) {
+  return (["banned", "pinned"] as const).flatMap((kind) =>
+    sidecar[kind].flatMap((rule) =>
+      rule.call ? [`${kind} ${rule.id} (${rule.call.date}): ${rule.call.reason}`] : [],
+    ),
+  );
+}
+
+const UNRESOLVED = /unresolved/iu;
+
+// The source order's fallback or a recorded call has already picked the word.
+const SETTLED = /\bfallback\b|recorded call/iu;
+
+/*
+ * Every sentence of a rule's reason, every line of the style sheet and every
+ * glossary bullet of the locale that leaves a word unresolved: a vote too thin
+ * to decide, or a source a headless run couldn't read, both waiting on a
+ * speaker or a signed-in browser. One that a fallback or a recorded call
+ * settled is listed apart, after the open ones. Rules that share a sentence,
+ * such as one set of sound names, are listed together.
+ */
+export function unresolvedLines(
+  locale: string,
+  sidecar: Sidecar,
+  styleSheet: string,
+  glossary: string,
+) {
+  const byRules = new Map<
+    string,
+    { kind: string; ids: string[]; sentence: string; settled: boolean }
+  >();
+
+  for (const kind of ["banned", "pinned", "families"] as const) {
+    for (const rule of sidecar[kind]) {
+      const hasCall = "call" in rule && rule.call !== undefined;
+
+      for (const sentence of rule.reason.split(/(?<=[.!?])\s+/u)) {
+        if (!UNRESOLVED.test(sentence)) {
+          continue;
+        }
+
+        const settled = hasCall || SETTLED.test(sentence);
+
+        const key = `${settled} ${kind} ${sentence}`;
+
+        const group = byRules.get(key) ?? { kind, ids: [], sentence, settled };
+
+        group.ids.push(rule.id);
+        byRules.set(key, group);
+      }
+    }
+  }
+
+  const lines = [...byRules.values()].map(({ kind, ids, sentence, settled }) => ({
+    text: `${kind} ${ids.join(", ")}: ${sentence}`,
+    settled,
+  }));
+
+  for (const line of styleSheet.split("\n")) {
+    if (UNRESOLVED.test(line)) {
+      lines.push({
+        text: `style sheet: ${line.replace(/^\s*[-*]\s+/u, "")}`,
+        settled: SETTLED.test(line),
+      });
+    }
+  }
+
+  const bullet = `- ${locale}: `;
+
+  let heading = "";
+
+  for (const line of glossary.split("\n")) {
+    if (line.startsWith("## ")) {
+      heading = line.slice("## ".length);
+    } else if (line.startsWith(bullet) && UNRESOLVED.test(line)) {
+      lines.push({
+        text: `glossary, ${heading}: ${line.slice(bullet.length)}`,
+        settled: SETTLED.test(line),
+      });
+    }
+  }
+
+  const settled = lines.filter((line) => line.settled).map(({ text }) => `  ${text}`);
+
+  return [
+    ...lines.filter((line) => !line.settled).map(({ text }) => text),
+    ...(settled.length > 0 ? ["settled by fallback or call:", ...settled] : []),
+  ];
+}
+
+async function printPerLocale(
+  locale: string | undefined,
+  linesOf: (locale: string) => Promise<string[]>,
+) {
+  for (const tag of locale ? [locale] : await sidecarTags()) {
+    const lines = await linesOf(tag);
+
+    console.log(lines.length === 0 ? `${tag}: none` : `${tag}:`);
+
+    for (const line of lines) {
+      console.log(`  ${line}`);
+    }
+  }
+}
+
 const USAGE = `Usage: bun .claude/skills/translate/check.ts --locale <tag> [--catalog <path.po>]… [--strict]
        bun .claude/skills/translate/check.ts --shipped [--strict]
        bun .claude/skills/translate/check.ts --locale <tag> --mentions <pin id>
+       bun .claude/skills/translate/check.ts --calls [--locale <tag>]
+       bun .claude/skills/translate/check.ts --unresolved [--locale <tag>]
 
 Checks a locale's catalogs against .claude/skills/translate/languages/<tag>.json.
 Without --catalog, it reads both of the locale's catalogs from lingui.config.ts.
@@ -487,6 +597,11 @@ every shipped locale but English and prints an array of reports. --mentions
 lists instead, as JSON, every other entry whose English has that pin's msgid
 as a whole word, or matches its msgidPattern, with its translation, or
 "untranslated": true when it has none, and the pins that already select it.
+--calls lists, per sidecar or for one --locale, every banned or pinned rule
+that carries a recorded call, with its date and reason. --unresolved lists
+the same way every sentence of a rule's reason, every line of the style sheet
+and every glossary bullet of the locale that leaves a word unresolved, those a
+fallback or a recorded call settled under a heading of their own.
 
 Exit codes: 0 no wrong finding, 1 a wrong finding, or any finding with --strict,
 2 the check could not run.`;
@@ -530,12 +645,35 @@ async function run() {
       shipped: { type: "boolean" },
       strict: { type: "boolean" },
       mentions: { type: "string" },
+      calls: { type: "boolean" },
+      unresolved: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
 
   if (values.help) {
     console.log(USAGE);
+
+    return;
+  }
+
+  if (values.calls) {
+    await printPerLocale(values.locale, async (locale) => callLines(await loadSidecar(locale)));
+
+    return;
+  }
+
+  if (values.unresolved) {
+    const glossary = await Bun.file(path.join(import.meta.dir, "glossary.md")).text();
+
+    await printPerLocale(values.locale, async (locale) =>
+      unresolvedLines(
+        locale,
+        await loadSidecar(locale),
+        await Bun.file(styleSheetPath(locale)).text(),
+        glossary,
+      ),
+    );
 
     return;
   }

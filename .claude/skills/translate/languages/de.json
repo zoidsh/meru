@@ -1025,6 +1025,10 @@
       "expect": "Letzte Downloads",
       "severity": "wrong",
       "reason": "The recent download history popup is Letzte Downloads, as in Letzte Downloads anzeigen, never Aktueller Downloadverlauf (the user's call, from Chrome's Letzte Downloads).",
+      "call": {
+        "reason": "The user chose Chrome's Letzte Downloads for the recent downloads popup over Aktueller Downloadverlauf.",
+        "date": "2026-10-31"
+      },
       "example": {
         "msgid": "Recent download history",
         "clean": "Letzte Downloads",
@@ -1299,6 +1303,10 @@
       "expect": "^Leinen$",
       "severity": "wrong",
       "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Brise, Klangspiel, Duett, Klopfen and Leinen, Linen translated as the user settled for German.",
+      "call": {
+        "reason": "The user settled that the sound Linen is translated, as Leinen, rather than left in English.",
+        "date": "2026-10-31"
+      },
       "example": {
         "fault": "Linen"
       }

@@ -1497,6 +1497,10 @@
       "expect": "^Linnen$",
       "severity": "wrong",
       "reason": "Glossary, agent-chosen, unresolved by the app count (no name is in more than two of the seven apps): the notification sounds are Bries, Klokkenspel, Duet, Klop and Linnen, Linen translated as the user settled for German.",
+      "call": {
+        "reason": "Linen is translated, as Linnen, following the user's call for German.",
+        "date": "2026-10-31"
+      },
       "example": {
         "fault": "Linen"
       }

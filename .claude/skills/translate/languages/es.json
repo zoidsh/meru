@@ -1561,6 +1561,10 @@
       "expect": "^Amplio$",
       "severity": "wrong",
       "reason": "The Width setting's Wide option is Amplio, never Ancho, by a recorded call (source order 4b; Tim delegates language judgment to the lead): Chrome's Ancho is Width's own word here, and a select can't show its label as one of its values. Amplio is the apps' word with Width's Ancho out of the vote (agent-chosen, unresolved by the app count: amplio: 2 of 7 (Thunderbird, LibreOffice)), and pairs with Estrecho, as LibreOffice's Estrechos and Amplios do.",
+      "call": {
+        "reason": "Amplio over Chrome's Ancho, which is Width's own word, so the select would show its label as one of its values.",
+        "date": "2026-11-01"
+      },
       "example": {
         "clean": "Amplio",
         "fault": "Ancho"

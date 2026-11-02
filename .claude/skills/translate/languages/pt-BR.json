@@ -1548,6 +1548,10 @@
       "expect": "^Larga$",
       "severity": "wrong",
       "reason": "The Width setting's Wide option is Larga, agreeing with a largura, by a recorded call (source order 4b; Tim delegates language judgment to the lead): Chrome's one Wide, Espaçadas, names spacing, not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: largo: 2 of 7 (Thunderbird, Firefox), thin, taken by the same call).",
+      "call": {
+        "reason": "Larga, agreeing with a largura, since Chrome's one Wide, Espaçadas, names spacing rather than a sidebar's size.",
+        "date": "2026-11-01"
+      },
       "example": {
         "clean": "Larga",
         "fault": "Espaçadas"
@@ -1559,6 +1563,10 @@
       "expect": "^Estreita$",
       "severity": "wrong",
       "reason": "The Width setting's Narrow option is Estreita, agreeing with a largura and pairing with Larga, by the same recorded call as the wide pin; Chrome has no Narrow option of its own.",
+      "call": {
+        "reason": "Estreita, agreeing with a largura and pairing with Larga, by the wide pin's call.",
+        "date": "2026-11-01"
+      },
       "example": {
         "clean": "Estreita",
         "fault": "Estreito"

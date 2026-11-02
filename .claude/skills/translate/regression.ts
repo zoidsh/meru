@@ -2,7 +2,7 @@ import { exists, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { checkCatalogs, type Report } from "./check";
-import { type Catalog, dumpCatalogs, parse, sliceGlossary } from "./collect";
+import { type Catalog, dumpCatalogs, parse, scratchDir, sliceGlossary } from "./collect";
 import {
   type EntryFinding,
   CATEGORIES,
@@ -990,7 +990,10 @@ prepare  writes each measurement's inputs from the set and prints the reviewer
 run      prepares, runs every reviewer of every locale and measurement in parallel,
          headless, each logging beside its findings file, then scores.
 score    reports each measurement's recall per severity and false positives, then
-         the range across the measurements.`;
+         the range across the measurements.
+
+--dir defaults to $TRANSLATE_SCRATCH/regression when that is set, and with
+--agent reviewer to $TRANSLATE_SCRATCH/regression-reviewer.`;
 
 const AGENTS = {
   mqm: { prepare, score },
@@ -1017,8 +1020,11 @@ async function run() {
 
   const agent = AGENTS[values.agent as keyof typeof AGENTS];
 
+  const givenDir =
+    values.dir ?? scratchDir(values.agent === "reviewer" ? "regression-reviewer" : "regression");
+
   if (
-    !values.dir ||
+    !givenDir ||
     !agent ||
     !["prepare", "run", "score"].includes(mode ?? "") ||
     locales.length === 0
@@ -1028,7 +1034,7 @@ async function run() {
     process.exit(2);
   }
 
-  const dir = path.resolve(values.dir);
+  const dir = path.resolve(givenDir);
 
   const problems: string[] = [];
 

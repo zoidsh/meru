@@ -1,12 +1,11 @@
-import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import {
-  LANGUAGES_DIR,
   loadSidecar,
   PLATFORMS,
   type PlatformRow,
   type Sidecar,
+  sidecarTags,
   styleSheetPath,
 } from "./rules";
 
@@ -99,12 +98,7 @@ export function writeGeneratedTable(markdown: string, locale: string, table: str
 async function run() {
   const { positionals } = parseArgs({ allowPositionals: true });
 
-  const locales =
-    positionals.length > 0
-      ? positionals
-      : (await readdir(LANGUAGES_DIR))
-          .filter((file) => file.endsWith(".json"))
-          .map((file) => file.slice(0, -".json".length));
+  const locales = positionals.length > 0 ? positionals : await sidecarTags();
 
   const paths: string[] = [];
 

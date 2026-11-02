@@ -671,10 +671,42 @@ describe("language sidecars", () => {
     expect(sidecarSchema.safeParse(planted).success).toBe(false);
   });
 
+  test("a rule's call is a one-line reason with its date", async () => {
+    const sidecar = await Bun.file(sidecarPath("fr")).json();
+
+    const withCall = (call: unknown) => ({
+      ...sidecar,
+      pinned: [{ ...sidecar.pinned[0], call }, ...sidecar.pinned.slice(1)],
+    });
+
+    expect(
+      sidecarSchema.safeParse(
+        withCall({ reason: "Chrome's word is Width's own", date: "2026-11-01" }),
+      ).success,
+    ).toBe(true);
+    expect(sidecarSchema.safeParse(withCall({ reason: "No date" })).success).toBe(false);
+    expect(
+      sidecarSchema.safeParse(withCall({ reason: "Two\nlines", date: "2026-11-01" })).success,
+    ).toBe(false);
+    expect(
+      sidecarSchema.safeParse(withCall({ reason: "A date", date: "1 November" })).success,
+    ).toBe(false);
+  });
+
   for (const locale of locales) {
     describe(locale, () => {
       test("gives every rule an id of its own", async () => {
         expect(duplicateRuleIds(await Bun.file(sidecarPath(locale)).json())).toEqual([]);
+      });
+
+      test("a rule whose reason records a call or an exception carries a call", async () => {
+        const sidecar = await loadSidecar(locale);
+
+        expect(
+          [...sidecar.banned, ...sidecar.pinned]
+            .filter((rule) => /\b(?:call|exception)\b/iu.test(rule.reason) && !rule.call)
+            .map((rule) => rule.id),
+        ).toEqual([]);
       });
 
       test("the style sheet's Platform words table is the one its sidecar writes", async () => {

@@ -483,3 +483,19 @@ describe("mergeBase", () => {
     }
   });
 });
+
+describe("TRANSLATE_SCRATCH", () => {
+  test("is where --dump writes when --out is left out", async () => {
+    const scratch = await mkdtemp(path.join(tmpdir(), "translate-scratch-"));
+
+    const result = Bun.spawnSync(["bun", ".claude/skills/translate/collect.ts", "--dump", "sv"], {
+      cwd: path.join(import.meta.dir, ".."),
+      env: { ...process.env, TRANSLATE_SCRATCH: scratch },
+      stdout: "ignore",
+      stderr: "pipe",
+    });
+
+    expect(result.stderr.toString()).toBe("");
+    expect(await Bun.file(path.join(scratch, "translate", "sv.dump.txt")).exists()).toBe(true);
+  });
+});
