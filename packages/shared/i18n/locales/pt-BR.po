@@ -2938,15 +2938,6 @@ msgid "Settings"
 msgstr "Configurações"
 
 #. A menu or a menu item in Meru's menu bar
-#: packages/app/menu.ts
-msgid "Share"
-msgstr "Compartilhar"
-
-#: packages/app/context-menu.ts
-msgctxt "context menu"
-msgid "Share"
-msgstr "Compartilhar"
-
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/context-menu.ts
 #: packages/app/menu.ts
