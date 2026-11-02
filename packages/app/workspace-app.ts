@@ -35,6 +35,7 @@ import { extensions } from "./extensions";
 import { ipc } from "./ipc";
 import { copyText } from "./lib/clipboard";
 import { loadUrl, loadUrlOrRestoreNavigationHistory } from "./lib/load-url";
+import { getNativeCancelLabel } from "./lib/native-cancel-label";
 import {
   createChildWebContentsView,
   openViewDevToolsOnLaunch,
@@ -238,7 +239,9 @@ export class WorkspaceApp {
       type: "info",
       message,
       detail,
-      buttons: touchIdRequiresUpgrade ? [t`Upgrade to Meru Pro`, t`Cancel`] : [getNativeOkLabel()],
+      buttons: touchIdRequiresUpgrade
+        ? [t`Upgrade to Meru Pro`, getNativeCancelLabel()]
+        : [getNativeOkLabel()],
       defaultId: 0,
       cancelId: touchIdRequiresUpgrade ? 1 : 0,
       checkboxLabel: t`Don't show again`,

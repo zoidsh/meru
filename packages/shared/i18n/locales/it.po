@@ -590,12 +590,6 @@ msgid "C&opy Image Address"
 msgstr "Copia indirizzo immagine"
 
 #. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
-#: packages/app/dialogs.ts
-#: packages/app/license-key.ts
-#: packages/app/menu.ts
-#: packages/app/protocol/index.ts
-#: packages/app/url.ts
-#: packages/app/workspace-app.ts
 #: packages/renderer/components/config-select-field.tsx
 #: packages/renderer/desktop-sources.tsx
 #: packages/renderer/routes/settings/accounts.tsx
@@ -603,6 +597,24 @@ msgstr "Copia indirizzo immagine"
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 #: packages/renderer/routes/settings/license.tsx
 #: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Cancel"
+msgstr "Annulla"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "Linux"
+msgid "Cancel"
+msgstr "Annulla"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "macOS"
+msgid "Cancel"
+msgstr "Annulla"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "Windows"
 msgid "Cancel"
 msgstr "Annulla"
 
@@ -725,6 +737,12 @@ msgctxt "context menu"
 msgid "Close"
 msgstr "Chiudi"
 
+#. File menu item that closes the window
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Close"
+msgstr "Chiudi"
+
 #. Button on a tab in the vertical tabs strip that closes the tab
 #: packages/renderer/components/vertical-tabs.tsx
 msgctxt "tab"
@@ -733,7 +751,7 @@ msgstr "Chiudi"
 
 #. File menu item that closes the window
 #: packages/app/menu.ts
-msgctxt "window"
+msgctxt "Windows"
 msgid "Close"
 msgstr "Chiudi"
 
@@ -1508,6 +1526,19 @@ msgstr "Accelerazione hardware"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Help"
+msgstr "Aiuto"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Help"
+msgstr "Aiuto"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Help"
 msgstr "Guida"
 
@@ -2900,13 +2931,19 @@ msgid "Settings"
 msgstr "Impostazioni"
 
 #. A menu or a menu item in Meru's menu bar
-#. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Share"
 msgstr "Condividi"
 
 #: packages/app/context-menu.ts
 msgctxt "context menu"
+msgid "Share"
+msgstr "Condividi"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/context-menu.ts
+#: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Share"
 msgstr "Condividi"
 

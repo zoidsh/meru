@@ -356,11 +356,11 @@ msgstr "Zeitfenster hinzufügen"
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Add Workspace apps to the launcher on the right of the titlebar."
-msgstr "Füge dem Launcher rechts in der Titelleiste Workspace-Apps hinzu."
+msgstr "Dem Launcher rechts in der Titelleiste Workspace-Apps hinzufügen."
 
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "Add your own CSS to personalize the Gmail interface further. Changes take effect after a restart."
-msgstr "Füge eigenes CSS hinzu, um die Gmail-Oberfläche weiter anzupassen. Änderungen werden nach einem Neustart wirksam."
+msgstr "Eigenes CSS hinzufügen, um die Gmail-Oberfläche weiter anzupassen. Änderungen werden nach einem Neustart wirksam."
 
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Heading of the Gmail page's section for settings most people leave alone
@@ -590,12 +590,6 @@ msgid "C&opy Image Address"
 msgstr "Bildadresse kopieren"
 
 #. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
-#: packages/app/dialogs.ts
-#: packages/app/license-key.ts
-#: packages/app/menu.ts
-#: packages/app/protocol/index.ts
-#: packages/app/url.ts
-#: packages/app/workspace-app.ts
 #: packages/renderer/components/config-select-field.tsx
 #: packages/renderer/desktop-sources.tsx
 #: packages/renderer/routes/settings/accounts.tsx
@@ -603,6 +597,24 @@ msgstr "Bildadresse kopieren"
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 #: packages/renderer/routes/settings/license.tsx
 #: packages/renderer/routes/settings/saved-searches.tsx
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "Linux"
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "macOS"
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#. The Cancel button of a native dialog
+#: packages/app/lib/native-cancel-label.ts
+msgctxt "Windows"
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -673,12 +685,12 @@ msgstr "Wähle Meru im Ordner „Programme“ aus."
 #: packages/renderer/routes/settings/appearance.tsx
 msgctxt "Linux"
 msgid "Choose the color of the system tray icon."
-msgstr "Wähle die Farbe des Symbols im Statusbereich aus."
+msgstr "Die Farbe des Symbols im Statusbereich auswählen."
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgctxt "Windows"
 msgid "Choose the color of the system tray icon."
-msgstr "Wähle die Farbe des Symbols im Infobereich aus."
+msgstr "Die Farbe des Symbols im Infobereich auswählen."
 
 #. Title of the window that picks a screen or a window to share in a Google Meet call
 #: packages/app/account.ts
@@ -688,11 +700,11 @@ msgstr "Wähle aus, was du teilen möchtest"
 #. Marks as important names Gmail's Important marker, so important follows Gmail's word for it
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Choose whether every new email or only the emails Gmail marks as important shows a notification."
-msgstr "Lege fest, ob für jede neue E-Mail oder nur für E-Mails, die Gmail als wichtig markiert, eine Benachrichtigung angezeigt wird."
+msgstr "Festlegen, ob für jede neue E-Mail oder nur für E-Mails, die Gmail als wichtig markiert, eine Benachrichtigung angezeigt wird."
 
 #: packages/renderer/routes/settings/updates.tsx
 msgid "Choose which releases to receive. The beta channel gets upcoming features early."
-msgstr "Lege fest, welche Versionen du erhältst. Der Beta-Kanal bekommt neue Funktionen früher."
+msgstr "Festlegen, welche Versionen du erhältst. Der Beta-Kanal bekommt neue Funktionen früher."
 
 #. Button that clears the whole download history
 #: packages/renderer/routes/download-history.tsx
@@ -725,6 +737,12 @@ msgctxt "context menu"
 msgid "Close"
 msgstr "Schließen"
 
+#. File menu item that closes the window
+#: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Close"
+msgstr "Schließen"
+
 #. Button on a tab in the vertical tabs strip that closes the tab
 #: packages/renderer/components/vertical-tabs.tsx
 msgctxt "tab"
@@ -733,7 +751,7 @@ msgstr "Schließen"
 
 #. File menu item that closes the window
 #: packages/app/menu.ts
-msgctxt "window"
+msgctxt "Windows"
 msgid "Close"
 msgstr "Schließen"
 
@@ -1508,6 +1526,19 @@ msgstr "Hardwarebeschleunigung"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
+msgctxt "Linux"
+msgid "Help"
+msgstr "Hilfe"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "macOS"
+msgid "Help"
+msgstr "Hilfe"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/menu.ts
+msgctxt "Windows"
 msgid "Help"
 msgstr "Hilfe"
 
@@ -2779,7 +2810,7 @@ msgstr "&Alles markieren"
 
 #: packages/renderer/routes/settings/languages.tsx
 msgid "Select additional languages for spellchecking alongside the system language."
-msgstr "Wähle neben der Systemsprache weitere Sprachen für die Rechtschreibprüfung aus."
+msgstr "Neben der Systemsprache weitere Sprachen für die Rechtschreibprüfung auswählen."
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -2835,15 +2866,15 @@ msgstr "Vorherigen Tab auswählen"
 
 #: packages/renderer/routes/settings/appearance.tsx
 msgid "Select the application theme."
-msgstr "Wähle das Design der App aus."
+msgstr "Das Design der App auswählen."
 
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Select the sound to play for notifications."
-msgstr "Wähle den Ton für Benachrichtigungen aus."
+msgstr "Den Ton für Benachrichtigungen auswählen."
 
 #: packages/renderer/routes/settings/workspace-apps.tsx
 msgid "Select the Workspace apps that open in the external browser instead of the app."
-msgstr "Wähle die Workspace-Apps aus, die statt in der App im externen Browser geöffnet werden."
+msgstr "Die Workspace-Apps auswählen, die statt in der App im externen Browser geöffnet werden."
 
 #. Settings is the item in the 1Password app, so use the word 1Password shows in that language
 #: packages/renderer/routes/settings/extensions.tsx
@@ -2861,15 +2892,15 @@ msgstr "Einen User-Agent senden, der Meru und Electron nennt, statt des User-Age
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Set Meru as the default mail client to handle email links and related protocols."
-msgstr "Lege Meru als Standard-E-Mail-App fest, um E-Mail-Links und verwandte Protokolle zu öffnen."
+msgstr "Meru als Standard-E-Mail-App festlegen, um E-Mail-Links und verwandte Protokolle zu öffnen."
 
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Set the time windows when notifications are active. Outside them, notifications stay silent. Leave the list empty to allow notifications at any time."
-msgstr "Lege die Zeitfenster fest, in denen Benachrichtigungen aktiv sind. Außerhalb davon bleiben Benachrichtigungen stumm. Lass die Liste leer, um Benachrichtigungen jederzeit zu erlauben."
+msgstr "Die Zeitfenster festlegen, in denen Benachrichtigungen aktiv sind. Außerhalb davon bleiben Benachrichtigungen stumm. Lass die Liste leer, um Benachrichtigungen jederzeit zu erlauben."
 
 #: packages/renderer/routes/settings/notifications.tsx
 msgid "Set the volume level for notification sounds."
-msgstr "Lege die Lautstärke für Benachrichtigungstöne fest."
+msgstr "Die Lautstärke für Benachrichtigungstöne festlegen."
 
 #. Button that opens the steps for connecting the extension to the 1Password desktop app
 #: packages/renderer/routes/settings/extensions.tsx
@@ -2900,13 +2931,19 @@ msgid "Settings"
 msgstr "Einstellungen"
 
 #. A menu or a menu item in Meru's menu bar
-#. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Share"
 msgstr "Teilen"
 
 #: packages/app/context-menu.ts
 msgctxt "context menu"
+msgid "Share"
+msgstr "Teilen"
+
+#. A menu or a menu item in Meru's menu bar
+#: packages/app/context-menu.ts
+#: packages/app/menu.ts
+msgctxt "macOS"
 msgid "Share"
 msgstr "Teilen"
 
@@ -3774,12 +3811,12 @@ msgstr "Fenster"
 #. A categorized inbox is Gmail's own inbox type of that name, with categories such as Primary and Promotions, so it follows Gmail's words for them
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "With a categorized inbox, choose which categories are watched for new email notifications and included in the unified inbox."
-msgstr "Lege bei einem Posteingang mit Kategorien fest, welche Kategorien auf neue E-Mails für Benachrichtigungen überwacht und in den kombinierten Posteingang aufgenommen werden."
+msgstr "Bei einem Posteingang mit Kategorien festlegen, welche Kategorien auf neue E-Mails für Benachrichtigungen überwacht und in den kombinierten Posteingang aufgenommen werden."
 
 #. Multiple inboxes is Gmail's own inbox type of that name, so it follows Gmail's word for it
 #: packages/renderer/routes/settings/gmail/index.tsx
 msgid "With multiple inboxes, choose which sections count toward the unread count shown in the app. The default combines every section."
-msgstr "Lege bei mehreren Posteingängen fest, welche Abschnitte in die angezeigte Anzahl ungelesener E-Mails einfließen. Standardmäßig werden alle Abschnitte zusammengezählt."
+msgstr "Bei mehreren Posteingängen festlegen, welche Abschnitte in die angezeigte Anzahl ungelesener E-Mails einfließen. Standardmäßig werden alle Abschnitte zusammengezählt."
 
 #. Example of a Gmail label's name, shown in the empty Label field
 #. Example of an account's label, shown in the empty Label field

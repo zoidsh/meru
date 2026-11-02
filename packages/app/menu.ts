@@ -13,6 +13,7 @@ import { downloads } from "@/downloads";
 import { ipc } from "@/ipc";
 import { copyText } from "@/lib/clipboard";
 import { log } from "@/lib/log";
+import { getNativeCancelLabel } from "@/lib/native-cancel-label";
 import { relaunchApp } from "@/lib/relaunch";
 import { main } from "@/main";
 import { appUpdater } from "@/updater";
@@ -290,14 +291,14 @@ export class AppMenu {
     // `click`, so elsewhere a Share item would have nothing to do.
     const macOSShareMessageItem: MenuItemConstructorOptions = copyOrShareMessageLink
       ? {
-          label: t`Share`,
+          label: t({ message: "Share", context: "macOS" }),
           role: "shareMenu",
           sharingItem: {
             urls: [copyOrShareMessageLink],
           },
         }
       : {
-          label: t`Share`,
+          label: t({ message: "Share", context: "macOS" }),
           enabled: false,
           submenu: [],
         };
@@ -418,13 +419,19 @@ export class AppMenu {
             type: "separator",
           },
           {
-            label: platform.isMacOS
-              ? t({ message: "Close Window", context: "macOS" })
-              : t({
-                  message: "Close",
-                  context: "window",
-                  comment: "File menu item that closes the window",
-                }),
+            label: byPlatform(platform, {
+              macOS: t({ message: "Close Window", context: "macOS" }),
+              windows: t({
+                message: "Close",
+                context: "Windows",
+                comment: "File menu item that closes the window",
+              }),
+              linux: t({
+                message: "Close",
+                context: "Linux",
+                comment: "File menu item that closes the window",
+              }),
+            }),
             role: "close",
           },
           ...(platform.isMacOS ? [] : [nonMacOSMinimizeItem]),
@@ -805,7 +812,11 @@ export class AppMenu {
       },
       ...(platform.isMacOS ? macOSWindowMenuItems : []),
       {
-        label: t`Help`,
+        label: byPlatform(platform, {
+          macOS: t({ message: "Help", context: "macOS" }),
+          windows: t({ message: "Help", context: "Windows" }),
+          linux: t({ message: "Help", context: "Linux" }),
+        }),
         role: "help",
         submenu: [
           {
@@ -904,7 +915,7 @@ export class AppMenu {
                   const { response } = await dialog.showMessageBox({
                     type: "warning",
                     buttons: [
-                      t`Cancel`,
+                      getNativeCancelLabel(),
                       t({
                         message: "Reset",
                         comment: "Button in the Reset App dialog that erases Meru's data",

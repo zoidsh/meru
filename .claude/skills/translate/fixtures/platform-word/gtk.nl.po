@@ -1,0 +1,20 @@
+msgid ""
+msgstr ""
+"Language: nl\n"
+
+msgid "_Copy"
+msgstr "_Kopiëren"
+
+msgctxt "keyboard label"
+msgid "Help"
+msgstr "Help"
+
+msgid "Quit %s"
+msgstr "%s afsluiten"
+
+#, fuzzy
+msgid "Copy"
+msgstr "Kopie"
+
+msgid "_Check for Updates..."
+msgstr ""

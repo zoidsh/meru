@@ -1,0 +1,10 @@
+msgid ""
+msgstr ""
+"Language: ja\n"
+
+msgctxt "shortcuts dialog"
+msgid "Copy"
+msgstr "コピー"
+
+msgid "_Copy"
+msgstr "コピー(_C)"
