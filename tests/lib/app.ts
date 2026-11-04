@@ -314,7 +314,7 @@ async function launchOnUserDataDir(
   options: UseAppOptions,
 ): Promise<LaunchedApp> {
   // The built binary, not `electron .`: only a packaged app has isPackaged
-  // true, which is what sends loadRenderer down its production loadFile
+  // true, which is what sends loadRenderer down its production `file://`
   // branch. Running the app the way it ships is the point.
   const app = await _electron.launch({
     executablePath: EXECUTABLE_PATH,

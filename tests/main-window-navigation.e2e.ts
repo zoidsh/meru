@@ -5,6 +5,7 @@
  */
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
+import { expectReturnFromNavigation, findRendererPage } from "./lib/renderer-navigation";
 import { openSettingsPage } from "./lib/settings";
 
 const NAVIGATED_URL = "https://example.com/nav-guard";
@@ -95,3 +96,9 @@ test("settings routes still switch within the page", async () => {
 
   expect(await readOpenedUrls()).toEqual([]);
 });
+
+for (const url of ["about:blank", "about:srcdoc"]) {
+  test(`the page comes back from ${url} with its bridge`, async () => {
+    await expectReturnFromNavigation(meru, await findRendererPage(meru, "main"), url);
+  });
+}
