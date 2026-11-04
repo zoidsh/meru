@@ -1,0 +1,85 @@
+import path from "node:path";
+
+const PREFERRED_EXTENSIONS = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/jpg", "jpg"],
+  ["image/png", "png"],
+  ["image/gif", "gif"],
+  ["image/webp", "webp"],
+  ["image/svg+xml", "svg"],
+  ["image/bmp", "bmp"],
+  ["image/tiff", "tiff"],
+  ["image/heic", "heic"],
+  ["image/avif", "avif"],
+  ["image/x-icon", "ico"],
+  ["image/vnd.microsoft.icon", "ico"],
+  ["application/pdf", "pdf"],
+  ["text/plain", "txt"],
+  ["text/html", "html"],
+  ["text/css", "css"],
+  ["text/csv", "csv"],
+  ["application/json", "json"],
+  ["application/xml", "xml"],
+  ["text/xml", "xml"],
+  ["application/rtf", "rtf"],
+  ["text/rtf", "rtf"],
+  ["application/msword", "doc"],
+  ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx"],
+  ["application/vnd.ms-excel", "xls"],
+  ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx"],
+  ["application/vnd.ms-powerpoint", "ppt"],
+  ["application/vnd.openxmlformats-officedocument.presentationml.presentation", "pptx"],
+  ["application/vnd.oasis.opendocument.text", "odt"],
+  ["application/vnd.oasis.opendocument.spreadsheet", "ods"],
+  ["application/vnd.oasis.opendocument.presentation", "odp"],
+  ["text/calendar", "ics"],
+  ["application/zip", "zip"],
+  ["application/x-zip-compressed", "zip"],
+  ["application/gzip", "gz"],
+  ["application/x-gzip", "gz"],
+  ["application/x-tar", "tar"],
+  ["application/x-7z-compressed", "7z"],
+  ["application/vnd.rar", "rar"],
+  ["application/x-rar-compressed", "rar"],
+  ["audio/mpeg", "mp3"],
+  ["audio/wav", "wav"],
+  ["audio/x-wav", "wav"],
+  ["audio/ogg", "ogg"],
+  ["audio/mp4", "m4a"],
+  ["audio/x-m4a", "m4a"],
+  ["video/mp4", "mp4"],
+  ["video/webm", "webm"],
+  ["video/quicktime", "mov"],
+]);
+
+/** Adds the extension a file of this type usually has, when the name has none and the type is known. */
+export function withPreferredExtension(fileName: string, mimeType: string) {
+  if (path.extname(fileName)) {
+    return fileName;
+  }
+
+  const extension = PREFERRED_EXTENSIONS.get((mimeType.split(";")[0] ?? "").trim().toLowerCase());
+
+  return extension ? `${fileName}.${extension}` : fileName;
+}
+
+function nextPath(filePath: string) {
+  const extension = path.extname(filePath);
+
+  const name = path.basename(filePath, extension);
+
+  const [, base = name, number = "0"] = /^(.*)\((\d+)\)$/.exec(name) ?? [];
+
+  return path.join(path.dirname(filePath), `${base.trim()} (${Number(number) + 1})${extension}`);
+}
+
+/** The path itself, or the first of `name (1).ext`, `name (2).ext` and so on that isn't taken. */
+export function findUnusedPath(filePath: string, isTaken: (candidate: string) => boolean) {
+  let candidate = filePath;
+
+  while (isTaken(candidate)) {
+    candidate = nextPath(candidate);
+  }
+
+  return candidate;
+}

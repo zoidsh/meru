@@ -181,10 +181,9 @@ test("Save Image As asks where to save, starting in the configured location, wit
   await rightClick("#image");
 
   /*
-   * The listener goes on after the click because `download()` adds its own during
-   * the click, and this one has to read what every other listener left. The item
-   * is cancelled before Electron gets to open the dialog, which it does only once
-   * every listener has returned.
+   * The listener goes on after the app's own, because it has to read what they
+   * left. The item is cancelled before Electron gets to open the dialog, which
+   * it does only once every listener has returned.
    */
   const started = await meru.app.evaluate(({ webContents }, url) => {
     const main = globalThis as MainProcessGlobals;

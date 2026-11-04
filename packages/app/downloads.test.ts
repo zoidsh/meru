@@ -478,6 +478,15 @@ describe("the file name", () => {
     ["video/mp4", "mp4"],
     ["video/webm", "webm"],
     ["video/quicktime", "mov"],
+    ["image/jpg", "jpg"],
+    ["image/vnd.microsoft.icon", "ico"],
+    ["text/xml", "xml"],
+    ["text/rtf", "rtf"],
+    ["application/x-zip-compressed", "zip"],
+    ["application/x-gzip", "gz"],
+    ["application/x-rar-compressed", "rar"],
+    ["audio/x-wav", "wav"],
+    ["audio/x-m4a", "m4a"],
   ])("a name with no extension and the type %s gets .%s", (mimeType, extension) => {
     const item = arrive({ filename: "attachment", mimeType });
 
