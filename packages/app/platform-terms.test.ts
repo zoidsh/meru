@@ -1,26 +1,20 @@
-import { beforeAll, describe, expect, mock, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { compileMessageOrThrow } from "@lingui/message-utils/compileMessage";
 import { generateMessageId } from "@lingui/message-utils/generateMessageId";
 import { i18n } from "@meru/shared/i18n";
 import type { MenuItemConstructorOptions } from "electron";
-import type { Labels } from "electron-context-menu";
 import {
   built,
   mockMenuDependencies,
   PLATFORM_CONTEXTS,
   type PlatformContext,
+  restoreProcessPlatform,
+  rightClick,
   setPlatform,
+  setProcessPlatform,
 } from "./test/menu-mocks";
 
-let contextMenuLabels: Labels = {};
-
 mockMenuDependencies();
-
-mock.module("electron-context-menu", () => ({
-  default: (options: { labels: Labels }) => {
-    contextMenuLabels = options.labels;
-  },
-}));
 
 const { AppMenu } = await import("./menu");
 
@@ -45,7 +39,8 @@ const MENU_MESSAGES = [
   "Quit {appName}",
 ];
 
-const CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
+/** The context menu's messages, by item id. */
+const CONTEXT_MENU_MESSAGES: Record<string, string> = {
   cut: "Cu&t",
   paste: "&Paste",
   pasteAndMatchStyle: "Paste and &Match Style",
@@ -55,8 +50,8 @@ const CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
 /** An OS label only macOS shows, which takes Apple's word through the macOS message alone. */
 const MACOS_ONLY_MENU_MESSAGE = "Window";
 
-/** macOS never shows electron-context-menu's Select All. */
-const NON_MACOS_CONTEXT_MENU_MESSAGES: Partial<Record<keyof Labels, string>> = {
+/** macOS never shows the context menu's Select All. */
+const NON_MACOS_CONTEXT_MENU_MESSAGES: Record<string, string> = {
   selectAll: "Select &All",
 };
 
@@ -101,11 +96,17 @@ function collectLabels(items: MenuItemConstructorOptions[]): string[] {
   ]);
 }
 
+afterAll(() => {
+  restoreProcessPlatform();
+});
+
 describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
   beforeAll(() => {
     activatePlatformMarkedCatalog();
 
     setPlatform(context);
+
+    setProcessPlatform(context);
   });
 
   test("the application menu uses the platform's message for each OS label", () => {
@@ -158,15 +159,26 @@ describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
   });
 
   test("the page context menu uses the platform's message for each OS label", () => {
-    setupWindowContextMenu({} as Parameters<typeof setupWindowContextMenu>[0]);
+    // An image in a text field, the one click that shows every one of them.
+    const items = rightClick(
+      setupWindowContextMenu,
+      { webContents: { getURL: () => "https://docs.google.com/document/d/1/" } },
+      {
+        isEditable: true,
+        selectionText: "Meru",
+        mediaType: "image",
+        srcURL: "https://example.com/image.png",
+        pageURL: "https://docs.google.com/document/d/1/",
+      },
+    );
 
     const expectedLabels = {
       ...CONTEXT_MENU_MESSAGES,
       ...(context === "macOS" ? {} : NON_MACOS_CONTEXT_MENU_MESSAGES),
     };
 
-    for (const [key, message] of Object.entries(expectedLabels)) {
-      expect(contextMenuLabels[key as keyof Labels]).toBe(markedTranslation(context, message));
+    for (const [id, message] of Object.entries(expectedLabels)) {
+      expect(items.find((item) => item.id === id)?.label).toBe(markedTranslation(context, message));
     }
   });
 });

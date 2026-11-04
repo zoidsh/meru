@@ -62,6 +62,34 @@ function renderPage(pageTitle: string) {
 `;
 }
 
+const CONTEXT_MENU_PATH = "/context-menu/";
+
+/** A single gray pixel, drawn large enough to right-click. */
+const CONTEXT_MENU_IMAGE = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4nGNgAAAAAgABSK+kcQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+/**
+ * One of everything the context menu offers its own items for. Each address
+ * carries `token`, so what lands on the clipboard can only have come from this
+ * run.
+ */
+function renderContextMenuPage(token: string) {
+  return `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Context Menu Stand-In</title></head>
+<body>
+<p><a id="link" href="https://example.com/${token}/link">A link</a></p>
+<p><a id="link-without-text" href="https://example.com/${token}/no-text" style="display: block; width: 64px; height: 24px; background: gray"></a></p>
+<p><img id="image" src="${CONTEXT_MENU_PATH}${token}/image.png" alt="" width="64" height="64"></p>
+<p><a id="email" href="mailto:${token}@example.com">An email address</a></p>
+<p><input id="input" value="Meru"></p>
+</body>
+</html>
+`;
+}
+
 function respond(request: IncomingMessage, response: ServerResponse) {
   /*
    * Resolved against the request's own authority rather than a fixed host, so
@@ -126,6 +154,22 @@ function respond(request: IncomingMessage, response: ServerResponse) {
     return;
   }
 
+  if (requestUrl.pathname.startsWith(CONTEXT_MENU_PATH)) {
+    const [token, file] = requestUrl.pathname.slice(CONTEXT_MENU_PATH.length).split("/");
+
+    if (file === "image.png") {
+      response.writeHead(200, { "content-type": "image/png" });
+
+      response.end(CONTEXT_MENU_IMAGE);
+    } else {
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+
+      response.end(renderContextMenuPage(token ?? ""));
+    }
+
+    return;
+  }
+
   if (requestUrl.pathname === "/download") {
     /*
      * The attachment disposition is what makes this a download rather than a
@@ -152,6 +196,8 @@ export type TestServer = {
   origin: string;
   /** The URL of a page carrying the given title. */
   pageUrl(pageTitle: string): string;
+  /** The URL of a page with a link, an image, an email address and a text field, each carrying `token`. */
+  contextMenuPageUrl(token: string): string;
   /** What `MERU_TEST_GMAIL_URL` is set to, so that account views load this server. */
   gmailUrl: string;
   /**
@@ -198,6 +244,9 @@ export async function startTestServer(): Promise<TestServer> {
     origin,
     pageUrl(pageTitle) {
       return `${origin}/app/${encodeURIComponent(pageTitle)}`;
+    },
+    contextMenuPageUrl(token) {
+      return `${origin}${CONTEXT_MENU_PATH}${token}`;
     },
     gmailUrl: `${origin}${GMAIL_PATH}`,
     slowGmailUrl(delayMs) {

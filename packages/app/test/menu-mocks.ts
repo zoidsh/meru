@@ -13,6 +13,26 @@ export function setPlatform(context: PlatformContext) {
   platform.isLinux = context === "Linux";
 }
 
+const realProcessPlatform = process.platform;
+
+const PROCESS_PLATFORMS: Record<PlatformContext, NodeJS.Platform> = {
+  macOS: "darwin",
+  Windows: "win32",
+  Linux: "linux",
+};
+
+/** For a test whose subject reads `process.platform` as well, so the host's OS stays out of it. */
+export function setProcessPlatform(context: PlatformContext) {
+  Object.defineProperty(process, "platform", {
+    value: PROCESS_PLATFORMS[context],
+    configurable: true,
+  });
+}
+
+export function restoreProcessPlatform() {
+  Object.defineProperty(process, "platform", { value: realProcessPlatform, configurable: true });
+}
+
 /** The template of the menu built last. */
 export const built: { template: MenuItemConstructorOptions[] } = { template: [] };
 
@@ -25,11 +45,54 @@ export const gmail: { userEmail: string | undefined; messageId: string | undefin
 
 export const licenseKey = { isValid: false };
 
+type ContextMenuListener = (event: unknown, parameters: unknown) => void;
+
+/** The template a right-click on `view` builds, through the listener the view was given. */
+export function rightClick(
+  setupWindowContextMenu: (view: never) => void,
+  view: { webContents: object },
+  parameters: Record<string, unknown>,
+) {
+  let listener: ContextMenuListener | undefined;
+
+  Object.assign(view.webContents, {
+    on: (event: string, handler: ContextMenuListener) => {
+      if (event === "context-menu") {
+        listener = handler;
+      }
+    },
+    once: () => {},
+  });
+
+  setupWindowContextMenu(view as never);
+
+  built.template = [];
+
+  listener?.(
+    {},
+    {
+      selectionText: "",
+      isEditable: false,
+      linkURL: "",
+      linkText: "",
+      mediaType: "none",
+      srcURL: "",
+      misspelledWord: "",
+      dictionarySuggestions: [],
+      x: 0,
+      y: 0,
+      editFlags: { canCut: true, canCopy: true, canPaste: true },
+      ...parameters,
+    },
+  );
+
+  return built.template;
+}
+
 /*
  * Stands in for Electron and for every module the application menu, the tray
  * and the context menu import, so each builds its template without an app.
- * Call it before importing any of them. electron-context-menu is left to the
- * caller.
+ * Call it before importing any of them.
  */
 export function mockMenuDependencies() {
   mock.module("@electron-toolkit/utils", () => ({ is: { dev: false }, platform }));
@@ -89,7 +152,7 @@ export function mockMenuDependencies() {
 
   mock.module("@/ipc", () => ({ ipc: {} }));
 
-  mock.module("@/lib/clipboard", () => ({ copyText: () => {} }));
+  mock.module("@/lib/clipboard", () => ({ copyBookmark: () => {}, copyText: () => {} }));
 
   mock.module("@/lib/log", () => ({ log: {} }));
 

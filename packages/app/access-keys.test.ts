@@ -22,9 +22,6 @@ import {
  * in one menu that share it leave one of them out of reach. Every catalog in
  * the locales directory is checked, so a new language is covered once its file
  * is there. macOS shows no access keys, so only Windows and Linux are built.
- *
- * electron-context-menu runs for real: it decides which of its items a click
- * shows, and only its `process.platform` checks are pointed at the platform.
  */
 
 mockMenuDependencies();
@@ -140,7 +137,7 @@ const NO_CLICK = {
   editFlags,
 };
 
-/** What was right-clicked, each shown by a different set of electron-context-menu's items. */
+/** What was right-clicked, each shown by a different set of the context menu's items. */
 const CLICKS: Record<string, Partial<typeof NO_CLICK>> = {
   "a page": {},
   "selected text": { selectionText: "Meru" },
