@@ -54,7 +54,9 @@ mock.module("electron", () => ({ ...electron, default: electron }));
 
 const download = mock((..._arguments: unknown[]) => Promise.resolve());
 
-mock.module("electron-dl", () => ({ CancelError: class extends Error {}, download }));
+class CancelError extends Error {}
+
+mock.module("electron-dl", () => ({ CancelError, download }));
 
 const gmailUrl = "https://mail.google.com/mail/u/0/";
 
@@ -112,8 +114,10 @@ mock.module("./accounts", () => ({
 
 mock.module("./lib/deep-link", () => ({ createMeruMessageUrl: () => "meru://message" }));
 
+const logError = mock((..._arguments: unknown[]) => {});
+
 mock.module("./lib/log", () => ({
-  log: { error: () => {} },
+  log: { error: logError },
 }));
 
 mock.module("./license-key", () => ({ licenseKey }));
@@ -190,6 +194,7 @@ beforeEach(() => {
   electron.clipboard.writeText.mockClear();
   electron.shell.openExternal.mockClear();
   download.mockClear();
+  logError.mockClear();
   openExternalUrl.mockClear();
   setPlatform("isLinux");
   setProcessPlatform("linux");
@@ -465,6 +470,27 @@ describe("clicking", () => {
     clickItem(rightClick(view, IMAGE), "saveImageAs");
 
     expect(download.mock.calls).toEqual([[view, IMAGE.srcURL, { saveAs: true }]]);
+  });
+
+  test("Save Image As logs nothing when the save is cancelled", async () => {
+    download.mockImplementationOnce(() => Promise.reject(new CancelError()));
+
+    clickItem(openContextMenuItems(IMAGE), "saveImageAs");
+
+    await settle();
+
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  test("Save Image As logs a save that fails", async () => {
+    download.mockImplementationOnce(() => Promise.reject(new Error("Disk full")));
+
+    clickItem(openContextMenuItems(IMAGE), "saveImageAs");
+
+    await settle();
+
+    expect(logError).toHaveBeenCalledTimes(1);
   });
 
   test("Copy Image copies the image under the click", () => {
