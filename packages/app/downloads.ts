@@ -13,7 +13,7 @@ import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { main } from "@/main";
 import { createNotification } from "@/notifications";
-import { findUnusedPath, withPreferredExtension } from "./lib/download-path";
+import { findUnusedPath, pathKey, withPreferredExtension } from "./lib/download-path";
 import { fileExists } from "./lib/fs";
 import { log } from "./lib/log";
 import { Popup } from "./lib/popup";
@@ -129,14 +129,16 @@ class Downloads {
   }
 
   /*
-   * Chromium writes to a temporary name and renames at the end, overwriting
-   * whatever is there, so a path a running download holds is free on disk.
+   * Chromium creates a download's file moments after it starts and overwrites
+   * whatever has that name, so until then the disk says a held path is free.
    */
   private isPathTaken(candidate: string) {
+    const key = pathKey(candidate);
+
     return (
       existsSync(candidate) ||
       [...this.activeDownloads].some(
-        ([item, heldPath]) => heldPath === candidate || item.getSavePath() === candidate,
+        ([item, heldPath]) => pathKey(heldPath) === key || pathKey(item.getSavePath()) === key,
       )
     );
   }

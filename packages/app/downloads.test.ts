@@ -248,6 +248,12 @@ function progressValues() {
   return fakeWindow.setProgressBar.mock.calls.map(([progress]) => progress);
 }
 
+function setPlatform(name: keyof typeof currentPlatform) {
+  currentPlatform.isMacOS = name === "isMacOS";
+  currentPlatform.isWindows = name === "isWindows";
+  currentPlatform.isLinux = name === "isLinux";
+}
+
 /** Past what a download's listeners defer to a later task, which `Bun.sleep(0)` can overtake. */
 const settle = () =>
   new Promise((resolve) => {
@@ -268,8 +274,7 @@ beforeEach(() => {
 
   initDownloads({ "downloads.saveAs": false, "downloads.location": location });
 
-  currentPlatform.isMacOS = false;
-  currentPlatform.isLinux = true;
+  setPlatform("isLinux");
 
   for (const fake of [
     badgeCounts,
@@ -406,6 +411,48 @@ describe("the file name", () => {
     expect(arrive({ filename: "chosen.pdf" }).dialogOptions?.defaultPath).toBe(
       path.join(location, "chosen (1).pdf"),
     );
+  });
+
+  describe.each(["isMacOS", "isWindows"] as const)("with %s, whose disks fold case", (name) => {
+    beforeEach(() => {
+      setPlatform(name);
+    });
+
+    test("two names differing only by case at once get a path each", () => {
+      const first = arrive({ filename: "Report.pdf" });
+      const second = arrive({ filename: "report.pdf" });
+
+      expect(path.basename(first.savePath)).toBe("Report.pdf");
+      expect(path.basename(second.savePath)).toBe("report (1).pdf");
+    });
+
+    test("two names differing only by Unicode form at once get a path each", () => {
+      const first = arrive({ filename: "r\u00e9sum\u00e9.pdf" });
+      const second = arrive({ filename: "re\u0301sume\u0301.pdf" });
+
+      expect(path.basename(first.savePath)).toBe("r\u00e9sum\u00e9.pdf");
+      expect(path.basename(second.savePath)).toBe("re\u0301sume\u0301 (1).pdf");
+    });
+
+    test("a path chosen in the save dialog is taken whatever its case", () => {
+      initDownloads({ "downloads.saveAs": true });
+
+      const asked = arrive({ filename: "asked.pdf" });
+
+      asked.setSavePath(path.join(location, "Chosen.pdf"));
+
+      expect(arrive({ filename: "chosen.pdf" }).dialogOptions?.defaultPath).toBe(
+        path.join(location, "chosen (1).pdf"),
+      );
+    });
+  });
+
+  test("two names differing only by case are two files on Linux", () => {
+    const first = arrive({ filename: "Report.pdf" });
+    const second = arrive({ filename: "report.pdf" });
+
+    expect(path.basename(first.savePath)).toBe("Report.pdf");
+    expect(path.basename(second.savePath)).toBe("report.pdf");
   });
 
   test.each(["completed", "cancelled", "interrupted"])(
@@ -757,8 +804,7 @@ describe("when a download completes", () => {
   });
 
   test("quarantine comes first on macOS, ahead of the history, the folder and the notification", async () => {
-    currentPlatform.isMacOS = true;
-    currentPlatform.isLinux = false;
+    setPlatform("isMacOS");
 
     store["downloads.openFolderWhenDone"] = true;
 
@@ -792,8 +838,7 @@ describe("when a download completes", () => {
   });
 
   test("only a completed download is quarantined", async () => {
-    currentPlatform.isMacOS = true;
-    currentPlatform.isLinux = false;
+    setPlatform("isMacOS");
 
     arrive().finish("interrupted");
 

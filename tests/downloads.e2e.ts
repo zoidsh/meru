@@ -169,6 +169,43 @@ test("two same-named downloads at once both survive with their own content", asy
     .toEqual(["same (1).txt", "same.txt"]);
 });
 
+test("two names differing only by case, started together, both survive with their own content", async () => {
+  await watchDownloads();
+
+  // In one tick, since neither file is on disk yet to say the name is taken.
+  await meru.app.evaluate(
+    ({ webContents }, { viewUrl, urls }) => {
+      const view = webContents.getAllWebContents().find((page) => page.getURL() === viewUrl);
+
+      for (const url of urls) {
+        view?.downloadURL(url);
+      }
+    },
+    {
+      viewUrl: meru.gmailStandIn.signInUrl,
+      urls: [
+        { name: "Case.txt", body: "the upper" },
+        { name: "case.txt", body: "the lower" },
+      ].map(({ name, body }) =>
+        meru.gmailStandIn.fileUrl({ name, type: "text/plain", body, delivery: "heldBody" }),
+      ),
+    },
+  );
+
+  await expect.poll(() => readMain("startedCount")).toBe(2);
+
+  meru.gmailStandIn.releaseHeld();
+
+  await expect.poll(() => readMain("doneStates")).toEqual(["completed", "completed"]);
+
+  await expect.poll(async () => (await savedFiles()).length, { timeout: ms("10s") }).toBe(2);
+
+  expect((await Promise.all((await savedFiles()).map(readSavedFile))).sort()).toEqual([
+    "the lower",
+    "the upper",
+  ]);
+});
+
 test("a dropped connection adds one row, shows the error once and clears the bar, and the next download clears it too", async () => {
   await watchDownloads();
 

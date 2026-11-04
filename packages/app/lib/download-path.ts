@@ -1,4 +1,13 @@
 import path from "node:path";
+import { platform } from "@electron-toolkit/utils";
+
+/**
+ * What two paths share when they'd be one file. Disks on macOS and Windows fold
+ * case by default, and a case-sensitive one only gets an extra ` (1)` from this.
+ */
+export function pathKey(filePath: string) {
+  return platform.isLinux ? filePath : filePath.normalize("NFC").toLowerCase();
+}
 
 const PREFERRED_EXTENSIONS = new Map([
   ["image/jpeg", "jpg"],
