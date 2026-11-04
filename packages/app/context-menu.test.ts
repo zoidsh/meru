@@ -112,6 +112,12 @@ mock.module("./accounts", () => ({
   },
 }));
 
+const DOWNLOADS_LOCATION = "/configured/downloads";
+
+mock.module("./config", () => ({
+  config: { get: (key: string) => (key === "downloads.location" ? DOWNLOADS_LOCATION : undefined) },
+}));
+
 mock.module("./lib/deep-link", () => ({ createMeruMessageUrl: () => "meru://message" }));
 
 const logError = mock((..._arguments: unknown[]) => {});
@@ -450,12 +456,48 @@ describe("clicking", () => {
     });
   }
 
-  test("Save Image As downloads the image through a save dialog", () => {
+  test("Save Image As downloads the image through a save dialog in the configured location", () => {
     const view = createView(workspaceUrl);
 
     clickItem(rightClick(view, IMAGE), "saveImageAs");
 
-    expect(download.mock.calls).toEqual([[view, IMAGE.srcURL, { saveAs: true }]]);
+    expect(download.mock.calls).toEqual([
+      [
+        view,
+        IMAGE.srcURL,
+        { saveAs: true, directory: DOWNLOADS_LOCATION, onStarted: expect.any(Function) },
+      ],
+    ]);
+  });
+
+  /** What `setSavePath` got from a download with this URL chain reaching the listener. */
+  function savePathsSetFor(urlChain: string[]) {
+    clickItem(openContextMenuItems(IMAGE), "saveImageAs");
+
+    const options = download.mock.calls[0]?.[2] as {
+      onStarted?: (item: {
+        getURLChain: () => string[];
+        setSavePath: (path: string) => void;
+      }) => void;
+    };
+
+    const setSavePath = mock((_path: string) => {});
+
+    options.onStarted?.({ getURLChain: () => urlChain, setSavePath });
+
+    return setSavePath.mock.calls;
+  }
+
+  test("Save Image As clears the save path the Save As setting's listener left", () => {
+    expect(savePathsSetFor([IMAGE.srcURL])).toEqual([[""]]);
+  });
+
+  test("Save Image As clears the save path of an image that redirects", () => {
+    expect(savePathsSetFor([IMAGE.srcURL, "https://example.com/moved.png"])).toEqual([[""]]);
+  });
+
+  test("Save Image As leaves the save path of another download alone", () => {
+    expect(savePathsSetFor(["https://example.com/other.pdf"])).toEqual([]);
   });
 
   test("Save Image As logs nothing when the save is cancelled", async () => {

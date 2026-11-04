@@ -11,6 +11,7 @@ import {
 import { CancelError, download } from "electron-dl";
 import { serializeError } from "serialize-error";
 import { accounts } from "./accounts";
+import { config } from "./config";
 import { copyBookmark, copyText } from "./lib/clipboard";
 import { createMeruMessageUrl } from "./lib/deep-link";
 import { log } from "./lib/log";
@@ -265,7 +266,20 @@ function editItems({ view, parameters, labels, hasText }: MenuContext): MenuItem
 
 function saveImageAs(view: View, url: string) {
   // electron-dl reads nothing off the view but `webContents`, so a `WebContentsView` serves.
-  download(view as BrowserWindow, url, { saveAs: true }).catch((error: unknown) => {
+  download(view as BrowserWindow, url, {
+    saveAs: true,
+    directory: config.get("downloads.location"),
+    // With `downloads.saveAs` off, the app's own `will-download` listener has
+    // already set a save path by now, and Electron opens the dialog only without one.
+    // `download()`'s listener stays on the session while the image saves, so it sees
+    // other downloads too, and those keep following the setting. The chain's first
+    // entry is the address asked for, where `getURL()` is where a redirect ended.
+    onStarted: (item) => {
+      if (item.getURLChain()[0] === url) {
+        item.setSavePath("");
+      }
+    },
+  }).catch((error: unknown) => {
     if (!(error instanceof CancelError)) {
       log.error("Failed to save the image", { error: serializeError(error) });
     }

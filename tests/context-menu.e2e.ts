@@ -1,9 +1,19 @@
 import { randomUUID } from "node:crypto";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 import { ms } from "@meru/shared/ms";
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
 
-const meru = useApp();
+const DOWNLOADS_DIRECTORY = "configured-downloads";
+
+const meru = useApp(async ({ userDataDir }) => {
+  const downloadsLocation = path.join(userDataDir, DOWNLOADS_DIRECTORY);
+
+  await mkdir(downloadsLocation);
+
+  return { "downloads.location": downloadsLocation, "downloads.saveAs": false };
+});
 
 const TOKEN = randomUUID();
 
@@ -11,6 +21,7 @@ const SENTINEL = `sentinel-${TOKEN}`;
 
 type MainProcessGlobals = typeof globalThis & {
   contextMenu?: Electron.Menu;
+  downloadState?: string;
   downloadUrls?: string[];
 };
 
@@ -158,6 +169,54 @@ test("Save Image As starts a download of the image", async () => {
   await expect
     .poll(() => meru.app.evaluate(() => (globalThis as MainProcessGlobals).downloadUrls))
     .toEqual([`${meru.gmailStandIn.contextMenuPageUrl(TOKEN)}/image.png`]);
+});
+
+test("Save Image As asks where to save, starting in the configured location, with saveAs off", async () => {
+  const rightClick = await openContextMenuPage();
+
+  await rightClick("#image");
+
+  /*
+   * The listener goes on after the click because `download()` adds its own during
+   * the click, and this one has to read what every other listener left. The item
+   * is cancelled before Electron gets to open the dialog, which it does only once
+   * every listener has returned.
+   */
+  const started = await meru.app.evaluate(({ webContents }, url) => {
+    const main = globalThis as MainProcessGlobals;
+
+    const contents = webContents.getAllWebContents().find((page) => page.getURL() === url);
+
+    if (!contents) {
+      throw new Error("The account view is gone");
+    }
+
+    main.contextMenu?.getMenuItemById("saveImageAs")?.click();
+
+    return new Promise<{ savePath: string; defaultPath: string | undefined }>((resolve) => {
+      contents.session.once("will-download", (_event, item) => {
+        item.once("done", (_doneEvent, state) => {
+          main.downloadState = state;
+        });
+
+        resolve({
+          savePath: item.getSavePath(),
+          defaultPath: item.getSaveDialogOptions().defaultPath,
+        });
+
+        item.cancel();
+      });
+    });
+  }, meru.gmailStandIn.contextMenuPageUrl(TOKEN));
+
+  expect(started).toEqual({
+    savePath: "",
+    defaultPath: path.join(meru.userDataDir, DOWNLOADS_DIRECTORY, "image.png"),
+  });
+
+  await expect
+    .poll(() => meru.app.evaluate(() => (globalThis as MainProcessGlobals).downloadState))
+    .toBe("cancelled");
 });
 
 test("a text field offers the editing items, and Paste pastes", async () => {

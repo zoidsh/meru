@@ -8,3 +8,6 @@ This file is the draft of the next release, written one line at a time as work l
 
 - Clicking a link in `Settings… → What's new` opens it in your browser, instead of replacing Meru's window with the page.
 - **Copy Link Address**, **Copy Image Address** and **Copy Email Address** in the right-click menu copy again, where they had stopped doing anything
+- **Save Image As…** in the right-click menu always asks where to save, starting in your download location, where it could save without asking or start in your Downloads folder
+- The download notification shows a file name with text like `\x41` in it as saved, where it decoded that text into another character
+- Cancelling a save dialog no longer adds a blank row to your download history

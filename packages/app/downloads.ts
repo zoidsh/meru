@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { platform } from "@electron-toolkit/utils";
-import { msg, t } from "@lingui/core/macro";
+import { msg, ph, t } from "@lingui/core/macro";
 import { BASE_SPACING } from "@meru/shared/constants";
 import { i18n } from "@meru/shared/i18n";
 import { ms } from "@meru/shared/ms";
@@ -16,6 +16,8 @@ import { fileExists } from "./lib/fs";
 import { log } from "./lib/log";
 import { Popup } from "./lib/popup";
 import { quarantineFile } from "./lib/quarantine";
+
+const FILE_NAME_PLACEHOLDER = "{fileName}";
 
 // lingui-set comment="Button on the download notification that shows the file in the file manager"
 const SHOW_IN_FILE_MANAGER = platform.isMacOS
@@ -86,6 +88,10 @@ class Downloads {
           }
         }
 
+        if (state === "cancelled") {
+          return;
+        }
+
         this.addDownloadHistoryItem({
           fileName,
           filePath,
@@ -126,7 +132,12 @@ class Downloads {
           // download as well, because some notification servers, such as
           // dunst, draw no buttons.
           createNotification({
-            title: t`Downloaded ${fileName}`,
+            // Added after Lingui, which decodes `\xHH` and `\uHHHH` in a message's
+            // final text, and by a function, since a string would expand `$&`.
+            title: t`Downloaded ${ph({ fileName: FILE_NAME_PLACEHOLDER })}`.replace(
+              FILE_NAME_PLACEHOLDER,
+              () => fileName,
+            ),
             actions: [
               {
                 text: shouldOpenFile
