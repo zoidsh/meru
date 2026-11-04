@@ -360,7 +360,7 @@ describe.each([...LAYOUT_PLATFORMS])("layout on $name", ({ flag, processPlatform
   });
 });
 
-describe("Look Up on a selection Latin width counting would cut short", () => {
+describe("the Look Up label", () => {
   function lookUpLabel(selectionText: string) {
     setPlatform("isMacOS");
     setProcessPlatform("darwin");
@@ -384,6 +384,13 @@ describe("Look Up on a selection Latin width counting would cut short", () => {
 
     expect(lookUpLabel(selection)).toBe(`Look Up “${selection}”`);
   });
+
+  test.each(["C:\\x41dir", "C:\\u0041dir", "a$&b", "$`$'$$"])(
+    "shows %s as it was selected",
+    (selection) => {
+      expect(lookUpLabel(selection)).toBe(`Look Up “${selection.replaceAll("&", "&&")}”`);
+    },
+  );
 });
 
 /** The item's own click handler, called the way Electron calls it. */

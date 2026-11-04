@@ -21,14 +21,16 @@ const LOOK_UP_MAX_GRAPHEMES = 25;
 
 const MAILTO_PREFIX = "mailto:";
 
-function getItemLabels(selection: string) {
+const SELECTION_PLACEHOLDER = "{selection}";
+
+function getItemLabels() {
   // lingui-set comment="An item in the context menu of a page or a text field; & marks the access key on Windows and Linux"
   return {
     learnSpelling: platform.isMacOS
       ? t({ message: "&Learn Spelling", context: "macOS" })
       : t`&Learn Spelling`,
     lookUpSelection: t({
-      message: `Look Up “${ph({ selection })}”`,
+      message: `Look Up “${ph({ selection: SELECTION_PLACEHOLDER })}”`,
       context: "macOS",
       comment: "Context menu item on macOS; selection is the selected text",
     }),
@@ -165,10 +167,14 @@ function lookUpItems({ view, parameters, labels, hasText }: MenuContext): MenuIt
     return [];
   }
 
+  const selection = truncateSelection(parameters.selectionText.trim()).replaceAll("&", "&&");
+
   return [
     {
       id: "lookUpSelection",
-      label: labels.lookUpSelection,
+      // Added after Lingui, which decodes `\xHH` and `\uHHHH` in a message's
+      // final text, and by a function, since a string would expand `$&`.
+      label: labels.lookUpSelection.replace(SELECTION_PLACEHOLDER, () => selection),
       click: () => {
         view.webContents.showDefinitionForSelection();
       },
@@ -412,7 +418,7 @@ function buildTemplate(view: View, parameters: Electron.ContextMenuParams): Menu
   const context: MenuContext = {
     view,
     parameters,
-    labels: getItemLabels(truncateSelection(parameters.selectionText.trim()).replaceAll("&", "&&")),
+    labels: getItemLabels(),
     hasText: parameters.selectionText.length > 0,
   };
 
