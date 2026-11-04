@@ -66,7 +66,6 @@
     "dayjs": "^1.11.13",
     "electron": "^45.1.0",
     "electron-builder": "^26.16.1",
-    "electron-context-menu": "^4.1.0",
     "electron-dl": "^4.0.0",
     "electron-log": "^5.4.0",
     "electron-store": "^10.0.1",
@@ -233,7 +232,6 @@
     "afterPack": "./build/hooks/afterPack.js"
   },
   "patchedDependencies": {
-    "electron-context-menu@4.1.0": "patches/electron-context-menu@4.1.0.patch",
     "conf@14.0.0": "patches/conf@14.0.0.patch",
     "sonner@2.0.7": "patches/sonner@2.0.7.patch",
     "electron-store@10.1.0": "patches/electron-store@10.1.0.patch"

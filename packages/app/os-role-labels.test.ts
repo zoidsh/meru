@@ -7,14 +7,15 @@ import { compileMessageOrThrow } from "@lingui/message-utils/compileMessage";
 import { generateMessageId } from "@lingui/message-utils/generateMessageId";
 import { i18n } from "@meru/shared/i18n";
 import type { MenuItemConstructorOptions } from "electron";
-import type { Labels } from "electron-context-menu";
 import {
   gmail,
+  gmailView,
   built,
   licenseKey,
   mockMenuDependencies,
   PLATFORM_CONTEXTS,
   type PlatformContext,
+  rightClick,
   setPlatform,
 } from "./test/menu-mocks";
 
@@ -25,13 +26,6 @@ import {
  * a platform through a message without its context, so a split is found
  * before a translator meets the shared word.
  */
-
-type ContextMenuOptions = {
-  labels: Labels;
-  append?: (defaultActions: unknown, parameters: unknown) => MenuItemConstructorOptions[];
-};
-
-let contextMenuOptions: ContextMenuOptions | undefined;
 
 mockMenuDependencies();
 
@@ -48,12 +42,6 @@ const main: { window: typeof mainWindow | null; location: string } = {
 };
 
 mock.module("@/main", () => ({ main }));
-
-mock.module("electron-context-menu", () => ({
-  default: (options: ContextMenuOptions) => {
-    contextMenuOptions = options;
-  },
-}));
 
 const { AppMenu } = await import("./menu");
 
@@ -113,15 +101,8 @@ const MACOS_OS_ROLES = new Set([
 /** The menu bar's menus every platform names, whatever role they carry. */
 const TOP_LEVEL_MENUS = new Set(["File", "Edit", "View", "Window", "Help"]);
 
-/** electron-context-menu's items that do what an Electron role does, keyed as its `labels` are. */
-const CONTEXT_MENU_ROLES: (keyof Labels)[] = [
-  "cut",
-  "copy",
-  "paste",
-  "pasteAndMatchStyle",
-  "selectAll",
-  "services",
-];
+/** The context menu's items that do what an Electron role does, by id. */
+const CONTEXT_MENU_ROLES = new Set(["cut", "copy", "paste", "pasteAndMatchStyle", "selectAll"]);
 
 /** Native dialogs' buttons the operating system names, by their English. */
 const OS_DIALOG_BUTTONS = new Set(["OK", "Cancel", "Quit", "Close", "Yes", "No"]);
@@ -227,15 +208,20 @@ function withLicensedMessage(open: boolean) {
 function contextMenuLabels(platform: PlatformContext) {
   withLicensedMessage(true);
 
-  setupWindowContextMenu({} as Parameters<typeof setupWindowContextMenu>[0]);
-
-  const options = contextMenuOptions as ContextMenuOptions;
-
-  const appended = options.append?.({}, { pageURL: "https://mail.google.com/mail/u/0/" }) ?? [];
+  const items = rightClick(setupWindowContextMenu, gmailView, {
+    isEditable: true,
+    selectionText: "Meru",
+    pageURL: gmailView.webContents.getURL(),
+  });
 
   withLicensedMessage(false);
 
-  return [...CONTEXT_MENU_ROLES.map((key) => options.labels[key]), ...osLabels(appended, platform)];
+  return [
+    ...items
+      .filter(({ id }) => id !== undefined && CONTEXT_MENU_ROLES.has(id))
+      .map(({ label }) => label),
+    ...osLabels(items, platform),
+  ];
 }
 
 type DialogButton = { file: string; msgid: string; context: string | undefined };

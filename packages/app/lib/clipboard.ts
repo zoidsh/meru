@@ -1,4 +1,4 @@
-import { clipboard } from "electron";
+import { ClipboardItem, clipboard } from "electron";
 import { serializeError } from "serialize-error";
 import { log } from "./log";
 
@@ -13,9 +13,28 @@ import { log } from "./log";
  * write — the verification code copy, which marks the email read and deletes it
  * only once the code is really on the clipboard.
  */
-export async function copyText(text: string) {
+export function copyText(text: string) {
+  return attemptWrite(() => clipboard.writeText(text));
+}
+
+/**
+ * Writes `url` to the system clipboard as text and as a bookmark named `title`,
+ * answering whether the write landed, as `copyText` does.
+ */
+export function copyBookmark(title: string, url: string) {
+  return attemptWrite(() =>
+    clipboard.write([
+      new ClipboardItem({
+        "text/plain": url,
+        "electron application/bookmark": { title, url },
+      }),
+    ]),
+  );
+}
+
+async function attemptWrite(write: () => Promise<void>) {
   try {
-    await clipboard.writeText(text);
+    await write();
 
     return true;
   } catch (error) {
