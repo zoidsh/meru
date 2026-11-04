@@ -8,7 +8,7 @@ import { BASE_SPACING } from "@meru/shared/constants";
 import { i18n } from "@meru/shared/i18n";
 import { ms } from "@meru/shared/ms";
 import type { DownloadItem } from "@meru/shared/types";
-import { app, type BrowserWindow, dialog, shell, type WebContents } from "electron";
+import { app, type BrowserWindow, dialog, type Session, shell, type WebContents } from "electron";
 import { serializeError } from "serialize-error";
 import { config } from "@/config";
 import { main } from "@/main";
@@ -55,7 +55,7 @@ class Downloads {
   private completedBytes = 0;
 
   /** One entry per Save Image As whose download hasn't arrived, so two of one address each ask. */
-  private pendingSaves: { url: string; expiresAt: number }[] = [];
+  private pendingSaves: { session: Session; url: string; expiresAt: number }[] = [];
 
   toggleRecentDownloadHistoryPopup(parentWindow: BrowserWindow) {
     return this.recentDownloadHistoryPopup.toggle(parentWindow, {
@@ -102,6 +102,7 @@ class Downloads {
   /** Starts a download that asks where to save, whatever the Save As setting says. */
   saveAs(webContents: WebContents, url: string) {
     this.pendingSaves.push({
+      session: webContents.session,
       url: canonicalUrl(url),
       expiresAt: Date.now() + PENDING_SAVE_LIFETIME,
     });
@@ -109,7 +110,7 @@ class Downloads {
     webContents.downloadURL(url);
   }
 
-  private takePendingSave(item: Electron.DownloadItem) {
+  private takePendingSave(session: Session, item: Electron.DownloadItem) {
     const now = Date.now();
 
     this.pendingSaves = this.pendingSaves.filter(({ expiresAt }) => expiresAt > now);
@@ -117,7 +118,9 @@ class Downloads {
     // The chain's first entry is the address asked for, where `getURL()` is where a redirect ended.
     const url = canonicalUrl(item.getURLChain()[0] ?? "");
 
-    const index = this.pendingSaves.findIndex((pending) => pending.url === url);
+    const index = this.pendingSaves.findIndex(
+      (pending) => pending.session === session && pending.url === url,
+    );
 
     if (index === -1) {
       return false;
@@ -299,8 +302,8 @@ class Downloads {
     const alwaysAsk = config.get("downloads.saveAs");
     const directory = config.get("downloads.location");
 
-    const handleWillDownload = (_event: Electron.Event, item: Electron.DownloadItem) => {
-      const isPendingSave = this.takePendingSave(item);
+    const handleWillDownload = (session: Session, item: Electron.DownloadItem) => {
+      const isPendingSave = this.takePendingSave(session, item);
 
       const unusedPath = findUnusedPath(
         path.join(
@@ -350,7 +353,9 @@ class Downloads {
     };
 
     app.on("session-created", (session) => {
-      session.on("will-download", handleWillDownload);
+      session.on("will-download", (_event, item) => {
+        handleWillDownload(session, item);
+      });
     });
 
     const cleanupDownloadsHistory = () => {

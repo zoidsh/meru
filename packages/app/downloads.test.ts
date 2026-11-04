@@ -1059,6 +1059,21 @@ describe("Save Image As", () => {
     expectSavedWithoutAsking(arriveImage(url), "image (2).png");
   });
 
+  test("another session's download of that address isn't asked, and the image still is", () => {
+    const url = imageUrl();
+
+    saveImage(url);
+
+    const other = arrive(
+      { filename: "image.png", mimeType: "image/png", urlChain: [url] },
+      { from: createSession() },
+    );
+
+    expectSavedWithoutAsking(other);
+
+    expectAsked(arriveImage(url), "image (1).png");
+  });
+
   test("a later ordinary download of that address isn't asked", async () => {
     const url = imageUrl();
 
