@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
 import { compileMessageOrThrow } from "@lingui/message-utils/compileMessage";
 import { generateMessageId } from "@lingui/message-utils/generateMessageId";
 import { i18n } from "@meru/shared/i18n";
@@ -8,10 +8,8 @@ import {
   mockMenuDependencies,
   PLATFORM_CONTEXTS,
   type PlatformContext,
-  restoreProcessPlatform,
   rightClick,
   setPlatform,
-  setProcessPlatform,
 } from "./test/menu-mocks";
 
 mockMenuDependencies();
@@ -96,17 +94,11 @@ function collectLabels(items: MenuItemConstructorOptions[]): string[] {
   ]);
 }
 
-afterAll(() => {
-  restoreProcessPlatform();
-});
-
 describe.each(PLATFORM_CONTEXTS)("on %s", (context) => {
   beforeAll(() => {
     activatePlatformMarkedCatalog();
 
     setPlatform(context);
-
-    setProcessPlatform(context);
   });
 
   test("the application menu uses the platform's message for each OS label", () => {

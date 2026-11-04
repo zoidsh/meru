@@ -13,26 +13,6 @@ export function setPlatform(context: PlatformContext) {
   platform.isLinux = context === "Linux";
 }
 
-const realProcessPlatform = process.platform;
-
-const PROCESS_PLATFORMS: Record<PlatformContext, NodeJS.Platform> = {
-  macOS: "darwin",
-  Windows: "win32",
-  Linux: "linux",
-};
-
-/** For a test whose subject reads `process.platform` as well, so the host's OS stays out of it. */
-export function setProcessPlatform(context: PlatformContext) {
-  Object.defineProperty(process, "platform", {
-    value: PROCESS_PLATFORMS[context],
-    configurable: true,
-  });
-}
-
-export function restoreProcessPlatform() {
-  Object.defineProperty(process, "platform", { value: realProcessPlatform, configurable: true });
-}
-
 /** The template of the menu built last. */
 export const built: { template: MenuItemConstructorOptions[] } = { template: [] };
 

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, mock, test } from "bun:test";
+import { beforeAll, describe, expect, mock, test } from "bun:test";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import type { Messages } from "@lingui/core";
@@ -15,10 +15,8 @@ import {
   mockMenuDependencies,
   PLATFORM_CONTEXTS,
   type PlatformContext,
-  restoreProcessPlatform,
   rightClick,
   setPlatform,
-  setProcessPlatform,
 } from "./test/menu-mocks";
 
 /*
@@ -296,10 +294,6 @@ beforeAll(async () => {
   await activateMarkedCatalog();
 });
 
-afterAll(() => {
-  restoreProcessPlatform();
-});
-
 test("finds a dialog's literal buttons, through a ternary too", () => {
   const source = `
     dialog.showMessageBox({
@@ -323,8 +317,6 @@ test("finds a dialog's literal buttons, through a ternary too", () => {
 test("every allowance still names a label that lacks its context", () => {
   const found = PLATFORM_CONTEXTS.flatMap((platform) => {
     setPlatform(platform);
-
-    setProcessPlatform(platform);
 
     return missingContexts("context menu", platform, contextMenuLabels(platform));
   });
@@ -351,8 +343,6 @@ test("a native dialog's OS-named button has a platform context", async () => {
 describe.each(PLATFORM_CONTEXTS)("on %s", (platform) => {
   beforeAll(() => {
     setPlatform(platform);
-
-    setProcessPlatform(platform);
   });
 
   test("the application menu's OS labels have the platform's context", () => {

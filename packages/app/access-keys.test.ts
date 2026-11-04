@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import type { Messages } from "@lingui/core";
@@ -34,10 +34,7 @@ const { AppTray } = await import("./tray");
 
 const LOCALES_DIR = path.join(import.meta.dir, "../shared/i18n/locales");
 
-const PLATFORMS: { context: PlatformContext; processPlatform: NodeJS.Platform }[] = [
-  { context: "Windows", processPlatform: "win32" },
-  { context: "Linux", processPlatform: "linux" },
-];
+const PLATFORMS: PlatformContext[] = ["Windows", "Linux"];
 
 type Menu = { name: string; items: MenuItemConstructorOptions[] };
 
@@ -237,16 +234,6 @@ const locales = (await readdir(LOCALES_DIR))
   .filter((file) => file.endsWith(".po"))
   .map((file) => file.slice(0, -".po".length));
 
-const processPlatform = process.platform;
-
-function setProcessPlatform(value: NodeJS.Platform) {
-  Object.defineProperty(process, "platform", { value, configurable: true });
-}
-
-afterAll(() => {
-  setProcessPlatform(processPlatform);
-});
-
 test("finds two items that share an access key, in a submenu too", () => {
   const items: MenuItemConstructorOptions[] = [
     { label: "&Paste" },
@@ -264,15 +251,13 @@ test("finds two items that share an access key, in a submenu too", () => {
 });
 
 describe.each(locales)("%s", (locale) => {
-  describe.each(PLATFORMS)("on $context", ({ context, processPlatform: platformName }) => {
+  describe.each(PLATFORMS)("on %s", (context) => {
     let menus: Menu[] = [];
 
     beforeAll(async () => {
       i18n.loadAndActivate({ locale, messages: await loadCatalog(locale) });
 
       setPlatform(context);
-
-      setProcessPlatform(platformName);
 
       menus = buildMenus();
     });

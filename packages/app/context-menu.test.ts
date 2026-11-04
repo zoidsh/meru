@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import type { BrowserWindow, MenuItemConstructorOptions } from "electron";
 
 const currentPlatform = { isMacOS: false, isWindows: false, isLinux: true };
@@ -171,16 +171,6 @@ function setPlatform(platform: keyof typeof currentPlatform) {
   currentPlatform.isLinux = platform === "isLinux";
 }
 
-const realProcessPlatform = process.platform;
-
-function setProcessPlatform(value: NodeJS.Platform) {
-  Object.defineProperty(process, "platform", { value, configurable: true });
-}
-
-afterAll(() => {
-  setProcessPlatform(realProcessPlatform);
-});
-
 function setLicensedMessage(open: boolean) {
   licenseKey.isValid = open;
   gmail.messageId = open ? "message" : undefined;
@@ -197,7 +187,6 @@ beforeEach(() => {
   logError.mockClear();
   openExternalUrl.mockClear();
   setPlatform("isLinux");
-  setProcessPlatform("linux");
   setLicensedMessage(true);
   gmail.view = createView(gmailUrl);
 });
@@ -335,9 +324,9 @@ const CLICKS: Record<string, Record<string, unknown>> = {
 };
 
 const LAYOUT_PLATFORMS = [
-  { name: "macOS", flag: "isMacOS", processPlatform: "darwin" },
-  { name: "Windows", flag: "isWindows", processPlatform: "win32" },
-  { name: "Linux", flag: "isLinux", processPlatform: "linux" },
+  { name: "macOS", flag: "isMacOS" },
+  { name: "Windows", flag: "isWindows" },
+  { name: "Linux", flag: "isLinux" },
 ] as const;
 
 const LAYOUT_VIEWS = [
@@ -346,11 +335,10 @@ const LAYOUT_VIEWS = [
   { name: "a Workspace view", isGmail: false, isLicensedMessage: false },
 ];
 
-describe.each([...LAYOUT_PLATFORMS])("layout on $name", ({ flag, processPlatform }) => {
+describe.each([...LAYOUT_PLATFORMS])("layout on $name", ({ flag }) => {
   describe.each(LAYOUT_VIEWS)("in $name", ({ isGmail, isLicensedMessage }) => {
     test.each(Object.keys(CLICKS))("on %s", (click) => {
       setPlatform(flag);
-      setProcessPlatform(processPlatform);
       setLicensedMessage(isLicensedMessage);
 
       const items = rightClick(
@@ -368,7 +356,6 @@ describe.each([...LAYOUT_PLATFORMS])("layout on $name", ({ flag, processPlatform
 describe("the Look Up label", () => {
   function lookUpLabel(selectionText: string) {
     setPlatform("isMacOS");
-    setProcessPlatform("darwin");
 
     return openContextMenuItems({ selectionText }).find(({ id }) => id === "lookUpSelection")
       ?.label;
@@ -437,7 +424,6 @@ describe("clicking", () => {
 
   test("Look Up shows the definition of the selection on macOS", () => {
     setPlatform("isMacOS");
-    setProcessPlatform("darwin");
 
     const view = createView(workspaceUrl);
 
