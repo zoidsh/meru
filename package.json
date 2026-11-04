@@ -88,7 +88,6 @@
     "react-dom": "^19.1.1",
     "react-hotkeys-hook": "^5.1.0",
     "react-markdown": "^10.1.0",
-    "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
     "rolldown": "^1.0.0-rc.10",
     "select-dom": "^9.3.0",
