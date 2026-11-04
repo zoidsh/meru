@@ -360,6 +360,32 @@ describe.each([...LAYOUT_PLATFORMS])("layout on $name", ({ flag, processPlatform
   });
 });
 
+describe("Look Up on a selection Latin width counting would cut short", () => {
+  function lookUpLabel(selectionText: string) {
+    setPlatform("isMacOS");
+    setProcessPlatform("darwin");
+
+    return openContextMenuItems({ selectionText }).find(({ id }) => id === "lookUpSelection")
+      ?.label;
+  }
+
+  test("keeps 25 CJK characters whole", () => {
+    const selection = "漢".repeat(25);
+
+    expect(lookUpLabel(selection)).toBe(`Look Up “${selection}”`);
+  });
+
+  test("cuts 26 CJK characters to 24 and the ellipsis", () => {
+    expect(lookUpLabel("漢".repeat(26))).toBe(`Look Up “${"漢".repeat(24)}…”`);
+  });
+
+  test("counts an emoji sequence as one", () => {
+    const selection = "👨‍👩‍👧‍👦".repeat(25);
+
+    expect(lookUpLabel(selection)).toBe(`Look Up “${selection}”`);
+  });
+});
+
 /** The item's own click handler, called the way Electron calls it. */
 function clickItem(items: MenuItemConstructorOptions[], find: string) {
   const item = items.find(({ id, label }) => id === find || label === find);
