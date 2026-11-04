@@ -70,6 +70,12 @@ const CONTEXT_MENU_IMAGE = Buffer.from(
   "base64",
 );
 
+/** The same pixel with enough after its end to take its data URL past Chromium's 2 MB limit. */
+const LARGE_DATA_IMAGE_URL = `data:image/png;base64,${Buffer.concat([
+  CONTEXT_MENU_IMAGE,
+  Buffer.alloc(3 * 1024 * 1024),
+]).toString("base64")}`;
+
 /**
  * One of everything the context menu offers its own items for. Each address
  * carries `token`, so what lands on the clipboard can only have come from this
@@ -83,6 +89,7 @@ function renderContextMenuPage(token: string) {
 <p><a id="link" href="https://example.com/${token}/link">A link</a></p>
 <p><a id="link-without-text" href="https://example.com/${token}/no-text" style="display: block; width: 64px; height: 24px; background: gray"></a></p>
 <p><img id="image" src="${CONTEXT_MENU_PATH}${token}/image.png" alt="" width="64" height="64"></p>
+<p><img id="held-image" src="${CONTEXT_MENU_PATH}${token}/held-image.png" alt="" width="64" height="64"></p>
 <p><a id="email" href="mailto:${token}@example.com">An email address</a></p>
 <p><input id="input" value="Meru"></p>
 </body>
@@ -90,7 +97,87 @@ function renderContextMenuPage(token: string) {
 `;
 }
 
-function respond(request: IncomingMessage, response: ServerResponse) {
+function renderLargeDataImagePage() {
+  return `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Large Data Image Stand-In</title></head>
+<body>
+<p><img id="image" src="${LARGE_DATA_IMAGE_URL}" alt="" width="64" height="64"></p>
+</body>
+</html>
+`;
+}
+
+const FILE_PATH = "/file";
+
+const DROPPED_FILE_PART = Buffer.alloc(200_000, "a");
+
+export type TestFile = {
+  name: string;
+  type: string;
+  body?: string;
+  /**
+   * `heldBody` sends half the body and the rest on release, `heldBodyOfUnknownSize`
+   * the same with no `content-length`, and `dropped` half the bytes it promised
+   * before cutting the connection.
+   */
+  delivery?: "heldBody" | "heldBodyOfUnknownSize" | "dropped";
+};
+
+async function serveFile(
+  response: ServerResponse,
+  { name, type, body = "", delivery }: TestFile,
+  whenReleased: () => Promise<void>,
+) {
+  const headers = {
+    "content-type": type,
+    "content-disposition": `attachment; filename="${name}"`,
+    // Chromium otherwise holds a text response back until it has enough of it to sniff.
+    "x-content-type-options": "nosniff",
+  };
+
+  const middle = Math.floor(body.length / 2);
+
+  if (delivery === "dropped") {
+    response.writeHead(200, {
+      ...headers,
+      "content-length": DROPPED_FILE_PART.length * 2,
+    });
+
+    response.write(DROPPED_FILE_PART);
+
+    setTimeout(() => {
+      response.destroy();
+    }, 300);
+
+    return;
+  }
+
+  if (delivery === "heldBody" || delivery === "heldBodyOfUnknownSize") {
+    response.writeHead(
+      200,
+      delivery === "heldBody" ? { ...headers, "content-length": Buffer.byteLength(body) } : headers,
+    );
+
+    response.write(body.slice(0, middle));
+
+    await whenReleased();
+
+    response.end(body.slice(middle));
+
+    return;
+  }
+
+  response.writeHead(200, { ...headers, "content-length": Buffer.byteLength(body) });
+
+  response.end(body);
+}
+
+function respond(
+  request: IncomingMessage,
+  response: ServerResponse,
+  whenReleased: () => Promise<void>,
+) {
   /*
    * Resolved against the request's own authority rather than a fixed host, so
    * that the redirect below can name this same server on the port it ended up
@@ -161,6 +248,23 @@ function respond(request: IncomingMessage, response: ServerResponse) {
       response.writeHead(200, { "content-type": "image/png" });
 
       response.end(CONTEXT_MENU_IMAGE);
+    } else if (file === "held-image.png") {
+      const send = () => {
+        response.writeHead(200, { "content-type": "image/png", "cache-control": "no-store" });
+
+        response.end(CONTEXT_MENU_IMAGE);
+      };
+
+      // The page's own `<img>` is answered, so only a download of it has a gap before its response starts.
+      if (request.headers["sec-fetch-dest"] === "image") {
+        send();
+      } else {
+        whenReleased().then(send, () => response.destroy());
+      }
+    } else if (file === "large-data-image") {
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+
+      response.end(renderLargeDataImagePage());
     } else {
       response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
 
@@ -186,6 +290,14 @@ function respond(request: IncomingMessage, response: ServerResponse) {
     return;
   }
 
+  if (requestUrl.pathname === FILE_PATH) {
+    const file = JSON.parse(requestUrl.searchParams.get("file") ?? "{}") as TestFile;
+
+    serveFile(response, file, whenReleased).catch(() => response.destroy());
+
+    return;
+  }
+
   response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
 
   response.end(renderPage(decodeURIComponent(requestUrl.pathname.replace(/^\/app\//, ""))));
@@ -198,6 +310,12 @@ export type TestServer = {
   pageUrl(pageTitle: string): string;
   /** The URL of a page with a link, an image, an email address and a text field, each carrying `token`. */
   contextMenuPageUrl(token: string): string;
+  /** The URL of a file sent as an attachment, delivered as it says. */
+  fileUrl(file: TestFile): string;
+  /** How many held responses are waiting on `releaseHeld`. */
+  heldCount(): number;
+  /** Lets every held response carry on. */
+  releaseHeld(): void;
   /** What `MERU_TEST_GMAIL_URL` is set to, so that account views load this server. */
   gmailUrl: string;
   /**
@@ -213,6 +331,13 @@ export type TestServer = {
 };
 
 export async function startTestServer(): Promise<TestServer> {
+  let held: (() => void)[] = [];
+
+  const whenReleased = () =>
+    new Promise<void>((resolve) => {
+      held.push(resolve);
+    });
+
   const server: Server = createServer((request, response) => {
     /*
      * Guarded, because an exception thrown out of a `node:http` handler is an
@@ -222,7 +347,7 @@ export async function startTestServer(): Promise<TestServer> {
      * in, on a path carrying a malformed percent escape.
      */
     try {
-      respond(request, response);
+      respond(request, response, whenReleased);
     } catch {
       response.writeHead(400);
 
@@ -247,6 +372,21 @@ export async function startTestServer(): Promise<TestServer> {
     },
     contextMenuPageUrl(token) {
       return `${origin}${CONTEXT_MENU_PATH}${token}`;
+    },
+    fileUrl(file) {
+      return `${origin}${FILE_PATH}?file=${encodeURIComponent(JSON.stringify(file))}`;
+    },
+    heldCount() {
+      return held.length;
+    },
+    releaseHeld() {
+      const released = held;
+
+      held = [];
+
+      for (const release of released) {
+        release();
+      }
     },
     gmailUrl: `${origin}${GMAIL_PATH}`,
     slowGmailUrl(delayMs) {
