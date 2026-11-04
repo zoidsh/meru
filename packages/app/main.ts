@@ -6,6 +6,7 @@ import { app, BrowserWindow } from "electron";
 import { accounts } from "@/accounts";
 import { watchForAppMenuKey } from "@/app-menu-shortcut";
 import { config } from "@/config";
+import { isWebUrl } from "@/lib/deep-link";
 import {
   getCommonBrowserWindowOptions,
   getTitleBarOptions,
@@ -17,6 +18,20 @@ import { appMenu } from "@/menu";
 import { openExternalUrl } from "@/url";
 import { ipc } from "./ipc";
 import { trial } from "./trial";
+
+function getDocumentUrl(url: string) {
+  return url.split(/[?#]/, 1)[0];
+}
+
+/**
+ * Only a web link goes to the browser: `shell.openExternal` hands any other
+ * scheme, `file:` and `smb:` among them, to whatever the system registered.
+ */
+function openWebUrlInBrowser(url: string) {
+  if (isWebUrl(url)) {
+    openExternalUrl(url, { skipTrustedHostCheck: true });
+  }
+}
 
 class Main {
   private _window: BrowserWindow | undefined;
@@ -190,8 +205,21 @@ class Main {
       this.resolveRendererReady?.();
     });
 
+    // Whatever page this window loads gets every IPC channel, so it stays on
+    // the document `loadRenderer` committed. Compared without the query and
+    // fragment, so a reload, including the dev server's, still goes through.
+    this.window.webContents.on("will-navigate", (event, url) => {
+      if (getDocumentUrl(url) === getDocumentUrl(this.window.webContents.getURL())) {
+        return;
+      }
+
+      event.preventDefault();
+
+      openWebUrlInBrowser(url);
+    });
+
     this.window.webContents.setWindowOpenHandler(({ url }) => {
-      openExternalUrl(url, { skipTrustedHostCheck: true });
+      openWebUrlInBrowser(url);
 
       return {
         action: "deny",
