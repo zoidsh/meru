@@ -71,14 +71,14 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
 - **Windows**, arm64 natively and x64 under emulation:
   - Both report the target version and render the signed-in inbox.
   - Switching accounts with real clicks and typing keeps each view's state.
-  - Minimize and restore, close to tray and restore, quit and relaunch, and silent uninstall.
+  - Close to tray and restore from the tray, quit and relaunch, and silent uninstall.
   - The fuses read as shipped, and `--inspect`, `ELECTRON_RUN_AS_NODE` and `NODE_OPTIONS` are ignored, against an unfused control.
   - Open at login round-trips, also at a path with a space.
   - An arm64 update to a released build keeps the channel.
 - **Linux**, `meru-linux` on arm64 and a throwaway `meru-linux-x64`:
   - The AppImage and the deb render the signed-in inbox; the AppImage, deb and rpm read the shipped fuses.
-  - Two accounts under X11: after launch, every switch, and minimize and restore, the selected account's view is the one shown, its `document.visibilityState` is `visible` and the other's `hidden`, and real `xdotool` clicks and typing land in it.
-  - Close to tray and a second launch's handoff, and several cold starts.
+  - Two accounts under X11 with a window manager: after minimize and restore the selected account's view is the one shown, which `tests/account-view-visibility*.e2e.ts` skips where `xvfb-run` has none, and real `xdotool` clicks and typing land in the shown view.
+  - Close to tray and restore from the tray, and several cold starts.
   - A new-mail notification carries its buttons over D-Bus, and **Mark as Read** reaches Gmail.
   - Under headless sway with `--ozone-platform=wayland`, the first launch maps the window, and keyboard and pointer input work.
   - X11 paste does not hang.
