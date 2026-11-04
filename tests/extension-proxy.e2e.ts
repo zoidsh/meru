@@ -344,7 +344,7 @@ test("only the default session holds the worker, and every account is content-sc
  * anything did.
  *
  * What makes it unreachable in a packaged build is the scheme: `loadRenderer`
- * uses `loadFile` outside development, and the loader never asks for file
+ * loads a `file://` page outside development, and the loader never asks for file
  * access, so no pattern matches. That is what this asserts. Reading the probe
  * attribute back as `null` would not say it — a context that injected and is
  * still running its probes has not written the attribute yet either — so the

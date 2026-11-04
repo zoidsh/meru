@@ -1,8 +1,10 @@
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { is, platform } from "@electron-toolkit/utils";
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import type { Config } from "@meru/shared/types";
 import {
+  app,
   BrowserWindow,
   type BrowserWindowConstructorOptions,
   nativeTheme,
@@ -13,6 +15,7 @@ import { appI18n } from "@/i18n";
 import { shouldOpenDevToolsOnLaunch } from "./dev-tools";
 import { isLinuxWindowControlsEnabled } from "./linux";
 import { loadUrl } from "./load-url";
+import { keepOnRendererPage } from "./renderer-page";
 
 const CASCADE_OFFSET = 30;
 
@@ -180,20 +183,20 @@ export function loadRenderer(
 
   searchParams.set("locale", appI18n.locale);
 
-  if (is.dev) {
-    // `||`, not `??`: an empty value is as unusable as an unset one, and
-    // keeping it loads the page with no origin to resolve against.
-    // oxlint-disable-next-line lingui/no-unlocalized-strings -- a URL
-    const rendererUrl = process.env.MERU_RENDERER_URL || "http://localhost:3000/";
+  // `||`, not `??`: an empty value is as unusable as an unset one, and
+  // keeping it loads the page with no origin to resolve against.
+  const pageFileUrl = is.dev
+    ? // oxlint-disable-next-line lingui/no-unlocalized-strings -- a URL
+      `${process.env.MERU_RENDERER_URL || "http://localhost:3000/"}${pageFileName}`
+    : pathToFileURL(path.join(app.getAppPath(), "build-js", "renderer", pageFileName)).href;
 
-    loadUrl(window.webContents, `${rendererUrl}${pageFileName}?${searchParams.toString()}`);
+  const pageUrl = `${pageFileUrl}?${searchParams.toString()}`;
 
-    if (shouldOpenDevToolsOnLaunch) {
-      window.webContents.openDevTools({ mode: "detach" });
-    }
-  } else {
-    window.webContents.loadFile(path.join("build-js", "renderer", pageFileName), {
-      search: searchParams.toString(),
-    });
+  keepOnRendererPage(window.webContents, pageUrl);
+
+  loadUrl(window.webContents, pageUrl);
+
+  if (shouldOpenDevToolsOnLaunch) {
+    window.webContents.openDevTools({ mode: "detach" });
   }
 }
