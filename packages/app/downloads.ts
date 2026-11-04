@@ -88,6 +88,10 @@ class Downloads {
           }
         }
 
+        if (state === "cancelled") {
+          return;
+        }
+
         this.addDownloadHistoryItem({
           fileName,
           filePath,

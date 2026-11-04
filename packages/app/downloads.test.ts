@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
+import type { DownloadItem } from "@meru/shared/types";
 
 const openPath = mock((_path: string) => Promise.resolve(""));
 
@@ -62,6 +63,10 @@ async function finishDownload(state: string, savePath: string) {
   await done?.({}, state);
 }
 
+function history() {
+  return store["downloads.history"] as DownloadItem[];
+}
+
 beforeEach(() => {
   store["downloads.history"] = [];
   store["downloads.openFolderWhenDone"] = false;
@@ -79,4 +84,32 @@ describe("the download notification", () => {
       expect(createNotification.mock.calls[0]?.[0].title).toBe(`Downloaded ${fileName}`);
     },
   );
+});
+
+describe("the download history", () => {
+  test("records a completed download", async () => {
+    await finishDownload("completed", "/downloads/report.pdf");
+
+    expect(history().map(({ fileName, filePath }) => ({ fileName, filePath }))).toEqual([
+      { fileName: "report.pdf", filePath: "/downloads/report.pdf" },
+    ]);
+  });
+
+  test("records an interrupted download", async () => {
+    await finishDownload("interrupted", "/downloads/report.pdf");
+
+    expect(history().map(({ fileName }) => fileName)).toEqual(["report.pdf"]);
+  });
+
+  test("records nothing when the save dialog is cancelled", async () => {
+    await finishDownload("cancelled", "");
+
+    expect(history()).toEqual([]);
+  });
+
+  test("records nothing when a download is cancelled under way", async () => {
+    await finishDownload("cancelled", "/downloads/report.pdf");
+
+    expect(history()).toEqual([]);
+  });
 });
