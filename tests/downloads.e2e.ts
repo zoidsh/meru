@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import { ms } from "@meru/shared/ms";
 import { expect, test } from "@playwright/test";
@@ -127,7 +127,10 @@ test("an ordinary download lands in the configured folder and the history, with 
 
   const [row] = (await meru.readConfig())["downloads.history"] ?? [];
 
-  expect(row?.filePath).toBe(path.join(downloadsLocation(), "notes.txt"));
+  // Resolved on both sides, since Windows can hand out an 8.3 short form of the temp directory.
+  expect(await realpath(row?.filePath ?? "")).toBe(
+    await realpath(path.join(downloadsLocation(), "notes.txt")),
+  );
 });
 
 test("an extensionless JPEG gets .jpg", async () => {
