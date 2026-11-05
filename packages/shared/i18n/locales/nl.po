@@ -1189,7 +1189,7 @@ msgstr "Download"
 #. Title of the error box shown when a download fails
 #: packages/app/downloads.ts
 msgid "Download Error"
-msgstr ""
+msgstr "Downloadfout"
 
 #: packages/renderer/routes/download-history.tsx
 msgid "Download history"
@@ -3392,7 +3392,7 @@ msgstr "Tekstkleur"
 #. Message of the error box shown when a download fails; fileName is the file's name
 #: packages/app/downloads.ts
 msgid "The download of {fileName} was interrupted"
-msgstr ""
+msgstr "De download van {fileName} is onderbroken"
 
 #: packages/app/lib/extension-window.ts
 msgid "The extension is running, but Meru can't open a window for it."
