@@ -16,8 +16,6 @@ class ClipboardItem {
 const clipboardWrites: unknown[] = [];
 
 const electron = {
-  app: { isPackaged: true, on: () => {} },
-  BrowserWindow: { getAllWindows: () => [] },
   ClipboardItem,
   clipboard: {
     writeText: mock((_text: string) => Promise.resolve()),
@@ -39,7 +37,6 @@ const electron = {
       return rejection;
     },
   },
-  dialog: {},
   Menu: {
     buildFromTemplate: (items: MenuItemConstructorOptions[]) => {
       template = items;
@@ -52,11 +49,9 @@ const electron = {
 
 mock.module("electron", () => ({ ...electron, default: electron }));
 
-const download = mock((..._arguments: unknown[]) => Promise.resolve());
+const saveAs = mock((..._arguments: unknown[]) => {});
 
-class CancelError extends Error {}
-
-mock.module("electron-dl", () => ({ CancelError, download }));
+mock.module("./downloads", () => ({ downloads: { saveAs } }));
 
 const gmailUrl = "https://mail.google.com/mail/u/0/";
 
@@ -110,12 +105,6 @@ mock.module("./accounts", () => ({
   accounts: {
     getSelectedAccount: () => ({ instance: { gmail } }),
   },
-}));
-
-const DOWNLOADS_LOCATION = "/configured/downloads";
-
-mock.module("./config", () => ({
-  config: { get: (key: string) => (key === "downloads.location" ? DOWNLOADS_LOCATION : undefined) },
 }));
 
 mock.module("./lib/deep-link", () => ({ createMeruMessageUrl: () => "meru://message" }));
@@ -189,7 +178,7 @@ beforeEach(() => {
   popup.mockClear();
   electron.clipboard.writeText.mockClear();
   electron.shell.openExternal.mockClear();
-  download.mockClear();
+  saveAs.mockClear();
   logError.mockClear();
   openExternalUrl.mockClear();
   setPlatform("isLinux");
@@ -456,68 +445,19 @@ describe("clicking", () => {
     });
   }
 
-  test("Save Image As downloads the image through a save dialog in the configured location", () => {
+  test("Save Image As saves the image's address from the view it's in", () => {
     const view = createView(workspaceUrl);
 
     clickItem(rightClick(view, IMAGE), "saveImageAs");
 
-    expect(download.mock.calls).toEqual([
-      [
-        view,
-        IMAGE.srcURL,
-        { saveAs: true, directory: DOWNLOADS_LOCATION, onStarted: expect.any(Function) },
-      ],
-    ]);
-  });
-
-  /** What `setSavePath` got from a download with this URL chain reaching the listener. */
-  function savePathsSetFor(urlChain: string[]) {
-    clickItem(openContextMenuItems(IMAGE), "saveImageAs");
-
-    const options = download.mock.calls[0]?.[2] as {
-      onStarted?: (item: {
-        getURLChain: () => string[];
-        setSavePath: (path: string) => void;
-      }) => void;
-    };
-
-    const setSavePath = mock((_path: string) => {});
-
-    options.onStarted?.({ getURLChain: () => urlChain, setSavePath });
-
-    return setSavePath.mock.calls;
-  }
-
-  test("Save Image As clears the save path the Save As setting's listener left", () => {
-    expect(savePathsSetFor([IMAGE.srcURL])).toEqual([[""]]);
-  });
-
-  test("Save Image As clears the save path of an image that redirects", () => {
-    expect(savePathsSetFor([IMAGE.srcURL, "https://example.com/moved.png"])).toEqual([[""]]);
-  });
-
-  test("Save Image As leaves the save path of another download alone", () => {
-    expect(savePathsSetFor(["https://example.com/other.pdf"])).toEqual([]);
-  });
-
-  test("Save Image As logs nothing when the save is cancelled", async () => {
-    download.mockImplementationOnce(() => Promise.reject(new CancelError()));
-
-    clickItem(openContextMenuItems(IMAGE), "saveImageAs");
-
-    await settle();
-
-    expect(download).toHaveBeenCalledTimes(1);
+    expect(saveAs.mock.calls).toEqual([[view.webContents, IMAGE.srcURL]]);
     expect(logError).not.toHaveBeenCalled();
   });
 
-  test("Save Image As logs a save that fails", async () => {
-    download.mockImplementationOnce(() => Promise.reject(new Error("Disk full")));
+  test("Save Image As logs and saves nothing for an image with no address", () => {
+    clickItem(openContextMenuItems({ ...IMAGE, srcURL: "" }), "saveImageAs");
 
-    clickItem(openContextMenuItems(IMAGE), "saveImageAs");
-
-    await settle();
-
+    expect(saveAs).not.toHaveBeenCalled();
     expect(logError).toHaveBeenCalledTimes(1);
   });
 

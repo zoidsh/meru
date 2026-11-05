@@ -66,7 +66,6 @@
     "dayjs": "^1.11.13",
     "electron": "^45.1.0",
     "electron-builder": "^26.16.1",
-    "electron-dl": "^4.0.0",
     "electron-log": "^5.4.0",
     "electron-store": "^10.0.1",
     "electron-updater": "^6.6.2",

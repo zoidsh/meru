@@ -1186,6 +1186,11 @@ msgstr "Fertig"
 msgid "Download"
 msgstr "Herunterladen"
 
+#. Title of the error box shown when a download fails
+#: packages/app/downloads.ts
+msgid "Download Error"
+msgstr "Downloadfehler"
+
 #: packages/renderer/routes/download-history.tsx
 msgid "Download history"
 msgstr "Downloadverlauf"
@@ -3383,6 +3388,11 @@ msgstr "Testbenachrichtigung"
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Text color"
 msgstr "Textfarbe"
+
+#. Message of the error box shown when a download fails; fileName is the file's name
+#: packages/app/downloads.ts
+msgid "The download of {fileName} was interrupted"
+msgstr "Der Download von {fileName} wurde unterbrochen"
 
 #: packages/app/lib/extension-window.ts
 msgid "The extension is running, but Meru can't open a window for it."

@@ -23,11 +23,15 @@ type MainProcessGlobals = typeof globalThis & {
   contextMenu?: Electron.Menu;
   downloadState?: string;
   downloadUrls?: string[];
+  imageSrcUrl?: string;
+  otherDownloadState?: string;
+  savedImage?: { savePath: string; defaultPath: string | undefined };
+  uncaughtErrors?: string[];
 };
 
 /** Opens the stand-in page in the account view, and keeps every menu the app pops up from showing. */
-async function openContextMenuPage() {
-  const { contextMenuPageUrl, signInUrl } = meru.gmailStandIn;
+async function openContextMenuPage(pageUrl = meru.gmailStandIn.contextMenuPageUrl(TOKEN)) {
+  const { signInUrl } = meru.gmailStandIn;
 
   const findAccountView = () => meru.app.windows().find((page) => page.url() === signInUrl);
 
@@ -39,7 +43,7 @@ async function openContextMenuPage() {
     throw new Error("The account view is gone");
   }
 
-  await accountView.goto(contextMenuPageUrl(TOKEN));
+  await accountView.goto(pageUrl);
 
   await meru.app.evaluate(({ Menu }) => {
     Menu.prototype.popup = function capture(this: Electron.Menu) {
@@ -177,10 +181,9 @@ test("Save Image As asks where to save, starting in the configured location, wit
   await rightClick("#image");
 
   /*
-   * The listener goes on after the click because `download()` adds its own during
-   * the click, and this one has to read what every other listener left. The item
-   * is cancelled before Electron gets to open the dialog, which it does only once
-   * every listener has returned.
+   * The listener goes on after the app's own, because it has to read what they
+   * left. The item is cancelled before Electron gets to open the dialog, which
+   * it does only once every listener has returned.
    */
   const started = await meru.app.evaluate(({ webContents }, url) => {
     const main = globalThis as MainProcessGlobals;
@@ -217,6 +220,188 @@ test("Save Image As asks where to save, starting in the configured location, wit
   await expect
     .poll(() => meru.app.evaluate(() => (globalThis as MainProcessGlobals).downloadState))
     .toBe("cancelled");
+});
+
+test("Save Image As still asks when another download finishes before the image's response starts", async () => {
+  const { contextMenuPageUrl, fileUrl, heldCount, releaseHeld } = meru.gmailStandIn;
+
+  const pageUrl = contextMenuPageUrl(TOKEN);
+
+  const rightClick = await openContextMenuPage();
+
+  await rightClick("#held-image");
+
+  await meru.app.evaluate(
+    ({ webContents }, { imageUrl, url }) => {
+      const main = globalThis as MainProcessGlobals;
+
+      const contents = webContents.getAllWebContents().find((page) => page.getURL() === url);
+
+      if (!contents) {
+        throw new Error("The account view is gone");
+      }
+
+      main.contextMenu?.getMenuItemById("saveImageAs")?.click();
+
+      contents.session.on("will-download", (_event, item) => {
+        if (item.getURLChain()[0] === imageUrl) {
+          main.savedImage = {
+            savePath: item.getSavePath(),
+            defaultPath: item.getSaveDialogOptions().defaultPath,
+          };
+
+          item.cancel();
+        } else {
+          item.once("done", (_doneEvent, state) => {
+            main.otherDownloadState = state;
+          });
+        }
+      });
+    },
+    { imageUrl: `${pageUrl}/held-image.png`, url: pageUrl },
+  );
+
+  await expect.poll(heldCount).toBe(1);
+
+  await meru.app.evaluate(
+    ({ webContents }, { other, url }) => {
+      webContents
+        .getAllWebContents()
+        .find((page) => page.getURL() === url)
+        ?.downloadURL(other);
+    },
+    {
+      other: fileUrl({ name: "other.txt", type: "text/plain", body: "Finishes first" }),
+      url: pageUrl,
+    },
+  );
+
+  await expect
+    .poll(() => meru.app.evaluate(() => (globalThis as MainProcessGlobals).otherDownloadState))
+    .toBe("completed");
+
+  releaseHeld();
+
+  await expect
+    .poll(() => meru.app.evaluate(() => (globalThis as MainProcessGlobals).savedImage))
+    .toEqual({
+      savePath: "",
+      defaultPath: path.join(meru.userDataDir, DOWNLOADS_DIRECTORY, "held-image.png"),
+    });
+});
+
+test("Save Image As leaves the Dock badge and the badge count as they were", async () => {
+  const rightClick = await openContextMenuPage();
+
+  await rightClick("#image");
+
+  const before = await meru.app.evaluate(
+    ({ app, webContents }, { savePath, url }) => {
+      const main = globalThis as MainProcessGlobals;
+
+      const contents = webContents.getAllWebContents().find((page) => page.getURL() === url);
+
+      if (!contents) {
+        throw new Error("The account view is gone");
+      }
+
+      if (app.dock) {
+        app.dock.setBadge("7");
+      } else {
+        app.badgeCount = 7;
+      }
+
+      main.contextMenu?.getMenuItemById("saveImageAs")?.click();
+
+      // A save path of the test's own, so the image saves with no dialog to open.
+      contents.session.once("will-download", (_event, item) => {
+        item.setSavePath(savePath);
+
+        item.once("done", (_doneEvent, state) => {
+          main.downloadState = state;
+        });
+      });
+
+      return { dock: app.dock?.getBadge(), count: app.badgeCount };
+    },
+    {
+      savePath: path.join(meru.userDataDir, DOWNLOADS_DIRECTORY, "saved.png"),
+      url: meru.gmailStandIn.contextMenuPageUrl(TOKEN),
+    },
+  );
+
+  await expect
+    .poll(() => meru.app.evaluate(() => (globalThis as MainProcessGlobals).downloadState))
+    .toBe("completed");
+
+  const after = await meru.app.evaluate(({ app }) => ({
+    dock: app.dock?.getBadge(),
+    count: app.badgeCount,
+  }));
+
+  expect(after).toEqual(before);
+});
+
+test("Save Image As on an image too large to have an address does nothing, and throws nothing", async () => {
+  const pageUrl = `${meru.gmailStandIn.contextMenuPageUrl(TOKEN)}/large-data-image`;
+
+  const rightClick = await openContextMenuPage(pageUrl);
+
+  await meru.app.evaluate(({ webContents }, url) => {
+    const main = globalThis as MainProcessGlobals;
+
+    const contents = webContents.getAllWebContents().find((page) => page.getURL() === url);
+
+    if (!contents) {
+      throw new Error("The account view is gone");
+    }
+
+    main.uncaughtErrors = [];
+
+    process.on("uncaughtException", (error) => {
+      main.uncaughtErrors?.push(error.message);
+    });
+
+    contents.once("context-menu", (_event, parameters) => {
+      main.imageSrcUrl = parameters.srcURL;
+    });
+
+    // Ahead of the app's own listeners and cancelling, so no save dialog can open.
+    contents.session.prependListener("will-download", (_event, item) => {
+      main.downloadUrls = [...(main.downloadUrls ?? []), item.getURL()];
+
+      item.cancel();
+    });
+  }, pageUrl);
+
+  await rightClick("#image");
+
+  expect(await meru.app.evaluate(() => (globalThis as MainProcessGlobals).imageSrcUrl)).toBe("");
+
+  expect(await menuItemIds()).toContain("saveImageAs");
+
+  const countWindows = () =>
+    meru.app.evaluate(({ BrowserWindow, webContents }) => ({
+      windows: BrowserWindow.getAllWindows().length,
+      webContents: webContents.getAllWebContents().length,
+    }));
+
+  const windowsBefore = await countWindows();
+
+  await clickMenuItem("saveImageAs");
+
+  // Long enough for a download of nothing to reach the session's listeners, were one started.
+  await new Promise((resolve) => setTimeout(resolve, ms("2s")));
+
+  expect(await meru.app.evaluate(() => (globalThis as MainProcessGlobals).uncaughtErrors)).toEqual(
+    [],
+  );
+
+  expect(
+    await meru.app.evaluate(() => (globalThis as MainProcessGlobals).downloadUrls),
+  ).toBeUndefined();
+
+  expect(await countWindows()).toEqual(windowsBefore);
 });
 
 test("a text field offers the editing items, and Paste pastes", async () => {

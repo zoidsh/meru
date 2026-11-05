@@ -70,6 +70,11 @@ class Main {
     this._window = browserWindow;
   }
 
+  /** For what can run before `init()` has created the window, where `window` throws. */
+  get windowIfCreated() {
+    return this._window;
+  }
+
   shouldLaunchMinimized =
     app.commandLine.hasSwitch("launch-minimized") || config.get("launchMinimized");
 

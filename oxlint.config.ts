@@ -154,9 +154,10 @@ export default defineConfig({
         "**/*.e2e.ts",
         // Helpers shared by the tests.
         "packages/app/test/**",
-        // Files whose strings are data: blocked hosts, SVG ids, window manager
-        // names, system paths and attribute values.
+        // Files whose strings are data: blocked hosts, MIME types, SVG ids, window
+        // manager names, system paths and attribute values.
         "packages/app/blocker/hosts.ts",
+        "packages/app/lib/download-path.ts",
         "packages/app/lib/linux.ts",
         "packages/app/lib/machine-id/**",
         "packages/app/lib/quarantine.ts",
