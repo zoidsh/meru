@@ -3,10 +3,14 @@ import { platform } from "@electron-toolkit/utils";
 
 /**
  * What two paths share when they'd be one file. Disks on macOS and Windows fold
- * case by default, and a case-sensitive one only gets an extra ` (1)` from this.
+ * case by default, more widely than either JavaScript mapping: lowering alone
+ * keeps `ς` from `σ` and `ß` from `ss`, and raising alone keeps `ẞ` from `ß`.
+ * Normalizing comes last because raising can leave a decomposed form. Joining
+ * names a disk keeps apart, such as `I` and `ı` or any pair on a case-sensitive
+ * disk, only adds a ` (1)`.
  */
 export function pathKey(filePath: string) {
-  return platform.isLinux ? filePath : filePath.normalize("NFC").toLowerCase();
+  return platform.isLinux ? filePath : filePath.toLowerCase().toUpperCase().normalize("NFC");
 }
 
 const PREFERRED_EXTENSIONS = new Map([

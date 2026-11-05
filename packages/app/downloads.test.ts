@@ -426,6 +426,19 @@ describe("the file name", () => {
       expect(path.basename(second.savePath)).toBe("report (1).pdf");
     });
 
+    test.each([
+      ["ΛΟΓΟΣ.pdf", "λογος.pdf", "λογος (1).pdf"],
+      ["λογος.pdf", "ΛΟΓΟΣ.pdf", "ΛΟΓΟΣ (1).pdf"],
+      ["STRASSE.pdf", "straße.pdf", "straße (1).pdf"],
+      ["straße.pdf", "STRASSE.pdf", "STRASSE (1).pdf"],
+    ])("%s and %s at once get a path each", (first, second, expected) => {
+      const firstItem = arrive({ filename: first });
+      const secondItem = arrive({ filename: second });
+
+      expect(path.basename(firstItem.savePath)).toBe(first);
+      expect(path.basename(secondItem.savePath)).toBe(expected);
+    });
+
     test("two names differing only by Unicode form at once get a path each", () => {
       const first = arrive({ filename: "r\u00e9sum\u00e9.pdf" });
       const second = arrive({ filename: "re\u0301sume\u0301.pdf" });
