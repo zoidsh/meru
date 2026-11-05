@@ -63,17 +63,18 @@ Arguments naming a level or an explicit version override this triage. Take them,
 
 ### Beta
 
-A beta version stays ahead of every stable, so a Beta user is never offered a stable as a downgrade and never sits behind one. It isn't triaged. It follows from the last stable `S` and the last prerelease `B`:
+A beta version stays ahead of every stable, so a Beta user is never offered a stable as a downgrade and never sits behind one. It follows from the last stable `S`, the last prerelease `B`, and what the beta holds. Triage the range since `S`, read with `git log --oneline --cherry-pick --right-only --no-merges <S>...HEAD`, by the stable rules above: it is fixes-only when they would make it a patch.
 
-- When `B`'s version without its suffix is higher than `S`, the cycle continues: increment `N`. `3.64.0-beta.1` with `3.63.2` stable is followed by `3.64.0-beta.2`.
-- Otherwise a new cycle starts at the minor after `S`: `3.63.1` stable gives `3.64.0-beta.1`, and once `3.64.0` ships the next is `3.65.0-beta.1`. Minor, because `beta` holds features, and so that a patch `main` cuts in the meantime stays below it.
+- When `B`'s version without its suffix is higher than `S`, the cycle continues: increment `N`. `3.64.0-beta.1` with `3.63.2` stable is followed by `3.64.0-beta.2`. The exception is a patch cycle whose range now holds more than fixes, which moves to the minor after `S`: `3.64.2-beta.1` with `3.64.1` stable is followed by `3.65.0-beta.1`. Otherwise the stable `3.64.2` would carry Beta users past it and off the feature.
+- Otherwise a new cycle starts. A fixes-only range starts at the patch after `S`: `3.64.1` stable gives `3.64.2-beta.1`. The stable `3.64.2` then ranks above it and moves Beta users on, with nothing lost and no further beta needed.
+- Any other range starts at the minor after `S`: `3.63.1` stable gives `3.64.0-beta.1`, and once `3.64.0` ships the next is `3.65.0-beta.1`. Minor, so that a patch `main` cuts in the meantime stays below the features on `beta`.
 - An explicit `-beta.N` version overrides this, as long as it is higher than `S` and than `B`. A major is taken only when asked.
 
 ## Confirm the version
 
 Always confirm before editing `package.json`, even when the version is obvious.
 
-- Show the current version, the proposed version and, for a stable, its level, the number of commits in the range, and the handful of user-facing commits that drive the choice, not the whole log. For a beta, also show `S` and `B`.
+- Show the current version, the proposed version and, for a stable, its level, the number of commits in the range, and the handful of user-facing commits that drive the choice, not the whole log. For a beta, also show `S` and `B` and, when a new cycle starts, whether the range is fixes-only.
 - Wait for an explicit yes. If the user names a different level or version instead, take it without re-arguing.
 
 ## Commit the version
