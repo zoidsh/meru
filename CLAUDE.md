@@ -8,22 +8,23 @@ Meru is an Electron desktop client for Gmail and Google Workspace, sold with a P
 
 `mise.toml` pins bun and node, so setup is `mise install` and then `bun install --frozen-lockfile`. `mise.lock` holds the exact build for each CI runner's platform, and `jdx/mise-action` installs from it with `--locked`, which fails for a platform the file lacks; after changing a version in `mise.toml`, run `mise lock`, which refreshes every platform already in the file. Lefthook formats and lint-fixes staged files at every commit.
 
-| Task                                    | Command                                                      |
-| --------------------------------------- | ------------------------------------------------------------ |
-| Run the app with rebuild-on-change      | `bun run dev`, flags below                                   |
-| Format / check formatting               | `bun run fmt` / `bun run fmt:check`                          |
-| Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                          |
-| Typecheck every package                 | `bun run types`                                              |
-| Unit tests                              | `bun run test`                                               |
-| One unit test file                      | `bun run test packages/shared/tabs.test.ts`                  |
-| One test by name                        | `bun run test -t "name"`                                     |
-| Extract strings into the catalogs       | `bun run i18n:extract`                                       |
-| Compile the catalogs                    | `bun run i18n:compile`                                       |
-| Check the catalogs                      | `bun run i18n:check`                                         |
-| End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e`  |
-| Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`            |
-| Signed, notarised macOS build           | `op run --env-file .env.signing.op -- bun run build:mac`     |
-| Signed arm64 DMG to test locally        | `op run --env-file .env.signing.op -- bun run build:mac:dmg` |
+| Task                                    | Command                                                         |
+| --------------------------------------- | --------------------------------------------------------------- |
+| Run the app with rebuild-on-change      | `bun run dev`, flags below                                      |
+| Format / check formatting               | `bun run fmt` / `bun run fmt:check`                             |
+| Lint / lint with fixes                  | `bun run lint` / `bun run lint:fix`                             |
+| Typecheck every package                 | `bun run types`                                                 |
+| Unit tests                              | `bun run test`                                                  |
+| One unit test file                      | `bun run test packages/shared/tabs.test.ts`                     |
+| One test by name                        | `bun run test -t "name"`                                        |
+| Extract strings into the catalogs       | `bun run i18n:extract`                                          |
+| Compile the catalogs                    | `bun run i18n:compile`                                          |
+| Check the catalogs                      | `bun run i18n:check`                                            |
+| End-to-end suite (builds the app first) | `bun run test:e2e`; on Linux `xvfb-run -a bun run test:e2e`     |
+| Pass macOS's end-to-end job locally     | `op run --env-file .env.e2e.op -- bun run test:e2e:macos-check` |
+| Build for one platform                  | `bun run build:mac` / `build:linux` / `build:win`               |
+| Signed, notarised macOS build           | `op run --env-file .env.signing.op -- bun run build:mac`        |
+| Signed arm64 DMG to test locally        | `op run --env-file .env.signing.op -- bun run build:mac:dmg`    |
 
 `build:mac:dmg` builds only the arm64 DMG and skips notarisation and the signing timestamp, so it is minutes faster, and the result opens only on a Mac it reached without quarantine, such as by `scp`. Never ship it.
 
@@ -37,7 +38,7 @@ A run with `--background`, or with `MERU_BACKGROUND=1` in its environment, which
 
 Checks by cost: `bun run lint && bun run types` in the edit loop; `fmt:check`, `lint`, `types`, `bun run test` and, after touching a string, `i18n:check` before a pull request, since each is a CI job; the end-to-end suite is what CI adds on top, on all three platforms.
 
-End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name. Every launch's account views load a page the suite serves itself, which `MERU_TEST_GMAIL_URL` points them at, so only the tests on a signed-in profile reach Gmail.
+End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dist`, `MERU_EXECUTABLE` points at any built app, and extra arguments pass through to Playwright. The suite's license key and signed-in account come from 1Password, below. On the Mac mini, run `test:e2e:macos-check` before pushing a pull request's branch or a commit straight to `main` or `beta`: it needs a clean tree, runs the suite as CI does, and posts the commit status `e2e-macos-local`, which makes CI skip its hosted macOS job for that exact commit. A rebase or squash makes a new commit, which runs the hosted job again, and a release always runs it. Test files are `*.e2e.ts`, never `*.spec.ts`, because `bun test` would claim that name. Every launch's account views load a page the suite serves itself, which `MERU_TEST_GMAIL_URL` points them at, so only the tests on a signed-in profile reach Gmail.
 
 ## Branches
 

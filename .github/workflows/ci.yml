@@ -43,6 +43,7 @@ jobs:
     outputs:
       code: ${{ steps.files.outputs.code }}
       translate: ${{ steps.files.outputs.translate }}
+      e2e-matrix: ${{ steps.e2e-matrix.outputs.matrix }}
     steps:
       - id: files
         env:
@@ -58,6 +59,30 @@ jobs:
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "translate=$translate" >> "$GITHUB_OUTPUT"
+      # macOS stays one job because hosted arm64 runners are short: every extra
+      # job is another chance of one never being acquired, which turns the run
+      # red after a 15 minute wait. Linux and Windows gain little from more
+      # workers alone, so they keep their shards.
+      #
+      # scripts/e2e-macos-check.ts records a pass on the Mac mini as a commit
+      # status, and only someone with write access can post one, so a fork can't
+      # skip its macOS job. A release always runs it, as the last check before
+      # publishing. This has to shape the matrix, because a job's `if` can't read
+      # `matrix`, and a step's `if` would still queue for a macOS runner.
+      - id: e2e-matrix
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          macos='{"os":"macos-latest","shard":1,"shards":1},'
+          if [ "$GITHUB_EVENT_NAME" != release ]; then
+            state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/statuses" --jq 'map(select(.context == "e2e-macos-local")) | first | .state' || true)
+            if [ "$state" = success ]; then
+              echo "::notice::Skipping the macOS job: e2e-macos-local passed on $SHA."
+              macos=
+            fi
+          fi
+          echo "matrix={\"include\":[$macos{\"os\":\"ubuntu-latest\",\"shard\":1,\"shards\":2},{\"os\":\"ubuntu-latest\",\"shard\":2,\"shards\":2},{\"os\":\"windows-latest\",\"shard\":1,\"shards\":3},{\"os\":\"windows-latest\",\"shard\":2,\"shards\":3},{\"os\":\"windows-latest\",\"shard\":3,\"shards\":3}]}" >> "$GITHUB_OUTPUT"
   fmt:
     runs-on: ubuntu-latest
     steps:
@@ -123,20 +148,9 @@ jobs:
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over.
     timeout-minutes: 20
-    # macOS stays one job because hosted arm64 runners are short: every extra job
-    # is another chance of one never being acquired, which turns the run red
-    # after a 15 minute wait. Linux and Windows gain little from more workers
-    # alone, so they keep their shards.
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - { os: macos-latest, shard: 1, shards: 1 }
-          - { os: ubuntu-latest, shard: 1, shards: 2 }
-          - { os: ubuntu-latest, shard: 2, shards: 2 }
-          - { os: windows-latest, shard: 1, shards: 3 }
-          - { os: windows-latest, shard: 2, shards: 3 }
-          - { os: windows-latest, shard: 3, shards: 3 }
+      matrix: ${{ fromJSON(needs.changes.outputs.e2e-matrix) }}
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
