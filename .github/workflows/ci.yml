@@ -123,15 +123,17 @@ jobs:
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over.
     timeout-minutes: 20
-    # Windows alone is slow enough to need shards. macOS stays one job because
-    # hosted arm64 runners are short: every extra job is another chance of one
-    # never being acquired, which turns the run red after a 15 minute wait.
+    # macOS stays one job because hosted arm64 runners are short: every extra job
+    # is another chance of one never being acquired, which turns the run red
+    # after a 15 minute wait. Linux and Windows gain little from more workers
+    # alone, so they keep their shards.
     strategy:
       fail-fast: false
       matrix:
         include:
           - { os: macos-latest, shard: 1, shards: 1 }
-          - { os: ubuntu-latest, shard: 1, shards: 1 }
+          - { os: ubuntu-latest, shard: 1, shards: 2 }
+          - { os: ubuntu-latest, shard: 2, shards: 2 }
           - { os: windows-latest, shard: 1, shards: 3 }
           - { os: windows-latest, shard: 2, shards: 3 }
           - { os: windows-latest, shard: 3, shards: 3 }

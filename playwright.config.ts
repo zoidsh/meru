@@ -12,6 +12,14 @@ export default defineConfig({
   fullyParallel: true,
   // The smallest hosted runner, macOS, has 3 vCPUs.
   workers: process.env.CI ? 3 : undefined,
+  // A native resize's modal loop warps the one cursor and ends when another
+  // window activates, so it can't share the desktop with an app launching.
+  // Running it first as a dependency is what keeps every other test off the
+  // desktop meanwhile, and a shard runs its dependencies whole.
+  projects: [
+    { name: "exclusive", testMatch: "native-resize.e2e.ts", workers: 1 },
+    { name: "parallel", testIgnore: "native-resize.e2e.ts", dependencies: ["exclusive"] },
+  ],
   timeout: ms("2m"),
   expect: {
     timeout: ms("1m"),
