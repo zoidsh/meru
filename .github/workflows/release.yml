@@ -50,12 +50,30 @@ jobs:
               exit 1
             fi
           fi
+  # A release builds on a ci run that already passed rather than repeating it. The
+  # version commit has no run of its own on beta and a concurrent one on main, and
+  # nothing in it can break what its parent proved, so it answers for its parent
+  # only when it holds the version bump alone. Pull request runs don't count: they
+  # test a merge with the base rather than the commit.
   ci:
     needs: channel
-    uses: ./.github/workflows/ci.yml
-    # Reusable workflows get none of the caller's secrets without this,
-    # so the e2e job would run without a license key and fail the release.
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          sha=$GITHUB_SHA
+          commit=$(gh api "repos/$GITHUB_REPOSITORY/commits/$sha") || exit 1
+          others=$(jq '[.files[] | select((.filename == "package.json" and .additions == 1 and .deletions == 1) or (.filename == "CHANGELOG.md" and .additions == 0) | not)] | length' <<< "$commit")
+          if [ "$(jq -r .commit.message <<< "$commit")" = "${TAG#v}" ] && [ "$others" = 0 ]; then
+            sha=$(jq -r '.parents[0].sha' <<< "$commit")
+          fi
+          passed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$sha&status=success&per_page=100" --jq '[.workflow_runs[] | select(.path == ".github/workflows/ci.yml" and (.event == "push" or .event == "workflow_dispatch"))] | length') || exit 1
+          if [ "$passed" = 0 ]; then
+            echo "::error::$sha has no passing ci run on its branch. Run it, then re-run this job."
+            exit 1
+          fi
   build:
     needs: ci
     runs-on: ${{ matrix.os }}
