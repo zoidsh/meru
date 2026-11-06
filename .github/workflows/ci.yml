@@ -168,6 +168,16 @@ jobs:
       matrix: ${{ fromJSON(needs.changes.outputs.e2e-matrix) }}
     steps:
       - uses: actions/checkout@v7
+      # The checkout is on D:, and these default to C:, which is far slower to
+      # write: every test creates a profile under the temp directory.
+      - if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          {
+            echo "TEMP=$RUNNER_TEMP"
+            echo "TMP=$RUNNER_TEMP"
+            echo "BUN_INSTALL_CACHE_DIR=$RUNNER_TEMP/bun-install-cache"
+          } >> "$GITHUB_ENV"
       - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile
       # Only Linux needs a display server invented for it. -a takes a free
