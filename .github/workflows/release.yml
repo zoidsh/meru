@@ -50,12 +50,12 @@ jobs:
               exit 1
             fi
           fi
-  # A release builds on a ci run that already passed rather than repeating it. The
-  # version commit has no run of its own on beta and a concurrent one on main, and
-  # nothing in it can break what its parent proved, so it answers for its parent
-  # only when it holds the version bump alone. Pull request runs don't count: they
-  # test a merge with the base rather than the commit.
-  ci:
+  # Hosted macOS runners are too short to wait on before every publish, so a
+  # release skips macOS's end-to-end job when the commit beneath it already passed
+  # all three platforms. A version commit answers for its parent only when it holds
+  # the version bump alone. Pull request runs don't count: they test a merge with
+  # the base rather than the commit.
+  ci-passed:
     needs: channel
     runs-on: ubuntu-latest
     steps:
@@ -74,6 +74,16 @@ jobs:
             echo "::error::$sha has no passing ci run on its branch. Run it, then re-run this job."
             exit 1
           fi
+  # A version bump is not inert: a config migration first runs on the build whose
+  # version reaches its range, which is how `>=3.60.0` bricked a fresh install of
+  # 3.60.0-beta.1. So the app still launches at this exact version before a publish,
+  # on Linux and Windows.
+  ci:
+    needs: ci-passed
+    uses: ./.github/workflows/ci.yml
+    # Reusable workflows get none of the caller's secrets without this,
+    # so the e2e job would run without a license key and fail the release.
+    secrets: inherit
   build:
     needs: ci
     runs-on: ${{ matrix.os }}

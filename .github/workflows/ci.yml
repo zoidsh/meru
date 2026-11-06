@@ -5,14 +5,16 @@ on:
     branches:
       - main
   pull_request:
+  workflow_call:
   workflow_dispatch:
 
 # A superseded run is cancelled rather than left to finish: two pushes seconds
 # apart otherwise pay for three app builds on a commit already replaced. The
 # newest run on a branch covers everything beneath it, which is all the release
-# skill reads.
+# skill reads. A release keeps a group of its own, because `run_id` is unique to
+# a run, so a push can never cancel the check a publish is waiting on.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref) || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -23,14 +25,19 @@ jobs:
   #
   # Only a pull request is gated. A push to main is the run the release skill
   # reads as main's build check, and a docs-only commit skipping there would
-  # turn a red commit beneath it green; a dispatched run must never skip either.
-  # The whole pull request's files count, not the latest push's, because a
-  # superseded run is cancelled before it finishes. A rename counts its old path
-  # too, so a source file renamed to markdown still runs.
+  # turn a red commit beneath it green; a release and a dispatched run must
+  # never skip either. The whole pull request's files count, not the latest
+  # push's, because a superseded run is cancelled before it finishes. A rename
+  # counts its old path too, so a source file renamed to markdown still runs.
   #
   # The translate skill sits under .claude but is what check.ts and the
   # translate tests read, its rules, style sheets and glossary included, so a
   # change to it sets `translate`, which runs every job but e2e.
+  #
+  # No permissions block: release.yml calls this workflow with a token that
+  # holds no pull-requests scope, and a called job asking for more than its
+  # caller has rejects the whole release run before it starts. The repository
+  # is public, so the files list needs no scope.
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -59,9 +66,10 @@ jobs:
       #
       # scripts/e2e-macos-check.ts records a pass on the Mac mini as a commit
       # status, and only someone with write access can post one, so a fork can't
-      # skip its macOS job. This has to shape the matrix, because a job's `if`
-      # can't read `matrix`, and a step's `if` would still queue for a macOS
-      # runner.
+      # skip its macOS job. A release leaves macOS out too, having checked that
+      # the commit beneath it passed there. This has to shape the matrix, because
+      # a job's `if` can't read `matrix`, and a step's `if` would still queue for
+      # a macOS runner.
       - id: e2e-matrix
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,7 +77,9 @@ jobs:
         run: |
           macos='{"os":"macos-latest","shard":1,"shards":1},'
           state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/statuses" --jq 'map(select(.context == "e2e-macos-local")) | first | .state' || true)
-          if [ "$state" = success ]; then
+          if [ "$GITHUB_EVENT_NAME" = release ]; then
+            macos=
+          elif [ "$state" = success ]; then
             echo "::notice::Skipping the macOS job: e2e-macos-local passed on $SHA."
             macos=
           fi
