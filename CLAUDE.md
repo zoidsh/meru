@@ -49,7 +49,7 @@ End-to-end details: `MERU_SKIP_BUILD=1` reruns against the build already in `dis
   git fetch origin && git checkout --detach origin/beta
   GIT_SEQUENCE_EDITOR="bun $PWD/scripts/beta-rebase.ts todo" git rebase -i --empty=drop origin/main
   bun scripts/beta-rebase.ts check
-  git push --force-with-lease=beta origin HEAD:beta && gh workflow run ci.yml --ref beta
+  git push --force-with-lease=beta origin HEAD:beta
   ```
 
   A `CHANGELOG.md` conflict resolves to the file as it stands at that point in the rebase, `HEAD`, plus the lines this one commit adds. Taking `main`'s file instead would lose the lines of features already replayed in the same rebase. An open pull request into `beta` then moves across with `git rebase --onto origin/beta <old>`, where `<old>` is the commit `origin/beta` pointed at before the push.
