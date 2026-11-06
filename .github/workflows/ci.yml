@@ -84,7 +84,7 @@ jobs:
             echo "::notice::Skipping the macOS job: e2e-macos-local passed on $SHA."
             macos=
           fi
-          echo "matrix={\"include\":[$macos{\"os\":\"ubuntu-latest\",\"shard\":1,\"shards\":2},{\"os\":\"ubuntu-latest\",\"shard\":2,\"shards\":2},{\"os\":\"windows-latest\",\"shard\":1,\"shards\":3},{\"os\":\"windows-latest\",\"shard\":2,\"shards\":3},{\"os\":\"windows-latest\",\"shard\":3,\"shards\":3}]}" >> "$GITHUB_OUTPUT"
+          echo "matrix={\"include\":[$macos{\"os\":\"ubuntu-latest\",\"shard\":1,\"shards\":3},{\"os\":\"ubuntu-latest\",\"shard\":2,\"shards\":3},{\"os\":\"ubuntu-latest\",\"shard\":3,\"shards\":3},{\"os\":\"windows-latest\",\"shard\":1,\"shards\":5},{\"os\":\"windows-latest\",\"shard\":2,\"shards\":5},{\"os\":\"windows-latest\",\"shard\":3,\"shards\":5},{\"os\":\"windows-latest\",\"shard\":4,\"shards\":5},{\"os\":\"windows-latest\",\"shard\":5,\"shards\":5}]}" >> "$GITHUB_OUTPUT"
       # Most pushes to main are a pull request's squash, whose end-to-end jobs have
       # just passed on the same tree, and what they repeated cost a hosted macOS job.
       - if: github.event_name == 'push'
