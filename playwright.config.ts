@@ -6,14 +6,20 @@ export default defineConfig({
   // Not *.spec.ts: `bun test` claims that name and would try to run these files
   // as unit tests, where Playwright's test() throws.
   testMatch: "**/*.e2e.ts",
-  // Spreads tests rather than files across CI's shards, which would otherwise
-  // leave one shard holding a whole slow file. Each test launches its own app
-  // on a fresh profile, so none depends on another having run in the same shard.
+  // Spreads tests rather than files across workers and shards, so one slow file
+  // can't hold up a single worker. Each test launches its own app on a fresh
+  // profile, and the single instance lock lives in that profile.
   fullyParallel: true,
-  // The app takes a single instance lock, and each test drives a window of its
-  // own, so nothing here is safe to run against itself in parallel. Playwright's
-  // own Electron suite and Element's desktop app both settle on the same.
-  workers: 1,
+  // The smallest hosted runner, macOS, has 3 vCPUs.
+  workers: process.env.CI ? 3 : undefined,
+  // A native resize's modal loop warps the one cursor and ends when another
+  // window activates, so it can't share the desktop with an app launching.
+  // Running it first as a dependency is what keeps every other test off the
+  // desktop meanwhile, and a shard runs its dependencies whole.
+  projects: [
+    { name: "exclusive", testMatch: "native-resize.e2e.ts", workers: 1 },
+    { name: "parallel", testIgnore: "native-resize.e2e.ts", dependencies: ["exclusive"] },
+  ],
   timeout: ms("2m"),
   expect: {
     timeout: ms("1m"),

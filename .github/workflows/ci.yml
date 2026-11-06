@@ -8,15 +8,13 @@ on:
   workflow_call:
   workflow_dispatch:
 
-# One run per pull request, with a superseded one cancelled rather than left to
-# finish. Two pushes seconds apart otherwise pay for three app builds on a
-# commit that has already been replaced.
-#
-# Everything else gets a group of its own, because `run_id` is unique to a run:
-# a push to main, a dispatched run and a release build never wait on each
-# other, which is what a shared group without cancellation would make them do.
+# A superseded run is cancelled rather than left to finish: two pushes seconds
+# apart otherwise pay for three app builds on a commit already replaced. The
+# newest run on a branch covers everything beneath it, which is all the release
+# skill reads. A release keeps a group of its own, because `run_id` is unique to
+# a run, so a push can never cancel the check a publish is waiting on.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref) || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -125,16 +123,20 @@ jobs:
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over.
     timeout-minutes: 20
-    # Every shard builds the app itself, so each one still proves its platform
-    # compiles.
+    # macOS stays one job because hosted arm64 runners are short: every extra job
+    # is another chance of one never being acquired, which turns the run red
+    # after a 15 minute wait. Linux and Windows gain little from more workers
+    # alone, so they keep their shards.
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-          - windows-latest
-        shard: [1, 2, 3]
+        include:
+          - { os: macos-latest, shard: 1, shards: 1 }
+          - { os: ubuntu-latest, shard: 1, shards: 2 }
+          - { os: ubuntu-latest, shard: 2, shards: 2 }
+          - { os: windows-latest, shard: 1, shards: 3 }
+          - { os: windows-latest, shard: 2, shards: 3 }
+          - { os: windows-latest, shard: 3, shards: 3 }
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
@@ -142,11 +144,11 @@ jobs:
       # Only Linux needs a display server invented for it. -a takes a free
       # display rather than colliding on :99.
       - if: runner.os == 'Linux'
-        run: xvfb-run -a bun run test:e2e --shard=${{ matrix.shard }}/3
+        run: xvfb-run -a bun run test:e2e --shard=${{ matrix.shard }}/${{ matrix.shards }}
         env:
           MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       - if: runner.os != 'Linux'
-        run: bun run test:e2e --shard=${{ matrix.shard }}/3
+        run: bun run test:e2e --shard=${{ matrix.shard }}/${{ matrix.shards }}
         env:
           MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       # always(), not failure(): a job killed for running long counts as

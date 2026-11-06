@@ -1,0 +1,42 @@
+name: retry-unacquired
+
+# GitHub cancels a job after about 15 minutes when it has no hosted runner to
+# give it, and the run reads red with nothing wrong in the code. Nothing but the
+# annotation tells that apart from a job superseded or stopped by hand.
+on:
+  workflow_run:
+    workflows:
+      - ci
+      - release
+    types:
+      - completed
+
+permissions:
+  actions: write
+  checks: read
+
+jobs:
+  retry:
+    if: github.event.workflow_run.run_attempt < 3 && contains(fromJSON('["failure", "cancelled"]'), github.event.workflow_run.conclusion)
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          # A rerun rejoins its concurrency group, so rerunning a replaced
+          # commit would cancel the run of the commit that replaced it. A fork's
+          # branch doesn't resolve here, or resolves to some other commit.
+          current=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_BRANCH" --jq .sha) || exit 0
+          [ "$current" = "$HEAD_SHA" ] || exit 0
+
+          urls=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/attempts/$ATTEMPT/jobs?per_page=100" --jq '.jobs[] | select(.conclusion == "cancelled" and (.runner_name // "") == "") | .check_run_url')
+          for url in $urls; do
+            if gh api "$url/annotations" --jq '.[].message' | grep -q 'not acquired by Runner'; then
+              gh run rerun "$RUN_ID" --failed --repo "$GITHUB_REPOSITORY"
+              exit 0
+            fi
+          done
