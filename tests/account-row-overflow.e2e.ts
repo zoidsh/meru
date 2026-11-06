@@ -18,8 +18,8 @@
  * arrow at each end — is the rest.
  *
  * Pro, because the free version runs one account and there would be no row.
- * Sixteen of them at 1000x700 is comfortably more than fits; the point is the
- * overflow, not the exact number.
+ * Eight of them at 1000x700 is more than fits; the point is the overflow, not the
+ * exact number, and each account is a live view the app has to launch and quit.
  *
  * Two launches rather than one, because `useApp` seeds every test in the group
  * it is called in and which account the app comes up on is the difference
@@ -31,22 +31,14 @@ import { seedAccount } from "./lib/accounts";
 import { type MeruApp, useProApp } from "./lib/app";
 
 const ACCOUNT_LABELS = [
-  "Personal",
-  "Work",
-  "Studio",
-  "Freelance",
-  "Side project",
-  "Family",
-  "Old work",
-  "Newsletters",
-  "Support",
-  "Billing",
-  "Club",
-  "School",
-  "Volunteer",
-  "Archive",
-  "Sales",
-  "Operations",
+  "Personal correspondence",
+  "Work correspondence",
+  "Studio correspondence",
+  "Freelance correspondence",
+  "Side project correspondence",
+  "Family correspondence",
+  "Old work correspondence",
+  "Newsletter correspondence",
 ];
 
 /** The account at the far end of the row, which nothing can reach without scrolling. */
