@@ -123,16 +123,18 @@ jobs:
     # GitHub's six hour default. Two attempts of a two minute test, its build
     # and its teardown fit inside this several times over.
     timeout-minutes: 20
-    # Every shard builds the app itself, so each one still proves its platform
-    # compiles.
+    # Windows alone is slow enough to need shards. macOS stays one job because
+    # hosted arm64 runners are short: every extra job is another chance of one
+    # never being acquired, which turns the run red after a 15 minute wait.
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-          - windows-latest
-        shard: [1, 2, 3]
+        include:
+          - { os: macos-latest, shard: 1, shards: 1 }
+          - { os: ubuntu-latest, shard: 1, shards: 1 }
+          - { os: windows-latest, shard: 1, shards: 3 }
+          - { os: windows-latest, shard: 2, shards: 3 }
+          - { os: windows-latest, shard: 3, shards: 3 }
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
@@ -140,11 +142,11 @@ jobs:
       # Only Linux needs a display server invented for it. -a takes a free
       # display rather than colliding on :99.
       - if: runner.os == 'Linux'
-        run: xvfb-run -a bun run test:e2e --shard=${{ matrix.shard }}/3
+        run: xvfb-run -a bun run test:e2e --shard=${{ matrix.shard }}/${{ matrix.shards }}
         env:
           MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       - if: runner.os != 'Linux'
-        run: bun run test:e2e --shard=${{ matrix.shard }}/3
+        run: bun run test:e2e --shard=${{ matrix.shard }}/${{ matrix.shards }}
         env:
           MERU_TEST_LICENSE_KEY: ${{ secrets.MERU_TEST_LICENSE_KEY }}
       # always(), not failure(): a job killed for running long counts as
