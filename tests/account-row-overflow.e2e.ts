@@ -31,14 +31,14 @@ import { seedAccount } from "./lib/accounts";
 import { type MeruApp, useProApp } from "./lib/app";
 
 const ACCOUNT_LABELS = [
-  "Personal",
-  "Work",
-  "Studio",
-  "Freelance",
-  "Side project",
-  "Family",
-  "Old work",
-  "Newsletters",
+  "Personal correspondence",
+  "Work correspondence",
+  "Studio correspondence",
+  "Freelance correspondence",
+  "Side project correspondence",
+  "Family correspondence",
+  "Old work correspondence",
+  "Newsletter correspondence",
 ];
 
 /** The account at the far end of the row, which nothing can reach without scrolling. */
