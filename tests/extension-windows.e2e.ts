@@ -169,6 +169,23 @@ async function runInPage<Result>(webContentsId: number, script: string) {
 }
 
 /**
+ * Runs a script that closes the page's own window. Its answer can't be waited
+ * for: when the window goes first, `executeJavaScript` never settles, and the
+ * test hangs until it times out.
+ */
+async function closeWindowFromPage(webContentsId: number, script: string) {
+  await meru.app.evaluate(
+    ({ webContents }, { webContentsId: contentsId, script: pageScript }) => {
+      webContents
+        .fromId(contentsId)
+        ?.mainFrame.executeJavaScript(pageScript)
+        .catch(() => undefined);
+    },
+    { webContentsId, script },
+  );
+}
+
+/**
  * The `WebContents` ids of the views Meru is showing, which is what the
  * embedder answers `tabs.Tab.active` from.
  */
@@ -282,9 +299,7 @@ test("a page finds its own window by URL and closes it", async () => {
 
   expect(windowPage).toMatchObject({ id: pageId, windowId });
 
-  // Not awaited in the page, which goes away with its window before it could
-  // answer
-  await runInPage(pageId, `chrome.windows.remove(${windowId}); null`);
+  await closeWindowFromPage(pageId, `chrome.windows.remove(${windowId})`);
 
   await expect.poll(readWindowUrls).not.toContain(getWindowPageUrl());
 
@@ -304,11 +319,9 @@ test("a page closes its own window with windows.getCurrent and remove", async ()
     id: windowId,
   });
 
-  // Not awaited in the page, which goes away with its window before it could
-  // answer
-  await runInPage(
+  await closeWindowFromPage(
     pageId,
-    "chrome.windows.getCurrent().then((window) => chrome.windows.remove(window.id)); null",
+    "chrome.windows.getCurrent().then((window) => chrome.windows.remove(window.id))",
   );
 
   await expect.poll(readWindowUrls).not.toContain(getWindowPageUrl());
@@ -337,7 +350,7 @@ test("a page in an extension window gets only the extension-page permissions", a
     ),
   ).toEqual(["granted", "denied", "granted"]);
 
-  await runInPage(pageId, `chrome.windows.remove(${windowId}); null`);
+  await closeWindowFromPage(pageId, `chrome.windows.remove(${windowId})`);
 
   await expect.poll(readWindowUrls).not.toContain(getWindowPageUrl());
 
@@ -381,7 +394,7 @@ test("a page in an extension window sees the view Meru is showing as the current
     await runInPage<SeenTab[]>(pageId, `chrome.tabs.query({ windowId: ${windowId} })`),
   ).toEqual([expect.objectContaining({ id: pageId })]);
 
-  await runInPage(pageId, `chrome.windows.remove(${windowId}); null`);
+  await closeWindowFromPage(pageId, `chrome.windows.remove(${windowId})`);
 
   await expect.poll(readWindowUrls).not.toContain(getWindowPageUrl());
 
