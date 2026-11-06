@@ -88,7 +88,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
-      - run: bun install --frozen-lockfile --ignore-scripts
+      - uses: ./.github/actions/bun-install
+        with:
+          args: --ignore-scripts
       - run: bun run fmt:check
   lint:
     needs: changes
@@ -97,7 +99,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
-      - run: bun install --frozen-lockfile --ignore-scripts
+      - uses: ./.github/actions/bun-install
+        with:
+          args: --ignore-scripts
       - run: bun run lint
   # The catalog checks, in the order they answer: whether the committed PO is
   # what `lingui extract` would write, whether anything is untranslated,
@@ -112,7 +116,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
-      - run: bun install --frozen-lockfile --ignore-scripts
+      - uses: ./.github/actions/bun-install
+        with:
+          args: --ignore-scripts
       - run: bunx lingui compile --strict
       - run: bunx lingui check sync --clean --workers 1
       - run: bunx lingui check missing --mode catalog --verbose --workers 1
@@ -125,7 +131,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
-      - run: bun install --frozen-lockfile --ignore-scripts
+      - uses: ./.github/actions/bun-install
+        with:
+          args: --ignore-scripts
       - run: bun run types:ci
   test:
     needs: changes
@@ -134,7 +142,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
-      - run: bun install --frozen-lockfile --ignore-scripts
+      - uses: ./.github/actions/bun-install
+        with:
+          args: --ignore-scripts
       - run: bun run test
   e2e:
     # Builds the app and launches it, so this is also what proves each platform
@@ -154,7 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
-      - run: bun install --frozen-lockfile
+      - uses: ./.github/actions/bun-install
       # Only Linux needs a display server invented for it. -a takes a free
       # display rather than colliding on :99.
       - if: runner.os == 'Linux'
