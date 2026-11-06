@@ -136,7 +136,7 @@ function createAccount(id: string) {
   }
 
   const requestDisplayMedia = () => {
-    const answers: Array<{ video?: SelectedDesktopSource }> = [];
+    const answers: Array<{ video?: SelectedDesktopSource } | null> = [];
 
     handler({}, (streams) => {
       answers.push(streams);
@@ -197,7 +197,7 @@ describe("display media requests", () => {
 
     openedPicker(0).emit("closed");
 
-    expect(answers).toEqual([{}]);
+    expect(answers).toEqual([null]);
     expect(account.desktopSourcesWindow).toBeNull();
     expect(ipcMain.listenerCount("desktopSources.select")).toBe(0);
   });
@@ -244,13 +244,13 @@ describe("display media requests", () => {
 
     expect(pickerWindows).toHaveLength(1);
     expect(openedPicker(0).focused).toBe(1);
-    expect(secondAnswers).toEqual([{}]);
+    expect(secondAnswers).toEqual([null]);
     expect(firstAnswers).toEqual([]);
 
     pick(openedPicker(0), screen);
 
     expect(firstAnswers).toEqual([{ video: screen }]);
-    expect(secondAnswers).toEqual([{}]);
+    expect(secondAnswers).toEqual([null]);
     expect(account.desktopSourcesWindow).toBeNull();
   });
 

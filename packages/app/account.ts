@@ -206,7 +206,7 @@ export class Account {
         if (this.desktopSourcesWindow) {
           this.desktopSourcesWindow.focus();
 
-          callback({});
+          callback(null);
 
           return;
         }
@@ -214,7 +214,7 @@ export class Account {
         const googleMeetParentWindow = this.findGoogleMeetParentWindow();
 
         if (!googleMeetParentWindow) {
-          callback({});
+          callback(null);
 
           return;
         }
@@ -261,7 +261,7 @@ export class Account {
 
           this.desktopSourcesWindow = null;
 
-          callback({});
+          callback(null);
 
           desktopSourcesWindow.destroy();
         };
