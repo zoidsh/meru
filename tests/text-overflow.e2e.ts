@@ -493,7 +493,7 @@ const ACCOUNTS = [
   }),
 ];
 
-const LANGUAGES: { tag: string; seedConfig: Partial<Config>; env: Record<string, string> }[] = [
+const ALL_LANGUAGES: { tag: string; seedConfig: Partial<Config>; env: Record<string, string> }[] = [
   ...SHIPPED_CATALOG_TAGS.filter((tag) => tag !== "en").map((tag) => ({
     tag,
     seedConfig: { "app.language": tag, accounts: ACCOUNTS },
@@ -501,6 +501,19 @@ const LANGUAGES: { tag: string; seedConfig: Partial<Config>; env: Record<string,
   })),
   { tag: PSEUDO_LOCALE, seedConfig: { accounts: ACCOUNTS }, env: { MERU_PSEUDO_LOCALE: "1" } },
 ];
+
+/*
+ * Whether a translation is too long shows up on any platform, and Linux and macOS
+ * walk them all. What Windows adds is its fonts, for which the longest text, the
+ * longest real language and a CJK one are enough, at a fraction of its slowest
+ * file's time.
+ */
+const WINDOWS_LANGUAGES = new Set([PSEUDO_LOCALE, "de", "ja"]);
+
+const LANGUAGES =
+  process.platform === "win32"
+    ? ALL_LANGUAGES.filter((language) => WINDOWS_LANGUAGES.has(language.tag))
+    : ALL_LANGUAGES;
 
 const WIDTHS = [
   { name: "the width the window opens at", isMinimum: false },
