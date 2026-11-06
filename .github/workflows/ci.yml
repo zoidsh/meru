@@ -44,6 +44,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
       translate: ${{ steps.files.outputs.translate }}
       e2e-matrix: ${{ steps.e2e-matrix.outputs.matrix }}
+      e2e-proved: ${{ steps.e2e-proved.outputs.proved }}
     steps:
       - id: files
         env:
@@ -84,6 +85,19 @@ jobs:
             macos=
           fi
           echo "matrix={\"include\":[$macos{\"os\":\"ubuntu-latest\",\"shard\":1,\"shards\":2},{\"os\":\"ubuntu-latest\",\"shard\":2,\"shards\":2},{\"os\":\"windows-latest\",\"shard\":1,\"shards\":3},{\"os\":\"windows-latest\",\"shard\":2,\"shards\":3},{\"os\":\"windows-latest\",\"shard\":3,\"shards\":3}]}" >> "$GITHUB_OUTPUT"
+      # Most pushes to main are a pull request's squash, whose end-to-end jobs have
+      # just passed on the same tree, and what they repeated cost a hosted macOS job.
+      - if: github.event_name == 'push'
+        uses: actions/checkout@v7
+      - id: e2e-proved
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if reason=$(bash .github/scripts/e2e-already-proved.sh "$GITHUB_SHA"); then
+            echo "::notice::Skipping the end-to-end jobs: $reason"
+            echo "proved=true" >> "$GITHUB_OUTPUT"
+          fi
   fmt:
     runs-on: ubuntu-latest
     steps:
@@ -143,7 +157,7 @@ jobs:
     # launching proved strictly less, and a signed build is only needed at
     # release, which release.yml does itself.
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.e2e-proved != 'true'
     runs-on: ${{ matrix.os }}
     # A test that hangs rather than fails would otherwise sit on a runner for
     # GitHub's six hour default. Two attempts of a two minute test, its build
