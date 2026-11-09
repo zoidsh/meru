@@ -415,7 +415,7 @@ msgid "Amber"
 msgstr "アンバー"
 
 #. Titlebar button on Windows and Linux that opens Meru's menu, in place of a menu bar
-#: packages/renderer/components/app-titlebar.tsx
+#: packages/renderer/components/app-menu-button.tsx
 msgid "App menu"
 msgstr "アプリメニュー"
 
