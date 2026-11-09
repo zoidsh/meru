@@ -10,13 +10,15 @@
  * stand-in Gmail redirects to its sign-in page, so the view's document is that
  * page, and so is the origin the localStorage entry belongs to.
  *
- * Pro for the disabled account alone, since a second account is Pro and the
- * only account cannot be disabled.
+ * Pro for the disabled account, since a second account is Pro and the only
+ * account cannot be disabled, and for the pinned tab, since saved tabs are.
  */
 import { expect, type Locator, test } from "@playwright/test";
-import { seedAccount } from "./lib/accounts";
+import { seedAccount, seedSavedTab } from "./lib/accounts";
 import { type MeruApp, useApp, useProApp } from "./lib/app";
+import { startTestServer, type TestServer } from "./lib/server";
 import { openSettingsPage } from "./lib/settings";
+import { waitForVerticalTabs } from "./lib/strip";
 
 const COOKIE_NAME = "meru-test-cookie";
 
@@ -48,6 +50,9 @@ async function hasCookie(meru: MeruApp, accountId: string) {
 /**
  * Runs a script in the account's Gmail view, or reports `undefined` while the
  * view has no settled document to run it in.
+ *
+ * Found by the stand-in's sign-in page on `localhost`, since the account's
+ * workspace tabs share its session and load their pages from `127.0.0.1`.
  */
 function evaluateInGmailView(meru: MeruApp, accountId: string, script: string) {
   return meru.app.evaluate(
@@ -56,15 +61,16 @@ function evaluateInGmailView(meru: MeruApp, accountId: string, script: string) {
         window.webContents.getURL().includes("main.html"),
       );
 
-      const view = mainWindow?.contentView.children.find((child) =>
-        (child as Electron.WebContentsView).webContents?.session.storagePath?.includes(accountId),
-      ) as Electron.WebContentsView | undefined;
+      const view = mainWindow?.contentView.children.find((child) => {
+        const { webContents } = child as Electron.WebContentsView;
 
-      if (
-        !view ||
-        view.webContents.isLoading() ||
-        !view.webContents.getURL().includes("localhost")
-      ) {
+        return (
+          webContents?.session.storagePath?.includes(accountId) &&
+          new URL(webContents.getURL() || "about:blank").hostname === "localhost"
+        );
+      }) as Electron.WebContentsView | undefined;
+
+      if (!view || view.webContents.isLoading()) {
         return undefined;
       }
 
@@ -220,5 +226,152 @@ test.describe("with the second account disabled", () => {
 
     // The other account's partition is not touched.
     expect(await hasCookie(meru, "first-account")).toBe(true);
+  });
+});
+
+/*
+ * Tabs, which run in the account's session too. A page left open while its
+ * cookies are cleared would write its site data straight back, so deleting
+ * cookies closes every tab but Gmail first: an unpinned one is gone, and a
+ * pinned one stays where the user pinned it, unloaded, as hibernation leaves
+ * it. Pro, since saved tabs are.
+ */
+test.describe("with a pinned tab and an unpinned one", () => {
+  const PINNED_PAGE_TITLE = "Pinned Stand-In";
+
+  const UNPINNED_PAGE_TITLE = "Unpinned Stand-In";
+
+  let server: TestServer;
+
+  // The query makes the app take the page for Calendar.
+  function pageUrl(pageTitle: string) {
+    return `${server.pageUrl(pageTitle)}?stand-in-for=/calendar.google.com`;
+  }
+
+  test.beforeAll(async () => {
+    server = await startTestServer();
+  });
+
+  test.afterAll(async () => {
+    await server.close();
+  });
+
+  const meru = useProApp(() => ({
+    accounts: [
+      seedAccount({
+        id: "first-account",
+        label: "Personal",
+        savedTabs: [
+          seedSavedTab({
+            app: "calendar",
+            url: pageUrl(PINNED_PAGE_TITLE),
+            title: PINNED_PAGE_TITLE,
+            loadOnLaunch: true,
+          }),
+        ],
+      }),
+    ],
+  }));
+
+  function hasLoadedPage(url: string) {
+    return meru.app.evaluate(
+      ({ webContents }, pageUrl) =>
+        webContents
+          .getAllWebContents()
+          .some((contents) => contents.getURL() === pageUrl && !contents.isLoading()),
+      url,
+    );
+  }
+
+  function stripTab(pageTitle: string) {
+    return meru.renderer.getByRole("button", { name: pageTitle, exact: true });
+  }
+
+  async function readSavedTabUrls() {
+    const config = await meru.readConfig();
+
+    return config.accounts
+      ?.find((account) => account.id === "first-account")
+      ?.workspaceApps.savedTabs.map((savedTab) => savedTab.url);
+  }
+
+  /** Both tabs live, the unpinned one opened from a link in the pinned one. */
+  async function openTabs() {
+    await expect.poll(() => hasLoadedPage(pageUrl(PINNED_PAGE_TITLE))).toBe(true);
+
+    await meru.app.evaluate(
+      ({ webContents }, { pinnedUrl, unpinnedUrl }) => {
+        const contents = webContents
+          .getAllWebContents()
+          .find((each) => each.getURL() === pinnedUrl);
+
+        void contents?.executeJavaScript(`window.open(${JSON.stringify(unpinnedUrl)}); null`, true);
+      },
+      { pinnedUrl: pageUrl(PINNED_PAGE_TITLE), unpinnedUrl: pageUrl(UNPINNED_PAGE_TITLE) },
+    );
+
+    await expect.poll(() => hasLoadedPage(pageUrl(UNPINNED_PAGE_TITLE))).toBe(true);
+
+    await expect(stripTab(UNPINNED_PAGE_TITLE)).toBeVisible();
+  }
+
+  async function closeSettings() {
+    await meru.closeSettings();
+
+    await waitForVerticalTabs(meru);
+  }
+
+  test("deleting cookies closes the unpinned tab and unloads the pinned one", async () => {
+    await openTabs();
+
+    await markGmailView(meru, "first-account");
+
+    const dialog = await openDeleteBrowsingDataDialog(meru, "Personal");
+
+    await dialog.getByRole("checkbox", { name: "Cookies and other site data" }).click();
+
+    await deleteData(dialog);
+
+    await expect
+      .poll(() => readGmailView(meru, "first-account"))
+      .toEqual({ marked: false, stored: null });
+
+    expect(await hasLoadedPage(pageUrl(UNPINNED_PAGE_TITLE))).toBe(false);
+
+    expect(await hasLoadedPage(pageUrl(PINNED_PAGE_TITLE))).toBe(false);
+
+    expect(await readSavedTabUrls()).toEqual([pageUrl(PINNED_PAGE_TITLE)]);
+
+    await closeSettings();
+
+    await expect(stripTab(UNPINNED_PAGE_TITLE)).toHaveCount(0);
+
+    // Dormant, which the strip draws faded.
+    await expect(stripTab(PINNED_PAGE_TITLE)).toHaveClass(/(?:^|\s)opacity-50(?:\s|$)/);
+  });
+
+  test("deleting the cache leaves every tab open", async () => {
+    await openTabs();
+
+    await markGmailView(meru, "first-account");
+
+    const dialog = await openDeleteBrowsingDataDialog(meru, "Personal");
+
+    await deleteData(dialog);
+
+    await expect
+      .poll(() => readGmailView(meru, "first-account"))
+      .toEqual({ marked: false, stored: "1" });
+
+    // Polled, since both are reloading.
+    await expect.poll(() => hasLoadedPage(pageUrl(UNPINNED_PAGE_TITLE))).toBe(true);
+
+    await expect.poll(() => hasLoadedPage(pageUrl(PINNED_PAGE_TITLE))).toBe(true);
+
+    await closeSettings();
+
+    await expect(stripTab(UNPINNED_PAGE_TITLE)).toBeVisible();
+
+    await expect(stripTab(PINNED_PAGE_TITLE)).not.toHaveClass(/(?:^|\s)opacity-50(?:\s|$)/);
   });
 });

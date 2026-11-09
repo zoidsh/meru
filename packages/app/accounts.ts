@@ -207,7 +207,7 @@ class Accounts {
     }
   }
 
-  refreshSelectedAccountView() {
+  refreshSelectedAccountView({ focus = true }: { focus?: boolean } = {}) {
     const activeTab = this.getSelectedAccount().instance.tabs.activeTab;
 
     if (!activeTab.view) {
@@ -219,7 +219,9 @@ class Accounts {
 
     activeTab.updateViewBounds?.();
 
-    this.focusActiveView();
+    if (focus) {
+      this.focusActiveView();
+    }
   }
 
   /**
@@ -606,17 +608,33 @@ class Accounts {
 
     const instance = this.instances.get(accountId);
 
+    // Closed before the clear, so no open page writes its site data back
+    // while it runs.
+    if (cookies) {
+      instance?.tabs.closeAllButGmail();
+    }
+
     // A disabled account was never constructed, so its data is reached through
     // its partition, as `removeAccount` does.
     await (instance?.session ?? session.fromPartition(`persist:${accountId}`)).clearData({
       dataTypes,
     });
 
-    if (instance?.gmail.hasView) {
+    if (!instance) {
+      return;
+    }
+
+    if (instance.gmail.hasView) {
       instance.gmail.view.webContents.reload();
     }
 
-    instance?.tabs.reloadAll();
+    instance.tabs.reloadAll();
+
+    // Without focus: this is asked for from the settings window, and focusing
+    // the view would bring the main window forward over it.
+    if (this.getAccount(accountId).config.selected) {
+      this.refreshSelectedAccountView({ focus: false });
+    }
   }
 
   async removeAccount(selectedAccountId: string) {

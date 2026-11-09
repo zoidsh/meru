@@ -6,7 +6,7 @@ This file is the draft of the next release, written one line at a time as work l
 
 ### Added
 
-- Delete one account's cookies, its cache or both with **Delete browsing data…** in the account's menu in `Settings… → Accounts`, which now also holds **Edit account…** and **Remove account…**. Only the cache is selected by default, and deleting cookies signs you out of that account
+- Delete one account's cookies, its cache or both with **Delete browsing data…** in the account's menu in `Settings… → Accounts`, which now also holds **Edit account…** and **Remove account…**. Only the cache is selected by default. Deleting cookies signs you out of that account and closes its tabs other than Gmail, and pinned tabs stay in place and load again when you open them
 
 ### Changed
 
