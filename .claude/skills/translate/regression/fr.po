@@ -51,7 +51,7 @@ msgstr "Supprimer le compte"
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Réglages…"
 
 #. A menu or a menu item in Meru's menu bar

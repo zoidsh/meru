@@ -35,7 +35,7 @@ Sentence style, with nouns capitalized as German always does. A label that opens
 
 ## Settings
 
-_Einstellungen_. The app-menu item with `msgctxt` `macOS` is _Einstellungen …_, as AppKit writes it; with `Windows` or `Linux` it is _Einstellungen_, since the English has no ellipsis.
+_Einstellungen_. The app-menu item with `msgctxt` `macOS` is _Einstellungen …_, as AppKit writes it; with `Windows` or `Linux` it is _Einstellungen …_ too, Microsoft's and GNOME's word with the English's ellipsis.
 
 ## Access keys
 

@@ -60,6 +60,8 @@ mock.module("@/lib/relaunch", () => ({ relaunchApp: () => {} }));
 
 mock.module("@/main", () => ({ main: { location: "/", window: mainWindow } }));
 
+mock.module("@/settings-window", () => ({ settingsWindow: {} }));
+
 mock.module("@/updater", () => ({ appUpdater: { isUpdateSupported: () => true } }));
 
 mock.module("@/url", () => ({ openExternalUrl: () => {} }));

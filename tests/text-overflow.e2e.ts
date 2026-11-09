@@ -18,7 +18,7 @@
  * a layout that fits it fits English.
  *
  * Each case walks the titlebar, in every state of the trial badge, and every
- * settings page the sidebar lists, at the width the window opens at and at its
+ * settings page the sidebar lists, at the width each window opens at and at its
  * minimum width, and reports every visible run of text that a box clips:
  * - an ancestor with `overflow` hidden or clipped on an axis, which is also what
  *   `text-overflow: ellipsis` and line clamping need, when the text reaches past
@@ -49,7 +49,7 @@
  */
 import { PSEUDO_LOCALE, SHIPPED_CATALOG_TAGS } from "@meru/shared/i18n/tags";
 import type { Config } from "@meru/shared/types";
-import { expect, type Locator, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { seedAccount } from "./lib/accounts";
 import { type MeruApp, useApp } from "./lib/app";
 import { setMinimumWindowWidth } from "./lib/page-fit";
@@ -64,8 +64,8 @@ type Overflow = {
 };
 
 /** Every visible run of text a box clips, as the comment at the top defines it. */
-function readOverflows(meru: MeruApp) {
-  return meru.renderer.evaluate(async () => {
+function readOverflows(page: Page) {
+  return page.evaluate(async () => {
     await document.fonts.ready;
 
     // A badge fades between its sides, and a box measured mid-transition is
@@ -376,8 +376,8 @@ function readTitlebarCollisions(meru: MeruApp) {
  * The first line runs from the top of the handle or the content, whichever is
  * higher, to the bottom of whichever is lower.
  */
-function readSortableRowBreaks(meru: MeruApp) {
-  return meru.renderer.evaluate(() => {
+function readSortableRowBreaks(page: Page) {
+  return page.evaluate(() => {
     const breaks: string[] = [];
 
     for (const row of document.querySelectorAll('[data-slot="item"]')) {
@@ -473,8 +473,8 @@ function setTrialState(meru: MeruApp, state: (typeof TRIAL_STATES)[number]) {
  * count rather than on names, so a selector that stopped matching fails here
  * instead of every case passing having checked nothing.
  */
-async function readSettingsPageLabels(navigation: Locator) {
-  const labels = await navigation.getByRole("button").allInnerTexts();
+async function readSettingsPageLabels(settings: Page) {
+  const labels = await settings.getByTestId("settings-nav").getByRole("button").allInnerTexts();
 
   expect(labels.length).toBeGreaterThanOrEqual(5);
 
@@ -516,8 +516,8 @@ const LANGUAGES =
     : ALL_LANGUAGES;
 
 const WIDTHS = [
-  { name: "the width the window opens at", isMinimum: false },
-  { name: "the window's minimum width", isMinimum: true },
+  { name: "the width each window opens at", isMinimum: false },
+  { name: "each window's minimum width", isMinimum: true },
 ];
 
 for (const language of LANGUAGES) {
@@ -536,9 +536,9 @@ for (const language of LANGUAGES) {
 
         const findings: string[] = [];
 
-        const check = async (where: string) => {
-          for (const overflow of await readOverflows(meru)) {
-            findings.push(formatOverflow(`${language.tag} ${windowWidth}px ${where}`, overflow));
+        const check = async (where: string, page = meru.renderer, pageWidth = windowWidth) => {
+          for (const overflow of await readOverflows(page)) {
+            findings.push(formatOverflow(`${language.tag} ${pageWidth}px ${where}`, overflow));
           }
         };
 
@@ -564,15 +564,19 @@ for (const language of LANGUAGES) {
           await meru.renderer.mouse.move(0, 0);
         }
 
-        const navigation = await meru.openSettings();
+        const settings = await meru.openSettings();
 
-        for (const label of await readSettingsPageLabels(navigation)) {
-          await openSettingsPage(meru, navigation, label);
+        const settingsWidth = width.isMinimum
+          ? await setMinimumWindowWidth(meru, settings)
+          : await settings.evaluate(() => window.innerWidth);
 
-          await check(`settings "${label}"`);
+        for (const label of await readSettingsPageLabels(settings)) {
+          await openSettingsPage(settings, label);
 
-          for (const rowBreak of await readSortableRowBreaks(meru)) {
-            findings.push(`${language.tag} ${windowWidth}px settings "${label}": ${rowBreak}`);
+          await check(`settings "${label}"`, settings, settingsWidth);
+
+          for (const rowBreak of await readSortableRowBreaks(settings)) {
+            findings.push(`${language.tag} ${settingsWidth}px settings "${label}": ${rowBreak}`);
           }
         }
 

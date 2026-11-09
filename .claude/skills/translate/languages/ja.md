@@ -33,7 +33,7 @@ None. Latin words inside Japanese keep their own capitals (Gmail, Meru Pro).
 
 ## Settings
 
-設定. The app-menu item with `msgctxt` `macOS` is 設定…, as AppKit writes it; with `Windows` or `Linux` it is 設定, since the English has no ellipsis.
+設定. The app-menu item with `msgctxt` `macOS` is 設定…, as AppKit writes it; with `Windows` or `Linux` it is 設定… too, Microsoft's and GNOME's word with the English's ellipsis.
 
 ## Access keys
 

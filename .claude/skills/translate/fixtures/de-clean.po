@@ -65,7 +65,7 @@ msgstr "Datei"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Einstellungen …"
 
 #: packages/app/context-menu.ts

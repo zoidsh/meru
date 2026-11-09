@@ -55,19 +55,11 @@ class AppUpdater {
    * way out of an install that can no longer update itself.
    */
   private sendUpdateNotVerified(version: string | null) {
-    ipc.renderer.send(
-      main.window.webContents,
-      "appUpdater.updateNotVerified",
-      version ? `v${version}` : null,
-    );
+    ipc.broadcast("appUpdater.updateNotVerified", version ? `v${version}` : null);
   }
 
   private sendUpdateAvailable(version: string | null) {
-    ipc.renderer.send(
-      main.window.webContents,
-      "appUpdater.updateAvailable",
-      version ? `v${version}` : null,
-    );
+    ipc.broadcast("appUpdater.updateAvailable", version ? `v${version}` : null);
 
     this.lastAnnouncedVersion = version;
   }

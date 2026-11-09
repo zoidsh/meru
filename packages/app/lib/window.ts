@@ -109,6 +109,21 @@ export function getTitleBarOptions() {
   };
 }
 
+/** The window controls Windows and Linux draw follow the theme only when told to. */
+export function updateTitleBarOverlay(browserWindow: BrowserWindow) {
+  if (platform.isMacOS || browserWindow.isDestroyed()) {
+    return;
+  }
+
+  const { titleBarOverlay } = getTitleBarOptions();
+
+  if (typeof titleBarOverlay === "boolean") {
+    return;
+  }
+
+  browserWindow.setTitleBarOverlay(titleBarOverlay);
+}
+
 export function getCommonBrowserWindowOptions() {
   return {
     ...getTitleBarOptions(),
@@ -160,6 +175,7 @@ export function createBrowserWindow(options: BrowserWindowConstructorOptions) {
 
 export type RendererPage =
   | "main"
+  | "settings"
   | "workspace-app"
   | "desktop-sources"
   | "recent-download-history"
@@ -168,6 +184,8 @@ export type RendererPage =
 type LoadRendererOptions = {
   page: RendererPage;
   searchParams?: URLSearchParams;
+  /** The hash route the page starts on. */
+  hash?: string;
 };
 
 export function loadRenderer(
@@ -190,7 +208,7 @@ export function loadRenderer(
       `${process.env.MERU_RENDERER_URL || "http://localhost:3000/"}${pageFileName}`
     : pathToFileURL(path.join(app.getAppPath(), "build-js", "renderer", pageFileName)).href;
 
-  const pageUrl = `${pageFileUrl}?${searchParams.toString()}`;
+  const pageUrl = `${pageFileUrl}?${searchParams.toString()}${options.hash ? `#${options.hash}` : ""}`;
 
   keepOnRendererPage(window.webContents, pageUrl);
 

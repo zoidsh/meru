@@ -125,7 +125,8 @@ export function AboutSettings() {
       </SettingsHeader>
       <SettingsContent>
         <FieldGroup>
-          <FieldSet>
+          {/* A fieldset is as wide as its content by default, which would stop the Device ID truncating. */}
+          <FieldSet className="min-w-0">
             <DiagnosticInfo />
           </FieldSet>
           <FieldSeparator />

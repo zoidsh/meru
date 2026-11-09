@@ -24,7 +24,7 @@ const { AppTray } = await import("./tray");
 const MENU_MESSAGES = [
   "About {appName}",
   "Check for Updates…",
-  "Settings",
+  "Settings…",
   "File",
   "Compose",
   "Undo",

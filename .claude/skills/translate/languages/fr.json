@@ -321,21 +321,21 @@
           {
             "word": "Réglages…",
             "source": "(AppKit `MenuCommands` `Settings\\U2026`)",
-            "labels": ["Settings"]
+            "labels": ["Settings…"]
           }
         ],
         "Windows": [
           {
-            "word": "Paramètres",
+            "word": "Paramètres…",
             "source": "(TBX `21910_780478_1053484`)",
-            "labels": ["Settings"]
+            "labels": ["Settings…"]
           }
         ],
         "Linux": [
           {
-            "word": "Paramètres",
+            "word": "Paramètres…",
             "source": "(gtk4 `Settings`)",
-            "labels": ["Settings"]
+            "labels": ["Settings…"]
           }
         ]
       },
@@ -930,7 +930,7 @@
         "entries": [
           {
             "msgctxt": "macOS",
-            "msgid": "Settings"
+            "msgid": "Settings…"
           }
         ]
       }

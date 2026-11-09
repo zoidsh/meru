@@ -32,7 +32,6 @@ import {
   TitlebarLeft,
   TitlebarNavigationControls,
   TitlebarRightOverlay,
-  TitlebarTitle,
 } from "@/components/titlebar";
 import { UnreadCountBadge } from "@/components/unread-count-badge";
 import { WorkspaceAppsLauncher } from "@/components/workspace-apps-launcher";
@@ -633,17 +632,6 @@ export function AppTitlebar() {
   const [isUnverifiedAppUpdateDetailsOpen, setIsUnverifiedAppUpdateDetailsOpen] = useState(false);
 
   const isLicenseKeyValid = useIsLicenseKeyValid();
-
-  if (location.startsWith("/settings/")) {
-    return (
-      <Titlebar>
-        <TitlebarTitle>
-          {t({ message: "Settings", comment: "Title of the Settings window, in its titlebar" })}
-        </TitlebarTitle>
-        <AppMenuButton className="ml-auto" />
-      </Titlebar>
-    );
-  }
 
   if (!config || !accounts) {
     return;

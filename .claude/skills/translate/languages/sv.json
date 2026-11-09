@@ -321,21 +321,21 @@
           {
             "word": "Inställningar…",
             "source": "(AppKit `MenuCommands` `Settings\\U2026`)",
-            "labels": ["Settings"]
+            "labels": ["Settings…"]
           }
         ],
         "Windows": [
           {
-            "word": "Inställningar",
+            "word": "Inställningar…",
             "source": "(TBX `21910_780478_1048484`)",
-            "labels": ["Settings"]
+            "labels": ["Settings…"]
           }
         ],
         "Linux": [
           {
-            "word": "Inställningar",
+            "word": "Inställningar…",
             "source": "(gtk4 `Settings`)",
-            "labels": ["Settings"]
+            "labels": ["Settings…"]
           }
         ]
       },

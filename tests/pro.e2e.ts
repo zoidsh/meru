@@ -175,12 +175,12 @@ test("the unified inbox opens from the titlebar", async () => {
 test("every Pro-gated control is unlocked", async () => {
   const unlockedGroups: string[] = [];
 
-  const navigation = await meru.openSettings();
+  const settings = await meru.openSettings();
 
-  for (const label of await readSettingsPageLabels(navigation)) {
+  for (const label of await readSettingsPageLabels(settings)) {
     // As in the free version's walk: read the page this loop is on, not the one
     // before it.
-    await openSettingsPage(meru, navigation, label);
+    await openSettingsPage(settings, label);
 
     /*
      * The exact inverse of `settings.e2e.ts`, over the same marker and the same
@@ -188,7 +188,7 @@ test("every Pro-gated control is unlocked", async () => {
      * the same fields are usable once the license is valid. Neither keeps a
      * list, so a field that gained or lost its gate is walked by both.
      */
-    const gatedControls = await meru.renderer.locator("[data-meru-pro]").evaluateAll((markers) =>
+    const gatedControls = await settings.locator("[data-meru-pro]").evaluateAll((markers) =>
       markers.map((marker) => {
         const group = marker.closest(
           '[data-slot="field"], [data-slot="field-set"], [data-slot="item"]',
@@ -215,10 +215,9 @@ test("every Pro-gated control is unlocked", async () => {
      * straight off the license — so its absence is the only claim covering
      * them.
      */
-    await expect(
-      meru.renderer.getByRole("link", { name: "Upgrade", exact: true }),
-      label,
-    ).toHaveCount(0);
+    await expect(settings.getByRole("link", { name: "Upgrade", exact: true }), label).toHaveCount(
+      0,
+    );
 
     for (const { field, usable } of gatedControls) {
       /*

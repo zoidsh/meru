@@ -179,7 +179,7 @@ class Trial {
   }
 
   private sendChanged() {
-    ipc.renderer.send(main.window.webContents, "trial.changed", {
+    ipc.broadcast("trial.changed", {
       daysLeft: this.daysLeft,
       expired: this.expired,
     });

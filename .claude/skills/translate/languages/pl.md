@@ -34,7 +34,7 @@ Sentence style: only the first word, proper nouns and the courtesy pronouns abov
 
 ## Settings
 
-_Ustawienia_. The app-menu item with `msgctxt` `macOS` is _Ustawienia…_, as AppKit writes it; with `Windows` or `Linux` it is _Ustawienia_, since the English has no ellipsis.
+_Ustawienia_. The app-menu item with `msgctxt` `macOS` is _Ustawienia…_, as AppKit writes it; with `Windows` or `Linux` it is _Ustawienia…_ too, Microsoft's and GNOME's word with the English's ellipsis.
 
 ## Access keys
 

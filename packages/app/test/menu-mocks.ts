@@ -140,6 +140,8 @@ export function mockMenuDependencies() {
 
   mock.module("@/main", () => ({ main: { window: { isVisible: () => true }, location: "/" } }));
 
+  mock.module("@/settings-window", () => ({ settingsWindow: {} }));
+
   mock.module("@/updater", () => ({ appUpdater: { isUpdateSupported: () => true } }));
 
   mock.module("@/url", () => ({ openExternalUrl: () => {} }));

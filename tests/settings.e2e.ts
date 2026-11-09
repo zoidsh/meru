@@ -12,14 +12,14 @@ const meru = useApp();
 test("every settings page renders", async () => {
   const rendererErrors: Error[] = [];
 
-  meru.renderer.on("pageerror", (error) => {
+  const settings = await meru.openSettings();
+
+  settings.on("pageerror", (error) => {
     rendererErrors.push(error);
   });
 
-  const navigation = await meru.openSettings();
-
-  for (const label of await readSettingsPageLabels(navigation)) {
-    await openSettingsPage(meru, navigation, label);
+  for (const label of await readSettingsPageLabels(settings)) {
+    await openSettingsPage(settings, label);
   }
 
   /*
@@ -31,9 +31,11 @@ test("every settings page renders", async () => {
 });
 
 test("a switch writes its key back to the config", async () => {
-  await openSettingsPage(meru, await meru.openSettings(), "Downloads");
+  const settings = await meru.openSettings();
 
-  const saveAs = configSwitch(meru, "downloads.saveAs");
+  await openSettingsPage(settings, "Downloads");
+
+  const saveAs = configSwitch(settings, "downloads.saveAs");
 
   await expect(saveAs).toBeVisible();
 
@@ -52,15 +54,17 @@ test("a switch writes its key back to the config", async () => {
 });
 
 test("a select behind a confirmation writes only once confirmed", async () => {
-  await openSettingsPage(meru, await meru.openSettings(), "Updates");
+  const settings = await meru.openSettings();
 
-  const releaseChannel = meru.renderer.locator('[id="updates.channel"]');
+  await openSettingsPage(settings, "Updates");
+
+  const releaseChannel = settings.locator('[id="updates.channel"]');
 
   await releaseChannel.click();
 
-  await meru.renderer.getByRole("option", { name: "Beta" }).click();
+  await settings.getByRole("option", { name: "Beta" }).click();
 
-  const confirmation = meru.renderer.getByRole("dialog");
+  const confirmation = settings.getByRole("dialog");
 
   await expect(confirmation).toContainText("Switch to the beta channel?");
 
@@ -75,7 +79,7 @@ test("a select behind a confirmation writes only once confirmed", async () => {
 
   await releaseChannel.click();
 
-  await meru.renderer.getByRole("option", { name: "Beta" }).click();
+  await settings.getByRole("option", { name: "Beta" }).click();
 
   // Changing the channel sends the updater off to check the new feed. That call
   // is fire and forget, and the app already makes one like it on every launch.
@@ -87,14 +91,14 @@ test("a select behind a confirmation writes only once confirmed", async () => {
 test("every field label points at its control", async () => {
   const labelledIds: string[] = [];
 
-  const navigation = await meru.openSettings();
+  const settings = await meru.openSettings();
 
-  for (const label of await readSettingsPageLabels(navigation)) {
+  for (const label of await readSettingsPageLabels(settings)) {
     // Opened and waited for before the DOM is read. Every page is statically
     // imported and renders in the same task as the navigation today, so a scan
     // would find it anyway — but one lazily loaded page would have this reading
     // the page before it and reporting nothing at all.
-    await openSettingsPage(meru, navigation, label);
+    await openSettingsPage(settings, label);
 
     /*
      * A label naming an id nothing carries is a field whose text does not click
@@ -102,7 +106,7 @@ test("every field label points at its control", async () => {
      * It is also what the rest of these tests stand on, since they address a
      * control through the label that points at it.
      */
-    const fieldLabels = await meru.renderer.locator("label[for]").evaluateAll((labelElements) =>
+    const fieldLabels = await settings.locator("label[for]").evaluateAll((labelElements) =>
       labelElements.map((labelElement) => ({
         labelledId: labelElement.getAttribute("for") ?? "",
         resolves: Boolean(
@@ -135,11 +139,11 @@ test("every Pro-gated control is locked on the free version", async () => {
 
   let bannerCount = 0;
 
-  const navigation = await meru.openSettings();
+  const settings = await meru.openSettings();
 
-  for (const label of await readSettingsPageLabels(navigation)) {
+  for (const label of await readSettingsPageLabels(settings)) {
     // As above: read the page this loop is on, not the one before it.
-    await openSettingsPage(meru, navigation, label);
+    await openSettingsPage(settings, label);
 
     /*
      * The marker is the claim that a field needs Meru Pro, and its controls
@@ -154,7 +158,7 @@ test("every Pro-gated control is locked on the free version", async () => {
      * components, where badge and lock come from one expression and cannot
      * disagree. The hand-rolled fields it missed are the ones worth checking.
      */
-    const gatedControls = await meru.renderer.locator("[data-meru-pro]").evaluateAll((markers) =>
+    const gatedControls = await settings.locator("[data-meru-pro]").evaluateAll((markers) =>
       markers.map((marker) => {
         const group = marker.closest(
           '[data-slot="field"], [data-slot="field-set"], [data-slot="item"]',
@@ -188,7 +192,7 @@ test("every Pro-gated control is locked on the free version", async () => {
      * searches locks its Add button straight off the license and carries no
      * field badge at all, so the banner is what says the page is gated.
      */
-    bannerCount += await meru.renderer.getByRole("link", { name: "Upgrade", exact: true }).count();
+    bannerCount += await settings.getByRole("link", { name: "Upgrade", exact: true }).count();
 
     for (const { field, usable } of gatedControls) {
       // Soft, so every gated field on the page reports rather than only the
@@ -213,9 +217,9 @@ test("every Pro-gated control is locked on the free version", async () => {
 });
 
 test("a copy button is named for screen readers", async () => {
-  await openSettingsPage(meru, await meru.openSettings(), "About Meru");
+  const settings = await meru.openSettings();
 
-  await expect(
-    meru.renderer.getByRole("button", { name: "Copy", exact: true }).first(),
-  ).toBeVisible();
+  await openSettingsPage(settings, "About Meru");
+
+  await expect(settings.getByRole("button", { name: "Copy", exact: true }).first()).toBeVisible();
 });

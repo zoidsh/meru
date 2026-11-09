@@ -34,7 +34,7 @@ Title case for menu items and buttons, as Apple writes them: every word except a
 
 ## Settings
 
-_Configurações_, Chrome's word, in Meru's own copy: the window, its title and every mention of it. The app-menu item with `msgctxt` `macOS` is Apple's _Ajustes…_, as AppKit writes it; with `Windows` or `Linux` it is _Configurações_, Microsoft's and GNOME's word, without the ellipsis the English lacks. _Ajustes_ appears in Meru's own copy only as macOS's own _Ajustes do Sistema_.
+_Configurações_, Chrome's word, in Meru's own copy: the window, its title and every mention of it. The app-menu item with `msgctxt` `macOS` is Apple's _Ajustes…_, as AppKit writes it; with `Windows` or `Linux` it is _Configurações…_, Microsoft's and GNOME's word with the English's ellipsis. _Ajustes_ appears in Meru's own copy only as macOS's own _Ajustes do Sistema_.
 
 A setting's description says what the setting does, so it opens with the infinitive, as Chrome's do (_Mostrar notificação pop-up para novos dispositivos USB._, _Selecionar o diretório da extensão._): _Mostrar o ícone do app na barra de menus._, _Escolher a cor do ícone da bandeja do sistema._, _Definir os intervalos de horário em que as notificações ficam ativas._ A sentence that tells the user to do something, such as a step in another app or a later sentence of a description, takes the imperative with _você_, as Chrome's instructions do (_Selecione um campo de texto…_): _Abra e desbloqueie o 1Password._, _Deixe a lista vazia para permitir notificações a qualquer hora._
 

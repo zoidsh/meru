@@ -534,7 +534,11 @@ class Accounts {
 
     this.sendTabsChangedToRenderer();
 
+    // Google's sign-in runs in the new account's view, so the main window comes
+    // forward over the settings window this was asked for from.
     main.navigate("/");
+
+    main.window.focus();
   }
 
   /**
@@ -686,8 +690,8 @@ class Accounts {
       if (launchableAccountConfigs.some((account) => account.id === accountId)) {
         const instance = this.createAccountInstance(accountConfig);
 
-        // A view is created visible and paints over renderer HTML, and the
-        // settings page this is switched from is renderer HTML.
+        // A view is created visible and paints over renderer HTML, which the
+        // main window shows away from `/`.
         if (main.location !== "/") {
           this.hide();
         }
@@ -809,6 +813,21 @@ class Accounts {
     );
   }
 
+  serializeAccounts() {
+    return this.getAccounts().map((account) => ({
+      config: account.config,
+      gmail: account.instance.gmail.store.getState(),
+      verticalTabsWidth: account.instance.verticalTabsWidth,
+    }));
+  }
+
+  serializeTabs() {
+    return this.getAccounts().map((account) => ({
+      accountId: account.config.id,
+      tabs: account.instance.tabs.serialize(),
+    }));
+  }
+
   // The renderer registers its listeners only on its first load, so a send before then is lost.
   async sendTabsChangedToRenderer() {
     await main.rendererReady;
@@ -817,14 +836,7 @@ class Accounts {
       return;
     }
 
-    ipc.renderer.send(
-      main.window.webContents,
-      "tabs.changed",
-      this.getAccounts().map((account) => ({
-        accountId: account.config.id,
-        tabs: account.instance.tabs.serialize(),
-      })),
-    );
+    ipc.broadcast("tabs.changed", this.serializeTabs());
   }
 
   async sendAccountsChangedToRenderer() {
@@ -834,15 +846,7 @@ class Accounts {
       return;
     }
 
-    ipc.renderer.send(
-      main.window.webContents,
-      "accounts.changed",
-      this.getAccounts().map((account) => ({
-        config: account.config,
-        gmail: account.instance.gmail.store.getState(),
-        verticalTabsWidth: account.instance.verticalTabsWidth,
-      })),
-    );
+    ipc.broadcast("accounts.changed", this.serializeAccounts());
   }
 }
 

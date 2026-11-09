@@ -43,7 +43,7 @@ test("the unified inbox fits the window at its minimum width", async () => {
   const findings: string[] = [];
 
   const check = async (where: string) => {
-    for (const misfit of await readPageMisfits(meru)) {
+    for (const misfit of await readPageMisfits(meru.renderer)) {
       findings.push(`${windowWidth}px ${where}: ${misfit}`);
     }
   };

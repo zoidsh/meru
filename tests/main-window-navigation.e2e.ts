@@ -79,20 +79,26 @@ test("a new window opens in the browser only for a web link", async () => {
   expect(await readWindowUrls()).toEqual([meru.renderer.url()]);
 });
 
-test("settings routes still switch within the page", async () => {
-  const pageUrl = meru.renderer.url().split("#")[0];
+test("settings routes switch within the settings window's page, and leave this one alone", async () => {
+  const mainPageUrl = meru.renderer.url();
 
-  const navigation = await meru.openSettings();
+  const settings = await meru.openSettings();
 
-  await openSettingsPage(meru, navigation, "General");
+  const settingsDocumentUrl = settings.url().split("#")[0];
 
-  await expect(meru.renderer).toHaveURL(/#\/settings\/general$/);
+  await openSettingsPage(settings, "General");
 
-  await openSettingsPage(meru, navigation, "Appearance");
+  await expect(settings).toHaveURL(/#\/settings\/general$/);
 
-  await expect(meru.renderer).toHaveURL(/#\/settings\/appearance$/);
+  await openSettingsPage(settings, "Appearance");
 
-  expect((await readWindowUrls()).map((url) => url.split("#")[0])).toEqual([pageUrl]);
+  await expect(settings).toHaveURL(/#\/settings\/appearance$/);
+
+  expect((await readWindowUrls()).map((url) => url.split("#")[0]).sort()).toEqual(
+    [mainPageUrl.split("#")[0], settingsDocumentUrl].sort(),
+  );
+
+  expect(meru.renderer.url()).toBe(mainPageUrl);
 
   expect(await readOpenedUrls()).toEqual([]);
 });

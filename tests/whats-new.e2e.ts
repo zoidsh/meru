@@ -6,7 +6,7 @@
  * become elements, images must come from GitHub alone, and a link must leave
  * for the browser rather than take the window with it.
  */
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { useApp } from "./lib/app";
 import { openSettingsPage } from "./lib/settings";
 
@@ -71,11 +71,15 @@ test.beforeEach(async () => {
   );
 });
 
+let settings: Page;
+
 /** The What's new page, once it shows the stubbed release. */
 async function openWhatsNew() {
-  await openSettingsPage(meru, await meru.openSettings(), "What's new");
+  settings = await meru.openSettings();
 
-  await expect(meru.renderer.getByText("v99.0.0")).toBeVisible();
+  await openSettingsPage(settings, "What's new");
+
+  await expect(settings.getByText("v99.0.0")).toBeVisible();
 }
 
 function readOpenPageUrls() {
@@ -87,9 +91,9 @@ function readOpenPageUrls() {
 test("release notes render their markdown and none of their HTML", async () => {
   await openWhatsNew();
 
-  await expect.soft(meru.renderer.locator("kbd", { hasText: "Enter" })).toBeVisible();
+  await expect.soft(settings.locator("kbd", { hasText: "Enter" })).toBeVisible();
 
-  const githubImage = meru.renderer.locator(`img[src="${GITHUB_IMAGE_URL}"]`);
+  const githubImage = settings.locator(`img[src="${GITHUB_IMAGE_URL}"]`);
 
   await expect(githubImage).toBeAttached();
 
@@ -101,14 +105,14 @@ test("release notes render their markdown and none of their HTML", async () => {
   // Read once GitHub's image has loaded, which the others would have done beside it.
   expect
     .soft(
-      await meru.renderer.locator(`[src*="attacker.example"], [href*="attacker.example"]`).count(),
+      await settings.locator(`[src*="attacker.example"], [href*="attacker.example"]`).count(),
       "elements pointing at attacker.example",
     )
     .toBe(0);
 
   expect.soft(attackerRequestCount, "requests to attacker.example").toBe(0);
 
-  expect.soft(await meru.renderer.locator("details").count(), "details elements").toBe(0);
+  expect.soft(await settings.locator("details").count(), "details elements").toBe(0);
 });
 
 test("a link in the release notes opens in the browser, leaving the window where it was", async () => {
@@ -124,9 +128,9 @@ test("a link in the release notes opens in the browser, leaving the window where
 
   await openWhatsNew();
 
-  const pageUrl = meru.renderer.url();
+  const pageUrl = settings.url();
 
-  const linkBox = await meru.renderer.getByRole("link", { name: "the details" }).boundingBox();
+  const linkBox = await settings.getByRole("link", { name: "the details" }).boundingBox();
 
   if (!linkBox) {
     throw new Error("The link has no box to click");
@@ -134,7 +138,7 @@ test("a link in the release notes opens in the browser, leaving the window where
 
   // By the mouse, not `locator.click()`, which would wait on any navigation the
   // click starts.
-  await meru.renderer.mouse.click(linkBox.x + linkBox.width / 2, linkBox.y + linkBox.height / 2);
+  await settings.mouse.click(linkBox.x + linkBox.width / 2, linkBox.y + linkBox.height / 2);
 
   // Soft, so a click that navigated the window still reports where it went.
   await expect

@@ -29,11 +29,18 @@ test("launches and renders appearance settings", async () => {
    * the fragment by hand arrives at the same page while proving nothing about
    * whether the app offers a way to get there.
    */
-  const navigation = await meru.openSettings();
+  const settings = await meru.openSettings();
 
-  await navigation.getByRole("button", { name: "Appearance", exact: true }).click();
+  settings.on("pageerror", (error) => {
+    rendererErrors.push(error);
+  });
 
-  await expect(meru.renderer.getByTestId("settings-title")).toHaveText("Appearance");
+  await settings
+    .getByTestId("settings-nav")
+    .getByRole("button", { name: "Appearance", exact: true })
+    .click();
+
+  await expect(settings.getByTestId("settings-title")).toHaveText("Appearance");
 
   /*
    * Reaches the main process over its own Node inspector, which the debugging
@@ -48,8 +55,9 @@ test("launches and renders appearance settings", async () => {
     })),
   );
 
-  expect(windows).toHaveLength(1);
-  expect(windows[0]?.isVisible).toBe(true);
+  // The main window and the settings window.
+  expect(windows).toHaveLength(2);
+  expect(windows.every((window) => window.isVisible)).toBe(true);
 
   expect(rendererErrors.map((error) => error.stack ?? error.message)).toEqual([]);
 });

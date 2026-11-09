@@ -21,25 +21,21 @@ const meru = useProApp();
  * Flips Show Do Not Disturb button from the settings page and comes back to the
  * titlebar, having waited for the write.
  *
- * The config on disk is polled before settings is left, so a failure afterwards
- * is the titlebar and not a write that had yet to land. Settings swaps the
- * titlebar for one carrying nothing but the title, so the navigation controls
- * are waited for on the way back: they are drawn by the account titlebar and
- * only by it, and an absence asserted before they arrive would be satisfied by
- * the titlebar that has not come back yet.
+ * The config on disk is polled before settings is closed, so a failure
+ * afterwards is the titlebar and not a write that had yet to land.
  */
 async function setShowDoNotDisturbButton(shown: boolean) {
-  await openSettingsPage(meru, await meru.openSettings(), "Appearance");
+  const settings = await meru.openSettings();
 
-  await configSwitch(meru, "doNotDisturb.showTitlebarButton").click();
+  await openSettingsPage(settings, "Appearance");
+
+  await configSwitch(settings, "doNotDisturb.showTitlebarButton").click();
 
   await expect
     .poll(async () => (await meru.readConfig())["doNotDisturb.showTitlebarButton"])
     .toBe(shown);
 
-  await meru.renderer.getByRole("button", { name: "Close settings" }).click();
-
-  await expect(meru.renderer.getByRole("button", { name: "Go back" })).toBeVisible();
+  await meru.closeSettings();
 }
 
 test("the Do Not Disturb button follows its setting, and turns Do Not Disturb off when hidden", async () => {

@@ -44,7 +44,7 @@ msgstr "Fil"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Inställningar…"
 
 #: packages/app/context-menu.ts

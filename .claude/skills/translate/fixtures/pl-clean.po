@@ -39,7 +39,7 @@ msgstr "Plik"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Ustawienia…"
 
 #: packages/app/context-menu.ts

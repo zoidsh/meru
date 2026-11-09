@@ -40,10 +40,13 @@ export type ViewSnapshot = {
  */
 export function readViews(meru: MeruApp): Promise<ViewSnapshot[]> {
   return meru.app.evaluate(({ BrowserWindow, session }) => {
-    const [window] = BrowserWindow.getAllWindows();
+    // By its page, since the settings window can be open beside it.
+    const window = BrowserWindow.getAllWindows()
+      .filter((window) => !window.webContents.isDestroyed())
+      .find((candidate) => candidate.webContents.getURL().includes("main.html"));
 
     if (!window) {
-      throw new Error("The app has no window");
+      throw new Error("The app has no main window");
     }
 
     return window.contentView.children.map((child) => {
@@ -81,10 +84,13 @@ export function findViewByUrl(views: ViewSnapshot[], urlPrefix: string) {
  */
 export async function readUnfilledSpace(meru: MeruApp, view: ViewSnapshot) {
   const contentBounds = await meru.app.evaluate(({ BrowserWindow }) => {
-    const [window] = BrowserWindow.getAllWindows();
+    // By its page, since the settings window can be open beside it.
+    const window = BrowserWindow.getAllWindows()
+      .filter((window) => !window.webContents.isDestroyed())
+      .find((candidate) => candidate.webContents.getURL().includes("main.html"));
 
     if (!window) {
-      throw new Error("The app has no window");
+      throw new Error("The app has no main window");
     }
 
     // The content bounds rather than the window bounds: on Windows the window

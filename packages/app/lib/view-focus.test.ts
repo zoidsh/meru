@@ -10,7 +10,6 @@ const base = {
 describe("resolveViewFocusTarget", () => {
   const cases: Array<[string, Partial<typeof base>, ViewFocusTarget]> = [
     ["the active tab is in front", {}, "activeTab"],
-    ["settings is open", { location: "/settings/general" }, null],
     ["the unified inbox is open", { location: "/unified-inbox" }, null],
     ["the download history is open", { location: "/download-history" }, null],
     [
@@ -30,7 +29,7 @@ describe("resolveViewFocusTarget", () => {
     ],
     [
       "a route is open and the active tab is windowed",
-      { location: "/settings/general", activeTab: { isWindowed: true, hasView: true } },
+      { location: "/unified-inbox", activeTab: { isWindowed: true, hasView: true } },
       null,
     ],
   ];

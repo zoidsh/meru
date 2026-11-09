@@ -29,10 +29,8 @@ mock.module("./extensions", () => ({ extensions: {} }));
 
 mock.module("./ipc", () => ({
   ipc: {
-    renderer: {
-      send: (_webContents: unknown, channel: string, payload: Sent["payload"]) => {
-        sent.push({ channel, payload });
-      },
+    broadcast: (channel: string, payload: Sent["payload"]) => {
+      sent.push({ channel, payload });
     },
   },
 }));

@@ -28,7 +28,7 @@ msgstr "Configuración de Gmail"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Configuración…"
 
 #: packages/renderer/routes/settings/accounts.tsx

@@ -126,7 +126,7 @@ msgstr "Obtenir les applis Google"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Réglages…"
 
 #: packages/renderer/routes/settings/general.tsx

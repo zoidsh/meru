@@ -8,9 +8,8 @@ import { Route, useRoute } from "wouter";
 import { navigate } from "wouter/use-hash-location";
 import { DownloadHistory } from "@/routes/download-history";
 import { UnifiedInbox } from "@/routes/unified-inbox";
-import { sidebarNavItems } from "./app-sidebar";
 
-/** Names the page it closes, since the same button closes all three. */
+/** Names the page it closes, since the same button closes both. */
 function CloseButton({ label }: { label: string }) {
   const closePage = () => {
     navigate("/");
@@ -41,46 +40,23 @@ export function AppMain() {
   const { t } = useLingui();
 
   const [matchUnifiedInboxRoute] = useRoute("/unified-inbox");
-  const [matchDownloadHistoryRoute] = useRoute("/download-history");
-
-  const isFullWidthRoute = matchUnifiedInboxRoute || matchDownloadHistoryRoute;
 
   return (
     <div className="relative flex flex-1 bg-sidebar">
-      <ScrollArea
-        className={cn(
-          "@container relative flex-1 overflow-hidden border bg-background dark:border-none",
-          !isFullWidthRoute && "m-4 rounded-xl",
-        )}
-      >
+      <ScrollArea className="@container relative flex-1 overflow-hidden border bg-background dark:border-none">
         {/* Below its full width a column keeps 5rem a side, which clears the close button. */}
         <div
           className={cn(
             "mx-auto py-8",
-            matchUnifiedInboxRoute
-              ? "w-full max-w-6xl px-20 @6xl:px-8"
-              : matchDownloadHistoryRoute
-                ? "max-w-2xl px-8"
-                : "w-full max-w-3xl px-20 @3xl:px-28",
+            matchUnifiedInboxRoute ? "w-full max-w-6xl px-20 @6xl:px-8" : "max-w-2xl px-8",
           )}
         >
           <Route path="/unified-inbox" component={UnifiedInbox} />
           <Route path="/download-history" component={DownloadHistory} />
-          {sidebarNavItems
-            .filter((navItem) => navItem.type !== "separator")
-            .map(({ path, component }) => (
-              <Route key={path} path={path} component={component} />
-            ))}
         </div>
         <div className="absolute top-8 right-8">
           <CloseButton
-            label={
-              matchUnifiedInboxRoute
-                ? t`Close unified inbox`
-                : matchDownloadHistoryRoute
-                  ? t`Close download history`
-                  : t`Close settings`
-            }
+            label={matchUnifiedInboxRoute ? t`Close unified inbox` : t`Close download history`}
           />
         </div>
       </ScrollArea>

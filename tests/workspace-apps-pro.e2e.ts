@@ -406,20 +406,21 @@ test("a download from a workspace app lands on disk and in the history", async (
  *
  * Through the switch rather than by seeding, because the setting is one a user
  * turns off with the app running and what is being proved is that both hosts
- * follow it live. The config on disk is polled before settings is left, so a
- * failure afterwards is the button and not a write that had yet to land — and
- * the strip is waited for again, because settings unmounts it.
+ * follow it live. The config on disk is polled before settings is closed, so
+ * a failure afterwards is the button and not a write that had yet to land.
  */
 async function setShowBookmarksButton(shown: boolean) {
-  await openSettingsPage(meru, await meru.openSettings(), "Workspace apps");
+  const settings = await meru.openSettings();
 
-  await configSwitch(meru, "workspaceApps.showBookmarksButton").click();
+  await openSettingsPage(settings, "Workspace apps");
+
+  await configSwitch(settings, "workspaceApps.showBookmarksButton").click();
 
   await expect
     .poll(async () => (await meru.readConfig())["workspaceApps.showBookmarksButton"])
     .toBe(shown);
 
-  await meru.renderer.getByRole("button", { name: "Close settings" }).click();
+  await meru.closeSettings();
 
   await waitForVerticalTabs(meru);
 }

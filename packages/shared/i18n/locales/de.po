@@ -779,10 +779,6 @@ msgstr "Suche auf der Seite schließen"
 msgid "Close Other Tabs"
 msgstr "Andere Tabs schließen"
 
-#: packages/renderer/components/app-main.tsx
-msgid "Close settings"
-msgstr "Einstellungen schließen"
-
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgid "Close Tab"
@@ -2916,27 +2912,27 @@ msgid "Set up desktop app"
 msgstr "Desktop-App einrichten"
 
 #. Title of the Settings window, in its titlebar
-#: packages/renderer/components/app-titlebar.tsx
+#: packages/renderer/settings.tsx
 msgid "Settings"
 msgstr "Einstellungen"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "Linux"
-msgid "Settings"
-msgstr "Einstellungen"
+msgid "Settings…"
+msgstr "Einstellungen …"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Einstellungen …"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "Windows"
-msgid "Settings"
-msgstr "Einstellungen"
+msgid "Settings…"
+msgstr "Einstellungen …"
 
 #. A menu or a menu item in Meru's menu bar
 #. A menu or a menu item in Meru's menu bar

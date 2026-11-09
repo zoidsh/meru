@@ -1,7 +1,6 @@
 import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { AppMain } from "@/components/app-main";
-import { AppSidebar } from "@/components/app-sidebar";
 import { AppTitlebar } from "@/components/app-titlebar";
 import { AppToaster } from "@/components/app-toaster";
 import { VerticalTabs } from "@/components/vertical-tabs";
@@ -25,10 +24,6 @@ function Main() {
               <AppMain />
             </Route>
             <Route path="/download-history">
-              <AppMain />
-            </Route>
-            <Route>
-              <AppSidebar />
               <AppMain />
             </Route>
           </Switch>
