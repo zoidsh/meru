@@ -153,6 +153,7 @@ const NON_VERB_OPENERS = new Set([
   "How",
   "Meru",
   "No",
+  "Some",
   "Where",
   "With",
 ]);

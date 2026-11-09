@@ -24,6 +24,7 @@ The form and case each kind of label takes, decided before the language's first 
 - **Context or popup menu item:** A noun or a short verb phrase, as a button: URLをコピー, 他のタブをすべて閉じる, 既定のブラウザで開く.
 - **Select option:** A noun, an adverb or a plain-form verb: 表示, 非表示, 常に, しない, 狭い.
 - **Checkbox or switch label:** A noun phrase or a plain-form verb phrase, with no です/ます: ウィンドウを表示, 完了したらフォルダを開く, 広告をブロック.
+- **Checkbox that picks what an action applies to:** A noun phrase naming what it picks, never a verb phrase, as Chrome's Cookies and other site data is in its Delete browsing data dialog: Cookieと他のサイトデータ, キャッシュされた画像とファイル.
 - **Setting description:** The polite form, ending in 。: ダウンロードが完了したら、ファイルを含むフォルダを開きます。 One that says what the setting holds ends in です, and an instruction takes ～してください.
 - **OS label:** Its platform's word from [Platform words](#platform-words), as its source writes it: ペースト on macOS, 貼り付け on Windows and Linux.
 

@@ -810,6 +810,36 @@ The Width setting's options for the vertical tabs sidebar. A language whose word
 - pl: Wąska, Szeroka, agreeing with Width's _szerokość_ (Chrome 5/5 for _width_, Chromium 156.0.8078.49's .xtb files), never Chrome's _Szeroko_: Chrome's one _Wide_ is Reading mode's letter spacing (`IDS_READING_MODE_SPACING_COMBOBOX_WIDE`, beside _Bardzo szeroko_), not a sidebar's size, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: szeroki: 4 of 7 (Thunderbird, Firefox, LibreOffice, Apple), with Width's _szerokość_ out of the vote); _Szeroka_ shares a root with the label but is not its word; Chrome has no _Narrow_, and _wąski_ is szeroki's antonym; a sentence names them _między wąską a szeroką_
 - sv: Smal, Bred, agreeing with Width's _Bredd_ (Chrome 5/5), an option one letter short of its label but never equal to it, never _Smalt_ or _Brett_; Chrome's one _Wide_, _Bred_, is Reading mode's letter spacing beside _Very wide_, _Mycket brett_, so it is out under the narrowest sense, and the apps' word decides (agent-chosen: bred: 3 of 7 (Thunderbird, Firefox, LibreOffice), with Width's _bredd_ out of the vote); Chrome has no _Narrow_ (Chrome 0/0), so LibreOffice's _Narrow_, _Smal_, paired with its _Wide_, _Bred_, decides; a sentence names them _smal och bred_, as the select shows them
 
+## Browsing data
+
+What Delete browsing data… deletes from one account: its cookies, the data sites store and its cache, as Chrome's Delete browsing data does. Counted on _browsing data_ as a whole word; Chrome's exact _Browsing data_ takes the same word in every language (Chrome 2/2).
+
+- de: Browserdaten (Chrome 26/27; _Browserdaten löschen_)
+- fr: données de navigation (Chrome 26/27; _Supprimer les données de navigation_)
+- it: dati di navigazione (Chrome 25/27; _Elimina dati di navigazione_)
+- es: datos de navegación (Chrome 27/27; _Eliminar datos de navegación_)
+- es-419: datos de navegación (Chrome 27/27; _Borrar datos de navegación_)
+- pt-BR: dados de navegação, title case in menu items and buttons: _Excluir Dados de Navegação_ (Chrome 27/27; _Excluir dados de navegação_)
+- nl: browsegegevens (Chrome 26/27; _Browsegegevens verwijderen_)
+- pl: dane przeglądania (Chrome 27/27; _Usuń dane przeglądania_)
+- sv: webbinformation (Chrome 27/27; _Radera webbinformation_)
+- ja: 閲覧履歴データ (Chrome 16/27, 閲覧データ in the other 11; 閲覧履歴データを削除), never 閲覧データ
+
+## Account actions
+
+The name of the button on an account's row in Settings that opens the menu of what can be done to the account. Chrome has no _account actions_ (Chrome 0/0), so each word is the glossary's account with Chrome's word for _actions_, counted on _actions_ as a whole word.
+
+- de: Kontoaktionen (Chrome 41/44 for _Aktion_)
+- fr: actions du compte (Chrome 44/44 for _action_)
+- it: azioni dell’account (Chrome 44/44 for _azion_)
+- es: acciones de la cuenta (Chrome 44/44 for _accion_)
+- es-419: acciones de la cuenta (Chrome 43/44 for _accion_)
+- pt-BR: ações da conta, title case in menu items and buttons: _Ações da Conta_ (Chrome 44/44 for _ações_)
+- nl: accountacties (Chrome 44/44 for _actie_)
+- pl: działania na koncie (Chrome 33/44 for _działanie_, _czynności_ in 13), never _czynności na koncie_
+- sv: kontoåtgärder (Chrome 44/44 for _åtgärd_)
+- ja: アカウントの操作 (Chrome 39/44 for 操作)
+
 ## Gmail's words
 
 What Gmail itself shows for the things a Meru string can name, by step 2 of the source order. Folder names keep Gmail's capitalization. Sources, all Gmail Help with `hl=<tag>`: **shortcuts** is "Keyboard shortcuts for Gmail" (support.google.com/mail/answer/6594), **undo send** is "Undo sending" (answer/2819488), **spam** is "Mark or unmark Spam" (answer/1366858), **trash** is "Delete or recover deleted Gmail messages" (answer/7401), **categories** is "Add or remove inbox categories & tabs" (answer/3055016) and **importance** is "Importance markers in Gmail" (answer/186543).
