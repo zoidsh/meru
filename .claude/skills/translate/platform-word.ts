@@ -19,10 +19,10 @@ import {
   type Platform,
   type PlatformRow,
   PLATFORMS,
+  platformSheetPath,
   type Sidecar,
   sidecarPath,
   sidecarSchema,
-  styleSheetPath,
   withoutAccessKey,
 } from "./rules";
 
@@ -407,7 +407,7 @@ function byCell(values: string[] | undefined, option: string) {
 }
 
 /*
- * Writes the row into every sidecar, and each style sheet's table from it, or
+ * Writes the row into every sidecar, and each platform sheet's table from it, or
  * nothing at all when any language lacks a word, since the sidecar test needs
  * every filled sidecar to cover every platform entry.
  */
@@ -464,14 +464,14 @@ async function addRow(english: string, tags: string[], options: RowOptions) {
   for (const { tag, sidecar } of rows) {
     await Bun.write(sidecarPath(tag), `${JSON.stringify(sidecar, null, 2)}\n`);
 
-    const styleSheet = styleSheetPath(tag);
+    const platformSheet = platformSheetPath(tag);
 
     await Bun.write(
-      styleSheet,
-      writeGeneratedTable(await Bun.file(styleSheet).text(), tag, renderPlatformTable(sidecar)),
+      platformSheet,
+      writeGeneratedTable(await Bun.file(platformSheet).text(), tag, renderPlatformTable(sidecar)),
     );
 
-    written.push(sidecarPath(tag), styleSheet);
+    written.push(sidecarPath(tag), platformSheet);
   }
 
   const { exitCode } = Bun.spawnSync(["bunx", "oxfmt", ...written], {
@@ -499,7 +499,7 @@ Mac, which only macOS can do. --limit caps the sources shown under a word
 
 --add-row writes a Platform words row of that name into every sidecar, shipped
 or not, since the sidecar test holds each filled one to every platform entry,
-and rewrites each style sheet's table from it. Each covered platform's cell is
+and rewrites each language's platform sheet table from it. Each covered platform's cell is
 its first candidate, citing that word's first source, and settles the --label
 msgids, the English when none is given, and the --sentence ones. --platform
 names the platforms the row covers, all three by default; the others get

@@ -14,6 +14,7 @@ import {
   loadSidecar,
   PLATFORMS,
   platformEntries,
+  platformSheetPath,
   sidecarPath,
   sidecarSchema,
   styleSheetPath,
@@ -32,7 +33,7 @@ const SOURCE_CATALOGS = [
 ].map((catalog) => path.join(import.meta.dir, "..", catalog));
 
 const locales = (await readdir(LANGUAGES_DIR))
-  .filter((file) => file.endsWith(".md"))
+  .filter((file) => file.endsWith(".md") && !file.endsWith(".platform.md"))
   .map((file) => file.slice(0, -".md".length));
 
 async function sourcePlatformEntries() {
@@ -644,6 +645,14 @@ describe("language sidecars", () => {
     expect(sidecars.sort()).toEqual([...locales].sort());
   });
 
+  test("every style sheet has a platform sheet, and every platform sheet a style sheet", async () => {
+    const platformSheets = (await readdir(LANGUAGES_DIR))
+      .filter((file) => file.endsWith(".platform.md"))
+      .map((file) => file.slice(0, -".platform.md".length));
+
+    expect(platformSheets.sort()).toEqual([...locales].sort());
+  });
+
   test("a table that differs from its sidecar's rows by one word is caught", async () => {
     const sidecar = await loadSidecar("fr");
 
@@ -657,7 +666,7 @@ describe("language sidecars", () => {
       },
     };
 
-    const table = readGeneratedTable(await Bun.file(styleSheetPath("fr")).text(), "fr") ?? [];
+    const table = readGeneratedTable(await Bun.file(platformSheetPath("fr")).text(), "fr") ?? [];
 
     expect(tableCells(table)).not.toEqual(tableCells(renderPlatformTable(changed)));
   });
@@ -709,13 +718,20 @@ describe("language sidecars", () => {
         ).toEqual([]);
       });
 
-      test("the style sheet's Platform words table is the one its sidecar writes", async () => {
-        const table = readGeneratedTable(await Bun.file(styleSheetPath(locale)).text(), locale);
+      test("the platform sheet's Platform words table is the one its sidecar writes", async () => {
+        const table = readGeneratedTable(await Bun.file(platformSheetPath(locale)).text(), locale);
 
         expect(table, "the table's markers").toBeDefined();
         expect(tableCells(table ?? [])).toEqual(
           tableCells(renderPlatformTable(await loadSidecar(locale))),
         );
+      });
+
+      test("the style sheet links its platform sheet and holds no table of its own", async () => {
+        const styleSheet = await Bun.file(styleSheetPath(locale)).text();
+
+        expect(styleSheet).toContain(`](${locale}.platform.md)`);
+        expect(readGeneratedTable(styleSheet, locale)).toBeUndefined();
       });
 
       test("a filled sidecar covers every platform entry in the source catalogs, and no other", async () => {

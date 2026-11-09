@@ -4,15 +4,15 @@ import {
   loadSidecar,
   PLATFORMS,
   type PlatformRow,
+  platformSheetPath,
   type Sidecar,
   sidecarTags,
-  styleSheetPath,
 } from "./rules";
 
 /*
- * Writes each style sheet's Platform words table from its sidecar's rows, so a
- * platform word is decided in one place. `scripts/translate-rules.test.ts`
- * fails when a table and its sidecar differ.
+ * Writes each language's Platform words table, `languages/<tag>.platform.md`,
+ * from its sidecar's rows, so a platform word is decided in one place.
+ * `scripts/translate-rules.test.ts` fails when a table and its sidecar differ.
  */
 
 const HEADER = ["English", "macOS (Apple)", "Windows (Microsoft)", "Linux (GNOME)"];
@@ -64,7 +64,7 @@ export function tableCells(lines: string[]) {
     );
 }
 
-/** The lines between the markers, or undefined when the style sheet has none. */
+/** The lines between the markers, or undefined when the platform sheet has none. */
 function tableBounds(lines: string[], locale: string) {
   const begin = lines.indexOf(beginMarker(locale));
 
@@ -87,7 +87,7 @@ export function writeGeneratedTable(markdown: string, locale: string, table: str
   const bounds = tableBounds(lines, locale);
 
   if (!bounds) {
-    throw new Error(`${locale}.md has no generated Platform words table between markers`);
+    throw new Error(`${locale}.platform.md has no generated Platform words table between markers`);
   }
 
   return [...lines.slice(0, bounds.begin + 1), "", ...table, "", ...lines.slice(bounds.end)].join(
@@ -103,16 +103,16 @@ async function run() {
   const paths: string[] = [];
 
   for (const locale of locales) {
-    const styleSheet = styleSheetPath(locale);
+    const platformSheet = platformSheetPath(locale);
 
     const table = renderPlatformTable(await loadSidecar(locale));
 
     await Bun.write(
-      styleSheet,
-      writeGeneratedTable(await Bun.file(styleSheet).text(), locale, table),
+      platformSheet,
+      writeGeneratedTable(await Bun.file(platformSheet).text(), locale, table),
     );
 
-    paths.push(styleSheet);
+    paths.push(platformSheet);
   }
 
   const { exitCode } = Bun.spawnSync(["bunx", "oxfmt", ...paths], {

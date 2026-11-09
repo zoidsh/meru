@@ -5,8 +5,8 @@ import { z } from "zod";
 /*
  * The machine-readable half of a style sheet, `languages/<tag>.json`, which
  * `check.ts` holds a catalog against. The Markdown is the source of prose and
- * citations, except for its Platform words table, which `platform-table.ts`
- * writes from the sidecar's rows.
+ * citations, except for the Platform words table in `languages/<tag>.platform.md`,
+ * which `platform-table.ts` writes from the sidecar's rows.
  */
 
 export const PLATFORMS = ["macOS", "Windows", "Linux"] as const;
@@ -270,6 +270,14 @@ export async function sidecarTags() {
 
 export function styleSheetPath(locale: string) {
   return path.join(LANGUAGES_DIR, `${locale}.md`);
+}
+
+/*
+ * The style sheet's Platform words table, out of the sheet so a translator
+ * reads it only for an entry with a platform `msgctxt`.
+ */
+export function platformSheetPath(locale: string) {
+  return path.join(LANGUAGES_DIR, `${locale}.platform.md`);
 }
 
 export async function loadSidecar(locale: string) {
