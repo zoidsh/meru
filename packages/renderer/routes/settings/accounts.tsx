@@ -615,7 +615,7 @@ function AccountActions({
             </Button>
           }
         />
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-auto">
           <DropdownMenuItem onClick={() => setOpenDialog("edit")}>
             <Trans comment="Menu item that opens the dialog for editing the account">
               Edit account…
