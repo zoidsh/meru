@@ -172,6 +172,29 @@ test.describe("with one account", () => {
 
     await expect(dialog.getByRole("button", { name: "Delete data" })).toBeDisabled();
   });
+
+  test("a failed deletion says so in the dialog and can be tried again", async () => {
+    // Electron hands back the same `Session` object for a partition, so this is
+    // the one the account clears.
+    await meru.app.evaluate(({ session }) => {
+      session.fromPartition("persist:first-account").clearData = () =>
+        Promise.reject(new Error("clearData failed for the test"));
+    });
+
+    const dialog = await openDeleteBrowsingDataDialog(meru, "Personal");
+
+    await dialog.getByRole("button", { name: "Delete data" }).click();
+
+    await expect(dialog.getByRole("alert")).toHaveText(
+      "Meru couldn't delete this account's browsing data. Try again.",
+    );
+
+    await expect(dialog.getByRole("button", { name: "Delete data" })).toBeEnabled();
+
+    await expect(dialog.getByRole("button", { name: "Cancel" })).toBeEnabled();
+
+    await expect(dialog.page().getByText("Browsing data deleted")).toHaveCount(0);
+  });
 });
 
 test.describe("with the second account disabled", () => {

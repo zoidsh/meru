@@ -1964,6 +1964,10 @@ msgstr "Meru kan geen verbinding maken met internet. Maak verbinding en start Me
 msgid "Meru couldn't check for updates."
 msgstr "Meru kan niet controleren op updates."
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru couldn't delete this account's browsing data. Try again."
+msgstr ""
+
 #: packages/app/ipc.ts
 msgid "Meru doesn't know this extension."
 msgstr "Meru kent deze extensie niet."

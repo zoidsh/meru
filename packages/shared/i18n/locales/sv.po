@@ -1964,6 +1964,10 @@ msgstr "Meru kan inte ansluta till internet. Anslut och starta om Meru för att 
 msgid "Meru couldn't check for updates."
 msgstr "Meru kunde inte söka efter uppdateringar."
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru couldn't delete this account's browsing data. Try again."
+msgstr ""
+
 #: packages/app/ipc.ts
 msgid "Meru doesn't know this extension."
 msgstr "Meru känner inte till det här tillägget."

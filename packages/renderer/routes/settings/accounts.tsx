@@ -39,6 +39,7 @@ import {
   Field,
   FieldContent,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -480,6 +481,8 @@ function DeleteBrowsingDataDialog({ account, open, onOpenChange }: DialogProps) 
 
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [hasFailed, setHasFailed] = useState(false);
+
   const { t } = useLingui();
 
   return (
@@ -495,6 +498,8 @@ function DeleteBrowsingDataDialog({ account, open, onOpenChange }: DialogProps) 
           setCookies(false);
 
           setCache(true);
+
+          setHasFailed(false);
         }
       }}
     >
@@ -542,6 +547,11 @@ function DeleteBrowsingDataDialog({ account, open, onOpenChange }: DialogProps) 
             </FieldContent>
           </Field>
         </FieldGroup>
+        {hasFailed && (
+          <FieldError>
+            <Trans>Meru couldn't delete this account's browsing data. Try again.</Trans>
+          </FieldError>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>
             <Trans>Cancel</Trans>
@@ -552,11 +562,17 @@ function DeleteBrowsingDataDialog({ account, open, onOpenChange }: DialogProps) 
             onClick={async () => {
               setIsDeleting(true);
 
+              setHasFailed(false);
+
               try {
                 await ipc.main.invoke("accounts.deleteBrowsingData", account.id, {
                   cookies,
                   cache,
                 });
+              } catch {
+                setHasFailed(true);
+
+                return;
               } finally {
                 setIsDeleting(false);
               }
