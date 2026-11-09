@@ -21,7 +21,7 @@ Words come from the first source in [source-order.md](source-order.md). Cited co
 1. `printenv CLAUDE_CODE_EFFORT_LEVEL CLAUDE_CODE_SUBAGENT_MODEL_FORCE`: if either prints, stop and tell the user to restart without it (`env -u CLAUDE_CODE_EFFORT_LEVEL claude`). Never pass `model` or `effort` when spawning.
 2. Headless (`claude -p`) only: `printenv CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS` must print `0`, else stop and give the user `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 env -u CLAUDE_CODE_EFFORT_LEVEL -u CLAUDE_CODE_SUBAGENT_MODEL_FORCE claude -p "/translate" --permission-mode bypassPermissions`.
 3. `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts` is `en` alone: say nothing to translate; stop.
-4. `<dir>` = `$TRANSLATE_SCRATCH/translate` if `TRANSLATE_SCRATCH` is set (`mkdir -p`), else `<session scratchpad>/translate`, else `$(mktemp -d "$TMPDIR/translate.XXXXXX")/translate`. Never `/tmp`, never another session's folder. Print it in the report.
+4. Run `printenv TRANSLATE_SCRATCH`. When it prints a path, `<dir>` is that path plus `/translate` (`mkdir -p`), whatever scratchpad the session has. Otherwise `<dir>` is `<session scratchpad>/translate`, or, with no session scratchpad, `$(mktemp -d "$TMPDIR/translate.XXXXXX")/translate`. Never `/tmp`, never another session's folder. Print it in the report.
 
 ## 1. Extract
 
@@ -29,7 +29,7 @@ Words come from the first source in [source-order.md](source-order.md). Cited co
 
 ## 2. Collect
 
-`bun .claude/skills/translate/collect.ts --base <base> --out <dir>`, `<base>` = `gh pr view --json baseRefName -q .baseRefName`, else `beta`. Pass a branch name. Never fetch or rebase during the run.
+`bun .claude/skills/translate/collect.ts --base <base> --out <dir>`, `<base>` = `gh pr view --json baseRefName -q .baseRefName`; with no pull request, `beta` when `git merge-base --is-ancestor origin/beta HEAD` succeeds, else `main`. Pass a branch name. Never fetch or rebase during the run.
 
 Per locale it writes `<tag>.txt` (entries with msgctxt, `#.` comments, origins, `prior art`) and `<tag>.glossary.md` (the glossary slice), and labels each locale `translate` or `review`.
 
@@ -92,7 +92,7 @@ Per locale, only what needs the user:
 
 Then the last output of step 5.
 
-Leave catalogs uncommitted and commit nothing. Stage each finished rule change alone (sidecar, style sheet, platform table, glossary, fixtures, scripts, tests) with `git add`, never a catalog, and never change a rule file and a catalog in one command. Source, English and comment edits stay unstaged with the catalogs. Finish with `git diff --cached > <dir>/rules.patch` and `git diff > <dir>/catalogs.patch` and name both. If anything was staged before the run, stage nothing and list the rule files instead.
+Leave catalogs uncommitted and commit nothing. Rule changes for this run's strings, such as opener lines, glossary terms or label forms, land in the same branch as the strings, as their own commit. Stage each finished rule change alone (sidecar, style sheet, platform table, glossary, fixtures, scripts, tests) with `git add`, never a catalog, and never change a rule file and a catalog in one command. Source, English and comment edits stay unstaged with the catalogs. Finish with `git diff --cached > <dir>/rules.patch` and `git diff > <dir>/catalogs.patch` and name both. If anything was staged before the run, stage nothing and list the rule files instead.
 
 ## Elsewhere
 
