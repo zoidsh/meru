@@ -8,6 +8,7 @@ import {
   getVisibleVerticalTabs,
   type VerticalTabsSessionWidth,
 } from "@meru/shared/tabs";
+import type { BrowsingDataTypes } from "@meru/shared/types";
 import { net, powerMonitor, session } from "electron";
 import { Account } from "./account";
 import { config } from "./config";
@@ -579,10 +580,7 @@ class Accounts {
     this.instances.delete(accountId);
   }
 
-  async deleteBrowsingData(
-    accountId: AccountConfig["id"],
-    { cookies, cache }: { cookies: boolean; cache: boolean },
-  ) {
+  async deleteBrowsingData(accountId: AccountConfig["id"], { cookies, cache }: BrowsingDataTypes) {
     const dataTypes: Electron.ClearDataOptions["dataTypes"] = [];
 
     if (cache) {
