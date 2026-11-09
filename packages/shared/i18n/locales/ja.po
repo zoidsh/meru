@@ -288,7 +288,7 @@ msgstr "Meruについて"
 #. Button on an account's row in Settings that opens a menu of its actions
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Account actions"
-msgstr ""
+msgstr "アカウントの操作"
 
 #. A menu or a menu item in Meru's menu bar
 #. A page of Settings, named in the settings sidebar and as the page's title
@@ -592,7 +592,7 @@ msgstr "すべてを手前に移動"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Browsing data deleted"
-msgstr ""
+msgstr "閲覧履歴データを削除しました"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -608,7 +608,7 @@ msgstr "画像アドレスをコピー"
 #. Checkbox in the Delete browsing data dialog that deletes the account's cache
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Cached images and files"
-msgstr ""
+msgstr "キャッシュされた画像とファイル"
 
 #. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
 #: packages/renderer/components/config-select-field.tsx
@@ -879,7 +879,7 @@ msgstr "スレッド"
 #. Checkbox in the Delete browsing data dialog that deletes the account's cookies and the data sites store, such as local storage
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Cookies and other site data"
-msgstr ""
+msgstr "Cookieと他のサイトデータ"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -1135,17 +1135,17 @@ msgstr "{label}を削除しますか?"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete browsing data"
-msgstr ""
+msgstr "閲覧履歴データの削除"
 
 #. Menu item that opens the dialog for deleting the account's cookies and cache
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete browsing data…"
-msgstr ""
+msgstr "閲覧履歴データを削除…"
 
 #. Button that deletes the browsing data checked in the dialog
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete data"
-msgstr ""
+msgstr "データを削除"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Delete label color"
@@ -1278,7 +1278,7 @@ msgstr "アカウントを編集"
 #. Menu item that opens the dialog for editing the account
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Edit account…"
-msgstr ""
+msgstr "アカウントを編集…"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1966,7 +1966,7 @@ msgstr "Meruはアップデートを確認できませんでした。"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Meru couldn't delete this account's browsing data. Try again."
-msgstr ""
+msgstr "Meruはこのアカウントの閲覧履歴データを削除できませんでした。もう一度お試しください。"
 
 #: packages/app/ipc.ts
 msgid "Meru doesn't know this extension."
@@ -2650,7 +2650,7 @@ msgstr "アカウントを削除"
 #. Menu item that opens the dialog for removing the account
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove account…"
-msgstr ""
+msgstr "アカウントを削除…"
 
 #. Button that removes the license key from Meru and restarts it
 #: packages/app/license-key.ts
@@ -3290,7 +3290,7 @@ msgstr "パスワードまたはほかの2段階認証の方法でログイン�
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Signs you out of this account."
-msgstr ""
+msgstr "このアカウントからログアウトします。"
 
 #. Screen reader label of the field for the address of a site to add
 #: packages/renderer/routes/settings/extensions.tsx
@@ -3309,7 +3309,7 @@ msgstr "スカイ"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Some pages may load more slowly the next time."
-msgstr ""
+msgstr "次回、一部のページの読み込みに時間がかかる場合があります。"
 
 #. Heading of the Notifications section about notification sounds
 #. Setting that picks the notification sound

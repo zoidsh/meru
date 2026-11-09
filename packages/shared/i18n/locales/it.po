@@ -288,7 +288,7 @@ msgstr "Informazioni su Meru"
 #. Button on an account's row in Settings that opens a menu of its actions
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Account actions"
-msgstr ""
+msgstr "Azioni dell’account"
 
 #. A menu or a menu item in Meru's menu bar
 #. A page of Settings, named in the settings sidebar and as the page's title
@@ -592,7 +592,7 @@ msgstr "Porta tutto in primo piano"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Browsing data deleted"
-msgstr ""
+msgstr "Dati di navigazione eliminati"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -608,7 +608,7 @@ msgstr "Copia indirizzo immagine"
 #. Checkbox in the Delete browsing data dialog that deletes the account's cache
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Cached images and files"
-msgstr ""
+msgstr "Immagini e file memorizzati nella cache"
 
 #. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
 #: packages/renderer/components/config-select-field.tsx
@@ -879,7 +879,7 @@ msgstr "Conversazione"
 #. Checkbox in the Delete browsing data dialog that deletes the account's cookies and the data sites store, such as local storage
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Cookies and other site data"
-msgstr ""
+msgstr "Cookie e altri dati dei siti"
 
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
@@ -1135,17 +1135,17 @@ msgstr "Vuoi eliminare la ricerca salvata {label}?"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete browsing data"
-msgstr ""
+msgstr "Elimina dati di navigazione"
 
 #. Menu item that opens the dialog for deleting the account's cookies and cache
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete browsing data…"
-msgstr ""
+msgstr "Elimina dati di navigazione…"
 
 #. Button that deletes the browsing data checked in the dialog
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete data"
-msgstr ""
+msgstr "Elimina dati"
 
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Delete label color"
@@ -1278,7 +1278,7 @@ msgstr "Modifica account"
 #. Menu item that opens the dialog for editing the account
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Edit account…"
-msgstr ""
+msgstr "Modifica account…"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1966,7 +1966,7 @@ msgstr "Meru non è riuscito a verificare gli aggiornamenti."
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Meru couldn't delete this account's browsing data. Try again."
-msgstr ""
+msgstr "Meru non è riuscito a eliminare i dati di navigazione di questo account. Riprova."
 
 #: packages/app/ipc.ts
 msgid "Meru doesn't know this extension."
@@ -2650,7 +2650,7 @@ msgstr "Rimuovi account"
 #. Menu item that opens the dialog for removing the account
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Remove account…"
-msgstr ""
+msgstr "Rimuovi account…"
 
 #. Button that removes the license key from Meru and restarts it
 #: packages/app/license-key.ts
@@ -3290,7 +3290,7 @@ msgstr "Accedi con la password o con un altro secondo fattore. Con Meru Pro puoi
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Signs you out of this account."
-msgstr ""
+msgstr "Esci da questo account."
 
 #. Screen reader label of the field for the address of a site to add
 #: packages/renderer/routes/settings/extensions.tsx
@@ -3309,7 +3309,7 @@ msgstr "Celeste"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Some pages may load more slowly the next time."
-msgstr ""
+msgstr "Alcune pagine potrebbero caricarsi più lentamente la prossima volta."
 
 #. Heading of the Notifications section about notification sounds
 #. Setting that picks the notification sound
