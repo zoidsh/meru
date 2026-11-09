@@ -4,6 +4,10 @@ This file is the draft of the next release, written one line at a time as work l
 
 ## [Unreleased]
 
+### Added
+
+- Delete one account's cookies, its cache or both with **Delete browsing data…** in the account's menu in `Settings… → Accounts`, which now also holds **Edit account…** and **Remove account…**. Only the cache is selected by default, and deleting cookies signs you out of that account
+
 ### Changed
 
 - Settings opens in its own window, so your inbox stays in view while you change them

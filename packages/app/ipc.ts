@@ -209,6 +209,10 @@ class Ipc {
       accounts.setAccountEnabled(accountId, enabled);
     });
 
+    this.main.handle("accounts.deleteBrowsingData", (_event, accountId, dataTypes) =>
+      accounts.deleteBrowsingData(accountId, dataTypes),
+    );
+
     this.main.on("workspaceApp.goBack", (_event, workspaceAppId) => {
       getNavigationWebContents(workspaceAppId).navigationHistory.goBack();
     });

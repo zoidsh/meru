@@ -17,10 +17,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@meru/ui/components/alert-dialog";
 import { Badge } from "@meru/ui/components/badge";
 import { Button } from "@meru/ui/components/button";
+import { Checkbox } from "@meru/ui/components/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -29,6 +29,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@meru/ui/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@meru/ui/components/dropdown-menu";
 import {
   Field,
   FieldContent,
@@ -50,8 +56,9 @@ import {
 import { Switch } from "@meru/ui/components/switch";
 import { cn } from "@meru/ui/lib/utils";
 import { useForm } from "@tanstack/react-form";
-import { GripVerticalIcon, PencilIcon, TrashIcon, XIcon } from "lucide-react";
+import { GripVerticalIcon, MoreHorizontalIcon, XIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import type { Entries } from "type-fest";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
@@ -373,28 +380,22 @@ function AddAccountButton() {
   );
 }
 
-function EditAccountButton({
+type DialogProps = {
+  account: AccountConfig;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+function EditAccountDialog({
   account,
   isLastEnabledAccount,
-}: {
-  account: AccountConfig;
-  isLastEnabledAccount: boolean;
-}) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const { t } = useLingui();
-
+  open,
+  onOpenChange,
+}: DialogProps & { isLastEnabledAccount: boolean }) {
   const label = getAccountLabel(account.label);
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger
-        render={
-          <Button size="icon" className="size-8 p-0" variant="outline" title={t`Edit account`}>
-            <PencilIcon />
-          </Button>
-        }
-      />
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <SettingsDialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -419,7 +420,7 @@ function EditAccountButton({
               ipc.main.send("accounts.setAccountEnabled", account.id, values.disabled !== true);
             }
 
-            setIsDialogOpen(false);
+            onOpenChange(false);
 
             if (
               account.gmail.unreadBadge !== values.gmail.unreadBadge ||
@@ -434,6 +435,225 @@ function EditAccountButton({
         />
       </SettingsDialogContent>
     </Dialog>
+  );
+}
+
+function RemoveAccountDialog({ account, open, onOpenChange }: DialogProps) {
+  const label = getAccountLabel(account.label);
+
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            <Trans>Remove {label}?</Trans>
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            <Trans>
+              Meru signs out of this account and clears its data from this computer, including saved
+              tabs and bookmarks. Your Gmail account isn't affected.
+            </Trans>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            <Trans>Cancel</Trans>
+          </AlertDialogCancel>
+          <AlertDialogClose
+            render={<AlertDialogAction variant="destructive" />}
+            onClick={() => {
+              ipc.main.send("accounts.removeAccount", account.id);
+            }}
+          >
+            <Trans>Remove account</Trans>
+          </AlertDialogClose>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function DeleteBrowsingDataDialog({ account, open, onOpenChange }: DialogProps) {
+  const [cookies, setCookies] = useState(false);
+
+  const [cache, setCache] = useState(true);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { t } = useLingui();
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isDeleting) {
+          onOpenChange(isOpen);
+        }
+      }}
+      onOpenChangeComplete={(isOpen) => {
+        if (!isOpen) {
+          setCookies(false);
+
+          setCache(true);
+        }
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            <Trans>Delete browsing data</Trans>
+          </AlertDialogTitle>
+        </AlertDialogHeader>
+        <FieldGroup>
+          <Field orientation="horizontal">
+            <Checkbox
+              id="delete-browsing-data-cookies"
+              checked={cookies}
+              onCheckedChange={setCookies}
+              disabled={isDeleting}
+            />
+            <FieldContent>
+              <FieldLabel htmlFor="delete-browsing-data-cookies">
+                <Trans comment="Checkbox in the Delete browsing data dialog that deletes the account's cookies and the data sites store, such as local storage">
+                  Cookies and other site data
+                </Trans>
+              </FieldLabel>
+              <FieldDescription>
+                <Trans>Signs you out of this account.</Trans>
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+          <Field orientation="horizontal">
+            <Checkbox
+              id="delete-browsing-data-cache"
+              checked={cache}
+              onCheckedChange={setCache}
+              disabled={isDeleting}
+            />
+            <FieldContent>
+              <FieldLabel htmlFor="delete-browsing-data-cache">
+                <Trans comment="Checkbox in the Delete browsing data dialog that deletes the account's cache">
+                  Cached images and files
+                </Trans>
+              </FieldLabel>
+              <FieldDescription>
+                <Trans>Some pages may load more slowly the next time.</Trans>
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+        </FieldGroup>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>
+            <Trans>Cancel</Trans>
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={(!cookies && !cache) || isDeleting}
+            onClick={async () => {
+              setIsDeleting(true);
+
+              try {
+                await ipc.main.invoke("accounts.deleteBrowsingData", account.id, {
+                  cookies,
+                  cache,
+                });
+              } finally {
+                setIsDeleting(false);
+              }
+
+              onOpenChange(false);
+
+              toast.success(t`Browsing data deleted`);
+            }}
+          >
+            <Trans comment="Button that deletes the browsing data checked in the dialog">
+              Delete data
+            </Trans>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function AccountActions({
+  account,
+  removable,
+  isLastEnabledAccount,
+}: {
+  account: AccountConfig;
+  removable: boolean;
+  isLastEnabledAccount: boolean;
+}) {
+  const [openDialog, setOpenDialog] = useState<"edit" | "remove" | "deleteBrowsingData" | null>(
+    null,
+  );
+
+  const { t } = useLingui();
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setOpenDialog(null);
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              size="icon"
+              className="size-8 p-0"
+              variant="outline"
+              title={t({
+                message: "Account actions",
+                comment: "Button on an account's row in Settings that opens a menu of its actions",
+              })}
+            >
+              <MoreHorizontalIcon />
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setOpenDialog("edit")}>
+            <Trans comment="Menu item that opens the dialog for editing the account">
+              Edit account…
+            </Trans>
+          </DropdownMenuItem>
+          {removable && (
+            <DropdownMenuItem onClick={() => setOpenDialog("remove")}>
+              <Trans comment="Menu item that opens the dialog for removing the account">
+                Remove account…
+              </Trans>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={() => setOpenDialog("deleteBrowsingData")}>
+            <Trans comment="Menu item that opens the dialog for deleting the account's cookies and cache">
+              Delete browsing data…
+            </Trans>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <EditAccountDialog
+        account={account}
+        isLastEnabledAccount={isLastEnabledAccount}
+        open={openDialog === "edit"}
+        onOpenChange={handleOpenChange}
+      />
+      {removable && (
+        <RemoveAccountDialog
+          account={account}
+          open={openDialog === "remove"}
+          onOpenChange={handleOpenChange}
+        />
+      )}
+      <DeleteBrowsingDataDialog
+        account={account}
+        open={openDialog === "deleteBrowsingData"}
+        onOpenChange={handleOpenChange}
+      />
+    </>
   );
 }
 
@@ -497,49 +717,11 @@ function SortableAccountItem({
         )}
       </ItemContent>
       <ItemActions>
-        <EditAccountButton account={account} isLastEnabledAccount={isLastEnabledAccount} />
-        {removable && (
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button
-                  size="icon"
-                  className="size-8 p-0"
-                  variant="outline"
-                  title={t`Remove account`}
-                >
-                  <TrashIcon />
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  <Trans>Remove {label}?</Trans>
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  <Trans>
-                    Meru signs out of this account and clears its data from this computer, including
-                    saved tabs and bookmarks. Your Gmail account isn't affected.
-                  </Trans>
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>
-                  <Trans>Cancel</Trans>
-                </AlertDialogCancel>
-                <AlertDialogClose
-                  render={<AlertDialogAction variant="destructive" />}
-                  onClick={() => {
-                    ipc.main.send("accounts.removeAccount", account.id);
-                  }}
-                >
-                  <Trans>Remove account</Trans>
-                </AlertDialogClose>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+        <AccountActions
+          account={account}
+          removable={removable}
+          isLastEnabledAccount={isLastEnabledAccount}
+        />
       </ItemActions>
     </Item>
   );

@@ -282,6 +282,10 @@ export type IpcMainEvents =
         messageId: string,
         action: GmailAction,
       ) => void;
+      "accounts.deleteBrowsingData": (
+        accountId: AccountConfig["id"],
+        dataTypes: { cookies: boolean; cache: boolean },
+      ) => void;
       "licenseKey.activate": (licenseKey: string) => { success: boolean };
       "license.getDeviceInfo": () => { label: string };
       "license.updateDeviceInfo": (input: { label: string }) => void;

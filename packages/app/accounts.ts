@@ -579,6 +579,48 @@ class Accounts {
     this.instances.delete(accountId);
   }
 
+  async deleteBrowsingData(
+    accountId: AccountConfig["id"],
+    { cookies, cache }: { cookies: boolean; cache: boolean },
+  ) {
+    const dataTypes: Electron.ClearDataOptions["dataTypes"] = [];
+
+    if (cache) {
+      dataTypes.push("cache");
+    }
+
+    // Without `webSQL`, which Electron accepts and ignores. `clearData` leaves
+    // `chrome-extension://` storage alone, so extensions stay signed in.
+    if (cookies) {
+      dataTypes.push(
+        "cookies",
+        "localStorage",
+        "indexedDB",
+        "serviceWorkers",
+        "fileSystems",
+        "backgroundFetch",
+      );
+    }
+
+    if (dataTypes.length === 0) {
+      return;
+    }
+
+    const instance = this.instances.get(accountId);
+
+    // A disabled account was never constructed, so its data is reached through
+    // its partition, as `removeAccount` does.
+    await (instance?.session ?? session.fromPartition(`persist:${accountId}`)).clearData({
+      dataTypes,
+    });
+
+    if (instance?.gmail.hasView) {
+      instance.gmail.view.webContents.reload();
+    }
+
+    instance?.tabs.reloadAll();
+  }
+
   async removeAccount(selectedAccountId: string) {
     const instance = this.instances.get(selectedAccountId);
 

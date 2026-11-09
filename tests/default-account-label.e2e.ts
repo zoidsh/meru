@@ -12,7 +12,7 @@
 import { setupI18n } from "@lingui/core";
 import { generateMessageId } from "@lingui/message-utils/generateMessageId";
 import { messages } from "@meru/shared/i18n/locales/de";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 import { useApp } from "./lib/app";
 import { openSettingsPage } from "./lib/settings";
 
@@ -69,10 +69,17 @@ test("Settings and the Accounts menu name the first account in German and the co
   expect(await readStoredLabel()).toBe("Default");
 });
 
+async function openEditDialog(settings: Page, accountItems: Locator) {
+  await accountItems.getByRole("button", { name: "Kontoaktionen" }).click();
+
+  // German takes a no-break space before the ellipsis.
+  await settings.getByRole("menuitem", { name: "Konto bearbeiten\u00a0…", exact: true }).click();
+}
+
 test("saving the edit dialog untouched leaves the stored label in English", async () => {
   const { settings, accountItems } = await openAccountsSettings();
 
-  await accountItems.getByRole("button", { name: "Konto bearbeiten" }).click();
+  await openEditDialog(settings, accountItems);
 
   const dialog = settings.getByRole("dialog");
 
@@ -98,7 +105,7 @@ test("saving the edit dialog untouched leaves the stored label in English", asyn
     })
     .toEqual(["orange", "Default"]);
 
-  await accountItems.getByRole("button", { name: "Konto bearbeiten" }).click();
+  await openEditDialog(settings, accountItems);
 
   await labelField.fill("Arbeit");
 

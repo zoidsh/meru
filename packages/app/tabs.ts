@@ -824,6 +824,14 @@ export class Tabs {
     }
   }
 
+  reloadAll() {
+    for (const tab of this.tabs) {
+      if (tab instanceof WorkspaceApp) {
+        tab.reload();
+      }
+    }
+  }
+
   serialize(): TabState[] {
     return this.tabs.map((tab) => ({
       id: tab.id,
