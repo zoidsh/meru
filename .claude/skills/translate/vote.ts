@@ -245,7 +245,7 @@ const USAGE = `Usage: bun .claude/skills/translate/vote.ts [--concepts <file>] [
 
 Runs the seven-app vote for every concept of vote-concepts.json, or those
 named after --, in each language given, over the corpora corpus.ts writes
-to .cache/translate/corpus. Prints each result as the glossary cites it, with
+to the translate cache's corpus/. Prints each result as the glossary cites it, with
 its status and every app's vote; --detail adds each app's message counts, and
 --show each app's messages under the candidate each counted for. --missing
 lists, without voting, each concept that has no candidate words for a

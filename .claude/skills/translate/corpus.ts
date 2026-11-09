@@ -1,5 +1,6 @@
 import { readdirSync } from "node:fs";
 import { mkdir, readdir, readFile, stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
@@ -7,7 +8,8 @@ import { LANGUAGES_DIR } from "./rules";
 
 /*
  * Fetches the translations a Chrome count and the seven-app vote read, as
- * `counting.md` describes, into `.cache/translate`, which git ignores: nothing
+ * `counting.md` describes, into a cache outside the checkout, so every worktree
+ * shares one download, `MERU_TRANSLATE_CACHE` or `~/.cache/meru-translate`: nothing
  * of these texts is checked in, only the words and counts a rule cites. Each
  * source becomes `corpus/<app>.<tag>.jsonl`, one `[english, translation]` pair
  * per line, which `count.ts` and `vote.ts` read.
@@ -15,7 +17,9 @@ import { LANGUAGES_DIR } from "./rules";
 
 export const ROOT = path.join(import.meta.dir, "../../..");
 
-export const CACHE_DIR = path.join(ROOT, ".cache/translate");
+export const CACHE_DIR =
+  process.env.MERU_TRANSLATE_CACHE ??
+  path.join(process.env.XDG_CACHE_HOME ?? path.join(homedir(), ".cache"), "meru-translate");
 
 export const CORPUS_DIR = path.join(CACHE_DIR, "corpus");
 
@@ -1095,7 +1099,7 @@ export async function buildCorpus(source: Source, tag: string, chromium: string)
 const USAGE = `Usage: bun .claude/skills/translate/corpus.ts [--source <name>]… [--refresh] <tag>…
 
 Fetches what a Chrome count, a GNOME count and the seven-app vote read into
-.cache/translate, and writes corpus/<source>.<tag>.jsonl for each: chrome, at
+the translate cache (MERU_TRANSLATE_CACHE, else ~/.cache/meru-translate), and writes corpus/<source>.<tag>.jsonl for each: chrome, at
 the Chromium version of node_modules' Electron, ${APPS.join(", ")}, and gnome,
 GNOME's ${GNOME_PROJECTS.join(", ")} translations. Without --source it
 builds them all. A corpus already built is kept unless --refresh is given; the

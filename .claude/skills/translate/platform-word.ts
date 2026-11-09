@@ -493,7 +493,7 @@ Each word is listed with the source ids a sidecar row cites, best first: a
 source that writes the English exactly as Meru does, then the most cited. The
 English is matched without its access key, ellipsis or case, and a placeholder
 matches any other. Without --tag it covers every tag with a sidecar. A source
-missing from .cache/translate/raw is fetched there first, Apple's from this
+missing from the translate cache's raw/ is fetched there first, Apple's from this
 Mac, which only macOS can do. --limit caps the sources shown under a word
 (default 3); --json prints every one.
 

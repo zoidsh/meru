@@ -157,7 +157,7 @@ const USAGE = `Usage: bun .claude/skills/translate/count.ts <tag> [<rule id>…]
        bun .claude/skills/translate/count.ts <tag> --source <name> --english <regex> --expect <regex> [--case] [--show]
 
 Counts Chrome's messages for each pin or ban of languages/<tag>.json named, or
-every one without ids, in .cache/translate/corpus/chrome.<tag>.jsonl, which
+every one without ids, in the translate cache's corpus/chrome.<tag>.jsonl, which
 corpus.ts --source chrome <tag> writes, and prints each beside the count its
 reason cites. --english counts a pin by the Chrome term its word comes from
 rather than its countEnglish or msgidPattern; with --expect and no rule id, it
