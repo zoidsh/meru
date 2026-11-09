@@ -26,14 +26,14 @@ Never read or search `.claude/skills/translate/regression.ts` or `.claude/skills
 
 1. Read the style sheet and the glossary slice in full. Read the platform words file only when an entry has a `macOS`, `Windows` or `Linux` msgctxt.
 2. Read the `check.ts` report. Each finding is already found: confirm or dismiss it, whatever its severity, since every one left standing goes to the translator. For each, read the sidecar rule it names (grep the sidecar for its rule id); don't read the sidecar whole. Give a dismissal's reason, such as an allowlisted compound the sidecar misses, which the skill writes into the sidecar. Never repeat a confirmed one; a different problem in a flagged entry is still yours.
-3. **Partial run:** read `<locale>.context.txt` in full and review every entry of the entry file against the checklist. For the items that read across entries (12, 13), grep the dump for each new entry's key English terms and their translations; don't page through the dump. A problem a grep shows in an older entry is a finding too.
+3. **Partial run:** read `<locale>.context.txt` in full and review every entry of the entry file against the checklist. For the items that read across entries (12, 13), grep the dump for each new entry's key English terms and their translations; don't page through the dump. Where a new entry disagrees with the catalog's word, the new entry is the one to fix.
 4. **Full run:** read the dump in as few `Read` calls as the tool allows, ending each on a `###` heading, and review every entry; use the entry file only to know which are new. Skip the context file.
 
 Unsure of ICU or Lingui syntax: read the docs page URL with `.md` appended, such as https://lingui.dev/ref/macro.md. An ambiguous entry: read the source line its origin names.
 
 ## Checklist
 
-Check every new entry against each item, and the whole catalog against the items that read across entries.
+Check every entry of the entry file against each item, reading across the catalog for the items that need it. Findings go only on entries the entry file lists: the run changes nothing else, and `collect.ts --apply` refuses any other. A problem in an older entry goes in your reply under `Outside this run:`, one line each with its msgid, never in the findings file.
 
 1. **Placeholders and tags.** Every `{name}` placeholder and every `<0>`, `</0>` and `<0/>` tag in the English is in the translation exactly, the same names and numbers and as many of each, and nothing is added.
 2. **ICU syntax.** Braces balance, `plural` and `select` keep their argument and keyword, and every branch has its text in braces.
@@ -92,6 +92,7 @@ Keep it short:
 - the path of your findings file and its counts by severity, such as `wrong 2, improve 14`;
 - each `check.ts` finding you dismissed, with its msgid, rule id and the reason; confirmed ones need no line;
 - doubts you had no fix for, and product questions, one line each;
+- `Outside this run:` problems in older entries, one line each, when you saw any;
 - `PASS: <locale>` as the last line when the file holds no `wrong` finding, and no `PASS` line otherwise.
 
 When you are continued after the translator's fixes, with a new `check.ts` report, review only the entries named, against the catalogs as they now stand. Rewrite the findings file: drop each resolved finding, update one that isn't, keep the `improve` findings, add any new problem the fix made. Reply the same way.

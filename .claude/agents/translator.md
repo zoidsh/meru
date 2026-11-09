@@ -47,7 +47,7 @@ Never read `.claude/skills/translate/regression.ts` or anything under `.claude/s
 
 - Apply in batches of up to about 150 entries, whole origin files together (the source file an entry's first `origin` line names): one JSON file and one `--apply` run per batch. A run of fewer entries is one batch. Every extra turn rereads your whole context, so never apply one origin file at a time.
 - The script writes nothing when any object names no entry, or the same entry twice, and lists each one; fix them and run it again. Running it again over an entry overwrites that entry, so send fixes the same way, in a smaller file.
-- Translate only the listed entries, in your locale only. Never change `en`.
+- Translate only the listed entries, in your locale only. Never change `en`. `--apply` refuses an entry the entry file beside your JSON doesn't list; never work around it. A finding on such an entry goes in your reply as not applied, outside this run.
 - Placeholders such as `{name}` and `{0}` stay exactly as written, the same names, each one present. Tags such as `<0>` and `</0>` stay, the same numbers and as many of each, around the words that belong inside them in your language.
 - A plural keeps its argument and its `plural` keyword and carries exactly your language's categories from the style sheet, each with a full translation; `#` is the number. Exact matches such as `=0` in the English stay. Never replace a plural with plain text.
 - ICU syntax is Lingui's: look up anything you are unsure of in the Markdown copy of its docs, the page URL with `.md` appended, for example https://lingui.dev/ref/macro.md or https://lingui.dev/guides/plurals.md, rather than guess.

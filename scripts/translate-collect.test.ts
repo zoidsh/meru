@@ -11,6 +11,7 @@ import {
   listedOrigins,
   listLocale,
   mergeBase,
+  outsideEntryFile,
   sliceGlossary,
   translationChanges,
 } from "../.claude/skills/translate/collect";
@@ -572,5 +573,41 @@ describe("TRANSLATE_SCRATCH", () => {
 
     expect(result.stderr.toString()).toBe("");
     expect(await Bun.file(path.join(scratch, "translate", "sv.dump.txt")).exists()).toBe(true);
+  });
+});
+
+describe("outsideEntryFile", () => {
+  const listed = [
+    { catalog: "app", msgctxt: null, msgid: "Download Error" },
+    { catalog: "app", msgctxt: "macOS", msgid: "Settings" },
+  ];
+
+  test("passes the listed entries, matching msgctxt and catalog", () => {
+    const byCatalog = new Map([
+      [
+        "app",
+        [
+          { msgid: "Download Error", msgstr: "Downloadfehler" },
+          { msgctxt: "macOS", msgid: "Settings", msgstr: "Einstellungen …" },
+        ],
+      ],
+    ]);
+
+    expect(outsideEntryFile(byCatalog, listed)).toEqual([]);
+  });
+
+  test("refuses an older entry, the same msgid in another context, and another catalog", () => {
+    const byCatalog = new Map([
+      [
+        "app",
+        [
+          { msgid: "Hide inbox footer", msgstr: "Fußzeile ausblenden" },
+          { msgctxt: "Windows", msgid: "Settings", msgstr: "Einstellungen" },
+        ],
+      ],
+      ["preload-gmail", [{ msgid: "Download Error", msgstr: "Downloadfehler" }]],
+    ]);
+
+    expect(outsideEntryFile(byCatalog, listed)).toHaveLength(3);
   });
 });

@@ -18,7 +18,8 @@ import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
  * With `--out <dir>`, each locale's list goes to `<dir>/<tag>.txt` instead,
  * with that locale's slice of the glossary beside it, so an agent reads one
  * language rather than every one. `<tag> --apply <json>` writes translations
- * into a locale's catalogs, and `--dump <tag> --out <dir>` writes its whole
+ * into a locale's catalogs, refusing any entry missing from the `<tag>.txt`
+ * beside the JSON unless `--outside` is given, and `--dump <tag> --out <dir>` writes its whole
  * catalog for review, beside `<tag>.context.txt`, the slice of that dump the
  * entry list's own files make up, once `<dir>/<tag>.txt` is there. `--out`
  * defaults to `$TRANSLATE_SCRATCH/translate` when that is set.
@@ -591,7 +592,68 @@ function translationsOf(json: unknown, catalogNames: string[]) {
   return { errors, byCatalog };
 }
 
-async function apply(config: LinguiConfigNormalized, jsonPath: string, locales: string[]) {
+/** The entries `collect.ts` listed for translation, read back from its `<tag>.txt`. */
+export function parseEntryFile(text: string) {
+  const entries: AssessedEntry[] = [];
+
+  let catalog: string | undefined;
+
+  for (const line of text.split("\n")) {
+    const heading = /^### ([^:\s]+): /u.exec(line);
+
+    if (heading) {
+      catalog = heading[1];
+
+      continue;
+    }
+
+    if (line.startsWith("- msgid: ")) {
+      if (!catalog) {
+        throw new Error(`An entry comes before any "### <catalog>:" heading: ${line}`);
+      }
+
+      entries.push({ catalog, msgctxt: null, msgid: JSON.parse(line.slice("- msgid: ".length)) });
+
+      continue;
+    }
+
+    const last = entries.at(-1);
+
+    if (last && line.startsWith("  msgctxt: ")) {
+      last.msgctxt = JSON.parse(line.slice("  msgctxt: ".length));
+    }
+  }
+
+  return entries;
+}
+
+/*
+ * A run translates only what its entry file lists: a reviewer's or MQM's
+ * finding on an older entry once rewrote shipped copy in a run that added two
+ * strings. `--outside` lifts it for a change the user asked for.
+ */
+export function outsideEntryFile(byCatalog: Map<string, Translation[]>, listed: AssessedEntry[]) {
+  const key = (catalog: string, msgctxt: string | null | undefined, msgid: string) =>
+    `${catalog}\u0004${msgctxt ?? ""}\u0004${msgid}`;
+
+  const keys = new Set(listed.map(({ catalog, msgctxt, msgid }) => key(catalog, msgctxt, msgid)));
+
+  return [...byCatalog].flatMap(([catalog, translations]) =>
+    translations
+      .filter(({ msgctxt, msgid }) => !keys.has(key(catalog, msgctxt, msgid)))
+      .map(
+        ({ msgctxt, msgid }) =>
+          `${catalog}: ${msgctxt === undefined ? "" : `${JSON.stringify(msgctxt)} `}${JSON.stringify(msgid)} is not in this run's entry file; report it instead of changing it.`,
+      ),
+  );
+}
+
+async function apply(
+  config: LinguiConfigNormalized,
+  jsonPath: string,
+  locales: string[],
+  outside = false,
+) {
   const [locale] = locales;
 
   if (
@@ -611,6 +673,12 @@ async function apply(config: LinguiConfigNormalized, jsonPath: string, locales: 
     await Bun.file(jsonPath).json(),
     files.map(({ name }) => name),
   );
+
+  const entryFile = Bun.file(path.join(path.dirname(jsonPath), `${locale}.txt`));
+
+  if (!outside && (await entryFile.exists())) {
+    errors.push(...outsideEntryFile(byCatalog, parseEntryFile(await entryFile.text())));
+  }
 
   const writes: { relative: string; absolute: string; text: string; count: number }[] = [];
 
@@ -1074,13 +1142,14 @@ async function run() {
       base: { type: "string" },
       out: { type: "string" },
       apply: { type: "string" },
+      outside: { type: "boolean" },
       dump: { type: "string" },
     },
     allowPositionals: true,
   });
 
   if (values.apply) {
-    await apply(config, values.apply, positionals);
+    await apply(config, values.apply, positionals, values.outside);
 
     return;
   }

@@ -12,6 +12,8 @@ Run kinds, decided per locale in step 2:
 - **Partial**: the entry file lists some entries, such as a pull request adding strings. The common case. Steps 1–5 and 7.
 - **Full**: the entry file lists every entry (a language's first translation), or the user asks for the whole catalog or for MQM. Steps 1–7, with [mqm.md](mqm.md) as step 6.
 
+**Scope.** A run changes only the entries its `<tag>.txt` lists. Never change an older translation to match a new rule, a review or a preference; put it in the report under Outside this run. `collect.ts --apply` refuses unlisted entries; pass `--outside` only when the user asked for that change.
+
 Words come from the first source in [source-order.md](source-order.md). Cited counts are frozen; recount only per [counting.md](counting.md). Rule, split and new-string procedures are in [rules.md](rules.md); read it only when a step sends you there.
 
 ## 0. Preconditions
@@ -56,7 +58,7 @@ Then:
 - Otherwise build one fix list: every `check.ts` finding the reviewer didn't dismiss (CI fails on any severity), every `wrong` finding, and every `improve` finding, each with catalog (`app` or `preload-gmail`, not the PO path), msgctxt, msgid, msgstr, kind, reason, suggestion. `SendMessage` it to the translator. Rerun `check.ts` into the same file. If the list held any `wrong` or `check.ts` finding, `SendMessage` the reviewer to re-review those entries only, naming the new report.
 - No second round. A finding still open goes to the report with the reviewer's text and the translator's answer. Never edit a catalog yourself to close one.
 - A `check.ts` finding the reviewer dismissed: verify its reason against the sidecar and source. Holds: add the allowance per [rules.md § Changing a rule](rules.md#changing-a-rule). Doesn't: it goes on the fix list. Report either way.
-- A reviewer `wrong` finding that names a glossary, platform or pinned word not in the rules: make it a rule per [rules.md § Changing a rule](rules.md#changing-a-rule), or report why not.
+- A reviewer `wrong` finding that names a glossary, platform or pinned word not in the rules: make it a rule per [rules.md § Changing a rule](rules.md#changing-a-rule) only when `check.ts --locale <tag>` then flags no older entry; otherwise leave the rules as they were and report it as a proposed rule.
 - Only wording goes to the reviewer. Unsure choices, doubts without a fix and product questions go to the report.
 - No `SendMessage`: spawn a new agent of the same type with the original prompt, the list and the previous reply.
 
@@ -71,7 +73,7 @@ bunx lingui compile --strict
 bun .claude/skills/translate/check.ts --shipped --strict
 ```
 
-A failure names entry and locale: send it to that locale's translator as one finding and rerun once; still failing, report it. `check.ts` exit 2: report, don't retry. A reported finding the reviewer dismissed for a reason that held means its allowance is missing: add it, send nothing to the translator. A finding in a locale nobody worked on this run: report it.
+A failure names entry and locale: send it to that locale's translator as one finding and rerun once; still failing, report it. `check.ts` exit 2: report, don't retry. A reported finding the reviewer dismissed for a reason that held means its allowance is missing: add it, send nothing to the translator. A finding in a locale nobody worked on this run, or on an older entry: report it, never fix it; one caused by a rule change this run made means undoing that rule change.
 
 ## 6. MQM (full runs only)
 
@@ -85,6 +87,7 @@ Per locale, only what needs the user:
 - full runs: the `mqm.ts` table, open critical or major findings, dismissed findings with reasons, term-level findings and the rule each became;
 - translator's unsure choices, reviewer's unresolved doubts, product questions;
 - dismissed `check.ts` findings with reasons;
+- Outside this run: problems agents saw in older entries, and proposed rules that would change them, for the user to decide;
 - terms chosen that the glossary lacks.
 
 Then the last output of step 5.

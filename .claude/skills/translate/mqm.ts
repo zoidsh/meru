@@ -11,11 +11,12 @@ import {
   DEFAULT_BASE,
   mergeBase,
   parse,
+  parseEntryFile,
   readAtRef,
   scratchDir,
 } from "./collect";
 
-export { type AssessedEntry, changedEntries };
+export { type AssessedEntry, changedEntries, parseEntryFile };
 
 /*
  * Scores a locale's MQM review, the findings of each independent run, so no
@@ -96,41 +97,6 @@ export function keyOf({ catalog, msgctxt, msgid }: AssessedEntry) {
 
 export function describe({ catalog, msgctxt, msgid }: AssessedEntry) {
   return `${catalog}: ${msgctxt === null ? "" : `${JSON.stringify(msgctxt)} `}${JSON.stringify(msgid)}`;
-}
-
-/** The entries `collect.ts` listed for translation, read back from its `<tag>.txt`. */
-export function parseEntryFile(text: string) {
-  const entries: AssessedEntry[] = [];
-
-  let catalog: string | undefined;
-
-  for (const line of text.split("\n")) {
-    const heading = /^### ([^:\s]+): /u.exec(line);
-
-    if (heading) {
-      catalog = heading[1];
-
-      continue;
-    }
-
-    if (line.startsWith("- msgid: ")) {
-      if (!catalog) {
-        throw new Error(`An entry comes before any "### <catalog>:" heading: ${line}`);
-      }
-
-      entries.push({ catalog, msgctxt: null, msgid: JSON.parse(line.slice("- msgid: ".length)) });
-
-      continue;
-    }
-
-    const last = entries.at(-1);
-
-    if (last && line.startsWith("  msgctxt: ")) {
-      last.msgctxt = JSON.parse(line.slice("  msgctxt: ".length));
-    }
-  }
-
-  return entries;
 }
 
 /*
