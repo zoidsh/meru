@@ -65,7 +65,14 @@ describe("the translate skill's links", () => {
   test("SKILL.md links every file it moved out", async () => {
     const skill = await Bun.file(path.join(TRANSLATE_DIR, "SKILL.md")).text();
 
-    for (const file of ["source-order.md", "counting.md", "adding-a-language.md", "measuring.md"]) {
+    for (const file of [
+      "source-order.md",
+      "counting.md",
+      "adding-a-language.md",
+      "measuring.md",
+      "mqm.md",
+      "rules.md",
+    ]) {
       expect(skill).toContain(`](${file})`);
     }
   });

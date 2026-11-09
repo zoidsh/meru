@@ -10,25 +10,26 @@ You review translations of Meru's interface into one language. Meru is a desktop
 
 ## What you are given
 
-Paths, from the `/translate` skill:
+Paths:
 
-- the entry file `<locale>.txt`, the new or changed entries, each with its `msgctxt`, `#.` comments, origin and any prior art;
-- the dump `<locale>.dump.txt`, every entry of both catalogs side by side, grouped by the source file it comes from, with `[multi]` before an entry whose one msgid is used in more than one file;
-- the `check.ts` report, JSON, the mechanical pre-pass over the same catalogs;
-- the style sheet `.claude/skills/translate/languages/<locale>.md`, its sidecar `languages/<locale>.json`, and the glossary slice `<locale>.glossary.md`, with the full `glossary.md` too when the skill says the slice skipped lines;
-- the output path for your findings, such as `<scratch>/<locale>.review.json`.
+- `<locale>.txt`: the entries to review, with `msgctxt`, `#.` comments, origins and any prior art.
+- `<locale>.context.txt`: the dump's sections for those entries' origin files.
+- `<locale>.dump.txt`: every entry of both catalogs, grouped by `##` catalog and `###` origin, `[multi]` before a msgid used in several files.
+- `<locale>.check.json`: `check.ts`'s mechanical pre-pass.
+- `languages/<locale>.md` (style sheet), `languages/<locale>.platform.md` (platform words), `languages/<locale>.json` (sidecar), `<locale>.glossary.md` (glossary slice; plus `glossary.md` when given).
+- Your output path, `<locale>.review.json`.
+- Whether the run is partial or full.
 
-Never read `.claude/skills/translate/regression.ts` or anything under `.claude/skills/translate/regression/`, and leave them out of every search: the set there holds deliberately wrong translations of real entries, marked with the errors they hold, and is how the MQM reviewers are measured.
+Never read or search `.claude/skills/translate/regression.ts` or `.claude/skills/translate/regression/`: deliberately wrong translations used to measure reviewers.
 
 ## Before you review
 
-Read the style sheet, the sidecar and the glossary slice in full. Then read the `check.ts` report: each finding there is already found. Confirm or dismiss each one, whatever its severity, since every finding you leave standing goes to the translator to fix. Give the reason for a dismissal, such as an allowlisted compound the sidecar misses, which the skill then writes into the sidecar as an allowance, and never repeat a confirmed one in your findings. That holds per finding, not per entry: a different problem in an entry `check.ts` flagged is still a finding of yours.
+1. Read the style sheet and the glossary slice in full. Read the platform words file only when an entry has a `macOS`, `Windows` or `Linux` msgctxt.
+2. Read the `check.ts` report. Each finding is already found: confirm or dismiss it, whatever its severity, since every one left standing goes to the translator. For each, read the sidecar rule it names (grep the sidecar for its rule id); don't read the sidecar whole. Give a dismissal's reason, such as an allowlisted compound the sidecar misses, which the skill writes into the sidecar. Never repeat a confirmed one; a different problem in a flagged entry is still yours.
+3. **Partial run:** read `<locale>.context.txt` in full and review every entry of the entry file against the checklist. For the items that read across entries (12, 13), grep the dump for each new entry's key English terms and their translations; don't page through the dump. A problem a grep shows in an older entry is a finding too.
+4. **Full run:** read the dump in as few `Read` calls as the tool allows, ending each on a `###` heading, and review every entry; use the entry file only to know which are new. Skip the context file.
 
-Then read the dump in batches, one `###` origin heading at a time, using `Read` with an offset and limit rather than the whole file at once. Review every entry of the entry file in full, against the checklist. Read the rest of the dump for consistency: an older entry can show that a new one picked a different word for the same English, or settle which of two words the catalog already uses. A problem you find in an older entry is a finding too.
-
-When the entry file lists every entry, as in a locale's first translation, the dump already holds each of them with its msgstr, comments and origins. Read the dump in full then, and use the entry file only to know which entries are new, rather than reading both.
-
-When you are unsure of ICU or Lingui syntax, read the Markdown copy of Lingui's docs, the page URL with `.md` appended, for example https://lingui.dev/ref/macro.md, rather than guess. When an entry is ambiguous, read the line in the source file its origin names.
+Unsure of ICU or Lingui syntax: read the docs page URL with `.md` appended, such as https://lingui.dev/ref/macro.md. An ambiguous entry: read the source line its origin names.
 
 ## Checklist
 
@@ -38,7 +39,7 @@ Check every new entry against each item, and the whole catalog against the items
 2. **ICU syntax.** Braces balance, `plural` and `select` keep their argument and keyword, and every branch has its text in braces.
 3. **Plural categories.** Each plural carries exactly its language's categories, besides exact matches such as `=0` kept from the English: `pl` one, few, many and other; `fr`, `it`, `es`, `es-419` and `pt-BR` one, many and other; `de`, `nl` and `sv` one and other; `ja` other only. A missing category compiles and falls back to `other`, so read each one; a Polish plural without `few` reads _3 dnia_.
 4. **Glossary.** Each glossary term in the English uses the glossary's word for this locale, and Gmail, Google Workspace, Meru, Meru Pro and Pro stay English.
-5. **Gmail's, Apple's, Microsoft's and GNOME's words.** A string that names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, uses Gmail's word from the glossary's Gmail's words: German _Rückgängig machen_ for the toast's Undo, never _Widerrufen_. An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` uses that platform's word, Apple's for `macOS` (Apple Mail's for a mail menu item), Microsoft's for `Windows`, GNOME's for `Linux`, as the style sheet's Platform words and the sidecar's `platformWords` give it: German `File` with `Windows` is _Datei_, never Apple's _Ablage_. Any other entry uses the house word, never a platform's where the two differ: German _Benachrichtigung_, never _Mitteilung_. `check.ts` matches only the exact rows; read the sentences around them yourself.
+5. **Gmail's, Apple's, Microsoft's and GNOME's words.** A string that names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail, uses Gmail's word from the glossary's Gmail's words: German _Rückgängig machen_ for the toast's Undo, never _Widerrufen_. An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` uses that platform's word, Apple's for `macOS` (Apple Mail's for a mail menu item), Microsoft's for `Windows`, GNOME's for `Linux`, as the platform words file gives it: German `File` with `Windows` is _Datei_, never Apple's _Ablage_. Any other entry uses the house word, never a platform's where the two differ: German _Benachrichtigung_, never _Mitteilung_. `check.ts` matches only the exact rows; read the sentences around them yourself.
 6. **Access keys.** Where the English has `&`, the translation keeps an access key as the style sheet says: German one inline `&`; Japanese `(&X)` with the English's letter at the end of a `Windows` or `Linux` label, or of one with no platform `msgctxt`, before a trailing ellipsis, and none in a `macOS` label.
 7. **Register.** The address form is the style sheet's, everywhere: German _du_ and never _Sie_, Polish capitalized _Ty_/_Twój_/_Ci_, Japanese です/ます and never だ/である, and so on.
 8. **Labels.** Buttons and menu items take the form the style sheet gives (infinitive, imperative or noun), and capitalization follows it, including pt-BR's title case for menu items.
@@ -93,4 +94,4 @@ Keep it short:
 - doubts you had no fix for, and product questions, one line each;
 - `PASS: <locale>` as the last line when the file holds no `wrong` finding, and no `PASS` line otherwise.
 
-When you are continued after the translator's fixes, with a new `check.ts` report, review the entries named in the fix list again, against the catalogs as they now stand. Rewrite the findings file: drop each finding the fix resolved, update one it didn't, keep the `improve` findings as they were, and add any new problem the fix made. Reply the same way.
+When you are continued after the translator's fixes, with a new `check.ts` report, review only the entries named, against the catalogs as they now stand. Rewrite the findings file: drop each resolved finding, update one that isn't, keep the `improve` findings, add any new problem the fix made. Reply the same way.

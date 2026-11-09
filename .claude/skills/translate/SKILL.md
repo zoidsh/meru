@@ -1,86 +1,66 @@
 ---
 name: translate
-description: Translate Meru's interface strings into every shipped language, with a translator, a reviewer and an MQM reviewer agent per locale. Use after wrapping or changing a user-visible string, when CI's catalog checks report untranslated entries, or when asked to translate the catalogs.
+description: Translate Meru's interface strings into every shipped language, with a translator and a reviewer agent per locale, and an MQM gate when a language is first translated. Use after wrapping or changing a user-visible string, when CI's catalog checks report untranslated entries, or when asked to translate the catalogs.
 ---
 
 # Translate
 
-Fills every shipped locale's untranslated and fuzzy entries in both catalogs, `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then runs the checks CI runs. Each locale gets its own `translator` agent, which writes the translations, its own `translation-reviewer` agent, which checks them, and, as the final step, a fresh `translation-mqm-reviewer` agent, which assesses the result with MQM for `mqm.ts` to score and gate. All three are in `.claude/agents`. Their guidance is beside this file: `glossary.md` and `languages/<tag>.md`.
+Fill every shipped locale's untranslated and fuzzy entries in `packages/shared/i18n/locales/<tag>.po` and `packages/preload-gmail/locales/<tag>.po`, then pass CI's checks. Agents are in `.claude/agents`: `translator`, `translation-reviewer`, `translation-mqm-reviewer`.
 
-## Where a word comes from
+Run kinds, decided per locale in step 2:
 
-Every word in every language comes from the first source in the order [source-order.md](source-order.md) gives, from the operating system's own words to the seven-app vote, and the glossary, the style sheets and the sidecars cite which. Read it before ruling on a word.
+- **Partial**: the entry file lists some entries, such as a pull request adding strings. The common case. Steps 1–5 and 7.
+- **Full**: the entry file lists every entry (a language's first translation), or the user asks for the whole catalog or for MQM. Steps 1–7, with [mqm.md](mqm.md) as step 6.
 
-A Chrome count or a seven-app vote is frozen once a glossary entry or a sidecar reason cites it: recount only when a rule is disputed, when an Electron upgrade changes Chromium's wording for the term, or when a change to the counting scripts changes what they count. [counting.md](counting.md) says how to take one again with `corpus.ts`, `count.ts` and `vote.ts`.
+Words come from the first source in [source-order.md](source-order.md). Cited counts are frozen; recount only per [counting.md](counting.md). Rule, split and new-string procedures are in [rules.md](rules.md); read it only when a step sends you there.
 
-## Before you start
+## 0. Preconditions
 
-- `CLAUDE_CODE_EFFORT_LEVEL` overrides the `effort` in the agents' frontmatter, and `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` their `model`. Run `printenv CLAUDE_CODE_EFFORT_LEVEL CLAUDE_CODE_SUBAGENT_MODEL_FORCE`; if either prints a value, stop and tell the user to start the session again without it, such as `env -u CLAUDE_CODE_EFFORT_LEVEL claude`.
-- Never pass `model` or `effort` when spawning any of the agents, which would override the frontmatter too.
-- `claude -p` stops waiting for agents still running in the background once `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS` has passed, and `0` lifts that ceiling, so a headless run without it can exit with its agents unfinished. In a headless session, run `printenv CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS`; if it prints anything but `0`, stop and tell the user to rerun as `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 env -u CLAUDE_CODE_EFFORT_LEVEL -u CLAUDE_CODE_SUBAGENT_MODEL_FORCE claude -p "/translate" --permission-mode bypassPermissions`, the command a headless run always takes.
-- Read `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts`. When it holds `en` alone, say there is nothing to translate, since English is the source, and stop.
-- `<scratchpad>` below is the run's scratch directory, never `/tmp`, chosen by the first of these that applies, and nothing else:
-  1. Run `printenv TRANSLATE_SCRATCH`. When it prints a path, that path is `<scratchpad>`, created with `mkdir -p` if missing, whatever scratchpad the session has, and no other directory is made or used. A lead that launches a headless run from its own session sets it to a new directory under its own scratchpad, such as `TRANSLATE_SCRATCH=<its scratchpad>/translate-pl` before the command above, so the run's files sit beside the lead's. `collect.ts` and `mqm.ts` default `--out` and `--dir` to `$TRANSLATE_SCRATCH/translate` when it is set, and `regression.ts` its `--dir` to `$TRANSLATE_SCRATCH/regression`, or `$TRANSLATE_SCRATCH/regression-reviewer` with `--agent reviewer`, so the MQM reviewers never read the pipeline reviewer's inputs.
-  2. Otherwise, the session's scratchpad directory.
-  3. Only when the session has none, as a headless `claude -p` session may not, a new one from `mktemp -d "$TMPDIR/translate.XXXXXX"`.
-
-  Use it for the whole run and print its path in the report. Never look for one in other sessions' folders.
+1. `printenv CLAUDE_CODE_EFFORT_LEVEL CLAUDE_CODE_SUBAGENT_MODEL_FORCE`: if either prints, stop and tell the user to restart without it (`env -u CLAUDE_CODE_EFFORT_LEVEL claude`). Never pass `model` or `effort` when spawning.
+2. Headless (`claude -p`) only: `printenv CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS` must print `0`, else stop and give the user `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 env -u CLAUDE_CODE_EFFORT_LEVEL -u CLAUDE_CODE_SUBAGENT_MODEL_FORCE claude -p "/translate" --permission-mode bypassPermissions`.
+3. `SHIPPED_CATALOG_TAGS` in `packages/shared/i18n/tags.ts` is `en` alone: say nothing to translate; stop.
+4. `<dir>` = `$TRANSLATE_SCRATCH/translate` if `TRANSLATE_SCRATCH` is set (`mkdir -p`), else `<session scratchpad>/translate`, else `$(mktemp -d "$TMPDIR/translate.XXXXXX")/translate`. Never `/tmp`, never another session's folder. Print it in the report.
 
 ## 1. Extract
 
-Run `bun run i18n:extract`, so each catalog holds every string in the code.
+`bun run i18n:extract`
 
-## 2. Collect the entries
+## 2. Collect
 
-Run `bun .claude/skills/translate/collect.ts --base <base> --out <scratchpad>/translate`, where `<base>` is the name of the branch the work will merge into: the pull request's base from `gh pr view --json baseRefName -q .baseRefName` when there is one, else `beta`, which is also the default when `--base` is left out. The changes it compares against start at the branch's own merge base with `<base>`: of `<base>` and `origin/<base>`, the script takes whichever merge base is nearer `HEAD`, so a worktree rebased onto a local `<base>` newer than the last fetch, or onto a fresh fetch past a stale local branch, never counts the target's own commits as its changes. Pass the branch name, not a commit, and never fetch or rebase during the run, which would move the base between step 2 and step 6. It writes, for every shipped locale except `en` with work to do, `<tag>.txt`, each untranslated or fuzzy entry across both catalogs with its `msgctxt`, its `#.` comments and its origin, and beside it `<tag>.glossary.md`, the glossary with only that locale's words. It prints the paths of both. When it warns that it skipped glossary lines, give translators and reviewers the full `glossary.md` as well as the slice, and say so in the report.
+`bun .claude/skills/translate/collect.ts --base <base> --out <dir>`, `<base>` = `gh pr view --json baseRefName -q .baseRefName`, else `beta`. Pass a branch name. Never fetch or rebase during the run.
 
-When the English of an entry changed, Lingui made it a new entry and kept the old one as obsolete, or dropped it once `--clean` ran. The script looks for the old entry in the catalog's obsolete entries, in the catalog at `HEAD` and at the merge base with `<base>`, pairing each with the closest English in the same context, where a shared comment only breaks a tie, and never giving one old entry to two new ones. It prints the old translation as `prior art`, and warns on stderr when `--base` doesn't resolve. Check that each pairing is really the same string reworded, by searching the entry files for `prior art` rather than reading them whole; drop one that isn't.
+Per locale it writes `<tag>.txt` (entries with msgctxt, `#.` comments, origins, `prior art`) and `<tag>.glossary.md` (the glossary slice), and labels each locale `translate` or `review`.
 
-It decides each locale on its own. A locale with no untranslated or fuzzy entry gets instead every entry whose translation changed since the merge base with `<base>`, such as a hand edit or a rule fix, each with its translation then and now, in the same `<tag>.txt`. Each path line names its locale's kind, `translate` or `review`, and the script ends with a line per kind: `To translate: …`, `To review only, …: …` and `Nothing to translate or review in …`. A review-only locale skips step 3; it runs step 4 on its entry file, where a fix list goes to a new `translator` given its locale's paths and the list, since no translator ran, and then steps 5 and 6, step 6 as a partial run. A locale with nothing to translate or review needs only step 5. When `--base` doesn't resolve and a locale has nothing to translate, the script exits 2, since what changed there can't be told: fetch the base or pass another branch, and run it again, never going on without that locale's review.
+- Grep the entry files for `prior art`; drop a pairing that isn't the same string reworded.
+- Warning about skipped glossary lines: also pass `glossary.md` wherever a slice is passed, and report it.
+- Exit 2 (`--base` unresolved): fetch the base or pass another branch and rerun. Never skip that locale.
+- `review` locale (translations changed by hand, nothing untranslated): skip step 3; in step 4 a fix list goes to a new `translator`.
+- Nothing to do in a locale: only step 5.
+- New msgids exist and this isn't a language's first run: do [rules.md § New strings](rules.md#new-strings) before step 3.
 
-## 3. Translate, one agent per locale
+## 3. Translate
 
-Spawn one `translator` per locale with entries, all in one message so they run in parallel. Each prompt carries:
+Spawn one `translator` per `translate` locale, all in one message. Prompt: the locale tag; the paths of `languages/<tag>.md`, `languages/<tag>.platform.md`, `<dir>/<tag>.glossary.md`, both PO files and `<dir>/<tag>.txt` (paths, never contents); "Lingui syntax: read the docs page URL with `.md` appended, such as https://lingui.dev/ref/macro.md." Keep each agent ID.
 
-- the locale tag, and the paths of its style sheet `.claude/skills/translate/languages/<tag>.md`, whose JSON sidecar `languages/<tag>.json` sits beside it, of its glossary slice `<tag>.glossary.md` and of its two PO files;
-- the path of its entry file `<tag>.txt`, never the entries pasted into the prompt;
-- that it looks up Lingui syntax in the Markdown copy of a docs page, the page URL with `.md` appended, such as https://lingui.dev/ref/macro.md, rather than guess.
+## 4. Review, one fix round
 
-Keep each translator's agent ID; the review sends its findings back to the same agent.
+As each translator returns:
 
-## 4. Review, then fix, at most twice
+1. `bun .claude/skills/translate/check.ts --locale <tag> > <dir>/<tag>.check.json` (exit 1 = findings; exit 2 = crash, report it).
+2. `bun .claude/skills/translate/collect.ts --dump <tag> --out <dir>`: writes `<tag>.dump.txt` and `<tag>.context.txt`.
+3. Spawn one `translation-reviewer`. Prompt: the locale tag, partial or full, the Lingui line, and the paths of `<tag>.txt`, `<tag>.context.txt`, `<tag>.dump.txt`, `<tag>.check.json`, `languages/<tag>.md`, `languages/<tag>.platform.md`, `languages/<tag>.json`, `<tag>.glossary.md`, and its output `<dir>/<tag>.review.json`. Keep its ID.
 
-As each translator returns, prepare that locale's review in the same scratch directory, `<scratchpad>/translate`:
+Then:
 
-1. Run `bun .claude/skills/translate/check.ts --locale <tag> > <scratchpad>/translate/<tag>.check.json`. It exits 1 when a finding is `wrong`, which is a result, not a failure; exit 2 is a crash, which you report rather than review around.
-2. Run `bun .claude/skills/translate/collect.ts --dump <tag> --out <scratchpad>/translate`, which writes `<tag>.dump.txt`, both catalogs grouped by the file each entry comes from.
-
-Then spawn one `translation-reviewer` for that locale. Its prompt carries the locale tag, the same instruction about Lingui's Markdown docs, and these paths, never their contents:
-
-- the entry file `<tag>.txt`, the entries it reviews in full;
-- the dump `<tag>.dump.txt`, which it reads for consistency;
-- the `check.ts` report `<tag>.check.json`;
-- the style sheet `languages/<tag>.md`, its sidecar `languages/<tag>.json` and the glossary slice `<tag>.glossary.md`, plus `glossary.md` when step 2 warned about skipped lines;
-- the output path `<scratchpad>/translate/<tag>.review.json`, where it writes its findings.
-
-Keep its agent ID too. Its findings come in two kinds, each with a complete `suggestion`. A `wrong` finding is a meaning or rule breach: it enters the fix loop and is reviewed again after the fix. An `improve` finding is a suggested fix the translator applies after the loop unless it disagrees, as [below](#suggested-fixes).
-
-- A reviewer whose reply ends `PASS: <tag>` and whose `check.ts` report has no finding it left standing, whatever its severity, closes that locale.
-- Otherwise, build one fix list: every `check.ts` finding the reviewer didn't dismiss, whatever its severity, since CI fails on any, plus the `wrong` findings in `<tag>.review.json`, each with its msgid, msgctxt, catalog, reason and suggestion. `check.ts` gives `catalog` as the PO file's path, so write it as the name `--apply` takes: `app` for `packages/shared/i18n/locales/<tag>.po`, `preload-gmail` for `packages/preload-gmail/locales/<tag>.po`. Continue the same translator with `SendMessage` to its agent ID, passing the list, so it keeps its context. Then run `check.ts` again into the same file, and continue the same reviewer with `SendMessage` to re-review only the entries on the list, naming the new report.
-- Stop after two rounds of fixes. A finding still open then goes to the report, with the reviewer's text and the translator's answer; it is never forced through by editing the catalog yourself.
-- A `check.ts` finding the reviewer dismissed is a false positive only once the sidecar says so, since CI fails on any finding left in the catalogs. Check the reviewer's reason against the sidecar and the source; when it holds, add the allowance to that rule as [Changing a rule](#changing-a-rule) says, in the same run, so `check.ts` no longer reports it, never with an exception in CI; when it doesn't, the finding goes on the fix list. Either way it goes to the report with the reviewer's reason and what you did.
-
-Never ask the reviewer to rule on anything else. The translator's own unsure choices, listed in its reply, go to the report for the user, and so do the reviewer's doubts it had no fix for and product questions from either agent, such as how a platform behaves or whether a label needs an access key: anything that isn't wording.
-
-If `SendMessage` is unavailable, spawn a new agent of the same type instead, giving it the original prompt plus the fix list and the translator's previous reply.
-
-### Suggested fixes
-
-Once the loop above has closed a locale or reached its cap, continue the translator with `SendMessage`, passing the path of `<tag>.review.json` and telling it to apply its `improve` findings. It applies every one unless it disagrees, and says why for each it leaves. A finding whose `msgstr` no longer matches the entry's translation was written before a fix in the loop; the translator skips it or merges it by hand, never writing the suggestion over the fix, and says so. Then run `check.ts` again into `<tag>.check.json`; any finding there goes back to the translator as one fix, outside the round count, since it comes from a suggestion rather than a review.
+- Reply ends `PASS: <tag>`, no `improve` findings, and no `check.ts` finding left standing: locale closed.
+- Otherwise build one fix list: every `check.ts` finding the reviewer didn't dismiss (CI fails on any severity), every `wrong` finding, and every `improve` finding, each with catalog (`app` or `preload-gmail`, not the PO path), msgctxt, msgid, msgstr, kind, reason, suggestion. `SendMessage` it to the translator. Rerun `check.ts` into the same file. If the list held any `wrong` or `check.ts` finding, `SendMessage` the reviewer to re-review those entries only, naming the new report.
+- No second round. A finding still open goes to the report with the reviewer's text and the translator's answer. Never edit a catalog yourself to close one.
+- A `check.ts` finding the reviewer dismissed: verify its reason against the sidecar and source. Holds: add the allowance per [rules.md § Changing a rule](rules.md#changing-a-rule). Doesn't: it goes on the fix list. Report either way.
+- A reviewer `wrong` finding that names a glossary, platform or pinned word not in the rules: make it a rule per [rules.md § Changing a rule](rules.md#changing-a-rule), or report why not.
+- Only wording goes to the reviewer. Unsure choices, doubts without a fix and product questions go to the report.
+- No `SendMessage`: spawn a new agent of the same type with the original prompt, the list and the previous reply.
 
 ## 5. Check
-
-Run CI's checks, in this order, the last of them the rules check of every shipped locale except `en`:
 
 ```sh
 bun run i18n:extract
@@ -91,71 +71,31 @@ bunx lingui compile --strict
 bun .claude/skills/translate/check.ts --shipped --strict
 ```
 
-The first drops the obsolete entries the translators used as prior art. A failure names its entry and locale. The last fails on any finding, `doubtful` and `style` included, exactly as CI does, so a finding left standing fails the pull request: send it to that locale's translator as one more finding, then run the checks again. If it still fails, report it rather than retry. A `check.ts` exit of 2 is a crash; report it, never retry it. A finding the reviewer dismissed in step 4, for a reason that held, should have its allowance by now; one still reported means the allowance is missing: add it in the sidecar, `languages/<tag>.json`, and its fixtures, as [Changing a rule](#changing-a-rule) says, never with an exception in CI, and send nothing to the translator for it. A finding in a locale no translator worked on this run goes straight to the report. Say in the report what became of each.
+A failure names entry and locale: send it to that locale's translator as one finding and rerun once; still failing, report it. `check.ts` exit 2: report, don't retry. A reported finding the reviewer dismissed for a reason that held means its allowance is missing: add it, send nothing to the translator. A finding in a locale nobody worked on this run: report it.
 
-## 6. MQM
+## 6. MQM (full runs only)
 
-The final step assesses each locale a translator worked on this run, every review-only locale of step 2, or one the user asks to have assessed, with MQM (Multidimensional Quality Metrics): three fresh `translation-mqm-reviewer`s each list, independently, every error with a category, a severity and a correction, and `mqm.ts` scores them. Each error costs points, minor 1, major 5 and critical 25; the score is 100 × (1 − points / source words), the words being the English's, counted as `mqm.ts` documents.
-
-An LLM judge misses errors and varies from run to run, so every finding any run reports counts, and you rule on the serious ones instead of a vote between runs: on the [regression sets](measuring.md), a two-of-three vote dropped real catches, a major among them, and never a false positive. Findings are matched by entry (catalog, msgctxt, msgid), and an entry takes the most severe finding any run reports, with every run's finding kept beside it. A critical or major blocks the gate until you dismiss it or it is applied; every minor goes to the translator. The score is the median of the three runs' own scores, each printed beside it; it is reported and recorded, never gated on. The agent's prompt carries examples of real errors from Meru's runs, across languages, and one correct translation not to flag.
-
-A run is full for a locale when step 2's entry file listed every entry of its catalogs, as in its first translation, or when the user asks for the whole catalog; it is partial otherwise, such as a pull request adding a few strings. A full run assesses every entry. A partial run assesses only the entries the run wrote: those step 2 listed, and every older entry whose translation it changed, such as a `check.ts` fix or a new pin's. Either passes with no critical or major finding open.
-
-1. **Assess.** Run `bun .claude/skills/translate/collect.ts --dump <tag> --out <scratchpad>/translate`, so the dump holds the catalogs as they now stand. For a partial run, also run `bun .claude/skills/translate/mqm.ts --dir <scratchpad>/translate --list --base <base> <tag>`, with step 2's `<base>`, which writes `<tag>.assess.txt`: the entries of `<tag>.txt` and every other entry whose translation differs from the catalog at the merge base. Spawn three `translation-mqm-reviewer`s per locale, every locale's in one message, so they run in parallel. Each is cold and blind to the other two: its prompt carries the locale tag, whether the run is full or partial, and only these paths, never a `*.review.json`, a `*.check.json`, another run's or an earlier round's MQM file, or anything an agent said:
-   - the dump `<tag>.dump.txt`;
-   - for a partial run, the list `<tag>.assess.txt`;
-   - the style sheet `languages/<tag>.md` and its sidecar `languages/<tag>.json`;
-   - the glossary slice `<tag>.glossary.md`, plus `glossary.md` when step 2 warned about skipped lines;
-   - its own output path, `<scratchpad>/translate/<tag>.mqm.<run>.json`, with `<run>` 1, 2 or 3.
-2. **Score.** Run `bun .claude/skills/translate/mqm.ts --dir <scratchpad>/translate <tag>…`, with `--partial` for a partial run, and keep its output: a table per locale, with each run's score beside the median, then every run's blocking finding with the reviewer's reason under it, the minor ones, the term-level ones, the applied ones and the dismissed ones, an entry's line saying how many runs reported it at that severity, which is not agreement on one error. It writes the findings still open to `<tag>.mqm.corrections.json`, one object per entry at its most severe finding, with every run's finding in `all`. It exits 1 when a locale is blocked, which is a result, not a failure. A finding is applied once the catalog no longer holds the translation `<tag>.dump.txt` showed the runs, so score against the dump the round's reviewers read. Exit 2 means a findings file it can't score, such as a finding that names no assessed entry, and each error names its run's file: continue that run's reviewer with `SendMessage` and the errors, to correct the names alone, and score again. After two such corrections, report the errors and the locale fails the run. A lone `<tag>.mqm.json`, without run files beside it, is scored as one run, as a test or a rerun of one reviewer writes it; a round always has three.
-3. **Adjudicate.** Rule on every blocking finding, whichever number of runs reported it: it stands, and goes to the translator, or you dismiss it. Check a minor you doubt the same way; the rest go to the translator as they are. A finding you have shown false, such as a meaning the source line contradicts or a correction Chrome's count contradicts, gets a `dismissed` field with the reason, which you write and the reviewer never does, on the one finding it rules on, in that run's file, then score again. It removes that finding alone: another run's finding on the same entry can name a different error, so each critical or major gets a ruling of its own, and `mqm.ts` lists every run's blocking finding for you to rule on. Dismiss only with a reason checked against the code or a source, such as the line an entry's origin names or a Chrome count, never on your own reading of the language. A term-level finding, one in the `terminology` category or one whose `source` names a word, that proposes a word from memory, without a source that has it, such as a correction whose `source` is missing or names a count, a platform word or a glossary entry that doesn't hold it, is dismissed unless you find a source for the word, by the [source order](source-order.md): `count.ts`, `platform-word.ts` or `vote.ts --show`. A term-level correction that replaces Chrome's exact form for a term with a word built on it is dismissed too, unless the built word is the lead's recorded exception, as source order 4a says. A finding in any other category, such as accuracy, grammar or style, is never dismissed for lacking a source. `mqm.ts` leaves a dismissed finding out of its run's score and the gate, and lists each one with its run and reason. A dismissed finding still points at something to fix: a term-level one at the sidecar rule that should have settled the word, any other at the English or its translator comment that let the reviewer misread it. Fix that in the same run, and send nothing to the translator for the finding.
-4. **Correct.** Continue each locale's translator with `SendMessage`, passing the path of `<tag>.mqm.corrections.json` and telling it to apply every correction in it. It says why for each it leaves, citing the style sheet, the sidecar or the glossary. A blocking finding it leaves still blocks: dismiss it, when its reason holds against the code or a source, or it stays open.
-5. **Settle terms.** A finding that carries a `source` is term-level: a word the glossary or the source order should settle. In the same run, make it a rule, as [Changing a rule](#changing-a-rule) says: a pin with its `example` or a ban in `languages/<tag>.json`, the word in the style sheet or the glossary, and for a ban its allowed wording in `fixtures/<tag>-clean.po` and a planted fault in `fixtures/<tag>-faults.po`; then run `bun test --isolate scripts/translate-*.test.ts`, `check.ts --locale <tag>` and `count.ts <tag> --check`, as [Changing a rule](#changing-a-rule) says, and send any finding to the translator. A term-level finding that contradicts a rule already in the sidecar goes to the report instead, since the rule came from the source order.
-6. **Score again.** Run step 2's command again, without regenerating the dump: each correction the translator made now reads as applied. A locale still blocked has a critical or major finding open, which goes to the report with the reviewer's reason and the translator's answer, and the locale fails the run. A locale is never forced through by editing the catalog yourself.
-7. **Score the corrections.** Once a locale passes, run `bun .claude/skills/translate/mqm.ts --dir <scratchpad>/translate --corrected <tag>…`, still before regenerating the dump, which writes `<tag>.assess.txt`: every entry whose translation differs from what the runs read, the translator's corrections and any `check.ts` fix step 5 asked for. When it lists none, the locale is done. Otherwise rename each of its `<tag>.mqm.<run>.json` to `<tag>.round<round>.mqm.<run>.json`, and `<tag>.mqm.corrections.json` to `<tag>.round<round>.mqm.corrections.json`, `<round>` starting at 1, and run steps 1 to 6 again for that locale as a partial run over that list, skipping step 1's `--list`, which would overwrite it, with three new `translation-mqm-reviewer`s, never continued ones, so they judge the corrections cold; a new critical or major blocks as before. Stop after two such passes; corrections the second one leads to are held by `check.ts` alone, and go to the report as unscored.
-
-Then run the checks of [5. Check](#5-check) again, since the corrections changed the catalogs.
+Follow [mqm.md](mqm.md), then step 5 again.
 
 ## 7. Report
 
-Per locale, say:
+Per locale, only what needs the user:
 
-- how many entries were translated, how many review rounds they took, and the `wrong` findings fixed and still open, each open one with its msgid, the problem, the suggested fix and the translator's answer;
-- the count of `improve` findings, the path of `<tag>.review.json` that holds them, how many the translator applied and each one it left with its reason;
-- the MQM table from `mqm.ts`, its median score and each run's, points per 1,000 words and critical, major and minor counts, for every round, with whether the run was full or partial, and how many entries each corrections pass scored; how many corrections the translator applied and each one it left with its reason; each critical or major finding still open; every dismissed finding with its reason and what was fixed so it does not recur; each term-level finding with the rule it became, or why it didn't; each critical or major finding only one run reported and what you made of it; and where the MQM reviewers said they were less sure;
-- the translator's unsure choices, as its reply lists them, the reviewer's doubts it had no fix for, and the product questions from either agent;
-- each `check.ts` finding the reviewer dismissed, with its reason;
-- every term a translator chose that the glossary lacks, so it can be added to `glossary.md`.
+- entries translated; `wrong` fixed / open (each open one: msgid, problem, suggestion, translator's answer); `improve` applied / left with reasons;
+- full runs: the `mqm.ts` table, open critical or major findings, dismissed findings with reasons, term-level findings and the rule each became;
+- translator's unsure choices, reviewer's unresolved doubts, product questions;
+- dismissed `check.ts` findings with reasons;
+- terms chosen that the glossary lacks.
 
-Then show the output of the checks in step 5, as they ran last.
+Then the last output of step 5.
 
-Leave the catalogs uncommitted: the translations land in the same commit as the strings they translate. Commit nothing else either, but keep every rule change apart from the catalog edits, so the two can be committed apart without splitting one diff by hand: once a rule change is done and its tests pass, as [Changing a rule](#changing-a-rule) says, stage its files alone with `git add`, the sidecar, style sheet, glossary, fixtures, a script and its test, and never stage a catalog; and never change a rule file and a catalog in one command or script. Source, English and code edits, such as a context split or a translator comment, are not rules: they stay unstaged with the catalogs, since the translations land with the strings they translate. At the end, write `git diff --cached > <scratchpad>/translate/rules.patch` and `git diff > <scratchpad>/translate/catalogs.patch`, everything left unstaged, and name both patches in the report. When something was already staged before the run, stage nothing: list each rule change's files in the report instead.
+Leave catalogs uncommitted and commit nothing. Stage each finished rule change alone (sidecar, style sheet, platform table, glossary, fixtures, scripts, tests) with `git add`, never a catalog, and never change a rule file and a catalog in one command. Source, English and comment edits stay unstaged with the catalogs. Finish with `git diff --cached > <dir>/rules.patch` and `git diff > <dir>/catalogs.patch` and name both. If anything was staged before the run, stage nothing and list the rule files instead.
 
-## Changing a rule
+## Elsewhere
 
-A decision recorded in a sidecar, `languages/<tag>.json`, carries its own test: a pin's `example` holds the wording it allows and a fault it catches, its allowed wording the catalog's own translation of the example's entry once the catalog has one, which `scripts/translate-examples.test.ts` holds it to, and for every other rule `fixtures/<tag>-clean.po` holds the wording it allows and `fixtures/<tag>-faults.po` a planted fault, which `scripts/translate-check.test.ts` holds the rules against. Keep a hand-written fixture entry only for what an example can't say, such as a ban's allowance or a fault that trips two rules at once, and add it with `bun .claude/skills/translate/fixture.ts <tag> clean|faults --msgid <English> --msgstr <translation> [--msgctxt <context>] [--origin <path>] [--fault <rule>:<id>]`, which keeps the blank line before it and the newline after it that `scripts/translate-fixtures.test.ts` checks every fixture for. A pin or ban whose reason cites a Chrome count cites the exact messages it counted: when the count is not of the pin's own msgid as a whole word, its `countEnglish` names the Chrome English, `countExpect` the translation when the pin's word is built on Chrome's, and `countKeepAccessKeys` a menu item read by its access key, as [counting.md](counting.md#a-chrome-count) says, so `bun .claude/skills/translate/count.ts <tag> <id>` reproduces the number in the reason. A pin or ban that rests on a recorded call, source order 4b, or on an exception to the source order, such as a word built on Chrome's, carries a `call` beside its reason, `{ "reason": <one line>, "date": <YYYY-MM-DD> }`, saying what was decided over what and when; `bun .claude/skills/translate/check.ts --calls [--locale <tag>]` lists every one, and `scripts/translate-rules.test.ts` fails for a rule whose reason says call or exception without it. A pin that changes an option's or a label's word changes it in every sentence that names it too, as Spanish's Wide, pinned as Amplio, left three descriptions on ancho: run `bun .claude/skills/translate/check.ts --locale <tag> --mentions <pin id>`, which lists as JSON every other entry whose English has the pin's msgid as a whole word, or matches its `msgidPattern`, with its translation, marked `untranslated` when it has none, as in a language being added, and the pins already holding it, then give each one still on the old word the new one and pin the sentence form as well, as Spanish's `wide-in-sentences` pins narrow and wide. Before the rule is done, run `bun .claude/skills/translate/count.ts <tag> --check`, which prints every pin and ban beside its cited count and exits 1 when any prints `(differs)`; fix the citation or the count fields until it passes, never the number alone. It reads the Chrome corpus, which `bun .claude/skills/translate/corpus.ts --source chrome <tag>` fetches when `.cache/translate` lacks it. Changing a decision means changing the style sheet, the glossary, the sidecar and, for a ban, the fixtures together, then running `bunx oxfmt .claude/skills/translate/languages/<tag>.json`, since a sidecar written by hand rarely matches the formatter and CI's `fmt:check` fails on it, and `bun test --isolate scripts/translate-*.test.ts`. A platform word changes in the sidecar alone, and `platform-table.ts` rewrites the style sheet's table from it. Look the word up rather than search for it: `bun .claude/skills/translate/platform-word.ts <English> [--tag <tag>…]` prints, per language and platform, every word Apple's AppKit, Mail and WebKit, the Microsoft Terminology Collection and GNOME's gtk4, nautilus, gnome-text-editor and gnome-control-center give for the English, each with the source id a row cites, such as (AppKit `MenuCommands` `File`), (TBX `7285_185699_346733`) or (nautilus `shortcuts dialog` `View`), and a TBX entry's definition beside its id, so the sense can be told apart. Its first candidate is the one whose source writes the English exactly as Meru does; a word it doesn't list, such as one inferred from a longer label, cites what it is built from, as the rows' _inferred from_ sources do.
-
-## Splitting a message
-
-When one msgid serves several labels that a language has to tell apart, such as an Auto whose adjective agrees with each setting's noun, the code gives each its own `context`, and extract would make each context a new, untranslated entry in every locale. Before extract, run `bun .claude/skills/translate/split-message.ts --msgid <English> --context <msgctxt>…`, with `--from <msgctxt>` when the shared entry has a context of its own. It copies the shared entry's translation into a fuzzy entry for each new context, in every locale's catalogs, so the next run's translators and reviewers only check that each still agrees with its context. A copy that still fits is accepted with `bun .claude/skills/translate/set-entry.ts --locale <tag> --msgid <English> --context <msgctxt>`, which clears its fuzzy flag, and one that doesn't gets `--msgstr <translation>` as well; `set-entry.ts` edits one entry of a catalog that way at any time, keeping its comments, flags and references, so no run needs a script of its own for it. Then run step 1's extract, which keeps those entries and drops the shared one once no code uses it. A split into `macOS`, `Windows` and `Linux` contexts also needs a Platform words row in every sidecar, shipped or not, which `bun .claude/skills/translate/platform-word.ts <English> --add-row <row>` writes, as [adding-a-language.md](adding-a-language.md) says; each copy's word then comes from that row, not from the shared entry it was copied from.
-
-Before a language's first run, the lead runs `bun .claude/skills/translate/shared-messages.ts`, which lists every msgid without a msgctxt that more than one `#.` comment describes, with its comments and references, reviews it for the agreement that language needs, and splits each message it can't share this way before the run starts. It runs it again with `--menus`, which lists every msgid without a msgctxt that the menu bar and a context or popup menu both use, whatever its comments, since a language can give the two different label forms, as Dutch writes the menu bar in the imperative and its context menus in the infinitive.
-
-## Adding strings later
-
-Once every language has shipped, a change that wraps new strings or rewords old ones needs no setup of its own: one `/translate` run covers the new msgids in every shipped language at once. Step 2 lists only the new and changed entries for each locale, so step 4 reviews them in full and step 6 is a partial run, which assesses those entries and every older one the run changed, and passes with no critical or major finding open.
-
-The run does for the new strings what the lead did before each language's first run, itself: in a headless run, the session is the lead. The new msgids are those in step 2's `<tag>.txt` files, or the added msgids in `git diff "$(git merge-base <base> HEAD)" -- packages/shared/i18n/locales/en.po packages/preload-gmail/locales/en.po` after step 1's extract, with step 2's `<base>`. After steps 1 and 2, and before step 3 spawns any translator, the run:
-
-- runs `bun .claude/skills/translate/shared-messages.ts`, and again with `--menus`, and splits any new msgid one language can't share, as [Splitting a message](#splitting-a-message) says, then runs steps 1 and 2 again so the entry files hold the split entries;
-- reads each new label's kind against every style sheet's `## Label forms`, and adds a line there first when the kind is new, so no translator guesses a form;
-- gives a new `macOS`, `Windows` or `Linux` entry its Platform words row in every sidecar with `platform-word.ts --add-row`, since `scripts/translate-rules.test.ts` fails for a sidecar that lacks it.
-
-## Beyond a run
-
-These live in files of their own, each linked where a step needs it:
-
-- [source-order.md](source-order.md): where every word comes from, and how a source is cited.
-- [counting.md](counting.md): taking a Chrome count or a seven-app vote again, and when a cited one is ever recounted.
-- [adding-a-language.md](adding-a-language.md): the seven places a language has to be in before it ships.
-- [measuring.md](measuring.md): measuring the MQM reviewers and the pipeline reviewer on the regression sets, after any change to a reviewer's prompt, model or effort, or to step 4 or 6, with the recorded results to set a new measurement beside and the reviewers' known weaknesses, which a translator or the lead watches for since the gate can miss them.
+- [mqm.md](mqm.md): step 6.
+- [rules.md](rules.md): changing a rule, splitting a message, new strings.
+- [source-order.md](source-order.md): where a word comes from.
+- [counting.md](counting.md): Chrome counts and the seven-app vote.
+- [adding-a-language.md](adding-a-language.md): shipping a new language.
+- [measuring.md](measuring.md): measuring the reviewers after a change to a reviewer's prompt, model or effort, or to what a full run reads.

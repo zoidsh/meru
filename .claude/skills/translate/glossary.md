@@ -1,12 +1,12 @@
 # Glossary
 
-One fixed translation per term and catalog. Use it every time the term appears, inflected as the sentence needs, and never a synonym. Where a term is missing here, find its word by the source order below, and say in your summary which word you chose and where it came from, so it can be added. A line that reads _decided in the language's run_ is such a term: its word is never another term's, however near, until a run settles it.
+One fixed translation per term and catalog. Use it every time the term appears, inflected as the sentence needs, and never a synonym. Where a term is missing here, find its word by the source order in `.claude/skills/translate/source-order.md`, and say in your summary which word you chose and where it came from, so it can be added. A line that reads _decided in the language's run_ is such a term: its word is never another term's, however near, until a run settles it.
 
 ## Where a word comes from
 
 Capitalization below is the base form inside a sentence. A label takes its language's label capitalization from the style sheet: `pt-BR` title-cases menu items, for example _Caixa de Entrada Unificada_.
 
-Every word here follows the source order in `.claude/skills/translate/source-order.md`, which also says how each word cites its source. The slice `collect.ts` writes for one locale carries that file in full in place of this paragraph.
+Every word here follows the source order in `.claude/skills/translate/source-order.md`, which also says how each word cites its source. Read it only to choose a word this glossary lacks or to check a cited source.
 
 ## Terms that stay English
 

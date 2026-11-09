@@ -544,7 +544,7 @@ export function reviewerPrompt(locale: string, dir: string, run: number, fullGlo
   return [
     `Assess the ${locale} translation with MQM. This is a full run: assess every entry of the dump.`,
     `- Dump: ${path.join(dir, `${locale}.dump.txt`)}`,
-    `- Style sheet: .claude/skills/translate/languages/${locale}.md, sidecar .claude/skills/translate/languages/${locale}.json`,
+    `- Style sheet: .claude/skills/translate/languages/${locale}.md, platform words .claude/skills/translate/languages/${locale}.platform.md, sidecar .claude/skills/translate/languages/${locale}.json`,
     `- Glossary slice: ${path.join(dir, `${locale}.glossary.md`)}${fullGlossary ? ", and the full .claude/skills/translate/glossary.md, since the slice skipped lines" : ""}`,
     `- Write your findings to ${path.join(dir, `${locale}.mqm.${run}.json`)}`,
   ].join("\n");
@@ -876,11 +876,11 @@ export function scoreReview(
 /** The prompt step 4 gives the pipeline reviewer, naming the set's files as a first translation's. */
 export function pipelineReviewerPrompt(locale: string, dir: string, fullGlossary: boolean) {
   return [
-    `Review the ${locale} translations. The entry file lists every entry, as in a locale's first translation.`,
+    `Review the ${locale} translations. This is a full run: the entry file lists every entry, as in a locale's first translation.`,
     `- Entry file: ${path.join(dir, `${locale}.txt`)}`,
     `- Dump: ${path.join(dir, `${locale}.dump.txt`)}`,
     `- check.ts report: ${path.join(dir, `${locale}.check.json`)}`,
-    `- Style sheet: .claude/skills/translate/languages/${locale}.md, sidecar .claude/skills/translate/languages/${locale}.json`,
+    `- Style sheet: .claude/skills/translate/languages/${locale}.md, platform words .claude/skills/translate/languages/${locale}.platform.md, sidecar .claude/skills/translate/languages/${locale}.json`,
     `- Glossary slice: ${path.join(dir, `${locale}.glossary.md`)}${fullGlossary ? ", and the full .claude/skills/translate/glossary.md, since the slice skipped lines" : ""}`,
     `- Write your findings to ${path.join(dir, `${locale}.review.json`)}`,
     "Look up Lingui syntax in the Markdown copy of a docs page, the page URL with .md appended, such as https://lingui.dev/ref/macro.md, rather than guess.",

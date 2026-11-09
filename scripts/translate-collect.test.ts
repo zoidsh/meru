@@ -7,11 +7,12 @@ import {
   applyTranslations,
   type Catalog,
   dumpCatalogs,
+  dumpContext,
+  listedOrigins,
   listLocale,
   mergeBase,
   sliceGlossary,
   translationChanges,
-  withSourceOrder,
 } from "../.claude/skills/translate/collect";
 import { CATALOG_TAGS } from "../packages/shared/i18n/tags";
 
@@ -224,6 +225,113 @@ Columns: msgctxt | msgid | msgstr | comments | origins. "-" is no msgctxt. "[mul
   });
 });
 
+describe("dumpContext", () => {
+  const GMAIL = `${HEADER}
+#. Toast in the Gmail view once a message has been sent
+#: packages/preload-gmail/ipc.ts
+msgid "Message sent"
+msgstr "Nachricht gesendet"
+`;
+
+  async function dump() {
+    const parse = async (text: string) => (await po.parse(text, context)) as Catalog;
+
+    return dumpCatalogs("de", [
+      { name: "app", relative: "app/de.po", catalog: await parse(CATALOG) },
+      { name: "preload-gmail", relative: "gmail/de.po", catalog: await parse(GMAIL) },
+    ]).text;
+  }
+
+  test("reads the origins the entry list names, whatever their order", () => {
+    expect(
+      listedOrigins(`## de
+
+### app: app/de.po
+
+- msgid: "Settings"
+  msgctxt: "macOS"
+  origin: packages/app/menu.ts
+  status: untranslated
+- msgid: "Settings"
+  origin: packages/app/settings.ts
+  origin: packages/renderer/routes/settings.tsx
+  status: untranslated
+`),
+    ).toEqual(
+      new Set([
+        "packages/app/menu.ts",
+        "packages/app/settings.ts",
+        "packages/renderer/routes/settings.tsx",
+      ]),
+    );
+  });
+
+  test("keeps the sections of the listed origins alone, under the headings that place them", async () => {
+    const { text, total, files } = dumpContext(
+      await dump(),
+      new Set(["packages/app/menu.ts", "packages/preload-gmail/ipc.ts"]),
+    );
+
+    expect(text).toBe(`# de: every entry, grouped by the file it comes from
+
+Columns: msgctxt | msgid | msgstr | comments | origins. "-" is no msgctxt. "[multi]" marks an entry used in more than one file, listed under the first.
+
+## app: app/de.po
+
+### packages/app/menu.ts
+
+"macOS" | "Settings" | "" | App menu item that opens the settings window | packages/app/menu.ts
+"Windows" | "Settings" | "" | App menu item that opens the settings window | packages/app/menu.ts
+
+## preload-gmail: gmail/de.po
+
+### packages/preload-gmail/ipc.ts
+
+- | "Message sent" | "Nachricht gesendet" | Toast in the Gmail view once a message has been sent | packages/preload-gmail/ipc.ts
+`);
+
+    expect({ total, files }).toEqual({ total: 3, files: 2 });
+  });
+
+  test("keeps an entry used in several files, with its marker, under the first origin the list names", async () => {
+    const { text, total, files } = dumpContext(
+      await dump(),
+      new Set(["packages/app/settings.ts", "packages/renderer/routes/settings.tsx"]),
+    );
+
+    expect(text).toBe(`# de: every entry, grouped by the file it comes from
+
+Columns: msgctxt | msgid | msgstr | comments | origins. "-" is no msgctxt. "[multi]" marks an entry used in more than one file, listed under the first.
+
+## app: app/de.po
+
+### packages/app/settings.ts
+
+[multi] - | "Settings" | "" | Title of the settings window | packages/app/settings.ts, packages/renderer/routes/settings.tsx
+`);
+
+    expect({ total, files }).toEqual({ total: 1, files: 1 });
+  });
+
+  test("equals the dump when the list names every file, and is the preamble alone when it names none", async () => {
+    const text = await dump();
+
+    const origins = new Set(
+      [...text.matchAll(/^### (.+)$/gmu)].map(([, origin]) => origin as string),
+    );
+
+    expect(dumpContext(text, origins).text).toBe(text);
+    expect(dumpContext(text, new Set(["packages/app/gone.ts"]))).toEqual({
+      text: `# de: every entry, grouped by the file it comes from
+
+Columns: msgctxt | msgid | msgstr | comments | origins. "-" is no msgctxt. "[multi]" marks an entry used in more than one file, listed under the first.
+`,
+      total: 0,
+      files: 0,
+    });
+  });
+});
+
 describe("sliceGlossary", () => {
   test("gives every language its own line for the app links badge, never another badge's word", async () => {
     const glossary = await Bun.file(
@@ -309,39 +417,6 @@ The window.
       'glossary.md:29: skipped "| --- | --- |"',
       'glossary.md:31: skipped "```"',
     ]);
-  });
-});
-
-describe("withSourceOrder", () => {
-  test("puts the source order in place of the paragraph that links to it, keeping the rest", () => {
-    const slice =
-      "# Glossary\n\n## Where a word comes from\n\nCapitals are the base form.\n\nSee source-order.md.\n\n## Tab\n\n- ja: タブ\n";
-
-    const sourceOrder =
-      "# Where a word comes from\n\n1. The system's.\n\n## How a source is cited\n\nIn brackets.\n";
-
-    expect(withSourceOrder(slice, sourceOrder)).toBe(
-      "# Glossary\n\n## Where a word comes from\n\nCapitals are the base form.\n\n1. The system's.\n\n### How a source is cited\n\nIn brackets.\n\n## Tab\n\n- ja: タブ\n",
-    );
-  });
-
-  test("gives the real slice the source order in full and no link in its place", async () => {
-    const translateDir = path.join(import.meta.dir, "../.claude/skills/translate");
-
-    const sourceOrder = await Bun.file(path.join(translateDir, "source-order.md")).text();
-
-    const { text } = sliceGlossary(
-      await Bun.file(path.join(translateDir, "glossary.md")).text(),
-      "fr",
-    );
-
-    const slice = withSourceOrder(text, sourceOrder);
-
-    expect(slice).toContain(
-      sourceOrder.split("\n").find((line) => line.includes("(4c)")) ?? "(4c)",
-    );
-    expect(slice).not.toContain("in place of this paragraph");
-    expect(slice).toContain("Capitalization below is the base form inside a sentence.");
   });
 });
 

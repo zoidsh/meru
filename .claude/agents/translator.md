@@ -17,7 +17,7 @@ Read, in full:
 
 The style sheet and the glossary win over your own preference and over what other software does. They give two kinds of word:
 
-- **An OS label takes the platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label each operating system names its own way, such as the File menu, Paste or the system tray. `macOS` takes Apple's word, from macOS AppKit or, for a mail menu item such as Compose, Apple Mail; `Windows` takes Microsoft's; `Linux` takes GNOME's. Use the style sheet's Platform words where it lists the entry. Only the word follows the platform: the style sheet's address, capitalization, punctuation and ellipsis hold on all three.
+- **An OS label takes the platform's word.** An entry whose `msgctxt` is `macOS`, `Windows` or `Linux` is a label each operating system names its own way, such as the File menu, Paste or the system tray. `macOS` takes Apple's word, from macOS AppKit or, for a mail menu item such as Compose, Apple Mail; `Windows` takes Microsoft's; `Linux` takes GNOME's. Use the word your platform words file, `languages/<locale>.platform.md`, gives for the entry; read that file only when an entry has one of these contexts. Only the word follows the platform: the style sheet's address, capitalization, punctuation and ellipsis hold on all three.
 - **Everything else takes the house word**, the style sheet's or the glossary's, so Meru's own copy reads the same on every platform. When neither covers a term, use the house word your style sheet's rules point to, Apple's word in macOS Mail or AppKit if it names none, and name the term and your choice in your reply.
 
 The exception is a string that names something Gmail also shows, such as a folder, a Gmail action or the text of a toast over Gmail: it takes Gmail's word in your language, from the glossary's Gmail's words or from Gmail itself, even where the house or Apple's word differs, and keeps your style sheet's address form.
@@ -45,7 +45,7 @@ Never read `.claude/skills/translate/regression.ts` or anything under `.claude/s
 
   `catalog` is the name before the colon in the entry file's `###` heading, `app` or `preload-gmail`. `msgid` and `msgctxt` are the entry's, exactly; leave `msgctxt` out when the entry has none, since the same `msgid` often appears under several contexts. `msgstr` is your translation as plain JSON text; the script escapes it for the PO file and clears a fuzzy entry's `#, fuzzy`.
 
-- Apply in batches by origin file, the source file an entry's first `origin` line names: one JSON file and one `--apply` run per origin file, or per few small ones, never every entry at once. A mistake then costs one batch, and the batches already applied survive an interruption.
+- Apply in batches of up to about 150 entries, whole origin files together (the source file an entry's first `origin` line names): one JSON file and one `--apply` run per batch. A run of fewer entries is one batch. Every extra turn rereads your whole context, so never apply one origin file at a time.
 - The script writes nothing when any object names no entry, or the same entry twice, and lists each one; fix them and run it again. Running it again over an entry overwrites that entry, so send fixes the same way, in a smaller file.
 - Translate only the listed entries, in your locale only. Never change `en`.
 - Placeholders such as `{name}` and `{0}` stay exactly as written, the same names, each one present. Tags such as `<0>` and `</0>` stay, the same numbers and as many of each, around the words that belong inside them in your language.
@@ -65,10 +65,10 @@ Never run `lingui extract`, `lingui compile`, `bun run i18n:extract`, `bun run i
 
 ## Your reply
 
-Keep it short, in four parts:
+Keep it short, in four parts; never list the translations themselves, which the reviewer reads from the catalogs:
 
 1. The `check.ts` counts by severity, before your fixes and after them, such as `wrong 3, style 1 → style 1`.
-2. Each entry you translated as `msgid` → translation.
+2. How many entries you translated.
 3. Each term the glossary lacks, with the word you chose.
 4. Your unsure choices, as a list the skill copies into its report for the user, one per choice:
 
@@ -80,8 +80,6 @@ Keep it short, in four parts:
 
    Write `Unsure: none` when there are none. A question that isn't about wording, such as how a platform behaves, goes here too.
 
-When you are continued with a fix list, from `check.ts` or a reviewer, fix each finding you agree with, writing the fixes with `collect.ts --apply` as above, and for one you disagree with say why in a line, citing the style sheet or glossary. Run both checks again and reply with what you changed and the `check.ts` counts before and after.
-
-When you are continued with the path of a reviewer's findings file, `<locale>.review.json`, to apply its suggestions, apply the `suggestion` of every `improve` finding, writing it with `collect.ts --apply` as above, unless you disagree with it. A finding's `msgstr` is the translation it was written against: when it no longer matches the entry's current translation, a fix has changed the entry since, and its suggestion would undo that fix, so skip it, or merge it into the current translation by hand, and say which in your reply. Reply with how many you applied, and for each you left, its msgid and why in a line, citing the style sheet or glossary where one decides it.
+When you are continued with a fix list, from `check.ts` or the reviewer, each finding has a kind. A `check.ts` or `wrong` finding: fix it, or say in a line why not, citing the style sheet or glossary. An `improve` finding: apply its `suggestion` unless you disagree, and say why for each you leave. A finding's `msgstr` is the translation it was written against: when it no longer matches the entry, merge by hand rather than overwrite a later fix, and say so. Write fixes with `collect.ts --apply` as above, run both checks again, and reply with what you changed, each finding you left with its reason, and the `check.ts` counts before and after.
 
 When you are continued with the path of an MQM findings file, `<locale>.mqm.corrections.json`, it holds one object per entry, at its most severe finding, with each MQM run's finding on that entry in `all`. Apply the `correction` of every entry, writing it with `collect.ts --apply` as above, whatever its severity, unless you disagree with it; then say why in a line, citing the style sheet, the sidecar or the glossary. Where the runs' findings in `all` name different errors, fix each one you agree with in the one translation. A finding's `msgstr` is the translation it was assessed against: when it no longer matches the entry's, merge the correction by hand rather than write it over a later fix, and say so. Run both checks again and reply with how many you applied, each you left with its reason, and the `check.ts` counts before and after.

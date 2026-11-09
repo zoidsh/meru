@@ -19,8 +19,9 @@ import { CATALOG_TAGS } from "../../../packages/shared/i18n/tags";
  * with that locale's slice of the glossary beside it, so an agent reads one
  * language rather than every one. `<tag> --apply <json>` writes translations
  * into a locale's catalogs, and `--dump <tag> --out <dir>` writes its whole
- * catalog for review. `--out` defaults to `$TRANSLATE_SCRATCH/translate` when
- * that is set.
+ * catalog for review, beside `<tag>.context.txt`, the slice of that dump the
+ * entry list's own files make up, once `<dir>/<tag>.txt` is there. `--out`
+ * defaults to `$TRANSLATE_SCRATCH/translate` when that is set.
  */
 
 type Entry = {
@@ -302,50 +303,6 @@ export function sliceGlossary(
       .trim()}\n`,
     warnings,
   };
-}
-
-const SOURCE_ORDER_PATH = path.join(import.meta.dir, "source-order.md");
-
-const SOURCE_ORDER_HEADING = "## Where a word comes from";
-
-/*
- * The glossary links to `source-order.md` rather than restating it, but an
- * agent reads its slice from the scratch directory, where no link resolves, so
- * the slice carries the file in place of the paragraph that links to it, its
- * headings one level down.
- */
-export function withSourceOrder(slice: string, sourceOrder: string) {
-  const start = slice.indexOf(`${SOURCE_ORDER_HEADING}\n`);
-
-  if (start === -1) {
-    throw new Error(`glossary.md has no "${SOURCE_ORDER_HEADING}" section`);
-  }
-
-  const next = slice.indexOf("\n## ", start + SOURCE_ORDER_HEADING.length);
-
-  const section = slice.slice(start, next === -1 ? undefined : next);
-
-  const pointer = section
-    .split("\n\n")
-    .map((paragraph) => paragraph.trimEnd())
-    .find((paragraph) => paragraph.includes("source-order.md"));
-
-  if (pointer === undefined) {
-    throw new Error(
-      `glossary.md's "${SOURCE_ORDER_HEADING}" section has no link to source-order.md`,
-    );
-  }
-
-  const pointerStart = start + section.indexOf(pointer);
-
-  const pointerEnd = pointerStart + pointer.length;
-
-  const body = sourceOrder
-    .replace(/^# .*\n+/u, "")
-    .replace(/^## /gmu, "### ")
-    .trim();
-
-  return `${slice.slice(0, pointerStart)}${body}${slice.slice(pointerEnd)}`;
 }
 
 export type Translation = { msgctxt?: string; msgid: string; msgstr: string };
@@ -750,6 +707,81 @@ export function dumpCatalogs(
   return { text: `${sections.join("\n\n")}\n`, total, multiOrigin };
 }
 
+/** Every source file the entry list names, which the entries' dump sections are under. */
+export function listedOrigins(entries: string) {
+  return new Set(
+    [...entries.matchAll(/^ *origin: (.+)$/gmu)].map(([, origin]) => (origin as string).trim()),
+  );
+}
+
+/*
+ * The dump cut down to the sections of those files, so a partial run reads the
+ * entries around the ones it has to write rather than every catalog. An entry
+ * used in several files keeps its one section, the first origin's, since the
+ * list names that origin too.
+ */
+export function dumpContext(dump: string, origins: Set<string>) {
+  const preamble: string[] = [];
+
+  const sections: string[] = [];
+
+  let catalog: string | undefined;
+
+  let section: string[] | undefined;
+
+  let total = 0;
+
+  const flush = () => {
+    if (!section) {
+      return;
+    }
+
+    const lines = section;
+
+    section = undefined;
+
+    if (!origins.has((lines[0] as string).slice("### ".length))) {
+      return;
+    }
+
+    if (catalog !== undefined) {
+      sections.push(catalog);
+
+      catalog = undefined;
+    }
+
+    sections.push(lines.join("\n").trimEnd());
+
+    total += lines.filter((line, index) => index > 0 && line !== "").length;
+  };
+
+  for (const line of dump.split("\n")) {
+    if (line.startsWith("### ")) {
+      flush();
+
+      section = [line];
+    } else if (line.startsWith("## ")) {
+      flush();
+
+      catalog = line;
+    } else if (section) {
+      section.push(line);
+    } else if (catalog === undefined) {
+      preamble.push(line);
+    }
+  }
+
+  flush();
+
+  const files = sections.filter((heading) => heading.startsWith("### ")).length;
+
+  return {
+    text: `${[preamble.join("\n").trimEnd(), ...sections].join("\n\n")}\n`,
+    total,
+    files,
+  };
+}
+
 async function dump(config: LinguiConfigNormalized, locale: string, out: string | undefined) {
   if (!out || !config.locales.includes(locale)) {
     throw new Error(`--dump takes a locale, one of ${config.locales.join(", ")}, and --out <dir>.`);
@@ -772,6 +804,24 @@ async function dump(config: LinguiConfigNormalized, locale: string, out: string 
   await Bun.write(dumpPath, text);
 
   console.log(`${dumpPath}: ${total} entries, ${multiOrigin} used in more than one file`);
+
+  const entriesPath = path.join(out, `${locale}.txt`);
+
+  const entries = Bun.file(entriesPath);
+
+  if (!(await entries.exists())) {
+    return;
+  }
+
+  const context = dumpContext(text, listedOrigins(await entries.text()));
+
+  const contextPath = path.join(out, `${locale}.context.txt`);
+
+  await Bun.write(contextPath, context.text);
+
+  console.log(
+    `${contextPath}: ${context.total} entries, from the ${context.files} file${context.files === 1 ? "" : "s"} ${locale}.txt names`,
+  );
 }
 
 function formatEntry(id: string, entry: Entry, status: string, priorArt?: PriorArt) {
@@ -925,8 +975,6 @@ async function collect(
 
   let glossary: string | undefined;
 
-  let sourceOrder: string | undefined;
-
   let glossaryWarned = false;
 
   const byKind = { translate: [], review: [], none: [], unknown: [] } as Record<
@@ -977,8 +1025,6 @@ async function collect(
 
     glossary ??= await Bun.file(GLOSSARY_PATH).text();
 
-    sourceOrder ??= await Bun.file(SOURCE_ORDER_PATH).text();
-
     const slice = sliceGlossary(glossary, locale);
 
     if (!glossaryWarned) {
@@ -993,7 +1039,7 @@ async function collect(
 
     await Bun.write(entriesPath, section);
 
-    await Bun.write(glossaryPath, withSourceOrder(slice.text, sourceOrder));
+    await Bun.write(glossaryPath, slice.text);
 
     console.log(`${locale} (${list.kind}, ${list.count} entries): ${entriesPath} ${glossaryPath}`);
   }
