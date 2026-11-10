@@ -24,12 +24,8 @@ const germanDefaultLabel = setupI18n({ locale: "de", messages: { de: messages } 
 });
 
 async function openAccountsSettings() {
-  // The German macOS item takes a no-break space before its ellipsis.
-  expect(
-    await meru.runMenuCommand(
-      process.platform === "darwin" ? "Einstellungen\u00a0…" : "Einstellungen",
-    ),
-  ).toBe(true);
+  // The German item takes a no-break space before its ellipsis, on every platform.
+  expect(await meru.runMenuCommand("Einstellungen\u00a0…")).toBe(true);
 
   await expect
     .poll(() => meru.app.windows().some((page) => page.url().includes("settings.html")))
