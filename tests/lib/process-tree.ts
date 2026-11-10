@@ -7,7 +7,7 @@
  * that one process leaves every one of them running, holding the files in the
  * user data directory open, and Windows refuses to delete a file that is open.
  */
-import { execFile } from "node:child_process";
+import { type ChildProcess, execFile } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { promisify } from "node:util";
 
@@ -154,4 +154,17 @@ export async function waitForProcessesToExit(tree: ProcessEntry[]) {
 
     await sleep(EXIT_POLL_INTERVAL);
   }
+}
+
+/** Kills a child started outside Playwright, with everything under it, unless it has exited. */
+export async function killTree(child: ChildProcess) {
+  if (child.exitCode !== null || child.signalCode !== null) {
+    return;
+  }
+
+  const tree = await readProcessTree(child.pid as number);
+
+  tree.push(...(await killProcessTree(tree)));
+
+  await waitForProcessesToExit(tree);
 }

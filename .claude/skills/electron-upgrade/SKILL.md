@@ -59,24 +59,23 @@ A version named in the brief must pass the same rules: run the script, and take 
 
 Every upgrade verifies everything this Mac can, on the host and in the macOS, Windows and Linux VMs. How to run each VM, get a build in and drive it is in `$PROJECT_DOCS_DIR/zoidsh/meru/macos-vm.md`, `windows-vm.md` and `linux-vm.md`. Each VM signs the test account in itself; a copied profile signs Google out.
 
-The round lists only what no end-to-end test covers. A check that gains an end-to-end test leaves this list in the same pull request as the test.
+The round lists only what no end-to-end test covers. A check that gains an end-to-end test leaves this list in the same pull request as the test. The fuses, that `--inspect`, `ELECTRON_RUN_AS_NODE` and `NODE_OPTIONS` are refused against a control, and that the swipe addon loads are `tests/hardening.e2e.ts`'s, which CI runs on the suite's own x64 Linux and Windows builds and arm64 macOS build; arm64 Linux and Windows are the VMs' below.
 
 - **Host:** a real meeting reaches **You are presenting**. That a share through Meru's picker returns a live track is `tests/screen-share-pro.e2e.ts`'s, which on macOS skips without the Screen Recording grant; when the macOS run skipped it, check the live track here too.
 - **macOS**, a fresh clone of the base VM with a signed, unnotarised arm64 DMG from `op run --env-file .env.signing.op -- bun run build:mac:dmg`:
   - `codesign --verify --deep --strict` passes, `spctl` reads `source=Developer ID`, and the app reports the target version.
-  - The fuses read as shipped; `--inspect` and `ELECTRON_RUN_AS_NODE` are ignored.
-  - The swipe addon loads.
   - An update between two signed builds of the branch, versioned apart as `macos-vm.md` describes, installs through ShipIt, relaunches signed on the target and keeps the channel.
   - Sign-in, the signed-in inbox, and switching to a second account and back.
 - **Windows**, arm64 natively and x64 under emulation:
   - Both report the target version and render the signed-in inbox.
   - Switching accounts with real clicks and typing keeps each view's state.
   - Close to tray and restore from the tray, quit and relaunch, and silent uninstall.
-  - The fuses read as shipped, and `--inspect`, `ELECTRON_RUN_AS_NODE` and `NODE_OPTIONS` are ignored, against an unfused control.
+  - `tests/hardening.e2e.ts` passes against the arm64 build, run with `MERU_EXECUTABLE` and `MERU_SKIP_BUILD=1` as `windows-vm.md` runs the suite.
   - Open at login round-trips, also at a path with a space.
   - An arm64 update to a released build keeps the channel.
 - **Linux**, `meru-linux` on arm64 and a throwaway `meru-linux-x64`:
-  - The AppImage and the deb render the signed-in inbox; the AppImage, deb and rpm read the shipped fuses.
+  - The AppImage and the deb render the signed-in inbox.
+  - `tests/hardening.e2e.ts` passes against an arm64 build, run with `MERU_EXECUTABLE` and `MERU_SKIP_BUILD=1` as `linux-vm.md` runs the suite.
   - `tests/account-view-visibility*.e2e.ts` on an arm64 build, as `linux-vm.md` runs the suite, but on Xvfb with openbox instead of `xvfb-run`, so the minimize tests run rather than skip as they do in CI.
   - Two accounts under X11 with openbox: real `xdotool` clicks and typing land in the shown view.
   - Close to tray and restore from the tray, and several cold starts.
@@ -84,7 +83,7 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
   - Under headless sway with `--ozone-platform=wayland`, the first launch maps the window, and keyboard and pointer input work.
   - X11 paste does not hang.
   - The AppImage updates to a released build.
-  - x86_64 reports `(x64)`, reads the same fuses and renders two accounts.
+  - x86_64 reports `(x64)` and renders two accounts.
 
 When the round is over, delete the macOS clone and `meru-linux-x64`, remove bun and node from the guests, and stop every VM this run started.
 

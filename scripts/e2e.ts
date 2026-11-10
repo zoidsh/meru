@@ -8,6 +8,7 @@
  * single command on every platform.
  */
 import { spawn } from "bun";
+import { E2E_FUSE_OVERRIDES } from "./lib/e2e-fuses";
 import { SIGNING_ENV_VARS } from "./signing-env";
 
 const BUILDS = {
@@ -53,14 +54,12 @@ if (!process.env.MERU_EXECUTABLE && !process.env.MERU_SKIP_BUILD) {
       ...build.args,
       "--publish",
       "never",
-      // `_electron.launch` waits for the main process to print "Debugger
-      // listening on", which it gets by passing `--inspect=0`, so the shipped
-      // build's `enableNodeCliInspectArguments: false` would hang every test.
-      // The suite therefore drives a build that differs from a release in that
-      // one fuse and in carrying the pseudo-locale, and in nothing else: a
-      // config override merges into the `electronFuses` block rather than
-      // replacing it.
-      "-c.electronFuses.enableNodeCliInspectArguments=true",
+      // The suite drives a build that differs from a release in these fuses
+      // and in carrying the pseudo-locale, and in nothing else: a config
+      // override merges into the `electronFuses` block rather than replacing it.
+      ...Object.entries(E2E_FUSE_OVERRIDES).map(
+        ([fuse, value]) => `-c.electronFuses.${fuse}=${value}`,
+      ),
     ],
     {
       // Signing and notarising would only slow down an app launched in place,

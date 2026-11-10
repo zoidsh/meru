@@ -21,7 +21,7 @@ import { ms } from "@meru/shared/ms";
 import type { Config } from "@meru/shared/types";
 import { expect, test } from "@playwright/test";
 import { EXECUTABLE_PATH, launchArguments } from "./app";
-import { killProcessTree, readProcessTree, waitForProcessesToExit } from "./process-tree";
+import { killProcessTree, killTree, readProcessTree, waitForProcessesToExit } from "./process-tree";
 import { startTestServer, type TestServer } from "./server";
 
 type Electron = typeof import("electron");
@@ -152,18 +152,6 @@ function waitForExit(child: ChildProcess, timeout: number) {
       resolve(code);
     });
   });
-}
-
-async function killTree(child: ChildProcess) {
-  if (hasExited(child)) {
-    return;
-  }
-
-  const tree = await readProcessTree(child.pid as number);
-
-  tree.push(...(await killProcessTree(tree)));
-
-  await waitForProcessesToExit(tree);
 }
 
 function waitForInspectorUrl(mainProcess: ChildProcess, output: string[]) {
