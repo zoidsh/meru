@@ -59,7 +59,7 @@ A version named in the brief must pass the same rules: run the script, and take 
 
 Every upgrade verifies everything this Mac can, on the host and in the macOS, Windows and Linux VMs. How to run each VM, get a build in and drive it is in `$PROJECT_DOCS_DIR/zoidsh/meru/macos-vm.md`, `windows-vm.md` and `linux-vm.md`. Each VM signs the test account in itself; a copied profile signs Google out.
 
-The round lists only what no end-to-end test covers. A check that gains an end-to-end test leaves this list in the same pull request as the test. The fuses, that `--inspect`, `ELECTRON_RUN_AS_NODE` and `NODE_OPTIONS` are refused against a control, and that the swipe addon loads are `tests/hardening.e2e.ts`'s, which CI runs on the suite's own x64 Linux and Windows builds and arm64 macOS build; arm64 Linux and Windows are the VMs' below.
+The round lists only what no end-to-end test covers. A check that gains an end-to-end test leaves this list in the same pull request as the test. The fuses, that `--inspect`, `ELECTRON_RUN_AS_NODE` and `NODE_OPTIONS` are refused against a control, and that the swipe addon loads are `tests/hardening.e2e.ts`'s, which CI runs on the suite's own x64 Linux and Windows builds and arm64 macOS build; arm64 Linux and Windows are the VMs' below. That the first launch under `--ozone-platform=wayland` maps the window and takes keyboard and pointer input is `tests/wayland.e2e.ts`'s, in a headless sway of its own on CI's x64 Linux.
 
 - **Host:** a real meeting reaches **You are presenting**. That a share through Meru's picker returns a live track is `tests/screen-share-pro.e2e.ts`'s, which on macOS skips without the Screen Recording grant; when the macOS run skipped it, check the live track here too.
 - **macOS**, a fresh clone of the base VM with a signed, unnotarised arm64 DMG from `op run --env-file .env.signing.op -- bun run build:mac:dmg`:
@@ -79,7 +79,6 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
   - Two accounts under X11 with openbox: real `xdotool` clicks and typing land in the shown view.
   - Close to tray and restore from the tray.
   - A new-mail notification carries its buttons over D-Bus, and **Mark as Read** reaches Gmail.
-  - Under headless sway with `--ozone-platform=wayland`, the first launch maps the window, and keyboard and pointer input work.
   - X11 paste does not hang.
   - The AppImage updates to a released build.
   - x86_64 reports `(x64)` and renders two accounts.
