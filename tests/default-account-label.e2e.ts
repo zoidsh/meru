@@ -12,7 +12,7 @@
 import { setupI18n } from "@lingui/core";
 import { generateMessageId } from "@lingui/message-utils/generateMessageId";
 import { messages } from "@meru/shared/i18n/locales/de";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { useApp } from "./lib/app";
 import { openSettingsPage } from "./lib/settings";
 
@@ -24,20 +24,23 @@ const germanDefaultLabel = setupI18n({ locale: "de", messages: { de: messages } 
 });
 
 async function openAccountsSettings() {
-  // The German macOS item takes a no-break space before its ellipsis.
-  expect(
-    await meru.runMenuCommand(
-      process.platform === "darwin" ? "Einstellungen\u00a0…" : "Einstellungen",
-    ),
-  ).toBe(true);
+  // The German item takes a no-break space before its ellipsis, on every platform.
+  expect(await meru.runMenuCommand("Einstellungen\u00a0…")).toBe(true);
 
-  const navigation = meru.renderer.getByTestId("settings-nav");
+  await expect
+    .poll(() => meru.app.windows().some((page) => page.url().includes("settings.html")))
+    .toBe(true);
 
-  await expect(navigation).toBeVisible();
+  const settings = meru.app.windows().find((page) => page.url().includes("settings.html")) as Page;
 
-  await openSettingsPage(meru, navigation, "Konten");
+  await expect(settings.getByTestId("settings-nav")).toBeVisible();
 
-  return meru.renderer.locator('[data-slot="item-group"] [data-slot="item"]');
+  await openSettingsPage(settings, "Konten");
+
+  return {
+    settings,
+    accountItems: settings.locator('[data-slot="item-group"] [data-slot="item"]'),
+  };
 }
 
 async function readStoredLabel() {
@@ -45,7 +48,7 @@ async function readStoredLabel() {
 }
 
 test("Settings and the Accounts menu name the first account in German and the config keeps it in English", async () => {
-  const accountItems = await openAccountsSettings();
+  const { accountItems } = await openAccountsSettings();
 
   const title = accountItems.locator('[data-slot="item-title"]');
 
@@ -67,11 +70,11 @@ test("Settings and the Accounts menu name the first account in German and the co
 });
 
 test("saving the edit dialog untouched leaves the stored label in English", async () => {
-  const accountItems = await openAccountsSettings();
+  const { settings, accountItems } = await openAccountsSettings();
 
   await accountItems.getByRole("button", { name: "Konto bearbeiten" }).click();
 
-  const dialog = meru.renderer.getByRole("dialog");
+  const dialog = settings.getByRole("dialog");
 
   const labelField = dialog.locator('input[name="label"]');
 
@@ -81,7 +84,7 @@ test("saving the edit dialog untouched leaves the stored label in English", asyn
   // itself. A label that is already "Default" would pass before it lands.
   await dialog.locator("#color").click();
 
-  await meru.renderer.getByRole("option", { name: "Orange" }).click();
+  await settings.getByRole("option", { name: "Orange" }).click();
 
   await dialog.getByRole("button", { name: "Speichern" }).click();
 

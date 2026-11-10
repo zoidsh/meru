@@ -61,13 +61,13 @@ test.describe("with the master switch on", () => {
   test("keeps the password manager installed last, and settings shows only it on", async () => {
     await expectOnlyBitwardenLeft(meru);
 
-    await openSettingsPage(meru, await meru.openSettings(), "Extensions");
+    const settings = await meru.openSettings();
 
-    await expect(meru.renderer.getByRole("switch", { name: "Install Bitwarden" })).toBeChecked();
+    await openSettingsPage(settings, "Extensions");
 
-    await expect(
-      meru.renderer.getByRole("switch", { name: "Install 1Password" }),
-    ).not.toBeChecked();
+    await expect(settings.getByRole("switch", { name: "Install Bitwarden" })).toBeChecked();
+
+    await expect(settings.getByRole("switch", { name: "Install 1Password" })).not.toBeChecked();
   });
 });
 

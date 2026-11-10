@@ -34,7 +34,7 @@ Sentence style: only the first word and proper nouns take a capital. A label tha
 
 ## Settings
 
-_Configuración_, Chrome's word, in Meru's own copy: the window, its title and every mention of it. The app-menu item with `msgctxt` `macOS` is Apple's _Ajustes…_, as AppKit writes it; with `Windows` or `Linux` it is _Configuración_, Microsoft's and GNOME's word, without the ellipsis the English lacks. _Ajustes_ appears in Meru's own copy only as macOS's own _Ajustes del Sistema_.
+_Configuración_, Chrome's word, in Meru's own copy: the window, its title and every mention of it. The app-menu item with `msgctxt` `macOS` is Apple's _Ajustes…_, as AppKit writes it; with `Windows` or `Linux` it is _Configuración…_, Microsoft's and GNOME's word with the English's ellipsis. _Ajustes_ appears in Meru's own copy only as macOS's own _Ajustes del Sistema_.
 
 ## Access keys
 

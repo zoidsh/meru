@@ -39,6 +39,7 @@ import { relaunchApp } from "@/lib/relaunch";
 import { licenseKey } from "@/license-key";
 import { main } from "@/main";
 import { appMenu } from "@/menu";
+import { settingsWindow } from "@/settings-window";
 import { swipeNavigation } from "@/swipe-navigation";
 import { DormantTab, isWindowedTab } from "@/tabs";
 import {
@@ -100,6 +101,10 @@ function getNavigationWebContents(workspaceAppId?: string) {
 function getRendererWebContents() {
   const rendererWebContents = [main.window.webContents];
 
+  if (settingsWindow.window && !settingsWindow.window.webContents.isDestroyed()) {
+    rendererWebContents.push(settingsWindow.window.webContents);
+  }
+
   const recentDownloadHistoryPopupWebContents = downloads.recentDownloadHistoryPopup.webContents;
 
   if (recentDownloadHistoryPopupWebContents) {
@@ -149,11 +154,18 @@ class Ipc {
 
   renderer = new IpcEmitter<IpcRendererEvent>();
 
+  broadcast<E extends keyof IpcRendererEvent>(
+    channel: Extract<E, string>,
+    ...args: IpcRendererEvent[E]
+  ) {
+    for (const rendererWebContents of getRendererWebContents()) {
+      this.renderer.send(rendererWebContents, channel, ...args);
+    }
+  }
+
   init() {
     config.onDidAnyChange(() => {
-      for (const rendererWebContents of getRendererWebContents()) {
-        ipc.renderer.send(rendererWebContents, "config.configChanged", config.store);
-      }
+      ipc.broadcast("config.configChanged", config.store);
     });
 
     config.onDidChange("accounts", () => {
@@ -231,8 +243,8 @@ class Ipc {
       swipeNavigation.setPageScrollEdge(event.sender, pageScrollEdge);
     });
 
-    this.main.on("titleBar.toggleAppMenu", (_event, anchor) => {
-      appMenu.togglePopup(anchor);
+    this.main.on("titleBar.toggleAppMenu", (event, anchor) => {
+      appMenu.togglePopup(anchor, settingsWindow.getAppMenuWindow(event.sender));
     });
 
     // A menu in the chrome closing, which leaves the keyboard nowhere on purpose.
@@ -317,7 +329,7 @@ class Ipc {
     });
 
     ipc.main.on("appUpdater.openVersionHistory", () => {
-      main.navigate("/settings/version-history");
+      settingsWindow.open("version-history");
     });
 
     ipc.main.on("appUpdater.openReleasePage", () => {

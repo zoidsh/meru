@@ -33,7 +33,7 @@ msgstr "Bestand"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Instellingen…"
 
 #: packages/app/context-menu.ts

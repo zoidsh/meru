@@ -127,8 +127,10 @@ function DefaultMailClientField() {
   );
 
   if (platform.isWindows) {
+    // Responsive, so the button goes under the text in a column too narrow to
+    // hold both, rather than past its edge: its label does not wrap.
     return (
-      <Field orientation="horizontal">
+      <Field orientation="responsive">
         <FieldContent>
           <FieldTitle>{heading}</FieldTitle>
           <FieldDescription>

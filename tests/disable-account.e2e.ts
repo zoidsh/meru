@@ -73,32 +73,34 @@ async function countAccountViews(meru: MeruApp, accountId: string) {
 
 /** The rows of the accounts list in settings, which lists what the config holds. */
 async function openAccountsSettings(meru: MeruApp) {
-  const navigation = await meru.openSettings();
+  const settings = await meru.openSettings();
 
-  await openSettingsPage(meru, navigation, "Accounts");
+  await openSettingsPage(settings, "Accounts");
 
-  return meru.renderer.locator('[data-slot="item-group"] [data-slot="item"]');
+  return {
+    settings,
+    accountItems: settings.locator('[data-slot="item-group"] [data-slot="item"]'),
+  };
 }
 
 /** Opens one account's edit dialog, flips Disabled and saves. */
 async function toggleDisabled(meru: MeruApp, label: string) {
-  const accountItems = await openAccountsSettings(meru);
+  const { settings, accountItems } = await openAccountsSettings(meru);
 
   await accountItems
     .filter({ hasText: label })
     .getByRole("button", { name: "Edit account" })
     .click();
 
-  await meru.renderer.getByRole("switch", { name: "Disabled" }).click();
+  await settings.getByRole("switch", { name: "Disabled" }).click();
 
-  await meru.renderer.getByRole("button", { name: "Save" }).click();
+  await settings.getByRole("button", { name: "Save" }).click();
 
-  await expect(meru.renderer.getByRole("dialog")).toHaveCount(0);
+  await expect(settings.getByRole("dialog")).toHaveCount(0);
 }
 
 /**
- * Leaves settings the way the settings page itself offers, which selects
- * nothing on the way out.
+ * Closes the settings window, which selects nothing on the way out.
  *
  * The Accounts menu items are the other way back, and they are no use here:
  * their handler selects the account before it navigates, so a view left in the
@@ -111,7 +113,7 @@ async function toggleDisabled(meru: MeruApp, label: string) {
  * been checked.
  */
 async function closeSettings(meru: MeruApp) {
-  await meru.renderer.getByRole("button", { name: "Close settings" }).click();
+  await meru.closeSettings();
 
   await expect(meru.renderer.getByRole("button", { name: "Go back" })).toBeVisible();
 }
@@ -156,7 +158,7 @@ test.describe("with the second account disabled", () => {
   });
 
   test("settings still lists it, marked disabled", async () => {
-    const accountItems = await openAccountsSettings(meru);
+    const { accountItems } = await openAccountsSettings(meru);
 
     await expect(accountItems).toHaveCount(2);
 
@@ -177,17 +179,14 @@ test.describe("with the second account disabled", () => {
   });
 
   test("it can be removed, without an instance to remove it through", async () => {
-    const accountItems = await openAccountsSettings(meru);
+    const { settings, accountItems } = await openAccountsSettings(meru);
 
     await accountItems
       .filter({ hasText: "Work" })
       .getByRole("button", { name: "Remove account" })
       .click();
 
-    await meru.renderer
-      .getByRole("alertdialog")
-      .getByRole("button", { name: "Remove account" })
-      .click();
+    await settings.getByRole("alertdialog").getByRole("button", { name: "Remove account" }).click();
 
     await expect
       .poll(async () => (await meru.readConfig()).accounts?.map((account) => account.id))
@@ -323,10 +322,10 @@ test.describe("with one account", () => {
   });
 
   test("the last enabled account cannot be turned off", async () => {
-    const accountItems = await openAccountsSettings(meru);
+    const { settings, accountItems } = await openAccountsSettings(meru);
 
     await accountItems.getByRole("button", { name: "Edit account" }).click();
 
-    await expect(meru.renderer.getByRole("switch", { name: "Disabled" })).toBeDisabled();
+    await expect(settings.getByRole("switch", { name: "Disabled" })).toBeDisabled();
   });
 });

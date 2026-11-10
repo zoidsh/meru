@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Config } from "@meru/shared/types";
 import { expect, test, type TestInfo } from "@playwright/test";
-import { _electron, type ElectronApplication, type Locator, type Page } from "playwright";
+import { _electron, type ElectronApplication, type Page } from "playwright";
 import { killProcessTree, readProcessTree, waitForProcessesToExit } from "./process-tree";
 import { startTestServer, type TestServer } from "./server";
 
@@ -459,10 +459,12 @@ export type MeruApp = {
    */
   relaunch(): Promise<void>;
   /**
-   * Opens settings through the menu, and hands back its navigation sidebar to
-   * pick a page from.
+   * Opens settings through the menu, and hands back the page of the window it
+   * opens in. `renderer` stays the main window's.
    */
-  openSettings(): Promise<Locator>;
+  openSettings(): Promise<Page>;
+  /** Closes the settings window, and waits for it to be gone. */
+  closeSettings(): Promise<void>;
   /** The config as it stands on disk, which is where the main process wrote it. */
   readConfig(): Promise<Partial<Config>>;
   /**
@@ -723,12 +725,41 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
       // By accelerator, so a launch in any interface language finds it.
       expect(await this.runMenuCommand({ accelerator: "CommandOrControl+," })).toBe(true);
 
-      const navigation = currentRenderer().getByTestId("settings-nav");
+      const { app } = current();
+
+      const isSettingsPage = (page: Page) => page.url().includes("settings.html");
+
+      await expect.poll(() => app.windows().some(isSettingsPage)).toBe(true);
+
+      const settings = app.windows().find(isSettingsPage) as Page;
 
       // Waiting for the sidebar is also what proves the command arrived.
-      await expect(navigation).toBeVisible();
+      await expect(settings.getByTestId("settings-nav")).toBeVisible();
 
-      return navigation;
+      return settings;
+    },
+    async closeSettings() {
+      const { app } = current();
+
+      const readSettingsWindowCount = () =>
+        app.evaluate(
+          ({ BrowserWindow }) =>
+            BrowserWindow.getAllWindows()
+              .filter((window) => !window.webContents.isDestroyed())
+              .filter((window) => window.webContents.getURL().includes("settings.html")).length,
+        );
+
+      await app.evaluate(({ BrowserWindow }) => {
+        for (const window of BrowserWindow.getAllWindows().filter(
+          (window) => !window.webContents.isDestroyed(),
+        )) {
+          if (window.webContents.getURL().includes("settings.html")) {
+            window.close();
+          }
+        }
+      });
+
+      await expect.poll(readSettingsWindowCount).toBe(0);
     },
     async readConfig() {
       const configPath = path.join(current().userDataDir, "config.json");

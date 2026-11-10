@@ -63,10 +63,8 @@ mock.module("./config", () => ({
 
 mock.module("./ipc", () => ({
   ipc: {
-    renderer: {
-      send: (_webContents: unknown, _channel: string, payload: unknown) => {
-        sent.push(payload);
-      },
+    broadcast: (_channel: string, payload: unknown) => {
+      sent.push(payload);
     },
   },
 }));

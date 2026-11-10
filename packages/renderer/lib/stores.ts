@@ -3,7 +3,7 @@ import type { AccountInstances } from "@meru/shared/schemas";
 import type { AccountTabsState } from "@meru/shared/tabs";
 import type { TrialState } from "@meru/shared/types";
 import { create } from "zustand";
-import { accountsSearchParam, trialSearchParam } from "./search-params";
+import { accountsSearchParam, tabsSearchParam, trialSearchParam } from "./search-params";
 
 export const useAccountsStore = create<{
   accounts: AccountInstances;
@@ -24,7 +24,7 @@ ipc.renderer.on("accounts.changed", (_event, accounts) => {
 export const useTabsStore = create<{
   accountsTabs: AccountTabsState[];
 }>(() => ({
-  accountsTabs: [],
+  accountsTabs: tabsSearchParam ? JSON.parse(tabsSearchParam) : [],
 }));
 
 ipc.renderer.on("tabs.changed", (_event, accountsTabs) => {

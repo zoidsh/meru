@@ -1,8 +1,11 @@
 import { nativeTheme } from "electron";
 import { config } from "@/config";
 import { ipc } from "@/ipc";
+import { updateTitleBarOverlay } from "@/lib/window";
 import { main } from "@/main";
+import { settingsWindow } from "@/settings-window";
 import { appTray } from "@/tray";
+import { WorkspaceApp } from "@/workspace-app";
 
 class Theme {
   // Split from `listen()` because the window's colors and the renderer's
@@ -15,13 +18,13 @@ class Theme {
 
   listen() {
     nativeTheme.on("updated", () => {
-      ipc.renderer.send(
-        main.window.webContents,
-        "theme.darkModeChanged",
-        nativeTheme.shouldUseDarkColors,
-      );
+      ipc.broadcast("theme.darkModeChanged", nativeTheme.shouldUseDarkColors);
 
-      main.updateTitlebarOverlay();
+      for (const window of [main.window, settingsWindow.window, ...WorkspaceApp.getAllWindows()]) {
+        if (window) {
+          updateTitleBarOverlay(window);
+        }
+      }
 
       appTray.updateIcon();
     });

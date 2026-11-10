@@ -14,7 +14,7 @@ Every word here follows the source order in `.claude/skills/translate/source-ord
 
 ## Settings
 
-The window and Meru's own copy, also the Settings section of the language's style sheet. The app-menu item has a platform `msgctxt`: on macOS it is AppKit's word with AppKit's ellipsis, named below, and on Windows and Linux the platform's word, from the style sheet.
+The window and Meru's own copy, also the Settings section of the language's style sheet. The app-menu item has a platform `msgctxt`: on macOS it is AppKit's word with AppKit's ellipsis, named below, and on Windows and Linux the platform's word with the English's ellipsis, from the style sheet.
 
 - de: Einstellungen (Chrome 430/436); the macOS menu item _Einstellungen …_ with a no-break space before the ellipsis (Apple)
 - fr: Paramètres (Chrome 416/432, Chromium 156.0.8078.49's .xtb files); the macOS menu item _Réglages…_ (Apple)

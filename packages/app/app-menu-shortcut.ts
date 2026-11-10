@@ -2,7 +2,7 @@ import { platform } from "@electron-toolkit/utils";
 import type { WebContents } from "electron";
 import { ipc } from "@/ipc";
 import { type AppMenuKeyState, readAppMenuKey } from "@/lib/app-menu-key";
-import { main } from "@/main";
+import { settingsWindow } from "@/settings-window";
 
 /**
  * macOS has the system menu bar, so this is only the way in on Windows and
@@ -32,7 +32,7 @@ export function watchForAppMenuKey(webContents: WebContents) {
     // The page never sees the key that opened the menu.
     event.preventDefault();
 
-    ipc.renderer.send(main.window.webContents, "appMenu.toggle");
+    ipc.renderer.send(settingsWindow.getAppMenuWindow(webContents).webContents, "appMenu.toggle");
   });
 
   // A press of the mouse ends the gesture, the way it does in Chromium's own

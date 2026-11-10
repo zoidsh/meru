@@ -415,7 +415,7 @@ msgid "Amber"
 msgstr "Ámbar"
 
 #. Titlebar button on Windows and Linux that opens Meru's menu, in place of a menu bar
-#: packages/renderer/components/app-titlebar.tsx
+#: packages/renderer/components/app-menu-button.tsx
 msgid "App menu"
 msgstr "Menú de la app"
 
@@ -778,10 +778,6 @@ msgstr "Cerrar búsqueda en la página"
 #: packages/app/ipc.ts
 msgid "Close Other Tabs"
 msgstr "Cerrar las demás pestañas"
-
-#: packages/renderer/components/app-main.tsx
-msgid "Close settings"
-msgstr "Cerrar configuración"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -2916,27 +2912,27 @@ msgid "Set up desktop app"
 msgstr "Configurar app de escritorio"
 
 #. Title of the Settings window, in its titlebar
-#: packages/renderer/components/app-titlebar.tsx
+#: packages/renderer/settings.tsx
 msgid "Settings"
 msgstr "Configuración"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "Linux"
-msgid "Settings"
-msgstr "Configuración"
+msgid "Settings…"
+msgstr "Configuración…"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Configuración…"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "Windows"
-msgid "Settings"
-msgstr "Configuración"
+msgid "Settings…"
+msgstr "Configuración…"
 
 #. A menu or a menu item in Meru's menu bar
 #. A menu or a menu item in Meru's menu bar

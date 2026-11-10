@@ -18,9 +18,11 @@ function readDocumentLanguage(page: Page) {
 }
 
 test("the language field offers the shipped languages, writes the one picked and asks for a restart", async () => {
-  await openSettingsPage(meru, await meru.openSettings(), "General");
+  const settings = await meru.openSettings();
 
-  const language = meru.renderer.locator('[id="app.language"]');
+  await openSettingsPage(settings, "General");
+
+  const language = settings.locator('[id="app.language"]');
 
   // Contained rather than equal, because the trigger renders its own chevron
   // alongside the value.
@@ -28,9 +30,9 @@ test("the language field offers the shipped languages, writes the one picked and
 
   await language.click();
 
-  await expect(meru.renderer.getByRole("option", { name: "System" })).toBeVisible();
+  await expect(settings.getByRole("option", { name: "System" })).toBeVisible();
 
-  const english = meru.renderer.getByRole("option", { name: "English" });
+  const english = settings.getByRole("option", { name: "English" });
 
   await expect(english).toBeVisible();
 
@@ -42,7 +44,7 @@ test("the language field offers the shipped languages, writes the one picked and
 
   await expect(language).toContainText("English");
 
-  const restartRequired = meru.renderer
+  const restartRequired = settings
     .getByRole("listitem")
     .filter({ hasText: "Restart Meru to apply the changes." });
 

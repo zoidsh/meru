@@ -5,8 +5,7 @@
  * find, so the walk itself lives here rather than in either of them.
  */
 import type { Config } from "@meru/shared/types";
-import { expect, type Locator } from "@playwright/test";
-import type { MeruApp } from "./app";
+import { expect, type Page } from "@playwright/test";
 
 /**
  * The switch a config key is rendered by, found through the label it points at.
@@ -16,8 +15,8 @@ import type { MeruApp } from "./app";
  * `<key>-label`, so the key is already a stable handle and adding test ids
  * would only give the two somewhere to drift apart.
  */
-export function configSwitch(meru: MeruApp, configKey: keyof Config) {
-  return meru.renderer.locator(`[aria-labelledby="${configKey}-label"]`);
+export function configSwitch(settings: Page, configKey: keyof Config) {
+  return settings.locator(`[aria-labelledby="${configKey}-label"]`);
 }
 
 /**
@@ -33,8 +32,8 @@ export function configSwitch(meru: MeruApp, configKey: keyof Config) {
  * Languages is hidden from the sidebar on macOS, so it goes uncovered there —
  * which is right, because there is no way to open it there either.
  */
-export async function readSettingsPageLabels(navigation: Locator) {
-  const labels = await navigation.getByRole("button").allInnerTexts();
+export async function readSettingsPageLabels(settings: Page) {
+  const labels = await settings.getByTestId("settings-nav").getByRole("button").allInnerTexts();
 
   /*
    * Guards the reading itself. A selector that stopped matching would hand
@@ -53,9 +52,12 @@ export async function readSettingsPageLabels(navigation: Locator) {
  * safe to read the DOM afterwards. The title is asserted against the label that
  * was clicked, so an item wired to the wrong page still fails.
  */
-export async function openSettingsPage(meru: MeruApp, navigation: Locator, label: string) {
-  await navigation.getByRole("button", { name: label, exact: true }).click();
+export async function openSettingsPage(settings: Page, label: string) {
+  await settings
+    .getByTestId("settings-nav")
+    .getByRole("button", { name: label, exact: true })
+    .click();
 
   // Contained, not equal: Extensions carries a maturity badge inside its title.
-  await expect(meru.renderer.getByTestId("settings-title"), label).toContainText(label);
+  await expect(settings.getByTestId("settings-title"), label).toContainText(label);
 }

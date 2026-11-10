@@ -16,6 +16,7 @@ import { log } from "@/lib/log";
 import { getNativeCancelLabel } from "@/lib/native-cancel-label";
 import { relaunchApp } from "@/lib/relaunch";
 import { main } from "@/main";
+import { settingsWindow } from "@/settings-window";
 import { appUpdater } from "@/updater";
 import { openExternalUrl } from "@/url";
 import { WorkspaceApp } from "@/workspace-app";
@@ -172,6 +173,11 @@ export class AppMenu {
 
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
+    // Settings holds no view, so what acts on the selected account's view
+    // leaves it alone there rather than reach into the main window.
+    const isSettingsWindowFocused =
+      focusedWindow !== null && focusedWindow === settingsWindow.window;
+
     const getActiveZoomTarget = () => {
       if (focusedWindow && focusedWindow !== main.window) {
         return WorkspaceApp.tryFromWebContents(focusedWindow.webContents);
@@ -305,7 +311,7 @@ export class AppMenu {
 
     const isFindInPageEnabled =
       Boolean(focusedWindow && WorkspaceApp.tryFromWebContents(focusedWindow.webContents)) ||
-      main.location === "/";
+      (!isSettingsWindowFocused && main.location === "/");
 
     const allAccounts = accounts.getAccounts();
 
@@ -320,7 +326,7 @@ export class AppMenu {
               linux: t({ message: `About ${appName}`, context: "Linux" }),
             }),
             click: () => {
-              main.navigate("/settings/about");
+              settingsWindow.open("about");
             },
           },
           {
@@ -339,13 +345,13 @@ export class AppMenu {
           },
           {
             label: byPlatform(platform, {
-              macOS: t({ message: "Settings", context: "macOS" }),
-              windows: t({ message: "Settings", context: "Windows" }),
-              linux: t({ message: "Settings", context: "Linux" }),
+              macOS: t({ message: "Settings…", context: "macOS" }),
+              windows: t({ message: "Settings…", context: "Windows" }),
+              linux: t({ message: "Settings…", context: "Linux" }),
             }),
             accelerator: "CommandOrControl+,",
             click: () => {
-              main.navigate("/settings/general");
+              settingsWindow.open();
             },
           },
           {
@@ -608,6 +614,10 @@ export class AppMenu {
             label: t`Reload`,
             accelerator: "CommandOrControl+R",
             click: () => {
+              if (isSettingsWindowFocused) {
+                return;
+              }
+
               getActiveViewWebContents().reload();
             },
           },
@@ -615,6 +625,10 @@ export class AppMenu {
             label: t`Hard Reload`,
             accelerator: "CommandOrControl+Shift+R",
             click: () => {
+              if (isSettingsWindowFocused) {
+                return;
+              }
+
               getActiveViewWebContents().reloadIgnoringCache();
             },
           },
@@ -625,6 +639,12 @@ export class AppMenu {
             label: t`Developer Tools`,
             accelerator: is.dev && platform.isMacOS ? "Command+Alt+I" : undefined,
             click: () => {
+              if (isSettingsWindowFocused) {
+                focusedWindow?.webContents.openDevTools({ mode: "detach" });
+
+                return;
+              }
+
               if (focusedWindow && focusedWindow !== main.window) {
                 const workspaceApp = WorkspaceApp.tryFromWebContents(focusedWindow.webContents);
 
@@ -668,6 +688,10 @@ export class AppMenu {
             label: t`Back`,
             accelerator: platform.isMacOS ? "Command+[" : "Alt+Left",
             click: () => {
+              if (isSettingsWindowFocused) {
+                return;
+              }
+
               getActiveViewWebContents().navigationHistory.goBack();
             },
           },
@@ -675,6 +699,10 @@ export class AppMenu {
             label: t`Forward`,
             accelerator: platform.isMacOS ? "Command+]" : "Alt+Right",
             click: () => {
+              if (isSettingsWindowFocused) {
+                return;
+              }
+
               getActiveViewWebContents().navigationHistory.goForward();
             },
           },
@@ -805,7 +833,7 @@ export class AppMenu {
           {
             label: t`Manage Accounts`,
             click: () => {
-              main.navigate("/settings/accounts");
+              settingsWindow.open("accounts");
             },
           },
         ],
@@ -822,7 +850,7 @@ export class AppMenu {
           {
             label: t`What's New`,
             click: () => {
-              main.navigate("/settings/version-history");
+              settingsWindow.open("version-history");
             },
           },
           {
@@ -957,12 +985,12 @@ export class AppMenu {
   }
 
   /** Without an anchor the menu comes up at the pointer, which is where a click left it. */
-  togglePopup(anchor?: { x: number; y: number }) {
+  togglePopup(anchor?: { x: number; y: number }, window: BrowserWindow = main.window) {
     if (this._isPopupOpen) {
-      this.menu.closePopup(main.window);
+      this.menu.closePopup(window);
     } else {
       this.menu.popup({
-        window: main.window,
+        window,
         ...anchor,
       });
     }

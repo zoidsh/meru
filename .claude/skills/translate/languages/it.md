@@ -33,7 +33,7 @@ Sentence style: only the first word and proper nouns take a capital. A label tha
 
 ## Settings
 
-_Impostazioni_. The app-menu item with `msgctxt` `macOS` is _Impostazioni…_, as AppKit writes it; with `Windows` or `Linux` it is _Impostazioni_, since the English has no ellipsis.
+_Impostazioni_. The app-menu item with `msgctxt` `macOS` is _Impostazioni…_, as AppKit writes it; with `Windows` or `Linux` it is _Impostazioni…_ too, Microsoft's and GNOME's word with the English's ellipsis.
 
 ## Access keys
 

@@ -416,29 +416,19 @@ test.describe("coming up on the first account", () => {
     expect(await readAccountButtonPlacement(meru, LAST_ACCOUNT_ID)).toEqual(IN_VIEW);
   });
 
-  test("the arrows come back with the row after a trip through settings", async () => {
-    const scrollRightButton = readScrollArrow(meru, "right");
-
+  test("the arrows stay with the row through a trip to settings", async () => {
     await expectScrollArrowOffered(meru, "right");
 
+    // Settings opens in a window of its own, so the row stays where it is.
     await meru.openSettings();
 
-    // Gone rather than faded out: settings takes the whole row with it.
-    await expect(scrollRightButton).toHaveCount(0);
-
-    await meru.renderer.getByRole("button", { name: "Close settings" }).click();
-
-    await expect(meru.renderer.getByRole("button", { name: "Go back" })).toBeVisible();
-
-    /*
-     * A row laid out afresh works out what it can reach for itself, and has to
-     * keep working it out: measured once, against a layout its buttons have not
-     * finished settling into, it would read a row that fits and offer nothing to
-     * scroll it with ever again.
-     */
     await expectScrollArrowOffered(meru, "right");
 
-    await scrollRightButton.click();
+    await meru.closeSettings();
+
+    await expectScrollArrowOffered(meru, "right");
+
+    await readScrollArrow(meru, "right").click();
 
     await expectScrollArrowOffered(meru, "left");
   });

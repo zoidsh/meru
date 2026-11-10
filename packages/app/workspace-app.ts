@@ -56,6 +56,7 @@ import {
 } from "./lib/zoom";
 import { licenseKey } from "./license-key";
 import { main } from "./main";
+import { settingsWindow } from "./settings-window";
 import { isWindowedTab, registerTabBroadcasts } from "./tabs";
 import { openExternalUrl } from "./url";
 
@@ -313,7 +314,7 @@ export class WorkspaceApp {
     }
 
     if (url.startsWith(`${GOOGLE_ACCOUNTS_URL}/AddSession`)) {
-      main.navigate("/settings/accounts");
+      settingsWindow.open("accounts");
 
       return { action: "deny" };
     }

@@ -415,7 +415,7 @@ msgid "Amber"
 msgstr "Bärnstensgul"
 
 #. Titlebar button on Windows and Linux that opens Meru's menu, in place of a menu bar
-#: packages/renderer/components/app-titlebar.tsx
+#: packages/renderer/components/app-menu-button.tsx
 msgid "App menu"
 msgstr "Appmeny"
 
@@ -778,10 +778,6 @@ msgstr "Stäng sökning på sidan"
 #: packages/app/ipc.ts
 msgid "Close Other Tabs"
 msgstr "Stäng andra flikar"
-
-#: packages/renderer/components/app-main.tsx
-msgid "Close settings"
-msgstr "Stäng inställningar"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -2916,27 +2912,27 @@ msgid "Set up desktop app"
 msgstr "Konfigurera skrivbordsappen"
 
 #. Title of the Settings window, in its titlebar
-#: packages/renderer/components/app-titlebar.tsx
+#: packages/renderer/settings.tsx
 msgid "Settings"
 msgstr "Inställningar"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "Linux"
-msgid "Settings"
-msgstr "Inställningar"
+msgid "Settings…"
+msgstr "Inställningar…"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Inställningar…"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
 msgctxt "Windows"
-msgid "Settings"
-msgstr "Inställningar"
+msgid "Settings…"
+msgstr "Inställningar…"
 
 #. A menu or a menu item in Meru's menu bar
 #. A menu or a menu item in Meru's menu bar

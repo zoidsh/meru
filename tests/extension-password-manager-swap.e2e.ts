@@ -11,7 +11,7 @@
  * lock without it.
  */
 import { BITWARDEN_EXTENSION_ID, ONEPASSWORD_EXTENSION_ID } from "@meru/shared/extensions";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { useProApp } from "./lib/app";
 import { openSettingsPage } from "./lib/settings";
 
@@ -20,8 +20,10 @@ const meru = useProApp(
   { env: { MERU_EXTENSIONS_FIXTURE: "1" } },
 );
 
+let settings: Page;
+
 function extensionSwitch(name: string) {
-  return meru.renderer.getByRole("switch", { name: `Install ${name}` });
+  return settings.getByRole("switch", { name: `Install ${name}` });
 }
 
 async function readInstalledExtensionIds() {
@@ -29,7 +31,9 @@ async function readInstalledExtensionIds() {
 }
 
 test("turning on a second password manager asks first, and replacing turns the other off", async () => {
-  await openSettingsPage(meru, await meru.openSettings(), "Extensions");
+  settings = await meru.openSettings();
+
+  await openSettingsPage(settings, "Extensions");
 
   await expect(extensionSwitch("Bitwarden")).toBeChecked();
 
@@ -37,7 +41,7 @@ test("turning on a second password manager asks first, and replacing turns the o
 
   await extensionSwitch("1Password").click();
 
-  const replaceBitwarden = meru.renderer.getByRole("alertdialog", {
+  const replaceBitwarden = settings.getByRole("alertdialog", {
     name: "Replace Bitwarden with 1Password?",
   });
 
@@ -50,7 +54,7 @@ test("turning on a second password manager asks first, and replacing turns the o
   // Cancel is the default, so the safe answer is the one Return gives
   await expect(replaceBitwarden.getByRole("button", { name: "Cancel" })).toBeFocused();
 
-  await meru.renderer.keyboard.press("Enter");
+  await settings.keyboard.press("Enter");
 
   await expect(replaceBitwarden).toBeHidden();
 
@@ -65,12 +69,12 @@ test("turning on a second password manager asks first, and replacing turns the o
   await replaceBitwarden.getByRole("button", { name: "Replace" }).click();
 
   // What follows any 1Password install, a swap included
-  await expect(meru.renderer.getByRole("dialog", { name: "Connect 1Password" })).toBeVisible();
+  await expect(settings.getByRole("dialog", { name: "Connect 1Password" })).toBeVisible();
 
   await expect.poll(readInstalledExtensionIds).toEqual([ONEPASSWORD_EXTENSION_ID]);
 
   // The setup dialog is modal, so the switches behind it are out of reach until it closes
-  await meru.renderer.getByRole("button", { name: "Later" }).click();
+  await settings.getByRole("button", { name: "Later" }).click();
 
   await expect(extensionSwitch("Bitwarden")).not.toBeChecked();
 
@@ -78,7 +82,7 @@ test("turning on a second password manager asks first, and replacing turns the o
 
   await extensionSwitch("Bitwarden").click();
 
-  const replaceOnePassword = meru.renderer.getByRole("alertdialog", {
+  const replaceOnePassword = settings.getByRole("alertdialog", {
     name: "Replace 1Password with Bitwarden?",
   });
 
@@ -89,7 +93,7 @@ test("turning on a second password manager asks first, and replacing turns the o
   await replaceOnePassword.getByRole("button", { name: "Replace" }).click();
 
   // And what follows any other install
-  await expect(meru.renderer.getByText("Restart Meru to apply the changes.")).toBeVisible();
+  await expect(settings.getByText("Restart Meru to apply the changes.")).toBeVisible();
 
   await expect.poll(readInstalledExtensionIds).toEqual([BITWARDEN_EXTENSION_ID]);
 

@@ -34,7 +34,7 @@ Sentence style: only the first word and proper nouns take a capital, in labels a
 
 ## Settings
 
-_Paramètres_, Chrome's word, in Meru's own copy: the window, its title and every mention of it. The app-menu item with `msgctxt` `macOS` is Apple's _Réglages…_, as AppKit writes it; with `Windows` or `Linux` it is Microsoft's and GNOME's _Paramètres_, without the ellipsis the English lacks. _Réglages_ appears in Meru's own copy only as macOS's own _Réglages Système_.
+_Paramètres_, Chrome's word, in Meru's own copy: the window, its title and every mention of it. The app-menu item with `msgctxt` `macOS` is Apple's _Réglages…_, as AppKit writes it; with `Windows` or `Linux` it is Microsoft's and GNOME's _Paramètres…_, with the English's ellipsis. _Réglages_ appears in Meru's own copy only as macOS's own _Réglages Système_.
 
 ## Access keys
 

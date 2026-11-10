@@ -1246,18 +1246,15 @@ test("removing an account leaves the one worker, and its store, where it was", a
 
   expect(workerStamp).toEqual(expect.any(String));
 
-  const navigation = await meru.openSettings();
+  const settings = await meru.openSettings();
 
-  await openSettingsPage(meru, navigation, "Accounts");
+  await openSettingsPage(settings, "Accounts");
 
   // The first row is the account the partition constants name as the removed
   // one: accounts are listed in config order
-  await meru.renderer.getByRole("button", { name: "Remove account" }).first().click();
+  await settings.getByRole("button", { name: "Remove account" }).first().click();
 
-  await meru.renderer
-    .getByRole("alertdialog")
-    .getByRole("button", { name: "Remove account" })
-    .click();
+  await settings.getByRole("alertdialog").getByRole("button", { name: "Remove account" }).click();
 
   await expect.poll(async () => (await readLoadedFixture(REMOVED_PARTITION)) === null).toBe(true);
 

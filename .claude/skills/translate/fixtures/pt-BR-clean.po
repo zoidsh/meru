@@ -32,13 +32,13 @@ msgstr "Configurações do Gmail"
 
 #: packages/app/menu.ts
 msgctxt "macOS"
-msgid "Settings"
+msgid "Settings…"
 msgstr "Ajustes…"
 
 #: packages/app/menu.ts
 msgctxt "Linux"
-msgid "Settings"
-msgstr "Configurações"
+msgid "Settings…"
+msgstr "Configurações…"
 
 #: packages/renderer/routes/settings/general.tsx
 msgid "Choose Meru as the default mail client in Windows Settings."

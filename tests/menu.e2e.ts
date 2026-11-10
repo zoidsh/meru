@@ -119,9 +119,14 @@ test("a menu command drives the window", async () => {
 
   await expect.poll(() => new URL(meru.renderer.url()).hash).toBe("#/download-history");
 
-  expect(await meru.runMenuCommand("Settings")).toBe(true);
+  expect(await meru.runMenuCommand("Settings…")).toBe(true);
 
-  await expect.poll(() => new URL(meru.renderer.url()).hash).toBe("#/settings/general");
+  // Settings opens a window of its own and leaves this one where it was.
+  await expect
+    .poll(() => meru.app.windows().some((page) => page.url().includes("settings.html")))
+    .toBe(true);
+
+  expect(new URL(meru.renderer.url()).hash).toBe("#/download-history");
 });
 
 test("a command with nothing to act on is disabled", async () => {

@@ -8,7 +8,6 @@ import { watchForAppMenuKey } from "@/app-menu-shortcut";
 import { config } from "@/config";
 import {
   getCommonBrowserWindowOptions,
-  getTitleBarOptions,
   isWindowVisibleOnConnectedDisplay,
   loadRenderer,
   onceReadyToShow,
@@ -96,21 +95,11 @@ class Main {
 
   isQuittingApp = false;
 
-  loadURL() {
+  /** The state a page with the titlebar or settings needs for its first paint. */
+  createSeedSearchParams() {
     const searchParams = new URLSearchParams();
 
-    searchParams.set(
-      "accounts",
-      JSON.stringify(
-        accounts.getAccounts().map((account) => ({
-          config: account.config,
-          gmail: account.instance.gmail.store.getState(),
-          verticalTabsWidth: account.instance.verticalTabsWidth,
-        })),
-      ),
-    );
-
-    searchParams.set("accountsUnreadBadge", JSON.stringify(config.get("accounts.unreadBadge")));
+    searchParams.set("accounts", JSON.stringify(accounts.serializeAccounts()));
 
     if (trial.daysLeft || trial.expired) {
       searchParams.set(
@@ -119,24 +108,18 @@ class Main {
       );
     }
 
+    return searchParams;
+  }
+
+  loadURL() {
+    const searchParams = this.createSeedSearchParams();
+
+    searchParams.set("accountsUnreadBadge", JSON.stringify(config.get("accounts.unreadBadge")));
+
     loadRenderer(this.window, {
       page: "main",
       searchParams,
     });
-  }
-
-  updateTitlebarOverlay() {
-    if (platform.isMacOS) {
-      return;
-    }
-
-    const { titleBarOverlay } = getTitleBarOptions();
-
-    if (typeof titleBarOverlay === "boolean") {
-      return;
-    }
-
-    this.window.setTitleBarOverlay(titleBarOverlay);
   }
 
   init() {
