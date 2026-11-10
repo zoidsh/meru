@@ -127,6 +127,7 @@ type Launched = {
   inspector: Inspector;
   userDataDir: string;
   env: NodeJS.ProcessEnv;
+  args: string[];
   output: string[];
   secondInstances: ChildProcess[];
 };
@@ -189,14 +190,22 @@ function waitForInspectorUrl(mainProcess: ChildProcess, output: string[]) {
 }
 
 /** Starts the app on a user data directory that is already there, and connects to its inspector. */
-async function start(userDataDir: string, gmailUrl: string): Promise<Launched> {
+async function start(
+  userDataDir: string,
+  gmailUrl: string,
+  { args = [] }: UnattachedAppOptions,
+): Promise<Launched> {
   const env = { ...process.env, MERU_TEST_BACKGROUND: "1", MERU_TEST_GMAIL_URL: gmailUrl };
 
-  const mainProcess = spawn(EXECUTABLE_PATH, ["--inspect=0", ...launchArguments(userDataDir)], {
-    cwd: process.cwd(),
-    env,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const mainProcess = spawn(
+    EXECUTABLE_PATH,
+    ["--inspect=0", ...launchArguments(userDataDir), ...args],
+    {
+      cwd: process.cwd(),
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
 
   const output: string[] = [];
 
@@ -214,7 +223,7 @@ async function start(userDataDir: string, gmailUrl: string): Promise<Launched> {
 
     mainProcess.stderr?.on("data", onData);
 
-    return { mainProcess, inspector, userDataDir, env, output, secondInstances: [] };
+    return { mainProcess, inspector, userDataDir, env, args, output, secondInstances: [] };
   } catch (error) {
     await killTree(mainProcess);
 
@@ -222,7 +231,11 @@ async function start(userDataDir: string, gmailUrl: string): Promise<Launched> {
   }
 }
 
-async function launch(seedConfig: Partial<Config>, gmailUrl: string): Promise<Launched> {
+async function launch(
+  seedConfig: Partial<Config>,
+  gmailUrl: string,
+  options: UnattachedAppOptions,
+): Promise<Launched> {
   const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
 
   // The same seed `useApp` writes, for the same reason: no trial check against
@@ -233,7 +246,7 @@ async function launch(seedConfig: Partial<Config>, gmailUrl: string): Promise<La
   );
 
   try {
-    return await start(userDataDir, gmailUrl);
+    return await start(userDataDir, gmailUrl, options);
   } catch (error) {
     await rm(userDataDir, { recursive: true, force: true });
 
@@ -283,6 +296,11 @@ async function close({ mainProcess, inspector, userDataDir, secondInstances }: L
   await rm(userDataDir, { recursive: true, force: true });
 }
 
+export type UnattachedAppOptions = {
+  /** Extra command-line arguments for the app and every second instance, after the suite's own. */
+  args?: string[];
+};
+
 export type UnattachedApp = {
   readonly userDataDir: string;
   /**
@@ -319,7 +337,10 @@ export type UnattachedApp = {
  * Launches the app for every test in the file, as `useApp` does, once its
  * window has loaded the renderer.
  */
-export function useUnattachedApp(seedConfig: Partial<Config>): UnattachedApp {
+export function useUnattachedApp(
+  seedConfig: Partial<Config>,
+  options: UnattachedAppOptions = {},
+): UnattachedApp {
   let gmailStandIn: TestServer | undefined;
 
   let launched: Launched | undefined;
@@ -350,9 +371,9 @@ export function useUnattachedApp(seedConfig: Partial<Config>): UnattachedApp {
       )) as never;
     },
     async launchSecondInstance() {
-      const { userDataDir, env, secondInstances } = current();
+      const { userDataDir, env, args, secondInstances } = current();
 
-      const secondInstance = spawn(EXECUTABLE_PATH, launchArguments(userDataDir), {
+      const secondInstance = spawn(EXECUTABLE_PATH, [...launchArguments(userDataDir), ...args], {
         cwd: process.cwd(),
         env,
         stdio: "ignore",
@@ -414,7 +435,7 @@ export function useUnattachedApp(seedConfig: Partial<Config>): UnattachedApp {
 
       previous.inspector.close();
 
-      launched = await start(previous.userDataDir, (gmailStandIn as TestServer).gmailUrl);
+      launched = await start(previous.userDataDir, (gmailStandIn as TestServer).gmailUrl, options);
 
       await waitForRenderer();
     },
@@ -440,7 +461,7 @@ export function useUnattachedApp(seedConfig: Partial<Config>): UnattachedApp {
   }
 
   test.beforeEach(async () => {
-    launched = await launch(seedConfig, (gmailStandIn as TestServer).gmailUrl);
+    launched = await launch(seedConfig, (gmailStandIn as TestServer).gmailUrl, options);
 
     await waitForRenderer();
   });

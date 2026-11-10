@@ -148,7 +148,7 @@ type LaunchedApp = {
 };
 
 /** Resolves true when the work finishes in time, false when it runs over. */
-async function withTimeout(work: Promise<unknown>, timeout: number) {
+export async function withTimeout(work: Promise<unknown>, timeout: number) {
   let timer: NodeJS.Timeout | undefined;
 
   try {

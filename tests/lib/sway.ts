@@ -51,7 +51,11 @@ const DISPLAY_VARIABLES = ["DISPLAY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR", "SWA
 type Rect = { x: number; y: number; width: number; height: number };
 
 export type SwayView = {
+  /** sway's own id for the view, which `[con_id=…]` criteria match. */
+  id: number;
   app_id: string | null;
+  /** The window's title. */
+  name: string | null;
   shell: string;
   visible: boolean;
   /** Where the view sits in the layout, borders and all, in logical pixels. */
