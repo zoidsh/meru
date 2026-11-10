@@ -120,7 +120,7 @@ function assertXpropInstalled() {
   }
 }
 
-function onceSpawned(child: ChildProcess) {
+export function onceSpawned(child: ChildProcess) {
   return new Promise<void>((resolve, reject) => {
     child.once("spawn", resolve);
 

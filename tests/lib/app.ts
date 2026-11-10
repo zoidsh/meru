@@ -119,6 +119,8 @@ export type UseAppOptions = {
    * What the extension tests use to set the fixture and shared-instance flags.
    */
   env?: Record<string, string>;
+  /** Extra command-line arguments for the launched app, after the suite's own. */
+  args?: string[];
   /**
    * A user data directory to copy in before the app is launched, so that it
    * comes up with everything in it — a signed-in Gmail account above all, which
@@ -350,7 +352,7 @@ async function launchOnUserDataDir(
   // branch. Running the app the way it ships is the point.
   const app = await _electron.launch({
     executablePath: EXECUTABLE_PATH,
-    args: launchArguments(userDataDir),
+    args: [...launchArguments(userDataDir), ...(options.args ?? [])],
     cwd: process.cwd(),
     // Other sessions share this machine's desktop, and a test has no use for
     // its foreground.
