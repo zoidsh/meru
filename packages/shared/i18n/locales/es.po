@@ -285,6 +285,11 @@ msgstr "Acerca de {appName}"
 msgid "About Meru"
 msgstr "Acerca de Meru"
 
+#. Button on an account's row in Settings that opens a menu of its actions
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Account actions"
+msgstr "Acciones de la cuenta"
+
 #. A menu or a menu item in Meru's menu bar
 #. A page of Settings, named in the settings sidebar and as the page's title
 #. Heading of the Appearance section for how accounts look
@@ -585,6 +590,10 @@ msgctxt "macOS"
 msgid "Bring All to Front"
 msgstr "Traer todo al frente"
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Browsing data deleted"
+msgstr "Datos de navegación eliminados"
+
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "C&opy Image Address"
@@ -595,6 +604,11 @@ msgstr "C&opiar dirección de imagen"
 msgctxt "macOS"
 msgid "C&opy Image Address"
 msgstr "Copiar dirección de imagen"
+
+#. Checkbox in the Delete browsing data dialog that deletes the account's cache
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Cached images and files"
+msgstr "Archivos e imágenes almacenados en caché"
 
 #. Button in a dialog asking to confirm a setting change, which leaves the setting as it was
 #: packages/renderer/components/config-select-field.tsx
@@ -862,6 +876,11 @@ msgstr "Seguir con la versión gratuita"
 msgid "Conversation"
 msgstr "Conversación"
 
+#. Checkbox in the Delete browsing data dialog that deletes the account's cookies and the data sites store, such as local storage
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Cookies and other site data"
+msgstr "Cookies y otros datos de sitios"
+
 #. An item in the context menu of a page or a text field; & marks the access key on Windows and Linux
 #: packages/app/context-menu.ts
 msgid "Cop&y Image"
@@ -1114,6 +1133,20 @@ msgstr "Eliminar"
 msgid "Delete {label}?"
 msgstr "¿Eliminar {label}?"
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Delete browsing data"
+msgstr "Eliminar datos de navegación"
+
+#. Menu item that opens the dialog for deleting the account's cookies and cache
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Delete browsing data…"
+msgstr "Eliminar datos de navegación…"
+
+#. Button that deletes the browsing data checked in the dialog
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Delete data"
+msgstr "Eliminar datos"
+
 #: packages/renderer/routes/settings/gmail/label-colors.tsx
 msgid "Delete label color"
 msgstr "Eliminar color de etiqueta"
@@ -1241,6 +1274,11 @@ msgstr "Edición"
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Edit account"
 msgstr "Editar cuenta"
+
+#. Menu item that opens the dialog for editing the account
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Edit account…"
+msgstr "Editar cuenta…"
 
 #. A menu or a menu item in Meru's menu bar
 #: packages/app/menu.ts
@@ -1926,6 +1964,10 @@ msgstr "Meru no puede conectarse a internet. Conéctate y reinicia Meru para vol
 msgid "Meru couldn't check for updates."
 msgstr "Meru no ha podido buscar actualizaciones."
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Meru couldn't delete this account's browsing data. Try again."
+msgstr "Meru no ha podido eliminar los datos de navegación de esta cuenta. Vuelve a intentarlo."
+
 #: packages/app/ipc.ts
 msgid "Meru doesn't know this extension."
 msgstr "Meru no reconoce esta extensión."
@@ -2605,6 +2647,11 @@ msgstr "Quitar {site}"
 msgid "Remove account"
 msgstr "Quitar cuenta"
 
+#. Menu item that opens the dialog for removing the account
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Remove account…"
+msgstr "Quitar cuenta…"
+
 #. Button that removes the license key from Meru and restarts it
 #: packages/app/license-key.ts
 msgid "Remove and restart"
@@ -3241,6 +3288,10 @@ msgstr "Inicia sesión con tu contraseña u otro segundo factor disponible. Si l
 msgid "Sign in with your password or another second factor. Meru Pro lets you create a passkey for this Mac in your Google account's security settings and sign in with Touch ID. Passkeys from Chrome, iCloud, or your phone don't work in Meru either way."
 msgstr "Inicia sesión con tu contraseña u otro segundo factor. Meru Pro te permite crear una llave de acceso para este Mac en la configuración de seguridad de tu Cuenta de Google e iniciar sesión con Touch ID. Las llaves de acceso de Chrome, de iCloud o de tu teléfono no funcionan en Meru en ningún caso."
 
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Signs you out of this account."
+msgstr "Se cerrará la sesión de esta cuenta."
+
 #. Screen reader label of the field for the address of a site to add
 #: packages/renderer/routes/settings/extensions.tsx
 msgid "Site to add"
@@ -3255,6 +3306,10 @@ msgstr "Sitios de {extensionName}"
 #: packages/shared/accounts.ts
 msgid "Sky"
 msgstr "Celeste"
+
+#: packages/renderer/routes/settings/accounts.tsx
+msgid "Some pages may load more slowly the next time."
+msgstr "Es posible que algunas páginas tarden más en cargarse la próxima vez."
 
 #. Heading of the Notifications section about notification sounds
 #. Setting that picks the notification sound

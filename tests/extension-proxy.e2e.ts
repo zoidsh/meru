@@ -1252,7 +1252,9 @@ test("removing an account leaves the one worker, and its store, where it was", a
 
   // The first row is the account the partition constants name as the removed
   // one: accounts are listed in config order
-  await settings.getByRole("button", { name: "Remove account" }).first().click();
+  await settings.getByRole("button", { name: "Account actions" }).first().click();
+
+  await settings.getByRole("menuitem", { name: "Remove account…" }).click();
 
   await settings.getByRole("alertdialog").getByRole("button", { name: "Remove account" }).click();
 

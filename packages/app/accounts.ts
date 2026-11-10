@@ -8,6 +8,7 @@ import {
   getVisibleVerticalTabs,
   type VerticalTabsSessionWidth,
 } from "@meru/shared/tabs";
+import type { BrowsingDataTypes } from "@meru/shared/types";
 import { net, powerMonitor, session } from "electron";
 import { Account } from "./account";
 import { config } from "./config";
@@ -206,7 +207,7 @@ class Accounts {
     }
   }
 
-  refreshSelectedAccountView() {
+  refreshSelectedAccountView({ focus = true }: { focus?: boolean } = {}) {
     const activeTab = this.getSelectedAccount().instance.tabs.activeTab;
 
     if (!activeTab.view) {
@@ -218,7 +219,9 @@ class Accounts {
 
     activeTab.updateViewBounds?.();
 
-    this.focusActiveView();
+    if (focus) {
+      this.focusActiveView();
+    }
   }
 
   /**
@@ -577,6 +580,61 @@ class Accounts {
     instance.destroy();
 
     this.instances.delete(accountId);
+  }
+
+  async deleteBrowsingData(accountId: AccountConfig["id"], { cookies, cache }: BrowsingDataTypes) {
+    const dataTypes: Electron.ClearDataOptions["dataTypes"] = [];
+
+    if (cache) {
+      dataTypes.push("cache");
+    }
+
+    // Without `webSQL`, which Electron accepts and ignores. `clearData` leaves
+    // `chrome-extension://` storage alone, so extensions stay signed in.
+    if (cookies) {
+      dataTypes.push(
+        "cookies",
+        "localStorage",
+        "indexedDB",
+        "serviceWorkers",
+        "fileSystems",
+        "backgroundFetch",
+      );
+    }
+
+    if (dataTypes.length === 0) {
+      return;
+    }
+
+    const instance = this.instances.get(accountId);
+
+    // Closed before the clear, so no open page writes its site data back
+    // while it runs.
+    if (cookies) {
+      instance?.tabs.closeAllButGmail();
+    }
+
+    // A disabled account was never constructed, so its data is reached through
+    // its partition, as `removeAccount` does.
+    await (instance?.session ?? session.fromPartition(`persist:${accountId}`)).clearData({
+      dataTypes,
+    });
+
+    if (!instance) {
+      return;
+    }
+
+    if (instance.gmail.hasView) {
+      instance.gmail.view.webContents.reload();
+    }
+
+    instance.tabs.reloadAll();
+
+    // Without focus: this is asked for from the settings window, and focusing
+    // the view would bring the main window forward over it.
+    if (this.getAccount(accountId).config.selected) {
+      this.refreshSelectedAccountView({ focus: false });
+    }
   }
 
   async removeAccount(selectedAccountId: string) {

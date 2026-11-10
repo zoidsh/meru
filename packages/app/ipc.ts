@@ -209,6 +209,20 @@ class Ipc {
       accounts.setAccountEnabled(accountId, enabled);
     });
 
+    this.main.handle("accounts.deleteBrowsingData", async (_event, accountId, dataTypes) => {
+      try {
+        await accounts.deleteBrowsingData(accountId, dataTypes);
+      } catch (error) {
+        log.error("Failed to delete browsing data", {
+          accountId,
+          dataTypes,
+          error: serializeError(error),
+        });
+
+        throw error;
+      }
+    });
+
     this.main.on("workspaceApp.goBack", (_event, workspaceAppId) => {
       getNavigationWebContents(workspaceAppId).navigationHistory.goBack();
     });

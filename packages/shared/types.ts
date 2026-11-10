@@ -33,6 +33,8 @@ import type {
 
 export type TrialState = { daysLeft: number; expired: boolean };
 
+export type BrowsingDataTypes = { cookies: boolean; cache: boolean };
+
 export type DesktopSource = { id: string; name: string; thumbnail: string };
 
 export type DesktopSources = DesktopSource[];
@@ -281,6 +283,10 @@ export type IpcMainEvents =
         accountId: AccountConfig["id"],
         messageId: string,
         action: GmailAction,
+      ) => void;
+      "accounts.deleteBrowsingData": (
+        accountId: AccountConfig["id"],
+        dataTypes: BrowsingDataTypes,
       ) => void;
       "licenseKey.activate": (licenseKey: string) => { success: boolean };
       "license.getDeviceInfo": () => { label: string };

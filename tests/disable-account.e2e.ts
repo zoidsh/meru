@@ -89,8 +89,10 @@ async function toggleDisabled(meru: MeruApp, label: string) {
 
   await accountItems
     .filter({ hasText: label })
-    .getByRole("button", { name: "Edit account" })
+    .getByRole("button", { name: "Account actions" })
     .click();
+
+  await settings.getByRole("menuitem", { name: "Edit account…" }).click();
 
   await settings.getByRole("switch", { name: "Disabled" }).click();
 
@@ -183,8 +185,10 @@ test.describe("with the second account disabled", () => {
 
     await accountItems
       .filter({ hasText: "Work" })
-      .getByRole("button", { name: "Remove account" })
+      .getByRole("button", { name: "Account actions" })
       .click();
+
+    await settings.getByRole("menuitem", { name: "Remove account…" }).click();
 
     await settings.getByRole("alertdialog").getByRole("button", { name: "Remove account" }).click();
 
@@ -324,7 +328,9 @@ test.describe("with one account", () => {
   test("the last enabled account cannot be turned off", async () => {
     const { settings, accountItems } = await openAccountsSettings(meru);
 
-    await accountItems.getByRole("button", { name: "Edit account" }).click();
+    await accountItems.getByRole("button", { name: "Account actions" }).click();
+
+    await settings.getByRole("menuitem", { name: "Edit account…" }).click();
 
     await expect(settings.getByRole("switch", { name: "Disabled" })).toBeDisabled();
   });

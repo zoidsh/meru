@@ -824,6 +824,23 @@ export class Tabs {
     }
   }
 
+  /** Closes every tab but Gmail, leaving a pinned one dormant in its place. */
+  closeAllButGmail() {
+    for (const tab of this.tabs.slice()) {
+      if (tab.id !== GMAIL_TAB_ID) {
+        this.closeTab(tab.id);
+      }
+    }
+  }
+
+  reloadAll() {
+    for (const tab of this.tabs) {
+      if (tab instanceof WorkspaceApp) {
+        tab.reload();
+      }
+    }
+  }
+
   serialize(): TabState[] {
     return this.tabs.map((tab) => ({
       id: tab.id,
