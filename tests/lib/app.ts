@@ -464,10 +464,13 @@ async function collectDiagnostics(launched: LaunchedApp, testInfo: TestInfo) {
  * Resolves only once every process the app was made of has exited, killed or
  * not, because the user data directory is deleted next and Windows will not
  * delete a file one of them still has open. Resolves true when the app quit by
- * itself with exit code 0, which is what says Chromium wrote out its stores.
+ * itself with exit code 0, which is what says Chromium wrote out its stores,
+ * also for an app the test already quit.
  */
-async function closeApp(app: ElectronApplication) {
-  const mainProcess = app.process();
+async function closeApp({ app, mainProcess }: LaunchedApp) {
+  if (hasExited(mainProcess)) {
+    return mainProcess.exitCode === 0;
+  }
 
   const tree = await readProcessTree(mainProcess.pid as number);
 
@@ -532,9 +535,10 @@ export type MeruApp = {
    */
   quit(): Promise<number | null>;
   /**
-   * Quits the app and starts it again on the same user data directory, which is
-   * the only shape a restart can take: the single instance lock is scoped to
-   * that directory, so the second launch has to wait for the first to be gone.
+   * Quits the app, unless `quit()` already has, and starts it again on the same
+   * user data directory, which is the only shape a restart can take: the single
+   * instance lock is scoped to that directory, so the second launch has to wait
+   * for the first to be gone.
    *
    * Everything the test held from before — a window, a `WebContents` id —
    * belongs to the app that quit, so a test asks the new one for its own.
@@ -703,7 +707,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
           ).catch(() => false);
         }
 
-        const quitCleanly = await closeApp(app);
+        const quitCleanly = await closeApp(current());
 
         if (signedInProfileDir) {
           await reportWriteBack(signedInProfileDir, userDataDir, { isSignedIn, quitCleanly });
@@ -759,7 +763,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
         .tracing.stop()
         .catch(() => undefined);
 
-      await closeApp(previous.app);
+      await closeApp(previous);
 
       launched = {
         ...(await launchOnUserDataDir(previous.userDataDir, launchOptions())),
