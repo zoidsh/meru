@@ -1135,7 +1135,7 @@ msgstr "{label} verwijderen?"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete browsing data"
-msgstr "Verwijder browsegegevens"
+msgstr "Browsegegevens verwijderen"
 
 #. Menu item that opens the dialog for deleting the account's cookies and cache
 #: packages/renderer/routes/settings/accounts.tsx

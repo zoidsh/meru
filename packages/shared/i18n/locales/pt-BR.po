@@ -1135,7 +1135,7 @@ msgstr "Excluir {label}?"
 
 #: packages/renderer/routes/settings/accounts.tsx
 msgid "Delete browsing data"
-msgstr "Excluir Dados de Navegação"
+msgstr "Excluir dados de navegação"
 
 #. Menu item that opens the dialog for deleting the account's cookies and cache
 #: packages/renderer/routes/settings/accounts.tsx
