@@ -16,6 +16,12 @@ import { expect, test, type TestInfo } from "@playwright/test";
 import { _electron, type ElectronApplication, type Page } from "playwright";
 import { killProcessTree, readProcessTree, waitForProcessesToExit } from "./process-tree";
 import { startTestServer, type TestServer } from "./server";
+import {
+  acquireProfileLock,
+  flushAndCheckSignedIn,
+  isWriteBackArtifact,
+  writeBackSession,
+} from "./signed-in-session";
 
 // Where electron-builder leaves the unpacked app, per platform. macOS and
 // Windows name it after productName, "Meru"; Linux lowercases it. Getting that
@@ -48,6 +54,8 @@ export const EXECUTABLE_PATH = resolveExecutablePath();
 const CLOSE_TIMEOUT = 15_000;
 
 const DIAGNOSTICS_TIMEOUT = 10_000;
+
+const SIGNED_IN_CHECK_TIMEOUT = 15_000;
 
 /**
  * Exported so that a second instance spawned to deliver a deep link is started
@@ -133,6 +141,8 @@ type LaunchedApp = {
   /** Unset until the app has shown its window, which it may never do. */
   renderer: Page | undefined;
   userDataDir: string;
+  /** Set for a launch on a copy of the signed-in profile, which holds its lock. */
+  releaseProfile?: () => Promise<void>;
 };
 
 /** Resolves true when the work finishes in time, false when it runs over. */
@@ -213,7 +223,10 @@ async function dropRuntimeState(userDataDir: string) {
  * the same, sessions included, which is what makes either reusable here.
  */
 async function copySignedInProfile(profileDir: string, userDataDir: string) {
-  await cp(profileDir, userDataDir, { recursive: true });
+  await cp(profileDir, userDataDir, {
+    recursive: true,
+    filter: (source) => !isWriteBackArtifact(source),
+  });
 
   await dropRuntimeState(userDataDir);
 
@@ -231,6 +244,25 @@ async function copySignedInProfile(profileDir: string, userDataDir: string) {
 }
 
 async function launchApp(seedConfig: SeedConfig, options: UseAppOptions): Promise<LaunchedApp> {
+  if (!options.signedInProfileDir) {
+    return launchOnFreshUserDataDir(seedConfig, options);
+  }
+
+  const releaseProfile = await acquireProfileLock(options.signedInProfileDir);
+
+  try {
+    return { ...(await launchOnFreshUserDataDir(seedConfig, options)), releaseProfile };
+  } catch (error) {
+    await releaseProfile();
+
+    throw error;
+  }
+}
+
+async function launchOnFreshUserDataDir(
+  seedConfig: SeedConfig,
+  options: UseAppOptions,
+): Promise<LaunchedApp> {
   /*
    * A user data directory of its own, for two reasons. The app takes a single
    * instance lock scoped to that directory and quits when it loses, so runs
@@ -342,6 +374,22 @@ function hasExited(mainProcess: ChildProcess) {
   return mainProcess.exitCode !== null || mainProcess.signalCode !== null;
 }
 
+/*
+ * A Google page's query or fragment can carry the signed-in address, as a
+ * sign-in page's does, and diagnostics end up in public CI logs.
+ */
+export function redactGoogleUrl(url: string) {
+  try {
+    const { hostname, origin, pathname } = new URL(url);
+
+    return hostname === "google.com" || hostname.endsWith(".google.com")
+      ? `${origin}${pathname}`
+      : url;
+  } catch {
+    return url;
+  }
+}
+
 async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestInfo) {
   /*
    * The renderer's own HTML. Gmail and workspace apps are separate views
@@ -359,18 +407,17 @@ async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestI
     });
   }
 
+  const windowUrls = app.windows().map((window) => redactGoogleUrl(window.url()));
+
   await testInfo.attach("windows", {
-    body: app
-      .windows()
-      .map((window) => window.url())
-      .join("\n"),
+    body: windowUrls.join("\n"),
     contentType: "text/plain",
   });
 
   // Also to stdout, not only the attachments: a job that is killed for running
   // long never uploads its artifacts, and that is exactly the run whose state
   // is worth seeing.
-  console.log(`[e2e] windows: ${JSON.stringify(app.windows().map((window) => window.url()))}`);
+  console.log(`[e2e] windows: ${JSON.stringify(windowUrls)}`);
 
   const mainProcessWindows = await app
     .evaluate(({ BrowserWindow }) =>
@@ -382,6 +429,7 @@ async function attachDiagnostics({ app, renderer }: LaunchedApp, testInfo: TestI
         crashed: window.webContents.isCrashed(),
       })),
     )
+    .then((windows) => windows.map((window) => ({ ...window, url: redactGoogleUrl(window.url) })))
     .catch((error: Error) => `unreachable: ${error.message}`);
 
   console.log(`[e2e] main process: ${JSON.stringify(mainProcessWindows)}`);
@@ -415,10 +463,13 @@ async function collectDiagnostics(launched: LaunchedApp, testInfo: TestInfo) {
  *
  * Resolves only once every process the app was made of has exited, killed or
  * not, because the user data directory is deleted next and Windows will not
- * delete a file one of them still has open.
+ * delete a file one of them still has open. Resolves true when the app quit by
+ * itself with exit code 0, which is what says Chromium wrote out its stores.
  */
 async function closeApp(app: ElectronApplication) {
-  const tree = await readProcessTree(app.process().pid as number);
+  const mainProcess = app.process();
+
+  const tree = await readProcessTree(mainProcess.pid as number);
 
   const closed = await withTimeout(app.close(), CLOSE_TIMEOUT).catch(() => false);
 
@@ -429,6 +480,37 @@ async function closeApp(app: ElectronApplication) {
   }
 
   await waitForProcessesToExit(tree);
+
+  return closed && mainProcess.exitCode === 0;
+}
+
+/*
+ * Logged rather than thrown, because a session that could not be written back
+ * leaves the profile as it was before the run, which the next run can still
+ * use. The test that needs it signed in is what fails when it is not.
+ */
+async function reportWriteBack(
+  profileDir: string,
+  userDataDir: string,
+  { isSignedIn, quitCleanly }: { isSignedIn: boolean; quitCleanly: boolean },
+) {
+  if (!isSignedIn || !quitCleanly) {
+    console.log(
+      `[e2e] signed-in profile left as it was: ${isSignedIn ? "the app did not quit cleanly" : "the run was not signed in to Gmail at quit"}`,
+    );
+
+    return;
+  }
+
+  try {
+    const { written, skipped } = await writeBackSession(profileDir, userDataDir);
+
+    console.log(
+      `[e2e] signed-in profile: wrote back ${written.length} rotated session(s)${skipped.length ? `; left ${skipped.join("; ")}` : ""}`,
+    );
+  } catch (error) {
+    console.log(`[e2e] signed-in profile left as it was: ${(error as Error).message}`);
+  }
 }
 
 export type MeruApp = {
@@ -583,7 +665,7 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
       await collectDiagnostics(current(), testInfo);
     }
 
-    const { app, mainProcess, userDataDir } = current();
+    const { app, mainProcess, userDataDir, releaseProfile } = current();
 
     try {
       // An app the test quit has nothing left to trace or close.
@@ -608,10 +690,32 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
       // running would take the next test's launch down with it through the
       // single instance lock.
       if (!hasExited(mainProcess)) {
-        await closeApp(app);
+        const { signedInProfileDir } = options;
+
+        let isSignedIn = false;
+
+        if (signedInProfileDir) {
+          await withTimeout(
+            flushAndCheckSignedIn(app).then((result) => {
+              isSignedIn = result;
+            }),
+            SIGNED_IN_CHECK_TIMEOUT,
+          ).catch(() => false);
+        }
+
+        const quitCleanly = await closeApp(app);
+
+        if (signedInProfileDir) {
+          await reportWriteBack(signedInProfileDir, userDataDir, { isSignedIn, quitCleanly });
+        }
       }
 
       await rm(userDataDir, { recursive: true, force: true });
+
+      // Not reached when the app could not be stopped, which is when releasing
+      // would let another run start beside it. The lock then breaks once this
+      // worker exits.
+      await releaseProfile?.();
 
       launched = undefined;
     }
@@ -657,7 +761,10 @@ export function useApp(seedConfig: SeedConfig = {}, options: UseAppOptions = {})
 
       await closeApp(previous.app);
 
-      launched = await launchOnUserDataDir(previous.userDataDir, launchOptions());
+      launched = {
+        ...(await launchOnUserDataDir(previous.userDataDir, launchOptions())),
+        releaseProfile: previous.releaseProfile,
+      };
 
       try {
         launched.renderer = await findRendererWindow(launched.app);

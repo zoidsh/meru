@@ -56,6 +56,11 @@ async function listProcesses(): Promise<ProcessEntry[]> {
   });
 }
 
+/** When the process with this pid started, or undefined when none is running. */
+export async function readProcessStartedAt(pid: number) {
+  return (await listProcesses()).find((entry) => entry.pid === pid)?.startedAt;
+}
+
 /**
  * The process and every descendant it has right now.
  *
