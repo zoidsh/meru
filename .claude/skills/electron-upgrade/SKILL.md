@@ -65,7 +65,7 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
 - **macOS**, a fresh clone of the base VM with a signed, unnotarised arm64 DMG from `op run --env-file .env.signing.op -- bun run build:mac:dmg`:
   - `codesign --verify --deep --strict` passes, `spctl` reads `source=Developer ID`, and the app reports the target version.
   - An update between two signed builds of the branch, versioned apart as `macos-vm.md` describes, installs through ShipIt, relaunches signed on the target and keeps the channel.
-  - Sign-in, the signed-in inbox, and switching to a second account and back.
+  - Sign-in, and switching to a second account and back. The signed-in inbox is `tests/gmail-inbox-signed-in.e2e.ts`'s, on the host.
 - **Windows**, arm64 natively and x64 under emulation:
   - Both report the target version and render the signed-in inbox.
   - Switching accounts with real clicks and typing keeps each view's state.
