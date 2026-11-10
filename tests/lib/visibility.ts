@@ -7,8 +7,9 @@
  * "visible" whatever happens.
  */
 import { ms } from "@meru/shared/ms";
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
 import type { UnattachedApp } from "./unattached-app";
+import { requireWindowManager } from "./window-manager";
 
 /** How long a view is given to report the state the window is in once it has loaded. */
 const STATE_TIMEOUT = ms("15s");
@@ -130,34 +131,20 @@ export async function selectAccountFromMenu(meru: UnattachedApp, label: string) 
   expect(found, `the Accounts menu has ${label}`).toBe(true);
 }
 
-/**
- * Minimizes the window and restores it, which runs the app's `restore` handler.
- * Skips the test on Linux when nothing minimizes the window: CI runs it under
- * xvfb with no window manager, and there neither call does anything. Anywhere
- * else a window that stays up fails the test.
- */
+/** Minimizes the window and restores it, which runs the app's `restore` handler. */
 export async function minimizeAndRestore(meru: UnattachedApp, accountIds: string[]) {
+  requireWindowManager("Minimizing the window");
+
   await meru.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.minimize();
   });
 
-  const minimized = await expect
+  await expect
     .poll(
       () => meru.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized()),
-      {
-        timeout: MINIMIZE_TIMEOUT,
-      },
+      { message: "the window minimized", timeout: MINIMIZE_TIMEOUT },
     )
-    .toBe(true)
-    .then(() => true)
-    .catch(() => false);
-
-  test.skip(
-    !minimized && process.platform === "linux",
-    "the window manager did not minimize the window",
-  );
-
-  expect(minimized, "the window minimized").toBe(true);
+    .toBe(true);
 
   await expectAllHidden(meru, accountIds);
 

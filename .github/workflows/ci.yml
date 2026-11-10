@@ -180,6 +180,14 @@ jobs:
           } >> "$GITHUB_ENV"
       - uses: jdx/mise-action@v4
       - run: bun install --frozen-lockfile
+      # Not on the runner image: the minimize and maximize tests start an Xvfb
+      # and openbox of their own. One line, so further packages join it rather
+      # than paying for another apt run.
+      - name: Install a window manager
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -o Acquire::Retries=3
+          sudo apt-get install -y --no-install-recommends -o Acquire::Retries=3 openbox x11-utils
       # Only Linux needs a display server invented for it. -a takes a free
       # display rather than colliding on :99.
       - if: runner.os == 'Linux'

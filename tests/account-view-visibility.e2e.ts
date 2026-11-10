@@ -16,8 +16,12 @@ import {
   minimizeAndRestore,
   waitForAccountViews,
 } from "./lib/visibility";
+import { useWindowManagerDisplay } from "./lib/window-manager";
 
 const ACCOUNT_ID = "only-account";
+
+// Minimizing needs a window manager, and each test gets its own.
+useWindowManagerDisplay();
 
 const meru = useUnattachedApp({
   accounts: [seedAccount({ id: ACCOUNT_ID, label: "Personal" })],

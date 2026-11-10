@@ -24,12 +24,16 @@ import {
   selectAccountFromMenu,
   waitForAccountViews,
 } from "./lib/visibility";
+import { useWindowManagerDisplay } from "./lib/window-manager";
 
 const PERSONAL = { id: "first-account", label: "Personal" };
 
 const WORK = { id: "second-account", label: "Work" };
 
 const ACCOUNT_IDS = [PERSONAL.id, WORK.id];
+
+// Minimizing needs a window manager, and each test gets its own.
+useWindowManagerDisplay();
 
 const meru = useUnattachedApp({
   licenseKey: requireLicenseKey(),

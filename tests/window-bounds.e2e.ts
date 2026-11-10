@@ -12,6 +12,7 @@
 import { APP_TITLEBAR_HEIGHT } from "@meru/shared/constants";
 import { expect, test } from "@playwright/test";
 import { useApp } from "./lib/app";
+import { requireWindowManager, useWindowManagerDisplay } from "./lib/window-manager";
 
 /**
  * How long the stand-in holds the account view's page back. Comfortably longer
@@ -19,6 +20,9 @@ import { useApp } from "./lib/app";
  * runner with nothing to spare, and short enough to pay three times over.
  */
 const GMAIL_LOAD_DELAY = 2_000;
+
+// Maximizing needs a window manager, and each test gets its own.
+useWindowManagerDisplay();
 
 /*
  * The minimum window size is lifted for these tests. It defaults to 912x512,
@@ -42,7 +46,7 @@ const meru = useApp(
 /** How long a step is given to settle before it is taken as never going to. */
 const ASSERTION_TIMEOUT = 15_000;
 
-/** How long a window manager is given to act on a maximize before it is taken as unsupported. */
+/** How long the window manager is given to act on a maximize. */
 const MAXIMIZE_TIMEOUT = 5_000;
 
 /*
@@ -215,6 +219,8 @@ test("the account view follows the window as it is resized", async () => {
 });
 
 test("the account view follows the window into and out of maximize", async () => {
+  requireWindowManager("Maximizing the window");
+
   await waitForAccountView();
 
   /*
@@ -233,25 +239,19 @@ test("the account view follows the window into and out of maximize", async () =>
     BrowserWindow.getAllWindows()[0]?.maximize();
   });
 
-  const maximized = await expect
+  await expect
     .poll(
       async () => {
         const layout = await readLayout();
 
         return layout.isMaximized && layout.contentBounds.height > restoredHeight;
       },
-      { timeout: MAXIMIZE_TIMEOUT },
+      {
+        message: `the window maximized to taller than the ${restoredHeight}px it was restored at`,
+        timeout: MAXIMIZE_TIMEOUT,
+      },
     )
-    .toBe(true)
-    .then(() => true)
-    .catch(() => false);
-
-  /*
-   * Linux runs under xvfb, which has no window manager, so nothing there acts on
-   * a maximize and the window keeps the size it had. Skipping says that plainly
-   * rather than passing on an assertion that never got to mean anything.
-   */
-  test.skip(!maximized, "the window manager did not maximize the window to a larger size");
+    .toBe(true);
 
   await expectViewToFillWindow("maximizing the window", { slack: MAXIMIZED_EDGE_SLACK });
 

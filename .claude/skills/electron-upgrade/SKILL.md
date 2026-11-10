@@ -76,7 +76,6 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
 - **Linux**, `meru-linux` on arm64 and a throwaway `meru-linux-x64`:
   - The AppImage and the deb render the signed-in inbox.
   - `tests/hardening.e2e.ts` passes against an arm64 build, run with `MERU_EXECUTABLE` and `MERU_SKIP_BUILD=1` as `linux-vm.md` runs the suite.
-  - `tests/account-view-visibility*.e2e.ts` on an arm64 build, as `linux-vm.md` runs the suite, but on Xvfb with openbox instead of `xvfb-run`, so the minimize tests run rather than skip as they do in CI.
   - Two accounts under X11 with openbox: real `xdotool` clicks and typing land in the shown view.
   - Close to tray and restore from the tray, and several cold starts.
   - A new-mail notification carries its buttons over D-Bus, and **Mark as Read** reaches Gmail.
