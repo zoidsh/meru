@@ -61,7 +61,7 @@ Every upgrade verifies everything this Mac can, on the host and in the macOS, Wi
 
 The round lists only what no end-to-end test covers. A check that gains an end-to-end test leaves this list in the same pull request as the test.
 
-- **Host:** a Meet screen share through Meru's picker returns a live track, and a real meeting reaches **You are presenting**. That the picker opens is `tests/renderer-page-navigation-pro.e2e.ts`'s.
+- **Host:** a real meeting reaches **You are presenting**. That a share through Meru's picker returns a live track is `tests/screen-share-pro.e2e.ts`'s, which on macOS skips without the Screen Recording grant; when the macOS run skipped it, check the live track here too.
 - **macOS**, a fresh clone of the base VM with a signed, unnotarised arm64 DMG from `op run --env-file .env.signing.op -- bun run build:mac:dmg`:
   - `codesign --verify --deep --strict` passes, `spctl` reads `source=Developer ID`, and the app reports the target version.
   - The fuses read as shipped; `--inspect` and `ELECTRON_RUN_AS_NODE` are ignored.
