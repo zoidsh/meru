@@ -17,7 +17,7 @@ The same procedure runs whether or not the brief names a version, so every upgra
 
 ## Pick the target
 
-Run `bun scripts/electron-upgrade.ts`. It reads the version `bun.lock` resolves and npm's publish times and published versions, and prints the newest stable release in the major `bun.lock` resolves once it has been on npm for 24 hours. Exit 1 means there is nothing to take, with the reason on stderr: already current, or held because the newest release is younger than 24 hours, even when an older one is old enough, since a quick successor suggests the older one had a problem. Report the reason and stop. Exit 2 is an error; report it and stop.
+Run `git fetch origin`, then `bun scripts/electron-upgrade.ts` in a checkout at `origin/main`, such as the upgrade's worktree, since the script reads the `bun.lock` beside it. It reads the version `bun.lock` resolves and npm's publish times and published versions, and prints the newest stable release in the major `bun.lock` resolves once it has been on npm for 24 hours. Exit 1 means there is nothing to take, with the reason on stderr: already current, or held because the newest release is younger than 24 hours, even when an older one is old enough, since a quick successor suggests the older one had a problem. Report the reason and stop. Exit 2 is an error; report it and stop.
 
 A version named in the brief must pass the same rules: run the script, and take the named version only if it is what the script prints. Otherwise say why not and stop.
 
@@ -42,7 +42,7 @@ A version named in the brief must pass the same rules: run the script, and take 
   - `WebContentsView` visibility, stacking and lifecycle, on Linux above all, where a wrong view can pass CI on all three platforms.
   - The updater: Squirrel.Mac and ShipIt on macOS, NSIS on Windows, AppImage on Linux.
   - Notifications, the tray and the clipboard.
-  - The toolchain: the lock keeps Playwright at 1.62.1, since later versions can lose a packaged app's first window (microsoft/playwright#43247), and electron-builder and `@electron/fuses` must still build and fuse the new binary.
+  - The toolchain: the bump must leave Playwright's version in `bun.lock` as it was, since later versions can lose a packaged app's first window (microsoft/playwright#43247), and electron-builder and `@electron/fuses` must still build and fuse the new binary.
 
 ## Probe, bump and fix
 
@@ -53,7 +53,7 @@ A version named in the brief must pass the same rules: run the script, and take 
 ## Check
 
 - `bun run fmt:check`, `bun run lint`, `bun run types`, `bun run test`, and `op run --env-file .env.e2e.op -- bun run test:e2e`. Compare the counts with the baseline; a new failure or skip is a finding, not noise.
-- CI runs the end-to-end suite on macOS, Windows and Linux, so whatever an end-to-end test covers is proven on all three there.
+- CI runs the end-to-end suite on Windows and Linux, and on macOS only for a commit without the `e2e-macos-local` status. Before every push, a review fix's included, run `op run --env-file .env.e2e.op -- bun run test:e2e:macos-check` on a clean tree, which posts the status for that commit. It runs without the signed-in account and with retries, so the counts compared with the baseline come from the `test:e2e` run above, not from it.
 
 ## The VM round
 
@@ -61,12 +61,12 @@ Every upgrade verifies everything this Mac can, on the host and in the macOS, Wi
 
 The round lists only what no end-to-end test covers. A check that gains an end-to-end test leaves this list in the same pull request as the test.
 
-- **Host:** a Meet screen share from a Gmail view opens Meru's picker, returns a live track, and a real meeting reaches **You are presenting**.
+- **Host:** a Meet screen share through Meru's picker returns a live track, and a real meeting reaches **You are presenting**. That the picker opens is `tests/renderer-page-navigation-pro.e2e.ts`'s.
 - **macOS**, a fresh clone of the base VM with a signed, unnotarised arm64 DMG from `op run --env-file .env.signing.op -- bun run build:mac:dmg`:
   - `codesign --verify --deep --strict` passes, `spctl` reads `source=Developer ID`, and the app reports the target version.
   - The fuses read as shipped; `--inspect` and `ELECTRON_RUN_AS_NODE` are ignored.
   - The swipe addon loads.
-  - An update between two signed builds of the branch, versioned apart in a throwaway worktree, installs through ShipIt, relaunches signed on the target and keeps the channel.
+  - An update between two signed builds of the branch, versioned apart as `macos-vm.md` describes, installs through ShipIt, relaunches signed on the target and keeps the channel.
   - Sign-in, the signed-in inbox, and switching to a second account and back.
 - **Windows**, arm64 natively and x64 under emulation:
   - Both report the target version and render the signed-in inbox.
@@ -77,7 +77,8 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
   - An arm64 update to a released build keeps the channel.
 - **Linux**, `meru-linux` on arm64 and a throwaway `meru-linux-x64`:
   - The AppImage and the deb render the signed-in inbox; the AppImage, deb and rpm read the shipped fuses.
-  - Two accounts under X11 with a window manager: after minimize and restore the selected account's view is the one shown, which `tests/account-view-visibility*.e2e.ts` skips where `xvfb-run` has none, and real `xdotool` clicks and typing land in the shown view.
+  - `tests/account-view-visibility*.e2e.ts` on an arm64 build, as `linux-vm.md` runs the suite, but on Xvfb with openbox instead of `xvfb-run`, so the minimize tests run rather than skip as they do in CI.
+  - Two accounts under X11 with openbox: real `xdotool` clicks and typing land in the shown view.
   - Close to tray and restore from the tray, and several cold starts.
   - A new-mail notification carries its buttons over D-Bus, and **Mark as Read** reaches Gmail.
   - Under headless sway with `--ozone-platform=wayland`, the first launch maps the window, and keyboard and pointer input work.
@@ -85,11 +86,13 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
   - The AppImage updates to a released build.
   - x86_64 reports `(x64)`, reads the same fuses and renders two accounts.
 
+When the round is over, delete the macOS clone and `meru-linux-x64`, remove bun and node from the guests, and stop every VM this run started.
+
 Under `## Not verified` goes only what this Mac cannot do: Touch ID and Bitwarden biometric unlock, Meet with camera and microphone and through the macOS system picker, a notarised build under Gatekeeper with quarantine, Windows Azure signing, and whatever the VM docs record as impossible here.
 
 ## Changelog
 
-- `[Unreleased]` holds one line under `Changed`, "Updated to Electron <major>, which brings Chrome <Chromium major> and its security fixes", naming the major the branch is on. The bump commit adds it when it is missing, as it is once a stable release has emptied the section, and corrects one that names an older major.
+- `[Unreleased]` holds one line under `Changed`, "Updated to Electron <version>, which brings Chrome <Chromium version> and its security fixes", with both exact versions from the target's release notes. The bump commit adds it when it is missing, as it is once a stable release has emptied the section, and corrects one that names an older version.
 - Any other user-visible change the upgrade brings gets a line of its own, under `Added`, `Changed` or `Fixed` as `CLAUDE.md` assigns them, in the same commit as that change.
 
 ## Record
@@ -100,7 +103,7 @@ Add a section for the target to `$PROJECT_DOCS_DIR/zoidsh/meru/electron-<major>-
 
 - Into `main`. Title `Upgrade Electron to <version>`, followed by `, <the user-visible fix>` when there is one.
 - Body: a summary; what reaches Meru, and what was checked and is not applicable; the proof, with the running version before and after and the check and end-to-end counts against the baseline; the VM round's results; `## Not verified`; risk and how to revert.
-- It merges only once CI has passed on macOS, Windows and Linux.
+- It merges only once CI has passed on Windows and Linux, and macOS has passed there or as `e2e-macos-local` on the same commit.
 
 ## When an upgrade finds a new kind of break
 
