@@ -121,12 +121,15 @@ export function LanguagesSettings() {
                   <Button
                     variant="outline"
                     disabled={!isLicenseKeyValid}
+                    // A summary too long for the trigger wraps rather than
+                    // clipping, the way a settings sidebar item does; min-h-8
+                    // and py-1 keep a one-line trigger at the Button's h-8.
                     className={cn(
-                      "w-full justify-between font-normal",
+                      "h-auto min-h-8 w-full justify-between py-1 text-left font-normal whitespace-normal",
                       selected.length === 0 && "text-muted-foreground",
                     )}
                   >
-                    <span className="truncate">{getTriggerLabel()}</span>
+                    <span className="min-w-0 wrap-anywhere">{getTriggerLabel()}</span>
                     <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
                   </Button>
                 }
