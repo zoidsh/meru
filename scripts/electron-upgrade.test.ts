@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import path from "node:path";
 import { ms } from "@meru/shared/ms";
 import { decide, lockedElectron, reasons } from "./electron-upgrade";
 
@@ -142,6 +143,55 @@ describe("decide", () => {
     expect(() =>
       decideListed({ time: { "45.2.0": ago(30) }, versions: [45], current: "45.1.0", now }),
     ).toThrow("not a list of version strings");
+  });
+
+  test("fails on a current version npm does not list", () => {
+    expect(() => decideListed({ time: { "45.1.0": ago(100) }, current: "45.9.9", now })).toThrow(
+      "Electron 45.9.9 is not a version npm lists",
+    );
+  });
+});
+
+describe("the command", () => {
+  const fixtures = path.join(import.meta.dirname, "fixtures");
+
+  function run(...args: string[]) {
+    const result = Bun.spawnSync([
+      process.execPath,
+      path.join(import.meta.dirname, "electron-upgrade.ts"),
+      "--time",
+      path.join(fixtures, "electron-time.json"),
+      "--versions",
+      path.join(fixtures, "electron-versions.json"),
+      ...args,
+    ]);
+
+    return {
+      code: result.exitCode,
+      stdout: result.stdout.toString(),
+      stderr: result.stderr.toString(),
+    };
+  }
+
+  test("prints the target alone and exits 0", () => {
+    const result = run("--current", "45.1.0", "--now", "2026-10-31T19:18:04Z");
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe("45.2.0\n");
+  });
+
+  test("exits 1 with the reason when holding", () => {
+    const result = run("--current", "45.1.0", "--now", "2026-10-31T00:18:04Z");
+
+    expect(result.code).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("Holding: Electron 45.2.0");
+  });
+
+  test("exits 2 on an error", () => {
+    expect(run("--current", "99.0.0").code).toBe(2);
+    expect(run("--current", "45.1.0", "--min-age", "").code).toBe(2);
+    expect(run("--unknown").code).toBe(2);
   });
 });
 

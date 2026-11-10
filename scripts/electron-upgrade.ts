@@ -91,6 +91,11 @@ export function decide({
   const currentParts = parseVersion(current);
   const releases = stableReleases(time, versions).sort((a, b) => compare(b.parts, a.parts));
 
+  // Otherwise a version npm never published reads as the newest in its major.
+  if (!(versions as string[]).includes(current)) {
+    throw new Error(`Electron ${current} is not a version npm lists`);
+  }
+
   // `--now` can lie in the past, where a major npm lists is not out yet.
   const newerMajor = releases.find(
     (release) => release.parts[0] > currentParts[0] && release.publishedAt <= now,
