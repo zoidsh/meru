@@ -1207,6 +1207,62 @@ test("storage.onChanged fires in the worker and the shim session, for the worker
 });
 
 /*
+ * Electron keeps a `sync` store with no sync service behind it, so it holds
+ * data like a second `local`. An extension that keeps its settings there
+ * reaches the worker's store from an account session only through the relay,
+ * change events included.
+ */
+test("sync storage is the worker's store across the proxy, and its changes reach both sessions", async () => {
+  const workerPopupId = await openProbeWindow(WORKER_SESSION, popupUrl("worker-sync"));
+
+  const shimPopupId = await openProbeWindow(SURVIVING_PARTITION, popupUrl("shim-sync"));
+
+  const listenForSyncChanges = `window.syncChanges = [];
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === "sync") {
+        window.syncChanges.push(changes);
+      }
+    });
+    true`;
+
+  const writeSync = (key: string, value: string) =>
+    `chrome.storage.sync.set(${JSON.stringify({ [key]: value })}).then(
+      () => "written",
+      (error) => error.message,
+    )`;
+
+  const readSync = `chrome.storage.sync.get(["syncFromWorker", "syncFromShim"]).then(
+    (items) => items,
+    (error) => error.message,
+  )`;
+
+  for (const pageId of [workerPopupId, shimPopupId]) {
+    await runInPage(pageId, listenForSyncChanges);
+  }
+
+  expect(await runInPage(workerPopupId, writeSync("syncFromWorker", "worker"))).toBe("written");
+
+  expect(await runInPage(shimPopupId, writeSync("syncFromShim", "shim"))).toBe("written");
+
+  const bothWrites = { syncFromWorker: "worker", syncFromShim: "shim" };
+
+  // The shim session's own `sync` store holds neither key, so reading the
+  // worker popup's write there is the relayed call reaching the worker's
+  expect(await runInPage(shimPopupId, readSync)).toEqual(bothWrites);
+
+  expect(await runInPage(workerPopupId, readSync)).toEqual(bothWrites);
+
+  for (const pageId of [workerPopupId, shimPopupId]) {
+    await expect
+      .poll(() => runInPage(pageId, "window.syncChanges"))
+      .toEqual([
+        { syncFromWorker: { newValue: "worker" } },
+        { syncFromShim: { newValue: "shim" } },
+      ]);
+  }
+});
+
+/*
  * What the worker living in the default session buys, and the reason for the
  * whole change: removing an account is a non-event for every other account.
  * Nothing about the removed session was load-bearing — it held a
