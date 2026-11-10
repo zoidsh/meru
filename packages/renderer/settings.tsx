@@ -25,7 +25,7 @@ function Settings() {
           <AppSidebar />
           <div className="relative flex flex-1 bg-sidebar">
             <ScrollArea className="@container relative m-4 flex-1 overflow-hidden rounded-xl border bg-background dark:border-none">
-              <div className="mx-auto w-full max-w-3xl px-20 py-8 @3xl:px-28">
+              <div className="mx-auto w-full max-w-3xl px-8 py-8 @xl:px-20 @3xl:px-28">
                 {sidebarNavItems
                   .filter((navItem) => navItem.type !== "separator")
                   .map(({ path, component }) => (
