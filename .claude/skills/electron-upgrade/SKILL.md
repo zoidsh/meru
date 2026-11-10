@@ -69,7 +69,7 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
 - **Windows**, arm64 natively and x64 under emulation:
   - Both report the target version and render the signed-in inbox.
   - Switching accounts with real clicks and typing keeps each view's state.
-  - Close to tray and restore from the tray, quit and relaunch, and silent uninstall.
+  - Close to tray and restore from the tray, and silent uninstall.
   - `tests/hardening.e2e.ts` passes against the arm64 build, run with `MERU_EXECUTABLE` and `MERU_SKIP_BUILD=1` as `windows-vm.md` runs the suite.
   - Open at login round-trips, also at a path with a space.
   - An arm64 update to a released build keeps the channel.
@@ -77,7 +77,7 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
   - The AppImage and the deb render the signed-in inbox.
   - `tests/hardening.e2e.ts` passes against an arm64 build, run with `MERU_EXECUTABLE` and `MERU_SKIP_BUILD=1` as `linux-vm.md` runs the suite.
   - Two accounts under X11 with openbox: real `xdotool` clicks and typing land in the shown view.
-  - Close to tray and restore from the tray, and several cold starts.
+  - Close to tray and restore from the tray.
   - A new-mail notification carries its buttons over D-Bus, and **Mark as Read** reaches Gmail.
   - Under headless sway with `--ozone-platform=wayland`, the first launch maps the window, and keyboard and pointer input work.
   - X11 paste does not hang.

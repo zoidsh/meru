@@ -188,16 +188,8 @@ function waitForInspectorUrl(mainProcess: ChildProcess, output: string[]) {
   });
 }
 
-async function launch(seedConfig: Partial<Config>, gmailUrl: string): Promise<Launched> {
-  const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
-
-  // The same seed `useApp` writes, for the same reason: no trial check against
-  // the API, and a native dialog waiting on nobody if it failed.
-  await writeFile(
-    path.join(userDataDir, "config.json"),
-    JSON.stringify({ "trial.expired": true, ...seedConfig }, null, "\t"),
-  );
-
+/** Starts the app on a user data directory that is already there, and connects to its inspector. */
+async function start(userDataDir: string, gmailUrl: string): Promise<Launched> {
   const env = { ...process.env, MERU_TEST_BACKGROUND: "1", MERU_TEST_GMAIL_URL: gmailUrl };
 
   const mainProcess = spawn(EXECUTABLE_PATH, ["--inspect=0", ...launchArguments(userDataDir)], {
@@ -226,10 +218,48 @@ async function launch(seedConfig: Partial<Config>, gmailUrl: string): Promise<La
   } catch (error) {
     await killTree(mainProcess);
 
+    throw error;
+  }
+}
+
+async function launch(seedConfig: Partial<Config>, gmailUrl: string): Promise<Launched> {
+  const userDataDir = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
+
+  // The same seed `useApp` writes, for the same reason: no trial check against
+  // the API, and a native dialog waiting on nobody if it failed.
+  await writeFile(
+    path.join(userDataDir, "config.json"),
+    JSON.stringify({ "trial.expired": true, ...seedConfig }, null, "\t"),
+  );
+
+  try {
+    return await start(userDataDir, gmailUrl);
+  } catch (error) {
     await rm(userDataDir, { recursive: true, force: true });
 
     throw error;
   }
+}
+
+/**
+ * Asks the app to quit and resolves with its exit code, or undefined when it
+ * is still running at the timeout, once every process it was made of is gone.
+ */
+async function quitAndWait(mainProcess: ChildProcess, requestQuit: () => Promise<void>) {
+  const tree = await readProcessTree(mainProcess.pid as number);
+
+  const exited = waitForExit(mainProcess, QUIT_TIMEOUT);
+
+  await requestQuit();
+
+  const code = await exited;
+
+  // Also when it quit, for any helper the main process left behind.
+  tree.push(...(await killProcessTree(tree)));
+
+  await waitForProcessesToExit(tree);
+
+  return code;
 }
 
 async function close({ mainProcess, inspector, userDataDir, secondInstances }: Launched) {
@@ -238,21 +268,14 @@ async function close({ mainProcess, inspector, userDataDir, secondInstances }: L
   }
 
   if (!hasExited(mainProcess)) {
-    const tree = await readProcessTree(mainProcess.pid as number);
+    const code = await quitAndWait(mainProcess, async () => {
+      // Not awaited: the reply can be lost with the process it came from.
+      inspector.evaluate(`${ELECTRON}.app.quit()`).catch(() => undefined);
+    });
 
-    const exited = waitForExit(mainProcess, QUIT_TIMEOUT);
-
-    // Not awaited: the reply can be lost with the process it came from.
-    inspector.evaluate(`${ELECTRON}.app.quit()`).catch(() => undefined);
-
-    if ((await exited) === undefined) {
+    if (code === undefined) {
       console.log(`[e2e] the app did not quit within ${QUIT_TIMEOUT}ms; killing it`);
     }
-
-    // Also when it quit, for any helper the main process left behind.
-    tree.push(...(await killProcessTree(tree)));
-
-    await waitForProcessesToExit(tree);
   }
 
   inspector.close();
@@ -279,6 +302,17 @@ export type UnattachedApp = {
    * the front on macOS.
    */
   launchSecondInstance(): Promise<void>;
+  /**
+   * Quits through the menu's Quit item, and resolves with the main process's
+   * exit code, or null when it has not exited within the quit timeout.
+   */
+  quit(): Promise<number | null>;
+  /**
+   * Starts the app again on the same user data directory, a cold start rather
+   * than a second instance, once the previous one has quit, and resolves once
+   * its window has loaded the renderer.
+   */
+  relaunch(): Promise<void>;
 };
 
 /**
@@ -339,24 +373,76 @@ export function useUnattachedApp(seedConfig: Partial<Config>): UnattachedApp {
       // Losing the lock exits 0; anything else never got as far as handing over.
       expect(code, "the second instance's exit code").toBe(0);
     },
+    async quit() {
+      let found = false;
+
+      const code = await quitAndWait(current().mainProcess, async () => {
+        // By accelerator, which is the same in every interface language.
+        // Clicked on the next tick, so the reply leaves before the process goes.
+        found = await meru.evaluate(({ Menu }) => {
+          const find = (menuItems: Electron.MenuItem[]): Electron.MenuItem | undefined =>
+            menuItems
+              .map((menuItem) =>
+                menuItem.accelerator === "CommandOrControl+Q"
+                  ? menuItem
+                  : find(menuItem.submenu?.items ?? []),
+              )
+              .find(Boolean);
+
+          const menuItem = find(Menu.getApplicationMenu()?.items ?? []);
+
+          if (menuItem) {
+            setImmediate(() => {
+              menuItem.click();
+            });
+          }
+
+          return Boolean(menuItem);
+        });
+      });
+
+      expect(found, "the menu has a Quit item").toBe(true);
+
+      return code ?? null;
+    },
+    async relaunch() {
+      const previous = current();
+
+      if (!hasExited(previous.mainProcess)) {
+        throw new Error("The app is still running; quit it before launching it again");
+      }
+
+      previous.inspector.close();
+
+      launched = await start(previous.userDataDir, (gmailStandIn as TestServer).gmailUrl);
+
+      await waitForRenderer();
+    },
   };
+
+  function waitForRenderer() {
+    return expect
+      .poll(
+        () =>
+          meru
+            .evaluate(({ BrowserWindow }) => {
+              const [window] = BrowserWindow.getAllWindows();
+
+              return Boolean(
+                window?.webContents.getURL().includes("main.html") &&
+                !window.webContents.isLoading(),
+              );
+            })
+            .catch(() => false),
+        { message: "the app's window loaded the renderer" },
+      )
+      .toBe(true);
+  }
 
   test.beforeEach(async () => {
     launched = await launch(seedConfig, (gmailStandIn as TestServer).gmailUrl);
 
-    await expect
-      .poll(() =>
-        meru
-          .evaluate(({ BrowserWindow }) => {
-            const [window] = BrowserWindow.getAllWindows();
-
-            return Boolean(
-              window?.webContents.getURL().includes("main.html") && !window.webContents.isLoading(),
-            );
-          })
-          .catch(() => false),
-      )
-      .toBe(true);
+    await waitForRenderer();
   });
 
   // oxlint-disable-next-line no-empty-pattern
