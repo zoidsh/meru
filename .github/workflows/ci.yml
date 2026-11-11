@@ -207,6 +207,9 @@ jobs:
         with:
           name: e2e-${{ matrix.os }}-${{ matrix.shard }}
           if-no-files-found: ignore
+          # A trace is opened in the days after the failure it records, never
+          # months later.
+          retention-days: 14
           # The trace opens in the trace viewer and is the thing worth having;
           # the report is the readable index into it.
           path: |
