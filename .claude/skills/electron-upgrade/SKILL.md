@@ -59,21 +59,20 @@ A version named in the brief must pass the same rules: run the script, and take 
 
 Every upgrade verifies everything this Mac can, on the host and in the macOS, Windows and Linux VMs. How to run each VM, get a build in and drive it is in `$PROJECT_DOCS_DIR/zoidsh/meru/macos-vm.md`, `windows-vm.md` and `linux-vm.md`. Each VM signs the test account in itself; a copied profile signs Google out.
 
-The round lists only what no end-to-end test covers. A check that gains an end-to-end test leaves this list in the same pull request as the test. The fuses, that `--inspect`, `ELECTRON_RUN_AS_NODE` and `NODE_OPTIONS` are refused against a control, and that the swipe addon loads are `tests/hardening.e2e.ts`'s, which CI runs on the suite's own x64 Linux and Windows builds and arm64 macOS build; arm64 Linux and Windows are the VMs' below. That the first launch under `--ozone-platform=wayland` maps the window and takes keyboard and pointer input is `tests/wayland.e2e.ts`'s, in a headless sway of its own on CI's x64 Linux.
+The round lists only what no end-to-end test covers. A check that gains an end-to-end test leaves this list in the same pull request as the test. The fuses, that `--inspect`, `ELECTRON_RUN_AS_NODE` and `NODE_OPTIONS` are refused against a control, and that the swipe addon loads are `tests/hardening.e2e.ts`'s, which CI runs on the suite's own x64 Linux and Windows builds and arm64 macOS build; arm64 Linux and Windows are the VMs' below. That the first launch under `--ozone-platform=wayland` maps the window and takes keyboard and pointer input is `tests/wayland.e2e.ts`'s, in a headless sway of its own on CI's x64 Linux. x64 is CI's alone: it runs the whole suite on x64 Linux and Windows, so the round runs only arm64.
 
 - **Host:** a real meeting reaches **You are presenting**. That a share through Meru's picker returns a live track is `tests/screen-share-pro.e2e.ts`'s, which on macOS skips without the Screen Recording grant; when the macOS run skipped it, check the live track here too.
 - **macOS**, a fresh clone of the base VM with a signed, unnotarised arm64 DMG from `op run --env-file .env.signing.op -- bun run build:mac:dmg`:
   - `codesign --verify --deep --strict` passes, `spctl` reads `source=Developer ID`, and the app reports the target version.
   - An update between two signed builds of the branch, versioned apart as `macos-vm.md` describes, installs through ShipIt, relaunches signed on the target and keeps the channel.
   - Sign-in, and switching to a second account and back. The signed-in inbox is `tests/gmail-inbox-signed-in.e2e.ts`'s, on the host.
-- **Windows**, arm64 natively and x64 under emulation:
-  - Both report the target version and render the signed-in inbox.
+- **Windows**, arm64 natively:
+  - It reports the target version and renders the signed-in inbox.
   - Switching accounts with real clicks and typing keeps each view's state.
   - Close to tray and restore from the tray, and silent uninstall.
   - `tests/hardening.e2e.ts` passes against the arm64 build, run with `MERU_EXECUTABLE` and `MERU_SKIP_BUILD=1` as `windows-vm.md` runs the suite.
   - Open at login round-trips, also at a path with a space.
-  - An arm64 update to a released build keeps the channel.
-- **Linux**, `meru-linux` on arm64 and a throwaway `meru-linux-x64`:
+  - An arm64 update to a released build keeps the channel.- **Linux**, `meru-linux` on arm64:
   - The AppImage and the deb render the signed-in inbox.
   - `tests/hardening.e2e.ts` passes against an arm64 build, run with `MERU_EXECUTABLE` and `MERU_SKIP_BUILD=1` as `linux-vm.md` runs the suite.
   - Two accounts under X11 with openbox: real `xdotool` clicks and typing land in the shown view.
@@ -81,9 +80,7 @@ The round lists only what no end-to-end test covers. A check that gains an end-t
   - A new-mail notification carries its buttons over D-Bus, and **Mark as Read** reaches Gmail.
   - X11 paste does not hang.
   - The AppImage updates to a released build.
-  - x86_64 reports `(x64)` and renders two accounts.
-
-When the round is over, delete the macOS clone and `meru-linux-x64`, remove bun and node from the guests, and stop every VM this run started.
+    When the round is over, delete the macOS clone, remove bun and node from the guests, and stop every VM this run started.
 
 Under `## Not verified` goes only what this Mac cannot do: Touch ID and Bitwarden biometric unlock, Meet with camera and microphone and through the macOS system picker, a notarised build under Gatekeeper with quarantine, Windows Azure signing, and whatever the VM docs record as impossible here.
 
