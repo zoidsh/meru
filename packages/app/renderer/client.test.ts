@@ -59,13 +59,20 @@ describe(createClient, () => {
 
   it("parses an invoke's answer against its result schema", async () => {
     const { bridge, client } = connect();
+    const answer = {
+      entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
+      menu: {},
+      stage: snapshot,
+      views: [],
+      zoom: [],
+    };
     bridge.answers.set("e2e.snapshot", {
       ok: true,
-      value: { menu: {}, stage: snapshot, views: [], zoom: [] },
+      value: answer,
     });
     await expect(client.invoke(e2e.snapshot, {})).resolves.toStrictEqual({
       ok: true,
-      value: { menu: {}, stage: snapshot, views: [], zoom: [] },
+      value: answer,
     });
 
     bridge.answers.set("e2e.snapshot", { ok: true, value: { stage: 1 } });

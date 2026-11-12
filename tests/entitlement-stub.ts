@@ -21,6 +21,9 @@ export interface Stub {
   readonly requests: { licenseKey: string | null; deviceId: string }[];
   /** Answers `licenseKey` from now on; null is a device with no license key. */
   readonly answer: (licenseKey: string | null, answer: StubAnswer) => void;
+  /** Holds every answer until `release`, so what the app shows before one arrives can be seen. */
+  readonly hold: () => void;
+  readonly release: () => void;
   readonly stop: () => Promise<void>;
 }
 
@@ -84,6 +87,8 @@ export const startStub = async ({
     ...answers,
   ]);
   const requests: Stub["requests"] = [];
+  const gate = new EventTarget();
+  let holding = false;
   const server = createServer((request, response) => {
     const handle = async () => {
       const text = await readBody(request);
@@ -99,6 +104,9 @@ export const startStub = async ({
         return;
       }
       requests.push(parsed.data);
+      if (holding) {
+        await once(gate, "release");
+      }
       const answer = table.get(parsed.data.licenseKey);
       if (answer === undefined) {
         send(response, 403, { error: { reason: "unknownLicenseKey" } });
@@ -124,6 +132,13 @@ export const startStub = async ({
     answer: (licenseKey, answer) => {
       table.set(licenseKey, answer);
     },
+    hold: () => {
+      holding = true;
+    },
+    release: () => {
+      holding = false;
+      gate.dispatchEvent(new Event("release"));
+    },
     requests,
     stop: async () => {
       server.closeAllConnections();
@@ -133,3 +148,11 @@ export const startStub = async ({
     url: `http://127.0.0.1:${address.port}/entitlement/issue`,
   };
 };
+
+// Run directly, it serves a trial to a device with no license key and Pro to PRO-KEY until stopped.
+if (import.meta.main) {
+  const stub = await startStub({
+    answers: [["PRO-KEY", { deviceLimit: 3, kind: "pro" }]],
+  });
+  console.log(`MERU_ENTITLEMENT_URL=${stub.url}`);
+}

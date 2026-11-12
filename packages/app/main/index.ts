@@ -139,6 +139,7 @@ const start = async () => {
   if (e2e) {
     answerE2e({
       accelerators: applicationAccelerators,
+      entitlement,
       registrar: dispatcher,
       stages,
     });
