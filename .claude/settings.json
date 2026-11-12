@@ -1,4 +1,7 @@
 {
+  "env": {
+    "MERU_BACKGROUND": "1"
+  },
   "hooks": {
     "PostToolUse": [
       {
