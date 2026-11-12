@@ -401,17 +401,20 @@ describe("a drag across panes", () => {
     });
   });
 
-  it("moves the panes with the pointer and tells the chrome page nothing until the release", () => {
+  it("moves the panes and tells the chrome page with each move, so the divider follows the pointer", () => {
     const { window, overlay, stages, changes } = dragging();
 
     expect(
       stages.dragTo(overlay?.contentsId ?? 0, { x: 300, y: 400 }, 1).ok
     ).toBeTruthy();
-    expect(childBounds(window)[0]?.width).toBe(288);
-    expect(changes()).toStrictEqual([]);
+    stages.dragTo(overlay?.contentsId ?? 0, { x: 320, y: 400 }, 1);
+    expect(childBounds(window)[0]?.width).toBe(308);
+    expect(changes().map((change) => change.dividers[0]?.rect.x)).toStrictEqual(
+      [296, 316]
+    );
   });
 
-  it("removes the overlay on release and sends one snapshot", () => {
+  it("removes the overlay on release, having sent where the release left the divider", () => {
     const { window, overlay, stages, changes } = dragging();
 
     expect(

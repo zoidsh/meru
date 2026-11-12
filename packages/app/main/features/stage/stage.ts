@@ -240,7 +240,7 @@ export class Stage {
       ...this.#group,
       layout: resize(this.#group.layout, drag.splitId, ratio),
     };
-    this.#arrange(false);
+    this.#arrange();
     return ok(undefined);
   }
 
@@ -251,7 +251,6 @@ export class Stage {
     this.dragTo(point);
     this.#retireOverlay();
     this.#reconcile();
-    this.#publish();
     return ok(undefined);
   }
 

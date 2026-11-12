@@ -36,6 +36,13 @@ test("splits, drags the divider across the panes, and closes a pane", async () =
     await chrome.mouse.move(x, y);
     await chrome.mouse.down();
     await chrome.mouse.move(x - 200, y, { steps: 10 });
+    // The divider the chrome page draws follows the pointer before the release.
+    await expect
+      .poll(async () => {
+        const moving = await divider.boundingBox();
+        return moving === null ? 0 : moving.x + moving.width / 2;
+      })
+      .toBeCloseTo(x - 200, 0);
     await chrome.mouse.up();
 
     await expect
