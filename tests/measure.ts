@@ -149,7 +149,7 @@ const git = (...args: string[]) =>
   execFileSync("git", args, { cwd: root, encoding: "utf-8" }).trim();
 
 const commit = () =>
-  `${git("rev-parse", "--short", "HEAD")}${git("status", "--porcelain") === "" ? "" : "+dirty"}`;
+  `${git("rev-parse", "--short", "HEAD")}${git("status", "--porcelain", "--", ".", ":!measurements") === "" ? "" : "+dirty"}`;
 
 /** Launches an app, reads it 5s after launch, right after one split, and after the idle time, and closes it. */
 export const measureApp = async (
