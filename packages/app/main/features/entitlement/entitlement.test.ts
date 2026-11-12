@@ -70,6 +70,7 @@ const stateFile = (state: Partial<EntitlementState>) =>
       deviceId: DEVICE,
       lastAnswer: null,
       licenseKey: null,
+      rejected: null,
       token: null,
       ...state,
     },
@@ -337,32 +338,76 @@ describe(Entitlement, () => {
     expect(entitlement.current().kind).toBe("free");
   });
 
-  it("keeps the value when the API rejects the request, and reports it", async () => {
-    const token = await mint({ exp: (NOW - 1000) / 1000 });
-    const { api, changed, entitlement, reports, stored } = await setup({
-      answers: [err({ kind: "rejected", reason: "unknownLicenseKey" })],
+  it("falls back to a trial request when a license key is rejected while the trial runs, and asks about the key again an hour on", async () => {
+    const endsAt = (NOW + 7 * 24 * HOUR) / 1000;
+    const rejected: Scripted = err({
+      kind: "rejected",
+      reason: "unknownLicenseKey",
+    });
+    const { api, clock, entitlement, reports } = await setup({
+      answers: [rejected, issued({ endsAt, plan: "trial" }), issued()],
       state: {
-        licenseKey: "KEY-1",
-        token: { licenseKey: "KEY-1", value: token },
+        token: {
+          licenseKey: null,
+          value: await mint({ endsAt, plan: "trial" }),
+        },
       },
     });
-    const before = entitlement.current();
     entitlement.start();
-    await settled(api, 1);
+    entitlement.setLicenseKey("BAD-KEY");
+    await settled(api, 2);
+    expect(api.requests.map(({ licenseKey }) => licenseKey)).toStrictEqual([
+      "BAD-KEY",
+      null,
+    ]);
+    expect(reports).toStrictEqual([
+      "entitlement: the API answered rejected: unknownLicenseKey",
+    ]);
     await expect
-      .poll(() => reports)
-      .toStrictEqual([
-        "entitlement: the API answered rejected: unknownLicenseKey",
-      ]);
-    expect(entitlement.current()).toStrictEqual(before);
-    expect(changed).toStrictEqual([]);
-    await expect(stored()).resolves.toMatchObject({
-      data: {
-        lastAnswer: { detail: "unknownLicenseKey", outcome: "rejected" },
-        token: { value: token },
-      },
+      .poll(() => entitlement.current())
+      .toMatchObject({ kind: "trial", source: "refreshed" });
+
+    clock.advance(HOUR - 1);
+    expect(api.requests).toHaveLength(2);
+    clock.advance(1);
+    await settled(api, 3);
+    expect(api.requests.at(-1)).toStrictEqual({
+      deviceId: DEVICE,
+      licenseKey: "BAD-KEY",
     });
+    await expect.poll(() => entitlement.current().kind).toBe("licensed");
   });
+
+  it.each([
+    [
+      "the trial has ended",
+      { endsAt: (NOW - HOUR) / 1000, plan: "trial" } as const,
+      null,
+    ],
+    ["there is no trial token", {}, "KEY-1"],
+  ])(
+    "is free when a license key is rejected and %s, keeping the reason",
+    async (_name, claims, tokenKey) => {
+      const token = await mint({ ...claims, exp: (NOW - 1000) / 1000 });
+      const { api, entitlement, stored } = await setup({
+        answers: [err({ kind: "rejected", reason: "unknownLicenseKey" })],
+        state: {
+          licenseKey: "KEY-1",
+          token: { licenseKey: tokenKey, value: token },
+        },
+      });
+      entitlement.start();
+      await settled(api, 1);
+      await expect.poll(() => entitlement.current().kind).toBe("free");
+      expect(api.requests).toHaveLength(1);
+      await expect(stored()).resolves.toMatchObject({
+        data: {
+          lastAnswer: { detail: "unknownLicenseKey", outcome: "rejected" },
+          rejected: { at: NOW, licenseKey: "KEY-1" },
+        },
+      });
+    }
+  );
 
   it("asks again after a server error, waiting longer each time", async () => {
     const failure: Scripted = err({ detail: "HTTP 503", kind: "serverError" });

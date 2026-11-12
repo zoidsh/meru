@@ -49,6 +49,10 @@ export const entitlementStateSchema = z.object({
   deviceId: idSchema,
   licenseKey: licenseKeySchema,
   lastAnswer: lastAnswerSchema.nullable(),
+  /** The license key the API last refused, and when; asked about again an hour later, or as soon as the key changes. */
+  rejected: z
+    .object({ at: z.number().int(), licenseKey: z.string().min(1) })
+    .nullable(),
   token: z
     .object({
       /** The license key the token was issued for, so a changed key asks again. */
@@ -90,6 +94,7 @@ export const entitlementSnapshot = (
       deviceId: deviceId ?? ids(),
       lastAnswer: null,
       licenseKey: licenseKey ?? null,
+      rejected: null,
       token: null,
     };
     const fallbacks: EntitlementFallback[] = [];
@@ -136,6 +141,10 @@ const LONGEST_DELAY = 2 ** 31 - 1;
 
 const describeError = (error: EntitlementApiError) =>
   error.kind === "rejected" ? error.reason : error.detail;
+
+/** Whether the API refused the license key the device holds now. */
+const keyRejected = (state: EntitlementState): boolean =>
+  state.rejected !== null && state.rejected.licenseKey === state.licenseKey;
 
 export class Entitlement<K> {
   readonly #options: EntitlementOptions<K>;
@@ -231,7 +240,7 @@ export class Entitlement<K> {
     if (this.#state === undefined || this.#state.licenseKey === licenseKey) {
       return;
     }
-    this.#save({ ...this.#state, licenseKey });
+    this.#save({ ...this.#state, licenseKey, rejected: null });
     this.#delay = 0;
     this.#schedule();
   }
@@ -264,6 +273,43 @@ export class Entitlement<K> {
     );
   }
 
+  /** Whether the device holds a trial token, not one for a license key, whose trial has not ended. */
+  #trialRunning(state: EntitlementState, now: number): boolean {
+    const claims = this.#claims;
+    return (
+      claims !== undefined &&
+      state.token?.licenseKey === null &&
+      claims.plan === "trial" &&
+      claims.status === "active" &&
+      (claims.endsAt ?? 0) * 1000 > now
+    );
+  }
+
+  /** The license key to ask the API about now, null for a trial; undefined when nothing is due. */
+  #due(
+    state: EntitlementState,
+    now: number
+  ): { licenseKey: string | null } | undefined {
+    const { rejected } = state;
+    if (rejected === null || !keyRejected(state)) {
+      return this.#needsToken(state)
+        ? { licenseKey: state.licenseKey }
+        : undefined;
+    }
+    if (now >= rejected.at + RETRY_MAX) {
+      return { licenseKey: rejected.licenseKey };
+    }
+    const claims = this.#claims;
+    if (
+      claims !== undefined &&
+      this.#trialRunning(state, now) &&
+      (state.lastAnswer?.outcome === "rejected" || isExpired(claims, now, 0))
+    ) {
+      return { licenseKey: null };
+    }
+    return undefined;
+  }
+
   #schedule() {
     this.#cancel();
     this.#derive();
@@ -272,17 +318,21 @@ export class Entitlement<K> {
       return;
     }
     const { clock, network } = this.#options;
-    if (!this.#needsToken(state)) {
+    const now = clock.now();
+    const due = this.#due(state, now);
+    if (due === undefined) {
       this.#delay = 0;
       const claims = this.#claims;
-      const next = claims === undefined ? [] : [claims.exp * 1000];
-      const endsAt = (claims?.endsAt ?? 0) * 1000;
-      if (endsAt > clock.now()) {
-        next.push(endsAt);
+      const next = [
+        (claims?.exp ?? 0) * 1000,
+        (claims?.endsAt ?? 0) * 1000,
+        state.rejected === null ? 0 : state.rejected.at + RETRY_MAX,
+      ].filter((time) => time > now);
+      if (next.length > 0) {
+        this.#at(Math.min(...next), () => {
+          this.#schedule();
+        });
       }
-      this.#at(Math.min(...next), () => {
-        this.#schedule();
-      });
       return;
     }
     if (!network.isOnline()) {
@@ -295,19 +345,19 @@ export class Entitlement<K> {
       return;
     }
     if (this.#delay === 0) {
-      void this.#refresh(state);
+      void this.#refresh(state, due.licenseKey);
       return;
     }
-    this.#at(clock.now() + this.#delay, () => {
-      void this.#refresh(state);
+    this.#at(now + this.#delay, () => {
+      void this.#refresh(state, due.licenseKey);
     });
   }
 
-  async #refresh(asked: EntitlementState) {
+  async #refresh(asked: EntitlementState, licenseKey: string | null) {
     this.#cancel();
     this.#refreshing = true;
     const { api, clock, report } = this.#options;
-    const { deviceId, licenseKey } = asked;
+    const { deviceId } = asked;
     let answer: Awaited<ReturnType<EntitlementApi["issue"]>>;
     try {
       answer = await api.issue({ deviceId, licenseKey });
@@ -329,6 +379,7 @@ export class Entitlement<K> {
         const current = this.#state ?? asked;
         this.#state = {
           ...current,
+          rejected: licenseKey === null ? current.rejected : null,
           token: { licenseKey, value: answer.value.token },
         };
       }
@@ -342,12 +393,21 @@ export class Entitlement<K> {
         `entitlement: the API answered ${answer.error.kind}: ${describeError(answer.error)}`
       );
     }
-    this.#save({ ...(this.#state ?? asked), lastAnswer: outcome });
+    const saved = this.#state ?? asked;
+    if (outcome.outcome === "rejected" && licenseKey !== null) {
+      // The same key gets the same refusal, so it is asked again an hour on, or once the key changes, and the device falls back to its trial meanwhile.
+      this.#save({
+        ...saved,
+        lastAnswer: outcome,
+        rejected: { at: outcome.at, licenseKey },
+      });
+    } else {
+      this.#save({ ...saved, lastAnswer: outcome });
+    }
     if (outcome.outcome === "issued") {
       this.#delay = 0;
     } else if (outcome.outcome === "rejected") {
-      // The same key gets the same refusal, so it is asked again only at the longest spacing or once the key changes.
-      this.#delay = RETRY_MAX;
+      this.#delay = licenseKey === null ? RETRY_MAX : 0;
     } else {
       this.#delay = Math.min(Math.max(this.#delay * 2, RETRY_FIRST), RETRY_MAX);
     }
@@ -382,11 +442,18 @@ export class Entitlement<K> {
   }
 
   #derive() {
-    const next = deriveEntitlement(
-      this.#claims,
-      this.#options.clock.now(),
-      this.#claims === undefined ? "stored" : this.#source
-    );
+    const now = this.#options.clock.now();
+    const state = this.#state;
+    const next: EntitlementValue =
+      state !== undefined &&
+      keyRejected(state) &&
+      !this.#trialRunning(state, now)
+        ? { expiresAt: null, kind: "free", source: this.#source }
+        : deriveEntitlement(
+            this.#claims,
+            now,
+            this.#claims === undefined ? "stored" : this.#source
+          );
     const previous = this.#value;
     this.#value = next;
     if (sameGrant(previous, next)) {
