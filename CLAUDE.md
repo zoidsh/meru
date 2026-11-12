@@ -1,4 +1,4 @@
-# AGENTS.md
+# CLAUDE.md
 
 Meru 4, the rewrite of the Electron client for Gmail and Google Apps. The design, principles, glossary and decisions live outside this repository, in `$PROJECT_DOCS_DIR/zoidsh/meru/next` (`~/projects/docs/zoidsh/meru/next` on the maintainer's Mac); read `principles.md` and `architecture/design.md` before changing structure, and use the glossary's words.
 
