@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, screen } from "electron";
 
 import type { Ports, WindowPort, WindowSpec } from "../../core/ports.ts";
+import { handleOf, portOf, viewFactory } from "./views.ts";
 
 const createWindow = (spec: WindowSpec): WindowPort => {
   const window = new BrowserWindow({
@@ -17,8 +18,22 @@ const createWindow = (spec: WindowSpec): WindowPort => {
     },
     width: spec.width,
   });
+  const content = window.contentView;
 
   return {
+    addChildView: (view, index) => {
+      content.addChildView(handleOf(view), index);
+    },
+    childViews: () =>
+      content.children.flatMap((child) => {
+        const port = portOf(child);
+        return port === undefined ? [] : [port];
+      }),
+    contentBounds: () => {
+      const [width = 0, height = 0] = window.getContentSize();
+      return { height, width, x: 0, y: 0 };
+    },
+    contentsId: window.webContents.id,
     loadFile: async (path) => {
       await window.loadFile(path);
     },
@@ -30,6 +45,15 @@ const createWindow = (spec: WindowSpec): WindowPort => {
       return () => {
         window.off("closed", listener);
       };
+    },
+    onResized: (listener) => {
+      window.on("resize", listener);
+      return () => {
+        window.off("resize", listener);
+      };
+    },
+    removeChildView: (view) => {
+      content.removeChildView(handleOf(view));
     },
     show: () => {
       window.show();
@@ -63,5 +87,7 @@ export const createElectronPorts = (): Ports => ({
   },
   clock: { now: () => Date.now() },
   createWindow,
+  cursor: { screenPoint: () => screen.getCursorScreenPoint() },
   ids: () => randomUUID(),
+  views: viewFactory,
 });

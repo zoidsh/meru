@@ -9,3 +9,7 @@ export const rectSchema = z.object({
 });
 
 export type Rect = z.infer<typeof rectSchema>;
+
+export const pointSchema = z.object({ x: z.number(), y: z.number() });
+
+export type Point = z.infer<typeof pointSchema>;

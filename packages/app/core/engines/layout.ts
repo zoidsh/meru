@@ -6,7 +6,7 @@ import type {
   Orientation,
   Split,
 } from "../records/layout.ts";
-import type { Rect } from "../records/rect.ts";
+import type { Point, Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
 import { clamp } from "./ordering.ts";
 
@@ -25,11 +25,6 @@ export const STYLE_METRICS: Readonly<Record<Style, StyleMetrics>> = {
 
 export const MIN_RATIO = 0.1;
 export const MAX_RATIO = 0.9;
-
-export interface Point {
-  readonly x: number;
-  readonly y: number;
-}
 
 export interface Divider {
   readonly splitId: string;
