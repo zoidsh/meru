@@ -98,6 +98,7 @@ const start = async () => {
     ids: ports.ids,
     keys: await importKeys(crypto.subtle, acceptedKeys(ports.app.packaged)),
     network: ports.network,
+    power: ports.power,
     onError: report,
     registrar: dispatcher,
     report: (message) => {

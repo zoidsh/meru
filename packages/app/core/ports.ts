@@ -128,6 +128,11 @@ export interface OnlinePort {
   readonly onChange: (listener: (online: boolean) => void) => Unsubscribe;
 }
 
+export interface PowerPort {
+  /** Calls `listener` when the machine wakes from sleep, during which timers did not run. */
+  readonly onResume: (listener: () => void) => Unsubscribe;
+}
+
 export interface Ports {
   readonly app: AppPort;
   readonly clock: Clock;
@@ -136,6 +141,7 @@ export interface Ports {
   readonly cursor: CursorPort;
   readonly ipc: IpcTransportPort;
   readonly network: OnlinePort;
+  readonly power: PowerPort;
   readonly views: ViewFactoryPort;
   readonly createWindow: (spec: WindowSpec) => WindowPort;
 }

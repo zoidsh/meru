@@ -38,6 +38,11 @@ export class FakeClock implements Clock {
     this.#now = until;
   };
 
+  /** Moves time on as a sleep of the machine does, running no timer: they fire late, once something runs them. */
+  readonly sleep = (milliseconds: number) => {
+    this.#now += milliseconds;
+  };
+
   get pending(): number {
     return this.#timers.size;
   }

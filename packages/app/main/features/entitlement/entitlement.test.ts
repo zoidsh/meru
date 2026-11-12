@@ -16,6 +16,7 @@ import type { Scripted } from "../../../test/fakes/entitlement-api.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeOnline } from "../../../test/fakes/online.ts";
+import { FakePower } from "../../../test/fakes/power.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { ENTITLEMENT_FILE, Entitlement } from "./index.ts";
 import type { EntitlementState } from "./index.ts";
@@ -90,6 +91,7 @@ const setup = async ({
   const clock = new FakeClock(NOW);
   const api = new FakeEntitlementApi(answers);
   const network = new FakeOnline(online);
+  const power = new FakePower();
   const registrar = new FakeRegistrar();
   const events = new AppEvents();
   const changed: AppEventMap["entitlement.changed"][] = [];
@@ -109,6 +111,7 @@ const setup = async ({
     onError: (error) => {
       throw error;
     },
+    power,
     registrar,
     report: (message) => {
       reports.push(message);
@@ -127,6 +130,7 @@ const setup = async ({
     entitlement,
     fs,
     network,
+    power,
     registrar,
     reports,
     stored: async (): Promise<unknown> => {
@@ -236,6 +240,23 @@ describe(Entitlement, () => {
       .poll(() => entitlement.current().expiresAt)
       .toBe(NOW + 4 * HOUR);
     expect(clock.pending).toBeGreaterThan(0);
+  });
+
+  it("refreshes once on waking when the token expired during a sleep", async () => {
+    const { api, clock, entitlement, power } = await setup({
+      answers: [issued({ exp: (NOW + 4 * HOUR) / 1000 })],
+      state: { token: { licenseKey: null, value: await mint() } },
+    });
+    entitlement.start();
+    clock.sleep(2 * HOUR);
+    expect(api.requests).toHaveLength(0);
+    power.resume();
+    await settled(api, 1);
+    await expect
+      .poll(() => entitlement.current().expiresAt)
+      .toBe(NOW + 4 * HOUR);
+    clock.advance(HOUR);
+    expect(api.requests).toHaveLength(1);
   });
 
   it("flips to disabled with the reason, pushes and emits once, and stores the answer", async () => {

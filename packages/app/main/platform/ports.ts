@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { app, BrowserWindow, net, screen } from "electron";
+import { app, BrowserWindow, net, powerMonitor, screen } from "electron";
 
 import type {
   EntitlementApi,
@@ -143,6 +143,14 @@ export const createElectronPorts = (): Ports => ({
   ids: () => randomUUID(),
   ipc: ipcTransport,
   network: onlinePort,
+  power: {
+    onResume: (listener) => {
+      powerMonitor.on("resume", listener);
+      return () => {
+        powerMonitor.off("resume", listener);
+      };
+    },
+  },
   views: viewFactory,
 });
 

@@ -16,6 +16,7 @@ import type {
   FsPort,
   Ids,
   OnlinePort,
+  PowerPort,
   Unsubscribe,
 } from "../../../core/ports.ts";
 import type {
@@ -116,6 +117,7 @@ export interface EntitlementOptions<K> {
   readonly clock: Clock;
   readonly ids: Ids;
   readonly network: OnlinePort;
+  readonly power: PowerPort;
   readonly events: AppEvents;
   readonly registrar: IpcRegistrar;
   readonly subtle: Ed25519Subtle<K>;
@@ -200,8 +202,13 @@ export class Entitlement<K> {
   /** Refreshes behind the window whenever the token has expired, never blocking and never asking the user. */
   start(): Unsubscribe {
     this.#started = true;
+    // Timers stop while the machine sleeps, so a token that expired during a sleep would otherwise wait out the rest of the timer.
+    const unresume = this.#options.power.onResume(() => {
+      this.#schedule();
+    });
     this.#schedule();
     return () => {
+      unresume();
       this.#started = false;
       this.#cancel();
       this.#store.dispose();
