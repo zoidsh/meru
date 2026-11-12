@@ -1,0 +1,73 @@
+import { describe, expect, it } from "vitest";
+
+import type { Entitlement } from "../records/entitlement.ts";
+import { canUse, FREE_PROFILES } from "./gate.ts";
+import type { GatedFeature } from "./gate.ts";
+
+const NOW = 1_800_000_000_000;
+const facts = { expiresAt: NOW + 1000, source: "stored" } as const;
+
+const unknown: Entitlement = { ...facts, expiresAt: null, kind: "unknown" };
+const free: Entitlement = { ...facts, kind: "free" };
+const trial: Entitlement = { ...facts, endsAt: NOW + 1, kind: "trial" };
+const ended: Entitlement = { ...facts, endsAt: NOW, kind: "trial" };
+const licensed: Entitlement = {
+  ...facts,
+  deviceLimit: 3,
+  kind: "licensed",
+  plan: "pro",
+  seat: null,
+};
+const disabled: Entitlement = {
+  ...facts,
+  kind: "disabled",
+  reason: "refunded",
+};
+
+const features: GatedFeature[] = [
+  "extraProfile",
+  "extension",
+  "unifiedInbox",
+  "proSetting",
+];
+
+const many = { now: NOW, profiles: FREE_PROFILES };
+
+describe(canUse, () => {
+  it.each(features)("lets a license and a running trial use %s", (feature) => {
+    expect(canUse(licensed, feature, many)).toStrictEqual({ allowed: true });
+    expect(canUse(trial, feature, many)).toStrictEqual({ allowed: true });
+  });
+
+  it.each([
+    [unknown, "free"],
+    [free, "free"],
+    [ended, "trialEnded"],
+    [disabled, "disabled"],
+  ] as const)("refuses %o every Pro action, as %s", (entitlement, reason) => {
+    for (const feature of features) {
+      expect(canUse(entitlement, feature, many)).toStrictEqual({
+        allowed: false,
+        reason,
+      });
+    }
+  });
+
+  it.each([unknown, free, ended, disabled])(
+    "lets %o open the profiles free allows",
+    (entitlement) => {
+      expect(
+        canUse(entitlement, "extraProfile", {
+          now: NOW,
+          profiles: FREE_PROFILES - 1,
+        })
+      ).toStrictEqual({ allowed: true });
+    }
+  );
+
+  it("refuses a trial at the moment it ends, whatever the token says", () => {
+    expect(
+      canUse(trial, "extension", { now: NOW + 1, profiles: 0 })
+    ).toStrictEqual({ allowed: false, reason: "trialEnded" });
+  });
+});
