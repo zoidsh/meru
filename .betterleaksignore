@@ -1,0 +1,2 @@
+# The development signing key is public on purpose: only a run from the repository accepts its tokens (packages/app/shared/entitlement/keys.ts).
+scripts/entitlement/dev-private.pem:private-key:1

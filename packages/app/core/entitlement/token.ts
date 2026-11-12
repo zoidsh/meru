@@ -12,23 +12,25 @@ export const tokenHeaderSchema = z.object({
 /** Seconds since the epoch, as JWT's NumericDate counts. */
 const secondsSchema = z.number().int().nonnegative();
 
-export const claimsSchema = z
-  .object({
-    deviceLimit: z.number().int().nonnegative(),
-    /** The trial's end; present only on a trial. */
-    endsAt: secondsSchema.optional(),
-    exp: secondsSchema,
-    iat: secondsSchema,
-    plan: z.enum(["trial", "pro", "team"]),
-    /** Why the license is disabled, such as refunded, revoked or deviceLimit; present only when it is. */
-    reason: z.string().min(1).optional(),
-    seat: z.string().min(1).optional(),
-    status: z.enum(["active", "disabled"]),
-    /** The device id the token was issued to. */
-    sub: z.string().min(1),
-    /** The lifetime in seconds the server issued the token with. */
-    ttl: z.number().int().positive(),
-  })
+/** The claims' fields, before the rules that tie them together. */
+export const claimFieldsSchema = z.object({
+  deviceLimit: z.number().int().nonnegative(),
+  /** The trial's end; present only on a trial. */
+  endsAt: secondsSchema.optional(),
+  exp: secondsSchema,
+  iat: secondsSchema,
+  plan: z.enum(["trial", "pro", "team"]),
+  /** Why the license is disabled, such as refunded, revoked or deviceLimit; present only when it is. */
+  reason: z.string().min(1).optional(),
+  seat: z.string().min(1).optional(),
+  status: z.enum(["active", "disabled"]),
+  /** The device id the token was issued to. */
+  sub: z.string().min(1),
+  /** The lifetime in seconds the server issued the token with. */
+  ttl: z.number().int().positive(),
+});
+
+export const claimsSchema = claimFieldsSchema
   .refine((claims) => claims.plan !== "trial" || claims.endsAt !== undefined, {
     message: "A trial has no endsAt",
     path: ["endsAt"],

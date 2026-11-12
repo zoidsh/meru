@@ -61,6 +61,10 @@ A domain's channels are declared once in `shared/channels/<domain>.ts` with `def
 
 Both run by hand on macOS, not in CI, before pushing a change that could move the numbers; the run's line is committed with the change and its commit message says what moved.
 
+## Entitlement
+
+`shared/entitlement/keys.ts` holds the Ed25519 public keys a token may be signed with, by `kid`, compiled into the bundle. The development key, `dev-2026-11`, is not a secret: its private half is `scripts/entitlement/dev-private.pem`, and only a run from the repository accepts it, never an installed app. A production key is added to `productionKeys` by a release, before the API signs with it; the app never fetches a key.
+
 ## Worktrees and profiles
 
 `pnpm dev` in a linked worktree uses its own user data directory, `.meru/<branch>`, so several worktrees run at once; the main checkout keeps Electron's default. `--profile <name>` picks `.meru/<name>`. `--background`, or `MERU_BACKGROUND=1` (set for Claude Code sessions in `.claude/settings.json`), opens the window behind whatever is in front; the end-to-end suite also sets `MERU_TEST_BACKGROUND=1`, which keeps the app from ever activating on macOS.
