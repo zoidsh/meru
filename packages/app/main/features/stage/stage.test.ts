@@ -335,11 +335,12 @@ describe("a drag across panes", () => {
     );
   });
 
-  it("takes moves from the chrome page too, and ends on a move with no button held", () => {
+  it("takes moves from the chrome page too, and ignores one with no button held", () => {
     const { window, overlay, stages, id } = dragging();
 
     expect(stages.dragTo(id, { x: 500, y: 10 }, 1).ok).toBeTruthy();
-    expect(stages.dragTo(id, { x: 500, y: 10 }, 0).ok).toBeTruthy();
+    expect(stages.dragTo(id, { x: 900, y: 10 }, 0).ok).toBeTruthy();
+    expect(stages.endDrag(id, { x: 500, y: 10 }).ok).toBeTruthy();
 
     const late = stages.dragTo(id, { x: 700, y: 10 }, 1);
     expect({

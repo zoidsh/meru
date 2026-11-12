@@ -154,14 +154,14 @@ export class Stages {
     return this.#with(sender, (found) => found.beginDrag(splitId));
   }
 
-  // On macOS the release after a drag across panes reaches neither the chrome page nor the overlay when the overlay is missing, so a move with no button held ends the drag too.
+  // Only a release ends a drag: a move with no button held, such as a view reports when it appears under a resting pointer, is ignored rather than taken for one.
   dragTo(
     sender: number,
     point: Point,
     buttons: number
   ): Result<undefined, StageError> {
     return this.#with(sender, (found) =>
-      buttons === 0 ? found.endDrag(point) : found.dragTo(point)
+      buttons === 0 ? ok(undefined) : found.dragTo(point)
     );
   }
 

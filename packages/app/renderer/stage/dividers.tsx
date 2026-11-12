@@ -42,22 +42,25 @@ export const Dividers = ({
 }) => {
   const dividers = useStore(store, (snapshot) => snapshot?.dividers);
 
-  // On macOS the chrome page keeps the pointer it captured even over a pane, so its moves and release reach main alongside the overlay's; main takes whichever arrives.
+  // The page keeps getting the pointer over a pane while the button is held on macOS and Linux, so it reports moves and the release alongside the overlay and main takes whichever arrives. They are followed on the window as well as captured, because on Linux the capture did not hold once the overlay appeared.
   const begin = (splitId: string) => (event: PointerEvent<HTMLElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
     client.send(stage.beginDrag, { splitId });
-  };
-  const move = (event: PointerEvent<HTMLElement>) => {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    const move = (moved: globalThis.PointerEvent) => {
       client.send(stage.dragTo, {
-        buttons: event.buttons,
-        x: event.clientX,
-        y: event.clientY,
+        buttons: moved.buttons,
+        x: moved.clientX,
+        y: moved.clientY,
       });
-    }
-  };
-  const end = (event: PointerEvent<HTMLElement>) => {
-    client.send(stage.endDrag, { x: event.clientX, y: event.clientY });
+    };
+    const end = (released: globalThis.PointerEvent) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      client.send(stage.endDrag, { x: released.clientX, y: released.clientY });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    event.preventDefault();
   };
 
   return (
@@ -68,8 +71,6 @@ export const Dividers = ({
           data-split-id={divider.splitId}
           key={divider.splitId}
           onPointerDown={begin(divider.splitId)}
-          onPointerMove={move}
-          onPointerUp={end}
           style={hitArea(divider)}
         >
           <div className="divider-line" style={line(divider)} />

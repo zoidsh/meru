@@ -14,6 +14,10 @@ window.addEventListener("pointermove", (event) => {
   });
 });
 
-window.addEventListener("pointerup", (event) => {
+const release = (event: PointerEvent) => {
   dragBridge.send(end, { x: event.clientX, y: event.clientY });
-});
+};
+
+window.addEventListener("pointerup", release);
+// A press on the overlay means the release that should have ended the drag went elsewhere.
+window.addEventListener("pointerdown", release);
