@@ -1,9 +1,6 @@
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-/**
- * The list with the item at `from` moved to `to`, both clamped to the list, which is what a drag in the sidebar asks for. The input is never mutated.
- */
 export const moveItem = <T>(
   items: readonly T[],
   from: number,

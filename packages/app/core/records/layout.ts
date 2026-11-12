@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { idSchema } from "./id.ts";
 
-/** `vertical` puts the two sides next to each other with a vertical divider between them, `horizontal` stacks them. */
+// Named as iTerm and VS Code name a split: `vertical` puts the sides next to each other with a vertical divider, `horizontal` stacks them.
 export const orientationSchema = z.enum(["vertical", "horizontal"]);
 
 export type Orientation = z.infer<typeof orientationSchema>;
@@ -20,7 +20,6 @@ export interface Split {
   readonly kind: "split";
   readonly id: string;
   readonly orientation: Orientation;
-  /** The share of the split's length, less its gap, that `first` takes. */
   readonly ratio: number;
   readonly first: LayoutNode;
   readonly second: LayoutNode;
@@ -47,7 +46,6 @@ export const layoutNodeSchema: z.ZodType<LayoutNode> = z.union([
   splitSchema,
 ]);
 
-/** The tree of splits a group holds; `null` is the empty layout that closing the last pane leaves. */
 export const layoutSchema = layoutNodeSchema.nullable();
 
 export type Layout = z.infer<typeof layoutSchema>;

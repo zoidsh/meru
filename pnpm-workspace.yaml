@@ -5,7 +5,7 @@ packages:
 allowBuilds:
   lefthook: true
 
-# Ultracite 8.2.0 was younger than pnpm's minimum release age when it was taken.
+# Ultracite 8.2.0 is younger than pnpm's minimum release age.
 minimumReleaseAgeExclude:
   - ultracite@8.2.0
 

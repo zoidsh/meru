@@ -1,8 +1,4 @@
-/*
- * The development loop: the renderer on Vite's dev server with HMR, main and the preload rebuilt on change, and Electron restarted after each rebuild.
- *
- * node scripts/dev.ts [--profile <name>] [--background] [any Electron argument…]
- */
+// node scripts/dev.ts [--profile <name>] [--background] [any Electron argument…]
 import { execFileSync, spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { once } from "node:events";

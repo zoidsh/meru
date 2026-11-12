@@ -17,7 +17,6 @@ export interface InvokeChannel<
   readonly result: R;
 }
 
-/** Answered synchronously, for the snapshot a page needs before its first paint. */
 export interface SyncChannel<
   P extends z.ZodType = z.ZodType,
   R extends z.ZodType = z.ZodType,

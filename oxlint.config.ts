@@ -50,7 +50,7 @@ const restrict = (files: string[], patterns: Pattern[]): OxlintOverride => ({
   rules: { "no-restricted-imports": ["error", { patterns }] },
 });
 
-// Design section 1. oxlint applies the last matching override's options whole, so a narrower directory repeats every pattern of the wider one.
+// oxlint applies the last matching override's options whole, so a narrower directory repeats every pattern of the wider one.
 const layers = [
   restrict(
     ["packages/app/core/**"],

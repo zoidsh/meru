@@ -4,7 +4,6 @@ import { idSchema } from "./id.ts";
 
 export const tabSchema = z.object({
   appId: idSchema,
-  /** A crash is per tab, so its health lives here rather than on the profile. */
   health: z.enum(["ok", "crashed"]),
   id: idSchema,
   pinned: z.boolean(),

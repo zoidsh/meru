@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Meru 4, the rewrite of the Electron client for Gmail and Google Apps. The design, principles, glossary and decisions live outside this repository, in `$PROJECT_DOCS_DIR/zoidsh/meru/next` (`~/projects/docs/zoidsh/meru/next` on the maintainer's Mac); read `principles.md` and `architecture/design.md` before changing structure, and use the glossary's words.
+Meru is an Electron client for Gmail and Google apps. The design, principles, glossary and decisions live outside this repository, in `$PROJECT_DOCS_DIR/zoidsh/meru/next` (`~/projects/docs/zoidsh/meru/next` on the maintainer's Mac); read `principles.md` and `architecture/design.md` before changing structure, and use the glossary's words.
 
 ## Commands
 
@@ -18,19 +18,23 @@ Meru 4, the rewrite of the Electron client for Gmail and Google Apps. The design
 
 ## Layers
 
-> `core` imports nothing of ours and nothing of Electron's. Features import `core` and each other's types. `platform` is the only layer with a value import from `electron`. (Principle 1)
+> `core` imports nothing of ours and nothing of Electron's. Features import `core` and each other's types. `platform` is the only layer with a value import from `electron`.
 
-> No module constructs a singleton at import. `index.ts` in main and the page entry in the renderer build the object graph. (Principle 2)
+> No module constructs a singleton at import. `index.ts` in main and the page entry in the renderer build the object graph.
 
-> Adding a feature is additive: its diff touches its own directory, one line in `index.ts`, the glossary and the changelog. (Principle 11)
+> Adding a feature is additive: its diff touches its own directory, one line in `index.ts`, the glossary and the changelog.
 
 `oxlint.config.ts` enforces the layers under `packages/app` with `no-restricted-imports` per directory, plus `import/no-cycle`. A preload value-imports `electron` only in its `bridge.ts`. The renderer and preloads never import `main`.
 
 ## Tests
 
-> No test replaces one of our own modules. Doubles exist only at ports, one hand-written fake per port in `packages/app/test/fakes/`, an object literal that `satisfies` it or a small class that `implements` it, never a cast. (Principle 6)
+> No test replaces one of our own modules. Doubles exist only at ports, one hand-written fake per port in `packages/app/test/fakes/`, an object literal that `satisfies` it or a small class that `implements` it, never a cast.
 
 No `vi.mock` anywhere. Unit tests sit beside their file as `*.test.ts`; Vitest runs `core`, `shared`, `main` and `scripts` in Node and `preload` and `renderer` under happy-dom. `scripts/check-layers.test.ts` imports every `core/` and `main/features/` module with nothing faked. End-to-end tests are `tests/*.e2e.ts`.
+
+## Comments
+
+A comment says only what the code cannot: an outside constraint, such as Electron, Chromium, Gmail, a platform or a tool, or why the obvious approach was rejected. Never what the code does, and never a reference to a principle.
 
 ## Stage
 
