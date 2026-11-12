@@ -1,4 +1,5 @@
 import type { Point, Rect } from "./records/rect.ts";
+import type { Result } from "./result.ts";
 
 export type Ids = () => string;
 
@@ -98,6 +99,26 @@ export interface WindowPort {
   readonly childViews: () => readonly ViewPort[];
   readonly onResized: (listener: () => void) => Unsubscribe;
   readonly onClosed: (listener: () => void) => Unsubscribe;
+}
+
+export interface EntitlementRequest {
+  /** Null on a device with no license key, which the API answers with a trial. */
+  readonly licenseKey: string | null;
+  readonly deviceId: string;
+}
+
+export type EntitlementApiError =
+  /** The request never reached the API or got no answer in time. */
+  | { readonly kind: "offline"; readonly detail: string }
+  /** The API refused the request, such as an unknown license key; asking again with the same key gets the same answer. */
+  | { readonly kind: "rejected"; readonly reason: string }
+  | { readonly kind: "serverError"; readonly detail: string };
+
+export interface EntitlementApi {
+  /** Asks for a token for this device; a disabled license is a token, not an error. */
+  readonly issue: (
+    request: EntitlementRequest
+  ) => Promise<Result<{ readonly token: string }, EntitlementApiError>>;
 }
 
 export interface Ports {
