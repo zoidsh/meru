@@ -1,4 +1,4 @@
-import type { FsPort } from "../../core/ports.ts";
+import type { FsPort, Unsubscribe } from "../../core/ports.ts";
 
 export class FakeFs implements FsPort {
   readonly userDataDir = "/user-data";
@@ -7,6 +7,7 @@ export class FakeFs implements FsPort {
   readonly writes: { readonly name: string; readonly text: string }[] = [];
   /** Set to make every read fail, as a file the app may not open does. */
   failReads: Error | undefined;
+  readonly #watchers = new Map<string, Set<() => void>>();
 
   constructor(files: Readonly<Record<string, string>> = {}) {
     for (const [name, text] of Object.entries(files)) {
@@ -32,4 +33,25 @@ export class FakeFs implements FsPort {
     await Promise.resolve();
     return this.files.has(name);
   };
+
+  readonly watch = (name: string, listener: () => void): Unsubscribe => {
+    const listeners = this.#watchers.get(name) ?? new Set();
+    listeners.add(listener);
+    this.#watchers.set(name, listeners);
+    return () => {
+      listeners.delete(listener);
+    };
+  };
+
+  /** Changes a file as an editor would, outside the app, and tells whoever watches it. */
+  readonly edit = (name: string, text: string) => {
+    this.files.set(name, text);
+    for (const listener of this.#watchers.get(name) ?? []) {
+      listener();
+    }
+  };
+
+  get watched(): number {
+    return [...this.#watchers.values()].reduce((sum, set) => sum + set.size, 0);
+  }
 }

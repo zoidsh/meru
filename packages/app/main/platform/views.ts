@@ -24,6 +24,7 @@ const createView = (spec: ViewSpec): ViewPort => {
       partition: spec.partition,
       preload: spec.preload,
       sandbox: true,
+      zoomFactor: spec.zoom,
     },
   });
   view.setBorderRadius(spec.radius);
@@ -68,6 +69,10 @@ const createView = (spec: ViewSpec): ViewPort => {
     setBounds: (rect) => {
       view.setBounds(rect);
     },
+    setZoomFactor: (factor) => {
+      contents.setZoomFactor(factor);
+    },
+    zoomFactor: () => contents.getZoomFactor(),
   };
   handles.set(port, view);
   ports.set(view, port);

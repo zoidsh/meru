@@ -37,6 +37,11 @@ export const stagePushes = definePushes("stage", {
 export const e2e = defineChannels("e2e", {
   snapshot: invoke(
     z.object({}),
-    z.object({ stage: stageSnapshotSchema, views: z.array(rectSchema) })
+    z.object({
+      stage: stageSnapshotSchema,
+      views: z.array(rectSchema),
+      /** Each pane's zoom factor, in layout order. */
+      zoom: z.array(z.number()),
+    })
   ),
 });

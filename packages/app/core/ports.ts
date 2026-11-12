@@ -18,10 +18,14 @@ export interface FsPort {
   /** Replaces the file whole or not at all. */
   readonly writeTextAtomic: (name: string, text: string) => Promise<void>;
   readonly exists: (name: string) => Promise<boolean>;
+  /** Calls `listener` when the file may have changed on disk; a change can be reported more than once. */
+  readonly watch: (name: string, listener: () => void) => Unsubscribe;
 }
 
 export interface AppPort {
   readonly platform: string;
+  /** False for a run from the repository, such as `pnpm dev` or the end-to-end suite. */
+  readonly packaged: boolean;
   readonly whenReady: () => Promise<void>;
   readonly onWindowAllClosed: (listener: () => void) => Unsubscribe;
   /** Holds the quit until `task` settles, such as a snapshot written to disk. */
@@ -41,6 +45,8 @@ export interface ViewPort {
   readonly onFocus: (listener: () => void) => Unsubscribe;
   readonly setBackgroundColor: (color: string) => void;
   readonly setBorderRadius: (radius: number) => void;
+  readonly setZoomFactor: (factor: number) => void;
+  readonly zoomFactor: () => number;
   readonly destroy: () => void;
   readonly onRenderProcessGone: (
     listener: (reason: string) => void
@@ -51,6 +57,7 @@ export interface ViewSpec {
   readonly partition?: string;
   readonly preload?: string;
   readonly radius: number;
+  readonly zoom: number;
 }
 
 export interface ViewFactoryPort {

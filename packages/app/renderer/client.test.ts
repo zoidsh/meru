@@ -60,11 +60,11 @@ describe(createClient, () => {
     const { bridge, client } = connect();
     bridge.answers.set("e2e.snapshot", {
       ok: true,
-      value: { stage: snapshot, views: [] },
+      value: { stage: snapshot, views: [], zoom: [] },
     });
     await expect(client.invoke(e2e.snapshot, {})).resolves.toStrictEqual({
       ok: true,
-      value: { stage: snapshot, views: [] },
+      value: { stage: snapshot, views: [], zoom: [] },
     });
 
     bridge.answers.set("e2e.snapshot", { ok: true, value: { stage: 1 } });

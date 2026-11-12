@@ -54,7 +54,9 @@ test("splits, drags the divider across the panes, and closes a pane", async () =
 });
 
 test("draws classic panes edge to edge", async () => {
-  const { chrome, close } = await launch({ MERU_STYLE: "classic" });
+  const { chrome, close } = await launch({
+    settings: { global: { "appearance.style": "classic" } },
+  });
   try {
     await expect.poll(async () => await styleOf(chrome)).toBe("classic");
     const [view] = await viewsOf(chrome);

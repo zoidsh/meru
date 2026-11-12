@@ -2,10 +2,10 @@ import path from "node:path";
 
 import { leaf } from "../core/engines/layout.ts";
 import type { Group } from "../core/records/group.ts";
-import { styleSchema } from "../core/records/style.ts";
 import type { Tab } from "../core/records/tab.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { rendererSurface, surfaces } from "../shared/channels/surfaces.ts";
+import { SettingsStore } from "./features/settings/index.ts";
 import { Stages } from "./features/stage/index.ts";
 import { listenIpc } from "./platform/ipc.ts";
 import { setApplicationMenu } from "./platform/menu.ts";
@@ -24,7 +24,6 @@ const start = async () => {
   const ports = createElectronPorts();
   const dist = path.join(import.meta.dirname, "..");
   const e2e = process.env.MERU_E2E === "1";
-  const style = styleSchema.catch("modern").parse(process.env.MERU_STYLE);
 
   ports.app.onWindowAllClosed(() => {
     ports.app.quit();
@@ -54,13 +53,32 @@ const start = async () => {
     }
   );
 
+  const settings = new SettingsStore({
+    app: ports.app,
+    clock: ports.clock,
+    fs: ports.fs,
+    onError: report,
+    onFallback: (fallbacks) => {
+      for (const { key, profileId, reason } of fallbacks) {
+        console.warn(
+          `settings.json: ${key ?? "a layer"}${profileId === null ? "" : ` of profile ${profileId}`} is ${reason}, so its default stands`
+        );
+      }
+    },
+    registrar: dispatcher,
+    // Only a run from the repository follows hand edits; an installed app learns of a change from the code that made it.
+    watchFile: !ports.app.packaged,
+  });
+  await settings.open();
+  settings.start();
+
   const stages = new Stages({
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     e2e,
     ids: ports.ids,
     onError: report,
     registrar: dispatcher,
-    style,
+    settings,
     views: ports.views,
   });
   stages.start();

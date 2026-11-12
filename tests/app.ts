@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -12,14 +12,34 @@ const root = path.join(import.meta.dirname, "..");
 
 export interface Launched {
   readonly app: ElectronApplication;
+  readonly userData: string;
   readonly chrome: Page;
   readonly close: () => Promise<void>;
 }
 
-export const launch = async (
-  env: Readonly<Record<string, string>> = {}
-): Promise<Launched> => {
+export interface LaunchOptions {
+  readonly env?: Readonly<Record<string, string>>;
+  /** The settings layers, written to `settings.json` before the app starts. */
+  readonly settings?: unknown;
+}
+
+export const SETTINGS_FILE = "settings.json";
+
+export const writeSettings = async (userData: string, settings: unknown) => {
+  await writeFile(
+    path.join(userData, SETTINGS_FILE),
+    JSON.stringify({ data: settings, version: 1 })
+  );
+};
+
+export const launch = async ({
+  env = {},
+  settings,
+}: LaunchOptions = {}): Promise<Launched> => {
   const userData = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
+  if (settings !== undefined) {
+    await writeSettings(userData, settings);
+  }
   // chrome-sandbox ships without its setuid bit outside an installed package, so an unpacked Linux run cannot use the sandbox.
   const sandbox = process.platform === "linux" ? ["--no-sandbox"] : [];
   const app = await electron.launch({
@@ -47,6 +67,7 @@ export const launch = async (
   return {
     app,
     chrome,
+    userData,
     close: async () => {
       await app.close();
       await rm(userData, { force: true, recursive: true });

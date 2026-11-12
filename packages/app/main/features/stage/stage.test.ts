@@ -9,17 +9,40 @@ import { stage as stageChannels } from "../../../shared/channels/stage.ts";
 import { dragSurface } from "../../../shared/channels/surfaces.ts";
 import { stageSnapshotSchema } from "../../../shared/stage.ts";
 import type { StageSnapshot } from "../../../shared/stage.ts";
+import { FakeApp } from "../../../test/fakes/app.ts";
+import { FakeClock } from "../../../test/fakes/clock.ts";
+import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import type { FakeView } from "../../../test/fakes/view.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
+import { SettingsStore } from "../settings/index.ts";
 import { Stages } from "./index.ts";
 
 const GMAIL = "https://mail.google.com/";
 
+const settingsWith = (style: Style) => {
+  const settings = new SettingsStore({
+    app: new FakeApp(),
+    clock: new FakeClock(),
+    fs: new FakeFs(),
+    onError: (error) => {
+      throw error;
+    },
+    onFallback: () => {
+      throw new Error("Nothing was read, so nothing can fall back");
+    },
+    registrar: new FakeRegistrar(),
+    watchFile: false,
+  });
+  settings.set("appearance.style", style);
+  return settings;
+};
+
 const setup = (style: Style = "modern") => {
   const window = new FakeWindow(1200, 800);
+  const settings = settingsWith(style);
   const views = new FakeViewFactory();
   const registrar = new FakeRegistrar();
   const errors: unknown[] = [];
@@ -31,7 +54,7 @@ const setup = (style: Style = "modern") => {
       errors.push(error);
     },
     registrar,
-    style,
+    settings,
     views,
   });
   stages.start();
@@ -62,7 +85,17 @@ const setup = (style: Style = "modern") => {
   };
   const stage = stages.open(window, group, [tab]);
   const id = window.contentsId;
-  return { changes, errors, id, registrar, stage, stages, views, window };
+  return {
+    changes,
+    errors,
+    id,
+    registrar,
+    settings,
+    stage,
+    stages,
+    views,
+    window,
+  };
 };
 
 const childBounds = (window: FakeWindow) =>
@@ -77,6 +110,7 @@ describe(Stages, () => {
     expect(view?.spec).toStrictEqual({
       partition: "persist:dev",
       radius: 10,
+      zoom: 1,
     });
     expect(view?.url).toBe(GMAIL);
     expect(view?.bounds()).toStrictEqual({
@@ -99,6 +133,30 @@ describe(Stages, () => {
       x: 0,
       y: 0,
     });
+  });
+
+  it("lays the panes out again when the appearance style changes", () => {
+    const { views, settings, changes, id, stages } = setup("modern");
+    stages.split(id, "vertical");
+    settings.set("appearance.style", "classic");
+    expect(
+      views.alive.map((view) => [view.radius, view.bounds()])
+    ).toStrictEqual([
+      [0, { height: 800, width: 600, x: 0, y: 0 }],
+      [0, { height: 800, width: 599, x: 601, y: 0 }],
+    ]);
+    expect(changes().at(-1)?.style).toBe("classic");
+  });
+
+  it("zooms the panes of the profile whose zoom changed", () => {
+    const { views, settings, id, stages, stage } = setup();
+    settings.set("stage.zoom", 1.5, "work");
+    expect(views.alive.map((view) => view.zoom)).toStrictEqual([1]);
+    settings.set("stage.zoom", 1.25, "dev");
+    stages.split(id, "vertical");
+    expect(stage.zoomFactors).toStrictEqual([1.25, 1.25]);
+    settings.set("stage.zoom", undefined, "dev");
+    expect(stage.zoomFactors).toStrictEqual([1, 1]);
   });
 
   it("splits the focused pane into two views in layout order that tile the window", () => {
@@ -305,7 +363,7 @@ describe("a drag across panes", () => {
     }).toStrictEqual({
       background: "#00000000",
       bounds: window.contentBounds(),
-      spec: { preload: "/dist/preload/drag.cjs", radius: 0 },
+      spec: { preload: "/dist/preload/drag.cjs", radius: 0, zoom: 1 },
     });
   });
 

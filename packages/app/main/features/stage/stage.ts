@@ -37,7 +37,10 @@ export interface StageOptions {
   readonly ids: Ids;
   readonly group: Group;
   readonly tabs: Map<string, Tab>;
-  readonly style: Style;
+  /** Read on every layout, so a change shows at the next one. */
+  readonly style: () => Style;
+  /** The zoom of this group's profile. */
+  readonly zoom: () => number;
   readonly dragPreload: string | undefined;
   readonly onChange: (snapshot: StageSnapshot) => void;
   readonly onOverlay: (contentsId: number, attached: boolean) => void;
@@ -194,7 +197,7 @@ export class Stage {
     const divider = layout(
       this.#group.layout,
       this.#options.window.contentBounds(),
-      this.#options.style,
+      this.#options.style(),
       this.#fullscreen
     ).dividers.find((found) => found.splitId === splitId);
     if (divider === undefined) {
@@ -204,6 +207,7 @@ export class Stage {
     const overlay = this.#options.views.create({
       preload: this.#options.dragPreload,
       radius: 0,
+      zoom: 1,
     });
     overlay.setBackgroundColor(TRANSPARENT);
     this.#load(overlay, dragPage(divider.orientation));
@@ -225,7 +229,7 @@ export class Stage {
     const ratio = ratioAt(
       this.#group.layout,
       bounds,
-      this.#options.style,
+      this.#options.style(),
       drag.splitId,
       point
     );
@@ -251,6 +255,26 @@ export class Stage {
     return ok(undefined);
   }
 
+  /** Lays the panes out again after the appearance style changed. */
+  restyle(): void {
+    this.#arrange();
+  }
+
+  /** Applies the profile's zoom to every pane after it changed. */
+  rezoom(): void {
+    const zoom = this.#options.zoom();
+    for (const view of this.#views.values()) {
+      view.setZoomFactor(zoom);
+    }
+  }
+
+  get zoomFactors(): number[] {
+    return panes(this.#group.layout).flatMap((pane) => {
+      const view = this.#views.get(pane.paneId);
+      return view === undefined ? [] : [view.zoomFactor()];
+    });
+  }
+
   get dragging(): boolean {
     return this.#drag !== undefined;
   }
@@ -259,7 +283,7 @@ export class Stage {
     const arrangement = layout(
       this.#group.layout,
       this.#options.window.contentBounds(),
-      this.#options.style,
+      this.#options.style(),
       this.#fullscreen
     );
     return {
@@ -269,7 +293,7 @@ export class Stage {
         paneId,
         rect,
       })),
-      style: this.#options.style,
+      style: this.#options.style(),
     };
   }
 
@@ -357,7 +381,7 @@ export class Stage {
         this.#retired.push(view);
       }
     }
-    const { radius } = STYLE_METRICS[this.#options.style];
+    const { radius } = STYLE_METRICS[this.#options.style()];
     for (const [paneId, pane] of wanted) {
       const tab = this.#tabOf(paneId);
       if (this.#views.has(paneId) || tab === undefined) {
@@ -366,6 +390,7 @@ export class Stage {
       const view = this.#options.views.create({
         partition: `persist:${this.#group.profileId}`,
         radius,
+        zoom: this.#options.zoom(),
       });
       this.#focusListeners.set(
         paneId,
@@ -410,10 +435,10 @@ export class Stage {
     const arrangement = layout(
       this.#group.layout,
       bounds,
-      this.#options.style,
+      this.#options.style(),
       this.#fullscreen
     );
-    const { radius } = STYLE_METRICS[this.#options.style];
+    const { radius } = STYLE_METRICS[this.#options.style()];
     for (const [paneId, view] of this.#views) {
       const rect = arrangement.panes.get(paneId);
       if (rect !== undefined) {

@@ -2,6 +2,7 @@ import type { AppPort, Unsubscribe } from "../../core/ports.ts";
 
 export class FakeApp implements AppPort {
   readonly platform: string;
+  readonly packaged = false;
   quitting = false;
   ready = false;
   activationProhibited = false;

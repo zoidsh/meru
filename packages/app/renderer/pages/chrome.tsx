@@ -5,6 +5,10 @@ import { stage, stagePushes } from "../../shared/channels/stage.ts";
 import { rendererSurface } from "../../shared/channels/surfaces.ts";
 import type { StageSnapshot } from "../../shared/stage.ts";
 import { createClient } from "../client.ts";
+import {
+  createSettingsStore,
+  SettingsContext,
+} from "../features/settings/use-setting.ts";
 import { Dividers } from "../stage/dividers.tsx";
 import { createStore } from "../store.ts";
 
@@ -16,6 +20,7 @@ const store = createStore<StageSnapshot | undefined>(
 client.on(stagePushes.changed, (snapshot) => {
   store.set(() => snapshot);
 });
+const settings = createSettingsStore(client);
 
 const root = document.querySelector("#root");
 
@@ -25,6 +30,8 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <Dividers client={client} store={store} />
+    <SettingsContext value={settings}>
+      <Dividers client={client} store={store} />
+    </SettingsContext>
   </StrictMode>
 );

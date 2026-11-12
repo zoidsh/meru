@@ -107,6 +107,7 @@ export const createElectronPorts = (): Ports => ({
         app.off("window-all-closed", listener);
       };
     },
+    packaged: app.isPackaged,
     platform: process.platform,
     prohibitActivation: () => {
       if (process.platform === "darwin") {

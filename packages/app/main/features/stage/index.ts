@@ -7,7 +7,6 @@ import type {
 import type { Group } from "../../../core/records/group.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
 import type { Point, Rect } from "../../../core/records/rect.ts";
-import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
@@ -16,6 +15,7 @@ import { drag } from "../../../shared/channels/drag.ts";
 import { e2e, stage, stagePushes } from "../../../shared/channels/stage.ts";
 import { dragSurface } from "../../../shared/channels/surfaces.ts";
 import type { StageSnapshot } from "../../../shared/stage.ts";
+import type { SettingsStore } from "../settings/index.ts";
 import { Stage } from "./stage.ts";
 import type { StageError } from "./stage.ts";
 
@@ -25,7 +25,7 @@ export { Stage } from "./stage.ts";
 export interface StagesOptions {
   readonly ids: Ids;
   readonly views: ViewFactoryPort;
-  readonly style: Style;
+  readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
   readonly registrar: IpcRegistrar;
   readonly e2e: boolean;
@@ -43,8 +43,22 @@ export class Stages {
   }
 
   start(): Unsubscribe {
-    const { registrar } = this.#options;
+    const { registrar, settings } = this.#options;
     const unregister = [
+      settings.subscribe((changes) => {
+        const restyle = changes.some(
+          (change) => change.key === "appearance.style"
+        );
+        const rezoom = changes.some((change) => change.key === "stage.zoom");
+        for (const found of new Set(this.#bySender.values())) {
+          if (restyle) {
+            found.restyle();
+          }
+          if (rezoom) {
+            found.rezoom();
+          }
+        }
+      }),
       registrar.register(stage, {
         beginDrag: ({ splitId }, { contentsId }) =>
           this.beginDrag(contentsId, splitId),
@@ -71,7 +85,11 @@ export class Stages {
         registrar.register(e2e, {
           snapshot: (_payload, { contentsId }) =>
             this.#with(contentsId, (found) =>
-              ok({ stage: found.snapshot(), views: found.childBounds() })
+              ok({
+                stage: found.snapshot(),
+                views: found.childBounds(),
+                zoom: found.zoomFactors,
+              })
             ),
         })
       );
@@ -109,10 +127,11 @@ export class Stages {
           this.#unassign.delete(contentsId);
         }
       },
-      style: this.#options.style,
+      style: () => this.#options.settings.get("appearance.style"),
       tabs: this.#tabs,
       views: this.#options.views,
       window,
+      zoom: () => this.#options.settings.get("stage.zoom", group.profileId),
     });
     this.#bySender.set(windowId, opened);
     window.onClosed(() => {

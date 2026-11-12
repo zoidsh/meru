@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { leaf } from "../../core/engines/layout.ts";
+import { FakeApp } from "../../test/fakes/app.ts";
+import { FakeClock } from "../../test/fakes/clock.ts";
+import { FakeFs } from "../../test/fakes/fs.ts";
 import { fakeIds } from "../../test/fakes/ids.ts";
 import { FakeRegistrar } from "../../test/fakes/registrar.ts";
 import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
+import { SettingsStore } from "../features/settings/index.ts";
 import { Stages } from "../features/stage/index.ts";
 import { buildMenu, MENU_IDS } from "./menu.ts";
 
@@ -19,7 +23,19 @@ const setup = (platform = "darwin") => {
       failures.push("error");
     },
     registrar: new FakeRegistrar(),
-    style: "classic",
+    settings: new SettingsStore({
+      app: new FakeApp(),
+      clock: new FakeClock(),
+      fs: new FakeFs(),
+      onError: (error) => {
+        failures.push(String(error));
+      },
+      onFallback: () => {
+        failures.push("fallback");
+      },
+      registrar: new FakeRegistrar(),
+      watchFile: false,
+    }),
     views: new FakeViewFactory(),
   });
   stages.open(
