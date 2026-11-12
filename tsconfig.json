@@ -19,6 +19,9 @@
   "references": [
     { "path": "./packages/app/core" },
     { "path": "./packages/app/shared" },
+    { "path": "./packages/app/main" },
+    { "path": "./packages/app/preload" },
+    { "path": "./packages/app/renderer" },
     { "path": "./tsconfig.node.json" }
   ]
 }

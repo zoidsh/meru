@@ -1,0 +1,11 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../node_modules/.tsbuild/renderer",
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "types": [],
+    "jsx": "react-jsx"
+  },
+  "include": ["."],
+  "references": [{ "path": "../core" }, { "path": "../shared" }]
+}

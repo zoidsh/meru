@@ -2,9 +2,10 @@
   "name": "meru",
   "private": true,
   "type": "module",
+  "main": "dist/main/index.js",
   "scripts": {
     "dev": "node scripts/dev.ts",
-    "build": "vp run build",
+    "build": "vp build -c vite.main.ts && vp build -c vite.preload.ts && vp build -c vite.renderer.ts",
     "test": "vp test",
     "lint": "vp lint",
     "fmt": "vp fmt",
