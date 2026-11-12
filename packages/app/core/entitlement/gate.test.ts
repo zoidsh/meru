@@ -46,11 +46,19 @@ describe(canUse, () => {
     [disabled, "disabled"],
   ] as const)("refuses %o every Pro action, as %s", (entitlement, reason) => {
     for (const feature of features) {
-      expect(canUse(entitlement, feature, many)).toStrictEqual({
+      expect(canUse(entitlement, feature, many)).toMatchObject({
         allowed: false,
         reason,
       });
     }
+  });
+
+  it("says how many profiles free allows when it refuses another", () => {
+    expect(canUse(free, "extraProfile", many)).toStrictEqual({
+      allowed: false,
+      allowedProfiles: 1,
+      reason: "free",
+    });
   });
 
   it.each([unknown, free, ended, disabled])(

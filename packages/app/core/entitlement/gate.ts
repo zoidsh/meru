@@ -17,7 +17,12 @@ export type GateRefusal = "free" | "trialEnded" | "disabled";
 
 export type Gate =
   | { readonly allowed: true }
-  | { readonly allowed: false; readonly reason: GateRefusal };
+  | {
+      readonly allowed: false;
+      readonly reason: GateRefusal;
+      /** For extraProfile, how many profiles the refused entitlement allows. */
+      readonly allowedProfiles?: number;
+    };
 
 /** Profiles a free entitlement may have. */
 export const FREE_PROFILES = 1;
@@ -42,11 +47,13 @@ export const canUse = (
   if (freeAllows(feature, context)) {
     return ALLOWED;
   }
+  let reason: GateRefusal = "free";
   if (entitlement.kind === "trial") {
-    return { allowed: false, reason: "trialEnded" };
+    reason = "trialEnded";
+  } else if (entitlement.kind === "disabled") {
+    reason = "disabled";
   }
-  if (entitlement.kind === "disabled") {
-    return { allowed: false, reason: "disabled" };
-  }
-  return { allowed: false, reason: "free" };
+  return feature === "extraProfile"
+    ? { allowed: false, allowedProfiles: FREE_PROFILES, reason }
+    : { allowed: false, reason };
 };
