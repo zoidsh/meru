@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { hostname, tmpdir } from "node:os";
 import path from "node:path";
 import { setTimeout as wait } from "node:timers/promises";
 
@@ -189,6 +189,7 @@ export const measureApp = async (
       blank: options.app !== "meru" || options.blank,
       commit: commit(),
       electron: await app.evaluate(() => process.versions.electron),
+      host: hostname(),
       platform: process.platform,
       samples,
     };

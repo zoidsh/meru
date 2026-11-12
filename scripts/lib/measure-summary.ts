@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type Point = "launch" | "split" | "idle";
 
 export const POINTS: readonly Point[] = ["launch", "split", "idle"];
@@ -28,6 +30,8 @@ export interface Sample {
 export interface Measurement {
   readonly app: AppName;
   readonly commit: string;
+  /** The machine measured, since lines are compared only with lines from the same one. */
+  readonly host: string;
   readonly platform: string;
   readonly electron: string;
   readonly at: string;
@@ -191,4 +195,25 @@ export const overBudget = (
       : [];
   });
   return [...cpu, ...growth];
+};
+
+const firstLineSchema = z.object({ host: z.string() });
+
+/** The host a measurements file records: the override if given, else its first line's, else none yet, so the first run sets it. */
+export const recordingHost = (
+  text: string,
+  override: string | undefined
+): string | undefined => {
+  if (override !== undefined && override !== "") {
+    return override;
+  }
+  const first = text.split("\n").find(Boolean);
+  if (first === undefined) {
+    return undefined;
+  }
+  const parsed = firstLineSchema.safeParse(JSON.parse(first));
+  if (!parsed.success) {
+    throw new Error("The first line of the measurements file has no host");
+  }
+  return parsed.data.host;
 };

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { kindOf, overBudget, summarise, table } from "./measure-summary.ts";
+import {
+  kindOf,
+  overBudget,
+  recordingHost,
+  summarise,
+  table,
+} from "./measure-summary.ts";
 import type {
   AppName,
   Measurement,
@@ -33,6 +39,7 @@ const measurement = (
   at: "2026-11-12T00:00:00.000Z",
   blank: true,
   commit: "abc1234",
+  host: "mac-mini",
   electron: "45.2.3",
   platform: "darwin",
   samples: Object.entries(samples).flatMap(([point, readings]) =>
@@ -153,5 +160,18 @@ describe(overBudget, () => {
     expect(overBudget(meru, { growthKB: 20 * MB, idleCpu: 2 })).toStrictEqual(
       []
     );
+  });
+});
+
+describe(recordingHost, () => {
+  it("is the first line's host, or the override, or none for a new file", () => {
+    const text = `${JSON.stringify({ host: "mac-mini" })}\n${JSON.stringify({ host: "other" })}\n`;
+    expect(recordingHost(text, undefined)).toBe("mac-mini");
+    expect(recordingHost(text, "laptop")).toBe("laptop");
+    expect(recordingHost("", undefined)).toBeUndefined();
+  });
+
+  it("refuses a first line without a host", () => {
+    expect(() => recordingHost("{}\n", undefined)).toThrow("no host");
   });
 });

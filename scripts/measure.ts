@@ -1,12 +1,13 @@
 // pnpm measure [--profile <name>] [--samples <n>] [--idle <seconds>] [--floor[=view]] [--blank]
 import { existsSync } from "node:fs";
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { hostname } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
 import { measureApp } from "../tests/measure.ts";
 import { toProfileName } from "./lib/dev-args.ts";
-import { table } from "./lib/measure-summary.ts";
+import { recordingHost, table } from "./lib/measure-summary.ts";
 import type { AppName, Measurement } from "./lib/measure-summary.ts";
 
 const root = path.join(import.meta.dirname, "..");
@@ -48,18 +49,22 @@ const floorOf = (arg: string | undefined): AppName | undefined => {
   throw new Error(`${arg} is not --floor or --floor=view`);
 };
 
-/** Appends a line per measurement, keeping the newest lines only. */
+/** Appends a line per measurement, keeping the newest lines only, when this is the machine the file records, and says what it did. */
 const record = async (measurements: readonly Measurement[]) => {
   const file = path.join(root, "measurements", "darwin.jsonl");
   await mkdir(path.dirname(file), { recursive: true });
   const text = existsSync(file) ? await readFile(file, "utf-8") : "";
+  const host = recordingHost(text, process.env.MERU_MEASURE_HOST);
+  if (host !== undefined && host !== hostname()) {
+    return `Not recorded: ${path.relative(root, file)} records ${host}, and this is ${hostname()}`;
+  }
   const lines = text.split("\n").filter(Boolean);
   const added = measurements.map((measurement) => JSON.stringify(measurement));
   const kept = [...lines, ...added].slice(-KEEP);
   await (kept.length === lines.length + added.length
     ? appendFile(file, added.map((line) => `${line}\n`).join(""))
     : writeFile(file, `${kept.join("\n")}\n`));
-  return file;
+  return `Appended to ${path.relative(root, file)}`;
 };
 
 const run = async () => {
@@ -89,12 +94,12 @@ const run = async () => {
     floor === undefined
       ? undefined
       : await measureApp({ ...common, app: floor });
-  const file = await record(base === undefined ? [meru] : [meru, base]);
+  const outcome = await record(base === undefined ? [meru] : [meru, base]);
   console.log(
     `${meru.commit} on ${meru.platform}, Electron ${meru.electron}, ${meru.blank ? "blank panes" : "panes showing their app"}. Memory is private where Electron reports it, else the working set; CPU is percent of one core.\n`
   );
   console.log(table(meru, base));
-  console.log(`\nAppended to ${path.relative(root, file)}`);
+  console.log(`\n${outcome}`);
 };
 
 try {
