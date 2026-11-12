@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "../../../node_modules/.tsbuild/core-test",
     "lib": ["es2024"],
-    "types": [],
+    // Tests sign their token fixtures with Node's WebCrypto.
+    "types": ["node"],
     "resolveJsonModule": true
   },
   "include": ["**/*.test.ts", "fixtures/*.json"],
