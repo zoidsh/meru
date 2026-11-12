@@ -17,6 +17,7 @@ import { createElectronPorts } from "./platform/ports.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
 import { answerE2e } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
+import { answerMeasure } from "./shell/measure.ts";
 import { ApplicationMenu } from "./shell/menu.ts";
 import { MainWindow } from "./shell/window.ts";
 
@@ -103,6 +104,9 @@ const start = async () => {
     settings,
   }).start();
 
+  if (process.env.MERU_MEASURE === "1") {
+    answerMeasure({ registrar: dispatcher, stages });
+  }
   if (e2e) {
     answerE2e({
       accelerators: applicationAccelerators,

@@ -57,6 +57,14 @@ const TRANSPARENT = "#00000000";
 const dragPage = (orientation: Orientation) =>
   `data:text/html,<html style="cursor:${orientation === "vertical" ? "col-resize" : "row-resize"};height:100%"></html>`;
 
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).host || url;
+  } catch {
+    return url;
+  }
+};
+
 export class Stage {
   readonly #options: StageOptions;
   #group: Group;
@@ -265,6 +273,24 @@ export class Stage {
     for (const view of this.#views.values()) {
       view.setZoomFactor(zoom);
     }
+  }
+
+  /** What each web contents of this stage shows, for a measurement to name its process by. */
+  get roles(): { readonly contentsId: number; readonly name: string }[] {
+    return [
+      { contentsId: this.#options.window.contentsId, name: "chrome page" },
+      ...panes(this.#group.layout).flatMap((pane) => {
+        const view = this.#views.get(pane.paneId);
+        const tab = this.#tabOf(pane.paneId);
+        return view === undefined || tab === undefined
+          ? []
+          : [{ contentsId: view.contentsId, name: `pane ${hostOf(tab.url)}` }];
+      }),
+      ...this.#overlays.map((overlay) => ({
+        contentsId: overlay.contentsId,
+        name: "overlay",
+      })),
+    ];
   }
 
   get zoomFactors(): number[] {

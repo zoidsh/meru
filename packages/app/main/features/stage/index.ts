@@ -191,6 +191,13 @@ export class Stages {
     return this.#with(sender, (found) => ok(found.snapshot()));
   }
 
+  /** What every web contents of every stage shows. */
+  roles(): { readonly contentsId: number; readonly name: string }[] {
+    return [...new Set(this.#bySender.values())].flatMap(
+      (found) => found.roles
+    );
+  }
+
   /** What the end-to-end suite asserts on: the stage as held here, the bounds Electron reports for each child view, and each pane's zoom. */
   inspect(sender: number): Result<StageInspection, StageError> {
     return this.#with(sender, (found) =>
