@@ -1,10 +1,17 @@
 import { randomUUID } from "node:crypto";
 
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, net, screen } from "electron";
 
-import type { Ports, WindowPort, WindowSpec } from "../../core/ports.ts";
+import type {
+  EntitlementApi,
+  Ports,
+  WindowPort,
+  WindowSpec,
+} from "../../core/ports.ts";
+import { createEntitlementApi } from "./entitlement-api.ts";
 import { createFs } from "./fs.ts";
 import { ipcTransport } from "./ipc.ts";
+import { onlinePort } from "./online.ts";
 import { handleOf, portOf, viewFactory } from "./views.ts";
 
 const createWindow = (spec: WindowSpec): WindowPort => {
@@ -135,5 +142,13 @@ export const createElectronPorts = (): Ports => ({
   fs: createFs(app.getPath("userData")),
   ids: () => randomUUID(),
   ipc: ipcTransport,
+  network: onlinePort,
   views: viewFactory,
 });
+
+/** Asks the entitlement API at `url` through Chromium's network stack, which takes the system's proxy and certificates. */
+export const createElectronEntitlementApi = (url: string): EntitlementApi =>
+  createEntitlementApi({
+    fetch: async (input, init) => await net.fetch(input, init),
+    url,
+  });

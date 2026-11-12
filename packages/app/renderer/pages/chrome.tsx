@@ -6,6 +6,10 @@ import { rendererSurface } from "../../shared/channels/surfaces.ts";
 import type { StageSnapshot } from "../../shared/stage.ts";
 import { createClient } from "../client.ts";
 import {
+  createEntitlementStore,
+  markEntitlement,
+} from "../features/entitlement/store.ts";
+import {
   createSettingsStore,
   SettingsContext,
 } from "../features/settings/use-setting.ts";
@@ -21,6 +25,7 @@ client.on(stagePushes.changed, (snapshot) => {
   store.set(() => snapshot);
 });
 const settings = createSettingsStore(client);
+markEntitlement(createEntitlementStore(client), document.documentElement);
 
 const root = document.querySelector("#root");
 

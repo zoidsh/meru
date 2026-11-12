@@ -121,6 +121,13 @@ export interface EntitlementApi {
   ) => Promise<Result<{ readonly token: string }, EntitlementApiError>>;
 }
 
+/** Whether the machine has a network connection, as the operating system reports it; a server can still be out of reach. */
+export interface OnlinePort {
+  readonly isOnline: () => boolean;
+  /** Calls `listener` when the connection comes or goes. */
+  readonly onChange: (listener: (online: boolean) => void) => Unsubscribe;
+}
+
 export interface Ports {
   readonly app: AppPort;
   readonly clock: Clock;
@@ -128,6 +135,7 @@ export interface Ports {
   readonly ids: Ids;
   readonly cursor: CursorPort;
   readonly ipc: IpcTransportPort;
+  readonly network: OnlinePort;
   readonly views: ViewFactoryPort;
   readonly createWindow: (spec: WindowSpec) => WindowPort;
 }

@@ -1,11 +1,15 @@
 import path from "node:path";
 
 import { leaf } from "../core/engines/layout.ts";
+import { AppEvents } from "../core/events.ts";
 import type { Group } from "../core/records/group.ts";
 import type { Tab } from "../core/records/tab.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { rendererSurface, surfaces } from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
+import { ENTITLEMENT_URL } from "../shared/entitlement/api.ts";
+import { acceptedKeys, importKeys } from "../shared/entitlement/keys.ts";
+import { Entitlement } from "./features/entitlement/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { Stages } from "./features/stage/index.ts";
 import { listenIpc } from "./platform/ipc.ts";
@@ -13,7 +17,10 @@ import {
   applicationAccelerators,
   setApplicationMenu,
 } from "./platform/menu.ts";
-import { createElectronPorts } from "./platform/ports.ts";
+import {
+  createElectronEntitlementApi,
+  createElectronPorts,
+} from "./platform/ports.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
 import { answerE2e } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
@@ -78,6 +85,28 @@ const start = async () => {
   });
   await settings.open();
   settings.start();
+
+  const events = new AppEvents();
+  const entitlement = new Entitlement({
+    api: createElectronEntitlementApi(
+      process.env.MERU_ENTITLEMENT_URL ?? ENTITLEMENT_URL
+    ),
+    app: ports.app,
+    clock: ports.clock,
+    events,
+    fs: ports.fs,
+    ids: ports.ids,
+    keys: await importKeys(crypto.subtle, acceptedKeys(ports.app.packaged)),
+    network: ports.network,
+    onError: report,
+    registrar: dispatcher,
+    report: (message) => {
+      console.warn(message);
+    },
+    subtle: crypto.subtle,
+  });
+  await entitlement.open();
+  entitlement.attach();
 
   const commands = new CommandDispatcher();
   commands.start(dispatcher);
@@ -146,6 +175,7 @@ const start = async () => {
     rendererUrl: process.env.MERU_RENDERER_URL,
   });
   await window.show();
+  entitlement.start();
 };
 
 // Not awaited: Electron holds back "ready" until an ES module entry finishes evaluating, so a top-level await on whenReady() never settles.
