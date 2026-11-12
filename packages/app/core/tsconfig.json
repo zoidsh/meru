@@ -5,5 +5,7 @@
     "lib": ["es2024"],
     "types": []
   },
-  "include": ["."]
+  "include": ["."],
+  // Tests compile in tsconfig.test.json, which may take the port fakes, since the fakes import core.
+  "exclude": ["**/*.test.ts"]
 }

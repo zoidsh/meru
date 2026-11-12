@@ -1,0 +1,11 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../node_modules/.tsbuild/core-test",
+    "lib": ["es2024"],
+    "types": [],
+    "resolveJsonModule": true
+  },
+  "include": ["**/*.test.ts", "fixtures/*.json"],
+  "references": [{ "path": "." }, { "path": "../test/fakes" }]
+}

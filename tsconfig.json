@@ -18,6 +18,7 @@
   "files": [],
   "references": [
     { "path": "./packages/app/core" },
+    { "path": "./packages/app/core/tsconfig.test.json" },
     { "path": "./packages/app/shared" },
     { "path": "./packages/app/main" },
     { "path": "./packages/app/preload" },

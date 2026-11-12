@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { app, BrowserWindow, screen } from "electron";
 
 import type { Ports, WindowPort, WindowSpec } from "../../core/ports.ts";
+import { createFs } from "./fs.ts";
 import { ipcTransport } from "./ipc.ts";
 import { handleOf, portOf, viewFactory } from "./views.ts";
 
@@ -68,8 +69,38 @@ const createWindow = (spec: WindowSpec): WindowPort => {
   };
 };
 
+const quitTasks = new Set<() => Promise<void>>();
+let quitHeld = false;
+
+// before-quit is the last moment the main process can still write; holding the quit there and quitting again once the tasks settle is how Electron lets a quit wait on async work.
+const holdQuit = (event: { preventDefault: () => void }) => {
+  if (quitHeld || quitTasks.size === 0) {
+    return;
+  }
+  event.preventDefault();
+  quitHeld = true;
+  const settle = async () => {
+    await Promise.allSettled(
+      [...quitTasks].map(async (task) => {
+        await task();
+      })
+    );
+    app.quit();
+  };
+  void settle();
+};
+
 export const createElectronPorts = (): Ports => ({
   app: {
+    onQuit: (task) => {
+      if (quitTasks.size === 0) {
+        app.on("before-quit", holdQuit);
+      }
+      quitTasks.add(task);
+      return () => {
+        quitTasks.delete(task);
+      };
+    },
     onWindowAllClosed: (listener) => {
       app.on("window-all-closed", listener);
       return () => {
@@ -89,9 +120,18 @@ export const createElectronPorts = (): Ports => ({
       await app.whenReady();
     },
   },
-  clock: { now: () => Date.now() },
+  clock: {
+    now: () => Date.now(),
+    schedule: (delay, task) => {
+      const timer = setTimeout(task, delay);
+      return () => {
+        clearTimeout(timer);
+      };
+    },
+  },
   createWindow,
   cursor: { screenPoint: () => screen.getCursorScreenPoint() },
+  fs: createFs(app.getPath("userData")),
   ids: () => randomUUID(),
   ipc: ipcTransport,
   views: viewFactory,

@@ -2,16 +2,30 @@ import type { Point, Rect } from "./records/rect.ts";
 
 export type Ids = () => string;
 
+export type Unsubscribe = () => void;
+
 export interface Clock {
   readonly now: () => number;
+  /** Runs `task` once after `delay` milliseconds unless cancelled first. */
+  readonly schedule: (delay: number, task: () => void) => Unsubscribe;
 }
 
-export type Unsubscribe = () => void;
+/** Files under the user data directory, named relative to it; a name is one path segment. */
+export interface FsPort {
+  readonly userDataDir: string;
+  /** Undefined when the file does not exist. */
+  readonly readText: (name: string) => Promise<string | undefined>;
+  /** Replaces the file whole or not at all. */
+  readonly writeTextAtomic: (name: string, text: string) => Promise<void>;
+  readonly exists: (name: string) => Promise<boolean>;
+}
 
 export interface AppPort {
   readonly platform: string;
   readonly whenReady: () => Promise<void>;
   readonly onWindowAllClosed: (listener: () => void) => Unsubscribe;
+  /** Holds the quit until `task` settles, such as a snapshot written to disk. */
+  readonly onQuit: (task: () => Promise<void>) => Unsubscribe;
   readonly quit: () => void;
   /** Keeps the app from ever coming to the front, for a run nobody watches; macOS only. */
   readonly prohibitActivation: () => void;
@@ -82,6 +96,7 @@ export interface WindowPort {
 export interface Ports {
   readonly app: AppPort;
   readonly clock: Clock;
+  readonly fs: FsPort;
   readonly ids: Ids;
   readonly cursor: CursorPort;
   readonly ipc: IpcTransportPort;
