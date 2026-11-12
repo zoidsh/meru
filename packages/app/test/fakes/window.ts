@@ -9,7 +9,6 @@ let nextContentsId = 1;
 
 export class FakeWindow implements WindowPort {
   readonly contentsId: number;
-  /** Every add and remove, in order, as Electron would have received them. */
   readonly effects: ChildViewEffect[] = [];
   loaded: string | undefined;
   shown: "active" | "inactive" | undefined;

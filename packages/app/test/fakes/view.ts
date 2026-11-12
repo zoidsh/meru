@@ -33,7 +33,6 @@ export class FakeView implements ViewPort {
     await Promise.resolve();
   };
 
-  /** Moves focus here the way a click in the page would, telling the listeners. */
   readonly focus = () => {
     this.focused = true;
     for (const listener of this.#focusListeners) {
