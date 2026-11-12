@@ -12,7 +12,9 @@
     "types": "tsc --build",
     "check": "vp check && tsc --build && vp test run",
     "prepare": "lefthook install",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --project e2e",
+    "test:budget": "playwright test --project budget",
+    "measure": "node scripts/measure.ts"
   },
   "dependencies": {
     "zod": "4.6.7"

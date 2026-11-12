@@ -24,6 +24,8 @@ export interface LaunchOptions {
   readonly env?: Readonly<Record<string, string>>;
   /** The settings layers, written to `settings.json` before the app starts. */
   readonly settings?: Settings;
+  /** An existing user data directory, kept when the app closes; a temporary one otherwise. */
+  readonly userData?: string;
 }
 
 export const SETTINGS_FILE = "settings.json";
@@ -38,8 +40,9 @@ export const writeSettings = async (userData: string, settings: Settings) => {
 export const launch = async ({
   env = {},
   settings,
+  userData: given,
 }: LaunchOptions = {}): Promise<Launched> => {
-  const userData = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
+  const userData = given ?? (await mkdtemp(path.join(tmpdir(), "meru-e2e-")));
   if (settings !== undefined) {
     await writeSettings(userData, settings);
   }
@@ -73,7 +76,9 @@ export const launch = async ({
     userData,
     close: async () => {
       await app.close();
-      await rm(userData, { force: true, recursive: true });
+      if (given === undefined) {
+        await rm(userData, { force: true, recursive: true });
+      }
     },
   };
 };

@@ -15,6 +15,7 @@ Meru is an Electron client for Gmail and Google apps. The design, principles, gl
 | Everything before a push | `pnpm check` (format, lint, types, tests) |
 | Build into `dist/` | `pnpm build` |
 | End-to-end, against `dist/` | `pnpm test:e2e`; on Linux `xvfb-run -a pnpm test:e2e` |
+| Measure CPU and memory, against `dist/`, macOS only | `pnpm measure`, `pnpm test:budget` |
 
 ## Layers
 
@@ -53,6 +54,12 @@ Every action a user can trigger is a command, declared by its feature in `comman
 ## IPC
 
 A domain's channels are declared once in `shared/channels/<domain>.ts` with `defineChannels` and zod schemas, and a surface in `shared/channels/surfaces.ts` lists the domains a kind of page may use. Callers pass the channel objects, never names: the renderer's `client.send(stage.split, payload)`, a feature's `registrar.register(stage, { split: handler, … })`, `registrar.push(contentsId, stagePushes.changed, snapshot)`. A renamed channel, a changed schema, a missing handler or a channel of another surface fails `tsc --build`; at runtime the preload's allowlist and the dispatcher in `main/shell/ipc.ts` refuse anything outside the sender's surface and parse every payload before a handler sees it.
+
+## Measure
+
+`pnpm measure [--profile <name>] [--samples <n>] [--idle <seconds>] [--blank] [--floor[=view]]` launches the built app and reads every process, by kind (main, chrome page, pane, overlay, gpu, utility), at three points: 5s after launch, right after one split, and after a minute idle. It appends one JSON line to `measurements/darwin.jsonl`, which is committed and keeps its newest 500 lines, and prints each kind's largest memory and mean CPU per point. `--floor` also measures `scripts/floor/`, a bare Electron app with one sandboxed window, and `--floor=view` the same with one view, and prints them beside Meru. Memory is private for main and the working set for the rest, which is all Electron reports on macOS. `pnpm test:budget` fails if any process uses more than 2% CPU at idle or main or the chrome page grows more than 10MB from launch to idle.
+
+Both run by hand on macOS, not in CI, before pushing a change that could move the numbers; the run's line is committed with the change and its commit message says what moved.
 
 ## Worktrees and profiles
 
