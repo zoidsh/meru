@@ -44,6 +44,15 @@ const read = async (app: ElectronApplication) =>
         id: contents.id,
         pid: contents.getOSProcessId(),
       })),
+      // Site isolation puts a cross-site frame, such as one Google's sign-in page embeds, in a process of its own that no web contents names.
+      frames: webContents
+        .getAllWebContents()
+        .flatMap((contents) =>
+          contents.mainFrame.framesInSubtree.filter(
+            (frame) => frame.osProcessId !== contents.getOSProcessId()
+          )
+        )
+        .map((frame) => ({ pid: frame.osProcessId, url: frame.url })),
       floorRoles: JSON.stringify(Reflect.get(globalThis, "floorRoles") ?? {}),
       main: { privateKB: main.private, sharedKB: main.shared },
       metrics: electronApp.getAppMetrics().map((metric) => ({
@@ -68,10 +77,23 @@ const toReadings = (
     const shown = snapshot.contents
       .filter((contents) => contents.pid === metric.pid)
       .flatMap((contents) => roles[String(contents.id)] ?? []);
+    const framed = [
+      ...new Set(
+        snapshot.frames
+          .filter((frame) => frame.pid === metric.pid)
+          .flatMap((frame) => {
+            try {
+              return [`pane frame: ${new URL(frame.url).host}`];
+            } catch {
+              return [];
+            }
+          })
+      ),
+    ];
     const names: Record<string, string> = {
       Browser: "main",
       GPU: "gpu",
-      Tab: shown.join(", "),
+      Tab: (shown.length > 0 ? shown : framed).join(", "),
       Utility: service,
     };
     const main = metric.type === "Browser" ? snapshot.main : undefined;

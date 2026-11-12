@@ -84,6 +84,7 @@ describe(kindOf, () => {
         process("Network Service", "Utility", 0, 0),
         process("chrome page", "Tab", 0, 0),
         process("pane mail.google.com, pane mail.google.com", "Tab", 0, 0),
+        process("pane frame: accounts.youtube.com", "Tab", 0, 0),
         process("overlay", "Tab", 0, 0),
         process("", "Tab", 0, 0),
       ].map(kindOf)
@@ -93,6 +94,7 @@ describe(kindOf, () => {
       "utility",
       "chrome page",
       "pane",
+      "pane frame",
       "overlay",
       "renderer",
     ]);

@@ -10,7 +10,7 @@ export interface ProcessReading {
   /** Electron's process type: Browser, Tab, GPU, Utility. */
   readonly type: string;
   readonly pid: number;
-  /** What the process shows: main, chrome page, a pane by its tab's host, overlay, gpu, a utility by its service. */
+  /** What the process shows: main, chrome page, a pane by its tab's host, a pane's out-of-process frame by its host, overlay, gpu, a utility by its service. */
   readonly name: string;
   /** Percent of one core since the previous reading. */
   readonly cpu: number;
@@ -44,7 +44,7 @@ export interface Measurement {
 export const memoryOf = (reading: ProcessReading): number =>
   reading.privateKB ?? reading.workingSetKB;
 
-/** A process's kind, the row it is summed into: main, chrome page, pane, overlay, gpu, utility, renderer. */
+/** A process's kind, the row it is summed into: main, chrome page, pane, pane frame, overlay, gpu, utility, renderer. */
 export const kindOf = ({ type, name }: ProcessReading): string => {
   if (type === "Browser") {
     return "main";
@@ -55,7 +55,7 @@ export const kindOf = ({ type, name }: ProcessReading): string => {
   if (type === "Utility") {
     return "utility";
   }
-  const named = ["chrome page", "pane", "overlay"].find((kind) =>
+  const named = ["chrome page", "pane frame", "pane", "overlay"].find((kind) =>
     name.startsWith(kind)
   );
   return named ?? "renderer";
