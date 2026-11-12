@@ -5,11 +5,10 @@ import playwright from "ultracite/oxlint/playwright";
 import react from "ultracite/oxlint/react";
 import vitest from "ultracite/oxlint/vitest";
 
-interface Pattern {
-  regex: string;
+type Pattern = {
   message: string;
   allowTypeImports?: boolean;
-}
+} & ({ regex: string } | { group: string[] });
 
 // A specifier crosses into a layer when one of its path segments names it; imports are relative, so the segment is the layer.
 const layer = (name: string) => `(^|/)${name}(/|$)`;
@@ -50,6 +49,35 @@ const restrict = (files: string[], patterns: Pattern[]): OxlintOverride => ({
   rules: { "no-restricted-imports": ["error", { patterns }] },
 });
 
+// A feature's settings.ts and commands.ts are its half of a contract every page reads: the registries in shared assemble them, so they import what shared may and nothing else of the feature.
+const contract: Pattern[] = [
+  noElectron,
+  ours,
+  notPreload,
+  notRenderer,
+  into("shell", "A contract file imports no shell."),
+  into("platform", "A contract file imports no platform."),
+  {
+    message: "A contract file imports nothing else of its feature.",
+    regex: "^\\./",
+  },
+  {
+    message: "A contract file imports nothing of another feature.",
+    regex: "^\\.\\./[^.]",
+  },
+];
+
+// A group, not a regex: oxlint's regex has no lookahead, and the exception is two file names.
+const registry: Pattern = {
+  group: [
+    "**/main/**",
+    "!**/main/features/*/settings.ts",
+    "!**/main/features/*/commands.ts",
+  ],
+  message:
+    "A registry assembles features' settings.ts and commands.ts and imports nothing else of main.",
+};
+
 // oxlint applies the last matching override's options whole, so a narrower directory repeats every pattern of the wider one.
 const layers = [
   restrict(
@@ -82,6 +110,17 @@ const layers = [
         true
       ),
     ]
+  ),
+  restrict(
+    ["packages/app/shared/*/registry.ts"],
+    [noElectron, ours, notPreload, notRenderer, registry]
+  ),
+  restrict(
+    [
+      "packages/app/main/features/*/settings.ts",
+      "packages/app/main/features/*/commands.ts",
+    ],
+    contract
   ),
   restrict(["packages/app/preload/**"], [electron, notMain, notRenderer]),
   restrict(["packages/app/preload/*/bridge.ts"], [notMain, notRenderer]),

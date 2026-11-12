@@ -6,6 +6,8 @@
     "types": ["node"]
   },
   "include": ["."],
+  // Compiled with shared, whose registries assemble them.
+  "exclude": ["features/*/settings.ts", "features/*/commands.ts"],
   "references": [
     { "path": "../core" },
     { "path": "../shared" },

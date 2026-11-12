@@ -2,9 +2,15 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../node_modules/.tsbuild/shared",
+    "rootDir": "..",
     "lib": ["es2024"],
     "types": []
   },
-  "include": ["."],
+  // A feature's settings.ts and commands.ts are the contract its registry assembles, so they compile with shared.
+  "include": [
+    ".",
+    "../main/features/*/settings.ts",
+    "../main/features/*/commands.ts"
+  ],
   "references": [{ "path": "../core" }]
 }

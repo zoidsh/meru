@@ -4,10 +4,17 @@ import type {
   SettingsLayers,
   ValueOf,
 } from "../../core/engines/settings.ts";
+import { appearanceSettings } from "../../main/features/appearance/settings.ts";
+import { shortcutsSettings } from "../../main/features/shortcuts/settings.ts";
+import { stageSettings } from "../../main/features/stage/settings.ts";
 import type { Setting } from "./define.ts";
 
 // Every feature's settings.ts, assembled here and nowhere else.
-export const registry = [] as const satisfies readonly Setting[];
+export const registry = [
+  ...appearanceSettings,
+  ...shortcutsSettings,
+  ...stageSettings,
+] as const satisfies readonly Setting[];
 
 export type Registry = typeof registry;
 
