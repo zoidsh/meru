@@ -1,26 +1,22 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { stage, stagePushes } from "../../shared/channels/stage.ts";
+import { rendererSurface } from "../../shared/channels/surfaces.ts";
+import type { StageSnapshot } from "../../shared/stage.ts";
 import { createClient } from "../client.ts";
-import { createStore, useStore } from "../store.ts";
-import type { Store } from "../store.ts";
+import { Dividers } from "../stage/dividers.tsx";
+import { createStore } from "../store.ts";
 
-interface ChromeState {
-  readonly platform: string;
-}
+const client = createClient(window, rendererSurface);
+const seed = client.sendSync(stage.snapshot, {});
+const store = createStore<StageSnapshot | undefined>(
+  seed.ok ? seed.value : undefined
+);
+client.on(stagePushes.changed, (snapshot) => {
+  store.set(() => snapshot);
+});
 
-const Chrome = ({ store }: { store: Store<ChromeState> }) => {
-  const platform = useStore(store, (state) => state.platform);
-  return (
-    <main>
-      <h1>Meru</h1>
-      <p>Running on {platform}</p>
-    </main>
-  );
-};
-
-const client = createClient(window);
-const store = createStore<ChromeState>({ platform: client.platform });
 const root = document.querySelector("#root");
 
 if (!root) {
@@ -29,6 +25,6 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <Chrome store={store} />
+    <Dividers client={client} store={store} />
   </StrictMode>
 );

@@ -8,6 +8,8 @@ export interface MainWindowOptions {
   readonly rendererFile: string;
   /** Open behind whatever is in front, for a desktop other sessions share. */
   readonly background: boolean;
+  /** Runs before the chrome page loads, so whatever the page asks for on its first paint is there. */
+  readonly onCreated: (window: WindowPort) => void;
 }
 
 export class MainWindow {
@@ -19,7 +21,7 @@ export class MainWindow {
   }
 
   async show(): Promise<void> {
-    const { ports, preload, rendererUrl, rendererFile, background } =
+    const { ports, preload, rendererUrl, rendererFile, background, onCreated } =
       this.#options;
     const window = ports.createWindow({
       height: 800,
@@ -31,6 +33,7 @@ export class MainWindow {
     window.onClosed(() => {
       this.#window = undefined;
     });
+    onCreated(window);
 
     await (rendererUrl === undefined
       ? window.loadFile(rendererFile)

@@ -17,7 +17,7 @@ import type {
 } from "../../../core/ports.ts";
 import type { Group } from "../../../core/records/group.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
-import type { Point } from "../../../core/records/rect.ts";
+import type { Point, Rect } from "../../../core/records/rect.ts";
 import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
@@ -94,7 +94,7 @@ export class Stage {
   split(
     orientation: Orientation,
     paneId = this.#focused
-  ): Result<void, StageError> {
+  ): Result<undefined, StageError> {
     const source = this.#tabOf(paneId);
     if (paneId === undefined || source === undefined) {
       return err("unknownPane");
@@ -121,7 +121,7 @@ export class Stage {
     return ok(undefined);
   }
 
-  close(paneId = this.#focused): Result<void, StageError> {
+  close(paneId = this.#focused): Result<undefined, StageError> {
     const order = panes(this.#group.layout);
     const index = order.findIndex((pane) => pane.paneId === paneId);
     const closing = order[index];
@@ -152,7 +152,7 @@ export class Stage {
     return ok(undefined);
   }
 
-  resize(splitId: string, ratio: number): Result<void, StageError> {
+  resize(splitId: string, ratio: number): Result<undefined, StageError> {
     const tree = resize(this.#group.layout, splitId, ratio);
     if (tree === this.#group.layout) {
       return err("unknownSplit");
@@ -162,7 +162,7 @@ export class Stage {
     return ok(undefined);
   }
 
-  focusPane(paneId: string): Result<void, StageError> {
+  focusPane(paneId: string): Result<undefined, StageError> {
     const view = this.#views.get(paneId);
     if (view === undefined) {
       return err("unknownPane");
@@ -173,7 +173,7 @@ export class Stage {
     return ok(undefined);
   }
 
-  focusNext(): Result<void, StageError> {
+  focusNext(): Result<undefined, StageError> {
     const next =
       this.#focused === undefined
         ? undefined
@@ -181,7 +181,7 @@ export class Stage {
     return next === undefined ? err("unknownPane") : this.focusPane(next);
   }
 
-  setFullscreen(paneId: string | undefined): Result<void, StageError> {
+  setFullscreen(paneId: string | undefined): Result<undefined, StageError> {
     if (paneId !== undefined && !this.#views.has(paneId)) {
       return err("unknownPane");
     }
@@ -191,7 +191,7 @@ export class Stage {
   }
 
   // Pointer events over a pane go to that pane's renderer, so the chrome page cannot follow a drag across one by itself; a transparent view over every pane catches the pointer for the drag's duration.
-  beginDrag(splitId: string): Result<void, StageError> {
+  beginDrag(splitId: string): Result<undefined, StageError> {
     const divider = layout(
       this.#group.layout,
       this.#options.window.contentBounds(),
@@ -216,7 +216,7 @@ export class Stage {
     return ok(undefined);
   }
 
-  dragTo(point: Point): Result<void, StageError> {
+  dragTo(point: Point): Result<undefined, StageError> {
     const drag = this.#drag;
     if (drag === undefined) {
       return err("noDrag");
@@ -240,7 +240,7 @@ export class Stage {
     return ok(undefined);
   }
 
-  endDrag(point: Point): Result<void, StageError> {
+  endDrag(point: Point): Result<undefined, StageError> {
     if (this.#drag === undefined) {
       return err("noDrag");
     }
@@ -289,6 +289,10 @@ export class Stage {
       ...this.#overlays,
       ...(fullscreen === undefined ? [] : [fullscreen]),
     ];
+  }
+
+  childBounds(): Rect[] {
+    return this.#options.window.childViews().map((view) => view.bounds());
   }
 
   dispose(): void {

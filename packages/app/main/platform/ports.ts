@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { app, BrowserWindow, screen } from "electron";
 
 import type { Ports, WindowPort, WindowSpec } from "../../core/ports.ts";
+import { ipcTransport } from "./ipc.ts";
 import { handleOf, portOf, viewFactory } from "./views.ts";
 
 const createWindow = (spec: WindowSpec): WindowPort => {
@@ -89,5 +90,6 @@ export const createElectronPorts = (): Ports => ({
   createWindow,
   cursor: { screenPoint: () => screen.getCursorScreenPoint() },
   ids: () => randomUUID(),
+  ipc: ipcTransport,
   views: viewFactory,
 });

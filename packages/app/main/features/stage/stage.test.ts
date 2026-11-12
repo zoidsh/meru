@@ -4,8 +4,11 @@ import { layout, leaf } from "../../../core/engines/layout.ts";
 import type { Group } from "../../../core/records/group.ts";
 import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
+import { stage as stageChannels } from "../../../shared/channels/stage.ts";
+import { stageSnapshotSchema } from "../../../shared/stage.ts";
 import type { StageSnapshot } from "../../../shared/stage.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import type { FakeView } from "../../../test/fakes/view.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
@@ -16,21 +19,28 @@ const GMAIL = "https://mail.google.com/";
 const setup = (style: Style = "modern") => {
   const window = new FakeWindow(1200, 800);
   const views = new FakeViewFactory();
-  const changes: StageSnapshot[] = [];
+  const registrar = new FakeRegistrar();
   const errors: unknown[] = [];
   const stages = new Stages({
     dragPreload: "/dist/preload/drag.cjs",
+    e2e: false,
     ids: fakeIds(),
-    onChange: (windowId, snapshot) => {
-      expect(windowId).toBe(window.contentsId);
-      changes.push(snapshot);
-    },
     onError: (error) => {
       errors.push(error);
     },
+    registrar,
     style,
     views,
   });
+  stages.start();
+  const changes = (): StageSnapshot[] =>
+    registrar.pushes.map((pushed) => {
+      expect(pushed).toMatchObject({
+        channel: "stage.changed",
+        contentsId: window.contentsId,
+      });
+      return stageSnapshotSchema.parse(pushed.payload);
+    });
   const tab: Tab = {
     appId: "gmail",
     health: "ok",
@@ -50,7 +60,7 @@ const setup = (style: Style = "modern") => {
   };
   const stage = stages.open(window, group, [tab]);
   const id = window.contentsId;
-  return { changes, errors, id, stage, stages, views, window };
+  return { changes, errors, id, registrar, stage, stages, views, window };
 };
 
 const childBounds = (window: FakeWindow) =>
@@ -73,7 +83,7 @@ describe(Stages, () => {
       x: 8,
       y: 8,
     });
-    expect(changes.at(-1)?.panes).toStrictEqual([
+    expect(changes().at(-1)?.panes).toStrictEqual([
       { paneId: "p1", rect: { height: 784, width: 1184, x: 8, y: 8 } },
     ]);
   });
@@ -119,7 +129,7 @@ describe(Stages, () => {
       tabs: 2,
       url: GMAIL,
     });
-    expect(changes.at(-1)?.dividers).toStrictEqual([
+    expect(changes().at(-1)?.dividers).toStrictEqual([
       {
         orientation: "vertical",
         rect: { height: 784, width: 8, x: 596, y: 8 },
@@ -184,9 +194,11 @@ describe(Stages, () => {
       { height: 584, width: 488, x: 8, y: 8 },
       { height: 584, width: 488, x: 504, y: 8 },
     ]);
-    expect(changes.at(-1)?.panes.map((pane) => pane.rect)).toStrictEqual(
-      childBounds(window)
-    );
+    expect(
+      changes()
+        .at(-1)
+        ?.panes.map((pane) => pane.rect)
+    ).toStrictEqual(childBounds(window));
   });
 
   it("resizes a split and refuses one it does not have", () => {
@@ -228,11 +240,41 @@ describe(Stages, () => {
 const dragging = () => {
   const context = setup();
   context.stages.split(context.id, "vertical");
-  context.changes.length = 0;
+  context.registrar.pushes.length = 0;
   const result = context.stages.beginDrag(context.id, "id2");
   const overlay: FakeView | undefined = context.views.created[2];
   return { ...context, overlay, result };
 };
+
+describe("the stage channels", () => {
+  it("split and close the sender's window", () => {
+    const { registrar, id, window } = setup();
+    expect(
+      registrar.call(stageChannels.split, { orientation: "horizontal" }, id)
+    ).toStrictEqual({ ok: true, value: undefined });
+    expect(window.childViews()).toHaveLength(2);
+    expect(registrar.call(stageChannels.close, {}, id).ok).toBeTruthy();
+    expect(window.childViews()).toHaveLength(1);
+  });
+
+  it("answer the snapshot a page paints first", () => {
+    const { registrar, id, changes } = setup();
+    expect(registrar.call(stageChannels.snapshot, {}, id)).toStrictEqual({
+      ok: true,
+      value: changes().at(-1),
+    });
+  });
+
+  it("refuse a sender with no window", () => {
+    const { registrar } = setup();
+    expect(
+      registrar.call(stageChannels.focusPane, { paneId: "p1" }, -1)
+    ).toStrictEqual({
+      error: "unknownWindow",
+      ok: false,
+    });
+  });
+});
 
 describe("a drag across panes", () => {
   it("covers every pane with a transparent overlay for its duration", () => {
@@ -258,7 +300,7 @@ describe("a drag across panes", () => {
       stages.dragTo(overlay?.contentsId ?? 0, { x: 300, y: 400 }, 1).ok
     ).toBeTruthy();
     expect(childBounds(window)[0]?.width).toBe(288);
-    expect(changes).toStrictEqual([]);
+    expect(changes()).toStrictEqual([]);
   });
 
   it("removes the overlay on release and sends one snapshot", () => {
@@ -272,9 +314,9 @@ describe("a drag across panes", () => {
       { height: 784, width: 788, x: 404, y: 8 },
     ]);
     expect(overlay?.destroyed).toBeTruthy();
-    expect(changes.map((change) => change.dividers[0]?.rect.x)).toStrictEqual([
-      396,
-    ]);
+    expect(changes().map((change) => change.dividers[0]?.rect.x)).toStrictEqual(
+      [396]
+    );
   });
 
   it("takes moves from the chrome page too, and ends on a move with no button held", () => {
