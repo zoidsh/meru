@@ -2,6 +2,9 @@
  * The seams between Meru and Electron. `main/platform` implements them over Electron, `test/fakes` by hand; nothing else knows which one it has.
  */
 
+/** Makes a new opaque id; the fake counts, so a test's ids are deterministic. */
+export type Ids = () => string;
+
 export interface Clock {
   readonly now: () => number;
 }
@@ -35,5 +38,6 @@ export interface WindowPort {
 export interface Ports {
   readonly app: AppPort;
   readonly clock: Clock;
+  readonly ids: Ids;
   readonly createWindow: (spec: WindowSpec) => WindowPort;
 }

@@ -169,6 +169,10 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@playwright/test':
         specifier: 1.65.0
@@ -224,6 +228,8 @@ importers:
       vitest:
         specifier: 5.1.0
         version: 5.1.0(@types/node@24.19.2)(@vitest/browser-preview@5.1.0)(@vitest/ui@5.1.0)(@voidzero-dev/vite-plus-core@1.6.0(@types/node@24.19.2)(typescript@7.0.2)(yaml@2.9.1))(happy-dom@21.0.4)
+
+  packages/app: {}
 
 packages:
 

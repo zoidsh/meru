@@ -14,6 +14,9 @@
     "prepare": "lefthook install",
     "test:e2e": "playwright test"
   },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
   "devDependencies": {
     "@playwright/test": "1.65.0",
     "@types/node": "24.19.2",

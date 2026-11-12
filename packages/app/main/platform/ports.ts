@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { app, BrowserWindow } from "electron";
 
 import type { Ports, WindowPort, WindowSpec } from "../../core/ports.ts";
@@ -61,4 +63,5 @@ export const createElectronPorts = (): Ports => ({
   },
   clock: { now: () => Date.now() },
   createWindow,
+  ids: () => randomUUID(),
 });
