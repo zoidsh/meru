@@ -83,7 +83,8 @@ export const applicationAccelerators = (): Record<string, string | null> => {
   const found: Record<string, string | null> = {};
   const visit = (items: readonly MenuItem[]) => {
     for (const item of items) {
-      if (item.id !== "") {
+      // Electron leaves id undefined on an item made from a role, whatever its typings say.
+      if (typeof item.id === "string" && item.id !== "") {
         found[item.id] = item.accelerator ?? null;
       }
       visit(item.submenu?.items ?? []);

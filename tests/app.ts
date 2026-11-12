@@ -5,9 +5,11 @@ import path from "node:path";
 import { _electron as electron, expect } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 
+import { commands } from "../packages/app/shared/channels/commands.ts";
 import { wireName } from "../packages/app/shared/channels/define.ts";
 import { e2e } from "../packages/app/shared/channels/e2e.ts";
 import type { CommandId } from "../packages/app/shared/commands/registry.ts";
+import type { Settings } from "../packages/app/shared/settings/registry.ts";
 
 const root = path.join(import.meta.dirname, "..");
 
@@ -21,12 +23,12 @@ export interface Launched {
 export interface LaunchOptions {
   readonly env?: Readonly<Record<string, string>>;
   /** The settings layers, written to `settings.json` before the app starts. */
-  readonly settings?: unknown;
+  readonly settings?: Settings;
 }
 
 export const SETTINGS_FILE = "settings.json";
 
-export const writeSettings = async (userData: string, settings: unknown) => {
+export const writeSettings = async (userData: string, settings: Settings) => {
   await writeFile(
     path.join(userData, SETTINGS_FILE),
     JSON.stringify({ data: settings, version: 1 })
@@ -99,6 +101,18 @@ export const stageOf = async (chrome: Page) => {
 export const viewsOf = async (chrome: Page) => {
   const { views } = await stageOf(chrome);
   return views;
+};
+
+export const zoomOf = async (chrome: Page) => {
+  const { zoom } = await stageOf(chrome);
+  return zoom;
+};
+
+/** Runs a command as a button on the chrome page would. */
+export const runCommand = async (chrome: Page, id: CommandId) => {
+  await chrome.evaluate(
+    `window.meru.invoke(${JSON.stringify(wireName(commands.run))}, ${JSON.stringify({ id })})`
+  );
 };
 
 export const styleOf = async (chrome: Page) => {

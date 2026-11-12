@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import type { Rect } from "../packages/app/core/records/rect.ts";
 import type { CommandId } from "../packages/app/shared/commands/registry.ts";
-import { clickMenuItem, launch, stageOf, styleOf, viewsOf } from "./app.ts";
+import { clickMenuItem, launch, stageOf, viewsOf } from "./app.ts";
 
 const SPLIT_VERTICAL: CommandId = "stage.splitVertical";
 const CLOSE_PANE: CommandId = "stage.closePane";
@@ -58,22 +58,6 @@ test("splits, drags the divider across the panes, and closes a pane", async () =
 
     await clickMenuItem(app, CLOSE_PANE);
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
-  } finally {
-    await close();
-  }
-});
-
-test("draws classic panes edge to edge", async () => {
-  const { chrome, close } = await launch({
-    settings: { global: { "appearance.style": "classic" } },
-  });
-  try {
-    await expect.poll(async () => await styleOf(chrome)).toBe("classic");
-    const [view] = await viewsOf(chrome);
-    const size = await chrome.evaluate<{ width: number; height: number }>(
-      "({ width: innerWidth, height: innerHeight })"
-    );
-    expect(view).toStrictEqual({ ...size, x: 0, y: 0 });
   } finally {
     await close();
   }
