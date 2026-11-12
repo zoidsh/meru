@@ -1,0 +1,9 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../node_modules/.tsbuild/core",
+    "lib": ["es2024"],
+    "types": []
+  },
+  "include": ["."]
+}

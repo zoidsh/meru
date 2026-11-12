@@ -1,0 +1,5 @@
+{
+  "name": "@meru/app",
+  "private": true,
+  "type": "module"
+}

@@ -16,5 +16,9 @@
     "types": []
   },
   "files": [],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    { "path": "./packages/app/core" },
+    { "path": "./packages/app/shared" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }
