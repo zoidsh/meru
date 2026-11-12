@@ -29,7 +29,6 @@ export type StageError =
   | "unknownPane"
   | "unknownSplit"
   | "lastPane"
-  | "noDrag"
   | "failed";
 
 export interface StageOptions {
@@ -216,10 +215,11 @@ export class Stage {
     return ok(undefined);
   }
 
+  // The chrome page and the overlay both report the pointer, so a move or release after the other source ended the drag is expected and ignored.
   dragTo(point: Point): Result<undefined, StageError> {
     const drag = this.#drag;
     if (drag === undefined) {
-      return err("noDrag");
+      return ok(undefined);
     }
     const bounds = this.#options.window.contentBounds();
     const ratio = ratioAt(
@@ -242,7 +242,7 @@ export class Stage {
 
   endDrag(point: Point): Result<undefined, StageError> {
     if (this.#drag === undefined) {
-      return err("noDrag");
+      return ok(undefined);
     }
     this.dragTo(point);
     this.#retireOverlay();

@@ -89,7 +89,7 @@ const restartElectron = async () => {
   startElectron();
 };
 
-const nodeConfigs = ["vite.main.ts", "vite.preload.ts"];
+const nodeConfigs = ["vite.main.ts", "vite.preload.ts", "vite.preload-drag.ts"];
 const pending = new Set(nodeConfigs);
 
 const watch = async (configFile: string) => {
@@ -105,7 +105,6 @@ const watch = async (configFile: string) => {
     if (event.code !== "END") {
       return;
     }
-    // Electron starts once both first builds are out, then restarts on every later one.
     pending.delete(configFile);
     if (pending.size === 0) {
       void restartElectron();

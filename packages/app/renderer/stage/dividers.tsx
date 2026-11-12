@@ -1,5 +1,6 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, PointerEvent } from "react";
 
+import { stage } from "../../shared/channels/stage.ts";
 import type { RendererSurface } from "../../shared/channels/surfaces.ts";
 import type { StageSnapshot } from "../../shared/stage.ts";
 import type { Client } from "../client.ts";
@@ -33,12 +34,32 @@ const line = ({ orientation }: Divider): CSSProperties =>
     : { height: 1, top: HIT / 2 - 0.5, width: "100%" };
 
 export const Dividers = ({
+  client,
   store,
 }: {
   readonly client: Client<RendererSurface>;
   readonly store: Store<StageSnapshot | undefined>;
 }) => {
   const dividers = useStore(store, (snapshot) => snapshot?.dividers);
+
+  // On macOS the chrome page keeps the pointer it captured even over a pane, so its moves and release reach main alongside the overlay's; main takes whichever arrives.
+  const begin = (splitId: string) => (event: PointerEvent<HTMLElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    client.send(stage.beginDrag, { splitId });
+  };
+  const move = (event: PointerEvent<HTMLElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      client.send(stage.dragTo, {
+        buttons: event.buttons,
+        x: event.clientX,
+        y: event.clientY,
+      });
+    }
+  };
+  const end = (event: PointerEvent<HTMLElement>) => {
+    client.send(stage.endDrag, { x: event.clientX, y: event.clientY });
+  };
+
   return (
     <div className="dividers">
       {dividers?.map((divider) => (
@@ -46,6 +67,9 @@ export const Dividers = ({
           className="divider"
           data-split-id={divider.splitId}
           key={divider.splitId}
+          onPointerDown={begin(divider.splitId)}
+          onPointerMove={move}
+          onPointerUp={end}
           style={hitArea(divider)}
         >
           <div className="divider-line" style={line(divider)} />

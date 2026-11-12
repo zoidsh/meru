@@ -53,7 +53,7 @@ const start = async () => {
   );
 
   const stages = new Stages({
-    dragPreload: undefined,
+    dragPreload: path.join(dist, "preload", "drag.cjs"),
     e2e,
     ids: ports.ids,
     onError: report,

@@ -4,7 +4,9 @@ import { layout, leaf } from "../../../core/engines/layout.ts";
 import type { Group } from "../../../core/records/group.ts";
 import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
+import { drag } from "../../../shared/channels/drag.ts";
 import { stage as stageChannels } from "../../../shared/channels/stage.ts";
+import { dragSurface } from "../../../shared/channels/surfaces.ts";
 import { stageSnapshotSchema } from "../../../shared/stage.ts";
 import type { StageSnapshot } from "../../../shared/stage.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
@@ -277,6 +279,20 @@ describe("the stage channels", () => {
 });
 
 describe("a drag across panes", () => {
+  it("lets the overlay use the drag channels while it is up, and no longer", () => {
+    const { registrar, overlay, window, stages, id } = dragging();
+    const sender = overlay?.contentsId ?? 0;
+    expect(registrar.surfaces.get(sender)).toBe(dragSurface);
+
+    registrar.call(drag.move, { buttons: 1, x: 300, y: 5 }, sender);
+    expect(childBounds(window)[0]?.width).toBe(288);
+    registrar.call(drag.end, { x: 300, y: 5 }, sender);
+
+    expect(registrar.surfaces.has(sender)).toBeFalsy();
+    expect(stages.snapshot(sender).ok).toBeFalsy();
+    expect(stages.snapshot(id).ok).toBeTruthy();
+  });
+
   it("covers every pane with a transparent overlay for its duration", () => {
     const { window, overlay, views, result } = dragging();
     expect(result.ok).toBeTruthy();
@@ -325,14 +341,12 @@ describe("a drag across panes", () => {
     expect(stages.dragTo(id, { x: 500, y: 10 }, 1).ok).toBeTruthy();
     expect(stages.dragTo(id, { x: 500, y: 10 }, 0).ok).toBeTruthy();
 
+    const late = stages.dragTo(id, { x: 700, y: 10 }, 1);
     expect({
       destroyed: overlay?.destroyed,
+      late: late.ok,
       width: childBounds(window)[0]?.width,
-    }).toStrictEqual({ destroyed: true, width: 488 });
-    expect(stages.dragTo(id, { x: 700, y: 10 }, 1)).toStrictEqual({
-      error: "noDrag",
-      ok: false,
-    });
+    }).toStrictEqual({ destroyed: true, late: true, width: 488 });
     expect(
       stages.dragTo(overlay?.contentsId ?? 0, { x: 1, y: 1 }, 1)
     ).toStrictEqual({

@@ -12,7 +12,9 @@ import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
+import { drag } from "../../../shared/channels/drag.ts";
 import { e2e, stage, stagePushes } from "../../../shared/channels/stage.ts";
+import { dragSurface } from "../../../shared/channels/surfaces.ts";
 import type { StageSnapshot } from "../../../shared/stage.ts";
 import { Stage } from "./stage.ts";
 import type { StageError } from "./stage.ts";
@@ -34,6 +36,7 @@ export class Stages {
   readonly #options: StagesOptions;
   readonly #tabs = new Map<string, Tab>();
   readonly #bySender = new Map<number, Stage>();
+  readonly #unassign = new Map<number, Unsubscribe>();
 
   constructor(options: StagesOptions) {
     this.#options = options;
@@ -56,6 +59,11 @@ export class Stages {
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),
         split: ({ orientation, paneId }, { contentsId }) =>
           this.split(contentsId, orientation, paneId),
+      }),
+      registrar.register(drag, {
+        end: (point, { contentsId }) => this.endDrag(contentsId, point),
+        move: ({ x, y, buttons }, { contentsId }) =>
+          this.dragTo(contentsId, { x, y }, buttons),
       }),
     ];
     if (this.#options.e2e) {
@@ -91,8 +99,14 @@ export class Stages {
       onOverlay: (contentsId, attached) => {
         if (attached) {
           this.#bySender.set(contentsId, opened);
+          this.#unassign.set(
+            contentsId,
+            this.#options.registrar.assign(contentsId, dragSurface)
+          );
         } else {
           this.#bySender.delete(contentsId);
+          this.#unassign.get(contentsId)?.();
+          this.#unassign.delete(contentsId);
         }
       },
       style: this.#options.style,

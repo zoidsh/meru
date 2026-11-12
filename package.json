@@ -5,7 +5,7 @@
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "node scripts/dev.ts",
-    "build": "vp build -c vite.main.ts && vp build -c vite.preload.ts && vp build -c vite.renderer.ts",
+    "build": "rm -rf dist/preload && vp build -c vite.main.ts && vp build -c vite.preload.ts && vp build -c vite.preload-drag.ts && vp build -c vite.renderer.ts",
     "test": "vp test run",
     "lint": "vp lint",
     "fmt": "vp fmt",

@@ -45,3 +45,15 @@ export const nodeLibrary = (options: {
       target: "node24",
     },
   });
+
+// A sandboxed preload can be neither an ES module nor require a chunk it shares with another preload, so each is a CommonJS build of its own into `dist/preload`, which none of them empties.
+export const preloadLibrary = (name: string): UserConfig =>
+  mergeConfig(
+    nodeLibrary({
+      entry: path.join(app, `preload/${name}/index.ts`),
+      fileName: `${name}.cjs`,
+      format: "cjs",
+      outDir: "preload",
+    }),
+    { build: { emptyOutDir: false } }
+  );
