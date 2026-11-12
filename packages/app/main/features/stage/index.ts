@@ -12,15 +12,23 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { drag } from "../../../shared/channels/drag.ts";
-import { e2e, stage, stagePushes } from "../../../shared/channels/stage.ts";
+import { stage, stagePushes } from "../../../shared/channels/stage.ts";
 import { dragSurface } from "../../../shared/channels/surfaces.ts";
+import type { CommandRegistrar } from "../../../shared/commands/define.ts";
 import type { StageSnapshot } from "../../../shared/stage.ts";
 import type { SettingsStore } from "../settings/index.ts";
+import { stageCommands } from "./commands.ts";
 import { Stage } from "./stage.ts";
 import type { StageError } from "./stage.ts";
 
 export type { StageError } from "./stage.ts";
 export { Stage } from "./stage.ts";
+
+export interface StageInspection {
+  readonly stage: StageSnapshot;
+  readonly views: Rect[];
+  readonly zoom: number[];
+}
 
 export interface StagesOptions {
   readonly ids: Ids;
@@ -28,7 +36,7 @@ export interface StagesOptions {
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
   readonly registrar: IpcRegistrar;
-  readonly e2e: boolean;
+  readonly commands: CommandRegistrar;
   readonly onError: (error: unknown) => void;
 }
 
@@ -43,8 +51,13 @@ export class Stages {
   }
 
   start(): Unsubscribe {
-    const { registrar, settings } = this.#options;
+    const { registrar, settings, commands } = this.#options;
     const unregister = [
+      commands.register(stageCommands, {
+        closePane: ({ windowId }) => this.close(windowId),
+        splitHorizontal: ({ windowId }) => this.split(windowId, "horizontal"),
+        splitVertical: ({ windowId }) => this.split(windowId, "vertical"),
+      }),
       settings.subscribe((changes) => {
         const restyle = changes.some(
           (change) => change.key === "appearance.style"
@@ -80,20 +93,6 @@ export class Stages {
           this.dragTo(contentsId, { x, y }, buttons),
       }),
     ];
-    if (this.#options.e2e) {
-      unregister.push(
-        registrar.register(e2e, {
-          snapshot: (_payload, { contentsId }) =>
-            this.#with(contentsId, (found) =>
-              ok({
-                stage: found.snapshot(),
-                views: found.childBounds(),
-                zoom: found.zoomFactors,
-              })
-            ),
-        })
-      );
-    }
     return () => {
       for (const remove of unregister) {
         remove();
@@ -192,8 +191,15 @@ export class Stages {
     return this.#with(sender, (found) => ok(found.snapshot()));
   }
 
-  childBounds(sender: number): Result<Rect[], StageError> {
-    return this.#with(sender, (found) => ok(found.childBounds()));
+  /** What the end-to-end suite asserts on: the stage as held here, the bounds Electron reports for each child view, and each pane's zoom. */
+  inspect(sender: number): Result<StageInspection, StageError> {
+    return this.#with(sender, (found) =>
+      ok({
+        stage: found.snapshot(),
+        views: found.childBounds(),
+        zoom: found.zoomFactors,
+      })
+    );
   }
 
   #with<T>(

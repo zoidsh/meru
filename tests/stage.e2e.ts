@@ -1,8 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 import type { Rect } from "../packages/app/core/records/rect.ts";
-import { MENU_IDS } from "../packages/app/main/shell/menu.ts";
+import type { CommandId } from "../packages/app/shared/commands/registry.ts";
 import { clickMenuItem, launch, stageOf, styleOf, viewsOf } from "./app.ts";
+
+const SPLIT_VERTICAL: CommandId = "stage.splitVertical";
+const CLOSE_PANE: CommandId = "stage.closePane";
 
 const overlap = (a: Rect, b: Rect) =>
   Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) *
@@ -13,7 +16,7 @@ test("splits, drags the divider across the panes, and closes a pane", async () =
   try {
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
 
-    await clickMenuItem(app, MENU_IDS.splitVertically);
+    await clickMenuItem(app, SPLIT_VERTICAL);
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(2);
     const split = await stageOf(chrome);
     const [left, right] = split.views;
@@ -46,7 +49,7 @@ test("splits, drags the divider across the panes, and closes a pane", async () =
     expect(dragged.views[0]?.width).toBeLessThan(left?.width ?? 0);
     expect(dragged.views).toHaveLength(2);
 
-    await clickMenuItem(app, MENU_IDS.closePane);
+    await clickMenuItem(app, CLOSE_PANE);
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
   } finally {
     await close();

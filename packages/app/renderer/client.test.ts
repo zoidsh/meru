@@ -9,7 +9,8 @@ import {
   event,
   push,
 } from "../shared/channels/define.ts";
-import { e2e, stage, stagePushes } from "../shared/channels/stage.ts";
+import { e2e } from "../shared/channels/e2e.ts";
+import { stage, stagePushes } from "../shared/channels/stage.ts";
 import { rendererSurface } from "../shared/channels/surfaces.ts";
 import type { StageSnapshot } from "../shared/stage.ts";
 import { FakeBridge } from "../test/fakes/bridge.ts";
@@ -60,11 +61,11 @@ describe(createClient, () => {
     const { bridge, client } = connect();
     bridge.answers.set("e2e.snapshot", {
       ok: true,
-      value: { stage: snapshot, views: [], zoom: [] },
+      value: { menu: {}, stage: snapshot, views: [], zoom: [] },
     });
     await expect(client.invoke(e2e.snapshot, {})).resolves.toStrictEqual({
       ok: true,
-      value: { stage: snapshot, views: [], zoom: [] },
+      value: { menu: {}, stage: snapshot, views: [], zoom: [] },
     });
 
     bridge.answers.set("e2e.snapshot", { ok: true, value: { stage: 1 } });

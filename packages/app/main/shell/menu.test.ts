@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { leaf } from "../../core/engines/layout.ts";
+import { commands as channels } from "../../shared/channels/commands.ts";
+import { commands } from "../../shared/commands/registry.ts";
 import { FakeApp } from "../../test/fakes/app.ts";
 import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
@@ -10,42 +12,44 @@ import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
 import { SettingsStore } from "../features/settings/index.ts";
 import { Stages } from "../features/stage/index.ts";
-import { buildMenu, MENU_IDS } from "./menu.ts";
+import type { MenuAction, MenuSection } from "../platform/menu.ts";
+import { CommandDispatcher } from "./commands.ts";
+import { ApplicationMenu, buildMenu } from "./menu.ts";
 
 const setup = (platform = "darwin") => {
   const window = new FakeWindow();
-  const failures: string[] = [];
+  const reports: string[] = [];
+  const registrar = new FakeRegistrar();
+  const settings = new SettingsStore({
+    app: new FakeApp(),
+    clock: new FakeClock(),
+    fs: new FakeFs(),
+    onError: (error) => {
+      reports.push(String(error));
+    },
+    onFallback: () => {
+      reports.push("fallback");
+    },
+    registrar,
+    watchFile: false,
+  });
+  const dispatcher = new CommandDispatcher();
+  dispatcher.start(registrar);
   const stages = new Stages({
+    commands: dispatcher,
     dragPreload: undefined,
-    e2e: false,
     ids: fakeIds(),
     onError: () => {
-      failures.push("error");
+      reports.push("error");
     },
-    registrar: new FakeRegistrar(),
-    settings: new SettingsStore({
-      app: new FakeApp(),
-      clock: new FakeClock(),
-      fs: new FakeFs(),
-      onError: (error) => {
-        failures.push(String(error));
-      },
-      onFallback: () => {
-        failures.push("fallback");
-      },
-      registrar: new FakeRegistrar(),
-      watchFile: false,
-    }),
+    registrar,
+    settings,
     views: new FakeViewFactory(),
   });
+  stages.start();
   stages.open(
     window,
-    {
-      id: "g1",
-      layout: leaf("p1", "t1"),
-      profileId: "dev",
-      tabIds: ["t1"],
-    },
+    { id: "g1", layout: leaf("p1", "t1"), profileId: "dev", tabIds: ["t1"] },
     [
       {
         appId: "gmail",
@@ -60,62 +64,187 @@ const setup = (platform = "darwin") => {
       },
     ]
   );
-  const sections = buildMenu({
-    onFailure: (action, error) => {
-      failures.push(`${action}: ${error}`);
+  const built: (readonly MenuSection[])[] = [];
+  new ApplicationMenu({
+    apply: (sections) => {
+      built.push(sections);
     },
+    commands,
+    dispatcher,
     platform,
-    stages,
-  });
-  const actions = sections.flatMap((section) =>
-    section.kind === "submenu" ? section.entries : []
-  );
+    report: (message) => {
+      reports.push(message);
+    },
+    settings,
+  }).start();
+  const sections = () => built.at(-1) ?? [];
+  const actions = () =>
+    sections().flatMap((section) =>
+      section.kind === "submenu"
+        ? section.entries.filter(
+            (entry): entry is MenuAction => entry.kind === "action"
+          )
+        : []
+    );
   const action = (id: string) => {
-    const found = actions.find((candidate) => candidate.id === id);
+    const found = actions().find((candidate) => candidate.id === id);
     if (found === undefined) {
       throw new Error(`No menu action ${id}`);
     }
     return found;
   };
-  return { action, actions, failures, sections, window };
+  return {
+    action,
+    actions,
+    built,
+    registrar,
+    reports,
+    sections,
+    settings,
+    window,
+  };
 };
 
-describe(buildMenu, () => {
-  it("carries the pane shortcuts in the View menu, beside the Edit menu", () => {
+const shortcuts = (actions: readonly MenuAction[]) =>
+  actions.map(({ id, accelerator }) => [id, accelerator]);
+
+describe(ApplicationMenu, () => {
+  it("carries the stage's commands in the View menu, beside the Edit menu, with their default shortcuts", () => {
     const { actions, sections } = setup();
     expect(
-      actions.map(({ accelerator, label }) => ({ accelerator, label }))
+      actions().map(({ id, accelerator, label }) => ({
+        accelerator,
+        id,
+        label,
+      }))
     ).toStrictEqual([
-      { accelerator: "CommandOrControl+D", label: "Split vertically" },
-      { accelerator: "CommandOrControl+Shift+D", label: "Split horizontally" },
-      { accelerator: "CommandOrControl+W", label: "Close pane" },
+      {
+        accelerator: "CommandOrControl+D",
+        id: "stage.splitVertical",
+        label: "Split vertically",
+      },
+      {
+        accelerator: "CommandOrControl+Shift+D",
+        id: "stage.splitHorizontal",
+        label: "Split horizontally",
+      },
+      {
+        accelerator: "CommandOrControl+W",
+        id: "stage.closePane",
+        label: "Close pane",
+      },
     ]);
-    expect(sections.slice(0, 2)).toStrictEqual([
+    expect(sections().slice(0, 2)).toStrictEqual([
       { kind: "role", role: "appMenu" },
       { kind: "role", role: "editMenu" },
     ]);
   });
 
   it("puts a file menu where there is no app menu", () => {
-    expect(setup("linux").sections[0]).toStrictEqual({
+    expect(setup("linux").sections()[0]).toStrictEqual({
       kind: "role",
       role: "fileMenu",
     });
   });
 
-  it("splits and closes panes in the window it is for", () => {
+  it("runs a command in the window it is for", () => {
     const { action, window } = setup();
-    action(MENU_IDS.splitVertically).run(window.contentsId);
-    action(MENU_IDS.splitHorizontally).run(window.contentsId);
+    action("stage.splitVertical").run(window.contentsId);
+    action("stage.splitHorizontal").run(window.contentsId);
     expect(window.childViews()).toHaveLength(3);
-    action(MENU_IDS.closePane).run(window.contentsId);
+    action("stage.closePane").run(window.contentsId);
     expect(window.childViews()).toHaveLength(2);
   });
 
   it("reports what it could not do and does nothing without a window", () => {
-    const { action, window, failures } = setup();
-    action(MENU_IDS.closePane).run(window.contentsId);
-    action(MENU_IDS.closePane).run(undefined);
-    expect(failures).toStrictEqual(["close-pane: lastPane"]);
+    const { action, window, reports } = setup();
+    action("stage.closePane").run(window.contentsId);
+    action("stage.closePane").run(undefined);
+    expect(reports).toStrictEqual(["stage.closePane: lastPane"]);
+  });
+
+  it("rebuilds with the user's shortcuts when they change, and only then", () => {
+    const { actions, built, settings, reports } = setup();
+    settings.set("stage.zoom", 2);
+    expect(built).toHaveLength(1);
+    settings.set("shortcuts.bindings", {
+      "stage.closePane": null,
+      "stage.splitVertical": "Alt+CmdOrCtrl+V",
+    });
+    expect(built).toHaveLength(2);
+    expect(shortcuts(actions())).toStrictEqual([
+      ["stage.splitVertical", "CommandOrControl+Alt+V"],
+      ["stage.splitHorizontal", "CommandOrControl+Shift+D"],
+      ["stage.closePane", undefined],
+    ]);
+    settings.set("shortcuts.bindings", {
+      "stage.splitHorizontal": "Cmd+V",
+      "stage.splitVertical": "CmdOrCtrl+V",
+    });
+    expect(reports).toStrictEqual([
+      "stage.splitHorizontal and stage.splitVertical share Command+V",
+    ]);
+  });
+
+  it("runs a command a page asks for, in the page's window", () => {
+    const { registrar, window } = setup();
+    expect(
+      registrar.call(
+        channels.run,
+        { id: "stage.splitVertical" },
+        window.contentsId
+      )
+    ).toStrictEqual({ ok: true, value: null });
+    expect(window.childViews()).toHaveLength(2);
+    expect(
+      registrar.call(channels.run, { id: "stage.closePane" }, -1)
+    ).toStrictEqual({ error: "unknownWindow", ok: false });
+  });
+});
+
+describe(buildMenu, () => {
+  it("adds edit commands after the platform's own edit items, in order", () => {
+    const sections = buildMenu({
+      bindings: new Map(),
+      commands: [
+        {
+          id: "stage.splitVertical",
+          label: "B",
+          menu: { order: 2, section: "edit" },
+        },
+        {
+          id: "stage.closePane",
+          label: "A",
+          menu: { order: 1, section: "edit" },
+        },
+        { id: "stage.splitHorizontal", label: "Hidden" },
+      ],
+      platform: "linux",
+      run: () => {
+        throw new Error("Nothing is clicked");
+      },
+    });
+    const [, edit, view] = sections;
+    expect(
+      edit?.kind === "submenu"
+        ? edit.entries.map((entry) =>
+            entry.kind === "action" ? entry.label : entry.kind
+          )
+        : edit
+    ).toStrictEqual([
+      "role",
+      "role",
+      "separator",
+      "role",
+      "role",
+      "role",
+      "role",
+      "role",
+      "role",
+      "separator",
+      "A",
+      "B",
+    ]);
+    expect(view).toStrictEqual({ entries: [], kind: "submenu", label: "View" });
   });
 });

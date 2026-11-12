@@ -11,6 +11,7 @@ import { stageSnapshotSchema } from "../../../shared/stage.ts";
 import type { StageSnapshot } from "../../../shared/stage.ts";
 import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
+import { FakeCommandRegistrar } from "../../../test/fakes/commands.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
@@ -45,10 +46,11 @@ const setup = (style: Style = "modern") => {
   const settings = settingsWith(style);
   const views = new FakeViewFactory();
   const registrar = new FakeRegistrar();
+  const commands = new FakeCommandRegistrar();
   const errors: unknown[] = [];
   const stages = new Stages({
     dragPreload: "/dist/preload/drag.cjs",
-    e2e: false,
+    commands,
     ids: fakeIds(),
     onError: (error) => {
       errors.push(error);
@@ -87,6 +89,7 @@ const setup = (style: Style = "modern") => {
   const id = window.contentsId;
   return {
     changes,
+    commands,
     errors,
     id,
     registrar,
@@ -305,6 +308,37 @@ const dragging = () => {
   const overlay: FakeView | undefined = context.views.created[2];
   return { ...context, overlay, result };
 };
+
+describe("the stage commands", () => {
+  it("are the three the stage declares", () => {
+    expect(setup().commands.ids.toSorted()).toStrictEqual([
+      "stage.closePane",
+      "stage.splitHorizontal",
+      "stage.splitVertical",
+    ]);
+  });
+
+  it("split and close panes in the window they are given", () => {
+    const { commands, id, window } = setup();
+    expect(commands.run("stage.splitVertical", id).ok).toBeTruthy();
+    expect(commands.run("stage.splitHorizontal", id).ok).toBeTruthy();
+    expect(window.childViews()).toHaveLength(3);
+    expect(commands.run("stage.closePane", id).ok).toBeTruthy();
+    expect(window.childViews()).toHaveLength(2);
+  });
+
+  it("report what they could not do", () => {
+    const { commands, id } = setup();
+    expect(commands.run("stage.closePane", id)).toStrictEqual({
+      error: "lastPane",
+      ok: false,
+    });
+    expect(commands.run("stage.splitVertical", -1)).toStrictEqual({
+      error: "unknownWindow",
+      ok: false,
+    });
+  });
+});
 
 describe("the stage channels", () => {
   it("split and close the sender's window", () => {

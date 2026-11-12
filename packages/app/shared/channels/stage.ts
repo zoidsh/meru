@@ -2,16 +2,8 @@ import { z } from "zod";
 
 import { idSchema } from "../../core/records/id.ts";
 import { orientationSchema } from "../../core/records/layout.ts";
-import { rectSchema } from "../../core/records/rect.ts";
 import { stageSnapshotSchema } from "../stage.ts";
-import {
-  defineChannels,
-  definePushes,
-  event,
-  invoke,
-  push,
-  sync,
-} from "./define.ts";
+import { defineChannels, definePushes, event, push, sync } from "./define.ts";
 
 const pointer = z.object({ x: z.number(), y: z.number() });
 
@@ -32,16 +24,4 @@ export const stage = defineChannels("stage", {
 
 export const stagePushes = definePushes("stage", {
   changed: push(stageSnapshotSchema),
-});
-
-export const e2e = defineChannels("e2e", {
-  snapshot: invoke(
-    z.object({}),
-    z.object({
-      stage: stageSnapshotSchema,
-      views: z.array(rectSchema),
-      /** Each pane's zoom factor, in layout order. */
-      zoom: z.array(z.number()),
-    })
-  ),
 });

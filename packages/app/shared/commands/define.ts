@@ -1,0 +1,79 @@
+import type { Unsubscribe } from "../../core/ports.ts";
+import type { Result } from "../../core/result.ts";
+import type { Name } from "../key.ts";
+import type { Message } from "../msg.ts";
+
+export type MenuSectionId = "edit" | "view";
+
+export interface CommandSpec {
+  readonly label: Message;
+  /** In Electron's accelerator form; the user's binding in `shortcuts.bindings` replaces it. */
+  readonly shortcut?: { readonly default: string };
+  readonly menu?: { readonly section: MenuSectionId; readonly order: number };
+}
+
+export type CommandSpecs = Readonly<Record<string, CommandSpec>>;
+
+export interface CommandGroup<
+  F extends string = string,
+  C extends CommandSpecs = CommandSpecs,
+> {
+  readonly feature: F;
+  readonly commands: C;
+}
+
+export interface Command<Id extends string = string> extends CommandSpec {
+  readonly id: Id;
+}
+
+export type CommandIdOf<G extends CommandGroup> =
+  `${G["feature"]}.${keyof G["commands"] & string}`;
+
+type Named<C> = {
+  readonly [N in keyof C]: N extends string
+    ? N extends Name<N>
+      ? C[N]
+      : never
+    : never;
+};
+
+/** A feature's commands, each id `feature.name`; a name is camelCase with no dot. */
+export const defineCommands = <
+  const F extends string,
+  const C extends CommandSpecs,
+>(
+  feature: F & Name<F>,
+  commands: C & Named<C>
+): CommandGroup<F, C> => ({ commands, feature });
+
+export const commandsOf = <F extends string, C extends CommandSpecs>(
+  group: CommandGroup<F, C>
+): Command<CommandIdOf<CommandGroup<F, C>>>[] =>
+  Object.keys(group.commands)
+    .filter((name): name is keyof C & string =>
+      Object.hasOwn(group.commands, name)
+    )
+    .map((name) => ({
+      ...group.commands[name],
+      id: `${group.feature}.${name}`,
+    }));
+
+export interface CommandContext {
+  /** The window the command was given for. */
+  readonly windowId: number;
+}
+
+export type CommandHandler = (
+  context: CommandContext
+) => Result<unknown, string>;
+
+export type CommandHandlers<C extends CommandSpecs> = {
+  readonly [N in keyof C]: CommandHandler;
+};
+
+export interface CommandRegistrar {
+  readonly register: <F extends string, C extends CommandSpecs>(
+    group: CommandGroup<F, C>,
+    handlers: CommandHandlers<C>
+  ) => Unsubscribe;
+}

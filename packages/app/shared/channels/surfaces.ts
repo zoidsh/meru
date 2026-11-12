@@ -1,12 +1,14 @@
+import { commands } from "./commands.ts";
 import { defineSurface } from "./define.ts";
 import type { Surface } from "./define.ts";
 import { drag } from "./drag.ts";
+import { e2e } from "./e2e.ts";
 import { settings, settingsPushes } from "./settings.ts";
-import { e2e, stage, stagePushes } from "./stage.ts";
+import { stage, stagePushes } from "./stage.ts";
 
 export const rendererSurface = defineSurface({
   pushes: [stagePushes, settingsPushes],
-  requests: [stage, settings, e2e],
+  requests: [stage, settings, commands, e2e],
 });
 
 export type RendererSurface = typeof rendererSurface;

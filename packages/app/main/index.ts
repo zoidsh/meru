@@ -5,13 +5,19 @@ import type { Group } from "../core/records/group.ts";
 import type { Tab } from "../core/records/tab.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { rendererSurface, surfaces } from "../shared/channels/surfaces.ts";
+import { commands as allCommands } from "../shared/commands/registry.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { Stages } from "./features/stage/index.ts";
 import { listenIpc } from "./platform/ipc.ts";
-import { setApplicationMenu } from "./platform/menu.ts";
+import {
+  applicationAccelerators,
+  setApplicationMenu,
+} from "./platform/menu.ts";
 import { createElectronPorts } from "./platform/ports.ts";
+import { CommandDispatcher } from "./shell/commands.ts";
+import { answerE2e } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
-import { buildMenu } from "./shell/menu.ts";
+import { ApplicationMenu } from "./shell/menu.ts";
 import { MainWindow } from "./shell/window.ts";
 
 const PROFILE_ID = "dev";
@@ -72,9 +78,12 @@ const start = async () => {
   await settings.open();
   settings.start();
 
+  const commands = new CommandDispatcher();
+  commands.start(dispatcher);
+
   const stages = new Stages({
+    commands,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
-    e2e,
     ids: ports.ids,
     onError: report,
     registrar: dispatcher,
@@ -82,15 +91,25 @@ const start = async () => {
     views: ports.views,
   });
   stages.start();
-  setApplicationMenu(
-    buildMenu({
-      onFailure: (action, error) => {
-        console.warn(`${action}: ${error}`);
-      },
-      platform: ports.app.platform,
+
+  new ApplicationMenu({
+    apply: setApplicationMenu,
+    commands: allCommands,
+    dispatcher: commands,
+    platform: ports.app.platform,
+    report: (message) => {
+      console.warn(message);
+    },
+    settings,
+  }).start();
+
+  if (e2e) {
+    answerE2e({
+      accelerators: applicationAccelerators,
+      registrar: dispatcher,
       stages,
-    })
-  );
+    });
+  }
 
   const tab: Tab = {
     appId: "gmail",

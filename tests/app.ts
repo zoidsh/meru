@@ -6,7 +6,8 @@ import { _electron as electron, expect } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { wireName } from "../packages/app/shared/channels/define.ts";
-import { e2e } from "../packages/app/shared/channels/stage.ts";
+import { e2e } from "../packages/app/shared/channels/e2e.ts";
+import type { CommandId } from "../packages/app/shared/commands/registry.ts";
 
 const root = path.join(import.meta.dirname, "..");
 
@@ -105,7 +106,10 @@ export const styleOf = async (chrome: Page) => {
   return stage.style;
 };
 
-export const clickMenuItem = async (app: ElectronApplication, id: string) => {
+export const clickMenuItem = async (
+  app: ElectronApplication,
+  id: CommandId
+) => {
   await app.evaluate(({ Menu }, itemId) => {
     const item = Menu.getApplicationMenu()?.getMenuItemById(itemId);
     if (!item) {
