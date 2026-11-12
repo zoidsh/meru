@@ -28,9 +28,17 @@ Meru 4, the rewrite of the Electron client for Gmail and Google Apps. The design
 
 ## Tests
 
-> No test replaces one of our own modules. Doubles exist only at ports, one hand-written fake per port in `packages/app/test/fakes/`, an object literal that `satisfies` it, never a cast. (Principle 6)
+> No test replaces one of our own modules. Doubles exist only at ports, one hand-written fake per port in `packages/app/test/fakes/`, an object literal that `satisfies` it or a small class that `implements` it, never a cast. (Principle 6)
 
 No `vi.mock` anywhere. Unit tests sit beside their file as `*.test.ts`; Vitest runs `core`, `shared`, `main` and `scripts` in Node and `preload` and `renderer` under happy-dom. `scripts/check-layers.test.ts` imports every `core/` and `main/features/` module with nothing faked. End-to-end tests are `tests/*.e2e.ts`.
+
+## Stage
+
+`main/features/stage/` owns one `Stage` per window: the window's group and its layout, the view of each pane, and overlays such as the drag overlay. `Stage.reconcile()` is the only code that calls `addChildView` or `removeChildView`; it stacks panes in layout order, overlays above them and a fullscreen pane on top, and reorders by removing and inserting because Electron moves an attached view to the top whatever index it is given. Geometry comes from the pure `core/engines/layout.ts`. Cmd/Ctrl+D splits the focused pane vertically, Cmd/Ctrl+Shift+D horizontally, and Cmd/Ctrl+W closes it, from the View menu in `main/shell/menu.ts`. `MERU_STYLE=classic` draws panes edge to edge with 1px seams instead of the default `modern` inset, rounded panes; `MERU_E2E=1` loads `about:blank` in panes and answers the end-to-end suite's `e2e.snapshot` channel.
+
+## IPC
+
+A domain's channels are declared once in `shared/channels/<domain>.ts` with `defineChannels` and zod schemas, and a surface in `shared/channels/surfaces.ts` lists the domains a kind of page may use. Callers pass the channel objects, never names: the renderer's `client.send(stage.split, payload)`, a feature's `registrar.register(stage, { split: handler, … })`, `registrar.push(contentsId, stagePushes.changed, snapshot)`. A renamed channel, a changed schema, a missing handler or a channel of another surface fails `tsc --build`; at runtime the preload's allowlist and the dispatcher in `main/shell/ipc.ts` refuse anything outside the sender's surface and parse every payload before a handler sees it.
 
 ## Worktrees and profiles
 
