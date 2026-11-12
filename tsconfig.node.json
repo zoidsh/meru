@@ -4,5 +4,10 @@
     "types": ["node"],
     "outDir": "node_modules/.tsbuild/node"
   },
-  "include": ["*.ts", "scripts", "tests"]
+  "include": ["*.ts", "scripts", "tests"],
+  "references": [
+    { "path": "./packages/app/core" },
+    { "path": "./packages/app/shared" },
+    { "path": "./packages/app/main" }
+  ]
 }

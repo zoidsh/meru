@@ -1,30 +1,17 @@
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { expect, test } from "@playwright/test";
 
-import { _electron as electron, expect, test } from "@playwright/test";
+import { launch, viewsOf } from "./app.ts";
 
-const root = path.join(import.meta.dirname, "..");
-
-test("opens one window showing Meru", async () => {
-  const userData = await mkdtemp(path.join(tmpdir(), "meru-e2e-"));
-  // chrome-sandbox ships without its setuid bit outside an installed package, so an unpacked Linux run cannot use the sandbox.
-  const sandbox = process.platform === "linux" ? ["--no-sandbox"] : [];
-  const app = await electron.launch({
-    args: [root, `--user-data-dir=${userData}`, ...sandbox],
-    env: { ...process.env, MERU_BACKGROUND: "1", MERU_TEST_BACKGROUND: "1" },
-  });
-
+test("opens one window showing one pane", async () => {
+  const { app, chrome, close } = await launch();
   try {
-    const window = await app.firstWindow();
-    await expect(window.locator("h1")).toHaveText("Meru");
-    await expect(window).toHaveTitle("Meru");
-    await expect(window.locator("body")).toContainText(
-      `Running on ${process.platform}`
+    await expect(chrome).toHaveTitle("Meru");
+    const windows = await app.evaluate(
+      ({ BrowserWindow }) => BrowserWindow.getAllWindows().length
     );
-    expect(app.windows()).toHaveLength(1);
+    expect(windows).toBe(1);
+    await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
   } finally {
-    await app.close();
-    await rm(userData, { force: true, recursive: true });
+    await close();
   }
 });

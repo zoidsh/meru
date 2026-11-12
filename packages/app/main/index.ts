@@ -8,8 +8,10 @@ import { allowlist } from "../shared/channels/define.ts";
 import { rendererSurface, surfaces } from "../shared/channels/surfaces.ts";
 import { Stages } from "./features/stage/index.ts";
 import { listenIpc } from "./platform/ipc.ts";
+import { setApplicationMenu } from "./platform/menu.ts";
 import { createElectronPorts } from "./platform/ports.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
+import { buildMenu } from "./shell/menu.ts";
 import { MainWindow } from "./shell/window.ts";
 
 const PROFILE_ID = "dev";
@@ -62,6 +64,15 @@ const start = async () => {
     views: ports.views,
   });
   stages.start();
+  setApplicationMenu(
+    buildMenu({
+      onFailure: (action, error) => {
+        console.warn(`${action}: ${error}`);
+      },
+      platform: ports.app.platform,
+      stages,
+    })
+  );
 
   const tab: Tab = {
     appId: "gmail",
