@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - next
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vp lint
+      - run: pnpm exec vp fmt --check
+      - run: pnpm exec tsc --build
+      - run: pnpm exec vp test run
+      - run: pnpm run build
+      - run: xvfb-run -a pnpm run test:e2e
+      # always(): the trace of a run killed for time is the one most worth reading.
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 7

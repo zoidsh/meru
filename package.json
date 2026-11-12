@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "node scripts/dev.ts",
     "build": "vp build -c vite.main.ts && vp build -c vite.preload.ts && vp build -c vite.renderer.ts",
-    "test": "vp test",
+    "test": "vp test run",
     "lint": "vp lint",
     "fmt": "vp fmt",
     "types": "tsc --build",
-    "check": "vp run check",
-    "prepare": "lefthook install"
+    "check": "vp check && tsc --build && vp test run",
+    "prepare": "lefthook install",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "1.65.0",
