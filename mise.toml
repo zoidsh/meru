@@ -1,0 +1,7 @@
+[tools]
+node = "24"
+pnpm = "12.18.0"
+
+[env]
+# Puts the project-local vp on PATH. The trailing "/." is load-bearing: npm-run-path, which Ultracite's execa uses, skips a node_modules/.bin already on PATH by exact string and prepends every ancestor's instead, so a worktree nested in another checkout would lint with that checkout's oxlint.
+_.path = ["{{config_root}}/node_modules/.bin/."]

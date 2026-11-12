@@ -1,0 +1,8 @@
+pre-commit:
+  jobs:
+    # Called by path, not through `pnpm exec`, which puts this worktree's node_modules/.bin on PATH and so makes Ultracite resolve oxlint from an enclosing checkout (see mise.toml).
+    - run: node_modules/.bin/ultracite fix {staged_files}
+      glob:
+        - "*.{js,mjs,cjs,ts,tsx,mts,cts}"
+        - "*.{json,jsonc,css,html,md,yaml,yml}"
+      stage_fixed: true

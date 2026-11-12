@@ -1,0 +1,15 @@
+packages:
+  - packages/*
+
+# pnpm runs no dependency build script unless it is listed here. Electron 45 has none: it downloads its binary on first use.
+allowBuilds:
+  lefthook: true
+
+# Ultracite 8.2.0 was younger than pnpm's minimum release age when it was taken.
+minimumReleaseAgeExclude:
+  - ultracite@8.2.0
+
+# Vite+ ships its own Vite and Vitest; aliasing keeps plugins and our imports on the same copies.
+overrides:
+  vite@*: npm:@voidzero-dev/vite-plus-core@1.6.0
+  vitest@*: 5.1.0
