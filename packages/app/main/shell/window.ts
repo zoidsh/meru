@@ -1,8 +1,11 @@
 import type { Ports, WindowPort } from "../../core/ports.ts";
+import type { Rect } from "../../core/records/rect.ts";
 
 export interface MainWindowOptions {
   readonly ports: Ports;
   readonly preload: string;
+  /** Where the window opens on the screen, frame included. */
+  readonly bounds: Rect;
   /** The renderer dev server's chrome page; the built file is loaded when it is unset. */
   readonly rendererUrl: string | undefined;
   readonly rendererFile: string;
@@ -21,14 +24,16 @@ export class MainWindow {
   }
 
   async show(): Promise<void> {
-    const { ports, preload, rendererUrl, rendererFile, background, onCreated } =
-      this.#options;
-    const window = ports.createWindow({
-      height: 800,
+    const {
+      ports,
       preload,
-      title: "Meru",
-      width: 1200,
-    });
+      bounds,
+      rendererUrl,
+      rendererFile,
+      background,
+      onCreated,
+    } = this.#options;
+    const window = ports.createWindow({ bounds, preload, title: "Meru" });
     this.#window = window;
     window.onClosed(() => {
       this.#window = undefined;

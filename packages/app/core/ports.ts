@@ -79,8 +79,8 @@ export interface IpcTransportPort {
 
 export interface WindowSpec {
   readonly title: string;
-  readonly width: number;
-  readonly height: number;
+  /** The window's outer bounds on the screen, frame included. */
+  readonly bounds: Rect;
   /** Absolute path of the built preload the window's page runs with. */
   readonly preload: string;
 }
@@ -93,6 +93,10 @@ export interface WindowPort {
   /** Shows the window without activating the app, so it opens behind whatever is in front. */
   readonly showInactive: () => void;
   readonly contentBounds: () => Rect;
+  /** The window's outer bounds on the screen, frame included. */
+  readonly bounds: () => Rect;
+  /** Calls `listener` after the window was moved or resized. */
+  readonly onBoundsChanged: (listener: () => void) => Unsubscribe;
   /** Electron moves a view that is already attached to the top, whatever `index` says. */
   readonly addChildView: (view: ViewPort, index: number) => void;
   readonly removeChildView: (view: ViewPort) => void;
@@ -154,6 +158,16 @@ export interface UpdaterPort {
   readonly onEvent: (listener: (event: UpdaterEvent) => void) => Unsubscribe;
 }
 
+export interface Display {
+  /** The part of the display a window may cover: the screen less the menu bar, dock or taskbar. */
+  readonly workArea: Rect;
+  readonly primary: boolean;
+}
+
+export interface DisplayPort {
+  readonly displays: () => readonly Display[];
+}
+
 /** The browser sessions panes load in, one partition per profile. */
 export interface SessionPort {
   /** Deletes everything the partition stored: cookies, storage and cache. */
@@ -166,6 +180,7 @@ export interface Ports {
   readonly fs: FsPort;
   readonly ids: Ids;
   readonly cursor: CursorPort;
+  readonly displays: DisplayPort;
   readonly ipc: IpcTransportPort;
   readonly network: OnlinePort;
   readonly power: PowerPort;

@@ -14,6 +14,7 @@ import { Profiles } from "./features/profiles/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { Stages } from "./features/stage/index.ts";
 import { Updater } from "./features/updater/index.ts";
+import { Windows } from "./features/windows/index.ts";
 import { listenIpc } from "./platform/ipc.ts";
 import {
   applicationAccelerators,
@@ -132,6 +133,22 @@ const start = async () => {
   await profiles.open();
   profiles.start();
 
+  const windows = new Windows({
+    app: ports.app,
+    clock: ports.clock,
+    displays: ports.displays,
+    events,
+    fs: ports.fs,
+    ids: ports.ids,
+    onError: report,
+    profiles,
+    report: (message) => {
+      console.warn(message);
+    },
+  });
+  await windows.open();
+  windows.start();
+
   const commands = new CommandDispatcher();
   commands.start(dispatcher);
 
@@ -204,8 +221,10 @@ const start = async () => {
 
   const window = new MainWindow({
     background: process.env.MERU_BACKGROUND === "1",
+    bounds: windows.mainBounds(),
     onCreated: (created) => {
       dispatcher.assign(created.contentsId, rendererSurface);
+      windows.attachMain(created);
       stages.open(created, group, [tab]);
     },
     ports,

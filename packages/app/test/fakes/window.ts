@@ -16,11 +16,14 @@ export class FakeWindow implements WindowPort {
   #children: ViewPort[] = [];
   readonly #resized = new Set<() => void>();
   readonly #closed = new Set<() => void>();
+  readonly #moved = new Set<() => void>();
+  #bounds: Rect;
 
-  constructor(width = 1200, height = 800) {
+  constructor(width = 1200, height = 800, x = 0, y = 0) {
     nextContentsId += 1;
     this.contentsId = nextContentsId;
     this.#size = { height, width };
+    this.#bounds = { height, width, x, y };
   }
 
   readonly loadUrl = async (url: string) => {
@@ -42,6 +45,23 @@ export class FakeWindow implements WindowPort {
   };
 
   readonly contentBounds = (): Rect => ({ ...this.#size, x: 0, y: 0 });
+
+  readonly bounds = (): Rect => this.#bounds;
+
+  readonly onBoundsChanged = (listener: () => void): Unsubscribe => {
+    this.#moved.add(listener);
+    return () => {
+      this.#moved.delete(listener);
+    };
+  };
+
+  /** Moves or resizes the window as the user would, by its outer bounds. */
+  readonly setBounds = (bounds: Rect) => {
+    this.#bounds = bounds;
+    for (const listener of this.#moved) {
+      listener();
+    }
+  };
 
   // Electron's View.addChildView: an attached view moves to the top and the index is ignored.
   readonly addChildView = (view: ViewPort, index: number) => {

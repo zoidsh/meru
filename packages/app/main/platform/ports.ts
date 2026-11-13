@@ -23,7 +23,7 @@ import { handleOf, portOf, viewFactory } from "./views.ts";
 
 const createWindow = (spec: WindowSpec): WindowPort => {
   const window = new BrowserWindow({
-    height: spec.height,
+    ...spec.bounds,
     show: false,
     title: spec.title,
     webPreferences: {
@@ -32,7 +32,6 @@ const createWindow = (spec: WindowSpec): WindowPort => {
       preload: spec.preload,
       sandbox: true,
     },
-    width: spec.width,
   });
   const content = window.contentView;
 
@@ -40,6 +39,7 @@ const createWindow = (spec: WindowSpec): WindowPort => {
     addChildView: (view, index) => {
       content.addChildView(handleOf(view), index);
     },
+    bounds: () => window.getBounds(),
     childViews: () =>
       content.children.flatMap((child) => {
         const port = portOf(child);
@@ -55,6 +55,14 @@ const createWindow = (spec: WindowSpec): WindowPort => {
     },
     loadUrl: async (url) => {
       await window.loadURL(url);
+    },
+    onBoundsChanged: (listener) => {
+      window.on("move", listener);
+      window.on("resize", listener);
+      return () => {
+        window.off("move", listener);
+        window.off("resize", listener);
+      };
     },
     onClosed: (listener) => {
       window.on("closed", listener);
@@ -146,6 +154,15 @@ export const createElectronPorts = (): Ports => ({
   },
   createWindow,
   cursor: { screenPoint: () => screen.getCursorScreenPoint() },
+  displays: {
+    displays: () => {
+      const primary = screen.getPrimaryDisplay().id;
+      return screen.getAllDisplays().map((display) => ({
+        primary: display.id === primary,
+        workArea: display.workArea,
+      }));
+    },
+  },
   fs: createFs(app.getPath("userData")),
   ids: () => randomUUID(),
   ipc: ipcTransport,
