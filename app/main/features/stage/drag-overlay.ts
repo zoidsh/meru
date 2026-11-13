@@ -7,7 +7,6 @@ import type { Style } from "../../../core/records/style.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { Surface } from "../../../shared/channels/define.ts";
-import type { DragSubject } from "../../../shared/channels/stage.ts";
 import {
   dragSurface,
   overlays,
@@ -25,8 +24,6 @@ export interface DragOverlayOptions {
   readonly preload: string | undefined;
   /** The preload of a tab drag's page, which is one of the renderer's. */
   readonly overlayPreload: string | undefined;
-  /** The address of the page a tab drag shows, drawing the tab and where it would land. */
-  readonly tabPage: (tabId: string) => string;
   readonly onError: (error: unknown) => void;
   /** The group's layout, which a drag starts from. */
   readonly layout: () => Layout;
@@ -73,13 +70,6 @@ export class DragOverlay {
 
   get view(): ViewPort | undefined {
     return this.#drag?.owned.view;
-  }
-
-  /** Starts a drag, ending any drag already on. */
-  begin(subject: DragSubject): Result<undefined, "unknownSplit"> {
-    return subject.kind === "divider"
-      ? this.#beginDivider(subject.splitId)
-      : this.#beginTab(subject.tabId);
   }
 
   // The chrome page and the overlay both report the pointer, so a move or release after the other source ended the drag is expected and ignored.
@@ -144,7 +134,8 @@ export class DragOverlay {
     this.#options.retire(drag.owned);
   }
 
-  #beginDivider(splitId: string): Result<undefined, "unknownSplit"> {
+  /** Starts a divider's drag, ending any drag already on. */
+  beginDivider(splitId: string): Result<undefined, "unknownSplit"> {
     const { area, flush } = this.#options.area();
     const base = this.#options.layout();
     const divider = layout(
@@ -172,16 +163,14 @@ export class DragOverlay {
     return ok(undefined);
   }
 
-  #beginTab(tabId: string): Result<undefined, "unknownSplit"> {
+  /** Starts a tab's drag over the page at `url`, which draws the tab and where it would land, ending any drag already on. */
+  beginTab(tabId: string, url: string): void {
     this.retire();
-    const owned = this.#open(
-      this.#options.tabPage(tabId),
-      this.#options.overlayPreload,
-      [surfaceArgument("tabDrag")]
-    );
+    const owned = this.#open(url, this.#options.overlayPreload, [
+      surfaceArgument("tabDrag"),
+    ]);
     this.#drag = { kind: "tab", owned, tabId };
     this.#options.onOverlay(owned.view.contentsId, overlays.tabDrag);
-    return ok(undefined);
   }
 
   #open(

@@ -21,7 +21,6 @@ import type {
   DragSubject,
   StageSnapshot,
 } from "../../../shared/channels/stage.ts";
-import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import type {
   CommandContext,
   CommandRegistrar,
@@ -47,11 +46,8 @@ export interface StagesOptions {
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
   readonly overlayPreload: string | undefined;
-  /** The overlay page's address for an overlay of `kind`, carrying `query`. */
-  readonly overlayUrl: (
-    kind: OverlayKind,
-    query: Readonly<Record<string, string>>
-  ) => string;
+  /** The address of the page a drag of the tab shows over the panes. */
+  readonly tabDragUrl: (tab: Tab) => string;
   /** What the chrome takes of a window's content area. */
   readonly insets: () => ChromeInsets;
   readonly registrar: IpcRegistrar;
@@ -189,7 +185,7 @@ export class Stages {
       groupId,
       keys: (view) => this.#options.keys.attach(view, windowId),
       overlayPreload: this.#options.overlayPreload,
-      overlayUrl: this.#options.overlayUrl,
+      tabDragUrl: this.#options.tabDragUrl,
       onPointer: (contentsId, point) => {
         this.#options.registrar.push(contentsId, dragPushes.pointer, point);
       },

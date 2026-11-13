@@ -83,8 +83,6 @@ const setup = async () => {
     commands,
     dragPreload: "/dist/preload/drag.cjs",
     overlayPreload: "/dist/preload/renderer.cjs",
-    overlayUrl: (kind, query) =>
-      `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
     events,
     insets: () => ({ left: 0, top: 0 }),
     onError: rethrow,
@@ -99,6 +97,8 @@ const setup = async () => {
     profiles,
     registrar,
     settings,
+    tabDragUrl: (tab) =>
+      `overlay.html?${new URLSearchParams({ appId: tab.appId, kind: "tabDrag", tabId: tab.id }).toString()}`,
     views,
   });
   stages.start();

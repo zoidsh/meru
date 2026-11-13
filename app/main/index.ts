@@ -204,7 +204,6 @@ const start = async () => {
     },
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
-    overlayUrl,
     events,
     insets: () => chromeInsets(sidebars.current()),
     onError: report,
@@ -212,6 +211,18 @@ const start = async () => {
     registrar: dispatcher,
     settings,
     keys,
+    // The chrome is neutral grey, so the drop takes the colour that marks the tab's profile, which stands out on a page.
+    tabDragUrl: (tab) => {
+      const accent = profiles.state.profiles.find(
+        (profile) => profile.id === tab.profileId
+      )?.color;
+      return overlayUrl("tabDrag", {
+        appId: tab.appId,
+        tabId: tab.id,
+        ...(accent === undefined ? {} : { accent }),
+        ...(tab.title === null ? {} : { title: tab.title }),
+      });
+    },
     views: ports.views,
   });
   stages.start();

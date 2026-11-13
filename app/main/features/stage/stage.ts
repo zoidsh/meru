@@ -54,6 +54,7 @@ export type StageError =
   | "unknownWindow"
   | "unknownPane"
   | "unknownSplit"
+  | "unknownTab"
   | "lastPane"
   /** The profiles refused the change, such as closing a profile's last Gmail tab. */
   | "refused"
@@ -93,11 +94,8 @@ export interface StageOptions {
   readonly dragPreload: string | undefined;
   /** The preload of an overlay's page, which is one of the renderer's. */
   readonly overlayPreload: string | undefined;
-  /** The overlay page's address for an overlay of `kind`, carrying `query`. */
-  readonly overlayUrl: (
-    kind: OverlayKind,
-    query: Readonly<Record<string, string>>
-  ) => string;
+  /** The address of the page a drag of the tab shows over the panes. */
+  readonly tabDragUrl: (tab: Tab) => string;
   /** Tells a tab drag's page, `contentsId`, where the chrome page saw the pointer. */
   readonly onPointer: (contentsId: number, point: Point) => void;
   readonly onChange: (snapshot: StageSnapshot) => void;
@@ -191,19 +189,6 @@ export class Stage {
         this.#retired.push(owned);
       },
       style: options.style,
-      tabPage: (tabId) => {
-        const tab = options.profiles.tab(tabId);
-        // The chrome is neutral grey, so the drop rect takes the colour that marks the tab's profile to stand out on a page.
-        const accent = options.profiles.state.profiles.find(
-          (profile) => profile.id === tab?.profileId
-        )?.color;
-        return options.overlayUrl("tabDrag", {
-          accent: accent ?? "",
-          appId: tab?.appId ?? "",
-          tabId,
-          title: tab?.title ?? "",
-        });
-      },
     });
     this.#shown = this.#read();
     this.#focused = panes(this.#layout())[0]?.tabIds[0];
@@ -401,9 +386,17 @@ export class Stage {
 
   /** Covers the panes with the drag's overlay, for a divider or a tab dragged from the sidebar. */
   beginDrag(subject: DragSubject): Result<undefined, StageError> {
-    const begun = this.#drag.begin(subject);
-    if (!begun.ok) {
-      return begun;
+    if (subject.kind === "tab") {
+      const tab = this.#options.profiles.tab(subject.tabId);
+      if (tab === undefined) {
+        return err("unknownTab");
+      }
+      this.#drag.beginTab(tab.id, this.#options.tabDragUrl(tab));
+    } else {
+      const begun = this.#drag.beginDivider(subject.splitId);
+      if (!begun.ok) {
+        return begun;
+      }
     }
     this.#reconcile();
     this.#arrange(false);

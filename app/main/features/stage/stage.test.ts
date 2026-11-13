@@ -108,8 +108,6 @@ const setup = async (style: Style = "modern") => {
     commands,
     dragPreload: "/dist/preload/drag.cjs",
     overlayPreload: "/dist/preload/renderer.cjs",
-    overlayUrl: (kind, query) =>
-      `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
     events,
     insets: () => insets,
     onError,
@@ -118,6 +116,8 @@ const setup = async (style: Style = "modern") => {
     onPopup: () => true,
     registrar,
     settings,
+    tabDragUrl: (tab) =>
+      `overlay.html?${new URLSearchParams({ appId: tab.appId, kind: "tabDrag", tabId: tab.id }).toString()}`,
     views,
   });
   stages.start();
@@ -891,7 +891,7 @@ const draggingTab = async () => {
 
 describe("a sidebar row dragged over the panes", () => {
   it("covers the panes with the overlay page on the tab drag's surface, naming the tab", async () => {
-    const { calendar, overlay, profiles, result, window } = await draggingTab();
+    const { calendar, overlay, result, window } = await draggingTab();
     expect(result.ok).toBeTruthy();
     const url = new URL(overlay?.url ?? "", "file:///");
     expect({
@@ -900,13 +900,7 @@ describe("a sidebar row dragged over the panes", () => {
       spec: overlay?.spec,
     }).toStrictEqual({
       bounds: window.contentBounds(),
-      query: {
-        accent: profiles.selected().color,
-        appId: "calendar",
-        kind: "tabDrag",
-        tabId: calendar.id,
-        title: "Calendar",
-      },
+      query: { appId: "calendar", kind: "tabDrag", tabId: calendar.id },
       spec: {
         arguments: ["--meru-surface=tabDrag"],
         background: "#00000000",
@@ -915,6 +909,14 @@ describe("a sidebar row dragged over the panes", () => {
         zoom: 1,
       },
     });
+  });
+
+  it("refuses a tab it does not know, covering nothing", async () => {
+    const { stages, id, window } = await setup();
+    expect([
+      stages.beginDrag(id, { kind: "tab", tabId: "nope" }),
+      window.childViews().length,
+    ]).toStrictEqual([{ error: "unknownTab", ok: false }, 1]);
   });
 
   it("lets its page read the panes and end the drag, and nothing else", async () => {
