@@ -28,7 +28,7 @@ const PROFILES = {
   profiles: [profileOf("personal", { status: { kind: "ok", unreadCount: 4 } })],
   selectedProfileId: "personal",
   tabs: [
-    tabOf("mail", "gmail"),
+    tabOf("mail", "gmail", "personal", false),
     tabOf("calendar", "calendar"),
     tabOf("drive", "drive"),
   ],
@@ -108,7 +108,7 @@ describe(Sidebar, () => {
     ]);
   });
 
-  it("offers a close on every row but the profile's one Gmail tab, and closes a row from it or on a middle click", () => {
+  it("offers a close on every row main says may close, and closes a row from it or on a middle click", () => {
     const { container, sentOn } = mount([answer(tabs.close, null)]);
     const row = (id: string) =>
       container.querySelector<HTMLElement>(`[data-tab-id=${id}]`);

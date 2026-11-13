@@ -5,7 +5,6 @@ import type { z } from "zod";
 
 import type { Group } from "../core/records/group.ts";
 import type { LayoutNode } from "../core/records/layout.ts";
-import type { Tab } from "../core/records/tab.ts";
 import { wireName } from "../shared/channels/define.ts";
 import type {
   InvokeChannel,
@@ -51,12 +50,16 @@ export const profileOf = (
   ...more,
 });
 
+type ShownTab = ProfilesSnapshot["tabs"][number];
+
 export const tabOf = (
   id: string,
   appId: string,
-  profileId = "personal"
-): Tab => ({
+  profileId = "personal",
+  closeable = true
+): ShownTab => ({
   appId,
+  closeable,
   health: "ok",
   id,
   pinned: false,

@@ -9,7 +9,9 @@ import { validateState } from "../../../core/engines/state-validate.ts";
 import {
   addProfile,
   addTab,
+  canClose,
   closeTab,
+  openTab,
   firstState,
   firstGroup,
   joinTab,
@@ -43,7 +45,7 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { Opened, SnapshotSpec } from "../../../core/snapshot.ts";
-import { appById, gmail } from "../../../shared/apps.ts";
+import { appById, gmail, isSingleInstance } from "../../../shared/apps.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import {
   profiles as profileChannels,
@@ -239,6 +241,10 @@ export class Profiles {
         ...profile,
         deactivated: deactivated.has(profile.id),
       })),
+      tabs: this.state.tabs.map((tab) => ({
+        ...tab,
+        closeable: canClose(this.state, tab.id, isSingleInstance).ok,
+      })),
     };
   }
 
@@ -303,25 +309,27 @@ export class Profiles {
     appId: string,
     placement?: Placement
   ): Result<Tab, ProfilesError> {
-    const existing = this.state.tabs.find(
-      (tab) =>
-        tab.profileId === profileId &&
-        tab.appId === appId &&
-        appById(appId)?.singleInstance === true
+    const app = appById(appId);
+    if (app === undefined) {
+      return err("unknownApp");
+    }
+    const { ids } = this.#options;
+    const opened = openTab(
+      this.state,
+      newTab(ids, profileId, app),
+      ids,
+      isSingleInstance,
+      placement
     );
-    return existing === undefined
-      ? this.addTab(profileId, appId, placement)
-      : ok(existing);
+    if (!opened.ok) {
+      return opened;
+    }
+    const committed = this.#commit(ok(opened.value.state));
+    return committed.ok ? ok(opened.value.tab) : committed;
   }
 
   closeTab(tabId: string): Result<undefined, ProfilesError> {
-    return this.#commit(
-      closeTab(
-        this.state,
-        tabId,
-        (appId) => appById(appId)?.singleInstance === true
-      )
-    );
+    return this.#commit(closeTab(this.state, tabId, isSingleInstance));
   }
 
   /** Brings a tab to the front: its profile selected, its group shown, its pane focused. */

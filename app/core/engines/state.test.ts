@@ -9,7 +9,9 @@ import { validateState } from "./state-validate.ts";
 import {
   addProfile,
   addTab,
+  canClose,
   closeTab,
+  openTab,
   createGroup,
   firstGroup,
   freshState,
@@ -118,10 +120,10 @@ describe("the state's operations", () => {
     expect(split.groups.map((found) => found.tabIds)).toStrictEqual([
       ["t1", "t2"],
     ]);
-    const closed = unwrap(closeTab(split, "t2"));
+    const closed = unwrap(closeTab(split, "t2", gmail));
     expect(validateState(closed)).toStrictEqual([]);
     expect(closed.groups).toStrictEqual([group]);
-    expect(closeTab(closed, "t1")).toStrictEqual({
+    expect(closeTab(closed, "t1", () => false)).toStrictEqual({
       error: "lastTab",
       ok: false,
     });
@@ -138,6 +140,42 @@ describe("the state's operations", () => {
       closeTab(two, "t1", gmail).ok,
       closeTab(calendar, "t3", gmail).ok,
     ]).toStrictEqual([{ error: "required", ok: false }, true, true]);
+  });
+
+  it("answers whether a tab may close without closing it", () => {
+    const { ids, state } = start();
+    const calendar = unwrap(
+      addTab(state, { ...tabOf("t3", "a"), appId: "calendar" }, ids)
+    );
+    expect([
+      canClose(calendar, "t1", gmail),
+      canClose(calendar, "t3", gmail),
+      canClose(state, "t1", () => false),
+      canClose(state, "nope", gmail),
+    ]).toStrictEqual([
+      { error: "required", ok: false },
+      { ok: true, value: undefined },
+      { error: "lastTab", ok: false },
+      { error: "unknownTab", ok: false },
+    ]);
+  });
+
+  it("opens to a profile's one tab of a single-instance app, and adds a tab of any other", () => {
+    const { ids, state } = start();
+    const again = unwrap(openTab(state, tabOf("t2", "a"), ids, gmail));
+    const calendar = { ...tabOf("t3", "a"), appId: "calendar" };
+    const added = unwrap(openTab(state, calendar, ids, gmail));
+    expect({
+      again: [again.tab.id, again.state],
+      added: [added.tab.id, added.state.tabs.map((tab) => tab.id)],
+      other: unwrap(
+        openTab(state, { ...tabOf("t4", "a"), appId: "drive" }, ids, gmail)
+      ).tab.id,
+    }).toStrictEqual({
+      added: ["t3", ["t1", "t3"]],
+      again: ["t1", state],
+      other: "t4",
+    });
   });
 
   it("makes a group of tabs alone in theirs, and lets one leave it", () => {

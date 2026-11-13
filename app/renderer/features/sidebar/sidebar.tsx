@@ -20,7 +20,6 @@ import {
 } from "../../../core/engines/sidebar.ts";
 import type { DropTarget } from "../../../core/engines/sidebar.ts";
 import type { Tab } from "../../../core/records/tab.ts";
-import { appById } from "../../../shared/apps.ts";
 import { commands } from "../../../shared/channels/commands.ts";
 import { tabs as tabChannels } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
@@ -148,15 +147,9 @@ export const Sidebar = ({
       ? (profile?.status.unreadCount ?? null)
       : null,
   };
-  const profileTabs = snapshot.tabs.filter(
-    (tab) => tab.profileId === snapshot.selectedProfileId
+  const closeable = new Set(
+    snapshot.tabs.filter((tab) => tab.closeable).map((tab) => tab.id)
   );
-  // Main refuses to close a profile's last tab of a single-instance app, so its row offers no close.
-  const closeable = (tab: Tab) =>
-    appById(tab.appId)?.singleInstance !== true ||
-    profileTabs.some(
-      (other) => other.id !== tab.id && other.appId === tab.appId
-    );
   const focusable = active ?? rows.flatMap(rowTabs)[0]?.id;
   // dnd-kit hands a move the operation as it stood before it, with the pointer's new place beside it, and finds the row under the pointer only after, which it reports as a drag over.
   const mark = (target: DropTarget | undefined) => {
@@ -190,7 +183,7 @@ export const Sidebar = ({
   const rowOf = (tab: Tab) => (
     <TabRowButton
       active={tab.id === active}
-      closeable={closeable(tab)}
+      closeable={closeable.has(tab.id)}
       drop={drop?.tabId === tab.id ? drop : undefined}
       focusable={tab.id === focusable}
       gmail={tab.appId === "gmail" ? gmail : undefined}

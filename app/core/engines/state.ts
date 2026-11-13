@@ -258,33 +258,61 @@ const withoutTab = (group: Group, tabId: string): Group | undefined => {
   };
 };
 
-/** Closes a tab; its pane closes with it, and a group left empty goes. A profile keeps its last tab of an app `singleInstance` names. */
-export const closeTab = (
+/** Whether an app keeps one tab per profile, as the catalog says of Gmail. */
+export type SingleInstance = (appId: string) => boolean;
+
+/** The tab an app opens to: the profile's one tab of a single-instance app when it has it, else `tab`, added as addTab adds it. */
+export const openTab = (
+  state: ProfilesState,
+  tab: Tab,
+  ids: Ids,
+  singleInstance: SingleInstance,
+  placement?: Placement
+): Result<{ readonly state: ProfilesState; readonly tab: Tab }, StateError> => {
+  const existing = singleInstance(tab.appId)
+    ? state.tabs.find(
+        (found) =>
+          found.profileId === tab.profileId && found.appId === tab.appId
+      )
+    : undefined;
+  if (existing !== undefined) {
+    return ok({ state, tab: existing });
+  }
+  const added = addTab(state, tab, ids, placement);
+  return added.ok ? ok({ state: added.value, tab }) : added;
+};
+
+/** Whether the tab may close: a profile keeps at least one tab, and its last tab of a single-instance app. */
+export const canClose = (
   state: ProfilesState,
   tabId: string,
-  singleInstance: (appId: string) => boolean = () => false
-): Changed => {
+  singleInstance: SingleInstance
+): Result<undefined, StateError> => {
   const tab = state.tabs.find((found) => found.id === tabId);
   if (tab === undefined) {
     return err("unknownTab");
   }
+  const others = state.tabs.filter(
+    (found) => found.profileId === tab.profileId && found.id !== tabId
+  );
   if (
     singleInstance(tab.appId) &&
-    !state.tabs.some(
-      (found) =>
-        found.id !== tabId &&
-        found.profileId === tab.profileId &&
-        found.appId === tab.appId
-    )
+    !others.some((found) => found.appId === tab.appId)
   ) {
     return err("required");
   }
-  if (
-    !state.tabs.some(
-      (found) => found.profileId === tab.profileId && found.id !== tabId
-    )
-  ) {
-    return err("lastTab");
+  return others.length === 0 ? err("lastTab") : ok(undefined);
+};
+
+/** Closes a tab; its pane closes with it, and a group left empty goes. */
+export const closeTab = (
+  state: ProfilesState,
+  tabId: string,
+  singleInstance: SingleInstance
+): Changed => {
+  const closeable = canClose(state, tabId, singleInstance);
+  if (!closeable.ok) {
+    return closeable;
   }
   return ok({
     ...state,

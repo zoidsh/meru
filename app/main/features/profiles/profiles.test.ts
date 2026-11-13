@@ -341,12 +341,18 @@ describe(Profiles, () => {
     ]);
   });
 
-  it("keeps a profile's last Gmail tab, and closes any other tab", async () => {
+  it("keeps a profile's last Gmail tab, says so in the snapshot, and closes any other tab", async () => {
     const { profiles } = await setup();
     const [gmail] = profiles.state.tabs;
     const calendar = unwrap(
       profiles.addTab(profiles.selected().id, "calendar")
     );
+    expect(
+      profiles.snapshot().tabs.map((tab) => [tab.appId, tab.closeable])
+    ).toStrictEqual([
+      ["gmail", false],
+      ["calendar", true],
+    ]);
     expect(profiles.closeTab(gmail?.id ?? "")).toStrictEqual({
       error: "required",
       ok: false,

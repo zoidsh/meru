@@ -6,9 +6,10 @@ import { profilesStateSchema } from "../../core/records/profiles-state.ts";
 import { tabSchema } from "../../core/records/tab.ts";
 import { defineChannels, definePushes, invoke, push, sync } from "./define.ts";
 
-/** What a page is told about profiles: the state, with each profile marked deactivated when the entitlement does not allow it. */
+/** What a page is told about profiles: the state, with each profile marked deactivated when the entitlement does not allow it, and each tab whether it may close. */
 export const profilesSnapshotSchema = profilesStateSchema.extend({
   profiles: z.array(profileSchema.extend({ deactivated: z.boolean() })),
+  tabs: z.array(tabSchema.extend({ closeable: z.boolean() })),
 });
 
 export type ProfilesSnapshot = z.infer<typeof profilesSnapshotSchema>;

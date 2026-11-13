@@ -69,3 +69,7 @@ export const apps: readonly App[] = [
 
 export const appById = (id: string): App | undefined =>
   apps.find((app) => app.id === id);
+
+/** Whether the catalog keeps the app to one tab per profile. */
+export const isSingleInstance = (appId: string): boolean =>
+  appById(appId)?.singleInstance === true;
