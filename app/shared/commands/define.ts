@@ -21,12 +21,19 @@ export interface CommandSpec {
 
 export type CommandSpecs = Readonly<Record<string, CommandSpec>>;
 
+/** What the shortcuts page calls a feature's commands, and where it lists them, lowest first. */
+export interface CommandSection {
+  readonly label: Message;
+  readonly order: number;
+}
+
 export interface CommandGroup<
   F extends string = string,
   C extends CommandSpecs = CommandSpecs,
 > {
   readonly feature: F;
   readonly commands: C;
+  readonly section: CommandSection;
 }
 
 export interface Command<Id extends string = string> extends CommandSpec {
@@ -50,8 +57,9 @@ export const defineCommands = <
   const C extends CommandSpecs,
 >(
   feature: F & Name<F>,
-  commands: C & Named<C>
-): CommandGroup<F, C> => ({ commands, feature });
+  commands: C & Named<C>,
+  section: CommandSection
+): CommandGroup<F, C> => ({ commands, feature, section });
 
 export const commandsOf = <F extends string, C extends CommandSpecs>(
   group: CommandGroup<F, C>

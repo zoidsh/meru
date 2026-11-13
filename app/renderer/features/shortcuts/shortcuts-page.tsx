@@ -8,7 +8,11 @@ import {
   resolveBindings,
 } from "../../../core/engines/shortcuts.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
-import { commands } from "../../../shared/commands/registry.ts";
+import {
+  commandById,
+  commands,
+  commandSections,
+} from "../../../shared/commands/registry.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
@@ -16,31 +20,6 @@ import { Button } from "../../ui/button.tsx";
 import type { PageContent } from "../settings/page-content.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
-
-type Feature = CommandId extends `${infer F}.${string}` ? F : never;
-
-const FEATURES: Readonly<Record<Feature, Message>> = {
-  launcher: msg`Tabs`,
-  profiles: msg`Profiles`,
-  settings: msg`Settings`,
-  sidebar: msg`Sidebar`,
-  stage: msg`Panes`,
-  updater: msg`Updates`,
-};
-
-// The order the page lists features in, as a user reaches for them.
-const ORDER = [
-  "launcher",
-  "stage",
-  "sidebar",
-  "profiles",
-  "settings",
-  "updater",
-] as const satisfies readonly Feature[];
-
-const labelOf = new Map(
-  commands.map((command): [CommandId, Message] => [command.id, command.label])
-);
 
 type Bindings = Readonly<Partial<Record<CommandId, string | null>>>;
 
@@ -65,7 +44,7 @@ const Recorder = ({
   }
   return (
     <Button
-      aria-label={msg`Shortcut for ${labelOf.get(id) ?? id}`}
+      aria-label={msg`Shortcut for ${commandById(id).label}`}
       className="min-w-32 font-mono"
       data-recording={recording ? "" : undefined}
       onBlur={() => {
@@ -127,23 +106,19 @@ export const ShortcutsPage = () => {
       value: next,
     });
   };
-  const sections = ORDER.map((feature) => ({
-    feature,
-    members: commands.filter((command) => command.id.startsWith(`${feature}.`)),
-  }));
   return (
     <div className="flex flex-col gap-8">
-      {sections.map(({ feature, members }) => (
+      {commandSections.map((section) => (
         <section
-          aria-label={FEATURES[feature]}
+          aria-label={section.label}
           className="flex flex-col"
-          key={feature}
+          key={section.feature}
         >
           <h2 className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
-            {FEATURES[feature]}
+            {section.label}
           </h2>
           <div className="divide-y">
-            {members.map((command) => {
+            {section.commands.map((command) => {
               const clash = clashes.find((found) =>
                 found.ids.includes(command.id)
               );
@@ -163,7 +138,7 @@ export const ShortcutsPage = () => {
                         className="text-destructive text-xs"
                         data-conflict=""
                       >
-                        {msg`Also the shortcut of ${others.map((other) => labelOf.get(other) ?? other).join(", ")}`}
+                        {msg`Also the shortcut of ${others.map((other) => commandById(other).label).join(", ")}`}
                       </span>
                     ) : undefined}
                   </div>

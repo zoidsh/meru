@@ -5,11 +5,17 @@ import { commandsOf, defineCommands } from "./define.ts";
 import { commands } from "./registry.ts";
 import type { CommandId } from "./registry.ts";
 
+const SECTION = { label: "Panes", order: 0 };
+
 describe(defineCommands, () => {
   it("gives each command the id feature.name", () => {
-    const group = defineCommands("pane", {
-      zoomIn: { label: "Zoom in", shortcut: { default: "CmdOrCtrl+Plus" } },
-    });
+    const group = defineCommands(
+      "pane",
+      {
+        zoomIn: { label: "Zoom in", shortcut: { default: "CmdOrCtrl+Plus" } },
+      },
+      SECTION
+    );
     const [zoomIn] = commandsOf(group);
     expect(zoomIn).toStrictEqual({
       id: "pane.zoomIn",
@@ -23,11 +29,13 @@ describe(defineCommands, () => {
 
   it("takes only a camelCase feature and names", () => {
     // @ts-expect-error: the feature is lower case
-    defineCommands("Pane", { zoomIn: { label: "" } });
+    defineCommands("Pane", { zoomIn: { label: "" } }, SECTION);
     // @ts-expect-error: a name has no dot
-    defineCommands("pane", { "zoom.in": { label: "" } });
-    // @ts-expect-error: a name is camelCase
-    expect(defineCommands("pane", { ZoomIn: { label: "" } })).toBeDefined();
+    defineCommands("pane", { "zoom.in": { label: "" } }, SECTION);
+    expect(
+      // @ts-expect-error: a name is camelCase
+      defineCommands("pane", { ZoomIn: { label: "" } }, SECTION)
+    ).toBeDefined();
   });
 });
 

@@ -20,14 +20,18 @@ const rethrow = (error: unknown) => {
   throw error;
 };
 
-const fixture = defineCommands("page", {
-  close: { label: msg`Close page`, shortcut: { default: "Escape" } },
-  split: {
-    label: msg`Split`,
-    menu: { order: 1, section: "view" },
-    shortcut: { default: "CmdOrCtrl+Alt+N" },
+const fixture = defineCommands(
+  "page",
+  {
+    close: { label: msg`Close page`, shortcut: { default: "Escape" } },
+    split: {
+      label: msg`Split`,
+      menu: { order: 1, section: "view" },
+      shortcut: { default: "CmdOrCtrl+Alt+N" },
+    },
   },
-});
+  { label: msg`Page`, order: 0 }
+);
 
 const key = (
   code: string,
@@ -126,9 +130,11 @@ describe(ShortcutKeys, () => {
   });
 
   it("hears no page while no command without a menu item has a key", () => {
-    const quiet = defineCommands("quiet", {
-      close: { label: msg`Close page` },
-    });
+    const quiet = defineCommands(
+      "quiet",
+      { close: { label: msg`Close page` } },
+      { label: msg`Quiet`, order: 0 }
+    );
     const dispatcher = new CommandDispatcher<"quiet.close">();
     const keys = new ShortcutKeys({
       commands: commandsOf(quiet),
