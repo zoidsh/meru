@@ -87,7 +87,7 @@ test("splits, drags the divider across the panes, moves focus, and closes a tab"
   }
 });
 
-test("keeps a tab's page through a split beside it and leaving the group", async () => {
+test("keeps a tab's page through a split beside it, leaving the group and joining it again", async () => {
   const { app, chrome, close } = await launch();
   try {
     await expect.poll(async () => await panesOf(app)).toHaveLength(1);
@@ -107,6 +107,17 @@ test("keeps a tab's page through a split beside it and leaving the group", async
     await expect.poll(async () => await panesOf(app)).toStrictEqual([added]);
     await invokeIn(chrome, tabs.focus, { tabId: first.tabId });
     await expect.poll(async () => await panesOf(app)).toStrictEqual([first]);
+
+    await invokeIn(chrome, tabs.join, {
+      orientation: "vertical",
+      side: "before",
+      tabId: first.tabId,
+      targetTabId: added?.tabId ?? "",
+    });
+    await invokeIn(chrome, tabs.focus, { tabId: first.tabId });
+    await expect
+      .poll(async () => await panesOf(app))
+      .toStrictEqual([first, added]);
   } finally {
     await close();
   }
