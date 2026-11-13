@@ -82,11 +82,6 @@ const specOf = <R extends SettingSpecs, K extends KeyOf<R>>(
   return found;
 };
 
-export const isSettingKey = <R extends SettingSpecs>(
-  specs: R,
-  key: string
-): key is KeyOf<R> => specs.some((spec) => spec.key === key);
-
 const fits = (specs: SettingSpecs, layer: Raw, scope: SettingScope): boolean =>
   Object.entries(layer).every(([key, value]) => {
     const spec = specs.find((found) => found.key === key);

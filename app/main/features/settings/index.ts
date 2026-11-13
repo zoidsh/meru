@@ -165,7 +165,6 @@ export class SettingsStore {
     };
   }
 
-  /** Writes what is pending now. */
   async flush(): Promise<void> {
     await this.#store.flush();
   }

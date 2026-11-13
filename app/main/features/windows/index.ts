@@ -132,7 +132,6 @@ export class Windows {
     this.#update({ bounds: window.bounds() });
   }
 
-  /** Writes what is pending now. */
   async flush(): Promise<void> {
     await this.#store.flush();
   }

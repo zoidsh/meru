@@ -104,8 +104,6 @@ export const entitlementSnapshot = (
   version: 1,
 });
 
-export type EntitlementListener = (entitlement: EntitlementValue) => void;
-
 export interface EntitlementOptions<K> {
   readonly api: EntitlementApi;
   readonly fs: FsPort;
@@ -140,7 +138,6 @@ const keyRejected = (state: EntitlementState): boolean =>
 export class Entitlement<K> {
   readonly #options: EntitlementOptions<K>;
   readonly #store: SnapshotStore<EntitlementState, EntitlementFallback>;
-  readonly #listeners = new Set<EntitlementListener>();
   readonly #disposables = new DisposableStore();
   #state: EntitlementState | undefined;
   #claims: Claims | undefined;
@@ -221,13 +218,6 @@ export class Entitlement<K> {
     return this.#value;
   }
 
-  subscribe(listener: EntitlementListener): Unsubscribe {
-    this.#listeners.add(listener);
-    return () => {
-      this.#listeners.delete(listener);
-    };
-  }
-
   /** Stores the license key, or removes it for null, and asks for a token for it. */
   setLicenseKey(licenseKey: string | null): void {
     if (this.#state === undefined || this.#state.licenseKey === licenseKey) {
@@ -238,7 +228,6 @@ export class Entitlement<K> {
     this.#schedule();
   }
 
-  /** Writes what is pending now. */
   async flush(): Promise<void> {
     await this.#store.flush();
   }
@@ -449,12 +438,6 @@ export class Entitlement<K> {
       return;
     }
     this.#options.registrar.broadcast(entitlementPushes.changed, next);
-    for (const listener of this.#listeners) {
-      listener(next);
-    }
-    this.#options.events.emit("entitlement.changed", {
-      entitlement: next,
-      reason: next.kind === "disabled" ? next.reason : null,
-    });
+    this.#options.events.emit("entitlement.changed", { entitlement: next });
   }
 }

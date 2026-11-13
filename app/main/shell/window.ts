@@ -19,7 +19,6 @@ export interface MainWindowOptions {
 
 export class MainWindow {
   readonly #options: MainWindowOptions;
-  #window: WindowPort | undefined;
 
   constructor(options: MainWindowOptions) {
     this.#options = options;
@@ -42,10 +41,6 @@ export class MainWindow {
       preload,
       title: "Meru",
     });
-    this.#window = window;
-    window.onClosed(() => {
-      this.#window = undefined;
-    });
     onCreated(window);
 
     await (rendererUrl === undefined
@@ -58,9 +53,5 @@ export class MainWindow {
     } else {
       window.show();
     }
-  }
-
-  get isOpen(): boolean {
-    return this.#window !== undefined;
   }
 }

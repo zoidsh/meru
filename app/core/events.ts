@@ -3,11 +3,8 @@ import type { Entitlement } from "./records/entitlement.ts";
 
 /** The signals a feature sends up to whoever assembles the app, by name. */
 export interface AppEventMap {
-  /** What the user may use changed; `reason` is the server's when the license was disabled. */
-  readonly "entitlement.changed": {
-    readonly entitlement: Entitlement;
-    readonly reason: string | null;
-  };
+  /** What the user may use changed. */
+  readonly "entitlement.changed": { readonly entitlement: Entitlement };
   /** Something a menu item shows, such as whether it is enabled, may have changed. */
   readonly "menu.invalidated": null;
   /** Another profile is selected, showing `groupId` in the main window. */

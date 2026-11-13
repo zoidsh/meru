@@ -5,25 +5,16 @@ import {
   addTab,
   closeTab,
   colorFor,
-  createGroup,
   firstGroup,
   freshState,
-  leaveGroup,
   moveTabTo,
   removeProfile,
   repairState,
   resizeSplit,
   selectProfile,
-  setProfileStatus,
-  splitInto,
-  updateTab,
   validateState,
 } from "../../../core/engines/state.ts";
-import type {
-  Placement,
-  StateError,
-  TabPatch,
-} from "../../../core/engines/state.ts";
+import type { Placement, StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
 import type { GateRefusal } from "../../../core/entitlement/gate.ts";
 import type { AppEvents } from "../../../core/events.ts";
@@ -37,9 +28,8 @@ import type {
 import type { App } from "../../../core/records/app.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { Group } from "../../../core/records/group.ts";
-import type { Orientation } from "../../../core/records/layout.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
-import type { Profile, ProfileStatus } from "../../../core/records/profile.ts";
+import type { Profile } from "../../../core/records/profile.ts";
 import { profilesStateSchema } from "../../../core/records/profiles-state.ts";
 import type { ProfilesState } from "../../../core/records/profiles-state.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -296,13 +286,6 @@ export class Profiles {
     return this.#commit(selectProfile(this.state, profileId));
   }
 
-  setProfileStatus(
-    profileId: string,
-    status: ProfileStatus
-  ): Result<undefined, ProfilesError> {
-    return this.#commit(setProfileStatus(this.state, profileId, status));
-  }
-
   /** Adds a tab of the app after the profile's others, in a group of its own or split into a group's pane. */
   addTab(
     profileId: string,
@@ -340,43 +323,6 @@ export class Profiles {
     return this.#commit(moveTabTo(this.state, tabId, to));
   }
 
-  setTabStatus(
-    tabId: string,
-    patch: TabPatch
-  ): Result<undefined, ProfilesError> {
-    return this.#commit(updateTab(this.state, tabId, patch));
-  }
-
-  createGroup(
-    tabIds: readonly [string, ...string[]],
-    orientation: Orientation
-  ): Result<string, ProfilesError> {
-    const made = createGroup(
-      this.state,
-      tabIds,
-      orientation,
-      this.#options.ids
-    );
-    if (!made.ok) {
-      return made;
-    }
-    const committed = this.#commit(ok(made.value.state));
-    return committed.ok ? ok(made.value.groupId) : committed;
-  }
-
-  splitInto(
-    tabId: string,
-    placement: Placement
-  ): Result<undefined, ProfilesError> {
-    return this.#commit(
-      splitInto(this.state, tabId, placement, this.#options.ids)
-    );
-  }
-
-  leaveGroup(tabId: string): Result<undefined, ProfilesError> {
-    return this.#commit(leaveGroup(this.state, tabId, this.#options.ids));
-  }
-
   resize(
     groupId: string,
     splitId: string,
@@ -385,7 +331,6 @@ export class Profiles {
     return this.#commit(resizeSplit(this.state, groupId, splitId, ratio));
   }
 
-  /** Writes what is pending now. */
   async flush(): Promise<void> {
     await this.#store.flush();
   }

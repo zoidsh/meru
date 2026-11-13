@@ -10,7 +10,6 @@ import { stageSettings } from "../../main/features/stage/settings.ts";
 import { updaterSettings } from "../../main/features/updater/settings.ts";
 import type { Setting } from "./define.ts";
 
-// Every feature's settings.ts, assembled here and nowhere else.
 export const registry = [
   ...appearanceSettings,
   ...shortcutsSettings,

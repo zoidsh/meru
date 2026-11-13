@@ -228,7 +228,7 @@ describe(Profiles, () => {
     const created = unwrap(profiles.createProfile("Work"));
     unwrap(profiles.selectProfile(created.id));
     registrar.dispatch(PAGE, wireName(profileChannels.snapshot), {});
-    events.emit("entitlement.changed", { entitlement: free, reason: null });
+    events.emit("entitlement.changed", { entitlement: free });
     const pushed = profilesSnapshotSchema.parse(transport.sent.at(-1)?.payload);
     expect(
       pushed.profiles.map((profile) => [profile.label, profile.deactivated])
@@ -335,12 +335,8 @@ const operations: readonly ((
   (profiles, { profileId, appId }) => profiles.addTab(profileId, appId),
   (profiles, { tabId }) => profiles.closeTab(tabId),
   (profiles, { tabId, index }) => profiles.moveTab(tabId, index),
-  (profiles, { tabId, placement }) => profiles.splitInto(tabId, placement),
-  (profiles, { tabId }) => profiles.leaveGroup(tabId),
   (profiles, { profileId, appId, placement }) =>
     profiles.addTab(profileId, appId, placement),
-  (profiles, { tabId, placement }) =>
-    profiles.createGroup([tabId, placement.paneId], placement.orientation),
 ];
 
 const choose = (

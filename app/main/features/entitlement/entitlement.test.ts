@@ -300,7 +300,7 @@ describe(Entitlement, () => {
       reason: "refunded",
       source: "refreshed",
     };
-    expect(changed).toStrictEqual([{ entitlement: value, reason: "refunded" }]);
+    expect(changed).toStrictEqual([{ entitlement: value }]);
     expect(transport.sent).toStrictEqual([
       {
         channel: wireName(entitlementPushes.changed),
