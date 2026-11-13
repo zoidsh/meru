@@ -340,13 +340,6 @@ export class Stage {
     this.#arrange();
   }
 
-  /** Gives every tab's view the stage keeps, shown or detached, the ground it shows before its page paints. */
-  recolour(background: string): void {
-    for (const [, view] of this.#views.entries()) {
-      view.setBackgroundColor(background);
-    }
-  }
-
   /** Applies each tab's profile's zoom to its view after it changed. */
   rezoom(): void {
     const { profiles, zoom } = this.#options;

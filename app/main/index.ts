@@ -252,7 +252,6 @@ const start = async () => {
   ports.theme.onChange(() => {
     const theme = themeOf(ports.theme);
     window.recolour(theme);
-    stages.recolour(theme);
     dispatcher.broadcast(themePushes.changed, { theme });
   });
   await window.show();
