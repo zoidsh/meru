@@ -1,4 +1,5 @@
 import { DisposableStore } from "../../../core/disposable.ts";
+import { chromeColors } from "../../../core/engines/chrome.ts";
 import type { ChromeInsets } from "../../../core/engines/chrome.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
@@ -11,6 +12,7 @@ import type { Orientation } from "../../../core/records/layout.ts";
 import type { NavigationAction } from "../../../core/records/navigation.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Tab } from "../../../core/records/tab.ts";
+import type { Theme } from "../../../core/records/theme.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
@@ -188,6 +190,15 @@ export class Stages {
     });
     opened.start();
     return opened;
+  }
+
+  // A view's ground is set when it is made, and a kept view outlives the theme it was made in.
+  /** Gives every view of every stage the chrome's ground for the theme. */
+  recolour(theme: Theme): void {
+    const { background } = chromeColors(theme);
+    for (const found of this.all) {
+      found.recolour(background);
+    }
   }
 
   /** Lays every stage out again, after what the chrome takes of the windows changed. */

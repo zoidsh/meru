@@ -121,6 +121,9 @@ const createView = (spec: ViewSpec): ViewPort => {
         openers.delete(listener);
       };
     },
+    setBackgroundColor: (color) => {
+      view.setBackgroundColor(color);
+    },
     setBorderRadius: (radius) => {
       view.setBorderRadius(radius);
     },

@@ -19,6 +19,7 @@ export class FakeView implements ViewPort {
   readonly spec: ViewSpec;
   url: string | undefined;
   radius: number;
+  background: string;
   zoom: number;
   destroyed = false;
   focused = false;
@@ -37,6 +38,7 @@ export class FakeView implements ViewPort {
     this.contentsId = nextContentsId;
     this.spec = spec;
     this.radius = spec.radius;
+    this.background = spec.background;
     this.zoom = spec.zoom;
   }
 
@@ -115,6 +117,10 @@ export class FakeView implements ViewPort {
 
   readonly setBorderRadius = (radius: number) => {
     this.radius = radius;
+  };
+
+  readonly setBackgroundColor = (color: string) => {
+    this.background = color;
   };
 
   readonly setZoomFactor = (factor: number) => {

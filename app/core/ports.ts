@@ -61,6 +61,8 @@ export interface ViewPort {
   /** Calls `listener` for each link the page opens; one nobody takes goes on as Chromium would take it. */
   readonly onOpen: (listener: OpenListener) => Unsubscribe;
   readonly setBorderRadius: (radius: number) => void;
+  /** What the view shows before its page paints, as hex. */
+  readonly setBackgroundColor: (color: string) => void;
   readonly setZoomFactor: (factor: number) => void;
   /** Read only by the end-to-end suite's inspector. */
   readonly zoomFactor: () => number;

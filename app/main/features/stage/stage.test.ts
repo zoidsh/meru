@@ -404,6 +404,21 @@ describe(Stages, () => {
     ]);
   });
 
+  it("gives every view it keeps, shown or detached, the chrome's ground when the theme flips, and leaves the overlay clear", async () => {
+    const { stage, stages, views, profiles, profileId } = await setup();
+    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+    profiles.moveTab(calendar.id, 0);
+    profiles.moveTab(calendar.id, 1);
+    stage.openOverlay("launcher", "file:///overlay.html");
+    const grounds = () => views.alive.map((view) => view.background);
+    expect(grounds()).toStrictEqual(["#ececf1", "#ececf1", "#00000000"]);
+
+    stages.recolour("dark");
+    expect(grounds()).toStrictEqual(["#1d1d24", "#1d1d24", "#00000000"]);
+    stages.recolour("light");
+    expect(grounds()).toStrictEqual(["#ececf1", "#ececf1", "#00000000"]);
+  });
+
   it("answers every view it keeps with its tab, marking one no pane shows", async () => {
     const { stage, profiles, profileId } = await setup();
     const calendar = unwrap(profiles.addTab(profileId, "calendar"));
