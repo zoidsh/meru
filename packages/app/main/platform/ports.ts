@@ -55,13 +55,13 @@ const createWindow = (spec: WindowSpec): WindowPort => {
         window.off("closed", listener);
       };
     },
-    // On Linux the menu bar takes its height from the content area when the window is shown, with no resize event; the classic end-to-end test catches it.
+    // On Linux the menu bar takes its height from the content area some time after the window is shown, with no resize event on the window, only on its content view; the classic end-to-end test catches it.
     onResized: (listener) => {
       window.on("resize", listener);
-      window.on("show", listener);
+      content.on("bounds-changed", listener);
       return () => {
         window.off("resize", listener);
-        window.off("show", listener);
+        content.off("bounds-changed", listener);
       };
     },
     removeChildView: (view) => {

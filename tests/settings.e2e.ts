@@ -34,15 +34,19 @@ test("tiles classic panes edge to edge from settings.json", async () => {
       ]);
       expect(views).toStrictEqual([{ ...size, x: 0, y: 0 }]);
     }).toPass({ timeout: 5000 });
-    const size = await contentSize(launched);
 
     await runCommand(chrome, "stage.splitVertical");
-    await expect.poll(async () => await viewsOf(chrome)).toHaveLength(2);
-    const [left, right] = await viewsOf(chrome);
-    expect(left).toMatchObject({ height: size.height, x: 0, y: 0 });
-    expect(right).toMatchObject({ height: size.height, y: 0 });
-    expect((left?.width ?? 0) + 1 + (right?.width ?? 0)).toBe(size.width);
-    expect(right?.x).toBe((left?.width ?? 0) + 1);
+    await expect(async () => {
+      const [[left, right, ...rest], size] = await Promise.all([
+        viewsOf(chrome),
+        contentSize(launched),
+      ]);
+      expect(rest).toHaveLength(0);
+      expect(left).toMatchObject({ height: size.height, x: 0, y: 0 });
+      expect(right).toMatchObject({ height: size.height, y: 0 });
+      expect((left?.width ?? 0) + 1 + (right?.width ?? 0)).toBe(size.width);
+      expect(right?.x).toBe((left?.width ?? 0) + 1);
+    }).toPass({ timeout: 5000 });
   } finally {
     await close();
   }
