@@ -39,7 +39,7 @@ import {
 import type { PageSurfaceName } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
-import { Popup } from "./popup.ts";
+import { Overlay } from "./overlay.ts";
 
 export type StageError =
   | "unknownWindow"
@@ -72,8 +72,8 @@ export interface StageOptions {
   /** What the chrome takes of the content area, read on every layout. */
   readonly insets: () => ChromeInsets;
   readonly dragPreload: string | undefined;
-  /** The preload of a popup's page, which is one of the renderer's. */
-  readonly popupPreload: string | undefined;
+  /** The preload of an overlay's page, which is one of the renderer's. */
+  readonly overlayPreload: string | undefined;
   readonly onChange: (snapshot: StageSnapshot) => void;
   /** An overlay's page came, on the surface its channels are allowed from, or went, with null. */
   readonly onOverlay: (contentsId: number, surface: Surface | null) => void;
@@ -86,7 +86,7 @@ export class Stage {
   readonly #disposables = new DisposableStore();
   readonly #focusListeners = new Map<string, Unsubscribe>();
   readonly #navigationListeners = new Map<string, Unsubscribe>();
-  readonly #popup: Popup;
+  readonly #overlay: Overlay;
   readonly #factory: ViewFactoryPort;
   readonly #keys = new Map<ViewPort, Unsubscribe>();
   #shown: Group | undefined;
@@ -104,9 +104,9 @@ export class Stage {
         return view;
       },
     };
-    this.#popup = new Popup({
+    this.#overlay = new Overlay({
       onError: options.onError,
-      preload: options.popupPreload,
+      preload: options.overlayPreload,
       views: this.#factory,
     });
     this.#shown = this.#read();
@@ -295,7 +295,7 @@ export class Stage {
     if (divider === undefined) {
       return err("unknownSplit");
     }
-    this.#retireOverlay();
+    this.#retireDrag();
     const drag = new DragOverlay({
       layout: this.#layout(),
       onError: this.#options.onError,
@@ -311,21 +311,21 @@ export class Stage {
     return ok(undefined);
   }
 
-  /** Shows a renderer page over the panes until closePopup, replacing any popup already up; its page may use the channels of `surface`. */
-  openPopup(url: string, surface: PageSurfaceName): void {
-    this.#dropPopup();
-    const view = this.#popup.open(url, [surfaceArgument(surface)]);
+  /** Shows a renderer page over the panes until closeOverlay, replacing any overlay already up; its page may use the channels of `surface`. */
+  openOverlay(url: string, surface: PageSurfaceName): void {
+    this.#dropOverlay();
+    const view = this.#overlay.open(url, [surfaceArgument(surface)]);
     this.#options.onOverlay(view.contentsId, pageSurfaces[surface]);
     this.#reconcile();
     this.#arrange(false);
   }
 
-  /** Takes the popup down and gives the keyboard back to the focused pane. */
-  closePopup(): void {
-    if (this.#popup.view === undefined) {
+  /** Takes the overlay down and gives the keyboard back to the focused pane. */
+  closeOverlay(): void {
+    if (this.#overlay.view === undefined) {
       return;
     }
-    this.#dropPopup();
+    this.#dropOverlay();
     this.#reconcile();
     if (this.#focused !== undefined) {
       this.#views.get(this.#focused)?.focus();
@@ -362,7 +362,7 @@ export class Stage {
       return ok(undefined);
     }
     this.dragTo(point);
-    this.#retireOverlay();
+    this.#retireDrag();
     const group = this.#read();
     if (drag.ratio !== undefined && group !== undefined) {
       this.#options.profiles.resize(group.id, drag.splitId, drag.ratio);
@@ -402,9 +402,9 @@ export class Stage {
     });
   }
 
-  /** The views over the panes: a drag's, then the popup's. */
+  /** The views over the panes: a drag's, then the overlay's. */
   get overlays(): readonly ViewPort[] {
-    return [this.#drag?.view, this.#popup.view].filter(
+    return [this.#drag?.view, this.#overlay.view].filter(
       (view) => view !== undefined
     );
   }
@@ -438,8 +438,8 @@ export class Stage {
       unsubscribe();
     }
     this.#navigationListeners.clear();
-    this.#retireOverlay();
-    this.#dropPopup();
+    this.#retireDrag();
+    this.#dropOverlay();
     for (const view of [...this.#views.values(), ...this.#retired]) {
       this.#destroy(view);
     }
@@ -503,16 +503,16 @@ export class Stage {
     view.destroy();
   }
 
-  #dropPopup(): void {
-    const popup = this.#popup.close();
-    if (popup === undefined) {
+  #dropOverlay(): void {
+    const overlay = this.#overlay.close();
+    if (overlay === undefined) {
       return;
     }
-    this.#options.onOverlay(popup.contentsId, null);
-    this.#retired.push(popup);
+    this.#options.onOverlay(overlay.contentsId, null);
+    this.#retired.push(overlay);
   }
 
-  #retireOverlay(): void {
+  #retireDrag(): void {
     const drag = this.#drag;
     if (drag === undefined) {
       return;

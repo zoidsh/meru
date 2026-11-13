@@ -103,7 +103,7 @@ const setup = async (style: Style = "modern") => {
     blankPanes: false,
     commands,
     dragPreload: "/dist/preload/drag.cjs",
-    popupPreload: "/dist/preload/renderer.cjs",
+    overlayPreload: "/dist/preload/renderer.cjs",
     events,
     insets: () => insets,
     onError,
@@ -637,28 +637,28 @@ describe("a drag across panes", () => {
   });
 });
 
-describe("a popup over the panes", () => {
-  it("opens a tab beside the focused pane from the popup's own page, on the surface it was given", async () => {
+describe("an overlay over the panes", () => {
+  it("opens a tab beside the focused pane from the overlay's own page, on the surface it was given", async () => {
     const { call, id, profiles, stage, views } = await setup();
-    stage.openPopup("file:///overlay.html", "launcher");
-    const popup = views.created.at(-1)?.contentsId ?? 0;
+    stage.openOverlay("file:///overlay.html", "launcher");
+    const overlay = views.created.at(-1)?.contentsId ?? 0;
     const profileId = profiles.selected().id;
     expect(
       call(
         tabOpening.open,
         { appId: "calendar", profileId, split: true },
-        popup
+        overlay
       ).ok
     ).toBeTruthy();
     expect(
-      call(stageChannels.split, { orientation: "vertical" }, popup).ok
+      call(stageChannels.split, { orientation: "vertical" }, overlay).ok
     ).toBeFalsy();
     expect(profiles.state.tabs.map((tab) => tab.appId)).toStrictEqual([
       "gmail",
       "calendar",
     ]);
     expect(stage.snapshot().panes).toHaveLength(2);
-    expect(id).not.toBe(popup);
+    expect(id).not.toBe(overlay);
   });
 
   it("opens a tab in a group of its own and shows it, and brings Gmail's one tab to the front instead of adding another", async () => {
@@ -667,11 +667,11 @@ describe("a popup over the panes", () => {
     events.on("tab.focused", ({ tabId }) => {
       focused.push(profiles.tab(tabId)?.appId ?? tabId);
     });
-    stage.openPopup("file:///overlay.html", "launcher");
-    const popup = views.created.at(-1)?.contentsId ?? 0;
+    stage.openOverlay("file:///overlay.html", "launcher");
+    const overlay = views.created.at(-1)?.contentsId ?? 0;
     const profileId = profiles.selected().id;
     const open = (appId: string) =>
-      call(tabOpening.open, { appId, profileId, split: false }, popup).ok;
+      call(tabOpening.open, { appId, profileId, split: false }, overlay).ok;
     expect([open("drive"), open("gmail")]).toStrictEqual([true, true]);
     expect({
       focused,
@@ -686,14 +686,14 @@ describe("a popup over the panes", () => {
 
   it("is a transparent renderer page above every pane, focused once loaded, until it is closed", async () => {
     const { call, profileId, window, views, stage } = await setup();
-    stage.openPopup("file:///overlay.html", "launcher");
-    const [pane, popup] = views.created;
-    await expect.poll(() => popup?.focused).toBeTruthy();
+    stage.openOverlay("file:///overlay.html", "launcher");
+    const [pane, overlay] = views.created;
+    await expect.poll(() => overlay?.focused).toBeTruthy();
     expect({
-      background: popup?.backgroundColor,
-      spec: popup?.spec,
-      top: window.childViews().at(-1) === popup,
-      url: popup?.url,
+      background: overlay?.backgroundColor,
+      spec: overlay?.spec,
+      top: window.childViews().at(-1) === overlay,
+      url: overlay?.url,
     }).toStrictEqual({
       background: "#00000000",
       spec: {
@@ -705,7 +705,7 @@ describe("a popup over the panes", () => {
       top: true,
       url: "file:///overlay.html",
     });
-    const sender = popup?.contentsId ?? 0;
+    const sender = overlay?.contentsId ?? 0;
     const asks = () =>
       call(tabOpening.open, { appId: "gmail", profileId, split: false }, sender)
         .ok;
@@ -713,11 +713,11 @@ describe("a popup over the panes", () => {
     if (pane !== undefined) {
       pane.focused = false;
     }
-    stage.closePopup();
+    stage.closeOverlay();
     expect([
-      popup?.destroyed,
+      overlay?.destroyed,
       pane?.focused,
-      window.childViews().some((view) => view === popup),
+      window.childViews().some((view) => view === overlay),
       asks(),
     ]).toStrictEqual([true, true, false, false]);
   });

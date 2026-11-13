@@ -14,7 +14,7 @@ export interface LauncherOptions {
   readonly overlayUrl: (query: Readonly<Record<string, string>>) => string;
 }
 
-/** Opens the launcher as a popup over the panes, from the chrome page's button or from launcher.open, which asks the chrome page for the button. */
+/** Opens the launcher as an overlay over the panes, from the chrome page's button or from launcher.open, which asks the chrome page for the button. */
 export class Launcher {
   readonly #options: LauncherOptions;
   readonly #disposables = new DisposableStore();
@@ -37,7 +37,7 @@ export class Launcher {
       }),
       registrar.register(launcher, {
         close: (_payload, { contentsId }) => {
-          stages.find(contentsId)?.closePopup();
+          stages.find(contentsId)?.closeOverlay();
           return ok(undefined);
         },
         open: ({ anchor }, { contentsId }) => {
@@ -45,7 +45,7 @@ export class Launcher {
           if (stage === undefined) {
             return err("unknownWindow");
           }
-          stage.openPopup(
+          stage.openOverlay(
             overlayUrl({ anchor: JSON.stringify(anchor), kind: "launcher" }),
             "launcher"
           );

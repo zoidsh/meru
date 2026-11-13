@@ -91,7 +91,7 @@ const setup = async (platform = "darwin") => {
     blankPanes: false,
     commands: dispatcher,
     dragPreload: undefined,
-    popupPreload: undefined,
+    overlayPreload: undefined,
     events,
     insets: () => ({ left: 0, top: 0 }),
     onError: () => {

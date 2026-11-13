@@ -42,7 +42,7 @@ export interface StagesOptions {
   readonly blankPanes: boolean;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
-  readonly popupPreload: string | undefined;
+  readonly overlayPreload: string | undefined;
   /** What the chrome takes of a window's content area. */
   readonly insets: () => ChromeInsets;
   readonly registrar: IpcRegistrar;
@@ -157,7 +157,7 @@ export class Stages {
       dragPreload: this.#options.dragPreload,
       groupId,
       keys: (view) => this.#options.keys.attach(view, windowId),
-      popupPreload: this.#options.popupPreload,
+      overlayPreload: this.#options.overlayPreload,
       insets: this.#options.insets,
       onChange: (snapshot) => {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);

@@ -179,7 +179,7 @@ const start = async () => {
     blankPanes: e2e,
     commands,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
-    popupPreload: path.join(dist, "preload", "renderer.cjs"),
+    overlayPreload: path.join(dist, "preload", "renderer.cjs"),
     events,
     insets: () => ({
       left: sidebarInset(sidebars.current()),

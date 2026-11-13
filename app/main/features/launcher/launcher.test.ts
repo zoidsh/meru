@@ -71,7 +71,7 @@ const setup = async () => {
     events,
     insets: () => ({ left: 0, top: 0 }),
     onError: rethrow,
-    popupPreload: "renderer.cjs",
+    overlayPreload: "renderer.cjs",
     profiles,
     registrar,
     settings,
@@ -109,20 +109,20 @@ describe(Launcher, () => {
         anchor,
       }).ok
     ).toBeTruthy();
-    const popup = views.created.at(-1);
+    const overlay = views.created.at(-1);
     await expect
-      .poll(() => popup?.url)
+      .poll(() => overlay?.url)
       .toBe(
         `overlay.html?${new URLSearchParams({ anchor: JSON.stringify(anchor), kind: "launcher" }).toString()}`
       );
-    expect(popup?.bounds()).toStrictEqual(window.contentBounds());
+    expect(overlay?.bounds()).toStrictEqual(window.contentBounds());
     expect(
-      registrar.dispatch(popup?.contentsId ?? 0, wireName(launcher.close), {})
+      registrar.dispatch(overlay?.contentsId ?? 0, wireName(launcher.close), {})
         .ok
     ).toBeTruthy();
     expect([
-      popup?.destroyed,
-      window.childViews().some((view) => view === popup),
+      overlay?.destroyed,
+      window.childViews().some((view) => view === overlay),
     ]).toStrictEqual([true, false]);
   });
 
