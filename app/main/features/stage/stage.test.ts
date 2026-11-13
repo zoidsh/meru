@@ -8,7 +8,7 @@ import type { Beside } from "../../../core/records/layout.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
-import { drag } from "../../../shared/channels/drag.ts";
+import { drag, dragPushes } from "../../../shared/channels/drag.ts";
 import {
   stage as stageChannels,
   stagePushes,
@@ -110,6 +110,8 @@ const setup = async (style: Style = "modern") => {
     commands,
     dragPreload: "/dist/preload/drag.cjs",
     overlayPreload: "/dist/preload/renderer.cjs",
+    overlayUrl: (kind, query) =>
+      `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
     events,
     insets: () => insets,
     onError,
@@ -450,7 +452,9 @@ describe(Stages, () => {
   it("refuses to drag a split it does not have", async () => {
     const { stages, id } = await setup();
     stages.split(id, "vertical");
-    expect(stages.beginDrag(id, "nope")).toStrictEqual({
+    expect(
+      stages.beginDrag(id, { kind: "divider", splitId: "nope" })
+    ).toStrictEqual({
       error: "unknownSplit",
       ok: false,
     });
@@ -459,7 +463,7 @@ describe(Stages, () => {
   it("disposes every view when the window closes", async () => {
     const { window, views, stages, id, splitId } = await setup();
     stages.split(id, "vertical");
-    stages.beginDrag(id, splitId());
+    stages.beginDrag(id, { kind: "divider", splitId: splitId() });
 
     window.close();
 
@@ -484,7 +488,10 @@ const dragging = async () => {
   const context = await setup();
   context.stages.split(context.id, "vertical");
   context.transport.sent.length = 0;
-  const result = context.stages.beginDrag(context.id, context.splitId());
+  const result = context.stages.beginDrag(context.id, {
+    kind: "divider",
+    splitId: context.splitId(),
+  });
   const overlay: FakeView | undefined = context.views.created[2];
   return { ...context, overlay, result };
 };
@@ -945,10 +952,139 @@ describe("a drag across panes", () => {
 
   it("refuses a split the layout does not have", async () => {
     const { stages, id } = await setup();
-    expect(stages.beginDrag(id, "id2")).toStrictEqual({
+    expect(
+      stages.beginDrag(id, { kind: "divider", splitId: "id2" })
+    ).toStrictEqual({
       error: "unknownSplit",
       ok: false,
     });
+  });
+});
+
+const draggingTab = async () => {
+  const context = await setup();
+  const { profiles, profileId, stages, id, views } = context;
+  const [gmail = ""] = profiles.currentGroup()?.tabIds ?? [];
+  const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+  context.transport.sent.length = 0;
+  const result = stages.beginDrag(id, { kind: "tab", tabId: calendar.id });
+  const overlay = views.created.at(-1);
+  const groupOf = (tabId: string) =>
+    profiles.state.groups.find((group) => group.tabIds.includes(tabId));
+  return { ...context, calendar, gmail, groupOf, overlay, result };
+};
+
+describe("a sidebar row dragged over the panes", () => {
+  it("covers the panes with the overlay page on the tab drag's surface, naming the tab", async () => {
+    const { calendar, overlay, profiles, result, window } = await draggingTab();
+    expect(result.ok).toBeTruthy();
+    const url = new URL(overlay?.url ?? "", "file:///");
+    expect({
+      bounds: overlay?.bounds(),
+      query: Object.fromEntries(url.searchParams),
+      spec: overlay?.spec,
+    }).toStrictEqual({
+      bounds: window.contentBounds(),
+      query: {
+        accent: profiles.selected().color,
+        appId: "calendar",
+        kind: "tabDrag",
+        tabId: calendar.id,
+        title: "Calendar",
+      },
+      spec: {
+        arguments: ["--meru-surface=tabDrag"],
+        background: "#00000000",
+        preload: "/dist/preload/renderer.cjs",
+        radius: 0,
+        zoom: 1,
+      },
+    });
+  });
+
+  it("lets its page read the panes and end the drag, and nothing else", async () => {
+    const { call, calendar, overlay } = await draggingTab();
+    const sender = overlay?.contentsId ?? 0;
+    expect(call(stageChannels.snapshot, {}, sender).ok).toBeTruthy();
+    expect(
+      call(
+        stageChannels.openTab,
+        { appId: "drive", profileId: calendar.profileId, split: false },
+        sender
+      )
+    ).toMatchObject({ error: { kind: "unknownChannel" }, ok: false });
+    expect(call(drag.end, { x: -1, y: -1 }, sender).ok).toBeTruthy();
+    expect(overlay?.destroyed).toBeTruthy();
+  });
+
+  it("hands the chrome page's pointer to the overlay's page alone, leaving the panes where they are", async () => {
+    const { id, overlay, stages, transport, window } = await draggingTab();
+    const before = childBounds(window);
+    stages.dragTo(id, { x: 300, y: 400 }, 1);
+    stages.dragTo(id, { x: 320, y: 410 }, 1);
+    expect(
+      transport.sent.map(({ channel, contentsId, payload }) => ({
+        channel,
+        payload,
+        toOverlay: contentsId === overlay?.contentsId,
+      }))
+    ).toStrictEqual([
+      {
+        channel: wireName(dragPushes.pointer),
+        payload: { x: 300, y: 400 },
+        toOverlay: true,
+      },
+      {
+        channel: wireName(dragPushes.pointer),
+        payload: { x: 320, y: 410 },
+        toOverlay: true,
+      },
+    ]);
+    expect(childBounds(window)).toStrictEqual(before);
+  });
+
+  it("joins the tab beside the pane on the side of the edge it is let go by, keeping focus on the pane that had it", async () => {
+    const { calendar, gmail, groupOf, id, overlay, stage, stages } =
+      await draggingTab();
+    expect(stages.endDrag(id, { x: 50, y: 400 }).ok).toBeTruthy();
+    const snapshot = stage.snapshot();
+    expect({
+      destroyed: overlay?.destroyed,
+      focused: snapshot.panes.find(
+        (pane) => pane.paneId === snapshot.focusedPaneId
+      )?.tabId,
+      group: groupOf(gmail)?.tabIds,
+      layout: groupOf(gmail)?.layout?.kind,
+      panes: snapshot.panes.map((pane) => pane.tabId),
+    }).toStrictEqual({
+      destroyed: true,
+      focused: gmail,
+      group: [gmail, calendar.id],
+      layout: "split",
+      panes: [calendar.id, gmail],
+    });
+  });
+
+  it("joins the tab after the pane when it is let go in the middle, split side by side", async () => {
+    const { calendar, gmail, groupOf, id, stage, stages } = await draggingTab();
+    stages.endDrag(id, { x: 600, y: 400 });
+    const joined = groupOf(gmail)?.layout;
+    expect({
+      orientation: joined?.kind === "split" ? joined.orientation : undefined,
+      panes: stage.snapshot().panes.map((pane) => pane.tabId),
+    }).toStrictEqual({ orientation: "vertical", panes: [gmail, calendar.id] });
+  });
+
+  it("cancels on a release outside every pane, changing nothing", async () => {
+    const { calendar, groupOf, id, overlay, profiles, stages } =
+      await draggingTab();
+    const before = profiles.state;
+    expect(stages.endDrag(id, { x: -1, y: -1 }).ok).toBeTruthy();
+    expect({
+      alone: groupOf(calendar.id)?.tabIds,
+      destroyed: overlay?.destroyed,
+      same: profiles.state === before,
+    }).toStrictEqual({ alone: [calendar.id], destroyed: true, same: true });
   });
 });
 

@@ -8,6 +8,7 @@ import {
   entitlementOf,
   pickApp,
   profilesOf,
+  stageOf,
   viewsOf,
 } from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
@@ -105,6 +106,53 @@ test("shows the sidebar once Calendar is added through the launcher, Drive dragg
     await expect
       .poll(async () => await appsOf(chrome))
       .toStrictEqual(["Calendar", "Drive", "Gmail"]);
+  } finally {
+    await close();
+  }
+});
+
+const isTabDrag = (page: Page) =>
+  new URL(page.url()).searchParams.get("kind") === "tabDrag";
+
+test("joins a row dragged out of the sidebar beside the pane it is let go on, tinting the half it would take on the way", async () => {
+  const { app, chrome, close } = await launch();
+  try {
+    await openApp(app, chrome, "Calendar");
+    await expect(rowsOf(chrome)).toHaveCount(2);
+    const { panes } = await stageOf(chrome);
+    const [pane] = panes;
+    const source = await rowsOf(chrome).nth(0).boundingBox();
+    if (pane === undefined || source === null) {
+      throw new Error("Neither a pane nor a row is drawn");
+    }
+    await chrome.mouse.move(
+      source.x + source.width / 2,
+      source.y + source.height / 2
+    );
+    await chrome.mouse.down();
+    const left = {
+      x: pane.rect.x + pane.rect.width * 0.1,
+      y: pane.rect.y + pane.rect.height / 2,
+    };
+    await chrome.mouse.move(left.x, left.y, { steps: 12 });
+    await expect.poll(() => app.windows().some(isTabDrag)).toBeTruthy();
+    const overlay = app.windows().find(isTabDrag);
+    // The overlay page hears the pointer only through main, after its page has loaded, so the pointer moves again once it is there.
+    await overlay?.locator("body").waitFor();
+    await chrome.mouse.move(left.x + 1, left.y, { steps: 2 });
+    const tint = await overlay?.locator("[data-tint]").boundingBox();
+    expect(tint?.width).toBeCloseTo(pane.rect.width / 2, 0);
+    await chrome.mouse.up();
+
+    await expect.poll(() => app.windows().some(isTabDrag)).toBeFalsy();
+    await expect.poll(async () => await viewsOf(app)).toHaveLength(2);
+    await expect(
+      chrome.locator("nav[data-sidebar] [data-group-id] [data-tab-id]")
+    ).toHaveCount(2);
+    await expect(chrome.locator("[data-tab-id] [data-active]")).toHaveAttribute(
+      "title",
+      /Calendar/u
+    );
   } finally {
     await close();
   }

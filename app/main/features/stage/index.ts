@@ -15,9 +15,13 @@ import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
-import { drag } from "../../../shared/channels/drag.ts";
+import { drag, dragPushes } from "../../../shared/channels/drag.ts";
 import { stage, stagePushes } from "../../../shared/channels/stage.ts";
-import type { StageSnapshot } from "../../../shared/channels/stage.ts";
+import type {
+  DragSubject,
+  StageSnapshot,
+} from "../../../shared/channels/stage.ts";
+import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import type {
   CommandContext,
   CommandRegistrar,
@@ -44,6 +48,11 @@ export interface StagesOptions {
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
   readonly overlayPreload: string | undefined;
+  /** The overlay page's address for an overlay of `kind`, carrying `query`. */
+  readonly overlayUrl: (
+    kind: OverlayKind,
+    query: Readonly<Record<string, string>>
+  ) => string;
   /** What the chrome takes of a window's content area. */
   readonly insets: () => ChromeInsets;
   readonly registrar: IpcRegistrar;
@@ -140,8 +149,8 @@ export class Stages {
         }
       }),
       registrar.register(stage, {
-        beginDrag: ({ splitId }, { contentsId }) =>
-          this.beginDrag(contentsId, splitId),
+        beginDrag: (subject, { contentsId }) =>
+          this.beginDrag(contentsId, subject),
         dragTo: ({ x, y, buttons }, { contentsId }) =>
           this.dragTo(contentsId, { x, y }, buttons),
         endDrag: (point, { contentsId }) => this.endDrag(contentsId, point),
@@ -191,6 +200,10 @@ export class Stages {
       groupId,
       keys: (view) => this.#options.keys.attach(view, windowId),
       overlayPreload: this.#options.overlayPreload,
+      overlayUrl: this.#options.overlayUrl,
+      onPointer: (contentsId, point) => {
+        this.#options.registrar.push(contentsId, dragPushes.pointer, point);
+      },
       insets: this.#options.insets,
       onChange: (snapshot) => {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
@@ -258,8 +271,11 @@ export class Stages {
     return this.#with(windowId, (found) => found.focusPrevious());
   }
 
-  beginDrag(sender: number, splitId: string): Result<undefined, StageError> {
-    return this.#with(sender, (found) => found.beginDrag(splitId));
+  beginDrag(
+    sender: number,
+    subject: DragSubject
+  ): Result<undefined, StageError> {
+    return this.#with(sender, (found) => found.beginDrag(subject));
   }
 
   // Only a release ends a drag: a move with no button held, such as a view reports when it appears under a resting pointer, is ignored rather than taken for one.

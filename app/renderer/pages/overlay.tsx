@@ -18,6 +18,7 @@ import {
   createSettingsStore,
   SettingsContext,
 } from "../features/settings/use-setting.ts";
+import { TabDrag } from "../features/stage/tab-drag.tsx";
 import { followTheme } from "../theme.ts";
 
 import "../ui/globals.css";
@@ -39,6 +40,15 @@ const shows: {
         </ProfilesContext>
       </SettingsContext>
     </LauncherClientProvider>
+  ),
+  tabDrag: (client, query) => (
+    <TabDrag
+      accent={query.get("accent") ?? ""}
+      appId={query.get("appId") ?? ""}
+      client={client}
+      tabId={query.get("tabId") ?? ""}
+      title={query.get("title") ?? ""}
+    />
   ),
 };
 

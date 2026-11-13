@@ -3,7 +3,7 @@ import { z } from "zod";
 import { commands } from "./commands.ts";
 import { defineSurface } from "./define.ts";
 import type { Surface } from "./define.ts";
-import { drag } from "./drag.ts";
+import { drag, dragPushes } from "./drag.ts";
 import { entitlement, entitlementPushes } from "./entitlement.ts";
 import { launcher } from "./launcher.ts";
 import { profiles, profilesPushes, tabs } from "./profiles.ts";
@@ -53,13 +53,22 @@ export const launcherSurface = defineSurface({
 
 export type LauncherSurface = typeof launcherSurface;
 
+/** A sidebar row dragged over the panes: the page draws the row and the zone it would land in, reading where the panes are once, and reports the release. */
+export const tabDragSurface = defineSurface({
+  pushes: [dragPushes, themePushes],
+  requests: [drag, { snapshot: stage.snapshot }],
+});
+
+export type TabDragSurface = typeof tabDragSurface;
+
 /** What the overlay page can show over the panes, by the `kind` its address names, each on its own surface. */
-export const overlayKindSchema = z.enum(["launcher"]);
+export const overlayKindSchema = z.enum(["launcher", "tabDrag"]);
 
 export type OverlayKind = z.infer<typeof overlayKindSchema>;
 
 export const overlays = {
   launcher: launcherSurface,
+  tabDrag: tabDragSurface,
 } satisfies Record<OverlayKind, Surface>;
 
 /** The surfaces a page the renderer's preload serves may hold, by the name main passes the preload: the chrome page's, and each overlay's under its kind. */
@@ -97,4 +106,5 @@ export const surfaces: readonly Surface[] = [
   chromeSurface,
   dragSurface,
   launcherSurface,
+  tabDragSurface,
 ];

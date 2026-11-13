@@ -67,7 +67,7 @@ export const Sidebar = ({
   const gmailBadge = useSetting("sidebar.gmailUnreadBadge");
   const unreadBadge = useSetting("profiles.unreadBadge");
   const { seams } = STYLE_METRICS[useSetting("appearance.style")];
-  const { drop, handlers } = useTabDrop();
+  const { area, drop, handlers } = useTabDrop();
   if (sidebar.kind === "hidden" || snapshot === undefined) {
     return null;
   }
@@ -137,6 +137,7 @@ export const Sidebar = ({
         wide ? "gap-1" : "items-center gap-2"
       )}
       data-sidebar={size}
+      ref={area}
       style={{ width }}
     >
       <DragDropProvider {...handlers(rows)}>

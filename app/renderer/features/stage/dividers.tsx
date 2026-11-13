@@ -41,7 +41,7 @@ export const Dividers = () => {
   // The page keeps getting the pointer over a pane while the button is held on macOS and Linux, so it reports moves and the release alongside the overlay and main takes whichever arrives. They are followed on the window as well as captured, because on Linux the capture did not hold once the overlay appeared.
   const begin = (splitId: string) => (event: PointerEvent<HTMLElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
-    client.send(stage.beginDrag, { splitId });
+    client.send(stage.beginDrag, { kind: "divider", splitId });
     const move = (moved: globalThis.PointerEvent) => {
       client.send(stage.dragTo, {
         buttons: moved.buttons,

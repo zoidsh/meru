@@ -7,6 +7,7 @@ import { AppEvents } from "../core/events.ts";
 import { themeOf } from "../core/ports.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
+import type { OverlayKind } from "../shared/channels/surfaces.ts";
 import { themePushes } from "../shared/channels/theme.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
@@ -175,6 +176,16 @@ const start = async () => {
     settings,
   });
   sidebars.start();
+  const pages: PageOptions = {
+    devServer: process.env.MERU_RENDERER_URL,
+    dir: path.join(dist, "renderer"),
+    platform: ports.lifecycle.platform,
+    theme: () => themeOf(ports.theme),
+  };
+  const overlayUrl = (
+    kind: OverlayKind,
+    query: Readonly<Record<string, string>>
+  ): string => pageUrl(pages, "overlay.html", { ...query, kind });
   // The end-to-end suite asserts on the links that would leave for the browser and never opens one.
   const externalLinks = new RecordingShell();
   const stages = new Stages({
@@ -183,6 +194,7 @@ const start = async () => {
     shell: e2e ? externalLinks : ports.shell,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
+    overlayUrl,
     events,
     insets: () => chromeInsets(sidebars.current()),
     onError: report,
@@ -193,17 +205,10 @@ const start = async () => {
     views: ports.views,
   });
   stages.start();
-  const pages: PageOptions = {
-    devServer: process.env.MERU_RENDERER_URL,
-    dir: path.join(dist, "renderer"),
-    platform: ports.lifecycle.platform,
-    theme: () => themeOf(ports.theme),
-  };
   new Launcher({
     commands,
     events,
-    overlayUrl: (kind, query) =>
-      pageUrl(pages, "overlay.html", { ...query, kind }),
+    overlayUrl,
     registrar: dispatcher,
     stages,
   }).start();

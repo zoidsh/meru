@@ -7,22 +7,32 @@ import type { Style } from "../../../core/records/style.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { Surface } from "../../../shared/channels/define.ts";
-import { dragSurface } from "../../../shared/channels/surfaces.ts";
+import type { DragSubject } from "../../../shared/channels/stage.ts";
+import {
+  dragSurface,
+  overlays,
+  surfaceArgument,
+} from "../../../shared/channels/surfaces.ts";
 import { loadOwned, TRANSPARENT } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 
-const dragPage = (orientation: Orientation) =>
+const dividerPage = (orientation: Orientation) =>
   `data:text/html,<html style="cursor:${orientation === "vertical" ? "col-resize" : "row-resize"};height:100%"></html>`;
 
 export interface DragOverlayOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
+  /** The preload of a divider drag's page. */
   readonly preload: string | undefined;
+  /** The preload of a tab drag's page, which is one of the renderer's. */
+  readonly overlayPreload: string | undefined;
+  /** The address of the page a tab drag shows, drawing the tab and where it would land. */
+  readonly tabPage: (tabId: string) => string;
   readonly onError: (error: unknown) => void;
   /** The group's layout, which a drag starts from. */
   readonly layout: () => Layout;
   readonly area: () => StageArea;
   readonly style: () => Style;
-  /** The drag's view came, on the drag's surface, or went, with null. */
+  /** The drag's view came, on its surface, or went, with null. */
   readonly onOverlay: (contentsId: number, surface: Surface | null) => void;
   /** Hands back a view the drag is done with, for the stage to detach before it disposes it. */
   readonly retire: (owned: OwnedView) => void;
@@ -30,17 +40,24 @@ export interface DragOverlayOptions {
   readonly onMove: () => void;
   /** The group takes the split's ratio as the drag left it. */
   readonly commit: (splitId: string, ratio: number) => void;
+  /** Where the chrome page saw the pointer during a tab drag, for the drag's page to draw. */
+  readonly onPointer: (contentsId: number, point: Point) => void;
+  /** The tab was let go at the point. */
+  readonly drop: (tabId: string, point: Point) => void;
 }
 
-interface Drag {
-  readonly splitId: string;
-  readonly owned: OwnedView;
-  readonly layout: Layout;
-  readonly ratio: number | undefined;
-}
+type Drag =
+  | {
+      readonly kind: "divider";
+      readonly owned: OwnedView;
+      readonly splitId: string;
+      readonly layout: Layout;
+      readonly ratio: number | undefined;
+    }
+  | { readonly kind: "tab"; readonly owned: OwnedView; readonly tabId: string };
 
 // Pointer events over a pane go to that pane's renderer, so the chrome page cannot follow a drag across one by itself; a transparent view over every pane catches the pointer for the drag's duration.
-/** A stage's divider drags: the view that catches the pointer, and the layout as the pointer left it, which the group takes on release. */
+/** A stage's drags across the panes, a divider's or a sidebar row's: the view that catches the pointer, the layout as a divider drag left it, which the group takes on release, and the tab a row drag lets go. */
 export class DragOverlay {
   readonly #options: DragOverlayOptions;
   #drag: Drag | undefined;
@@ -49,49 +66,30 @@ export class DragOverlay {
     this.#options = options;
   }
 
-  /** The layout as the pointer has moved it, while a drag is on. */
+  /** The layout as the pointer has moved it, while a divider drag is on. */
   get layout(): Layout | undefined {
-    return this.#drag?.layout;
+    return this.#drag?.kind === "divider" ? this.#drag.layout : undefined;
   }
 
   get view(): ViewPort | undefined {
     return this.#drag?.owned.view;
   }
 
-  /** Starts dragging the split's divider, ending any drag already on. */
-  begin(splitId: string): Result<undefined, "unknownSplit"> {
-    const { area, flush } = this.#options.area();
-    const base = this.#options.layout();
-    const divider = layout(
-      base,
-      area,
-      this.#options.style(),
-      flush
-    ).dividers.find((found) => found.splitId === splitId);
-    if (divider === undefined) {
-      return err("unknownSplit");
-    }
-    this.retire();
-    const owned = this.#options.create({
-      background: TRANSPARENT,
-      preload: this.#options.preload,
-      radius: 0,
-      zoom: 1,
-    });
-    void loadOwned(
-      owned.view,
-      dragPage(divider.orientation),
-      this.#options.onError
-    );
-    this.#drag = { layout: base, owned, ratio: undefined, splitId };
-    this.#options.onOverlay(owned.view.contentsId, dragSurface);
-    return ok(undefined);
+  /** Starts a drag, ending any drag already on. */
+  begin(subject: DragSubject): Result<undefined, "unknownSplit"> {
+    return subject.kind === "divider"
+      ? this.#beginDivider(subject.splitId)
+      : this.#beginTab(subject.tabId);
   }
 
   // The chrome page and the overlay both report the pointer, so a move or release after the other source ended the drag is expected and ignored.
   move(point: Point): Result<undefined, "unknownSplit"> {
     const drag = this.#drag;
     if (drag === undefined) {
+      return ok(undefined);
+    }
+    if (drag.kind === "tab") {
+      this.#options.onPointer(drag.owned.view.contentsId, point);
       return ok(undefined);
     }
     const { area, flush } = this.#options.area();
@@ -115,21 +113,27 @@ export class DragOverlay {
     return ok(undefined);
   }
 
-  // The group takes the ratio once, on release, so a drag writes the state once rather than with every move of the pointer.
+  // The group takes the ratio or the tab once, on release, so a drag writes the state once rather than with every move of the pointer.
   end(point: Point): Result<undefined, "unknownSplit"> {
-    if (this.#drag === undefined) {
+    const drag = this.#drag;
+    if (drag === undefined) {
+      return ok(undefined);
+    }
+    if (drag.kind === "tab") {
+      this.retire();
+      this.#options.drop(drag.tabId, point);
       return ok(undefined);
     }
     this.move(point);
-    const drag = this.#drag;
+    const moved = this.#drag;
     this.retire();
-    if (drag.ratio !== undefined) {
-      this.#options.commit(drag.splitId, drag.ratio);
+    if (moved?.kind === "divider" && moved.ratio !== undefined) {
+      this.#options.commit(moved.splitId, moved.ratio);
     }
     return ok(undefined);
   }
 
-  /** Ends the drag, if one is on, without the group taking its ratio. */
+  /** Ends the drag, if one is on, without the group taking what it carried. */
   retire(): void {
     const drag = this.#drag;
     if (drag === undefined) {
@@ -138,5 +142,61 @@ export class DragOverlay {
     this.#drag = undefined;
     this.#options.onOverlay(drag.owned.view.contentsId, null);
     this.#options.retire(drag.owned);
+  }
+
+  #beginDivider(splitId: string): Result<undefined, "unknownSplit"> {
+    const { area, flush } = this.#options.area();
+    const base = this.#options.layout();
+    const divider = layout(
+      base,
+      area,
+      this.#options.style(),
+      flush
+    ).dividers.find((found) => found.splitId === splitId);
+    if (divider === undefined) {
+      return err("unknownSplit");
+    }
+    this.retire();
+    const owned = this.#open(
+      dividerPage(divider.orientation),
+      this.#options.preload
+    );
+    this.#drag = {
+      kind: "divider",
+      layout: base,
+      owned,
+      ratio: undefined,
+      splitId,
+    };
+    this.#options.onOverlay(owned.view.contentsId, dragSurface);
+    return ok(undefined);
+  }
+
+  #beginTab(tabId: string): Result<undefined, "unknownSplit"> {
+    this.retire();
+    const owned = this.#open(
+      this.#options.tabPage(tabId),
+      this.#options.overlayPreload,
+      [surfaceArgument("tabDrag")]
+    );
+    this.#drag = { kind: "tab", owned, tabId };
+    this.#options.onOverlay(owned.view.contentsId, overlays.tabDrag);
+    return ok(undefined);
+  }
+
+  #open(
+    url: string,
+    preload: string | undefined,
+    args?: readonly string[]
+  ): OwnedView {
+    const owned = this.#options.create({
+      ...(args === undefined ? {} : { arguments: args }),
+      background: TRANSPARENT,
+      preload,
+      radius: 0,
+      zoom: 1,
+    });
+    void loadOwned(owned.view, url, this.#options.onError);
+    return owned;
   }
 }

@@ -4,6 +4,8 @@ import { DisposableStore } from "../../../core/disposable.ts";
 import { stageArea } from "../../../core/engines/chrome.ts";
 import type { ChromeInsets } from "../../../core/engines/chrome.ts";
 import {
+  besideAt,
+  besideOf,
   focusNext,
   focusPrevious,
   layout,
@@ -36,7 +38,10 @@ import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { Surface } from "../../../shared/channels/define.ts";
-import type { StageSnapshot } from "../../../shared/channels/stage.ts";
+import type {
+  DragSubject,
+  StageSnapshot,
+} from "../../../shared/channels/stage.ts";
 import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
@@ -67,6 +72,7 @@ export type StageProfiles = Pick<
   | "resize"
   | "swapPanes"
   | "balanceGroup"
+  | "joinTab"
 >;
 
 export interface StageOptions {
@@ -87,6 +93,13 @@ export interface StageOptions {
   readonly dragPreload: string | undefined;
   /** The preload of an overlay's page, which is one of the renderer's. */
   readonly overlayPreload: string | undefined;
+  /** The overlay page's address for an overlay of `kind`, carrying `query`. */
+  readonly overlayUrl: (
+    kind: OverlayKind,
+    query: Readonly<Record<string, string>>
+  ) => string;
+  /** Tells a tab drag's page, `contentsId`, where the chrome page saw the pointer. */
+  readonly onPointer: (contentsId: number, point: Point) => void;
   readonly onChange: (snapshot: StageSnapshot) => void;
   /** A link a pane's page opens; true takes it from the page. */
   readonly onOpen: (
@@ -168,11 +181,29 @@ export class Stage {
         this.#arrange();
       },
       onOverlay: options.onOverlay,
+      onPointer: options.onPointer,
+      drop: (tabId, point) => {
+        this.#drop(tabId, point);
+      },
+      overlayPreload: options.overlayPreload,
       preload: options.dragPreload,
       retire: (owned) => {
         this.#retired.push(owned);
       },
       style: options.style,
+      tabPage: (tabId) => {
+        const tab = options.profiles.tab(tabId);
+        // The chrome is neutral grey, so the tint takes the colour that marks the tab's profile to stand out on a page.
+        const accent = options.profiles.state.profiles.find(
+          (profile) => profile.id === tab?.profileId
+        )?.color;
+        return options.overlayUrl("tabDrag", {
+          accent: accent ?? "",
+          appId: tab?.appId ?? "",
+          tabId,
+          title: tab?.title ?? "",
+        });
+      },
     });
     this.#shown = this.#read();
     this.#focused = panes(this.#layout())[0]?.tabIds[0];
@@ -388,8 +419,9 @@ export class Stage {
     return target === undefined ? err("unknownPane") : this.focusPane(target);
   }
 
-  beginDrag(splitId: string): Result<undefined, StageError> {
-    const begun = this.#drag.begin(splitId);
+  /** Covers the panes with the drag's overlay, for a divider or a tab dragged from the sidebar. */
+  beginDrag(subject: DragSubject): Result<undefined, StageError> {
+    const begun = this.#drag.begin(subject);
     if (!begun.ok) {
       return begun;
     }
@@ -558,6 +590,26 @@ export class Stage {
     }
     this.#reconcile();
     this.#arrange();
+  }
+
+  // The tab joins beside the pane under the point, on the zone's side; focus stays on the tab that had it, as it does when a tab leaves its group.
+  #drop(tabId: string, point: Point): void {
+    const target = this.snapshot().panes.find(
+      (pane) => besideAt(pane.rect, point) !== undefined
+    );
+    const zone =
+      target === undefined ? undefined : besideAt(target.rect, point);
+    if (target === undefined || zone === undefined || target.tabId === tabId) {
+      return;
+    }
+    const focused = this.#focused;
+    if (
+      this.#options.profiles.joinTab(tabId, target.tabId, besideOf(zone)).ok &&
+      focused !== undefined
+    ) {
+      this.refresh();
+      this.focusTab(focused);
+    }
   }
 
   /** Shows every pane of the group again after one was maximised. */

@@ -74,6 +74,8 @@ const setup = async () => {
     insets: () => ({ left: 0, top: 0 }),
     onError: rethrow,
     overlayPreload: "renderer.cjs",
+    overlayUrl: (kind, query) =>
+      `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
     profiles,
     registrar,
     settings,

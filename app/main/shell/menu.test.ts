@@ -94,6 +94,8 @@ const setup = async (platform = "darwin") => {
     commands: dispatcher,
     dragPreload: undefined,
     overlayPreload: undefined,
+    overlayUrl: (kind, query) =>
+      `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
     events,
     insets: () => ({ left: 0, top: 0 }),
     onError: () => {

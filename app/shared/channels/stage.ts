@@ -35,8 +35,17 @@ export type StageSnapshot = z.infer<typeof stageSnapshotSchema>;
 
 const pointer = z.object({ x: z.number(), y: z.number() });
 
+/** What a drag over the panes carries: a split's divider, or a sidebar row dragged onto a pane. */
+export const dragSubjectSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("divider"), splitId: idSchema }),
+  z.object({ kind: z.literal("tab"), tabId: idSchema }),
+]);
+
+export type DragSubject = z.infer<typeof dragSubjectSchema>;
+
 export const stage = defineChannels("stage", {
-  beginDrag: event(z.object({ splitId: idSchema })),
+  /** Covers the panes of the sender's window with the drag's overlay, which takes the pointer until the release. */
+  beginDrag: event(dragSubjectSchema),
   dragTo: event(pointer.extend({ buttons: z.number().int() })),
   endDrag: event(pointer),
   /** Opens a tab of the app in the profile and shows it, in a group of one or, with `split`, beside the focused pane of the sender's window in `orientation`, vertical unless named; a single-instance app's one tab instead when the profile has it. */

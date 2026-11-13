@@ -59,9 +59,12 @@ describe(createClient, () => {
 
   it("sends an event under its declared name", () => {
     const { bridge, client } = connect();
-    client.send(stage.beginDrag, { splitId: "s1" });
+    client.send(stage.beginDrag, { kind: "divider", splitId: "s1" });
     expect(bridge.sent).toStrictEqual([
-      { channel: "stage.beginDrag", payload: { splitId: "s1" } },
+      {
+        channel: "stage.beginDrag",
+        payload: { kind: "divider", splitId: "s1" },
+      },
     ]);
   });
 
