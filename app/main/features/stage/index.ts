@@ -232,11 +232,13 @@ export class Stages {
     return opened;
   }
 
-  /** Loads the address in the tab's view in every stage that keeps one. */
-  load(tabId: string, url: string): void {
+  /** Loads the address in the tab's view in every stage that keeps one; false when none does. */
+  load(tabId: string, url: string): boolean {
+    let loaded = false;
     for (const found of this.all) {
-      found.load(tabId, url);
+      loaded = found.load(tabId, url) || loaded;
     }
+    return loaded;
   }
 
   /** Lays every stage out again, after what the chrome takes of the windows changed. */

@@ -24,6 +24,7 @@ import {
   newProfile,
   newTab,
   swapPanes,
+  updateTab,
 } from "../../../core/engines/state.ts";
 import type { StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
@@ -331,6 +332,11 @@ export class Profiles {
     }
     const committed = this.#commit(ok(opened.value.state));
     return committed.ok ? ok(opened.value.tab) : committed;
+  }
+
+  /** Points the tab at an address, which its view loads when it is next made. */
+  navigateTab(tabId: string, url: string): Result<undefined, ProfilesError> {
+    return this.#commit(updateTab(this.state, tabId, { url }));
   }
 
   closeTab(tabId: string): Result<undefined, ProfilesError> {

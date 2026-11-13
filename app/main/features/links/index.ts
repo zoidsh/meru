@@ -10,7 +10,10 @@ import type { SettingsStore } from "../settings/index.ts";
 import type { Stages } from "../stage/index.ts";
 
 export interface LinksOptions {
-  readonly profiles: Pick<Profiles, "state" | "tab" | "openTab" | "focusTab">;
+  readonly profiles: Pick<
+    Profiles,
+    "state" | "tab" | "openTab" | "focusTab" | "navigateTab"
+  >;
   readonly settings: Pick<SettingsStore, "get">;
   readonly shell: ShellPort;
   /** Loads the address in the tab's view, wherever a stage keeps one. */
@@ -29,8 +32,11 @@ export class Links {
   /** Routes a link the tab's page opened; true when it was taken from the page. */
   open(tabId: string, url: string, disposition: Disposition): boolean {
     const { profiles, shell, settings, stages } = this.#options;
+    // A tab no stage keeps a view of yet would lose the link, so it takes the address and its view starts there once shown.
     const load = (id: string, address: string) => {
-      stages.load(id, address);
+      if (!stages.load(id, address)) {
+        profiles.navigateTab(id, address);
+      }
     };
     const from = profiles.tab(tabId);
     if (from === undefined || disposition === "inPlace" || isSignIn(url)) {

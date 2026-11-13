@@ -66,6 +66,11 @@ const setup = async () => {
   });
   await profiles.open();
   const shell = new RecordingShell();
+  // As the windows feature does, and ahead of the stages, the window shows the group of the tab last brought to the front.
+  let shown: string | undefined;
+  events.on("tab.focused", ({ groupId }) => {
+    shown = groupId;
+  });
   const stages = new Stages({
     keys: new ShortcutKeys({
       commands: allCommands,
@@ -98,7 +103,7 @@ const setup = async () => {
   });
   stages.start();
   const links = new Links({ profiles, settings, shell, stages });
-  stages.open(window, () => profiles.currentGroup()?.id);
+  stages.open(window, () => shown ?? profiles.currentGroup()?.id);
   const changes = (): StageSnapshot[] =>
     transport.sent
       .filter((pushed) => pushed.channel === wireName(stagePushes.changed))
@@ -209,6 +214,19 @@ describe(Links, () => {
       gmailUrl: "https://mail.google.com/mail/u/0/#inbox/xyz",
       views: 2,
     });
+  });
+
+  it("starts a tab no stage keeps a view of yet at the link, rather than losing it", async () => {
+    const { views, profiles } = await setup();
+    const [gmail] = views.created;
+    gmail?.open(CALENDAR, "background");
+    const later = "https://calendar.google.com/calendar/r/day";
+    gmail?.open(later, "default");
+    const [calendar] = tabsOf(profiles, "calendar");
+    expect([calendar?.url, views.created[1]?.url]).toStrictEqual([
+      later,
+      later,
+    ]);
   });
 
   it("shows a blank popup only once it heads for Google's sign-in, and sends anything else to the browser", async () => {
