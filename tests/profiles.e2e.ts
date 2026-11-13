@@ -5,15 +5,12 @@ import path from "node:path";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import { wireName } from "../app/shared/channels/define.ts";
 import { profiles } from "../app/shared/channels/profiles.ts";
-import { launch, stageOf, viewsOf } from "./app.ts";
+import { invokeIn, launch, stageOf, viewsOf } from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
 
 const createProfile = async (chrome: Page, label: string) =>
-  await chrome.evaluate<unknown>(
-    `window.meru.invoke(${JSON.stringify(wireName(profiles.create))}, ${JSON.stringify({ label })})`
-  );
+  await invokeIn(chrome, profiles.create, { label });
 
 const kindOf = async (chrome: Page) => {
   const { entitlement } = await stageOf(chrome);

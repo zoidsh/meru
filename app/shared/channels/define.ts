@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { Unsubscribe } from "../../core/ports.ts";
+import { err, ok } from "../../core/result.ts";
 import type { Result } from "../../core/result.ts";
 
 export interface EventChannel<P extends z.ZodType = z.ZodType> {
@@ -165,6 +166,32 @@ export const ipcErrorSchema = z.object({
 });
 
 export type IpcError = z.infer<typeof ipcErrorSchema>;
+
+export const envelopeSchema = z.union([
+  z.object({ ok: z.literal(true), value: z.unknown() }),
+  z.object({ error: ipcErrorSchema, ok: z.literal(false) }),
+]);
+
+const malformed = (message: string): IpcError => ({
+  kind: "invalidPayload",
+  message,
+});
+
+/** What a page makes of main's answer: its value parsed by the channel's schema, or the error. */
+export const settle = <R extends z.ZodType>(
+  schema: R,
+  answer: unknown
+): Result<z.output<R>, IpcError> => {
+  const envelope = envelopeSchema.safeParse(answer);
+  if (!envelope.success) {
+    return err(malformed(envelope.error.message));
+  }
+  if (!envelope.data.ok) {
+    return err(envelope.data.error);
+  }
+  const value = schema.safeParse(envelope.data.value);
+  return value.success ? ok(value.data) : err(malformed(value.error.message));
+};
 
 export type ValueOf<C extends RequestChannel> =
   C extends InvokeChannel<z.ZodType, infer R>

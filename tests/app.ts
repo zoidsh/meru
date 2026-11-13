@@ -4,10 +4,18 @@ import path from "node:path";
 
 import { _electron as electron, expect } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
+import type { z } from "zod";
 
+import { BRIDGE_KEY } from "../app/core/ports.ts";
 import type { ProfilesState } from "../app/core/records/profiles-state.ts";
+import type { Result } from "../app/core/result.ts";
 import { commands } from "../app/shared/channels/commands.ts";
-import { wireName } from "../app/shared/channels/define.ts";
+import { settle, wireName } from "../app/shared/channels/define.ts";
+import type {
+  IpcError,
+  InvokeChannel,
+  SyncChannel,
+} from "../app/shared/channels/define.ts";
 import { e2e } from "../app/shared/channels/e2e.ts";
 import type { CommandId } from "../app/shared/commands/registry.ts";
 import type { Settings } from "../app/shared/settings/registry.ts";
@@ -122,25 +130,29 @@ export const launch = async ({
   };
 };
 
-const answerSchema = e2e.snapshot.result;
+/** Sends a request as the page's client would, and settles main's answer the same way. */
+export const invokeIn = async <P extends z.ZodType, R extends z.ZodType>(
+  page: Page,
+  channel: InvokeChannel<P, R> | SyncChannel<P, R>,
+  payload: z.input<P>
+): Promise<Result<z.output<R>, IpcError>> => {
+  const method = channel.kind === "invoke" ? "invoke" : "sendSync";
+  const answer = await page.evaluate<unknown>(
+    `window.${BRIDGE_KEY}.${method}(${JSON.stringify(wireName(channel))}, ${JSON.stringify(payload)})`
+  );
+  return settle(channel.result, answer);
+};
+
+const valueOf = <T>(result: Result<T, IpcError>): T => {
+  if (!result.ok) {
+    throw new Error(`${result.error.kind}: ${result.error.message}`);
+  }
+  return result.value;
+};
 
 /** The stage as main holds it and the bounds Electron reports for each child view, bottom first. */
-export const stageOf = async (chrome: Page) => {
-  const answer = await chrome.evaluate<unknown>(
-    `window.meru.invoke(${JSON.stringify(wireName(e2e.snapshot))}, {})`
-  );
-  const result = answerSchema.safeParse(
-    typeof answer === "object" && answer !== null && "value" in answer
-      ? answer.value
-      : answer
-  );
-  if (!result.success) {
-    throw new Error(
-      `The stage snapshot did not parse: ${JSON.stringify(answer)}`
-    );
-  }
-  return result.data;
-};
+export const stageOf = async (chrome: Page) =>
+  valueOf(await invokeIn(chrome, e2e.snapshot, {}));
 
 export const viewsOf = async (chrome: Page) => {
   const { views } = await stageOf(chrome);
@@ -154,9 +166,7 @@ export const zoomOf = async (chrome: Page) => {
 
 /** Runs a command as a button on the chrome page would, and answers what main answered. */
 export const runCommand = async (chrome: Page, id: CommandId) =>
-  await chrome.evaluate<unknown>(
-    `window.meru.invoke(${JSON.stringify(wireName(commands.run))}, ${JSON.stringify({ id })})`
-  );
+  await invokeIn(chrome, commands.run, { id });
 
 export const styleOf = async (chrome: Page) => {
   const { stage } = await stageOf(chrome);

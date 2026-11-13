@@ -9,9 +9,8 @@ import { uniq } from "es-toolkit/array";
 import { execaSync } from "execa";
 import { z } from "zod";
 
-import { wireName } from "../../app/shared/channels/define.ts";
 import { measure as measureChannels } from "../../app/shared/channels/measure.ts";
-import { launch, runCommand } from "../../tests/app.ts";
+import { invokeIn, launch, runCommand } from "../../tests/app.ts";
 import type {
   AppName,
   Measurement,
@@ -112,14 +111,12 @@ const rolesOf = async (
     const { floorRoles } = await read(app);
     return rolesSchema.parse(JSON.parse(floorRoles));
   }
-  const answer = await chrome.evaluate<unknown>(
-    `window.meru.invoke(${JSON.stringify(wireName(measureChannels.roles))}, {})`
-  );
-  const roles = z
-    .object({ value: measureChannels.roles.result })
-    .parse(answer).value;
+  const roles = await invokeIn(chrome, measureChannels.roles, {});
+  if (!roles.ok) {
+    throw new Error(`measure.roles: ${roles.error.message}`);
+  }
   return Object.fromEntries(
-    roles.map(({ contentsId, name }) => [String(contentsId), name])
+    roles.value.map(({ contentsId, name }) => [String(contentsId), name])
   );
 };
 
