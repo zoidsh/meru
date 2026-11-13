@@ -11,10 +11,10 @@ import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
-import { FakeShell } from "../../../test/fakes/shell.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
+import { RecordingShell } from "../../shell/e2e.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { ShortcutKeys } from "../../shell/keys.ts";
 import { Profiles } from "../profiles/index.ts";
@@ -59,7 +59,7 @@ const setup = async () => {
   await profiles.open();
   const views = new FakeViewFactory();
   const stages = new Stages({
-    shell: new FakeShell(),
+    shell: new RecordingShell(),
     keys: new ShortcutKeys({
       commands: allCommands,
       dispatcher: commands,

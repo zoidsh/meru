@@ -24,12 +24,12 @@ import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
-import { FakeShell } from "../../../test/fakes/shell.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import type { FakeView } from "../../../test/fakes/view.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
 import { unwrap } from "../../../test/result.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
+import { RecordingShell } from "../../shell/e2e.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { ShortcutKeys } from "../../shell/keys.ts";
 import { Profiles } from "../profiles/index.ts";
@@ -97,7 +97,7 @@ const setup = async (style: Style = "modern") => {
   });
   await profiles.open();
   const insets = { left: 0, top: 0 };
-  const shell = new FakeShell();
+  const shell = new RecordingShell();
   const stages = new Stages({
     keys: new ShortcutKeys({
       commands: allCommands,

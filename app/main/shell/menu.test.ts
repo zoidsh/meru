@@ -11,7 +11,6 @@ import { fakeIds } from "../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../test/fakes/session.ts";
-import { FakeShell } from "../../test/fakes/shell.ts";
 import { FakeUpdater } from "../../test/fakes/updater.ts";
 import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
@@ -21,6 +20,7 @@ import { Stages } from "../features/stage/index.ts";
 import { Updater } from "../features/updater/index.ts";
 import type { MenuAction, MenuSection } from "../platform/menu.ts";
 import { CommandDispatcher } from "./commands.ts";
+import { RecordingShell } from "./e2e.ts";
 import { IpcDispatcher } from "./ipc.ts";
 import { ShortcutKeys } from "./keys.ts";
 import { ApplicationMenu, buildMenu } from "./menu.ts";
@@ -80,7 +80,7 @@ const setup = async (platform = "darwin") => {
   await profiles.open();
   profiles.start();
   const stages = new Stages({
-    shell: new FakeShell(),
+    shell: new RecordingShell(),
     keys: new ShortcutKeys({
       commands,
       dispatcher,
