@@ -4,6 +4,7 @@
   "private": true,
   "description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
   "author": "Tim Cheung <tim@meru.so>",
+  "repository": "zoidsh/meru",
   "type": "module",
   "main": "dist/main/index.js",
   "scripts": {
@@ -19,9 +20,9 @@
     "test:budget": "playwright test --project budget",
     "measure": "node scripts/measure.ts",
     "package": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --dir",
-    "package:mac": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --mac --publish never",
-    "package:linux": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --linux --publish never",
-    "package:win": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --win --publish never"
+    "package:mac": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --mac",
+    "package:linux": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --linux",
+    "package:win": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --win"
   },
   "dependencies": {
     "electron-updater": "6.6.2",
