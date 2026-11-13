@@ -168,6 +168,37 @@ export const setProfileStatus = (
       })
     : err("unknownProfile");
 
+/** What the user may change about a profile; a null colour takes the colour away. */
+export interface ProfilePatch {
+  readonly label?: string;
+  readonly color?: string | null;
+}
+
+export const updateProfile = (
+  state: ProfilesState,
+  profileId: string,
+  patch: ProfilePatch
+): Changed => {
+  if (!hasProfile(state, profileId)) {
+    return err("unknownProfile");
+  }
+  return ok({
+    ...state,
+    profiles: state.profiles.map((found) => {
+      if (found.id !== profileId) {
+        return found;
+      }
+      const { color, ...kept } = found;
+      const next = patch.color === undefined ? color : patch.color;
+      return {
+        ...kept,
+        label: patch.label ?? found.label,
+        ...(next === null || next === undefined ? {} : { color: next }),
+      };
+    }),
+  });
+};
+
 /** What a tab may change about itself after it was added. */
 export type TabPatch = Partial<
   Pick<Tab, "health" | "sleeping" | "title" | "url" | "zoom" | "pinned">

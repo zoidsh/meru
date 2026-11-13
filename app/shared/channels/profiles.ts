@@ -22,6 +22,15 @@ export const profiles = defineChannels("profiles", {
   ),
   remove: invoke(z.object({ profileId: idSchema }), z.null()),
   select: invoke(z.object({ profileId: idSchema }), z.null()),
+  /** Renames the profile or changes its colour; a null colour takes it away. */
+  update: invoke(
+    z.object({
+      color: colorSchema.nullable().optional(),
+      label: z.string().min(1).optional(),
+      profileId: idSchema,
+    }),
+    z.null()
+  ),
   snapshot: sync(z.object({}), profilesSnapshotSchema),
 });
 

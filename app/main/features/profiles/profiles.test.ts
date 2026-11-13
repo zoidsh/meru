@@ -194,6 +194,28 @@ describe(Profiles, () => {
     });
   });
 
+  it("renames a profile and changes its colour on a page's request, and refuses an empty label", async () => {
+    const { profiles, registrar } = await setup();
+    const created = unwrap(profiles.createProfile("Work"));
+    const update = (payload: object) =>
+      registrar.dispatch(PAGE, wireName(profileChannels.update), payload);
+    const renamed = update({
+      color: "#123456",
+      label: "Office",
+      profileId: created.id,
+    });
+    const empty = update({ label: "", profileId: created.id });
+    expect({
+      empty: empty.ok,
+      profile: profiles.state.profiles.find((found) => found.id === created.id),
+      renamed,
+    }).toStrictEqual({
+      empty: false,
+      profile: { ...created, color: "#123456", label: "Office" },
+      renamed: { ok: true, value: null },
+    });
+  });
+
   it("selects a profile, telling whoever listens which group it shows, and moves the selection off a removed one", async () => {
     const { profiles, selected } = await setup();
     const first = profiles.selected();

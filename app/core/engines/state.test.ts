@@ -29,6 +29,7 @@ import {
   joinTab,
   splitInto,
   swapPanes,
+  updateProfile,
 } from "./state.ts";
 
 const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
@@ -103,6 +104,25 @@ describe(validateState, () => {
 });
 
 describe("the state's operations", () => {
+  it("renames a profile and changes or clears its colour, keeping what the patch leaves out", () => {
+    const { state } = start();
+    const [first] = state.profiles;
+    const profileId = first?.id ?? "";
+    const renamed = unwrap(
+      updateProfile(state, profileId, { color: "#123456", label: "Work" })
+    );
+    const cleared = unwrap(updateProfile(renamed, profileId, { color: null }));
+    expect({
+      cleared: Object.keys(cleared.profiles[0] ?? {}).includes("color"),
+      renamed: renamed.profiles[0],
+      unknown: updateProfile(state, "nobody", { label: "Work" }),
+    }).toStrictEqual({
+      cleared: false,
+      renamed: { ...first, color: "#123456", label: "Work" },
+      unknown: { error: "unknownProfile", ok: false },
+    });
+  });
+
   it("splits a new tab into a group's pane and closes it back to a group of one", () => {
     const { ids, state } = start();
     const [group] = state.groups;

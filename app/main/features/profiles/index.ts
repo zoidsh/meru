@@ -25,9 +25,10 @@ import {
   newProfile,
   newTab,
   swapPanes,
+  updateProfile,
   updateTab,
 } from "../../../core/engines/state.ts";
-import type { StateError } from "../../../core/engines/state.ts";
+import type { ProfilePatch, StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
 import type { GateRefusal } from "../../../core/entitlement/gate.ts";
 import type { AppEvents } from "../../../core/events.ts";
@@ -170,6 +171,8 @@ export class Profiles {
         remove: ({ profileId }) => done(this.removeProfile(profileId)),
         select: ({ profileId }) => done(this.selectProfile(profileId)),
         snapshot: () => ok(this.snapshot()),
+        update: ({ profileId, ...patch }) =>
+          done(this.updateProfile(profileId, patch)),
       }),
       registrar.register(tabChannels, {
         add: ({ profileId, appId }) => this.addTab(profileId, appId),
@@ -285,6 +288,14 @@ export class Profiles {
       void this.#clear(partitionOf(profileId));
     }
     return committed;
+  }
+
+  /** Renames a profile or changes its colour, deactivated or not. */
+  updateProfile(
+    profileId: string,
+    patch: ProfilePatch
+  ): Result<undefined, ProfilesError> {
+    return this.#commit(updateProfile(this.state, profileId, patch));
   }
 
   selectProfile(profileId: string): Result<undefined, ProfilesError> {
