@@ -1,7 +1,7 @@
-import type { TitleBar, TitleBarOverlay } from "./engines/chrome.ts";
 import type { KeyInput } from "./engines/shortcuts.ts";
 import type { Navigation, NavigationAction } from "./records/navigation.ts";
 import type { Rect } from "./records/rect.ts";
+import type { TitleBar, TitleBarOverlay } from "./records/title-bar.ts";
 import type { Result } from "./result.ts";
 
 export type Ids = () => string;

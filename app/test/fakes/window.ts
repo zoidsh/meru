@@ -1,8 +1,8 @@
 import { clamp } from "es-toolkit";
 
-import type { TitleBarOverlay } from "../../core/engines/chrome.ts";
 import type { Unsubscribe, ViewPort, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
+import type { TitleBarOverlay } from "../../core/records/title-bar.ts";
 import { FakeKeys } from "./keys.ts";
 
 let nextContentsId = 1;

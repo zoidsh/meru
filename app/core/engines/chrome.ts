@@ -1,4 +1,5 @@
 import type { Rect } from "../records/rect.ts";
+import type { TitleBar, TitleBarOverlay } from "../records/title-bar.ts";
 
 export type Theme = "light" | "dark";
 
@@ -15,19 +16,6 @@ export const chromeColors = (theme: Theme): ChromeColors =>
   theme === "dark"
     ? { background: "#1d1d24", foreground: "#e2e2ea" }
     : { background: "#ececf1", foreground: "#2a2a30" };
-
-export interface TitleBarOverlay {
-  readonly color: string;
-  readonly symbolColor: string;
-  readonly height: number;
-}
-
-export interface TitleBar {
-  readonly style: "hiddenInset" | "hidden";
-  readonly trafficLights: { readonly x: number; readonly y: number } | null;
-  /** The window controls drawn over the page, which also tells the page where they are through `env(titlebar-area-*)`; null where the platform draws none. On macOS only the height counts. */
-  readonly overlay: TitleBarOverlay | null;
-}
 
 // `hiddenInset` pins the lights 11px from the top and skips the centring `titleBarOverlay.height` would do, so centring them on a taller row takes an explicit position; x repeats Electron's own inset, so only the height moves.
 const TRAFFIC_LIGHT_HEIGHT = 12;
