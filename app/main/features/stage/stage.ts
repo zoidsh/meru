@@ -26,6 +26,7 @@ import type {
   Orientation,
   Placement,
 } from "../../../core/records/layout.ts";
+import type { Disposition } from "../../../core/records/link.ts";
 import type { NavigationAction } from "../../../core/records/navigation.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Style } from "../../../core/records/style.ts";
@@ -75,6 +76,12 @@ export interface StageOptions {
   /** The preload of an overlay's page, which is one of the renderer's. */
   readonly overlayPreload: string | undefined;
   readonly onChange: (snapshot: StageSnapshot) => void;
+  /** A link a pane's page opens; true takes it from the page. */
+  readonly onOpen: (
+    tabId: string,
+    url: string,
+    disposition: Disposition
+  ) => boolean;
   /** An overlay's page came, on the surface its channels are allowed from, or went, with null. */
   readonly onOverlay: (contentsId: number, surface: Surface | null) => void;
   readonly onError: (error: unknown) => void;
@@ -108,8 +115,7 @@ export class Stage {
           this.#publish();
         }
       },
-      // Nothing routes a link a pane opens, so each goes on as Chromium would take it.
-      onOpen: () => false,
+      onOpen: options.onOpen,
       radius: () => STYLE_METRICS[options.style()].radius,
       sourceOf: (tab) => ({
         url: options.urlOf(tab),

@@ -58,6 +58,7 @@ const setup = async () => {
   await profiles.open();
   const views = new FakeViewFactory();
   const stages = new Stages({
+    onOpen: () => false,
     keys: new ShortcutKeys({
       commands: allCommands,
       dispatcher: commands,

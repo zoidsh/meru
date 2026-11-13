@@ -178,6 +178,8 @@ const start = async () => {
   const stages = new Stages({
     blankPanes: e2e,
     commands,
+    // Nothing routes a link a pane opens yet, so each goes on as Chromium would take it.
+    onOpen: () => false,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
     events,

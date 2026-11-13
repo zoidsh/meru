@@ -8,6 +8,7 @@ import type {
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
+import type { Disposition } from "../../../core/records/link.ts";
 import type { NavigationAction } from "../../../core/records/navigation.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -46,6 +47,12 @@ export interface StagesOptions {
   readonly insets: () => ChromeInsets;
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
+  /** A link a pane's page opens, in the tab `tabId`; true takes it from the page. */
+  readonly onOpen: (
+    tabId: string,
+    url: string,
+    disposition: Disposition
+  ) => boolean;
   readonly onError: (error: unknown) => void;
 }
 
@@ -155,6 +162,7 @@ export class Stages {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
       },
       onError: this.#options.onError,
+      onOpen: this.#options.onOpen,
       onOverlay: (contentsId, surface) => {
         if (surface === null) {
           this.#bySender.delete(contentsId);

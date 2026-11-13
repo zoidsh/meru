@@ -79,6 +79,7 @@ const setup = async (platform = "darwin") => {
   await profiles.open();
   profiles.start();
   const stages = new Stages({
+    onOpen: () => false,
     keys: new ShortcutKeys({
       commands,
       dispatcher,

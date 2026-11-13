@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Beside } from "../../../core/records/layout.ts";
+import type { Disposition } from "../../../core/records/link.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
@@ -95,6 +96,7 @@ const setup = async (style: Style = "modern") => {
   });
   await profiles.open();
   const insets = { left: 0, top: 0 };
+  const opened: { tabId: string; url: string; disposition: Disposition }[] = [];
   const stages = new Stages({
     keys: new ShortcutKeys({
       commands: allCommands,
@@ -110,6 +112,10 @@ const setup = async (style: Style = "modern") => {
     events,
     insets: () => insets,
     onError,
+    onOpen: (tabId, url, disposition) => {
+      opened.push({ disposition, tabId, url });
+      return url.startsWith("https://calendar.google.com/");
+    },
     profiles,
     registrar,
     settings,
@@ -131,6 +137,7 @@ const setup = async (style: Style = "modern") => {
   return {
     call,
     changes,
+    opened,
     commands,
     errors,
     events,
@@ -417,13 +424,22 @@ describe(Stages, () => {
     ]);
   });
 
-  it("hears the links a pane opens and leaves each to Chromium", async () => {
-    const { views } = await setup();
+  it("hands each link a pane opens to its listener with the pane's tab and the disposition, and leaves to Chromium what it does not take", async () => {
+    const { views, opened, profiles } = await setup();
     const [gmail] = views.created;
     expect([
       gmail?.open("https://calendar.google.com/", "background"),
       gmail?.open("https://example.com/"),
-    ]).toStrictEqual([false, false]);
+    ]).toStrictEqual([true, false]);
+    const tabId = profiles.state.tabs[0]?.id;
+    expect(opened).toStrictEqual([
+      {
+        disposition: "background",
+        tabId,
+        url: "https://calendar.google.com/",
+      },
+      { disposition: "inPlace", tabId, url: "https://example.com/" },
+    ]);
   });
 
   it("keeps the last pane", async () => {
