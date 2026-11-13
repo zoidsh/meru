@@ -79,7 +79,7 @@ const setup = async () => {
     registrar,
     stages,
   }).start();
-  return { commands, registrar, stage, transport, window };
+  return { commands, registrar, stage, transport, views, window };
 };
 
 describe(Launcher, () => {
@@ -93,22 +93,24 @@ describe(Launcher, () => {
   });
 
   it("opens the launcher's page over the sender's panes beside the anchor, and closes it from that page", async () => {
-    const { registrar, stage, window } = await setup();
+    const { registrar, views, window } = await setup();
     const anchor = { height: 28, width: 28, x: 900, y: 6 };
     expect(
       registrar.dispatch(window.contentsId, wireName(launcher.open), {
         anchor,
       }).ok
     ).toBeTruthy();
-    const { popup } = stage;
+    const popup = views.created.at(-1);
+    await expect.poll(() => popup?.url).toBe("launcher.html#900,6");
+    expect(popup?.bounds()).toStrictEqual(window.contentBounds());
     expect(
       registrar.dispatch(popup?.contentsId ?? 0, wireName(launcher.close), {})
         .ok
     ).toBeTruthy();
-    expect([popup?.bounds(), stage.popup]).toStrictEqual([
-      window.contentBounds(),
-      undefined,
-    ]);
+    expect([
+      popup?.destroyed,
+      window.childViews().some((view) => view === popup),
+    ]).toStrictEqual([true, false]);
   });
 
   it("refuses to open from a sender with no window", async () => {

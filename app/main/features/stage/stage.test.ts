@@ -592,10 +592,9 @@ describe("a drag across panes", () => {
 
 describe("a popup over the panes", () => {
   it("splits with a new tab of the app it names, from the popup's own page", async () => {
-    const { call, id, profiles, stage } = await setup();
+    const { call, id, profiles, stage, views } = await setup();
     stage.openPopup("file:///launcher.html");
-    const { popup: view } = stage;
-    const popup = view?.contentsId ?? 0;
+    const popup = views.created.at(-1)?.contentsId ?? 0;
     expect(
       call(
         stageChannels.split,

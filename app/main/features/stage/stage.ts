@@ -30,6 +30,8 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import type { Profiles } from "../profiles/index.ts";
+import { DragOverlay } from "./drag-overlay.ts";
+import { Popup } from "./popup.ts";
 
 export type StageError =
   | "unknownWindow"
@@ -74,35 +76,26 @@ export interface StageOptions {
 /** A drag's overlay only catches the pointer; a popup is a renderer page, such as the launcher, drawn over the panes. */
 export type OverlayKind = "drag" | "popup";
 
-interface Drag {
-  readonly splitId: string;
-  readonly overlay: ViewPort;
-  /** The layout as the pointer left it, which the group takes on release. */
-  layout: Layout;
-  ratio: number | undefined;
-}
-
-const TRANSPARENT = "#00000000";
-
-const dragPage = (orientation: Orientation) =>
-  `data:text/html,<html style="cursor:${orientation === "vertical" ? "col-resize" : "row-resize"};height:100%"></html>`;
-
 export class Stage {
   readonly #options: StageOptions;
   readonly #views = new Map<string, ViewPort>();
   readonly #disposables = new DisposableStore();
   readonly #focusListeners = new Map<string, Unsubscribe>();
   readonly #navigationListeners = new Map<string, Unsubscribe>();
+  readonly #popup: Popup;
   #shown: Group | undefined;
-  #overlays: ViewPort[] = [];
   #retired: ViewPort[] = [];
   #focused: string | undefined;
-  #drag: Drag | undefined;
-  #popup: ViewPort | undefined;
+  #drag: DragOverlay | undefined;
   #published: StageSnapshot | undefined;
 
   constructor(options: StageOptions) {
     this.#options = options;
+    this.#popup = new Popup({
+      onError: options.onError,
+      preload: options.popupPreload,
+      views: options.views,
+    });
     this.#shown = this.#read();
     this.#focused = panes(this.#layout())[0]?.paneId;
   }
@@ -257,7 +250,6 @@ export class Stage {
     return target === undefined ? err("unknownPane") : this.focusPane(target);
   }
 
-  // Pointer events over a pane go to that pane's renderer, so the chrome page cannot follow a drag across one by itself; a transparent view over every pane catches the pointer for the drag's duration.
   beginDrag(splitId: string): Result<undefined, StageError> {
     const divider = this.#arrangement().dividers.find(
       (found) => found.splitId === splitId
@@ -266,53 +258,33 @@ export class Stage {
       return err("unknownSplit");
     }
     this.#retireOverlay();
-    const overlay = this.#options.views.create({
+    const drag = new DragOverlay({
+      layout: this.#layout(),
+      onError: this.#options.onError,
+      orientation: divider.orientation,
       preload: this.#options.dragPreload,
-      radius: 0,
-      zoom: 1,
+      splitId,
+      views: this.#options.views,
     });
-    overlay.setBackgroundColor(TRANSPARENT);
-    this.#load(overlay, dragPage(divider.orientation));
-    this.#drag = { layout: this.#layout(), overlay, ratio: undefined, splitId };
-    this.#overlays = [...this.#overlays, overlay];
-    this.#options.onOverlay(overlay.contentsId, true, "drag");
+    this.#drag = drag;
+    this.#options.onOverlay(drag.view.contentsId, true, "drag");
     this.#reconcile();
     this.#arrange(false);
     return ok(undefined);
   }
 
-  // A page of the chrome page's cannot draw over the panes, which are views above it, so a popup is a transparent view of its own over the whole window, taking the keyboard while it is up.
   /** Shows a renderer page over the panes until closePopup, replacing any popup already up. */
   openPopup(url: string): void {
     this.#dropPopup();
-    const view = this.#options.views.create({
-      preload: this.#options.popupPreload,
-      radius: 0,
-      zoom: 1,
-    });
-    view.setBackgroundColor(TRANSPARENT);
-    this.#popup = view;
-    this.#overlays = [...this.#overlays, view];
+    const view = this.#popup.open(url);
     this.#options.onOverlay(view.contentsId, true, "popup");
     this.#reconcile();
     this.#arrange(false);
-    // Focused once loaded, since a view focused before its page exists hands the page no focus to start with.
-    const load = async () => {
-      try {
-        await view.loadURL(url);
-        if (this.#popup === view) {
-          view.focus();
-        }
-      } catch (error) {
-        this.#options.onError(error);
-      }
-    };
-    void load();
   }
 
   /** Takes the popup down and gives the keyboard back to the focused pane. */
   closePopup(): void {
-    if (this.#popup === undefined) {
+    if (this.#popup.view === undefined) {
       return;
     }
     this.#dropPopup();
@@ -320,11 +292,6 @@ export class Stage {
     if (this.#focused !== undefined) {
       this.#views.get(this.#focused)?.focus();
     }
-  }
-
-  /** The popup's view while one is up. */
-  get popup(): ViewPort | undefined {
-    return this.#popup;
   }
 
   // The chrome page and the overlay both report the pointer, so a move or release after the other source ended the drag is expected and ignored.
@@ -396,8 +363,11 @@ export class Stage {
     });
   }
 
+  /** The views over the panes: a drag's, then the popup's. */
   get overlays(): readonly ViewPort[] {
-    return this.#overlays;
+    return [this.#drag?.view, this.#popup.view].filter(
+      (view) => view !== undefined
+    );
   }
 
   snapshot(): StageSnapshot {
@@ -479,12 +449,10 @@ export class Stage {
   }
 
   #dropPopup(): void {
-    const popup = this.#popup;
+    const popup = this.#popup.close();
     if (popup === undefined) {
       return;
     }
-    this.#popup = undefined;
-    this.#overlays = this.#overlays.filter((view) => view !== popup);
     this.#options.onOverlay(popup.contentsId, false, "popup");
     this.#retired.push(popup);
   }
@@ -495,9 +463,8 @@ export class Stage {
       return;
     }
     this.#drag = undefined;
-    this.#overlays = this.#overlays.filter((view) => view !== drag.overlay);
-    this.#options.onOverlay(drag.overlay.contentsId, false, "drag");
-    this.#retired.push(drag.overlay);
+    this.#options.onOverlay(drag.view.contentsId, false, "drag");
+    this.#retired.push(drag.view);
   }
 
   #syncViews(): void {
@@ -555,7 +522,7 @@ export class Stage {
     const { window } = this.#options;
     const wanted = stackOf(
       this.panes().map(({ view }) => view),
-      this.#overlays
+      this.overlays
     );
     for (const operation of stackPlan(window.childViews(), wanted)) {
       if (operation.kind === "remove") {
@@ -580,7 +547,7 @@ export class Stage {
       }
       view.setBorderRadius(radius);
     }
-    for (const overlay of this.#overlays) {
+    for (const overlay of this.overlays) {
       overlay.setBounds(bounds);
     }
     if (publish) {
