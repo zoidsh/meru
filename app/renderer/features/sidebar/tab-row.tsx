@@ -1,6 +1,6 @@
-import { useDraggable } from "@dnd-kit/react";
+import { useDraggable, useDroppable } from "@dnd-kit/react";
 import { cn } from "cn";
-import { CircleAlertIcon } from "lucide-react";
+import { CircleAlertIcon, XIcon } from "lucide-react";
 
 import type { DropTarget, SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -24,7 +24,11 @@ const titleOf = (tab: Tab): string => {
     : msg`${tab.title} – ${name}`;
 };
 
-const GmailBadge = ({ needsSignIn, unread }: GmailMark) => {
+const GmailBadge = ({ mark }: { readonly mark: GmailMark | undefined }) => {
+  if (mark === undefined) {
+    return null;
+  }
+  const { needsSignIn, unread } = mark;
   if (needsSignIn) {
     return (
       <CircleAlertIcon className="bg-background pointer-events-none absolute -top-1 -right-1 size-3.5 rounded-full text-yellow-400" />
@@ -38,54 +42,95 @@ const GmailBadge = ({ needsSignIn, unread }: GmailMark) => {
   );
 };
 
-/** One tab's row in the strip: its icon, its title when wide, and Gmail's marks. */
+const DropLine = ({ at }: { readonly at: "before" | "after" }) => (
+  <div
+    className={cn(
+      "bg-primary absolute inset-x-0 h-0.5 rounded-full",
+      at === "before" ? "-top-0.5" : "-bottom-0.5"
+    )}
+  />
+);
+
+const CloseButton = ({
+  wide,
+  onClose,
+}: {
+  readonly wide: boolean;
+  readonly onClose: () => void;
+}) => (
+  <Button
+    className={cn(
+      "absolute opacity-0 transition-colors group-hover:opacity-100 focus-visible:opacity-100",
+      wide
+        ? "inset-y-0 right-1 my-auto size-5"
+        : "-top-1 -right-1 size-4 rounded-full"
+    )}
+    data-close=""
+    onClick={onClose}
+    size="icon"
+    tabIndex={-1}
+    title={msg`Close`}
+    variant="secondary"
+  >
+    <XIcon className="size-3" />
+  </Button>
+);
+
+/** One tab's row in the strip: its icon, its title when wide, Gmail's marks, and the close control hovering reveals. */
 export const TabRowButton = ({
   tab,
-  index,
   size,
   active,
+  focusable,
+  closeable,
   gmail,
   drop,
-  register,
 }: {
   readonly tab: Tab;
-  readonly index: number;
   readonly size: SidebarSize;
   readonly active: boolean;
+  readonly focusable: boolean;
+  readonly closeable: boolean;
   readonly gmail: GmailMark | undefined;
   readonly drop: DropTarget | undefined;
-  readonly register: (tabId: string, element: Element | null) => void;
 }) => {
   const client = useClient();
   const { ref, isDragging } = useDraggable({ id: tab.id });
+  const { ref: dropRef } = useDroppable({ disabled: isDragging, id: tab.id });
   const wide = size === "wide";
+  const close = () => {
+    void client.invoke(tabChannels.close, { tabId: tab.id });
+  };
   return (
     <div
-      className="relative"
+      className="group relative"
       data-drop={drop?.zone}
       data-tab-id={tab.id}
-      ref={(element) => {
-        register(tab.id, element);
-      }}
+      ref={dropRef}
     >
-      {drop?.zone === "before" ? (
-        <div className="bg-primary absolute inset-x-0 -top-0.5 h-0.5 rounded-full" />
-      ) : null}
+      {drop?.zone === "before" ? <DropLine at="before" /> : null}
       <Button
+        aria-selected={active}
         className={cn(
           "touch-none transition-colors",
           wide && "w-full justify-start",
+          wide && closeable && "group-hover:pr-7",
           isDragging && "opacity-50",
           drop?.zone === "onto" && "ring-primary/50 ring-2"
         )}
         data-active={active || undefined}
-        data-index={index}
+        onAuxClick={(event) => {
+          if (event.button === 1 && closeable) {
+            close();
+          }
+        }}
         onClick={() => {
           void client.invoke(tabChannels.focus, { tabId: tab.id });
         }}
         ref={ref}
+        role="tab"
         size={wide ? "sm" : "icon"}
-        tabIndex={-1}
+        tabIndex={focusable ? 0 : -1}
         title={titleOf(tab)}
         variant={active ? "secondary" : "ghost"}
       >
@@ -96,10 +141,9 @@ export const TabRowButton = ({
           </span>
         ) : null}
       </Button>
-      {gmail === undefined ? null : <GmailBadge {...gmail} />}
-      {drop?.zone === "after" ? (
-        <div className="bg-primary absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full" />
-      ) : null}
+      <GmailBadge mark={gmail} />
+      {closeable ? <CloseButton onClose={close} wide={wide} /> : null}
+      {drop?.zone === "after" ? <DropLine at="after" /> : null}
     </div>
   );
 };

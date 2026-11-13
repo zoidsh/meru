@@ -108,6 +108,77 @@ describe(Sidebar, () => {
     ]);
   });
 
+  it("offers a close on every row but the profile's one Gmail tab, and closes a row from it or on a middle click", () => {
+    const { container, sentOn } = mount([answer(tabs.close, null)]);
+    const row = (id: string) =>
+      container.querySelector<HTMLElement>(`[data-tab-id=${id}]`);
+    const offered = ["mail", "calendar", "drive"].map(
+      (id) => row(id)?.querySelector("[data-close]") !== null
+    );
+    act(() => {
+      row("calendar")?.querySelector<HTMLElement>("[data-close]")?.click();
+      row("drive")
+        ?.querySelector("[role=tab]")
+        ?.dispatchEvent(
+          new MouseEvent("auxclick", { bubbles: true, button: 1 })
+        );
+      row("mail")
+        ?.querySelector("[role=tab]")
+        ?.dispatchEvent(
+          new MouseEvent("auxclick", { bubbles: true, button: 1 })
+        );
+    });
+    expect([offered, sentOn(tabs.close)]).toStrictEqual([
+      [false, true, true],
+      [{ tabId: "calendar" }, { tabId: "drive" }],
+    ]);
+  });
+
+  it("is a tablist whose active tab holds the one tab stop, and moves focus through the tabs with the arrow keys, Home and End", () => {
+    const { container } = mount();
+    const tabElements = [
+      ...container.querySelectorAll<HTMLElement>("[role=tablist] [role=tab]"),
+    ];
+    const focused = () =>
+      document.activeElement instanceof HTMLElement
+        ? tabElements.indexOf(document.activeElement)
+        : -1;
+    const press = (key: string) => {
+      act(() => {
+        document.activeElement?.dispatchEvent(
+          new KeyboardEvent("keydown", { bubbles: true, key })
+        );
+      });
+      return focused();
+    };
+    const stops = tabElements.map((tab) => [
+      tab.tabIndex,
+      tab.getAttribute("aria-selected"),
+    ]);
+    act(() => {
+      tabElements[2]?.focus();
+    });
+    expect([
+      stops,
+      press("ArrowDown"),
+      press("ArrowDown"),
+      press("ArrowUp"),
+      press("End"),
+      press("Home"),
+    ]).toStrictEqual([
+      [
+        [-1, "false"],
+        [-1, "false"],
+        [0, "true"],
+      ],
+      0,
+      1,
+      0,
+      2,
+      0,
+    ]);
+  });
+
   it("titles a row with its page and its app, and the width toggle with its shortcut once it has one", () => {
     const { container } = mount([
       answer(settings.snapshot, {

@@ -1,9 +1,13 @@
 import { DragDropProvider } from "@dnd-kit/react";
-import type { DragEndEvent, DragMoveEvent } from "@dnd-kit/react";
+import type {
+  DragEndEvent,
+  DragMoveEvent,
+  DragOverEvent,
+} from "@dnd-kit/react";
 import { cn } from "cn";
 import { ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { useState } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 import { orderedTabs, rowTabs } from "../../../core/engines/ordering.ts";
 import type { TabRow } from "../../../core/engines/ordering.ts";
@@ -15,6 +19,7 @@ import {
 } from "../../../core/engines/sidebar.ts";
 import type { DropTarget } from "../../../core/engines/sidebar.ts";
 import type { Tab } from "../../../core/records/tab.ts";
+import { appById } from "../../../shared/apps.ts";
 import { commands } from "../../../shared/channels/commands.ts";
 import { tabs as tabChannels } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
@@ -38,24 +43,43 @@ const ROW_RADIUS: Readonly<Record<Size, string>> = {
 
 const OUTLINE_PADDING = 2;
 
-const findTarget = (
-  rows: ReadonlyMap<string, Element>,
-  draggedId: string,
-  point: { readonly x: number; readonly y: number }
+const targetOf = (
+  { target, position }: DragMoveEvent["operation"],
+  y = position.current.y
 ): DropTarget | undefined => {
-  for (const [tabId, element] of rows) {
-    const rect = element.getBoundingClientRect();
-    if (
-      tabId !== draggedId &&
-      point.y >= rect.top &&
-      point.y <= rect.bottom &&
-      point.x >= rect.left - rect.width &&
-      point.x <= rect.right + rect.width
-    ) {
-      return { tabId, zone: zoneAt(rect.top, rect.bottom, point.y) };
-    }
+  const rect = target?.element?.getBoundingClientRect();
+  return typeof target?.id === "string" && rect !== undefined
+    ? { tabId: target.id, zone: zoneAt(rect.top, rect.bottom, y) }
+    : undefined;
+};
+
+const sameTarget = (a: DropTarget | undefined, b: DropTarget | undefined) =>
+  a?.tabId === b?.tabId && a?.zone === b?.zone;
+
+const STEPS: Readonly<
+  Record<string, (index: number, count: number) => number>
+> = {
+  ArrowDown: (index, count) => (index + 1) % count,
+  ArrowUp: (index, count) => (index - 1 + count) % count,
+  End: (_index, count) => count - 1,
+  Home: () => 0,
+};
+
+const moveFocus = (event: KeyboardEvent<HTMLElement>) => {
+  const step = STEPS[event.key];
+  if (step === undefined) {
+    return;
   }
-  return undefined;
+  const tabs = [
+    ...event.currentTarget.querySelectorAll<HTMLElement>("[role=tab]"),
+  ];
+  const index =
+    event.target instanceof HTMLElement ? tabs.indexOf(event.target) : -1;
+  if (index === -1) {
+    return;
+  }
+  event.preventDefault();
+  tabs[step(index, tabs.length)]?.focus();
 };
 
 const WidthToggle = ({ size }: { readonly size: Size }) => {
@@ -95,10 +119,7 @@ export const Sidebar = ({
   const showWidthToggle = useSetting("sidebar.showWidthToggle");
   const gmailBadge = useSetting("sidebar.gmailUnreadBadge");
   const unreadBadge = useSetting("profiles.unreadBadge");
-  const elements = useRef(new Map<string, Element>());
   const [drop, setDrop] = useState<DropTarget | undefined>();
-  // The provider may hold the handlers of the render a drag began in, so the release reads the target from a ref rather than that render's state.
-  const dropRef = useRef<DropTarget | undefined>(undefined);
   if (sidebar.kind === "hidden" || snapshot === undefined) {
     return null;
   }
@@ -125,26 +146,29 @@ export const Sidebar = ({
       ? (profile?.status.unreadCount ?? null)
       : null,
   };
-  const register = (tabId: string, element: Element | null) => {
-    if (element === null) {
-      elements.current.delete(tabId);
-    } else {
-      elements.current.set(tabId, element);
-    }
+  const profileTabs = snapshot.tabs.filter(
+    (tab) => tab.profileId === snapshot.selectedProfileId
+  );
+  // Main refuses to close a profile's last tab of a single-instance app, so its row offers no close.
+  const closeable = (tab: Tab) =>
+    appById(tab.appId)?.singleInstance !== true ||
+    profileTabs.some(
+      (other) => other.id !== tab.id && other.appId === tab.appId
+    );
+  const focusable = active ?? rows.flatMap(rowTabs)[0]?.id;
+  // dnd-kit hands a move the operation as it stood before it, with the pointer's new place beside it, and finds the row under the pointer only after, which it reports as a drag over.
+  const mark = (target: DropTarget | undefined) => {
+    setDrop((current) => (sameTarget(current, target) ? current : target));
   };
   const move = (event: DragMoveEvent) => {
-    const source = event.operation.source?.id;
-    const target =
-      typeof source === "string"
-        ? findTarget(elements.current, source, event.operation.position.current)
-        : undefined;
-    dropRef.current = target;
-    setDrop(target);
+    mark(targetOf(event.operation, event.to?.y));
+  };
+  const over = (event: DragOverEvent) => {
+    mark(targetOf(event.operation));
   };
   const end = (event: DragEndEvent) => {
     const source = event.operation.source?.id;
-    const target = dropRef.current;
-    dropRef.current = undefined;
+    const target = targetOf(event.operation);
     setDrop(undefined);
     if (event.canceled || typeof source !== "string" || target === undefined) {
       return;
@@ -161,21 +185,21 @@ export const Sidebar = ({
       });
     }
   };
-  const rowOf = (tab: Tab, index: number) => (
+  const rowOf = (tab: Tab) => (
     <TabRowButton
       active={tab.id === active}
+      closeable={closeable(tab)}
       drop={drop?.tabId === tab.id ? drop : undefined}
+      focusable={tab.id === focusable}
       gmail={tab.appId === "gmail" ? gmail : undefined}
-      index={index}
       key={tab.id}
-      register={register}
       size={size}
       tab={tab}
     />
   );
-  const drawRow = (row: TabRow, index: number) =>
+  const drawRow = (row: TabRow) =>
     row.kind === "tab" ? (
-      rowOf(row.tab, index)
+      rowOf(row.tab)
     ) : (
       <div
         className={cn(
@@ -189,7 +213,7 @@ export const Sidebar = ({
           padding: OUTLINE_PADDING,
         }}
       >
-        {rowTabs(row).map((tab) => rowOf(tab, index))}
+        {rowTabs(row).map(rowOf)}
       </div>
     );
   return (
@@ -201,12 +225,16 @@ export const Sidebar = ({
       data-sidebar={size}
       style={{ width }}
     >
-      <DragDropProvider onDragEnd={end} onDragMove={move}>
+      <DragDropProvider onDragEnd={end} onDragMove={move} onDragOver={over}>
         <div
+          aria-orientation="vertical"
           className={cn(
             "flex min-h-0 w-full scrollbar-none flex-col overflow-y-auto",
             wide ? "gap-1" : "items-center gap-2"
           )}
+          onKeyDown={moveFocus}
+          role="tablist"
+          tabIndex={-1}
         >
           {rows.map(drawRow)}
         </div>
@@ -218,7 +246,6 @@ export const Sidebar = ({
         )}
       >
         {launcher?.(size)}
-        <div data-slot="bookmarks" />
         {showWidthToggle ? <WidthToggle size={size} /> : null}
       </div>
     </nav>

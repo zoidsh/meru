@@ -43,6 +43,48 @@ const kindOf = async (chrome: Page) => {
 const rowsOf = (chrome: Page) =>
   chrome.locator("nav[data-sidebar] [data-tab-id]");
 
+// A row's title ends with its app's name.
+const appsOf = async (chrome: Page) => {
+  const tabs = await rowsOf(chrome).locator("[role=tab]").all();
+  return await Promise.all(
+    tabs.map(async (tab) => {
+      const title = await tab.getAttribute("title");
+      return title?.split(" – ").at(-1);
+    })
+  );
+};
+
+// The strip marks the zone under the pointer on its next frame, so the release waits for the mark of the zone it means.
+/** Drags row `from` over row `to`, `onto` its middle or `before` its top quarter, and lets go there. */
+const drag = async (
+  chrome: Page,
+  from: number,
+  to: number,
+  zone: "before" | "onto"
+) => {
+  const source = await rowsOf(chrome).nth(from).boundingBox();
+  const target = await rowsOf(chrome).nth(to).boundingBox();
+  if (source === null || target === null) {
+    throw new Error("A row is not drawn");
+  }
+  await chrome.mouse.move(
+    source.x + source.width / 2,
+    source.y + source.height / 2
+  );
+  await chrome.mouse.down();
+  await chrome.mouse.move(
+    target.x + target.width / 2,
+    target.y + target.height * (zone === "before" ? 0.1 : 0.5),
+    { steps: 12 }
+  );
+  await expect(rowsOf(chrome).nth(to)).toHaveAttribute("data-drop", zone);
+  await chrome.mouse.up();
+  // dnd-kit animates the row back into place and takes no other drag until it has.
+  await expect(
+    chrome.locator("[data-dnd-dragging], [data-dnd-dropping]")
+  ).toHaveCount(0);
+};
+
 test("shows a fresh profile with neither the strip nor the profile row", async () => {
   const { chrome, close } = await launch();
   try {
@@ -55,7 +97,7 @@ test("shows a fresh profile with neither the strip nor the profile row", async (
   }
 });
 
-test("shows the strip once Calendar is added through the launcher, and Drive dragged onto it shares its group and the stage", async () => {
+test("shows the strip once Calendar is added through the launcher, Drive dragged onto it shares its group and the stage, and dragged between rows leaves the group and moves", async () => {
   const { app, chrome, close } = await launch();
   try {
     await openApp(app, chrome, "Calendar");
@@ -70,28 +112,24 @@ test("shows the strip once Calendar is added through the launcher, and Drive dra
 
     await openApp(app, chrome, "Drive");
     await expect(rowsOf(chrome)).toHaveCount(3);
-    const drive = await rowsOf(chrome).nth(2).boundingBox();
-    const calendar = await rowsOf(chrome).nth(1).boundingBox();
-    if (drive === null || calendar === null) {
-      throw new Error("A row is not drawn");
-    }
-    await chrome.mouse.move(
-      drive.x + drive.width / 2,
-      drive.y + drive.height / 2
-    );
-    await chrome.mouse.down();
-    await chrome.mouse.move(
-      calendar.x + calendar.width / 2,
-      calendar.y + calendar.height / 2,
-      { steps: 12 }
-    );
-    await chrome.mouse.up();
+    await drag(chrome, 2, 1, "onto");
 
     const group = chrome.locator("nav[data-sidebar] [data-group-id]");
     await expect(group).toHaveCount(1);
     await expect(group.locator("[data-tab-id]")).toHaveCount(2);
     await expect(group).toHaveCSS("border-top-style", "dashed");
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(2);
+
+    await drag(chrome, 2, 0, "before");
+    await expect(group).toHaveCount(0);
+    await expect
+      .poll(async () => await appsOf(chrome))
+      .toStrictEqual(["Drive", "Gmail", "Calendar"]);
+
+    await drag(chrome, 2, 0, "before");
+    await expect
+      .poll(async () => await appsOf(chrome))
+      .toStrictEqual(["Calendar", "Drive", "Gmail"]);
   } finally {
     await close();
   }
