@@ -1,7 +1,8 @@
 import { WebContentsView } from "electron";
-import type { Input, View } from "electron";
+import type { View } from "electron";
 
 import type { ViewFactoryPort, ViewPort, ViewSpec } from "../../core/ports.ts";
+import { onBeforeInput } from "./keys.ts";
 
 const handles = new WeakMap<ViewPort, WebContentsView>();
 const ports = new WeakMap<View, ViewPort>();
@@ -60,17 +61,7 @@ const createView = (spec: ViewSpec): ViewPort => {
       canGoForward: contents.navigationHistory.canGoForward(),
       loading: contents.isLoading(),
     }),
-    onKey: (listener) => {
-      const heard = (event: { preventDefault: () => void }, input: Input) => {
-        if (listener(input)) {
-          event.preventDefault();
-        }
-      };
-      contents.on("before-input-event", heard);
-      return () => {
-        contents.off("before-input-event", heard);
-      };
-    },
+    onKey: (listener) => onBeforeInput(contents, listener),
     onFocus: (listener) => {
       contents.on("focus", listener);
       return () => {

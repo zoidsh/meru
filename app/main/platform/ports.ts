@@ -9,7 +9,6 @@ import {
   screen,
   session,
 } from "electron";
-import type { Input } from "electron";
 
 import type {
   EntitlementApi,
@@ -20,6 +19,7 @@ import type {
 import { createEntitlementApi } from "./entitlement-api.ts";
 import { createFs } from "./fs.ts";
 import { ipcTransport } from "./ipc.ts";
+import { onBeforeInput } from "./keys.ts";
 import { onlinePort } from "./online.ts";
 import { handleOf, portOf, viewFactory } from "./views.ts";
 
@@ -75,17 +75,7 @@ const createWindow = (spec: WindowSpec): WindowPort => {
         window.off("close", listener);
       };
     },
-    onKey: (listener) => {
-      const heard = (event: { preventDefault: () => void }, input: Input) => {
-        if (listener(input)) {
-          event.preventDefault();
-        }
-      };
-      window.webContents.on("before-input-event", heard);
-      return () => {
-        window.webContents.off("before-input-event", heard);
-      };
-    },
+    onKey: (listener) => onBeforeInput(window.webContents, listener),
     onClosed: (listener) => {
       window.on("closed", listener);
       return () => {
