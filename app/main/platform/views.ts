@@ -23,7 +23,7 @@ export const handleOf = (view: ViewPort): WebContentsView => {
 
 export const portOf = (view: View): ViewPort | undefined => ports.get(view);
 
-// The dispositions 3.x's window-open handler told apart: a new window and a background tab; Chromium's foreground tab and the rest open as an ordinary click would.
+// Chromium's window-open dispositions are new-window, background-tab, foreground-tab and other; only the first two ask for something an ordinary click does not.
 const dispositionOf = (
   disposition: HandlerDetails["disposition"]
 ): Disposition => {
