@@ -1,4 +1,5 @@
 import { DisposableStore } from "../../../core/disposable.ts";
+import type { ChromeInsets } from "../../../core/engines/chrome.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
   Unsubscribe,
@@ -32,6 +33,8 @@ export interface StagesOptions {
   readonly blankPanes: boolean;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
+  /** What the chrome takes of a window's content area. */
+  readonly insets: () => ChromeInsets;
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
   readonly onError: (error: unknown) => void;
@@ -110,6 +113,7 @@ export class Stages {
     const opened = new Stage({
       dragPreload: this.#options.dragPreload,
       groupId,
+      insets: this.#options.insets,
       onChange: (snapshot) => {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
       },
@@ -144,6 +148,13 @@ export class Stages {
     });
     opened.start();
     return opened;
+  }
+
+  /** Lays every stage out again, after what the chrome takes of the windows changed. */
+  relayout(): void {
+    for (const found of this.all) {
+      found.restyle();
+    }
   }
 
   split(

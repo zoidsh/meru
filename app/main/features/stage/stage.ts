@@ -1,6 +1,8 @@
 import { isEqual } from "es-toolkit";
 
 import { DisposableStore } from "../../../core/disposable.ts";
+import { stageArea } from "../../../core/engines/chrome.ts";
+import type { ChromeInsets } from "../../../core/engines/chrome.ts";
 import {
   focusNext,
   focusPrevious,
@@ -54,6 +56,8 @@ export interface StageOptions {
   /** Read on every layout, so a change shows at the next one. */
   readonly style: () => Style;
   readonly zoom: (profileId: string) => number;
+  /** What the chrome takes of the content area, read on every layout. */
+  readonly insets: () => ChromeInsets;
   readonly dragPreload: string | undefined;
   readonly onChange: (snapshot: StageSnapshot) => void;
   readonly onOverlay: (contentsId: number, attached: boolean) => void;
@@ -247,7 +251,7 @@ export class Stage {
     }
     const ratio = ratioAt(
       drag.layout,
-      this.#options.window.contentBounds(),
+      this.#area(),
       this.#options.style(),
       drag.splitId,
       point
@@ -278,7 +282,7 @@ export class Stage {
     return ok(undefined);
   }
 
-  /** Lays the panes out again after the appearance style changed. */
+  /** Lays the panes out again after the appearance style or the chrome's insets changed. */
   restyle(): void {
     this.#arrange();
   }
@@ -354,10 +358,13 @@ export class Stage {
   }
 
   #arrangement() {
-    return layout(
-      this.#layout(),
+    return layout(this.#layout(), this.#area(), this.#options.style());
+  }
+
+  #area() {
+    return stageArea(
       this.#options.window.contentBounds(),
-      this.#options.style()
+      this.#options.insets()
     );
   }
 

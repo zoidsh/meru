@@ -86,11 +86,13 @@ const setup = async (style: Style = "modern") => {
     settings,
   });
   await profiles.open();
+  const insets = { left: 0, top: 0 };
   const stages = new Stages({
     blankPanes: false,
     commands,
     dragPreload: "/dist/preload/drag.cjs",
     events,
+    insets: () => insets,
     onError,
     profiles,
     registrar,
@@ -116,6 +118,7 @@ const setup = async (style: Style = "modern") => {
     commands,
     errors,
     id,
+    insets,
     paneIds,
     profileId,
     profiles,
@@ -178,6 +181,16 @@ describe(Stages, () => {
     expect(changes().at(-1)?.panes).toStrictEqual([
       { paneId: paneIds()[0], rect: { height: 784, width: 1184, x: 8, y: 8 } },
     ]);
+  });
+
+  it("lays the panes out in what the chrome leaves, again when that changes", async () => {
+    const { views, insets, stages, changes } = await setup("classic");
+    insets.top = 40;
+    insets.left = 64;
+    stages.relayout();
+    const area = { height: 760, width: 1136, x: 64, y: 40 };
+    expect(views.created[0]?.bounds()).toStrictEqual(area);
+    expect(changes().at(-1)?.panes[0]?.rect).toStrictEqual(area);
   });
 
   it("draws classic edge to edge with square corners", async () => {

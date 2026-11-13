@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { TITLEBAR_HEIGHT } from "../core/engines/chrome.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
@@ -162,6 +163,7 @@ const start = async () => {
     commands,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     events,
+    insets: () => ({ left: 0, top: TITLEBAR_HEIGHT }),
     onError: report,
     profiles,
     registrar: dispatcher,

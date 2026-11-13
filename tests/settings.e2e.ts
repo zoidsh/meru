@@ -1,15 +1,22 @@
 import { expect, test } from "@playwright/test";
 
+import { TITLEBAR_HEIGHT } from "../app/core/engines/chrome.ts";
 import { launch, runCommand, writeSettings } from "../scripts/lib/app.ts";
 import type { Launched } from "../scripts/lib/app.ts";
 import { inspect, styleOf, viewsOf, zoomOf } from "./app.ts";
 
 const PROFILE = "dev";
 
-const contentSize = async ({ chrome }: Launched) =>
-  await chrome.evaluate<{ width: number; height: number }>(
-    "({ width: innerWidth, height: innerHeight })"
-  );
+/** The content area less the titlebar, which a profile with one tab leaves to its pane. */
+const stageSize = async ({ chrome }: Launched) => {
+  const { width, height } = await chrome.evaluate<{
+    width: number;
+    height: number;
+  }>("({ width: innerWidth, height: innerHeight })");
+  return { height: height - TITLEBAR_HEIGHT, width };
+};
+
+const TOP = { x: 0, y: TITLEBAR_HEIGHT };
 
 test("tiles classic panes edge to edge from settings.json", async () => {
   const launched = await launch({
@@ -22,20 +29,20 @@ test("tiles classic panes edge to edge from settings.json", async () => {
     await expect(async () => {
       const [views, size] = await Promise.all([
         viewsOf(chrome),
-        contentSize(launched),
+        stageSize(launched),
       ]);
-      expect(views).toStrictEqual([{ ...size, x: 0, y: 0 }]);
+      expect(views).toStrictEqual([{ ...size, ...TOP }]);
     }).toPass({ timeout: 5000 });
 
     await runCommand(chrome, "stage.splitVertical");
     await expect(async () => {
       const [[left, right, ...rest], size] = await Promise.all([
         viewsOf(chrome),
-        contentSize(launched),
+        stageSize(launched),
       ]);
       expect(rest).toHaveLength(0);
-      expect(left).toMatchObject({ height: size.height, x: 0, y: 0 });
-      expect(right).toMatchObject({ height: size.height, y: 0 });
+      expect(left).toMatchObject({ height: size.height, ...TOP });
+      expect(right).toMatchObject({ height: size.height, y: TOP.y });
       expect((left?.width ?? 0) + 1 + (right?.width ?? 0)).toBe(size.width);
       expect(right?.x).toBe((left?.width ?? 0) + 1);
     }).toPass({ timeout: 5000 });
@@ -93,12 +100,12 @@ test("follows settings.json edited while the app runs", async () => {
       profiles: { [PROFILE]: { "stage.zoom": 2 } },
     });
     await expect.poll(async () => await styleOf(chrome)).toBe("classic");
-    const size = await contentSize(launched);
+    const size = await stageSize(launched);
     await expect
       .poll(async () => await inspect(chrome))
       .toMatchObject({
         menu: { "stage.splitVertical": "CommandOrControl+Alt+V" },
-        views: [{ ...size, x: 0, y: 0 }],
+        views: [{ ...size, ...TOP }],
         zoom: [2],
       });
   } finally {

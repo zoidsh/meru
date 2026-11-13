@@ -80,6 +80,7 @@ const setup = async (platform = "darwin") => {
     commands: dispatcher,
     dragPreload: undefined,
     events,
+    insets: () => ({ left: 0, top: 0 }),
     onError: () => {
       reports.push("error");
     },
