@@ -17,6 +17,7 @@ export default defineConfig({
           include: [
             `${app}/{core,shared,main}/**/*.test.ts`,
             "packages/user-data/**/*.test.ts",
+            "packaging/*.test.ts",
             "scripts/**/*.test.ts",
           ],
           name: "node",
