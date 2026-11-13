@@ -79,8 +79,7 @@ export const LauncherButton = ({
 export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
   const client = useClient();
   const snapshot = useProfiles();
-  const profileId = snapshot?.selectedProfileId ?? "";
-  const appIds = useSetting("launcher.apps", profileId);
+  const appIds = useSetting("launcher.apps");
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const input = useRef<HTMLInputElement>(null);
@@ -98,6 +97,11 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
 
   // A single-instance app has one tab a profile, which its entry brings to the front rather than adding another.
   const open = async (app: App, split: boolean) => {
+    const profileId = snapshot?.selectedProfileId;
+    if (profileId === undefined) {
+      close();
+      return;
+    }
     const existing =
       app.singleInstance === true
         ? snapshot?.tabs.find(

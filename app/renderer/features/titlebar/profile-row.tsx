@@ -59,7 +59,10 @@ const follow = (row: HTMLElement, update: () => void) => {
 };
 
 /** Which way the row can still scroll, kept as its size, its contents and its scroll position change. */
-const useRowScroll = (row: HTMLDivElement | null, selectedId: string) => {
+const useRowScroll = (
+  row: HTMLDivElement | null,
+  selectedId: string | undefined
+) => {
   const [scroll, setScroll] = useState<RowScroll>(NONE);
 
   useEffect(
@@ -74,6 +77,9 @@ const useRowScroll = (row: HTMLDivElement | null, selectedId: string) => {
 
   // Keyed on the selection rather than the click, since a shortcut or the menu selects a profile without the row hearing of it.
   useEffect(() => {
+    if (selectedId === undefined) {
+      return;
+    }
     row
       ?.querySelector(`[data-profile-id="${CSS.escape(selectedId)}"]`)
       ?.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -138,7 +144,7 @@ export const ProfileRow = () => {
   const snapshot = useProfiles();
   const unreadBadge = useSetting("profiles.unreadBadge");
   const [row, setRow] = useState<HTMLDivElement | null>(null);
-  const selectedId = snapshot?.selectedProfileId ?? "";
+  const selectedId = snapshot?.selectedProfileId;
   const scroll = useRowScroll(row, selectedId);
   const shown = orderedProfiles(snapshot?.profiles ?? []).filter(
     (profile) => !profile.deactivated

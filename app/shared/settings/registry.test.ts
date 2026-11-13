@@ -19,7 +19,7 @@ describe("the settings registry", () => {
 
   it("lets a profile override only what is about its own page", () => {
     expectTypeOf<ProfileSettingKey>().toEqualTypeOf<
-      "launcher.apps" | "sidebar.width" | "stage.zoom"
+      "sidebar.width" | "stage.zoom"
     >();
     expectTypeOf<SettingKey>().toEqualTypeOf<
       | "appearance.style"

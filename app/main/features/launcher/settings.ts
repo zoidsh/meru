@@ -13,7 +13,7 @@ export const launcherSettings = [
     page: "sidebar",
     restart: false,
     schema: z.array(idSchema),
-    scope: "profile",
+    scope: "global",
     tier: "free",
   }),
 ] as const;

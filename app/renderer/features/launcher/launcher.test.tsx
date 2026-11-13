@@ -62,9 +62,8 @@ const mount = (appIds?: readonly string[]) => {
   const page = mountChrome(<Launcher anchor={ANCHOR} />, {
     "profiles.snapshot": PROFILES,
     "settings.snapshot": {
-      global: {},
-      profiles:
-        appIds === undefined ? {} : { personal: { "launcher.apps": appIds } },
+      global: appIds === undefined ? {} : { "launcher.apps": appIds },
+      profiles: {},
     },
     "stage.snapshot": stageOf(),
     "tabs.add": tabOf("added", "calendar"),
@@ -81,7 +80,7 @@ describe(Launcher, () => {
     }
   });
 
-  it("lists the profile's launcher.apps, narrowed as one types", () => {
+  it("lists launcher.apps, narrowed as one types", () => {
     mount(["calendar", "drive", "docs"]);
     const all = names();
     type("dr");
