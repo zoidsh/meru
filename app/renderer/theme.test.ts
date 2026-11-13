@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { chromeColors } from "../core/engines/chrome.ts";
 import { followTheme } from "./theme.ts";
 import type { ColorScheme } from "./theme.ts";
 
@@ -42,6 +43,20 @@ describe(followTheme, () => {
     expect(root.classList.contains("dark")).toBeTruthy();
     scheme.change(false);
     expect(root.classList.contains("dark")).toBeFalsy();
+  });
+
+  it("sets the chrome's ground and ink from the same table the window takes its background from", () => {
+    const { root, scheme } = page("file:///chrome.html?theme=light", false);
+    const colors = () => [
+      root.style.getPropertyValue("--background"),
+      root.style.getPropertyValue("--foreground"),
+    ];
+    const light = colors();
+    scheme.change(true);
+    expect([light, colors()]).toStrictEqual([
+      [chromeColors("light").background, chromeColors("light").foreground],
+      [chromeColors("dark").background, chromeColors("dark").foreground],
+    ]);
   });
 
   it("takes the colour scheme when the URL has no theme", () => {

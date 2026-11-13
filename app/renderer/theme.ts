@@ -1,3 +1,4 @@
+import { chromeColors } from "../core/engines/chrome.ts";
 import type { Unsubscribe } from "../core/ports.ts";
 
 const DARK = "(prefers-color-scheme: dark)";
@@ -15,7 +16,15 @@ export interface ColorScheme {
   ) => void;
 }
 
-/** Marks the root dark or light: as the page URL's `theme` says for the first paint, then as Chromium's colour scheme, which follows the operating system's. */
+// The ground and the ink are the window's own background and its title bar overlay's colours too, which main takes from the same table.
+const mark = (root: HTMLElement, dark: boolean) => {
+  root.classList.toggle("dark", dark);
+  const { background, foreground } = chromeColors(dark ? "dark" : "light");
+  root.style.setProperty("--background", background);
+  root.style.setProperty("--foreground", foreground);
+};
+
+/** Marks the root dark or light and sets the chrome's ground and ink: as the page URL's `theme` says for the first paint, then as Chromium's colour scheme, which follows the operating system's. */
 export const followTheme = (
   root: HTMLElement,
   url: string,
@@ -23,12 +32,9 @@ export const followTheme = (
 ): Unsubscribe => {
   const query = media(DARK);
   const given = new URL(url).searchParams.get("theme");
-  root.classList.toggle(
-    "dark",
-    given === null ? query.matches : given === "dark"
-  );
+  mark(root, given === null ? query.matches : given === "dark");
   const follow = (event: { readonly matches: boolean }) => {
-    root.classList.toggle("dark", event.matches);
+    mark(root, event.matches);
   };
   query.addEventListener("change", follow);
   return () => {
