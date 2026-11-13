@@ -6,6 +6,10 @@ export interface OwnedView {
   readonly dispose: () => void;
 }
 
+// A page that sets no background of its own, as some of Google's do, paints the view's colour, and assumes a browser's white canvas.
+/** The background of a pane's view, whatever the theme. */
+export const CANVAS = "#ffffff";
+
 /** The background of a view the panes show through. */
 export const TRANSPARENT = "#00000000";
 

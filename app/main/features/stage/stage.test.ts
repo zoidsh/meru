@@ -96,7 +96,6 @@ const setup = async (style: Style = "modern") => {
   await profiles.open();
   const insets = { left: 0, top: 0 };
   const stages = new Stages({
-    background: () => "#ececf1",
     keys: new ShortcutKeys({
       commands: allCommands,
       dispatcher: commands,
@@ -200,7 +199,7 @@ describe(Stages, () => {
 
     expect(window.childViews()).toStrictEqual([view]);
     expect(view?.spec).toStrictEqual({
-      background: "#ececf1",
+      background: "#ffffff",
       partition: `persist:${profileId}`,
       radius: 10,
       zoom: 1,

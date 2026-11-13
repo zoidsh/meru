@@ -2,7 +2,7 @@ import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
 import type { Disposition } from "../../../core/records/link.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
 import type { Tab } from "../../../core/records/tab.ts";
-import { loadOwned } from "./owned-view.ts";
+import { CANVAS, loadOwned } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 
 /** What a tab's view is made from beyond its profile's partition. */
@@ -14,8 +14,6 @@ export interface TabSource {
 export interface TabViewsOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
   readonly sourceOf: (tab: Tab) => TabSource;
-  /** The chrome's ground, which a pane shows until its page paints. */
-  readonly background: () => string;
   readonly radius: () => number;
   readonly onFocus: (tabId: string) => void;
   readonly onNavigation: (tabId: string) => void;
@@ -78,7 +76,7 @@ export class TabViews {
     const { create, onFocus, onNavigation, onOpen, onError } = this.#options;
     const source = this.#options.sourceOf(tab);
     const owned = create({
-      background: this.#options.background(),
+      background: CANVAS,
       partition: partitionOf(tab.profileId),
       radius: this.#options.radius(),
       zoom: source.zoom,

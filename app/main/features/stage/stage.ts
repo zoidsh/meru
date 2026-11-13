@@ -69,8 +69,6 @@ export interface StageOptions {
   /** Read on every layout, so a change shows at the next one. */
   readonly style: () => Style;
   readonly zoom: (profileId: string) => number;
-  /** The chrome's ground, which a pane shows until its page paints. */
-  readonly background: () => string;
   /** What the chrome takes of the content area, read on every layout. */
   readonly insets: () => ChromeInsets;
   readonly dragPreload: string | undefined;
@@ -97,7 +95,6 @@ export class Stage {
   constructor(options: StageOptions) {
     this.#options = options;
     this.#views = new TabViews({
-      background: options.background,
       create: (spec) => this.#own(spec),
       onError: options.onError,
       onFocus: (tabId) => {
