@@ -51,12 +51,15 @@ const autoSize = (tabs: readonly Tab[]): SidebarSize => {
   return [...counts.values()].some((count) => count > 1) ? "wide" : "narrow";
 };
 
-/** The strip for a profile's tabs: shown only when there is more than one to switch between, wide under `auto` once an app has several tabs, since icons alone no longer tell them apart. */
+/** Whether a profile's tabs call for a strip at all: only when there is more than one to switch between. */
+export const hasStrip = (tabs: readonly Tab[]): boolean => tabs.length > 1;
+
+/** The strip for a profile's tabs: shown while `hasStrip` and the user has not hidden it, wide under `auto` once an app has several tabs, since icons alone no longer tell them apart. */
 export const sidebarOf = (
   tabs: readonly Tab[],
   choice: SidebarChoice
 ): Sidebar => {
-  if (tabs.length <= 1 || choice.hidden) {
+  if (!hasStrip(tabs) || choice.hidden) {
     return { kind: "hidden" };
   }
   const size =

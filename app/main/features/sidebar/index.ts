@@ -1,9 +1,10 @@
 import { isEqual } from "es-toolkit";
 
 import { DisposableStore } from "../../../core/disposable.ts";
-import { sidebarOf } from "../../../core/engines/sidebar.ts";
+import { hasStrip, sidebarOf } from "../../../core/engines/sidebar.ts";
 import type { Sidebar, SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { AppEvents } from "../../../core/events.ts";
+import type { Tab } from "../../../core/records/tab.ts";
 import { ok } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { sidebar, sidebarPushes } from "../../../shared/channels/sidebar.ts";
@@ -15,7 +16,7 @@ import { sidebarCommands } from "./commands.ts";
 export interface SidebarsOptions {
   readonly profiles: Pick<Profiles, "selected" | "state">;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
-  readonly events: Pick<AppEvents, "on">;
+  readonly events: Pick<AppEvents, "on" | "emit">;
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
   /** Called after the selected profile's strip appeared, went or changed width. */
@@ -40,9 +41,12 @@ export class Sidebars {
     this.#disposables.add(
       registrar.register(sidebar, { snapshot: () => ok(this.#current) }),
       commands.register(sidebarCommands, {
-        toggle: () => {
-          this.toggle();
-          return ok(null);
+        toggle: {
+          run: () => {
+            this.toggle();
+            return ok(null);
+          },
+          when: () => hasStrip(this.#tabs()),
         },
         toggleWidth: {
           run: () => {
@@ -96,17 +100,20 @@ export class Sidebars {
     this.#update();
   }
 
+  #tabs(): Tab[] {
+    const { profiles } = this.#options;
+    const { id } = profiles.selected();
+    return profiles.state.tabs.filter((tab) => tab.profileId === id);
+  }
+
   #compute(): Sidebar {
     const { profiles, settings } = this.#options;
     const { id } = profiles.selected();
-    return sidebarOf(
-      profiles.state.tabs.filter((tab) => tab.profileId === id),
-      {
-        flipped: this.#flipped.get(id) ?? null,
-        hidden: this.#hidden.has(id),
-        width: settings.get("sidebar.width", id),
-      }
-    );
+    return sidebarOf(this.#tabs(), {
+      flipped: this.#flipped.get(id) ?? null,
+      hidden: this.#hidden.has(id),
+      width: settings.get("sidebar.width", id),
+    });
   }
 
   #update(): void {
@@ -117,5 +124,6 @@ export class Sidebars {
     this.#current = next;
     this.#options.registrar.broadcast(sidebarPushes.changed, next);
     this.#options.onChange(next);
+    this.#options.events.emit("menu.invalidated", null);
   }
 }

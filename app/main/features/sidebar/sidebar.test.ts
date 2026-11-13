@@ -82,6 +82,7 @@ const setup = async () => {
     add,
     changes,
     commands,
+    events,
     profileId,
     pushed,
     registrar,
@@ -133,5 +134,21 @@ describe(Sidebars, () => {
     ]).toStrictEqual([{ kind: "hidden" }, false, narrow, wide]);
     settings.set("sidebar.width", "narrow");
     expect(sidebars.current()).toStrictEqual(wide);
+  });
+
+  it("offers sidebar.toggle only while the profile has a strip to hide, and has the menu rebuilt when the strip changes", async () => {
+    const { add, commands, events } = await setup();
+    const alone = commands.enabled("sidebar.toggle");
+    add("drive");
+    let invalidated = 0;
+    events.on("menu.invalidated", () => {
+      invalidated += 1;
+    });
+    commands.run("sidebar.toggle", { windowId: PAGE });
+    expect([
+      alone,
+      commands.enabled("sidebar.toggle"),
+      invalidated,
+    ]).toStrictEqual([false, true, 1]);
   });
 });
