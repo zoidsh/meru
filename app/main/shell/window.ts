@@ -63,7 +63,8 @@ export class MainWindow {
         platform,
         theme: theme(),
       });
-      if (overlay !== null) {
+      // macOS draws its traffic lights in its own colours, and Electron recolours an overlay only on Windows and Linux.
+      if (overlay !== null && platform !== "darwin") {
         window.setTitleBarOverlay(overlay);
       }
     });

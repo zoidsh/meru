@@ -25,7 +25,7 @@ export interface TitleBarOverlay {
 export interface TitleBar {
   readonly style: "hiddenInset" | "hidden";
   readonly trafficLights: { readonly x: number; readonly y: number } | null;
-  /** The window controls Windows and Linux draw over the page; null where the platform draws none. */
+  /** The window controls drawn over the page, which also tells the page where they are through `env(titlebar-area-*)`; null where the platform draws none. On macOS only the height counts. */
   readonly overlay: TitleBarOverlay | null;
 }
 
@@ -40,9 +40,16 @@ export const titleBarOf = (options: {
   readonly linuxControls: boolean;
 }): TitleBar => {
   const { platform, theme, linuxControls } = options;
+  const colors = chromeColors(theme);
+  // One pixel short of the row, so the titlebar's bottom border shows under the controls.
+  const overlay: TitleBarOverlay = {
+    color: colors.background,
+    height: TITLEBAR_HEIGHT - 1,
+    symbolColor: colors.foreground,
+  };
   if (platform === "darwin") {
     return {
-      overlay: null,
+      overlay,
       style: "hiddenInset",
       trafficLights: {
         x: TRAFFIC_LIGHT_X,
@@ -50,17 +57,8 @@ export const titleBarOf = (options: {
       },
     };
   }
-  const colors = chromeColors(theme);
   return {
-    // One pixel short of the row, so the titlebar's bottom border shows under the controls.
-    overlay:
-      platform === "linux" && !linuxControls
-        ? null
-        : {
-            color: colors.background,
-            height: TITLEBAR_HEIGHT - 1,
-            symbolColor: colors.foreground,
-          },
+    overlay: platform === "linux" && !linuxControls ? null : overlay,
     style: "hidden",
     trafficLights: null,
   };

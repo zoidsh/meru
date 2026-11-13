@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { stageArea, TITLEBAR_HEIGHT, titleBarOf } from "./chrome.ts";
 
 describe(titleBarOf, () => {
-  it("centres the traffic lights on the titlebar row on macOS and draws no overlay", () => {
+  it("centres the traffic lights on the titlebar row on macOS", () => {
     expect(
       titleBarOf({ linuxControls: false, platform: "darwin", theme: "dark" })
     ).toStrictEqual({
-      overlay: null,
+      overlay: { color: "#0a0a0a", height: 39, symbolColor: "#fafafa" },
       style: "hiddenInset",
       trafficLights: { x: 12, y: 14 },
     });
