@@ -1,7 +1,7 @@
 import { defineCommands } from "../../../shared/commands/define.ts";
 import { msg } from "../../../shared/msg.ts";
 
-// 3.x's keys: the digit row picks a profile in the order the titlebar shows them, and the brackets step through them; one CmdOrCtrl declaration serves every platform.
+// 3.x's keys: the digit row picks a profile in the order the titlebar shows them, and the brackets step through them.
 export const profilesCommands = defineCommands("profiles", {
   next: {
     label: msg`Select next profile`,
