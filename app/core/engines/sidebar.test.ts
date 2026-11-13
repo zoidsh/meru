@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 
+import type { Group } from "../records/group.ts";
 import type { Tab } from "../records/tab.ts";
-import { sidebarInset, sidebarOf } from "./sidebar.ts";
+import { orderedTabs } from "./ordering.ts";
+import {
+  dropAction,
+  showsGmailUnread,
+  sidebarInset,
+  sidebarOf,
+  zoneAt,
+} from "./sidebar.ts";
 import type { SidebarChoice } from "./sidebar.ts";
 
 const tab = (appId: string, pinned = false): Tab => ({
@@ -59,5 +67,102 @@ describe(sidebarInset, () => {
   it("takes the strip's width, or nothing while it is hidden", () => {
     expect(sidebarInset({ kind: "hidden" })).toBe(0);
     expect(sidebarInset({ kind: "shown", size: "wide", width: 224 })).toBe(224);
+  });
+});
+
+describe(showsGmailUnread, () => {
+  it("shows the count always, never, or only while another tab is in front", () => {
+    expect(
+      (["always", "whenInactive", "never"] as const).flatMap((mode) => [
+        showsGmailUnread(mode, true),
+        showsGmailUnread(mode, false),
+      ])
+    ).toStrictEqual([true, true, false, true, false, false]);
+  });
+});
+
+describe(zoneAt, () => {
+  it("puts the top and bottom quarters of a row between rows and the rest onto it", () => {
+    expect([0, 9, 10, 30, 31, 40].map((y) => zoneAt(0, 40, y))).toStrictEqual([
+      "before",
+      "before",
+      "onto",
+      "onto",
+      "after",
+      "after",
+    ]);
+  });
+});
+
+const tabOf = (id: string): Tab => ({ ...tab(id), id });
+const solo = (id: string): Group => ({
+  id: `g-${id}`,
+  layout: { kind: "leaf", paneId: `p-${id}`, tabIds: [id] },
+  profileId: "p",
+  tabIds: [id],
+});
+
+describe(dropAction, () => {
+  // a, then b and c split in one group, then d.
+  const rows = orderedTabs(
+    ["a", "b", "c", "d"].map(tabOf),
+    [
+      solo("a"),
+      {
+        id: "g-bc",
+        layout: {
+          first: { kind: "leaf", paneId: "p-b", tabIds: ["b"] },
+          id: "s",
+          kind: "split",
+          orientation: "vertical",
+          ratio: 0.5,
+          second: { kind: "leaf", paneId: "p-c", tabIds: ["c"] },
+        },
+        profileId: "p",
+        tabIds: ["b", "c"],
+      },
+      solo("d"),
+    ],
+    "p"
+  );
+
+  it("moves a tab alone to the row it is let go between, and does nothing where it already is", () => {
+    expect([
+      dropAction(rows, "a", { tabId: "d", zone: "after" }),
+      dropAction(rows, "d", { tabId: "a", zone: "before" }),
+      dropAction(rows, "d", { tabId: "c", zone: "after" }),
+      dropAction(rows, "a", { tabId: "b", zone: "before" }),
+    ]).toStrictEqual([
+      { kind: "move", to: 2 },
+      { kind: "move", to: 0 },
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it("takes a tab out of its group to the row it is let go between, even right beside the group", () => {
+    expect([
+      dropAction(rows, "c", { tabId: "a", zone: "before" }),
+      dropAction(rows, "c", { tabId: "b", zone: "after" }),
+      dropAction(rows, "b", { tabId: "d", zone: "after" }),
+    ]).toStrictEqual([
+      { kind: "leave", to: 0 },
+      { kind: "leave", to: 2 },
+      { kind: "leave", to: 3 },
+    ]);
+  });
+
+  it("joins another row's group when let go onto it, and not its own", () => {
+    expect([
+      dropAction(rows, "a", { tabId: "c", zone: "onto" }),
+      dropAction(rows, "b", { tabId: "d", zone: "onto" }),
+      dropAction(rows, "b", { tabId: "c", zone: "onto" }),
+      dropAction(rows, "a", { tabId: "a", zone: "onto" }),
+    ]).toStrictEqual([
+      { kind: "join", targetTabId: "c" },
+      { kind: "join", targetTabId: "d" },
+      undefined,
+      undefined,
+    ]);
   });
 });

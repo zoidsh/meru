@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import type { Tab } from "../records/tab.ts";
+import { rowTabs } from "./ordering.ts";
+import type { TabRow } from "./ordering.ts";
 
 export const sidebarWidthSchema = z.enum(["auto", "narrow", "wide"]);
 
@@ -63,3 +65,60 @@ export const sidebarOf = (
 /** What the strip takes from the left of the content area. */
 export const sidebarInset = (sidebar: Sidebar): number =>
   sidebar.kind === "shown" ? sidebar.width : 0;
+
+/** Whether the Gmail row shows its unread count: `whenInactive` leaves it to the inbox while Gmail is in front. */
+export const showsGmailUnread = (
+  mode: "always" | "whenInactive" | "never",
+  gmailActive: boolean
+): boolean => mode === "always" || (mode === "whenInactive" && !gmailActive);
+
+/** Where on a row a dragged tab is let go: its top or bottom quarter puts it between rows, the rest beside the row's pane. */
+export type DropZone = "before" | "onto" | "after";
+
+export interface DropTarget {
+  readonly tabId: string;
+  readonly zone: DropZone;
+}
+
+/** What letting go of a dragged tab does: `tabs.move` its row, `tabs.leave` its group for a row of its own, or `tabs.join` another tab's group. */
+export type DropAction =
+  | { readonly kind: "move"; readonly to: number }
+  | { readonly kind: "leave"; readonly to: number }
+  | { readonly kind: "join"; readonly targetTabId: string };
+
+/** The zone of a row from `top` to `bottom` that a point at `y` is over. */
+export const zoneAt = (top: number, bottom: number, y: number): DropZone => {
+  const quarter = (bottom - top) / 4;
+  if (y < top + quarter) {
+    return "before";
+  }
+  return y > bottom - quarter ? "after" : "onto";
+};
+
+const holds = (wanted: string) => (row: TabRow) =>
+  rowTabs(row).some((found) => found.id === wanted);
+
+/** The change a drop of `tabId` on `target` makes to the rows, undefined for one that changes nothing; `to` is the row it ends at, as tabs.move and tabs.leave take it. */
+export const dropAction = (
+  rows: readonly TabRow[],
+  tabId: string,
+  target: DropTarget
+): DropAction | undefined => {
+  const from = rows.findIndex(holds(tabId));
+  const at = rows.findIndex(holds(target.tabId));
+  const source = rows[from];
+  if (source === undefined || at === -1 || target.tabId === tabId) {
+    return undefined;
+  }
+  if (target.zone === "onto") {
+    return at === from
+      ? undefined
+      : { kind: "join", targetTabId: target.tabId };
+  }
+  const gap = target.zone === "before" ? at : at + 1;
+  if (source.kind === "group") {
+    return { kind: "leave", to: gap };
+  }
+  const to = gap > from ? gap - 1 : gap;
+  return to === from ? undefined : { kind: "move", to };
+};
