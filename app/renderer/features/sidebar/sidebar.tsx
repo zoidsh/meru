@@ -1,12 +1,5 @@
 import { DragDropProvider } from "@dnd-kit/react";
-import type {
-  DragEndEvent,
-  DragMoveEvent,
-  DragOverEvent,
-} from "@dnd-kit/react";
 import { cn } from "cn";
-import { ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react";
-import { useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import { STYLE_METRICS } from "../../../core/engines/layout.ts";
@@ -14,47 +7,26 @@ import { orderedTabs, rowTabs } from "../../../core/engines/ordering.ts";
 import type { TabRow } from "../../../core/engines/ordering.ts";
 import {
   activeTabId,
-  dropAction,
   showsGmailUnread,
-  zoneAt,
 } from "../../../core/engines/sidebar.ts";
-import type { DropTarget } from "../../../core/engines/sidebar.ts";
+import type { SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { Tab } from "../../../core/records/tab.ts";
-import { commands } from "../../../shared/channels/commands.ts";
-import { tabs as tabChannels } from "../../../shared/channels/profiles.ts";
-import { msg } from "../../../shared/msg.ts";
-import { useClient } from "../../client-context.tsx";
-import { Button } from "../../ui/button.tsx";
-import { useTooltip } from "../commands/use-tooltip.ts";
 import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useStage } from "../stage/use-stage.ts";
 import { TabRowButton } from "./tab-row.tsx";
 import type { GmailMark } from "./tab-row.tsx";
 import { useSidebar } from "./use-sidebar.ts";
-
-type Size = "narrow" | "wide";
+import { useTabDrop } from "./use-tab-drop.ts";
+import { WidthToggle } from "./width-toggle.tsx";
 
 /** The row radius each size draws at, which a group's outline adds its padding to so the two curves stay parallel. */
-const ROW_RADIUS: Readonly<Record<Size, string>> = {
+const ROW_RADIUS: Readonly<Record<SidebarSize, string>> = {
   narrow: "var(--radius-lg)",
   wide: "min(var(--radius-md), 12px)",
 };
 
 const OUTLINE_PADDING = 2;
-
-const targetOf = (
-  { target, position }: DragMoveEvent["operation"],
-  y = position.current.y
-): DropTarget | undefined => {
-  const rect = target?.element?.getBoundingClientRect();
-  return typeof target?.id === "string" && rect !== undefined
-    ? { tabId: target.id, zone: zoneAt(rect.top, rect.bottom, y) }
-    : undefined;
-};
-
-const sameTarget = (a: DropTarget | undefined, b: DropTarget | undefined) =>
-  a?.tabId === b?.tabId && a?.zone === b?.zone;
 
 const STEPS: Readonly<
   Record<string, (index: number, count: number) => number>
@@ -82,37 +54,12 @@ const moveFocus = (event: KeyboardEvent<HTMLElement>) => {
   tabs[step(index, tabs.length)]?.focus();
 };
 
-const WidthToggle = ({ size }: { readonly size: Size }) => {
-  const client = useClient();
-  const wide = size === "wide";
-  const title = useTooltip(
-    wide ? msg`Narrow the sidebar` : msg`Widen the sidebar`,
-    "sidebar.toggleWidth"
-  );
-  return (
-    <Button
-      className={cn("text-muted-foreground", wide && "self-end")}
-      data-width-toggle=""
-      onClick={() => {
-        void client.invoke(commands.run, { id: "sidebar.toggleWidth" });
-      }}
-      size="icon"
-      tabIndex={-1}
-      title={title}
-      variant="ghost"
-    >
-      {wide ? <ChevronsLeftIcon /> : <ChevronsRightIcon />}
-    </Button>
-  );
-};
-
 /** The sidebar, the selected profile's tabs down the left of the window, shown while it has more than one; `launcher` goes at its foot. */
 export const Sidebar = ({
   launcher,
 }: {
-  readonly launcher?: (size: Size) => ReactNode;
+  readonly launcher?: (size: SidebarSize) => ReactNode;
 }) => {
-  const client = useClient();
   const sidebar = useSidebar();
   const snapshot = useProfiles();
   const stageSnapshot = useStage();
@@ -120,7 +67,7 @@ export const Sidebar = ({
   const gmailBadge = useSetting("sidebar.gmailUnreadBadge");
   const unreadBadge = useSetting("profiles.unreadBadge");
   const { seams } = STYLE_METRICS[useSetting("appearance.style")];
-  const [drop, setDrop] = useState<DropTarget | undefined>();
+  const { drop, handlers } = useTabDrop();
   if (sidebar.kind === "hidden" || snapshot === undefined) {
     return null;
   }
@@ -151,35 +98,6 @@ export const Sidebar = ({
     snapshot.tabs.filter((tab) => tab.closeable).map((tab) => tab.id)
   );
   const focusable = active ?? rows.flatMap(rowTabs)[0]?.id;
-  // dnd-kit hands a move the operation as it stood before it, with the pointer's new place beside it, and finds the row under the pointer only after, which it reports as a drag over.
-  const mark = (target: DropTarget | undefined) => {
-    setDrop((current) => (sameTarget(current, target) ? current : target));
-  };
-  const move = (event: DragMoveEvent) => {
-    mark(targetOf(event.operation, event.to?.y));
-  };
-  const over = (event: DragOverEvent) => {
-    mark(targetOf(event.operation));
-  };
-  const end = (event: DragEndEvent) => {
-    const source = event.operation.source?.id;
-    const target = targetOf(event.operation);
-    setDrop(undefined);
-    if (event.canceled || typeof source !== "string" || target === undefined) {
-      return;
-    }
-    const action = dropAction(rows, source, target);
-    if (action?.kind === "move") {
-      void client.invoke(tabChannels.move, { tabId: source, to: action.to });
-    } else if (action?.kind === "leave") {
-      void client.invoke(tabChannels.leave, { tabId: source, to: action.to });
-    } else if (action?.kind === "join") {
-      void client.invoke(tabChannels.join, {
-        tabId: source,
-        targetTabId: action.targetTabId,
-      });
-    }
-  };
   const rowOf = (tab: Tab) => (
     <TabRowButton
       active={tab.id === active}
@@ -221,7 +139,7 @@ export const Sidebar = ({
       data-sidebar={size}
       style={{ width }}
     >
-      <DragDropProvider onDragEnd={end} onDragMove={move} onDragOver={over}>
+      <DragDropProvider {...handlers(rows)}>
         <div
           aria-orientation="vertical"
           className={cn(
