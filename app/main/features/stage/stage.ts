@@ -228,19 +228,6 @@ export class Stage {
     return ok(undefined);
   }
 
-  resize(splitId: string, ratio: number): Result<undefined, StageError> {
-    const group = this.#read();
-    if (group === undefined) {
-      return err("unknownSplit");
-    }
-    const resized = this.#options.profiles.resize(group.id, splitId, ratio);
-    if (!resized.ok) {
-      return err(resized.error === "unknownSplit" ? "unknownSplit" : "refused");
-    }
-    this.refresh();
-    return ok(undefined);
-  }
-
   focusPane(paneId: string): Result<undefined, StageError> {
     const view = this.#views.view(paneId);
     if (view === undefined) {

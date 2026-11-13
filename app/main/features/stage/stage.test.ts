@@ -368,13 +368,10 @@ describe(Stages, () => {
     ).toStrictEqual(childBounds(window));
   });
 
-  it("resizes a split and refuses one it does not have", async () => {
-    const { window, stages, id, splitId } = await setup();
+  it("refuses to drag a split it does not have", async () => {
+    const { stages, id } = await setup();
     stages.split(id, "vertical");
-
-    expect(stages.resize(id, splitId(), 0.25).ok).toBeTruthy();
-    expect(childBounds(window)[0]?.width).toBe(294);
-    expect(stages.resize(id, "nope", 0.25)).toStrictEqual({
+    expect(stages.beginDrag(id, "nope")).toStrictEqual({
       error: "unknownSplit",
       ok: false,
     });
@@ -397,7 +394,7 @@ describe(Stages, () => {
 
   it("refuses a window it does not know", async () => {
     const { stages } = await setup();
-    expect(stages.focusPane(-1, "pane")).toStrictEqual({
+    expect(stages.split(-1, "vertical")).toStrictEqual({
       error: "unknownWindow",
       ok: false,
     });
@@ -496,22 +493,16 @@ describe("the stage commands", () => {
 });
 
 describe("the stage channels", () => {
-  it("split and close the sender's window", async () => {
-    const { call, id, window } = await setup();
-    expect(
-      call(stageChannels.split, { orientation: "horizontal" }, id)
-    ).toStrictEqual({ ok: true, value: undefined });
-    expect(window.childViews()).toHaveLength(2);
-    expect(call(stageChannels.close, {}, id).ok).toBeTruthy();
-    expect(window.childViews()).toHaveLength(1);
-  });
-
-  it("move the focused pane through its history and tell the page where it stands", async () => {
-    const { call, id, views, changes, stages } = await setup();
+  it("move the focused pane through its history, or stop it, and tell the page where it stands", async () => {
+    const { commands, id, views, changes, stages } = await setup();
     stages.split(id, "vertical");
     const [first, second] = views.alive;
-    call(stageChannels.navigate, { action: "back" }, id);
-    expect([first?.navigated, second?.navigated]).toStrictEqual([[], ["back"]]);
+    commands.run("stage.back", { windowId: id });
+    commands.run("stage.stop", { windowId: id });
+    expect([first?.navigated, second?.navigated]).toStrictEqual([
+      [],
+      ["back", "stop"],
+    ]);
     const arrived = { canGoBack: true, canGoForward: false, loading: true };
     first?.arrive(arrived);
     expect(changes().at(-1)?.navigation).toStrictEqual({
@@ -534,7 +525,7 @@ describe("the stage channels", () => {
   it("refuse a sender with no window", async () => {
     const { call, registrar } = await setup();
     registrar.assign(-1, chromeSurface);
-    expect(call(stageChannels.focusPane, { paneId: "p1" }, -1)).toStrictEqual({
+    expect(call(stageChannels.snapshot, {}, -1)).toStrictEqual({
       error: { kind: "failed", message: "unknownWindow" },
       ok: false,
     });
@@ -654,9 +645,7 @@ describe("an overlay over the panes", () => {
         overlay
       ).ok
     ).toBeTruthy();
-    expect(
-      call(stageChannels.split, { orientation: "vertical" }, overlay).ok
-    ).toBeFalsy();
+    expect(call(stageChannels.snapshot, {}, overlay).ok).toBeFalsy();
     expect(profiles.state.tabs.map((tab) => tab.appId)).toStrictEqual([
       "gmail",
       "calendar",

@@ -12,7 +12,6 @@ import type { ReactNode } from "react";
 import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
 import { STYLE_METRICS } from "../../../core/engines/layout.ts";
 import { commands } from "../../../shared/channels/commands.ts";
-import { stage } from "../../../shared/channels/stage.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../client-context.tsx";
@@ -58,13 +57,7 @@ const NavigationControls = () => {
       </TitlebarIconButton>
       <TitlebarIconButton
         disabled={navigation === null}
-        onClick={
-          loading
-            ? () => {
-                client.send(stage.navigate, { action: "stop" });
-              }
-            : run("stage.reload")
-        }
+        onClick={run(loading ? "stage.stop" : "stage.reload")}
         onMouseEnter={() => {
           setReloadHovered(true);
         }}

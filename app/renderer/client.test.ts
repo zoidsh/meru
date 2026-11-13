@@ -53,9 +53,9 @@ describe(createClient, () => {
 
   it("sends an event under its declared name", () => {
     const { bridge, client } = connect();
-    client.send(stage.split, { orientation: "vertical" });
+    client.send(stage.beginDrag, { splitId: "s1" });
     expect(bridge.sent).toStrictEqual([
-      { channel: "stage.split", payload: { orientation: "vertical" } },
+      { channel: "stage.beginDrag", payload: { splitId: "s1" } },
     ]);
   });
 
@@ -106,11 +106,11 @@ describe(createClient, () => {
     // Never called: these lines exist for the compiler to refuse.
     const refused = () => {
       // @ts-expect-error A payload the schema does not describe.
-      client.send(stage.split, { orientation: "diagonal" });
+      client.send(stage.beginDrag, { splitId: 7 });
       // @ts-expect-error A channel of another surface.
       client.send(elsewhere.poke, { orientation: "vertical" });
       // @ts-expect-error An event is not invoked.
-      void client.invoke(stage.split, { orientation: "vertical" });
+      void client.invoke(stage.beginDrag, { splitId: "s1" });
       // @ts-expect-error A push of another surface.
       client.on(elsewherePushes.poked, () => {
         throw new Error("never pushed");

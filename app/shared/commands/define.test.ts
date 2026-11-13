@@ -55,6 +55,7 @@ describe("the command registry", () => {
       | "stage.reload"
       | "stage.splitHorizontal"
       | "stage.splitVertical"
+      | "stage.stop"
       | "launcher.open"
       | "updater.check"
       | "updater.install"

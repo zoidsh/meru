@@ -152,18 +152,13 @@ describe(Titlebar, () => {
     act(() => {
       controls()[2]?.click();
     });
-    expect([
-      titled,
-      sentOn(commands.run),
-      sentOn(stage.navigate),
-    ]).toStrictEqual([
+    expect([titled, sentOn(commands.run)]).toStrictEqual([
       [
         [false, "Go back (⌘[)"],
         [true, "Go forward (⌘])"],
         [false, "Reload page (⌘R)"],
       ],
-      [{ id: "stage.back" }, { id: "stage.reload" }],
-      [{ action: "stop" }],
+      [{ id: "stage.back" }, { id: "stage.reload" }, { id: "stage.stop" }],
     ]);
   });
 

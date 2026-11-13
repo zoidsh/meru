@@ -90,6 +90,7 @@ export class Stages {
         focusPrevious: inWindow((windowId) => this.focusPrevious(windowId)),
         forward: inWindow((windowId) => this.#navigate(windowId, "forward")),
         reload: inWindow((windowId) => this.#navigate(windowId, "reload")),
+        stop: inWindow((windowId) => this.#navigate(windowId, "stop")),
         splitHorizontal: inWindow((windowId) =>
           this.split(windowId, "horizontal")
         ),
@@ -112,16 +113,9 @@ export class Stages {
       registrar.register(stage, {
         beginDrag: ({ splitId }, { contentsId }) =>
           this.beginDrag(contentsId, splitId),
-        close: ({ paneId }, { contentsId }) => this.close(contentsId, paneId),
         dragTo: ({ x, y, buttons }, { contentsId }) =>
           this.dragTo(contentsId, { x, y }, buttons),
         endDrag: (point, { contentsId }) => this.endDrag(contentsId, point),
-        focusPane: ({ paneId }, { contentsId }) =>
-          this.focusPane(contentsId, paneId),
-        navigate: ({ action }, { contentsId }) =>
-          this.#navigate(contentsId, action),
-        resize: ({ splitId, ratio }, { contentsId }) =>
-          this.resize(contentsId, splitId, ratio),
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),
         openTab: ({ appId, profileId, split }, { contentsId }) => {
           const opened = this.#with(contentsId, (found) =>
@@ -129,8 +123,6 @@ export class Stages {
           );
           return opened.ok ? ok(null) : opened;
         },
-        split: ({ orientation, paneId }, { contentsId }) =>
-          this.split(contentsId, orientation, paneId),
       }),
       registrar.register(drag, {
         end: (point, { contentsId }) => this.endDrag(contentsId, point),
@@ -215,18 +207,6 @@ export class Stages {
 
   close(windowId: number, paneId?: string): Result<undefined, StageError> {
     return this.#with(windowId, (found) => found.close(paneId));
-  }
-
-  resize(
-    windowId: number,
-    splitId: string,
-    ratio: number
-  ): Result<undefined, StageError> {
-    return this.#with(windowId, (found) => found.resize(splitId, ratio));
-  }
-
-  focusPane(windowId: number, paneId: string): Result<undefined, StageError> {
-    return this.#with(windowId, (found) => found.focusPane(paneId));
   }
 
   focusNext(windowId: number): Result<undefined, StageError> {

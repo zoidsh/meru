@@ -33,6 +33,7 @@ export const stageCommands = defineCommands("stage", {
     menu: { order: 6, section: "view" },
     shortcut: { default: "CmdOrCtrl+R" },
   },
+  stop: { label: msg`Stop` },
   splitHorizontal: {
     label: msg`Split horizontally`,
     menu: { order: 2, section: "view" },
