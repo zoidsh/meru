@@ -59,7 +59,7 @@ test("puts a rebound command's shortcut in the menu", async () => {
     settings: {
       global: {
         "shortcuts.bindings": {
-          "stage.closePane": null,
+          "stage.closeTab": null,
           "stage.splitVertical": "Alt+CmdOrCtrl+V",
         },
       },
@@ -69,8 +69,8 @@ test("puts a rebound command's shortcut in the menu", async () => {
   try {
     const { menu } = await stageOf(chrome);
     expect(menu).toMatchObject({
-      "stage.closePane": null,
-      "stage.splitHorizontal": "CommandOrControl+Shift+D",
+      "stage.closeTab": null,
+      "stage.splitHorizontal": "CommandOrControl+Alt+Shift+N",
       "stage.splitVertical": "CommandOrControl+Alt+V",
     });
   } finally {

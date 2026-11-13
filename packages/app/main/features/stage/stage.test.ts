@@ -310,9 +310,11 @@ const dragging = () => {
 };
 
 describe("the stage commands", () => {
-  it("are the three the stage declares", () => {
+  it("are the five the stage declares", () => {
     expect(setup().commands.ids.toSorted()).toStrictEqual([
-      "stage.closePane",
+      "stage.closeTab",
+      "stage.focusNext",
+      "stage.focusPrevious",
       "stage.splitHorizontal",
       "stage.splitVertical",
     ]);
@@ -323,13 +325,30 @@ describe("the stage commands", () => {
     expect(commands.run("stage.splitVertical", id).ok).toBeTruthy();
     expect(commands.run("stage.splitHorizontal", id).ok).toBeTruthy();
     expect(window.childViews()).toHaveLength(3);
-    expect(commands.run("stage.closePane", id).ok).toBeTruthy();
+    expect(commands.run("stage.closeTab", id).ok).toBeTruthy();
     expect(window.childViews()).toHaveLength(2);
+  });
+
+  it("move focus to the next and previous pane in layout order, wrapping", () => {
+    const { commands, id, changes } = setup();
+    commands.run("stage.splitVertical", id);
+    commands.run("stage.splitHorizontal", id);
+    const focused = () => changes().at(-1)?.focusedPaneId;
+    const start = focused();
+    const visited = [
+      "stage.focusNext",
+      "stage.focusPrevious",
+      "stage.focusPrevious",
+    ].map((command) => {
+      const result = commands.run(command, id);
+      return result.ok ? focused() : result.error;
+    });
+    expect([start, ...visited]).toStrictEqual(["id6", "p1", "id6", "id3"]);
   });
 
   it("report what they could not do", () => {
     const { commands, id } = setup();
-    expect(commands.run("stage.closePane", id)).toStrictEqual({
+    expect(commands.run("stage.closeTab", id)).toStrictEqual({
       error: "lastPane",
       ok: false,
     });

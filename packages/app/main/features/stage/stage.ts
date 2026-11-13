@@ -1,6 +1,7 @@
 import {
   close,
   focusNext,
+  focusPrevious,
   layout,
   panes,
   ratioAt,
@@ -184,11 +185,21 @@ export class Stage {
   }
 
   focusNext(): Result<undefined, StageError> {
-    const next =
+    return this.#focusBy(focusNext);
+  }
+
+  focusPrevious(): Result<undefined, StageError> {
+    return this.#focusBy(focusPrevious);
+  }
+
+  #focusBy(
+    step: (tree: Group["layout"], paneId: string) => string | undefined
+  ): Result<undefined, StageError> {
+    const target =
       this.#focused === undefined
         ? undefined
-        : focusNext(this.#group.layout, this.#focused);
-    return next === undefined ? err("unknownPane") : this.focusPane(next);
+        : step(this.#group.layout, this.#focused);
+    return target === undefined ? err("unknownPane") : this.focusPane(target);
   }
 
   setFullscreen(paneId: string | undefined): Result<undefined, StageError> {

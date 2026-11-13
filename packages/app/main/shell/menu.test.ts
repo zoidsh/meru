@@ -119,19 +119,29 @@ describe(ApplicationMenu, () => {
       }))
     ).toStrictEqual([
       {
-        accelerator: "CommandOrControl+D",
+        accelerator: "CommandOrControl+Alt+N",
         id: "stage.splitVertical",
         label: "Split vertically",
       },
       {
-        accelerator: "CommandOrControl+Shift+D",
+        accelerator: "CommandOrControl+Alt+Shift+N",
         id: "stage.splitHorizontal",
         label: "Split horizontally",
       },
       {
-        accelerator: "CommandOrControl+W",
-        id: "stage.closePane",
-        label: "Close pane",
+        accelerator: "CommandOrControl+Shift+W",
+        id: "stage.closeTab",
+        label: "Close tab",
+      },
+      {
+        accelerator: "CommandOrControl+Alt+.",
+        id: "stage.focusNext",
+        label: "Focus next pane",
+      },
+      {
+        accelerator: "CommandOrControl+Alt+,",
+        id: "stage.focusPrevious",
+        label: "Focus previous pane",
       },
     ]);
     expect(sections().slice(0, 2)).toStrictEqual([
@@ -152,15 +162,15 @@ describe(ApplicationMenu, () => {
     action("stage.splitVertical").run(window.contentsId);
     action("stage.splitHorizontal").run(window.contentsId);
     expect(window.childViews()).toHaveLength(3);
-    action("stage.closePane").run(window.contentsId);
+    action("stage.closeTab").run(window.contentsId);
     expect(window.childViews()).toHaveLength(2);
   });
 
   it("reports what it could not do and does nothing without a window", () => {
     const { action, window, reports } = setup();
-    action("stage.closePane").run(window.contentsId);
-    action("stage.closePane").run(undefined);
-    expect(reports).toStrictEqual(["stage.closePane: lastPane"]);
+    action("stage.closeTab").run(window.contentsId);
+    action("stage.closeTab").run(undefined);
+    expect(reports).toStrictEqual(["stage.closeTab: lastPane"]);
   });
 
   it("rebuilds with the user's shortcuts when they change, and only then", () => {
@@ -168,14 +178,16 @@ describe(ApplicationMenu, () => {
     settings.set("stage.zoom", 2);
     expect(built).toHaveLength(1);
     settings.set("shortcuts.bindings", {
-      "stage.closePane": null,
+      "stage.closeTab": null,
       "stage.splitVertical": "Alt+CmdOrCtrl+V",
     });
     expect(built).toHaveLength(2);
     expect(shortcuts(actions())).toStrictEqual([
       ["stage.splitVertical", "CommandOrControl+Alt+V"],
-      ["stage.splitHorizontal", "CommandOrControl+Shift+D"],
-      ["stage.closePane", undefined],
+      ["stage.splitHorizontal", "CommandOrControl+Alt+Shift+N"],
+      ["stage.closeTab", undefined],
+      ["stage.focusNext", "CommandOrControl+Alt+."],
+      ["stage.focusPrevious", "CommandOrControl+Alt+,"],
     ]);
     settings.set("shortcuts.bindings", {
       "stage.splitHorizontal": "Cmd+V",
@@ -197,7 +209,7 @@ describe(ApplicationMenu, () => {
     ).toStrictEqual({ ok: true, value: null });
     expect(window.childViews()).toHaveLength(2);
     expect(
-      registrar.call(channels.run, { id: "stage.closePane" }, -1)
+      registrar.call(channels.run, { id: "stage.closeTab" }, -1)
     ).toStrictEqual({ error: "unknownWindow", ok: false });
   });
 });
@@ -213,7 +225,7 @@ describe(buildMenu, () => {
           menu: { order: 2, section: "edit" },
         },
         {
-          id: "stage.closePane",
+          id: "stage.closeTab",
           label: "A",
           menu: { order: 1, section: "edit" },
         },

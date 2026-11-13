@@ -129,6 +129,15 @@ export const focusNext = (tree: Layout, paneId: string): string | undefined => {
   return ids[(index + 1) % ids.length];
 };
 
+export const focusPrevious = (
+  tree: Layout,
+  paneId: string
+): string | undefined => {
+  const ids = panes(tree).map((pane) => pane.paneId);
+  const index = ids.indexOf(paneId);
+  return ids.at(index <= 0 ? -1 : index - 1);
+};
+
 const inset = (rect: Rect, by: number): Rect => {
   const x = Math.min(by, Math.floor(rect.width / 2));
   const y = Math.min(by, Math.floor(rect.height / 2));

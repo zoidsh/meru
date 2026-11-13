@@ -1,17 +1,25 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 import type { Rect } from "../packages/app/core/records/rect.ts";
 import type { CommandId } from "../packages/app/shared/commands/registry.ts";
 import { clickMenuItem, launch, stageOf, viewsOf } from "./app.ts";
 
 const SPLIT_VERTICAL: CommandId = "stage.splitVertical";
-const CLOSE_PANE: CommandId = "stage.closePane";
+const CLOSE_TAB: CommandId = "stage.closeTab";
+const FOCUS_NEXT: CommandId = "stage.focusNext";
+const FOCUS_PREVIOUS: CommandId = "stage.focusPrevious";
+
+const focusedOf = async (chrome: Page) => {
+  const { stage } = await stageOf(chrome);
+  return stage.focusedPaneId;
+};
 
 const overlap = (a: Rect, b: Rect) =>
   Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) *
   Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
 
-test("splits, drags the divider across the panes, and closes a pane", async () => {
+test("splits, drags the divider across the panes, moves focus, and closes a tab", async () => {
   const { app, chrome, close } = await launch();
   try {
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
@@ -56,7 +64,14 @@ test("splits, drags the divider across the panes, and closes a pane", async () =
     expect(dragged.views[0]?.width).toBeLessThan(left?.width ?? 0);
     expect(dragged.views).toHaveLength(2);
 
-    await clickMenuItem(app, CLOSE_PANE);
+    const [first, second] = dragged.stage.panes.map((pane) => pane.paneId);
+    expect(dragged.stage.focusedPaneId).toBe(second);
+    await clickMenuItem(app, FOCUS_NEXT);
+    await expect.poll(async () => await focusedOf(chrome)).toBe(first);
+    await clickMenuItem(app, FOCUS_PREVIOUS);
+    await expect.poll(async () => await focusedOf(chrome)).toBe(second);
+
+    await clickMenuItem(app, CLOSE_TAB);
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
   } finally {
     await close();

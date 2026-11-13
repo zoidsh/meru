@@ -7,6 +7,7 @@ import type { Style } from "../records/style.ts";
 import {
   close,
   focusNext,
+  focusPrevious,
   layout,
   leaf,
   MAX_RATIO,
@@ -388,5 +389,35 @@ describe(focusNext, () => {
 
   it("has nothing to focus in the empty layout", () => {
     expect(focusNext(null, "p1")).toBeUndefined();
+  });
+});
+
+describe(focusPrevious, () => {
+  it.each(cases)(
+    "visits every pane in reverse and wraps (seed $seed)",
+    ({ tree }) => {
+      const order = panes(tree).map((pane) => pane.paneId);
+      const first = order[0] ?? "";
+      const seen = [first];
+      let current = focusPrevious(tree, first);
+      while (current !== undefined && current !== first) {
+        seen.push(current);
+        current = focusPrevious(tree, current);
+      }
+      expect(seen).toStrictEqual([first, ...order.slice(1).toReversed()]);
+    }
+  );
+
+  it("undoes focusNext", () => {
+    for (const { tree } of cases) {
+      for (const { paneId } of panes(tree)) {
+        const next = focusNext(tree, paneId) ?? "";
+        expect(focusPrevious(tree, next)).toBe(paneId);
+      }
+    }
+  });
+
+  it("has nothing to focus in the empty layout", () => {
+    expect(focusPrevious(null, "p1")).toBeUndefined();
   });
 });

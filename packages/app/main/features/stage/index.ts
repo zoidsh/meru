@@ -54,7 +54,9 @@ export class Stages {
     const { registrar, settings, commands } = this.#options;
     const unregister = [
       commands.register(stageCommands, {
-        closePane: ({ windowId }) => this.close(windowId),
+        closeTab: ({ windowId }) => this.close(windowId),
+        focusNext: ({ windowId }) => this.focusNext(windowId),
+        focusPrevious: ({ windowId }) => this.focusPrevious(windowId),
         splitHorizontal: ({ windowId }) => this.split(windowId, "horizontal"),
         splitVertical: ({ windowId }) => this.split(windowId, "vertical"),
       }),
@@ -166,6 +168,14 @@ export class Stages {
 
   focusPane(windowId: number, paneId: string): Result<undefined, StageError> {
     return this.#with(windowId, (found) => found.focusPane(paneId));
+  }
+
+  focusNext(windowId: number): Result<undefined, StageError> {
+    return this.#with(windowId, (found) => found.focusNext());
+  }
+
+  focusPrevious(windowId: number): Result<undefined, StageError> {
+    return this.#with(windowId, (found) => found.focusPrevious());
   }
 
   beginDrag(sender: number, splitId: string): Result<undefined, StageError> {
