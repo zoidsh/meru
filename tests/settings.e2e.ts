@@ -26,10 +26,15 @@ test("tiles classic panes edge to edge from settings.json", async () => {
   const { chrome, close } = launched;
   try {
     await expect.poll(async () => await styleOf(chrome)).toBe("classic");
+    // Read with the views each time: on Linux the content area can shrink by the menu bar's height after the page has loaded.
+    await expect(async () => {
+      const [views, size] = await Promise.all([
+        viewsOf(chrome),
+        contentSize(launched),
+      ]);
+      expect(views).toStrictEqual([{ ...size, x: 0, y: 0 }]);
+    }).toPass({ timeout: 5000 });
     const size = await contentSize(launched);
-    await expect
-      .poll(async () => await viewsOf(chrome))
-      .toStrictEqual([{ ...size, x: 0, y: 0 }]);
 
     await runCommand(chrome, "stage.splitVertical");
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(2);
