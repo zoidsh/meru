@@ -1,4 +1,10 @@
-import type { Unsubscribe, ViewPort, ViewSpec } from "../../core/ports.ts";
+import type { Disposition } from "../../core/engines/links.ts";
+import type {
+  OpenListener,
+  Unsubscribe,
+  ViewPort,
+  ViewSpec,
+} from "../../core/ports.ts";
 import type {
   Navigation,
   NavigationAction,
@@ -71,6 +77,24 @@ export class FakeView implements ViewPort {
       this.#navigationListeners.delete(listener);
     };
   };
+
+  readonly #openListeners = new Set<OpenListener>();
+
+  readonly onOpen = (listener: OpenListener): Unsubscribe => {
+    this.#openListeners.add(listener);
+    return () => {
+      this.#openListeners.delete(listener);
+    };
+  };
+
+  /** Opens a link as a click inside the page would: true when a listener took it, false when every listener left it, undefined with none listening. */
+  readonly open = (
+    url: string,
+    disposition: Disposition = "default"
+  ): boolean | undefined =>
+    this.#openListeners.size === 0
+      ? undefined
+      : [...this.#openListeners].some((listener) => listener(url, disposition));
 
   /** Moves the page through its history as a click inside it would. */
   readonly arrive = (navigation: Navigation) => {

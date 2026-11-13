@@ -1,7 +1,13 @@
 import { WebContentsView } from "electron";
-import type { View } from "electron";
+import type { HandlerDetails, View } from "electron";
 
-import type { ViewFactoryPort, ViewPort, ViewSpec } from "../../core/ports.ts";
+import type { Disposition } from "../../core/engines/links.ts";
+import type {
+  OpenListener,
+  ViewFactoryPort,
+  ViewPort,
+  ViewSpec,
+} from "../../core/ports.ts";
 import { onBeforeInput } from "./keys.ts";
 
 const handles = new WeakMap<ViewPort, WebContentsView>();
@@ -16,6 +22,16 @@ export const handleOf = (view: ViewPort): WebContentsView => {
 };
 
 export const portOf = (view: View): ViewPort | undefined => ports.get(view);
+
+// The dispositions 3.x's window-open handler told apart: a new window and a background tab; Chromium's foreground tab and the rest open as an ordinary click would.
+const dispositionOf = (
+  disposition: HandlerDetails["disposition"]
+): Disposition => {
+  if (disposition === "new-window") {
+    return "window";
+  }
+  return disposition === "background-tab" ? "background" : "default";
+};
 
 const createView = (spec: ViewSpec): ViewPort => {
   const view = new WebContentsView({
@@ -32,6 +48,20 @@ const createView = (spec: ViewSpec): ViewPort => {
   view.setBorderRadius(spec.radius);
   view.setBackgroundColor(spec.background);
   const contents = view.webContents;
+  const openers = new Set<OpenListener>();
+  const taken = (url: string, disposition: Disposition) =>
+    [...openers].some((listener) => listener(url, disposition));
+  // Electron keeps one window-open handler per web contents, so the view installs it once and fans each link out to its listeners.
+  contents.setWindowOpenHandler(({ url, disposition }) =>
+    taken(url, dispositionOf(disposition))
+      ? { action: "deny" }
+      : { action: "allow" }
+  );
+  contents.on("will-navigate", (event) => {
+    if (taken(event.url, "default")) {
+      event.preventDefault();
+    }
+  });
 
   const port: ViewPort = {
     bounds: () => view.getBounds(),
@@ -83,6 +113,12 @@ const createView = (spec: ViewSpec): ViewPort => {
         contents.off("did-stop-loading", changed);
         contents.off("did-navigate", changed);
         contents.off("did-navigate-in-page", changed);
+      };
+    },
+    onOpen: (listener) => {
+      openers.add(listener);
+      return () => {
+        openers.delete(listener);
       };
     },
     setBorderRadius: (radius) => {

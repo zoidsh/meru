@@ -1,3 +1,4 @@
+import type { Disposition } from "./engines/links.ts";
 import type { KeyInput } from "./engines/shortcuts.ts";
 import type { Navigation, NavigationAction } from "./records/navigation.ts";
 import type { Rect } from "./records/rect.ts";
@@ -41,6 +42,9 @@ export interface LifecyclePort {
 /** Hears each key before the page does; a listener answering true keeps the key from the page. */
 export type KeyListener = (input: KeyInput) => boolean;
 
+/** Hears a link the page opens, in a new tab or window or in place; a listener answering true takes it, so the page neither opens a window nor navigates. */
+export type OpenListener = (url: string, disposition: Disposition) => boolean;
+
 export interface ViewPort {
   readonly contentsId: number;
   readonly onKey: (listener: KeyListener) => Unsubscribe;
@@ -54,6 +58,8 @@ export interface ViewPort {
   readonly navigate: (action: NavigationAction) => void;
   /** Calls `listener` when what `navigation()` answers may have changed. */
   readonly onNavigation: (listener: () => void) => Unsubscribe;
+  /** Calls `listener` for each link the page opens; one nobody takes goes on as Chromium would take it. */
+  readonly onOpen: (listener: OpenListener) => Unsubscribe;
   readonly setBorderRadius: (radius: number) => void;
   readonly setZoomFactor: (factor: number) => void;
   /** Read only by the end-to-end suite's inspector. */

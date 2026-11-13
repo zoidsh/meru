@@ -395,6 +395,15 @@ describe(Stages, () => {
     ]);
   });
 
+  it("hears the links a pane opens and leaves each to Chromium", async () => {
+    const { views } = await setup();
+    const [gmail] = views.created;
+    expect([
+      gmail?.open("https://calendar.google.com/", "background"),
+      gmail?.open("https://example.com/"),
+    ]).toStrictEqual([false, false]);
+  });
+
   it("keeps the last pane", async () => {
     const { window, stages, id } = await setup();
     expect(stages.close(id)).toStrictEqual({ error: "lastPane", ok: false });

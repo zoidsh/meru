@@ -1,3 +1,4 @@
+import type { Disposition } from "../../../core/engines/links.ts";
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
 import { loadOwned } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
@@ -12,6 +13,12 @@ export interface TabViewsOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
   readonly onFocus: (tabId: string) => void;
   readonly onNavigation: (tabId: string) => void;
+  /** A link the tab's page opens; true takes it from the page. */
+  readonly onOpen: (
+    tabId: string,
+    url: string,
+    disposition: Disposition
+  ) => boolean;
   readonly onError: (error: unknown) => void;
 }
 
@@ -63,7 +70,7 @@ export class TabViews {
   }
 
   #make(tabId: string, source: TabSource): OwnedView {
-    const { create, onFocus, onNavigation, onError } = this.#options;
+    const { create, onFocus, onNavigation, onOpen, onError } = this.#options;
     const owned = create(source.spec);
     const { view } = owned;
     const listeners = [
@@ -73,6 +80,7 @@ export class TabViews {
       view.onFocus(() => {
         onFocus(tabId);
       }),
+      view.onOpen((url, disposition) => onOpen(tabId, url, disposition)),
     ];
     void loadOwned(view, source.url, onError);
     return {

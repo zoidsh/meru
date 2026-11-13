@@ -111,6 +111,8 @@ export class Stage {
           this.#publish();
         }
       },
+      // Nothing routes a link a pane opens, so each goes on as Chromium would take it.
+      onOpen: () => false,
     });
     this.#overlay = new Overlay({
       create: (spec) => this.#own(spec),
