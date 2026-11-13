@@ -28,8 +28,7 @@ export interface TabViewsOptions {
   readonly onError: (error: unknown) => void;
 }
 
-// A view outlives the group its tab is shown in, so moving a tab between groups, panes or splits, or switching the group a window shows, never reloads its page.
-/** The view of each tab a stage has shown, by tab id: made, loaded and listened to the first time the tab is shown, retired only once the tab is gone. */
+/** The view of each tab a stage has shown, by tab id, made the first time the tab is shown and retired only once the tab is gone, so moving a tab between groups, panes or splits, or switching the group a window shows, never reloads its page. */
 export class TabViews {
   readonly #options: TabViewsOptions;
   readonly #views = new Map<string, OwnedView>();
