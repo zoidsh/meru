@@ -12,6 +12,7 @@ import { acceptedKeys, importKeys } from "../shared/entitlement/keys.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { Stages } from "./features/stage/index.ts";
+import { Updater } from "./features/updater/index.ts";
 import { listenIpc } from "./platform/ipc.ts";
 import {
   applicationAccelerators,
@@ -21,6 +22,7 @@ import {
   createElectronEntitlementApi,
   createElectronPorts,
 } from "./platform/ports.ts";
+import { createElectronUpdater } from "./platform/updater.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
 import { answerE2e } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
@@ -123,10 +125,23 @@ const start = async () => {
   });
   stages.start();
 
+  const updater = new Updater({
+    app: ports.app,
+    clock: ports.clock,
+    commands,
+    events,
+    onError: report,
+    registrar: dispatcher,
+    settings,
+    updater: createElectronUpdater(),
+  });
+  updater.attach();
+
   new ApplicationMenu({
     apply: setApplicationMenu,
     commands: allCommands,
     dispatcher: commands,
+    events,
     platform: ports.app.platform,
     report: (message) => {
       console.warn(message);
@@ -143,6 +158,7 @@ const start = async () => {
       entitlement,
       registrar: dispatcher,
       stages,
+      updater,
     });
   }
 
@@ -178,6 +194,7 @@ const start = async () => {
   });
   await window.show();
   entitlement.start();
+  updater.start();
 };
 
 // Not awaited: Electron holds back "ready" until an ES module entry finishes evaluating, so a top-level await on whenReady() never settles.

@@ -3,19 +3,20 @@ import { err, ok } from "../../core/result.ts";
 import type { Result } from "../../core/result.ts";
 import { commands as channels } from "../../shared/channels/commands.ts";
 import type { IpcRegistrar } from "../../shared/channels/define.ts";
-import { commandsOf } from "../../shared/commands/define.ts";
+import { commandsOf, guardOf } from "../../shared/commands/define.ts";
 import type {
   CommandContext,
   CommandGroup,
   CommandHandler,
   CommandHandlers,
+  GuardedHandler,
   CommandRegistrar,
   CommandSpecs,
 } from "../../shared/commands/define.ts";
 
 /** Holds each command's handler, registered by the feature that declares it, and runs one by id for the menu or a page. */
 export class CommandDispatcher implements CommandRegistrar {
-  readonly #handlers = new Map<string, CommandHandler>();
+  readonly #handlers = new Map<string, GuardedHandler>();
 
   readonly register = <F extends string, C extends CommandSpecs>(
     group: CommandGroup<F, C>,
@@ -27,8 +28,10 @@ export class CommandDispatcher implements CommandRegistrar {
       }
       return command.id;
     });
-    for (const [name, handler] of Object.entries<CommandHandler>(handlers)) {
-      this.#handlers.set(`${group.feature}.${name}`, handler);
+    for (const [name, handler] of Object.entries<
+      CommandHandler | GuardedHandler
+    >(handlers)) {
+      this.#handlers.set(`${group.feature}.${name}`, guardOf(handler));
     }
     return () => {
       for (const id of ids) {
@@ -41,11 +44,17 @@ export class CommandDispatcher implements CommandRegistrar {
     return this.#handlers.has(id);
   }
 
+  /** Whether the command can run now; one nothing handles cannot. */
+  enabled(id: string): boolean {
+    return this.#handlers.get(id)?.when() ?? false;
+  }
+
   run(id: string, context: CommandContext): Result<unknown, string> {
     const handler = this.#handlers.get(id);
-    return handler === undefined
-      ? err(`Nothing handles ${id}`)
-      : handler(context);
+    if (handler === undefined) {
+      return err(`Nothing handles ${id}`);
+    }
+    return handler.when() ? handler.run(context) : err(`${id} cannot run now`);
   }
 
   /** Answers a page's `commands.run` for the page's own window. */

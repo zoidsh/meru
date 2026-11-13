@@ -113,12 +113,11 @@ export const zoomOf = async (chrome: Page) => {
   return zoom;
 };
 
-/** Runs a command as a button on the chrome page would. */
-export const runCommand = async (chrome: Page, id: CommandId) => {
-  await chrome.evaluate(
+/** Runs a command as a button on the chrome page would, and answers what main answered. */
+export const runCommand = async (chrome: Page, id: CommandId) =>
+  await chrome.evaluate<unknown>(
     `window.meru.invoke(${JSON.stringify(wireName(commands.run))}, ${JSON.stringify({ id })})`
   );
-};
 
 export const styleOf = async (chrome: Page) => {
   const { stage } = await stageOf(chrome);

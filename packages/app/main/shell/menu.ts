@@ -1,4 +1,5 @@
 import { conflicts, resolveBindings } from "../../core/engines/shortcuts.ts";
+import type { AppEvents } from "../../core/events.ts";
 import type { Unsubscribe } from "../../core/ports.ts";
 import type { Command, MenuSectionId } from "../../shared/commands/define.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
@@ -19,10 +20,28 @@ const EDIT_ROLES: readonly MenuEntry[] = [
   { kind: "role", role: "selectAll" },
 ];
 
+const APP_ROLES_BEFORE: readonly MenuEntry[] = [
+  { kind: "role", role: "about" },
+  { kind: "separator" },
+];
+
+const APP_ROLES_AFTER: readonly MenuEntry[] = [
+  { kind: "separator" },
+  { kind: "role", role: "services" },
+  { kind: "separator" },
+  { kind: "role", role: "hide" },
+  { kind: "role", role: "hideOthers" },
+  { kind: "role", role: "unhide" },
+  { kind: "separator" },
+  { kind: "role", role: "quit" },
+];
+
 export interface MenuOptions {
   readonly platform: string;
   readonly commands: readonly Command<CommandId>[];
   readonly bindings: ReadonlyMap<CommandId, string | null>;
+  /** Whether a command can run now; the menu shows one that cannot disabled. */
+  readonly enabled: (id: CommandId) => boolean;
   readonly run: (id: CommandId, windowId: number) => void;
 }
 
@@ -31,6 +50,7 @@ export const buildMenu = ({
   platform,
   commands,
   bindings,
+  enabled,
   run,
 }: MenuOptions): MenuSection[] => {
   const actions = (section: MenuSectionId): MenuEntry[] =>
@@ -43,6 +63,7 @@ export const buildMenu = ({
       .toSorted((a, b) => a.order - b.order)
       .map(({ command }) => ({
         accelerator: bindings.get(command.id) ?? undefined,
+        enabled: enabled(command.id),
         id: command.id,
         kind: "action",
         label: command.label,
@@ -54,10 +75,22 @@ export const buildMenu = ({
         },
       }));
   const edit = actions("edit");
+  const app = actions("app");
+  const mac = platform === "darwin";
+  const first: MenuSection =
+    mac && app.length > 0
+      ? {
+          entries: [...APP_ROLES_BEFORE, ...app, ...APP_ROLES_AFTER],
+          kind: "roleSubmenu",
+          role: "appMenu",
+        }
+      : { kind: "role", role: mac ? "appMenu" : "fileMenu" };
+  const help: MenuSection[] =
+    mac || app.length === 0
+      ? []
+      : [{ entries: app, kind: "submenu", label: msg`Help` }];
   return [
-    platform === "darwin"
-      ? { kind: "role", role: "appMenu" }
-      : { kind: "role", role: "fileMenu" },
+    first,
     edit.length === 0
       ? { kind: "role", role: "editMenu" }
       : {
@@ -66,13 +99,16 @@ export const buildMenu = ({
           label: msg`Edit`,
         },
     { entries: actions("view"), kind: "submenu", label: msg`View` },
+    ...help,
   ];
 };
 
 export interface ApplicationMenuOptions {
   readonly platform: string;
   readonly commands: readonly Command<CommandId>[];
-  readonly dispatcher: Pick<CommandDispatcher, "run">;
+  readonly dispatcher: Pick<CommandDispatcher, "run" | "enabled">;
+  /** Rebuilds the menu when a command's `when` may have changed. */
+  readonly events: Pick<AppEvents, "on">;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   /** Hands the built menu to Electron. */
   readonly apply: (sections: readonly MenuSection[]) => void;
@@ -89,11 +125,21 @@ export class ApplicationMenu {
 
   start(): Unsubscribe {
     this.#build();
-    return this.#options.settings.subscribe((changes) => {
-      if (changes.some((change) => change.key === "shortcuts.bindings")) {
+    const unsubscribe = [
+      this.#options.settings.subscribe((changes) => {
+        if (changes.some((change) => change.key === "shortcuts.bindings")) {
+          this.#build();
+        }
+      }),
+      this.#options.events.on("menu.invalidated", () => {
         this.#build();
+      }),
+    ];
+    return () => {
+      for (const remove of unsubscribe) {
+        remove();
       }
-    });
+    };
   }
 
   #build(): void {
@@ -110,6 +156,7 @@ export class ApplicationMenu {
       buildMenu({
         bindings,
         commands,
+        enabled: (id) => dispatcher.enabled(id),
         platform,
         run: (id, windowId) => {
           const result = dispatcher.run(id, { windowId });

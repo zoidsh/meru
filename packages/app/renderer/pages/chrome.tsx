@@ -13,6 +13,7 @@ import {
   createSettingsStore,
   SettingsContext,
 } from "../features/settings/use-setting.ts";
+import { createUpdateStore, markUpdate } from "../features/updater/store.ts";
 import { Dividers } from "../stage/dividers.tsx";
 import { createStore } from "../store.ts";
 
@@ -26,6 +27,7 @@ client.on(stagePushes.changed, (snapshot) => {
 });
 const settings = createSettingsStore(client);
 markEntitlement(createEntitlementStore(client), document.documentElement);
+markUpdate(createUpdateStore(client), document.documentElement);
 
 const root = document.querySelector("#root");
 

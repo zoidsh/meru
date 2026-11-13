@@ -24,6 +24,7 @@
     "package:win": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --win --publish never"
   },
   "dependencies": {
+    "electron-updater": "6.6.2",
     "zod": "4.6.7"
   },
   "devDependencies": {

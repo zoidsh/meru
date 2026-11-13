@@ -2,15 +2,16 @@ import type { AppPort, Unsubscribe } from "../../core/ports.ts";
 
 export class FakeApp implements AppPort {
   readonly platform: string;
-  readonly packaged = false;
+  readonly packaged: boolean;
   quitting = false;
   ready = false;
   activationProhibited = false;
   readonly #quitTasks = new Set<() => Promise<void>>();
   readonly #allClosed = new Set<() => void>();
 
-  constructor(platform = "darwin") {
+  constructor(platform = "darwin", packaged = false) {
     this.platform = platform;
+    this.packaged = packaged;
   }
 
   readonly whenReady = async () => {

@@ -1,23 +1,27 @@
 import type { Unsubscribe } from "../../core/ports.ts";
+import { err } from "../../core/result.ts";
 import type { Result } from "../../core/result.ts";
-import { commandsOf } from "../../shared/commands/define.ts";
+import { commandsOf, guardOf } from "../../shared/commands/define.ts";
 import type {
   CommandGroup,
   CommandHandler,
   CommandHandlers,
+  GuardedHandler,
   CommandRegistrar,
   CommandSpecs,
 } from "../../shared/commands/define.ts";
 
 export class FakeCommandRegistrar implements CommandRegistrar {
-  readonly #handlers = new Map<string, CommandHandler>();
+  readonly #handlers = new Map<string, GuardedHandler>();
 
   readonly register = <F extends string, C extends CommandSpecs>(
     group: CommandGroup<F, C>,
     handlers: CommandHandlers<C>
   ): Unsubscribe => {
-    for (const [name, handler] of Object.entries<CommandHandler>(handlers)) {
-      this.#handlers.set(`${group.feature}.${name}`, handler);
+    for (const [name, handler] of Object.entries<
+      CommandHandler | GuardedHandler
+    >(handlers)) {
+      this.#handlers.set(`${group.feature}.${name}`, guardOf(handler));
     }
     return () => {
       for (const command of commandsOf(group)) {
@@ -36,6 +40,11 @@ export class FakeCommandRegistrar implements CommandRegistrar {
     if (handler === undefined) {
       throw new Error(`Nothing registered ${id}`);
     }
-    return handler({ windowId });
+    return handler.when()
+      ? handler.run({ windowId })
+      : err(`${id} cannot run now`);
   };
+
+  readonly enabled = (id: string): boolean =>
+    this.#handlers.get(id)?.when() ?? false;
 }

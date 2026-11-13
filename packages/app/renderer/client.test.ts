@@ -63,6 +63,7 @@ describe(createClient, () => {
       entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
       menu: {},
       stage: snapshot,
+      update: { kind: "idle" },
       views: [],
       zoom: [],
     };

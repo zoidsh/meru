@@ -10,6 +10,7 @@ export interface MenuAction {
   readonly id: string;
   readonly label: string;
   readonly accelerator: string | undefined;
+  readonly enabled: boolean;
   readonly run: (windowId: number | undefined) => void;
 }
 
@@ -26,7 +27,13 @@ export type MenuEntry =
         | "paste"
         | "pasteAndMatchStyle"
         | "delete"
-        | "selectAll";
+        | "selectAll"
+        | "about"
+        | "services"
+        | "hide"
+        | "hideOthers"
+        | "unhide"
+        | "quit";
     };
 
 export type MenuSection =
@@ -37,6 +44,12 @@ export type MenuSection =
   | {
       readonly kind: "submenu";
       readonly label: string;
+      readonly entries: readonly MenuEntry[];
+    }
+  /** A menu Electron names and places itself, with these entries. */
+  | {
+      readonly kind: "roleSubmenu";
+      readonly role: "appMenu";
       readonly entries: readonly MenuEntry[];
     };
 
@@ -61,6 +74,7 @@ const entry = (item: MenuEntry): MenuItemConstructorOptions => {
     click: (_item, window) => {
       item.run(windowIdOf(window));
     },
+    enabled: item.enabled,
     id: item.id,
     label: item.label,
   };
@@ -69,11 +83,15 @@ const entry = (item: MenuEntry): MenuItemConstructorOptions => {
 export const setApplicationMenu = (sections: readonly MenuSection[]): void => {
   Menu.setApplicationMenu(
     Menu.buildFromTemplate(
-      sections.map((section) =>
-        section.kind === "role"
-          ? { role: section.role }
-          : { label: section.label, submenu: section.entries.map(entry) }
-      )
+      sections.map((section): MenuItemConstructorOptions => {
+        if (section.kind === "role") {
+          return { role: section.role };
+        }
+        if (section.kind === "roleSubmenu") {
+          return { role: section.role, submenu: section.entries.map(entry) };
+        }
+        return { label: section.label, submenu: section.entries.map(entry) };
+      })
     )
   );
 };

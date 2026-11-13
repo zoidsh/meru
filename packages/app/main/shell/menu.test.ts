@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { leaf } from "../../core/engines/layout.ts";
+import { AppEvents } from "../../core/events.ts";
 import { commands as channels } from "../../shared/channels/commands.ts";
 import { commands } from "../../shared/commands/registry.ts";
 import { FakeApp } from "../../test/fakes/app.ts";
@@ -8,13 +9,22 @@ import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
 import { fakeIds } from "../../test/fakes/ids.ts";
 import { FakeRegistrar } from "../../test/fakes/registrar.ts";
+import { FakeUpdater } from "../../test/fakes/updater.ts";
 import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
 import { SettingsStore } from "../features/settings/index.ts";
 import { Stages } from "../features/stage/index.ts";
+import { Updater } from "../features/updater/index.ts";
 import type { MenuAction, MenuSection } from "../platform/menu.ts";
 import { CommandDispatcher } from "./commands.ts";
 import { ApplicationMenu, buildMenu } from "./menu.ts";
+
+const entriesOf = (section: MenuSection) =>
+  section.kind === "role"
+    ? []
+    : section.entries.filter(
+        (entry): entry is MenuAction => entry.kind === "action"
+      );
 
 const setup = (platform = "darwin") => {
   const window = new FakeWindow();
@@ -64,6 +74,20 @@ const setup = (platform = "darwin") => {
       },
     ]
   );
+  const events = new AppEvents();
+  const feed = new FakeUpdater();
+  new Updater({
+    app: new FakeApp(platform),
+    clock: new FakeClock(),
+    commands: dispatcher,
+    events,
+    onError: () => {
+      reports.push("error");
+    },
+    registrar,
+    settings,
+    updater: feed,
+  }).attach();
   const built: (readonly MenuSection[])[] = [];
   new ApplicationMenu({
     apply: (sections) => {
@@ -71,6 +95,7 @@ const setup = (platform = "darwin") => {
     },
     commands,
     dispatcher,
+    events,
     platform,
     report: (message) => {
       reports.push(message);
@@ -80,10 +105,8 @@ const setup = (platform = "darwin") => {
   const sections = () => built.at(-1) ?? [];
   const actions = () =>
     sections().flatMap((section) =>
-      section.kind === "submenu"
-        ? section.entries.filter(
-            (entry): entry is MenuAction => entry.kind === "action"
-          )
+      section.kind === "submenu" && section.label !== "Help"
+        ? entriesOf(section)
         : []
     );
   const action = (id: string) => {
@@ -97,6 +120,7 @@ const setup = (platform = "darwin") => {
     action,
     actions,
     built,
+    feed,
     registrar,
     reports,
     sections,
@@ -144,17 +168,60 @@ describe(ApplicationMenu, () => {
         label: "Focus previous pane",
       },
     ]);
-    expect(sections().slice(0, 2)).toStrictEqual([
-      { kind: "role", role: "appMenu" },
-      { kind: "role", role: "editMenu" },
+    expect(sections()[1]).toStrictEqual({ kind: "role", role: "editMenu" });
+  });
+
+  it("puts a file menu where there is no app menu, and the update commands in Help", () => {
+    const { sections } = setup("linux");
+    const [first] = sections();
+    const help = sections().at(3);
+    expect(first).toStrictEqual({ kind: "role", role: "fileMenu" });
+    expect(
+      help?.kind === "submenu" && {
+        ids: entriesOf(help).map((entry) => entry.id),
+        label: help.label,
+      }
+    ).toStrictEqual({
+      ids: ["updater.check", "updater.install"],
+      label: "Help",
+    });
+  });
+
+  it("puts the update commands in the app menu on macOS, between About and Services", () => {
+    const [app] = setup("darwin").sections();
+    expect(
+      app?.kind === "roleSubmenu" &&
+        app.entries.map((entry) =>
+          entry.kind === "action"
+            ? entry.id
+            : `${entry.kind}${"role" in entry ? `:${entry.role}` : ""}`
+        )
+    ).toStrictEqual([
+      "role:about",
+      "separator",
+      "updater.check",
+      "updater.install",
+      "separator",
+      "role:services",
+      "separator",
+      "role:hide",
+      "role:hideOthers",
+      "role:unhide",
+      "separator",
+      "role:quit",
     ]);
   });
 
-  it("puts a file menu where there is no app menu", () => {
-    expect(setup("linux").sections()[0]).toStrictEqual({
-      kind: "role",
-      role: "fileMenu",
-    });
+  it("enables Restart to update once an update is ready, rebuilding the menu", () => {
+    const { built, feed, sections } = setup("linux");
+    const install = () =>
+      sections()
+        .flatMap(entriesOf)
+        .find((entry) => entry.id === "updater.install")?.enabled;
+    expect(install()).toBeFalsy();
+    feed.emit({ kind: "downloaded", version: "4.1.0" });
+    expect(built).toHaveLength(2);
+    expect(install()).toBeTruthy();
   });
 
   it("runs a command in the window it is for", () => {
@@ -231,6 +298,7 @@ describe(buildMenu, () => {
         },
         { id: "stage.splitHorizontal", label: "Hidden" },
       ],
+      enabled: () => true,
       platform: "linux",
       run: () => {
         throw new Error("Nothing is clicked");

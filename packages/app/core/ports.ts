@@ -133,6 +133,27 @@ export interface PowerPort {
   readonly onResume: (listener: () => void) => Unsubscribe;
 }
 
+export type UpdaterEvent =
+  | { readonly kind: "checking" }
+  | { readonly kind: "available"; readonly version: string }
+  | { readonly kind: "notAvailable" }
+  /** Percent of the download done, from 0 to 100. */
+  | { readonly kind: "progress"; readonly percent: number }
+  | { readonly kind: "downloaded"; readonly version: string }
+  | { readonly kind: "error"; readonly message: string };
+
+/** The release feed the app was published to; a found update downloads by itself and installs when the app quits. */
+export interface UpdaterPort {
+  /** Rejects when the feed cannot be read; `prerelease` also offers beta releases. */
+  readonly checkForUpdates: (options: {
+    readonly prerelease: boolean;
+  }) => Promise<void>;
+  readonly downloadUpdate: () => Promise<void>;
+  /** Quits the app, installs the downloaded update and starts it again. */
+  readonly quitAndInstall: () => void;
+  readonly onEvent: (listener: (event: UpdaterEvent) => void) => Unsubscribe;
+}
+
 export interface Ports {
   readonly app: AppPort;
   readonly clock: Clock;

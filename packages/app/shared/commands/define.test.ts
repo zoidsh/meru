@@ -32,13 +32,15 @@ describe(defineCommands, () => {
 });
 
 describe("the command registry", () => {
-  it("holds the stage's commands, each once", () => {
+  it("holds every feature's commands, each once", () => {
     expectTypeOf<CommandId>().toEqualTypeOf<
       | "stage.closeTab"
       | "stage.focusNext"
       | "stage.focusPrevious"
       | "stage.splitHorizontal"
       | "stage.splitVertical"
+      | "updater.check"
+      | "updater.install"
     >();
     const ids = commands.map((command) => command.id);
     expect(new Set(ids).size).toBe(ids.length);

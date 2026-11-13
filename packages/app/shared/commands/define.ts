@@ -3,7 +3,8 @@ import type { Result } from "../../core/result.ts";
 import type { Name } from "../key.ts";
 import type { Message } from "../msg.ts";
 
-export type MenuSectionId = "edit" | "view";
+/** `app` is the app menu on macOS and the Help menu elsewhere. */
+export type MenuSectionId = "app" | "edit" | "view";
 
 export interface CommandSpec {
   readonly label: Message;
@@ -67,9 +68,20 @@ export type CommandHandler = (
   context: CommandContext
 ) => Result<unknown, string>;
 
+/** A handler with the condition its command can run under; the menu shows the command disabled while `when` is false. */
+export interface GuardedHandler {
+  readonly run: CommandHandler;
+  readonly when: () => boolean;
+}
+
 export type CommandHandlers<C extends CommandSpecs> = {
-  readonly [N in keyof C]: CommandHandler;
+  readonly [N in keyof C]: CommandHandler | GuardedHandler;
 };
+
+export const guardOf = (
+  handler: CommandHandler | GuardedHandler
+): GuardedHandler =>
+  typeof handler === "function" ? { run: handler, when: () => true } : handler;
 
 export interface CommandRegistrar {
   readonly register: <F extends string, C extends CommandSpecs>(

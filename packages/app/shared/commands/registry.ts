@@ -1,10 +1,14 @@
 import { z } from "zod";
 
 import { stageCommands } from "../../main/features/stage/commands.ts";
+import { updaterCommands } from "../../main/features/updater/commands.ts";
 import { commandsOf } from "./define.ts";
 
 // Every feature's commands.ts, assembled here and nowhere else.
-export const commands = [...commandsOf(stageCommands)];
+export const commands = [
+  ...commandsOf(stageCommands),
+  ...commandsOf(updaterCommands),
+];
 
 export type CommandId = (typeof commands)[number]["id"];
 

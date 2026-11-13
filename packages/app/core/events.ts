@@ -8,6 +8,8 @@ export interface AppEventMap {
     readonly entitlement: Entitlement;
     readonly reason: string | null;
   };
+  /** Something a menu item shows, such as whether it is enabled, may have changed. */
+  readonly "menu.invalidated": null;
 }
 
 export type AppEventName = keyof AppEventMap;
@@ -17,6 +19,7 @@ type Listener<N extends AppEventName> = (payload: AppEventMap[N]) => void;
 export class AppEvents {
   readonly #listeners: { readonly [N in AppEventName]: Set<Listener<N>> } = {
     "entitlement.changed": new Set(),
+    "menu.invalidated": new Set(),
   };
 
   on<N extends AppEventName>(name: N, listener: Listener<N>): Unsubscribe {
