@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { chromeColors } from "../core/engines/chrome.ts";
-import type { Theme } from "../core/engines/chrome.ts";
+import type { Theme } from "../core/records/theme.ts";
 import { followTheme } from "./theme.ts";
 
 const page = (url: string) => {

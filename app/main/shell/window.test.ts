@@ -3,6 +3,7 @@ import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { themeOf } from "../../core/ports.ts";
 import type { WindowSpec } from "../../core/ports.ts";
 import { wireName } from "../../shared/channels/define.ts";
 import { settingsPushes } from "../../shared/channels/settings.ts";
@@ -46,7 +47,7 @@ const open = async (platform: string, devServer?: string) => {
       devServer,
       dir: "/dist/renderer",
       platform,
-      theme: () => (theme.dark() ? "dark" : "light"),
+      theme: () => themeOf(theme),
     },
     preload: "/preload.cjs",
     registrar,

@@ -1,6 +1,6 @@
 import { chromeColors } from "../core/engines/chrome.ts";
-import type { Theme } from "../core/engines/chrome.ts";
 import type { Unsubscribe } from "../core/ports.ts";
+import type { Theme } from "../core/records/theme.ts";
 
 // The ground and the ink are the window's own background and its title bar overlay's colours too, which main takes from the same table.
 const mark = (root: HTMLElement, theme: Theme) => {

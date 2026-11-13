@@ -1,9 +1,8 @@
 import type { Rect } from "../records/rect.ts";
+import type { Theme } from "../records/theme.ts";
 import type { TitleBar, TitleBarOverlay } from "../records/title-bar.ts";
 import type { Flush } from "./layout.ts";
 import type { Sidebar } from "./sidebar.ts";
-
-export type Theme = "light" | "dark";
 
 /** The height of the titlebar row across the window's top, which the window's own controls are centred on. */
 export const TITLEBAR_HEIGHT = 40;

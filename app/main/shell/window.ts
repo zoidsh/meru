@@ -2,9 +2,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { chromeColors, titleBarOf } from "../../core/engines/chrome.ts";
-import type { Theme } from "../../core/engines/chrome.ts";
+import { themeOf } from "../../core/ports.ts";
 import type { Ports, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
+import type { Theme } from "../../core/records/theme.ts";
 import type { IpcRegistrar } from "../../shared/channels/define.ts";
 import {
   pageSurfaces,
@@ -77,7 +78,7 @@ export class MainWindow {
       registrar,
     } = this.#options;
     const { platform } = ports.lifecycle;
-    const theme = (): Theme => (ports.theme.dark() ? "dark" : "light");
+    const theme = () => themeOf(ports.theme);
     const window = ports.windows.create({
       arguments: [surfaceArgument(surface)],
       background: chromeColors(theme()).background,

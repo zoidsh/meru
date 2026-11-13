@@ -1,6 +1,7 @@
 import type { KeyInput } from "./engines/shortcuts.ts";
 import type { Navigation, NavigationAction } from "./records/navigation.ts";
 import type { Rect } from "./records/rect.ts";
+import type { Theme } from "./records/theme.ts";
 import type { TitleBar, TitleBarOverlay } from "./records/title-bar.ts";
 import type { Result } from "./result.ts";
 
@@ -193,6 +194,9 @@ export interface ThemePort {
   readonly dark: () => boolean;
   readonly onChange: (listener: () => void) => Unsubscribe;
 }
+
+export const themeOf = (port: ThemePort): Theme =>
+  port.dark() ? "dark" : "light";
 
 /** The browser sessions panes load in, one partition per profile. */
 export interface SessionPort {

@@ -4,6 +4,7 @@ import { chromeColors, chromeInsets } from "../core/engines/chrome.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
+import { themeOf } from "../core/ports.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
@@ -172,8 +173,7 @@ const start = async () => {
   });
   sidebars.start();
   const stages = new Stages({
-    background: () =>
-      chromeColors(ports.theme.dark() ? "dark" : "light").background,
+    background: () => chromeColors(themeOf(ports.theme)).background,
     blankPanes: e2e,
     commands,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
@@ -192,7 +192,7 @@ const start = async () => {
     devServer: process.env.MERU_RENDERER_URL,
     dir: path.join(dist, "renderer"),
     platform: ports.lifecycle.platform,
-    theme: () => (ports.theme.dark() ? "dark" : "light"),
+    theme: () => themeOf(ports.theme),
   };
   new Launcher({
     commands,

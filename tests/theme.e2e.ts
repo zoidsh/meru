@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { chromeColors } from "../app/core/engines/chrome.ts";
-import type { Theme } from "../app/core/engines/chrome.ts";
+import type { Theme } from "../app/core/records/theme.ts";
 import { launch } from "../scripts/lib/app.ts";
 
 test("recolours the chrome page when the theme changes, to dark and back to light", async () => {
