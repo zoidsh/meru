@@ -11,6 +11,7 @@ export const launcherSettings = [
     description: msg`The apps the launcher lists, in the order it lists them.`,
     label: msg`Launcher apps`,
     page: "sidebar",
+    section: msg`Launcher`,
     restart: false,
     options: appNames,
     schema: z.array(appIdSchema),

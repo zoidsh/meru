@@ -19,6 +19,7 @@ import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Button } from "../../ui/button.tsx";
 import type { PageContent } from "../settings/page-content.ts";
+import { SettingsSection } from "../settings/settings-section.tsx";
 import { useSetting } from "../settings/use-setting.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 
@@ -122,65 +123,53 @@ export const ShortcutsPage = () => {
   return (
     <div className="flex flex-col gap-8">
       {commandSections.map((section) => (
-        <section
-          aria-label={section.label}
-          className="flex flex-col"
-          key={section.feature}
-        >
-          <h2 className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
-            {section.label}
-          </h2>
-          <div className="divide-y">
-            {section.commands.map((command) => {
-              const clash = clashes.find((found) =>
-                found.ids.includes(command.id)
-              );
-              const others =
-                clash?.ids.filter((other) => other !== command.id) ?? [];
-              const own = Object.hasOwn(bindings, command.id);
-              return (
-                <div
-                  className="flex items-center justify-between gap-6 py-2"
-                  data-command={command.id}
-                  key={command.id}
-                >
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-sm">{command.label}</span>
-                    {others.length > 0 ? (
-                      <span
-                        className="text-destructive text-xs"
-                        data-conflict=""
-                      >
-                        {msg`Also the shortcut of ${others.map((other) => commandById(other).label).join(", ")}`}
-                      </span>
-                    ) : undefined}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    {own ? (
-                      <Button
-                        onClick={() => {
-                          write(omit(bindings, [command.id]));
-                        }}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        {msg`Reset`}
-                      </Button>
-                    ) : undefined}
-                    <Recorder
-                      accelerator={resolved.get(command.id) ?? null}
-                      id={command.id}
-                      onRecord={(accelerator) => {
-                        write({ ...bindings, [command.id]: accelerator });
-                      }}
-                      platform={platform}
-                    />
-                  </div>
+        <SettingsSection heading={section.label} key={section.feature}>
+          {section.commands.map((command) => {
+            const clash = clashes.find((found) =>
+              found.ids.includes(command.id)
+            );
+            const others =
+              clash?.ids.filter((other) => other !== command.id) ?? [];
+            const own = Object.hasOwn(bindings, command.id);
+            return (
+              <div
+                className="flex items-center justify-between gap-6 px-4 py-2"
+                data-command={command.id}
+                key={command.id}
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-sm">{command.label}</span>
+                  {others.length > 0 ? (
+                    <span className="text-destructive text-xs" data-conflict="">
+                      {msg`Also the shortcut of ${others.map((other) => commandById(other).label).join(", ")}`}
+                    </span>
+                  ) : undefined}
                 </div>
-              );
-            })}
-          </div>
-        </section>
+                <div className="flex shrink-0 items-center gap-1">
+                  {own ? (
+                    <Button
+                      onClick={() => {
+                        write(omit(bindings, [command.id]));
+                      }}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      {msg`Reset`}
+                    </Button>
+                  ) : undefined}
+                  <Recorder
+                    accelerator={resolved.get(command.id) ?? null}
+                    id={command.id}
+                    onRecord={(accelerator) => {
+                      write({ ...bindings, [command.id]: accelerator });
+                    }}
+                    platform={platform}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </SettingsSection>
       ))}
     </div>
   );

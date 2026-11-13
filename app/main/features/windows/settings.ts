@@ -9,6 +9,7 @@ export const windowsSettings = [
     description: msg`Show the close, minimize and maximize buttons in the titlebar.`,
     label: msg`Window controls`,
     page: "appearance",
+    section: msg`Window`,
     platforms: ["linux"],
     restart: true,
     schema: z.boolean(),

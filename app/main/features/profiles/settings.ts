@@ -17,6 +17,7 @@ export const profilesSettings = [
     description: msg`Show each profile's unread count on its button in the titlebar.`,
     label: msg`Show unread badges`,
     page: "appearance",
+    section: msg`Profiles`,
     restart: false,
     schema: z.boolean(),
     scope: "global",

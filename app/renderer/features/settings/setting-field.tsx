@@ -173,7 +173,7 @@ export const SettingField = ({
   };
   const { kind } = fieldKindOf(setting.schema);
   return (
-    <div className="flex flex-col gap-3 py-4" data-setting={setting.key}>
+    <div className="flex flex-col gap-3 p-4" data-setting={setting.key}>
       <Row
         control={
           <Control

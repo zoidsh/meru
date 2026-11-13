@@ -6,6 +6,7 @@ import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Button } from "../../ui/button.tsx";
 import type { PageContent } from "../settings/page-content.ts";
+import { SettingsSection } from "../settings/settings-section.tsx";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 import { useUpdate } from "./use-update.ts";
 
@@ -49,25 +50,27 @@ export const UpdateStatus = () => {
     }
   };
   return (
-    <div className="flex items-center justify-between gap-6 rounded-xl border p-4">
-      <div className="flex flex-col gap-1">
-        <p className="text-sm" data-update={state.kind}>
-          {describe(state)}
-        </p>
-        {refusal === undefined ? undefined : (
-          <p className="text-muted-foreground text-xs">{refusal}</p>
-        )}
+    <SettingsSection>
+      <div className="flex items-center justify-between gap-6 p-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm" data-update={state.kind}>
+            {describe(state)}
+          </p>
+          {refusal === undefined ? undefined : (
+            <p className="text-muted-foreground text-xs">{refusal}</p>
+          )}
+        </div>
+        <Button
+          disabled={state.kind === "checking" || state.kind === "downloading"}
+          onClick={() => {
+            void run();
+          }}
+          variant="outline"
+        >
+          {ready ? msg`Restart to update` : msg`Check for updates`}
+        </Button>
       </div>
-      <Button
-        disabled={state.kind === "checking" || state.kind === "downloading"}
-        onClick={() => {
-          void run();
-        }}
-        variant="outline"
-      >
-        {ready ? msg`Restart to update` : msg`Check for updates`}
-      </Button>
-    </div>
+    </SettingsSection>
   );
 };
 

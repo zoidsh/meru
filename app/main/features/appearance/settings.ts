@@ -17,6 +17,7 @@ export const appearanceSettings = [
     label: msg`Appearance style`,
     options: { classic: msg`Classic`, modern: msg`Modern` },
     page: appearancePage.id,
+    section: msg`General`,
     restart: false,
     schema: styleSchema,
     scope: "global",

@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { sortBy } from "es-toolkit";
+import { groupBy, sortBy } from "es-toolkit";
 
 import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
 import { msg } from "../../../shared/msg.ts";
@@ -11,6 +11,7 @@ import { useHash } from "../../use-hash.ts";
 import { pageContents } from "./contents.ts";
 import { fieldKindOf } from "./field-kind.ts";
 import { SettingField } from "./setting-field.tsx";
+import { SettingsSection } from "./settings-section.tsx";
 import { useSettingsClient } from "./use-settings-client.ts";
 
 const appliesOn = (setting: Setting, platform: string) =>
@@ -28,13 +29,20 @@ const Fields = ({ page }: { readonly page: SettingsPageId }) => {
   const ordered = sortBy(shown, [
     (setting) => fieldKindOf(setting.schema).kind === "multiChoice",
   ]);
-  return shown.length === 0 ? undefined : (
-    <div className="divide-y">
-      {ordered.map((setting) => (
+  // The page's own settings come first, then each section in the order the registry first names it.
+  const sections = Object.entries(
+    groupBy(ordered, (setting) => setting.section ?? "")
+  ).toSorted(([a], [b]) => Number(a !== "") - Number(b !== ""));
+  return sections.map(([heading, settings]) => (
+    <SettingsSection
+      heading={heading === "" ? undefined : heading}
+      key={heading}
+    >
+      {settings.map((setting) => (
         <SettingField key={setting.key} setting={setting} />
       ))}
-    </div>
-  );
+    </SettingsSection>
+  ));
 };
 
 /** 3.x's settings window: the titlebar, the pages down the left, and the page the address names on the right, its fields rendered from the registry. */
@@ -64,7 +72,7 @@ export const SettingsWindow = () => {
       <div className="flex min-h-0 flex-1">
         <nav
           aria-label={msg`Settings`}
-          className="flex w-58 shrink-0 flex-col gap-1 overflow-y-auto px-3 pb-3"
+          className="flex w-58 shrink-0 flex-col gap-1 overflow-y-auto border-r px-3 pb-3"
         >
           {settingsPages.map((found) => (
             <Button
@@ -83,7 +91,7 @@ export const SettingsWindow = () => {
             </Button>
           ))}
         </nav>
-        <main className="bg-card text-card-foreground mr-3 mb-3 flex-1 overflow-y-auto rounded-xl border">
+        <main className="flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-8">
             <h1 className="text-2xl font-semibold" data-page={page.id}>
               {page.label}

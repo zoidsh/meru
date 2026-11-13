@@ -37,6 +37,8 @@ interface SettingFacts<
   readonly page: Page;
   readonly label: Message;
   readonly description?: Message;
+  /** The heading of the card on its page the setting sits in, written in sentence case; settings with none share the card under the page's title. */
+  readonly section?: Message;
   /** The platforms the setting does anything on; every one when absent. */
   readonly platforms?: readonly Platform[];
 }

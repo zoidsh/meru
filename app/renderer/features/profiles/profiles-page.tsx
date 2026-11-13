@@ -26,6 +26,7 @@ import {
 import { Input } from "../../ui/input.tsx";
 import { refusalOf } from "../entitlement/refusal.ts";
 import type { PageContent } from "../settings/page-content.ts";
+import { SettingsSection } from "../settings/settings-section.tsx";
 import { useDraft } from "../settings/use-draft.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 import { useProfiles } from "./use-profiles.ts";
@@ -131,7 +132,7 @@ const ProfileItem = ({
   );
   return (
     <li
-      className="flex flex-col gap-3 rounded-xl border p-4"
+      className="flex flex-col gap-3 p-4"
       data-deactivated={profile.deactivated ? "" : undefined}
       data-profile-id={profile.id}
     >
@@ -289,15 +290,17 @@ export const ProfilesPage = () => {
       <div className="flex justify-end">
         <AddProfile refusal={snapshot.newProfileRefusal} />
       </div>
-      <ul className="flex flex-col gap-3">
-        {shown.map((profile) => (
-          <ProfileItem
-            key={profile.id}
-            profile={profile}
-            removable={shown.length > 1}
-          />
-        ))}
-      </ul>
+      <SettingsSection>
+        <ul className="divide-y">
+          {shown.map((profile) => (
+            <ProfileItem
+              key={profile.id}
+              profile={profile}
+              removable={shown.length > 1}
+            />
+          ))}
+        </ul>
+      </SettingsSection>
     </div>
   );
 };
