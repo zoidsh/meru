@@ -11,7 +11,6 @@ import {
   STYLE_METRICS,
 } from "../../../core/engines/layout.ts";
 import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
-import type { Placement } from "../../../core/engines/state.ts";
 import type {
   Unsubscribe,
   ViewFactoryPort,
@@ -20,7 +19,11 @@ import type {
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Group } from "../../../core/records/group.ts";
-import type { Layout, Orientation } from "../../../core/records/layout.ts";
+import type {
+  Layout,
+  Orientation,
+  Placement,
+} from "../../../core/records/layout.ts";
 import type { NavigationAction } from "../../../core/records/navigation.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
 import type { Point } from "../../../core/records/rect.ts";

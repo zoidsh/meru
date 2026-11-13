@@ -1,7 +1,7 @@
 import type { Ids } from "../ports.ts";
 import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
-import type { Beside, Orientation } from "../records/layout.ts";
+import type { Beside, Orientation, Placement } from "../records/layout.ts";
 import { colorFor } from "../records/profile.ts";
 import type { Profile, ProfileStatus } from "../records/profile.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
@@ -168,12 +168,6 @@ export const updateTab = (
         ),
       })
     : err("unknownTab");
-
-/** Where a tab joins a group: beside or below one of the group's panes, on the side `side` names. */
-export interface Placement extends Beside {
-  readonly groupId: string;
-  readonly paneId: string;
-}
 
 /** Moves the tab's pane beside another pane of the same group. */
 const movePaneOf = (

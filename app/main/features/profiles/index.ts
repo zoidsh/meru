@@ -23,7 +23,7 @@ import {
   newProfile,
   newTab,
 } from "../../../core/engines/state.ts";
-import type { Placement, StateError } from "../../../core/engines/state.ts";
+import type { StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
 import type { GateRefusal } from "../../../core/entitlement/gate.ts";
 import type { AppEvents } from "../../../core/events.ts";
@@ -36,7 +36,7 @@ import type {
 } from "../../../core/ports.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { Group } from "../../../core/records/group.ts";
-import type { Beside } from "../../../core/records/layout.ts";
+import type { Placement, Beside } from "../../../core/records/layout.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
 import type { Profile } from "../../../core/records/profile.ts";
 import { profilesStateSchema } from "../../../core/records/profiles-state.ts";

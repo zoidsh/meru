@@ -20,6 +20,14 @@ export const besideSchema = z.object({
 
 export type Beside = z.infer<typeof besideSchema>;
 
+/** Where a tab joins a group: beside or below one of the group's panes, on the side `side` names. */
+export const placementSchema = besideSchema.extend({
+  groupId: idSchema,
+  paneId: idSchema,
+});
+
+export type Placement = z.infer<typeof placementSchema>;
+
 export const leafSchema = z.object({
   kind: z.literal("leaf"),
   paneId: idSchema,

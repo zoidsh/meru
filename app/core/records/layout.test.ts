@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { groupSchema } from "./group.ts";
-import { layoutSchema } from "./layout.ts";
+import { layoutSchema, placementSchema } from "./layout.ts";
 
 const leaf = (paneId: string, tabIds = ["t1"]) => ({
   kind: "leaf",
@@ -61,5 +61,20 @@ describe("the group schema", () => {
       tabIds: ["t1"],
     };
     expect(groupSchema.parse(group)).toStrictEqual(group);
+  });
+});
+
+describe("the placement schema", () => {
+  it("parses a pane of a group with the side it joins on, and refuses an unknown side", () => {
+    const placement = {
+      groupId: "g1",
+      orientation: "horizontal",
+      paneId: "p1",
+      side: "before",
+    };
+    expect(placementSchema.parse(placement)).toStrictEqual(placement);
+    expect(
+      placementSchema.safeParse({ ...placement, side: "above" }).success
+    ).toBeFalsy();
   });
 });
