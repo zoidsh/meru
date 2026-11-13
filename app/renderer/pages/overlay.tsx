@@ -41,15 +41,18 @@ const shows: {
       </SettingsContext>
     </LauncherClientProvider>
   ),
-  tabDrag: (client, query) => (
-    <TabDrag
-      accent={query.get("accent") ?? ""}
-      appId={query.get("appId") ?? ""}
-      client={client}
-      tabId={query.get("tabId") ?? ""}
-      title={query.get("title") ?? ""}
-    />
-  ),
+  tabDrag: (client, query) => {
+    const tabId = query.get("tabId");
+    return tabId === null ? null : (
+      <TabDrag
+        accent={query.get("accent") ?? undefined}
+        appId={query.get("appId") ?? undefined}
+        client={client}
+        tabId={tabId}
+        title={query.get("title") ?? undefined}
+      />
+    );
+  },
 };
 
 const query = new URL(location.href).searchParams;

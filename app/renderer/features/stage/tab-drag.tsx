@@ -20,11 +20,10 @@ export const TabDrag = ({
   title,
 }: {
   readonly client: Client<TabDragSurface>;
-  /** The colour of the tint, the theme's primary when empty. */
-  readonly accent: string;
-  readonly appId: string;
+  readonly accent?: string | undefined;
+  readonly appId?: string | undefined;
   readonly tabId: string;
-  readonly title: string;
+  readonly title?: string | undefined;
 }) => {
   // The panes cannot move while the overlay covers them, so they are read once.
   const snapshot = useMemo(() => {
@@ -53,9 +52,7 @@ export const TabDrag = ({
     return null;
   }
   const zone = dropTargetAt(snapshot.panes, point, tabId)?.rect;
-  const colour = accent === "" ? "var(--primary)" : accent;
-  const app = appById(appId);
-  const name = app?.name ?? appId;
+  const app = appId === undefined ? undefined : appById(appId);
   return (
     <div className="pointer-events-none fixed inset-0 cursor-grabbing">
       {zone === undefined ? null : (
@@ -63,8 +60,12 @@ export const TabDrag = ({
           className="absolute border-2"
           data-drop=""
           style={{
-            backgroundColor: `color-mix(in oklab, ${colour} 15%, transparent)`,
-            borderColor: colour,
+            ...(accent === undefined
+              ? {}
+              : {
+                  backgroundColor: `color-mix(in oklab, ${accent} 15%, transparent)`,
+                  borderColor: accent,
+                }),
             borderRadius: STYLE_METRICS[snapshot.style].radius,
             height: zone.height,
             left: zone.x,
@@ -79,7 +80,7 @@ export const TabDrag = ({
         style={{ left: point.x + GHOST_OFFSET, top: point.y + GHOST_OFFSET }}
       >
         <AppIcon className="size-4 shrink-0" icon={app?.icon} />
-        <span className="truncate">{title === "" ? name : title}</span>
+        <span className="truncate">{title ?? app?.name}</span>
       </div>
     </div>
   );

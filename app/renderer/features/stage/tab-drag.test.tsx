@@ -33,13 +33,7 @@ const mount = () => {
   const root = createRoot(container);
   act(() => {
     root.render(
-      <TabDrag
-        accent="#3e63dd"
-        appId="drive"
-        client={client}
-        tabId="drive-1"
-        title=""
-      />
+      <TabDrag accent="#3e63dd" appId="drive" client={client} tabId="drive-1" />
     );
   });
   mounted.push(() => {
