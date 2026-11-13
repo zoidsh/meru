@@ -53,7 +53,9 @@ export const settingsSnapshot: SnapshotSpec<Settings, Fallback> = {
   version: 1,
 };
 
-export type SettingsListener = (changes: readonly SettingChange[]) => void;
+export type SettingsListener = (
+  changes: readonly SettingChange<typeof registry>[]
+) => void;
 
 export interface SettingsOptions {
   readonly fs: FsPort;

@@ -62,8 +62,8 @@ export interface Fallback {
   readonly reason: "invalid" | "unknown" | "notProfileScoped";
 }
 
-export interface SettingChange {
-  readonly key: string;
+export interface SettingChange<R extends SettingSpecs = SettingSpecs> {
+  readonly key: KeyOf<R>;
   readonly profileId: string | null;
 }
 
@@ -273,25 +273,38 @@ export const withoutProfile = <R extends SettingSpecs>(
   ),
 });
 
-const diffLayer = (
-  before: Raw | undefined,
-  after: Raw | undefined,
+// A for-in over a generic layer is typed by the layer's keys, where Object.keys gives only strings.
+const keysOf = <L extends Raw>(
+  layer: L | undefined
+): Extract<keyof L, string>[] => {
+  const keys: Extract<keyof L, string>[] = [];
+  if (layer !== undefined) {
+    for (const key in layer) {
+      if (Object.hasOwn(layer, key)) {
+        keys.push(key);
+      }
+    }
+  }
+  return keys;
+};
+
+const diffLayer = <L extends Raw>(
+  before: L | undefined,
+  after: L | undefined,
   profileId: string | null
-): SettingChange[] => {
-  const keys = new Set([
-    ...Object.keys(before ?? EMPTY),
-    ...Object.keys(after ?? EMPTY),
-  ]);
-  return [...keys]
+): {
+  readonly key: Extract<keyof L, string>;
+  readonly profileId: string | null;
+}[] =>
+  [...new Set([...keysOf(before), ...keysOf(after)])]
     .filter((key) => !isEqual(lookup(before, key), lookup(after, key)))
     .map((key) => ({ key, profileId }));
-};
 
 /** Every key whose stored value differs, per layer; a layer that appeared or went lists each of its keys. */
 export const diff = <R extends SettingSpecs>(
   before: SettingsLayers<R>,
   after: SettingsLayers<R>
-): SettingChange[] => {
+): SettingChange<R>[] => {
   const profileIds = new Set([
     ...Object.keys(before.profiles),
     ...Object.keys(after.profiles),
@@ -311,7 +324,7 @@ export const diff = <R extends SettingSpecs>(
 /** The stored value of one key in one layer, for sending a change on; undefined when the layer does not set it. */
 export const storedValue = <R extends SettingSpecs>(
   settings: SettingsLayers<R>,
-  change: SettingChange
+  change: SettingChange<R>
 ): unknown =>
   lookup(
     change.profileId === null

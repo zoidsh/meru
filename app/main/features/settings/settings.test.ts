@@ -8,6 +8,7 @@ import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
 import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import type { registry } from "../../../shared/settings/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
@@ -53,7 +54,7 @@ const setup = async (
   });
   const opened = await store.open();
   store.start();
-  const changes: SettingChange[][] = [];
+  const changes: SettingChange<typeof registry>[][] = [];
   store.subscribe((changed) => {
     changes.push([...changed]);
   });
