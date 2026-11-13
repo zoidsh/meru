@@ -7,10 +7,11 @@ import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeDisplays, PRIMARY_DISPLAY } from "../../../test/fakes/display.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
+import { IpcDispatcher } from "../../shell/ipc.ts";
 import { Profiles } from "../profiles/index.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { Windows, WINDOWS_FILE, windowsStateSchema } from "./index.ts";
@@ -31,7 +32,10 @@ const setup = async (fs = new FakeFs()) => {
   const clock = new FakeClock(NOW);
   const lifecycle = new FakeLifecycle();
   const events = new AppEvents();
-  const registrar = new FakeRegistrar();
+  const registrar = new IpcDispatcher({
+    onError: fail,
+    transport: new FakeIpcTransport(),
+  });
   const settings = new SettingsStore({
     lifecycle,
     clock,

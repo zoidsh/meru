@@ -9,15 +9,17 @@ import {
   entitlement as channels,
   entitlementPushes,
 } from "../../../shared/channels/entitlement.ts";
+import { rendererSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeEntitlementApi } from "../../../test/fakes/entitlement-api.ts";
 import type { Scripted } from "../../../test/fakes/entitlement-api.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeOnline } from "../../../test/fakes/online.ts";
 import { FakePower } from "../../../test/fakes/power.ts";
-import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
+import { IpcDispatcher } from "../../shell/ipc.ts";
 import { ENTITLEMENT_FILE, Entitlement } from "./index.ts";
 import type { EntitlementState } from "./index.ts";
 
@@ -93,7 +95,14 @@ const setup = async ({
   const api = new FakeEntitlementApi(answers);
   const network = new FakeOnline(online);
   const power = new FakePower();
-  const registrar = new FakeRegistrar();
+  const transport = new FakeIpcTransport();
+  const registrar = new IpcDispatcher({
+    onError: (error) => {
+      throw error;
+    },
+    transport,
+  });
+  registrar.assign(PAGE, rendererSurface);
   const events = new AppEvents();
   const changed: AppEventMap["entitlement.changed"][] = [];
   events.on("entitlement.changed", (payload) => {
@@ -121,7 +130,7 @@ const setup = async ({
   });
   await entitlement.open();
   entitlement.attach();
-  registrar.call(channels.snapshot, {}, PAGE);
+  registrar.dispatch(PAGE, wireName(channels.snapshot), {});
   // Only what follows start() counts, so a value read from storage is not taken for a change.
   changed.length = 0;
   return {
@@ -134,6 +143,7 @@ const setup = async ({
     power,
     registrar,
     reports,
+    transport,
     stored: async (): Promise<unknown> => {
       await entitlement.flush();
       const text = fs.files.get(ENTITLEMENT_FILE);
@@ -265,7 +275,7 @@ describe(Entitlement, () => {
       reason: "refunded",
       status: "disabled",
     } as const;
-    const { api, changed, clock, entitlement, registrar, stored } = await setup(
+    const { api, changed, clock, entitlement, transport, stored } = await setup(
       {
         answers: [
           issued({ ...disabled, exp: (NOW + 2 * HOUR) / 1000 }),
@@ -291,7 +301,7 @@ describe(Entitlement, () => {
       source: "refreshed",
     };
     expect(changed).toStrictEqual([{ entitlement: value, reason: "refunded" }]);
-    expect(registrar.pushes).toStrictEqual([
+    expect(transport.sent).toStrictEqual([
       {
         channel: wireName(entitlementPushes.changed),
         contentsId: PAGE,
@@ -484,7 +494,9 @@ describe(Entitlement, () => {
     const { registrar } = await setup({
       state: { token: { licenseKey: null, value: await mint() } },
     });
-    expect(registrar.call(channels.snapshot, {}, PAGE)).toMatchObject({
+    expect(
+      registrar.dispatch(PAGE, wireName(channels.snapshot), {})
+    ).toMatchObject({
       ok: true,
       value: { kind: "licensed" },
     });

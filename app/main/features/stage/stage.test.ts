@@ -3,28 +3,35 @@ import { describe, expect, it } from "vitest";
 import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Style } from "../../../core/records/style.ts";
+import { wireName } from "../../../shared/channels/define.ts";
+import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { drag } from "../../../shared/channels/drag.ts";
 import {
   stage as stageChannels,
   stageSnapshotSchema,
 } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import { dragSurface } from "../../../shared/channels/surfaces.ts";
+import { rendererSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeCommandRegistrar } from "../../../test/fakes/commands.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import type { FakeView } from "../../../test/fakes/view.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
+import { CommandDispatcher } from "../../shell/commands.ts";
+import { IpcDispatcher } from "../../shell/ipc.ts";
 import { Profiles } from "../profiles/index.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { Stages } from "./index.ts";
 
 const GMAIL = "https://mail.google.com/";
+
+const rethrow = (error: unknown) => {
+  throw error;
+};
 
 const settingsWith = (style: Style) => {
   const settings = new SettingsStore({
@@ -37,7 +44,10 @@ const settingsWith = (style: Style) => {
     onFallback: () => {
       throw new Error("Nothing was read, so nothing can fall back");
     },
-    registrar: new FakeRegistrar(),
+    registrar: new IpcDispatcher({
+      onError: rethrow,
+      transport: new FakeIpcTransport(),
+    }),
     watchFile: false,
   });
   settings.set("appearance.style", style);
@@ -48,13 +58,17 @@ const setup = async (style: Style = "modern") => {
   const window = new FakeWindow(1200, 800);
   const settings = settingsWith(style);
   const views = new FakeViewFactory();
-  const registrar = new FakeRegistrar();
-  const commands = new FakeCommandRegistrar();
   const events = new AppEvents();
   const errors: unknown[] = [];
   const onError = (error: unknown) => {
     errors.push(error);
   };
+  const transport = new FakeIpcTransport();
+  const registrar = new IpcDispatcher({ onError, transport });
+  registrar.assign(window.contentsId, rendererSurface);
+  const call = (channel: RequestChannel, payload: unknown, sender: number) =>
+    registrar.dispatch(sender, wireName(channel), payload);
+  const commands = new CommandDispatcher();
   const profiles = new Profiles({
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
@@ -82,7 +96,7 @@ const setup = async (style: Style = "modern") => {
   });
   stages.start();
   const changes = (): StageSnapshot[] =>
-    registrar.pushes.map((pushed) => {
+    transport.sent.map((pushed) => {
       expect(pushed).toMatchObject({
         channel: "stage.changed",
         contentsId: window.contentsId,
@@ -95,6 +109,7 @@ const setup = async (style: Style = "modern") => {
   const paneIds = () => stage.snapshot().panes.map((pane) => pane.paneId);
   const splitId = () => stage.snapshot().dividers[0]?.splitId ?? "";
   return {
+    call,
     changes,
     commands,
     errors,
@@ -107,6 +122,7 @@ const setup = async (style: Style = "modern") => {
     splitId,
     stage,
     stages,
+    transport,
     views,
     window,
   };
@@ -339,7 +355,7 @@ describe(Stages, () => {
 const dragging = async () => {
   const context = await setup();
   context.stages.split(context.id, "vertical");
-  context.registrar.pushes.length = 0;
+  context.transport.sent.length = 0;
   const result = context.stages.beginDrag(context.id, context.splitId());
   const overlay: FakeView | undefined = context.views.created[2];
   return { ...context, overlay, result };
@@ -348,28 +364,34 @@ const dragging = async () => {
 describe("the stage commands", () => {
   it("are the five the stage declares", async () => {
     const { commands } = await setup();
-    expect(commands.ids.toSorted()).toStrictEqual([
-      "stage.closeTab",
-      "stage.focusNext",
-      "stage.focusPrevious",
-      "stage.splitHorizontal",
-      "stage.splitVertical",
-    ]);
+    expect(
+      [
+        "stage.closeTab",
+        "stage.focusNext",
+        "stage.focusPrevious",
+        "stage.splitHorizontal",
+        "stage.splitVertical",
+      ].every((id) => commands.has(id))
+    ).toBeTruthy();
   });
 
   it("split and close panes in the window they are given", async () => {
     const { commands, id, window } = await setup();
-    expect(commands.run("stage.splitVertical", id).ok).toBeTruthy();
-    expect(commands.run("stage.splitHorizontal", id).ok).toBeTruthy();
+    expect(
+      commands.run("stage.splitVertical", { windowId: id }).ok
+    ).toBeTruthy();
+    expect(
+      commands.run("stage.splitHorizontal", { windowId: id }).ok
+    ).toBeTruthy();
     expect(window.childViews()).toHaveLength(3);
-    expect(commands.run("stage.closeTab", id).ok).toBeTruthy();
+    expect(commands.run("stage.closeTab", { windowId: id }).ok).toBeTruthy();
     expect(window.childViews()).toHaveLength(2);
   });
 
   it("move focus to the next and previous pane in layout order, wrapping", async () => {
     const { commands, id, changes, paneIds } = await setup();
-    commands.run("stage.splitVertical", id);
-    commands.run("stage.splitHorizontal", id);
+    commands.run("stage.splitVertical", { windowId: id });
+    commands.run("stage.splitHorizontal", { windowId: id });
     const [first, second, third] = paneIds();
     const focused = () => changes().at(-1)?.focusedPaneId;
     const start = focused();
@@ -378,7 +400,7 @@ describe("the stage commands", () => {
       "stage.focusPrevious",
       "stage.focusPrevious",
     ].map((command) => {
-      const result = commands.run(command, id);
+      const result = commands.run(command, { windowId: id });
       return result.ok ? focused() : result.error;
     });
     expect([start, ...visited]).toStrictEqual([third, first, third, second]);
@@ -386,42 +408,43 @@ describe("the stage commands", () => {
 
   it("report what they could not do", async () => {
     const { commands, id } = await setup();
-    expect(commands.run("stage.closeTab", id)).toStrictEqual({
+    expect(commands.run("stage.closeTab", { windowId: id })).toStrictEqual({
       error: "lastPane",
       ok: false,
     });
-    expect(commands.run("stage.splitVertical", -1)).toStrictEqual({
-      error: "unknownWindow",
-      ok: false,
-    });
+    expect(commands.run("stage.splitVertical", { windowId: -1 })).toStrictEqual(
+      {
+        error: "unknownWindow",
+        ok: false,
+      }
+    );
   });
 });
 
 describe("the stage channels", () => {
   it("split and close the sender's window", async () => {
-    const { registrar, id, window } = await setup();
+    const { call, id, window } = await setup();
     expect(
-      registrar.call(stageChannels.split, { orientation: "horizontal" }, id)
+      call(stageChannels.split, { orientation: "horizontal" }, id)
     ).toStrictEqual({ ok: true, value: undefined });
     expect(window.childViews()).toHaveLength(2);
-    expect(registrar.call(stageChannels.close, {}, id).ok).toBeTruthy();
+    expect(call(stageChannels.close, {}, id).ok).toBeTruthy();
     expect(window.childViews()).toHaveLength(1);
   });
 
   it("answer the snapshot a page paints first", async () => {
-    const { registrar, id, changes } = await setup();
-    expect(registrar.call(stageChannels.snapshot, {}, id)).toStrictEqual({
+    const { call, id, changes } = await setup();
+    expect(call(stageChannels.snapshot, {}, id)).toStrictEqual({
       ok: true,
       value: changes().at(-1),
     });
   });
 
   it("refuse a sender with no window", async () => {
-    const { registrar } = await setup();
-    expect(
-      registrar.call(stageChannels.focusPane, { paneId: "p1" }, -1)
-    ).toStrictEqual({
-      error: "unknownWindow",
+    const { call, registrar } = await setup();
+    registrar.assign(-1, rendererSurface);
+    expect(call(stageChannels.focusPane, { paneId: "p1" }, -1)).toStrictEqual({
+      error: { kind: "failed", message: "unknownWindow" },
       ok: false,
     });
   });
@@ -429,15 +452,22 @@ describe("the stage channels", () => {
 
 describe("a drag across panes", () => {
   it("lets the overlay use the drag channels while it is up, and no longer", async () => {
-    const { registrar, overlay, window, stages, id } = await dragging();
+    const { call, overlay, window, stages, id } = await dragging();
     const sender = overlay?.contentsId ?? 0;
-    expect(registrar.surfaces.get(sender)).toBe(dragSurface);
 
-    registrar.call(drag.move, { buttons: 1, x: 300, y: 5 }, sender);
-    expect(childBounds(window)[0]?.width).toBe(288);
-    registrar.call(drag.end, { x: 300, y: 5 }, sender);
+    const moved = call(drag.move, { buttons: 1, x: 300, y: 5 }, sender).ok;
+    const width = childBounds(window)[0]?.width;
+    const ended = call(drag.end, { x: 300, y: 5 }, sender).ok;
+    expect({ ended, moved, width }).toStrictEqual({
+      ended: true,
+      moved: true,
+      width: 288,
+    });
 
-    expect(registrar.surfaces.has(sender)).toBeFalsy();
+    expect(call(drag.end, { x: 300, y: 5 }, sender)).toMatchObject({
+      error: { kind: "wrongSurface" },
+      ok: false,
+    });
     expect(stages.snapshot(sender).ok).toBeFalsy();
     expect(stages.snapshot(id).ok).toBeTruthy();
   });

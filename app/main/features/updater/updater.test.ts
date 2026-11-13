@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import { AppEvents } from "../../../core/events.ts";
 import { updateStateSchema } from "../../../core/records/update.ts";
+import { wireName } from "../../../shared/channels/define.ts";
+import { rendererSurface } from "../../../shared/channels/surfaces.ts";
 import { updater as channels } from "../../../shared/channels/updater.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeCommandRegistrar } from "../../../test/fakes/commands.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
+import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeUpdater } from "../../../test/fakes/updater.ts";
+import { CommandDispatcher } from "../../shell/commands.ts";
+import { IpcDispatcher } from "../../shell/ipc.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { FIRST_CHECK_DELAY, Updater } from "./index.ts";
 
@@ -17,7 +20,14 @@ const PAGE = 7;
 
 const setup = ({ packaged = true } = {}) => {
   const clock = new FakeClock();
-  const registrar = new FakeRegistrar();
+  const transport = new FakeIpcTransport();
+  const registrar = new IpcDispatcher({
+    onError: (error) => {
+      throw error;
+    },
+    transport,
+  });
+  registrar.assign(PAGE, rendererSurface);
   const settings = new SettingsStore({
     lifecycle: new FakeLifecycle(),
     clock,
@@ -32,7 +42,7 @@ const setup = ({ packaged = true } = {}) => {
     watchFile: false,
   });
   const feed = new FakeUpdater();
-  const commands = new FakeCommandRegistrar();
+  const commands = new CommandDispatcher();
   const events = new AppEvents();
   let invalidated = 0;
   events.on("menu.invalidated", () => {
@@ -52,7 +62,7 @@ const setup = ({ packaged = true } = {}) => {
   });
   updater.attach();
   const pushed = () =>
-    registrar.pushes
+    transport.sent
       .filter((push) => push.channel === "updater.changed")
       .map((push) => updateStateSchema.parse(push.payload));
   return {
@@ -104,7 +114,7 @@ describe(Updater, () => {
     clock.advance(FIRST_CHECK_DELAY + 24 * HOUR);
     settings.set("updater.channel", "beta");
     expect(feed.checks).toHaveLength(0);
-    expect(commands.run("updater.check", 1)).toStrictEqual({
+    expect(commands.run("updater.check", { windowId: 1 })).toStrictEqual({
       error: "notPackaged",
       ok: false,
     });
@@ -112,7 +122,9 @@ describe(Updater, () => {
 
   it("walks a found update through download to ready, pushing each state to a page that asked", () => {
     const { feed, pushed, registrar } = setup();
-    expect(registrar.call(channels.snapshot, {}, PAGE)).toStrictEqual({
+    expect(
+      registrar.dispatch(PAGE, wireName(channels.snapshot), {})
+    ).toStrictEqual({
       ok: true,
       value: { kind: "idle" },
     });
@@ -149,7 +161,7 @@ describe(Updater, () => {
     feed.emit({ kind: "downloaded", version: "4.1.0" });
     expect(commands.enabled("updater.install")).toBeTruthy();
     expect(invalidated()).toBe(1);
-    expect(commands.run("updater.install", 1).ok).toBeTruthy();
+    expect(commands.run("updater.install", { windowId: 1 }).ok).toBeTruthy();
     expect(feed.installs).toBe(1);
   });
 

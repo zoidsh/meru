@@ -117,6 +117,21 @@ const layers = [
       ),
     ]
   ),
+  // A feature's test assembles it as the composition root does, over the shell's real IPC and command dispatchers.
+  restrict(
+    ["app/main/features/**/*.test.ts"],
+    [
+      scriptsOnly,
+      electron,
+      notPreload,
+      notRenderer,
+      into(
+        "platform",
+        "Features take platform through a port, never its values.",
+        true
+      ),
+    ]
+  ),
   restrict(
     ["app/shared/*/registry.ts"],
     [scriptsOnly, noElectron, ours, notPreload, notRenderer, registry]

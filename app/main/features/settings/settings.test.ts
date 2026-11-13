@@ -4,14 +4,24 @@ import type {
   Fallback,
   SettingChange,
 } from "../../../core/engines/settings.ts";
+import { wireName } from "../../../shared/channels/define.ts";
+import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
+import { rendererSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
+import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
+import { IpcDispatcher } from "../../shell/ipc.ts";
 import { SETTINGS_FILE, SettingsStore } from "./index.ts";
 
 const file = (data: unknown) => JSON.stringify({ data, version: 1 });
+
+const PAGE = 7;
+
+const rethrow = (error: unknown) => {
+  throw error;
+};
 
 const setup = async (
   data?: unknown,
@@ -22,7 +32,11 @@ const setup = async (
   );
   const clock = new FakeClock();
   const lifecycle = new FakeLifecycle();
-  const registrar = new FakeRegistrar();
+  const transport = new FakeIpcTransport();
+  const registrar = new IpcDispatcher({ onError: rethrow, transport });
+  registrar.assign(PAGE, rendererSurface);
+  const call = (channel: RequestChannel, payload: unknown) =>
+    registrar.dispatch(PAGE, wireName(channel), payload);
   const fallbacks: Fallback[] = [];
   const store = new SettingsStore({
     lifecycle,
@@ -43,7 +57,17 @@ const setup = async (
   store.subscribe((changed) => {
     changes.push([...changed]);
   });
-  return { lifecycle, changes, clock, fallbacks, fs, opened, registrar, store };
+  return {
+    call,
+    changes,
+    clock,
+    fallbacks,
+    fs,
+    lifecycle,
+    opened,
+    store,
+    transport,
+  };
 };
 
 const stored = (fs: FakeFs): unknown =>
@@ -85,7 +109,10 @@ describe(SettingsStore, () => {
       onFallback: (found) => {
         fallbacks.push(...found);
       },
-      registrar: new FakeRegistrar(),
+      registrar: new IpcDispatcher({
+        onError: rethrow,
+        transport: new FakeIpcTransport(),
+      }),
       watchFile: false,
     }).open();
     expect(fallbacks).toStrictEqual([
@@ -169,22 +196,18 @@ describe(SettingsStore, () => {
   });
 
   it("seeds a page and pushes it each change, with the stored value", async () => {
-    const { store, registrar } = await setup({
+    const { store, call, transport } = await setup({
       global: { "appearance.style": "classic" },
     });
-    expect(registrar.call(channels.snapshot, {}, 7)).toStrictEqual({
+    expect(call(channels.snapshot, {})).toStrictEqual({
       ok: true,
       value: { global: { "appearance.style": "classic" }, profiles: {} },
     });
     store.set("appearance.style", undefined);
     expect(
-      registrar.call(
-        channels.set,
-        { key: "stage.zoom", profileId: "work", value: 3 },
-        7
-      )
+      call(channels.set, { key: "stage.zoom", profileId: "work", value: 3 })
     ).toStrictEqual({ ok: true, value: null });
-    expect(registrar.pushes).toStrictEqual([
+    expect(transport.sent).toStrictEqual([
       {
         channel: "settings.changed",
         contentsId: 7,
@@ -205,10 +228,10 @@ describe(SettingsStore, () => {
   });
 
   it("answers a page's bad value with the reason", async () => {
-    const { registrar } = await setup();
+    const { call } = await setup();
     expect(
-      registrar.call(channels.set, { key: "stage.zoom", value: "big" }, 7)
-    ).toMatchObject({ ok: false });
+      call(channels.set, { key: "stage.zoom", value: "big" })
+    ).toMatchObject({ error: { kind: "failed" }, ok: false });
   });
 });
 

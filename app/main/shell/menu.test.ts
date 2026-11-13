@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { AppEvents } from "../../core/events.ts";
 import { commands as channels } from "../../shared/channels/commands.ts";
+import { wireName } from "../../shared/channels/define.ts";
+import { rendererSurface } from "../../shared/channels/surfaces.ts";
 import { commands } from "../../shared/commands/registry.ts";
 import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
 import { fakeIds } from "../../test/fakes/ids.ts";
+import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
-import { FakeRegistrar } from "../../test/fakes/registrar.ts";
 import { FakeSessions } from "../../test/fakes/session.ts";
 import { FakeUpdater } from "../../test/fakes/updater.ts";
 import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
@@ -18,6 +20,7 @@ import { Stages } from "../features/stage/index.ts";
 import { Updater } from "../features/updater/index.ts";
 import type { MenuAction, MenuSection } from "../platform/menu.ts";
 import { CommandDispatcher } from "./commands.ts";
+import { IpcDispatcher } from "./ipc.ts";
 import { ApplicationMenu, buildMenu } from "./menu.ts";
 
 const entriesOf = (section: MenuSection) =>
@@ -30,7 +33,12 @@ const entriesOf = (section: MenuSection) =>
 const setup = async (platform = "darwin") => {
   const window = new FakeWindow();
   const reports: string[] = [];
-  const registrar = new FakeRegistrar();
+  const registrar = new IpcDispatcher({
+    onError: (error) => {
+      throw error;
+    },
+    transport: new FakeIpcTransport(),
+  });
   const settings = new SettingsStore({
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
@@ -46,6 +54,8 @@ const setup = async (platform = "darwin") => {
   });
   const dispatcher = new CommandDispatcher();
   dispatcher.start(registrar);
+  registrar.assign(window.contentsId, rendererSurface);
+  registrar.assign(-1, rendererSurface);
   const events = new AppEvents();
   const profiles = new Profiles({
     lifecycle: new FakeLifecycle(platform),
@@ -274,16 +284,17 @@ describe(ApplicationMenu, () => {
   it("runs a command a page asks for, in the page's window", async () => {
     const { registrar, window } = await setup();
     expect(
-      registrar.call(
-        channels.run,
-        { id: "stage.splitVertical" },
-        window.contentsId
-      )
+      registrar.dispatch(window.contentsId, wireName(channels.run), {
+        id: "stage.splitVertical",
+      })
     ).toStrictEqual({ ok: true, value: null });
     expect(window.childViews()).toHaveLength(2);
     expect(
-      registrar.call(channels.run, { id: "stage.closeTab" }, -1)
-    ).toStrictEqual({ error: "unknownWindow", ok: false });
+      registrar.dispatch(-1, wireName(channels.run), { id: "stage.closeTab" })
+    ).toStrictEqual({
+      error: { kind: "failed", message: "unknownWindow" },
+      ok: false,
+    });
   });
 });
 

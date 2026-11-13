@@ -10,17 +10,20 @@ import { PROFILE_COLORS } from "../../../core/records/profile.ts";
 import { profilesStateSchema } from "../../../core/records/profiles-state.ts";
 import type { ProfilesState } from "../../../core/records/profiles-state.ts";
 import type { Result } from "../../../core/result.ts";
+import { wireName } from "../../../shared/channels/define.ts";
 import {
   profiles as profileChannels,
   tabs as tabChannels,
   profilesSnapshotSchema,
 } from "../../../shared/channels/profiles.ts";
+import { rendererSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
+import { IpcDispatcher } from "../../shell/ipc.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { FIRST_PROFILE_LABEL, Profiles, PROFILES_FILE } from "./index.ts";
 
@@ -41,7 +44,14 @@ const setup = async ({
 }: { entitlement?: Entitlement; fs?: FakeFs } = {}) => {
   const clock = new FakeClock(NOW);
   const lifecycle = new FakeLifecycle();
-  const registrar = new FakeRegistrar();
+  const transport = new FakeIpcTransport();
+  const registrar = new IpcDispatcher({
+    onError: (error) => {
+      throw error;
+    },
+    transport,
+  });
+  registrar.assign(PAGE, rendererSurface);
   const events = new AppEvents();
   const sessions = new FakeSessions();
   const settings = new SettingsStore({
@@ -105,6 +115,7 @@ const setup = async ({
     sessions,
     settings,
     stored,
+    transport,
   };
 };
 
@@ -213,14 +224,12 @@ describe(Profiles, () => {
   );
 
   it("deactivates the profiles past the free count when the trial ends, keeping them and moving the selection", async () => {
-    const { profiles, events, registrar } = await setup();
+    const { profiles, events, registrar, transport } = await setup();
     const created = unwrap(profiles.createProfile("Work"));
     unwrap(profiles.selectProfile(created.id));
-    registrar.call(profileChannels.snapshot, {}, PAGE);
+    registrar.dispatch(PAGE, wireName(profileChannels.snapshot), {});
     events.emit("entitlement.changed", { entitlement: free, reason: null });
-    const pushed = profilesSnapshotSchema.parse(
-      registrar.pushes.at(-1)?.payload
-    );
+    const pushed = profilesSnapshotSchema.parse(transport.sent.at(-1)?.payload);
     expect(
       pushed.profiles.map((profile) => [profile.label, profile.deactivated])
     ).toStrictEqual([
@@ -252,24 +261,25 @@ describe(Profiles, () => {
   });
 
   it("answers its channels and pushes each change to the pages that asked", async () => {
-    const { registrar, profiles } = await setup();
+    const { registrar, profiles, transport } = await setup();
     const seed = profilesSnapshotSchema.parse(
-      unwrap(registrar.call(profileChannels.snapshot, {}, PAGE))
+      unwrap(registrar.dispatch(PAGE, wireName(profileChannels.snapshot), {}))
     );
     expect(seed.profiles).toHaveLength(1);
     const added = unwrap(
-      registrar.call(
-        tabChannels.add,
-        { appId: "drive", profileId: profiles.selected().id },
-        PAGE
-      )
+      registrar.dispatch(PAGE, wireName(tabChannels.add), {
+        appId: "drive",
+        profileId: profiles.selected().id,
+      })
     );
     expect(added).toMatchObject({ appId: "drive" });
     expect(
-      registrar.call(profileChannels.create, { label: "Work" }, PAGE)
+      registrar.dispatch(PAGE, wireName(profileChannels.create), {
+        label: "Work",
+      })
     ).toMatchObject({ ok: true });
     expect(
-      registrar.pushes.map((pushed) => [pushed.channel, pushed.contentsId])
+      transport.sent.map((pushed) => [pushed.channel, pushed.contentsId])
     ).toStrictEqual([
       ["profiles.changed", PAGE],
       ["profiles.changed", PAGE],
