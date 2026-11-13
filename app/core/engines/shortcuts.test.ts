@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   conflicts,
+  glyphs,
+  matchShortcut,
   normalise,
   onPlatform,
   parseAccelerator,
@@ -133,5 +135,118 @@ describe(conflicts, () => {
     expect(conflicts(resolveBindings(commands, {}), "darwin")).toStrictEqual(
       []
     );
+  });
+});
+
+describe(glyphs, () => {
+  it("prints macOS symbols in the order its menus use", () => {
+    expect(glyphs("CmdOrCtrl+Alt+Shift+N", "darwin")).toBe("⌥⇧⌘N");
+    expect(glyphs("Ctrl+Shift+]", "darwin")).toBe("⌃⇧]");
+    expect(glyphs("Escape", "darwin")).toBe("⎋");
+  });
+
+  it("names the keys joined by + elsewhere", () => {
+    expect(glyphs("CmdOrCtrl+Alt+N", "win32")).toBe("Ctrl+Alt+N");
+    expect(glyphs("CmdOrCtrl+Shift+[", "linux")).toBe("Ctrl+Shift+[");
+  });
+
+  it("prints nothing for what does not parse", () => {
+    expect(glyphs("Hyper+D", "darwin")).toBeUndefined();
+  });
+});
+
+const press = (
+  code: string,
+  key: string,
+  modifiers: Partial<{
+    shift: boolean;
+    control: boolean;
+    alt: boolean;
+    meta: boolean;
+  }> = {}
+) => ({
+  alt: false,
+  code,
+  control: false,
+  key,
+  meta: false,
+  shift: false,
+  type: "keyDown",
+  ...modifiers,
+});
+
+describe(matchShortcut, () => {
+  const bindings = new Map<string, string | null>([
+    ["profiles.select2", "CommandOrControl+2"],
+    ["stage.splitVertical", "CommandOrControl+Alt+N"],
+    ["profiles.next", "CommandOrControl+Shift+]"],
+    ["page.close", "Escape"],
+    ["stage.closeTab", null],
+  ]);
+
+  it("finds the command a key press is bound to on each platform", () => {
+    expect(
+      matchShortcut(press("Digit2", "2", { meta: true }), bindings, "darwin")
+    ).toBe("profiles.select2");
+    expect(
+      matchShortcut(press("Digit2", "2", { control: true }), bindings, "linux")
+    ).toBe("profiles.select2");
+    expect(matchShortcut(press("Escape", "Escape"), bindings, "win32")).toBe(
+      "page.close"
+    );
+  });
+
+  it("reads the physical key, whatever character Option or Shift makes of it", () => {
+    expect(
+      matchShortcut(
+        press("KeyN", "˜", { alt: true, meta: true }),
+        bindings,
+        "darwin"
+      )
+    ).toBe("stage.splitVertical");
+    expect(
+      matchShortcut(
+        press("BracketRight", "}", { meta: true, shift: true }),
+        bindings,
+        "darwin"
+      )
+    ).toBe("profiles.next");
+  });
+
+  it("wants exactly the bound modifiers", () => {
+    expect(
+      matchShortcut(press("Digit2", "2", { control: true }), bindings, "darwin")
+    ).toBeUndefined();
+    expect(
+      matchShortcut(
+        press("Digit2", "2", { meta: true, shift: true }),
+        bindings,
+        "darwin"
+      )
+    ).toBeUndefined();
+    expect(
+      matchShortcut(
+        press("Escape", "Escape", { shift: true }),
+        bindings,
+        "darwin"
+      )
+    ).toBeUndefined();
+  });
+
+  it("ignores a release and an unbound command", () => {
+    expect(
+      matchShortcut(
+        { ...press("Digit2", "2", { meta: true }), type: "keyUp" },
+        bindings,
+        "darwin"
+      )
+    ).toBeUndefined();
+    expect(
+      matchShortcut(
+        press("KeyW", "W", { meta: true, shift: true }),
+        bindings,
+        "darwin"
+      )
+    ).toBeUndefined();
   });
 });

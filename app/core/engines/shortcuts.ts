@@ -201,3 +201,158 @@ export const conflicts = <Id extends string>(
     .filter(([, ids]) => ids.length > 1)
     .map(([accelerator, ids]) => ({ accelerator, ids }));
 };
+
+// macOS prints modifiers as symbols in Control, Option, Shift, Command order, as its menus do.
+const MAC_ORDER: readonly Modifier[] = ["Control", "Alt", "Shift", "Command"];
+
+const MAC_GLYPHS: Readonly<Partial<Record<Modifier, string>>> = {
+  Alt: "⌥",
+  Command: "⌘",
+  Control: "⌃",
+  Shift: "⇧",
+};
+
+const MAC_KEYS: Readonly<Record<string, string>> = {
+  Backspace: "⌫",
+  Delete: "⌦",
+  Down: "↓",
+  Escape: "⎋",
+  Left: "←",
+  Plus: "+",
+  Return: "↩",
+  Right: "→",
+  Space: "Space",
+  Tab: "⇥",
+  Up: "↑",
+};
+
+const OTHER_NAMES: Readonly<Partial<Record<Modifier, string>>> = {
+  Alt: "Alt",
+  AltGr: "AltGr",
+  Control: "Ctrl",
+  Shift: "Shift",
+  Super: "Super",
+};
+
+/** An accelerator as the platform prints it: symbols run together on macOS, such as ⌥⌘N, names joined by + elsewhere, such as Ctrl+Alt+N; undefined when it does not parse. */
+export const glyphs = (text: string, platform: string): string | undefined => {
+  const parsed = parseAccelerator(text);
+  if (parsed === undefined) {
+    return undefined;
+  }
+  const { modifiers, key } = onPlatform(parsed, platform);
+  if (platform === "darwin") {
+    return [
+      ...MAC_ORDER.filter((modifier) => modifiers.includes(modifier)).map(
+        (modifier) => MAC_GLYPHS[modifier] ?? ""
+      ),
+      MAC_KEYS[key] ?? key,
+    ].join("");
+  }
+  return [
+    ...modifiers.map((modifier) => OTHER_NAMES[modifier] ?? modifier),
+    key,
+  ].join("+");
+};
+
+/** A key event as Chromium reports it to main before the page sees it. */
+export interface KeyInput {
+  readonly type: string;
+  readonly key: string;
+  /** The physical key, which names the key whatever character a modifier makes it type. */
+  readonly code: string;
+  readonly shift: boolean;
+  readonly control: boolean;
+  readonly alt: boolean;
+  readonly meta: boolean;
+}
+
+const CODE_KEYS: Readonly<Record<string, string>> = {
+  ArrowDown: "Down",
+  ArrowLeft: "Left",
+  ArrowRight: "Right",
+  ArrowUp: "Up",
+  Backquote: "`",
+  Backslash: "\\",
+  Backspace: "Backspace",
+  BracketLeft: "[",
+  BracketRight: "]",
+  Comma: ",",
+  Delete: "Delete",
+  End: "End",
+  Enter: "Return",
+  Equal: "=",
+  Escape: "Escape",
+  Home: "Home",
+  Insert: "Insert",
+  Minus: "-",
+  PageDown: "PageDown",
+  PageUp: "PageUp",
+  Period: ".",
+  Quote: "'",
+  Semicolon: ";",
+  Slash: "/",
+  Space: "Space",
+  Tab: "Tab",
+};
+
+// Keyed by the physical key, since Alt or Option turns N into a character of its own on macOS and a layout moves the punctuation.
+const keyOfInput = (input: KeyInput): string | undefined => {
+  const named = /^(?:Key|Digit)(?<key>[A-Z\d])$/u.exec(input.code)?.groups?.key;
+  if (named !== undefined) {
+    return named;
+  }
+  if (/^F\d{1,2}$/u.test(input.code)) {
+    return input.code;
+  }
+  return CODE_KEYS[input.code] ?? keyOf(input.key);
+};
+
+const pressedOf = (input: KeyInput, platform: string): Set<Modifier> => {
+  const pressed = new Set<Modifier>();
+  if (input.control) {
+    pressed.add("Control");
+  }
+  if (input.alt) {
+    pressed.add("Alt");
+  }
+  if (input.shift) {
+    pressed.add("Shift");
+  }
+  if (input.meta) {
+    pressed.add(platform === "darwin" ? "Command" : "Super");
+  }
+  return pressed;
+};
+
+/** The command whose shortcut a key press is, on the platform; undefined for a release, a repeat of nothing bound, or a key no command has. */
+export const matchShortcut = <Id extends string>(
+  input: KeyInput,
+  bindings: ReadonlyMap<Id, string | null>,
+  platform: string
+): Id | undefined => {
+  if (input.type !== "keyDown") {
+    return undefined;
+  }
+  const key = keyOfInput(input);
+  if (key === undefined) {
+    return undefined;
+  }
+  const pressed = pressedOf(input, platform);
+  for (const [id, accelerator] of bindings) {
+    const parsed =
+      accelerator === null ? undefined : parseAccelerator(accelerator);
+    if (parsed === undefined) {
+      continue;
+    }
+    const wanted = onPlatform(parsed, platform);
+    if (
+      wanted.key === key &&
+      wanted.modifiers.length === pressed.size &&
+      wanted.modifiers.every((modifier) => pressed.has(modifier))
+    ) {
+      return id;
+    }
+  }
+  return undefined;
+};
