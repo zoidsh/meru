@@ -19,7 +19,7 @@ export interface GmailMark {
 
 const titleOf = (tab: Tab): string => {
   const name = appById(tab.appId)?.name ?? tab.appId;
-  return tab.title === "" || tab.title === name
+  return tab.title === null || tab.title === name
     ? name
     : msg`${tab.title} – ${name}`;
 };
@@ -137,7 +137,7 @@ export const TabRowButton = ({
         <AppIcon className="size-4" icon={appById(tab.appId)?.icon} />
         {wide ? (
           <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
-            {tab.title === "" ? titleOf(tab) : tab.title}
+            {tab.title ?? titleOf(tab)}
           </span>
         ) : null}
       </Button>

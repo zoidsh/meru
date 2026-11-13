@@ -28,7 +28,7 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
   const snapshot = useProfiles();
   const appIds = useSetting("launcher.apps");
   const [query, setQuery] = useState("");
-  const [highlighted, setHighlighted] = useState("");
+  const [highlighted, setHighlighted] = useState<string | undefined>();
   const shown = launcherApps(apps, appIds, query);
   const close = () => {
     client.send(launcher.close, {});
@@ -82,7 +82,8 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
           onKeyDown={keyDown}
           onValueChange={setHighlighted}
           shouldFilter={false}
-          value={highlighted}
+          // cmdk takes the empty string for no highlighted item.
+          value={highlighted ?? ""}
         >
           <CommandInput
             aria-label={msg`Search apps`}

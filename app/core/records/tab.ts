@@ -9,7 +9,8 @@ export const tabSchema = z.object({
   pinned: z.boolean(),
   profileId: idSchema,
   sleeping: z.boolean(),
-  title: z.string(),
+  /** The page's own title, null until it reports one. */
+  title: z.string().nullable(),
   url: z.url(),
   zoom: z.number().positive(),
 });
