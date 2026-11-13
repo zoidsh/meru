@@ -14,7 +14,7 @@ Meru is an Electron client for Gmail and Google apps. The design, principles, gl
 | Unit tests | `vp test run`, one file `vp test run <path>` |
 | Everything before a push | `pnpm check` (format, lint, types, tests) |
 | Build into `dist/` | `pnpm build` |
-| End-to-end, against `dist/` | `pnpm test:e2e`; on Linux `xvfb-run -a pnpm test:e2e` |
+| End-to-end, against `dist/` | `pnpm test:e2e`; on Linux `xvfb-run -a -s "-screen 0 1920x1080x24 -noreset" pnpm test:e2e` |
 | Package an unpacked app into `packaging/out/` | `pnpm package` |
 | Package installers, signed when the env is set | `pnpm package:mac`, `package:linux`, `package:win` |
 | Signed installers from CI, as run artifacts | `gh workflow run build.yml --ref next` |
@@ -88,7 +88,7 @@ The values live as GitHub repository secrets on `zoidsh/meru`, sourced from 1Pas
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push to `next`, every pull request and by hand. `check` runs `pnpm check` on Linux. `e2e` runs on `ubuntu-latest`, `macos-latest` and `windows-latest`: `pnpm build` and `pnpm test:e2e` against the unpacked `dist/` (under `xvfb-run -a` on Linux), plus `pnpm test` on macOS and Windows, where paths and the shell differ; a failed run uploads `test-results/`. `package` packs a Linux x64 AppImage through `pnpm package:linux AppImage --x64`. Steps run in bash on every OS, and pnpm's store is cached per OS. The e2e suite launches `dist/` with Playwright directly, so it needs no `MERU_E2E_BUILD` build.
+`.github/workflows/ci.yml` runs on every push to `next`, every pull request and by hand. `check` runs `pnpm check` on Linux. `e2e` runs on `ubuntu-latest`, `macos-latest` and `windows-latest`: `pnpm build` and `pnpm test:e2e` against the unpacked `dist/` (under `xvfb-run` on Linux, with `-noreset` so the X server survives the moment between two launches), plus `pnpm test` on macOS and Windows, where paths and the shell differ; a failed run uploads `test-results/`. `package` packs a Linux x64 AppImage through `pnpm package:linux AppImage --x64`. Steps run in bash on every OS, and pnpm's store is cached per OS. The e2e suite launches `dist/` with Playwright directly, so it needs no `MERU_E2E_BUILD` build.
 
 `.github/workflows/build.yml` runs only by hand (`gh workflow run build.yml --ref next`). On macOS, Linux and Windows it runs `pnpm package:<platform>` with that platform's signing secrets, so macOS is signed and notarised and Windows signed, and keeps the installers as the run's artifacts for 14 days: `meru-mac` (dmg and zip for x64 and arm64), `meru-win` (one NSIS installer and one portable exe, each holding x64 and arm64), `meru-linux` (AppImage, deb and rpm for both). It publishes nothing: there is no release, no tag trigger and no update feed.
 

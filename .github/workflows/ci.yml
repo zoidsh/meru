@@ -59,8 +59,9 @@ jobs:
       - if: runner.os != 'Linux'
         run: pnpm test
       - run: pnpm build
+      # Xvfb resets when its last client disconnects, and an app launched during the reset fails with "Missing X server"; xvfb-run's default screen is also 8-bit 640x480.
       - if: runner.os == 'Linux'
-        run: xvfb-run -a pnpm test:e2e
+        run: xvfb-run -a -s "-screen 0 1920x1080x24 -noreset" pnpm test:e2e
       - if: runner.os != 'Linux'
         run: pnpm test:e2e
       # always(): the trace of a run killed for time is the one most worth reading.
