@@ -110,8 +110,8 @@ test("follows settings.json edited while the app runs", async () => {
       .poll(async () => await inspect(app))
       .toMatchObject({
         menu: { "stage.splitVertical": "CommandOrControl+Alt+V" },
+        panes: [{ zoom: 2 }],
         views: [{ ...size, ...TOP }],
-        zoom: [2],
       });
   } finally {
     await close();

@@ -17,7 +17,7 @@ const valueOf = <T>(result: Result<T, IpcError>): T => {
   return result.value;
 };
 
-/** What Electron holds for the page's stage and the menu: the bounds of each child view, bottom first, each pane's zoom and each command's accelerator. */
+/** What Electron holds for the page's stage and the menu: the bounds of each child view, bottom first, each pane's tab, web contents and zoom, and each command's accelerator. */
 export const inspect = async (app: ElectronApplication) =>
   e2eSnapshotSchema.parse(await readExposed(app, E2E_GLOBAL));
 
@@ -26,15 +26,15 @@ export const viewsOf = async (app: ElectronApplication) => {
   return views;
 };
 
-/** Each pane's tab with the id of the web contents showing it, in layout order. */
-export const paneContentsOf = async (app: ElectronApplication) => {
-  const { tabs } = await inspect(app);
-  return tabs;
+/** Each pane's tab with the id of the web contents showing it and its zoom, in layout order. */
+export const panesOf = async (app: ElectronApplication) => {
+  const { panes } = await inspect(app);
+  return panes;
 };
 
 export const zoomOf = async (app: ElectronApplication) => {
-  const { zoom } = await inspect(app);
-  return zoom;
+  const panes = await panesOf(app);
+  return panes.map((pane) => pane.zoom);
 };
 
 export const stageOf = async (chrome: Page) =>
