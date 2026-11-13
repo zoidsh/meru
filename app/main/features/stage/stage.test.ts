@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
+import type { Beside } from "../../../core/records/layout.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
@@ -34,6 +35,8 @@ import { Stages } from "./index.ts";
 import type { Stage } from "./stage.ts";
 
 const GMAIL = "https://mail.google.com/";
+
+const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
 
 const rethrow = (error: unknown) => {
   throw error;
@@ -359,7 +362,7 @@ describe(Stages, () => {
     const [gmail, calendarView] = views.created;
     const seen: (readonly unknown[])[] = [];
 
-    unwrap(profiles.joinTab(gmailId, calendar.id));
+    unwrap(profiles.joinTab(gmailId, calendar.id, VERTICAL_AFTER));
     seen.push(window.childViews());
     unwrap(profiles.leaveGroup(gmailId, 0));
     seen.push(window.childViews());

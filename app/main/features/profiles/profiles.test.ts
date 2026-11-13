@@ -7,6 +7,7 @@ import type { Placement } from "../../../core/engines/state.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { AppEventMap } from "../../../core/events.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
+import type { Beside } from "../../../core/records/layout.ts";
 import { PROFILE_COLORS } from "../../../core/records/profile.ts";
 import { profilesStateSchema } from "../../../core/records/profiles-state.ts";
 import type { ProfilesState } from "../../../core/records/profiles-state.ts";
@@ -124,6 +125,8 @@ const setup = async ({
     transport,
   };
 };
+
+const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
 
 const unwrap = <T>(
   result: { ok: true; value: T } | { ok: false; error: unknown }
@@ -319,13 +322,13 @@ describe(Profiles, () => {
     const drive = unwrap(profiles.addTab(profileId, "drive"));
     const groupOfTab = (tabId: string) =>
       profiles.state.groups.find((group) => group.tabIds.includes(tabId));
-    unwrap(profiles.joinTab(drive.id, calendar.id));
+    unwrap(profiles.joinTab(drive.id, calendar.id, VERTICAL_AFTER));
     expect(groupOfTab(drive.id)?.tabIds).toStrictEqual([calendar.id, drive.id]);
     expect(groupOfTab(drive.id)?.layout).toMatchObject({
       kind: "split",
       orientation: "vertical",
     });
-    unwrap(profiles.joinTab(drive.id, gmail?.id ?? ""));
+    unwrap(profiles.joinTab(drive.id, gmail?.id ?? "", VERTICAL_AFTER));
     expect(groupOfTab(calendar.id)?.tabIds).toStrictEqual([calendar.id]);
     expect(groupOfTab(drive.id)?.tabIds).toStrictEqual([gmail?.id, drive.id]);
     unwrap(profiles.leaveGroup(drive.id, 0));
@@ -440,7 +443,8 @@ const operations: readonly ((
   (profiles, { profileId, appId }) => profiles.addTab(profileId, appId),
   (profiles, { tabId }) => profiles.closeTab(tabId),
   (profiles, { tabId, index }) => profiles.moveTab(tabId, index),
-  (profiles, { tabId, targetTabId }) => profiles.joinTab(tabId, targetTabId),
+  (profiles, { tabId, targetTabId, placement }) =>
+    profiles.joinTab(tabId, targetTabId, placement),
   (profiles, { tabId, index }) => profiles.leaveGroup(tabId, index),
   (profiles, { profileId, appId, placement }) =>
     profiles.addTab(profileId, appId, placement),

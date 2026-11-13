@@ -59,7 +59,10 @@ export const useTabDrop = (): {
       } else if (action?.kind === "leave") {
         void client.invoke(tabs.leave, { tabId: source, to: action.to });
       } else if (action?.kind === "join") {
+        // A drop onto a row says nothing of a side, so the tab goes to the right of the row's pane until a gesture on the stage chooses one.
         void client.invoke(tabs.join, {
+          orientation: "vertical",
+          side: "after",
           tabId: source,
           targetTabId: action.targetTabId,
         });

@@ -36,6 +36,7 @@ import type {
 } from "../../../core/ports.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { Group } from "../../../core/records/group.ts";
+import type { Beside } from "../../../core/records/layout.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
 import type { Profile } from "../../../core/records/profile.ts";
 import { profilesStateSchema } from "../../../core/records/profiles-state.ts";
@@ -167,8 +168,8 @@ export class Profiles {
         add: ({ profileId, appId }) => this.addTab(profileId, appId),
         close: ({ tabId }) => done(this.closeTab(tabId)),
         focus: ({ tabId }) => done(this.focusTab(tabId)),
-        join: ({ tabId, targetTabId }) =>
-          done(this.joinTab(tabId, targetTabId)),
+        join: ({ tabId, targetTabId, orientation, side }) =>
+          done(this.joinTab(tabId, targetTabId, { orientation, side })),
         leave: ({ tabId, to }) => done(this.leaveGroup(tabId, to)),
         move: ({ tabId, to }) => done(this.moveTab(tabId, to)),
       }),
@@ -354,19 +355,14 @@ export class Profiles {
     return this.#commit(leaveGroup(this.state, tabId, this.#options.ids, to));
   }
 
-  /** Puts a tab beside another tab's pane, vertically, leaving its own group first, and brings it to the front. */
+  /** Puts a tab beside another tab's pane where `beside` says, leaving its own group first when that is another, and brings it to the front. */
   joinTab(
     tabId: string,
-    targetTabId: string
+    targetTabId: string,
+    beside: Beside
   ): Result<undefined, ProfilesError> {
     const committed = this.#commit(
-      joinTab(
-        this.state,
-        tabId,
-        targetTabId,
-        { orientation: "vertical", side: "after" },
-        this.#options.ids
-      )
+      joinTab(this.state, tabId, targetTabId, beside, this.#options.ids)
     );
     return committed.ok ? this.focusTab(tabId) : committed;
   }
