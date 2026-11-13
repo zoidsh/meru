@@ -5,8 +5,8 @@ import { hostname } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
+import { currentBranch, devUserDataDir } from "../packages/user-data/index.ts";
 import { measureApp } from "../tests/measure.ts";
-import { toProfileName } from "./lib/dev-args.ts";
 import { recordingHost, table } from "./lib/measure-summary.ts";
 import type { AppName, Measurement } from "./lib/measure-summary.ts";
 
@@ -88,7 +88,7 @@ const run = async () => {
     userData:
       values.profile === undefined
         ? undefined
-        : path.join(root, ".meru", toProfileName(values.profile)),
+        : devUserDataDir(root, values.profile, currentBranch(root)),
   });
   const base =
     floor === undefined

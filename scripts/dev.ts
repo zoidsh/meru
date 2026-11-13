@@ -1,5 +1,5 @@
 // node scripts/dev.ts [--profile <name>] [--background] [any Electron argument…]
-import { execFileSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { createRequire } from "node:module";
@@ -7,31 +7,16 @@ import path from "node:path";
 
 import { build, createServer } from "vite-plus";
 
-import { resolveProfile, splitArgs } from "./lib/dev-args.ts";
+import { currentBranch, devUserDataDir } from "../packages/user-data/index.ts";
+import { splitArgs } from "./lib/dev-args.ts";
 
 const root = path.join(import.meta.dirname, "..");
 // The electron package's main export, outside Electron, is the binary's path.
 const electronBinary = String(createRequire(import.meta.url)("electron"));
 
-const git = (...args: string[]) => {
-  try {
-    return execFileSync("git", args, { cwd: root, encoding: "utf-8" }).trim();
-  } catch {
-    return "";
-  }
-};
-
 const { profile, background, electronArgs } = splitArgs(process.argv.slice(2));
-const profileName = resolveProfile(profile, {
-  branch: git("symbolic-ref", "--short", "HEAD"),
-  gitCommonDir: path.resolve(root, git("rev-parse", "--git-common-dir")),
-  gitDir: path.resolve(root, git("rev-parse", "--git-dir")),
-  toplevel: root,
-});
-const userDataArgs =
-  profileName === undefined
-    ? []
-    : [`--user-data-dir=${path.join(root, ".meru", profileName)}`];
+const userData = devUserDataDir(root, profile, currentBranch(root));
+const userDataArgs = [`--user-data-dir=${userData}`];
 
 const renderer = await createServer({
   configFile: path.join(root, "vite.renderer.ts"),
@@ -117,5 +102,5 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 }
 
 console.log(
-  `Renderer on ${rendererUrl}, profile ${profileName ?? "default"}${background ? ", in the background" : ""}`
+  `Renderer on ${rendererUrl}, user data in ${path.relative(root, userData)}${background ? ", in the background" : ""}`
 );

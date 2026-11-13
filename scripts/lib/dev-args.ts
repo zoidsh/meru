@@ -1,5 +1,3 @@
-import path from "node:path";
-
 export interface DevArgs {
   readonly profile: string | undefined;
   readonly background: boolean;
@@ -33,35 +31,4 @@ export const splitArgs = (
   }
 
   return { background, electronArgs, profile };
-};
-
-/** A branch or folder name as a directory name under `.meru`: slashes and anything else a path could choke on become dashes. */
-export const toProfileName = (ref: string): string =>
-  ref
-    .replaceAll(/[^\w.-]+/gu, "-")
-    .replaceAll(/^[.-]+|[.-]+$/gu, "")
-    .slice(0, 64) || "worktree";
-
-export interface WorktreeState {
-  readonly gitDir: string;
-  readonly gitCommonDir: string;
-  readonly toplevel: string;
-  /** Empty on a detached HEAD. */
-  readonly branch: string;
-}
-
-/**
- * The profile a run uses: the one named, else one per linked worktree, because Electron scopes its single instance lock to the user data directory and two runs sharing one are not two apps. The main checkout keeps the default directory, and so its signed-in profiles.
- */
-export const resolveProfile = (
-  named: string | undefined,
-  worktree: WorktreeState
-): string | undefined => {
-  if (named !== undefined) {
-    return toProfileName(named);
-  }
-  if (path.resolve(worktree.gitDir) === path.resolve(worktree.gitCommonDir)) {
-    return undefined;
-  }
-  return toProfileName(worktree.branch || path.basename(worktree.toplevel));
 };

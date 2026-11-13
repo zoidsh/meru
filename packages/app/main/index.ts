@@ -23,6 +23,7 @@ import {
   createElectronPorts,
 } from "./platform/ports.ts";
 import { createElectronUpdater } from "./platform/updater.ts";
+import { placeUserData } from "./platform/user-data.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
 import { answerE2e } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
@@ -37,8 +38,9 @@ const report = (error: unknown) => {
 };
 
 const start = async () => {
-  const ports = createElectronPorts();
   const dist = path.join(import.meta.dirname, "..");
+  placeUserData(path.join(dist, ".."));
+  const ports = createElectronPorts();
   const e2e = process.env.MERU_E2E === "1";
 
   ports.app.onWindowAllClosed(() => {

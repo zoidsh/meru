@@ -8,6 +8,7 @@
   "references": [
     { "path": "./packages/app/core" },
     { "path": "./packages/app/shared" },
-    { "path": "./packages/app/main" }
+    { "path": "./packages/app/main" },
+    { "path": "./packages/user-data" }
   ]
 }

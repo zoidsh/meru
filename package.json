@@ -19,10 +19,10 @@
     "test:e2e": "playwright test --project e2e",
     "test:budget": "playwright test --project budget",
     "measure": "node scripts/measure.ts",
-    "package": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --dir",
-    "package:mac": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --mac",
-    "package:linux": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --linux",
-    "package:win": "pnpm build && packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --win"
+    "package": "pnpm build && MERU_LOCAL_PACKAGE=1 packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --dir",
+    "package:mac": "pnpm build && MERU_LOCAL_PACKAGE=1 packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --mac",
+    "package:linux": "pnpm build && MERU_LOCAL_PACKAGE=1 packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --linux",
+    "package:win": "pnpm build && MERU_LOCAL_PACKAGE=1 packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --win"
   },
   "dependencies": {
     "electron-updater": "6.6.2",

@@ -24,6 +24,7 @@
     { "path": "./packages/app/preload" },
     { "path": "./packages/app/renderer" },
     { "path": "./packages/app/test/fakes" },
+    { "path": "./packages/user-data" },
     { "path": "./tsconfig.node.json" }
   ]
 }

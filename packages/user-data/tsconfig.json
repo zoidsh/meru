@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../node_modules/.tsbuild/user-data",
+    "lib": ["es2024"],
+    "types": ["node"]
+  },
+  "include": ["."]
+}

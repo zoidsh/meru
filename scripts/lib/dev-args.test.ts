@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveProfile, splitArgs, toProfileName } from "./dev-args.ts";
+import { splitArgs } from "./dev-args.ts";
 
 describe(splitArgs, () => {
   it("claims --profile and --background and passes the rest to Electron", () => {
@@ -26,45 +26,5 @@ describe(splitArgs, () => {
     expect(() => splitArgs(["--profile"], {})).toThrow(
       "--profile needs a name"
     );
-  });
-});
-
-describe(resolveProfile, () => {
-  const linked = {
-    branch: "feature/sidebar",
-    gitCommonDir: "/repo/.git",
-    gitDir: "/repo/.git/worktrees/sidebar",
-    toplevel: "/repo/.claude/worktrees/sidebar",
-  };
-
-  it("names a linked worktree's profile after its branch", () => {
-    expect(resolveProfile(undefined, linked)).toBe("feature-sidebar");
-  });
-
-  it("falls back to the folder on a detached HEAD", () => {
-    expect(resolveProfile(undefined, { ...linked, branch: "" })).toBe(
-      "sidebar"
-    );
-  });
-
-  it("leaves the main checkout on the default directory", () => {
-    expect(
-      resolveProfile(undefined, {
-        ...linked,
-        gitDir: "/repo/.git",
-        toplevel: "/repo",
-      })
-    ).toBeUndefined();
-  });
-
-  it("prefers a named profile", () => {
-    expect(resolveProfile("demo", linked)).toBe("demo");
-  });
-});
-
-describe(toProfileName, () => {
-  it("keeps a name safe as one directory", () => {
-    expect(toProfileName("../.hidden/x")).toBe("hidden-x");
-    expect(toProfileName("///")).toBe("worktree");
   });
 });

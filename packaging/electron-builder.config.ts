@@ -1,3 +1,6 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
 import type { Configuration } from "electron-builder";
 
 const ARCHES: ("x64" | "arm64")[] = ["x64", "arm64"];
@@ -6,6 +9,19 @@ const SCHEMES = ["meru", "mailto", "http", "https"];
 
 // Playwright drives the app through the inspector, so the end-to-end suite's build keeps the CLI inspect arguments that a release turns off.
 const e2eBuild = process.env.MERU_E2E_BUILD === "1";
+
+// A build for this machine names the checkout it came from, and the app keeps its user data there rather than in the directory an installed Meru, 3.x included, uses.
+const localMarker = (): string | undefined => {
+  if (process.env.MERU_LOCAL_PACKAGE !== "1") {
+    return undefined;
+  }
+  const marker = path.join(import.meta.dirname, "out", "local-package");
+  mkdirSync(path.dirname(marker), { recursive: true });
+  writeFileSync(marker, path.resolve(import.meta.dirname, ".."));
+  return marker;
+};
+
+const marker = localMarker();
 
 const config: Configuration = {
   appId: "sh.zoid.meru",
@@ -30,6 +46,8 @@ const config: Configuration = {
     runAsNode: false,
   },
   // Main and the preloads are bundles, so nothing under node_modules is loaded at runtime.
+  extraResources:
+    marker === undefined ? [] : [{ from: marker, to: "local-package" }],
   files: ["dist/**", "!dist/**/*.map", "static/**", "!node_modules/**"],
   linux: {
     category: "Network;Office",
