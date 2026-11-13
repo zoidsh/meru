@@ -79,18 +79,6 @@ const drag = async (
   ).toHaveCount(0);
 };
 
-test("shows a fresh profile with neither the strip nor the profile row", async () => {
-  const { chrome, close } = await launch();
-  try {
-    await expect(chrome.locator("header[data-titlebar]")).toBeVisible();
-    await expect(chrome.locator("nav[data-sidebar]")).toHaveCount(0);
-    await expect(chrome.locator("[data-profile-row]")).toHaveCount(0);
-    await expect(chrome.locator("[data-launcher-button]")).toBeVisible();
-  } finally {
-    await close();
-  }
-});
-
 test("shows the strip once Calendar is added through the launcher, Drive dragged onto it shares its group and the stage, and dragged between rows leaves the group and moves", async () => {
   const { app, chrome, close } = await launch();
   try {

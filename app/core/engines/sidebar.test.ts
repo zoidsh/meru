@@ -28,7 +28,7 @@ const tab = (appId: string, pinned = false): Tab => ({
 const auto: SidebarChoice = { flipped: null, hidden: false, width: "auto" };
 
 describe(sidebarOf, () => {
-  it("hides the strip with one tab or none, and when the user hid it", () => {
+  it("hides the strip for a fresh profile's one Gmail tab, with none, and when the user hid it", () => {
     expect(sidebarOf([tab("gmail")], auto)).toStrictEqual({ kind: "hidden" });
     expect(sidebarOf([], auto)).toStrictEqual({ kind: "hidden" });
     expect(

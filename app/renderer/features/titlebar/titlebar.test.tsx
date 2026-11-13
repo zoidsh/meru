@@ -51,9 +51,12 @@ describe(Titlebar, () => {
     }
   });
 
-  it("shows no profile row while there is one profile", () => {
+  it("shows a fresh profile, its strip hidden, no profile row and what goes at its right end", () => {
     const { container } = mount([profilesAnswer([profileOf("personal")])]);
-    expect(container.querySelector("[data-profile-row]")).toBeNull();
+    expect([
+      container.querySelector("[data-profile-row]"),
+      container.querySelector("[data-trailing]") !== null,
+    ]).toStrictEqual([null, true]);
   });
 
   it("shows a button per profile the entitlement allows, the selected one secondary, and selects one on a click", () => {
