@@ -19,8 +19,9 @@ import { createClient } from "./client.ts";
 const elsewhere = defineChannels("elsewhere", {
   poke: event(z.object({ orientation: z.enum(["vertical", "horizontal"]) })),
 });
+// Channels are told apart by their schemas' types, so this push carries a payload no surface's push has.
 const elsewherePushes = definePushes("elsewhere", {
-  poked: push(z.object({})),
+  poked: push(z.object({ pokedAt: z.date() })),
 });
 
 const snapshot: StageSnapshot = {

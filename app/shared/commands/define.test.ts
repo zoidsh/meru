@@ -52,6 +52,7 @@ describe("the command registry", () => {
       | "stage.focusPrevious"
       | "stage.splitHorizontal"
       | "stage.splitVertical"
+      | "tabs.new"
       | "updater.check"
       | "updater.install"
     >();

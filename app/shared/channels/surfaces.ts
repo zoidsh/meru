@@ -4,6 +4,7 @@ import type { Surface } from "./define.ts";
 import { drag } from "./drag.ts";
 import { e2e } from "./e2e.ts";
 import { entitlement, entitlementPushes } from "./entitlement.ts";
+import { launcher, launcherPushes } from "./launcher.ts";
 import { measure } from "./measure.ts";
 import { profiles, profilesPushes, tabs } from "./profiles.ts";
 import { settings, settingsPushes } from "./settings.ts";
@@ -19,6 +20,7 @@ export const rendererSurface = defineSurface({
     updaterPushes,
     profilesPushes,
     sidebarPushes,
+    launcherPushes,
   ],
   requests: [
     stage,
@@ -29,6 +31,7 @@ export const rendererSurface = defineSurface({
     profiles,
     tabs,
     sidebar,
+    launcher,
   ],
 });
 

@@ -5,6 +5,7 @@ import type {
   ValueOf,
 } from "../../core/engines/settings.ts";
 import { appearanceSettings } from "../../main/features/appearance/settings.ts";
+import { launcherSettings } from "../../main/features/launcher/settings.ts";
 import { profilesSettings } from "../../main/features/profiles/settings.ts";
 import { shortcutsSettings } from "../../main/features/shortcuts/settings.ts";
 import { sidebarSettings } from "../../main/features/sidebar/settings.ts";
@@ -15,6 +16,7 @@ import type { Setting } from "./define.ts";
 
 export const registry = [
   ...appearanceSettings,
+  ...launcherSettings,
   ...profilesSettings,
   ...shortcutsSettings,
   ...sidebarSettings,

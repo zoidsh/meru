@@ -15,7 +15,10 @@ import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { drag } from "../../../shared/channels/drag.ts";
 import { stage, stagePushes } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import { dragSurface } from "../../../shared/channels/surfaces.ts";
+import {
+  dragSurface,
+  rendererSurface,
+} from "../../../shared/channels/surfaces.ts";
 import type { CommandRegistrar } from "../../../shared/commands/define.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import { stageCommands } from "./commands.ts";
@@ -33,6 +36,7 @@ export interface StagesOptions {
   readonly blankPanes: boolean;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
+  readonly popupPreload: string | undefined;
   /** What the chrome takes of a window's content area. */
   readonly insets: () => ChromeInsets;
   readonly registrar: IpcRegistrar;
@@ -99,8 +103,8 @@ export class Stages {
         resize: ({ splitId, ratio }, { contentsId }) =>
           this.resize(contentsId, splitId, ratio),
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),
-        split: ({ orientation, paneId }, { contentsId }) =>
-          this.split(contentsId, orientation, paneId),
+        split: ({ orientation, paneId, appId }, { contentsId }) =>
+          this.split(contentsId, orientation, paneId, appId),
       }),
       registrar.register(drag, {
         end: (point, { contentsId }) => this.endDrag(contentsId, point),
@@ -121,17 +125,21 @@ export class Stages {
     const opened = new Stage({
       dragPreload: this.#options.dragPreload,
       groupId,
+      popupPreload: this.#options.popupPreload,
       insets: this.#options.insets,
       onChange: (snapshot) => {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
       },
       onError: this.#options.onError,
-      onOverlay: (contentsId, attached) => {
+      onOverlay: (contentsId, attached, kind) => {
         if (attached) {
           this.#bySender.set(contentsId, opened);
           this.#unassign.set(
             contentsId,
-            this.#options.registrar.assign(contentsId, dragSurface)
+            this.#options.registrar.assign(
+              contentsId,
+              kind === "drag" ? dragSurface : rendererSurface
+            )
           );
         } else {
           this.#bySender.delete(contentsId);
@@ -168,9 +176,12 @@ export class Stages {
   split(
     windowId: number,
     orientation: Orientation,
-    paneId?: string
+    paneId?: string,
+    appId?: string
   ): Result<undefined, StageError> {
-    return this.#with(windowId, (found) => found.split(orientation, paneId));
+    return this.#with(windowId, (found) =>
+      found.split(orientation, paneId, appId)
+    );
   }
 
   close(windowId: number, paneId?: string): Result<undefined, StageError> {

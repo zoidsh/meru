@@ -60,10 +60,19 @@ export interface StageOptions {
   /** What the chrome takes of the content area, read on every layout. */
   readonly insets: () => ChromeInsets;
   readonly dragPreload: string | undefined;
+  /** The preload of a popup's page, which is one of the renderer's. */
+  readonly popupPreload: string | undefined;
   readonly onChange: (snapshot: StageSnapshot) => void;
-  readonly onOverlay: (contentsId: number, attached: boolean) => void;
+  readonly onOverlay: (
+    contentsId: number,
+    attached: boolean,
+    kind: OverlayKind
+  ) => void;
   readonly onError: (error: unknown) => void;
 }
+
+/** A drag's overlay only catches the pointer; a popup is a renderer page, such as the launcher, drawn over the panes. */
+export type OverlayKind = "drag" | "popup";
 
 interface Drag {
   readonly splitId: string;
@@ -89,6 +98,7 @@ export class Stage {
   #retired: ViewPort[] = [];
   #focused: string | undefined;
   #drag: Drag | undefined;
+  #popup: ViewPort | undefined;
   #published: StageSnapshot | undefined;
 
   constructor(options: StageOptions) {
@@ -129,21 +139,26 @@ export class Stage {
     this.#update();
   }
 
-  /** Splits a pane with a new tab of the same app beside or below it. */
+  /** Splits a pane with a new tab beside or below it, of `appId`, or of the pane's own app. */
   split(
     orientation: Orientation,
-    paneId = this.#focused
+    paneId = this.#focused,
+    appId?: string
   ): Result<undefined, StageError> {
     const group = this.#read();
     const source = this.#tabOf(paneId);
     if (paneId === undefined || group === undefined || source === undefined) {
       return err("unknownPane");
     }
-    const added = this.#options.profiles.addTab(group.profileId, source.appId, {
-      groupId: group.id,
-      orientation,
-      paneId,
-    });
+    const added = this.#options.profiles.addTab(
+      group.profileId,
+      appId ?? source.appId,
+      {
+        groupId: group.id,
+        orientation,
+        paneId,
+      }
+    );
     if (!added.ok) {
       return err(added.error === "unknownPane" ? "unknownPane" : "refused");
     }
@@ -260,10 +275,56 @@ export class Stage {
     this.#load(overlay, dragPage(divider.orientation));
     this.#drag = { layout: this.#layout(), overlay, ratio: undefined, splitId };
     this.#overlays = [...this.#overlays, overlay];
-    this.#options.onOverlay(overlay.contentsId, true);
+    this.#options.onOverlay(overlay.contentsId, true, "drag");
     this.#reconcile();
     this.#arrange(false);
     return ok(undefined);
+  }
+
+  // A page of the chrome page's cannot draw over the panes, which are views above it, so a popup is a transparent view of its own over the whole window, taking the keyboard while it is up.
+  /** Shows a renderer page over the panes until closePopup, replacing any popup already up. */
+  openPopup(url: string): void {
+    this.#dropPopup();
+    const view = this.#options.views.create({
+      preload: this.#options.popupPreload,
+      radius: 0,
+      zoom: 1,
+    });
+    view.setBackgroundColor(TRANSPARENT);
+    this.#popup = view;
+    this.#overlays = [...this.#overlays, view];
+    this.#options.onOverlay(view.contentsId, true, "popup");
+    this.#reconcile();
+    this.#arrange(false);
+    // Focused once loaded, since a view focused before its page exists hands the page no focus to start with.
+    const load = async () => {
+      try {
+        await view.loadURL(url);
+        if (this.#popup === view) {
+          view.focus();
+        }
+      } catch (error) {
+        this.#options.onError(error);
+      }
+    };
+    void load();
+  }
+
+  /** Takes the popup down and gives the keyboard back to the focused pane. */
+  closePopup(): void {
+    if (this.#popup === undefined) {
+      return;
+    }
+    this.#dropPopup();
+    this.#reconcile();
+    if (this.#focused !== undefined) {
+      this.#views.get(this.#focused)?.focus();
+    }
+  }
+
+  /** The popup's view while one is up. */
+  get popup(): ViewPort | undefined {
+    return this.#popup;
   }
 
   // The chrome page and the overlay both report the pointer, so a move or release after the other source ended the drag is expected and ignored.
@@ -369,6 +430,7 @@ export class Stage {
     }
     this.#navigationListeners.clear();
     this.#retireOverlay();
+    this.#dropPopup();
     for (const view of [...this.#views.values(), ...this.#retired]) {
       view.destroy();
     }
@@ -416,6 +478,17 @@ export class Stage {
     void load();
   }
 
+  #dropPopup(): void {
+    const popup = this.#popup;
+    if (popup === undefined) {
+      return;
+    }
+    this.#popup = undefined;
+    this.#overlays = this.#overlays.filter((view) => view !== popup);
+    this.#options.onOverlay(popup.contentsId, false, "popup");
+    this.#retired.push(popup);
+  }
+
   #retireOverlay(): void {
     const drag = this.#drag;
     if (drag === undefined) {
@@ -423,7 +496,7 @@ export class Stage {
     }
     this.#drag = undefined;
     this.#overlays = this.#overlays.filter((view) => view !== drag.overlay);
-    this.#options.onOverlay(drag.overlay.contentsId, false);
+    this.#options.onOverlay(drag.overlay.contentsId, false, "drag");
     this.#retired.push(drag.overlay);
   }
 

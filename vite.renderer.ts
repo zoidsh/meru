@@ -14,7 +14,12 @@ export default defineConfig(
     base: "./",
     build: {
       outDir: path.join(dist, "renderer"),
-      rolldownOptions: { input: { chrome: path.join(pages, "chrome.html") } },
+      rolldownOptions: {
+        input: {
+          chrome: path.join(pages, "chrome.html"),
+          launcher: path.join(pages, "launcher.html"),
+        },
+      },
     },
     plugins: [react(), tailwindcss()],
     root: pages,

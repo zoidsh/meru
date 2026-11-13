@@ -1,4 +1,5 @@
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { TITLEBAR_HEIGHT } from "../core/engines/chrome.ts";
 import { sidebarInset } from "../core/engines/sidebar.ts";
@@ -14,6 +15,7 @@ import {
 } from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
+import { Launcher } from "./features/launcher/index.ts";
 import { Profiles } from "./features/profiles/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { Sidebars } from "./features/sidebar/index.ts";
@@ -37,7 +39,7 @@ import { IpcDispatcher } from "./shell/ipc.ts";
 import { ShortcutKeys } from "./shell/keys.ts";
 import { answerMeasure } from "./shell/measure.ts";
 import { ApplicationMenu } from "./shell/menu.ts";
-import { MainWindow } from "./shell/window.ts";
+import { MainWindow, pageQuery } from "./shell/window.ts";
 
 const report = (error: unknown) => {
   console.error(error);
@@ -178,6 +180,7 @@ const start = async () => {
     blankPanes: e2e,
     commands,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
+    popupPreload: path.join(dist, "preload", "renderer.cjs"),
     events,
     insets: () => ({
       left: sidebarInset(sidebars.current()),
@@ -207,6 +210,29 @@ const start = async () => {
     settings,
   });
   sidebars.start();
+  const rendererUrl = process.env.MERU_RENDERER_URL;
+  new Launcher({
+    commands,
+    pageUrl: (anchor) => {
+      const url =
+        rendererUrl === undefined
+          ? pathToFileURL(path.join(dist, "renderer", "launcher.html"))
+          : new URL("launcher.html", rendererUrl);
+      const query = {
+        ...pageQuery(
+          ports.lifecycle.platform,
+          ports.theme.dark() ? "dark" : "light"
+        ),
+        anchor: JSON.stringify(anchor),
+      };
+      for (const [key, value] of Object.entries(query)) {
+        url.searchParams.set(key, value);
+      }
+      return url.href;
+    },
+    registrar: dispatcher,
+    stages,
+  }).start();
   commands.provide((windowId) => {
     const id = windowId ?? mainWindowId;
     if (id === undefined) {
@@ -269,7 +295,7 @@ const start = async () => {
     ports,
     preload: path.join(dist, "preload", "renderer.cjs"),
     rendererFile: path.join(dist, "renderer", "chrome.html"),
-    rendererUrl: process.env.MERU_RENDERER_URL,
+    rendererUrl,
   });
   await window.show();
   entitlement.start();

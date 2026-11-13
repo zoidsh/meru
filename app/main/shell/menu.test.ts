@@ -81,6 +81,7 @@ const setup = async (platform = "darwin") => {
     blankPanes: false,
     commands: dispatcher,
     dragPreload: undefined,
+    popupPreload: undefined,
     events,
     insets: () => ({ left: 0, top: 0 }),
     onError: () => {
@@ -191,16 +192,33 @@ describe(ApplicationMenu, () => {
         label: "Focus previous pane",
       },
     ]);
-    expect(sections()[1]).toStrictEqual({ kind: "role", role: "editMenu" });
+    expect(sections()[2]).toStrictEqual({ kind: "role", role: "editMenu" });
   });
 
-  it("puts a file menu where there is no app menu, and the update commands in Help", async () => {
+  it("puts New tab in a File menu, ending with Close on macOS", async () => {
+    const { sections } = await setup("darwin");
+    const [, file] = sections();
+    expect(file).toMatchObject({
+      entries: [
+        { id: "tabs.new", kind: "action" },
+        { kind: "separator" },
+        { kind: "role", role: "close" },
+      ],
+      kind: "submenu",
+      label: "File",
+    });
+  });
+
+  it("ends the File menu with Quit where there is no app menu, and puts the update commands in Help", async () => {
     const { sections } = await setup("linux");
     const [first] = sections();
     const help = sections().find(
       (section) => section.kind === "submenu" && section.label === "Help"
     );
-    expect(first).toStrictEqual({ kind: "role", role: "fileMenu" });
+    expect(first?.kind === "submenu" && first.entries.at(-1)).toStrictEqual({
+      kind: "role",
+      role: "quit",
+    });
     expect(
       help?.kind === "submenu" && {
         ids: entriesOf(help).map((entry) => entry.id),

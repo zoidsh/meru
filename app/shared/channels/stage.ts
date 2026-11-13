@@ -45,8 +45,13 @@ export const stage = defineChannels("stage", {
     z.object({ ratio: z.number().min(0).max(1), splitId: idSchema })
   ),
   snapshot: sync(z.object({}), stageSnapshotSchema),
+  /** Splits a pane, the focused one unless named, with a new tab of `appId`, or of the pane's own app. */
   split: event(
-    z.object({ orientation: orientationSchema, paneId: idSchema.optional() })
+    z.object({
+      appId: idSchema.optional(),
+      orientation: orientationSchema,
+      paneId: idSchema.optional(),
+    })
   ),
 });
 

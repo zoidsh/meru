@@ -19,10 +19,11 @@ describe("the settings registry", () => {
 
   it("lets a profile override only what is about its own page", () => {
     expectTypeOf<ProfileSettingKey>().toEqualTypeOf<
-      "sidebar.width" | "stage.zoom"
+      "launcher.apps" | "sidebar.width" | "stage.zoom"
     >();
     expectTypeOf<SettingKey>().toEqualTypeOf<
       | "appearance.style"
+      | "launcher.apps"
       | "profiles.unreadBadge"
       | "shortcuts.bindings"
       | "sidebar.gmailUnreadBadge"

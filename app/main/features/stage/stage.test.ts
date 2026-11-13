@@ -92,6 +92,7 @@ const setup = async (style: Style = "modern") => {
     blankPanes: false,
     commands,
     dragPreload: "/dist/preload/drag.cjs",
+    popupPreload: "/dist/preload/renderer.cjs",
     events,
     insets: () => insets,
     onError,
@@ -586,5 +587,57 @@ describe("a drag across panes", () => {
       error: "unknownSplit",
       ok: false,
     });
+  });
+});
+
+describe("a popup over the panes", () => {
+  it("splits with a new tab of the app it names, from the popup's own page", async () => {
+    const { call, id, profiles, stage } = await setup();
+    stage.openPopup("file:///launcher.html");
+    const { popup: view } = stage;
+    const popup = view?.contentsId ?? 0;
+    expect(
+      call(
+        stageChannels.split,
+        { appId: "calendar", orientation: "vertical" },
+        popup
+      ).ok
+    ).toBeTruthy();
+    expect(profiles.state.tabs.map((tab) => tab.appId)).toStrictEqual([
+      "gmail",
+      "calendar",
+    ]);
+    expect(stage.snapshot().panes).toHaveLength(2);
+    expect(id).not.toBe(popup);
+  });
+
+  it("is a transparent renderer page above every pane, focused once loaded, until it is closed", async () => {
+    const { call, window, views, stage } = await setup();
+    stage.openPopup("file:///launcher.html");
+    const [pane, popup] = views.created;
+    await expect.poll(() => popup?.focused).toBeTruthy();
+    expect({
+      background: popup?.backgroundColor,
+      spec: popup?.spec,
+      top: window.childViews().at(-1) === popup,
+      url: popup?.url,
+    }).toStrictEqual({
+      background: "#00000000",
+      spec: { preload: "/dist/preload/renderer.cjs", radius: 0, zoom: 1 },
+      top: true,
+      url: "file:///launcher.html",
+    });
+    const sender = popup?.contentsId ?? 0;
+    expect(call(stageChannels.snapshot, {}, sender).ok).toBeTruthy();
+    if (pane !== undefined) {
+      pane.focused = false;
+    }
+    stage.closePopup();
+    expect([
+      popup?.destroyed,
+      pane?.focused,
+      window.childViews().some((view) => view === popup),
+      call(stageChannels.snapshot, {}, sender).ok,
+    ]).toStrictEqual([true, true, false, false]);
   });
 });

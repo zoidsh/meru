@@ -198,7 +198,11 @@ const WidthToggle = ({ size }: { readonly size: Size }) => {
 };
 
 /** The strip of the selected profile's tabs down the left of the window, shown while it has more than one; `launcher` goes at its foot. */
-export const Sidebar = ({ launcher }: { readonly launcher?: ReactNode }) => {
+export const Sidebar = ({
+  launcher,
+}: {
+  readonly launcher?: (size: Size) => ReactNode;
+}) => {
   const client = useClient();
   const sidebar = useSidebar();
   const snapshot = useProfiles();
@@ -326,7 +330,7 @@ export const Sidebar = ({ launcher }: { readonly launcher?: ReactNode }) => {
           wide ? "gap-1" : "items-center gap-2"
         )}
       >
-        {launcher}
+        {launcher?.(size)}
         <div data-slot="bookmarks" />
         {showWidthToggle ? <WidthToggle size={size} /> : null}
       </div>
