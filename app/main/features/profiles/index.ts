@@ -1,5 +1,10 @@
 import { DisposableStore } from "../../../core/disposable.ts";
-import { orderedProfiles, stepFrom } from "../../../core/engines/ordering.ts";
+import { panes } from "../../../core/engines/layout.ts";
+import {
+  groupOf,
+  orderedProfiles,
+  stepFrom,
+} from "../../../core/engines/ordering.ts";
 import { repairState } from "../../../core/engines/state-repair.ts";
 import { validateState } from "../../../core/engines/state-validate.ts";
 import {
@@ -8,12 +13,14 @@ import {
   closeTab,
   firstState,
   firstGroup,
+  leaveGroup,
   moveTabTo,
   removeProfile,
   resizeSplit,
   selectProfile,
   newProfile,
   newTab,
+  splitInto,
 } from "../../../core/engines/state.ts";
 import type { Placement, StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
@@ -158,6 +165,10 @@ export class Profiles {
       registrar.register(tabChannels, {
         add: ({ profileId, appId }) => this.addTab(profileId, appId),
         close: ({ tabId }) => done(this.closeTab(tabId)),
+        focus: ({ tabId }) => done(this.focusTab(tabId)),
+        join: ({ tabId, targetTabId }) =>
+          done(this.joinTab(tabId, targetTabId)),
+        leave: ({ tabId, to }) => done(this.leaveGroup(tabId, to)),
         move: ({ tabId, to }) => done(this.moveTab(tabId, to)),
       }),
       this.#options.commands.register(profilesCommands, {
@@ -295,6 +306,74 @@ export class Profiles {
         (appId) => appById(appId)?.singleInstance === true
       )
     );
+  }
+
+  /** Brings a tab to the front: its profile selected, its group shown, its pane focused. */
+  focusTab(tabId: string): Result<undefined, ProfilesError> {
+    const tab = this.tab(tabId);
+    const group = groupOf(tabId, this.state.groups);
+    if (tab === undefined || group === undefined) {
+      return err("unknownTab");
+    }
+    if (tab.profileId !== this.state.selectedProfileId) {
+      const selected = this.selectProfile(tab.profileId);
+      if (!selected.ok) {
+        return selected;
+      }
+    }
+    this.#options.events.emit("tab.focused", { groupId: group.id, tabId });
+    return ok(undefined);
+  }
+
+  /** Moves a tab that is alone in its group beside one of another group's panes. */
+  splitInto(
+    tabId: string,
+    placement: Placement
+  ): Result<undefined, ProfilesError> {
+    return this.#commit(
+      splitInto(this.state, tabId, placement, this.#options.ids)
+    );
+  }
+
+  /** Takes a tab out of its group into a group of its own, at row `to` of its profile's list when given. */
+  leaveGroup(tabId: string, to?: number): Result<undefined, ProfilesError> {
+    const left = leaveGroup(this.state, tabId, this.#options.ids);
+    return this.#commit(
+      left.ok && to !== undefined ? moveTabTo(left.value, tabId, to) : left
+    );
+  }
+
+  /** Puts a tab beside another tab's pane, vertically, leaving its own group first, and brings it to the front. */
+  joinTab(
+    tabId: string,
+    targetTabId: string
+  ): Result<undefined, ProfilesError> {
+    const own = groupOf(tabId, this.state.groups);
+    const target = groupOf(targetTabId, this.state.groups);
+    const pane = panes(target?.layout ?? null).find((found) =>
+      found.tabIds.includes(targetTabId)
+    );
+    if (own === undefined || target === undefined || pane === undefined) {
+      return err("unknownTab");
+    }
+    if (own.id === target.id) {
+      return err("alreadyGrouped");
+    }
+    const { ids } = this.#options;
+    const alone =
+      own.tabIds.length > 1
+        ? leaveGroup(this.state, tabId, ids)
+        : ok(this.state);
+    const joined = alone.ok
+      ? splitInto(
+          alone.value,
+          tabId,
+          { groupId: target.id, orientation: "vertical", paneId: pane.paneId },
+          ids
+        )
+      : alone;
+    const committed = this.#commit(joined);
+    return committed.ok ? this.focusTab(tabId) : committed;
   }
 
   moveTab(tabId: string, to: number): Result<undefined, ProfilesError> {

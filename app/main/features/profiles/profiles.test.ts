@@ -286,6 +286,60 @@ describe(Profiles, () => {
     ]).toStrictEqual([false, false]);
   });
 
+  it("brings a tab of another profile to the front, selecting its profile and telling whoever shows it", async () => {
+    const { profiles, events, registrar } = await setup();
+    const work = unwrap(profiles.createProfile("Work"));
+    const calendar = unwrap(profiles.addTab(work.id, "calendar"));
+    const focused: AppEventMap["tab.focused"][] = [];
+    events.on("tab.focused", (payload) => {
+      focused.push(payload);
+    });
+    expect(
+      registrar.dispatch(PAGE, wireName(tabChannels.focus), {
+        tabId: calendar.id,
+      })
+    ).toStrictEqual({ ok: true, value: null });
+    expect(profiles.selected().id).toBe(work.id);
+    expect(focused).toStrictEqual([
+      {
+        groupId: profiles.state.groups.find((group) =>
+          group.tabIds.includes(calendar.id)
+        )?.id,
+        tabId: calendar.id,
+      },
+    ]);
+  });
+
+  it("joins a tab into another's group beside its pane, out of its own group first, and leaves it again at a row", async () => {
+    const { profiles } = await setup();
+    const profileId = profiles.selected().id;
+    const [gmail] = profiles.state.tabs;
+    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+    const drive = unwrap(profiles.addTab(profileId, "drive"));
+    const groupOfTab = (tabId: string) =>
+      profiles.state.groups.find((group) => group.tabIds.includes(tabId));
+    unwrap(profiles.joinTab(drive.id, calendar.id));
+    expect(groupOfTab(drive.id)?.tabIds).toStrictEqual([calendar.id, drive.id]);
+    expect(groupOfTab(drive.id)?.layout).toMatchObject({
+      kind: "split",
+      orientation: "vertical",
+    });
+    unwrap(profiles.joinTab(drive.id, gmail?.id ?? ""));
+    expect(groupOfTab(calendar.id)?.tabIds).toStrictEqual([calendar.id]);
+    expect(groupOfTab(drive.id)?.tabIds).toStrictEqual([gmail?.id, drive.id]);
+    unwrap(profiles.leaveGroup(drive.id, 0));
+    expect(
+      profiles.state.tabs.map((tab) => [
+        tab.appId,
+        groupOfTab(tab.id)?.tabIds.length,
+      ])
+    ).toStrictEqual([
+      ["drive", 1],
+      ["gmail", 1],
+      ["calendar", 1],
+    ]);
+  });
+
   it("keeps a profile's last Gmail tab, and closes any other tab", async () => {
     const { profiles } = await setup();
     const [gmail] = profiles.state.tabs;

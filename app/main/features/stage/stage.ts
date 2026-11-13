@@ -214,6 +214,16 @@ export class Stage {
     return ok(undefined);
   }
 
+  /** Focuses the pane showing the tab, if the stage shows it. */
+  focusTab(tabId: string): Result<undefined, StageError> {
+    const pane = panes(this.#layout()).find((found) =>
+      found.tabIds.includes(tabId)
+    );
+    return pane === undefined
+      ? err("unknownPane")
+      : this.focusPane(pane.paneId);
+  }
+
   focusNext(): Result<undefined, StageError> {
     return this.#focusBy(focusNext);
   }

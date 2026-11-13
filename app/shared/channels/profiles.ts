@@ -26,6 +26,12 @@ export const profiles = defineChannels("profiles", {
 export const tabs = defineChannels("tabs", {
   add: invoke(z.object({ appId: idSchema, profileId: idSchema }), tabSchema),
   close: invoke(z.object({ tabId: idSchema }), z.null()),
+  /** Shows the tab's group in the main window and focuses its pane, selecting its profile first. */
+  focus: invoke(z.object({ tabId: idSchema }), z.null()),
+  /** Puts the tab beside another tab's pane, in that tab's group, taking it out of its own group first. */
+  join: invoke(z.object({ tabId: idSchema, targetTabId: idSchema }), z.null()),
+  /** Takes the tab out of its group into a group of its own, at row `to` of its profile's list. */
+  leave: invoke(z.object({ tabId: idSchema, to: z.number().int() }), z.null()),
   /** Moves the row holding the tab to row `to` of its profile's list. */
   move: invoke(z.object({ tabId: idSchema, to: z.number().int() }), z.null()),
 });

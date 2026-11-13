@@ -58,6 +58,12 @@ export class Stages {
           found.refresh();
         }
       }),
+      events.on("tab.focused", ({ tabId }) => {
+        for (const found of this.all) {
+          found.refresh();
+          found.focusTab(tabId);
+        }
+      }),
       commands.register(stageCommands, {
         closeTab: ({ windowId }) => this.close(windowId),
         focusNext: ({ windowId }) => this.focusNext(windowId),

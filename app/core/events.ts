@@ -12,6 +12,8 @@ export interface AppEventMap {
     readonly profileId: string;
     readonly groupId: string;
   };
+  /** A tab was asked to come to the front: the main window shows its group, with its pane focused. */
+  readonly "tab.focused": { readonly tabId: string; readonly groupId: string };
   /** A group, a tab or the group a window shows may have changed, so every stage reads its group again. */
   readonly "stage.invalidated": null;
 }
@@ -26,6 +28,7 @@ export class AppEvents {
     "menu.invalidated": new Set(),
     "profile.selected": new Set(),
     "stage.invalidated": new Set(),
+    "tab.focused": new Set(),
   };
 
   on<N extends AppEventName>(name: N, listener: Listener<N>): Unsubscribe {

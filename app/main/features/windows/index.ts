@@ -85,6 +85,9 @@ export class Windows {
       },
       this.#options.events.on("profile.selected", ({ groupId }) => {
         this.#update({ groupId });
+      }),
+      this.#options.events.on("tab.focused", ({ groupId }) => {
+        this.#update({ groupId });
       })
     );
   }
