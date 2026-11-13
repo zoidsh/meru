@@ -92,8 +92,12 @@ export class SettingsStore {
   async open(): Promise<Opened<Settings, Fallback>> {
     const opened = await this.#store.open();
     this.#settings = opened.value;
-    if (opened.fallbacks.length > 0) {
-      this.#options.onFallback(opened.fallbacks);
+    const fallbacks: readonly Fallback[] =
+      opened.source === "file" || opened.source === "missing"
+        ? opened.fallbacks
+        : [{ key: null, profileId: null, reason: "invalid" }];
+    if (fallbacks.length > 0) {
+      this.#options.onFallback(fallbacks);
     }
     return opened;
   }

@@ -186,15 +186,16 @@ const parseLayer = (
   return { fallbacks, layer };
 };
 
-/** Parses each key on its own, so one bad value costs only that key; everything dropped is reported. */
+/** Parses each key on its own, so one bad value costs only that key; everything dropped is reported. Undefined is no file, which drops nothing. */
 export const parseSettings = <R extends SettingSpecs>(
   specs: R,
   raw: unknown
 ): { settings: SettingsLayers<R>; fallbacks: Fallback[] } => {
   const root = isRecord(raw) ? raw : {};
-  const fallbacks: Fallback[] = isRecord(raw)
-    ? []
-    : [{ key: null, profileId: null, reason: "invalid" }];
+  const fallbacks: Fallback[] =
+    raw === undefined || isRecord(raw)
+      ? []
+      : [{ key: null, profileId: null, reason: "invalid" }];
   const global = parseLayer(specs, root.global, null);
   fallbacks.push(...global.fallbacks);
   const profiles: Record<string, ProfileLayer<R>> = {};

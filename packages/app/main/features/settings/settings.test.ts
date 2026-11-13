@@ -61,6 +61,38 @@ describe(SettingsStore, () => {
     expect(store.get("shortcuts.bindings")).toStrictEqual({});
   });
 
+  it("starts from defaults and reports nothing when there is no file or an empty one", async () => {
+    const missing = await setup();
+    const empty = await setup({ global: {}, profiles: {} });
+    expect([missing.opened.source, empty.opened.source]).toStrictEqual([
+      "missing",
+      "file",
+    ]);
+    expect([...missing.fallbacks, ...empty.fallbacks]).toStrictEqual([]);
+    expect(missing.store.get("appearance.style")).toBe("modern");
+  });
+
+  it("says the whole file fell back when it does not parse", async () => {
+    const fs = new FakeFs({ [SETTINGS_FILE]: "{ half" });
+    const fallbacks: Fallback[] = [];
+    await new SettingsStore({
+      app: new FakeApp(),
+      clock: new FakeClock(),
+      fs,
+      onError: (error) => {
+        throw error;
+      },
+      onFallback: (found) => {
+        fallbacks.push(...found);
+      },
+      registrar: new FakeRegistrar(),
+      watchFile: false,
+    }).open();
+    expect(fallbacks).toStrictEqual([
+      { key: null, profileId: null, reason: "invalid" },
+    ]);
+  });
+
   it("starts from defaults when the file is corrupt, and says what fell back", async () => {
     const { store, fallbacks, opened } = await setup({
       global: { "appearance.style": "neon" },
