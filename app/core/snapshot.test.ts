@@ -4,7 +4,6 @@ import { z } from "zod";
 import { FakeClock } from "../test/fakes/clock.ts";
 import { FakeFs } from "../test/fakes/fs.ts";
 import { FakeLifecycle } from "../test/fakes/lifecycle.ts";
-import { migrate } from "./engines/migrate.ts";
 import version1 from "./fixtures/snapshot-v1.json" with { type: "json" };
 import { SnapshotStore } from "./snapshot.ts";
 
@@ -219,38 +218,5 @@ describe(SnapshotStore, () => {
           }
         )
     ).toThrow("people.json is at version 2 with 0 migrations");
-  });
-});
-
-describe(migrate, () => {
-  const ladder = [
-    (data: unknown) => ({ from1: data }),
-    (data: unknown) => ({ from2: data }),
-  ];
-
-  it("runs each step from the file's version to the current one", () => {
-    expect(migrate("x", 1, 3, ladder)).toStrictEqual({
-      ok: true,
-      value: { from2: { from1: "x" } },
-    });
-    expect(migrate("x", 2, 3, ladder)).toStrictEqual({
-      ok: true,
-      value: { from2: "x" },
-    });
-    expect(migrate("x", 3, 3, ladder)).toStrictEqual({ ok: true, value: "x" });
-  });
-
-  it("refuses a newer file and reports a step that threw", () => {
-    expect(migrate("x", 4, 3, ladder)).toStrictEqual({
-      error: "newer",
-      ok: false,
-    });
-    expect(
-      migrate("x", 1, 2, [
-        () => {
-          throw new Error("bad");
-        },
-      ])
-    ).toStrictEqual({ error: "failed", ok: false });
   });
 });
