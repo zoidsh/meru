@@ -7,12 +7,10 @@ import type {
   UpdaterEvent,
   UpdaterPort,
 } from "../../core/ports.ts";
+import { messageOf } from "../../core/values.ts";
 
 const infoSchema = z.object({ version: z.string() });
 const progressSchema = z.object({ percent: z.number() });
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 const forward = (
   updater: AppUpdater,
@@ -38,7 +36,7 @@ const forward = (
     }
   });
   updater.on("error", (error: unknown) => {
-    emit({ kind: "error", message: describe(error) });
+    emit({ kind: "error", message: messageOf(error) });
   });
   updater.on("update-available", withInfo("available"));
   updater.on("update-downloaded", withInfo("downloaded"));

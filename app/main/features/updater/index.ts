@@ -10,6 +10,7 @@ import type {
 import type { UpdateState } from "../../../core/records/update.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
+import { clamp, messageOf } from "../../../core/values.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import {
   updater as channels,
@@ -53,7 +54,7 @@ const advance = (state: UpdateState, event: UpdaterEvent): UpdateState => {
     case "progress": {
       return {
         kind: "downloading",
-        percent: Math.min(100, Math.max(0, event.percent)),
+        percent: clamp(event.percent, 0, 100),
       };
     }
     case "downloaded": {
@@ -167,7 +168,7 @@ export class Updater {
       this.#set(
         advance(this.#state, {
           kind: "error",
-          message: error instanceof Error ? error.message : String(error),
+          message: messageOf(error),
         })
       );
     }

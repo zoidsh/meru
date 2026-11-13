@@ -1,5 +1,6 @@
 import type { Unsubscribe, ViewPort, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
+import { clamp } from "../../core/values.ts";
 
 export type ChildViewEffect =
   | { readonly kind: "add"; readonly view: ViewPort; readonly index: number }
@@ -73,7 +74,7 @@ export class FakeWindow implements WindowPort {
       ];
       return;
     }
-    const at = Math.min(Math.max(index, 0), this.#children.length);
+    const at = clamp(index, 0, this.#children.length);
     this.#children = this.#children.toSpliced(at, 0, view);
   };
 

@@ -6,7 +6,6 @@ import type { Profile } from "../records/profile.ts";
 import type { Tab } from "../records/tab.ts";
 import { leaf } from "./layout.ts";
 import {
-  clamp,
   groupOf,
   moveItem,
   moveProfile,
@@ -16,14 +15,6 @@ import {
   rowTabs,
 } from "./ordering.ts";
 import type { TabRow } from "./ordering.ts";
-
-describe(clamp, () => {
-  it("keeps a value inside the range", () => {
-    expect(clamp(5, 0, 10)).toBe(5);
-    expect(clamp(-1, 0, 10)).toBe(0);
-    expect(clamp(11, 0, 10)).toBe(10);
-  });
-});
 
 describe(moveItem, () => {
   it("moves an item forward and backward", () => {

@@ -1,9 +1,10 @@
 // A layer over a registry type parameter is a mapped type whose keys arrive with the caller's registry; the rule reads it as `{}` before they do.
 /* oxlint-disable typescript/no-generated-empty-object-type */
-import type { z } from "zod";
+import { z } from "zod";
 
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
+import { isEqual, pick } from "../values.ts";
 
 export type SettingScope = "global" | "profile";
 
@@ -68,8 +69,7 @@ export interface SettingChange {
 
 type Raw = Readonly<Record<string, unknown>>;
 
-const isRecord = (value: unknown): value is Raw =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+const rawSchema = z.record(z.string(), z.unknown());
 
 const specOf = <R extends SettingSpecs, K extends KeyOf<R>>(
   specs: R,
@@ -157,7 +157,8 @@ const parseLayer = (
   raw: unknown,
   profileId: string | null
 ): { layer: Raw; fallbacks: Fallback[] } => {
-  if (!isRecord(raw)) {
+  const read = rawSchema.safeParse(raw);
+  if (!read.success) {
     return {
       fallbacks:
         raw === undefined ? [] : [{ key: null, profileId, reason: "invalid" }],
@@ -166,7 +167,7 @@ const parseLayer = (
   }
   const fallbacks: Fallback[] = [];
   const layer: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(raw)) {
+  for (const [key, value] of Object.entries(read.data)) {
     const spec = specs.find((found) => found.key === key);
     if (spec === undefined) {
       fallbacks.push({ key, profileId, reason: "unknown" });
@@ -191,20 +192,20 @@ export const parseSettings = <R extends SettingSpecs>(
   specs: R,
   raw: unknown
 ): { settings: SettingsLayers<R>; fallbacks: Fallback[] } => {
-  const root = isRecord(raw) ? raw : {};
   const fallbacks: Fallback[] =
-    raw === undefined || isRecord(raw)
+    raw === undefined || rawSchema.safeParse(raw).success
       ? []
       : [{ key: null, profileId: null, reason: "invalid" }];
-  const global = parseLayer(specs, root.global, null);
+  const global = parseLayer(specs, pick(raw, "global", z.unknown()), null);
   fallbacks.push(...global.fallbacks);
   const profiles: Record<string, ProfileLayer<R>> = {};
-  const rawProfiles = root.profiles;
-  if (rawProfiles !== undefined && !isRecord(rawProfiles)) {
+  const rawProfiles = pick(raw, "profiles", z.unknown());
+  const profileLayers = rawSchema.safeParse(rawProfiles);
+  if (rawProfiles !== undefined && !profileLayers.success) {
     fallbacks.push({ key: null, profileId: null, reason: "invalid" });
   }
   for (const [profileId, rawLayer] of Object.entries(
-    isRecord(rawProfiles) ? rawProfiles : {}
+    profileLayers.success ? profileLayers.data : {}
   )) {
     const parsed = parseLayer(specs, rawLayer, profileId);
     fallbacks.push(...parsed.fallbacks);
@@ -277,26 +278,6 @@ export const withoutProfile = <R extends SettingSpecs>(
   ),
 });
 
-// Settings are JSON values, so a structural walk is equality; key order does not count.
-const equal = (a: unknown, b: unknown): boolean => {
-  if (Object.is(a, b)) {
-    return true;
-  }
-  if (Array.isArray(a) && Array.isArray(b)) {
-    return (
-      a.length === b.length && a.every((item, index) => equal(item, b[index]))
-    );
-  }
-  if (isRecord(a) && isRecord(b)) {
-    const keys = Object.keys(a);
-    return (
-      keys.length === Object.keys(b).length &&
-      keys.every((key) => Object.hasOwn(b, key) && equal(a[key], b[key]))
-    );
-  }
-  return false;
-};
-
 const diffLayer = (
   before: Raw | undefined,
   after: Raw | undefined,
@@ -307,7 +288,7 @@ const diffLayer = (
     ...Object.keys(after ?? EMPTY),
   ]);
   return [...keys]
-    .filter((key) => !equal(lookup(before, key), lookup(after, key)))
+    .filter((key) => !isEqual(lookup(before, key), lookup(after, key)))
     .map((key) => ({ key, profileId }));
 };
 

@@ -1,9 +1,7 @@
 import type { Group } from "../records/group.ts";
 import type { Profile } from "../records/profile.ts";
 import type { Tab } from "../records/tab.ts";
-
-export const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
+import { clamp } from "../values.ts";
 
 export const moveItem = <T>(
   items: readonly T[],

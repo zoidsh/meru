@@ -29,6 +29,7 @@ import { idSchema } from "../../../core/records/id.ts";
 import { err, ok } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { SnapshotSpec } from "../../../core/snapshot.ts";
+import { clamp, pick } from "../../../core/values.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import {
   entitlement as channels,
@@ -71,18 +72,6 @@ export type LastAnswer = z.infer<typeof lastAnswerSchema>;
 /** A field of entitlement.json that could not be read and was replaced. */
 export type EntitlementFallback = keyof EntitlementState;
 
-const field = <S extends z.ZodType>(
-  data: unknown,
-  key: EntitlementFallback,
-  schema: S
-): z.output<S> | undefined => {
-  if (typeof data !== "object" || data === null) {
-    return undefined;
-  }
-  const parsed = schema.safeParse(Reflect.get(data, key));
-  return parsed.success ? parsed.data : undefined;
-};
-
 export const entitlementSnapshot = (
   ids: Ids
 ): SnapshotSpec<EntitlementState, EntitlementFallback> => ({
@@ -90,8 +79,8 @@ export const entitlementSnapshot = (
   name: ENTITLEMENT_FILE,
   // A token is bound to the device id, so the id is kept whenever it can be, and a new one is made only when it is gone.
   recover: (data) => {
-    const deviceId = field(data, "deviceId", idSchema);
-    const licenseKey = field(data, "licenseKey", licenseKeySchema);
+    const deviceId = pick(data, "deviceId", idSchema);
+    const licenseKey = pick(data, "licenseKey", licenseKeySchema);
     const state: EntitlementState = {
       deviceId: deviceId ?? ids(),
       lastAnswer: null,
@@ -270,9 +259,8 @@ export class Entitlement<K> {
   }
 
   #at(time: number, task: () => void) {
-    const delay = Math.max(0, time - this.#options.clock.now());
     this.#timer = this.#options.clock.schedule(
-      Math.min(delay, LONGEST_DELAY),
+      clamp(time - this.#options.clock.now(), 0, LONGEST_DELAY),
       task
     );
   }
@@ -410,7 +398,7 @@ export class Entitlement<K> {
     } else if (outcome.outcome === "rejected") {
       this.#delay = licenseKey === null ? RETRY_MAX : 0;
     } else {
-      this.#delay = Math.min(Math.max(this.#delay * 2, RETRY_FIRST), RETRY_MAX);
+      this.#delay = clamp(this.#delay * 2, RETRY_FIRST, RETRY_MAX);
     }
     this.#refreshing = false;
     this.#schedule();

@@ -8,7 +8,7 @@ import type {
 } from "../records/layout.ts";
 import type { Point, Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
-import { clamp } from "./ordering.ts";
+import { clamp } from "../values.ts";
 
 export interface StyleMetrics {
   readonly inset: number;

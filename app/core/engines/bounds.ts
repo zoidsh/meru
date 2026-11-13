@@ -1,6 +1,6 @@
 import type { Display } from "../ports.ts";
 import type { Rect } from "../records/rect.ts";
-import { clamp } from "./ordering.ts";
+import { clamp } from "../values.ts";
 
 export const DEFAULT_WINDOW_SIZE = { height: 800, width: 1200 } as const;
 

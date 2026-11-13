@@ -1,4 +1,5 @@
 import type { Entitlement, EntitlementSource } from "../records/entitlement.ts";
+import { isEqual } from "../values.ts";
 import type { Claims } from "./token.ts";
 
 /** The entitlement a verified token's claims grant at `now`, in milliseconds; no claims is a device that has never had a token. */
@@ -33,8 +34,8 @@ const grant = ({
   expiresAt: _expiresAt,
   source: _source,
   ...rest
-}: Entitlement) => JSON.stringify(rest);
+}: Entitlement) => rest;
 
 /** Whether two values grant the same, whatever token or answer each came from. */
 export const sameGrant = (a: Entitlement, b: Entitlement): boolean =>
-  grant(a) === grant(b);
+  isEqual(grant(a), grant(b));

@@ -22,6 +22,7 @@ import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
+import { isEqual } from "../../../core/values.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import type { Profiles } from "../profiles/index.ts";
 
@@ -89,7 +90,7 @@ export class Stage {
   #focused: string | undefined;
   #fullscreen: string | undefined;
   #drag: Drag | undefined;
-  #published: string | undefined;
+  #published: StageSnapshot | undefined;
 
   constructor(options: StageOptions) {
     this.#options = options;
@@ -542,9 +543,8 @@ export class Stage {
       return;
     }
     const snapshot = this.snapshot();
-    const text = JSON.stringify(snapshot);
-    if (text !== this.#published) {
-      this.#published = text;
+    if (!isEqual(snapshot, this.#published)) {
+      this.#published = snapshot;
       this.#options.onChange(snapshot);
     }
   }

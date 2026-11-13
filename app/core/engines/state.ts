@@ -12,6 +12,7 @@ import { tabSchema } from "../records/tab.ts";
 import type { Tab } from "../records/tab.ts";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
+import { pick } from "../values.ts";
 import { close, leaf, panes, resize, split } from "./layout.ts";
 import { groupOf, moveTab, orderedProfiles } from "./ordering.ts";
 
@@ -436,8 +437,7 @@ export const firstGroup = (
 };
 
 const listOf = <T>(data: unknown, key: string, schema: z.ZodType<T>) => {
-  const list = z.object({ [key]: z.array(z.unknown()) }).safeParse(data);
-  const items = list.success ? (list.data[key] ?? []) : [];
+  const items = pick(data, key, z.array(z.unknown())) ?? [];
   const parsed = items.flatMap((item) => {
     const one = schema.safeParse(item);
     return one.success ? [one.data] : [];

@@ -16,6 +16,7 @@ import { windowSchema } from "../../../core/records/window.ts";
 import type { Window } from "../../../core/records/window.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { Opened, SnapshotSpec } from "../../../core/snapshot.ts";
+import { isEqual } from "../../../core/values.ts";
 import type { Profiles } from "../profiles/index.ts";
 
 export const WINDOWS_FILE = "windows.json";
@@ -157,7 +158,7 @@ export class Windows {
       };
     } else {
       next = { ...main, ...change };
-      if (JSON.stringify(next) === JSON.stringify(main)) {
+      if (isEqual(next, main)) {
         return;
       }
     }
