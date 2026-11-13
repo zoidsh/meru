@@ -90,6 +90,15 @@ export class Stages {
       }),
       commands.register(stageCommands, {
         back: inWindow((windowId) => this.#navigate(windowId, "back")),
+        balance: inWindow((windowId) =>
+          this.#with(windowId, (found) => found.balance())
+        ),
+        maximise: inWindow((windowId) =>
+          this.#with(windowId, (found) => found.maximise())
+        ),
+        swap: inWindow((windowId) =>
+          this.#with(windowId, (found) => found.swap())
+        ),
         closeTab: inWindow((windowId) => this.close(windowId)),
         focusNext: inWindow((windowId) => this.focusNext(windowId)),
         focusPrevious: inWindow((windowId) => this.focusPrevious(windowId)),

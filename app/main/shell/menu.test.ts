@@ -207,6 +207,21 @@ describe(ApplicationMenu, () => {
         id: "stage.reload",
         label: "Reload",
       },
+      {
+        accelerator: "CommandOrControl+Alt+Shift+.",
+        id: "stage.swap",
+        label: "Swap with next pane",
+      },
+      {
+        accelerator: "CommandOrControl+Alt+=",
+        id: "stage.balance",
+        label: "Balance panes",
+      },
+      {
+        accelerator: "CommandOrControl+Shift+Return",
+        id: "stage.maximise",
+        label: "Maximise pane",
+      },
     ]);
     expect(sections()[2]).toStrictEqual({ kind: "role", role: "editMenu" });
   });
@@ -371,6 +386,9 @@ describe(ApplicationMenu, () => {
       ["stage.focusNext", "CommandOrControl+Alt+."],
       ["stage.focusPrevious", "CommandOrControl+Alt+,"],
       ["stage.reload", "CommandOrControl+R"],
+      ["stage.swap", "CommandOrControl+Alt+Shift+."],
+      ["stage.balance", "CommandOrControl+Alt+="],
+      ["stage.maximise", "CommandOrControl+Shift+Return"],
     ]);
     settings.set("shortcuts.bindings", {
       "stage.splitHorizontal": "Cmd+V",

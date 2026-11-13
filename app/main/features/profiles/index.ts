@@ -9,6 +9,7 @@ import { validateState } from "../../../core/engines/state-validate.ts";
 import {
   addProfile,
   addTab,
+  balanceGroup,
   canClose,
   closeTab,
   openTab,
@@ -22,6 +23,7 @@ import {
   selectProfile,
   newProfile,
   newTab,
+  swapPanes,
 } from "../../../core/engines/state.ts";
 import type { StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
@@ -377,6 +379,20 @@ export class Profiles {
     ratio: number
   ): Result<undefined, ProfilesError> {
     return this.#commit(resizeSplit(this.state, groupId, splitId, ratio));
+  }
+
+  /** Trades the places of two of the group's panes, each keeping its tab. */
+  swapPanes(
+    groupId: string,
+    a: string,
+    b: string
+  ): Result<undefined, ProfilesError> {
+    return this.#commit(swapPanes(this.state, groupId, a, b));
+  }
+
+  /** Evens the shares of every run of the group's splits of one orientation. */
+  balanceGroup(groupId: string): Result<undefined, ProfilesError> {
+    return this.#commit(balanceGroup(this.state, groupId));
   }
 
   async flush(): Promise<void> {

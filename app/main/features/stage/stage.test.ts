@@ -510,11 +510,14 @@ const dragging = async () => {
 };
 
 describe("the stage commands", () => {
-  it("are the five the stage declares", async () => {
+  it("are the ones the stage declares", async () => {
     const { commands } = await setup();
     expect(
       (
         [
+          "stage.balance",
+          "stage.maximise",
+          "stage.swap",
           "stage.closeTab",
           "stage.focusNext",
           "stage.focusPrevious",
@@ -576,8 +579,85 @@ describe("the stage commands", () => {
     expect([start, ...visited]).toStrictEqual([third, first, third, second]);
   });
 
+  it("swap the focused pane with the next in layout order, focus going with it", async () => {
+    const { commands, id, changes, profiles } = await setup();
+    commands.run("stage.splitVertical", { windowId: id });
+    commands.run("stage.splitHorizontal", { windowId: id });
+    const tabsInOrder = () =>
+      changes()
+        .at(-1)
+        ?.panes.map(({ tabId }) => tabId);
+    const focusedTab = () => {
+      const last = changes().at(-1);
+      return last?.panes.find((pane) => pane.paneId === last.focusedPaneId)
+        ?.tabId;
+    };
+    const [first, second, third] = tabsInOrder() ?? [];
+    expect(focusedTab()).toBe(third);
+    expect(commands.run("stage.swap", { windowId: id }).ok).toBeTruthy();
+    expect(tabsInOrder()).toStrictEqual([third, second, first]);
+    expect(focusedTab()).toBe(third);
+    expect(profiles.currentGroup()?.tabIds).toHaveLength(3);
+  });
+
+  it("balance the group's splits", async () => {
+    const { commands, id, profiles, stages, splitId } = await setup();
+    stages.split(id, "vertical");
+    unwrap(profiles.resize(profiles.currentGroup()?.id ?? "", splitId(), 0.2));
+    expect(commands.run("stage.balance", { windowId: id }).ok).toBeTruthy();
+    const { layout: tree } = profiles.currentGroup() ?? {};
+    expect(tree?.kind === "split" ? tree.ratio : undefined).toBe(0.5);
+  });
+
+  it("maximise the focused pane over the whole stage, and restore the others when run again", async () => {
+    const { commands, id, window, changes, paneIds, stages } = await setup();
+    stages.split(id, "vertical");
+    stages.split(id, "horizontal");
+    const third = paneIds().at(2);
+    const maximise = () => commands.run("stage.maximise", { windowId: id });
+
+    expect(maximise().ok).toBeTruthy();
+    expect(window.childViews()).toHaveLength(1);
+    expect(changes().at(-1)).toMatchObject({
+      dividers: [],
+      focusedPaneId: third,
+      panes: [
+        { paneId: third, rect: { height: 784, width: 1184, x: 8, y: 8 } },
+      ],
+    });
+    maximise();
+    expect(window.childViews()).toHaveLength(3);
+  });
+
+  it("restore the others once another pane is focused or a tab is closed", async () => {
+    const { commands, id, window, changes, paneIds, stage, stages } =
+      await setup();
+    stages.split(id, "vertical");
+    stages.split(id, "horizontal");
+    const [first] = paneIds();
+    const maximise = () => commands.run("stage.maximise", { windowId: id });
+    maximise();
+    stage.focusPane(first ?? "");
+    const focused = [
+      window.childViews().length,
+      changes().at(-1)?.focusedPaneId,
+    ];
+    maximise();
+    commands.run("stage.closeTab", { windowId: id });
+    expect([
+      ...focused,
+      window.childViews().length,
+      changes().at(-1)?.dividers.length,
+    ]).toStrictEqual([3, first, 2, 1]);
+  });
+
   it("report what they could not do", async () => {
     const { commands, id } = await setup();
+    expect(
+      (["stage.swap", "stage.maximise"] as const).map(
+        (command: CommandId) => commands.run(command, { windowId: id }).ok
+      )
+    ).toStrictEqual([false, false]);
     expect(commands.run("stage.closeTab", { windowId: id })).toStrictEqual({
       error: "lastPane",
       ok: false,

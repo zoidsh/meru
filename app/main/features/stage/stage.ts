@@ -9,6 +9,7 @@ import {
   layout,
   paneOfTab,
   panes,
+  shownLayout,
   STYLE_METRICS,
   tabOfPane,
 } from "../../../core/engines/layout.ts";
@@ -54,7 +55,15 @@ export type StageError =
 /** What a stage reads its group and tabs from, and changes them through. */
 export type StageProfiles = Pick<
   Profiles,
-  "group" | "tab" | "addTab" | "openTab" | "focusTab" | "closeTab" | "resize"
+  | "group"
+  | "tab"
+  | "addTab"
+  | "openTab"
+  | "focusTab"
+  | "closeTab"
+  | "resize"
+  | "swapPanes"
+  | "balanceGroup"
 >;
 
 export interface StageOptions {
@@ -96,6 +105,8 @@ export class Stage {
   readonly #retired: OwnedView[] = [];
   // Held by tab, since a pane's id changes under a join or a move.
   #focused: string | undefined;
+  // Kept per window and never stored: a maximised pane is a way of looking at the group, not part of it.
+  #maximised: string | undefined;
   readonly #drag: DragOverlay;
   #published: StageSnapshot | undefined;
 
@@ -182,6 +193,7 @@ export class Stage {
       return;
     }
     this.#shown = group;
+    this.#maximised = undefined;
     if (this.#focusedPane() === undefined) {
       this.#focused = panes(this.#layout())[0]?.tabIds[0];
     }
@@ -242,6 +254,7 @@ export class Stage {
     if (order.length === 1) {
       return err("lastPane");
     }
+    this.#maximised = undefined;
     const wasFocused = this.#focused === tabId;
     if (!this.#options.profiles.closeTab(tabId).ok) {
       return err("refused");
@@ -262,9 +275,62 @@ export class Stage {
       return err("unknownPane");
     }
     this.#focused = tabId;
+    if (this.#maximised !== undefined && this.#maximised !== tabId) {
+      this.#restore();
+    }
     view.focus();
     this.#publish();
     return ok(undefined);
+  }
+
+  /** Gives the focused pane the whole stage, hiding the others, or shows them all again when one is maximised. */
+  maximise(): Result<undefined, StageError> {
+    if (this.#maximised !== undefined) {
+      this.#restore();
+      this.#publish();
+      return ok(undefined);
+    }
+    const focused = this.#focused;
+    if (focused === undefined || this.#focusedPane() === undefined) {
+      return err("unknownPane");
+    }
+    if (panes(this.#layout()).length === 1) {
+      return err("lastPane");
+    }
+    this.#maximised = focused;
+    this.#reconcile();
+    this.#arrange();
+    return ok(undefined);
+  }
+
+  /** Trades the focused pane's place with the next pane's in layout order. */
+  swap(): Result<undefined, StageError> {
+    const group = this.#read();
+    const focused = this.#focusedPane();
+    const next =
+      group === undefined || focused === undefined
+        ? undefined
+        : focusNext(group.layout, focused);
+    if (group === undefined || focused === undefined || next === undefined) {
+      return err("unknownPane");
+    }
+    if (next === focused) {
+      return err("lastPane");
+    }
+    return this.#options.profiles.swapPanes(group.id, focused, next).ok
+      ? ok(undefined)
+      : err("refused");
+  }
+
+  /** Gives each pane of every run of the group's splits of one orientation the same share of it. */
+  balance(): Result<undefined, StageError> {
+    const group = this.#read();
+    if (group === undefined) {
+      return err("unknownPane");
+    }
+    return this.#options.profiles.balanceGroup(group.id).ok
+      ? ok(undefined)
+      : err("refused");
   }
 
   /** Moves the focused pane through its history, or reloads or stops it. */
@@ -358,9 +424,9 @@ export class Stage {
     return this.#options.window;
   }
 
-  /** Each pane's view with the tab it shows, in layout order. */
+  /** Each shown pane's view with the tab it shows, in layout order. */
   panes(): { readonly view: ViewPort; readonly tab: Tab }[] {
-    return panes(this.#layout()).flatMap((pane) => {
+    return panes(this.#shownLayout()).flatMap((pane) => {
       const tab = this.#tabOf(pane.paneId);
       const view = tab === undefined ? undefined : this.#views.view(tab.id);
       return view === undefined || tab === undefined ? [] : [{ tab, view }];
@@ -421,13 +487,29 @@ export class Stage {
       : this.#options.profiles.group(groupId);
   }
 
+  /** The group's layout, as a divider drag has moved it while one is on, every pane in it whether shown or not. */
   #layout(): Layout {
     return this.#drag.layout ?? this.#read()?.layout ?? null;
   }
 
+  #shownLayout(): Layout {
+    return shownLayout(this.#read()?.layout ?? null, {
+      drag: this.#drag.layout,
+      fullscreen: undefined,
+      maximised: this.#maximised,
+    });
+  }
+
   #arrangement() {
     const { area, flush } = this.#area();
-    return layout(this.#layout(), area, this.#options.style(), flush);
+    return layout(this.#shownLayout(), area, this.#options.style(), flush);
+  }
+
+  /** Shows every pane of the group again after one was maximised. */
+  #restore(): void {
+    this.#maximised = undefined;
+    this.#reconcile();
+    this.#arrange(false);
   }
 
   #area() {
@@ -512,7 +594,7 @@ export class Stage {
     const bounds = this.#options.window.contentBounds();
     const arrangement = this.#arrangement();
     const { radius } = STYLE_METRICS[this.#options.style()];
-    for (const pane of panes(this.#layout())) {
+    for (const pane of panes(this.#shownLayout())) {
       const [tabId] = pane.tabIds;
       const view = tabId === undefined ? undefined : this.#views.view(tabId);
       const rect = arrangement.panes.get(pane.paneId);
@@ -531,7 +613,9 @@ export class Stage {
 
   #update(): void {
     this.#views.show(
-      panes(this.#layout()).flatMap(({ paneId }) => this.#tabOf(paneId) ?? [])
+      panes(this.#shownLayout()).flatMap(
+        ({ paneId }) => this.#tabOf(paneId) ?? []
+      )
     );
     this.#retireClosed();
     this.#reconcile();
