@@ -1,7 +1,13 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { commands } from "../../../shared/channels/commands.ts";
+import { profiles, tabs } from "../../../shared/channels/profiles.ts";
+import { settings } from "../../../shared/channels/settings.ts";
+import { sidebar } from "../../../shared/channels/sidebar.ts";
+import { stage } from "../../../shared/channels/stage.ts";
 import {
+  answer,
   groupOf,
   mountChrome,
   profileOf,
@@ -12,8 +18,6 @@ import type { Answers } from "../../testing.tsx";
 import { Sidebar } from "./sidebar.tsx";
 
 const mounted: (() => void)[] = [];
-
-const NARROW = { kind: "shown", size: "narrow", width: 64 };
 
 // Gmail alone, then Calendar and Drive split in one group.
 const PROFILES = {
@@ -30,15 +34,15 @@ const PROFILES = {
   ],
 };
 
-const mount = (answers: Answers = {}) => {
+const mount = (answers: Answers = []) => {
   const page = mountChrome(
     <Sidebar launcher={() => <i data-launcher="" />} />,
-    {
-      "profiles.snapshot": PROFILES,
-      "sidebar.snapshot": NARROW,
-      "stage.snapshot": stageOf({ focusedPaneId: "pane-drive" }),
+    [
+      answer(profiles.snapshot, PROFILES),
+      answer(sidebar.snapshot, { kind: "shown", size: "narrow", width: 64 }),
+      answer(stage.snapshot, stageOf({ focusedPaneId: "pane-drive" })),
       ...answers,
-    }
+    ]
   );
   mounted.push(page.unmount);
   const rows = () =>
@@ -61,7 +65,7 @@ describe(Sidebar, () => {
   });
 
   it("draws nothing while the strip is hidden", () => {
-    const { container } = mount({ "sidebar.snapshot": { kind: "hidden" } });
+    const { container } = mount([answer(sidebar.snapshot, { kind: "hidden" })]);
     expect(container.querySelector("nav")).toBeNull();
   });
 
@@ -75,15 +79,15 @@ describe(Sidebar, () => {
   });
 
   it("leaves the Gmail count to the inbox while Gmail is in front under whenInactive", () => {
-    const settings = {
+    const whenInactive = answer(settings.snapshot, {
       global: { "sidebar.gmailUnreadBadge": "whenInactive" },
       profiles: {},
-    };
-    const inFront = mount({
-      "settings.snapshot": settings,
-      "stage.snapshot": stageOf({ focusedPaneId: "pane-mail" }),
     });
-    const behind = mount({ "settings.snapshot": settings });
+    const inFront = mount([
+      whenInactive,
+      answer(stage.snapshot, stageOf({ focusedPaneId: "pane-mail" })),
+    ]);
+    const behind = mount([whenInactive]);
     expect([inFront.rows()[0]?.badge, behind.rows()[0]?.badge]).toStrictEqual([
       undefined,
       "4",
@@ -98,21 +102,21 @@ describe(Sidebar, () => {
         ?.click();
       container.querySelector<HTMLElement>("[data-width-toggle]")?.click();
     });
-    expect([sentOn("tabs.focus"), sentOn("commands.run")]).toStrictEqual([
+    expect([sentOn(tabs.focus), sentOn(commands.run)]).toStrictEqual([
       [{ tabId: "calendar" }],
       [{ id: "sidebar.toggleWidth" }],
     ]);
   });
 
   it("titles a row with its page and its app, and the width toggle with its shortcut once it has one", () => {
-    const { container } = mount({
-      "settings.snapshot": {
+    const { container } = mount([
+      answer(settings.snapshot, {
         global: {
           "shortcuts.bindings": { "sidebar.toggleWidth": "CmdOrCtrl+Shift+B" },
         },
         profiles: {},
-      },
-    });
+      }),
+    ]);
     expect([
       container.querySelector<HTMLElement>("[data-tab-id=calendar] button")
         ?.title,

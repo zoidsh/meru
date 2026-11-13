@@ -1,7 +1,16 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { groupOf, mountChrome, profileOf, tabOf } from "../../testing.tsx";
+import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
+import { profiles, tabOpening } from "../../../shared/channels/profiles.ts";
+import { settings } from "../../../shared/channels/settings.ts";
+import {
+  answer,
+  groupOf,
+  mountChrome,
+  profileOf,
+  tabOf,
+} from "../../testing.tsx";
 import { Launcher, LauncherButton } from "./launcher.tsx";
 
 const mounted: (() => void)[] = [];
@@ -53,14 +62,14 @@ const settle = async () => {
 };
 
 const mount = (appIds?: readonly string[]) => {
-  const page = mountChrome(<Launcher anchor={ANCHOR} />, {
-    "profiles.snapshot": PROFILES,
-    "settings.snapshot": {
+  const page = mountChrome(<Launcher anchor={ANCHOR} />, [
+    answer(profiles.snapshot, PROFILES),
+    answer(settings.snapshot, {
       global: appIds === undefined ? {} : { "launcher.apps": appIds },
       profiles: {},
-    },
-    "tabs.open": null,
-  });
+    }),
+    answer(tabOpening.open, null),
+  ]);
   mounted.push(page.unmount);
   return page;
 };
@@ -87,8 +96,8 @@ describe(Launcher, () => {
     key({ key: "Enter" });
     await settle();
     expect([
-      sentOn("tabs.open"),
-      sentOn("launcher.close").length,
+      sentOn(tabOpening.open),
+      sentOn(launcher.close).length,
     ]).toStrictEqual([
       [{ appId: "calendar", profileId: "personal", split: false }],
       1,
@@ -100,7 +109,7 @@ describe(Launcher, () => {
     key({ key: "ArrowDown" });
     key({ key: "Enter", shiftKey: true });
     await settle();
-    expect(sentOn("tabs.open")).toStrictEqual([
+    expect(sentOn(tabOpening.open)).toStrictEqual([
       { appId: "drive", profileId: "personal", split: true },
     ]);
   });
@@ -114,12 +123,12 @@ describe(LauncherButton, () => {
   });
 
   it("opens the launcher beside itself on a click and when launcher.open asks", () => {
-    const page = mountChrome(<LauncherButton place="titlebar" />, {});
+    const page = mountChrome(<LauncherButton place="titlebar" />, []);
     mounted.push(page.unmount);
     act(() => {
       page.container.querySelector("button")?.click();
     });
-    page.push("launcher.requested", {});
-    expect(page.sentOn("launcher.open")).toHaveLength(2);
+    page.push(launcherPushes.requested, {});
+    expect(page.sentOn(launcher.open)).toHaveLength(2);
   });
 });

@@ -1,10 +1,18 @@
 import { act } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
+import type { z } from "zod";
 
 import type { Group } from "../core/records/group.ts";
 import type { LayoutNode } from "../core/records/layout.ts";
 import type { Tab } from "../core/records/tab.ts";
+import { wireName } from "../shared/channels/define.ts";
+import type {
+  InvokeChannel,
+  PushChannel,
+  RequestChannel,
+  SyncChannel,
+} from "../shared/channels/define.ts";
 import type { ProfilesSnapshot } from "../shared/channels/profiles.ts";
 import type { StageSnapshot } from "../shared/channels/stage.ts";
 import {
@@ -99,8 +107,19 @@ export const stageOf = (more: Partial<StageSnapshot> = {}): StageSnapshot => ({
   ...more,
 });
 
-/** What main answers the page's snapshots with, by channel name. */
-export type Answers = Readonly<Record<string, unknown>>;
+/** What main answers a request with. */
+export interface Answer {
+  readonly channel: InvokeChannel | SyncChannel;
+  readonly value: unknown;
+}
+
+export const answer = <C extends InvokeChannel | SyncChannel>(
+  channel: C,
+  value: z.input<C["result"]>
+): Answer => ({ channel, value });
+
+/** What main answers the page's requests with; a later answer for a channel replaces an earlier one. */
+export type Answers = readonly Answer[];
 
 /** Renders under the providers of the chrome page and the launcher's, whose clients talk to a fake bridge seeded with `answers`. */
 export const mountChrome = (
@@ -109,8 +128,8 @@ export const mountChrome = (
   platform = "darwin"
 ) => {
   const bridge = new FakeBridge(platform);
-  for (const [channel, value] of Object.entries(answers)) {
-    bridge.answers.set(channel, { ok: true, value });
+  for (const { channel, value } of answers) {
+    bridge.answers.set(wireName(channel), { ok: true, value });
   }
   const client = createClient({ meru: bridge }, rendererSurface);
   const launcherClient = createClient({ meru: bridge }, launcherSurface);
@@ -137,14 +156,17 @@ export const mountChrome = (
   return {
     bridge,
     container,
-    push: (channel: string, payload: unknown) => {
+    push: <C extends PushChannel>(
+      channel: C,
+      payload: z.input<C["payload"]>
+    ) => {
       act(() => {
-        bridge.emit(channel, payload);
+        bridge.emit(wireName(channel), payload);
       });
     },
-    sentOn: (channel: string) =>
+    sentOn: (channel: RequestChannel) =>
       bridge.sent
-        .filter((sent) => sent.channel === channel)
+        .filter((sent) => sent.channel === wireName(channel))
         .map((sent) => sent.payload),
     unmount: () => {
       act(() => {
