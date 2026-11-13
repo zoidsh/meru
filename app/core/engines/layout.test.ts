@@ -340,6 +340,27 @@ describe(split, () => {
     });
   });
 
+  it("puts the new pane before the one split, above it when stacked", () => {
+    const result = split(
+      leaf("p1", "t1"),
+      "p1",
+      { orientation: "horizontal", side: "before" },
+      "t2",
+      counter("id")
+    );
+    expect(result).toStrictEqual({
+      layout: {
+        first: leaf("id2", "t2"),
+        id: "id1",
+        kind: "split",
+        orientation: "horizontal",
+        ratio: 0.5,
+        second: leaf("p1", "t1"),
+      },
+      paneId: "id2",
+    });
+  });
+
   it("refuses a pane the layout does not have", () => {
     expect(
       split(
