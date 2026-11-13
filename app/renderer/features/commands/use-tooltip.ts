@@ -6,7 +6,7 @@ import type { CommandId } from "../../../shared/commands/registry.ts";
 import { useClient } from "../../chrome-context.tsx";
 import { useSetting } from "../settings/use-setting.ts";
 
-// A native title rather than a page tooltip: anything the chrome page draws past its own strips sits under the panes' views.
+// A native title rather than a page tooltip: anything the chrome page draws past the titlebar and the sidebar sits under the panes' views.
 /** A control's tooltip: its label, and after it the shortcut of the command it runs in the platform's glyphs, when it has one. */
 export const useTooltip = (label: string, commandId?: CommandId): string => {
   const { platform } = useClient();

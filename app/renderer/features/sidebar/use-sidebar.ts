@@ -7,7 +7,7 @@ import type { Store, SyncSource } from "../../store.ts";
 
 const HIDDEN: Sidebar = { kind: "hidden" };
 
-/** The page's copy of the selected profile's strip, hidden until main says otherwise. */
+/** The page's copy of the selected profile's sidebar, hidden until main says otherwise. */
 export const createSidebarStore = (
   client: SyncSource<
     (typeof sidebar.snapshot)["result"],
@@ -22,7 +22,7 @@ export const SidebarContext = createContext<Store<Sidebar> | undefined>(
 
 const same = <T>(value: T) => value;
 
-/** The selected profile's strip as main last pushed it. */
+/** The selected profile's sidebar as main last pushed it. */
 export const useSidebar = (): Sidebar => {
   const store = useContext(SidebarContext);
   if (store === undefined) {

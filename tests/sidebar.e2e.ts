@@ -48,7 +48,7 @@ const appsOf = async (chrome: Page) => {
   );
 };
 
-// The strip marks the zone under the pointer on its next frame, so the release waits for the mark of the zone it means.
+// The sidebar marks the zone under the pointer on its next frame, so the release waits for the mark of the zone it means.
 /** Drags row `from` over row `to`, `onto` its middle or `before` its top quarter, and lets go there. */
 const drag = async (
   chrome: Page,
@@ -79,7 +79,7 @@ const drag = async (
   ).toHaveCount(0);
 };
 
-test("shows the strip once Calendar is added through the launcher, Drive dragged onto it shares its group and the stage, and dragged between rows leaves the group and moves", async () => {
+test("shows the sidebar once Calendar is added through the launcher, Drive dragged onto it shares its group and the stage, and dragged between rows leaves the group and moves", async () => {
   const { app, chrome, close } = await launch();
   try {
     await openApp(app, chrome, "Calendar");
@@ -146,12 +146,12 @@ test("shows a row of three profiles under a trial, and the menu's second profile
   }
 });
 
-test("hides the strip and brings it back from the menu, laying the panes out again", async () => {
+test("hides the sidebar and brings it back from the menu, laying the panes out again", async () => {
   const { app, chrome, close } = await launch();
   try {
     await openApp(app, chrome, "Calendar");
-    const strip = chrome.locator("nav[data-sidebar]");
-    await expect(strip).toBeVisible();
+    const sidebar = chrome.locator("nav[data-sidebar]");
+    await expect(sidebar).toBeVisible();
     const left = async () => {
       const [first] = await viewsOf(chrome);
       return first?.x;
@@ -159,11 +159,11 @@ test("hides the strip and brings it back from the menu, laying the panes out aga
     const shown = await left();
 
     await clickMenuItem(app, "sidebar.toggle");
-    await expect(strip).toHaveCount(0);
+    await expect(sidebar).toHaveCount(0);
     await expect.poll(left).toBeLessThan(shown ?? 0);
 
     await clickMenuItem(app, "sidebar.toggle");
-    await expect(strip).toBeVisible();
+    await expect(sidebar).toBeVisible();
     await expect.poll(left).toBe(shown);
   } finally {
     await close();

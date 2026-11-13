@@ -28,7 +28,7 @@ const tab = (appId: string, pinned = false): Tab => ({
 const auto: SidebarChoice = { flipped: null, hidden: false, width: "auto" };
 
 describe(sidebarOf, () => {
-  it("hides the strip for a fresh profile's one Gmail tab, with none, and when the user hid it", () => {
+  it("hides the sidebar for a fresh profile's one Gmail tab, with none, and when the user hid it", () => {
     expect(sidebarOf([tab("gmail")], auto)).toStrictEqual({ kind: "hidden" });
     expect(sidebarOf([], auto)).toStrictEqual({ kind: "hidden" });
     expect(
@@ -65,7 +65,7 @@ describe(sidebarOf, () => {
 });
 
 describe(sidebarInset, () => {
-  it("takes the strip's width, or nothing while it is hidden", () => {
+  it("takes the sidebar's width, or nothing while it is hidden", () => {
     expect(sidebarInset({ kind: "hidden" })).toBe(0);
     expect(sidebarInset({ kind: "shown", size: "wide", width: 224 })).toBe(224);
   });

@@ -106,7 +106,7 @@ const WidthToggle = ({ size }: { readonly size: Size }) => {
   );
 };
 
-/** The strip of the selected profile's tabs down the left of the window, shown while it has more than one; `launcher` goes at its foot. */
+/** The sidebar, the selected profile's tabs down the left of the window, shown while it has more than one; `launcher` goes at its foot. */
 export const Sidebar = ({
   launcher,
 }: {

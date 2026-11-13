@@ -64,7 +64,7 @@ describe(Sidebar, () => {
     }
   });
 
-  it("draws nothing while the strip is hidden", () => {
+  it("draws nothing while the sidebar is hidden", () => {
     const { container } = mount([answer(sidebar.snapshot, { kind: "hidden" })]);
     expect(container.querySelector("nav")).toBeNull();
   });

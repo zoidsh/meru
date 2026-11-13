@@ -1,7 +1,7 @@
 import { isEqual } from "es-toolkit";
 
 import { DisposableStore } from "../../../core/disposable.ts";
-import { hasStrip, sidebarOf } from "../../../core/engines/sidebar.ts";
+import { hasSidebar, sidebarOf } from "../../../core/engines/sidebar.ts";
 import type { Sidebar, SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -19,11 +19,11 @@ export interface SidebarsOptions {
   readonly events: Pick<AppEvents, "on" | "emit">;
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
-  /** Called after the selected profile's strip appeared, went or changed width. */
+  /** Called after the selected profile's sidebar appeared, went or changed width. */
   readonly onChange: (sidebar: Sidebar) => void;
 }
 
-/** Decides the selected profile's strip, and holds what the user hid or flipped per profile for as long as the app runs. */
+/** Decides the selected profile's sidebar, and holds what the user hid or flipped per profile for as long as the app runs. */
 export class Sidebars {
   readonly #options: SidebarsOptions;
   readonly #disposables = new DisposableStore();
@@ -46,7 +46,7 @@ export class Sidebars {
             this.toggle();
             return ok(null);
           },
-          when: () => hasStrip(this.#tabs()),
+          when: () => hasSidebar(this.#tabs()),
         },
         toggleWidth: {
           run: () => {
@@ -71,12 +71,12 @@ export class Sidebars {
     this.#disposables.dispose();
   }
 
-  /** The selected profile's strip. */
+  /** The selected profile's sidebar. */
   current(): Sidebar {
     return this.#current;
   }
 
-  /** Hides the selected profile's strip, or brings it back. */
+  /** Hides the selected profile's sidebar, or brings it back. */
   toggle(): void {
     const { id } = this.#options.profiles.selected();
     if (this.#hidden.has(id)) {
@@ -87,7 +87,7 @@ export class Sidebars {
     this.#update();
   }
 
-  /** Puts the selected profile's strip on the width it is not on, until the app quits, leaving the setting alone. */
+  /** Puts the selected profile's sidebar on the width it is not on, until the app quits, leaving the setting alone. */
   toggleWidth(): void {
     const current = this.#current;
     if (current.kind !== "shown") {

@@ -76,7 +76,7 @@ const CloseButton = ({
   </Button>
 );
 
-/** One tab's row in the strip: its icon, its title when wide, Gmail's marks, and the close control hovering reveals. */
+/** One tab's row in the sidebar: its icon, its title when wide, Gmail's marks, and the close control hovering reveals. */
 export const TabRowButton = ({
   tab,
   size,

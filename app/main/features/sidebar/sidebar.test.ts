@@ -95,7 +95,7 @@ const narrow: Sidebar = { kind: "shown", size: "narrow", width: 64 };
 const wide: Sidebar = { kind: "shown", size: "wide", width: 224 };
 
 describe(Sidebars, () => {
-  it("shows no strip for a profile with Gmail alone, and answers the page's snapshot", async () => {
+  it("shows no sidebar for a profile with Gmail alone, and answers the page's snapshot", async () => {
     const { sidebars, registrar } = await setup();
     expect(sidebars.current()).toStrictEqual({ kind: "hidden" });
     expect(
@@ -103,7 +103,7 @@ describe(Sidebars, () => {
     ).toStrictEqual({ ok: true, value: { kind: "hidden" } });
   });
 
-  it("shows the strip once the profile has a second tab, wide once an app has two, telling the page and the stage", async () => {
+  it("shows the sidebar once the profile has a second tab, wide once an app has two, telling the page and the stage", async () => {
     const { add, changes, pushed } = await setup();
     add("calendar");
     add("drive");
@@ -119,7 +119,7 @@ describe(Sidebars, () => {
     expect(sidebars.current()).toStrictEqual(wide);
   });
 
-  it("hides the strip and brings it back on sidebar.toggle, and flips its width on sidebar.toggleWidth", async () => {
+  it("hides the sidebar and brings it back on sidebar.toggle, and flips its width on sidebar.toggleWidth", async () => {
     const { add, commands, sidebars, settings } = await setup();
     add("drive");
     const run = (id: CommandId) => {
@@ -136,7 +136,7 @@ describe(Sidebars, () => {
     expect(sidebars.current()).toStrictEqual(wide);
   });
 
-  it("offers sidebar.toggle only while the profile has a strip to hide, and has the menu rebuilt when the strip changes", async () => {
+  it("offers sidebar.toggle only while the profile has a sidebar to hide, and has the menu rebuilt when the sidebar changes", async () => {
     const { add, commands, events } = await setup();
     const alone = commands.enabled("sidebar.toggle");
     add("drive");

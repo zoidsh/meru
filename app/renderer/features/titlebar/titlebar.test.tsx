@@ -51,7 +51,7 @@ describe(Titlebar, () => {
     }
   });
 
-  it("shows a fresh profile, its strip hidden, no profile row and what goes at its right end", () => {
+  it("shows a fresh profile, its sidebar hidden, no profile row and what goes at its right end", () => {
     const { container } = mount([profilesAnswer([profileOf("personal")])]);
     expect([
       container.querySelector("[data-profile-row]"),

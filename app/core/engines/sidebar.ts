@@ -11,7 +11,7 @@ export const sidebarWidthSchema = z.enum(["auto", "narrow", "wide"]);
 /** The width a user sets: one of the two, or `auto`, which picks between them. */
 export type SidebarWidth = z.infer<typeof sidebarWidthSchema>;
 
-/** One of the two widths the strip is ever drawn at. */
+/** One of the two widths the sidebar is ever drawn at. */
 export type SidebarSize = Exclude<SidebarWidth, "auto">;
 
 /** 3.x's widths: icons alone in eight steps of its 8px spacing, icon and title in 28. */
@@ -29,15 +29,15 @@ export const sidebarSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-/** Whether the strip is drawn, and how wide. */
+/** Whether the sidebar is drawn, and how wide. */
 export type Sidebar = z.infer<typeof sidebarSchema>;
 
 export interface SidebarChoice {
   /** The profile's `sidebar.width`. */
   readonly width: SidebarWidth;
-  /** Whether the user hid the strip for the profile. */
+  /** Whether the user hid the sidebar for the profile. */
   readonly hidden: boolean;
-  /** A width the user flipped to in the strip, which stands until the app quits. */
+  /** A width the user flipped to in the sidebar, which stands until the app quits. */
   readonly flipped: SidebarSize | null;
 }
 
@@ -51,15 +51,15 @@ const autoSize = (tabs: readonly Tab[]): SidebarSize => {
   return [...counts.values()].some((count) => count > 1) ? "wide" : "narrow";
 };
 
-/** Whether a profile's tabs call for a strip at all: only when there is more than one to switch between. */
-export const hasStrip = (tabs: readonly Tab[]): boolean => tabs.length > 1;
+/** Whether a profile's tabs call for a sidebar at all: only when there is more than one to switch between. */
+export const hasSidebar = (tabs: readonly Tab[]): boolean => tabs.length > 1;
 
-/** The strip for a profile's tabs: shown while `hasStrip` and the user has not hidden it, wide under `auto` once an app has several tabs, since icons alone no longer tell them apart. */
+/** The sidebar for a profile's tabs: shown while `hasSidebar` and the user has not hidden it, wide under `auto` once an app has several tabs, since icons alone no longer tell them apart. */
 export const sidebarOf = (
   tabs: readonly Tab[],
   choice: SidebarChoice
 ): Sidebar => {
-  if (!hasStrip(tabs) || choice.hidden) {
+  if (!hasSidebar(tabs) || choice.hidden) {
     return { kind: "hidden" };
   }
   const size =
@@ -67,7 +67,7 @@ export const sidebarOf = (
   return { kind: "shown", size, width: SIDEBAR_PIXELS[size] };
 };
 
-/** What the strip takes from the left of the content area. */
+/** What the sidebar takes from the left of the content area. */
 export const sidebarInset = (sidebar: Sidebar): number =>
   sidebar.kind === "shown" ? sidebar.width : 0;
 
