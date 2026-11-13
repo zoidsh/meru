@@ -119,9 +119,11 @@ export class Stages {
         reload: inWindow((windowId) => this.#navigate(windowId, "reload")),
         stop: inWindow((windowId) => this.#navigate(windowId, "stop")),
         splitHorizontal: inWindow((windowId) =>
-          this.split(windowId, "horizontal")
+          this.#requestSplit(windowId, "horizontal")
         ),
-        splitVertical: inWindow((windowId) => this.split(windowId, "vertical")),
+        splitVertical: inWindow((windowId) =>
+          this.#requestSplit(windowId, "vertical")
+        ),
       }),
       settings.subscribe((changes) => {
         const restyle = changes.some(
@@ -144,9 +146,9 @@ export class Stages {
           this.dragTo(contentsId, { x, y }, buttons),
         endDrag: (point, { contentsId }) => this.endDrag(contentsId, point),
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),
-        openTab: ({ appId, profileId, split }, { contentsId }) => {
+        openTab: ({ appId, profileId, split, orientation }, { contentsId }) => {
           const opened = this.#with(contentsId, (found) =>
-            found.openTab(profileId, appId, split)
+            found.openTab(profileId, appId, split, orientation)
           );
           return opened.ok ? ok(null) : opened;
         },
@@ -161,6 +163,16 @@ export class Stages {
 
   dispose(): void {
     this.#disposables.dispose();
+  }
+
+  #requestSplit(
+    windowId: number,
+    orientation: Orientation
+  ): Result<undefined, StageError> {
+    return this.#with(windowId, () => {
+      this.#options.events.emit("split.requested", { orientation, windowId });
+      return ok(undefined);
+    });
   }
 
   #navigate(

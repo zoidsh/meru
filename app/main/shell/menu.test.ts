@@ -155,11 +155,13 @@ const setup = async (platform = "darwin") => {
     action,
     actions,
     built,
+    events,
     feed,
     registrar,
     reports,
     sections,
     settings,
+    stages,
     submenu,
     window,
   };
@@ -356,12 +358,18 @@ describe(ApplicationMenu, () => {
   });
 
   it("runs a command in the window it is for", async () => {
-    const { action, window } = await setup();
+    const { action, events, stages, window } = await setup();
+    const requested: number[] = [];
+    events.on("split.requested", ({ windowId }) => {
+      requested.push(windowId);
+    });
     action("stage.splitVertical").run(window.contentsId);
-    action("stage.splitHorizontal").run(window.contentsId);
-    expect(window.childViews()).toHaveLength(3);
+    stages.split(window.contentsId, "vertical");
     action("stage.closeTab").run(window.contentsId);
-    expect(window.childViews()).toHaveLength(2);
+    expect([requested, window.childViews().length]).toStrictEqual([
+      [window.contentsId],
+      1,
+    ]);
   });
 
   it("reports what it could not do and does nothing without a window", async () => {
@@ -401,13 +409,17 @@ describe(ApplicationMenu, () => {
   });
 
   it("runs a command a page asks for, in the page's window", async () => {
-    const { registrar, window } = await setup();
+    const { events, registrar, window } = await setup();
+    const requested: number[] = [];
+    events.on("split.requested", ({ windowId }) => {
+      requested.push(windowId);
+    });
     expect(
       registrar.dispatch(window.contentsId, wireName(channels.run), {
         id: "stage.splitVertical",
       })
     ).toStrictEqual({ ok: true, value: null });
-    expect(window.childViews()).toHaveLength(2);
+    expect(requested).toStrictEqual([window.contentsId]);
     expect(
       registrar.dispatch(-1, wireName(channels.run), { id: "stage.closeTab" })
     ).toStrictEqual({

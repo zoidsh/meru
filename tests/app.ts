@@ -1,3 +1,4 @@
+import { expect } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import type { Result } from "../app/core/result.ts";
@@ -66,4 +67,28 @@ export const clickMenuItem = async (
     // MenuItem.click is typed as a bare Function.
     Reflect.apply(item.click, item, []);
   }, id);
+};
+
+const isLauncher = (page: Page) =>
+  new URL(page.url()).pathname.endsWith("/overlay.html");
+
+/** The launcher's page once it is open. */
+export const launcherOf = async (app: ElectronApplication) => {
+  await expect.poll(() => app.windows().some(isLauncher)).toBeTruthy();
+  const launcher = app.windows().find(isLauncher);
+  if (launcher === undefined) {
+    throw new Error("The launcher went away");
+  }
+  return launcher;
+};
+
+/** Picks the app named `name` with Enter in the open launcher, and waits for it to close. */
+export const pickApp = async (app: ElectronApplication, name: string) => {
+  const launcher = await launcherOf(app);
+  const search = launcher.locator("input");
+  await search.fill(name);
+  await expect(launcher.locator("[data-app-id]")).toHaveCount(1);
+  // Enter closes the launcher's page, which can be gone before Playwright hears back about the key, so the press may fail once it has done its work; the poll below is the assertion.
+  await search.press("Enter").catch(() => null);
+  await expect.poll(() => app.windows().some(isLauncher)).toBeFalsy();
 };

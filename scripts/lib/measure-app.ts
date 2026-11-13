@@ -14,7 +14,9 @@ import {
   measureRolesSchema,
 } from "../../app/main/shell/measure.ts";
 import { launcher } from "../../app/shared/channels/launcher.ts";
-import { launch, readExposed, runCommand, sendIn } from "./app.ts";
+import { profiles } from "../../app/shared/channels/profiles.ts";
+import { stage } from "../../app/shared/channels/stage.ts";
+import { invokeIn, launch, readExposed, runCommand, sendIn } from "./app.ts";
 import type {
   AppName,
   Measurement,
@@ -173,6 +175,19 @@ const commit = () =>
 
 const LAUNCHER_LOAD = 2000;
 
+// A split command opens the launcher for the new pane's app, so the split is asked for as the launcher asks it, with an app other than Gmail, whose one tab a split would only bring to the front.
+const splitWithCalendar = async (chrome: Page) => {
+  const state = await invokeIn(chrome, profiles.snapshot, {});
+  if (!state.ok) {
+    throw new Error(`The profiles did not answer: ${state.error.message}`);
+  }
+  await invokeIn(chrome, stage.openTab, {
+    appId: "calendar",
+    profileId: state.value.selectedProfileId,
+    split: true,
+  });
+};
+
 /** Launches an app, reads it 5s after launch, right after one split, with the launcher open, and after the idle time once the launcher has closed, and closes it. */
 export const measureApp = async (
   options: MeasureOptions
@@ -194,7 +209,7 @@ export const measureApp = async (
       },
     ];
     if (chrome !== undefined) {
-      await runCommand(chrome, "stage.splitVertical");
+      await splitWithCalendar(chrome);
     }
     samples.push({
       point: "split",

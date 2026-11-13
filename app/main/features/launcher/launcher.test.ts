@@ -85,12 +85,13 @@ const setup = async () => {
   const stage = stages.open(window, () => profiles.currentGroup()?.id);
   new Launcher({
     commands,
+    events,
     overlayUrl: (kind, query) =>
       `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
     registrar,
     stages,
   }).start();
-  return { commands, registrar, stage, transport, views, window };
+  return { commands, events, registrar, stage, transport, views, window };
 };
 
 describe(Launcher, () => {
@@ -120,6 +121,28 @@ describe(Launcher, () => {
     await expect
       .poll(() => views.created.at(-1)?.url)
       .toBe("overlay.html?kind=launcher");
+  });
+
+  it("opens the launcher's page for a split of the orientation launcher.open names", async () => {
+    const { registrar, views, window } = await setup();
+    registrar.dispatch(window.contentsId, wireName(launcher.open), {
+      split: "horizontal",
+    });
+    await expect
+      .poll(() => views.created.at(-1)?.url)
+      .toBe("overlay.html?split=horizontal&kind=launcher");
+  });
+
+  it("opens the launcher's page for a split when a split command asks, in its window", async () => {
+    const { commands, views, window } = await setup();
+    expect(
+      commands.run("stage.splitVertical", { windowId: window.contentsId }).ok
+    ).toBeTruthy();
+    const overlay = views.created.at(-1);
+    await expect
+      .poll(() => overlay?.url)
+      .toBe("overlay.html?split=vertical&kind=launcher");
+    expect(window.childViews().at(-1)).toBe(overlay);
   });
 
   it("refuses to open from a sender with no window", async () => {

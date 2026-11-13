@@ -234,15 +234,16 @@ export class Stage {
     return shown === undefined ? ok(undefined) : this.focusPane(shown);
   }
 
-  /** Opens a tab of the app in the profile and shows it: beside the focused pane with `split` when the stage shows that profile, else in a group of one; a single-instance app's one tab instead when the profile has it. */
+  /** Opens a tab of the app in the profile and shows it: beside the focused pane in `orientation` with `split` when the stage shows that profile, else in a group of one; a single-instance app's one tab instead when the profile has it. */
   openTab(
     profileId: string,
     appId: string,
-    split: boolean
+    split: boolean,
+    orientation: Orientation = "vertical"
   ): Result<undefined, StageError> {
     const placement =
       split && this.#read()?.profileId === profileId
-        ? this.#placement("vertical")
+        ? this.#placement(orientation)
         : undefined;
     const { profiles } = this.#options;
     const opened = profiles.openTab(profileId, appId, placement);

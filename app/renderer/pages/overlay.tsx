@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { orientationSchema } from "../../core/records/layout.ts";
 import { overlayKindSchema, overlays } from "../../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../../shared/channels/surfaces.ts";
 import { themePushes } from "../../shared/channels/theme.ts";
@@ -28,11 +29,13 @@ const shows: {
     query: URLSearchParams
   ) => ReactNode;
 } = {
-  launcher: (client) => (
+  launcher: (client, query) => (
     <LauncherClientProvider client={client}>
       <SettingsContext value={createSettingsStore(client)}>
         <ProfilesContext value={createProfilesStore(client)}>
-          <Launcher />
+          <Launcher
+            split={orientationSchema.safeParse(query.get("split")).data}
+          />
         </ProfilesContext>
       </SettingsContext>
     </LauncherClientProvider>

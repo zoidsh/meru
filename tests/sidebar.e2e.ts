@@ -3,11 +3,14 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { profiles } from "../app/shared/channels/profiles.ts";
 import { invokeIn, launch } from "../scripts/lib/app.ts";
-import { clickMenuItem, entitlementOf, profilesOf, viewsOf } from "./app.ts";
+import {
+  clickMenuItem,
+  entitlementOf,
+  pickApp,
+  profilesOf,
+  viewsOf,
+} from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
-
-const isLauncher = (page: Page) =>
-  new URL(page.url()).pathname.endsWith("/overlay.html");
 
 /** Opens the launcher from the chrome page's button and picks the app named `name` with Enter. */
 const openApp = async (
@@ -16,17 +19,7 @@ const openApp = async (
   name: string
 ) => {
   await chrome.locator("[data-launcher-button]").click();
-  await expect.poll(() => app.windows().some(isLauncher)).toBeTruthy();
-  const launcher = app.windows().find(isLauncher);
-  if (launcher === undefined) {
-    throw new Error("The launcher went away");
-  }
-  const search = launcher.locator("input");
-  await search.fill(name);
-  await expect(launcher.locator("[data-app-id]")).toHaveCount(1);
-  // Enter closes the launcher's page, which can be gone before Playwright hears back about the key, so the press may fail once it has done its work; the poll below is the assertion.
-  await search.press("Enter").catch(() => null);
-  await expect.poll(() => app.windows().some(isLauncher)).toBeFalsy();
+  await pickApp(app, name);
 };
 
 const kindOf = async (chrome: Page) => {

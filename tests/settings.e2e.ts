@@ -4,7 +4,7 @@ import { TITLEBAR_HEIGHT } from "../app/core/engines/chrome.ts";
 import { SIDEBAR_PIXELS } from "../app/core/engines/sidebar.ts";
 import { launch, runCommand, writeSettings } from "../scripts/lib/app.ts";
 import type { Launched } from "../scripts/lib/app.ts";
-import { inspect, styleOf, viewsOf, zoomOf } from "./app.ts";
+import { inspect, pickApp, styleOf, viewsOf, zoomOf } from "./app.ts";
 
 const PROFILE = "dev";
 
@@ -35,9 +35,10 @@ test("tiles classic panes edge to edge from settings.json", async () => {
       expect(views).toStrictEqual([{ ...size, ...TOP }]);
     }).toPass({ timeout: 5000 });
 
-    // The split's second Gmail tab shows the sidebar, wide because one app now has two tabs.
+    // The split's Calendar tab shows the sidebar, narrow because no app has two tabs.
     await runCommand(chrome, "stage.splitVertical");
-    const sidebar = SIDEBAR_PIXELS.wide;
+    await pickApp(app, "Calendar");
+    const sidebar = SIDEBAR_PIXELS.narrow;
     await expect(async () => {
       const [[left, right, ...rest], size] = await Promise.all([
         viewsOf(app),

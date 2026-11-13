@@ -3,6 +3,7 @@ import type { KeyboardEvent } from "react";
 
 import { launcherApps } from "../../../core/engines/launcher.ts";
 import type { App } from "../../../core/records/app.ts";
+import type { Orientation } from "../../../core/records/layout.ts";
 import { apps } from "../../../shared/apps.ts";
 import { launcher } from "../../../shared/channels/launcher.ts";
 import { stage } from "../../../shared/channels/stage.ts";
@@ -21,8 +22,22 @@ import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useLauncherClient } from "./use-launcher-client.ts";
 
-/** The launcher itself, on its own page over the panes, centred over the window: a search field over the apps, Enter opening the highlighted one and Shift+Enter splitting the focused pane with it. */
-export const Launcher = () => {
+const titleOf = (split: Orientation | undefined): string => {
+  if (split === "vertical") {
+    return msg`Split vertically with…`;
+  }
+  if (split === "horizontal") {
+    return msg`Split horizontally with…`;
+  }
+  return msg`Open app`;
+};
+
+/** The launcher itself, on its own page over the panes, centred over the window: a search field over the apps, Enter opening the highlighted one, Shift+Enter splitting the focused pane with it, and with `split` every pick splitting the focused pane that way. */
+export const Launcher = ({
+  split,
+}: {
+  readonly split?: Orientation | undefined;
+}) => {
   const client = useLauncherClient();
   const snapshot = useProfiles();
   const appIds = useSetting("launcher.apps");
@@ -40,10 +55,16 @@ export const Launcher = () => {
     };
   });
 
-  const open = async (app: App, split: boolean) => {
+  const title = titleOf(split);
+  const open = async (app: App, shift: boolean) => {
     const profileId = snapshot?.selectedProfileId;
     if (profileId !== undefined) {
-      await client.invoke(stage.openTab, { appId: app.id, profileId, split });
+      await client.invoke(
+        stage.openTab,
+        split === undefined
+          ? { appId: app.id, profileId, split: shift }
+          : { appId: app.id, orientation: split, profileId, split: true }
+      );
     }
     close();
   };
@@ -68,7 +89,7 @@ export const Launcher = () => {
         }
       }}
       open
-      title={msg`Open app`}
+      title={title}
     >
       <Command
         onKeyDown={keyDown}
@@ -81,7 +102,7 @@ export const Launcher = () => {
           aria-label={msg`Search apps`}
           autoFocus
           onValueChange={setQuery}
-          placeholder={msg`Search apps`}
+          placeholder={title}
           value={query}
         />
         <CommandList>

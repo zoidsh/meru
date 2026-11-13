@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
+import type { AppEventMap } from "../../../core/events.ts";
 import type { Beside } from "../../../core/records/layout.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
@@ -510,22 +511,35 @@ describe("the stage commands", () => {
     ).toBeTruthy();
   });
 
-  it("split and close panes in the window they are given", async () => {
-    const { commands, id, window } = await setup();
-    expect(
-      commands.run("stage.splitVertical", { windowId: id }).ok
-    ).toBeTruthy();
-    expect(
-      commands.run("stage.splitHorizontal", { windowId: id }).ok
-    ).toBeTruthy();
+  it("split by asking the launcher for the new pane's app, in the window they are given, splitting nothing themselves", async () => {
+    const { commands, events, id, window } = await setup();
+    const requested: AppEventMap["split.requested"][] = [];
+    events.on("split.requested", (payload) => {
+      requested.push(payload);
+    });
+    expect([
+      commands.run("stage.splitVertical", { windowId: id }).ok,
+      commands.run("stage.splitHorizontal", { windowId: id }).ok,
+    ]).toStrictEqual([true, true]);
+    expect(requested).toStrictEqual([
+      { orientation: "vertical", windowId: id },
+      { orientation: "horizontal", windowId: id },
+    ]);
+    expect(window.childViews()).toHaveLength(1);
+  });
+
+  it("close panes in the window they are given", async () => {
+    const { commands, id, stages, window } = await setup();
+    stages.split(id, "vertical");
+    stages.split(id, "horizontal");
     expect(window.childViews()).toHaveLength(3);
     expect(commands.run("stage.closeTab", { windowId: id }).ok).toBeTruthy();
     expect(window.childViews()).toHaveLength(2);
   });
 
   it("move the focused pane back, forward and reload it", async () => {
-    const { commands, id, views } = await setup();
-    commands.run("stage.splitVertical", { windowId: id });
+    const { commands, id, stages, views } = await setup();
+    stages.split(id, "vertical");
     for (const command of [
       "stage.back",
       "stage.forward",
@@ -540,9 +554,9 @@ describe("the stage commands", () => {
   });
 
   it("move focus to the next and previous pane in layout order, wrapping", async () => {
-    const { commands, id, changes, paneIds } = await setup();
-    commands.run("stage.splitVertical", { windowId: id });
-    commands.run("stage.splitHorizontal", { windowId: id });
+    const { commands, id, changes, paneIds, stages } = await setup();
+    stages.split(id, "vertical");
+    stages.split(id, "horizontal");
     const [first, second, third] = paneIds();
     const focused = () => changes().at(-1)?.focusedPaneId;
     const start = focused();
@@ -559,9 +573,9 @@ describe("the stage commands", () => {
   });
 
   it("swap the focused pane with the next in layout order, focus going with it", async () => {
-    const { commands, id, changes, profiles } = await setup();
-    commands.run("stage.splitVertical", { windowId: id });
-    commands.run("stage.splitHorizontal", { windowId: id });
+    const { commands, id, changes, profiles, stages } = await setup();
+    stages.split(id, "vertical");
+    stages.split(id, "horizontal");
     const tabsInOrder = () =>
       changes()
         .at(-1)
@@ -956,8 +970,25 @@ describe("an overlay over the panes", () => {
       "gmail",
       "calendar",
     ]);
-    expect(stage.snapshot().panes).toHaveLength(2);
+    expect([
+      stage.snapshot().panes.length,
+      stage.snapshot().dividers[0]?.orientation,
+    ]).toStrictEqual([2, "vertical"]);
     expect(id).not.toBe(overlay);
+  });
+
+  it("opens a tab below the focused pane when the split names the horizontal orientation", async () => {
+    const { call, profileId, stage, views } = await setup();
+    stage.openOverlay("launcher", "file:///overlay.html");
+    const overlay = views.created.at(-1)?.contentsId ?? 0;
+    call(
+      stageChannels.openTab,
+      { appId: "calendar", orientation: "horizontal", profileId, split: true },
+      overlay
+    );
+    expect(
+      stage.snapshot().dividers.map((divider) => divider.orientation)
+    ).toStrictEqual(["horizontal"]);
   });
 
   it("opens a tab in a group of its own and shows it, and brings Gmail's one tab to the front instead of adding another", async () => {

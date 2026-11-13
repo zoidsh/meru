@@ -5,7 +5,15 @@ import type { Rect } from "../app/core/records/rect.ts";
 import { tabs } from "../app/shared/channels/profiles.ts";
 import type { CommandId } from "../app/shared/commands/registry.ts";
 import { invokeIn, launch } from "../scripts/lib/app.ts";
-import { clickMenuItem, inspect, panesOf, stageOf, viewsOf } from "./app.ts";
+import {
+  clickMenuItem,
+  inspect,
+  launcherOf,
+  panesOf,
+  pickApp,
+  stageOf,
+  viewsOf,
+} from "./app.ts";
 
 const SPLIT_VERTICAL: CommandId = "stage.splitVertical";
 const CLOSE_TAB: CommandId = "stage.closeTab";
@@ -21,12 +29,21 @@ const overlap = (a: Rect, b: Rect) =>
   Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) *
   Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
 
-test("splits, drags the divider across the panes, moves focus, and closes a tab", async () => {
+test("splits with the app picked in the launcher, drags the divider across the panes, moves focus, and closes a tab", async () => {
   const { app, chrome, close } = await launch();
   try {
     await expect.poll(async () => await viewsOf(app)).toHaveLength(1);
 
+    const { menu } = await inspect(app);
+    expect(menu[SPLIT_VERTICAL]).toBe("CommandOrControl+Alt+N");
     await clickMenuItem(app, SPLIT_VERTICAL);
+    const launcher = await launcherOf(app);
+    await expect(launcher.locator("input")).toHaveAttribute(
+      "placeholder",
+      "Split vertically with…"
+    );
+    expect(await panesOf(app)).toHaveLength(1);
+    await pickApp(app, "Calendar");
     // The views and the snapshot are two reads, and a window still settling after launch can lay out again between them, so they are read together until they agree.
     let split: Rect[] = [];
     await expect(async () => {
@@ -97,6 +114,7 @@ test("keeps a tab's page through a split beside it, leaving the group and joinin
     }
 
     await clickMenuItem(app, SPLIT_VERTICAL);
+    await pickApp(app, "Calendar");
     await expect.poll(async () => await panesOf(app)).toHaveLength(2);
     const [kept, added] = await panesOf(app);
     expect(kept).toStrictEqual(first);

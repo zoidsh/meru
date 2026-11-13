@@ -39,9 +39,14 @@ export const stage = defineChannels("stage", {
   beginDrag: event(z.object({ splitId: idSchema })),
   dragTo: event(pointer.extend({ buttons: z.number().int() })),
   endDrag: event(pointer),
-  /** Opens a tab of the app in the profile and shows it, in a group of one or, with `split`, beside the focused pane of the sender's window; a single-instance app's one tab instead when the profile has it. */
+  /** Opens a tab of the app in the profile and shows it, in a group of one or, with `split`, beside the focused pane of the sender's window in `orientation`, vertical unless named; a single-instance app's one tab instead when the profile has it. */
   openTab: invoke(
-    z.object({ appId: idSchema, profileId: idSchema, split: z.boolean() }),
+    z.object({
+      appId: idSchema,
+      orientation: orientationSchema.optional(),
+      profileId: idSchema,
+      split: z.boolean(),
+    }),
     z.null()
   ),
   snapshot: sync(z.object({}), stageSnapshotSchema),

@@ -1,6 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import type { Orientation } from "../../../core/records/layout.ts";
 import { launcher } from "../../../shared/channels/launcher.ts";
 import { profiles } from "../../../shared/channels/profiles.ts";
 import { settings } from "../../../shared/channels/settings.ts";
@@ -64,8 +65,8 @@ const settle = async () => {
   });
 };
 
-const mount = (appIds?: readonly string[]) => {
-  const page = mountChrome(<Launcher />, [
+const mount = (appIds?: readonly string[], split?: Orientation) => {
+  const page = mountChrome(<Launcher split={split} />, [
     answer(profiles.snapshot, PROFILES),
     answer(settings.snapshot, {
       global: appIds === undefined ? {} : { "launcher.apps": appIds },
@@ -126,6 +127,56 @@ describe(Launcher, () => {
     expect(sentOn(stage.openTab)).toStrictEqual([
       { appId: "calendar", profileId: "personal", split: false },
       { appId: "drive", profileId: "personal", split: true },
+    ]);
+  });
+
+  it("says what a pick will do: open an app, or split the focused pane either way", () => {
+    const placeholders = ([undefined, "vertical", "horizontal"] as const).map(
+      (split) => {
+        const { unmount } = mount(["calendar"], split);
+        const placeholder = input()?.placeholder;
+        unmount();
+        return placeholder;
+      }
+    );
+    expect(placeholders).toStrictEqual([
+      "Open app",
+      "Split vertically with…",
+      "Split horizontally with…",
+    ]);
+  });
+
+  it("splits the focused pane in the orientation it was opened for, on Enter as on Shift+Enter", async () => {
+    const vertical = mount(["calendar", "drive"], "vertical");
+    key({ key: "Enter" });
+    await settle();
+    vertical.unmount();
+    const horizontal = mount(["calendar", "drive"], "horizontal");
+    key({ key: "ArrowDown" });
+    key({ key: "Enter", shiftKey: true });
+    await settle();
+    expect([
+      vertical.sentOn(stage.openTab),
+      horizontal.sentOn(stage.openTab),
+      horizontal.sentOn(launcher.close).length,
+    ]).toStrictEqual([
+      [
+        {
+          appId: "calendar",
+          orientation: "vertical",
+          profileId: "personal",
+          split: true,
+        },
+      ],
+      [
+        {
+          appId: "drive",
+          orientation: "horizontal",
+          profileId: "personal",
+          split: true,
+        },
+      ],
+      1,
     ]);
   });
 
