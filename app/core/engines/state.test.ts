@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { fakeIds } from "../../test/fakes/ids.ts";
+import { random } from "../../test/random.ts";
 import { unwrap } from "../../test/result.ts";
 import type { Beside } from "../records/layout.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
@@ -11,6 +12,7 @@ import { validateState } from "./state-validate.ts";
 import {
   addProfile,
   addTab,
+  balanceGroup,
   canClose,
   closeTab,
   openTab,
@@ -23,6 +25,7 @@ import {
   selectProfile,
   joinTab,
   splitInto,
+  swapPanes,
 } from "./state.ts";
 
 const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
@@ -381,6 +384,80 @@ const repair = () => {
     tabFor: (profileId: string) => tabOf(`new-${profileId}`, profileId),
   };
 };
+
+describe("the state's invariants under the layout's own changes", () => {
+  it.each(Array.from({ length: 40 }, (_, index) => index + 1))(
+    "hold through a run of moves, swaps, balances and resizes of one group's panes (seed %i)",
+    (seed) => {
+      const draw = random(seed);
+      const any = <T>(items: readonly T[]): T | undefined =>
+        items[Math.floor(draw() * items.length)];
+      const { ids, state } = start();
+      let current = state;
+      for (const tabId of ["t2", "t3", "t4", "t5"]) {
+        current = unwrap(addTab(current, tabOf(tabId, "a"), ids));
+      }
+      const grouped = unwrap(
+        createGroup(current, ["t1", "t2", "t3", "t4", "t5"], "vertical", ids)
+      );
+      const { groupId } = grouped;
+      current = grouped.state;
+      let changed = 0;
+      for (let step = 0; step < 60; step += 1) {
+        const before = current;
+        const layout =
+          before.groups.find((found) => found.id === groupId)?.layout ?? null;
+        const a = any(panes(layout));
+        const b = any(panes(layout));
+        const beside: Beside = {
+          orientation: draw() < 0.5 ? "vertical" : "horizontal",
+          side: draw() < 0.5 ? "before" : "after",
+        };
+        const operation = any([
+          () =>
+            joinTab(
+              before,
+              a?.tabIds[0] ?? "",
+              b?.tabIds[0] ?? "",
+              beside,
+              ids
+            ),
+          () => swapPanes(before, groupId, a?.paneId ?? "", b?.paneId ?? ""),
+          () => balanceGroup(before, groupId),
+          () =>
+            resizeSplit(
+              before,
+              groupId,
+              layout?.kind === "split" ? layout.id : "",
+              draw()
+            ),
+        ]);
+        const result = operation?.();
+        if (result?.ok === true) {
+          current = result.value;
+          changed += 1;
+        }
+        expect(validateState(current)).toStrictEqual([]);
+      }
+      expect(changed).toBeGreaterThan(20);
+    }
+  );
+
+  it("refuses to swap in a group or with a pane it does not have", () => {
+    const { state } = start();
+    const [group] = state.groups;
+    const [pane] = panes(group?.layout ?? null);
+    expect([
+      swapPanes(state, "g9", pane?.paneId ?? "", "p9"),
+      swapPanes(state, group?.id ?? "", pane?.paneId ?? "", "p9"),
+      balanceGroup(state, "g9"),
+    ]).toStrictEqual([
+      { error: "unknownGroup", ok: false },
+      { error: "unknownPane", ok: false },
+      { error: "unknownGroup", ok: false },
+    ]);
+  });
+});
 
 describe(repairState, () => {
   it("starts fresh when no profile survives", () => {

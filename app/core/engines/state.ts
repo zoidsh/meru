@@ -1,7 +1,12 @@
 import type { Ids } from "../ports.ts";
 import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
-import type { Beside, Orientation, Placement } from "../records/layout.ts";
+import type {
+  Beside,
+  Layout,
+  Orientation,
+  Placement,
+} from "../records/layout.ts";
 import { colorFor } from "../records/profile.ts";
 import type { Profile, ProfileStatus } from "../records/profile.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
@@ -9,6 +14,7 @@ import type { Tab } from "../records/tab.ts";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
 import {
+  balance,
   close,
   leaf,
   movePane,
@@ -16,6 +22,7 @@ import {
   panes,
   resize,
   split,
+  swap,
 } from "./layout.ts";
 import { groupOf, moveTab, orderedProfiles } from "./ordering.ts";
 
@@ -439,6 +446,17 @@ export const createGroup = (
   return ok({ groupId: group.id, state: current });
 };
 
+const withLayout = (
+  state: ProfilesState,
+  groupId: string,
+  layout: Layout
+): ProfilesState => ({
+  ...state,
+  groups: state.groups.map((found) =>
+    found.id === groupId ? { ...found, layout } : found
+  ),
+});
+
 export const resizeSplit = (
   state: ProfilesState,
   groupId: string,
@@ -453,12 +471,35 @@ export const resizeSplit = (
   if (layout === group.layout) {
     return err("unknownSplit");
   }
-  return ok({
-    ...state,
-    groups: state.groups.map((found) =>
-      found.id === groupId ? { ...found, layout } : found
-    ),
-  });
+  return ok(withLayout(state, groupId, layout));
+};
+
+/** Trades the places of two of the group's panes, each keeping its tab. */
+export const swapPanes = (
+  state: ProfilesState,
+  groupId: string,
+  a: string,
+  b: string
+): Changed => {
+  const group = state.groups.find((found) => found.id === groupId);
+  if (group === undefined) {
+    return err("unknownGroup");
+  }
+  const layout = swap(group.layout, a, b);
+  return layout === undefined
+    ? err("unknownPane")
+    : ok(withLayout(state, groupId, layout));
+};
+
+/** Gives each pane of every run of the group's splits of one orientation the same share of it. */
+export const balanceGroup = (
+  state: ProfilesState,
+  groupId: string
+): Changed => {
+  const group = state.groups.find((found) => found.id === groupId);
+  return group === undefined
+    ? err("unknownGroup")
+    : ok(withLayout(state, groupId, balance(group.layout)));
 };
 
 /** Moves the row holding the tab to row `to` of its profile's tab list. */
