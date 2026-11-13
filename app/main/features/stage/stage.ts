@@ -16,6 +16,15 @@ import {
   STYLE_METRICS,
   tabOfPane,
 } from "../../../core/engines/layout.ts";
+import {
+  afterClose,
+  afterFocus,
+  afterFullscreen,
+  fullscreenPaneOf,
+  NO_SPOTLIGHT,
+  toggleMaximised,
+} from "../../../core/engines/spotlight.ts";
+import type { Spotlight } from "../../../core/engines/spotlight.ts";
 import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
 import type {
   Unsubscribe,
@@ -121,10 +130,7 @@ export class Stage {
   readonly #retired: OwnedView[] = [];
   // Held by tab, since a pane's id changes under a join or a move.
   #focused: string | undefined;
-  // Kept per window and never stored: a maximised pane is a way of looking at the group, not part of it.
-  #maximised: string | undefined;
-  /** The tab whose page is fullscreen. */
-  #fullscreenTab: string | undefined;
+  #spotlight: Spotlight = NO_SPOTLIGHT;
   readonly #drag: DragOverlay;
   #published: StageSnapshot | undefined;
 
@@ -220,8 +226,7 @@ export class Stage {
       return;
     }
     this.#shown = group;
-    this.#maximised = undefined;
-    this.#fullscreenTab = undefined;
+    this.#spotlight = NO_SPOTLIGHT;
     if (this.#focusedPane() === undefined) {
       this.#focused = panes(this.#layout())[0]?.tabIds[0];
     }
@@ -259,10 +264,7 @@ export class Stage {
     if (order.length === 1) {
       return err("lastPane");
     }
-    this.#maximised = undefined;
-    if (this.#fullscreenTab === tabId) {
-      this.#fullscreenTab = undefined;
-    }
+    this.#spotlight = afterClose(this.#spotlight, tabId);
     const wasFocused = this.#focused === tabId;
     if (!this.#options.profiles.closeTab(tabId).ok) {
       return err("refused");
@@ -279,12 +281,15 @@ export class Stage {
   focusPane(paneId: string): Result<undefined, StageError> {
     const tabId = tabOfPane(this.#layout(), paneId);
     const view = tabId === undefined ? undefined : this.#views.view(tabId);
-    if (view === undefined) {
+    if (tabId === undefined || view === undefined) {
       return err("unknownPane");
     }
     this.#focused = tabId;
-    if (this.#maximised !== undefined && this.#maximised !== tabId) {
-      this.#restore();
+    const spotlight = afterFocus(this.#spotlight, tabId);
+    if (spotlight !== this.#spotlight) {
+      this.#spotlight = spotlight;
+      this.#reconcile();
+      this.#arrange(false);
     }
     view.focus();
     this.#publish();
@@ -293,19 +298,15 @@ export class Stage {
 
   /** Gives the focused pane the whole stage, hiding the others, or shows them all again when one is maximised. */
   maximise(): Result<undefined, StageError> {
-    if (this.#maximised !== undefined) {
-      this.#restore();
-      this.#publish();
-      return ok(undefined);
+    const toggled = toggleMaximised(
+      this.#spotlight,
+      this.#focusedPane() === undefined ? undefined : this.#focused,
+      panes(this.#layout()).length
+    );
+    if (!toggled.ok) {
+      return toggled;
     }
-    const focused = this.#focused;
-    if (focused === undefined || this.#focusedPane() === undefined) {
-      return err("unknownPane");
-    }
-    if (panes(this.#layout()).length === 1) {
-      return err("lastPane");
-    }
-    this.#maximised = focused;
+    this.#spotlight = toggled.value;
     this.#reconcile();
     this.#arrange();
     return ok(undefined);
@@ -531,17 +532,12 @@ export class Stage {
   #shownLayout(): Layout {
     return shownLayout(this.#read()?.layout ?? null, {
       drag: this.#drag.layout,
-      fullscreen: this.#fullscreenTab,
-      maximised: this.#maximised,
+      ...this.#spotlight,
     });
   }
 
-  /** The pane of the fullscreen tab, while the stage shows it. */
   #fullscreenPane(): string | undefined {
-    const tabId = this.#fullscreenTab;
-    return tabId === undefined
-      ? undefined
-      : paneOfTab(this.#shownLayout(), tabId);
+    return fullscreenPaneOf(this.#shownLayout(), this.#spotlight);
   }
 
   #arrangement() {
@@ -563,13 +559,11 @@ export class Stage {
 
   // Electron takes the window fullscreen itself when a view's page asks for it and puts it back when the page leaves, so the stage only gives the pane the window; setting the window's fullscreen as well left the page stuck in fullscreen once it asked to leave.
   #fullscreen(tabId: string, entered: boolean): void {
-    if (entered) {
-      this.#fullscreenTab = tabId;
-    } else if (this.#fullscreenTab === tabId) {
-      this.#fullscreenTab = undefined;
-    } else {
+    const spotlight = afterFullscreen(this.#spotlight, tabId, entered);
+    if (spotlight === this.#spotlight) {
       return;
     }
+    this.#spotlight = spotlight;
     this.#reconcile();
     this.#arrange();
   }
@@ -592,13 +586,6 @@ export class Stage {
       this.refresh();
       this.focusTab(focused);
     }
-  }
-
-  /** Shows every pane of the group again after one was maximised. */
-  #restore(): void {
-    this.#maximised = undefined;
-    this.#reconcile();
-    this.#arrange(false);
   }
 
   #area() {
