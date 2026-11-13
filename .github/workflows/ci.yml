@@ -86,9 +86,7 @@ jobs:
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: pnpm-store-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
-      # Not pnpm package:linux, which marks the build as local to this checkout; this one is built as a release would be.
-      - run: pnpm build
-      - run: packaging/node_modules/.bin/electron-builder --config packaging/electron-builder.config.ts --publish never --linux AppImage --x64
+      - run: pnpm package:linux AppImage --x64
       - uses: actions/upload-artifact@v7
         with:
           name: appimage-x64
