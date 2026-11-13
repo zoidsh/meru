@@ -1,5 +1,6 @@
-import { DragDropProvider } from "@dnd-kit/react";
+import { DragDropProvider, useDragDropManager } from "@dnd-kit/react";
 import { cn } from "cn";
+import { useEffect } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import { STYLE_METRICS } from "../../../core/engines/layout.ts";
@@ -11,6 +12,8 @@ import {
 } from "../../../core/engines/sidebar.ts";
 import type { SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { Tab } from "../../../core/records/tab.ts";
+import { stagePushes } from "../../../shared/channels/stage.ts";
+import { useClient } from "../../client-context.tsx";
 import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useStage } from "../stage/use-stage.ts";
@@ -52,6 +55,20 @@ const moveFocus = (event: KeyboardEvent<HTMLElement>) => {
   }
   event.preventDefault();
   tabs[step(index, tabs.length)]?.focus();
+};
+
+// The drag's page over the panes has the keyboard once it holds the pointer, so an Escape there ends the drag in main, and dnd-kit here has to be told.
+const EndOnCancel = () => {
+  const client = useClient();
+  const manager = useDragDropManager();
+  useEffect(
+    () =>
+      client.on(stagePushes.dragCancelled, () => {
+        manager?.actions.stop({ canceled: true });
+      }),
+    [client, manager]
+  );
+  return null;
 };
 
 /** The sidebar, the selected profile's tabs down the left of the window, shown while it has more than one; `launcher` goes at its foot. */
@@ -141,6 +158,7 @@ export const Sidebar = ({
       style={{ width }}
     >
       <DragDropProvider {...handlers(rows)}>
+        <EndOnCancel />
         <div
           aria-orientation="vertical"
           className={cn(

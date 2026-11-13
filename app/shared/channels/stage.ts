@@ -62,4 +62,6 @@ export const stage = defineChannels("stage", {
 
 export const stagePushes = definePushes("stage", {
   changed: push(stageSnapshotSchema),
+  /** The drag the chrome page began was cancelled from the drag's own page, so the chrome page's drag ends too. */
+  dragCancelled: push(z.object({})),
 });

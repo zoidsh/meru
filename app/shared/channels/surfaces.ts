@@ -38,7 +38,10 @@ export const chromeSurface = defineSurface({
 
 export type ChromeSurface = typeof chromeSurface;
 
-export const dragSurface = defineSurface({ pushes: [], requests: [drag] });
+export const dragSurface = defineSurface({
+  pushes: [],
+  requests: [drag, { cancelDrag: stage.cancelDrag }],
+});
 
 /** The launcher's page over the panes: it reads the profiles and the settings, opens a tab and closes itself. */
 export const launcherSurface = defineSurface({
@@ -56,7 +59,7 @@ export type LauncherSurface = typeof launcherSurface;
 /** A sidebar row dragged over the panes: the page draws the row and the zone it would land in, reading where the panes are once, and reports the release. */
 export const tabDragSurface = defineSurface({
   pushes: [dragPushes, themePushes],
-  requests: [drag, { snapshot: stage.snapshot }],
+  requests: [drag, { cancelDrag: stage.cancelDrag, snapshot: stage.snapshot }],
 });
 
 export type TabDragSurface = typeof tabDragSurface;

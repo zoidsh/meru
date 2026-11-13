@@ -90,6 +90,17 @@ describe(TabDrag, () => {
     });
   });
 
+  it("cancels the drag on Escape", () => {
+    const { bridge } = mount();
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    });
+    expect(
+      bridge.sent.filter((sent) => sent.channel === wireName(stage.cancelDrag))
+    ).toStrictEqual([{ channel: wireName(stage.cancelDrag), payload: {} }]);
+  });
+
   it("reports a release it sees itself as the end of the drag", () => {
     const { bridge } = mount();
     act(() => {

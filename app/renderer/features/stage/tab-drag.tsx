@@ -39,12 +39,19 @@ export const TabDrag = ({
     const release = (event: PointerEvent) => {
       client.send(drag.end, { x: event.clientX, y: event.clientY });
     };
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        client.send(stage.cancelDrag, {});
+      }
+    };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", release);
+    window.addEventListener("keydown", cancel);
     const unsubscribe = client.on(dragPushes.pointer, setPoint);
     return () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", release);
+      window.removeEventListener("keydown", cancel);
       unsubscribe();
     };
   }, [client]);

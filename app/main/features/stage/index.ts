@@ -279,8 +279,15 @@ export class Stages {
     return this.#with(sender, (found) => found.endDrag(point));
   }
 
+  /** Ends the sender's stage's drag with nothing dropped, telling the window's chrome page when the drag's own page cancelled it. */
   cancelDrag(sender: number): Result<undefined, StageError> {
-    return this.#with(sender, (found) => found.cancelDrag());
+    return this.#with(sender, (found) => {
+      const windowId = found.window.contentsId;
+      if (sender !== windowId) {
+        this.#options.registrar.push(windowId, stagePushes.dragCancelled, {});
+      }
+      return found.cancelDrag();
+    });
   }
 
   snapshot(sender: number): Result<StageSnapshot, StageError> {

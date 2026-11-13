@@ -815,6 +815,33 @@ describe("a drag across panes", () => {
     expect(stages.snapshot(id).ok).toBeTruthy();
   });
 
+  it("ends on a cancel from the overlay's page, taking no ratio and telling the chrome page", async () => {
+    const { call, overlay, profiles, transport, window, id } = await dragging();
+    const sender = overlay?.contentsId ?? 0;
+    const before = profiles.currentGroup()?.layout;
+    call(drag.move, { buttons: 1, x: 300, y: 5 }, sender);
+    expect(call(stageChannels.cancelDrag, {}, sender).ok).toBeTruthy();
+    expect({
+      children: window.childViews().length,
+      destroyed: overlay?.destroyed,
+      layout: profiles.currentGroup()?.layout,
+      told: transport.sent.filter(
+        (pushed) => pushed.channel === wireName(stagePushes.dragCancelled)
+      ),
+    }).toStrictEqual({
+      children: 2,
+      destroyed: true,
+      layout: before,
+      told: [
+        {
+          channel: wireName(stagePushes.dragCancelled),
+          contentsId: id,
+          payload: {},
+        },
+      ],
+    });
+  });
+
   it("covers every pane with a transparent overlay for its duration", async () => {
     const { window, overlay, views, result } = await dragging();
     expect(result.ok).toBeTruthy();

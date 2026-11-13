@@ -49,13 +49,24 @@ export const Dividers = () => {
         y: moved.clientY,
       });
     };
-    const end = (released: globalThis.PointerEvent) => {
+    const stop = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
+      window.removeEventListener("keydown", cancel);
+    };
+    const end = (released: globalThis.PointerEvent) => {
+      stop();
       client.send(stage.endDrag, { x: released.clientX, y: released.clientY });
+    };
+    const cancel = (pressed: KeyboardEvent) => {
+      if (pressed.key === "Escape") {
+        stop();
+        client.send(stage.cancelDrag, {});
+      }
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end);
+    window.addEventListener("keydown", cancel);
     event.preventDefault();
   };
 

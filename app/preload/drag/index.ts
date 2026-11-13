@@ -1,9 +1,11 @@
 import { wireName } from "../../shared/channels/define.ts";
 import { drag } from "../../shared/channels/drag.ts";
+import { stage } from "../../shared/channels/stage.ts";
 import { dragBridge } from "./bridge.ts";
 
 const move = wireName(drag.move);
 const end = wireName(drag.end);
+const cancel = wireName(stage.cancelDrag);
 
 // The preload's world sees the page's DOM events, so the data: page needs no script of its own.
 window.addEventListener("pointermove", (event) => {
@@ -21,3 +23,8 @@ const release = (event: PointerEvent) => {
 window.addEventListener("pointerup", release);
 // A press on the overlay means the release that should have ended the drag went elsewhere.
 window.addEventListener("pointerdown", release);
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    dragBridge.send(cancel, {});
+  }
+});
