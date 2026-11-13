@@ -23,6 +23,7 @@
     { "path": "./app/main" },
     { "path": "./app/preload" },
     { "path": "./app/renderer" },
+    { "path": "./app/test" },
     { "path": "./app/test/fakes" },
     { "path": "./packages/user-data" },
     { "path": "./tsconfig.node.json" }

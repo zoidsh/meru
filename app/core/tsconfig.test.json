@@ -8,5 +8,9 @@
     "resolveJsonModule": true
   },
   "include": ["**/*.test.ts", "fixtures/*.json"],
-  "references": [{ "path": "." }, { "path": "../test/fakes" }]
+  "references": [
+    { "path": "." },
+    { "path": "../test" },
+    { "path": "../test/fakes" }
+  ]
 }

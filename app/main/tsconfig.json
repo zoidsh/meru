@@ -11,6 +11,7 @@
   "references": [
     { "path": "../core" },
     { "path": "../shared" },
+    { "path": "../test" },
     { "path": "../test/fakes" },
     { "path": "../../packages/user-data" }
   ]

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { fakeIds } from "../../test/fakes/ids.ts";
+import { unwrap } from "../../test/result.ts";
 import type { Beside } from "../records/layout.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
 import type { Tab } from "../records/tab.ts";
@@ -44,15 +45,6 @@ const profile = (id: string, order = 0) => ({
   order,
   status: { kind: "ok" as const },
 });
-
-const unwrap = <T>(
-  result: { ok: true; value: T } | { ok: false; error: unknown }
-): T => {
-  if (!result.ok) {
-    throw new Error(`Expected a change, got ${String(result.error)}`);
-  }
-  return result.value;
-};
 
 const gmail = (appId: string) => appId === "gmail";
 

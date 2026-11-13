@@ -25,6 +25,7 @@ import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
+import { unwrap } from "../../../test/result.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { SettingsStore } from "../settings/index.ts";
@@ -126,15 +127,6 @@ const setup = async ({
 };
 
 const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
-
-const unwrap = <T>(
-  result: { ok: true; value: T } | { ok: false; error: unknown }
-): T => {
-  if (!result.ok) {
-    throw new Error(`Expected success, got ${String(result.error)}`);
-  }
-  return result.value;
-};
 
 describe(Profiles, () => {
   it("starts a fresh install with one profile holding one Gmail tab in a group of one, selected and written", async () => {

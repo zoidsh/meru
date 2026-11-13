@@ -26,6 +26,7 @@ import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import type { FakeView } from "../../../test/fakes/view.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
+import { unwrap } from "../../../test/result.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { ShortcutKeys } from "../../shell/keys.ts";
@@ -152,15 +153,6 @@ const setup = async (style: Style = "modern") => {
 
 const zoomOf = (stage: Stage) =>
   stage.panes().map(({ view }) => view.zoomFactor());
-
-const unwrap = <T>(
-  result: { ok: true; value: T } | { ok: false; error: unknown }
-): T => {
-  if (!result.ok) {
-    throw new Error(`Expected success, got ${String(result.error)}`);
-  }
-  return result.value;
-};
 
 const childBounds = (window: FakeWindow) =>
   window.childViews().map((view) => view.bounds());
