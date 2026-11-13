@@ -5,6 +5,7 @@ import { rendererSurface } from "../../shared/channels/surfaces.ts";
 import { ChromeProvider, createChrome } from "../chrome-context.tsx";
 import { createClient } from "../client.ts";
 import { Dividers } from "../features/stage/dividers.tsx";
+import { Titlebar } from "../features/titlebar/titlebar.tsx";
 import { followTheme } from "../theme.ts";
 
 followTheme(document.documentElement, location.href, (query) =>
@@ -23,6 +24,7 @@ createRoot(root).render(
   <StrictMode>
     <ChromeProvider chrome={chrome}>
       <div className="bg-background text-foreground flex h-full flex-col">
+        <Titlebar />
         <div className="flex min-h-0 flex-1" />
       </div>
       <Dividers />
