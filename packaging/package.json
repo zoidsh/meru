@@ -1,0 +1,8 @@
+{
+  "name": "@meru/packaging",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "electron-builder": "26.16.1"
+  }
+}

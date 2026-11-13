@@ -1,9 +1,12 @@
 packages:
   - packages/*
+  - packaging
 
 # pnpm runs no dependency build script unless it is listed here. Electron 45 has none: it downloads its binary on first use.
 allowBuilds:
   lefthook: true
+  # electron-builder depends on it for Squirrel.Windows, a target Meru does not build; its install script only picks the vendored 7-Zip for the architecture.
+  electron-winstaller: false
 
 # Ultracite 8.2.0 is younger than pnpm's minimum release age.
 minimumReleaseAgeExclude:

@@ -3,3 +3,4 @@ dist/
 .meru/
 test-results/
 playwright-report/
+packaging/out/
