@@ -9,7 +9,7 @@ import { tabDragSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeBridge } from "../../../test/fakes/bridge.ts";
 import { createClient } from "../../client.ts";
 import { stageOf } from "../../testing.tsx";
-import { TabDrag, tintAt } from "./tab-drag.tsx";
+import { TabDrag, dropRectAt } from "./tab-drag.tsx";
 
 const LEFT = { height: 400, width: 300, x: 0, y: 0 };
 const RIGHT = { height: 400, width: 300, x: 300, y: 0 };
@@ -53,8 +53,8 @@ const mount = () => {
       bridge.emit(wireName(dragPushes.pointer), { x, y });
     });
   };
-  const tint = () => {
-    const found = container.querySelector<HTMLElement>("[data-tint]");
+  const dropped = () => {
+    const found = container.querySelector<HTMLElement>("[data-drop]");
     return found === null
       ? undefined
       : {
@@ -63,21 +63,21 @@ const mount = () => {
           width: found.style.width,
         };
   };
-  return { bridge, container, point, tint };
+  return { bridge, container, point, dropped };
 };
 
-describe(tintAt, () => {
+describe(dropRectAt, () => {
   it("takes the half of the pane by the edge the point is near, and the whole pane in its middle", () => {
     expect([
-      tintAt(PANES, { x: 20, y: 200 }, "drive-1"),
-      tintAt(PANES, { x: 450, y: 200 }, "drive-1"),
+      dropRectAt(PANES, { x: 20, y: 200 }, "drive-1"),
+      dropRectAt(PANES, { x: 450, y: 200 }, "drive-1"),
     ]).toStrictEqual([{ ...LEFT, width: 150 }, RIGHT]);
   });
 
   it("draws nothing over the dragged tab's own pane or off every pane", () => {
     expect([
-      tintAt(PANES, { x: 20, y: 200 }, "mail"),
-      tintAt(PANES, { x: 700, y: 200 }, "drive-1"),
+      dropRectAt(PANES, { x: 20, y: 200 }, "mail"),
+      dropRectAt(PANES, { x: 700, y: 200 }, "drive-1"),
     ]).toStrictEqual([undefined, undefined]);
   });
 });
@@ -94,18 +94,18 @@ describe(TabDrag, () => {
     expect(container.childElementCount).toBe(0);
   });
 
-  it("follows the pointer main reports, drawing the row beside it and the tint where it would land", () => {
-    const { container, point, tint } = mount();
+  it("follows the pointer main reports, drawing the row beside it and the part of the pane it would take", () => {
+    const { container, point, dropped } = mount();
     point(20, 200);
     expect({
       ghost: container.querySelector("[data-ghost]")?.textContent,
-      tint: tint(),
+      drop: dropped(),
     }).toStrictEqual({
       ghost: "Drive",
-      tint: { height: "400px", left: "0px", width: "150px" },
+      drop: { height: "400px", left: "0px", width: "150px" },
     });
     point(450, 200);
-    expect(tint()).toStrictEqual({
+    expect(dropped()).toStrictEqual({
       height: "400px",
       left: "300px",
       width: "300px",

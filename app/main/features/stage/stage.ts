@@ -4,8 +4,8 @@ import { DisposableStore } from "../../../core/disposable.ts";
 import { stageArea } from "../../../core/engines/chrome.ts";
 import type { ChromeInsets } from "../../../core/engines/chrome.ts";
 import {
-  besideAt,
-  besideOf,
+  dropZoneAt,
+  placementOf,
   focusNext,
   focusPrevious,
   layout,
@@ -193,7 +193,7 @@ export class Stage {
       style: options.style,
       tabPage: (tabId) => {
         const tab = options.profiles.tab(tabId);
-        // The chrome is neutral grey, so the tint takes the colour that marks the tab's profile to stand out on a page.
+        // The chrome is neutral grey, so the drop rect takes the colour that marks the tab's profile to stand out on a page.
         const accent = options.profiles.state.profiles.find(
           (profile) => profile.id === tab?.profileId
         )?.color;
@@ -595,16 +595,17 @@ export class Stage {
   // The tab joins beside the pane under the point, on the zone's side; focus stays on the tab that had it, as it does when a tab leaves its group.
   #drop(tabId: string, point: Point): void {
     const target = this.snapshot().panes.find(
-      (pane) => besideAt(pane.rect, point) !== undefined
+      (pane) => dropZoneAt(pane.rect, point) !== undefined
     );
     const zone =
-      target === undefined ? undefined : besideAt(target.rect, point);
+      target === undefined ? undefined : dropZoneAt(target.rect, point);
     if (target === undefined || zone === undefined || target.tabId === tabId) {
       return;
     }
     const focused = this.#focused;
     if (
-      this.#options.profiles.joinTab(tabId, target.tabId, besideOf(zone)).ok &&
+      this.#options.profiles.joinTab(tabId, target.tabId, placementOf(zone))
+        .ok &&
       focused !== undefined
     ) {
       this.refresh();

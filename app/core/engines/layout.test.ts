@@ -13,8 +13,8 @@ import type { Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
 import {
   balance,
-  besideAt,
-  besideOf,
+  dropZoneAt,
+  placementOf,
   close,
   dropRect,
   focusNext,
@@ -716,7 +716,7 @@ describe(balance, () => {
   });
 });
 
-describe(besideAt, () => {
+describe(dropZoneAt, () => {
   const rect = { height: 500, width: 1000, x: 100, y: 50 };
 
   it("takes the outer fifth by each edge for that edge and the middle for a join", () => {
@@ -729,7 +729,7 @@ describe(besideAt, () => {
         { x: 600, y: 300 },
         { x: 299, y: 300 },
         { x: 300, y: 300 },
-      ].map((point) => besideAt(rect, point))
+      ].map((point) => dropZoneAt(rect, point))
     ).toStrictEqual([
       "left",
       "right",
@@ -743,22 +743,22 @@ describe(besideAt, () => {
 
   it("gives a corner to the edge the point is nearer, by share of the pane", () => {
     expect([
-      besideAt(rect, { x: 110, y: 90 }),
-      besideAt(rect, { x: 150, y: 60 }),
+      dropZoneAt(rect, { x: 110, y: 90 }),
+      dropZoneAt(rect, { x: 150, y: 60 }),
     ]).toStrictEqual(["left", "top"]);
   });
 
   it("answers nothing outside the pane or for an empty one", () => {
     expect([
-      besideAt(rect, { x: 99, y: 300 }),
-      besideAt(rect, { x: 1100, y: 300 }),
-      besideAt(rect, { x: 600, y: 550 }),
-      besideAt({ ...rect, width: 0 }, { x: 100, y: 300 }),
+      dropZoneAt(rect, { x: 99, y: 300 }),
+      dropZoneAt(rect, { x: 1100, y: 300 }),
+      dropZoneAt(rect, { x: 600, y: 550 }),
+      dropZoneAt({ ...rect, width: 0 }, { x: 100, y: 300 }),
     ]).toStrictEqual([undefined, undefined, undefined, undefined]);
   });
 
   it.each(cases)(
-    "finds every point of a pane in exactly one pane and the tint inside it (seed $seed)",
+    "finds every point of a pane in exactly one pane and the drop rect inside it (seed $seed)",
     ({ tree, rect: bounds, style, draw }) => {
       const arrangement = layout(tree, bounds, style);
       const point = {
@@ -766,7 +766,7 @@ describe(besideAt, () => {
         y: bounds.y + Math.floor(draw() * bounds.height),
       };
       const hits = [...arrangement.panes.values()].flatMap((pane) => {
-        const zone = besideAt(pane, point);
+        const zone = dropZoneAt(pane, point);
         return zone === undefined ? [] : [{ pane, zone }];
       });
       expect(hits.length).toBeLessThanOrEqual(1);
@@ -779,10 +779,10 @@ describe(besideAt, () => {
   );
 });
 
-describe(besideOf, () => {
+describe(placementOf, () => {
   it("puts left and top before, right and bottom after, and a join beside", () => {
     expect(
-      (["left", "right", "top", "bottom", "centre"] as const).map(besideOf)
+      (["left", "right", "top", "bottom", "centre"] as const).map(placementOf)
     ).toStrictEqual([
       { orientation: "vertical", side: "before" },
       { orientation: "vertical", side: "after" },
@@ -794,7 +794,7 @@ describe(besideOf, () => {
 });
 
 describe(dropRect, () => {
-  it("tints the half by the edge, or the whole pane for a join", () => {
+  it("takes the half by the edge, or the whole pane for a join", () => {
     const rect = { height: 301, width: 801, x: 10, y: 20 };
     expect(
       (["left", "right", "top", "bottom", "centre"] as const).map((zone) =>

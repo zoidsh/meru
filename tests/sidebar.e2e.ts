@@ -114,7 +114,7 @@ test("shows the sidebar once Calendar is added through the launcher, Drive dragg
 const isTabDrag = (page: Page) =>
   new URL(page.url()).searchParams.get("kind") === "tabDrag";
 
-test("joins a row dragged out of the sidebar beside the pane it is let go on, tinting the half it would take on the way", async () => {
+test("joins a row dragged out of the sidebar beside the pane it is let go on, marking the half it would take on the way", async () => {
   const { app, chrome, close } = await launch();
   try {
     await openApp(app, chrome, "Calendar");
@@ -140,8 +140,8 @@ test("joins a row dragged out of the sidebar beside the pane it is let go on, ti
     // The overlay page hears the pointer only through main, after its page has loaded, so the pointer moves again once it is there.
     await overlay?.locator("body").waitFor();
     await chrome.mouse.move(left.x + 1, left.y, { steps: 2 });
-    const tint = await overlay?.locator("[data-tint]").boundingBox();
-    expect(tint?.width).toBeCloseTo(pane.rect.width / 2, 0);
+    const drop = await overlay?.locator("[data-drop]").boundingBox();
+    expect(drop?.width).toBeCloseTo(pane.rect.width / 2, 0);
     await chrome.mouse.up();
 
     await expect.poll(() => app.windows().some(isTabDrag)).toBeFalsy();

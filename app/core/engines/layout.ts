@@ -287,7 +287,7 @@ export type DropZone = "left" | "right" | "top" | "bottom" | "centre";
 export const EDGE_ZONE = 0.2;
 
 /** The zone of the pane's rect under the point: the nearest edge while within its fifth, else the middle; undefined outside the rect. */
-export const besideAt = (rect: Rect, point: Point): DropZone | undefined => {
+export const dropZoneAt = (rect: Rect, point: Point): DropZone | undefined => {
   if (rect.width === 0 || rect.height === 0) {
     return undefined;
   }
@@ -322,9 +322,9 @@ const BESIDE: Readonly<Record<DropZone, Beside>> = {
 };
 
 /** Where a tab dropped on the zone goes against the pane. */
-export const besideOf = (zone: DropZone): Beside => BESIDE[zone];
+export const placementOf = (zone: DropZone): Beside => BESIDE[zone];
 
-/** The part of the pane a tab dropped on the zone takes, which the drop tints: the half by an edge, the whole pane in the middle. */
+/** The part of the pane a tab dropped on the zone takes, which the drop marks: the half by an edge, the whole pane in the middle. */
 export const dropRect = (rect: Rect, zone: DropZone): Rect => {
   const width = Math.round(rect.width / 2);
   const height = Math.round(rect.height / 2);

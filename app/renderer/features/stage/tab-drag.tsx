@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  besideAt,
+  dropZoneAt,
   dropRect,
   STYLE_METRICS,
 } from "../../../core/engines/layout.ts";
@@ -15,13 +15,13 @@ import type { Client } from "../../client.ts";
 import { AppIcon } from "../apps/app-icon.tsx";
 
 /** Where a tab let go at `point` would land: the part of the pane under it the zone takes, or nothing over the tab's own pane or no pane. */
-export const tintAt = (
+export const dropRectAt = (
   panes: StageSnapshot["panes"],
   point: Point,
   tabId: string
 ): Rect | undefined => {
   for (const pane of panes) {
-    const zone = besideAt(pane.rect, point);
+    const zone = dropZoneAt(pane.rect, point);
     if (zone !== undefined) {
       return pane.tabId === tabId ? undefined : dropRect(pane.rect, zone);
     }
@@ -31,7 +31,7 @@ export const tintAt = (
 
 const GHOST_OFFSET = 12;
 
-/** A sidebar row dragged over the panes: the row beside the pointer and a tint over where it would land. */
+/** A sidebar row dragged over the panes: the row beside the pointer and, over the pane under it, the part the tab would take. */
 export const TabDrag = ({
   client,
   accent,
@@ -72,19 +72,19 @@ export const TabDrag = ({
   if (point === undefined || snapshot === undefined) {
     return null;
   }
-  const zone = tintAt(snapshot.panes, point, tabId);
-  const tint = accent === "" ? "var(--primary)" : accent;
+  const zone = dropRectAt(snapshot.panes, point, tabId);
+  const colour = accent === "" ? "var(--primary)" : accent;
   const app = appById(appId);
   const name = app?.name ?? appId;
   return (
     <div className="pointer-events-none fixed inset-0 cursor-grabbing">
       {zone === undefined ? null : (
         <div
-          className="absolute border-2 border-(--tint) bg-(--tint)/15"
-          data-tint=""
+          className="absolute border-2"
+          data-drop=""
           style={{
-            backgroundColor: `color-mix(in oklab, ${tint} 15%, transparent)`,
-            borderColor: tint,
+            backgroundColor: `color-mix(in oklab, ${colour} 15%, transparent)`,
+            borderColor: colour,
             borderRadius: STYLE_METRICS[snapshot.style].radius,
             height: zone.height,
             left: zone.x,
