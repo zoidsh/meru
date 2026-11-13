@@ -73,7 +73,7 @@ const drag = async (
   ).toHaveCount(0);
 };
 
-test("shows the sidebar once Calendar is added through the launcher, Drive dragged onto it shares its group and the stage, and dragged between rows leaves the group and moves", async () => {
+test("shows the sidebar once Calendar is added through the launcher, Drive dragged onto it shares its group and the stage, and dragged between rows leaves the group and moves, never above the pinned Gmail", async () => {
   const { app, chrome, close } = await launch();
   try {
     await openApp(app, chrome, "Calendar");
@@ -100,12 +100,12 @@ test("shows the sidebar once Calendar is added through the launcher, Drive dragg
     await expect(group).toHaveCount(0);
     await expect
       .poll(async () => await appsOf(chrome))
-      .toStrictEqual(["Drive", "Gmail", "Calendar"]);
+      .toStrictEqual(["Gmail", "Drive", "Calendar"]);
 
     await drag(chrome, 2, 0, "before");
     await expect
       .poll(async () => await appsOf(chrome))
-      .toStrictEqual(["Calendar", "Drive", "Gmail"]);
+      .toStrictEqual(["Gmail", "Calendar", "Drive"]);
   } finally {
     await close();
   }
@@ -119,9 +119,15 @@ test("joins a row dragged out of the sidebar beside the pane it is let go on, ma
   try {
     await openApp(app, chrome, "Calendar");
     await expect(rowsOf(chrome)).toHaveCount(2);
+    // Gmail's row is pinned and drags nowhere, so Calendar's is dragged onto Gmail's pane.
+    await rowsOf(chrome).nth(0).locator("[role=tab]").click();
+    await expect(chrome.locator("[data-tab-id] [data-active]")).toHaveAttribute(
+      "title",
+      /Gmail/u
+    );
     const { panes } = await stageOf(chrome);
     const [pane] = panes;
-    const source = await rowsOf(chrome).nth(0).boundingBox();
+    const source = await rowsOf(chrome).nth(1).boundingBox();
     if (pane === undefined || source === null) {
       throw new Error("Neither a pane nor a row is drawn");
     }
@@ -151,7 +157,16 @@ test("joins a row dragged out of the sidebar beside the pane it is let go on, ma
     ).toHaveCount(2);
     await expect(chrome.locator("[data-tab-id] [data-active]")).toHaveAttribute(
       "title",
-      /Calendar/u
+      /Gmail/u
+    );
+    const { tabs } = await profilesOf(chrome);
+    const xOf = async (appId: string) => {
+      const tab = tabs.find((found) => found.appId === appId);
+      const shown = await stageOf(chrome);
+      return shown.panes.find((found) => found.tabId === tab?.id)?.rect.x;
+    };
+    expect((await xOf("calendar")) ?? Infinity).toBeLessThan(
+      (await xOf("gmail")) ?? -Infinity
     );
   } finally {
     await close();

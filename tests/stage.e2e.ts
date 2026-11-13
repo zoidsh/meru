@@ -120,22 +120,23 @@ test("keeps a tab's page through a split beside it, leaving the group and joinin
     expect(kept).toStrictEqual(first);
     expect(added?.contentsId).not.toBe(first.contentsId);
 
-    // The window keeps showing the group the tab left, so the tab is brought back to the front to read its pane.
-    await invokeIn(chrome, tabs.leave, { tabId: first.tabId, to: 0 });
-    await expect.poll(async () => await panesOf(app)).toStrictEqual([added]);
-    await invokeIn(chrome, tabs.focus, { tabId: first.tabId });
+    // Gmail's tab is pinned to its group, so Calendar's leaves; the window keeps showing the group it left, so it is brought back to the front to read its pane.
+    const addedId = added?.tabId ?? "";
+    await invokeIn(chrome, tabs.leave, { tabId: addedId, to: 1 });
     await expect.poll(async () => await panesOf(app)).toStrictEqual([first]);
+    await invokeIn(chrome, tabs.focus, { tabId: addedId });
+    await expect.poll(async () => await panesOf(app)).toStrictEqual([added]);
 
     await invokeIn(chrome, tabs.join, {
       orientation: "vertical",
       side: "before",
-      tabId: first.tabId,
-      targetTabId: added?.tabId ?? "",
+      tabId: addedId,
+      targetTabId: first.tabId,
     });
-    await invokeIn(chrome, tabs.focus, { tabId: first.tabId });
+    await invokeIn(chrome, tabs.focus, { tabId: addedId });
     await expect
       .poll(async () => await panesOf(app))
-      .toStrictEqual([first, added]);
+      .toStrictEqual([added, first]);
   } finally {
     await close();
   }
