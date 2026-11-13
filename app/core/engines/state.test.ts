@@ -104,20 +104,22 @@ describe(validateState, () => {
 });
 
 describe("the state's operations", () => {
-  it("renames a profile and changes or clears its colour, keeping what the patch leaves out", () => {
+  it("renames a profile and changes its colour, keeping what the patch leaves out", () => {
     const { state } = start();
     const [first] = state.profiles;
     const profileId = first?.id ?? "";
     const renamed = unwrap(
       updateProfile(state, profileId, { color: "#123456", label: "Work" })
     );
-    const cleared = unwrap(updateProfile(renamed, profileId, { color: null }));
+    const relabelled = unwrap(
+      updateProfile(renamed, profileId, { label: "Home" })
+    );
     expect({
-      cleared: Object.keys(cleared.profiles[0] ?? {}).includes("color"),
+      relabelled: relabelled.profiles[0],
       renamed: renamed.profiles[0],
       unknown: updateProfile(state, "nobody", { label: "Work" }),
     }).toStrictEqual({
-      cleared: false,
+      relabelled: { ...first, color: "#123456", label: "Home" },
       renamed: { ...first, color: "#123456", label: "Work" },
       unknown: { error: "unknownProfile", ok: false },
     });

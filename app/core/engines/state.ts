@@ -171,7 +171,7 @@ export const setProfileStatus = (
 /** What the user may change about a profile; a null colour takes the colour away. */
 export interface ProfilePatch {
   readonly label?: string;
-  readonly color?: string | null;
+  readonly color?: string;
 }
 
 export const updateProfile = (
@@ -188,12 +188,10 @@ export const updateProfile = (
       if (found.id !== profileId) {
         return found;
       }
-      const { color, ...kept } = found;
-      const next = patch.color === undefined ? color : patch.color;
       return {
-        ...kept,
+        ...found,
         label: patch.label ?? found.label,
-        ...(next === null || next === undefined ? {} : { color: next }),
+        ...(patch.color === undefined ? {} : { color: patch.color }),
       };
     }),
   });
