@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { hostname, tmpdir } from "node:os";
 import path from "node:path";
@@ -6,6 +5,8 @@ import { setTimeout as wait } from "node:timers/promises";
 
 import { _electron as electron } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
+import { uniq } from "es-toolkit/array";
+import { execaSync } from "execa";
 import { z } from "zod";
 
 import { wireName } from "../../app/shared/channels/define.ts";
@@ -77,19 +78,17 @@ const toReadings = (
     const shown = snapshot.contents
       .filter((contents) => contents.pid === metric.pid)
       .flatMap((contents) => roles[String(contents.id)] ?? []);
-    const framed = [
-      ...new Set(
-        snapshot.frames
-          .filter((frame) => frame.pid === metric.pid)
-          .flatMap((frame) => {
-            try {
-              return [`pane frame: ${new URL(frame.url).host}`];
-            } catch {
-              return [];
-            }
-          })
-      ),
-    ];
+    const framed = uniq(
+      snapshot.frames
+        .filter((frame) => frame.pid === metric.pid)
+        .flatMap((frame) => {
+          try {
+            return [`pane frame: ${new URL(frame.url).host}`];
+          } catch {
+            return [];
+          }
+        })
+    );
     const names: Record<string, string> = {
       Browser: "main",
       GPU: "gpu",
@@ -167,8 +166,7 @@ const launchFloor = async (view: boolean) => {
   };
 };
 
-const git = (...args: string[]) =>
-  execFileSync("git", args, { cwd: root, encoding: "utf-8" }).trim();
+const git = (...args: string[]) => execaSync("git", args, { cwd: root }).stdout;
 
 const commit = () =>
   `${git("rev-parse", "--short", "HEAD")}${git("status", "--porcelain", "--", ".", ":!measurements") === "" ? "" : "+dirty"}`;

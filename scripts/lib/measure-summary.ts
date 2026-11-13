@@ -1,3 +1,5 @@
+import { groupBy, uniq } from "es-toolkit/array";
+import { mean, meanBy, sumBy } from "es-toolkit/math";
 import { z } from "zod";
 
 export type Point = "launch" | "split" | "idle";
@@ -69,21 +71,13 @@ export interface Row {
   >;
 }
 
-const mean = (values: readonly number[]) =>
-  values.length === 0
-    ? 0
-    : values.reduce((sum, value) => sum + value, 0) / values.length;
-
 export const summarise = (measurement: Measurement): Row[] => {
   const kinds = new Map<string, Map<Point, ProcessReading[][]>>();
   for (const { point, readings } of measurement.samples) {
     for (const reading of readings) {
-      const byKind = new Map<string, ProcessReading[]>();
-      for (const process of reading) {
-        const kind = kindOf(process);
-        byKind.set(kind, [...(byKind.get(kind) ?? []), process]);
-      }
-      for (const [kind, processes] of byKind) {
+      for (const [kind, processes] of Object.entries(
+        groupBy(reading, kindOf)
+      )) {
         const points = kinds.get(kind) ?? new Map<Point, ProcessReading[][]>();
         points.set(point, [...(points.get(point) ?? []), processes]);
         kinds.set(kind, points);
@@ -99,7 +93,7 @@ export const summarise = (measurement: Measurement): Row[] => {
           // CPU of a kind in one reading is the sum over its processes; the row shows the mean of those sums.
           cpu: mean(
             readings.map((processes) =>
-              processes.reduce((sum, process) => sum + process.cpu, 0)
+              sumBy(processes, (process) => process.cpu)
             )
           ),
           memoryKB: Math.max(...readings.flat().map(memoryOf)),
@@ -128,7 +122,7 @@ export const table = (meru: Measurement, floor?: Measurement): string => {
       floor === undefined ? [point] : [point, `${point} ${floor.app}`]
     ),
   ];
-  const kinds = [...new Set([...ours, ...theirs].map((row) => row.kind))];
+  const kinds = uniq([...ours, ...theirs].map((row) => row.kind));
   const rows = kinds.map((kind) => {
     const mine = ours.find((row) => row.kind === kind);
     const base = theirs.find((row) => row.kind === kind);
@@ -170,11 +164,10 @@ export const overBudget = (
     measurement.samples.find((sample) => sample.point === point)?.readings ??
     [];
   const idle = at("idle").flat();
-  const cpu = [...new Set(idle.map((process) => process.pid))].flatMap(
-    (pid) => {
-      const readings = idle.filter((process) => process.pid === pid);
-      const used = mean(readings.map((process) => process.cpu));
-      const name = readings[0]?.name ?? String(pid);
+  const cpu = Object.entries(groupBy(idle, (process) => process.pid)).flatMap(
+    ([pid, readings]) => {
+      const used = meanBy(readings, (process) => process.cpu);
+      const name = readings[0]?.name ?? pid;
       return used > budget.idleCpu
         ? [`${name} used ${used.toFixed(1)}% CPU at idle`]
         : [];

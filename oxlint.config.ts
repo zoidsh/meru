@@ -27,6 +27,10 @@ const ours: Pattern = {
   message: "Leaf packages are not imported here.",
   regex: "^@meru/",
 };
+const scriptsOnly: Pattern = {
+  message: "execa and es-toolkit serve scripts/ and tests/, not the app.",
+  regex: "^(execa|es-toolkit)(/|$)",
+};
 const into = (
   name: string,
   message: string,
@@ -83,6 +87,7 @@ const layers = [
   restrict(
     ["app/core/**"],
     [
+      scriptsOnly,
       noElectron,
       ours,
       into("shared", "core imports nothing of ours."),
@@ -93,13 +98,14 @@ const layers = [
   ),
   restrict(
     ["app/shared/**"],
-    [noElectron, ours, notMain, notPreload, notRenderer]
+    [scriptsOnly, noElectron, ours, notMain, notPreload, notRenderer]
   ),
-  restrict(["app/main/**"], [electron, notPreload, notRenderer]),
-  restrict(["app/main/platform/**"], [notPreload, notRenderer]),
+  restrict(["app/main/**"], [scriptsOnly, electron, notPreload, notRenderer]),
+  restrict(["app/main/platform/**"], [scriptsOnly, notPreload, notRenderer]),
   restrict(
     ["app/main/features/**"],
     [
+      scriptsOnly,
       electron,
       notPreload,
       notRenderer,
@@ -113,15 +119,15 @@ const layers = [
   ),
   restrict(
     ["app/shared/*/registry.ts"],
-    [noElectron, ours, notPreload, notRenderer, registry]
+    [scriptsOnly, noElectron, ours, notPreload, notRenderer, registry]
   ),
   restrict(
     ["app/main/features/*/settings.ts", "app/main/features/*/commands.ts"],
-    contract
+    [scriptsOnly, ...contract]
   ),
-  restrict(["app/preload/**"], [electron, notMain, notRenderer]),
-  restrict(["app/preload/*/bridge.ts"], [notMain, notRenderer]),
-  restrict(["app/renderer/**"], [noElectron, notMain, notPreload]),
+  restrict(["app/preload/**"], [scriptsOnly, electron, notMain, notRenderer]),
+  restrict(["app/preload/*/bridge.ts"], [scriptsOnly, notMain, notRenderer]),
+  restrict(["app/renderer/**"], [scriptsOnly, noElectron, notMain, notPreload]),
 ];
 
 export default defineConfig({
