@@ -13,6 +13,7 @@ import {
   canClose,
   closeTab,
   openTab,
+  pinSingleInstance,
   firstState,
   firstGroup,
   joinTab,
@@ -139,7 +140,10 @@ export class Profiles {
 
   async open(): Promise<Opened<ProfilesState, string>> {
     const opened = await this.#store.open();
-    this.#state = opened.value;
+    this.#state = pinSingleInstance(opened.value, isSingleInstanceId);
+    if (this.#state !== opened.value && opened.source === "file") {
+      this.#store.write(this.#state);
+    }
     if (opened.fallbacks.length > 0) {
       this.#options.report(
         `${PROFILES_FILE}: dropped ${opened.fallbacks.join(", ")}`

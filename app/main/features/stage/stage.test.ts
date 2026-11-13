@@ -130,7 +130,21 @@ const setup = async (style: Style = "modern") => {
         expect(pushed.contentsId).toBe(window.contentsId);
         return stageSnapshotSchema.parse(pushed.payload);
       });
-  const stage = stages.open(window, () => profiles.currentGroup()?.id);
+  // The window shows the group of the tab last shown, as the windows feature keeps it, else the profile's first.
+  let showing: string | undefined;
+  const show = (tabId: string) => {
+    showing = tabId;
+    events.emit("stage.invalidated", null);
+  };
+  const stage = stages.open(
+    window,
+    () =>
+      (showing === undefined
+        ? undefined
+        : profiles.state.groups.find((group) =>
+            group.tabIds.includes(showing ?? "")
+          )?.id) ?? profiles.currentGroup()?.id
+  );
   const id = window.contentsId;
   const profileId = profiles.selected().id;
   const paneIds = () => stage.snapshot().panes.map((pane) => pane.paneId);
@@ -151,6 +165,7 @@ const setup = async (style: Style = "modern") => {
     profiles,
     registrar,
     settings,
+    show,
     split,
     splitId,
     stage,
@@ -353,11 +368,11 @@ describe(Stages, () => {
   });
 
   it("shows another group once the state says so, detaching the views of the one it showed and keeping them", async () => {
-    const { window, views, profiles, profileId, changes } = await setup();
+    const { window, views, profiles, profileId, changes, show } = await setup();
     const [gmail] = views.created;
     const added = unwrap(profiles.addTab(profileId, "calendar"));
     expect(views.created).toHaveLength(1);
-    profiles.moveTab(added.id, 0);
+    show(added.id);
     const [, calendar] = views.created;
     expect({
       children: window.childViews(),
@@ -373,18 +388,18 @@ describe(Stages, () => {
   });
 
   it("keeps every tab's view through a join, a leave and a switch of group, so no page reloads", async () => {
-    const { window, views, profiles, profileId } = await setup();
+    const { window, views, profiles, profileId, show } = await setup();
     const [gmailId = ""] = profiles.currentGroup()?.tabIds ?? [];
     const calendar = unwrap(profiles.addTab(profileId, "calendar"));
-    profiles.moveTab(calendar.id, 0);
+    show(calendar.id);
     const [gmail, calendarView] = views.created;
     const seen: (readonly unknown[])[] = [];
 
-    unwrap(profiles.joinTab(gmailId, calendar.id, VERTICAL_AFTER));
+    unwrap(profiles.joinTab(calendar.id, gmailId, VERTICAL_AFTER));
     seen.push(window.childViews());
-    unwrap(profiles.leaveGroup(gmailId, 0));
+    unwrap(profiles.leaveGroup(calendar.id));
     seen.push(window.childViews());
-    profiles.moveTab(calendar.id, 0);
+    show(gmailId);
     seen.push(window.childViews());
 
     expect({
@@ -394,16 +409,17 @@ describe(Stages, () => {
     }).toStrictEqual({
       created: [gmail, calendarView],
       destroyed: [],
-      seen: [[calendarView, gmail], [gmail], [calendarView]],
+      seen: [[gmail, calendarView], [calendarView], [gmail]],
     });
   });
 
   it("disposes a closed tab's view even while its group is not shown", async () => {
-    const { views, profiles, profileId } = await setup();
+    const { views, profiles, profileId, show } = await setup();
+    const [gmailId = ""] = profiles.currentGroup()?.tabIds ?? [];
     const calendar = unwrap(profiles.addTab(profileId, "calendar"));
-    profiles.moveTab(calendar.id, 0);
+    show(calendar.id);
     const [gmail, calendarView] = views.created;
-    profiles.moveTab(calendar.id, 1);
+    show(gmailId);
 
     unwrap(profiles.closeTab(calendar.id));
 
@@ -414,10 +430,11 @@ describe(Stages, () => {
   });
 
   it("answers every view it keeps with its tab, marking one no pane shows", async () => {
-    const { stage, profiles, profileId } = await setup();
+    const { stage, profiles, profileId, show } = await setup();
+    const [gmailId = ""] = profiles.currentGroup()?.tabIds ?? [];
     const calendar = unwrap(profiles.addTab(profileId, "calendar"));
-    profiles.moveTab(calendar.id, 0);
-    profiles.moveTab(calendar.id, 1);
+    show(calendar.id);
+    show(gmailId);
 
     expect(
       stage.kept().map(({ tab, shown }) => ({ appId: tab.appId, shown }))
@@ -712,13 +729,13 @@ describe("a page's fullscreen", () => {
   });
 
   it("forgets the fullscreen tab once the group changes, so its pane comes back in its place", async () => {
-    const { window, views, profiles, split } = await setup();
+    const { window, views, profiles, split, show } = await setup();
     split("vertical");
     const [, second] = views.alive;
     second?.fullscreen(true);
     const [, calendar = ""] = profiles.currentGroup()?.tabIds ?? [];
     profiles.leaveGroup(calendar);
-    profiles.moveTab(calendar, 0);
+    show(calendar);
     expect([
       window.childViews(),
       second?.bounds(),

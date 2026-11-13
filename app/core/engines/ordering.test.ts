@@ -127,6 +127,22 @@ const flat = (rows: readonly TabRow[]) =>
 const SEEDS = Array.from({ length: 200 }, (_, index) => index + 1);
 
 describe(orderedTabs, () => {
+  it("puts a pinned tab's row first, and the pinned tab first in its group, whatever the order of tabs and panes", () => {
+    const pinned = { ...tabOf("t3", "a"), pinned: true };
+    const tabs = [tabOf("t1", "a"), tabOf("t2", "a"), pinned, tabOf("t4", "a")];
+    const groups = [
+      groupWith("g1", "a", ["t1"]),
+      groupWith("g2", "a", ["t2"]),
+      groupWith("g3", "a", ["t4", "t3"]),
+    ];
+    const rows = orderedTabs(tabs, groups, "a");
+    expect(
+      rows.map((row) =>
+        row.kind === "tab" ? row.tab.id : row.tabs.map((tab) => tab.id)
+      )
+    ).toStrictEqual([["t3", "t4"], "t1", "t2"]);
+  });
+
   it("lists a group's tabs in the order of its panes, whatever the order of its tabIds", () => {
     const tabs = ["t1", "t2"].map((id) => tabOf(id, "a"));
     const groups = [

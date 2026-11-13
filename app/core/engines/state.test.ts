@@ -20,6 +20,9 @@ import {
   firstGroup,
   freshState,
   leaveGroup,
+  moveTabTo,
+  newTab,
+  pinSingleInstance,
   removeProfile,
   resizeSplit,
   selectProfile,
@@ -492,5 +495,69 @@ describe(repairState, () => {
       "1 tabs",
       "group bad",
     ]);
+  });
+});
+
+const pinnedStart = () => {
+  const ids = fakeIds("n");
+  const state = freshState(
+    profile("a"),
+    { ...tabOf("t1", "a"), pinned: true },
+    ids
+  );
+  const calendar = { ...tabOf("t2", "a"), appId: "calendar" };
+  const drive = { ...tabOf("t3", "a"), appId: "drive" };
+  const added = unwrap(
+    addTab(unwrap(addTab(state, calendar, ids)), drive, ids)
+  );
+  return { ids, state: added };
+};
+
+describe("a pinned tab", () => {
+  it("is what a new tab of a single-instance app is, and only that", () => {
+    const ids = fakeIds("n");
+    const app = {
+      hosts: ["mail.google.com"],
+      icon: "gmail" as const,
+      id: "gmail",
+      name: "Gmail",
+      openBehavior: "tab" as const,
+      url: "https://mail.google.com/",
+    };
+    expect([
+      newTab(ids, "a", { ...app, singleInstance: true }).pinned,
+      newTab(ids, "a", app).pinned,
+    ]).toStrictEqual([true, false]);
+  });
+
+  it("neither moves nor leaves its group nor joins another, while the others may leave it", () => {
+    const { ids, state } = pinnedStart();
+    const joined = unwrap(joinTab(state, "t2", "t1", VERTICAL_AFTER, ids));
+    expect([
+      moveTabTo(state, "t1", 2),
+      leaveGroup(joined, "t1", ids),
+      joinTab(state, "t1", "t2", VERTICAL_AFTER, ids),
+      leaveGroup(joined, "t2", ids).ok,
+    ]).toStrictEqual([
+      { error: "pinned", ok: false },
+      { error: "pinned", ok: false },
+      { error: "pinned", ok: false },
+      true,
+    ]);
+  });
+
+  it("keeps the first row when another row is moved to the top", () => {
+    const { state } = pinnedStart();
+    const moved = unwrap(moveTabTo(state, "t3", 0));
+    expect(moved.tabs.map((tab) => tab.id)).toStrictEqual(["t1", "t3", "t2"]);
+  });
+
+  it("is set on the tabs of a single-instance app in a state written before the rule, leaving a state that has it as it is", () => {
+    const { state } = start();
+    const pinned = pinSingleInstance(state, gmail);
+    expect([
+      pinned.tabs.map((tab) => tab.pinned),
+      pinSingleInstance(pinned, gmail),
+    ]).toStrictEqual([[true], pinned]);
   });
 });

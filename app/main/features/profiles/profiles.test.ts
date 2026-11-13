@@ -308,7 +308,7 @@ describe(Profiles, () => {
     ]);
   });
 
-  it("joins a tab into another's group beside its pane, out of its own group first, and leaves it again at a row", async () => {
+  it("joins a tab into another's group beside its pane, out of its own group first, and leaves it again at a row below the pinned Gmail", async () => {
     const { profiles } = await setup();
     const profileId = profiles.selected().id;
     const [gmail] = profiles.state.tabs;
@@ -332,8 +332,8 @@ describe(Profiles, () => {
         groupOfTab(tab.id)?.tabIds.length,
       ])
     ).toStrictEqual([
-      ["drive", 1],
       ["gmail", 1],
+      ["drive", 1],
       ["calendar", 1],
     ]);
   });

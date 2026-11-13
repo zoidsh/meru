@@ -1,4 +1,5 @@
 import type { Ids } from "../ports.ts";
+import { isSingleInstance } from "../records/app.ts";
 import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
 import type {
@@ -42,7 +43,9 @@ export type StateError =
   /** Only a tab alone in its group can join another. */
   | "alreadyGrouped"
   /** The tab is alone in its group already. */
-  | "notGrouped";
+  | "notGrouped"
+  /** A pinned tab keeps its row and its group. */
+  | "pinned";
 
 type Changed = Result<ProfilesState, StateError>;
 
@@ -55,12 +58,12 @@ export const groupOfOne = (tab: Tab, ids: Ids): Group => ({
 
 export const FIRST_PROFILE_LABEL = "Personal";
 
-/** A tab of the app at its start page. */
+/** A tab of the app at its start page, pinned for a single-instance app. */
 export const newTab = (ids: Ids, profileId: string, app: App): Tab => ({
   appId: app.id,
   health: "ok",
   id: ids(),
-  pinned: false,
+  pinned: isSingleInstance(app),
   profileId,
   sleeping: false,
   title: app.name,
@@ -353,7 +356,7 @@ export const closeTab = (
   });
 };
 
-/** Takes a tab out of its group into a group of its own. */
+/** Takes a tab out of its group into a group of its own; a pinned tab stays, the others leaving it. */
 export const leaveGroup = (
   state: ProfilesState,
   tabId: string,
@@ -364,6 +367,9 @@ export const leaveGroup = (
   const group = groupOf(tabId, state.groups);
   if (tab === undefined || group === undefined) {
     return err("unknownTab");
+  }
+  if (tab.pinned) {
+    return err("pinned");
   }
   const left = withoutTab(group, tabId);
   if (left === undefined) {
@@ -395,6 +401,9 @@ export const joinTab = (
   }
   if (tabId === targetTabId) {
     return err("alreadyGrouped");
+  }
+  if (state.tabs.some((tab) => tab.id === tabId && tab.pinned)) {
+    return err("pinned");
   }
   const alone =
     own.id !== target.id && own.tabIds.length > 1
@@ -502,15 +511,34 @@ export const balanceGroup = (
     : ok(withLayout(state, groupId, balance(group.layout)));
 };
 
-/** Moves the row holding the tab to row `to` of its profile's tab list. */
+/** Moves the row holding the tab to row `to` of its profile's tab list, below the pinned rows; a pinned tab's row stays. */
 export const moveTabTo = (
   state: ProfilesState,
   tabId: string,
   to: number
-): Changed =>
-  state.tabs.some((tab) => tab.id === tabId)
-    ? ok({ ...state, tabs: moveTab(state.tabs, state.groups, tabId, to) })
-    : err("unknownTab");
+): Changed => {
+  const tab = state.tabs.find((found) => found.id === tabId);
+  if (tab === undefined) {
+    return err("unknownTab");
+  }
+  return tab.pinned
+    ? err("pinned")
+    : ok({ ...state, tabs: moveTab(state.tabs, state.groups, tabId, to) });
+};
+
+/** Pins every tab of a single-instance app, as newTab does, for a state written before the rule. */
+export const pinSingleInstance = (
+  state: ProfilesState,
+  singleInstance: SingleInstance
+): ProfilesState =>
+  state.tabs.some((tab) => !tab.pinned && singleInstance(tab.appId))
+    ? {
+        ...state,
+        tabs: state.tabs.map((tab) =>
+          singleInstance(tab.appId) ? { ...tab, pinned: true } : tab
+        ),
+      }
+    : state;
 
 /** The first group of a profile in sidebar order. */
 export const firstGroup = (

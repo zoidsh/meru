@@ -45,7 +45,11 @@ export const groupOf = (
   groups: readonly Group[]
 ): Group | undefined => groups.find((group) => group.tabIds.includes(tabId));
 
-/** A profile's tabs in sidebar order: the order of `tabs`, with a group of several in place of its first tab and its tabs in the order of its layout's panes, so the rows follow a drop or a swap. */
+const pinnedFirst = (a: Tab, b: Tab) => Number(b.pinned) - Number(a.pinned);
+
+const rowPinned = (row: TabRow) => rowTabs(row).some((tab) => tab.pinned);
+
+/** A profile's tabs in sidebar order: the order of `tabs`, with a group of several in place of its first tab and its tabs in the order of its layout's panes, so the rows follow a drop or a swap; a pinned tab's row comes first, and the pinned tab first in its group, whatever joins or leaves it. */
 export const orderedTabs = (
   tabs: readonly Tab[],
   groups: readonly Group[],
@@ -74,12 +78,12 @@ export const orderedTabs = (
     for (const member of members) {
       placed.add(member.id);
     }
-    rows.push({ group, kind: "group", tabs: members });
+    rows.push({ group, kind: "group", tabs: members.toSorted(pinnedFirst) });
   }
-  return rows;
+  return rows.toSorted((a, b) => Number(rowPinned(b)) - Number(rowPinned(a)));
 };
 
-/** Moves the row holding `tabId` to row `to` of its profile, clamped to the list; a tab in a group moves with its group. */
+/** Moves the row holding `tabId` to row `to` of its profile, clamped to the list below the pinned rows; a tab in a group moves with its group, and a pinned row stays. */
 export const moveTab = (
   tabs: readonly Tab[],
   groups: readonly Group[],
@@ -94,7 +98,14 @@ export const moveTab = (
   const from = rows.findIndex((row) =>
     rowTabs(row).some((tab) => tab.id === tabId)
   );
-  const reordered = moveItem(rows, from, to).flatMap(rowTabs).values();
+  const pinned = rows.filter(rowPinned).length;
+  const row = rows[from];
+  if (row === undefined || rowPinned(row)) {
+    return [...tabs];
+  }
+  const reordered = moveItem(rows, from, Math.max(to, pinned))
+    .flatMap(rowTabs)
+    .values();
   return tabs.map((tab) =>
     tab.profileId === moving.profileId ? (reordered.next().value ?? tab) : tab
   );
