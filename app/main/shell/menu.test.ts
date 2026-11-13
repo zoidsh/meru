@@ -159,6 +159,7 @@ const setup = async (platform = "darwin") => {
     built,
     events,
     feed,
+    profiles,
     registrar,
     reports,
     sections,
@@ -360,13 +361,15 @@ describe(ApplicationMenu, () => {
   });
 
   it("runs a command in the window it is for", async () => {
-    const { action, events, stages, window } = await setup();
+    const { action, events, stages, window, profiles } = await setup();
     const requested: number[] = [];
     events.on("split.requested", ({ windowId }) => {
       requested.push(windowId);
     });
     action("stage.splitVertical").run(window.contentsId);
-    stages.split(window.contentsId, "vertical");
+    stages
+      .find(window.contentsId)
+      ?.openTab(profiles.selected().id, "calendar", "vertical");
     action("stage.closeTab").run(window.contentsId);
     expect([requested, window.childViews().length]).toStrictEqual([
       [window.contentsId],

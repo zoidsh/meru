@@ -242,29 +242,6 @@ export class Stage {
     this.#update();
   }
 
-  /** Splits a pane with a new tab of its own app beside or below it. */
-  split(
-    orientation: Orientation,
-    paneId = this.#focusedPane()
-  ): Result<undefined, StageError> {
-    const placement = this.#placement(orientation, paneId);
-    const source = this.#tabOf(placement?.paneId);
-    if (placement === undefined || source === undefined) {
-      return err("unknownPane");
-    }
-    const added = this.#options.profiles.addTab(
-      source.profileId,
-      source.appId,
-      placement
-    );
-    if (!added.ok) {
-      return err(added.error === "unknownPane" ? "unknownPane" : "refused");
-    }
-    this.refresh();
-    const shown = paneOfTab(this.#layout(), added.value.id);
-    return shown === undefined ? ok(undefined) : this.focusPane(shown);
-  }
-
   /** Opens a tab of the app in the profile and shows it: beside the focused pane in the orientation `split` names when the stage shows that profile, else in a group of one; a single-instance app's one tab instead when the profile has it. */
   openTab(
     profileId: string,

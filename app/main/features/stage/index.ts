@@ -248,14 +248,6 @@ export class Stages {
     }
   }
 
-  split(
-    windowId: number,
-    orientation: Orientation,
-    paneId?: string
-  ): Result<undefined, StageError> {
-    return this.#with(windowId, (found) => found.split(orientation, paneId));
-  }
-
   close(windowId: number, paneId?: string): Result<undefined, StageError> {
     return this.#with(windowId, (found) => found.close(paneId));
   }

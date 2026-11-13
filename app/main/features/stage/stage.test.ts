@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { AppEventMap } from "../../../core/events.ts";
-import type { Beside } from "../../../core/records/layout.ts";
+import type { Beside, Orientation } from "../../../core/records/layout.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
@@ -133,6 +133,9 @@ const setup = async (style: Style = "modern") => {
   const profileId = profiles.selected().id;
   const paneIds = () => stage.snapshot().panes.map((pane) => pane.paneId);
   const splitId = () => stage.snapshot().dividers[0]?.splitId ?? "";
+  /** Opens a Calendar tab beside the focused pane, as the launcher does for a split. */
+  const split = (orientation: Orientation) =>
+    stage.openTab(profileId, "calendar", orientation);
   return {
     call,
     changes,
@@ -146,6 +149,7 @@ const setup = async (style: Style = "modern") => {
     profiles,
     registrar,
     settings,
+    split,
     splitId,
     stage,
     stages,
@@ -260,8 +264,8 @@ describe(Stages, () => {
   });
 
   it("lays the panes out again when the appearance style changes", async () => {
-    const { views, settings, changes, id, stages } = await setup("modern");
-    stages.split(id, "vertical");
+    const { views, settings, changes, split } = await setup("modern");
+    split("vertical");
     settings.set("appearance.style", "classic");
     expect(
       views.alive.map((view) => [view.radius, view.bounds()])
@@ -273,21 +277,20 @@ describe(Stages, () => {
   });
 
   it("zooms the panes of the profile whose zoom changed", async () => {
-    const { views, settings, id, stages, stage, profileId } = await setup();
+    const { views, settings, stage, profileId, split } = await setup();
     settings.set("stage.zoom", 1.5, "work");
     expect(views.alive.map((view) => view.zoom)).toStrictEqual([1]);
     settings.set("stage.zoom", 1.25, profileId);
-    stages.split(id, "vertical");
+    split("vertical");
     expect(zoomOf(stage)).toStrictEqual([1.25, 1.25]);
     settings.set("stage.zoom", undefined, profileId);
     expect(zoomOf(stage)).toStrictEqual([1, 1]);
   });
 
-  it("splits the focused pane with a new tab of its app, into two views in layout order that tile the window", async () => {
-    const { window, views, stages, id, changes, splitId, profiles } =
-      await setup();
+  it("splits the focused pane with a new tab, into two views in layout order that tile the window", async () => {
+    const { window, views, changes, splitId, profiles, split } = await setup();
 
-    expect(stages.split(id, "vertical")).toStrictEqual({
+    expect(split("vertical")).toStrictEqual({
       ok: true,
       value: undefined,
     });
@@ -313,8 +316,8 @@ describe(Stages, () => {
         { height: 784, width: 588, x: 604, y: 8 },
       ],
       focused: true,
-      tabs: ["gmail", "gmail"],
-      url: GMAIL,
+      tabs: ["gmail", "calendar"],
+      url: "https://calendar.google.com/",
     });
     expect(changes().at(-1)?.dividers).toStrictEqual([
       {
@@ -326,9 +329,9 @@ describe(Stages, () => {
   });
 
   it("closes the focused pane, destroying its view, and focuses its neighbour", async () => {
-    const { window, views, stages, id, profiles } = await setup();
+    const { window, views, stages, id, profiles, split } = await setup();
     const tabs = profiles.currentGroup()?.tabIds;
-    stages.split(id, "horizontal");
+    split("horizontal");
     const [first, second] = views.created;
 
     expect(stages.close(id).ok).toBeTruthy();
@@ -429,8 +432,8 @@ describe(Stages, () => {
   });
 
   it("follows a window resize with bounds alone", async () => {
-    const { window, stages, id, changes } = await setup();
-    stages.split(id, "vertical");
+    const { window, changes, split } = await setup();
+    split("vertical");
     const before = window.childViews();
 
     window.resize(1000, 600);
@@ -448,8 +451,8 @@ describe(Stages, () => {
   });
 
   it("refuses to drag a split it does not have", async () => {
-    const { stages, id } = await setup();
-    stages.split(id, "vertical");
+    const { stages, id, split } = await setup();
+    split("vertical");
     expect(
       stages.beginDrag(id, { kind: "divider", splitId: "nope" })
     ).toStrictEqual({
@@ -459,15 +462,15 @@ describe(Stages, () => {
   });
 
   it("disposes every view when the window closes", async () => {
-    const { window, views, stages, id, splitId } = await setup();
-    stages.split(id, "vertical");
+    const { window, views, stages, id, splitId, split } = await setup();
+    split("vertical");
     stages.beginDrag(id, { kind: "divider", splitId: splitId() });
 
     window.close();
 
     expect(views.created).toHaveLength(3);
     expect(views.alive).toStrictEqual([]);
-    expect(stages.split(id, "vertical")).toStrictEqual({
+    expect(stages.close(id)).toStrictEqual({
       error: "unknownWindow",
       ok: false,
     });
@@ -475,7 +478,7 @@ describe(Stages, () => {
 
   it("refuses a window it does not know", async () => {
     const { stages } = await setup();
-    expect(stages.split(-1, "vertical")).toStrictEqual({
+    expect(stages.close(-1)).toStrictEqual({
       error: "unknownWindow",
       ok: false,
     });
@@ -484,7 +487,7 @@ describe(Stages, () => {
 
 const dragging = async () => {
   const context = await setup();
-  context.stages.split(context.id, "vertical");
+  context.split("vertical");
   context.transport.sent.length = 0;
   const result = context.stages.beginDrag(context.id, {
     kind: "divider",
@@ -534,17 +537,17 @@ describe("the stage commands", () => {
   });
 
   it("close panes in the window they are given", async () => {
-    const { commands, id, stages, window } = await setup();
-    stages.split(id, "vertical");
-    stages.split(id, "horizontal");
+    const { commands, id, window, split } = await setup();
+    split("vertical");
+    split("horizontal");
     expect(window.childViews()).toHaveLength(3);
     expect(commands.run("stage.closeTab", { windowId: id }).ok).toBeTruthy();
     expect(window.childViews()).toHaveLength(2);
   });
 
   it("move the focused pane back, forward and reload it", async () => {
-    const { commands, id, stages, views } = await setup();
-    stages.split(id, "vertical");
+    const { commands, id, views, split } = await setup();
+    split("vertical");
     for (const command of [
       "stage.back",
       "stage.forward",
@@ -559,9 +562,9 @@ describe("the stage commands", () => {
   });
 
   it("move focus to the next and previous pane in layout order, wrapping", async () => {
-    const { commands, id, changes, paneIds, stages } = await setup();
-    stages.split(id, "vertical");
-    stages.split(id, "horizontal");
+    const { commands, id, changes, paneIds, split } = await setup();
+    split("vertical");
+    split("horizontal");
     const [first, second, third] = paneIds();
     const focused = () => changes().at(-1)?.focusedPaneId;
     const start = focused();
@@ -578,9 +581,9 @@ describe("the stage commands", () => {
   });
 
   it("swap the focused pane with the next in layout order, focus going with it", async () => {
-    const { commands, id, changes, profiles, stages } = await setup();
-    stages.split(id, "vertical");
-    stages.split(id, "horizontal");
+    const { commands, id, changes, profiles, split } = await setup();
+    split("vertical");
+    split("horizontal");
     const tabsInOrder = () =>
       changes()
         .at(-1)
@@ -599,8 +602,8 @@ describe("the stage commands", () => {
   });
 
   it("balance the group's splits", async () => {
-    const { commands, id, profiles, stages, splitId } = await setup();
-    stages.split(id, "vertical");
+    const { commands, id, profiles, splitId, split } = await setup();
+    split("vertical");
     unwrap(profiles.resize(profiles.currentGroup()?.id ?? "", splitId(), 0.2));
     expect(commands.run("stage.balance", { windowId: id }).ok).toBeTruthy();
     const { layout: tree } = profiles.currentGroup() ?? {};
@@ -608,9 +611,9 @@ describe("the stage commands", () => {
   });
 
   it("maximise the focused pane over the whole stage, and restore the others when run again", async () => {
-    const { commands, id, window, changes, paneIds, stages } = await setup();
-    stages.split(id, "vertical");
-    stages.split(id, "horizontal");
+    const { commands, id, window, changes, paneIds, split } = await setup();
+    split("vertical");
+    split("horizontal");
     const third = paneIds().at(2);
     const maximise = () => commands.run("stage.maximise", { windowId: id });
 
@@ -628,11 +631,12 @@ describe("the stage commands", () => {
   });
 
   it("restore the others once another pane is focused or a tab is closed", async () => {
-    const { commands, id, window, changes, paneIds, stage, stages } =
+    const { commands, id, window, changes, paneIds, stage, split } =
       await setup();
-    stages.split(id, "vertical");
-    stages.split(id, "horizontal");
-    const [first] = paneIds();
+    split("vertical");
+    split("horizontal");
+    // Gmail's one tab cannot close, so a Calendar pane is the one closed.
+    const [, first] = paneIds();
     const maximise = () => commands.run("stage.maximise", { windowId: id });
     maximise();
     stage.focusPane(first ?? "");
@@ -671,9 +675,9 @@ describe("the stage commands", () => {
 
 describe("a page's fullscreen", () => {
   it("gives the pane the whole window, square, the other panes detached and the chrome covered, until the page leaves it", async () => {
-    const { window, views, stages, id, insets } = await setup();
+    const { window, views, insets, split } = await setup();
     insets.top = 40;
-    stages.split(id, "vertical");
+    split("vertical");
     const [first, second] = views.alive;
     second?.fullscreen(true);
     const during = {
@@ -694,8 +698,8 @@ describe("a page's fullscreen", () => {
   });
 
   it("ignores the leaving of a page that was not fullscreen", async () => {
-    const { window, views, stages, id } = await setup();
-    stages.split(id, "vertical");
+    const { window, views, split } = await setup();
+    split("vertical");
     const [first, second] = views.alive;
     second?.fullscreen(true);
     first?.fullscreen(false);
@@ -705,8 +709,8 @@ describe("a page's fullscreen", () => {
 
 describe("the stage channels", () => {
   it("move the focused pane through its history, or stop it, and tell the page where it stands", async () => {
-    const { commands, id, views, changes, stages } = await setup();
-    stages.split(id, "vertical");
+    const { commands, id, views, changes, split } = await setup();
+    split("vertical");
     const [first, second] = views.alive;
     commands.run("stage.back", { windowId: id });
     commands.run("stage.stop", { windowId: id });
