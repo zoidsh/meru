@@ -13,8 +13,8 @@ import {
   createSettingsStore,
   SettingsContext,
 } from "../features/settings/use-setting.ts";
+import { Dividers } from "../features/stage/dividers.tsx";
 import { createUpdateStore, markUpdate } from "../features/updater/store.ts";
-import { Dividers } from "../stage/dividers.tsx";
 import { createStore } from "../store.ts";
 
 const client = createClient(window, rendererSurface);

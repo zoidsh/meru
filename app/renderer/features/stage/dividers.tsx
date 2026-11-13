@@ -1,11 +1,11 @@
 import type { CSSProperties, PointerEvent } from "react";
 
-import { stage } from "../../shared/channels/stage.ts";
-import type { StageSnapshot } from "../../shared/channels/stage.ts";
-import type { RendererSurface } from "../../shared/channels/surfaces.ts";
-import type { Client } from "../client.ts";
-import type { Store } from "../store.ts";
-import { useStore } from "../store.ts";
+import { stage } from "../../../shared/channels/stage.ts";
+import type { StageSnapshot } from "../../../shared/channels/stage.ts";
+import type { RendererSurface } from "../../../shared/channels/surfaces.ts";
+import type { Client } from "../../client.ts";
+import type { Store } from "../../store.ts";
+import { useStore } from "../../store.ts";
 
 type Divider = StageSnapshot["dividers"][number];
 
