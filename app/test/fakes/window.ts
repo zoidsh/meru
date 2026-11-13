@@ -15,7 +15,6 @@ let nextContentsId = 1;
 export class FakeWindow implements WindowPort {
   readonly contentsId: number;
   loaded: string | undefined;
-  query: Readonly<Record<string, string>> | undefined;
   background: string | undefined;
   overlay: TitleBarOverlay | undefined;
   shown: "active" | "inactive" | undefined;
@@ -35,15 +34,6 @@ export class FakeWindow implements WindowPort {
 
   readonly loadUrl = async (url: string) => {
     this.loaded = url;
-    await Promise.resolve();
-  };
-
-  readonly loadFile = async (
-    path: string,
-    query: Readonly<Record<string, string>>
-  ) => {
-    this.loaded = path;
-    this.query = query;
     await Promise.resolve();
   };
 

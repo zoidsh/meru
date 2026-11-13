@@ -109,10 +109,6 @@ export interface WindowPort {
   /** Keys typed into the window's own page, the chrome. */
   readonly onKey: (listener: KeyListener) => Unsubscribe;
   readonly loadUrl: (url: string) => Promise<void>;
-  readonly loadFile: (
-    path: string,
-    query: Readonly<Record<string, string>>
-  ) => Promise<void>;
   readonly setBackgroundColor: (color: string) => void;
   /** Only for a window created with an overlay. */
   readonly setTitleBarOverlay: (overlay: TitleBarOverlay) => void;

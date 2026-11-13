@@ -58,9 +58,6 @@ const createWindow = (spec: WindowSpec): WindowPort => {
       return { height, width, x: 0, y: 0 };
     },
     contentsId: window.webContents.id,
-    loadFile: async (path, query) => {
-      await window.loadFile(path, { query: { ...query } });
-    },
     loadUrl: async (url) => {
       await window.loadURL(url);
     },

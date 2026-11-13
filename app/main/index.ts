@@ -1,5 +1,4 @@
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 
 import { TITLEBAR_HEIGHT } from "../core/engines/chrome.ts";
 import { sidebarInset } from "../core/engines/sidebar.ts";
@@ -39,7 +38,8 @@ import { IpcDispatcher } from "./shell/ipc.ts";
 import { ShortcutKeys } from "./shell/keys.ts";
 import { answerMeasure } from "./shell/measure.ts";
 import { ApplicationMenu } from "./shell/menu.ts";
-import { MainWindow, pageQuery } from "./shell/window.ts";
+import { MainWindow, pageUrl } from "./shell/window.ts";
+import type { PageOptions } from "./shell/window.ts";
 
 const report = (error: unknown) => {
   console.error(error);
@@ -210,26 +210,16 @@ const start = async () => {
     settings,
   });
   sidebars.start();
-  const rendererUrl = process.env.MERU_RENDERER_URL;
+  const pages: PageOptions = {
+    devServer: process.env.MERU_RENDERER_URL,
+    dir: path.join(dist, "renderer"),
+    platform: ports.lifecycle.platform,
+    theme: () => (ports.theme.dark() ? "dark" : "light"),
+  };
   new Launcher({
     commands,
-    pageUrl: (anchor) => {
-      const url =
-        rendererUrl === undefined
-          ? pathToFileURL(path.join(dist, "renderer", "launcher.html"))
-          : new URL("launcher.html", rendererUrl);
-      const query = {
-        ...pageQuery(
-          ports.lifecycle.platform,
-          ports.theme.dark() ? "dark" : "light"
-        ),
-        anchor: JSON.stringify(anchor),
-      };
-      for (const [key, value] of Object.entries(query)) {
-        url.searchParams.set(key, value);
-      }
-      return url.href;
-    },
+    pageUrl: (anchor) =>
+      pageUrl(pages, "launcher.html", { anchor: JSON.stringify(anchor) }),
     registrar: dispatcher,
     stages,
   }).start();
@@ -293,9 +283,8 @@ const start = async () => {
       stages.open(created, () => windows.mainGroupId());
     },
     ports,
+    pages,
     preload: path.join(dist, "preload", "renderer.cjs"),
-    rendererFile: path.join(dist, "renderer", "chrome.html"),
-    rendererUrl,
   });
   await window.show();
   entitlement.start();

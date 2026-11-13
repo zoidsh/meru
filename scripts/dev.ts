@@ -50,7 +50,7 @@ const startElectron = () => {
       cwd: root,
       env: {
         ...process.env,
-        MERU_RENDERER_URL: rendererUrl,
+        MERU_RENDERER_URL: rendererBase,
         ...(background ? { MERU_BACKGROUND: "1" } : {}),
       },
       stdio: "inherit",

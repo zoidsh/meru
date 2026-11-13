@@ -1,3 +1,6 @@
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import type { WindowSpec } from "../../core/ports.ts";
@@ -6,7 +9,7 @@ import { FakeTheme } from "../../test/fakes/theme.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
 import { MainWindow } from "./window.ts";
 
-const open = async (platform: string, rendererUrl?: string) => {
+const open = async (platform: string, devServer?: string) => {
   const theme = new FakeTheme(true);
   const window = new FakeWindow();
   const specs: WindowSpec[] = [];
@@ -28,9 +31,13 @@ const open = async (platform: string, rendererUrl?: string) => {
         },
       },
     },
+    pages: {
+      devServer,
+      dir: "/dist/renderer",
+      platform,
+      theme: () => (theme.dark() ? "dark" : "light"),
+    },
     preload: "/preload.cjs",
-    rendererFile: "/chrome.html",
-    rendererUrl,
   }).show();
   return { specs, theme, window };
 };
@@ -40,15 +47,14 @@ describe(MainWindow, () => {
     const { specs, window } = await open("darwin");
     expect(specs[0]?.background).toBe("#0a0a0a");
     expect(specs[0]?.titleBar.style).toBe("hiddenInset");
-    expect(window.query).toStrictEqual({ platform: "darwin", theme: "dark" });
+    expect(window.loaded).toBe(
+      `${pathToFileURL(path.join("/dist/renderer", "chrome.html")).href}?platform=darwin&theme=dark`
+    );
     expect(window.shown).toBe("inactive");
   });
 
   it("puts the same in the dev server's URL", async () => {
-    const { window } = await open(
-      "darwin",
-      "http://127.0.0.1:5173/chrome.html"
-    );
+    const { window } = await open("darwin", "http://127.0.0.1:5173/");
     expect(window.loaded).toBe(
       "http://127.0.0.1:5173/chrome.html?platform=darwin&theme=dark"
     );
