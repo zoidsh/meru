@@ -10,6 +10,7 @@ import { profiles, profilesPushes, tabs } from "./profiles.ts";
 import { settings, settingsPushes } from "./settings.ts";
 import { sidebar, sidebarPushes } from "./sidebar.ts";
 import { stage, stagePushes } from "./stage.ts";
+import { themePushes } from "./theme.ts";
 import { updater, updaterPushes } from "./updater.ts";
 
 export const chromeSurface = defineSurface({
@@ -21,6 +22,7 @@ export const chromeSurface = defineSurface({
     profilesPushes,
     sidebarPushes,
     launcherPushes,
+    themePushes,
   ],
   requests: [
     stage,
@@ -47,7 +49,7 @@ export const dragSurface = defineSurface({ pushes: [], requests: [drag] });
 
 /** The launcher's page over the panes: it reads the profiles and the settings, opens a tab and closes itself. */
 export const launcherSurface = defineSurface({
-  pushes: [profilesPushes, settingsPushes],
+  pushes: [profilesPushes, settingsPushes, themePushes],
   requests: [
     launcher,
     { openTab: stage.openTab },

@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { chromeSurface } from "../../shared/channels/surfaces.ts";
+import { themePushes } from "../../shared/channels/theme.ts";
 import { ChromeProvider } from "../client-context.tsx";
 import { createClient } from "../client.ts";
 import { LauncherButton } from "../features/launcher/launcher-button.tsx";
@@ -25,11 +26,13 @@ import { followTheme } from "../theme.ts";
 
 import "../ui/globals.css";
 
-followTheme(document.documentElement, location.href, (query) =>
-  matchMedia(query)
-);
-
 const client = createClient(window, chromeSurface);
+
+followTheme(document.documentElement, location.href, (listener) =>
+  client.on(themePushes.changed, ({ theme }) => {
+    listener(theme);
+  })
+);
 
 const root = document.querySelector("#root");
 

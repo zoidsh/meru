@@ -4,22 +4,34 @@ import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import type { WindowSpec } from "../../core/ports.ts";
+import { wireName } from "../../shared/channels/define.ts";
+import { chromeSurface } from "../../shared/channels/surfaces.ts";
+import { themePushes } from "../../shared/channels/theme.ts";
+import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
 import { FakeTheme } from "../../test/fakes/theme.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
+import { IpcDispatcher } from "./ipc.ts";
 import { MainWindow } from "./window.ts";
 
 const open = async (platform: string, devServer?: string) => {
   const theme = new FakeTheme(true);
   const window = new FakeWindow();
   const specs: WindowSpec[] = [];
+  const transport = new FakeIpcTransport();
+  const registrar = new IpcDispatcher({
+    onError: (error) => {
+      throw error;
+    },
+    transport,
+  });
   await new MainWindow({
     arguments: [],
     background: true,
     bounds: { height: 800, width: 1200, x: 0, y: 0 },
     linuxControls: false,
-    onCreated: () => {
-      // The test reads the window from the factory.
+    onCreated: (created) => {
+      registrar.assign(created.contentsId, chromeSurface);
     },
     ports: {
       lifecycle: new FakeLifecycle(platform),
@@ -38,8 +50,9 @@ const open = async (platform: string, devServer?: string) => {
       theme: () => (theme.dark() ? "dark" : "light"),
     },
     preload: "/preload.cjs",
+    registrar,
   }).show();
-  return { specs, theme, window };
+  return { specs, theme, transport, window };
 };
 
 describe(MainWindow, () => {
@@ -66,5 +79,29 @@ describe(MainWindow, () => {
     expect(window.background).toBe("#ececf1");
     expect(window.overlay?.color).toBe("#ececf1");
     expect(window.overlay?.symbolColor).toBe("#2a2a30");
+  });
+
+  it("tells the chrome page the theme changed, so it recolours with the window", async () => {
+    const { theme, transport, window } = await open("darwin");
+    theme.set(false);
+    theme.set(true);
+    expect(
+      transport.sent.filter(
+        (sent) =>
+          sent.contentsId === window.contentsId &&
+          sent.channel === wireName(themePushes.changed)
+      )
+    ).toStrictEqual([
+      {
+        channel: wireName(themePushes.changed),
+        contentsId: window.contentsId,
+        payload: { theme: "light" },
+      },
+      {
+        channel: wireName(themePushes.changed),
+        contentsId: window.contentsId,
+        payload: { theme: "dark" },
+      },
+    ]);
   });
 });

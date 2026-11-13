@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { rectSchema } from "../../core/records/rect.ts";
 import { launcher } from "../../shared/channels/launcher.ts";
 import { launcherSurface } from "../../shared/channels/surfaces.ts";
+import { themePushes } from "../../shared/channels/theme.ts";
 import { createClient } from "../client.ts";
 import { Launcher } from "../features/launcher/launcher.tsx";
 import { LauncherClientProvider } from "../features/launcher/use-launcher-client.ts";
@@ -20,10 +21,6 @@ import { followTheme } from "../theme.ts";
 
 import "../ui/globals.css";
 
-followTheme(document.documentElement, location.href, (query) =>
-  matchMedia(query)
-);
-
 const parseRect = (raw: string | null) => {
   let parsed: unknown = null;
   try {
@@ -36,6 +33,11 @@ const parseRect = (raw: string | null) => {
 
 const showLauncher = (query: URLSearchParams): ReactNode => {
   const client = createClient(window, launcherSurface);
+  followTheme(document.documentElement, location.href, (listener) =>
+    client.on(themePushes.changed, ({ theme }) => {
+      listener(theme);
+    })
+  );
   const anchor = parseRect(query.get("anchor"));
   if (anchor === undefined) {
     client.send(launcher.close, {});

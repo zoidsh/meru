@@ -266,6 +266,7 @@ const start = async () => {
     ports,
     pages,
     preload: path.join(dist, "preload", "renderer.cjs"),
+    registrar: dispatcher,
   });
   await window.show();
   entitlement.start();

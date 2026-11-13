@@ -5,6 +5,8 @@ import { chromeColors, titleBarOf } from "../../core/engines/chrome.ts";
 import type { Theme } from "../../core/engines/chrome.ts";
 import type { Ports, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
+import type { IpcRegistrar } from "../../shared/channels/define.ts";
+import { themePushes } from "../../shared/channels/theme.ts";
 
 export interface PageOptions {
   /** The renderer dev server's address; the built pages are loaded while it is unset. */
@@ -34,6 +36,8 @@ export const pageUrl = (
 
 export interface MainWindowOptions {
   readonly ports: Pick<Ports, "lifecycle" | "theme" | "windows">;
+  /** Tells every page the theme changed. */
+  readonly registrar: Pick<IpcRegistrar, "broadcast">;
   readonly preload: string;
   /** Passed to the chrome page's renderer process. */
   readonly arguments: readonly string[];
@@ -65,6 +69,7 @@ export class MainWindow {
       background,
       linuxControls,
       onCreated,
+      registrar,
     } = this.#options;
     const { platform } = ports.lifecycle;
     const theme = (): Theme => (ports.theme.dark() ? "dark" : "light");
@@ -87,6 +92,7 @@ export class MainWindow {
       if (overlay !== null && platform !== "darwin") {
         window.setTitleBarOverlay(overlay);
       }
+      registrar.broadcast(themePushes.changed, { theme: theme() });
     });
     window.onClosed(stopFollowing);
     onCreated(window);
