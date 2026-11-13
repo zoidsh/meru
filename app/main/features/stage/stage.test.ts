@@ -150,6 +150,15 @@ const setup = async (style: Style = "modern") => {
 const zoomOf = (stage: Stage) =>
   stage.panes().map(({ view }) => view.zoomFactor());
 
+const unwrap = <T>(
+  result: { ok: true; value: T } | { ok: false; error: unknown }
+): T => {
+  if (!result.ok) {
+    throw new Error(`Expected success, got ${String(result.error)}`);
+  }
+  return result.value;
+};
+
 const childBounds = (window: FakeWindow) =>
   window.childViews().map((view) => view.bounds());
 
@@ -322,15 +331,12 @@ describe(Stages, () => {
     });
   });
 
-  it("shows another group once the state says so, retiring the views of the one it showed", async () => {
+  it("shows another group once the state says so, detaching the views of the one it showed and keeping them", async () => {
     const { window, views, profiles, profileId, changes } = await setup();
     const [gmail] = views.created;
-    const added = profiles.addTab(profileId, "calendar");
+    const added = unwrap(profiles.addTab(profileId, "calendar"));
     expect(views.created).toHaveLength(1);
-    if (!added.ok) {
-      throw new Error(added.error);
-    }
-    profiles.moveTab(added.value.id, 0);
+    profiles.moveTab(added.id, 0);
     const [, calendar] = views.created;
     expect({
       children: window.childViews(),
@@ -338,11 +344,52 @@ describe(Stages, () => {
       url: calendar?.url,
     }).toStrictEqual({
       children: [calendar],
-      destroyed: true,
+      destroyed: false,
       url: "https://calendar.google.com/",
     });
     const shown = changes().at(-1);
     expect(shown?.focusedPaneId).toBe(shown?.panes[0]?.paneId);
+  });
+
+  it("keeps every tab's view through a join, a leave and a switch of group, so no page reloads", async () => {
+    const { window, views, profiles, profileId } = await setup();
+    const [gmailId = ""] = profiles.currentGroup()?.tabIds ?? [];
+    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+    profiles.moveTab(calendar.id, 0);
+    const [gmail, calendarView] = views.created;
+    const seen: (readonly unknown[])[] = [];
+
+    unwrap(profiles.joinTab(gmailId, calendar.id));
+    seen.push(window.childViews());
+    unwrap(profiles.leaveGroup(gmailId, 0));
+    seen.push(window.childViews());
+    profiles.moveTab(calendar.id, 0);
+    seen.push(window.childViews());
+
+    expect({
+      created: views.created,
+      destroyed: views.created.filter((view) => view.destroyed),
+      seen,
+    }).toStrictEqual({
+      created: [gmail, calendarView],
+      destroyed: [],
+      seen: [[calendarView, gmail], [gmail], [calendarView]],
+    });
+  });
+
+  it("disposes a closed tab's view even while its group is not shown", async () => {
+    const { views, profiles, profileId } = await setup();
+    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+    profiles.moveTab(calendar.id, 0);
+    const [gmail, calendarView] = views.created;
+    profiles.moveTab(calendar.id, 1);
+
+    unwrap(profiles.closeTab(calendar.id));
+
+    expect([gmail?.destroyed, calendarView?.destroyed]).toStrictEqual([
+      false,
+      true,
+    ]);
   });
 
   it("keeps the last pane", async () => {

@@ -13,6 +13,8 @@ export const e2eSnapshotSchema = z.object({
   menu: z.partialRecord(commandIdSchema, z.string().nullable()),
   /** Bounds Electron reports for each child view of the first window, bottom first. */
   views: z.array(rectSchema),
+  /** Each pane's tab and the id of the web contents showing it, in layout order. */
+  tabs: z.array(z.object({ contentsId: z.number(), tabId: z.string() })),
   /** Each pane's zoom factor, in layout order. */
   zoom: z.array(z.number()),
 });
@@ -28,6 +30,11 @@ export const exposeE2e = (options: {
     const [stage] = options.stages.all;
     return {
       menu: options.accelerators(),
+      tabs:
+        stage?.panes().map(({ tab, view }) => ({
+          contentsId: view.contentsId,
+          tabId: tab.id,
+        })) ?? [],
       views: stage?.window.childViews().map((view) => view.bounds()) ?? [],
       zoom: stage?.panes().map(({ view }) => view.zoomFactor()) ?? [],
     };

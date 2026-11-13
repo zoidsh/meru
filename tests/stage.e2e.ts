@@ -2,9 +2,10 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 import type { Rect } from "../app/core/records/rect.ts";
+import { tabs } from "../app/shared/channels/profiles.ts";
 import type { CommandId } from "../app/shared/commands/registry.ts";
-import { launch } from "../scripts/lib/app.ts";
-import { clickMenuItem, stageOf, viewsOf } from "./app.ts";
+import { invokeIn, launch } from "../scripts/lib/app.ts";
+import { clickMenuItem, paneContentsOf, stageOf, viewsOf } from "./app.ts";
 
 const SPLIT_VERTICAL: CommandId = "stage.splitVertical";
 const CLOSE_TAB: CommandId = "stage.closeTab";
@@ -81,6 +82,35 @@ test("splits, drags the divider across the panes, moves focus, and closes a tab"
 
     await clickMenuItem(app, CLOSE_TAB);
     await expect.poll(async () => await viewsOf(app)).toHaveLength(1);
+  } finally {
+    await close();
+  }
+});
+
+test("keeps a tab's page through a split beside it and leaving the group", async () => {
+  const { app, chrome, close } = await launch();
+  try {
+    await expect.poll(async () => await paneContentsOf(app)).toHaveLength(1);
+    const [first] = await paneContentsOf(app);
+    if (first === undefined) {
+      throw new Error("The first tab has no pane");
+    }
+
+    await clickMenuItem(app, SPLIT_VERTICAL);
+    await expect.poll(async () => await paneContentsOf(app)).toHaveLength(2);
+    const [kept, added] = await paneContentsOf(app);
+    expect(kept).toStrictEqual(first);
+    expect(added?.contentsId).not.toBe(first.contentsId);
+
+    // The window keeps showing the group the tab left, so the tab is brought back to the front to read its pane.
+    await invokeIn(chrome, tabs.leave, { tabId: first.tabId, to: 0 });
+    await expect
+      .poll(async () => await paneContentsOf(app))
+      .toStrictEqual([added]);
+    await invokeIn(chrome, tabs.focus, { tabId: first.tabId });
+    await expect
+      .poll(async () => await paneContentsOf(app))
+      .toStrictEqual([first]);
   } finally {
     await close();
   }

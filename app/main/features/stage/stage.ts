@@ -90,6 +90,7 @@ export class Stage {
   readonly #overlay: Overlay;
   #shown: Group | undefined;
   readonly #retired: OwnedView[] = [];
+  /** The tab whose pane has the keyboard. */
   #focused: string | undefined;
   readonly #drag: DragOverlay;
   #published: StageSnapshot | undefined;
@@ -99,14 +100,14 @@ export class Stage {
     this.#views = new TabViews({
       create: (spec) => this.#own(spec),
       onError: options.onError,
-      onFocus: (paneId) => {
-        if (this.#focused !== paneId) {
-          this.#focused = paneId;
+      onFocus: (tabId) => {
+        if (this.#focused !== tabId) {
+          this.#focused = tabId;
           this.#publish();
         }
       },
-      onNavigation: (paneId) => {
-        if (this.#focused === paneId) {
+      onNavigation: (tabId) => {
+        if (this.#focused === tabId) {
           this.#publish();
         }
       },
@@ -138,7 +139,7 @@ export class Stage {
       style: options.style,
     });
     this.#shown = this.#read();
-    this.#focused = panes(this.#layout())[0]?.paneId;
+    this.#focused = panes(this.#layout())[0]?.tabIds[0];
   }
 
   start(): void {
@@ -154,16 +155,21 @@ export class Stage {
     this.#update();
   }
 
-  /** Shows the group again if it, or which group the window shows, changed since the stage last looked. */
+  /** Shows the group again if it, or which group the window shows, changed since the stage last looked, and lets the views of closed tabs go. */
   refresh(): void {
+    if (this.#disposables.disposed) {
+      return;
+    }
     const group = this.#read();
-    if (this.#disposables.disposed || group === this.#shown) {
+    if (group === this.#shown) {
+      if (this.#retireClosed()) {
+        this.#reconcile();
+      }
       return;
     }
     this.#shown = group;
-    const order = panes(this.#layout());
-    if (!order.some((pane) => pane.paneId === this.#focused)) {
-      this.#focused = order[0]?.paneId;
+    if (this.#focusedPane() === undefined) {
+      this.#focused = panes(this.#layout())[0]?.tabIds[0];
     }
     this.#update();
   }
@@ -171,7 +177,7 @@ export class Stage {
   /** Splits a pane with a new tab of its own app beside or below it. */
   split(
     orientation: Orientation,
-    paneId = this.#focused
+    paneId = this.#focusedPane()
   ): Result<undefined, StageError> {
     const placement = this.#placement(orientation, paneId);
     const source = this.#tabOf(placement?.paneId);
@@ -214,18 +220,17 @@ export class Stage {
   }
 
   /** Closes a pane's tab; the last pane stays. */
-  close(paneId = this.#focused): Result<undefined, StageError> {
+  close(paneId = this.#focusedPane()): Result<undefined, StageError> {
     const order = panes(this.#layout());
     const index = order.findIndex((pane) => pane.paneId === paneId);
-    const closing = order[index];
-    const [tabId] = closing?.tabIds ?? [];
-    if (closing === undefined || tabId === undefined) {
+    const [tabId] = order[index]?.tabIds ?? [];
+    if (tabId === undefined) {
       return err("unknownPane");
     }
     if (order.length === 1) {
       return err("lastPane");
     }
-    const wasFocused = this.#focused === closing.paneId;
+    const wasFocused = this.#focused === tabId;
     if (!this.#options.profiles.closeTab(tabId).ok) {
       return err("refused");
     }
@@ -239,11 +244,13 @@ export class Stage {
   }
 
   focusPane(paneId: string): Result<undefined, StageError> {
-    const view = this.#views.view(paneId);
+    const pane = panes(this.#layout()).find((found) => found.paneId === paneId);
+    const [tabId] = pane?.tabIds ?? [];
+    const view = tabId === undefined ? undefined : this.#views.view(tabId);
     if (view === undefined) {
       return err("unknownPane");
     }
-    this.#focused = paneId;
+    this.#focused = tabId;
     view.focus();
     this.#publish();
     return ok(undefined);
@@ -251,8 +258,7 @@ export class Stage {
 
   /** Moves the focused pane through its history, or reloads or stops it. */
   navigate(action: NavigationAction): Result<undefined, StageError> {
-    const view =
-      this.#focused === undefined ? undefined : this.#views.view(this.#focused);
+    const view = this.#focusedView();
     if (view === undefined) {
       return err("unknownPane");
     }
@@ -281,10 +287,9 @@ export class Stage {
   #focusBy(
     step: (tree: Layout, paneId: string) => string | undefined
   ): Result<undefined, StageError> {
+    const focused = this.#focusedPane();
     const target =
-      this.#focused === undefined
-        ? undefined
-        : step(this.#layout(), this.#focused);
+      focused === undefined ? undefined : step(this.#layout(), focused);
     return target === undefined ? err("unknownPane") : this.focusPane(target);
   }
 
@@ -325,9 +330,7 @@ export class Stage {
     }
     this.#dropOverlay();
     this.#reconcile();
-    if (this.#focused !== undefined) {
-      this.#views.view(this.#focused)?.focus();
-    }
+    this.#focusedView()?.focus();
   }
 
   /** Lays the panes out again after the appearance style or the chrome's insets changed. */
@@ -335,15 +338,14 @@ export class Stage {
     this.#arrange();
   }
 
-  /** Applies the profile's zoom to every pane after it changed. */
+  /** Applies each tab's profile's zoom to its view after it changed. */
   rezoom(): void {
-    const group = this.#read();
-    if (group === undefined) {
-      return;
-    }
-    const zoom = this.#options.zoom(group.profileId);
-    for (const [, view] of this.#views.entries()) {
-      view.setZoomFactor(zoom);
+    const { profiles, zoom } = this.#options;
+    for (const [tabId, view] of this.#views.entries()) {
+      const tab = profiles.tab(tabId);
+      if (tab !== undefined) {
+        view.setZoomFactor(zoom(tab.profileId));
+      }
     }
   }
 
@@ -354,15 +356,15 @@ export class Stage {
   /** Each pane's view with the tab it shows, in layout order. */
   panes(): { readonly view: ViewPort; readonly tab: Tab }[] {
     return panes(this.#layout()).flatMap((pane) => {
-      const view = this.#views.view(pane.paneId);
       const tab = this.#tabOf(pane.paneId);
+      const view = tab === undefined ? undefined : this.#views.view(tab.id);
       return view === undefined || tab === undefined ? [] : [{ tab, view }];
     });
   }
 
   /** The views over the panes: a drag's, then the overlay's. */
   get overlays(): readonly ViewPort[] {
-    return [this.#drag?.view, this.#overlay.view].filter(
+    return [this.#drag.view, this.#overlay.view].filter(
       (view) => view !== undefined
     );
   }
@@ -371,11 +373,8 @@ export class Stage {
     const arrangement = this.#arrangement();
     return {
       dividers: [...arrangement.dividers],
-      focusedPaneId: this.#focused ?? null,
-      navigation:
-        (this.#focused === undefined
-          ? undefined
-          : this.#views.view(this.#focused)?.navigation()) ?? null,
+      focusedPaneId: this.#focusedPane() ?? null,
+      navigation: this.#focusedView()?.navigation() ?? null,
       panes: [...arrangement.panes].map(([paneId, rect]) => ({
         paneId,
         rect,
@@ -405,7 +404,7 @@ export class Stage {
   }
 
   #layout(): Layout {
-    return this.#drag?.layout ?? this.#read()?.layout ?? null;
+    return this.#drag.layout ?? this.#read()?.layout ?? null;
   }
 
   #arrangement() {
@@ -426,10 +425,25 @@ export class Stage {
     return tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
   }
 
+  /** The pane showing the focused tab, while the stage shows it. */
+  #focusedPane(): string | undefined {
+    const focused = this.#focused;
+    return focused === undefined
+      ? undefined
+      : panes(this.#layout()).find((pane) => pane.tabIds.includes(focused))
+          ?.paneId;
+  }
+
+  #focusedView(): ViewPort | undefined {
+    return this.#focusedPane() === undefined || this.#focused === undefined
+      ? undefined
+      : this.#views.view(this.#focused);
+  }
+
   /** Where a tab goes beside or below the pane, the focused one unless named, in the group the stage shows. */
   #placement(
     orientation: Orientation,
-    paneId = this.#focused
+    paneId = this.#focusedPane()
   ): Placement | undefined {
     const group = this.#read();
     return group === undefined || paneId === undefined
@@ -459,28 +473,39 @@ export class Stage {
     this.#retired.push(overlay);
   }
 
-  /** The source of each pane's view, none for a pane whose tab or group is gone. */
-  #sources(): Map<string, TabSource | undefined> {
-    const group = this.#read();
+  /** The source of the view of each tab the shown group's panes show. */
+  #sources(): Map<string, TabSource> {
     const { radius } = STYLE_METRICS[this.#options.style()];
     return new Map(
-      panes(this.#layout()).map(({ paneId }) => {
+      panes(this.#layout()).flatMap(({ paneId }) => {
         const tab = this.#tabOf(paneId);
-        const source =
-          group === undefined || tab === undefined
-            ? undefined
-            : {
-                spec: {
-                  background: this.#options.background(),
-                  partition: partitionOf(group.profileId),
-                  radius,
-                  zoom: this.#options.zoom(group.profileId),
+        return tab === undefined
+          ? []
+          : [
+              [
+                tab.id,
+                {
+                  spec: {
+                    background: this.#options.background(),
+                    partition: partitionOf(tab.profileId),
+                    radius,
+                    zoom: this.#options.zoom(tab.profileId),
+                  },
+                  url: this.#options.urlOf(tab),
                 },
-                url: this.#options.urlOf(tab),
-              };
-        return [paneId, source];
+              ],
+            ];
       })
     );
+  }
+
+  /** Hands the views of closed tabs, a removed profile's among them, to be detached and disposed. */
+  #retireClosed(): boolean {
+    const closed = this.#views.retire(
+      (tabId) => this.#options.profiles.tab(tabId) !== undefined
+    );
+    this.#retired.push(...closed);
+    return closed.length > 0;
   }
 
   #reconcile(): void {
@@ -505,12 +530,14 @@ export class Stage {
     const bounds = this.#options.window.contentBounds();
     const arrangement = this.#arrangement();
     const { radius } = STYLE_METRICS[this.#options.style()];
-    for (const [paneId, view] of this.#views.entries()) {
-      const rect = arrangement.panes.get(paneId);
-      if (rect !== undefined) {
+    for (const pane of panes(this.#layout())) {
+      const [tabId] = pane.tabIds;
+      const view = tabId === undefined ? undefined : this.#views.view(tabId);
+      const rect = arrangement.panes.get(pane.paneId);
+      if (view !== undefined && rect !== undefined) {
         view.setBounds(rect);
+        view.setBorderRadius(radius);
       }
-      view.setBorderRadius(radius);
     }
     for (const overlay of this.overlays) {
       overlay.setBounds(bounds);
@@ -521,7 +548,8 @@ export class Stage {
   }
 
   #update(): void {
-    this.#retired.push(...this.#views.sync(this.#sources()));
+    this.#views.show(this.#sources());
+    this.#retireClosed();
     this.#reconcile();
     this.#arrange();
   }

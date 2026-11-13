@@ -26,6 +26,12 @@ export const viewsOf = async (app: ElectronApplication) => {
   return views;
 };
 
+/** Each pane's tab with the id of the web contents showing it, in layout order. */
+export const paneContentsOf = async (app: ElectronApplication) => {
+  const { tabs } = await inspect(app);
+  return tabs;
+};
+
 export const zoomOf = async (app: ElectronApplication) => {
   const { zoom } = await inspect(app);
   return zoom;
