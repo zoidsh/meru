@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  inspect,
   launch,
   runCommand,
-  stageOf,
   styleOf,
   viewsOf,
   writeSettings,
@@ -76,7 +76,7 @@ test("puts a rebound command's shortcut in the menu", async () => {
     },
   });
   try {
-    const { menu } = await stageOf(chrome);
+    const { menu } = await inspect(chrome);
     expect(menu).toMatchObject({
       "stage.closeTab": null,
       "stage.splitHorizontal": "CommandOrControl+Alt+Shift+N",
@@ -102,7 +102,7 @@ test("follows settings.json edited while the app runs", async () => {
     await expect.poll(async () => await styleOf(chrome)).toBe("classic");
     const size = await contentSize(launched);
     await expect
-      .poll(async () => await stageOf(chrome))
+      .poll(async () => await inspect(chrome))
       .toMatchObject({
         menu: { "stage.splitVertical": "CommandOrControl+Alt+V" },
         views: [{ ...size, x: 0, y: 0 }],

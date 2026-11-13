@@ -25,7 +25,6 @@ export type { StageError, StageProfiles } from "./stage.ts";
 export { Stage } from "./stage.ts";
 
 export interface StageInspection {
-  readonly stage: StageSnapshot;
   readonly views: Rect[];
   readonly zoom: number[];
 }
@@ -214,11 +213,10 @@ export class Stages {
     );
   }
 
-  /** What the end-to-end suite asserts on: the stage as held here, the bounds Electron reports for each child view, and each pane's zoom. */
+  /** What the end-to-end suite asserts on beside the stage: the bounds Electron reports for each child view, and each pane's zoom. */
   inspect(sender: number): Result<StageInspection, StageError> {
     return this.#with(sender, (found) =>
       ok({
-        stage: found.snapshot(),
         views: found.childBounds(),
         zoom: found.zoomFactors,
       })

@@ -6,15 +6,22 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 import { profiles } from "../app/shared/channels/profiles.ts";
-import { invokeIn, launch, stageOf, viewsOf } from "./app.ts";
+import {
+  entitlementOf,
+  invokeIn,
+  launch,
+  profilesOf,
+  stageOf,
+  viewsOf,
+} from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
 
 const createProfile = async (chrome: Page, label: string) =>
   await invokeIn(chrome, profiles.create, { label });
 
 const kindOf = async (chrome: Page) => {
-  const { entitlement } = await stageOf(chrome);
-  return entitlement.kind;
+  const { kind } = await entitlementOf(chrome);
+  return kind;
 };
 
 test("opens a fresh install on one profile with one Gmail tab in one pane", async () => {
@@ -24,7 +31,10 @@ test("opens a fresh install on one profile with one Gmail tab in one pane", asyn
     const windows = await app.evaluate(
       ({ BrowserWindow }) => BrowserWindow.getAllWindows().length
     );
-    const { profiles: state, stage } = await stageOf(chrome);
+    const [state, stage] = await Promise.all([
+      profilesOf(chrome),
+      stageOf(chrome),
+    ]);
     expect({
       groups: state.groups.map((group) => group.tabIds.length),
       panes: stage.panes.length,
@@ -53,7 +63,7 @@ test("creates a second profile under a trial and refuses one when free", async (
         ok: true,
         value: { label: "Work", order: 1 },
       });
-      const { profiles: state } = await stageOf(trial.chrome);
+      const state = await profilesOf(trial.chrome);
       expect(state.profiles.map((profile) => profile.label)).toStrictEqual([
         "Personal",
         "Work",

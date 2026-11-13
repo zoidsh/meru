@@ -4,7 +4,12 @@ import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { allowlist } from "../shared/channels/define.ts";
-import { rendererSurface, surfaces } from "../shared/channels/surfaces.ts";
+import {
+  rendererSurface,
+  surfaces,
+  TEST_SURFACE_ARGUMENT,
+  testSurface,
+} from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Profiles } from "./features/profiles/index.ts";
@@ -39,6 +44,8 @@ const start = async () => {
   placeUserData(path.join(dist, "..", ".."));
   const ports = createElectronPorts();
   const e2e = process.env.MERU_E2E === "1";
+  const measure = process.env.MERU_MEASURE === "1";
+  const pageSurface = e2e || measure ? testSurface : rendererSurface;
 
   ports.lifecycle.onWindowAllClosed(() => {
     ports.lifecycle.quit();
@@ -52,7 +59,7 @@ const start = async () => {
     onError: report,
     transport: ports.ipc,
   });
-  const lists = surfaces.map(allowlist);
+  const lists = [...surfaces, pageSurface].map(allowlist);
   listenIpc(
     {
       event: lists.flatMap((list) => [...list.event]),
@@ -187,25 +194,23 @@ const start = async () => {
     settings,
   }).start();
 
-  if (process.env.MERU_MEASURE === "1") {
+  if (measure) {
     answerMeasure({ registrar: dispatcher, stages });
   }
   if (e2e) {
     answerE2e({
       accelerators: applicationAccelerators,
-      entitlement,
-      profiles,
       registrar: dispatcher,
       stages,
-      updater,
     });
   }
 
   const window = new MainWindow({
+    arguments: pageSurface === testSurface ? [TEST_SURFACE_ARGUMENT] : [],
     background: process.env.MERU_BACKGROUND === "1",
     bounds: windows.mainBounds(),
     onCreated: (created) => {
-      dispatcher.assign(created.contentsId, rendererSurface);
+      dispatcher.assign(created.contentsId, pageSurface);
       windows.attachMain(created);
       stages.open(created, () => windows.mainGroupId());
     },

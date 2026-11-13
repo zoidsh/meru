@@ -27,6 +27,7 @@ const createWindow = (spec: WindowSpec): WindowPort => {
     show: false,
     title: spec.title,
     webPreferences: {
+      additionalArguments: [...spec.arguments],
       contextIsolation: true,
       nodeIntegration: false,
       preload: spec.preload,

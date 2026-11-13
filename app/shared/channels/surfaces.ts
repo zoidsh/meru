@@ -18,20 +18,19 @@ export const rendererSurface = defineSurface({
     updaterPushes,
     profilesPushes,
   ],
-  requests: [
-    stage,
-    settings,
-    commands,
-    entitlement,
-    updater,
-    profiles,
-    tabs,
-    e2e,
-    measure,
-  ],
+  requests: [stage, settings, commands, entitlement, updater, profiles, tabs],
 });
 
 export type RendererSurface = typeof rendererSurface;
+
+/** The chrome page's surface in a run the end-to-end suite or `pnpm measure` drives, which also inspects what main holds. */
+export const testSurface = defineSurface({
+  pushes: rendererSurface.pushes,
+  requests: [...rendererSurface.requests, e2e, measure],
+});
+
+/** The argument main passes the chrome page's preload in such a run, since a sandboxed preload sees no environment of main's. */
+export const TEST_SURFACE_ARGUMENT = "--meru-test-surface";
 
 export const dragSurface = defineSurface({ pushes: [], requests: [drag] });
 

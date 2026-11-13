@@ -17,6 +17,10 @@ import type {
   SyncChannel,
 } from "../app/shared/channels/define.ts";
 import { e2e } from "../app/shared/channels/e2e.ts";
+import { entitlement } from "../app/shared/channels/entitlement.ts";
+import { profiles } from "../app/shared/channels/profiles.ts";
+import { stage } from "../app/shared/channels/stage.ts";
+import { updater } from "../app/shared/channels/updater.ts";
 import type { CommandId } from "../app/shared/commands/registry.ts";
 import type { Settings } from "../app/shared/settings/registry.ts";
 
@@ -150,27 +154,39 @@ const valueOf = <T>(result: Result<T, IpcError>): T => {
   return result.value;
 };
 
-/** The stage as main holds it and the bounds Electron reports for each child view, bottom first. */
-export const stageOf = async (chrome: Page) =>
+/** What Electron holds for the page's stage and the menu: the bounds of each child view, bottom first, each pane's zoom and each command's accelerator. */
+export const inspect = async (chrome: Page) =>
   valueOf(await invokeIn(chrome, e2e.snapshot, {}));
 
 export const viewsOf = async (chrome: Page) => {
-  const { views } = await stageOf(chrome);
+  const { views } = await inspect(chrome);
   return views;
 };
 
 export const zoomOf = async (chrome: Page) => {
-  const { zoom } = await stageOf(chrome);
+  const { zoom } = await inspect(chrome);
   return zoom;
 };
+
+export const stageOf = async (chrome: Page) =>
+  valueOf(await invokeIn(chrome, stage.snapshot, {}));
+
+export const profilesOf = async (chrome: Page) =>
+  valueOf(await invokeIn(chrome, profiles.snapshot, {}));
+
+export const entitlementOf = async (chrome: Page) =>
+  valueOf(await invokeIn(chrome, entitlement.snapshot, {}));
+
+export const updateOf = async (chrome: Page) =>
+  valueOf(await invokeIn(chrome, updater.snapshot, {}));
 
 /** Runs a command as a button on the chrome page would, and answers what main answered. */
 export const runCommand = async (chrome: Page, id: CommandId) =>
   await invokeIn(chrome, commands.run, { id });
 
 export const styleOf = async (chrome: Page) => {
-  const { stage } = await stageOf(chrome);
-  return stage.style;
+  const { style } = await stageOf(chrome);
+  return style;
 };
 
 export const clickMenuItem = async (

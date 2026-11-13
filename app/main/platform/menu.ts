@@ -5,6 +5,9 @@ import type {
   MenuItemConstructorOptions,
 } from "electron";
 
+import { commandIdSchema } from "../../shared/commands/registry.ts";
+import type { CommandId } from "../../shared/commands/registry.ts";
+
 export interface MenuAction {
   readonly kind: "action";
   readonly id: string;
@@ -97,13 +100,16 @@ export const setApplicationMenu = (sections: readonly MenuSection[]): void => {
 };
 
 /** The accelerator of every item with an id in the application menu, as Electron holds it; null for an item with none. */
-export const applicationAccelerators = (): Record<string, string | null> => {
-  const found: Record<string, string | null> = {};
+export const applicationAccelerators = (): Partial<
+  Record<CommandId, string | null>
+> => {
+  const found: Partial<Record<CommandId, string | null>> = {};
   const visit = (items: readonly MenuItem[]) => {
     for (const item of items) {
       // Electron leaves id undefined on an item made from a role, whatever its typings say.
-      if (typeof item.id === "string" && item.id !== "") {
-        found[item.id] = item.accelerator ?? null;
+      const id = commandIdSchema.safeParse(item.id);
+      if (id.success) {
+        found[id.data] = item.accelerator ?? null;
       }
       visit(item.submenu?.items ?? []);
     }

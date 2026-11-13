@@ -74,6 +74,8 @@ export interface WindowSpec {
   readonly bounds: Rect;
   /** Absolute path of the built preload the window's page runs with. */
   readonly preload: string;
+  /** Extra command-line arguments the page's renderer process, and so its preload, sees. */
+  readonly arguments: readonly string[];
 }
 
 export interface WindowFactoryPort {

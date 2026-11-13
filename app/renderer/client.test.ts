@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { z } from "zod";
 
 import type { Result } from "../core/result.ts";
+import { commands } from "../shared/channels/commands.ts";
 import type { IpcError } from "../shared/channels/define.ts";
 import {
   defineChannels,
@@ -9,7 +10,6 @@ import {
   event,
   push,
 } from "../shared/channels/define.ts";
-import { e2e } from "../shared/channels/e2e.ts";
 import { stage, stagePushes } from "../shared/channels/stage.ts";
 import type { StageSnapshot } from "../shared/channels/stage.ts";
 import { rendererSurface } from "../shared/channels/surfaces.ts";
@@ -59,31 +59,15 @@ describe(createClient, () => {
 
   it("parses an invoke's answer against its result schema", async () => {
     const { bridge, client } = connect();
-    const answer = {
-      entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
-      menu: {},
-      profiles: {
-        groups: [],
-        profiles: [],
-        selectedProfileId: "p",
-        tabs: [],
-      },
-      stage: snapshot,
-      update: { kind: "idle" },
-      views: [],
-      zoom: [],
-    };
-    bridge.answers.set("e2e.snapshot", {
-      ok: true,
-      value: answer,
-    });
-    await expect(client.invoke(e2e.snapshot, {})).resolves.toStrictEqual({
-      ok: true,
-      value: answer,
-    });
+    bridge.answers.set("commands.run", { ok: true, value: null });
+    await expect(
+      client.invoke(commands.run, { id: "stage.splitVertical" })
+    ).resolves.toStrictEqual({ ok: true, value: null });
 
-    bridge.answers.set("e2e.snapshot", { ok: true, value: { stage: 1 } });
-    const malformed = await client.invoke(e2e.snapshot, {});
+    bridge.answers.set("commands.run", { ok: true, value: { stage: 1 } });
+    const malformed = await client.invoke(commands.run, {
+      id: "stage.splitVertical",
+    });
     expect(malformed.ok).toBeFalsy();
   });
 

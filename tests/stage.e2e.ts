@@ -11,8 +11,8 @@ const FOCUS_NEXT: CommandId = "stage.focusNext";
 const FOCUS_PREVIOUS: CommandId = "stage.focusPrevious";
 
 const focusedOf = async (chrome: Page) => {
-  const { stage } = await stageOf(chrome);
-  return stage.focusedPaneId;
+  const { focusedPaneId } = await stageOf(chrome);
+  return focusedPaneId;
 };
 
 const overlap = (a: Rect, b: Rect) =>
@@ -26,12 +26,11 @@ test("splits, drags the divider across the panes, moves focus, and closes a tab"
 
     await clickMenuItem(app, SPLIT_VERTICAL);
     await expect.poll(async () => await viewsOf(chrome)).toHaveLength(2);
-    const split = await stageOf(chrome);
-    const [left, right] = split.views;
+    const split = await viewsOf(chrome);
+    const [left, right] = split;
     expect(left && right && overlap(left, right)).toBe(0);
-    expect(split.views).toStrictEqual(
-      split.stage.panes.map((pane) => pane.rect)
-    );
+    const { panes } = await stageOf(chrome);
+    expect(split).toStrictEqual(panes.map((pane) => pane.rect));
 
     const divider = chrome.locator(".divider");
     await expect(divider).toHaveCount(1);
@@ -55,17 +54,18 @@ test("splits, drags the divider across the panes, moves focus, and closes a tab"
 
     await expect
       .poll(async () => {
-        const { stage } = await stageOf(chrome);
-        const [moved] = stage.dividers;
+        const { dividers } = await stageOf(chrome);
+        const [moved] = dividers;
         return moved === undefined ? 0 : moved.rect.x + moved.rect.width / 2;
       })
       .toBeCloseTo(x - 200, 0);
-    const dragged = await stageOf(chrome);
-    expect(dragged.views[0]?.width).toBeLessThan(left?.width ?? 0);
-    expect(dragged.views).toHaveLength(2);
+    const dragged = await viewsOf(chrome);
+    expect(dragged[0]?.width).toBeLessThan(left?.width ?? 0);
+    expect(dragged).toHaveLength(2);
 
-    const [first, second] = dragged.stage.panes.map((pane) => pane.paneId);
-    expect(dragged.stage.focusedPaneId).toBe(second);
+    const shown = await stageOf(chrome);
+    const [first, second] = shown.panes.map((pane) => pane.paneId);
+    expect(shown.focusedPaneId).toBe(second);
     await clickMenuItem(app, FOCUS_NEXT);
     await expect.poll(async () => await focusedOf(chrome)).toBe(first);
     await clickMenuItem(app, FOCUS_PREVIOUS);
