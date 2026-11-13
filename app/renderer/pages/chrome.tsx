@@ -5,15 +5,10 @@ import { stage, stagePushes } from "../../shared/channels/stage.ts";
 import { rendererSurface } from "../../shared/channels/surfaces.ts";
 import { createClient } from "../client.ts";
 import {
-  createEntitlementStore,
-  markEntitlement,
-} from "../features/entitlement/store.ts";
-import {
   createSettingsStore,
   SettingsContext,
 } from "../features/settings/use-setting.ts";
 import { Dividers } from "../features/stage/dividers.tsx";
-import { createUpdateStore, markUpdate } from "../features/updater/store.ts";
 import { syncedStore } from "../store.ts";
 
 const client = createClient(window, rendererSurface);
@@ -24,8 +19,6 @@ const store = syncedStore(
   undefined
 );
 const settings = createSettingsStore(client);
-markEntitlement(createEntitlementStore(client), document.documentElement);
-markUpdate(createUpdateStore(client), document.documentElement);
 
 const root = document.querySelector("#root");
 

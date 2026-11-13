@@ -1,4 +1,3 @@
-import type { Unsubscribe } from "../../../core/ports.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import {
   entitlement as channels,
@@ -20,15 +19,3 @@ export const createEntitlementStore = (
   client: Client<RendererSurface>
 ): Store<Entitlement> =>
   syncedStore(client, channels.snapshot, entitlementPushes.changed, UNKNOWN);
-
-/** Keeps `data-entitlement` on `element` at the entitlement's kind, which is what the end-to-end suite reads. */
-export const markEntitlement = (
-  store: Store<Entitlement>,
-  element: HTMLElement
-): Unsubscribe => {
-  const mark = () => {
-    element.dataset.entitlement = store.get().kind;
-  };
-  mark();
-  return store.subscribe(mark);
-};
