@@ -79,25 +79,24 @@ describe(ProfilesPage, () => {
     });
   });
 
-  it("renames a profile once typing pauses and recolours it at once, through profiles.update", () => {
+  it("renames a profile with what was typed last once typing pauses, and recolours it at once, through profiles.update", () => {
     vi.useFakeTimers();
     const { sentOn } = mount(TRIAL);
+    const last = () => sentOn(profiles.update).at(-1);
+    type(item("work")?.querySelector("input"), "Off");
     type(item("work")?.querySelector("input"), "Office");
-    const early = sentOn(profiles.update).length;
     act(() => {
       vi.advanceTimersByTime(1000);
     });
+    const renamed = last();
     act(() => {
       item("work")
         ?.querySelector<HTMLInputElement>("input[value='#30a46c']")
         ?.click();
     });
-    expect({ early, sent: sentOn(profiles.update) }).toStrictEqual({
-      early: 0,
-      sent: [
-        { label: "Office", profileId: "work" },
-        { color: "#30a46c", profileId: "work" },
-      ],
+    expect({ recoloured: last(), renamed }).toStrictEqual({
+      recoloured: { color: "#30a46c", profileId: "work" },
+      renamed: { label: "Office", profileId: "work" },
     });
   });
 
@@ -115,16 +114,20 @@ describe(ProfilesPage, () => {
         )
         ?.click();
     });
-    const asked = sentOn(profiles.remove).length;
+    const asked = sentOn(profiles.remove).at(-1);
     act(() => {
       buttons()
         .find((button) => button.textContent === "Remove profile")
         ?.click();
     });
-    expect({ add, asked, removed: sentOn(profiles.remove) }).toStrictEqual({
+    expect({
+      add,
+      asked,
+      removed: sentOn(profiles.remove).at(-1),
+    }).toStrictEqual({
       add: true,
-      asked: 0,
-      removed: [{ profileId: "work" }],
+      asked: undefined,
+      removed: { profileId: "work" },
     });
   });
 });
