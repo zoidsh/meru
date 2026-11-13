@@ -25,14 +25,4 @@ export const linksSettings = [
     scope: "global",
     tier: "pro",
   }),
-  defineSetting("links.mode", {
-    default: "tabs",
-    description: msg`Whether a Google app a link opens becomes a tab or a window of its own.`,
-    label: msg`Open apps as`,
-    page: "panes",
-    restart: false,
-    schema: z.enum(["tabs", "windows"]),
-    scope: "global",
-    tier: "pro",
-  }),
 ] as const;

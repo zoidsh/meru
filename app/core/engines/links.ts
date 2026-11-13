@@ -11,8 +11,6 @@ export interface LinkSettings {
   readonly openInApp: boolean;
   /** Apps whose links always open in the browser. */
   readonly excludedApps: readonly string[];
-  /** Whether an app a link opens becomes a tab or a window of its own. */
-  readonly mode: "tabs" | "windows";
 }
 
 export interface LinkContext {
@@ -117,10 +115,7 @@ export const resolveLinkTarget = (
     .find((tab) => tab.appId === app.id);
   const background = disposition === "background";
   if (!isSingleInstance(app)) {
-    const windowed =
-      disposition === "window" ||
-      settings.mode === "windows" ||
-      app.openBehavior === "window";
+    const windowed = disposition === "window" || app.openBehavior === "window";
     if (windowed) {
       return { action: "window", appId: app.id };
     }

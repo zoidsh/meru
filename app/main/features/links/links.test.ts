@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { isSignIn } from "../../../core/engines/links.ts";
+import { groupOf } from "../../../core/engines/ordering.ts";
 import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
@@ -178,9 +179,11 @@ describe(Links, () => {
       group: profiles.currentGroup()?.tabIds.length,
     };
     gmail?.open("https://drive.google.com/drive/my-drive", "window");
-    expect([background, tabsOf(profiles, "drive").length]).toStrictEqual([
+    const [drive] = tabsOf(profiles, "drive");
+    const group = groupOf(drive?.id ?? "", profiles.state.groups);
+    expect([background, group?.tabIds]).toStrictEqual([
       { calendar: 1, children: 1, group: 1 },
-      1,
+      [drive?.id],
     ]);
   });
 

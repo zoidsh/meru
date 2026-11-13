@@ -50,7 +50,6 @@ const groups: Group[] = tabs.map((found) => ({
 
 const settings: LinkSettings = {
   excludedApps: [],
-  mode: "tabs",
   openInApp: true,
 };
 
@@ -131,17 +130,12 @@ describe(resolveLinkTarget, () => {
     });
   });
 
-  it("opens a window when the click, the setting or the app asks for one", () => {
+  it("opens a window when the click or the app asks for one", () => {
     const url = "https://calendar.google.com/";
     expect([
       resolveLinkTarget(url, context(gmail, { disposition: "window" })),
-      resolveLinkTarget(
-        url,
-        context(gmail, { settings: { ...settings, mode: "windows" } })
-      ),
       resolveLinkTarget("https://meet.google.com/abc", context(gmail)),
     ]).toStrictEqual([
-      { action: "window", appId: "calendar" },
       { action: "window", appId: "calendar" },
       { action: "window", appId: "meet" },
     ]);

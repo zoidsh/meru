@@ -25,7 +25,6 @@ describe("the settings registry", () => {
       | "appearance.style"
       | "launcher.apps"
       | "links.excludedApps"
-      | "links.mode"
       | "links.openInApp"
       | "profiles.unreadBadge"
       | "shortcuts.bindings"

@@ -44,7 +44,6 @@ export class Links {
       groups,
       settings: {
         excludedApps: settings.get("links.excludedApps"),
-        mode: settings.get("links.mode"),
         openInApp: settings.get("links.openInApp"),
       },
       tabs,
@@ -69,7 +68,9 @@ export class Links {
     const opened = profiles.openTab(
       from.profileId,
       target.appId,
-      background ? undefined : this.#beside(tabId),
+      target.action === "newTab" && !background
+        ? this.#beside(tabId)
+        : undefined,
       url
     );
     if (!opened.ok) {
