@@ -40,9 +40,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # No macOS: GitHub rations its runners and the job queued for an hour, and the suite runs on the maintainer's Mac before every push.
         os:
           - ubuntu-latest
-          - macos-latest
           - windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -55,7 +55,7 @@ jobs:
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: pnpm-store-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
-      # The check job runs these on Linux; paths, the shell and git differ on the other two.
+      # The check job runs these on Linux; paths, the shell and git differ on Windows.
       - if: runner.os != 'Linux'
         run: pnpm test
       - run: pnpm build
