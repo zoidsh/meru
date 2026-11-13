@@ -12,6 +12,7 @@ import {
   resize,
   STYLE_METRICS,
 } from "../../../core/engines/layout.ts";
+import type { Flush } from "../../../core/engines/layout.ts";
 import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
 import type {
   Unsubscribe,
@@ -342,7 +343,8 @@ export class Stage {
       this.#area(),
       this.#options.style(),
       drag.splitId,
-      point
+      point,
+      this.#flush()
     );
     if (ratio === undefined) {
       return err("unknownSplit");
@@ -458,7 +460,17 @@ export class Stage {
   }
 
   #arrangement() {
-    return layout(this.#layout(), this.#area(), this.#options.style());
+    return layout(
+      this.#layout(),
+      this.#area(),
+      this.#options.style(),
+      this.#flush()
+    );
+  }
+
+  #flush(): Flush {
+    const insets = this.#options.insets();
+    return { left: insets.left > 0, top: insets.top > 0 };
   }
 
   #area() {

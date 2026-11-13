@@ -9,6 +9,7 @@ import {
   focusNext,
   focusPrevious,
   layout,
+  NO_FLUSH,
   leaf,
   MAX_RATIO,
   MIN_RATIO,
@@ -160,7 +161,7 @@ describe(layout, () => {
     "gives a fullscreen pane the whole rect and hides the rest (seed $seed)",
     ({ tree, rect, style, draw }) => {
       const pane = pick(draw, panes(tree)).paneId;
-      const arrangement = layout(tree, rect, style, pane);
+      const arrangement = layout(tree, rect, style, NO_FLUSH, pane);
       expect([...arrangement.panes]).toStrictEqual([[pane, rect]]);
       expect(arrangement.dividers).toStrictEqual([]);
     }
@@ -175,6 +176,28 @@ describe(layout, () => {
       ).toStrictEqual(insetRect(rect, style));
     }
   );
+
+  it("keeps no inset on a flush side, where the panes meet the chrome", () => {
+    const rect = { height: 600, width: 1000, x: 0, y: 0 };
+    expect(
+      layout(leaf("p1", "t1"), rect, "modern", {
+        left: true,
+        top: true,
+      }).panes.get("p1")
+    ).toStrictEqual({ height: 592, width: 992, x: 0, y: 0 });
+    expect(
+      layout(leaf("p1", "t1"), rect, "modern", {
+        left: false,
+        top: true,
+      }).panes.get("p1")
+    ).toStrictEqual({ height: 592, width: 984, x: 8, y: 0 });
+    expect(
+      layout(leaf("p1", "t1"), rect, "classic", {
+        left: true,
+        top: true,
+      }).panes.get("p1")
+    ).toStrictEqual(rect);
+  });
 
   it("draws classic edge to edge and modern inset", () => {
     const rect = { height: 600, width: 1000, x: 0, y: 0 };

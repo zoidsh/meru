@@ -139,14 +139,24 @@ export const focusPrevious = (
   return ids.at(index <= 0 ? -1 : index - 1);
 };
 
-const inset = (rect: Rect, by: number): Rect => {
-  const x = Math.min(by, Math.floor(rect.width / 2));
-  const y = Math.min(by, Math.floor(rect.height / 2));
+/** The sides on which the panes touch the chrome rather than the window's edge, and so keep no inset there. */
+export interface Flush {
+  readonly top: boolean;
+  readonly left: boolean;
+}
+
+export const NO_FLUSH: Flush = { left: false, top: false };
+
+const inset = (rect: Rect, by: number, flush: Flush): Rect => {
+  const left = flush.left ? 0 : Math.min(by, rect.width);
+  const right = Math.min(by, rect.width - left);
+  const top = flush.top ? 0 : Math.min(by, rect.height);
+  const bottom = Math.min(by, rect.height - top);
   return {
-    height: rect.height - 2 * y,
-    width: rect.width - 2 * x,
-    x: rect.x + x,
-    y: rect.y + y,
+    height: rect.height - top - bottom,
+    width: rect.width - left - right,
+    x: rect.x + left,
+    y: rect.y + top,
   };
 };
 
@@ -212,6 +222,7 @@ export const layout = (
   tree: Layout,
   rect: Rect,
   style: Style,
+  flush: Flush = NO_FLUSH,
   fullscreenPaneId?: string
 ): Arrangement => {
   if (tree === null) {
@@ -228,7 +239,7 @@ export const layout = (
   const dividers: Divider[] = [];
   visit(
     tree,
-    inset(rect, metrics.inset),
+    inset(rect, metrics.inset, flush),
     metrics.gap,
     (node, division) => {
       dividers.push({
@@ -249,20 +260,26 @@ export const ratioAt = (
   rect: Rect,
   style: Style,
   splitId: string,
-  point: Point
+  point: Point,
+  flush: Flush = NO_FLUSH
 ): number | undefined => {
   if (tree === null) {
     return undefined;
   }
   const metrics = STYLE_METRICS[style];
   let ratio: number | undefined;
-  visit(tree, inset(rect, metrics.inset), metrics.gap, (node, division) => {
-    if (node.id !== splitId || division.available === 0) {
-      return;
+  visit(
+    tree,
+    inset(rect, metrics.inset, flush),
+    metrics.gap,
+    (node, division) => {
+      if (node.id !== splitId || division.available === 0) {
+        return;
+      }
+      const along = node.orientation === "vertical" ? point.x : point.y;
+      const offset = along - division.start - division.gap / 2;
+      ratio = clamp(offset / division.available, MIN_RATIO, MAX_RATIO);
     }
-    const along = node.orientation === "vertical" ? point.x : point.y;
-    const offset = along - division.start - division.gap / 2;
-    ratio = clamp(offset / division.available, MIN_RATIO, MAX_RATIO);
-  });
+  );
   return ratio;
 };

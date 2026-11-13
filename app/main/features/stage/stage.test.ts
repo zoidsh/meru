@@ -209,6 +209,19 @@ describe(Stages, () => {
     expect(changes().at(-1)?.panes[0]?.rect).toStrictEqual(area);
   });
 
+  it("keeps no gap where modern panes meet the titlebar and the sidebar", async () => {
+    const { views, insets, stages } = await setup();
+    insets.top = 40;
+    insets.left = 64;
+    stages.relayout();
+    expect(views.created[0]?.bounds()).toStrictEqual({
+      height: 752,
+      width: 1128,
+      x: 64,
+      y: 40,
+    });
+  });
+
   it("draws classic edge to edge with square corners", async () => {
     const { views } = await setup("classic");
     expect(views.created[0]?.radius).toBe(0);
