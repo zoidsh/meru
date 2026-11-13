@@ -1,5 +1,5 @@
 import { DisposableStore } from "../../../core/disposable.ts";
-import { orderedProfiles } from "../../../core/engines/ordering.ts";
+import { orderedProfiles, stepFrom } from "../../../core/engines/ordering.ts";
 import { repairState } from "../../../core/engines/state-repair.ts";
 import { validateState } from "../../../core/engines/state-validate.ts";
 import {
@@ -45,7 +45,12 @@ import {
   tabs as tabChannels,
 } from "../../../shared/channels/profiles.ts";
 import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
+import type {
+  CommandRegistrar,
+  GuardedHandler,
+} from "../../../shared/commands/define.ts";
 import type { SettingsStore } from "../settings/index.ts";
+import { profilesCommands } from "./commands.ts";
 
 export const PROFILES_FILE = "profiles.json";
 
@@ -92,6 +97,7 @@ export interface ProfilesOptions {
   readonly ids: Ids;
   readonly events: AppEvents;
   readonly registrar: IpcRegistrar;
+  readonly commands: CommandRegistrar;
   readonly sessions: SessionPort;
   readonly settings: Pick<SettingsStore, "removeProfile">;
   /** The entitlement at construction; later values arrive as `entitlement.changed`. */
@@ -153,6 +159,19 @@ export class Profiles {
         add: ({ profileId, appId }) => this.addTab(profileId, appId),
         close: ({ tabId }) => done(this.closeTab(tabId)),
         move: ({ tabId, to }) => done(this.moveTab(tabId, to)),
+      }),
+      this.#options.commands.register(profilesCommands, {
+        next: this.#step(1),
+        previous: this.#step(-1),
+        select1: this.#selectAt(0),
+        select2: this.#selectAt(1),
+        select3: this.#selectAt(2),
+        select4: this.#selectAt(3),
+        select5: this.#selectAt(4),
+        select6: this.#selectAt(5),
+        select7: this.#selectAt(6),
+        select8: this.#selectAt(7),
+        select9: this.#selectAt(8),
       }),
       events.on("entitlement.changed", ({ entitlement }) => {
         this.#entitlement = entitlement;
@@ -294,6 +313,42 @@ export class Profiles {
     await this.#store.flush();
   }
 
+  /** The profiles the titlebar shows, in its order: every one the entitlement allows. */
+  selectable(): Profile[] {
+    const deactivated = this.#deactivated();
+    return orderedProfiles(this.state.profiles).filter(
+      (profile) => !deactivated.has(profile.id)
+    );
+  }
+
+  #selectAt(index: number): GuardedHandler {
+    return {
+      run: () => {
+        const profile = this.selectable()[index];
+        return profile === undefined
+          ? err("unknownProfile")
+          : done(this.selectProfile(profile.id));
+      },
+      when: () => this.selectable()[index] !== undefined,
+    };
+  }
+
+  #step(by: 1 | -1): GuardedHandler {
+    return {
+      run: () => {
+        const next = stepFrom(
+          this.selectable().map((profile) => profile.id),
+          this.state.selectedProfileId,
+          by
+        );
+        return next === undefined
+          ? err("unknownProfile")
+          : done(this.selectProfile(next));
+      },
+      when: () => this.selectable().length > 1,
+    };
+  }
+
   #deactivated(): Set<string> {
     return deactivatedProfiles(
       orderedProfiles(this.state.profiles).map((profile) => profile.id),
@@ -348,6 +403,7 @@ export class Profiles {
 
   #publish(): void {
     this.#options.registrar.broadcast(profilesPushes.changed, this.snapshot());
+    this.#options.events.emit("menu.invalidated", null);
   }
 
   async #clear(partition: string): Promise<void> {

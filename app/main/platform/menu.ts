@@ -32,6 +32,7 @@ export type MenuEntry =
         | "delete"
         | "selectAll"
         | "about"
+        | "close"
         | "services"
         | "hide"
         | "hideOthers"

@@ -76,6 +76,8 @@ export const buildMenu = ({
       }));
   const edit = actions("edit");
   const app = actions("app");
+  const file = actions("file");
+  const profiles = actions("profiles");
   const mac = platform === "darwin";
   const first: MenuSection =
     mac && app.length > 0
@@ -89,8 +91,27 @@ export const buildMenu = ({
     mac || app.length === 0
       ? []
       : [{ entries: app, kind: "submenu", label: msg`Help` }];
+  const fileMenu: MenuSection[] =
+    file.length === 0
+      ? []
+      : [
+          {
+            entries: [
+              ...file,
+              { kind: "separator" },
+              { kind: "role", role: mac ? "close" : "quit" },
+            ],
+            kind: "submenu",
+            label: msg`File`,
+          },
+        ];
+  const profilesMenu: MenuSection[] =
+    profiles.length === 0
+      ? []
+      : [{ entries: profiles, kind: "submenu", label: msg`Profiles` }];
   return [
-    first,
+    ...(mac || file.length === 0 ? [first] : []),
+    ...fileMenu,
     edit.length === 0
       ? { kind: "role", role: "editMenu" }
       : {
@@ -99,6 +120,7 @@ export const buildMenu = ({
           label: msg`Edit`,
         },
     { entries: actions("view"), kind: "submenu", label: msg`View` },
+    ...profilesMenu,
     ...help,
   ];
 };

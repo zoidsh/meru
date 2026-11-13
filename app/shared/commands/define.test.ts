@@ -34,6 +34,17 @@ describe(defineCommands, () => {
 describe("the command registry", () => {
   it("holds every feature's commands, each once", () => {
     expectTypeOf<CommandId>().toEqualTypeOf<
+      | "profiles.next"
+      | "profiles.previous"
+      | "profiles.select1"
+      | "profiles.select2"
+      | "profiles.select3"
+      | "profiles.select4"
+      | "profiles.select5"
+      | "profiles.select6"
+      | "profiles.select7"
+      | "profiles.select8"
+      | "profiles.select9"
       | "stage.closeTab"
       | "stage.focusNext"
       | "stage.focusPrevious"

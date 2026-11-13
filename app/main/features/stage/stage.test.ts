@@ -73,6 +73,7 @@ const setup = async (style: Style = "modern") => {
     registrar.dispatch(sender, wireName(channel), payload);
   const commands = new CommandDispatcher();
   const profiles = new Profiles({
+    commands,
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     entitlement: { expiresAt: null, kind: "unknown", source: "stored" },

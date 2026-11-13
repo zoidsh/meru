@@ -4,7 +4,7 @@ import type { Name } from "../key.ts";
 import type { Message } from "../msg.ts";
 
 /** `app` is the app menu on macOS and the Help menu elsewhere. */
-export type MenuSectionId = "app" | "edit" | "view";
+export type MenuSectionId = "app" | "file" | "edit" | "view" | "profiles";
 
 export interface CommandSpec {
   readonly label: Message;

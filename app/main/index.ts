@@ -122,7 +122,11 @@ const start = async () => {
   await entitlement.open();
   entitlement.attach();
 
+  const commands = new CommandDispatcher();
+  commands.start(dispatcher);
+
   const profiles = new Profiles({
+    commands,
     lifecycle: ports.lifecycle,
     clock: ports.clock,
     entitlement: entitlement.current(),
@@ -156,8 +160,6 @@ const start = async () => {
   await windows.open();
   windows.start();
 
-  const commands = new CommandDispatcher();
-  commands.start(dispatcher);
   const keys = new ShortcutKeys({
     commands: allCommands,
     dispatcher: commands,

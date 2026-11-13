@@ -24,6 +24,7 @@ import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
+import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { Profiles, PROFILES_FILE } from "./index.ts";
@@ -75,7 +76,9 @@ const setup = async ({
   });
   const errors: unknown[] = [];
   const reports: string[] = [];
+  const commands = new CommandDispatcher();
   const profiles = new Profiles({
+    commands,
     lifecycle,
     clock,
     entitlement,
@@ -105,6 +108,7 @@ const setup = async ({
     );
   };
   return {
+    commands,
     errors,
     events,
     fs,
@@ -251,6 +255,35 @@ describe(Profiles, () => {
       error: "deactivated",
       ok: false,
     });
+  });
+
+  it("selects a profile by its place in the titlebar and steps through them, wrapping, past the deactivated ones", async () => {
+    const { profiles, commands, events } = await setup();
+    const work = unwrap(profiles.createProfile("Work"));
+    const home = unwrap(profiles.createProfile("Home"));
+    const first = profiles.selected().id;
+    const visit = (ids: readonly string[]) =>
+      ids.map((id) => {
+        commands.run(id, { windowId: 1 });
+        return profiles.selected().id;
+      });
+    expect(
+      visit([
+        "profiles.select2",
+        "profiles.next",
+        "profiles.next",
+        "profiles.previous",
+        "profiles.select4",
+      ])
+    ).toStrictEqual([work.id, home.id, first, home.id, home.id]);
+    expect(commands.enabled("profiles.select4")).toBeFalsy();
+
+    events.emit("entitlement.changed", { entitlement: free });
+    expect(profiles.selected().id).toBe(first);
+    expect([
+      commands.enabled("profiles.select2"),
+      commands.enabled("profiles.next"),
+    ]).toStrictEqual([false, false]);
   });
 
   it("keeps a profile's last Gmail tab, and closes any other tab", async () => {

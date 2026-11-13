@@ -9,6 +9,7 @@ import {
   groupOf,
   moveItem,
   moveProfile,
+  stepFrom,
   moveTab,
   orderedProfiles,
   orderedTabs,
@@ -282,5 +283,18 @@ describe(groupOf, () => {
     ];
     expect(groupOf("t3", groups)?.id).toBe("g2");
     expect(groupOf("t9", groups)).toBeUndefined();
+  });
+});
+
+describe(stepFrom, () => {
+  it("steps forward and back, wrapping at either end", () => {
+    expect(stepFrom(["a", "b", "c"], "c", 1)).toBe("a");
+    expect(stepFrom(["a", "b", "c"], "a", -1)).toBe("c");
+    expect(stepFrom(["a", "b", "c"], "a", 1)).toBe("b");
+  });
+
+  it("starts at the first from an id it does not have, and finds nothing in nothing", () => {
+    expect(stepFrom(["a", "b"], "x", -1)).toBe("a");
+    expect(stepFrom([], "x", 1)).toBeUndefined();
   });
 });

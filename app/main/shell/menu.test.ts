@@ -58,6 +58,7 @@ const setup = async (platform = "darwin") => {
   registrar.assign(-1, rendererSurface);
   const events = new AppEvents();
   const profiles = new Profiles({
+    commands: dispatcher,
     lifecycle: new FakeLifecycle(platform),
     clock: new FakeClock(),
     entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
@@ -75,6 +76,7 @@ const setup = async (platform = "darwin") => {
     settings,
   });
   await profiles.open();
+  profiles.start();
   const stages = new Stages({
     blankPanes: false,
     commands: dispatcher,
@@ -119,14 +121,17 @@ const setup = async (platform = "darwin") => {
     settings,
   }).start();
   const sections = () => built.at(-1) ?? [];
-  const actions = () =>
+  const submenu = (label: string) =>
     sections().flatMap((section) =>
-      section.kind === "submenu" && section.label !== "Help"
+      section.kind === "submenu" && section.label === label
         ? entriesOf(section)
         : []
     );
+  const actions = () => submenu("View");
   const action = (id: string) => {
-    const found = actions().find((candidate) => candidate.id === id);
+    const found = [...actions(), ...submenu("Profiles")].find(
+      (candidate) => candidate.id === id
+    );
     if (found === undefined) {
       throw new Error(`No menu action ${id}`);
     }
@@ -141,6 +146,7 @@ const setup = async (platform = "darwin") => {
     reports,
     sections,
     settings,
+    submenu,
     window,
   };
 };
@@ -190,7 +196,9 @@ describe(ApplicationMenu, () => {
   it("puts a file menu where there is no app menu, and the update commands in Help", async () => {
     const { sections } = await setup("linux");
     const [first] = sections();
-    const help = sections().at(3);
+    const help = sections().find(
+      (section) => section.kind === "submenu" && section.label === "Help"
+    );
     expect(first).toStrictEqual({ kind: "role", role: "fileMenu" });
     expect(
       help?.kind === "submenu" && {
@@ -239,6 +247,29 @@ describe(ApplicationMenu, () => {
     feed.emit({ kind: "downloaded", version: "4.1.0" });
     expect(built).toHaveLength(2);
     expect(install()).toBeTruthy();
+  });
+
+  it("lists the profile commands in a Profiles menu, enabled for the profiles there are", async () => {
+    const { submenu } = await setup();
+    expect(
+      submenu("Profiles").map(({ id, accelerator, enabled }) => [
+        id,
+        accelerator,
+        enabled,
+      ])
+    ).toStrictEqual([
+      ["profiles.select1", "CommandOrControl+1", true],
+      ["profiles.select2", "CommandOrControl+2", false],
+      ["profiles.select3", "CommandOrControl+3", false],
+      ["profiles.select4", "CommandOrControl+4", false],
+      ["profiles.select5", "CommandOrControl+5", false],
+      ["profiles.select6", "CommandOrControl+6", false],
+      ["profiles.select7", "CommandOrControl+7", false],
+      ["profiles.select8", "CommandOrControl+8", false],
+      ["profiles.select9", "CommandOrControl+9", false],
+      ["profiles.next", "CommandOrControl+Shift+]", false],
+      ["profiles.previous", "CommandOrControl+Shift+[", false],
+    ]);
   });
 
   it("runs a command in the window it is for", async () => {

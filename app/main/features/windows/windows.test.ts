@@ -12,6 +12,7 @@ import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
+import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { Profiles } from "../profiles/index.ts";
 import { SettingsStore } from "../settings/index.ts";
@@ -48,6 +49,7 @@ const setup = async (fs = new FakeFs()) => {
   });
   await settings.open();
   const profiles = new Profiles({
+    commands: new CommandDispatcher(),
     lifecycle,
     clock,
     entitlement: trial,
