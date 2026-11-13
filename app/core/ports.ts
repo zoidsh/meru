@@ -60,6 +60,8 @@ export interface ViewPort {
   readonly onNavigation: (listener: () => void) => Unsubscribe;
   /** Calls `listener` for each link the page opens; one nobody takes goes on as Chromium would take it. */
   readonly onOpen: (listener: OpenListener) => Unsubscribe;
+  /** Calls `listener` with true when the page asks for fullscreen, such as a video's fullscreen button, and with false when it leaves it. */
+  readonly onFullscreen: (listener: (entered: boolean) => void) => Unsubscribe;
   readonly setBorderRadius: (radius: number) => void;
   readonly setZoomFactor: (factor: number) => void;
   /** Read only by the end-to-end suite's inspector. */

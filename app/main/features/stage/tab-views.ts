@@ -17,6 +17,8 @@ export interface TabViewsOptions {
   readonly radius: () => number;
   readonly onFocus: (tabId: string) => void;
   readonly onNavigation: (tabId: string) => void;
+  /** The tab's page asked for fullscreen, with true, or left it. */
+  readonly onFullscreen: (tabId: string, entered: boolean) => void;
   /** A link the tab's page opens; true takes it from the page. */
   readonly onOpen: (
     tabId: string,
@@ -73,7 +75,8 @@ export class TabViews {
   }
 
   #make(tab: Tab): OwnedView {
-    const { create, onFocus, onNavigation, onOpen, onError } = this.#options;
+    const { create, onFocus, onFullscreen, onNavigation, onOpen, onError } =
+      this.#options;
     const source = this.#options.sourceOf(tab);
     const owned = create({
       background: CANVAS,
@@ -91,6 +94,9 @@ export class TabViews {
         onFocus(tabId);
       }),
       view.onOpen((url, disposition) => onOpen(tabId, url, disposition)),
+      view.onFullscreen((entered) => {
+        onFullscreen(tabId, entered);
+      }),
     ];
     void loadOwned(view, source.url, onError);
     return {

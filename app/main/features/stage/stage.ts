@@ -7,6 +7,7 @@ import {
   focusNext,
   focusPrevious,
   layout,
+  NO_FLUSH,
   paneOfTab,
   panes,
   shownLayout,
@@ -107,6 +108,8 @@ export class Stage {
   #focused: string | undefined;
   // Kept per window and never stored: a maximised pane is a way of looking at the group, not part of it.
   #maximised: string | undefined;
+  /** The tab whose page is fullscreen. */
+  #fullscreenTab: string | undefined;
   readonly #drag: DragOverlay;
   #published: StageSnapshot | undefined;
 
@@ -120,6 +123,9 @@ export class Stage {
           this.#focused = tabId;
           this.#publish();
         }
+      },
+      onFullscreen: (tabId, entered) => {
+        this.#fullscreen(tabId, entered);
       },
       onNavigation: (tabId) => {
         if (this.#focused === tabId) {
@@ -495,14 +501,47 @@ export class Stage {
   #shownLayout(): Layout {
     return shownLayout(this.#read()?.layout ?? null, {
       drag: this.#drag.layout,
-      fullscreen: undefined,
+      fullscreen: this.#fullscreenTab,
       maximised: this.#maximised,
     });
   }
 
+  /** The pane of the fullscreen tab, while the stage shows it. */
+  #fullscreenPane(): string | undefined {
+    const tabId = this.#fullscreenTab;
+    return tabId === undefined
+      ? undefined
+      : paneOfTab(this.#shownLayout(), tabId);
+  }
+
   #arrangement() {
+    const shown = this.#shownLayout();
+    const style = this.#options.style();
+    const fullscreen = this.#fullscreenPane();
+    if (fullscreen !== undefined) {
+      return layout(
+        shown,
+        this.#options.window.contentBounds(),
+        style,
+        NO_FLUSH,
+        fullscreen
+      );
+    }
     const { area, flush } = this.#area();
-    return layout(this.#shownLayout(), area, this.#options.style(), flush);
+    return layout(shown, area, style, flush);
+  }
+
+  // Electron takes the window fullscreen itself when a view's page asks for it and puts it back when the page leaves, so the stage only gives the pane the window; setting the window's fullscreen as well left the page stuck in fullscreen once it asked to leave.
+  #fullscreen(tabId: string, entered: boolean): void {
+    if (entered) {
+      this.#fullscreenTab = tabId;
+    } else if (this.#fullscreenTab === tabId) {
+      this.#fullscreenTab = undefined;
+    } else {
+      return;
+    }
+    this.#reconcile();
+    this.#arrange();
   }
 
   /** Shows every pane of the group again after one was maximised. */
@@ -593,7 +632,10 @@ export class Stage {
   #arrange(publish = true): void {
     const bounds = this.#options.window.contentBounds();
     const arrangement = this.#arrangement();
-    const { radius } = STYLE_METRICS[this.#options.style()];
+    const radius =
+      this.#fullscreenPane() === undefined
+        ? STYLE_METRICS[this.#options.style()].radius
+        : 0;
     for (const pane of panes(this.#shownLayout())) {
       const [tabId] = pane.tabIds;
       const view = tabId === undefined ? undefined : this.#views.view(tabId);

@@ -671,6 +671,40 @@ describe("the stage commands", () => {
   });
 });
 
+describe("a page's fullscreen", () => {
+  it("gives the pane the whole window, square, the other panes detached and the chrome covered, until the page leaves it", async () => {
+    const { window, views, stages, id, insets } = await setup();
+    insets.top = 40;
+    stages.split(id, "vertical");
+    const [first, second] = views.alive;
+    second?.fullscreen(true);
+    const during = {
+      bounds: second?.bounds(),
+      children: window.childViews(),
+      radius: second?.radius,
+    };
+    second?.fullscreen(false);
+    expect([during, window.childViews(), second?.radius]).toStrictEqual([
+      {
+        bounds: { height: 800, width: 1200, x: 0, y: 0 },
+        children: [second],
+        radius: 0,
+      },
+      [first, second],
+      10,
+    ]);
+  });
+
+  it("ignores the leaving of a page that was not fullscreen", async () => {
+    const { window, views, stages, id } = await setup();
+    stages.split(id, "vertical");
+    const [first, second] = views.alive;
+    second?.fullscreen(true);
+    first?.fullscreen(false);
+    expect(window.childViews()).toStrictEqual([second]);
+  });
+});
+
 describe("the stage channels", () => {
   it("move the focused pane through its history, or stop it, and tell the page where it stands", async () => {
     const { commands, id, views, changes, stages } = await setup();

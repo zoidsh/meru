@@ -115,6 +115,20 @@ const createView = (spec: ViewSpec): ViewPort => {
         contents.off("did-navigate-in-page", changed);
       };
     },
+    onFullscreen: (listener) => {
+      const entered = () => {
+        listener(true);
+      };
+      const left = () => {
+        listener(false);
+      };
+      contents.on("enter-html-full-screen", entered);
+      contents.on("leave-html-full-screen", left);
+      return () => {
+        contents.off("enter-html-full-screen", entered);
+        contents.off("leave-html-full-screen", left);
+      };
+    },
     onOpen: (listener) => {
       openers.add(listener);
       return () => {

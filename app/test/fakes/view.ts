@@ -94,6 +94,24 @@ export class FakeView implements ViewPort {
   ): boolean =>
     [...this.#openListeners].some((listener) => listener(url, disposition));
 
+  readonly #fullscreenListeners = new Set<(entered: boolean) => void>();
+
+  readonly onFullscreen = (
+    listener: (entered: boolean) => void
+  ): Unsubscribe => {
+    this.#fullscreenListeners.add(listener);
+    return () => {
+      this.#fullscreenListeners.delete(listener);
+    };
+  };
+
+  /** Asks for fullscreen, or leaves it, as a video's fullscreen button would. */
+  readonly fullscreen = (entered: boolean) => {
+    for (const listener of this.#fullscreenListeners) {
+      listener(entered);
+    }
+  };
+
   /** Moves the page through its history as a click inside it would. */
   readonly arrive = (navigation: Navigation) => {
     this.#navigation = navigation;
