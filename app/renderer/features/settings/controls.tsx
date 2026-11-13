@@ -2,7 +2,6 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import { cn } from "cn";
 import { GripVerticalIcon } from "lucide-react";
-import { useState } from "react";
 import type { z } from "zod";
 
 import { moveItem } from "../../../core/engines/ordering.ts";
@@ -12,7 +11,7 @@ import { Button } from "../../ui/button.tsx";
 import { ChoiceGroup } from "../../ui/choice-group.tsx";
 import { Input } from "../../ui/input.tsx";
 import { Switch } from "../../ui/switch.tsx";
-import { useDebounced } from "../../use-debounced.ts";
+import { useDraft } from "./use-draft.ts";
 
 /** What every field component is given: the value in force, whether it may change, and where a valid change goes. */
 export interface ControlProps {
@@ -23,9 +22,6 @@ export interface ControlProps {
   readonly schema: z.ZodType;
   readonly onChange: (value: unknown) => void;
 }
-
-// Typing writes once it pauses rather than on every key, so a half-typed number never reaches main.
-const TYPING = 400;
 
 export const BooleanControl = ({
   id,
@@ -71,33 +67,6 @@ export const ChoiceControl = ({
     value={typeof value === "string" ? value : undefined}
   />
 );
-
-/** Text typed into an input, written once typing pauses while the schema takes it, and put back to the value in force when the input loses focus. */
-const useDraft = (
-  value: string,
-  parse: (text: string) => unknown,
-  schema: z.ZodType,
-  onChange: (value: unknown) => void
-) => {
-  const [draft, setDraft] = useState<string | undefined>(undefined);
-  const write = useDebounced(onChange, TYPING);
-  const shown = draft ?? value;
-  const valid = schema.safeParse(parse(shown)).success;
-  return {
-    handleBlur: () => {
-      setDraft(undefined);
-    },
-    handleChange: (text: string) => {
-      setDraft(text);
-      const parsed = schema.safeParse(parse(text));
-      if (parsed.success) {
-        write(parsed.data);
-      }
-    },
-    shown,
-    valid,
-  };
-};
 
 export const NumberControl = ({
   id,

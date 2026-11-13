@@ -3,7 +3,10 @@ import { useState } from "react";
 
 import { orderedProfiles } from "../../../core/engines/ordering.ts";
 import type { GateRefusal } from "../../../core/entitlement/gate.ts";
-import { PROFILE_COLORS } from "../../../core/records/profile.ts";
+import {
+  PROFILE_COLORS,
+  profileSchema,
+} from "../../../core/records/profile.ts";
 import { profiles as channels } from "../../../shared/channels/profiles.ts";
 import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
@@ -21,16 +24,13 @@ import {
   DialogTitle,
 } from "../../ui/dialog.tsx";
 import { Input } from "../../ui/input.tsx";
-import { useDebounced } from "../../use-debounced.ts";
 import { refusalOf } from "../entitlement/refusal.ts";
 import type { PageContent } from "../settings/page-content.ts";
+import { useDraft } from "../settings/use-draft.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 import { useProfiles } from "./use-profiles.ts";
 
 type ShownProfile = ProfilesSnapshot["profiles"][number];
-
-// Typing renames once it pauses, so the titlebar does not follow every key.
-const TYPING = 400;
 
 const COLOR_NAMES: Readonly<Record<(typeof PROFILE_COLORS)[number], Message>> =
   {
@@ -117,15 +117,18 @@ const ProfileItem = ({
   readonly removable: boolean;
 }) => {
   const client = useSettingsClient();
-  const [label, setLabel] = useState<string | undefined>(undefined);
   const [removing, setRemoving] = useState(false);
-  const rename = useDebounced((next: string) => {
-    void client.invoke(channels.update, {
-      label: next,
-      profileId: profile.id,
-    });
-  }, TYPING);
-  const shown = label ?? profile.label;
+  const label = useDraft(
+    profile.label,
+    (text) => text.trim(),
+    profileSchema.shape.label,
+    (next) => {
+      void client.invoke(channels.update, {
+        label: next,
+        profileId: profile.id,
+      });
+    }
+  );
   return (
     <li
       className="flex flex-col gap-3 rounded-xl border p-4"
@@ -139,20 +142,14 @@ const ProfileItem = ({
           style={{ backgroundColor: profile.color }}
         />
         <Input
-          aria-invalid={shown.trim() === ""}
+          aria-invalid={!label.valid}
           aria-label={msg`Label`}
           className={cn("max-w-64", profile.deactivated && "opacity-60")}
-          onBlur={() => {
-            setLabel(undefined);
-          }}
+          onBlur={label.handleBlur}
           onChange={(event) => {
-            const next = event.target.value;
-            setLabel(next);
-            if (next.trim() !== "") {
-              rename(next.trim());
-            }
+            label.handleChange(event.target.value);
           }}
-          value={shown}
+          value={label.shown}
         />
         {profile.deactivated ? (
           <Badge variant="outline">{msg`Deactivated`}</Badge>

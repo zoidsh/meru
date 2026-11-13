@@ -1,29 +1,55 @@
 import { useEffect, useMemo, useRef } from "react";
 
-/** `run` called `wait` milliseconds after the last call, with that call's arguments; a call still waiting when the component goes is dropped. */
+export interface Debounced<A extends readonly unknown[]> {
+  /** Calls `run` once `wait` milliseconds pass with no other call, with the last call's arguments. */
+  readonly call: (...args: A) => void;
+  /** Runs a call still waiting, at once. */
+  readonly flush: () => void;
+}
+
+interface Waiting<A> {
+  readonly timer: ReturnType<typeof setTimeout>;
+  readonly args: A;
+}
+
+/** `run` debounced by `wait` milliseconds; a call still waiting runs when `flush` is called or the component goes, so leaving a field never loses what was typed. */
 export const useDebounced = <A extends readonly unknown[]>(
   run: (...args: A) => void,
   wait: number
-): ((...args: A) => void) => {
+): Debounced<A> => {
   const latest = useRef(run);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const waiting = useRef<Waiting<A> | undefined>(undefined);
   useEffect(() => {
     latest.current = run;
   });
-  useEffect(
-    () => () => {
-      clearTimeout(timer.current);
-    },
-    []
-  );
-  return useMemo(
-    () =>
-      (...args: A) => {
-        clearTimeout(timer.current);
-        timer.current = setTimeout(() => {
-          latest.current(...args);
-        }, wait);
+  const debounced = useMemo(
+    () => ({
+      call: (...args: A) => {
+        clearTimeout(waiting.current?.timer);
+        waiting.current = {
+          args,
+          timer: setTimeout(() => {
+            waiting.current = undefined;
+            latest.current(...args);
+          }, wait),
+        };
       },
+      flush: () => {
+        const found = waiting.current;
+        if (found !== undefined) {
+          clearTimeout(found.timer);
+          waiting.current = undefined;
+          latest.current(...found.args);
+        }
+      },
+    }),
     [wait]
   );
+  useEffect(
+    () => () => {
+      debounced.flush();
+    },
+    [debounced]
+  );
+  return debounced;
 };
