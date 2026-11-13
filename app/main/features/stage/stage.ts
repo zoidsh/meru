@@ -17,6 +17,7 @@ import type {
   Unsubscribe,
   ViewFactoryPort,
   ViewPort,
+  ViewSpec,
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Group } from "../../../core/records/group.ts";
@@ -39,6 +40,8 @@ import type { PageSurfaceName } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
 import { Overlay } from "./overlay.ts";
+import { PaneViews } from "./pane-views.ts";
+import type { OwnedView, PaneSource } from "./pane-views.ts";
 
 export type StageError =
   | "unknownWindow"
@@ -83,32 +86,36 @@ export interface StageOptions {
 
 export class Stage {
   readonly #options: StageOptions;
-  readonly #views = new Map<string, ViewPort>();
+  readonly #views: PaneViews;
   readonly #disposables = new DisposableStore();
-  readonly #focusListeners = new Map<string, Unsubscribe>();
-  readonly #navigationListeners = new Map<string, Unsubscribe>();
   readonly #overlay: Overlay;
-  readonly #factory: ViewFactoryPort;
-  readonly #keys = new Map<ViewPort, Unsubscribe>();
   #shown: Group | undefined;
-  #retired: ViewPort[] = [];
+  readonly #retired: OwnedView[] = [];
   #focused: string | undefined;
   #drag: DragOverlay | undefined;
   #published: StageSnapshot | undefined;
 
   constructor(options: StageOptions) {
     this.#options = options;
-    this.#factory = {
-      create: (spec) => {
-        const view = options.views.create(spec);
-        this.#keys.set(view, options.keys(view));
-        return view;
+    this.#views = new PaneViews({
+      create: (spec) => this.#own(spec),
+      onError: options.onError,
+      onFocus: (paneId) => {
+        if (this.#focused !== paneId) {
+          this.#focused = paneId;
+          this.#publish();
+        }
       },
-    };
+      onNavigation: (paneId) => {
+        if (this.#focused === paneId) {
+          this.#publish();
+        }
+      },
+    });
     this.#overlay = new Overlay({
+      create: (spec) => this.#own(spec),
       onError: options.onError,
       preload: options.overlayPreload,
-      views: this.#factory,
     });
     this.#shown = this.#read();
     this.#focused = panes(this.#layout())[0]?.paneId;
@@ -235,7 +242,7 @@ export class Stage {
   }
 
   focusPane(paneId: string): Result<undefined, StageError> {
-    const view = this.#views.get(paneId);
+    const view = this.#views.view(paneId);
     if (view === undefined) {
       return err("unknownPane");
     }
@@ -248,7 +255,7 @@ export class Stage {
   /** Moves the focused pane through its history, or reloads or stops it. */
   navigate(action: NavigationAction): Result<undefined, StageError> {
     const view =
-      this.#focused === undefined ? undefined : this.#views.get(this.#focused);
+      this.#focused === undefined ? undefined : this.#views.view(this.#focused);
     if (view === undefined) {
       return err("unknownPane");
     }
@@ -293,12 +300,12 @@ export class Stage {
     }
     this.#retireDrag();
     const drag = new DragOverlay({
+      create: (spec) => this.#own(spec),
       layout: this.#layout(),
       onError: this.#options.onError,
       orientation: divider.orientation,
       preload: this.#options.dragPreload,
       splitId,
-      views: this.#factory,
     });
     this.#drag = drag;
     this.#options.onOverlay(drag.view.contentsId, dragSurface);
@@ -324,7 +331,7 @@ export class Stage {
     this.#dropOverlay();
     this.#reconcile();
     if (this.#focused !== undefined) {
-      this.#views.get(this.#focused)?.focus();
+      this.#views.view(this.#focused)?.focus();
     }
   }
 
@@ -381,7 +388,7 @@ export class Stage {
       return;
     }
     const zoom = this.#options.zoom(group.profileId);
-    for (const view of this.#views.values()) {
+    for (const [, view] of this.#views.entries()) {
       view.setZoomFactor(zoom);
     }
   }
@@ -393,7 +400,7 @@ export class Stage {
   /** Each pane's view with the tab it shows, in layout order. */
   panes(): { readonly view: ViewPort; readonly tab: Tab }[] {
     return panes(this.#layout()).flatMap((pane) => {
-      const view = this.#views.get(pane.paneId);
+      const view = this.#views.view(pane.paneId);
       const tab = this.#tabOf(pane.paneId);
       return view === undefined || tab === undefined ? [] : [{ tab, view }];
     });
@@ -414,7 +421,7 @@ export class Stage {
       navigation:
         (this.#focused === undefined
           ? undefined
-          : this.#views.get(this.#focused)?.navigation()) ?? null,
+          : this.#views.view(this.#focused)?.navigation()) ?? null,
       panes: [...arrangement.panes].map(([paneId, rect]) => ({
         paneId,
         rect,
@@ -428,21 +435,12 @@ export class Stage {
       return;
     }
     this.#disposables.dispose();
-    for (const unsubscribe of [
-      ...this.#focusListeners.values(),
-      ...this.#navigationListeners.values(),
-    ]) {
-      unsubscribe();
-    }
-    this.#navigationListeners.clear();
     this.#retireDrag();
     this.#dropOverlay();
-    for (const view of [...this.#views.values(), ...this.#retired]) {
-      this.#destroy(view);
+    this.#views.dispose();
+    for (const owned of this.#retired.splice(0)) {
+      owned.dispose();
     }
-    this.#views.clear();
-    this.#focusListeners.clear();
-    this.#retired = [];
   }
 
   #read(): Group | undefined {
@@ -474,21 +472,17 @@ export class Stage {
     return tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
   }
 
-  #load(view: ViewPort, url: string): void {
-    const load = async () => {
-      try {
-        await view.loadURL(url);
-      } catch (error) {
-        this.#options.onError(error);
-      }
+  // Every view the stage makes hears the keys typed into it, for the commands without a menu item.
+  #own(spec: ViewSpec): OwnedView {
+    const view = this.#options.views.create(spec);
+    const unkey = this.#options.keys(view);
+    return {
+      dispose: () => {
+        unkey();
+        view.destroy();
+      },
+      view,
     };
-    void load();
-  }
-
-  #destroy(view: ViewPort): void {
-    this.#keys.get(view)?.();
-    this.#keys.delete(view);
-    view.destroy();
   }
 
   #dropOverlay(): void {
@@ -496,7 +490,7 @@ export class Stage {
     if (overlay === undefined) {
       return;
     }
-    this.#options.onOverlay(overlay.contentsId, null);
+    this.#options.onOverlay(overlay.view.contentsId, null);
     this.#retired.push(overlay);
   }
 
@@ -507,59 +501,31 @@ export class Stage {
     }
     this.#drag = undefined;
     this.#options.onOverlay(drag.view.contentsId, null);
-    this.#retired.push(drag.view);
+    this.#retired.push(drag.owned);
   }
 
-  #syncViews(): void {
+  /** The source of each pane's view, none for a pane whose tab or group is gone. */
+  #sources(): Map<string, PaneSource | undefined> {
     const group = this.#read();
-    const wanted = new Map(
-      panes(this.#layout()).map((pane) => [pane.paneId, pane])
-    );
-    for (const [paneId, view] of this.#views) {
-      if (!wanted.has(paneId)) {
-        this.#focusListeners.get(paneId)?.();
-        this.#focusListeners.delete(paneId);
-        this.#navigationListeners.get(paneId)?.();
-        this.#navigationListeners.delete(paneId);
-        this.#views.delete(paneId);
-        this.#retired.push(view);
-      }
-    }
-    if (group === undefined) {
-      return;
-    }
     const { radius } = STYLE_METRICS[this.#options.style()];
-    for (const [paneId, pane] of wanted) {
-      const tab = this.#tabOf(paneId);
-      if (this.#views.has(paneId) || tab === undefined) {
-        continue;
-      }
-      const view = this.#factory.create({
-        background: this.#options.background(),
-        partition: partitionOf(group.profileId),
-        radius,
-        zoom: this.#options.zoom(group.profileId),
-      });
-      this.#navigationListeners.set(
-        paneId,
-        view.onNavigation(() => {
-          if (this.#focused === pane.paneId) {
-            this.#publish();
-          }
-        })
-      );
-      this.#focusListeners.set(
-        paneId,
-        view.onFocus(() => {
-          if (this.#focused !== pane.paneId) {
-            this.#focused = pane.paneId;
-            this.#publish();
-          }
-        })
-      );
-      this.#views.set(paneId, view);
-      this.#load(view, this.#options.urlOf(tab));
-    }
+    return new Map(
+      panes(this.#layout()).map(({ paneId }) => {
+        const tab = this.#tabOf(paneId);
+        const source =
+          group === undefined || tab === undefined
+            ? undefined
+            : {
+                spec: {
+                  background: this.#options.background(),
+                  partition: partitionOf(group.profileId),
+                  radius,
+                  zoom: this.#options.zoom(group.profileId),
+                },
+                url: this.#options.urlOf(tab),
+              };
+        return [paneId, source];
+      })
+    );
   }
 
   #reconcile(): void {
@@ -575,8 +541,8 @@ export class Stage {
         window.addChildView(operation.view, operation.index);
       }
     }
-    for (const view of this.#retired.splice(0)) {
-      this.#destroy(view);
+    for (const owned of this.#retired.splice(0)) {
+      owned.dispose();
     }
   }
 
@@ -584,7 +550,7 @@ export class Stage {
     const bounds = this.#options.window.contentBounds();
     const arrangement = this.#arrangement();
     const { radius } = STYLE_METRICS[this.#options.style()];
-    for (const [paneId, view] of this.#views) {
+    for (const [paneId, view] of this.#views.entries()) {
       const rect = arrangement.panes.get(paneId);
       if (rect !== undefined) {
         view.setBounds(rect);
@@ -600,7 +566,7 @@ export class Stage {
   }
 
   #update(): void {
-    this.#syncViews();
+    this.#retired.push(...this.#views.sync(this.#sources()));
     this.#reconcile();
     this.#arrange();
   }

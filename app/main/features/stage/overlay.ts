@@ -1,7 +1,8 @@
-import type { ViewFactoryPort, ViewPort } from "../../../core/ports.ts";
+import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
+import type { OwnedView } from "./pane-views.ts";
 
 export interface OverlayOptions {
-  readonly views: ViewFactoryPort;
+  readonly create: (spec: ViewSpec) => OwnedView;
   /** The preload of an overlay's page, which is one of the renderer's. */
   readonly preload: string | undefined;
   readonly onError: (error: unknown) => void;
@@ -13,7 +14,7 @@ const TRANSPARENT = "#00000000";
 /** A renderer page, such as the launcher, drawn over a stage's panes; one at a time. */
 export class Overlay {
   readonly #options: OverlayOptions;
-  #view: ViewPort | undefined;
+  #owned: OwnedView | undefined;
 
   constructor(options: OverlayOptions) {
     this.#options = options;
@@ -21,24 +22,25 @@ export class Overlay {
 
   /** The overlay's view while one is up. */
   get view(): ViewPort | undefined {
-    return this.#view;
+    return this.#owned?.view;
   }
 
   /** Makes the view of an overlay showing `url`, focused once its page has loaded; the caller attaches it. */
   open(url: string, args: readonly string[]): ViewPort {
-    const view = this.#options.views.create({
+    const owned = this.#options.create({
       arguments: args,
       preload: this.#options.preload,
       background: TRANSPARENT,
       radius: 0,
       zoom: 1,
     });
-    this.#view = view;
+    this.#owned = owned;
+    const { view } = owned;
     // Focused once loaded, since a view focused before its page exists hands the page no focus to start with.
     const load = async () => {
       try {
         await view.loadURL(url);
-        if (this.#view === view) {
+        if (this.#owned === owned) {
           view.focus();
         }
       } catch (error) {
@@ -49,10 +51,10 @@ export class Overlay {
     return view;
   }
 
-  /** Forgets the overlay and hands back its view for the caller to detach and destroy; undefined with none up. */
-  close(): ViewPort | undefined {
-    const view = this.#view;
-    this.#view = undefined;
-    return view;
+  /** Forgets the overlay and hands back its view for the caller to detach and dispose; undefined with none up. */
+  close(): OwnedView | undefined {
+    const owned = this.#owned;
+    this.#owned = undefined;
+    return owned;
   }
 }

@@ -1,5 +1,6 @@
-import type { ViewFactoryPort, ViewPort } from "../../../core/ports.ts";
+import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
 import type { Layout, Orientation } from "../../../core/records/layout.ts";
+import type { OwnedView } from "./pane-views.ts";
 
 const TRANSPARENT = "#00000000";
 
@@ -10,12 +11,12 @@ const dragPage = (orientation: Orientation) =>
 /** A divider's drag: the overlay that catches the pointer, and the layout as the pointer left it, which the group takes on release. */
 export class DragOverlay {
   readonly splitId: string;
-  readonly view: ViewPort;
+  readonly owned: OwnedView;
   layout: Layout;
   ratio: number | undefined;
 
   constructor(options: {
-    readonly views: ViewFactoryPort;
+    readonly create: (spec: ViewSpec) => OwnedView;
     readonly preload: string | undefined;
     readonly splitId: string;
     readonly orientation: Orientation;
@@ -25,13 +26,13 @@ export class DragOverlay {
     this.splitId = options.splitId;
     this.layout = options.layout;
     this.ratio = undefined;
-    this.view = options.views.create({
+    this.owned = options.create({
       background: TRANSPARENT,
       preload: options.preload,
       radius: 0,
       zoom: 1,
     });
-    const { view } = this;
+    const { view } = this.owned;
     const load = async () => {
       try {
         await view.loadURL(dragPage(options.orientation));
@@ -40,5 +41,9 @@ export class DragOverlay {
       }
     };
     void load();
+  }
+
+  get view(): ViewPort {
+    return this.owned.view;
   }
 }
