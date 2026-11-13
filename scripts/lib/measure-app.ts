@@ -9,9 +9,12 @@ import { uniq } from "es-toolkit/array";
 import { execaSync } from "execa";
 import { z } from "zod";
 
+import {
+  MEASURE_GLOBAL,
+  measureRolesSchema,
+} from "../../app/main/shell/measure.ts";
 import { launcher } from "../../app/shared/channels/launcher.ts";
-import { measure as measureChannels } from "../../app/shared/channels/measure.ts";
-import { invokeIn, launch, runCommand, sendIn } from "./app.ts";
+import { launch, readExposed, runCommand, sendIn } from "./app.ts";
 import type {
   AppName,
   Measurement,
@@ -112,12 +115,11 @@ const rolesOf = async (
     const { floorRoles } = await read(app);
     return rolesSchema.parse(JSON.parse(floorRoles));
   }
-  const roles = await invokeIn(chrome, measureChannels.roles, {});
-  if (!roles.ok) {
-    throw new Error(`measure.roles: ${roles.error.message}`);
-  }
+  const roles = measureRolesSchema.parse(
+    await readExposed(app, MEASURE_GLOBAL)
+  );
   return Object.fromEntries(
-    roles.value.map(({ contentsId, name }) => [String(contentsId), name])
+    roles.map(({ contentsId, name }) => [String(contentsId), name])
   );
 };
 

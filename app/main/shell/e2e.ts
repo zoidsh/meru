@@ -1,26 +1,36 @@
-import type { Unsubscribe } from "../../core/ports.ts";
-import { err, ok } from "../../core/result.ts";
-import type { IpcRegistrar } from "../../shared/channels/define.ts";
-import { e2e } from "../../shared/channels/e2e.ts";
+import { z } from "zod";
+
+import { rectSchema } from "../../core/records/rect.ts";
+import { commandIdSchema } from "../../shared/commands/registry.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
 import type { Stages } from "../features/stage/index.ts";
 
-/** Answers the end-to-end suite's snapshot from what Electron holds for the sender's stage: the bounds of each child view, bottom first, each pane's zoom, and the menu. */
-export const answerE2e = (options: {
-  readonly registrar: IpcRegistrar;
-  readonly stages: Pick<Stages, "find">;
+/** The global under which a run with MERU_E2E=1 leaves its inspector, which the end-to-end suite calls through Playwright's `app.evaluate`, so no page is allowed a channel only a test needs. */
+export const E2E_GLOBAL = "meruE2e";
+
+export const e2eSnapshotSchema = z.object({
+  /** The accelerator of each command in the application menu. */
+  menu: z.partialRecord(commandIdSchema, z.string().nullable()),
+  /** Bounds Electron reports for each child view of the first window, bottom first. */
+  views: z.array(rectSchema),
+  /** Each pane's zoom factor, in layout order. */
+  zoom: z.array(z.number()),
+});
+
+export type E2eSnapshot = z.infer<typeof e2eSnapshotSchema>;
+
+/** Leaves, as a JSON string under `E2E_GLOBAL`, what Electron holds for the first window's stage and the menu. */
+export const exposeE2e = (options: {
+  readonly stages: Pick<Stages, "all">;
   readonly accelerators: () => Partial<Record<CommandId, string | null>>;
-}): Unsubscribe =>
-  options.registrar.register(e2e, {
-    snapshot: (_payload, { contentsId }) => {
-      const stage = options.stages.find(contentsId);
-      if (stage === undefined) {
-        return err("unknownWindow");
-      }
-      return ok({
-        menu: options.accelerators(),
-        views: stage.window.childViews().map((view) => view.bounds()),
-        zoom: stage.panes().map(({ view }) => view.zoomFactor()),
-      });
-    },
-  });
+}): void => {
+  const snapshot = (): E2eSnapshot => {
+    const [stage] = options.stages.all;
+    return {
+      menu: options.accelerators(),
+      views: stage?.window.childViews().map((view) => view.bounds()) ?? [],
+      zoom: stage?.panes().map(({ view }) => view.zoomFactor()) ?? [],
+    };
+  };
+  Reflect.set(globalThis, E2E_GLOBAL, () => JSON.stringify(snapshot()));
+};

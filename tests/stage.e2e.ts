@@ -23,11 +23,11 @@ const overlap = (a: Rect, b: Rect) =>
 test("splits, drags the divider across the panes, moves focus, and closes a tab", async () => {
   const { app, chrome, close } = await launch();
   try {
-    await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
+    await expect.poll(async () => await viewsOf(app)).toHaveLength(1);
 
     await clickMenuItem(app, SPLIT_VERTICAL);
-    await expect.poll(async () => await viewsOf(chrome)).toHaveLength(2);
-    const split = await viewsOf(chrome);
+    await expect.poll(async () => await viewsOf(app)).toHaveLength(2);
+    const split = await viewsOf(app);
     const [left, right] = split;
     expect(left && right && overlap(left, right)).toBe(0);
     const { panes } = await stageOf(chrome);
@@ -60,7 +60,7 @@ test("splits, drags the divider across the panes, moves focus, and closes a tab"
         return moved === undefined ? 0 : moved.rect.x + moved.rect.width / 2;
       })
       .toBeCloseTo(x - 200, 0);
-    const dragged = await viewsOf(chrome);
+    const dragged = await viewsOf(app);
     expect(dragged[0]?.width).toBeLessThan(left?.width ?? 0);
     expect(dragged).toHaveLength(2);
 
@@ -73,7 +73,7 @@ test("splits, drags the divider across the panes, moves focus, and closes a tab"
     await expect.poll(async () => await focusedOf(chrome)).toBe(second);
 
     await clickMenuItem(app, CLOSE_TAB);
-    await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
+    await expect.poll(async () => await viewsOf(app)).toHaveLength(1);
   } finally {
     await close();
   }

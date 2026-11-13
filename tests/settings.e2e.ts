@@ -23,13 +23,13 @@ test("tiles classic panes edge to edge from settings.json", async () => {
   const launched = await launch({
     settings: { global: { "appearance.style": "classic" }, profiles: {} },
   });
-  const { chrome, close } = launched;
+  const { app, chrome, close } = launched;
   try {
     await expect.poll(async () => await styleOf(chrome)).toBe("classic");
     // Read with the views each time: on Linux the content area can shrink by the menu bar's height after the page has loaded.
     await expect(async () => {
       const [views, size] = await Promise.all([
-        viewsOf(chrome),
+        viewsOf(app),
         stageSize(launched),
       ]);
       expect(views).toStrictEqual([{ ...size, ...TOP }]);
@@ -40,7 +40,7 @@ test("tiles classic panes edge to edge from settings.json", async () => {
     const sidebar = SIDEBAR_PIXELS.wide;
     await expect(async () => {
       const [[left, right, ...rest], size] = await Promise.all([
-        viewsOf(chrome),
+        viewsOf(app),
         stageSize(launched),
       ]);
       expect(rest).toHaveLength(0);
@@ -57,19 +57,19 @@ test("tiles classic panes edge to edge from settings.json", async () => {
 });
 
 test("zooms a profile's panes by its override of stage.zoom", async () => {
-  const { chrome, close } = await launch({
+  const { app, close } = await launch({
     profileId: PROFILE,
     settings: { global: {}, profiles: { [PROFILE]: { "stage.zoom": 1.5 } } },
   });
   try {
-    await expect.poll(async () => await zoomOf(chrome)).toStrictEqual([1.5]);
+    await expect.poll(async () => await zoomOf(app)).toStrictEqual([1.5]);
   } finally {
     await close();
   }
 });
 
 test("puts a rebound command's shortcut in the menu", async () => {
-  const { chrome, close } = await launch({
+  const { app, close } = await launch({
     settings: {
       global: {
         "shortcuts.bindings": {
@@ -81,7 +81,7 @@ test("puts a rebound command's shortcut in the menu", async () => {
     },
   });
   try {
-    const { menu } = await inspect(chrome);
+    const { menu } = await inspect(app);
     expect(menu).toMatchObject({
       "stage.closeTab": null,
       "stage.splitHorizontal": "CommandOrControl+Alt+Shift+N",
@@ -94,7 +94,7 @@ test("puts a rebound command's shortcut in the menu", async () => {
 
 test("follows settings.json edited while the app runs", async () => {
   const launched = await launch({ profileId: PROFILE });
-  const { chrome, close, userData } = launched;
+  const { app, chrome, close, userData } = launched;
   try {
     await expect.poll(async () => await styleOf(chrome)).toBe("modern");
     await writeSettings(userData, {
@@ -107,7 +107,7 @@ test("follows settings.json edited while the app runs", async () => {
     await expect.poll(async () => await styleOf(chrome)).toBe("classic");
     const size = await stageSize(launched);
     await expect
-      .poll(async () => await inspect(chrome))
+      .poll(async () => await inspect(app))
       .toMatchObject({
         menu: { "stage.splitVertical": "CommandOrControl+Alt+V" },
         views: [{ ...size, ...TOP }],

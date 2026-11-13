@@ -1,14 +1,14 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import type { Result } from "../app/core/result.ts";
+import { E2E_GLOBAL, e2eSnapshotSchema } from "../app/main/shell/e2e.ts";
 import type { IpcError } from "../app/shared/channels/define.ts";
-import { e2e } from "../app/shared/channels/e2e.ts";
 import { entitlement } from "../app/shared/channels/entitlement.ts";
 import { profiles } from "../app/shared/channels/profiles.ts";
 import { stage } from "../app/shared/channels/stage.ts";
 import { updater } from "../app/shared/channels/updater.ts";
 import type { CommandId } from "../app/shared/commands/registry.ts";
-import { invokeIn } from "../scripts/lib/app.ts";
+import { invokeIn, readExposed } from "../scripts/lib/app.ts";
 
 const valueOf = <T>(result: Result<T, IpcError>): T => {
   if (!result.ok) {
@@ -18,16 +18,16 @@ const valueOf = <T>(result: Result<T, IpcError>): T => {
 };
 
 /** What Electron holds for the page's stage and the menu: the bounds of each child view, bottom first, each pane's zoom and each command's accelerator. */
-export const inspect = async (chrome: Page) =>
-  valueOf(await invokeIn(chrome, e2e.snapshot, {}));
+export const inspect = async (app: ElectronApplication) =>
+  e2eSnapshotSchema.parse(await readExposed(app, E2E_GLOBAL));
 
-export const viewsOf = async (chrome: Page) => {
-  const { views } = await inspect(chrome);
+export const viewsOf = async (app: ElectronApplication) => {
+  const { views } = await inspect(app);
   return views;
 };
 
-export const zoomOf = async (chrome: Page) => {
-  const { zoom } = await inspect(chrome);
+export const zoomOf = async (app: ElectronApplication) => {
+  const { zoom } = await inspect(app);
   return zoom;
 };
 

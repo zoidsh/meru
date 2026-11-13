@@ -1,8 +1,14 @@
-import type { Unsubscribe } from "../../core/ports.ts";
-import { ok } from "../../core/result.ts";
-import type { IpcRegistrar } from "../../shared/channels/define.ts";
-import { measure } from "../../shared/channels/measure.ts";
+import { z } from "zod";
+
 import type { Stages } from "../features/stage/index.ts";
+
+/** The global under which a run with MERU_MEASURE=1 leaves the names of its web contents, which `pnpm measure` reads through Playwright's `app.evaluate`. */
+export const MEASURE_GLOBAL = "meruMeasure";
+
+/** What each web contents shows, by its id: the chrome page, a pane by its tab's host, an overlay. */
+export const measureRolesSchema = z.array(
+  z.object({ contentsId: z.number().int(), name: z.string() })
+);
 
 const hostOf = (url: string) => {
   try {
@@ -12,24 +18,21 @@ const hostOf = (url: string) => {
   }
 };
 
-/** Names what each web contents of every stage shows, so a measurement can name the process behind it. */
-export const answerMeasure = (options: {
-  readonly registrar: IpcRegistrar;
+/** Leaves, as a JSON string under `MEASURE_GLOBAL`, what each web contents of every stage shows, so a measurement can name the process behind it. */
+export const exposeMeasure = (options: {
   readonly stages: Pick<Stages, "all">;
-}): Unsubscribe =>
-  options.registrar.register(measure, {
-    roles: () =>
-      ok(
-        options.stages.all.flatMap((stage) => [
-          { contentsId: stage.window.contentsId, name: "chrome page" },
-          ...stage.panes().map(({ tab, view }) => ({
-            contentsId: view.contentsId,
-            name: `pane ${hostOf(tab.url)}`,
-          })),
-          ...stage.overlays.map((overlay) => ({
-            contentsId: overlay.contentsId,
-            name: "overlay",
-          })),
-        ])
-      ),
-  });
+}): void => {
+  const roles = (): z.infer<typeof measureRolesSchema> =>
+    options.stages.all.flatMap((stage) => [
+      { contentsId: stage.window.contentsId, name: "chrome page" },
+      ...stage.panes().map(({ tab, view }) => ({
+        contentsId: view.contentsId,
+        name: `pane ${hostOf(tab.url)}`,
+      })),
+      ...stage.overlays.map((overlay) => ({
+        contentsId: overlay.contentsId,
+        name: "overlay",
+      })),
+    ]);
+  Reflect.set(globalThis, MEASURE_GLOBAL, () => JSON.stringify(roles()));
+};

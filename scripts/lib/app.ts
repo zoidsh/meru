@@ -127,6 +127,26 @@ export const launch = async ({
   };
 };
 
+/** Calls what main left under `key` on globalThis for a test or a measurement, a function answering JSON, and parses its answer. */
+export const readExposed = async (
+  app: ElectronApplication,
+  key: string
+): Promise<unknown> => {
+  const json = await app.evaluate((_electron, name) => {
+    const read: unknown = Reflect.get(globalThis, name);
+    if (typeof read !== "function") {
+      throw new TypeError(`Main exposes nothing under ${name}`);
+    }
+    const answer: unknown = Reflect.apply(read, undefined, []);
+    if (typeof answer !== "string") {
+      throw new TypeError(`${name} answered no JSON`);
+    }
+    return answer;
+  }, key);
+  const parsed: unknown = JSON.parse(json);
+  return parsed;
+};
+
 /** Sends a request as the page's client would, and settles main's answer the same way. */
 export const invokeIn = async <P extends z.ZodType, R extends z.ZodType>(
   page: Page,

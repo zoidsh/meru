@@ -7,7 +7,7 @@ test("opens a fresh install in one window on one profile with one Gmail tab in o
   const { app, chrome, close } = await launch();
   try {
     await expect(chrome).toHaveTitle("Meru");
-    await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
+    await expect.poll(async () => await viewsOf(app)).toHaveLength(1);
     const windows = await app.evaluate(
       ({ BrowserWindow }) => BrowserWindow.getAllWindows().length
     );

@@ -5,7 +5,7 @@ import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { allowlist } from "../shared/channels/define.ts";
-import { pageSurfaces, surfaces } from "../shared/channels/surfaces.ts";
+import { surfaces } from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
@@ -27,10 +27,10 @@ import {
 import { createElectronUpdater } from "./platform/updater.ts";
 import { placeUserData } from "./platform/user-data.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
-import { answerE2e } from "./shell/e2e.ts";
+import { exposeE2e } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
 import { ShortcutKeys } from "./shell/keys.ts";
-import { answerMeasure } from "./shell/measure.ts";
+import { exposeMeasure } from "./shell/measure.ts";
 import { ApplicationMenu } from "./shell/menu.ts";
 import { MainWindow, pageUrl } from "./shell/window.ts";
 import type { PageOptions } from "./shell/window.ts";
@@ -48,9 +48,6 @@ const start = async () => {
   placeUserData(path.join(dist, "..", ".."));
   const ports = createElectronPorts();
   const e2e = process.env.MERU_E2E === "1";
-  const measure = process.env.MERU_MEASURE === "1";
-  const pageSurfaceName = e2e || measure ? "test" : "chrome";
-  const pageSurface = pageSurfaces[pageSurfaceName];
 
   ports.lifecycle.onWindowAllClosed(() => {
     ports.lifecycle.quit();
@@ -64,7 +61,7 @@ const start = async () => {
     onError: report,
     transport: ports.ipc,
   });
-  const lists = [...surfaces, pageSurface].map(allowlist);
+  const lists = surfaces.map(allowlist);
   listenIpc(
     {
       event: lists.flatMap((list) => [...list.event]),
@@ -226,15 +223,11 @@ const start = async () => {
     settings,
   }).start();
 
-  if (measure) {
-    answerMeasure({ registrar: dispatcher, stages });
+  if (process.env.MERU_MEASURE === "1") {
+    exposeMeasure({ stages });
   }
   if (e2e) {
-    answerE2e({
-      accelerators: applicationAccelerators,
-      registrar: dispatcher,
-      stages,
-    });
+    exposeE2e({ accelerators: applicationAccelerators, stages });
   }
 
   const window = new MainWindow({
@@ -250,7 +243,7 @@ const start = async () => {
     pages,
     preload: path.join(dist, "preload", "renderer.cjs"),
     registrar: dispatcher,
-    surface: pageSurfaceName,
+    surface: "chrome",
   });
   await window.show();
   entitlement.start();

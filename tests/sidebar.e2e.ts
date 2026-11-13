@@ -100,7 +100,7 @@ test("shows the sidebar once Calendar is added through the launcher, Drive dragg
     await expect(group).toHaveCount(1);
     await expect(group.locator("[data-tab-id]")).toHaveCount(2);
     await expect(group).toHaveCSS("border-top-style", "dashed");
-    await expect.poll(async () => await viewsOf(chrome)).toHaveLength(2);
+    await expect.poll(async () => await viewsOf(app)).toHaveLength(2);
 
     await drag(chrome, 2, 0, "before");
     await expect(group).toHaveCount(0);
@@ -153,7 +153,7 @@ test("hides the sidebar and brings it back from the menu, laying the panes out a
     const sidebar = chrome.locator("nav[data-sidebar]");
     await expect(sidebar).toBeVisible();
     const left = async () => {
-      const [first] = await viewsOf(chrome);
+      const [first] = await viewsOf(app);
       return first?.x;
     };
     const shown = await left();
