@@ -635,7 +635,7 @@ describe("a drag across panes", () => {
 describe("an overlay over the panes", () => {
   it("opens a tab beside the focused pane from the overlay's own page, on the surface it was given", async () => {
     const { call, id, profiles, stage, views } = await setup();
-    stage.openOverlay("file:///overlay.html", "launcher");
+    stage.openOverlay("launcher", "file:///overlay.html");
     const overlay = views.created.at(-1)?.contentsId ?? 0;
     const profileId = profiles.selected().id;
     expect(
@@ -660,7 +660,7 @@ describe("an overlay over the panes", () => {
     events.on("tab.focused", ({ tabId }) => {
       focused.push(profiles.tab(tabId)?.appId ?? tabId);
     });
-    stage.openOverlay("file:///overlay.html", "launcher");
+    stage.openOverlay("launcher", "file:///overlay.html");
     const overlay = views.created.at(-1)?.contentsId ?? 0;
     const profileId = profiles.selected().id;
     const open = (appId: string) =>
@@ -680,7 +680,7 @@ describe("an overlay over the panes", () => {
 
   it("is a transparent renderer page above every pane, focused once loaded, until it is closed", async () => {
     const { call, profileId, window, views, stage } = await setup();
-    stage.openOverlay("file:///overlay.html", "launcher");
+    stage.openOverlay("launcher", "file:///overlay.html");
     const [pane, overlay] = views.created;
     await expect.poll(() => overlay?.focused).toBeTruthy();
     expect({

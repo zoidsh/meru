@@ -33,10 +33,10 @@ import type { Surface } from "../../../shared/channels/define.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import {
   dragSurface,
-  pageSurfaces,
+  overlays,
   surfaceArgument,
 } from "../../../shared/channels/surfaces.ts";
-import type { PageSurfaceName } from "../../../shared/channels/surfaces.ts";
+import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
 import { Overlay } from "./overlay.ts";
@@ -302,10 +302,10 @@ export class Stage {
   }
 
   /** Shows a renderer page over the panes until closeOverlay, replacing any overlay already up; its page may use the channels of `surface`. */
-  openOverlay(url: string, surface: PageSurfaceName): void {
+  openOverlay(kind: OverlayKind, url: string): void {
     this.#dropOverlay();
-    const view = this.#overlay.open(url, [surfaceArgument(surface)]);
-    this.#options.onOverlay(view.contentsId, pageSurfaces[surface]);
+    const view = this.#overlay.open(url, [surfaceArgument(kind)]);
+    this.#options.onOverlay(view.contentsId, overlays[kind]);
     this.#reconcile();
     this.#arrange(false);
   }

@@ -84,8 +84,8 @@ const setup = async () => {
   const stage = stages.open(window, () => profiles.currentGroup()?.id);
   new Launcher({
     commands,
-    overlayUrl: (query) =>
-      `overlay.html?${new URLSearchParams(query).toString()}`,
+    overlayUrl: (kind, query) =>
+      `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
     registrar,
     stages,
   }).start();

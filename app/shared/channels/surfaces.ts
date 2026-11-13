@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { commands } from "./commands.ts";
 import { defineSurface } from "./define.ts";
 import type { Surface } from "./define.ts";
@@ -52,13 +54,27 @@ export const launcherSurface = defineSurface({
 
 export type LauncherSurface = typeof launcherSurface;
 
-/** The surfaces a page the renderer's preload serves may hold, by the name main passes the preload. */
+/** What the overlay page can show over the panes, by the `kind` its address names, each on its own surface. */
+export const overlayKindSchema = z.enum(["launcher"]);
+
+export type OverlayKind = z.infer<typeof overlayKindSchema>;
+
+export const overlays = {
+  launcher: launcherSurface,
+} satisfies Record<OverlayKind, Surface>;
+
+/** The surfaces a page the renderer's preload serves may hold, by the name main passes the preload: the chrome page's, and each overlay's under its kind. */
+export const pageSurfaceNameSchema = z.enum([
+  "chrome",
+  ...overlayKindSchema.options,
+]);
+
+export type PageSurfaceName = z.infer<typeof pageSurfaceNameSchema>;
+
 export const pageSurfaces = {
   chrome: chromeSurface,
-  launcher: launcherSurface,
-};
-
-export type PageSurfaceName = keyof typeof pageSurfaces;
+  ...overlays,
+} satisfies Record<PageSurfaceName, Surface>;
 
 const SURFACE_ARGUMENT = "--meru-surface=";
 
@@ -66,16 +82,16 @@ const SURFACE_ARGUMENT = "--meru-surface=";
 export const surfaceArgument = (name: PageSurfaceName): string =>
   `${SURFACE_ARGUMENT}${name}`;
 
-/** The surface the command line names, or none, so a page with no argument is refused everything. */
+const NOTHING = defineSurface({ pushes: [], requests: [] });
+
+/** The surface the command line names, or none, so a page with no argument or an unknown name is refused everything. */
 export const surfaceOf = (argv: readonly string[]): Surface => {
-  const name = argv
-    .find((argument) => argument.startsWith(SURFACE_ARGUMENT))
-    ?.slice(SURFACE_ARGUMENT.length);
-  const named = new Map<string, Surface>(Object.entries(pageSurfaces));
-  return (
-    (name === undefined ? undefined : named.get(name)) ??
-    defineSurface({ pushes: [], requests: [] })
+  const named = pageSurfaceNameSchema.safeParse(
+    argv
+      .find((argument) => argument.startsWith(SURFACE_ARGUMENT))
+      ?.slice(SURFACE_ARGUMENT.length)
   );
+  return named.success ? pageSurfaces[named.data] : NOTHING;
 };
 
 export const surfaces: readonly Surface[] = [

@@ -196,7 +196,8 @@ const start = async () => {
   };
   new Launcher({
     commands,
-    overlayUrl: (query) => pageUrl(pages, "overlay.html", query),
+    overlayUrl: (kind, query) =>
+      pageUrl(pages, "overlay.html", { ...query, kind }),
     registrar: dispatcher,
     stages,
   }).start();
