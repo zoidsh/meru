@@ -87,14 +87,12 @@ export class FakeView implements ViewPort {
     };
   };
 
-  /** Opens a link as the page would, in place unless `disposition` names a new window or tab: true when a listener took it, false when every listener left it, undefined with none listening. */
+  /** Opens a link as the page would, in place unless `disposition` names a new window or tab: true when a listener took it from the page. */
   readonly open = (
     url: string,
     disposition: Disposition = "inPlace"
-  ): boolean | undefined =>
-    this.#openListeners.size === 0
-      ? undefined
-      : [...this.#openListeners].some((listener) => listener(url, disposition));
+  ): boolean =>
+    [...this.#openListeners].some((listener) => listener(url, disposition));
 
   /** Moves the page through its history as a click inside it would. */
   readonly arrive = (navigation: Navigation) => {
