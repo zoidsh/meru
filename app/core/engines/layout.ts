@@ -338,6 +338,32 @@ export const dropRect = (rect: Rect, zone: DropZone): Rect => {
   return rects[zone];
 };
 
+/** Where a tab let go at a point lands among the panes. */
+export interface DropTarget {
+  /** The tab of the pane under the point. */
+  readonly tabId: string;
+  readonly zone: DropZone;
+  /** The part of that pane the dropped tab takes. */
+  readonly rect: Rect;
+}
+
+/** The pane under the point and where on it the tab `tabId` would land; nothing over the tab's own pane or off every pane. */
+export const dropTargetAt = (
+  shown: readonly { readonly rect: Rect; readonly tabId: string }[],
+  point: Point,
+  tabId: string
+): DropTarget | undefined => {
+  for (const pane of shown) {
+    const zone = dropZoneAt(pane.rect, point);
+    if (zone !== undefined) {
+      return pane.tabId === tabId
+        ? undefined
+        : { rect: dropRect(pane.rect, zone), tabId: pane.tabId, zone };
+    }
+  }
+  return undefined;
+};
+
 /** The sides of the area that keep no inset. */
 export interface Flush {
   readonly top: boolean;

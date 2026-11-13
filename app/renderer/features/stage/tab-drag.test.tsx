@@ -9,7 +9,7 @@ import { tabDragSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeBridge } from "../../../test/fakes/bridge.ts";
 import { createClient } from "../../client.ts";
 import { stageOf } from "../../testing.tsx";
-import { TabDrag, dropRectAt } from "./tab-drag.tsx";
+import { TabDrag } from "./tab-drag.tsx";
 
 const LEFT = { height: 400, width: 300, x: 0, y: 0 };
 const RIGHT = { height: 400, width: 300, x: 300, y: 0 };
@@ -65,22 +65,6 @@ const mount = () => {
   };
   return { bridge, container, point, dropped };
 };
-
-describe(dropRectAt, () => {
-  it("takes the half of the pane by the edge the point is near, and the whole pane in its middle", () => {
-    expect([
-      dropRectAt(PANES, { x: 20, y: 200 }, "drive-1"),
-      dropRectAt(PANES, { x: 450, y: 200 }, "drive-1"),
-    ]).toStrictEqual([{ ...LEFT, width: 150 }, RIGHT]);
-  });
-
-  it("draws nothing over the dragged tab's own pane or off every pane", () => {
-    expect([
-      dropRectAt(PANES, { x: 20, y: 200 }, "mail"),
-      dropRectAt(PANES, { x: 700, y: 200 }, "drive-1"),
-    ]).toStrictEqual([undefined, undefined]);
-  });
-});
 
 describe(TabDrag, () => {
   afterEach(() => {

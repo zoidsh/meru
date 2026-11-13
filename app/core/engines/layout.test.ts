@@ -13,6 +13,7 @@ import type { Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
 import {
   balance,
+  dropTargetAt,
   dropZoneAt,
   placementOf,
   close,
@@ -851,5 +852,31 @@ describe(shownLayout, () => {
     expect(
       shownLayout(tree, { drag: dragged, fullscreen: "t9", maximised: "t8" })
     ).toBe(dragged);
+  });
+});
+
+describe(dropTargetAt, () => {
+  const left = { height: 400, width: 300, x: 0, y: 0 };
+  const right = { height: 400, width: 300, x: 300, y: 0 };
+  const shown = [
+    { rect: left, tabId: "mail" },
+    { rect: right, tabId: "calendar" },
+  ];
+
+  it("takes the half of the pane by the edge the point is near, and the whole pane in its middle", () => {
+    expect([
+      dropTargetAt(shown, { x: 20, y: 200 }, "drive"),
+      dropTargetAt(shown, { x: 450, y: 200 }, "drive"),
+    ]).toStrictEqual([
+      { rect: { ...left, width: 150 }, tabId: "mail", zone: "left" },
+      { rect: right, tabId: "calendar", zone: "centre" },
+    ]);
+  });
+
+  it("finds nothing over the dragged tab's own pane or off every pane", () => {
+    expect([
+      dropTargetAt(shown, { x: 20, y: 200 }, "mail"),
+      dropTargetAt(shown, { x: 700, y: 200 }, "drive"),
+    ]).toStrictEqual([undefined, undefined]);
   });
 });

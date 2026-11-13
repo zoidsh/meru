@@ -4,7 +4,7 @@ import { DisposableStore } from "../../../core/disposable.ts";
 import { stageArea } from "../../../core/engines/chrome.ts";
 import type { ChromeInsets } from "../../../core/engines/chrome.ts";
 import {
-  dropZoneAt,
+  dropTargetAt,
   placementOf,
   focusNext,
   focusPrevious,
@@ -594,18 +594,17 @@ export class Stage {
 
   // The tab joins beside the pane under the point, on the zone's side; focus stays on the tab that had it, as it does when a tab leaves its group.
   #drop(tabId: string, point: Point): void {
-    const target = this.snapshot().panes.find(
-      (pane) => dropZoneAt(pane.rect, point) !== undefined
-    );
-    const zone =
-      target === undefined ? undefined : dropZoneAt(target.rect, point);
-    if (target === undefined || zone === undefined || target.tabId === tabId) {
+    const target = dropTargetAt(this.snapshot().panes, point, tabId);
+    if (target === undefined) {
       return;
     }
     const focused = this.#focused;
     if (
-      this.#options.profiles.joinTab(tabId, target.tabId, placementOf(zone))
-        .ok &&
+      this.#options.profiles.joinTab(
+        tabId,
+        target.tabId,
+        placementOf(target.zone)
+      ).ok &&
       focused !== undefined
     ) {
       this.refresh();

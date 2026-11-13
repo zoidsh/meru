@@ -1,33 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  dropZoneAt,
-  dropRect,
-  STYLE_METRICS,
-} from "../../../core/engines/layout.ts";
-import type { Point, Rect } from "../../../core/records/rect.ts";
+import { dropTargetAt, STYLE_METRICS } from "../../../core/engines/layout.ts";
+import type { Point } from "../../../core/records/rect.ts";
 import { appById } from "../../../shared/apps.ts";
 import { drag, dragPushes } from "../../../shared/channels/drag.ts";
 import { stage } from "../../../shared/channels/stage.ts";
-import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import type { TabDragSurface } from "../../../shared/channels/surfaces.ts";
 import type { Client } from "../../client.ts";
 import { AppIcon } from "../apps/app-icon.tsx";
-
-/** Where a tab let go at `point` would land: the part of the pane under it the zone takes, or nothing over the tab's own pane or no pane. */
-export const dropRectAt = (
-  panes: StageSnapshot["panes"],
-  point: Point,
-  tabId: string
-): Rect | undefined => {
-  for (const pane of panes) {
-    const zone = dropZoneAt(pane.rect, point);
-    if (zone !== undefined) {
-      return pane.tabId === tabId ? undefined : dropRect(pane.rect, zone);
-    }
-  }
-  return undefined;
-};
 
 const GHOST_OFFSET = 12;
 
@@ -72,7 +52,7 @@ export const TabDrag = ({
   if (point === undefined || snapshot === undefined) {
     return null;
   }
-  const zone = dropRectAt(snapshot.panes, point, tabId);
+  const zone = dropTargetAt(snapshot.panes, point, tabId)?.rect;
   const colour = accent === "" ? "var(--primary)" : accent;
   const app = appById(appId);
   const name = app?.name ?? appId;
