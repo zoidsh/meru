@@ -88,6 +88,8 @@ export class Stages {
         endDrag: (point, { contentsId }) => this.endDrag(contentsId, point),
         focusPane: ({ paneId }, { contentsId }) =>
           this.focusPane(contentsId, paneId),
+        navigate: ({ action }, { contentsId }) =>
+          this.#with(contentsId, (found) => found.navigate(action)),
         resize: ({ splitId, ratio }, { contentsId }) =>
           this.resize(contentsId, splitId, ratio),
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),

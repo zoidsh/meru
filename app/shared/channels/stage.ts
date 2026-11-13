@@ -15,6 +15,14 @@ export const stageSnapshotSchema = z.object({
     })
   ),
   focusedPaneId: idSchema.nullable(),
+  /** The focused pane's history, which the titlebar's back, forward and reload follow; null with no pane. */
+  navigation: z
+    .object({
+      canGoBack: z.boolean(),
+      canGoForward: z.boolean(),
+      loading: z.boolean(),
+    })
+    .nullable(),
   panes: z.array(z.object({ paneId: idSchema, rect: rectSchema })),
   style: styleSchema,
 });
@@ -29,6 +37,10 @@ export const stage = defineChannels("stage", {
   dragTo: event(pointer.extend({ buttons: z.number().int() })),
   endDrag: event(pointer),
   focusPane: event(z.object({ paneId: idSchema })),
+  /** Moves the focused pane through its history, or reloads or stops it. */
+  navigate: event(
+    z.object({ action: z.enum(["back", "forward", "reload", "stop"]) })
+  ),
   resize: event(
     z.object({ ratio: z.number().min(0).max(1), splitId: idSchema })
   ),

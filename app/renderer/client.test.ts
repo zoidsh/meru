@@ -26,6 +26,7 @@ const elsewherePushes = definePushes("elsewhere", {
 const snapshot: StageSnapshot = {
   dividers: [],
   focusedPaneId: "p1",
+  navigation: null,
   panes: [{ paneId: "p1", rect: { height: 10, width: 10, x: 0, y: 0 } }],
   style: "modern",
 };

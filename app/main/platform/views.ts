@@ -44,10 +44,41 @@ const createView = (spec: ViewSpec): ViewPort => {
     loadURL: async (url) => {
       await contents.loadURL(url);
     },
+    navigate: (action) => {
+      if (action === "back") {
+        contents.navigationHistory.goBack();
+      } else if (action === "forward") {
+        contents.navigationHistory.goForward();
+      } else if (action === "reload") {
+        contents.reload();
+      } else {
+        contents.stop();
+      }
+    },
+    navigation: () => ({
+      canGoBack: contents.navigationHistory.canGoBack(),
+      canGoForward: contents.navigationHistory.canGoForward(),
+      loading: contents.isLoading(),
+    }),
     onFocus: (listener) => {
       contents.on("focus", listener);
       return () => {
         contents.off("focus", listener);
+      };
+    },
+    onNavigation: (listener) => {
+      const changed = () => {
+        listener();
+      };
+      contents.on("did-start-loading", changed);
+      contents.on("did-stop-loading", changed);
+      contents.on("did-navigate", changed);
+      contents.on("did-navigate-in-page", changed);
+      return () => {
+        contents.off("did-start-loading", changed);
+        contents.off("did-stop-loading", changed);
+        contents.off("did-navigate", changed);
+        contents.off("did-navigate-in-page", changed);
       };
     },
     setBackgroundColor: (color) => {

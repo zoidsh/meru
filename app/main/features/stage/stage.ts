@@ -14,6 +14,7 @@ import {
 } from "../../../core/engines/layout.ts";
 import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
 import type {
+  NavigationAction,
   Unsubscribe,
   ViewFactoryPort,
   ViewPort,
@@ -82,6 +83,7 @@ export class Stage {
   readonly #views = new Map<string, ViewPort>();
   readonly #disposables = new DisposableStore();
   readonly #focusListeners = new Map<string, Unsubscribe>();
+  readonly #navigationListeners = new Map<string, Unsubscribe>();
   #shown: Group | undefined;
   #overlays: ViewPort[] = [];
   #retired: ViewPort[] = [];
@@ -198,6 +200,17 @@ export class Stage {
     this.#focused = paneId;
     view.focus();
     this.#publish();
+    return ok(undefined);
+  }
+
+  /** Moves the focused pane through its history, or reloads or stops it. */
+  navigate(action: NavigationAction): Result<undefined, StageError> {
+    const view =
+      this.#focused === undefined ? undefined : this.#views.get(this.#focused);
+    if (view === undefined) {
+      return err("unknownPane");
+    }
+    view.navigate(action);
     return ok(undefined);
   }
 
@@ -321,6 +334,10 @@ export class Stage {
     return {
       dividers: [...arrangement.dividers],
       focusedPaneId: this.#focused ?? null,
+      navigation:
+        (this.#focused === undefined
+          ? undefined
+          : this.#views.get(this.#focused)?.navigation()) ?? null,
       panes: [...arrangement.panes].map(([paneId, rect]) => ({
         paneId,
         rect,
@@ -334,9 +351,13 @@ export class Stage {
       return;
     }
     this.#disposables.dispose();
-    for (const unsubscribe of this.#focusListeners.values()) {
+    for (const unsubscribe of [
+      ...this.#focusListeners.values(),
+      ...this.#navigationListeners.values(),
+    ]) {
       unsubscribe();
     }
+    this.#navigationListeners.clear();
     this.#retireOverlay();
     for (const view of [...this.#views.values(), ...this.#retired]) {
       view.destroy();
@@ -405,6 +426,8 @@ export class Stage {
       if (!wanted.has(paneId)) {
         this.#focusListeners.get(paneId)?.();
         this.#focusListeners.delete(paneId);
+        this.#navigationListeners.get(paneId)?.();
+        this.#navigationListeners.delete(paneId);
         this.#views.delete(paneId);
         this.#retired.push(view);
       }
@@ -423,6 +446,14 @@ export class Stage {
         radius,
         zoom: this.#options.zoom(group.profileId),
       });
+      this.#navigationListeners.set(
+        paneId,
+        view.onNavigation(() => {
+          if (this.#focused === pane.paneId) {
+            this.#publish();
+          }
+        })
+      );
       this.#focusListeners.set(
         paneId,
         view.onFocus(() => {

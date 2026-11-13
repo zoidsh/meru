@@ -144,6 +144,7 @@ describe("the stage snapshot's comparison", () => {
     const sent: StageSnapshot = {
       dividers: [],
       focusedPaneId: "p1",
+      navigation: null,
       panes: [{ paneId: "p1", rect: { height: 10, width: 10, x: 0, y: 0 } }],
       style: "modern",
     };
@@ -151,6 +152,7 @@ describe("the stage snapshot's comparison", () => {
       style: "modern",
       panes: [{ rect: { y: 0, x: 0, width: 10, height: 10 }, paneId: "p1" }],
       focusedPaneId: "p1",
+      navigation: null,
       dividers: [],
     };
     expect([
@@ -452,6 +454,23 @@ describe("the stage channels", () => {
     expect(window.childViews()).toHaveLength(2);
     expect(call(stageChannels.close, {}, id).ok).toBeTruthy();
     expect(window.childViews()).toHaveLength(1);
+  });
+
+  it("move the focused pane through its history and tell the page where it stands", async () => {
+    const { call, id, views, changes, stages } = await setup();
+    stages.split(id, "vertical");
+    const [first, second] = views.alive;
+    call(stageChannels.navigate, { action: "back" }, id);
+    expect([first?.navigated, second?.navigated]).toStrictEqual([[], ["back"]]);
+    const arrived = { canGoBack: true, canGoForward: false, loading: true };
+    first?.arrive(arrived);
+    expect(changes().at(-1)?.navigation).toStrictEqual({
+      canGoBack: false,
+      canGoForward: false,
+      loading: false,
+    });
+    second?.arrive(arrived);
+    expect(changes().at(-1)?.navigation).toStrictEqual(arrived);
   });
 
   it("answer the snapshot a page paints first", async () => {

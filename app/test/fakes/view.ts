@@ -1,4 +1,10 @@
-import type { Unsubscribe, ViewPort, ViewSpec } from "../../core/ports.ts";
+import type {
+  Navigation,
+  NavigationAction,
+  Unsubscribe,
+  ViewPort,
+  ViewSpec,
+} from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
 
 let nextContentsId = 1000;
@@ -14,6 +20,13 @@ export class FakeView implements ViewPort {
   focused = false;
   #bounds: Rect = { height: 0, width: 0, x: 0, y: 0 };
   readonly #focusListeners = new Set<() => void>();
+  readonly #navigationListeners = new Set<() => void>();
+  readonly navigated: NavigationAction[] = [];
+  #navigation: Navigation = {
+    canGoBack: false,
+    canGoForward: false,
+    loading: false,
+  };
 
   constructor(spec: ViewSpec) {
     nextContentsId += 1;
@@ -46,6 +59,27 @@ export class FakeView implements ViewPort {
     return () => {
       this.#focusListeners.delete(listener);
     };
+  };
+
+  readonly navigation = () => this.#navigation;
+
+  readonly navigate = (action: NavigationAction) => {
+    this.navigated.push(action);
+  };
+
+  readonly onNavigation = (listener: () => void): Unsubscribe => {
+    this.#navigationListeners.add(listener);
+    return () => {
+      this.#navigationListeners.delete(listener);
+    };
+  };
+
+  /** Moves the page through its history as a click inside it would. */
+  readonly arrive = (navigation: Navigation) => {
+    this.#navigation = navigation;
+    for (const listener of this.#navigationListeners) {
+      listener();
+    }
   };
 
   readonly setBackgroundColor = (color: string) => {

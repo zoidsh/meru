@@ -35,6 +35,15 @@ export interface LifecyclePort {
   readonly prohibitActivation: () => void;
 }
 
+/** Where a view's page stands in its history, and whether it is loading. */
+export interface Navigation {
+  readonly canGoBack: boolean;
+  readonly canGoForward: boolean;
+  readonly loading: boolean;
+}
+
+export type NavigationAction = "back" | "forward" | "reload" | "stop";
+
 export interface ViewPort {
   readonly contentsId: number;
   readonly setBounds: (rect: Rect) => void;
@@ -42,6 +51,10 @@ export interface ViewPort {
   readonly loadURL: (url: string) => Promise<void>;
   readonly focus: () => void;
   readonly onFocus: (listener: () => void) => Unsubscribe;
+  readonly navigation: () => Navigation;
+  readonly navigate: (action: NavigationAction) => void;
+  /** Calls `listener` when what `navigation()` answers may have changed. */
+  readonly onNavigation: (listener: () => void) => Unsubscribe;
   readonly setBackgroundColor: (color: string) => void;
   readonly setBorderRadius: (radius: number) => void;
   readonly setZoomFactor: (factor: number) => void;
