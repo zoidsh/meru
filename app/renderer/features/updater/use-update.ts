@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext } from "react";
 
 import type { UpdateState } from "../../../core/records/update.ts";
 import type { SettingsSurface } from "../../../shared/channels/surfaces.ts";
@@ -7,7 +7,7 @@ import {
   updaterPushes,
 } from "../../../shared/channels/updater.ts";
 import type { Client } from "../../client.ts";
-import { createStore, useStore } from "../../store.ts";
+import { createStore, useWholeStore } from "../../store.ts";
 import type { Store } from "../../store.ts";
 
 const IDLE: UpdateState = { kind: "idle" };
@@ -28,12 +28,5 @@ export const UpdateContext = createContext<Store<UpdateState> | undefined>(
   undefined
 );
 
-const same = <T>(value: T) => value;
-
-export const useUpdate = (): UpdateState => {
-  const store = useContext(UpdateContext);
-  if (store === undefined) {
-    throw new Error("useUpdate needs an UpdateContext above it");
-  }
-  return useStore(store, same);
-};
+export const useUpdate = (): UpdateState =>
+  useWholeStore(UpdateContext, "useUpdate");

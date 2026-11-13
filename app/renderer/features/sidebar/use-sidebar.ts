@@ -1,8 +1,8 @@
-import { createContext, useContext } from "react";
+import { createContext } from "react";
 
 import type { Sidebar } from "../../../core/engines/sidebar.ts";
 import { sidebar, sidebarPushes } from "../../../shared/channels/sidebar.ts";
-import { syncedStore, useStore } from "../../store.ts";
+import { syncedStore, useWholeStore } from "../../store.ts";
 import type { Store, SyncSource } from "../../store.ts";
 
 const HIDDEN: Sidebar = { kind: "hidden" };
@@ -20,13 +20,6 @@ export const SidebarContext = createContext<Store<Sidebar> | undefined>(
   undefined
 );
 
-const same = <T>(value: T) => value;
-
 /** The selected profile's sidebar as main last pushed it. */
-export const useSidebar = (): Sidebar => {
-  const store = useContext(SidebarContext);
-  if (store === undefined) {
-    throw new Error("useSidebar needs a SidebarContext above it");
-  }
-  return useStore(store, same);
-};
+export const useSidebar = (): Sidebar =>
+  useWholeStore(SidebarContext, "useSidebar");

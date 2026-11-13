@@ -1,8 +1,8 @@
-import { createContext, useContext } from "react";
+import { createContext } from "react";
 
 import { stage, stagePushes } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import { syncedStore, useStore } from "../../store.ts";
+import { syncedStore, useWholeStore } from "../../store.ts";
 import type { Store, SyncSource } from "../../store.ts";
 
 /** The page's copy of its window's stage; undefined until main first answers. */
@@ -18,13 +18,6 @@ export const StageContext = createContext<
   Store<StageSnapshot | undefined> | undefined
 >(undefined);
 
-const same = <T>(value: T) => value;
-
 /** The window's stage as main last pushed it: the panes, the dividers and the focused pane. */
-export const useStage = (): StageSnapshot | undefined => {
-  const store = useContext(StageContext);
-  if (store === undefined) {
-    throw new Error("useStage needs a StageContext above it");
-  }
-  return useStore(store, same);
-};
+export const useStage = (): StageSnapshot | undefined =>
+  useWholeStore(StageContext, "useStage");

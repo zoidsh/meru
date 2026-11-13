@@ -1,4 +1,6 @@
-import { useSyncExternalStore } from "react";
+import { identity } from "es-toolkit";
+import { useContext, useSyncExternalStore } from "react";
+import type { Context } from "react";
 import type { z } from "zod";
 
 import type { Unsubscribe } from "../core/ports.ts";
@@ -87,3 +89,15 @@ export const syncedStore = <
 // The selector must return a stable value for an unchanged state, as useSyncExternalStore compares snapshots by identity.
 export const useStore = <T, S>(store: Store<T>, select: (state: T) => S): S =>
   useSyncExternalStore(store.subscribe, () => select(store.get()));
+
+/** The whole of the store the context holds, for a hook `hook` that reads it under its provider. */
+export const useWholeStore = <T>(
+  context: Context<Store<T> | undefined>,
+  hook: string
+): T => {
+  const store = useContext(context);
+  if (store === undefined) {
+    throw new Error(`${hook} needs its context above it`);
+  }
+  return useStore(store, identity);
+};
