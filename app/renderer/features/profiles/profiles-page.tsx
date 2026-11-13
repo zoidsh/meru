@@ -10,6 +10,7 @@ import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Badge } from "../../ui/badge.tsx";
 import { Button } from "../../ui/button.tsx";
+import { ChoiceGroup } from "../../ui/choice-group.tsx";
 import {
   Dialog,
   DialogClose,
@@ -55,29 +56,19 @@ const ColorPicker = ({
   readonly color: string | undefined;
   readonly onPick: (color: string) => void;
 }) => (
-  <fieldset className="flex flex-wrap gap-1.5">
-    <legend className="sr-only">{label}</legend>
-    {PROFILE_COLORS.map((swatch) => (
-      <label
-        className="has-checked:ring-foreground has-focus-visible:ring-ring/50 size-5 cursor-pointer rounded-full ring-offset-2 ring-offset-[var(--card)] has-checked:ring-2 has-focus-visible:ring-3"
-        key={swatch}
-        style={{ backgroundColor: swatch }}
-        title={COLOR_NAMES[swatch]}
-      >
-        <span className="sr-only">{COLOR_NAMES[swatch]}</span>
-        <input
-          checked={color === swatch}
-          className="sr-only"
-          name={label}
-          onChange={() => {
-            onPick(swatch);
-          }}
-          type="radio"
-          value={swatch}
-        />
-      </label>
-    ))}
-  </fieldset>
+  <ChoiceGroup
+    choices={PROFILE_COLORS.map((swatch) => ({
+      children: <span className="sr-only">{COLOR_NAMES[swatch]}</span>,
+      style: { backgroundColor: swatch },
+      title: COLOR_NAMES[swatch],
+      value: swatch,
+    }))}
+    legend={label}
+    name={label}
+    onChange={onPick}
+    value={color}
+    variant="swatches"
+  />
 );
 
 const RemoveDialog = ({

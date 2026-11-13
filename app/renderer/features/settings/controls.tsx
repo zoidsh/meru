@@ -9,6 +9,7 @@ import { moveItem } from "../../../core/engines/ordering.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Button } from "../../ui/button.tsx";
+import { ChoiceGroup } from "../../ui/choice-group.tsx";
 import { Input } from "../../ui/input.tsx";
 import { Switch } from "../../ui/switch.tsx";
 import { useDebounced } from "../../use-debounced.ts";
@@ -57,31 +58,18 @@ export const ChoiceControl = ({
   readonly values: readonly string[];
   readonly names: ReadonlyMap<string, Message>;
 }) => (
-  <fieldset
-    className="bg-muted inline-flex shrink-0 gap-0.5 rounded-lg p-0.5"
+  <ChoiceGroup
+    choices={values.map((option) => ({
+      children: names.get(option) ?? option,
+      value: option,
+    }))}
     disabled={disabled}
     id={id}
-  >
-    <legend className="sr-only">{label}</legend>
-    {values.map((option) => (
-      <label
-        className="has-checked:bg-background has-focus-visible:ring-ring/50 inline-flex h-7 cursor-pointer items-center rounded-md px-2.5 text-[0.8rem] font-medium select-none has-checked:shadow-sm has-focus-visible:ring-3 has-disabled:cursor-not-allowed has-disabled:opacity-50"
-        key={option}
-      >
-        <input
-          checked={value === option}
-          className="sr-only"
-          name={id}
-          onChange={() => {
-            onChange(option);
-          }}
-          type="radio"
-          value={option}
-        />
-        {names.get(option) ?? option}
-      </label>
-    ))}
-  </fieldset>
+    legend={label}
+    name={id}
+    onChange={onChange}
+    value={typeof value === "string" ? value : undefined}
+  />
 );
 
 /** Text typed into an input, written once typing pauses while the schema takes it, and put back to the value in force when the input loses focus. */
