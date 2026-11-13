@@ -1,5 +1,6 @@
 import { clamp } from "es-toolkit";
 
+import type { TitleBarOverlay } from "../../core/engines/chrome.ts";
 import type { Unsubscribe, ViewPort, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
 
@@ -8,6 +9,9 @@ let nextContentsId = 1;
 export class FakeWindow implements WindowPort {
   readonly contentsId: number;
   loaded: string | undefined;
+  query: Readonly<Record<string, string>> | undefined;
+  background: string | undefined;
+  overlay: TitleBarOverlay | undefined;
   shown: "active" | "inactive" | undefined;
   #size: { width: number; height: number };
   #children: ViewPort[] = [];
@@ -28,9 +32,21 @@ export class FakeWindow implements WindowPort {
     await Promise.resolve();
   };
 
-  readonly loadFile = async (path: string) => {
+  readonly loadFile = async (
+    path: string,
+    query: Readonly<Record<string, string>>
+  ) => {
     this.loaded = path;
+    this.query = query;
     await Promise.resolve();
+  };
+
+  readonly setBackgroundColor = (color: string) => {
+    this.background = color;
+  };
+
+  readonly setTitleBarOverlay = (overlay: TitleBarOverlay) => {
+    this.overlay = overlay;
   };
 
   readonly show = () => {

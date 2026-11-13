@@ -76,6 +76,9 @@ export const firstProfiles = (profileId: string): ProfilesState => ({
   ],
 });
 
+const isChromePage = (page: Page) =>
+  new URL(page.url()).pathname.endsWith("/chrome.html");
+
 export const launch = async ({
   env = {},
   settings,
@@ -105,14 +108,8 @@ export const launch = async ({
     },
   });
   // Every pane is a page to Playwright as well, so the chrome page is told apart by its URL.
-  await expect
-    .poll(() =>
-      app.windows().some((page) => page.url().endsWith("chrome.html"))
-    )
-    .toBeTruthy();
-  const chrome = app
-    .windows()
-    .find((page) => page.url().endsWith("chrome.html"));
+  await expect.poll(() => app.windows().some(isChromePage)).toBeTruthy();
+  const chrome = app.windows().find(isChromePage);
   if (chrome === undefined) {
     throw new Error("The chrome page went away");
   }

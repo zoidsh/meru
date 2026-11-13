@@ -1,0 +1,85 @@
+import type { Rect } from "../records/rect.ts";
+
+export type Theme = "light" | "dark";
+
+/** The height of the titlebar row across the window's top, which the window's own controls are centred on. */
+export const TITLEBAR_HEIGHT = 40;
+
+export interface ChromeColors {
+  readonly background: string;
+  readonly foreground: string;
+}
+
+/** The chrome's ground and ink, as hex, which is all a window's background and its title bar overlay take. */
+export const chromeColors = (theme: Theme): ChromeColors =>
+  theme === "dark"
+    ? { background: "#0a0a0a", foreground: "#fafafa" }
+    : { background: "#ffffff", foreground: "#0a0a0a" };
+
+export interface TitleBarOverlay {
+  readonly color: string;
+  readonly symbolColor: string;
+  readonly height: number;
+}
+
+export interface TitleBar {
+  readonly style: "hiddenInset" | "hidden";
+  readonly trafficLights: { readonly x: number; readonly y: number } | null;
+  /** The window controls Windows and Linux draw over the page; null where the platform draws none. */
+  readonly overlay: TitleBarOverlay | null;
+}
+
+// `hiddenInset` pins the lights 11px from the top and skips the centring `titleBarOverlay.height` would do, so centring them on a taller row takes an explicit position; x repeats Electron's own inset, so only the height moves.
+const TRAFFIC_LIGHT_HEIGHT = 12;
+const TRAFFIC_LIGHT_X = 12;
+
+export const titleBarOf = (options: {
+  readonly platform: string;
+  readonly theme: Theme;
+  /** Whether a Linux window draws its controls, which some window managers have no room for. */
+  readonly linuxControls: boolean;
+}): TitleBar => {
+  const { platform, theme, linuxControls } = options;
+  if (platform === "darwin") {
+    return {
+      overlay: null,
+      style: "hiddenInset",
+      trafficLights: {
+        x: TRAFFIC_LIGHT_X,
+        y: (TITLEBAR_HEIGHT - TRAFFIC_LIGHT_HEIGHT) / 2,
+      },
+    };
+  }
+  const colors = chromeColors(theme);
+  return {
+    // One pixel short of the row, so the titlebar's bottom border shows under the controls.
+    overlay:
+      platform === "linux" && !linuxControls
+        ? null
+        : {
+            color: colors.background,
+            height: TITLEBAR_HEIGHT - 1,
+            symbolColor: colors.foreground,
+          },
+    style: "hidden",
+    trafficLights: null,
+  };
+};
+
+/** How much of the window's content area the chrome takes before the panes: the titlebar above them, the sidebar to their left. */
+export interface ChromeInsets {
+  readonly top: number;
+  readonly left: number;
+}
+
+/** The part of the content area the panes are laid out in. */
+export const stageArea = (content: Rect, insets: ChromeInsets): Rect => {
+  const top = Math.min(insets.top, content.height);
+  const left = Math.min(insets.left, content.width);
+  return {
+    height: content.height - top,
+    width: content.width - left,
+    x: content.x + left,
+    y: content.y + top,
+  };
+};

@@ -25,6 +25,7 @@ describe("the settings registry", () => {
       | "stage.zoom"
       | "updater.channel"
       | "updater.intervalHours"
+      | "window.linuxControls"
     >();
     expectTypeOf<SettingValue<"appearance.style">>().toEqualTypeOf<
       "modern" | "classic"

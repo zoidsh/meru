@@ -10,6 +10,11 @@ import {
 } from "../features/settings/use-setting.ts";
 import { Dividers } from "../features/stage/dividers.tsx";
 import { syncedStore } from "../store.ts";
+import { followTheme } from "../theme.ts";
+
+followTheme(document.documentElement, location.href, (query) =>
+  matchMedia(query)
+);
 
 const client = createClient(window, rendererSurface);
 const store = syncedStore(

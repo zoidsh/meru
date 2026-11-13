@@ -209,6 +209,7 @@ const start = async () => {
     arguments: pageSurface === testSurface ? [TEST_SURFACE_ARGUMENT] : [],
     background: process.env.MERU_BACKGROUND === "1",
     bounds: windows.mainBounds(),
+    linuxControls: settings.get("window.linuxControls"),
     onCreated: (created) => {
       dispatcher.assign(created.contentsId, pageSurface);
       windows.attachMain(created);

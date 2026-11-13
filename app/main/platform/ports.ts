@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import {
   app,
   BrowserWindow,
+  nativeTheme,
   net,
   powerMonitor,
   screen,
@@ -22,10 +23,15 @@ import { onlinePort } from "./online.ts";
 import { handleOf, portOf, viewFactory } from "./views.ts";
 
 const createWindow = (spec: WindowSpec): WindowPort => {
+  const { titleBar } = spec;
   const window = new BrowserWindow({
     ...spec.bounds,
+    backgroundColor: spec.background,
     show: false,
     title: spec.title,
+    titleBarOverlay: titleBar.overlay ?? false,
+    titleBarStyle: titleBar.style,
+    trafficLightPosition: titleBar.trafficLights ?? undefined,
     webPreferences: {
       additionalArguments: [...spec.arguments],
       contextIsolation: true,
@@ -51,8 +57,8 @@ const createWindow = (spec: WindowSpec): WindowPort => {
       return { height, width, x: 0, y: 0 };
     },
     contentsId: window.webContents.id,
-    loadFile: async (path) => {
-      await window.loadFile(path);
+    loadFile: async (path, query) => {
+      await window.loadFile(path, { query: { ...query } });
     },
     loadUrl: async (url) => {
       await window.loadURL(url);
@@ -85,6 +91,12 @@ const createWindow = (spec: WindowSpec): WindowPort => {
     },
     removeChildView: (view) => {
       content.removeChildView(handleOf(view));
+    },
+    setBackgroundColor: (color) => {
+      window.setBackgroundColor(color);
+    },
+    setTitleBarOverlay: (overlay) => {
+      window.setTitleBarOverlay(overlay);
     },
     show: () => {
       window.show();
@@ -182,6 +194,15 @@ export const createElectronPorts = (): Ports => ({
       const found = session.fromPartition(partition);
       await found.clearStorageData();
       await found.clearCache();
+    },
+  },
+  theme: {
+    dark: () => nativeTheme.shouldUseDarkColors,
+    onChange: (listener) => {
+      nativeTheme.on("updated", listener);
+      return () => {
+        nativeTheme.off("updated", listener);
+      };
     },
   },
   views: viewFactory,

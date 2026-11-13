@@ -1,3 +1,4 @@
+import type { TitleBar, TitleBarOverlay } from "./engines/chrome.ts";
 import type { Rect } from "./records/rect.ts";
 import type { Result } from "./result.ts";
 
@@ -76,6 +77,9 @@ export interface WindowSpec {
   readonly preload: string;
   /** Extra command-line arguments the page's renderer process, and so its preload, sees. */
   readonly arguments: readonly string[];
+  readonly titleBar: TitleBar;
+  /** What shows before the page paints, as hex. */
+  readonly background: string;
 }
 
 export interface WindowFactoryPort {
@@ -85,7 +89,13 @@ export interface WindowFactoryPort {
 export interface WindowPort {
   readonly contentsId: number;
   readonly loadUrl: (url: string) => Promise<void>;
-  readonly loadFile: (path: string) => Promise<void>;
+  readonly loadFile: (
+    path: string,
+    query: Readonly<Record<string, string>>
+  ) => Promise<void>;
+  readonly setBackgroundColor: (color: string) => void;
+  /** Only for a window created with an overlay. */
+  readonly setTitleBarOverlay: (overlay: TitleBarOverlay) => void;
   readonly show: () => void;
   /** Shows the window without activating the app, so it opens behind whatever is in front. */
   readonly showInactive: () => void;
@@ -167,6 +177,12 @@ export interface DisplayPort {
   readonly displays: () => readonly Display[];
 }
 
+/** Whether the operating system asks for dark colours. */
+export interface ThemePort {
+  readonly dark: () => boolean;
+  readonly onChange: (listener: () => void) => Unsubscribe;
+}
+
 /** The browser sessions panes load in, one partition per profile. */
 export interface SessionPort {
   /** Deletes everything the partition stored: cookies, storage and cache. */
@@ -183,6 +199,7 @@ export interface Ports {
   readonly online: OnlinePort;
   readonly power: PowerPort;
   readonly sessions: SessionPort;
+  readonly theme: ThemePort;
   readonly views: ViewFactoryPort;
   readonly windows: WindowFactoryPort;
 }
