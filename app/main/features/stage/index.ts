@@ -6,7 +6,7 @@ import type {
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
-import type { Point, Rect } from "../../../core/records/rect.ts";
+import type { Point } from "../../../core/records/rect.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
@@ -23,11 +23,6 @@ import type { StageError, StageProfiles } from "./stage.ts";
 
 export type { StageError, StageProfiles } from "./stage.ts";
 export { Stage } from "./stage.ts";
-
-export interface StageInspection {
-  readonly views: Rect[];
-  readonly zoom: number[];
-}
 
 export interface StagesOptions {
   readonly views: ViewFactoryPort;
@@ -206,21 +201,13 @@ export class Stages {
     return this.#with(sender, (found) => ok(found.snapshot()));
   }
 
-  /** What every web contents of every stage shows. */
-  roles(): { readonly contentsId: number; readonly name: string }[] {
-    return [...new Set(this.#bySender.values())].flatMap(
-      (found) => found.roles
-    );
+  /** The stage of the window whose chrome page is `sender`. */
+  find(sender: number): Stage | undefined {
+    return this.#bySender.get(sender);
   }
 
-  /** What the end-to-end suite asserts on beside the stage: the bounds Electron reports for each child view, and each pane's zoom. */
-  inspect(sender: number): Result<StageInspection, StageError> {
-    return this.#with(sender, (found) =>
-      ok({
-        views: found.childBounds(),
-        zoom: found.zoomFactors,
-      })
-    );
+  get all(): readonly Stage[] {
+    return [...new Set(this.#bySender.values())];
   }
 
   #with<T>(

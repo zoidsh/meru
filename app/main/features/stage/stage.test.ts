@@ -27,6 +27,7 @@ import { IpcDispatcher } from "../../shell/ipc.ts";
 import { Profiles } from "../profiles/index.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { Stages } from "./index.ts";
+import type { Stage } from "./stage.ts";
 
 const GMAIL = "https://mail.google.com/";
 
@@ -128,6 +129,9 @@ const setup = async (style: Style = "modern") => {
   };
 };
 
+const zoomOf = (stage: Stage) =>
+  stage.panes().map(({ view }) => view.zoomFactor());
+
 const childBounds = (window: FakeWindow) =>
   window.childViews().map((view) => view.bounds());
 
@@ -184,9 +188,9 @@ describe(Stages, () => {
     expect(views.alive.map((view) => view.zoom)).toStrictEqual([1]);
     settings.set("stage.zoom", 1.25, profileId);
     stages.split(id, "vertical");
-    expect(stage.zoomFactors).toStrictEqual([1.25, 1.25]);
+    expect(zoomOf(stage)).toStrictEqual([1.25, 1.25]);
     settings.set("stage.zoom", undefined, profileId);
-    expect(stage.zoomFactors).toStrictEqual([1, 1]);
+    expect(zoomOf(stage)).toStrictEqual([1, 1]);
   });
 
   it("splits the focused pane with a new tab of its app, into two views in layout order that tile the window", async () => {
@@ -280,31 +284,14 @@ describe(Stages, () => {
     expect(window.childViews()).toHaveLength(1);
   });
 
-  it("moves a view by removing it and inserting it again", async () => {
-    const { window, views, stages, stage, id, paneIds } = await setup();
-    stages.split(id, "vertical");
-    const [first, second] = views.created;
-    const before = window.effects.length;
-
-    expect(stage.setFullscreen(paneIds()[0]).ok).toBeTruthy();
-
-    expect(window.childViews()).toStrictEqual([second, first]);
-    expect(window.effects.slice(before)).toStrictEqual([
-      { kind: "remove", view: second },
-      { index: 0, kind: "add", view: second },
-    ]);
-    expect(first?.bounds()).toStrictEqual(window.contentBounds());
-    expect(first?.radius).toBe(0);
-  });
-
   it("follows a window resize with bounds alone", async () => {
     const { window, stages, id, changes } = await setup();
     stages.split(id, "vertical");
-    const before = window.effects.length;
+    const before = window.childViews();
 
     window.resize(1000, 600);
 
-    expect(window.effects).toHaveLength(before);
+    expect(window.childViews()).toBe(before);
     expect(childBounds(window)).toStrictEqual([
       { height: 584, width: 488, x: 8, y: 8 },
       { height: 584, width: 488, x: 504, y: 8 },

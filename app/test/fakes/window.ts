@@ -2,15 +2,10 @@ import type { Unsubscribe, ViewPort, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
 import { clamp } from "../../core/values.ts";
 
-export type ChildViewEffect =
-  | { readonly kind: "add"; readonly view: ViewPort; readonly index: number }
-  | { readonly kind: "remove"; readonly view: ViewPort };
-
 let nextContentsId = 1;
 
 export class FakeWindow implements WindowPort {
   readonly contentsId: number;
-  readonly effects: ChildViewEffect[] = [];
   loaded: string | undefined;
   shown: "active" | "inactive" | undefined;
   #size: { width: number; height: number };
@@ -66,7 +61,6 @@ export class FakeWindow implements WindowPort {
 
   // Electron's View.addChildView: an attached view moves to the top and the index is ignored.
   readonly addChildView = (view: ViewPort, index: number) => {
-    this.effects.push({ index, kind: "add", view });
     if (this.#children.includes(view)) {
       this.#children = [
         ...this.#children.filter((child) => child !== view),
@@ -79,7 +73,6 @@ export class FakeWindow implements WindowPort {
   };
 
   readonly removeChildView = (view: ViewPort) => {
-    this.effects.push({ kind: "remove", view });
     this.#children = this.#children.filter((child) => child !== view);
   };
 

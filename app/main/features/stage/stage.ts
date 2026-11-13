@@ -8,6 +8,7 @@ import {
   resize,
   STYLE_METRICS,
 } from "../../../core/engines/layout.ts";
+import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
 import type {
   Unsubscribe,
   ViewFactoryPort,
@@ -17,7 +18,7 @@ import type {
 import type { Group } from "../../../core/records/group.ts";
 import type { Layout, Orientation } from "../../../core/records/layout.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
-import type { Point, Rect } from "../../../core/records/rect.ts";
+import type { Point } from "../../../core/records/rect.ts";
 import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
@@ -71,14 +72,6 @@ const TRANSPARENT = "#00000000";
 const dragPage = (orientation: Orientation) =>
   `data:text/html,<html style="cursor:${orientation === "vertical" ? "col-resize" : "row-resize"};height:100%"></html>`;
 
-const hostOf = (url: string) => {
-  try {
-    return new URL(url).host || url;
-  } catch {
-    return url;
-  }
-};
-
 export class Stage {
   readonly #options: StageOptions;
   readonly #views = new Map<string, ViewPort>();
@@ -88,7 +81,6 @@ export class Stage {
   #overlays: ViewPort[] = [];
   #retired: ViewPort[] = [];
   #focused: string | undefined;
-  #fullscreen: string | undefined;
   #drag: Drag | undefined;
   #published: StageSnapshot | undefined;
 
@@ -126,9 +118,6 @@ export class Stage {
     const order = panes(this.#layout());
     if (!order.some((pane) => pane.paneId === this.#focused)) {
       this.#focused = order[0]?.paneId;
-    }
-    if (!order.some((pane) => pane.paneId === this.#fullscreen)) {
-      this.#fullscreen = undefined;
     }
     this.#update();
   }
@@ -225,23 +214,11 @@ export class Stage {
     return target === undefined ? err("unknownPane") : this.focusPane(target);
   }
 
-  setFullscreen(paneId: string | undefined): Result<undefined, StageError> {
-    if (paneId !== undefined && !this.#views.has(paneId)) {
-      return err("unknownPane");
-    }
-    this.#fullscreen = paneId;
-    this.#update();
-    return ok(undefined);
-  }
-
   // Pointer events over a pane go to that pane's renderer, so the chrome page cannot follow a drag across one by itself; a transparent view over every pane catches the pointer for the drag's duration.
   beginDrag(splitId: string): Result<undefined, StageError> {
-    const divider = layout(
-      this.#layout(),
-      this.#options.window.contentBounds(),
-      this.#options.style(),
-      this.#fullscreen
-    ).dividers.find((found) => found.splitId === splitId);
+    const divider = this.#arrangement().dividers.find(
+      (found) => found.splitId === splitId
+    );
     if (divider === undefined) {
       return err("unknownSplit");
     }
@@ -317,42 +294,25 @@ export class Stage {
     }
   }
 
-  /** What each web contents of this stage shows, for a measurement to name its process by. */
-  get roles(): { readonly contentsId: number; readonly name: string }[] {
-    return [
-      { contentsId: this.#options.window.contentsId, name: "chrome page" },
-      ...panes(this.#layout()).flatMap((pane) => {
-        const view = this.#views.get(pane.paneId);
-        const tab = this.#tabOf(pane.paneId);
-        return view === undefined || tab === undefined
-          ? []
-          : [{ contentsId: view.contentsId, name: `pane ${hostOf(tab.url)}` }];
-      }),
-      ...this.#overlays.map((overlay) => ({
-        contentsId: overlay.contentsId,
-        name: "overlay",
-      })),
-    ];
+  get window(): WindowPort {
+    return this.#options.window;
   }
 
-  get zoomFactors(): number[] {
+  /** Each pane's view with the tab it shows, in layout order. */
+  panes(): { readonly view: ViewPort; readonly tab: Tab }[] {
     return panes(this.#layout()).flatMap((pane) => {
       const view = this.#views.get(pane.paneId);
-      return view === undefined ? [] : [view.zoomFactor()];
+      const tab = this.#tabOf(pane.paneId);
+      return view === undefined || tab === undefined ? [] : [{ tab, view }];
     });
   }
 
-  get dragging(): boolean {
-    return this.#drag !== undefined;
+  get overlays(): readonly ViewPort[] {
+    return this.#overlays;
   }
 
   snapshot(): StageSnapshot {
-    const arrangement = layout(
-      this.#layout(),
-      this.#options.window.contentBounds(),
-      this.#options.style(),
-      this.#fullscreen
-    );
+    const arrangement = this.#arrangement();
     return {
       dividers: [...arrangement.dividers],
       focusedPaneId: this.#focused ?? null,
@@ -362,28 +322,6 @@ export class Stage {
       })),
       style: this.#options.style(),
     };
-  }
-
-  stack(): ViewPort[] {
-    const paneViews = panes(this.#layout()).flatMap((pane) => {
-      const view = this.#views.get(pane.paneId);
-      return view === undefined || pane.paneId === this.#fullscreen
-        ? []
-        : [view];
-    });
-    const fullscreen =
-      this.#fullscreen === undefined
-        ? undefined
-        : this.#views.get(this.#fullscreen);
-    return [
-      ...paneViews,
-      ...this.#overlays,
-      ...(fullscreen === undefined ? [] : [fullscreen]),
-    ];
-  }
-
-  childBounds(): Rect[] {
-    return this.#options.window.childViews().map((view) => view.bounds());
   }
 
   dispose(): void {
@@ -412,6 +350,14 @@ export class Stage {
 
   #layout(): Layout {
     return this.#drag?.layout ?? this.#read()?.layout ?? null;
+  }
+
+  #arrangement() {
+    return layout(
+      this.#layout(),
+      this.#options.window.contentBounds(),
+      this.#options.style()
+    );
   }
 
   #tabOf(paneId: string | undefined): Tab | undefined {
@@ -483,24 +429,18 @@ export class Stage {
     }
   }
 
-  // Electron's addChildView moves an attached view to the top whatever index it is given, so a view out of place is removed and inserted again.
   #reconcile(): void {
     const { window } = this.#options;
-    const wanted = this.stack();
-    for (const view of window.childViews()) {
-      if (!wanted.includes(view)) {
-        window.removeChildView(view);
+    const wanted = stackOf(
+      this.panes().map(({ view }) => view),
+      this.#overlays
+    );
+    for (const operation of stackPlan(window.childViews(), wanted)) {
+      if (operation.kind === "remove") {
+        window.removeChildView(operation.view);
+      } else {
+        window.addChildView(operation.view, operation.index);
       }
-    }
-    for (const [index, view] of wanted.entries()) {
-      const current = window.childViews();
-      if (current[index] === view) {
-        continue;
-      }
-      if (current.includes(view)) {
-        window.removeChildView(view);
-      }
-      window.addChildView(view, index);
     }
     for (const view of this.#retired.splice(0)) {
       view.destroy();
@@ -509,19 +449,14 @@ export class Stage {
 
   #arrange(publish = true): void {
     const bounds = this.#options.window.contentBounds();
-    const arrangement = layout(
-      this.#layout(),
-      bounds,
-      this.#options.style(),
-      this.#fullscreen
-    );
+    const arrangement = this.#arrangement();
     const { radius } = STYLE_METRICS[this.#options.style()];
     for (const [paneId, view] of this.#views) {
       const rect = arrangement.panes.get(paneId);
       if (rect !== undefined) {
         view.setBounds(rect);
       }
-      view.setBorderRadius(paneId === this.#fullscreen ? 0 : radius);
+      view.setBorderRadius(radius);
     }
     for (const overlay of this.#overlays) {
       overlay.setBounds(bounds);
