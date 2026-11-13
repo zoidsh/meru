@@ -28,7 +28,7 @@ const PROFILES = {
   profiles: [profileOf("personal", { status: { kind: "ok", unreadCount: 4 } })],
   selectedProfileId: "personal",
   tabs: [
-    tabOf("mail", "gmail", "personal", false),
+    { ...tabOf("mail", "gmail", "personal", false), pinned: true },
     tabOf("calendar", "calendar"),
     tabOf("drive", "drive"),
   ],
@@ -132,6 +132,30 @@ describe(Sidebar, () => {
       [false, true, true],
       [{ tabId: "calendar" }, { tabId: "drive" }],
     ]);
+  });
+
+  it("draws the pinned Gmail row as its icon alone, outlined, with no drag handle or close control", async () => {
+    const { container } = mount();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const row = (id: string) =>
+      container.querySelector<HTMLElement>(`[data-tab-id=${id}]`);
+    const draggable = (id: string) =>
+      row(id)
+        ?.querySelector("[role=tab]")
+        ?.hasAttribute("aria-roledescription");
+    expect({
+      close: row("mail")?.querySelector("[data-close]"),
+      draggable: [draggable("mail"), draggable("calendar")],
+      pinned: row("mail")?.dataset.pinned,
+      text: row("mail")?.querySelector("[role=tab]")?.textContent,
+    }).toStrictEqual({
+      close: null,
+      draggable: [false, true],
+      pinned: "",
+      text: "",
+    });
   });
 
   it("is a tablist whose active tab holds the one tab stop, and moves focus through the tabs with the arrow keys, Home and End", () => {

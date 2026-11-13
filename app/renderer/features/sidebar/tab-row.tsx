@@ -42,14 +42,21 @@ const GmailBadge = ({ mark }: { readonly mark: GmailMark | undefined }) => {
   );
 };
 
-const DropLine = ({ at }: { readonly at: "before" | "after" }) => (
-  <div
-    className={cn(
-      "bg-primary absolute inset-x-0 h-0.5 rounded-full",
-      at === "before" ? "-top-0.5" : "-bottom-0.5"
-    )}
-  />
-);
+const DropLine = ({
+  at,
+  zone,
+}: {
+  readonly at: "before" | "after";
+  readonly zone: DropTarget["zone"] | undefined;
+}) =>
+  zone === at ? (
+    <div
+      className={cn(
+        "bg-primary absolute inset-x-0 h-0.5 rounded-full",
+        at === "before" ? "-top-0.5" : "-bottom-0.5"
+      )}
+    />
+  ) : null;
 
 const CloseButton = ({
   wide,
@@ -76,7 +83,20 @@ const CloseButton = ({
   </Button>
 );
 
-/** One tab's row in the sidebar: its icon, its title when wide, Gmail's marks, and the close control hovering reveals. */
+const variantOf = (active: boolean, pinned: boolean) => {
+  if (active) {
+    return "secondary";
+  }
+  return pinned ? "outline" : "ghost";
+};
+
+const Title = ({ tab }: { readonly tab: Tab }) => (
+  <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
+    {tab.title ?? titleOf(tab)}
+  </span>
+);
+
+/** One tab's row in the sidebar: its icon, its title when wide, Gmail's marks, and the close control hovering reveals; a pinned tab's row is its icon alone, outlined while inactive and across the strip when wide, as 3.x draws a pinned tab, and is no drag source. */
 export const TabRowButton = ({
   tab,
   size,
@@ -95,9 +115,12 @@ export const TabRowButton = ({
   readonly drop: DropTarget | undefined;
 }) => {
   const client = useClient();
-  const { ref, isDragging } = useDraggable({ id: tab.id });
+  const { pinned } = tab;
+  const { ref, isDragging } = useDraggable({ disabled: pinned, id: tab.id });
   const { ref: dropRef } = useDroppable({ id: tab.id });
   const wide = size === "wide";
+  const titled = wide && !pinned;
+  const onto = drop?.zone === "onto";
   const close = () => {
     void client.invoke(tabChannels.close, { tabId: tab.id });
   };
@@ -105,18 +128,20 @@ export const TabRowButton = ({
     <div
       className="group relative"
       data-drop={drop?.zone}
+      data-pinned={pinned ? "" : undefined}
       data-tab-id={tab.id}
       ref={dropRef}
     >
-      {drop?.zone === "before" ? <DropLine at="before" /> : null}
+      <DropLine at="before" zone={drop?.zone} />
       <Button
         aria-selected={active}
         className={cn(
           "touch-none transition-colors",
-          wide && "w-full justify-start",
-          wide && closeable && "group-hover:pr-7",
+          wide && "w-full",
+          titled && "justify-start",
+          titled && closeable && "group-hover:pr-7",
           isDragging && "opacity-50",
-          drop?.zone === "onto" && "ring-primary/50 ring-2"
+          onto && "ring-primary/50 ring-2"
         )}
         data-active={active || undefined}
         onAuxClick={(event) => {
@@ -127,23 +152,19 @@ export const TabRowButton = ({
         onClick={() => {
           void client.invoke(tabChannels.focus, { tabId: tab.id });
         }}
-        ref={ref}
+        ref={pinned ? undefined : ref}
         role="tab"
-        size={wide ? "sm" : "icon"}
+        size={titled ? "sm" : "icon"}
         tabIndex={focusable ? 0 : -1}
         title={titleOf(tab)}
-        variant={active ? "secondary" : "ghost"}
+        variant={variantOf(active, pinned)}
       >
         <AppIcon className="size-4" icon={appById(tab.appId)?.icon} />
-        {wide ? (
-          <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
-            {tab.title ?? titleOf(tab)}
-          </span>
-        ) : null}
+        {titled ? <Title tab={tab} /> : null}
       </Button>
       <GmailBadge mark={gmail} />
       {closeable ? <CloseButton onClose={close} wide={wide} /> : null}
-      {drop?.zone === "after" ? <DropLine at="after" /> : null}
+      <DropLine at="after" zone={drop?.zone} />
     </div>
   );
 };
