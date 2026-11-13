@@ -624,8 +624,8 @@ describe(movePane, () => {
 
 describe(swap, () => {
   it.each(cases.filter(({ tree }) => panes(tree).length > 1))(
-    "trades the two panes' places and leaves the rest (seed $seed)",
-    ({ tree, draw }) => {
+    "trades the two panes' places, leaves the rest and still tiles (seed $seed)",
+    ({ tree, rect, style, draw }) => {
       const order = panes(tree);
       const [a, b] = twoPanes(draw, tree);
       const swapped = swap(tree, a.paneId, b.paneId);
@@ -639,6 +639,7 @@ describe(swap, () => {
         })
       );
       expect(splits(swapped ?? null)).toHaveLength(splits(tree).length);
+      expect(tilesExactly(swapped ?? null, rect, style)).toBeTruthy();
       expect(swap(swapped ?? null, a.paneId, b.paneId)).toStrictEqual(tree);
     }
   );
