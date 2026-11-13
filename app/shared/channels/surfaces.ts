@@ -7,6 +7,7 @@ import { entitlement, entitlementPushes } from "./entitlement.ts";
 import { measure } from "./measure.ts";
 import { profiles, profilesPushes, tabs } from "./profiles.ts";
 import { settings, settingsPushes } from "./settings.ts";
+import { sidebar, sidebarPushes } from "./sidebar.ts";
 import { stage, stagePushes } from "./stage.ts";
 import { updater, updaterPushes } from "./updater.ts";
 
@@ -17,8 +18,18 @@ export const rendererSurface = defineSurface({
     entitlementPushes,
     updaterPushes,
     profilesPushes,
+    sidebarPushes,
   ],
-  requests: [stage, settings, commands, entitlement, updater, profiles, tabs],
+  requests: [
+    stage,
+    settings,
+    commands,
+    entitlement,
+    updater,
+    profiles,
+    tabs,
+    sidebar,
+  ],
 });
 
 export type RendererSurface = typeof rendererSurface;

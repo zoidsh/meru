@@ -6,6 +6,7 @@ import type {
 } from "../../core/engines/settings.ts";
 import { appearanceSettings } from "../../main/features/appearance/settings.ts";
 import { shortcutsSettings } from "../../main/features/shortcuts/settings.ts";
+import { sidebarSettings } from "../../main/features/sidebar/settings.ts";
 import { stageSettings } from "../../main/features/stage/settings.ts";
 import { updaterSettings } from "../../main/features/updater/settings.ts";
 import { windowsSettings } from "../../main/features/windows/settings.ts";
@@ -14,6 +15,7 @@ import type { Setting } from "./define.ts";
 export const registry = [
   ...appearanceSettings,
   ...shortcutsSettings,
+  ...sidebarSettings,
   ...stageSettings,
   ...updaterSettings,
   ...windowsSettings,

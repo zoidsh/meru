@@ -127,7 +127,8 @@ const setup = async (platform = "darwin") => {
         ? entriesOf(section)
         : []
     );
-  const actions = () => submenu("View");
+  const actions = () =>
+    submenu("View").filter((entry) => entry.id.startsWith("stage."));
   const action = (id: string) => {
     const found = [...actions(), ...submenu("Profiles")].find(
       (candidate) => candidate.id === id

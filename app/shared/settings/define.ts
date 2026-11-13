@@ -4,7 +4,12 @@ import type { SettingScope, SettingSpec } from "../../core/engines/settings.ts";
 import type { DottedKey } from "../key.ts";
 import type { Message } from "../msg.ts";
 
-export type SettingsPage = "appearance" | "panes" | "shortcuts" | "updates";
+export type SettingsPage =
+  | "appearance"
+  | "panes"
+  | "sidebar"
+  | "shortcuts"
+  | "updates";
 
 export interface Setting<
   K extends string = string,

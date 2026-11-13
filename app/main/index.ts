@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { TITLEBAR_HEIGHT } from "../core/engines/chrome.ts";
+import { sidebarInset } from "../core/engines/sidebar.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
@@ -15,6 +16,7 @@ import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Profiles } from "./features/profiles/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
+import { Sidebars } from "./features/sidebar/index.ts";
 import { Stages } from "./features/stage/index.ts";
 import { Updater } from "./features/updater/index.ts";
 import { Windows } from "./features/windows/index.ts";
@@ -177,7 +179,10 @@ const start = async () => {
     commands,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     events,
-    insets: () => ({ left: 0, top: TITLEBAR_HEIGHT }),
+    insets: () => ({
+      left: sidebarInset(sidebars.current()),
+      top: TITLEBAR_HEIGHT,
+    }),
     onError: report,
     profiles,
     registrar: dispatcher,
@@ -191,6 +196,17 @@ const start = async () => {
     },
   });
   stages.start();
+  const sidebars = new Sidebars({
+    commands,
+    events,
+    onChange: () => {
+      stages.relayout();
+    },
+    profiles,
+    registrar: dispatcher,
+    settings,
+  });
+  sidebars.start();
   commands.provide((windowId) => {
     const id = windowId ?? mainWindowId;
     if (id === undefined) {

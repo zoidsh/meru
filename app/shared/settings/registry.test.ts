@@ -17,11 +17,16 @@ describe("the settings registry", () => {
     expect(entry.schema.safeParse(entry.default).success).toBeTruthy();
   });
 
-  it("lets a profile override only the stage's zoom", () => {
-    expectTypeOf<ProfileSettingKey>().toEqualTypeOf<"stage.zoom">();
+  it("lets a profile override only what is about its own page", () => {
+    expectTypeOf<ProfileSettingKey>().toEqualTypeOf<
+      "sidebar.width" | "stage.zoom"
+    >();
     expectTypeOf<SettingKey>().toEqualTypeOf<
       | "appearance.style"
       | "shortcuts.bindings"
+      | "sidebar.gmailUnreadBadge"
+      | "sidebar.showWidthToggle"
+      | "sidebar.width"
       | "stage.zoom"
       | "updater.channel"
       | "updater.intervalHours"
