@@ -306,20 +306,22 @@ export class Profiles {
     return committed.ok ? ok(tab) : committed;
   }
 
-  /** The tab an app opens to in a profile: the profile's one tab of a single-instance app when it has it, else a new tab, as addTab adds it. */
+  /** The tab an app opens to in a profile: the profile's one tab of a single-instance app when it has it, else a new tab at `url`, or the app's start page, as addTab adds it. */
   openTab(
     profileId: string,
     appId: string,
-    placement?: Placement
+    placement?: Placement,
+    url?: string
   ): Result<Tab, ProfilesError> {
     const app = appById(appId);
     if (app === undefined) {
       return err("unknownApp");
     }
     const { ids } = this.#options;
+    const fresh = newTab(ids, profileId, app);
     const opened = openTab(
       this.state,
-      newTab(ids, profileId, app),
+      url === undefined ? fresh : { ...fresh, url },
       ids,
       isSingleInstanceId,
       placement
