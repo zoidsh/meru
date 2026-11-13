@@ -2,8 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { stage, stagePushes } from "../../shared/channels/stage.ts";
+import type { StageSnapshot } from "../../shared/channels/stage.ts";
 import { rendererSurface } from "../../shared/channels/surfaces.ts";
-import type { StageSnapshot } from "../../shared/stage.ts";
 import { createClient } from "../client.ts";
 import {
   createEntitlementStore,

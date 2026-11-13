@@ -13,8 +13,8 @@ import type { Result } from "../../../core/result.ts";
 import {
   profiles as profileChannels,
   tabs as tabChannels,
+  profilesSnapshotSchema,
 } from "../../../shared/channels/profiles.ts";
-import { profilesSnapshotSchema } from "../../../shared/profiles.ts";
 import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";

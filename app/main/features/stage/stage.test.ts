@@ -4,10 +4,12 @@ import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { drag } from "../../../shared/channels/drag.ts";
-import { stage as stageChannels } from "../../../shared/channels/stage.ts";
+import {
+  stage as stageChannels,
+  stageSnapshotSchema,
+} from "../../../shared/channels/stage.ts";
+import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import { dragSurface } from "../../../shared/channels/surfaces.ts";
-import { stageSnapshotSchema } from "../../../shared/stage.ts";
-import type { StageSnapshot } from "../../../shared/stage.ts";
 import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeCommandRegistrar } from "../../../test/fakes/commands.ts";

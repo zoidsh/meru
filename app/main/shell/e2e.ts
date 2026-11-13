@@ -4,7 +4,7 @@ import type { UpdateState } from "../../core/records/update.ts";
 import { ok } from "../../core/result.ts";
 import type { IpcRegistrar } from "../../shared/channels/define.ts";
 import { e2e } from "../../shared/channels/e2e.ts";
-import type { ProfilesSnapshot } from "../../shared/profiles.ts";
+import type { ProfilesSnapshot } from "../../shared/channels/profiles.ts";
 import type { Stages } from "../features/stage/index.ts";
 
 /** Answers the end-to-end suite's snapshot from the sender's stage, the menu as Electron holds it, the entitlement, the profiles and the update state. */

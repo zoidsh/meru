@@ -54,7 +54,7 @@ import {
   profilesPushes,
   tabs as tabChannels,
 } from "../../../shared/channels/profiles.ts";
-import type { ProfilesSnapshot } from "../../../shared/profiles.ts";
+import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
 import type { SettingsStore } from "../settings/index.ts";
 
 export const PROFILES_FILE = "profiles.json";

@@ -21,7 +21,7 @@ import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
-import type { StageSnapshot } from "../../../shared/stage.ts";
+import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import type { Profiles } from "../profiles/index.ts";
 
 export type StageError =

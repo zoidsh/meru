@@ -11,8 +11,8 @@ import {
 } from "../shared/channels/define.ts";
 import { e2e } from "../shared/channels/e2e.ts";
 import { stage, stagePushes } from "../shared/channels/stage.ts";
+import type { StageSnapshot } from "../shared/channels/stage.ts";
 import { rendererSurface } from "../shared/channels/surfaces.ts";
-import type { StageSnapshot } from "../shared/stage.ts";
 import { FakeBridge } from "../test/fakes/bridge.ts";
 import { createClient } from "./client.ts";
 
