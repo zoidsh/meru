@@ -6,6 +6,11 @@ import type { Theme } from "../../core/engines/chrome.ts";
 import type { Ports, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
 import type { IpcRegistrar } from "../../shared/channels/define.ts";
+import {
+  pageSurfaces,
+  surfaceArgument,
+} from "../../shared/channels/surfaces.ts";
+import type { PageSurfaceName } from "../../shared/channels/surfaces.ts";
 import { themePushes } from "../../shared/channels/theme.ts";
 
 export interface PageOptions {
@@ -36,11 +41,11 @@ export const pageUrl = (
 
 export interface MainWindowOptions {
   readonly ports: Pick<Ports, "lifecycle" | "theme" | "windows">;
-  /** Tells every page the theme changed. */
-  readonly registrar: Pick<IpcRegistrar, "broadcast">;
+  /** Gives the chrome page its surface, and tells every page the theme changed. */
+  readonly registrar: Pick<IpcRegistrar, "assign" | "broadcast">;
   readonly preload: string;
-  /** Passed to the chrome page's renderer process. */
-  readonly arguments: readonly string[];
+  /** The surface the chrome page's channels are allowed from, which its preload is told too. */
+  readonly surface: PageSurfaceName;
   /** Where the window opens on the screen, frame included. */
   readonly bounds: Rect;
   readonly pages: PageOptions;
@@ -61,7 +66,7 @@ export class MainWindow {
 
   async show(): Promise<WindowPort> {
     const {
-      arguments: args,
+      surface,
       ports,
       preload,
       bounds,
@@ -74,7 +79,7 @@ export class MainWindow {
     const { platform } = ports.lifecycle;
     const theme = (): Theme => (ports.theme.dark() ? "dark" : "light");
     const window = ports.windows.create({
-      arguments: args,
+      arguments: [surfaceArgument(surface)],
       background: chromeColors(theme()).background,
       bounds,
       preload,
@@ -95,6 +100,7 @@ export class MainWindow {
       registrar.broadcast(themePushes.changed, { theme: theme() });
     });
     window.onClosed(stopFollowing);
+    registrar.assign(window.contentsId, pageSurfaces[surface]);
     onCreated(window);
 
     await window.loadUrl(pageUrl(pages, "chrome.html"));

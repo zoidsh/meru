@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import type { WindowSpec } from "../../core/ports.ts";
 import { wireName } from "../../shared/channels/define.ts";
-import { chromeSurface } from "../../shared/channels/surfaces.ts";
+import { settingsPushes } from "../../shared/channels/settings.ts";
 import { themePushes } from "../../shared/channels/theme.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
@@ -26,12 +26,11 @@ const open = async (platform: string, devServer?: string) => {
     transport,
   });
   await new MainWindow({
-    arguments: [],
     background: true,
     bounds: { height: 800, width: 1200, x: 0, y: 0 },
     linuxControls: false,
-    onCreated: (created) => {
-      registrar.assign(created.contentsId, chromeSurface);
+    onCreated: () => {
+      // The test reads the window from the factory.
     },
     ports: {
       lifecycle: new FakeLifecycle(platform),
@@ -51,8 +50,9 @@ const open = async (platform: string, devServer?: string) => {
     },
     preload: "/preload.cjs",
     registrar,
+    surface: "chrome",
   }).show();
-  return { specs, theme, transport, window };
+  return { registrar, specs, theme, transport, window };
 };
 
 describe(MainWindow, () => {
@@ -64,6 +64,16 @@ describe(MainWindow, () => {
       `${pathToFileURL(path.join("/dist/renderer", "chrome.html")).href}?platform=darwin&theme=dark`
     );
     expect(window.shown).toBe("inactive");
+  });
+
+  it("names the chrome page's surface to its preload and allows it that surface's channels", async () => {
+    const { registrar, specs, transport, window } = await open("darwin");
+    expect(specs[0]?.arguments).toStrictEqual(["--meru-surface=chrome"]);
+    transport.sent.length = 0;
+    registrar.broadcast(settingsPushes.changed, { changes: [] });
+    expect(transport.sent.map((sent) => sent.contentsId)).toStrictEqual([
+      window.contentsId,
+    ]);
   });
 
   it("puts the same in the dev server's URL", async () => {

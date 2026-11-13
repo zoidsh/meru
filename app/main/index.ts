@@ -5,11 +5,7 @@ import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { allowlist } from "../shared/channels/define.ts";
-import {
-  pageSurfaces,
-  surfaceArgument,
-  surfaces,
-} from "../shared/channels/surfaces.ts";
+import { pageSurfaces, surfaces } from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
@@ -242,13 +238,11 @@ const start = async () => {
   }
 
   const window = new MainWindow({
-    arguments: [surfaceArgument(pageSurfaceName)],
     background: process.env.MERU_BACKGROUND === "1",
     bounds: windows.mainBounds(),
     linuxControls: settings.get("window.linuxControls"),
     onCreated: (created) => {
       keys.attach(created, created.contentsId);
-      dispatcher.assign(created.contentsId, pageSurface);
       windows.attachMain(created);
       stages.open(created, () => windows.mainGroupId());
     },
@@ -256,6 +250,7 @@ const start = async () => {
     pages,
     preload: path.join(dist, "preload", "renderer.cjs"),
     registrar: dispatcher,
+    surface: pageSurfaceName,
   });
   await window.show();
   entitlement.start();
