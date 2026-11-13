@@ -24,6 +24,11 @@ export type SettingKey = KeyOf<Registry>;
 
 export type ProfileSettingKey = ProfileKeyOf<Registry>;
 
+/** A profile names its layer only for a key a profile may override. */
+export type ProfileArg<K extends SettingKey> = K extends ProfileSettingKey
+  ? [profileId?: string]
+  : [];
+
 export type SettingValue<K extends SettingKey> = ValueOf<Registry, K>;
 
 export type Settings = SettingsLayers<Registry>;

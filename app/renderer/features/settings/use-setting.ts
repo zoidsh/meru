@@ -12,7 +12,7 @@ import {
 import type { RendererSurface } from "../../../shared/channels/surfaces.ts";
 import { registry } from "../../../shared/settings/registry.ts";
 import type {
-  ProfileSettingKey,
+  ProfileArg,
   SettingKey,
   Settings,
 } from "../../../shared/settings/registry.ts";
@@ -54,7 +54,7 @@ export const SettingsContext = createContext<Store<Settings> | undefined>(
 /** The value in force for a key, for a profile when the key is one a profile may override; re-renders when it changes. */
 export const useSetting = <K extends SettingKey>(
   key: K,
-  ...profile: K extends ProfileSettingKey ? [profileId?: string] : []
+  ...profile: ProfileArg<K>
 ) => {
   const store = useContext(SettingsContext);
   if (store === undefined) {

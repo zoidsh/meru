@@ -29,7 +29,7 @@ import {
 } from "../../../shared/channels/settings.ts";
 import { registry } from "../../../shared/settings/registry.ts";
 import type {
-  ProfileSettingKey,
+  ProfileArg,
   SettingKey,
   Settings,
   SettingValue,
@@ -52,11 +52,6 @@ export const settingsSnapshot: SnapshotSpec<Settings, Fallback> = {
   schema: settingsSchema,
   version: 1,
 };
-
-/** A profile names its layer only for a key a profile may override. */
-export type ProfileArg<K extends SettingKey> = K extends ProfileSettingKey
-  ? [profileId?: string]
-  : [];
 
 export type SettingsListener = (changes: readonly SettingChange[]) => void;
 
