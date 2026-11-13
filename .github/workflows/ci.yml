@@ -32,3 +32,18 @@ jobs:
           path: test-results
           if-no-files-found: ignore
           retention-days: 7
+
+  package:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm package:linux AppImage --x64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: appimage-x64
+          path: packaging/out/*.AppImage
+          if-no-files-found: error
+          retention-days: 7
