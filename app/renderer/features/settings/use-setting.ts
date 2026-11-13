@@ -17,17 +17,19 @@ import type {
   Settings,
 } from "../../../shared/settings/registry.ts";
 import type { Client } from "../../client.ts";
-import { createStore, useStore } from "../../store.ts";
+import { syncedStore, useStore } from "../../store.ts";
 import type { Store } from "../../store.ts";
 
-/** The page's copy of the settings layers: seeded once, then kept by the main process's pushes. */
+/** The page's copy of the settings layers, each push's changes applied to it. */
 export const createSettingsStore = (
   client: Client<RendererSurface>
-): Store<Settings> => {
-  const seed = client.sendSync(channels.snapshot, {});
-  const store = createStore<Settings>(seed.ok ? seed.value : emptySettings());
-  client.on(settingsPushes.changed, ({ changes }) => {
-    store.set((current) => {
+): Store<Settings> =>
+  syncedStore(
+    client,
+    channels.snapshot,
+    settingsPushes.changed,
+    emptySettings(),
+    (current, { changes }) => {
       let layers = current;
       for (const { key, value, profileId } of changes) {
         const next = withValue(
@@ -42,10 +44,8 @@ export const createSettingsStore = (
         }
       }
       return layers;
-    });
-  });
-  return store;
-};
+    }
+  );
 
 export const SettingsContext = createContext<Store<Settings> | undefined>(
   undefined

@@ -6,22 +6,16 @@ import {
   updaterPushes,
 } from "../../../shared/channels/updater.ts";
 import type { Client } from "../../client.ts";
-import { createStore } from "../../store.ts";
+import { syncedStore } from "../../store.ts";
 import type { Store } from "../../store.ts";
 
-/** The page's copy of the update state: seeded once, then kept by the main process's pushes. */
+/** The page's copy of the update state. */
 export const createUpdateStore = (
   client: Client<RendererSurface>
-): Store<UpdateState> => {
-  const seed = client.sendSync(channels.snapshot, {});
-  const store = createStore<UpdateState>(
-    seed.ok ? seed.value : { kind: "idle" }
-  );
-  client.on(updaterPushes.changed, (state) => {
-    store.set(() => state);
+): Store<UpdateState> =>
+  syncedStore(client, channels.snapshot, updaterPushes.changed, {
+    kind: "idle",
   });
-  return store;
-};
 
 /** Keeps `data-update` on `element` at the update state's kind, which is what the end-to-end suite reads. */
 export const markUpdate = (

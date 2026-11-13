@@ -2,7 +2,6 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { stage, stagePushes } from "../../shared/channels/stage.ts";
-import type { StageSnapshot } from "../../shared/channels/stage.ts";
 import { rendererSurface } from "../../shared/channels/surfaces.ts";
 import { createClient } from "../client.ts";
 import {
@@ -15,16 +14,15 @@ import {
 } from "../features/settings/use-setting.ts";
 import { Dividers } from "../features/stage/dividers.tsx";
 import { createUpdateStore, markUpdate } from "../features/updater/store.ts";
-import { createStore } from "../store.ts";
+import { syncedStore } from "../store.ts";
 
 const client = createClient(window, rendererSurface);
-const seed = client.sendSync(stage.snapshot, {});
-const store = createStore<StageSnapshot | undefined>(
-  seed.ok ? seed.value : undefined
+const store = syncedStore(
+  client,
+  stage.snapshot,
+  stagePushes.changed,
+  undefined
 );
-client.on(stagePushes.changed, (snapshot) => {
-  store.set(() => snapshot);
-});
 const settings = createSettingsStore(client);
 markEntitlement(createEntitlementStore(client), document.documentElement);
 markUpdate(createUpdateStore(client), document.documentElement);
