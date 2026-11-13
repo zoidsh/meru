@@ -13,6 +13,7 @@ defaults:
 
 jobs:
   build:
+    name: build (${{ matrix.platform }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
