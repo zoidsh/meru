@@ -15,12 +15,9 @@ import type {
 } from "../shared/channels/define.ts";
 import type { ProfilesSnapshot } from "../shared/channels/profiles.ts";
 import type { StageSnapshot } from "../shared/channels/stage.ts";
-import {
-  launcherSurface,
-  rendererSurface,
-} from "../shared/channels/surfaces.ts";
+import { launcherSurface, chromeSurface } from "../shared/channels/surfaces.ts";
 import { FakeBridge } from "../test/fakes/bridge.ts";
-import { ChromeProvider } from "./chrome-context.tsx";
+import { ChromeProvider } from "./client-context.tsx";
 import { createClient } from "./client.ts";
 import { LauncherClientProvider } from "./features/launcher/use-launcher-client.ts";
 import {
@@ -131,7 +128,7 @@ export const mountChrome = (
   for (const { channel, value } of answers) {
     bridge.answers.set(wireName(channel), { ok: true, value });
   }
-  const client = createClient({ meru: bridge }, rendererSurface);
+  const client = createClient({ meru: bridge }, chromeSurface);
   const launcherClient = createClient({ meru: bridge }, launcherSurface);
   const container = document.createElement("div");
   document.body.append(container);

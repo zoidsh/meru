@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AppEvents } from "../../core/events.ts";
 import { commands as channels } from "../../shared/channels/commands.ts";
 import { wireName } from "../../shared/channels/define.ts";
-import { rendererSurface } from "../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../shared/channels/surfaces.ts";
 import { commands } from "../../shared/commands/registry.ts";
 import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
@@ -55,8 +55,8 @@ const setup = async (platform = "darwin") => {
   });
   const dispatcher = new CommandDispatcher();
   dispatcher.start(registrar);
-  registrar.assign(window.contentsId, rendererSurface);
-  registrar.assign(-1, rendererSurface);
+  registrar.assign(window.contentsId, chromeSurface);
+  registrar.assign(-1, chromeSurface);
   const events = new AppEvents();
   const profiles = new Profiles({
     commands: dispatcher,

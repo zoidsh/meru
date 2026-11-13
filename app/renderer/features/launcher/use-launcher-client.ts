@@ -1,5 +1,5 @@
 import type { LauncherSurface } from "../../../shared/channels/surfaces.ts";
-import { defineClientContext } from "../../chrome-context.tsx";
+import { defineClientContext } from "../../client-context.tsx";
 
 const launcherClient = defineClientContext<LauncherSurface>("launcher");
 

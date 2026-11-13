@@ -5,7 +5,7 @@ import type { SettingChange } from "../../../core/engines/settings.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import type { registry } from "../../../shared/settings/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
@@ -33,7 +33,7 @@ const setup = async (
   const lifecycle = new FakeLifecycle();
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({ onError: rethrow, transport });
-  registrar.assign(PAGE, rendererSurface);
+  registrar.assign(PAGE, chromeSurface);
   const call = (channel: RequestChannel, payload: unknown) =>
     registrar.dispatch(PAGE, wireName(channel), payload);
   const fallbacks: Fallback[] = [];

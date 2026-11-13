@@ -11,7 +11,7 @@ import { orderedProfiles } from "../../../core/engines/ordering.ts";
 import { profiles as profileChannels } from "../../../shared/channels/profiles.ts";
 import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
-import { useClient } from "../../chrome-context.tsx";
+import { useClient } from "../../client-context.tsx";
 import { Button } from "../../ui/button.tsx";
 import { UnreadBadge } from "../profiles/unread-badge.tsx";
 import { useProfiles } from "../profiles/use-profiles.ts";

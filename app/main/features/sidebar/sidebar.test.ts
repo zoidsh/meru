@@ -5,7 +5,7 @@ import { sidebarSchema } from "../../../core/engines/sidebar.ts";
 import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { sidebar, sidebarPushes } from "../../../shared/channels/sidebar.ts";
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
@@ -28,7 +28,7 @@ const rethrow = (error: unknown) => {
 const setup = async () => {
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({ onError: rethrow, transport });
-  registrar.assign(PAGE, rendererSurface);
+  registrar.assign(PAGE, chromeSurface);
   const lifecycle = new FakeLifecycle();
   const clock = new FakeClock();
   const settings = new SettingsStore({

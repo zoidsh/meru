@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AppEvents } from "../../../core/events.ts";
 import { updateStateSchema } from "../../../core/records/update.ts";
 import { wireName } from "../../../shared/channels/define.ts";
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { updater as channels } from "../../../shared/channels/updater.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
@@ -27,7 +27,7 @@ const setup = ({ packaged = true } = {}) => {
     },
     transport,
   });
-  registrar.assign(PAGE, rendererSurface);
+  registrar.assign(PAGE, chromeSurface);
   const settings = new SettingsStore({
     lifecycle: new FakeLifecycle(),
     clock,

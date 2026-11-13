@@ -10,7 +10,7 @@ import {
   it,
 } from "vitest";
 
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeBridge } from "../../../test/fakes/bridge.ts";
 import { createClient } from "../../client.ts";
 import {
@@ -31,7 +31,7 @@ const mount = (seed: unknown) => {
   const bridge = new FakeBridge();
   bridge.answers.set("settings.snapshot", { ok: true, value: seed });
   const store = createSettingsStore(
-    createClient({ meru: bridge }, rendererSurface)
+    createClient({ meru: bridge }, chromeSurface)
   );
   const container = document.createElement("div");
   const root = createRoot(container);

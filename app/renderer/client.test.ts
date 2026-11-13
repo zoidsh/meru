@@ -12,7 +12,7 @@ import {
 } from "../shared/channels/define.ts";
 import { stage, stagePushes } from "../shared/channels/stage.ts";
 import type { StageSnapshot } from "../shared/channels/stage.ts";
-import { rendererSurface } from "../shared/channels/surfaces.ts";
+import { chromeSurface } from "../shared/channels/surfaces.ts";
 import { FakeBridge } from "../test/fakes/bridge.ts";
 import { createClient } from "./client.ts";
 
@@ -34,7 +34,7 @@ const snapshot: StageSnapshot = {
 
 const connect = () => {
   const bridge = new FakeBridge("linux");
-  return { bridge, client: createClient({ meru: bridge }, rendererSurface) };
+  return { bridge, client: createClient({ meru: bridge }, chromeSurface) };
 };
 
 describe(createClient, () => {
@@ -43,11 +43,11 @@ describe(createClient, () => {
   });
 
   it("refuses a page without the bridge", () => {
-    expect(() => createClient(window, rendererSurface)).toThrow(
+    expect(() => createClient(window, chromeSurface)).toThrow(
       "window.meru is missing"
     );
     expect(() =>
-      createClient({ meru: { platform: "linux" } }, rendererSurface)
+      createClient({ meru: { platform: "linux" } }, chromeSurface)
     ).toThrow("window.meru is missing");
   });
 

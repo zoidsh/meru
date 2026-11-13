@@ -17,7 +17,7 @@ import {
   tabs as tabChannels,
   profilesSnapshotSchema,
 } from "../../../shared/channels/profiles.ts";
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
@@ -54,7 +54,7 @@ const setup = async ({
     },
     transport,
   });
-  registrar.assign(PAGE, rendererSurface);
+  registrar.assign(PAGE, chromeSurface);
   const events = new AppEvents();
   const sessions = new FakeSessions();
   const settings = new SettingsStore({

@@ -10,7 +10,7 @@ import { apps } from "../../../shared/apps.ts";
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
 import { tabOpening } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
-import { useClient } from "../../chrome-context.tsx";
+import { useClient } from "../../client-context.tsx";
 import { Button } from "../../ui/button.tsx";
 import {
   Command,

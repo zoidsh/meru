@@ -14,7 +14,7 @@ import { commands } from "../../../shared/channels/commands.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { msg } from "../../../shared/msg.ts";
-import { useClient } from "../../chrome-context.tsx";
+import { useClient } from "../../client-context.tsx";
 import { useTooltip } from "../commands/use-tooltip.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useSidebar } from "../sidebar/use-sidebar.ts";

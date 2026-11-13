@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { glyphs, resolveBindings } from "../../../core/engines/shortcuts.ts";
 import { commands } from "../../../shared/commands/registry.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
-import { useClient } from "../../chrome-context.tsx";
+import { useClient } from "../../client-context.tsx";
 import { useSetting } from "../settings/use-setting.ts";
 
 // A native title rather than a page tooltip: anything the chrome page draws past the titlebar and the sidebar sits under the panes' views.

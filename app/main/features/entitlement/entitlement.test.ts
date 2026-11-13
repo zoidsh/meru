@@ -9,7 +9,7 @@ import {
   entitlement as channels,
   entitlementPushes,
 } from "../../../shared/channels/entitlement.ts";
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeEntitlementApi } from "../../../test/fakes/entitlement-api.ts";
 import type { Scripted } from "../../../test/fakes/entitlement-api.ts";
@@ -102,7 +102,7 @@ const setup = async ({
     },
     transport,
   });
-  registrar.assign(PAGE, rendererSurface);
+  registrar.assign(PAGE, chromeSurface);
   const events = new AppEvents();
   const changed: AppEventMap["entitlement.changed"][] = [];
   events.on("entitlement.changed", (payload) => {

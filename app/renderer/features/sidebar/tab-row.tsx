@@ -7,7 +7,7 @@ import type { Tab } from "../../../core/records/tab.ts";
 import { appById } from "../../../shared/apps.ts";
 import { tabs as tabChannels } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
-import { useClient } from "../../chrome-context.tsx";
+import { useClient } from "../../client-context.tsx";
 import { Button } from "../../ui/button.tsx";
 import { AppIcon } from "../apps/app-icon.tsx";
 import { UnreadBadge } from "../profiles/unread-badge.tsx";

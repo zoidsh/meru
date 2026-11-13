@@ -12,7 +12,7 @@ import { sidebar, sidebarPushes } from "./sidebar.ts";
 import { stage, stagePushes } from "./stage.ts";
 import { updater, updaterPushes } from "./updater.ts";
 
-export const rendererSurface = defineSurface({
+export const chromeSurface = defineSurface({
   pushes: [
     stagePushes,
     settingsPushes,
@@ -35,12 +35,12 @@ export const rendererSurface = defineSurface({
   ],
 });
 
-export type RendererSurface = typeof rendererSurface;
+export type ChromeSurface = typeof chromeSurface;
 
 /** The chrome page's surface in a run the end-to-end suite or `pnpm measure` drives, which also inspects what main holds. */
 export const testSurface = defineSurface({
-  pushes: rendererSurface.pushes,
-  requests: [...rendererSurface.requests, e2e, measure],
+  pushes: chromeSurface.pushes,
+  requests: [...chromeSurface.requests, e2e, measure],
 });
 
 export const dragSurface = defineSurface({ pushes: [], requests: [drag] });
@@ -55,7 +55,7 @@ export type LauncherSurface = typeof launcherSurface;
 
 /** The surfaces a page the renderer's preload serves may hold, by the name main passes the preload. */
 export const pageSurfaces = {
-  chrome: rendererSurface,
+  chrome: chromeSurface,
   launcher: launcherSurface,
   test: testSurface,
 };
@@ -81,7 +81,7 @@ export const surfaceOf = (argv: readonly string[]): Surface => {
 };
 
 export const surfaces: readonly Surface[] = [
-  rendererSurface,
+  chromeSurface,
   dragSurface,
   launcherSurface,
 ];

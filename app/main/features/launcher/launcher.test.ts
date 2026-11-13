@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
@@ -79,7 +79,7 @@ const setup = async () => {
   });
   stages.start();
   const window = new FakeWindow(1200, 800);
-  registrar.assign(window.contentsId, rendererSurface);
+  registrar.assign(window.contentsId, chromeSurface);
   const stage = stages.open(window, () => profiles.currentGroup()?.id);
   new Launcher({
     commands,
@@ -128,7 +128,7 @@ describe(Launcher, () => {
 
   it("refuses to open from a sender with no window", async () => {
     const { registrar } = await setup();
-    registrar.assign(99, rendererSurface);
+    registrar.assign(99, chromeSurface);
     expect(
       registrar.dispatch(99, wireName(launcher.open), {
         anchor: { height: 1, width: 1, x: 0, y: 0 },

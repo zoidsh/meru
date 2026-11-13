@@ -2,7 +2,7 @@ import type { CSSProperties, PointerEvent } from "react";
 
 import { stage } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import { useClient } from "../../chrome-context.tsx";
+import { useClient } from "../../client-context.tsx";
 import { useSetting } from "../settings/use-setting.ts";
 import { useStage } from "./use-stage.ts";
 

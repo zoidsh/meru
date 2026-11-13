@@ -14,7 +14,7 @@ import {
   stageSnapshotSchema,
 } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../../../shared/commands/registry.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
@@ -72,7 +72,7 @@ const setup = async (style: Style = "modern") => {
   };
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({ onError, transport });
-  registrar.assign(window.contentsId, rendererSurface);
+  registrar.assign(window.contentsId, chromeSurface);
   const call = (channel: RequestChannel, payload: unknown, sender: number) =>
     registrar.dispatch(sender, wireName(channel), payload);
   const commands = new CommandDispatcher();
@@ -532,7 +532,7 @@ describe("the stage channels", () => {
 
   it("refuse a sender with no window", async () => {
     const { call, registrar } = await setup();
-    registrar.assign(-1, rendererSurface);
+    registrar.assign(-1, chromeSurface);
     expect(call(stageChannels.focusPane, { paneId: "p1" }, -1)).toStrictEqual({
       error: { kind: "failed", message: "unknownWindow" },
       ok: false,
