@@ -139,7 +139,7 @@ export const focusPrevious = (
   return ids.at(index <= 0 ? -1 : index - 1);
 };
 
-/** The sides on which the panes touch the chrome rather than the window's edge, and so keep no inset there. */
+/** The sides of the area that keep no inset. */
 export interface Flush {
   readonly top: boolean;
   readonly left: boolean;

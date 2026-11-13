@@ -1,5 +1,7 @@
 import type { Rect } from "../records/rect.ts";
 import type { TitleBar, TitleBarOverlay } from "../records/title-bar.ts";
+import type { Flush } from "./layout.ts";
+import type { Sidebar } from "./sidebar.ts";
 
 export type Theme = "light" | "dark";
 
@@ -58,14 +60,29 @@ export interface ChromeInsets {
   readonly left: number;
 }
 
-/** The part of the content area the panes are laid out in. */
-export const stageArea = (content: Rect, insets: ChromeInsets): Rect => {
+/** What the chrome takes: the titlebar's row, and the sidebar's width while it shows. */
+export const chromeInsets = (sidebar: Sidebar): ChromeInsets => ({
+  left: sidebar.kind === "shown" ? sidebar.width : 0,
+  top: TITLEBAR_HEIGHT,
+});
+
+export interface StageArea {
+  /** The part of the content area the panes are laid out in. */
+  readonly area: Rect;
+  /** The sides where the panes meet the chrome rather than the window's edge, which keep no inset, so the chrome's own spacing stands. */
+  readonly flush: Flush;
+}
+
+export const stageArea = (content: Rect, insets: ChromeInsets): StageArea => {
   const top = Math.min(insets.top, content.height);
   const left = Math.min(insets.left, content.width);
   return {
-    height: content.height - top,
-    width: content.width - left,
-    x: content.x + left,
-    y: content.y + top,
+    area: {
+      height: content.height - top,
+      width: content.width - left,
+      x: content.x + left,
+      y: content.y + top,
+    },
+    flush: { left: insets.left > 0, top: insets.top > 0 },
   };
 };

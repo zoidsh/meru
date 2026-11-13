@@ -67,10 +67,6 @@ export const sidebarOf = (
   return { kind: "shown", size, width: SIDEBAR_PIXELS[size] };
 };
 
-/** What the sidebar takes from the left of the content area. */
-export const sidebarInset = (sidebar: Sidebar): number =>
-  sidebar.kind === "shown" ? sidebar.width : 0;
-
 export const gmailUnreadBadgeSchema = z.enum([
   "always",
   "whenInactive",

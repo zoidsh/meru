@@ -7,7 +7,6 @@ import {
   activeTabId,
   dropAction,
   showsGmailUnread,
-  sidebarInset,
   sidebarOf,
   zoneAt,
 } from "./sidebar.ts";
@@ -61,13 +60,6 @@ describe(sidebarOf, () => {
     expect(
       sidebarOf(two, { ...auto, flipped: "wide", width: "narrow" })
     ).toMatchObject({ size: "wide" });
-  });
-});
-
-describe(sidebarInset, () => {
-  it("takes the sidebar's width, or nothing while it is hidden", () => {
-    expect(sidebarInset({ kind: "hidden" })).toBe(0);
-    expect(sidebarInset({ kind: "shown", size: "wide", width: 224 })).toBe(224);
   });
 });
 
