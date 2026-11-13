@@ -364,6 +364,19 @@ export class Stage {
     });
   }
 
+  /** Every tab's view the stage keeps, with whether a pane shows it or it waits detached. */
+  kept(): {
+    readonly view: ViewPort;
+    readonly tab: Tab;
+    readonly shown: boolean;
+  }[] {
+    const shown = new Set(this.panes().map(({ view }) => view));
+    return this.#views.entries().flatMap(([tabId, view]) => {
+      const tab = this.#options.profiles.tab(tabId);
+      return tab === undefined ? [] : [{ shown: shown.has(view), tab, view }];
+    });
+  }
+
   /** The views over the panes: a drag's, then the overlay's. */
   get overlays(): readonly ViewPort[] {
     return [this.#drag.view, this.#overlay.view].filter(

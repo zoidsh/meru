@@ -404,6 +404,20 @@ describe(Stages, () => {
     ]);
   });
 
+  it("answers every view it keeps with its tab, marking one no pane shows", async () => {
+    const { stage, profiles, profileId } = await setup();
+    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+    profiles.moveTab(calendar.id, 0);
+    profiles.moveTab(calendar.id, 1);
+
+    expect(
+      stage.kept().map(({ tab, shown }) => ({ appId: tab.appId, shown }))
+    ).toStrictEqual([
+      { appId: "gmail", shown: true },
+      { appId: "calendar", shown: false },
+    ]);
+  });
+
   it("hears the links a pane opens and leaves each to Chromium", async () => {
     const { views } = await setup();
     const [gmail] = views.created;

@@ -5,7 +5,7 @@ import type { Stages } from "../features/stage/index.ts";
 /** The global under which a run with MERU_MEASURE=1 leaves the names of its web contents, which `pnpm measure` reads through Playwright's `app.evaluate`. */
 export const MEASURE_GLOBAL = "meruMeasure";
 
-/** What each web contents shows, by its id: the chrome page, a pane by its tab's host, an overlay. */
+/** What each web contents shows, by its id: the chrome page, a tab's view by its host, marked detached while no pane shows it, an overlay. */
 export const measureRolesSchema = z.array(
   z.object({ contentsId: z.number().int(), name: z.string() })
 );
@@ -25,9 +25,9 @@ export const exposeMeasure = (options: {
   const roles = (): z.infer<typeof measureRolesSchema> =>
     options.stages.all.flatMap((stage) => [
       { contentsId: stage.window.contentsId, name: "chrome page" },
-      ...stage.panes().map(({ tab, view }) => ({
+      ...stage.kept().map(({ tab, view, shown }) => ({
         contentsId: view.contentsId,
-        name: `pane ${hostOf(tab.url)}`,
+        name: `pane ${hostOf(tab.url)}${shown ? "" : " (detached)"}`,
       })),
       ...stage.overlays.map((overlay) => ({
         contentsId: overlay.contentsId,
