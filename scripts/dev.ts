@@ -76,7 +76,11 @@ const restartElectron = async () => {
   startElectron();
 };
 
-const nodeConfigs = ["vite.main.ts", "vite.preload.ts", "vite.preload-drag.ts"];
+const nodeConfigs = [
+  "vite.main.ts",
+  "vite.preload-renderer.ts",
+  "vite.preload-drag.ts",
+];
 const pending = new Set(nodeConfigs);
 
 const watch = async (configFile: string) => {
