@@ -72,7 +72,7 @@ export type StageProfiles = Pick<
   | "closeTab"
   | "resize"
   | "swapPanes"
-  | "balanceGroup"
+  | "equaliseGroup"
   | "joinTab"
 >;
 
@@ -331,12 +331,12 @@ export class Stage {
   }
 
   /** Gives each pane of every run of the group's splits of one orientation the same share of it. */
-  balance(): Result<undefined, StageError> {
+  equalise(): Result<undefined, StageError> {
     const group = this.#read();
     if (group === undefined) {
       return err("unknownPane");
     }
-    return this.#options.profiles.balanceGroup(group.id).ok
+    return this.#options.profiles.equaliseGroup(group.id).ok
       ? ok(undefined)
       : err("refused");
   }

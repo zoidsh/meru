@@ -12,7 +12,7 @@ import type {
 import type { Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
 import {
-  balance,
+  equalise,
   dropTargetAt,
   dropZoneAt,
   placementOf,
@@ -654,7 +654,7 @@ describe(swap, () => {
   });
 });
 
-describe(balance, () => {
+describe(equalise, () => {
   it("gives each pane of a run of one orientation an equal share", () => {
     const ids = counter("id");
     const beside: Beside = { orientation: "vertical", side: "after" };
@@ -664,7 +664,7 @@ describe(balance, () => {
         ?.layout ?? null;
     const rect = { height: 300, width: 900, x: 0, y: 0 };
     const widths = [
-      ...layout(balance(tree), rect, "classic").panes.values(),
+      ...layout(equalise(tree), rect, "classic").panes.values(),
     ].map((pane) => pane.width);
     expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(1);
   });
@@ -672,11 +672,11 @@ describe(balance, () => {
   it.each(cases)(
     "keeps the panes and the splits and still tiles (seed $seed)",
     ({ tree, rect, style }) => {
-      const balanced = balance(tree);
+      const equalised = equalise(tree);
       expect({
-        ids: idsOf(balanced),
-        leaves: leafSet(balanced),
-        tiles: tilesExactly(balanced, rect, style),
+        ids: idsOf(equalised),
+        leaves: leafSet(equalised),
+        tiles: tilesExactly(equalised, rect, style),
       }).toStrictEqual({
         ids: idsOf(tree),
         leaves: leafSet(tree),
@@ -688,13 +688,13 @@ describe(balance, () => {
   it.each(cases)(
     "keeps every ratio within MIN_RATIO and MAX_RATIO and changes nothing a second time (seed $seed)",
     ({ tree }) => {
-      const balanced = balance(tree);
+      const equalised = equalise(tree);
       expect(
-        splits(balanced).filter(
+        splits(equalised).filter(
           ({ ratio }) => ratio < MIN_RATIO || ratio > MAX_RATIO
         )
       ).toStrictEqual([]);
-      expect(balance(balanced)).toStrictEqual(balanced);
+      expect(equalise(equalised)).toStrictEqual(equalised);
     }
   );
 
@@ -710,7 +710,7 @@ describe(balance, () => {
     }
     expect(panes(tree)).toHaveLength(14);
     expect(
-      splits(balance(tree)).filter(
+      splits(equalise(tree)).filter(
         ({ ratio }) => ratio < MIN_RATIO || ratio > MAX_RATIO
       )
     ).toStrictEqual([]);

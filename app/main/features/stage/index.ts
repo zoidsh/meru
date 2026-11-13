@@ -97,8 +97,8 @@ export class Stages {
       }),
       commands.register(stageCommands, {
         back: inWindow((windowId) => this.#navigate(windowId, "back")),
-        balance: inWindow((windowId) =>
-          this.#with(windowId, (found) => found.balance())
+        equalise: inWindow((windowId) =>
+          this.#with(windowId, (found) => found.equalise())
         ),
         maximise: inWindow((windowId) =>
           this.#with(windowId, (found) => found.maximise())

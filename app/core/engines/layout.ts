@@ -195,7 +195,7 @@ const weight = (node: LayoutNode, orientation: Orientation): number =>
     ? weight(node.first, orientation) + weight(node.second, orientation)
     : 1;
 
-const balanceNode = (node: LayoutNode): LayoutNode => {
+const equaliseNode = (node: LayoutNode): LayoutNode => {
   if (node.kind === "leaf") {
     return node;
   }
@@ -203,15 +203,15 @@ const balanceNode = (node: LayoutNode): LayoutNode => {
   const second = weight(node.second, node.orientation);
   return {
     ...node,
-    first: balanceNode(node.first),
+    first: equaliseNode(node.first),
     ratio: clamp(first / (first + second), MIN_RATIO, MAX_RATIO),
-    second: balanceNode(node.second),
+    second: equaliseNode(node.second),
   };
 };
 
 /** Gives every pane in a run of splits of one orientation the same share of it. */
-export const balance = (tree: Layout): Layout =>
-  tree === null ? null : balanceNode(tree);
+export const equalise = (tree: Layout): Layout =>
+  tree === null ? null : equaliseNode(tree);
 
 const mapSplit = (
   node: LayoutNode,

@@ -9,7 +9,7 @@ import { validateState } from "../../../core/engines/state-validate.ts";
 import {
   addProfile,
   addTab,
-  balanceGroup,
+  equaliseGroup,
   canClose,
   closeTab,
   openTab,
@@ -413,8 +413,8 @@ export class Profiles {
   }
 
   /** Evens the shares of every run of the group's splits of one orientation. */
-  balanceGroup(groupId: string): Result<undefined, ProfilesError> {
-    return this.#commit(balanceGroup(this.state, groupId));
+  equaliseGroup(groupId: string): Result<undefined, ProfilesError> {
+    return this.#commit(equaliseGroup(this.state, groupId));
   }
 
   async flush(): Promise<void> {

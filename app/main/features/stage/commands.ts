@@ -41,8 +41,8 @@ export const stageCommands = defineCommands(
       menu: { order: 7, section: "view" },
       shortcut: { default: "CmdOrCtrl+Alt+S" },
     },
-    balance: {
-      label: msg`Balance panes`,
+    equalise: {
+      label: msg`Equalise panes`,
       menu: { order: 8, section: "view" },
       shortcut: { default: "CmdOrCtrl+Alt+=" },
     },

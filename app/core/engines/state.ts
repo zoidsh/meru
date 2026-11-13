@@ -15,7 +15,7 @@ import type { Tab } from "../records/tab.ts";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
 import {
-  balance,
+  equalise,
   close,
   leaf,
   movePane,
@@ -530,14 +530,14 @@ export const swapPanes = (
 };
 
 /** Gives each pane of every run of the group's splits of one orientation the same share of it. */
-export const balanceGroup = (
+export const equaliseGroup = (
   state: ProfilesState,
   groupId: string
 ): Changed => {
   const group = state.groups.find((found) => found.id === groupId);
   return group === undefined
     ? err("unknownGroup")
-    : ok(withLayout(state, groupId, balance(group.layout)));
+    : ok(withLayout(state, groupId, equalise(group.layout)));
 };
 
 /** Moves the row holding the tab to row `to` of its profile's tab list, below the pinned rows; a pinned tab's row stays. */

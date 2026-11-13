@@ -522,7 +522,7 @@ describe("the stage commands", () => {
     expect(
       (
         [
-          "stage.balance",
+          "stage.equalise",
           "stage.maximise",
           "stage.swap",
           "stage.closeTab",
@@ -631,11 +631,11 @@ describe("the stage commands", () => {
     expect(profiles.currentGroup()?.tabIds).toHaveLength(3);
   });
 
-  it("balance the group's splits", async () => {
+  it("equalise the group's splits", async () => {
     const { commands, id, profiles, splitId, split } = await setup();
     split("vertical");
     unwrap(profiles.resize(profiles.currentGroup()?.id ?? "", splitId(), 0.2));
-    expect(commands.run("stage.balance", { windowId: id }).ok).toBeTruthy();
+    expect(commands.run("stage.equalise", { windowId: id }).ok).toBeTruthy();
     const { layout: tree } = profiles.currentGroup() ?? {};
     expect(tree?.kind === "split" ? tree.ratio : undefined).toBe(0.5);
   });

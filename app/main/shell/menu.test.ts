@@ -226,8 +226,8 @@ describe(ApplicationMenu, () => {
       },
       {
         accelerator: "CommandOrControl+Alt+=",
-        id: "stage.balance",
-        label: "Balance panes",
+        id: "stage.equalise",
+        label: "Equalise panes",
       },
       {
         accelerator: "CommandOrControl+Alt+M",
@@ -407,7 +407,7 @@ describe(ApplicationMenu, () => {
       ["stage.focusPrevious", "CommandOrControl+Alt+,"],
       ["stage.reload", "CommandOrControl+R"],
       ["stage.swap", "CommandOrControl+Alt+S"],
-      ["stage.balance", "CommandOrControl+Alt+="],
+      ["stage.equalise", "CommandOrControl+Alt+="],
       ["stage.maximise", "CommandOrControl+Alt+M"],
     ]);
     settings.set("shortcuts.bindings", {

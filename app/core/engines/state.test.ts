@@ -12,7 +12,7 @@ import { validateState } from "./state-validate.ts";
 import {
   addProfile,
   addTab,
-  balanceGroup,
+  equaliseGroup,
   canClose,
   closeTab,
   openTab,
@@ -412,7 +412,7 @@ const repair = () => {
 
 describe("the state's invariants under the layout's own changes", () => {
   it.each(Array.from({ length: 40 }, (_, index) => index + 1))(
-    "hold through a run of moves, swaps, balances and resizes of one group's panes (seed %i)",
+    "hold through a run of moves, swaps, equalises and resizes of one group's panes (seed %i)",
     (seed) => {
       const draw = random(seed);
       const any = <T>(items: readonly T[]): T | undefined =>
@@ -448,7 +448,7 @@ describe("the state's invariants under the layout's own changes", () => {
               ids
             ),
           () => swapPanes(before, groupId, a?.paneId ?? "", b?.paneId ?? ""),
-          () => balanceGroup(before, groupId),
+          () => equaliseGroup(before, groupId),
           () =>
             resizeSplit(
               before,
@@ -475,7 +475,7 @@ describe("the state's invariants under the layout's own changes", () => {
     expect([
       swapPanes(state, "g9", pane?.paneId ?? "", "p9"),
       swapPanes(state, group?.id ?? "", pane?.paneId ?? "", "p9"),
-      balanceGroup(state, "g9"),
+      equaliseGroup(state, "g9"),
     ]).toStrictEqual([
       { error: "unknownGroup", ok: false },
       { error: "unknownPane", ok: false },

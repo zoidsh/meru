@@ -57,7 +57,7 @@ describe("the command registry", () => {
       | "sidebar.toggle"
       | "sidebar.toggleWidth"
       | "stage.back"
-      | "stage.balance"
+      | "stage.equalise"
       | "stage.closeTab"
       | "stage.focusNext"
       | "stage.focusPrevious"
