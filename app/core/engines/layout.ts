@@ -280,6 +280,64 @@ export const shownLayout = (tree: Layout, showing: Showing): Layout => {
   return base;
 };
 
+/** Where over a pane a dragged tab lands: beside one of its edges, taking that half, or in the middle, joining beside it. */
+export type DropZone = "left" | "right" | "top" | "bottom" | "centre";
+
+/** The share of a pane's width or height, from each edge, that drops beside that edge. */
+export const EDGE_ZONE = 0.2;
+
+/** The zone of the pane's rect under the point: the nearest edge while within its fifth, else the middle; undefined outside the rect. */
+export const besideAt = (rect: Rect, point: Point): DropZone | undefined => {
+  if (rect.width === 0 || rect.height === 0) {
+    return undefined;
+  }
+  const across = (point.x - rect.x) / rect.width;
+  const down = (point.y - rect.y) / rect.height;
+  if (across < 0 || across >= 1 || down < 0 || down >= 1) {
+    return undefined;
+  }
+  const edges: readonly (readonly [DropZone, number])[] = [
+    ["left", across],
+    ["right", 1 - across],
+    ["top", down],
+    ["bottom", 1 - down],
+  ];
+  let nearest: DropZone = "centre";
+  let distance = EDGE_ZONE;
+  for (const [zone, from] of edges) {
+    if (from < distance) {
+      nearest = zone;
+      distance = from;
+    }
+  }
+  return nearest;
+};
+
+const BESIDE: Readonly<Record<DropZone, Beside>> = {
+  bottom: { orientation: "horizontal", side: "after" },
+  centre: { orientation: "vertical", side: "after" },
+  left: { orientation: "vertical", side: "before" },
+  right: { orientation: "vertical", side: "after" },
+  top: { orientation: "horizontal", side: "before" },
+};
+
+/** Where a tab dropped on the zone goes against the pane. */
+export const besideOf = (zone: DropZone): Beside => BESIDE[zone];
+
+/** The part of the pane a tab dropped on the zone takes, which the drop tints: the half by an edge, the whole pane in the middle. */
+export const dropRect = (rect: Rect, zone: DropZone): Rect => {
+  const width = Math.round(rect.width / 2);
+  const height = Math.round(rect.height / 2);
+  const rects: Readonly<Record<DropZone, Rect>> = {
+    bottom: { ...rect, height: rect.height - height, y: rect.y + height },
+    centre: rect,
+    left: { ...rect, width },
+    right: { ...rect, width: rect.width - width, x: rect.x + width },
+    top: { ...rect, height },
+  };
+  return rects[zone];
+};
+
 /** The sides of the area that keep no inset. */
 export interface Flush {
   readonly top: boolean;

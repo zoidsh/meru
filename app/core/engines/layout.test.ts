@@ -13,7 +13,10 @@ import type { Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
 import {
   balance,
+  besideAt,
+  besideOf,
   close,
+  dropRect,
   focusNext,
   focusPrevious,
   layout,
@@ -710,6 +713,100 @@ describe(balance, () => {
         ({ ratio }) => ratio < MIN_RATIO || ratio > MAX_RATIO
       )
     ).toStrictEqual([]);
+  });
+});
+
+describe(besideAt, () => {
+  const rect = { height: 500, width: 1000, x: 100, y: 50 };
+
+  it("takes the outer fifth by each edge for that edge and the middle for a join", () => {
+    expect(
+      [
+        { x: 101, y: 300 },
+        { x: 1099, y: 300 },
+        { x: 600, y: 51 },
+        { x: 600, y: 549 },
+        { x: 600, y: 300 },
+        { x: 299, y: 300 },
+        { x: 300, y: 300 },
+      ].map((point) => besideAt(rect, point))
+    ).toStrictEqual([
+      "left",
+      "right",
+      "top",
+      "bottom",
+      "centre",
+      "left",
+      "centre",
+    ]);
+  });
+
+  it("gives a corner to the edge the point is nearer, by share of the pane", () => {
+    expect([
+      besideAt(rect, { x: 110, y: 90 }),
+      besideAt(rect, { x: 150, y: 60 }),
+    ]).toStrictEqual(["left", "top"]);
+  });
+
+  it("answers nothing outside the pane or for an empty one", () => {
+    expect([
+      besideAt(rect, { x: 99, y: 300 }),
+      besideAt(rect, { x: 1100, y: 300 }),
+      besideAt(rect, { x: 600, y: 550 }),
+      besideAt({ ...rect, width: 0 }, { x: 100, y: 300 }),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined]);
+  });
+
+  it.each(cases)(
+    "finds every point of a pane in exactly one pane and the tint inside it (seed $seed)",
+    ({ tree, rect: bounds, style, draw }) => {
+      const arrangement = layout(tree, bounds, style);
+      const point = {
+        x: bounds.x + Math.floor(draw() * bounds.width),
+        y: bounds.y + Math.floor(draw() * bounds.height),
+      };
+      const hits = [...arrangement.panes.values()].flatMap((pane) => {
+        const zone = besideAt(pane, point);
+        return zone === undefined ? [] : [{ pane, zone }];
+      });
+      expect(hits.length).toBeLessThanOrEqual(1);
+      for (const { pane, zone } of hits) {
+        expect(overlap(dropRect(pane, zone), pane)).toBe(
+          area(dropRect(pane, zone))
+        );
+      }
+    }
+  );
+});
+
+describe(besideOf, () => {
+  it("puts left and top before, right and bottom after, and a join beside", () => {
+    expect(
+      (["left", "right", "top", "bottom", "centre"] as const).map(besideOf)
+    ).toStrictEqual([
+      { orientation: "vertical", side: "before" },
+      { orientation: "vertical", side: "after" },
+      { orientation: "horizontal", side: "before" },
+      { orientation: "horizontal", side: "after" },
+      { orientation: "vertical", side: "after" },
+    ]);
+  });
+});
+
+describe(dropRect, () => {
+  it("tints the half by the edge, or the whole pane for a join", () => {
+    const rect = { height: 301, width: 801, x: 10, y: 20 };
+    expect(
+      (["left", "right", "top", "bottom", "centre"] as const).map((zone) =>
+        dropRect(rect, zone)
+      )
+    ).toStrictEqual([
+      { height: 301, width: 401, x: 10, y: 20 },
+      { height: 301, width: 400, x: 411, y: 20 },
+      { height: 151, width: 801, x: 10, y: 20 },
+      { height: 150, width: 801, x: 10, y: 171 },
+      rect,
+    ]);
   });
 });
 
