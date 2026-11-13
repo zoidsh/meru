@@ -27,9 +27,6 @@ const targetOf = (
 const within = (rect: DOMRect, { x, y }: Point) =>
   x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
 
-// Nowhere a pane can be, so a release there cancels the drag over the panes.
-const NOWHERE: Point = { x: -1, y: -1 };
-
 const sameTarget = (a: DropTarget | undefined, b: DropTarget | undefined) =>
   a?.tabId === b?.tabId && a?.zone === b?.zone;
 
@@ -69,7 +66,7 @@ export const useTabDrop = (): {
     }
     if (handed.current !== undefined) {
       handed.current = undefined;
-      client.send(stage.endDrag, NOWHERE);
+      client.send(stage.cancelDrag, {});
     }
     return false;
   };
@@ -84,8 +81,12 @@ export const useTabDrop = (): {
       setDrop(undefined);
       if (handed.current !== undefined) {
         handed.current = undefined;
-        const { x, y } = event.operation.position.current;
-        client.send(stage.endDrag, event.canceled ? NOWHERE : { x, y });
+        if (event.canceled) {
+          client.send(stage.cancelDrag, {});
+        } else {
+          const { x, y } = event.operation.position.current;
+          client.send(stage.endDrag, { x, y });
+        }
         return;
       }
       if (

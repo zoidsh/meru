@@ -139,6 +139,7 @@ export class Stages {
         dragTo: ({ x, y, buttons }, { contentsId }) =>
           this.dragTo(contentsId, { x, y }, buttons),
         endDrag: (point, { contentsId }) => this.endDrag(contentsId, point),
+        cancelDrag: (_payload, { contentsId }) => this.cancelDrag(contentsId),
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),
         openTab: ({ appId, profileId, split }, { contentsId }) => {
           const opened = this.#with(contentsId, (found) =>
@@ -276,6 +277,10 @@ export class Stages {
 
   endDrag(sender: number, point: Point): Result<undefined, StageError> {
     return this.#with(sender, (found) => found.endDrag(point));
+  }
+
+  cancelDrag(sender: number): Result<undefined, StageError> {
+    return this.#with(sender, (found) => found.cancelDrag());
   }
 
   snapshot(sender: number): Result<StageSnapshot, StageError> {

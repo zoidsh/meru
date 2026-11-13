@@ -407,6 +407,15 @@ export class Stage {
     return this.#drag.move(point);
   }
 
+  /** Takes the drag's overlay down, the group keeping what it had. */
+  cancelDrag(): Result<undefined, StageError> {
+    this.#drag.retire();
+    this.refresh();
+    this.#reconcile();
+    this.#arrange(false);
+    return ok(undefined);
+  }
+
   endDrag(point: Point): Result<undefined, StageError> {
     const ended = this.#drag.end(point);
     this.refresh();

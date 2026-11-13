@@ -992,11 +992,17 @@ describe("a sidebar row dragged over the panes", () => {
     }).toStrictEqual({ orientation: "vertical", panes: [gmail, calendar.id] });
   });
 
-  it("cancels on a release outside every pane, changing nothing", async () => {
+  it.each([
+    ["a release outside every pane", { x: 1300, y: 400 }],
+    ["being cancelled", undefined],
+  ])("ends on %s, changing nothing", async (_how, point) => {
     const { calendar, groupOf, id, overlay, profiles, stages } =
       await draggingTab();
     const before = profiles.state;
-    expect(stages.endDrag(id, { x: -1, y: -1 }).ok).toBeTruthy();
+    expect(
+      (point === undefined ? stages.cancelDrag(id) : stages.endDrag(id, point))
+        .ok
+    ).toBeTruthy();
     expect({
       alone: groupOf(calendar.id)?.tabIds,
       destroyed: overlay?.destroyed,
