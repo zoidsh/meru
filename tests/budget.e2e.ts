@@ -3,8 +3,8 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { measureApp } from "../scripts/lib/measure-app.ts";
 import { overBudget } from "../scripts/lib/measure-summary.ts";
-import { measureApp } from "./measure.ts";
 
 const IDLE_CPU_PERCENT = 2;
 const GROWTH_MB = 10;

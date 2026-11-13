@@ -8,17 +8,17 @@ import { _electron as electron } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { z } from "zod";
 
-import { wireName } from "../app/shared/channels/define.ts";
-import { measure as measureChannels } from "../app/shared/channels/measure.ts";
+import { wireName } from "../../app/shared/channels/define.ts";
+import { measure as measureChannels } from "../../app/shared/channels/measure.ts";
+import { launch, runCommand } from "../../tests/app.ts";
 import type {
   AppName,
   Measurement,
   ProcessReading,
   Sample,
-} from "../scripts/lib/measure-summary.ts";
-import { launch, runCommand } from "./app.ts";
+} from "./measure-summary.ts";
 
-const root = path.join(import.meta.dirname, "..");
+const root = path.join(import.meta.dirname, "..", "..");
 
 export interface MeasureOptions {
   readonly app: AppName;
