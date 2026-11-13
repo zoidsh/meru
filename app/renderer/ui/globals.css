@@ -27,6 +27,11 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -56,6 +61,16 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
+  /* The chrome's greys, which renderer/theme.ts sets as --background and --foreground from chromeColors. */
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: color-mix(
+    in oklab,
+    var(--foreground) 7%,
+    var(--background)
+  );
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
 }
 
 .dark {
@@ -75,6 +90,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+  --sidebar-accent: color-mix(
+    in oklab,
+    var(--foreground) 10%,
+    var(--background)
+  );
 }
 
 @layer base {

@@ -55,7 +55,7 @@ export const SettingsWindow = () => {
     return null;
   }
   return (
-    <div className="bg-background text-foreground flex h-full flex-col">
+    <div className="bg-sidebar text-sidebar-foreground flex h-full flex-col">
       <header
         className="draggable relative shrink-0 select-none"
         style={{ height: TITLEBAR_HEIGHT }}
@@ -73,7 +73,7 @@ export const SettingsWindow = () => {
       <div className="flex min-h-0 flex-1">
         <nav
           aria-label={msg`Settings`}
-          className="flex w-58 shrink-0 flex-col gap-1 overflow-y-auto border-r px-3 pb-3"
+          className="border-sidebar-border flex w-58 shrink-0 flex-col gap-1 overflow-y-auto border-r px-3 pb-3"
         >
           {settingsPages.map((found) => {
             const Icon = pageIcons[found.icon];
@@ -81,14 +81,16 @@ export const SettingsWindow = () => {
               <Button
                 aria-current={found.id === page.id ? "page" : undefined}
                 className={cn(
-                  "w-full justify-start font-normal",
-                  found.id !== page.id && "text-muted-foreground"
+                  "hover:bg-sidebar-accent dark:hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full justify-start font-normal",
+                  found.id === page.id
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70"
                 )}
                 key={found.id}
                 onClick={() => {
                   navigate(found.id);
                 }}
-                variant={found.id === page.id ? "secondary" : "ghost"}
+                variant="ghost"
               >
                 <Icon aria-hidden="true" />
                 {found.label}
