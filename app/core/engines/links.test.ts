@@ -9,7 +9,7 @@ import type { LinkContext, LinkSettings } from "./links.ts";
 
 const app = (id: string, hosts: string[], more: Partial<App> = {}): App => ({
   hosts,
-  icon: id,
+  icon: "gmail",
   id,
   name: id,
   openBehavior: "tab",

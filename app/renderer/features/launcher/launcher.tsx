@@ -181,7 +181,7 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
               tabIndex={-1}
               type="button"
             >
-              <AppIcon appId={app.icon} className="size-4" />
+              <AppIcon className="size-4" icon={app.icon} />
               {app.name}
             </button>
           ))}

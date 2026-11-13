@@ -2,10 +2,12 @@ import { GlobeIcon } from "lucide-react";
 import { useId } from "react";
 import type { ComponentProps, ReactElement } from "react";
 
+import type { AppIconName } from "../../../core/records/app.ts";
+
 type Draw = (instanceId: string, props: ComponentProps<"svg">) => ReactElement;
 
 // Every mask, gradient and filter below is referenced by `url(#id)`, which resolves to the first matching id in the document, so each instance suffixes its own; an icon inside a `display: none` subtree has no definitions at all.
-const icons: Readonly<Record<string, Draw>> = {
+const icons: Readonly<Record<AppIconName, Draw>> = {
   admin: (instanceId, props) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -2139,16 +2141,15 @@ const icons: Readonly<Record<string, Draw>> = {
   ),
 };
 
-/** An app's icon from the catalog's `icon`, every one reaching 1px from the edge of its 24px box on its longer side, so the set reads as one; a globe for an id it does not know. */
+/** An app's icon from the catalog's `icon`, every one reaching 1px from the edge of its 24px box on its longer side, so the set reads as one; a globe for an app the catalog does not know. */
 export const AppIcon = ({
-  appId,
+  icon,
   ...props
-}: { readonly appId: string } & ComponentProps<"svg">) => {
+}: { readonly icon: AppIconName | undefined } & ComponentProps<"svg">) => {
   const instanceId = useId().replaceAll(/[^a-zA-Z0-9]/gu, "");
-  const draw = Object.hasOwn(icons, appId) ? icons[appId] : undefined;
-  return draw === undefined ? (
+  return icon === undefined ? (
     <GlobeIcon {...props} />
   ) : (
-    draw(instanceId, props)
+    icons[icon](instanceId, props)
   );
 };

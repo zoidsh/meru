@@ -119,7 +119,7 @@ const TabRowButton = ({
         title={titleOf(tab)}
         variant={active ? "secondary" : "ghost"}
       >
-        <AppIcon appId={tab.appId} className="size-4" />
+        <AppIcon className="size-4" icon={appById(tab.appId)?.icon} />
         {wide ? (
           <span className="min-w-0 flex-1 overflow-hidden mask-r-from-[calc(100%-1.5rem)] text-left whitespace-nowrap">
             {tab.title === "" ? titleOf(tab) : tab.title}

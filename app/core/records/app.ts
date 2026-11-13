@@ -7,11 +7,42 @@ export const openBehaviorSchema = z.enum(["tab", "window"]);
 
 export type OpenBehavior = z.infer<typeof openBehaviorSchema>;
 
+export const appIconSchema = z.enum([
+  "admin",
+  "ads",
+  "analytics",
+  "appsScript",
+  "calendar",
+  "chat",
+  "classroom",
+  "contacts",
+  "docs",
+  "drive",
+  "forms",
+  "gemini",
+  "gmail",
+  "groups",
+  "keep",
+  "meet",
+  "myaccount",
+  "notebook",
+  "photos",
+  "searchConsole",
+  "sheets",
+  "sites",
+  "slides",
+  "tasks",
+  "vids",
+  "voice",
+]);
+
+/** The name of one of the icons the app bundles. */
+export type AppIconName = z.infer<typeof appIconSchema>;
+
 export const appSchema = z.object({
   /** A link to one of these hosts, or a subdomain of one, is a link to the app; `host/segment` claims only paths starting with that segment, for apps that share a host. */
   hosts: z.array(z.string().min(1)).min(1),
-  /** The name of the app's bundled icon. */
-  icon: z.string().min(1),
+  icon: appIconSchema,
   id: idSchema,
   name: z.string().min(1),
   openBehavior: openBehaviorSchema,

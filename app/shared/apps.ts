@@ -1,4 +1,4 @@
-import type { App } from "../core/records/app.ts";
+import type { App, AppIconName } from "../core/records/app.ts";
 
 // Google serves an app's files from a usercontent host named after it, and a link there belongs to the app as much as one to the app's own host.
 const googleHosts = (subdomain: string) => [
@@ -7,9 +7,9 @@ const googleHosts = (subdomain: string) => [
 ];
 
 const entry = (
-  id: string,
+  id: AppIconName,
   name: string,
-  subdomain = id,
+  subdomain: string = id,
   more: Partial<App> = {}
 ): App => ({
   hosts: googleHosts(subdomain),
@@ -22,7 +22,7 @@ const entry = (
 });
 
 // Docs, Sheets, Slides, Forms and Vids share docs.google.com, where only the first path segment tells them apart; their own hosts redirect there.
-const onDocs = (id: string, name: string, segment: string): App => {
+const onDocs = (id: AppIconName, name: string, segment: string): App => {
   const app = entry(id, name);
   return { ...app, hosts: [...app.hosts, `docs.google.com/${segment}`] };
 };

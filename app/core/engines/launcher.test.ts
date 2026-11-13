@@ -6,7 +6,7 @@ import { launcherApps, launcherSide } from "./launcher.ts";
 
 const app = (id: string, name: string): App => ({
   hosts: [`${id}.google.com`],
-  icon: id,
+  icon: "gmail",
   id,
   name,
   openBehavior: "tab",
