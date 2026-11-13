@@ -1,16 +1,16 @@
 import { DisposableStore } from "../../../core/disposable.ts";
+import { advance, IDLE_UPDATE } from "../../../core/engines/update.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
   LifecyclePort,
   Clock,
   Unsubscribe,
-  UpdaterEvent,
   UpdaterPort,
 } from "../../../core/ports.ts";
 import type { UpdateState } from "../../../core/records/update.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
-import { clamp, messageOf } from "../../../core/values.ts";
+import { messageOf } from "../../../core/values.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import {
   updater as channels,
@@ -38,45 +38,11 @@ export const FIRST_CHECK_DELAY = 10_000;
 
 const HOUR = 3_600_000;
 
-const IDLE: UpdateState = { kind: "idle" };
-
-const advance = (state: UpdateState, event: UpdaterEvent): UpdateState => {
-  switch (event.kind) {
-    case "checking": {
-      return { kind: "checking" };
-    }
-    case "available": {
-      return { kind: "available", version: event.version };
-    }
-    case "notAvailable": {
-      return IDLE;
-    }
-    case "progress": {
-      return {
-        kind: "downloading",
-        percent: clamp(event.percent, 0, 100),
-      };
-    }
-    case "downloaded": {
-      return { kind: "ready", version: event.version };
-    }
-    case "error": {
-      // A downloaded update still installs on quit whatever a later check runs into.
-      return state.kind === "ready"
-        ? state
-        : { kind: "error", message: event.message };
-    }
-    default: {
-      return state;
-    }
-  }
-};
-
 /** Checks the release feed behind the window, on a timer, in a packaged app only, and keeps every page told how far an update has got. */
 export class Updater {
   readonly #options: UpdaterOptions;
   readonly #disposables = new DisposableStore();
-  #state: UpdateState = IDLE;
+  #state: UpdateState = IDLE_UPDATE;
   #started = false;
   #timer: Unsubscribe | undefined;
 
