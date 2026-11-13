@@ -35,8 +35,9 @@ export const rowTabs = (row: TabRow): readonly Tab[] =>
 const byOrder = (a: Profile, b: Profile) =>
   a.order - b.order || a.id.localeCompare(b.id);
 
-export const orderedProfiles = (profiles: readonly Profile[]): Profile[] =>
-  profiles.toSorted(byOrder);
+export const orderedProfiles = <P extends Profile>(
+  profiles: readonly P[]
+): P[] => profiles.toSorted(byOrder);
 
 export const groupOf = (
   tabId: string,

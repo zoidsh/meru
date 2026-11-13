@@ -141,8 +141,7 @@ export const ProfileRow = () => {
   const selectedId = snapshot?.selectedProfileId ?? "";
   const scroll = useRowScroll(row, selectedId);
   const shown = orderedProfiles(snapshot?.profiles ?? []).filter(
-    (profile): profile is ShownProfile =>
-      "deactivated" in profile && profile.deactivated === false
+    (profile) => !profile.deactivated
   );
   if (shown.length <= 1) {
     return null;
