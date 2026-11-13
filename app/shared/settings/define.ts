@@ -21,6 +21,10 @@ export interface Setting<
   readonly page: SettingsPage;
   readonly label: Message;
   readonly description?: Message;
+  /** What each of a choice's values is called on the settings page. */
+  readonly options?: Readonly<Record<z.output<S> & string, Message>>;
+  /** The platforms the setting does anything on, as Node names them; every one when absent. */
+  readonly platforms?: readonly ("darwin" | "linux" | "win32")[];
 }
 
 export const defineSetting = <

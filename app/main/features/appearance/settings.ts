@@ -7,6 +7,7 @@ export const appearanceSettings = [
     default: "modern",
     description: msg`Modern insets panes with rounded corners; classic draws them edge to edge.`,
     label: msg`Appearance style`,
+    options: { classic: msg`Classic`, modern: msg`Modern` },
     page: "appearance",
     restart: false,
     schema: styleSchema,

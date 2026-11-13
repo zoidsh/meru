@@ -6,8 +6,9 @@ import { defineSetting } from "../../../shared/settings/define.ts";
 export const updaterSettings = [
   defineSetting("updater.channel", {
     default: "stable",
-    description: msg`Beta also offers releases before they reach everyone.`,
-    label: msg`Update channel`,
+    description: msg`Choose which releases to receive. The beta channel gets upcoming features early.`,
+    label: msg`Release channel`,
+    options: { beta: msg`Beta`, stable: msg`Stable` },
     page: "updates",
     restart: false,
     schema: z.enum(["stable", "beta"]),
