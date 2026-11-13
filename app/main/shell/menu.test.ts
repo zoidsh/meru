@@ -210,6 +210,14 @@ describe(ApplicationMenu, () => {
     expect(sections()[2]).toStrictEqual({ kind: "role", role: "editMenu" });
   });
 
+  it("puts the sidebar's toggle in the View menu on CmdOrCtrl+S", async () => {
+    const { submenu } = await setup();
+    expect(
+      submenu("View").find((entry) => entry.id === "sidebar.toggle")
+        ?.accelerator
+    ).toBe("CommandOrControl+S");
+  });
+
   it.each([
     ["darwin", "Command+[", "Command+]"],
     ["linux", "Alt+Left", "Alt+Right"],

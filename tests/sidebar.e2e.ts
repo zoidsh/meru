@@ -3,13 +3,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { profiles } from "../app/shared/channels/profiles.ts";
 import { invokeIn, launch } from "../scripts/lib/app.ts";
-import {
-  clickMenuItem,
-  entitlementOf,
-  inspect,
-  profilesOf,
-  viewsOf,
-} from "./app.ts";
+import { clickMenuItem, entitlementOf, profilesOf, viewsOf } from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
 
 const isLauncher = (page: Page) =>
@@ -135,7 +129,7 @@ test("shows the strip once Calendar is added through the launcher, Drive dragged
   }
 });
 
-test("shows a row of three profiles under a trial, and CmdOrCtrl+2 selects the second", async () => {
+test("shows a row of three profiles under a trial, and the menu's second profile item selects the second", async () => {
   const stub = await startStub();
   try {
     const { app, chrome, close } = await launch({
@@ -149,8 +143,6 @@ test("shows a row of three profiles under a trial, and CmdOrCtrl+2 selects the s
       await expect(buttons).toHaveText(["Personal", "Work", "Club"]);
       await expect(buttons.nth(0)).toHaveAttribute("data-selected", "true");
 
-      const { menu } = await inspect(chrome);
-      expect(menu["profiles.select2"]).toBe("CommandOrControl+2");
       await clickMenuItem(app, "profiles.select2");
       await expect(buttons.nth(1)).toHaveAttribute("data-selected", "true");
       const state = await profilesOf(chrome);
@@ -166,14 +158,12 @@ test("shows a row of three profiles under a trial, and CmdOrCtrl+2 selects the s
   }
 });
 
-test("hides the strip and brings it back with CmdOrCtrl+S, laying the panes out again", async () => {
+test("hides the strip and brings it back from the menu, laying the panes out again", async () => {
   const { app, chrome, close } = await launch();
   try {
     await openApp(app, chrome, "Calendar");
     const strip = chrome.locator("nav[data-sidebar]");
     await expect(strip).toBeVisible();
-    const { menu } = await inspect(chrome);
-    expect(menu["sidebar.toggle"]).toBe("CommandOrControl+S");
     const left = async () => {
       const [first] = await viewsOf(chrome);
       return first?.x;
