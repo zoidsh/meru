@@ -2,8 +2,6 @@ import { StrictMode } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { rectSchema } from "../../core/records/rect.ts";
-import { launcher } from "../../shared/channels/launcher.ts";
 import { overlayKindSchema, overlays } from "../../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../../shared/channels/surfaces.ts";
 import { themePushes } from "../../shared/channels/theme.ts";
@@ -23,16 +21,6 @@ import { followTheme } from "../theme.ts";
 
 import "../ui/globals.css";
 
-const parseRect = (raw: string | null) => {
-  let parsed: unknown = null;
-  try {
-    parsed = JSON.parse(raw ?? "null");
-  } catch {
-    parsed = null;
-  }
-  return rectSchema.safeParse(parsed).data;
-};
-
 /** What the page shows for each kind of overlay, given a client on that kind's surface from `overlays`, with only the stores it reads. */
 const shows: {
   readonly [K in OverlayKind]: (
@@ -40,22 +28,15 @@ const shows: {
     query: URLSearchParams
   ) => ReactNode;
 } = {
-  launcher: (client, query) => {
-    const anchor = parseRect(query.get("anchor"));
-    if (anchor === undefined) {
-      client.send(launcher.close, {});
-      return null;
-    }
-    return (
-      <LauncherClientProvider client={client}>
-        <SettingsContext value={createSettingsStore(client)}>
-          <ProfilesContext value={createProfilesStore(client)}>
-            <Launcher anchor={anchor} />
-          </ProfilesContext>
-        </SettingsContext>
-      </LauncherClientProvider>
-    );
-  },
+  launcher: (client) => (
+    <LauncherClientProvider client={client}>
+      <SettingsContext value={createSettingsStore(client)}>
+        <ProfilesContext value={createProfilesStore(client)}>
+          <Launcher />
+        </ProfilesContext>
+      </SettingsContext>
+    </LauncherClientProvider>
+  ),
 };
 
 const query = new URL(location.href).searchParams;

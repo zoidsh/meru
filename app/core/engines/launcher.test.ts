@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { App } from "../records/app.ts";
-import { TITLEBAR_HEIGHT } from "./chrome.ts";
-import { launcherApps, launcherSide } from "./launcher.ts";
+import { launcherApps } from "./launcher.ts";
 
 const app = (id: string, name: string): App => ({
   hosts: [`${id}.google.com`],
@@ -32,14 +31,5 @@ describe(launcherApps, () => {
     expect(
       ids(launcherApps(catalog, ["gmail", "calendar", "drive"], " AL "))
     ).toStrictEqual(["calendar"]);
-  });
-});
-
-describe(launcherSide, () => {
-  it("opens below a button in the titlebar and to the right of one below it", () => {
-    expect([
-      launcherSide({ height: 28, width: 28, x: 900, y: 6 }),
-      launcherSide({ height: 32, width: 32, x: 16, y: TITLEBAR_HEIGHT + 400 }),
-    ]).toStrictEqual(["bottom", "right"]);
   });
 });

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
-import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
+import { launcher } from "../../../shared/channels/launcher.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
@@ -94,29 +94,13 @@ const setup = async () => {
 };
 
 describe(Launcher, () => {
-  it("asks the window's chrome page to open the launcher from its button on launcher.open", async () => {
-    const { commands, transport, window } = await setup();
-    transport.sent.length = 0;
-    commands.run("launcher.open", { windowId: window.contentsId });
+  it("opens the launcher's page over the window's panes on launcher.open, and closes it from that page", async () => {
+    const { commands, registrar, views, window } = await setup();
     expect(
-      transport.sent.map((sent) => [sent.contentsId, sent.channel])
-    ).toStrictEqual([[window.contentsId, wireName(launcherPushes.requested)]]);
-  });
-
-  it("opens the launcher's page over the sender's panes beside the anchor, and closes it from that page", async () => {
-    const { registrar, views, window } = await setup();
-    const anchor = { height: 28, width: 28, x: 900, y: 6 };
-    expect(
-      registrar.dispatch(window.contentsId, wireName(launcher.open), {
-        anchor,
-      }).ok
+      commands.run("launcher.open", { windowId: window.contentsId }).ok
     ).toBeTruthy();
     const overlay = views.created.at(-1);
-    await expect
-      .poll(() => overlay?.url)
-      .toBe(
-        `overlay.html?${new URLSearchParams({ anchor: JSON.stringify(anchor), kind: "launcher" }).toString()}`
-      );
+    await expect.poll(() => overlay?.url).toBe("overlay.html?kind=launcher");
     expect(overlay?.bounds()).toStrictEqual(window.contentBounds());
     expect(
       registrar.dispatch(overlay?.contentsId ?? 0, wireName(launcher.close), {})
@@ -128,13 +112,21 @@ describe(Launcher, () => {
     ]).toStrictEqual([true, false]);
   });
 
+  it("opens the launcher's page over the sender's panes from the chrome page's button", async () => {
+    const { registrar, views, window } = await setup();
+    expect(
+      registrar.dispatch(window.contentsId, wireName(launcher.open), {}).ok
+    ).toBeTruthy();
+    await expect
+      .poll(() => views.created.at(-1)?.url)
+      .toBe("overlay.html?kind=launcher");
+  });
+
   it("refuses to open from a sender with no window", async () => {
     const { registrar } = await setup();
     registrar.assign(99, chromeSurface);
-    expect(
-      registrar.dispatch(99, wireName(launcher.open), {
-        anchor: { height: 1, width: 1, x: 0, y: 0 },
-      })
-    ).toMatchObject({ ok: false });
+    expect(registrar.dispatch(99, wireName(launcher.open), {})).toMatchObject({
+      ok: false,
+    });
   });
 });

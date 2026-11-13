@@ -1,7 +1,8 @@
 import { DisposableStore } from "../../../core/disposable.ts";
 import { err, ok } from "../../../core/result.ts";
+import type { Result } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
-import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
+import { launcher } from "../../../shared/channels/launcher.ts";
 import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import type { CommandRegistrar } from "../../../shared/commands/define.ts";
 import type { Stages } from "../stage/index.ts";
@@ -18,7 +19,7 @@ export interface LauncherOptions {
   ) => string;
 }
 
-/** Opens the launcher as an overlay over the panes, from the chrome page's button or from launcher.open, which asks the chrome page for the button. */
+/** Opens the launcher as an overlay over the panes of a window, from the chrome page's button or from launcher.open. */
 export class Launcher {
   readonly #options: LauncherOptions;
   readonly #disposables = new DisposableStore();
@@ -28,35 +29,31 @@ export class Launcher {
   }
 
   start(): void {
-    const { registrar, commands, stages, overlayUrl } = this.#options;
+    const { registrar, commands, stages } = this.#options;
     this.#disposables.add(
       commands.register(launcherCommands, {
-        open: ({ windowId }) => {
-          if (windowId === null) {
-            return err("unknownWindow");
-          }
-          registrar.push(windowId, launcherPushes.requested, {});
-          return ok(null);
-        },
+        open: ({ windowId }) =>
+          windowId === null ? err("unknownWindow") : this.open(windowId),
       }),
       registrar.register(launcher, {
         close: (_payload, { contentsId }) => {
           stages.find(contentsId)?.closeOverlay();
           return ok(undefined);
         },
-        open: ({ anchor }, { contentsId }) => {
-          const stage = stages.find(contentsId);
-          if (stage === undefined) {
-            return err("unknownWindow");
-          }
-          stage.openOverlay(
-            "launcher",
-            overlayUrl("launcher", { anchor: JSON.stringify(anchor) })
-          );
-          return ok(undefined);
-        },
+        open: (_payload, { contentsId }) => this.open(contentsId),
       })
     );
+  }
+
+  /** Opens the launcher over the panes of the window whose chrome page is `windowId`. */
+  open(windowId: number): Result<undefined, "unknownWindow"> {
+    const { stages, overlayUrl } = this.#options;
+    const stage = stages.find(windowId);
+    if (stage === undefined) {
+      return err("unknownWindow");
+    }
+    stage.openOverlay("launcher", overlayUrl("launcher", {}));
+    return ok(undefined);
   }
 
   dispose(): void {

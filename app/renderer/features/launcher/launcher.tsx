@@ -1,29 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 
-import { launcherApps, launcherSide } from "../../../core/engines/launcher.ts";
+import { launcherApps } from "../../../core/engines/launcher.ts";
 import type { App } from "../../../core/records/app.ts";
-import type { Rect } from "../../../core/records/rect.ts";
 import { apps } from "../../../shared/apps.ts";
 import { launcher } from "../../../shared/channels/launcher.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import { msg } from "../../../shared/msg.ts";
 import {
   Command,
+  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from "../../ui/command.tsx";
-import { Popover, PopoverContent } from "../../ui/popover.tsx";
 import { AppIcon } from "../apps/app-icon.tsx";
 import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useLauncherClient } from "./use-launcher-client.ts";
 
-/** The launcher itself, on its own page over the panes, beside the button it was opened from: a search field over the apps, Enter opening the highlighted one and Shift+Enter splitting the focused pane with it. */
-export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
+/** The launcher itself, on its own page over the panes, centred over the window: a search field over the apps, Enter opening the highlighted one and Shift+Enter splitting the focused pane with it. */
+export const Launcher = () => {
   const client = useLauncherClient();
   const snapshot = useProfiles();
   const appIds = useSetting("launcher.apps");
@@ -60,61 +59,53 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
   };
 
   return (
-    <Popover
+    <CommandDialog
+      className="w-80"
+      description={msg`Pick a Google app to open`}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
           close();
         }
       }}
       open
+      title={msg`Open app`}
     >
-      <PopoverContent
-        align="end"
-        anchor={{
-          getBoundingClientRect: () =>
-            new DOMRect(anchor.x, anchor.y, anchor.width, anchor.height),
-        }}
-        className="w-64 p-0"
-        data-launcher=""
-        side={launcherSide(anchor)}
+      <Command
+        onKeyDown={keyDown}
+        onValueChange={setHighlighted}
+        shouldFilter={false}
+        // cmdk takes the empty string for no highlighted item.
+        value={highlighted ?? ""}
       >
-        <Command
-          onKeyDown={keyDown}
-          onValueChange={setHighlighted}
-          shouldFilter={false}
-          // cmdk takes the empty string for no highlighted item.
-          value={highlighted ?? ""}
-        >
-          <CommandInput
-            aria-label={msg`Search apps`}
-            autoFocus
-            onValueChange={setQuery}
-            placeholder={msg`Search apps`}
-            value={query}
-          />
-          <CommandList>
-            <CommandEmpty>{msg`No apps found`}</CommandEmpty>
-            <CommandGroup>
-              {shown.map((app) => (
-                <CommandItem
-                  data-app-id={app.id}
-                  key={app.id}
-                  onPointerDown={(event) => {
-                    splitOnSelect.current = event.shiftKey;
-                  }}
-                  onSelect={() => {
-                    void open(app, splitOnSelect.current);
-                  }}
-                  value={app.id}
-                >
-                  <AppIcon className="size-4" icon={app.icon} />
-                  {app.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+        <CommandInput
+          aria-label={msg`Search apps`}
+          autoFocus
+          onValueChange={setQuery}
+          placeholder={msg`Search apps`}
+          value={query}
+        />
+        <CommandList>
+          <CommandEmpty>{msg`No apps found`}</CommandEmpty>
+          <CommandGroup>
+            {shown.map((app) => (
+              <CommandItem
+                data-app-id={app.id}
+                key={app.id}
+                onPointerDown={(event) => {
+                  splitOnSelect.current = event.shiftKey;
+                }}
+                onSelect={() => {
+                  void open(app, splitOnSelect.current);
+                }}
+                value={app.id}
+              >
+                <AppIcon className="size-4" icon={app.icon} />
+                {app.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    </CommandDialog>
   );
 };

@@ -1,7 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
+import { launcher } from "../../../shared/channels/launcher.ts";
 import { profiles } from "../../../shared/channels/profiles.ts";
 import { settings } from "../../../shared/channels/settings.ts";
 import { stage } from "../../../shared/channels/stage.ts";
@@ -16,8 +16,6 @@ import { LauncherButton } from "./launcher-button.tsx";
 import { Launcher } from "./launcher.tsx";
 
 const mounted: (() => void)[] = [];
-
-const ANCHOR = { height: 28, width: 28, x: 900, y: 6 };
 
 const PROFILES = {
   groups: [groupOf("g-mail", ["mail"])],
@@ -67,7 +65,7 @@ const settle = async () => {
 };
 
 const mount = (appIds?: readonly string[]) => {
-  const page = mountChrome(<Launcher anchor={ANCHOR} />, [
+  const page = mountChrome(<Launcher />, [
     answer(profiles.snapshot, PROFILES),
     answer(settings.snapshot, {
       global: appIds === undefined ? {} : { "launcher.apps": appIds },
@@ -131,6 +129,37 @@ describe(Launcher, () => {
     ]);
   });
 
+  it("draws the apps in a dialog over a backdrop, and closes on a click on the backdrop", async () => {
+    const { sentOn } = mount(["calendar", "drive"]);
+    const backdrop = document.querySelector<HTMLElement>(
+      "[data-slot=dialog-overlay]"
+    );
+    expect([
+      document.querySelector("[role=dialog] [data-app-id=calendar]") !== null,
+      backdrop !== null,
+    ]).toStrictEqual([true, true]);
+    act(() => {
+      for (const name of ["pointerdown", "mousedown", "pointerup", "mouseup"]) {
+        backdrop?.dispatchEvent(
+          new PointerEvent(name, { bubbles: true, button: 0 })
+        );
+      }
+      backdrop?.click();
+    });
+    await settle();
+    expect([sentOn(stage.openTab), sentOn(launcher.close)]).toStrictEqual([
+      [],
+      [{}],
+    ]);
+  });
+
+  it("closes on Escape", async () => {
+    const { sentOn } = mount(["calendar"]);
+    key({ key: "Escape" });
+    await settle();
+    expect(sentOn(launcher.close)).toStrictEqual([{}]);
+  });
+
   it("asks for a split on Shift+Enter, after moving down to the app", async () => {
     const { sentOn } = mount(["calendar", "drive"]);
     key({ key: "ArrowDown" });
@@ -149,13 +178,12 @@ describe(LauncherButton, () => {
     }
   });
 
-  it("opens the launcher beside itself on a click and when launcher.open asks", () => {
+  it("asks main to open the launcher on a click", () => {
     const page = mountChrome(<LauncherButton place="titlebar" />, []);
     mounted.push(page.unmount);
     act(() => {
       page.container.querySelector("button")?.click();
     });
-    page.push(launcherPushes.requested, {});
-    expect(page.sentOn(launcher.open)).toHaveLength(2);
+    expect(page.sentOn(launcher.open)).toStrictEqual([{}]);
   });
 });
