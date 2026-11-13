@@ -1,6 +1,6 @@
-import { issuedSchema, refusedSchema } from "../../core/entitlement/api.ts";
+import { answerOf } from "../../core/entitlement/api.ts";
 import type { EntitlementApi } from "../../core/ports.ts";
-import { err, ok } from "../../core/result.ts";
+import { err } from "../../core/result.ts";
 
 export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
@@ -31,25 +31,6 @@ export const createEntitlementApi = (options: {
     } catch (error) {
       return err({ detail: String(error), kind: "offline" });
     }
-    const body = await bodyOf(response);
-    if (response.ok) {
-      const issued = issuedSchema.safeParse(body);
-      return issued.success
-        ? ok({ token: issued.data.token })
-        : err({
-            detail: `A ${response.status} without a token`,
-            kind: "serverError",
-          });
-    }
-    if (response.status >= 400 && response.status < 500) {
-      const refused = refusedSchema.safeParse(body);
-      return err({
-        kind: "rejected",
-        reason: refused.success
-          ? refused.data.error.reason
-          : `http${response.status}`,
-      });
-    }
-    return err({ detail: `HTTP ${response.status}`, kind: "serverError" });
+    return answerOf(response.status, await bodyOf(response));
   },
 });

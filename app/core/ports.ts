@@ -118,11 +118,14 @@ export type EntitlementApiError =
   | { readonly kind: "rejected"; readonly reason: string }
   | { readonly kind: "serverError"; readonly detail: string };
 
+export type EntitlementAnswer = Result<
+  { readonly token: string },
+  EntitlementApiError
+>;
+
 export interface EntitlementApi {
   /** Asks for a token for this device; a disabled license is a token, not an error. */
-  readonly issue: (
-    request: EntitlementRequest
-  ) => Promise<Result<{ readonly token: string }, EntitlementApiError>>;
+  readonly issue: (request: EntitlementRequest) => Promise<EntitlementAnswer>;
 }
 
 /** Whether the machine has a network connection, as the operating system reports it; a server can still be out of reach. */

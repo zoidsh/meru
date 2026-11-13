@@ -11,6 +11,7 @@ import type { AppEvents } from "../../../core/events.ts";
 import type {
   AppPort,
   Clock,
+  EntitlementAnswer,
   EntitlementApi,
   EntitlementApiError,
   FsPort,
@@ -24,7 +25,7 @@ import type {
   EntitlementSource,
 } from "../../../core/records/entitlement.ts";
 import { idSchema } from "../../../core/records/id.ts";
-import { ok } from "../../../core/result.ts";
+import { err, ok } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { SnapshotSpec } from "../../../core/snapshot.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
@@ -358,14 +359,11 @@ export class Entitlement<K> {
     this.#refreshing = true;
     const { api, clock, report } = this.#options;
     const { deviceId } = asked;
-    let answer: Awaited<ReturnType<EntitlementApi["issue"]>>;
+    let answer: EntitlementAnswer;
     try {
       answer = await api.issue({ deviceId, licenseKey });
     } catch (error) {
-      answer = {
-        error: { detail: String(error), kind: "serverError" },
-        ok: false,
-      };
+      answer = err({ detail: String(error), kind: "serverError" });
     }
     let outcome: LastAnswer;
     if (answer.ok) {

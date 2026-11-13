@@ -59,33 +59,13 @@ describe(createEntitlementApi, () => {
     expect(received).toStrictEqual([request]);
   });
 
-  it("returns the reason of a refusal", async () => {
+  it("passes the status and body of a refusal on", async () => {
     const { api } = await serve(
       403,
       '{"error":{"reason":"unknownLicenseKey"}}'
     );
     await expect(api.issue(request)).resolves.toStrictEqual({
       error: { kind: "rejected", reason: "unknownLicenseKey" },
-      ok: false,
-    });
-  });
-
-  it("names a refusal with no reason by its status", async () => {
-    const { api } = await serve(404, "Not found");
-    await expect(api.issue(request)).resolves.toStrictEqual({
-      error: { kind: "rejected", reason: "http404" },
-      ok: false,
-    });
-  });
-
-  it.each([
-    [500, '{"token":"a.b.c"}'],
-    [200, '{"tolkien":"a.b.c"}'],
-    [200, "not json"],
-  ])("calls a %i answering %s a server error", async (status, body) => {
-    const { api } = await serve(status, body);
-    await expect(api.issue(request)).resolves.toMatchObject({
-      error: { kind: "serverError" },
       ok: false,
     });
   });
