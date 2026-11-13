@@ -25,6 +25,7 @@ import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
+import { random } from "../../../test/random.ts";
 import { unwrap } from "../../../test/result.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
@@ -406,15 +407,6 @@ describe(Profiles, () => {
   });
 });
 
-// Deterministic, so a failing seed fails the same way on every run.
-const random = (seed: number) => {
-  let state = seed;
-  return (below: number) => {
-    state = (state * 1_103_515_245 + 12_345) % 2_147_483_648;
-    return below === 0 ? 0 : state % below;
-  };
-};
-
 interface Choice {
   readonly profileId: string;
   readonly tabId: string;
@@ -469,7 +461,8 @@ describe("the profiles' invariants", () => {
     "hold after every one of a run of random operations (seed %i)",
     async (seed) => {
       const { profiles, errors } = await setup();
-      const pick = random(seed);
+      const draw = random(seed);
+      const pick = (below: number) => Math.floor(draw() * below);
       let changed = 0;
       for (let step = 0; step < 80; step += 1) {
         const operation = operations[pick(operations.length)];

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { random } from "../../test/random.ts";
 import { layoutSchema } from "../records/layout.ts";
 import type {
   Beside,
@@ -28,15 +29,6 @@ import {
   STYLE_METRICS,
   swap,
 } from "./layout.ts";
-
-// Park and Miller's minimal standard generator: seeded, so a failing case is the same case on every run.
-const random = (seed: number) => {
-  let state = seed;
-  return () => {
-    state = (state * 48_271) % 2_147_483_647;
-    return state / 2_147_483_647;
-  };
-};
 
 const counter = (prefix: string) => {
   let count = 0;
