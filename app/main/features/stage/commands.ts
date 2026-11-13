@@ -37,7 +37,7 @@ export const stageCommands = defineCommands("stage", {
   swap: {
     label: msg`Swap with next pane`,
     menu: { order: 7, section: "view" },
-    shortcut: { default: "CmdOrCtrl+Alt+Shift+." },
+    shortcut: { default: "CmdOrCtrl+Alt+S" },
   },
   balance: {
     label: msg`Balance panes`,
@@ -47,7 +47,7 @@ export const stageCommands = defineCommands("stage", {
   maximise: {
     label: msg`Maximise pane`,
     menu: { order: 9, section: "view" },
-    shortcut: { default: "CmdOrCtrl+Shift+Enter" },
+    shortcut: { default: "CmdOrCtrl+Alt+M" },
   },
   splitHorizontal: {
     label: msg`Split horizontally`,

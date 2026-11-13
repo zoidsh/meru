@@ -215,7 +215,7 @@ describe(ApplicationMenu, () => {
         label: "Reload",
       },
       {
-        accelerator: "CommandOrControl+Alt+Shift+.",
+        accelerator: "CommandOrControl+Alt+S",
         id: "stage.swap",
         label: "Swap with next pane",
       },
@@ -225,7 +225,7 @@ describe(ApplicationMenu, () => {
         label: "Balance panes",
       },
       {
-        accelerator: "CommandOrControl+Shift+Return",
+        accelerator: "CommandOrControl+Alt+M",
         id: "stage.maximise",
         label: "Maximise pane",
       },
@@ -401,9 +401,9 @@ describe(ApplicationMenu, () => {
       ["stage.focusNext", "CommandOrControl+Alt+."],
       ["stage.focusPrevious", "CommandOrControl+Alt+,"],
       ["stage.reload", "CommandOrControl+R"],
-      ["stage.swap", "CommandOrControl+Alt+Shift+."],
+      ["stage.swap", "CommandOrControl+Alt+S"],
       ["stage.balance", "CommandOrControl+Alt+="],
-      ["stage.maximise", "CommandOrControl+Shift+Return"],
+      ["stage.maximise", "CommandOrControl+Alt+M"],
     ]);
     settings.set("shortcuts.bindings", {
       "stage.splitHorizontal": "Cmd+V",
