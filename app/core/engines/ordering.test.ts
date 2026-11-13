@@ -127,6 +127,14 @@ const flat = (rows: readonly TabRow[]) =>
 const SEEDS = Array.from({ length: 200 }, (_, index) => index + 1);
 
 describe(orderedTabs, () => {
+  it("lists a group's tabs in the order of its panes, whatever the order of its tabIds", () => {
+    const tabs = ["t1", "t2"].map((id) => tabOf(id, "a"));
+    const groups = [
+      { ...groupWith("g1", "a", ["t2", "t1"]), tabIds: ["t1", "t2"] },
+    ];
+    expect(flat(orderedTabs(tabs, groups, "a"))).toStrictEqual(["t2", "t1"]);
+  });
+
   it("keeps a group of one as a plain row and a bigger group as one row in the group's order", () => {
     const tabs = ["t1", "t2", "t3", "t4"].map((id) => tabOf(id, "a"));
     const groups = [

@@ -3,6 +3,7 @@ import { clamp } from "es-toolkit";
 import type { Group } from "../records/group.ts";
 import type { Profile } from "../records/profile.ts";
 import type { Tab } from "../records/tab.ts";
+import { panes } from "./layout.ts";
 
 export const moveItem = <T>(
   items: readonly T[],
@@ -44,7 +45,7 @@ export const groupOf = (
   groups: readonly Group[]
 ): Group | undefined => groups.find((group) => group.tabIds.includes(tabId));
 
-/** A profile's tabs in sidebar order: the order of `tabs`, with a group of several in place of its first tab and its tabs in the group's order. */
+/** A profile's tabs in sidebar order: the order of `tabs`, with a group of several in place of its first tab and its tabs in the order of its layout's panes, so the rows follow a drop or a swap. */
 export const orderedTabs = (
   tabs: readonly Tab[],
   groups: readonly Group[],
@@ -64,10 +65,12 @@ export const orderedTabs = (
       rows.push({ kind: "tab", tab });
       continue;
     }
-    const members = group.tabIds.flatMap((id) => {
-      const member = byId.get(id);
-      return member === undefined || placed.has(id) ? [] : [member];
-    });
+    const members = panes(group.layout)
+      .flatMap((pane) => pane.tabIds)
+      .flatMap((id) => {
+        const member = byId.get(id);
+        return member === undefined || placed.has(id) ? [] : [member];
+      });
     for (const member of members) {
       placed.add(member.id);
     }
