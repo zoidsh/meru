@@ -11,9 +11,6 @@ const ARCHES: ("x64" | "arm64")[] = ["x64", "arm64"];
 
 const SCHEMES = ["meru", "mailto", "http", "https"];
 
-// Playwright drives the app through the inspector, so the end-to-end suite's build keeps the CLI inspect arguments that a release turns off.
-const e2eBuild = process.env.MERU_E2E_BUILD === "1";
-
 // A build for this machine names the checkout it came from, and the app keeps its user data there rather than in the directory an installed Meru, 3.x included, uses.
 const localMarker = (): string | undefined => {
   if (process.env.MERU_LOCAL_PACKAGE !== "1") {
@@ -61,7 +58,7 @@ const config: Configuration = {
   electronFuses: {
     enableCookieEncryption: false,
     enableEmbeddedAsarIntegrityValidation: true,
-    enableNodeCliInspectArguments: e2eBuild,
+    enableNodeCliInspectArguments: false,
     enableNodeOptionsEnvironmentVariable: false,
     grantFileProtocolExtraPrivileges: true,
     onlyLoadAppFromAsar: true,
