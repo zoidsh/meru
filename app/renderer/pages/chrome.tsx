@@ -10,6 +10,8 @@ import { Dividers } from "../features/stage/dividers.tsx";
 import { Titlebar } from "../features/titlebar/titlebar.tsx";
 import { followTheme } from "../theme.ts";
 
+import "../ui/globals.css";
+
 followTheme(document.documentElement, location.href, (query) =>
   matchMedia(query)
 );

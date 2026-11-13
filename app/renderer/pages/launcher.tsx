@@ -9,6 +9,8 @@ import { createClient } from "../client.ts";
 import { Launcher } from "../features/launcher/launcher.tsx";
 import { followTheme } from "../theme.ts";
 
+import "../ui/globals.css";
+
 followTheme(document.documentElement, location.href, (query) =>
   matchMedia(query)
 );
