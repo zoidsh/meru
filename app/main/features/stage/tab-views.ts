@@ -1,16 +1,22 @@
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
 import type { Disposition } from "../../../core/records/link.ts";
+import { partitionOf } from "../../../core/records/profile.ts";
+import type { Tab } from "../../../core/records/tab.ts";
 import { loadOwned } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 
-/** What a tab's view is made from: its spec and the address it loads. */
+/** What a tab's view is made from beyond its profile's partition. */
 export interface TabSource {
-  readonly spec: ViewSpec;
   readonly url: string;
+  readonly zoom: number;
 }
 
 export interface TabViewsOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
+  readonly sourceOf: (tab: Tab) => TabSource;
+  /** The chrome's ground, which a pane shows until its page paints. */
+  readonly background: () => string;
+  readonly radius: () => number;
   readonly onFocus: (tabId: string) => void;
   readonly onNavigation: (tabId: string) => void;
   /** A link the tab's page opens; true takes it from the page. */
@@ -41,11 +47,11 @@ export class TabViews {
     return [...this.#views].map(([tabId, { view }]) => [tabId, view]);
   }
 
-  /** Makes the view of each tab `shown` names that has none from its source. */
-  show(shown: ReadonlyMap<string, TabSource>): void {
-    for (const [tabId, source] of shown) {
-      if (!this.#views.has(tabId)) {
-        this.#views.set(tabId, this.#make(tabId, source));
+  /** Makes the view of each tab that has none. */
+  show(tabs: readonly Tab[]): void {
+    for (const tab of tabs) {
+      if (!this.#views.has(tab.id)) {
+        this.#views.set(tab.id, this.#make(tab));
       }
     }
   }
@@ -69,10 +75,17 @@ export class TabViews {
     this.#views.clear();
   }
 
-  #make(tabId: string, source: TabSource): OwnedView {
+  #make(tab: Tab): OwnedView {
     const { create, onFocus, onNavigation, onOpen, onError } = this.#options;
-    const owned = create(source.spec);
+    const source = this.#options.sourceOf(tab);
+    const owned = create({
+      background: this.#options.background(),
+      partition: partitionOf(tab.profileId),
+      radius: this.#options.radius(),
+      zoom: source.zoom,
+    });
     const { view } = owned;
+    const tabId = tab.id;
     const listeners = [
       view.onNavigation(() => {
         onNavigation(tabId);

@@ -27,7 +27,6 @@ import type {
   Placement,
 } from "../../../core/records/layout.ts";
 import type { NavigationAction } from "../../../core/records/navigation.ts";
-import { partitionOf } from "../../../core/records/profile.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -45,7 +44,6 @@ import { DragOverlay } from "./drag-overlay.ts";
 import { Overlay } from "./overlay.ts";
 import type { OwnedView } from "./owned-view.ts";
 import { TabViews } from "./tab-views.ts";
-import type { TabSource } from "./tab-views.ts";
 
 export type StageError =
   | "unknownWindow"
@@ -103,6 +101,7 @@ export class Stage {
   constructor(options: StageOptions) {
     this.#options = options;
     this.#views = new TabViews({
+      background: options.background,
       create: (spec) => this.#own(spec),
       onError: options.onError,
       onFocus: (tabId) => {
@@ -118,6 +117,11 @@ export class Stage {
       },
       // Nothing routes a link a pane opens, so each goes on as Chromium would take it.
       onOpen: () => false,
+      radius: () => STYLE_METRICS[options.style()].radius,
+      sourceOf: (tab) => ({
+        url: options.urlOf(tab),
+        zoom: options.zoom(tab.profileId),
+      }),
     });
     this.#overlay = new Overlay({
       create: (spec) => this.#own(spec),
@@ -472,32 +476,6 @@ export class Stage {
     this.#retired.push(overlay);
   }
 
-  /** The source of the view of each tab the shown group's panes show. */
-  #sources(): Map<string, TabSource> {
-    const { radius } = STYLE_METRICS[this.#options.style()];
-    return new Map(
-      panes(this.#layout()).flatMap(({ paneId }) => {
-        const tab = this.#tabOf(paneId);
-        return tab === undefined
-          ? []
-          : [
-              [
-                tab.id,
-                {
-                  spec: {
-                    background: this.#options.background(),
-                    partition: partitionOf(tab.profileId),
-                    radius,
-                    zoom: this.#options.zoom(tab.profileId),
-                  },
-                  url: this.#options.urlOf(tab),
-                },
-              ],
-            ];
-      })
-    );
-  }
-
   /** Hands the views of closed tabs, a removed profile's among them, to be detached and disposed. */
   #retireClosed(): boolean {
     const closed = this.#views.retire(
@@ -547,7 +525,9 @@ export class Stage {
   }
 
   #update(): void {
-    this.#views.show(this.#sources());
+    this.#views.show(
+      panes(this.#layout()).flatMap(({ paneId }) => this.#tabOf(paneId) ?? [])
+    );
     this.#retireClosed();
     this.#reconcile();
     this.#arrange();
