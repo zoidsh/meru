@@ -297,6 +297,23 @@ export class Profiles {
     return committed.ok ? ok(tab) : committed;
   }
 
+  /** The tab an app opens to in a profile: the profile's one tab of a single-instance app when it has it, else a new tab, as addTab adds it. */
+  openTab(
+    profileId: string,
+    appId: string,
+    placement?: Placement
+  ): Result<Tab, ProfilesError> {
+    const existing = this.state.tabs.find(
+      (tab) =>
+        tab.profileId === profileId &&
+        tab.appId === appId &&
+        appById(appId)?.singleInstance === true
+    );
+    return existing === undefined
+      ? this.addTab(profileId, appId, placement)
+      : ok(existing);
+  }
+
   closeTab(tabId: string): Result<undefined, ProfilesError> {
     return this.#commit(
       closeTab(

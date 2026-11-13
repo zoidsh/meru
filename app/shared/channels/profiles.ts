@@ -36,6 +36,15 @@ export const tabs = defineChannels("tabs", {
   move: invoke(z.object({ tabId: idSchema, to: z.number().int() }), z.null()),
 });
 
+/** Opening a tab, which the stage of the sender's window answers, since a split goes beside its focused pane. */
+export const tabOpening = defineChannels("tabs", {
+  /** Opens a tab of the app in the profile and shows it, in a group of one or, with `split`, beside the focused pane; a single-instance app's one tab instead when the profile has it. */
+  open: invoke(
+    z.object({ appId: idSchema, profileId: idSchema, split: z.boolean() }),
+    z.null()
+  ),
+});
+
 export const profilesPushes = definePushes("profiles", {
   changed: push(profilesSnapshotSchema),
 });

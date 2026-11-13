@@ -7,10 +7,14 @@ import type { LayoutNode } from "../core/records/layout.ts";
 import type { Tab } from "../core/records/tab.ts";
 import type { ProfilesSnapshot } from "../shared/channels/profiles.ts";
 import type { StageSnapshot } from "../shared/channels/stage.ts";
-import { rendererSurface } from "../shared/channels/surfaces.ts";
+import {
+  launcherSurface,
+  rendererSurface,
+} from "../shared/channels/surfaces.ts";
 import { FakeBridge } from "../test/fakes/bridge.ts";
 import { ChromeProvider } from "./chrome-context.tsx";
 import { createClient } from "./client.ts";
+import { LauncherClientProvider } from "./features/launcher/use-launcher-client.ts";
 import {
   createProfilesStore,
   ProfilesContext,
@@ -98,7 +102,7 @@ export const stageOf = (more: Partial<StageSnapshot> = {}): StageSnapshot => ({
 /** What main answers the page's snapshots with, by channel name. */
 export type Answers = Readonly<Record<string, unknown>>;
 
-/** Renders under the chrome page's providers, whose client talks to a fake bridge seeded with `answers`. */
+/** Renders under the providers of the chrome page and the launcher's, whose clients talk to a fake bridge seeded with `answers`. */
 export const mountChrome = (
   node: ReactNode,
   answers: Answers,
@@ -109,21 +113,24 @@ export const mountChrome = (
     bridge.answers.set(channel, { ok: true, value });
   }
   const client = createClient({ meru: bridge }, rendererSurface);
+  const launcherClient = createClient({ meru: bridge }, launcherSurface);
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
   act(() => {
     root.render(
       <ChromeProvider client={client}>
-        <SettingsContext value={createSettingsStore(client)}>
-          <ProfilesContext value={createProfilesStore(client)}>
-            <StageContext value={createStageStore(client)}>
-              <SidebarContext value={createSidebarStore(client)}>
-                {node}
-              </SidebarContext>
-            </StageContext>
-          </ProfilesContext>
-        </SettingsContext>
+        <LauncherClientProvider client={launcherClient}>
+          <SettingsContext value={createSettingsStore(client)}>
+            <ProfilesContext value={createProfilesStore(client)}>
+              <StageContext value={createStageStore(client)}>
+                <SidebarContext value={createSidebarStore(client)}>
+                  {node}
+                </SidebarContext>
+              </StageContext>
+            </ProfilesContext>
+          </SettingsContext>
+        </LauncherClientProvider>
       </ChromeProvider>
     );
   });

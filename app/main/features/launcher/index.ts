@@ -1,8 +1,8 @@
 import { DisposableStore } from "../../../core/disposable.ts";
-import type { Rect } from "../../../core/records/rect.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
+import { launcherSurface } from "../../../shared/channels/surfaces.ts";
 import type { CommandRegistrar } from "../../../shared/commands/define.ts";
 import type { Stages } from "../stage/index.ts";
 import { launcherCommands } from "./commands.ts";
@@ -11,8 +11,8 @@ export interface LauncherOptions {
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
   readonly stages: Pick<Stages, "find">;
-  /** The launcher page's address, carrying the anchor it is drawn beside. */
-  readonly pageUrl: (anchor: Rect) => string;
+  /** The overlay page's address, carrying `query`. */
+  readonly overlayUrl: (query: Readonly<Record<string, string>>) => string;
 }
 
 /** Opens the launcher as a popup over the panes, from the chrome page's button or from launcher.open, which asks the chrome page for the button. */
@@ -25,7 +25,7 @@ export class Launcher {
   }
 
   start(): void {
-    const { registrar, commands, stages, pageUrl } = this.#options;
+    const { registrar, commands, stages, overlayUrl } = this.#options;
     this.#disposables.add(
       commands.register(launcherCommands, {
         open: ({ windowId }) => {
@@ -46,7 +46,10 @@ export class Launcher {
           if (stage === undefined) {
             return err("unknownWindow");
           }
-          stage.openPopup(pageUrl(anchor));
+          stage.openPopup(
+            overlayUrl({ anchor: JSON.stringify(anchor), kind: "launcher" }),
+            launcherSurface
+          );
           return ok(undefined);
         },
       })

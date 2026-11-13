@@ -7,13 +7,17 @@ import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { drag } from "../../../shared/channels/drag.ts";
+import { tabOpening } from "../../../shared/channels/profiles.ts";
 import {
   stage as stageChannels,
   stagePushes,
   stageSnapshotSchema,
 } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import {
+  launcherSurface,
+  rendererSurface,
+} from "../../../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../../../shared/commands/registry.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
@@ -129,6 +133,7 @@ const setup = async (style: Style = "modern") => {
     changes,
     commands,
     errors,
+    events,
     id,
     insets,
     paneIds,
@@ -604,17 +609,21 @@ describe("a drag across panes", () => {
 });
 
 describe("a popup over the panes", () => {
-  it("splits with a new tab of the app it names, from the popup's own page", async () => {
+  it("opens a tab beside the focused pane from the popup's own page, on the surface it was given", async () => {
     const { call, id, profiles, stage, views } = await setup();
-    stage.openPopup("file:///launcher.html");
+    stage.openPopup("file:///overlay.html", launcherSurface);
     const popup = views.created.at(-1)?.contentsId ?? 0;
+    const profileId = profiles.selected().id;
     expect(
       call(
-        stageChannels.split,
-        { appId: "calendar", orientation: "vertical" },
+        tabOpening.open,
+        { appId: "calendar", profileId, split: true },
         popup
       ).ok
     ).toBeTruthy();
+    expect(
+      call(stageChannels.split, { orientation: "vertical" }, popup).ok
+    ).toBeFalsy();
     expect(profiles.state.tabs.map((tab) => tab.appId)).toStrictEqual([
       "gmail",
       "calendar",
@@ -623,9 +632,32 @@ describe("a popup over the panes", () => {
     expect(id).not.toBe(popup);
   });
 
+  it("opens a tab in a group of its own and shows it, and brings Gmail's one tab to the front instead of adding another", async () => {
+    const { call, events, profiles, stage, views } = await setup();
+    const focused: string[] = [];
+    events.on("tab.focused", ({ tabId }) => {
+      focused.push(profiles.tab(tabId)?.appId ?? tabId);
+    });
+    stage.openPopup("file:///overlay.html", launcherSurface);
+    const popup = views.created.at(-1)?.contentsId ?? 0;
+    const profileId = profiles.selected().id;
+    const open = (appId: string) =>
+      call(tabOpening.open, { appId, profileId, split: false }, popup).ok;
+    expect([open("drive"), open("gmail")]).toStrictEqual([true, true]);
+    expect({
+      focused,
+      groups: profiles.state.groups.map((group) => group.tabIds.length),
+      tabs: profiles.state.tabs.map((tab) => tab.appId),
+    }).toStrictEqual({
+      focused: ["drive", "gmail"],
+      groups: [1, 1],
+      tabs: ["gmail", "drive"],
+    });
+  });
+
   it("is a transparent renderer page above every pane, focused once loaded, until it is closed", async () => {
-    const { call, window, views, stage } = await setup();
-    stage.openPopup("file:///launcher.html");
+    const { call, profileId, window, views, stage } = await setup();
+    stage.openPopup("file:///overlay.html", launcherSurface);
     const [pane, popup] = views.created;
     await expect.poll(() => popup?.focused).toBeTruthy();
     expect({
@@ -637,10 +669,13 @@ describe("a popup over the panes", () => {
       background: "#00000000",
       spec: { preload: "/dist/preload/renderer.cjs", radius: 0, zoom: 1 },
       top: true,
-      url: "file:///launcher.html",
+      url: "file:///overlay.html",
     });
     const sender = popup?.contentsId ?? 0;
-    expect(call(stageChannels.snapshot, {}, sender).ok).toBeTruthy();
+    const asks = () =>
+      call(tabOpening.open, { appId: "gmail", profileId, split: false }, sender)
+        .ok;
+    expect(asks()).toBeTruthy();
     if (pane !== undefined) {
       pane.focused = false;
     }
@@ -649,7 +684,7 @@ describe("a popup over the panes", () => {
       popup?.destroyed,
       pane?.focused,
       window.childViews().some((view) => view === popup),
-      call(stageChannels.snapshot, {}, sender).ok,
+      asks(),
     ]).toStrictEqual([true, true, false, false]);
   });
 });

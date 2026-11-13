@@ -17,7 +17,7 @@ export default defineConfig(
       rolldownOptions: {
         input: {
           chrome: path.join(pages, "chrome.html"),
-          launcher: path.join(pages, "launcher.html"),
+          overlay: path.join(pages, "overlay.html"),
         },
       },
     },

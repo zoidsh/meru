@@ -212,8 +212,7 @@ const start = async () => {
   };
   new Launcher({
     commands,
-    pageUrl: (anchor) =>
-      pageUrl(pages, "launcher.html", { anchor: JSON.stringify(anchor) }),
+    overlayUrl: (query) => pageUrl(pages, "overlay.html", query),
     registrar: dispatcher,
     stages,
   }).start();

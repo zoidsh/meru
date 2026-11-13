@@ -13,7 +13,7 @@ import {
 import { startStub } from "./entitlement-stub.ts";
 
 const isLauncher = (page: Page) =>
-  new URL(page.url()).pathname.endsWith("/launcher.html");
+  new URL(page.url()).pathname.endsWith("/overlay.html");
 
 /** Opens the launcher from the chrome page's button and picks the app named `name` with Enter. */
 const openApp = async (

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { AppEvents } from "../../../core/events.ts";
-import type { Rect } from "../../../core/records/rect.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
 import { rendererSurface } from "../../../shared/channels/surfaces.ts";
@@ -84,7 +83,8 @@ const setup = async () => {
   const stage = stages.open(window, () => profiles.currentGroup()?.id);
   new Launcher({
     commands,
-    pageUrl: (anchor: Rect) => `launcher.html#${anchor.x},${anchor.y}`,
+    overlayUrl: (query) =>
+      `overlay.html?${new URLSearchParams(query).toString()}`,
     registrar,
     stages,
   }).start();
@@ -110,7 +110,11 @@ describe(Launcher, () => {
       }).ok
     ).toBeTruthy();
     const popup = views.created.at(-1);
-    await expect.poll(() => popup?.url).toBe("launcher.html#900,6");
+    await expect
+      .poll(() => popup?.url)
+      .toBe(
+        `overlay.html?${new URLSearchParams({ anchor: JSON.stringify(anchor), kind: "launcher" }).toString()}`
+      );
     expect(popup?.bounds()).toStrictEqual(window.contentBounds());
     expect(
       registrar.dispatch(popup?.contentsId ?? 0, wireName(launcher.close), {})

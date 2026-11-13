@@ -14,12 +14,9 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { drag } from "../../../shared/channels/drag.ts";
+import { tabOpening } from "../../../shared/channels/profiles.ts";
 import { stage, stagePushes } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import {
-  dragSurface,
-  rendererSurface,
-} from "../../../shared/channels/surfaces.ts";
 import type {
   CommandContext,
   CommandRegistrar,
@@ -121,6 +118,14 @@ export class Stages {
         split: ({ orientation, paneId, appId }, { contentsId }) =>
           this.split(contentsId, orientation, paneId, appId),
       }),
+      registrar.register(tabOpening, {
+        open: ({ appId, profileId, split }, { contentsId }) => {
+          const opened = this.#with(contentsId, (found) =>
+            found.openTab(profileId, appId, split)
+          );
+          return opened.ok ? ok(null) : opened;
+        },
+      }),
       registrar.register(drag, {
         end: (point, { contentsId }) => this.endDrag(contentsId, point),
         move: ({ x, y, buttons }, { contentsId }) =>
@@ -147,20 +152,17 @@ export class Stages {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
       },
       onError: this.#options.onError,
-      onOverlay: (contentsId, attached, kind) => {
-        if (attached) {
-          this.#bySender.set(contentsId, opened);
-          this.#unassign.set(
-            contentsId,
-            this.#options.registrar.assign(
-              contentsId,
-              kind === "drag" ? dragSurface : rendererSurface
-            )
-          );
-        } else {
+      onOverlay: (contentsId, surface) => {
+        if (surface === null) {
           this.#bySender.delete(contentsId);
           this.#unassign.get(contentsId)?.();
           this.#unassign.delete(contentsId);
+        } else {
+          this.#bySender.set(contentsId, opened);
+          this.#unassign.set(
+            contentsId,
+            this.#options.registrar.assign(contentsId, surface)
+          );
         }
       },
       profiles,

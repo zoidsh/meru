@@ -1,13 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  groupOf,
-  mountChrome,
-  profileOf,
-  stageOf,
-  tabOf,
-} from "../../testing.tsx";
+import { groupOf, mountChrome, profileOf, tabOf } from "../../testing.tsx";
 import { Launcher, LauncherButton } from "./launcher.tsx";
 
 const mounted: (() => void)[] = [];
@@ -65,9 +59,7 @@ const mount = (appIds?: readonly string[]) => {
       global: appIds === undefined ? {} : { "launcher.apps": appIds },
       profiles: {},
     },
-    "stage.snapshot": stageOf(),
-    "tabs.add": tabOf("added", "calendar"),
-    "tabs.focus": null,
+    "tabs.open": null,
   });
   mounted.push(page.unmount);
   return page;
@@ -90,39 +82,26 @@ describe(Launcher, () => {
     ]);
   });
 
-  it("adds a tab of the highlighted app in a group of its own on Enter and shows it, then closes", async () => {
+  it("asks main to open the highlighted app for the selected profile on Enter, then closes", async () => {
     const { sentOn } = mount(["calendar", "drive"]);
     key({ key: "Enter" });
     await settle();
     expect([
-      sentOn("tabs.add"),
-      sentOn("tabs.focus"),
+      sentOn("tabs.open"),
       sentOn("launcher.close").length,
     ]).toStrictEqual([
-      [{ appId: "calendar", profileId: "personal" }],
-      [{ tabId: "added" }],
+      [{ appId: "calendar", profileId: "personal", split: false }],
       1,
     ]);
   });
 
-  it("splits the focused pane with the app on Shift+Enter, after moving down to it", async () => {
+  it("asks for a split on Shift+Enter, after moving down to the app", async () => {
     const { sentOn } = mount(["calendar", "drive"]);
     key({ key: "ArrowDown" });
     key({ key: "Enter", shiftKey: true });
     await settle();
-    expect([sentOn("stage.split"), sentOn("tabs.add")]).toStrictEqual([
-      [{ appId: "drive", orientation: "vertical" }],
-      [],
-    ]);
-  });
-
-  it("brings the profile's Gmail tab to the front rather than adding another", async () => {
-    const { sentOn } = mount(["gmail"]);
-    key({ key: "Enter", shiftKey: true });
-    await settle();
-    expect([sentOn("tabs.focus"), sentOn("stage.split")]).toStrictEqual([
-      [{ tabId: "mail" }],
-      [],
+    expect(sentOn("tabs.open")).toStrictEqual([
+      { appId: "drive", profileId: "personal", split: true },
     ]);
   });
 });

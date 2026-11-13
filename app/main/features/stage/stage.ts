@@ -28,7 +28,9 @@ import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
+import type { Surface } from "../../../shared/channels/define.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
+import { dragSurface } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
 import { Popup } from "./popup.ts";
@@ -45,7 +47,7 @@ export type StageError =
 /** What a stage reads its group and tabs from, and changes them through. */
 export type StageProfiles = Pick<
   Profiles,
-  "group" | "tab" | "addTab" | "closeTab" | "resize"
+  "group" | "tab" | "addTab" | "openTab" | "focusTab" | "closeTab" | "resize"
 >;
 
 export interface StageOptions {
@@ -67,16 +69,10 @@ export interface StageOptions {
   /** The preload of a popup's page, which is one of the renderer's. */
   readonly popupPreload: string | undefined;
   readonly onChange: (snapshot: StageSnapshot) => void;
-  readonly onOverlay: (
-    contentsId: number,
-    attached: boolean,
-    kind: OverlayKind
-  ) => void;
+  /** An overlay's page came, on the surface its channels are allowed from, or went, with null. */
+  readonly onOverlay: (contentsId: number, surface: Surface | null) => void;
   readonly onError: (error: unknown) => void;
 }
-
-/** A drag's overlay only catches the pointer; a popup is a renderer page, such as the launcher, drawn over the panes. */
-export type OverlayKind = "drag" | "popup";
 
 export class Stage {
   readonly #options: StageOptions;
@@ -171,6 +167,31 @@ export class Stage {
       found.tabIds.includes(added.value.id)
     );
     return pane === undefined ? ok(undefined) : this.focusPane(pane.paneId);
+  }
+
+  /** Opens a tab of the app in the profile and shows it: beside the focused pane with `split` when the stage shows that profile, else in a group of one; a single-instance app's one tab instead when the profile has it. */
+  openTab(
+    profileId: string,
+    appId: string,
+    split: boolean
+  ): Result<undefined, StageError> {
+    const group = this.#read();
+    const paneId = this.#focused;
+    const placement =
+      split &&
+      group !== undefined &&
+      paneId !== undefined &&
+      group.profileId === profileId
+        ? { groupId: group.id, orientation: "vertical" as const, paneId }
+        : undefined;
+    const { profiles } = this.#options;
+    const opened = profiles.openTab(profileId, appId, placement);
+    if (!opened.ok) {
+      return err("refused");
+    }
+    return profiles.focusTab(opened.value.id).ok
+      ? ok(undefined)
+      : err("refused");
   }
 
   /** Closes a pane's tab; the last pane stays. */
@@ -278,17 +299,17 @@ export class Stage {
       views: this.#factory,
     });
     this.#drag = drag;
-    this.#options.onOverlay(drag.view.contentsId, true, "drag");
+    this.#options.onOverlay(drag.view.contentsId, dragSurface);
     this.#reconcile();
     this.#arrange(false);
     return ok(undefined);
   }
 
-  /** Shows a renderer page over the panes until closePopup, replacing any popup already up. */
-  openPopup(url: string): void {
+  /** Shows a renderer page over the panes until closePopup, replacing any popup already up; its page may use the channels of `surface`. */
+  openPopup(url: string, surface: Surface): void {
     this.#dropPopup();
     const view = this.#popup.open(url);
-    this.#options.onOverlay(view.contentsId, true, "popup");
+    this.#options.onOverlay(view.contentsId, surface);
     this.#reconcile();
     this.#arrange(false);
   }
@@ -470,7 +491,7 @@ export class Stage {
     if (popup === undefined) {
       return;
     }
-    this.#options.onOverlay(popup.contentsId, false, "popup");
+    this.#options.onOverlay(popup.contentsId, null);
     this.#retired.push(popup);
   }
 
@@ -480,7 +501,7 @@ export class Stage {
       return;
     }
     this.#drag = undefined;
-    this.#options.onOverlay(drag.view.contentsId, false, "drag");
+    this.#options.onOverlay(drag.view.contentsId, null);
     this.#retired.push(drag.view);
   }
 

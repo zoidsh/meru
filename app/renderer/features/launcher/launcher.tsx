@@ -8,8 +8,7 @@ import type { App } from "../../../core/records/app.ts";
 import type { Rect } from "../../../core/records/rect.ts";
 import { apps } from "../../../shared/apps.ts";
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
-import { tabs } from "../../../shared/channels/profiles.ts";
-import { stage } from "../../../shared/channels/stage.ts";
+import { tabOpening } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../chrome-context.tsx";
 import { Button } from "../../ui/button.tsx";
@@ -19,6 +18,7 @@ import { AppIcon } from "../apps/app-icon.tsx";
 import { useTooltip } from "../commands/use-tooltip.ts";
 import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
+import { useLauncherClient } from "./use-launcher-client.ts";
 
 const BUTTON_SIZE = {
   narrow: "icon",
@@ -77,7 +77,7 @@ export const LauncherButton = ({
 
 /** The launcher itself, on its own page over the panes, beside the button it was opened from. */
 export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
-  const client = useClient();
+  const client = useLauncherClient();
   const snapshot = useProfiles();
   const appIds = useSetting("launcher.apps");
   const [query, setQuery] = useState("");
@@ -95,28 +95,10 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
     };
   });
 
-  // A single-instance app has one tab a profile, which its entry brings to the front rather than adding another.
   const open = async (app: App, split: boolean) => {
     const profileId = snapshot?.selectedProfileId;
-    if (profileId === undefined) {
-      close();
-      return;
-    }
-    const existing =
-      app.singleInstance === true
-        ? snapshot?.tabs.find(
-            (tab) => tab.profileId === profileId && tab.appId === app.id
-          )
-        : undefined;
-    if (existing !== undefined) {
-      await client.invoke(tabs.focus, { tabId: existing.id });
-    } else if (split) {
-      client.send(stage.split, { appId: app.id, orientation: "vertical" });
-    } else {
-      const added = await client.invoke(tabs.add, { appId: app.id, profileId });
-      if (added.ok) {
-        await client.invoke(tabs.focus, { tabId: added.value.id });
-      }
+    if (profileId !== undefined) {
+      await client.invoke(tabOpening.open, { appId: app.id, profileId, split });
     }
     close();
   };
