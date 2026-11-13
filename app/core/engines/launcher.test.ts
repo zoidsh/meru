@@ -13,7 +13,7 @@ const app = (id: string, name: string): App => ({
 });
 
 const catalog = [
-  app("gmail", "Gmail"),
+  { ...app("gmail", "Gmail"), singleInstance: true },
   app("calendar", "Calendar"),
   app("drive", "Drive"),
 ];
@@ -23,8 +23,14 @@ const ids = (found: readonly App[]) => found.map((entry) => entry.id);
 describe(launcherApps, () => {
   it("lists the apps in the order given, skipping ids the catalog does not know", () => {
     expect(
-      ids(launcherApps(catalog, ["drive", "gone", "gmail"], ""))
-    ).toStrictEqual(["drive", "gmail"]);
+      ids(launcherApps(catalog, ["drive", "gone", "calendar"], ""))
+    ).toStrictEqual(["drive", "calendar"]);
+  });
+
+  it("leaves out the single-instance apps, whose one tab is always open", () => {
+    expect(ids(launcherApps(catalog, ["gmail", "calendar"], ""))).toStrictEqual(
+      ["calendar"]
+    );
   });
 
   it("keeps the apps whose name holds the query, ignoring case and the spaces around it", () => {

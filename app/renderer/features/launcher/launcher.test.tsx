@@ -95,6 +95,11 @@ describe(Launcher, () => {
     ]);
   });
 
+  it("leaves out Gmail, the single-instance app, even when launcher.apps names it", () => {
+    mount(["gmail", "calendar"]);
+    expect(names()).toStrictEqual(["Calendar"]);
+  });
+
   it("asks main to open the highlighted app for the selected profile on Enter, then closes", async () => {
     const { sentOn } = mount(["calendar", "drive"]);
     key({ key: "Enter" });
