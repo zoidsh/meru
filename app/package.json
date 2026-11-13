@@ -13,6 +13,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@meru/user-data": "workspace:*",
     "electron": "45.2.3"
   }
 }

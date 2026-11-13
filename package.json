@@ -19,6 +19,7 @@
     "package:win": "node scripts/package.ts --win"
   },
   "devDependencies": {
+    "@meru/user-data": "workspace:*",
     "@playwright/test": "1.65.0",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",

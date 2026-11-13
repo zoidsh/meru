@@ -1,12 +1,12 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import {
-  currentBranch,
   devUserDataDir,
+  readBranch,
   toProfileName,
   userDataDirFor,
 } from "./index.ts";
@@ -38,14 +38,64 @@ describe(toProfileName, () => {
   });
 });
 
-describe(currentBranch, () => {
+const inTemp = async (body: (dir: string) => Promise<void> | void) => {
+  const dir = await mkdtemp(path.join(tmpdir(), "meru-branch-"));
+  try {
+    await body(dir);
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+};
+
+describe(readBranch, () => {
   it("is empty outside a repository", async () => {
-    const outside = await mkdtemp(path.join(tmpdir(), "meru-branch-"));
-    try {
-      expect(currentBranch(outside)).toBe("");
-    } finally {
-      await rm(outside, { force: true, recursive: true });
-    }
+    await inTemp((dir) => {
+      expect(readBranch(dir)).toBe("");
+    });
+  });
+
+  it("reads the branch of a checkout", async () => {
+    await inTemp(async (dir) => {
+      await mkdir(path.join(dir, ".git"));
+      await writeFile(
+        path.join(dir, ".git", "HEAD"),
+        "ref: refs/heads/feature/sidebar\n"
+      );
+      expect(readBranch(dir)).toBe("feature/sidebar");
+    });
+  });
+
+  it("follows a worktree's .git file to its own HEAD", async () => {
+    await inTemp(async (dir) => {
+      const gitDir = path.join(dir, "main", ".git", "worktrees", "next");
+      await mkdir(gitDir, { recursive: true });
+      await writeFile(path.join(gitDir, "HEAD"), "ref: refs/heads/next\n");
+      const worktree = path.join(dir, "next");
+      await mkdir(worktree);
+      await writeFile(path.join(worktree, ".git"), `gitdir: ${gitDir}\n`);
+      expect(readBranch(worktree)).toBe("next");
+    });
+  });
+
+  it("follows a relative gitdir", async () => {
+    await inTemp(async (dir) => {
+      await mkdir(path.join(dir, "store"));
+      await writeFile(path.join(dir, "store", "HEAD"), "ref: refs/heads/x\n");
+      await mkdir(path.join(dir, "tree"));
+      await writeFile(path.join(dir, "tree", ".git"), "gitdir: ../store\n");
+      expect(readBranch(path.join(dir, "tree"))).toBe("x");
+    });
+  });
+
+  it("is empty on a detached HEAD", async () => {
+    await inTemp(async (dir) => {
+      await mkdir(path.join(dir, ".git"));
+      await writeFile(
+        path.join(dir, ".git", "HEAD"),
+        "0123456789abcdef0123456789abcdef01234567\n"
+      );
+      expect(readBranch(dir)).toBe("");
+    });
   });
 });
 

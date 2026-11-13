@@ -5,9 +5,9 @@ import { once } from "node:events";
 import { createRequire } from "node:module";
 import path from "node:path";
 
+import { devUserDataDir, readBranch } from "@meru/user-data";
 import { build, createServer } from "vite-plus";
 
-import { currentBranch, devUserDataDir } from "../packages/user-data/index.ts";
 import { splitArgs } from "./lib/dev-args.ts";
 
 const root = path.join(import.meta.dirname, "..");
@@ -17,7 +17,7 @@ const electronBinary = String(
 );
 
 const { profile, background, electronArgs } = splitArgs(process.argv.slice(2));
-const userData = devUserDataDir(root, profile, currentBranch(root));
+const userData = devUserDataDir(root, profile, readBranch(root));
 const userDataArgs = [`--user-data-dir=${userData}`];
 
 const renderer = await createServer({

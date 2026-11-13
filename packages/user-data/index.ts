@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 /** A branch or profile name as a directory name under `.meru`: slashes and anything else a path could choke on become dashes. */
@@ -18,17 +18,34 @@ export const devUserDataDir = (
 ): string =>
   path.join(root, ".meru", toProfileName(named ?? (branch || "default")));
 
-/** The branch checked out at `root`; empty on a detached HEAD or outside a repository. */
-export const currentBranch = (root: string): string => {
+const read = (file: string): string | undefined => {
   try {
-    return execFileSync("git", ["symbolic-ref", "--short", "HEAD"], {
-      cwd: root,
-      encoding: "utf-8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
+    return readFileSync(file, "utf-8").trim();
   } catch {
-    return "";
+    return undefined;
   }
+};
+
+/** The git directory of the checkout at `root`: `.git` itself, or in a worktree the directory its `.git` file names. */
+const gitDirOf = (root: string): string | undefined => {
+  const dotGit = path.join(root, ".git");
+  const pointer = read(dotGit);
+  if (pointer === undefined) {
+    return dotGit;
+  }
+  const named = /^gitdir:\s*(?<dir>.+)$/u.exec(pointer)?.groups?.dir;
+  return named === undefined ? undefined : path.resolve(root, named);
+};
+
+/** The branch checked out at `root`, read from the files git keeps; empty on a detached HEAD or outside a repository. */
+export const readBranch = (root: string): string => {
+  const gitDir = gitDirOf(root);
+  const head =
+    gitDir === undefined ? undefined : read(path.join(gitDir, "HEAD"));
+  return (
+    /^ref:\s*refs\/heads\/(?<branch>.+)$/u.exec(head ?? "")?.groups?.branch ??
+    ""
+  );
 };
 
 export interface UserDataInputs {
