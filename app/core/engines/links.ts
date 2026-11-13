@@ -100,7 +100,7 @@ export const resolveLinkTarget = (
   if (
     app.id === from.appId &&
     hostOf(url) === hostOf(from.url) &&
-    disposition === "default"
+    (disposition === "inPlace" || disposition === "default")
   ) {
     return { action: "samePane" };
   }

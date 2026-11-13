@@ -58,7 +58,7 @@ const createView = (spec: ViewSpec): ViewPort => {
       : { action: "allow" }
   );
   contents.on("will-navigate", (event) => {
-    if (taken(event.url, "default")) {
+    if (taken(event.url, "inPlace")) {
       event.preventDefault();
     }
   });

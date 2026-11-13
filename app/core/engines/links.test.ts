@@ -92,13 +92,12 @@ describe(appOfUrl, () => {
 });
 
 describe(resolveLinkTarget, () => {
-  it("keeps a link to the same app on the same host in the pane", () => {
-    expect(
-      resolveLinkTarget(
-        "https://mail.google.com/mail/u/0/#inbox/abc",
-        context(gmail)
-      )
-    ).toStrictEqual({ action: "samePane" });
+  it("keeps a link to the same app on the same host in the pane, followed in place or opened as a tab", () => {
+    const url = "https://mail.google.com/mail/u/0/#inbox/abc";
+    expect([
+      resolveLinkTarget(url, context(gmail)),
+      resolveLinkTarget(url, context(gmail, { disposition: "inPlace" })),
+    ]).toStrictEqual([{ action: "samePane" }, { action: "samePane" }]);
   });
 
   it("opens a link to another app of the catalog in its tab, or a new one", () => {
