@@ -1,5 +1,4 @@
 import { DisposableStore } from "../../../core/disposable.ts";
-import { panes } from "../../../core/engines/layout.ts";
 import {
   groupOf,
   orderedProfiles,
@@ -13,6 +12,7 @@ import {
   closeTab,
   firstState,
   firstGroup,
+  joinTab,
   leaveGroup,
   moveTabTo,
   removeProfile,
@@ -20,7 +20,6 @@ import {
   selectProfile,
   newProfile,
   newTab,
-  splitInto,
 } from "../../../core/engines/state.ts";
 import type { Placement, StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
@@ -325,22 +324,9 @@ export class Profiles {
     return ok(undefined);
   }
 
-  /** Moves a tab that is alone in its group beside one of another group's panes. */
-  splitInto(
-    tabId: string,
-    placement: Placement
-  ): Result<undefined, ProfilesError> {
-    return this.#commit(
-      splitInto(this.state, tabId, placement, this.#options.ids)
-    );
-  }
-
   /** Takes a tab out of its group into a group of its own, at row `to` of its profile's list when given. */
   leaveGroup(tabId: string, to?: number): Result<undefined, ProfilesError> {
-    const left = leaveGroup(this.state, tabId, this.#options.ids);
-    return this.#commit(
-      left.ok && to !== undefined ? moveTabTo(left.value, tabId, to) : left
-    );
+    return this.#commit(leaveGroup(this.state, tabId, this.#options.ids, to));
   }
 
   /** Puts a tab beside another tab's pane, vertically, leaving its own group first, and brings it to the front. */
@@ -348,31 +334,9 @@ export class Profiles {
     tabId: string,
     targetTabId: string
   ): Result<undefined, ProfilesError> {
-    const own = groupOf(tabId, this.state.groups);
-    const target = groupOf(targetTabId, this.state.groups);
-    const pane = panes(target?.layout ?? null).find((found) =>
-      found.tabIds.includes(targetTabId)
+    const committed = this.#commit(
+      joinTab(this.state, tabId, targetTabId, this.#options.ids)
     );
-    if (own === undefined || target === undefined || pane === undefined) {
-      return err("unknownTab");
-    }
-    if (own.id === target.id) {
-      return err("alreadyGrouped");
-    }
-    const { ids } = this.#options;
-    const alone =
-      own.tabIds.length > 1
-        ? leaveGroup(this.state, tabId, ids)
-        : ok(this.state);
-    const joined = alone.ok
-      ? splitInto(
-          alone.value,
-          tabId,
-          { groupId: target.id, orientation: "vertical", paneId: pane.paneId },
-          ids
-        )
-      : alone;
-    const committed = this.#commit(joined);
     return committed.ok ? this.focusTab(tabId) : committed;
   }
 
@@ -393,7 +357,7 @@ export class Profiles {
   }
 
   /** The profiles the titlebar shows, in its order: every one the entitlement allows. */
-  selectable(): Profile[] {
+  #selectable(): Profile[] {
     const deactivated = this.#deactivated();
     return orderedProfiles(this.state.profiles).filter(
       (profile) => !deactivated.has(profile.id)
@@ -403,12 +367,12 @@ export class Profiles {
   #selectAt(index: number): GuardedHandler {
     return {
       run: () => {
-        const profile = this.selectable()[index];
+        const profile = this.#selectable()[index];
         return profile === undefined
           ? err("unknownProfile")
           : done(this.selectProfile(profile.id));
       },
-      when: () => this.selectable()[index] !== undefined,
+      when: () => this.#selectable()[index] !== undefined,
     };
   }
 
@@ -416,7 +380,7 @@ export class Profiles {
     return {
       run: () => {
         const next = stepFrom(
-          this.selectable().map((profile) => profile.id),
+          this.#selectable().map((profile) => profile.id),
           this.state.selectedProfileId,
           by
         );
@@ -424,7 +388,7 @@ export class Profiles {
           ? err("unknownProfile")
           : done(this.selectProfile(next));
       },
-      when: () => this.selectable().length > 1,
+      when: () => this.#selectable().length > 1,
     };
   }
 

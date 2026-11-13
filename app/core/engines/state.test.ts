@@ -17,6 +17,7 @@ import {
   removeProfile,
   resizeSplit,
   selectProfile,
+  joinTab,
   splitInto,
 } from "./state.ts";
 
@@ -163,6 +164,33 @@ describe("the state's operations", () => {
     }).toStrictEqual({ groups: [["t1", "t3"], ["t2"]], problems: [] });
     expect(leaveGroup(left, "t2", ids)).toStrictEqual({
       error: "notGrouped",
+      ok: false,
+    });
+    const first = unwrap(leaveGroup(made.state, "t3", ids, 0));
+    expect(first.tabs.map((tab) => tab.id)).toStrictEqual(["t3", "t1", "t2"]);
+  });
+
+  it("joins a tab beside another group's pane, out of its own group first, but not into its own", () => {
+    const { ids, state } = start();
+    const more = unwrap(
+      addTab(
+        unwrap(addTab(state, tabOf("t2", "a"), ids)),
+        tabOf("t3", "a"),
+        ids
+      )
+    );
+    const grouped = unwrap(createGroup(more, ["t1", "t2"], "vertical", ids));
+    const joined = unwrap(joinTab(grouped.state, "t2", "t3", ids));
+    expect({
+      groups: joined.groups.map((group) => group.tabIds),
+      problems: validateState(joined),
+    }).toStrictEqual({ groups: [["t1"], ["t3", "t2"]], problems: [] });
+    expect(joinTab(joined, "t2", "t3", ids)).toStrictEqual({
+      error: "alreadyGrouped",
+      ok: false,
+    });
+    expect(joinTab(joined, "t2", "gone", ids)).toStrictEqual({
+      error: "unknownTab",
       ok: false,
     });
   });

@@ -303,7 +303,8 @@ export const closeTab = (
 export const leaveGroup = (
   state: ProfilesState,
   tabId: string,
-  ids: Ids
+  ids: Ids,
+  to?: number
 ): Changed => {
   const tab = state.tabs.find((found) => found.id === tabId);
   const group = groupOf(tabId, state.groups);
@@ -314,13 +315,44 @@ export const leaveGroup = (
   if (left === undefined) {
     return err("notGrouped");
   }
-  return ok({
+  const next = {
     ...state,
     groups: [
       ...state.groups.map((found) => (found.id === group.id ? left : found)),
       groupOfOne(tab, ids),
     ],
-  });
+  };
+  return to === undefined ? ok(next) : moveTabTo(next, tabId, to);
+};
+
+/** Puts a tab beside the pane of another tab of another group, vertically, taking it out of its own group first. */
+export const joinTab = (
+  state: ProfilesState,
+  tabId: string,
+  targetTabId: string,
+  ids: Ids
+): Changed => {
+  const own = groupOf(tabId, state.groups);
+  const target = groupOf(targetTabId, state.groups);
+  const pane = panes(target?.layout ?? null).find((found) =>
+    found.tabIds.includes(targetTabId)
+  );
+  if (own === undefined || target === undefined || pane === undefined) {
+    return err("unknownTab");
+  }
+  if (own.id === target.id) {
+    return err("alreadyGrouped");
+  }
+  const alone =
+    own.tabIds.length > 1 ? leaveGroup(state, tabId, ids) : ok(state);
+  return alone.ok
+    ? splitInto(
+        alone.value,
+        tabId,
+        { groupId: target.id, orientation: "vertical", paneId: pane.paneId },
+        ids
+      )
+    : alone;
 };
 
 /** Makes one group of tabs that are each alone in theirs, the first tab's group taking the others, each split off the pane added before it. */
