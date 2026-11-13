@@ -1,10 +1,6 @@
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
-
-/** A view the stage made, with what takes it down: the listeners it holds and the view itself. */
-export interface OwnedView {
-  readonly view: ViewPort;
-  readonly dispose: () => void;
-}
+import { loadOwned } from "./owned-view.ts";
+import type { OwnedView } from "./owned-view.ts";
 
 /** What a pane's view is made from: its spec and the address it loads. */
 export interface PaneSource {
@@ -75,14 +71,7 @@ export class PaneViews {
         onFocus(paneId);
       }),
     ];
-    const load = async () => {
-      try {
-        await view.loadURL(source.url);
-      } catch (error) {
-        onError(error);
-      }
-    };
-    void load();
+    void loadOwned(view, source.url, onError);
     return {
       dispose: () => {
         for (const unsubscribe of listeners) {

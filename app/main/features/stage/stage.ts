@@ -8,11 +8,10 @@ import {
   focusPrevious,
   layout,
   panes,
-  ratioAt,
-  resize,
   STYLE_METRICS,
 } from "../../../core/engines/layout.ts";
 import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
+import type { Placement } from "../../../core/engines/state.ts";
 import type {
   Unsubscribe,
   ViewFactoryPort,
@@ -32,7 +31,6 @@ import type { Result } from "../../../core/result.ts";
 import type { Surface } from "../../../shared/channels/define.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import {
-  dragSurface,
   overlays,
   surfaceArgument,
 } from "../../../shared/channels/surfaces.ts";
@@ -40,8 +38,9 @@ import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
 import { Overlay } from "./overlay.ts";
+import type { OwnedView } from "./owned-view.ts";
 import { PaneViews } from "./pane-views.ts";
-import type { OwnedView, PaneSource } from "./pane-views.ts";
+import type { PaneSource } from "./pane-views.ts";
 
 export type StageError =
   | "unknownWindow"
@@ -92,7 +91,7 @@ export class Stage {
   #shown: Group | undefined;
   readonly #retired: OwnedView[] = [];
   #focused: string | undefined;
-  #drag: DragOverlay | undefined;
+  readonly #drag: DragOverlay;
   #published: StageSnapshot | undefined;
 
   constructor(options: StageOptions) {
@@ -117,13 +116,29 @@ export class Stage {
       onError: options.onError,
       preload: options.overlayPreload,
     });
+    this.#drag = new DragOverlay({
+      area: () => this.#area(),
+      commit: (splitId, ratio) => {
+        const group = this.#read();
+        if (group !== undefined) {
+          options.profiles.resize(group.id, splitId, ratio);
+        }
+      },
+      create: (spec) => this.#own(spec),
+      layout: () => this.#read()?.layout ?? null,
+      onError: options.onError,
+      onMove: () => {
+        this.#arrange();
+      },
+      onOverlay: options.onOverlay,
+      preload: options.dragPreload,
+      retire: (owned) => {
+        this.#retired.push(owned);
+      },
+      style: options.style,
+    });
     this.#shown = this.#read();
     this.#focused = panes(this.#layout())[0]?.paneId;
-  }
-
-  /** The group the stage shows, as the profiles hold it now. */
-  get group(): Group | undefined {
-    return this.#read();
   }
 
   start(): void {
@@ -158,16 +173,16 @@ export class Stage {
     orientation: Orientation,
     paneId = this.#focused
   ): Result<undefined, StageError> {
-    const group = this.#read();
-    const source = this.#tabOf(paneId);
-    if (paneId === undefined || group === undefined || source === undefined) {
+    const placement = this.#placement(orientation, paneId);
+    const source = this.#tabOf(placement?.paneId);
+    if (placement === undefined || source === undefined) {
       return err("unknownPane");
     }
-    const added = this.#options.profiles.addTab(group.profileId, source.appId, {
-      groupId: group.id,
-      orientation,
-      paneId,
-    });
+    const added = this.#options.profiles.addTab(
+      source.profileId,
+      source.appId,
+      placement
+    );
     if (!added.ok) {
       return err(added.error === "unknownPane" ? "unknownPane" : "refused");
     }
@@ -184,14 +199,9 @@ export class Stage {
     appId: string,
     split: boolean
   ): Result<undefined, StageError> {
-    const group = this.#read();
-    const paneId = this.#focused;
     const placement =
-      split &&
-      group !== undefined &&
-      paneId !== undefined &&
-      group.profileId === profileId
-        ? { groupId: group.id, orientation: "vertical" as const, paneId }
+      split && this.#read()?.profileId === profileId
+        ? this.#placement("vertical")
         : undefined;
     const { profiles } = this.#options;
     const opened = profiles.openTab(profileId, appId, placement);
@@ -279,29 +289,27 @@ export class Stage {
   }
 
   beginDrag(splitId: string): Result<undefined, StageError> {
-    const divider = this.#arrangement().dividers.find(
-      (found) => found.splitId === splitId
-    );
-    if (divider === undefined) {
-      return err("unknownSplit");
+    const begun = this.#drag.begin(splitId);
+    if (!begun.ok) {
+      return begun;
     }
-    this.#retireDrag();
-    const drag = new DragOverlay({
-      create: (spec) => this.#own(spec),
-      layout: this.#layout(),
-      onError: this.#options.onError,
-      orientation: divider.orientation,
-      preload: this.#options.dragPreload,
-      splitId,
-    });
-    this.#drag = drag;
-    this.#options.onOverlay(drag.view.contentsId, dragSurface);
     this.#reconcile();
     this.#arrange(false);
     return ok(undefined);
   }
 
-  /** Shows a renderer page over the panes until closeOverlay, replacing any overlay already up; its page may use the channels of `surface`. */
+  dragTo(point: Point): Result<undefined, StageError> {
+    return this.#drag.move(point);
+  }
+
+  endDrag(point: Point): Result<undefined, StageError> {
+    const ended = this.#drag.end(point);
+    this.refresh();
+    this.#reconcile();
+    return ended;
+  }
+
+  /** Shows a renderer page over the panes until closeOverlay, replacing any overlay already up; its page may use the channels of the `kind`'s surface. */
   openOverlay(kind: OverlayKind, url: string): void {
     this.#dropOverlay();
     const view = this.#overlay.open(url, [surfaceArgument(kind)]);
@@ -320,47 +328,6 @@ export class Stage {
     if (this.#focused !== undefined) {
       this.#views.view(this.#focused)?.focus();
     }
-  }
-
-  // The chrome page and the overlay both report the pointer, so a move or release after the other source ended the drag is expected and ignored.
-  dragTo(point: Point): Result<undefined, StageError> {
-    const drag = this.#drag;
-    if (drag === undefined) {
-      return ok(undefined);
-    }
-    const { area, flush } = this.#area();
-    const ratio = ratioAt(
-      drag.layout,
-      area,
-      this.#options.style(),
-      drag.splitId,
-      point,
-      flush
-    );
-    if (ratio === undefined) {
-      return err("unknownSplit");
-    }
-    drag.layout = resize(drag.layout, drag.splitId, ratio);
-    drag.ratio = ratio;
-    this.#arrange();
-    return ok(undefined);
-  }
-
-  // The group takes the ratio once, on release, so a drag writes the state once rather than with every move of the pointer.
-  endDrag(point: Point): Result<undefined, StageError> {
-    const drag = this.#drag;
-    if (drag === undefined) {
-      return ok(undefined);
-    }
-    this.dragTo(point);
-    this.#retireDrag();
-    const group = this.#read();
-    if (drag.ratio !== undefined && group !== undefined) {
-      this.#options.profiles.resize(group.id, drag.splitId, drag.ratio);
-    }
-    this.refresh();
-    this.#reconcile();
-    return ok(undefined);
   }
 
   /** Lays the panes out again after the appearance style or the chrome's insets changed. */
@@ -422,7 +389,7 @@ export class Stage {
       return;
     }
     this.#disposables.dispose();
-    this.#retireDrag();
+    this.#drag.retire();
     this.#dropOverlay();
     this.#views.dispose();
     for (const owned of this.#retired.splice(0)) {
@@ -459,6 +426,17 @@ export class Stage {
     return tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
   }
 
+  /** Where a tab goes beside or below the pane, the focused one unless named, in the group the stage shows. */
+  #placement(
+    orientation: Orientation,
+    paneId = this.#focused
+  ): Placement | undefined {
+    const group = this.#read();
+    return group === undefined || paneId === undefined
+      ? undefined
+      : { groupId: group.id, orientation, paneId };
+  }
+
   // Every view the stage makes hears the keys typed into it, for the commands without a menu item.
   #own(spec: ViewSpec): OwnedView {
     const view = this.#options.views.create(spec);
@@ -479,16 +457,6 @@ export class Stage {
     }
     this.#options.onOverlay(overlay.view.contentsId, null);
     this.#retired.push(overlay);
-  }
-
-  #retireDrag(): void {
-    const drag = this.#drag;
-    if (drag === undefined) {
-      return;
-    }
-    this.#drag = undefined;
-    this.#options.onOverlay(drag.view.contentsId, null);
-    this.#retired.push(drag.owned);
   }
 
   /** The source of each pane's view, none for a pane whose tab or group is gone. */

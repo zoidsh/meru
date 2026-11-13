@@ -259,7 +259,7 @@ describe(Stages, () => {
   });
 
   it("splits the focused pane with a new tab of its app, into two views in layout order that tile the window", async () => {
-    const { window, views, stages, stage, id, changes, splitId, profiles } =
+    const { window, views, stages, id, changes, splitId, profiles } =
       await setup();
 
     expect(stages.split(id, "vertical")).toStrictEqual({
@@ -269,7 +269,7 @@ describe(Stages, () => {
 
     const [first, second] = views.created;
     const expected = layout(
-      stage.group?.layout ?? null,
+      profiles.currentGroup()?.layout ?? null,
       window.contentBounds(),
       "modern"
     );
@@ -278,7 +278,9 @@ describe(Stages, () => {
     expect({
       bounds: childBounds(window),
       focused: second?.focused,
-      tabs: stage.group?.tabIds.map((tabId) => profiles.tab(tabId)?.appId),
+      tabs: profiles
+        .currentGroup()
+        ?.tabIds.map((tabId) => profiles.tab(tabId)?.appId),
       url: second?.url,
     }).toStrictEqual({
       bounds: [
@@ -299,8 +301,8 @@ describe(Stages, () => {
   });
 
   it("closes the focused pane, destroying its view, and focuses its neighbour", async () => {
-    const { window, views, stages, id, stage } = await setup();
-    const tabs = stage.group?.tabIds;
+    const { window, views, stages, id, profiles } = await setup();
+    const tabs = profiles.currentGroup()?.tabIds;
     stages.split(id, "horizontal");
     const [first, second] = views.created;
 
@@ -311,7 +313,7 @@ describe(Stages, () => {
       bounds: first?.bounds(),
       destroyed: second?.destroyed,
       focused: first?.focused,
-      tabs: stage.group?.tabIds,
+      tabs: profiles.currentGroup()?.tabIds,
     }).toStrictEqual({
       bounds: { height: 784, width: 1184, x: 8, y: 8 },
       destroyed: true,

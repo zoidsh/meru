@@ -1,5 +1,6 @@
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
-import type { OwnedView } from "./pane-views.ts";
+import { loadOwned, TRANSPARENT } from "./owned-view.ts";
+import type { OwnedView } from "./owned-view.ts";
 
 export interface OverlayOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
@@ -8,9 +9,7 @@ export interface OverlayOptions {
   readonly onError: (error: unknown) => void;
 }
 
-const TRANSPARENT = "#00000000";
-
-// A page of the chrome page's cannot draw over the panes, which are views above it, so an overlay is a transparent view of its own over the whole window, taking the keyboard while it is up.
+// The chrome page cannot draw over the panes, which are views above it, so an overlay is a transparent view of its own over the whole window, taking the keyboard while it is up.
 /** A renderer page, such as the launcher, drawn over a stage's panes; one at a time. */
 export class Overlay {
   readonly #options: OverlayOptions;
@@ -29,25 +28,23 @@ export class Overlay {
   open(url: string, args: readonly string[]): ViewPort {
     const owned = this.#options.create({
       arguments: args,
-      preload: this.#options.preload,
       background: TRANSPARENT,
+      preload: this.#options.preload,
       radius: 0,
       zoom: 1,
     });
     this.#owned = owned;
     const { view } = owned;
     // Focused once loaded, since a view focused before its page exists hands the page no focus to start with.
-    const load = async () => {
-      try {
-        await view.loadURL(url);
-        if (this.#owned === owned) {
-          view.focus();
-        }
-      } catch (error) {
-        this.#options.onError(error);
+    const focusLoaded = async () => {
+      if (
+        (await loadOwned(view, url, this.#options.onError)) &&
+        this.#owned === owned
+      ) {
+        view.focus();
       }
     };
-    void load();
+    void focusLoaded();
     return view;
   }
 
