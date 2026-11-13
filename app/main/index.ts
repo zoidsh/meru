@@ -49,7 +49,9 @@ const start = async () => {
   const dist = path.join(import.meta.dirname, "..");
   placeUserData(path.join(dist, "..", ".."));
   const ports = createElectronPorts();
-  const e2e = process.env.MERU_E2E === "1";
+  // An installed app never takes the test switches from its environment, so no user can turn on the inspector or blank panes by setting a variable.
+  const e2e = !ports.lifecycle.packaged && process.env.MERU_E2E === "1";
+  const measure = !ports.lifecycle.packaged && process.env.MERU_MEASURE === "1";
 
   ports.lifecycle.onWindowAllClosed(() => {
     ports.lifecycle.quit();
@@ -225,7 +227,7 @@ const start = async () => {
     settings,
   }).start();
 
-  if (process.env.MERU_MEASURE === "1") {
+  if (measure) {
     exposeMeasure({ stages });
   }
   if (e2e) {
