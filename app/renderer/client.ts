@@ -1,10 +1,9 @@
 import { z } from "zod";
 
-import type { Unsubscribe } from "../core/ports.ts";
+import { BRIDGE_KEY } from "../core/ports.ts";
+import type { RendererBridge, Unsubscribe } from "../core/ports.ts";
 import { err, ok } from "../core/result.ts";
 import type { Result } from "../core/result.ts";
-import { BRIDGE_KEY } from "../shared/bridge.ts";
-import type { RendererBridge } from "../shared/bridge.ts";
 import { ipcErrorSchema, wireName } from "../shared/channels/define.ts";
 import type {
   EventChannel,

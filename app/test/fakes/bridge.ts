@@ -1,5 +1,4 @@
-import type { Unsubscribe } from "../../core/ports.ts";
-import type { RendererBridge } from "../../shared/bridge.ts";
+import type { RendererBridge, Unsubscribe } from "../../core/ports.ts";
 
 export class FakeBridge implements RendererBridge {
   readonly platform: string;

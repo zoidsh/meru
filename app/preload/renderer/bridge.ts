@@ -1,8 +1,8 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { IpcRendererEvent } from "electron";
 
-import { BRIDGE_KEY } from "../../shared/bridge.ts";
-import type { RendererBridge } from "../../shared/bridge.ts";
+import { BRIDGE_KEY } from "../../core/ports.ts";
+import type { RendererBridge } from "../../core/ports.ts";
 import type { Allowlist } from "../../shared/channels/define.ts";
 
 const refuse = (channel: string): never => {
