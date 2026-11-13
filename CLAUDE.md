@@ -15,6 +15,7 @@ Meru is an Electron client for Gmail and Google apps. The design, principles, gl
 | Everything before a push | `pnpm check` (format, lint, types, tests) |
 | Build into `dist/` | `pnpm build` |
 | End-to-end, against `dist/` | `pnpm test:e2e`; on Linux `xvfb-run -a pnpm test:e2e` |
+| Package an unpacked app into `packaging/out/` | `pnpm package` |
 | Measure CPU and memory, against `dist/`, macOS only | `pnpm measure`, `pnpm test:budget` |
 
 ## Layers
@@ -68,6 +69,20 @@ The entitlement is derived from a token the API signs, JWT-shaped with `alg: EdD
 The app POSTs `{ licenseKey, deviceId }` to `MERU_ENTITLEMENT_URL`, or the placeholder in `shared/entitlement/api.ts`, and takes `{ token }` from a 200 and `{ error: { reason } }` from a 4xx. To run against a local stand-in, `node tests/entitlement-stub.ts` serves the end-to-end suite's stub, which signs with the development key, answering a trial with no license key and Pro for `PRO-KEY`, and prints the `MERU_ENTITLEMENT_URL=…` to launch `pnpm dev` with. To put a token in place by hand, `node scripts/entitlement/sign.ts claims.json` prints one for claims such as `{ "sub": "<deviceId from entitlement.json>", "plan": "pro", "deviceLimit": 3, "ttl": 10800, "status": "active" }`.
 
 `shared/entitlement/keys.ts` holds the Ed25519 public keys a token may be signed with, by `kid`, compiled into the bundle. The development key, `dev-2026-11`, is not a secret: its private half is `scripts/entitlement/dev-private.pem`, and only a run from the repository accepts it, never an installed app. A production key is added to `productionKeys` by a release, before the API signs with it; the app never fetches a key.
+
+## Packaging
+
+`packaging/` is a workspace package of its own whose one dependency is electron-builder, so the app's dependencies stay what the app loads. `packaging/electron-builder.config.ts` is the config, typed through `Configuration`, and `packaging/assets/` holds the icons, `Assets.car`, which carries the icon `CFBundleIconName` names, and the NSIS include. The asar holds `dist/` and `static/` without source maps and without `node_modules`, since main and the preloads are bundles. `pnpm package` builds and packs an unpacked app for this machine (`packaging/out/mac-arm64/Meru.app` here); `pnpm package:mac`, `package:linux` and `package:win` pack that platform's installers with `--publish never`, and take targets after them, as CI's `pnpm package:linux AppImage --x64` does. `packaging/out/` is ignored.
+
+The fuses are 3.x's: `runAsNode`, `enableNodeOptionsEnvironmentVariable` and `enableNodeCliInspectArguments` off, asar integrity and `onlyLoadAppFromAsar` on, `grantFileProtocolExtraPrivileges` on because the renderer is a `file://` page, `enableCookieEncryption` off because it is one-way. `MERU_E2E_BUILD=1` packs with `enableNodeCliInspectArguments` on, for a suite that drives a packaged app through Playwright, which needs the inspector. The packaged app has the app id `sh.zoid.meru` and so 3.x's user data directory: launch it with `--user-data-dir=<a temporary directory>` and `MERU_BACKGROUND=1`, never bare, or it opens 3.x's profiles.
+
+Signing is not set up on `next`: the macOS identity, notarisation, entitlements and provisioning profile and the Windows Azure signing come in their own change, at the `// signing: see docs` marks in the config. How 3.x does it is in `$PROJECT_DOCS_DIR/shared/electron-macos-signing.md` and `$PROJECT_DOCS_DIR/zoidsh/meru/windows-code-signing-setup.md`.
+
+## Updater
+
+`main/features/updater/` holds an `UpdateState` (`core/records/update.ts`: `idle`, `checking`, `available`, `downloading` with a percent, `ready` with a version, `error`) over the `UpdaterPort`, which `main/platform/updater.ts` implements with electron-updater, downloading by itself and installing on quit. `attach()` answers `updater.snapshot` and registers the commands before the window shows; `start()`, after it, does nothing unless the app is packaged, and otherwise checks 10s later and then every `updater.intervalHours` (global, default 4), and at once when `updater.channel` (global, `stable` or `beta`, which asks for prereleases) changes. Every change is pushed as `updater.changed`, which marks `data-update` on the chrome page's root. `updater.check` ("Check for updates…") answers `notPackaged` in a run from the repository; `updater.install` ("Restart to update") is enabled only while an update is ready, through its handler's `when`, and the menu rebuilds on the `menu.invalidated` event. Both sit in the app menu on macOS and in Help elsewhere, with no default shortcut.
+
+The feed is the GitHub releases of `zoidsh/meru`, which electron-builder writes into `app-update.yml` in the app's resources when it packs an installer target; an unpacked `pnpm package` app has none, so its check ends in `error`. To try an update by hand, pack the same app twice with a higher `version` in `package.json` the second time, serve the second build's `packaging/out/` with `npx http-server packaging/out -p 8080`, and write `Contents/Resources/app-update.yml` (`resources/app-update.yml` on Linux and Windows) in the first build as `provider: generic` and `url: http://localhost:8080`; then launch it as above, and it checks 10s after the window shows. Squirrel.Mac refuses an unsigned app, so on macOS that route fails until signing lands.
 
 ## Worktrees and profiles
 
