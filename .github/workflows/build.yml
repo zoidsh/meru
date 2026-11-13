@@ -1,0 +1,68 @@
+name: build
+
+# Builds signed installers and keeps them as run artifacts. Nothing is published: no 4.0 build reaches the release feed before the 3.x import works.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            files: |
+              packaging/out/*.dmg
+              packaging/out/*.zip
+          - os: ubuntu-latest
+            platform: linux
+            files: |
+              packaging/out/*.AppImage
+              packaging/out/*.deb
+              packaging/out/*.rpm
+          - os: windows-latest
+            platform: win
+            files: packaging/out/*.exe
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+      - run: pnpm install --frozen-lockfile
+      - if: matrix.platform == 'mac'
+        run: pnpm package:mac
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      - if: matrix.platform == 'linux'
+        run: pnpm package:linux
+      - if: matrix.platform == 'win'
+        run: pnpm package:win
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: meru-${{ matrix.platform }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+          retention-days: 14
