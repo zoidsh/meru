@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import { LayoutGridIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent, MouseEvent } from "react";
+import type { KeyboardEvent } from "react";
 
 import { launcherApps, launcherSide } from "../../../core/engines/launcher.ts";
 import type { App } from "../../../core/records/app.ts";
@@ -12,7 +12,14 @@ import { tabOpening } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../chrome-context.tsx";
 import { Button } from "../../ui/button.tsx";
-import { Input } from "../../ui/input.tsx";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../../ui/command.tsx";
 import { Popover, PopoverContent } from "../../ui/popover.tsx";
 import { AppIcon } from "../apps/app-icon.tsx";
 import { useTooltip } from "../commands/use-tooltip.ts";
@@ -75,14 +82,13 @@ export const LauncherButton = ({
   );
 };
 
-/** The launcher itself, on its own page over the panes, beside the button it was opened from. */
+/** The launcher itself, on its own page over the panes, beside the button it was opened from: a search field over the apps, Enter opening the highlighted one and Shift+Enter splitting the focused pane with it. */
 export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
   const client = useLauncherClient();
   const snapshot = useProfiles();
   const appIds = useSetting("launcher.apps");
   const [query, setQuery] = useState("");
-  const [highlighted, setHighlighted] = useState(0);
-  const input = useRef<HTMLInputElement>(null);
+  const [highlighted, setHighlighted] = useState("");
   const shown = launcherApps(apps, appIds, query);
   const close = () => {
     client.send(launcher.close, {});
@@ -103,14 +109,9 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
     close();
   };
 
-  const keyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
-    if (step !== undefined && shown.length > 0) {
-      setHighlighted((at) => (at + step + shown.length) % shown.length);
-      event.preventDefault();
-      return;
-    }
-    const app = shown[Math.min(highlighted, shown.length - 1)];
+  // cmdk's own Enter gives its handler no event, so Shift would be lost; a prevented key is one cmdk leaves alone.
+  const keyDown = (event: KeyboardEvent) => {
+    const app = shown.find((found) => found.id === highlighted) ?? shown[0];
     if (event.key === "Enter" && app !== undefined) {
       event.preventDefault();
       void open(app, event.shiftKey);
@@ -132,46 +133,42 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
           getBoundingClientRect: () =>
             new DOMRect(anchor.x, anchor.y, anchor.width, anchor.height),
         }}
-        className="w-64 gap-1 p-1"
+        className="w-64 p-0"
         data-launcher=""
-        initialFocus={input}
         side={launcherSide(anchor)}
       >
-        <Input
-          aria-label={msg`Search apps`}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setHighlighted(0);
-          }}
+        <Command
           onKeyDown={keyDown}
-          placeholder={msg`Search apps`}
-          ref={input}
-          value={query}
-        />
-        <div className="flex max-h-80 flex-col gap-0.5 overflow-y-auto">
-          {shown.map((app, index) => (
-            <button
-              data-highlighted={index === highlighted || undefined}
-              className={cn(
-                "flex h-8 items-center gap-2 rounded-md px-2 text-left text-sm outline-none",
-                index === highlighted && "bg-accent text-accent-foreground"
-              )}
-              data-app-id={app.id}
-              key={app.id}
-              onClick={(event: MouseEvent) => {
-                void open(app, event.shiftKey);
-              }}
-              onMouseEnter={() => {
-                setHighlighted(index);
-              }}
-              tabIndex={-1}
-              type="button"
-            >
-              <AppIcon className="size-4" icon={app.icon} />
-              {app.name}
-            </button>
-          ))}
-        </div>
+          onValueChange={setHighlighted}
+          shouldFilter={false}
+          value={highlighted}
+        >
+          <CommandInput
+            aria-label={msg`Search apps`}
+            autoFocus
+            onValueChange={setQuery}
+            placeholder={msg`Search apps`}
+            value={query}
+          />
+          <CommandList>
+            <CommandEmpty>{msg`No apps found`}</CommandEmpty>
+            <CommandGroup>
+              {shown.map((app) => (
+                <CommandItem
+                  data-app-id={app.id}
+                  key={app.id}
+                  onClick={(event) => {
+                    void open(app, event.shiftKey);
+                  }}
+                  value={app.id}
+                >
+                  <AppIcon className="size-4" icon={app.icon} />
+                  {app.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
       </PopoverContent>
     </Popover>
   );
