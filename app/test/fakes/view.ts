@@ -14,7 +14,6 @@ export class FakeView implements ViewPort {
   focused = false;
   #bounds: Rect = { height: 0, width: 0, x: 0, y: 0 };
   readonly #focusListeners = new Set<() => void>();
-  readonly #goneListeners = new Set<(reason: string) => void>();
 
   constructor(spec: ViewSpec) {
     nextContentsId += 1;
@@ -42,8 +41,6 @@ export class FakeView implements ViewPort {
     }
   };
 
-  readonly isFocused = () => this.focused;
-
   readonly onFocus = (listener: () => void): Unsubscribe => {
     this.#focusListeners.add(listener);
     return () => {
@@ -67,20 +64,5 @@ export class FakeView implements ViewPort {
 
   readonly destroy = () => {
     this.destroyed = true;
-  };
-
-  readonly onRenderProcessGone = (
-    listener: (reason: string) => void
-  ): Unsubscribe => {
-    this.#goneListeners.add(listener);
-    return () => {
-      this.#goneListeners.delete(listener);
-    };
-  };
-
-  readonly crash = (reason: string) => {
-    for (const listener of this.#goneListeners) {
-      listener(reason);
-    }
   };
 }

@@ -77,10 +77,6 @@ export const createElectronUpdater = (): UpdaterPort => {
       updater.allowPrerelease = prerelease;
       await updater.checkForUpdates();
     },
-    downloadUpdate: async () => {
-      const updater = await load();
-      await updater.downloadUpdate();
-    },
     onEvent: (listener): Unsubscribe => {
       listeners.add(listener);
       return () => {

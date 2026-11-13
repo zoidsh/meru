@@ -33,7 +33,7 @@ export class MainWindow {
       background,
       onCreated,
     } = this.#options;
-    const window = ports.createWindow({ bounds, preload, title: "Meru" });
+    const window = ports.windows.create({ bounds, preload, title: "Meru" });
     this.#window = window;
     window.onClosed(() => {
       this.#window = undefined;

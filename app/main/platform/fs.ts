@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { watch as watchPath } from "node:fs";
 import type { FSWatcher } from "node:fs";
-import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { FsPort } from "../../core/ports.ts";
@@ -18,17 +18,6 @@ export const createFs = (userDataDir: string): FsPort => {
   };
 
   return {
-    exists: async (name) => {
-      try {
-        await stat(pathOf(name));
-        return true;
-      } catch (error) {
-        if (isMissing(error)) {
-          return false;
-        }
-        throw error;
-      }
-    },
     readText: async (name) => {
       const read = await readFile(pathOf(name), "utf-8")
         .then((text) => ({ text }))
@@ -40,7 +29,6 @@ export const createFs = (userDataDir: string): FsPort => {
         });
       return read.text;
     },
-    userDataDir,
     // The directory is watched, not the file: an atomic write replaces the file with another, and a watch on the old one hears nothing after the first.
     watch: (name, listener) => {
       const target = path.basename(pathOf(name));

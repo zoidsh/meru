@@ -155,8 +155,6 @@ export const createElectronPorts = (): Ports => ({
       };
     },
   },
-  createWindow,
-  cursor: { screenPoint: () => screen.getCursorScreenPoint() },
   displays: {
     displays: () => {
       const primary = screen.getPrimaryDisplay().id;
@@ -186,6 +184,7 @@ export const createElectronPorts = (): Ports => ({
     },
   },
   views: viewFactory,
+  windows: { create: createWindow },
 });
 
 /** Asks the entitlement API at `url` through Chromium's network stack, which takes the system's proxy and certificates. */

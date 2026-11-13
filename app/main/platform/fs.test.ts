@@ -26,7 +26,6 @@ describe(createFs, () => {
   it("writes a file whole and reads it back, leaving no temporary file", async () => {
     const dir = await temporary();
     const fs = createFs(path.join(dir, "user-data"));
-    await expect(fs.exists("settings.json")).resolves.toBeFalsy();
     await expect(fs.readText("settings.json")).resolves.toBeUndefined();
     await fs.writeTextAtomic("settings.json", "one");
     await fs.writeTextAtomic("settings.json", "two");

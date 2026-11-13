@@ -41,7 +41,6 @@ const createView = (spec: ViewSpec): ViewPort => {
     focus: () => {
       contents.focus();
     },
-    isFocused: () => contents.isFocused(),
     loadURL: async (url) => {
       await contents.loadURL(url);
     },
@@ -49,15 +48,6 @@ const createView = (spec: ViewSpec): ViewPort => {
       contents.on("focus", listener);
       return () => {
         contents.off("focus", listener);
-      };
-    },
-    onRenderProcessGone: (listener) => {
-      const forward = (_event: unknown, details: { reason: string }) => {
-        listener(details.reason);
-      };
-      contents.on("render-process-gone", forward);
-      return () => {
-        contents.off("render-process-gone", forward);
       };
     },
     setBackgroundColor: (color) => {

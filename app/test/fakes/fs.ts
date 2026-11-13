@@ -1,7 +1,6 @@
 import type { FsPort, Unsubscribe } from "../../core/ports.ts";
 
 export class FakeFs implements FsPort {
-  readonly userDataDir = "/user-data";
   readonly files = new Map<string, string>();
   /** Every completed write, in order, as the effect a snapshot store has on disk. */
   readonly writes: { readonly name: string; readonly text: string }[] = [];
@@ -27,11 +26,6 @@ export class FakeFs implements FsPort {
     await Promise.resolve();
     this.files.set(name, text);
     this.writes.push({ name, text });
-  };
-
-  readonly exists = async (name: string) => {
-    await Promise.resolve();
-    return this.files.has(name);
   };
 
   readonly watch = (name: string, listener: () => void): Unsubscribe => {

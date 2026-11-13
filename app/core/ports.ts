@@ -1,4 +1,4 @@
-import type { Point, Rect } from "./records/rect.ts";
+import type { Rect } from "./records/rect.ts";
 import type { Result } from "./result.ts";
 
 export type Ids = () => string;
@@ -13,12 +13,10 @@ export interface Clock {
 
 /** Files under the user data directory, named relative to it; a name is one path segment. */
 export interface FsPort {
-  readonly userDataDir: string;
   /** Undefined when the file does not exist. */
   readonly readText: (name: string) => Promise<string | undefined>;
   /** Replaces the file whole or not at all. */
   readonly writeTextAtomic: (name: string, text: string) => Promise<void>;
-  readonly exists: (name: string) => Promise<boolean>;
   /** Calls `listener` when the file may have changed on disk; a change can be reported more than once. */
   readonly watch: (name: string, listener: () => void) => Unsubscribe;
 }
@@ -42,16 +40,12 @@ export interface ViewPort {
   readonly bounds: () => Rect;
   readonly loadURL: (url: string) => Promise<void>;
   readonly focus: () => void;
-  readonly isFocused: () => boolean;
   readonly onFocus: (listener: () => void) => Unsubscribe;
   readonly setBackgroundColor: (color: string) => void;
   readonly setBorderRadius: (radius: number) => void;
   readonly setZoomFactor: (factor: number) => void;
   readonly zoomFactor: () => number;
   readonly destroy: () => void;
-  readonly onRenderProcessGone: (
-    listener: (reason: string) => void
-  ) => Unsubscribe;
 }
 
 export interface ViewSpec {
@@ -63,10 +57,6 @@ export interface ViewSpec {
 
 export interface ViewFactoryPort {
   readonly create: (spec: ViewSpec) => ViewPort;
-}
-
-export interface CursorPort {
-  readonly screenPoint: () => Point;
 }
 
 export interface IpcTransportPort {
@@ -84,6 +74,10 @@ export interface WindowSpec {
   readonly bounds: Rect;
   /** Absolute path of the built preload the window's page runs with. */
   readonly preload: string;
+}
+
+export interface WindowFactoryPort {
+  readonly create: (spec: WindowSpec) => WindowPort;
 }
 
 export interface WindowPort {
@@ -156,7 +150,6 @@ export interface UpdaterPort {
   readonly checkForUpdates: (options: {
     readonly prerelease: boolean;
   }) => Promise<void>;
-  readonly downloadUpdate: () => Promise<void>;
   /** Quits the app, installs the downloaded update and starts it again. */
   readonly quitAndInstall: () => void;
   readonly onEvent: (listener: (event: UpdaterEvent) => void) => Unsubscribe;
@@ -183,14 +176,13 @@ export interface Ports {
   readonly clock: Clock;
   readonly fs: FsPort;
   readonly ids: Ids;
-  readonly cursor: CursorPort;
   readonly displays: DisplayPort;
   readonly ipc: IpcTransportPort;
   readonly online: OnlinePort;
   readonly power: PowerPort;
   readonly sessions: SessionPort;
   readonly views: ViewFactoryPort;
-  readonly createWindow: (spec: WindowSpec) => WindowPort;
+  readonly windows: WindowFactoryPort;
 }
 
 // contextBridge carries plain values and functions only, so the bridge is untyped transport; the client over it takes the channel objects and parses what comes back.

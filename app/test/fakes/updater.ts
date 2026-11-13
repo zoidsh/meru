@@ -8,7 +8,6 @@ import type {
 export class FakeUpdater implements UpdaterPort {
   /** The `prerelease` of every check asked for, in order. */
   readonly checks: boolean[] = [];
-  downloads = 0;
   installs = 0;
   /** When set, the next check rejects with it. */
   failNext: Error | undefined;
@@ -26,11 +25,6 @@ export class FakeUpdater implements UpdaterPort {
     if (failure !== undefined) {
       throw failure;
     }
-  };
-
-  readonly downloadUpdate = async () => {
-    this.downloads += 1;
-    await Promise.resolve();
   };
 
   readonly quitAndInstall = () => {

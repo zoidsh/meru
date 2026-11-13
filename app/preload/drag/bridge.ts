@@ -1,11 +1,7 @@
 import { ipcRenderer } from "electron";
 
-export interface DragBridge {
-  readonly send: (channel: string, payload: unknown) => void;
-}
-
-export const dragBridge: DragBridge = {
-  send: (channel, payload) => {
+export const dragBridge = {
+  send: (channel: string, payload: unknown) => {
     ipcRenderer.send(channel, payload);
   },
 };
