@@ -30,7 +30,8 @@ const openApp = async (
   const search = launcher.locator("input");
   await search.fill(name);
   await expect(launcher.locator("[data-app-id]")).toHaveCount(1);
-  await search.press("Enter");
+  // Enter closes the launcher's page, which can be gone before Playwright hears back about the key, so the press may fail once it has done its work; the poll below is the assertion.
+  await search.press("Enter").catch(() => null);
   await expect.poll(() => app.windows().some(isLauncher)).toBeFalsy();
 };
 
