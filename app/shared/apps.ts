@@ -1,4 +1,6 @@
-import { isSingleInstance } from "../core/records/app.ts";
+import { z } from "zod";
+
+import { appIdSchema, isSingleInstance } from "../core/records/app.ts";
 import type { App, AppIconName } from "../core/records/app.ts";
 
 // Google serves an app's files from a usercontent host named after it, and a link there belongs to the app as much as one to the app's own host.
@@ -67,6 +69,14 @@ export const apps: readonly App[] = [
   onDocs("vids", "Vids", "videos"),
   entry("voice", "Voice"),
 ];
+
+/** The catalog's ids, in its order. */
+export const appIds = z.array(appIdSchema).parse(apps.map((app) => app.id));
+
+/** Each app's name by its id, for a setting that picks apps from the catalog. */
+export const appNames = z
+  .record(appIdSchema, z.string())
+  .parse(Object.fromEntries(apps.map((app) => [app.id, app.name])));
 
 export const appById = (id: string): App | undefined =>
   apps.find((app) => app.id === id);

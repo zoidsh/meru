@@ -1,8 +1,11 @@
-import { ArrowDownIcon, ArrowUpIcon, XIcon } from "lucide-react";
+import { DragDropProvider } from "@dnd-kit/react";
+import { isSortable, useSortable } from "@dnd-kit/react/sortable";
+import { cn } from "cn";
+import { GripVerticalIcon } from "lucide-react";
 import { useState } from "react";
 import type { z } from "zod";
 
-import { appById } from "../../../shared/apps.ts";
+import { moveItem } from "../../../core/engines/ordering.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Button } from "../../ui/button.tsx";
@@ -193,98 +196,114 @@ const itemsOf = (value: unknown): string[] =>
     ? value.filter((item): item is string => typeof item === "string")
     : [];
 
-const moved = (items: readonly string[], from: number, to: number) => {
-  const next = items.filter((_item, index) => index !== from);
-  next.splice(to, 0, items[from] ?? "");
-  return next;
+const Picked = ({
+  value,
+  index,
+  name,
+  disabled,
+  onUncheck,
+}: {
+  readonly value: string;
+  readonly index: number;
+  readonly name: Message;
+  readonly disabled: boolean;
+  readonly onUncheck: () => void;
+}) => {
+  const { ref, handleRef, isDragging } = useSortable({
+    disabled,
+    id: value,
+    index,
+  });
+  return (
+    <li
+      className={cn(
+        "flex items-center gap-2 py-1 pr-3 pl-1",
+        isDragging && "opacity-50"
+      )}
+      data-value={value}
+      ref={ref}
+    >
+      <Button
+        aria-label={msg`Drag ${name} to reorder`}
+        className="cursor-grab touch-none"
+        disabled={disabled}
+        ref={handleRef}
+        size="icon-sm"
+        variant="ghost"
+      >
+        <GripVerticalIcon />
+      </Button>
+      <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+        <input
+          checked
+          disabled={disabled}
+          onChange={onUncheck}
+          type="checkbox"
+        />
+        <span className="truncate">{name}</span>
+      </label>
+    </li>
+  );
 };
 
-/** A list of strings in order: each can move or go, and one is added at the end while the schema takes the list with it. */
-export const ListControl = ({
+/** Several of a choice's values as 3.x's checkboxes over every value: the checked ones first, in the order they are kept, which dragging changes, and a newly checked one at the end. */
+export const MultiChoiceControl = ({
   id,
   label,
   value,
   disabled,
-  schema,
   onChange,
-}: ControlProps) => {
-  const items = itemsOf(value);
-  const [adding, setAdding] = useState("");
-  const added = [...items, adding.trim()];
-  const addable = adding.trim() !== "" && schema.safeParse(added).success;
-  const add = () => {
-    if (addable) {
-      onChange(added);
-      setAdding("");
-    }
-  };
+  values,
+  names,
+}: ControlProps & {
+  readonly values: readonly string[];
+  readonly names: ReadonlyMap<string, Message>;
+}) => {
+  const picked = itemsOf(value);
+  const rest = values.filter((option) => !picked.includes(option));
+  const nameOf = (option: string) => names.get(option) ?? option;
   return (
-    <div className="flex flex-col gap-2" id={id}>
-      {items.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{msg`None`}</p>
-      ) : (
-        <ul aria-label={label} className="divide-y rounded-lg border">
-          {items.map((item, index) => (
-            <li className="flex items-center gap-1 py-1 pr-1 pl-3" key={item}>
-              <span className="min-w-0 flex-1 truncate text-sm">
-                {appById(item)?.name ?? item}
-              </span>
-              <Button
-                disabled={disabled || index === 0}
-                onClick={() => {
-                  onChange(moved(items, index, index - 1));
-                }}
-                size="icon-sm"
-                title={msg`Move up`}
-                variant="ghost"
-              >
-                <ArrowUpIcon />
-              </Button>
-              <Button
-                disabled={disabled || index === items.length - 1}
-                onClick={() => {
-                  onChange(moved(items, index, index + 1));
-                }}
-                size="icon-sm"
-                title={msg`Move down`}
-                variant="ghost"
-              >
-                <ArrowDownIcon />
-              </Button>
-              <Button
-                disabled={disabled}
-                onClick={() => {
-                  onChange(items.filter((_item, at) => at !== index));
-                }}
-                size="icon-sm"
-                title={msg`Remove`}
-                variant="ghost"
-              >
-                <XIcon />
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <form
-        className="flex gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          add();
+    <ul aria-label={label} className="divide-y rounded-lg border" id={id}>
+      <DragDropProvider
+        onDragEnd={(event) => {
+          const { source } = event.operation;
+          if (!event.canceled && isSortable(source)) {
+            onChange(moveItem(picked, source.initialIndex, source.index));
+          }
         }}
       >
-        <Input
-          aria-label={msg`Add to ${label}`}
-          disabled={disabled}
-          onChange={(event) => {
-            setAdding(event.target.value);
-          }}
-          value={adding}
-        />
-        <Button disabled={disabled || !addable} type="submit" variant="outline">
-          {msg`Add`}
-        </Button>
-      </form>
-    </div>
+        {picked.map((option, index) => (
+          <Picked
+            disabled={disabled}
+            index={index}
+            key={option}
+            name={nameOf(option)}
+            onUncheck={() => {
+              onChange(picked.filter((found) => found !== option));
+            }}
+            value={option}
+          />
+        ))}
+      </DragDropProvider>
+      {rest.map((option) => (
+        <li
+          className="flex items-center py-1 pr-3 pl-10"
+          data-value={option}
+          key={option}
+        >
+          <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+            <input
+              checked={false}
+              disabled={disabled}
+              onChange={() => {
+                onChange([...picked, option]);
+              }}
+              type="checkbox"
+            />
+            <span className="truncate">{nameOf(option)}</span>
+          </label>
+        </li>
+      ))}
+    </ul>
   );
 };

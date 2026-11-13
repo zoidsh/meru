@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { appOfUrl } from "../core/engines/links.ts";
-import { appSchema } from "../core/records/app.ts";
-import { apps, gmail } from "./apps.ts";
+import { appIdSchema, appSchema } from "../core/records/app.ts";
+import { appIds, apps, gmail } from "./apps.ts";
 
 describe("the apps catalog", () => {
+  it("holds one app per id, in the order the ids are declared", () => {
+    expect(appIds).toStrictEqual(appIdSchema.options);
+  });
+
   it("parses every entry", () => {
     for (const app of apps) {
       expect(appSchema.parse(app)).toStrictEqual(app);

@@ -7,7 +7,9 @@ export const openBehaviorSchema = z.enum(["tab", "window"]);
 
 export type OpenBehavior = z.infer<typeof openBehaviorSchema>;
 
+// In the catalog's order, Gmail first and the rest by name, which a setting picking apps lists them in.
 export const appIconSchema = z.enum([
+  "gmail",
   "admin",
   "ads",
   "analytics",
@@ -20,12 +22,11 @@ export const appIconSchema = z.enum([
   "drive",
   "forms",
   "gemini",
-  "gmail",
+  "notebook",
   "groups",
   "keep",
   "meet",
   "myaccount",
-  "notebook",
   "photos",
   "searchConsole",
   "sheets",
@@ -38,6 +39,11 @@ export const appIconSchema = z.enum([
 
 /** The name of one of the icons the app bundles. */
 export type AppIconName = z.infer<typeof appIconSchema>;
+
+/** An app of the catalog by its id, which is also the name of its icon. */
+export const appIdSchema = appIconSchema;
+
+export type AppId = AppIconName;
 
 export const appSchema = z.object({
   /** A link to one of these hosts, or a subdomain of one, is a link to the app; `host/segment` claims only paths starting with that segment, for apps that share a host. */

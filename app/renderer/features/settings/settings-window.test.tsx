@@ -59,6 +59,23 @@ const click = (element: Element | null | undefined) => {
   });
 };
 
+const pickRows = () =>
+  [
+    ...(field("launcher.apps")?.querySelectorAll<HTMLElement>(
+      "li[data-value]"
+    ) ?? []),
+  ].map((row) => ({
+    checked: row.querySelector("input")?.checked,
+    name: row.textContent,
+  }));
+const pick = (name: string) => {
+  click(
+    [...(field("launcher.apps")?.querySelectorAll("li[data-value]") ?? [])]
+      .find((row) => row.textContent === name)
+      ?.querySelector("input")
+  );
+};
+
 describe(SettingsWindow, () => {
   afterEach(() => {
     for (const unmount of mounted.splice(0)) {
@@ -192,21 +209,28 @@ describe(SettingsWindow, () => {
     }).toStrictEqual({ linux: true, mac: null });
   });
 
-  it("edits a list in order, each item moving up or going, an item added at the end", () => {
+  it("picks apps as checkboxes over the catalog, the picked ones first in their order, a newly checked one at the end", () => {
     const { sentOn } = mount({
       layers: {
-        global: { "launcher.apps": ["calendar", "drive"] },
+        global: { "launcher.apps": ["drive", "calendar"] },
         profiles: {},
       },
       page: "sidebar",
     });
-    const list = field("launcher.apps");
-    const rows = list?.querySelectorAll("li") ?? [];
-    click(rows[1]?.querySelector("[title='Move up']"));
-    click(rows[0]?.querySelector("[title='Remove']"));
-    expect(sentOn(settings.set)).toStrictEqual([
-      { key: "launcher.apps", value: ["drive", "calendar"] },
-      { key: "launcher.apps", value: ["drive"] },
-    ]);
+    const shown = pickRows().slice(0, 4);
+    pick("Gmail");
+    pick("Drive");
+    expect({ sent: sentOn(settings.set), shown }).toStrictEqual({
+      sent: [
+        { key: "launcher.apps", value: ["drive", "calendar", "gmail"] },
+        { key: "launcher.apps", value: ["calendar"] },
+      ],
+      shown: [
+        { checked: true, name: "Drive" },
+        { checked: true, name: "Calendar" },
+        { checked: false, name: "Gmail" },
+        { checked: false, name: "Admin" },
+      ],
+    });
   });
 });

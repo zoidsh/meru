@@ -17,7 +17,7 @@ import { useProfiles } from "../profiles/use-profiles.ts";
 import {
   BooleanControl,
   ChoiceControl,
-  ListControl,
+  MultiChoiceControl,
   NumberControl,
   TextControl,
 } from "./controls.tsx";
@@ -59,8 +59,14 @@ const Control = ({
   if (kind.kind === "text") {
     return <TextControl {...props} />;
   }
-  if (kind.kind === "list") {
-    return <ListControl {...props} />;
+  if (kind.kind === "multiChoice") {
+    return (
+      <MultiChoiceControl
+        {...props}
+        names={new Map(Object.entries(setting.options ?? {}))}
+        values={kind.values}
+      />
+    );
   }
   return null;
 };
@@ -186,7 +192,7 @@ export const SettingField = ({
             )}
           />
         }
-        wide={kind === "list"}
+        wide={kind === "multiChoice"}
       >
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm font-medium" htmlFor={id}>

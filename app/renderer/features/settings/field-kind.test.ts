@@ -12,7 +12,8 @@ describe(fieldKindOf, () => {
       fieldKindOf(z.number().int().min(1).max(168)),
       fieldKindOf(z.number().min(0.25)),
       fieldKindOf(z.string()),
-      fieldKindOf(z.array(z.string().min(1))),
+      fieldKindOf(z.array(z.enum(["gmail", "drive"]))),
+      fieldKindOf(z.array(z.string())),
       fieldKindOf(z.record(z.string(), z.string())),
     ]).toStrictEqual([
       { kind: "boolean" },
@@ -20,7 +21,8 @@ describe(fieldKindOf, () => {
       { kind: "number", max: 168, min: 1, step: 1 },
       { kind: "number", max: undefined, min: 0.25, step: 0.1 },
       { kind: "text" },
-      { kind: "list" },
+      { kind: "multiChoice", values: ["gmail", "drive"] },
+      { kind: "bespoke" },
       { kind: "bespoke" },
     ]);
   });

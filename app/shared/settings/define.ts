@@ -17,12 +17,14 @@ export const defineSettingsPage = <const Id extends string>(
   page: Omit<SettingsPage<Id>, "id">
 ): SettingsPage<Id> => ({ ...page, id });
 
-/** A choice's settings name each of its values; any other kind names none. */
+/** A choice's settings name each of its values, as do several choices' of one kind; any other kind names none. */
 type OptionsOf<S extends z.ZodType> = S extends z.ZodEnum
   ? { readonly options: Readonly<Record<z.output<S> & string, Message>> }
-  : z.ZodEnum extends S
-    ? { readonly options?: Readonly<Record<string, Message>> }
-    : { readonly options?: undefined };
+  : S extends z.ZodArray<infer E extends z.ZodEnum>
+    ? { readonly options: Readonly<Record<z.output<E> & string, Message>> }
+    : z.ZodEnum extends S
+      ? { readonly options?: Readonly<Record<string, Message>> }
+      : { readonly options?: undefined };
 
 interface SettingFacts<
   S extends z.ZodType,

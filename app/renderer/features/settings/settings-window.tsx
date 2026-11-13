@@ -26,7 +26,7 @@ const Fields = ({ page }: { readonly page: SettingsPageId }) => {
       appliesOn(setting, platform)
   );
   const ordered = sortBy(shown, [
-    (setting) => fieldKindOf(setting.schema).kind === "list",
+    (setting) => fieldKindOf(setting.schema).kind === "multiChoice",
   ]);
   return shown.length === 0 ? undefined : (
     <div className="divide-y">

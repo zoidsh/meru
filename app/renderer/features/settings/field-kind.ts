@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** How the settings page edits a value, read off its schema; `bespoke` is a value no field component edits, such as the shortcuts page's bindings. */
+/** How the settings page edits a value, read off its schema; `multiChoice` picks several of a choice's values in an order, and `bespoke` is a value no field component edits, such as the shortcuts page's bindings. */
 export type FieldKind =
   | { readonly kind: "boolean" }
   | { readonly kind: "choice"; readonly values: readonly string[] }
@@ -11,7 +11,7 @@ export type FieldKind =
       readonly step: number;
     }
   | { readonly kind: "text" }
-  | { readonly kind: "list" }
+  | { readonly kind: "multiChoice"; readonly values: readonly string[] }
   | { readonly kind: "bespoke" };
 
 const bound = (value: number | null) =>
@@ -38,8 +38,13 @@ export const fieldKindOf = (schema: z.ZodType): FieldKind => {
   if (schema instanceof z.ZodString) {
     return { kind: "text" };
   }
-  if (schema instanceof z.ZodArray && schema.element instanceof z.ZodString) {
-    return { kind: "list" };
+  if (schema instanceof z.ZodArray && schema.element instanceof z.ZodEnum) {
+    return {
+      kind: "multiChoice",
+      values: schema.element.options.filter(
+        (value) => typeof value === "string"
+      ),
+    };
   }
   return { kind: "bespoke" };
 };
