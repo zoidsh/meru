@@ -1,17 +1,15 @@
 import { DisposableStore } from "../../../core/disposable.ts";
+import { parseSettings } from "../../../core/engines/settings-parse.ts";
+import type { Fallback } from "../../../core/engines/settings-parse.ts";
 import {
   diff,
   emptySettings,
-  parseSettings,
   resolve,
   storedValue,
   withoutProfile,
   withValue,
 } from "../../../core/engines/settings.ts";
-import type {
-  Fallback,
-  SettingChange,
-} from "../../../core/engines/settings.ts";
+import type { SettingChange } from "../../../core/engines/settings.ts";
 import type {
   LifecyclePort,
   Clock,

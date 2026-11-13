@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { parseSettings } from "../../core/engines/settings.ts";
+import { parseSettings } from "../../core/engines/settings-parse.ts";
 import { registry } from "./registry.ts";
 import type { SettingKey } from "./registry.ts";
 

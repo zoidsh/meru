@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  Fallback,
-  SettingChange,
-} from "../../../core/engines/settings.ts";
+import type { Fallback } from "../../../core/engines/settings-parse.ts";
+import type { SettingChange } from "../../../core/engines/settings.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
