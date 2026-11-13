@@ -14,16 +14,20 @@ import {
 describe(devUserDataDir, () => {
   it("names the directory after the branch", () => {
     expect(devUserDataDir("/repo", undefined, "feature/sidebar")).toBe(
-      "/repo/.meru/feature-sidebar"
+      path.join("/repo", ".meru", "feature-sidebar")
     );
   });
 
   it("falls back to default on a detached HEAD", () => {
-    expect(devUserDataDir("/repo", undefined, "")).toBe("/repo/.meru/default");
+    expect(devUserDataDir("/repo", undefined, "")).toBe(
+      path.join("/repo", ".meru", "default")
+    );
   });
 
   it("prefers a named profile", () => {
-    expect(devUserDataDir("/repo", "demo", "main")).toBe("/repo/.meru/demo");
+    expect(devUserDataDir("/repo", "demo", "main")).toBe(
+      path.join("/repo", ".meru", "demo")
+    );
   });
 });
 
@@ -49,9 +53,9 @@ describe(userDataDirFor, () => {
   it("puts a run from the repository under its branch", () => {
     expect(
       userDataDirFor({ branch: "next", packaged: false, root: "/repo" })
-    ).toBe("/repo/.meru/next");
+    ).toBe(path.join("/repo", ".meru", "next"));
     expect(userDataDirFor({ packaged: false, root: "/repo" })).toBe(
-      "/repo/.meru/default"
+      path.join("/repo", ".meru", "default")
     );
   });
 
@@ -62,7 +66,7 @@ describe(userDataDirFor, () => {
         packaged: true,
         root: "/Applications/Meru.app",
       })
-    ).toBe("/src/meru/.meru/packaged");
+    ).toBe(path.join("/src", "meru", ".meru", "packaged"));
   });
 
   it("leaves an installed app on Electron's default", () => {
