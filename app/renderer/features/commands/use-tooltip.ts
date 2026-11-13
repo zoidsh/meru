@@ -15,7 +15,9 @@ export const useTooltip = (label: string, commandId?: CommandId): string => {
     if (commandId === undefined) {
       return label;
     }
-    const accelerator = resolveBindings(commands, bindings).get(commandId);
+    const accelerator = resolveBindings(commands, bindings, platform).get(
+      commandId
+    );
     const shown =
       accelerator === null || accelerator === undefined
         ? undefined

@@ -1,6 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { commands } from "../../../shared/channels/commands.ts";
 import { profiles } from "../../../shared/channels/profiles.ts";
 import { settings } from "../../../shared/channels/settings.ts";
 import { sidebar, sidebarPushes } from "../../../shared/channels/sidebar.ts";
@@ -120,9 +121,10 @@ describe(Titlebar, () => {
     ]);
   });
 
-  it("goes back, forward and reloads the focused pane, and stops it while it loads", () => {
+  it("runs back and reload as commands, titled with their shortcuts, and stops the focused pane while it loads", () => {
     const { container, sentOn, push } = mount([
       profilesAnswer([profileOf("personal")]),
+      answer(commands.run, null),
       answer(
         stage.snapshot,
         stageOf({
@@ -133,11 +135,7 @@ describe(Titlebar, () => {
     const controls = () => [
       ...container.querySelectorAll<HTMLButtonElement>("header button"),
     ];
-    expect(controls().map((button) => button.disabled)).toStrictEqual([
-      false,
-      true,
-      false,
-    ]);
+    const titled = controls().map((button) => [button.disabled, button.title]);
     act(() => {
       controls()[0]?.click();
       controls()[2]?.click();
@@ -151,10 +149,18 @@ describe(Titlebar, () => {
     act(() => {
       controls()[2]?.click();
     });
-    expect(sentOn(stage.navigate)).toStrictEqual([
-      { action: "back" },
-      { action: "reload" },
-      { action: "stop" },
+    expect([
+      titled,
+      sentOn(commands.run),
+      sentOn(stage.navigate),
+    ]).toStrictEqual([
+      [
+        [false, "Go back (⌘[)"],
+        [true, "Go forward (⌘])"],
+        [false, "Reload page (⌘R)"],
+      ],
+      [{ id: "stage.back" }, { id: "stage.reload" }],
+      [{ action: "stop" }],
     ]);
   });
 

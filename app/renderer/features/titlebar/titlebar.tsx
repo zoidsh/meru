@@ -9,24 +9,29 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
-import type { NavigationAction } from "../../../core/records/navigation.ts";
+import { commands } from "../../../shared/channels/commands.ts";
 import { stage } from "../../../shared/channels/stage.ts";
+import type { CommandId } from "../../../shared/commands/registry.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../chrome-context.tsx";
+import { useTooltip } from "../commands/use-tooltip.ts";
 import { useSidebar } from "../sidebar/use-sidebar.ts";
 import { useStage } from "../stage/use-stage.ts";
 import { ProfileRow } from "./profile-row.tsx";
 import { TitlebarIconButton } from "./titlebar-icon-button.tsx";
 
-/** Back, forward and reload for the focused pane; reload is stop while it loads. */
+/** Back, forward and reload for the focused pane, each running its command; reload is stop while the pane loads. */
 const NavigationControls = () => {
   const client = useClient();
   const navigation = useStage()?.navigation ?? null;
   const [reloadHovered, setReloadHovered] = useState(false);
-  const go = (action: NavigationAction) => () => {
-    client.send(stage.navigate, { action });
+  const run = (id: CommandId) => () => {
+    void client.invoke(commands.run, { id });
   };
   const loading = navigation?.loading ?? false;
+  const back = useTooltip(msg`Go back`, "stage.back");
+  const forward = useTooltip(msg`Go forward`, "stage.forward");
+  const reload = useTooltip(msg`Reload page`, "stage.reload");
   const reloadIcon = reloadHovered ? (
     <XIcon />
   ) : (
@@ -36,28 +41,34 @@ const NavigationControls = () => {
     <div className="flex shrink-0 items-center gap-1">
       <TitlebarIconButton
         disabled={navigation?.canGoBack !== true}
-        onClick={go("back")}
-        title={msg`Go back`}
+        onClick={run("stage.back")}
+        title={back}
       >
         <ArrowLeftIcon />
       </TitlebarIconButton>
       <TitlebarIconButton
         disabled={navigation?.canGoForward !== true}
-        onClick={go("forward")}
-        title={msg`Go forward`}
+        onClick={run("stage.forward")}
+        title={forward}
       >
         <ArrowRightIcon />
       </TitlebarIconButton>
       <TitlebarIconButton
         disabled={navigation === null}
-        onClick={go(loading ? "stop" : "reload")}
+        onClick={
+          loading
+            ? () => {
+                client.send(stage.navigate, { action: "stop" });
+              }
+            : run("stage.reload")
+        }
         onMouseEnter={() => {
           setReloadHovered(true);
         }}
         onMouseLeave={() => {
           setReloadHovered(false);
         }}
-        title={loading ? msg`Stop loading` : msg`Reload page`}
+        title={loading ? msg`Stop loading` : reload}
       >
         {loading ? reloadIcon : <RotateCwIcon />}
       </TitlebarIconButton>

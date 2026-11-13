@@ -3,8 +3,7 @@ import type { ComponentProps } from "react";
 
 import { Button } from "../../ui/button.tsx";
 
-// Window chrome takes no tab stop, as a browser's does not: Tab belongs to the page in front, and every control here is also a command in the menu.
-/** An icon button on the titlebar, which the window is not dragged by. */
+/** An icon button on the titlebar, which the window is not dragged by; it takes no tab stop, as a browser's chrome does not, since Tab belongs to the page in front. */
 export const TitlebarIconButton = ({
   className,
   ...props

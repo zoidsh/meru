@@ -105,7 +105,8 @@ export class ShortcutKeys<Id extends string = CommandId> {
   #resolve(): void {
     this.#bindings = resolveBindings(
       this.#options.commands.filter((command) => command.menu === undefined),
-      this.#options.settings.get("shortcuts.bindings")
+      this.#options.settings.get("shortcuts.bindings"),
+      this.#options.platform
     );
     for (const [source, attached] of this.#sources) {
       this.#listen(source, attached);

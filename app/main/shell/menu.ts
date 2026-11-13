@@ -105,6 +105,11 @@ export const buildMenu = ({
             label: msg`File`,
           },
         ];
+  const history = actions("history");
+  const historyMenu: MenuSection[] =
+    history.length === 0
+      ? []
+      : [{ entries: history, kind: "submenu", label: msg`History` }];
   const profilesMenu: MenuSection[] =
     profiles.length === 0
       ? []
@@ -120,6 +125,7 @@ export const buildMenu = ({
           label: msg`Edit`,
         },
     { entries: actions("view"), kind: "submenu", label: msg`View` },
+    ...historyMenu,
     ...profilesMenu,
     ...help,
   ];
@@ -169,7 +175,8 @@ export class ApplicationMenu {
       this.#options;
     const bindings = resolveBindings(
       commands,
-      settings.get("shortcuts.bindings")
+      settings.get("shortcuts.bindings"),
+      platform
     );
     for (const conflict of conflicts(bindings, platform)) {
       report(`${conflict.ids.join(" and ")} share ${conflict.accelerator}`);

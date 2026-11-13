@@ -47,9 +47,12 @@ describe("the command registry", () => {
       | "profiles.select9"
       | "sidebar.toggle"
       | "sidebar.toggleWidth"
+      | "stage.back"
       | "stage.closeTab"
       | "stage.focusNext"
       | "stage.focusPrevious"
+      | "stage.forward"
+      | "stage.reload"
       | "stage.splitHorizontal"
       | "stage.splitVertical"
       | "launcher.open"
@@ -60,10 +63,13 @@ describe("the command registry", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it.each(commands)("$id has a default shortcut Electron reads", (command) => {
-    const shortcut = command.shortcut?.default;
+  it.each(commands)("$id has default shortcuts Electron reads", (command) => {
+    const shortcuts = [command.shortcut?.default, command.shortcut?.darwin];
     expect(
-      shortcut === undefined || parseAccelerator(shortcut) !== undefined
+      shortcuts.every(
+        (shortcut) =>
+          shortcut === undefined || parseAccelerator(shortcut) !== undefined
+      )
     ).toBeTruthy();
   });
 });

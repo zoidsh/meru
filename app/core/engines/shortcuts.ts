@@ -150,15 +150,24 @@ export const onPlatform = (
 
 export interface ShortcutCommand<Id extends string = string> {
   readonly id: Id;
-  readonly shortcut?: { readonly default: string };
+  readonly shortcut?: { readonly default: string; readonly darwin?: string };
 }
 
+const defaultOf = (
+  shortcut: ShortcutCommand["shortcut"],
+  platform: string
+): string | undefined =>
+  platform === "darwin"
+    ? (shortcut?.darwin ?? shortcut?.default)
+    : shortcut?.default;
+
 /**
- * Each command's accelerator: the user's binding, null for one they unbound, else the command's default; normalised. A binding that does not parse leaves the default.
+ * Each command's accelerator: the user's binding, null for one they unbound, else the command's default on the platform; normalised. A binding that does not parse leaves the default.
  */
 export const resolveBindings = <Id extends string>(
   commands: readonly ShortcutCommand<Id>[],
-  bindings: Readonly<Partial<Record<string, string | null>>>
+  bindings: Readonly<Partial<Record<string, string | null>>>,
+  platform: string
 ): ReadonlyMap<Id, string | null> =>
   new Map(
     commands.map((command): [Id, string | null] => {
@@ -168,11 +177,10 @@ export const resolveBindings = <Id extends string>(
       if (bound === null) {
         return [command.id, null];
       }
+      const fallback = defaultOf(command.shortcut, platform);
       const chosen =
         (bound === undefined ? undefined : normalise(bound)) ??
-        (command.shortcut === undefined
-          ? undefined
-          : normalise(command.shortcut.default));
+        (fallback === undefined ? undefined : normalise(fallback));
       return [command.id, chosen ?? null];
     })
   );

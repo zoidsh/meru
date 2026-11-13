@@ -87,7 +87,7 @@ const commands = [
 
 describe(resolveBindings, () => {
   it("takes the default where nothing is bound", () => {
-    expect(resolveBindings(commands, {})).toStrictEqual(
+    expect(resolveBindings(commands, {}, "linux")).toStrictEqual(
       new Map([
         ["stage.splitVertical", "CommandOrControl+D"],
         ["stage.splitHorizontal", "CommandOrControl+Shift+D"],
@@ -98,13 +98,17 @@ describe(resolveBindings, () => {
   });
 
   it("rebinds, unbinds, and keeps the default for a binding that does not parse", () => {
-    const resolved = resolveBindings(commands, {
-      "stage.closePane": "nonsense+",
-      "stage.focusNext": "ctrl+tab",
-      "stage.gone": "CmdOrCtrl+G",
-      "stage.splitHorizontal": null,
-      "stage.splitVertical": "alt+cmdorctrl+v",
-    });
+    const resolved = resolveBindings(
+      commands,
+      {
+        "stage.closePane": "nonsense+",
+        "stage.focusNext": "ctrl+tab",
+        "stage.gone": "CmdOrCtrl+G",
+        "stage.splitHorizontal": null,
+        "stage.splitVertical": "alt+cmdorctrl+v",
+      },
+      "linux"
+    );
     expect([...resolved]).toStrictEqual([
       ["stage.splitVertical", "CommandOrControl+Alt+V"],
       ["stage.splitHorizontal", null],
@@ -112,14 +116,31 @@ describe(resolveBindings, () => {
       ["stage.focusNext", "Control+Tab"],
     ]);
   });
+
+  it("takes a command's macOS default on macOS and its default elsewhere", () => {
+    const back = [
+      {
+        id: "stage.back",
+        shortcut: { darwin: "Command+[", default: "Alt+Left" },
+      },
+    ];
+    expect([
+      resolveBindings(back, {}, "darwin").get("stage.back"),
+      resolveBindings(back, {}, "win32").get("stage.back"),
+      resolveBindings(back, { "stage.back": "Alt+B" }, "darwin").get(
+        "stage.back"
+      ),
+    ]).toStrictEqual(["Command+[", "Alt+Left", "Alt+B"]);
+  });
 });
 
 describe(conflicts, () => {
   it("finds two commands on the keys a platform presses", () => {
-    const resolved = resolveBindings(commands, {
-      "stage.closePane": "Cmd+D",
-      "stage.focusNext": "Ctrl+D",
-    });
+    const resolved = resolveBindings(
+      commands,
+      { "stage.closePane": "Cmd+D", "stage.focusNext": "Ctrl+D" },
+      "linux"
+    );
     expect(conflicts(resolved, "darwin")).toStrictEqual([
       {
         accelerator: "Command+D",
@@ -132,9 +153,9 @@ describe(conflicts, () => {
         ids: ["stage.splitVertical", "stage.focusNext"],
       },
     ]);
-    expect(conflicts(resolveBindings(commands, {}), "darwin")).toStrictEqual(
-      []
-    );
+    expect(
+      conflicts(resolveBindings(commands, {}, "linux"), "darwin")
+    ).toStrictEqual([]);
   });
 });
 

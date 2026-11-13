@@ -201,9 +201,38 @@ describe(ApplicationMenu, () => {
         id: "stage.focusPrevious",
         label: "Focus previous pane",
       },
+      {
+        accelerator: "CommandOrControl+R",
+        id: "stage.reload",
+        label: "Reload",
+      },
     ]);
     expect(sections()[2]).toStrictEqual({ kind: "role", role: "editMenu" });
   });
+
+  it.each([
+    ["darwin", "Command+[", "Command+]"],
+    ["linux", "Alt+Left", "Alt+Right"],
+    ["win32", "Alt+Left", "Alt+Right"],
+  ])(
+    "puts back and forward in a History menu after View, on %s's keys",
+    async (platform, back, forward) => {
+      const { sections, submenu } = await setup(platform);
+      const labels = sections().flatMap((section) =>
+        section.kind === "submenu" ? [section.label] : []
+      );
+      expect([
+        labels.indexOf("History") - labels.indexOf("View"),
+        shortcuts(submenu("History")),
+      ]).toStrictEqual([
+        1,
+        [
+          ["stage.back", back],
+          ["stage.forward", forward],
+        ],
+      ]);
+    }
+  );
 
   it("puts New tab in a File menu, ending with Close on macOS", async () => {
     const { sections } = await setup("darwin");
@@ -332,6 +361,7 @@ describe(ApplicationMenu, () => {
       ["stage.closeTab", undefined],
       ["stage.focusNext", "CommandOrControl+Alt+."],
       ["stage.focusPrevious", "CommandOrControl+Alt+,"],
+      ["stage.reload", "CommandOrControl+R"],
     ]);
     settings.set("shortcuts.bindings", {
       "stage.splitHorizontal": "Cmd+V",

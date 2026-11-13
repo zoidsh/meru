@@ -8,6 +8,7 @@ import type {
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
+import type { NavigationAction } from "../../../core/records/navigation.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
@@ -79,9 +80,12 @@ export class Stages {
         }
       }),
       commands.register(stageCommands, {
+        back: inWindow((windowId) => this.#navigate(windowId, "back")),
         closeTab: inWindow((windowId) => this.close(windowId)),
         focusNext: inWindow((windowId) => this.focusNext(windowId)),
         focusPrevious: inWindow((windowId) => this.focusPrevious(windowId)),
+        forward: inWindow((windowId) => this.#navigate(windowId, "forward")),
+        reload: inWindow((windowId) => this.#navigate(windowId, "reload")),
         splitHorizontal: inWindow((windowId) =>
           this.split(windowId, "horizontal")
         ),
@@ -111,7 +115,7 @@ export class Stages {
         focusPane: ({ paneId }, { contentsId }) =>
           this.focusPane(contentsId, paneId),
         navigate: ({ action }, { contentsId }) =>
-          this.#with(contentsId, (found) => found.navigate(action)),
+          this.#navigate(contentsId, action),
         resize: ({ splitId, ratio }, { contentsId }) =>
           this.resize(contentsId, splitId, ratio),
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),
@@ -136,6 +140,13 @@ export class Stages {
 
   dispose(): void {
     this.#disposables.dispose();
+  }
+
+  #navigate(
+    contentsId: number,
+    action: NavigationAction
+  ): Result<undefined, StageError> {
+    return this.#with(contentsId, (found) => found.navigate(action));
   }
 
   /** Opens the stage of a window that shows the group `groupId` names, read again on every change. */

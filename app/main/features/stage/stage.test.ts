@@ -410,6 +410,9 @@ describe("the stage commands", () => {
           "stage.focusPrevious",
           "stage.splitHorizontal",
           "stage.splitVertical",
+          "stage.back",
+          "stage.forward",
+          "stage.reload",
         ] as const
       ).every((id) => commands.has(id))
     ).toBeTruthy();
@@ -426,6 +429,22 @@ describe("the stage commands", () => {
     expect(window.childViews()).toHaveLength(3);
     expect(commands.run("stage.closeTab", { windowId: id }).ok).toBeTruthy();
     expect(window.childViews()).toHaveLength(2);
+  });
+
+  it("move the focused pane back, forward and reload it", async () => {
+    const { commands, id, views } = await setup();
+    commands.run("stage.splitVertical", { windowId: id });
+    for (const command of [
+      "stage.back",
+      "stage.forward",
+      "stage.reload",
+    ] as const) {
+      commands.run(command, { windowId: id });
+    }
+    expect(views.alive.map((view) => view.navigated)).toStrictEqual([
+      [],
+      ["back", "forward", "reload"],
+    ]);
   });
 
   it("move focus to the next and previous pane in layout order, wrapping", async () => {

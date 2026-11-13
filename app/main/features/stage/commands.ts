@@ -2,6 +2,11 @@ import { defineCommands } from "../../../shared/commands/define.ts";
 import { msg } from "../../../shared/msg.ts";
 
 export const stageCommands = defineCommands("stage", {
+  back: {
+    label: msg`Back`,
+    menu: { order: 1, section: "history" },
+    shortcut: { darwin: "Command+[", default: "Alt+Left" },
+  },
   closeTab: {
     label: msg`Close tab`,
     menu: { order: 3, section: "view" },
@@ -13,10 +18,20 @@ export const stageCommands = defineCommands("stage", {
     menu: { order: 4, section: "view" },
     shortcut: { default: "CmdOrCtrl+Alt+." },
   },
+  forward: {
+    label: msg`Forward`,
+    menu: { order: 2, section: "history" },
+    shortcut: { darwin: "Command+]", default: "Alt+Right" },
+  },
   focusPrevious: {
     label: msg`Focus previous pane`,
     menu: { order: 5, section: "view" },
     shortcut: { default: "CmdOrCtrl+Alt+," },
+  },
+  reload: {
+    label: msg`Reload`,
+    menu: { order: 6, section: "view" },
+    shortcut: { default: "CmdOrCtrl+R" },
   },
   splitHorizontal: {
     label: msg`Split horizontally`,
