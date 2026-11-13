@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { DisposableStore } from "../../../core/disposable.ts";
 import { clampToDisplay } from "../../../core/engines/bounds.ts";
+import { mainGroupOf } from "../../../core/engines/windows.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
   LifecyclePort,
@@ -44,7 +45,7 @@ export interface WindowsOptions {
   readonly ids: Ids;
   readonly events: AppEvents;
   readonly displays: DisplayPort;
-  readonly profiles: Pick<Profiles, "group" | "currentGroup" | "selected">;
+  readonly profiles: Pick<Profiles, "currentGroup" | "state">;
   readonly report: (message: string) => void;
   readonly onError: (error: unknown) => void;
 }
@@ -104,19 +105,8 @@ export class Windows {
     );
   }
 
-  /** The group the main window shows: the one it showed, while that is still a group of the selected profile, else the profile's current group. */
   mainGroupId(): string | undefined {
-    const { profiles } = this.#options;
-    const shown = this.#main()?.groupId;
-    const group = shown === undefined ? undefined : profiles.group(shown);
-    if (group !== undefined && group.profileId === profiles.selected().id) {
-      return group.id;
-    }
-    const current = profiles.currentGroup()?.id;
-    if (current !== undefined) {
-      this.#update({ groupId: current });
-    }
-    return current;
+    return mainGroupOf(this.#windows, this.#options.profiles.state);
   }
 
   /** Follows the main window's moves and resizes, and writes where it was when it closes. */

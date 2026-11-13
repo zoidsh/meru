@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_WINDOW_SIZE } from "../../../core/engines/bounds.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
+import { pick } from "../../../core/values.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeDisplays, PRIMARY_DISPLAY } from "../../../test/fakes/display.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
@@ -80,11 +81,7 @@ const setup = async (fs = new FakeFs()) => {
   windows.start();
   const stored = () => {
     const parsed: unknown = JSON.parse(fs.files.get(WINDOWS_FILE) ?? "null");
-    return windowsStateSchema.parse(
-      typeof parsed === "object" && parsed !== null && "data" in parsed
-        ? parsed.data
-        : undefined
-    ).windows;
+    return pick(parsed, "data", windowsStateSchema)?.windows;
   };
   return { lifecycle, clock, displays, fs, profiles, reports, stored, windows };
 };
