@@ -32,7 +32,7 @@ const titleOf = (split: Orientation | undefined): string => {
   return msg`Open app`;
 };
 
-/** The launcher itself, on its own page over the panes, centred over the window: a search field over the apps, Enter opening the highlighted one, Shift+Enter splitting the focused pane with it, and with `split` every pick splitting the focused pane that way. */
+/** The launcher itself, on its own page over the panes, in the upper part of the window so its top stays put as the list filters: a search field over the apps, Enter opening the highlighted one, Shift+Enter splitting the focused pane with it, and with `split` every pick splitting the focused pane that way. */
 export const Launcher = ({
   split,
 }: {
@@ -81,7 +81,7 @@ export const Launcher = ({
 
   return (
     <CommandDialog
-      className="w-80"
+      className="top-[14%] w-80 translate-y-0"
       description={msg`Pick a Google app to open`}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
@@ -105,7 +105,7 @@ export const Launcher = ({
           placeholder={title}
           value={query}
         />
-        <CommandList>
+        <CommandList className="max-h-[60vh]">
           <CommandEmpty>{msg`No apps found`}</CommandEmpty>
           <CommandGroup>
             {shown.map((app) => (
