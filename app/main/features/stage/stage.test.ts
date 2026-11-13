@@ -893,7 +893,7 @@ describe("a sidebar row dragged over the panes", () => {
     expect(
       call(
         stageChannels.openTab,
-        { appId: "drive", profileId: calendar.profileId, split: false },
+        { appId: "drive", profileId: calendar.profileId },
         sender
       )
     ).toMatchObject({ error: { kind: "unknownChannel" }, ok: false });
@@ -981,7 +981,7 @@ describe("an overlay over the panes", () => {
     expect(
       call(
         stageChannels.openTab,
-        { appId: "calendar", profileId, split: true },
+        { appId: "calendar", profileId, split: "vertical" },
         overlay
       ).ok
     ).toBeTruthy();
@@ -1003,7 +1003,7 @@ describe("an overlay over the panes", () => {
     const overlay = views.created.at(-1)?.contentsId ?? 0;
     call(
       stageChannels.openTab,
-      { appId: "calendar", orientation: "horizontal", profileId, split: true },
+      { appId: "calendar", profileId, split: "horizontal" },
       overlay
     );
     expect(
@@ -1021,8 +1021,7 @@ describe("an overlay over the panes", () => {
     const overlay = views.created.at(-1)?.contentsId ?? 0;
     const profileId = profiles.selected().id;
     const open = (appId: string) =>
-      call(stageChannels.openTab, { appId, profileId, split: false }, overlay)
-        .ok;
+      call(stageChannels.openTab, { appId, profileId }, overlay).ok;
     expect([open("drive"), open("gmail")]).toStrictEqual([true, true]);
     expect({
       focused,
@@ -1057,11 +1056,7 @@ describe("an overlay over the panes", () => {
     });
     const sender = overlay?.contentsId ?? 0;
     const asks = () =>
-      call(
-        stageChannels.openTab,
-        { appId: "gmail", profileId, split: false },
-        sender
-      ).ok;
+      call(stageChannels.openTab, { appId: "gmail", profileId }, sender).ok;
     expect(asks()).toBeTruthy();
     if (pane !== undefined) {
       pane.focused = false;

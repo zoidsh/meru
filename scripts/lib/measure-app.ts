@@ -184,7 +184,7 @@ const splitWithCalendar = async (chrome: Page) => {
   await invokeIn(chrome, stage.openTab, {
     appId: "calendar",
     profileId: state.value.selectedProfileId,
-    split: true,
+    split: "vertical",
   });
 };
 

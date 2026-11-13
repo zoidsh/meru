@@ -107,10 +107,7 @@ describe(Launcher, () => {
     expect([
       sentOn(stage.openTab),
       sentOn(launcher.close).length,
-    ]).toStrictEqual([
-      [{ appId: "calendar", profileId: "personal", split: false }],
-      1,
-    ]);
+    ]).toStrictEqual([[{ appId: "calendar", profileId: "personal" }], 1]);
   });
 
   it("opens an app on a click, split when Shift was held at the press", async () => {
@@ -130,8 +127,8 @@ describe(Launcher, () => {
     });
     await settle();
     expect(sentOn(stage.openTab)).toStrictEqual([
-      { appId: "calendar", profileId: "personal", split: false },
-      { appId: "drive", profileId: "personal", split: true },
+      { appId: "calendar", profileId: "personal" },
+      { appId: "drive", profileId: "personal", split: "vertical" },
     ]);
   });
 
@@ -168,17 +165,15 @@ describe(Launcher, () => {
       [
         {
           appId: "calendar",
-          orientation: "vertical",
           profileId: "personal",
-          split: true,
+          split: "vertical",
         },
       ],
       [
         {
           appId: "drive",
-          orientation: "horizontal",
           profileId: "personal",
-          split: true,
+          split: "horizontal",
         },
       ],
       1,
@@ -222,7 +217,7 @@ describe(Launcher, () => {
     key({ key: "Enter", shiftKey: true });
     await settle();
     expect(sentOn(stage.openTab)).toStrictEqual([
-      { appId: "drive", profileId: "personal", split: true },
+      { appId: "drive", profileId: "personal", split: "vertical" },
     ]);
   });
 });

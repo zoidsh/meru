@@ -59,12 +59,12 @@ export const Launcher = ({
   const open = async (app: App, shift: boolean) => {
     const profileId = snapshot?.selectedProfileId;
     if (profileId !== undefined) {
-      await client.invoke(
-        stage.openTab,
-        split === undefined
-          ? { appId: app.id, profileId, split: shift }
-          : { appId: app.id, orientation: split, profileId, split: true }
-      );
+      const orientation = split ?? (shift ? "vertical" : undefined);
+      await client.invoke(stage.openTab, {
+        appId: app.id,
+        profileId,
+        ...(orientation === undefined ? {} : { split: orientation }),
+      });
     }
     close();
   };

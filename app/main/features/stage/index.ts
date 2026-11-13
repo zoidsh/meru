@@ -144,9 +144,9 @@ export class Stages {
           this.dragTo(contentsId, { x, y }, buttons),
         endDrag: (point, { contentsId }) => this.endDrag(contentsId, point),
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),
-        openTab: ({ appId, profileId, split, orientation }, { contentsId }) => {
+        openTab: ({ appId, profileId, split }, { contentsId }) => {
           const opened = this.#with(contentsId, (found) =>
-            found.openTab(profileId, appId, split, orientation)
+            found.openTab(profileId, appId, split)
           );
           return opened.ok ? ok(null) : opened;
         },
