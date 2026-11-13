@@ -1,7 +1,13 @@
 import { clamp } from "es-toolkit";
 
 import type { TitleBarOverlay } from "../../core/engines/chrome.ts";
-import type { Unsubscribe, ViewPort, WindowPort } from "../../core/ports.ts";
+import type { KeyInput } from "../../core/engines/shortcuts.ts";
+import type {
+  KeyListener,
+  Unsubscribe,
+  ViewPort,
+  WindowPort,
+} from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
 
 let nextContentsId = 1;
@@ -39,6 +45,24 @@ export class FakeWindow implements WindowPort {
     this.loaded = path;
     this.query = query;
     await Promise.resolve();
+  };
+
+  readonly #keyListeners = new Set<KeyListener>();
+
+  readonly onKey = (listener: KeyListener): Unsubscribe => {
+    this.#keyListeners.add(listener);
+    return () => {
+      this.#keyListeners.delete(listener);
+    };
+  };
+
+  /** Types a key into the page; true when a listener kept it from the page. */
+  readonly press = (input: KeyInput): boolean => {
+    let kept = false;
+    for (const listener of this.#keyListeners) {
+      kept = listener(input) || kept;
+    }
+    return kept;
   };
 
   readonly setBackgroundColor = (color: string) => {

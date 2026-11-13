@@ -1,4 +1,5 @@
 import type { TitleBar, TitleBarOverlay } from "./engines/chrome.ts";
+import type { KeyInput } from "./engines/shortcuts.ts";
 import type { Rect } from "./records/rect.ts";
 import type { Result } from "./result.ts";
 
@@ -44,8 +45,12 @@ export interface Navigation {
 
 export type NavigationAction = "back" | "forward" | "reload" | "stop";
 
+/** Hears each key before the page does; a listener answering true keeps the key from the page. */
+export type KeyListener = (input: KeyInput) => boolean;
+
 export interface ViewPort {
   readonly contentsId: number;
+  readonly onKey: (listener: KeyListener) => Unsubscribe;
   readonly setBounds: (rect: Rect) => void;
   readonly bounds: () => Rect;
   readonly loadURL: (url: string) => Promise<void>;
@@ -101,6 +106,8 @@ export interface WindowFactoryPort {
 
 export interface WindowPort {
   readonly contentsId: number;
+  /** Keys typed into the window's own page, the chrome. */
+  readonly onKey: (listener: KeyListener) => Unsubscribe;
   readonly loadUrl: (url: string) => Promise<void>;
   readonly loadFile: (
     path: string,

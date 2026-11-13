@@ -9,6 +9,7 @@ import {
   screen,
   session,
 } from "electron";
+import type { Input } from "electron";
 
 import type {
   EntitlementApi,
@@ -72,6 +73,17 @@ const createWindow = (spec: WindowSpec): WindowPort => {
         window.off("move", listener);
         window.off("resize", listener);
         window.off("close", listener);
+      };
+    },
+    onKey: (listener) => {
+      const heard = (event: { preventDefault: () => void }, input: Input) => {
+        if (listener(input)) {
+          event.preventDefault();
+        }
+      };
+      window.webContents.on("before-input-event", heard);
+      return () => {
+        window.webContents.off("before-input-event", heard);
       };
     },
     onClosed: (listener) => {

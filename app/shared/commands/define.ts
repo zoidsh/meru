@@ -59,19 +59,25 @@ export const commandsOf = <F extends string, C extends CommandSpecs>(
       id: `${group.feature}.${name}`,
     }));
 
+/** A page the chrome shows in place of the panes. */
+export type ChromePage = "none" | "settings";
+
+/** What a command is given for: its window, and what that window shows. */
 export interface CommandContext {
   /** The window the command was given for. */
   readonly windowId: number;
+  readonly page: ChromePage;
+  readonly focusedPaneId: string | null;
 }
 
 export type CommandHandler = (
   context: CommandContext
 ) => Result<unknown, string>;
 
-/** A handler with the condition its command can run under; the menu shows the command disabled while `when` is false. */
+/** A handler with the condition its command can run under; the menu shows the command disabled while `when` is false, and its shortcut reaches the page instead. */
 export interface GuardedHandler {
   readonly run: CommandHandler;
-  readonly when: () => boolean;
+  readonly when: (context: CommandContext) => boolean;
 }
 
 export type CommandHandlers<C extends CommandSpecs> = {

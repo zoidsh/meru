@@ -29,9 +29,10 @@ import {
 } from "./platform/ports.ts";
 import { createElectronUpdater } from "./platform/updater.ts";
 import { placeUserData } from "./platform/user-data.ts";
-import { CommandDispatcher } from "./shell/commands.ts";
+import { CommandDispatcher, NO_WINDOW } from "./shell/commands.ts";
 import { answerE2e } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
+import { ShortcutKeys } from "./shell/keys.ts";
 import { answerMeasure } from "./shell/measure.ts";
 import { ApplicationMenu } from "./shell/menu.ts";
 import { MainWindow } from "./shell/window.ts";
@@ -157,6 +158,17 @@ const start = async () => {
 
   const commands = new CommandDispatcher();
   commands.start(dispatcher);
+  const keys = new ShortcutKeys({
+    commands: allCommands,
+    dispatcher: commands,
+    platform: ports.lifecycle.platform,
+    report: (message) => {
+      console.warn(message);
+    },
+    settings,
+  });
+  keys.start();
+  let mainWindowId: number | undefined;
 
   const stages = new Stages({
     blankPanes: e2e,
@@ -168,9 +180,26 @@ const start = async () => {
     profiles,
     registrar: dispatcher,
     settings,
-    views: ports.views,
+    views: {
+      create: (spec) => {
+        const view = ports.views.create(spec);
+        keys.attach(view, () => mainWindowId);
+        return view;
+      },
+    },
   });
   stages.start();
+  commands.provide((windowId) => {
+    const id = windowId ?? mainWindowId;
+    if (id === undefined) {
+      return NO_WINDOW;
+    }
+    return {
+      focusedPaneId: stages.find(id)?.snapshot().focusedPaneId ?? null,
+      page: "none",
+      windowId: id,
+    };
+  });
 
   const updater = new Updater({
     lifecycle: ports.lifecycle,
@@ -213,6 +242,8 @@ const start = async () => {
     bounds: windows.mainBounds(),
     linuxControls: settings.get("window.linuxControls"),
     onCreated: (created) => {
+      mainWindowId = created.contentsId;
+      keys.attach(created, () => created.contentsId);
       dispatcher.assign(created.contentsId, pageSurface);
       windows.attachMain(created);
       stages.open(created, () => windows.mainGroupId());

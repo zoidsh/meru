@@ -1,4 +1,6 @@
+import type { KeyInput } from "../../core/engines/shortcuts.ts";
 import type {
+  KeyListener,
   Navigation,
   NavigationAction,
   Unsubscribe,
@@ -80,6 +82,24 @@ export class FakeView implements ViewPort {
     for (const listener of this.#navigationListeners) {
       listener();
     }
+  };
+
+  readonly #keyListeners = new Set<KeyListener>();
+
+  readonly onKey = (listener: KeyListener): Unsubscribe => {
+    this.#keyListeners.add(listener);
+    return () => {
+      this.#keyListeners.delete(listener);
+    };
+  };
+
+  /** Types a key into the page; true when a listener kept it from the page. */
+  readonly press = (input: KeyInput): boolean => {
+    let kept = false;
+    for (const listener of this.#keyListeners) {
+      kept = listener(input) || kept;
+    }
+    return kept;
   };
 
   readonly setBackgroundColor = (color: string) => {
