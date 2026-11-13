@@ -1,5 +1,5 @@
-import type { Disposition } from "../../../core/engines/links.ts";
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
+import type { Disposition } from "../../../core/records/link.ts";
 import { loadOwned } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 

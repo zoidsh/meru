@@ -1,6 +1,7 @@
 import { isSingleInstance } from "../records/app.ts";
 import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
+import type { Disposition } from "../records/link.ts";
 import type { Tab } from "../records/tab.ts";
 import { orderedTabs, rowTabs } from "./ordering.ts";
 
@@ -13,9 +14,6 @@ export interface LinkSettings {
   /** Whether an app a link opens becomes a tab or a window of its own. */
   readonly mode: "tabs" | "windows";
 }
-
-/** What the click asked for, as Chromium reports it: an ordinary click, a background tab, or a new window. */
-export type Disposition = "default" | "background" | "window";
 
 export interface LinkContext {
   readonly catalog: readonly App[];

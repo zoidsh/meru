@@ -1,5 +1,5 @@
-import type { Disposition } from "./engines/links.ts";
 import type { KeyInput } from "./engines/shortcuts.ts";
+import type { Disposition } from "./records/link.ts";
 import type { Navigation, NavigationAction } from "./records/navigation.ts";
 import type { Rect } from "./records/rect.ts";
 import type { Theme } from "./records/theme.ts";

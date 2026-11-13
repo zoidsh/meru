@@ -1,13 +1,13 @@
 import { WebContentsView } from "electron";
 import type { HandlerDetails, View } from "electron";
 
-import type { Disposition } from "../../core/engines/links.ts";
 import type {
   OpenListener,
   ViewFactoryPort,
   ViewPort,
   ViewSpec,
 } from "../../core/ports.ts";
+import type { Disposition } from "../../core/records/link.ts";
 import { onBeforeInput } from "./keys.ts";
 
 const handles = new WeakMap<ViewPort, WebContentsView>();
