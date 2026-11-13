@@ -188,7 +188,41 @@ const splitWithCalendar = async (chrome: Page) => {
   });
 };
 
-/** Launches an app, reads it 5s after launch, right after one split, with the launcher open, and after the idle time once the launcher has closed, and closes it. */
+const DRAG_STEP = 16;
+
+// The new tab is dragged as the sidebar hands a row's drag to the stage, its pointer swept back and forth across the window as a hand would, so the drag's page and the drop marks are paid for while it is read.
+const dragCalendar = async (chrome: Page) => {
+  const state = await invokeIn(chrome, profiles.snapshot, {});
+  const tab = state.ok
+    ? state.value.tabs.find((found) => found.appId === "calendar")
+    : undefined;
+  if (tab === undefined) {
+    throw new Error("The split left no Calendar tab to drag");
+  }
+  await sendIn(chrome, stage.beginDrag, { kind: "tab", tabId: tab.id });
+  const controller = new AbortController();
+  const sweep = async () => {
+    for (let step = 0; !controller.signal.aborted; step += 1) {
+      const phase = (step % 100) / 100;
+      // oxlint-disable-next-line no-await-in-loop -- one move a frame, as a pointer sends them
+      await sendIn(chrome, stage.dragTo, {
+        buttons: 1,
+        x: Math.round(100 + 800 * Math.abs(1 - 2 * phase)),
+        y: 300,
+      });
+      // oxlint-disable-next-line no-await-in-loop -- as above
+      await wait(DRAG_STEP);
+    }
+  };
+  const swept = sweep();
+  return async () => {
+    controller.abort();
+    await swept;
+    await sendIn(chrome, stage.cancelDrag, {});
+  };
+};
+
+/** Launches an app, reads it 5s after launch, right after one split, while the split's tab is dragged over the panes, with the launcher open, and after the idle time once the launcher has closed, and closes it. */
 export const measureApp = async (
   options: MeasureOptions
 ): Promise<Measurement> => {
@@ -215,6 +249,13 @@ export const measureApp = async (
       point: "split",
       readings: await sample(app, chrome, options.readings),
     });
+    const release =
+      chrome === undefined ? undefined : await dragCalendar(chrome);
+    samples.push({
+      point: "tabDrag",
+      readings: await sample(app, chrome, options.readings),
+    });
+    await release?.();
     if (chrome !== undefined) {
       await runCommand(chrome, "launcher.open");
       await wait(LAUNCHER_LOAD);
