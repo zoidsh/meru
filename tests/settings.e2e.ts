@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { TITLEBAR_HEIGHT } from "../app/core/engines/chrome.ts";
+import { SIDEBAR_PIXELS } from "../app/core/engines/sidebar.ts";
 import { launch, runCommand, writeSettings } from "../scripts/lib/app.ts";
 import type { Launched } from "../scripts/lib/app.ts";
 import { inspect, styleOf, viewsOf, zoomOf } from "./app.ts";
@@ -34,17 +35,21 @@ test("tiles classic panes edge to edge from settings.json", async () => {
       expect(views).toStrictEqual([{ ...size, ...TOP }]);
     }).toPass({ timeout: 5000 });
 
+    // The split's second Gmail tab shows the sidebar, wide because one app now has two tabs.
     await runCommand(chrome, "stage.splitVertical");
+    const strip = SIDEBAR_PIXELS.wide;
     await expect(async () => {
       const [[left, right, ...rest], size] = await Promise.all([
         viewsOf(chrome),
         stageSize(launched),
       ]);
       expect(rest).toHaveLength(0);
-      expect(left).toMatchObject({ height: size.height, ...TOP });
+      expect(left).toMatchObject({ height: size.height, x: strip, y: TOP.y });
       expect(right).toMatchObject({ height: size.height, y: TOP.y });
-      expect((left?.width ?? 0) + 1 + (right?.width ?? 0)).toBe(size.width);
-      expect(right?.x).toBe((left?.width ?? 0) + 1);
+      expect((left?.width ?? 0) + 1 + (right?.width ?? 0)).toBe(
+        size.width - strip
+      );
+      expect(right?.x).toBe(strip + (left?.width ?? 0) + 1);
     }).toPass({ timeout: 5000 });
   } finally {
     await close();
