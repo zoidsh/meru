@@ -119,6 +119,7 @@ export const Sidebar = ({
   const showWidthToggle = useSetting("sidebar.showWidthToggle");
   const gmailBadge = useSetting("sidebar.gmailUnreadBadge");
   const unreadBadge = useSetting("profiles.unreadBadge");
+  const seam = useSetting("appearance.style") === "classic";
   const [drop, setDrop] = useState<DropTarget | undefined>();
   if (sidebar.kind === "hidden" || snapshot === undefined) {
     return null;
@@ -219,7 +220,8 @@ export const Sidebar = ({
   return (
     <nav
       className={cn(
-        "bg-background flex shrink-0 flex-col overflow-hidden border-r p-3 select-none motion-safe:transition-[width] motion-safe:duration-200",
+        "bg-background flex shrink-0 flex-col overflow-hidden p-3 select-none motion-safe:transition-[width] motion-safe:duration-200",
+        seam && "border-r",
         wide ? "gap-1" : "items-center gap-2"
       )}
       data-sidebar={size}

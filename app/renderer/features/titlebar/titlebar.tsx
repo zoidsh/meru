@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -15,6 +16,7 @@ import type { CommandId } from "../../../shared/commands/registry.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../chrome-context.tsx";
 import { useTooltip } from "../commands/use-tooltip.ts";
+import { useSetting } from "../settings/use-setting.ts";
 import { useSidebar } from "../sidebar/use-sidebar.ts";
 import { useStage } from "../stage/use-stage.ts";
 import { ProfileRow } from "./profile-row.tsx";
@@ -79,9 +81,13 @@ const NavigationControls = () => {
 /** The bar across the top of the window, which drags it everywhere but on its controls; `trailing` shows at its right end while the sidebar is hidden. */
 export const Titlebar = ({ trailing }: { readonly trailing?: ReactNode }) => {
   const sidebar = useSidebar();
+  const seam = useSetting("appearance.style") === "classic";
   return (
     <header
-      className="draggable bg-background relative shrink-0 overflow-hidden border-b select-none"
+      className={cn(
+        "draggable bg-background relative shrink-0 overflow-hidden select-none",
+        seam && "border-b"
+      )}
       data-titlebar=""
       style={{ height: TITLEBAR_HEIGHT }}
     >
