@@ -697,6 +697,33 @@ describe("a page's fullscreen", () => {
     ]);
   });
 
+  it("forgets the fullscreen tab once it closes, the others' panes laid out again", async () => {
+    const { window, views, commands, id, split } = await setup();
+    split("vertical");
+    const [first, second] = views.alive;
+    second?.fullscreen(true);
+    commands.run("stage.closeTab", { windowId: id });
+    expect([window.childViews(), first?.bounds()]).toStrictEqual([
+      [first],
+      { height: 784, width: 1184, x: 8, y: 8 },
+    ]);
+  });
+
+  it("forgets the fullscreen tab once the group changes, so its pane comes back in its place", async () => {
+    const { window, views, profiles, split } = await setup();
+    split("vertical");
+    const [, second] = views.alive;
+    second?.fullscreen(true);
+    const [, calendar = ""] = profiles.currentGroup()?.tabIds ?? [];
+    profiles.leaveGroup(calendar);
+    profiles.moveTab(calendar, 0);
+    expect([
+      window.childViews(),
+      second?.bounds(),
+      second?.radius,
+    ]).toStrictEqual([[second], { height: 784, width: 1184, x: 8, y: 8 }, 10]);
+  });
+
   it("ignores the leaving of a page that was not fullscreen", async () => {
     const { window, views, split } = await setup();
     split("vertical");

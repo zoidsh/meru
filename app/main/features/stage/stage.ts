@@ -236,6 +236,7 @@ export class Stage {
     }
     this.#shown = group;
     this.#maximised = undefined;
+    this.#fullscreenTab = undefined;
     if (this.#focusedPane() === undefined) {
       this.#focused = panes(this.#layout())[0]?.tabIds[0];
     }
@@ -274,6 +275,9 @@ export class Stage {
       return err("lastPane");
     }
     this.#maximised = undefined;
+    if (this.#fullscreenTab === tabId) {
+      this.#fullscreenTab = undefined;
+    }
     const wasFocused = this.#focused === tabId;
     if (!this.#options.profiles.closeTab(tabId).ok) {
       return err("refused");
