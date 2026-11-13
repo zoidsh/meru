@@ -223,6 +223,15 @@ describe(Profiles, () => {
     }
   );
 
+  it("refuses a second profile once the entitlement changes to free", async () => {
+    const { profiles, events } = await setup();
+    events.emit("entitlement.changed", { entitlement: free });
+    expect(profiles.createProfile("Work")).toStrictEqual({
+      error: "free",
+      ok: false,
+    });
+  });
+
   it("deactivates the profiles past the free count when the trial ends, keeping them and moving the selection", async () => {
     const { profiles, events, registrar, transport } = await setup();
     const created = unwrap(profiles.createProfile("Work"));

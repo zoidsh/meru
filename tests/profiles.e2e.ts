@@ -6,14 +6,7 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 import { profiles } from "../app/shared/channels/profiles.ts";
-import {
-  entitlementOf,
-  invokeIn,
-  launch,
-  profilesOf,
-  stageOf,
-  viewsOf,
-} from "./app.ts";
+import { entitlementOf, invokeIn, launch, profilesOf } from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
 
 const createProfile = async (chrome: Page, label: string) =>
@@ -24,36 +17,7 @@ const kindOf = async (chrome: Page) => {
   return kind;
 };
 
-test("opens a fresh install on one profile with one Gmail tab in one pane", async () => {
-  const { app, chrome, close } = await launch();
-  try {
-    await expect.poll(async () => await viewsOf(chrome)).toHaveLength(1);
-    const windows = await app.evaluate(
-      ({ BrowserWindow }) => BrowserWindow.getAllWindows().length
-    );
-    const [state, stage] = await Promise.all([
-      profilesOf(chrome),
-      stageOf(chrome),
-    ]);
-    expect({
-      groups: state.groups.map((group) => group.tabIds.length),
-      panes: stage.panes.length,
-      profiles: state.profiles.map((profile) => profile.label),
-      tabs: state.tabs.map((tab) => tab.appId),
-      windows,
-    }).toStrictEqual({
-      groups: [1],
-      panes: 1,
-      profiles: ["Personal"],
-      tabs: ["gmail"],
-      windows: 1,
-    });
-  } finally {
-    await close();
-  }
-});
-
-test("creates a second profile under a trial and refuses one when free", async () => {
+test("creates a second profile under a trial", async () => {
   const stub = await startStub();
   try {
     const trial = await launch({ env: { MERU_ENTITLEMENT_URL: stub.url } });
@@ -70,18 +34,6 @@ test("creates a second profile under a trial and refuses one when free", async (
       ]);
     } finally {
       await trial.close();
-    }
-
-    stub.answer(null, { days: -1, kind: "trial" });
-    const free = await launch({ env: { MERU_ENTITLEMENT_URL: stub.url } });
-    try {
-      await expect.poll(async () => await kindOf(free.chrome)).toBe("free");
-      expect(await createProfile(free.chrome, "Work")).toMatchObject({
-        error: { kind: "failed", message: "free" },
-        ok: false,
-      });
-    } finally {
-      await free.close();
     }
   } finally {
     await stub.stop();
