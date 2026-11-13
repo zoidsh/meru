@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Fallback } from "../../../core/engines/settings-parse.ts";
 import type { SettingChange } from "../../../core/engines/settings.ts";
+import { AppEvents } from "../../../core/events.ts";
+import type { Entitlement } from "../../../core/records/entitlement.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
@@ -22,10 +24,30 @@ const rethrow = (error: unknown) => {
   throw error;
 };
 
+const FREE: Entitlement = { expiresAt: null, kind: "free", source: "stored" };
+
+const LICENSED: Entitlement = {
+  deviceLimit: 3,
+  expiresAt: null,
+  kind: "licensed",
+  plan: "pro",
+  seat: null,
+  source: "stored",
+};
+
 const setup = async (
   data?: unknown,
-  { watchFile = false }: { watchFile?: boolean } = {}
+  {
+    watchFile = false,
+    entitled = LICENSED,
+  }: { watchFile?: boolean; entitled?: Entitlement } = {}
 ) => {
+  let entitlement = entitled;
+  const events = new AppEvents();
+  const entitle = (next: Entitlement) => {
+    entitlement = next;
+    events.emit("entitlement.changed", { entitlement: next });
+  };
   const fs = new FakeFs(
     data === undefined ? {} : { [SETTINGS_FILE]: file(data) }
   );
@@ -49,6 +71,8 @@ const setup = async (
     },
     registrar,
     watchFile,
+    entitlement: () => entitlement,
+    events,
   });
   const opened = await store.open();
   store.start();
@@ -60,6 +84,7 @@ const setup = async (
     call,
     changes,
     clock,
+    entitle,
     fallbacks,
     fs,
     lifecycle,
@@ -113,6 +138,8 @@ describe(SettingsStore, () => {
         transport: new FakeIpcTransport(),
       }),
       watchFile: false,
+      entitlement: () => FREE,
+      events: new AppEvents(),
     }).open();
     expect(fallbacks).toStrictEqual([
       { key: null, profileId: null, reason: "invalid" },
@@ -276,5 +303,40 @@ describe("a settings file edited by hand", () => {
   it("is not watched unless asked", async () => {
     const { fs } = await setup({});
     expect(fs.watched).toBe(0);
+  });
+});
+
+describe("a Pro setting", () => {
+  it("resolves to its default while the entitlement refuses Pro, and to what is stored once it allows it", async () => {
+    const { store, entitle, changes } = await setup(
+      { global: { "links.openInApp": false } },
+      { entitled: FREE }
+    );
+    const free = store.get("links.openInApp");
+    entitle(LICENSED);
+    expect([free, store.get("links.openInApp"), changes]).toStrictEqual([
+      true,
+      false,
+      [
+        [
+          { key: "links.openInApp", profileId: null },
+          { key: "links.excludedApps", profileId: null },
+        ],
+      ],
+    ]);
+  });
+
+  it("tells subscribers nothing when the entitlement changes without changing what Pro allows", async () => {
+    const { entitle, changes } = await setup({}, { entitled: FREE });
+    entitle({ expiresAt: null, kind: "unknown", source: "stored" });
+    expect(changes).toStrictEqual([]);
+  });
+
+  it("keeps a free setting whatever the entitlement", async () => {
+    const { store } = await setup(
+      { global: { "appearance.style": "classic" } },
+      { entitled: FREE }
+    );
+    expect(store.get("appearance.style")).toBe("classic");
   });
 });

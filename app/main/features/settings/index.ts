@@ -10,12 +10,15 @@ import {
   withValue,
 } from "../../../core/engines/settings.ts";
 import type { SettingChange } from "../../../core/engines/settings.ts";
+import { canUse } from "../../../core/entitlement/gate.ts";
+import type { AppEvents } from "../../../core/events.ts";
 import type {
   LifecyclePort,
   Clock,
   FsPort,
   Unsubscribe,
 } from "../../../core/ports.ts";
+import type { Entitlement } from "../../../core/records/entitlement.ts";
 import { ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
@@ -62,9 +65,16 @@ export interface SettingsOptions {
   readonly registrar: IpcRegistrar;
   /** Follow edits made to the file by hand while the app runs. */
   readonly watchFile: boolean;
+  /** What the user may use now, which a Pro setting's value waits on. */
+  readonly entitlement: () => Entitlement;
+  readonly events: Pick<AppEvents, "on">;
   readonly onError: (error: unknown) => void;
   readonly onFallback: (fallbacks: readonly Fallback[]) => void;
 }
+
+const PRO_KEYS: ReadonlySet<SettingKey> = new Set(
+  registry.filter((entry) => entry.tier === "pro").map((entry) => entry.key)
+);
 
 // Editors save in several steps, each reported as a change.
 const SETTLE = 50;
@@ -75,6 +85,7 @@ export class SettingsStore {
   readonly #listeners = new Set<SettingsListener>();
   readonly #disposables = new DisposableStore();
   #settings: Settings = emptySettings();
+  #proAllowed = false;
 
   constructor(options: SettingsOptions) {
     this.#options = options;
@@ -100,8 +111,12 @@ export class SettingsStore {
   }
 
   start(): void {
-    const { registrar, fs, clock } = this.#options;
+    const { registrar, fs, clock, events } = this.#options;
+    this.#proAllowed = this.#allowsPro();
     this.#disposables.add(
+      events.on("entitlement.changed", () => {
+        this.#regate();
+      }),
       () => {
         this.#store.dispose();
       },
@@ -137,9 +152,14 @@ export class SettingsStore {
     return this.#settings;
   }
 
+  /** The value in force: a Pro setting's default while the entitlement refuses Pro, whatever is stored. */
   get<K extends SettingKey>(key: K, ...profile: ProfileArg<K>) {
     const [profileId] = profile;
-    return resolve(registry, this.#settings, key, profileId);
+    const layers =
+      PRO_KEYS.has(key) && !this.#allowsPro()
+        ? emptySettings()
+        : this.#settings;
+    return resolve(registry, layers, key, profileId);
   }
 
   /** Stores a value, or removes it when `value` is undefined, so the next layer down shows through. */
@@ -182,6 +202,26 @@ export class SettingsStore {
       this.#store.write(this.#settings);
     }
     return ok(undefined);
+  }
+
+  #allowsPro(): boolean {
+    return canUse(this.#options.entitlement(), "proSetting", {
+      now: this.#options.clock.now(),
+      profiles: 0,
+    }).allowed;
+  }
+
+  // A Pro setting's stored value comes into force, or goes, with the entitlement, so the features reading it hear of it as of any change.
+  #regate(): void {
+    const allowed = this.#allowsPro();
+    if (allowed === this.#proAllowed) {
+      return;
+    }
+    this.#proAllowed = allowed;
+    const changes = [...PRO_KEYS].map((key) => ({ key, profileId: null }));
+    for (const listener of this.#listeners) {
+      listener(changes);
+    }
   }
 
   async #reload(): Promise<void> {

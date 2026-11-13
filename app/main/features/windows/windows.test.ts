@@ -39,6 +39,8 @@ const setup = async (fs = new FakeFs()) => {
     transport: new FakeIpcTransport(),
   });
   const settings = new SettingsStore({
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
+    events: new AppEvents(),
     lifecycle,
     clock,
     fs,

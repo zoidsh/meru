@@ -39,6 +39,15 @@ const setup = async () => {
   registrar.assign(window.contentsId, chromeSurface);
   const clock = new FakeClock();
   const settings = new SettingsStore({
+    entitlement: () => ({
+      deviceLimit: 3,
+      expiresAt: null,
+      kind: "licensed",
+      plan: "pro",
+      seat: null,
+      source: "stored",
+    }),
+    events: new AppEvents(),
     lifecycle: new FakeLifecycle(),
     clock,
     fs: new FakeFs(),

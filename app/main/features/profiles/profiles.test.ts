@@ -60,6 +60,8 @@ const setup = async ({
   const events = new AppEvents();
   const sessions = new FakeSessions();
   const settings = new SettingsStore({
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
+    events: new AppEvents(),
     lifecycle,
     clock,
     fs,

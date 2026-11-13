@@ -29,6 +29,8 @@ const setup = ({ packaged = true } = {}) => {
   });
   registrar.assign(PAGE, chromeSurface);
   const settings = new SettingsStore({
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
+    events: new AppEvents(),
     lifecycle: new FakeLifecycle(),
     clock,
     fs: new FakeFs(),

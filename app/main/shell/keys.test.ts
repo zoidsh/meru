@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { KeyInput } from "../../core/engines/shortcuts.ts";
+import { AppEvents } from "../../core/events.ts";
 import { ok } from "../../core/result.ts";
 import { commandsOf, defineCommands } from "../../shared/commands/define.ts";
 import { msg } from "../../shared/msg.ts";
@@ -45,6 +46,8 @@ const key = (
 
 const setup = () => {
   const settings = new SettingsStore({
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
+    events: new AppEvents(),
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     fs: new FakeFs(),

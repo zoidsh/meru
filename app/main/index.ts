@@ -84,25 +84,6 @@ const start = async () => {
     }
   );
 
-  const settings = new SettingsStore({
-    lifecycle: ports.lifecycle,
-    clock: ports.clock,
-    fs: ports.fs,
-    onError: report,
-    onFallback: (fallbacks) => {
-      for (const { key, profileId, reason } of fallbacks) {
-        warn(
-          `settings.json: ${key ?? "a layer"}${profileId === null ? "" : ` of profile ${profileId}`} is ${reason}, so its default stands`
-        );
-      }
-    },
-    registrar: dispatcher,
-    // Only a run from the repository follows hand edits; an installed app learns of a change from the code that made it.
-    watchFile: !ports.lifecycle.packaged,
-  });
-  await settings.open();
-  settings.start();
-
   const events = new AppEvents();
   const entitlement = new Entitlement({
     api: createElectronEntitlementApi(
@@ -126,6 +107,27 @@ const start = async () => {
   });
   await entitlement.open();
   entitlement.attach();
+
+  const settings = new SettingsStore({
+    lifecycle: ports.lifecycle,
+    clock: ports.clock,
+    fs: ports.fs,
+    onError: report,
+    onFallback: (fallbacks) => {
+      for (const { key, profileId, reason } of fallbacks) {
+        warn(
+          `settings.json: ${key ?? "a layer"}${profileId === null ? "" : ` of profile ${profileId}`} is ${reason}, so its default stands`
+        );
+      }
+    },
+    registrar: dispatcher,
+    // Only a run from the repository follows hand edits; an installed app learns of a change from the code that made it.
+    watchFile: !ports.lifecycle.packaged,
+    entitlement: () => entitlement.current(),
+    events,
+  });
+  await settings.open();
+  settings.start();
 
   const commands = new CommandDispatcher();
   commands.start(dispatcher);

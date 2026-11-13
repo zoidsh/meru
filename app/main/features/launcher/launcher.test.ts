@@ -31,6 +31,8 @@ const setup = async () => {
   const lifecycle = new FakeLifecycle();
   const clock = new FakeClock();
   const settings = new SettingsStore({
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
+    events: new AppEvents(),
     clock,
     fs: new FakeFs(),
     lifecycle,

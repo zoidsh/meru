@@ -46,6 +46,8 @@ const rethrow = (error: unknown) => {
 
 const settingsWith = (style: Style) => {
   const settings = new SettingsStore({
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
+    events: new AppEvents(),
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     fs: new FakeFs(),
