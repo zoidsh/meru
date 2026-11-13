@@ -89,7 +89,7 @@ export class Stage {
   readonly #overlay: Overlay;
   #shown: Group | undefined;
   readonly #retired: OwnedView[] = [];
-  /** The tab whose pane has the keyboard. */
+  // Held by tab, since a pane's id changes under a join or a move.
   #focused: string | undefined;
   readonly #drag: DragOverlay;
   #published: StageSnapshot | undefined;
