@@ -72,6 +72,12 @@ if (!kind.success) {
   );
 }
 
+// Generic over the kind so a kind's client reaches its own entry of `shows`; indexed by the parsed union, the entry would have to take every overlay's client at once.
+const render = <K extends OverlayKind>(
+  shown: K,
+  client: Client<(typeof overlays)[K]>
+): ReactNode => shows[shown](client, query);
+
 const client = createClient(window, overlays[kind.data]);
 
 followTheme(document.documentElement, location.href, (listener) =>
@@ -80,6 +86,4 @@ followTheme(document.documentElement, location.href, (listener) =>
   })
 );
 
-createRoot(root).render(
-  <StrictMode>{shows[kind.data](client, query)}</StrictMode>
-);
+createRoot(root).render(<StrictMode>{render(kind.data, client)}</StrictMode>);
