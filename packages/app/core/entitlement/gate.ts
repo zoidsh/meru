@@ -57,3 +57,16 @@ export const canUse = (
     ? { allowed: false, allowedProfiles: FREE_PROFILES, reason }
     : { allowed: false, reason };
 };
+
+/** Which of the profiles, in sidebar order, the entitlement leaves deactivated: kept with everything in them, but not usable until it allows them again. */
+export const deactivatedProfiles = (
+  orderedIds: readonly string[],
+  entitlement: Entitlement,
+  now: number
+): Set<string> =>
+  new Set(
+    orderedIds.filter(
+      (_id, index) =>
+        !canUse(entitlement, "extraProfile", { now, profiles: index }).allowed
+    )
+  );

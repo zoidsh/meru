@@ -27,9 +27,13 @@ const onDocs = (id: string, name: string, segment: string): App => {
   return { ...app, hosts: [...app.hosts, `docs.google.com/${segment}`] };
 };
 
+export const gmail: App = entry("gmail", "Gmail", "mail", {
+  singleInstance: true,
+});
+
 /** Every Google app a tab can show, Gmail first and the rest by name. */
 export const apps: readonly App[] = [
-  entry("gmail", "Gmail", "mail", { singleInstance: true }),
+  gmail,
   entry("admin", "Admin"),
   entry("ads", "Ads"),
   entry("analytics", "Analytics"),
@@ -62,8 +66,6 @@ export const apps: readonly App[] = [
   onDocs("vids", "Vids", "videos"),
   entry("voice", "Voice"),
 ];
-
-export const GMAIL_APP_ID = "gmail";
 
 export const appById = (id: string): App | undefined =>
   apps.find((app) => app.id === id);

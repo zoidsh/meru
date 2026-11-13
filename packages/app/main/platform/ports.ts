@@ -1,6 +1,13 @@
 import { randomUUID } from "node:crypto";
 
-import { app, BrowserWindow, net, powerMonitor, screen } from "electron";
+import {
+  app,
+  BrowserWindow,
+  net,
+  powerMonitor,
+  screen,
+  session,
+} from "electron";
 
 import type {
   EntitlementApi,
@@ -149,6 +156,13 @@ export const createElectronPorts = (): Ports => ({
       return () => {
         powerMonitor.off("resume", listener);
       };
+    },
+  },
+  sessions: {
+    clear: async (partition) => {
+      const found = session.fromPartition(partition);
+      await found.clearStorageData();
+      await found.clearCache();
     },
   },
   views: viewFactory,

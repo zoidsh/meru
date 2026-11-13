@@ -154,6 +154,12 @@ export interface UpdaterPort {
   readonly onEvent: (listener: (event: UpdaterEvent) => void) => Unsubscribe;
 }
 
+/** The browser sessions panes load in, one partition per profile. */
+export interface SessionPort {
+  /** Deletes everything the partition stored: cookies, storage and cache. */
+  readonly clear: (partition: string) => Promise<void>;
+}
+
 export interface Ports {
   readonly app: AppPort;
   readonly clock: Clock;
@@ -163,6 +169,7 @@ export interface Ports {
   readonly ipc: IpcTransportPort;
   readonly network: OnlinePort;
   readonly power: PowerPort;
+  readonly sessions: SessionPort;
   readonly views: ViewFactoryPort;
   readonly createWindow: (spec: WindowSpec) => WindowPort;
 }

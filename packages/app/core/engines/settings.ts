@@ -266,6 +266,17 @@ export const withValue = <R extends SettingSpecs>(
   );
 };
 
+/** The settings with a profile's override layer gone. */
+export const withoutProfile = <R extends SettingSpecs>(
+  settings: SettingsLayers<R>,
+  profileId: string
+): SettingsLayers<R> => ({
+  ...settings,
+  profiles: Object.fromEntries(
+    Object.entries(settings.profiles).filter(([id]) => id !== profileId)
+  ),
+});
+
 // Settings are JSON values, so a structural walk is equality; key order does not count.
 const equal = (a: unknown, b: unknown): boolean => {
   if (Object.is(a, b)) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Entitlement } from "../records/entitlement.ts";
-import { canUse, FREE_PROFILES } from "./gate.ts";
+import { canUse, deactivatedProfiles, FREE_PROFILES } from "./gate.ts";
 import type { GatedFeature } from "./gate.ts";
 
 const NOW = 1_800_000_000_000;
@@ -77,5 +77,22 @@ describe(canUse, () => {
     expect(
       canUse(trial, "extension", { now: NOW + 1, profiles: 0 })
     ).toStrictEqual({ allowed: false, reason: "trialEnded" });
+  });
+});
+
+describe(deactivatedProfiles, () => {
+  const ids = ["a", "b", "c"];
+
+  it.each([unknown, free, ended, disabled])(
+    "deactivates every profile past the free count under %o",
+    (entitlement) => {
+      expect(deactivatedProfiles(ids, entitlement, NOW)).toStrictEqual(
+        new Set(ids.slice(FREE_PROFILES))
+      );
+    }
+  );
+
+  it.each([trial, licensed])("deactivates none under %o", (entitlement) => {
+    expect(deactivatedProfiles(ids, entitlement, NOW).size).toBe(0);
   });
 });

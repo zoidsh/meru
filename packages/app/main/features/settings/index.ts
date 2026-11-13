@@ -4,6 +4,7 @@ import {
   parseSettings,
   resolve,
   storedValue,
+  withoutProfile,
   withValue,
 } from "../../../core/engines/settings.ts";
 import type {
@@ -154,6 +155,13 @@ export class SettingsStore {
     ...profile: ProfileArg<K>
   ): Result<undefined, string> {
     return this.#set(key, value, ...profile);
+  }
+
+  /** Drops a removed profile's override layer. */
+  removeProfile(profileId: string): void {
+    if (this.#replace(withoutProfile(this.#settings, profileId))) {
+      this.#store.write(this.#settings);
+    }
   }
 
   subscribe(listener: SettingsListener): Unsubscribe {

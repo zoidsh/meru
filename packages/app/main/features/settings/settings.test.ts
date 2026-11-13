@@ -143,6 +143,21 @@ describe(SettingsStore, () => {
     expect(store.get("stage.zoom", "work")).toBe(1.25);
   });
 
+  it("drops a removed profile's layer and writes the file without it", async () => {
+    const { store, changes, fs } = await setup({
+      global: {},
+      profiles: { home: { "stage.zoom": 1.5 }, work: { "stage.zoom": 2 } },
+    });
+    store.removeProfile("work");
+    store.removeProfile("gone");
+    expect(changes).toStrictEqual([[{ key: "stage.zoom", profileId: "work" }]]);
+    await store.flush();
+    expect(stored(fs)).toStrictEqual({
+      data: { global: {}, profiles: { home: { "stage.zoom": 1.5 } } },
+      version: 1,
+    });
+  });
+
   it("refuses a value its schema refuses, and a profile override of a global key", async () => {
     const { store, changes } = await setup();
     // @ts-expect-error: not a style

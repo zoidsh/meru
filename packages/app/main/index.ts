@@ -10,6 +10,7 @@ import { commands as allCommands } from "../shared/commands/registry.ts";
 import { ENTITLEMENT_URL } from "../shared/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../shared/entitlement/keys.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
+import { Profiles } from "./features/profiles/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { Stages } from "./features/stage/index.ts";
 import { Updater } from "./features/updater/index.ts";
@@ -112,6 +113,24 @@ const start = async () => {
   });
   await entitlement.open();
   entitlement.attach();
+
+  const profiles = new Profiles({
+    app: ports.app,
+    clock: ports.clock,
+    entitlement: entitlement.current(),
+    events,
+    fs: ports.fs,
+    ids: ports.ids,
+    onError: report,
+    registrar: dispatcher,
+    report: (message) => {
+      console.warn(message);
+    },
+    sessions: ports.sessions,
+    settings,
+  });
+  await profiles.open();
+  profiles.start();
 
   const commands = new CommandDispatcher();
   commands.start(dispatcher);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { appSchema } from "../core/records/app.ts";
-import { apps, GMAIL_APP_ID } from "./apps.ts";
+import { apps, gmail } from "./apps.ts";
 
 describe("the apps catalog", () => {
   it("parses every entry", () => {
@@ -22,10 +22,10 @@ describe("the apps catalog", () => {
   it("has unique ids and puts Gmail first, as the one single-instance app", () => {
     const ids = apps.map((app) => app.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids[0]).toBe(GMAIL_APP_ID);
+    expect(ids[0]).toBe(gmail.id);
     expect(
       apps.filter((app) => app.singleInstance === true).map((app) => app.id)
-    ).toStrictEqual([GMAIL_APP_ID]);
+    ).toStrictEqual([gmail.id]);
   });
 
   it("claims each host or path for one app only", () => {
