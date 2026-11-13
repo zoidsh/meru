@@ -15,7 +15,6 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { drag } from "../../../shared/channels/drag.ts";
-import { tabOpening } from "../../../shared/channels/profiles.ts";
 import { stage, stagePushes } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import type {
@@ -119,16 +118,14 @@ export class Stages {
         resize: ({ splitId, ratio }, { contentsId }) =>
           this.resize(contentsId, splitId, ratio),
         snapshot: (_payload, { contentsId }) => this.snapshot(contentsId),
-        split: ({ orientation, paneId, appId }, { contentsId }) =>
-          this.split(contentsId, orientation, paneId, appId),
-      }),
-      registrar.register(tabOpening, {
-        open: ({ appId, profileId, split }, { contentsId }) => {
+        openTab: ({ appId, profileId, split }, { contentsId }) => {
           const opened = this.#with(contentsId, (found) =>
             found.openTab(profileId, appId, split)
           );
           return opened.ok ? ok(null) : opened;
         },
+        split: ({ orientation, paneId }, { contentsId }) =>
+          this.split(contentsId, orientation, paneId),
       }),
       registrar.register(drag, {
         end: (point, { contentsId }) => this.endDrag(contentsId, point),
@@ -205,12 +202,9 @@ export class Stages {
   split(
     windowId: number,
     orientation: Orientation,
-    paneId?: string,
-    appId?: string
+    paneId?: string
   ): Result<undefined, StageError> {
-    return this.#with(windowId, (found) =>
-      found.split(orientation, paneId, appId)
-    );
+    return this.#with(windowId, (found) => found.split(orientation, paneId));
   }
 
   close(windowId: number, paneId?: string): Result<undefined, StageError> {

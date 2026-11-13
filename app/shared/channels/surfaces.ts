@@ -6,7 +6,7 @@ import { e2e } from "./e2e.ts";
 import { entitlement, entitlementPushes } from "./entitlement.ts";
 import { launcher, launcherPushes } from "./launcher.ts";
 import { measure } from "./measure.ts";
-import { profiles, profilesPushes, tabOpening, tabs } from "./profiles.ts";
+import { profiles, profilesPushes, tabs } from "./profiles.ts";
 import { settings, settingsPushes } from "./settings.ts";
 import { sidebar, sidebarPushes } from "./sidebar.ts";
 import { stage, stagePushes } from "./stage.ts";
@@ -48,7 +48,12 @@ export const dragSurface = defineSurface({ pushes: [], requests: [drag] });
 /** The launcher's page over the panes: it reads the profiles and the settings, opens a tab and closes itself. */
 export const launcherSurface = defineSurface({
   pushes: [profilesPushes, settingsPushes],
-  requests: [launcher, tabOpening, { snapshot: profiles.snapshot }, settings],
+  requests: [
+    launcher,
+    { openTab: stage.openTab },
+    { snapshot: profiles.snapshot },
+    settings,
+  ],
 });
 
 export type LauncherSurface = typeof launcherSurface;

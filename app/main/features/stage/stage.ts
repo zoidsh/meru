@@ -145,26 +145,21 @@ export class Stage {
     this.#update();
   }
 
-  /** Splits a pane with a new tab beside or below it, of `appId`, or of the pane's own app. */
+  /** Splits a pane with a new tab of its own app beside or below it. */
   split(
     orientation: Orientation,
-    paneId = this.#focused,
-    appId?: string
+    paneId = this.#focused
   ): Result<undefined, StageError> {
     const group = this.#read();
     const source = this.#tabOf(paneId);
     if (paneId === undefined || group === undefined || source === undefined) {
       return err("unknownPane");
     }
-    const added = this.#options.profiles.addTab(
-      group.profileId,
-      appId ?? source.appId,
-      {
-        groupId: group.id,
-        orientation,
-        paneId,
-      }
-    );
+    const added = this.#options.profiles.addTab(group.profileId, source.appId, {
+      groupId: group.id,
+      orientation,
+      paneId,
+    });
     if (!added.ok) {
       return err(added.error === "unknownPane" ? "unknownPane" : "refused");
     }

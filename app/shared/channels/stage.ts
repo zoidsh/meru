@@ -8,7 +8,14 @@ import {
 } from "../../core/records/navigation.ts";
 import { rectSchema } from "../../core/records/rect.ts";
 import { styleSchema } from "../../core/records/style.ts";
-import { defineChannels, definePushes, event, push, sync } from "./define.ts";
+import {
+  defineChannels,
+  definePushes,
+  event,
+  invoke,
+  push,
+  sync,
+} from "./define.ts";
 
 export const stageSnapshotSchema = z.object({
   dividers: z.array(
@@ -37,17 +44,18 @@ export const stage = defineChannels("stage", {
   focusPane: event(z.object({ paneId: idSchema })),
   /** Moves the focused pane through its history, or reloads or stops it. */
   navigate: event(z.object({ action: navigationActionSchema })),
+  /** Opens a tab of the app in the profile and shows it, in a group of one or, with `split`, beside the focused pane of the sender's window; a single-instance app's one tab instead when the profile has it. */
+  openTab: invoke(
+    z.object({ appId: idSchema, profileId: idSchema, split: z.boolean() }),
+    z.null()
+  ),
   resize: event(
     z.object({ ratio: z.number().min(0).max(1), splitId: idSchema })
   ),
   snapshot: sync(z.object({}), stageSnapshotSchema),
-  /** Splits a pane, the focused one unless named, with a new tab of `appId`, or of the pane's own app. */
+  /** Splits a pane, the focused one unless named, with a new tab of the pane's own app. */
   split: event(
-    z.object({
-      appId: idSchema.optional(),
-      orientation: orientationSchema,
-      paneId: idSchema.optional(),
-    })
+    z.object({ orientation: orientationSchema, paneId: idSchema.optional() })
   ),
 });
 

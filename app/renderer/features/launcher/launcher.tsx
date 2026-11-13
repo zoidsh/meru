@@ -8,7 +8,7 @@ import type { App } from "../../../core/records/app.ts";
 import type { Rect } from "../../../core/records/rect.ts";
 import { apps } from "../../../shared/apps.ts";
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
-import { tabOpening } from "../../../shared/channels/profiles.ts";
+import { stage } from "../../../shared/channels/stage.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../client-context.tsx";
 import { Button } from "../../ui/button.tsx";
@@ -104,7 +104,7 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
   const open = async (app: App, split: boolean) => {
     const profileId = snapshot?.selectedProfileId;
     if (profileId !== undefined) {
-      await client.invoke(tabOpening.open, { appId: app.id, profileId, split });
+      await client.invoke(stage.openTab, { appId: app.id, profileId, split });
     }
     close();
   };

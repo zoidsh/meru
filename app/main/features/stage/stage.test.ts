@@ -7,7 +7,6 @@ import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { drag } from "../../../shared/channels/drag.ts";
-import { tabOpening } from "../../../shared/channels/profiles.ts";
 import {
   stage as stageChannels,
   stagePushes,
@@ -645,7 +644,7 @@ describe("an overlay over the panes", () => {
     const profileId = profiles.selected().id;
     expect(
       call(
-        tabOpening.open,
+        stageChannels.openTab,
         { appId: "calendar", profileId, split: true },
         overlay
       ).ok
@@ -671,7 +670,8 @@ describe("an overlay over the panes", () => {
     const overlay = views.created.at(-1)?.contentsId ?? 0;
     const profileId = profiles.selected().id;
     const open = (appId: string) =>
-      call(tabOpening.open, { appId, profileId, split: false }, overlay).ok;
+      call(stageChannels.openTab, { appId, profileId, split: false }, overlay)
+        .ok;
     expect([open("drive"), open("gmail")]).toStrictEqual([true, true]);
     expect({
       focused,
@@ -707,8 +707,11 @@ describe("an overlay over the panes", () => {
     });
     const sender = overlay?.contentsId ?? 0;
     const asks = () =>
-      call(tabOpening.open, { appId: "gmail", profileId, split: false }, sender)
-        .ok;
+      call(
+        stageChannels.openTab,
+        { appId: "gmail", profileId, split: false },
+        sender
+      ).ok;
     expect(asks()).toBeTruthy();
     if (pane !== undefined) {
       pane.focused = false;

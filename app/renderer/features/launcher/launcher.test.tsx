@@ -2,8 +2,9 @@ import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
-import { profiles, tabOpening } from "../../../shared/channels/profiles.ts";
+import { profiles } from "../../../shared/channels/profiles.ts";
 import { settings } from "../../../shared/channels/settings.ts";
+import { stage } from "../../../shared/channels/stage.ts";
 import {
   answer,
   groupOf,
@@ -71,7 +72,7 @@ const mount = (appIds?: readonly string[]) => {
       global: appIds === undefined ? {} : { "launcher.apps": appIds },
       profiles: {},
     }),
-    answer(tabOpening.open, null),
+    answer(stage.openTab, null),
   ]);
   mounted.push(page.unmount);
   return page;
@@ -99,7 +100,7 @@ describe(Launcher, () => {
     key({ key: "Enter" });
     await settle();
     expect([
-      sentOn(tabOpening.open),
+      sentOn(stage.openTab),
       sentOn(launcher.close).length,
     ]).toStrictEqual([
       [{ appId: "calendar", profileId: "personal", split: false }],
@@ -123,7 +124,7 @@ describe(Launcher, () => {
       item("drive")?.click();
     });
     await settle();
-    expect(sentOn(tabOpening.open)).toStrictEqual([
+    expect(sentOn(stage.openTab)).toStrictEqual([
       { appId: "calendar", profileId: "personal", split: false },
       { appId: "drive", profileId: "personal", split: true },
     ]);
@@ -134,7 +135,7 @@ describe(Launcher, () => {
     key({ key: "ArrowDown" });
     key({ key: "Enter", shiftKey: true });
     await settle();
-    expect(sentOn(tabOpening.open)).toStrictEqual([
+    expect(sentOn(stage.openTab)).toStrictEqual([
       { appId: "drive", profileId: "personal", split: true },
     ]);
   });
