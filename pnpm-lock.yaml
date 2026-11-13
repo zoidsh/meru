@@ -258,6 +258,12 @@ importers:
         specifier: 26.16.1
         version: 26.16.1(electron-builder-squirrel-windows@26.16.1)(supports-color@7.2.0)
 
+  scripts/floor:
+    devDependencies:
+      electron:
+        specifier: 45.2.3
+        version: 45.2.3(supports-color@7.2.0)
+
 packages:
 
   '@babel/code-frame@7.29.7':

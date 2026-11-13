@@ -2,6 +2,7 @@ packages:
   - app
   - packages/*
   - packaging
+  - scripts/floor
 
 # pnpm runs no dependency build script unless it is listed here. Electron 45 has none: it downloads its binary on first use.
 allowBuilds:
