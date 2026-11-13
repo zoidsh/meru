@@ -96,7 +96,7 @@ export const TabRowButton = ({
 }) => {
   const client = useClient();
   const { ref, isDragging } = useDraggable({ id: tab.id });
-  const { ref: dropRef } = useDroppable({ disabled: isDragging, id: tab.id });
+  const { ref: dropRef } = useDroppable({ id: tab.id });
   const wide = size === "wide";
   const close = () => {
     void client.invoke(tabChannels.close, { tabId: tab.id });

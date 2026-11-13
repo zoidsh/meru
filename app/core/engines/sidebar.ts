@@ -139,7 +139,7 @@ export const dropAction = (
   const from = rows.findIndex(holds(tabId));
   const at = rows.findIndex(holds(target.tabId));
   const source = rows[from];
-  if (source === undefined || at === -1 || target.tabId === tabId) {
+  if (source === undefined || at === -1) {
     return undefined;
   }
   if (target.zone === "onto") {
@@ -150,6 +150,9 @@ export const dropAction = (
   const gap = target.zone === "before" ? at : at + 1;
   if (source.kind === "group") {
     return { kind: "leave", to: gap };
+  }
+  if (target.tabId === tabId) {
+    return undefined;
   }
   const to = gap > from ? gap - 1 : gap;
   return to === from ? undefined : { kind: "move", to };

@@ -181,15 +181,19 @@ describe(dropAction, () => {
     ]);
   });
 
-  it("takes a tab out of its group to the row it is let go between, even right beside the group", () => {
+  it("takes a tab out of its group to the row it is let go between, even right beside the group or over its own row's edge", () => {
     expect([
       dropAction(rows, "c", { tabId: "a", zone: "before" }),
       dropAction(rows, "c", { tabId: "b", zone: "after" }),
       dropAction(rows, "b", { tabId: "d", zone: "after" }),
+      dropAction(rows, "c", { tabId: "c", zone: "after" }),
+      dropAction(rows, "a", { tabId: "a", zone: "after" }),
     ]).toStrictEqual([
       { kind: "leave", to: 0 },
       { kind: "leave", to: 2 },
       { kind: "leave", to: 3 },
+      { kind: "leave", to: 2 },
+      undefined,
     ]);
   });
 
