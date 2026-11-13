@@ -56,6 +56,20 @@ export const launcherSurface = defineSurface({
 
 export type LauncherSurface = typeof launcherSurface;
 
+/** The settings window's page: it reads and writes the settings and the profiles, reads the entitlement a Pro setting waits on and the update state, and runs commands such as checking for updates. */
+export const settingsSurface = defineSurface({
+  pushes: [
+    settingsPushes,
+    profilesPushes,
+    entitlementPushes,
+    updaterPushes,
+    themePushes,
+  ],
+  requests: [settings, profiles, entitlement, commands, updater],
+});
+
+export type SettingsSurface = typeof settingsSurface;
+
 /** A sidebar row dragged over the panes: the page draws the row and the zone it would land in, reading where the panes are once, and reports the release. */
 export const tabDragSurface = defineSurface({
   pushes: [dragPushes, themePushes],
@@ -74,9 +88,10 @@ export const overlays = {
   tabDrag: tabDragSurface,
 } satisfies Record<OverlayKind, Surface>;
 
-/** The surfaces a page the renderer's preload serves may hold, by the name main passes the preload: the chrome page's, and each overlay's under its kind. */
+/** The surfaces a page the renderer's preload serves may hold, by the name main passes the preload: the chrome page's, the settings page's, and each overlay's under its kind. */
 export const pageSurfaceNameSchema = z.enum([
   "chrome",
+  "settings",
   ...overlayKindSchema.options,
 ]);
 
@@ -84,6 +99,7 @@ export type PageSurfaceName = z.infer<typeof pageSurfaceNameSchema>;
 
 export const pageSurfaces = {
   chrome: chromeSurface,
+  settings: settingsSurface,
   ...overlays,
 } satisfies Record<PageSurfaceName, Surface>;
 
@@ -109,5 +125,6 @@ export const surfaces: readonly Surface[] = [
   chromeSurface,
   dragSurface,
   launcherSurface,
+  settingsSurface,
   tabDragSurface,
 ];

@@ -1,0 +1,119 @@
+import { cn } from "cn";
+import { sortBy } from "es-toolkit";
+import type { ReactNode } from "react";
+
+import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
+import { msg } from "../../../shared/msg.ts";
+import type { Message } from "../../../shared/msg.ts";
+import type { Setting, SettingsPage } from "../../../shared/settings/define.ts";
+import { registry } from "../../../shared/settings/registry.ts";
+import { Button } from "../../ui/button.tsx";
+import { useHash } from "../../use-hash.ts";
+import { ProfilesPage } from "../profiles/profiles-page.tsx";
+import { ShortcutsPage } from "../shortcuts/shortcuts-page.tsx";
+import { UpdateStatus } from "../updater/update-status.tsx";
+import { fieldKindOf } from "./field-kind.ts";
+import { SettingField } from "./setting-field.tsx";
+import { useSettingsClient } from "./use-settings-client.ts";
+
+type PageId = SettingsPage | "profiles";
+
+interface Page {
+  readonly id: PageId;
+  readonly label: Message;
+  /** Shown above the page's registry fields, for what the registry does not hold. */
+  readonly top?: () => ReactNode;
+}
+
+// 3.x's order: its accounts, now profiles, then appearance, then the rest by name.
+export const PAGES: readonly Page[] = [
+  { id: "profiles", label: msg`Profiles`, top: () => <ProfilesPage /> },
+  { id: "appearance", label: msg`Appearance` },
+  { id: "panes", label: msg`Panes` },
+  { id: "shortcuts", label: msg`Shortcuts`, top: () => <ShortcutsPage /> },
+  { id: "sidebar", label: msg`Sidebar` },
+  { id: "updates", label: msg`Updates`, top: () => <UpdateStatus /> },
+];
+
+const appliesOn = (setting: Setting, platform: string) =>
+  setting.platforms?.some((found) => found === platform) ?? true;
+
+const Fields = ({ page }: { readonly page: PageId }) => {
+  const { platform } = useSettingsClient();
+  // A list is as wide as the page and as long as it holds, so it comes after the fields that sit on one line.
+  const shown = registry.filter(
+    (setting) =>
+      setting.page === page &&
+      fieldKindOf(setting.schema).kind !== "bespoke" &&
+      appliesOn(setting, platform)
+  );
+  const ordered = sortBy(shown, [
+    (setting) => fieldKindOf(setting.schema).kind === "list",
+  ]);
+  return shown.length === 0 ? undefined : (
+    <div className="divide-y">
+      {ordered.map((setting) => (
+        <SettingField key={setting.key} setting={setting} />
+      ))}
+    </div>
+  );
+};
+
+/** 3.x's settings window: the titlebar, the pages down the left, and the page the address names on the right, its fields rendered from the registry. */
+export const SettingsWindow = () => {
+  const [hash, navigate] = useHash();
+  const page = PAGES.find((found) => found.id === hash) ?? PAGES[0];
+  if (page === undefined) {
+    return null;
+  }
+  return (
+    <div className="bg-background text-foreground flex h-full flex-col">
+      <header
+        className="draggable relative shrink-0 select-none"
+        style={{ height: TITLEBAR_HEIGHT }}
+      >
+        <div
+          className="absolute top-0 bottom-0 flex items-center justify-center text-sm font-medium"
+          style={{
+            left: "env(titlebar-area-x, 0)",
+            width: "env(titlebar-area-width, 100%)",
+          }}
+        >
+          {msg`Settings`}
+        </div>
+      </header>
+      <div className="flex min-h-0 flex-1">
+        <nav
+          aria-label={msg`Settings`}
+          className="flex w-58 shrink-0 flex-col gap-1 overflow-y-auto px-3 pb-3"
+        >
+          {PAGES.map((found) => (
+            <Button
+              aria-current={found.id === page.id ? "page" : undefined}
+              className={cn(
+                "w-full justify-start font-normal",
+                found.id !== page.id && "text-muted-foreground"
+              )}
+              key={found.id}
+              onClick={() => {
+                navigate(found.id);
+              }}
+              variant={found.id === page.id ? "secondary" : "ghost"}
+            >
+              {found.label}
+            </Button>
+          ))}
+        </nav>
+        <main className="bg-card text-card-foreground mr-3 mb-3 flex-1 overflow-y-auto rounded-xl border">
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-8">
+            <h1 className="text-2xl font-semibold" data-page={page.id}>
+              {page.label}
+            </h1>
+            {page.top?.()}
+            <Fields page={page.id} />
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};

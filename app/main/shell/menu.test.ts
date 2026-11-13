@@ -279,7 +279,7 @@ describe(ApplicationMenu, () => {
     });
   });
 
-  it("ends the File menu with Quit where there is no app menu, and puts the update commands in Help", async () => {
+  it("ends the File menu with Quit where there is no app menu, and puts the update commands and Settings in Help", async () => {
     const { sections } = await setup("linux");
     const [first] = sections();
     const help = sections().find(
@@ -295,12 +295,12 @@ describe(ApplicationMenu, () => {
         label: help.label,
       }
     ).toStrictEqual({
-      ids: ["updater.check", "updater.install"],
+      ids: ["updater.check", "updater.install", "settings.open"],
       label: "Help",
     });
   });
 
-  it("puts the update commands in the app menu on macOS, between About and Services", async () => {
+  it("puts the update commands and Settings in the app menu on macOS, between About and Services", async () => {
     const { sections } = await setup("darwin");
     const [app] = sections();
     expect(
@@ -315,6 +315,7 @@ describe(ApplicationMenu, () => {
       "separator",
       "updater.check",
       "updater.install",
+      "settings.open",
       "separator",
       "role:services",
       "separator",

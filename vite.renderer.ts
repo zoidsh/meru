@@ -18,6 +18,7 @@ export default defineConfig(
         input: {
           chrome: path.join(pages, "chrome.html"),
           overlay: path.join(pages, "overlay.html"),
+          settings: path.join(pages, "settings.html"),
         },
       },
     },

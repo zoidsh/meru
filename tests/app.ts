@@ -92,3 +92,16 @@ export const pickApp = async (app: ElectronApplication, name: string) => {
   await search.press("Enter").catch(() => null);
   await expect.poll(() => app.windows().some(isLauncher)).toBeFalsy();
 };
+
+const isSettings = (page: Page) =>
+  new URL(page.url()).pathname.endsWith("/settings.html");
+
+/** The settings window's page once it is open. */
+export const settingsPageOf = async (app: ElectronApplication) => {
+  await expect.poll(() => app.windows().some(isSettings)).toBeTruthy();
+  const page = app.windows().find(isSettings);
+  if (page === undefined) {
+    throw new Error("The settings window went away");
+  }
+  return page;
+};

@@ -66,3 +66,14 @@ export const useSetting = <K extends SettingKey>(
     resolve(registry, settings, key, profileId)
   );
 };
+
+const same = <T>(value: T) => value;
+
+/** Every layer as the page holds it, for a page that reads keys it only knows at run time, such as the settings page. */
+export const useSettingsLayers = (): Settings => {
+  const store = useContext(SettingsContext);
+  if (store === undefined) {
+    throw new Error("useSettingsLayers needs a SettingsContext above it");
+  }
+  return useStore(store, same);
+};

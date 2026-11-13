@@ -14,10 +14,18 @@ import type {
 } from "../shared/channels/define.ts";
 import type { ProfilesSnapshot } from "../shared/channels/profiles.ts";
 import type { StageSnapshot } from "../shared/channels/stage.ts";
-import { launcherSurface, chromeSurface } from "../shared/channels/surfaces.ts";
+import {
+  chromeSurface,
+  launcherSurface,
+  settingsSurface,
+} from "../shared/channels/surfaces.ts";
 import { FakeBridge } from "../test/fakes/bridge.ts";
 import { ChromeProvider } from "./client-context.tsx";
 import { createClient } from "./client.ts";
+import {
+  createEntitlementStore,
+  EntitlementContext,
+} from "./features/entitlement/use-entitlement.ts";
 import { LauncherClientProvider } from "./features/launcher/use-launcher-client.ts";
 import {
   createProfilesStore,
@@ -27,11 +35,16 @@ import {
   createSettingsStore,
   SettingsContext,
 } from "./features/settings/use-setting.ts";
+import { SettingsClientProvider } from "./features/settings/use-settings-client.ts";
 import {
   createSidebarStore,
   SidebarContext,
 } from "./features/sidebar/use-sidebar.ts";
 import { createStageStore, StageContext } from "./features/stage/use-stage.ts";
+import {
+  createUpdateStore,
+  UpdateContext,
+} from "./features/updater/use-update.ts";
 
 Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true);
 
@@ -121,37 +134,20 @@ export const answer = <C extends InvokeChannel | SyncChannel>(
 /** What main answers the page's requests with; a later answer for a channel replaces an earlier one. */
 export type Answers = readonly Answer[];
 
-/** Renders under the providers of the chrome page and the launcher's, whose clients talk to a fake bridge seeded with `answers`. */
-export const mountChrome = (
-  node: ReactNode,
+const mount = (
+  render: (bridge: FakeBridge) => ReactNode,
   answers: Answers,
-  platform = "darwin"
+  platform: string
 ) => {
   const bridge = new FakeBridge(platform);
   for (const { channel, value } of answers) {
     bridge.answers.set(wireName(channel), { ok: true, value });
   }
-  const client = createClient({ meru: bridge }, chromeSurface);
-  const launcherClient = createClient({ meru: bridge }, launcherSurface);
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
   act(() => {
-    root.render(
-      <ChromeProvider client={client}>
-        <LauncherClientProvider client={launcherClient}>
-          <SettingsContext value={createSettingsStore(client)}>
-            <ProfilesContext value={createProfilesStore(client)}>
-              <StageContext value={createStageStore(client)}>
-                <SidebarContext value={createSidebarStore(client)}>
-                  {node}
-                </SidebarContext>
-              </StageContext>
-            </ProfilesContext>
-          </SettingsContext>
-        </LauncherClientProvider>
-      </ChromeProvider>
-    );
+    root.render(render(bridge));
   });
   return {
     bridge,
@@ -176,3 +172,60 @@ export const mountChrome = (
     },
   };
 };
+
+/** Renders under the providers of the chrome page and the launcher's, whose clients talk to a fake bridge seeded with `answers`. */
+export const mountChrome = (
+  node: ReactNode,
+  answers: Answers,
+  platform = "darwin"
+) =>
+  mount(
+    (bridge) => {
+      const client = createClient({ meru: bridge }, chromeSurface);
+      const launcherClient = createClient({ meru: bridge }, launcherSurface);
+      return (
+        <ChromeProvider client={client}>
+          <LauncherClientProvider client={launcherClient}>
+            <SettingsContext value={createSettingsStore(client)}>
+              <ProfilesContext value={createProfilesStore(client)}>
+                <StageContext value={createStageStore(client)}>
+                  <SidebarContext value={createSidebarStore(client)}>
+                    {node}
+                  </SidebarContext>
+                </StageContext>
+              </ProfilesContext>
+            </SettingsContext>
+          </LauncherClientProvider>
+        </ChromeProvider>
+      );
+    },
+    answers,
+    platform
+  );
+
+/** Renders under the settings window's providers, whose client talks to a fake bridge seeded with `answers`. */
+export const mountSettings = (
+  node: ReactNode,
+  answers: Answers,
+  platform = "darwin"
+) =>
+  mount(
+    (bridge) => {
+      const client = createClient({ meru: bridge }, settingsSurface);
+      return (
+        <SettingsClientProvider client={client}>
+          <SettingsContext value={createSettingsStore(client)}>
+            <ProfilesContext value={createProfilesStore(client)}>
+              <EntitlementContext value={createEntitlementStore(client)}>
+                <UpdateContext value={createUpdateStore(client)}>
+                  {node}
+                </UpdateContext>
+              </EntitlementContext>
+            </ProfilesContext>
+          </SettingsContext>
+        </SettingsClientProvider>
+      );
+    },
+    answers,
+    platform
+  );

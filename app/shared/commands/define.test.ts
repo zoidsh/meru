@@ -45,6 +45,7 @@ describe("the command registry", () => {
       | "profiles.select7"
       | "profiles.select8"
       | "profiles.select9"
+      | "settings.open"
       | "sidebar.toggle"
       | "sidebar.toggleWidth"
       | "stage.back"

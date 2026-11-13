@@ -110,17 +110,24 @@ export class MainWindow {
 
   /** Paints the window's ground and its window controls in the theme's colours, while it is open. */
   recolour(theme: Theme): void {
-    const window = this.#window;
-    if (window === undefined) {
-      return;
-    }
-    const { linuxControls, ports } = this.#options;
-    const { platform } = ports.lifecycle;
-    window.setBackgroundColor(chromeColors(theme).background);
-    const { overlay } = titleBarOf({ linuxControls, platform, theme });
-    // macOS draws its traffic lights in its own colours, and Electron recolours an overlay only on Windows and Linux.
-    if (overlay !== null && platform !== "darwin") {
-      window.setTitleBarOverlay(overlay);
+    if (this.#window !== undefined) {
+      const { linuxControls, ports } = this.#options;
+      recolour(this.#window, theme, ports.lifecycle.platform, linuxControls);
     }
   }
 }
+
+/** Paints a window's ground and its window controls in the theme's colours. */
+export const recolour = (
+  window: WindowPort,
+  theme: Theme,
+  platform: string,
+  linuxControls: boolean
+) => {
+  window.setBackgroundColor(chromeColors(theme).background);
+  const { overlay } = titleBarOf({ linuxControls, platform, theme });
+  // macOS draws its traffic lights in its own colours, and Electron recolours an overlay only on Windows and Linux.
+  if (overlay !== null && platform !== "darwin") {
+    window.setTitleBarOverlay(overlay);
+  }
+};
