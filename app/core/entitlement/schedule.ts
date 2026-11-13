@@ -1,4 +1,5 @@
-import { clamp } from "../values.ts";
+import { clamp } from "es-toolkit";
+
 import type { Claims } from "./token.ts";
 import { isExpired } from "./verify.ts";
 

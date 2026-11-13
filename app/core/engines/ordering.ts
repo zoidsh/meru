@@ -1,7 +1,8 @@
+import { clamp } from "es-toolkit";
+
 import type { Group } from "../records/group.ts";
 import type { Profile } from "../records/profile.ts";
 import type { Tab } from "../records/tab.ts";
-import { clamp } from "../values.ts";
 
 export const moveItem = <T>(
   items: readonly T[],

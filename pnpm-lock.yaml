@@ -233,6 +233,9 @@ importers:
       electron-updater:
         specifier: 6.6.2
         version: 6.6.2(supports-color@7.2.0)
+      es-toolkit:
+        specifier: 1.53.0
+        version: 1.53.0
       react:
         specifier: 19.3.1
         version: 19.3.1

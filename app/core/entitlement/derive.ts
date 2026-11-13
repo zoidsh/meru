@@ -1,5 +1,6 @@
+import { isEqual } from "es-toolkit";
+
 import type { Entitlement, EntitlementSource } from "../records/entitlement.ts";
-import { isEqual } from "../values.ts";
 import type { Claims } from "./token.ts";
 
 /** The entitlement a verified token's claims grant at `now`, in milliseconds; no claims is a device that has never had a token. */

@@ -7,14 +7,14 @@ import { profileSchema } from "../records/profile.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
 import { tabSchema } from "../records/tab.ts";
 import type { Tab } from "../records/tab.ts";
-import { pick } from "../values.ts";
+import { parseField } from "../values.ts";
 import { panes } from "./layout.ts";
 import { orderedProfiles } from "./ordering.ts";
 import { repeated, sameMembers } from "./state-validate.ts";
 import { groupOfOne } from "./state.ts";
 
 const listOf = <T>(data: unknown, key: string, schema: z.ZodType<T>) => {
-  const items = pick(data, key, z.array(z.unknown())) ?? [];
+  const items = parseField(data, key, z.array(z.unknown())) ?? [];
   const parsed = items.flatMap((item) => {
     const one = schema.safeParse(item);
     return one.success ? [one.data] : [];

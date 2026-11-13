@@ -28,8 +28,8 @@ const ours: Pattern = {
   regex: "^@meru/",
 };
 const scriptsOnly: Pattern = {
-  message: "execa and es-toolkit serve scripts/ and tests/, not the app.",
-  regex: "^(execa|es-toolkit)(/|$)",
+  message: "execa serves scripts/ and tests/, not the app.",
+  regex: "^execa(/|$)",
 };
 const into = (
   name: string,

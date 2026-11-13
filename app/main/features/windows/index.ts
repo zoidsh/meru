@@ -1,3 +1,4 @@
+import { isEqual } from "es-toolkit";
 import { z } from "zod";
 
 import { DisposableStore } from "../../../core/disposable.ts";
@@ -17,7 +18,6 @@ import { windowSchema } from "../../../core/records/window.ts";
 import type { Window } from "../../../core/records/window.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { Opened, SnapshotSpec } from "../../../core/snapshot.ts";
-import { isEqual } from "../../../core/values.ts";
 import type { Profiles } from "../profiles/index.ts";
 
 export const WINDOWS_FILE = "windows.json";

@@ -1,6 +1,7 @@
+import { clamp } from "es-toolkit";
+
 import type { UpdaterEvent } from "../ports.ts";
 import type { UpdateState } from "../records/update.ts";
-import { clamp } from "../values.ts";
 
 export const IDLE_UPDATE: UpdateState = { kind: "idle" };
 

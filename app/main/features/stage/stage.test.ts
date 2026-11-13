@@ -1,3 +1,4 @@
+import { isEqual } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import { layout } from "../../../core/engines/layout.ts";
@@ -134,6 +135,27 @@ const zoomOf = (stage: Stage) =>
 
 const childBounds = (window: FakeWindow) =>
   window.childViews().map((view) => view.bounds());
+
+describe("the stage snapshot's comparison", () => {
+  it("takes two snapshots that differ only in key order as the same, so the second is not published", () => {
+    const sent: StageSnapshot = {
+      dividers: [],
+      focusedPaneId: "p1",
+      panes: [{ paneId: "p1", rect: { height: 10, width: 10, x: 0, y: 0 } }],
+      style: "modern",
+    };
+    const reordered: StageSnapshot = {
+      style: "modern",
+      panes: [{ rect: { y: 0, x: 0, width: 10, height: 10 }, paneId: "p1" }],
+      focusedPaneId: "p1",
+      dividers: [],
+    };
+    expect([
+      isEqual(sent, reordered),
+      isEqual(sent, { ...reordered, focusedPaneId: "p2" }),
+    ]).toStrictEqual([true, false]);
+  });
+});
 
 describe(Stages, () => {
   it("shows the group's one pane over the content area, inset, in the profile's session", async () => {

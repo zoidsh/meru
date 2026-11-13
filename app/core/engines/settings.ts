@@ -1,10 +1,10 @@
+import { isEqual } from "es-toolkit";
 // A layer over a registry type parameter is a mapped type whose keys arrive with the caller's registry; the rule reads it as `{}` before they do.
 /* oxlint-disable typescript/no-generated-empty-object-type */
 import type { z } from "zod";
 
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
-import { isEqual } from "../values.ts";
 
 export type SettingScope = "global" | "profile";
 

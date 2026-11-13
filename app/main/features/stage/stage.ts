@@ -1,3 +1,5 @@
+import { isEqual } from "es-toolkit";
+
 import { DisposableStore } from "../../../core/disposable.ts";
 import {
   focusNext,
@@ -23,7 +25,6 @@ import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
-import { isEqual } from "../../../core/values.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import type { Profiles } from "../profiles/index.ts";
 

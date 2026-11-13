@@ -1,6 +1,7 @@
+import { clamp } from "es-toolkit";
+
 import type { Unsubscribe, ViewPort, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
-import { clamp } from "../../core/values.ts";
 
 let nextContentsId = 1;
 

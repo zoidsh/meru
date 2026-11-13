@@ -2,7 +2,7 @@
 /* oxlint-disable typescript/no-generated-empty-object-type */
 import { z } from "zod";
 
-import { pick } from "../values.ts";
+import { parseField } from "../values.ts";
 import { EMPTY, toGlobal, toProfile } from "./settings.ts";
 import type {
   ProfileLayer,
@@ -65,10 +65,14 @@ export const parseSettings = <R extends SettingSpecs>(
     raw === undefined || rawSchema.safeParse(raw).success
       ? []
       : [{ key: null, profileId: null, reason: "invalid" }];
-  const global = parseLayer(specs, pick(raw, "global", z.unknown()), null);
+  const global = parseLayer(
+    specs,
+    parseField(raw, "global", z.unknown()),
+    null
+  );
   fallbacks.push(...global.fallbacks);
   const profiles: Record<string, ProfileLayer<R>> = {};
-  const rawProfiles = pick(raw, "profiles", z.unknown());
+  const rawProfiles = parseField(raw, "profiles", z.unknown());
   const profileLayers = rawSchema.safeParse(rawProfiles);
   if (rawProfiles !== undefined && !profileLayers.success) {
     fallbacks.push({ key: null, profileId: null, reason: "invalid" });

@@ -8,6 +8,7 @@
   "main": "dist/main/index.js",
   "dependencies": {
     "electron-updater": "6.6.2",
+    "es-toolkit": "1.53.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "zod": "4.6.7"

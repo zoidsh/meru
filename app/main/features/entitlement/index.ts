@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 import { z } from "zod";
 
 import { DisposableStore } from "../../../core/disposable.ts";
@@ -35,7 +36,7 @@ import { idSchema } from "../../../core/records/id.ts";
 import { err, ok } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { SnapshotSpec } from "../../../core/snapshot.ts";
-import { clamp, pick } from "../../../core/values.ts";
+import { parseField } from "../../../core/values.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import {
   entitlement as channels,
@@ -85,8 +86,8 @@ export const entitlementSnapshot = (
   name: ENTITLEMENT_FILE,
   // A token is bound to the device id, so the id is kept whenever it can be, and a new one is made only when it is gone.
   recover: (data) => {
-    const deviceId = pick(data, "deviceId", idSchema);
-    const licenseKey = pick(data, "licenseKey", licenseKeySchema);
+    const deviceId = parseField(data, "deviceId", idSchema);
+    const licenseKey = parseField(data, "licenseKey", licenseKeySchema);
     const state: EntitlementState = {
       deviceId: deviceId ?? ids(),
       lastAnswer: null,
