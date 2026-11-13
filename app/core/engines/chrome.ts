@@ -31,10 +31,9 @@ export const titleBarOf = (options: {
 }): TitleBar => {
   const { platform, theme, linuxControls } = options;
   const colors = chromeColors(theme);
-  // One pixel short of the row, so the titlebar's bottom border shows under the controls.
   const overlay: TitleBarOverlay = {
     color: colors.background,
-    height: TITLEBAR_HEIGHT - 1,
+    height: TITLEBAR_HEIGHT,
     symbolColor: colors.foreground,
   };
   if (platform === "darwin") {

@@ -12,7 +12,7 @@ describe(titleBarOf, () => {
     expect(
       titleBarOf({ linuxControls: false, platform: "darwin", theme: "dark" })
     ).toStrictEqual({
-      overlay: { color: "#1d1d24", height: 39, symbolColor: "#e2e2ea" },
+      overlay: { color: "#1d1d24", height: 40, symbolColor: "#e2e2ea" },
       style: "hiddenInset",
       trafficLights: { x: 12, y: 14 },
     });
@@ -24,7 +24,7 @@ describe(titleBarOf, () => {
     ).toStrictEqual({
       overlay: {
         color: "#ececf1",
-        height: TITLEBAR_HEIGHT - 1,
+        height: TITLEBAR_HEIGHT,
         symbolColor: "#2a2a30",
       },
       style: "hidden",
