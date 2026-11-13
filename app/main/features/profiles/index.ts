@@ -30,7 +30,7 @@ import {
 } from "../../../core/engines/state.ts";
 import type { ProfilePatch, StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
-import type { GateRefusal } from "../../../core/entitlement/gate.ts";
+import type { Gate, GateRefusal } from "../../../core/entitlement/gate.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
   LifecyclePort,
@@ -246,8 +246,10 @@ export class Profiles {
 
   snapshot(): ProfilesSnapshot {
     const deactivated = this.#deactivated();
+    const gate = this.#newProfileGate();
     return {
       ...this.state,
+      newProfileRefusal: gate.allowed ? null : gate.reason,
       profiles: this.state.profiles.map((profile) => ({
         ...profile,
         deactivated: deactivated.has(profile.id),
@@ -260,11 +262,8 @@ export class Profiles {
   }
 
   createProfile(label: string, color?: string): Result<Profile, ProfilesError> {
-    const { ids, clock } = this.#options;
-    const gate = canUse(this.#entitlement, "extraProfile", {
-      now: clock.now(),
-      profiles: this.state.profiles.length,
-    });
+    const { ids } = this.#options;
+    const gate = this.#newProfileGate();
     if (!gate.allowed) {
       return err(gate.reason);
     }
@@ -456,6 +455,13 @@ export class Profiles {
       },
       when: () => this.#selectable().length > 1,
     };
+  }
+
+  #newProfileGate(): Gate {
+    return canUse(this.#entitlement, "extraProfile", {
+      now: this.#options.clock.now(),
+      profiles: this.state.profiles.length,
+    });
   }
 
   #deactivated(): Set<string> {

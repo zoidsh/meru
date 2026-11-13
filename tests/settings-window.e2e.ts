@@ -28,7 +28,9 @@ test("opens one settings window from its command, whose pages write the settings
     await expect
       .poll(async () => {
         const answered = await invokeIn(chrome, settings.snapshot, {});
-        return answered.ok ? answered.value.global["updater.channel"] : null;
+        return answered.ok
+          ? answered.value.layers.global["updater.channel"]
+          : null;
       })
       .toBe("beta");
 

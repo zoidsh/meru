@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { gateRefusalSchema } from "../../core/entitlement/gate.ts";
 import { idSchema } from "../../core/records/id.ts";
 import { besideSchema } from "../../core/records/layout.ts";
 import { colorSchema, profileSchema } from "../../core/records/profile.ts";
@@ -7,8 +8,9 @@ import { profilesStateSchema } from "../../core/records/profiles-state.ts";
 import { tabSchema } from "../../core/records/tab.ts";
 import { defineChannels, definePushes, invoke, push, sync } from "./define.ts";
 
-/** What a page is told about profiles: the state, with each profile marked deactivated when the entitlement does not allow it, and each tab whether it may close. */
+/** What a page is told about profiles: the state, with each profile marked deactivated when the entitlement does not allow it, each tab whether it may close, and why the entitlement refuses another profile, null while it allows one. */
 export const profilesSnapshotSchema = profilesStateSchema.extend({
+  newProfileRefusal: gateRefusalSchema.nullable(),
   profiles: z.array(profileSchema.extend({ deactivated: z.boolean() })),
   tabs: z.array(tabSchema.extend({ closeable: z.boolean() })),
 });

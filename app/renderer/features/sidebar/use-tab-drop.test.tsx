@@ -19,6 +19,7 @@ const mounted: (() => void)[] = [];
 const PROFILES = {
   groups: [groupOf("g-mail", ["mail"]), groupOf("g-cal", ["calendar"])],
   profiles: [profileOf("personal")],
+  newProfileRefusal: null,
   selectedProfileId: "personal",
   tabs: [
     { ...tabOf("mail", "gmail", "personal", false), pinned: true },

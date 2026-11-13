@@ -227,7 +227,10 @@ describe(SettingsStore, () => {
     });
     expect(call(channels.snapshot, {})).toStrictEqual({
       ok: true,
-      value: { global: { "appearance.style": "classic" }, profiles: {} },
+      value: {
+        layers: { global: { "appearance.style": "classic" }, profiles: {} },
+        locked: {},
+      },
     });
     store.set("appearance.style", undefined);
     expect(
@@ -241,6 +244,7 @@ describe(SettingsStore, () => {
           changes: [
             { key: "appearance.style", profileId: null, value: undefined },
           ],
+          locked: {},
         },
       },
       {
@@ -248,16 +252,27 @@ describe(SettingsStore, () => {
         contentsId: 7,
         payload: {
           changes: [{ key: "stage.zoom", profileId: "work", value: 3 }],
+          locked: {},
         },
       },
     ]);
   });
 
-  it("answers a page's bad value with the reason", async () => {
-    const { call } = await setup();
-    expect(
-      call(channels.set, { key: "stage.zoom", value: "big" })
-    ).toMatchObject({ error: { kind: "failed" }, ok: false });
+  it("refuses a page's value its key's schema refuses, and a profile for a global key, before the store sees it", async () => {
+    const { call, changes } = await setup();
+    expect([
+      call(channels.set, { key: "stage.zoom", value: "big" }),
+      call(channels.set, {
+        key: "appearance.style",
+        profileId: "work",
+        value: "classic",
+      }),
+      changes,
+    ]).toMatchObject([
+      { error: { kind: "invalidPayload" }, ok: false },
+      { error: { kind: "invalidPayload" }, ok: false },
+      [],
+    ]);
   });
 });
 
@@ -330,6 +345,47 @@ describe("a Pro setting", () => {
     const { entitle, changes } = await setup({}, { entitled: FREE });
     entitle({ expiresAt: null, kind: "unknown", source: "stored" });
     expect(changes).toStrictEqual([]);
+  });
+
+  it("tells pages which keys are locked and why, refuses a page's write to one, and tells them again when the entitlement changes", async () => {
+    const { call, entitle, transport } = await setup({}, { entitled: FREE });
+    const snapshot = call(channels.snapshot, {});
+    const refused = call(channels.set, {
+      key: "links.openInApp",
+      value: false,
+    });
+    entitle(LICENSED);
+    expect({ refused, sent: transport.sent, snapshot }).toMatchObject({
+      refused: { ok: false },
+      sent: [
+        {
+          channel: "settings.changed",
+          payload: { changes: [], locked: {} },
+        },
+      ],
+      snapshot: {
+        ok: true,
+        value: {
+          locked: { "links.excludedApps": "free", "links.openInApp": "free" },
+        },
+      },
+    });
+  });
+
+  it("tells subscribers of every layer that stores a Pro key when the entitlement changes", async () => {
+    const { entitle, changes, store } = await setup(
+      { global: { "links.openInApp": false } },
+      { entitled: FREE }
+    );
+    store.set("links.excludedApps", ["drive"]);
+    changes.splice(0);
+    entitle(LICENSED);
+    expect(changes).toStrictEqual([
+      [
+        { key: "links.openInApp", profileId: null },
+        { key: "links.excludedApps", profileId: null },
+      ],
+    ]);
   });
 
   it("keeps a free setting whatever the entitlement", async () => {

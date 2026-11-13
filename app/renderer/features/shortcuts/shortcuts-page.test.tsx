@@ -11,8 +11,11 @@ const mounted: (() => void)[] = [];
 const mount = (bindings: Readonly<Record<string, string | null>> = {}) => {
   const page = mountSettings(<ShortcutsPage />, [
     answer(settings.snapshot, {
-      global: { "shortcuts.bindings": bindings },
-      profiles: {},
+      layers: {
+        global: { "shortcuts.bindings": bindings },
+        profiles: {},
+      },
+      locked: {},
     }),
     answer(settings.set, null),
   ]);

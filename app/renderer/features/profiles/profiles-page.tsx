@@ -2,6 +2,7 @@ import { cn } from "cn";
 import { useState } from "react";
 
 import { orderedProfiles } from "../../../core/engines/ordering.ts";
+import type { GateRefusal } from "../../../core/entitlement/gate.ts";
 import { PROFILE_COLORS } from "../../../core/records/profile.ts";
 import { profiles as channels } from "../../../shared/channels/profiles.ts";
 import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
@@ -21,7 +22,6 @@ import {
 import { Input } from "../../ui/input.tsx";
 import { useDebounced } from "../../use-debounced.ts";
 import { refusalOf } from "../entitlement/refusal.ts";
-import { useGate } from "../entitlement/use-entitlement.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 import { useProfiles } from "./use-profiles.ts";
 
@@ -204,19 +204,18 @@ const ProfileItem = ({
 };
 
 /** Asks for a new profile's label and colour; the gate's refusal stands in for the button while it refuses. */
-const AddProfile = ({ count }: { readonly count: number }) => {
+const AddProfile = ({ refusal }: { readonly refusal: GateRefusal | null }) => {
   const client = useSettingsClient();
-  const gate = useGate("extraProfile", count);
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [color, setColor] = useState<string | undefined>(undefined);
   const [error, setError] = useState<Message | undefined>(undefined);
-  if (!gate.allowed) {
+  if (refusal !== null) {
     return (
       <p className="text-sm" data-locked="">
-        {gate.reason === "free"
+        {refusal === "free"
           ? msg`Upgrade to Meru Pro to add more profiles`
-          : refusalOf(gate.reason)}
+          : refusalOf(refusal)}
       </p>
     );
   }
@@ -299,7 +298,7 @@ export const ProfilesPage = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end">
-        <AddProfile count={shown.length} />
+        <AddProfile refusal={snapshot.newProfileRefusal} />
       </div>
       <ul className="flex flex-col gap-3">
         {shown.map((profile) => (

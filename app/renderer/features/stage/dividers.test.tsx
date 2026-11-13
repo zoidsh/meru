@@ -13,8 +13,11 @@ const mount = (style: "modern" | "classic") => {
   const page = mountChrome(<Dividers />, [
     answer(sidebar.snapshot, { kind: "hidden" }),
     answer(settings.snapshot, {
-      global: { "appearance.style": style },
-      profiles: {},
+      layers: {
+        global: { "appearance.style": style },
+        profiles: {},
+      },
+      locked: {},
     }),
     answer(stage.snapshot, {
       ...stageOf({ style }),

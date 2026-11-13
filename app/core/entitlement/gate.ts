@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import type { Entitlement } from "../records/entitlement.ts";
 
 export type GatedFeature =
@@ -9,11 +11,21 @@ export type GatedFeature =
 export interface GateContext {
   /** Milliseconds since the epoch. */
   readonly now: number;
+}
+
+export interface ProfileGateContext extends GateContext {
   /** Profiles that exist before the one being opened. */
   readonly profiles: number;
 }
 
-export type GateRefusal = "free" | "trialEnded" | "disabled";
+/** What the gate needs to know of the moment: the time, and for another profile how many there are. */
+export type GateContextOf<F extends GatedFeature> = F extends "extraProfile"
+  ? ProfileGateContext
+  : GateContext;
+
+export const gateRefusalSchema = z.enum(["free", "trialEnded", "disabled"]);
+
+export type GateRefusal = z.infer<typeof gateRefusalSchema>;
 
 export type Gate =
   | { readonly allowed: true }
@@ -29,14 +41,14 @@ export const FREE_PROFILES = 1;
 
 const ALLOWED: Gate = { allowed: true };
 
-const freeAllows = (feature: GatedFeature, context: GateContext) =>
-  feature === "extraProfile" && context.profiles < FREE_PROFILES;
+const freeAllows = (context: GateContext | ProfileGateContext) =>
+  "profiles" in context && context.profiles < FREE_PROFILES;
 
 /** Whether the entitlement allows a Pro action now; read at the moment of use, never cached. */
-export const canUse = (
+export const canUse = <F extends GatedFeature>(
   entitlement: Entitlement,
-  feature: GatedFeature,
-  context: GateContext
+  feature: F,
+  context: GateContextOf<F>
 ): Gate => {
   if (entitlement.kind === "licensed") {
     return ALLOWED;
@@ -44,7 +56,7 @@ export const canUse = (
   if (entitlement.kind === "trial" && entitlement.endsAt > context.now) {
     return ALLOWED;
   }
-  if (freeAllows(feature, context)) {
+  if (freeAllows(context)) {
     return ALLOWED;
   }
   let reason: GateRefusal = "free";

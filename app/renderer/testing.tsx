@@ -22,10 +22,6 @@ import {
 import { FakeBridge } from "../test/fakes/bridge.ts";
 import { ChromeProvider } from "./client-context.tsx";
 import { createClient } from "./client.ts";
-import {
-  createEntitlementStore,
-  EntitlementContext,
-} from "./features/entitlement/use-entitlement.ts";
 import { LauncherClientProvider } from "./features/launcher/use-launcher-client.ts";
 import {
   createProfilesStore,
@@ -216,11 +212,9 @@ export const mountSettings = (
         <SettingsClientProvider client={client}>
           <SettingsContext value={createSettingsStore(client)}>
             <ProfilesContext value={createProfilesStore(client)}>
-              <EntitlementContext value={createEntitlementStore(client)}>
-                <UpdateContext value={createUpdateStore(client)}>
-                  {node}
-                </UpdateContext>
-              </EntitlementContext>
+              <UpdateContext value={createUpdateStore(client)}>
+                {node}
+              </UpdateContext>
             </ProfilesContext>
           </SettingsContext>
         </SettingsClientProvider>

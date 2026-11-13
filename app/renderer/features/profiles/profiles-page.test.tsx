@@ -1,26 +1,18 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { Entitlement } from "../../../core/records/entitlement.ts";
-import { entitlement } from "../../../shared/channels/entitlement.ts";
 import { profiles } from "../../../shared/channels/profiles.ts";
 import { answer, mountSettings, profileOf, tabOf } from "../../testing.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
 
 const mounted: (() => void)[] = [];
 
-const FREE: Entitlement = { expiresAt: null, kind: "free", source: "stored" };
+const FREE = "free";
 
-const TRIAL: Entitlement = {
-  endsAt: Date.now() + 86_400_000,
-  expiresAt: null,
-  kind: "trial",
-  source: "refreshed",
-};
+const TRIAL = "trial";
 
-const mount = (allowed: Entitlement) => {
+const mount = (allowed: typeof FREE | typeof TRIAL) => {
   const page = mountSettings(<ProfilesPage />, [
-    answer(entitlement.snapshot, allowed),
     answer(profiles.snapshot, {
       groups: [],
       profiles: [
@@ -28,8 +20,9 @@ const mount = (allowed: Entitlement) => {
         profileOf("personal", { label: "Personal", order: 0 }),
       ].map((profile) => ({
         ...profile,
-        deactivated: allowed.kind === "free" && profile.id === "work",
+        deactivated: allowed === FREE && profile.id === "work",
       })),
+      newProfileRefusal: allowed === FREE ? "free" : null,
       selectedProfileId: "personal",
       tabs: [tabOf("mail", "gmail")],
     }),

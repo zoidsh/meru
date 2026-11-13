@@ -70,7 +70,7 @@ describe(MainWindow, () => {
     const { registrar, specs, transport, window } = await open("darwin");
     expect(specs[0]?.arguments).toStrictEqual(["--meru-surface=chrome"]);
     transport.sent.length = 0;
-    registrar.broadcast(settingsPushes.changed, { changes: [] });
+    registrar.broadcast(settingsPushes.changed, { changes: [], locked: {} });
     expect(transport.sent.map((sent) => sent.contentsId)).toStrictEqual([
       window.contentsId,
     ]);

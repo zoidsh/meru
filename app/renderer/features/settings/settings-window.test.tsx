@@ -1,50 +1,43 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { Entitlement } from "../../../core/records/entitlement.ts";
-import { entitlement } from "../../../shared/channels/entitlement.ts";
 import { profiles } from "../../../shared/channels/profiles.ts";
 import { settings } from "../../../shared/channels/settings.ts";
 import { updater } from "../../../shared/channels/updater.ts";
 import type { Settings } from "../../../shared/settings/registry.ts";
+import type { Locked } from "../../../shared/settings/schema.ts";
 import { answer, mountSettings, profileOf, tabOf } from "../../testing.tsx";
 import { SettingsWindow } from "./settings-window.tsx";
 
 const mounted: (() => void)[] = [];
 
-const FREE: Entitlement = { expiresAt: null, kind: "free", source: "stored" };
-
-const LICENSED: Entitlement = {
-  deviceLimit: 3,
-  expiresAt: null,
-  kind: "licensed",
-  plan: "pro",
-  seat: null,
-  source: "refreshed",
+const FREE_LOCKS: Locked = {
+  "links.excludedApps": "free",
+  "links.openInApp": "free",
 };
 
 const mount = ({
   page,
   layers = { global: {}, profiles: {} },
-  allowed = FREE,
+  locked = FREE_LOCKS,
   platform = "darwin",
 }: {
   readonly page: string;
   readonly layers?: Settings;
-  readonly allowed?: Entitlement;
+  readonly locked?: Locked;
   readonly platform?: string;
 }) => {
   location.hash = `/${page}`;
   const mountedPage = mountSettings(
     <SettingsWindow />,
     [
-      answer(settings.snapshot, layers),
+      answer(settings.snapshot, { layers, locked }),
       answer(settings.set, null),
-      answer(entitlement.snapshot, allowed),
       answer(updater.snapshot, { kind: "idle" }),
       answer(profiles.snapshot, {
         groups: [],
         profiles: [profileOf("personal", { label: "Personal" })],
+        newProfileRefusal: null,
         selectedProfileId: "personal",
         tabs: [tabOf("mail", "gmail")],
       }),
@@ -136,7 +129,7 @@ describe(SettingsWindow, () => {
     for (const unmount of mounted.splice(0)) {
       unmount();
     }
-    const { sentOn } = mount({ allowed: LICENSED, page: "panes" });
+    const { sentOn } = mount({ locked: {}, page: "panes" });
     click(field("links.openInApp")?.querySelector("[role=switch]"));
     expect({
       licensed: field("links.openInApp")?.querySelector("[data-locked]"),

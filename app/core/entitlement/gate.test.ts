@@ -33,10 +33,15 @@ const features: GatedFeature[] = [
 
 const many = { now: NOW, profiles: FREE_PROFILES };
 
+const at = (feature: GatedFeature, entitlement: Entitlement) =>
+  feature === "extraProfile"
+    ? canUse(entitlement, feature, many)
+    : canUse(entitlement, feature, { now: NOW });
+
 describe(canUse, () => {
   it.each(features)("lets a license and a running trial use %s", (feature) => {
-    expect(canUse(licensed, feature, many)).toStrictEqual({ allowed: true });
-    expect(canUse(trial, feature, many)).toStrictEqual({ allowed: true });
+    expect(at(feature, licensed)).toStrictEqual({ allowed: true });
+    expect(at(feature, trial)).toStrictEqual({ allowed: true });
   });
 
   it.each([
@@ -46,7 +51,7 @@ describe(canUse, () => {
     [disabled, "disabled"],
   ] as const)("refuses %o every Pro action, as %s", (entitlement, reason) => {
     for (const feature of features) {
-      expect(canUse(entitlement, feature, many)).toMatchObject({
+      expect(at(feature, entitlement)).toMatchObject({
         allowed: false,
         reason,
       });
@@ -74,9 +79,10 @@ describe(canUse, () => {
   );
 
   it("refuses a trial at the moment it ends, whatever the token says", () => {
-    expect(
-      canUse(trial, "extension", { now: NOW + 1, profiles: 0 })
-    ).toStrictEqual({ allowed: false, reason: "trialEnded" });
+    expect(canUse(trial, "extension", { now: NOW + 1 })).toStrictEqual({
+      allowed: false,
+      reason: "trialEnded",
+    });
   });
 });
 

@@ -11,6 +11,7 @@ import {
 } from "../../../core/engines/settings.ts";
 import type { SettingChange } from "../../../core/engines/settings.ts";
 import { canUse } from "../../../core/entitlement/gate.ts";
+import type { GateRefusal } from "../../../core/entitlement/gate.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
   LifecyclePort,
@@ -19,7 +20,7 @@ import type {
   Unsubscribe,
 } from "../../../core/ports.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
-import { ok } from "../../../core/result.ts";
+import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { Opened, SnapshotSpec } from "../../../core/snapshot.ts";
@@ -39,7 +40,10 @@ import {
   settingChangeSchema,
   settingsSchema,
 } from "../../../shared/settings/schema.ts";
-import type { SettingChangeMessage } from "../../../shared/settings/schema.ts";
+import type {
+  Locked,
+  SettingChangeMessage,
+} from "../../../shared/settings/schema.ts";
 
 export const SETTINGS_FILE = "settings.json";
 
@@ -85,7 +89,7 @@ export class SettingsStore {
   readonly #listeners = new Set<SettingsListener>();
   readonly #disposables = new DisposableStore();
   #settings: Settings = emptySettings();
-  #proAllowed = false;
+  #refusal: GateRefusal | null = null;
 
   constructor(options: SettingsOptions) {
     this.#options = options;
@@ -112,7 +116,7 @@ export class SettingsStore {
 
   start(): void {
     const { registrar, fs, clock, events } = this.#options;
-    this.#proAllowed = this.#allowsPro();
+    this.#refusal = this.#proRefusal();
     this.#disposables.add(
       events.on("entitlement.changed", () => {
         this.#regate();
@@ -122,10 +126,13 @@ export class SettingsStore {
       },
       registrar.register(channels, {
         set: ({ key, value, profileId }) => {
+          if (this.locked()[key] !== undefined) {
+            return err(`${key} is locked`);
+          }
           const result = this.#set(key, value, profileId);
           return result.ok ? ok(null) : result;
         },
-        snapshot: () => ok(this.#settings),
+        snapshot: () => ok({ layers: this.#settings, locked: this.locked() }),
       })
     );
     if (this.#options.watchFile) {
@@ -156,10 +163,22 @@ export class SettingsStore {
   get<K extends SettingKey>(key: K, ...profile: ProfileArg<K>) {
     const [profileId] = profile;
     const layers =
-      PRO_KEYS.has(key) && !this.#allowsPro()
+      PRO_KEYS.has(key) && this.#proRefusal() !== null
         ? emptySettings()
         : this.#settings;
     return resolve(registry, layers, key, profileId);
+  }
+
+  /** The keys whose stored value the entitlement holds back, each with the gate's reason. */
+  locked(): Locked {
+    const refusal = this.#proRefusal();
+    const locked: Partial<Record<SettingKey, GateRefusal>> = {};
+    if (refusal !== null) {
+      for (const key of PRO_KEYS) {
+        locked[key] = refusal;
+      }
+    }
+    return locked;
   }
 
   /** Stores a value, or removes it when `value` is undefined, so the next layer down shows through. */
@@ -204,21 +223,39 @@ export class SettingsStore {
     return ok(undefined);
   }
 
-  #allowsPro(): boolean {
-    return canUse(this.#options.entitlement(), "proSetting", {
+  #proRefusal(): GateRefusal | null {
+    const gate = canUse(this.#options.entitlement(), "proSetting", {
       now: this.#options.clock.now(),
-      profiles: 0,
-    }).allowed;
+    });
+    return gate.allowed ? null : gate.reason;
   }
 
-  // A Pro setting's stored value comes into force, or goes, with the entitlement, so the features reading it hear of it as of any change.
+  // A Pro setting's stored value comes into force, or goes, with the entitlement, so the features reading it hear of it as of any change, in every layer that stores it.
   #regate(): void {
-    const allowed = this.#allowsPro();
-    if (allowed === this.#proAllowed) {
+    const refusal = this.#proRefusal();
+    if (refusal === this.#refusal) {
       return;
     }
-    this.#proAllowed = allowed;
-    const changes = [...PRO_KEYS].map((key) => ({ key, profileId: null }));
+    const wasAllowed = this.#refusal === null;
+    this.#refusal = refusal;
+    this.#options.registrar.broadcast(settingsPushes.changed, {
+      changes: [],
+      locked: this.locked(),
+    });
+    if (wasAllowed === (refusal === null)) {
+      return;
+    }
+    const changes: SettingChange<typeof registry>[] = [...PRO_KEYS].flatMap(
+      (key) => [
+        { key, profileId: null },
+        ...Object.keys(this.#settings.profiles)
+          .filter(
+            (profileId) =>
+              storedValue(this.#settings, { key, profileId }) !== undefined
+          )
+          .map((profileId) => ({ key, profileId })),
+      ]
+    );
     for (const listener of this.#listeners) {
       listener(changes);
     }
@@ -250,6 +287,7 @@ export class SettingsStore {
     });
     this.#options.registrar.broadcast(settingsPushes.changed, {
       changes: messages,
+      locked: this.locked(),
     });
     for (const listener of this.#listeners) {
       listener(changes);

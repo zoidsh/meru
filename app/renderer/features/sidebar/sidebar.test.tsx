@@ -26,6 +26,7 @@ const PROFILES = {
     groupOf("g-work", ["calendar", "drive"]),
   ],
   profiles: [profileOf("personal", { status: { kind: "ok", unreadCount: 4 } })],
+  newProfileRefusal: null,
   selectedProfileId: "personal",
   tabs: [
     { ...tabOf("mail", "gmail", "personal", false), pinned: true },
@@ -80,8 +81,11 @@ describe(Sidebar, () => {
 
   it("leaves the Gmail count to the inbox while Gmail is in front under whenInactive", () => {
     const whenInactive = answer(settings.snapshot, {
-      global: { "sidebar.gmailUnreadBadge": "whenInactive" },
-      profiles: {},
+      layers: {
+        global: { "sidebar.gmailUnreadBadge": "whenInactive" },
+        profiles: {},
+      },
+      locked: {},
     });
     const inFront = mount([
       whenInactive,
@@ -206,10 +210,15 @@ describe(Sidebar, () => {
   it("titles a row with its page and its app, and the width toggle with its shortcut once it has one", () => {
     const { container } = mount([
       answer(settings.snapshot, {
-        global: {
-          "shortcuts.bindings": { "sidebar.toggleWidth": "CmdOrCtrl+Shift+B" },
+        layers: {
+          global: {
+            "shortcuts.bindings": {
+              "sidebar.toggleWidth": "CmdOrCtrl+Shift+B",
+            },
+          },
+          profiles: {},
         },
-        profiles: {},
+        locked: {},
       }),
     ]);
     expect([

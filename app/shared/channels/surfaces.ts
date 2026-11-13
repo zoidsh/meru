@@ -56,16 +56,10 @@ export const launcherSurface = defineSurface({
 
 export type LauncherSurface = typeof launcherSurface;
 
-/** The settings window's page: it reads and writes the settings and the profiles, reads the entitlement a Pro setting waits on and the update state, and runs commands such as checking for updates. */
+/** The settings window's page: it reads and writes the settings and the profiles, reads the update state, and runs commands such as checking for updates. */
 export const settingsSurface = defineSurface({
-  pushes: [
-    settingsPushes,
-    profilesPushes,
-    entitlementPushes,
-    updaterPushes,
-    themePushes,
-  ],
-  requests: [settings, profiles, entitlement, commands, updater],
+  pushes: [settingsPushes, profilesPushes, updaterPushes, themePushes],
+  requests: [settings, profiles, commands, updater],
 });
 
 export type SettingsSurface = typeof settingsSurface;

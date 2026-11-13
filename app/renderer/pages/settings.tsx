@@ -5,10 +5,6 @@ import { settingsSurface } from "../../shared/channels/surfaces.ts";
 import { themePushes } from "../../shared/channels/theme.ts";
 import { createClient } from "../client.ts";
 import {
-  createEntitlementStore,
-  EntitlementContext,
-} from "../features/entitlement/use-entitlement.ts";
-import {
   createProfilesStore,
   ProfilesContext,
 } from "../features/profiles/use-profiles.ts";
@@ -45,11 +41,9 @@ createRoot(root).render(
     <SettingsClientProvider client={client}>
       <SettingsContext value={createSettingsStore(client)}>
         <ProfilesContext value={createProfilesStore(client)}>
-          <EntitlementContext value={createEntitlementStore(client)}>
-            <UpdateContext value={createUpdateStore(client)}>
-              <SettingsWindow />
-            </UpdateContext>
-          </EntitlementContext>
+          <UpdateContext value={createUpdateStore(client)}>
+            <SettingsWindow />
+          </UpdateContext>
         </ProfilesContext>
       </SettingsContext>
     </SettingsClientProvider>

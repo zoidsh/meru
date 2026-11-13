@@ -21,6 +21,7 @@ const mounted: (() => void)[] = [];
 const PROFILES = {
   groups: [groupOf("g-mail", ["mail"])],
   profiles: [profileOf("personal")],
+  newProfileRefusal: null,
   selectedProfileId: "personal",
   tabs: [tabOf("mail", "gmail")],
 };
@@ -69,8 +70,11 @@ const mount = (appIds?: readonly string[], split?: Orientation) => {
   const page = mountChrome(<Launcher split={split} />, [
     answer(profiles.snapshot, PROFILES),
     answer(settings.snapshot, {
-      global: appIds === undefined ? {} : { "launcher.apps": appIds },
-      profiles: {},
+      layers: {
+        global: appIds === undefined ? {} : { "launcher.apps": appIds },
+        profiles: {},
+      },
+      locked: {},
     }),
     answer(stage.openTab, null),
   ]);

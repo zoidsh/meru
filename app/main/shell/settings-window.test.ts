@@ -49,7 +49,7 @@ const setup = (platform = "darwin") => {
   });
   const reached = () => {
     transport.sent.length = 0;
-    registrar.broadcast(settingsPushes.changed, { changes: [] });
+    registrar.broadcast(settingsPushes.changed, { changes: [], locked: {} });
     return transport.sent.map((sent) => sent.contentsId);
   };
   return { created, reached, settings, specs };

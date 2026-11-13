@@ -10,9 +10,9 @@ import { settings as channels } from "../../../shared/channels/settings.ts";
 import { msg } from "../../../shared/msg.ts";
 import { registry } from "../../../shared/settings/registry.ts";
 import type { Registry } from "../../../shared/settings/registry.ts";
+import { settingSet } from "../../../shared/settings/schema.ts";
 import { Badge } from "../../ui/badge.tsx";
 import { refusalOf } from "../entitlement/refusal.ts";
-import { useGate } from "../entitlement/use-entitlement.ts";
 import { useProfiles } from "../profiles/use-profiles.ts";
 import {
   BooleanControl,
@@ -23,7 +23,7 @@ import {
 } from "./controls.tsx";
 import type { ControlProps } from "./controls.tsx";
 import { fieldKindOf } from "./field-kind.ts";
-import { useSettingsLayers } from "./use-setting.ts";
+import { useLocked, useSettingsLayers } from "./use-setting.ts";
 import { useSettingsClient } from "./use-settings-client.ts";
 
 export type SettingEntry = Registry[number];
@@ -157,15 +157,13 @@ export const SettingField = ({
   const id = useId();
   const client = useSettingsClient();
   const layers = useSettingsLayers();
-  const proGate = useGate("proSetting", 0);
-  const gate = setting.tier === "pro" ? proGate : undefined;
-  const locked = gate !== undefined && !gate.allowed;
+  const refusal = useLocked(setting.key);
+  const locked = refusal !== undefined;
   const write = (value: unknown, profileId?: string) => {
-    void client.invoke(channels.set, {
-      key: setting.key,
-      value,
-      ...(profileId === undefined ? {} : { profileId }),
-    });
+    const payload = settingSet(setting.key, value, profileId);
+    if (payload !== undefined) {
+      void client.invoke(channels.set, payload);
+    }
   };
   const { kind } = fieldKindOf(setting.schema);
   return (
@@ -201,11 +199,11 @@ export const SettingField = ({
         {setting.description === undefined ? undefined : (
           <p className="text-muted-foreground text-sm">{setting.description}</p>
         )}
-        {gate !== undefined && !gate.allowed ? (
+        {refusal === undefined ? undefined : (
           <p className="text-sm" data-locked="">
-            {refusalOf(gate.reason)}
+            {refusalOf(refusal)}
           </p>
-        ) : undefined}
+        )}
         {setting.restart ? (
           <p className="text-muted-foreground text-xs">
             {msg`Restart Meru to apply the changes.`}

@@ -27,9 +27,12 @@ const Zoom = ({ profileId }: { readonly profileId: string }) => (
 
 const roots: Root[] = [];
 
-const mount = (seed: unknown) => {
+const mount = (seed: unknown, locked: unknown = {}) => {
   const bridge = new FakeBridge();
-  bridge.answers.set("settings.snapshot", { ok: true, value: seed });
+  bridge.answers.set("settings.snapshot", {
+    ok: true,
+    value: { layers: seed, locked },
+  });
   const store = createSettingsStore(
     createClient({ meru: bridge }, chromeSurface)
   );
@@ -48,7 +51,7 @@ const mount = (seed: unknown) => {
     [...container.querySelectorAll("p")].map((node) => node.textContent);
   const push = (changes: unknown[]) => {
     act(() => {
-      bridge.emit("settings.changed", { changes });
+      bridge.emit("settings.changed", { changes, locked });
     });
   };
   return { push, text };
@@ -90,6 +93,14 @@ describe(useSetting, () => {
   it("ignores a pushed value its schema refuses", () => {
     const { text, push } = mount({ global: {}, profiles: {} });
     push([{ key: "stage.zoom", profileId: "work", value: "huge" }]);
+    expect(text()).toStrictEqual(["modern", "1"]);
+  });
+
+  it("holds a locked key at its default whatever is stored", () => {
+    const { text } = mount(
+      { global: { "appearance.style": "classic" }, profiles: {} },
+      { "appearance.style": "free" }
+    );
     expect(text()).toStrictEqual(["modern", "1"]);
   });
 

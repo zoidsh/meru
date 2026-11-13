@@ -24,6 +24,7 @@ const profilesAnswer = (shown: ReturnType<typeof profileOf>[]) =>
     groups: shown.map((profile) =>
       groupOf(`group-${profile.id}`, [`gmail-${profile.id}`], profile.id)
     ),
+    newProfileRefusal: null,
     profiles: shown,
     selectedProfileId: shown[0]?.id ?? "personal",
     tabs: shown.map((profile) =>
@@ -101,8 +102,11 @@ describe(Titlebar, () => {
     const hidden = mount([
       ...answers,
       answer(settings.snapshot, {
-        global: { "profiles.unreadBadge": false },
-        profiles: {},
+        layers: {
+          global: { "profiles.unreadBadge": false },
+          profiles: {},
+        },
+        locked: {},
       }),
     ]);
     const badges = (page: typeof shown) =>
