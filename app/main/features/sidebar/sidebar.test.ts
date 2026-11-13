@@ -59,12 +59,12 @@ const setup = async () => {
   await profiles.open();
   profiles.start();
   const changes: Sidebar[] = [];
+  events.on("sidebar.changed", ({ sidebar: changed }) => {
+    changes.push(changed);
+  });
   const sidebars = new Sidebars({
     commands,
     events,
-    onChange: (changed) => {
-      changes.push(changed);
-    },
     profiles,
     registrar,
     settings,

@@ -19,8 +19,6 @@ export interface SidebarsOptions {
   readonly events: Pick<AppEvents, "on" | "emit">;
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
-  /** Called after the selected profile's sidebar appeared, went or changed width. */
-  readonly onChange: (sidebar: Sidebar) => void;
 }
 
 /** Decides the selected profile's sidebar, and holds what the user hid or flipped per profile for as long as the app runs. */
@@ -123,7 +121,7 @@ export class Sidebars {
     }
     this.#current = next;
     this.#options.registrar.broadcast(sidebarPushes.changed, next);
-    this.#options.onChange(next);
+    this.#options.events.emit("sidebar.changed", { sidebar: next });
     this.#options.events.emit("menu.invalidated", null);
   }
 }

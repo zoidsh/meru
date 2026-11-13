@@ -43,6 +43,10 @@ const report = (error: unknown) => {
   console.error(error);
 };
 
+const warn = (message: string) => {
+  console.warn(message);
+};
+
 const start = async () => {
   const dist = path.join(import.meta.dirname, "..");
   placeUserData(path.join(dist, "..", ".."));
@@ -74,7 +78,7 @@ const start = async () => {
     (contentsId, channel, payload) => {
       const result = dispatcher.dispatch(contentsId, channel, payload);
       if (!result.ok) {
-        console.warn(`${channel}: ${result.error.message}`);
+        warn(`${channel}: ${result.error.message}`);
       }
       return result;
     }
@@ -87,7 +91,7 @@ const start = async () => {
     onError: report,
     onFallback: (fallbacks) => {
       for (const { key, profileId, reason } of fallbacks) {
-        console.warn(
+        warn(
           `settings.json: ${key ?? "a layer"}${profileId === null ? "" : ` of profile ${profileId}`} is ${reason}, so its default stands`
         );
       }
@@ -117,9 +121,7 @@ const start = async () => {
     power: ports.power,
     onError: report,
     registrar: dispatcher,
-    report: (message) => {
-      console.warn(message);
-    },
+    report: warn,
     subtle: crypto.subtle,
   });
   await entitlement.open();
@@ -138,9 +140,7 @@ const start = async () => {
     ids: ports.ids,
     onError: report,
     registrar: dispatcher,
-    report: (message) => {
-      console.warn(message);
-    },
+    report: warn,
     sessions: ports.sessions,
     settings,
   });
@@ -156,9 +156,7 @@ const start = async () => {
     ids: ports.ids,
     onError: report,
     profiles,
-    report: (message) => {
-      console.warn(message);
-    },
+    report: warn,
   });
   await windows.open();
   windows.start();
@@ -167,13 +165,19 @@ const start = async () => {
     commands: allCommands,
     dispatcher: commands,
     platform: ports.lifecycle.platform,
-    report: (message) => {
-      console.warn(message);
-    },
+    report: warn,
     settings,
   });
   keys.start();
 
+  const sidebars = new Sidebars({
+    commands,
+    events,
+    profiles,
+    registrar: dispatcher,
+    settings,
+  });
+  sidebars.start();
   const stages = new Stages({
     background: () =>
       chromeColors(ports.theme.dark() ? "dark" : "light").background,
@@ -191,17 +195,6 @@ const start = async () => {
     views: ports.views,
   });
   stages.start();
-  const sidebars = new Sidebars({
-    commands,
-    events,
-    onChange: () => {
-      stages.relayout();
-    },
-    profiles,
-    registrar: dispatcher,
-    settings,
-  });
-  sidebars.start();
   const pages: PageOptions = {
     devServer: process.env.MERU_RENDERER_URL,
     dir: path.join(dist, "renderer"),
@@ -233,9 +226,7 @@ const start = async () => {
     dispatcher: commands,
     events,
     platform: ports.lifecycle.platform,
-    report: (message) => {
-      console.warn(message);
-    },
+    report: warn,
     settings,
   }).start();
 

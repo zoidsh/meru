@@ -74,6 +74,9 @@ export class Stages {
           found.refresh();
         }
       }),
+      events.on("sidebar.changed", () => {
+        this.relayout();
+      }),
       events.on("tab.focused", ({ tabId }) => {
         for (const found of this.all) {
           found.refresh();
