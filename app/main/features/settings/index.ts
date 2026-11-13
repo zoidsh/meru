@@ -78,7 +78,6 @@ export class SettingsStore {
   readonly #options: SettingsOptions;
   readonly #store: SnapshotStore<Settings, Fallback>;
   readonly #listeners = new Set<SettingsListener>();
-  readonly #pages = new Set<number>();
   readonly #disposables = new DisposableStore();
   #settings: Settings = emptySettings();
 
@@ -116,10 +115,7 @@ export class SettingsStore {
           const result = this.#set(key, value, profileId);
           return result.ok ? ok(null) : result;
         },
-        snapshot: (_payload, { contentsId }) => {
-          this.#pages.add(contentsId);
-          return ok(this.#settings);
-        },
+        snapshot: () => ok(this.#settings),
       })
     );
     if (this.#options.watchFile) {
@@ -218,11 +214,9 @@ export class SettingsStore {
       });
       return parsed.success ? [parsed.data] : [];
     });
-    for (const contentsId of this.#pages) {
-      this.#options.registrar.push(contentsId, settingsPushes.changed, {
-        changes: messages,
-      });
-    }
+    this.#options.registrar.broadcast(settingsPushes.changed, {
+      changes: messages,
+    });
     for (const listener of this.#listeners) {
       listener(changes);
     }

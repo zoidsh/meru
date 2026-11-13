@@ -130,9 +130,9 @@ const setup = async ({
   });
   await entitlement.open();
   entitlement.attach();
-  registrar.dispatch(PAGE, wireName(channels.snapshot), {});
   // Only what follows start() counts, so a value read from storage is not taken for a change.
   changed.length = 0;
+  transport.sent.length = 0;
   return {
     api,
     changed,

@@ -150,7 +150,6 @@ export class Profiles {
   readonly #options: ProfilesOptions;
   readonly #store: SnapshotStore<ProfilesState, string>;
   readonly #disposables = new DisposableStore();
-  readonly #pages = new Set<number>();
   #entitlement: Entitlement;
   #state: ProfilesState | undefined;
 
@@ -193,10 +192,7 @@ export class Profiles {
         create: ({ label, color }) => this.createProfile(label, color),
         remove: ({ profileId }) => done(this.removeProfile(profileId)),
         select: ({ profileId }) => done(this.selectProfile(profileId)),
-        snapshot: (_payload, { contentsId }) => {
-          this.#pages.add(contentsId);
-          return ok(this.snapshot());
-        },
+        snapshot: () => ok(this.snapshot()),
       }),
       registrar.register(tabChannels, {
         add: ({ profileId, appId }) => this.addTab(profileId, appId),
@@ -447,14 +443,7 @@ export class Profiles {
   }
 
   #publish(): void {
-    const snapshot = this.snapshot();
-    for (const contentsId of this.#pages) {
-      this.#options.registrar.push(
-        contentsId,
-        profilesPushes.changed,
-        snapshot
-      );
-    }
+    this.#options.registrar.broadcast(profilesPushes.changed, this.snapshot());
   }
 
   async #clear(partition: string): Promise<void> {

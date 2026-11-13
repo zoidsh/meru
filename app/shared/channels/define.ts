@@ -209,4 +209,9 @@ export interface IpcRegistrar {
     channel: C,
     payload: z.input<C["payload"]>
   ) => void;
+  /** Pushes to every page whose surface has the channel, and forgets one that is gone. */
+  readonly broadcast: <C extends PushChannel>(
+    channel: C,
+    payload: z.input<C["payload"]>
+  ) => void;
 }

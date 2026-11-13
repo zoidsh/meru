@@ -88,8 +88,26 @@ export class IpcDispatcher implements IpcRegistrar {
     channel: C,
     payload: z.input<C["payload"]>
   ): void => {
-    this.#transport.send(contentsId, wireName(channel), payload);
+    this.#send(contentsId, wireName(channel), payload);
   };
+
+  readonly broadcast = <C extends PushChannel>(
+    channel: C,
+    payload: z.input<C["payload"]>
+  ): void => {
+    const name = wireName(channel);
+    for (const [contentsId, surface] of this.#senders) {
+      if (surface.push.has(name)) {
+        this.#send(contentsId, name, payload);
+      }
+    }
+  };
+
+  #send(contentsId: number, channel: string, payload: unknown): void {
+    if (!this.#transport.send(contentsId, channel, payload)) {
+      this.#senders.delete(contentsId);
+    }
+  }
 
   dispatch(
     contentsId: number,

@@ -75,7 +75,6 @@ const advance = (state: UpdateState, event: UpdaterEvent): UpdateState => {
 export class Updater {
   readonly #options: UpdaterOptions;
   readonly #disposables = new DisposableStore();
-  readonly #pages = new Set<number>();
   #state: UpdateState = IDLE;
   #started = false;
   #timer: Unsubscribe | undefined;
@@ -88,14 +87,8 @@ export class Updater {
   attach(): void {
     const { registrar, commands, updater } = this.#options;
     this.#disposables.add(
-      () => {
-        this.#pages.clear();
-      },
       registrar.register(channels, {
-        snapshot: (_payload, { contentsId }) => {
-          this.#pages.add(contentsId);
-          return ok(this.#state);
-        },
+        snapshot: () => ok(this.#state),
       }),
       commands.register(updaterCommands, {
         check: () => this.check(),
@@ -195,9 +188,7 @@ export class Updater {
   #set(state: UpdateState) {
     const previous = this.#state;
     this.#state = state;
-    for (const contentsId of this.#pages) {
-      this.#options.registrar.push(contentsId, updaterPushes.changed, state);
-    }
+    this.#options.registrar.broadcast(updaterPushes.changed, state);
     if (previous.kind !== state.kind) {
       this.#options.events.emit("menu.invalidated", null);
     }

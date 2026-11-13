@@ -70,11 +70,12 @@ export interface CursorPort {
 }
 
 export interface IpcTransportPort {
+  /** False when the web contents is gone, and nothing was sent. */
   readonly send: (
     contentsId: number,
     channel: string,
     payload: unknown
-  ) => void;
+  ) => boolean;
 }
 
 export interface WindowSpec {

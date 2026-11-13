@@ -110,6 +110,27 @@ describe(IpcDispatcher, () => {
     ]);
   });
 
+  it("broadcasts to every sender whose surface has the push, and forgets one that is gone", () => {
+    const { dispatcher, transport } = setup();
+    dispatcher.assign(3, surface);
+    dispatcher.broadcast(counterPushes.changed, { value: 1 });
+    transport.gone.add(3);
+    dispatcher.broadcast(counterPushes.changed, { value: 2 });
+    transport.gone.delete(3);
+    dispatcher.broadcast(counterPushes.changed, { value: 3 });
+    expect(
+      transport.sent.map(({ contentsId, payload }) => [contentsId, payload])
+    ).toStrictEqual([
+      [1, { value: 1 }],
+      [3, { value: 1 }],
+      [1, { value: 2 }],
+      [1, { value: 3 }],
+    ]);
+    expect(dispatcher.dispatch(3, "counter.add", { by: 1 })).toMatchObject({
+      error: { kind: "wrongSurface" },
+    });
+  });
+
   it("takes only handlers that match the declaration", () => {
     const { dispatcher } = setup();
     const register = () => {

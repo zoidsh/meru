@@ -19,9 +19,11 @@ export type Dispatch = (
 export const ipcTransport: IpcTransportPort = {
   send: (contentsId, channel, payload) => {
     const contents = webContents.fromId(contentsId);
-    if (contents !== undefined && !contents.isDestroyed()) {
-      contents.send(channel, payload);
+    if (contents === undefined || contents.isDestroyed()) {
+      return false;
     }
+    contents.send(channel, payload);
+    return true;
   },
 };
 

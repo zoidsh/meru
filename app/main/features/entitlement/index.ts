@@ -152,7 +152,6 @@ export class Entitlement<K> {
   readonly #options: EntitlementOptions<K>;
   readonly #store: SnapshotStore<EntitlementState, EntitlementFallback>;
   readonly #listeners = new Set<EntitlementListener>();
-  readonly #pages = new Set<number>();
   readonly #disposables = new DisposableStore();
   #state: EntitlementState | undefined;
   #claims: Claims | undefined;
@@ -203,14 +202,8 @@ export class Entitlement<K> {
       () => {
         this.#store.dispose();
       },
-      () => {
-        this.#pages.clear();
-      },
       this.#options.registrar.register(channels, {
-        snapshot: (_payload, { contentsId }) => {
-          this.#pages.add(contentsId);
-          return ok(this.#value);
-        },
+        snapshot: () => ok(this.#value),
       })
     );
   }
@@ -467,9 +460,7 @@ export class Entitlement<K> {
     if (sameGrant(previous, next)) {
       return;
     }
-    for (const contentsId of this.#pages) {
-      this.#options.registrar.push(contentsId, entitlementPushes.changed, next);
-    }
+    this.#options.registrar.broadcast(entitlementPushes.changed, next);
     for (const listener of this.#listeners) {
       listener(next);
     }

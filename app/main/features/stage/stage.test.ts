@@ -8,6 +8,7 @@ import type { RequestChannel } from "../../../shared/channels/define.ts";
 import { drag } from "../../../shared/channels/drag.ts";
 import {
   stage as stageChannels,
+  stagePushes,
   stageSnapshotSchema,
 } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
@@ -96,13 +97,12 @@ const setup = async (style: Style = "modern") => {
   });
   stages.start();
   const changes = (): StageSnapshot[] =>
-    transport.sent.map((pushed) => {
-      expect(pushed).toMatchObject({
-        channel: "stage.changed",
-        contentsId: window.contentsId,
+    transport.sent
+      .filter((pushed) => pushed.channel === wireName(stagePushes.changed))
+      .map((pushed) => {
+        expect(pushed.contentsId).toBe(window.contentsId);
+        return stageSnapshotSchema.parse(pushed.payload);
       });
-      return stageSnapshotSchema.parse(pushed.payload);
-    });
   const stage = stages.open(window, () => profiles.currentGroup()?.id);
   const id = window.contentsId;
   const profileId = profiles.selected().id;

@@ -260,7 +260,7 @@ describe(Profiles, () => {
     });
   });
 
-  it("answers its channels and pushes each change to the pages that asked", async () => {
+  it("answers its channels and pushes each change to every page", async () => {
     const { registrar, profiles, transport } = await setup();
     const seed = profilesSnapshotSchema.parse(
       unwrap(registrar.dispatch(PAGE, wireName(profileChannels.snapshot), {}))
