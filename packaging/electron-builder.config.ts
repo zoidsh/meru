@@ -3,6 +3,9 @@ import path from "node:path";
 
 import type { Configuration } from "electron-builder";
 
+import { writeNotarizationKey } from "./hooks.ts";
+import { hasSigningEnv } from "./signing-env.ts";
+
 const ARCHES: ("x64" | "arm64")[] = ["x64", "arm64"];
 
 const SCHEMES = ["meru", "mailto", "http", "https"];
@@ -31,6 +34,9 @@ const config: Configuration = {
     artifactName: "${productName}-${version}-${arch}.${ext}",
   },
   asarUnpack: [],
+  beforePack: () => {
+    writeNotarizationKey();
+  },
   directories: {
     buildResources: "packaging/assets",
     output: "packaging/out",
@@ -64,6 +70,7 @@ const config: Configuration = {
   mac: {
     category: "public.app-category.productivity",
     darkModeSupport: true,
+    entitlements: "packaging/assets/entitlements.mac.plist",
     extendInfo: {
       CFBundleIconName: "AppIcon",
       CFBundleURLSchemes: SCHEMES,
@@ -74,9 +81,12 @@ const config: Configuration = {
     },
     // CFBundleIconName names the icon in this compiled asset catalog, which electron-builder does not produce.
     extraResources: [{ from: "packaging/assets/Assets.car", to: "Assets.car" }],
+    gatekeeperAssess: false,
+    hardenedRuntime: true,
     icon: "packaging/assets/icon.icns",
     minimumSystemVersion: "13.0.0",
-    // signing: see docs
+    // Notarises when APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER are set, and skips with a warning otherwise.
+    notarize: true,
     target: { arch: ARCHES, target: "default" },
   },
   nsis: {
@@ -91,12 +101,22 @@ const config: Configuration = {
   // Without the pin electron-builder 26 uses the FUSE2 runtime, and the AppImage needs libfuse.so.2 on the user's machine.
   toolsets: { appimage: "1.0.3" },
   win: {
+    // electron-builder starts its Azure signing manager whenever this is set, and that needs Windows, or pwsh and wine, and fails without the credentials, so an unsigned build leaves it out.
+    azureSignOptions: hasSigningEnv("win")
+      ? {
+          certificateProfileName: "zoid-public-trust",
+          codeSigningAccountName: "zoid",
+          endpoint: "https://neu.codesigning.azure.net",
+          // electron-updater compares a downloaded installer's signer against this, so it has to be the certificate's subject exactly.
+          publisherName: "CN=Zoid Ltd, O=Zoid Ltd, L=London, C=GB",
+        }
+      : null,
     icon: "packaging/assets/icon.ico",
-    // signing: see docs
     target: [
       { arch: ARCHES, target: "nsis" },
       { arch: ARCHES, target: "portable" },
     ],
+    verifyUpdateCodeSignature: true,
   },
 };
 
