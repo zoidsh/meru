@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { isSignIn } from "../../../core/engines/links.ts";
 import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
@@ -82,7 +83,13 @@ const setup = async () => {
     insets: () => ({ left: 0, top: 0 }),
     onError: rethrow,
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
-    onPopup: (url) => links.popup(url),
+    onPopup: (url) => {
+      const shows = isSignIn(url);
+      if (!shows) {
+        shell.openExternal(url);
+      }
+      return shows;
+    },
     profiles,
     registrar,
     settings,

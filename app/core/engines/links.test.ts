@@ -4,7 +4,7 @@ import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
 import type { Tab } from "../records/tab.ts";
 import { leaf } from "./layout.ts";
-import { appOfUrl, resolveLinkTarget } from "./links.ts";
+import { appOfUrl, isSignIn, resolveLinkTarget } from "./links.ts";
 import type { LinkContext, LinkSettings } from "./links.ts";
 
 const app = (id: string, hosts: string[], more: Partial<App> = {}): App => ({
@@ -174,5 +174,17 @@ describe(resolveLinkTarget, () => {
       { action: "external" },
       { action: "external" },
     ]);
+  });
+});
+
+describe(isSignIn, () => {
+  it("takes Google's sign-in and nothing else", () => {
+    expect(
+      [
+        "https://accounts.google.com/o/oauth2/auth",
+        "https://example.com/",
+        "https://mail.google.com/",
+      ].map(isSignIn)
+    ).toStrictEqual([true, false, false]);
   });
 });

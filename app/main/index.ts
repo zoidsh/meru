@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { chromeInsets } from "../core/engines/chrome.ts";
+import { isSignIn } from "../core/engines/links.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
@@ -189,11 +190,18 @@ const start = async () => {
   ): string => pageUrl(pages, "overlay.html", { ...query, kind });
   // The end-to-end suite asserts on the links that would leave for the browser and never opens one.
   const externalLinks = new RecordingShell();
+  const shell = e2e ? externalLinks : ports.shell;
   const stages = new Stages({
     blankPanes: e2e,
     commands,
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
-    onPopup: (url) => links.popup(url),
+    onPopup: (url) => {
+      const shows = isSignIn(url);
+      if (!shows) {
+        shell.openExternal(url);
+      }
+      return shows;
+    },
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
     overlayUrl,
@@ -210,7 +218,7 @@ const start = async () => {
   const links = new Links({
     profiles,
     settings,
-    shell: e2e ? externalLinks : ports.shell,
+    shell,
     stages,
   });
   new Launcher({

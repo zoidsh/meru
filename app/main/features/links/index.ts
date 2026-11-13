@@ -1,5 +1,5 @@
 import { paneOfTab } from "../../../core/engines/layout.ts";
-import { resolveLinkTarget } from "../../../core/engines/links.ts";
+import { isSignIn, resolveLinkTarget } from "../../../core/engines/links.ts";
 import { groupOf } from "../../../core/engines/ordering.ts";
 import type { ShellPort } from "../../../core/ports.ts";
 import type { Placement } from "../../../core/records/layout.ts";
@@ -8,8 +8,6 @@ import { apps } from "../../../shared/apps.ts";
 import type { Profiles } from "../profiles/index.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import type { Stages } from "../stage/index.ts";
-
-const ACCOUNTS = "https://accounts.google.com/";
 
 export interface LinksOptions {
   readonly profiles: Pick<Profiles, "state" | "tab" | "openTab" | "focusTab">;
@@ -35,11 +33,7 @@ export class Links {
       stages.load(id, address);
     };
     const from = profiles.tab(tabId);
-    if (
-      from === undefined ||
-      disposition === "inPlace" ||
-      url.startsWith(ACCOUNTS)
-    ) {
+    if (from === undefined || disposition === "inPlace" || isSignIn(url)) {
       return false;
     }
     const { groups, tabs } = profiles.state;
@@ -89,15 +83,6 @@ export class Links {
       profiles.focusTab(opened.value.id);
     }
     return true;
-  }
-
-  /** Whether a blank popup the tab's page opened shows once it navigates to `url`: Google's sign-in does, and anything else goes to the browser. */
-  popup(url: string): boolean {
-    if (url.startsWith(ACCOUNTS)) {
-      return true;
-    }
-    this.#options.shell.openExternal(url);
-    return false;
   }
 
   /** Beside the tab's pane, in its group. */

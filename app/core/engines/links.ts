@@ -87,6 +87,11 @@ export const appOfUrl = (
 
 const hostOf = (url: string) => locate(url)?.host;
 
+const SIGN_IN = "https://accounts.google.com/";
+
+/** Whether the address is Google's sign-in, which a pane's page navigates to itself and a blank popup shows: every other popup's address goes to the browser. */
+export const isSignIn = (url: string): boolean => url.startsWith(SIGN_IN);
+
 /** Where a link followed in a pane goes. */
 export const resolveLinkTarget = (
   url: string,
