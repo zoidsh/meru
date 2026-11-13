@@ -43,7 +43,10 @@ const measurement = (
   electron: "45.2.3",
   platform: "darwin",
   samples: Object.entries(samples).flatMap(([point, readings]) =>
-    point === "launch" || point === "split" || point === "idle"
+    point === "launch" ||
+    point === "split" ||
+    point === "launcher" ||
+    point === "idle"
       ? [{ point, readings }]
       : []
   ),
@@ -130,17 +133,17 @@ describe(table, () => {
       launch: [[process("main", "Browser", 1, 100 * MB, 30 * MB)]],
     });
     expect(table(meru, floor).split("\n")).toStrictEqual([
-      "kind         launch        launch floor  split  split floor  idle          idle floor",
-      "main         40.0 MB 5.0%  30.0 MB 1.0%  -      -            46.0 MB 0.5%  -",
-      "chrome page  50.0 MB 3.0%  -             -      -            61.0 MB 0.3%  -",
-      "pane         -             -             -      -            90.0 MB 4.0%  -",
-      "gpu          70.0 MB 1.0%  -             -      -            -             -",
+      "kind         launch        launch floor  split  split floor  launcher  launcher floor  idle          idle floor",
+      "main         40.0 MB 5.0%  30.0 MB 1.0%  -      -            -         -               46.0 MB 0.5%  -",
+      "chrome page  50.0 MB 3.0%  -             -      -            -         -               61.0 MB 0.3%  -",
+      "pane         -             -             -      -            -         -               90.0 MB 4.0%  -",
+      "gpu          70.0 MB 1.0%  -             -      -            -         -               -             -",
     ]);
   });
 
   it("prints Meru alone when there is no floor", () => {
     expect(table(meru).split("\n")[0]).toBe(
-      "kind         launch        split  idle"
+      "kind         launch        split  launcher  idle"
     );
   });
 });

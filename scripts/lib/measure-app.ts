@@ -9,8 +9,9 @@ import { uniq } from "es-toolkit/array";
 import { execaSync } from "execa";
 import { z } from "zod";
 
+import { launcher } from "../../app/shared/channels/launcher.ts";
 import { measure as measureChannels } from "../../app/shared/channels/measure.ts";
-import { invokeIn, launch, runCommand } from "./app.ts";
+import { invokeIn, launch, runCommand, sendIn } from "./app.ts";
 import type {
   AppName,
   Measurement,
@@ -168,7 +169,9 @@ const git = (...args: string[]) => execaSync("git", args, { cwd: root }).stdout;
 const commit = () =>
   `${git("rev-parse", "--short", "HEAD")}${git("status", "--porcelain", "--", ".", ":!measurements") === "" ? "" : "+dirty"}`;
 
-/** Launches an app, reads it 5s after launch, right after one split, and after the idle time, and closes it. */
+const LAUNCHER_LOAD = 2000;
+
+/** Launches an app, reads it 5s after launch, right after one split, with the launcher open, and after the idle time once the launcher has closed, and closes it. */
 export const measureApp = async (
   options: MeasureOptions
 ): Promise<Measurement> => {
@@ -195,6 +198,17 @@ export const measureApp = async (
       point: "split",
       readings: await sample(app, chrome, options.readings),
     });
+    if (chrome !== undefined) {
+      await runCommand(chrome, "launcher.open");
+      await wait(LAUNCHER_LOAD);
+    }
+    samples.push({
+      point: "launcher",
+      readings: await sample(app, chrome, options.readings),
+    });
+    if (chrome !== undefined) {
+      await sendIn(chrome, launcher.close, {});
+    }
     await wait(options.idleSeconds * 1000);
     samples.push({
       point: "idle",

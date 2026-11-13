@@ -2,9 +2,9 @@ import { groupBy, uniq } from "es-toolkit/array";
 import { mean, meanBy, sumBy } from "es-toolkit/math";
 import { z } from "zod";
 
-export type Point = "launch" | "split" | "idle";
+export type Point = "launch" | "split" | "launcher" | "idle";
 
-export const POINTS: readonly Point[] = ["launch", "split", "idle"];
+export const POINTS: readonly Point[] = ["launch", "split", "launcher", "idle"];
 
 export type AppName = "meru" | "floor" | "floor-view";
 

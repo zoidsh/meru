@@ -12,6 +12,7 @@ import type { Result } from "../../app/core/result.ts";
 import { commands } from "../../app/shared/channels/commands.ts";
 import { settle, wireName } from "../../app/shared/channels/define.ts";
 import type {
+  EventChannel,
   IpcError,
   InvokeChannel,
   SyncChannel,
@@ -137,6 +138,17 @@ export const invokeIn = async <P extends z.ZodType, R extends z.ZodType>(
     `window.${BRIDGE_KEY}.${method}(${JSON.stringify(wireName(channel))}, ${JSON.stringify(payload)})`
   );
   return settle(channel.result, answer);
+};
+
+/** Sends an event as the page's client would. */
+export const sendIn = async <P extends z.ZodType>(
+  page: Page,
+  channel: EventChannel<P>,
+  payload: z.input<P>
+): Promise<void> => {
+  await page.evaluate(
+    `window.${BRIDGE_KEY}.send(${JSON.stringify(wireName(channel))}, ${JSON.stringify(payload)})`
+  );
 };
 
 /** Runs a command as a button on the chrome page would, and answers what main answered. */
