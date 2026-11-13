@@ -1,6 +1,6 @@
-import type { AppPort, Unsubscribe } from "../../core/ports.ts";
+import type { LifecyclePort, Unsubscribe } from "../../core/ports.ts";
 
-export class FakeApp implements AppPort {
+export class FakeLifecycle implements LifecyclePort {
   readonly platform: string;
   readonly packaged: boolean;
   quitting = false;

@@ -27,7 +27,7 @@ import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
 import type { GateRefusal } from "../../../core/entitlement/gate.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
-  AppPort,
+  LifecyclePort,
   Clock,
   FsPort,
   Ids,
@@ -133,7 +133,7 @@ const done = (result: Result<undefined, ProfilesError>): Result<null, string> =>
 export interface ProfilesOptions {
   readonly fs: FsPort;
   readonly clock: Clock;
-  readonly app: Pick<AppPort, "onQuit">;
+  readonly lifecycle: Pick<LifecyclePort, "onQuit">;
   readonly ids: Ids;
   readonly events: AppEvents;
   readonly registrar: IpcRegistrar;
@@ -157,7 +157,7 @@ export class Profiles {
     this.#options = options;
     this.#entitlement = options.entitlement;
     this.#store = new SnapshotStore(profilesSnapshot(options.ids), {
-      app: options.app,
+      lifecycle: options.lifecycle,
       clock: options.clock,
       fs: options.fs,
       onError: options.onError,

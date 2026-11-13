@@ -12,7 +12,7 @@ import type {
   SettingChange,
 } from "../../../core/engines/settings.ts";
 import type {
-  AppPort,
+  LifecyclePort,
   Clock,
   FsPort,
   Unsubscribe,
@@ -62,7 +62,7 @@ export type SettingsListener = (changes: readonly SettingChange[]) => void;
 export interface SettingsOptions {
   readonly fs: FsPort;
   readonly clock: Clock;
-  readonly app: Pick<AppPort, "onQuit">;
+  readonly lifecycle: Pick<LifecyclePort, "onQuit">;
   readonly registrar: IpcRegistrar;
   /** Follow edits made to the file by hand while the app runs. */
   readonly watchFile: boolean;
@@ -83,7 +83,7 @@ export class SettingsStore {
   constructor(options: SettingsOptions) {
     this.#options = options;
     this.#store = new SnapshotStore(settingsSnapshot, {
-      app: options.app,
+      lifecycle: options.lifecycle,
       clock: options.clock,
       fs: options.fs,
       onError: options.onError,

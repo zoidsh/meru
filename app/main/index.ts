@@ -40,12 +40,12 @@ const start = async () => {
   const ports = createElectronPorts();
   const e2e = process.env.MERU_E2E === "1";
 
-  ports.app.onWindowAllClosed(() => {
-    ports.app.quit();
+  ports.lifecycle.onWindowAllClosed(() => {
+    ports.lifecycle.quit();
   });
-  await ports.app.whenReady();
+  await ports.lifecycle.whenReady();
   if (process.env.MERU_TEST_BACKGROUND === "1") {
-    ports.app.prohibitActivation();
+    ports.lifecycle.prohibitActivation();
   }
 
   const dispatcher = new IpcDispatcher({
@@ -69,7 +69,7 @@ const start = async () => {
   );
 
   const settings = new SettingsStore({
-    app: ports.app,
+    lifecycle: ports.lifecycle,
     clock: ports.clock,
     fs: ports.fs,
     onError: report,
@@ -82,7 +82,7 @@ const start = async () => {
     },
     registrar: dispatcher,
     // Only a run from the repository follows hand edits; an installed app learns of a change from the code that made it.
-    watchFile: !ports.app.packaged,
+    watchFile: !ports.lifecycle.packaged,
   });
   await settings.open();
   settings.start();
@@ -92,13 +92,16 @@ const start = async () => {
     api: createElectronEntitlementApi(
       process.env.MERU_ENTITLEMENT_URL ?? ENTITLEMENT_URL
     ),
-    app: ports.app,
+    lifecycle: ports.lifecycle,
     clock: ports.clock,
     events,
     fs: ports.fs,
     ids: ports.ids,
-    keys: await importKeys(crypto.subtle, acceptedKeys(ports.app.packaged)),
-    network: ports.network,
+    keys: await importKeys(
+      crypto.subtle,
+      acceptedKeys(ports.lifecycle.packaged)
+    ),
+    online: ports.online,
     power: ports.power,
     onError: report,
     registrar: dispatcher,
@@ -111,7 +114,7 @@ const start = async () => {
   entitlement.attach();
 
   const profiles = new Profiles({
-    app: ports.app,
+    lifecycle: ports.lifecycle,
     clock: ports.clock,
     entitlement: entitlement.current(),
     events,
@@ -129,7 +132,7 @@ const start = async () => {
   profiles.start();
 
   const windows = new Windows({
-    app: ports.app,
+    lifecycle: ports.lifecycle,
     clock: ports.clock,
     displays: ports.displays,
     events,
@@ -161,7 +164,7 @@ const start = async () => {
   stages.start();
 
   const updater = new Updater({
-    app: ports.app,
+    lifecycle: ports.lifecycle,
     clock: ports.clock,
     commands,
     events,
@@ -177,7 +180,7 @@ const start = async () => {
     commands: allCommands,
     dispatcher: commands,
     events,
-    platform: ports.app.platform,
+    platform: ports.lifecycle.platform,
     report: (message) => {
       console.warn(message);
     },

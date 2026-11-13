@@ -116,7 +116,7 @@ const holdQuit = (event: { preventDefault: () => void }) => {
 };
 
 export const createElectronPorts = (): Ports => ({
-  app: {
+  lifecycle: {
     onQuit: (task) => {
       if (quitTasks.size === 0) {
         app.on("before-quit", holdQuit);
@@ -169,7 +169,7 @@ export const createElectronPorts = (): Ports => ({
   fs: createFs(app.getPath("userData")),
   ids: () => randomUUID(),
   ipc: ipcTransport,
-  network: onlinePort,
+  online: onlinePort,
   power: {
     onResume: (listener) => {
       powerMonitor.on("resume", listener);

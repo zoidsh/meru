@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { FakeApp } from "../test/fakes/app.ts";
 import { FakeClock } from "../test/fakes/clock.ts";
 import { FakeFs } from "../test/fakes/fs.ts";
+import { FakeLifecycle } from "../test/fakes/lifecycle.ts";
 import { migrate } from "./engines/migrate.ts";
 import version1 from "./fixtures/snapshot-v1.json" with { type: "json" };
 import { SnapshotStore } from "./snapshot.ts";
@@ -25,7 +25,7 @@ const toVersion2 = (data: unknown): unknown => {
 const setup = (files: Readonly<Record<string, string>> = {}) => {
   const fs = new FakeFs(files);
   const clock = new FakeClock();
-  const app = new FakeApp();
+  const lifecycle = new FakeLifecycle();
   const errors: unknown[] = [];
   const store = new SnapshotStore<People, string>(
     {
@@ -52,7 +52,7 @@ const setup = (files: Readonly<Record<string, string>> = {}) => {
       version: 2,
     },
     {
-      app,
+      lifecycle,
       clock,
       fs,
       onError: (error) => {
@@ -60,7 +60,7 @@ const setup = (files: Readonly<Record<string, string>> = {}) => {
       },
     }
   );
-  return { app, clock, errors, fs, store };
+  return { lifecycle, clock, errors, fs, store };
 };
 
 const file = (data: unknown, version = 2) => JSON.stringify({ data, version });
@@ -163,10 +163,10 @@ describe(SnapshotStore, () => {
   });
 
   it("flushes a pending write when the app quits", async () => {
-    const { store, app, fs, clock } = setup();
+    const { store, lifecycle, fs, clock } = setup();
     await store.open();
     store.write({ names: ["Ada"] });
-    await app.quitAndWait();
+    await lifecycle.quitAndWait();
     expect(fs.writes).toHaveLength(1);
     expect(clock.pending).toBe(0);
     const reopened = setup({ [NAME]: fs.writes[0]?.text ?? "" });
@@ -210,7 +210,7 @@ describe(SnapshotStore, () => {
             version: 2,
           },
           {
-            app: new FakeApp(),
+            lifecycle: new FakeLifecycle(),
             clock: new FakeClock(),
             fs: new FakeFs(),
             onError: () => {

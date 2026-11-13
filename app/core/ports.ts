@@ -23,7 +23,7 @@ export interface FsPort {
   readonly watch: (name: string, listener: () => void) => Unsubscribe;
 }
 
-export interface AppPort {
+export interface LifecyclePort {
   readonly platform: string;
   /** False for a run from the repository, such as `pnpm dev` or the end-to-end suite. */
   readonly packaged: boolean;
@@ -178,14 +178,14 @@ export interface SessionPort {
 }
 
 export interface Ports {
-  readonly app: AppPort;
+  readonly lifecycle: LifecyclePort;
   readonly clock: Clock;
   readonly fs: FsPort;
   readonly ids: Ids;
   readonly cursor: CursorPort;
   readonly displays: DisplayPort;
   readonly ipc: IpcTransportPort;
-  readonly network: OnlinePort;
+  readonly online: OnlinePort;
   readonly power: PowerPort;
   readonly sessions: SessionPort;
   readonly views: ViewFactoryPort;

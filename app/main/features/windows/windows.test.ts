@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_WINDOW_SIZE } from "../../../core/engines/bounds.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
-import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeDisplays, PRIMARY_DISPLAY } from "../../../test/fakes/display.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
@@ -29,11 +29,11 @@ const fail = (error: unknown) => {
 
 const setup = async (fs = new FakeFs()) => {
   const clock = new FakeClock(NOW);
-  const app = new FakeApp();
+  const lifecycle = new FakeLifecycle();
   const events = new AppEvents();
   const registrar = new FakeRegistrar();
   const settings = new SettingsStore({
-    app,
+    lifecycle,
     clock,
     fs,
     onError: fail,
@@ -43,7 +43,7 @@ const setup = async (fs = new FakeFs()) => {
   });
   await settings.open();
   const profiles = new Profiles({
-    app,
+    lifecycle,
     clock,
     entitlement: trial,
     events,
@@ -60,7 +60,7 @@ const setup = async (fs = new FakeFs()) => {
   const displays = new FakeDisplays();
   const reports: string[] = [];
   const windows = new Windows({
-    app,
+    lifecycle,
     clock,
     displays,
     events,
@@ -82,7 +82,7 @@ const setup = async (fs = new FakeFs()) => {
         : undefined
     ).windows;
   };
-  return { app, clock, displays, fs, profiles, reports, stored, windows };
+  return { lifecycle, clock, displays, fs, profiles, reports, stored, windows };
 };
 
 describe(Windows, () => {

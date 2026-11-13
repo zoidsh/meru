@@ -9,7 +9,7 @@ import { isExpired, verifyToken } from "../../../core/entitlement/verify.ts";
 import type { Ed25519Subtle } from "../../../core/entitlement/verify.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
-  AppPort,
+  LifecyclePort,
   Clock,
   EntitlementAnswer,
   EntitlementApi,
@@ -119,10 +119,10 @@ export type EntitlementListener = (entitlement: EntitlementValue) => void;
 export interface EntitlementOptions<K> {
   readonly api: EntitlementApi;
   readonly fs: FsPort;
-  readonly app: Pick<AppPort, "onQuit">;
+  readonly lifecycle: Pick<LifecyclePort, "onQuit">;
   readonly clock: Clock;
   readonly ids: Ids;
-  readonly network: OnlinePort;
+  readonly online: OnlinePort;
   readonly power: PowerPort;
   readonly events: AppEvents;
   readonly registrar: IpcRegistrar;
@@ -170,7 +170,7 @@ export class Entitlement<K> {
   constructor(options: EntitlementOptions<K>) {
     this.#options = options;
     this.#store = new SnapshotStore(entitlementSnapshot(options.ids), {
-      app: options.app,
+      lifecycle: options.lifecycle,
       clock: options.clock,
       fs: options.fs,
       onError: options.onError,
@@ -318,7 +318,7 @@ export class Entitlement<K> {
     if (!this.#started || this.#refreshing || state === undefined) {
       return;
     }
-    const { clock, network } = this.#options;
+    const { clock, online } = this.#options;
     const now = clock.now();
     const due = this.#due(state, now);
     if (due === undefined) {
@@ -336,9 +336,9 @@ export class Entitlement<K> {
       }
       return;
     }
-    if (!network.isOnline()) {
-      this.#waiting = network.onChange((online) => {
-        if (online) {
+    if (!online.isOnline()) {
+      this.#waiting = online.onChange((connected) => {
+        if (connected) {
           this.#delay = 0;
           this.#schedule();
         }

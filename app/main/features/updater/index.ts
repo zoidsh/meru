@@ -1,6 +1,6 @@
 import type { AppEvents } from "../../../core/events.ts";
 import type {
-  AppPort,
+  LifecyclePort,
   Clock,
   Unsubscribe,
   UpdaterEvent,
@@ -22,7 +22,7 @@ export type UpdaterError = "notPackaged" | "notReady";
 
 export interface UpdaterOptions {
   readonly updater: UpdaterPort;
-  readonly app: Pick<AppPort, "packaged">;
+  readonly lifecycle: Pick<LifecyclePort, "packaged">;
   readonly clock: Clock;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly registrar: IpcRegistrar;
@@ -114,7 +114,7 @@ export class Updater {
   /** Schedules the first check after the delay and the rest at the user's interval; does nothing in an app run from the repository. */
   start(): Unsubscribe {
     const unsubscribe: Unsubscribe[] = [];
-    if (this.#options.app.packaged) {
+    if (this.#options.lifecycle.packaged) {
       this.#started = true;
       this.#schedule(FIRST_CHECK_DELAY);
       unsubscribe.push(
@@ -145,7 +145,7 @@ export class Updater {
 
   /** Asks the feed now and restarts the interval; an update found downloads by itself. */
   check(): Result<undefined, UpdaterError> {
-    if (!this.#options.app.packaged) {
+    if (!this.#options.lifecycle.packaged) {
       return err("notPackaged");
     }
     if (this.#started) {

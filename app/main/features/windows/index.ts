@@ -3,7 +3,7 @@ import { z } from "zod";
 import { clampToDisplay } from "../../../core/engines/bounds.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
-  AppPort,
+  LifecyclePort,
   Clock,
   DisplayPort,
   FsPort,
@@ -39,7 +39,7 @@ export const windowsSnapshot: SnapshotSpec<WindowsState, string> = {
 export interface WindowsOptions {
   readonly fs: FsPort;
   readonly clock: Clock;
-  readonly app: Pick<AppPort, "onQuit">;
+  readonly lifecycle: Pick<LifecyclePort, "onQuit">;
   readonly ids: Ids;
   readonly events: AppEvents;
   readonly displays: DisplayPort;
@@ -57,7 +57,7 @@ export class Windows {
   constructor(options: WindowsOptions) {
     this.#options = options;
     this.#store = new SnapshotStore(windowsSnapshot, {
-      app: options.app,
+      lifecycle: options.lifecycle,
       clock: options.clock,
       fs: options.fs,
       onError: options.onError,

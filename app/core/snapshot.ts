@@ -2,7 +2,7 @@ import type { z } from "zod";
 
 import { envelopeSchema, migrate } from "./engines/migrate.ts";
 import type { Migration } from "./engines/migrate.ts";
-import type { AppPort, Clock, FsPort, Unsubscribe } from "./ports.ts";
+import type { LifecyclePort, Clock, FsPort, Unsubscribe } from "./ports.ts";
 
 export interface Recovered<T, F> {
   readonly value: T;
@@ -39,7 +39,7 @@ export interface Opened<T, F> extends Recovered<T, F> {
 export interface SnapshotPorts {
   readonly fs: FsPort;
   readonly clock: Clock;
-  readonly app: Pick<AppPort, "onQuit">;
+  readonly lifecycle: Pick<LifecyclePort, "onQuit">;
   readonly onError: (error: unknown) => void;
 }
 
@@ -70,7 +70,7 @@ export class SnapshotStore<T, F = never> {
 
   /** Reads the file, never throwing: whatever cannot be read comes back as the recovered value with the reason. */
   async open(): Promise<Opened<T, F>> {
-    this.#unsubscribe ??= this.#ports.app.onQuit(async () => {
+    this.#unsubscribe ??= this.#ports.lifecycle.onQuit(async () => {
       await this.flush();
     });
     let text: string | undefined;

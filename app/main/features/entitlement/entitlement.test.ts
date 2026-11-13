@@ -9,12 +9,12 @@ import {
   entitlement as channels,
   entitlementPushes,
 } from "../../../shared/channels/entitlement.ts";
-import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeEntitlementApi } from "../../../test/fakes/entitlement-api.ts";
 import type { Scripted } from "../../../test/fakes/entitlement-api.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeOnline } from "../../../test/fakes/online.ts";
 import { FakePower } from "../../../test/fakes/power.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
@@ -102,13 +102,13 @@ const setup = async ({
   const reports: string[] = [];
   const entitlement = new Entitlement({
     api,
-    app: new FakeApp(),
+    lifecycle: new FakeLifecycle(),
     clock,
     events,
     fs,
     ids: fakeIds("device-"),
     keys: new Map([[KID, pair.publicKey]]),
-    network,
+    online: network,
     onError: (error) => {
       throw error;
     },

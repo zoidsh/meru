@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { AppEvents } from "../../../core/events.ts";
 import { updateStateSchema } from "../../../core/records/update.ts";
 import { updater as channels } from "../../../shared/channels/updater.ts";
-import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeCommandRegistrar } from "../../../test/fakes/commands.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
+import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeUpdater } from "../../../test/fakes/updater.ts";
 import { SettingsStore } from "../settings/index.ts";
@@ -19,7 +19,7 @@ const setup = ({ packaged = true } = {}) => {
   const clock = new FakeClock();
   const registrar = new FakeRegistrar();
   const settings = new SettingsStore({
-    app: new FakeApp(),
+    lifecycle: new FakeLifecycle(),
     clock,
     fs: new FakeFs(),
     onError: (error) => {
@@ -39,7 +39,7 @@ const setup = ({ packaged = true } = {}) => {
     invalidated += 1;
   });
   const updater = new Updater({
-    app: new FakeApp("darwin", packaged),
+    lifecycle: new FakeLifecycle("darwin", packaged),
     clock,
     commands,
     events,

@@ -10,11 +10,11 @@ import {
 } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import { dragSurface } from "../../../shared/channels/surfaces.ts";
-import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeCommandRegistrar } from "../../../test/fakes/commands.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
@@ -28,7 +28,7 @@ const GMAIL = "https://mail.google.com/";
 
 const settingsWith = (style: Style) => {
   const settings = new SettingsStore({
-    app: new FakeApp(),
+    lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     fs: new FakeFs(),
     onError: (error) => {
@@ -56,7 +56,7 @@ const setup = async (style: Style = "modern") => {
     errors.push(error);
   };
   const profiles = new Profiles({
-    app: new FakeApp(),
+    lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
     events,

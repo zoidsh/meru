@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { AppEvents } from "../../core/events.ts";
 import { commands as channels } from "../../shared/channels/commands.ts";
 import { commands } from "../../shared/commands/registry.ts";
-import { FakeApp } from "../../test/fakes/app.ts";
 import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
 import { fakeIds } from "../../test/fakes/ids.ts";
+import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
 import { FakeRegistrar } from "../../test/fakes/registrar.ts";
 import { FakeSessions } from "../../test/fakes/session.ts";
 import { FakeUpdater } from "../../test/fakes/updater.ts";
@@ -32,7 +32,7 @@ const setup = async (platform = "darwin") => {
   const reports: string[] = [];
   const registrar = new FakeRegistrar();
   const settings = new SettingsStore({
-    app: new FakeApp(),
+    lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     fs: new FakeFs(),
     onError: (error) => {
@@ -48,7 +48,7 @@ const setup = async (platform = "darwin") => {
   dispatcher.start(registrar);
   const events = new AppEvents();
   const profiles = new Profiles({
-    app: new FakeApp(platform),
+    lifecycle: new FakeLifecycle(platform),
     clock: new FakeClock(),
     entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
     events,
@@ -82,7 +82,7 @@ const setup = async (platform = "darwin") => {
   stages.open(window, () => profiles.currentGroup()?.id);
   const feed = new FakeUpdater();
   new Updater({
-    app: new FakeApp(platform),
+    lifecycle: new FakeLifecycle(platform),
     clock: new FakeClock(),
     commands: dispatcher,
     events,

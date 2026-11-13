@@ -15,10 +15,10 @@ import {
   tabs as tabChannels,
   profilesSnapshotSchema,
 } from "../../../shared/channels/profiles.ts";
-import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
+import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { SettingsStore } from "../settings/index.ts";
@@ -40,12 +40,12 @@ const setup = async ({
   fs = new FakeFs(),
 }: { entitlement?: Entitlement; fs?: FakeFs } = {}) => {
   const clock = new FakeClock(NOW);
-  const app = new FakeApp();
+  const lifecycle = new FakeLifecycle();
   const registrar = new FakeRegistrar();
   const events = new AppEvents();
   const sessions = new FakeSessions();
   const settings = new SettingsStore({
-    app,
+    lifecycle,
     clock,
     fs,
     onError: (error) => {
@@ -65,7 +65,7 @@ const setup = async ({
   const errors: unknown[] = [];
   const reports: string[] = [];
   const profiles = new Profiles({
-    app,
+    lifecycle,
     clock,
     entitlement,
     events,

@@ -5,9 +5,9 @@ import type {
   SettingChange,
 } from "../../../core/engines/settings.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
-import { FakeApp } from "../../../test/fakes/app.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
+import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeRegistrar } from "../../../test/fakes/registrar.ts";
 import { SETTINGS_FILE, SettingsStore } from "./index.ts";
 
@@ -21,11 +21,11 @@ const setup = async (
     data === undefined ? {} : { [SETTINGS_FILE]: file(data) }
   );
   const clock = new FakeClock();
-  const app = new FakeApp();
+  const lifecycle = new FakeLifecycle();
   const registrar = new FakeRegistrar();
   const fallbacks: Fallback[] = [];
   const store = new SettingsStore({
-    app,
+    lifecycle,
     clock,
     fs,
     onError: (error) => {
@@ -43,7 +43,7 @@ const setup = async (
   store.subscribe((changed) => {
     changes.push([...changed]);
   });
-  return { app, changes, clock, fallbacks, fs, opened, registrar, store };
+  return { lifecycle, changes, clock, fallbacks, fs, opened, registrar, store };
 };
 
 const stored = (fs: FakeFs): unknown =>
@@ -76,7 +76,7 @@ describe(SettingsStore, () => {
     const fs = new FakeFs({ [SETTINGS_FILE]: "{ half" });
     const fallbacks: Fallback[] = [];
     await new SettingsStore({
-      app: new FakeApp(),
+      lifecycle: new FakeLifecycle(),
       clock: new FakeClock(),
       fs,
       onError: (error) => {
