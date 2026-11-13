@@ -7,6 +7,7 @@ import {
 } from "../../../shared/settings/define.ts";
 
 export const updatesPage = defineSettingsPage("updates", {
+  icon: "refresh-cw",
   label: msg`Updates`,
   order: 60,
 });

@@ -6,6 +6,7 @@ import {
 } from "../../../shared/settings/define.ts";
 
 export const appearancePage = defineSettingsPage("appearance", {
+  icon: "palette",
   label: msg`Appearance`,
   order: 20,
 });

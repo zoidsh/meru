@@ -10,6 +10,7 @@ import { Button } from "../../ui/button.tsx";
 import { useHash } from "../../use-hash.ts";
 import { pageContents } from "./contents.ts";
 import { fieldKindOf } from "./field-kind.ts";
+import { pageIcons } from "./page-icons.ts";
 import { SettingField } from "./setting-field.tsx";
 import { SettingsSection } from "./settings-section.tsx";
 import { useSettingsClient } from "./use-settings-client.ts";
@@ -74,22 +75,26 @@ export const SettingsWindow = () => {
           aria-label={msg`Settings`}
           className="flex w-58 shrink-0 flex-col gap-1 overflow-y-auto border-r px-3 pb-3"
         >
-          {settingsPages.map((found) => (
-            <Button
-              aria-current={found.id === page.id ? "page" : undefined}
-              className={cn(
-                "w-full justify-start font-normal",
-                found.id !== page.id && "text-muted-foreground"
-              )}
-              key={found.id}
-              onClick={() => {
-                navigate(found.id);
-              }}
-              variant={found.id === page.id ? "secondary" : "ghost"}
-            >
-              {found.label}
-            </Button>
-          ))}
+          {settingsPages.map((found) => {
+            const Icon = pageIcons[found.icon];
+            return (
+              <Button
+                aria-current={found.id === page.id ? "page" : undefined}
+                className={cn(
+                  "w-full justify-start font-normal",
+                  found.id !== page.id && "text-muted-foreground"
+                )}
+                key={found.id}
+                onClick={() => {
+                  navigate(found.id);
+                }}
+                variant={found.id === page.id ? "secondary" : "ghost"}
+              >
+                <Icon aria-hidden="true" />
+                {found.label}
+              </Button>
+            );
+          })}
         </nav>
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-8">

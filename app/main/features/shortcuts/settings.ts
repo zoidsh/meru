@@ -15,6 +15,7 @@ const acceleratorSchema = z
   });
 
 export const shortcutsPage = defineSettingsPage("shortcuts", {
+  icon: "keyboard",
   label: msg`Shortcuts`,
   order: 40,
 });

@@ -1,3 +1,4 @@
+import type { IconName } from "lucide-react/dynamic";
 import type { z } from "zod";
 
 import type { SettingScope, SettingSpec } from "../../core/engines/settings.ts";
@@ -5,17 +6,24 @@ import type { Platform } from "../../core/records/platform.ts";
 import type { DottedKey, Name } from "../key.ts";
 import type { Message } from "../msg.ts";
 
-/** A page of the settings window: what it is called and where it sits down the left, lowest first. */
-export interface SettingsPage<Id extends string = string> {
+/** A page of the settings window: what it is called, the lucide icon before its label, by name, and where it sits down the left, lowest first. */
+export interface SettingsPage<
+  Id extends string = string,
+  Icon extends IconName = IconName,
+> {
   readonly id: Id;
   readonly label: Message;
+  readonly icon: Icon;
   readonly order: number;
 }
 
-export const defineSettingsPage = <const Id extends string>(
+export const defineSettingsPage = <
+  const Id extends string,
+  const Icon extends IconName,
+>(
   id: Id & Name<Id>,
-  page: Omit<SettingsPage<Id>, "id">
-): SettingsPage<Id> => ({ ...page, id });
+  page: Omit<SettingsPage<Id, Icon>, "id">
+): SettingsPage<Id, Icon> => ({ ...page, id });
 
 /** A choice's settings name each of its values, as do several choices' of one kind; any other kind names none. */
 type OptionsOf<S extends z.ZodType> = S extends z.ZodEnum

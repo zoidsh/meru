@@ -7,6 +7,7 @@ import {
 } from "../../../shared/settings/define.ts";
 
 export const profilesPage = defineSettingsPage("profiles", {
+  icon: "users",
   label: msg`Profiles`,
   order: 10,
 });

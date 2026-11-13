@@ -48,6 +48,8 @@ const pages = [
 
 export type SettingsPageId = (typeof pages)[number]["id"];
 
+export type SettingsPageIcon = (typeof pages)[number]["icon"];
+
 /** The settings window's pages, in the order they sit down the left. */
 export const settingsPages = sortBy(pages, [(page) => page.order]);
 

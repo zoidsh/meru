@@ -11,6 +11,7 @@ import {
 } from "../../../shared/settings/define.ts";
 
 export const sidebarPage = defineSettingsPage("sidebar", {
+  icon: "panel-left",
   label: msg`Sidebar`,
   order: 50,
 });
