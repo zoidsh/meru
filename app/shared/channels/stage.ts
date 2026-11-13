@@ -3,7 +3,7 @@ import { z } from "zod";
 import { idSchema } from "../../core/records/id.ts";
 import { orientationSchema } from "../../core/records/layout.ts";
 import { navigationSchema } from "../../core/records/navigation.ts";
-import { rectSchema } from "../../core/records/rect.ts";
+import { pointSchema, rectSchema } from "../../core/records/rect.ts";
 import { styleSchema } from "../../core/records/style.ts";
 import {
   defineChannels,
@@ -33,8 +33,6 @@ export const stageSnapshotSchema = z.object({
 
 export type StageSnapshot = z.infer<typeof stageSnapshotSchema>;
 
-const pointer = z.object({ x: z.number(), y: z.number() });
-
 /** What a drag over the panes carries: a split's divider, or a sidebar row dragged onto a pane. */
 export const dragSubjectSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("divider"), splitId: idSchema }),
@@ -46,8 +44,8 @@ export type DragSubject = z.infer<typeof dragSubjectSchema>;
 export const stage = defineChannels("stage", {
   /** Covers the panes of the sender's window with the drag's overlay, which takes the pointer until the release. */
   beginDrag: event(dragSubjectSchema),
-  dragTo: event(pointer.extend({ buttons: z.number().int() })),
-  endDrag: event(pointer),
+  dragTo: event(pointSchema.extend({ buttons: z.number().int() })),
+  endDrag: event(pointSchema),
   /** Opens a tab of the app in the profile and shows it, in a group of one or, with `split`, beside the focused pane of the sender's window in `orientation`, vertical unless named; a single-instance app's one tab instead when the profile has it. */
   openTab: invoke(
     z.object({
