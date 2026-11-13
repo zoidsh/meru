@@ -1,47 +1,55 @@
 import {
-  close,
   focusNext,
   focusPrevious,
   layout,
   panes,
   ratioAt,
   resize,
-  split,
   STYLE_METRICS,
 } from "../../../core/engines/layout.ts";
 import type {
-  Ids,
   Unsubscribe,
   ViewFactoryPort,
   ViewPort,
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Group } from "../../../core/records/group.ts";
-import type { Orientation } from "../../../core/records/layout.ts";
+import type { Layout, Orientation } from "../../../core/records/layout.ts";
+import { partitionOf } from "../../../core/records/profile.ts";
 import type { Point, Rect } from "../../../core/records/rect.ts";
 import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { StageSnapshot } from "../../../shared/stage.ts";
+import type { Profiles } from "../profiles/index.ts";
 
 export type StageError =
   | "unknownWindow"
   | "unknownPane"
   | "unknownSplit"
   | "lastPane"
+  /** The profiles refused the change, such as closing a profile's last Gmail tab. */
+  | "refused"
   | "failed";
+
+/** What a stage reads its group and tabs from, and changes them through. */
+export type StageProfiles = Pick<
+  Profiles,
+  "group" | "tab" | "addTab" | "closeTab" | "resize"
+>;
 
 export interface StageOptions {
   readonly window: WindowPort;
   readonly views: ViewFactoryPort;
-  readonly ids: Ids;
-  readonly group: Group;
-  readonly tabs: Map<string, Tab>;
+  readonly profiles: StageProfiles;
+  /** The group the window shows, read again whenever the state may have changed. */
+  readonly groupId: () => string | undefined;
+  /** The address a pane loads for its tab. */
+  readonly urlOf: (tab: Tab) => string;
   /** Read on every layout, so a change shows at the next one. */
   readonly style: () => Style;
-  /** The zoom of this group's profile. */
-  readonly zoom: () => number;
+  readonly zoom: (profileId: string) => number;
   readonly dragPreload: string | undefined;
   readonly onChange: (snapshot: StageSnapshot) => void;
   readonly onOverlay: (contentsId: number, attached: boolean) => void;
@@ -51,6 +59,9 @@ export interface StageOptions {
 interface Drag {
   readonly splitId: string;
   readonly overlay: ViewPort;
+  /** The layout as the pointer left it, which the group takes on release. */
+  layout: Layout;
+  ratio: number | undefined;
 }
 
 const TRANSPARENT = "#00000000";
@@ -68,25 +79,27 @@ const hostOf = (url: string) => {
 
 export class Stage {
   readonly #options: StageOptions;
-  #group: Group;
   readonly #views = new Map<string, ViewPort>();
   readonly #unsubscribe: Unsubscribe[] = [];
   readonly #focusListeners = new Map<string, Unsubscribe>();
+  #shown: Group | undefined;
   #overlays: ViewPort[] = [];
   #retired: ViewPort[] = [];
   #focused: string | undefined;
   #fullscreen: string | undefined;
   #drag: Drag | undefined;
+  #published: string | undefined;
   #disposed = false;
 
   constructor(options: StageOptions) {
     this.#options = options;
-    this.#group = options.group;
-    this.#focused = panes(options.group.layout)[0]?.paneId;
+    this.#shown = this.#read();
+    this.#focused = panes(this.#layout())[0]?.paneId;
   }
 
-  get group(): Group {
-    return this.#group;
+  /** The group the stage shows, as the profiles hold it now. */
+  get group(): Group | undefined {
+    return this.#read();
   }
 
   start(): void {
@@ -102,74 +115,83 @@ export class Stage {
     this.#update();
   }
 
+  /** Shows the group again if it, or which group the window shows, changed since the stage last looked. */
+  refresh(): void {
+    const group = this.#read();
+    if (this.#disposed || group === this.#shown) {
+      return;
+    }
+    this.#shown = group;
+    const order = panes(this.#layout());
+    if (!order.some((pane) => pane.paneId === this.#focused)) {
+      this.#focused = order[0]?.paneId;
+    }
+    if (!order.some((pane) => pane.paneId === this.#fullscreen)) {
+      this.#fullscreen = undefined;
+    }
+    this.#update();
+  }
+
+  /** Splits a pane with a new tab of the same app beside or below it. */
   split(
     orientation: Orientation,
     paneId = this.#focused
   ): Result<undefined, StageError> {
+    const group = this.#read();
     const source = this.#tabOf(paneId);
-    if (paneId === undefined || source === undefined) {
+    if (paneId === undefined || group === undefined || source === undefined) {
       return err("unknownPane");
     }
-    const tab: Tab = { ...source, id: this.#options.ids() };
-    const result = split(
-      this.#group.layout,
-      paneId,
+    const added = this.#options.profiles.addTab(group.profileId, source.appId, {
+      groupId: group.id,
       orientation,
-      tab.id,
-      this.#options.ids
-    );
-    if (result === undefined) {
-      return err("unknownPane");
+      paneId,
+    });
+    if (!added.ok) {
+      return err(added.error === "unknownPane" ? "unknownPane" : "refused");
     }
-    this.#options.tabs.set(tab.id, tab);
-    this.#group = {
-      ...this.#group,
-      layout: result.layout,
-      tabIds: [...this.#group.tabIds, tab.id],
-    };
-    this.#update();
-    this.focusPane(result.paneId);
-    return ok(undefined);
+    this.refresh();
+    const pane = panes(this.#layout()).find((found) =>
+      found.tabIds.includes(added.value.id)
+    );
+    return pane === undefined ? ok(undefined) : this.focusPane(pane.paneId);
   }
 
+  /** Closes a pane's tab; the last pane stays. */
   close(paneId = this.#focused): Result<undefined, StageError> {
-    const order = panes(this.#group.layout);
+    const order = panes(this.#layout());
     const index = order.findIndex((pane) => pane.paneId === paneId);
     const closing = order[index];
-    if (closing === undefined) {
+    const [tabId] = closing?.tabIds ?? [];
+    if (closing === undefined || tabId === undefined) {
       return err("unknownPane");
     }
     if (order.length === 1) {
       return err("lastPane");
     }
-    const tree = close(this.#group.layout, closing.paneId);
-    this.#group = {
-      ...this.#group,
-      layout: tree,
-      tabIds: this.#group.tabIds.filter((id) => !closing.tabIds.includes(id)),
-    };
-    for (const id of closing.tabIds) {
-      this.#options.tabs.delete(id);
+    const wasFocused = this.#focused === closing.paneId;
+    if (!this.#options.profiles.closeTab(tabId).ok) {
+      return err("refused");
     }
-    if (this.#fullscreen === closing.paneId) {
-      this.#fullscreen = undefined;
-    }
-    const remaining = panes(tree);
+    this.refresh();
+    const remaining = panes(this.#layout());
     const next = remaining[Math.min(index, remaining.length - 1)]?.paneId;
-    this.#update();
-    if (next !== undefined && this.#focused === closing.paneId) {
+    if (next !== undefined && wasFocused) {
       this.focusPane(next);
     }
     return ok(undefined);
   }
 
   resize(splitId: string, ratio: number): Result<undefined, StageError> {
-    const tree = resize(this.#group.layout, splitId, ratio);
-    if (tree === this.#group.layout) {
+    const group = this.#read();
+    if (group === undefined) {
       return err("unknownSplit");
     }
-    this.#group = { ...this.#group, layout: tree };
-    this.#update();
+    const resized = this.#options.profiles.resize(group.id, splitId, ratio);
+    if (!resized.ok) {
+      return err(resized.error === "unknownSplit" ? "unknownSplit" : "refused");
+    }
+    this.refresh();
     return ok(undefined);
   }
 
@@ -193,12 +215,12 @@ export class Stage {
   }
 
   #focusBy(
-    step: (tree: Group["layout"], paneId: string) => string | undefined
+    step: (tree: Layout, paneId: string) => string | undefined
   ): Result<undefined, StageError> {
     const target =
       this.#focused === undefined
         ? undefined
-        : step(this.#group.layout, this.#focused);
+        : step(this.#layout(), this.#focused);
     return target === undefined ? err("unknownPane") : this.focusPane(target);
   }
 
@@ -214,7 +236,7 @@ export class Stage {
   // Pointer events over a pane go to that pane's renderer, so the chrome page cannot follow a drag across one by itself; a transparent view over every pane catches the pointer for the drag's duration.
   beginDrag(splitId: string): Result<undefined, StageError> {
     const divider = layout(
-      this.#group.layout,
+      this.#layout(),
       this.#options.window.contentBounds(),
       this.#options.style(),
       this.#fullscreen
@@ -230,7 +252,7 @@ export class Stage {
     });
     overlay.setBackgroundColor(TRANSPARENT);
     this.#load(overlay, dragPage(divider.orientation));
-    this.#drag = { overlay, splitId };
+    this.#drag = { layout: this.#layout(), overlay, ratio: undefined, splitId };
     this.#overlays = [...this.#overlays, overlay];
     this.#options.onOverlay(overlay.contentsId, true);
     this.#reconcile();
@@ -244,10 +266,9 @@ export class Stage {
     if (drag === undefined) {
       return ok(undefined);
     }
-    const bounds = this.#options.window.contentBounds();
     const ratio = ratioAt(
-      this.#group.layout,
-      bounds,
+      drag.layout,
+      this.#options.window.contentBounds(),
       this.#options.style(),
       drag.splitId,
       point
@@ -255,20 +276,25 @@ export class Stage {
     if (ratio === undefined) {
       return err("unknownSplit");
     }
-    this.#group = {
-      ...this.#group,
-      layout: resize(this.#group.layout, drag.splitId, ratio),
-    };
+    drag.layout = resize(drag.layout, drag.splitId, ratio);
+    drag.ratio = ratio;
     this.#arrange();
     return ok(undefined);
   }
 
+  // The group takes the ratio once, on release, so a drag writes the state once rather than with every move of the pointer.
   endDrag(point: Point): Result<undefined, StageError> {
-    if (this.#drag === undefined) {
+    const drag = this.#drag;
+    if (drag === undefined) {
       return ok(undefined);
     }
     this.dragTo(point);
     this.#retireOverlay();
+    const group = this.#read();
+    if (drag.ratio !== undefined && group !== undefined) {
+      this.#options.profiles.resize(group.id, drag.splitId, drag.ratio);
+    }
+    this.refresh();
     this.#reconcile();
     return ok(undefined);
   }
@@ -280,7 +306,11 @@ export class Stage {
 
   /** Applies the profile's zoom to every pane after it changed. */
   rezoom(): void {
-    const zoom = this.#options.zoom();
+    const group = this.#read();
+    if (group === undefined) {
+      return;
+    }
+    const zoom = this.#options.zoom(group.profileId);
     for (const view of this.#views.values()) {
       view.setZoomFactor(zoom);
     }
@@ -290,7 +320,7 @@ export class Stage {
   get roles(): { readonly contentsId: number; readonly name: string }[] {
     return [
       { contentsId: this.#options.window.contentsId, name: "chrome page" },
-      ...panes(this.#group.layout).flatMap((pane) => {
+      ...panes(this.#layout()).flatMap((pane) => {
         const view = this.#views.get(pane.paneId);
         const tab = this.#tabOf(pane.paneId);
         return view === undefined || tab === undefined
@@ -305,7 +335,7 @@ export class Stage {
   }
 
   get zoomFactors(): number[] {
-    return panes(this.#group.layout).flatMap((pane) => {
+    return panes(this.#layout()).flatMap((pane) => {
       const view = this.#views.get(pane.paneId);
       return view === undefined ? [] : [view.zoomFactor()];
     });
@@ -317,7 +347,7 @@ export class Stage {
 
   snapshot(): StageSnapshot {
     const arrangement = layout(
-      this.#group.layout,
+      this.#layout(),
       this.#options.window.contentBounds(),
       this.#options.style(),
       this.#fullscreen
@@ -334,7 +364,7 @@ export class Stage {
   }
 
   stack(): ViewPort[] {
-    const paneViews = panes(this.#group.layout).flatMap((pane) => {
+    const paneViews = panes(this.#layout()).flatMap((pane) => {
       const view = this.#views.get(pane.paneId);
       return view === undefined || pane.paneId === this.#fullscreen
         ? []
@@ -375,12 +405,21 @@ export class Stage {
     this.#retired = [];
   }
 
+  #read(): Group | undefined {
+    const groupId = this.#options.groupId();
+    return groupId === undefined
+      ? undefined
+      : this.#options.profiles.group(groupId);
+  }
+
+  #layout(): Layout {
+    return this.#drag?.layout ?? this.#read()?.layout ?? null;
+  }
+
   #tabOf(paneId: string | undefined): Tab | undefined {
-    const pane = panes(this.#group.layout).find(
-      (found) => found.paneId === paneId
-    );
-    const tabId = pane?.tabIds[0];
-    return tabId === undefined ? undefined : this.#options.tabs.get(tabId);
+    const pane = panes(this.#layout()).find((found) => found.paneId === paneId);
+    const [tabId] = pane?.tabIds ?? [];
+    return tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
   }
 
   #load(view: ViewPort, url: string): void {
@@ -406,8 +445,9 @@ export class Stage {
   }
 
   #syncViews(): void {
+    const group = this.#read();
     const wanted = new Map(
-      panes(this.#group.layout).map((pane) => [pane.paneId, pane])
+      panes(this.#layout()).map((pane) => [pane.paneId, pane])
     );
     for (const [paneId, view] of this.#views) {
       if (!wanted.has(paneId)) {
@@ -417,6 +457,9 @@ export class Stage {
         this.#retired.push(view);
       }
     }
+    if (group === undefined) {
+      return;
+    }
     const { radius } = STYLE_METRICS[this.#options.style()];
     for (const [paneId, pane] of wanted) {
       const tab = this.#tabOf(paneId);
@@ -424,9 +467,9 @@ export class Stage {
         continue;
       }
       const view = this.#options.views.create({
-        partition: `persist:${this.#group.profileId}`,
+        partition: partitionOf(group.profileId),
         radius,
-        zoom: this.#options.zoom(),
+        zoom: this.#options.zoom(group.profileId),
       });
       this.#focusListeners.set(
         paneId,
@@ -438,7 +481,7 @@ export class Stage {
         })
       );
       this.#views.set(paneId, view);
-      this.#load(view, tab.url);
+      this.#load(view, this.#options.urlOf(tab));
     }
   }
 
@@ -469,7 +512,7 @@ export class Stage {
   #arrange(publish = true): void {
     const bounds = this.#options.window.contentBounds();
     const arrangement = layout(
-      this.#group.layout,
+      this.#layout(),
       bounds,
       this.#options.style(),
       this.#fullscreen
@@ -496,9 +539,16 @@ export class Stage {
     this.#arrange();
   }
 
+  // A page needs only the stage as it is now, so a snapshot equal to the last one sent is not sent again.
   #publish(): void {
-    if (!this.#disposed) {
-      this.#options.onChange(this.snapshot());
+    if (this.#disposed) {
+      return;
+    }
+    const snapshot = this.snapshot();
+    const text = JSON.stringify(snapshot);
+    if (text !== this.#published) {
+      this.#published = text;
+      this.#options.onChange(snapshot);
     }
   }
 }

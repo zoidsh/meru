@@ -56,12 +56,15 @@ const createWindow = (spec: WindowSpec): WindowPort => {
     loadUrl: async (url) => {
       await window.loadURL(url);
     },
+    // "close" comes last, while the bounds can still be read, so a move that sent no event of its own, as a programmatic one may not on every platform, is still kept.
     onBoundsChanged: (listener) => {
       window.on("move", listener);
       window.on("resize", listener);
+      window.on("close", listener);
       return () => {
         window.off("move", listener);
         window.off("resize", listener);
+        window.off("close", listener);
       };
     },
     onClosed: (listener) => {

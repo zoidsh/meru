@@ -11,7 +11,6 @@ import {
 } from "./app.ts";
 import type { Launched } from "./app.ts";
 
-// The profile main/index.ts opens until profiles arrive.
 const PROFILE = "dev";
 
 const contentSize = async ({ chrome }: Launched) =>
@@ -54,6 +53,7 @@ test("tiles classic panes edge to edge from settings.json", async () => {
 
 test("zooms a profile's panes by its override of stage.zoom", async () => {
   const { chrome, close } = await launch({
+    profileId: PROFILE,
     settings: { global: {}, profiles: { [PROFILE]: { "stage.zoom": 1.5 } } },
   });
   try {
@@ -88,7 +88,7 @@ test("puts a rebound command's shortcut in the menu", async () => {
 });
 
 test("follows settings.json edited while the app runs", async () => {
-  const launched = await launch();
+  const launched = await launch({ profileId: PROFILE });
   const { chrome, close, userData } = launched;
   try {
     await expect.poll(async () => await styleOf(chrome)).toBe("modern");

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { entitlementSchema } from "../../core/records/entitlement.ts";
 import { rectSchema } from "../../core/records/rect.ts";
 import { updateStateSchema } from "../../core/records/update.ts";
+import { profilesSnapshotSchema } from "../profiles.ts";
 import { stageSnapshotSchema } from "../stage.ts";
 import { defineChannels, invoke } from "./define.ts";
 
@@ -14,6 +15,7 @@ export const e2e = defineChannels("e2e", {
       entitlement: entitlementSchema,
       /** The accelerator of each item in the application menu, by id. */
       menu: z.record(z.string(), z.string().nullable()),
+      profiles: profilesSnapshotSchema,
       stage: stageSnapshotSchema,
       update: updateStateSchema,
       /** Bounds Electron reports for each child view, bottom first. */

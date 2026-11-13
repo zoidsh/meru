@@ -5,6 +5,7 @@ import path from "node:path";
 import { _electron as electron, expect } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 
+import type { ProfilesState } from "../packages/app/core/records/profiles-state.ts";
 import { commands } from "../packages/app/shared/channels/commands.ts";
 import { wireName } from "../packages/app/shared/channels/define.ts";
 import { e2e } from "../packages/app/shared/channels/e2e.ts";
@@ -24,6 +25,8 @@ export interface LaunchOptions {
   readonly env?: Readonly<Record<string, string>>;
   /** The settings layers, written to `settings.json` before the app starts. */
   readonly settings?: Settings;
+  /** The id of the one profile, written to `profiles.json` before the app starts, for a test that names the profile in a file. */
+  readonly profileId?: string;
   /** An existing user data directory, kept when the app closes; a temporary one otherwise. */
   readonly userData?: string;
 }
@@ -37,14 +40,50 @@ export const writeSettings = async (userData: string, settings: Settings) => {
   );
 };
 
+/** What a first launch writes to `profiles.json`, with the profile's id chosen. */
+export const firstProfiles = (profileId: string): ProfilesState => ({
+  groups: [
+    {
+      id: "group-1",
+      layout: { kind: "leaf", paneId: "pane-1", tabIds: ["tab-1"] },
+      profileId,
+      tabIds: ["tab-1"],
+    },
+  ],
+  profiles: [
+    { id: profileId, label: "Personal", order: 0, status: { kind: "ok" } },
+  ],
+  selectedProfileId: profileId,
+  tabs: [
+    {
+      appId: "gmail",
+      health: "ok",
+      id: "tab-1",
+      pinned: false,
+      profileId,
+      sleeping: false,
+      title: "Gmail",
+      url: "https://mail.google.com/",
+      zoom: 1,
+    },
+  ],
+});
+
 export const launch = async ({
   env = {},
   settings,
+  profileId,
   userData: given,
 }: LaunchOptions = {}): Promise<Launched> => {
   const userData = given ?? (await mkdtemp(path.join(tmpdir(), "meru-e2e-")));
   if (settings !== undefined) {
     await writeSettings(userData, settings);
+  }
+  if (profileId !== undefined) {
+    await writeFile(
+      path.join(userData, "profiles.json"),
+      JSON.stringify({ data: firstProfiles(profileId), version: 1 })
+    );
   }
   // chrome-sandbox ships without its setuid bit outside an installed package, so an unpacked Linux run cannot use the sandbox.
   const sandbox = process.platform === "linux" ? ["--no-sandbox"] : [];

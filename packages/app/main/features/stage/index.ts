@@ -1,10 +1,9 @@
+import type { AppEvents } from "../../../core/events.ts";
 import type {
-  Ids,
   Unsubscribe,
   ViewFactoryPort,
   WindowPort,
 } from "../../../core/ports.ts";
-import type { Group } from "../../../core/records/group.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
 import type { Point, Rect } from "../../../core/records/rect.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -19,9 +18,9 @@ import type { StageSnapshot } from "../../../shared/stage.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import { stageCommands } from "./commands.ts";
 import { Stage } from "./stage.ts";
-import type { StageError } from "./stage.ts";
+import type { StageError, StageProfiles } from "./stage.ts";
 
-export type { StageError } from "./stage.ts";
+export type { StageError, StageProfiles } from "./stage.ts";
 export { Stage } from "./stage.ts";
 
 export interface StageInspection {
@@ -31,8 +30,11 @@ export interface StageInspection {
 }
 
 export interface StagesOptions {
-  readonly ids: Ids;
   readonly views: ViewFactoryPort;
+  readonly profiles: StageProfiles;
+  readonly events: AppEvents;
+  /** Load `about:blank` in every pane, for the end-to-end suite, which asserts on views and bounds and never on a network page. */
+  readonly blankPanes: boolean;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
   readonly registrar: IpcRegistrar;
@@ -42,7 +44,6 @@ export interface StagesOptions {
 
 export class Stages {
   readonly #options: StagesOptions;
-  readonly #tabs = new Map<string, Tab>();
   readonly #bySender = new Map<number, Stage>();
   readonly #unassign = new Map<number, Unsubscribe>();
 
@@ -51,8 +52,13 @@ export class Stages {
   }
 
   start(): Unsubscribe {
-    const { registrar, settings, commands } = this.#options;
+    const { registrar, settings, commands, events } = this.#options;
     const unregister = [
+      events.on("stage.invalidated", () => {
+        for (const found of new Set(this.#bySender.values())) {
+          found.refresh();
+        }
+      }),
       commands.register(stageCommands, {
         closeTab: ({ windowId }) => this.close(windowId),
         focusNext: ({ windowId }) => this.focusNext(windowId),
@@ -102,15 +108,13 @@ export class Stages {
     };
   }
 
-  open(window: WindowPort, group: Group, tabs: readonly Tab[]): Stage {
-    for (const tab of tabs) {
-      this.#tabs.set(tab.id, tab);
-    }
+  /** Opens the stage of a window that shows the group `groupId` names, read again on every change. */
+  open(window: WindowPort, groupId: () => string | undefined): Stage {
     const windowId = window.contentsId;
+    const { blankPanes, profiles, settings } = this.#options;
     const opened = new Stage({
       dragPreload: this.#options.dragPreload,
-      group,
-      ids: this.#options.ids,
+      groupId,
       onChange: (snapshot) => {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
       },
@@ -128,11 +132,12 @@ export class Stages {
           this.#unassign.delete(contentsId);
         }
       },
-      style: () => this.#options.settings.get("appearance.style"),
-      tabs: this.#tabs,
+      profiles,
+      style: () => settings.get("appearance.style"),
+      urlOf: (tab: Tab) => (blankPanes ? "about:blank" : tab.url),
       views: this.#options.views,
       window,
-      zoom: () => this.#options.settings.get("stage.zoom", group.profileId),
+      zoom: (profileId) => settings.get("stage.zoom", profileId),
     });
     this.#bySender.set(windowId, opened);
     window.onClosed(() => {

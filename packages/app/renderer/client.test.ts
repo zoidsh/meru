@@ -62,6 +62,12 @@ describe(createClient, () => {
     const answer = {
       entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
       menu: {},
+      profiles: {
+        groups: [],
+        profiles: [],
+        selectedProfileId: "p",
+        tabs: [],
+      },
       stage: snapshot,
       update: { kind: "idle" },
       views: [],

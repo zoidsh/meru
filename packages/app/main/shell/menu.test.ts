@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { leaf } from "../../core/engines/layout.ts";
 import { AppEvents } from "../../core/events.ts";
 import { commands as channels } from "../../shared/channels/commands.ts";
 import { commands } from "../../shared/commands/registry.ts";
@@ -9,9 +8,11 @@ import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
 import { fakeIds } from "../../test/fakes/ids.ts";
 import { FakeRegistrar } from "../../test/fakes/registrar.ts";
+import { FakeSessions } from "../../test/fakes/session.ts";
 import { FakeUpdater } from "../../test/fakes/updater.ts";
 import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
+import { Profiles } from "../features/profiles/index.ts";
 import { SettingsStore } from "../features/settings/index.ts";
 import { Stages } from "../features/stage/index.ts";
 import { Updater } from "../features/updater/index.ts";
@@ -26,7 +27,7 @@ const entriesOf = (section: MenuSection) =>
         (entry): entry is MenuAction => entry.kind === "action"
       );
 
-const setup = (platform = "darwin") => {
+const setup = async (platform = "darwin") => {
   const window = new FakeWindow();
   const reports: string[] = [];
   const registrar = new FakeRegistrar();
@@ -45,36 +46,40 @@ const setup = (platform = "darwin") => {
   });
   const dispatcher = new CommandDispatcher();
   dispatcher.start(registrar);
-  const stages = new Stages({
-    commands: dispatcher,
-    dragPreload: undefined,
+  const events = new AppEvents();
+  const profiles = new Profiles({
+    app: new FakeApp(platform),
+    clock: new FakeClock(),
+    entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
+    events,
+    fs: new FakeFs(),
     ids: fakeIds(),
     onError: () => {
       reports.push("error");
     },
     registrar,
+    report: (message) => {
+      reports.push(message);
+    },
+    sessions: new FakeSessions(),
+    settings,
+  });
+  await profiles.open();
+  const stages = new Stages({
+    blankPanes: false,
+    commands: dispatcher,
+    dragPreload: undefined,
+    events,
+    onError: () => {
+      reports.push("error");
+    },
+    profiles,
+    registrar,
     settings,
     views: new FakeViewFactory(),
   });
   stages.start();
-  stages.open(
-    window,
-    { id: "g1", layout: leaf("p1", "t1"), profileId: "dev", tabIds: ["t1"] },
-    [
-      {
-        appId: "gmail",
-        health: "ok",
-        id: "t1",
-        pinned: false,
-        profileId: "dev",
-        sleeping: false,
-        title: "Gmail",
-        url: "https://mail.google.com/",
-        zoom: 1,
-      },
-    ]
-  );
-  const events = new AppEvents();
+  stages.open(window, () => profiles.currentGroup()?.id);
   const feed = new FakeUpdater();
   new Updater({
     app: new FakeApp(platform),
@@ -133,8 +138,8 @@ const shortcuts = (actions: readonly MenuAction[]) =>
   actions.map(({ id, accelerator }) => [id, accelerator]);
 
 describe(ApplicationMenu, () => {
-  it("carries the stage's commands in the View menu, beside the Edit menu, with their default shortcuts", () => {
-    const { actions, sections } = setup();
+  it("carries the stage's commands in the View menu, beside the Edit menu, with their default shortcuts", async () => {
+    const { actions, sections } = await setup();
     expect(
       actions().map(({ id, accelerator, label }) => ({
         accelerator,
@@ -171,8 +176,8 @@ describe(ApplicationMenu, () => {
     expect(sections()[1]).toStrictEqual({ kind: "role", role: "editMenu" });
   });
 
-  it("puts a file menu where there is no app menu, and the update commands in Help", () => {
-    const { sections } = setup("linux");
+  it("puts a file menu where there is no app menu, and the update commands in Help", async () => {
+    const { sections } = await setup("linux");
     const [first] = sections();
     const help = sections().at(3);
     expect(first).toStrictEqual({ kind: "role", role: "fileMenu" });
@@ -187,8 +192,9 @@ describe(ApplicationMenu, () => {
     });
   });
 
-  it("puts the update commands in the app menu on macOS, between About and Services", () => {
-    const [app] = setup("darwin").sections();
+  it("puts the update commands in the app menu on macOS, between About and Services", async () => {
+    const { sections } = await setup("darwin");
+    const [app] = sections();
     expect(
       app?.kind === "roleSubmenu" &&
         app.entries.map((entry) =>
@@ -212,8 +218,8 @@ describe(ApplicationMenu, () => {
     ]);
   });
 
-  it("enables Restart to update once an update is ready, rebuilding the menu", () => {
-    const { built, feed, sections } = setup("linux");
+  it("enables Restart to update once an update is ready, rebuilding the menu", async () => {
+    const { built, feed, sections } = await setup("linux");
     const install = () =>
       sections()
         .flatMap(entriesOf)
@@ -224,8 +230,8 @@ describe(ApplicationMenu, () => {
     expect(install()).toBeTruthy();
   });
 
-  it("runs a command in the window it is for", () => {
-    const { action, window } = setup();
+  it("runs a command in the window it is for", async () => {
+    const { action, window } = await setup();
     action("stage.splitVertical").run(window.contentsId);
     action("stage.splitHorizontal").run(window.contentsId);
     expect(window.childViews()).toHaveLength(3);
@@ -233,15 +239,15 @@ describe(ApplicationMenu, () => {
     expect(window.childViews()).toHaveLength(2);
   });
 
-  it("reports what it could not do and does nothing without a window", () => {
-    const { action, window, reports } = setup();
+  it("reports what it could not do and does nothing without a window", async () => {
+    const { action, window, reports } = await setup();
     action("stage.closeTab").run(window.contentsId);
     action("stage.closeTab").run(undefined);
     expect(reports).toStrictEqual(["stage.closeTab: lastPane"]);
   });
 
-  it("rebuilds with the user's shortcuts when they change, and only then", () => {
-    const { actions, built, settings, reports } = setup();
+  it("rebuilds with the user's shortcuts when they change, and only then", async () => {
+    const { actions, built, settings, reports } = await setup();
     settings.set("stage.zoom", 2);
     expect(built).toHaveLength(1);
     settings.set("shortcuts.bindings", {
@@ -265,8 +271,8 @@ describe(ApplicationMenu, () => {
     ]);
   });
 
-  it("runs a command a page asks for, in the page's window", () => {
-    const { registrar, window } = setup();
+  it("runs a command a page asks for, in the page's window", async () => {
+    const { registrar, window } = await setup();
     expect(
       registrar.call(
         channels.run,

@@ -1,9 +1,6 @@
 import path from "node:path";
 
-import { leaf } from "../core/engines/layout.ts";
 import { AppEvents } from "../core/events.ts";
-import type { Group } from "../core/records/group.ts";
-import type { Tab } from "../core/records/tab.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { rendererSurface, surfaces } from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
@@ -32,8 +29,6 @@ import { IpcDispatcher } from "./shell/ipc.ts";
 import { answerMeasure } from "./shell/measure.ts";
 import { ApplicationMenu } from "./shell/menu.ts";
 import { MainWindow } from "./shell/window.ts";
-
-const PROFILE_ID = "dev";
 
 const report = (error: unknown) => {
   console.error(error);
@@ -153,10 +148,12 @@ const start = async () => {
   commands.start(dispatcher);
 
   const stages = new Stages({
+    blankPanes: e2e,
     commands,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
-    ids: ports.ids,
+    events,
     onError: report,
+    profiles,
     registrar: dispatcher,
     settings,
     views: ports.views,
@@ -194,30 +191,12 @@ const start = async () => {
     answerE2e({
       accelerators: applicationAccelerators,
       entitlement,
+      profiles,
       registrar: dispatcher,
       stages,
       updater,
     });
   }
-
-  const tab: Tab = {
-    appId: "gmail",
-    health: "ok",
-    id: ports.ids(),
-    pinned: false,
-    profileId: PROFILE_ID,
-    sleeping: false,
-    title: "Gmail",
-    // The end-to-end suite asserts on views and bounds, never on a network page.
-    url: e2e ? "about:blank" : "https://mail.google.com/",
-    zoom: 1,
-  };
-  const group: Group = {
-    id: ports.ids(),
-    layout: leaf(ports.ids(), tab.id),
-    profileId: PROFILE_ID,
-    tabIds: [tab.id],
-  };
 
   const window = new MainWindow({
     background: process.env.MERU_BACKGROUND === "1",
@@ -225,7 +204,7 @@ const start = async () => {
     onCreated: (created) => {
       dispatcher.assign(created.contentsId, rendererSurface);
       windows.attachMain(created);
-      stages.open(created, group, [tab]);
+      stages.open(created, () => windows.mainGroupId());
     },
     ports,
     preload: path.join(dist, "preload", "renderer.cjs"),
