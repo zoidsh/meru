@@ -34,7 +34,6 @@ export const stageCommands = defineCommands("stage", {
     shortcut: { default: "CmdOrCtrl+R" },
   },
   stop: { label: msg`Stop` },
-  // Neither 3.x, Chrome nor Arc has a key for swap, balance or maximise; each is new, as shortcuts-prior-art.md lines them up with iTerm, tmux and VS Code.
   swap: {
     label: msg`Swap with next pane`,
     menu: { order: 7, section: "view" },
