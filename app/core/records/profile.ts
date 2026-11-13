@@ -38,3 +38,12 @@ export const PROFILE_COLORS = [
 
 /** The session partition a profile's panes load in. */
 export const partitionOf = (profileId: string) => `persist:${profileId}`;
+
+/** A colour from the palette, picked by the profile's id, which is random. */
+export const colorFor = (profileId: string): string => {
+  let sum = 0;
+  for (const char of profileId) {
+    sum += char.codePointAt(0) ?? 0;
+  }
+  return PROFILE_COLORS[sum % PROFILE_COLORS.length] ?? PROFILE_COLORS[0];
+};

@@ -1,25 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import { fakeIds } from "../../test/fakes/ids.ts";
-import { PROFILE_COLORS } from "../records/profile.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
 import type { Tab } from "../records/tab.ts";
 import { leaf, panes } from "./layout.ts";
+import { repairState } from "./state-repair.ts";
+import { validateState } from "./state-validate.ts";
 import {
   addProfile,
   addTab,
   closeTab,
-  colorFor,
   createGroup,
   firstGroup,
   freshState,
   leaveGroup,
   removeProfile,
-  repairState,
   resizeSplit,
   selectProfile,
   splitInto,
-  validateState,
 } from "./state.ts";
 
 const tabOf = (id: string, profileId: string): Tab => ({
@@ -49,6 +47,8 @@ const unwrap = <T>(
   }
   return result.value;
 };
+
+const gmail = (appId: string) => appId === "gmail";
 
 const start = () => {
   const ids = fakeIds("n");
@@ -124,6 +124,19 @@ describe("the state's operations", () => {
       error: "lastTab",
       ok: false,
     });
+  });
+
+  it("keeps a profile's last tab of a single-instance app, and closes one that has another", () => {
+    const { ids, state } = start();
+    const two = unwrap(addTab(state, tabOf("t2", "a"), ids));
+    const calendar = unwrap(
+      addTab(state, { ...tabOf("t3", "a"), appId: "calendar" }, ids)
+    );
+    expect([
+      closeTab(calendar, "t1", gmail),
+      closeTab(two, "t1", gmail).ok,
+      closeTab(calendar, "t3", gmail).ok,
+    ]).toStrictEqual([{ error: "required", ok: false }, true, true]);
   });
 
   it("makes a group of tabs alone in theirs, and lets one leave it", () => {
@@ -223,13 +236,6 @@ describe("the state's operations", () => {
       error: "unknownSplit",
       ok: false,
     });
-  });
-});
-
-describe(colorFor, () => {
-  it("picks a colour of the palette, the same for the same id", () => {
-    expect(PROFILE_COLORS).toContain(colorFor("profile-1"));
-    expect(colorFor("profile-1")).toBe(colorFor("profile-1"));
   });
 });
 

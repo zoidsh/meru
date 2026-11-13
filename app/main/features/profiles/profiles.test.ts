@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { panes } from "../../../core/engines/layout.ts";
-import { validateState } from "../../../core/engines/state.ts";
+import { validateState } from "../../../core/engines/state-validate.ts";
+import { FIRST_PROFILE_LABEL } from "../../../core/engines/state.ts";
 import type { Placement } from "../../../core/engines/state.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { AppEventMap } from "../../../core/events.ts";
@@ -25,7 +26,7 @@ import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { SettingsStore } from "../settings/index.ts";
-import { FIRST_PROFILE_LABEL, Profiles, PROFILES_FILE } from "./index.ts";
+import { Profiles, PROFILES_FILE } from "./index.ts";
 
 const NOW = 1_800_000_000_000;
 const PAGE = 7;

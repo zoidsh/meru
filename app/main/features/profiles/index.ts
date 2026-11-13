@@ -1,18 +1,19 @@
 import { DisposableStore } from "../../../core/disposable.ts";
 import { orderedProfiles } from "../../../core/engines/ordering.ts";
+import { repairState } from "../../../core/engines/state-repair.ts";
+import { validateState } from "../../../core/engines/state-validate.ts";
 import {
   addProfile,
   addTab,
   closeTab,
-  colorFor,
+  firstState,
   firstGroup,
-  freshState,
   moveTabTo,
   removeProfile,
-  repairState,
   resizeSplit,
   selectProfile,
-  validateState,
+  newProfile,
+  newTab,
 } from "../../../core/engines/state.ts";
 import type { Placement, StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
@@ -25,7 +26,6 @@ import type {
   Ids,
   SessionPort,
 } from "../../../core/ports.ts";
-import type { App } from "../../../core/records/app.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { Group } from "../../../core/records/group.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
@@ -49,49 +49,14 @@ import type { SettingsStore } from "../settings/index.ts";
 
 export const PROFILES_FILE = "profiles.json";
 
-export const FIRST_PROFILE_LABEL = "Personal";
-
 export type ProfilesError =
   | StateError
   | GateRefusal
   | "unknownApp"
-  /** The profile's last tab of a single-instance app, such as Gmail, stays. */
-  | "required"
   /** The entitlement does not allow the profile now. */
   | "deactivated"
   /** The change would have broken an invariant of the state, which is a bug, reported. */
   | "invalid";
-
-export const newTab = (ids: Ids, profileId: string, app: App): Tab => ({
-  appId: app.id,
-  health: "ok",
-  id: ids(),
-  pinned: false,
-  profileId,
-  sleeping: false,
-  title: app.name,
-  url: app.url,
-  zoom: 1,
-});
-
-const newProfile = (
-  ids: Ids,
-  label: string,
-  color?: string
-): Omit<Profile, "order"> => {
-  const id = ids();
-  return { color: color ?? colorFor(id), id, label, status: { kind: "ok" } };
-};
-
-/** The state of a first launch: one profile with one Gmail tab, selected. */
-export const firstState = (ids: Ids): ProfilesState => {
-  const profile = newProfile(ids, FIRST_PROFILE_LABEL);
-  return freshState(
-    { ...profile, order: 0 },
-    newTab(ids, profile.id, gmail),
-    ids
-  );
-};
 
 export const profilesSnapshot = (
   ids: Ids
@@ -100,10 +65,10 @@ export const profilesSnapshot = (
   name: PROFILES_FILE,
   recover: (data) => {
     if (data === undefined) {
-      return { fallbacks: [], value: firstState(ids) };
+      return { fallbacks: [], value: firstState(ids, gmail) };
     }
     const repaired = repairState(data, {
-      fresh: () => firstState(ids),
+      fresh: () => firstState(ids, gmail),
       ids,
       tabFor: (profileId) => newTab(ids, profileId, gmail),
     });
@@ -304,19 +269,13 @@ export class Profiles {
   }
 
   closeTab(tabId: string): Result<undefined, ProfilesError> {
-    const tab = this.tab(tabId);
-    if (tab !== undefined && appById(tab.appId)?.singleInstance === true) {
-      const others = this.state.tabs.some(
-        (found) =>
-          found.id !== tabId &&
-          found.profileId === tab.profileId &&
-          found.appId === tab.appId
-      );
-      if (!others) {
-        return err("required");
-      }
-    }
-    return this.#commit(closeTab(this.state, tabId));
+    return this.#commit(
+      closeTab(
+        this.state,
+        tabId,
+        (appId) => appById(appId)?.singleInstance === true
+      )
+    );
   }
 
   moveTab(tabId: string, to: number): Result<undefined, ProfilesError> {

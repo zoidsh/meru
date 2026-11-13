@@ -1,18 +1,13 @@
-import { z } from "zod";
-
 import type { Ids } from "../ports.ts";
-import { groupSchema } from "../records/group.ts";
+import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
-import { idSchema } from "../records/id.ts";
 import type { Orientation } from "../records/layout.ts";
-import { PROFILE_COLORS, profileSchema } from "../records/profile.ts";
+import { colorFor } from "../records/profile.ts";
 import type { Profile, ProfileStatus } from "../records/profile.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
-import { tabSchema } from "../records/tab.ts";
 import type { Tab } from "../records/tab.ts";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
-import { pick } from "../values.ts";
 import { close, leaf, panes, resize, split } from "./layout.ts";
 import { groupOf, moveTab, orderedProfiles } from "./ordering.ts";
 
@@ -27,6 +22,8 @@ export type StateError =
   /** A profile keeps at least one tab. */
   | "lastTab"
   | "otherProfile"
+  /** The profile's last tab of a single-instance app, such as Gmail, stays. */
+  | "required"
   /** Only a tab alone in its group can join another. */
   | "alreadyGrouped"
   /** The tab is alone in its group already. */
@@ -34,95 +31,37 @@ export type StateError =
 
 type Changed = Result<ProfilesState, StateError>;
 
-const sameMembers = (a: readonly string[], b: readonly string[]) => {
-  const sorted = b.toSorted();
-  return (
-    a.length === b.length &&
-    a.toSorted().every((id, index) => id === sorted[index])
-  );
-};
-
-const repeated = (ids: readonly string[]) =>
-  ids.filter((id, index) => ids.indexOf(id) !== index);
-
-/** What is wrong with the state, one sentence per broken invariant; empty when it holds. */
-export const validateState = (state: ProfilesState): string[] => {
-  const problems: string[] = [];
-  const kinds = {
-    group: state.groups.map((group) => group.id),
-    pane: state.groups.flatMap((group) =>
-      panes(group.layout).map((pane) => pane.paneId)
-    ),
-    profile: state.profiles.map((profile) => profile.id),
-    tab: state.tabs.map((tab) => tab.id),
-  };
-  for (const [kind, ids] of Object.entries(kinds)) {
-    for (const id of new Set(repeated(ids))) {
-      problems.push(`${kind} ${id} appears more than once`);
-    }
-  }
-  const profileIds = new Set(kinds.profile);
-  if (!profileIds.has(state.selectedProfileId)) {
-    problems.push(`the selected profile ${state.selectedProfileId} is missing`);
-  }
-  const tabs = new Map(state.tabs.map((tab) => [tab.id, tab]));
-  for (const tab of state.tabs) {
-    if (!profileIds.has(tab.profileId)) {
-      problems.push(`tab ${tab.id} belongs to no profile`);
-    }
-    const count = state.groups.filter((group) =>
-      group.tabIds.includes(tab.id)
-    ).length;
-    if (count !== 1) {
-      problems.push(`tab ${tab.id} is in ${count} groups`);
-    }
-  }
-  for (const group of state.groups) {
-    if (!profileIds.has(group.profileId)) {
-      problems.push(`group ${group.id} belongs to no profile`);
-    }
-    if (group.tabIds.length === 0) {
-      problems.push(`group ${group.id} is empty`);
-    }
-    for (const id of new Set(repeated(group.tabIds))) {
-      problems.push(`group ${group.id} lists tab ${id} more than once`);
-    }
-    for (const id of group.tabIds) {
-      const tab = tabs.get(id);
-      if (tab === undefined) {
-        problems.push(`group ${group.id} lists the missing tab ${id}`);
-      } else if (tab.profileId !== group.profileId) {
-        problems.push(`group ${group.id} holds tab ${id} of another profile`);
-      }
-    }
-    const shown = panes(group.layout).flatMap((pane) => pane.tabIds);
-    if (!sameMembers(shown, group.tabIds)) {
-      problems.push(`group ${group.id}'s layout does not show its tabs`);
-    }
-  }
-  for (const profile of state.profiles) {
-    if (!state.tabs.some((tab) => tab.profileId === profile.id)) {
-      problems.push(`profile ${profile.id} has no tab`);
-    }
-  }
-  return problems;
-};
-
-/** A colour from the palette, picked by the profile's id, which is random. */
-export const colorFor = (profileId: string): string => {
-  let sum = 0;
-  for (const char of profileId) {
-    sum += char.codePointAt(0) ?? 0;
-  }
-  return PROFILE_COLORS[sum % PROFILE_COLORS.length] ?? PROFILE_COLORS[0];
-};
-
 export const groupOfOne = (tab: Tab, ids: Ids): Group => ({
   id: ids(),
   layout: leaf(ids(), tab.id),
   profileId: tab.profileId,
   tabIds: [tab.id],
 });
+
+export const FIRST_PROFILE_LABEL = "Personal";
+
+/** A tab of the app at its start page. */
+export const newTab = (ids: Ids, profileId: string, app: App): Tab => ({
+  appId: app.id,
+  health: "ok",
+  id: ids(),
+  pinned: false,
+  profileId,
+  sleeping: false,
+  title: app.name,
+  url: app.url,
+  zoom: 1,
+});
+
+/** A profile with a new id, coloured from the palette unless `color` is given; its order is set where it is added. */
+export const newProfile = (
+  ids: Ids,
+  label: string,
+  color?: string
+): Omit<Profile, "order"> => {
+  const id = ids();
+  return { color: color ?? colorFor(id), id, label, status: { kind: "ok" } };
+};
 
 /** The state of a profile with one tab in a group of one, selected. */
 export const freshState = (
@@ -135,6 +74,16 @@ export const freshState = (
   selectedProfileId: profile.id,
   tabs: [tab],
 });
+
+/** The state of a first launch: one profile with one tab of `app`, selected. */
+export const firstState = (ids: Ids, app: App): ProfilesState => {
+  const profile = newProfile(ids, FIRST_PROFILE_LABEL);
+  return freshState(
+    { ...profile, order: 0 },
+    newTab(ids, profile.id, app),
+    ids
+  );
+};
 
 const hasProfile = (state: ProfilesState, profileId: string) =>
   state.profiles.some((profile) => profile.id === profileId);
@@ -309,11 +258,26 @@ const withoutTab = (group: Group, tabId: string): Group | undefined => {
   };
 };
 
-/** Closes a tab; its pane closes with it, and a group left empty goes. */
-export const closeTab = (state: ProfilesState, tabId: string): Changed => {
+/** Closes a tab; its pane closes with it, and a group left empty goes. A profile keeps its last tab of an app `singleInstance` names. */
+export const closeTab = (
+  state: ProfilesState,
+  tabId: string,
+  singleInstance: (appId: string) => boolean = () => false
+): Changed => {
   const tab = state.tabs.find((found) => found.id === tabId);
   if (tab === undefined) {
     return err("unknownTab");
+  }
+  if (
+    singleInstance(tab.appId) &&
+    !state.tabs.some(
+      (found) =>
+        found.id !== tabId &&
+        found.profileId === tab.profileId &&
+        found.appId === tab.appId
+    )
+  ) {
+    return err("required");
   }
   if (
     !state.tabs.some(
@@ -434,109 +398,4 @@ export const firstGroup = (
 ): Group | undefined => {
   const first = state.tabs.find((tab) => tab.profileId === profileId);
   return first === undefined ? undefined : groupOf(first.id, state.groups);
-};
-
-const listOf = <T>(data: unknown, key: string, schema: z.ZodType<T>) => {
-  const items = pick(data, key, z.array(z.unknown())) ?? [];
-  const parsed = items.flatMap((item) => {
-    const one = schema.safeParse(item);
-    return one.success ? [one.data] : [];
-  });
-  return { dropped: items.length - parsed.length, parsed };
-};
-
-const uniqueBy = <T extends { readonly id: string }>(items: readonly T[]) => {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    if (seen.has(item.id)) {
-      return false;
-    }
-    seen.add(item.id);
-    return true;
-  });
-};
-
-export interface Repair {
-  readonly ids: Ids;
-  /** The state of a first launch, for data that holds no usable profile. */
-  readonly fresh: () => ProfilesState;
-  /** A tab for a profile left with none. */
-  readonly tabFor: (profileId: string) => Tab;
-}
-
-/** Keeps whatever of `data` holds together: the profiles and tabs that parse, the groups whose tabs and layout agree, a group of one for each tab left without, and a tab for each profile left with none. */
-export const repairState = (
-  data: unknown,
-  repair: Repair
-): { readonly state: ProfilesState; readonly dropped: string[] } => {
-  const dropped: string[] = [];
-  const read = <T extends { readonly id: string }>(
-    key: string,
-    schema: z.ZodType<T>
-  ) => {
-    const list = listOf(data, key, schema);
-    const parsed = uniqueBy(list.parsed);
-    const count = list.dropped + list.parsed.length - parsed.length;
-    if (count > 0) {
-      dropped.push(`${count} ${key}`);
-    }
-    return parsed;
-  };
-  const profiles = read("profiles", profileSchema);
-  if (profiles.length === 0) {
-    return { dropped: ["every profile"], state: repair.fresh() };
-  }
-  const profileIds = new Set(profiles.map((profile) => profile.id));
-  const tabs = read("tabs", tabSchema).filter((tab) =>
-    profileIds.has(tab.profileId)
-  );
-  const tabsById = new Map(tabs.map((tab) => [tab.id, tab]));
-  const claimed = new Set<string>();
-  const paneIds = new Set<string>();
-  const groups = read("groups", groupSchema).filter((group) => {
-    const shown = panes(group.layout);
-    const holds =
-      profileIds.has(group.profileId) &&
-      group.tabIds.length > 0 &&
-      repeated(group.tabIds).length === 0 &&
-      group.tabIds.every(
-        (id) =>
-          tabsById.get(id)?.profileId === group.profileId && !claimed.has(id)
-      ) &&
-      sameMembers(
-        shown.flatMap((pane) => pane.tabIds),
-        group.tabIds
-      ) &&
-      shown.every((pane) => !paneIds.has(pane.paneId));
-    if (holds) {
-      for (const id of group.tabIds) {
-        claimed.add(id);
-      }
-      for (const pane of shown) {
-        paneIds.add(pane.paneId);
-      }
-    } else {
-      dropped.push(`group ${group.id}`);
-    }
-    return holds;
-  });
-  for (const tab of tabs) {
-    if (!claimed.has(tab.id)) {
-      groups.push(groupOfOne(tab, repair.ids));
-    }
-  }
-  for (const profile of profiles) {
-    if (!tabs.some((tab) => tab.profileId === profile.id)) {
-      const tab = repair.tabFor(profile.id);
-      tabs.push(tab);
-      groups.push(groupOfOne(tab, repair.ids));
-    }
-  }
-  const selected = z.object({ selectedProfileId: idSchema }).safeParse(data);
-  const [first] = orderedProfiles(profiles);
-  const selectedProfileId =
-    selected.success && profileIds.has(selected.data.selectedProfileId)
-      ? selected.data.selectedProfileId
-      : (first?.id ?? "");
-  return { dropped, state: { groups, profiles, selectedProfileId, tabs } };
 };
