@@ -5,7 +5,15 @@ import {
   sidebarWidthSchema,
 } from "../../../core/engines/sidebar.ts";
 import { msg } from "../../../shared/msg.ts";
-import { defineSetting } from "../../../shared/settings/define.ts";
+import {
+  defineSetting,
+  defineSettingsPage,
+} from "../../../shared/settings/define.ts";
+
+export const sidebarPage = defineSettingsPage("sidebar", {
+  label: msg`Sidebar`,
+  order: 50,
+});
 
 export const sidebarSettings = [
   defineSetting("sidebar.width", {
@@ -13,7 +21,7 @@ export const sidebarSettings = [
     description: msg`Narrow shows icons, wide adds titles; auto is wide once an app has more than one tab.`,
     label: msg`Width`,
     options: { auto: msg`Automatic`, narrow: msg`Narrow`, wide: msg`Wide` },
-    page: "sidebar",
+    page: sidebarPage.id,
     restart: false,
     schema: sidebarWidthSchema,
     scope: "profile",
@@ -22,7 +30,7 @@ export const sidebarSettings = [
   defineSetting("sidebar.showWidthToggle", {
     default: true,
     label: msg`Show width button`,
-    page: "sidebar",
+    page: sidebarPage.id,
     restart: false,
     schema: z.boolean(),
     scope: "global",
@@ -37,7 +45,7 @@ export const sidebarSettings = [
       never: msg`Never`,
       whenInactive: msg`When inactive`,
     },
-    page: "sidebar",
+    page: sidebarPage.id,
     restart: false,
     schema: gmailUnreadBadgeSchema,
     scope: "global",

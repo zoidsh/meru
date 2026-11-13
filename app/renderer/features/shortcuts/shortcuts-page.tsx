@@ -13,6 +13,7 @@ import type { CommandId } from "../../../shared/commands/registry.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Button } from "../../ui/button.tsx";
+import type { PageContent } from "../settings/page-content.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 
@@ -195,4 +196,9 @@ export const ShortcutsPage = () => {
       ))}
     </div>
   );
+};
+
+export const shortcutsContent: PageContent = {
+  Content: ShortcutsPage,
+  page: "shortcuts",
 };

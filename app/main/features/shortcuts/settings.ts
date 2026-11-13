@@ -3,7 +3,10 @@ import { z } from "zod";
 import { parseAccelerator } from "../../../core/engines/shortcuts.ts";
 import { commandIdSchema } from "../../../shared/commands/registry.ts";
 import { msg } from "../../../shared/msg.ts";
-import { defineSetting } from "../../../shared/settings/define.ts";
+import {
+  defineSetting,
+  defineSettingsPage,
+} from "../../../shared/settings/define.ts";
 
 const acceleratorSchema = z
   .string()
@@ -11,12 +14,17 @@ const acceleratorSchema = z
     message: "Not an accelerator Electron reads",
   });
 
+export const shortcutsPage = defineSettingsPage("shortcuts", {
+  label: msg`Shortcuts`,
+  order: 40,
+});
+
 export const shortcutsSettings = [
   defineSetting("shortcuts.bindings", {
     default: {},
     description: msg`A command's shortcut, or none, in place of its default.`,
     label: msg`Shortcuts`,
-    page: "shortcuts",
+    page: shortcutsPage.id,
     restart: false,
     schema: z.partialRecord(commandIdSchema, acceleratorSchema.nullable()),
     scope: "global",

@@ -40,6 +40,26 @@ describe(defineSetting, () => {
     expect(defineSetting("stage.flag", wrong)).toBeDefined();
   });
 
+  it("names each value of a choice, and nothing for any other kind", () => {
+    const choice = {
+      ...entry,
+      default: "a" as const,
+      schema: z.enum(["a", "b"]),
+    };
+    // @ts-expect-error: a choice names its values
+    defineSetting("stage.pick", choice);
+    // @ts-expect-error: every value is named
+    defineSetting("stage.pick", { ...choice, options: { a: msg`A` } });
+    // @ts-expect-error: a boolean has no values to name
+    defineSetting("stage.flag", { ...entry, options: { on: msg`On` } });
+    expect(
+      defineSetting("stage.pick", {
+        ...choice,
+        options: { a: msg`A`, b: msg`B` },
+      }).options
+    ).toStrictEqual({ a: "A", b: "B" });
+  });
+
   it("formats a message as its text until it is translated", () => {
     const count = 2;
     expect(msg`Split ${count} panes`).toBe("Split 2 panes");

@@ -1,19 +1,55 @@
+import { sortBy } from "es-toolkit";
+import type { z } from "zod";
+
 import type {
   KeyOf,
   ProfileKeyOf,
+  SettingScope,
   SettingsLayers,
   ValueOf,
 } from "../../core/engines/settings.ts";
-import { appearanceSettings } from "../../main/features/appearance/settings.ts";
+import {
+  appearancePage,
+  appearanceSettings,
+} from "../../main/features/appearance/settings.ts";
 import { launcherSettings } from "../../main/features/launcher/settings.ts";
 import { linksSettings } from "../../main/features/links/settings.ts";
-import { profilesSettings } from "../../main/features/profiles/settings.ts";
-import { shortcutsSettings } from "../../main/features/shortcuts/settings.ts";
-import { sidebarSettings } from "../../main/features/sidebar/settings.ts";
-import { stageSettings } from "../../main/features/stage/settings.ts";
-import { updaterSettings } from "../../main/features/updater/settings.ts";
+import {
+  profilesPage,
+  profilesSettings,
+} from "../../main/features/profiles/settings.ts";
+import {
+  shortcutsPage,
+  shortcutsSettings,
+} from "../../main/features/shortcuts/settings.ts";
+import {
+  sidebarPage,
+  sidebarSettings,
+} from "../../main/features/sidebar/settings.ts";
+import {
+  panesPage,
+  stageSettings,
+} from "../../main/features/stage/settings.ts";
+import {
+  updaterSettings,
+  updatesPage,
+} from "../../main/features/updater/settings.ts";
 import { windowsSettings } from "../../main/features/windows/settings.ts";
 import type { Setting } from "./define.ts";
+
+const pages = [
+  appearancePage,
+  panesPage,
+  profilesPage,
+  shortcutsPage,
+  sidebarPage,
+  updatesPage,
+] as const;
+
+export type SettingsPageId = (typeof pages)[number]["id"];
+
+/** The settings window's pages, in the order they sit down the left. */
+export const settingsPages = sortBy(pages, [(page) => page.order]);
 
 export const registry = [
   ...appearanceSettings,
@@ -25,7 +61,12 @@ export const registry = [
   ...stageSettings,
   ...updaterSettings,
   ...windowsSettings,
-] as const satisfies readonly Setting[];
+] as const satisfies readonly Setting<
+  string,
+  z.ZodType,
+  SettingScope,
+  SettingsPageId
+>[];
 
 export type Registry = typeof registry;
 

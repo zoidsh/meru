@@ -1,7 +1,15 @@
 import { z } from "zod";
 
 import { msg } from "../../../shared/msg.ts";
-import { defineSetting } from "../../../shared/settings/define.ts";
+import {
+  defineSetting,
+  defineSettingsPage,
+} from "../../../shared/settings/define.ts";
+
+export const profilesPage = defineSettingsPage("profiles", {
+  label: msg`Profiles`,
+  order: 10,
+});
 
 export const profilesSettings = [
   defineSetting("profiles.unreadBadge", {

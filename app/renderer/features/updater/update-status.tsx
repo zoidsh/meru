@@ -5,6 +5,7 @@ import { commands } from "../../../shared/channels/commands.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Button } from "../../ui/button.tsx";
+import type { PageContent } from "../settings/page-content.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 import { useUpdate } from "./use-update.ts";
 
@@ -68,4 +69,9 @@ export const UpdateStatus = () => {
       </Button>
     </div>
   );
+};
+
+export const updatesContent: PageContent = {
+  Content: UpdateStatus,
+  page: "updates",
 };

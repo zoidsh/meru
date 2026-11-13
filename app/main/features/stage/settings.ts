@@ -1,17 +1,25 @@
 import { z } from "zod";
 
 import { msg } from "../../../shared/msg.ts";
-import { defineSetting } from "../../../shared/settings/define.ts";
+import {
+  defineSetting,
+  defineSettingsPage,
+} from "../../../shared/settings/define.ts";
 
 // Chromium's own zoom range.
 export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 5;
 
+export const panesPage = defineSettingsPage("panes", {
+  label: msg`Panes`,
+  order: 30,
+});
+
 export const stageSettings = [
   defineSetting("stage.zoom", {
     default: 1,
     label: msg`Zoom`,
-    page: "panes",
+    page: panesPage.id,
     restart: false,
     schema: z.number().min(MIN_ZOOM).max(MAX_ZOOM),
     scope: "profile",

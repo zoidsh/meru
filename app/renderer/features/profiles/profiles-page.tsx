@@ -22,6 +22,7 @@ import {
 import { Input } from "../../ui/input.tsx";
 import { useDebounced } from "../../use-debounced.ts";
 import { refusalOf } from "../entitlement/refusal.ts";
+import type { PageContent } from "../settings/page-content.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 import { useProfiles } from "./use-profiles.ts";
 
@@ -311,4 +312,9 @@ export const ProfilesPage = () => {
       </ul>
     </div>
   );
+};
+
+export const profilesContent: PageContent = {
+  Content: ProfilesPage,
+  page: "profiles",
 };

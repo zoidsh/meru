@@ -1,44 +1,22 @@
 import { cn } from "cn";
 import { sortBy } from "es-toolkit";
-import type { ReactNode } from "react";
 
 import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
 import { msg } from "../../../shared/msg.ts";
-import type { Message } from "../../../shared/msg.ts";
-import type { Setting, SettingsPage } from "../../../shared/settings/define.ts";
-import { registry } from "../../../shared/settings/registry.ts";
+import type { Setting } from "../../../shared/settings/define.ts";
+import { registry, settingsPages } from "../../../shared/settings/registry.ts";
+import type { SettingsPageId } from "../../../shared/settings/registry.ts";
 import { Button } from "../../ui/button.tsx";
 import { useHash } from "../../use-hash.ts";
-import { ProfilesPage } from "../profiles/profiles-page.tsx";
-import { ShortcutsPage } from "../shortcuts/shortcuts-page.tsx";
-import { UpdateStatus } from "../updater/update-status.tsx";
+import { pageContents } from "./contents.ts";
 import { fieldKindOf } from "./field-kind.ts";
 import { SettingField } from "./setting-field.tsx";
 import { useSettingsClient } from "./use-settings-client.ts";
 
-type PageId = SettingsPage | "profiles";
-
-interface Page {
-  readonly id: PageId;
-  readonly label: Message;
-  /** Shown above the page's registry fields, for what the registry does not hold. */
-  readonly top?: () => ReactNode;
-}
-
-// 3.x's order: its accounts, now profiles, then appearance, then the rest by name.
-export const PAGES: readonly Page[] = [
-  { id: "profiles", label: msg`Profiles`, top: () => <ProfilesPage /> },
-  { id: "appearance", label: msg`Appearance` },
-  { id: "panes", label: msg`Panes` },
-  { id: "shortcuts", label: msg`Shortcuts`, top: () => <ShortcutsPage /> },
-  { id: "sidebar", label: msg`Sidebar` },
-  { id: "updates", label: msg`Updates`, top: () => <UpdateStatus /> },
-];
-
 const appliesOn = (setting: Setting, platform: string) =>
   setting.platforms?.some((found) => found === platform) ?? true;
 
-const Fields = ({ page }: { readonly page: PageId }) => {
+const Fields = ({ page }: { readonly page: SettingsPageId }) => {
   const { platform } = useSettingsClient();
   // A list is as wide as the page and as long as it holds, so it comes after the fields that sit on one line.
   const shown = registry.filter(
@@ -62,7 +40,8 @@ const Fields = ({ page }: { readonly page: PageId }) => {
 /** 3.x's settings window: the titlebar, the pages down the left, and the page the address names on the right, its fields rendered from the registry. */
 export const SettingsWindow = () => {
   const [hash, navigate] = useHash();
-  const page = PAGES.find((found) => found.id === hash) ?? PAGES[0];
+  const page =
+    settingsPages.find((found) => found.id === hash) ?? settingsPages[0];
   if (page === undefined) {
     return null;
   }
@@ -87,7 +66,7 @@ export const SettingsWindow = () => {
           aria-label={msg`Settings`}
           className="flex w-58 shrink-0 flex-col gap-1 overflow-y-auto px-3 pb-3"
         >
-          {PAGES.map((found) => (
+          {settingsPages.map((found) => (
             <Button
               aria-current={found.id === page.id ? "page" : undefined}
               className={cn(
@@ -109,7 +88,11 @@ export const SettingsWindow = () => {
             <h1 className="text-2xl font-semibold" data-page={page.id}>
               {page.label}
             </h1>
-            {page.top?.()}
+            {pageContents
+              .filter((content) => content.page === page.id)
+              .map(({ page: id, Content }) => (
+                <Content key={id} />
+              ))}
             <Fields page={page.id} />
           </div>
         </main>
