@@ -676,7 +676,37 @@ describe(balance, () => {
         leaves: leafSet(tree),
         tiles: true,
       });
+    }
+  );
+
+  it.each(cases)(
+    "keeps every ratio within MIN_RATIO and MAX_RATIO and changes nothing a second time (seed $seed)",
+    ({ tree }) => {
+      const balanced = balance(tree);
+      expect(
+        splits(balanced).filter(
+          ({ ratio }) => ratio < MIN_RATIO || ratio > MAX_RATIO
+        )
+      ).toStrictEqual([]);
       expect(balance(balanced)).toStrictEqual(balanced);
     }
   );
+
+  it("keeps a run of more panes than even shares within MIN_RATIO allow inside the bounds", () => {
+    const ids = counter("id");
+    const beside: Beside = { orientation: "vertical", side: "after" };
+    let tree: Layout = leaf("p1", "t1");
+    let last = "p1";
+    for (let index = 2; index <= 14; index += 1) {
+      const result = split(tree, last, beside, `t${index}`, ids);
+      tree = result?.layout ?? tree;
+      last = result?.paneId ?? last;
+    }
+    expect(panes(tree)).toHaveLength(14);
+    expect(
+      splits(balance(tree)).filter(
+        ({ ratio }) => ratio < MIN_RATIO || ratio > MAX_RATIO
+      )
+    ).toStrictEqual([]);
+  });
 });
