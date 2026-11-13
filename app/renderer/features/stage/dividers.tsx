@@ -67,13 +67,13 @@ export const Dividers = ({
     <div className="dividers">
       {dividers?.map((divider) => (
         <div
-          className="divider"
+          className="divider absolute touch-none"
           data-split-id={divider.splitId}
           key={divider.splitId}
           onPointerDown={begin(divider.splitId)}
           style={hitArea(divider)}
         >
-          <div className="divider-line" style={line(divider)} />
+          <div className="bg-foreground/20 absolute" style={line(divider)} />
         </div>
       ))}
     </div>

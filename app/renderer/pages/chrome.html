@@ -3,37 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <title>Meru</title>
-    <style>
-      :root {
-        color-scheme: light dark;
-        --ground: #ececec;
-        --divider: rgb(0 0 0 / 18%);
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --ground: #1f1f1f;
-          --divider: rgb(255 255 255 / 18%);
-        }
-      }
-      html,
-      body {
-        background: var(--ground);
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-      }
-      .divider {
-        position: absolute;
-        touch-action: none;
-      }
-      .divider-line {
-        background: var(--divider);
-        position: absolute;
-      }
-    </style>
+    <link rel="stylesheet" href="../ui/globals.css" />
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="h-screen overflow-hidden">
+    <div id="root" class="h-full"></div>
     <script type="module" src="./chrome.tsx"></script>
   </body>
 </html>

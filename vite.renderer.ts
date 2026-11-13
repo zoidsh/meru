@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite-plus";
 
@@ -15,7 +16,7 @@ export default defineConfig(
       outDir: path.join(dist, "renderer"),
       rolldownOptions: { input: { chrome: path.join(pages, "chrome.html") } },
     },
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     root: pages,
     server: { host: "127.0.0.1", strictPort: false },
   })

@@ -150,7 +150,18 @@ export default defineConfig({
   extends: [core, react, vitest, playwright],
   ignorePatterns: core.ignorePatterns,
   options: { typeAware: true },
-  overrides: layers,
+  overrides: [
+    ...layers,
+    // shadcn writes these files and `shadcn add --overwrite` writes them again, so they keep its style rather than ours.
+    {
+      files: ["app/renderer/ui/**"],
+      rules: {
+        "eslint/func-style": "off",
+        "eslint/no-use-before-define": "off",
+        "import/consistent-type-specifier-style": "off",
+      },
+    },
+  ],
   rules: {
     "import/no-cycle": ["error", { ignoreTypes: false }],
   },
