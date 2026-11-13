@@ -1,5 +1,6 @@
 import type { CSSProperties, PointerEvent } from "react";
 
+import { STYLE_METRICS } from "../../../core/engines/layout.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import { useClient } from "../../client-context.tsx";
@@ -35,7 +36,7 @@ const line = ({ orientation }: Divider): CSSProperties =>
 export const Dividers = () => {
   const client = useClient();
   const dividers = useStage()?.dividers;
-  const seam = useSetting("appearance.style") === "classic";
+  const { seams } = STYLE_METRICS[useSetting("appearance.style")];
 
   // The page keeps getting the pointer over a pane while the button is held on macOS and Linux, so it reports moves and the release alongside the overlay and main takes whichever arrives. They are followed on the window as well as captured, because on Linux the capture did not hold once the overlay appeared.
   const begin = (splitId: string) => (event: PointerEvent<HTMLElement>) => {
@@ -68,7 +69,7 @@ export const Dividers = () => {
           onPointerDown={begin(divider.splitId)}
           style={hitArea(divider)}
         >
-          {seam && (
+          {seams && (
             <div className="bg-foreground/20 absolute" style={line(divider)} />
           )}
         </div>

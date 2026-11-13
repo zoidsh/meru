@@ -15,11 +15,13 @@ export interface StyleMetrics {
   readonly inset: number;
   readonly gap: number;
   readonly radius: number;
+  /** Whether a 1px line is drawn where panes, titlebar and sidebar meet, rather than leaving the ground and the gaps to set them apart. */
+  readonly seams: boolean;
 }
 
 export const STYLE_METRICS: Readonly<Record<Style, StyleMetrics>> = {
-  classic: { gap: 1, inset: 0, radius: 0 },
-  modern: { gap: 8, inset: 8, radius: 10 },
+  classic: { gap: 1, inset: 0, radius: 0, seams: true },
+  modern: { gap: 8, inset: 8, radius: 10, seams: false },
 };
 
 export const MIN_RATIO = 0.1;

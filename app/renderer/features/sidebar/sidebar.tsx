@@ -9,6 +9,7 @@ import { ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react";
 import { useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 
+import { STYLE_METRICS } from "../../../core/engines/layout.ts";
 import { orderedTabs, rowTabs } from "../../../core/engines/ordering.ts";
 import type { TabRow } from "../../../core/engines/ordering.ts";
 import {
@@ -119,7 +120,7 @@ export const Sidebar = ({
   const showWidthToggle = useSetting("sidebar.showWidthToggle");
   const gmailBadge = useSetting("sidebar.gmailUnreadBadge");
   const unreadBadge = useSetting("profiles.unreadBadge");
-  const seam = useSetting("appearance.style") === "classic";
+  const { seams } = STYLE_METRICS[useSetting("appearance.style")];
   const [drop, setDrop] = useState<DropTarget | undefined>();
   if (sidebar.kind === "hidden" || snapshot === undefined) {
     return null;
@@ -221,7 +222,7 @@ export const Sidebar = ({
     <nav
       className={cn(
         "bg-background flex shrink-0 flex-col overflow-hidden p-3 select-none motion-safe:transition-[width] motion-safe:duration-200",
-        seam && "border-r",
+        seams && "border-r",
         wide ? "gap-1" : "items-center gap-2"
       )}
       data-sidebar={size}

@@ -10,6 +10,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
+import { STYLE_METRICS } from "../../../core/engines/layout.ts";
 import { commands } from "../../../shared/channels/commands.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
@@ -81,12 +82,12 @@ const NavigationControls = () => {
 /** The bar across the top of the window, which drags it everywhere but on its controls; `trailing` shows at its right end while the sidebar is hidden. */
 export const Titlebar = ({ trailing }: { readonly trailing?: ReactNode }) => {
   const sidebar = useSidebar();
-  const seam = useSetting("appearance.style") === "classic";
+  const { seams } = STYLE_METRICS[useSetting("appearance.style")];
   return (
     <header
       className={cn(
         "draggable bg-background relative shrink-0 overflow-hidden select-none",
-        seam && "border-b"
+        seams && "border-b"
       )}
       data-titlebar=""
       style={{ height: TITLEBAR_HEIGHT }}
