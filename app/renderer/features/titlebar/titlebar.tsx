@@ -9,7 +9,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
-import type { NavigationAction } from "../../../core/ports.ts";
+import type { NavigationAction } from "../../../core/records/navigation.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../chrome-context.tsx";

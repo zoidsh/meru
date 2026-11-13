@@ -14,7 +14,6 @@ import {
 } from "../../../core/engines/layout.ts";
 import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
 import type {
-  NavigationAction,
   Unsubscribe,
   ViewFactoryPort,
   ViewPort,
@@ -22,6 +21,7 @@ import type {
 } from "../../../core/ports.ts";
 import type { Group } from "../../../core/records/group.ts";
 import type { Layout, Orientation } from "../../../core/records/layout.ts";
+import type { NavigationAction } from "../../../core/records/navigation.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Style } from "../../../core/records/style.ts";

@@ -1,5 +1,6 @@
 import type { TitleBar, TitleBarOverlay } from "./engines/chrome.ts";
 import type { KeyInput } from "./engines/shortcuts.ts";
+import type { Navigation, NavigationAction } from "./records/navigation.ts";
 import type { Rect } from "./records/rect.ts";
 import type { Result } from "./result.ts";
 
@@ -35,15 +36,6 @@ export interface LifecyclePort {
   /** Keeps the app from ever coming to the front, for a run nobody watches; macOS only. */
   readonly prohibitActivation: () => void;
 }
-
-/** Where a view's page stands in its history, and whether it is loading. */
-export interface Navigation {
-  readonly canGoBack: boolean;
-  readonly canGoForward: boolean;
-  readonly loading: boolean;
-}
-
-export type NavigationAction = "back" | "forward" | "reload" | "stop";
 
 /** Hears each key before the page does; a listener answering true keeps the key from the page. */
 export type KeyListener = (input: KeyInput) => boolean;

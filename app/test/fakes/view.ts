@@ -1,10 +1,8 @@
+import type { Unsubscribe, ViewPort, ViewSpec } from "../../core/ports.ts";
 import type {
   Navigation,
   NavigationAction,
-  Unsubscribe,
-  ViewPort,
-  ViewSpec,
-} from "../../core/ports.ts";
+} from "../../core/records/navigation.ts";
 import type { Rect } from "../../core/records/rect.ts";
 import { FakeKeys } from "./keys.ts";
 
