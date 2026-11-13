@@ -3,12 +3,12 @@ import { loadOwned } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 
 /** What a pane's view is made from: its spec and the address it loads. */
-export interface PaneSource {
+export interface TabSource {
   readonly spec: ViewSpec;
   readonly url: string;
 }
 
-export interface PaneViewsOptions {
+export interface TabViewsOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
   readonly onFocus: (paneId: string) => void;
   readonly onNavigation: (paneId: string) => void;
@@ -16,11 +16,11 @@ export interface PaneViewsOptions {
 }
 
 /** The view of each pane a stage shows, by pane id: made, loaded and listened to when its pane appears, retired when it goes. */
-export class PaneViews {
-  readonly #options: PaneViewsOptions;
+export class TabViews {
+  readonly #options: TabViewsOptions;
   readonly #views = new Map<string, OwnedView>();
 
-  constructor(options: PaneViewsOptions) {
+  constructor(options: TabViewsOptions) {
     this.#options = options;
   }
 
@@ -35,7 +35,7 @@ export class PaneViews {
 
   /** Keeps the panes `wanted` names, making the view of each that has none from its source, and hands back the views of the panes that went, for the caller to detach before it disposes them. */
   sync(
-    wanted: ReadonlyMap<string, PaneSource | undefined>
+    wanted: ReadonlyMap<string, TabSource | undefined>
   ): readonly OwnedView[] {
     const retired: OwnedView[] = [];
     for (const [paneId, owned] of this.#views) {
@@ -59,7 +59,7 @@ export class PaneViews {
     this.#views.clear();
   }
 
-  #make(paneId: string, source: PaneSource): OwnedView {
+  #make(paneId: string, source: TabSource): OwnedView {
     const { create, onFocus, onNavigation, onError } = this.#options;
     const owned = create(source.spec);
     const { view } = owned;

@@ -39,8 +39,8 @@ import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
 import { Overlay } from "./overlay.ts";
 import type { OwnedView } from "./owned-view.ts";
-import { PaneViews } from "./pane-views.ts";
-import type { PaneSource } from "./pane-views.ts";
+import { TabViews } from "./tab-views.ts";
+import type { TabSource } from "./tab-views.ts";
 
 export type StageError =
   | "unknownWindow"
@@ -85,7 +85,7 @@ export interface StageOptions {
 
 export class Stage {
   readonly #options: StageOptions;
-  readonly #views: PaneViews;
+  readonly #views: TabViews;
   readonly #disposables = new DisposableStore();
   readonly #overlay: Overlay;
   #shown: Group | undefined;
@@ -96,7 +96,7 @@ export class Stage {
 
   constructor(options: StageOptions) {
     this.#options = options;
-    this.#views = new PaneViews({
+    this.#views = new TabViews({
       create: (spec) => this.#own(spec),
       onError: options.onError,
       onFocus: (paneId) => {
@@ -460,7 +460,7 @@ export class Stage {
   }
 
   /** The source of each pane's view, none for a pane whose tab or group is gone. */
-  #sources(): Map<string, PaneSource | undefined> {
+  #sources(): Map<string, TabSource | undefined> {
     const group = this.#read();
     const { radius } = STYLE_METRICS[this.#options.style()];
     return new Map(
