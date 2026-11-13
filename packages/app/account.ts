@@ -20,7 +20,6 @@ import { EXTENSION_PAGE_PERMISSIONS, extensions } from "./extensions";
 import { Gmail } from "./gmail";
 import { log } from "./lib/log";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
-import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { areWorkspaceAppNotificationsAllowed } from "./notifications";
 import { Tabs } from "./tabs";
@@ -110,19 +109,39 @@ export class Account {
   }
 
   setSpellCheckerLanguages() {
-    if (platform.isMacOS || !licenseKey.isValid) {
+    if (platform.isMacOS) {
       return;
     }
 
-    const additionalLanguages = config.get("spellchecker.languages");
+    const languages = [app.getLocale(), ...config.get("spellchecker.languages")];
 
-    if (additionalLanguages.length === 0) {
+    try {
+      this.session.setSpellCheckerLanguages(languages);
+
       return;
+    } catch {
+      // Electron throws on a code it has no dictionary for, such as the locale
+      // `ja`, and then writes nothing at all, so the rest are tried one by one.
     }
 
-    const osLocale = app.getLocale();
+    const supportedLanguages = languages.filter((language) => {
+      try {
+        this.session.setSpellCheckerLanguages([language]);
 
-    this.session.setSpellCheckerLanguages([osLocale, ...additionalLanguages]);
+        return true;
+      } catch (error) {
+        log.warn("Dropped an unsupported spellchecker language", {
+          language,
+          error: serializeError(error),
+        });
+
+        return false;
+      }
+    });
+
+    // Written even when empty, which is what Chromium itself does for a locale
+    // with no dictionary.
+    this.session.setSpellCheckerLanguages(supportedLanguages);
   }
 
   private registerSessionPermissionsRequestsHandler() {

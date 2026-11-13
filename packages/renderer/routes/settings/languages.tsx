@@ -14,10 +14,7 @@ import { cn } from "@meru/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "lucide-react";
 import { useMemo } from "react";
-import { LicenseKeyRequiredBanner } from "@/components/license-key-required-banner";
-import { LicenseKeyRequiredFieldBadge } from "@/components/license-key-required-field-badge";
 import { Settings, SettingsContent, SettingsHeader, SettingsTitle } from "@/components/settings";
-import { useIsLicenseKeyValid } from "@/lib/hooks";
 import { useConfig, useConfigMutation } from "@/lib/react-query";
 import { settingsPageLabels } from "@/lib/settings-pages";
 
@@ -25,8 +22,6 @@ export function LanguagesSettings() {
   const { config } = useConfig();
 
   const configMutation = useConfigMutation();
-
-  const isLicenseKeyValid = useIsLicenseKeyValid();
 
   // The spellchecker's languages are named in the interface language.
   const { i18n, t } = useLingui();
@@ -101,14 +96,12 @@ export function LanguagesSettings() {
         <SettingsTitle>{t(settingsPageLabels.languages)}</SettingsTitle>
       </SettingsHeader>
       <SettingsContent>
-        <LicenseKeyRequiredBanner />
         <FieldGroup>
           <FieldSet>
             <FieldLegend variant="label" className="flex items-center gap-2">
               <Trans comment="Setting that picks the languages the spellchecker checks">
                 Spellchecker
               </Trans>
-              <LicenseKeyRequiredFieldBadge />
             </FieldLegend>
             <FieldDescription>
               <Trans>
@@ -120,7 +113,6 @@ export function LanguagesSettings() {
                 render={
                   <Button
                     variant="outline"
-                    disabled={!isLicenseKeyValid}
                     // A summary too long for the trigger wraps rather than
                     // clipping, the way a settings sidebar item does; min-h-8
                     // and py-1 keep a one-line trigger at the Button's h-8.
