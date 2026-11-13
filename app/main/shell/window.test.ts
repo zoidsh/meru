@@ -45,7 +45,7 @@ const open = async (platform: string, devServer?: string) => {
 describe(MainWindow, () => {
   it("opens with the chrome's ground and tells the page its platform and theme", async () => {
     const { specs, window } = await open("darwin");
-    expect(specs[0]?.background).toBe("#0a0a0a");
+    expect(specs[0]?.background).toBe("#1d1d24");
     expect(specs[0]?.titleBar.style).toBe("hiddenInset");
     expect(window.loaded).toBe(
       `${pathToFileURL(path.join("/dist/renderer", "chrome.html")).href}?platform=darwin&theme=dark`
@@ -63,8 +63,8 @@ describe(MainWindow, () => {
   it("recolours the window controls when the theme changes", async () => {
     const { theme, window } = await open("win32");
     theme.set(false);
-    expect(window.background).toBe("#ffffff");
-    expect(window.overlay?.color).toBe("#ffffff");
-    expect(window.overlay?.symbolColor).toBe("#0a0a0a");
+    expect(window.background).toBe("#ececf1");
+    expect(window.overlay?.color).toBe("#ececf1");
+    expect(window.overlay?.symbolColor).toBe("#2a2a30");
   });
 });

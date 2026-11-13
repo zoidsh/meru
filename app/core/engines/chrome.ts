@@ -10,11 +10,11 @@ export interface ChromeColors {
   readonly foreground: string;
 }
 
-/** The chrome's ground and ink, as hex, which is all a window's background and its title bar overlay take. */
+/** The chrome's ground and ink, as hex, which is all a window's background and its title bar overlay take: a neutral grey either way, which the panes, white or near-black as Google draws them, sit on. */
 export const chromeColors = (theme: Theme): ChromeColors =>
   theme === "dark"
-    ? { background: "#0a0a0a", foreground: "#fafafa" }
-    : { background: "#ffffff", foreground: "#0a0a0a" };
+    ? { background: "#1d1d24", foreground: "#e2e2ea" }
+    : { background: "#ececf1", foreground: "#2a2a30" };
 
 export interface TitleBarOverlay {
   readonly color: string;
