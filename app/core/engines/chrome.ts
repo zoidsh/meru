@@ -30,9 +30,10 @@ export const titleBarOf = (options: {
 }): TitleBar => {
   const { platform, theme, linuxControls } = options;
   const colors = chromeColors(theme);
+  // One pixel short of the row, so classic's seam under the titlebar shows beneath the window controls too; in modern that pixel is the titlebar's own ground.
   const overlay: TitleBarOverlay = {
     color: colors.background,
-    height: TITLEBAR_HEIGHT,
+    height: TITLEBAR_HEIGHT - 1,
     symbolColor: colors.foreground,
   };
   if (platform === "darwin") {
