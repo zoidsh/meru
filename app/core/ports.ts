@@ -45,6 +45,7 @@ export interface ViewPort {
   readonly contentsId: number;
   readonly onKey: (listener: KeyListener) => Unsubscribe;
   readonly setBounds: (rect: Rect) => void;
+  /** Read only by the end-to-end suite's inspector. */
   readonly bounds: () => Rect;
   readonly loadURL: (url: string) => Promise<void>;
   readonly focus: () => void;
@@ -55,6 +56,7 @@ export interface ViewPort {
   readonly onNavigation: (listener: () => void) => Unsubscribe;
   readonly setBorderRadius: (radius: number) => void;
   readonly setZoomFactor: (factor: number) => void;
+  /** Read only by the end-to-end suite's inspector. */
   readonly zoomFactor: () => number;
   readonly destroy: () => void;
 }
