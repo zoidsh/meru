@@ -360,7 +360,13 @@ export class Profiles {
     targetTabId: string
   ): Result<undefined, ProfilesError> {
     const committed = this.#commit(
-      joinTab(this.state, tabId, targetTabId, this.#options.ids)
+      joinTab(
+        this.state,
+        tabId,
+        targetTabId,
+        { orientation: "vertical", side: "after" },
+        this.#options.ids
+      )
     );
     return committed.ok ? this.focusTab(tabId) : committed;
   }

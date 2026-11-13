@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { layoutSchema } from "../records/layout.ts";
-import type { Layout, LayoutNode, Split } from "../records/layout.ts";
+import type {
+  Beside,
+  Layout,
+  Leaf,
+  LayoutNode,
+  Split,
+} from "../records/layout.ts";
 import type { Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
 import {
+  balance,
   close,
   focusNext,
   focusPrevious,
@@ -14,10 +21,12 @@ import {
   MAX_RATIO,
   MIN_RATIO,
   panes,
+  movePane,
   ratioAt,
   resize,
   split,
   STYLE_METRICS,
+  swap,
 } from "./layout.ts";
 
 // Park and Miller's minimal standard generator: seeded, so a failing case is the same case on every run.
@@ -66,7 +75,8 @@ const generate = (seed: number): Case => {
   for (let index = 0; index < count; index += 1) {
     const target = pick(draw, panes(tree)).paneId;
     const orientation = draw() < 0.5 ? "vertical" : "horizontal";
-    const result = split(tree, target, orientation, ids(), ids);
+    const side = draw() < 0.5 ? "before" : "after";
+    const result = split(tree, target, { orientation, side }, ids(), ids);
     if (result === undefined) {
       throw new Error("split lost a pane it was given");
     }
@@ -216,7 +226,13 @@ describe(layout, () => {
 
   it("rounds the first side and gives the second the remainder", () => {
     const ids = counter("id");
-    const result = split(leaf("p1", "t1"), "p1", "vertical", "t2", ids);
+    const result = split(
+      leaf("p1", "t1"),
+      "p1",
+      { orientation: "vertical", side: "after" },
+      "t2",
+      ids
+    );
     const rect = { height: 50, width: 100, x: 0, y: 0 };
     const arrangement = layout(result?.layout ?? null, rect, "classic");
     // 99 pixels to share at 0.5: the first side rounds 49.5 up to 50, the second keeps 49.
@@ -269,7 +285,13 @@ describe(split, () => {
     "then close gives back the tree (seed $seed)",
     ({ tree, draw }) => {
       const pane = pick(draw, panes(tree)).paneId;
-      const result = split(tree, pane, "horizontal", "new-tab", counter("new"));
+      const result = split(
+        tree,
+        pane,
+        { orientation: "horizontal", side: "after" },
+        "new-tab",
+        counter("new")
+      );
       expect(result).toBeDefined();
       expect(panes(result?.layout ?? null)).toHaveLength(
         panes(tree).length + 1
@@ -284,7 +306,7 @@ describe(split, () => {
     const result = split(
       leaf("p1", "t1"),
       "p1",
-      "vertical",
+      { orientation: "vertical", side: "after" },
       "t2",
       counter("id")
     );
@@ -303,9 +325,23 @@ describe(split, () => {
 
   it("refuses a pane the layout does not have", () => {
     expect(
-      split(leaf("p1", "t1"), "p9", "vertical", "t2", counter("id"))
+      split(
+        leaf("p1", "t1"),
+        "p9",
+        { orientation: "vertical", side: "after" },
+        "t2",
+        counter("id")
+      )
     ).toBeUndefined();
-    expect(split(null, "p1", "vertical", "t2", counter("id"))).toBeUndefined();
+    expect(
+      split(
+        null,
+        "p1",
+        { orientation: "vertical", side: "after" },
+        "t2",
+        counter("id")
+      )
+    ).toBeUndefined();
   });
 });
 
@@ -350,7 +386,7 @@ describe(resize, () => {
     const result = split(
       leaf("p1", "t1"),
       "p1",
-      "vertical",
+      { orientation: "vertical", side: "after" },
       "t2",
       counter("id")
     );
@@ -443,4 +479,166 @@ describe(focusPrevious, () => {
   it("has nothing to focus in the empty layout", () => {
     expect(focusPrevious(null, "p1")).toBeUndefined();
   });
+});
+
+const leafSet = (tree: Layout) =>
+  panes(tree)
+    .map((pane) => `${pane.paneId}:${pane.tabIds.join(",")}`)
+    .toSorted();
+
+const idsOf = (tree: Layout) => [
+  ...panes(tree).map((pane) => pane.paneId),
+  ...splits(tree).map((node) => node.id),
+];
+
+/** Two different panes of a layout that has at least two. */
+const twoPanes = (draw: () => number, tree: Layout): [Leaf, Leaf] => {
+  const first = pick(draw, panes(tree));
+  const second = pick(
+    draw,
+    panes(tree).filter((pane) => pane.paneId !== first.paneId)
+  );
+  return [first, second];
+};
+
+const tilesExactly = (tree: Layout, rect: Rect, style: Style) => {
+  const all = pieces(layout(tree, rect, style));
+  return (
+    all.reduce((sum, piece) => sum + area(piece), 0) ===
+    area(insetRect(rect, style))
+  );
+};
+
+describe(movePane, () => {
+  it.each(cases.filter(({ tree }) => panes(tree).length > 1))(
+    "keeps every pane, its tabs and every id, lands the pane on the side asked, and still tiles (seed $seed)",
+    ({ tree, rect, style, draw }) => {
+      const [moving, target] = twoPanes(draw, tree);
+      const beside: Beside = {
+        orientation: draw() < 0.5 ? "vertical" : "horizontal",
+        side: draw() < 0.5 ? "before" : "after",
+      };
+      const moved = movePane(tree, moving.paneId, target.paneId, beside);
+      const order = panes(moved ?? null).map((pane) => pane.paneId);
+      const at = order.indexOf(moving.paneId);
+      expect({
+        ids: idsOf(moved ?? null).toSorted(),
+        leaves: leafSet(moved ?? null),
+        neighbour: order[beside.side === "before" ? at + 1 : at - 1],
+        tiles: tilesExactly(moved ?? null, rect, style),
+      }).toStrictEqual({
+        ids: idsOf(tree).toSorted(),
+        leaves: leafSet(tree),
+        neighbour: target.paneId,
+        tiles: true,
+      });
+    }
+  );
+
+  it("puts the pane before the target, reusing the split it left", () => {
+    const tree: LayoutNode = {
+      first: leaf("p1", "t1"),
+      id: "s1",
+      kind: "split",
+      orientation: "vertical",
+      ratio: 0.3,
+      second: {
+        first: leaf("p2", "t2"),
+        id: "s2",
+        kind: "split",
+        orientation: "horizontal",
+        ratio: 0.5,
+        second: leaf("p3", "t3"),
+      },
+    };
+    expect(
+      movePane(tree, "p3", "p1", { orientation: "horizontal", side: "before" })
+    ).toStrictEqual({
+      first: {
+        first: leaf("p3", "t3"),
+        id: "s2",
+        kind: "split",
+        orientation: "horizontal",
+        ratio: 0.5,
+        second: leaf("p1", "t1"),
+      },
+      id: "s1",
+      kind: "split",
+      orientation: "vertical",
+      ratio: 0.3,
+      second: leaf("p2", "t2"),
+    });
+  });
+
+  it("refuses a pane that is alone, missing or its own target", () => {
+    const beside: Beside = { orientation: "vertical", side: "after" };
+    const pair = split(leaf("p1", "t1"), "p1", beside, "t2", counter("id"));
+    const tree = pair?.layout ?? null;
+    expect([
+      movePane(leaf("p1", "t1"), "p1", "p1", beside),
+      movePane(tree, "p1", "p1", beside),
+      movePane(tree, "p9", "p1", beside),
+      movePane(tree, "p1", "p9", beside),
+      movePane(null, "p1", "p2", beside),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined, undefined]);
+  });
+});
+
+describe(swap, () => {
+  it.each(cases.filter(({ tree }) => panes(tree).length > 1))(
+    "trades the two panes' places and leaves the rest (seed $seed)",
+    ({ tree, draw }) => {
+      const order = panes(tree);
+      const [a, b] = twoPanes(draw, tree);
+      const swapped = swap(tree, a.paneId, b.paneId);
+      expect(swap(tree, a.paneId, a.paneId)).toBeUndefined();
+      expect(panes(swapped ?? null)).toStrictEqual(
+        order.map((pane) => {
+          if (pane.paneId === a.paneId) {
+            return b;
+          }
+          return pane.paneId === b.paneId ? a : pane;
+        })
+      );
+      expect(splits(swapped ?? null)).toHaveLength(splits(tree).length);
+      expect(swap(swapped ?? null, a.paneId, b.paneId)).toStrictEqual(tree);
+    }
+  );
+
+  it("refuses a pane the layout does not have", () => {
+    expect(swap(leaf("p1", "t1"), "p1", "p9")).toBeUndefined();
+  });
+});
+
+describe(balance, () => {
+  it("gives each pane of a run of one orientation an equal share", () => {
+    const ids = counter("id");
+    const beside: Beside = { orientation: "vertical", side: "after" };
+    const pair = split(leaf("p1", "t1"), "p1", beside, "t2", ids);
+    const tree =
+      split(pair?.layout ?? null, pair?.paneId ?? "", beside, "t3", ids)
+        ?.layout ?? null;
+    const rect = { height: 300, width: 900, x: 0, y: 0 };
+    const widths = [
+      ...layout(balance(tree), rect, "classic").panes.values(),
+    ].map((pane) => pane.width);
+    expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(1);
+  });
+
+  it.each(cases)(
+    "keeps the panes and the splits and still tiles (seed $seed)",
+    ({ tree, rect, style }) => {
+      const balanced = balance(tree);
+      expect({
+        ids: idsOf(balanced),
+        leaves: leafSet(balanced),
+        tiles: tilesExactly(balanced, rect, style),
+      }).toStrictEqual({
+        ids: idsOf(tree),
+        leaves: leafSet(tree),
+        tiles: true,
+      });
+      expect(balance(balanced)).toStrictEqual(balanced);
+    }
+  );
 });

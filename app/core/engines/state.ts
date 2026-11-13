@@ -1,14 +1,14 @@
 import type { Ids } from "../ports.ts";
 import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
-import type { Orientation } from "../records/layout.ts";
+import type { Beside, Orientation } from "../records/layout.ts";
 import { colorFor } from "../records/profile.ts";
 import type { Profile, ProfileStatus } from "../records/profile.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
 import type { Tab } from "../records/tab.ts";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
-import { close, leaf, panes, resize, split } from "./layout.ts";
+import { close, leaf, movePane, panes, resize, split } from "./layout.ts";
 import { groupOf, moveTab, orderedProfiles } from "./ordering.ts";
 
 export type StateError =
@@ -169,14 +169,38 @@ export const updateTab = (
       })
     : err("unknownTab");
 
-/** Where a tab joins a group: beside or below one of the group's panes. */
-export interface Placement {
+/** Where a tab joins a group: beside or below one of the group's panes, on the side `side` names. */
+export interface Placement extends Beside {
   readonly groupId: string;
   readonly paneId: string;
-  readonly orientation: Orientation;
 }
 
-/** Moves a tab that is alone in its group into another group of its profile, splitting one of that group's panes. */
+/** Moves the tab's pane beside another pane of the same group. */
+const movePaneOf = (
+  state: ProfilesState,
+  tabId: string,
+  group: Group,
+  placement: Placement
+): Changed => {
+  const pane = panes(group.layout).find((found) =>
+    found.tabIds.includes(tabId)
+  );
+  const moved =
+    pane === undefined
+      ? undefined
+      : movePane(group.layout, pane.paneId, placement.paneId, placement);
+  if (moved === undefined) {
+    return err("unknownPane");
+  }
+  return ok({
+    ...state,
+    groups: state.groups.map((found) =>
+      found.id === group.id ? { ...group, layout: moved } : found
+    ),
+  });
+};
+
+/** Moves a tab into a group of its profile, splitting one of that group's panes: a tab alone in its group from that group, or a tab of the group from its own pane. */
 export const splitInto = (
   state: ProfilesState,
   tabId: string,
@@ -195,16 +219,13 @@ export const splitInto = (
   if (target.profileId !== tab.profileId) {
     return err("otherProfile");
   }
-  if (own.tabIds.length > 1 || own.id === target.id) {
+  if (own.id === target.id) {
+    return movePaneOf(state, tabId, target, placement);
+  }
+  if (own.tabIds.length > 1) {
     return err("alreadyGrouped");
   }
-  const result = split(
-    target.layout,
-    placement.paneId,
-    placement.orientation,
-    tabId,
-    ids
-  );
+  const result = split(target.layout, placement.paneId, placement, tabId, ids);
   if (result === undefined) {
     return err("unknownPane");
   }
@@ -353,11 +374,12 @@ export const leaveGroup = (
   return to === undefined ? ok(next) : moveTabTo(next, tabId, to);
 };
 
-/** Puts a tab beside the pane of another tab of another group, vertically, taking it out of its own group first. */
+/** Puts a tab beside the pane of another tab where `beside` says: out of its own group first when that is another, or from its own pane when the two share a group. */
 export const joinTab = (
   state: ProfilesState,
   tabId: string,
   targetTabId: string,
+  beside: Beside,
   ids: Ids
 ): Changed => {
   const own = groupOf(tabId, state.groups);
@@ -368,16 +390,18 @@ export const joinTab = (
   if (own === undefined || target === undefined || pane === undefined) {
     return err("unknownTab");
   }
-  if (own.id === target.id) {
+  if (tabId === targetTabId) {
     return err("alreadyGrouped");
   }
   const alone =
-    own.tabIds.length > 1 ? leaveGroup(state, tabId, ids) : ok(state);
+    own.id !== target.id && own.tabIds.length > 1
+      ? leaveGroup(state, tabId, ids)
+      : ok(state);
   return alone.ok
     ? splitInto(
         alone.value,
         tabId,
-        { groupId: target.id, orientation: "vertical", paneId: pane.paneId },
+        { ...beside, groupId: target.id, paneId: pane.paneId },
         ids
       )
     : alone;
@@ -408,7 +432,7 @@ export const createGroup = (
     const next = splitInto(
       current,
       tabId,
-      { groupId: group.id, orientation, paneId: last.paneId },
+      { groupId: group.id, orientation, paneId: last.paneId, side: "after" },
       ids
     );
     if (!next.ok) {

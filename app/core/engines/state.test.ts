@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { fakeIds } from "../../test/fakes/ids.ts";
+import type { Beside } from "../records/layout.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
 import type { Tab } from "../records/tab.ts";
 import { leaf, panes } from "./layout.ts";
@@ -22,6 +23,8 @@ import {
   joinTab,
   splitInto,
 } from "./state.ts";
+
+const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
 
 const tabOf = (id: string, profileId: string): Tab => ({
   appId: "gmail",
@@ -113,6 +116,7 @@ describe("the state's operations", () => {
       addTab(state, tabOf("t2", "a"), ids, {
         groupId: group.id,
         orientation: "vertical",
+        side: "after",
         paneId: pane.paneId,
       })
     );
@@ -208,7 +212,7 @@ describe("the state's operations", () => {
     expect(first.tabs.map((tab) => tab.id)).toStrictEqual(["t3", "t1", "t2"]);
   });
 
-  it("joins a tab beside another group's pane, out of its own group first, but not into its own", () => {
+  it("joins a tab beside another group's pane, out of its own group first, on the side asked", () => {
     const { ids, state } = start();
     const more = unwrap(
       addTab(
@@ -218,18 +222,79 @@ describe("the state's operations", () => {
       )
     );
     const grouped = unwrap(createGroup(more, ["t1", "t2"], "vertical", ids));
-    const joined = unwrap(joinTab(grouped.state, "t2", "t3", ids));
+    const joined = unwrap(
+      joinTab(
+        grouped.state,
+        "t2",
+        "t3",
+        { orientation: "horizontal", side: "before" },
+        ids
+      )
+    );
+    const [, group] = joined.groups;
     expect({
-      groups: joined.groups.map((group) => group.tabIds),
+      groups: joined.groups.map((found) => found.tabIds),
+      layout:
+        group?.layout?.kind === "split"
+          ? [
+              group.layout.orientation,
+              panes(group.layout).flatMap((pane) => pane.tabIds),
+            ]
+          : [],
       problems: validateState(joined),
-    }).toStrictEqual({ groups: [["t1"], ["t3", "t2"]], problems: [] });
-    expect(joinTab(joined, "t2", "t3", ids)).toStrictEqual({
+    }).toStrictEqual({
+      groups: [["t1"], ["t3", "t2"]],
+      layout: ["horizontal", ["t2", "t3"]],
+      problems: [],
+    });
+    expect(joinTab(joined, "t2", "t2", VERTICAL_AFTER, ids)).toStrictEqual({
       error: "alreadyGrouped",
       ok: false,
     });
-    expect(joinTab(joined, "t2", "gone", ids)).toStrictEqual({
+    expect(joinTab(joined, "t2", "gone", VERTICAL_AFTER, ids)).toStrictEqual({
       error: "unknownTab",
       ok: false,
+    });
+  });
+
+  it("moves a tab within its own group, keeping its pane, the group and every tab", () => {
+    const { ids, state } = start();
+    const more = unwrap(
+      addTab(
+        unwrap(addTab(state, tabOf("t2", "a"), ids)),
+        tabOf("t3", "a"),
+        ids
+      )
+    );
+    const grouped = unwrap(
+      createGroup(more, ["t1", "t2", "t3"], "vertical", ids)
+    );
+    const group = grouped.state.groups.find(
+      (found) => found.id === grouped.groupId
+    );
+    const before = panes(group?.layout ?? null);
+    const moved = unwrap(
+      joinTab(
+        grouped.state,
+        "t3",
+        "t1",
+        { orientation: "horizontal", side: "before" },
+        ids
+      )
+    );
+    const after = panes(
+      moved.groups.find((found) => found.id === grouped.groupId)?.layout ?? null
+    );
+    expect({
+      groups: moved.groups.map((found) => found.tabIds),
+      order: after.flatMap((pane) => pane.tabIds),
+      panes: after.map((pane) => pane.paneId).toSorted(),
+      problems: validateState(moved),
+    }).toStrictEqual({
+      groups: [["t1", "t2", "t3"]],
+      order: ["t3", "t1", "t2"],
+      panes: before.map((pane) => pane.paneId).toSorted(),
+      problems: [],
     });
   });
 
@@ -244,7 +309,12 @@ describe("the state's operations", () => {
       splitInto(
         two,
         "t2",
-        { groupId: first.id, orientation: "vertical", paneId: "n2" },
+        {
+          groupId: first.id,
+          orientation: "vertical",
+          paneId: "n2",
+          side: "after",
+        },
         ids
       )
     ).toStrictEqual({ error: "otherProfile", ok: false });
@@ -253,7 +323,12 @@ describe("the state's operations", () => {
       splitInto(
         three,
         "t3",
-        { groupId: first.id, orientation: "vertical", paneId: "nope" },
+        {
+          groupId: first.id,
+          orientation: "vertical",
+          paneId: "nope",
+          side: "after",
+        },
         ids
       )
     ).toStrictEqual({ error: "unknownPane", ok: false });
@@ -291,6 +366,7 @@ describe("the state's operations", () => {
       addTab(state, tabOf("t2", "a"), ids, {
         groupId: group.id,
         orientation: "vertical",
+        side: "after",
         paneId: pane.paneId,
       })
     );

@@ -2,6 +2,7 @@ import { clamp } from "es-toolkit";
 
 import type { Ids } from "../ports.ts";
 import type {
+  Beside,
   Layout,
   LayoutNode,
   Leaf,
@@ -73,31 +74,136 @@ const replaceLeaf = (
   return node;
 };
 
+const hasPane = (tree: Layout, paneId: string) =>
+  panes(tree).some((pane) => pane.paneId === paneId);
+
+const insertBeside = (
+  tree: LayoutNode,
+  paneId: string,
+  beside: Beside,
+  added: Leaf,
+  splitId: string
+): LayoutNode | null =>
+  replaceLeaf(tree, paneId, (target) => ({
+    first: beside.side === "before" ? added : target,
+    id: splitId,
+    kind: "split",
+    orientation: beside.orientation,
+    ratio: 0.5,
+    second: beside.side === "before" ? target : added,
+  }));
+
+/** Splits the pane in two, the tab's new pane on the side `beside` names. */
 export const split = (
   tree: Layout,
   paneId: string,
-  orientation: Orientation,
+  beside: Beside,
   tabId: string,
   ids: Ids
 ): { readonly layout: LayoutNode; readonly paneId: string } | undefined => {
-  if (tree === null || !panes(tree).some((pane) => pane.paneId === paneId)) {
+  if (tree === null || !hasPane(tree, paneId)) {
     return undefined;
   }
   const splitId = ids();
   const added = leaf(ids(), tabId);
-  const layout = replaceLeaf(tree, paneId, (first) => ({
-    first,
-    id: splitId,
-    kind: "split",
-    orientation,
-    ratio: 0.5,
-    second: added,
-  }));
+  const layout = insertBeside(tree, paneId, beside, added, splitId);
   return layout === null ? undefined : { layout, paneId: added.paneId };
 };
 
 export const close = (tree: Layout, paneId: string): Layout =>
   tree === null ? null : replaceLeaf(tree, paneId, () => null);
+
+const parentOf = (node: LayoutNode, paneId: string): Split | undefined => {
+  if (node.kind === "leaf") {
+    return undefined;
+  }
+  const holds = (child: LayoutNode) =>
+    child.kind === "leaf" && child.paneId === paneId;
+  if (holds(node.first) || holds(node.second)) {
+    return node;
+  }
+  return parentOf(node.first, paneId) ?? parentOf(node.second, paneId);
+};
+
+// The split the pane leaves closes with it, so the split it makes beside the target takes that id and the move needs no new one.
+/** Takes the pane out of its place and puts it beside the target pane, keeping its id and tabs; undefined for a pane that is missing, alone or the target itself. */
+export const movePane = (
+  tree: Layout,
+  paneId: string,
+  targetPaneId: string,
+  beside: Beside
+): LayoutNode | undefined => {
+  const moving = panes(tree).find((pane) => pane.paneId === paneId);
+  const parent = tree === null ? undefined : parentOf(tree, paneId);
+  const without = close(tree, paneId);
+  if (
+    moving === undefined ||
+    parent === undefined ||
+    without === null ||
+    !hasPane(without, targetPaneId)
+  ) {
+    return undefined;
+  }
+  return (
+    insertBeside(without, targetPaneId, beside, moving, parent.id) ?? undefined
+  );
+};
+
+const mapLeaves = (
+  node: LayoutNode,
+  update: (leaf: Leaf) => Leaf
+): LayoutNode =>
+  node.kind === "leaf"
+    ? update(node)
+    : {
+        ...node,
+        first: mapLeaves(node.first, update),
+        second: mapLeaves(node.second, update),
+      };
+
+/** Puts each of the two panes where the other was; undefined unless both are there and differ. */
+export const swap = (
+  tree: Layout,
+  a: string,
+  b: string
+): LayoutNode | undefined => {
+  const found = panes(tree);
+  const first = found.find((pane) => pane.paneId === a);
+  const second = found.find((pane) => pane.paneId === b);
+  if (tree === null || first === undefined || second === undefined || a === b) {
+    return undefined;
+  }
+  return mapLeaves(tree, (node) => {
+    if (node.paneId === a) {
+      return second;
+    }
+    return node.paneId === b ? first : node;
+  });
+};
+
+/** How many panes share the node's length along `orientation`. */
+const weight = (node: LayoutNode, orientation: Orientation): number =>
+  node.kind === "split" && node.orientation === orientation
+    ? weight(node.first, orientation) + weight(node.second, orientation)
+    : 1;
+
+const balanceNode = (node: LayoutNode): LayoutNode => {
+  if (node.kind === "leaf") {
+    return node;
+  }
+  const first = weight(node.first, node.orientation);
+  const second = weight(node.second, node.orientation);
+  return {
+    ...node,
+    first: balanceNode(node.first),
+    ratio: clamp(first / (first + second), MIN_RATIO, MAX_RATIO),
+    second: balanceNode(node.second),
+  };
+};
+
+/** Gives every pane in a run of splits of one orientation the same share of it. */
+export const balance = (tree: Layout): Layout =>
+  tree === null ? null : balanceNode(tree);
 
 const mapSplit = (
   node: LayoutNode,

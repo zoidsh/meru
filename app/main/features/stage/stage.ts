@@ -448,7 +448,7 @@ export class Stage {
     const group = this.#read();
     return group === undefined || paneId === undefined
       ? undefined
-      : { groupId: group.id, orientation, paneId };
+      : { groupId: group.id, orientation, paneId, side: "after" };
   }
 
   // Every view the stage makes hears the keys typed into it, for the commands without a menu item.

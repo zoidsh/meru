@@ -424,6 +424,7 @@ const random = (seed: number) => {
 interface Choice {
   readonly profileId: string;
   readonly tabId: string;
+  readonly targetTabId: string;
   readonly placement: Placement;
   readonly appId: string;
   readonly index: number;
@@ -439,6 +440,8 @@ const operations: readonly ((
   (profiles, { profileId, appId }) => profiles.addTab(profileId, appId),
   (profiles, { tabId }) => profiles.closeTab(tabId),
   (profiles, { tabId, index }) => profiles.moveTab(tabId, index),
+  (profiles, { tabId, targetTabId }) => profiles.joinTab(tabId, targetTabId),
+  (profiles, { tabId, index }) => profiles.leaveGroup(tabId, index),
   (profiles, { profileId, appId, placement }) =>
     profiles.addTab(profileId, appId, placement),
 ];
@@ -456,11 +459,13 @@ const choose = (
     placement: {
       groupId: group?.id ?? "",
       orientation: pick(2) === 0 ? "vertical" : "horizontal",
+      side: pick(2) === 0 ? "before" : "after",
       paneId: any(panes(group?.layout ?? null))?.paneId ?? "",
     },
     profileId:
       (pick(4) === 0 ? group?.profileId : any(state.profiles)?.id) ?? "",
     tabId: any(state.tabs)?.id ?? "",
+    targetTabId: any(state.tabs)?.id ?? "",
   };
 };
 

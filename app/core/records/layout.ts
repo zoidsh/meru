@@ -7,6 +7,19 @@ export const orientationSchema = z.enum(["vertical", "horizontal"]);
 
 export type Orientation = z.infer<typeof orientationSchema>;
 
+/** Which side of a split a pane added beside another takes: `before`, first, left or above it, or `after`, second. */
+export const sideSchema = z.enum(["before", "after"]);
+
+export type Side = z.infer<typeof sideSchema>;
+
+/** Where a pane goes against another: beside or below it, and on which side. */
+export const besideSchema = z.object({
+  orientation: orientationSchema,
+  side: sideSchema,
+});
+
+export type Beside = z.infer<typeof besideSchema>;
+
 export const leafSchema = z.object({
   kind: z.literal("leaf"),
   paneId: idSchema,
