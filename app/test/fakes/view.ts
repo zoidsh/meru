@@ -1,6 +1,4 @@
-import type { KeyInput } from "../../core/engines/shortcuts.ts";
 import type {
-  KeyListener,
   Navigation,
   NavigationAction,
   Unsubscribe,
@@ -8,6 +6,7 @@ import type {
   ViewSpec,
 } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
+import { FakeKeys } from "./keys.ts";
 
 let nextContentsId = 1000;
 
@@ -84,23 +83,16 @@ export class FakeView implements ViewPort {
     }
   };
 
-  readonly #keyListeners = new Set<KeyListener>();
+  readonly #keys = new FakeKeys();
 
-  readonly onKey = (listener: KeyListener): Unsubscribe => {
-    this.#keyListeners.add(listener);
-    return () => {
-      this.#keyListeners.delete(listener);
-    };
-  };
+  readonly onKey = this.#keys.onKey;
 
   /** Types a key into the page; true when a listener kept it from the page. */
-  readonly press = (input: KeyInput): boolean => {
-    let kept = false;
-    for (const listener of this.#keyListeners) {
-      kept = listener(input) || kept;
-    }
-    return kept;
-  };
+  readonly press = this.#keys.press;
+
+  get listening(): boolean {
+    return this.#keys.listening;
+  }
 
   readonly setBackgroundColor = (color: string) => {
     this.backgroundColor = color;
