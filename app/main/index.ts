@@ -7,6 +7,7 @@ import { AppEvents } from "../core/events.ts";
 import { themeOf } from "../core/ports.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
+import { themePushes } from "../shared/channels/theme.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
@@ -245,6 +246,11 @@ const start = async () => {
     preload: path.join(dist, "preload", "renderer.cjs"),
     registrar: dispatcher,
     surface: "chrome",
+  });
+  ports.theme.onChange(() => {
+    const theme = themeOf(ports.theme);
+    window.recolour(theme);
+    dispatcher.broadcast(themePushes.changed, { theme });
   });
   await window.show();
   entitlement.start();

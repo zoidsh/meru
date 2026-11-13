@@ -12,7 +12,6 @@ import {
   surfaceArgument,
 } from "../../shared/channels/surfaces.ts";
 import type { PageSurfaceName } from "../../shared/channels/surfaces.ts";
-import { themePushes } from "../../shared/channels/theme.ts";
 
 export interface PageOptions {
   /** The renderer dev server's address; the built pages are loaded while it is unset. */
@@ -42,8 +41,8 @@ export const pageUrl = (
 
 export interface MainWindowOptions {
   readonly ports: Pick<Ports, "lifecycle" | "theme" | "windows">;
-  /** Gives the chrome page its surface, and tells every page the theme changed. */
-  readonly registrar: Pick<IpcRegistrar, "assign" | "broadcast">;
+  /** Gives the chrome page its surface. */
+  readonly registrar: Pick<IpcRegistrar, "assign">;
   readonly preload: string;
   /** The surface the chrome page's channels are allowed from, which its preload is told too. */
   readonly surface: PageSurfaceName;
@@ -60,6 +59,7 @@ export interface MainWindowOptions {
 
 export class MainWindow {
   readonly #options: MainWindowOptions;
+  #window: WindowPort | undefined;
 
   constructor(options: MainWindowOptions) {
     this.#options = options;
@@ -77,30 +77,23 @@ export class MainWindow {
       onCreated,
       registrar,
     } = this.#options;
-    const { platform } = ports.lifecycle;
-    const theme = () => themeOf(ports.theme);
+    const theme = themeOf(ports.theme);
     const window = ports.windows.create({
       arguments: [surfaceArgument(surface)],
-      background: chromeColors(theme()).background,
+      background: chromeColors(theme).background,
       bounds,
       preload,
       title: "Meru",
-      titleBar: titleBarOf({ linuxControls, platform, theme: theme() }),
-    });
-    const stopFollowing = ports.theme.onChange(() => {
-      window.setBackgroundColor(chromeColors(theme()).background);
-      const { overlay } = titleBarOf({
+      titleBar: titleBarOf({
         linuxControls,
-        platform,
-        theme: theme(),
-      });
-      // macOS draws its traffic lights in its own colours, and Electron recolours an overlay only on Windows and Linux.
-      if (overlay !== null && platform !== "darwin") {
-        window.setTitleBarOverlay(overlay);
-      }
-      registrar.broadcast(themePushes.changed, { theme: theme() });
+        platform: ports.lifecycle.platform,
+        theme,
+      }),
     });
-    window.onClosed(stopFollowing);
+    this.#window = window;
+    window.onClosed(() => {
+      this.#window = undefined;
+    });
     registrar.assign(window.contentsId, pageSurfaces[surface]);
     onCreated(window);
 
@@ -113,5 +106,21 @@ export class MainWindow {
       window.show();
     }
     return window;
+  }
+
+  /** Paints the window's ground and its window controls in the theme's colours, while it is open. */
+  recolour(theme: Theme): void {
+    const window = this.#window;
+    if (window === undefined) {
+      return;
+    }
+    const { linuxControls, ports } = this.#options;
+    const { platform } = ports.lifecycle;
+    window.setBackgroundColor(chromeColors(theme).background);
+    const { overlay } = titleBarOf({ linuxControls, platform, theme });
+    // macOS draws its traffic lights in its own colours, and Electron recolours an overlay only on Windows and Linux.
+    if (overlay !== null && platform !== "darwin") {
+      window.setTitleBarOverlay(overlay);
+    }
   }
 }

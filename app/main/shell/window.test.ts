@@ -5,9 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { themeOf } from "../../core/ports.ts";
 import type { WindowSpec } from "../../core/ports.ts";
-import { wireName } from "../../shared/channels/define.ts";
 import { settingsPushes } from "../../shared/channels/settings.ts";
-import { themePushes } from "../../shared/channels/theme.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
 import { FakeTheme } from "../../test/fakes/theme.ts";
@@ -26,7 +24,7 @@ const open = async (platform: string, devServer?: string) => {
     },
     transport,
   });
-  await new MainWindow({
+  const main = new MainWindow({
     background: true,
     bounds: { height: 800, width: 1200, x: 0, y: 0 },
     linuxControls: false,
@@ -52,8 +50,9 @@ const open = async (platform: string, devServer?: string) => {
     preload: "/preload.cjs",
     registrar,
     surface: "chrome",
-  }).show();
-  return { registrar, specs, theme, transport, window };
+  });
+  await main.show();
+  return { main, registrar, specs, theme, transport, window };
 };
 
 describe(MainWindow, () => {
@@ -84,35 +83,18 @@ describe(MainWindow, () => {
     );
   });
 
-  it("recolours the window controls when the theme changes", async () => {
-    const { theme, window } = await open("win32");
-    theme.set(false);
+  it("recolours the window and its controls in another theme", async () => {
+    const { main, window } = await open("win32");
+    main.recolour("light");
     expect(window.background).toBe("#ececf1");
     expect(window.overlay?.color).toBe("#ececf1");
     expect(window.overlay?.symbolColor).toBe("#2a2a30");
   });
 
-  it("tells the chrome page the theme changed, so it recolours with the window", async () => {
-    const { theme, transport, window } = await open("darwin");
-    theme.set(false);
-    theme.set(true);
-    expect(
-      transport.sent.filter(
-        (sent) =>
-          sent.contentsId === window.contentsId &&
-          sent.channel === wireName(themePushes.changed)
-      )
-    ).toStrictEqual([
-      {
-        channel: wireName(themePushes.changed),
-        contentsId: window.contentsId,
-        payload: { theme: "light" },
-      },
-      {
-        channel: wireName(themePushes.changed),
-        contentsId: window.contentsId,
-        payload: { theme: "dark" },
-      },
-    ]);
+  it("leaves the traffic lights to macOS", async () => {
+    const { main, window } = await open("darwin");
+    main.recolour("light");
+    expect(window.background).toBe("#ececf1");
+    expect(window.overlay).toBeUndefined();
   });
 });
