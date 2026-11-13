@@ -135,7 +135,7 @@ describe(LauncherButton, () => {
     }
   });
 
-  it("opens the launcher beside itself on a click and when tabs.new asks", () => {
+  it("opens the launcher beside itself on a click and when launcher.open asks", () => {
     const page = mountChrome(<LauncherButton place="titlebar" />, {});
     mounted.push(page.unmount);
     act(() => {

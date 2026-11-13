@@ -11,6 +11,6 @@ export const launcher = defineChannels("launcher", {
 });
 
 export const launcherPushes = definePushes("launcher", {
-  /** tabs.new ran: the chrome page opens the launcher from whichever of its buttons is showing. */
+  /** launcher.open ran: the chrome page opens the launcher from whichever of its buttons is showing. */
   requested: push(z.object({})),
 });

@@ -38,7 +38,7 @@ const rectOf = (element: Element): Rect => {
   };
 };
 
-/** The button the launcher opens from, in the titlebar or at the foot of the sidebar; it also answers tabs.new while it is the one showing. */
+/** The button the launcher opens from, in the titlebar or at the foot of the sidebar; it also answers launcher.open while it is the one showing. */
 export const LauncherButton = ({
   place,
 }: {
@@ -48,7 +48,7 @@ export const LauncherButton = ({
   const client = useClient();
   const ref = useRef<HTMLButtonElement>(null);
   const label = msg`Open app`;
-  const title = useTooltip(label, "tabs.new");
+  const title = useTooltip(label, "launcher.open");
   const open = () => {
     if (ref.current !== null) {
       client.send(launcher.open, { anchor: rectOf(ref.current) });

@@ -52,7 +52,7 @@ describe("the command registry", () => {
       | "stage.focusPrevious"
       | "stage.splitHorizontal"
       | "stage.splitVertical"
-      | "tabs.new"
+      | "launcher.open"
       | "updater.check"
       | "updater.install"
     >();

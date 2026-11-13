@@ -83,10 +83,10 @@ const setup = async () => {
 };
 
 describe(Launcher, () => {
-  it("asks the window's chrome page to open the launcher from its button on tabs.new", async () => {
+  it("asks the window's chrome page to open the launcher from its button on launcher.open", async () => {
     const { commands, transport, window } = await setup();
     transport.sent.length = 0;
-    commands.run("tabs.new", { windowId: window.contentsId });
+    commands.run("launcher.open", { windowId: window.contentsId });
     expect(
       transport.sent.map((sent) => [sent.contentsId, sent.channel])
     ).toStrictEqual([[window.contentsId, wireName(launcherPushes.requested)]]);

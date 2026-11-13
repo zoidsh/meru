@@ -15,7 +15,7 @@ export interface LauncherOptions {
   readonly pageUrl: (anchor: Rect) => string;
 }
 
-/** Opens the launcher as a popup over the panes, from the chrome page's button or from tabs.new, which asks the chrome page for the button. */
+/** Opens the launcher as a popup over the panes, from the chrome page's button or from launcher.open, which asks the chrome page for the button. */
 export class Launcher {
   readonly #options: LauncherOptions;
   readonly #disposables = new DisposableStore();
@@ -28,7 +28,7 @@ export class Launcher {
     const { registrar, commands, stages, pageUrl } = this.#options;
     this.#disposables.add(
       commands.register(launcherCommands, {
-        new: ({ windowId }) => {
+        open: ({ windowId }) => {
           registrar.push(windowId, launcherPushes.requested, {});
           return ok(null);
         },

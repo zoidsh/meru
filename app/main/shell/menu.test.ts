@@ -200,7 +200,7 @@ describe(ApplicationMenu, () => {
     const [, file] = sections();
     expect(file).toMatchObject({
       entries: [
-        { id: "tabs.new", kind: "action" },
+        { id: "launcher.open", kind: "action" },
         { kind: "separator" },
         { kind: "role", role: "close" },
       ],
