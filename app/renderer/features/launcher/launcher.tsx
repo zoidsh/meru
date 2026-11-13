@@ -109,7 +109,8 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
     close();
   };
 
-  // cmdk's own Enter gives its handler no event, so Shift would be lost; a prevented key is one cmdk leaves alone.
+  // cmdk replaces an item's onClick with its own and hands onSelect no event, so Shift is read from the press before it and from the key here; a prevented Enter is one cmdk leaves alone.
+  const splitOnSelect = useRef(false);
   const keyDown = (event: KeyboardEvent) => {
     const app = shown.find((found) => found.id === highlighted) ?? shown[0];
     if (event.key === "Enter" && app !== undefined) {
@@ -157,8 +158,11 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
                 <CommandItem
                   data-app-id={app.id}
                   key={app.id}
-                  onClick={(event) => {
-                    void open(app, event.shiftKey);
+                  onPointerDown={(event) => {
+                    splitOnSelect.current = event.shiftKey;
+                  }}
+                  onSelect={() => {
+                    void open(app, splitOnSelect.current);
                   }}
                   value={app.id}
                 >

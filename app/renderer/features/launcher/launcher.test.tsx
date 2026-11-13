@@ -26,6 +26,9 @@ const PROFILES = {
 
 const input = () => document.querySelector<HTMLInputElement>("input");
 
+const item = (appId: string) =>
+  document.querySelector<HTMLElement>(`[data-app-id="${appId}"]`);
+
 const names = () =>
   [...document.querySelectorAll<HTMLElement>("[data-app-id]")].map(
     (entry) => entry.textContent
@@ -101,6 +104,28 @@ describe(Launcher, () => {
     ]).toStrictEqual([
       [{ appId: "calendar", profileId: "personal", split: false }],
       1,
+    ]);
+  });
+
+  it("opens an app on a click, split when Shift was held at the press", async () => {
+    const { sentOn } = mount(["calendar", "drive"]);
+    act(() => {
+      item("calendar")?.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true, shiftKey: false })
+      );
+      item("calendar")?.click();
+    });
+    await settle();
+    act(() => {
+      item("drive")?.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true, shiftKey: true })
+      );
+      item("drive")?.click();
+    });
+    await settle();
+    expect(sentOn(tabOpening.open)).toStrictEqual([
+      { appId: "calendar", profileId: "personal", split: false },
+      { appId: "drive", profileId: "personal", split: true },
     ]);
   });
 
