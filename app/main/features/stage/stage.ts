@@ -34,10 +34,6 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { Surface } from "../../../shared/channels/define.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import {
-  overlays,
-  surfaceArgument,
-} from "../../../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
@@ -126,7 +122,11 @@ export class Stage {
     this.#overlay = new Overlay({
       create: (spec) => this.#own(spec),
       onError: options.onError,
+      onOverlay: options.onOverlay,
       preload: options.overlayPreload,
+      retire: (owned) => {
+        this.#retired.push(owned);
+      },
     });
     this.#drag = new DragOverlay({
       area: () => this.#area(),
@@ -320,9 +320,7 @@ export class Stage {
 
   /** Shows a renderer page over the panes until closeOverlay, replacing any overlay already up; its page may use the channels of the `kind`'s surface. */
   openOverlay(kind: OverlayKind, url: string): void {
-    this.#dropOverlay();
-    const view = this.#overlay.open(url, [surfaceArgument(kind)]);
-    this.#options.onOverlay(view.contentsId, overlays[kind]);
+    this.#overlay.open(kind, url);
     this.#reconcile();
     this.#arrange(false);
   }
@@ -332,7 +330,7 @@ export class Stage {
     if (this.#overlay.view === undefined) {
       return;
     }
-    this.#dropOverlay();
+    this.#overlay.close();
     this.#reconcile();
     this.#focusedView()?.focus();
   }
@@ -393,7 +391,7 @@ export class Stage {
     }
     this.#disposables.dispose();
     this.#drag.retire();
-    this.#dropOverlay();
+    this.#overlay.close();
     this.#views.dispose();
     for (const owned of this.#retired.splice(0)) {
       owned.dispose();
@@ -465,15 +463,6 @@ export class Stage {
       },
       view,
     };
-  }
-
-  #dropOverlay(): void {
-    const overlay = this.#overlay.close();
-    if (overlay === undefined) {
-      return;
-    }
-    this.#options.onOverlay(overlay.view.contentsId, null);
-    this.#retired.push(overlay);
   }
 
   /** Hands the views of closed tabs, a removed profile's among them, to be detached and disposed. */

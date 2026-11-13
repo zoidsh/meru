@@ -1,4 +1,10 @@
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
+import type { Surface } from "../../../shared/channels/define.ts";
+import {
+  overlays,
+  surfaceArgument,
+} from "../../../shared/channels/surfaces.ts";
+import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import { loadOwned, TRANSPARENT } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 
@@ -7,6 +13,10 @@ export interface OverlayOptions {
   /** The preload of an overlay's page, which is one of the renderer's. */
   readonly preload: string | undefined;
   readonly onError: (error: unknown) => void;
+  /** The overlay's page came, on the surface of its kind, or went, with null. */
+  readonly onOverlay: (contentsId: number, surface: Surface | null) => void;
+  /** Hands back a view the overlay is done with, for the stage to detach before it disposes it. */
+  readonly retire: (owned: OwnedView) => void;
 }
 
 // The chrome page cannot draw over the panes, which are views above it, so an overlay is a transparent view of its own over the whole window, taking the keyboard while it is up.
@@ -24,10 +34,11 @@ export class Overlay {
     return this.#owned?.view;
   }
 
-  /** Makes the view of an overlay showing `url`, focused once its page has loaded; the caller attaches it. */
-  open(url: string, args: readonly string[]): ViewPort {
+  /** Makes the view of an overlay of `kind` showing `url`, focused once its page has loaded, closing any overlay already up; the caller attaches it. */
+  open(kind: OverlayKind, url: string): ViewPort {
+    this.close();
     const owned = this.#options.create({
-      arguments: args,
+      arguments: [surfaceArgument(kind)],
       background: TRANSPARENT,
       preload: this.#options.preload,
       radius: 0,
@@ -45,13 +56,18 @@ export class Overlay {
       }
     };
     void focusLoaded();
+    this.#options.onOverlay(view.contentsId, overlays[kind]);
     return view;
   }
 
-  /** Forgets the overlay and hands back its view for the caller to detach and dispose; undefined with none up. */
-  close(): OwnedView | undefined {
+  /** Takes the overlay down, if one is up. */
+  close(): void {
     const owned = this.#owned;
+    if (owned === undefined) {
+      return;
+    }
     this.#owned = undefined;
-    return owned;
+    this.#options.onOverlay(owned.view.contentsId, null);
+    this.#options.retire(owned);
   }
 }
