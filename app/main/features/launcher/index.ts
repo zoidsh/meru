@@ -29,6 +29,9 @@ export class Launcher {
     this.#disposables.add(
       commands.register(launcherCommands, {
         open: ({ windowId }) => {
+          if (windowId === null) {
+            return err("unknownWindow");
+          }
           registrar.push(windowId, launcherPushes.requested, {});
           return ok(null);
         },

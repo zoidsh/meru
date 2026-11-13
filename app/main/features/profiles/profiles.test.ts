@@ -18,6 +18,7 @@ import {
   profilesSnapshotSchema,
 } from "../../../shared/channels/profiles.ts";
 import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
@@ -262,7 +263,7 @@ describe(Profiles, () => {
     const work = unwrap(profiles.createProfile("Work"));
     const home = unwrap(profiles.createProfile("Home"));
     const first = profiles.selected().id;
-    const visit = (ids: readonly string[]) =>
+    const visit = (ids: readonly CommandId[]) =>
       ids.map((id) => {
         commands.run(id, { windowId: 1 });
         return profiles.selected().id;

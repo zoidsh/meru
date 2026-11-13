@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import type { KeyInput } from "../../core/engines/shortcuts.ts";
 import { ok } from "../../core/result.ts";
 import { commandsOf, defineCommands } from "../../shared/commands/define.ts";
-import type { ChromePage } from "../../shared/commands/define.ts";
 import { msg } from "../../shared/msg.ts";
 import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
@@ -57,21 +56,17 @@ const setup = () => {
     }),
     watchFile: false,
   });
-  const dispatcher = new CommandDispatcher();
-  let page: ChromePage = "none";
+  const dispatcher = new CommandDispatcher<"page.close" | "page.split">();
+  // Escape closes a page only in a window that has one open, as the settings page will.
+  const open = new Set<number>();
   const ran: string[] = [];
-  dispatcher.provide((windowId) => ({
-    focusedPaneId: null,
-    page,
-    windowId: windowId ?? -1,
-  }));
   dispatcher.register(fixture, {
     close: {
       run: ({ windowId }) => {
         ran.push(`close ${windowId}`);
         return ok(null);
       },
-      when: (context) => context.page !== "none",
+      when: ({ windowId }) => windowId !== null && open.has(windowId),
     },
     split: () => {
       ran.push("split");
@@ -88,14 +83,16 @@ const setup = () => {
   keys.start();
   const window = new FakeWindow();
   const pane = new FakeViewFactory().create({ radius: 0, zoom: 1 });
-  keys.attach(window, () => window.contentsId);
-  keys.attach(pane, () => window.contentsId);
+  keys.attach(window, window.contentsId);
+  const detach = keys.attach(pane, window.contentsId);
   return {
-    ran,
-    pane,
-    show: (shown: ChromePage) => {
-      page = shown;
+    detach,
+    open: () => {
+      open.add(window.contentsId);
     },
+    pane,
+    ran,
+    settings,
     window,
   };
 };
@@ -109,8 +106,8 @@ describe(ShortcutKeys, () => {
   });
 
   it("keeps the key from the page and runs the command for the page's window once it can run", () => {
-    const { pane, window, ran, show } = setup();
-    show("settings");
+    const { pane, window, ran, open } = setup();
+    open();
     expect(pane.press(key("Escape", "Escape"))).toBeTruthy();
     expect(ran).toStrictEqual([`close ${window.contentsId}`]);
   });
@@ -119,5 +116,30 @@ describe(ShortcutKeys, () => {
     const { pane, ran } = setup();
     expect(pane.press(key("KeyN", "˜", { alt: true, meta: true }))).toBeFalsy();
     expect(ran).toStrictEqual([]);
+  });
+
+  it("hears no page while no command without a menu item has a key", () => {
+    const quiet = defineCommands("quiet", {
+      close: { label: msg`Close page` },
+    });
+    const dispatcher = new CommandDispatcher<"quiet.close">();
+    const keys = new ShortcutKeys({
+      commands: commandsOf(quiet),
+      dispatcher,
+      platform: "darwin",
+      report: rethrow,
+      settings: setup().settings,
+    });
+    keys.start();
+    const pane = new FakeViewFactory().create({ radius: 0, zoom: 1 });
+    keys.attach(pane, 1);
+    expect(pane.listening).toBeFalsy();
+  });
+
+  it("stops hearing a page once detached", () => {
+    const { detach, pane, open } = setup();
+    open();
+    detach();
+    expect(pane.press(key("Escape", "Escape"))).toBeFalsy();
   });
 });

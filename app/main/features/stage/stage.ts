@@ -51,6 +51,8 @@ export type StageProfiles = Pick<
 export interface StageOptions {
   readonly window: WindowPort;
   readonly views: ViewFactoryPort;
+  /** Hears the keys typed into one of the stage's views, until the returned call. */
+  readonly keys: (view: ViewPort) => Unsubscribe;
   readonly profiles: StageProfiles;
   /** The group the window shows, read again whenever the state may have changed. */
   readonly groupId: () => string | undefined;
@@ -83,6 +85,8 @@ export class Stage {
   readonly #focusListeners = new Map<string, Unsubscribe>();
   readonly #navigationListeners = new Map<string, Unsubscribe>();
   readonly #popup: Popup;
+  readonly #factory: ViewFactoryPort;
+  readonly #keys = new Map<ViewPort, Unsubscribe>();
   #shown: Group | undefined;
   #retired: ViewPort[] = [];
   #focused: string | undefined;
@@ -91,10 +95,17 @@ export class Stage {
 
   constructor(options: StageOptions) {
     this.#options = options;
+    this.#factory = {
+      create: (spec) => {
+        const view = options.views.create(spec);
+        this.#keys.set(view, options.keys(view));
+        return view;
+      },
+    };
     this.#popup = new Popup({
       onError: options.onError,
       preload: options.popupPreload,
-      views: options.views,
+      views: this.#factory,
     });
     this.#shown = this.#read();
     this.#focused = panes(this.#layout())[0]?.paneId;
@@ -264,7 +275,7 @@ export class Stage {
       orientation: divider.orientation,
       preload: this.#options.dragPreload,
       splitId,
-      views: this.#options.views,
+      views: this.#factory,
     });
     this.#drag = drag;
     this.#options.onOverlay(drag.view.contentsId, true, "drag");
@@ -402,7 +413,7 @@ export class Stage {
     this.#retireOverlay();
     this.#dropPopup();
     for (const view of [...this.#views.values(), ...this.#retired]) {
-      view.destroy();
+      this.#destroy(view);
     }
     this.#views.clear();
     this.#focusListeners.clear();
@@ -448,6 +459,12 @@ export class Stage {
     void load();
   }
 
+  #destroy(view: ViewPort): void {
+    this.#keys.get(view)?.();
+    this.#keys.delete(view);
+    view.destroy();
+  }
+
   #dropPopup(): void {
     const popup = this.#popup.close();
     if (popup === undefined) {
@@ -491,7 +508,7 @@ export class Stage {
       if (this.#views.has(paneId) || tab === undefined) {
         continue;
       }
-      const view = this.#options.views.create({
+      const view = this.#factory.create({
         partition: partitionOf(group.profileId),
         radius,
         zoom: this.#options.zoom(group.profileId),
@@ -532,7 +549,7 @@ export class Stage {
       }
     }
     for (const view of this.#retired.splice(0)) {
-      view.destroy();
+      this.#destroy(view);
     }
   }
 

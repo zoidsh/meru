@@ -6,6 +6,7 @@ import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { sidebar, sidebarPushes } from "../../../shared/channels/sidebar.ts";
 import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
@@ -120,7 +121,7 @@ describe(Sidebars, () => {
   it("hides the strip and brings it back on sidebar.toggle, and flips its width on sidebar.toggleWidth", async () => {
     const { add, commands, sidebars, settings } = await setup();
     add("drive");
-    const run = (id: string) => {
+    const run = (id: CommandId) => {
       commands.run(id, { windowId: PAGE });
       return sidebars.current();
     };

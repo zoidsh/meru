@@ -59,15 +59,10 @@ export const commandsOf = <F extends string, C extends CommandSpecs>(
       id: `${group.feature}.${name}`,
     }));
 
-/** A page the chrome shows in place of the panes. */
-export type ChromePage = "none" | "settings";
-
-/** What a command is given for: its window, and what that window shows. */
+/** What a command is given for. */
 export interface CommandContext {
-  /** The window the command was given for. */
-  readonly windowId: number;
-  readonly page: ChromePage;
-  readonly focusedPaneId: string | null;
+  /** The window the command was given for, by its chrome page; null while asking whether it could run with no window, as the menu does before one opens. */
+  readonly windowId: number | null;
 }
 
 export type CommandHandler = (

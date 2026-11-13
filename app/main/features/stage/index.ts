@@ -4,6 +4,7 @@ import type { AppEvents } from "../../../core/events.ts";
 import type {
   Unsubscribe,
   ViewFactoryPort,
+  ViewPort,
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
@@ -19,7 +20,10 @@ import {
   dragSurface,
   rendererSurface,
 } from "../../../shared/channels/surfaces.ts";
-import type { CommandRegistrar } from "../../../shared/commands/define.ts";
+import type {
+  CommandContext,
+  CommandRegistrar,
+} from "../../../shared/commands/define.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import { stageCommands } from "./commands.ts";
 import { Stage } from "./stage.ts";
@@ -30,6 +34,10 @@ export { Stage } from "./stage.ts";
 
 export interface StagesOptions {
   readonly views: ViewFactoryPort;
+  /** Hears the keys typed into a view, for the window `windowId`. */
+  readonly keys: {
+    readonly attach: (view: ViewPort, windowId: number) => Unsubscribe;
+  };
   readonly profiles: StageProfiles;
   readonly events: AppEvents;
   /** Load `about:blank` in every pane, for the end-to-end suite, which asserts on views and bounds and never on a network page. */
@@ -43,6 +51,11 @@ export interface StagesOptions {
   readonly commands: CommandRegistrar;
   readonly onError: (error: unknown) => void;
 }
+
+const inWindow =
+  (run: (windowId: number) => Result<undefined, StageError>) =>
+  ({ windowId }: CommandContext): Result<undefined, StageError> =>
+    windowId === null ? err("unknownWindow") : run(windowId);
 
 export class Stages {
   readonly #options: StagesOptions;
@@ -69,11 +82,13 @@ export class Stages {
         }
       }),
       commands.register(stageCommands, {
-        closeTab: ({ windowId }) => this.close(windowId),
-        focusNext: ({ windowId }) => this.focusNext(windowId),
-        focusPrevious: ({ windowId }) => this.focusPrevious(windowId),
-        splitHorizontal: ({ windowId }) => this.split(windowId, "horizontal"),
-        splitVertical: ({ windowId }) => this.split(windowId, "vertical"),
+        closeTab: inWindow((windowId) => this.close(windowId)),
+        focusNext: inWindow((windowId) => this.focusNext(windowId)),
+        focusPrevious: inWindow((windowId) => this.focusPrevious(windowId)),
+        splitHorizontal: inWindow((windowId) =>
+          this.split(windowId, "horizontal")
+        ),
+        splitVertical: inWindow((windowId) => this.split(windowId, "vertical")),
       }),
       settings.subscribe((changes) => {
         const restyle = changes.some(
@@ -125,6 +140,7 @@ export class Stages {
     const opened = new Stage({
       dragPreload: this.#options.dragPreload,
       groupId,
+      keys: (view) => this.#options.keys.attach(view, windowId),
       popupPreload: this.#options.popupPreload,
       insets: this.#options.insets,
       onChange: (snapshot) => {

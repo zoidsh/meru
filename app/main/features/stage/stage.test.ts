@@ -14,6 +14,8 @@ import {
 } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import { rendererSurface } from "../../../shared/channels/surfaces.ts";
+import { commands as allCommands } from "../../../shared/commands/registry.ts";
+import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
@@ -25,6 +27,7 @@ import type { FakeView } from "../../../test/fakes/view.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
+import { ShortcutKeys } from "../../shell/keys.ts";
 import { Profiles } from "../profiles/index.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { Stages } from "./index.ts";
@@ -89,6 +92,13 @@ const setup = async (style: Style = "modern") => {
   await profiles.open();
   const insets = { left: 0, top: 0 };
   const stages = new Stages({
+    keys: new ShortcutKeys({
+      commands: allCommands,
+      dispatcher: commands,
+      platform: "darwin",
+      report: rethrow,
+      settings,
+    }),
     blankPanes: false,
     commands,
     dragPreload: "/dist/preload/drag.cjs",
@@ -391,13 +401,15 @@ describe("the stage commands", () => {
   it("are the five the stage declares", async () => {
     const { commands } = await setup();
     expect(
-      [
-        "stage.closeTab",
-        "stage.focusNext",
-        "stage.focusPrevious",
-        "stage.splitHorizontal",
-        "stage.splitVertical",
-      ].every((id) => commands.has(id))
+      (
+        [
+          "stage.closeTab",
+          "stage.focusNext",
+          "stage.focusPrevious",
+          "stage.splitHorizontal",
+          "stage.splitVertical",
+        ] as const
+      ).every((id) => commands.has(id))
     ).toBeTruthy();
   });
 
@@ -421,11 +433,12 @@ describe("the stage commands", () => {
     const [first, second, third] = paneIds();
     const focused = () => changes().at(-1)?.focusedPaneId;
     const start = focused();
-    const visited = [
+    const steps = [
       "stage.focusNext",
       "stage.focusPrevious",
       "stage.focusPrevious",
-    ].map((command) => {
+    ] as const;
+    const visited = steps.map((command: CommandId) => {
       const result = commands.run(command, { windowId: id });
       return result.ok ? focused() : result.error;
     });
