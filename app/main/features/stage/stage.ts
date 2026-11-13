@@ -30,7 +30,12 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { Surface } from "../../../shared/channels/define.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import { dragSurface } from "../../../shared/channels/surfaces.ts";
+import {
+  dragSurface,
+  pageSurfaces,
+  surfaceArgument,
+} from "../../../shared/channels/surfaces.ts";
+import type { PageSurfaceName } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
 import { Popup } from "./popup.ts";
@@ -306,10 +311,10 @@ export class Stage {
   }
 
   /** Shows a renderer page over the panes until closePopup, replacing any popup already up; its page may use the channels of `surface`. */
-  openPopup(url: string, surface: Surface): void {
+  openPopup(url: string, surface: PageSurfaceName): void {
     this.#dropPopup();
-    const view = this.#popup.open(url);
-    this.#options.onOverlay(view.contentsId, surface);
+    const view = this.#popup.open(url, [surfaceArgument(surface)]);
+    this.#options.onOverlay(view.contentsId, pageSurfaces[surface]);
     this.#reconcile();
     this.#arrange(false);
   }

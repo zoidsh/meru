@@ -43,9 +43,6 @@ export const testSurface = defineSurface({
   requests: [...rendererSurface.requests, e2e, measure],
 });
 
-/** The argument main passes the chrome page's preload in such a run, since a sandboxed preload sees no environment of main's. */
-export const TEST_SURFACE_ARGUMENT = "--meru-test-surface";
-
 export const dragSurface = defineSurface({ pushes: [], requests: [drag] });
 
 /** The launcher's page over the panes: it reads the profiles and the settings, opens a tab and closes itself. */
@@ -55,6 +52,33 @@ export const launcherSurface = defineSurface({
 });
 
 export type LauncherSurface = typeof launcherSurface;
+
+/** The surfaces a page the renderer's preload serves may hold, by the name main passes the preload. */
+export const pageSurfaces = {
+  chrome: rendererSurface,
+  launcher: launcherSurface,
+  test: testSurface,
+};
+
+export type PageSurfaceName = keyof typeof pageSurfaces;
+
+const SURFACE_ARGUMENT = "--meru-surface=";
+
+// A sandboxed preload sees no environment of main's, so main names the page's surface in its command line.
+export const surfaceArgument = (name: PageSurfaceName): string =>
+  `${SURFACE_ARGUMENT}${name}`;
+
+/** The surface the command line names, or none, so a page with no argument is refused everything. */
+export const surfaceOf = (argv: readonly string[]): Surface => {
+  const name = argv
+    .find((argument) => argument.startsWith(SURFACE_ARGUMENT))
+    ?.slice(SURFACE_ARGUMENT.length);
+  const named = new Map<string, Surface>(Object.entries(pageSurfaces));
+  return (
+    (name === undefined ? undefined : named.get(name)) ??
+    defineSurface({ pushes: [], requests: [] })
+  );
+};
 
 export const surfaces: readonly Surface[] = [
   rendererSurface,

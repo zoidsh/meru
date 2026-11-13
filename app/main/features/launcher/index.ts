@@ -2,7 +2,6 @@ import { DisposableStore } from "../../../core/disposable.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
-import { launcherSurface } from "../../../shared/channels/surfaces.ts";
 import type { CommandRegistrar } from "../../../shared/commands/define.ts";
 import type { Stages } from "../stage/index.ts";
 import { launcherCommands } from "./commands.ts";
@@ -48,7 +47,7 @@ export class Launcher {
           }
           stage.openPopup(
             overlayUrl({ anchor: JSON.stringify(anchor), kind: "launcher" }),
-            launcherSurface
+            "launcher"
           );
           return ok(undefined);
         },

@@ -25,8 +25,9 @@ export class Popup {
   }
 
   /** Makes the view of a popup showing `url`, focused once its page has loaded; the caller attaches it. */
-  open(url: string): ViewPort {
+  open(url: string, args: readonly string[]): ViewPort {
     const view = this.#options.views.create({
+      arguments: args,
       preload: this.#options.preload,
       radius: 0,
       zoom: 1,

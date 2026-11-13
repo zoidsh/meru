@@ -20,6 +20,7 @@ export const portOf = (view: View): ViewPort | undefined => ports.get(view);
 const createView = (spec: ViewSpec): ViewPort => {
   const view = new WebContentsView({
     webPreferences: {
+      additionalArguments: [...(spec.arguments ?? [])],
       contextIsolation: true,
       nodeIntegration: false,
       partition: spec.partition,

@@ -62,6 +62,8 @@ export interface ViewPort {
 export interface ViewSpec {
   readonly partition?: string;
   readonly preload?: string;
+  /** Extra command-line arguments the page's renderer process, and so its preload, sees. */
+  readonly arguments?: readonly string[];
   readonly radius: number;
   readonly zoom: number;
 }

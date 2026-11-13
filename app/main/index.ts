@@ -7,10 +7,9 @@ import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import {
-  rendererSurface,
+  pageSurfaces,
+  surfaceArgument,
   surfaces,
-  TEST_SURFACE_ARGUMENT,
-  testSurface,
 } from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
@@ -51,7 +50,8 @@ const start = async () => {
   const ports = createElectronPorts();
   const e2e = process.env.MERU_E2E === "1";
   const measure = process.env.MERU_MEASURE === "1";
-  const pageSurface = e2e || measure ? testSurface : rendererSurface;
+  const pageSurfaceName = e2e || measure ? "test" : "chrome";
+  const pageSurface = pageSurfaces[pageSurfaceName];
 
   ports.lifecycle.onWindowAllClosed(() => {
     ports.lifecycle.quit();
@@ -253,7 +253,7 @@ const start = async () => {
   }
 
   const window = new MainWindow({
-    arguments: pageSurface === testSurface ? [TEST_SURFACE_ARGUMENT] : [],
+    arguments: [surfaceArgument(pageSurfaceName)],
     background: process.env.MERU_BACKGROUND === "1",
     bounds: windows.mainBounds(),
     linuxControls: settings.get("window.linuxControls"),

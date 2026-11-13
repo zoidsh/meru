@@ -14,10 +14,7 @@ import {
   stageSnapshotSchema,
 } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import {
-  launcherSurface,
-  rendererSurface,
-} from "../../../shared/channels/surfaces.ts";
+import { rendererSurface } from "../../../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../../../shared/commands/registry.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
@@ -611,7 +608,7 @@ describe("a drag across panes", () => {
 describe("a popup over the panes", () => {
   it("opens a tab beside the focused pane from the popup's own page, on the surface it was given", async () => {
     const { call, id, profiles, stage, views } = await setup();
-    stage.openPopup("file:///overlay.html", launcherSurface);
+    stage.openPopup("file:///overlay.html", "launcher");
     const popup = views.created.at(-1)?.contentsId ?? 0;
     const profileId = profiles.selected().id;
     expect(
@@ -638,7 +635,7 @@ describe("a popup over the panes", () => {
     events.on("tab.focused", ({ tabId }) => {
       focused.push(profiles.tab(tabId)?.appId ?? tabId);
     });
-    stage.openPopup("file:///overlay.html", launcherSurface);
+    stage.openPopup("file:///overlay.html", "launcher");
     const popup = views.created.at(-1)?.contentsId ?? 0;
     const profileId = profiles.selected().id;
     const open = (appId: string) =>
@@ -657,7 +654,7 @@ describe("a popup over the panes", () => {
 
   it("is a transparent renderer page above every pane, focused once loaded, until it is closed", async () => {
     const { call, profileId, window, views, stage } = await setup();
-    stage.openPopup("file:///overlay.html", launcherSurface);
+    stage.openPopup("file:///overlay.html", "launcher");
     const [pane, popup] = views.created;
     await expect.poll(() => popup?.focused).toBeTruthy();
     expect({
@@ -667,7 +664,12 @@ describe("a popup over the panes", () => {
       url: popup?.url,
     }).toStrictEqual({
       background: "#00000000",
-      spec: { preload: "/dist/preload/renderer.cjs", radius: 0, zoom: 1 },
+      spec: {
+        arguments: ["--meru-surface=launcher"],
+        preload: "/dist/preload/renderer.cjs",
+        radius: 0,
+        zoom: 1,
+      },
       top: true,
       url: "file:///overlay.html",
     });
