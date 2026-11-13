@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 
 import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
-import type { AppEventMap } from "../../../core/events.ts";
 import type { Beside, Orientation } from "../../../core/records/layout.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
@@ -31,6 +30,7 @@ import { unwrap } from "../../../test/result.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { ShortcutKeys } from "../../shell/keys.ts";
+import { Launcher } from "../launcher/index.ts";
 import { Profiles } from "../profiles/index.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { Stages } from "./index.ts";
@@ -538,21 +538,32 @@ describe("the stage commands", () => {
     ).toBeTruthy();
   });
 
-  it("split by asking the launcher for the new pane's app, in the window they are given, splitting nothing themselves", async () => {
-    const { commands, events, id, window } = await setup();
-    const requested: AppEventMap["split.requested"][] = [];
-    events.on("split.requested", (payload) => {
-      requested.push(payload);
-    });
+  it("split by opening the launcher for the new pane's app over the window they are given, splitting nothing themselves", async () => {
+    const { commands, events, id, registrar, stages, views, window, profiles } =
+      await setup();
+    new Launcher({
+      commands,
+      events,
+      overlayUrl: (kind, query) =>
+        `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
+      registrar,
+      stages,
+    }).start();
+    const opened = (run: CommandId) => {
+      commands.run(run, { windowId: id });
+      return new URL(views.created.at(-1)?.url ?? "", "file:///").search;
+    };
     expect([
-      commands.run("stage.splitVertical", { windowId: id }).ok,
-      commands.run("stage.splitHorizontal", { windowId: id }).ok,
-    ]).toStrictEqual([true, true]);
-    expect(requested).toStrictEqual([
-      { orientation: "vertical", windowId: id },
-      { orientation: "horizontal", windowId: id },
+      opened("stage.splitVertical"),
+      opened("stage.splitHorizontal"),
+      window.childViews().length,
+      profiles.currentGroup()?.tabIds.length,
+    ]).toStrictEqual([
+      "?split=vertical&kind=launcher",
+      "?split=horizontal&kind=launcher",
+      2,
+      1,
     ]);
-    expect(window.childViews()).toHaveLength(1);
   });
 
   it("close panes in the window they are given", async () => {
@@ -1027,6 +1038,28 @@ describe("a sidebar row dragged over the panes", () => {
       panes: [calendar.id, gmail],
     });
   });
+
+  it.each([
+    ["left", { x: 50, y: 400 }, "vertical", true],
+    ["right", { x: 1150, y: 400 }, "vertical", false],
+    ["top", { x: 600, y: 50 }, "horizontal", true],
+    ["bottom", { x: 600, y: 750 }, "horizontal", false],
+  ] as const)(
+    "joins the tab by the %s edge it is let go by, on that side and in that orientation",
+    async (_edge, point, orientation, first) => {
+      const { calendar, gmail, groupOf, id, stage, stages } =
+        await draggingTab();
+      stages.endDrag(id, point);
+      const joined = groupOf(gmail)?.layout;
+      expect({
+        orientation: joined?.kind === "split" ? joined.orientation : undefined,
+        panes: stage.snapshot().panes.map((pane) => pane.tabId),
+      }).toStrictEqual({
+        orientation,
+        panes: first ? [calendar.id, gmail] : [gmail, calendar.id],
+      });
+    }
+  );
 
   it("joins the tab after the pane when it is let go in the middle, split side by side", async () => {
     const { calendar, gmail, groupOf, id, stage, stages } = await draggingTab();
