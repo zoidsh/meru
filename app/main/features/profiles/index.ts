@@ -46,7 +46,7 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { Opened, SnapshotSpec } from "../../../core/snapshot.ts";
-import { appById, gmail, isSingleInstance } from "../../../shared/apps.ts";
+import { appById, gmail, isSingleInstanceId } from "../../../shared/apps.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import {
   profiles as profileChannels,
@@ -244,7 +244,7 @@ export class Profiles {
       })),
       tabs: this.state.tabs.map((tab) => ({
         ...tab,
-        closeable: canClose(this.state, tab.id, isSingleInstance).ok,
+        closeable: canClose(this.state, tab.id, isSingleInstanceId).ok,
       })),
     };
   }
@@ -319,7 +319,7 @@ export class Profiles {
       this.state,
       newTab(ids, profileId, app),
       ids,
-      isSingleInstance,
+      isSingleInstanceId,
       placement
     );
     if (!opened.ok) {
@@ -330,7 +330,7 @@ export class Profiles {
   }
 
   closeTab(tabId: string): Result<undefined, ProfilesError> {
-    return this.#commit(closeTab(this.state, tabId, isSingleInstance));
+    return this.#commit(closeTab(this.state, tabId, isSingleInstanceId));
   }
 
   /** Brings a tab to the front: its profile selected, its group shown, its pane focused. */
