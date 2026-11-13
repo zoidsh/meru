@@ -30,6 +30,7 @@ const createView = (spec: ViewSpec): ViewPort => {
     },
   });
   view.setBorderRadius(spec.radius);
+  view.setBackgroundColor(spec.background);
   const contents = view.webContents;
 
   const port: ViewPort = {
@@ -83,9 +84,6 @@ const createView = (spec: ViewSpec): ViewPort => {
         contents.off("did-navigate", changed);
         contents.off("did-navigate-in-page", changed);
       };
-    },
-    setBackgroundColor: (color) => {
-      view.setBackgroundColor(color);
     },
     setBorderRadius: (radius) => {
       view.setBorderRadius(radius);

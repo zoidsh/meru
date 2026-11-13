@@ -40,6 +40,8 @@ export interface StagesOptions {
   /** Load `about:blank` in every pane, for the end-to-end suite, which asserts on views and bounds and never on a network page. */
   readonly blankPanes: boolean;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
+  /** The chrome's ground, which a pane shows until its page paints. */
+  readonly background: () => string;
   readonly dragPreload: string | undefined;
   readonly overlayPreload: string | undefined;
   /** What the chrome takes of a window's content area. */
@@ -151,6 +153,7 @@ export class Stages {
     const windowId = window.contentsId;
     const { blankPanes, profiles, settings } = this.#options;
     const opened = new Stage({
+      background: this.#options.background,
       dragPreload: this.#options.dragPreload,
       groupId,
       keys: (view) => this.#options.keys.attach(view, windowId),

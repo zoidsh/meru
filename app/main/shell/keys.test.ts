@@ -82,7 +82,11 @@ const setup = () => {
   });
   keys.start();
   const window = new FakeWindow();
-  const pane = new FakeViewFactory().create({ radius: 0, zoom: 1 });
+  const pane = new FakeViewFactory().create({
+    background: "#ffffff",
+    radius: 0,
+    zoom: 1,
+  });
   keys.attach(window, window.contentsId);
   const detach = keys.attach(pane, window.contentsId);
   return {
@@ -131,7 +135,11 @@ describe(ShortcutKeys, () => {
       settings: setup().settings,
     });
     keys.start();
-    const pane = new FakeViewFactory().create({ radius: 0, zoom: 1 });
+    const pane = new FakeViewFactory().create({
+      background: "#ffffff",
+      radius: 0,
+      zoom: 1,
+    });
     keys.attach(pane, 1);
     expect(pane.listening).toBeFalsy();
   });

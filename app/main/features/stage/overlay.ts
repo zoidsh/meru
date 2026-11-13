@@ -29,10 +29,10 @@ export class Overlay {
     const view = this.#options.views.create({
       arguments: args,
       preload: this.#options.preload,
+      background: TRANSPARENT,
       radius: 0,
       zoom: 1,
     });
-    view.setBackgroundColor(TRANSPARENT);
     this.#view = view;
     // Focused once loaded, since a view focused before its page exists hands the page no focus to start with.
     const load = async () => {

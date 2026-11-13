@@ -14,7 +14,6 @@ export class FakeView implements ViewPort {
   url: string | undefined;
   radius: number;
   zoom: number;
-  backgroundColor: string | undefined;
   destroyed = false;
   focused = false;
   #bounds: Rect = { height: 0, width: 0, x: 0, y: 0 };
@@ -91,10 +90,6 @@ export class FakeView implements ViewPort {
   get listening(): boolean {
     return this.#keys.listening;
   }
-
-  readonly setBackgroundColor = (color: string) => {
-    this.backgroundColor = color;
-  };
 
   readonly setBorderRadius = (radius: number) => {
     this.radius = radius;

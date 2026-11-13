@@ -92,6 +92,7 @@ const setup = async (style: Style = "modern") => {
   await profiles.open();
   const insets = { left: 0, top: 0 };
   const stages = new Stages({
+    background: () => "#ececf1",
     keys: new ShortcutKeys({
       commands: allCommands,
       dispatcher: commands,
@@ -182,6 +183,7 @@ describe(Stages, () => {
 
     expect(window.childViews()).toStrictEqual([view]);
     expect(view?.spec).toStrictEqual({
+      background: "#ececf1",
       partition: `persist:${profileId}`,
       radius: 10,
       zoom: 1,
@@ -567,13 +569,16 @@ describe("a drag across panes", () => {
     expect(window.childViews()).toStrictEqual(views.created);
     expect(overlay?.url).toMatch(/^data:text\/html,.*col-resize/u);
     expect({
-      background: overlay?.backgroundColor,
       bounds: overlay?.bounds(),
       spec: overlay?.spec,
     }).toStrictEqual({
-      background: "#00000000",
       bounds: window.contentBounds(),
-      spec: { preload: "/dist/preload/drag.cjs", radius: 0, zoom: 1 },
+      spec: {
+        background: "#00000000",
+        preload: "/dist/preload/drag.cjs",
+        radius: 0,
+        zoom: 1,
+      },
     });
   });
 
@@ -690,14 +695,13 @@ describe("an overlay over the panes", () => {
     const [pane, overlay] = views.created;
     await expect.poll(() => overlay?.focused).toBeTruthy();
     expect({
-      background: overlay?.backgroundColor,
       spec: overlay?.spec,
       top: window.childViews().at(-1) === overlay,
       url: overlay?.url,
     }).toStrictEqual({
-      background: "#00000000",
       spec: {
         arguments: ["--meru-surface=launcher"],
+        background: "#00000000",
         preload: "/dist/preload/renderer.cjs",
         radius: 0,
         zoom: 1,

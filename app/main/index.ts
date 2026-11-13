@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { chromeInsets } from "../core/engines/chrome.ts";
+import { chromeColors, chromeInsets } from "../core/engines/chrome.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
@@ -175,6 +175,8 @@ const start = async () => {
   keys.start();
 
   const stages = new Stages({
+    background: () =>
+      chromeColors(ports.theme.dark() ? "dark" : "light").background,
     blankPanes: e2e,
     commands,
     dragPreload: path.join(dist, "preload", "drag.cjs"),

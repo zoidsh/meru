@@ -26,11 +26,11 @@ export class DragOverlay {
     this.layout = options.layout;
     this.ratio = undefined;
     this.view = options.views.create({
+      background: TRANSPARENT,
       preload: options.preload,
       radius: 0,
       zoom: 1,
     });
-    this.view.setBackgroundColor(TRANSPARENT);
     const { view } = this;
     const load = async () => {
       try {

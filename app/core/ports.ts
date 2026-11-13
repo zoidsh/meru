@@ -52,7 +52,6 @@ export interface ViewPort {
   readonly navigate: (action: NavigationAction) => void;
   /** Calls `listener` when what `navigation()` answers may have changed. */
   readonly onNavigation: (listener: () => void) => Unsubscribe;
-  readonly setBackgroundColor: (color: string) => void;
   readonly setBorderRadius: (radius: number) => void;
   readonly setZoomFactor: (factor: number) => void;
   readonly zoomFactor: () => number;
@@ -66,6 +65,8 @@ export interface ViewSpec {
   readonly arguments?: readonly string[];
   readonly radius: number;
   readonly zoom: number;
+  /** What the view shows before its page paints, as hex, with alpha for a view the panes show through. */
+  readonly background: string;
 }
 
 export interface ViewFactoryPort {
