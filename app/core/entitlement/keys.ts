@@ -1,5 +1,5 @@
-import { decodeBase64Url } from "../../core/entitlement/token.ts";
-import type { Ed25519Subtle } from "../../core/entitlement/verify.ts";
+import { decodeBase64Url } from "./token.ts";
+import type { Ed25519Subtle } from "./verify.ts";
 
 /** Raw Ed25519 public keys, base64url, by key id. */
 export type PublicKeys = Readonly<Record<string, string>>;

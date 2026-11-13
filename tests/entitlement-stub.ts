@@ -2,7 +2,7 @@ import { once } from "node:events";
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { issueRequestSchema } from "../app/shared/entitlement/api.ts";
+import { issueRequestSchema } from "../app/core/entitlement/api.ts";
 import { mintToken } from "../scripts/entitlement/sign.ts";
 
 const DAY = 86_400;

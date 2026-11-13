@@ -1,11 +1,11 @@
 import path from "node:path";
 
+import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
+import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { rendererSurface, surfaces } from "../shared/channels/surfaces.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
-import { ENTITLEMENT_URL } from "../shared/entitlement/api.ts";
-import { acceptedKeys, importKeys } from "../shared/entitlement/keys.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Profiles } from "./features/profiles/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";

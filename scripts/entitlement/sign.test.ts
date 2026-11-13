@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { verifyToken } from "../../app/core/entitlement/verify.ts";
 import {
   acceptedKeys,
   DEV_KID,
   importKeys,
-} from "../../app/shared/entitlement/keys.ts";
+} from "../../app/core/entitlement/keys.ts";
+import { verifyToken } from "../../app/core/entitlement/verify.ts";
 import { mintToken } from "./sign.ts";
 
 const NOW = 1_800_000_000_000;

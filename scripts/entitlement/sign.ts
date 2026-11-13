@@ -4,12 +4,12 @@ import path from "node:path";
 
 import { z } from "zod";
 
+import { DEV_KID } from "../../app/core/entitlement/keys.ts";
 import {
   claimFieldsSchema,
   claimsSchema,
 } from "../../app/core/entitlement/token.ts";
 import type { Claims } from "../../app/core/entitlement/token.ts";
-import { DEV_KID } from "../../app/shared/entitlement/keys.ts";
 
 const DEV_KEY = path.join(import.meta.dirname, "dev-private.pem");
 

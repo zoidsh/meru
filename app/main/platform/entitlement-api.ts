@@ -1,6 +1,6 @@
+import { issuedSchema, refusedSchema } from "../../core/entitlement/api.ts";
 import type { EntitlementApi } from "../../core/ports.ts";
 import { err, ok } from "../../core/result.ts";
-import { issuedSchema, refusedSchema } from "../../shared/entitlement/api.ts";
 
 export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
