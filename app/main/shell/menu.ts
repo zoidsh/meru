@@ -1,6 +1,6 @@
+import { DisposableStore } from "../../core/disposable.ts";
 import { conflicts, resolveBindings } from "../../core/engines/shortcuts.ts";
 import type { AppEvents } from "../../core/events.ts";
-import type { Unsubscribe } from "../../core/ports.ts";
 import type { Command, MenuSectionId } from "../../shared/commands/define.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
 import { msg } from "../../shared/msg.ts";
@@ -118,14 +118,15 @@ export interface ApplicationMenuOptions {
 /** Keeps the application menu built from the commands and the user's shortcuts, rebuilding it when the shortcuts change. */
 export class ApplicationMenu {
   readonly #options: ApplicationMenuOptions;
+  readonly #disposables = new DisposableStore();
 
   constructor(options: ApplicationMenuOptions) {
     this.#options = options;
   }
 
-  start(): Unsubscribe {
+  start(): void {
     this.#build();
-    const unsubscribe = [
+    this.#disposables.add(
       this.#options.settings.subscribe((changes) => {
         if (changes.some((change) => change.key === "shortcuts.bindings")) {
           this.#build();
@@ -133,13 +134,12 @@ export class ApplicationMenu {
       }),
       this.#options.events.on("menu.invalidated", () => {
         this.#build();
-      }),
-    ];
-    return () => {
-      for (const remove of unsubscribe) {
-        remove();
-      }
-    };
+      })
+    );
+  }
+
+  dispose(): void {
+    this.#disposables.dispose();
   }
 
   #build(): void {

@@ -1,3 +1,4 @@
+import { DisposableStore } from "../../../core/disposable.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
   LifecyclePort,
@@ -73,6 +74,7 @@ const advance = (state: UpdateState, event: UpdaterEvent): UpdateState => {
 /** Checks the release feed behind the window, on a timer, in a packaged app only, and keeps every page told how far an update has got. */
 export class Updater {
   readonly #options: UpdaterOptions;
+  readonly #disposables = new DisposableStore();
   readonly #pages = new Set<number>();
   #state: UpdateState = IDLE;
   #started = false;
@@ -83,9 +85,12 @@ export class Updater {
   }
 
   /** Answers pages and the menu from the state as it stands, before the window shows. */
-  attach(): Unsubscribe {
+  attach(): void {
     const { registrar, commands, updater } = this.#options;
-    const unsubscribe = [
+    this.#disposables.add(
+      () => {
+        this.#pages.clear();
+      },
       registrar.register(channels, {
         snapshot: (_payload, { contentsId }) => {
           this.#pages.add(contentsId);
@@ -101,42 +106,37 @@ export class Updater {
       }),
       updater.onEvent((event) => {
         this.#set(advance(this.#state, event));
-      }),
-    ];
-    return () => {
-      for (const remove of unsubscribe) {
-        remove();
-      }
-      this.#pages.clear();
-    };
+      })
+    );
   }
 
   /** Schedules the first check after the delay and the rest at the user's interval; does nothing in an app run from the repository. */
-  start(): Unsubscribe {
-    const unsubscribe: Unsubscribe[] = [];
-    if (this.#options.lifecycle.packaged) {
-      this.#started = true;
-      this.#schedule(FIRST_CHECK_DELAY);
-      unsubscribe.push(
-        this.#options.settings.subscribe((changes) => {
-          if (changes.some((change) => change.key === "updater.channel")) {
-            this.check();
-          } else if (
-            changes.some((change) => change.key === "updater.intervalHours")
-          ) {
-            this.#schedule(this.#interval());
-          }
-        })
-      );
+  start(): void {
+    if (!this.#options.lifecycle.packaged) {
+      return;
     }
-    return () => {
-      for (const remove of unsubscribe) {
-        remove();
-      }
-      this.#started = false;
-      this.#timer?.();
-      this.#timer = undefined;
-    };
+    this.#started = true;
+    this.#schedule(FIRST_CHECK_DELAY);
+    this.#disposables.add(
+      () => {
+        this.#started = false;
+        this.#timer?.();
+        this.#timer = undefined;
+      },
+      this.#options.settings.subscribe((changes) => {
+        if (changes.some((change) => change.key === "updater.channel")) {
+          this.check();
+        } else if (
+          changes.some((change) => change.key === "updater.intervalHours")
+        ) {
+          this.#schedule(this.#interval());
+        }
+      })
+    );
+  }
+
+  dispose(): void {
+    this.#disposables.dispose();
   }
 
   current(): UpdateState {

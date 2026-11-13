@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { DisposableStore } from "../../../core/disposable.ts";
 import {
   deriveEntitlement,
   sameGrant,
@@ -152,6 +153,7 @@ export class Entitlement<K> {
   readonly #store: SnapshotStore<EntitlementState, EntitlementFallback>;
   readonly #listeners = new Set<EntitlementListener>();
   readonly #pages = new Set<number>();
+  readonly #disposables = new DisposableStore();
   #state: EntitlementState | undefined;
   #claims: Claims | undefined;
   #source: EntitlementSource = "stored";
@@ -196,33 +198,41 @@ export class Entitlement<K> {
   }
 
   /** Answers pages from the value as it stands, before the window shows. */
-  attach(): Unsubscribe {
-    const unregister = this.#options.registrar.register(channels, {
-      snapshot: (_payload, { contentsId }) => {
-        this.#pages.add(contentsId);
-        return ok(this.#value);
+  attach(): void {
+    this.#disposables.add(
+      () => {
+        this.#store.dispose();
       },
-    });
-    return () => {
-      unregister();
-      this.#pages.clear();
-    };
+      () => {
+        this.#pages.clear();
+      },
+      this.#options.registrar.register(channels, {
+        snapshot: (_payload, { contentsId }) => {
+          this.#pages.add(contentsId);
+          return ok(this.#value);
+        },
+      })
+    );
   }
 
   /** Refreshes behind the window whenever the token has expired, never blocking and never asking the user. */
-  start(): Unsubscribe {
+  start(): void {
     this.#started = true;
-    // Timers stop while the machine sleeps, so a token that expired during a sleep would otherwise wait out the rest of the timer.
-    const unresume = this.#options.power.onResume(() => {
-      this.#schedule();
-    });
+    this.#disposables.add(
+      () => {
+        this.#started = false;
+        this.#cancel();
+      },
+      // Timers stop while the machine sleeps, so a token that expired during a sleep would otherwise wait out the rest of the timer.
+      this.#options.power.onResume(() => {
+        this.#schedule();
+      })
+    );
     this.#schedule();
-    return () => {
-      unresume();
-      this.#started = false;
-      this.#cancel();
-      this.#store.dispose();
-    };
+  }
+
+  dispose(): void {
+    this.#disposables.dispose();
   }
 
   current(): EntitlementValue {

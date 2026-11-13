@@ -1,6 +1,7 @@
 import { ipcMain, webContents } from "electron";
 import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
 
+import { DisposableStore } from "../../core/disposable.ts";
 import type { IpcTransportPort, Unsubscribe } from "../../core/ports.ts";
 
 export interface IpcNames {
@@ -25,13 +26,13 @@ export const ipcTransport: IpcTransportPort = {
 };
 
 export const listenIpc = (names: IpcNames, dispatch: Dispatch): Unsubscribe => {
-  const removers: Unsubscribe[] = [];
+  const disposables = new DisposableStore();
   for (const channel of new Set(names.event)) {
     const listener = (event: IpcMainEvent, payload: unknown) => {
       dispatch(event.sender.id, channel, payload);
     };
     ipcMain.on(channel, listener);
-    removers.push(() => {
+    disposables.add(() => {
       ipcMain.off(channel, listener);
     });
   }
@@ -39,7 +40,7 @@ export const listenIpc = (names: IpcNames, dispatch: Dispatch): Unsubscribe => {
     ipcMain.handle(channel, (event: IpcMainInvokeEvent, payload: unknown) =>
       dispatch(event.sender.id, channel, payload)
     );
-    removers.push(() => {
+    disposables.add(() => {
       ipcMain.removeHandler(channel);
     });
   }
@@ -48,13 +49,11 @@ export const listenIpc = (names: IpcNames, dispatch: Dispatch): Unsubscribe => {
       event.returnValue = dispatch(event.sender.id, channel, payload);
     };
     ipcMain.on(channel, listener);
-    removers.push(() => {
+    disposables.add(() => {
       ipcMain.off(channel, listener);
     });
   }
   return () => {
-    for (const remove of removers) {
-      remove();
-    }
+    disposables.dispose();
   };
 };

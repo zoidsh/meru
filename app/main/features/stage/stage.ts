@@ -1,3 +1,4 @@
+import { DisposableStore } from "../../../core/disposable.ts";
 import {
   focusNext,
   focusPrevious,
@@ -80,7 +81,7 @@ const hostOf = (url: string) => {
 export class Stage {
   readonly #options: StageOptions;
   readonly #views = new Map<string, ViewPort>();
-  readonly #unsubscribe: Unsubscribe[] = [];
+  readonly #disposables = new DisposableStore();
   readonly #focusListeners = new Map<string, Unsubscribe>();
   #shown: Group | undefined;
   #overlays: ViewPort[] = [];
@@ -89,7 +90,6 @@ export class Stage {
   #fullscreen: string | undefined;
   #drag: Drag | undefined;
   #published: string | undefined;
-  #disposed = false;
 
   constructor(options: StageOptions) {
     this.#options = options;
@@ -104,7 +104,7 @@ export class Stage {
 
   start(): void {
     const { window } = this.#options;
-    this.#unsubscribe.push(
+    this.#disposables.add(
       window.onResized(() => {
         this.#arrange();
       }),
@@ -118,7 +118,7 @@ export class Stage {
   /** Shows the group again if it, or which group the window shows, changed since the stage last looked. */
   refresh(): void {
     const group = this.#read();
-    if (this.#disposed || group === this.#shown) {
+    if (this.#disposables.disposed || group === this.#shown) {
       return;
     }
     this.#shown = group;
@@ -386,14 +386,11 @@ export class Stage {
   }
 
   dispose(): void {
-    if (this.#disposed) {
+    if (this.#disposables.disposed) {
       return;
     }
-    this.#disposed = true;
-    for (const unsubscribe of [
-      ...this.#unsubscribe.splice(0),
-      ...this.#focusListeners.values(),
-    ]) {
+    this.#disposables.dispose();
+    for (const unsubscribe of this.#focusListeners.values()) {
       unsubscribe();
     }
     this.#retireOverlay();
@@ -541,7 +538,7 @@ export class Stage {
 
   // A page needs only the stage as it is now, so a snapshot equal to the last one sent is not sent again.
   #publish(): void {
-    if (this.#disposed) {
+    if (this.#disposables.disposed) {
       return;
     }
     const snapshot = this.snapshot();

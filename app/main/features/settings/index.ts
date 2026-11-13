@@ -1,3 +1,4 @@
+import { DisposableStore } from "../../../core/disposable.ts";
 import {
   diff,
   emptySettings,
@@ -78,6 +79,7 @@ export class SettingsStore {
   readonly #store: SnapshotStore<Settings, Fallback>;
   readonly #listeners = new Set<SettingsListener>();
   readonly #pages = new Set<number>();
+  readonly #disposables = new DisposableStore();
   #settings: Settings = emptySettings();
 
   constructor(options: SettingsOptions) {
@@ -103,9 +105,12 @@ export class SettingsStore {
     return opened;
   }
 
-  start(): Unsubscribe {
+  start(): void {
     const { registrar, fs, clock } = this.#options;
-    const removers = [
+    this.#disposables.add(
+      () => {
+        this.#store.dispose();
+      },
       registrar.register(channels, {
         set: ({ key, value, profileId }) => {
           const result = this.#set(key, value, profileId);
@@ -115,11 +120,11 @@ export class SettingsStore {
           this.#pages.add(contentsId);
           return ok(this.#settings);
         },
-      }),
-    ];
+      })
+    );
     if (this.#options.watchFile) {
       let cancel: Unsubscribe | undefined;
-      removers.push(
+      this.#disposables.add(
         fs.watch(SETTINGS_FILE, () => {
           cancel ??= clock.schedule(SETTLE, () => {
             cancel = undefined;
@@ -131,12 +136,10 @@ export class SettingsStore {
         }
       );
     }
-    return () => {
-      for (const remove of removers) {
-        remove();
-      }
-      this.#store.dispose();
-    };
+  }
+
+  dispose(): void {
+    this.#disposables.dispose();
   }
 
   get settings(): Settings {

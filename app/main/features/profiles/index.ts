@@ -1,3 +1,4 @@
+import { DisposableStore } from "../../../core/disposable.ts";
 import { orderedProfiles } from "../../../core/engines/ordering.ts";
 import {
   addProfile,
@@ -32,7 +33,6 @@ import type {
   FsPort,
   Ids,
   SessionPort,
-  Unsubscribe,
 } from "../../../core/ports.ts";
 import type { App } from "../../../core/records/app.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
@@ -149,6 +149,7 @@ export interface ProfilesOptions {
 export class Profiles {
   readonly #options: ProfilesOptions;
   readonly #store: SnapshotStore<ProfilesState, string>;
+  readonly #disposables = new DisposableStore();
   readonly #pages = new Set<number>();
   #entitlement: Entitlement;
   #state: ProfilesState | undefined;
@@ -182,9 +183,12 @@ export class Profiles {
     return opened;
   }
 
-  start(): Unsubscribe {
+  start(): void {
     const { registrar, events } = this.#options;
-    const removers = [
+    this.#disposables.add(
+      () => {
+        this.#store.dispose();
+      },
       registrar.register(profileChannels, {
         create: ({ label, color }) => this.createProfile(label, color),
         remove: ({ profileId }) => done(this.removeProfile(profileId)),
@@ -203,14 +207,12 @@ export class Profiles {
         this.#entitlement = entitlement;
         this.#reselect();
         this.#publish();
-      }),
-    ];
-    return () => {
-      for (const remove of removers) {
-        remove();
-      }
-      this.#store.dispose();
-    };
+      })
+    );
+  }
+
+  dispose(): void {
+    this.#disposables.dispose();
   }
 
   get state(): ProfilesState {

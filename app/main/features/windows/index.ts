@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { DisposableStore } from "../../../core/disposable.ts";
 import { clampToDisplay } from "../../../core/engines/bounds.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
@@ -8,7 +9,6 @@ import type {
   DisplayPort,
   FsPort,
   Ids,
-  Unsubscribe,
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Rect } from "../../../core/records/rect.ts";
@@ -52,6 +52,7 @@ export interface WindowsOptions {
 export class Windows {
   readonly #options: WindowsOptions;
   readonly #store: SnapshotStore<WindowsState, string>;
+  readonly #disposables = new DisposableStore();
   #windows: Window[] = [];
 
   constructor(options: WindowsOptions) {
@@ -75,18 +76,19 @@ export class Windows {
     return opened;
   }
 
-  start(): Unsubscribe {
-    const removers = [
+  start(): void {
+    this.#disposables.add(
+      () => {
+        this.#store.dispose();
+      },
       this.#options.events.on("profile.selected", ({ groupId }) => {
         this.#update({ groupId });
-      }),
-    ];
-    return () => {
-      for (const remove of removers) {
-        remove();
-      }
-      this.#store.dispose();
-    };
+      })
+    );
+  }
+
+  dispose(): void {
+    this.#disposables.dispose();
   }
 
   get windows(): readonly Window[] {
@@ -117,21 +119,16 @@ export class Windows {
   }
 
   /** Follows the main window's moves and resizes, and writes where it was when it closes. */
-  attachMain(window: WindowPort): Unsubscribe {
-    const removers = [
+  attachMain(window: WindowPort): void {
+    this.#disposables.add(
       window.onBoundsChanged(() => {
         this.#update({ bounds: window.bounds() });
       }),
       window.onClosed(() => {
         void this.flush();
-      }),
-    ];
+      })
+    );
     this.#update({ bounds: window.bounds() });
-    return () => {
-      for (const remove of removers) {
-        remove();
-      }
-    };
   }
 
   /** Writes what is pending now. */

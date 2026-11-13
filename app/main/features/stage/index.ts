@@ -1,3 +1,4 @@
+import { DisposableStore } from "../../../core/disposable.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
   Unsubscribe,
@@ -44,6 +45,7 @@ export interface StagesOptions {
 
 export class Stages {
   readonly #options: StagesOptions;
+  readonly #disposables = new DisposableStore();
   readonly #bySender = new Map<number, Stage>();
   readonly #unassign = new Map<number, Unsubscribe>();
 
@@ -51,9 +53,9 @@ export class Stages {
     this.#options = options;
   }
 
-  start(): Unsubscribe {
+  start(): void {
     const { registrar, settings, commands, events } = this.#options;
-    const unregister = [
+    this.#disposables.add(
       events.on("stage.invalidated", () => {
         for (const found of new Set(this.#bySender.values())) {
           found.refresh();
@@ -99,13 +101,12 @@ export class Stages {
         end: (point, { contentsId }) => this.endDrag(contentsId, point),
         move: ({ x, y, buttons }, { contentsId }) =>
           this.dragTo(contentsId, { x, y }, buttons),
-      }),
-    ];
-    return () => {
-      for (const remove of unregister) {
-        remove();
-      }
-    };
+      })
+    );
+  }
+
+  dispose(): void {
+    this.#disposables.dispose();
   }
 
   /** Opens the stage of a window that shows the group `groupId` names, read again on every change. */
