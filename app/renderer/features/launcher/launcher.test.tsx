@@ -12,7 +12,8 @@ import {
   profileOf,
   tabOf,
 } from "../../testing.tsx";
-import { Launcher, LauncherButton } from "./launcher.tsx";
+import { LauncherButton } from "./launcher-button.tsx";
+import { Launcher } from "./launcher.tsx";
 
 const mounted: (() => void)[] = [];
 

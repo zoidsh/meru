@@ -1,5 +1,3 @@
-import { cn } from "cn";
-import { LayoutGridIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 
@@ -7,11 +5,9 @@ import { launcherApps, launcherSide } from "../../../core/engines/launcher.ts";
 import type { App } from "../../../core/records/app.ts";
 import type { Rect } from "../../../core/records/rect.ts";
 import { apps } from "../../../shared/apps.ts";
-import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
+import { launcher } from "../../../shared/channels/launcher.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import { msg } from "../../../shared/msg.ts";
-import { useClient } from "../../client-context.tsx";
-import { Button } from "../../ui/button.tsx";
 import {
   Command,
   CommandEmpty,
@@ -22,65 +18,9 @@ import {
 } from "../../ui/command.tsx";
 import { Popover, PopoverContent } from "../../ui/popover.tsx";
 import { AppIcon } from "../apps/app-icon.tsx";
-import { useTooltip } from "../commands/use-tooltip.ts";
 import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useLauncherClient } from "./use-launcher-client.ts";
-
-const BUTTON_SIZE = {
-  narrow: "icon",
-  titlebar: "icon-sm",
-  wide: "sm",
-} as const;
-
-const rectOf = (element: Element): Rect => {
-  const { left, top, right, bottom } = element.getBoundingClientRect();
-  const x = Math.floor(left);
-  const y = Math.floor(top);
-  return {
-    height: Math.ceil(bottom) - y,
-    width: Math.ceil(right) - x,
-    x,
-    y,
-  };
-};
-
-/** The button the launcher opens from, in the titlebar or at the foot of the sidebar; it also answers launcher.open while it is the one showing. */
-export const LauncherButton = ({
-  place,
-}: {
-  readonly place: "titlebar" | "narrow" | "wide";
-}) => {
-  const wide = place === "wide";
-  const client = useClient();
-  const ref = useRef<HTMLButtonElement>(null);
-  const label = msg`Open app`;
-  const title = useTooltip(label, "launcher.open");
-  const open = () => {
-    if (ref.current !== null) {
-      client.send(launcher.open, { anchor: rectOf(ref.current) });
-    }
-  };
-  useEffect(() => client.on(launcherPushes.requested, open));
-  return (
-    <Button
-      className={cn(
-        "draggable-none text-muted-foreground",
-        wide && "w-full justify-start"
-      )}
-      data-launcher-button=""
-      onClick={open}
-      ref={ref}
-      size={BUTTON_SIZE[place]}
-      tabIndex={-1}
-      title={title}
-      variant="ghost"
-    >
-      <LayoutGridIcon />
-      {wide ? label : null}
-    </Button>
-  );
-};
 
 /** The launcher itself, on its own page over the panes, beside the button it was opened from: a search field over the apps, Enter opening the highlighted one and Shift+Enter splitting the focused pane with it. */
 export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {

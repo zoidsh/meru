@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { chromeSurface } from "../../shared/channels/surfaces.ts";
 import { ChromeProvider } from "../client-context.tsx";
 import { createClient } from "../client.ts";
-import { LauncherButton } from "../features/launcher/launcher.tsx";
+import { LauncherButton } from "../features/launcher/launcher-button.tsx";
 import {
   createProfilesStore,
   ProfilesContext,
