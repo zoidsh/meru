@@ -1,15 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { themeOf } from "../../core/ports.ts";
-import type { WindowSpec } from "../../core/ports.ts";
-import { settingsPushes } from "../../shared/channels/settings.ts";
-import { FakeDisplays } from "../../test/fakes/display.ts";
-import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
-import { FakeTheme } from "../../test/fakes/theme.ts";
-import { FakeWindow } from "../../test/fakes/window.ts";
-import { IpcDispatcher } from "./ipc.ts";
-import { SettingsWindow } from "./settings-window.ts";
+import { themeOf } from "../../../core/ports.ts";
+import type { WindowSpec } from "../../../core/ports.ts";
+import { settingsPushes } from "../../../shared/channels/settings.ts";
+import { FakeDisplays } from "../../../test/fakes/display.ts";
+import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
+import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { FakeTheme } from "../../../test/fakes/theme.ts";
+import { FakeWindow } from "../../../test/fakes/window.ts";
+import { CommandDispatcher } from "../../shell/commands.ts";
+import { IpcDispatcher } from "../../shell/ipc.ts";
+import { pageUrl } from "../../shell/window.ts";
+import { SettingsWindow } from "./window.ts";
 
 const setup = (platform = "darwin") => {
   const theme = new FakeTheme(false);
@@ -22,14 +24,19 @@ const setup = (platform = "darwin") => {
     },
     transport,
   });
+  const commands = new CommandDispatcher();
+  const pages = {
+    devServer: undefined,
+    dir: "/dist/renderer",
+    platform,
+    theme: () => themeOf(theme),
+  };
   const settings = new SettingsWindow({
     background: false,
+    commands,
     linuxControls: false,
-    pages: {
-      devServer: undefined,
-      dir: "/dist/renderer",
-      platform,
-      theme: () => themeOf(theme),
+    onError: (error) => {
+      throw error;
     },
     ports: {
       displays: new FakeDisplays(),
@@ -46,19 +53,24 @@ const setup = (platform = "darwin") => {
     },
     preload: "/preload.cjs",
     registrar,
+    url: () => pageUrl(pages, "settings.html"),
   });
+  settings.start();
   const reached = () => {
     transport.sent.length = 0;
     registrar.broadcast(settingsPushes.changed, { changes: [], locked: {} });
     return transport.sent.map((sent) => sent.contentsId);
   };
-  return { created, reached, settings, specs };
+  return { commands, created, reached, settings, specs };
 };
 
 describe(SettingsWindow, () => {
-  it("opens one window at 3.x's size on the primary display, its page on the settings surface", async () => {
-    const { created, reached, settings, specs } = setup();
-    await settings.open();
+  it("opens one window at 3.x's size on the primary display on settings.open, its page on the settings surface", async () => {
+    const { commands, created, reached, specs } = setup();
+    commands.run("settings.open", { windowId: 1 });
+    await vi.waitFor(() => {
+      expect(created[0]?.shown).toBeDefined();
+    });
     const [window] = created;
     expect({
       arguments: specs[0]?.arguments,

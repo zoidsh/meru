@@ -6,7 +6,6 @@ import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { themeOf } from "../core/ports.ts";
-import { ok } from "../core/result.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../shared/channels/surfaces.ts";
@@ -16,8 +15,8 @@ import { Entitlement } from "./features/entitlement/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
 import { Links } from "./features/links/index.ts";
 import { Profiles } from "./features/profiles/index.ts";
-import { settingsCommands } from "./features/settings/commands.ts";
 import { SettingsStore } from "./features/settings/index.ts";
+import { SettingsWindow } from "./features/settings/window.ts";
 import { Sidebars } from "./features/sidebar/index.ts";
 import { Stages } from "./features/stage/index.ts";
 import { Updater } from "./features/updater/index.ts";
@@ -39,7 +38,6 @@ import { IpcDispatcher } from "./shell/ipc.ts";
 import { ShortcutKeys } from "./shell/keys.ts";
 import { exposeMeasure } from "./shell/measure.ts";
 import { ApplicationMenu } from "./shell/menu.ts";
-import { SettingsWindow } from "./shell/settings-window.ts";
 import { MainWindow, pageUrl } from "./shell/window.ts";
 import type { PageOptions } from "./shell/window.ts";
 
@@ -282,18 +280,15 @@ const start = async () => {
   const linuxControls = settings.get("window.linuxControls");
   const settingsWindow = new SettingsWindow({
     background,
+    commands,
     linuxControls,
-    pages,
+    onError: report,
     ports,
     preload: path.join(dist, "preload", "renderer.cjs"),
     registrar: dispatcher,
+    url: () => pageUrl(pages, "settings.html"),
   });
-  commands.register(settingsCommands, {
-    open: () => {
-      void settingsWindow.open().catch(report);
-      return ok(null);
-    },
-  });
+  settingsWindow.start();
 
   const window = new MainWindow({
     background,

@@ -1,7 +1,11 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { chromeColors, titleBarOf } from "../../core/engines/chrome.ts";
+import {
+  chromeColors,
+  titleBarOf,
+  windowColours,
+} from "../../core/engines/chrome.ts";
 import { themeOf } from "../../core/ports.ts";
 import type { Ports, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
@@ -118,16 +122,15 @@ export class MainWindow {
 }
 
 /** Paints a window's ground and its window controls in the theme's colours. */
-export const recolour = (
+const recolour = (
   window: WindowPort,
   theme: Theme,
   platform: string,
   linuxControls: boolean
 ) => {
-  window.setBackgroundColor(chromeColors(theme).background);
-  const { overlay } = titleBarOf({ linuxControls, platform, theme });
-  // macOS draws its traffic lights in its own colours, and Electron recolours an overlay only on Windows and Linux.
-  if (overlay !== null && platform !== "darwin") {
-    window.setTitleBarOverlay(overlay);
+  const colours = windowColours({ linuxControls, platform, theme });
+  window.setBackgroundColor(colours.background);
+  if (colours.overlay !== null) {
+    window.setTitleBarOverlay(colours.overlay);
   }
 };

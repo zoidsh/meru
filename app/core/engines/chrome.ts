@@ -53,6 +53,19 @@ export const titleBarOf = (options: {
   };
 };
 
+/** What a window paints in the theme: its ground, and the overlay of its window controls where Electron recolours one, which it does only on Windows and Linux, since macOS draws its traffic lights in its own colours. */
+export const windowColours = (options: {
+  readonly platform: string;
+  readonly theme: Theme;
+  readonly linuxControls: boolean;
+}): {
+  readonly background: string;
+  readonly overlay: TitleBarOverlay | null;
+} => ({
+  background: chromeColors(options.theme).background,
+  overlay: options.platform === "darwin" ? null : titleBarOf(options).overlay,
+});
+
 /** How much of the window's content area the chrome takes before the panes: the titlebar above them, the sidebar to their left. */
 export interface ChromeInsets {
   readonly top: number;
