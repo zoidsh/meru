@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  acceleratorOf,
   conflicts,
   glyphs,
   matchShortcut,
@@ -194,6 +195,33 @@ const press = (
   shift: false,
   type: "keyDown",
   ...modifiers,
+});
+
+describe(acceleratorOf, () => {
+  it("records the platform's command key as CommandOrControl, by the physical key", () => {
+    expect([
+      acceleratorOf(press("KeyK", "K", { meta: true, shift: true }), "darwin"),
+      acceleratorOf(press("KeyK", "k", { control: true }), "darwin"),
+      acceleratorOf(press("KeyN", "ñ", { alt: true, control: true }), "linux"),
+      acceleratorOf(press("KeyK", "k", { meta: true }), "win32"),
+      acceleratorOf(press("Comma", ",", { meta: true }), "darwin"),
+    ]).toStrictEqual([
+      "CommandOrControl+Shift+K",
+      "Control+K",
+      "CommandOrControl+Alt+N",
+      "Super+K",
+      "CommandOrControl+,",
+    ]);
+  });
+
+  it("records nothing for a modifier alone or a key typing would press, but takes a function key alone", () => {
+    expect([
+      acceleratorOf(press("MetaLeft", "Meta", { meta: true }), "darwin"),
+      acceleratorOf(press("KeyK", "k"), "darwin"),
+      acceleratorOf(press("KeyK", "K", { shift: true }), "darwin"),
+      acceleratorOf(press("F5", "F5"), "darwin"),
+    ]).toStrictEqual([undefined, undefined, undefined, "F5"]);
+  });
 });
 
 describe(matchShortcut, () => {

@@ -333,6 +333,34 @@ const pressedOf = (input: KeyInput, platform: string): Set<Modifier> => {
   return pressed;
 };
 
+/**
+ * The accelerator a key press records, in the form that travels between platforms: the platform's command key, Command on macOS and Control elsewhere, as CommandOrControl. Undefined for a modifier alone, or a key with no modifier other than Shift, which typing would press, unless it is a function key.
+ */
+export const acceleratorOf = (
+  input: KeyInput,
+  platform: string
+): string | undefined => {
+  const key = keyOfInput(input);
+  if (key === undefined) {
+    return undefined;
+  }
+  const pressed = pressedOf(input, platform);
+  const command = platform === "darwin" ? "Command" : "Control";
+  const modifiers = new Set(
+    [...pressed].map((modifier) =>
+      modifier === command ? "CommandOrControl" : modifier
+    )
+  );
+  const typed = [...modifiers].every((modifier) => modifier === "Shift");
+  if (typed && !/^F\d{1,2}$/u.test(key)) {
+    return undefined;
+  }
+  return formatAccelerator({
+    key,
+    modifiers: ORDER.filter((modifier) => modifiers.has(modifier)),
+  });
+};
+
 /** The command whose shortcut a key press is, on the platform; undefined for a release, a repeat of nothing bound, or a key no command has. */
 export const matchShortcut = <Id extends string>(
   input: KeyInput,
