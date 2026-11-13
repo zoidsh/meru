@@ -5,8 +5,14 @@ import {
   deriveEntitlement,
   sameGrant,
 } from "../../../core/entitlement/derive.ts";
+import {
+  due,
+  fallsBackToFree,
+  nextDelay,
+  nextWake,
+} from "../../../core/entitlement/schedule.ts";
 import type { Claims } from "../../../core/entitlement/token.ts";
-import { isExpired, verifyToken } from "../../../core/entitlement/verify.ts";
+import { verifyToken } from "../../../core/entitlement/verify.ts";
 import type { Ed25519Subtle } from "../../../core/entitlement/verify.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
@@ -123,17 +129,11 @@ export interface EntitlementOptions<K> {
 
 /** How far this device's clock may run ahead of the API's before a token counts as expired. */
 const SKEW_SECONDS = 300;
-const RETRY_FIRST = 60_000;
-const RETRY_MAX = 3_600_000;
 // setTimeout fires at once for a delay past a signed 32-bit millisecond count.
 const LONGEST_DELAY = 2 ** 31 - 1;
 
 const describeError = (error: EntitlementApiError) =>
   error.kind === "rejected" ? error.reason : error.detail;
-
-/** Whether the API refused the license key the device holds now. */
-const keyRejected = (state: EntitlementState): boolean =>
-  state.rejected !== null && state.rejected.licenseKey === state.licenseKey;
 
 export class Entitlement<K> {
   readonly #options: EntitlementOptions<K>;
@@ -232,14 +232,6 @@ export class Entitlement<K> {
     await this.#store.flush();
   }
 
-  #needsToken(state: EntitlementState): boolean {
-    return (
-      this.#claims === undefined ||
-      state.token?.licenseKey !== state.licenseKey ||
-      isExpired(this.#claims, this.#options.clock.now(), 0)
-    );
-  }
-
   #cancel() {
     this.#timer?.();
     this.#timer = undefined;
@@ -254,43 +246,6 @@ export class Entitlement<K> {
     );
   }
 
-  /** Whether the device holds a trial token, not one for a license key, whose trial has not ended. */
-  #trialRunning(state: EntitlementState, now: number): boolean {
-    const claims = this.#claims;
-    return (
-      claims !== undefined &&
-      state.token?.licenseKey === null &&
-      claims.plan === "trial" &&
-      claims.status === "active" &&
-      (claims.endsAt ?? 0) * 1000 > now
-    );
-  }
-
-  /** The license key to ask the API about now, null for a trial; undefined when nothing is due. */
-  #due(
-    state: EntitlementState,
-    now: number
-  ): { licenseKey: string | null } | undefined {
-    const { rejected } = state;
-    if (rejected === null || !keyRejected(state)) {
-      return this.#needsToken(state)
-        ? { licenseKey: state.licenseKey }
-        : undefined;
-    }
-    if (now >= rejected.at + RETRY_MAX) {
-      return { licenseKey: rejected.licenseKey };
-    }
-    const claims = this.#claims;
-    if (
-      claims !== undefined &&
-      this.#trialRunning(state, now) &&
-      (state.lastAnswer?.outcome === "rejected" || isExpired(claims, now, 0))
-    ) {
-      return { licenseKey: null };
-    }
-    return undefined;
-  }
-
   #schedule() {
     this.#cancel();
     this.#derive();
@@ -300,17 +255,12 @@ export class Entitlement<K> {
     }
     const { clock, online } = this.#options;
     const now = clock.now();
-    const due = this.#due(state, now);
-    if (due === undefined) {
+    const asked = due(state, this.#claims, now);
+    if (asked === undefined) {
       this.#delay = 0;
-      const claims = this.#claims;
-      const next = [
-        (claims?.exp ?? 0) * 1000,
-        (claims?.endsAt ?? 0) * 1000,
-        state.rejected === null ? 0 : state.rejected.at + RETRY_MAX,
-      ].filter((time) => time > now);
-      if (next.length > 0) {
-        this.#at(Math.min(...next), () => {
+      const wake = nextWake(state, this.#claims, now);
+      if (wake !== undefined) {
+        this.#at(wake, () => {
           this.#schedule();
         });
       }
@@ -326,11 +276,11 @@ export class Entitlement<K> {
       return;
     }
     if (this.#delay === 0) {
-      void this.#refresh(state, due.licenseKey);
+      void this.#refresh(state, asked.licenseKey);
       return;
     }
     this.#at(now + this.#delay, () => {
-      void this.#refresh(state, due.licenseKey);
+      void this.#refresh(state, asked.licenseKey);
     });
   }
 
@@ -382,13 +332,7 @@ export class Entitlement<K> {
     } else {
       this.#save({ ...saved, lastAnswer: outcome });
     }
-    if (outcome.outcome === "issued") {
-      this.#delay = 0;
-    } else if (outcome.outcome === "rejected") {
-      this.#delay = licenseKey === null ? RETRY_MAX : 0;
-    } else {
-      this.#delay = clamp(this.#delay * 2, RETRY_FIRST, RETRY_MAX);
-    }
+    this.#delay = nextDelay(this.#delay, outcome.outcome, licenseKey);
     this.#refreshing = false;
     this.#schedule();
   }
@@ -423,9 +367,7 @@ export class Entitlement<K> {
     const now = this.#options.clock.now();
     const state = this.#state;
     const next: EntitlementValue =
-      state !== undefined &&
-      keyRejected(state) &&
-      !this.#trialRunning(state, now)
+      state !== undefined && fallsBackToFree(state, this.#claims, now)
         ? { expiresAt: null, kind: "free", source: this.#source }
         : deriveEntitlement(
             this.#claims,
