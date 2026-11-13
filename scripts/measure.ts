@@ -73,8 +73,8 @@ const run = async () => {
       "pnpm measure runs on macOS only, where the numbers are kept"
     );
   }
-  if (!existsSync(path.join(root, "dist/main/index.js"))) {
-    throw new Error("Nothing to measure in dist/; run pnpm build first");
+  if (!existsSync(path.join(root, "app/dist/main/index.js"))) {
+    throw new Error("Nothing to measure in app/dist/; run pnpm build first");
   }
   const floor = floorOf(floorArg);
   const common = {

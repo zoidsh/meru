@@ -2,6 +2,8 @@
 
 Meru is an Electron client for Gmail and Google apps. The design, principles, glossary and decisions live outside this repository, in `$PROJECT_DOCS_DIR/zoidsh/meru/next` (`~/projects/docs/zoidsh/meru/next` on the maintainer's Mac); read `principles.md` and `architecture/design.md` before changing structure, and use the glossary's words.
 
+The app is `app/`, a workspace package whose `package.json` holds its name, version, description, `main`, runtime dependencies and Electron; it builds into `app/dist/`. `packages/` holds the leaf packages that serve it and import nothing from it, `packaging/` electron-builder, `tests/` the end-to-end suite and `scripts/` the development scripts. The root `package.json` holds only the workspace, the scripts and the toolchain.
+
 ## Commands
 
 `mise install`, then `pnpm install --frozen-lockfile`. mise puts `node_modules/.bin` on PATH, so `vp` and `tsc` run bare.
@@ -13,12 +15,12 @@ Meru is an Electron client for Gmail and Google apps. The design, principles, gl
 | Typecheck | `tsc --build` |
 | Unit tests | `vp test run`, one file `vp test run <path>` |
 | Everything before a push | `pnpm check` (format, lint, types, tests) |
-| Build into `dist/` | `pnpm build` |
-| End-to-end, against `dist/` | `pnpm test:e2e`; on Linux `xvfb-run -a -s "-screen 0 1920x1080x24 -noreset" pnpm test:e2e` |
+| Build into `app/dist/` | `pnpm build` |
+| End-to-end, against `app/dist/` | `pnpm test:e2e`; on Linux `xvfb-run -a -s "-screen 0 1920x1080x24 -noreset" pnpm test:e2e` |
 | Package an unpacked app into `packaging/out/` | `pnpm package` |
 | Package installers, signed when the env is set | `pnpm package:mac`, `package:linux`, `package:win` |
 | Signed installers from CI, as run artifacts | `gh workflow run build.yml --ref next` |
-| Measure CPU and memory, against `dist/`, macOS only | `pnpm measure`, `pnpm test:budget` |
+| Measure CPU and memory, against `app/dist/`, macOS only | `pnpm measure`, `pnpm test:budget` |
 
 ## Layers
 
@@ -28,11 +30,11 @@ Meru is an Electron client for Gmail and Google apps. The design, principles, gl
 
 > Adding a feature is additive: its diff touches its own directory, one line in `index.ts`, the glossary and the changelog.
 
-`oxlint.config.ts` enforces the layers under `packages/app` with `no-restricted-imports` per directory, plus `import/no-cycle`. A preload value-imports `electron` only in its `bridge.ts`. The renderer and preloads never import `main`, with one exception: a feature's `settings.ts` and `commands.ts` are its half of the contract every page reads, so they compile with `shared`, the registries in `shared/*/registry.ts` import them, and lint holds them to what `shared` may import.
+`oxlint.config.ts` enforces the layers under `app/` with `no-restricted-imports` per directory, plus `import/no-cycle`. A preload value-imports `electron` only in its `bridge.ts`. The renderer and preloads never import `main`, with one exception: a feature's `settings.ts` and `commands.ts` are its half of the contract every page reads, so they compile with `shared`, the registries in `shared/*/registry.ts` import them, and lint holds them to what `shared` may import.
 
 ## Tests
 
-> No test replaces one of our own modules. Doubles exist only at ports, one hand-written fake per port in `packages/app/test/fakes/`, an object literal that `satisfies` it or a small class that `implements` it, never a cast.
+> No test replaces one of our own modules. Doubles exist only at ports, one hand-written fake per port in `app/test/fakes/`, an object literal that `satisfies` it or a small class that `implements` it, never a cast.
 
 No `vi.mock` anywhere. Unit tests sit beside their file as `*.test.ts`; Vitest runs `core`, `shared`, `main`, `packages/user-data`, `packaging` and `scripts` in Node and `preload` and `renderer` under happy-dom. Core's tests compile in `core/tsconfig.test.json`, which may take the fakes, since the fakes import core. `scripts/check-layers.test.ts` imports every `core/` and `main/features/` module with nothing faked. End-to-end tests are `tests/*.e2e.ts`.
 
@@ -84,7 +86,7 @@ The app POSTs `{ licenseKey, deviceId }` to `MERU_ENTITLEMENT_URL`, or the place
 
 ## Packaging
 
-`packaging/` is a workspace package of its own whose one dependency is electron-builder, so the app's dependencies stay what the app loads. `packaging/electron-builder.config.ts` is the config, typed through `Configuration`, and `packaging/assets/` holds the icons, `Assets.car`, which carries the icon `CFBundleIconName` names, and the NSIS include. The asar holds `dist/` and `static/` without source maps and without `node_modules`, since main and the preloads are bundles. `pnpm package` builds and packs an unpacked app for this machine (`packaging/out/mac-arm64/Meru.app` here); `pnpm package:mac`, `package:linux` and `package:win` pack that platform's installers with `--publish never`, and pass anything after them to electron-builder, such as `pnpm package:linux AppImage --x64`. All four run `scripts/package.ts`. `packaging/out/` is ignored.
+`packaging/` is a workspace package of its own whose one dependency is electron-builder, so the app's dependencies stay what the app loads. `packaging/electron-builder.config.ts` is the config, typed through `Configuration`; it packs `app/` and takes the description and the Electron version from `app/package.json`; and `packaging/assets/` holds the icons, `Assets.car`, which carries the icon `CFBundleIconName` names, and the NSIS include. The asar holds `app/dist/` without source maps and without `node_modules`, since main and the preloads are bundles. `pnpm package` builds and packs an unpacked app for this machine (`packaging/out/mac-arm64/Meru.app` here); `pnpm package:mac`, `package:linux` and `package:win` pack that platform's installers with `--publish never`, and pass anything after them to electron-builder, such as `pnpm package:linux AppImage --x64`. All four run `scripts/package.ts`. `packaging/out/` is ignored.
 
 The fuses are 3.x's: `runAsNode`, `enableNodeOptionsEnvironmentVariable` and `enableNodeCliInspectArguments` off, asar integrity and `onlyLoadAppFromAsar` on, `grantFileProtocolExtraPrivileges` on because the renderer is a `file://` page, `enableCookieEncryption` off because it is one-way. `MERU_E2E_BUILD=1` packs with `enableNodeCliInspectArguments` on, for a suite that drives a packaged app through Playwright, which needs the inspector. The app id is 3.x's, `sh.zoid.meru`, so an installed app shares 3.x's user data directory. A `pnpm package*` build is marked local instead: `scripts/package.ts` sets `MERU_LOCAL_PACKAGE=1`, the config then adds a `local-package` resource holding the checkout's absolute path, and main, finding it, keeps the app's user data in `<checkout>/.meru/packaged`. In GitHub Actions (`GITHUB_ACTIONS=true`) the script leaves the variable unset, so a CI build has no marker and uses Electron's default, as a release does.
 
@@ -98,7 +100,7 @@ The values live as GitHub repository secrets on `zoidsh/meru`, sourced from 1Pas
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push to `next`, every pull request and by hand. `check` runs `pnpm check` on Linux. `e2e` runs on `ubuntu-latest`, `macos-latest` and `windows-latest`: `pnpm build` and `pnpm test:e2e` against the unpacked `dist/` (under `xvfb-run` on Linux, with `-noreset` so the X server survives the moment between two launches), plus `pnpm test` on macOS and Windows, where paths and the shell differ; a failed run uploads `test-results/`. `package` packs a Linux x64 AppImage through `pnpm package:linux AppImage --x64`. Steps run in bash on every OS, and pnpm's store is cached per OS. The e2e suite launches `dist/` with Playwright directly, so it needs no `MERU_E2E_BUILD` build.
+`.github/workflows/ci.yml` runs on every push to `next`, every pull request and by hand. `check` runs `pnpm check` on Linux. `e2e` runs on `ubuntu-latest`, `macos-latest` and `windows-latest`: `pnpm build` and `pnpm test:e2e` against the unpacked `app/dist/` (under `xvfb-run` on Linux, with `-noreset` so the X server survives the moment between two launches), plus `pnpm test` on macOS and Windows, where paths and the shell differ; a failed run uploads `test-results/`. `package` packs a Linux x64 AppImage through `pnpm package:linux AppImage --x64`. Steps run in bash on every OS, and pnpm's store is cached per OS. The e2e suite launches `app/dist/` with Playwright directly, so it needs no `MERU_E2E_BUILD` build.
 
 `.github/workflows/build.yml` runs only by hand (`gh workflow run build.yml --ref next`). On macOS, Linux and Windows it runs `pnpm package:<platform>` with that platform's signing secrets, so macOS is signed and notarised and Windows signed, and keeps the installers as the run's artifacts for 14 days: `meru-mac` (dmg and zip for x64 and arm64), `meru-win` (one NSIS installer and one portable exe, each holding x64 and arm64), `meru-linux` (AppImage, deb and rpm for both). It publishes nothing: there is no release, no tag trigger and no update feed.
 
@@ -110,4 +112,4 @@ The feed is the GitHub releases of `zoidsh/meru`, which electron-builder writes 
 
 ## Worktrees and profiles
 
-A run from the repository keeps its user data under the checkout's `.meru/` (ignored by git), never in Electron's default directory, which is the installed app's: `.meru/<branch>`, or `.meru/default` on a detached HEAD, so every worktree and the main checkout run at once. `pnpm dev --profile <name>` picks `.meru/<name>`. Main applies the same rule before `ready` for any other unpackaged launch, such as `electron .` or `pnpm measure`, unless `--user-data-dir` names a directory, as the end-to-end suite's temporary ones do. The derivation is `packages/user-data/`, which both `scripts/dev.ts` and `main/platform/user-data.ts` import. `--background`, or `MERU_BACKGROUND=1` (set for Claude Code sessions in `.claude/settings.json`), opens the window behind whatever is in front; the end-to-end suite also sets `MERU_TEST_BACKGROUND=1`, which keeps the app from ever activating on macOS.
+A run from the repository keeps its user data under the checkout's `.meru/` (ignored by git), never in Electron's default directory, which is the installed app's: `.meru/<branch>`, or `.meru/default` on a detached HEAD, so every worktree and the main checkout run at once. `pnpm dev --profile <name>` picks `.meru/<name>`. Main applies the same rule before `ready` for any other unpackaged launch, such as `electron app` or `pnpm measure`, unless `--user-data-dir` names a directory, as the end-to-end suite's temporary ones do. The derivation is `packages/user-data/`, which both `scripts/dev.ts` and `main/platform/user-data.ts` import. `--background`, or `MERU_BACKGROUND=1` (set for Claude Code sessions in `.claude/settings.json`), opens the window behind whatever is in front; the end-to-end suite also sets `MERU_TEST_BACKGROUND=1`, which keeps the app from ever activating on macOS.

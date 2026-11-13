@@ -5,12 +5,12 @@ import path from "node:path";
 import { _electron as electron, expect } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import type { ProfilesState } from "../packages/app/core/records/profiles-state.ts";
-import { commands } from "../packages/app/shared/channels/commands.ts";
-import { wireName } from "../packages/app/shared/channels/define.ts";
-import { e2e } from "../packages/app/shared/channels/e2e.ts";
-import type { CommandId } from "../packages/app/shared/commands/registry.ts";
-import type { Settings } from "../packages/app/shared/settings/registry.ts";
+import type { ProfilesState } from "../app/core/records/profiles-state.ts";
+import { commands } from "../app/shared/channels/commands.ts";
+import { wireName } from "../app/shared/channels/define.ts";
+import { e2e } from "../app/shared/channels/e2e.ts";
+import type { CommandId } from "../app/shared/commands/registry.ts";
+import type { Settings } from "../app/shared/settings/registry.ts";
 
 const root = path.join(import.meta.dirname, "..");
 
@@ -88,7 +88,7 @@ export const launch = async ({
   // chrome-sandbox ships without its setuid bit outside an installed package, so an unpacked Linux run cannot use the sandbox.
   const sandbox = process.platform === "linux" ? ["--no-sandbox"] : [];
   const app = await electron.launch({
-    args: [root, `--user-data-dir=${userData}`, ...sandbox],
+    args: [path.join(root, "app"), `--user-data-dir=${userData}`, ...sandbox],
     env: {
       ...process.env,
       MERU_BACKGROUND: "1",

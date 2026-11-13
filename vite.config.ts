@@ -1,9 +1,12 @@
+import path from "node:path";
+
 import { defineConfig } from "vite-plus";
 
 import fmt from "./oxfmt.config.ts";
 import lint from "./oxlint.config.ts";
+import { app, root } from "./vite.base.ts";
 
-const app = "packages/app";
+const tests = path.relative(root, app);
 
 // vp lint, vp fmt and vp test read this file only. The lint and format rules stay in Ultracite's own files so `ultracite fix` and the editor read the same ones.
 export default defineConfig({
@@ -15,7 +18,7 @@ export default defineConfig({
         test: {
           environment: "node",
           include: [
-            `${app}/{core,shared,main}/**/*.test.ts`,
+            `${tests}/{core,shared,main}/**/*.test.ts`,
             "packages/user-data/**/*.test.ts",
             "packaging/*.test.ts",
             "scripts/**/*.test.ts",
@@ -26,7 +29,7 @@ export default defineConfig({
       {
         test: {
           environment: "happy-dom",
-          include: [`${app}/{preload,renderer}/**/*.test.{ts,tsx}`],
+          include: [`${tests}/{preload,renderer}/**/*.test.{ts,tsx}`],
           name: "dom",
         },
       },

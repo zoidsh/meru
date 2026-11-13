@@ -17,13 +17,13 @@
   },
   "files": [],
   "references": [
-    { "path": "./packages/app/core" },
-    { "path": "./packages/app/core/tsconfig.test.json" },
-    { "path": "./packages/app/shared" },
-    { "path": "./packages/app/main" },
-    { "path": "./packages/app/preload" },
-    { "path": "./packages/app/renderer" },
-    { "path": "./packages/app/test/fakes" },
+    { "path": "./app/core" },
+    { "path": "./app/core/tsconfig.test.json" },
+    { "path": "./app/shared" },
+    { "path": "./app/main" },
+    { "path": "./app/preload" },
+    { "path": "./app/renderer" },
+    { "path": "./app/test/fakes" },
     { "path": "./packages/user-data" },
     { "path": "./tsconfig.node.json" }
   ]

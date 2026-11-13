@@ -1,7 +1,7 @@
 {
-  "extends": "../../../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../node_modules/.tsbuild/main",
+    "outDir": "../../node_modules/.tsbuild/main",
     "lib": ["es2024"],
     "types": ["node"]
   },
@@ -12,6 +12,6 @@
     { "path": "../core" },
     { "path": "../shared" },
     { "path": "../test/fakes" },
-    { "path": "../../user-data" }
+    { "path": "../../packages/user-data" }
   ]
 }

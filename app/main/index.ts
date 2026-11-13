@@ -36,7 +36,7 @@ const report = (error: unknown) => {
 
 const start = async () => {
   const dist = path.join(import.meta.dirname, "..");
-  placeUserData(path.join(dist, ".."));
+  placeUserData(path.join(dist, "..", ".."));
   const ports = createElectronPorts();
   const e2e = process.env.MERU_E2E === "1";
 

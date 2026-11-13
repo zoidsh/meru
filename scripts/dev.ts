@@ -12,7 +12,9 @@ import { splitArgs } from "./lib/dev-args.ts";
 
 const root = path.join(import.meta.dirname, "..");
 // The electron package's main export, outside Electron, is the binary's path.
-const electronBinary = String(createRequire(import.meta.url)("electron"));
+const electronBinary = String(
+  createRequire(path.join(root, "app", "package.json"))("electron")
+);
 
 const { profile, background, electronArgs } = splitArgs(process.argv.slice(2));
 const userData = devUserDataDir(root, profile, currentBranch(root));
@@ -41,15 +43,19 @@ const shutdown = async (code: number) => {
 };
 
 const startElectron = () => {
-  const child = spawn(electronBinary, [".", ...userDataArgs, ...electronArgs], {
-    cwd: root,
-    env: {
-      ...process.env,
-      MERU_RENDERER_URL: rendererUrl,
-      ...(background ? { MERU_BACKGROUND: "1" } : {}),
-    },
-    stdio: "inherit",
-  });
+  const child = spawn(
+    electronBinary,
+    ["app", ...userDataArgs, ...electronArgs],
+    {
+      cwd: root,
+      env: {
+        ...process.env,
+        MERU_RENDERER_URL: rendererUrl,
+        ...(background ? { MERU_BACKGROUND: "1" } : {}),
+      },
+      stdio: "inherit",
+    }
+  );
   child.on("exit", (code) => {
     // Quitting the app ends the loop; a restart replaces the child before this one exits.
     if (electron === child && !stopping) {

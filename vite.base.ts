@@ -5,8 +5,8 @@ import { mergeConfig } from "vite-plus";
 import type { UserConfig } from "vite-plus";
 
 export const root = import.meta.dirname;
-export const app = path.join(root, "packages/app");
-export const dist = path.join(root, "dist");
+export const app = path.join(root, "app");
+export const dist = path.join(app, "dist");
 
 const base: UserConfig = {
   build: { emptyOutDir: true, sourcemap: true },

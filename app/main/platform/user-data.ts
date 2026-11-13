@@ -3,7 +3,10 @@ import path from "node:path";
 
 import { app } from "electron";
 
-import { currentBranch, userDataDirFor } from "../../../user-data/index.ts";
+import {
+  currentBranch,
+  userDataDirFor,
+} from "../../../packages/user-data/index.ts";
 
 /** The checkout a `pnpm package` build names in its `local-package` resource; undefined for a CI or release build, which has none. */
 const markerRepo = (): string | undefined => {

@@ -81,7 +81,7 @@ const registry: Pattern = {
 // oxlint applies the last matching override's options whole, so a narrower directory repeats every pattern of the wider one.
 const layers = [
   restrict(
-    ["packages/app/core/**"],
+    ["app/core/**"],
     [
       noElectron,
       ours,
@@ -92,13 +92,13 @@ const layers = [
     ]
   ),
   restrict(
-    ["packages/app/shared/**"],
+    ["app/shared/**"],
     [noElectron, ours, notMain, notPreload, notRenderer]
   ),
-  restrict(["packages/app/main/**"], [electron, notPreload, notRenderer]),
-  restrict(["packages/app/main/platform/**"], [notPreload, notRenderer]),
+  restrict(["app/main/**"], [electron, notPreload, notRenderer]),
+  restrict(["app/main/platform/**"], [notPreload, notRenderer]),
   restrict(
-    ["packages/app/main/features/**"],
+    ["app/main/features/**"],
     [
       electron,
       notPreload,
@@ -112,19 +112,16 @@ const layers = [
     ]
   ),
   restrict(
-    ["packages/app/shared/*/registry.ts"],
+    ["app/shared/*/registry.ts"],
     [noElectron, ours, notPreload, notRenderer, registry]
   ),
   restrict(
-    [
-      "packages/app/main/features/*/settings.ts",
-      "packages/app/main/features/*/commands.ts",
-    ],
+    ["app/main/features/*/settings.ts", "app/main/features/*/commands.ts"],
     contract
   ),
-  restrict(["packages/app/preload/**"], [electron, notMain, notRenderer]),
-  restrict(["packages/app/preload/*/bridge.ts"], [notMain, notRenderer]),
-  restrict(["packages/app/renderer/**"], [noElectron, notMain, notPreload]),
+  restrict(["app/preload/**"], [electron, notMain, notRenderer]),
+  restrict(["app/preload/*/bridge.ts"], [notMain, notRenderer]),
+  restrict(["app/renderer/**"], [noElectron, notMain, notPreload]),
 ];
 
 export default defineConfig({

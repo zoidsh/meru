@@ -8,8 +8,8 @@ import { _electron as electron } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { z } from "zod";
 
-import { wireName } from "../packages/app/shared/channels/define.ts";
-import { measure as measureChannels } from "../packages/app/shared/channels/measure.ts";
+import { wireName } from "../app/shared/channels/define.ts";
+import { measure as measureChannels } from "../app/shared/channels/measure.ts";
 import type {
   AppName,
   Measurement,

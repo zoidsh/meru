@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const app = path.join(import.meta.dirname, "../packages/app");
+const app = path.join(import.meta.dirname, "../app");
 
 const modules = globSync(
   ["core/**/*.{ts,tsx}", "main/features/**/*.{ts,tsx}"],

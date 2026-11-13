@@ -7,9 +7,9 @@ import { z } from "zod";
 import {
   claimFieldsSchema,
   claimsSchema,
-} from "../../packages/app/core/entitlement/token.ts";
-import type { Claims } from "../../packages/app/core/entitlement/token.ts";
-import { DEV_KID } from "../../packages/app/shared/entitlement/keys.ts";
+} from "../../app/core/entitlement/token.ts";
+import type { Claims } from "../../app/core/entitlement/token.ts";
+import { DEV_KID } from "../../app/shared/entitlement/keys.ts";
 
 const DEV_KEY = path.join(import.meta.dirname, "dev-private.pem");
 

@@ -1,7 +1,7 @@
 {
-  "extends": "../../../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../node_modules/.tsbuild/shared",
+    "outDir": "../../node_modules/.tsbuild/shared",
     "rootDir": "..",
     "lib": ["es2024"],
     "types": []

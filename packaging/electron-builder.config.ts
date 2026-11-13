@@ -1,7 +1,8 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import type { Configuration } from "electron-builder";
+import { z } from "zod";
 
 import { writeNotarizationKey } from "./hooks.ts";
 import { hasSigningEnv } from "./signing-env.ts";
@@ -26,6 +27,21 @@ const localMarker = (): string | undefined => {
 
 const marker = localMarker();
 
+// electron-builder looks for Electron in the project's node_modules, and the project is the workspace root, not the app.
+const { description, devDependencies } = z
+  .object({
+    description: z.string(),
+    devDependencies: z.object({ electron: z.string() }),
+  })
+  .parse(
+    JSON.parse(
+      readFileSync(
+        path.join(import.meta.dirname, "..", "app", "package.json"),
+        "utf-8"
+      )
+    )
+  );
+
 const config: Configuration = {
   appId: "sh.zoid.meru",
   appImage: {
@@ -38,6 +54,7 @@ const config: Configuration = {
     writeNotarizationKey();
   },
   directories: {
+    app: "app",
     buildResources: "packaging/assets",
     output: "packaging/out",
   },
@@ -51,14 +68,14 @@ const config: Configuration = {
     resetAdHocDarwinSignature: true,
     runAsNode: false,
   },
+  electronVersion: devDependencies.electron,
   // Main and the preloads are bundles, so nothing under node_modules is loaded at runtime.
   extraResources:
     marker === undefined ? [] : [{ from: marker, to: "local-package" }],
-  files: ["dist/**", "!dist/**/*.map", "static/**", "!node_modules/**"],
+  files: ["dist/**", "!dist/**/*.map", "!node_modules/**"],
   linux: {
     category: "Network;Office",
-    description:
-      "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
+    description,
     icon: "packaging/assets/icons/",
     synopsis: "The Gmail experience you deserve",
     target: [

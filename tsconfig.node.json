@@ -6,9 +6,9 @@
   },
   "include": ["*.ts", "scripts", "tests", "packaging/*.ts"],
   "references": [
-    { "path": "./packages/app/core" },
-    { "path": "./packages/app/shared" },
-    { "path": "./packages/app/main" },
+    { "path": "./app/core" },
+    { "path": "./app/shared" },
+    { "path": "./app/main" },
     { "path": "./packages/user-data" }
   ]
 }

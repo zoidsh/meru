@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import type { Rect } from "../packages/app/core/records/rect.ts";
-import type { CommandId } from "../packages/app/shared/commands/registry.ts";
+import type { Rect } from "../app/core/records/rect.ts";
+import type { CommandId } from "../app/shared/commands/registry.ts";
 import { clickMenuItem, launch, stageOf, viewsOf } from "./app.ts";
 
 const SPLIT_VERTICAL: CommandId = "stage.splitVertical";

@@ -1,15 +1,9 @@
 {
-  "name": "meru",
-  "version": "4.0.0-alpha.1",
   "private": true,
-  "description": "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
-  "author": "Tim Cheung <tim@meru.so>",
-  "repository": "zoidsh/meru",
   "type": "module",
-  "main": "dist/main/index.js",
   "scripts": {
     "dev": "node scripts/dev.ts",
-    "build": "rm -rf dist/preload && vp build -c vite.main.ts && vp build -c vite.preload.ts && vp build -c vite.preload-drag.ts && vp build -c vite.renderer.ts",
+    "build": "rm -rf app/dist/preload && vp build -c vite.main.ts && vp build -c vite.preload.ts && vp build -c vite.preload-drag.ts && vp build -c vite.renderer.ts",
     "test": "vp test run",
     "lint": "vp lint",
     "fmt": "vp fmt",
@@ -24,29 +18,23 @@
     "package:linux": "node scripts/package.ts --linux",
     "package:win": "node scripts/package.ts --win"
   },
-  "dependencies": {
-    "electron-updater": "6.6.2",
-    "zod": "4.6.7"
-  },
   "devDependencies": {
     "@playwright/test": "1.65.0",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.3.0",
-    "electron": "45.2.3",
     "happy-dom": "21.0.4",
     "lefthook": "2.2.2",
     "oxfmt": "0.78.0",
     "oxlint": "1.93.0",
     "oxlint-tsgolint": "7.0.2006",
-    "react": "19.3.1",
-    "react-dom": "19.3.1",
     "typescript": "7.0.2",
     "ultracite": "8.2.0",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
     "vite-plus": "1.6.0",
-    "vitest": "5.1.0"
+    "vitest": "5.1.0",
+    "zod": "4.6.7"
   },
   "packageManager": "pnpm@12.18.0"
 }

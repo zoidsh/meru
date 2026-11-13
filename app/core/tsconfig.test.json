@@ -1,7 +1,7 @@
 {
-  "extends": "../../../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../node_modules/.tsbuild/core-test",
+    "outDir": "../../node_modules/.tsbuild/core-test",
     "lib": ["es2024"],
     // Tests sign their token fixtures with Node's WebCrypto.
     "types": ["node"],

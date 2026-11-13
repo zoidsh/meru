@@ -1,7 +1,7 @@
 {
-  "extends": "../../../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../node_modules/.tsbuild/preload",
+    "outDir": "../../node_modules/.tsbuild/preload",
     "lib": ["es2024", "dom", "dom.iterable"],
     "types": []
   },

@@ -5,8 +5,8 @@ import path from "node:path";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import { wireName } from "../packages/app/shared/channels/define.ts";
-import { profiles } from "../packages/app/shared/channels/profiles.ts";
+import { wireName } from "../app/shared/channels/define.ts";
+import { profiles } from "../app/shared/channels/profiles.ts";
 import { launch, stageOf, viewsOf } from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
 
