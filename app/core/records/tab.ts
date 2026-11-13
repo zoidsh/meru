@@ -6,7 +6,6 @@ export const tabSchema = z.object({
   appId: idSchema,
   health: z.enum(["ok", "crashed"]),
   id: idSchema,
-  pinned: z.boolean(),
   profileId: idSchema,
   sleeping: z.boolean(),
   /** The page's own title, null until it reports one. */

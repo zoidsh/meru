@@ -5,6 +5,8 @@ import type { Tab } from "../records/tab.ts";
 import { panes } from "./layout.ts";
 import { rowTabs } from "./ordering.ts";
 import type { TabRow } from "./ordering.ts";
+import { isPinned } from "./pinned.ts";
+import type { SingleInstance } from "./pinned.ts";
 
 export const sidebarWidthSchema = z.enum(["auto", "narrow", "wide"]);
 
@@ -41,10 +43,13 @@ export interface SidebarChoice {
   readonly flipped: SidebarSize | null;
 }
 
-const autoSize = (tabs: readonly Tab[]): SidebarSize => {
+const autoSize = (
+  tabs: readonly Tab[],
+  singleInstance: SingleInstance
+): SidebarSize => {
   const counts = new Map<string, number>();
   for (const tab of tabs) {
-    if (!tab.pinned) {
+    if (!isPinned(tab, singleInstance)) {
       counts.set(tab.appId, (counts.get(tab.appId) ?? 0) + 1);
     }
   }
@@ -57,13 +62,15 @@ export const hasSidebar = (tabs: readonly Tab[]): boolean => tabs.length > 1;
 /** The sidebar for a profile's tabs: shown while `hasSidebar` and the user has not hidden it, wide under `auto` once an app has several tabs, since icons alone no longer tell them apart. */
 export const sidebarOf = (
   tabs: readonly Tab[],
-  choice: SidebarChoice
+  choice: SidebarChoice,
+  singleInstance: SingleInstance
 ): Sidebar => {
   if (!hasSidebar(tabs) || choice.hidden) {
     return { kind: "hidden" };
   }
   const size =
-    choice.flipped ?? (choice.width === "auto" ? autoSize(tabs) : choice.width);
+    choice.flipped ??
+    (choice.width === "auto" ? autoSize(tabs, singleInstance) : choice.width);
   return { kind: "shown", size, width: SIDEBAR_PIXELS[size] };
 };
 

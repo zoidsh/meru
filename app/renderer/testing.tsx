@@ -71,7 +71,6 @@ export const tabOf = (
   closeable,
   health: "ok",
   id,
-  pinned: false,
   profileId,
   sleeping: false,
   title: `${appId} ${id}`,

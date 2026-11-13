@@ -67,7 +67,6 @@ export const firstProfiles = (profileId: string): ProfilesState => ({
       appId: "gmail",
       health: "ok",
       id: "tab-1",
-      pinned: false,
       profileId,
       sleeping: false,
       title: "Gmail",

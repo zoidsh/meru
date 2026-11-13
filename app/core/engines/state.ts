@@ -1,5 +1,4 @@
 import type { Ids } from "../ports.ts";
-import { isSingleInstance } from "../records/app.ts";
 import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
 import type {
@@ -26,6 +25,8 @@ import {
   swap,
 } from "./layout.ts";
 import { groupOf, moveTab, orderedProfiles } from "./ordering.ts";
+import { isPinned } from "./pinned.ts";
+import type { SingleInstance } from "./pinned.ts";
 
 export type StateError =
   | "unknownProfile"
@@ -38,13 +39,11 @@ export type StateError =
   /** A profile keeps at least one tab. */
   | "lastTab"
   | "otherProfile"
-  /** The profile's last tab of a single-instance app, such as Gmail, stays. */
-  | "required"
   /** Only a tab alone in its group can join another. */
   | "alreadyGrouped"
   /** The tab is alone in its group already. */
   | "notGrouped"
-  /** A pinned tab keeps its row and its group. */
+  /** A pinned tab stays open, keeps its row and keeps its group. */
   | "pinned";
 
 type Changed = Result<ProfilesState, StateError>;
@@ -58,12 +57,11 @@ export const groupOfOne = (tab: Tab, ids: Ids): Group => ({
 
 export const FIRST_PROFILE_LABEL = "Personal";
 
-/** A tab of the app at its start page, pinned for a single-instance app. */
+/** A tab of the app at its start page. */
 export const newTab = (ids: Ids, profileId: string, app: App): Tab => ({
   appId: app.id,
   health: "ok",
   id: ids(),
-  pinned: isSingleInstance(app),
   profileId,
   sleeping: false,
   title: app.name,
@@ -199,7 +197,7 @@ export const updateProfile = (
 
 /** What a tab may change about itself after it was added. */
 export type TabPatch = Partial<
-  Pick<Tab, "health" | "sleeping" | "title" | "url" | "zoom" | "pinned">
+  Pick<Tab, "health" | "sleeping" | "title" | "url" | "zoom">
 >;
 
 export const updateTab = (
@@ -316,9 +314,6 @@ const withoutTab = (group: Group, tabId: string): Group | undefined => {
   };
 };
 
-/** Whether an app keeps one tab per profile, as the catalog says of Gmail. */
-export type SingleInstance = (appId: string) => boolean;
-
 /** The tab an app opens to: the profile's one tab of a single-instance app when it has it, else `tab`, added as addTab adds it. */
 export const openTab = (
   state: ProfilesState,
@@ -340,7 +335,7 @@ export const openTab = (
   return added.ok ? ok({ state: added.value, tab }) : added;
 };
 
-/** Whether the tab may close: a profile keeps at least one tab, and its last tab of a single-instance app. */
+/** Whether the tab may close: a pinned tab stays, and a profile keeps at least one tab. */
 export const canClose = (
   state: ProfilesState,
   tabId: string,
@@ -350,16 +345,14 @@ export const canClose = (
   if (tab === undefined) {
     return err("unknownTab");
   }
-  const others = state.tabs.filter(
-    (found) => found.profileId === tab.profileId && found.id !== tabId
-  );
-  if (
-    singleInstance(tab.appId) &&
-    !others.some((found) => found.appId === tab.appId)
-  ) {
-    return err("required");
+  if (isPinned(tab, singleInstance)) {
+    return err("pinned");
   }
-  return others.length === 0 ? err("lastTab") : ok(undefined);
+  return state.tabs.some(
+    (found) => found.profileId === tab.profileId && found.id !== tabId
+  )
+    ? ok(undefined)
+    : err("lastTab");
 };
 
 /** Closes a tab; its pane closes with it, and a group left empty goes. */
@@ -390,6 +383,7 @@ export const leaveGroup = (
   state: ProfilesState,
   tabId: string,
   ids: Ids,
+  singleInstance: SingleInstance,
   to?: number
 ): Changed => {
   const tab = state.tabs.find((found) => found.id === tabId);
@@ -397,7 +391,7 @@ export const leaveGroup = (
   if (tab === undefined || group === undefined) {
     return err("unknownTab");
   }
-  if (tab.pinned) {
+  if (isPinned(tab, singleInstance)) {
     return err("pinned");
   }
   const left = withoutTab(group, tabId);
@@ -411,7 +405,9 @@ export const leaveGroup = (
       groupOfOne(tab, ids),
     ],
   };
-  return to === undefined ? ok(next) : moveTabTo(next, tabId, to);
+  return to === undefined
+    ? ok(next)
+    : moveTabTo(next, tabId, to, singleInstance);
 };
 
 /** Puts a tab beside the pane of another tab where `beside` says: out of its own group first when that is another, or from its own pane when the two share a group. */
@@ -420,7 +416,8 @@ export const joinTab = (
   tabId: string,
   targetTabId: string,
   beside: Beside,
-  ids: Ids
+  ids: Ids,
+  singleInstance: SingleInstance
 ): Changed => {
   const own = groupOf(tabId, state.groups);
   const target = groupOf(targetTabId, state.groups);
@@ -431,12 +428,14 @@ export const joinTab = (
   if (tabId === targetTabId) {
     return err("alreadyGrouped");
   }
-  if (state.tabs.some((tab) => tab.id === tabId && tab.pinned)) {
+  if (
+    state.tabs.some((tab) => tab.id === tabId && isPinned(tab, singleInstance))
+  ) {
     return err("pinned");
   }
   const alone =
     own.id !== target.id && own.tabIds.length > 1
-      ? leaveGroup(state, tabId, ids)
+      ? leaveGroup(state, tabId, ids, singleInstance)
       : ok(state);
   return alone.ok
     ? splitInto(
@@ -544,30 +543,20 @@ export const equaliseGroup = (
 export const moveTabTo = (
   state: ProfilesState,
   tabId: string,
-  to: number
+  to: number,
+  singleInstance: SingleInstance
 ): Changed => {
   const tab = state.tabs.find((found) => found.id === tabId);
   if (tab === undefined) {
     return err("unknownTab");
   }
-  return tab.pinned
+  return isPinned(tab, singleInstance)
     ? err("pinned")
-    : ok({ ...state, tabs: moveTab(state.tabs, state.groups, tabId, to) });
-};
-
-/** Pins every tab of a single-instance app, as newTab does, for a state written before the rule. */
-export const pinSingleInstance = (
-  state: ProfilesState,
-  singleInstance: SingleInstance
-): ProfilesState =>
-  state.tabs.some((tab) => !tab.pinned && singleInstance(tab.appId))
-    ? {
+    : ok({
         ...state,
-        tabs: state.tabs.map((tab) =>
-          singleInstance(tab.appId) ? { ...tab, pinned: true } : tab
-        ),
-      }
-    : state;
+        tabs: moveTab(state.tabs, state.groups, tabId, to, singleInstance),
+      });
+};
 
 /** The first group of a profile in sidebar order. */
 export const firstGroup = (

@@ -9,7 +9,6 @@ const tab = (id: string, profileId: string): Tab => ({
   appId: "gmail",
   health: "ok",
   id,
-  pinned: false,
   profileId,
   sleeping: false,
   title: "Gmail",

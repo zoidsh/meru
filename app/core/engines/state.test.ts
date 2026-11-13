@@ -21,8 +21,6 @@ import {
   freshState,
   leaveGroup,
   moveTabTo,
-  newTab,
-  pinSingleInstance,
   removeProfile,
   resizeSplit,
   selectProfile,
@@ -35,15 +33,20 @@ import {
 const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
 
 const tabOf = (id: string, profileId: string): Tab => ({
-  appId: "gmail",
+  appId: "drive",
   health: "ok",
   id,
-  pinned: false,
   profileId,
   sleeping: false,
   title: id,
-  url: "https://mail.google.com/",
+  url: "https://drive.google.com/",
   zoom: 1,
+});
+
+const gmailTab = (id: string, profileId: string): Tab => ({
+  ...tabOf(id, profileId),
+  appId: "gmail",
+  url: "https://mail.google.com/",
 });
 
 const profile = (id: string, order = 0) => ({
@@ -63,7 +66,16 @@ const start = () => {
 
 describe(validateState, () => {
   it("accepts a fresh state", () => {
-    expect(validateState(start().state)).toStrictEqual([]);
+    expect(validateState(start().state, gmail)).toStrictEqual([]);
+  });
+
+  it("names a profile's second tab of a single-instance app", () => {
+    const ids = fakeIds("n");
+    const state = freshState(profile("a"), gmailTab("t1", "a"), ids);
+    const twice = unwrap(addTab(state, gmailTab("t2", "a"), ids));
+    expect(validateState(twice, gmail)).toStrictEqual([
+      "profile a has more than one gmail tab",
+    ]);
   });
 
   it("names every broken invariant", () => {
@@ -82,7 +94,7 @@ describe(validateState, () => {
       selectedProfileId: "missing",
       tabs: [...state.tabs, tabOf("t3", "z")],
     };
-    expect(validateState(broken)).toStrictEqual([
+    expect(validateState(broken, gmail)).toStrictEqual([
       "the selected profile missing is missing",
       "tab t1 is in 2 groups",
       "tab t3 belongs to no profile",
@@ -95,7 +107,7 @@ describe(validateState, () => {
       "profile b has no tab",
     ]);
     expect(
-      validateState({ ...state, groups: [group, group] }).slice(0, 2)
+      validateState({ ...state, groups: [group, group] }, gmail).slice(0, 2)
     ).toStrictEqual([
       "group n1 appears more than once",
       "pane n2 appears more than once",
@@ -140,12 +152,12 @@ describe("the state's operations", () => {
         paneId: pane.paneId,
       })
     );
-    expect(validateState(split)).toStrictEqual([]);
+    expect(validateState(split, gmail)).toStrictEqual([]);
     expect(split.groups.map((found) => found.tabIds)).toStrictEqual([
       ["t1", "t2"],
     ]);
     const closed = unwrap(closeTab(split, "t2", gmail));
-    expect(validateState(closed)).toStrictEqual([]);
+    expect(validateState(closed, gmail)).toStrictEqual([]);
     expect(closed.groups).toStrictEqual([group]);
     expect(closeTab(closed, "t1", () => false)).toStrictEqual({
       error: "lastTab",
@@ -153,21 +165,21 @@ describe("the state's operations", () => {
     });
   });
 
-  it("keeps a profile's last tab of a single-instance app, and closes one that has another", () => {
-    const { ids, state } = start();
-    const two = unwrap(addTab(state, tabOf("t2", "a"), ids));
+  it("keeps a pinned tab open, and closes any other", () => {
+    const ids = fakeIds("n");
+    const state = freshState(profile("a"), gmailTab("t1", "a"), ids);
     const calendar = unwrap(
       addTab(state, { ...tabOf("t3", "a"), appId: "calendar" }, ids)
     );
     expect([
       closeTab(calendar, "t1", gmail),
-      closeTab(two, "t1", gmail).ok,
       closeTab(calendar, "t3", gmail).ok,
-    ]).toStrictEqual([{ error: "required", ok: false }, true, true]);
+    ]).toStrictEqual([{ error: "pinned", ok: false }, true]);
   });
 
   it("answers whether a tab may close without closing it", () => {
-    const { ids, state } = start();
+    const ids = fakeIds("n");
+    const state = freshState(profile("a"), gmailTab("t1", "a"), ids);
     const calendar = unwrap(
       addTab(state, { ...tabOf("t3", "a"), appId: "calendar" }, ids)
     );
@@ -177,7 +189,7 @@ describe("the state's operations", () => {
       canClose(state, "t1", () => false),
       canClose(state, "nope", gmail),
     ]).toStrictEqual([
-      { error: "required", ok: false },
+      { error: "pinned", ok: false },
       { ok: true, value: undefined },
       { error: "lastTab", ok: false },
       { error: "unknownTab", ok: false },
@@ -185,8 +197,9 @@ describe("the state's operations", () => {
   });
 
   it("opens to a profile's one tab of a single-instance app, and adds a tab of any other", () => {
-    const { ids, state } = start();
-    const again = unwrap(openTab(state, tabOf("t2", "a"), ids, gmail));
+    const ids = fakeIds("n");
+    const state = freshState(profile("a"), gmailTab("t1", "a"), ids);
+    const again = unwrap(openTab(state, gmailTab("t2", "a"), ids, gmail));
     const calendar = { ...tabOf("t3", "a"), appId: "calendar" };
     const added = unwrap(openTab(state, calendar, ids, gmail));
     expect({
@@ -214,21 +227,21 @@ describe("the state's operations", () => {
     const made = unwrap(
       createGroup(more, ["t1", "t2", "t3"], "horizontal", ids)
     );
-    expect(validateState(made.state)).toStrictEqual([]);
+    expect(validateState(made.state, gmail)).toStrictEqual([]);
     expect(createGroup(made.state, ["t2"], "vertical", ids)).toStrictEqual({
       error: "alreadyGrouped",
       ok: false,
     });
-    const left = unwrap(leaveGroup(made.state, "t2", ids));
+    const left = unwrap(leaveGroup(made.state, "t2", ids, gmail));
     expect({
       groups: left.groups.map((group) => group.tabIds),
-      problems: validateState(left),
+      problems: validateState(left, gmail),
     }).toStrictEqual({ groups: [["t1", "t3"], ["t2"]], problems: [] });
-    expect(leaveGroup(left, "t2", ids)).toStrictEqual({
+    expect(leaveGroup(left, "t2", ids, gmail)).toStrictEqual({
       error: "notGrouped",
       ok: false,
     });
-    const first = unwrap(leaveGroup(made.state, "t3", ids, 0));
+    const first = unwrap(leaveGroup(made.state, "t3", ids, gmail, 0));
     expect(first.tabs.map((tab) => tab.id)).toStrictEqual(["t3", "t1", "t2"]);
   });
 
@@ -248,7 +261,8 @@ describe("the state's operations", () => {
         "t2",
         "t3",
         { orientation: "horizontal", side: "before" },
-        ids
+        ids,
+        gmail
       )
     );
     const [, group] = joined.groups;
@@ -261,17 +275,21 @@ describe("the state's operations", () => {
               panes(group.layout).flatMap((pane) => pane.tabIds),
             ]
           : [],
-      problems: validateState(joined),
+      problems: validateState(joined, gmail),
     }).toStrictEqual({
       groups: [["t1"], ["t3", "t2"]],
       layout: ["horizontal", ["t2", "t3"]],
       problems: [],
     });
-    expect(joinTab(joined, "t2", "t2", VERTICAL_AFTER, ids)).toStrictEqual({
+    expect(
+      joinTab(joined, "t2", "t2", VERTICAL_AFTER, ids, gmail)
+    ).toStrictEqual({
       error: "alreadyGrouped",
       ok: false,
     });
-    expect(joinTab(joined, "t2", "gone", VERTICAL_AFTER, ids)).toStrictEqual({
+    expect(
+      joinTab(joined, "t2", "gone", VERTICAL_AFTER, ids, gmail)
+    ).toStrictEqual({
       error: "unknownTab",
       ok: false,
     });
@@ -299,7 +317,8 @@ describe("the state's operations", () => {
         "t3",
         "t1",
         { orientation: "horizontal", side: "before" },
-        ids
+        ids,
+        gmail
       )
     );
     const after = panes(
@@ -309,7 +328,7 @@ describe("the state's operations", () => {
       groups: moved.groups.map((found) => found.tabIds),
       order: after.flatMap((pane) => pane.tabIds),
       panes: after.map((pane) => pane.paneId).toSorted(),
-      problems: validateState(moved),
+      problems: validateState(moved, gmail),
     }).toStrictEqual({
       groups: [["t1", "t2", "t3"]],
       order: ["t3", "t1", "t2"],
@@ -361,7 +380,7 @@ describe("the state's operations", () => {
     const selected = unwrap(selectProfile(two, "b"));
     const removed = unwrap(removeProfile(selected, "b"));
     expect({
-      problems: validateState(removed),
+      problems: validateState(removed, gmail),
       selected: removed.selectedProfileId,
       tabs: removed.tabs.map((tab) => tab.id),
     }).toStrictEqual({ problems: [], selected: "a", tabs: ["t1"] });
@@ -445,7 +464,8 @@ describe("the state's invariants under the layout's own changes", () => {
               a?.tabIds[0] ?? "",
               b?.tabIds[0] ?? "",
               beside,
-              ids
+              ids,
+              gmail
             ),
           () => swapPanes(before, groupId, a?.paneId ?? "", b?.paneId ?? ""),
           () => equaliseGroup(before, groupId),
@@ -462,7 +482,7 @@ describe("the state's invariants under the layout's own changes", () => {
           current = result.value;
           changed += 1;
         }
-        expect(validateState(current)).toStrictEqual([]);
+        expect(validateState(current, gmail)).toStrictEqual([]);
       }
       expect(changed).toBeGreaterThan(20);
     }
@@ -505,7 +525,7 @@ describe(repairState, () => {
       tabs: [...state.tabs, tabOf("t2", "a"), tabOf("t3", "nobody"), 7],
     };
     const repaired = repairState(data, repair());
-    expect(validateState(repaired.state)).toStrictEqual([]);
+    expect(validateState(repaired.state, gmail)).toStrictEqual([]);
     expect(repaired.state.selectedProfileId).toBe("a");
     expect(repaired.state.tabs.map((tab) => tab.id)).toStrictEqual([
       "t1",
@@ -522,13 +542,9 @@ describe(repairState, () => {
 
 const pinnedStart = () => {
   const ids = fakeIds("n");
-  const state = freshState(
-    profile("a"),
-    { ...tabOf("t1", "a"), pinned: true },
-    ids
-  );
+  const state = freshState(profile("a"), gmailTab("t1", "a"), ids);
   const calendar = { ...tabOf("t2", "a"), appId: "calendar" };
-  const drive = { ...tabOf("t3", "a"), appId: "drive" };
+  const drive = tabOf("t3", "a");
   const added = unwrap(
     addTab(unwrap(addTab(state, calendar, ids)), drive, ids)
   );
@@ -536,30 +552,16 @@ const pinnedStart = () => {
 };
 
 describe("a pinned tab", () => {
-  it("is what a new tab of a single-instance app is, and only that", () => {
-    const ids = fakeIds("n");
-    const app = {
-      hosts: ["mail.google.com"],
-      icon: "gmail" as const,
-      id: "gmail",
-      name: "Gmail",
-      openBehavior: "tab" as const,
-      url: "https://mail.google.com/",
-    };
-    expect([
-      newTab(ids, "a", { ...app, singleInstance: true }).pinned,
-      newTab(ids, "a", app).pinned,
-    ]).toStrictEqual([true, false]);
-  });
-
   it("neither moves nor leaves its group nor joins another, while the others may leave it", () => {
     const { ids, state } = pinnedStart();
-    const joined = unwrap(joinTab(state, "t2", "t1", VERTICAL_AFTER, ids));
+    const joined = unwrap(
+      joinTab(state, "t2", "t1", VERTICAL_AFTER, ids, gmail)
+    );
     expect([
-      moveTabTo(state, "t1", 2),
-      leaveGroup(joined, "t1", ids),
-      joinTab(state, "t1", "t2", VERTICAL_AFTER, ids),
-      leaveGroup(joined, "t2", ids).ok,
+      moveTabTo(state, "t1", 2, gmail),
+      leaveGroup(joined, "t1", ids, gmail),
+      joinTab(state, "t1", "t2", VERTICAL_AFTER, ids, gmail),
+      leaveGroup(joined, "t2", ids, gmail).ok,
     ]).toStrictEqual([
       { error: "pinned", ok: false },
       { error: "pinned", ok: false },
@@ -570,16 +572,7 @@ describe("a pinned tab", () => {
 
   it("keeps the first row when another row is moved to the top", () => {
     const { state } = pinnedStart();
-    const moved = unwrap(moveTabTo(state, "t3", 0));
+    const moved = unwrap(moveTabTo(state, "t3", 0, gmail));
     expect(moved.tabs.map((tab) => tab.id)).toStrictEqual(["t1", "t3", "t2"]);
-  });
-
-  it("is set on the tabs of a single-instance app in a state written before the rule, leaving a state that has it as it is", () => {
-    const { state } = start();
-    const pinned = pinSingleInstance(state, gmail);
-    expect([
-      pinned.tabs.map((tab) => tab.pinned),
-      pinSingleInstance(pinned, gmail),
-    ]).toStrictEqual([[true], pinned]);
   });
 });

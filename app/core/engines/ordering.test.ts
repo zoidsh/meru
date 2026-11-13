@@ -56,11 +56,12 @@ describe(moveItem, () => {
   });
 });
 
+const none = () => false;
+
 const tabOf = (id: string, profileId: string): Tab => ({
-  appId: "gmail",
+  appId: "drive",
   health: "ok",
   id,
-  pinned: false,
   profileId,
   sleeping: false,
   title: id,
@@ -128,14 +129,14 @@ const SEEDS = Array.from({ length: 200 }, (_, index) => index + 1);
 
 describe(orderedTabs, () => {
   it("puts a pinned tab's row first, and the pinned tab first in its group, whatever the order of tabs and panes", () => {
-    const pinned = { ...tabOf("t3", "a"), pinned: true };
+    const pinned = { ...tabOf("t3", "a"), appId: "gmail" };
     const tabs = [tabOf("t1", "a"), tabOf("t2", "a"), pinned, tabOf("t4", "a")];
     const groups = [
       groupWith("g1", "a", ["t1"]),
       groupWith("g2", "a", ["t2"]),
       groupWith("g3", "a", ["t4", "t3"]),
     ];
-    const rows = orderedTabs(tabs, groups, "a");
+    const rows = orderedTabs(tabs, groups, "a", (appId) => appId === "gmail");
     expect(
       rows.map((row) =>
         row.kind === "tab" ? row.tab.id : row.tabs.map((tab) => tab.id)
@@ -148,7 +149,10 @@ describe(orderedTabs, () => {
     const groups = [
       { ...groupWith("g1", "a", ["t2", "t1"]), tabIds: ["t1", "t2"] },
     ];
-    expect(flat(orderedTabs(tabs, groups, "a"))).toStrictEqual(["t2", "t1"]);
+    expect(flat(orderedTabs(tabs, groups, "a", none))).toStrictEqual([
+      "t2",
+      "t1",
+    ]);
   });
 
   it("keeps a group of one as a plain row and a bigger group as one row in the group's order", () => {
@@ -158,13 +162,13 @@ describe(orderedTabs, () => {
       groupWith("g2", "a", ["t4", "t2"]),
       groupWith("g3", "a", ["t3"]),
     ];
-    const rows = orderedTabs(tabs, groups, "a");
+    const rows = orderedTabs(tabs, groups, "a", none);
     expect(
       rows.map((row) =>
         row.kind === "tab" ? row.tab.id : row.tabs.map((tab) => tab.id)
       )
     ).toStrictEqual(["t1", ["t4", "t2"], "t3"]);
-    expect(orderedTabs(tabs, groups, "b")).toStrictEqual([]);
+    expect(orderedTabs(tabs, groups, "b", none)).toStrictEqual([]);
   });
 
   it.each(SEEDS)(
@@ -172,7 +176,7 @@ describe(orderedTabs, () => {
     (seed) => {
       const { tabs, groups, profileIds } = randomState(seed);
       for (const profileId of profileIds) {
-        const listed = flat(orderedTabs(tabs, groups, profileId));
+        const listed = flat(orderedTabs(tabs, groups, profileId, none));
         const own = tabs
           .filter((tab) => tab.profileId === profileId)
           .map((tab) => tab.id);
@@ -191,10 +195,10 @@ describe(moveTab, () => {
       groupWith("g3", "a", ["t4"]),
     ];
     expect(
-      flat(orderedTabs(moveTab(tabs, groups, "t4", 0), groups, "a"))
+      flat(orderedTabs(moveTab(tabs, groups, "t4", 0, none), groups, "a", none))
     ).toStrictEqual(["t4", "t1", "t2", "t3"]);
     expect(
-      flat(orderedTabs(moveTab(tabs, groups, "t3", 2), groups, "a"))
+      flat(orderedTabs(moveTab(tabs, groups, "t3", 2, none), groups, "a", none))
     ).toStrictEqual(["t1", "t4", "t2", "t3"]);
   });
 
@@ -203,12 +207,10 @@ describe(moveTab, () => {
     const groups = tabs.map((tab) =>
       groupWith(`g${tab.id}`, tab.profileId, [tab.id])
     );
-    expect(moveTab(tabs, groups, "t3", 0).map((tab) => tab.id)).toStrictEqual([
-      "t3",
-      "t2",
-      "t1",
-    ]);
-    expect(moveTab(tabs, groups, "missing", 0)).toStrictEqual(tabs);
+    expect(
+      moveTab(tabs, groups, "t3", 0, none).map((tab) => tab.id)
+    ).toStrictEqual(["t3", "t2", "t1"]);
+    expect(moveTab(tabs, groups, "missing", 0, none)).toStrictEqual(tabs);
   });
 
   it.each(SEEDS)(
@@ -216,26 +218,36 @@ describe(moveTab, () => {
     (seed) => {
       const { tabs, groups, profileIds } = randomState(seed);
       const order = (moved: readonly Tab[], profileId: string) =>
-        flat(orderedTabs(moved, groups, profileId));
+        flat(orderedTabs(moved, groups, profileId, none));
       for (const profileId of profileIds) {
-        const rows = orderedTabs(tabs, groups, profileId);
+        const rows = orderedTabs(tabs, groups, profileId, none);
         const others = tabs.filter((tab) => tab.profileId !== profileId);
         for (const [index, row] of rows.entries()) {
           const [tab] = rowTabs(row);
           if (tab === undefined) {
             continue;
           }
-          const still = moveTab(tabs, groups, tab.id, index);
-          expect(orderedTabs(still, groups, profileId)).toStrictEqual(rows);
-          expect(
-            order(moveTab(tabs, groups, tab.id, rows.length + 5), profileId)
-          ).toStrictEqual(
-            order(moveTab(tabs, groups, tab.id, rows.length - 1), profileId)
+          const still = moveTab(tabs, groups, tab.id, index, none);
+          expect(orderedTabs(still, groups, profileId, none)).toStrictEqual(
+            rows
           );
           expect(
-            order(moveTab(tabs, groups, tab.id, -5), profileId)
-          ).toStrictEqual(order(moveTab(tabs, groups, tab.id, 0), profileId));
-          const moved = moveTab(tabs, groups, tab.id, rows.length);
+            order(
+              moveTab(tabs, groups, tab.id, rows.length + 5, none),
+              profileId
+            )
+          ).toStrictEqual(
+            order(
+              moveTab(tabs, groups, tab.id, rows.length - 1, none),
+              profileId
+            )
+          );
+          expect(
+            order(moveTab(tabs, groups, tab.id, -5, none), profileId)
+          ).toStrictEqual(
+            order(moveTab(tabs, groups, tab.id, 0, none), profileId)
+          );
+          const moved = moveTab(tabs, groups, tab.id, rows.length, none);
           expect(order(moved, profileId).toSorted()).toStrictEqual(
             flat(rows).toSorted()
           );

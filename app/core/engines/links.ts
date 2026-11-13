@@ -110,7 +110,16 @@ export const resolveLinkTarget = (
   if (!settings.openInApp || settings.excludedApps.includes(app.id)) {
     return EXTERNAL;
   }
-  const existing = orderedTabs(context.tabs, context.groups, from.profileId)
+  const singleInstance = (appId: string) =>
+    context.catalog.some(
+      (found) => found.id === appId && isSingleInstance(found)
+    );
+  const existing = orderedTabs(
+    context.tabs,
+    context.groups,
+    from.profileId,
+    singleInstance
+  )
     .flatMap(rowTabs)
     .find((tab) => tab.appId === app.id);
   const background = disposition === "background";

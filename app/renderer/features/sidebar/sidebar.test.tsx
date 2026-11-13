@@ -29,7 +29,7 @@ const PROFILES = {
   newProfileRefusal: null,
   selectedProfileId: "personal",
   tabs: [
-    { ...tabOf("mail", "gmail", "personal", false), pinned: true },
+    tabOf("mail", "gmail", "personal", false),
     tabOf("calendar", "calendar"),
     tabOf("drive", "drive"),
   ],

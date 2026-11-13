@@ -2,9 +2,10 @@ import { useDraggable, useDroppable } from "@dnd-kit/react";
 import { cn } from "cn";
 import { CircleAlertIcon, XIcon } from "lucide-react";
 
+import { isPinned } from "../../../core/engines/pinned.ts";
 import type { DropTarget, SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { Tab } from "../../../core/records/tab.ts";
-import { appById } from "../../../shared/apps.ts";
+import { appById, isSingleInstanceId } from "../../../shared/apps.ts";
 import { tabs as tabChannels } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../client-context.tsx";
@@ -115,7 +116,7 @@ export const TabRowButton = ({
   readonly drop: DropTarget | undefined;
 }) => {
   const client = useClient();
-  const { pinned } = tab;
+  const pinned = isPinned(tab, isSingleInstanceId);
   const { ref, isDragging } = useDraggable({ disabled: pinned, id: tab.id });
   const { ref: dropRef } = useDroppable({ id: tab.id });
   const wide = size === "wide";

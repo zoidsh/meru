@@ -29,7 +29,6 @@ const tab = (id: string, appId: string, url: string): Tab => ({
   appId,
   health: "ok",
   id,
-  pinned: false,
   profileId: "work",
   sleeping: false,
   title: appId,

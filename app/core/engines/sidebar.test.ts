@@ -12,11 +12,10 @@ import {
 } from "./sidebar.ts";
 import type { SidebarChoice } from "./sidebar.ts";
 
-const tab = (appId: string, pinned = false): Tab => ({
+const tab = (appId: string): Tab => ({
   appId,
   health: "ok",
   id: `${appId}-${Math.random()}`,
-  pinned,
   profileId: "p",
   sleeping: false,
   title: appId,
@@ -24,41 +23,55 @@ const tab = (appId: string, pinned = false): Tab => ({
   zoom: 1,
 });
 
+const gmail = (appId: string) => appId === "gmail";
+
 const auto: SidebarChoice = { flipped: null, hidden: false, width: "auto" };
 
 describe(sidebarOf, () => {
   it("hides the sidebar for a fresh profile's one Gmail tab, with none, and when the user hid it", () => {
-    expect(sidebarOf([tab("gmail")], auto)).toStrictEqual({ kind: "hidden" });
-    expect(sidebarOf([], auto)).toStrictEqual({ kind: "hidden" });
+    expect(sidebarOf([tab("gmail")], auto, gmail)).toStrictEqual({
+      kind: "hidden",
+    });
+    expect(sidebarOf([], auto, gmail)).toStrictEqual({ kind: "hidden" });
     expect(
-      sidebarOf([tab("gmail"), tab("calendar")], { ...auto, hidden: true })
+      sidebarOf(
+        [tab("gmail"), tab("calendar")],
+        { ...auto, hidden: true },
+        gmail
+      )
     ).toStrictEqual({ kind: "hidden" });
   });
 
   it("is narrow under auto while every app has one tab, and wide once one has several", () => {
-    expect(sidebarOf([tab("gmail"), tab("calendar")], auto)).toStrictEqual({
+    expect(
+      sidebarOf([tab("gmail"), tab("calendar")], auto, gmail)
+    ).toStrictEqual({
       kind: "shown",
       size: "narrow",
       width: 64,
     });
     expect(
-      sidebarOf([tab("gmail"), tab("drive"), tab("drive")], auto)
+      sidebarOf([tab("gmail"), tab("drive"), tab("drive")], auto, gmail)
     ).toStrictEqual({ kind: "shown", size: "wide", width: 224 });
   });
 
   it("counts no pinned tab towards wide, as 3.x did", () => {
     expect(
-      sidebarOf([tab("gmail"), tab("drive", true), tab("drive")], auto)
+      sidebarOf(
+        [tab("gmail"), tab("drive"), tab("drive")],
+        auto,
+        (appId) => appId === "drive"
+      )
     ).toMatchObject({ size: "narrow" });
   });
 
   it("takes the width the user set, and over it the one they flipped to", () => {
     const two = [tab("gmail"), tab("drive"), tab("drive")];
-    expect(sidebarOf(two, { ...auto, width: "narrow" })).toMatchObject({
+    expect(sidebarOf(two, { ...auto, width: "narrow" }, gmail)).toMatchObject({
       size: "narrow",
     });
     expect(
-      sidebarOf(two, { ...auto, flipped: "wide", width: "narrow" })
+      sidebarOf(two, { ...auto, flipped: "wide", width: "narrow" }, gmail)
     ).toMatchObject({ size: "wide" });
   });
 });
@@ -164,7 +177,8 @@ describe(dropAction, () => {
       },
       solo("d"),
     ],
-    "p"
+    "p",
+    gmail
   );
 
   it("moves a tab alone to the row it is let go between, and does nothing where it already is", () => {

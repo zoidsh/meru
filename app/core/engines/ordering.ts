@@ -4,6 +4,8 @@ import type { Group } from "../records/group.ts";
 import type { Profile } from "../records/profile.ts";
 import type { Tab } from "../records/tab.ts";
 import { panes } from "./layout.ts";
+import { isPinned } from "./pinned.ts";
+import type { SingleInstance } from "./pinned.ts";
 
 export const moveItem = <T>(
   items: readonly T[],
@@ -45,16 +47,15 @@ export const groupOf = (
   groups: readonly Group[]
 ): Group | undefined => groups.find((group) => group.tabIds.includes(tabId));
 
-const pinnedFirst = (a: Tab, b: Tab) => Number(b.pinned) - Number(a.pinned);
-
-const rowPinned = (row: TabRow) => rowTabs(row).some((tab) => tab.pinned);
-
 /** A profile's tabs in sidebar order: the order of `tabs`, with a group of several in place of its first tab and its tabs in the order of its layout's panes, so the rows follow a drop or a swap; a pinned tab's row comes first, and the pinned tab first in its group, whatever joins or leaves it. */
 export const orderedTabs = (
   tabs: readonly Tab[],
   groups: readonly Group[],
-  profileId: string
+  profileId: string,
+  singleInstance: SingleInstance
 ): TabRow[] => {
+  const pinned = (tab: Tab) => Number(isPinned(tab, singleInstance));
+  const rowPinned = (row: TabRow) => Math.max(0, ...rowTabs(row).map(pinned));
   const own = tabs.filter((tab) => tab.profileId === profileId);
   const byId = new Map(own.map((tab) => [tab.id, tab]));
   const placed = new Set<string>();
@@ -78,9 +79,13 @@ export const orderedTabs = (
     for (const member of members) {
       placed.add(member.id);
     }
-    rows.push({ group, kind: "group", tabs: members.toSorted(pinnedFirst) });
+    rows.push({
+      group,
+      kind: "group",
+      tabs: members.toSorted((a, b) => pinned(b) - pinned(a)),
+    });
   }
-  return rows.toSorted((a, b) => Number(rowPinned(b)) - Number(rowPinned(a)));
+  return rows.toSorted((a, b) => rowPinned(b) - rowPinned(a));
 };
 
 /** Moves the row holding `tabId` to row `to` of its profile, clamped to the list below the pinned rows; a tab in a group moves with its group, and a pinned row stays. */
@@ -88,15 +93,18 @@ export const moveTab = (
   tabs: readonly Tab[],
   groups: readonly Group[],
   tabId: string,
-  to: number
+  to: number,
+  singleInstance: SingleInstance
 ): Tab[] => {
   const moving = tabs.find((tab) => tab.id === tabId);
   if (moving === undefined) {
     return [...tabs];
   }
-  const rows = orderedTabs(tabs, groups, moving.profileId);
-  const from = rows.findIndex((row) =>
-    rowTabs(row).some((tab) => tab.id === tabId)
+  const rows = orderedTabs(tabs, groups, moving.profileId, singleInstance);
+  const rowPinned = (found: TabRow) =>
+    rowTabs(found).some((tab) => isPinned(tab, singleInstance));
+  const from = rows.findIndex((found) =>
+    rowTabs(found).some((tab) => tab.id === tabId)
   );
   const pinned = rows.filter(rowPinned).length;
   const row = rows[from];

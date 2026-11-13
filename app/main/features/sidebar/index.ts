@@ -6,6 +6,7 @@ import type { Sidebar, SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { ok } from "../../../core/result.ts";
+import { isSingleInstanceId } from "../../../shared/apps.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { sidebar, sidebarPushes } from "../../../shared/channels/sidebar.ts";
 import type { CommandRegistrar } from "../../../shared/commands/define.ts";
@@ -107,11 +108,15 @@ export class Sidebars {
   #compute(): Sidebar {
     const { profiles, settings } = this.#options;
     const { id } = profiles.selected();
-    return sidebarOf(this.#tabs(), {
-      flipped: this.#flipped.get(id) ?? null,
-      hidden: this.#hidden.has(id),
-      width: settings.get("sidebar.width", id),
-    });
+    return sidebarOf(
+      this.#tabs(),
+      {
+        flipped: this.#flipped.get(id) ?? null,
+        hidden: this.#hidden.has(id),
+        width: settings.get("sidebar.width", id),
+      },
+      isSingleInstanceId
+    );
   }
 
   #update(): void {

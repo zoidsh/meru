@@ -1,5 +1,6 @@
 import type { ProfilesState } from "../records/profiles-state.ts";
 import { panes } from "./layout.ts";
+import type { SingleInstance } from "./pinned.ts";
 
 export const sameMembers = (a: readonly string[], b: readonly string[]) => {
   const sorted = b.toSorted();
@@ -13,7 +14,10 @@ export const repeated = (ids: readonly string[]) =>
   ids.filter((id, index) => ids.indexOf(id) !== index);
 
 /** What is wrong with the state, one sentence per broken invariant; empty when it holds. */
-export const validateState = (state: ProfilesState): string[] => {
+export const validateState = (
+  state: ProfilesState,
+  singleInstance: SingleInstance
+): string[] => {
   const problems: string[] = [];
   const kinds = {
     group: state.groups.map((group) => group.id),
@@ -68,8 +72,13 @@ export const validateState = (state: ProfilesState): string[] => {
     }
   }
   for (const profile of state.profiles) {
-    if (!state.tabs.some((tab) => tab.profileId === profile.id)) {
+    const own = state.tabs.filter((tab) => tab.profileId === profile.id);
+    if (own.length === 0) {
       problems.push(`profile ${profile.id} has no tab`);
+    }
+    const single = own.map((tab) => tab.appId).filter(singleInstance);
+    for (const appId of new Set(repeated(single))) {
+      problems.push(`profile ${profile.id} has more than one ${appId} tab`);
     }
   }
   return problems;

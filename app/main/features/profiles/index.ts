@@ -8,12 +8,10 @@ import { repairState } from "../../../core/engines/state-repair.ts";
 import { validateState } from "../../../core/engines/state-validate.ts";
 import {
   addProfile,
-  addTab,
   equaliseGroup,
   canClose,
   closeTab,
   openTab,
-  pinSingleInstance,
   firstState,
   firstGroup,
   joinTab,
@@ -94,7 +92,7 @@ export const profilesSnapshot = (
     return { fallbacks: repaired.dropped, value: repaired.state };
   },
   schema: profilesStateSchema.superRefine((state, context) => {
-    for (const message of validateState(state)) {
+    for (const message of validateState(state, isSingleInstanceId)) {
       context.addIssue({ code: "custom", message });
     }
   }),
@@ -141,10 +139,7 @@ export class Profiles {
 
   async open(): Promise<Opened<ProfilesState, string>> {
     const opened = await this.#store.open();
-    this.#state = pinSingleInstance(opened.value, isSingleInstanceId);
-    if (this.#state !== opened.value && opened.source === "file") {
-      this.#store.write(this.#state);
-    }
+    this.#state = opened.value;
     if (opened.fallbacks.length > 0) {
       this.#options.report(
         `${PROFILES_FILE}: dropped ${opened.fallbacks.join(", ")}`
@@ -304,21 +299,13 @@ export class Profiles {
     return this.#commit(selectProfile(this.state, profileId));
   }
 
-  /** Adds a tab of the app after the profile's others, in a group of its own or split into a group's pane. */
+  /** Adds a tab of the app after the profile's others, in a group of its own or split into a group's pane; a single-instance app the profile has is answered with its tab. */
   addTab(
     profileId: string,
     appId: string,
     placement?: Placement
   ): Result<Tab, ProfilesError> {
-    const app = appById(appId);
-    if (app === undefined) {
-      return err("unknownApp");
-    }
-    const tab = newTab(this.#options.ids, profileId, app);
-    const committed = this.#commit(
-      addTab(this.state, tab, this.#options.ids, placement)
-    );
-    return committed.ok ? ok(tab) : committed;
+    return this.openTab(profileId, appId, placement);
   }
 
   /** The tab an app opens to in a profile: the profile's one tab of a single-instance app when it has it, else a new tab at `url`, or the app's start page, as addTab adds it. */
@@ -376,7 +363,9 @@ export class Profiles {
 
   /** Takes a tab out of its group into a group of its own, at row `to` of its profile's list when given. */
   leaveGroup(tabId: string, to?: number): Result<undefined, ProfilesError> {
-    return this.#commit(leaveGroup(this.state, tabId, this.#options.ids, to));
+    return this.#commit(
+      leaveGroup(this.state, tabId, this.#options.ids, isSingleInstanceId, to)
+    );
   }
 
   /** Puts a tab beside another tab's pane where `beside` says, leaving its own group first when that is another, and brings it to the front. */
@@ -386,13 +375,20 @@ export class Profiles {
     beside: Beside
   ): Result<undefined, ProfilesError> {
     const committed = this.#commit(
-      joinTab(this.state, tabId, targetTabId, beside, this.#options.ids)
+      joinTab(
+        this.state,
+        tabId,
+        targetTabId,
+        beside,
+        this.#options.ids,
+        isSingleInstanceId
+      )
     );
     return committed.ok ? this.focusTab(tabId) : committed;
   }
 
   moveTab(tabId: string, to: number): Result<undefined, ProfilesError> {
-    return this.#commit(moveTabTo(this.state, tabId, to));
+    return this.#commit(moveTabTo(this.state, tabId, to, isSingleInstanceId));
   }
 
   resize(
@@ -489,7 +485,7 @@ export class Profiles {
     if (!next.ok) {
       return next;
     }
-    const problems = validateState(next.value);
+    const problems = validateState(next.value, isSingleInstanceId);
     if (problems.length > 0) {
       this.#options.onError(
         new Error(

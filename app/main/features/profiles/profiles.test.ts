@@ -11,6 +11,7 @@ import { PROFILE_COLORS } from "../../../core/records/profile.ts";
 import { profilesStateSchema } from "../../../core/records/profiles-state.ts";
 import type { ProfilesState } from "../../../core/records/profiles-state.ts";
 import type { Result } from "../../../core/result.ts";
+import { isSingleInstanceId } from "../../../shared/apps.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import {
   profiles as profileChannels,
@@ -373,7 +374,7 @@ describe(Profiles, () => {
       ["calendar", true],
     ]);
     expect(profiles.closeTab(gmail?.id ?? "")).toStrictEqual({
-      error: "required",
+      error: "pinned",
       ok: false,
     });
     unwrap(profiles.closeTab(calendar.id));
@@ -426,7 +427,9 @@ describe(Profiles, () => {
         }),
       }),
     });
-    expect(validateState(mended.profiles.state)).toStrictEqual([]);
+    expect(
+      validateState(mended.profiles.state, isSingleInstanceId)
+    ).toStrictEqual([]);
     expect(mended.reports).toStrictEqual([]);
   });
 });
@@ -493,7 +496,9 @@ describe("the profiles' invariants", () => {
         if (operation?.(profiles, choose(profiles.state, pick)).ok === true) {
           changed += 1;
         }
-        expect(validateState(profiles.state)).toStrictEqual([]);
+        expect(validateState(profiles.state, isSingleInstanceId)).toStrictEqual(
+          []
+        );
       }
       expect({ errors, mostlyChanged: changed > 20 }).toStrictEqual({
         errors: [],

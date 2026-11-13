@@ -12,6 +12,7 @@ import {
 } from "../../../core/engines/sidebar.ts";
 import type { SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { Tab } from "../../../core/records/tab.ts";
+import { isSingleInstanceId } from "../../../shared/apps.ts";
 import { stagePushes } from "../../../shared/channels/stage.ts";
 import { useClient } from "../../client-context.tsx";
 import { useProfiles } from "../profiles/use-profiles.ts";
@@ -93,7 +94,8 @@ export const Sidebar = ({
   const rows = orderedTabs(
     snapshot.tabs,
     snapshot.groups,
-    snapshot.selectedProfileId
+    snapshot.selectedProfileId,
+    isSingleInstanceId
   );
   const profile = snapshot.profiles.find(
     (found) => found.id === snapshot.selectedProfileId
