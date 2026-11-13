@@ -23,6 +23,7 @@ describe("the settings registry", () => {
     >();
     expectTypeOf<SettingKey>().toEqualTypeOf<
       | "appearance.style"
+      | "profiles.unreadBadge"
       | "shortcuts.bindings"
       | "sidebar.gmailUnreadBadge"
       | "sidebar.showWidthToggle"
