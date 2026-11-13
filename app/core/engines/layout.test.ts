@@ -21,6 +21,7 @@ import {
   leaf,
   MAX_RATIO,
   MIN_RATIO,
+  paneOfTab,
   panes,
   movePane,
   ratioAt,
@@ -28,6 +29,7 @@ import {
   split,
   STYLE_METRICS,
   swap,
+  tabOfPane,
 } from "./layout.ts";
 
 const counter = (prefix: string) => {
@@ -269,6 +271,29 @@ describe(layout, () => {
     for (const piece of all) {
       expect(Math.min(piece.width, piece.height)).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe("paneOfTab and tabOfPane", () => {
+  it.each(cases)(
+    "answer each other for every pane (seed $seed)",
+    ({ tree }) => {
+      for (const { paneId, tabIds } of panes(tree)) {
+        const [tabId = ""] = tabIds;
+        expect([tabOfPane(tree, paneId), paneOfTab(tree, tabId)]).toStrictEqual(
+          [tabId, paneId]
+        );
+      }
+    }
+  );
+
+  it("know nothing of a pane or tab the layout does not show", () => {
+    expect([
+      tabOfPane(leaf("p1", "t1"), "p9"),
+      paneOfTab(leaf("p1", "t1"), "t9"),
+      tabOfPane(null, "p1"),
+      paneOfTab(null, "t1"),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined]);
   });
 });
 

@@ -55,6 +55,14 @@ export const panes = (tree: Layout): Leaf[] => {
   return [...panes(tree.first), ...panes(tree.second)];
 };
 
+/** The id of the pane showing the tab, while the layout shows it. */
+export const paneOfTab = (tree: Layout, tabId: string): string | undefined =>
+  panes(tree).find((pane) => pane.tabIds.includes(tabId))?.paneId;
+
+/** The tab the pane shows, while the layout has the pane. */
+export const tabOfPane = (tree: Layout, paneId: string): string | undefined =>
+  panes(tree).find((pane) => pane.paneId === paneId)?.tabIds[0];
+
 const replaceLeaf = (
   node: LayoutNode,
   paneId: string,

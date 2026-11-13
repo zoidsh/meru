@@ -7,8 +7,10 @@ import {
   focusNext,
   focusPrevious,
   layout,
+  paneOfTab,
   panes,
   STYLE_METRICS,
+  tabOfPane,
 } from "../../../core/engines/layout.ts";
 import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
 import type {
@@ -198,10 +200,8 @@ export class Stage {
       return err(added.error === "unknownPane" ? "unknownPane" : "refused");
     }
     this.refresh();
-    const pane = panes(this.#layout()).find((found) =>
-      found.tabIds.includes(added.value.id)
-    );
-    return pane === undefined ? ok(undefined) : this.focusPane(pane.paneId);
+    const shown = paneOfTab(this.#layout(), added.value.id);
+    return shown === undefined ? ok(undefined) : this.focusPane(shown);
   }
 
   /** Opens a tab of the app in the profile and shows it: beside the focused pane with `split` when the stage shows that profile, else in a group of one; a single-instance app's one tab instead when the profile has it. */
@@ -249,8 +249,7 @@ export class Stage {
   }
 
   focusPane(paneId: string): Result<undefined, StageError> {
-    const pane = panes(this.#layout()).find((found) => found.paneId === paneId);
-    const [tabId] = pane?.tabIds ?? [];
+    const tabId = tabOfPane(this.#layout(), paneId);
     const view = tabId === undefined ? undefined : this.#views.view(tabId);
     if (view === undefined) {
       return err("unknownPane");
@@ -273,12 +272,8 @@ export class Stage {
 
   /** Focuses the pane showing the tab, if the stage shows it. */
   focusTab(tabId: string): Result<undefined, StageError> {
-    const pane = panes(this.#layout()).find((found) =>
-      found.tabIds.includes(tabId)
-    );
-    return pane === undefined
-      ? err("unknownPane")
-      : this.focusPane(pane.paneId);
+    const paneId = paneOfTab(this.#layout(), tabId);
+    return paneId === undefined ? err("unknownPane") : this.focusPane(paneId);
   }
 
   focusNext(): Result<undefined, StageError> {
@@ -425,8 +420,8 @@ export class Stage {
   }
 
   #tabOf(paneId: string | undefined): Tab | undefined {
-    const pane = panes(this.#layout()).find((found) => found.paneId === paneId);
-    const [tabId] = pane?.tabIds ?? [];
+    const tabId =
+      paneId === undefined ? undefined : tabOfPane(this.#layout(), paneId);
     return tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
   }
 
@@ -435,8 +430,7 @@ export class Stage {
     const focused = this.#focused;
     return focused === undefined
       ? undefined
-      : panes(this.#layout()).find((pane) => pane.tabIds.includes(focused))
-          ?.paneId;
+      : paneOfTab(this.#layout(), focused);
   }
 
   #focusedView(): ViewPort | undefined {

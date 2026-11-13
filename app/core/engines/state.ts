@@ -8,7 +8,15 @@ import type { ProfilesState } from "../records/profiles-state.ts";
 import type { Tab } from "../records/tab.ts";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
-import { close, leaf, movePane, panes, resize, split } from "./layout.ts";
+import {
+  close,
+  leaf,
+  movePane,
+  paneOfTab,
+  panes,
+  resize,
+  split,
+} from "./layout.ts";
 import { groupOf, moveTab, orderedProfiles } from "./ordering.ts";
 
 export type StateError =
@@ -176,13 +184,11 @@ const movePaneOf = (
   group: Group,
   placement: Placement
 ): Changed => {
-  const pane = panes(group.layout).find((found) =>
-    found.tabIds.includes(tabId)
-  );
+  const paneId = paneOfTab(group.layout, tabId);
   const moved =
-    pane === undefined
+    paneId === undefined
       ? undefined
-      : movePane(group.layout, pane.paneId, placement.paneId, placement);
+      : movePane(group.layout, paneId, placement.paneId, placement);
   if (moved === undefined) {
     return err("unknownPane");
   }
@@ -260,15 +266,13 @@ export const addTab = (
 };
 
 const withoutTab = (group: Group, tabId: string): Group | undefined => {
-  const pane = panes(group.layout).find((found) =>
-    found.tabIds.includes(tabId)
-  );
-  if (pane === undefined || group.tabIds.length <= 1) {
+  const paneId = paneOfTab(group.layout, tabId);
+  if (paneId === undefined || group.tabIds.length <= 1) {
     return undefined;
   }
   return {
     ...group,
-    layout: close(group.layout, pane.paneId),
+    layout: close(group.layout, paneId),
     tabIds: group.tabIds.filter((id) => id !== tabId),
   };
 };
@@ -378,10 +382,8 @@ export const joinTab = (
 ): Changed => {
   const own = groupOf(tabId, state.groups);
   const target = groupOf(targetTabId, state.groups);
-  const pane = panes(target?.layout ?? null).find((found) =>
-    found.tabIds.includes(targetTabId)
-  );
-  if (own === undefined || target === undefined || pane === undefined) {
+  const paneId = paneOfTab(target?.layout ?? null, targetTabId);
+  if (own === undefined || target === undefined || paneId === undefined) {
     return err("unknownTab");
   }
   if (tabId === targetTabId) {
@@ -395,7 +397,7 @@ export const joinTab = (
     ? splitInto(
         alone.value,
         tabId,
-        { ...beside, groupId: target.id, paneId: pane.paneId },
+        { ...beside, groupId: target.id, paneId },
         ids
       )
     : alone;
