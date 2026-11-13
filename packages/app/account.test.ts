@@ -49,6 +49,9 @@ let pickerWindows: FakePickerWindow[] = [];
 
 let locale = "en-US";
 
+/** What the default session holds, which Chromium chose and Meru never writes. */
+let defaultSpellCheckerLanguages = ["en-US"];
+
 let additionalSpellCheckerLanguages: string[] = [];
 
 /** Codes the fake setter throws on, as Electron does for one it has no dictionary for. */
@@ -62,6 +65,7 @@ mock.module("electron", () => ({
   app: { getLocale: () => locale },
   ipcMain,
   session: {
+    defaultSession: { getSpellCheckerLanguages: () => defaultSpellCheckerLanguages },
     fromPartition: (partition: string) => ({
       setPermissionRequestHandler: (handler: PermissionRequestHandler) => {
         permissionRequestHandlers.set(partition, handler);
@@ -207,6 +211,8 @@ beforeEach(() => {
   unsupportedSpellCheckerLanguages = new Set();
 
   spellCheckerLanguages.clear();
+
+  defaultSpellCheckerLanguages = ["en-US"];
 });
 
 describe("display media requests", () => {
@@ -354,20 +360,40 @@ describe("spellchecker languages", () => {
     expect(createAccountSpellCheckerLanguages()).toEqual(["en-US", "de", "fr"]);
   });
 
-  test("drop a system language with no dictionary and keep the rest", () => {
+  test("check the default session's languages in place of a system language with no dictionary", () => {
     locale = "ja";
 
     unsupportedSpellCheckerLanguages = new Set(["ja"]);
 
-    additionalSpellCheckerLanguages = ["de"];
-
-    expect(createAccountSpellCheckerLanguages()).toEqual(["de"]);
+    expect(createAccountSpellCheckerLanguages()).toEqual(["en-US"]);
   });
 
-  test("check nothing when no language has a dictionary", () => {
+  test("check the picked languages after the default session's languages", () => {
     locale = "ja";
 
     unsupportedSpellCheckerLanguages = new Set(["ja"]);
+
+    additionalSpellCheckerLanguages = ["de", "en-US"];
+
+    expect(createAccountSpellCheckerLanguages()).toEqual(["en-US", "de"]);
+  });
+
+  test("drop a picked language with no dictionary and keep the rest", () => {
+    unsupportedSpellCheckerLanguages = new Set(["xx"]);
+
+    additionalSpellCheckerLanguages = ["xx", "de"];
+
+    expect(createAccountSpellCheckerLanguages()).toEqual(["en-US", "de"]);
+  });
+
+  test("check nothing when the default is empty and no language has a dictionary", () => {
+    locale = "ja";
+
+    defaultSpellCheckerLanguages = [];
+
+    unsupportedSpellCheckerLanguages = new Set(["ja", "xx"]);
+
+    additionalSpellCheckerLanguages = ["xx"];
 
     expect(createAccountSpellCheckerLanguages()).toEqual([]);
   });

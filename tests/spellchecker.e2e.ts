@@ -72,7 +72,7 @@ test.describe("with German as an additional language", () => {
   });
 });
 
-test.describe("in a locale with no dictionary", () => {
+test.describe("in a locale with no dictionary, with German as an additional language", () => {
   const meru = useApp(
     {
       accounts: [seedAccount({ id: ACCOUNT_ID, label: "Personal" })],
@@ -81,9 +81,28 @@ test.describe("in a locale with no dictionary", () => {
     { args: ["--lang=ja"] },
   );
 
-  test("the app starts and the account's session checks German alone", async () => {
-    await expect(meru.renderer.locator("#root > *").first()).toBeAttached();
+  test("the account's session checks Chromium's default and German", async () => {
+    const defaultLanguages = await readDefaultSpellCheckerLanguages(meru);
 
-    await expect.poll(() => readAccountSpellCheckerLanguages(meru)).toEqual(["de"]);
+    await expect
+      .poll(() => readAccountSpellCheckerLanguages(meru))
+      .toEqual([...defaultLanguages, "de"]);
+  });
+});
+
+test.describe("in a locale with no dictionary", () => {
+  const meru = useApp(
+    { accounts: [seedAccount({ id: ACCOUNT_ID, label: "Personal" })] },
+    { args: ["--lang=ja"] },
+  );
+
+  test("the account's session keeps Chromium's default", async () => {
+    const defaultLanguages = await readDefaultSpellCheckerLanguages(meru);
+
+    // Chromium falls back to a dictionary of its own rather than to none, so an
+    // empty list here would mean spellchecking had been turned off.
+    expect(defaultLanguages).not.toEqual([]);
+
+    await expect.poll(() => readAccountSpellCheckerLanguages(meru)).toEqual(defaultLanguages);
   });
 });

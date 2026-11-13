@@ -113,18 +113,20 @@ export class Account {
       return;
     }
 
-    const languages = [app.getLocale(), ...config.get("spellchecker.languages")];
+    const locale = app.getLocale();
+
+    const additionalLanguages = config.get("spellchecker.languages");
 
     try {
-      this.session.setSpellCheckerLanguages(languages);
+      this.session.setSpellCheckerLanguages([...new Set([locale, ...additionalLanguages])]);
 
       return;
     } catch {
       // Electron throws on a code it has no dictionary for, such as the locale
-      // `ja`, and then writes nothing at all, so the rest are tried one by one.
+      // `ja`, and then writes nothing at all, so each code is tried on its own.
     }
 
-    const supportedLanguages = languages.filter((language) => {
+    const isSupported = (language: string) => {
       try {
         this.session.setSpellCheckerLanguages([language]);
 
@@ -137,11 +139,18 @@ export class Account {
 
         return false;
       }
-    });
+    };
 
-    // Written even when empty, which is what Chromium itself does for a locale
-    // with no dictionary.
-    this.session.setSpellCheckerLanguages(supportedLanguages);
+    // For a locale with no dictionary Chromium falls back to a default of its
+    // own, `en-US` on Linux, which the default session holds untouched because
+    // Meru never writes its languages.
+    const systemLanguages = isSupported(locale)
+      ? [locale]
+      : session.defaultSession.getSpellCheckerLanguages();
+
+    this.session.setSpellCheckerLanguages([
+      ...new Set([...systemLanguages, ...additionalLanguages.filter(isSupported)]),
+    ]);
   }
 
   private registerSessionPermissionsRequestsHandler() {
