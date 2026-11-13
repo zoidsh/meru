@@ -123,6 +123,8 @@ export interface WindowPort {
   readonly show: () => void;
   /** Shows the window without activating the app, so it opens behind whatever is in front. */
   readonly showInactive: () => void;
+  /** Keeps the menu's accelerators from firing while the window's own page has focus, so the page receives every key. */
+  readonly setIgnoreMenuShortcuts: (ignore: boolean) => void;
   readonly contentBounds: () => Rect;
   /** The window's outer bounds on the screen, frame included. */
   readonly bounds: () => Rect;

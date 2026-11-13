@@ -13,6 +13,7 @@ export class FakeWindow implements WindowPort {
   background: string | undefined;
   overlay: TitleBarOverlay | undefined;
   shown: "active" | "inactive" | undefined;
+  ignoresMenuShortcuts = false;
   #size: { width: number; height: number };
   #children: ViewPort[] = [];
   readonly #resized = new Set<() => void>();
@@ -57,6 +58,10 @@ export class FakeWindow implements WindowPort {
 
   readonly showInactive = () => {
     this.shown = "inactive";
+  };
+
+  readonly setIgnoreMenuShortcuts = (ignore: boolean) => {
+    this.ignoresMenuShortcuts = ignore;
   };
 
   readonly contentBounds = (): Rect => ({ ...this.#size, x: 0, y: 0 });

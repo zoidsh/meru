@@ -104,6 +104,9 @@ const createWindow = (spec: WindowSpec): WindowPort => {
     showInactive: () => {
       window.showInactive();
     },
+    setIgnoreMenuShortcuts: (ignore) => {
+      window.webContents.setIgnoreMenuShortcuts(ignore);
+    },
   };
 };
 

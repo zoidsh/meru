@@ -61,7 +61,7 @@ const setup = (platform = "darwin") => {
     registrar.broadcast(settingsPushes.changed, { changes: [], locked: {} });
     return transport.sent.map((sent) => sent.contentsId);
   };
-  return { commands, created, reached, settings, specs };
+  return { commands, created, reached, registrar, settings, specs };
 };
 
 describe(SettingsWindow, () => {
@@ -107,6 +107,22 @@ describe(SettingsWindow, () => {
       count: 2,
       reached: [created[1]?.contentsId],
     });
+  });
+
+  it("keeps the menu's shortcuts from its page while the shortcuts page records one", async () => {
+    const { created, registrar, settings } = setup();
+    await settings.open();
+    const [window] = created;
+    const record = (recording: boolean) =>
+      registrar.dispatch(window?.contentsId ?? 0, "shortcuts.recording", {
+        recording,
+      }).ok;
+    const started = [record(true), window?.ignoresMenuShortcuts];
+    expect([
+      ...started,
+      record(false),
+      window?.ignoresMenuShortcuts,
+    ]).toStrictEqual([true, true, true, false]);
   });
 
   it("recolours its ground and its window controls in another theme", async () => {

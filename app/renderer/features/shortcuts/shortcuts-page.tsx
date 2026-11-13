@@ -1,5 +1,5 @@
 import { omit } from "es-toolkit";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   acceleratorOf,
@@ -8,6 +8,7 @@ import {
   resolveBindings,
 } from "../../../core/engines/shortcuts.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
+import { shortcuts } from "../../../shared/channels/shortcuts.ts";
 import {
   commandById,
   commands,
@@ -35,7 +36,19 @@ const Recorder = ({
   readonly platform: string;
   readonly onRecord: (accelerator: string | null) => void;
 }) => {
+  const client = useSettingsClient();
   const [recording, setRecording] = useState(false);
+  // The menu's accelerators fire before the page sees the key, so main sets them aside while the page records one.
+  useEffect(() => {
+    if (recording) {
+      client.send(shortcuts.recording, { recording: true });
+    }
+    return () => {
+      if (recording) {
+        client.send(shortcuts.recording, { recording: false });
+      }
+    };
+  }, [client, recording]);
   const shown =
     accelerator === null ? undefined : glyphs(accelerator, platform);
   let text: Message = shown ?? msg`None`;

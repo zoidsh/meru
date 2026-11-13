@@ -4,8 +4,9 @@ import { titleBarOf, windowColours } from "../../../core/engines/chrome.ts";
 import { themeOf } from "../../../core/ports.ts";
 import type { Ports, WindowPort } from "../../../core/ports.ts";
 import type { Theme } from "../../../core/records/theme.ts";
-import { ok } from "../../../core/result.ts";
+import { err, ok } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
+import { shortcuts } from "../../../shared/channels/shortcuts.ts";
 import {
   pageSurfaces,
   surfaceArgument,
@@ -19,7 +20,7 @@ export const SETTINGS_WINDOW_SIZE = { height: 720, width: 1000 } as const;
 
 export interface SettingsWindowOptions {
   readonly ports: Pick<Ports, "displays" | "lifecycle" | "theme" | "windows">;
-  readonly registrar: Pick<IpcRegistrar, "assign">;
+  readonly registrar: Pick<IpcRegistrar, "assign" | "register">;
   readonly commands: CommandRegistrar;
   readonly preload: string;
   /** The settings page's address, which carries the theme at the moment it is asked. */
@@ -50,6 +51,15 @@ export class SettingsWindow {
         open: () => {
           this.open().catch(this.#options.onError);
           return ok(null);
+        },
+      }),
+      this.#options.registrar.register(shortcuts, {
+        recording: ({ recording }, { contentsId }) => {
+          if (this.#window?.contentsId !== contentsId) {
+            return err("not the settings window");
+          }
+          this.#window.setIgnoreMenuShortcuts(recording);
+          return ok(undefined);
         },
       })
     );

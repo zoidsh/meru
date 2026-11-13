@@ -105,3 +105,36 @@ export const settingsPageOf = async (app: ElectronApplication) => {
   }
   return page;
 };
+
+/** Types a key into the settings window as the operating system would, through its web contents, so an accelerator the page leaves alone reaches the menu. */
+export const pressInSettings = async (
+  app: ElectronApplication,
+  keyCode: string,
+  modifiers: readonly ("alt" | "control" | "meta" | "shift")[]
+) => {
+  await app.evaluate(
+    ({ BrowserWindow }, key) => {
+      const window = BrowserWindow.getAllWindows().find((found) =>
+        found.webContents.getURL().includes("/settings.html")
+      );
+      if (window === undefined) {
+        throw new Error("No settings window");
+      }
+      window.webContents.sendInputEvent({
+        keyCode: key.keyCode,
+        modifiers: [...key.modifiers],
+        type: "keyDown",
+      });
+      window.webContents.sendInputEvent({
+        keyCode: key.keyCode,
+        modifiers: [...key.modifiers],
+        type: "keyUp",
+      });
+    },
+    { keyCode, modifiers }
+  );
+};
+
+/** Whether the launcher's page is open. */
+export const launcherOpen = (app: ElectronApplication) =>
+  app.windows().some(isLauncher);

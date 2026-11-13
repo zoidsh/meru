@@ -2,6 +2,7 @@ import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { settings } from "../../../shared/channels/settings.ts";
+import { shortcuts } from "../../../shared/channels/shortcuts.ts";
 import { commands } from "../../../shared/commands/registry.ts";
 import { answer, mountSettings } from "../../testing.tsx";
 import { ShortcutsPage } from "./shortcuts-page.tsx";
@@ -94,6 +95,20 @@ describe(ShortcutsPage, () => {
         value: { "launcher.open": null, "stage.reload": "CmdOrCtrl+Shift+R" },
       },
       { key: "shortcuts.bindings", value: {} },
+    ]);
+  });
+
+  it("tells main while it records, so the menu leaves the keys to the page", () => {
+    const { sentOn } = mount();
+    const button = recorder("launcher.open");
+    act(() => {
+      button?.click();
+    });
+    const started = sentOn(shortcuts.recording);
+    press(button, { code: "KeyK", key: "K", metaKey: true });
+    expect([started, sentOn(shortcuts.recording)]).toStrictEqual([
+      [{ recording: true }],
+      [{ recording: true }, { recording: false }],
     ]);
   });
 
