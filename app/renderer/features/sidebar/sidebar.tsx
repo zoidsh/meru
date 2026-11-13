@@ -9,10 +9,10 @@ import {
 import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import { panes } from "../../../core/engines/layout.ts";
 import { orderedTabs, rowTabs } from "../../../core/engines/ordering.ts";
 import type { TabRow } from "../../../core/engines/ordering.ts";
 import {
+  activeTabId,
   dropAction,
   showsGmailUnread,
   zoneAt,
@@ -22,7 +22,6 @@ import type { Tab } from "../../../core/records/tab.ts";
 import { appById } from "../../../shared/apps.ts";
 import { commands } from "../../../shared/channels/commands.ts";
 import { tabs as tabChannels } from "../../../shared/channels/profiles.ts";
-import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../chrome-context.tsx";
 import { Button } from "../../ui/button.tsx";
@@ -135,22 +134,6 @@ const TabRowButton = ({
   );
 };
 
-/** The tab whose pane has focus, which its row shows as the active one. */
-const activeTabId = (
-  snapshot: ProfilesSnapshot,
-  focusedPaneId: string | null
-): string | undefined => {
-  for (const group of snapshot.groups) {
-    const pane = panes(group.layout).find(
-      (found) => found.paneId === focusedPaneId
-    );
-    if (pane !== undefined) {
-      return pane.tabIds[0];
-    }
-  }
-  return undefined;
-};
-
 const findTarget = (
   rows: ReadonlyMap<string, Element>,
   draggedId: string,
@@ -225,16 +208,18 @@ export const Sidebar = ({
   const profile = snapshot.profiles.find(
     (found) => found.id === snapshot.selectedProfileId
   );
-  const active = activeTabId(snapshot, stageSnapshot?.focusedPaneId ?? null);
+  const active = activeTabId(
+    snapshot.groups,
+    stageSnapshot?.focusedPaneId ?? null
+  );
   const gmailActive =
     active !== undefined &&
     snapshot.tabs.some((tab) => tab.id === active && tab.appId === "gmail");
   const gmail: GmailMark = {
     needsSignIn: profile?.status.kind === "needsSignIn",
-    unread:
-      unreadBadge && showsGmailUnread(gmailBadge, gmailActive)
-        ? (profile?.status.unreadCount ?? null)
-        : null,
+    unread: showsGmailUnread({ gmailActive, mode: gmailBadge, unreadBadge })
+      ? (profile?.status.unreadCount ?? null)
+      : null,
   };
   const register = (tabId: string, element: Element | null) => {
     if (element === null) {

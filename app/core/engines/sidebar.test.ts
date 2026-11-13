@@ -4,6 +4,7 @@ import type { Group } from "../records/group.ts";
 import type { Tab } from "../records/tab.ts";
 import { orderedTabs } from "./ordering.ts";
 import {
+  activeTabId,
   dropAction,
   showsGmailUnread,
   sidebarInset,
@@ -74,10 +75,58 @@ describe(showsGmailUnread, () => {
   it("shows the count always, never, or only while another tab is in front", () => {
     expect(
       (["always", "whenInactive", "never"] as const).flatMap((mode) => [
-        showsGmailUnread(mode, true),
-        showsGmailUnread(mode, false),
+        showsGmailUnread({ gmailActive: true, mode, unreadBadge: true }),
+        showsGmailUnread({ gmailActive: false, mode, unreadBadge: true }),
       ])
     ).toStrictEqual([true, true, false, true, false, false]);
+  });
+
+  it("shows no count while unread counts are off, whatever the mode", () => {
+    expect(
+      showsGmailUnread({
+        gmailActive: false,
+        mode: "always",
+        unreadBadge: false,
+      })
+    ).toBeFalsy();
+  });
+});
+
+describe(activeTabId, () => {
+  const groups: Group[] = [
+    {
+      id: "g1",
+      layout: { kind: "leaf", paneId: "p1", tabIds: ["mail"] },
+      profileId: "p",
+      tabIds: ["mail"],
+    },
+    {
+      id: "g2",
+      layout: {
+        first: { kind: "leaf", paneId: "p2", tabIds: ["calendar"] },
+        id: "s1",
+        kind: "split",
+        orientation: "vertical",
+        ratio: 0.5,
+        second: { kind: "leaf", paneId: "p3", tabIds: ["drive"] },
+      },
+      profileId: "p",
+      tabIds: ["calendar", "drive"],
+    },
+  ];
+
+  it("is the tab of the focused pane, in whichever group holds it", () => {
+    expect([
+      activeTabId(groups, "p1"),
+      activeTabId(groups, "p3"),
+    ]).toStrictEqual(["mail", "drive"]);
+  });
+
+  it("is none with no focused pane or one no group holds", () => {
+    expect([
+      activeTabId(groups, null),
+      activeTabId(groups, "gone"),
+    ]).toStrictEqual([undefined, undefined]);
   });
 });
 

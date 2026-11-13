@@ -3,10 +3,10 @@ import { LayoutGridIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 
-import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
+import { launcherApps, launcherSide } from "../../../core/engines/launcher.ts";
 import type { App } from "../../../core/records/app.ts";
 import type { Rect } from "../../../core/records/rect.ts";
-import { appById } from "../../../shared/apps.ts";
+import { apps } from "../../../shared/apps.ts";
 import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
 import { tabs } from "../../../shared/channels/profiles.ts";
 import { stage } from "../../../shared/channels/stage.ts";
@@ -75,20 +75,6 @@ export const LauncherButton = ({
   );
 };
 
-/** The apps of `appIds` the catalog knows, in that order, whose name holds `query`. */
-export const launcherApps = (
-  appIds: readonly string[],
-  query: string
-): App[] => {
-  const wanted = query.trim().toLocaleLowerCase();
-  return appIds.flatMap((id) => {
-    const app = appById(id);
-    return app !== undefined && app.name.toLocaleLowerCase().includes(wanted)
-      ? [app]
-      : [];
-  });
-};
-
 /** The launcher itself, on its own page over the panes, beside the button it was opened from. */
 export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
   const client = useClient();
@@ -98,7 +84,7 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const input = useRef<HTMLInputElement>(null);
-  const shown = launcherApps(appIds, query);
+  const shown = launcherApps(apps, appIds, query);
   const close = () => {
     client.send(launcher.close, {});
   };
@@ -145,7 +131,6 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
     }
   };
 
-  const fromSidebar = anchor.y >= TITLEBAR_HEIGHT;
   return (
     <Popover
       onOpenChange={(isOpen) => {
@@ -164,7 +149,7 @@ export const Launcher = ({ anchor }: { readonly anchor: Rect }) => {
         className="w-64 gap-1 p-1"
         data-launcher=""
         initialFocus={input}
-        side={fromSidebar ? "right" : "bottom"}
+        side={launcherSide(anchor)}
       >
         <Input
           aria-label={msg`Search apps`}

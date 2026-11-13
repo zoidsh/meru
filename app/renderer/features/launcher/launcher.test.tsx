@@ -8,7 +8,7 @@ import {
   stageOf,
   tabOf,
 } from "../../testing.tsx";
-import { Launcher, LauncherButton, launcherApps } from "./launcher.tsx";
+import { Launcher, LauncherButton } from "./launcher.tsx";
 
 const mounted: (() => void)[] = [];
 
@@ -73,16 +73,6 @@ const mount = (appIds?: readonly string[]) => {
   mounted.push(page.unmount);
   return page;
 };
-
-describe(launcherApps, () => {
-  it("lists the apps it is given in their order, by a name holding the query, and skips an id the catalog lacks", () => {
-    expect(
-      launcherApps(["drive", "nope", "docs", "calendar"], " D").map(
-        (app) => app.id
-      )
-    ).toStrictEqual(["drive", "docs", "calendar"]);
-  });
-});
 
 describe(Launcher, () => {
   afterEach(() => {

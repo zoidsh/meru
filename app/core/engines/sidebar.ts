@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+import type { Group } from "../records/group.ts";
 import type { Tab } from "../records/tab.ts";
+import { panes } from "./layout.ts";
 import { rowTabs } from "./ordering.ts";
 import type { TabRow } from "./ordering.ts";
 
@@ -22,7 +24,7 @@ export const sidebarSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("hidden") }),
   z.object({
     kind: z.literal("shown"),
-    size: z.enum(["narrow", "wide"]),
+    size: sidebarWidthSchema.exclude(["auto"]),
     width: z.number().int().positive(),
   }),
 ]);
@@ -66,11 +68,42 @@ export const sidebarOf = (
 export const sidebarInset = (sidebar: Sidebar): number =>
   sidebar.kind === "shown" ? sidebar.width : 0;
 
-/** Whether the Gmail row shows its unread count: `whenInactive` leaves it to the inbox while Gmail is in front. */
-export const showsGmailUnread = (
-  mode: "always" | "whenInactive" | "never",
-  gmailActive: boolean
-): boolean => mode === "always" || (mode === "whenInactive" && !gmailActive);
+export const gmailUnreadBadgeSchema = z.enum([
+  "always",
+  "whenInactive",
+  "never",
+]);
+
+/** When the Gmail row shows the profile's unread count. */
+export type GmailUnreadBadge = z.infer<typeof gmailUnreadBadgeSchema>;
+
+/** Whether the Gmail row shows its unread count: never while unread counts are off, and under `whenInactive` not while Gmail is in front, where the inbox shows it. */
+export const showsGmailUnread = (options: {
+  /** `profiles.unreadBadge`, which turns every unread count off. */
+  readonly unreadBadge: boolean;
+  /** `sidebar.gmailUnreadBadge`. */
+  readonly mode: GmailUnreadBadge;
+  readonly gmailActive: boolean;
+}): boolean =>
+  options.unreadBadge &&
+  (options.mode === "always" ||
+    (options.mode === "whenInactive" && !options.gmailActive));
+
+/** The tab whose pane has focus, which its row shows as the active one. */
+export const activeTabId = (
+  groups: readonly Group[],
+  focusedPaneId: string | null
+): string | undefined => {
+  for (const group of groups) {
+    const pane = panes(group.layout).find(
+      (found) => found.paneId === focusedPaneId
+    );
+    if (pane !== undefined) {
+      return pane.tabIds[0];
+    }
+  }
+  return undefined;
+};
 
 /** Where on a row a dragged tab is let go: its top or bottom quarter puts it between rows, the rest beside the row's pane. */
 export type DropZone = "before" | "onto" | "after";

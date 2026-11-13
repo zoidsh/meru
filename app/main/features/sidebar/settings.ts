@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { sidebarWidthSchema } from "../../../core/engines/sidebar.ts";
+import {
+  gmailUnreadBadgeSchema,
+  sidebarWidthSchema,
+} from "../../../core/engines/sidebar.ts";
 import { msg } from "../../../shared/msg.ts";
 import { defineSetting } from "../../../shared/settings/define.ts";
 
@@ -30,7 +33,7 @@ export const sidebarSettings = [
     label: msg`Show Gmail unread badge`,
     page: "sidebar",
     restart: false,
-    schema: z.enum(["always", "whenInactive", "never"]),
+    schema: gmailUnreadBadgeSchema,
     scope: "global",
     tier: "free",
   }),
