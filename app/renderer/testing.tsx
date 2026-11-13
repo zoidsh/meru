@@ -1,0 +1,124 @@
+import { act } from "react";
+import type { ReactNode } from "react";
+import { createRoot } from "react-dom/client";
+
+import type { Group } from "../core/records/group.ts";
+import type { LayoutNode } from "../core/records/layout.ts";
+import type { Tab } from "../core/records/tab.ts";
+import type { ProfilesSnapshot } from "../shared/channels/profiles.ts";
+import type { StageSnapshot } from "../shared/channels/stage.ts";
+import { rendererSurface } from "../shared/channels/surfaces.ts";
+import { FakeBridge } from "../test/fakes/bridge.ts";
+import { ChromeProvider, createChrome } from "./chrome-context.tsx";
+import { createClient } from "./client.ts";
+
+Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true);
+
+type ShownProfile = ProfilesSnapshot["profiles"][number];
+
+export const profileOf = (
+  id: string,
+  more: Partial<ShownProfile> = {}
+): ShownProfile => ({
+  color: "#0090ff",
+  deactivated: false,
+  id,
+  label: id,
+  order: 0,
+  status: { kind: "ok" },
+  ...more,
+});
+
+export const tabOf = (
+  id: string,
+  appId: string,
+  profileId = "personal"
+): Tab => ({
+  appId,
+  health: "ok",
+  id,
+  pinned: false,
+  profileId,
+  sleeping: false,
+  title: `${appId} ${id}`,
+  url: "https://example.com/",
+  zoom: 1,
+});
+
+/** A group of the tabs, side by side in that order. */
+export const groupOf = (
+  id: string,
+  tabIds: readonly string[],
+  profileId = "personal"
+): Group => {
+  let layout: LayoutNode | null = null;
+  for (const [index, tabId] of tabIds.entries()) {
+    const leaf: LayoutNode = {
+      kind: "leaf",
+      paneId: `pane-${tabId}`,
+      tabIds: [tabId],
+    };
+    layout =
+      layout === null
+        ? leaf
+        : {
+            first: layout,
+            id: `${id}-split-${index}`,
+            kind: "split",
+            orientation: "vertical",
+            ratio: 0.5,
+            second: leaf,
+          };
+  }
+  return { id, layout, profileId, tabIds: [...tabIds] };
+};
+
+export const stageOf = (more: Partial<StageSnapshot> = {}): StageSnapshot => ({
+  dividers: [],
+  focusedPaneId: null,
+  navigation: null,
+  panes: [],
+  style: "modern",
+  ...more,
+});
+
+/** What main answers the page's snapshots with, by channel name. */
+export type Answers = Readonly<Record<string, unknown>>;
+
+/** Renders under a ChromeProvider whose client talks to a fake bridge seeded with `answers`. */
+export const mountChrome = (
+  node: ReactNode,
+  answers: Answers,
+  platform = "darwin"
+) => {
+  const bridge = new FakeBridge(platform);
+  for (const [channel, value] of Object.entries(answers)) {
+    bridge.answers.set(channel, { ok: true, value });
+  }
+  const chrome = createChrome(createClient({ meru: bridge }, rendererSurface));
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  act(() => {
+    root.render(<ChromeProvider chrome={chrome}>{node}</ChromeProvider>);
+  });
+  return {
+    bridge,
+    container,
+    push: (channel: string, payload: unknown) => {
+      act(() => {
+        bridge.emit(channel, payload);
+      });
+    },
+    sentOn: (channel: string) =>
+      bridge.sent
+        .filter((sent) => sent.channel === channel)
+        .map((sent) => sent.payload),
+    unmount: () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    },
+  };
+};

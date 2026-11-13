@@ -2,10 +2,7 @@ import type { CSSProperties, PointerEvent } from "react";
 
 import { stage } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import type { RendererSurface } from "../../../shared/channels/surfaces.ts";
-import type { Client } from "../../client.ts";
-import type { Store } from "../../store.ts";
-import { useStore } from "../../store.ts";
+import { useClient, useStage } from "../../chrome-context.tsx";
 
 type Divider = StageSnapshot["dividers"][number];
 
@@ -33,14 +30,9 @@ const line = ({ orientation }: Divider): CSSProperties =>
     ? { height: "100%", left: HIT / 2 - 0.5, width: 1 }
     : { height: 1, top: HIT / 2 - 0.5, width: "100%" };
 
-export const Dividers = ({
-  client,
-  store,
-}: {
-  readonly client: Client<RendererSurface>;
-  readonly store: Store<StageSnapshot | undefined>;
-}) => {
-  const dividers = useStore(store, (snapshot) => snapshot?.dividers);
+export const Dividers = () => {
+  const client = useClient();
+  const dividers = useStage()?.dividers;
 
   // The page keeps getting the pointer over a pane while the button is held on macOS and Linux, so it reports moves and the release alongside the overlay and main takes whichever arrives. They are followed on the window as well as captured, because on Linux the capture did not hold once the overlay appeared.
   const begin = (splitId: string) => (event: PointerEvent<HTMLElement>) => {
