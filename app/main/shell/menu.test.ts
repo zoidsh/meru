@@ -18,7 +18,7 @@ import { Profiles } from "../features/profiles/index.ts";
 import { SettingsStore } from "../features/settings/index.ts";
 import { Stages } from "../features/stage/index.ts";
 import { Updater } from "../features/updater/index.ts";
-import type { MenuAction, MenuSection } from "../platform/menu.ts";
+import type { MenuAction, MenuEntry, MenuSection } from "../platform/menu.ts";
 import { CommandDispatcher } from "./commands.ts";
 import { IpcDispatcher } from "./ipc.ts";
 import { ShortcutKeys } from "./keys.ts";
@@ -171,6 +171,11 @@ const setup = async (platform = "darwin") => {
   };
 };
 
+const nameOf = (entry: MenuEntry) =>
+  entry.kind === "action"
+    ? entry.id
+    : `${entry.kind}${"role" in entry ? `:${entry.role}` : ""}`;
+
 const shortcuts = (actions: readonly MenuAction[]) =>
   actions.map(({ id, accelerator }) => [id, accelerator]);
 
@@ -279,38 +284,37 @@ describe(ApplicationMenu, () => {
     });
   });
 
-  it("ends the File menu with Quit where there is no app menu, and puts the update commands and Settings in Help", async () => {
-    const { sections } = await setup("linux");
-    const [first] = sections();
-    const help = sections().find(
-      (section) => section.kind === "submenu" && section.label === "Help"
-    );
-    expect(first?.kind === "submenu" && first.entries.at(-1)).toStrictEqual({
-      kind: "role",
-      role: "quit",
-    });
-    expect(
-      help?.kind === "submenu" && {
-        ids: entriesOf(help).map((entry) => entry.id),
-        label: help.label,
-      }
-    ).toStrictEqual({
-      ids: ["updater.check", "updater.install", "settings.open"],
-      label: "Help",
-    });
-  });
+  it.each(["linux", "win32"])(
+    "opens with the app-named menu on %s too, holding the update commands, Settings and Quit, and ends the File menu with Close and Minimize",
+    async (platform) => {
+      const { sections } = await setup(platform);
+      const [app, file] = sections();
+      expect([
+        app?.kind === "app" && app.entries.map(nameOf),
+        file?.kind === "submenu" && file.entries.map(nameOf),
+        sections().some(
+          (section) => section.kind === "submenu" && section.label === "Help"
+        ),
+      ]).toStrictEqual([
+        [
+          "role:about",
+          "separator",
+          "updater.check",
+          "updater.install",
+          "settings.open",
+          "separator",
+          "role:quit",
+        ],
+        ["launcher.open", "separator", "role:close", "role:minimize"],
+        false,
+      ]);
+    }
+  );
 
   it("puts the update commands and Settings in the app menu on macOS, between About and Services", async () => {
     const { sections } = await setup("darwin");
     const [app] = sections();
-    expect(
-      app?.kind === "roleSubmenu" &&
-        app.entries.map((entry) =>
-          entry.kind === "action"
-            ? entry.id
-            : `${entry.kind}${"role" in entry ? `:${entry.role}` : ""}`
-        )
-    ).toStrictEqual([
+    expect(app?.kind === "app" && app.entries.map(nameOf)).toStrictEqual([
       "role:about",
       "separator",
       "updater.check",

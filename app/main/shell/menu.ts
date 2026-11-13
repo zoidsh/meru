@@ -20,20 +20,15 @@ const EDIT_ROLES: readonly MenuEntry[] = [
   { kind: "role", role: "selectAll" },
 ];
 
-const APP_ROLES_BEFORE: readonly MenuEntry[] = [
-  { kind: "role", role: "about" },
-  { kind: "separator" },
-];
+const MINIMIZE: MenuEntry = { kind: "role", role: "minimize" };
 
-const APP_ROLES_AFTER: readonly MenuEntry[] = [
-  { kind: "separator" },
+const MAC_APP_ROLES: readonly MenuEntry[] = [
   { kind: "role", role: "services" },
   { kind: "separator" },
   { kind: "role", role: "hide" },
   { kind: "role", role: "hideOthers" },
   { kind: "role", role: "unhide" },
   { kind: "separator" },
-  { kind: "role", role: "quit" },
 ];
 
 export interface MenuOptions {
@@ -45,7 +40,7 @@ export interface MenuOptions {
   readonly run: (id: CommandId, windowId: number) => void;
 }
 
-/** The application menu: the platform's own menus, then each section's commands in order, with the resolved shortcuts. */
+/** The application menu: the app-named menu first on every platform, as 3.x has it, with macOS's own roles only there, then each section's commands in order, with the resolved shortcuts. */
 export const buildMenu = ({
   platform,
   commands,
@@ -79,18 +74,17 @@ export const buildMenu = ({
   const file = actions("file");
   const profiles = actions("profiles");
   const mac = platform === "darwin";
-  const first: MenuSection =
-    mac && app.length > 0
-      ? {
-          entries: [...APP_ROLES_BEFORE, ...app, ...APP_ROLES_AFTER],
-          kind: "roleSubmenu",
-          role: "appMenu",
-        }
-      : { kind: "role", role: mac ? "appMenu" : "fileMenu" };
-  const help: MenuSection[] =
-    mac || app.length === 0
-      ? []
-      : [{ entries: app, kind: "submenu", label: msg`Help` }];
+  const first: MenuSection = {
+    entries: [
+      { kind: "role", role: "about" },
+      { kind: "separator" },
+      ...app,
+      { kind: "separator" },
+      ...(mac ? MAC_APP_ROLES : []),
+      { kind: "role", role: "quit" },
+    ],
+    kind: "app",
+  };
   const fileMenu: MenuSection[] =
     file.length === 0
       ? []
@@ -99,7 +93,8 @@ export const buildMenu = ({
             entries: [
               ...file,
               { kind: "separator" },
-              { kind: "role", role: mac ? "close" : "quit" },
+              { kind: "role", role: "close" },
+              ...(mac ? [] : [MINIMIZE]),
             ],
             kind: "submenu",
             label: msg`File`,
@@ -115,7 +110,7 @@ export const buildMenu = ({
       ? []
       : [{ entries: profiles, kind: "submenu", label: msg`Profiles` }];
   return [
-    ...(mac || file.length === 0 ? [first] : []),
+    first,
     ...fileMenu,
     edit.length === 0
       ? { kind: "role", role: "editMenu" }
@@ -127,7 +122,6 @@ export const buildMenu = ({
     { entries: actions("view"), kind: "submenu", label: msg`View` },
     ...historyMenu,
     ...profilesMenu,
-    ...help,
   ];
 };
 

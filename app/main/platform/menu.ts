@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, Menu } from "electron";
 import type {
   BaseWindow,
   MenuItem,
@@ -33,6 +33,7 @@ export type MenuEntry =
         | "selectAll"
         | "about"
         | "close"
+        | "minimize"
         | "services"
         | "hide"
         | "hideOthers"
@@ -41,21 +42,14 @@ export type MenuEntry =
     };
 
 export type MenuSection =
-  | {
-      readonly kind: "role";
-      readonly role: "appMenu" | "fileMenu" | "editMenu";
-    }
+  | { readonly kind: "role"; readonly role: "editMenu" }
   | {
       readonly kind: "submenu";
       readonly label: string;
       readonly entries: readonly MenuEntry[];
     }
-  /** A menu Electron names and places itself, with these entries. */
-  | {
-      readonly kind: "roleSubmenu";
-      readonly role: "appMenu";
-      readonly entries: readonly MenuEntry[];
-    };
+  /** The menu named after the app, which macOS shows first in bold. */
+  | { readonly kind: "app"; readonly entries: readonly MenuEntry[] };
 
 // A click from the menu bar names the window it was for; one from MenuItem.click(), or with the app inactive, names none, so the focused or first window stands in.
 const windowIdOf = (window: BaseWindow | undefined): number | undefined => {
@@ -91,8 +85,8 @@ export const setApplicationMenu = (sections: readonly MenuSection[]): void => {
         if (section.kind === "role") {
           return { role: section.role };
         }
-        if (section.kind === "roleSubmenu") {
-          return { role: section.role, submenu: section.entries.map(entry) };
+        if (section.kind === "app") {
+          return { label: app.name, submenu: section.entries.map(entry) };
         }
         return { label: section.label, submenu: section.entries.map(entry) };
       })
