@@ -1,3 +1,4 @@
+import { isSingleInstance as singleInstanceApp } from "../core/records/app.ts";
 import type { App, AppIconName } from "../core/records/app.ts";
 
 // Google serves an app's files from a usercontent host named after it, and a link there belongs to the app as much as one to the app's own host.
@@ -71,5 +72,7 @@ export const appById = (id: string): App | undefined =>
   apps.find((app) => app.id === id);
 
 /** Whether the catalog keeps the app to one tab per profile. */
-export const isSingleInstance = (appId: string): boolean =>
-  appById(appId)?.singleInstance === true;
+export const isSingleInstance = (appId: string): boolean => {
+  const app = appById(appId);
+  return app !== undefined && singleInstanceApp(app);
+};

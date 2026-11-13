@@ -52,3 +52,6 @@ export const appSchema = z.object({
 });
 
 export type App = z.infer<typeof appSchema>;
+
+export const isSingleInstance = (app: App): boolean =>
+  app.singleInstance === true;

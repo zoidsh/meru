@@ -1,3 +1,4 @@
+import { isSingleInstance } from "../records/app.ts";
 import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
 import type { Tab } from "../records/tab.ts";
@@ -112,7 +113,7 @@ export const resolveLinkTarget = (
     .flatMap(rowTabs)
     .find((tab) => tab.appId === app.id);
   const background = disposition === "background";
-  if (app.singleInstance !== true) {
+  if (!isSingleInstance(app)) {
     const windowed =
       disposition === "window" ||
       settings.mode === "windows" ||
