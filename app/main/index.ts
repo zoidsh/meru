@@ -12,6 +12,7 @@ import { themePushes } from "../shared/channels/theme.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
+import { Links } from "./features/links/index.ts";
 import { Profiles } from "./features/profiles/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { Sidebars } from "./features/sidebar/index.ts";
@@ -191,7 +192,8 @@ const start = async () => {
   const stages = new Stages({
     blankPanes: e2e,
     commands,
-    shell: e2e ? externalLinks : ports.shell,
+    onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
+    onPopup: (url) => links.popup(url),
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
     overlayUrl,
@@ -205,6 +207,12 @@ const start = async () => {
     views: ports.views,
   });
   stages.start();
+  const links = new Links({
+    profiles,
+    settings,
+    shell: e2e ? externalLinks : ports.shell,
+    stages,
+  });
   new Launcher({
     commands,
     events,

@@ -1,21 +1,22 @@
 import { paneOfTab } from "../../../core/engines/layout.ts";
 import { resolveLinkTarget } from "../../../core/engines/links.ts";
-import type { LinkSettings } from "../../../core/engines/links.ts";
 import { groupOf } from "../../../core/engines/ordering.ts";
 import type { ShellPort } from "../../../core/ports.ts";
 import type { Placement } from "../../../core/records/layout.ts";
 import type { Disposition } from "../../../core/records/link.ts";
 import { apps } from "../../../shared/apps.ts";
 import type { Profiles } from "../profiles/index.ts";
+import type { SettingsStore } from "../settings/index.ts";
+import type { Stages } from "../stage/index.ts";
 
 const ACCOUNTS = "https://accounts.google.com/";
 
 export interface LinksOptions {
   readonly profiles: Pick<Profiles, "state" | "tab" | "openTab" | "focusTab">;
-  readonly settings: () => LinkSettings;
+  readonly settings: Pick<SettingsStore, "get">;
   readonly shell: ShellPort;
   /** Loads the address in the tab's view, wherever a stage keeps one. */
-  readonly load: (tabId: string, url: string) => void;
+  readonly stages: Pick<Stages, "load">;
 }
 
 /** Carries out where resolveLinkTarget sends a link a pane's page opens. */
@@ -29,7 +30,10 @@ export class Links {
   // A page navigating itself is left to it, so Google's sign-in and its redirects stay in the pane, and so is a window onto accounts.google.com, which signs in.
   /** Routes a link the tab's page opened; true when it was taken from the page. */
   open(tabId: string, url: string, disposition: Disposition): boolean {
-    const { profiles, shell, load } = this.#options;
+    const { profiles, shell, settings, stages } = this.#options;
+    const load = (id: string, address: string) => {
+      stages.load(id, address);
+    };
     const from = profiles.tab(tabId);
     if (
       from === undefined ||
@@ -44,7 +48,11 @@ export class Links {
       disposition,
       from,
       groups,
-      settings: this.#options.settings(),
+      settings: {
+        excludedApps: settings.get("links.excludedApps"),
+        mode: settings.get("links.mode"),
+        openInApp: settings.get("links.openInApp"),
+      },
       tabs,
     });
     if (target.action === "samePane") {

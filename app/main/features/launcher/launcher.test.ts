@@ -14,7 +14,6 @@ import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
-import { RecordingShell } from "../../shell/e2e.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { ShortcutKeys } from "../../shell/keys.ts";
 import { Profiles } from "../profiles/index.ts";
@@ -59,7 +58,8 @@ const setup = async () => {
   await profiles.open();
   const views = new FakeViewFactory();
   const stages = new Stages({
-    shell: new RecordingShell(),
+    onOpen: () => false,
+    onPopup: () => true,
     keys: new ShortcutKeys({
       commands: allCommands,
       dispatcher: commands,

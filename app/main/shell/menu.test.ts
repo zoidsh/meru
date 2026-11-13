@@ -20,7 +20,6 @@ import { Stages } from "../features/stage/index.ts";
 import { Updater } from "../features/updater/index.ts";
 import type { MenuAction, MenuSection } from "../platform/menu.ts";
 import { CommandDispatcher } from "./commands.ts";
-import { RecordingShell } from "./e2e.ts";
 import { IpcDispatcher } from "./ipc.ts";
 import { ShortcutKeys } from "./keys.ts";
 import { ApplicationMenu, buildMenu } from "./menu.ts";
@@ -80,7 +79,8 @@ const setup = async (platform = "darwin") => {
   await profiles.open();
   profiles.start();
   const stages = new Stages({
-    shell: new RecordingShell(),
+    onOpen: () => false,
+    onPopup: () => true,
     keys: new ShortcutKeys({
       commands,
       dispatcher,
