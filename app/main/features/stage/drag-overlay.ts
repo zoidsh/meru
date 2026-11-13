@@ -148,7 +148,7 @@ export class DragOverlay {
       return err("unknownSplit");
     }
     this.retire();
-    const owned = this.#open(
+    const { owned } = this.#open(
       dividerPage(divider.orientation),
       this.#options.preload
     );
@@ -166,18 +166,30 @@ export class DragOverlay {
   /** Starts a tab's drag over the page at `url`, which draws the tab and where it would land, ending any drag already on. */
   beginTab(tabId: string, url: string): void {
     this.retire();
-    const owned = this.#open(url, this.#options.overlayPreload, [
+    const { loaded, owned } = this.#open(url, this.#options.overlayPreload, [
       surfaceArgument("tabDrag"),
     ]);
     this.#drag = { kind: "tab", owned, tabId };
     this.#options.onOverlay(owned.view.contentsId, overlays.tabDrag);
+    // Electron leaves the keyboard with the chrome page, where the row was pressed, when a view is added, so the drag's page takes it for its Escape to reach main; focused once loaded, as a view focused before its page exists hands the page no focus.
+    const focusLoaded = async () => {
+      if ((await loaded) && this.#drag?.owned === owned) {
+        owned.view.focus();
+      }
+    };
+    void focusLoaded();
+  }
+
+  /** What the drag is of, while one is on. */
+  get kind(): "divider" | "tab" | undefined {
+    return this.#drag?.kind;
   }
 
   #open(
     url: string,
     preload: string | undefined,
     args?: readonly string[]
-  ): OwnedView {
+  ): { readonly owned: OwnedView; readonly loaded: Promise<boolean> } {
     const owned = this.#options.create({
       ...(args === undefined ? {} : { arguments: args }),
       background: TRANSPARENT,
@@ -185,7 +197,9 @@ export class DragOverlay {
       radius: 0,
       zoom: 1,
     });
-    void loadOwned(owned.view, url, this.#options.onError);
-    return owned;
+    return {
+      loaded: loadOwned(owned.view, url, this.#options.onError),
+      owned,
+    };
   }
 }

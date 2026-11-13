@@ -1,5 +1,5 @@
 import { isEqual } from "es-toolkit";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
@@ -965,6 +965,34 @@ describe("a sidebar row dragged over the panes", () => {
         radius: 0,
         zoom: 1,
       },
+    });
+  });
+
+  it("takes the keyboard once its page has loaded, and gives it back to the focused pane when the drag ends or is cancelled", async () => {
+    const { calendar, id, overlay, stages, views } = await draggingTab();
+    const focusedPane = () =>
+      views.created.find(
+        (view) => view !== overlay && view.focused && !view.destroyed
+      );
+    await vi.waitFor(() => {
+      expect(overlay?.focused).toBeTruthy();
+    });
+    const taken = overlay?.focused;
+    for (const view of views.created) {
+      view.focused = false;
+    }
+    stages.cancelDrag(id);
+    const afterCancel = focusedPane() !== undefined;
+    for (const view of views.created) {
+      view.focused = false;
+    }
+    stages.beginDrag(id, { kind: "tab", tabId: calendar.id });
+    stages.endDrag(id, { x: -1, y: -1 });
+    const afterEnd = focusedPane() !== undefined;
+    expect({ afterCancel, afterEnd, taken }).toStrictEqual({
+      afterCancel: true,
+      afterEnd: true,
+      taken: true,
     });
   });
 

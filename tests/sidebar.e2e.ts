@@ -173,6 +173,51 @@ test("joins a row dragged out of the sidebar beside the pane it is let go on, ma
   }
 });
 
+test("cancels a row's drag over the panes on Escape, which reaches the drag's page, and drops nothing on release", async () => {
+  const { app, chrome, close } = await launch();
+  try {
+    await openApp(app, chrome, "Calendar");
+    await expect(rowsOf(chrome)).toHaveCount(2);
+    const { panes } = await stageOf(chrome);
+    const [pane] = panes;
+    const source = await rowsOf(chrome).nth(1).boundingBox();
+    if (pane === undefined || source === null) {
+      throw new Error("Neither a pane nor a row is drawn");
+    }
+    await chrome.mouse.move(
+      source.x + source.width / 2,
+      source.y + source.height / 2
+    );
+    await chrome.mouse.down();
+    await chrome.mouse.move(
+      pane.rect.x + pane.rect.width * 0.1,
+      pane.rect.y + pane.rect.height / 2,
+      { steps: 12 }
+    );
+    await expect.poll(() => app.windows().some(isTabDrag)).toBeTruthy();
+    await app.windows().find(isTabDrag)?.locator("body").waitFor();
+    // The stage gives the drag's page the keyboard, so the key goes to it as a keystroke would.
+    await app.evaluate(({ webContents }) => {
+      const page = webContents
+        .getAllWebContents()
+        .find((found) => found.getURL().includes("kind=tabDrag"));
+      page?.sendInputEvent({ keyCode: "Escape", type: "keyDown" });
+      page?.sendInputEvent({ keyCode: "Escape", type: "keyUp" });
+    });
+    await expect.poll(() => app.windows().some(isTabDrag)).toBeFalsy();
+    await expect(
+      chrome.locator("[data-dnd-dragging], [data-dnd-dropping]")
+    ).toHaveCount(0);
+    await chrome.mouse.up();
+    await expect.poll(async () => await viewsOf(app)).toHaveLength(1);
+    await expect(
+      chrome.locator("nav[data-sidebar] [data-group-id]")
+    ).toHaveCount(0);
+  } finally {
+    await close();
+  }
+});
+
 test("shows a row of three profiles under a trial, and the menu's second profile item selects the second", async () => {
   const stub = await startStub();
   try {

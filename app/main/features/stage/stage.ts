@@ -410,17 +410,25 @@ export class Stage {
 
   /** Takes the drag's overlay down, the group keeping what it had. */
   cancelDrag(): Result<undefined, StageError> {
+    const tab = this.#drag.kind === "tab";
     this.#drag.retire();
     this.refresh();
     this.#reconcile();
     this.#arrange(false);
+    if (tab) {
+      this.#focusedView()?.focus();
+    }
     return ok(undefined);
   }
 
   endDrag(point: Point): Result<undefined, StageError> {
+    const tab = this.#drag.kind === "tab";
     const ended = this.#drag.end(point);
     this.refresh();
     this.#reconcile();
+    if (tab) {
+      this.#focusedView()?.focus();
+    }
     return ended;
   }
 

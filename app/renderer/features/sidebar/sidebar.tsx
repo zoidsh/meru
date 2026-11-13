@@ -58,7 +58,7 @@ const moveFocus = (event: KeyboardEvent<HTMLElement>) => {
   tabs[step(index, tabs.length)]?.focus();
 };
 
-// The drag's page over the panes has the keyboard once it holds the pointer, so an Escape there ends the drag in main, and dnd-kit here has to be told.
+// The stage gives the drag's page over the panes the keyboard, so an Escape there ends the drag in main, and dnd-kit here has to be told.
 const EndOnCancel = () => {
   const client = useClient();
   const manager = useDragDropManager();
