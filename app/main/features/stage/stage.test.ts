@@ -163,12 +163,24 @@ describe("the stage snapshot's comparison", () => {
       dividers: [],
       focusedPaneId: "p1",
       navigation: null,
-      panes: [{ paneId: "p1", rect: { height: 10, width: 10, x: 0, y: 0 } }],
+      panes: [
+        {
+          paneId: "p1",
+          rect: { height: 10, width: 10, x: 0, y: 0 },
+          tabId: "t1",
+        },
+      ],
       style: "modern",
     };
     const reordered: StageSnapshot = {
       style: "modern",
-      panes: [{ rect: { y: 0, x: 0, width: 10, height: 10 }, paneId: "p1" }],
+      panes: [
+        {
+          tabId: "t1",
+          rect: { y: 0, x: 0, width: 10, height: 10 },
+          paneId: "p1",
+        },
+      ],
       focusedPaneId: "p1",
       navigation: null,
       dividers: [],
@@ -182,7 +194,8 @@ describe("the stage snapshot's comparison", () => {
 
 describe(Stages, () => {
   it("shows the group's one pane over the content area, inset, in the profile's session", async () => {
-    const { window, views, changes, paneIds, profileId } = await setup();
+    const { window, views, changes, paneIds, profileId, profiles } =
+      await setup();
     const [view] = views.created;
 
     expect(window.childViews()).toStrictEqual([view]);
@@ -200,7 +213,11 @@ describe(Stages, () => {
       y: 8,
     });
     expect(changes().at(-1)?.panes).toStrictEqual([
-      { paneId: paneIds()[0], rect: { height: 784, width: 1184, x: 8, y: 8 } },
+      {
+        paneId: paneIds()[0],
+        rect: { height: 784, width: 1184, x: 8, y: 8 },
+        tabId: profiles.state.tabs[0]?.id,
+      },
     ]);
   });
 

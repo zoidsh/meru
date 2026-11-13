@@ -25,7 +25,9 @@ export const stageSnapshotSchema = z.object({
   focusedPaneId: idSchema.nullable(),
   /** The focused pane's history, which the titlebar's back, forward and reload follow; null with no pane. */
   navigation: navigationSchema.nullable(),
-  panes: z.array(z.object({ paneId: idSchema, rect: rectSchema })),
+  panes: z.array(
+    z.object({ paneId: idSchema, rect: rectSchema, tabId: idSchema })
+  ),
   style: styleSchema,
 });
 

@@ -377,10 +377,10 @@ export class Stage {
       dividers: [...arrangement.dividers],
       focusedPaneId: this.#focusedPane() ?? null,
       navigation: this.#focusedView()?.navigation() ?? null,
-      panes: [...arrangement.panes].map(([paneId, rect]) => ({
-        paneId,
-        rect,
-      })),
+      panes: [...arrangement.panes].flatMap(([paneId, rect]) => {
+        const tabId = tabOfPane(this.#layout(), paneId);
+        return tabId === undefined ? [] : [{ paneId, rect, tabId }];
+      }),
       style: this.#options.style(),
     };
   }
