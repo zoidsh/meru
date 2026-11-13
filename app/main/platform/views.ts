@@ -1,5 +1,10 @@
-import { WebContentsView } from "electron";
-import type { HandlerDetails, View } from "electron";
+import { BrowserWindow, WebContentsView } from "electron";
+import type {
+  BrowserWindowConstructorOptions,
+  HandlerDetails,
+  View,
+  WebContents,
+} from "electron";
 
 import type {
   OpenListener,
@@ -51,12 +56,32 @@ const createView = (spec: ViewSpec): ViewPort => {
   const openers = new Set<OpenListener>();
   const taken = (url: string, disposition: Disposition) =>
     [...openers].some((listener) => listener(url, disposition));
+  const popupListeners = new Set<(url: string) => boolean>();
+  const showsPopup = (url: string) =>
+    popupListeners.size === 0 ||
+    [...popupListeners].some((listener) => listener(url));
+  // Google's sign-in opens a blank window and only then points it at accounts.google.com, so the window cannot be judged by its address when it opens; it waits hidden for its first navigation.
+  const openBlank = (options: BrowserWindowConstructorOptions): WebContents => {
+    const popup = new BrowserWindow({ ...options, show: false });
+    popup.webContents.once("will-navigate", (event) => {
+      if (showsPopup(event.url)) {
+        popup.show();
+      } else {
+        event.preventDefault();
+        popup.destroy();
+      }
+    });
+    return popup.webContents;
+  };
   // Electron keeps one window-open handler per web contents, so the view installs it once and fans each link out to its listeners.
-  contents.setWindowOpenHandler(({ url, disposition }) =>
-    taken(url, dispositionOf(disposition))
+  contents.setWindowOpenHandler(({ url, disposition }) => {
+    if (url === "about:blank") {
+      return { action: "allow", createWindow: openBlank };
+    }
+    return taken(url, dispositionOf(disposition))
       ? { action: "deny" }
-      : { action: "allow" }
-  );
+      : { action: "allow" };
+  });
   contents.on("will-navigate", (event) => {
     if (taken(event.url, "inPlace")) {
       event.preventDefault();
@@ -127,6 +152,12 @@ const createView = (spec: ViewSpec): ViewPort => {
       return () => {
         contents.off("enter-html-full-screen", entered);
         contents.off("leave-html-full-screen", left);
+      };
+    },
+    onPopup: (listener) => {
+      popupListeners.add(listener);
+      return () => {
+        popupListeners.delete(listener);
       };
     },
     onOpen: (listener) => {

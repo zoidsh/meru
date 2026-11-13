@@ -24,6 +24,9 @@ describe("the settings registry", () => {
     expectTypeOf<SettingKey>().toEqualTypeOf<
       | "appearance.style"
       | "launcher.apps"
+      | "links.excludedApps"
+      | "links.mode"
+      | "links.openInApp"
       | "profiles.unreadBadge"
       | "shortcuts.bindings"
       | "sidebar.gmailUnreadBadge"

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { ShellPort } from "../../core/ports.ts";
 import { rectSchema } from "../../core/records/rect.ts";
 import { commandIdSchema } from "../../shared/commands/registry.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
@@ -9,6 +10,8 @@ import type { Stages } from "../features/stage/index.ts";
 export const E2E_GLOBAL = "meruE2e";
 
 export const e2eSnapshotSchema = z.object({
+  /** Every address a link sent to the browser, in order. */
+  external: z.array(z.string()),
   /** The accelerator of each command in the application menu. */
   menu: z.partialRecord(commandIdSchema, z.string().nullable()),
   /** Bounds Electron reports for each child view of the first window, bottom first. */
@@ -21,14 +24,25 @@ export const e2eSnapshotSchema = z.object({
 
 export type E2eSnapshot = z.infer<typeof e2eSnapshotSchema>;
 
-/** Leaves, as a JSON string under `E2E_GLOBAL`, what Electron holds for the first window's stage and the menu. */
+/** The shell of a run under MERU_E2E: it keeps each address it was asked to open in the browser and opens none. */
+export class RecordingShell implements ShellPort {
+  readonly opened: string[] = [];
+
+  readonly openExternal = (url: string) => {
+    this.opened.push(url);
+  };
+}
+
+/** Leaves, as a JSON string under `E2E_GLOBAL`, what Electron holds for the first window's stage and the menu, and the links sent to the browser. */
 export const exposeE2e = (options: {
   readonly stages: Pick<Stages, "all">;
   readonly accelerators: () => Partial<Record<CommandId, string | null>>;
+  readonly external: RecordingShell;
 }): void => {
   const snapshot = (): E2eSnapshot => {
     const [stage] = options.stages.all;
     return {
+      external: [...options.external.opened],
       menu: options.accelerators(),
       panes:
         stage?.panes().map(({ tab, view }) => ({

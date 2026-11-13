@@ -17,6 +17,8 @@ export interface TabViewsOptions {
   readonly radius: () => number;
   readonly onFocus: (tabId: string) => void;
   readonly onNavigation: (tabId: string) => void;
+  /** A blank popup the tab's page opened navigated to `url`; true shows it. */
+  readonly onPopup: (url: string) => boolean;
   /** The tab's page asked for fullscreen, with true, or left it. */
   readonly onFullscreen: (tabId: string, entered: boolean) => void;
   /** A link the tab's page opens; true takes it from the page. */
@@ -94,6 +96,7 @@ export class TabViews {
         onFocus(tabId);
       }),
       view.onOpen((url, disposition) => onOpen(tabId, url, disposition)),
+      view.onPopup(this.#options.onPopup),
       view.onFullscreen((entered) => {
         onFullscreen(tabId, entered);
       }),

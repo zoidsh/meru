@@ -11,6 +11,7 @@ import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
+import { FakeShell } from "../../../test/fakes/shell.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
@@ -58,7 +59,7 @@ const setup = async () => {
   await profiles.open();
   const views = new FakeViewFactory();
   const stages = new Stages({
-    onOpen: () => false,
+    shell: new FakeShell(),
     keys: new ShortcutKeys({
       commands: allCommands,
       dispatcher: commands,

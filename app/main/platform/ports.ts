@@ -8,6 +8,7 @@ import {
   powerMonitor,
   screen,
   session,
+  shell,
 } from "electron";
 
 import type {
@@ -193,6 +194,18 @@ export const createElectronPorts = (): Ports => ({
       const found = session.fromPartition(partition);
       await found.clearStorageData();
       await found.clearCache();
+    },
+  },
+  shell: {
+    openExternal: (url) => {
+      const open = async () => {
+        try {
+          await shell.openExternal(url);
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      void open();
     },
   },
   theme: {

@@ -29,7 +29,7 @@ import {
 import { createElectronUpdater } from "./platform/updater.ts";
 import { placeUserData } from "./platform/user-data.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
-import { exposeE2e } from "./shell/e2e.ts";
+import { exposeE2e, RecordingShell } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
 import { ShortcutKeys } from "./shell/keys.ts";
 import { exposeMeasure } from "./shell/measure.ts";
@@ -175,11 +175,12 @@ const start = async () => {
     settings,
   });
   sidebars.start();
+  // The end-to-end suite asserts on the links that would leave for the browser and never opens one.
+  const externalLinks = new RecordingShell();
   const stages = new Stages({
     blankPanes: e2e,
     commands,
-    // Nothing routes a link a pane opens yet, so each goes on as Chromium would take it.
-    onOpen: () => false,
+    shell: e2e ? externalLinks : ports.shell,
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
     events,
@@ -232,7 +233,11 @@ const start = async () => {
     exposeMeasure({ stages });
   }
   if (e2e) {
-    exposeE2e({ accelerators: applicationAccelerators, stages });
+    exposeE2e({
+      accelerators: applicationAccelerators,
+      external: externalLinks,
+      stages,
+    });
   }
 
   const window = new MainWindow({

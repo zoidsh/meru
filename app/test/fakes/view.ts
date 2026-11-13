@@ -94,6 +94,20 @@ export class FakeView implements ViewPort {
   ): boolean =>
     [...this.#openListeners].some((listener) => listener(url, disposition));
 
+  readonly #popupListeners = new Set<(url: string) => boolean>();
+
+  readonly onPopup = (listener: (url: string) => boolean): Unsubscribe => {
+    this.#popupListeners.add(listener);
+    return () => {
+      this.#popupListeners.delete(listener);
+    };
+  };
+
+  /** Opens a blank popup and points it at `url`, as Google's sign-in does: true when the popup would show. */
+  readonly popup = (url: string): boolean =>
+    this.#popupListeners.size === 0 ||
+    [...this.#popupListeners].some((listener) => listener(url));
+
   readonly #fullscreenListeners = new Set<(entered: boolean) => void>();
 
   readonly onFullscreen = (

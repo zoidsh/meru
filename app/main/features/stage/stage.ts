@@ -41,6 +41,7 @@ import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { DragOverlay } from "./drag-overlay.ts";
 import { Overlay } from "./overlay.ts";
+import { loadOwned } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 import { TabViews } from "./tab-views.ts";
 
@@ -56,6 +57,7 @@ export type StageError =
 /** What a stage reads its group and tabs from, and changes them through. */
 export type StageProfiles = Pick<
   Profiles,
+  | "state"
   | "group"
   | "tab"
   | "addTab"
@@ -92,6 +94,8 @@ export interface StageOptions {
     url: string,
     disposition: Disposition
   ) => boolean;
+  /** A blank popup a pane's page opened navigated to `url`; true shows it. */
+  readonly onPopup: (url: string) => boolean;
   /** An overlay's page came, on the surface its channels are allowed from, or went, with null. */
   readonly onOverlay: (contentsId: number, surface: Surface | null) => void;
   readonly onError: (error: unknown) => void;
@@ -133,6 +137,7 @@ export class Stage {
         }
       },
       onOpen: options.onOpen,
+      onPopup: options.onPopup,
       radius: () => STYLE_METRICS[options.style()].radius,
       sourceOf: (tab) => ({
         url: options.urlOf(tab),
@@ -347,6 +352,16 @@ export class Stage {
     }
     view.navigate(action);
     return ok(undefined);
+  }
+
+  /** Loads the address in the tab's view, if the stage keeps one; false when it does not. */
+  load(tabId: string, url: string): boolean {
+    const view = this.#views.view(tabId);
+    if (view === undefined) {
+      return false;
+    }
+    void loadOwned(view, url, this.#options.onError);
+    return true;
   }
 
   /** Focuses the pane showing the tab, if the stage shows it. */

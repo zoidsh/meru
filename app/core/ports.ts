@@ -60,6 +60,8 @@ export interface ViewPort {
   readonly onNavigation: (listener: () => void) => Unsubscribe;
   /** Calls `listener` for each link the page opens; one nobody takes goes on as Chromium would take it. */
   readonly onOpen: (listener: OpenListener) => Unsubscribe;
+  /** Calls `listener` with the first address a blank popup the page opened navigates to, as Google's sign-in does with `window.open("about:blank")`; the popup shows when a listener answers true, or when there is none, and closes otherwise. */
+  readonly onPopup: (listener: (url: string) => boolean) => Unsubscribe;
   /** Calls `listener` with true when the page asks for fullscreen, such as a video's fullscreen button, and with false when it leaves it. */
   readonly onFullscreen: (listener: (entered: boolean) => void) => Unsubscribe;
   readonly setBorderRadius: (radius: number) => void;
@@ -208,6 +210,12 @@ export interface ThemePort {
 export const themeOf = (port: ThemePort): Theme =>
   port.dark() ? "dark" : "light";
 
+/** The operating system's handlers for what the app does not open itself. */
+export interface ShellPort {
+  /** Opens the address in the default browser. */
+  readonly openExternal: (url: string) => void;
+}
+
 /** The browser sessions panes load in, one partition per profile. */
 export interface SessionPort {
   /** Deletes everything the partition stored: cookies, storage and cache. */
@@ -224,6 +232,7 @@ export interface Ports {
   readonly online: OnlinePort;
   readonly power: PowerPort;
   readonly sessions: SessionPort;
+  readonly shell: ShellPort;
   readonly theme: ThemePort;
   readonly views: ViewFactoryPort;
   readonly windows: WindowFactoryPort;

@@ -2,13 +2,13 @@ import { DisposableStore } from "../../../core/disposable.ts";
 import type { ChromeInsets } from "../../../core/engines/chrome.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type {
+  ShellPort,
   Unsubscribe,
   ViewFactoryPort,
   ViewPort,
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
-import type { Disposition } from "../../../core/records/link.ts";
 import type { NavigationAction } from "../../../core/records/navigation.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -24,6 +24,7 @@ import type {
 } from "../../../shared/commands/define.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import { stageCommands } from "./commands.ts";
+import { Links } from "./links.ts";
 import { Stage } from "./stage.ts";
 import type { StageError, StageProfiles } from "./stage.ts";
 
@@ -47,12 +48,8 @@ export interface StagesOptions {
   readonly insets: () => ChromeInsets;
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
-  /** A link a pane's page opens, in the tab `tabId`; true takes it from the page. */
-  readonly onOpen: (
-    tabId: string,
-    url: string,
-    disposition: Disposition
-  ) => boolean;
+  /** Where a link to anything but a Google app goes. */
+  readonly shell: ShellPort;
   readonly onError: (error: unknown) => void;
 }
 
@@ -66,9 +63,25 @@ export class Stages {
   readonly #disposables = new DisposableStore();
   readonly #bySender = new Map<number, Stage>();
   readonly #unassign = new Map<number, Unsubscribe>();
+  readonly #links: Links;
 
   constructor(options: StagesOptions) {
     this.#options = options;
+    const { settings } = options;
+    this.#links = new Links({
+      load: (tabId, url) => {
+        for (const found of this.all) {
+          found.load(tabId, url);
+        }
+      },
+      profiles: options.profiles,
+      settings: () => ({
+        excludedApps: settings.get("links.excludedApps"),
+        mode: settings.get("links.mode"),
+        openInApp: settings.get("links.openInApp"),
+      }),
+      shell: options.shell,
+    });
   }
 
   start(): void {
@@ -171,7 +184,9 @@ export class Stages {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
       },
       onError: this.#options.onError,
-      onOpen: this.#options.onOpen,
+      onOpen: (tabId, url, disposition) =>
+        this.#links.open(tabId, url, disposition),
+      onPopup: (url) => this.#links.popup(url),
       onOverlay: (contentsId, surface) => {
         if (surface === null) {
           this.#bySender.delete(contentsId);

@@ -1,0 +1,104 @@
+import { paneOfTab } from "../../../core/engines/layout.ts";
+import { resolveLinkTarget } from "../../../core/engines/links.ts";
+import type { LinkSettings } from "../../../core/engines/links.ts";
+import { groupOf } from "../../../core/engines/ordering.ts";
+import type { ShellPort } from "../../../core/ports.ts";
+import type { Placement } from "../../../core/records/layout.ts";
+import type { Disposition } from "../../../core/records/link.ts";
+import { apps } from "../../../shared/apps.ts";
+import type { Profiles } from "../profiles/index.ts";
+
+const ACCOUNTS = "https://accounts.google.com/";
+
+export interface LinksOptions {
+  readonly profiles: Pick<Profiles, "state" | "tab" | "openTab" | "focusTab">;
+  readonly settings: () => LinkSettings;
+  readonly shell: ShellPort;
+  /** Loads the address in the tab's view, wherever a stage keeps one. */
+  readonly load: (tabId: string, url: string) => void;
+}
+
+/** Carries out where resolveLinkTarget sends a link a pane's page opens. */
+export class Links {
+  readonly #options: LinksOptions;
+
+  constructor(options: LinksOptions) {
+    this.#options = options;
+  }
+
+  // A page navigating itself is left to it, so Google's sign-in and its redirects stay in the pane, and so is a window onto accounts.google.com, which signs in.
+  /** Routes a link the tab's page opened; true when it was taken from the page. */
+  open(tabId: string, url: string, disposition: Disposition): boolean {
+    const { profiles, shell, load } = this.#options;
+    const from = profiles.tab(tabId);
+    if (
+      from === undefined ||
+      disposition === "inPlace" ||
+      url.startsWith(ACCOUNTS)
+    ) {
+      return false;
+    }
+    const { groups, tabs } = profiles.state;
+    const target = resolveLinkTarget(url, {
+      catalog: apps,
+      disposition,
+      from,
+      groups,
+      settings: this.#options.settings(),
+      tabs,
+    });
+    if (target.action === "samePane") {
+      load(tabId, url);
+      return true;
+    }
+    if (target.action === "external") {
+      shell.openExternal(url);
+      return true;
+    }
+    const background = target.action === "newTab" && target.background;
+    const existing = target.action === "newTab" ? target.tabId : undefined;
+    if (existing !== undefined) {
+      load(existing, url);
+      if (!background) {
+        profiles.focusTab(existing);
+      }
+      return true;
+    }
+    const opened = profiles.openTab(
+      from.profileId,
+      target.appId,
+      background ? undefined : this.#beside(tabId),
+      url
+    );
+    if (!opened.ok) {
+      shell.openExternal(url);
+      return true;
+    }
+    if (opened.value.url !== url) {
+      load(opened.value.id, url);
+    }
+    if (!background) {
+      profiles.focusTab(opened.value.id);
+    }
+    return true;
+  }
+
+  /** Whether a blank popup the tab's page opened shows once it navigates to `url`: Google's sign-in does, and anything else goes to the browser. */
+  popup(url: string): boolean {
+    if (url.startsWith(ACCOUNTS)) {
+      return true;
+    }
+    this.#options.shell.openExternal(url);
+    return false;
+  }
+
+  /** Beside the tab's pane, in its group. */
+  #beside(tabId: string): Placement | undefined {
+    const group = groupOf(tabId, this.#options.profiles.state.groups);
+    const paneId =
+      group === undefined ? undefined : paneOfTab(group.layout, tabId);
+    return group === undefined || paneId === undefined
+      ? undefined
+      : { groupId: group.id, orientation: "vertical", paneId, side: "after" };
+  }
+}

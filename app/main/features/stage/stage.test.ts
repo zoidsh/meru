@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Beside } from "../../../core/records/layout.ts";
-import type { Disposition } from "../../../core/records/link.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
@@ -24,6 +23,7 @@ import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
+import { FakeShell } from "../../../test/fakes/shell.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import type { FakeView } from "../../../test/fakes/view.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
@@ -96,7 +96,7 @@ const setup = async (style: Style = "modern") => {
   });
   await profiles.open();
   const insets = { left: 0, top: 0 };
-  const opened: { tabId: string; url: string; disposition: Disposition }[] = [];
+  const shell = new FakeShell();
   const stages = new Stages({
     keys: new ShortcutKeys({
       commands: allCommands,
@@ -112,11 +112,8 @@ const setup = async (style: Style = "modern") => {
     events,
     insets: () => insets,
     onError,
-    onOpen: (tabId, url, disposition) => {
-      opened.push({ disposition, tabId, url });
-      return url.startsWith("https://calendar.google.com/");
-    },
     profiles,
+    shell,
     registrar,
     settings,
     views,
@@ -137,7 +134,7 @@ const setup = async (style: Style = "modern") => {
   return {
     call,
     changes,
-    opened,
+    shell,
     commands,
     errors,
     events,
@@ -424,24 +421,6 @@ describe(Stages, () => {
     ]);
   });
 
-  it("hands each link a pane opens to its listener with the pane's tab and the disposition, and leaves to Chromium what it does not take", async () => {
-    const { views, opened, profiles } = await setup();
-    const [gmail] = views.created;
-    expect([
-      gmail?.open("https://calendar.google.com/", "background"),
-      gmail?.open("https://example.com/"),
-    ]).toStrictEqual([true, false]);
-    const tabId = profiles.state.tabs[0]?.id;
-    expect(opened).toStrictEqual([
-      {
-        disposition: "background",
-        tabId,
-        url: "https://calendar.google.com/",
-      },
-      { disposition: "inPlace", tabId, url: "https://example.com/" },
-    ]);
-  });
-
   it("keeps the last pane", async () => {
     const { window, stages, id } = await setup();
     expect(stages.close(id)).toStrictEqual({ error: "lastPane", ok: false });
@@ -668,6 +647,120 @@ describe("the stage commands", () => {
         ok: false,
       }
     );
+  });
+});
+
+const CALENDAR = "https://calendar.google.com/calendar/r/week";
+
+const tabsOf = (profiles: Profiles, appId: string) =>
+  profiles.state.tabs.filter((tab) => tab.appId === appId);
+
+describe("a link a pane opens", () => {
+  it("leaves a page navigating itself and a window onto Google's sign-in to Chromium", async () => {
+    const { views, shell } = await setup();
+    const [gmail] = views.created;
+    expect([
+      gmail?.open("https://example.com/"),
+      gmail?.open(CALENDAR),
+      gmail?.open("https://accounts.google.com/signin", "default"),
+      shell.opened,
+    ]).toStrictEqual([false, false, false, []]);
+  });
+
+  it("loads a link to the pane's own app in the pane", async () => {
+    const { views, profiles } = await setup();
+    const [gmail] = views.created;
+    const url = "https://mail.google.com/mail/u/0/#inbox/abc";
+    expect(gmail?.open(url, "default")).toBeTruthy();
+    expect([gmail?.url, profiles.state.tabs]).toStrictEqual([
+      url,
+      [expect.objectContaining({ appId: "gmail" })],
+    ]);
+  });
+
+  it("sends anything but a Google app to the browser, and every app once Google apps open outside", async () => {
+    const { views, shell, settings, profiles } = await setup();
+    const [gmail] = views.created;
+    gmail?.open("https://example.com/", "default");
+    settings.set("links.excludedApps", ["calendar"]);
+    gmail?.open(CALENDAR, "default");
+    settings.set("links.excludedApps", []);
+    settings.set("links.openInApp", false);
+    gmail?.open(CALENDAR, "background");
+    expect([shell.opened, tabsOf(profiles, "calendar")]).toStrictEqual([
+      ["https://example.com/", CALENDAR, CALENDAR],
+      [],
+    ]);
+  });
+
+  it("opens another app's link in a new tab split beside the pane and focuses it", async () => {
+    const { views, profiles, changes } = await setup();
+    const [gmail] = views.created;
+    expect(gmail?.open(CALENDAR, "default")).toBeTruthy();
+    const [calendar] = tabsOf(profiles, "calendar");
+    const last = changes().at(-1);
+    expect({
+      focused: last?.panes.find((pane) => pane.paneId === last.focusedPaneId)
+        ?.tabId,
+      group: profiles.currentGroup()?.tabIds,
+      url: calendar?.url,
+      viewUrl: views.created[1]?.url,
+    }).toStrictEqual({
+      focused: calendar?.id,
+      group: [profiles.state.tabs[0]?.id, calendar?.id],
+      url: CALENDAR,
+      viewUrl: CALENDAR,
+    });
+  });
+
+  it("opens a background tab in a group of its own without showing it, and a window's link as a tab, there being no group windows yet", async () => {
+    const { views, profiles, window } = await setup();
+    const [gmail] = views.created;
+    gmail?.open(CALENDAR, "background");
+    const background = {
+      calendar: tabsOf(profiles, "calendar").length,
+      children: window.childViews().length,
+      group: profiles.currentGroup()?.tabIds.length,
+    };
+    gmail?.open("https://drive.google.com/drive/my-drive", "window");
+    expect([background, tabsOf(profiles, "drive").length]).toStrictEqual([
+      { calendar: 1, children: 1, group: 1 },
+      1,
+    ]);
+  });
+
+  it("brings the tab already showing the app to the front with the link, Gmail's one tab among them", async () => {
+    const { views, profiles } = await setup();
+    const [gmail] = views.created;
+    gmail?.open(CALENDAR, "default");
+    const [, calendarView] = views.created;
+    const later = "https://calendar.google.com/calendar/r/day";
+    calendarView?.open(
+      "https://mail.google.com/mail/u/0/#inbox/xyz",
+      "default"
+    );
+    gmail?.open(later, "default");
+    expect({
+      calendars: tabsOf(profiles, "calendar").length,
+      calendarUrl: calendarView?.url,
+      gmailUrl: gmail?.url,
+      views: views.created.length,
+    }).toStrictEqual({
+      calendarUrl: later,
+      calendars: 1,
+      gmailUrl: "https://mail.google.com/mail/u/0/#inbox/xyz",
+      views: 2,
+    });
+  });
+
+  it("shows a blank popup only once it heads for Google's sign-in, and sends anything else to the browser", async () => {
+    const { views, shell } = await setup();
+    const [gmail] = views.created;
+    expect([
+      gmail?.popup("https://accounts.google.com/o/oauth2/auth"),
+      gmail?.popup("https://example.com/"),
+      shell.opened,
+    ]).toStrictEqual([true, false, ["https://example.com/"]]);
   });
 });
 

@@ -5,7 +5,7 @@ import type { Rect } from "../app/core/records/rect.ts";
 import { tabs } from "../app/shared/channels/profiles.ts";
 import type { CommandId } from "../app/shared/commands/registry.ts";
 import { invokeIn, launch } from "../scripts/lib/app.ts";
-import { clickMenuItem, panesOf, stageOf, viewsOf } from "./app.ts";
+import { clickMenuItem, inspect, panesOf, stageOf, viewsOf } from "./app.ts";
 
 const SPLIT_VERTICAL: CommandId = "stage.splitVertical";
 const CLOSE_TAB: CommandId = "stage.closeTab";
@@ -118,6 +118,35 @@ test("keeps a tab's page through a split beside it, leaving the group and joinin
     await expect
       .poll(async () => await panesOf(app))
       .toStrictEqual([first, added]);
+  } finally {
+    await close();
+  }
+});
+
+test("sends a window a pane opens onto another site to the browser rather than opening a window", async () => {
+  const { app, close } = await launch();
+  try {
+    await expect.poll(async () => await panesOf(app)).toHaveLength(1);
+    const [pane] = await panesOf(app);
+    await app.evaluate(async ({ webContents }, contentsId) => {
+      await webContents
+        .fromId(contentsId)
+        ?.executeJavaScript(
+          'window.open("https://example.com/"); window.open("about:blank").location = "https://example.org/"; 1',
+          true
+        );
+    }, pane?.contentsId ?? -1);
+    await expect
+      .poll(async () => {
+        const { external } = await inspect(app);
+        return external;
+      })
+      .toStrictEqual(["https://example.com/", "https://example.org/"]);
+    expect(
+      await app.evaluate(
+        ({ BrowserWindow }) => BrowserWindow.getAllWindows().length
+      )
+    ).toBe(1);
   } finally {
     await close();
   }
