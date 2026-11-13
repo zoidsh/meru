@@ -26,12 +26,19 @@ test("splits, drags the divider across the panes, moves focus, and closes a tab"
     await expect.poll(async () => await viewsOf(app)).toHaveLength(1);
 
     await clickMenuItem(app, SPLIT_VERTICAL);
-    await expect.poll(async () => await viewsOf(app)).toHaveLength(2);
-    const split = await viewsOf(app);
+    // The views and the snapshot are two reads, and a window still settling after launch can lay out again between them, so they are read together until they agree.
+    let split: Rect[] = [];
+    await expect(async () => {
+      const [views, { panes }] = await Promise.all([
+        viewsOf(app),
+        stageOf(chrome),
+      ]);
+      expect(views).toHaveLength(2);
+      expect(views).toStrictEqual(panes.map((pane) => pane.rect));
+      split = views;
+    }).toPass({ timeout: 5000 });
     const [left, right] = split;
     expect(left && right && overlap(left, right)).toBe(0);
-    const { panes } = await stageOf(chrome);
-    expect(split).toStrictEqual(panes.map((pane) => pane.rect));
 
     const divider = chrome.locator(".divider");
     await expect(divider).toHaveCount(1);
@@ -60,9 +67,9 @@ test("splits, drags the divider across the panes, moves focus, and closes a tab"
         return moved === undefined ? 0 : moved.rect.x + moved.rect.width / 2;
       })
       .toBeCloseTo(x - 200, 0);
+    await expect.poll(async () => await viewsOf(app)).toHaveLength(2);
     const dragged = await viewsOf(app);
     expect(dragged[0]?.width).toBeLessThan(left?.width ?? 0);
-    expect(dragged).toHaveLength(2);
 
     const shown = await stageOf(chrome);
     const [first, second] = shown.panes.map((pane) => pane.paneId);
