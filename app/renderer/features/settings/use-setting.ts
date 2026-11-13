@@ -9,20 +9,21 @@ import {
   settings as channels,
   settingsPushes,
 } from "../../../shared/channels/settings.ts";
-import type { RendererSurface } from "../../../shared/channels/surfaces.ts";
 import { registry } from "../../../shared/settings/registry.ts";
 import type {
   ProfileArg,
   SettingKey,
   Settings,
 } from "../../../shared/settings/registry.ts";
-import type { Client } from "../../client.ts";
 import { syncedStore, useStore } from "../../store.ts";
-import type { Store } from "../../store.ts";
+import type { Store, SyncSource } from "../../store.ts";
 
 /** The page's copy of the settings layers, each push's changes applied to it. */
 export const createSettingsStore = (
-  client: Client<RendererSurface>
+  client: SyncSource<
+    (typeof channels.snapshot)["result"],
+    (typeof settingsPushes.changed)["payload"]
+  >
 ): Store<Settings> =>
   syncedStore(
     client,

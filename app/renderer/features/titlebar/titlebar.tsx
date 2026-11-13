@@ -12,7 +12,9 @@ import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
 import type { NavigationAction } from "../../../core/ports.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import { msg } from "../../../shared/msg.ts";
-import { useClient, useSidebar, useStage } from "../../chrome-context.tsx";
+import { useClient } from "../../chrome-context.tsx";
+import { useSidebar } from "../sidebar/use-sidebar.ts";
+import { useStage } from "../stage/use-stage.ts";
 import { ProfileRow } from "./profile-row.tsx";
 import { TitlebarIconButton } from "./titlebar-icon-button.tsx";
 

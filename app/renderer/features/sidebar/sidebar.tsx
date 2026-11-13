@@ -24,17 +24,15 @@ import { commands } from "../../../shared/channels/commands.ts";
 import { tabs as tabChannels } from "../../../shared/channels/profiles.ts";
 import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
-import {
-  useClient,
-  useProfiles,
-  useSidebar,
-  useStage,
-} from "../../chrome-context.tsx";
+import { useClient } from "../../chrome-context.tsx";
 import { Button } from "../../ui/button.tsx";
 import { AppIcon } from "../apps/app-icon.tsx";
 import { useTooltip } from "../commands/use-tooltip.ts";
 import { UnreadBadge } from "../profiles/unread-badge.tsx";
+import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
+import { useStage } from "../stage/use-stage.ts";
+import { useSidebar } from "./use-sidebar.ts";
 
 type Size = "narrow" | "wide";
 

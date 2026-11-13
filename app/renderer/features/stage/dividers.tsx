@@ -2,7 +2,8 @@ import type { CSSProperties, PointerEvent } from "react";
 
 import { stage } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
-import { useClient, useStage } from "../../chrome-context.tsx";
+import { useClient } from "../../chrome-context.tsx";
+import { useStage } from "./use-stage.ts";
 
 type Divider = StageSnapshot["dividers"][number];
 

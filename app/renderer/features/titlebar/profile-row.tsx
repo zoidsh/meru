@@ -11,9 +11,10 @@ import { orderedProfiles } from "../../../core/engines/ordering.ts";
 import { profiles as profileChannels } from "../../../shared/channels/profiles.ts";
 import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
-import { useClient, useProfiles } from "../../chrome-context.tsx";
+import { useClient } from "../../chrome-context.tsx";
 import { Button } from "../../ui/button.tsx";
 import { UnreadBadge } from "../profiles/unread-badge.tsx";
+import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { TitlebarIconButton } from "./titlebar-icon-button.tsx";
 

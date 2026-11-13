@@ -4,9 +4,17 @@ import { createRoot } from "react-dom/client";
 import { rectSchema } from "../../core/records/rect.ts";
 import { launcher } from "../../shared/channels/launcher.ts";
 import { rendererSurface } from "../../shared/channels/surfaces.ts";
-import { ChromeProvider, createChrome } from "../chrome-context.tsx";
+import { ChromeProvider } from "../chrome-context.tsx";
 import { createClient } from "../client.ts";
 import { Launcher } from "../features/launcher/launcher.tsx";
+import {
+  createProfilesStore,
+  ProfilesContext,
+} from "../features/profiles/use-profiles.ts";
+import {
+  createSettingsStore,
+  SettingsContext,
+} from "../features/settings/use-setting.ts";
 import { followTheme } from "../theme.ts";
 
 import "../ui/globals.css";
@@ -39,8 +47,12 @@ if (anchor === undefined) {
 } else {
   createRoot(root).render(
     <StrictMode>
-      <ChromeProvider chrome={createChrome(client)}>
-        <Launcher anchor={anchor} />
+      <ChromeProvider client={client}>
+        <SettingsContext value={createSettingsStore(client)}>
+          <ProfilesContext value={createProfilesStore(client)}>
+            <Launcher anchor={anchor} />
+          </ProfilesContext>
+        </SettingsContext>
       </ChromeProvider>
     </StrictMode>
   );

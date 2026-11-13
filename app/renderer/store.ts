@@ -1,14 +1,13 @@
 import { useSyncExternalStore } from "react";
 import type { z } from "zod";
 
+import type { Unsubscribe } from "../core/ports.ts";
+import type { Result } from "../core/result.ts";
 import type {
+  IpcError,
   PushChannel,
-  Surface,
-  SurfacePush,
-  SurfaceSync,
   SyncChannel,
 } from "../shared/channels/define.ts";
-import type { Client } from "./client.ts";
 
 export interface Store<T> {
   readonly get: () => T;
@@ -44,23 +43,36 @@ export const createStore = <T>(initial: T): Store<T> => {
 type NoPayload = z.ZodObject<Record<string, never>>;
 
 /**
+ * What a synced store needs of a page's client: a snapshot answered by `R` and a push carrying `P`. A client of any surface that has both channels satisfies it, which is what lets a store serve every page that may read it.
+ */
+export interface SyncSource<R extends z.ZodType, P extends z.ZodType> {
+  readonly sendSync: (
+    channel: SyncChannel<NoPayload, R>,
+    payload: z.input<NoPayload>
+  ) => Result<z.output<R>, IpcError>;
+  readonly on: (
+    channel: PushChannel<P>,
+    listener: (payload: z.output<P>) => void
+  ) => Unsubscribe;
+}
+
+/**
  * A page's copy of something main holds: seeded once from `snapshot`, `fallback` when that fails, then kept by `push`. A push replaces the copy, or with `follow` is applied to it, as a list of changes is.
  */
 export const syncedStore = <
-  S extends Surface,
   R extends z.ZodType,
   P extends z.ZodType,
   F = z.output<R>,
 >(
-  client: Client<S>,
-  snapshot: SyncChannel<NoPayload, R> & SurfaceSync<S>,
-  push: PushChannel<P> & SurfacePush<S>,
+  client: SyncSource<R, P>,
+  snapshot: SyncChannel<NoPayload, R>,
+  push: PushChannel<P>,
   fallback: F,
   follow?: (state: z.output<R> | F, payload: z.output<P>) => z.output<R> | F
 ): Store<z.output<R> | F> => {
   const seed = client.sendSync(snapshot, {});
   const store = createStore<z.output<R> | F>(seed.ok ? seed.value : fallback);
-  client.on<P>(push, (payload) => {
+  client.on(push, (payload) => {
     store.set((state) => {
       if (follow !== undefined) {
         return follow(state, payload);

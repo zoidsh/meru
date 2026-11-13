@@ -11,12 +11,13 @@ import { launcher, launcherPushes } from "../../../shared/channels/launcher.ts";
 import { tabs } from "../../../shared/channels/profiles.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import { msg } from "../../../shared/msg.ts";
-import { useClient, useProfiles } from "../../chrome-context.tsx";
+import { useClient } from "../../chrome-context.tsx";
 import { Button } from "../../ui/button.tsx";
 import { Input } from "../../ui/input.tsx";
 import { Popover, PopoverContent } from "../../ui/popover.tsx";
 import { AppIcon } from "../apps/app-icon.tsx";
 import { useTooltip } from "../commands/use-tooltip.ts";
+import { useProfiles } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 
 const BUTTON_SIZE = {

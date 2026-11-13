@@ -2,11 +2,24 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { rendererSurface } from "../../shared/channels/surfaces.ts";
-import { ChromeProvider, createChrome } from "../chrome-context.tsx";
+import { ChromeProvider } from "../chrome-context.tsx";
 import { createClient } from "../client.ts";
 import { LauncherButton } from "../features/launcher/launcher.tsx";
+import {
+  createProfilesStore,
+  ProfilesContext,
+} from "../features/profiles/use-profiles.ts";
+import {
+  createSettingsStore,
+  SettingsContext,
+} from "../features/settings/use-setting.ts";
 import { Sidebar } from "../features/sidebar/sidebar.tsx";
+import {
+  createSidebarStore,
+  SidebarContext,
+} from "../features/sidebar/use-sidebar.ts";
 import { Dividers } from "../features/stage/dividers.tsx";
+import { createStageStore, StageContext } from "../features/stage/use-stage.ts";
 import { Titlebar } from "../features/titlebar/titlebar.tsx";
 import { followTheme } from "../theme.ts";
 
@@ -16,7 +29,7 @@ followTheme(document.documentElement, location.href, (query) =>
   matchMedia(query)
 );
 
-const chrome = createChrome(createClient(window, rendererSurface));
+const client = createClient(window, rendererSurface);
 
 const root = document.querySelector("#root");
 
@@ -26,14 +39,24 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <ChromeProvider chrome={chrome}>
-      <div className="bg-background text-foreground flex h-full flex-col">
-        <Titlebar trailing={<LauncherButton place="titlebar" />} />
-        <div className="flex min-h-0 flex-1">
-          <Sidebar launcher={(size) => <LauncherButton place={size} />} />
-        </div>
-      </div>
-      <Dividers />
+    <ChromeProvider client={client}>
+      <SettingsContext value={createSettingsStore(client)}>
+        <ProfilesContext value={createProfilesStore(client)}>
+          <StageContext value={createStageStore(client)}>
+            <SidebarContext value={createSidebarStore(client)}>
+              <div className="bg-background text-foreground flex h-full flex-col">
+                <Titlebar trailing={<LauncherButton place="titlebar" />} />
+                <div className="flex min-h-0 flex-1">
+                  <Sidebar
+                    launcher={(size) => <LauncherButton place={size} />}
+                  />
+                </div>
+              </div>
+              <Dividers />
+            </SidebarContext>
+          </StageContext>
+        </ProfilesContext>
+      </SettingsContext>
     </ChromeProvider>
   </StrictMode>
 );

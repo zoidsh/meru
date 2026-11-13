@@ -9,8 +9,21 @@ import type { ProfilesSnapshot } from "../shared/channels/profiles.ts";
 import type { StageSnapshot } from "../shared/channels/stage.ts";
 import { rendererSurface } from "../shared/channels/surfaces.ts";
 import { FakeBridge } from "../test/fakes/bridge.ts";
-import { ChromeProvider, createChrome } from "./chrome-context.tsx";
+import { ChromeProvider } from "./chrome-context.tsx";
 import { createClient } from "./client.ts";
+import {
+  createProfilesStore,
+  ProfilesContext,
+} from "./features/profiles/use-profiles.ts";
+import {
+  createSettingsStore,
+  SettingsContext,
+} from "./features/settings/use-setting.ts";
+import {
+  createSidebarStore,
+  SidebarContext,
+} from "./features/sidebar/use-sidebar.ts";
+import { createStageStore, StageContext } from "./features/stage/use-stage.ts";
 
 Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true);
 
@@ -85,7 +98,7 @@ export const stageOf = (more: Partial<StageSnapshot> = {}): StageSnapshot => ({
 /** What main answers the page's snapshots with, by channel name. */
 export type Answers = Readonly<Record<string, unknown>>;
 
-/** Renders under a ChromeProvider whose client talks to a fake bridge seeded with `answers`. */
+/** Renders under the chrome page's providers, whose client talks to a fake bridge seeded with `answers`. */
 export const mountChrome = (
   node: ReactNode,
   answers: Answers,
@@ -95,12 +108,24 @@ export const mountChrome = (
   for (const [channel, value] of Object.entries(answers)) {
     bridge.answers.set(channel, { ok: true, value });
   }
-  const chrome = createChrome(createClient({ meru: bridge }, rendererSurface));
+  const client = createClient({ meru: bridge }, rendererSurface);
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
   act(() => {
-    root.render(<ChromeProvider chrome={chrome}>{node}</ChromeProvider>);
+    root.render(
+      <ChromeProvider client={client}>
+        <SettingsContext value={createSettingsStore(client)}>
+          <ProfilesContext value={createProfilesStore(client)}>
+            <StageContext value={createStageStore(client)}>
+              <SidebarContext value={createSidebarStore(client)}>
+                {node}
+              </SidebarContext>
+            </StageContext>
+          </ProfilesContext>
+        </SettingsContext>
+      </ChromeProvider>
+    );
   });
   return {
     bridge,
