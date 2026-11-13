@@ -8,6 +8,7 @@ import { overlayKindSchema, overlays } from "../../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../../shared/channels/surfaces.ts";
 import { themePushes } from "../../shared/channels/theme.ts";
 import { createClient } from "../client.ts";
+import type { Client } from "../client.ts";
 import { Launcher } from "../features/launcher/launcher.tsx";
 import { LauncherClientProvider } from "../features/launcher/use-launcher-client.ts";
 import {
@@ -32,17 +33,14 @@ const parseRect = (raw: string | null) => {
   return rectSchema.safeParse(parsed).data;
 };
 
-/** What the page shows for each kind of overlay, on that kind's surface from `overlays`, with only the stores it reads. */
-const shows: Readonly<
-  Record<OverlayKind, (query: URLSearchParams) => ReactNode>
-> = {
-  launcher: (query) => {
-    const client = createClient(window, overlays.launcher);
-    followTheme(document.documentElement, location.href, (listener) =>
-      client.on(themePushes.changed, ({ theme }) => {
-        listener(theme);
-      })
-    );
+/** What the page shows for each kind of overlay, given a client on that kind's surface from `overlays`, with only the stores it reads. */
+const shows: {
+  readonly [K in OverlayKind]: (
+    client: Client<(typeof overlays)[K]>,
+    query: URLSearchParams
+  ) => ReactNode;
+} = {
+  launcher: (client, query) => {
     const anchor = parseRect(query.get("anchor"));
     if (anchor === undefined) {
       client.send(launcher.close, {});
@@ -74,4 +72,14 @@ if (!kind.success) {
   );
 }
 
-createRoot(root).render(<StrictMode>{shows[kind.data](query)}</StrictMode>);
+const client = createClient(window, overlays[kind.data]);
+
+followTheme(document.documentElement, location.href, (listener) =>
+  client.on(themePushes.changed, ({ theme }) => {
+    listener(theme);
+  })
+);
+
+createRoot(root).render(
+  <StrictMode>{shows[kind.data](client, query)}</StrictMode>
+);
