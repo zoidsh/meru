@@ -3,7 +3,8 @@ import type { Page } from "@playwright/test";
 
 import type { Rect } from "../app/core/records/rect.ts";
 import type { CommandId } from "../app/shared/commands/registry.ts";
-import { clickMenuItem, launch, stageOf, viewsOf } from "./app.ts";
+import { launch } from "../scripts/lib/app.ts";
+import { clickMenuItem, stageOf, viewsOf } from "./app.ts";
 
 const SPLIT_VERTICAL: CommandId = "stage.splitVertical";
 const CLOSE_TAB: CommandId = "stage.closeTab";

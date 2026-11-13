@@ -7,7 +7,8 @@ import type { Page } from "@playwright/test";
 import { z } from "zod";
 
 import { mintToken } from "../scripts/entitlement/sign.ts";
-import { entitlementOf, launch } from "./app.ts";
+import { launch } from "../scripts/lib/app.ts";
+import { entitlementOf } from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
 
 const ENTITLEMENT_FILE = "entitlement.json";

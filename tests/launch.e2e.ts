@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { launch, profilesOf, stageOf, viewsOf } from "./app.ts";
+import { launch } from "../scripts/lib/app.ts";
+import { profilesOf, stageOf, viewsOf } from "./app.ts";
 
 test("opens a fresh install in one window on one profile with one Gmail tab in one pane", async () => {
   const { app, chrome, close } = await launch();

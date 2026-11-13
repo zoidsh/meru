@@ -1,15 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  inspect,
-  launch,
-  runCommand,
-  styleOf,
-  viewsOf,
-  writeSettings,
-  zoomOf,
-} from "./app.ts";
-import type { Launched } from "./app.ts";
+import { launch, runCommand, writeSettings } from "../scripts/lib/app.ts";
+import type { Launched } from "../scripts/lib/app.ts";
+import { inspect, styleOf, viewsOf, zoomOf } from "./app.ts";
 
 const PROFILE = "dev";
 

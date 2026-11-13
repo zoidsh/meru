@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { launch, runCommand, updateOf } from "./app.ts";
+import { launch, runCommand } from "../scripts/lib/app.ts";
+import { updateOf } from "./app.ts";
 
 test("seeds the update state as idle and refuses a check in an unpackaged run", async () => {
   const { chrome, close } = await launch();

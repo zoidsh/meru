@@ -6,7 +6,8 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 import { profiles } from "../app/shared/channels/profiles.ts";
-import { entitlementOf, invokeIn, launch, profilesOf } from "./app.ts";
+import { invokeIn, launch } from "../scripts/lib/app.ts";
+import { entitlementOf, profilesOf } from "./app.ts";
 import { startStub } from "./entitlement-stub.ts";
 
 const createProfile = async (chrome: Page, label: string) =>

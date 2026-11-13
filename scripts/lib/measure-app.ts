@@ -10,7 +10,7 @@ import { execaSync } from "execa";
 import { z } from "zod";
 
 import { measure as measureChannels } from "../../app/shared/channels/measure.ts";
-import { invokeIn, launch, runCommand } from "../../tests/app.ts";
+import { invokeIn, launch, runCommand } from "./app.ts";
 import type {
   AppName,
   Measurement,
