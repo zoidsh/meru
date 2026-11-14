@@ -7,10 +7,10 @@ export const INBOX_FEED_URL = "https://mail.google.com/mail/u/0/feed/atom";
 /** Gmail's Important marker as a label, which the feed takes as a path segment; probed to match `is:unread is:important in:inbox`. */
 export const IMPORTANT_FEED_LABEL = "^iim";
 
-export const FEED_INTERVAL = 30_000;
+const FEED_INTERVAL = 30_000;
 
 /** The longest wait between reads after failures, so the feed comes back within minutes of the network or the session. */
-export const FEED_MAX_DELAY = 5 * 60_000;
+const FEED_MAX_DELAY = 5 * 60_000;
 
 export const FEED_TIMEOUT = 20_000;
 

@@ -59,9 +59,7 @@ describe(readFeed, () => {
       [[], []],
     ]);
   });
-});
 
-describe(readFeed, () => {
   it("forgets an entry once it was issued too long before a read to be called new again", () => {
     const first = readFeed(EMPTY_FEED_MEMORY, two, at("2026-11-13T09:00:00Z"));
     const later = readFeed(first.memory, [], at("2026-11-14T09:00:00Z"));
