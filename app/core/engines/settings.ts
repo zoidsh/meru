@@ -29,7 +29,7 @@ export type SettingSpecs = readonly (
 
 export type KeyOf<R extends SettingSpecs> = R[number]["key"];
 
-export type SpecOf<R extends SettingSpecs, K extends KeyOf<R>> = Extract<
+type SpecOf<R extends SettingSpecs, K extends KeyOf<R>> = Extract<
   R[number],
   { readonly key: K }
 >;
@@ -45,11 +45,11 @@ export type ProfileKeyOf<R extends SettingSpecs> = Extract<
   { readonly scope: "profile" }
 >["key"];
 
-export type GlobalLayer<R extends SettingSpecs> = {
+type GlobalLayer<R extends SettingSpecs> = {
   readonly [K in KeyOf<R>]?: ValueOf<R, K>;
 };
 
-export type ProfileLayer<R extends SettingSpecs> = {
+type ProfileLayer<R extends SettingSpecs> = {
   readonly [K in ProfileKeyOf<R>]?: ValueOf<R, K>;
 };
 
@@ -63,7 +63,7 @@ export interface SettingChange<R extends SettingSpecs = SettingSpecs> {
   readonly profileId: string | null;
 }
 
-export type Raw = Readonly<Record<string, unknown>>;
+type Raw = Readonly<Record<string, unknown>>;
 
 const specOf = <R extends SettingSpecs, K extends KeyOf<R>>(
   specs: R,
@@ -76,48 +76,50 @@ const specOf = <R extends SettingSpecs, K extends KeyOf<R>>(
   return found;
 };
 
-const fits = (specs: SettingSpecs, layer: Raw, scope: SettingScope): boolean =>
-  Object.entries(layer).every(([key, value]) => {
-    const spec = specs.find((found) => found.key === key);
-    return (
-      spec !== undefined &&
-      (scope === "global" || spec.scope === "profile") &&
-      spec.schema.safeParse(value).success
-    );
-  });
+type Mutable<L> = { -readonly [K in keyof L]: L[K] };
 
-// Each value was parsed against its own key's schema before the layer was built, which is what this checks again; TypeScript cannot follow a value to its key through a loop over the registry.
-const isGlobalLayer = <R extends SettingSpecs>(
-  specs: R,
-  layer: Raw
-): layer is GlobalLayer<R> => fits(specs, layer, "global");
-
-const isProfileLayer = <R extends SettingSpecs>(
-  specs: R,
-  layer: Raw
-): layer is ProfileLayer<R> => fits(specs, layer, "profile");
-
-export const EMPTY: Raw = {};
-
-/** The layer typed by the registry, once each value was parsed against its key's schema. */
-export const toGlobal = <R extends SettingSpecs>(
-  specs: R,
-  layer: Raw
-): GlobalLayer<R> => {
-  if (!isGlobalLayer(specs, layer)) {
-    throw new Error("A global layer was built from unparsed values");
-  }
-  return layer;
+// TypeScript cannot follow a parsed value to its key's type through a generic key, so the value itself earns it; comparing the parse's output with the input keeps the check true for a schema that would transform or strip it.
+const isValueOf = <R extends SettingSpecs, K extends KeyOf<R>>(
+  spec: SpecOf<R, K>,
+  value: unknown
+): value is ValueOf<R, K> => {
+  const parsed = spec.schema.safeParse(value);
+  return parsed.success && isEqual(parsed.data, value);
 };
 
-export const toProfile = <R extends SettingSpecs>(
+const isKeyOf = <R extends SettingSpecs>(
   specs: R,
-  layer: Raw
-): ProfileLayer<R> => {
-  if (!isProfileLayer(specs, layer)) {
-    throw new Error("A profile layer was built from unparsed values");
+  key: string
+): key is KeyOf<R> => specs.some((spec) => spec.key === key);
+
+const isProfileKeyOf = <R extends SettingSpecs>(
+  specs: R,
+  key: string
+): key is ProfileKeyOf<R> =>
+  specs.some((spec) => spec.key === key && spec.scope === "profile");
+
+/** Why a value was kept out of a layer. */
+export type Refusal = "unknown" | "notProfileScoped" | "invalid";
+
+/** Puts a value in a layer, the global one when `profileId` is null, parsing it once against its key's schema; null when it was put there. */
+export const put = <R extends SettingSpecs>(
+  specs: R,
+  layer: Mutable<GlobalLayer<R>>,
+  key: string,
+  value: unknown,
+  profileId: string | null
+): Refusal | null => {
+  if (!isKeyOf(specs, key)) {
+    return "unknown";
   }
-  return layer;
+  if (profileId !== null && !isProfileKeyOf(specs, key)) {
+    return "notProfileScoped";
+  }
+  if (!isValueOf(specOf(specs, key), value)) {
+    return "invalid";
+  }
+  layer[key] = value;
+  return null;
 };
 
 const lookup = (layer: Raw | undefined, key: string): unknown =>
@@ -167,38 +169,25 @@ export const withValue = <R extends SettingSpecs>(
   value: unknown,
   profileId?: string
 ): Result<SettingsLayers<R>, string> => {
-  const spec = specs.find((found) => found.key === key);
-  if (spec === undefined) {
+  if (!isKeyOf(specs, key)) {
     return err(`${key} is not a setting`);
   }
-  if (profileId !== undefined && spec.scope !== "profile") {
+  if (profileId !== undefined && !isProfileKeyOf(specs, key)) {
     return err(`${key} is not a setting a profile may override`);
   }
-  const current: Raw =
+  const layer: GlobalLayer<R> =
     profileId === undefined
-      ? settings.global
-      : (settings.profiles[profileId] ?? EMPTY);
-  let next: Raw;
+      ? { ...settings.global }
+      : { ...settings.profiles[profileId] };
   if (value === undefined) {
-    const { [key]: _removed, ...rest } = current;
-    next = rest;
-  } else {
-    const parsed = spec.schema.safeParse(value);
-    if (!parsed.success) {
-      return err(`${key}: ${parsed.error.message}`);
-    }
-    next = { ...current, [key]: parsed.data };
+    Reflect.deleteProperty(layer, key);
+  } else if (put(specs, layer, key, value, profileId ?? null) !== null) {
+    return err(`${key} does not fit its schema`);
   }
   return ok(
     profileId === undefined
-      ? { ...settings, global: toGlobal(specs, next) }
-      : {
-          ...settings,
-          profiles: {
-            ...settings.profiles,
-            [profileId]: toProfile(specs, next),
-          },
-        }
+      ? { ...settings, global: layer }
+      : { ...settings, profiles: { ...settings.profiles, [profileId]: layer } }
   );
 };
 

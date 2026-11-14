@@ -3,54 +3,38 @@
 import { z } from "zod";
 
 import { parseField } from "../values.ts";
-import { EMPTY, toGlobal, toProfile } from "./settings.ts";
-import type {
-  ProfileLayer,
-  Raw,
-  SettingSpecs,
-  SettingsLayers,
-} from "./settings.ts";
+import { put } from "./settings.ts";
+import type { Refusal, SettingSpecs, SettingsLayers } from "./settings.ts";
 
 /** A value, a layer or the file that was dropped on reading, and why. */
 export interface Fallback {
   /** Null when the whole layer, or the whole file, was unusable. */
   readonly key: string | null;
   readonly profileId: string | null;
-  readonly reason: "invalid" | "unknown" | "notProfileScoped";
+  readonly reason: Refusal;
 }
 
 const rawSchema = z.record(z.string(), z.unknown());
 
-const parseLayer = (
-  specs: SettingSpecs,
+const parseLayer = <R extends SettingSpecs>(
+  specs: R,
   raw: unknown,
   profileId: string | null
-): { layer: Raw; fallbacks: Fallback[] } => {
+): { layer: SettingsLayers<R>["global"]; fallbacks: Fallback[] } => {
+  const layer: SettingsLayers<R>["global"] = {};
   const read = rawSchema.safeParse(raw);
   if (!read.success) {
     return {
       fallbacks:
         raw === undefined ? [] : [{ key: null, profileId, reason: "invalid" }],
-      layer: EMPTY,
+      layer,
     };
   }
   const fallbacks: Fallback[] = [];
-  const layer: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(read.data)) {
-    const spec = specs.find((found) => found.key === key);
-    if (spec === undefined) {
-      fallbacks.push({ key, profileId, reason: "unknown" });
-      continue;
-    }
-    if (profileId !== null && spec.scope !== "profile") {
-      fallbacks.push({ key, profileId, reason: "notProfileScoped" });
-      continue;
-    }
-    const parsed = spec.schema.safeParse(value);
-    if (parsed.success) {
-      layer[key] = parsed.data;
-    } else {
-      fallbacks.push({ key, profileId, reason: "invalid" });
+    const reason = put(specs, layer, key, value, profileId);
+    if (reason !== null) {
+      fallbacks.push({ key, profileId, reason });
     }
   }
   return { fallbacks, layer };
@@ -71,7 +55,7 @@ export const parseSettings = <R extends SettingSpecs>(
     null
   );
   fallbacks.push(...global.fallbacks);
-  const profiles: Record<string, ProfileLayer<R>> = {};
+  const profiles: Record<string, SettingsLayers<R>["global"]> = {};
   const rawProfiles = parseField(raw, "profiles", z.unknown());
   const profileLayers = rawSchema.safeParse(rawProfiles);
   if (rawProfiles !== undefined && !profileLayers.success) {
@@ -82,10 +66,7 @@ export const parseSettings = <R extends SettingSpecs>(
   )) {
     const parsed = parseLayer(specs, rawLayer, profileId);
     fallbacks.push(...parsed.fallbacks);
-    profiles[profileId] = toProfile(specs, parsed.layer);
+    profiles[profileId] = parsed.layer;
   }
-  return {
-    fallbacks,
-    settings: { global: toGlobal(specs, global.layer), profiles },
-  };
+  return { fallbacks, settings: { global: global.layer, profiles } };
 };
