@@ -16,6 +16,9 @@ import type { Stages } from "../features/stage/index.ts";
 /** The global under which a run with MERU_E2E=1 leaves its inspector, which the end-to-end suite calls through Playwright's `app.evaluate`, so no page is allowed a channel only a test needs. */
 export const E2E_GLOBAL = "meruE2e";
 
+/** The global under which the same run leaves a click on the notification at the index it is given, as the suite's stand-in for a click in the notification centre. */
+export const E2E_CLICK_NOTIFICATION = "meruE2eClickNotification";
+
 export const e2eSnapshotSchema = z.object({
   /** Every address a link sent to the browser, in order. */
   external: z.array(z.string()),
@@ -58,6 +61,8 @@ export interface RecordingDesktop {
   readonly badge: BadgePort;
   readonly notifications: NotificationPort;
   readonly tray: TrayPort;
+  /** Clicks the notification shown `index`th, as the notification centre would. */
+  readonly click: (index: number) => void;
   readonly read: () => {
     readonly badge: number;
     readonly notifications: readonly NotificationSpec[];
@@ -67,7 +72,7 @@ export interface RecordingDesktop {
 
 export const recordingDesktop = (): RecordingDesktop => {
   let badge = 0;
-  const notifications: NotificationSpec[] = [];
+  const notifications: { spec: NotificationSpec; click: () => void }[] = [];
   let tray: TraySpec | undefined;
   return {
     badge: {
@@ -75,12 +80,19 @@ export const recordingDesktop = (): RecordingDesktop => {
         badge = total;
       },
     },
+    click: (index) => {
+      notifications[index]?.click();
+    },
     notifications: {
-      show: (spec) => {
-        notifications.push(spec);
+      show: (spec, click) => {
+        notifications.push({ click, spec });
       },
     },
-    read: () => ({ badge, notifications: [...notifications], tray }),
+    read: () => ({
+      badge,
+      notifications: notifications.map(({ spec }) => spec),
+      tray,
+    }),
     tray: {
       hide: () => {
         tray = undefined;
@@ -121,4 +133,5 @@ export const exposeE2e = (options: {
     };
   };
   Reflect.set(globalThis, E2E_GLOBAL, () => JSON.stringify(snapshot()));
+  Reflect.set(globalThis, E2E_CLICK_NOTIFICATION, options.desktop.click);
 };

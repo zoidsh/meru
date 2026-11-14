@@ -54,15 +54,28 @@ export const createBadge = (platform: string): BadgePort => ({
   },
 });
 
-export const notificationPort: NotificationPort = {
-  show: (spec, onClick) => {
-    if (!Notification.isSupported()) {
-      return;
-    }
-    const notification = new Notification(spec);
-    notification.on("click", onClick);
-    notification.show();
-  },
+// Electron drops a notification's listeners once its wrapper is garbage collected, while the notification stays in the notification centre, so a later click would only bring the app to the front; each is held until it is clicked or closed.
+export const createNotifications = (): NotificationPort => {
+  const shown = new Set<Notification>();
+  return {
+    show: (spec, onClick) => {
+      if (!Notification.isSupported()) {
+        return;
+      }
+      const notification = new Notification(spec);
+      const release = () => {
+        shown.delete(notification);
+      };
+      shown.add(notification);
+      notification.once("close", release);
+      notification.once("failed", release);
+      notification.once("click", () => {
+        release();
+        onClick();
+      });
+      notification.show();
+    },
+  };
 };
 
 // The main build copies the icons beside its bundle. Windows takes its tray icon as a multi-size ICO, which Electron reads only from a path, and picks the size for the display's scale; macOS's template takes its @2x sibling by name.

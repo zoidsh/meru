@@ -17,7 +17,7 @@ import type {
   WindowPort,
   WindowSpec,
 } from "../../core/ports.ts";
-import { createBadge, createTray, notificationPort } from "./desktop.ts";
+import { createBadge, createNotifications, createTray } from "./desktop.ts";
 import { createEntitlementApi } from "./entitlement-api.ts";
 import { createFs } from "./fs.ts";
 import { ipcTransport } from "./ipc.ts";
@@ -212,7 +212,7 @@ export const createElectronPorts = (): Ports => ({
     },
   },
   badge: createBadge(process.platform),
-  notifications: notificationPort,
+  notifications: createNotifications(),
   tray: createTray(),
   sessions: createSessions(),
   shell: {

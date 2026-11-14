@@ -1,7 +1,8 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { ONE_UNREAD, TWO_UNREAD } from "../app/core/fixtures/gmail-feeds.ts";
-import { expect, inspect, profilesOf, test } from "./app.ts";
+import { E2E_CLICK_NOTIFICATION } from "../app/main/shell/e2e.ts";
+import { expect, inspect, panesOf, profilesOf, test } from "./app.ts";
 import { SIGN_IN_PATH } from "./feed-stub.ts";
 
 // The inbox calls mail new only if it was issued shortly before the last read, so the fixture's entries are dated now.
@@ -26,6 +27,28 @@ const statusOf = async (chrome: Page) => {
   return profiles[0]?.status;
 };
 
+const clickNotification = async (app: ElectronApplication, index: number) => {
+  await app.evaluate(
+    (_electron, [name, at]) => {
+      const click: unknown = Reflect.get(globalThis, name);
+      if (typeof click !== "function") {
+        throw new TypeError(`Main exposes nothing under ${name}`);
+      }
+      Reflect.apply(click, undefined, [at]);
+    },
+    [E2E_CLICK_NOTIFICATION, index] as const
+  );
+};
+
+const paneUrlsOf = async (app: ElectronApplication) => {
+  const panes = await panesOf(app);
+  return await app.evaluate(
+    ({ webContents }, ids) =>
+      ids.map((id) => webContents.fromId(id)?.getURL() ?? ""),
+    panes.map((pane) => pane.contentsId)
+  );
+};
+
 // Waking the machine reads every feed at once, rather than waiting out the 30 seconds between reads.
 const wake = async (app: ElectronApplication) => {
   await app.evaluate(({ powerMonitor }) => {
@@ -33,7 +56,7 @@ const wake = async (app: ElectronApplication) => {
   });
 };
 
-test("shows the feed's unread count, notifies about mail that arrives and marks a signed-out session without following its redirect", async ({
+test("shows the feed's unread count, notifies about mail that arrives, opens a message from its notification and marks a signed-out session without following its redirect", async ({
   feed,
   launch,
   stub,
@@ -53,6 +76,24 @@ test("shows the feed's unread count, notifies about mail that arrives and marks 
     .poll(async () => await notifiedOf(app))
     .toStrictEqual(["12345", "Tom O'Brien"]);
   await expect.poll(async () => await badgeOf(app)).toBe(2);
+
+  await app.evaluate(({ BrowserWindow }) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.hide();
+    }
+  });
+  await clickNotification(app, 1);
+  await expect
+    .poll(async () => await paneUrlsOf(app))
+    .toStrictEqual([`${feed.url}/#inbox/18c1a2b3c4d5e6f7`]);
+  await expect
+    .poll(
+      async () =>
+        await app.evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows().some((window) => window.isVisible())
+        )
+    )
+    .toBe(true);
 
   feed.answer({ kind: "signIn" });
   await wake(app);
