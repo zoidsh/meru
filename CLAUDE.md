@@ -44,7 +44,7 @@ A comment says only what the code cannot: an outside constraint, such as Electro
 
 ## Commits
 
-One commit per logical change. The subject says what changed in at most 72 characters; after a blank line, a body of a few sentences says why: the constraint, the approach rejected, what moved.
+One commit per logical change. The subject says what changed in at most 72 characters; after a blank line, a body of a few sentences says why: the constraint, the approach rejected, what moved. A port from 3.x takes its behaviour, never the shape of its code: read 3.x for what it does and for what it does badly, such as tangled responsibilities, hidden state, unbounded retries, untested DOM pokes or comments that lie, and let the port fix each.
 
 ## Stage
 
