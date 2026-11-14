@@ -36,10 +36,7 @@ import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { SnapshotSpec } from "../../../core/snapshot.ts";
 import { parseField } from "../../../core/values.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
-import {
-  entitlement as channels,
-  entitlementPushes,
-} from "../../../shared/channels/entitlement.ts";
+import { entitlement as channels } from "../../../shared/channels/entitlement.ts";
 
 export const ENTITLEMENT_FILE = "entitlement.json";
 
@@ -374,7 +371,6 @@ export class Entitlement<K> {
     if (sameGrant(previous, next)) {
       return;
     }
-    this.#options.registrar.broadcast(entitlementPushes.changed, next);
     this.#options.events.emit("entitlement.changed", { entitlement: next });
   }
 }

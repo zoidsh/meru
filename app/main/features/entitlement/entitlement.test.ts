@@ -5,10 +5,7 @@ import { AppEvents } from "../../../core/events.ts";
 import type { AppEventMap } from "../../../core/events.ts";
 import { err, ok } from "../../../core/result.ts";
 import { wireName } from "../../../shared/channels/define.ts";
-import {
-  entitlement as channels,
-  entitlementPushes,
-} from "../../../shared/channels/entitlement.ts";
+import { entitlement as channels } from "../../../shared/channels/entitlement.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeEntitlementApi } from "../../../test/fakes/entitlement-api.ts";
@@ -275,15 +272,13 @@ describe(Entitlement, () => {
       reason: "refunded",
       status: "disabled",
     } as const;
-    const { api, changed, clock, entitlement, transport, stored } = await setup(
-      {
-        answers: [
-          issued({ ...disabled, exp: (NOW + 2 * HOUR) / 1000 }),
-          issued({ ...disabled, exp: (NOW + 3 * HOUR) / 1000 }),
-        ],
-        state: { token: { licenseKey: null, value: await mint() } },
-      }
-    );
+    const { api, changed, clock, entitlement, stored } = await setup({
+      answers: [
+        issued({ ...disabled, exp: (NOW + 2 * HOUR) / 1000 }),
+        issued({ ...disabled, exp: (NOW + 3 * HOUR) / 1000 }),
+      ],
+      state: { token: { licenseKey: null, value: await mint() } },
+    });
     entitlement.start();
     clock.advance(HOUR);
     await settled(api, 1);
@@ -301,13 +296,6 @@ describe(Entitlement, () => {
       source: "refreshed",
     };
     expect(changed).toStrictEqual([{ entitlement: value }]);
-    expect(transport.sent).toStrictEqual([
-      {
-        channel: wireName(entitlementPushes.changed),
-        contentsId: PAGE,
-        payload: value,
-      },
-    ]);
     await expect(stored()).resolves.toMatchObject({
       data: { lastAnswer: { outcome: "issued" } },
     });
