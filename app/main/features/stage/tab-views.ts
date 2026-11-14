@@ -1,5 +1,5 @@
 import type { LogPort } from "../../../core/log.ts";
-import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
+import type { Unsubscribe, ViewPort, ViewSpec } from "../../../core/ports.ts";
 import type { Disposition } from "../../../core/records/link.ts";
 import type { PageHistory } from "../../../core/records/navigation.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
@@ -15,9 +15,19 @@ interface TabSource {
   readonly zoom: number;
 }
 
+/** The preload a tab's page runs, given by its app, and what its page may ask of main once its view exists. */
+export interface ContentPage {
+  readonly preload: string;
+  /** Extra command-line arguments the preload reads, such as its surface's. */
+  readonly arguments: readonly string[];
+  /** The view `contentsId` of the tab was made; the returned call is made when it goes. */
+  readonly attach: (contentsId: number) => Unsubscribe;
+}
+
 interface TabViewsOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
   readonly sourceOf: (tab: Tab) => TabSource;
+  readonly content?: (tab: Tab) => ContentPage | undefined;
   readonly radius: () => number;
   readonly onFocus: (tabId: string) => void;
   readonly onNavigation: (tabId: string) => void;
@@ -93,11 +103,15 @@ export class TabViews {
     const { create, onFocus, onFullscreen, onNavigation, onOpen, log } =
       this.#options;
     const source = this.#options.sourceOf(tab);
+    const content = this.#options.content?.(tab);
     const owned = create({
       background: CANVAS,
       partition: partitionOf(tab.profileId),
       radius: this.#options.radius(),
       zoom: source.zoom,
+      ...(content === undefined
+        ? {}
+        : { arguments: content.arguments, preload: content.preload }),
     });
     const { view } = owned;
     const tabId = tab.id;
@@ -114,6 +128,7 @@ export class TabViews {
         onFullscreen(tabId, entered);
       }),
       view.onAudible(this.#options.onAudible),
+      ...(content === undefined ? [] : [content.attach(view.contentsId)]),
     ];
     void loadOwned(view, source.url, log, source.history);
     return {

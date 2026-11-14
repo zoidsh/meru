@@ -61,6 +61,7 @@ import { Overlay } from "./overlay.ts";
 import { loadOwned } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 import { TabViews } from "./tab-views.ts";
+import type { ContentPage } from "./tab-views.ts";
 
 export type StageError =
   | "unknownWindow"
@@ -99,6 +100,7 @@ interface StageOptions {
     readonly url: string;
     readonly history?: PageHistory;
   };
+  readonly content?: (tab: Tab) => ContentPage | undefined;
   /** Read on every layout, so a change shows at the next one. */
   readonly style: () => Style;
   readonly zoom: (profileId: string) => number;
@@ -163,6 +165,7 @@ export class Stage {
       onOpen: options.onOpen,
       onPopup: options.onPopup,
       radius: () => STYLE_METRICS[options.style()].radius,
+      ...(options.content === undefined ? {} : { content: options.content }),
       sourceOf: (tab) => ({
         ...options.startOf(tab),
         zoom: options.zoom(tab.profileId),

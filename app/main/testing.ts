@@ -124,7 +124,6 @@ export const testStages = (
   });
   const views = new FakeViewFactory();
   const stages = new Stages({
-    blankPanes: false,
     commands,
     dragPreload: undefined,
     events,

@@ -2,10 +2,12 @@ import path from "node:path";
 
 import { chromeInsets } from "../core/engines/chrome.ts";
 import { GMAIL_URL } from "../core/engines/inbox.ts";
+import { GOOGLE_SIGN_IN } from "../core/engines/links.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { themeOf } from "../core/ports.ts";
+import type { Tab } from "../core/records/tab.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../shared/channels/surfaces.ts";
@@ -13,6 +15,8 @@ import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Appearance } from "./features/appearance/index.ts";
 import { Badge } from "./features/badge/index.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
+import { Gmail, USER_STYLES_FILE } from "./features/gmail/index.ts";
+import { Google } from "./features/google/index.ts";
 import { Inbox } from "./features/inbox/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
 import { Links } from "./features/links/index.ts";
@@ -51,6 +55,20 @@ import type { PageOptions } from "./shell/window.ts";
 
 // Held outside start() so a failure to start can still be written and the file flushed.
 let fileLog: FileLog | undefined;
+
+// The stand-in mailbox has a stand-in sign-in beside it, since a test cannot serve accounts.google.com.
+const signInOf = (gmailOverride: string | undefined): string =>
+  gmailOverride === undefined
+    ? GOOGLE_SIGN_IN
+    : new URL("/signin", gmailOverride).href;
+
+// The suite's Gmail pane shows the stand-in mailbox when it is given one, and every other pane nothing.
+const testPaneUrl =
+  (gmailOverride: string | undefined) =>
+  (tab: Tab): string =>
+    tab.appId === "gmail" && gmailOverride !== undefined
+      ? `${gmailOverride}/`
+      : "about:blank";
 
 const start = async () => {
   const dist = path.join(import.meta.dirname, "..");
@@ -195,6 +213,9 @@ const start = async () => {
   // The suite asserts on what the app would put on the desktop and puts nothing there.
   const recorded = recordingDesktop();
   const desktop = e2e ? recorded : ports;
+  // The end-to-end suite asserts on the links that would leave for the browser and the files it would open, and opens none.
+  const externalLinks = new RecordingShell();
+  const shell = e2e ? externalLinks : ports.shell;
   // A run from the repository can read a stand-in feed; the suite and a measure read none unless given one, so no test run asks Google.
   const gmailOverride = ports.lifecycle.packaged
     ? undefined
@@ -214,16 +235,38 @@ const start = async () => {
   if (gmailOverride !== undefined || !(e2e || measure)) {
     inbox.start();
   }
+  const gmail = new Gmail({
+    clock: ports.clock,
+    commands,
+    entitlement: () => entitlement.current(),
+    events,
+    fs: ports.fs,
+    log: log.scoped("gmail"),
+    mailbox: gmailOverride ?? GMAIL_URL,
+    preload: path.join(dist, "preload", "gmail.cjs"),
+    profiles,
+    registrar: dispatcher,
+    settings,
+    shell,
+    signIn: signInOf(gmailOverride),
+    userStylesPath: path.join(userDataDir(), USER_STYLES_FILE),
+  });
+  await gmail.start();
+  const google = new Google({
+    commands,
+    preload: path.join(dist, "preload", "google.cjs"),
+    registrar: dispatcher,
+  });
+  google.start();
   const overlayUrl = (
     kind: OverlayKind,
     query: Readonly<Record<string, string>>
   ): string => pageUrl(pages, "overlay.html", { ...query, kind });
-  // The end-to-end suite asserts on the links that would leave for the browser and never opens one.
-  const externalLinks = new RecordingShell();
-  const shell = e2e ? externalLinks : ports.shell;
   const stages = new Stages({
-    blankPanes: e2e,
     commands,
+    content: (tab) =>
+      tab.appId === "gmail" ? gmail.page(tab) : google.page(tab),
+    ...(e2e ? { paneUrl: testPaneUrl(gmailOverride) } : {}),
     historyOf: (tabId) => sleep.historyOf(tabId),
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
     onPopup: (url) => links.popup(url),
@@ -359,7 +402,9 @@ const start = async () => {
     inbox,
     gmailUrl: gmailOverride ?? GMAIL_URL,
     load: (tabId, url) => {
-      stages.load(tabId, url);
+      if (!gmail.navigate(tabId, url)) {
+        stages.load(tabId, url);
+      }
     },
     notifications: desktop.notifications,
     platform,

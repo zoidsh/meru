@@ -33,6 +33,7 @@ import type { SettingsStore } from "../settings/index.ts";
 import { stageCommands } from "./commands.ts";
 import { Stage } from "./stage.ts";
 import type { StageError, StageProfiles } from "./stage.ts";
+import type { ContentPage } from "./tab-views.ts";
 
 export type { StageError, StageProfiles } from "./stage.ts";
 export { Stage } from "./stage.ts";
@@ -45,8 +46,10 @@ export interface StagesOptions {
   };
   readonly profiles: StageProfiles;
   readonly events: AppEvents;
-  /** Load `about:blank` in every pane, for the end-to-end suite, which asserts on views and bounds and never on a network page. */
-  readonly blankPanes: boolean;
+  /** Where a tab's pane starts instead of the tab's address, for the end-to-end suite, which asserts on views and bounds and never on a network page. */
+  readonly paneUrl?: (tab: Tab) => string;
+  /** The content preload a tab's page runs, by its app. */
+  readonly content?: (tab: Tab) => ContentPage | undefined;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly dragPreload: string | undefined;
   readonly overlayPreload: string | undefined;
@@ -195,8 +198,9 @@ export class Stages {
   /** Opens the stage of a window that shows the group `groupId` names, read again on every change. */
   open(window: WindowPort, groupId: () => string | undefined): Stage {
     const windowId = window.contentsId;
-    const { blankPanes, profiles, settings } = this.#options;
+    const { content, paneUrl, profiles, settings } = this.#options;
     const opened = new Stage({
+      ...(content === undefined ? {} : { content }),
       dragPreload: this.#options.dragPreload,
       groupId,
       keys: (view) => this.#options.keys.attach(view, windowId),
@@ -236,7 +240,7 @@ export class Stages {
         const history =
           asked === undefined ? this.#options.historyOf?.(tab.id) : undefined;
         return {
-          url: asked ?? (blankPanes ? "about:blank" : tab.url),
+          url: asked ?? paneUrl?.(tab) ?? tab.url,
           ...(history === undefined ? {} : { history }),
         };
       },
