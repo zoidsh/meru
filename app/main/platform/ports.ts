@@ -13,6 +13,7 @@ import {
 
 import type {
   EntitlementApi,
+  LifecyclePort,
   Ports,
   WindowPort,
   WindowSpec,
@@ -123,38 +124,43 @@ const createWindow = (spec: WindowSpec): WindowPort => {
   };
 };
 
-const quitTasks = new Set<() => Promise<void>>();
-let quitHeld = false;
-
 // before-quit is the last moment the main process can still write; holding the quit there and quitting again once the tasks settle is how Electron lets a quit wait on async work.
-const holdQuit = (event: { preventDefault: () => void }) => {
-  if (quitHeld || quitTasks.size === 0) {
-    return;
-  }
-  event.preventDefault();
-  quitHeld = true;
+const createQuitHold = (): LifecyclePort["onQuit"] => {
+  const tasks = new Set<() => Promise<void>>();
+  let held = false;
   const settle = async () => {
     await Promise.allSettled(
-      [...quitTasks].map(async (task) => {
+      [...tasks].map(async (task) => {
         await task();
       })
     );
     app.quit();
   };
-  void settle();
+  const hold = (event: { preventDefault: () => void }) => {
+    if (held) {
+      return;
+    }
+    event.preventDefault();
+    held = true;
+    void settle();
+  };
+  return (task) => {
+    if (tasks.size === 0) {
+      app.on("before-quit", hold);
+    }
+    tasks.add(task);
+    return () => {
+      tasks.delete(task);
+      if (tasks.size === 0) {
+        app.off("before-quit", hold);
+      }
+    };
+  };
 };
 
 export const createElectronPorts = (): Ports => ({
   lifecycle: {
-    onQuit: (task) => {
-      if (quitTasks.size === 0) {
-        app.on("before-quit", holdQuit);
-      }
-      quitTasks.add(task);
-      return () => {
-        quitTasks.delete(task);
-      };
-    },
+    onQuit: createQuitHold(),
     onWindowAllClosed: (listener) => {
       app.on("window-all-closed", listener);
       return () => {
