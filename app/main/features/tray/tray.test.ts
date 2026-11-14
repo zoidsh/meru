@@ -10,7 +10,6 @@ import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { Platform } from "../../../core/records/platform.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
-import { FakeBadge } from "../../../test/fakes/badge.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
@@ -81,7 +80,6 @@ const setup = async (platform: Platform) => {
   sessions.answer(INBOX_FEED_URL, feed(NONE_UNREAD), partitionOf(personal));
   sessions.answer(INBOX_FEED_URL, feed(TWO_UNREAD), partitionOf(work));
   const inbox = new Inbox({
-    badge: new FakeBadge(),
     clock,
     events,
     feedUrl: INBOX_FEED_URL,

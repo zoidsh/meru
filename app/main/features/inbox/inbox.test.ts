@@ -17,7 +17,6 @@ import { partitionOf } from "../../../core/records/profile.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { inboxPushes } from "../../../shared/channels/inbox.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
-import { FakeBadge } from "../../../test/fakes/badge.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
@@ -92,7 +91,6 @@ const setup = async ({ online = true } = {}) => {
   sessions.answer(INBOX_FEED_URL, feed(NONE_UNREAD));
   const network = new FakeOnline(online);
   const power = new FakePower();
-  const badge = new FakeBadge();
   const log = new FakeLog();
   const arrived: { profileId: string; subjects: string[] }[] = [];
   events.on("mail.arrived", ({ profileId, entries }) => {
@@ -102,7 +100,6 @@ const setup = async ({ online = true } = {}) => {
     });
   });
   const inbox = new Inbox({
-    badge,
     clock,
     events,
     feedUrl: INBOX_FEED_URL,
@@ -133,7 +130,6 @@ const setup = async ({ online = true } = {}) => {
   return {
     advance,
     arrived,
-    badge,
     first,
     inbox,
     log,
@@ -149,8 +145,8 @@ const setup = async ({ online = true } = {}) => {
 };
 
 describe(Inbox, () => {
-  it("reads each profile's feed through its own session at once, and gives its status, the pages and the badge the count the feed states", async () => {
-    const { badge, first, inbox, profiles, pushed, sessions, start, status } =
+  it("reads each profile's feed through its own session at once, and gives its status, the pages and the total the count the feed states", async () => {
+    const { first, inbox, profiles, pushed, sessions, start, status } =
       await setup();
     const second = profiles.createProfile("Work");
     const secondId = second.ok ? second.value.id : "";
@@ -158,15 +154,14 @@ describe(Inbox, () => {
     sessions.answer(INBOX_FEED_URL, feed(ONE_UNREAD), partitionOf(secondId));
     await start();
     expect({
-      badge: badge.total,
       partitions: sessions.fetched
         .map((fetched) => fetched.partition)
         .toSorted(),
       pushed: pushed() > 0,
       snapshot: inbox.snapshot().profiles[secondId]?.unread,
       statuses: [status(), status(secondId)],
+      total: inbox.total(),
     }).toStrictEqual({
-      badge: 58,
       partitions: [partitionOf(first), partitionOf(secondId)].toSorted(),
       pushed: true,
       snapshot: 1,
@@ -174,6 +169,7 @@ describe(Inbox, () => {
         { kind: "ok", unreadCount: 57 },
         { kind: "ok", unreadCount: 1 },
       ],
+      total: 58,
     });
   });
 
@@ -250,18 +246,6 @@ describe(Inbox, () => {
     power.resume();
     await settle();
     expect([offline, sessions.fetched.length]).toStrictEqual([0, 2]);
-  });
-
-  it("leaves out of the badge a profile that is not counted, and shows nothing once the badge is off", async () => {
-    const { badge, first, sessions, settings, start } = await setup();
-    sessions.answer(INBOX_FEED_URL, feed(TWO_UNREAD));
-    await start();
-    const counted = badge.total;
-    settings.set("inbox.countUnread", false, first);
-    const uncounted = badge.total;
-    settings.set("inbox.countUnread", true, first);
-    settings.set("inbox.unreadBadge", false);
-    expect([counted, uncounted, badge.total]).toStrictEqual([2, 0, 0]);
   });
 
   it("stops reading a profile once it is removed", async () => {

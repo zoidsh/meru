@@ -15,7 +15,6 @@ import { isSignIn } from "../../../core/engines/links.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type { LogPort } from "../../../core/log.ts";
 import type {
-  BadgePort,
   Clock,
   OnlinePort,
   PowerPort,
@@ -36,9 +35,8 @@ export interface InboxOptions {
   readonly clock: Clock;
   readonly online: OnlinePort;
   readonly power: PowerPort;
-  readonly badge: BadgePort;
   readonly profiles: Pick<Profiles, "state" | "isDeactivated" | "setStatus">;
-  readonly settings: Pick<SettingsStore, "get" | "subscribe">;
+  readonly settings: Pick<SettingsStore, "get">;
   readonly registrar: IpcRegistrar;
   readonly events: Pick<AppEvents, "on" | "emit">;
   readonly log: LogPort;
@@ -56,9 +54,7 @@ interface ProfileFeed {
 
 type Outcome = "read" | "failed";
 
-const BADGE_KEYS = new Set(["inbox.unreadBadge", "inbox.countUnread"]);
-
-/** Reads each active profile's Gmail inbox feed through its session, on an interval that backs off while it fails, and tells the profile, every page and the app's icon what is unread. */
+/** Reads each active profile's Gmail inbox feed through its session, on an interval that backs off while it fails, and tells the profile and every page what is unread. */
 export class Inbox {
   readonly #options: InboxOptions;
   readonly #disposables = new DisposableStore();
@@ -78,7 +74,7 @@ export class Inbox {
   }
 
   start(): void {
-    const { events, online, power, settings } = this.#options;
+    const { events, online, power } = this.#options;
     this.#disposables.add(
       events.on("stage.invalidated", () => {
         this.#follow();
@@ -93,11 +89,6 @@ export class Inbox {
       }),
       power.onResume(() => {
         this.readAll();
-      }),
-      settings.subscribe((changes) => {
-        if (changes.some((change) => BADGE_KEYS.has(change.key))) {
-          this.#badge();
-        }
       }),
       () => {
         for (const feed of this.#feeds.values()) {
@@ -283,11 +274,5 @@ export class Inbox {
     const { events, registrar } = this.#options;
     registrar.broadcast(inboxPushes.changed, this.snapshot());
     events.emit("inbox.changed", null);
-    this.#badge();
-  }
-
-  #badge(): void {
-    const { badge, settings } = this.#options;
-    badge.set(settings.get("inbox.unreadBadge") ? this.total() : 0);
   }
 }

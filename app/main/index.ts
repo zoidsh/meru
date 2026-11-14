@@ -13,6 +13,7 @@ import { surfaces } from "../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../shared/channels/surfaces.ts";
 import { themePushes } from "../shared/channels/theme.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
+import { Badge } from "./features/badge/index.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Inbox } from "./features/inbox/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
@@ -193,7 +194,6 @@ const start = async () => {
     ? undefined
     : process.env.MERU_FEED_URL;
   const inbox = new Inbox({
-    badge: desktop.badge,
     clock: ports.clock,
     events,
     feedUrl: feedOverride ?? INBOX_FEED_URL,
@@ -206,6 +206,7 @@ const start = async () => {
     settings,
   });
   inbox.attach();
+  new Badge({ badge: desktop.badge, events, inbox, settings }).start();
   if (feedOverride !== undefined || !(e2e || measure)) {
     inbox.start();
   }
