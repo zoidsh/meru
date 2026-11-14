@@ -1,17 +1,13 @@
-import { expect, test } from "@playwright/test";
+import { runCommand } from "../scripts/lib/app.ts";
+import { expect, test, updateOf } from "./app.ts";
 
-import { launch, runCommand } from "../scripts/lib/app.ts";
-import { updateOf } from "./app.ts";
-
-test("seeds the update state as idle and refuses a check in an unpackaged run", async () => {
-  const { chrome, close } = await launch();
-  try {
-    await expect(updateOf(chrome)).resolves.toStrictEqual({ kind: "idle" });
-    await expect(runCommand(chrome, "updater.check")).resolves.toStrictEqual({
-      error: { kind: "failed", message: "notPackaged" },
-      ok: false,
-    });
-  } finally {
-    await close();
-  }
+test("seeds the update state as idle and refuses a check in an unpackaged run", async ({
+  launch,
+}) => {
+  const { chrome } = await launch();
+  await expect(updateOf(chrome)).resolves.toStrictEqual({ kind: "idle" });
+  await expect(runCommand(chrome, "updater.check")).resolves.toStrictEqual({
+    error: { kind: "failed", message: "notPackaged" },
+    ok: false,
+  });
 });

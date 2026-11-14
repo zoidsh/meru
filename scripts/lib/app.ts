@@ -9,6 +9,11 @@ import type { z } from "zod";
 import { BRIDGE_KEY } from "../../app/core/ports.ts";
 import type { ProfilesState } from "../../app/core/records/profiles-state.ts";
 import type { Result } from "../../app/core/result.ts";
+import { PROFILES_FILE } from "../../app/main/features/profiles/index.ts";
+import {
+  SETTINGS_FILE,
+  settingsSnapshot,
+} from "../../app/main/features/settings/index.ts";
 import { commands } from "../../app/shared/channels/commands.ts";
 import { settle, wireName } from "../../app/shared/channels/define.ts";
 import type {
@@ -39,12 +44,10 @@ export interface LaunchOptions {
   readonly userData?: string;
 }
 
-export const SETTINGS_FILE = "settings.json";
-
 export const writeSettings = async (userData: string, settings: Settings) => {
   await writeFile(
     path.join(userData, SETTINGS_FILE),
-    JSON.stringify({ data: settings, version: 1 })
+    JSON.stringify({ data: settings, version: settingsSnapshot.version })
   );
 };
 
@@ -76,8 +79,26 @@ export const firstProfiles = (profileId: string): ProfilesState => ({
   ],
 });
 
-const isChromePage = (page: Page) =>
-  new URL(page.url()).pathname.endsWith("/chrome.html");
+/** The pages whose URL contains `part`, such as `/settings.html` or `kind=launcher`; every pane is a page to Playwright as well. */
+export const pagesOf = (app: ElectronApplication, part: string) =>
+  app.windows().filter((page) => page.url().includes(part));
+
+/** The first page whose URL contains `part`, once there is one. */
+export const pageOf = async (app: ElectronApplication, part: string) => {
+  await expect.poll(() => pagesOf(app, part).length).toBeGreaterThan(0);
+  const [page] = pagesOf(app, part);
+  if (page === undefined) {
+    throw new Error(`The page at ${part} went away`);
+  }
+  return page;
+};
+
+export const valueOf = <T>(result: Result<T, IpcError>): T => {
+  if (!result.ok) {
+    throw new Error(`${result.error.kind}: ${result.error.message}`);
+  }
+  return result.value;
+};
 
 export const launch = async ({
   env = {},
@@ -91,7 +112,7 @@ export const launch = async ({
   }
   if (profileId !== undefined) {
     await writeFile(
-      path.join(userData, "profiles.json"),
+      path.join(userData, PROFILES_FILE),
       JSON.stringify({ data: firstProfiles(profileId), version: 1 })
     );
   }
@@ -107,12 +128,7 @@ export const launch = async ({
       ...env,
     },
   });
-  // Every pane is a page to Playwright as well, so the chrome page is told apart by its URL.
-  await expect.poll(() => app.windows().some(isChromePage)).toBeTruthy();
-  const chrome = app.windows().find(isChromePage);
-  if (chrome === undefined) {
-    throw new Error("The chrome page went away");
-  }
+  const chrome = await pageOf(app, "/chrome.html");
   return {
     app,
     chrome,
