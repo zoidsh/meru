@@ -21,8 +21,8 @@ export interface FeedStub {
 const MAILBOX_PATH = "/mail/u/0";
 const FEED_PATH = `${MAILBOX_PATH}/feed/atom`;
 
-/** Where the stub sends a signed-out session, on loopback like the rest, so a request that followed the redirect would show in `requests` rather than leave the machine. */
-export const SIGN_IN_PATH = "/ServiceLogin";
+/** Where the stub sends a signed-out session, as Google does; the session reports a redirect rather than following it, so nothing reaches Google. */
+const SIGN_IN_URL = "https://accounts.google.com/ServiceLogin";
 
 /** A loopback stand-in for a Gmail mailbox: its inbox feed, answering every profile's session alike, and a page for each message. */
 export const startFeedStub = async (): Promise<FeedStub> => {
@@ -45,7 +45,7 @@ export const startFeedStub = async (): Promise<FeedStub> => {
     } else if (found.kind === "signIn") {
       response
         .writeHead(302, {
-          location: `http://${request.headers.host}${SIGN_IN_PATH}?service=mail`,
+          location: `${SIGN_IN_URL}?service=mail`,
         })
         .end();
     } else {

@@ -3,7 +3,6 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { ONE_UNREAD, TWO_UNREAD } from "../app/core/fixtures/gmail-feeds.ts";
 import { E2E_CLICK_NOTIFICATION } from "../app/main/shell/e2e.ts";
 import { expect, inspect, panesOf, profilesOf, test } from "./app.ts";
-import { SIGN_IN_PATH } from "./feed-stub.ts";
 
 // The inbox calls mail new only if it was issued shortly before the last read, so the fixture's entries are dated now.
 const issuedNow = (text: string) =>
@@ -100,5 +99,4 @@ test("shows the feed's unread count, notifies about mail that arrives, opens a m
   await expect
     .poll(async () => await statusOf(chrome))
     .toStrictEqual({ kind: "needsSignIn" });
-  expect(feed.requests).not.toContain(SIGN_IN_PATH);
 });

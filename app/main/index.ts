@@ -305,6 +305,7 @@ const start = async () => {
       accelerators: applicationAccelerators,
       desktop: recorded,
       external: externalLinks,
+      sessions: ports.sessions,
       stages,
     });
   }

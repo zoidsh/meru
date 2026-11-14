@@ -4,6 +4,7 @@ import type {
   BadgePort,
   NotificationPort,
   NotificationSpec,
+  SessionPort,
   ShellPort,
   TrayPort,
   TraySpec,
@@ -15,6 +16,9 @@ import type { Stages } from "../features/stage/index.ts";
 
 /** The global under which a run with MERU_E2E=1 leaves its inspector, which the end-to-end suite calls through Playwright's `app.evaluate`, so no page is allowed a channel only a test needs. */
 export const E2E_GLOBAL = "meruE2e";
+
+/** The global under which the same run leaves the sessions' `fetchText`, answering its response as JSON or rejecting as it does, so the suite can read through the real network stack against a loopback server. */
+export const E2E_FETCH = "meruE2eFetch";
 
 /** The global under which the same run leaves a click on the notification at the index it is given, as the suite's stand-in for a click in the notification centre. */
 export const E2E_CLICK_NOTIFICATION = "meruE2eClickNotification";
@@ -111,6 +115,7 @@ export const exposeE2e = (options: {
   readonly accelerators: () => Partial<Record<CommandId, string | null>>;
   readonly external: RecordingShell;
   readonly desktop: RecordingDesktop;
+  readonly sessions: Pick<SessionPort, "fetchText">;
 }): void => {
   const snapshot = (): E2eSnapshot => {
     const [stage] = options.stages.all;
@@ -135,4 +140,10 @@ export const exposeE2e = (options: {
   };
   Reflect.set(globalThis, E2E_GLOBAL, () => JSON.stringify(snapshot()));
   Reflect.set(globalThis, E2E_CLICK_NOTIFICATION, options.desktop.click);
+  Reflect.set(
+    globalThis,
+    E2E_FETCH,
+    async (partition: string, url: string, timeout: number) =>
+      JSON.stringify(await options.sessions.fetchText(partition, url, timeout))
+  );
 };
