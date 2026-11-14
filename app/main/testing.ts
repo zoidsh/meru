@@ -29,6 +29,15 @@ export const UNKNOWN: Entitlement = {
   source: "stored",
 };
 
+export const PRO: Entitlement = {
+  deviceLimit: 3,
+  expiresAt: null,
+  kind: "licensed",
+  plan: "pro",
+  seat: null,
+  source: "stored",
+};
+
 export interface TestAppOptions {
   readonly clock?: FakeClock;
   readonly entitlement?: () => Entitlement;

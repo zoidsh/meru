@@ -9,21 +9,12 @@ import {
 } from "../../../shared/channels/stage.ts";
 import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
 import { FakeShell } from "../../../test/fakes/shell.ts";
-import { testApp, testStages } from "../../testing.ts";
+import { PRO, testApp, testStages } from "../../testing.ts";
 import type { Profiles } from "../profiles/index.ts";
 import { Links } from "./index.ts";
 
 const setup = async () => {
-  const app = await testApp({
-    entitlement: () => ({
-      deviceLimit: 3,
-      expiresAt: null,
-      kind: "licensed",
-      plan: "pro",
-      seat: null,
-      source: "stored",
-    }),
-  });
+  const app = await testApp({ entitlement: () => PRO });
   const { profiles, settings, transport } = app;
   const shell = new FakeShell();
   const { stages, views, window } = testStages(app, {
