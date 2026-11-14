@@ -4,7 +4,6 @@ import { commands } from "./commands.ts";
 import { defineSurface } from "./define.ts";
 import type { Surface } from "./define.ts";
 import { dragPushes } from "./drag.ts";
-import { entitlement } from "./entitlement.ts";
 import { launcher } from "./launcher.ts";
 import { profiles, profilesPushes, tabs } from "./profiles.ts";
 import { settings, settingsPushes } from "./settings.ts";
@@ -22,17 +21,7 @@ export const chromeSurface = defineSurface({
     sidebarPushes,
     themePushes,
   ],
-  requests: [
-    stage,
-    settings,
-    commands,
-    entitlement,
-    { snapshot: updater.snapshot },
-    profiles,
-    tabs,
-    sidebar,
-    launcher,
-  ],
+  requests: [stage, settings, commands, profiles, tabs, sidebar, launcher],
 });
 
 export type ChromeSurface = typeof chromeSurface;

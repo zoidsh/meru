@@ -9,10 +9,14 @@ import type {
   TrayPort,
   TraySpec,
 } from "../../core/ports.ts";
+import { entitlementSchema } from "../../core/records/entitlement.ts";
 import { rectSchema } from "../../core/records/rect.ts";
+import { updateStateSchema } from "../../core/records/update.ts";
 import { commandIdSchema } from "../../shared/commands/registry.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
+import type { Entitlement } from "../features/entitlement/index.ts";
 import type { Stages } from "../features/stage/index.ts";
+import type { Updater } from "../features/updater/index.ts";
 
 /** The global under which a run with MERU_E2E=1 leaves its inspector, which the end-to-end suite calls through Playwright's `app.evaluate`, so no page is allowed a channel only a test needs. */
 export const E2E_GLOBAL = "meruE2e";
@@ -26,6 +30,10 @@ export const E2E_CLICK_NOTIFICATION = "meruE2eClickNotification";
 export const e2eSnapshotSchema = z.object({
   /** Every address a link sent to the browser, in order. */
   external: z.array(z.string()),
+  /** The entitlement main derived, which no page reads. */
+  entitlement: entitlementSchema,
+  /** The updater's state, which only the settings window reads. */
+  update: updateStateSchema,
   /** The count on the app's icon. */
   badge: z.number(),
   /** Every notification shown, in order. */
@@ -109,9 +117,11 @@ export const recordingDesktop = (): RecordingDesktop => {
   };
 };
 
-/** Leaves, as a JSON string under `E2E_GLOBAL`, what Electron holds for the first window's stage and the menu, and the links sent to the browser. */
+/** Leaves, as a JSON string under `E2E_GLOBAL`, what Electron holds for the first window's stage and the menu, the entitlement, the update state and the links sent to the browser. */
 export const exposeE2e = (options: {
   readonly stages: Pick<Stages, "all">;
+  readonly entitlement: Pick<Entitlement<unknown>, "current">;
+  readonly updater: Pick<Updater, "current">;
   readonly accelerators: () => Partial<Record<CommandId, string | null>>;
   readonly external: RecordingShell;
   readonly desktop: RecordingDesktop;
@@ -122,6 +132,7 @@ export const exposeE2e = (options: {
     const desktop = options.desktop.read();
     return {
       badge: desktop.badge,
+      entitlement: options.entitlement.current(),
       external: [...options.external.opened],
       notifications: [...desktop.notifications],
       tray:
@@ -129,6 +140,7 @@ export const exposeE2e = (options: {
           item.kind === "separator" ? "-" : item.label
         ) ?? null,
       menu: options.accelerators(),
+      update: options.updater.current(),
       panes:
         stage?.panes().map(({ tab, view }) => ({
           contentsId: view.contentsId,

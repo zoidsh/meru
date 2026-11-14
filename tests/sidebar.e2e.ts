@@ -196,7 +196,7 @@ test("shows a row of three profiles under a trial, and the menu's second profile
   const { app, chrome } = await launch({
     env: { MERU_ENTITLEMENT_URL: stub.url },
   });
-  await expect.poll(async () => await entitlementKindOf(chrome)).toBe("trial");
+  await expect.poll(async () => await entitlementKindOf(app)).toBe("trial");
   await invokeIn(chrome, profiles.create, { label: "Work" });
   await invokeIn(chrome, profiles.create, { label: "Club" });
   const buttons = chrome.locator("[data-profile-row] [data-profile-id]");

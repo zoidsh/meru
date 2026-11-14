@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { Page } from "@playwright/test";
+import type { ElectronApplication } from "@playwright/test";
 import { z } from "zod";
 
 import { ENTITLEMENT_FILE } from "../app/main/features/entitlement/index.ts";
@@ -45,25 +45,24 @@ test("holds the entitlement from a signed token, refreshed from the API and kept
 }) => {
   test.setTimeout(90_000);
   stub.answer(PRO_KEY, { deviceLimit: 3, kind: "pro" });
-  const run = async (url: string, check: (chrome: Page) => Promise<void>) => {
-    const { chrome, close } = await launch({
+  const run = async (
+    url: string,
+    check: (app: ElectronApplication) => Promise<void>
+  ) => {
+    const { app, close } = await launch({
       env: { MERU_ENTITLEMENT_URL: url },
     });
-    await check(chrome);
+    await check(app);
     await close();
   };
   // A fresh install shows the window before the API answers, then a trial.
   stub.hold();
-  await run(stub.url, async (chrome) => {
+  await run(stub.url, async (app) => {
     await expect.poll(() => stub.requests.length).toBe(1);
-    await expect
-      .poll(async () => await entitlementKindOf(chrome))
-      .toBe("unknown");
+    await expect.poll(async () => await entitlementKindOf(app)).toBe("unknown");
     stub.release();
-    await expect
-      .poll(async () => await entitlementKindOf(chrome))
-      .toBe("trial");
-    const entitlement = await entitlementOf(chrome);
+    await expect.poll(async () => await entitlementKindOf(app)).toBe("trial");
+    const entitlement = await entitlementOf(app);
     expect(entitlement).toMatchObject({ kind: "trial", source: "refreshed" });
   });
   const first = await readState(userData);
@@ -71,21 +70,19 @@ test("holds the entitlement from a signed token, refreshed from the API and kept
   expect(stub.requests).toStrictEqual([{ deviceId, licenseKey: null }]);
 
   // A token still valid starts the app with no network at all.
-  await run("http://127.0.0.1:1/", async (chrome) => {
-    await expect
-      .poll(async () => await entitlementKindOf(chrome))
-      .toBe("trial");
-    const entitlement = await entitlementOf(chrome);
+  await run("http://127.0.0.1:1/", async (app) => {
+    await expect.poll(async () => await entitlementKindOf(app)).toBe("trial");
+    const entitlement = await entitlementOf(app);
     expect(entitlement).toMatchObject({ kind: "trial", source: "stored" });
   });
 
   // A license key the token was not issued for is asked about at launch.
   await editState(userData, (data) => ({ ...data, licenseKey: PRO_KEY }));
-  await run(stub.url, async (chrome) => {
+  await run(stub.url, async (app) => {
     await expect
-      .poll(async () => await entitlementKindOf(chrome))
+      .poll(async () => await entitlementKindOf(app))
       .toBe("licensed");
-    const entitlement = await entitlementOf(chrome);
+    const entitlement = await entitlementOf(app);
     expect(entitlement).toMatchObject({ kind: "licensed", plan: "pro" });
   });
 
@@ -103,11 +100,11 @@ test("holds the entitlement from a signed token, refreshed from the API and kept
     ...data,
     token: { licenseKey: PRO_KEY, value: expired },
   }));
-  await run(stub.url, async (chrome) => {
+  await run(stub.url, async (app) => {
     await expect
-      .poll(async () => await entitlementKindOf(chrome))
+      .poll(async () => await entitlementKindOf(app))
       .toBe("disabled");
-    const entitlement = await entitlementOf(chrome);
+    const entitlement = await entitlementOf(app);
     expect(entitlement).toMatchObject({
       kind: "disabled",
       reason: "refunded",

@@ -31,12 +31,10 @@ import type {
   EntitlementSource,
 } from "../../../core/records/entitlement.ts";
 import { idSchema } from "../../../core/records/id.ts";
-import { err, ok } from "../../../core/result.ts";
+import { err } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { SnapshotSpec } from "../../../core/snapshot.ts";
 import { parseField } from "../../../core/values.ts";
-import type { IpcRegistrar } from "../../../shared/channels/define.ts";
-import { entitlement as channels } from "../../../shared/channels/entitlement.ts";
 
 export const ENTITLEMENT_FILE = "entitlement.json";
 
@@ -115,7 +113,6 @@ export interface EntitlementOptions<K> {
   readonly online: OnlinePort;
   readonly power: PowerPort;
   readonly events: AppEvents;
-  readonly registrar: IpcRegistrar;
   readonly subtle: Ed25519Subtle<K>;
   /** The accepted public keys by key id. */
   readonly keys: ReadonlyMap<string, K>;
@@ -177,18 +174,6 @@ export class Entitlement<K> {
     this.#derive();
   }
 
-  /** Answers pages from the value as it stands, before the window shows. */
-  attach(): void {
-    this.#disposables.add(
-      () => {
-        this.#store.dispose();
-      },
-      this.#options.registrar.register(channels, {
-        snapshot: () => ok(this.#value),
-      })
-    );
-  }
-
   /** Refreshes behind the window whenever the token has expired, never blocking and never asking the user. */
   start(): void {
     this.#started = true;
@@ -207,6 +192,7 @@ export class Entitlement<K> {
 
   dispose(): void {
     this.#disposables.dispose();
+    this.#store.dispose();
   }
 
   current(): EntitlementValue {

@@ -6,11 +6,9 @@ import { test as base, expect } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { E2E_GLOBAL, e2eSnapshotSchema } from "../app/main/shell/e2e.ts";
-import { entitlement } from "../app/shared/channels/entitlement.ts";
 import { profiles } from "../app/shared/channels/profiles.ts";
 import { settings } from "../app/shared/channels/settings.ts";
 import { stage } from "../app/shared/channels/stage.ts";
-import { updater } from "../app/shared/channels/updater.ts";
 import type { CommandId } from "../app/shared/commands/registry.ts";
 import {
   invokeIn,
@@ -114,16 +112,20 @@ export const stageOf = async (chrome: Page) =>
 export const profilesOf = async (chrome: Page) =>
   valueOf(await invokeIn(chrome, profiles.snapshot, {}));
 
-export const entitlementOf = async (chrome: Page) =>
-  valueOf(await invokeIn(chrome, entitlement.snapshot, {}));
+export const entitlementOf = async (app: ElectronApplication) => {
+  const { entitlement } = await inspect(app);
+  return entitlement;
+};
 
-export const entitlementKindOf = async (chrome: Page) => {
-  const { kind } = await entitlementOf(chrome);
+export const entitlementKindOf = async (app: ElectronApplication) => {
+  const { kind } = await entitlementOf(app);
   return kind;
 };
 
-export const updateOf = async (chrome: Page) =>
-  valueOf(await invokeIn(chrome, updater.snapshot, {}));
+export const updateOf = async (app: ElectronApplication) => {
+  const { update } = await inspect(app);
+  return update;
+};
 
 export const settingsOf = async (chrome: Page) =>
   valueOf(await invokeIn(chrome, settings.snapshot, {}));

@@ -123,11 +123,9 @@ const start = async () => {
     online: ports.online,
     power: ports.power,
     log: log.scoped("entitlement"),
-    registrar: dispatcher,
     subtle: crypto.subtle,
   });
   await entitlement.open();
-  entitlement.attach();
 
   const settings = new SettingsStore({
     lifecycle: ports.lifecycle,
@@ -303,9 +301,11 @@ const start = async () => {
     exposeE2e({
       accelerators: applicationAccelerators,
       desktop: recorded,
+      entitlement,
       external: externalLinks,
       sessions: ports.sessions,
       stages,
+      updater,
     });
   }
 

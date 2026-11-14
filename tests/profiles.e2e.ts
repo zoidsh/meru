@@ -3,8 +3,10 @@ import { invokeIn } from "../scripts/lib/app.ts";
 import { entitlementKindOf, expect, profilesOf, test } from "./app.ts";
 
 test("creates a second profile under a trial", async ({ launch, stub }) => {
-  const { chrome } = await launch({ env: { MERU_ENTITLEMENT_URL: stub.url } });
-  await expect.poll(async () => await entitlementKindOf(chrome)).toBe("trial");
+  const { app, chrome } = await launch({
+    env: { MERU_ENTITLEMENT_URL: stub.url },
+  });
+  await expect.poll(async () => await entitlementKindOf(app)).toBe("trial");
   expect(
     await invokeIn(chrome, profiles.create, { label: "Work" })
   ).toMatchObject({ ok: true, value: { label: "Work", order: 1 } });

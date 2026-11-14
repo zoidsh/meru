@@ -4,20 +4,15 @@ import type { Claims } from "../../../core/entitlement/token.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { AppEventMap } from "../../../core/events.ts";
 import { err, ok } from "../../../core/result.ts";
-import { wireName } from "../../../shared/channels/define.ts";
-import { entitlement as channels } from "../../../shared/channels/entitlement.ts";
-import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeEntitlementApi } from "../../../test/fakes/entitlement-api.ts";
 import type { Scripted } from "../../../test/fakes/entitlement-api.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
+import { FakeLog } from "../../../test/fakes/log.ts";
 import { FakeOnline } from "../../../test/fakes/online.ts";
 import { FakePower } from "../../../test/fakes/power.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
 import { ENTITLEMENT_FILE, Entitlement } from "./index.ts";
 import type { EntitlementState } from "./index.ts";
 
@@ -25,7 +20,6 @@ const DEVICE = "device-1";
 const KID = "test-1";
 const NOW = 1_800_000_000_000;
 const HOUR = 3_600_000;
-const PAGE = 7;
 
 const pair = await crypto.subtle.generateKey("Ed25519", false, [
   "sign",
@@ -93,12 +87,6 @@ const setup = async ({
   const api = new FakeEntitlementApi(answers);
   const network = new FakeOnline(online);
   const power = new FakePower();
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({
-    log: strictLog,
-    transport,
-  });
-  registrar.assign(PAGE, chromeSurface);
   const events = new AppEvents();
   const changed: AppEventMap["entitlement.changed"][] = [];
   events.on("entitlement.changed", (payload) => {
@@ -116,14 +104,11 @@ const setup = async ({
     online: network,
     log: log.scoped("entitlement"),
     power,
-    registrar,
     subtle: crypto.subtle,
   });
   await entitlement.open();
-  entitlement.attach();
   // Only what follows start() counts, so a value read from storage is not taken for a change.
   changed.length = 0;
-  transport.sent.length = 0;
   return {
     api,
     changed,
@@ -132,9 +117,7 @@ const setup = async ({
     fs,
     network,
     power,
-    registrar,
     log,
-    transport,
     stored: async (): Promise<unknown> => {
       await entitlement.flush();
       const text = fs.files.get(ENTITLEMENT_FILE);
@@ -488,15 +471,11 @@ describe(Entitlement, () => {
     await expect(stored()).resolves.toMatchObject({ data: { token: null } });
   });
 
-  it("answers a page's snapshot with the value as it stands", async () => {
-    const { registrar } = await setup({
+  it("derives the value from a stored token with no network", async () => {
+    const { entitlement } = await setup({
+      online: false,
       state: { token: { licenseKey: null, value: await mint() } },
     });
-    expect(
-      registrar.dispatch(PAGE, wireName(channels.snapshot), {})
-    ).toMatchObject({
-      ok: true,
-      value: { kind: "licensed" },
-    });
+    expect(entitlement.current()).toMatchObject({ kind: "licensed" });
   });
 });
