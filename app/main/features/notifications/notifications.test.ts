@@ -4,70 +4,22 @@ import { describe, expect, it } from "vitest";
 
 import { parseFeed } from "../../../core/engines/feed.ts";
 import { GMAIL_URL } from "../../../core/engines/inbox.ts";
-import { AppEvents } from "../../../core/events.ts";
 import { TWO_UNREAD } from "../../../core/fixtures/gmail-feeds.ts";
-import type { Entitlement } from "../../../core/records/entitlement.ts";
 import { gmail } from "../../../shared/apps.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
-import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeFs } from "../../../test/fakes/fs.ts";
-import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { strictLog } from "../../../test/fakes/log.ts";
 import { FakeNotifications } from "../../../test/fakes/notifications.ts";
-import { FakeSessions } from "../../../test/fakes/session.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { Profiles } from "../profiles/index.ts";
-import { SettingsStore } from "../settings/index.ts";
+import { PRO, testApp } from "../../testing.ts";
 import { Notifications } from "./index.ts";
-
-const PRO: Entitlement = {
-  deviceLimit: 3,
-  expiresAt: null,
-  kind: "licensed",
-  plan: "pro",
-  seat: null,
-  source: "stored",
-};
 
 const parsed = parseFeed(TWO_UNREAD);
 const entries = parsed.ok ? parsed.value.entries.toReversed() : [];
 const [older, newest] = entries;
 
 const setup = async () => {
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ log: strictLog, transport });
+  const { events, profiles, registrar, settings } = await testApp({
+    entitlement: () => PRO,
+  });
   registrar.assign(3, chromeSurface);
-  const lifecycle = new FakeLifecycle();
-  const clock = new FakeClock();
-  const events = new AppEvents();
-  const settings = new SettingsStore({
-    entitlement: () => PRO,
-    events,
-    lifecycle,
-    clock,
-    fs: new FakeFs(),
-    log: strictLog,
-    registrar,
-    watchFile: false,
-  });
-  const profiles = new Profiles({
-    commands: new CommandDispatcher(),
-    lifecycle,
-    clock,
-    entitlement: () => PRO,
-    events,
-    fs: new FakeFs(),
-    ids: fakeIds(),
-    log: strictLog,
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
-  });
-  await profiles.open();
-  profiles.start();
   const port = new FakeNotifications();
   const loaded: string[] = [];
   let shown = 0;
