@@ -245,6 +245,9 @@ importers:
       '@fontsource-variable/inter':
         specifier: 5.3.0
         version: 5.3.0
+      '@rgrove/parse-xml':
+        specifier: 5.0.0
+        version: 5.0.0
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -1100,6 +1103,10 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@rgrove/parse-xml@5.0.0':
+    resolution: {integrity: sha512-SgHFyisNAkS2ZbM8SCriUm1N0bxLiz0POKvpDeAtrnLrXaYG1PawNwu1rSjmE/vcVHbZzYWNgVP6xkep6R4uXg==}
+    engines: {node: '>=22.12.0'}
 
   '@rolldown/pluginutils@1.1.0':
     resolution: {integrity: sha512-K+NU2HDCEem4sClgHH4ZZXwdJeNFkJo+hRk479DIwdIviAPN2hFJH1KHHwg8CxHQXvi0M5XY4deTXINfIiSG6w==}
@@ -4568,6 +4575,8 @@ snapshots:
       react: 19.3.1
     optionalDependencies:
       '@types/react': 19.3.0
+
+  '@rgrove/parse-xml@5.0.0': {}
 
   '@rolldown/pluginutils@1.1.0': {}
 
