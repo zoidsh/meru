@@ -46,6 +46,14 @@ test("splits with the app picked in the launcher, drags the divider across the p
     "Split vertically with…"
   );
   expect(await panesOf(app)).toHaveLength(1);
+  // The launcher is a view over the whole window, above the pane only because it is the window's last child view.
+  const { width, height } = await chrome.evaluate<{
+    width: number;
+    height: number;
+  }>("({ width: innerWidth, height: innerHeight })");
+  await expect
+    .poll(async () => await viewsOf(app))
+    .toMatchObject([{}, { height, width, x: 0, y: 0 }]);
   await pickApp(app, "Calendar");
   // The views and the snapshot are two reads, and a window still settling after launch can lay out again between them, so they are read together until they agree.
   let split: Rect[] = [];
