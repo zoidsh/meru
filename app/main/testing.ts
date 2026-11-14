@@ -23,7 +23,7 @@ import { CommandDispatcher } from "./shell/commands.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
 import { ShortcutKeys } from "./shell/keys.ts";
 
-export const UNKNOWN: Entitlement = {
+const UNKNOWN: Entitlement = {
   expiresAt: null,
   kind: "unknown",
   source: "stored",
