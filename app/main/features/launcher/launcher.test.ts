@@ -1,90 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { launcher } from "../../../shared/channels/launcher.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
-import { commands as allCommands } from "../../../shared/commands/registry.ts";
-import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeFs } from "../../../test/fakes/fs.ts";
-import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { strictLog } from "../../../test/fakes/log.ts";
-import { FakeSessions } from "../../../test/fakes/session.ts";
-import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
-import { FakeWindow } from "../../../test/fakes/window.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { ShortcutKeys } from "../../shell/keys.ts";
-import { Profiles } from "../profiles/index.ts";
-import { SettingsStore } from "../settings/index.ts";
-import { Stages } from "../stage/index.ts";
+import { testApp, testStages } from "../../testing.ts";
 import { Launcher } from "./index.ts";
 
 const setup = async () => {
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ log: strictLog, transport });
-  const lifecycle = new FakeLifecycle();
-  const clock = new FakeClock();
-  const settings = new SettingsStore({
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events: new AppEvents(),
-    clock,
-    fs: new FakeFs(),
-    lifecycle,
-    log: strictLog,
-    registrar,
-    watchFile: false,
-  });
-  const events = new AppEvents();
-  const commands = new CommandDispatcher();
-  const profiles = new Profiles({
-    clock,
-    commands,
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events,
-    fs: new FakeFs(),
-    ids: fakeIds(),
-    lifecycle,
-    log: strictLog,
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
-  });
-  await profiles.open();
-  const views = new FakeViewFactory();
-  const stages = new Stages({
-    onOpen: () => false,
-    onPopup: () => true,
+  const app = await testApp();
+  const { commands, events, registrar, transport } = app;
+  const { stage, stages, views, window } = testStages(app, {
     onSplitRequested: (windowId, orientation) => {
       launcherOf.open(windowId, orientation);
     },
-    keys: new ShortcutKeys({
-      commands: allCommands,
-      dispatcher: commands,
-      platform: "darwin",
-      log: strictLog,
-      settings,
-    }),
-    blankPanes: true,
-    commands,
-    dragPreload: undefined,
-    events,
-    insets: () => ({ left: 0, top: 0 }),
-    log: strictLog,
-    overlayPreload: "renderer.cjs",
-    profiles,
-    registrar,
-    settings,
-    tabDragUrl: (tab) =>
-      `overlay.html?${new URLSearchParams({ appId: tab.appId, kind: "tabDrag", tabId: tab.id }).toString()}`,
-    views,
   });
-  stages.start();
-  const window = new FakeWindow(1200, 800);
-  registrar.assign(window.contentsId, chromeSurface);
-  const stage = stages.open(window, () => profiles.currentGroup()?.id);
   const launcherOf = new Launcher({
     commands,
     overlayUrl: (kind, query) =>
