@@ -42,6 +42,10 @@ describe(defineCommands, () => {
 describe("the command registry", () => {
   it("holds every feature's commands, each once", () => {
     expectTypeOf<CommandId>().toEqualTypeOf<
+      | "gmail.editUserStyles"
+      | "gmail.revealUserStyles"
+      | "google.toggleMeetCamera"
+      | "google.toggleMeetMicrophone"
       | "profiles.next"
       | "profiles.previous"
       | "profiles.select1"

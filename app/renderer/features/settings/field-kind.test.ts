@@ -27,11 +27,11 @@ describe(fieldKindOf, () => {
     ]);
   });
 
-  it("finds a field for every setting but the shortcuts page's bindings, which it edits with its own control", () => {
+  it("finds a field for every setting but the ones its own page's control edits", () => {
     expect(
       registry
         .filter((setting) => fieldKindOf(setting.schema).kind === "bespoke")
         .map((setting) => setting.key)
-    ).toStrictEqual(["shortcuts.bindings"]);
+    ).toStrictEqual(["gmail.labelColors", "shortcuts.bindings"]);
   });
 });

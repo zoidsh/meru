@@ -19,6 +19,19 @@ import { useSettingsClient } from "./use-settings-client.ts";
 const appliesOn = (setting: Setting, platform: Platform) =>
   setting.platforms?.some((found) => found === platform) ?? true;
 
+const Contents = ({
+  page,
+  below,
+}: {
+  readonly page: SettingsPageId;
+  readonly below: boolean;
+}) =>
+  pageContents
+    .filter(
+      (content) => content.page === page && (content.below ?? false) === below
+    )
+    .map(({ page: id, Content }) => <Content key={id} />);
+
 const Fields = ({ page }: { readonly page: SettingsPageId }) => {
   const { platform } = useSettingsClient();
   // A list is as wide as the page and as long as it holds, so it comes after the fields that sit on one line.
@@ -104,12 +117,9 @@ export const SettingsWindow = () => {
             <h1 className="text-2xl font-semibold" data-page={page.id}>
               {page.label}
             </h1>
-            {pageContents
-              .filter((content) => content.page === page.id)
-              .map(({ page: id, Content }) => (
-                <Content key={id} />
-              ))}
+            <Contents below={false} page={page.id} />
             <Fields page={page.id} />
+            <Contents below page={page.id} />
           </div>
         </main>
       </div>

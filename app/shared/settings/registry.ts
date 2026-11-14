@@ -13,6 +13,10 @@ import {
   appearanceSettings,
 } from "../../main/features/appearance/settings.ts";
 import {
+  gmailPage,
+  gmailSettings,
+} from "../../main/features/gmail/settings.ts";
+import {
   inboxPage,
   inboxSettings,
 } from "../../main/features/inbox/settings.ts";
@@ -49,6 +53,7 @@ import type { Setting } from "./define.ts";
 
 const pages = [
   appearancePage,
+  gmailPage,
   inboxPage,
   panesPage,
   profilesPage,
@@ -67,6 +72,7 @@ export const settingsPages = sortBy(pages, [(page) => page.order]);
 
 export const registry = [
   ...appearanceSettings,
+  ...gmailSettings,
   ...inboxSettings,
   ...launcherSettings,
   ...linksSettings,

@@ -27,6 +27,12 @@ describe("the settings registry", () => {
     >();
     expectTypeOf<SettingKey>().toEqualTypeOf<
       | "appearance.style"
+      | "gmail.hideGmailLogo"
+      | "gmail.hidePromoBanner"
+      | "gmail.hideUpgradeButton"
+      | "gmail.labelColors"
+      | "gmail.reverseConversation"
+      | "gmail.showTrimmedContent"
       | "inbox.countUnread"
       | "inbox.unreadBadge"
       | "launcher.apps"

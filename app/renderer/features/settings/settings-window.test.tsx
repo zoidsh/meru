@@ -104,6 +104,7 @@ describe(SettingsWindow, () => {
       pages: [
         "Profiles",
         "Inbox",
+        "Gmail",
         "Appearance",
         "Panes",
         "Sleep",

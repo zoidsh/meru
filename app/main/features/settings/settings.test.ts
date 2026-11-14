@@ -329,6 +329,11 @@ describe("a Pro setting", () => {
       false,
       [
         [
+          { key: "gmail.hidePromoBanner", profileId: null },
+          { key: "gmail.hideUpgradeButton", profileId: null },
+          { key: "gmail.reverseConversation", profileId: null },
+          { key: "gmail.showTrimmedContent", profileId: null },
+          { key: "gmail.labelColors", profileId: null },
           { key: "links.openInApp", profileId: null },
           { key: "links.excludedApps", profileId: null },
           { key: "notifications.newEmails", profileId: null },
@@ -379,6 +384,11 @@ describe("a Pro setting", () => {
     entitle(LICENSED);
     expect(changes).toStrictEqual([
       [
+        { key: "gmail.hidePromoBanner", profileId: null },
+        { key: "gmail.hideUpgradeButton", profileId: null },
+        { key: "gmail.reverseConversation", profileId: null },
+        { key: "gmail.showTrimmedContent", profileId: null },
+        { key: "gmail.labelColors", profileId: null },
         { key: "links.openInApp", profileId: null },
         { key: "links.excludedApps", profileId: null },
         { key: "notifications.newEmails", profileId: null },
