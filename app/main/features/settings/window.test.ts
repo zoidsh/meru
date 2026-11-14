@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { themeOf } from "../../../core/ports.ts";
 import type { WindowSpec } from "../../../core/ports.ts";
+import { wireName } from "../../../shared/channels/define.ts";
 import { settingsPushes } from "../../../shared/channels/settings.ts";
+import { shortcuts } from "../../../shared/channels/shortcuts.ts";
 import { FakeDisplays } from "../../../test/fakes/display.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
@@ -111,9 +113,13 @@ describe(SettingsWindow, () => {
     await settings.open();
     const [window] = created;
     const record = (recording: boolean) =>
-      registrar.dispatch(window?.contentsId ?? 0, "shortcuts.recording", {
-        recording,
-      }).ok;
+      registrar.dispatch(
+        window?.contentsId ?? 0,
+        wireName(shortcuts.recording),
+        {
+          recording,
+        }
+      ).ok;
     const started = [record(true), window?.ignoresMenuShortcuts];
     expect([
       ...started,
