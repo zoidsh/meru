@@ -541,10 +541,7 @@ export class Profiles {
     if (next.value.selectedProfileId !== before.selectedProfileId) {
       const group = this.currentGroup(next.value.selectedProfileId);
       if (group !== undefined) {
-        events.emit("profile.selected", {
-          groupId: group.id,
-          profileId: next.value.selectedProfileId,
-        });
+        events.emit("profile.selected", { groupId: group.id });
       }
     }
     if (!isEqual(before.profiles, next.value.profiles)) {

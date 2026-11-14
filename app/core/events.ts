@@ -19,10 +19,7 @@ export interface AppEventMap {
   /** A profile was added, removed or edited, or the entitlement changed which are deactivated; a status the feed reports is not a change here. */
   readonly "profiles.changed": null;
   /** Another profile is selected, showing `groupId` in the main window. */
-  readonly "profile.selected": {
-    readonly profileId: string;
-    readonly groupId: string;
-  };
+  readonly "profile.selected": { readonly groupId: string };
   /** A tab was asked to come to the front: the main window shows its group, with its pane focused. */
   readonly "tab.focused": { readonly tabId: string; readonly groupId: string };
   /** A group, a tab or the group a window shows may have changed, so every stage reads its group again. */

@@ -212,8 +212,8 @@ describe(Profiles, () => {
     unwrap(profiles.selectProfile(created.id));
     unwrap(profiles.removeProfile(created.id));
     expect(selected).toStrictEqual([
-      { groupId: createdGroup, profileId: created.id },
-      { groupId: profiles.currentGroup(first.id)?.id, profileId: first.id },
+      { groupId: createdGroup },
+      { groupId: profiles.currentGroup(first.id)?.id },
     ]);
     expect(profiles.selectProfile("missing")).toStrictEqual({
       error: "unknownProfile",
