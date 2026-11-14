@@ -17,7 +17,7 @@ const setup = async () => {
   const app = await testApp({ entitlement: () => PRO });
   const { profiles, settings, transport } = app;
   const shell = new FakeShell();
-  const { stages, views, window } = testStages(app, {
+  const { open, stages, views } = testStages(app, {
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
     onPopup: (url) => links.popup(url),
   });
@@ -28,6 +28,7 @@ const setup = async () => {
     shell,
     stages,
   });
+  const { window } = open();
   const changes = (): StageSnapshot[] =>
     transport.sent
       .filter((pushed) => pushed.channel === wireName(stagePushes.changed))

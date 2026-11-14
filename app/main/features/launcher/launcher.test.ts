@@ -9,7 +9,7 @@ import { Launcher } from "./index.ts";
 const setup = async () => {
   const app = await testApp();
   const { commands, events, registrar, transport } = app;
-  const { stage, stages, views, window } = testStages(app, {
+  const { open, stages, views } = testStages(app, {
     onSplitRequested: (windowId, orientation) => {
       launcherOf.open(windowId, orientation);
     },
@@ -21,6 +21,7 @@ const setup = async () => {
     registrar,
     stages,
   });
+  const { stage, window } = open();
   launcherOf.start();
   return { commands, events, registrar, stage, transport, views, window };
 };

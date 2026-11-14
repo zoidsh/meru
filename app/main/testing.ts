@@ -107,7 +107,7 @@ export const testApp = async ({
 
 export type TestApp = Awaited<ReturnType<typeof testApp>>;
 
-/** The stages over a test app, started, with one window of 1200 by 800 that shows the group of the tab last focused, as the windows feature has it. */
+/** The stages over a test app, and `open`, which starts them with one window of 1200 by 800 that shows the group of the tab last focused, as the windows feature has it, once the test has built what must hear them first. */
 export const testStages = (
   app: TestApp,
   options: Partial<StagesOptions> = {}
@@ -145,9 +145,15 @@ export const testStages = (
     views,
     ...options,
   });
-  stages.start();
-  const window = new FakeWindow(1200, 800);
-  registrar.assign(window.contentsId, chromeSurface);
-  const stage = stages.open(window, () => shown ?? profiles.currentGroup()?.id);
-  return { stage, stages, views, window };
+  const open = () => {
+    stages.start();
+    const window = new FakeWindow(1200, 800);
+    registrar.assign(window.contentsId, chromeSurface);
+    const stage = stages.open(
+      window,
+      () => shown ?? profiles.currentGroup()?.id
+    );
+    return { stage, window };
+  };
+  return { open, stages, views };
 };
