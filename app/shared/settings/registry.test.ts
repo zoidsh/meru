@@ -17,21 +17,38 @@ describe("the settings registry", () => {
     expect(entry.schema.safeParse(entry.default).success).toBeTruthy();
   });
 
-  it("lets a profile override only what is about its own page", () => {
+  it("lets a profile override only what is about its own page or mail", () => {
     expectTypeOf<ProfileSettingKey>().toEqualTypeOf<
-      "sidebar.width" | "stage.zoom"
+      | "inbox.countUnread"
+      | "notifications.enabled"
+      | "notifications.newEmails"
+      | "sidebar.width"
+      | "stage.zoom"
     >();
     expectTypeOf<SettingKey>().toEqualTypeOf<
       | "appearance.style"
+      | "inbox.countUnread"
+      | "inbox.dockBadge"
       | "launcher.apps"
       | "links.excludedApps"
       | "links.openInApp"
+      | "notifications.enabled"
+      | "notifications.newEmails"
+      | "notifications.playSound"
+      | "notifications.showSender"
+      | "notifications.showSubject"
+      | "notifications.showSummary"
       | "profiles.unreadBadge"
       | "shortcuts.bindings"
       | "sidebar.gmailUnreadBadge"
       | "sidebar.showWidthToggle"
       | "sidebar.width"
       | "stage.zoom"
+      | "tray.enabled"
+      | "tray.iconColor"
+      | "tray.menuBar"
+      | "tray.selectUnread"
+      | "tray.unreadCount"
       | "updater.channel"
       | "updater.intervalHours"
       | "window.linuxControls"

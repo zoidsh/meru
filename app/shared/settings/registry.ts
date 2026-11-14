@@ -12,8 +12,13 @@ import {
   appearancePage,
   appearanceSettings,
 } from "../../main/features/appearance/settings.ts";
+import {
+  inboxPage,
+  inboxSettings,
+} from "../../main/features/inbox/settings.ts";
 import { launcherSettings } from "../../main/features/launcher/settings.ts";
 import { linksSettings } from "../../main/features/links/settings.ts";
+import { notificationsSettings } from "../../main/features/notifications/settings.ts";
 import {
   profilesPage,
   profilesSettings,
@@ -30,6 +35,7 @@ import {
   panesPage,
   stageSettings,
 } from "../../main/features/stage/settings.ts";
+import { traySettings } from "../../main/features/tray/settings.ts";
 import {
   updaterSettings,
   updatesPage,
@@ -39,6 +45,7 @@ import type { Setting } from "./define.ts";
 
 const pages = [
   appearancePage,
+  inboxPage,
   panesPage,
   profilesPage,
   shortcutsPage,
@@ -55,12 +62,15 @@ export const settingsPages = sortBy(pages, [(page) => page.order]);
 
 export const registry = [
   ...appearanceSettings,
+  ...inboxSettings,
   ...launcherSettings,
   ...linksSettings,
+  ...notificationsSettings,
   ...profilesSettings,
   ...shortcutsSettings,
   ...sidebarSettings,
   ...stageSettings,
+  ...traySettings,
   ...updaterSettings,
   ...windowsSettings,
 ] as const satisfies readonly Setting<

@@ -331,6 +331,7 @@ describe("a Pro setting", () => {
         [
           { key: "links.openInApp", profileId: null },
           { key: "links.excludedApps", profileId: null },
+          { key: "notifications.newEmails", profileId: null },
         ],
       ],
     ]);
@@ -379,6 +380,7 @@ describe("a Pro setting", () => {
       [
         { key: "links.openInApp", profileId: null },
         { key: "links.excludedApps", profileId: null },
+        { key: "notifications.newEmails", profileId: null },
       ],
     ]);
   });

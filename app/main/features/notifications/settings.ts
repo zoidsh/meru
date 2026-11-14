@@ -1,0 +1,70 @@
+import { z } from "zod";
+
+import { msg } from "../../../shared/msg.ts";
+import { defineSetting } from "../../../shared/settings/define.ts";
+
+export const notificationsSettings = [
+  defineSetting("notifications.enabled", {
+    default: true,
+    description: msg`Show a notification for each new email.`,
+    label: msg`New emails`,
+    page: "inbox",
+    section: msg`Notifications`,
+    restart: false,
+    schema: z.boolean(),
+    scope: "profile",
+    tier: "free",
+  }),
+  defineSetting("notifications.newEmails", {
+    default: "all",
+    description: msg`Notify about every new email, or only those Gmail marks important.`,
+    label: msg`Notify about`,
+    options: { all: msg`All new emails`, important: msg`Important emails` },
+    page: "inbox",
+    section: msg`Notifications`,
+    restart: false,
+    schema: z.enum(["all", "important"]),
+    scope: "profile",
+    tier: "pro",
+  }),
+  defineSetting("notifications.showSender", {
+    default: true,
+    label: msg`Show sender`,
+    page: "inbox",
+    section: msg`Notifications`,
+    restart: false,
+    schema: z.boolean(),
+    scope: "global",
+    tier: "free",
+  }),
+  defineSetting("notifications.showSubject", {
+    default: true,
+    label: msg`Show subject`,
+    page: "inbox",
+    section: msg`Notifications`,
+    restart: false,
+    schema: z.boolean(),
+    scope: "global",
+    tier: "free",
+  }),
+  defineSetting("notifications.showSummary", {
+    default: true,
+    label: msg`Show summary`,
+    page: "inbox",
+    section: msg`Notifications`,
+    restart: false,
+    schema: z.boolean(),
+    scope: "global",
+    tier: "free",
+  }),
+  defineSetting("notifications.playSound", {
+    default: true,
+    label: msg`Play sound`,
+    page: "inbox",
+    section: msg`Notifications`,
+    restart: false,
+    schema: z.boolean(),
+    scope: "global",
+    tier: "free",
+  }),
+] as const;

@@ -109,6 +109,7 @@ describe(SettingsWindow, () => {
       hash: "#/sidebar",
       pages: [
         "Profiles",
+        "Inbox",
         "Appearance",
         "Panes",
         "Shortcuts",
