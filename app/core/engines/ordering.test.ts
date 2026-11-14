@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { random } from "../../test/random.ts";
 import type { Group } from "../records/group.ts";
 import type { LayoutNode } from "../records/layout.ts";
 import type { Profile } from "../records/profile.ts";
@@ -9,7 +10,6 @@ import {
   besideTab,
   groupOf,
   moveItem,
-  moveProfile,
   moveTab,
   orderedProfiles,
   orderedTabs,
@@ -94,17 +94,9 @@ const groupWith = (id: string, profileId: string, tabIds: string[]): Group => ({
   tabIds,
 });
 
-// Deterministic, so a failing seed fails the same way on every run.
-const random = (seed: number) => {
-  let state = seed;
-  return (below: number) => {
-    state = (state * 1_103_515_245 + 12_345) % 2_147_483_648;
-    return state % below;
-  };
-};
-
 const randomState = (seed: number) => {
-  const pick = random(seed);
+  const draw = random(seed);
+  const pick = (below: number) => Math.floor(draw() * below);
   const profileIds = ["a", "b", "c"].slice(0, 1 + pick(3));
   const count = pick(12);
   const tabs: Tab[] = Array.from({ length: count }, (_, index) =>
@@ -281,33 +273,6 @@ describe(orderedProfiles, () => {
         ])
       )
     ).toStrictEqual(["a", "b", "c"]);
-  });
-});
-
-describe(moveProfile, () => {
-  const profiles = [profileOf("a", 0), profileOf("b", 4), profileOf("c", 9)];
-
-  it("moves a profile and numbers the orders from 0", () => {
-    expect(moveProfile(profiles, "c", 0)).toStrictEqual([
-      profileOf("c", 0),
-      profileOf("a", 1),
-      profileOf("b", 2),
-    ]);
-  });
-
-  it("clamps across the end and is stable under a no-op move", () => {
-    expect(moveProfile(profiles, "a", 99)).toStrictEqual(
-      moveProfile(profiles, "a", 2)
-    );
-    expect(moveProfile(profiles, "b", -3)).toStrictEqual(
-      moveProfile(profiles, "b", 0)
-    );
-    expect(idsOf(moveProfile(profiles, "b", 1))).toStrictEqual(["a", "b", "c"]);
-    expect(idsOf(moveProfile(profiles, "missing", 0))).toStrictEqual([
-      "a",
-      "b",
-      "c",
-    ]);
   });
 });
 

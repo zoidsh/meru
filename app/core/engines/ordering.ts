@@ -131,15 +131,3 @@ export const moveTab = (
     tab.profileId === moving.profileId ? (reordered.next().value ?? tab) : tab
   );
 };
-
-/** Moves a profile to position `to`, clamped, and numbers every profile's order from 0. */
-export const moveProfile = (
-  profiles: readonly Profile[],
-  profileId: string,
-  to: number
-): Profile[] => {
-  const ordered = orderedProfiles(profiles);
-  const from = ordered.findIndex((profile) => profile.id === profileId);
-  const moved = from === -1 ? ordered : moveItem(ordered, from, to);
-  return moved.map((profile, order) => ({ ...profile, order }));
-};
