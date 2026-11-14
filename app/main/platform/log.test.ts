@@ -10,6 +10,11 @@ import { createFileLog, LOG_FILE, OLD_LOG_FILE } from "./log.ts";
 
 const messageSchema = z.object({ message: z.string() });
 
+const droppedSchema = z.object({
+  fields: z.object({ dropped: z.number() }).optional(),
+  message: z.string(),
+});
+
 const made: string[] = [];
 
 const directory = async () => {
@@ -54,6 +59,36 @@ describe(createFileLog, () => {
       current: await lines(path.join(logs, LOG_FILE)),
       old: await lines(path.join(logs, OLD_LOG_FILE)),
     }).toStrictEqual({ current: ["three"], old: ["one", "two"] });
+  });
+
+  it("keeps at most the queue's cap of lines waiting, dropping the oldest and saying how many went", async () => {
+    const logs = await directory();
+    const log = createFileLog({
+      directory: logs,
+      minimum: "info",
+      mirror: false,
+      queueCap: 3,
+    });
+    const flood = log.scoped("flood");
+    for (const message of ["1", "2", "3", "4", "5"]) {
+      flood.info(message);
+    }
+    await log.flush();
+    const text = await readFile(path.join(logs, LOG_FILE), "utf-8");
+    expect(
+      text
+        .trim()
+        .split("\n")
+        .map((line) => droppedSchema.parse(JSON.parse(line)))
+    ).toStrictEqual([
+      {
+        fields: { dropped: 2 },
+        message: "Lines were dropped while the log fell behind",
+      },
+      { message: "3" },
+      { message: "4" },
+      { message: "5" },
+    ]);
   });
 
   it("settles a flush only once the lines written while it waits are on disk too", async () => {
