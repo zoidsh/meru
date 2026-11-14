@@ -63,7 +63,7 @@ export class Tray {
       events.on("inbox.changed", () => {
         this.#render();
       }),
-      events.on("stage.invalidated", () => {
+      events.on("profiles.changed", () => {
         this.#render();
       }),
       settings.subscribe((changes) => {

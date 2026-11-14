@@ -200,4 +200,21 @@ describe(Tray, () => {
       true,
     ]);
   });
+
+  it("renames a profile's item when the profile is renamed, and keeps the menu as it was when only a tab changes", async () => {
+    const { port, profiles, work } = await setup("linux");
+    const before = port.spec;
+    profiles.addTab(work, "calendar");
+    const unchanged = port.spec === before;
+    profiles.updateProfile(work, { label: "Office" });
+    expect([
+      unchanged,
+      port.spec?.menu.map((item) =>
+        item.kind === "separator" ? "-" : item.label
+      ),
+    ]).toStrictEqual([
+      true,
+      ["Personal", "Office (2)", "-", "Hide Meru", "-", "Quit"],
+    ]);
+  });
 });

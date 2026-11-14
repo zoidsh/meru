@@ -16,6 +16,8 @@ export interface AppEventMap {
   };
   /** Something a menu item shows, such as whether it is enabled, may have changed. */
   readonly "menu.invalidated": null;
+  /** A profile was added, removed or edited, or the entitlement changed which are deactivated; a status the feed reports is not a change here. */
+  readonly "profiles.changed": null;
   /** Another profile is selected, showing `groupId` in the main window. */
   readonly "profile.selected": {
     readonly profileId: string;
@@ -45,6 +47,7 @@ export class AppEvents {
     "mail.arrived": new Set(),
     "menu.invalidated": new Set(),
     "profile.selected": new Set(),
+    "profiles.changed": new Set(),
     "sidebar.changed": new Set(),
     "split.requested": new Set(),
     "stage.invalidated": new Set(),

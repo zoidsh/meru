@@ -200,6 +200,7 @@ export class Profiles {
         this.#entitlement = entitlement;
         this.#reselect();
         this.#publish();
+        events.emit("profiles.changed", null);
       })
     );
   }
@@ -518,12 +519,12 @@ export class Profiles {
       });
       return err("invalid");
     }
-    const before = this.state.selectedProfileId;
+    const before = this.state;
     this.#state = next.value;
     this.#store.write(next.value);
     this.#publish();
     const { events } = this.#options;
-    if (next.value.selectedProfileId !== before) {
+    if (next.value.selectedProfileId !== before.selectedProfileId) {
       const group = this.currentGroup(next.value.selectedProfileId);
       if (group !== undefined) {
         events.emit("profile.selected", {
@@ -531,6 +532,9 @@ export class Profiles {
           profileId: next.value.selectedProfileId,
         });
       }
+    }
+    if (!isEqual(before.profiles, next.value.profiles)) {
+      events.emit("profiles.changed", null);
     }
     events.emit("stage.invalidated", null);
     return ok(undefined);

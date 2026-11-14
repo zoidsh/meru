@@ -76,10 +76,7 @@ export class Inbox {
   start(): void {
     const { events, online, power } = this.#options;
     this.#disposables.add(
-      events.on("stage.invalidated", () => {
-        this.#follow();
-      }),
-      events.on("entitlement.changed", () => {
+      events.on("profiles.changed", () => {
         this.#follow();
       }),
       online.onChange((isOnline) => {
