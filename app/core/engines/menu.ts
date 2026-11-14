@@ -23,6 +23,9 @@ const MAC_APP_ROLES: readonly MenuEntry<never>[] = [
   { kind: "separator" },
 ];
 
+const checkOf = (checked: boolean | undefined) =>
+  checked === undefined ? {} : { checked };
+
 export interface MenuCommand<Id extends string> {
   readonly id: Id;
   readonly label: string;
@@ -41,6 +44,8 @@ export interface MenuOptions<Id extends string> {
   readonly labels: MenuLabels;
   /** Whether a command can run now; the menu shows one that cannot disabled. */
   readonly enabled: (id: Id) => boolean;
+  /** Whether a toggle command is on now; undefined for a command that is no toggle. */
+  readonly checked?: (id: Id) => boolean | undefined;
   readonly run: (id: Id, windowId: number) => void;
 }
 
@@ -51,6 +56,7 @@ export const buildMenu = <Id extends string>({
   bindings,
   labels,
   enabled,
+  checked,
   run,
 }: MenuOptions<Id>): MenuSection<Id>[] => {
   const actions = (section: MenuSectionId): MenuEntry<Id>[] =>
@@ -63,6 +69,7 @@ export const buildMenu = <Id extends string>({
       .toSorted((a, b) => a.order - b.order)
       .map(({ command }) => ({
         accelerator: bindings.get(command.id) ?? undefined,
+        ...checkOf(checked?.(command.id)),
         enabled: enabled(command.id),
         id: command.id,
         kind: "action",

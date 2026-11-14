@@ -126,6 +126,11 @@ export class MainWindow {
     return window;
   }
 
+  /** The window's chrome page, by which commands name it, while it is open. */
+  contentsId(): number | undefined {
+    return this.#window?.contentsId;
+  }
+
   /** Whether the window is open and shown. */
   visible(): boolean {
     return this.#window?.isVisible() ?? false;

@@ -33,6 +33,9 @@ const entry = (item: MenuEntry<CommandId>): MenuItemConstructorOptions => {
     enabled: item.enabled,
     id: item.id,
     label: item.label,
+    ...(item.checked === undefined
+      ? {}
+      : { checked: item.checked, type: "checkbox" }),
   };
 };
 

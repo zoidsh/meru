@@ -79,6 +79,8 @@ export type CommandHandler = (
 export interface GuardedHandler {
   readonly run: CommandHandler;
   readonly when: (context: CommandContext) => boolean;
+  /** Whether the command, a toggle, is on; the menu shows it with a check mark. */
+  readonly checked?: (context: CommandContext) => boolean;
 }
 
 export type CommandHandlers<C extends CommandSpecs> = {

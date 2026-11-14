@@ -259,6 +259,7 @@ const start = async () => {
   const sleepMinute = Number(process.env.MERU_SLEEP_MINUTE);
   const sleep = new Sleep({
     clock: ports.clock,
+    windowId: () => window.contentsId(),
     commands,
     events,
     ...(ports.lifecycle.packaged || !(sleepMinute > 0)
@@ -295,16 +296,6 @@ const start = async () => {
     updater: createElectronUpdater(),
   });
   updater.attach();
-
-  new ApplicationMenu({
-    apply: setApplicationMenu,
-    commands: allCommands,
-    dispatcher: commands,
-    events,
-    platform: ports.lifecycle.platform,
-    log: log.scoped("menu"),
-    settings,
-  }).start();
 
   if (measure) {
     exposeMeasure({ stages });
@@ -347,6 +338,16 @@ const start = async () => {
     registrar: dispatcher,
     surface: "chrome",
   });
+  new ApplicationMenu({
+    apply: setApplicationMenu,
+    commands: allCommands,
+    dispatcher: commands,
+    events,
+    platform: ports.lifecycle.platform,
+    log: log.scoped("menu"),
+    settings,
+    windowId: () => window.contentsId(),
+  }).start();
   new Appearance({
     registrar: dispatcher,
     theme: ports.theme,

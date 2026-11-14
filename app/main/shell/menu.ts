@@ -14,7 +14,9 @@ import type { CommandDispatcher } from "./commands.ts";
 export interface ApplicationMenuOptions {
   readonly platform: string;
   readonly commands: readonly Command<CommandId>[];
-  readonly dispatcher: Pick<CommandDispatcher, "run" | "enabled">;
+  readonly dispatcher: Pick<CommandDispatcher, "run" | "enabled" | "checked">;
+  /** The window the menu asks about, whose state an item such as a toggle shows: the main window, once it is open. */
+  readonly windowId?: () => number | undefined;
   /** Rebuilds the menu when a command's `when` may have changed. */
   readonly events: Pick<AppEvents, "on">;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
@@ -77,7 +79,8 @@ export class ApplicationMenu {
         bindings,
         commands,
         labels: labels(),
-        enabled: (id) => dispatcher.enabled(id),
+        checked: (id) => dispatcher.checked(id, this.#options.windowId?.()),
+        enabled: (id) => dispatcher.enabled(id, this.#options.windowId?.()),
         platform,
         run: (id, windowId) => {
           const result = dispatcher.run(id, { windowId });

@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 
+import type { MenuSection } from "../../../core/records/menu.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import {
   profilesPushes,
   profilesSnapshotSchema,
 } from "../../../shared/channels/profiles.ts";
+import { commands as allCommands } from "../../../shared/commands/registry.ts";
+import type { CommandId } from "../../../shared/commands/registry.ts";
+import { strictLog } from "../../../test/fakes/log.ts";
 import { unwrap } from "../../../test/result.ts";
+import { ApplicationMenu } from "../../shell/menu.ts";
 import { testApp, testStages } from "../../testing.ts";
 import { Sleep } from "./index.ts";
 
@@ -17,8 +22,10 @@ const setup = async () => {
   const { open, stages, views } = testStages(app, {
     historyOf: (tabId) => sleep.historyOf(tabId),
   });
+  let windowId: number | undefined;
   const sleep = new Sleep({
     clock,
+    windowId: () => windowId,
     commands,
     events,
     profiles,
@@ -28,6 +35,7 @@ const setup = async () => {
   // Started ahead of the stages, the other way round from the app's root, so a sweep cannot rely on the stages having heard a change first.
   sleep.start();
   const { window } = open();
+  windowId = window.contentsId;
   const [gmail] = profiles.state.tabs;
   if (gmail === undefined) {
     throw new Error("A first launch has a Gmail tab");
@@ -54,6 +62,7 @@ const setup = async () => {
     asleep,
     clock,
     commands,
+    events,
     drive,
     gmail,
     profiles,
@@ -143,6 +152,44 @@ describe(Sleep, () => {
         "https://drive.google.com/drive/folders/abc",
       ]
     );
+  });
+
+  it("shows the focused tab's leave to sleep as a check in the menu, rebuilt when it is toggled or another tab is focused", async () => {
+    const { commands, drive, events, gmail, settings, show, window } =
+      await setup();
+    let built: readonly MenuSection<CommandId>[] = [];
+    new ApplicationMenu({
+      apply: (sections) => {
+        built = sections;
+      },
+      commands: allCommands,
+      dispatcher: commands,
+      events,
+      log: strictLog,
+      platform: "darwin",
+      settings,
+      windowId: () => window.contentsId,
+    }).start();
+    const state = () => {
+      const found = built
+        .flatMap((section) => (section.kind === "role" ? [] : section.entries))
+        .find(
+          (entry) => entry.kind === "action" && entry.id === "sleep.toggleTab"
+        );
+      return found?.kind === "action"
+        ? [found.enabled, found.checked]
+        : undefined;
+    };
+    show(drive.id);
+    const before = state();
+    unwrap(commands.run("sleep.toggleTab", { windowId: window.contentsId }));
+    const toggled = state();
+    show(gmail.id);
+    expect([before, toggled, state()]).toStrictEqual([
+      [true, false],
+      [true, true],
+      [false, false],
+    ]);
   });
 
   it("counts the wait from when a tab watched a long while leaves the screen, and from when its sound stops", async () => {

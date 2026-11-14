@@ -13,6 +13,8 @@ export interface MenuAction<Id extends string> {
   readonly label: string;
   readonly accelerator: string | undefined;
   readonly enabled: boolean;
+  /** Whether the item shows a check mark; absent for an item that is no toggle. */
+  readonly checked?: boolean;
   readonly run: (windowId: number | undefined) => void;
 }
 

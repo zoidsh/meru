@@ -21,7 +21,9 @@ const MINUTE = 60_000;
 
 export interface SleepOptions {
   readonly clock: Clock;
-  readonly events: Pick<AppEvents, "on">;
+  readonly events: Pick<AppEvents, "on" | "emit">;
+  /** The window whose focused tab the menu's toggle shows, as the menu asks it. */
+  readonly windowId: () => number | undefined;
   readonly commands: CommandRegistrar;
   readonly profiles: Pick<
     Profiles,
@@ -42,6 +44,7 @@ export class Sleep {
   #timer: Unsubscribe | undefined;
   // Kept only in memory: a sleeping tab whose app quits starts at its stored address next time, as a page would after a restart.
   readonly #histories = new Map<string, PageHistory>();
+  #menuShows: string | undefined;
 
   constructor(options: SleepOptions) {
     this.#options = options;
@@ -52,11 +55,18 @@ export class Sleep {
     this.#disposables.add(
       commands.register(sleepCommands, {
         toggleTab: {
+          checked: (context) => this.#focusedTab(context)?.sleeps ?? false,
           run: (context) => {
             const tab = this.#focusedTab(context);
-            return tab === undefined
-              ? err("unknownTab")
-              : this.#options.profiles.letSleep(tab.id, !tab.sleeps);
+            if (tab === undefined) {
+              return err("unknownTab");
+            }
+            const toggled = this.#options.profiles.letSleep(
+              tab.id,
+              !tab.sleeps
+            );
+            this.#invalidateMenu();
+            return toggled;
           },
           when: (context) => {
             const tab = this.#focusedTab(context);
@@ -66,6 +76,7 @@ export class Sleep {
       }),
       events.on("stage.shown", () => {
         this.#sweep();
+        this.#invalidateMenu();
       }),
       events.on("tab.audible", () => {
         this.#sweep();
@@ -94,6 +105,18 @@ export class Sleep {
   /** Where the sleeping tab's page stood when it went to sleep, which it wakes at. */
   historyOf(tabId: string): PageHistory | undefined {
     return this.#histories.get(tabId);
+  }
+
+  // The menu shows the focused tab's leave as a check, and rebuilding it on every change of the stage would be wasted.
+  #invalidateMenu(): void {
+    const tab = this.#focusedTab({
+      windowId: this.#options.windowId() ?? null,
+    });
+    const shown = tab === undefined ? undefined : `${tab.id} ${tab.sleeps}`;
+    if (shown !== this.#menuShows) {
+      this.#menuShows = shown;
+      this.#options.events.emit("menu.invalidated", null);
+    }
   }
 
   #focusedTab({ windowId }: CommandContext) {

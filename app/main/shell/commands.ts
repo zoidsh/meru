@@ -58,6 +58,11 @@ export class CommandDispatcher<
     );
   }
 
+  /** Whether the toggle command is on for the window; undefined for a command that is no toggle. */
+  checked(id: Id, windowId?: number): boolean | undefined {
+    return this.#handlers.get(id)?.checked?.({ windowId: windowId ?? null });
+  }
+
   run(
     id: Id,
     { windowId }: { readonly windowId: number }
