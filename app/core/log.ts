@@ -4,8 +4,12 @@ export const LOG_LEVELS = ["debug", "info", "warn", "error"] as const;
 
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
+/** The envelope's own keys, which a line's fields may not take. */
+type EnvelopeKey = "level" | "message" | "scope" | "time";
+
 /** What a line says beyond its message, as values a reader can filter on; an `error` field is written as `{ name, message, stack }`. */
-export type LogFields = Readonly<Record<string, unknown>>;
+export type LogFields = Readonly<Record<string, unknown>> &
+  Readonly<Partial<Record<EnvelopeKey, never>>>;
 
 /** A levelled, structured log: a message that stays the same from one occurrence to the next, and the fields that vary. */
 export interface LogPort {
@@ -30,7 +34,7 @@ export const logs = (level: LogLevel, minimum: LogLevel): boolean =>
 const plain = (value: unknown): unknown =>
   value instanceof Error ? serializeError(value) : value;
 
-/** One JSON line per entry, so a file reads with `jq` and every field keeps its type. */
+/** One JSON line per entry, so a file reads with `jq` and every field keeps its type; the fields sit under `fields`, so none can pass for the envelope. */
 export const logLine = (entry: LogEntry): string => {
   const fields = Object.fromEntries(
     Object.entries(entry.fields).map(([key, value]) => [
@@ -43,7 +47,7 @@ export const logLine = (entry: LogEntry): string => {
     message: entry.message,
     scope: entry.scope,
     time: new Date(entry.time).toISOString(),
-    ...fields,
+    ...(Object.keys(fields).length > 0 ? { fields } : {}),
   })}\n`;
 };
 

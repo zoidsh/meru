@@ -91,7 +91,7 @@ const start = async () => {
         ipcLog.warn("A request was refused", {
           channel,
           kind: result.error.kind,
-          message: result.error.message,
+          detail: result.error.message,
         });
       }
       return result;
