@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import type { UpdateState } from "../../../core/records/update.ts";
 import { commands } from "../../../shared/channels/commands.ts";
+import { updater } from "../../../shared/channels/updater.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Button } from "../../ui/button.tsx";
@@ -36,17 +37,22 @@ export const UpdateStatus = () => {
   const [refusal, setRefusal] = useState<Message | undefined>(undefined);
   const ready = state.kind === "ready";
   const run = async () => {
-    const ran = await client.invoke(commands.run, {
-      id: ready ? "updater.install" : "updater.check",
-    });
-    if (ran.ok) {
-      setRefusal(undefined);
-    } else {
+    if (ready) {
+      const installed = await client.invoke(commands.run, {
+        id: "updater.install",
+      });
       setRefusal(
-        ran.error.message.includes("notPackaged")
-          ? msg`Updates come only to an installed Meru.`
-          : msg`Meru couldn't check for updates.`
+        installed.ok ? undefined : msg`Meru couldn't install the update.`
       );
+      return;
+    }
+    const checked = await client.invoke(updater.check, {});
+    if (!checked.ok) {
+      setRefusal(msg`Meru couldn't check for updates.`);
+    } else if (checked.value === "notPackaged") {
+      setRefusal(msg`Updates come only to an installed Meru.`);
+    } else {
+      setRefusal(undefined);
     }
   };
   return (

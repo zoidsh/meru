@@ -22,11 +22,10 @@ import {
   updater as channels,
   updaterPushes,
 } from "../../../shared/channels/updater.ts";
+import type { UpdaterError } from "../../../shared/channels/updater.ts";
 import type { CommandRegistrar } from "../../../shared/commands/define.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import { updaterCommands } from "./commands.ts";
-
-export type UpdaterError = "notPackaged" | "notReady";
 
 export interface UpdaterOptions {
   readonly updater: UpdaterPort;
@@ -61,6 +60,10 @@ export class Updater {
     const { registrar, commands, updater } = this.#options;
     this.#disposables.add(
       registrar.register(channels, {
+        check: () => {
+          const checked = this.check();
+          return ok(checked.ok ? null : checked.error);
+        },
         snapshot: () => ok(this.#state),
       }),
       commands.register(updaterCommands, {

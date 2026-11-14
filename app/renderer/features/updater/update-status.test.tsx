@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 
 import type { UpdateState } from "../../../core/records/update.ts";
 import { commands } from "../../../shared/channels/commands.ts";
-import { wireName } from "../../../shared/channels/define.ts";
 import { updater, updaterPushes } from "../../../shared/channels/updater.ts";
 import { answer, mountSettings } from "../../testing.tsx";
 import { UpdateStatus } from "./update-status.tsx";
@@ -12,6 +11,7 @@ const mount = (state: UpdateState) =>
   mountSettings(<UpdateStatus />, [
     answer(updater.snapshot, state),
     answer(commands.run, null),
+    answer(updater.check, null),
   ]);
 
 const button = () => document.querySelector("button");
@@ -34,13 +34,13 @@ describe(UpdateStatus, () => {
     const { sentOn } = mount({ kind: "idle" });
     const idle = shown();
     await click();
-    expect({ idle, sent: sentOn(commands.run) }).toStrictEqual({
+    expect({ idle, sent: sentOn(updater.check) }).toStrictEqual({
       idle: {
         button: "Check for updates",
         disabled: false,
         status: "Meru checks for updates in the background.",
       },
-      sent: [{ id: "updater.check" }],
+      sent: [{}],
     });
   });
 
@@ -79,11 +79,10 @@ describe(UpdateStatus, () => {
   });
 
   it("says updates come only to an installed Meru when main refuses the check as not packaged", async () => {
-    const { bridge } = mount({ kind: "idle" });
-    bridge.answers.set(wireName(commands.run), {
-      error: { kind: "failed", message: "notPackaged" },
-      ok: false,
-    });
+    mountSettings(<UpdateStatus />, [
+      answer(updater.snapshot, { kind: "idle" }),
+      answer(updater.check, "notPackaged"),
+    ]);
     await click();
     expect(
       document.querySelector("[data-update]")?.nextElementSibling?.textContent

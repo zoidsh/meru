@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AppEvents } from "../../../core/events.ts";
 import { updateStateSchema } from "../../../core/records/update.ts";
 import { wireName } from "../../../shared/channels/define.ts";
-import { chromeSurface } from "../../../shared/channels/surfaces.ts";
+import { settingsSurface } from "../../../shared/channels/surfaces.ts";
 import { updater as channels } from "../../../shared/channels/updater.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
@@ -26,7 +26,7 @@ const setup = ({ packaged = true } = {}) => {
     log: strictLog,
     transport,
   });
-  registrar.assign(PAGE, chromeSurface);
+  registrar.assign(PAGE, settingsSurface);
   const settings = new SettingsStore({
     entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
     events: new AppEvents(),
@@ -103,16 +103,19 @@ describe(Updater, () => {
   });
 
   it("never checks when not packaged, and says so when asked", () => {
-    const { clock, commands, feed, settings, updater } = setup({
+    const { clock, commands, feed, registrar, settings, updater } = setup({
       packaged: false,
     });
     updater.start();
     clock.advance(FIRST_CHECK_DELAY + 24 * HOUR);
     settings.set("updater.channel", "beta");
     expect(feed.checks).toHaveLength(0);
-    expect(commands.run("updater.check", { windowId: 1 })).toStrictEqual({
-      error: "notPackaged",
-      ok: false,
+    expect({
+      command: commands.run("updater.check", { windowId: 1 }),
+      page: registrar.dispatch(PAGE, wireName(channels.check), {}),
+    }).toStrictEqual({
+      command: { error: "notPackaged", ok: false },
+      page: { ok: true, value: "notPackaged" },
     });
   });
 

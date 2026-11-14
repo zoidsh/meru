@@ -29,7 +29,7 @@ export const chromeSurface = defineSurface({
     settings,
     commands,
     entitlement,
-    updater,
+    { snapshot: updater.snapshot },
     profiles,
     tabs,
     sidebar,
