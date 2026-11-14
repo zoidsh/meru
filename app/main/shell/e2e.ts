@@ -62,10 +62,21 @@ type E2eSnapshot = z.infer<typeof e2eSnapshotSchema>;
 /** The shell of a run under MERU_E2E: it keeps each address it was asked to open in the browser and opens none. */
 export class RecordingShell implements ShellPort {
   readonly opened: string[] = [];
+  readonly files: string[] = [];
+  readonly revealed: string[] = [];
 
   readonly openExternal = async (url: string) => {
     this.opened.push(url);
     await Promise.resolve();
+  };
+
+  readonly openPath = async (path: string) => {
+    this.files.push(path);
+    await Promise.resolve();
+  };
+
+  readonly showItemInFolder = (path: string) => {
+    this.revealed.push(path);
   };
 }
 

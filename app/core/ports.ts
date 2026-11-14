@@ -260,6 +260,10 @@ export const themeOf = (port: ThemePort): Theme =>
 export interface ShellPort {
   /** Opens the address in the default browser; rejects when nothing on the system opens it. */
   readonly openExternal: (url: string) => Promise<void>;
+  /** Opens the file in the application the system gives its type; rejects when none opens it. */
+  readonly openPath: (path: string) => Promise<void>;
+  /** Shows the file selected in the system's file manager. */
+  readonly showItemInFolder: (path: string) => void;
 }
 
 /** The most of a body a session request reads; a feed or a page past it is not what was asked for. */

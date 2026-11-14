@@ -222,6 +222,16 @@ export const createElectronPorts = (): Ports => ({
     openExternal: async (url) => {
       await shell.openExternal(url);
     },
+    // Electron answers a failure with its message rather than rejecting.
+    openPath: async (path) => {
+      const failed = await shell.openPath(path);
+      if (failed !== "") {
+        throw new Error(failed);
+      }
+    },
+    showItemInFolder: (path) => {
+      shell.showItemInFolder(path);
+    },
   },
   theme: {
     dark: () => nativeTheme.shouldUseDarkColors,

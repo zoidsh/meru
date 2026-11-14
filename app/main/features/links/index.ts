@@ -12,7 +12,7 @@ export interface LinksOptions {
   readonly log: LogPort;
   readonly profiles: Pick<Profiles, "state" | "tab" | "openTab" | "focusTab">;
   readonly settings: Pick<SettingsStore, "get">;
-  readonly shell: ShellPort;
+  readonly shell: Pick<ShellPort, "openExternal">;
   /** Loads the address in the tab's view, wherever a stage keeps one. */
   readonly stages: Pick<Stages, "load">;
 }
