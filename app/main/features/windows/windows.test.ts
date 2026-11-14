@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_WINDOW_SIZE } from "../../../core/engines/bounds.ts";
+import { groupOf } from "../../../core/engines/ordering.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import { parseField } from "../../../core/values.ts";
@@ -156,7 +157,6 @@ describe(Windows, () => {
 
   it("shows the group of a newly selected profile, and the profile's current group once the one it showed is gone", async () => {
     const { windows, profiles } = await setup();
-    const first = profiles.selected().id;
     const created = profiles.createProfile("Work");
     if (!created.ok) {
       throw new Error(created.error);
@@ -169,11 +169,10 @@ describe(Windows, () => {
     if (!drive.ok) {
       throw new Error(drive.error);
     }
-    profiles.moveTab(drive.value.id, 0);
-    profiles.selectProfile(first);
-    profiles.selectProfile(work);
-    const driveGroup = profiles.currentGroup(work)?.id;
-    expect(windows.windows.map((window) => window.groupId)).toStrictEqual([
+    profiles.focusTab(drive.value.id);
+    const driveGroup = groupOf(drive.value.id, profiles.state.groups)?.id;
+    expect([driveGroup === gmailGroup, windows.mainGroupId()]).toStrictEqual([
+      false,
       driveGroup,
     ]);
     profiles.closeTab(drive.value.id);
