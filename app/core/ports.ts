@@ -26,6 +26,31 @@ export interface FsPort {
   readonly watch: (name: string, listener: () => void) => Unsubscribe;
 }
 
+/** Something that went wrong outside any feature's own handling. */
+export type Failure =
+  | {
+      /** An exception nothing caught, or a promise rejected with nothing to hear it. */
+      readonly kind: "uncaught" | "unhandledRejection";
+      readonly error: unknown;
+    }
+  | {
+      readonly kind: "processGone";
+      /** `renderer` for a page's process, else the kind of helper process, such as `GPU`. */
+      readonly process: string;
+      readonly reason: string;
+      readonly exitCode: number;
+      /** The page a renderer was showing; empty for any other process. */
+      readonly url: string;
+    }
+  | {
+      /** An error a page wrote to its console. */
+      readonly kind: "consoleError";
+      readonly url: string;
+      readonly message: string;
+      readonly source: string;
+      readonly line: number;
+    };
+
 export interface LifecyclePort {
   readonly platform: string;
   /** False for a run from the repository, such as `pnpm dev` or the end-to-end suite. */
@@ -37,6 +62,7 @@ export interface LifecyclePort {
   readonly quit: () => void;
   /** Keeps the app from ever coming to the front, for a run nobody watches; macOS only. */
   readonly prohibitActivation: () => void;
+  readonly onFailure: (listener: (failure: Failure) => void) => Unsubscribe;
 }
 
 /** Hears each key before the page does; a listener answering true keeps the key from the page. */

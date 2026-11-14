@@ -12,7 +12,7 @@ import { strictLog } from "../../test/fakes/log.ts";
 import { FakeTheme } from "../../test/fakes/theme.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
 import { IpcDispatcher } from "./ipc.ts";
-import { MainWindow } from "./window.ts";
+import { isPageUrl, MainWindow, pageUrl } from "./window.ts";
 
 const open = async (platform: string, devServer?: string) => {
   const theme = new FakeTheme(true);
@@ -115,5 +115,28 @@ describe(MainWindow, () => {
     main.recolour("light");
     expect(window.background).toBe("#ececf1");
     expect(window.overlay).toBeUndefined();
+  });
+});
+
+describe(isPageUrl, () => {
+  it("knows the renderer's own pages, built or served, from anything else", () => {
+    const built = {
+      devServer: undefined,
+      dir: path.join(path.sep, "app", "dist", "renderer"),
+      platform: "darwin",
+      theme: () => "light" as const,
+    };
+    const served = { ...built, devServer: "http://localhost:5173/" };
+    expect([
+      isPageUrl(built, pageUrl(built, "chrome.html")),
+      isPageUrl(served, pageUrl(served, "settings.html")),
+      isPageUrl(built, "https://mail.google.com/mail/u/0/"),
+      isPageUrl(
+        built,
+        pathToFileURL(
+          path.join(path.sep, "app", "dist", "renderer-other", "x.html")
+        ).href
+      ),
+    ]).toStrictEqual([true, true, false, false]);
   });
 });

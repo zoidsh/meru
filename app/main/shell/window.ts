@@ -43,6 +43,12 @@ export const pageUrl = (
   return url.href;
 };
 
+/** Whether an address is one of the renderer's pages, built or served. */
+export const isPageUrl = (pages: PageOptions, url: string): boolean =>
+  url.startsWith(
+    pages.devServer ?? pathToFileURL(path.join(pages.dir, path.sep)).href
+  );
+
 export interface MainWindowOptions {
   readonly ports: Pick<Ports, "lifecycle" | "theme" | "windows">;
   /** Gives the chrome page its surface. */

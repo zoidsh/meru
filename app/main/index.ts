@@ -42,11 +42,12 @@ import { createElectronUpdater } from "./platform/updater.ts";
 import { placeUserData, userDataDir } from "./platform/user-data.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
 import { exposeE2e, recordingDesktop, RecordingShell } from "./shell/e2e.ts";
+import { logFailures } from "./shell/failures.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
 import { ShortcutKeys } from "./shell/keys.ts";
 import { exposeMeasure } from "./shell/measure.ts";
 import { ApplicationMenu } from "./shell/menu.ts";
-import { MainWindow, pageUrl } from "./shell/window.ts";
+import { isPageUrl, MainWindow, pageUrl } from "./shell/window.ts";
 import type { PageOptions } from "./shell/window.ts";
 
 // Held outside start() so a failure to start can still be written and the file flushed.
@@ -62,6 +63,20 @@ const start = async () => {
     mirror: !ports.lifecycle.packaged,
   });
   fileLog = log;
+  const pages: PageOptions = {
+    devServer: process.env.MERU_RENDERER_URL,
+    dir: path.join(dist, "renderer"),
+    platform: ports.lifecycle.platform,
+    theme: () => themeOf(ports.theme),
+  };
+  logFailures({
+    lifecycle: ports.lifecycle,
+    log: log.scoped("app"),
+    ownPage: (url) => isPageUrl(pages, url),
+  });
+  ports.lifecycle.onQuit(async () => {
+    await log.flush();
+  });
   // An installed app never takes the test switches from its environment, so no user can turn on the inspector or blank panes by setting a variable.
   const e2e = !ports.lifecycle.packaged && process.env.MERU_E2E === "1";
   const measure = !ports.lifecycle.packaged && process.env.MERU_MEASURE === "1";
@@ -208,12 +223,6 @@ const start = async () => {
   if (gmailOverride !== undefined || !(e2e || measure)) {
     inbox.start();
   }
-  const pages: PageOptions = {
-    devServer: process.env.MERU_RENDERER_URL,
-    dir: path.join(dist, "renderer"),
-    platform: ports.lifecycle.platform,
-    theme: () => themeOf(ports.theme),
-  };
   const overlayUrl = (
     kind: OverlayKind,
     query: Readonly<Record<string, string>>

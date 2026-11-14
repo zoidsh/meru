@@ -1,4 +1,4 @@
-import type { LifecyclePort, Unsubscribe } from "../../core/ports.ts";
+import type { Failure, LifecyclePort, Unsubscribe } from "../../core/ports.ts";
 
 export class FakeLifecycle implements LifecyclePort {
   readonly platform: string;
@@ -8,6 +8,7 @@ export class FakeLifecycle implements LifecyclePort {
   activationProhibited = false;
   readonly #quitTasks = new Set<() => Promise<void>>();
   readonly #allClosed = new Set<() => void>();
+  readonly #failures = new Set<(failure: Failure) => void>();
 
   constructor(platform = "darwin", packaged = false) {
     this.platform = platform;
@@ -45,6 +46,20 @@ export class FakeLifecycle implements LifecyclePort {
         await task();
       })
     );
+  };
+
+  readonly onFailure = (listener: (failure: Failure) => void): Unsubscribe => {
+    this.#failures.add(listener);
+    return () => {
+      this.#failures.delete(listener);
+    };
+  };
+
+  /** Reports a failure as Electron or Node would. */
+  readonly fail = (failure: Failure) => {
+    for (const listener of this.#failures) {
+      listener(failure);
+    }
   };
 
   readonly prohibitActivation = () => {
