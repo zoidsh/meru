@@ -201,11 +201,9 @@ const start = async () => {
     online: ports.online,
     power: ports.power,
     profiles,
-    registrar: dispatcher,
     sessions: ports.sessions,
     settings,
   });
-  inbox.attach();
   new Badge({ badge: desktop.badge, events, inbox, settings }).start();
   if (feedOverride !== undefined || !(e2e || measure)) {
     inbox.start();

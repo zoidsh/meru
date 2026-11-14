@@ -79,14 +79,12 @@ const setup = async () => {
     online: new FakeOnline(true),
     power: new FakePower(),
     profiles,
-    registrar,
     sessions,
     settings,
   });
   const port = new FakeBadge();
   const badge = new Badge({ badge: port, events, inbox, settings });
   badge.start();
-  inbox.attach();
   inbox.start();
   await setImmediate();
   return { badge, first: profiles.selected().id, port, settings };

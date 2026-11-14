@@ -87,7 +87,6 @@ const setup = async (platform: Platform) => {
     online: new FakeOnline(),
     power: new FakePower(),
     profiles,
-    registrar,
     sessions,
     settings,
   });

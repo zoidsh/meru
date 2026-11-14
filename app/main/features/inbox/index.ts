@@ -23,10 +23,6 @@ import type {
 } from "../../../core/ports.ts";
 import type { Feed } from "../../../core/records/feed.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
-import { ok } from "../../../core/result.ts";
-import type { IpcRegistrar } from "../../../shared/channels/define.ts";
-import { inbox, inboxPushes } from "../../../shared/channels/inbox.ts";
-import type { InboxSnapshot } from "../../../shared/channels/inbox.ts";
 import type { Profiles } from "../profiles/index.ts";
 import type { SettingsStore } from "../settings/index.ts";
 
@@ -37,7 +33,6 @@ export interface InboxOptions {
   readonly power: PowerPort;
   readonly profiles: Pick<Profiles, "state" | "isDeactivated" | "setStatus">;
   readonly settings: Pick<SettingsStore, "get">;
-  readonly registrar: IpcRegistrar;
   readonly events: Pick<AppEvents, "on" | "emit">;
   readonly log: LogPort;
   /** The inbox feed's address, which a run from the repository may point at a stand-in. */
@@ -62,15 +57,6 @@ export class Inbox {
 
   constructor(options: InboxOptions) {
     this.#options = options;
-  }
-
-  /** Answers pages, with nothing read yet, whether or not the feeds are read. */
-  attach(): void {
-    this.#disposables.add(
-      this.#options.registrar.register(inbox, {
-        snapshot: () => ok(this.snapshot()),
-      })
-    );
   }
 
   start(): void {
@@ -101,12 +87,11 @@ export class Inbox {
     this.#disposables.dispose();
   }
 
-  snapshot(): InboxSnapshot {
-    return {
-      profiles: Object.fromEntries(
-        [...this.#feeds].map(([profileId, { feed }]) => [profileId, feed])
-      ),
-    };
+  /** Each followed profile's feed as its last read listed it, by profile id. */
+  feeds(): Readonly<Record<string, Feed>> {
+    return Object.fromEntries(
+      [...this.#feeds].map(([profileId, { feed }]) => [profileId, feed])
+    );
   }
 
   /** The profile's unread mail as its feed last listed it; none before the first read. */
@@ -268,8 +253,6 @@ export class Inbox {
   }
 
   #publish(): void {
-    const { events, registrar } = this.#options;
-    registrar.broadcast(inboxPushes.changed, this.snapshot());
-    events.emit("inbox.changed", null);
+    this.#options.events.emit("inbox.changed", null);
   }
 }

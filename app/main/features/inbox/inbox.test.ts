@@ -14,8 +14,6 @@ import {
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { FeedEntry } from "../../../core/records/feed.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
-import { wireName } from "../../../shared/channels/define.ts";
-import { inboxPushes } from "../../../shared/channels/inbox.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
@@ -107,19 +105,18 @@ const setup = async ({ online = true } = {}) => {
     online: network,
     power,
     profiles,
-    registrar,
     sessions,
     settings,
   });
   const first = profiles.selected().id;
   const status = (profileId = first) =>
     profiles.state.profiles.find((profile) => profile.id === profileId)?.status;
-  const pushed = () =>
-    transport.sent.filter(
-      (sent) => sent.channel === wireName(inboxPushes.changed)
-    ).length;
+  let changed = 0;
+  events.on("inbox.changed", () => {
+    changed += 1;
+  });
+  const pushed = () => changed;
   const start = async () => {
-    inbox.attach();
     inbox.start();
     await settle();
   };
@@ -158,7 +155,7 @@ describe(Inbox, () => {
         .map((fetched) => fetched.partition)
         .toSorted(),
       pushed: pushed() > 0,
-      snapshot: inbox.snapshot().profiles[secondId]?.unread,
+      snapshot: inbox.feeds()[secondId]?.unread,
       statuses: [status(), status(secondId)],
       total: inbox.total(),
     }).toStrictEqual({
@@ -257,7 +254,7 @@ describe(Inbox, () => {
     const before = sessions.fetched.length;
     await advance(30_000);
     expect({
-      followed: Object.keys(inbox.snapshot().profiles).length,
+      followed: Object.keys(inbox.feeds()).length,
       reads: sessions.fetched.length - before,
     }).toStrictEqual({ followed: 1, reads: 1 });
   });
