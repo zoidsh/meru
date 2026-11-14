@@ -109,8 +109,7 @@ const setup = async ({ online = true } = {}) => {
     settings,
   });
   const first = profiles.selected().id;
-  const status = (profileId = first) =>
-    profiles.state.profiles.find((profile) => profile.id === profileId)?.status;
+  const status = (profileId = first) => profiles.profile(profileId)?.status;
   let changed = 0;
   events.on("inbox.changed", () => {
     changed += 1;
