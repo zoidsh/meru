@@ -33,7 +33,8 @@ test("opens one settings window from its command, whose pages write the settings
 
     await page.getByRole("button", { name: "Updates" }).click();
     await expect(page.locator("h1")).toHaveText("Updates");
-    await page.getByText("Beta", { exact: true }).click();
+    await page.getByRole("combobox", { name: "Release channel" }).click();
+    await page.getByRole("option", { name: "Beta" }).click();
     await expect
       .poll(async () => {
         const answered = await invokeIn(chrome, settings.snapshot, {});

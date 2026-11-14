@@ -8,8 +8,14 @@ import { moveItem } from "../../../core/engines/ordering.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Button } from "../../ui/button.tsx";
-import { ChoiceGroup } from "../../ui/choice-group.tsx";
 import { Input } from "../../ui/input.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select.tsx";
 import { Switch } from "../../ui/switch.tsx";
 import { useDraft } from "./use-draft.ts";
 
@@ -41,7 +47,7 @@ export const BooleanControl = ({
   />
 );
 
-/** A string union as a segmented control, each value named by the setting's options. */
+/** A string union as a select, each value named by the setting's options. */
 export const ChoiceControl = ({
   id,
   label,
@@ -54,18 +60,30 @@ export const ChoiceControl = ({
   readonly values: readonly string[];
   readonly names: ReadonlyMap<string, Message>;
 }) => (
-  <ChoiceGroup
-    choices={values.map((option) => ({
-      children: names.get(option) ?? option,
+  <Select
+    disabled={disabled}
+    items={values.map((option) => ({
+      label: names.get(option) ?? option,
       value: option,
     }))}
-    disabled={disabled}
-    id={id}
-    legend={label}
-    name={id}
-    onChange={onChange}
-    value={typeof value === "string" ? value : undefined}
-  />
+    onValueChange={(picked) => {
+      if (typeof picked === "string") {
+        onChange(picked);
+      }
+    }}
+    value={typeof value === "string" ? value : null}
+  >
+    <SelectTrigger aria-label={label} className="min-w-36 shrink-0" id={id}>
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      {values.map((option) => (
+        <SelectItem key={option} value={option}>
+          {names.get(option) ?? option}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 );
 
 export const NumberControl = ({

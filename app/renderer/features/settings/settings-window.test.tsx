@@ -118,19 +118,29 @@ describe(SettingsWindow, () => {
     });
   });
 
-  it("renders a string union as a segmented control and a number within its schema's bounds, writing a pick through settings.set", () => {
+  it("renders a string union as a select naming its value and a number within its schema's bounds, writing a pick through settings.set", async () => {
     const { sentOn } = mount({ page: "updates" });
     const hours = field("updater.intervalHours")?.querySelector("input");
-    const beta = [
-      ...(field("updater.channel")?.querySelectorAll("label") ?? []),
-    ].find((label) => label.textContent === "Beta");
-    click(beta?.querySelector("input"));
+    const trigger = field("updater.channel")?.querySelector("button");
+    const shown = trigger?.querySelector(
+      "[data-slot=select-value]"
+    )?.textContent;
+    click(trigger);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const options = [...document.querySelectorAll("[role=option]")];
+    click(options.find((option) => option.textContent === "Beta"));
     expect({
       bounds: [hours?.min, hours?.max, hours?.step],
+      options: options.map((option) => option.textContent),
       sent: sentOn(settings.set),
+      shown,
     }).toStrictEqual({
       bounds: ["1", "168", "1"],
+      options: ["Stable", "Beta"],
       sent: [{ key: "updater.channel", value: "beta" }],
+      shown: "Stable",
     });
   });
 

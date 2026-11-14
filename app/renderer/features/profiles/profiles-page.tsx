@@ -13,7 +13,6 @@ import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Badge } from "../../ui/badge.tsx";
 import { Button } from "../../ui/button.tsx";
-import { ChoiceGroup } from "../../ui/choice-group.tsx";
 import {
   Dialog,
   DialogClose,
@@ -47,7 +46,7 @@ const COLOR_NAMES: Readonly<Record<(typeof PROFILE_COLORS)[number], Message>> =
     "#ffc53d": msg`Yellow`,
   };
 
-/** The palette as a row of swatches, one checked; the label takes emoji from the system's own picker. */
+/** The palette as a row of swatches, native radios inside their labels so the browser gives the arrow keys and the one tab stop; the label takes emoji from the system's own picker. */
 const ColorPicker = ({
   label,
   color,
@@ -57,19 +56,29 @@ const ColorPicker = ({
   readonly color: string | undefined;
   readonly onPick: (color: string) => void;
 }) => (
-  <ChoiceGroup
-    choices={PROFILE_COLORS.map((swatch) => ({
-      children: <span className="sr-only">{COLOR_NAMES[swatch]}</span>,
-      style: { backgroundColor: swatch },
-      title: COLOR_NAMES[swatch],
-      value: swatch,
-    }))}
-    legend={label}
-    name={label}
-    onChange={onPick}
-    value={color}
-    variant="swatches"
-  />
+  <fieldset className="flex flex-wrap gap-1.5">
+    <legend className="sr-only">{label}</legend>
+    {PROFILE_COLORS.map((swatch) => (
+      <label
+        className="has-focus-visible:ring-ring/50 has-checked:ring-foreground size-5 cursor-pointer rounded-full ring-offset-2 ring-offset-[var(--card)] has-checked:ring-2 has-focus-visible:ring-3"
+        key={swatch}
+        style={{ backgroundColor: swatch }}
+        title={COLOR_NAMES[swatch]}
+      >
+        <input
+          checked={color === swatch}
+          className="sr-only"
+          name={label}
+          onChange={() => {
+            onPick(swatch);
+          }}
+          type="radio"
+          value={swatch}
+        />
+        <span className="sr-only">{COLOR_NAMES[swatch]}</span>
+      </label>
+    ))}
+  </fieldset>
 );
 
 const RemoveDialog = ({
