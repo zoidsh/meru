@@ -61,11 +61,11 @@ export const settingsSnapshot: SnapshotSpec<Settings, Fallback> = {
   version: 2,
 };
 
-export type SettingsListener = (
+type SettingsListener = (
   changes: readonly SettingChange<typeof registry>[]
 ) => void;
 
-export interface SettingsOptions {
+interface SettingsOptions {
   readonly fs: FsPort;
   readonly clock: Clock;
   readonly lifecycle: Pick<LifecyclePort, "onQuit" | "platform">;

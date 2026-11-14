@@ -27,7 +27,7 @@ import type { CommandRegistrar } from "../../../shared/commands/define.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import { updaterCommands } from "./commands.ts";
 
-export interface UpdaterOptions {
+interface UpdaterOptions {
   readonly updater: UpdaterPort;
   readonly lifecycle: Pick<LifecyclePort, "packaged">;
   readonly clock: Clock;

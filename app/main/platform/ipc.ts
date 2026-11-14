@@ -5,7 +5,7 @@ import { DisposableStore } from "../../core/disposable.ts";
 import type { IpcTransportPort, Unsubscribe } from "../../core/ports.ts";
 import type { Allowlist } from "../../shared/channels/define.ts";
 
-export type Dispatch = (
+type Dispatch = (
   contentsId: number,
   channel: string,
   payload: unknown

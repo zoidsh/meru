@@ -57,7 +57,7 @@ export const e2eSnapshotSchema = z.object({
   ),
 });
 
-export type E2eSnapshot = z.infer<typeof e2eSnapshotSchema>;
+type E2eSnapshot = z.infer<typeof e2eSnapshotSchema>;
 
 /** The shell of a run under MERU_E2E: it keeps each address it was asked to open in the browser and opens none. */
 export class RecordingShell implements ShellPort {
@@ -70,7 +70,7 @@ export class RecordingShell implements ShellPort {
 }
 
 /** The app icon, notifications and tray of a run under MERU_E2E: each keeps what it was asked to show and shows nothing on the desktop the suite shares. */
-export interface RecordingDesktop {
+interface RecordingDesktop {
   readonly badge: BadgePort;
   readonly notifications: NotificationPort;
   readonly tray: TrayPort;

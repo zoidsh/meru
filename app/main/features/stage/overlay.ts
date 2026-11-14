@@ -9,7 +9,7 @@ import type { OverlayKind } from "../../../shared/channels/surfaces.ts";
 import { loadOwned, TRANSPARENT } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 
-export interface OverlayOptions {
+interface OverlayOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
   /** The preload of an overlay's page, which is one of the renderer's. */
   readonly preload: string | undefined;

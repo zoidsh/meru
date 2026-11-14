@@ -68,7 +68,7 @@ import { tabsSleepByChoice } from "./migrations.ts";
 
 export const PROFILES_FILE = "profiles.json";
 
-export type ProfilesError =
+type ProfilesError =
   | StateError
   | GateRefusal
   | "unknownApp"
@@ -104,7 +104,7 @@ export const profilesSnapshot = (
 const done = (result: Result<undefined, ProfilesError>): Result<null, string> =>
   result.ok ? ok(null) : result;
 
-export interface ProfilesOptions {
+interface ProfilesOptions {
   readonly fs: FsPort;
   readonly clock: Clock;
   readonly lifecycle: Pick<LifecyclePort, "onQuit">;

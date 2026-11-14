@@ -14,7 +14,7 @@ import type { Profiles } from "../profiles/index.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import { sidebarCommands } from "./commands.ts";
 
-export interface SidebarsOptions {
+interface SidebarsOptions {
   readonly profiles: Pick<Profiles, "selected" | "state">;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly events: Pick<AppEvents, "on" | "emit">;

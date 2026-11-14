@@ -6,7 +6,7 @@ export const PAGE_ERRORS_PER_WINDOW = 20;
 
 export const PAGE_ERROR_WINDOW = 60_000;
 
-export interface FailureLogOptions {
+interface FailureLogOptions {
   readonly lifecycle: Pick<LifecyclePort, "onFailure" | "quit">;
   readonly clock: Pick<Clock, "now">;
   readonly log: LogPort;

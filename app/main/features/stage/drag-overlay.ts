@@ -19,7 +19,7 @@ import type { OwnedView } from "./owned-view.ts";
 const dividerPage = (orientation: Orientation) =>
   `data:text/html,<html style="cursor:${orientation === "vertical" ? "col-resize" : "row-resize"};height:100%"></html>`;
 
-export interface DragOverlayOptions {
+interface DragOverlayOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
   /** The preload of a divider drag's page. */
   readonly preload: string | undefined;

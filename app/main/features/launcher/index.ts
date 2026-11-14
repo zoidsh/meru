@@ -9,7 +9,7 @@ import type { CommandRegistrar } from "../../../shared/commands/define.ts";
 import type { Stages } from "../stage/index.ts";
 import { launcherCommands } from "./commands.ts";
 
-export interface LauncherOptions {
+interface LauncherOptions {
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
   readonly stages: Pick<Stages, "find">;

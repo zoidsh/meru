@@ -2,7 +2,7 @@ import { answerOf } from "../../core/entitlement/api.ts";
 import type { EntitlementApi } from "../../core/ports.ts";
 import { err } from "../../core/result.ts";
 
-export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
+type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
 const TIMEOUT = 15_000;
 

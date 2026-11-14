@@ -14,7 +14,7 @@ import type { Inbox } from "../inbox/index.ts";
 import type { Profiles } from "../profiles/index.ts";
 import type { SettingsStore } from "../settings/index.ts";
 
-export interface TrayOptions {
+interface TrayOptions {
   readonly tray: TrayPort;
   readonly platform: Platform;
   readonly theme: ThemePort;

@@ -12,7 +12,7 @@ import { msg } from "../../shared/msg.ts";
 import type { SettingsStore } from "../features/settings/index.ts";
 import type { CommandDispatcher } from "./commands.ts";
 
-export interface ApplicationMenuOptions {
+interface ApplicationMenuOptions {
   readonly platform: Platform;
   readonly commands: readonly Command<CommandId>[];
   readonly dispatcher: Pick<CommandDispatcher, "run" | "enabled" | "checked">;

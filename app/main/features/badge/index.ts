@@ -4,7 +4,7 @@ import type { BadgePort } from "../../../core/ports.ts";
 import type { Inbox } from "../inbox/index.ts";
 import type { SettingsStore } from "../settings/index.ts";
 
-export interface BadgeOptions {
+interface BadgeOptions {
   readonly badge: BadgePort;
   readonly inbox: Pick<Inbox, "total">;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;

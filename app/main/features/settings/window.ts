@@ -21,9 +21,9 @@ import { msg } from "../../../shared/msg.ts";
 import { settingsCommands } from "./commands.ts";
 
 /** 3.x's settings window size, shrunk to a smaller display. */
-export const SETTINGS_WINDOW_SIZE = { height: 720, width: 1000 } as const;
+const SETTINGS_WINDOW_SIZE = { height: 720, width: 1000 } as const;
 
-export interface SettingsWindowOptions {
+interface SettingsWindowOptions {
   readonly ports: Pick<Ports, "displays" | "lifecycle" | "theme" | "windows">;
   readonly registrar: Pick<IpcRegistrar, "assign" | "register">;
   readonly commands: CommandRegistrar;

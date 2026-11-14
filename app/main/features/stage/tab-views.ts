@@ -8,14 +8,14 @@ import { CANVAS, loadOwned } from "./owned-view.ts";
 import type { OwnedView } from "./owned-view.ts";
 
 /** What a tab's view is made from beyond its profile's partition. */
-export interface TabSource {
+interface TabSource {
   readonly url: string;
   /** Where the tab's last page stood when it went to sleep, which its view starts at instead of `url`. */
   readonly history?: PageHistory;
   readonly zoom: number;
 }
 
-export interface TabViewsOptions {
+interface TabViewsOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
   readonly sourceOf: (tab: Tab) => TabSource;
   readonly radius: () => number;

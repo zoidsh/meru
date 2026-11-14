@@ -25,9 +25,9 @@ export const WINDOWS_FILE = "windows.json";
 
 export const windowsStateSchema = z.object({ windows: z.array(windowSchema) });
 
-export type WindowsState = z.infer<typeof windowsStateSchema>;
+type WindowsState = z.infer<typeof windowsStateSchema>;
 
-export const windowsSnapshot: SnapshotSpec<WindowsState, string> = {
+const windowsSnapshot: SnapshotSpec<WindowsState, string> = {
   // A window's record only says where it was, so one that cannot be read is dropped and the window opens where a new one would.
   recover: (data) => ({
     fallbacks: data === undefined ? [] : ["windows"],
@@ -39,7 +39,7 @@ export const windowsSnapshot: SnapshotSpec<WindowsState, string> = {
   version: 1,
 };
 
-export interface WindowsOptions {
+interface WindowsOptions {
   readonly fs: FsPort;
   readonly clock: Clock;
   readonly lifecycle: Pick<LifecyclePort, "onQuit">;

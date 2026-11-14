@@ -86,7 +86,7 @@ export type StageProfiles = Pick<
   | "joinTab"
 >;
 
-export interface StageOptions {
+interface StageOptions {
   readonly window: WindowPort;
   readonly views: ViewFactoryPort;
   /** Hears the keys typed into one of the stage's views, until the returned call. */

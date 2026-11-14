@@ -5,7 +5,7 @@ import type { Theme } from "../../../core/records/theme.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import { themePushes } from "../../../shared/channels/theme.ts";
 
-export interface AppearanceOptions {
+interface AppearanceOptions {
   readonly theme: ThemePort;
   readonly registrar: Pick<IpcRegistrar, "broadcast">;
   /** The windows whose ground and title bar take the theme's colours. */

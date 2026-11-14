@@ -11,7 +11,7 @@ import type { CommandId } from "../../shared/commands/registry.ts";
 import type { SettingsStore } from "../features/settings/index.ts";
 import type { CommandDispatcher } from "./commands.ts";
 
-export interface ShortcutKeysOptions<Id extends string> {
+interface ShortcutKeysOptions<Id extends string> {
   readonly platform: Platform;
   /** Every command; only those without a menu placement are heard here. */
   readonly commands: readonly Command<Id>[];
@@ -21,7 +21,7 @@ export interface ShortcutKeysOptions<Id extends string> {
 }
 
 /** What keys come from: a page main owns. */
-export type KeySource = Pick<ViewPort, "onKey">;
+type KeySource = Pick<ViewPort, "onKey">;
 
 interface Attached {
   readonly windowId: number;

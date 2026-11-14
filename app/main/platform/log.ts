@@ -10,12 +10,12 @@ export const LOG_FILE = "main.log";
 export const OLD_LOG_FILE = "main.old.log";
 
 /** About a week of a busy day's lines, and small enough to attach to a support email. */
-export const LOG_CAP = 5 * 1024 * 1024;
+const LOG_CAP = 5 * 1024 * 1024;
 
 /** The most lines waiting for the disk; past it the oldest go, so a flood, such as a page logging errors in a loop, costs a bounded amount of memory. */
-export const QUEUE_CAP = 2000;
+const QUEUE_CAP = 2000;
 
-export interface FileLogOptions {
+interface FileLogOptions {
   readonly directory: string;
   readonly minimum: LogLevel;
   /** Writes every line to the console as well, for a run from the repository. */

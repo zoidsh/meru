@@ -47,7 +47,7 @@ const lastAnswerSchema = z.object({
   outcome: answerOutcomeSchema,
 });
 
-export const entitlementStateSchema = z.object({
+const entitlementStateSchema = z.object({
   /** Names this device to the API; a token is issued to one device id. */
   deviceId: idSchema,
   licenseKey: licenseKeySchema,
@@ -67,12 +67,12 @@ export const entitlementStateSchema = z.object({
 
 export type EntitlementState = z.infer<typeof entitlementStateSchema>;
 
-export type LastAnswer = z.infer<typeof lastAnswerSchema>;
+type LastAnswer = z.infer<typeof lastAnswerSchema>;
 
 /** A field of entitlement.json that could not be read and was replaced. */
-export type EntitlementFallback = keyof EntitlementState;
+type EntitlementFallback = keyof EntitlementState;
 
-export const entitlementSnapshot = (
+const entitlementSnapshot = (
   ids: Ids
 ): SnapshotSpec<EntitlementState, EntitlementFallback> => ({
   migrations: [],
@@ -104,7 +104,7 @@ export const entitlementSnapshot = (
   version: 1,
 });
 
-export interface EntitlementOptions<K> {
+interface EntitlementOptions<K> {
   readonly api: EntitlementApi;
   readonly fs: FsPort;
   readonly lifecycle: Pick<LifecyclePort, "onQuit">;

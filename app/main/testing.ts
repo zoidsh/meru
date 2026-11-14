@@ -38,7 +38,7 @@ export const PRO: Entitlement = {
   source: "stored",
 };
 
-export interface TestAppOptions {
+interface TestAppOptions {
   readonly clock?: FakeClock;
   readonly entitlement?: () => Entitlement;
   readonly fs?: FakeFs;
@@ -109,7 +109,7 @@ export const testApp = async ({
   };
 };
 
-export type TestApp = Awaited<ReturnType<typeof testApp>>;
+type TestApp = Awaited<ReturnType<typeof testApp>>;
 
 /** The stages over a test app, and `open`, which starts them with one window of 1200 by 800 that shows the group of the tab last focused, as the windows feature has it, once the test has built what must hear them first. */
 export const testStages = (

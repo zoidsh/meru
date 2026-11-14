@@ -50,7 +50,7 @@ export const isPageUrl = (pages: PageOptions, url: string): boolean =>
     pages.devServer ?? pathToFileURL(path.join(pages.dir, path.sep)).href
   );
 
-export interface MainWindowOptions {
+interface MainWindowOptions {
   readonly ports: Pick<Ports, "lifecycle" | "theme" | "windows">;
   /** Gives the chrome page its surface. */
   readonly registrar: Pick<IpcRegistrar, "assign">;
