@@ -10,7 +10,10 @@ import type {
 } from "../../../core/ports.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
 import type { Disposition } from "../../../core/records/link.ts";
-import type { NavigationAction } from "../../../core/records/navigation.ts";
+import type {
+  NavigationAction,
+  PageHistory,
+} from "../../../core/records/navigation.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
@@ -61,6 +64,8 @@ export interface StagesOptions {
   ) => boolean;
   /** A blank popup a pane's page opened navigated to `url`; true shows it. */
   readonly onPopup: (url: string) => boolean;
+  /** Where the tab's page stood when it went to sleep, which its next view starts at. */
+  readonly historyOf?: (tabId: string) => PageHistory | undefined;
   /** A split command ran in the window whose chrome page is `windowId`, which splits nothing until an app for the new pane is picked. */
   readonly onSplitRequested: (
     windowId: number,
@@ -98,6 +103,7 @@ export class Stages {
         for (const found of this.all) {
           found.refresh();
         }
+        events.emit("stage.shown", null);
       }),
       events.on("sidebar.changed", () => {
         this.relayout();
@@ -107,6 +113,7 @@ export class Stages {
           found.refresh();
           found.focusTab(tabId);
         }
+        events.emit("stage.shown", null);
       }),
       commands.register(stageCommands, {
         back: inWindow((windowId) => this.#navigate(windowId, "back")),
@@ -223,10 +230,15 @@ export class Stages {
       },
       profiles,
       style: () => settings.get("appearance.style"),
-      urlOf: (tab: Tab) => {
+      startOf: (tab: Tab) => {
         const asked = this.#startAt.get(tab.id);
         this.#startAt.delete(tab.id);
-        return asked ?? (blankPanes ? "about:blank" : tab.url);
+        const history =
+          asked === undefined ? this.#options.historyOf?.(tab.id) : undefined;
+        return {
+          url: asked ?? (blankPanes ? "about:blank" : tab.url),
+          ...(history === undefined ? {} : { history }),
+        };
       },
       views: this.#options.views,
       window,
@@ -274,11 +286,13 @@ export class Stages {
     );
   }
 
-  /** Lets go of the tab's view in every stage that keeps one out of sight, so its page's memory goes back; the tab loads again when it is next shown. */
-  sleep(tabId: string): void {
+  /** Lets go of the tab's view in every stage that keeps one out of sight, so its page's memory goes back, answering where its page stood; the tab loads again when it is next shown. */
+  sleep(tabId: string): PageHistory | undefined {
+    let history: PageHistory | undefined;
     for (const found of this.all) {
-      found.sleep(tabId);
+      history = found.sleep(tabId) ?? history;
     }
+    return history;
   }
 
   /** Lays every stage out again, after what the chrome takes of the windows changed. */

@@ -225,6 +225,7 @@ const start = async () => {
   const stages = new Stages({
     blankPanes: e2e,
     commands,
+    historyOf: (tabId) => sleep.historyOf(tabId),
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
     onPopup: (url) => links.popup(url),
     onSplitRequested: (windowId, orientation) => {
@@ -254,7 +255,7 @@ const start = async () => {
   stages.start();
   // The end-to-end suite shortens a minute of `sleep.afterMinutes` to watch a tab fall asleep.
   const sleepMinute = Number(process.env.MERU_SLEEP_MINUTE);
-  new Sleep({
+  const sleep = new Sleep({
     clock: ports.clock,
     commands,
     events,
@@ -264,7 +265,8 @@ const start = async () => {
     profiles,
     settings,
     stages,
-  }).start();
+  });
+  sleep.start();
   const links = new Links({
     log: log.scoped("links"),
     profiles,

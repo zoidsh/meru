@@ -112,6 +112,18 @@ const createView = (spec: ViewSpec): ViewPort => {
     loadURL: async (url) => {
       await contents.loadURL(url);
     },
+    history: () => ({
+      entries: contents.navigationHistory
+        .getAllEntries()
+        .map(({ pageState, title, url }) => ({ pageState, title, url })),
+      index: contents.navigationHistory.getActiveIndex(),
+    }),
+    restore: async ({ entries, index }) => {
+      await contents.navigationHistory.restore({
+        entries: [...entries],
+        index,
+      });
+    },
     navigate: (action) => {
       if (action === "back") {
         contents.navigationHistory.goBack();

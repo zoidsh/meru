@@ -1,6 +1,7 @@
 import type { LogPort } from "../../../core/log.ts";
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
 import type { Disposition } from "../../../core/records/link.ts";
+import type { PageHistory } from "../../../core/records/navigation.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { CANVAS, loadOwned } from "./owned-view.ts";
@@ -9,6 +10,8 @@ import type { OwnedView } from "./owned-view.ts";
 /** What a tab's view is made from beyond its profile's partition. */
 export interface TabSource {
   readonly url: string;
+  /** Where the tab's last page stood when it went to sleep, which its view starts at instead of `url`. */
+  readonly history?: PageHistory;
   readonly zoom: number;
 }
 
@@ -112,7 +115,7 @@ export class TabViews {
       }),
       view.onAudible(this.#options.onAudible),
     ];
-    void loadOwned(view, source.url, log);
+    void loadOwned(view, source.url, log, source.history);
     return {
       dispose: () => {
         for (const unsubscribe of listeners) {

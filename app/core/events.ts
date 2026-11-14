@@ -21,6 +21,8 @@ export interface AppEventMap {
   readonly "profile.selected": { readonly groupId: string };
   /** A tab was asked to come to the front: the main window shows its group, with its pane focused. */
   readonly "tab.focused": { readonly tabId: string; readonly groupId: string };
+  /** The stages have shown what the state asks of them, so which tabs a pane shows may have changed. */
+  readonly "stage.shown": null;
   /** Some tab's page started or stopped playing sound. */
   readonly "tab.audible": null;
   /** A group, a tab or the group a window shows may have changed, so every stage reads its group again. */
@@ -43,6 +45,7 @@ export class AppEvents {
     "profiles.changed": new Set(),
     "sidebar.changed": new Set(),
     "stage.invalidated": new Set(),
+    "stage.shown": new Set(),
     "tab.audible": new Set(),
     "tab.focused": new Set(),
   };

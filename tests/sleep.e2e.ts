@@ -23,7 +23,7 @@ const asleepOf = async (chrome: Page, tabId: string) => {
 };
 
 // A minute of `sleep.afterMinutes` lasts half a second here, so the tab falls asleep within the test.
-test("puts a tab the user let sleep to sleep once out of sight, and wakes it with a new page at its address when shown", async ({
+test("puts a tab the user let sleep to sleep once out of sight, and wakes it with a new page where it stood when shown", async ({
   launch,
 }) => {
   const { app, chrome } = await launch({
@@ -51,7 +51,15 @@ test("puts a tab the user let sleep to sleep once out of sight, and wakes it wit
   const [awake] = await panesOf(app);
   const before = must(awake, "Drive's pane").contentsId;
   await expect.poll(async () => await urlOf(app, before)).not.toBe("");
-  const address = await urlOf(app, before);
+  const start = await urlOf(app, before);
+  // A move within the page, so the address it wakes at differs from the one it started at.
+  await app.evaluate(async ({ webContents }, id) => {
+    await webContents
+      .fromId(id)
+      ?.executeJavaScript('location.hash = "folders/abc"', true);
+  }, before);
+  const address = `${start}#folders/abc`;
+  await expect.poll(async () => await urlOf(app, before)).toBe(address);
   valueOf(await runCommand(chrome, "sleep.toggleTab"));
 
   await invokeIn(chrome, tabs.focus, { tabId: gmailId });
@@ -69,5 +77,12 @@ test("puts a tab the user let sleep to sleep once out of sight, and wakes it wit
   const after = must(woken, "Drive's woken pane").contentsId;
   expect(after).not.toBe(before);
   await expect.poll(async () => await urlOf(app, after)).toBe(address);
+  expect(
+    await app.evaluate(
+      ({ webContents }, id) =>
+        webContents.fromId(id)?.navigationHistory.canGoBack(),
+      after
+    )
+  ).toBe(true);
   expect(await asleepOf(chrome, drive.id)).toBe(false);
 });

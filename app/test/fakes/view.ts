@@ -8,6 +8,7 @@ import type { Disposition } from "../../core/records/link.ts";
 import type {
   Navigation,
   NavigationAction,
+  PageHistory,
 } from "../../core/records/navigation.ts";
 import type { Rect } from "../../core/records/rect.ts";
 import { FakeKeys } from "./keys.ts";
@@ -50,7 +51,31 @@ export class FakeView implements ViewPort {
 
   readonly loadURL = async (url: string) => {
     this.url = url;
+    this.#history = { entries: [{ title: "", url }], index: 0 };
     await Promise.resolve();
+  };
+
+  #history: PageHistory = { entries: [], index: -1 };
+
+  readonly history = () => this.#history;
+
+  readonly restore = async (history: PageHistory) => {
+    if (this.#history.entries.length > 0) {
+      throw new Error("Only a view that has shown nothing can be restored");
+    }
+    this.#history = history;
+    this.url = history.entries[history.index]?.url;
+    await Promise.resolve();
+  };
+
+  /** Moves the page to `url` within itself, as a click on a link or a fragment would, dropping whatever lay ahead. */
+  readonly go = (url: string) => {
+    const { entries, index } = this.#history;
+    this.#history = {
+      entries: [...entries.slice(0, index + 1), { title: "", url }],
+      index: index + 1,
+    };
+    this.url = url;
   };
 
   readonly focus = () => {

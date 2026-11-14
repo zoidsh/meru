@@ -68,6 +68,7 @@ const setup = async () => {
   });
   const views = new FakeViewFactory();
   const stages = new Stages({
+    historyOf: (tabId) => sleep.historyOf(tabId),
     blankPanes: false,
     commands,
     dragPreload: undefined,
@@ -91,8 +92,6 @@ const setup = async () => {
     tabDragUrl: () => "overlay.html",
     views,
   });
-  stages.start();
-  stages.open(window, () => shown ?? profiles.currentGroup()?.id);
   const sleep = new Sleep({
     clock,
     commands,
@@ -101,7 +100,10 @@ const setup = async () => {
     settings,
     stages,
   });
+  // Started ahead of the stages, the other way round from the app's root, so a sweep cannot rely on the stages having heard a change first.
   sleep.start();
+  stages.start();
+  stages.open(window, () => shown ?? profiles.currentGroup()?.id);
   const [gmail] = profiles.state.tabs;
   if (gmail === undefined) {
     throw new Error("A first launch has a Gmail tab");
@@ -189,6 +191,33 @@ describe(Sleep, () => {
     clock.advance(3 * 60 * MINUTE);
     expect([notLet, asleep(), profiles.letSleep(gmail.id, true)]).toStrictEqual(
       [[[], false], [], { error: "pinned", ok: false }]
+    );
+  });
+
+  it("wakes a tab where its page stood, with its history behind it, and forgets it once awake", async () => {
+    const { clock, drive, gmail, profiles, show, viewOf } = await setup();
+    unwrap(profiles.letSleep(drive.id, true));
+    show(drive.id);
+    viewOf(drive.id)?.go("https://drive.google.com/drive/folders/abc");
+    show(gmail.id);
+    clock.advance(60 * MINUTE);
+    show(drive.id);
+    const woken = viewOf(drive.id);
+    show(gmail.id);
+    clock.advance(60 * MINUTE);
+    show(drive.id);
+    expect([woken?.url, woken?.history(), viewOf(drive.id)?.url]).toStrictEqual(
+      [
+        "https://drive.google.com/drive/folders/abc",
+        {
+          entries: [
+            { title: "", url: drive.url },
+            { title: "", url: "https://drive.google.com/drive/folders/abc" },
+          ],
+          index: 1,
+        },
+        "https://drive.google.com/drive/folders/abc",
+      ]
     );
   });
 

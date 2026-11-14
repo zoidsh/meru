@@ -39,7 +39,10 @@ import type {
 import type { Group } from "../../../core/records/group.ts";
 import type { Layout, Orientation } from "../../../core/records/layout.ts";
 import type { Disposition } from "../../../core/records/link.ts";
-import type { NavigationAction } from "../../../core/records/navigation.ts";
+import type {
+  NavigationAction,
+  PageHistory,
+} from "../../../core/records/navigation.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -91,8 +94,11 @@ export interface StageOptions {
   readonly profiles: StageProfiles;
   /** The group the window shows, read again whenever the state may have changed. */
   readonly groupId: () => string | undefined;
-  /** The address a pane loads for its tab. */
-  readonly urlOf: (tab: Tab) => string;
+  /** Where a new view of the tab starts. */
+  readonly startOf: (tab: Tab) => {
+    readonly url: string;
+    readonly history?: PageHistory;
+  };
   /** Read on every layout, so a change shows at the next one. */
   readonly style: () => Style;
   readonly zoom: (profileId: string) => number;
@@ -158,7 +164,7 @@ export class Stage {
       onPopup: options.onPopup,
       radius: () => STYLE_METRICS[options.style()].radius,
       sourceOf: (tab) => ({
-        url: options.urlOf(tab),
+        ...options.startOf(tab),
         zoom: options.zoom(tab.profileId),
       }),
     });
@@ -366,18 +372,19 @@ export class Stage {
     return true;
   }
 
-  /** Lets go of the tab's view while no pane of this stage shows it; true when there was one to let go. */
-  sleep(tabId: string): boolean {
+  /** Lets go of the tab's view while no pane of this stage shows it, answering where its page stood; undefined when there was none to let go. */
+  sleep(tabId: string): PageHistory | undefined {
     if (this.panes().some(({ tab }) => tab.id === tabId)) {
-      return false;
+      return undefined;
     }
     const owned = this.#views.release(tabId);
     if (owned === undefined) {
-      return false;
+      return undefined;
     }
+    const history = owned.view.history();
     this.#retired.push(owned);
     this.#reconcile();
-    return true;
+    return history;
   }
 
   /** Focuses the pane showing the tab, if the stage shows it. */

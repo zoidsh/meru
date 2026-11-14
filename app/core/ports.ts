@@ -1,6 +1,10 @@
 import type { KeyInput } from "./engines/shortcuts.ts";
 import type { Disposition } from "./records/link.ts";
-import type { Navigation, NavigationAction } from "./records/navigation.ts";
+import type {
+  Navigation,
+  NavigationAction,
+  PageHistory,
+} from "./records/navigation.ts";
 import type { Rect } from "./records/rect.ts";
 import type { Theme } from "./records/theme.ts";
 import type { TitleBar, TitleBarOverlay } from "./records/title-bar.ts";
@@ -78,6 +82,10 @@ export interface ViewPort {
   /** Read only by the end-to-end suite's inspector. */
   readonly bounds: () => Rect;
   readonly loadURL: (url: string) => Promise<void>;
+  /** The page's back-forward list as it stands. */
+  readonly history: () => PageHistory;
+  /** Loads a view that has shown nothing yet at `history`'s current entry, with the rest of the list behind and ahead of it. */
+  readonly restore: (history: PageHistory) => Promise<void>;
   readonly focus: () => void;
   readonly onFocus: (listener: () => void) => Unsubscribe;
   readonly navigation: () => Navigation;

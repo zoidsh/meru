@@ -3,6 +3,7 @@ import { isPinned } from "../../../core/engines/pinned.ts";
 import { sweep } from "../../../core/engines/sleep.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type { Clock, Unsubscribe } from "../../../core/ports.ts";
+import type { PageHistory } from "../../../core/records/navigation.ts";
 import { err } from "../../../core/result.ts";
 import { isSingleInstanceId } from "../../../shared/apps.ts";
 import type {
@@ -34,6 +35,8 @@ export class Sleep {
   #idleSince: ReadonlyMap<string, number> = new Map();
   #asleep: ReadonlySet<string> = new Set();
   #timer: Unsubscribe | undefined;
+  // Kept only in memory: a sleeping tab whose app quits starts at its stored address next time, as a page would after a restart.
+  readonly #histories = new Map<string, PageHistory>();
 
   constructor(options: SleepOptions) {
     this.#options = options;
@@ -56,10 +59,7 @@ export class Sleep {
           },
         },
       }),
-      events.on("stage.invalidated", () => {
-        this.#sweep();
-      }),
-      events.on("tab.focused", () => {
+      events.on("stage.shown", () => {
         this.#sweep();
       }),
       events.on("tab.audible", () => {
@@ -79,6 +79,11 @@ export class Sleep {
 
   dispose(): void {
     this.#disposables.dispose();
+  }
+
+  /** Where the sleeping tab's page stood when it went to sleep, which it wakes at. */
+  historyOf(tabId: string): PageHistory | undefined {
+    return this.#histories.get(tabId);
   }
 
   #focusedTab({ windowId }: CommandContext) {
@@ -106,7 +111,15 @@ export class Sleep {
       tabs: profiles.state.tabs,
     });
     for (const tabId of plan.fallAsleep) {
-      stages.sleep(tabId);
+      const history = stages.sleep(tabId);
+      if (history !== undefined) {
+        this.#histories.set(tabId, history);
+      }
+    }
+    for (const tabId of this.#histories.keys()) {
+      if (!plan.asleep.has(tabId)) {
+        this.#histories.delete(tabId);
+      }
     }
     this.#idleSince = plan.idleSince;
     this.#asleep = plan.asleep;
