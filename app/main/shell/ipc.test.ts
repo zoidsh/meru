@@ -87,6 +87,30 @@ describe(IpcDispatcher, () => {
     expect(log.at("error")).toStrictEqual(["A request's handler threw"]);
   });
 
+  it("hands a handler the profile the sender was assigned, never one of its payload", () => {
+    const transport = new FakeIpcTransport();
+    const dispatcher = new IpcDispatcher({
+      log: new FakeLog().scoped("ipc"),
+      transport,
+    });
+    const senders: (string | undefined)[] = [];
+    const pane = defineChannels("pane", {
+      say: event(z.object({ profileId: z.string().optional() })),
+    });
+    dispatcher.register(pane, {
+      say: (_payload, sender) => {
+        senders.push(sender.profileId);
+        return ok(undefined);
+      },
+    });
+    const paneSurface = defineSurface({ pushes: [], requests: [pane] });
+    dispatcher.assign(1, paneSurface, "work");
+    dispatcher.assign(2, paneSurface);
+    dispatcher.dispatch(1, "pane.say", { profileId: "home" });
+    dispatcher.dispatch(2, "pane.say", { profileId: "home" });
+    expect(senders).toStrictEqual(["work", undefined]);
+  });
+
   it("rejects an unknown channel", () => {
     const { dispatcher } = setup();
     expect(dispatcher.dispatch(1, "counter.nope", {})).toMatchObject({

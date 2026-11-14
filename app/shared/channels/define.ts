@@ -211,6 +211,8 @@ type ValueOf<C extends RequestChannel> =
 
 export interface Sender {
   readonly contentsId: number;
+  /** The profile whose pane sent it, for a pane's page; a page of the app's own has none. */
+  readonly profileId?: string;
 }
 
 type Handler<C extends RequestChannel> = (
@@ -239,7 +241,11 @@ export interface IpcRegistrar {
     channels: C,
     handlers: Handlers<C>
   ) => Unsubscribe;
-  readonly assign: (contentsId: number, surface: Surface) => Unsubscribe;
+  readonly assign: (
+    contentsId: number,
+    surface: Surface,
+    profileId?: string
+  ) => Unsubscribe;
   readonly push: <C extends PushChannel>(
     contentsId: number,
     channel: C,

@@ -42,7 +42,10 @@ const bind =
 export class IpcDispatcher implements IpcRegistrar {
   readonly #transport: IpcTransportPort;
   readonly #handlers = new Map<string, Bound>();
-  readonly #senders = new Map<number, Allowlist>();
+  readonly #senders = new Map<
+    number,
+    { readonly allowed: Allowlist; readonly profileId?: string }
+  >();
   readonly #log: LogPort;
 
   constructor(options: {
@@ -78,8 +81,16 @@ export class IpcDispatcher implements IpcRegistrar {
     };
   };
 
-  readonly assign = (contentsId: number, surface: Surface): Unsubscribe => {
-    this.#senders.set(contentsId, allowlist(surface));
+  /** Allows the page its surface's channels; a pane's page is assigned its profile, which its requests then carry whatever their payload says. */
+  readonly assign = (
+    contentsId: number,
+    surface: Surface,
+    profileId?: string
+  ): Unsubscribe => {
+    this.#senders.set(contentsId, {
+      allowed: allowlist(surface),
+      ...(profileId === undefined ? {} : { profileId }),
+    });
     return () => {
       this.#senders.delete(contentsId);
     };
@@ -98,8 +109,8 @@ export class IpcDispatcher implements IpcRegistrar {
     payload: z.input<C["payload"]>
   ): void => {
     const name = wireName(channel);
-    for (const [contentsId, surface] of this.#senders) {
-      if (surface.push.has(name)) {
+    for (const [contentsId, { allowed }] of this.#senders) {
+      if (allowed.push.has(name)) {
         this.#send(contentsId, name, payload);
       }
     }
@@ -116,10 +127,11 @@ export class IpcDispatcher implements IpcRegistrar {
     channel: string,
     payload: unknown
   ): Result<unknown, IpcError> {
-    const surface = this.#senders.get(contentsId);
-    if (surface === undefined) {
+    const sender = this.#senders.get(contentsId);
+    if (sender === undefined) {
       return failure("wrongSurface", `Sender ${contentsId} has no surface`);
     }
+    const surface = sender.allowed;
     const known =
       surface.event.has(channel) ||
       surface.invoke.has(channel) ||
@@ -135,7 +147,12 @@ export class IpcDispatcher implements IpcRegistrar {
       return failure("noHandler", `Nothing handles ${channel}`);
     }
     try {
-      return handler(payload, { contentsId });
+      return handler(payload, {
+        contentsId,
+        ...(sender.profileId === undefined
+          ? {}
+          : { profileId: sender.profileId }),
+      });
     } catch (error) {
       this.#log.error("A request's handler threw", { channel, error });
       return err({
