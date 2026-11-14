@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { fakeIds } from "../../test/fakes/ids.ts";
 import { random } from "../../test/random.ts";
 import { unwrap } from "../../test/result.ts";
+import type { Ids } from "../ports.ts";
 import type { Beside } from "../records/layout.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
 import type { Tab } from "../records/tab.ts";
@@ -16,7 +17,6 @@ import {
   canClose,
   closeTab,
   openTab,
-  createGroup,
   firstGroup,
   freshState,
   leaveGroup,
@@ -57,6 +57,35 @@ const profile = (id: string, order = 0) => ({
 });
 
 const gmail = (appId: string) => appId === "gmail";
+
+/** Joins each tab beside the one before it, so the first tab's group holds them all. */
+const grouped = (
+  state: ProfilesState,
+  [first, ...rest]: readonly [string, ...string[]],
+  orientation: Beside["orientation"],
+  ids: Ids
+) => {
+  let current = state;
+  let beside = first;
+  for (const tabId of rest) {
+    current = unwrap(
+      joinTab(
+        current,
+        tabId,
+        beside,
+        { orientation, side: "after" },
+        ids,
+        gmail
+      )
+    );
+    beside = tabId;
+  }
+  const group = current.groups.find((found) => found.tabIds.includes(first));
+  if (group === undefined) {
+    throw new Error(`no group holds ${first}`);
+  }
+  return { groupId: group.id, state: current };
+};
 
 const start = () => {
   const ids = fakeIds("n");
@@ -224,14 +253,8 @@ describe("the state's operations", () => {
         ids
       )
     );
-    const made = unwrap(
-      createGroup(more, ["t1", "t2", "t3"], "horizontal", ids)
-    );
+    const made = grouped(more, ["t1", "t2", "t3"], "horizontal", ids);
     expect(validateState(made.state, gmail)).toStrictEqual([]);
-    expect(createGroup(made.state, ["t2"], "vertical", ids)).toStrictEqual({
-      error: "alreadyGrouped",
-      ok: false,
-    });
     const left = unwrap(leaveGroup(made.state, "t2", ids, gmail));
     expect({
       groups: left.groups.map((group) => group.tabIds),
@@ -254,10 +277,10 @@ describe("the state's operations", () => {
         ids
       )
     );
-    const grouped = unwrap(createGroup(more, ["t1", "t2"], "vertical", ids));
+    const pair = grouped(more, ["t1", "t2"], "vertical", ids);
     const joined = unwrap(
       joinTab(
-        grouped.state,
+        pair.state,
         "t2",
         "t3",
         { orientation: "horizontal", side: "before" },
@@ -304,16 +327,14 @@ describe("the state's operations", () => {
         ids
       )
     );
-    const grouped = unwrap(
-      createGroup(more, ["t1", "t2", "t3"], "vertical", ids)
-    );
-    const group = grouped.state.groups.find(
-      (found) => found.id === grouped.groupId
+    const three = grouped(more, ["t1", "t2", "t3"], "vertical", ids);
+    const group = three.state.groups.find(
+      (found) => found.id === three.groupId
     );
     const before = panes(group?.layout ?? null);
     const moved = unwrap(
       joinTab(
-        grouped.state,
+        three.state,
         "t3",
         "t1",
         { orientation: "horizontal", side: "before" },
@@ -322,7 +343,7 @@ describe("the state's operations", () => {
       )
     );
     const after = panes(
-      moved.groups.find((found) => found.id === grouped.groupId)?.layout ?? null
+      moved.groups.find((found) => found.id === three.groupId)?.layout ?? null
     );
     expect({
       groups: moved.groups.map((found) => found.tabIds),
@@ -441,11 +462,14 @@ describe("the state's invariants under the layout's own changes", () => {
       for (const tabId of ["t2", "t3", "t4", "t5"]) {
         current = unwrap(addTab(current, tabOf(tabId, "a"), ids));
       }
-      const grouped = unwrap(
-        createGroup(current, ["t1", "t2", "t3", "t4", "t5"], "vertical", ids)
+      const five = grouped(
+        current,
+        ["t1", "t2", "t3", "t4", "t5"],
+        "vertical",
+        ids
       );
-      const { groupId } = grouped;
-      current = grouped.state;
+      const { groupId } = five;
+      current = five.state;
       let changed = 0;
       for (let step = 0; step < 60; step += 1) {
         const before = current;

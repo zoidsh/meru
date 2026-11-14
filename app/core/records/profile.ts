@@ -4,7 +4,6 @@ import { idSchema } from "./id.ts";
 
 export const profileStatusSchema = z.object({
   kind: z.enum(["ok", "needsSignIn"]),
-  reason: z.string().optional(),
   /** Unread mail in the profile's Gmail, as its page last reported it. */
   unreadCount: z.number().int().nonnegative().optional(),
 });

@@ -1,12 +1,7 @@
 import type { Ids } from "../ports.ts";
 import type { App } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
-import type {
-  Beside,
-  Layout,
-  Orientation,
-  Placement,
-} from "../records/layout.ts";
+import type { Beside, Layout, Placement } from "../records/layout.ts";
 import { colorFor } from "../records/profile.ts";
 import type { Profile, ProfileStatus } from "../records/profile.ts";
 import type { ProfilesState } from "../records/profiles-state.ts";
@@ -19,7 +14,6 @@ import {
   leaf,
   movePane,
   paneOfTab,
-  panes,
   resize,
   split,
   swap,
@@ -166,7 +160,7 @@ export const setProfileStatus = (
       })
     : err("unknownProfile");
 
-/** What the user may change about a profile; a null colour takes the colour away. */
+/** What the user may change about a profile. */
 export interface ProfilePatch {
   readonly label?: string;
   readonly color?: string;
@@ -445,42 +439,6 @@ export const joinTab = (
         ids
       )
     : alone;
-};
-
-/** Makes one group of tabs that are each alone in theirs, the first tab's group taking the others, each split off the pane added before it. */
-export const createGroup = (
-  state: ProfilesState,
-  tabIds: readonly [string, ...string[]],
-  orientation: Orientation,
-  ids: Ids
-): Result<{ state: ProfilesState; groupId: string }, StateError> => {
-  const [first, ...rest] = tabIds;
-  const group = groupOf(first, state.groups);
-  if (group === undefined) {
-    return err("unknownTab");
-  }
-  if (group.tabIds.length > 1) {
-    return err("alreadyGrouped");
-  }
-  let current = state;
-  for (const tabId of rest) {
-    const target = current.groups.find((found) => found.id === group.id);
-    const last = target === undefined ? undefined : panes(target.layout).at(-1);
-    if (last === undefined) {
-      return err("unknownGroup");
-    }
-    const next = splitInto(
-      current,
-      tabId,
-      { groupId: group.id, orientation, paneId: last.paneId, side: "after" },
-      ids
-    );
-    if (!next.ok) {
-      return next;
-    }
-    current = next.value;
-  }
-  return ok({ groupId: group.id, state: current });
 };
 
 const withLayout = (
