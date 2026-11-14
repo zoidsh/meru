@@ -2,59 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import type { Sidebar } from "../../../core/engines/sidebar.ts";
 import { sidebarSchema } from "../../../core/engines/sidebar.ts";
-import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { sidebar, sidebarPushes } from "../../../shared/channels/sidebar.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
-import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeFs } from "../../../test/fakes/fs.ts";
-import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { strictLog } from "../../../test/fakes/log.ts";
-import { FakeSessions } from "../../../test/fakes/session.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { Profiles } from "../profiles/index.ts";
-import { SettingsStore } from "../settings/index.ts";
+import { testApp } from "../../testing.ts";
 import { Sidebars } from "./index.ts";
 
 const PAGE = 3;
 
 const setup = async () => {
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ log: strictLog, transport });
+  const { commands, events, profiles, registrar, settings, transport } =
+    await testApp();
   registrar.assign(PAGE, chromeSurface);
-  const lifecycle = new FakeLifecycle();
-  const clock = new FakeClock();
-  const settings = new SettingsStore({
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events: new AppEvents(),
-    lifecycle,
-    clock,
-    fs: new FakeFs(),
-    log: strictLog,
-    registrar,
-    watchFile: false,
-  });
-  const events = new AppEvents();
-  const commands = new CommandDispatcher();
-  const profiles = new Profiles({
-    commands,
-    lifecycle,
-    clock,
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events,
-    fs: new FakeFs(),
-    ids: fakeIds(),
-    log: strictLog,
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
-  });
-  await profiles.open();
-  profiles.start();
   const changes: Sidebar[] = [];
   events.on("sidebar.changed", () => {
     changes.push(sidebars.current());
