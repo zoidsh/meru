@@ -47,11 +47,11 @@ const drag = async (
   to: number,
   zone: "before" | "onto"
 ) => {
-  const source = await rowsOf(chrome).nth(from).boundingBox();
-  const target = await rowsOf(chrome).nth(to).boundingBox();
-  if (source === null || target === null) {
-    throw new Error("A row is not drawn");
-  }
+  const source = must(
+    await rowsOf(chrome).nth(from).boundingBox(),
+    `Row ${from}`
+  );
+  const target = must(await rowsOf(chrome).nth(to).boundingBox(), `Row ${to}`);
   await chrome.mouse.move(
     source.x + source.width / 2,
     source.y + source.height / 2
