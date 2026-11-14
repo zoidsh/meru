@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "../../../node_modules/.tsbuild/fakes",
     "lib": ["es2024"],
-    "types": []
+    "types": ["node"]
   },
   "include": ["."],
   "references": [{ "path": "../../core" }, { "path": "../../shared" }]

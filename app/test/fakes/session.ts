@@ -1,16 +1,6 @@
 import { SESSION_BODY_CAP } from "../../core/ports.ts";
 import type { Clock, SessionPort, SessionResponse } from "../../core/ports.ts";
 
-const utf8Length = (text: string): number => {
-  let length = 0;
-  for (const character of text) {
-    const point = character.codePointAt(0) ?? 0;
-    length +=
-      [0x80, 0x8_00, 0x1_00_00, Infinity].findIndex((end) => point < end) + 1;
-  }
-  return length;
-};
-
 /** What the fake answers an address with: a response, a failure of the network, or nothing, which the timeout ends. */
 export type FakeAnswer = SessionResponse | Error | "silent";
 
@@ -60,7 +50,7 @@ export class FakeSessions implements SessionPort {
     // The real session stops reading at the cap, so no caller ever sees more.
     if (
       answer.kind === "answered" &&
-      utf8Length(answer.text) > SESSION_BODY_CAP
+      Buffer.byteLength(answer.text) > SESSION_BODY_CAP
     ) {
       return { kind: "tooLarge" };
     }
