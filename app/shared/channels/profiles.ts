@@ -6,7 +6,14 @@ import { besideSchema } from "../../core/records/layout.ts";
 import { colorSchema, profileSchema } from "../../core/records/profile.ts";
 import { profilesStateSchema } from "../../core/records/profiles-state.ts";
 import { tabSchema } from "../../core/records/tab.ts";
-import { defineChannels, definePushes, invoke, push, sync } from "./define.ts";
+import {
+  defineChannels,
+  definePushes,
+  invoke,
+  noPayload,
+  push,
+  sync,
+} from "./define.ts";
 
 /** What a page is told about profiles: the state, with each profile marked deactivated when the entitlement does not allow it, each tab whether it may close, and why the entitlement refuses another profile, null while it allows one. */
 export const profilesSnapshotSchema = profilesStateSchema.extend({
@@ -35,7 +42,7 @@ export const profiles = defineChannels("profiles", {
     }),
     z.null()
   ),
-  snapshot: sync(z.object({}), profilesSnapshotSchema),
+  snapshot: sync(noPayload, profilesSnapshotSchema),
 });
 
 export const tabs = defineChannels("tabs", {

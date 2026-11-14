@@ -7,6 +7,7 @@ import type { Unsubscribe } from "../core/ports.ts";
 import type { Result } from "../core/result.ts";
 import type {
   IpcError,
+  NoPayload,
   PushChannel,
   SyncChannel,
 } from "../shared/channels/define.ts";
@@ -41,8 +42,6 @@ export const createStore = <T>(initial: T): Store<T> => {
     },
   };
 };
-
-type NoPayload = z.ZodObject<Record<string, never>>;
 
 /**
  * What a synced store needs of a page's client: a snapshot answered by `R` and a push carrying `P`. A client of any surface that has both channels satisfies it, which is what lets a store serve every page that may read it.

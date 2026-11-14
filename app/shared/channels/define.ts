@@ -59,6 +59,11 @@ export const push = <P extends z.ZodType>(payload: P): PushChannel<P> => ({
   payload,
 });
 
+/** The payload of a channel that carries nothing. */
+export const noPayload = z.object({});
+
+export type NoPayload = typeof noPayload;
+
 // The channel objects themselves are what callers pass around, so a renamed or reshaped channel breaks every call site at compile time; the wire name is derived once, here.
 const wireNames = new WeakMap<object, string>();
 

@@ -1,10 +1,14 @@
-import { z } from "zod";
-
 import { entitlementSchema } from "../../core/records/entitlement.ts";
-import { defineChannels, definePushes, push, sync } from "./define.ts";
+import {
+  defineChannels,
+  definePushes,
+  noPayload,
+  push,
+  sync,
+} from "./define.ts";
 
 export const entitlement = defineChannels("entitlement", {
-  snapshot: sync(z.object({}), entitlementSchema),
+  snapshot: sync(noPayload, entitlementSchema),
 });
 
 export const entitlementPushes = definePushes("entitlement", {

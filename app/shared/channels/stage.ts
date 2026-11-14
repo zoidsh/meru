@@ -10,6 +10,7 @@ import {
   definePushes,
   event,
   invoke,
+  noPayload,
   push,
   sync,
 } from "./define.ts";
@@ -53,7 +54,7 @@ export const stage = defineChannels("stage", {
   dragTo: event(pointSchema.extend({ buttons: z.number().int() })),
   endDrag: event(pointSchema),
   /** Ends the drag on, if any, with nothing dropped and no ratio taken. */
-  cancelDrag: event(z.object({})),
+  cancelDrag: event(noPayload),
   /** Opens a tab of the app in the profile and shows it, in a group of one or, with `split`, beside the focused pane of the sender's window in that orientation; a single-instance app's one tab instead when the profile has it. */
   openTab: invoke(
     z.object({
@@ -63,11 +64,11 @@ export const stage = defineChannels("stage", {
     }),
     z.null()
   ),
-  snapshot: sync(z.object({}), stageSnapshotSchema),
+  snapshot: sync(noPayload, stageSnapshotSchema),
 });
 
 export const stagePushes = definePushes("stage", {
   changed: push(stageSnapshotSchema),
   /** The drag the chrome page began was cancelled from the drag's own page, so the chrome page's drag ends too. */
-  dragCancelled: push(z.object({})),
+  dragCancelled: push(noPayload),
 });
