@@ -18,6 +18,17 @@ export const ProfilesContext = createContext<
   Store<ProfilesSnapshot | undefined> | undefined
 >(undefined);
 
+/** A profile as the snapshot shows it, with what main derives for it. */
+export type ShownProfile = ProfilesSnapshot["profiles"][number];
+
 /** The profiles, tabs and groups as main last pushed them; undefined until the first answer. */
 export const useProfiles = (): ProfilesSnapshot | undefined =>
   useWholeStore(ProfilesContext, "useProfiles");
+
+/** The selected profile; undefined until the first answer. */
+export const useSelectedProfile = (): ShownProfile | undefined => {
+  const snapshot = useProfiles();
+  return snapshot?.profiles.find(
+    (profile) => profile.id === snapshot.selectedProfileId
+  );
+};

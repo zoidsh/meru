@@ -12,7 +12,7 @@ import type { Registry } from "../../../shared/settings/registry.ts";
 import { settingSet } from "../../../shared/settings/schema.ts";
 import { Badge } from "../../ui/badge.tsx";
 import { refusalOf } from "../entitlement/refusal.ts";
-import { useProfiles } from "../profiles/use-profiles.ts";
+import { useSelectedProfile } from "../profiles/use-profiles.ts";
 import {
   BooleanControl,
   ChoiceControl,
@@ -108,10 +108,7 @@ const ProfileOverride = ({
   const id = useId();
   const layers = useSettingsLayers();
   const specs = useSettingSpecs();
-  const snapshot = useProfiles();
-  const selected = snapshot?.profiles.find(
-    (found) => found.id === snapshot.selectedProfileId
-  );
+  const selected = useSelectedProfile();
   if (selected === undefined) {
     return null;
   }

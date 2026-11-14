@@ -8,7 +8,6 @@ import {
   profileSchema,
 } from "../../../core/records/profile.ts";
 import { profiles as channels } from "../../../shared/channels/profiles.ts";
-import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Message } from "../../../shared/msg.ts";
 import { Badge } from "../../ui/badge.tsx";
@@ -29,8 +28,7 @@ import { SettingsSection } from "../settings/settings-section.tsx";
 import { useDraft } from "../settings/use-draft.ts";
 import { useSettingsClient } from "../settings/use-settings-client.ts";
 import { useProfiles } from "./use-profiles.ts";
-
-type ShownProfile = ProfilesSnapshot["profiles"][number];
+import type { ShownProfile } from "./use-profiles.ts";
 
 const COLOR_NAMES: Readonly<Record<(typeof PROFILE_COLORS)[number], Message>> =
   {

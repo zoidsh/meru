@@ -12,10 +12,10 @@ import {
 } from "../../../core/engines/sidebar.ts";
 import type { SidebarSize } from "../../../core/engines/sidebar.ts";
 import type { Tab } from "../../../core/records/tab.ts";
-import { isSingleInstanceId } from "../../../shared/apps.ts";
+import { gmail as gmailApp, isSingleInstanceId } from "../../../shared/apps.ts";
 import { stagePushes } from "../../../shared/channels/stage.ts";
 import { useClient } from "../../client-context.tsx";
-import { useProfiles } from "../profiles/use-profiles.ts";
+import { useProfiles, useSelectedProfile } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { useStage } from "../stage/use-stage.ts";
 import { TabRowButton } from "./tab-row.tsx";
@@ -80,6 +80,7 @@ export const Sidebar = ({
 }) => {
   const sidebar = useSidebar();
   const snapshot = useProfiles();
+  const profile = useSelectedProfile();
   const stageSnapshot = useStage();
   const showWidthToggle = useSetting("sidebar.showWidthToggle");
   const gmailBadge = useSetting("sidebar.gmailUnreadBadge");
@@ -97,16 +98,13 @@ export const Sidebar = ({
     snapshot.selectedProfileId,
     isSingleInstanceId
   );
-  const profile = snapshot.profiles.find(
-    (found) => found.id === snapshot.selectedProfileId
-  );
   const active = activeTabId(
     snapshot.groups,
     stageSnapshot?.focusedPaneId ?? null
   );
   const gmailActive =
     active !== undefined &&
-    snapshot.tabs.some((tab) => tab.id === active && tab.appId === "gmail");
+    snapshot.tabs.some((tab) => tab.id === active && tab.appId === gmailApp.id);
   const gmail: GmailMark = {
     needsSignIn: profile?.status.kind === "needsSignIn",
     unread: showsGmailUnread({ gmailActive, mode: gmailBadge, unreadBadge })
@@ -123,7 +121,7 @@ export const Sidebar = ({
       closeable={closeable.has(tab.id)}
       drop={drop?.tabId === tab.id ? drop : undefined}
       focusable={tab.id === focusable}
-      gmail={tab.appId === "gmail" ? gmail : undefined}
+      gmail={tab.appId === gmailApp.id ? gmail : undefined}
       key={tab.id}
       size={size}
       tab={tab}

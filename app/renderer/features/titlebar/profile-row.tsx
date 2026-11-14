@@ -9,16 +9,14 @@ import { useEffect, useState } from "react";
 import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
 import { orderedProfiles } from "../../../core/engines/ordering.ts";
 import { profiles as profileChannels } from "../../../shared/channels/profiles.ts";
-import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
 import { msg } from "../../../shared/msg.ts";
 import { useClient } from "../../client-context.tsx";
 import { Button } from "../../ui/button.tsx";
 import { UnreadBadge } from "../profiles/unread-badge.tsx";
 import { useProfiles } from "../profiles/use-profiles.ts";
+import type { ShownProfile } from "../profiles/use-profiles.ts";
 import { useSetting } from "../settings/use-setting.ts";
 import { TitlebarIconButton } from "./titlebar-icon-button.tsx";
-
-type ShownProfile = ProfilesSnapshot["profiles"][number];
 
 const MINIMUM_SCROLL = 96;
 
