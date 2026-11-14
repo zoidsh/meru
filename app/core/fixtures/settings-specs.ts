@@ -10,11 +10,12 @@ const spec = <
   value: SettingSpec<K, S, Scope>
 ) => value;
 
-/** A registry of three settings, one of each kind of value, for the settings engine's tests. */
+/** A registry of three settings, one of each kind of value, one with a default of its own on macOS, for the settings engine's tests. */
 export const specs = [
   spec({
     default: "modern",
     key: "look.style",
+    platformDefaults: { darwin: "classic" },
     schema: z.enum(["modern", "classic"]),
     scope: "global",
   }),

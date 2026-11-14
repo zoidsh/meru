@@ -4,3 +4,7 @@ import { z } from "zod";
 export const platformSchema = z.enum(["darwin", "linux", "win32"]);
 
 export type Platform = z.infer<typeof platformSchema>;
+
+/** The platform as Node names it, another Unix taken as Linux, whose desktops behave alike. */
+export const platformOf = (name: string): Platform =>
+  platformSchema.catch("linux").parse(name);

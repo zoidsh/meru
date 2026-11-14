@@ -2,10 +2,12 @@ import { createContext, useContext } from "react";
 
 import {
   emptySettings,
+  forPlatform,
   resolve,
   withValue,
 } from "../../../core/engines/settings.ts";
 import type { GateRefusal } from "../../../core/entitlement/gate.ts";
+import { platformOf } from "../../../core/records/platform.ts";
 import {
   settings as channels,
   settingsPushes,
@@ -26,14 +28,24 @@ export interface SettingsCopy {
   readonly locked: Locked;
 }
 
+/** The registry as the page's platform has it, each platform default in the place of the default. */
+export type PlatformRegistry = readonly (typeof registry)[number][];
+
+/** The page's copy of the settings, and the registry its values resolve against. */
+export interface SettingsSource {
+  readonly store: Store<SettingsCopy>;
+  readonly specs: PlatformRegistry;
+}
+
 /** The page's copy of the settings, each push's changes applied to its layers and its locks replaced. */
 export const createSettingsStore = (
   client: SyncSource<
     (typeof channels.snapshot)["result"],
     (typeof settingsPushes.changed)["payload"]
-  >
-): Store<SettingsCopy> =>
-  syncedStore(
+  > & { readonly platform: string }
+): SettingsSource => ({
+  specs: forPlatform(registry, platformOf(client.platform)),
+  store: syncedStore(
     client,
     channels.snapshot,
     settingsPushes.changed,
@@ -54,19 +66,26 @@ export const createSettingsStore = (
       }
       return { layers, locked };
     }
-  );
+  ),
+});
 
-export const SettingsContext = createContext<Store<SettingsCopy> | undefined>(
+export const SettingsContext = createContext<SettingsSource | undefined>(
   undefined
 );
 
-const useSettingsStore = (): Store<SettingsCopy> => {
-  const store = useContext(SettingsContext);
-  if (store === undefined) {
+const useSettingsSource = (): SettingsSource => {
+  const source = useContext(SettingsContext);
+  if (source === undefined) {
     throw new Error("useSetting needs a SettingsContext above it");
   }
-  return store;
+  return source;
 };
+
+const useSettingsStore = (): Store<SettingsCopy> => useSettingsSource().store;
+
+/** The registry the page's values resolve against. */
+export const useSettingSpecs = (): PlatformRegistry =>
+  useSettingsSource().specs;
 
 /** The value in force for a key, for a profile when the key is one a profile may override, its default while the key is locked; re-renders when it changes. */
 export const useSetting = <K extends SettingKey>(
@@ -74,9 +93,10 @@ export const useSetting = <K extends SettingKey>(
   ...profile: ProfileArg<K>
 ) => {
   const [profileId] = profile;
-  return useStore(useSettingsStore(), ({ layers, locked }) =>
+  const { specs, store } = useSettingsSource();
+  return useStore(store, ({ layers, locked }) =>
     resolve(
-      registry,
+      specs,
       locked[key] === undefined ? layers : emptySettings(),
       key,
       profileId

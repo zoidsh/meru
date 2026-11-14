@@ -4,6 +4,7 @@ import type { Fallback } from "../../../core/engines/settings-parse.ts";
 import {
   diff,
   emptySettings,
+  forPlatform,
   resolve,
   storedValue,
   withoutProfile,
@@ -21,6 +22,7 @@ import type {
   Unsubscribe,
 } from "../../../core/ports.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
+import { platformOf } from "../../../core/records/platform.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
@@ -66,7 +68,7 @@ export type SettingsListener = (
 export interface SettingsOptions {
   readonly fs: FsPort;
   readonly clock: Clock;
-  readonly lifecycle: Pick<LifecyclePort, "onQuit">;
+  readonly lifecycle: Pick<LifecyclePort, "onQuit" | "platform">;
   readonly registrar: IpcRegistrar;
   /** Follow edits made to the file by hand while the app runs. */
   readonly watchFile: boolean;
@@ -88,11 +90,13 @@ export class SettingsStore {
   readonly #store: SnapshotStore<Settings, Fallback>;
   readonly #listeners = new Set<SettingsListener>();
   readonly #disposables = new DisposableStore();
+  readonly #specs: readonly (typeof registry)[number][];
   #settings: Settings = emptySettings();
   #refusal: GateRefusal | null = null;
 
   constructor(options: SettingsOptions) {
     this.#options = options;
+    this.#specs = forPlatform(registry, platformOf(options.lifecycle.platform));
     this.#store = new SnapshotStore(settingsSnapshot, {
       lifecycle: options.lifecycle,
       clock: options.clock,
@@ -166,7 +170,7 @@ export class SettingsStore {
       PRO_KEYS.has(key) && this.#proRefusal() !== null
         ? emptySettings()
         : this.#settings;
-    return resolve(registry, layers, key, profileId);
+    return resolve(this.#specs, layers, key, profileId);
   }
 
   /** The keys whose stored value the entitlement holds back, each with the gate's reason. */

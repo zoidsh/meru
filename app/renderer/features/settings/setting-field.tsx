@@ -8,7 +8,6 @@ import {
 } from "../../../core/engines/settings.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
 import { msg } from "../../../shared/msg.ts";
-import { registry } from "../../../shared/settings/registry.ts";
 import type { Registry } from "../../../shared/settings/registry.ts";
 import { settingSet } from "../../../shared/settings/schema.ts";
 import { Badge } from "../../ui/badge.tsx";
@@ -23,7 +22,11 @@ import {
 } from "./controls.tsx";
 import type { ControlProps } from "./controls.tsx";
 import { fieldKindOf } from "./field-kind.ts";
-import { useLocked, useSettingsLayers } from "./use-setting.ts";
+import {
+  useLocked,
+  useSettingSpecs,
+  useSettingsLayers,
+} from "./use-setting.ts";
 import { useSettingsClient } from "./use-settings-client.ts";
 
 export type SettingEntry = Registry[number];
@@ -104,6 +107,7 @@ const ProfileOverride = ({
 }) => {
   const id = useId();
   const layers = useSettingsLayers();
+  const specs = useSettingSpecs();
   const snapshot = useProfiles();
   const selected = snapshot?.profiles.find(
     (found) => found.id === snapshot.selectedProfileId
@@ -128,7 +132,7 @@ const ProfileOverride = ({
           onChange={(on) => {
             write(
               on === true
-                ? resolve(registry, layers, setting.key, selected.id)
+                ? resolve(specs, layers, setting.key, selected.id)
                 : undefined,
               selected.id
             );
@@ -147,7 +151,7 @@ const ProfileOverride = ({
           }}
           schema={setting.schema}
           setting={setting}
-          value={resolve(registry, layers, setting.key, selected.id)}
+          value={resolve(specs, layers, setting.key, selected.id)}
         />
       ) : undefined}
     </div>
@@ -163,6 +167,7 @@ export const SettingField = ({
   const id = useId();
   const client = useSettingsClient();
   const layers = useSettingsLayers();
+  const specs = useSettingSpecs();
   const refusal = useLocked(setting.key);
   const locked = refusal !== undefined;
   const write = (value: unknown, profileId?: string) => {
@@ -186,7 +191,7 @@ export const SettingField = ({
             schema={setting.schema}
             setting={setting}
             value={resolve(
-              registry,
+              specs,
               locked ? emptySettings() : layers,
               setting.key
             )}

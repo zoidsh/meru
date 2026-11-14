@@ -4,6 +4,7 @@ import { specs } from "../fixtures/settings-specs.ts";
 import {
   diff,
   emptySettings,
+  forPlatform,
   resolve,
   storedValue,
   withValue,
@@ -52,6 +53,20 @@ describe(resolve, () => {
       },
     };
     expect(resolve(specs, layers, "look.style", "work")).toBe("classic");
+  });
+});
+
+describe(forPlatform, () => {
+  it("takes a platform's own default where it has one, and the default elsewhere, under any stored value", () => {
+    expect([
+      resolve(forPlatform(specs, "darwin"), settings({}), "look.style"),
+      resolve(forPlatform(specs, "linux"), settings({}), "look.style"),
+      resolve(
+        forPlatform(specs, "darwin"),
+        settings({ global: { "look.style": "modern" } }),
+        "look.style"
+      ),
+    ]).toStrictEqual(["classic", "modern", "modern"]);
   });
 });
 

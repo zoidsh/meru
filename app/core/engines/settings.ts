@@ -3,6 +3,7 @@ import { isEqual } from "es-toolkit";
 /* oxlint-disable typescript/no-generated-empty-object-type */
 import type { z } from "zod";
 
+import type { Platform } from "../records/platform.ts";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
 
@@ -16,6 +17,8 @@ export interface SettingSpec<
   readonly key: K;
   readonly schema: S;
   readonly default: z.output<S>;
+  /** Takes the place of `default` on the platforms it names. */
+  readonly platformDefaults?: Readonly<Partial<Record<Platform, z.output<S>>>>;
   readonly scope: Scope;
 }
 
@@ -138,6 +141,16 @@ export const resolve = <R extends SettingSpecs, K extends KeyOf<R>>(
   const layer: GlobalLayer<R> | undefined = settings.profiles[profileId];
   return layer?.[key] ?? fallback;
 };
+
+/** The specs as `platform` has them, each platform default in the place of the default. */
+export const forPlatform = <R extends SettingSpecs>(
+  specs: R,
+  platform: Platform
+): readonly R[number][] =>
+  specs.map((spec) => {
+    const value: unknown = spec.platformDefaults?.[platform];
+    return value === undefined ? spec : { ...spec, default: value };
+  });
 
 export const emptySettings = <R extends SettingSpecs>(): SettingsLayers<R> => ({
   global: {},

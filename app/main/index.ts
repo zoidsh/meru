@@ -7,7 +7,7 @@ import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { themeOf } from "../core/ports.ts";
-import { platformSchema } from "../core/records/platform.ts";
+import { platformOf } from "../core/records/platform.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../shared/channels/surfaces.ts";
@@ -340,10 +340,7 @@ const start = async () => {
     settingsWindow.recolour(theme);
     dispatcher.broadcast(themePushes.changed, { theme });
   });
-  // Electron runs on other Unix systems too, whose desktops behave as Linux's.
-  const platform = platformSchema
-    .catch("linux")
-    .parse(ports.lifecycle.platform);
+  const platform = platformOf(ports.lifecycle.platform);
   new Notifications({
     events,
     inbox,
