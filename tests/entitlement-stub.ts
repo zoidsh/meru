@@ -7,13 +7,11 @@ import { mintToken } from "../scripts/entitlement/sign.ts";
 
 const DAY = 86_400;
 
-/** What the stub answers a license key with: a token, or a refusal. */
+/** The token the stub answers a license key with. */
 export type StubAnswer =
   | { readonly kind: "trial"; readonly days: number }
-  | { readonly kind: "pro" | "team"; readonly deviceLimit: number }
-  | { readonly kind: "disabled"; readonly reason: string }
-  | { readonly kind: "rejected"; readonly reason: string }
-  | { readonly kind: "serverError" };
+  | { readonly kind: "pro"; readonly deviceLimit: number }
+  | { readonly kind: "disabled"; readonly reason: string };
 
 export interface Stub {
   readonly url: string;
@@ -41,13 +39,9 @@ const send = (response: ServerResponse, status: number, body: unknown) => {
 };
 
 /** Signs with the development key, so only a run from the repository accepts its tokens. */
-const tokenFor = (
-  answer: Exclude<StubAnswer, { kind: "rejected" | "serverError" }>,
-  deviceId: string,
-  ttl: number
-) => {
+const tokenFor = (answer: StubAnswer, deviceId: string) => {
   const now = Math.floor(Date.now() / 1000);
-  const base = { sub: deviceId, ttl };
+  const base = { sub: deviceId, ttl: 3 * 3600 };
   if (answer.kind === "trial") {
     return mintToken({
       ...base,
@@ -69,22 +63,15 @@ const tokenFor = (
   return mintToken({
     ...base,
     deviceLimit: answer.deviceLimit,
-    plan: answer.kind,
+    plan: "pro",
     status: "active",
   });
 };
 
-/** A loopback stand-in for the entitlement API, answering per license key with tokens signed by the development key. */
-export const startStub = async ({
-  answers = [],
-  ttl = 3 * 3600,
-}: {
-  readonly answers?: readonly (readonly [string | null, StubAnswer])[];
-  readonly ttl?: number;
-} = {}): Promise<Stub> => {
+/** A loopback stand-in for the entitlement API, answering per license key with tokens signed by the development key, a trial to a device with no license key until told otherwise. */
+export const startStub = async (): Promise<Stub> => {
   const table = new Map<string | null, StubAnswer>([
     [null, { days: 14, kind: "trial" }],
-    ...answers,
   ]);
   const requests: Stub["requests"] = [];
   const gate = new EventTarget();
@@ -110,14 +97,8 @@ export const startStub = async ({
       const answer = table.get(parsed.data.licenseKey);
       if (answer === undefined) {
         send(response, 403, { error: { reason: "unknownLicenseKey" } });
-      } else if (answer.kind === "rejected") {
-        send(response, 403, { error: { reason: answer.reason } });
-      } else if (answer.kind === "serverError") {
-        send(response, 500, { error: { reason: "serverError" } });
       } else {
-        send(response, 200, {
-          token: tokenFor(answer, parsed.data.deviceId, ttl),
-        });
+        send(response, 200, { token: tokenFor(answer, parsed.data.deviceId) });
       }
     };
     void handle();
@@ -151,8 +132,7 @@ export const startStub = async ({
 
 // Run directly, it serves a trial to a device with no license key and Pro to PRO-KEY until stopped.
 if (import.meta.main) {
-  const stub = await startStub({
-    answers: [["PRO-KEY", { deviceLimit: 3, kind: "pro" }]],
-  });
+  const stub = await startStub();
+  stub.answer("PRO-KEY", { deviceLimit: 3, kind: "pro" });
   console.log(`MERU_ENTITLEMENT_URL=${stub.url}`);
 }
