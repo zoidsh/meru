@@ -2,17 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import type { Theme } from "../../../core/records/theme.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { strictLog } from "../../../test/fakes/log.ts";
 import { FakeTheme } from "../../../test/fakes/theme.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
+import { testApp } from "../../testing.ts";
 import { Appearance } from "./index.ts";
 
 const PAGE = 7;
 
-const setup = () => {
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ log: strictLog, transport });
+const setup = async () => {
+  const { registrar, transport } = await testApp();
   registrar.assign(PAGE, chromeSurface);
   const theme = new FakeTheme();
   const painted: [string, Theme][] = [];
@@ -31,8 +28,8 @@ const setup = () => {
 };
 
 describe(Appearance, () => {
-  it("repaints every window in the system's new theme and tells every page", () => {
-    const { painted, theme, transport } = setup();
+  it("repaints every window in the system's new theme and tells every page", async () => {
+    const { painted, theme, transport } = await setup();
     theme.set(true);
     expect({
       painted,
@@ -50,8 +47,8 @@ describe(Appearance, () => {
     });
   });
 
-  it("stops following the theme once disposed", () => {
-    const { appearance, painted, theme, transport } = setup();
+  it("stops following the theme once disposed", async () => {
+    const { appearance, painted, theme, transport } = await setup();
     appearance.dispose();
     theme.set(true);
     expect([painted, transport.sent]).toStrictEqual([[], []]);

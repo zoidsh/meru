@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { AppEvents } from "../../../core/events.ts";
 import type { Beside, Orientation } from "../../../core/records/layout.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
@@ -14,24 +13,11 @@ import {
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { commandsOf } from "../../../shared/commands/define.ts";
-import { commands as allCommands } from "../../../shared/commands/registry.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
-import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeFs } from "../../../test/fakes/fs.ts";
-import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { strictLog } from "../../../test/fakes/log.ts";
-import { FakeSessions } from "../../../test/fakes/session.ts";
-import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import type { FakeView } from "../../../test/fakes/view.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
 import { unwrap } from "../../../test/result.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { ShortcutKeys } from "../../shell/keys.ts";
-import { Profiles } from "../profiles/index.ts";
-import { SettingsStore } from "../settings/index.ts";
+import { testApp, testStages } from "../../testing.ts";
 import { stageCommands } from "./commands.ts";
 import { Stages } from "./index.ts";
 import type { Stage } from "./stage.ts";
@@ -40,77 +26,24 @@ const GMAIL = "https://mail.google.com/";
 
 const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
 
-const settingsWith = (style: Style) => {
-  const settings = new SettingsStore({
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events: new AppEvents(),
-    lifecycle: new FakeLifecycle(),
-    clock: new FakeClock(),
-    fs: new FakeFs(),
-    log: strictLog,
-    registrar: new IpcDispatcher({
-      log: strictLog,
-      transport: new FakeIpcTransport(),
-    }),
-    watchFile: false,
-  });
-  settings.set("appearance.style", style);
-  return settings;
-};
-
 const setup = async (style: Style = "modern") => {
   const requested: [number, Orientation][] = [];
   const window = new FakeWindow(1200, 800);
-  const settings = settingsWith(style);
-  const views = new FakeViewFactory();
-  const events = new AppEvents();
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ log: strictLog, transport });
+  const app = await testApp();
+  const { commands, events, profiles, registrar, settings, transport } = app;
+  settings.set("appearance.style", style);
   registrar.assign(window.contentsId, chromeSurface);
   const call = (channel: RequestChannel, payload: unknown, sender: number) =>
     registrar.dispatch(sender, wireName(channel), payload);
-  const commands = new CommandDispatcher();
-  const profiles = new Profiles({
-    commands,
-    lifecycle: new FakeLifecycle(),
-    clock: new FakeClock(),
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events,
-    fs: new FakeFs(),
-    ids: fakeIds(),
-    log: strictLog,
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
-  });
-  await profiles.open();
   const insets = { left: 0, top: 0 };
-  const stages = new Stages({
-    keys: new ShortcutKeys({
-      commands: allCommands,
-      dispatcher: commands,
-      platform: "darwin",
-      log: strictLog,
-      settings,
-    }),
-    blankPanes: false,
-    commands,
+  const { stages, views } = testStages(app, {
     dragPreload: "/dist/preload/drag.cjs",
-    overlayPreload: "/dist/preload/renderer.cjs",
-    events,
     insets: () => insets,
-    log: strictLog,
-    profiles,
-    onOpen: () => false,
     onPopup: () => true,
     onSplitRequested: (windowId, orientation) => {
       requested.push([windowId, orientation]);
     },
-    registrar,
-    settings,
-    tabDragUrl: (tab) =>
-      `overlay.html?${new URLSearchParams({ appId: tab.appId, kind: "tabDrag", tabId: tab.id }).toString()}`,
-    views,
+    overlayPreload: "/dist/preload/renderer.cjs",
   });
   stages.start();
   const changes = (): StageSnapshot[] =>

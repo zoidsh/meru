@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { AppEvents } from "../../core/events.ts";
 import type {
   MenuAction,
   MenuEntry,
@@ -12,23 +11,11 @@ import { wireName } from "../../shared/channels/define.ts";
 import { chromeSurface } from "../../shared/channels/surfaces.ts";
 import { commands } from "../../shared/commands/registry.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
-import { FakeClock } from "../../test/fakes/clock.ts";
-import { FakeFs } from "../../test/fakes/fs.ts";
-import { fakeIds } from "../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
 import { FakeLog } from "../../test/fakes/log.ts";
-import { FakeSessions } from "../../test/fakes/session.ts";
 import { FakeUpdater } from "../../test/fakes/updater.ts";
-import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
-import { FakeWindow } from "../../test/fakes/window.ts";
-import { Profiles } from "../features/profiles/index.ts";
-import { SettingsStore } from "../features/settings/index.ts";
-import { Stages } from "../features/stage/index.ts";
 import { Updater } from "../features/updater/index.ts";
-import { CommandDispatcher } from "./commands.ts";
-import { IpcDispatcher } from "./ipc.ts";
-import { ShortcutKeys } from "./keys.ts";
+import { testApp, testStages } from "../testing.ts";
 import { ApplicationMenu } from "./menu.ts";
 
 const entriesOf = (section: MenuSection<CommandId>) =>
@@ -39,75 +26,34 @@ const entriesOf = (section: MenuSection<CommandId>) =>
       );
 
 const setup = async (platform: Platform = "darwin") => {
-  const window = new FakeWindow();
   const log = new FakeLog();
-  const registrar = new IpcDispatcher({
-    log: log.scoped("ipc"),
-    transport: new FakeIpcTransport(),
-  });
-  const settings = new SettingsStore({
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events: new AppEvents(),
-    lifecycle: new FakeLifecycle(),
-    clock: new FakeClock(),
-    fs: new FakeFs(),
-    log: log.scoped("settings"),
-    registrar,
-    watchFile: false,
-  });
-  const dispatcher = new CommandDispatcher();
-  dispatcher.start(registrar);
-  registrar.assign(window.contentsId, chromeSurface);
-  registrar.assign(-1, chromeSurface);
-  const events = new AppEvents();
-  const profiles = new Profiles({
-    commands: dispatcher,
+  const app = await testApp({
     lifecycle: new FakeLifecycle(platform),
-    clock: new FakeClock(),
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events,
-    fs: new FakeFs(),
-    ids: fakeIds(),
     log: log.scoped("profiles"),
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
   });
-  await profiles.open();
-  profiles.start();
+  const {
+    clock,
+    commands: dispatcher,
+    events,
+    lifecycle,
+    profiles,
+    registrar,
+    settings,
+  } = app;
+  dispatcher.start(registrar);
+  registrar.assign(-1, chromeSurface);
   const requested: number[] = [];
-  const stages = new Stages({
-    onOpen: () => false,
+  const { open, stages } = testStages(app, {
     onPopup: () => true,
     onSplitRequested: (windowId) => {
       requested.push(windowId);
     },
-    keys: new ShortcutKeys({
-      commands,
-      dispatcher,
-      platform: "darwin",
-      log: log.scoped("keys"),
-      settings,
-    }),
-    blankPanes: false,
-    commands: dispatcher,
-    dragPreload: undefined,
-    overlayPreload: undefined,
-    events,
-    insets: () => ({ left: 0, top: 0 }),
-    log: log.scoped("stage"),
-    profiles,
-    registrar,
-    settings,
-    tabDragUrl: (tab) => `overlay.html?kind=tabDrag&tabId=${tab.id}`,
-    views: new FakeViewFactory(),
   });
-  stages.start();
-  stages.open(window, () => profiles.currentGroup()?.id);
+  const { window } = open();
   const feed = new FakeUpdater();
   new Updater({
-    lifecycle: new FakeLifecycle(platform),
-    clock: new FakeClock(),
+    lifecycle,
+    clock,
     commands: dispatcher,
     events,
     log: log.scoped("updater"),
