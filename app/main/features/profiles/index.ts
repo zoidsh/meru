@@ -230,6 +230,10 @@ export class Profiles {
     return found;
   }
 
+  profile(profileId: string): Profile | undefined {
+    return this.state.profiles.find((profile) => profile.id === profileId);
+  }
+
   group(groupId: string): Group | undefined {
     return this.state.groups.find((group) => group.id === groupId);
   }

@@ -19,7 +19,7 @@ export interface NotificationsOptions {
   readonly notifications: NotificationPort;
   readonly platform: Platform;
   readonly inbox: Pick<Inbox, "important">;
-  readonly profiles: Pick<Profiles, "state" | "focusTab">;
+  readonly profiles: Pick<Profiles, "state" | "profile" | "focusTab">;
   readonly settings: Pick<SettingsStore, "get">;
   readonly events: Pick<AppEvents, "on">;
   /** Brings the main window to the front. */
@@ -64,9 +64,7 @@ export class Notifications {
     // The Important feed costs a request, so it is read only once there is mail to filter.
     const important =
       newEmails === "important" ? await inbox.important(profileId) : undefined;
-    const profile = profiles.state.profiles.find(
-      (found) => found.id === profileId
-    );
+    const profile = profiles.profile(profileId);
     if (profile === undefined) {
       return;
     }

@@ -195,7 +195,7 @@ describe(Profiles, () => {
     const empty = update({ label: "", profileId: created.id });
     expect({
       empty: empty.ok,
-      profile: profiles.state.profiles.find((found) => found.id === created.id),
+      profile: profiles.profile(created.id),
       renamed,
     }).toStrictEqual({
       empty: false,

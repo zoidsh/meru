@@ -246,9 +246,7 @@ const start = async () => {
     keys,
     // The chrome is neutral grey, so the drop takes the colour that marks the tab's profile, which stands out on a page.
     tabDragUrl: (tab) => {
-      const accent = profiles.state.profiles.find(
-        (profile) => profile.id === tab.profileId
-      )?.color;
+      const accent = profiles.profile(tab.profileId)?.color;
       return overlayUrl("tabDrag", {
         appId: tab.appId,
         tabId: tab.id,
