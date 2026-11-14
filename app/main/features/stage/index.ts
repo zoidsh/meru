@@ -1,6 +1,7 @@
 import { DisposableStore } from "../../../core/disposable.ts";
 import type { ChromeInsets } from "../../../core/engines/chrome.ts";
 import type { AppEvents } from "../../../core/events.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type {
   Unsubscribe,
   ViewFactoryPort,
@@ -60,7 +61,7 @@ export interface StagesOptions {
   ) => boolean;
   /** A blank popup a pane's page opened navigated to `url`; true shows it. */
   readonly onPopup: (url: string) => boolean;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 const inWindow =
@@ -194,7 +195,7 @@ export class Stages {
       onChange: (snapshot) => {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
       },
-      onError: this.#options.onError,
+      log: this.#options.log,
       onOpen: this.#options.onOpen,
       onPopup: this.#options.onPopup,
       onOverlay: (contentsId, surface) => {
@@ -314,7 +315,7 @@ export class Stages {
     try {
       return run(found);
     } catch (error) {
-      this.#options.onError(error);
+      this.#options.log.error("A stage request threw", { error });
       return err("failed");
     }
   }

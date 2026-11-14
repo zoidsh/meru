@@ -16,6 +16,7 @@ import type { Claims } from "../../../core/entitlement/token.ts";
 import { verifyToken } from "../../../core/entitlement/verify.ts";
 import type { Ed25519Subtle } from "../../../core/entitlement/verify.ts";
 import type { AppEvents } from "../../../core/events.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type {
   LifecyclePort,
   Clock,
@@ -124,8 +125,7 @@ export interface EntitlementOptions<K> {
   readonly subtle: Ed25519Subtle<K>;
   /** The accepted public keys by key id. */
   readonly keys: ReadonlyMap<string, K>;
-  readonly report: (message: string) => void;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 /** How far this device's clock may run ahead of the API's before a token counts as expired. */
@@ -161,7 +161,7 @@ export class Entitlement<K> {
       lifecycle: options.lifecycle,
       clock: options.clock,
       fs: options.fs,
-      onError: options.onError,
+      log: options.log,
     });
   }
 
@@ -288,7 +288,7 @@ export class Entitlement<K> {
   async #refresh(asked: EntitlementState, licenseKey: string | null) {
     this.#cancel();
     this.#refreshing = true;
-    const { api, clock, report } = this.#options;
+    const { api, clock, log } = this.#options;
     const { deviceId } = asked;
     let answer: EntitlementAnswer;
     try {
@@ -318,9 +318,10 @@ export class Entitlement<K> {
         detail: describeError(answer.error),
         outcome: answer.error.kind,
       };
-      report(
-        `entitlement: the API answered ${answer.error.kind}: ${describeError(answer.error)}`
-      );
+      log.warn("The API refused the request", {
+        detail: describeError(answer.error),
+        kind: answer.error.kind,
+      });
     }
     const saved = this.#state ?? asked;
     if (outcome.outcome === "rejected" && licenseKey !== null) {
@@ -340,7 +341,7 @@ export class Entitlement<K> {
 
   /** The claims of a token signed for this device, expired or not; undefined, and reported, for any other token. */
   async #verify(text: string): Promise<Claims | undefined> {
-    const { clock, keys, report, subtle } = this.#options;
+    const { clock, keys, log, subtle } = this.#options;
     const deviceId = this.#state?.deviceId ?? "";
     const verified = await verifyToken(text, {
       deviceId,
@@ -355,7 +356,7 @@ export class Entitlement<K> {
     if (verified.error.kind === "expired") {
       return verified.error.claims;
     }
-    report(`entitlement: a token was refused as ${verified.error.kind}`);
+    log.warn("A token was refused", { kind: verified.error.kind });
     return undefined;
   }
 

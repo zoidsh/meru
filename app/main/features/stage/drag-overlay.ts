@@ -1,5 +1,6 @@
 import type { StageArea } from "../../../core/engines/chrome.ts";
 import { layout, ratioAt, resize } from "../../../core/engines/layout.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
 import type { Layout, Orientation } from "../../../core/records/layout.ts";
 import type { Point } from "../../../core/records/rect.ts";
@@ -24,7 +25,7 @@ export interface DragOverlayOptions {
   readonly preload: string | undefined;
   /** The preload of a tab drag's page, which is one of the renderer's. */
   readonly overlayPreload: string | undefined;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
   /** The group's layout, which a drag starts from. */
   readonly layout: () => Layout;
   readonly area: () => StageArea;
@@ -198,7 +199,7 @@ export class DragOverlay {
       zoom: 1,
     });
     return {
-      loaded: loadOwned(owned.view, url, this.#options.onError),
+      loaded: loadOwned(owned.view, url, this.#options.log),
       owned,
     };
   }

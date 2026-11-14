@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { Fallback } from "../../../core/engines/settings-parse.ts";
 import type { SettingChange } from "../../../core/engines/settings.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
@@ -13,16 +12,13 @@ import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { SETTINGS_FILE, SettingsStore } from "./index.ts";
 
 const file = (data: unknown) => JSON.stringify({ data, version: 1 });
 
 const PAGE = 7;
-
-const rethrow = (error: unknown) => {
-  throw error;
-};
 
 const FREE: Entitlement = { expiresAt: null, kind: "free", source: "stored" };
 
@@ -54,21 +50,16 @@ const setup = async (
   const clock = new FakeClock();
   const lifecycle = new FakeLifecycle();
   const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ onError: rethrow, transport });
+  const registrar = new IpcDispatcher({ log: strictLog, transport });
   registrar.assign(PAGE, chromeSurface);
   const call = (channel: RequestChannel, payload: unknown) =>
     registrar.dispatch(PAGE, wireName(channel), payload);
-  const fallbacks: Fallback[] = [];
+  const log = new FakeLog();
   const store = new SettingsStore({
     lifecycle,
     clock,
     fs,
-    onError: (error) => {
-      throw error;
-    },
-    onFallback: (found) => {
-      fallbacks.push(...found);
-    },
+    log: log.scoped("settings"),
     registrar,
     watchFile,
     entitlement: () => entitlement,
@@ -85,7 +76,7 @@ const setup = async (
     changes,
     clock,
     entitle,
-    fallbacks,
+    log,
     fs,
     lifecycle,
     opened,
@@ -116,44 +107,48 @@ describe(SettingsStore, () => {
       "missing",
       "file",
     ]);
-    expect([...missing.fallbacks, ...empty.fallbacks]).toStrictEqual([]);
+    expect([...missing.log.entries, ...empty.log.entries]).toStrictEqual([]);
     expect(missing.store.get("appearance.style")).toBe("modern");
   });
 
   it("says the whole file fell back when it does not parse", async () => {
     const fs = new FakeFs({ [SETTINGS_FILE]: "{ half" });
-    const fallbacks: Fallback[] = [];
+    const log = new FakeLog();
     await new SettingsStore({
       lifecycle: new FakeLifecycle(),
       clock: new FakeClock(),
       fs,
-      onError: (error) => {
-        throw error;
-      },
-      onFallback: (found) => {
-        fallbacks.push(...found);
-      },
+      log: log.scoped("settings"),
       registrar: new IpcDispatcher({
-        onError: rethrow,
+        log: strictLog,
         transport: new FakeIpcTransport(),
       }),
       watchFile: false,
       entitlement: () => FREE,
       events: new AppEvents(),
     }).open();
-    expect(fallbacks).toStrictEqual([
-      { key: null, profileId: null, reason: "invalid" },
+    expect(log.entries).toStrictEqual([
+      {
+        fields: { key: null, profileId: null, reason: "invalid" },
+        level: "warn",
+        message: "A setting fell back to its default",
+        scope: "settings",
+      },
     ]);
   });
 
   it("starts from defaults when the file is corrupt, and says what fell back", async () => {
-    const { store, fallbacks, opened } = await setup({
+    const { store, log, opened } = await setup({
       global: { "appearance.style": "neon" },
       profiles: { work: { "appearance.style": "classic" } },
     });
     expect(store.get("appearance.style")).toBe("modern");
     expect(opened.source).toBe("file");
-    expect(fallbacks).toStrictEqual([
+    expect(log.at("warn")).toStrictEqual([
+      "A setting fell back to its default",
+      "A setting fell back to its default",
+    ]);
+    expect(log.entries.map((entry) => entry.fields)).toStrictEqual([
       { key: "appearance.style", profileId: null, reason: "invalid" },
       {
         key: "appearance.style",

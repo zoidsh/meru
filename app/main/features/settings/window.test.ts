@@ -6,6 +6,7 @@ import { settingsPushes } from "../../../shared/channels/settings.ts";
 import { FakeDisplays } from "../../../test/fakes/display.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { strictLog } from "../../../test/fakes/log.ts";
 import { FakeTheme } from "../../../test/fakes/theme.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
@@ -19,9 +20,7 @@ const setup = (platform = "darwin") => {
   const specs: WindowSpec[] = [];
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({
-    onError: (error) => {
-      throw error;
-    },
+    log: strictLog,
     transport,
   });
   const commands = new CommandDispatcher();
@@ -35,9 +34,7 @@ const setup = (platform = "darwin") => {
     background: false,
     commands,
     linuxControls: false,
-    onError: (error) => {
-      throw error;
-    },
+    log: strictLog,
     ports: {
       displays: new FakeDisplays(),
       lifecycle: new FakeLifecycle(platform),

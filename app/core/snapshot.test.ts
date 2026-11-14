@@ -4,6 +4,7 @@ import { z } from "zod";
 import { FakeClock } from "../test/fakes/clock.ts";
 import { FakeFs } from "../test/fakes/fs.ts";
 import { FakeLifecycle } from "../test/fakes/lifecycle.ts";
+import { FakeLog, strictLog } from "../test/fakes/log.ts";
 import version1 from "./fixtures/snapshot-v1.json" with { type: "json" };
 import { SnapshotStore } from "./snapshot.ts";
 
@@ -25,7 +26,7 @@ const setup = (files: Readonly<Record<string, string>> = {}) => {
   const fs = new FakeFs(files);
   const clock = new FakeClock();
   const lifecycle = new FakeLifecycle();
-  const errors: unknown[] = [];
+  const log = new FakeLog();
   const store = new SnapshotStore<People, string>(
     {
       delay: 100,
@@ -54,12 +55,10 @@ const setup = (files: Readonly<Record<string, string>> = {}) => {
       lifecycle,
       clock,
       fs,
-      onError: (error) => {
-        errors.push(error);
-      },
+      log: log.scoped("snapshot"),
     }
   );
-  return { lifecycle, clock, errors, fs, store };
+  return { lifecycle, clock, log, fs, store };
 };
 
 const file = (data: unknown, version = 2) => JSON.stringify({ data, version });
@@ -132,14 +131,21 @@ describe(SnapshotStore, () => {
   });
 
   it("never throws when the file cannot be read", async () => {
-    const { store, fs, errors } = setup();
+    const { store, fs, log } = setup();
     const failure = new Error("EACCES");
     fs.failReads = failure;
     await expect(store.open()).resolves.toMatchObject({
       source: "unreadable",
       value: EMPTY,
     });
-    expect(errors).toStrictEqual([failure]);
+    expect(log.entries).toStrictEqual([
+      {
+        fields: { error: failure, file: NAME },
+        level: "error",
+        message: "Could not read a snapshot file",
+        scope: "snapshot",
+      },
+    ]);
   });
 
   it("lands a burst of writes once, after the delay", async () => {
@@ -212,9 +218,7 @@ describe(SnapshotStore, () => {
             lifecycle: new FakeLifecycle(),
             clock: new FakeClock(),
             fs: new FakeFs(),
-            onError: () => {
-              throw new Error("unexpected");
-            },
+            log: strictLog,
           }
         )
     ).toThrow("people.json is at version 2 with 0 migrations");

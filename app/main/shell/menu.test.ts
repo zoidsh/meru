@@ -10,6 +10,7 @@ import { FakeFs } from "../../test/fakes/fs.ts";
 import { fakeIds } from "../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
+import { FakeLog } from "../../test/fakes/log.ts";
 import { FakeSessions } from "../../test/fakes/session.ts";
 import { FakeUpdater } from "../../test/fakes/updater.ts";
 import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
@@ -33,11 +34,9 @@ const entriesOf = (section: MenuSection) =>
 
 const setup = async (platform = "darwin") => {
   const window = new FakeWindow();
-  const reports: string[] = [];
+  const log = new FakeLog();
   const registrar = new IpcDispatcher({
-    onError: (error) => {
-      throw error;
-    },
+    log: log.scoped("ipc"),
     transport: new FakeIpcTransport(),
   });
   const settings = new SettingsStore({
@@ -46,12 +45,7 @@ const setup = async (platform = "darwin") => {
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     fs: new FakeFs(),
-    onError: (error) => {
-      reports.push(String(error));
-    },
-    onFallback: () => {
-      reports.push("fallback");
-    },
+    log: log.scoped("settings"),
     registrar,
     watchFile: false,
   });
@@ -68,13 +62,8 @@ const setup = async (platform = "darwin") => {
     events,
     fs: new FakeFs(),
     ids: fakeIds(),
-    onError: () => {
-      reports.push("error");
-    },
+    log: log.scoped("profiles"),
     registrar,
-    report: (message) => {
-      reports.push(message);
-    },
     sessions: new FakeSessions(),
     settings,
   });
@@ -87,9 +76,7 @@ const setup = async (platform = "darwin") => {
       commands,
       dispatcher,
       platform: "darwin",
-      report: (message) => {
-        reports.push(message);
-      },
+      log: log.scoped("keys"),
       settings,
     }),
     blankPanes: false,
@@ -98,9 +85,7 @@ const setup = async (platform = "darwin") => {
     overlayPreload: undefined,
     events,
     insets: () => ({ left: 0, top: 0 }),
-    onError: () => {
-      reports.push("error");
-    },
+    log: log.scoped("stage"),
     profiles,
     registrar,
     settings,
@@ -115,9 +100,7 @@ const setup = async (platform = "darwin") => {
     clock: new FakeClock(),
     commands: dispatcher,
     events,
-    onError: () => {
-      reports.push("error");
-    },
+    log: log.scoped("updater"),
     registrar,
     settings,
     updater: feed,
@@ -131,9 +114,7 @@ const setup = async (platform = "darwin") => {
     dispatcher,
     events,
     platform,
-    report: (message) => {
-      reports.push(message);
-    },
+    log: log.scoped("menu"),
     settings,
   }).start();
   const sections = () => built.at(-1) ?? [];
@@ -160,9 +141,9 @@ const setup = async (platform = "darwin") => {
     built,
     events,
     feed,
+    log,
     profiles,
     registrar,
-    reports,
     sections,
     settings,
     stages,
@@ -383,15 +364,22 @@ describe(ApplicationMenu, () => {
     ]);
   });
 
-  it("reports what it could not do and does nothing without a window", async () => {
-    const { action, window, reports } = await setup();
+  it("logs what it could not do and does nothing without a window", async () => {
+    const { action, window, log } = await setup();
     action("stage.closeTab").run(window.contentsId);
     action("stage.closeTab").run(undefined);
-    expect(reports).toStrictEqual(["stage.closeTab: lastPane"]);
+    expect(log.entries).toStrictEqual([
+      {
+        fields: { id: "stage.closeTab", reason: "lastPane" },
+        level: "warn",
+        message: "A command refused to run",
+        scope: "menu",
+      },
+    ]);
   });
 
   it("rebuilds with the user's shortcuts when they change, and only then", async () => {
-    const { actions, built, settings, reports } = await setup();
+    const { actions, built, settings, log } = await setup();
     settings.set("stage.zoom", 2);
     expect(built).toHaveLength(1);
     settings.set("shortcuts.bindings", {
@@ -414,8 +402,16 @@ describe(ApplicationMenu, () => {
       "stage.splitHorizontal": "Cmd+V",
       "stage.splitVertical": "CmdOrCtrl+V",
     });
-    expect(reports).toStrictEqual([
-      "stage.splitHorizontal and stage.splitVertical share Command+V",
+    expect(log.entries).toStrictEqual([
+      {
+        fields: {
+          accelerator: "Command+V",
+          ids: ["stage.splitHorizontal", "stage.splitVertical"],
+        },
+        level: "warn",
+        message: "Commands share a shortcut",
+        scope: "menu",
+      },
     ]);
   });
 

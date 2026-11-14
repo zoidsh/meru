@@ -4,6 +4,7 @@ import {
   resolveBindings,
 } from "../../core/engines/shortcuts.ts";
 import type { ShortcutCommand } from "../../core/engines/shortcuts.ts";
+import type { LogPort } from "../../core/log.ts";
 import type { Unsubscribe, ViewPort } from "../../core/ports.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
 import type { SettingsStore } from "../features/settings/index.ts";
@@ -17,7 +18,7 @@ export interface ShortcutKeysOptions<Id extends string> {
   })[];
   readonly dispatcher: Pick<CommandDispatcher<Id>, "run" | "enabled">;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
-  readonly report: (message: string) => void;
+  readonly log: LogPort;
 }
 
 /** What keys come from: a page main owns. */
@@ -96,7 +97,10 @@ export class ShortcutKeys<Id extends string = CommandId> {
         windowId: attached.windowId,
       });
       if (!result.ok) {
-        this.#options.report(`${id}: ${result.error}`);
+        this.#options.log.warn("A command refused to run", {
+          id,
+          reason: result.error,
+        });
       }
       return true;
     });

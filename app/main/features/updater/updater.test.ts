@@ -9,6 +9,7 @@ import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
 import { FakeUpdater } from "../../../test/fakes/updater.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
@@ -22,9 +23,7 @@ const setup = ({ packaged = true } = {}) => {
   const clock = new FakeClock();
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({
-    onError: (error) => {
-      throw error;
-    },
+    log: strictLog,
     transport,
   });
   registrar.assign(PAGE, chromeSurface);
@@ -34,12 +33,7 @@ const setup = ({ packaged = true } = {}) => {
     lifecycle: new FakeLifecycle(),
     clock,
     fs: new FakeFs(),
-    onError: (error) => {
-      throw error;
-    },
-    onFallback: () => {
-      throw new Error("Nothing was read, so nothing can fall back");
-    },
+    log: strictLog,
     registrar,
     watchFile: false,
   });
@@ -50,14 +44,13 @@ const setup = ({ packaged = true } = {}) => {
   events.on("menu.invalidated", () => {
     invalidated += 1;
   });
+  const log = new FakeLog();
   const updater = new Updater({
     lifecycle: new FakeLifecycle("darwin", packaged),
     clock,
     commands,
     events,
-    onError: (error) => {
-      throw error;
-    },
+    log: log.scoped("updater"),
     registrar,
     settings,
     updater: feed,
@@ -72,6 +65,7 @@ const setup = ({ packaged = true } = {}) => {
     commands,
     feed,
     invalidated: () => invalidated,
+    log,
     pushed,
     registrar,
     settings,
@@ -143,7 +137,7 @@ describe(Updater, () => {
   });
 
   it("goes back to idle when there is nothing new, and to error when the feed fails", async () => {
-    const { feed, updater } = setup();
+    const { feed, log, updater } = setup();
     feed.emit({ kind: "checking" });
     feed.emit({ kind: "notAvailable" });
     expect(updater.current()).toStrictEqual({ kind: "idle" });
@@ -155,6 +149,7 @@ describe(Updater, () => {
         kind: "error",
         message: "net::ERR_INTERNET_DISCONNECTED",
       });
+    expect(log.at("warn")).toStrictEqual(["Could not check for updates"]);
   });
 
   it("enables Restart to update only once an update is ready, and then installs it", () => {

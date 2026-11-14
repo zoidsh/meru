@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { serializedErrorSchema } from "../../core/errors.ts";
 import type { Unsubscribe } from "../../core/ports.ts";
 import { err, ok } from "../../core/result.ts";
 import type { Result } from "../../core/result.ts";
@@ -163,6 +164,8 @@ export const ipcErrorSchema = z.object({
     "threw",
   ]),
   message: z.string(),
+  /** What a handler threw, which only a `threw` carries. */
+  error: serializedErrorSchema.optional(),
 });
 
 export type IpcError = z.infer<typeof ipcErrorSchema>;

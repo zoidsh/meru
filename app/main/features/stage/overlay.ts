@@ -1,3 +1,4 @@
+import type { LogPort } from "../../../core/log.ts";
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
 import type { Surface } from "../../../shared/channels/define.ts";
 import {
@@ -12,7 +13,7 @@ export interface OverlayOptions {
   readonly create: (spec: ViewSpec) => OwnedView;
   /** The preload of an overlay's page, which is one of the renderer's. */
   readonly preload: string | undefined;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
   /** The overlay's page came, on the surface of its kind, or went, with null. */
   readonly onOverlay: (contentsId: number, surface: Surface | null) => void;
   /** Hands back a view the overlay is done with, for the stage to detach before it disposes it. */
@@ -49,7 +50,7 @@ export class Overlay {
     // Focused once loaded, since a view focused before its page exists hands the page no focus to start with.
     const focusLoaded = async () => {
       if (
-        (await loadOwned(view, url, this.#options.onError)) &&
+        (await loadOwned(view, url, this.#options.log)) &&
         this.#owned === owned
       ) {
         view.focus();

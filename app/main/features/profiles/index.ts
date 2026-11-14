@@ -30,6 +30,7 @@ import type { ProfilePatch, StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
 import type { Gate, GateRefusal } from "../../../core/entitlement/gate.ts";
 import type { AppEvents } from "../../../core/events.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type {
   LifecyclePort,
   Clock,
@@ -114,8 +115,7 @@ export interface ProfilesOptions {
   readonly settings: Pick<SettingsStore, "removeProfile">;
   /** The entitlement at construction; later values arrive as `entitlement.changed`. */
   readonly entitlement: Entitlement;
-  readonly report: (message: string) => void;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 /** Owns profiles.json: every profile, tab and group, and which profile is selected. */
@@ -133,7 +133,7 @@ export class Profiles {
       lifecycle: options.lifecycle,
       clock: options.clock,
       fs: options.fs,
-      onError: options.onError,
+      log: options.log,
     });
   }
 
@@ -141,15 +141,20 @@ export class Profiles {
     const opened = await this.#store.open();
     this.#state = opened.value;
     if (opened.fallbacks.length > 0) {
-      this.#options.report(
-        `${PROFILES_FILE}: dropped ${opened.fallbacks.join(", ")}`
+      this.#options.log.warn(
+        "The profiles file dropped what it could not hold",
+        {
+          dropped: opened.fallbacks,
+          file: PROFILES_FILE,
+        }
       );
     }
     if (opened.source === "missing") {
       this.#store.write(opened.value);
     } else if (opened.source !== "file") {
-      this.#options.report(
-        `${PROFILES_FILE} is ${opened.source}, so the app starts with one profile`
+      this.#options.log.warn(
+        "The profiles file could not be read, so the app starts with one profile",
+        { file: PROFILES_FILE, source: opened.source }
       );
     }
     return opened;
@@ -487,11 +492,9 @@ export class Profiles {
     }
     const problems = validateState(next.value, isSingleInstanceId);
     if (problems.length > 0) {
-      this.#options.onError(
-        new Error(
-          `A change to the profiles was refused: ${problems.join("; ")}`
-        )
-      );
+      this.#options.log.error("A change to the profiles was refused", {
+        problems,
+      });
       return err("invalid");
     }
     const before = this.state.selectedProfileId;
@@ -521,7 +524,10 @@ export class Profiles {
     try {
       await this.#options.sessions.clear(partition);
     } catch (error) {
-      this.#options.onError(error);
+      this.#options.log.error("Could not clear a profile's session", {
+        error,
+        partition,
+      });
     }
   }
 }

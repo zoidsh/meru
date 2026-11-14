@@ -11,6 +11,7 @@ import {
   push,
 } from "../../shared/channels/define.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
+import { FakeLog } from "../../test/fakes/log.ts";
 import { IpcDispatcher } from "./ipc.ts";
 
 const counter = defineChannels("counter", {
@@ -28,11 +29,9 @@ const otherSurface = defineSurface({ pushes: [], requests: [other] });
 
 const setup = () => {
   const transport = new FakeIpcTransport();
-  const errors: unknown[] = [];
+  const log = new FakeLog();
   const dispatcher = new IpcDispatcher({
-    onError: (error) => {
-      errors.push(error);
-    },
+    log: log.scoped("ipc"),
     transport,
   });
   const seen: number[] = [];
@@ -49,7 +48,7 @@ const setup = () => {
   dispatcher.register(other, { ping: () => ok(undefined) });
   dispatcher.assign(1, surface);
   dispatcher.assign(2, otherSurface);
-  return { dispatcher, errors, seen, transport };
+  return { dispatcher, log, seen, transport };
 };
 
 describe(IpcDispatcher, () => {
@@ -77,12 +76,15 @@ describe(IpcDispatcher, () => {
     });
   });
 
-  it("turns a handler that throws into an error result", () => {
-    const { dispatcher, errors } = setup();
+  it("turns a handler that throws into an error result carrying the error", () => {
+    const { dispatcher, log } = setup();
     expect(dispatcher.dispatch(1, "counter.explode", {})).toMatchObject({
-      error: { kind: "threw" },
+      error: {
+        error: { message: "boom", name: "Error" },
+        kind: "threw",
+      },
     });
-    expect(errors).toHaveLength(1);
+    expect(log.at("error")).toStrictEqual(["A request's handler threw"]);
   });
 
   it("rejects an unknown channel", () => {

@@ -25,6 +25,7 @@ import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { random } from "../../../test/random.ts";
 import { unwrap } from "../../../test/result.ts";
@@ -52,9 +53,7 @@ const setup = async ({
   const lifecycle = new FakeLifecycle();
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({
-    onError: (error) => {
-      throw error;
-    },
+    log: strictLog,
     transport,
   });
   registrar.assign(PAGE, chromeSurface);
@@ -66,12 +65,7 @@ const setup = async ({
     lifecycle,
     clock,
     fs,
-    onError: (error) => {
-      throw error;
-    },
-    onFallback: () => {
-      throw new Error("Nothing was written, so nothing falls back");
-    },
+    log: strictLog,
     registrar,
     watchFile: false,
   });
@@ -80,8 +74,7 @@ const setup = async ({
   events.on("profile.selected", (payload) => {
     selected.push(payload);
   });
-  const errors: unknown[] = [];
-  const reports: string[] = [];
+  const log = new FakeLog();
   const commands = new CommandDispatcher();
   const profiles = new Profiles({
     commands,
@@ -91,13 +84,8 @@ const setup = async ({
     events,
     fs,
     ids: fakeIds("id"),
-    onError: (error) => {
-      errors.push(error);
-    },
+    log: log.scoped("profiles"),
     registrar,
-    report: (message) => {
-      reports.push(message);
-    },
     sessions,
     settings,
   });
@@ -115,13 +103,12 @@ const setup = async ({
   };
   return {
     commands,
-    errors,
+    log,
     events,
     fs,
     opened,
     profiles,
     registrar,
-    reports,
     selected,
     sessions,
     settings,
@@ -134,7 +121,7 @@ const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
 
 describe(Profiles, () => {
   it("starts a fresh install with one profile holding one Gmail tab in a group of one, selected and written", async () => {
-    const { profiles, opened, stored, errors } = await setup();
+    const { profiles, opened, stored, log } = await setup();
     const { state } = profiles;
     const [profile] = state.profiles;
     expect(opened.source).toBe("missing");
@@ -149,8 +136,8 @@ describe(Profiles, () => {
       selected: profile?.id,
       tabs: [["gmail", profile?.id, "https://mail.google.com/"]],
     });
-    expect({ errors, stored: await stored() }).toStrictEqual({
-      errors: [],
+    expect({ entries: log.entries, stored: await stored() }).toStrictEqual({
+      entries: [],
       stored: state,
     });
   });
@@ -430,7 +417,7 @@ describe(Profiles, () => {
     expect(
       validateState(mended.profiles.state, isSingleInstanceId)
     ).toStrictEqual([]);
-    expect(mended.reports).toStrictEqual([]);
+    expect(mended.log.entries).toStrictEqual([]);
   });
 });
 
@@ -487,7 +474,7 @@ describe("the profiles' invariants", () => {
   it.each(Array.from({ length: 30 }, (_, index) => index + 1))(
     "hold after every one of a run of random operations (seed %i)",
     async (seed) => {
-      const { profiles, errors } = await setup();
+      const { profiles, log } = await setup();
       const draw = random(seed);
       const pick = (below: number) => Math.floor(draw() * below);
       let changed = 0;
@@ -500,10 +487,10 @@ describe("the profiles' invariants", () => {
           []
         );
       }
-      expect({ errors, mostlyChanged: changed > 20 }).toStrictEqual({
-        errors: [],
-        mostlyChanged: true,
-      });
+      expect({
+        entries: log.entries,
+        mostlyChanged: changed > 20,
+      }).toStrictEqual({ entries: [], mostlyChanged: true });
     }
   );
 });

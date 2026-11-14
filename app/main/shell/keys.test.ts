@@ -9,16 +9,13 @@ import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
+import { strictLog } from "../../test/fakes/log.ts";
 import { FakeViewFactory } from "../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
 import { SettingsStore } from "../features/settings/index.ts";
 import { CommandDispatcher } from "./commands.ts";
 import { IpcDispatcher } from "./ipc.ts";
 import { ShortcutKeys } from "./keys.ts";
-
-const rethrow = (error: unknown) => {
-  throw error;
-};
 
 const fixture = defineCommands(
   "page",
@@ -55,10 +52,9 @@ const setup = () => {
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     fs: new FakeFs(),
-    onError: rethrow,
-    onFallback: rethrow,
+    log: strictLog,
     registrar: new IpcDispatcher({
-      onError: rethrow,
+      log: strictLog,
       transport: new FakeIpcTransport(),
     }),
     watchFile: false,
@@ -84,7 +80,7 @@ const setup = () => {
     commands: commandsOf(fixture),
     dispatcher,
     platform: "darwin",
-    report: rethrow,
+    log: strictLog,
     settings,
   });
   keys.start();
@@ -140,7 +136,7 @@ describe(ShortcutKeys, () => {
       commands: commandsOf(quiet),
       dispatcher,
       platform: "darwin",
-      report: rethrow,
+      log: strictLog,
       settings: setup().settings,
     });
     keys.start();

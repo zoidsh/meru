@@ -10,6 +10,7 @@ import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { strictLog } from "../../../test/fakes/log.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
@@ -21,13 +22,9 @@ import { SettingsStore } from "../settings/index.ts";
 import { Stages } from "../stage/index.ts";
 import { Launcher } from "./index.ts";
 
-const rethrow = (error: unknown) => {
-  throw error;
-};
-
 const setup = async () => {
   const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ onError: rethrow, transport });
+  const registrar = new IpcDispatcher({ log: strictLog, transport });
   const lifecycle = new FakeLifecycle();
   const clock = new FakeClock();
   const settings = new SettingsStore({
@@ -36,8 +33,7 @@ const setup = async () => {
     clock,
     fs: new FakeFs(),
     lifecycle,
-    onError: rethrow,
-    onFallback: rethrow,
+    log: strictLog,
     registrar,
     watchFile: false,
   });
@@ -51,9 +47,8 @@ const setup = async () => {
     fs: new FakeFs(),
     ids: fakeIds(),
     lifecycle,
-    onError: rethrow,
+    log: strictLog,
     registrar,
-    report: rethrow,
     sessions: new FakeSessions(),
     settings,
   });
@@ -66,7 +61,7 @@ const setup = async () => {
       commands: allCommands,
       dispatcher: commands,
       platform: "darwin",
-      report: rethrow,
+      log: strictLog,
       settings,
     }),
     blankPanes: true,
@@ -74,7 +69,7 @@ const setup = async () => {
     dragPreload: undefined,
     events,
     insets: () => ({ left: 0, top: 0 }),
-    onError: rethrow,
+    log: strictLog,
     overlayPreload: "renderer.cjs",
     profiles,
     registrar,

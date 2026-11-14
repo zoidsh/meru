@@ -13,6 +13,7 @@ import type { SettingChange } from "../../../core/engines/settings.ts";
 import { canUse } from "../../../core/entitlement/gate.ts";
 import type { GateRefusal } from "../../../core/entitlement/gate.ts";
 import type { AppEvents } from "../../../core/events.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type {
   LifecyclePort,
   Clock,
@@ -72,8 +73,7 @@ export interface SettingsOptions {
   /** What the user may use now, which a Pro setting's value waits on. */
   readonly entitlement: () => Entitlement;
   readonly events: Pick<AppEvents, "on">;
-  readonly onError: (error: unknown) => void;
-  readonly onFallback: (fallbacks: readonly Fallback[]) => void;
+  readonly log: LogPort;
 }
 
 const PRO_KEYS: ReadonlySet<SettingKey> = new Set(
@@ -97,7 +97,7 @@ export class SettingsStore {
       lifecycle: options.lifecycle,
       clock: options.clock,
       fs: options.fs,
-      onError: options.onError,
+      log: options.log,
     });
   }
 
@@ -109,7 +109,7 @@ export class SettingsStore {
         ? opened.fallbacks
         : [{ key: null, profileId: null, reason: "invalid" }];
     if (fallbacks.length > 0) {
-      this.#options.onFallback(fallbacks);
+      this.#fellBack(fallbacks);
     }
     return opened;
   }
@@ -261,13 +261,23 @@ export class SettingsStore {
     }
   }
 
+  #fellBack(fallbacks: readonly Fallback[]): void {
+    for (const { key, profileId, reason } of fallbacks) {
+      this.#options.log.warn("A setting fell back to its default", {
+        key,
+        profileId,
+        reason,
+      });
+    }
+  }
+
   async #reload(): Promise<void> {
     const opened = await this.#store.reload();
     if (opened === undefined) {
       return;
     }
     if (opened.fallbacks.length > 0) {
-      this.#options.onFallback(opened.fallbacks);
+      this.#fellBack(opened.fallbacks);
     }
     this.#replace(opened.value);
   }

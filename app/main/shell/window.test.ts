@@ -8,6 +8,7 @@ import type { WindowSpec } from "../../core/ports.ts";
 import { settingsPushes } from "../../shared/channels/settings.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
+import { strictLog } from "../../test/fakes/log.ts";
 import { FakeTheme } from "../../test/fakes/theme.ts";
 import { FakeWindow } from "../../test/fakes/window.ts";
 import { IpcDispatcher } from "./ipc.ts";
@@ -19,9 +20,7 @@ const open = async (platform: string, devServer?: string) => {
   const specs: WindowSpec[] = [];
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({
-    onError: (error) => {
-      throw error;
-    },
+    log: strictLog,
     transport,
   });
   const main = new MainWindow({

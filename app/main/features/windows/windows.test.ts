@@ -10,6 +10,7 @@ import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
@@ -26,16 +27,12 @@ const trial: Entitlement = {
   source: "stored",
 };
 
-const fail = (error: unknown) => {
-  throw error;
-};
-
 const setup = async (fs = new FakeFs()) => {
   const clock = new FakeClock(NOW);
   const lifecycle = new FakeLifecycle();
   const events = new AppEvents();
   const registrar = new IpcDispatcher({
-    onError: fail,
+    log: strictLog,
     transport: new FakeIpcTransport(),
   });
   const settings = new SettingsStore({
@@ -44,8 +41,7 @@ const setup = async (fs = new FakeFs()) => {
     lifecycle,
     clock,
     fs,
-    onError: fail,
-    onFallback: fail,
+    log: strictLog,
     registrar,
     watchFile: false,
   });
@@ -58,16 +54,15 @@ const setup = async (fs = new FakeFs()) => {
     events,
     fs,
     ids: fakeIds("p"),
-    onError: fail,
+    log: strictLog,
     registrar,
-    report: fail,
     sessions: new FakeSessions(),
     settings,
   });
   await profiles.open();
   profiles.start();
   const displays = new FakeDisplays();
-  const reports: string[] = [];
+  const log = new FakeLog();
   const windows = new Windows({
     lifecycle,
     clock,
@@ -75,11 +70,8 @@ const setup = async (fs = new FakeFs()) => {
     events,
     fs,
     ids: fakeIds("w"),
-    onError: fail,
+    log: log.scoped("windows"),
     profiles,
-    report: (message) => {
-      reports.push(message);
-    },
   });
   await windows.open();
   windows.start();
@@ -87,7 +79,7 @@ const setup = async (fs = new FakeFs()) => {
     const parsed: unknown = JSON.parse(fs.files.get(WINDOWS_FILE) ?? "null");
     return parseField(parsed, "data", windowsStateSchema)?.windows;
   };
-  return { lifecycle, clock, displays, fs, profiles, reports, stored, windows };
+  return { lifecycle, clock, displays, fs, log, profiles, stored, windows };
 };
 
 describe(Windows, () => {
@@ -189,12 +181,14 @@ describe(Windows, () => {
   });
 
   it("opens where a new window would when the file cannot be read", async () => {
-    const { reports, windows } = await setup(
+    const { log, windows } = await setup(
       new FakeFs({
         [WINDOWS_FILE]: JSON.stringify({ data: { windows: 3 }, version: 1 }),
       })
     );
-    expect(reports).toHaveLength(1);
+    expect(log.at("warn")).toStrictEqual([
+      "The windows file could not be read, so every window opens where a new one would",
+    ]);
     expect(windows.windows).toStrictEqual([]);
   });
 });

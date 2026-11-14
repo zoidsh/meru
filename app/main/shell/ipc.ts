@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import { serializeError } from "../../core/errors.ts";
+import type { LogPort } from "../../core/log.ts";
 import type { IpcTransportPort, Unsubscribe } from "../../core/ports.ts";
 import { err } from "../../core/result.ts";
 import type { Result } from "../../core/result.ts";
@@ -41,14 +43,14 @@ export class IpcDispatcher implements IpcRegistrar {
   readonly #transport: IpcTransportPort;
   readonly #handlers = new Map<string, Bound>();
   readonly #senders = new Map<number, Allowlist>();
-  readonly #onError: (error: unknown) => void;
+  readonly #log: LogPort;
 
   constructor(options: {
     readonly transport: IpcTransportPort;
-    readonly onError: (error: unknown) => void;
+    readonly log: LogPort;
   }) {
     this.#transport = options.transport;
-    this.#onError = options.onError;
+    this.#log = options.log;
   }
 
   readonly register = <C extends Requests>(
@@ -135,8 +137,12 @@ export class IpcDispatcher implements IpcRegistrar {
     try {
       return handler(payload, { contentsId });
     } catch (error) {
-      this.#onError(error);
-      return failure("threw", `${channel} threw`);
+      this.#log.error("A request's handler threw", { channel, error });
+      return err({
+        error: serializeError(error),
+        kind: "threw",
+        message: `${channel} threw`,
+      });
     }
   }
 }

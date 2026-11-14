@@ -12,6 +12,7 @@ import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { strictLog } from "../../../test/fakes/log.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
@@ -21,13 +22,9 @@ import { Sidebars } from "./index.ts";
 
 const PAGE = 3;
 
-const rethrow = (error: unknown) => {
-  throw error;
-};
-
 const setup = async () => {
   const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ onError: rethrow, transport });
+  const registrar = new IpcDispatcher({ log: strictLog, transport });
   registrar.assign(PAGE, chromeSurface);
   const lifecycle = new FakeLifecycle();
   const clock = new FakeClock();
@@ -37,8 +34,7 @@ const setup = async () => {
     lifecycle,
     clock,
     fs: new FakeFs(),
-    onError: rethrow,
-    onFallback: rethrow,
+    log: strictLog,
     registrar,
     watchFile: false,
   });
@@ -52,9 +48,8 @@ const setup = async () => {
     events,
     fs: new FakeFs(),
     ids: fakeIds(),
-    onError: rethrow,
+    log: strictLog,
     registrar,
-    report: rethrow,
     sessions: new FakeSessions(),
     settings,
   });

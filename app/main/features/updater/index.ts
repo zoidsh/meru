@@ -1,6 +1,7 @@
 import { DisposableStore } from "../../../core/disposable.ts";
 import { advance, IDLE_UPDATE } from "../../../core/engines/update.ts";
 import type { AppEvents } from "../../../core/events.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type {
   LifecyclePort,
   Clock,
@@ -30,7 +31,7 @@ export interface UpdaterOptions {
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
   readonly events: Pick<AppEvents, "emit">;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 /** How long after the window shows the first check waits, so launch does not share the network with it. */
@@ -131,6 +132,7 @@ export class Updater {
     try {
       await this.#options.updater.checkForUpdates({ prerelease });
     } catch (error) {
+      this.#options.log.warn("Could not check for updates", { error });
       this.#set(
         advance(this.#state, {
           kind: "error",

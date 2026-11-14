@@ -27,6 +27,7 @@ import {
 } from "../../../core/engines/spotlight.ts";
 import type { Spotlight } from "../../../core/engines/spotlight.ts";
 import { stackOf, stackPlan } from "../../../core/engines/stack.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type {
   Unsubscribe,
   ViewFactoryPort,
@@ -120,7 +121,7 @@ export interface StageOptions {
   readonly onPopup: (url: string) => boolean;
   /** An overlay's page came, on the surface its channels are allowed from, or went, with null. */
   readonly onOverlay: (contentsId: number, surface: Surface | null) => void;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 export class Stage {
@@ -140,7 +141,7 @@ export class Stage {
     this.#options = options;
     this.#views = new TabViews({
       create: (spec) => this.#own(spec),
-      onError: options.onError,
+      log: options.log,
       onFocus: (tabId) => {
         if (this.#focused !== tabId) {
           this.#focused = tabId;
@@ -165,7 +166,7 @@ export class Stage {
     });
     this.#overlay = new Overlay({
       create: (spec) => this.#own(spec),
-      onError: options.onError,
+      log: options.log,
       onOverlay: options.onOverlay,
       preload: options.overlayPreload,
       retire: (owned) => {
@@ -182,7 +183,7 @@ export class Stage {
       },
       create: (spec) => this.#own(spec),
       layout: () => this.#read()?.layout ?? null,
-      onError: options.onError,
+      log: options.log,
       onMove: () => {
         this.#arrange();
       },
@@ -360,7 +361,7 @@ export class Stage {
     if (view === undefined) {
       return false;
     }
-    void loadOwned(view, url, this.#options.onError);
+    void loadOwned(view, url, this.#options.log);
     return true;
   }
 

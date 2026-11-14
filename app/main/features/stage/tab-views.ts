@@ -1,3 +1,4 @@
+import type { LogPort } from "../../../core/log.ts";
 import type { ViewPort, ViewSpec } from "../../../core/ports.ts";
 import type { Disposition } from "../../../core/records/link.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
@@ -27,7 +28,7 @@ export interface TabViewsOptions {
     url: string,
     disposition: Disposition
   ) => boolean;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 /** The view of each tab a stage has shown, by tab id, made the first time the tab is shown and retired only once the tab is gone, so moving a tab between groups, panes or splits, or switching the group a window shows, never reloads its page. */
@@ -77,7 +78,7 @@ export class TabViews {
   }
 
   #make(tab: Tab): OwnedView {
-    const { create, onFocus, onFullscreen, onNavigation, onOpen, onError } =
+    const { create, onFocus, onFullscreen, onNavigation, onOpen, log } =
       this.#options;
     const source = this.#options.sourceOf(tab);
     const owned = create({
@@ -101,7 +102,7 @@ export class TabViews {
         onFullscreen(tabId, entered);
       }),
     ];
-    void loadOwned(view, source.url, onError);
+    void loadOwned(view, source.url, log);
     return {
       dispose: () => {
         for (const unsubscribe of listeners) {

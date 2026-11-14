@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import { envelopeSchema, migrate } from "./engines/migrate.ts";
 import type { Migration } from "./engines/migrate.ts";
+import type { LogPort } from "./log.ts";
 import type { LifecyclePort, Clock, FsPort, Unsubscribe } from "./ports.ts";
 
 export interface Recovered<T, F> {
@@ -40,7 +41,7 @@ export interface SnapshotPorts {
   readonly fs: FsPort;
   readonly clock: Clock;
   readonly lifecycle: Pick<LifecyclePort, "onQuit">;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 const DELAY = 1000;
@@ -77,7 +78,10 @@ export class SnapshotStore<T, F = never> {
     try {
       text = await this.#ports.fs.readText(this.#spec.name);
     } catch (error) {
-      this.#ports.onError(error);
+      this.#ports.log.error("Could not read a snapshot file", {
+        error,
+        file: this.#spec.name,
+      });
       return this.#recovered(undefined, "unreadable");
     }
     if (text === undefined) {
@@ -137,7 +141,10 @@ export class SnapshotStore<T, F = never> {
     try {
       await this.#ports.fs.writeTextAtomic(this.#spec.name, text);
     } catch (error) {
-      this.#ports.onError(error);
+      this.#ports.log.error("Could not write a snapshot file", {
+        error,
+        file: this.#spec.name,
+      });
     }
   }
 
@@ -196,7 +203,13 @@ export class SnapshotStore<T, F = never> {
           text
         );
       } catch (error) {
-        this.#ports.onError(error);
+        this.#ports.log.error(
+          "Could not keep the corrupt copy of a snapshot file",
+          {
+            error,
+            file: this.#spec.name,
+          }
+        );
       }
     }
     return this.#recovered(undefined, "corrupt");

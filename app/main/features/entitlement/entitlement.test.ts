@@ -17,6 +17,7 @@ import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
 import { FakeOnline } from "../../../test/fakes/online.ts";
 import { FakePower } from "../../../test/fakes/power.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
@@ -97,9 +98,7 @@ const setup = async ({
   const power = new FakePower();
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({
-    onError: (error) => {
-      throw error;
-    },
+    log: strictLog,
     transport,
   });
   registrar.assign(PAGE, chromeSurface);
@@ -108,7 +107,7 @@ const setup = async ({
   events.on("entitlement.changed", (payload) => {
     changed.push(payload);
   });
-  const reports: string[] = [];
+  const log = new FakeLog();
   const entitlement = new Entitlement({
     api,
     lifecycle: new FakeLifecycle(),
@@ -118,14 +117,9 @@ const setup = async ({
     ids: fakeIds("device-"),
     keys: new Map([[KID, pair.publicKey]]),
     online: network,
-    onError: (error) => {
-      throw error;
-    },
+    log: log.scoped("entitlement"),
     power,
     registrar,
-    report: (message) => {
-      reports.push(message);
-    },
     subtle: crypto.subtle,
   });
   await entitlement.open();
@@ -142,7 +136,7 @@ const setup = async ({
     network,
     power,
     registrar,
-    reports,
+    log,
     transport,
     stored: async (): Promise<unknown> => {
       await entitlement.flush();
@@ -354,7 +348,7 @@ describe(Entitlement, () => {
       kind: "rejected",
       reason: "unknownLicenseKey",
     });
-    const { api, clock, entitlement, reports } = await setup({
+    const { api, clock, entitlement, log } = await setup({
       answers: [rejected, issued({ endsAt, plan: "trial" }), issued()],
       state: {
         token: {
@@ -370,8 +364,13 @@ describe(Entitlement, () => {
       "BAD-KEY",
       null,
     ]);
-    expect(reports).toStrictEqual([
-      "entitlement: the API answered rejected: unknownLicenseKey",
+    expect(log.entries).toStrictEqual([
+      {
+        fields: { detail: "unknownLicenseKey", kind: "rejected" },
+        level: "warn",
+        message: "The API refused the request",
+        scope: "entitlement",
+      },
     ]);
     await expect
       .poll(() => entitlement.current())
@@ -421,15 +420,15 @@ describe(Entitlement, () => {
 
   it("asks again after a server error, waiting longer each time", async () => {
     const failure: Scripted = err({ detail: "HTTP 503", kind: "serverError" });
-    const { api, clock, entitlement, reports } = await setup({
+    const { api, clock, entitlement, log } = await setup({
       answers: [failure, failure, issued()],
     });
     entitlement.start();
-    await expect.poll(() => reports).toHaveLength(1);
+    await expect.poll(() => log.at("warn")).toHaveLength(1);
     clock.advance(60_000 - 1);
     expect(api.requests).toHaveLength(1);
     clock.advance(1);
-    await expect.poll(() => reports).toHaveLength(2);
+    await expect.poll(() => log.at("warn")).toHaveLength(2);
     clock.advance(120_000 - 1);
     expect(api.requests).toHaveLength(2);
     clock.advance(1);
@@ -477,15 +476,20 @@ describe(Entitlement, () => {
   });
 
   it("drops a stored token issued to another device", async () => {
-    const { entitlement, reports, stored } = await setup({
+    const { entitlement, log, stored } = await setup({
       online: false,
       state: {
         token: { licenseKey: null, value: await mint({ sub: "device-2" }) },
       },
     });
     expect(entitlement.current().kind).toBe("unknown");
-    expect(reports).toStrictEqual([
-      "entitlement: a token was refused as wrongDevice",
+    expect(log.entries).toStrictEqual([
+      {
+        fields: { kind: "wrongDevice" },
+        level: "warn",
+        message: "A token was refused",
+        scope: "entitlement",
+      },
     ]);
     await expect(stored()).resolves.toMatchObject({ data: { token: null } });
   });

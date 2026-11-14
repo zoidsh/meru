@@ -22,6 +22,8 @@ import { Stages } from "./features/stage/index.ts";
 import { Updater } from "./features/updater/index.ts";
 import { Windows } from "./features/windows/index.ts";
 import { listenIpc } from "./platform/ipc.ts";
+import { createFileLog } from "./platform/log.ts";
+import type { FileLog } from "./platform/log.ts";
 import {
   applicationAccelerators,
   setApplicationMenu,
@@ -31,7 +33,7 @@ import {
   createElectronPorts,
 } from "./platform/ports.ts";
 import { createElectronUpdater } from "./platform/updater.ts";
-import { placeUserData } from "./platform/user-data.ts";
+import { placeUserData, userDataDir } from "./platform/user-data.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
 import { exposeE2e, RecordingShell } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
@@ -41,18 +43,19 @@ import { ApplicationMenu } from "./shell/menu.ts";
 import { MainWindow, pageUrl } from "./shell/window.ts";
 import type { PageOptions } from "./shell/window.ts";
 
-const report = (error: unknown) => {
-  console.error(error);
-};
-
-const warn = (message: string) => {
-  console.warn(message);
-};
+// Held outside start() so a failure to start can still be written and the file flushed.
+let fileLog: FileLog | undefined;
 
 const start = async () => {
   const dist = path.join(import.meta.dirname, "..");
   placeUserData(path.join(dist, "..", ".."));
   const ports = createElectronPorts();
+  const log = createFileLog({
+    directory: path.join(userDataDir(), "logs"),
+    minimum: ports.lifecycle.packaged ? "info" : "debug",
+    mirror: !ports.lifecycle.packaged,
+  });
+  fileLog = log;
   // An installed app never takes the test switches from its environment, so no user can turn on the inspector or blank panes by setting a variable.
   const e2e = !ports.lifecycle.packaged && process.env.MERU_E2E === "1";
   const measure = !ports.lifecycle.packaged && process.env.MERU_MEASURE === "1";
@@ -65,8 +68,9 @@ const start = async () => {
     ports.lifecycle.prohibitActivation();
   }
 
+  const ipcLog = log.scoped("ipc");
   const dispatcher = new IpcDispatcher({
-    onError: report,
+    log: ipcLog,
     transport: ports.ipc,
   });
   const lists = surfaces.map(allowlist);
@@ -79,7 +83,11 @@ const start = async () => {
     (contentsId, channel, payload) => {
       const result = dispatcher.dispatch(contentsId, channel, payload);
       if (!result.ok) {
-        warn(`${channel}: ${result.error.message}`);
+        ipcLog.warn("A request was refused", {
+          channel,
+          kind: result.error.kind,
+          message: result.error.message,
+        });
       }
       return result;
     }
@@ -101,9 +109,8 @@ const start = async () => {
     ),
     online: ports.online,
     power: ports.power,
-    onError: report,
+    log: log.scoped("entitlement"),
     registrar: dispatcher,
-    report: warn,
     subtle: crypto.subtle,
   });
   await entitlement.open();
@@ -113,14 +120,7 @@ const start = async () => {
     lifecycle: ports.lifecycle,
     clock: ports.clock,
     fs: ports.fs,
-    onError: report,
-    onFallback: (fallbacks) => {
-      for (const { key, profileId, reason } of fallbacks) {
-        warn(
-          `settings.json: ${key ?? "a layer"}${profileId === null ? "" : ` of profile ${profileId}`} is ${reason}, so its default stands`
-        );
-      }
-    },
+    log: log.scoped("settings"),
     registrar: dispatcher,
     // Only a run from the repository follows hand edits; an installed app learns of a change from the code that made it.
     watchFile: !ports.lifecycle.packaged,
@@ -141,9 +141,8 @@ const start = async () => {
     events,
     fs: ports.fs,
     ids: ports.ids,
-    onError: report,
+    log: log.scoped("profiles"),
     registrar: dispatcher,
-    report: warn,
     sessions: ports.sessions,
     settings,
   });
@@ -157,9 +156,8 @@ const start = async () => {
     events,
     fs: ports.fs,
     ids: ports.ids,
-    onError: report,
+    log: log.scoped("windows"),
     profiles,
-    report: warn,
   });
   await windows.open();
   windows.start();
@@ -168,7 +166,7 @@ const start = async () => {
     commands: allCommands,
     dispatcher: commands,
     platform: ports.lifecycle.platform,
-    report: warn,
+    log: log.scoped("keys"),
     settings,
   });
   keys.start();
@@ -209,7 +207,7 @@ const start = async () => {
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
     events,
     insets: () => chromeInsets(sidebars.current()),
-    onError: report,
+    log: log.scoped("stage"),
     profiles,
     registrar: dispatcher,
     settings,
@@ -248,7 +246,7 @@ const start = async () => {
     clock: ports.clock,
     commands,
     events,
-    onError: report,
+    log: log.scoped("updater"),
     registrar: dispatcher,
     settings,
     updater: createElectronUpdater(),
@@ -261,7 +259,7 @@ const start = async () => {
     dispatcher: commands,
     events,
     platform: ports.lifecycle.platform,
-    report: warn,
+    log: log.scoped("menu"),
     settings,
   }).start();
 
@@ -282,7 +280,7 @@ const start = async () => {
     background,
     commands,
     linuxControls,
-    onError: report,
+    log: log.scoped("settings"),
     ports,
     preload: path.join(dist, "preload", "renderer.cjs"),
     registrar: dispatcher,
@@ -321,7 +319,10 @@ const main = async () => {
   try {
     await start();
   } catch (error) {
+    // The log may not exist yet, and a start that got nowhere leaves nothing else to read.
     console.error(error);
+    fileLog?.scoped("main").error("The app could not start", { error });
+    await fileLog?.flush();
     process.exit(1);
   }
 };

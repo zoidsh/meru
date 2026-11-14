@@ -1,6 +1,7 @@
 import { DisposableStore } from "../../core/disposable.ts";
 import { conflicts, resolveBindings } from "../../core/engines/shortcuts.ts";
 import type { AppEvents } from "../../core/events.ts";
+import type { LogPort } from "../../core/log.ts";
 import type { Command, MenuSectionId } from "../../shared/commands/define.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
 import { msg } from "../../shared/msg.ts";
@@ -134,7 +135,7 @@ export interface ApplicationMenuOptions {
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   /** Hands the built menu to Electron. */
   readonly apply: (sections: readonly MenuSection[]) => void;
-  readonly report: (message: string) => void;
+  readonly log: LogPort;
 }
 
 /** Keeps the application menu built from the commands and the user's shortcuts, rebuilding it when the shortcuts change. */
@@ -165,7 +166,7 @@ export class ApplicationMenu {
   }
 
   #build(): void {
-    const { platform, commands, dispatcher, settings, apply, report } =
+    const { platform, commands, dispatcher, settings, apply, log } =
       this.#options;
     const bindings = resolveBindings(
       commands,
@@ -173,7 +174,10 @@ export class ApplicationMenu {
       platform
     );
     for (const conflict of conflicts(bindings, platform)) {
-      report(`${conflict.ids.join(" and ")} share ${conflict.accelerator}`);
+      log.warn("Commands share a shortcut", {
+        accelerator: conflict.accelerator,
+        ids: conflict.ids,
+      });
     }
     apply(
       buildMenu({
@@ -184,7 +188,7 @@ export class ApplicationMenu {
         run: (id, windowId) => {
           const result = dispatcher.run(id, { windowId });
           if (!result.ok) {
-            report(`${id}: ${result.error}`);
+            log.warn("A command refused to run", { id, reason: result.error });
           }
         },
       })

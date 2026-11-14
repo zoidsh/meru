@@ -22,6 +22,7 @@ import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { strictLog } from "../../../test/fakes/log.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import type { FakeView } from "../../../test/fakes/view.ts";
@@ -40,10 +41,6 @@ const GMAIL = "https://mail.google.com/";
 
 const VERTICAL_AFTER: Beside = { orientation: "vertical", side: "after" };
 
-const rethrow = (error: unknown) => {
-  throw error;
-};
-
 const settingsWith = (style: Style) => {
   const settings = new SettingsStore({
     entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
@@ -51,14 +48,9 @@ const settingsWith = (style: Style) => {
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
     fs: new FakeFs(),
-    onError: (error) => {
-      throw error;
-    },
-    onFallback: () => {
-      throw new Error("Nothing was read, so nothing can fall back");
-    },
+    log: strictLog,
     registrar: new IpcDispatcher({
-      onError: rethrow,
+      log: strictLog,
       transport: new FakeIpcTransport(),
     }),
     watchFile: false,
@@ -72,12 +64,8 @@ const setup = async (style: Style = "modern") => {
   const settings = settingsWith(style);
   const views = new FakeViewFactory();
   const events = new AppEvents();
-  const errors: unknown[] = [];
-  const onError = (error: unknown) => {
-    errors.push(error);
-  };
   const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ onError, transport });
+  const registrar = new IpcDispatcher({ log: strictLog, transport });
   registrar.assign(window.contentsId, chromeSurface);
   const call = (channel: RequestChannel, payload: unknown, sender: number) =>
     registrar.dispatch(sender, wireName(channel), payload);
@@ -90,9 +78,8 @@ const setup = async (style: Style = "modern") => {
     events,
     fs: new FakeFs(),
     ids: fakeIds(),
-    onError,
+    log: strictLog,
     registrar,
-    report: onError,
     sessions: new FakeSessions(),
     settings,
   });
@@ -103,7 +90,7 @@ const setup = async (style: Style = "modern") => {
       commands: allCommands,
       dispatcher: commands,
       platform: "darwin",
-      report: rethrow,
+      log: strictLog,
       settings,
     }),
     blankPanes: false,
@@ -112,7 +99,7 @@ const setup = async (style: Style = "modern") => {
     overlayPreload: "/dist/preload/renderer.cjs",
     events,
     insets: () => insets,
-    onError,
+    log: strictLog,
     profiles,
     onOpen: () => false,
     onPopup: () => true,
@@ -156,7 +143,6 @@ const setup = async (style: Style = "modern") => {
     call,
     changes,
     commands,
-    errors,
     events,
     id,
     insets,
@@ -686,7 +672,7 @@ describe("the stage commands", () => {
     ]).toStrictEqual([3, first, 2, 1]);
   });
 
-  it("report what they could not do", async () => {
+  it("refuse what they could not do", async () => {
     const { commands, id } = await setup();
     expect(
       (["stage.swap", "stage.maximise"] as const).map(

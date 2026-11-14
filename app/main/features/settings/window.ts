@@ -1,6 +1,7 @@
 import { DisposableStore } from "../../../core/disposable.ts";
 import { clampToDisplay } from "../../../core/engines/bounds.ts";
 import { titleBarOf, windowColours } from "../../../core/engines/chrome.ts";
+import type { LogPort } from "../../../core/log.ts";
 import { themeOf } from "../../../core/ports.ts";
 import type { Ports, WindowPort } from "../../../core/ports.ts";
 import type { Theme } from "../../../core/records/theme.ts";
@@ -28,7 +29,7 @@ export interface SettingsWindowOptions {
   /** Open behind whatever is in front, for a desktop other sessions share. */
   readonly background: boolean;
   readonly linuxControls: boolean;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 /** The one settings window, opened by `settings.open`: on the primary display's centre, or brought to the front while it is open. */
@@ -36,6 +37,9 @@ export class SettingsWindow {
   readonly #options: SettingsWindowOptions;
   readonly #disposables = new DisposableStore();
   #window: WindowPort | undefined;
+  readonly #failed = (error: unknown) => {
+    this.#options.log.error("Could not open the settings window", { error });
+  };
 
   constructor(options: SettingsWindowOptions) {
     this.#options = options;
@@ -49,7 +53,7 @@ export class SettingsWindow {
     this.#disposables.add(
       this.#options.commands.register(settingsCommands, {
         open: () => {
-          this.open().catch(this.#options.onError);
+          this.open().catch(this.#failed);
           return ok(null);
         },
       }),

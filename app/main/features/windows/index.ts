@@ -5,6 +5,7 @@ import { DisposableStore } from "../../../core/disposable.ts";
 import { clampToDisplay } from "../../../core/engines/bounds.ts";
 import { mainGroupOf } from "../../../core/engines/windows.ts";
 import type { AppEvents } from "../../../core/events.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type {
   LifecyclePort,
   Clock,
@@ -46,8 +47,7 @@ export interface WindowsOptions {
   readonly events: AppEvents;
   readonly displays: DisplayPort;
   readonly profiles: Pick<Profiles, "currentGroup" | "state">;
-  readonly report: (message: string) => void;
-  readonly onError: (error: unknown) => void;
+  readonly log: LogPort;
 }
 
 /** Owns windows.json: where each window was and which group it shows. */
@@ -63,7 +63,7 @@ export class Windows {
       lifecycle: options.lifecycle,
       clock: options.clock,
       fs: options.fs,
-      onError: options.onError,
+      log: options.log,
     });
   }
 
@@ -71,8 +71,9 @@ export class Windows {
     const opened = await this.#store.open();
     this.#windows = [...opened.value.windows];
     if (opened.fallbacks.length > 0) {
-      this.#options.report(
-        `${WINDOWS_FILE} could not be read, so every window opens where a new one would`
+      this.#options.log.warn(
+        "The windows file could not be read, so every window opens where a new one would",
+        { dropped: opened.fallbacks, file: WINDOWS_FILE }
       );
     }
     return opened;

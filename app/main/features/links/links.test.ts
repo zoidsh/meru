@@ -16,6 +16,7 @@ import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
+import { strictLog } from "../../../test/fakes/log.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
@@ -28,14 +29,10 @@ import { SettingsStore } from "../settings/index.ts";
 import { Stages } from "../stage/index.ts";
 import { Links } from "./index.ts";
 
-const rethrow = (error: unknown) => {
-  throw error;
-};
-
 const setup = async () => {
   const window = new FakeWindow(1200, 800);
   const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ onError: rethrow, transport });
+  const registrar = new IpcDispatcher({ log: strictLog, transport });
   registrar.assign(window.contentsId, chromeSurface);
   const clock = new FakeClock();
   const settings = new SettingsStore({
@@ -51,8 +48,7 @@ const setup = async () => {
     lifecycle: new FakeLifecycle(),
     clock,
     fs: new FakeFs(),
-    onError: rethrow,
-    onFallback: rethrow,
+    log: strictLog,
     registrar,
     watchFile: false,
   });
@@ -67,9 +63,8 @@ const setup = async () => {
     events,
     fs: new FakeFs(),
     ids: fakeIds(),
-    onError: rethrow,
+    log: strictLog,
     registrar,
-    report: rethrow,
     sessions: new FakeSessions(),
     settings,
   });
@@ -85,7 +80,7 @@ const setup = async () => {
       commands: allCommands,
       dispatcher: commands,
       platform: "darwin",
-      report: rethrow,
+      log: strictLog,
       settings,
     }),
     blankPanes: false,
@@ -94,7 +89,7 @@ const setup = async () => {
     overlayPreload: "/dist/preload/renderer.cjs",
     events,
     insets: () => ({ left: 0, top: 0 }),
-    onError: rethrow,
+    log: strictLog,
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
     onPopup: (url) => {
       const shows = isSignIn(url);
