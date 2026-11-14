@@ -1,16 +1,8 @@
 import type { Unsubscribe } from "../../core/ports.ts";
+import type { MenuSectionId } from "../../core/records/menu.ts";
 import type { Result } from "../../core/result.ts";
 import type { Name } from "../key.ts";
 import type { Message } from "../msg.ts";
-
-/** `app` is the app menu on macOS and the Help menu elsewhere. */
-export type MenuSectionId =
-  | "app"
-  | "file"
-  | "edit"
-  | "view"
-  | "history"
-  | "profiles";
 
 export interface CommandSpec {
   readonly label: Message;
