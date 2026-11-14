@@ -1,96 +1,21 @@
-import { noop } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
-import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import {
   profilesPushes,
   profilesSnapshotSchema,
 } from "../../../shared/channels/profiles.ts";
-import { chromeSurface } from "../../../shared/channels/surfaces.ts";
-import { commands as allCommands } from "../../../shared/commands/registry.ts";
-import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeFs } from "../../../test/fakes/fs.ts";
-import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { strictLog } from "../../../test/fakes/log.ts";
-import { FakeSessions } from "../../../test/fakes/session.ts";
-import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
-import { FakeWindow } from "../../../test/fakes/window.ts";
 import { unwrap } from "../../../test/result.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { ShortcutKeys } from "../../shell/keys.ts";
-import { Profiles } from "../profiles/index.ts";
-import { SettingsStore } from "../settings/index.ts";
-import { Stages } from "../stage/index.ts";
+import { testApp, testStages } from "../../testing.ts";
 import { Sleep } from "./index.ts";
 
 const MINUTE = 60_000;
 
 const setup = async () => {
-  const window = new FakeWindow(1200, 800);
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ log: strictLog, transport });
-  registrar.assign(window.contentsId, chromeSurface);
-  const clock = new FakeClock();
-  const events = new AppEvents();
-  const settings = new SettingsStore({
-    clock,
-    entitlement: () => ({ expiresAt: null, kind: "free", source: "stored" }),
-    events,
-    fs: new FakeFs(),
-    lifecycle: new FakeLifecycle(),
-    log: strictLog,
-    registrar,
-    watchFile: false,
-  });
-  const commands = new CommandDispatcher();
-  const profiles = new Profiles({
-    clock,
-    commands,
-    entitlement: () => ({ expiresAt: null, kind: "free", source: "stored" }),
-    events,
-    fs: new FakeFs(),
-    ids: fakeIds(),
-    lifecycle: new FakeLifecycle(),
-    log: strictLog,
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
-  });
-  await profiles.open();
-  // As the windows feature does, and ahead of the stages, the window shows the group of the tab last brought to the front.
-  let shown: string | undefined;
-  events.on("tab.focused", ({ groupId }) => {
-    shown = groupId;
-  });
-  const views = new FakeViewFactory();
-  const stages = new Stages({
+  const app = await testApp();
+  const { clock, commands, events, profiles, settings, transport } = app;
+  const { open, stages, views } = testStages(app, {
     historyOf: (tabId) => sleep.historyOf(tabId),
-    blankPanes: false,
-    commands,
-    dragPreload: undefined,
-    events,
-    insets: () => ({ left: 0, top: 0 }),
-    keys: new ShortcutKeys({
-      commands: allCommands,
-      dispatcher: commands,
-      log: strictLog,
-      platform: "darwin",
-      settings,
-    }),
-    log: strictLog,
-    onOpen: () => false,
-    onPopup: () => false,
-    onSplitRequested: noop,
-    overlayPreload: undefined,
-    profiles,
-    registrar,
-    settings,
-    tabDragUrl: () => "overlay.html",
-    views,
   });
   const sleep = new Sleep({
     clock,
@@ -102,8 +27,7 @@ const setup = async () => {
   });
   // Started ahead of the stages, the other way round from the app's root, so a sweep cannot rely on the stages having heard a change first.
   sleep.start();
-  stages.start();
-  stages.open(window, () => shown ?? profiles.currentGroup()?.id);
+  const { window } = open();
   const [gmail] = profiles.state.tabs;
   if (gmail === undefined) {
     throw new Error("A first launch has a Gmail tab");
