@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import {
   app,
   BrowserWindow,
@@ -19,12 +21,6 @@ import type {
   TrayIcon,
   TrayPort,
 } from "../../core/ports.ts";
-import menuBar from "./icons/IconMenuBarTemplate.png?inline";
-import menuBar2x from "./icons/IconMenuBarTemplate@2x.png?inline";
-import trayDark from "./icons/IconTray-Dark.png?inline";
-import trayLight from "./icons/IconTray-Light.png?inline";
-import trayUnreadDark from "./icons/IconTrayUnread-Dark.png?inline";
-import trayUnreadLight from "./icons/IconTrayUnread-Light.png?inline";
 
 // Windows draws an overlay over the taskbar button rather than taking a count, and wants it in BGRA.
 const overlayImage = (total: number): NativeImage => {
@@ -68,18 +64,21 @@ export const notificationPort: NotificationPort = {
   },
 };
 
+// The main build copies the icons beside its bundle. Windows takes its tray icon as a multi-size ICO, which Electron reads only from a path, and picks the size for the display's scale; macOS's template takes its @2x sibling by name.
 const iconImage = (icon: TrayIcon): NativeImage => {
   if (icon.kind === "template") {
-    const image = nativeImage.createFromDataURL(menuBar);
-    image.addRepresentation({ dataURL: menuBar2x, scaleFactor: 2 });
+    const image = nativeImage.createFromPath(
+      path.join(import.meta.dirname, "IconMenuBarTemplate.png")
+    );
     image.setTemplateImage(true);
     return image;
   }
-  const urls = {
-    dark: icon.unread ? trayUnreadDark : trayDark,
-    light: icon.unread ? trayUnreadLight : trayLight,
-  };
-  return nativeImage.createFromDataURL(urls[icon.shade]);
+  const state = icon.unread ? "Unread" : "";
+  const shade = icon.shade === "dark" ? "Dark" : "Light";
+  const extension = process.platform === "win32" ? "ico" : "png";
+  return nativeImage.createFromPath(
+    path.join(import.meta.dirname, `IconTray${state}-${shade}.${extension}`)
+  );
 };
 
 export const createTray = (): TrayPort => {
