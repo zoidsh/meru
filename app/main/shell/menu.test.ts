@@ -74,9 +74,13 @@ const setup = async (platform = "darwin") => {
   });
   await profiles.open();
   profiles.start();
+  const requested: number[] = [];
   const stages = new Stages({
     onOpen: () => false,
     onPopup: () => true,
+    onSplitRequested: (windowId) => {
+      requested.push(windowId);
+    },
     keys: new ShortcutKeys({
       commands,
       dispatcher,
@@ -149,6 +153,7 @@ const setup = async (platform = "darwin") => {
     log,
     profiles,
     registrar,
+    requested,
     sections,
     settings,
     stages,
@@ -353,11 +358,7 @@ describe(ApplicationMenu, () => {
   });
 
   it("runs a command in the window it is for", async () => {
-    const { action, events, stages, window, profiles } = await setup();
-    const requested: number[] = [];
-    events.on("split.requested", ({ windowId }) => {
-      requested.push(windowId);
-    });
+    const { action, requested, stages, window, profiles } = await setup();
     action("stage.splitVertical").run(window.contentsId);
     stages
       .find(window.contentsId)
@@ -421,11 +422,7 @@ describe(ApplicationMenu, () => {
   });
 
   it("runs a command a page asks for, in the page's window", async () => {
-    const { events, registrar, window } = await setup();
-    const requested: number[] = [];
-    events.on("split.requested", ({ windowId }) => {
-      requested.push(windowId);
-    });
+    const { registrar, requested, window } = await setup();
     expect(
       registrar.dispatch(window.contentsId, wireName(channels.run), {
         id: "stage.splitVertical",

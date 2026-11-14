@@ -1,3 +1,4 @@
+import { noop } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import { groupOf } from "../../../core/engines/ordering.ts";
@@ -91,6 +92,7 @@ const setup = async () => {
     log: strictLog,
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
     onPopup: (url) => links.popup(url),
+    onSplitRequested: noop,
     profiles,
     registrar,
     settings,

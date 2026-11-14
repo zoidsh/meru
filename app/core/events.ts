@@ -1,7 +1,6 @@
 import type { Unsubscribe } from "./ports.ts";
 import type { Entitlement } from "./records/entitlement.ts";
 import type { FeedEntry } from "./records/feed.ts";
-import type { Orientation } from "./records/layout.ts";
 
 /** The signals a feature sends up to whoever assembles the app, by name. */
 export interface AppEventMap {
@@ -26,11 +25,6 @@ export interface AppEventMap {
   readonly "stage.invalidated": null;
   /** The selected profile's sidebar appeared, went or changed width, so the stages lay their panes out again. */
   readonly "sidebar.changed": null;
-  /** A split command ran in the window whose chrome page is `windowId`; the launcher asks which app the new pane shows. */
-  readonly "split.requested": {
-    readonly windowId: number;
-    readonly orientation: Orientation;
-  };
 }
 
 export type AppEventName = keyof AppEventMap;
@@ -46,7 +40,6 @@ export class AppEvents {
     "profile.selected": new Set(),
     "profiles.changed": new Set(),
     "sidebar.changed": new Set(),
-    "split.requested": new Set(),
     "stage.invalidated": new Set(),
     "tab.focused": new Set(),
   };

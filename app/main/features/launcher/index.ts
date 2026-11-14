@@ -1,5 +1,4 @@
 import { DisposableStore } from "../../../core/disposable.ts";
-import type { AppEvents } from "../../../core/events.ts";
 import type { Orientation } from "../../../core/records/layout.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
@@ -13,7 +12,6 @@ import { launcherCommands } from "./commands.ts";
 export interface LauncherOptions {
   readonly registrar: IpcRegistrar;
   readonly commands: CommandRegistrar;
-  readonly events: AppEvents;
   readonly stages: Pick<Stages, "find">;
   /** The overlay page's address for an overlay of `kind`, carrying `query`. */
   readonly overlayUrl: (
@@ -22,7 +20,7 @@ export interface LauncherOptions {
   ) => string;
 }
 
-/** Opens the launcher as an overlay over the panes of a window: from the chrome page's button, from launcher.open, and for the app of a new pane on split.requested. */
+/** Opens the launcher as an overlay over the panes of a window: from the chrome page's button, from launcher.open, and for the app of a new pane when a split command asks. */
 export class Launcher {
   readonly #options: LauncherOptions;
   readonly #disposables = new DisposableStore();
@@ -32,14 +30,11 @@ export class Launcher {
   }
 
   start(): void {
-    const { registrar, commands, events, stages } = this.#options;
+    const { registrar, commands, stages } = this.#options;
     this.#disposables.add(
       commands.register(launcherCommands, {
         open: ({ windowId }) =>
           windowId === null ? err("unknownWindow") : this.open(windowId),
-      }),
-      events.on("split.requested", ({ windowId, orientation }) => {
-        this.open(windowId, orientation);
       }),
       registrar.register(launcher, {
         close: (_payload, { contentsId }) => {

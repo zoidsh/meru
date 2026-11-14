@@ -227,6 +227,9 @@ const start = async () => {
     commands,
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
     onPopup: (url) => links.popup(url),
+    onSplitRequested: (windowId, orientation) => {
+      launcher.open(windowId, orientation);
+    },
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
     events,
@@ -269,13 +272,13 @@ const start = async () => {
     shell,
     stages,
   });
-  new Launcher({
+  const launcher = new Launcher({
     commands,
-    events,
     overlayUrl,
     registrar: dispatcher,
     stages,
-  }).start();
+  });
+  launcher.start();
 
   const updater = new Updater({
     lifecycle: ports.lifecycle,

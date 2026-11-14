@@ -1,3 +1,4 @@
+import { noop } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import { AppEvents } from "../../../core/events.ts";
@@ -82,6 +83,7 @@ const setup = async () => {
     log: strictLog,
     onOpen: () => false,
     onPopup: () => false,
+    onSplitRequested: noop,
     overlayPreload: undefined,
     profiles,
     registrar,

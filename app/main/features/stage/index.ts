@@ -61,6 +61,11 @@ export interface StagesOptions {
   ) => boolean;
   /** A blank popup a pane's page opened navigated to `url`; true shows it. */
   readonly onPopup: (url: string) => boolean;
+  /** A split command ran in the window whose chrome page is `windowId`, which splits nothing until an app for the new pane is picked. */
+  readonly onSplitRequested: (
+    windowId: number,
+    orientation: Orientation
+  ) => void;
   readonly log: LogPort;
 }
 
@@ -173,7 +178,7 @@ export class Stages {
     orientation: Orientation
   ): Result<undefined, StageError> {
     return this.#with(windowId, () => {
-      this.#options.events.emit("split.requested", { orientation, windowId });
+      this.#options.onSplitRequested(windowId, orientation);
       return ok(undefined);
     });
   }

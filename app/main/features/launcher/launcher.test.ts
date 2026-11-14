@@ -57,6 +57,9 @@ const setup = async () => {
   const stages = new Stages({
     onOpen: () => false,
     onPopup: () => true,
+    onSplitRequested: (windowId, orientation) => {
+      launcherOf.open(windowId, orientation);
+    },
     keys: new ShortcutKeys({
       commands: allCommands,
       dispatcher: commands,
@@ -82,14 +85,14 @@ const setup = async () => {
   const window = new FakeWindow(1200, 800);
   registrar.assign(window.contentsId, chromeSurface);
   const stage = stages.open(window, () => profiles.currentGroup()?.id);
-  new Launcher({
+  const launcherOf = new Launcher({
     commands,
-    events,
     overlayUrl: (kind, query) =>
       `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
     registrar,
     stages,
-  }).start();
+  });
+  launcherOf.start();
   return { commands, events, registrar, stage, transport, views, window };
 };
 

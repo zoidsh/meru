@@ -30,7 +30,6 @@ import { unwrap } from "../../../test/result.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { ShortcutKeys } from "../../shell/keys.ts";
-import { Launcher } from "../launcher/index.ts";
 import { Profiles } from "../profiles/index.ts";
 import { SettingsStore } from "../settings/index.ts";
 import { stageCommands } from "./commands.ts";
@@ -60,6 +59,7 @@ const settingsWith = (style: Style) => {
 };
 
 const setup = async (style: Style = "modern") => {
+  const requested: [number, Orientation][] = [];
   const window = new FakeWindow(1200, 800);
   const settings = settingsWith(style);
   const views = new FakeViewFactory();
@@ -103,6 +103,9 @@ const setup = async (style: Style = "modern") => {
     profiles,
     onOpen: () => false,
     onPopup: () => true,
+    onSplitRequested: (windowId, orientation) => {
+      requested.push([windowId, orientation]);
+    },
     registrar,
     settings,
     tabDragUrl: (tab) =>
@@ -150,6 +153,7 @@ const setup = async (style: Style = "modern") => {
     profileId,
     profiles,
     registrar,
+    requested,
     settings,
     show,
     split,
@@ -496,30 +500,20 @@ describe("the stage commands", () => {
     ).toStrictEqual([]);
   });
 
-  it("split by opening the launcher for the new pane's app over the window they are given, splitting nothing themselves", async () => {
-    const { commands, events, id, registrar, stages, views, window, profiles } =
-      await setup();
-    new Launcher({
-      commands,
-      events,
-      overlayUrl: (kind, query) =>
-        `overlay.html?${new URLSearchParams({ ...query, kind }).toString()}`,
-      registrar,
-      stages,
-    }).start();
-    const opened = (run: CommandId) => {
-      commands.run(run, { windowId: id });
-      return new URL(views.created.at(-1)?.url ?? "", "file:///").search;
-    };
+  it("split by asking for the new pane's app in the window they are given, splitting nothing themselves", async () => {
+    const { commands, id, requested, window, profiles } = await setup();
+    commands.run("stage.splitVertical", { windowId: id });
+    commands.run("stage.splitHorizontal", { windowId: id });
     expect([
-      opened("stage.splitVertical"),
-      opened("stage.splitHorizontal"),
+      requested,
       window.childViews().length,
       profiles.currentGroup()?.tabIds.length,
     ]).toStrictEqual([
-      "?split=vertical&kind=launcher",
-      "?split=horizontal&kind=launcher",
-      2,
+      [
+        [id, "vertical"],
+        [id, "horizontal"],
+      ],
+      1,
       1,
     ]);
   });
