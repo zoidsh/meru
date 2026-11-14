@@ -152,7 +152,7 @@ describe(Tray, () => {
   it("puts nothing in macOS's menu bar until asked, and then the template icon with the count beside it", async () => {
     const { port, settings } = await setup("darwin");
     const before = port.spec;
-    settings.set("tray.menuBar", true);
+    settings.set("tray.icon", true);
     expect([before, port.spec?.icon, port.spec?.title]).toStrictEqual([
       undefined,
       { kind: "template" },

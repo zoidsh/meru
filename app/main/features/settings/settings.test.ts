@@ -178,7 +178,7 @@ describe(SettingsStore, () => {
         global: { "appearance.style": "classic" },
         profiles: { work: { "stage.zoom": 2 } },
       },
-      version: 1,
+      version: 2,
     });
   });
 
@@ -202,7 +202,7 @@ describe(SettingsStore, () => {
     await store.flush();
     expect(stored(fs)).toStrictEqual({
       data: { global: {}, profiles: { home: { "stage.zoom": 1.5 } } },
-      version: 1,
+      version: 2,
     });
   });
 

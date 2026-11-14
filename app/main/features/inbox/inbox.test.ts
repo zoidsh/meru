@@ -260,7 +260,7 @@ describe(Inbox, () => {
     settings.set("inbox.countUnread", false, first);
     const uncounted = badge.total;
     settings.set("inbox.countUnread", true, first);
-    settings.set("inbox.dockBadge", false);
+    settings.set("inbox.unreadBadge", false);
     expect([counted, uncounted, badge.total]).toStrictEqual([2, 0, 0]);
   });
 

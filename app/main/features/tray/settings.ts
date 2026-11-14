@@ -3,27 +3,15 @@ import { z } from "zod";
 import { msg } from "../../../shared/msg.ts";
 import { defineSetting } from "../../../shared/settings/define.ts";
 
-// Two settings rather than one, because the icon is on by default where a closed window has no dock icon to bring it back, and off on macOS, where it does.
 export const traySettings = [
-  defineSetting("tray.menuBar", {
-    default: false,
-    description: msg`Show the application icon in the menu bar.`,
-    label: msg`Enable menu bar icon`,
-    page: "inbox",
-    section: msg`Menu bar and system tray`,
-    platforms: ["darwin"],
-    restart: false,
-    schema: z.boolean(),
-    scope: "global",
-    tier: "free",
-  }),
-  defineSetting("tray.enabled", {
+  defineSetting("tray.icon", {
     default: true,
-    description: msg`Show the application icon in the system tray.`,
-    label: msg`Enable system tray icon`,
+    description: msg`Show the application icon in the menu bar or the system tray.`,
+    label: msg`Show tray icon`,
     page: "inbox",
+    // Off where the dock brings a closed window back, as in 3.x.
+    platformDefaults: { darwin: false },
     section: msg`Menu bar and system tray`,
-    platforms: ["linux", "win32"],
     restart: false,
     schema: z.boolean(),
     scope: "global",

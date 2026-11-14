@@ -56,7 +56,7 @@ interface ProfileFeed {
 
 type Outcome = "read" | "failed";
 
-const BADGE_KEYS = new Set(["inbox.dockBadge", "inbox.countUnread"]);
+const BADGE_KEYS = new Set(["inbox.unreadBadge", "inbox.countUnread"]);
 
 /** Reads each active profile's Gmail inbox feed through its session, on an interval that backs off while it fails, and tells the profile, every page and the app's icon what is unread. */
 export class Inbox {
@@ -288,6 +288,6 @@ export class Inbox {
 
   #badge(): void {
     const { badge, settings } = this.#options;
-    badge.set(settings.get("inbox.dockBadge") ? this.total() : 0);
+    badge.set(settings.get("inbox.unreadBadge") ? this.total() : 0);
   }
 }

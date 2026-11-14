@@ -13,7 +13,7 @@ export const inboxPage = defineSettingsPage("inbox", {
 });
 
 export const inboxSettings = [
-  defineSetting("inbox.dockBadge", {
+  defineSetting("inbox.unreadBadge", {
     default: true,
     description: msg`Show the unread count of every profile on the app icon in the dock or taskbar.`,
     label: msg`Show unread badge`,

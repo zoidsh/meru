@@ -42,8 +42,7 @@ const QUIT_LABELS: Readonly<Record<Platform, string>> = {
 };
 
 const TRAY_KEYS = new Set([
-  "tray.menuBar",
-  "tray.enabled",
+  "tray.icon",
   "tray.unreadCount",
   "tray.iconColor",
   "inbox.countUnread",
@@ -89,16 +88,9 @@ export class Tray {
     this.#disposables.dispose();
   }
 
-  #enabled(): boolean {
-    const { platform, settings } = this.#options;
-    return settings.get(
-      platform === "darwin" ? "tray.menuBar" : "tray.enabled"
-    );
-  }
-
   #render(): void {
     const { inbox, platform, settings, tray } = this.#options;
-    if (!this.#enabled()) {
+    if (!settings.get("tray.icon")) {
       tray.hide();
       return;
     }
