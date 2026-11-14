@@ -116,6 +116,8 @@ export interface ProfilesOptions {
   readonly settings: Pick<SettingsStore, "removeProfile">;
   readonly entitlement: () => Entitlement;
   readonly log: LogPort;
+  /** The tabs asleep, which the sleep feature knows and nothing stores. */
+  readonly asleep?: () => ReadonlySet<string>;
 }
 
 /** Owns profiles.json: every profile, tab and group, and which profile is selected. */
@@ -124,7 +126,6 @@ export class Profiles {
   readonly #store: SnapshotStore<ProfilesState, string>;
   readonly #disposables = new DisposableStore();
   #state: ProfilesState | undefined;
-  #asleep: ReadonlySet<string> = new Set();
 
   constructor(options: ProfilesOptions) {
     this.#options = options;
@@ -250,6 +251,7 @@ export class Profiles {
   snapshot(): ProfilesSnapshot {
     const deactivated = this.#deactivated();
     const gate = this.#newProfileGate();
+    const asleep = this.#options.asleep?.() ?? new Set();
     return {
       ...this.state,
       newProfileRefusal: gate.allowed ? null : gate.reason,
@@ -259,7 +261,7 @@ export class Profiles {
       })),
       tabs: this.state.tabs.map((tab) => ({
         ...tab,
-        asleep: this.#asleep.has(tab.id),
+        asleep: asleep.has(tab.id),
         closeable: canClose(this.state, tab.id, isSingleInstanceId).ok,
       })),
     };
@@ -355,12 +357,8 @@ export class Profiles {
     );
   }
 
-  /** Records which tabs are asleep, which only the app knows and nothing stores, telling every page when it changed. */
-  setAsleep(tabIds: ReadonlySet<string>): void {
-    if (isEqual(tabIds, this.#asleep)) {
-      return;
-    }
-    this.#asleep = new Set(tabIds);
+  /** Tells every page that which tabs are asleep changed. */
+  asleepChanged(): void {
     this.#publish();
   }
 

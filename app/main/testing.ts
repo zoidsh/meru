@@ -47,10 +47,13 @@ export interface TestAppOptions {
   /** The log the profiles write to; every other part writes to `strictLog`. */
   readonly log?: LogPort;
   readonly sessions?: FakeSessions;
+  /** The tabs asleep, as the sleep feature tells the profiles. */
+  readonly asleep?: () => ReadonlySet<string>;
 }
 
 /** The shell, the settings and the profiles, opened and started as `index.ts` does, over fakes a test may hand in. */
 export const testApp = async ({
+  asleep,
   clock = new FakeClock(),
   entitlement = () => UNKNOWN,
   fs = new FakeFs(),
@@ -76,6 +79,7 @@ export const testApp = async ({
   await settings.open();
   settings.start();
   const profiles = new Profiles({
+    ...(asleep === undefined ? {} : { asleep }),
     clock,
     commands,
     entitlement,

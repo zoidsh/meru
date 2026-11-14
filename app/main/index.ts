@@ -148,6 +148,7 @@ const start = async () => {
   commands.start(dispatcher);
 
   const profiles = new Profiles({
+    asleep: () => sleep.asleep(),
     commands,
     lifecycle: ports.lifecycle,
     clock: ports.clock,

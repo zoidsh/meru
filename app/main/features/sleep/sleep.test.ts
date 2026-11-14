@@ -12,7 +12,7 @@ import { Sleep } from "./index.ts";
 const MINUTE = 60_000;
 
 const setup = async () => {
-  const app = await testApp();
+  const app = await testApp({ asleep: () => sleep.asleep() });
   const { clock, commands, events, profiles, settings, transport } = app;
   const { open, stages, views } = testStages(app, {
     historyOf: (tabId) => sleep.historyOf(tabId),

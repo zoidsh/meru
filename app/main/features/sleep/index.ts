@@ -1,3 +1,5 @@
+import { isEqual } from "es-toolkit";
+
 import { DisposableStore } from "../../../core/disposable.ts";
 import { isPinned } from "../../../core/engines/pinned.ts";
 import { sweep } from "../../../core/engines/sleep.ts";
@@ -21,7 +23,10 @@ export interface SleepOptions {
   readonly clock: Clock;
   readonly events: Pick<AppEvents, "on">;
   readonly commands: CommandRegistrar;
-  readonly profiles: Pick<Profiles, "letSleep" | "setAsleep" | "state" | "tab">;
+  readonly profiles: Pick<
+    Profiles,
+    "asleepChanged" | "letSleep" | "state" | "tab"
+  >;
   readonly settings: Pick<SettingsStore, "get" | "subscribe">;
   readonly stages: Pick<Stages, "audible" | "find" | "shown" | "sleep">;
   /** How long a minute of `sleep.afterMinutes` lasts; shorter only for the end-to-end suite. */
@@ -81,6 +86,11 @@ export class Sleep {
     this.#disposables.dispose();
   }
 
+  /** The tabs asleep now. */
+  asleep(): ReadonlySet<string> {
+    return this.#asleep;
+  }
+
   /** Where the sleeping tab's page stood when it went to sleep, which it wakes at. */
   historyOf(tabId: string): PageHistory | undefined {
     return this.#histories.get(tabId);
@@ -122,8 +132,10 @@ export class Sleep {
       }
     }
     this.#idleSince = plan.idleSince;
-    this.#asleep = plan.asleep;
-    profiles.setAsleep(plan.asleep);
+    if (!isEqual(plan.asleep, this.#asleep)) {
+      this.#asleep = plan.asleep;
+      profiles.asleepChanged();
+    }
     this.#timer?.();
     this.#timer =
       plan.next === null
