@@ -29,7 +29,7 @@ import {
 } from "./use-setting.ts";
 import { useSettingsClient } from "./use-settings-client.ts";
 
-export type SettingEntry = Registry[number];
+type SettingEntry = Registry[number];
 
 /** The field component for the setting's schema kind; none for a kind only a page of its own edits. */
 const Control = ({

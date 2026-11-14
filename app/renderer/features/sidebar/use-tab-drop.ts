@@ -30,7 +30,7 @@ const within = (rect: DOMRect, { x, y }: Point) =>
 const sameTarget = (a: DropTarget | undefined, b: DropTarget | undefined) =>
   a?.tabId === b?.tabId && a?.zone === b?.zone;
 
-export interface TabDropHandlers {
+interface TabDropHandlers {
   readonly onDragMove: (event: DragMoveEvent) => void;
   readonly onDragOver: (event: DragOverEvent) => void;
   readonly onDragEnd: (event: DragEndEvent) => void;

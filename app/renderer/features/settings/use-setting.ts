@@ -23,16 +23,16 @@ import { syncedStore, useStore } from "../../store.ts";
 import type { Store, SyncSource } from "../../store.ts";
 
 /** The page's copy of the settings: the layers, and the keys the entitlement locks at their default. */
-export interface SettingsCopy {
+interface SettingsCopy {
   readonly layers: Settings;
   readonly locked: Locked;
 }
 
 /** The registry as the page's platform has it, each platform default in the place of the default. */
-export type PlatformRegistry = readonly (typeof registry)[number][];
+type PlatformRegistry = readonly (typeof registry)[number][];
 
 /** The page's copy of the settings, and the registry its values resolve against. */
-export interface SettingsSource {
+interface SettingsSource {
   readonly store: Store<SettingsCopy>;
   readonly specs: PlatformRegistry;
 }

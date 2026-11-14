@@ -100,7 +100,7 @@ export const stageOf = (more: Partial<StageSnapshot> = {}): StageSnapshot => ({
 });
 
 /** What main answers a request with. */
-export interface Answer {
+interface Answer {
   readonly channel: InvokeChannel | SyncChannel;
   readonly value: unknown;
 }

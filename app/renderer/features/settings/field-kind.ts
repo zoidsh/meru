@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** How the settings page edits a value, read off its schema; `multiChoice` picks several of a choice's values in an order, and `bespoke` is a value no field component edits, such as the shortcuts page's bindings. */
-export type FieldKind =
+type FieldKind =
   | { readonly kind: "boolean" }
   | { readonly kind: "choice"; readonly values: readonly string[] }
   | {
