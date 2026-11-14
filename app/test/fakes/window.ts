@@ -19,6 +19,7 @@ export class FakeWindow implements WindowPort {
   readonly #resized = new Set<() => void>();
   readonly #closed = new Set<() => void>();
   readonly #moved = new Set<() => void>();
+  readonly #visibility = new Set<() => void>();
   #bounds: Rect;
 
   constructor(width = 1200, height = 800, x = 0, y = 0) {
@@ -53,12 +54,35 @@ export class FakeWindow implements WindowPort {
   };
 
   readonly show = () => {
-    this.shown = "active";
+    this.#setShown("active");
   };
 
   readonly showInactive = () => {
-    this.shown = "inactive";
+    this.#setShown("inactive");
   };
+
+  readonly hide = () => {
+    this.#setShown(undefined);
+  };
+
+  readonly isVisible = () => this.shown !== undefined;
+
+  readonly onVisibilityChanged = (listener: () => void): Unsubscribe => {
+    this.#visibility.add(listener);
+    return () => {
+      this.#visibility.delete(listener);
+    };
+  };
+
+  #setShown(shown: FakeWindow["shown"]): void {
+    const changed = (shown === undefined) !== (this.shown === undefined);
+    this.shown = shown;
+    if (changed) {
+      for (const listener of this.#visibility) {
+        listener();
+      }
+    }
+  }
 
   readonly setIgnoreMenuShortcuts = (ignore: boolean) => {
     this.ignoresMenuShortcuts = ignore;

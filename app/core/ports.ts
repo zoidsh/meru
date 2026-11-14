@@ -123,6 +123,10 @@ export interface WindowPort {
   readonly show: () => void;
   /** Shows the window without activating the app, so it opens behind whatever is in front. */
   readonly showInactive: () => void;
+  readonly hide: () => void;
+  readonly isVisible: () => boolean;
+  /** Calls `listener` after the window was shown or hidden. */
+  readonly onVisibilityChanged: (listener: () => void) => Unsubscribe;
   /** Keeps the menu's accelerators from firing while the window's own page has focus, so the page receives every key. */
   readonly setIgnoreMenuShortcuts: (ignore: boolean) => void;
   readonly contentBounds: () => Rect;
@@ -218,10 +222,72 @@ export interface ShellPort {
   readonly openExternal: (url: string) => void;
 }
 
+/** What a request answered, after any redirects. */
+export interface SessionResponse {
+  readonly status: number;
+  /** The address that answered, which differs from the one asked once a redirect was followed. */
+  readonly url: string;
+  readonly text: string;
+}
+
 /** The browser sessions panes load in, one partition per profile. */
 export interface SessionPort {
   /** Deletes everything the partition stored: cookies, storage and cache. */
   readonly clear: (partition: string) => Promise<void>;
+  /** Asks for `url` with the partition's cookies, following redirects; rejects when the network fails or no answer comes within `timeout` milliseconds. */
+  readonly fetchText: (
+    partition: string,
+    url: string,
+    timeout: number
+  ) => Promise<SessionResponse>;
+}
+
+/** The unread count on the app's icon: the dock's badge, the taskbar's overlay or the launcher's count. */
+export interface BadgePort {
+  /** Shows `total`, or nothing at none. */
+  readonly set: (total: number) => void;
+}
+
+export interface NotificationSpec {
+  readonly title: string;
+  /** Shown under the title on macOS only. */
+  readonly subtitle?: string;
+  readonly body?: string;
+  readonly silent: boolean;
+}
+
+/** The operating system's notifications. */
+export interface NotificationPort {
+  /** Shows a notification, calling `onClick` when it is clicked; does nothing where the system has none. */
+  readonly show: (spec: NotificationSpec, onClick: () => void) => void;
+}
+
+/** The icon in the menu bar or tray: macOS's template, drawn in the menu bar's own colour, or a coloured one in a shade that reads on the tray. */
+export type TrayIcon =
+  | { readonly kind: "template" }
+  | {
+      readonly kind: "tray";
+      readonly shade: "light" | "dark";
+      readonly unread: boolean;
+    };
+
+export type TrayItem =
+  | { readonly kind: "item"; readonly label: string; readonly run: () => void }
+  | { readonly kind: "separator" }
+  | { readonly kind: "quit"; readonly label: string };
+
+export interface TraySpec {
+  readonly icon: TrayIcon;
+  /** Text beside the icon, which only macOS's menu bar shows. */
+  readonly title: string;
+  readonly menu: readonly TrayItem[];
+}
+
+/** The app's icon in the menu bar or system tray. */
+export interface TrayPort {
+  /** Shows the icon as `spec` says, putting it up if it is not; `onClick` runs on a click that does not open the menu. */
+  readonly show: (spec: TraySpec, onClick: () => void) => void;
+  readonly hide: () => void;
 }
 
 export interface Ports {
@@ -234,6 +300,9 @@ export interface Ports {
   readonly online: OnlinePort;
   readonly power: PowerPort;
   readonly sessions: SessionPort;
+  readonly badge: BadgePort;
+  readonly notifications: NotificationPort;
+  readonly tray: TrayPort;
   readonly shell: ShellPort;
   readonly theme: ThemePort;
   readonly views: ViewFactoryPort;

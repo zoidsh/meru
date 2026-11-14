@@ -19,6 +19,7 @@ import type {
 } from "../../core/ports.ts";
 import { createEntitlementApi } from "./entitlement-api.ts";
 import { createFs } from "./fs.ts";
+import { createBadge, createTray, notificationPort } from "./inbox.ts";
 import { ipcTransport } from "./ipc.ts";
 import { onBeforeInput } from "./keys.ts";
 import { onlinePort } from "./online.ts";
@@ -103,6 +104,18 @@ const createWindow = (spec: WindowSpec): WindowPort => {
     },
     showInactive: () => {
       window.showInactive();
+    },
+    hide: () => {
+      window.hide();
+    },
+    isVisible: () => window.isVisible(),
+    onVisibilityChanged: (listener) => {
+      window.on("show", listener);
+      window.on("hide", listener);
+      return () => {
+        window.off("show", listener);
+        window.off("hide", listener);
+      };
     },
     setIgnoreMenuShortcuts: (ignore) => {
       window.webContents.setIgnoreMenuShortcuts(ignore);
@@ -192,11 +205,24 @@ export const createElectronPorts = (): Ports => ({
       };
     },
   },
+  badge: createBadge(process.platform),
+  notifications: notificationPort,
+  tray: createTray(),
   sessions: {
     clear: async (partition) => {
       const found = session.fromPartition(partition);
       await found.clearStorageData();
       await found.clearCache();
+    },
+    fetchText: async (partition, url, timeout) => {
+      const response = await session
+        .fromPartition(partition)
+        .fetch(url, { signal: AbortSignal.timeout(timeout) });
+      return {
+        status: response.status,
+        text: await response.text(),
+        url: response.url,
+      };
     },
   },
   shell: {
