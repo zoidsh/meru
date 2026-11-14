@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { panes } from "../../../core/engines/layout.ts";
 import { validateState } from "../../../core/engines/state-validate.ts";
 import { FIRST_PROFILE_LABEL } from "../../../core/engines/state.ts";
-import { AppEvents } from "../../../core/events.ts";
 import type { AppEventMap, AppEventName } from "../../../core/events.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { Beside, Placement } from "../../../core/records/layout.ts";
@@ -24,15 +23,10 @@ import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
-import { FakeSessions } from "../../../test/fakes/session.ts";
+import { FakeLog } from "../../../test/fakes/log.ts";
 import { random } from "../../../test/random.ts";
 import { unwrap } from "../../../test/result.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { SettingsStore } from "../settings/index.ts";
+import { testApp } from "../../testing.ts";
 import { Profiles, PROFILES_FILE } from "./index.ts";
 
 const NOW = 1_800_000_000_000;
@@ -50,53 +44,33 @@ const setup = async ({
   entitlement = trial,
   fs = new FakeFs(),
 }: { entitlement?: Entitlement; fs?: FakeFs } = {}) => {
-  const clock = new FakeClock(NOW);
-  const lifecycle = new FakeLifecycle();
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({
-    log: strictLog,
+  const log = new FakeLog();
+  let current = entitlement;
+  const {
+    commands,
+    events,
+    opened,
+    profiles,
+    registrar,
+    sessions,
+    settings,
     transport,
+  } = await testApp({
+    clock: new FakeClock(NOW),
+    entitlement: () => current,
+    fs,
+    ids: fakeIds("id"),
+    log: log.scoped("profiles"),
   });
   registrar.assign(PAGE, chromeSurface);
-  const events = new AppEvents();
-  const sessions = new FakeSessions();
-  const settings = new SettingsStore({
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events: new AppEvents(),
-    lifecycle,
-    clock,
-    fs,
-    log: strictLog,
-    registrar,
-    watchFile: false,
-  });
-  await settings.open();
   const selected: AppEventMap["profile.selected"][] = [];
   events.on("profile.selected", (payload) => {
     selected.push(payload);
   });
-  const log = new FakeLog();
-  const commands = new CommandDispatcher();
-  let current = entitlement;
   const changeEntitlement = (next: Entitlement) => {
     current = next;
     events.emit("entitlement.changed", { entitlement: next });
   };
-  const profiles = new Profiles({
-    commands,
-    lifecycle,
-    clock,
-    entitlement: () => current,
-    events,
-    fs,
-    ids: fakeIds("id"),
-    log: log.scoped("profiles"),
-    registrar,
-    sessions,
-    settings,
-  });
-  const opened = await profiles.open();
-  profiles.start();
   const stored = async (): Promise<ProfilesState> => {
     await profiles.flush();
     const text = fs.files.get(PROFILES_FILE) ?? "null";
