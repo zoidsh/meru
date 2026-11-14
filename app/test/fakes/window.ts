@@ -14,7 +14,6 @@ export class FakeWindow implements WindowPort {
   overlay: TitleBarOverlay | undefined;
   shown: "active" | "inactive" | undefined;
   ignoresMenuShortcuts = false;
-  #size: { width: number; height: number };
   #children: ViewPort[] = [];
   readonly #resized = new Set<() => void>();
   readonly #closed = new Set<() => void>();
@@ -25,7 +24,6 @@ export class FakeWindow implements WindowPort {
   constructor(width = 1200, height = 800, x = 0, y = 0) {
     nextContentsId += 1;
     this.contentsId = nextContentsId;
-    this.#size = { height, width };
     this.#bounds = { height, width, x, y };
   }
 
@@ -88,7 +86,12 @@ export class FakeWindow implements WindowPort {
     this.ignoresMenuShortcuts = ignore;
   };
 
-  readonly contentBounds = (): Rect => ({ ...this.#size, x: 0, y: 0 });
+  readonly contentBounds = (): Rect => ({
+    height: this.#bounds.height,
+    width: this.#bounds.width,
+    x: 0,
+    y: 0,
+  });
 
   readonly bounds = (): Rect => this.#bounds;
 
@@ -101,7 +104,16 @@ export class FakeWindow implements WindowPort {
 
   /** Moves or resizes the window as the user would, by its outer bounds. */
   readonly setBounds = (bounds: Rect) => {
+    const resized =
+      bounds.width !== this.#bounds.width ||
+      bounds.height !== this.#bounds.height;
     this.#bounds = bounds;
+    // Electron emits `resize` as well as `move` when the size changes.
+    if (resized) {
+      for (const listener of this.#resized) {
+        listener();
+      }
+    }
     for (const listener of this.#moved) {
       listener();
     }
@@ -141,10 +153,7 @@ export class FakeWindow implements WindowPort {
   };
 
   readonly resize = (width: number, height: number) => {
-    this.#size = { height, width };
-    for (const listener of this.#resized) {
-      listener();
-    }
+    this.setBounds({ ...this.#bounds, height, width });
   };
 
   readonly close = () => {
