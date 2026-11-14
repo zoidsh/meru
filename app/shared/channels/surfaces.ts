@@ -61,7 +61,7 @@ export const launcherSurface = defineSurface({
 
 export type LauncherSurface = typeof launcherSurface;
 
-/** The settings window's page: it reads and writes the settings and the profiles, reads the update state, runs commands such as checking for updates, and says while it records a shortcut. */
+/** The settings window's page: it reads and writes the settings and the profiles, reads the update state and checks for one, runs commands such as restarting to update, and says while it records a shortcut. */
 export const settingsSurface = defineSurface({
   pushes: [settingsPushes, profilesPushes, updaterPushes, themePushes],
   requests: [settings, profiles, commands, updater, shortcuts],
