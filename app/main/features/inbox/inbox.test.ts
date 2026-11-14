@@ -3,41 +3,24 @@ import { setImmediate } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
 
 import { GMAIL_URL, INBOX_FEED_URL } from "../../../core/engines/inbox.ts";
-import { AppEvents } from "../../../core/events.ts";
 import {
   MORE_THAN_LISTED,
   NONE_UNREAD,
   ONE_UNREAD,
   TWO_UNREAD,
 } from "../../../core/fixtures/gmail-feeds.ts";
-import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { FeedEntry } from "../../../core/records/feed.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeFs } from "../../../test/fakes/fs.ts";
-import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
+import { FakeLog } from "../../../test/fakes/log.ts";
 import { FakeOnline } from "../../../test/fakes/online.ts";
 import { FakePower } from "../../../test/fakes/power.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { Profiles } from "../profiles/index.ts";
-import { SettingsStore } from "../settings/index.ts";
+import { PRO, testApp } from "../../testing.ts";
 import { Inbox } from "./index.ts";
 
 const PAGE = 3;
-const PRO: Entitlement = {
-  deviceLimit: 3,
-  expiresAt: null,
-  kind: "licensed",
-  plan: "pro",
-  seat: null,
-  source: "stored",
-};
 
 const feed = (text: string) =>
   ({ kind: "answered", status: 200, text }) as const;
@@ -54,38 +37,14 @@ const settle = async () => {
 };
 
 const setup = async ({ online = true } = {}) => {
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ log: strictLog, transport });
-  registrar.assign(PAGE, chromeSurface);
-  const lifecycle = new FakeLifecycle();
   const clock = new FakeClock(Date.parse("2026-11-13T08:01:00Z"));
-  const events = new AppEvents();
-  const settings = new SettingsStore({
-    entitlement: () => PRO,
-    events,
-    lifecycle,
-    clock,
-    fs: new FakeFs(),
-    log: strictLog,
-    registrar,
-    watchFile: false,
-  });
-  const profiles = new Profiles({
-    commands: new CommandDispatcher(),
-    lifecycle,
-    clock,
-    entitlement: () => PRO,
-    events,
-    fs: new FakeFs(),
-    ids: fakeIds(),
-    log: strictLog,
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
-  });
-  await profiles.open();
-  profiles.start();
   const sessions = new FakeSessions(clock);
+  const { events, profiles, registrar, settings } = await testApp({
+    clock,
+    entitlement: () => PRO,
+    sessions,
+  });
+  registrar.assign(PAGE, chromeSurface);
   sessions.answer(INBOX_FEED_URL, feed(NONE_UNREAD));
   const network = new FakeOnline(online);
   const power = new FakePower();
