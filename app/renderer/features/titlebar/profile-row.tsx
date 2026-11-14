@@ -34,13 +34,19 @@ const scrollOf = (row: HTMLElement): RowScroll => ({
   canScrollRight: row.scrollWidth - row.clientWidth - row.scrollLeft > 1,
 });
 
-// A ResizeObserver reports every element once when it starts observing, which takes the first reading.
 const follow = (row: HTMLElement, update: () => void) => {
   const observer = new ResizeObserver(update);
-  observer.observe(row);
-  for (const child of row.children) {
-    observer.observe(child);
-  }
+  const observeAll = () => {
+    observer.observe(row);
+    for (const child of row.children) {
+      observer.observe(child);
+    }
+    update();
+  };
+  observeAll();
+  // A profile added or removed changes how far the row scrolls without resizing an element already observed.
+  const children = new MutationObserver(observeAll);
+  children.observe(row, { childList: true });
   // React attaches its wheel listener passively, and turning a vertical wheel into a horizontal scroll takes preventDefault.
   const wheel = (event: WheelEvent) => {
     if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
@@ -53,6 +59,7 @@ const follow = (row: HTMLElement, update: () => void) => {
   row.addEventListener("wheel", wheel, { passive: false });
   return () => {
     observer.disconnect();
+    children.disconnect();
     row.removeEventListener("scroll", update);
     row.removeEventListener("wheel", wheel);
   };
