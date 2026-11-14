@@ -55,6 +55,18 @@ const open = async (platform: string, devServer?: string) => {
 };
 
 describe(MainWindow, () => {
+  it("hides and reveals the window, telling each listener the window's visibility as it changes", async () => {
+    const { main } = await open("win32");
+    const heard: boolean[] = [];
+    main.onVisibilityChanged(() => {
+      heard.push(main.visible());
+    });
+    main.hide();
+    main.hide();
+    main.reveal();
+    expect(heard).toStrictEqual([false, true]);
+  });
+
   it("opens with the chrome's ground and tells the page its platform and theme", async () => {
     const { specs, window } = await open("darwin");
     expect(specs[0]?.background).toBe("#1d1d24");

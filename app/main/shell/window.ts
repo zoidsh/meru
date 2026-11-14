@@ -7,7 +7,7 @@ import {
   windowColours,
 } from "../../core/engines/chrome.ts";
 import { themeOf } from "../../core/ports.ts";
-import type { Ports, WindowPort } from "../../core/ports.ts";
+import type { Ports, Unsubscribe, WindowPort } from "../../core/ports.ts";
 import type { Rect } from "../../core/records/rect.ts";
 import type { Theme } from "../../core/records/theme.ts";
 import type { IpcRegistrar } from "../../shared/channels/define.ts";
@@ -63,6 +63,7 @@ export interface MainWindowOptions {
 
 export class MainWindow {
   readonly #options: MainWindowOptions;
+  readonly #visibility = new Set<() => void>();
   #window: WindowPort | undefined;
 
   constructor(options: MainWindowOptions) {
@@ -95,7 +96,13 @@ export class MainWindow {
       }),
     });
     this.#window = window;
+    const unsubscribe = window.onVisibilityChanged(() => {
+      for (const listener of this.#visibility) {
+        listener();
+      }
+    });
     window.onClosed(() => {
+      unsubscribe();
       this.#window = undefined;
     });
     registrar.assign(window.contentsId, pageSurfaces[surface]);
@@ -110,6 +117,28 @@ export class MainWindow {
       window.show();
     }
     return window;
+  }
+
+  /** Whether the window is open and shown. */
+  visible(): boolean {
+    return this.#window?.isVisible() ?? false;
+  }
+
+  /** Brings the open window to the front. */
+  reveal(): void {
+    this.#window?.show();
+  }
+
+  hide(): void {
+    this.#window?.hide();
+  }
+
+  /** Calls `listener` whenever the window is shown or hidden. */
+  onVisibilityChanged(listener: () => void): Unsubscribe {
+    this.#visibility.add(listener);
+    return () => {
+      this.#visibility.delete(listener);
+    };
   }
 
   /** Paints the window's ground and its window controls in the theme's colours, while it is open. */
