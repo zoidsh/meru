@@ -17,9 +17,9 @@ import type {
   WindowPort,
   WindowSpec,
 } from "../../core/ports.ts";
+import { createBadge, createTray, notificationPort } from "./desktop.ts";
 import { createEntitlementApi } from "./entitlement-api.ts";
 import { createFs } from "./fs.ts";
-import { createBadge, createTray, notificationPort } from "./inbox.ts";
 import { ipcTransport } from "./ipc.ts";
 import { onBeforeInput } from "./keys.ts";
 import { onlinePort } from "./online.ts";
