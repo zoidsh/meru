@@ -74,6 +74,8 @@ export class Stages {
   readonly #disposables = new DisposableStore();
   readonly #bySender = new Map<number, Stage>();
   readonly #unassign = new Map<number, Unsubscribe>();
+  /** Where a tab no stage kept a view of was asked to go, which its view starts at when one is made, without becoming the tab's stored address. */
+  readonly #startAt = new Map<string, string>();
 
   constructor(options: StagesOptions) {
     this.#options = options;
@@ -83,6 +85,11 @@ export class Stages {
     const { registrar, settings, commands, events } = this.#options;
     this.#disposables.add(
       events.on("stage.invalidated", () => {
+        for (const tabId of this.#startAt.keys()) {
+          if (this.#options.profiles.tab(tabId) === undefined) {
+            this.#startAt.delete(tabId);
+          }
+        }
         for (const found of this.all) {
           found.refresh();
         }
@@ -213,7 +220,11 @@ export class Stages {
       },
       profiles,
       style: () => settings.get("appearance.style"),
-      urlOf: (tab: Tab) => (blankPanes ? "about:blank" : tab.url),
+      urlOf: (tab: Tab) => {
+        const asked = this.#startAt.get(tab.id);
+        this.#startAt.delete(tab.id);
+        return asked ?? (blankPanes ? "about:blank" : tab.url);
+      },
       views: this.#options.views,
       window,
       zoom: (profileId) => settings.get("stage.zoom", profileId),
@@ -230,13 +241,15 @@ export class Stages {
     return opened;
   }
 
-  /** Loads the address in the tab's view in every stage that keeps one; false when none does. */
-  load(tabId: string, url: string): boolean {
+  /** Loads the address in the tab's view in every stage that keeps one, or, while none does, in the view the tab is next given. */
+  load(tabId: string, url: string): void {
     let loaded = false;
     for (const found of this.all) {
       loaded = found.load(tabId, url) || loaded;
     }
-    return loaded;
+    if (!loaded) {
+      this.#startAt.set(tabId, url);
+    }
   }
 
   /** Lays every stage out again, after what the chrome takes of the windows changed. */

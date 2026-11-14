@@ -76,7 +76,6 @@ const setup = async () => {
     inbox: { important: async () => await Promise.resolve(important) },
     load: (_tabId, url) => {
       loaded.push(url);
-      return false;
     },
     notifications: port,
     platform: "darwin",
@@ -141,7 +140,7 @@ describe(Notifications, () => {
     ]);
   });
 
-  it("opens the message in the profile's Gmail tab when a notification is clicked", async () => {
+  it("opens the message in the profile's Gmail tab when a notification is clicked, leaving the tab's own address as it was", async () => {
     const { arrive, loaded, port, profiles, shown } = await setup();
     await arrive();
     port.shown[0]?.click();
@@ -149,7 +148,7 @@ describe(Notifications, () => {
     expect({ loaded, shown: shown(), url: tab?.url }).toStrictEqual({
       loaded: [`https://mail.google.com/mail/u/0/#inbox/${older?.messageId}`],
       shown: 1,
-      url: `https://mail.google.com/mail/u/0/#inbox/${older?.messageId}`,
+      url: gmail.url,
     });
   });
 });

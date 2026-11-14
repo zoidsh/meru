@@ -17,13 +17,13 @@ export interface NotificationsOptions {
   readonly notifications: NotificationPort;
   readonly platform: Platform;
   readonly inbox: Pick<Inbox, "important">;
-  readonly profiles: Pick<Profiles, "state" | "focusTab" | "navigateTab">;
+  readonly profiles: Pick<Profiles, "state" | "focusTab">;
   readonly settings: Pick<SettingsStore, "get">;
   readonly events: Pick<AppEvents, "on">;
   /** Brings the main window to the front. */
   readonly showWindow: () => void;
-  /** Loads an address into the tab's pane; false when no stage keeps a view of it. */
-  readonly load: (tabId: string, url: string) => boolean;
+  /** Loads an address into the tab's pane, or the view it is next given. */
+  readonly load: (tabId: string, url: string) => void;
 }
 
 /** Raises a notification for each new email a profile's feed brings, under that profile's notification settings, and opens the message when one is clicked. */
@@ -91,9 +91,8 @@ export class Notifications {
     if (tab === undefined) {
       return;
     }
-    // A tab no stage has shown yet has no view to load into, so it is pointed at the message and its view starts there.
-    if (messageId !== "" && !load(tab.id, messageUrl(messageId))) {
-      profiles.navigateTab(tab.id, messageUrl(messageId));
+    if (messageId !== "") {
+      load(tab.id, messageUrl(messageId));
     }
     profiles.focusTab(tab.id);
   }

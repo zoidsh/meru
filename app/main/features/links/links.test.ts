@@ -220,7 +220,7 @@ describe(Links, () => {
     });
   });
 
-  it("starts a tab no stage keeps a view of yet at the link, rather than losing it", async () => {
+  it("starts a tab no stage keeps a view of yet at the link, rather than losing it, without making the link the tab's address", async () => {
     const { views, profiles } = await setup();
     const [gmail] = views.created;
     gmail?.open(CALENDAR, "background");
@@ -228,7 +228,7 @@ describe(Links, () => {
     gmail?.open(later, "default");
     const [calendar] = tabsOf(profiles, "calendar");
     expect([calendar?.url, views.created[1]?.url]).toStrictEqual([
-      later,
+      CALENDAR,
       later,
     ]);
   });

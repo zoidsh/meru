@@ -10,10 +10,7 @@ import type { SettingsStore } from "../settings/index.ts";
 import type { Stages } from "../stage/index.ts";
 
 export interface LinksOptions {
-  readonly profiles: Pick<
-    Profiles,
-    "state" | "tab" | "openTab" | "focusTab" | "navigateTab"
-  >;
+  readonly profiles: Pick<Profiles, "state" | "tab" | "openTab" | "focusTab">;
   readonly settings: Pick<SettingsStore, "get">;
   readonly shell: ShellPort;
   /** Loads the address in the tab's view, wherever a stage keeps one. */
@@ -31,11 +28,8 @@ export class Links {
   /** Routes a link the tab's page opened; true when it was taken from the page. A page navigating itself is left to it, so Google's sign-in and its redirects stay in the pane, and so is a window onto accounts.google.com, which signs in. */
   open(tabId: string, url: string, disposition: Disposition): boolean {
     const { profiles, shell, settings, stages } = this.#options;
-    // A tab no stage keeps a view of yet would lose the link, so it takes the address and its view starts there once shown.
     const load = (id: string, address: string) => {
-      if (!stages.load(id, address)) {
-        profiles.navigateTab(id, address);
-      }
+      stages.load(id, address);
     };
     const from = profiles.tab(tabId);
     if (from === undefined || disposition === "inPlace" || isSignIn(url)) {

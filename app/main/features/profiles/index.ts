@@ -23,7 +23,6 @@ import {
   newTab,
   swapPanes,
   updateProfile,
-  updateTab,
 } from "../../../core/engines/state.ts";
 import type { ProfilePatch, StateError } from "../../../core/engines/state.ts";
 import { deactivatedProfiles, canUse } from "../../../core/entitlement/gate.ts";
@@ -360,11 +359,6 @@ export class Profiles {
     this.#store.write(next.value);
     this.#publish();
     return ok(undefined);
-  }
-
-  /** Points the tab at an address, which its view loads when it is next made. */
-  navigateTab(tabId: string, url: string): Result<undefined, ProfilesError> {
-    return this.#commit(updateTab(this.state, tabId, { url }));
   }
 
   closeTab(tabId: string): Result<undefined, ProfilesError> {

@@ -343,7 +343,9 @@ const start = async () => {
   new Notifications({
     events,
     inbox,
-    load: (tabId, url) => stages.load(tabId, url),
+    load: (tabId, url) => {
+      stages.load(tabId, url);
+    },
     notifications: desktop.notifications,
     platform,
     profiles,
