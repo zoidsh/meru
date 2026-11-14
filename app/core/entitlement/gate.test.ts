@@ -58,14 +58,6 @@ describe(canUse, () => {
     }
   });
 
-  it("says how many profiles free allows when it refuses another", () => {
-    expect(canUse(free, "extraProfile", many)).toStrictEqual({
-      allowed: false,
-      allowedProfiles: 1,
-      reason: "free",
-    });
-  });
-
   it.each([unknown, free, ended, disabled])(
     "lets %o open the profiles free allows",
     (entitlement) => {

@@ -29,12 +29,7 @@ export type GateRefusal = z.infer<typeof gateRefusalSchema>;
 
 export type Gate =
   | { readonly allowed: true }
-  | {
-      readonly allowed: false;
-      readonly reason: GateRefusal;
-      /** For extraProfile, how many profiles the refused entitlement allows. */
-      readonly allowedProfiles?: number;
-    };
+  | { readonly allowed: false; readonly reason: GateRefusal };
 
 /** Profiles a free entitlement may have. */
 export const FREE_PROFILES = 1;
@@ -65,9 +60,7 @@ export const canUse = <F extends GatedFeature>(
   } else if (entitlement.kind === "disabled") {
     reason = "disabled";
   }
-  return feature === "extraProfile"
-    ? { allowed: false, allowedProfiles: FREE_PROFILES, reason }
-    : { allowed: false, reason };
+  return { allowed: false, reason };
 };
 
 /** Which of the profiles, in sidebar order, the entitlement leaves deactivated: kept with everything in them, but not usable until it allows them again. */
