@@ -80,6 +80,8 @@ const nodeConfigs = [
   "vite.main.ts",
   "vite.preload-renderer.ts",
   "vite.preload-drag.ts",
+  "vite.preload-gmail.ts",
+  "vite.preload-google.ts",
 ];
 const pending = new Set(nodeConfigs);
 
