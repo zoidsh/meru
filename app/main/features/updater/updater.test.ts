@@ -1,52 +1,31 @@
 import { describe, expect, it } from "vitest";
 
-import { AppEvents } from "../../../core/events.ts";
 import { updateStateSchema } from "../../../core/records/update.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { settingsSurface } from "../../../shared/channels/surfaces.ts";
 import { updater as channels } from "../../../shared/channels/updater.ts";
-import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeFs } from "../../../test/fakes/fs.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
+import { FakeLog } from "../../../test/fakes/log.ts";
 import { FakeUpdater } from "../../../test/fakes/updater.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { SettingsStore } from "../settings/index.ts";
+import { testApp } from "../../testing.ts";
 import { FIRST_CHECK_DELAY, Updater } from "./index.ts";
 
 const HOUR = 3_600_000;
 const PAGE = 7;
 
-const setup = ({ packaged = true } = {}) => {
-  const clock = new FakeClock();
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({
-    log: strictLog,
-    transport,
-  });
+const setup = async ({ packaged = true } = {}) => {
+  const lifecycle = new FakeLifecycle("darwin", packaged);
+  const { clock, commands, events, registrar, settings, transport } =
+    await testApp({ lifecycle });
   registrar.assign(PAGE, settingsSurface);
-  const settings = new SettingsStore({
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events: new AppEvents(),
-    lifecycle: new FakeLifecycle(),
-    clock,
-    fs: new FakeFs(),
-    log: strictLog,
-    registrar,
-    watchFile: false,
-  });
   const feed = new FakeUpdater();
-  const commands = new CommandDispatcher();
-  const events = new AppEvents();
   let invalidated = 0;
   events.on("menu.invalidated", () => {
     invalidated += 1;
   });
   const log = new FakeLog();
   const updater = new Updater({
-    lifecycle: new FakeLifecycle("darwin", packaged),
+    lifecycle,
     clock,
     commands,
     events,
@@ -74,8 +53,8 @@ const setup = ({ packaged = true } = {}) => {
 };
 
 describe(Updater, () => {
-  it("checks once the delay after the window has passed, and not before", () => {
-    const { clock, feed, updater } = setup();
+  it("checks once the delay after the window has passed, and not before", async () => {
+    const { clock, feed, updater } = await setup();
     updater.start();
     clock.advance(FIRST_CHECK_DELAY - 1);
     expect(feed.checks).toHaveLength(0);
@@ -83,8 +62,8 @@ describe(Updater, () => {
     expect(feed.checks).toStrictEqual([false]);
   });
 
-  it("checks again at the interval the user set, and at a new one from when it changes", () => {
-    const { clock, feed, settings, updater } = setup();
+  it("checks again at the interval the user set, and at a new one from when it changes", async () => {
+    const { clock, feed, settings, updater } = await setup();
     updater.start();
     clock.advance(FIRST_CHECK_DELAY + 4 * HOUR);
     expect(feed.checks).toHaveLength(2);
@@ -95,17 +74,19 @@ describe(Updater, () => {
     expect(feed.checks).toHaveLength(4);
   });
 
-  it("asks for prereleases on beta, and checks at once when the channel changes", () => {
-    const { feed, settings, updater } = setup();
+  it("asks for prereleases on beta, and checks at once when the channel changes", async () => {
+    const { feed, settings, updater } = await setup();
     updater.start();
     settings.set("updater.channel", "beta");
     expect(feed.checks).toStrictEqual([true]);
   });
 
-  it("never checks when not packaged, and says so when asked", () => {
-    const { clock, commands, feed, registrar, settings, updater } = setup({
-      packaged: false,
-    });
+  it("never checks when not packaged, and says so when asked", async () => {
+    const { clock, commands, feed, registrar, settings, updater } = await setup(
+      {
+        packaged: false,
+      }
+    );
     updater.start();
     clock.advance(FIRST_CHECK_DELAY + 24 * HOUR);
     settings.set("updater.channel", "beta");
@@ -119,8 +100,8 @@ describe(Updater, () => {
     });
   });
 
-  it("walks a found update through download to ready, pushing each state to a page that asked", () => {
-    const { feed, pushed, registrar } = setup();
+  it("walks a found update through download to ready, pushing each state to a page that asked", async () => {
+    const { feed, pushed, registrar } = await setup();
     expect(
       registrar.dispatch(PAGE, wireName(channels.snapshot), {})
     ).toStrictEqual({
@@ -140,7 +121,7 @@ describe(Updater, () => {
   });
 
   it("goes back to idle when there is nothing new, and to error when the feed fails", async () => {
-    const { feed, log, updater } = setup();
+    const { feed, log, updater } = await setup();
     feed.emit({ kind: "checking" });
     feed.emit({ kind: "notAvailable" });
     expect(updater.current()).toStrictEqual({ kind: "idle" });
@@ -155,8 +136,8 @@ describe(Updater, () => {
     expect(log.at("warn")).toStrictEqual(["Could not check for updates"]);
   });
 
-  it("enables Restart to update only once an update is ready, and then installs it", () => {
-    const { commands, feed, invalidated } = setup();
+  it("enables Restart to update only once an update is ready, and then installs it", async () => {
+    const { commands, feed, invalidated } = await setup();
     expect(commands.enabled("updater.install")).toBeFalsy();
     feed.emit({ kind: "downloaded", version: "4.1.0" });
     expect(commands.enabled("updater.install")).toBeTruthy();
@@ -165,8 +146,8 @@ describe(Updater, () => {
     expect(feed.installs).toBe(1);
   });
 
-  it("keeps a ready update through a later error and checks no more", () => {
-    const { clock, feed, updater } = setup();
+  it("keeps a ready update through a later error and checks no more", async () => {
+    const { clock, feed, updater } = await setup();
     updater.start();
     feed.emit({ kind: "downloaded", version: "4.1.0" });
     feed.emit({ kind: "error", message: "offline" });
