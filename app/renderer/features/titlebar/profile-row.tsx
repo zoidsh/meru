@@ -153,7 +153,7 @@ export const ProfileRow = () => {
     return null;
   }
   const arrow =
-    "absolute top-0 flex items-center bg-background duration-150 motion-safe:transition-opacity";
+    "absolute top-0 flex items-center bg-chrome duration-150 motion-safe:transition-opacity";
   return (
     <div
       className="relative flex min-w-0 flex-1 items-center"

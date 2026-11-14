@@ -47,7 +47,7 @@ createRoot(root).render(
         <ProfilesContext value={createProfilesStore(client)}>
           <StageContext value={createStageStore(client)}>
             <SidebarContext value={createSidebarStore(client)}>
-              <div className="bg-background text-foreground flex h-full flex-col">
+              <div className="bg-chrome text-chrome-foreground flex h-full flex-col">
                 <Titlebar trailing={<LauncherButton place="titlebar" />} />
                 <div className="flex min-h-0 flex-1">
                   <Sidebar

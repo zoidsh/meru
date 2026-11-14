@@ -98,7 +98,7 @@ export const SettingsWindow = () => {
             );
           })}
         </nav>
-        <main className="flex-1 overflow-y-auto">
+        <main className="bg-background text-foreground flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-8">
             <h1 className="text-2xl font-semibold" data-page={page.id}>
               {page.label}

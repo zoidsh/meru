@@ -6,8 +6,8 @@ import type { Theme } from "../core/records/theme.ts";
 const mark = (root: HTMLElement, theme: Theme) => {
   root.classList.toggle("dark", theme === "dark");
   const { background, foreground } = chromeColors(theme);
-  root.style.setProperty("--background", background);
-  root.style.setProperty("--foreground", foreground);
+  root.style.setProperty("--chrome", background);
+  root.style.setProperty("--chrome-foreground", foreground);
 };
 
 // Main is the source rather than the page's prefers-color-scheme, which Chromium does not change when the app sets nativeTheme.themeSource.

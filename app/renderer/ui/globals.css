@@ -27,6 +27,8 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-chrome: var(--chrome);
+  --color-chrome-foreground: var(--chrome-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
@@ -44,6 +46,8 @@
 
 :root,
 :host {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -61,19 +65,21 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
-  /* The chrome's greys, which renderer/theme.ts sets as --background and --foreground from chromeColors. */
-  --sidebar: var(--background);
-  --sidebar-foreground: var(--foreground);
+  /* The chrome's greys, which renderer/theme.ts sets as --chrome and --chrome-foreground from chromeColors. */
+  --sidebar: var(--chrome);
+  --sidebar-foreground: var(--chrome-foreground);
   --sidebar-accent: color-mix(
     in oklab,
-    var(--foreground) 7%,
-    var(--background)
+    var(--chrome-foreground) 7%,
+    var(--chrome)
   );
-  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-accent-foreground: var(--chrome-foreground);
   --sidebar-border: var(--border);
 }
 
 .dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
@@ -92,8 +98,8 @@
   --ring: oklch(0.556 0 0);
   --sidebar-accent: color-mix(
     in oklab,
-    var(--foreground) 10%,
-    var(--background)
+    var(--chrome-foreground) 10%,
+    var(--chrome)
   );
 }
 

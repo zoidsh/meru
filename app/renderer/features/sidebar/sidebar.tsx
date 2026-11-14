@@ -151,7 +151,7 @@ export const Sidebar = ({
   return (
     <nav
       className={cn(
-        "bg-background flex shrink-0 flex-col overflow-hidden p-3 select-none motion-safe:transition-[width] motion-safe:duration-200",
+        "bg-chrome flex shrink-0 flex-col overflow-hidden p-3 select-none motion-safe:transition-[width] motion-safe:duration-200",
         seams && "border-r",
         wide ? "gap-1" : "items-center gap-2"
       )}

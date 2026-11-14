@@ -32,7 +32,7 @@ const GmailBadge = ({ mark }: { readonly mark: GmailMark | undefined }) => {
   const { needsSignIn, unread } = mark;
   if (needsSignIn) {
     return (
-      <CircleAlertIcon className="bg-background pointer-events-none absolute -top-1 -right-1 size-3.5 rounded-full text-yellow-400" />
+      <CircleAlertIcon className="bg-chrome pointer-events-none absolute -top-1 -right-1 size-3.5 rounded-full text-yellow-400" />
     );
   }
   return unread === null || unread === 0 ? null : (

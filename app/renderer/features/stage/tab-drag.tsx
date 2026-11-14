@@ -82,7 +82,7 @@ export const TabDrag = ({
         />
       )}
       <div
-        className="bg-background text-foreground absolute flex max-w-56 items-center gap-2 rounded-md border px-2 py-1.5 text-sm shadow-lg"
+        className="bg-chrome text-chrome-foreground absolute flex max-w-56 items-center gap-2 rounded-md border px-2 py-1.5 text-sm shadow-lg"
         data-ghost=""
         style={{ left: point.x + GHOST_OFFSET, top: point.y + GHOST_OFFSET }}
       >

@@ -79,7 +79,7 @@ export const Titlebar = ({ trailing }: { readonly trailing?: ReactNode }) => {
   return (
     <header
       className={cn(
-        "draggable bg-background relative shrink-0 overflow-hidden select-none",
+        "draggable bg-chrome relative shrink-0 overflow-hidden select-none",
         seams && "border-b"
       )}
       data-titlebar=""

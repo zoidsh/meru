@@ -12,10 +12,7 @@ test("recolours the chrome page when the theme changes, to dark and back to ligh
       await app.evaluate(({ nativeTheme }, source) => {
         nativeTheme.themeSource = source;
       }, theme);
-      await expect(root).toHaveCSS(
-        "--background",
-        chromeColors(theme).background
-      );
+      await expect(root).toHaveCSS("--chrome", chromeColors(theme).background);
     };
     await show("light");
     await show("dark");

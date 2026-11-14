@@ -32,8 +32,8 @@ describe(followTheme, () => {
   it("sets the chrome's ground and ink from the same table the window takes its background from", () => {
     const { root, change } = page("file:///chrome.html?theme=light");
     const colors = () => [
-      root.style.getPropertyValue("--background"),
-      root.style.getPropertyValue("--foreground"),
+      root.style.getPropertyValue("--chrome"),
+      root.style.getPropertyValue("--chrome-foreground"),
     ];
     const light = colors();
     change("dark");
