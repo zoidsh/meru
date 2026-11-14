@@ -7,6 +7,7 @@ import type {
   WebContentsConsoleMessageEventParams,
 } from "electron";
 
+import { DisposableStore } from "../../core/disposable.ts";
 import type { LifecyclePort } from "../../core/ports.ts";
 
 /** Hears what goes wrong outside any feature's own handling: an exception or a rejection nothing caught, a process that ended, and an error a page wrote to its console. */
@@ -39,7 +40,7 @@ export const onFailure: LifecyclePort["onFailure"] = (listener) => {
       url: "",
     });
   };
-  const detach = new Set<() => void>();
+  const detach = new DisposableStore();
   const created = (_event: Event, contents: WebContents) => {
     const message = (event: Event<WebContentsConsoleMessageEventParams>) => {
       if (event.level === "error") {
@@ -52,16 +53,12 @@ export const onFailure: LifecyclePort["onFailure"] = (listener) => {
         });
       }
     };
-    const off = () => {
-      detach.delete(off);
-    };
     contents.on("console-message", message);
-    contents.once("destroyed", off);
-    detach.add(() => {
-      off();
+    const off = detach.track(() => {
       contents.off("console-message", message);
       contents.off("destroyed", off);
     });
+    contents.once("destroyed", off);
   };
   process.on("uncaughtException", uncaught);
   process.on("unhandledRejection", rejection);
@@ -74,8 +71,6 @@ export const onFailure: LifecyclePort["onFailure"] = (listener) => {
     app.off("render-process-gone", renderGone);
     app.off("child-process-gone", childGone);
     app.off("web-contents-created", created);
-    for (const each of detach) {
-      each();
-    }
+    detach.dispose();
   };
 };

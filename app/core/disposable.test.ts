@@ -22,6 +22,18 @@ describe(DisposableStore, () => {
     expect(store.disposed).toBeTruthy();
   });
 
+  it("forgets a tracked disposer run early, and runs one not run early at disposal, each once", () => {
+    const { disposer, ran } = recorder();
+    const store = new DisposableStore();
+    const early = store.track(disposer("early"));
+    store.track(disposer("late"));
+    early();
+    early();
+    const waiting = store.size;
+    store.dispose();
+    expect([ran, waiting, store.size]).toStrictEqual([["early", "late"], 1, 0]);
+  });
+
   it("runs a disposer added after disposal at once", () => {
     const { disposer, ran } = recorder();
     const store = new DisposableStore();
