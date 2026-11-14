@@ -2,22 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { DEFAULT_WINDOW_SIZE } from "../../../core/engines/bounds.ts";
 import { groupOf } from "../../../core/engines/ordering.ts";
-import { AppEvents } from "../../../core/events.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import { parseField } from "../../../core/values.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
 import { FakeDisplays, PRIMARY_DISPLAY } from "../../../test/fakes/display.ts";
 import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
-import { FakeSessions } from "../../../test/fakes/session.ts";
+import { FakeLog } from "../../../test/fakes/log.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { Profiles } from "../profiles/index.ts";
-import { SettingsStore } from "../settings/index.ts";
+import { testApp } from "../../testing.ts";
 import { Windows, WINDOWS_FILE, windowsStateSchema } from "./index.ts";
 
 const NOW = 1_800_000_000_000;
@@ -29,39 +22,12 @@ const trial: Entitlement = {
 };
 
 const setup = async (fs = new FakeFs()) => {
-  const clock = new FakeClock(NOW);
-  const lifecycle = new FakeLifecycle();
-  const events = new AppEvents();
-  const registrar = new IpcDispatcher({
-    log: strictLog,
-    transport: new FakeIpcTransport(),
-  });
-  const settings = new SettingsStore({
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events: new AppEvents(),
-    lifecycle,
-    clock,
-    fs,
-    log: strictLog,
-    registrar,
-    watchFile: false,
-  });
-  await settings.open();
-  const profiles = new Profiles({
-    commands: new CommandDispatcher(),
-    lifecycle,
-    clock,
+  const { clock, events, lifecycle, profiles } = await testApp({
+    clock: new FakeClock(NOW),
     entitlement: () => trial,
-    events,
     fs,
     ids: fakeIds("p"),
-    log: strictLog,
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
   });
-  await profiles.open();
-  profiles.start();
   const displays = new FakeDisplays();
   const log = new FakeLog();
   const windows = new Windows({
