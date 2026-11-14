@@ -1,11 +1,8 @@
-import { StrictMode } from "react";
 import type { ReactNode } from "react";
-import { createRoot } from "react-dom/client";
 
 import { orientationSchema } from "../../core/records/layout.ts";
 import { overlayKindSchema, overlays } from "../../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../../shared/channels/surfaces.ts";
-import { themePushes } from "../../shared/channels/theme.ts";
 import { createClient } from "../client.ts";
 import type { Client } from "../client.ts";
 import { Launcher } from "../features/launcher/launcher.tsx";
@@ -19,7 +16,7 @@ import {
   SettingsContext,
 } from "../features/settings/use-setting.ts";
 import { TabDrag } from "../features/stage/tab-drag.tsx";
-import { followTheme } from "../theme.ts";
+import { mountPage } from "../page.tsx";
 
 import "../ui/globals.css";
 
@@ -57,12 +54,6 @@ const shows: {
 
 const query = new URL(location.href).searchParams;
 const kind = overlayKindSchema.safeParse(query.get("kind"));
-const root = document.querySelector("#root");
-
-if (!root) {
-  throw new Error("overlay.html has no #root to render into");
-}
-
 if (!kind.success) {
   throw new Error(
     `overlay.html has no overlay of kind ${String(query.get("kind"))}`
@@ -77,10 +68,4 @@ const render = <K extends OverlayKind>(
 
 const client = createClient(window, overlays[kind.data]);
 
-followTheme(document.documentElement, location.href, (listener) =>
-  client.on(themePushes.changed, ({ theme }) => {
-    listener(theme);
-  })
-);
-
-createRoot(root).render(<StrictMode>{render(kind.data, client)}</StrictMode>);
+mountPage(client, render(kind.data, client));

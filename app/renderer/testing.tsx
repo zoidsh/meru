@@ -1,6 +1,7 @@
 import { act } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
+import { onTestFinished } from "vitest";
 import type { z } from "zod";
 
 import type { Group } from "../core/records/group.ts";
@@ -20,31 +21,12 @@ import {
   settingsSurface,
 } from "../shared/channels/surfaces.ts";
 import { FakeBridge } from "../test/fakes/bridge.ts";
-import { ChromeProvider } from "./client-context.tsx";
 import { createClient } from "./client.ts";
 import { LauncherClientProvider } from "./features/launcher/use-launcher-client.ts";
-import {
-  createProfilesStore,
-  ProfilesContext,
-} from "./features/profiles/use-profiles.ts";
-import {
-  createSettingsStore,
-  SettingsContext,
-} from "./features/settings/use-setting.ts";
-import { SettingsClientProvider } from "./features/settings/use-settings-client.ts";
-import {
-  createSidebarStore,
-  SidebarContext,
-} from "./features/sidebar/use-sidebar.ts";
-import { createStageStore, StageContext } from "./features/stage/use-stage.ts";
-import {
-  createUpdateStore,
-  UpdateContext,
-} from "./features/updater/use-update.ts";
+import type { ShownProfile } from "./features/profiles/use-profiles.ts";
+import { chromeStores, settingsStores } from "./page.tsx";
 
 Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true);
-
-type ShownProfile = ProfilesSnapshot["profiles"][number];
 
 export const profileOf = (
   id: string,
@@ -144,6 +126,18 @@ const mount = (
   act(() => {
     root.render(render(bridge));
   });
+  let mounted = true;
+  const unmount = () => {
+    if (!mounted) {
+      return;
+    }
+    mounted = false;
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  };
+  onTestFinished(unmount);
   return {
     bridge,
     container,
@@ -159,16 +153,37 @@ const mount = (
       bridge.sent
         .filter((sent) => sent.channel === wireName(channel))
         .map((sent) => sent.payload),
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
+    unmount,
   };
 };
 
-/** Renders under the providers of the chrome page and the launcher's, whose clients talk to a fake bridge seeded with `answers`. */
+// React tracks an input's value through its own setter, so the value is set past it for the change to reach onChange.
+/** Types `text` into `field` as a user would, replacing what it held. */
+export const typeInto = (
+  field: HTMLInputElement | null | undefined,
+  text: string
+) => {
+  act(() => {
+    if (field === null || field === undefined) {
+      return;
+    }
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value"
+    )?.set?.call(field, text);
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+};
+
+/** Lets the promises a render or a request started settle, such as a client's answers. */
+export const settle = async () => {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+};
+
+/** Renders under the providers of the chrome page and the launcher's, whose clients talk to a fake bridge seeded with `answers`; it unmounts when the test finishes. */
 export const mountChrome = (
   node: ReactNode,
   answers: Answers,
@@ -178,27 +193,18 @@ export const mountChrome = (
     (bridge) => {
       const client = createClient({ meru: bridge }, chromeSurface);
       const launcherClient = createClient({ meru: bridge }, launcherSurface);
-      return (
-        <ChromeProvider client={client}>
-          <LauncherClientProvider client={launcherClient}>
-            <SettingsContext value={createSettingsStore(client)}>
-              <ProfilesContext value={createProfilesStore(client)}>
-                <StageContext value={createStageStore(client)}>
-                  <SidebarContext value={createSidebarStore(client)}>
-                    {node}
-                  </SidebarContext>
-                </StageContext>
-              </ProfilesContext>
-            </SettingsContext>
-          </LauncherClientProvider>
-        </ChromeProvider>
+      return chromeStores(
+        client,
+        <LauncherClientProvider client={launcherClient}>
+          {node}
+        </LauncherClientProvider>
       );
     },
     answers,
     platform
   );
 
-/** Renders under the settings window's providers, whose client talks to a fake bridge seeded with `answers`. */
+/** Renders under the settings window's providers, whose client talks to a fake bridge seeded with `answers`; it unmounts when the test finishes. */
 export const mountSettings = (
   node: ReactNode,
   answers: Answers,
@@ -207,17 +213,7 @@ export const mountSettings = (
   mount(
     (bridge) => {
       const client = createClient({ meru: bridge }, settingsSurface);
-      return (
-        <SettingsClientProvider client={client}>
-          <SettingsContext value={createSettingsStore(client)}>
-            <ProfilesContext value={createProfilesStore(client)}>
-              <UpdateContext value={createUpdateStore(client)}>
-                {node}
-              </UpdateContext>
-            </ProfilesContext>
-          </SettingsContext>
-        </SettingsClientProvider>
-      );
+      return settingsStores(client, node);
     },
     answers,
     platform
