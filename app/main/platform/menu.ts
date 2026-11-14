@@ -5,51 +5,9 @@ import type {
   MenuItemConstructorOptions,
 } from "electron";
 
+import type { MenuEntry, MenuSection } from "../../core/records/menu.ts";
 import { commandIdSchema } from "../../shared/commands/registry.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
-
-export interface MenuAction {
-  readonly kind: "action";
-  readonly id: string;
-  readonly label: string;
-  readonly accelerator: string | undefined;
-  readonly enabled: boolean;
-  readonly run: (windowId: number | undefined) => void;
-}
-
-export type MenuEntry =
-  | MenuAction
-  | { readonly kind: "separator" }
-  | {
-      readonly kind: "role";
-      readonly role:
-        | "undo"
-        | "redo"
-        | "cut"
-        | "copy"
-        | "paste"
-        | "pasteAndMatchStyle"
-        | "delete"
-        | "selectAll"
-        | "about"
-        | "close"
-        | "minimize"
-        | "services"
-        | "hide"
-        | "hideOthers"
-        | "unhide"
-        | "quit";
-    };
-
-export type MenuSection =
-  | { readonly kind: "role"; readonly role: "editMenu" }
-  | {
-      readonly kind: "submenu";
-      readonly label: string;
-      readonly entries: readonly MenuEntry[];
-    }
-  /** The menu named after the app, which macOS shows first in bold. */
-  | { readonly kind: "app"; readonly entries: readonly MenuEntry[] };
 
 // A click from the menu bar names the window it was for; one from MenuItem.click(), or with the app inactive, names none, so the focused or first window stands in.
 const windowIdOf = (window: BaseWindow | undefined): number | undefined => {
@@ -60,7 +18,7 @@ const windowIdOf = (window: BaseWindow | undefined): number | undefined => {
   return target?.webContents.id;
 };
 
-const entry = (item: MenuEntry): MenuItemConstructorOptions => {
+const entry = (item: MenuEntry<CommandId>): MenuItemConstructorOptions => {
   if (item.kind === "separator") {
     return { type: "separator" };
   }
@@ -78,7 +36,9 @@ const entry = (item: MenuEntry): MenuItemConstructorOptions => {
   };
 };
 
-export const setApplicationMenu = (sections: readonly MenuSection[]): void => {
+export const setApplicationMenu = (
+  sections: readonly MenuSection<CommandId>[]
+): void => {
   Menu.setApplicationMenu(
     Menu.buildFromTemplate(
       sections.map((section): MenuItemConstructorOptions => {

@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { AppEvents } from "../../core/events.ts";
+import type {
+  MenuAction,
+  MenuEntry,
+  MenuSection,
+} from "../../core/records/menu.ts";
 import { commands as channels } from "../../shared/channels/commands.ts";
 import { wireName } from "../../shared/channels/define.ts";
 import { chromeSurface } from "../../shared/channels/surfaces.ts";
 import { commands } from "../../shared/commands/registry.ts";
+import type { CommandId } from "../../shared/commands/registry.ts";
 import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeFs } from "../../test/fakes/fs.ts";
 import { fakeIds } from "../../test/fakes/ids.ts";
@@ -19,17 +25,16 @@ import { Profiles } from "../features/profiles/index.ts";
 import { SettingsStore } from "../features/settings/index.ts";
 import { Stages } from "../features/stage/index.ts";
 import { Updater } from "../features/updater/index.ts";
-import type { MenuAction, MenuEntry, MenuSection } from "../platform/menu.ts";
 import { CommandDispatcher } from "./commands.ts";
 import { IpcDispatcher } from "./ipc.ts";
 import { ShortcutKeys } from "./keys.ts";
-import { ApplicationMenu, buildMenu } from "./menu.ts";
+import { ApplicationMenu } from "./menu.ts";
 
-const entriesOf = (section: MenuSection) =>
+const entriesOf = (section: MenuSection<CommandId>) =>
   section.kind === "role"
     ? []
     : section.entries.filter(
-        (entry): entry is MenuAction => entry.kind === "action"
+        (entry): entry is MenuAction<CommandId> => entry.kind === "action"
       );
 
 const setup = async (platform = "darwin") => {
@@ -105,7 +110,7 @@ const setup = async (platform = "darwin") => {
     settings,
     updater: feed,
   }).attach();
-  const built: (readonly MenuSection[])[] = [];
+  const built: (readonly MenuSection<CommandId>[])[] = [];
   new ApplicationMenu({
     apply: (sections) => {
       built.push(sections);
@@ -152,12 +157,12 @@ const setup = async (platform = "darwin") => {
   };
 };
 
-const nameOf = (entry: MenuEntry) =>
+const nameOf = (entry: MenuEntry<CommandId>) =>
   entry.kind === "action"
     ? entry.id
     : `${entry.kind}${"role" in entry ? `:${entry.role}` : ""}`;
 
-const shortcuts = (actions: readonly MenuAction[]) =>
+const shortcuts = (actions: readonly MenuAction<CommandId>[]) =>
   actions.map(({ id, accelerator }) => [id, accelerator]);
 
 describe(ApplicationMenu, () => {
@@ -433,53 +438,5 @@ describe(ApplicationMenu, () => {
       error: { kind: "failed", message: "unknownWindow" },
       ok: false,
     });
-  });
-});
-
-describe(buildMenu, () => {
-  it("adds edit commands after the platform's own edit items, in order", () => {
-    const sections = buildMenu({
-      bindings: new Map(),
-      commands: [
-        {
-          id: "stage.splitVertical",
-          label: "B",
-          menu: { order: 2, section: "edit" },
-        },
-        {
-          id: "stage.closeTab",
-          label: "A",
-          menu: { order: 1, section: "edit" },
-        },
-        { id: "stage.splitHorizontal", label: "Hidden" },
-      ],
-      enabled: () => true,
-      platform: "linux",
-      run: () => {
-        throw new Error("Nothing is clicked");
-      },
-    });
-    const [, edit, view] = sections;
-    expect(
-      edit?.kind === "submenu"
-        ? edit.entries.map((entry) =>
-            entry.kind === "action" ? entry.label : entry.kind
-          )
-        : edit
-    ).toStrictEqual([
-      "role",
-      "role",
-      "separator",
-      "role",
-      "role",
-      "role",
-      "role",
-      "role",
-      "role",
-      "separator",
-      "A",
-      "B",
-    ]);
-    expect(view).toStrictEqual({ entries: [], kind: "submenu", label: "View" });
   });
 });
