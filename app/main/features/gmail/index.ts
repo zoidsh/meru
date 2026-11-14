@@ -156,15 +156,17 @@ export class Gmail {
   /** Takes the tab's page to `url` by its fragment, as Gmail moves between its own views, when the tab has a page and the address is the mailbox's; false leaves it to the caller to load. */
   navigate(tabId: string, url: string): boolean {
     const contentsId = this.#pages.get(tabId);
-    const hash = url.slice(url.indexOf("#"));
+    const at = url.indexOf("#");
     if (
       contentsId === undefined ||
-      !url.startsWith(this.#options.mailbox) ||
-      !hash.startsWith("#")
+      at === -1 ||
+      !url.startsWith(this.#options.mailbox)
     ) {
       return false;
     }
-    this.#options.registrar.push(contentsId, gmailPushes.navigate, { hash });
+    this.#options.registrar.push(contentsId, gmailPushes.navigate, {
+      hash: url.slice(at),
+    });
     return true;
   }
 
