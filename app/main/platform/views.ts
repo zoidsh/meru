@@ -15,6 +15,9 @@ import type {
 import type { Disposition } from "../../core/records/link.ts";
 import { onBeforeInput } from "./keys.ts";
 
+/** How long a blank popup may wait for its first navigation; Google's sign-in points its window at accounts.google.com in the same task that opens it. */
+const BLANK_POPUP_TIMEOUT = 5000;
+
 const handles = new WeakMap<ViewPort, WebContentsView>();
 const ports = new WeakMap<View, ViewPort>();
 
@@ -60,10 +63,17 @@ const createView = (spec: ViewSpec): ViewPort => {
   const showsPopup = (url: string) =>
     popupListeners.size === 0 ||
     [...popupListeners].some((listener) => listener(url));
-  // Google's sign-in opens a blank window and only then points it at accounts.google.com, so the window cannot be judged by its address when it opens; it waits hidden for its first navigation.
+  // Google's sign-in opens a blank window and only then points it at accounts.google.com, so on Electron 45 the window cannot be judged by its address when it opens; it waits hidden for its first navigation, and one that never navigates, such as a page that writes into it, is closed rather than left hidden for good. tests/popup.e2e.ts reproduces both.
   const openBlank = (options: BrowserWindowConstructorOptions): WebContents => {
     const popup = new BrowserWindow({ ...options, show: false });
+    const unused = setTimeout(() => {
+      popup.destroy();
+    }, BLANK_POPUP_TIMEOUT);
+    popup.once("closed", () => {
+      clearTimeout(unused);
+    });
     popup.webContents.once("will-navigate", (event) => {
+      clearTimeout(unused);
       if (showsPopup(event.url)) {
         popup.show();
       } else {
