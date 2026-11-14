@@ -159,6 +159,23 @@ export class FakeView implements ViewPort {
 
   readonly audible = () => this.sounding;
 
+  readonly #audibleListeners = new Set<() => void>();
+
+  readonly onAudible = (listener: () => void): Unsubscribe => {
+    this.#audibleListeners.add(listener);
+    return () => {
+      this.#audibleListeners.delete(listener);
+    };
+  };
+
+  /** Starts or stops the page's sound, as a video playing or pausing would. */
+  readonly sound = (on: boolean) => {
+    this.sounding = on;
+    for (const listener of this.#audibleListeners) {
+      listener();
+    }
+  };
+
   readonly destroy = () => {
     this.destroyed = true;
   };

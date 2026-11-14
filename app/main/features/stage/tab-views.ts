@@ -22,6 +22,8 @@ export interface TabViewsOptions {
   readonly onPopup: (url: string) => boolean;
   /** The tab's page asked for fullscreen, with true, or left it. */
   readonly onFullscreen: (tabId: string, entered: boolean) => void;
+  /** Some tab's page started or stopped playing sound. */
+  readonly onAudible: () => void;
   /** A link the tab's page opens; true takes it from the page. */
   readonly onOpen: (
     tabId: string,
@@ -108,6 +110,7 @@ export class TabViews {
       view.onFullscreen((entered) => {
         onFullscreen(tabId, entered);
       }),
+      view.onAudible(this.#options.onAudible),
     ];
     void loadOwned(view, source.url, log);
     return {

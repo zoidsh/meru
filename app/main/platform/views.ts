@@ -187,6 +187,15 @@ const createView = (spec: ViewSpec): ViewPort => {
     },
     zoomFactor: () => contents.getZoomFactor(),
     audible: () => contents.isCurrentlyAudible(),
+    onAudible: (listener) => {
+      const changed = () => {
+        listener();
+      };
+      contents.on("audio-state-changed", changed);
+      return () => {
+        contents.off("audio-state-changed", changed);
+      };
+    },
   };
   handles.set(port, view);
   ports.set(view, port);

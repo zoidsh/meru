@@ -31,7 +31,7 @@ export interface SleepOptions {
 export class Sleep {
   readonly #options: SleepOptions;
   readonly #disposables = new DisposableStore();
-  #lastSeen: ReadonlyMap<string, number> = new Map();
+  #idleSince: ReadonlyMap<string, number> = new Map();
   #asleep: ReadonlySet<string> = new Set();
   #timer: Unsubscribe | undefined;
 
@@ -60,6 +60,9 @@ export class Sleep {
         this.#sweep();
       }),
       events.on("tab.focused", () => {
+        this.#sweep();
+      }),
+      events.on("tab.audible", () => {
         this.#sweep();
       }),
       settings.subscribe((changes) => {
@@ -96,7 +99,7 @@ export class Sleep {
       after: settings.get("sleep.afterMinutes") * minute,
       asleep: this.#asleep,
       audible: stages.audible(),
-      lastSeen: this.#lastSeen,
+      idleSince: this.#idleSince,
       now: clock.now(),
       shown: stages.shown(),
       singleInstance: isSingleInstanceId,
@@ -105,7 +108,7 @@ export class Sleep {
     for (const tabId of plan.fallAsleep) {
       stages.sleep(tabId);
     }
-    this.#lastSeen = plan.lastSeen;
+    this.#idleSince = plan.idleSince;
     this.#asleep = plan.asleep;
     profiles.setAsleep(plan.asleep);
     this.#timer?.();

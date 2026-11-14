@@ -8,8 +8,8 @@ export interface SleepInput {
   readonly shown: ReadonlySet<string>;
   /** The tabs whose page is playing sound, which counts as in use, since its sound would stop with its view. */
   readonly audible: ReadonlySet<string>;
-  /** When each tab was last shown or heard, as the last sweep left it. */
-  readonly lastSeen: ReadonlyMap<string, number>;
+  /** Since when each tab has been out of sight and silent, as the last sweep left it; a tab in use then has none. */
+  readonly idleSince: ReadonlyMap<string, number>;
   /** The tabs asleep before this sweep. */
   readonly asleep: ReadonlySet<string>;
   readonly now: number;
@@ -23,7 +23,7 @@ export interface SleepPlan {
   readonly asleep: ReadonlySet<string>;
   /** The tabs to put to sleep now, a subset of `asleep`. */
   readonly fallAsleep: readonly string[];
-  readonly lastSeen: ReadonlyMap<string, number>;
+  readonly idleSince: ReadonlyMap<string, number>;
   /** When the next tab is due to sleep, or null while none can, so nothing need wake to sweep again. */
   readonly next: number | null;
 }
@@ -34,20 +34,22 @@ export const maySleep = (
   singleInstance: SingleInstance
 ): boolean => tab.sleeps && !isPinned(tab, singleInstance);
 
-/** Decides which tabs sleep: one the user let sleep, out of sight and silent for `after`, falls asleep; a tab a pane shows is awake, and every other keeps its state. */
+/**
+ * Decides which tabs sleep: one the user let sleep, out of sight and silent for `after`, falls asleep; a tab a pane shows is awake, and every other keeps its state.
+ * A tab's idle time starts at the first sweep that finds it out of sight and silent, so the caller sweeps whenever a tab leaves the screen or falls silent.
+ */
 export const sweep = (input: SleepInput): SleepPlan => {
   const { after, audible, now, shown, singleInstance } = input;
   const asleep = new Set<string>();
   const fallAsleep: string[] = [];
-  const lastSeen = new Map<string, number>();
+  const idleSince = new Map<string, number>();
   let next: number | null = null;
   for (const tab of input.tabs) {
-    const inUse = shown.has(tab.id) || audible.has(tab.id);
-    const seen = inUse ? now : (input.lastSeen.get(tab.id) ?? now);
-    lastSeen.set(tab.id, seen);
-    if (shown.has(tab.id)) {
+    if (shown.has(tab.id) || audible.has(tab.id)) {
       continue;
     }
+    const since = input.idleSince.get(tab.id) ?? now;
+    idleSince.set(tab.id, since);
     if (input.asleep.has(tab.id)) {
       asleep.add(tab.id);
       continue;
@@ -55,7 +57,7 @@ export const sweep = (input: SleepInput): SleepPlan => {
     if (!maySleep(tab, singleInstance)) {
       continue;
     }
-    const due = seen + after;
+    const due = since + after;
     if (due <= now) {
       asleep.add(tab.id);
       fallAsleep.push(tab.id);
@@ -63,5 +65,5 @@ export const sweep = (input: SleepInput): SleepPlan => {
       next = next === null ? due : Math.min(next, due);
     }
   }
-  return { asleep, fallAsleep, lastSeen, next };
+  return { asleep, fallAsleep, idleSince, next };
 };

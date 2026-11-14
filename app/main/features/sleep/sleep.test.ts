@@ -192,6 +192,23 @@ describe(Sleep, () => {
     );
   });
 
+  it("counts the wait from when a tab watched a long while leaves the screen, and from when its sound stops", async () => {
+    const { asleep, clock, drive, gmail, profiles, show, viewOf } =
+      await setup();
+    unwrap(profiles.letSleep(drive.id, true));
+    show(drive.id);
+    clock.advance(70 * MINUTE);
+    const view = viewOf(drive.id);
+    view?.sound(true);
+    show(gmail.id);
+    clock.advance(59 * MINUTE);
+    view?.sound(false);
+    clock.advance(59 * MINUTE);
+    const beforeDue = asleep();
+    clock.advance(MINUTE);
+    expect([beforeDue, asleep()]).toStrictEqual([[], [drive.id]]);
+  });
+
   it("schedules no sweep while no tab can sleep, and follows a change of the minutes", async () => {
     const { asleep, clock, drive, gmail, profiles, settings, show } =
       await setup();

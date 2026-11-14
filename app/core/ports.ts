@@ -96,6 +96,8 @@ export interface ViewPort {
   readonly zoomFactor: () => number;
   /** Whether the page is playing sound now. */
   readonly audible: () => boolean;
+  /** Calls `listener` when the page starts or stops playing sound. */
+  readonly onAudible: (listener: () => void) => Unsubscribe;
   readonly destroy: () => void;
 }
 

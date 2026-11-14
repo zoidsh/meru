@@ -17,7 +17,7 @@ const input = (overrides: Partial<SleepInput> = {}): SleepInput => ({
   after: HOUR,
   asleep: new Set(),
   audible: new Set(),
-  lastSeen: new Map(),
+  idleSince: new Map(),
   now: 10 * HOUR,
   shown: new Set(),
   singleInstance: single,
@@ -40,7 +40,7 @@ describe(sweep, () => {
     const now = 10 * HOUR;
     const plan = sweep(
       input({
-        lastSeen: new Map([
+        idleSince: new Map([
           ["gmail", now - 2 * HOUR],
           ["drive", now - HOUR],
           ["docs", now - HOUR + MINUTE],
@@ -51,7 +51,7 @@ describe(sweep, () => {
     expect(plan).toStrictEqual({
       asleep: new Set(["drive"]),
       fallAsleep: ["drive"],
-      lastSeen: new Map([
+      idleSince: new Map([
         ["gmail", now - 2 * HOUR],
         ["drive", now - HOUR],
         ["docs", now - HOUR + MINUTE],
@@ -61,12 +61,12 @@ describe(sweep, () => {
     });
   });
 
-  it("keeps a shown or sounding tab awake and counts its wait from now", () => {
+  it("keeps a shown or sounding tab awake and forgets its idle time", () => {
     const now = 10 * HOUR;
     const plan = sweep(
       input({
         audible: new Set(["docs"]),
-        lastSeen: new Map([
+        idleSince: new Map([
           ["drive", now - 2 * HOUR],
           ["docs", now - 2 * HOUR],
         ]),
@@ -77,12 +77,30 @@ describe(sweep, () => {
     expect(plan).toStrictEqual({
       asleep: new Set(),
       fallAsleep: [],
-      lastSeen: new Map([
-        ["drive", now],
-        ["docs", now],
-      ]),
-      next: now + HOUR,
+      idleSince: new Map(),
+      next: null,
     });
+  });
+
+  it("counts a tab watched longer than the wait from when it leaves the screen, not from the last sweep", () => {
+    const shownAt = sweep(input({ now: 0, shown: new Set(["drive"]) }));
+    const hidden = sweep(
+      input({ idleSince: shownAt.idleSince, now: 70 * MINUTE, tabs: [drive] })
+    );
+    expect([hidden.fallAsleep, hidden.next]).toStrictEqual([[], 130 * MINUTE]);
+  });
+
+  it("counts a tab whose sound stops from when it falls silent", () => {
+    const sounding = sweep(
+      input({ audible: new Set(["drive"]), now: 70 * MINUTE, tabs: [drive] })
+    );
+    const silent = sweep(
+      input({ idleSince: sounding.idleSince, now: 129 * MINUTE, tabs: [drive] })
+    );
+    const due = sweep(
+      input({ idleSince: silent.idleSince, now: 130 * MINUTE, tabs: [drive] })
+    );
+    expect([silent.next, due.fallAsleep]).toStrictEqual([189 * MINUTE, []]);
   });
 
   it("wakes a sleeping tab once a pane shows it, and keeps one asleep while none does, without putting it to sleep again", () => {
@@ -90,7 +108,7 @@ describe(sweep, () => {
     const plan = sweep(
       input({
         asleep: new Set(["drive", "docs"]),
-        lastSeen: new Map([
+        idleSince: new Map([
           ["drive", now - 3 * HOUR],
           ["docs", now - 3 * HOUR],
         ]),
@@ -118,11 +136,11 @@ describe(sweep, () => {
     const plan = sweep(
       input({
         asleep: new Set(["closed"]),
-        lastSeen: new Map([["closed", 0]]),
+        idleSince: new Map([["closed", 0]]),
         tabs: [calendar],
       })
     );
-    expect([plan.asleep, [...plan.lastSeen.keys()]]).toStrictEqual([
+    expect([plan.asleep, [...plan.idleSince.keys()]]).toStrictEqual([
       new Set(),
       ["calendar"],
     ]);

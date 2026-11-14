@@ -106,6 +106,8 @@ export interface StageOptions {
   /** Tells a tab drag's page, `contentsId`, where the chrome page saw the pointer. */
   readonly onPointer: (contentsId: number, point: Point) => void;
   readonly onChange: (snapshot: StageSnapshot) => void;
+  /** Some tab's page started or stopped playing sound. */
+  readonly onAudible: () => void;
   /** A link a pane's page opens; true takes it from the page. */
   readonly onOpen: (
     tabId: string,
@@ -143,6 +145,7 @@ export class Stage {
           this.#publish();
         }
       },
+      onAudible: options.onAudible,
       onFullscreen: (tabId, entered) => {
         this.#fullscreen(tabId, entered);
       },

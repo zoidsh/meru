@@ -203,6 +203,9 @@ export class Stages {
         this.#options.registrar.push(windowId, stagePushes.changed, snapshot);
       },
       log: this.#options.log,
+      onAudible: () => {
+        this.#options.events.emit("tab.audible", null);
+      },
       onOpen: this.#options.onOpen,
       onPopup: this.#options.onPopup,
       onOverlay: (contentsId, surface) => {
