@@ -198,6 +198,7 @@ export class Profiles {
       events.on("entitlement.changed", () => {
         this.#reselect();
         this.#publish();
+        events.emit("menu.invalidated", null);
         events.emit("profiles.changed", null);
       })
     );
@@ -344,25 +345,14 @@ export class Profiles {
     return committed.ok ? ok(opened.value.tab) : committed;
   }
 
-  /** Records what the profile's feed last said, telling every page only when it changed; nothing about the stage changes with it. */
+  /** Records what the profile's feed last said, telling every page only when it changed; no stage or menu reads it. */
   setStatus(
     profileId: string,
     status: ProfileStatus
   ): Result<undefined, ProfilesError> {
-    const found = this.state.profiles.find(
-      (profile) => profile.id === profileId
-    );
-    if (found !== undefined && isEqual(found.status, status)) {
-      return ok(undefined);
-    }
-    const next = setProfileStatus(this.state, profileId, status);
-    if (!next.ok) {
-      return next;
-    }
-    this.#state = next.value;
-    this.#store.write(next.value);
-    this.#publish();
-    return ok(undefined);
+    return this.#commit(setProfileStatus(this.state, profileId, status), {
+      pagesOnly: true,
+    });
   }
 
   closeTab(tabId: string): Result<undefined, ProfilesError> {
@@ -520,11 +510,16 @@ export class Profiles {
     }
   }
 
+  /** Validates, stores and publishes a change; `pagesOnly` tells the pages and no one else, for what only a page shows. */
   #commit(
-    next: Result<ProfilesState, StateError>
+    next: Result<ProfilesState, StateError>,
+    { pagesOnly = false } = {}
   ): Result<undefined, ProfilesError> {
     if (!next.ok) {
       return next;
+    }
+    if (isEqual(next.value, this.state)) {
+      return ok(undefined);
     }
     const problems = validateState(next.value, isSingleInstanceId);
     if (problems.length > 0) {
@@ -537,7 +532,11 @@ export class Profiles {
     this.#state = next.value;
     this.#store.write(next.value);
     this.#publish();
+    if (pagesOnly) {
+      return ok(undefined);
+    }
     const { events } = this.#options;
+    events.emit("menu.invalidated", null);
     if (next.value.selectedProfileId !== before.selectedProfileId) {
       const group = this.currentGroup(next.value.selectedProfileId);
       if (group !== undefined) {
@@ -553,7 +552,6 @@ export class Profiles {
 
   #publish(): void {
     this.#options.registrar.broadcast(profilesPushes.changed, this.snapshot());
-    this.#options.events.emit("menu.invalidated", null);
   }
 
   async #clear(partition: string): Promise<void> {

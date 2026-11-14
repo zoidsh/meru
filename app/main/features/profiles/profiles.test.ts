@@ -4,10 +4,11 @@ import { panes } from "../../../core/engines/layout.ts";
 import { validateState } from "../../../core/engines/state-validate.ts";
 import { FIRST_PROFILE_LABEL } from "../../../core/engines/state.ts";
 import { AppEvents } from "../../../core/events.ts";
-import type { AppEventMap } from "../../../core/events.ts";
+import type { AppEventMap, AppEventName } from "../../../core/events.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { Beside, Placement } from "../../../core/records/layout.ts";
 import { PROFILE_COLORS } from "../../../core/records/profile.ts";
+import type { ProfileStatus } from "../../../core/records/profile.ts";
 import { profilesStateSchema } from "../../../core/records/profiles-state.ts";
 import type { ProfilesState } from "../../../core/records/profiles-state.ts";
 import type { Result } from "../../../core/result.ts";
@@ -374,6 +375,40 @@ describe(Profiles, () => {
     expect(profiles.addTab(profiles.selected().id, "nothing")).toStrictEqual({
       error: "unknownApp",
       ok: false,
+    });
+  });
+
+  it("records a feed's status, telling the pages once and neither the stage nor the menu", async () => {
+    const { events, profiles, registrar, stored, transport } = await setup();
+    registrar.dispatch(PAGE, wireName(profileChannels.snapshot), {});
+    const heard: string[] = [];
+    const names: AppEventName[] = [
+      "menu.invalidated",
+      "profiles.changed",
+      "stage.invalidated",
+    ];
+    for (const name of names) {
+      events.on(name, () => {
+        heard.push(name);
+      });
+    }
+    const { id } = profiles.selected();
+    const status: ProfileStatus = { kind: "ok", unreadCount: 3 };
+    unwrap(profiles.setStatus(id, status));
+    unwrap(profiles.setStatus(id, status));
+    const written = await stored();
+    expect({
+      heard,
+      pushed: transport.sent.length,
+      status: profiles.profile(id)?.status,
+      stored: written.profiles[0]?.status,
+      unknown: profiles.setStatus("missing", status),
+    }).toStrictEqual({
+      heard: [],
+      pushed: 1,
+      status,
+      stored: status,
+      unknown: { error: "unknownProfile", ok: false },
     });
   });
 
