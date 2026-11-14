@@ -1,5 +1,6 @@
 import { DisposableStore } from "../../../core/disposable.ts";
-import { maySleep, sweep } from "../../../core/engines/sleep.ts";
+import { isPinned } from "../../../core/engines/pinned.ts";
+import { sweep } from "../../../core/engines/sleep.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type { Clock, Unsubscribe } from "../../../core/ports.ts";
 import { err } from "../../../core/result.ts";
@@ -51,11 +52,7 @@ export class Sleep {
           },
           when: (context) => {
             const tab = this.#focusedTab(context);
-            return (
-              tab !== undefined &&
-              (tab.sleeps ||
-                maySleep({ ...tab, sleeps: true }, isSingleInstanceId))
-            );
+            return tab !== undefined && !isPinned(tab, isSingleInstanceId);
           },
         },
       }),
