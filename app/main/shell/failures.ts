@@ -7,14 +7,14 @@ export const PAGE_ERRORS_PER_WINDOW = 20;
 export const PAGE_ERROR_WINDOW = 60_000;
 
 export interface FailureLogOptions {
-  readonly lifecycle: Pick<LifecyclePort, "onFailure">;
+  readonly lifecycle: Pick<LifecyclePort, "onFailure" | "quit">;
   readonly clock: Pick<Clock, "now">;
   readonly log: LogPort;
   /** Whether a page is one of the app's own; Google's pages write errors of their own all day, which say nothing about the app. */
   readonly ownPage: (url: string) => boolean;
 }
 
-/** Writes each failure nothing else handled to the log. */
+/** Writes each failure nothing else handled to the log, and quits after an uncaught exception. */
 export const logFailures = ({
   clock,
   lifecycle,
@@ -58,6 +58,8 @@ export const logFailures = ({
     switch (failure.kind) {
       case "uncaught": {
         log.error("An exception was not caught", { error: failure.error });
+        // Node would have ended the process, and state an exception left half changed is not worth carrying on with; the quit still writes what it holds and flushes the log.
+        lifecycle.quit();
         break;
       }
       case "unhandledRejection": {

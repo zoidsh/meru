@@ -26,22 +26,24 @@ const setup = () => {
 };
 
 describe(logFailures, () => {
-  it("writes an uncaught exception and an unhandled rejection with their errors", () => {
+  it("writes an unhandled rejection and carries on, and writes an uncaught exception and quits", () => {
     const { lifecycle, log } = setup();
     const thrown = new Error("boom");
-    lifecycle.fail({ error: thrown, kind: "uncaught" });
     lifecycle.fail({ error: "no reason", kind: "unhandledRejection" });
+    const afterRejection = lifecycle.quitting;
+    lifecycle.fail({ error: thrown, kind: "uncaught" });
+    expect([afterRejection, lifecycle.quitting]).toStrictEqual([false, true]);
     expect(log.entries).toStrictEqual([
-      {
-        fields: { error: thrown },
-        level: "error",
-        message: "An exception was not caught",
-        scope: "app",
-      },
       {
         fields: { error: "no reason" },
         level: "error",
         message: "A rejected promise was not handled",
+        scope: "app",
+      },
+      {
+        fields: { error: thrown },
+        level: "error",
+        message: "An exception was not caught",
         scope: "app",
       },
     ]);
