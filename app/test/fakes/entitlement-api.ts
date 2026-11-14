@@ -22,11 +22,6 @@ export class FakeEntitlementApi implements EntitlementApi {
     this.#answers = [...answers];
   }
 
-  /** Queues answers for the next requests, in order. */
-  readonly script = (...answers: readonly Scripted[]) => {
-    this.#answers.push(...answers);
-  };
-
   readonly issue = async (request: EntitlementRequest): Promise<Answer> => {
     this.requests.push(request);
     await Promise.resolve();
