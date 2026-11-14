@@ -16,11 +16,11 @@ describe(CommandDispatcher, () => {
     const handlers = { first: () => ok(null), stray: () => ok(null) };
     const unregister = dispatcher.register(group, handlers);
     const registered = [
-      dispatcher.has("demo.first"),
-      dispatcher.has("demo.stray"),
+      dispatcher.enabled("demo.first"),
+      dispatcher.enabled("demo.stray"),
     ];
     unregister();
-    expect([...registered, dispatcher.has("demo.first")]).toStrictEqual([
+    expect([...registered, dispatcher.enabled("demo.first")]).toStrictEqual([
       true,
       false,
       false,

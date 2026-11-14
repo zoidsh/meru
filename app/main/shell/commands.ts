@@ -51,10 +51,6 @@ export class CommandDispatcher<
     };
   };
 
-  has(id: Id): boolean {
-    return this.#handlers.has(id);
-  }
-
   /** Whether the command can run now for the window, or with no window when none is given; one nothing handles cannot. */
   enabled(id: Id, windowId?: number): boolean {
     return (
