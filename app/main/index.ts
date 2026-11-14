@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { chromeInsets } from "../core/engines/chrome.ts";
+import { INBOX_FEED_URL } from "../core/engines/inbox.ts";
 import { isSignIn } from "../core/engines/links.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
@@ -12,6 +13,7 @@ import type { OverlayKind } from "../shared/channels/surfaces.ts";
 import { themePushes } from "../shared/channels/theme.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
+import { Inbox } from "./features/inbox/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
 import { Links } from "./features/links/index.ts";
 import { Profiles } from "./features/profiles/index.ts";
@@ -179,6 +181,28 @@ const start = async () => {
     settings,
   });
   sidebars.start();
+
+  // A run from the repository can read a stand-in feed; the suite and a measure read none unless given one, so no test run asks Google.
+  const feedOverride = ports.lifecycle.packaged
+    ? undefined
+    : process.env.MERU_FEED_URL;
+  const inbox = new Inbox({
+    badge: ports.badge,
+    clock: ports.clock,
+    events,
+    feedUrl: feedOverride ?? INBOX_FEED_URL,
+    log: log.scoped("inbox"),
+    online: ports.online,
+    power: ports.power,
+    profiles,
+    registrar: dispatcher,
+    sessions: ports.sessions,
+    settings,
+  });
+  inbox.attach();
+  if (feedOverride !== undefined || !(e2e || measure)) {
+    inbox.start();
+  }
   const pages: PageOptions = {
     devServer: process.env.MERU_RENDERER_URL,
     dir: path.join(dist, "renderer"),

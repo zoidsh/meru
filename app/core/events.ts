@@ -1,12 +1,20 @@
 import type { Sidebar } from "./engines/sidebar.ts";
 import type { Unsubscribe } from "./ports.ts";
 import type { Entitlement } from "./records/entitlement.ts";
+import type { FeedEntry } from "./records/feed.ts";
 import type { Orientation } from "./records/layout.ts";
 
 /** The signals a feature sends up to whoever assembles the app, by name. */
 export interface AppEventMap {
   /** What the user may use changed. */
   readonly "entitlement.changed": { readonly entitlement: Entitlement };
+  /** What a profile's feed lists changed, its unread count among it. */
+  readonly "inbox.changed": null;
+  /** A read of a profile's feed found mail that arrived since the last, oldest first. */
+  readonly "mail.arrived": {
+    readonly profileId: string;
+    readonly entries: readonly FeedEntry[];
+  };
   /** Something a menu item shows, such as whether it is enabled, may have changed. */
   readonly "menu.invalidated": null;
   /** Another profile is selected, showing `groupId` in the main window. */
@@ -34,6 +42,8 @@ type Listener<N extends AppEventName> = (payload: AppEventMap[N]) => void;
 export class AppEvents {
   readonly #listeners: { readonly [N in AppEventName]: Set<Listener<N>> } = {
     "entitlement.changed": new Set(),
+    "inbox.changed": new Set(),
+    "mail.arrived": new Set(),
     "menu.invalidated": new Set(),
     "profile.selected": new Set(),
     "sidebar.changed": new Set(),

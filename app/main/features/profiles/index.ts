@@ -1,3 +1,5 @@
+import { isEqual } from "es-toolkit";
+
 import { DisposableStore } from "../../../core/disposable.ts";
 import {
   groupOf,
@@ -20,6 +22,7 @@ import {
   removeProfile,
   resizeSplit,
   selectProfile,
+  setProfileStatus,
   newProfile,
   newTab,
   swapPanes,
@@ -42,7 +45,7 @@ import type { Entitlement } from "../../../core/records/entitlement.ts";
 import type { Group } from "../../../core/records/group.ts";
 import type { Placement, Beside } from "../../../core/records/layout.ts";
 import { partitionOf } from "../../../core/records/profile.ts";
-import type { Profile } from "../../../core/records/profile.ts";
+import type { Profile, ProfileStatus } from "../../../core/records/profile.ts";
 import { profilesStateSchema } from "../../../core/records/profiles-state.ts";
 import type { ProfilesState } from "../../../core/records/profiles-state.ts";
 import type { Tab } from "../../../core/records/tab.ts";
@@ -338,6 +341,27 @@ export class Profiles {
     }
     const committed = this.#commit(ok(opened.value.state));
     return committed.ok ? ok(opened.value.tab) : committed;
+  }
+
+  /** Records what the profile's feed last said, telling every page only when it changed; nothing about the stage changes with it. */
+  setStatus(
+    profileId: string,
+    status: ProfileStatus
+  ): Result<undefined, ProfilesError> {
+    const found = this.state.profiles.find(
+      (profile) => profile.id === profileId
+    );
+    if (found !== undefined && isEqual(found.status, status)) {
+      return ok(undefined);
+    }
+    const next = setProfileStatus(this.state, profileId, status);
+    if (!next.ok) {
+      return next;
+    }
+    this.#state = next.value;
+    this.#store.write(next.value);
+    this.#publish();
+    return ok(undefined);
   }
 
   /** Points the tab at an address, which its view loads when it is next made. */
