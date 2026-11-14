@@ -83,7 +83,7 @@ export class Stages {
     const { registrar, settings, commands, events } = this.#options;
     this.#disposables.add(
       events.on("stage.invalidated", () => {
-        for (const found of new Set(this.#bySender.values())) {
+        for (const found of this.all) {
           found.refresh();
         }
       }),
@@ -125,7 +125,7 @@ export class Stages {
           (change) => change.key === "appearance.style"
         );
         const rezoom = changes.some((change) => change.key === "stage.zoom");
-        for (const found of new Set(this.#bySender.values())) {
+        for (const found of this.all) {
           if (restyle) {
             found.restyle();
           }
@@ -246,8 +246,8 @@ export class Stages {
     }
   }
 
-  close(windowId: number, paneId?: string): Result<undefined, StageError> {
-    return this.#with(windowId, (found) => found.close(paneId));
+  close(windowId: number): Result<undefined, StageError> {
+    return this.#with(windowId, (found) => found.close());
   }
 
   focusNext(windowId: number): Result<undefined, StageError> {

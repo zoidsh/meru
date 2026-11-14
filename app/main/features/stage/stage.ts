@@ -17,6 +17,7 @@ import {
   tabAfterLeaving,
   tabOfPane,
 } from "../../../core/engines/layout.ts";
+import { besideTab } from "../../../core/engines/ordering.ts";
 import { isPinned } from "../../../core/engines/pinned.ts";
 import {
   afterFocus,
@@ -36,11 +37,7 @@ import type {
   WindowPort,
 } from "../../../core/ports.ts";
 import type { Group } from "../../../core/records/group.ts";
-import type {
-  Layout,
-  Orientation,
-  Placement,
-} from "../../../core/records/layout.ts";
+import type { Layout, Orientation } from "../../../core/records/layout.ts";
 import type { Disposition } from "../../../core/records/link.ts";
 import type { NavigationAction } from "../../../core/records/navigation.ts";
 import type { Point } from "../../../core/records/rect.ts";
@@ -75,10 +72,8 @@ export type StageError =
 /** What a stage reads its group and tabs from, and changes them through. */
 export type StageProfiles = Pick<
   Profiles,
-  | "state"
   | "group"
   | "tab"
-  | "addTab"
   | "openTab"
   | "focusTab"
   | "closeTab"
@@ -253,10 +248,14 @@ export class Stage {
     appId: string,
     split?: Orientation
   ): Result<undefined, StageError> {
+    const group = this.#read();
+    const focused = this.#focused;
     const placement =
-      split !== undefined && this.#read()?.profileId === profileId
-        ? this.#placement(split)
-        : undefined;
+      split === undefined ||
+      group?.profileId !== profileId ||
+      focused === undefined
+        ? undefined
+        : besideTab(group, focused, split);
     const { profiles } = this.#options;
     const opened = profiles.openTab(profileId, appId, placement);
     if (!opened.ok) {
@@ -267,14 +266,13 @@ export class Stage {
       : err("refused");
   }
 
-  /** Closes a pane's tab; the last pane stays. */
-  close(paneId = this.#focusedPane()): Result<undefined, StageError> {
-    const order = panes(this.#layout());
-    const [tabId] = order.find((pane) => pane.paneId === paneId)?.tabIds ?? [];
+  /** Closes the focused pane's tab; the last pane stays. */
+  close(): Result<undefined, StageError> {
+    const tabId = this.#focusedPane() === undefined ? undefined : this.#focused;
     if (tabId === undefined) {
       return err("unknownPane");
     }
-    if (order.length === 1) {
+    if (panes(this.#layout()).length === 1) {
       return err("lastPane");
     }
     return this.#options.profiles.closeTab(tabId).ok
@@ -633,17 +631,6 @@ export class Stage {
     return this.#focusedPane() === undefined || this.#focused === undefined
       ? undefined
       : this.#views.view(this.#focused);
-  }
-
-  /** Where a tab goes beside or below the pane, the focused one unless named, in the group the stage shows. */
-  #placement(
-    orientation: Orientation,
-    paneId = this.#focusedPane()
-  ): Placement | undefined {
-    const group = this.#read();
-    return group === undefined || paneId === undefined
-      ? undefined
-      : { groupId: group.id, orientation, paneId, side: "after" };
   }
 
   // Every view the stage makes hears the keys typed into it, for the commands without a menu item.

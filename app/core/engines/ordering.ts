@@ -1,9 +1,10 @@
 import { clamp } from "es-toolkit";
 
 import type { Group } from "../records/group.ts";
+import type { Orientation, Placement } from "../records/layout.ts";
 import type { Profile } from "../records/profile.ts";
 import type { Tab } from "../records/tab.ts";
-import { panes } from "./layout.ts";
+import { paneOfTab, panes } from "./layout.ts";
 import { isPinned } from "./pinned.ts";
 import type { SingleInstance } from "./pinned.ts";
 
@@ -46,6 +47,18 @@ export const groupOf = (
   tabId: string,
   groups: readonly Group[]
 ): Group | undefined => groups.find((group) => group.tabIds.includes(tabId));
+
+/** Where a tab goes beside or below the tab's pane in the group, while the group shows it. */
+export const besideTab = (
+  group: Group,
+  tabId: string,
+  orientation: Orientation
+): Placement | undefined => {
+  const paneId = paneOfTab(group.layout, tabId);
+  return paneId === undefined
+    ? undefined
+    : { groupId: group.id, orientation, paneId, side: "after" };
+};
 
 /** A profile's tabs in sidebar order: the order of `tabs`, with a group of several in place of its first tab and its tabs in the order of its layout's panes, so the rows follow a drop or a swap; a pinned tab's row comes first, and the pinned tab first in its group, whatever joins or leaves it. */
 export const orderedTabs = (

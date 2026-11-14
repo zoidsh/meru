@@ -6,6 +6,7 @@ import type { Profile } from "../records/profile.ts";
 import type { Tab } from "../records/tab.ts";
 import { leaf } from "./layout.ts";
 import {
+  besideTab,
   groupOf,
   moveItem,
   moveProfile,
@@ -319,6 +320,24 @@ describe(groupOf, () => {
     ];
     expect(groupOf("t3", groups)?.id).toBe("g2");
     expect(groupOf("t9", groups)).toBeUndefined();
+  });
+});
+
+describe(besideTab, () => {
+  it("places a tab after the tab's pane in its group, and nowhere for a tab the group does not show", () => {
+    const group = groupWith("g1", "a", ["t1", "t2"]);
+    expect([
+      besideTab(group, "t2", "horizontal"),
+      besideTab(group, "t9", "vertical"),
+    ]).toStrictEqual([
+      {
+        groupId: "g1",
+        orientation: "horizontal",
+        paneId: "pane-t2",
+        side: "after",
+      },
+      undefined,
+    ]);
   });
 });
 
