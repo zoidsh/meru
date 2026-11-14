@@ -104,6 +104,11 @@ export const testStages = (
   options: Partial<StagesOptions> = {}
 ) => {
   const { commands, events, profiles, registrar, settings } = app;
+  // Ahead of the stages, as the windows feature is, so a stage focusing the tab already shows its group.
+  let shown: string | undefined;
+  events.on("tab.focused", ({ groupId }) => {
+    shown = groupId;
+  });
   const views = new FakeViewFactory();
   const stages = new Stages({
     blankPanes: false,
@@ -132,10 +137,6 @@ export const testStages = (
     ...options,
   });
   stages.start();
-  let shown: string | undefined;
-  events.on("tab.focused", ({ groupId }) => {
-    shown = groupId;
-  });
   const window = new FakeWindow(1200, 800);
   registrar.assign(window.contentsId, chromeSurface);
   const stage = stages.open(window, () => shown ?? profiles.currentGroup()?.id);

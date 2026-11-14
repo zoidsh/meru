@@ -1,41 +1,20 @@
-import { noop } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import { groupOf } from "../../../core/engines/ordering.ts";
-import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import {
   stagePushes,
   stageSnapshotSchema,
 } from "../../../shared/channels/stage.ts";
-import { chromeSurface } from "../../../shared/channels/surfaces.ts";
-import { commands as allCommands } from "../../../shared/commands/registry.ts";
-import { FakeClock } from "../../../test/fakes/clock.ts";
-import { FakeFs } from "../../../test/fakes/fs.ts";
-import { fakeIds } from "../../../test/fakes/ids.ts";
-import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
-import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
-import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeShell } from "../../../test/fakes/shell.ts";
-import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
-import { FakeWindow } from "../../../test/fakes/window.ts";
-import { CommandDispatcher } from "../../shell/commands.ts";
-import { IpcDispatcher } from "../../shell/ipc.ts";
-import { ShortcutKeys } from "../../shell/keys.ts";
-import { Profiles } from "../profiles/index.ts";
-import { SettingsStore } from "../settings/index.ts";
-import { Stages } from "../stage/index.ts";
+import { testApp, testStages } from "../../testing.ts";
+import type { Profiles } from "../profiles/index.ts";
 import { Links } from "./index.ts";
 
 const setup = async () => {
-  const window = new FakeWindow(1200, 800);
-  const transport = new FakeIpcTransport();
-  const registrar = new IpcDispatcher({ log: strictLog, transport });
-  registrar.assign(window.contentsId, chromeSurface);
-  const clock = new FakeClock();
-  const settings = new SettingsStore({
+  const app = await testApp({
     entitlement: () => ({
       deviceLimit: 3,
       expiresAt: null,
@@ -44,63 +23,13 @@ const setup = async () => {
       seat: null,
       source: "stored",
     }),
-    events: new AppEvents(),
-    lifecycle: new FakeLifecycle(),
-    clock,
-    fs: new FakeFs(),
-    log: strictLog,
-    registrar,
-    watchFile: false,
   });
-  const views = new FakeViewFactory();
-  const events = new AppEvents();
-  const commands = new CommandDispatcher();
-  const profiles = new Profiles({
-    commands,
-    lifecycle: new FakeLifecycle(),
-    clock,
-    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
-    events,
-    fs: new FakeFs(),
-    ids: fakeIds(),
-    log: strictLog,
-    registrar,
-    sessions: new FakeSessions(),
-    settings,
-  });
-  await profiles.open();
+  const { profiles, settings, transport } = app;
   const shell = new FakeShell();
-  // As the windows feature does, and ahead of the stages, the window shows the group of the tab last brought to the front.
-  let shown: string | undefined;
-  events.on("tab.focused", ({ groupId }) => {
-    shown = groupId;
-  });
-  const stages = new Stages({
-    keys: new ShortcutKeys({
-      commands: allCommands,
-      dispatcher: commands,
-      platform: "darwin",
-      log: strictLog,
-      settings,
-    }),
-    blankPanes: false,
-    commands,
-    dragPreload: "/dist/preload/drag.cjs",
-    overlayPreload: "/dist/preload/renderer.cjs",
-    events,
-    insets: () => ({ left: 0, top: 0 }),
-    log: strictLog,
+  const { stages, views, window } = testStages(app, {
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
     onPopup: (url) => links.popup(url),
-    onSplitRequested: noop,
-    profiles,
-    registrar,
-    settings,
-    tabDragUrl: (tab) =>
-      `overlay.html?${new URLSearchParams({ appId: tab.appId, kind: "tabDrag", tabId: tab.id }).toString()}`,
-    views,
   });
-  stages.start();
   const links = new Links({
     log: strictLog,
     profiles,
@@ -108,7 +37,6 @@ const setup = async () => {
     shell,
     stages,
   });
-  stages.open(window, () => shown ?? profiles.currentGroup()?.id);
   const changes = (): StageSnapshot[] =>
     transport.sent
       .filter((pushed) => pushed.channel === wireName(stagePushes.changed))
