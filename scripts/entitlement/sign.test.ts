@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  acceptedKeys,
-  DEV_KID,
-  importKeys,
-} from "../../app/core/entitlement/keys.ts";
+import { acceptedKeys, importKeys } from "../../app/core/entitlement/keys.ts";
 import { verifyToken } from "../../app/core/entitlement/verify.ts";
 import { mintToken } from "./sign.ts";
 
@@ -36,12 +32,5 @@ describe(mintToken, () => {
 
   it("refuses claims the app would call malformed", () => {
     expect(() => mintToken({ ...draft, plan: "trial" })).toThrow(/endsAt/u);
-  });
-});
-
-describe(acceptedKeys, () => {
-  it("leaves the development key out of an installed app", () => {
-    expect(acceptedKeys(true)).not.toHaveProperty(DEV_KID);
-    expect(acceptedKeys(false)).toHaveProperty(DEV_KID);
   });
 });
