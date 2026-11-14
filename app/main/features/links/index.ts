@@ -1,9 +1,7 @@
-import { paneOfTab } from "../../../core/engines/layout.ts";
 import { isSignIn, resolveLinkTarget } from "../../../core/engines/links.ts";
-import { groupOf } from "../../../core/engines/ordering.ts";
+import { besideTab, groupOf } from "../../../core/engines/ordering.ts";
 import type { LogPort } from "../../../core/log.ts";
 import type { ShellPort } from "../../../core/ports.ts";
-import type { Placement } from "../../../core/records/layout.ts";
 import type { Disposition } from "../../../core/records/link.ts";
 import { apps } from "../../../shared/apps.ts";
 import type { Profiles } from "../profiles/index.ts";
@@ -66,11 +64,12 @@ export class Links {
       }
       return true;
     }
+    const group = groupOf(tabId, groups);
     const opened = profiles.openTab(
       from.profileId,
       target.appId,
-      target.action === "newTab" && !background
-        ? this.#beside(tabId)
+      target.action === "newTab" && !background && group !== undefined
+        ? besideTab(group, tabId, "vertical")
         : undefined,
       url
     );
@@ -108,15 +107,5 @@ export class Links {
       }
     };
     void open();
-  }
-
-  /** Beside the tab's pane, in its group. */
-  #beside(tabId: string): Placement | undefined {
-    const group = groupOf(tabId, this.#options.profiles.state.groups);
-    const paneId =
-      group === undefined ? undefined : paneOfTab(group.layout, tabId);
-    return group === undefined || paneId === undefined
-      ? undefined
-      : { groupId: group.id, orientation: "vertical", paneId, side: "after" };
   }
 }
