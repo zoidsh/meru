@@ -45,6 +45,7 @@ test("puts a tab the user let sleep to sleep once out of sight, and wakes it wit
   await expect.poll(async () => await shownTabs(app)).toStrictEqual([drive.id]);
   const [awake] = await panesOf(app);
   const before = must(awake, "Drive's pane").contentsId;
+  await expect.poll(async () => await urlOf(app, before)).not.toBe("");
   const address = await urlOf(app, before);
   valueOf(await runCommand(chrome, "sleep.toggleTab"));
 
@@ -61,9 +62,7 @@ test("puts a tab the user let sleep to sleep once out of sight, and wakes it wit
   await expect.poll(async () => await shownTabs(app)).toStrictEqual([drive.id]);
   const [woken] = await panesOf(app);
   const after = must(woken, "Drive's woken pane").contentsId;
-  expect([
-    after === before,
-    await urlOf(app, after),
-    await asleepOf(chrome, drive.id),
-  ]).toStrictEqual([false, address, false]);
+  expect(after).not.toBe(before);
+  await expect.poll(async () => await urlOf(app, after)).toBe(address);
+  expect(await asleepOf(chrome, drive.id)).toBe(false);
 });
