@@ -1,3 +1,5 @@
+import { expect } from "vitest";
+
 import { scopedLog } from "../../core/log.ts";
 import type { LogEntry, LogPort } from "../../core/log.ts";
 
@@ -19,9 +21,14 @@ export class FakeLog {
   }
 }
 
-/** A log for a test that expects nothing to go wrong: a warning or an error fails it where it is written. */
+/** A log for a test that expects nothing to go wrong: a warning or an error fails the test, without throwing into the code that wrote it, which might catch the throw and carry on. */
 export const strictLog: LogPort = scopedLog((entry) => {
-  if (entry.level === "warn" || entry.level === "error") {
-    throw new Error(`${entry.message} ${JSON.stringify(entry.fields)}`);
-  }
+  expect
+    .soft(
+      entry.level === "warn" || entry.level === "error"
+        ? `${entry.message} ${JSON.stringify(entry.fields)}`
+        : undefined,
+      "a test given strictLog expects no warning or error"
+    )
+    .toBeUndefined();
 }, "strict");
