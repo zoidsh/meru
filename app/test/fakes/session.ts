@@ -2,7 +2,7 @@ import { SESSION_BODY_CAP } from "../../core/ports.ts";
 import type { Clock, SessionPort, SessionResponse } from "../../core/ports.ts";
 
 /** What the fake answers an address with: a response, a failure of the network, or nothing, which the timeout ends. */
-export type FakeAnswer = SessionResponse | Error | "silent";
+type FakeAnswer = SessionResponse | Error | "silent";
 
 export class FakeSessions implements SessionPort {
   /** Every partition cleared, in order, as the effect on the browser's storage. */

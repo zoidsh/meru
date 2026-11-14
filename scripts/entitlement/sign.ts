@@ -14,12 +14,12 @@ import type { Claims } from "../../app/core/entitlement/token.ts";
 const DEV_KEY = path.join(import.meta.dirname, "dev-private.pem");
 
 /** Claims as a person writes them: `iat` defaults to now and `exp` to `iat + ttl`. */
-export const draftSchema = claimFieldsSchema.partial({
+const draftSchema = claimFieldsSchema.partial({
   exp: true,
   iat: true,
 });
 
-export type Draft = z.input<typeof draftSchema>;
+type Draft = z.input<typeof draftSchema>;
 
 const encode = (value: unknown) =>
   Buffer.from(JSON.stringify(value)).toString("base64url");

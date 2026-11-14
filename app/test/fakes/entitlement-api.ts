@@ -6,7 +6,7 @@ import type {
 import { err } from "../../core/result.ts";
 import type { Result } from "../../core/result.ts";
 
-export type Answer = Result<{ readonly token: string }, EntitlementApiError>;
+type Answer = Result<{ readonly token: string }, EntitlementApiError>;
 
 /** An answer, or one made from the request, such as a token signed for its device. */
 export type Scripted =
