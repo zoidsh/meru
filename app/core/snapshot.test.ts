@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { FakeClock } from "../test/fakes/clock.ts";
@@ -6,7 +6,7 @@ import { FakeFs } from "../test/fakes/fs.ts";
 import { FakeLifecycle } from "../test/fakes/lifecycle.ts";
 import { FakeLog, strictLog } from "../test/fakes/log.ts";
 import version1 from "./fixtures/snapshot-v1.json" with { type: "json" };
-import { SnapshotStore } from "./snapshot.ts";
+import { SnapshotStore, WRITE_DELAY } from "./snapshot.ts";
 
 const NAME = "people.json";
 
@@ -29,7 +29,6 @@ const setup = (files: Readonly<Record<string, string>> = {}) => {
   const log = new FakeLog();
   const store = new SnapshotStore<People, string>(
     {
-      delay: 100,
       migrations: [toVersion2],
       name: NAME,
       recover: (data) => {
@@ -68,7 +67,6 @@ describe(SnapshotStore, () => {
     const { store } = setup({ [NAME]: file({ names: ["Ada", "Grace"] }) });
     await expect(store.open()).resolves.toStrictEqual({
       fallbacks: [],
-      migratedFrom: null,
       source: "file",
       value: { names: ["Ada", "Grace"] },
     });
@@ -78,7 +76,6 @@ describe(SnapshotStore, () => {
     const { store } = setup();
     await expect(store.open()).resolves.toStrictEqual({
       fallbacks: [],
-      migratedFrom: null,
       source: "missing",
       value: EMPTY,
     });
@@ -90,7 +87,6 @@ describe(SnapshotStore, () => {
       const { store, fs } = setup({ [NAME]: text });
       await expect(store.open()).resolves.toStrictEqual({
         fallbacks: [],
-        migratedFrom: null,
         source: "corrupt",
         value: EMPTY,
       });
@@ -111,7 +107,6 @@ describe(SnapshotStore, () => {
     const { store } = setup({ [NAME]: JSON.stringify(version1) });
     await expect(store.open()).resolves.toStrictEqual({
       fallbacks: [],
-      migratedFrom: 1,
       source: "file",
       value: { names: ["Ada"] },
     });
@@ -153,11 +148,13 @@ describe(SnapshotStore, () => {
     await store.open();
     store.write({ names: ["Ada"] });
     store.write({ names: ["Ada", "Grace"] });
-    clock.advance(50);
+    clock.advance(WRITE_DELAY - 1);
     store.write({ names: ["Ada", "Grace", "Hedy"] });
     expect(fs.writes).toStrictEqual([]);
-    clock.advance(50);
-    await store.flush();
+    clock.advance(1);
+    await vi.waitFor(() => {
+      expect(fs.writes).toHaveLength(1);
+    });
     expect(fs.writes).toStrictEqual([
       {
         name: NAME,

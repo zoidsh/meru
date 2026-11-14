@@ -19,8 +19,6 @@ export interface SnapshotSpec<T, F> {
   readonly schema: z.ZodType<T>;
   /** Makes a value from whatever the schema refused, or from nothing when there was no usable file, and says what it left out. */
   readonly recover: (data: unknown) => Recovered<T, F>;
-  /** Milliseconds a write waits for others to land with it. */
-  readonly delay?: number;
 }
 
 export type SnapshotSource =
@@ -33,8 +31,6 @@ export type SnapshotSource =
 
 export interface Opened<T, F> extends Recovered<T, F> {
   readonly source: SnapshotSource;
-  /** The version the file had when it was older than this one. */
-  readonly migratedFrom: number | null;
 }
 
 export interface SnapshotPorts {
@@ -44,7 +40,8 @@ export interface SnapshotPorts {
   readonly log: LogPort;
 }
 
-const DELAY = 1000;
+/** Milliseconds a write waits for others to land with it. */
+export const WRITE_DELAY = 1000;
 
 export class SnapshotStore<T, F = never> {
   readonly #spec: SnapshotSpec<T, F>;
@@ -65,10 +62,6 @@ export class SnapshotStore<T, F = never> {
     this.#ports = ports;
   }
 
-  get name(): string {
-    return this.#spec.name;
-  }
-
   /** Reads the file, never throwing: whatever cannot be read comes back as the recovered value with the reason. */
   async open(): Promise<Opened<T, F>> {
     this.#unsubscribe ??= this.#ports.lifecycle.onQuit(async () => {
@@ -82,10 +75,10 @@ export class SnapshotStore<T, F = never> {
         error,
         file: this.#spec.name,
       });
-      return this.#recovered(undefined, "unreadable");
+      return this.#recovered("unreadable");
     }
     if (text === undefined) {
-      return this.#recovered(undefined, "missing");
+      return this.#recovered("missing");
     }
     this.#written = text;
     return await this.#read(text);
@@ -113,13 +106,10 @@ export class SnapshotStore<T, F = never> {
   /** Writes after the delay, together with any other write in it. */
   write(value: T): void {
     this.#pending = { value };
-    this.#cancel ??= this.#ports.clock.schedule(
-      this.#spec.delay ?? DELAY,
-      () => {
-        this.#cancel = undefined;
-        void this.flush();
-      }
-    );
+    this.#cancel ??= this.#ports.clock.schedule(WRITE_DELAY, () => {
+      this.#cancel = undefined;
+      void this.flush();
+    });
   }
 
   /** Writes what is pending now, and resolves once every write so far is on disk. */
@@ -173,25 +163,14 @@ export class SnapshotStore<T, F = never> {
     );
     if (!migrated.ok) {
       return this.#recovered(
-        undefined,
         migrated.error === "newer" ? "newer" : "failedMigration"
       );
     }
-    const migratedFrom = version < this.#spec.version ? version : null;
     const parsed = this.#spec.schema.safeParse(migrated.value);
     if (parsed.success) {
-      return {
-        fallbacks: [],
-        migratedFrom,
-        source: "file",
-        value: parsed.data,
-      };
+      return { fallbacks: [], source: "file", value: parsed.data };
     }
-    return {
-      ...this.#spec.recover(migrated.value),
-      migratedFrom,
-      source: "file",
-    };
+    return { ...this.#spec.recover(migrated.value), source: "file" };
   }
 
   // The next write replaces the file, so what could not be read is kept beside it for the user to recover by hand.
@@ -212,10 +191,10 @@ export class SnapshotStore<T, F = never> {
         );
       }
     }
-    return this.#recovered(undefined, "corrupt");
+    return this.#recovered("corrupt");
   }
 
-  #recovered(data: unknown, source: SnapshotSource): Opened<T, F> {
-    return { ...this.#spec.recover(data), migratedFrom: null, source };
+  #recovered(source: SnapshotSource): Opened<T, F> {
+    return { ...this.#spec.recover(undefined), source };
   }
 }
