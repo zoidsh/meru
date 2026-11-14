@@ -104,13 +104,17 @@ export const addProfile = (
   profile: Omit<Profile, "order">,
   tab: Tab,
   ids: Ids
-): ProfilesState => {
+): { readonly state: ProfilesState; readonly profile: Profile } => {
   const order = Math.max(-1, ...state.profiles.map((found) => found.order)) + 1;
+  const added = { ...profile, order };
   return {
-    ...state,
-    groups: [...state.groups, groupOfOne(tab, ids)],
-    profiles: [...state.profiles, { ...profile, order }],
-    tabs: [...state.tabs, tab],
+    profile: added,
+    state: {
+      ...state,
+      groups: [...state.groups, groupOfOne(tab, ids)],
+      profiles: [...state.profiles, added],
+      tabs: [...state.tabs, tab],
+    },
   };
 };
 

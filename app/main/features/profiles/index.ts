@@ -272,15 +272,14 @@ export class Profiles {
       return err(gate.reason);
     }
     const profile = newProfile(ids, label, color);
-    const next = addProfile(
+    const added = addProfile(
       this.state,
       profile,
       newTab(ids, profile.id, gmail),
       ids
     );
-    const added = next.profiles.find((found) => found.id === profile.id);
-    const committed = this.#commit(ok(next));
-    return committed.ok && added !== undefined ? ok(added) : err("invalid");
+    const committed = this.#commit(ok(added.state));
+    return committed.ok ? ok(added.profile) : committed;
   }
 
   /** Removes a profile with its tabs, its settings and its session. */

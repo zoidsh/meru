@@ -361,7 +361,7 @@ describe("the state's operations", () => {
 
   it("refuses to join a group of another profile, or a pane it does not have", () => {
     const { ids, state } = start();
-    const two = addProfile(state, profile("b"), tabOf("t2", "b"), ids);
+    const two = addProfile(state, profile("b"), tabOf("t2", "b"), ids).state;
     const [first] = two.groups;
     if (first === undefined) {
       throw new Error("A fresh state has a group");
@@ -397,8 +397,16 @@ describe("the state's operations", () => {
 
   it("removes a profile with its tabs and groups, moving the selection, but never the last one", () => {
     const { ids, state } = start();
-    const two = addProfile(state, profile("b"), tabOf("t2", "b"), ids);
-    expect(two.profiles.map((found) => found.order)).toStrictEqual([0, 1]);
+    const { profile: added, state: two } = addProfile(
+      state,
+      profile("b"),
+      tabOf("t2", "b"),
+      ids
+    );
+    expect([added, two.profiles.map((found) => found.order)]).toStrictEqual([
+      { ...profile("b"), order: 1 },
+      [0, 1],
+    ]);
     const selected = unwrap(selectProfile(two, "b"));
     const removed = unwrap(removeProfile(selected, "b"));
     expect({
