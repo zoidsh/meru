@@ -1,6 +1,10 @@
 import { DisposableStore } from "../../../core/disposable.ts";
 import { clampToDisplay } from "../../../core/engines/bounds.ts";
-import { titleBarOf, windowColours } from "../../../core/engines/chrome.ts";
+import {
+  recolourWindow,
+  titleBarOf,
+  windowColours,
+} from "../../../core/engines/chrome.ts";
 import type { LogPort } from "../../../core/log.ts";
 import { themeOf } from "../../../core/ports.ts";
 import type { Ports, WindowPort } from "../../../core/ports.ts";
@@ -80,14 +84,14 @@ export class SettingsWindow {
       this.#window.show();
       return;
     }
-    const theme = themeOf(ports.theme);
+    const look = {
+      linuxControls,
+      platform: ports.lifecycle.platform,
+      theme: themeOf(ports.theme),
+    };
     const window = ports.windows.create({
       arguments: [surfaceArgument("settings")],
-      background: windowColours({
-        linuxControls,
-        platform: ports.lifecycle.platform,
-        theme,
-      }).background,
+      background: windowColours(look).background,
       bounds: clampToDisplay(
         undefined,
         ports.displays.displays(),
@@ -95,11 +99,7 @@ export class SettingsWindow {
       ),
       preload,
       title: msg`Settings`,
-      titleBar: titleBarOf({
-        linuxControls,
-        platform: ports.lifecycle.platform,
-        theme,
-      }),
+      titleBar: titleBarOf(look),
     });
     this.#window = window;
     const unassign = registrar.assign(window.contentsId, pageSurfaces.settings);
@@ -116,18 +116,13 @@ export class SettingsWindow {
   }
 
   recolour(theme: Theme): void {
-    if (this.#window === undefined) {
-      return;
-    }
-    const { linuxControls, ports } = this.#options;
-    const colours = windowColours({
-      linuxControls,
-      platform: ports.lifecycle.platform,
-      theme,
-    });
-    this.#window.setBackgroundColor(colours.background);
-    if (colours.overlay !== null) {
-      this.#window.setTitleBarOverlay(colours.overlay);
+    if (this.#window !== undefined) {
+      const { linuxControls, ports } = this.#options;
+      recolourWindow(this.#window, {
+        linuxControls,
+        platform: ports.lifecycle.platform,
+        theme,
+      });
     }
   }
 }

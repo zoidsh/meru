@@ -1,3 +1,4 @@
+import type { WindowPort } from "../ports.ts";
 import type { Rect } from "../records/rect.ts";
 import type { Theme } from "../records/theme.ts";
 import type { TitleBar, TitleBarOverlay } from "../records/title-bar.ts";
@@ -22,12 +23,14 @@ export const chromeColors = (theme: Theme): ChromeColors =>
 const TRAFFIC_LIGHT_HEIGHT = 12;
 const TRAFFIC_LIGHT_X = 12;
 
-export const titleBarOf = (options: {
+export interface WindowLook {
   readonly platform: string;
   readonly theme: Theme;
   /** Whether a Linux window draws its controls, which some window managers have no room for. */
   readonly linuxControls: boolean;
-}): TitleBar => {
+}
+
+export const titleBarOf = (options: WindowLook): TitleBar => {
   const { platform, theme, linuxControls } = options;
   const colors = chromeColors(theme);
   // One pixel short of the row, so classic's seam under the titlebar shows beneath the window controls too; in modern that pixel is the titlebar's own ground.
@@ -54,17 +57,26 @@ export const titleBarOf = (options: {
 };
 
 /** What a window paints in the theme: its ground, and the overlay of its window controls where Electron recolours one, which it does only on Windows and Linux, since macOS draws its traffic lights in its own colours. */
-export const windowColours = (options: {
-  readonly platform: string;
-  readonly theme: Theme;
-  readonly linuxControls: boolean;
-}): {
+export const windowColours = (
+  options: WindowLook
+): {
   readonly background: string;
   readonly overlay: TitleBarOverlay | null;
 } => ({
   background: chromeColors(options.theme).background,
   overlay: options.platform === "darwin" ? null : titleBarOf(options).overlay,
 });
+
+export const recolourWindow = (
+  window: Pick<WindowPort, "setBackgroundColor" | "setTitleBarOverlay">,
+  options: WindowLook
+): void => {
+  const colours = windowColours(options);
+  window.setBackgroundColor(colours.background);
+  if (colours.overlay !== null) {
+    window.setTitleBarOverlay(colours.overlay);
+  }
+};
 
 /** How much of the window's content area the chrome takes before the panes: the titlebar above them, the sidebar to their left. */
 export interface ChromeInsets {

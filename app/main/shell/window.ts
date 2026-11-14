@@ -2,7 +2,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import {
-  chromeColors,
+  recolourWindow,
   titleBarOf,
   windowColours,
 } from "../../core/engines/chrome.ts";
@@ -82,18 +82,18 @@ export class MainWindow {
       onCreated,
       registrar,
     } = this.#options;
-    const theme = themeOf(ports.theme);
+    const look = {
+      linuxControls,
+      platform: ports.lifecycle.platform,
+      theme: themeOf(ports.theme),
+    };
     const window = ports.windows.create({
       arguments: [surfaceArgument(surface)],
-      background: chromeColors(theme).background,
+      background: windowColours(look).background,
       bounds,
       preload,
       title: "Meru",
-      titleBar: titleBarOf({
-        linuxControls,
-        platform: ports.lifecycle.platform,
-        theme,
-      }),
+      titleBar: titleBarOf(look),
     });
     this.#window = window;
     const unsubscribe = window.onVisibilityChanged(() => {
@@ -146,21 +146,11 @@ export class MainWindow {
   recolour(theme: Theme): void {
     if (this.#window !== undefined) {
       const { linuxControls, ports } = this.#options;
-      recolour(this.#window, theme, ports.lifecycle.platform, linuxControls);
+      recolourWindow(this.#window, {
+        linuxControls,
+        platform: ports.lifecycle.platform,
+        theme,
+      });
     }
   }
 }
-
-/** Paints a window's ground and its window controls in the theme's colours. */
-const recolour = (
-  window: WindowPort,
-  theme: Theme,
-  platform: string,
-  linuxControls: boolean
-) => {
-  const colours = windowColours({ linuxControls, platform, theme });
-  window.setBackgroundColor(colours.background);
-  if (colours.overlay !== null) {
-    window.setTitleBarOverlay(colours.overlay);
-  }
-};
