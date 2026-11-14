@@ -14,9 +14,9 @@ export const toProfileName = (ref: string): string =>
 export const devUserDataDir = (
   root: string,
   named: string | undefined,
-  branch: string
+  branch: string | undefined
 ): string =>
-  path.join(root, ".meru", toProfileName(named ?? (branch || "default")));
+  path.join(root, ".meru", toProfileName(named ?? branch ?? "default"));
 
 const read = (file: string): string | undefined => {
   try {
@@ -37,15 +37,13 @@ const gitDirOf = (root: string): string | undefined => {
   return named === undefined ? undefined : path.resolve(root, named);
 };
 
-/** The branch checked out at `root`, read from the files git keeps; empty on a detached HEAD or outside a repository. */
-export const readBranch = (root: string): string => {
+/** The branch checked out at `root`, read from the files git keeps; undefined on a detached HEAD or outside a repository. */
+export const readBranch = (root: string): string | undefined => {
   const gitDir = gitDirOf(root);
   const head =
     gitDir === undefined ? undefined : read(path.join(gitDir, "HEAD"));
-  return (
-    /^ref:\s*refs\/heads\/(?<branch>.+)$/u.exec(head ?? "")?.groups?.branch ??
-    ""
-  );
+  return /^ref:\s*refs\/heads\/(?<branch>.+)$/u.exec(head ?? "")?.groups
+    ?.branch;
 };
 
 export interface UserDataInputs {
@@ -56,7 +54,7 @@ export interface UserDataInputs {
   readonly markerRepo?: string;
   /** The directory `--user-data-dir` named. */
   readonly explicitDir?: string;
-  /** The branch checked out at `root`; empty or absent on a detached HEAD. */
+  /** The branch checked out at `root`; absent on a detached HEAD. */
   readonly branch?: string;
 }
 
@@ -68,7 +66,7 @@ export const userDataDirFor = ({
   packaged,
   markerRepo,
   explicitDir,
-  branch = "",
+  branch,
 }: UserDataInputs): string | undefined => {
   if (explicitDir !== undefined) {
     return explicitDir;

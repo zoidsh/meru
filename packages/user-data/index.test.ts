@@ -19,7 +19,7 @@ describe(devUserDataDir, () => {
   });
 
   it("falls back to default on a detached HEAD", () => {
-    expect(devUserDataDir("/repo", undefined, "")).toBe(
+    expect(devUserDataDir("/repo", undefined, undefined)).toBe(
       path.join("/repo", ".meru", "default")
     );
   });
@@ -50,7 +50,7 @@ const inTemp = async (body: (dir: string) => Promise<void> | void) => {
 describe(readBranch, () => {
   it("is empty outside a repository", async () => {
     await inTemp((dir) => {
-      expect(readBranch(dir)).toBe("");
+      expect(readBranch(dir)).toBeUndefined();
     });
   });
 
@@ -94,7 +94,7 @@ describe(readBranch, () => {
         path.join(dir, ".git", "HEAD"),
         "0123456789abcdef0123456789abcdef01234567\n"
       );
-      expect(readBranch(dir)).toBe("");
+      expect(readBranch(dir)).toBeUndefined();
     });
   });
 });
