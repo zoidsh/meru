@@ -94,6 +94,8 @@ export interface ViewPort {
   readonly setZoomFactor: (factor: number) => void;
   /** Read only by the end-to-end suite's inspector. */
   readonly zoomFactor: () => number;
+  /** Whether the page is playing sound now. */
+  readonly audible: () => boolean;
   readonly destroy: () => void;
 }
 

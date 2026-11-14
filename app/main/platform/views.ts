@@ -186,6 +186,7 @@ const createView = (spec: ViewSpec): ViewPort => {
       contents.setZoomFactor(factor);
     },
     zoomFactor: () => contents.getZoomFactor(),
+    audible: () => contents.isCurrentlyAudible(),
   };
   handles.set(port, view);
   ports.set(view, port);

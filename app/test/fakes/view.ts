@@ -22,6 +22,8 @@ export class FakeView implements ViewPort {
   zoom: number;
   destroyed = false;
   focused = false;
+  /** Whether the page plays sound, as a test sets it. */
+  sounding = false;
   #bounds: Rect = { height: 0, width: 0, x: 0, y: 0 };
   readonly #focusListeners = new Set<() => void>();
   readonly #navigationListeners = new Set<() => void>();
@@ -154,6 +156,8 @@ export class FakeView implements ViewPort {
   };
 
   readonly zoomFactor = () => this.zoom;
+
+  readonly audible = () => this.sounding;
 
   readonly destroy = () => {
     this.destroyed = true;

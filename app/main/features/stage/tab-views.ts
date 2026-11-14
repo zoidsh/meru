@@ -31,7 +31,7 @@ export interface TabViewsOptions {
   readonly log: LogPort;
 }
 
-/** The view of each tab a stage has shown, by tab id, made the first time the tab is shown and retired only once the tab is gone, so moving a tab between groups, panes or splits, or switching the group a window shows, never reloads its page. */
+/** The view of each tab a stage has shown, by tab id, made the first time the tab is shown and retired only once the tab is gone or asleep, so moving a tab between groups, panes or splits, or switching the group a window shows, never reloads its page. */
 export class TabViews {
   readonly #options: TabViewsOptions;
   readonly #views = new Map<string, OwnedView>();
@@ -56,6 +56,13 @@ export class TabViews {
         this.#views.set(tab.id, this.#make(tab));
       }
     }
+  }
+
+  /** Forgets the tab's view, handing it back for the caller to detach before it disposes it; the tab is given a new one the next time it is shown. */
+  release(tabId: string): OwnedView | undefined {
+    const owned = this.#views.get(tabId);
+    this.#views.delete(tabId);
+    return owned;
   }
 
   /** Forgets the views of the tabs `exists` no longer knows, handing them back for the caller to detach before it disposes them. */

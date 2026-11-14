@@ -252,6 +252,32 @@ export class Stages {
     }
   }
 
+  /** The tabs a pane of some window shows. */
+  shown(): Set<string> {
+    return new Set(
+      this.all.flatMap((found) => found.panes().map(({ tab }) => tab.id))
+    );
+  }
+
+  /** The tabs whose page in some window plays sound. */
+  audible(): Set<string> {
+    return new Set(
+      this.all.flatMap((found) =>
+        found
+          .kept()
+          .filter(({ view }) => view.audible())
+          .map(({ tab }) => tab.id)
+      )
+    );
+  }
+
+  /** Lets go of the tab's view in every stage that keeps one out of sight, so its page's memory goes back; the tab loads again when it is next shown. */
+  sleep(tabId: string): void {
+    for (const found of this.all) {
+      found.sleep(tabId);
+    }
+  }
+
   /** Lays every stage out again, after what the chrome takes of the windows changed. */
   relayout(): void {
     for (const found of this.all) {

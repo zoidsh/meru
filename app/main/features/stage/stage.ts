@@ -363,6 +363,20 @@ export class Stage {
     return true;
   }
 
+  /** Lets go of the tab's view while no pane of this stage shows it; true when there was one to let go. */
+  sleep(tabId: string): boolean {
+    if (this.panes().some(({ tab }) => tab.id === tabId)) {
+      return false;
+    }
+    const owned = this.#views.release(tabId);
+    if (owned === undefined) {
+      return false;
+    }
+    this.#retired.push(owned);
+    this.#reconcile();
+    return true;
+  }
+
   /** Focuses the pane showing the tab, if the stage shows it. */
   focusTab(tabId: string): Result<undefined, StageError> {
     const paneId = paneOfTab(this.#layout(), tabId);
