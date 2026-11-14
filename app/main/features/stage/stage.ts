@@ -3,16 +3,15 @@ import { isEqual } from "es-toolkit";
 import { DisposableStore } from "../../../core/disposable.ts";
 import { stageArea } from "../../../core/engines/chrome.ts";
 import type { ChromeInsets } from "../../../core/engines/chrome.ts";
+import type { Arrangement } from "../../../core/engines/layout.ts";
 import {
   dropTargetAt,
   placementOf,
   focusNext,
   focusPrevious,
   layout,
-  NO_FLUSH,
   paneOfTab,
   panes,
-  shownLayout,
   STYLE_METRICS,
   tabAfterLeaving,
   tabOfPane,
@@ -24,6 +23,7 @@ import {
   afterFullscreen,
   fullscreenPaneOf,
   NO_SPOTLIGHT,
+  shownLayout,
   toggleMaximised,
 } from "../../../core/engines/spotlight.ts";
 import type { Spotlight } from "../../../core/engines/spotlight.ts";
@@ -559,21 +559,17 @@ export class Stage {
     return fullscreenPaneOf(this.#shownLayout(), this.#spotlight);
   }
 
-  #arrangement() {
-    const shown = this.#shownLayout();
-    const style = this.#options.style();
+  // A fullscreen pane takes the whole window, the chrome and the inset with it.
+  #arrangement(): Arrangement {
     const fullscreen = this.#fullscreenPane();
     if (fullscreen !== undefined) {
-      return layout(
-        shown,
-        this.#options.window.contentBounds(),
-        style,
-        NO_FLUSH,
-        fullscreen
-      );
+      return {
+        dividers: [],
+        panes: new Map([[fullscreen, this.#options.window.contentBounds()]]),
+      };
     }
     const { area, flush } = this.#area();
-    return layout(shown, area, style, flush);
+    return layout(this.#shownLayout(), area, this.#options.style(), flush);
   }
 
   // Electron takes the window fullscreen itself when a view's page asks for it and puts it back when the page leaves, so the stage only gives the pane the window; setting the window's fullscreen as well left the page stuck in fullscreen once it asked to leave.

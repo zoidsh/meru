@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { leaf } from "./layout.ts";
+import type { Layout } from "../records/layout.ts";
+import { leaf, resize } from "./layout.ts";
 import {
   afterFocus,
   afterFullscreen,
   fullscreenPaneOf,
   NO_SPOTLIGHT,
+  shownLayout,
   toggleMaximised,
 } from "./spotlight.ts";
 
@@ -70,5 +72,34 @@ describe(fullscreenPaneOf, () => {
       fullscreenPaneOf(leaf("p2", "mail"), both),
       fullscreenPaneOf(shown, NO_SPOTLIGHT),
     ]).toStrictEqual(["p1", undefined, undefined]);
+  });
+});
+
+describe(shownLayout, () => {
+  const mail = leaf("p1", "mail");
+  const video = leaf("p2", "video");
+  const tree: Layout = {
+    first: mail,
+    id: "s1",
+    kind: "split",
+    orientation: "vertical",
+    ratio: 0.5,
+    second: video,
+  };
+  const none = { ...NO_SPOTLIGHT, drag: undefined };
+
+  it("shows the layout whole, else only the maximised tab's pane, and only the fullscreen tab's over that", () => {
+    expect([
+      shownLayout(tree, none),
+      shownLayout(tree, { ...none, maximised: "mail" }),
+      shownLayout(tree, { ...none, ...both }),
+    ]).toStrictEqual([tree, mail, video]);
+  });
+
+  it("shows the drag's layout, and ignores a tab the layout does not hold", () => {
+    const dragged = resize(tree, "s1", 0.3);
+    expect(
+      shownLayout(tree, { drag: dragged, fullscreen: "t9", maximised: "t8" })
+    ).toBe(dragged);
   });
 });

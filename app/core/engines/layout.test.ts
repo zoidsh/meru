@@ -21,7 +21,6 @@ import {
   focusNext,
   focusPrevious,
   layout,
-  NO_FLUSH,
   leaf,
   MAX_RATIO,
   MIN_RATIO,
@@ -30,7 +29,6 @@ import {
   movePane,
   ratioAt,
   resize,
-  shownLayout,
   split,
   STYLE_METRICS,
   swap,
@@ -164,16 +162,6 @@ describe(layout, () => {
       expect(
         arrangement.dividers.map((divider) => divider.splitId)
       ).toStrictEqual(splits(tree).map((node) => node.id));
-    }
-  );
-
-  it.each(cases)(
-    "gives a fullscreen pane the whole rect and hides the rest (seed $seed)",
-    ({ tree, rect, style, draw }) => {
-      const pane = pick(draw, panes(tree)).paneId;
-      const arrangement = layout(tree, rect, style, NO_FLUSH, pane);
-      expect([...arrangement.panes]).toStrictEqual([[pane, rect]]);
-      expect(arrangement.dividers).toStrictEqual([]);
     }
   );
 
@@ -836,50 +824,6 @@ describe(dropRect, () => {
       { height: 150, width: 801, x: 10, y: 171 },
       rect,
     ]);
-  });
-});
-
-const tabOf = (pane: Leaf) => pane.tabIds[0];
-
-describe(shownLayout, () => {
-  const none = { drag: undefined, fullscreen: undefined, maximised: undefined };
-
-  it.each(cases)(
-    "shows the layout whole with nothing maximised or fullscreen (seed $seed)",
-    ({ tree }) => {
-      expect(shownLayout(tree, none)).toBe(tree);
-    }
-  );
-
-  it.each(cases)(
-    "shows only the maximised tab's pane, and only the fullscreen tab's over it (seed $seed)",
-    ({ tree, draw }) => {
-      const maximised = pick(draw, panes(tree));
-      const fullscreen = pick(draw, panes(tree));
-      expect([
-        shownLayout(tree, { ...none, maximised: tabOf(maximised) }),
-        shownLayout(tree, {
-          ...none,
-          fullscreen: tabOf(fullscreen),
-          maximised: tabOf(maximised),
-        }),
-      ]).toStrictEqual([maximised, fullscreen]);
-    }
-  );
-
-  it("shows the drag's layout, and ignores a tab the layout does not hold", () => {
-    const tree =
-      split(
-        leaf("p1", "t1"),
-        "p1",
-        { orientation: "vertical", side: "after" },
-        "t2",
-        counter("id")
-      )?.layout ?? null;
-    const dragged = resize(tree, "id1", 0.3);
-    expect(
-      shownLayout(tree, { drag: dragged, fullscreen: "t9", maximised: "t8" })
-    ).toBe(dragged);
   });
 });
 

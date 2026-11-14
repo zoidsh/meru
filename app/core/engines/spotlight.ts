@@ -1,7 +1,7 @@
 import type { Layout } from "../records/layout.ts";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
-import { paneOfTab } from "./layout.ts";
+import { paneOfTab, panes } from "./layout.ts";
 
 /** Which of its group's panes a stage gives more than its share, by tab: a maximised one the whole stage, a fullscreen one the whole window. Kept per window and never stored, since it is a way of looking at the group, not part of it. */
 export interface Spotlight {
@@ -51,6 +51,27 @@ export const afterFullscreen = (
   return spotlight.fullscreen === tabId
     ? { ...spotlight, fullscreen: undefined }
     : spotlight;
+};
+
+/** The layout a stage shows: the drag's while one is on, and of it only the fullscreen tab's pane, else only the maximised tab's, while it holds them. */
+export const shownLayout = (
+  tree: Layout,
+  showing: Spotlight & {
+    /** The layout as a divider drag has moved it, while one is on. */
+    readonly drag: Layout | undefined;
+  }
+): Layout => {
+  const base = showing.drag ?? tree;
+  for (const tabId of [showing.fullscreen, showing.maximised]) {
+    const pane =
+      tabId === undefined
+        ? undefined
+        : panes(base).find((found) => found.tabIds.includes(tabId));
+    if (pane !== undefined) {
+      return pane;
+    }
+  }
+  return base;
 };
 
 /** The pane of the fullscreen tab, while the layout shown holds it. */

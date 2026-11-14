@@ -268,31 +268,6 @@ export const focusPrevious = (
   return ids.at(index <= 0 ? -1 : index - 1);
 };
 
-/** What a stage shows of its group's layout beyond the layout itself, the panes named by tab, since a pane's id changes under a join or a move. */
-export interface Showing {
-  /** The layout as a divider drag has moved it, while one is on. */
-  readonly drag: Layout | undefined;
-  /** The tab whose pane takes the whole stage, the others hidden. */
-  readonly maximised: string | undefined;
-  /** The tab whose page is fullscreen, whose pane takes the whole window. */
-  readonly fullscreen: string | undefined;
-}
-
-/** The layout a stage shows: the drag's while one is on, and of it only the fullscreen tab's pane, else only the maximised tab's, while it holds them. */
-export const shownLayout = (tree: Layout, showing: Showing): Layout => {
-  const base = showing.drag ?? tree;
-  for (const tabId of [showing.fullscreen, showing.maximised]) {
-    const pane =
-      tabId === undefined
-        ? undefined
-        : panes(base).find((found) => found.tabIds.includes(tabId));
-    if (pane !== undefined) {
-      return pane;
-    }
-  }
-  return base;
-};
-
 /** Where over a pane a dragged tab lands: beside one of its edges, taking that half, or in the middle, joining beside it. */
 export type DropZone = "left" | "right" | "top" | "bottom" | "centre";
 
@@ -398,7 +373,7 @@ export interface Flush {
   readonly left: boolean;
 }
 
-export const NO_FLUSH: Flush = { left: false, top: false };
+const NO_FLUSH: Flush = { left: false, top: false };
 
 const inset = (rect: Rect, by: number, flush: Flush): Rect => {
   const left = flush.left ? 0 : Math.min(by, rect.width);
@@ -475,17 +450,10 @@ export const layout = (
   tree: Layout,
   rect: Rect,
   style: Style,
-  flush: Flush = NO_FLUSH,
-  fullscreenPaneId?: string
+  flush: Flush = NO_FLUSH
 ): Arrangement => {
   if (tree === null) {
     return { dividers: [], panes: new Map() };
-  }
-  if (
-    fullscreenPaneId !== undefined &&
-    panes(tree).some((pane) => pane.paneId === fullscreenPaneId)
-  ) {
-    return { dividers: [], panes: new Map([[fullscreenPaneId, rect]]) };
   }
   const metrics = STYLE_METRICS[style];
   const rects = new Map<string, Rect>();
