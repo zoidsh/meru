@@ -8,9 +8,7 @@ export const orientationSchema = z.enum(["vertical", "horizontal"]);
 export type Orientation = z.infer<typeof orientationSchema>;
 
 /** Which side of a split a pane added beside another takes: `before`, first, left or above it, or `after`, second. */
-export const sideSchema = z.enum(["before", "after"]);
-
-export type Side = z.infer<typeof sideSchema>;
+const sideSchema = z.enum(["before", "after"]);
 
 /** Where a pane goes against another: beside or below it, and on which side. */
 export const besideSchema = z.object({
@@ -28,7 +26,7 @@ export const placementSchema = besideSchema.extend({
 
 export type Placement = z.infer<typeof placementSchema>;
 
-export const leafSchema = z.object({
+const leafSchema = z.object({
   kind: z.literal("leaf"),
   paneId: idSchema,
   // The cap is the only thing between this model and a stack of tabs per pane.
@@ -49,7 +47,7 @@ export interface Split {
 export type LayoutNode = Leaf | Split;
 
 // Annotated rather than inferred: zod cannot infer a type through a recursive union.
-export const splitSchema: z.ZodType<Split> = z.object({
+const splitSchema: z.ZodType<Split> = z.object({
   get first() {
     return layoutNodeSchema;
   },
@@ -62,7 +60,7 @@ export const splitSchema: z.ZodType<Split> = z.object({
   },
 });
 
-export const layoutNodeSchema: z.ZodType<LayoutNode> = z.union([
+const layoutNodeSchema: z.ZodType<LayoutNode> = z.union([
   leafSchema,
   splitSchema,
 ]);

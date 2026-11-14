@@ -23,7 +23,7 @@ const listOf = <T>(data: unknown, key: string, schema: z.ZodType<T>) => {
   return { dropped: items.length - parsed.length, parsed };
 };
 
-export interface Repair {
+interface Repair {
   readonly ids: Ids;
   /** The state of a first launch, for data that holds no usable profile. */
   readonly fresh: () => ProfilesState;

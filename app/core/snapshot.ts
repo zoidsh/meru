@@ -5,7 +5,7 @@ import type { Migration } from "./engines/migrate.ts";
 import type { LogPort } from "./log.ts";
 import type { LifecyclePort, Clock, FsPort, Unsubscribe } from "./ports.ts";
 
-export interface Recovered<T, F> {
+interface Recovered<T, F> {
   readonly value: T;
   readonly fallbacks: readonly F[];
 }
@@ -21,7 +21,7 @@ export interface SnapshotSpec<T, F> {
   readonly recover: (data: unknown) => Recovered<T, F>;
 }
 
-export type SnapshotSource =
+type SnapshotSource =
   | "file"
   | "missing"
   | "unreadable"
@@ -33,7 +33,7 @@ export interface Opened<T, F> extends Recovered<T, F> {
   readonly source: SnapshotSource;
 }
 
-export interface SnapshotPorts {
+interface SnapshotPorts {
   readonly fs: FsPort;
   readonly clock: Clock;
   readonly lifecycle: Pick<LifecyclePort, "onQuit">;

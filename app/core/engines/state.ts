@@ -194,11 +194,11 @@ export const updateProfile = (
 };
 
 /** What a tab may change about itself after it was added. */
-export type TabPatch = Partial<
+type TabPatch = Partial<
   Pick<Tab, "health" | "sleeps" | "title" | "url" | "zoom">
 >;
 
-export const updateTab = (
+const updateTab = (
   state: ProfilesState,
   tabId: string,
   patch: TabPatch

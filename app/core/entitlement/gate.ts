@@ -8,18 +8,18 @@ export type GatedFeature =
   | "unifiedInbox"
   | "proSetting";
 
-export interface GateContext {
+interface GateContext {
   /** Milliseconds since the epoch. */
   readonly now: number;
 }
 
-export interface ProfileGateContext extends GateContext {
+interface ProfileGateContext extends GateContext {
   /** Profiles that exist before the one being opened. */
   readonly profiles: number;
 }
 
 /** What the gate needs to know of the moment: the time, and for another profile how many there are. */
-export type GateContextOf<F extends GatedFeature> = F extends "extraProfile"
+type GateContextOf<F extends GatedFeature> = F extends "extraProfile"
   ? ProfileGateContext
   : GateContext;
 

@@ -13,7 +13,7 @@ import type { Point, Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
 import { stepFrom } from "../values.ts";
 
-export interface StyleMetrics {
+interface StyleMetrics {
   readonly inset: number;
   readonly gap: number;
   readonly radius: number;
@@ -29,7 +29,7 @@ export const STYLE_METRICS: Readonly<Record<Style, StyleMetrics>> = {
 export const MIN_RATIO = 0.1;
 export const MAX_RATIO = 0.9;
 
-export interface Divider {
+interface Divider {
   readonly splitId: string;
   readonly rect: Rect;
   readonly orientation: Orientation;
@@ -266,10 +266,10 @@ export const focusPrevious = (
 ): string | undefined => stepFrom(paneIds(tree), paneId, -1);
 
 /** Where over a pane a dragged tab lands: beside one of its edges, taking that half, or in the middle, joining beside it. */
-export type DropZone = "left" | "right" | "top" | "bottom" | "centre";
+type DropZone = "left" | "right" | "top" | "bottom" | "centre";
 
 /** The share of a pane's width or height, from each edge, that drops beside that edge. */
-export const EDGE_ZONE = 0.2;
+const EDGE_ZONE = 0.2;
 
 /** The zone of the pane's rect under the point: the nearest edge while within its fifth, else the middle; undefined outside the rect. */
 export const dropZoneAt = (rect: Rect, point: Point): DropZone | undefined => {
@@ -324,7 +324,7 @@ export const dropRect = (rect: Rect, zone: DropZone): Rect => {
 };
 
 /** Where a tab let go at a point lands among the panes. */
-export interface DropTarget {
+interface DropTarget {
   /** The tab of the pane under the point. */
   readonly tabId: string;
   readonly zone: DropZone;

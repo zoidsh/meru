@@ -7,7 +7,7 @@ export const serializedErrorSchema = z.object({
   stack: z.string().optional(),
 });
 
-export type SerializedError = z.infer<typeof serializedErrorSchema>;
+type SerializedError = z.infer<typeof serializedErrorSchema>;
 
 /** Any thrown value as `{ name, message, stack }`; a value that is no `Error` keeps its text as the message. */
 export const serializeError = (error: unknown): SerializedError => {

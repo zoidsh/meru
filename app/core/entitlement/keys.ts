@@ -2,15 +2,15 @@ import { decodeBase64Url } from "./token.ts";
 import type { Ed25519Subtle } from "./verify.ts";
 
 /** Raw Ed25519 public keys, base64url, by key id. */
-export type PublicKeys = Readonly<Record<string, string>>;
+type PublicKeys = Readonly<Record<string, string>>;
 
 /** The keys the API signs with. A new key is added by a release before the API switches to it, and one is dropped only once no token it signed can still be stored. */
-export const productionKeys: PublicKeys = {};
+const productionKeys: PublicKeys = {};
 
 export const DEV_KID = "dev-2026-11";
 
 /** Signs the tokens of `scripts/entitlement/sign.ts` and the end-to-end stub; its private key is in the repository, so only a run from the repository accepts it. */
-export const developmentKeys: PublicKeys = {
+const developmentKeys: PublicKeys = {
   [DEV_KID]: "PtbAtjqQvbURkrmlUEYoojWK0QoCABT25v4q5k2gUHE",
 };
 

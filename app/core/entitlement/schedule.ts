@@ -13,7 +13,7 @@ export const answerOutcomeSchema = z.enum([
   "invalid",
 ]);
 
-export type AnswerOutcome = z.infer<typeof answerOutcomeSchema>;
+type AnswerOutcome = z.infer<typeof answerOutcomeSchema>;
 
 /** What of entitlement.json decides when the device asks the API next. */
 export interface ScheduleState {

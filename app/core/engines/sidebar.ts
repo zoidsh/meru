@@ -11,7 +11,7 @@ import type { SingleInstance } from "./pinned.ts";
 export const sidebarWidthSchema = z.enum(["auto", "narrow", "wide"]);
 
 /** The width a user sets: one of the two, or `auto`, which picks between them. */
-export type SidebarWidth = z.infer<typeof sidebarWidthSchema>;
+type SidebarWidth = z.infer<typeof sidebarWidthSchema>;
 
 /** One of the two widths the sidebar is ever drawn at. */
 export type SidebarSize = Exclude<SidebarWidth, "auto">;
@@ -81,7 +81,7 @@ export const gmailUnreadBadgeSchema = z.enum([
 ]);
 
 /** When the Gmail row shows the profile's unread count. */
-export type GmailUnreadBadge = z.infer<typeof gmailUnreadBadgeSchema>;
+type GmailUnreadBadge = z.infer<typeof gmailUnreadBadgeSchema>;
 
 /** Whether the Gmail row shows its unread count: never while unread counts are off, and under `whenInactive` not while Gmail is in front, where the inbox shows it. */
 export const showsGmailUnread = (options: {
@@ -112,7 +112,7 @@ export const activeTabId = (
 };
 
 /** Where on a row a dragged tab is let go: its top or bottom quarter puts it between rows, the rest beside the row's pane. */
-export type DropZone = "before" | "onto" | "after";
+type DropZone = "before" | "onto" | "after";
 
 export interface DropTarget {
   readonly tabId: string;
@@ -120,7 +120,7 @@ export interface DropTarget {
 }
 
 /** What letting go of a dragged tab does: `tabs.move` its row, `tabs.leave` its group for a row of its own, or `tabs.join` another tab's group. */
-export type DropAction =
+type DropAction =
   | { readonly kind: "move"; readonly to: number }
   | { readonly kind: "leave"; readonly to: number }
   | { readonly kind: "join"; readonly targetTabId: string };

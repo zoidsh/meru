@@ -1,12 +1,10 @@
 import { z } from "zod";
 
 /** Where a link to the app opens when nothing else asks: as a tab, or in a window of its own. */
-export const openBehaviorSchema = z.enum(["tab", "window"]);
-
-export type OpenBehavior = z.infer<typeof openBehaviorSchema>;
+const openBehaviorSchema = z.enum(["tab", "window"]);
 
 // In the catalog's order, Gmail first and the rest by name, which a setting picking apps lists them in.
-export const appIconSchema = z.enum([
+const appIconSchema = z.enum([
   "gmail",
   "admin",
   "ads",

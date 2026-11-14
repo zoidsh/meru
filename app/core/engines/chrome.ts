@@ -9,7 +9,7 @@ import type { Sidebar } from "./sidebar.ts";
 /** The height of the titlebar row across the window's top, which the window's own controls are centred on. */
 export const TITLEBAR_HEIGHT = 40;
 
-export interface ChromeColors {
+interface ChromeColors {
   readonly background: string;
   readonly foreground: string;
 }
@@ -24,7 +24,7 @@ export const chromeColors = (theme: Theme): ChromeColors =>
 const TRAFFIC_LIGHT_HEIGHT = 12;
 const TRAFFIC_LIGHT_X = 12;
 
-export interface WindowLook {
+interface WindowLook {
   readonly platform: Platform;
   readonly theme: Theme;
   /** Whether a Linux window draws its controls, which some window managers have no room for. */

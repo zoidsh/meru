@@ -13,10 +13,10 @@ export const issueRequestSchema = z.object({
 });
 
 /** A 200's body. */
-export const issuedSchema = z.object({ token: z.string().min(1) });
+const issuedSchema = z.object({ token: z.string().min(1) });
 
 /** A 4xx's body: why the API refused, such as unknownLicenseKey or malformedRequest. */
-export const refusedSchema = z.object({
+const refusedSchema = z.object({
   error: z.object({ reason: z.string().min(1) }),
 });
 

@@ -11,7 +11,7 @@ export const envelopeSchema = z.object({
   version: z.number().int().min(1),
 });
 
-export type MigrationError = "newer" | "failed";
+type MigrationError = "newer" | "failed";
 
 /**
  * Runs the ladder from the file's version to `current`; `ladder[0]` takes version 1 to 2. A file from a newer version is refused rather than read as this one.

@@ -27,7 +27,7 @@ const MAC_APP_ROLES: readonly MenuEntry<never>[] = [
 const checkOf = (checked: boolean | undefined) =>
   checked === undefined ? {} : { checked };
 
-export interface MenuCommand<Id extends string> {
+interface MenuCommand<Id extends string> {
   readonly id: Id;
   readonly label: string;
   readonly menu?: { readonly section: MenuSectionId; readonly order: number };
@@ -38,7 +38,7 @@ export type MenuLabels = Readonly<
   Record<Exclude<MenuSectionId, "app">, string>
 >;
 
-export interface MenuOptions<Id extends string> {
+interface MenuOptions<Id extends string> {
   readonly platform: Platform;
   readonly commands: readonly MenuCommand<Id>[];
   readonly bindings: ReadonlyMap<Id, string | null>;

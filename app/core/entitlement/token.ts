@@ -3,7 +3,7 @@ import { z } from "zod";
 import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
 
-export const tokenHeaderSchema = z.object({
+const tokenHeaderSchema = z.object({
   alg: z.literal("EdDSA"),
   /** Which accepted public key signed the token. */
   kid: z.string().min(1),
@@ -40,11 +40,11 @@ export const claimsSchema = claimFieldsSchema
     { message: "A disabled token has no reason", path: ["reason"] }
   );
 
-export type TokenHeader = z.infer<typeof tokenHeaderSchema>;
+type TokenHeader = z.infer<typeof tokenHeaderSchema>;
 
 export type Claims = z.infer<typeof claimsSchema>;
 
-export interface ParsedToken {
+interface ParsedToken {
   readonly header: TokenHeader;
   readonly claims: Claims;
   /** The bytes the signature covers: the header and claims parts as they appear in the token, joined by a dot. */

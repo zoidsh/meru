@@ -22,7 +22,7 @@ export interface Ed25519Subtle<K> {
   ) => Promise<boolean>;
 }
 
-export type VerifyError =
+type VerifyError =
   | Malformed
   | { readonly kind: "unknownKey"; readonly kid: string }
   | { readonly kind: "badSignature" }
@@ -30,7 +30,7 @@ export type VerifyError =
   /** Signed and for this device, but past its expiry: the claims still say what the last answer was. */
   | { readonly kind: "expired"; readonly claims: Claims };
 
-export interface VerifyOptions<K> {
+interface VerifyOptions<K> {
   readonly subtle: Ed25519Subtle<K>;
   /** The accepted public keys by key id. */
   readonly keys: ReadonlyMap<string, K>;

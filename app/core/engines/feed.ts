@@ -5,7 +5,7 @@ import { err, ok } from "../result.ts";
 import type { Result } from "../result.ts";
 
 /** Why a feed's text is not a feed: not XML, as Google's sign-in page is not, or XML of another shape. */
-export type FeedError = "notXml" | "notAFeed";
+type FeedError = "notXml" | "notAFeed";
 
 const children = (element: XmlElement, name: string): XmlElement[] =>
   element.children.filter(

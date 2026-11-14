@@ -1,6 +1,6 @@
 import type { Platform } from "../records/platform.ts";
 
-export type Modifier =
+type Modifier =
   | "CommandOrControl"
   | "Command"
   | "Control"
@@ -9,7 +9,7 @@ export type Modifier =
   | "Shift"
   | "Super";
 
-export interface Accelerator {
+interface Accelerator {
   /** In canonical order, each at most once. */
   readonly modifiers: readonly Modifier[];
   readonly key: string;
@@ -150,7 +150,7 @@ export const onPlatform = (
   };
 };
 
-export interface ShortcutCommand<Id extends string = string> {
+interface ShortcutCommand<Id extends string = string> {
   readonly id: Id;
   readonly shortcut?: { readonly default: string; readonly darwin?: string };
 }
@@ -187,7 +187,7 @@ export const resolveBindings = <Id extends string>(
     })
   );
 
-export interface Conflict<Id extends string = string> {
+interface Conflict<Id extends string = string> {
   /** As pressed on the platform. */
   readonly accelerator: string;
   readonly ids: readonly Id[];

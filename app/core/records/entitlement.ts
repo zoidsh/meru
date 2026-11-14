@@ -25,6 +25,4 @@ export const entitlementSchema = z.discriminatedUnion("kind", [
 
 export type Entitlement = z.infer<typeof entitlementSchema>;
 
-export type EntitlementKind = Entitlement["kind"];
-
 export type EntitlementSource = Entitlement["source"];
