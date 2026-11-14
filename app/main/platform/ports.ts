@@ -218,15 +218,8 @@ export const createElectronPorts = (): Ports => ({
   tray: createTray(),
   sessions: createSessions(),
   shell: {
-    openExternal: (url) => {
-      const open = async () => {
-        try {
-          await shell.openExternal(url);
-        } catch (error) {
-          console.error(error);
-        }
-      };
-      void open();
+    openExternal: async (url) => {
+      await shell.openExternal(url);
     },
   },
   theme: {

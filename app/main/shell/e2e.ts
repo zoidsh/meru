@@ -51,8 +51,9 @@ export type E2eSnapshot = z.infer<typeof e2eSnapshotSchema>;
 export class RecordingShell implements ShellPort {
   readonly opened: string[] = [];
 
-  readonly openExternal = (url: string) => {
+  readonly openExternal = async (url: string) => {
     this.opened.push(url);
+    await Promise.resolve();
   };
 }
 

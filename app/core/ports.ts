@@ -244,8 +244,8 @@ export const themeOf = (port: ThemePort): Theme =>
 
 /** The operating system's handlers for what the app does not open itself. */
 export interface ShellPort {
-  /** Opens the address in the default browser. */
-  readonly openExternal: (url: string) => void;
+  /** Opens the address in the default browser; rejects when nothing on the system opens it. */
+  readonly openExternal: (url: string) => Promise<void>;
 }
 
 /** The most of a body a session request reads; a feed or a page past it is not what was asked for. */

@@ -1,6 +1,7 @@
 import { paneOfTab } from "../../../core/engines/layout.ts";
 import { isSignIn, resolveLinkTarget } from "../../../core/engines/links.ts";
 import { groupOf } from "../../../core/engines/ordering.ts";
+import type { LogPort } from "../../../core/log.ts";
 import type { ShellPort } from "../../../core/ports.ts";
 import type { Placement } from "../../../core/records/layout.ts";
 import type { Disposition } from "../../../core/records/link.ts";
@@ -10,6 +11,7 @@ import type { SettingsStore } from "../settings/index.ts";
 import type { Stages } from "../stage/index.ts";
 
 export interface LinksOptions {
+  readonly log: LogPort;
   readonly profiles: Pick<Profiles, "state" | "tab" | "openTab" | "focusTab">;
   readonly settings: Pick<SettingsStore, "get">;
   readonly shell: ShellPort;
@@ -27,7 +29,7 @@ export class Links {
 
   /** Routes a link the tab's page opened; true when it was taken from the page. A page navigating itself is left to it, so Google's sign-in and its redirects stay in the pane, and so is a window onto accounts.google.com, which signs in. */
   open(tabId: string, url: string, disposition: Disposition): boolean {
-    const { profiles, shell, settings, stages } = this.#options;
+    const { profiles, settings, stages } = this.#options;
     const load = (id: string, address: string) => {
       stages.load(id, address);
     };
@@ -52,7 +54,7 @@ export class Links {
       return true;
     }
     if (target.action === "external") {
-      shell.openExternal(url);
+      this.#external(url);
       return true;
     }
     const background = target.action === "newTab" && target.background;
@@ -73,7 +75,7 @@ export class Links {
       url
     );
     if (!opened.ok) {
-      shell.openExternal(url);
+      this.#external(url);
       return true;
     }
     if (opened.value.url !== url) {
@@ -83,6 +85,29 @@ export class Links {
       profiles.focusTab(opened.value.id);
     }
     return true;
+  }
+
+  /** Decides a blank popup at its first address: shown when it heads for Google's sign-in, which needs the opener, and otherwise sent to the browser and closed. */
+  popup(url: string): boolean {
+    const shows = isSignIn(url);
+    if (!shows) {
+      this.#external(url);
+    }
+    return shows;
+  }
+
+  #external(url: string): void {
+    const open = async () => {
+      try {
+        await this.#options.shell.openExternal(url);
+      } catch (error) {
+        this.#options.log.warn("The browser did not open a link", {
+          error,
+          url,
+        });
+      }
+    };
+    void open();
   }
 
   /** Beside the tab's pane, in its group. */

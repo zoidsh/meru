@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { isSignIn } from "../../../core/engines/links.ts";
 import { groupOf } from "../../../core/engines/ordering.ts";
 import { AppEvents } from "../../../core/events.ts";
 import { wireName } from "../../../shared/channels/define.ts";
@@ -16,7 +15,7 @@ import { FakeFs } from "../../../test/fakes/fs.ts";
 import { fakeIds } from "../../../test/fakes/ids.ts";
 import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
-import { strictLog } from "../../../test/fakes/log.ts";
+import { FakeLog, strictLog } from "../../../test/fakes/log.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeViewFactory } from "../../../test/fakes/view-factory.ts";
 import { FakeWindow } from "../../../test/fakes/window.ts";
@@ -91,13 +90,7 @@ const setup = async () => {
     insets: () => ({ left: 0, top: 0 }),
     log: strictLog,
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
-    onPopup: (url) => {
-      const shows = isSignIn(url);
-      if (!shows) {
-        shell.openExternal(url);
-      }
-      return shows;
-    },
+    onPopup: (url) => links.popup(url),
     profiles,
     registrar,
     settings,
@@ -106,7 +99,13 @@ const setup = async () => {
     views,
   });
   stages.start();
-  const links = new Links({ profiles, settings, shell, stages });
+  const links = new Links({
+    log: strictLog,
+    profiles,
+    settings,
+    shell,
+    stages,
+  });
   stages.open(window, () => shown ?? profiles.currentGroup()?.id);
   const changes = (): StageSnapshot[] =>
     transport.sent
@@ -241,5 +240,25 @@ describe(Links, () => {
       gmail?.popup("https://example.com/"),
       shell.opened,
     ]).toStrictEqual([true, false, ["https://example.com/"]]);
+  });
+
+  it("writes a warning when the system opens no browser for a link", async () => {
+    const { profiles, settings } = await setup();
+    const log = new FakeLog();
+    const links = new Links({
+      log: log.scoped("links"),
+      profiles,
+      settings,
+      shell: {
+        openExternal: async (url) => {
+          await Promise.reject(new Error(`No application opens ${url}`));
+        },
+      },
+      stages: { load: () => {} },
+    });
+    expect(links.popup("https://example.com/")).toBeFalsy();
+    await expect
+      .poll(() => log.at("warn"))
+      .toStrictEqual(["The browser did not open a link"]);
   });
 });

@@ -2,7 +2,6 @@ import path from "node:path";
 
 import { chromeInsets } from "../core/engines/chrome.ts";
 import { GMAIL_URL } from "../core/engines/inbox.ts";
-import { isSignIn } from "../core/engines/links.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
@@ -234,13 +233,7 @@ const start = async () => {
     blankPanes: e2e,
     commands,
     onOpen: (tabId, url, disposition) => links.open(tabId, url, disposition),
-    onPopup: (url) => {
-      const shows = isSignIn(url);
-      if (!shows) {
-        shell.openExternal(url);
-      }
-      return shows;
-    },
+    onPopup: (url) => links.popup(url),
     dragPreload: path.join(dist, "preload", "drag.cjs"),
     overlayPreload: path.join(dist, "preload", "renderer.cjs"),
     events,
@@ -266,6 +259,7 @@ const start = async () => {
   });
   stages.start();
   const links = new Links({
+    log: log.scoped("links"),
     profiles,
     settings,
     shell,
