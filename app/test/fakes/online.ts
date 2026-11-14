@@ -27,8 +27,4 @@ export class FakeOnline implements OnlinePort {
       listener(online);
     }
   };
-
-  get listening(): number {
-    return this.#listeners.size;
-  }
 }
