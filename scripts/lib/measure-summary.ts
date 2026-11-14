@@ -49,7 +49,7 @@ export interface Measurement {
 }
 
 /** The memory a reading is judged by: private where Electron reports it, else the working set. */
-export const memoryOf = (reading: ProcessReading): number =>
+const memoryOf = (reading: ProcessReading): number =>
   reading.privateKB ?? reading.workingSetKB;
 
 /** A process's kind, the row it is summed into: main, chrome page, pane, pane frame, overlay, gpu, utility, renderer. */
@@ -69,7 +69,7 @@ export const kindOf = ({ type, name }: ProcessReading): string => {
   return named ?? "renderer";
 };
 
-export interface Row {
+interface Row {
   readonly kind: string;
   /** Per point: the largest memory of any process of the kind in any reading, in KB, and the mean CPU across its readings. */
   readonly points: Readonly<
@@ -78,22 +78,22 @@ export interface Row {
 }
 
 export const summarise = (measurement: Measurement): Row[] => {
-  const kinds = new Map<string, Map<Point, ProcessReading[][]>>();
+  const kinds = new Map<string, Partial<Record<Point, ProcessReading[][]>>>();
   for (const { point, readings } of measurement.samples) {
     for (const reading of readings) {
       for (const [kind, processes] of Object.entries(
         groupBy(reading, kindOf)
       )) {
-        const points = kinds.get(kind) ?? new Map<Point, ProcessReading[][]>();
-        points.set(point, [...(points.get(point) ?? []), processes]);
+        const points = kinds.get(kind) ?? {};
         kinds.set(kind, points);
+        (points[point] ??= []).push(processes);
       }
     }
   }
   return [...kinds].map(([kind, points]) => ({
     kind,
     points: Object.fromEntries(
-      [...points].map(([point, readings]) => [
+      Object.entries(points).map(([point, readings]) => [
         point,
         {
           // CPU of a kind in one reading is the sum over its processes; the row shows the mean of those sums.

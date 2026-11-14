@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   kindOf,
   overBudget,
+  POINTS,
   recordingHost,
   summarise,
   table,
@@ -42,15 +43,10 @@ const measurement = (
   host: "mac-mini",
   electron: "45.2.3",
   platform: "darwin",
-  samples: Object.entries(samples).flatMap(([point, readings]) =>
-    point === "launch" ||
-    point === "split" ||
-    point === "tabDrag" ||
-    point === "launcher" ||
-    point === "idle"
-      ? [{ point, readings }]
-      : []
-  ),
+  samples: POINTS.flatMap((point) => {
+    const readings = samples[point];
+    return readings === undefined ? [] : [{ point, readings }];
+  }),
 });
 
 const MB = 1024;
@@ -122,8 +118,8 @@ describe(summarise, () => {
           launch: { cpu: 3, memoryKB: 50 * MB },
         },
       },
-      { kind: "pane", points: { idle: { cpu: 4, memoryKB: 90 * MB } } },
       { kind: "gpu", points: { launch: { cpu: 1, memoryKB: 70 * MB } } },
+      { kind: "pane", points: { idle: { cpu: 4, memoryKB: 90 * MB } } },
     ]);
   });
 });
@@ -137,8 +133,8 @@ describe(table, () => {
       "kind         launch        launch floor  split  split floor  tabDrag  tabDrag floor  launcher  launcher floor  idle          idle floor",
       "main         40.0 MB 5.0%  30.0 MB 1.0%  -      -            -        -              -         -               46.0 MB 0.5%  -",
       "chrome page  50.0 MB 3.0%  -             -      -            -        -              -         -               61.0 MB 0.3%  -",
-      "pane         -             -             -      -            -        -              -         -               90.0 MB 4.0%  -",
       "gpu          70.0 MB 1.0%  -             -      -            -        -              -         -               -             -",
+      "pane         -             -             -      -            -        -              -         -               90.0 MB 4.0%  -",
     ]);
   });
 
