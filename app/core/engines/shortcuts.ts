@@ -115,7 +115,7 @@ export const parseAccelerator = (text: string): Accelerator | undefined => {
   };
 };
 
-export const formatAccelerator = ({ modifiers, key }: Accelerator): string =>
+const formatAccelerator = ({ modifiers, key }: Accelerator): string =>
   [...modifiers, key].join("+");
 
 /** The canonical spelling of an accelerator, so two spellings of one compare equal; undefined when it does not parse. */
