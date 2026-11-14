@@ -14,11 +14,11 @@ import {
   panes,
   shownLayout,
   STYLE_METRICS,
+  tabAfterLeaving,
   tabOfPane,
 } from "../../../core/engines/layout.ts";
 import { isPinned } from "../../../core/engines/pinned.ts";
 import {
-  afterClose,
   afterFocus,
   afterFullscreen,
   fullscreenPaneOf,
@@ -228,12 +228,23 @@ export class Stage {
       }
       return;
     }
+    const before = this.#shown;
     this.#shown = group;
     this.#spotlight = NO_SPOTLIGHT;
-    if (this.#focusedPane() === undefined) {
-      this.#focused = panes(this.#layout())[0]?.tabIds[0];
+    if (this.#focusedPane() !== undefined) {
+      this.#update();
+      return;
     }
+    const paneWent = before !== undefined && before.id === group?.id;
+    this.#focused = tabAfterLeaving(
+      paneWent ? before.layout : null,
+      this.#layout(),
+      this.#focused
+    );
     this.#update();
+    if (paneWent) {
+      this.#focusedView()?.focus();
+    }
   }
 
   /** Opens a tab of the app in the profile and shows it: beside the focused pane in the orientation `split` names when the stage shows that profile, else in a group of one; a single-instance app's one tab instead when the profile has it. */
@@ -259,26 +270,16 @@ export class Stage {
   /** Closes a pane's tab; the last pane stays. */
   close(paneId = this.#focusedPane()): Result<undefined, StageError> {
     const order = panes(this.#layout());
-    const index = order.findIndex((pane) => pane.paneId === paneId);
-    const [tabId] = order[index]?.tabIds ?? [];
+    const [tabId] = order.find((pane) => pane.paneId === paneId)?.tabIds ?? [];
     if (tabId === undefined) {
       return err("unknownPane");
     }
     if (order.length === 1) {
       return err("lastPane");
     }
-    this.#spotlight = afterClose(this.#spotlight, tabId);
-    const wasFocused = this.#focused === tabId;
-    if (!this.#options.profiles.closeTab(tabId).ok) {
-      return err("refused");
-    }
-    this.refresh();
-    const remaining = panes(this.#layout());
-    const next = remaining[Math.min(index, remaining.length - 1)]?.paneId;
-    if (next !== undefined && wasFocused) {
-      this.focusPane(next);
-    }
-    return ok(undefined);
+    return this.#options.profiles.closeTab(tabId).ok
+      ? ok(undefined)
+      : err("refused");
   }
 
   focusPane(paneId: string): Result<undefined, StageError> {

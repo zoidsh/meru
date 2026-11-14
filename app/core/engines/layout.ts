@@ -55,6 +55,19 @@ export const panes = (tree: Layout): Leaf[] => {
   return [...panes(tree.first), ...panes(tree.second)];
 };
 
+/** The tab whose pane takes focus once the tab `gone` has left the layout `before`, leaving `after`: the one now in its place in layout order, else the last; the first when `before` did not hold `gone`. */
+export const tabAfterLeaving = (
+  before: Layout,
+  after: Layout,
+  gone: string | undefined
+): string | undefined => {
+  const index = panes(before).findIndex(
+    (pane) => gone !== undefined && pane.tabIds.includes(gone)
+  );
+  const left = panes(after);
+  return left[Math.min(Math.max(index, 0), left.length - 1)]?.tabIds[0];
+};
+
 /** The id of the pane showing the tab, while the layout shows it. */
 export const paneOfTab = (tree: Layout, tabId: string): string | undefined =>
   panes(tree).find((pane) => pane.tabIds.includes(tabId))?.paneId;

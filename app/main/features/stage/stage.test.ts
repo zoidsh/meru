@@ -356,6 +356,30 @@ describe(Stages, () => {
     });
   });
 
+  it("focuses the neighbour of a focused pane whose tab the sidebar closes", async () => {
+    const { views, changes, paneIds, profiles, split, stage } = await setup();
+    split("vertical");
+    split("vertical");
+    const [, middle, last] = paneIds();
+    unwrap(stage.focusPane(middle ?? ""));
+    const [, closing] = views.created;
+    for (const view of views.created) {
+      view.focused = false;
+    }
+
+    unwrap(profiles.closeTab(stage.snapshot().panes[1]?.tabId ?? ""));
+
+    expect({
+      closed: closing?.destroyed,
+      focused: views.created.map((view) => view.focused),
+      focusedPaneId: changes().at(-1)?.focusedPaneId,
+    }).toStrictEqual({
+      closed: true,
+      focused: [false, false, true],
+      focusedPaneId: last,
+    });
+  });
+
   it("shows another group once the state says so, detaching the views of the one it showed and keeping them", async () => {
     const { window, views, profiles, profileId, changes, show } = await setup();
     const [gmail] = views.created;

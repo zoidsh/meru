@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { leaf } from "./layout.ts";
 import {
-  afterClose,
   afterFocus,
   afterFullscreen,
   fullscreenPaneOf,
@@ -43,14 +42,6 @@ describe(afterFocus, () => {
       afterFocus(maximised, "mail") === maximised,
       afterFocus(NO_SPOTLIGHT, "mail") === NO_SPOTLIGHT,
     ]).toStrictEqual([NO_SPOTLIGHT, true, true]);
-  });
-});
-
-describe(afterClose, () => {
-  it("leaves nothing maximised, and forgets the fullscreen tab only when it is the one closed", () => {
-    expect([afterClose(both, "video"), afterClose(both, "mail")]).toStrictEqual(
-      [NO_SPOTLIGHT, { fullscreen: "video", maximised: undefined }]
-    );
   });
 });
 

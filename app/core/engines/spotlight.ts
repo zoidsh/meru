@@ -14,12 +14,6 @@ export const NO_SPOTLIGHT: Spotlight = {
   maximised: undefined,
 };
 
-/** Once a tab's pane closes, no pane stays maximised, and the tab is no longer fullscreen. */
-export const afterClose = (spotlight: Spotlight, tabId: string): Spotlight => ({
-  fullscreen: spotlight.fullscreen === tabId ? undefined : spotlight.fullscreen,
-  maximised: undefined,
-});
-
 /** Focusing another pane than the maximised one shows every pane again; the same spotlight when nothing changes. */
 export const afterFocus = (spotlight: Spotlight, tabId: string): Spotlight =>
   spotlight.maximised === undefined || spotlight.maximised === tabId

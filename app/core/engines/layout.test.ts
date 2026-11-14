@@ -34,6 +34,7 @@ import {
   split,
   STYLE_METRICS,
   swap,
+  tabAfterLeaving,
   tabOfPane,
 } from "./layout.ts";
 
@@ -405,6 +406,33 @@ describe(close, () => {
   it("leaves the tree alone for a pane it does not have", () => {
     const tree = leaf("p1", "t1");
     expect(close(tree, "p9")).toBe(tree);
+  });
+});
+
+describe(tabAfterLeaving, () => {
+  it("hands focus to the pane now in the gone pane's place, else the last, else the first", () => {
+    const three: Layout = {
+      first: leaf("p1", "t1"),
+      id: "s1",
+      kind: "split",
+      orientation: "vertical",
+      ratio: 0.5,
+      second: {
+        first: leaf("p2", "t2"),
+        id: "s2",
+        kind: "split",
+        orientation: "vertical",
+        ratio: 0.5,
+        second: leaf("p3", "t3"),
+      },
+    };
+    expect([
+      tabAfterLeaving(three, close(three, "p2"), "t2"),
+      tabAfterLeaving(three, close(three, "p3"), "t3"),
+      tabAfterLeaving(null, three, "t2"),
+      tabAfterLeaving(three, three, undefined),
+      tabAfterLeaving(three, null, "t1"),
+    ]).toStrictEqual(["t3", "t2", "t1", "t1", undefined]);
   });
 });
 
