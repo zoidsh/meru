@@ -416,7 +416,6 @@ export class Stage {
   cancelDrag(): Result<undefined, StageError> {
     const tab = this.#drag.kind === "tab";
     this.#drag.retire();
-    this.refresh();
     this.#reconcile();
     this.#arrange(false);
     if (tab) {
@@ -428,7 +427,6 @@ export class Stage {
   endDrag(point: Point): Result<undefined, StageError> {
     const tab = this.#drag.kind === "tab";
     const ended = this.#drag.end(point);
-    this.refresh();
     this.#reconcile();
     if (tab) {
       this.#focusedView()?.focus();
@@ -606,7 +604,6 @@ export class Stage {
       ).ok &&
       focused !== undefined
     ) {
-      this.refresh();
       this.focusTab(focused);
     }
   }
