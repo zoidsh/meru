@@ -4,6 +4,11 @@ export class FakeTray implements TrayPort {
   /** What the icon shows, or undefined while it is down. */
   spec: TraySpec | undefined;
   #click: (() => void) | undefined;
+  readonly #platform: string;
+
+  constructor(platform: string) {
+    this.#platform = platform;
+  }
 
   readonly show = (spec: TraySpec, onClick: () => void) => {
     this.spec = spec;
@@ -15,8 +20,11 @@ export class FakeTray implements TrayPort {
     this.#click = undefined;
   };
 
-  /** Clicks the icon, as a click that opens no menu. */
+  /** Clicks the icon, as a click that opens no menu; Linux opens the menu on any click and sends none. */
   readonly click = () => {
+    if (this.#platform === "linux") {
+      throw new Error("A tray on Linux sends no click");
+    }
     this.#click?.();
   };
 

@@ -114,7 +114,7 @@ const setup = async (platform: Platform) => {
     surface: "chrome",
   });
   await window.show();
-  const port = new FakeTray();
+  const port = new FakeTray(platform);
   new Tray({
     events,
     inbox,
@@ -215,5 +215,16 @@ describe(Tray, () => {
       true,
       ["Personal", "Office (2)", "-", "Hide Meru", "-", "Quit"],
     ]);
+  });
+
+  it("on Linux, where any click opens the menu and none reaches the app, hides and shows the window from the menu", async () => {
+    const { port, window } = await setup("linux");
+    port.pick("Hide Meru");
+    const hidden = !window.visible();
+    port.pick("Show Meru");
+    expect([hidden, window.visible()]).toStrictEqual([true, true]);
+    expect(() => {
+      port.click();
+    }).toThrow("A tray on Linux sends no click");
   });
 });
