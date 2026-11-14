@@ -68,6 +68,7 @@ const setup = async () => {
     profiles,
     settings,
     show,
+    stages,
     viewOf,
     window,
   };
@@ -189,6 +190,61 @@ describe(Sleep, () => {
       [true, false],
       [true, true],
       [false, false],
+    ]);
+  });
+
+  it("wakes a sleeping tab joined beside the shown one where its page stood", async () => {
+    const { asleep, clock, drive, gmail, profiles, show, viewOf } =
+      await setup();
+    const place = "https://drive.google.com/drive/folders/joined";
+    unwrap(profiles.letSleep(drive.id, true));
+    show(drive.id);
+    viewOf(drive.id)?.go(place);
+    show(gmail.id);
+    clock.advance(60 * MINUTE);
+    const slept = asleep();
+    unwrap(
+      profiles.joinTab(drive.id, gmail.id, {
+        orientation: "vertical",
+        side: "after",
+      })
+    );
+    expect([slept, asleep(), viewOf(drive.id)?.url]).toStrictEqual([
+      [drive.id],
+      [],
+      place,
+    ]);
+  });
+
+  it("lets a tab fall asleep while its row is dragged, and wakes it where it stood once dropped beside a pane", async () => {
+    const {
+      asleep,
+      clock,
+      drive,
+      gmail,
+      profiles,
+      show,
+      stages,
+      viewOf,
+      window,
+    } = await setup();
+    const place = "https://drive.google.com/drive/folders/dragged";
+    unwrap(profiles.letSleep(drive.id, true));
+    show(drive.id);
+    viewOf(drive.id)?.go(place);
+    show(gmail.id);
+    clock.advance(59 * MINUTE);
+    unwrap(
+      stages.beginDrag(window.contentsId, { kind: "tab", tabId: drive.id })
+    );
+    unwrap(stages.dragTo(window.contentsId, { x: 1150, y: 400 }, 1));
+    clock.advance(MINUTE);
+    const midDrag = asleep();
+    unwrap(stages.endDrag(window.contentsId, { x: 1150, y: 400 }));
+    expect([midDrag, asleep(), viewOf(drive.id)?.url]).toStrictEqual([
+      [drive.id],
+      [],
+      place,
     ]);
   });
 
