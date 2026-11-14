@@ -252,17 +252,45 @@ describe(Inbox, () => {
     });
   });
 
-  it("ignores a read asked for while one is out, which reads on its own schedule", async () => {
-    const { advance, inbox, sessions, start } = await setup();
+  it("reads again as soon as a read that hung ends when one was asked for meanwhile, and only once", async () => {
+    const { advance, inbox, sessions, start, status } = await setup();
     sessions.answer(INBOX_FEED_URL, "silent");
     await start();
+    inbox.readAll();
     inbox.readAll();
     await advance(1000);
     const during = sessions.fetched.length;
     sessions.answer(INBOX_FEED_URL, feed(ONE_UNREAD));
     await advance(19_000);
-    await advance(60_000);
-    expect([during, sessions.fetched.length]).toStrictEqual([1, 2]);
+    expect([during, sessions.fetched.length, status()]).toStrictEqual([
+      1,
+      2,
+      { kind: "ok", unreadCount: 1 },
+    ]);
+  });
+
+  it("follows one redirect within the mailbox, and fails a redirect anywhere else other than sign-in without calling the profile signed out", async () => {
+    const { advance, log, sessions, start, status } = await setup();
+    const other = "https://mail.google.com/mail/u/1/feed/atom";
+    sessions.answer(INBOX_FEED_URL, {
+      kind: "redirected",
+      location: other,
+      status: 302,
+    });
+    sessions.answer(other, feed(TWO_UNREAD));
+    await start();
+    const followed = status();
+    sessions.answer(other, {
+      kind: "redirected",
+      location: "https://mail.google.com/mail/u/2/feed/atom",
+      status: 302,
+    });
+    await advance(30_000);
+    expect([followed, status(), log.at("warn")]).toStrictEqual([
+      { kind: "ok", unreadCount: 2 },
+      { kind: "ok", unreadCount: 2 },
+      ["The inbox feed could not be read"],
+    ]);
   });
 
   it("drops what a read brings back for a profile removed while it was out", async () => {

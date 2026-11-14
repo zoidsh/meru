@@ -9,6 +9,7 @@ import {
   feedUrl,
   IMPORTANT_FEED_LABEL,
   readFeed,
+  redirectOf,
 } from "../../../core/engines/inbox.ts";
 import type { FeedMemory } from "../../../core/engines/inbox.ts";
 import type { AppEvents } from "../../../core/events.ts";
@@ -18,6 +19,7 @@ import type {
   OnlinePort,
   PowerPort,
   SessionPort,
+  SessionResponse,
   Unsubscribe,
 } from "../../../core/ports.ts";
 import type { Feed } from "../../../core/records/feed.ts";
@@ -44,6 +46,8 @@ interface ProfileFeed {
   /** What the run of failures under way is down to; undefined while the feed reads. */
   cause: string | undefined;
   reading: boolean;
+  /** A read was asked for while one was out, so the feed is read again as soon as it is back. */
+  again: boolean;
   timer: Unsubscribe | undefined;
   feed: Feed;
 }
@@ -56,7 +60,7 @@ type Fetched =
       readonly error?: unknown;
     };
 
-/** Google answers a session it will not let read the feed with a 401, or a redirect into its sign-in; the feed is only served over HTTPS, so no one else can answer with a redirect. */
+/** Google answers a session it will not let read the feed with a 401, or a redirect into its sign-in. */
 const SIGNED_OUT = "signedOut";
 
 /** Reads each active profile's Gmail inbox feed through its session, on an interval that backs off while it fails, and tells the profile and every page what is unread. */
@@ -156,6 +160,7 @@ export class Inbox {
           cause: undefined,
           failures: 0,
           feed: { entries: [], unread: 0 },
+          again: false,
           memory: EMPTY_FEED_MEMORY,
           reading: false,
           timer: undefined,
@@ -171,8 +176,12 @@ export class Inbox {
   async #read(profileId: string): Promise<void> {
     const { clock, online } = this.#options;
     const feed = this.#feeds.get(profileId);
-    // One read at a time per profile, so two cannot both call the same mail new.
-    if (feed === undefined || feed.reading) {
+    if (feed === undefined) {
+      return;
+    }
+    // One read at a time per profile, so two cannot both call the same mail new; one asked for meanwhile follows it.
+    if (feed.reading) {
+      feed.again = true;
       return;
     }
     feed.timer?.();
@@ -193,6 +202,11 @@ export class Inbox {
       this.#take(profileId, feed, read.feed, readAt);
     } else {
       this.#fail(profileId, feed, read);
+    }
+    if (feed.again) {
+      feed.again = false;
+      void this.#read(profileId);
+      return;
     }
     feed.timer = clock.schedule(feedDelay(feed.failures), () => {
       void this.#read(profileId);
@@ -249,20 +263,31 @@ export class Inbox {
 
   async #fetch(profileId: string, label?: string): Promise<Fetched> {
     const { clock, sessions } = this.#options;
-    let response;
+    const partition = partitionOf(profileId);
+    const url = feedUrl(this.#options.gmailUrl, clock.now(), label);
+    let response: SessionResponse;
     try {
-      response = await sessions.fetchText(
-        partitionOf(profileId),
-        feedUrl(this.#options.gmailUrl, clock.now(), label),
-        FEED_TIMEOUT
-      );
+      response = await sessions.fetchText(partition, url, FEED_TIMEOUT);
+      if (
+        response.kind === "redirected" &&
+        redirectOf(url, response.location) === "follow"
+      ) {
+        // Followed once only: a second redirect within the mailbox is a loop, not a page.
+        response = await sessions.fetchText(
+          partition,
+          new URL(response.location, url).href,
+          FEED_TIMEOUT
+        );
+      }
     } catch (error) {
       return { cause: "network", error, kind: "failed" };
     }
-    if (
-      response.kind === "redirected" ||
-      (response.kind === "answered" && response.status === 401)
-    ) {
+    if (response.kind === "redirected") {
+      return redirectOf(url, response.location) === "signIn"
+        ? { cause: SIGNED_OUT, kind: "failed" }
+        : { cause: "redirect", kind: "failed" };
+    }
+    if (response.kind === "answered" && response.status === 401) {
       return { cause: SIGNED_OUT, kind: "failed" };
     }
     if (response.kind === "tooLarge") {

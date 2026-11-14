@@ -1,4 +1,5 @@
 import type { FeedEntry } from "../records/feed.ts";
+import { isSignIn } from "./links.ts";
 
 /** The mailbox of the session's first signed-in account, the one a profile's Gmail pane shows; its feed, its messages and its actions hang off it. */
 export const GMAIL_URL = "https://mail.google.com/mail/u/0";
@@ -31,6 +32,26 @@ export const feedUrl = (
   label?: string
 ): string =>
   `${gmailUrl}/feed/atom${label === undefined ? "" : `/${label}`}?t=${now}`;
+
+const ORIGIN = /^(?<origin>[a-z][\w+.-]*:\/\/[^/?#]+)/iu;
+
+const originOf = (url: string) =>
+  ORIGIN.exec(url)?.groups?.origin?.toLowerCase();
+
+/** What a redirect of a read of the feed at `from` means: Google sends a session it will not serve to accounts.google.com, where it signs in; a move within the feed's own origin, such as to another signed-in account's `/mail/u/1`, is followed; anything else is a failure, not a sign-out. */
+export const redirectOf = (
+  from: string,
+  location: string
+): "signIn" | "follow" | "elsewhere" => {
+  if (isSignIn(location)) {
+    return "signIn";
+  }
+  const target = originOf(location);
+  if (target === undefined) {
+    return /^\/(?!\/)/u.test(location) ? "follow" : "elsewhere";
+  }
+  return target === originOf(from) ? "follow" : "elsewhere";
+};
 
 /** What a profile's last reads of its feed leave behind, to tell mail that arrived from mail that was already there. */
 export interface FeedMemory {

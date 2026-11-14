@@ -8,7 +8,9 @@ import {
   FEED_SLACK,
   feedDelay,
   feedUrl,
+  INBOX_FEED_URL,
   readFeed,
+  redirectOf,
 } from "./inbox.ts";
 
 const entriesOf = (text: string): readonly FeedEntry[] => {
@@ -65,6 +67,19 @@ describe(readFeed, () => {
       ...first.memory.seen.keys(),
       ...later.memory.seen.keys(),
     ]).toStrictEqual([newest?.id]);
+  });
+});
+
+describe(redirectOf, () => {
+  it("calls only a move to Google's sign-in signed out, follows one within the feed's origin, and calls the rest elsewhere", () => {
+    const from = `${INBOX_FEED_URL}?t=1`;
+    expect([
+      redirectOf(from, "https://accounts.google.com/ServiceLogin?service=mail"),
+      redirectOf(from, "https://mail.google.com/mail/u/1/feed/atom"),
+      redirectOf(from, "/mail/u/1/feed/atom"),
+      redirectOf(from, "https://example.com/feed"),
+      redirectOf(from, "http://["),
+    ]).toStrictEqual(["signIn", "follow", "follow", "elsewhere", "elsewhere"]);
   });
 });
 
