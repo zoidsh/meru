@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -53,5 +54,28 @@ describe(createFileLog, () => {
       current: await lines(path.join(logs, LOG_FILE)),
       old: await lines(path.join(logs, OLD_LOG_FILE)),
     }).toStrictEqual({ current: ["three"], old: ["one", "two"] });
+  });
+
+  it("settles a flush only once the lines written while it waits are on disk too", async () => {
+    const logs = await directory();
+    const log = createFileLog({
+      directory: logs,
+      minimum: "info",
+      mirror: false,
+    });
+    const quit = log.scoped("quit");
+    quit.info("first");
+    // Read synchronously the moment the flush settles, so a line still on its way cannot land before the read.
+    const seen = log
+      .flush()
+      .then(() => readFileSync(path.join(logs, LOG_FILE), "utf-8"));
+    quit.info("written during the flush");
+    const text = await seen;
+    expect(
+      text
+        .trim()
+        .split("\n")
+        .map((line) => messageSchema.parse(JSON.parse(line)).message)
+    ).toStrictEqual(["first", "written during the flush"]);
   });
 });

@@ -23,7 +23,7 @@ export interface FileLogOptions {
 
 export interface FileLog {
   readonly scoped: (scope: string) => LogPort;
-  /** Settles once every line written so far is on disk. */
+  /** Settles once every line is on disk, those written while it waits included, so a quit that flushes alongside other teardown keeps their lines. */
   readonly flush: () => Promise<void>;
 }
 
@@ -71,7 +71,12 @@ export const createFileLog = (options: FileLogOptions): FileLog => {
   };
   return {
     flush: async () => {
-      await written.catch(() => 0);
+      let settled: Promise<number> | undefined;
+      while (settled !== written) {
+        settled = written;
+        // oxlint-disable-next-line no-await-in-loop -- each wait is for the lines queued during the last one.
+        await settled.catch(() => 0);
+      }
     },
     scoped: (scope) => scopedLog(write, scope),
   };
