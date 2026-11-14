@@ -6,5 +6,9 @@
     "types": []
   },
   "include": ["."],
-  "references": [{ "path": "../core" }, { "path": "../shared" }]
+  "references": [
+    { "path": "../core" },
+    { "path": "../shared" },
+    { "path": "../test" }
+  ]
 }
