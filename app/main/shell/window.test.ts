@@ -87,6 +87,14 @@ describe(MainWindow, () => {
     ]);
   });
 
+  it("takes the chrome page's surface back once the window closes", async () => {
+    const { registrar, transport, window } = await open("darwin");
+    window.close();
+    transport.sent.length = 0;
+    registrar.broadcast(settingsPushes.changed, { changes: [], locked: {} });
+    expect(transport.sent).toStrictEqual([]);
+  });
+
   it("puts the same in the dev server's URL", async () => {
     const { window } = await open("darwin", "http://127.0.0.1:5173/");
     expect(window.loaded).toBe(

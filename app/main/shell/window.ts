@@ -101,11 +101,12 @@ export class MainWindow {
         listener();
       }
     });
+    const unassign = registrar.assign(window.contentsId, pageSurfaces[surface]);
     window.onClosed(() => {
       unsubscribe();
+      unassign();
       this.#window = undefined;
     });
-    registrar.assign(window.contentsId, pageSurfaces[surface]);
     onCreated(window);
 
     await window.loadUrl(pageUrl(pages, "chrome.html"));
