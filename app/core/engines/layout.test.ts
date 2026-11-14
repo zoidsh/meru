@@ -538,6 +538,12 @@ describe(focusPrevious, () => {
   it("has nothing to focus in the empty layout", () => {
     expect(focusPrevious(null, "p1")).toBeUndefined();
   });
+
+  it("starts at the first pane from a pane it does not have, as focusNext does", () => {
+    const tree = cases[0]?.tree ?? null;
+    expect(focusPrevious(tree, "p9")).toBe(focusNext(tree, "p9"));
+    expect(focusPrevious(tree, "p9")).toBe(panes(tree)[0]?.paneId);
+  });
 });
 
 const leafSet = (tree: Layout) =>

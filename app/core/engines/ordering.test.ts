@@ -10,7 +10,6 @@ import {
   groupOf,
   moveItem,
   moveProfile,
-  stepFrom,
   moveTab,
   orderedProfiles,
   orderedTabs,
@@ -338,18 +337,5 @@ describe(besideTab, () => {
       },
       undefined,
     ]);
-  });
-});
-
-describe(stepFrom, () => {
-  it("steps forward and back, wrapping at either end", () => {
-    expect(stepFrom(["a", "b", "c"], "c", 1)).toBe("a");
-    expect(stepFrom(["a", "b", "c"], "a", -1)).toBe("c");
-    expect(stepFrom(["a", "b", "c"], "a", 1)).toBe("b");
-  });
-
-  it("starts at the first from an id it does not have, and finds nothing in nothing", () => {
-    expect(stepFrom(["a", "b"], "x", -1)).toBe("a");
-    expect(stepFrom([], "x", 1)).toBeUndefined();
   });
 });

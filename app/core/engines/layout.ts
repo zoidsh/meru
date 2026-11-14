@@ -11,6 +11,7 @@ import type {
 } from "../records/layout.ts";
 import type { Point, Rect } from "../records/rect.ts";
 import type { Style } from "../records/style.ts";
+import { stepFrom } from "../values.ts";
 
 export interface StyleMetrics {
   readonly inset: number;
@@ -253,20 +254,16 @@ export const resize = (tree: Layout, splitId: string, ratio: number): Layout =>
         ratio: clamp(ratio, MIN_RATIO, MAX_RATIO),
       }));
 
-export const focusNext = (tree: Layout, paneId: string): string | undefined => {
-  const ids = panes(tree).map((pane) => pane.paneId);
-  const index = ids.indexOf(paneId);
-  return ids[(index + 1) % ids.length];
-};
+const paneIds = (tree: Layout): string[] =>
+  panes(tree).map((pane) => pane.paneId);
+
+export const focusNext = (tree: Layout, paneId: string): string | undefined =>
+  stepFrom(paneIds(tree), paneId, 1);
 
 export const focusPrevious = (
   tree: Layout,
   paneId: string
-): string | undefined => {
-  const ids = panes(tree).map((pane) => pane.paneId);
-  const index = ids.indexOf(paneId);
-  return ids.at(index <= 0 ? -1 : index - 1);
-};
+): string | undefined => stepFrom(paneIds(tree), paneId, -1);
 
 /** Where over a pane a dragged tab lands: beside one of its edges, taking that half, or in the middle, joining beside it. */
 export type DropZone = "left" | "right" | "top" | "bottom" | "centre";

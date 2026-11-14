@@ -1,11 +1,7 @@
 import { isEqual } from "es-toolkit";
 
 import { DisposableStore } from "../../../core/disposable.ts";
-import {
-  groupOf,
-  orderedProfiles,
-  stepFrom,
-} from "../../../core/engines/ordering.ts";
+import { groupOf, orderedProfiles } from "../../../core/engines/ordering.ts";
 import { repairState } from "../../../core/engines/state-repair.ts";
 import { validateState } from "../../../core/engines/state-validate.ts";
 import {
@@ -53,6 +49,7 @@ import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
 import type { Opened, SnapshotSpec } from "../../../core/snapshot.ts";
+import { stepFrom } from "../../../core/values.ts";
 import { appById, gmail, isSingleInstanceId } from "../../../shared/apps.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
 import {

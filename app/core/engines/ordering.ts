@@ -132,19 +132,6 @@ export const moveTab = (
   );
 };
 
-/** The id `by` steps from `current` in `ids`, wrapping at either end; the first when `current` is not among them. */
-export const stepFrom = (
-  ids: readonly string[],
-  current: string,
-  by: 1 | -1
-): string | undefined => {
-  const at = ids.indexOf(current);
-  if (at === -1) {
-    return ids[0];
-  }
-  return ids[(at + by + ids.length) % ids.length];
-};
-
 /** Moves a profile to position `to`, clamped, and numbers every profile's order from 0. */
 export const moveProfile = (
   profiles: readonly Profile[],
