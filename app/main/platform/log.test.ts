@@ -1,0 +1,57 @@
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { afterEach, describe, expect, it } from "vitest";
+import { z } from "zod";
+
+import { createFileLog, LOG_FILE, OLD_LOG_FILE } from "./log.ts";
+
+const messageSchema = z.object({ message: z.string() });
+
+const made: string[] = [];
+
+const directory = async () => {
+  const found = await mkdtemp(path.join(tmpdir(), "meru-log-"));
+  made.push(found);
+  return path.join(found, "logs");
+};
+
+const lines = async (file: string) => {
+  const text = await readFile(file, "utf-8");
+  return text
+    .trim()
+    .split("\n")
+    .map((line) => messageSchema.parse(JSON.parse(line)).message);
+};
+
+describe(createFileLog, () => {
+  afterEach(async () => {
+    await Promise.all(
+      made.splice(0).map(async (found) => {
+        await rm(found, { force: true, recursive: true });
+      })
+    );
+  });
+
+  it("appends lines at or above its level in order, and moves the file aside once the next line would pass the cap", async () => {
+    const logs = await directory();
+    const log = createFileLog({
+      cap: 200,
+      directory: logs,
+      minimum: "info",
+      mirror: false,
+      now: () => 0,
+    });
+    const inbox = log.scoped("inbox");
+    inbox.debug("skipped");
+    for (const message of ["one", "two", "three"]) {
+      inbox.info(message);
+    }
+    await log.flush();
+    expect({
+      current: await lines(path.join(logs, LOG_FILE)),
+      old: await lines(path.join(logs, OLD_LOG_FILE)),
+    }).toStrictEqual({ current: ["three"], old: ["one", "two"] });
+  });
+});
