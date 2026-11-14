@@ -21,6 +21,7 @@ import type {
   TrayIcon,
   TrayPort,
 } from "../../core/ports.ts";
+import { msg } from "../../shared/msg.ts";
 
 // Windows draws an overlay over the taskbar button rather than taking a count, and wants it in BGRA.
 const overlayImage = (total: number): NativeImage => {
@@ -44,7 +45,7 @@ export const createBadge = (platform: string): BadgePort => ({
       for (const window of BrowserWindow.getAllWindows()) {
         window.setOverlayIcon(
           total > 0 ? overlayImage(total) : null,
-          total > 0 ? "You have unread messages" : ""
+          total > 0 ? msg`You have unread messages` : ""
         );
       }
     } else {
