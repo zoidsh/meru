@@ -3,6 +3,7 @@ import { setImmediate } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
 
 import { parseFeed } from "../../../core/engines/feed.ts";
+import { GMAIL_URL } from "../../../core/engines/inbox.ts";
 import { AppEvents } from "../../../core/events.ts";
 import { TWO_UNREAD } from "../../../core/fixtures/gmail-feeds.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
@@ -74,6 +75,7 @@ const setup = async () => {
   const notifications = new Notifications({
     events,
     inbox: { important: async () => await Promise.resolve(important) },
+    gmailUrl: GMAIL_URL,
     load: (_tabId, url) => {
       loaded.push(url);
     },
@@ -87,8 +89,8 @@ const setup = async () => {
   });
   notifications.start();
   const first = profiles.selected().id;
-  const arrive = async (profileId = first) => {
-    events.emit("mail.arrived", { entries, profileId });
+  const arrive = async (profileId = first, arrived = entries) => {
+    events.emit("mail.arrived", { entries: arrived, profileId });
     await setImmediate();
   };
   return {
@@ -149,6 +151,29 @@ describe(Notifications, () => {
       loaded: [`https://mail.google.com/mail/u/0/#inbox/${older?.messageId}`],
       shown: 1,
       url: gmail.url,
+    });
+  });
+
+  it("raises one notification for more new emails than a handful, which opens the inbox", async () => {
+    const { arrive, loaded, port } = await setup();
+    const many = Array.from({ length: 6 }, (_, index) => ({
+      ...older,
+      id: `entry-${index}`,
+      messageId: `m${index}`,
+      subject: `Subject ${index}`,
+      summary: "",
+      link: "",
+      author: { email: "a@example.com", name: "A" },
+      issued: index,
+    }));
+    await arrive(undefined, many);
+    port.shown[0]?.click();
+    expect({
+      loaded,
+      shown: port.shown.map((shown) => shown.spec),
+    }).toStrictEqual({
+      loaded: ["https://mail.google.com/mail/u/0/#inbox"],
+      shown: [{ silent: false, title: "6 new emails" }],
     });
   });
 });

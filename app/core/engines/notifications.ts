@@ -54,6 +54,9 @@ export const mailNotice = (
   return { title, ...(lines.length === 0 ? {} : { body: lines.join("\n") }) };
 };
 
-/** The Gmail address that opens a message in a profile's pane. */
-export const messageUrl = (messageId: string): string =>
-  `https://mail.google.com/mail/u/0/#inbox/${messageId}`;
+/** The address in the mailbox that opens a message in a profile's pane. */
+export const messageUrl = (gmailUrl: string, messageId: string): string =>
+  `${gmailUrl}/#inbox/${messageId}`;
+
+/** The most notifications one read raises; past it, one notification says how many arrived, so a backlog delivered at once does not bury the screen. */
+export const MAX_MAIL_NOTICES = 5;

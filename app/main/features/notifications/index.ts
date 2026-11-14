@@ -1,6 +1,7 @@
 import { DisposableStore } from "../../../core/disposable.ts";
 import {
   mailNotice,
+  MAX_MAIL_NOTICES,
   messageUrl,
   notifiable,
 } from "../../../core/engines/notifications.ts";
@@ -9,6 +10,7 @@ import type { NotificationPort } from "../../../core/ports.ts";
 import type { FeedEntry } from "../../../core/records/feed.ts";
 import type { Platform } from "../../../core/records/platform.ts";
 import { gmail } from "../../../shared/apps.ts";
+import { msg } from "../../../shared/msg.ts";
 import type { Inbox } from "../inbox/index.ts";
 import type { Profiles } from "../profiles/index.ts";
 import type { SettingsStore } from "../settings/index.ts";
@@ -24,9 +26,11 @@ export interface NotificationsOptions {
   readonly showWindow: () => void;
   /** Loads an address into the tab's pane, or the view it is next given. */
   readonly load: (tabId: string, url: string) => void;
+  /** The mailbox a message opens in, which a run from the repository may point at a stand-in. */
+  readonly gmailUrl: string;
 }
 
-/** Raises a notification for each new email a profile's feed brings, under that profile's notification settings, and opens the message when one is clicked. */
+/** Raises a notification for each new email a profile's feed brings, or one for the lot past a handful, under that profile's notification settings, and opens the message, or the inbox, when one is clicked. */
 export class Notifications {
   readonly #options: NotificationsOptions;
   readonly #disposables = new DisposableStore();
@@ -51,7 +55,7 @@ export class Notifications {
     profileId: string,
     arrived: readonly FeedEntry[]
   ): Promise<void> {
-    const { inbox, notifications, platform, profiles, settings } =
+    const { gmailUrl, inbox, notifications, platform, profiles, settings } =
       this.#options;
     if (!settings.get("notifications.enabled", profileId)) {
       return;
@@ -75,14 +79,34 @@ export class Notifications {
       showSummary: settings.get("notifications.showSummary"),
     };
     const silent = !settings.get("notifications.playSound");
-    for (const entry of notifiable(arrived, newEmails, important)) {
+    const notified = notifiable(arrived, newEmails, important);
+    if (notified.length > MAX_MAIL_NOTICES) {
+      const count = msg`${notified.length} new emails`;
+      notifications.show(
+        {
+          silent,
+          title: options.labelled ? `[${profile.label}] ${count}` : count,
+        },
+        () => {
+          this.#open(profileId, `${gmailUrl}/#inbox`);
+        }
+      );
+      return;
+    }
+    for (const entry of notified) {
       notifications.show({ ...mailNotice(entry, options), silent }, () => {
-        this.#open(profileId, entry.messageId);
+        this.#open(
+          profileId,
+          entry.messageId === ""
+            ? undefined
+            : messageUrl(gmailUrl, entry.messageId)
+        );
       });
     }
   }
 
-  #open(profileId: string, messageId: string): void {
+  /** Brings the profile's Gmail tab to the front, at `url` when given. */
+  #open(profileId: string, url?: string): void {
     const { load, profiles, showWindow } = this.#options;
     showWindow();
     const tab = profiles.state.tabs.find(
@@ -91,8 +115,8 @@ export class Notifications {
     if (tab === undefined) {
       return;
     }
-    if (messageId !== "") {
-      load(tab.id, messageUrl(messageId));
+    if (url !== undefined) {
+      load(tab.id, url);
     }
     profiles.focusTab(tab.id);
   }

@@ -343,6 +343,7 @@ const start = async () => {
   new Notifications({
     events,
     inbox,
+    gmailUrl: gmailOverride ?? GMAIL_URL,
     load: (tabId, url) => {
       stages.load(tabId, url);
     },
