@@ -141,8 +141,7 @@ export class Account {
       }
     };
 
-    // For a locale with no dictionary Chromium falls back to a default of its
-    // own, `en-US` on Linux, which the default session holds untouched because
+    // The default session holds whatever Chromium chose, untouched, because
     // Meru never writes its languages.
     const systemLanguages = isSupported(locale)
       ? [locale]

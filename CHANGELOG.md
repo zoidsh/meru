@@ -18,6 +18,6 @@ This file is the draft of the next release, written one line at a time as work l
 
 - Closing the screen share picker without choosing a screen no longer shows an error
 - **Windows and Linux:** removing the last additional spellchecker language now stops checking spelling in it
-- **Windows and Linux:** Meru now opens its window when your system language has no spellchecker dictionary and additional spellchecker languages are selected. Before, it kept running without a window or tray icon, and opening it again did nothing
+- **Windows and Linux:** **Meru Pro** no longer starts without a window when your system language has no spellchecker dictionary and you've added spellchecker languages
 - Extensions that keep their settings in Chrome's synced storage can now save them. The settings stay on this device and are not synced
 - Windows opened from a workspace app, such as a compose window or a pop-out, now follow a theme change in their title bar
