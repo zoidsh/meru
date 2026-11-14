@@ -114,7 +114,7 @@ test("shows the sidebar once Calendar is added through the launcher, Drive dragg
 const isTabDrag = (page: Page) =>
   new URL(page.url()).searchParams.get("kind") === "tabDrag";
 
-test("joins a row dragged out of the sidebar beside the pane it is let go on, marking the half it would take on the way", async () => {
+test("joins a row dragged out of the sidebar beside the pane it is let go on, after the pinned Gmail even by its left edge, marking the half it would take on the way", async () => {
   const { app, chrome, close } = await launch();
   try {
     await openApp(app, chrome, "Calendar");
@@ -148,6 +148,7 @@ test("joins a row dragged out of the sidebar beside the pane it is let go on, ma
     await chrome.mouse.move(left.x + 1, left.y, { steps: 2 });
     const drop = await overlay?.locator("[data-drop]").boundingBox();
     expect(drop?.width).toBeCloseTo(pane.rect.width / 2, 0);
+    expect(drop?.x).toBeCloseTo(pane.rect.x + pane.rect.width / 2, 0);
     await chrome.mouse.up();
 
     await expect.poll(() => app.windows().some(isTabDrag)).toBeFalsy();
@@ -165,8 +166,8 @@ test("joins a row dragged out of the sidebar beside the pane it is let go on, ma
       const shown = await stageOf(chrome);
       return shown.panes.find((found) => found.tabId === tab?.id)?.rect.x;
     };
-    expect((await xOf("calendar")) ?? Infinity).toBeLessThan(
-      (await xOf("gmail")) ?? -Infinity
+    expect((await xOf("gmail")) ?? Infinity).toBeLessThan(
+      (await xOf("calendar")) ?? -Infinity
     );
   } finally {
     await close();

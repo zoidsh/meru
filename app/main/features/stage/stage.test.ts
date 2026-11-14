@@ -191,6 +191,7 @@ describe("the stage snapshot's comparison", () => {
       panes: [
         {
           paneId: "p1",
+          pinned: false,
           rect: { height: 10, width: 10, x: 0, y: 0 },
           tabId: "t1",
         },
@@ -202,6 +203,7 @@ describe("the stage snapshot's comparison", () => {
       panes: [
         {
           tabId: "t1",
+          pinned: false,
           rect: { y: 0, x: 0, width: 10, height: 10 },
           paneId: "p1",
         },
@@ -240,6 +242,7 @@ describe(Stages, () => {
     expect(changes().at(-1)?.panes).toStrictEqual([
       {
         paneId: paneIds()[0],
+        pinned: true,
         rect: { height: 784, width: 1184, x: 8, y: 8 },
         tabId: profiles.state.tabs[0]?.id,
       },
@@ -1045,7 +1048,7 @@ describe("a sidebar row dragged over the panes", () => {
     expect(childBounds(window)).toStrictEqual(before);
   });
 
-  it("joins the tab beside the pane on the side of the edge it is let go by, keeping focus on the pane that had it", async () => {
+  it("joins the tab beside the pane it is let go on, keeping focus on the pane that had it", async () => {
     const { calendar, gmail, groupOf, id, overlay, stage, stages } =
       await draggingTab();
     expect(stages.endDrag(id, { x: 50, y: 400 }).ok).toBeTruthy();
@@ -1063,18 +1066,18 @@ describe("a sidebar row dragged over the panes", () => {
       focused: gmail,
       group: [gmail, calendar.id],
       layout: "split",
-      panes: [calendar.id, gmail],
+      panes: [gmail, calendar.id],
     });
   });
 
   it.each([
-    ["left", { x: 50, y: 400 }, "vertical", true],
-    ["right", { x: 1150, y: 400 }, "vertical", false],
-    ["top", { x: 600, y: 50 }, "horizontal", true],
-    ["bottom", { x: 600, y: 750 }, "horizontal", false],
+    ["left", { x: 50, y: 400 }, "vertical"],
+    ["right", { x: 1150, y: 400 }, "vertical"],
+    ["top", { x: 600, y: 50 }, "horizontal"],
+    ["bottom", { x: 600, y: 750 }, "horizontal"],
   ] as const)(
-    "joins the tab by the %s edge it is let go by, on that side and in that orientation",
-    async (_edge, point, orientation, first) => {
+    "joins the tab by the %s edge of the pinned Gmail pane in that orientation, always after it",
+    async (_edge, point, orientation) => {
       const { calendar, gmail, groupOf, id, stage, stages } =
         await draggingTab();
       stages.endDrag(id, point);
@@ -1084,7 +1087,7 @@ describe("a sidebar row dragged over the panes", () => {
         panes: stage.snapshot().panes.map((pane) => pane.tabId),
       }).toStrictEqual({
         orientation,
-        panes: first ? [calendar.id, gmail] : [gmail, calendar.id],
+        panes: [gmail, calendar.id],
       });
     }
   );

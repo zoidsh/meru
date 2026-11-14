@@ -15,8 +15,8 @@ const LEFT = { height: 400, width: 300, x: 0, y: 0 };
 const RIGHT = { height: 400, width: 300, x: 300, y: 0 };
 
 const PANES = [
-  { paneId: "p1", rect: LEFT, tabId: "mail" },
-  { paneId: "p2", rect: RIGHT, tabId: "calendar" },
+  { paneId: "p1", pinned: false, rect: LEFT, tabId: "mail" },
+  { paneId: "p2", pinned: false, rect: RIGHT, tabId: "calendar" },
 ];
 
 const mounted: (() => void)[] = [];

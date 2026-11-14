@@ -347,14 +347,29 @@ export interface DropTarget {
   readonly rect: Rect;
 }
 
-/** The pane under the point and where on it the tab `tabId` would land; nothing over the tab's own pane or off every pane. */
+// A pinned tab stays first in its group's layout as in the sidebar's rows, so nothing lands before it.
+const AFTER_PINNED: Readonly<Record<DropZone, DropZone>> = {
+  bottom: "bottom",
+  centre: "centre",
+  left: "right",
+  right: "right",
+  top: "bottom",
+};
+
+/** The pane under the point and where on it the tab `tabId` would land, a pinned pane's left and top fifths landing on its right and bottom; nothing over the tab's own pane or off every pane. */
 export const dropTargetAt = (
-  shown: readonly { readonly rect: Rect; readonly tabId: string }[],
+  shown: readonly {
+    readonly rect: Rect;
+    readonly tabId: string;
+    readonly pinned?: boolean;
+  }[],
   point: Point,
   tabId: string
 ): DropTarget | undefined => {
   for (const pane of shown) {
-    const zone = dropZoneAt(pane.rect, point);
+    const found = dropZoneAt(pane.rect, point);
+    const zone =
+      found === undefined || pane.pinned !== true ? found : AFTER_PINNED[found];
     if (zone !== undefined) {
       return pane.tabId === tabId
         ? undefined

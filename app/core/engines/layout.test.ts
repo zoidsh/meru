@@ -873,6 +873,27 @@ describe(dropTargetAt, () => {
     ]);
   });
 
+  it("lands a drop on a pinned pane's left or top fifth on its right or bottom half, so the pinned tab stays first", () => {
+    const pinned = [{ ...shown[0], pinned: true, rect: left, tabId: "mail" }];
+    expect([
+      dropTargetAt(pinned, { x: 20, y: 200 }, "drive"),
+      dropTargetAt(pinned, { x: 150, y: 20 }, "drive"),
+      dropTargetAt(pinned, { x: 150, y: 200 }, "drive")?.zone,
+    ]).toStrictEqual([
+      {
+        rect: { ...left, width: 150, x: 150 },
+        tabId: "mail",
+        zone: "right",
+      },
+      {
+        rect: { ...left, height: 200, y: 200 },
+        tabId: "mail",
+        zone: "bottom",
+      },
+      "centre",
+    ]);
+  });
+
   it("finds nothing over the dragged tab's own pane or off every pane", () => {
     expect([
       dropTargetAt(shown, { x: 20, y: 200 }, "mail"),

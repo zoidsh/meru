@@ -16,6 +16,7 @@ import {
   STYLE_METRICS,
   tabOfPane,
 } from "../../../core/engines/layout.ts";
+import { isPinned } from "../../../core/engines/pinned.ts";
 import {
   afterClose,
   afterFocus,
@@ -46,6 +47,7 @@ import type { Style } from "../../../core/records/style.ts";
 import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
+import { isSingleInstanceId } from "../../../shared/apps.ts";
 import type { Surface } from "../../../shared/channels/define.ts";
 import type {
   DragSubject,
@@ -506,7 +508,18 @@ export class Stage {
       navigation: this.#focusedView()?.navigation() ?? null,
       panes: [...arrangement.panes].flatMap(([paneId, rect]) => {
         const tabId = tabOfPane(this.#layout(), paneId);
-        return tabId === undefined ? [] : [{ paneId, rect, tabId }];
+        const tab =
+          tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
+        return tab === undefined
+          ? []
+          : [
+              {
+                paneId,
+                pinned: isPinned(tab, isSingleInstanceId),
+                rect,
+                tabId: tab.id,
+              },
+            ];
       }),
       style: this.#options.style(),
     };

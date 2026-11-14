@@ -26,7 +26,13 @@ export const stageSnapshotSchema = z.object({
   /** The focused pane's history, which the titlebar's back, forward and reload follow; null with no pane. */
   navigation: navigationSchema.nullable(),
   panes: z.array(
-    z.object({ paneId: idSchema, rect: rectSchema, tabId: idSchema })
+    z.object({
+      paneId: idSchema,
+      /** Whether the pane shows a pinned tab, which nothing is dropped before. */
+      pinned: z.boolean(),
+      rect: rectSchema,
+      tabId: idSchema,
+    })
   ),
   style: styleSchema,
 });

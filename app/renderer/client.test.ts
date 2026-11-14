@@ -31,6 +31,7 @@ const snapshot: StageSnapshot = {
   panes: [
     {
       paneId: "p1",
+      pinned: false,
       rect: { height: 10, width: 10, x: 0, y: 0 },
       tabId: "t1",
     },
