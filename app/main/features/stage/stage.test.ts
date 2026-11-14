@@ -1,7 +1,5 @@
-import { isEqual } from "es-toolkit";
 import { describe, expect, it, vi } from "vitest";
 
-import { layout } from "../../../core/engines/layout.ts";
 import { AppEvents } from "../../../core/events.ts";
 import type { Beside, Orientation } from "../../../core/records/layout.ts";
 import type { Style } from "../../../core/records/style.ts";
@@ -15,6 +13,7 @@ import {
 } from "../../../shared/channels/stage.ts";
 import type { StageSnapshot } from "../../../shared/channels/stage.ts";
 import { chromeSurface } from "../../../shared/channels/surfaces.ts";
+import { commandsOf } from "../../../shared/commands/define.ts";
 import { commands as allCommands } from "../../../shared/commands/registry.ts";
 import type { CommandId } from "../../../shared/commands/registry.ts";
 import { FakeClock } from "../../../test/fakes/clock.ts";
@@ -34,6 +33,7 @@ import { ShortcutKeys } from "../../shell/keys.ts";
 import { Launcher } from "../launcher/index.ts";
 import { Profiles } from "../profiles/index.ts";
 import { SettingsStore } from "../settings/index.ts";
+import { stageCommands } from "./commands.ts";
 import { Stages } from "./index.ts";
 import type { Stage } from "./stage.ts";
 
@@ -168,43 +168,6 @@ const zoomOf = (stage: Stage) =>
 const childBounds = (window: FakeWindow) =>
   window.childViews().map((view) => view.bounds());
 
-describe("the stage snapshot's comparison", () => {
-  it("takes two snapshots that differ only in key order as the same, so the second is not published", () => {
-    const sent: StageSnapshot = {
-      dividers: [],
-      focusedPaneId: "p1",
-      navigation: null,
-      panes: [
-        {
-          paneId: "p1",
-          pinned: false,
-          rect: { height: 10, width: 10, x: 0, y: 0 },
-          tabId: "t1",
-        },
-      ],
-      style: "modern",
-    };
-    const reordered: StageSnapshot = {
-      style: "modern",
-      panes: [
-        {
-          tabId: "t1",
-          pinned: false,
-          rect: { y: 0, x: 0, width: 10, height: 10 },
-          paneId: "p1",
-        },
-      ],
-      focusedPaneId: "p1",
-      navigation: null,
-      dividers: [],
-    };
-    expect([
-      isEqual(sent, reordered),
-      isEqual(sent, { ...reordered, focusedPaneId: "p2" }),
-    ]).toStrictEqual([true, false]);
-  });
-});
-
 describe(Stages, () => {
   it("shows the group's one pane over the content area, inset, in the profile's session", async () => {
     const { window, views, changes, paneIds, profileId, profiles } =
@@ -302,13 +265,7 @@ describe(Stages, () => {
     });
 
     const [first, second] = views.created;
-    const expected = layout(
-      profiles.currentGroup()?.layout ?? null,
-      window.contentBounds(),
-      "modern"
-    );
     expect(window.childViews()).toStrictEqual([first, second]);
-    expect(childBounds(window)).toStrictEqual([...expected.panes.values()]);
     expect({
       bounds: childBounds(window),
       focused: second?.focused,
@@ -530,25 +487,13 @@ const dragging = async () => {
 };
 
 describe("the stage commands", () => {
-  it("are the ones the stage declares", async () => {
-    const { commands } = await setup();
+  it("are every one the stage declares, each enabled for its window", async () => {
+    const { commands, id } = await setup();
     expect(
-      (
-        [
-          "stage.equalise",
-          "stage.maximise",
-          "stage.swap",
-          "stage.closeTab",
-          "stage.focusNext",
-          "stage.focusPrevious",
-          "stage.splitHorizontal",
-          "stage.splitVertical",
-          "stage.back",
-          "stage.forward",
-          "stage.reload",
-        ] as const
-      ).every((id) => commands.has(id))
-    ).toBeTruthy();
+      commandsOf(stageCommands).filter(
+        (command) => !commands.enabled(command.id, id)
+      )
+    ).toStrictEqual([]);
   });
 
   it("split by opening the launcher for the new pane's app over the window they are given, splitting nothing themselves", async () => {
