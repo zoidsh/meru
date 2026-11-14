@@ -35,6 +35,14 @@ describe(surfaceOf, () => {
     expect(allowed).toStrictEqual([[], [], []]);
   });
 
+  it("allows, for several surfaces, what any of them allows", () => {
+    const list = allowlist(launcherSurface, chromeSurface);
+    expect([
+      list.invoke.has(wireName(stage.openTab)),
+      list.sync.has(wireName(stage.snapshot)),
+    ]).toStrictEqual([true, true]);
+  });
+
   it("allows the launcher's page to open a tab but not to read the stage", () => {
     const list = allowlist(surfaceOf(argv(surfaceArgument("launcher"))));
     expect([

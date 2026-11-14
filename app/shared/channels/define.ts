@@ -137,17 +137,20 @@ export interface Allowlist {
   readonly push: ReadonlySet<string>;
 }
 
-export const allowlist = (surface: Surface): Allowlist => {
+/** Every channel the surfaces allow, by kind. */
+export const allowlist = (...given: readonly Surface[]): Allowlist => {
   const sets = {
     event: new Set<string>(),
     invoke: new Set<string>(),
     push: new Set<string>(),
     sync: new Set<string>(),
   };
-  const channels: (RequestChannel | PushChannel)[] = [
-    ...surface.requests.flatMap((group) => Object.values(group)),
-    ...surface.pushes.flatMap((group) => Object.values(group)),
-  ];
+  const channels: (RequestChannel | PushChannel)[] = given.flatMap(
+    (surface) => [
+      ...surface.requests.flatMap((group) => Object.values(group)),
+      ...surface.pushes.flatMap((group) => Object.values(group)),
+    ]
+  );
   for (const channel of channels) {
     sets[channel.kind].add(wireName(channel));
   }

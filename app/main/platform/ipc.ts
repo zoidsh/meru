@@ -3,12 +3,7 @@ import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
 
 import { DisposableStore } from "../../core/disposable.ts";
 import type { IpcTransportPort, Unsubscribe } from "../../core/ports.ts";
-
-export interface IpcNames {
-  readonly event: Iterable<string>;
-  readonly invoke: Iterable<string>;
-  readonly sync: Iterable<string>;
-}
+import type { Allowlist } from "../../shared/channels/define.ts";
 
 export type Dispatch = (
   contentsId: number,
@@ -27,9 +22,12 @@ export const ipcTransport: IpcTransportPort = {
   },
 };
 
-export const listenIpc = (names: IpcNames, dispatch: Dispatch): Unsubscribe => {
+export const listenIpc = (
+  names: Omit<Allowlist, "push">,
+  dispatch: Dispatch
+): Unsubscribe => {
   const disposables = new DisposableStore();
-  for (const channel of new Set(names.event)) {
+  for (const channel of names.event) {
     const listener = (event: IpcMainEvent, payload: unknown) => {
       dispatch(event.sender.id, channel, payload);
     };
@@ -38,7 +36,7 @@ export const listenIpc = (names: IpcNames, dispatch: Dispatch): Unsubscribe => {
       ipcMain.off(channel, listener);
     });
   }
-  for (const channel of new Set(names.invoke)) {
+  for (const channel of names.invoke) {
     ipcMain.handle(channel, (event: IpcMainInvokeEvent, payload: unknown) =>
       dispatch(event.sender.id, channel, payload)
     );
@@ -46,7 +44,7 @@ export const listenIpc = (names: IpcNames, dispatch: Dispatch): Unsubscribe => {
       ipcMain.removeHandler(channel);
     });
   }
-  for (const channel of new Set(names.sync)) {
+  for (const channel of names.sync) {
     const listener = (event: IpcMainEvent, payload: unknown) => {
       event.returnValue = dispatch(event.sender.id, channel, payload);
     };

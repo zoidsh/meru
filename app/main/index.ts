@@ -94,25 +94,17 @@ const start = async () => {
     log: ipcLog,
     transport: ports.ipc,
   });
-  const lists = surfaces.map(allowlist);
-  listenIpc(
-    {
-      event: lists.flatMap((list) => [...list.event]),
-      invoke: lists.flatMap((list) => [...list.invoke]),
-      sync: lists.flatMap((list) => [...list.sync]),
-    },
-    (contentsId, channel, payload) => {
-      const result = dispatcher.dispatch(contentsId, channel, payload);
-      if (!result.ok) {
-        ipcLog.warn("A request was refused", {
-          channel,
-          kind: result.error.kind,
-          detail: result.error.message,
-        });
-      }
-      return result;
+  listenIpc(allowlist(...surfaces), (contentsId, channel, payload) => {
+    const result = dispatcher.dispatch(contentsId, channel, payload);
+    if (!result.ok) {
+      ipcLog.warn("A request was refused", {
+        channel,
+        kind: result.error.kind,
+        detail: result.error.message,
+      });
     }
-  );
+    return result;
+  });
 
   const events = new AppEvents();
   const entitlement = new Entitlement({
