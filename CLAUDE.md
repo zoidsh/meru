@@ -30,7 +30,7 @@ The app is `app/`, a workspace package whose `package.json` holds its name, vers
 
 > Adding a feature is additive: its diff touches its own directory, one line in `index.ts`, the glossary and the changelog.
 
-`oxlint.config.ts` enforces the layers under `app/` with `no-restricted-imports` per directory, plus `import/no-cycle`; `es-toolkit`, like zod, is a runtime dependency every layer may import, `clamp` and `isEqual` among it, while `execa` is for `scripts/` and refused under `app/`; `core/values.ts` holds what es-toolkit lacks, `parseField` and `messageOf`. A preload value-imports `electron` only in its `bridge.ts`. The renderer and preloads never import `main`, with one exception: a feature's `settings.ts` and `commands.ts` are its half of the contract every page reads, so they compile with `shared`, the registries in `shared/*/registry.ts` import them, and lint holds them to what `shared` may import.
+`oxlint.config.ts` enforces the layers under `app/` with `no-restricted-imports` per directory, plus `import/no-cycle`; `es-toolkit`, like zod, is a runtime dependency every layer may import, `clamp` and `isEqual` among it, while `execa` is for `scripts/` and refused under `app/`; `core/values.ts` holds what es-toolkit lacks, `parseField`, `messageOf` and `stepFrom`. A preload value-imports `electron` only in its `bridge.ts`. The renderer and preloads never import `main`, with one exception: a feature's `settings.ts` and `commands.ts` are its half of the contract every page reads, so they compile with `shared`, the registries in `shared/*/registry.ts` import them, and lint holds them to what `shared` may import.
 
 ## Tests
 

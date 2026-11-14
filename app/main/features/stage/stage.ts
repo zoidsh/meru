@@ -226,16 +226,15 @@ export class Stage {
     const before = this.#shown;
     this.#shown = group;
     this.#spotlight = NO_SPOTLIGHT;
-    if (this.#focusedPane() !== undefined) {
-      this.#update();
-      return;
+    const lost = this.#focusedPane() === undefined;
+    const paneWent = lost && before !== undefined && before.id === group?.id;
+    if (lost) {
+      this.#focused = tabAfterLeaving(
+        paneWent ? before.layout : null,
+        this.#layout(),
+        this.#focused
+      );
     }
-    const paneWent = before !== undefined && before.id === group?.id;
-    this.#focused = tabAfterLeaving(
-      paneWent ? before.layout : null,
-      this.#layout(),
-      this.#focused
-    );
     this.#update();
     if (paneWent) {
       this.#focusedView()?.focus();
