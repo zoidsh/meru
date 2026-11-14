@@ -143,6 +143,15 @@ const layers = [
   restrict(["app/preload/**"], [scriptsOnly, electron, notMain, notRenderer]),
   restrict(["app/preload/*/bridge.ts"], [scriptsOnly, notMain, notRenderer]),
   restrict(["app/renderer/**"], [scriptsOnly, noElectron, notMain, notPreload]),
+  restrict(
+    ["packages/*/**"],
+    [
+      {
+        group: ["**/app/**"],
+        message: "A leaf package imports nothing of the app.",
+      },
+    ]
+  ),
 ];
 
 export default defineConfig({
