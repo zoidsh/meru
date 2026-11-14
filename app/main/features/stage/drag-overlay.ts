@@ -105,15 +105,15 @@ export class DragOverlay {
   }
 
   // The group takes the ratio or the tab once, on release, so a drag writes the state once rather than with every move of the pointer.
-  end(point: Point): Result<undefined, "unknownSplit"> {
+  end(point: Point): void {
     const drag = this.#drag;
     if (drag === undefined) {
-      return ok(undefined);
+      return;
     }
     if (drag.kind === "tab") {
       this.retire();
       this.#options.drop(drag.tabId, point);
-      return ok(undefined);
+      return;
     }
     this.move(point);
     const moved = this.#drag;
@@ -121,7 +121,6 @@ export class DragOverlay {
     if (moved?.kind === "divider" && moved.ratio !== undefined) {
       this.#options.commit(moved.splitId, moved.ratio);
     }
-    return ok(undefined);
   }
 
   /** Ends the drag, if one is on, without the group taking what it carried. */

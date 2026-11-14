@@ -36,7 +36,7 @@ export class Overlay {
   }
 
   /** Makes the view of an overlay of `kind` showing `url`, focused once its page has loaded, closing any overlay already up; the caller attaches it. */
-  open(kind: OverlayKind, url: string): ViewPort {
+  open(kind: OverlayKind, url: string): void {
     this.close();
     const owned = this.#options.create({
       arguments: [surfaceArgument(kind)],
@@ -58,7 +58,6 @@ export class Overlay {
     };
     void focusLoaded();
     this.#options.onOverlay(view.contentsId, overlays[kind]);
-    return view;
   }
 
   /** Takes the overlay down, if one is up. */

@@ -424,12 +424,12 @@ export class Stage {
 
   endDrag(point: Point): Result<undefined, StageError> {
     const tab = this.#drag.kind === "tab";
-    const ended = this.#drag.end(point);
+    this.#drag.end(point);
     this.#reconcile();
     if (tab) {
       this.#focusedView()?.focus();
     }
-    return ended;
+    return ok(undefined);
   }
 
   /** Shows a renderer page over the panes until closeOverlay, replacing any overlay already up; its page may use the channels of the `kind`'s surface. */

@@ -7,8 +7,8 @@ import {
 } from "../../../shared/settings/define.ts";
 
 // Chromium's own zoom range.
-export const MIN_ZOOM = 0.25;
-export const MAX_ZOOM = 5;
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 5;
 
 export const panesPage = defineSettingsPage("panes", {
   icon: "columns-2",
