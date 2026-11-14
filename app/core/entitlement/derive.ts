@@ -1,6 +1,8 @@
 import { isEqual } from "es-toolkit";
 
 import type { Entitlement, EntitlementSource } from "../records/entitlement.ts";
+import { fallsBackToFree } from "./schedule.ts";
+import type { ScheduleState } from "./schedule.ts";
 import type { Claims } from "./token.ts";
 
 /** The entitlement a verified token's claims grant at `now`, in milliseconds; no claims is a device that has never had a token. */
@@ -30,6 +32,17 @@ export const deriveEntitlement = (
     seat: claims.seat ?? null,
   };
 };
+
+/** What the device holds at `now`: free whatever its token says once its license key was refused with no trial running, and otherwise what the claims grant, from `source` when there are claims and from what was stored when there are none. */
+export const entitlementOf = (
+  state: ScheduleState | undefined,
+  claims: Claims | undefined,
+  now: number,
+  source: EntitlementSource
+): Entitlement =>
+  state !== undefined && fallsBackToFree(state, claims, now)
+    ? { expiresAt: null, kind: "free", source }
+    : deriveEntitlement(claims, now, claims === undefined ? "stored" : source);
 
 const grant = ({
   expiresAt: _expiresAt,

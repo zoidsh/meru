@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveEntitlement, sameGrant } from "./derive.ts";
+import { deriveEntitlement, entitlementOf, sameGrant } from "./derive.ts";
+import type { ScheduleState } from "./schedule.ts";
 import type { Claims } from "./token.ts";
 
 const NOW = 1_800_000_000_000;
@@ -15,6 +16,39 @@ const claims = (overrides: Partial<Claims> = {}): Claims => ({
   sub: "device-1",
   ttl: 3600,
   ...overrides,
+});
+
+describe(entitlementOf, () => {
+  const held: ScheduleState = {
+    lastAnswer: null,
+    licenseKey: "KEY",
+    rejected: null,
+    token: { licenseKey: "KEY" },
+  };
+  const refused: ScheduleState = {
+    ...held,
+    rejected: { at: NOW, licenseKey: "KEY" },
+  };
+
+  it("is free from the given source once the key was refused and no trial runs", () => {
+    expect(entitlementOf(refused, claims(), NOW, "refreshed")).toStrictEqual({
+      expiresAt: null,
+      kind: "free",
+      source: "refreshed",
+    });
+  });
+
+  it("grants what the claims say from the given source, and is unknown from what was stored without them", () => {
+    expect([
+      entitlementOf(held, claims(), NOW, "refreshed").kind,
+      entitlementOf(held, claims(), NOW, "refreshed").source,
+      entitlementOf(undefined, undefined, NOW, "refreshed"),
+    ]).toStrictEqual([
+      "licensed",
+      "refreshed",
+      { expiresAt: null, kind: "unknown", source: "stored" },
+    ]);
+  });
 });
 
 describe(deriveEntitlement, () => {

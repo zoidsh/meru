@@ -2,14 +2,10 @@ import { clamp } from "es-toolkit";
 import { z } from "zod";
 
 import { DisposableStore } from "../../../core/disposable.ts";
-import {
-  deriveEntitlement,
-  sameGrant,
-} from "../../../core/entitlement/derive.ts";
+import { entitlementOf, sameGrant } from "../../../core/entitlement/derive.ts";
 import {
   answerOutcomeSchema,
   due,
-  fallsBackToFree,
   nextDelay,
   nextWake,
 } from "../../../core/entitlement/schedule.ts";
@@ -367,16 +363,12 @@ export class Entitlement<K> {
   }
 
   #derive() {
-    const now = this.#options.clock.now();
-    const state = this.#state;
-    const next: EntitlementValue =
-      state !== undefined && fallsBackToFree(state, this.#claims, now)
-        ? { expiresAt: null, kind: "free", source: this.#source }
-        : deriveEntitlement(
-            this.#claims,
-            now,
-            this.#claims === undefined ? "stored" : this.#source
-          );
+    const next = entitlementOf(
+      this.#state,
+      this.#claims,
+      this.#options.clock.now(),
+      this.#source
+    );
     const previous = this.#value;
     this.#value = next;
     if (sameGrant(previous, next)) {
