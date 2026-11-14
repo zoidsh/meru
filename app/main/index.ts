@@ -70,6 +70,7 @@ const start = async () => {
     theme: () => themeOf(ports.theme),
   };
   logFailures({
+    clock: ports.clock,
     lifecycle: ports.lifecycle,
     log: log.scoped("app"),
     ownPage: (url) => isPageUrl(pages, url),

@@ -45,6 +45,7 @@ export const onFailure: LifecyclePort["onFailure"] = (listener) => {
     const message = (event: Event<WebContentsConsoleMessageEventParams>) => {
       if (event.level === "error") {
         listener({
+          contentsId: contents.id,
           kind: "consoleError",
           line: event.lineNumber,
           message: event.message,

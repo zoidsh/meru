@@ -49,6 +49,7 @@ export type Failure =
   | {
       /** An error a page wrote to its console. */
       readonly kind: "consoleError";
+      readonly contentsId: number;
       readonly url: string;
       readonly message: string;
       readonly source: string;

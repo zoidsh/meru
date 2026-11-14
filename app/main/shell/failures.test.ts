@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { FakeClock } from "../../test/fakes/clock.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
 import { FakeLog } from "../../test/fakes/log.ts";
-import { logFailures } from "./failures.ts";
+import {
+  logFailures,
+  PAGE_ERROR_WINDOW,
+  PAGE_ERRORS_PER_WINDOW,
+} from "./failures.ts";
 
 const OWN = "file:///app/dist/renderer/chrome.html?platform=darwin";
 const GMAIL = "https://mail.google.com/mail/u/0/#inbox";
@@ -10,12 +15,14 @@ const GMAIL = "https://mail.google.com/mail/u/0/#inbox";
 const setup = () => {
   const lifecycle = new FakeLifecycle();
   const log = new FakeLog();
+  const clock = new FakeClock();
   const stop = logFailures({
+    clock,
     lifecycle,
     log: log.scoped("app"),
     ownPage: (url) => url.startsWith("file:///app/dist/renderer/"),
   });
-  return { lifecycle, log, stop };
+  return { clock, lifecycle, log, stop };
 };
 
 describe(logFailures, () => {
@@ -73,6 +80,7 @@ describe(logFailures, () => {
     const { lifecycle, log } = setup();
     for (const url of [OWN, GMAIL]) {
       lifecycle.fail({
+        contentsId: 1,
         kind: "consoleError",
         line: 12,
         message: "Uncaught TypeError: x is undefined",
@@ -92,6 +100,46 @@ describe(logFailures, () => {
         message: "A page logged an error",
         scope: "app",
       },
+    ]);
+  });
+
+  it("writes a page's first errors in a window and only counts the rest, saying so once the window ends", () => {
+    const { clock, lifecycle, log } = setup();
+    const flood = (contentsId: number, count: number) => {
+      for (let index = 0; index < count; index += 1) {
+        lifecycle.fail({
+          contentsId,
+          kind: "consoleError",
+          line: 1,
+          message: `flood ${index}`,
+          source: OWN,
+          url: OWN,
+        });
+      }
+    };
+    flood(1, PAGE_ERRORS_PER_WINDOW + 500);
+    flood(2, 1);
+    const inWindow = log.entries.length;
+    clock.advance(PAGE_ERROR_WINDOW);
+    flood(1, 1);
+    expect([
+      inWindow,
+      log.entries.slice(inWindow).map(({ fields, message }) => ({
+        fields,
+        message,
+      })),
+    ]).toStrictEqual([
+      PAGE_ERRORS_PER_WINDOW + 1,
+      [
+        {
+          fields: { dropped: 500, url: OWN },
+          message: "A page's errors were dropped",
+        },
+        {
+          fields: { line: 1, source: OWN, text: "flood 0", url: OWN },
+          message: "A page logged an error",
+        },
+      ],
     ]);
   });
 
