@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { tabs } from "../app/shared/channels/profiles.ts";
+import { stage } from "../app/shared/channels/stage.ts";
 import { invokeIn, runCommand, valueOf } from "../scripts/lib/app.ts";
 import { expect, must, panesOf, profilesOf, test } from "./app.ts";
 
@@ -35,13 +36,17 @@ test("puts a tab the user let sleep to sleep once out of sight, and wakes it wit
     tabs: [gmail],
   } = await profilesOf(chrome);
   const gmailId = must(gmail, "The Gmail tab").id;
-  const drive = valueOf(
-    await invokeIn(chrome, tabs.add, {
+  valueOf(
+    await invokeIn(chrome, stage.openTab, {
       appId: "drive",
       profileId: selectedProfileId,
     })
   );
-  await invokeIn(chrome, tabs.focus, { tabId: drive.id });
+  const { tabs: opened } = await profilesOf(chrome);
+  const drive = must(
+    opened.find((tab) => tab.appId === "drive"),
+    "Drive's tab"
+  );
   await expect.poll(async () => await shownTabs(app)).toStrictEqual([drive.id]);
   const [awake] = await panesOf(app);
   const before = must(awake, "Drive's pane").contentsId;

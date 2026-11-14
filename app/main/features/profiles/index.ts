@@ -174,7 +174,6 @@ export class Profiles {
           done(this.updateProfile(profileId, patch)),
       }),
       registrar.register(tabChannels, {
-        add: ({ profileId, appId }) => this.addTab(profileId, appId),
         close: ({ tabId }) => done(this.closeTab(tabId)),
         focus: ({ tabId }) => done(this.focusTab(tabId)),
         join: ({ tabId, targetTabId, orientation, side }) =>
@@ -309,16 +308,7 @@ export class Profiles {
     return this.#commit(selectProfile(this.state, profileId));
   }
 
-  /** Adds a tab of the app after the profile's others, in a group of its own or split into a group's pane; a single-instance app the profile has is answered with its tab. */
-  addTab(
-    profileId: string,
-    appId: string,
-    placement?: Placement
-  ): Result<Tab, ProfilesError> {
-    return this.openTab(profileId, appId, placement);
-  }
-
-  /** The tab an app opens to in a profile: the profile's one tab of a single-instance app when it has it, else a new tab at `url`, or the app's start page, as addTab adds it. */
+  /** The tab an app opens to in a profile: the profile's one tab of a single-instance app when it has it, else a new tab at `url`, or the app's start page, after the profile's others, in a group of its own or split into a group's pane. */
   openTab(
     profileId: string,
     appId: string,

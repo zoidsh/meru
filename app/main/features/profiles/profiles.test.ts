@@ -152,7 +152,7 @@ describe(Profiles, () => {
   it("reads back what it wrote", async () => {
     const first = await setup();
     const created = unwrap(first.profiles.createProfile("Work", "#123456"));
-    unwrap(first.profiles.addTab(created.id, "calendar"));
+    unwrap(first.profiles.openTab(created.id, "calendar"));
     unwrap(first.profiles.selectProfile(created.id));
     await first.profiles.flush();
     const second = await setup({ fs: first.fs });
@@ -304,7 +304,7 @@ describe(Profiles, () => {
   it("brings a tab of another profile to the front, selecting its profile and telling whoever shows it", async () => {
     const { profiles, events, registrar } = await setup();
     const work = unwrap(profiles.createProfile("Work"));
-    const calendar = unwrap(profiles.addTab(work.id, "calendar"));
+    const calendar = unwrap(profiles.openTab(work.id, "calendar"));
     const focused: AppEventMap["tab.focused"][] = [];
     events.on("tab.focused", (payload) => {
       focused.push(payload);
@@ -329,8 +329,8 @@ describe(Profiles, () => {
     const { profiles } = await setup();
     const profileId = profiles.selected().id;
     const [gmail] = profiles.state.tabs;
-    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
-    const drive = unwrap(profiles.addTab(profileId, "drive"));
+    const calendar = unwrap(profiles.openTab(profileId, "calendar"));
+    const drive = unwrap(profiles.openTab(profileId, "drive"));
     const groupOfTab = (tabId: string) =>
       profiles.state.groups.find((group) => group.tabIds.includes(tabId));
     unwrap(profiles.joinTab(drive.id, calendar.id, VERTICAL_AFTER));
@@ -359,7 +359,7 @@ describe(Profiles, () => {
     const { profiles } = await setup();
     const [gmail] = profiles.state.tabs;
     const calendar = unwrap(
-      profiles.addTab(profiles.selected().id, "calendar")
+      profiles.openTab(profiles.selected().id, "calendar")
     );
     expect(
       profiles.snapshot().tabs.map((tab) => [tab.appId, tab.closeable])
@@ -372,7 +372,7 @@ describe(Profiles, () => {
       ok: false,
     });
     unwrap(profiles.closeTab(calendar.id));
-    expect(profiles.addTab(profiles.selected().id, "nothing")).toStrictEqual({
+    expect(profiles.openTab(profiles.selected().id, "nothing")).toStrictEqual({
       error: "unknownApp",
       ok: false,
     });
@@ -413,29 +413,25 @@ describe(Profiles, () => {
   });
 
   it("answers its channels and pushes each change to every page", async () => {
-    const { registrar, profiles, transport } = await setup();
+    const { registrar, transport } = await setup();
     const seed = profilesSnapshotSchema.parse(
       unwrap(registrar.dispatch(PAGE, wireName(profileChannels.snapshot), {}))
     );
-    expect(seed.profiles).toHaveLength(1);
-    const added = unwrap(
-      registrar.dispatch(PAGE, wireName(tabChannels.add), {
-        appId: "drive",
-        profileId: profiles.selected().id,
-      })
-    );
-    expect(added).toMatchObject({ appId: "drive" });
-    expect(
-      registrar.dispatch(PAGE, wireName(profileChannels.create), {
-        label: "Work",
-      })
-    ).toMatchObject({ ok: true });
-    expect(
-      transport.sent.map((pushed) => [pushed.channel, pushed.contentsId])
-    ).toStrictEqual([
-      ["profiles.changed", PAGE],
-      ["profiles.changed", PAGE],
-    ]);
+    const created = registrar.dispatch(PAGE, wireName(profileChannels.create), {
+      label: "Work",
+    });
+    const last = transport.sent.at(-1);
+    expect({
+      created: created.ok,
+      pushed: [last?.channel, last?.contentsId],
+      seed: seed.profiles.length,
+      snapshot: profilesSnapshotSchema.parse(last?.payload).profiles.length,
+    }).toStrictEqual({
+      created: true,
+      pushed: ["profiles.changed", PAGE],
+      seed: 1,
+      snapshot: 2,
+    });
   });
 
   it("starts over from one profile when the file is corrupt, and mends a file that half holds", async () => {
@@ -478,14 +474,14 @@ const operations: readonly ((
   (profiles, { profileId }) => profiles.createProfile(profileId),
   (profiles, { profileId }) => profiles.removeProfile(profileId),
   (profiles, { profileId }) => profiles.selectProfile(profileId),
-  (profiles, { profileId, appId }) => profiles.addTab(profileId, appId),
+  (profiles, { profileId, appId }) => profiles.openTab(profileId, appId),
   (profiles, { tabId }) => profiles.closeTab(tabId),
   (profiles, { tabId, index }) => profiles.moveTab(tabId, index),
   (profiles, { tabId, targetTabId, placement }) =>
     profiles.joinTab(tabId, targetTabId, placement),
   (profiles, { tabId, index }) => profiles.leaveGroup(tabId, index),
   (profiles, { profileId, appId, placement }) =>
-    profiles.addTab(profileId, appId, placement),
+    profiles.openTab(profileId, appId, placement),
 ];
 
 const choose = (

@@ -73,7 +73,7 @@ const setup = async () => {
       .map((sent) => sidebarSchema.parse(sent.payload));
   const profileId = profiles.selected().id;
   const add = (appId: string) => {
-    profiles.addTab(profileId, appId);
+    profiles.openTab(profileId, appId);
   };
   return {
     add,

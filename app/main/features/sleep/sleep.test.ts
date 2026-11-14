@@ -104,7 +104,7 @@ const setup = async () => {
   if (gmail === undefined) {
     throw new Error("A first launch has a Gmail tab");
   }
-  const drive = unwrap(profiles.addTab(gmail.profileId, "drive"));
+  const drive = unwrap(profiles.openTab(gmail.profileId, "drive"));
   const asleep = () =>
     transport.sent
       .filter((sent) => sent.channel === wireName(profilesPushes.changed))

@@ -165,7 +165,7 @@ describe(Windows, () => {
     const gmailGroup = profiles.currentGroup(work)?.id;
     profiles.selectProfile(work);
     expect(windows.mainGroupId()).toBe(gmailGroup);
-    const drive = profiles.addTab(work, "drive");
+    const drive = profiles.openTab(work, "drive");
     if (!drive.ok) {
       throw new Error(drive.error);
     }

@@ -39,7 +39,6 @@ export const profiles = defineChannels("profiles", {
 });
 
 export const tabs = defineChannels("tabs", {
-  add: invoke(z.object({ appId: idSchema, profileId: idSchema }), tabSchema),
   close: invoke(z.object({ tabId: idSchema }), z.null()),
   /** Shows the tab's group in the main window and focuses its pane, selecting its profile first. */
   focus: invoke(z.object({ tabId: idSchema }), z.null()),

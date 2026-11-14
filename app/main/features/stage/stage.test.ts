@@ -340,7 +340,7 @@ describe(Stages, () => {
   it("shows another group once the state says so, detaching the views of the one it showed and keeping them", async () => {
     const { window, views, profiles, profileId, changes, show } = await setup();
     const [gmail] = views.created;
-    const added = unwrap(profiles.addTab(profileId, "calendar"));
+    const added = unwrap(profiles.openTab(profileId, "calendar"));
     expect(views.created).toHaveLength(1);
     show(added.id);
     const [, calendar] = views.created;
@@ -360,7 +360,7 @@ describe(Stages, () => {
   it("keeps every tab's view through a join, a leave and a switch of group, so no page reloads", async () => {
     const { window, views, profiles, profileId, show } = await setup();
     const [gmailId = ""] = profiles.currentGroup()?.tabIds ?? [];
-    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+    const calendar = unwrap(profiles.openTab(profileId, "calendar"));
     show(calendar.id);
     const [gmail, calendarView] = views.created;
     const seen: (readonly unknown[])[] = [];
@@ -386,7 +386,7 @@ describe(Stages, () => {
   it("disposes a closed tab's view even while its group is not shown", async () => {
     const { views, profiles, profileId, show } = await setup();
     const [gmailId = ""] = profiles.currentGroup()?.tabIds ?? [];
-    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+    const calendar = unwrap(profiles.openTab(profileId, "calendar"));
     show(calendar.id);
     const [gmail, calendarView] = views.created;
     show(gmailId);
@@ -402,7 +402,7 @@ describe(Stages, () => {
   it("answers every view it keeps with its tab, marking one no pane shows", async () => {
     const { stage, profiles, profileId, show } = await setup();
     const [gmailId = ""] = profiles.currentGroup()?.tabIds ?? [];
-    const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+    const calendar = unwrap(profiles.openTab(profileId, "calendar"));
     show(calendar.id);
     show(gmailId);
 
@@ -904,7 +904,7 @@ const draggingTab = async () => {
   const context = await setup();
   const { profiles, profileId, stages, id, views } = context;
   const [gmail = ""] = profiles.currentGroup()?.tabIds ?? [];
-  const calendar = unwrap(profiles.addTab(profileId, "calendar"));
+  const calendar = unwrap(profiles.openTab(profileId, "calendar"));
   context.transport.sent.length = 0;
   const result = stages.beginDrag(id, { kind: "tab", tabId: calendar.id });
   const overlay = views.created.at(-1);
