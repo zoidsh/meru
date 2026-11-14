@@ -1,12 +1,13 @@
 import type { TrayPort, TraySpec } from "../../core/ports.ts";
+import type { Platform } from "../../core/records/platform.ts";
 
 export class FakeTray implements TrayPort {
   /** What the icon shows, or undefined while it is down. */
   spec: TraySpec | undefined;
   #click: (() => void) | undefined;
-  readonly #platform: string;
+  readonly #platform: Platform;
 
-  constructor(platform: string) {
+  constructor(platform: Platform) {
     this.#platform = platform;
   }
 

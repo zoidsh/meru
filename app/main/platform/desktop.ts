@@ -21,6 +21,7 @@ import type {
   TrayIcon,
   TrayPort,
 } from "../../core/ports.ts";
+import type { Platform } from "../../core/records/platform.ts";
 import { msg } from "../../shared/msg.ts";
 
 // Windows draws an overlay over the taskbar button rather than taking a count, and wants it in BGRA.
@@ -37,7 +38,7 @@ const overlayImage = (total: number): NativeImage => {
   });
 };
 
-export const createBadge = (platform: string): BadgePort => ({
+export const createBadge = (platform: Platform): BadgePort => ({
   set: (total) => {
     if (platform === "darwin") {
       app.dock?.setBadge(badgeText(total));

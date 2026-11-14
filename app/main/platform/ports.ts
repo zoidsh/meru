@@ -214,7 +214,7 @@ export const createElectronPorts = (): Ports => ({
       };
     },
   },
-  badge: createBadge(process.platform),
+  badge: createBadge(platformOf(process.platform)),
   notifications: createNotifications(),
   tray: createTray(),
   sessions: createSessions(),
