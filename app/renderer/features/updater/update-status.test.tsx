@@ -1,5 +1,5 @@
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { UpdateState } from "../../../core/records/update.ts";
 import { commands } from "../../../shared/channels/commands.ts";
@@ -8,16 +8,11 @@ import { updater, updaterPushes } from "../../../shared/channels/updater.ts";
 import { answer, mountSettings } from "../../testing.tsx";
 import { UpdateStatus } from "./update-status.tsx";
 
-const mounted: (() => void)[] = [];
-
-const mount = (state: UpdateState) => {
-  const page = mountSettings(<UpdateStatus />, [
+const mount = (state: UpdateState) =>
+  mountSettings(<UpdateStatus />, [
     answer(updater.snapshot, state),
     answer(commands.run, null),
   ]);
-  mounted.push(page.unmount);
-  return page;
-};
 
 const button = () => document.querySelector("button");
 
@@ -35,12 +30,6 @@ const click = async () => {
 };
 
 describe(UpdateStatus, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("checks for updates from idle", async () => {
     const { sentOn } = mount({ kind: "idle" });
     const idle = shown();

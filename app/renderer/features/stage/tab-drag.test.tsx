@@ -1,6 +1,6 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished } from "vitest";
 
 import { wireName } from "../../../shared/channels/define.ts";
 import { dragPushes } from "../../../shared/channels/drag.ts";
@@ -19,8 +19,6 @@ const PANES = [
   { paneId: "p2", pinned: false, rect: RIGHT, tabId: "calendar" },
 ];
 
-const mounted: (() => void)[] = [];
-
 const mount = () => {
   const bridge = new FakeBridge();
   bridge.answers.set(wireName(stage.snapshot), {
@@ -36,7 +34,7 @@ const mount = () => {
       <TabDrag accent="#3e63dd" appId="drive" client={client} tabId="drive-1" />
     );
   });
-  mounted.push(() => {
+  onTestFinished(() => {
     act(() => {
       root.unmount();
     });
@@ -61,12 +59,6 @@ const mount = () => {
 };
 
 describe(TabDrag, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("draws nothing until it hears where the pointer is", () => {
     const { container } = mount();
     expect(container.childElementCount).toBe(0);
