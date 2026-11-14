@@ -1,15 +1,19 @@
 import { clamp } from "es-toolkit";
+import { z } from "zod";
 
 import type { Claims } from "./token.ts";
 import { isExpired } from "./verify.ts";
 
 /** How the API last answered. */
-export type AnswerOutcome =
-  | "issued"
-  | "offline"
-  | "rejected"
-  | "serverError"
-  | "invalid";
+export const answerOutcomeSchema = z.enum([
+  "issued",
+  "offline",
+  "rejected",
+  "serverError",
+  "invalid",
+]);
+
+export type AnswerOutcome = z.infer<typeof answerOutcomeSchema>;
 
 /** What of entitlement.json decides when the device asks the API next. */
 export interface ScheduleState {
@@ -30,11 +34,11 @@ export const RETRY_FIRST = 60_000;
 export const RETRY_MAX = 3_600_000;
 
 /** Whether the API refused the license key the device holds now. */
-export const keyRejected = (state: ScheduleState): boolean =>
+const keyRejected = (state: ScheduleState): boolean =>
   state.rejected !== null && state.rejected.licenseKey === state.licenseKey;
 
 /** Whether the device holds a trial token, not one for a license key, whose trial has not ended. */
-export const trialRunning = (
+const trialRunning = (
   state: ScheduleState,
   claims: Claims | undefined,
   now: number

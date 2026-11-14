@@ -7,6 +7,7 @@ import {
   sameGrant,
 } from "../../../core/entitlement/derive.ts";
 import {
+  answerOutcomeSchema,
   due,
   fallsBackToFree,
   nextDelay,
@@ -52,7 +53,7 @@ const lastAnswerSchema = z.object({
   /** Milliseconds since the epoch. */
   at: z.number().int(),
   detail: z.string().nullable(),
-  outcome: z.enum(["issued", "offline", "rejected", "serverError", "invalid"]),
+  outcome: answerOutcomeSchema,
 });
 
 export const entitlementStateSchema = z.object({
