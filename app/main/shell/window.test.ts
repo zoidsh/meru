@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { themeOf } from "../../core/ports.ts";
+import type { Platform } from "../../core/records/platform.ts";
 import { settingsPushes } from "../../shared/channels/settings.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
@@ -12,8 +13,9 @@ import { FakeTheme } from "../../test/fakes/theme.ts";
 import { FakeWindows } from "../../test/fakes/window-factory.ts";
 import { IpcDispatcher } from "./ipc.ts";
 import { isPageUrl, MainWindow, pageUrl } from "./window.ts";
+import type { PageOptions } from "./window.ts";
 
-const open = async (platform: string, devServer?: string) => {
+const open = async (platform: Platform, devServer?: string) => {
   const theme = new FakeTheme(true);
   const windows = new FakeWindows();
   const transport = new FakeIpcTransport();
@@ -120,7 +122,7 @@ describe(MainWindow, () => {
 
 describe(isPageUrl, () => {
   it("knows the renderer's own pages, built or served, from anything else", () => {
-    const built = {
+    const built: PageOptions = {
       devServer: undefined,
       dir: path.join(path.sep, "app", "dist", "renderer"),
       platform: "darwin",

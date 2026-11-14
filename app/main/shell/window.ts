@@ -8,6 +8,7 @@ import {
 } from "../../core/engines/chrome.ts";
 import { themeOf } from "../../core/ports.ts";
 import type { Ports, Unsubscribe, WindowPort } from "../../core/ports.ts";
+import type { Platform } from "../../core/records/platform.ts";
 import type { Rect } from "../../core/records/rect.ts";
 import type { Theme } from "../../core/records/theme.ts";
 import type { IpcRegistrar } from "../../shared/channels/define.ts";
@@ -22,7 +23,7 @@ export interface PageOptions {
   readonly devServer: string | undefined;
   /** The directory the built pages are in. */
   readonly dir: string;
-  readonly platform: string;
+  readonly platform: Platform;
   readonly theme: () => Theme;
 }
 

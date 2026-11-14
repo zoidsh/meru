@@ -3,13 +3,14 @@ import type { IpcRendererEvent } from "electron";
 
 import { BRIDGE_KEY } from "../../core/ports.ts";
 import type { RendererBridge } from "../../core/ports.ts";
+import type { Platform } from "../../core/records/platform.ts";
 import type { Allowlist } from "../../shared/channels/define.ts";
 
 const refuse = (channel: string): never => {
   throw new Error(`${channel} is not a channel this page may use`);
 };
 
-export const exposeBridge = (platform: string, allowed: Allowlist): void => {
+export const exposeBridge = (platform: Platform, allowed: Allowlist): void => {
   const bridge: RendererBridge = {
     invoke: async (channel, payload) => {
       if (!allowed.invoke.has(channel)) {

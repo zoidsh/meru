@@ -1,4 +1,5 @@
 import type { MenuEntry, MenuSection, MenuSectionId } from "../records/menu.ts";
+import type { Platform } from "../records/platform.ts";
 
 const EDIT_ROLES: readonly MenuEntry<never>[] = [
   { kind: "role", role: "undo" },
@@ -38,7 +39,7 @@ export type MenuLabels = Readonly<
 >;
 
 export interface MenuOptions<Id extends string> {
-  readonly platform: string;
+  readonly platform: Platform;
   readonly commands: readonly MenuCommand<Id>[];
   readonly bindings: ReadonlyMap<Id, string | null>;
   readonly labels: MenuLabels;

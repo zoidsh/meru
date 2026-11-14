@@ -5,6 +5,7 @@ import { conflicts, resolveBindings } from "../../core/engines/shortcuts.ts";
 import type { AppEvents } from "../../core/events.ts";
 import type { LogPort } from "../../core/log.ts";
 import type { MenuSection } from "../../core/records/menu.ts";
+import type { Platform } from "../../core/records/platform.ts";
 import type { Command } from "../../shared/commands/define.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
 import { msg } from "../../shared/msg.ts";
@@ -12,7 +13,7 @@ import type { SettingsStore } from "../features/settings/index.ts";
 import type { CommandDispatcher } from "./commands.ts";
 
 export interface ApplicationMenuOptions {
-  readonly platform: string;
+  readonly platform: Platform;
   readonly commands: readonly Command<CommandId>[];
   readonly dispatcher: Pick<CommandDispatcher, "run" | "enabled" | "checked">;
   /** The window the menu asks about, whose state an item such as a toggle shows: the main window, once it is open. */

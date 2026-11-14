@@ -1,16 +1,17 @@
 import { asyncNoop, noop } from "es-toolkit";
 
 import type { Failure, LifecyclePort, Unsubscribe } from "../../core/ports.ts";
+import type { Platform } from "../../core/records/platform.ts";
 
 export class FakeLifecycle implements LifecyclePort {
-  readonly platform: string;
+  readonly platform: Platform;
   readonly packaged: boolean;
   quitting = false;
   readonly #quitTasks = new Set<() => Promise<void>>();
   readonly #allClosed = new Set<() => void>();
   readonly #failures = new Set<(failure: Failure) => void>();
 
-  constructor(platform = "darwin", packaged = false) {
+  constructor(platform: Platform = "darwin", packaged = false) {
     this.platform = platform;
     this.packaged = packaged;
   }

@@ -17,6 +17,7 @@ import type {
   WindowPort,
   WindowSpec,
 } from "../../core/ports.ts";
+import { platformOf } from "../../core/records/platform.ts";
 import { createBadge, createNotifications, createTray } from "./desktop.ts";
 import { createEntitlementApi } from "./entitlement-api.ts";
 import { onFailure } from "./failures.ts";
@@ -170,7 +171,7 @@ export const createElectronPorts = (): Ports => ({
       };
     },
     packaged: app.isPackaged,
-    platform: process.platform,
+    platform: platformOf(process.platform),
     prohibitActivation: () => {
       if (process.platform === "darwin") {
         app.setActivationPolicy("prohibited");

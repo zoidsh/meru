@@ -5,13 +5,14 @@ import {
 } from "../../core/engines/shortcuts.ts";
 import type { LogPort } from "../../core/log.ts";
 import type { Unsubscribe, ViewPort } from "../../core/ports.ts";
+import type { Platform } from "../../core/records/platform.ts";
 import type { Command } from "../../shared/commands/define.ts";
 import type { CommandId } from "../../shared/commands/registry.ts";
 import type { SettingsStore } from "../features/settings/index.ts";
 import type { CommandDispatcher } from "./commands.ts";
 
 export interface ShortcutKeysOptions<Id extends string> {
-  readonly platform: string;
+  readonly platform: Platform;
   /** Every command; only those without a menu placement are heard here. */
   readonly commands: readonly Command<Id>[];
   readonly dispatcher: Pick<CommandDispatcher<Id>, "run" | "enabled">;

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { themeOf } from "../../../core/ports.ts";
+import type { Platform } from "../../../core/records/platform.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { settingsPushes } from "../../../shared/channels/settings.ts";
 import { shortcuts } from "../../../shared/channels/shortcuts.ts";
@@ -15,7 +16,7 @@ import { IpcDispatcher } from "../../shell/ipc.ts";
 import { pageUrl } from "../../shell/window.ts";
 import { SettingsWindow } from "./window.ts";
 
-const setup = (platform = "darwin") => {
+const setup = (platform: Platform = "darwin") => {
   const theme = new FakeTheme(false);
   const windows = new FakeWindows();
   const transport = new FakeIpcTransport();

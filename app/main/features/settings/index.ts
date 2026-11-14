@@ -22,7 +22,6 @@ import type {
   Unsubscribe,
 } from "../../../core/ports.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
-import { platformOf } from "../../../core/records/platform.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import { SnapshotStore } from "../../../core/snapshot.ts";
@@ -97,7 +96,7 @@ export class SettingsStore {
 
   constructor(options: SettingsOptions) {
     this.#options = options;
-    this.#specs = forPlatform(registry, platformOf(options.lifecycle.platform));
+    this.#specs = forPlatform(registry, options.lifecycle.platform);
     this.#store = new SnapshotStore(settingsSnapshot, {
       lifecycle: options.lifecycle,
       clock: options.clock,

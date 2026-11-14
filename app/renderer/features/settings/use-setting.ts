@@ -7,7 +7,7 @@ import {
   withValue,
 } from "../../../core/engines/settings.ts";
 import type { GateRefusal } from "../../../core/entitlement/gate.ts";
-import { platformOf } from "../../../core/records/platform.ts";
+import type { Platform } from "../../../core/records/platform.ts";
 import {
   settings as channels,
   settingsPushes,
@@ -42,9 +42,9 @@ export const createSettingsStore = (
   client: SyncSource<
     (typeof channels.snapshot)["result"],
     (typeof settingsPushes.changed)["payload"]
-  > & { readonly platform: string }
+  > & { readonly platform: Platform }
 ): SettingsSource => ({
-  specs: forPlatform(registry, platformOf(client.platform)),
+  specs: forPlatform(registry, client.platform),
   store: syncedStore(
     client,
     channels.snapshot,

@@ -6,7 +6,6 @@ import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { themeOf } from "../core/ports.ts";
-import { platformOf } from "../core/records/platform.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../shared/channels/surfaces.ts";
@@ -354,7 +353,7 @@ const start = async () => {
     theme: ports.theme,
     windows: [window, settingsWindow],
   }).start();
-  const platform = platformOf(ports.lifecycle.platform);
+  const { platform } = ports.lifecycle;
   new Notifications({
     events,
     inbox,

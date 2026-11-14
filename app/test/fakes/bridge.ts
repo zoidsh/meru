@@ -1,12 +1,13 @@
 import type { RendererBridge, Unsubscribe } from "../../core/ports.ts";
+import type { Platform } from "../../core/records/platform.ts";
 
 export class FakeBridge implements RendererBridge {
-  readonly platform: string;
+  readonly platform: Platform;
   readonly sent: { readonly channel: string; readonly payload: unknown }[] = [];
   readonly answers = new Map<string, unknown>();
   readonly #listeners = new Map<string, Set<(payload: unknown) => void>>();
 
-  constructor(platform = "darwin") {
+  constructor(platform: Platform = "darwin") {
     this.platform = platform;
   }
 

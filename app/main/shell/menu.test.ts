@@ -6,6 +6,7 @@ import type {
   MenuEntry,
   MenuSection,
 } from "../../core/records/menu.ts";
+import type { Platform } from "../../core/records/platform.ts";
 import { commands as channels } from "../../shared/channels/commands.ts";
 import { wireName } from "../../shared/channels/define.ts";
 import { chromeSurface } from "../../shared/channels/surfaces.ts";
@@ -37,7 +38,7 @@ const entriesOf = (section: MenuSection<CommandId>) =>
         (entry): entry is MenuAction<CommandId> => entry.kind === "action"
       );
 
-const setup = async (platform = "darwin") => {
+const setup = async (platform: Platform = "darwin") => {
   const window = new FakeWindow();
   const log = new FakeLog();
   const registrar = new IpcDispatcher({
@@ -237,7 +238,7 @@ describe(ApplicationMenu, () => {
     ).toBe("CommandOrControl+S");
   });
 
-  it.each([
+  it.each<readonly [Platform, string, string]>([
     ["darwin", "Command+[", "Command+]"],
     ["linux", "Alt+Left", "Alt+Right"],
     ["win32", "Alt+Left", "Alt+Right"],
@@ -275,7 +276,7 @@ describe(ApplicationMenu, () => {
     });
   });
 
-  it.each(["linux", "win32"])(
+  it.each<Platform>(["linux", "win32"])(
     "opens with the app-named menu on %s too, holding the update commands, Settings and Quit, and ends the File menu with Close and Minimize",
     async (platform) => {
       const { sections } = await setup(platform);

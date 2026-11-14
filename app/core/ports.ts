@@ -5,6 +5,7 @@ import type {
   NavigationAction,
   PageHistory,
 } from "./records/navigation.ts";
+import type { Platform } from "./records/platform.ts";
 import type { Rect } from "./records/rect.ts";
 import type { Theme } from "./records/theme.ts";
 import type { TitleBar, TitleBarOverlay } from "./records/title-bar.ts";
@@ -57,7 +58,7 @@ export type Failure =
     };
 
 export interface LifecyclePort {
-  readonly platform: string;
+  readonly platform: Platform;
   /** False for a run from the repository, such as `pnpm dev` or the end-to-end suite. */
   readonly packaged: boolean;
   readonly whenReady: () => Promise<void>;
@@ -360,7 +361,7 @@ export interface Ports {
 
 // contextBridge carries plain values and functions only, so the bridge is untyped transport; the client over it takes the channel objects and parses what comes back.
 export interface RendererBridge {
-  readonly platform: string;
+  readonly platform: Platform;
   readonly send: (channel: string, payload: unknown) => void;
   readonly invoke: (channel: string, payload: unknown) => Promise<unknown>;
   readonly sendSync: (channel: string, payload: unknown) => unknown;

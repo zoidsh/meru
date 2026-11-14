@@ -1,4 +1,5 @@
 import type { WindowPort } from "../ports.ts";
+import type { Platform } from "../records/platform.ts";
 import type { Rect } from "../records/rect.ts";
 import type { Theme } from "../records/theme.ts";
 import type { TitleBar, TitleBarOverlay } from "../records/title-bar.ts";
@@ -24,7 +25,7 @@ const TRAFFIC_LIGHT_HEIGHT = 12;
 const TRAFFIC_LIGHT_X = 12;
 
 export interface WindowLook {
-  readonly platform: string;
+  readonly platform: Platform;
   readonly theme: Theme;
   /** Whether a Linux window draws its controls, which some window managers have no room for. */
   readonly linuxControls: boolean;

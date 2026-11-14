@@ -1,6 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import type { Platform } from "../../../core/records/platform.ts";
 import { profiles } from "../../../shared/channels/profiles.ts";
 import { settings } from "../../../shared/channels/settings.ts";
 import { updater } from "../../../shared/channels/updater.ts";
@@ -23,7 +24,7 @@ const mount = ({
   readonly page: string;
   readonly layers?: Settings;
   readonly locked?: Locked;
-  readonly platform?: string;
+  readonly platform?: Platform;
 }) => {
   location.hash = `/${page}`;
   return mountSettings(

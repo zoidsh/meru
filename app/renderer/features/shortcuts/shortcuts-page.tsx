@@ -7,6 +7,7 @@ import {
   glyphs,
   resolveBindings,
 } from "../../../core/engines/shortcuts.ts";
+import type { Platform } from "../../../core/records/platform.ts";
 import { settings as channels } from "../../../shared/channels/settings.ts";
 import { shortcuts } from "../../../shared/channels/shortcuts.ts";
 import {
@@ -34,7 +35,7 @@ const Recorder = ({
 }: {
   readonly id: CommandId;
   readonly accelerator: string | null;
-  readonly platform: string;
+  readonly platform: Platform;
   readonly onRecord: (accelerator: string | null) => void;
 }) => {
   const client = useSettingsClient();

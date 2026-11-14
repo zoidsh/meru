@@ -6,6 +6,7 @@ import type { z } from "zod";
 
 import type { Group } from "../core/records/group.ts";
 import type { LayoutNode } from "../core/records/layout.ts";
+import type { Platform } from "../core/records/platform.ts";
 import { wireName } from "../shared/channels/define.ts";
 import type {
   InvokeChannel,
@@ -115,7 +116,7 @@ export type Answers = readonly Answer[];
 const mount = (
   render: (bridge: FakeBridge) => ReactNode,
   answers: Answers,
-  platform: string
+  platform: Platform
 ) => {
   const bridge = new FakeBridge(platform);
   for (const { channel, value } of answers) {
@@ -188,7 +189,7 @@ export const settle = async () => {
 export const mountChrome = (
   node: ReactNode,
   answers: Answers,
-  platform = "darwin"
+  platform: Platform = "darwin"
 ) =>
   mount(
     (bridge) => {
@@ -209,7 +210,7 @@ export const mountChrome = (
 export const mountSettings = (
   node: ReactNode,
   answers: Answers,
-  platform = "darwin"
+  platform: Platform = "darwin"
 ) =>
   mount(
     (bridge) => {

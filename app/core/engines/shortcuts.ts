@@ -1,3 +1,5 @@
+import type { Platform } from "../records/platform.ts";
+
 export type Modifier =
   | "CommandOrControl"
   | "Command"
@@ -125,7 +127,7 @@ export const normalise = (text: string): string | undefined => {
 /** The keys an accelerator presses on a platform: CommandOrControl is Command on macOS and Control elsewhere, as Super is Command on macOS. */
 export const onPlatform = (
   accelerator: Accelerator,
-  platform: string
+  platform: Platform
 ): Accelerator => {
   const mac = platform === "darwin";
   const pressed = new Set(
@@ -155,7 +157,7 @@ export interface ShortcutCommand<Id extends string = string> {
 
 const defaultOf = (
   shortcut: ShortcutCommand["shortcut"],
-  platform: string
+  platform: Platform
 ): string | undefined =>
   platform === "darwin"
     ? (shortcut?.darwin ?? shortcut?.default)
@@ -167,7 +169,7 @@ const defaultOf = (
 export const resolveBindings = <Id extends string>(
   commands: readonly ShortcutCommand<Id>[],
   bindings: Readonly<Partial<Record<string, string | null>>>,
-  platform: string
+  platform: Platform
 ): ReadonlyMap<Id, string | null> =>
   new Map(
     commands.map((command): [Id, string | null] => {
@@ -194,7 +196,7 @@ export interface Conflict<Id extends string = string> {
 /** Accelerators that more than one command would answer on a platform. */
 export const conflicts = <Id extends string>(
   resolved: ReadonlyMap<Id, string | null>,
-  platform: string
+  platform: Platform
 ): Conflict<Id>[] => {
   const byKeys = new Map<string, Id[]>();
   for (const [id, accelerator] of resolved) {
@@ -243,7 +245,10 @@ const OTHER_NAMES: Readonly<Partial<Record<Modifier, string>>> = {
 };
 
 /** An accelerator as the platform prints it: symbols run together on macOS, such as ⌥⌘N, names joined by + elsewhere, such as Ctrl+Alt+N; undefined when it does not parse. */
-export const glyphs = (text: string, platform: string): string | undefined => {
+export const glyphs = (
+  text: string,
+  platform: Platform
+): string | undefined => {
   const parsed = parseAccelerator(text);
   if (parsed === undefined) {
     return undefined;
@@ -316,7 +321,7 @@ const keyOfInput = (input: KeyInput): string | undefined => {
   return CODE_KEYS[input.code] ?? keyOf(input.key);
 };
 
-const pressedOf = (input: KeyInput, platform: string): Set<Modifier> => {
+const pressedOf = (input: KeyInput, platform: Platform): Set<Modifier> => {
   const pressed = new Set<Modifier>();
   if (input.control) {
     pressed.add("Control");
@@ -338,7 +343,7 @@ const pressedOf = (input: KeyInput, platform: string): Set<Modifier> => {
  */
 export const acceleratorOf = (
   input: KeyInput,
-  platform: string
+  platform: Platform
 ): string | undefined => {
   const key = keyOfInput(input);
   if (key === undefined) {
@@ -365,7 +370,7 @@ export const acceleratorOf = (
 export const matchShortcut = <Id extends string>(
   input: KeyInput,
   bindings: ReadonlyMap<Id, string | null>,
-  platform: string
+  platform: Platform
 ): Id | undefined => {
   if (input.type !== "keyDown") {
     return undefined;

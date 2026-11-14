@@ -2,6 +2,8 @@ import type { z } from "zod";
 
 import { BRIDGE_KEY } from "../core/ports.ts";
 import type { RendererBridge, Unsubscribe } from "../core/ports.ts";
+import { platformSchema } from "../core/records/platform.ts";
+import type { Platform } from "../core/records/platform.ts";
 import type { Result } from "../core/result.ts";
 import { settle, wireName } from "../shared/channels/define.ts";
 import type {
@@ -19,7 +21,7 @@ import type {
 
 // Each method is generic over the channel's schemas rather than the channel, so zod's `output<this>` resolves to them; the intersection keeps the channel to this surface's.
 export interface Client<S extends Surface> {
-  readonly platform: string;
+  readonly platform: Platform;
   readonly send: <P extends z.ZodType>(
     channel: EventChannel<P> & SurfaceEvent<S>,
     payload: z.input<P>
@@ -42,7 +44,7 @@ const isBridge = (value: unknown): value is RendererBridge =>
   typeof value === "object" &&
   value !== null &&
   "platform" in value &&
-  typeof value.platform === "string" &&
+  platformSchema.safeParse(value.platform).success &&
   ["send", "invoke", "sendSync", "on"].every(
     (key) => typeof Reflect.get(value, key) === "function"
   );

@@ -2,6 +2,7 @@ import { cn } from "cn";
 import { groupBy, sortBy } from "es-toolkit";
 
 import { TITLEBAR_HEIGHT } from "../../../core/engines/chrome.ts";
+import type { Platform } from "../../../core/records/platform.ts";
 import { msg } from "../../../shared/msg.ts";
 import type { Setting } from "../../../shared/settings/define.ts";
 import { registry, settingsPages } from "../../../shared/settings/registry.ts";
@@ -15,7 +16,7 @@ import { SettingField } from "./setting-field.tsx";
 import { SettingsSection } from "./settings-section.tsx";
 import { useSettingsClient } from "./use-settings-client.ts";
 
-const appliesOn = (setting: Setting, platform: string) =>
+const appliesOn = (setting: Setting, platform: Platform) =>
   setting.platforms?.some((found) => found === platform) ?? true;
 
 const Fields = ({ page }: { readonly page: SettingsPageId }) => {
