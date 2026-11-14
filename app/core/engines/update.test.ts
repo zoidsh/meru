@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { UpdaterEvent } from "../ports.ts";
-import { advance, IDLE_UPDATE } from "./update.ts";
+import { advance, canInstall, IDLE_UPDATE, isBusy } from "./update.ts";
 
 const run = (...events: readonly UpdaterEvent[]) => {
   let state = IDLE_UPDATE;
@@ -39,5 +39,26 @@ describe(advance, () => {
       { kind: "error", message: "offline" },
       { kind: "ready", version: "4.0.1" },
     ]);
+  });
+});
+
+describe(canInstall, () => {
+  it("installs only a downloaded update", () => {
+    expect([
+      canInstall(run({ kind: "downloaded", version: "4.0.1" })),
+      canInstall(run({ kind: "progress", percent: 50 })),
+      canInstall(IDLE_UPDATE),
+    ]).toStrictEqual([true, false, false]);
+  });
+});
+
+describe(isBusy, () => {
+  it("is busy while an update downloads or waits to install", () => {
+    expect([
+      isBusy(run({ kind: "progress", percent: 50 })),
+      isBusy(run({ kind: "downloaded", version: "4.0.1" })),
+      isBusy(run({ kind: "available", version: "4.0.1" })),
+      isBusy(run({ kind: "error", message: "offline" })),
+    ]).toStrictEqual([true, true, false, false]);
   });
 });

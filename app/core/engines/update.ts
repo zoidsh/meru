@@ -36,7 +36,16 @@ export const advance = (
         : { kind: "error", message: event.message };
     }
     default: {
-      return state;
+      const unknown: never = event;
+      return unknown;
     }
   }
 };
+
+/** Whether a downloaded update waits to be installed. */
+export const canInstall = (state: UpdateState): boolean =>
+  state.kind === "ready";
+
+/** Whether an update is on its way or waiting, so another check would find nothing new. */
+export const isBusy = (state: UpdateState): boolean =>
+  state.kind === "downloading" || state.kind === "ready";

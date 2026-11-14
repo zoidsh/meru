@@ -1,5 +1,10 @@
 import { DisposableStore } from "../../../core/disposable.ts";
-import { advance, IDLE_UPDATE } from "../../../core/engines/update.ts";
+import {
+  advance,
+  canInstall,
+  IDLE_UPDATE,
+  isBusy,
+} from "../../../core/engines/update.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type { LogPort } from "../../../core/log.ts";
 import type {
@@ -62,7 +67,7 @@ export class Updater {
         check: () => this.check(),
         install: {
           run: () => this.install(),
-          when: () => this.#state.kind === "ready",
+          when: () => canInstall(this.#state),
         },
       }),
       updater.onEvent((event) => {
@@ -112,16 +117,14 @@ export class Updater {
     if (this.#started) {
       this.#schedule(this.#interval());
     }
-    const busy =
-      this.#state.kind === "downloading" || this.#state.kind === "ready";
-    if (!busy) {
+    if (!isBusy(this.#state)) {
       void this.#ask(this.#options.settings.get("updater.channel") === "beta");
     }
     return ok(undefined);
   }
 
   install(): Result<undefined, UpdaterError> {
-    if (this.#state.kind !== "ready") {
+    if (!canInstall(this.#state)) {
       return err("notReady");
     }
     this.#options.updater.quitAndInstall();
