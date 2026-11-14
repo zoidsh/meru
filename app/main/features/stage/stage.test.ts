@@ -74,7 +74,7 @@ const setup = async (style: Style = "modern") => {
     commands,
     lifecycle: new FakeLifecycle(),
     clock: new FakeClock(),
-    entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
     events,
     fs: new FakeFs(),
     ids: fakeIds(),

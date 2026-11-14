@@ -114,8 +114,7 @@ export interface ProfilesOptions {
   readonly commands: CommandRegistrar;
   readonly sessions: SessionPort;
   readonly settings: Pick<SettingsStore, "removeProfile">;
-  /** The entitlement at construction; later values arrive as `entitlement.changed`. */
-  readonly entitlement: Entitlement;
+  readonly entitlement: () => Entitlement;
   readonly log: LogPort;
 }
 
@@ -124,13 +123,11 @@ export class Profiles {
   readonly #options: ProfilesOptions;
   readonly #store: SnapshotStore<ProfilesState, string>;
   readonly #disposables = new DisposableStore();
-  #entitlement: Entitlement;
   #state: ProfilesState | undefined;
   #asleep: ReadonlySet<string> = new Set();
 
   constructor(options: ProfilesOptions) {
     this.#options = options;
-    this.#entitlement = options.entitlement;
     this.#store = new SnapshotStore(profilesSnapshot(options.ids), {
       lifecycle: options.lifecycle,
       clock: options.clock,
@@ -198,8 +195,7 @@ export class Profiles {
         select8: this.#selectAt(7),
         select9: this.#selectAt(8),
       }),
-      events.on("entitlement.changed", ({ entitlement }) => {
-        this.#entitlement = entitlement;
+      events.on("entitlement.changed", () => {
         this.#reselect();
         this.#publish();
         events.emit("profiles.changed", null);
@@ -499,7 +495,7 @@ export class Profiles {
   }
 
   #newProfileGate(): Gate {
-    return canUse(this.#entitlement, "extraProfile", {
+    return canUse(this.#options.entitlement(), "extraProfile", {
       now: this.#options.clock.now(),
       profiles: this.state.profiles.length,
     });
@@ -508,7 +504,7 @@ export class Profiles {
   #deactivated(): Set<string> {
     return deactivatedProfiles(
       orderedProfiles(this.state.profiles).map((profile) => profile.id),
-      this.#entitlement,
+      this.#options.entitlement(),
       this.#options.clock.now()
     );
   }

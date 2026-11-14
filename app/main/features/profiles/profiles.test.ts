@@ -76,11 +76,16 @@ const setup = async ({
   });
   const log = new FakeLog();
   const commands = new CommandDispatcher();
+  let current = entitlement;
+  const changeEntitlement = (next: Entitlement) => {
+    current = next;
+    events.emit("entitlement.changed", { entitlement: next });
+  };
   const profiles = new Profiles({
     commands,
     lifecycle,
     clock,
-    entitlement,
+    entitlement: () => current,
     events,
     fs,
     ids: fakeIds("id"),
@@ -102,6 +107,7 @@ const setup = async ({
     );
   };
   return {
+    changeEntitlement,
     commands,
     log,
     events,
@@ -237,8 +243,8 @@ describe(Profiles, () => {
   );
 
   it("refuses a second profile once the entitlement changes to free", async () => {
-    const { profiles, events } = await setup();
-    events.emit("entitlement.changed", { entitlement: free });
+    const { changeEntitlement, profiles } = await setup();
+    changeEntitlement(free);
     expect(profiles.createProfile("Work")).toStrictEqual({
       error: "free",
       ok: false,
@@ -246,11 +252,11 @@ describe(Profiles, () => {
   });
 
   it("deactivates the profiles past the free count when the trial ends, keeping them and moving the selection", async () => {
-    const { profiles, events, registrar, transport } = await setup();
+    const { changeEntitlement, profiles, registrar, transport } = await setup();
     const created = unwrap(profiles.createProfile("Work"));
     unwrap(profiles.selectProfile(created.id));
     registrar.dispatch(PAGE, wireName(profileChannels.snapshot), {});
-    events.emit("entitlement.changed", { entitlement: free });
+    changeEntitlement(free);
     const pushed = profilesSnapshotSchema.parse(transport.sent.at(-1)?.payload);
     expect(
       pushed.profiles.map((profile) => [profile.label, profile.deactivated])
@@ -266,7 +272,7 @@ describe(Profiles, () => {
   });
 
   it("selects a profile by its place in the titlebar and steps through them, wrapping, past the deactivated ones", async () => {
-    const { profiles, commands, events } = await setup();
+    const { changeEntitlement, profiles, commands } = await setup();
     const work = unwrap(profiles.createProfile("Work"));
     const home = unwrap(profiles.createProfile("Home"));
     const first = profiles.selected().id;
@@ -286,7 +292,7 @@ describe(Profiles, () => {
     ).toStrictEqual([work.id, home.id, first, home.id, home.id]);
     expect(commands.enabled("profiles.select4")).toBeFalsy();
 
-    events.emit("entitlement.changed", { entitlement: free });
+    changeEntitlement(free);
     expect(profiles.selected().id).toBe(first);
     expect([
       commands.enabled("profiles.select2"),

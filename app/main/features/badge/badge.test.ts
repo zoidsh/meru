@@ -54,7 +54,7 @@ const setup = async () => {
   const profiles = new Profiles({
     clock,
     commands: new CommandDispatcher(),
-    entitlement: PRO,
+    entitlement: () => PRO,
     events,
     fs: new FakeFs(),
     ids: fakeIds(),

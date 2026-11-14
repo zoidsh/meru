@@ -63,7 +63,7 @@ const setup = async (platform = "darwin") => {
     commands: dispatcher,
     lifecycle: new FakeLifecycle(platform),
     clock: new FakeClock(),
-    entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
     events,
     fs: new FakeFs(),
     ids: fakeIds(),

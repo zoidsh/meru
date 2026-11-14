@@ -74,7 +74,7 @@ const setup = async ({ online = true } = {}) => {
     commands: new CommandDispatcher(),
     lifecycle,
     clock,
-    entitlement: PRO,
+    entitlement: () => PRO,
     events,
     fs: new FakeFs(),
     ids: fakeIds(),

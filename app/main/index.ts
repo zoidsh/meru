@@ -158,7 +158,7 @@ const start = async () => {
     commands,
     lifecycle: ports.lifecycle,
     clock: ports.clock,
-    entitlement: entitlement.current(),
+    entitlement: () => entitlement.current(),
     events,
     fs: ports.fs,
     ids: ports.ids,

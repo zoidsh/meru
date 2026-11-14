@@ -50,7 +50,7 @@ const setup = async (fs = new FakeFs()) => {
     commands: new CommandDispatcher(),
     lifecycle,
     clock,
-    entitlement: trial,
+    entitlement: () => trial,
     events,
     fs,
     ids: fakeIds("p"),

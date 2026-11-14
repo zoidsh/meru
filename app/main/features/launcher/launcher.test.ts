@@ -42,7 +42,7 @@ const setup = async () => {
   const profiles = new Profiles({
     clock,
     commands,
-    entitlement: { expiresAt: null, kind: "unknown", source: "stored" },
+    entitlement: () => ({ expiresAt: null, kind: "unknown", source: "stored" }),
     events,
     fs: new FakeFs(),
     ids: fakeIds(),
