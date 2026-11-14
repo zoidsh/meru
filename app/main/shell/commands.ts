@@ -24,19 +24,28 @@ export class CommandDispatcher<
     group: CommandGroup<F, C>,
     handlers: CommandHandlers<C>
   ): Unsubscribe => {
-    const ids = commandsOf(group).map((command) => {
-      if (this.#handlers.has(command.id)) {
-        throw new Error(`${command.id} has a handler already`);
+    const given = new Map(
+      Object.entries<CommandHandler | GuardedHandler>(handlers).map(
+        ([name, handler]) => [`${group.feature}.${name}`, handler]
+      )
+    );
+    const registered = commandsOf(group).map(
+      ({ id }): [string, GuardedHandler] => {
+        const handler = given.get(id);
+        if (handler === undefined) {
+          throw new Error(`${id} has no handler`);
+        }
+        if (this.#handlers.has(id)) {
+          throw new Error(`${id} has a handler already`);
+        }
+        return [id, guardOf(handler)];
       }
-      return command.id;
-    });
-    for (const [name, handler] of Object.entries<
-      CommandHandler | GuardedHandler
-    >(handlers)) {
-      this.#handlers.set(`${group.feature}.${name}`, guardOf(handler));
+    );
+    for (const [id, handler] of registered) {
+      this.#handlers.set(id, handler);
     }
     return () => {
-      for (const id of ids) {
+      for (const [id] of registered) {
         this.#handlers.delete(id);
       }
     };
