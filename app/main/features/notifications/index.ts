@@ -3,7 +3,7 @@ import {
   mailNotice,
   messageUrl,
   notifiable,
-} from "../../../core/engines/inbox.ts";
+} from "../../../core/engines/notifications.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type { NotificationPort } from "../../../core/ports.ts";
 import type { FeedEntry } from "../../../core/records/feed.ts";
