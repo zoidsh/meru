@@ -1,5 +1,5 @@
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { commands } from "../../../shared/channels/commands.ts";
 import { profiles } from "../../../shared/channels/profiles.ts";
@@ -16,8 +16,6 @@ import {
 } from "../../testing.tsx";
 import type { Answers } from "../../testing.tsx";
 import { Titlebar } from "./titlebar.tsx";
-
-const mounted: (() => void)[] = [];
 
 const profilesAnswer = (shown: ReturnType<typeof profileOf>[]) =>
   answer(profiles.snapshot, {
@@ -38,7 +36,6 @@ const mount = (answers: Answers) => {
     answer(stage.snapshot, stageOf()),
     ...answers,
   ]);
-  mounted.push(page.unmount);
   const buttons = () => [
     ...page.container.querySelectorAll<HTMLButtonElement>("[data-profile-id]"),
   ];
@@ -46,12 +43,6 @@ const mount = (answers: Answers) => {
 };
 
 describe(Titlebar, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("shows a fresh profile, its sidebar hidden, no profile row and what goes at its right end", () => {
     const { container } = mount([profilesAnswer([profileOf("personal")])]);
     expect([

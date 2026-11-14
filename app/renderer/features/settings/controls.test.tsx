@@ -2,27 +2,10 @@ import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { mountSettings } from "../../testing.tsx";
+import { mountSettings, typeInto } from "../../testing.tsx";
 import { NumberControl, TextControl } from "./controls.tsx";
 
-const mounted: (() => void)[] = [];
-
 const field = () => document.querySelector("input");
-
-// React tracks an input's value through its own setter, so the value is set past it for the change to reach onChange.
-const type = (text: string) => {
-  act(() => {
-    const input = field();
-    if (input === null) {
-      return;
-    }
-    Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      "value"
-    )?.set?.call(input, text);
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-};
 
 const pause = () => {
   act(() => {
@@ -43,7 +26,7 @@ const shown = () => ({
 
 const mountNumber = () => {
   const written: unknown[] = [];
-  const page = mountSettings(
+  mountSettings(
     <NumberControl
       disabled={false}
       id="hours"
@@ -59,13 +42,12 @@ const mountNumber = () => {
     />,
     []
   );
-  mounted.push(page.unmount);
   return written;
 };
 
 const mountText = () => {
   const written: unknown[] = [];
-  const page = mountSettings(
+  mountSettings(
     <TextControl
       disabled={false}
       id="name"
@@ -78,25 +60,21 @@ const mountText = () => {
     />,
     []
   );
-  mounted.push(page.unmount);
   return written;
 };
 
 describe(NumberControl, () => {
   afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
     vi.useRealTimers();
   });
 
   it("marks a number out of bounds or none at all, says what it takes, and writes nothing", () => {
     vi.useFakeTimers();
     const written = mountNumber();
-    type("30");
+    typeInto(field(), "30");
     pause();
     const out = { ...shown(), hint: document.querySelector("p")?.textContent };
-    type("");
+    typeInto(field(), "");
     pause();
     expect({ empty: shown(), out, written }).toStrictEqual({
       empty: { invalid: "true", value: "" },
@@ -112,10 +90,10 @@ describe(NumberControl, () => {
   it("puts the value in force back on blur after invalid input, and writes a valid one once typing pauses", () => {
     vi.useFakeTimers();
     const written = mountNumber();
-    type("0");
+    typeInto(field(), "0");
     blur();
     const reverted = shown();
-    type("6");
+    typeInto(field(), "6");
     pause();
     expect({ reverted, written }).toStrictEqual({
       reverted: { invalid: "false", value: "4" },
@@ -126,16 +104,13 @@ describe(NumberControl, () => {
 
 describe(TextControl, () => {
   afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
     vi.useRealTimers();
   });
 
   it("marks text the schema refuses, writes nothing, and puts the value in force back on blur", () => {
     vi.useFakeTimers();
     const written = mountText();
-    type("  ");
+    typeInto(field(), "  ");
     pause();
     const refused = shown();
     blur();
@@ -149,7 +124,7 @@ describe(TextControl, () => {
   it("writes typed text at once on blur rather than waiting for the pause", () => {
     vi.useFakeTimers();
     const written = mountText();
-    type("Office");
+    typeInto(field(), "Office");
     blur();
     expect(written).toStrictEqual(["Office"]);
   });

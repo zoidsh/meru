@@ -1,13 +1,11 @@
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { settings } from "../../../shared/channels/settings.ts";
 import { sidebar } from "../../../shared/channels/sidebar.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import { answer, mountChrome, stageOf } from "../../testing.tsx";
 import { Dividers } from "./dividers.tsx";
-
-const mounted: (() => void)[] = [];
 
 const mount = (style: "modern" | "classic") => {
   const page = mountChrome(<Dividers />, [
@@ -30,17 +28,10 @@ const mount = (style: "modern" | "classic") => {
       ],
     }),
   ]);
-  mounted.push(page.unmount);
   return page.container;
 };
 
 describe(Dividers, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("keeps the hit area but draws no line in the modern style", () => {
     const container = mount("modern");
     expect(container.querySelectorAll(".divider")).toHaveLength(1);
@@ -61,7 +52,6 @@ describe(Dividers, () => {
         ],
       }),
     ]);
-    mounted.push(page.unmount);
     const divider = page.container.querySelector<HTMLElement>(".divider");
     act(() => {
       divider?.dispatchEvent(

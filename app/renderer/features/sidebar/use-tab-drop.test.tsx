@@ -1,5 +1,5 @@
 import { act } from "react";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { profiles } from "../../../shared/channels/profiles.ts";
 import { sidebar } from "../../../shared/channels/sidebar.ts";
@@ -13,8 +13,6 @@ import {
   tabOf,
 } from "../../testing.tsx";
 import { Sidebar } from "./sidebar.tsx";
-
-const mounted: (() => void)[] = [];
 
 const PROFILES = {
   groups: [groupOf("g-mail", ["mail"]), groupOf("g-cal", ["calendar"])],
@@ -53,7 +51,6 @@ const mount = () => {
     answer(sidebar.snapshot, { kind: "shown", size: "narrow", width: 64 }),
     answer(stage.snapshot, stageOf({ focusedPaneId: "pane-mail" })),
   ]);
-  mounted.push(page.unmount);
   const nav = page.container.querySelector("nav");
   if (nav !== null) {
     nav.getBoundingClientRect = () => DOMRect.fromRect(STRIP);
@@ -88,12 +85,6 @@ describe("a sidebar row dragged to the sidebar's edge", () => {
       configurable: true,
       value: () => [],
     });
-  });
-
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
   });
 
   it("hands the drag to the stage once the pointer leaves the sidebar, and takes it back when it returns", async () => {

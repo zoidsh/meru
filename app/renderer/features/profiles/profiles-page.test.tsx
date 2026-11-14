@@ -2,10 +2,14 @@ import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { profiles } from "../../../shared/channels/profiles.ts";
-import { answer, mountSettings, profileOf, tabOf } from "../../testing.tsx";
+import {
+  answer,
+  mountSettings,
+  profileOf,
+  tabOf,
+  typeInto,
+} from "../../testing.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
-
-const mounted: (() => void)[] = [];
 
 const FREE = "free";
 
@@ -29,7 +33,6 @@ const mount = (allowed: typeof FREE | typeof TRIAL) => {
     answer(profiles.update, null),
     answer(profiles.remove, null),
   ]);
-  mounted.push(page.unmount);
   return page;
 };
 
@@ -38,25 +41,8 @@ const buttons = () => [...document.querySelectorAll("button")];
 const item = (id: string) =>
   document.querySelector<HTMLElement>(`[data-profile-id="${id}"]`);
 
-// React tracks an input's value through its own setter, so the value is set past it for the change to reach onChange.
-const type = (field: HTMLInputElement | null | undefined, text: string) => {
-  act(() => {
-    if (field === null || field === undefined) {
-      return;
-    }
-    Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      "value"
-    )?.set?.call(field, text);
-    field.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-};
-
 describe(ProfilesPage, () => {
   afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
     vi.useRealTimers();
   });
 
@@ -83,8 +69,8 @@ describe(ProfilesPage, () => {
     vi.useFakeTimers();
     const { sentOn } = mount(TRIAL);
     const last = () => sentOn(profiles.update).at(-1);
-    type(item("work")?.querySelector("input"), "Off");
-    type(item("work")?.querySelector("input"), "Office");
+    typeInto(item("work")?.querySelector("input"), "Off");
+    typeInto(item("work")?.querySelector("input"), "Office");
     act(() => {
       vi.advanceTimersByTime(1000);
     });

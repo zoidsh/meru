@@ -1,5 +1,5 @@
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { Orientation } from "../../../core/records/layout.ts";
 import { launcher } from "../../../shared/channels/launcher.ts";
@@ -11,12 +11,12 @@ import {
   groupOf,
   mountChrome,
   profileOf,
+  settle,
   tabOf,
+  typeInto,
 } from "../../testing.tsx";
 import { LauncherButton } from "./launcher-button.tsx";
 import { Launcher } from "./launcher.tsx";
-
-const mounted: (() => void)[] = [];
 
 const PROFILES = {
   groups: [groupOf("g-mail", ["mail"])],
@@ -44,28 +44,6 @@ const key = (init: KeyboardEventInit) => {
   });
 };
 
-// React tracks an input's value through its own setter, so the value is set past it for the change to reach onChange.
-const type = (text: string) => {
-  const field = input();
-  if (field === null) {
-    return;
-  }
-  act(() => {
-    Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      "value"
-    )?.set?.call(field, text);
-    field.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-};
-
-const settle = async () => {
-  await act(async () => {
-    await Promise.resolve();
-    await Promise.resolve();
-  });
-};
-
 const mount = (appIds?: readonly string[], split?: Orientation) => {
   const page = mountChrome(<Launcher split={split} />, [
     answer(profiles.snapshot, PROFILES),
@@ -78,21 +56,14 @@ const mount = (appIds?: readonly string[], split?: Orientation) => {
     }),
     answer(stage.openTab, null),
   ]);
-  mounted.push(page.unmount);
   return page;
 };
 
 describe(Launcher, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("lists launcher.apps, narrowed as one types", () => {
     mount(["calendar", "drive", "docs"]);
     const all = names();
-    type("dr");
+    typeInto(input(), "dr");
     expect([all, names()]).toStrictEqual([
       ["Calendar", "Drive", "Docs"],
       ["Drive"],
@@ -227,15 +198,8 @@ describe(Launcher, () => {
 });
 
 describe(LauncherButton, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("asks main to open the launcher on a click", () => {
     const page = mountChrome(<LauncherButton place="titlebar" />, []);
-    mounted.push(page.unmount);
     act(() => {
       page.container.querySelector("button")?.click();
     });

@@ -9,8 +9,6 @@ import type { Locked } from "../../../shared/settings/schema.ts";
 import { answer, mountSettings, profileOf, tabOf } from "../../testing.tsx";
 import { SettingsWindow } from "./settings-window.tsx";
 
-const mounted: (() => void)[] = [];
-
 const FREE_LOCKS: Locked = {
   "links.excludedApps": "free",
   "links.openInApp": "free",
@@ -28,7 +26,7 @@ const mount = ({
   readonly platform?: string;
 }) => {
   location.hash = `/${page}`;
-  const mountedPage = mountSettings(
+  return mountSettings(
     <SettingsWindow />,
     [
       answer(settings.snapshot, { layers, locked }),
@@ -44,8 +42,6 @@ const mount = ({
     ],
     platform
   );
-  mounted.push(mountedPage.unmount);
-  return mountedPage;
 };
 
 const field = (key: string) =>
@@ -78,9 +74,6 @@ const pick = (name: string) => {
 
 describe(SettingsWindow, () => {
   afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
     location.hash = "";
   });
 
@@ -146,7 +139,7 @@ describe(SettingsWindow, () => {
   });
 
   it("locks a Pro setting with the gate's reason while the entitlement refuses it, and lets it change once licensed", () => {
-    mount({ page: "panes" });
+    const refused = mount({ page: "panes" });
     const locked = {
       reason:
         field("links.openInApp")?.querySelector("[data-locked]")?.textContent,
@@ -154,9 +147,7 @@ describe(SettingsWindow, () => {
         ?.querySelector("[role=switch]")
         ?.matches("[data-disabled]"),
     };
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
+    refused.unmount();
     const { sentOn } = mount({ locked: {}, page: "panes" });
     click(field("links.openInApp")?.querySelector("[role=switch]"));
     expect({
@@ -176,9 +167,7 @@ describe(SettingsWindow, () => {
       field("stage.zoom")?.querySelectorAll("[role=switch]")[0] ?? null;
     click(own());
     const turnedOn = first.sentOn(settings.set);
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
+    first.unmount();
     const second = mount({
       layers: {
         global: { "stage.zoom": 1.5 },
@@ -206,11 +195,9 @@ describe(SettingsWindow, () => {
   });
 
   it("shows a setting only on the platforms it does anything on, saying when it needs a restart", () => {
-    mount({ page: "appearance" });
+    const onMac = mount({ page: "appearance" });
     const mac = field("window.linuxControls");
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
+    onMac.unmount();
     mount({ page: "appearance", platform: "linux" });
     expect({
       linux: field("window.linuxControls")?.textContent?.includes(

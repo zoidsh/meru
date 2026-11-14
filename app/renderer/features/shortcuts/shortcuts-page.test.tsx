@@ -1,13 +1,11 @@
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { settings } from "../../../shared/channels/settings.ts";
 import { shortcuts } from "../../../shared/channels/shortcuts.ts";
 import { commands } from "../../../shared/commands/registry.ts";
 import { answer, mountSettings } from "../../testing.tsx";
 import { ShortcutsPage } from "./shortcuts-page.tsx";
-
-const mounted: (() => void)[] = [];
 
 const mount = (bindings: Readonly<Record<string, string | null>> = {}) => {
   const page = mountSettings(<ShortcutsPage />, [
@@ -20,7 +18,6 @@ const mount = (bindings: Readonly<Record<string, string | null>> = {}) => {
     }),
     answer(settings.set, null),
   ]);
-  mounted.push(page.unmount);
   return page;
 };
 
@@ -45,12 +42,6 @@ const press = (
 };
 
 describe(ShortcutsPage, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("lists every command once, each under its feature", () => {
     mount();
     expect(

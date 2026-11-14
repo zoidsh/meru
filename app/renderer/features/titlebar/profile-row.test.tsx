@@ -1,5 +1,5 @@
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { profiles, profilesPushes } from "../../../shared/channels/profiles.ts";
 import type { ProfilesSnapshot } from "../../../shared/channels/profiles.ts";
@@ -11,8 +11,6 @@ import {
   tabOf,
 } from "../../testing.tsx";
 import { ProfileRow } from "./profile-row.tsx";
-
-const mounted: (() => void)[] = [];
 
 const snapshotOf = (ids: readonly string[]): ProfilesSnapshot => ({
   groups: ids.map((id) => groupOf(`group-${id}`, [`gmail-${id}`], id)),
@@ -32,17 +30,10 @@ const measure = (row: HTMLElement, scrollWidth: number) => {
 };
 
 describe(ProfileRow, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("shows the arrow to scroll right once a profile added overflows the row", async () => {
     const page = mountChrome(<ProfileRow />, [
       answer(profiles.snapshot, snapshotOf(["personal", "work"])),
     ]);
-    mounted.push(page.unmount);
     const row = page.container.querySelector<HTMLElement>(
       "[data-profile-row] > div"
     );

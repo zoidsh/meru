@@ -1,5 +1,5 @@
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { commands } from "../../../shared/channels/commands.ts";
 import { profiles, tabs } from "../../../shared/channels/profiles.ts";
@@ -16,8 +16,6 @@ import {
 } from "../../testing.tsx";
 import type { Answers } from "../../testing.tsx";
 import { Sidebar } from "./sidebar.tsx";
-
-const mounted: (() => void)[] = [];
 
 // Gmail alone, then Calendar and Drive split in one group.
 const PROFILES = {
@@ -45,7 +43,6 @@ const mount = (answers: Answers = []) => {
       ...answers,
     ]
   );
-  mounted.push(page.unmount);
   const rows = () =>
     [...page.container.querySelectorAll<HTMLElement>("[data-tab-id]")].map(
       (row) => ({
@@ -59,12 +56,6 @@ const mount = (answers: Answers = []) => {
 };
 
 describe(Sidebar, () => {
-  afterEach(() => {
-    for (const unmount of mounted.splice(0)) {
-      unmount();
-    }
-  });
-
   it("draws nothing while the sidebar is hidden", () => {
     const { container } = mount([answer(sidebar.snapshot, { kind: "hidden" })]);
     expect(container.querySelector("nav")).toBeNull();
