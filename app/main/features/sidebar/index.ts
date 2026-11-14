@@ -111,7 +111,7 @@ export class Sidebars {
     return sidebarOf(
       this.#tabs(),
       {
-        flipped: this.#flipped.get(id) ?? null,
+        flipped: this.#flipped.get(id),
         hidden: this.#hidden.has(id),
         width: settings.get("sidebar.width", id),
       },
@@ -126,7 +126,7 @@ export class Sidebars {
     }
     this.#current = next;
     this.#options.registrar.broadcast(sidebarPushes.changed, next);
-    this.#options.events.emit("sidebar.changed", { sidebar: next });
+    this.#options.events.emit("sidebar.changed", null);
     this.#options.events.emit("menu.invalidated", null);
   }
 }

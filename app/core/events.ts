@@ -1,4 +1,3 @@
-import type { Sidebar } from "./engines/sidebar.ts";
 import type { Unsubscribe } from "./ports.ts";
 import type { Entitlement } from "./records/entitlement.ts";
 import type { FeedEntry } from "./records/feed.ts";
@@ -27,7 +26,7 @@ export interface AppEventMap {
   /** A group, a tab or the group a window shows may have changed, so every stage reads its group again. */
   readonly "stage.invalidated": null;
   /** The selected profile's sidebar appeared, went or changed width, so the stages lay their panes out again. */
-  readonly "sidebar.changed": { readonly sidebar: Sidebar };
+  readonly "sidebar.changed": null;
   /** A split command ran in the window whose chrome page is `windowId`; the launcher asks which app the new pane shows. */
   readonly "split.requested": {
     readonly windowId: number;

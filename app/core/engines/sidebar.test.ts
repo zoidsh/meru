@@ -25,7 +25,7 @@ const tab = (appId: string): Tab => ({
 
 const gmail = (appId: string) => appId === "gmail";
 
-const auto: SidebarChoice = { flipped: null, hidden: false, width: "auto" };
+const auto: SidebarChoice = { hidden: false, width: "auto" };
 
 describe(sidebarOf, () => {
   it("hides the sidebar for a fresh profile's one Gmail tab, with none, and when the user hid it", () => {

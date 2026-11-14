@@ -56,8 +56,8 @@ const setup = async () => {
   await profiles.open();
   profiles.start();
   const changes: Sidebar[] = [];
-  events.on("sidebar.changed", ({ sidebar: changed }) => {
-    changes.push(changed);
+  events.on("sidebar.changed", () => {
+    changes.push(sidebars.current());
   });
   const sidebars = new Sidebars({
     commands,
@@ -133,19 +133,20 @@ describe(Sidebars, () => {
     expect(sidebars.current()).toStrictEqual(wide);
   });
 
-  it("offers sidebar.toggle only while the profile has a sidebar to hide, and has the menu rebuilt when the sidebar changes", async () => {
-    const { add, commands, events } = await setup();
-    const alone = commands.enabled("sidebar.toggle");
-    add("drive");
-    let invalidated = 0;
-    events.on("menu.invalidated", () => {
-      invalidated += 1;
-    });
-    commands.run("sidebar.toggle", { windowId: PAGE });
-    expect([
-      alone,
+  it("offers sidebar.toggle only while the profile has a sidebar to hide, and sidebar.toggleWidth only while it shows", async () => {
+    const { add, commands } = await setup();
+    const enabled = () => [
       commands.enabled("sidebar.toggle"),
-      invalidated,
-    ]).toStrictEqual([false, true, 1]);
+      commands.enabled("sidebar.toggleWidth"),
+    ];
+    const alone = enabled();
+    add("drive");
+    const shown = enabled();
+    commands.run("sidebar.toggle", { windowId: PAGE });
+    expect([alone, shown, enabled()]).toStrictEqual([
+      [false, false],
+      [true, true],
+      [true, false],
+    ]);
   });
 });

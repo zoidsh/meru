@@ -40,7 +40,7 @@ export interface SidebarChoice {
   /** Whether the user hid the sidebar for the profile. */
   readonly hidden: boolean;
   /** A width the user flipped to in the sidebar, which stands until the app quits. */
-  readonly flipped: SidebarSize | null;
+  readonly flipped?: SidebarSize;
 }
 
 const autoSize = (
