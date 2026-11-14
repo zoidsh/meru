@@ -57,7 +57,7 @@ export const SettingsWindow = () => {
   return (
     <div className="bg-sidebar text-sidebar-foreground flex h-full flex-col">
       <header
-        className="draggable relative shrink-0 select-none"
+        className="draggable bg-chrome text-chrome-foreground relative shrink-0 border-b select-none"
         style={{ height: TITLEBAR_HEIGHT }}
       >
         <div
