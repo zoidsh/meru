@@ -31,24 +31,80 @@ export interface LogEntry {
 export const logs = (level: LogLevel, minimum: LogLevel): boolean =>
   LOG_LEVELS.indexOf(level) >= LOG_LEVELS.indexOf(minimum);
 
-const plain = (value: unknown): unknown =>
-  value instanceof Error ? serializeError(value) : value;
+/** The longest line written; a line past it keeps its envelope and says how long its fields made it instead. */
+export const LINE_CAP = 16 * 1024;
+
+/** The longest text a field keeps, so one long value, such as a page's console message, leaves room for the rest. */
+export const TEXT_CAP = 4 * 1024;
+
+const REDACTIONS: readonly (readonly [RegExp, string])[] = [
+  // A query string carries tokens, search terms and message ids.
+  [
+    /(?<address>\b[a-z][\w+.-]*:\/\/[^\s?#"'<>]*)\?[^\s#"'<>]*/giu,
+    "$<address>?[redacted]",
+  ],
+  [/\b(?<scheme>bearer)\s+[\w~+/.=-]+/giu, "$<scheme> [redacted]"],
+  [
+    /\b(?<header>(?:set-)?cookie)(?<separator>\s*[:=]\s*)[^\n]*/giu,
+    "$<header>$<separator>[redacted]",
+  ],
+  [/[\w.+-]+@[a-z\d-]+(?:\.[a-z\d-]+)*\.[a-z]{2,}\b/giu, "[email]"],
+];
+
+/** Text with what would identify the user or let a reader act as them taken out: query strings, bearer and cookie values, email addresses. */
+export const redact = (text: string): string => {
+  const capped = text.length > TEXT_CAP ? `${text.slice(0, TEXT_CAP)}…` : text;
+  let redacted = capped;
+  for (const [pattern, replacement] of REDACTIONS) {
+    redacted = redacted.replace(pattern, replacement);
+  }
+  return redacted;
+};
+
+/** A field's value as written: every text in it redacted, at any depth, an `Error` as `{ name, message, stack }`. */
+const scrub = (value: unknown, seen: ReadonlySet<unknown>): unknown => {
+  if (typeof value === "string") {
+    return redact(value);
+  }
+  if (value instanceof Error) {
+    return scrub(serializeError(value), seen);
+  }
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+  if (seen.has(value)) {
+    return "[circular]";
+  }
+  const inside = new Set([...seen, value]);
+  if (Array.isArray(value)) {
+    return value.map((item: unknown) => scrub(item, inside));
+  }
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, scrub(item, inside)])
+  );
+};
 
 /** One JSON line per entry, so a file reads with `jq` and every field keeps its type; the fields sit under `fields`, so none can pass for the envelope. */
 export const logLine = (entry: LogEntry): string => {
   const fields = Object.fromEntries(
     Object.entries(entry.fields).map(([key, value]) => [
       key,
-      key === "error" ? serializeError(value) : plain(value),
+      scrub(key === "error" ? serializeError(value) : value, new Set()),
     ])
   );
-  return `${JSON.stringify({
+  const envelope = {
     level: entry.level,
-    message: entry.message,
+    message: redact(entry.message),
     scope: entry.scope,
     time: new Date(entry.time).toISOString(),
+  };
+  const line = JSON.stringify({
+    ...envelope,
     ...(Object.keys(fields).length > 0 ? { fields } : {}),
-  })}\n`;
+  });
+  return line.length > LINE_CAP
+    ? `${JSON.stringify({ ...envelope, fields: { truncated: line.length } })}\n`
+    : `${line}\n`;
 };
 
 /** A log whose every line names `scope`, such as the feature writing it. */

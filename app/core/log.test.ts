@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 
 import { serializeError } from "./errors.ts";
-import { logLine, logs } from "./log.ts";
+import { LINE_CAP, logLine, logs, redact, TEXT_CAP } from "./log.ts";
 
 describe(serializeError, () => {
   it("keeps an error's name, message and stack, and the text of anything else thrown", () => {
@@ -92,6 +93,95 @@ describe(logLine, () => {
       time: 0,
     });
     expect(line).toContain('"level":"warn"');
+  });
+});
+
+describe(redact, () => {
+  it("takes out query strings, bearer and cookie values and email addresses, and keeps the rest", () => {
+    expect([
+      redact(
+        "GET https://mail.google.com/mail/u/0/feed/atom?t=17&at=secret#inbox failed"
+      ),
+      redact("Authorization: Bearer eyJhbGciOi.payload.sig"),
+      redact("Cookie: SID=abc; GMAIL_AT=xyz"),
+      redact("set-cookie=OSID=1; Secure"),
+      redact("Signed in as ada.lovelace+meru@example.co.uk"),
+      redact("http://127.0.0.1:4100/mail/u/0"),
+      redact("node_modules/.pnpm/vitest@5.1.0_@types+node@24.19.2"),
+    ]).toStrictEqual([
+      "GET https://mail.google.com/mail/u/0/feed/atom?[redacted]#inbox failed",
+      "Authorization: Bearer [redacted]",
+      "Cookie: [redacted]",
+      "set-cookie=[redacted]",
+      "Signed in as [email]",
+      "http://127.0.0.1:4100/mail/u/0",
+      "node_modules/.pnpm/vitest@5.1.0_@types+node@24.19.2",
+    ]);
+  });
+
+  it("cuts a long text at the cap", () => {
+    expect(redact("x".repeat(TEXT_CAP + 10))).toBe(`${"x".repeat(TEXT_CAP)}…`);
+  });
+});
+
+describe("logLine's redaction and cap", () => {
+  const entry = {
+    level: "error",
+    message: "A page failed",
+    scope: "renderer",
+    time: 0,
+  } as const;
+
+  it("redacts the text of every field at any depth, an error's message and stack too", () => {
+    const error = new Error("fetch https://a.test/x?token=1 for bo@a.test");
+    const nested = { at: ["https://a.test/y?q=2"], plain: 3 };
+    const { fields } = z
+      .object({ fields: z.record(z.string(), z.unknown()) })
+      .parse(JSON.parse(logLine({ ...entry, fields: { error, nested } })));
+    expect([
+      z.object({ message: z.string() }).parse(fields.error).message,
+      fields.nested,
+    ]).toStrictEqual([
+      "fetch https://a.test/x?[redacted] for [email]",
+      { at: ["https://a.test/y?[redacted]"], plain: 3 },
+    ]);
+  });
+
+  it("writes a line past the cap as its envelope and the length its fields made it", () => {
+    const fields = Object.fromEntries(
+      Array.from({ length: 8 }, (_, index) => [
+        `f${index}`,
+        "x".repeat(TEXT_CAP),
+      ])
+    );
+    const line = logLine({ ...entry, fields });
+    const written = z
+      .object({ fields: z.object({ truncated: z.number() }) })
+      .loose()
+      .parse(JSON.parse(line));
+    expect([
+      line.length <= LINE_CAP,
+      written.fields.truncated > LINE_CAP,
+      written,
+    ]).toStrictEqual([
+      true,
+      true,
+      {
+        fields: { truncated: written.fields.truncated },
+        level: "error",
+        message: "A page failed",
+        scope: "renderer",
+        time: "1970-01-01T00:00:00.000Z",
+      },
+    ]);
+  });
+
+  it("writes a value that holds itself once, marking where it would repeat", () => {
+    const loop: { name: string; self?: unknown } = { name: "loop" };
+    loop.self = loop;
+    expect(JSON.parse(logLine({ ...entry, fields: { loop } }))).toMatchObject({
+      fields: { loop: { name: "loop", self: "[circular]" } },
+    });
   });
 });
 
