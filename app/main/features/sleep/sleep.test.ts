@@ -22,10 +22,11 @@ const setup = async () => {
   const { open, stages, views } = testStages(app, {
     historyOf: (tabId) => sleep.historyOf(tabId),
   });
-  let windowId: number | undefined;
+  // The window opens only once the feature has started, ahead of the stages.
+  const main: { windowId?: number } = {};
   const sleep = new Sleep({
     clock,
-    windowId: () => windowId,
+    windowId: () => main.windowId,
     commands,
     events,
     profiles,
@@ -35,7 +36,7 @@ const setup = async () => {
   // Started ahead of the stages, the other way round from the app's root, so a sweep cannot rely on the stages having heard a change first.
   sleep.start();
   const { window } = open();
-  windowId = window.contentsId;
+  main.windowId = window.contentsId;
   const [gmail] = profiles.state.tabs;
   if (gmail === undefined) {
     throw new Error("A first launch has a Gmail tab");
