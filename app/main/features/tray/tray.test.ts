@@ -21,7 +21,7 @@ import { FakePower } from "../../../test/fakes/power.ts";
 import { FakeSessions } from "../../../test/fakes/session.ts";
 import { FakeTheme } from "../../../test/fakes/theme.ts";
 import { FakeTray } from "../../../test/fakes/tray.ts";
-import { FakeWindow } from "../../../test/fakes/window.ts";
+import { FakeWindows } from "../../../test/fakes/window-factory.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { MainWindow } from "../../shell/window.ts";
@@ -108,7 +108,7 @@ const setup = async (platform: Platform) => {
     ports: {
       lifecycle,
       theme,
-      windows: { create: () => new FakeWindow() },
+      windows: new FakeWindows(),
     },
     preload: "/preload.cjs",
     registrar,

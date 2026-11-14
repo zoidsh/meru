@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { themeOf } from "../../../core/ports.ts";
-import type { WindowSpec } from "../../../core/ports.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import { settingsPushes } from "../../../shared/channels/settings.ts";
 import { shortcuts } from "../../../shared/channels/shortcuts.ts";
@@ -10,7 +9,7 @@ import { FakeIpcTransport } from "../../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../../test/fakes/lifecycle.ts";
 import { strictLog } from "../../../test/fakes/log.ts";
 import { FakeTheme } from "../../../test/fakes/theme.ts";
-import { FakeWindow } from "../../../test/fakes/window.ts";
+import { FakeWindows } from "../../../test/fakes/window-factory.ts";
 import { CommandDispatcher } from "../../shell/commands.ts";
 import { IpcDispatcher } from "../../shell/ipc.ts";
 import { pageUrl } from "../../shell/window.ts";
@@ -18,8 +17,7 @@ import { SettingsWindow } from "./window.ts";
 
 const setup = (platform = "darwin") => {
   const theme = new FakeTheme(false);
-  const created: FakeWindow[] = [];
-  const specs: WindowSpec[] = [];
+  const windows = new FakeWindows();
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({
     log: strictLog,
@@ -41,14 +39,7 @@ const setup = (platform = "darwin") => {
       displays: new FakeDisplays(),
       lifecycle: new FakeLifecycle(platform),
       theme,
-      windows: {
-        create: (spec) => {
-          specs.push(spec);
-          const window = new FakeWindow();
-          created.push(window);
-          return window;
-        },
-      },
+      windows,
     },
     preload: "/preload.cjs",
     registrar,
@@ -60,7 +51,14 @@ const setup = (platform = "darwin") => {
     registrar.broadcast(settingsPushes.changed, { changes: [], locked: {} });
     return transport.sent.map((sent) => sent.contentsId);
   };
-  return { commands, created, reached, registrar, settings, specs };
+  return {
+    commands,
+    created: windows.created,
+    reached,
+    registrar,
+    settings,
+    specs: windows.specs,
+  };
 };
 
 describe(SettingsWindow, () => {

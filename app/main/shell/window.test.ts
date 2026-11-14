@@ -4,20 +4,18 @@ import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { themeOf } from "../../core/ports.ts";
-import type { WindowSpec } from "../../core/ports.ts";
 import { settingsPushes } from "../../shared/channels/settings.ts";
 import { FakeIpcTransport } from "../../test/fakes/ipc-transport.ts";
 import { FakeLifecycle } from "../../test/fakes/lifecycle.ts";
 import { strictLog } from "../../test/fakes/log.ts";
 import { FakeTheme } from "../../test/fakes/theme.ts";
-import { FakeWindow } from "../../test/fakes/window.ts";
+import { FakeWindows } from "../../test/fakes/window-factory.ts";
 import { IpcDispatcher } from "./ipc.ts";
 import { isPageUrl, MainWindow, pageUrl } from "./window.ts";
 
 const open = async (platform: string, devServer?: string) => {
   const theme = new FakeTheme(true);
-  const window = new FakeWindow();
-  const specs: WindowSpec[] = [];
+  const windows = new FakeWindows();
   const transport = new FakeIpcTransport();
   const registrar = new IpcDispatcher({
     log: strictLog,
@@ -33,12 +31,7 @@ const open = async (platform: string, devServer?: string) => {
     ports: {
       lifecycle: new FakeLifecycle(platform),
       theme,
-      windows: {
-        create: (spec) => {
-          specs.push(spec);
-          return window;
-        },
-      },
+      windows,
     },
     pages: {
       devServer,
@@ -51,7 +44,14 @@ const open = async (platform: string, devServer?: string) => {
     surface: "chrome",
   });
   await main.show();
-  return { main, registrar, specs, theme, transport, window };
+  return {
+    main,
+    registrar,
+    specs: windows.specs,
+    theme,
+    transport,
+    window: windows.window(),
+  };
 };
 
 describe(MainWindow, () => {
