@@ -43,7 +43,16 @@ const REDACTIONS: readonly (readonly [RegExp, string])[] = [
     /(?<address>\b[a-z][\w+.-]*:\/\/[^\s?#"'<>]*)\?[^\s#"'<>]*/giu,
     "$<address>?[redacted]",
   ],
-  [/\b(?<scheme>bearer)\s+[\w~+/.=-]+/giu, "$<scheme> [redacted]"],
+  // Gmail's fragment names the open thread or message, such as #inbox/FMfcg…
+  [
+    /(?<address>\b[a-z][\w+.-]*:\/\/[^\s#"'<>]*)#[^\s"'<>]+/giu,
+    "$<address>#[redacted]",
+  ],
+  [
+    /\b(?<header>(?:proxy-)?authorization)(?<separator>\s*[:=]\s*)[^\n]*/giu,
+    "$<header>$<separator>[redacted]",
+  ],
+  [/\b(?<scheme>bearer|basic)\s+[\w~+/.=-]+/giu, "$<scheme> [redacted]"],
   [
     /\b(?<header>(?:set-)?cookie)(?<separator>\s*[:=]\s*)[^\n]*/giu,
     "$<header>$<separator>[redacted]",
@@ -51,7 +60,7 @@ const REDACTIONS: readonly (readonly [RegExp, string])[] = [
   [/[\w.+-]+@[a-z\d-]+(?:\.[a-z\d-]+)*\.[a-z]{2,}\b/giu, "[email]"],
 ];
 
-/** Text with what would identify the user or let a reader act as them taken out: query strings, bearer and cookie values, email addresses. */
+/** Text with what would identify the user or let a reader act as them taken out: query strings and fragments, credentials and cookie values, email addresses. */
 export const redact = (text: string): string => {
   const capped = text.length > TEXT_CAP ? `${text.slice(0, TEXT_CAP)}…` : text;
   let redacted = capped;

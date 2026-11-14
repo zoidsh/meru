@@ -97,20 +97,26 @@ describe(logLine, () => {
 });
 
 describe(redact, () => {
-  it("takes out query strings, bearer and cookie values and email addresses, and keeps the rest", () => {
+  it("takes out query strings and fragments, credentials and cookie values and email addresses, and keeps the rest", () => {
     expect([
       redact(
         "GET https://mail.google.com/mail/u/0/feed/atom?t=17&at=secret#inbox failed"
       ),
       redact("Authorization: Bearer eyJhbGciOi.payload.sig"),
+      redact("authorization=Basic dXNlcjpwYXNz"),
+      redact("sent Basic dXNlcjpwYXNz to the proxy"),
+      redact("opened https://mail.google.com/mail/u/0/#inbox/FMfcgzQXJWDsKmn"),
       redact("Cookie: SID=abc; GMAIL_AT=xyz"),
       redact("set-cookie=OSID=1; Secure"),
       redact("Signed in as ada.lovelace+meru@example.co.uk"),
       redact("http://127.0.0.1:4100/mail/u/0"),
       redact("node_modules/.pnpm/vitest@5.1.0_@types+node@24.19.2"),
     ]).toStrictEqual([
-      "GET https://mail.google.com/mail/u/0/feed/atom?[redacted]#inbox failed",
-      "Authorization: Bearer [redacted]",
+      "GET https://mail.google.com/mail/u/0/feed/atom?[redacted]#[redacted] failed",
+      "Authorization: [redacted]",
+      "authorization=[redacted]",
+      "sent Basic [redacted] to the proxy",
+      "opened https://mail.google.com/mail/u/0/#[redacted]",
       "Cookie: [redacted]",
       "set-cookie=[redacted]",
       "Signed in as [email]",
