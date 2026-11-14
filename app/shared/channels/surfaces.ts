@@ -4,6 +4,8 @@ import { commands } from "./commands.ts";
 import { defineSurface } from "./define.ts";
 import type { Surface } from "./define.ts";
 import { dragPushes } from "./drag.ts";
+import { gmail, gmailPushes } from "./gmail.ts";
+import { googlePushes } from "./google.ts";
 import { launcher } from "./launcher.ts";
 import { profiles, profilesPushes, tabs } from "./profiles.ts";
 import { settings, settingsPushes } from "./settings.ts";
@@ -115,9 +117,46 @@ export const surfaceOf = (argv: readonly string[]): Surface => {
   return named.success ? pageSurfaces[named.data] : NOTHING;
 };
 
+/** A Gmail pane's page, through the Gmail preload: it reads and follows what the settings make of Gmail, and reports what it found on the page. */
+export const gmailSurface = defineSurface({
+  pushes: [gmailPushes],
+  requests: [gmail],
+});
+
+export type GmailSurface = typeof gmailSurface;
+
+/** The page of a Google app's pane other than Gmail, through the Google preload, which only listens. */
+export const googleSurface = defineSurface({
+  pushes: [googlePushes],
+  requests: [],
+});
+
+export type GoogleSurface = typeof googleSurface;
+
+/** The surfaces a pane's page may hold, by the content preload it runs, which a pane of a Google app is given by its app. */
+export const contentSurfaceNameSchema = z.enum(["gmail", "google"]);
+
+export type ContentSurfaceName = z.infer<typeof contentSurfaceNameSchema>;
+
+export const contentSurfaces = {
+  gmail: gmailSurface,
+  google: googleSurface,
+} satisfies Record<ContentSurfaceName, Surface>;
+
+export const contentSurfaceArgument = (name: ContentSurfaceName): string =>
+  `${SURFACE_ARGUMENT}${name}`;
+
+/** Whether the command line names `name`, so a content preload loaded into a page main did not give it holds nothing. */
+export const namesContentSurface = (
+  argv: readonly string[],
+  name: ContentSurfaceName
+): boolean => argv.includes(contentSurfaceArgument(name));
+
 export const surfaces: readonly Surface[] = [
   chromeSurface,
   dragSurface,
+  gmailSurface,
+  googleSurface,
   launcherSurface,
   settingsSurface,
   tabDragSurface,
