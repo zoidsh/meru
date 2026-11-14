@@ -1,3 +1,4 @@
+import { isEqual, uniqBy } from "es-toolkit";
 import { z } from "zod";
 
 import type { Ids } from "../ports.ts";
@@ -10,7 +11,7 @@ import type { Tab } from "../records/tab.ts";
 import { parseField } from "../values.ts";
 import { panes } from "./layout.ts";
 import { orderedProfiles } from "./ordering.ts";
-import { repeated, sameMembers } from "./state-validate.ts";
+import { repeated } from "./state-validate.ts";
 import { groupOfOne } from "./state.ts";
 
 const listOf = <T>(data: unknown, key: string, schema: z.ZodType<T>) => {
@@ -20,17 +21,6 @@ const listOf = <T>(data: unknown, key: string, schema: z.ZodType<T>) => {
     return one.success ? [one.data] : [];
   });
   return { dropped: items.length - parsed.length, parsed };
-};
-
-const uniqueBy = <T extends { readonly id: string }>(items: readonly T[]) => {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    if (seen.has(item.id)) {
-      return false;
-    }
-    seen.add(item.id);
-    return true;
-  });
 };
 
 export interface Repair {
@@ -52,7 +42,7 @@ export const repairState = (
     schema: z.ZodType<T>
   ) => {
     const list = listOf(data, key, schema);
-    const parsed = uniqueBy(list.parsed);
+    const parsed = uniqBy(list.parsed, (item) => item.id);
     const count = list.dropped + list.parsed.length - parsed.length;
     if (count > 0) {
       dropped.push(`${count} ${key}`);
@@ -60,7 +50,8 @@ export const repairState = (
     return parsed;
   };
   const profiles = read("profiles", profileSchema);
-  if (profiles.length === 0) {
+  const [first] = orderedProfiles(profiles);
+  if (first === undefined) {
     return { dropped: ["every profile"], state: repair.fresh() };
   }
   const profileIds = new Set(profiles.map((profile) => profile.id));
@@ -80,9 +71,9 @@ export const repairState = (
         (id) =>
           tabsById.get(id)?.profileId === group.profileId && !claimed.has(id)
       ) &&
-      sameMembers(
-        shown.flatMap((pane) => pane.tabIds),
-        group.tabIds
+      isEqual(
+        shown.flatMap((pane) => pane.tabIds).toSorted(),
+        group.tabIds.toSorted()
       ) &&
       shown.every((pane) => !paneIds.has(pane.paneId));
     if (holds) {
@@ -110,10 +101,9 @@ export const repairState = (
     }
   }
   const selected = z.object({ selectedProfileId: idSchema }).safeParse(data);
-  const [first] = orderedProfiles(profiles);
   const selectedProfileId =
     selected.success && profileIds.has(selected.data.selectedProfileId)
       ? selected.data.selectedProfileId
-      : (first?.id ?? "");
+      : first.id;
   return { dropped, state: { groups, profiles, selectedProfileId, tabs } };
 };

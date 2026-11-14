@@ -1,14 +1,8 @@
+import { isEqual } from "es-toolkit";
+
 import type { ProfilesState } from "../records/profiles-state.ts";
 import { panes } from "./layout.ts";
 import type { SingleInstance } from "./pinned.ts";
-
-export const sameMembers = (a: readonly string[], b: readonly string[]) => {
-  const sorted = b.toSorted();
-  return (
-    a.length === b.length &&
-    a.toSorted().every((id, index) => id === sorted[index])
-  );
-};
 
 export const repeated = (ids: readonly string[]) =>
   ids.filter((id, index) => ids.indexOf(id) !== index);
@@ -67,7 +61,7 @@ export const validateState = (
       }
     }
     const shown = panes(group.layout).flatMap((pane) => pane.tabIds);
-    if (!sameMembers(shown, group.tabIds)) {
+    if (!isEqual(shown.toSorted(), group.tabIds.toSorted())) {
       problems.push(`group ${group.id}'s layout does not show its tabs`);
     }
   }
