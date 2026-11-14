@@ -47,12 +47,25 @@ const EXTENSION_URL = "chrome-extension://abcdefghijklmnop/popup.html";
 
 let pickerWindows: FakePickerWindow[] = [];
 
+let locale = "en-US";
+
+/** What the default session holds, which Chromium chose and Meru never writes. */
+let defaultSpellCheckerLanguages = ["en-US"];
+
+let additionalSpellCheckerLanguages: string[] = [];
+
+/** Codes the fake setter throws on, as Electron does for one it has no dictionary for. */
+let unsupportedSpellCheckerLanguages = new Set<string>();
+
+const spellCheckerLanguages = new Map<string, string[]>();
+
 mock.module("@electron-toolkit/utils", () => ({ platform: { isMacOS: false } }));
 
 mock.module("electron", () => ({
-  app: { getLocale: () => "en-US" },
+  app: { getLocale: () => locale },
   ipcMain,
   session: {
+    defaultSession: { getSpellCheckerLanguages: () => defaultSpellCheckerLanguages },
     fromPartition: (partition: string) => ({
       setPermissionRequestHandler: (handler: PermissionRequestHandler) => {
         permissionRequestHandlers.set(partition, handler);
@@ -61,6 +74,19 @@ mock.module("electron", () => ({
       setDisplayMediaRequestHandler: (handler: DisplayMediaRequestHandler) => {
         displayMediaRequestHandlers.set(partition, handler);
       },
+      setSpellCheckerLanguages: (languages: string[]) => {
+        const unsupported = languages.find((language) =>
+          unsupportedSpellCheckerLanguages.has(language),
+        );
+
+        if (unsupported) {
+          throw new Error(
+            `Invalid language code provided: "${unsupported}" is not a valid language code`,
+          );
+        }
+
+        spellCheckerLanguages.set(partition, languages);
+      },
       on: () => {},
     }),
   },
@@ -68,7 +94,12 @@ mock.module("electron", () => ({
 
 mock.module("./blocker", () => ({ blocker: { setupSession: () => {} } }));
 
-mock.module("./config", () => ({ config: { get: () => false } }));
+mock.module("./config", () => ({
+  config: {
+    get: (key: string) =>
+      key === "spellchecker.languages" ? additionalSpellCheckerLanguages : false,
+  },
+}));
 
 mock.module("./extensions", () => ({
   EXTENSION_PAGE_PERMISSIONS: new Set([
@@ -84,7 +115,7 @@ mock.module("./extensions", () => ({
 
 mock.module("./gmail", () => ({ Gmail: class {} }));
 
-mock.module("./lib/log", () => ({ log: { error: () => {} } }));
+mock.module("./lib/log", () => ({ log: { error: () => {}, warn: () => {} } }));
 
 mock.module("./lib/window", () => ({
   createBrowserWindow: () => {
@@ -97,8 +128,6 @@ mock.module("./lib/window", () => ({
   getPreloadPath: () => "",
   loadRenderer: () => {},
 }));
-
-mock.module("./license-key", () => ({ licenseKey: { isValid: false } }));
 
 mock.module("./main", () => ({ main: {} }));
 
@@ -174,6 +203,16 @@ beforeEach(() => {
   permissionRequestHandlers.clear();
 
   ipcMain.removeAllListeners();
+
+  locale = "en-US";
+
+  additionalSpellCheckerLanguages = [];
+
+  unsupportedSpellCheckerLanguages = new Set();
+
+  spellCheckerLanguages.clear();
+
+  defaultSpellCheckerLanguages = ["en-US"];
 });
 
 describe("display media requests", () => {
@@ -301,5 +340,61 @@ describe("permission requests", () => {
 
   test("refuse screen capture to an extension page", () => {
     expect(requestPermission("a", "display-capture", EXTENSION_URL)).toEqual([false]);
+  });
+});
+
+describe("spellchecker languages", () => {
+  function createAccountSpellCheckerLanguages() {
+    createAccount("a");
+
+    return spellCheckerLanguages.get("persist:a");
+  }
+
+  test("check the system language alone when no other is picked", () => {
+    expect(createAccountSpellCheckerLanguages()).toEqual(["en-US"]);
+  });
+
+  test("check the picked languages after the system language", () => {
+    additionalSpellCheckerLanguages = ["de", "fr"];
+
+    expect(createAccountSpellCheckerLanguages()).toEqual(["en-US", "de", "fr"]);
+  });
+
+  test("check the default session's languages in place of a system language with no dictionary", () => {
+    locale = "ja";
+
+    unsupportedSpellCheckerLanguages = new Set(["ja"]);
+
+    expect(createAccountSpellCheckerLanguages()).toEqual(["en-US"]);
+  });
+
+  test("check the picked languages after the default session's languages", () => {
+    locale = "ja";
+
+    unsupportedSpellCheckerLanguages = new Set(["ja"]);
+
+    additionalSpellCheckerLanguages = ["de", "en-US"];
+
+    expect(createAccountSpellCheckerLanguages()).toEqual(["en-US", "de"]);
+  });
+
+  test("drop a picked language with no dictionary and keep the rest", () => {
+    unsupportedSpellCheckerLanguages = new Set(["xx"]);
+
+    additionalSpellCheckerLanguages = ["xx", "de"];
+
+    expect(createAccountSpellCheckerLanguages()).toEqual(["en-US", "de"]);
+  });
+
+  test("check nothing when the default is empty and no language has a dictionary", () => {
+    locale = "ja";
+
+    defaultSpellCheckerLanguages = [];
+
+    unsupportedSpellCheckerLanguages = new Set(["ja", "xx"]);
+
+    additionalSpellCheckerLanguages = ["xx"];
+
+    expect(createAccountSpellCheckerLanguages()).toEqual([]);
   });
 });

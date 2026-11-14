@@ -20,7 +20,6 @@ import { EXTENSION_PAGE_PERMISSIONS, extensions } from "./extensions";
 import { Gmail } from "./gmail";
 import { log } from "./lib/log";
 import { createBrowserWindow, getPreloadPath, loadRenderer } from "./lib/window";
-import { licenseKey } from "./license-key";
 import { main } from "./main";
 import { areWorkspaceAppNotificationsAllowed } from "./notifications";
 import { Tabs } from "./tabs";
@@ -110,19 +109,47 @@ export class Account {
   }
 
   setSpellCheckerLanguages() {
-    if (platform.isMacOS || !licenseKey.isValid) {
+    if (platform.isMacOS) {
       return;
     }
+
+    const locale = app.getLocale();
 
     const additionalLanguages = config.get("spellchecker.languages");
 
-    if (additionalLanguages.length === 0) {
+    try {
+      this.session.setSpellCheckerLanguages([...new Set([locale, ...additionalLanguages])]);
+
       return;
+    } catch {
+      // Electron throws on a code it has no dictionary for, such as the locale
+      // `ja`, and then writes nothing at all, so each code is tried on its own.
     }
 
-    const osLocale = app.getLocale();
+    const isSupported = (language: string) => {
+      try {
+        this.session.setSpellCheckerLanguages([language]);
 
-    this.session.setSpellCheckerLanguages([osLocale, ...additionalLanguages]);
+        return true;
+      } catch (error) {
+        log.warn("Dropped an unsupported spellchecker language", {
+          language,
+          error: serializeError(error),
+        });
+
+        return false;
+      }
+    };
+
+    // The default session holds whatever Chromium chose, untouched, because
+    // Meru never writes its languages.
+    const systemLanguages = isSupported(locale)
+      ? [locale]
+      : session.defaultSession.getSpellCheckerLanguages();
+
+    this.session.setSpellCheckerLanguages([
+      ...new Set([...systemLanguages, ...additionalLanguages.filter(isSupported)]),
+    ]);
   }
 
   private registerSessionPermissionsRequestsHandler() {

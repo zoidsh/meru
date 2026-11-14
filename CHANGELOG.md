@@ -12,9 +12,12 @@ This file is the draft of the next release, written one line at a time as work l
 
 - Settings opens in its own window, so your inbox stays in view while you change them
 - Updated to Electron 45.2.3, which brings Chrome 156.0.8078.80 and its security fixes
+- **Windows and Linux:** additional spellchecker languages in `Settings… → Languages` no longer need Meru Pro
 
 ### Fixed
 
 - Closing the screen share picker without choosing a screen no longer shows an error
+- **Windows and Linux:** removing the last additional spellchecker language now stops checking spelling in it
+- **Windows and Linux:** **Meru Pro** no longer starts without a window when your system language has no spellchecker dictionary and you've added spellchecker languages
 - Extensions that keep their settings in Chrome's synced storage can now save them. The settings stay on this device and are not synced
 - Windows opened from a workspace app, such as a compose window or a pop-out, now follow a theme change in their title bar
