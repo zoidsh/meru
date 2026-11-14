@@ -10,8 +10,8 @@ import { platformOf } from "../core/records/platform.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../shared/channels/surfaces.ts";
-import { themePushes } from "../shared/channels/theme.ts";
 import { commands as allCommands } from "../shared/commands/registry.ts";
+import { Appearance } from "./features/appearance/index.ts";
 import { Badge } from "./features/badge/index.ts";
 import { Entitlement } from "./features/entitlement/index.ts";
 import { Inbox } from "./features/inbox/index.ts";
@@ -340,12 +340,11 @@ const start = async () => {
     registrar: dispatcher,
     surface: "chrome",
   });
-  ports.theme.onChange(() => {
-    const theme = themeOf(ports.theme);
-    window.recolour(theme);
-    settingsWindow.recolour(theme);
-    dispatcher.broadcast(themePushes.changed, { theme });
-  });
+  new Appearance({
+    registrar: dispatcher,
+    theme: ports.theme,
+    windows: [window, settingsWindow],
+  }).start();
   const platform = platformOf(ports.lifecycle.platform);
   new Notifications({
     events,
