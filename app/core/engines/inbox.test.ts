@@ -79,8 +79,8 @@ describe(feedDelay, () => {
 describe(feedUrl, () => {
   it("adds the label as a path segment and the time as a cache-buster", () => {
     expect([
-      feedUrl("https://mail.google.com/mail/u/0/feed/atom", 7),
-      feedUrl("https://mail.google.com/mail/u/0/feed/atom", 7, "^iim"),
+      feedUrl("https://mail.google.com/mail/u/0", 7),
+      feedUrl("https://mail.google.com/mail/u/0", 7, "^iim"),
     ]).toStrictEqual([
       "https://mail.google.com/mail/u/0/feed/atom?t=7",
       "https://mail.google.com/mail/u/0/feed/atom/^iim?t=7",

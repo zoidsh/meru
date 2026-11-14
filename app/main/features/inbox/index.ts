@@ -11,7 +11,6 @@ import {
   readFeed,
 } from "../../../core/engines/inbox.ts";
 import type { FeedMemory } from "../../../core/engines/inbox.ts";
-import { isSignIn } from "../../../core/engines/links.ts";
 import type { AppEvents } from "../../../core/events.ts";
 import type { LogPort } from "../../../core/log.ts";
 import type {
@@ -35,19 +34,30 @@ export interface InboxOptions {
   readonly settings: Pick<SettingsStore, "get">;
   readonly events: Pick<AppEvents, "on" | "emit">;
   readonly log: LogPort;
-  /** The inbox feed's address, which a run from the repository may point at a stand-in. */
-  readonly feedUrl: string;
+  /** The mailbox the feed is read from, which a run from the repository may point at a stand-in. */
+  readonly gmailUrl: string;
 }
 
 interface ProfileFeed {
   memory: FeedMemory;
   failures: number;
+  /** What the run of failures under way is down to; undefined while the feed reads. */
+  cause: string | undefined;
   reading: boolean;
   timer: Unsubscribe | undefined;
   feed: Feed;
 }
 
-type Outcome = "read" | "failed";
+type Fetched =
+  | { readonly kind: "feed"; readonly feed: Feed }
+  | {
+      readonly kind: "failed";
+      readonly cause: string;
+      readonly error?: unknown;
+    };
+
+/** Google answers a session it will not let read the feed with a 401, or a redirect into its sign-in; the feed is only served over HTTPS, so no one else can answer with a redirect. */
+const SIGNED_OUT = "signedOut";
 
 /** Reads each active profile's Gmail inbox feed through its session, on an interval that backs off while it fails, and tells the profile and every page what is unread. */
 export class Inbox {
@@ -143,6 +153,7 @@ export class Inbox {
     for (const profileId of wanted) {
       if (!this.#feeds.has(profileId)) {
         this.#feeds.set(profileId, {
+          cause: undefined,
           failures: 0,
           feed: { entries: [], unread: 0 },
           memory: EMPTY_FEED_MEMORY,
@@ -170,86 +181,100 @@ export class Inbox {
     if (!online.isOnline()) {
       return;
     }
+    const readAt = clock.now();
     feed.reading = true;
-    const outcome = await this.#readInto(profileId, feed);
+    const read = await this.#fetch(profileId);
     feed.reading = false;
+    // A profile removed while its read was out has nothing left to tell.
     if (this.#feeds.get(profileId) !== feed) {
       return;
     }
-    feed.failures = outcome === "read" ? 0 : feed.failures + 1;
+    if (read.kind === "feed") {
+      this.#take(profileId, feed, read.feed, readAt);
+    } else {
+      this.#fail(profileId, feed, read);
+    }
     feed.timer = clock.schedule(feedDelay(feed.failures), () => {
       void this.#read(profileId);
     });
   }
 
-  async #readInto(profileId: string, feed: ProfileFeed): Promise<Outcome> {
+  #take(profileId: string, feed: ProfileFeed, read: Feed, readAt: number) {
     const { events, log, profiles } = this.#options;
-    const readAt = this.#options.clock.now();
-    const read = await this.#fetch(profileId);
-    if (read.kind === "signedOut") {
-      profiles.setStatus(profileId, { kind: "needsSignIn" });
-      return "failed";
+    if (feed.cause !== undefined) {
+      log.info("The inbox feed reads again", {
+        failures: feed.failures,
+        profileId,
+      });
     }
-    if (read.kind === "failed") {
-      // Only the first failure of a run is worth a line; the rest repeat it every backoff.
-      if (feed.failures === 0) {
-        log.warn("The inbox feed could not be read", {
-          ...read.fields,
-          profileId,
-        });
-      }
-      return "failed";
-    }
-    const { arrived, memory } = readFeed(
-      feed.memory,
-      read.feed.entries,
-      readAt
-    );
+    feed.cause = undefined;
+    feed.failures = 0;
+    const { arrived, memory } = readFeed(feed.memory, read.entries, readAt);
     feed.memory = memory;
-    profiles.setStatus(profileId, {
-      kind: "ok",
-      unreadCount: read.feed.unread,
-    });
-    if (!isEqual(feed.feed, read.feed)) {
-      feed.feed = read.feed;
+    profiles.setStatus(profileId, { kind: "ok", unreadCount: read.unread });
+    if (!isEqual(feed.feed, read)) {
+      feed.feed = read;
       this.#publish();
     }
     if (arrived.length > 0) {
       events.emit("mail.arrived", { entries: arrived, profileId });
     }
-    return "read";
   }
 
-  async #fetch(
+  #fail(
     profileId: string,
-    label?: string
-  ): Promise<
-    | { readonly kind: "feed"; readonly feed: Feed }
-    | { readonly kind: "signedOut" }
-    | { readonly kind: "failed"; readonly fields: Record<string, unknown> }
-  > {
+    feed: ProfileFeed,
+    failed: Extract<Fetched, { kind: "failed" }>
+  ) {
+    const { log, profiles } = this.#options;
+    if (failed.cause === SIGNED_OUT) {
+      profiles.setStatus(profileId, { kind: "needsSignIn" });
+    }
+    // A run of failures repeats its line every backoff, so a line is written only when the run starts or its cause changes.
+    if (failed.cause !== feed.cause) {
+      const fields = {
+        cause: failed.cause,
+        profileId,
+        ...(failed.error === undefined ? {} : { error: failed.error }),
+      };
+      if (failed.cause === SIGNED_OUT) {
+        log.info("The profile has to sign in to read its feed", fields);
+      } else {
+        log.warn("The inbox feed could not be read", fields);
+      }
+    }
+    feed.cause = failed.cause;
+    feed.failures += 1;
+  }
+
+  async #fetch(profileId: string, label?: string): Promise<Fetched> {
     const { clock, sessions } = this.#options;
     let response;
     try {
       response = await sessions.fetchText(
         partitionOf(profileId),
-        feedUrl(this.#options.feedUrl, clock.now(), label),
+        feedUrl(this.#options.gmailUrl, clock.now(), label),
         FEED_TIMEOUT
       );
     } catch (error) {
-      return { fields: { error }, kind: "failed" };
+      return { cause: "network", error, kind: "failed" };
     }
-    // A signed-out session is sent to Google's sign-in page instead of the feed.
-    if (isSignIn(response.url) || response.status === 401) {
-      return { kind: "signedOut" };
+    if (
+      response.kind === "redirected" ||
+      (response.kind === "answered" && response.status === 401)
+    ) {
+      return { cause: SIGNED_OUT, kind: "failed" };
+    }
+    if (response.kind === "tooLarge") {
+      return { cause: "tooLarge", kind: "failed" };
     }
     if (response.status !== 200) {
-      return { fields: { status: response.status }, kind: "failed" };
+      return { cause: `status ${response.status}`, kind: "failed" };
     }
     const parsed = parseFeed(response.text);
     return parsed.ok
       ? { feed: parsed.value, kind: "feed" }
-      : { fields: { reason: parsed.error }, kind: "failed" };
+      : { cause: parsed.error, kind: "failed" };
   }
 
   #publish(): void {

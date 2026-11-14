@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import { chromeInsets } from "../core/engines/chrome.ts";
-import { INBOX_FEED_URL } from "../core/engines/inbox.ts";
+import { GMAIL_URL } from "../core/engines/inbox.ts";
 import { isSignIn } from "../core/engines/links.ts";
 import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
@@ -190,13 +190,13 @@ const start = async () => {
   const recorded = recordingDesktop();
   const desktop = e2e ? recorded : ports;
   // A run from the repository can read a stand-in feed; the suite and a measure read none unless given one, so no test run asks Google.
-  const feedOverride = ports.lifecycle.packaged
+  const gmailOverride = ports.lifecycle.packaged
     ? undefined
-    : process.env.MERU_FEED_URL;
+    : process.env.MERU_GMAIL_URL;
   const inbox = new Inbox({
     clock: ports.clock,
     events,
-    feedUrl: feedOverride ?? INBOX_FEED_URL,
+    gmailUrl: gmailOverride ?? GMAIL_URL,
     log: log.scoped("inbox"),
     online: ports.online,
     power: ports.power,
@@ -205,7 +205,7 @@ const start = async () => {
     settings,
   });
   new Badge({ badge: desktop.badge, events, inbox, settings }).start();
-  if (feedOverride !== undefined || !(e2e || measure)) {
+  if (gmailOverride !== undefined || !(e2e || measure)) {
     inbox.start();
   }
   const pages: PageOptions = {

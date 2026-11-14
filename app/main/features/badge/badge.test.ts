@@ -2,7 +2,7 @@ import { setImmediate } from "node:timers/promises";
 
 import { describe, expect, it } from "vitest";
 
-import { INBOX_FEED_URL } from "../../../core/engines/inbox.ts";
+import { GMAIL_URL, INBOX_FEED_URL } from "../../../core/engines/inbox.ts";
 import { AppEvents } from "../../../core/events.ts";
 import { TWO_UNREAD } from "../../../core/fixtures/gmail-feeds.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
@@ -67,14 +67,14 @@ const setup = async () => {
   await profiles.open();
   profiles.start();
   sessions.answer(INBOX_FEED_URL, {
+    kind: "answered",
     status: 200,
     text: TWO_UNREAD,
-    url: INBOX_FEED_URL,
   });
   const inbox = new Inbox({
     clock,
     events,
-    feedUrl: INBOX_FEED_URL,
+    gmailUrl: GMAIL_URL,
     log: strictLog,
     online: new FakeOnline(true),
     power: new FakePower(),

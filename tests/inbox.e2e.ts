@@ -2,6 +2,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { ONE_UNREAD, TWO_UNREAD } from "../app/core/fixtures/gmail-feeds.ts";
 import { expect, inspect, profilesOf, test } from "./app.ts";
+import { SIGN_IN_PATH } from "./feed-stub.ts";
 
 // The inbox calls mail new only if it was issued shortly before the last read, so the fixture's entries are dated now.
 const issuedNow = (text: string) =>
@@ -32,14 +33,14 @@ const wake = async (app: ElectronApplication) => {
   });
 };
 
-test("shows the feed's unread count, notifies about mail that arrives and marks a signed-out session", async ({
+test("shows the feed's unread count, notifies about mail that arrives and marks a signed-out session without following its redirect", async ({
   feed,
   launch,
   stub,
 }) => {
   feed.answer({ kind: "feed", text: issuedNow(ONE_UNREAD) });
   const { app, chrome } = await launch({
-    env: { MERU_ENTITLEMENT_URL: stub.url, MERU_FEED_URL: feed.url },
+    env: { MERU_ENTITLEMENT_URL: stub.url, MERU_GMAIL_URL: feed.url },
   });
   await expect
     .poll(async () => await statusOf(chrome))
@@ -58,4 +59,5 @@ test("shows the feed's unread count, notifies about mail that arrives and marks 
   await expect
     .poll(async () => await statusOf(chrome))
     .toStrictEqual({ kind: "needsSignIn" });
+  expect(feed.requests).not.toContain(SIGN_IN_PATH);
 });

@@ -2,13 +2,12 @@ import { setImmediate } from "node:timers/promises";
 
 import { describe, expect, it } from "vitest";
 
-import { INBOX_FEED_URL } from "../../../core/engines/inbox.ts";
+import { GMAIL_URL, INBOX_FEED_URL } from "../../../core/engines/inbox.ts";
 import { AppEvents } from "../../../core/events.ts";
 import {
   MORE_THAN_LISTED,
   NONE_UNREAD,
   ONE_UNREAD,
-  SIGN_IN_PAGE,
   TWO_UNREAD,
 } from "../../../core/fixtures/gmail-feeds.ts";
 import type { Entitlement } from "../../../core/records/entitlement.ts";
@@ -40,13 +39,14 @@ const PRO: Entitlement = {
   source: "stored",
 };
 
-const feed = (text: string) => ({ status: 200, text, url: INBOX_FEED_URL });
+const feed = (text: string) =>
+  ({ kind: "answered", status: 200, text }) as const;
 
 const SIGNED_OUT = {
-  status: 200,
-  text: SIGN_IN_PAGE,
-  url: "https://accounts.google.com/ServiceLogin?service=mail",
-};
+  kind: "redirected",
+  location: "https://accounts.google.com/ServiceLogin?service=mail",
+  status: 302,
+} as const;
 
 // A read awaits the session, then its answer; a macrotask runs only once every microtask they queue has.
 const settle = async () => {
@@ -85,7 +85,7 @@ const setup = async ({ online = true } = {}) => {
   });
   await profiles.open();
   profiles.start();
-  const sessions = new FakeSessions();
+  const sessions = new FakeSessions(clock);
   sessions.answer(INBOX_FEED_URL, feed(NONE_UNREAD));
   const network = new FakeOnline(online);
   const power = new FakePower();
@@ -100,7 +100,7 @@ const setup = async ({ online = true } = {}) => {
   const inbox = new Inbox({
     clock,
     events,
-    feedUrl: INBOX_FEED_URL,
+    gmailUrl: GMAIL_URL,
     log: log.scoped("inbox"),
     online: network,
     power,
@@ -220,7 +220,11 @@ describe(Inbox, () => {
     await advance(120_000);
     sessions.answer(INBOX_FEED_URL, feed(NONE_UNREAD));
     await advance(240_000);
-    sessions.answer(INBOX_FEED_URL, { status: 500, text: "", url: "" });
+    sessions.answer(INBOX_FEED_URL, {
+      kind: "answered",
+      status: 500,
+      text: "",
+    });
     await advance(30_000);
     expect({
       reads: sessions.fetched.length,
@@ -257,5 +261,70 @@ describe(Inbox, () => {
       followed: Object.keys(inbox.feeds()).length,
       reads: sessions.fetched.length - before,
     }).toStrictEqual({ followed: 1, reads: 1 });
+  });
+
+  it("gives up on a read nothing answers after 20 seconds, and on a body past the cap, each as a failure of its own cause, and says once when the feed reads again", async () => {
+    const { advance, log, sessions, start, status } = await setup();
+    sessions.answer(INBOX_FEED_URL, "silent");
+    await start();
+    await advance(20_000);
+    sessions.answer(
+      INBOX_FEED_URL,
+      feed(`${ONE_UNREAD}${" ".repeat(1024 * 1024)}`)
+    );
+    await advance(60_000);
+    await advance(120_000);
+    sessions.answer(INBOX_FEED_URL, feed(ONE_UNREAD));
+    await advance(240_000);
+    expect({
+      lines: log.entries.map((entry) => [
+        entry.level,
+        entry.fields.cause ?? null,
+      ]),
+      reads: sessions.fetched.length,
+      status: status(),
+    }).toStrictEqual({
+      lines: [
+        ["warn", "network"],
+        ["warn", "tooLarge"],
+        ["info", null],
+      ],
+      reads: 4,
+      status: { kind: "ok", unreadCount: 1 },
+    });
+  });
+
+  it("ignores a read asked for while one is out, which reads on its own schedule", async () => {
+    const { advance, inbox, sessions, start } = await setup();
+    sessions.answer(INBOX_FEED_URL, "silent");
+    await start();
+    inbox.readAll();
+    await advance(1000);
+    const during = sessions.fetched.length;
+    sessions.answer(INBOX_FEED_URL, feed(ONE_UNREAD));
+    await advance(19_000);
+    await advance(60_000);
+    expect([during, sessions.fetched.length]).toStrictEqual([1, 2]);
+  });
+
+  it("drops what a read brings back for a profile removed while it was out", async () => {
+    const { advance, arrived, inbox, profiles, sessions, start } =
+      await setup();
+    const work = profiles.createProfile("Work");
+    const workId = work.ok ? work.value.id : "";
+    sessions.answer(INBOX_FEED_URL, "silent", partitionOf(workId));
+    await start();
+    profiles.removeProfile(workId);
+    sessions.answer(INBOX_FEED_URL, feed(TWO_UNREAD), partitionOf(workId));
+    await advance(20_000);
+    expect({
+      arrived,
+      followed: Object.keys(inbox.feeds()),
+      statuses: profiles.state.profiles.map((profile) => profile.status),
+    }).toStrictEqual({
+      arrived: [],
+      followed: [profiles.selected().id],
+      statuses: [{ kind: "ok", unreadCount: 0 }],
+    });
   });
 });

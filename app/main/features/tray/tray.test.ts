@@ -2,7 +2,7 @@ import { setImmediate } from "node:timers/promises";
 
 import { describe, expect, it } from "vitest";
 
-import { INBOX_FEED_URL } from "../../../core/engines/inbox.ts";
+import { GMAIL_URL, INBOX_FEED_URL } from "../../../core/engines/inbox.ts";
 import { AppEvents } from "../../../core/events.ts";
 import { NONE_UNREAD, TWO_UNREAD } from "../../../core/fixtures/gmail-feeds.ts";
 import { themeOf } from "../../../core/ports.ts";
@@ -39,7 +39,8 @@ const PRO: Entitlement = {
   source: "stored",
 };
 
-const feed = (text: string) => ({ status: 200, text, url: INBOX_FEED_URL });
+const feed = (text: string) =>
+  ({ kind: "answered", status: 200, text }) as const;
 
 const setup = async (platform: Platform) => {
   const transport = new FakeIpcTransport();
@@ -82,7 +83,7 @@ const setup = async (platform: Platform) => {
   const inbox = new Inbox({
     clock,
     events,
-    feedUrl: INBOX_FEED_URL,
+    gmailUrl: GMAIL_URL,
     log: strictLog,
     online: new FakeOnline(),
     power: new FakePower(),

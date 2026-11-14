@@ -222,19 +222,29 @@ export interface ShellPort {
   readonly openExternal: (url: string) => void;
 }
 
-/** What a request answered, after any redirects. */
-export interface SessionResponse {
-  readonly status: number;
-  /** The address that answered, which differs from the one asked once a redirect was followed. */
-  readonly url: string;
-  readonly text: string;
-}
+/** The most of a body a session request reads; a feed or a page past it is not what was asked for. */
+export const SESSION_BODY_CAP = 1024 * 1024;
+
+/** What a request answered. A redirect is never followed, so a session sent to sign in costs no request to the sign-in page and a redirect loop costs one. */
+export type SessionResponse =
+  | {
+      readonly kind: "answered";
+      readonly status: number;
+      readonly text: string;
+    }
+  | {
+      readonly kind: "redirected";
+      readonly status: number;
+      readonly location: string;
+    }
+  /** The body passed `SESSION_BODY_CAP`, and was not read further. */
+  | { readonly kind: "tooLarge" };
 
 /** The browser sessions panes load in, one partition per profile. */
 export interface SessionPort {
   /** Deletes everything the partition stored: cookies, storage and cache. */
   readonly clear: (partition: string) => Promise<void>;
-  /** Asks for `url` with the partition's cookies, following redirects; rejects when the network fails or no answer comes within `timeout` milliseconds. */
+  /** Asks for `url` with the partition's cookies; rejects when the network fails or no answer comes within `timeout` milliseconds. */
   readonly fetchText: (
     partition: string,
     url: string,

@@ -1,7 +1,9 @@
 import type { FeedEntry } from "../records/feed.ts";
 
-/** The inbox feed of the session's first signed-in account, the one a profile's Gmail pane shows. */
-export const INBOX_FEED_URL = "https://mail.google.com/mail/u/0/feed/atom";
+/** The mailbox of the session's first signed-in account, the one a profile's Gmail pane shows; its feed, its messages and its actions hang off it. */
+export const GMAIL_URL = "https://mail.google.com/mail/u/0";
+
+export const INBOX_FEED_URL = `${GMAIL_URL}/feed/atom`;
 
 /** Gmail's Important marker as a label, which the feed takes as a path segment; probed to match `is:unread is:important in:inbox`. */
 export const IMPORTANT_FEED_LABEL = "^iim";
@@ -22,9 +24,13 @@ export const feedDelay = (failures: number): number =>
   Math.min(FEED_INTERVAL * 2 ** failures, FEED_MAX_DELAY);
 
 // Google answers a repeated feed address from a cache for a while, so a message that just arrived would not show.
-/** The feed's address for one read, `label` narrowing it to that label's unread mail. */
-export const feedUrl = (base: string, now: number, label?: string): string =>
-  `${base}${label === undefined ? "" : `/${label}`}?t=${now}`;
+/** The mailbox's feed's address for one read, `label` narrowing it to that label's unread mail. */
+export const feedUrl = (
+  gmailUrl: string,
+  now: number,
+  label?: string
+): string =>
+  `${gmailUrl}/feed/atom${label === undefined ? "" : `/${label}`}?t=${now}`;
 
 /** What a profile's last reads of its feed leave behind, to tell mail that arrived from mail that was already there. */
 export interface FeedMemory {

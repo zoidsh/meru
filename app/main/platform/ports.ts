@@ -7,7 +7,6 @@ import {
   net,
   powerMonitor,
   screen,
-  session,
   shell,
 } from "electron";
 
@@ -24,6 +23,7 @@ import { createFs } from "./fs.ts";
 import { ipcTransport } from "./ipc.ts";
 import { onBeforeInput } from "./keys.ts";
 import { onlinePort } from "./online.ts";
+import { createSessions } from "./session.ts";
 import { handleOf, portOf, viewFactory } from "./views.ts";
 
 const createWindow = (spec: WindowSpec): WindowPort => {
@@ -214,23 +214,7 @@ export const createElectronPorts = (): Ports => ({
   badge: createBadge(process.platform),
   notifications: notificationPort,
   tray: createTray(),
-  sessions: {
-    clear: async (partition) => {
-      const found = session.fromPartition(partition);
-      await found.clearStorageData();
-      await found.clearCache();
-    },
-    fetchText: async (partition, url, timeout) => {
-      const response = await session
-        .fromPartition(partition)
-        .fetch(url, { signal: AbortSignal.timeout(timeout) });
-      return {
-        status: response.status,
-        text: await response.text(),
-        url: response.url,
-      };
-    },
-  },
+  sessions: createSessions(),
   shell: {
     openExternal: (url) => {
       const open = async () => {

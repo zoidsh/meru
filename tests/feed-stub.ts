@@ -9,7 +9,7 @@ export type FeedAnswer =
   | { readonly kind: "signIn" };
 
 export interface FeedStub {
-  /** The base of the inbox feed, as the app takes it in `MERU_FEED_URL`. */
+  /** The mailbox, as the app takes it in `MERU_GMAIL_URL`. */
   readonly url: string;
   /** Every path asked for, label included and cache-buster left out, in order. */
   readonly requests: string[];
@@ -18,9 +18,13 @@ export interface FeedStub {
   readonly stop: () => Promise<void>;
 }
 
-const FEED_PATH = "/mail/u/0/feed/atom";
+const MAILBOX_PATH = "/mail/u/0";
+const FEED_PATH = `${MAILBOX_PATH}/feed/atom`;
 
-/** A loopback stand-in for Gmail's inbox feed, answering every profile's session alike. */
+/** Where the stub sends a signed-out session, on loopback like the rest, so a request that followed the redirect would show in `requests` rather than leave the machine. */
+export const SIGN_IN_PATH = "/ServiceLogin";
+
+/** A loopback stand-in for a Gmail mailbox: its inbox feed, answering every profile's session alike, and a page for each message. */
 export const startFeedStub = async (): Promise<FeedStub> => {
   const answers = new Map<string, FeedAnswer>([
     [FEED_PATH, { kind: "feed", text: NONE_UNREAD }],
@@ -32,12 +36,16 @@ export const startFeedStub = async (): Promise<FeedStub> => {
     );
     requests.push(path);
     const found = answers.get(path);
-    if (found === undefined) {
+    if (path === `${MAILBOX_PATH}/`) {
+      response
+        .writeHead(200, { "content-type": "text/html" })
+        .end("<!doctype html><title>Gmail</title>");
+    } else if (found === undefined) {
       response.writeHead(404).end();
     } else if (found.kind === "signIn") {
       response
         .writeHead(302, {
-          location: "https://accounts.google.com/ServiceLogin?service=mail",
+          location: `http://${request.headers.host}${SIGN_IN_PATH}?service=mail`,
         })
         .end();
     } else {
@@ -65,6 +73,6 @@ export const startFeedStub = async (): Promise<FeedStub> => {
       server.close();
       await once(server, "close");
     },
-    url: `http://127.0.0.1:${address.port}${FEED_PATH}`,
+    url: `http://127.0.0.1:${address.port}${MAILBOX_PATH}`,
   };
 };
