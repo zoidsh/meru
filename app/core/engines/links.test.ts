@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import type { App } from "../records/app.ts";
+import type { App, AppId } from "../records/app.ts";
 import type { Group } from "../records/group.ts";
 import type { Tab } from "../records/tab.ts";
 import { leaf } from "./layout.ts";
 import { appOfUrl, isSignIn, resolveLinkTarget } from "./links.ts";
 import type { LinkContext, LinkSettings } from "./links.ts";
 
-const app = (id: string, hosts: string[], more: Partial<App> = {}): App => ({
+const app = (id: AppId, hosts: string[], more: Partial<App> = {}): App => ({
   hosts,
   icon: "gmail",
   id,

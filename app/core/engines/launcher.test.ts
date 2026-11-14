@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { App } from "../records/app.ts";
+import type { App, AppId } from "../records/app.ts";
 import { launcherApps } from "./launcher.ts";
 
-const app = (id: string, name: string): App => ({
+const app = (id: AppId, name: string): App => ({
   hosts: [`${id}.google.com`],
   icon: "gmail",
   id,
