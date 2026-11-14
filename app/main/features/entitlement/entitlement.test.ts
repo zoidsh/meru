@@ -151,7 +151,7 @@ const settled = async (api: FakeEntitlementApi, requests: number) => {
 };
 
 describe(Entitlement, () => {
-  it("is unknown on a fresh install that is offline, and keeps a new device id", async () => {
+  it("is unknown on a fresh install that is offline, keeps a new device id, and asks once the network returns", async () => {
     const { api, entitlement, network, stored } = await setup({
       online: false,
     });
@@ -162,10 +162,11 @@ describe(Entitlement, () => {
       source: "stored",
     });
     expect(api.requests).toStrictEqual([]);
-    expect(network.listening).toBe(1);
     await expect(stored()).resolves.toMatchObject({
       data: { deviceId: "device-1", token: null },
     });
+    network.set(true);
+    await settled(api, 1);
   });
 
   it("starts licensed from a stored token that is still valid, asking nothing", async () => {
@@ -204,7 +205,9 @@ describe(Entitlement, () => {
     await expect
       .poll(() => entitlement.current())
       .toMatchObject({ expiresAt: NOW + 3 * HOUR, source: "refreshed" });
-    expect(network.listening).toBe(0);
+    network.set(false);
+    network.set(true);
+    expect(api.requests).toHaveLength(1);
     await expect(stored()).resolves.toMatchObject({
       data: { lastAnswer: { at: NOW, detail: null, outcome: "issued" } },
     });
@@ -231,7 +234,7 @@ describe(Entitlement, () => {
       .toMatchObject({ kind: "licensed", plan: "team", seat: "seat-4" });
   });
 
-  it("refreshes when the clock reaches the token's expiry", async () => {
+  it("refreshes when the clock reaches the token's expiry, and again at the new one", async () => {
     const { api, clock, entitlement } = await setup({
       answers: [issued({ exp: (NOW + 4 * HOUR) / 1000 })],
       state: { token: { licenseKey: null, value: await mint() } },
@@ -244,7 +247,10 @@ describe(Entitlement, () => {
     await expect
       .poll(() => entitlement.current().expiresAt)
       .toBe(NOW + 4 * HOUR);
-    expect(clock.pending).toBeGreaterThan(0);
+    clock.advance(3 * HOUR - 1);
+    expect(api.requests).toHaveLength(1);
+    clock.advance(1);
+    await settled(api, 2);
   });
 
   it("refreshes once on waking when the token expired during a sleep", async () => {
