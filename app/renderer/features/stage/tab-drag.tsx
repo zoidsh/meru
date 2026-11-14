@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { dropTargetAt, STYLE_METRICS } from "../../../core/engines/layout.ts";
 import type { Point } from "../../../core/records/rect.ts";
 import { appById } from "../../../shared/apps.ts";
-import { drag, dragPushes } from "../../../shared/channels/drag.ts";
+import { dragPushes } from "../../../shared/channels/drag.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import type { TabDragSurface } from "../../../shared/channels/surfaces.ts";
 import type { Client } from "../../client.ts";
@@ -37,7 +37,7 @@ export const TabDrag = ({
       setPoint({ x: event.clientX, y: event.clientY });
     };
     const release = (event: PointerEvent) => {
-      client.send(drag.end, { x: event.clientX, y: event.clientY });
+      client.send(stage.endDrag, { x: event.clientX, y: event.clientY });
     };
     const cancel = (event: KeyboardEvent) => {
       if (event.key === "Escape") {

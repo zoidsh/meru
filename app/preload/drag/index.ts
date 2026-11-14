@@ -1,10 +1,9 @@
 import { wireName } from "../../shared/channels/define.ts";
-import { drag } from "../../shared/channels/drag.ts";
 import { stage } from "../../shared/channels/stage.ts";
 import { dragBridge } from "./bridge.ts";
 
-const move = wireName(drag.move);
-const end = wireName(drag.end);
+const move = wireName(stage.dragTo);
+const end = wireName(stage.endDrag);
 const cancel = wireName(stage.cancelDrag);
 
 // The preload's world sees the page's DOM events, so the data: page needs no script of its own.

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { commands } from "./commands.ts";
 import { defineSurface } from "./define.ts";
 import type { Surface } from "./define.ts";
-import { drag, dragPushes } from "./drag.ts";
+import { dragPushes } from "./drag.ts";
 import { entitlement, entitlementPushes } from "./entitlement.ts";
 import { launcher } from "./launcher.ts";
 import { profiles, profilesPushes, tabs } from "./profiles.ts";
@@ -41,7 +41,13 @@ export type ChromeSurface = typeof chromeSurface;
 
 export const dragSurface = defineSurface({
   pushes: [],
-  requests: [drag, { cancelDrag: stage.cancelDrag }],
+  requests: [
+    {
+      cancelDrag: stage.cancelDrag,
+      dragTo: stage.dragTo,
+      endDrag: stage.endDrag,
+    },
+  ],
 });
 
 /** The launcher's page over the panes: it reads the profiles and the settings, opens a tab and closes itself. */
@@ -68,7 +74,13 @@ export type SettingsSurface = typeof settingsSurface;
 /** A sidebar row dragged over the panes: the page draws the row and the zone it would land in, reading where the panes are once, and reports the release. */
 export const tabDragSurface = defineSurface({
   pushes: [dragPushes, themePushes],
-  requests: [drag, { cancelDrag: stage.cancelDrag, snapshot: stage.snapshot }],
+  requests: [
+    {
+      cancelDrag: stage.cancelDrag,
+      endDrag: stage.endDrag,
+      snapshot: stage.snapshot,
+    },
+  ],
 });
 
 export type TabDragSurface = typeof tabDragSurface;

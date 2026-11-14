@@ -5,7 +5,7 @@ import type { Beside, Orientation } from "../../../core/records/layout.ts";
 import type { Style } from "../../../core/records/style.ts";
 import { wireName } from "../../../shared/channels/define.ts";
 import type { RequestChannel } from "../../../shared/channels/define.ts";
-import { drag, dragPushes } from "../../../shared/channels/drag.ts";
+import { dragPushes } from "../../../shared/channels/drag.ts";
 import {
   stage as stageChannels,
   stagePushes,
@@ -770,19 +770,25 @@ describe("a drag across panes", () => {
     const { call, overlay, window, stages, id } = await dragging();
     const sender = overlay?.contentsId ?? 0;
 
-    const moved = call(drag.move, { buttons: 1, x: 300, y: 5 }, sender).ok;
+    const moved = call(
+      stageChannels.dragTo,
+      { buttons: 1, x: 300, y: 5 },
+      sender
+    ).ok;
     const width = childBounds(window)[0]?.width;
-    const ended = call(drag.end, { x: 300, y: 5 }, sender).ok;
+    const ended = call(stageChannels.endDrag, { x: 300, y: 5 }, sender).ok;
     expect({ ended, moved, width }).toStrictEqual({
       ended: true,
       moved: true,
       width: 288,
     });
 
-    expect(call(drag.end, { x: 300, y: 5 }, sender)).toMatchObject({
-      error: { kind: "wrongSurface" },
-      ok: false,
-    });
+    expect(call(stageChannels.endDrag, { x: 300, y: 5 }, sender)).toMatchObject(
+      {
+        error: { kind: "wrongSurface" },
+        ok: false,
+      }
+    );
     expect(stages.snapshot(sender).ok).toBeFalsy();
     expect(stages.snapshot(id).ok).toBeTruthy();
   });
@@ -791,7 +797,7 @@ describe("a drag across panes", () => {
     const { call, overlay, profiles, transport, window, id } = await dragging();
     const sender = overlay?.contentsId ?? 0;
     const before = profiles.currentGroup()?.layout;
-    call(drag.move, { buttons: 1, x: 300, y: 5 }, sender);
+    call(stageChannels.dragTo, { buttons: 1, x: 300, y: 5 }, sender);
     expect(call(stageChannels.cancelDrag, {}, sender).ok).toBeTruthy();
     expect({
       children: window.childViews().length,
@@ -976,7 +982,9 @@ describe("a sidebar row dragged over the panes", () => {
         sender
       )
     ).toMatchObject({ error: { kind: "unknownChannel" }, ok: false });
-    expect(call(drag.end, { x: -1, y: -1 }, sender).ok).toBeTruthy();
+    expect(
+      call(stageChannels.endDrag, { x: -1, y: -1 }, sender).ok
+    ).toBeTruthy();
     expect(overlay?.destroyed).toBeTruthy();
   });
 

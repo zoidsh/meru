@@ -16,7 +16,7 @@ import type { Tab } from "../../../core/records/tab.ts";
 import { err, ok } from "../../../core/result.ts";
 import type { Result } from "../../../core/result.ts";
 import type { IpcRegistrar } from "../../../shared/channels/define.ts";
-import { drag, dragPushes } from "../../../shared/channels/drag.ts";
+import { dragPushes } from "../../../shared/channels/drag.ts";
 import { stage, stagePushes } from "../../../shared/channels/stage.ts";
 import type {
   DragSubject,
@@ -160,11 +160,6 @@ export class Stages {
           );
           return opened.ok ? ok(null) : opened;
         },
-      }),
-      registrar.register(drag, {
-        end: (point, { contentsId }) => this.endDrag(contentsId, point),
-        move: ({ x, y, buttons }, { contentsId }) =>
-          this.dragTo(contentsId, { x, y }, buttons),
       })
     );
   }

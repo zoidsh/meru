@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { wireName } from "../../../shared/channels/define.ts";
-import { drag, dragPushes } from "../../../shared/channels/drag.ts";
+import { dragPushes } from "../../../shared/channels/drag.ts";
 import { stage } from "../../../shared/channels/stage.ts";
 import { tabDragSurface } from "../../../shared/channels/surfaces.ts";
 import { FakeBridge } from "../../../test/fakes/bridge.ts";
@@ -109,9 +109,9 @@ describe(TabDrag, () => {
       );
     });
     expect(
-      bridge.sent.filter((sent) => sent.channel === wireName(drag.end))
+      bridge.sent.filter((sent) => sent.channel === wireName(stage.endDrag))
     ).toStrictEqual([
-      { channel: wireName(drag.end), payload: { x: 40, y: 60 } },
+      { channel: wireName(stage.endDrag), payload: { x: 40, y: 60 } },
     ]);
   });
 });
