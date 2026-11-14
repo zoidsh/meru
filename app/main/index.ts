@@ -7,6 +7,7 @@ import { ENTITLEMENT_URL } from "../core/entitlement/api.ts";
 import { acceptedKeys, importKeys } from "../core/entitlement/keys.ts";
 import { AppEvents } from "../core/events.ts";
 import { themeOf } from "../core/ports.ts";
+import { platformSchema } from "../core/records/platform.ts";
 import { allowlist } from "../shared/channels/define.ts";
 import { surfaces } from "../shared/channels/surfaces.ts";
 import type { OverlayKind } from "../shared/channels/surfaces.ts";
@@ -16,11 +17,13 @@ import { Entitlement } from "./features/entitlement/index.ts";
 import { Inbox } from "./features/inbox/index.ts";
 import { Launcher } from "./features/launcher/index.ts";
 import { Links } from "./features/links/index.ts";
+import { Notifications } from "./features/notifications/index.ts";
 import { Profiles } from "./features/profiles/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { SettingsWindow } from "./features/settings/window.ts";
 import { Sidebars } from "./features/sidebar/index.ts";
 import { Stages } from "./features/stage/index.ts";
+import { Tray } from "./features/tray/index.ts";
 import { Updater } from "./features/updater/index.ts";
 import { Windows } from "./features/windows/index.ts";
 import { listenIpc } from "./platform/ipc.ts";
@@ -37,7 +40,7 @@ import {
 import { createElectronUpdater } from "./platform/updater.ts";
 import { placeUserData, userDataDir } from "./platform/user-data.ts";
 import { CommandDispatcher } from "./shell/commands.ts";
-import { exposeE2e, RecordingShell } from "./shell/e2e.ts";
+import { exposeE2e, recordingDesktop, RecordingShell } from "./shell/e2e.ts";
 import { IpcDispatcher } from "./shell/ipc.ts";
 import { ShortcutKeys } from "./shell/keys.ts";
 import { exposeMeasure } from "./shell/measure.ts";
@@ -182,12 +185,15 @@ const start = async () => {
   });
   sidebars.start();
 
+  // The suite asserts on what the app would put on the desktop and puts nothing there.
+  const recorded = recordingDesktop();
+  const desktop = e2e ? recorded : ports;
   // A run from the repository can read a stand-in feed; the suite and a measure read none unless given one, so no test run asks Google.
   const feedOverride = ports.lifecycle.packaged
     ? undefined
     : process.env.MERU_FEED_URL;
   const inbox = new Inbox({
-    badge: ports.badge,
+    badge: desktop.badge,
     clock: ports.clock,
     events,
     feedUrl: feedOverride ?? INBOX_FEED_URL,
@@ -293,6 +299,7 @@ const start = async () => {
   if (e2e) {
     exposeE2e({
       accelerators: applicationAccelerators,
+      desktop: recorded,
       external: externalLinks,
       stages,
     });
@@ -333,6 +340,32 @@ const start = async () => {
     settingsWindow.recolour(theme);
     dispatcher.broadcast(themePushes.changed, { theme });
   });
+  // Electron runs on other Unix systems too, whose desktops behave as Linux's.
+  const platform = platformSchema
+    .catch("linux")
+    .parse(ports.lifecycle.platform);
+  new Notifications({
+    events,
+    inbox,
+    load: (tabId, url) => stages.load(tabId, url),
+    notifications: desktop.notifications,
+    platform,
+    profiles,
+    settings,
+    showWindow: () => {
+      window.reveal();
+    },
+  }).start();
+  new Tray({
+    events,
+    inbox,
+    platform,
+    profiles,
+    settings,
+    theme: ports.theme,
+    tray: desktop.tray,
+    window,
+  }).start();
   await window.show();
   entitlement.start();
   updater.start();
