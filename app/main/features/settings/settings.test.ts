@@ -374,6 +374,7 @@ describe("a Pro setting", () => {
       { entitled: FREE }
     );
     store.set("links.excludedApps", ["drive"]);
+    store.set("notifications.newEmails", "important", "work");
     changes.splice(0);
     entitle(LICENSED);
     expect(changes).toStrictEqual([
@@ -381,6 +382,7 @@ describe("a Pro setting", () => {
         { key: "links.openInApp", profileId: null },
         { key: "links.excludedApps", profileId: null },
         { key: "notifications.newEmails", profileId: null },
+        { key: "notifications.newEmails", profileId: "work" },
       ],
     ]);
   });
