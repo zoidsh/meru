@@ -37,7 +37,7 @@ export type RequestChannel = EventChannel | InvokeChannel | SyncChannel;
 
 export type Requests = Readonly<Record<string, RequestChannel>>;
 
-export type Pushes = Readonly<Record<string, PushChannel>>;
+type Pushes = Readonly<Record<string, PushChannel>>;
 
 export const event = <P extends z.ZodType>(payload: P): EventChannel<P> => ({
   kind: "event",
@@ -114,9 +114,7 @@ export const defineSurface = <
 // Distributed, because `keyof` of a union of declarations is only the keys they share.
 type ChannelsOf<C> = C extends unknown ? C[keyof C] : never;
 
-export type SurfaceRequest<S extends Surface> = ChannelsOf<
-  S["requests"][number]
->;
+type SurfaceRequest<S extends Surface> = ChannelsOf<S["requests"][number]>;
 
 export type SurfaceEvent<S extends Surface> = Extract<
   SurfaceRequest<S>,
@@ -162,7 +160,7 @@ export const allowlist = (...given: readonly Surface[]): Allowlist => {
   return sets;
 };
 
-export const ipcErrorSchema = z.object({
+const ipcErrorSchema = z.object({
   kind: z.enum([
     "unknownChannel",
     "wrongSurface",
@@ -178,7 +176,7 @@ export const ipcErrorSchema = z.object({
 
 export type IpcError = z.infer<typeof ipcErrorSchema>;
 
-export const envelopeSchema = z.union([
+const envelopeSchema = z.union([
   z.object({ ok: z.literal(true), value: z.unknown() }),
   z.object({ error: ipcErrorSchema, ok: z.literal(false) }),
 ]);
@@ -204,7 +202,7 @@ export const settle = <R extends z.ZodType>(
   return value.success ? ok(value.data) : err(malformed(value.error.message));
 };
 
-export type ValueOf<C extends RequestChannel> =
+type ValueOf<C extends RequestChannel> =
   C extends InvokeChannel<z.ZodType, infer R>
     ? z.input<R>
     : C extends SyncChannel<z.ZodType, infer S>
@@ -215,7 +213,7 @@ export interface Sender {
   readonly contentsId: number;
 }
 
-export type Handler<C extends RequestChannel> = (
+type Handler<C extends RequestChannel> = (
   payload: z.output<C["payload"]>,
   sender: Sender
 ) => Result<ValueOf<C>, string>;

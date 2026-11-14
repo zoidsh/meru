@@ -41,7 +41,7 @@ export const stageSnapshotSchema = z.object({
 export type StageSnapshot = z.infer<typeof stageSnapshotSchema>;
 
 /** What a drag over the panes carries: a split's divider, or a sidebar row dragged onto a pane. */
-export const dragSubjectSchema = z.discriminatedUnion("kind", [
+const dragSubjectSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("divider"), splitId: idSchema }),
   z.object({ kind: z.literal("tab"), tabId: idSchema }),
 ]);

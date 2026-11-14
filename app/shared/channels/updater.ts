@@ -11,7 +11,7 @@ import {
 } from "./define.ts";
 
 /** Why the updater refused to check or to install. */
-export const updaterErrorSchema = z.enum(["notPackaged", "notReady"]);
+const updaterErrorSchema = z.enum(["notPackaged", "notReady"]);
 
 export type UpdaterError = z.infer<typeof updaterErrorSchema>;
 

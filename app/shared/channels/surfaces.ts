@@ -83,7 +83,7 @@ export const overlays = {
 } satisfies Record<OverlayKind, Surface>;
 
 /** The surfaces a page the renderer's preload serves may hold, by the name main passes the preload: the chrome page's, the settings page's, and each overlay's under its kind. */
-export const pageSurfaceNameSchema = z.enum([
+const pageSurfaceNameSchema = z.enum([
   "chrome",
   "settings",
   ...overlayKindSchema.options,

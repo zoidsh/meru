@@ -4,7 +4,7 @@ import type { Result } from "../../core/result.ts";
 import type { Name } from "../key.ts";
 import type { Message } from "../msg.ts";
 
-export interface CommandSpec {
+interface CommandSpec {
   readonly label: Message;
   /** In Electron's accelerator form, `darwin` replacing `default` on macOS; the user's binding in `shortcuts.bindings` replaces both. */
   readonly shortcut?: { readonly default: string; readonly darwin?: string };
@@ -32,7 +32,7 @@ export interface Command<Id extends string = string> extends CommandSpec {
   readonly id: Id;
 }
 
-export type CommandIdOf<G extends CommandGroup> =
+type CommandIdOf<G extends CommandGroup> =
   `${G["feature"]}.${keyof G["commands"] & string}`;
 
 type Named<C> = {

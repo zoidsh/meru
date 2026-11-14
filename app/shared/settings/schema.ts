@@ -12,7 +12,7 @@ import type {
 
 const keys: readonly SettingKey[] = registry.map((entry) => entry.key);
 
-export const settingKeySchema = z.enum(keys);
+const settingKeySchema = z.enum(keys);
 
 /** The layers whole, refusing any key the registry would drop; parseSettings is the lenient read. */
 export const settingsSchema = z.unknown().transform((raw, context) => {
