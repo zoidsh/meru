@@ -56,6 +56,7 @@ describe("the command registry", () => {
       | "settings.open"
       | "sidebar.toggle"
       | "sidebar.toggleWidth"
+      | "sleep.toggleTab"
       | "stage.back"
       | "stage.equalise"
       | "stage.closeTab"

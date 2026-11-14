@@ -30,7 +30,7 @@ const tab = (id: string, appId: string, url: string): Tab => ({
   health: "ok",
   id,
   profileId: "work",
-  sleeping: false,
+  sleeps: false,
   title: appId,
   url,
   zoom: 1,

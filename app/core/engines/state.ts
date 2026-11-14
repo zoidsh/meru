@@ -57,7 +57,7 @@ export const newTab = (ids: Ids, profileId: string, app: App): Tab => ({
   health: "ok",
   id: ids(),
   profileId,
-  sleeping: false,
+  sleeps: false,
   title: app.name,
   url: app.url,
   zoom: 1,
@@ -191,7 +191,7 @@ export const updateProfile = (
 
 /** What a tab may change about itself after it was added. */
 export type TabPatch = Partial<
-  Pick<Tab, "health" | "sleeping" | "title" | "url" | "zoom">
+  Pick<Tab, "health" | "sleeps" | "title" | "url" | "zoom">
 >;
 
 export const updateTab = (
@@ -207,6 +207,20 @@ export const updateTab = (
         ),
       })
     : err("unknownTab");
+
+/** Lets the tab sleep once it has been out of sight a while, or keeps it awake; a pinned tab is always awake. */
+export const letSleep = (
+  state: ProfilesState,
+  tabId: string,
+  sleeps: boolean,
+  singleInstance: SingleInstance
+): Changed => {
+  const tab = state.tabs.find((found) => found.id === tabId);
+  if (tab !== undefined && sleeps && isPinned(tab, singleInstance)) {
+    return err("pinned");
+  }
+  return updateTab(state, tabId, { sleeps });
+};
 
 /** Moves the tab's pane beside another pane of the same group. */
 const movePaneOf = (

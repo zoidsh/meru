@@ -10,7 +10,7 @@ const tab = (id: string, profileId: string): Tab => ({
   health: "ok",
   id,
   profileId,
-  sleeping: false,
+  sleeps: false,
   title: "Gmail",
   url: "https://mail.google.com/",
   zoom: 1,

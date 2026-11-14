@@ -22,6 +22,7 @@ import { Profiles } from "./features/profiles/index.ts";
 import { SettingsStore } from "./features/settings/index.ts";
 import { SettingsWindow } from "./features/settings/window.ts";
 import { Sidebars } from "./features/sidebar/index.ts";
+import { Sleep } from "./features/sleep/index.ts";
 import { Stages } from "./features/stage/index.ts";
 import { Tray } from "./features/tray/index.ts";
 import { Updater } from "./features/updater/index.ts";
@@ -258,6 +259,19 @@ const start = async () => {
     views: ports.views,
   });
   stages.start();
+  // The end-to-end suite shortens a minute of `sleep.afterMinutes` to watch a tab fall asleep.
+  const sleepMinute = Number(process.env.MERU_SLEEP_MINUTE);
+  new Sleep({
+    clock: ports.clock,
+    commands,
+    events,
+    ...(ports.lifecycle.packaged || !(sleepMinute > 0)
+      ? {}
+      : { minute: sleepMinute }),
+    profiles,
+    settings,
+    stages,
+  }).start();
   const links = new Links({
     log: log.scoped("links"),
     profiles,

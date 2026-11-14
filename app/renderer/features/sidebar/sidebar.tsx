@@ -114,10 +114,14 @@ export const Sidebar = ({
   const closeable = new Set(
     snapshot.tabs.filter((tab) => tab.closeable).map((tab) => tab.id)
   );
+  const asleep = new Set(
+    snapshot.tabs.filter((tab) => tab.asleep).map((tab) => tab.id)
+  );
   const focusable = active ?? rows.flatMap(rowTabs)[0]?.id;
   const rowOf = (tab: Tab) => (
     <TabRowButton
       active={tab.id === active}
+      asleep={asleep.has(tab.id)}
       closeable={closeable.has(tab.id)}
       drop={drop?.tabId === tab.id ? drop : undefined}
       focusable={tab.id === focusable}

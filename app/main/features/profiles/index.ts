@@ -14,6 +14,7 @@ import {
   firstGroup,
   joinTab,
   leaveGroup,
+  letSleep,
   moveTabTo,
   removeProfile,
   resizeSplit,
@@ -63,6 +64,7 @@ import type {
 } from "../../../shared/commands/define.ts";
 import type { SettingsStore } from "../settings/index.ts";
 import { profilesCommands } from "./commands.ts";
+import { tabsSleepByChoice } from "./migrations.ts";
 
 export const PROFILES_FILE = "profiles.json";
 
@@ -78,7 +80,7 @@ export type ProfilesError =
 export const profilesSnapshot = (
   ids: Ids
 ): SnapshotSpec<ProfilesState, string> => ({
-  migrations: [],
+  migrations: [tabsSleepByChoice],
   name: PROFILES_FILE,
   recover: (data) => {
     if (data === undefined) {
@@ -96,7 +98,7 @@ export const profilesSnapshot = (
       context.addIssue({ code: "custom", message });
     }
   }),
-  version: 1,
+  version: 2,
 });
 
 const done = (result: Result<undefined, ProfilesError>): Result<null, string> =>
@@ -124,6 +126,7 @@ export class Profiles {
   readonly #disposables = new DisposableStore();
   #entitlement: Entitlement;
   #state: ProfilesState | undefined;
+  #asleep: ReadonlySet<string> = new Set();
 
   constructor(options: ProfilesOptions) {
     this.#options = options;
@@ -256,6 +259,7 @@ export class Profiles {
       })),
       tabs: this.state.tabs.map((tab) => ({
         ...tab,
+        asleep: this.#asleep.has(tab.id),
         closeable: canClose(this.state, tab.id, isSingleInstanceId).ok,
       })),
     };
@@ -363,6 +367,22 @@ export class Profiles {
 
   closeTab(tabId: string): Result<undefined, ProfilesError> {
     return this.#commit(closeTab(this.state, tabId, isSingleInstanceId));
+  }
+
+  /** Lets the tab sleep once it has been out of sight a while, or keeps it awake. */
+  letSleep(tabId: string, sleeps: boolean): Result<undefined, ProfilesError> {
+    return this.#commit(
+      letSleep(this.state, tabId, sleeps, isSingleInstanceId)
+    );
+  }
+
+  /** Records which tabs are asleep, which only the app knows and nothing stores, telling every page when it changed. */
+  setAsleep(tabIds: ReadonlySet<string>): void {
+    if (isEqual(tabIds, this.#asleep)) {
+      return;
+    }
+    this.#asleep = new Set(tabIds);
+    this.#publish();
   }
 
   /** Brings a tab to the front: its profile selected, its group shown, its pane focused. */

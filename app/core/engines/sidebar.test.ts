@@ -17,7 +17,7 @@ const tab = (appId: string): Tab => ({
   health: "ok",
   id: `${appId}-${Math.random()}`,
   profileId: "p",
-  sleeping: false,
+  sleeps: false,
   title: appId,
   url: "https://example.com/",
   zoom: 1,

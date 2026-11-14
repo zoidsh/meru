@@ -20,6 +20,7 @@ import {
   firstGroup,
   freshState,
   leaveGroup,
+  letSleep,
   moveTabTo,
   removeProfile,
   resizeSplit,
@@ -37,7 +38,7 @@ const tabOf = (id: string, profileId: string): Tab => ({
   health: "ok",
   id,
   profileId,
-  sleeping: false,
+  sleeps: false,
   title: id,
   url: "https://drive.google.com/",
   zoom: 1,
@@ -591,6 +592,26 @@ describe("a pinned tab", () => {
       { error: "pinned", ok: false },
       { error: "pinned", ok: false },
       true,
+    ]);
+  });
+
+  it("is never let sleep, while another tab is and can be kept awake again", () => {
+    const { state } = pinnedStart();
+    const slept = unwrap(letSleep(state, "t2", true, gmail));
+    expect([
+      letSleep(state, "t1", true, gmail),
+      slept.tabs.map((tab) => [tab.id, tab.sleeps]),
+      unwrap(letSleep(slept, "t2", false, gmail)).tabs.map((tab) => tab.sleeps),
+      letSleep(state, "nope", true, gmail),
+    ]).toStrictEqual([
+      { error: "pinned", ok: false },
+      [
+        ["t1", false],
+        ["t2", true],
+        ["t3", false],
+      ],
+      [false, false, false],
+      { error: "unknownTab", ok: false },
     ]);
   });
 

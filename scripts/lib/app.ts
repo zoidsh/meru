@@ -9,7 +9,10 @@ import type { z } from "zod";
 import { BRIDGE_KEY } from "../../app/core/ports.ts";
 import type { ProfilesState } from "../../app/core/records/profiles-state.ts";
 import type { Result } from "../../app/core/result.ts";
-import { PROFILES_FILE } from "../../app/main/features/profiles/index.ts";
+import {
+  PROFILES_FILE,
+  profilesSnapshot,
+} from "../../app/main/features/profiles/index.ts";
 import {
   SETTINGS_FILE,
   settingsSnapshot,
@@ -71,7 +74,7 @@ export const firstProfiles = (profileId: string): ProfilesState => ({
       health: "ok",
       id: "tab-1",
       profileId,
-      sleeping: false,
+      sleeps: false,
       title: "Gmail",
       url: "https://mail.google.com/",
       zoom: 1,
@@ -113,7 +116,10 @@ export const launch = async ({
   if (profileId !== undefined) {
     await writeFile(
       path.join(userData, PROFILES_FILE),
-      JSON.stringify({ data: firstProfiles(profileId), version: 1 })
+      JSON.stringify({
+        data: firstProfiles(profileId),
+        version: profilesSnapshot(() => profileId).version,
+      })
     );
   }
   // chrome-sandbox ships without its setuid bit outside an installed package, so an unpacked Linux run cannot use the sandbox.

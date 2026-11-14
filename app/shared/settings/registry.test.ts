@@ -43,6 +43,7 @@ describe("the settings registry", () => {
       | "sidebar.gmailUnreadBadge"
       | "sidebar.showWidthToggle"
       | "sidebar.width"
+      | "sleep.afterMinutes"
       | "stage.zoom"
       | "tray.icon"
       | "tray.iconColor"

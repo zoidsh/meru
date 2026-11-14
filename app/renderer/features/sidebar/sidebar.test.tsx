@@ -103,6 +103,34 @@ describe(Sidebar, () => {
     ]);
   });
 
+  it("fades the row of a sleeping tab, as 3.x does, and wakes it on a click", () => {
+    const { container, sentOn } = mount([
+      answer(profiles.snapshot, {
+        ...PROFILES,
+        tabs: PROFILES.tabs.map((tab) =>
+          tab.id === "calendar" ? { ...tab, asleep: true } : tab
+        ),
+      }),
+    ]);
+    const faded = [
+      ...container.querySelectorAll<HTMLElement>("[data-tab-id]"),
+    ].map((row) => [
+      row.dataset.tabId,
+      row.querySelector("button")?.classList.contains("opacity-50"),
+    ]);
+    act(() => {
+      container.querySelector<HTMLElement>("[data-asleep] button")?.click();
+    });
+    expect([faded, sentOn(tabs.focus)]).toStrictEqual([
+      [
+        ["mail", false],
+        ["calendar", true],
+        ["drive", false],
+      ],
+      [{ tabId: "calendar" }],
+    ]);
+  });
+
   it("offers a close on every row main says may close, and closes a row from it or on a middle click", () => {
     const { container, sentOn } = mount([answer(tabs.close, null)]);
     const row = (id: string) =>

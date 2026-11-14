@@ -50,11 +50,12 @@ export const tabOf = (
   closeable = true
 ): ShownTab => ({
   appId,
+  asleep: false,
   closeable,
   health: "ok",
   id,
   profileId,
-  sleeping: false,
+  sleeps: false,
   title: `${appId} ${id}`,
   url: "https://example.com/",
   zoom: 1,

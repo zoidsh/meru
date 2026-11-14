@@ -84,6 +84,28 @@ const CloseButton = ({
   </Button>
 );
 
+const buttonClass = ({
+  wide,
+  titled,
+  closeable,
+  faded,
+  onto,
+}: {
+  readonly wide: boolean;
+  readonly titled: boolean;
+  readonly closeable: boolean;
+  readonly faded: boolean;
+  readonly onto: boolean;
+}) =>
+  cn(
+    "touch-none transition-colors",
+    wide && "w-full",
+    titled && "justify-start",
+    titled && closeable && "group-hover:pr-7",
+    faded && "opacity-50",
+    onto && "ring-primary/50 ring-2"
+  );
+
 const variantOf = (active: boolean, pinned: boolean) => {
   if (active) {
     return "secondary";
@@ -97,11 +119,12 @@ const Title = ({ tab }: { readonly tab: Tab }) => (
   </span>
 );
 
-/** One tab's row in the sidebar: its icon, its title when wide, Gmail's marks, and the close control hovering reveals; a pinned tab's row is its icon alone, outlined while inactive and across the strip when wide, as 3.x draws a pinned tab, and is no drag source. */
+/** One tab's row in the sidebar: its icon, its title when wide, Gmail's marks, and the close control hovering reveals, faded while the tab is asleep; a pinned tab's row is its icon alone, outlined while inactive and across the strip when wide, as 3.x draws a pinned tab, and is no drag source. */
 export const TabRowButton = ({
   tab,
   size,
   active,
+  asleep,
   focusable,
   closeable,
   gmail,
@@ -110,6 +133,7 @@ export const TabRowButton = ({
   readonly tab: Tab;
   readonly size: SidebarSize;
   readonly active: boolean;
+  readonly asleep: boolean;
   readonly focusable: boolean;
   readonly closeable: boolean;
   readonly gmail: GmailMark | undefined;
@@ -129,6 +153,7 @@ export const TabRowButton = ({
     <div
       className="group relative"
       data-drop={drop?.zone}
+      data-asleep={asleep ? "" : undefined}
       data-pinned={pinned ? "" : undefined}
       data-tab-id={tab.id}
       ref={dropRef}
@@ -136,14 +161,13 @@ export const TabRowButton = ({
       <DropLine at="before" zone={drop?.zone} />
       <Button
         aria-selected={active}
-        className={cn(
-          "touch-none transition-colors",
-          wide && "w-full",
-          titled && "justify-start",
-          titled && closeable && "group-hover:pr-7",
-          isDragging && "opacity-50",
-          onto && "ring-primary/50 ring-2"
-        )}
+        className={buttonClass({
+          closeable,
+          faded: isDragging || asleep,
+          onto,
+          titled,
+          wide,
+        })}
         data-active={active || undefined}
         onAuxClick={(event) => {
           if (event.button === 1 && closeable) {

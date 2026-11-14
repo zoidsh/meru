@@ -12,7 +12,9 @@ import { defineChannels, definePushes, invoke, push, sync } from "./define.ts";
 export const profilesSnapshotSchema = profilesStateSchema.extend({
   newProfileRefusal: gateRefusalSchema.nullable(),
   profiles: z.array(profileSchema.extend({ deactivated: z.boolean() })),
-  tabs: z.array(tabSchema.extend({ closeable: z.boolean() })),
+  tabs: z.array(
+    tabSchema.extend({ asleep: z.boolean(), closeable: z.boolean() })
+  ),
 });
 
 export type ProfilesSnapshot = z.infer<typeof profilesSnapshotSchema>;

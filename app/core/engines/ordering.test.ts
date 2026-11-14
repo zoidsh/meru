@@ -63,7 +63,7 @@ const tabOf = (id: string, profileId: string): Tab => ({
   health: "ok",
   id,
   profileId,
-  sleeping: false,
+  sleeps: false,
   title: id,
   url: "https://mail.google.com/",
   zoom: 1,

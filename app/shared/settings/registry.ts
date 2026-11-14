@@ -32,6 +32,10 @@ import {
   sidebarSettings,
 } from "../../main/features/sidebar/settings.ts";
 import {
+  sleepPage,
+  sleepSettings,
+} from "../../main/features/sleep/settings.ts";
+import {
   panesPage,
   stageSettings,
 } from "../../main/features/stage/settings.ts";
@@ -50,6 +54,7 @@ const pages = [
   profilesPage,
   shortcutsPage,
   sidebarPage,
+  sleepPage,
   updatesPage,
 ] as const;
 
@@ -69,6 +74,7 @@ export const registry = [
   ...profilesSettings,
   ...shortcutsSettings,
   ...sidebarSettings,
+  ...sleepSettings,
   ...stageSettings,
   ...traySettings,
   ...updaterSettings,
