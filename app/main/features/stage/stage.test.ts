@@ -740,6 +740,15 @@ describe("a page's fullscreen", () => {
     ]);
   });
 
+  it("stays above an overlay opened over it", async () => {
+    const { window, views, split, stage } = await setup();
+    split("vertical");
+    const [, second] = views.alive;
+    second?.fullscreen(true);
+    stage.openOverlay("launcher", "file:///overlay.html");
+    expect(window.childViews()).toStrictEqual([views.alive.at(-1), second]);
+  });
+
   it("forgets the fullscreen tab once it closes, the others' panes laid out again", async () => {
     const { window, views, commands, id, split } = await setup();
     split("vertical");

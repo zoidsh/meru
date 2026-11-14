@@ -470,11 +470,14 @@ export class Stage {
   }
 
   /** Each shown pane's view with the tab it shows, in layout order. */
-  panes(): { readonly view: ViewPort; readonly tab: Tab }[] {
-    return panes(this.#shownLayout()).flatMap((pane) => {
-      const tab = this.#tabOf(pane.paneId);
-      const view = tab === undefined ? undefined : this.#views.view(tab.id);
-      return view === undefined || tab === undefined ? [] : [{ tab, view }];
+  panes(): {
+    readonly paneId: string;
+    readonly tab: Tab;
+    readonly view: ViewPort;
+  }[] {
+    return this.#shownTabs().flatMap((shown) => {
+      const view = this.#views.view(shown.tab.id);
+      return view === undefined ? [] : [{ ...shown, view }];
     });
   }
 
@@ -504,11 +507,9 @@ export class Stage {
       dividers: [...arrangement.dividers],
       focusedPaneId: this.#focusedPane() ?? null,
       navigation: this.#focusedView()?.navigation() ?? null,
-      panes: [...arrangement.panes].flatMap(([paneId, rect]) => {
-        const tabId = tabOfPane(this.#layout(), paneId);
-        const tab =
-          tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
-        return tab === undefined
+      panes: this.#shownTabs().flatMap(({ paneId, tab }) => {
+        const rect = arrangement.panes.get(paneId);
+        return rect === undefined
           ? []
           : [
               {
@@ -559,7 +560,6 @@ export class Stage {
     return fullscreenPaneOf(this.#shownLayout(), this.#spotlight);
   }
 
-  // A fullscreen pane takes the whole window, the chrome and the inset with it.
   #arrangement(): Arrangement {
     const fullscreen = this.#fullscreenPane();
     if (fullscreen !== undefined) {
@@ -609,10 +609,13 @@ export class Stage {
     );
   }
 
-  #tabOf(paneId: string | undefined): Tab | undefined {
-    const tabId =
-      paneId === undefined ? undefined : tabOfPane(this.#layout(), paneId);
-    return tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
+  /** Each shown pane with the tab it shows, in layout order. */
+  #shownTabs(): { readonly paneId: string; readonly tab: Tab }[] {
+    return panes(this.#shownLayout()).flatMap(({ paneId, tabIds: [tabId] }) => {
+      const tab =
+        tabId === undefined ? undefined : this.#options.profiles.tab(tabId);
+      return tab === undefined ? [] : [{ paneId, tab }];
+    });
   }
 
   /** The pane showing the focused tab, while the stage shows it. */
@@ -653,9 +656,11 @@ export class Stage {
 
   #reconcile(): void {
     const { window } = this.#options;
+    const shown = this.panes();
     const wanted = stackOf(
-      this.panes().map(({ view }) => view),
-      this.overlays
+      shown.map(({ view }) => view),
+      this.overlays,
+      shown.find(({ tab }) => tab.id === this.#spotlight.fullscreen)?.view
     );
     for (const operation of stackPlan(window.childViews(), wanted)) {
       if (operation.kind === "remove") {
@@ -676,11 +681,9 @@ export class Stage {
       this.#fullscreenPane() === undefined
         ? STYLE_METRICS[this.#options.style()].radius
         : 0;
-    for (const pane of panes(this.#shownLayout())) {
-      const [tabId] = pane.tabIds;
-      const view = tabId === undefined ? undefined : this.#views.view(tabId);
-      const rect = arrangement.panes.get(pane.paneId);
-      if (view !== undefined && rect !== undefined) {
+    for (const { paneId, view } of this.panes()) {
+      const rect = arrangement.panes.get(paneId);
+      if (rect !== undefined) {
         view.setBounds(rect);
         view.setBorderRadius(radius);
       }
@@ -694,11 +697,7 @@ export class Stage {
   }
 
   #update(): void {
-    this.#views.show(
-      panes(this.#shownLayout()).flatMap(
-        ({ paneId }) => this.#tabOf(paneId) ?? []
-      )
-    );
+    this.#views.show(this.#shownTabs().map(({ tab }) => tab));
     this.#retireClosed();
     this.#reconcile();
     this.#arrange();
