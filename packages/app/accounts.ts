@@ -166,7 +166,10 @@ class Accounts {
 
     // When window is closed/minimized, the account views sometimes don't render after showing/restoring window
     main.window.on("show", () => {
-      this.refreshSelectedAccountView();
+      // "show" also fires when the window comes back on screen after a Space
+      // switch, with another app in front. Focusing the view focuses the window,
+      // which on macOS moves it above that app until macOS moves it back.
+      this.refreshSelectedAccountView({ focus: main.window.isFocused() });
     });
 
     main.window.on("restore", () => {
