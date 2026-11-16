@@ -14,51 +14,48 @@ Meru is an Electron desktop client for Gmail and Google Workspace. This branch i
 | Lint, format check and typecheck together | `pnpm check` |
 | Lint / lint with fixes | `pnpm lint` / `pnpm lint:fix` |
 | Format / check formatting | `pnpm fmt` / `pnpm fmt:check` |
-| Typecheck every package | `pnpm types` |
+| Typecheck everything | `pnpm types` |
 | Unit tests | `pnpm test` |
-| One test file | `pnpm test packages/core/src/window-bounds` |
+| One test file | `pnpm test src/core/window-bounds` |
 | One test by name | `pnpm test -t "name"` |
 | Pack the unpacked app into `dist/release` | `pnpm package` |
 | Pack this platform's installers | `pnpm package:installers` |
 | End-to-end suite (packs first) | `pnpm test:e2e`; on Linux `xvfb-run -a pnpm test:e2e` |
 
-Run `pnpm check` and `pnpm test` before committing, and `pnpm test:e2e` when a change shows in a window.
+Run `pnpm check` and `pnpm test` before committing, and `pnpm test:e2e` when a change shows in a window. oxlint picks its `agent` output under Claude Code by itself.
 
-## Packages
+## Layout
 
-A pnpm workspace; every package is `packages/<name>`, named `@meru/<name>`, and exports its `.ts` source, which Node runs through pnpm's symlinks. Every dependency is a devDependency, since everything is bundled and nothing ships from `node_modules`.
+One package. Each area is a folder under `src`, with its tests beside the code:
 
-- `core`: pure logic with no Electron, unit-tested. Window bounds that stay on a display; which file an app-scheme URL names.
+- `core`: pure logic with no Electron, unit-tested.
 - `platform`: thin adapters over Electron, each behind an exported interface so features can be tested against fakes.
 - `main`: the entry and composition root. Builds the adapters, registers the `meru-app://` scheme, opens the shell window.
-- `preload-shell`: the shell window's sandboxed preload, bundled to one CommonJS file.
-- `shell`: the shell renderer, React and Tailwind, built by Vite.
-- `ui`: design tokens (`theme.css`, light and dark) and the `cn` helper.
+- `preload/shell`: the shell window's sandboxed preload, bundled to one CommonJS file.
+- `shell`: the shell renderer, React and Tailwind, built by Vite (`vite.config.ts`).
+- `ui`: shadcn components on Base UI, and `styles.css`, the Tailwind entry and theme every renderer imports.
 
-Import boundaries, enforced in `oxlint.config.ts` with `no-restricted-imports`, `no-restricted-globals` and `typescript/no-require-imports`:
+An import across areas uses the `package.json` subpath alias, `#core/app-url.ts`; one within an area is relative. Both keep the `.ts` extension for Node's type stripping, which also rules out enums and parameter properties. `tsconfig.json` is the main side (Node, no DOM), `tsconfig.web.json` the renderers (DOM, no Node), and `src/preload` and `e2e` have their own with both; `core` is checked under the first two.
 
-- `core` imports no other workspace package and nothing of `electron`, types included. `contract` imports only `core`, and nothing of `electron`.
-- `platform` and the `preload-*` packages may import `electron` by value; every other package may only `import type` from `electron`, and no package imports a deep path such as `electron/main`.
-- A workspace package is imported by its `@meru/` name, never by a relative path that climbs out of its own package (two `..` levels from `src`, however spelled) or an absolute one.
-- Nothing outside `scripts/` uses `require` or imports `node:module`.
+`oxlint.config.ts` holds the boundaries: `core` imports no other area and nothing of `electron`; only `platform` and `preload` import `electron` by value; no relative path into another area. Ultracite's preset already refuses `require`.
 
 A general utility (delay, debounce, clamp, retry, a timeout, a mutex, deep equality and the like) comes from `es-toolkit`; write one here only when es-toolkit has none that fits.
 
-TypeScript stays runnable by Node's type stripping: explicit `.ts` extensions on relative imports, `import type` for types, no enums, parameter properties or path aliases. Lint and format config is Ultracite's oxlint and oxfmt presets and nothing of our own beyond the import boundaries.
+Components in `src/ui` come only from `pnpm exec shadcn add <name>`, never written or patched by hand where the CLI has one, and stay as it writes them: oxfmt skips them and oxlint drops the rules their style breaks. In `src/ui/styles.css` the `dark` variant and the media query around the dark tokens are ours, so a regenerated theme must keep them.
 
 ## Builds
 
-`scripts/build.ts` bundles `main` (ESM, `main.mjs`) and `preload-shell` (`preload-shell.cjs`) with rolldown and builds `shell` with Vite into `out/prod/shell`, and writes the `package.json` Electron reads the name and version from. A dev run builds into `out/dev`; the two never share a folder. `MERU_BUILD_MODE` is replaced by a string literal, so the bundler folds `MERU_BUILD_MODE === "dev"` and drops the development branch and all it imports from a production bundle. `scripts/build.ts` then fails if any marker in `scripts/lib/forbidden-markers.ts` appears in `out/prod`; add to that list whatever else must never ship.
+`scripts/build.ts` bundles `main` (ESM, `main.mjs`) and `preload/shell` (`preload-shell.cjs`) with rolldown and builds `shell` with Vite into `out/prod/shell`, and writes the `package.json` Electron reads the name and version from. A dev run builds into `out/dev`; the two never share a folder. `MERU_BUILD_MODE` is replaced by a string literal, so the bundler folds `MERU_BUILD_MODE === "dev"` and drops the development branch and all it imports from a production bundle. `scripts/build.ts` then fails if any marker in `scripts/lib/forbidden-markers.ts` appears in `out/prod`; add to that list whatever else must never ship.
 
 The built shell is served from `meru-app://shell/` with a strict Content-Security-Policy, never from `file://`. In development the shell loads from the Vite dev server, and the policy allows exactly that origin, its hot-reload socket and a per-run nonce Vite stamps on what it injects.
 
 `scripts/package.ts` builds, then packs with electron-builder from `electron-builder.config.ts`, which packs only the built app, into an asar, and flips the Electron fuses, into `dist/release`. It removes the variant's folder in `dist` first, so no app from another version sits beside the new one. Every build is unsigned for now. `--e2e` makes the end-to-end variant: built into `out/e2e` with `MERU_E2E_BUILD` true, which compiles in `MERU_TEST_BACKGROUND`, and packed into `dist/e2e` with the inspector fuse on for Playwright. It is never packed into installers, and a release build fails if `MERU_TEST_BACKGROUND` appears in it.
 
-`appIdentity` in `packages/core/src/app-identity.ts` names every build. The `out/prod` build, which `pnpm build` and `pnpm package` make and `pnpm start` runs, is `Meru`, `sh.zoid.meru`, for a release or beta version and `Meru Dev`, `sh.zoid.meru.dev`, for every `-dev` version; dev and e2e builds are always `Meru Dev`. `Meru Dev` claims no URL scheme. The name goes into the manifest Electron reads, so Electron's default user data folder for a `Meru Dev` build is never an installed Meru's, and the window title follows it. `pnpm start` passes its own `.meru/<profile>` directory whatever the build is named.
+`appIdentity` in `src/core/app-identity.ts` names every build. The `out/prod` build, which `pnpm build` and `pnpm package` make and `pnpm start` runs, is `Meru`, `sh.zoid.meru`, for a release or beta version and `Meru Dev`, `sh.zoid.meru.dev`, for every `-dev` version; dev and e2e builds are always `Meru Dev`. `Meru Dev` claims no URL scheme. The name goes into the manifest Electron reads, so Electron's default user data folder for a `Meru Dev` build is never an installed Meru's, and the window title follows it. `pnpm start` passes its own `.meru/<profile>` directory whatever the build is named.
 
 ## Dev and start runs
 
-- `pnpm dev` starts Vite on `PORT`, or a free port when it is unset, rebuilds `main` and `preload-shell` on change and restarts Electron, one restart at a time. SIGINT, SIGTERM or SIGHUP at any moment, repeated or not, stops Electron (killing it after 5 seconds if it has not quit) and Vite. Quitting the app ends the script; Electron dying of a signal the script did not send ends it with a failure.
+- `pnpm dev` starts Vite on `PORT`, or a free port when it is unset, rebuilds `main` and the preload on change and restarts Electron, one restart at a time. SIGINT, SIGTERM or SIGHUP at any moment, repeated or not, stops Electron (killing it after 5 seconds if it has not quit) and Vite. Quitting the app ends the script; Electron dying of a signal the script did not send ends it with a failure.
 - `--profile <name>` uses `.meru/<name>` in the repository as the user data directory; the name is one plain directory name. Without it, a linked worktree uses a profile named after its branch and the main checkout uses `default`.
 - `--debug-port <n>` opens Chromium's remote debugging port; with `0` Chromium picks one and prints it.
 - `--background`, or `MERU_BACKGROUND=1` (which `.claude/settings.json` sets for Claude Code sessions), opens the window with `showInactive()` so it never takes the foreground or focus. On this shared Mac drive it over CDP, never by raising it.
