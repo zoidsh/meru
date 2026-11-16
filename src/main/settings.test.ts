@@ -115,7 +115,7 @@ describe(createSettingsStore, () => {
 
     expect(settings.get("design")).toBe("modern");
 
-    await settings.set("vibrancy", false);
+    await settings.update("vibrancy", () => false);
 
     expect(settings.get("vibrancy")).toBeFalsy();
     expect(saved).toStrictEqual([
@@ -130,9 +130,9 @@ describe(createSettingsStore, () => {
     settings.onChange("design", () => heard.push(settings.get("design")));
     settings.onChange("vibrancy", () => heard.push("vibrancy"));
 
-    await settings.set("design", "classic");
-    await settings.set("design", "classic");
-    await settings.set("design", "modern");
+    await settings.update("design", () => "classic");
+    await settings.update("design", () => "classic");
+    await settings.update("design", () => "modern");
 
     expect(heard).toStrictEqual(["classic", "modern"]);
   });
@@ -142,7 +142,7 @@ describe(createSettingsStore, () => {
     const heard: string[] = [];
 
     settings.onChange("design", () => heard.push("design"));
-    await settings.set("design", "modern");
+    await settings.update("design", () => "modern");
 
     expect(heard).toStrictEqual([]);
     expect(saved).toStrictEqual([{ version: 1, design: "modern" }]);
@@ -154,7 +154,7 @@ describe(createSettingsStore, () => {
 
     settings.onChange("design", () => heard.push("design"));
 
-    await expect(settings.set("design", "classic")).rejects.toThrow(
+    await expect(settings.update("design", () => "classic")).rejects.toThrow(
       "disk full"
     );
     expect(settings.get("design")).toBe("modern");

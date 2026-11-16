@@ -16,9 +16,10 @@ export interface CommandContext {
 
 /** What commands do, each through the module that owns it. */
 export interface CommandActions {
-  setSetting: <Key extends SettingKey>(
+  /** Sets a setting to what `change` makes of it once earlier changes are in. */
+  updateSetting: <Key extends SettingKey>(
     key: Key,
-    value: SettingValue<Key>
+    change: (value: SettingValue<Key>) => SettingValue<Key>
   ) => Promise<void>;
   reloadSelectedTab: () => void;
   selectTab: (key: TabKey) => Promise<unknown>;
@@ -55,7 +56,7 @@ const chooseDesign = (
   id,
   title,
   isChecked: ({ setting }) => setting("design") === design,
-  run: (_context, { setSetting }) => setSetting("design", design),
+  run: (_context, { updateSetting }) => updateSetting("design", () => design),
 });
 
 const selectAdjacentTab = (offset: number): Command["run"] => {
@@ -119,8 +120,8 @@ export const COMMANDS: readonly Command[] = [
       }),
     platforms: ["darwin"],
     isChecked: ({ setting }) => setting("vibrancy"),
-    run: ({ setting }, { setSetting }) =>
-      setSetting("vibrancy", !setting("vibrancy")),
+    run: (_context, { updateSetting }) =>
+      updateSetting("vibrancy", (isOn) => !isOn),
   },
   {
     id: "tab.reload",

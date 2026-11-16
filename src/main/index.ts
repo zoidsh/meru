@@ -38,7 +38,11 @@ import {
   shellState,
 } from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
-import { createShellWindow, revealWindow } from "./shell-window.ts";
+import {
+  createShellWindow,
+  followVibrancy,
+  revealWindow,
+} from "./shell-window.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
@@ -222,9 +226,7 @@ const start = async () => {
     vibrancy: settings.get("vibrancy"),
   });
 
-  settings.onChange("vibrancy", () => {
-    shell.window.setVibrancy(settings.get("vibrancy"));
-  });
+  followVibrancy(shell.window, settings);
 
   const senders = createSenderRegistry();
 
@@ -263,7 +265,7 @@ const start = async () => {
     commands: commandsFor(process.platform as Platform),
     context: () => ({ state: profiles.get(), setting: settings.get }),
     actions: {
-      setSetting: settings.set,
+      updateSetting: settings.update,
       reloadSelectedTab: views.reloadFront,
       selectTab: profiles.selectTab,
       closeTab: profiles.closeTab,

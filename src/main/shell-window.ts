@@ -2,6 +2,8 @@ import { resolveWindowBounds } from "#core/window-bounds.ts";
 import type { Displays } from "#platform/displays.ts";
 import type { AppWindow, WindowFactory } from "#platform/window.ts";
 
+import type { SettingsStore } from "./settings.ts";
+
 export interface ShellWindowDeps {
   windows: WindowFactory;
   displays: Displays;
@@ -71,6 +73,16 @@ export const createShellWindow = ({
   window.once("did-finish-load", showOnce);
 
   return { window, load: () => window.loadURL(url) };
+};
+
+/** Gives the window the vibrancy the settings hold, each time they change it. */
+export const followVibrancy = (
+  window: Pick<AppWindow, "setVibrancy">,
+  settings: Pick<SettingsStore, "get" | "onChange">
+) => {
+  settings.onChange("vibrancy", () => {
+    window.setVibrancy(settings.get("vibrancy"));
+  });
 };
 
 /** Brings the window back for a second launch, which exits straight after. */

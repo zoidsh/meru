@@ -7,6 +7,8 @@ import { COMMANDS, commandsFor } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { createProfiles } from "./profiles.ts";
 import { createSettingsStore } from "./settings.ts";
+import { shellSettings } from "./shell-handlers.ts";
+import { followVibrancy } from "./shell-window.ts";
 
 const twoProfiles: State = {
   version: 1,
@@ -40,7 +42,7 @@ const setup = (initial: State = twoProfiles) => {
   });
   let reloads = 0;
   const actions: CommandActions = {
-    setSetting: settings.set,
+    updateSetting: settings.update,
     reloadSelectedTab: () => {
       reloads += 1;
     },
@@ -100,15 +102,26 @@ describe("the command registry", () => {
     ]).toStrictEqual([false, true]);
   });
 
-  it("toggles vibrancy, checked while it is on", async () => {
+  it("toggles vibrancy in the window and the shell's slice, once for each of two queued clicks", async () => {
     const app = setup();
+    const applied: boolean[] = [];
+
+    followVibrancy({ setVibrancy: (isOn) => applied.push(isOn) }, app.settings);
 
     expect(app.isChecked("vibrancy.toggle")).toBeTruthy();
 
     await app.run("vibrancy.toggle");
 
-    expect(app.settings.get("vibrancy")).toBeFalsy();
-    expect(app.isChecked("vibrancy.toggle")).toBeFalsy();
+    expect([
+      applied,
+      shellSettings(app.settings.get, true).vibrancy,
+      app.isChecked("vibrancy.toggle"),
+    ]).toStrictEqual([[false], false, false]);
+
+    await Promise.all([app.run("vibrancy.toggle"), app.run("vibrancy.toggle")]);
+
+    expect(applied).toStrictEqual([false, true, false]);
+    expect(shellSettings(app.settings.get, true).vibrancy).toBeFalsy();
   });
 
   it("closes the selected tab, but never Gmail's", async () => {

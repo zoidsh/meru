@@ -60,40 +60,48 @@ export const createSettingsStore = ({
   const get = <Key extends SettingKey>(key: Key, profileId?: string) =>
     readSetting(settings, key, profileId);
 
-  return {
-    get,
-    /** Sets the global value, written before anyone reads it. */
-    set: async <Key extends SettingKey>(key: Key, value: SettingValue<Key>) => {
-      await mutex.acquire();
+  /**
+   * Sets the global value to what `change` makes of it, read after every
+   * change queued before, and written before anyone reads it.
+   */
+  const update = async <Key extends SettingKey>(
+    key: Key,
+    change: (value: SettingValue<Key>) => SettingValue<Key>
+  ) => {
+    await mutex.acquire();
 
-      try {
-        const next = writeSetting(settings, key, value);
-        const changed = SETTING_KEYS.filter(
-          (candidate) =>
-            !isEqual(
-              readSetting(next, candidate),
-              readSetting(settings, candidate)
-            )
-        );
+    try {
+      const next = writeSetting(settings, key, change(get(key)));
+      const changed = SETTING_KEYS.filter(
+        (candidate) =>
+          !isEqual(
+            readSetting(next, candidate),
+            readSetting(settings, candidate)
+          )
+      );
 
-        await save(next);
-        settings = next;
+      await save(next);
+      settings = next;
 
-        for (const changedKey of changed) {
-          for (const listener of listeners.get(changedKey) ?? []) {
-            try {
-              listener();
-            } catch (error) {
-              log(
-                `A listener of setting ${changedKey} failed: ${describe(error)}`
-              );
-            }
+      for (const changedKey of changed) {
+        for (const listener of listeners.get(changedKey) ?? []) {
+          try {
+            listener();
+          } catch (error) {
+            log(
+              `A listener of setting ${changedKey} failed: ${describe(error)}`
+            );
           }
         }
-      } finally {
-        mutex.release();
       }
-    },
+    } finally {
+      mutex.release();
+    }
+  };
+
+  return {
+    get,
+    update,
     /** Called after each change of the key's value. */
     onChange: (key: SettingKey, listener: () => void) => {
       const forKey = listeners.get(key) ?? new Set();

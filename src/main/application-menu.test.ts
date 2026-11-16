@@ -198,7 +198,7 @@ const setup = () => {
   });
   let reloads = 0;
   const actions = {
-    setSetting: settings.set,
+    updateSetting: settings.update,
     reloadSelectedTab: () => {
       reloads += 1;
     },
