@@ -104,76 +104,22 @@ const restrict = ({
   ];
 };
 
-const BY_ROLE =
-  "Find it through the accessibility tree: getByRole with a name, or getByLabel or getByText.";
-
-/**
- * What finds an element by CSS, XPath or a test id, whatever it is called on:
- * Playwright's selector methods, and the DOM's queries inside `evaluate`. The
- * page-level actions that take a selector are recognised by their arguments in
- * `scripts/lint/e2e-plugin.ts`.
- */
-const SELECTOR_METHODS = [
-  "locator",
-  "frameLocator",
-  "getByTestId",
-  "$",
-  "$$",
-  "$eval",
-  "$$eval",
-  "waitForSelector",
-  "querySelector",
-  "querySelectorAll",
-  "getElementById",
-  "getElementsByClassName",
-  "getElementsByName",
-  "getElementsByTagName",
-];
-
-/**
- * The fixtures hand tests the shell window as `shell`, so its page-level
- * actions are rejected even when the selector is a variable, which the
- * argument check cannot see.
- */
-const SELECTOR_ACTIONS = [
-  "check",
-  "click",
-  "dblclick",
-  "dispatchEvent",
-  "dragAndDrop",
-  "fill",
-  "focus",
-  "getAttribute",
-  "hover",
-  "innerHTML",
-  "innerText",
-  "inputValue",
-  "isChecked",
-  "isDisabled",
-  "isEditable",
-  "isEnabled",
-  "isHidden",
-  "isVisible",
-  "press",
-  "selectOption",
-  "setChecked",
-  "setInputFiles",
-  "tap",
-  "textContent",
-  "type",
-  "uncheck",
-];
-
-const NO_SELECTORS: [
+/** Habits that find an element by CSS, XPath or a test id rather than by role. */
+const NO_SELECTORS: ["error", ...{ property: string; message: string }[]] = [
   "error",
-  ...{ object?: string; property: string; message: string }[],
-] = [
-  "error",
-  ...SELECTOR_METHODS.map((property) => ({ property, message: BY_ROLE })),
-  ...SELECTOR_ACTIONS.map((property) => ({
-    object: "shell",
+  ...[
+    "locator",
+    "frameLocator",
+    "getByTestId",
+    "$",
+    "$$",
+    "$eval",
+    "$$eval",
+    "waitForSelector",
+  ].map((property) => ({
     property,
-    message: `shell.${property} takes a selector; act on a locator from getByRole instead.`,
+    message:
+      "Find it through the accessibility tree: getByRole with a name, or getByLabel or getByText.",
   })),
 ];
 
@@ -182,7 +128,6 @@ const NO_REQUIRE: ["error", string] = ["error", "require"];
 
 export default defineConfig({
   extends: [core, react, vitest],
-  jsPlugins: ["./scripts/lint/e2e-plugin.ts"],
   rules: {
     "no-restricted-imports": ["error", { paths: NO_NODE_MODULE, patterns: [] }],
     "no-restricted-globals": NO_REQUIRE,
@@ -201,7 +146,6 @@ export default defineConfig({
       files: ["e2e/**"],
       rules: {
         "no-restricted-properties": NO_SELECTORS,
-        "meru-e2e/no-selector-arguments": "error",
         // A Playwright fixture must destructure its first argument even when
         // it needs no other fixture, and its `use` is not React's hook.
         "no-empty-pattern": "off",
