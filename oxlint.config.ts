@@ -143,6 +143,10 @@ export default defineConfig({
       },
     },
     {
+      files: ["scripts/start.ts"],
+      rules: { "no-console": "error" },
+    },
+    {
       files: ["e2e/**"],
       rules: {
         "no-restricted-properties": NO_SELECTORS,
