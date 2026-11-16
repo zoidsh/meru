@@ -1,7 +1,3 @@
-import path from "node:path";
-
-import { t } from "@lingui/core/macro";
-
 import {
   createInitialState,
   decodeState,
@@ -11,7 +7,7 @@ import {
 import type { State } from "#core/state.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
-import { StartupError } from "./failures.ts";
+import { loadStore, saveStore } from "./store-file.ts";
 
 export const STATE_FILE_NAME = "state.json";
 
@@ -22,26 +18,13 @@ export interface StateStoreDeps {
   log: (message: string) => void;
 }
 
-const parse = (text: string): unknown => {
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    // Text that is not JSON decodes as unreadable.
-  }
-};
-
-const serialize = (state: State) =>
-  `${JSON.stringify(encodeState(state), undefined, 2)}\n`;
-
 /** Replaces the file whole; the caller sends one write at a time. */
 export const saveState = (file: TextFile, state: State) =>
-  file.write(serialize(state));
+  saveStore({ file, encode: encodeState }, state);
 
 /**
- * Reads the state, or starts from the initial state when there is none. A
- * file it cannot read is kept aside rather than overwritten. One a newer Meru
- * wrote stops startup with nothing on disk touched, since writing over it would
- * lose the way back to that version.
+ * Reads the state as `loadStore` does, with a first profile made when none
+ * of the file's could be read.
  */
 export const loadState = async ({
   file,
@@ -49,49 +32,23 @@ export const loadState = async ({
   now,
   log,
 }: StateStoreDeps): Promise<State> => {
-  const text = await file.read();
+  const loaded = await loadStore({
+    file,
+    name: "state",
+    decode: decodeState,
+    encode: encodeState,
+    initial: () => createInitialState(newId),
+    now,
+    log,
+  });
+  const state = withAProfile(loaded, newId);
 
-  if (text !== undefined) {
-    const decoded = decodeState(parse(text));
-
-    if (decoded.kind === "state") {
-      const state = withAProfile(decoded.state, newId);
-
-      if (state !== decoded.state) {
-        // Meru still starts on the profile in memory, or it never would.
-        await saveState(file, state).catch((error: unknown) => {
-          log(`The new first profile was not saved: ${String(error)}`);
-        });
-      }
-
-      return state;
-    }
-
-    if (decoded.kind === "newer") {
-      throw new StartupError(
-        t({
-          message:
-            "This data was saved by a newer version. Open it with that version, or update to it.",
-          comment:
-            "Shown when the app is started on data that a later version of the app wrote, which this version cannot read",
-        })
-      );
-    }
-
-    const aside = path.join(
-      path.dirname(file.path),
-      `state.corrupt-${now()}.json`
-    );
-
-    await file.moveTo(aside);
-    log(
-      `Kept the unreadable ${file.path} as ${aside} and started afresh: ${decoded.reason}`
-    );
+  if (state !== loaded) {
+    // Meru still starts on the profile in memory, or it never would.
+    await saveState(file, state).catch((error: unknown) => {
+      log(`The new first profile was not saved: ${String(error)}`);
+    });
   }
-
-  const state = createInitialState(newId);
-
-  await saveState(file, state);
 
   return state;
 };

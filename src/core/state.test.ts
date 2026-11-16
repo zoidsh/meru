@@ -35,8 +35,8 @@ const valid = {
 describe(decodeState, () => {
   it("reads a file slice 1.2 wrote, each profile with only its Gmail tab, selected", () => {
     expect(decodeState(valid)).toStrictEqual({
-      kind: "state",
-      state: {
+      kind: "read",
+      value: {
         ...valid,
         profiles: valid.profiles.map((profile) => ({
           ...profile,
@@ -70,8 +70,8 @@ describe(decodeState, () => {
     };
 
     expect(decodeState(withUnknown)).toStrictEqual({
-      kind: "state",
-      state: withUnknown,
+      kind: "read",
+      value: withUnknown,
     });
   });
 
@@ -119,11 +119,11 @@ const decodeProfiles = (profiles: unknown[], selected: unknown) => {
     selectedProfileId: selected,
   });
 
-  if (decoded.kind !== "state") {
+  if (decoded.kind !== "read") {
     throw new Error(decoded.kind);
   }
 
-  return decoded.state;
+  return decoded.value;
 };
 
 describe("decoding the top level", () => {
@@ -135,7 +135,7 @@ describe("decoding the top level", () => {
     ["profilesToClear", null],
     ["panes", 5],
   ])("reads a file whose %s is %j", (key, value) => {
-    expect(decodeState({ ...valid, [key]: value }).kind).toBe("state");
+    expect(decodeState({ ...valid, [key]: value }).kind).toBe("read");
   });
 
   it("clears only the ids on the list, and writes the rest back as found", () => {
@@ -144,12 +144,12 @@ describe("decoding the top level", () => {
       profilesToClear: [7, "gone", ""],
     });
 
-    if (decoded.kind !== "state") {
+    if (decoded.kind !== "read") {
       throw new Error(decoded.kind);
     }
 
-    expect(sortProfilesToClear(decoded.state).clear).toStrictEqual(["gone"]);
-    expect(encodeState(decoded.state)).toMatchObject({
+    expect(sortProfilesToClear(decoded.value).clear).toStrictEqual(["gone"]);
+    expect(encodeState(decoded.value)).toMatchObject({
       profilesToClear: ["gone", 7, ""],
     });
   });
@@ -157,14 +157,14 @@ describe("decoding the top level", () => {
   it("writes a list to clear that is not a list back as found, until an id goes on it", () => {
     const decoded = decodeState({ ...valid, profilesToClear: "x" });
 
-    if (decoded.kind !== "state") {
+    if (decoded.kind !== "read") {
       throw new Error(decoded.kind);
     }
 
-    expect(encodeState(decoded.state)).toMatchObject({ profilesToClear: "x" });
+    expect(encodeState(decoded.value)).toMatchObject({ profilesToClear: "x" });
 
     const id = valid.profiles[0]?.id ?? "";
-    const removed = removeProfile(decoded.state, id);
+    const removed = removeProfile(decoded.value, id);
 
     expect(removed && encodeState(removed)).toMatchObject({
       profilesToClear: [id],
@@ -223,11 +223,11 @@ describe("decoding profiles", () => {
       profilesToClear: ["x", "w", "gone"],
     });
 
-    if (decoded.kind !== "state") {
+    if (decoded.kind !== "read") {
       throw new Error(decoded.kind);
     }
 
-    expect(sortProfilesToClear(decoded.state)).toStrictEqual({
+    expect(sortProfilesToClear(decoded.value)).toStrictEqual({
       clear: ["gone"],
       stillListed: ["x", "w"],
     });
@@ -262,11 +262,11 @@ const decodeProfile = (tabs: unknown, selectedTabId?: unknown) => {
     selectedProfileId: valid.profiles[0]?.id,
   });
 
-  if (decoded.kind !== "state" || !decoded.state.profiles[0]) {
+  if (decoded.kind !== "read" || !decoded.value.profiles[0]) {
     throw new Error("The file did not decode");
   }
 
-  return decoded.state.profiles[0];
+  return decoded.value.profiles[0];
 };
 
 /** The profile's tabs as a file names them, decoded. */
@@ -277,11 +277,11 @@ const decodeTabs = (tabs: unknown, selectedTabId?: string) => {
     selectedProfileId: valid.profiles[0]?.id,
   });
 
-  if (decoded.kind !== "state") {
+  if (decoded.kind !== "read") {
     throw new Error(decoded.kind);
   }
 
-  const [profile] = decoded.state.profiles;
+  const [profile] = decoded.value.profiles;
 
   return {
     ids: profile?.tabs.filter(isTab).map((tab) => tab.id),
@@ -389,11 +389,11 @@ const fileWith = (tabs: unknown) => ({
 const rewrite = (file: unknown, change: (state: State) => State) => {
   const decoded = decodeState(file);
 
-  if (decoded.kind !== "state") {
+  if (decoded.kind !== "read") {
     throw new Error(decoded.kind);
   }
 
-  return encodeState(change(decoded.state)) as {
+  return encodeState(change(decoded.value)) as {
     profiles: { tabs: unknown }[];
   };
 };
@@ -458,7 +458,7 @@ describe(createInitialState, () => {
       ],
       selectedProfileId: "f00d",
     });
-    expect(decodeState(state)).toStrictEqual({ kind: "state", state });
+    expect(decodeState(state)).toStrictEqual({ kind: "read", value: state });
     expect(selectedProfile(state).id).toBe("f00d");
   });
 });
@@ -598,6 +598,6 @@ describe(removeProfile, () => {
   it("leaves a state that still decodes", () => {
     const next = removeProfile(three, "b");
 
-    expect(next && decodeState(next).kind).toBe("state");
+    expect(next && decodeState(next).kind).toBe("read");
   });
 });

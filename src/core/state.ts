@@ -1,6 +1,8 @@
 import { z } from "zod/mini";
 
 import { APPS, isAppId } from "./apps.ts";
+import { decodeVersioned } from "./store-file.ts";
+import type { Decoded } from "./store-file.ts";
 
 export const STATE_VERSION = 1;
 
@@ -232,37 +234,20 @@ export const newProfile = (id: string, name: string): Profile => ({
   selectedTabId: GMAIL_TAB_ID,
 });
 
-export type DecodedState =
-  | { kind: "state"; state: State }
-  /** A later Meru wrote it; nothing here may read it or write over it. */
-  | { kind: "newer"; version: number }
-  | { kind: "unreadable"; reason: string };
-
-const readVersion = (value: unknown) =>
-  typeof value === "object" && value !== null && "version" in value
-    ? value.version
-    : undefined;
-
 const isId = (entry: unknown): entry is string =>
   typeof entry === "string" && entry !== "";
 
-export const decodeState = (value: unknown): DecodedState => {
-  const version = readVersion(value);
+export const decodeState = (value: unknown): Decoded<State> => {
+  const result = decodeVersioned(value, STATE_VERSION, stateSchema);
 
-  if (Number.isInteger(version) && Number(version) > STATE_VERSION) {
-    return { kind: "newer", version: Number(version) };
-  }
-
-  const result = stateSchema.safeParse(value);
-
-  if (!result.success) {
-    return { kind: "unreadable", reason: z.prettifyError(result.error) };
+  if (result.kind !== "read") {
+    return result;
   }
 
   const profiles: Profile[] = [];
   const unread: UnreadProfile[] = [];
 
-  for (const entry of result.data.profiles) {
+  for (const entry of result.value.profiles) {
     const parsed = profileSchema.safeParse(entry);
 
     if (parsed.success) {
@@ -272,7 +257,7 @@ export const decodeState = (value: unknown): DecodedState => {
     }
   }
 
-  const { selectedProfileId, profilesToClear, ...rest } = result.data;
+  const { selectedProfileId, profilesToClear, ...rest } = result.value;
   const state: State = {
     ...rest,
     ...(profilesToClear === undefined
@@ -302,7 +287,7 @@ export const decodeState = (value: unknown): DecodedState => {
     };
   }
 
-  return { kind: "state", state };
+  return { kind: "read", value: state };
 };
 
 /**

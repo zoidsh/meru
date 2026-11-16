@@ -132,11 +132,11 @@ describe(createProfiles, () => {
       selectedProfileId: "b",
     });
 
-    if (decoded.kind !== "state") {
+    if (decoded.kind !== "read") {
       throw new Error(decoded.kind);
     }
 
-    const { profiles, steps, logs } = setup({ initial: decoded.state });
+    const { profiles, steps, logs } = setup({ initial: decoded.value });
 
     await expect(profiles.remove("a")).resolves.toBeTruthy();
 

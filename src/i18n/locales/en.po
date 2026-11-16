@@ -119,7 +119,7 @@ msgid "Tabs"
 msgstr "Tabs"
 
 #. Shown when the app is started on data that a later version of the app wrote, which this version cannot read
-#: src/main/state-store.ts
+#: src/main/store-file.ts
 msgid "This data was saved by a newer version. Open it with that version, or update to it."
 msgstr "This data was saved by a newer version. Open it with that version, or update to it."
 
