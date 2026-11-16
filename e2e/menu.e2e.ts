@@ -111,6 +111,12 @@ const readViewBounds = async (app: ElectronApplication) => {
   return views;
 };
 
+/** The padding the shell gives its content area, around where the view sits. */
+const drawnPadding = (shell: Page) =>
+  shell
+    .getByRole("main", { name: "Content" })
+    .evaluate((main) => getComputedStyle(main).padding);
+
 const zoomOf = (app: ElectronApplication, url: string) =>
   app.evaluate(
     ({ webContents }, prefix) =>
@@ -135,6 +141,7 @@ test("the View menu switches between the modern and classic designs without load
 
   await findPage(app, standIn.url);
 
+  const shell = await findPage(app, "meru-app:");
   const first = await readLayout(app);
 
   // On Windows and Linux the menu bar stays hidden and takes no height.
@@ -147,6 +154,7 @@ test("the View menu switches between the modern and classic designs without load
     checked: true,
     enabled: true,
   });
+  await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px");
 
   await recordRadii(app);
   await clickMenuItem(app, "design.classic");
@@ -155,6 +163,7 @@ test("the View menu switches between the modern and classic designs without load
     .poll(() => readViewBounds(app))
     .toStrictEqual([contentViewBounds(first.area, TAB_STRIP_WIDTH, "classic")]);
   expect(await readRadii(app)).toStrictEqual([0]);
+  await expect.poll(() => drawnPadding(shell)).toBe("0px");
   await expect
     .poll(() => menuItemState(app, "design.classic"))
     .toStrictEqual({ checked: true, enabled: true });
