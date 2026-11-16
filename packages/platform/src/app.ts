@@ -7,7 +7,8 @@ export interface AppLifecycle {
   getPath: (name: "userData" | "appData") => string;
   /** Must run before the app is ready, while nothing has used the folder. */
   setUserDataPath: (dir: string) => void;
-  hasSwitch: (name: string) => boolean;
+  /** A switch's value, empty when given bare, undefined when not given. */
+  getSwitchValue: (name: string) => string | undefined;
   appendSwitch: (name: string, value?: string) => void;
   /** False when another instance already holds this user data directory. */
   requestSingleInstanceLock: () => boolean;
@@ -39,7 +40,10 @@ export const createAppLifecycle = (): AppLifecycle => ({
   },
   getPath: (name) => app.getPath(name),
   setUserDataPath: (dir) => app.setPath("userData", dir),
-  hasSwitch: (name) => app.commandLine.hasSwitch(name),
+  getSwitchValue: (name) =>
+    app.commandLine.hasSwitch(name)
+      ? app.commandLine.getSwitchValue(name)
+      : undefined,
   appendSwitch: (name, value) => app.commandLine.appendSwitch(name, value),
   requestSingleInstanceLock: () => app.requestSingleInstanceLock(),
   whenReady: () => app.whenReady(),

@@ -1,133 +1,117 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  appUserModelIdFor,
-  packagedUserDataDir,
-  refuseUserDataDir,
-  userDataNameFor,
-} from "./run-identity.ts";
+import { decideUserData } from "./run-identity.ts";
 
-const mac = {
-  isPackaged: false,
-  appData: "/Users/me/Library/Application Support",
-  appNames: ["Meru", "meru"],
+const appData = "/Users/me/Library/Application Support";
+
+const packagedDev = {
+  isPackaged: true,
+  productName: "Meru",
+  version: "4.0.0-dev.0",
+  appData,
+  installedNames: ["Meru", "meru"],
+  userDataDirSwitch: undefined,
   platform: "darwin" as const,
 };
 
-describe(refuseUserDataDir, () => {
-  it("lets an unpackaged run use a profile of its own", () => {
+const unpackaged = { ...packagedDev, isPackaged: false };
+
+const release = { ...packagedDev, version: "4.0.0" };
+
+describe("decideUserData for a packaged -dev build", () => {
+  it("moves to a folder of its own when given no directory", () => {
+    const dev = { kind: "use", dir: `${appData}/Meru Dev`, move: true };
+
+    expect(decideUserData(packagedDev)).toStrictEqual(dev);
     expect(
-      refuseUserDataDir({ ...mac, userData: "/repo/.meru/default" })
-    ).toBeUndefined();
+      decideUserData({ ...packagedDev, version: "4.0.0-DEV.3" })
+    ).toStrictEqual(dev);
   });
 
-  it("refuses the installed app's directory, which an empty --user-data-dir falls back to", () => {
-    expect(
-      refuseUserDataDir({
-        ...mac,
-        userData: "/Users/me/Library/Application Support/Meru",
-      })
-    ).toMatch(/installed Meru/u);
+  it("treats an empty or bare --user-data-dir as no directory", () => {
+    for (const userDataDirSwitch of ["", "  "]) {
+      expect(
+        decideUserData({ ...packagedDev, userDataDirSwitch })
+      ).toStrictEqual({ kind: "use", dir: `${appData}/Meru Dev`, move: true });
+    }
   });
 
-  it("refuses it however it is spelled", () => {
+  it("uses a directory it is given", () => {
     expect(
-      refuseUserDataDir({
-        ...mac,
-        userData: "/Users/me/Library/Application Support/meru/",
-      })
-    ).toMatch(/installed Meru/u);
-    expect(
-      refuseUserDataDir({
-        ...mac,
-        userData: "/Users/me/Library/Application Support/x/../MERU",
-      })
-    ).toMatch(/installed Meru/u);
+      decideUserData({ ...packagedDev, userDataDirSwitch: "/tmp/profile" })
+    ).toStrictEqual({ kind: "use", dir: "/tmp/profile", move: false });
   });
 
-  it("refuses an empty directory", () => {
-    expect(refuseUserDataDir({ ...mac, userData: "" })).toMatch(
-      /no user data/u
-    );
+  it("refuses an installed Meru's folder however it is spelled", () => {
+    for (const userDataDirSwitch of [
+      `${appData}/Meru`,
+      `${appData}/meru/`,
+      `${appData}/x/../MERU`,
+    ]) {
+      expect(
+        decideUserData({ ...packagedDev, userDataDirSwitch })
+      ).toMatchObject({ kind: "refuse" });
+    }
+  });
+});
+
+describe("decideUserData for an unpackaged run", () => {
+  it("uses the profile it is given", () => {
+    expect(
+      decideUserData({
+        ...unpackaged,
+        userDataDirSwitch: "/repo/.meru/default",
+      })
+    ).toStrictEqual({ kind: "use", dir: "/repo/.meru/default", move: false });
+  });
+
+  it("refuses to run without a directory, empty or absent", () => {
+    for (const userDataDirSwitch of [undefined, ""]) {
+      expect(
+        decideUserData({ ...unpackaged, userDataDirSwitch })
+      ).toMatchObject({ kind: "refuse" });
+    }
+  });
+
+  it("refuses an installed Meru's folder and a packaged dev build's", () => {
+    for (const name of ["Meru", "meru", "Meru Dev"]) {
+      expect(
+        decideUserData({
+          ...unpackaged,
+          userDataDirSwitch: `${appData}/${name}`,
+        })
+      ).toMatchObject({ kind: "refuse" });
+    }
   });
 
   it("tells case apart on Linux", () => {
     const linux = {
-      ...mac,
+      ...unpackaged,
       appData: "/home/me/.config",
       platform: "linux" as const,
     };
 
     expect(
-      refuseUserDataDir({ ...linux, userData: "/home/me/.config/Meru" })
-    ).toMatch(/installed Meru/u);
+      decideUserData({ ...linux, userDataDirSwitch: "/home/me/.config/Meru" })
+    ).toMatchObject({ kind: "refuse" });
     expect(
-      refuseUserDataDir({ ...linux, userData: "/home/me/.config/MERU" })
-    ).toBeUndefined();
-  });
-
-  it("leaves a packaged app alone", () => {
-    expect(
-      refuseUserDataDir({
-        ...mac,
-        isPackaged: true,
-        userData: "/Users/me/Library/Application Support/Meru",
-      })
-    ).toBeUndefined();
+      decideUserData({ ...linux, userDataDirSwitch: "/home/me/.config/MERU" })
+    ).toMatchObject({ kind: "use" });
   });
 });
 
-describe(appUserModelIdFor, () => {
-  it("gives an unpackaged run an id apart from the installed app's", () => {
-    expect(appUserModelIdFor("sh.zoid.meru", true)).toBe("sh.zoid.meru");
-    expect(appUserModelIdFor("sh.zoid.meru", false)).toBe("sh.zoid.meru.dev");
-  });
-});
-
-describe(userDataNameFor, () => {
-  it("gives a -dev build a folder apart from the installed app's", () => {
-    expect(userDataNameFor("Meru", "4.0.0-dev.0")).toBe("Meru Dev");
-    expect(userDataNameFor("Meru", "4.0.0-dev")).toBe("Meru Dev");
-    expect(userDataNameFor("Meru", "4.0.0-dev+abc123")).toBe("Meru Dev");
+describe("decideUserData for a release", () => {
+  it("keeps Electron's default, the installed folder", () => {
+    expect(decideUserData(release)).toStrictEqual({
+      kind: "use",
+      dir: `${appData}/Meru`,
+      move: false,
+    });
   });
 
-  it("keeps the product name for a release, a beta and a lookalike prerelease", () => {
-    expect(userDataNameFor("Meru", "4.0.0")).toBe("Meru");
-    expect(userDataNameFor("Meru", "4.0.0-beta.1")).toBe("Meru");
-    expect(userDataNameFor("Meru", "4.0.0-devops.1")).toBe("Meru");
-  });
-});
-
-describe(packagedUserDataDir, () => {
-  const devBuild = {
-    isPackaged: true,
-    productName: "Meru",
-    version: "4.0.0-dev.0",
-    appData: "/Users/me/Library/Application Support",
-    hasUserDataDirSwitch: false,
-  };
-
-  it("moves a packaged -dev build to its own folder", () => {
-    expect(packagedUserDataDir(devBuild)).toBe(
-      "/Users/me/Library/Application Support/Meru Dev"
-    );
-  });
-
-  it("leaves a release on Electron's default", () => {
+  it("uses whatever directory it is given", () => {
     expect(
-      packagedUserDataDir({ ...devBuild, version: "4.0.0" })
-    ).toBeUndefined();
-  });
-
-  it("leaves a directory passed with --user-data-dir alone", () => {
-    expect(
-      packagedUserDataDir({ ...devBuild, hasUserDataDirSwitch: true })
-    ).toBeUndefined();
-  });
-
-  it("leaves an unpackaged run to its own guard", () => {
-    expect(
-      packagedUserDataDir({ ...devBuild, isPackaged: false })
-    ).toBeUndefined();
+      decideUserData({ ...release, userDataDirSwitch: `${appData}/Meru` })
+    ).toStrictEqual({ kind: "use", dir: `${appData}/Meru`, move: false });
   });
 });

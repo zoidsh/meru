@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { appIdFor } from "@meru/core/app-identity";
 import { createAppLifecycle } from "@meru/platform/app";
 import { createDevServerPolicy } from "@meru/platform/dev-server";
 import { createErrorDialog } from "@meru/platform/dialog";
@@ -11,12 +12,7 @@ import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
 import { readLaunchOptions } from "./launch-options.ts";
-import {
-  appUserModelIdFor,
-  packagedUserDataDir,
-  refuseUserDataDir,
-  userDataNameFor,
-} from "./run-identity.ts";
+import { decideUserData } from "./run-identity.ts";
 import { createShellWindow, revealWindow } from "./shell-window.ts";
 
 const APP_SCHEME = "meru-app";
@@ -71,41 +67,39 @@ const start = async () => {
   const options = readLaunchOptions({ argv: process.argv, env: process.env });
   const shellSource = resolveShell();
 
-  const userDataDir = packagedUserDataDir({
+  const userData = decideUserData({
     isPackaged: lifecycle.isPackaged,
     productName: MERU_PRODUCT_NAME,
     version: lifecycle.version,
     appData: lifecycle.getPath("appData"),
-    hasUserDataDirSwitch: lifecycle.hasSwitch("user-data-dir"),
+    installedNames: [MERU_PRODUCT_NAME, lifecycle.name],
+    userDataDirSwitch: lifecycle.getSwitchValue("user-data-dir"),
+    platform: process.platform,
   });
 
-  if (userDataDir) {
-    lifecycle.setUserDataPath(userDataDir);
+  // Before anything else: Electron creates its default folder, an installed
+  // Meru's, on the way out of even a run that never used it.
+  if (userData.kind === "use" && userData.move) {
+    lifecycle.setUserDataPath(userData.dir);
   }
 
-  // The suite reads where a build would keep its data without starting it,
-  // which would create the folder and take its lock.
+  // The suite asks where a build would keep its data without starting it,
+  // which would create the folder and take its lock, and without the dialog a
+  // refusal shows.
   if (MERU_E2E_BUILD && process.argv.includes("--print-user-data")) {
-    console.log(lifecycle.getPath("userData"));
-    lifecycle.exit(0);
+    if (userData.kind === "refuse") {
+      console.error(userData.reason);
+      lifecycle.exit(2);
+    } else {
+      console.log(userData.dir);
+      lifecycle.exit(0);
+    }
 
     return;
   }
 
-  const refusal = refuseUserDataDir({
-    isPackaged: lifecycle.isPackaged,
-    userData: lifecycle.getPath("userData"),
-    appData: lifecycle.getPath("appData"),
-    appNames: [
-      MERU_PRODUCT_NAME,
-      lifecycle.name,
-      userDataNameFor(MERU_PRODUCT_NAME, lifecycle.version),
-    ],
-    platform: process.platform,
-  });
-
-  if (refusal) {
-    throw new Error(refusal);
+  if (userData.kind === "refuse") {
+    throw new Error(userData.reason);
   }
 
   // The suite's app is never used by anyone, so it never comes in front of
@@ -132,7 +126,10 @@ const start = async () => {
 
   if (process.platform === "win32") {
     lifecycle.setAppUserModelId(
-      appUserModelIdFor(MERU_APP_ID, lifecycle.isPackaged)
+      appIdFor(MERU_APP_ID, {
+        version: lifecycle.version,
+        isRelease: lifecycle.isPackaged && !MERU_E2E_BUILD,
+      })
     );
   }
 
