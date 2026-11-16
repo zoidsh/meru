@@ -1,6 +1,6 @@
-import { resolveWindowBounds } from "@meru/core/window-bounds";
-import type { Displays } from "@meru/platform/displays";
-import type { AppWindow, WindowFactory } from "@meru/platform/window";
+import { resolveWindowBounds } from "#core/window-bounds.ts";
+import type { Displays } from "#platform/displays.ts";
+import type { AppWindow, WindowFactory } from "#platform/window.ts";
 
 export interface ShellWindowDeps {
   windows: WindowFactory;

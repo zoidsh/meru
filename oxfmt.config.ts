@@ -5,6 +5,6 @@ export default defineConfig({
   ...ultracite,
   sortTailwindcss: {
     ...ultracite.sortTailwindcss,
-    stylesheet: "packages/shell/src/styles.css",
+    stylesheet: "src/shell/styles.css",
   },
 });

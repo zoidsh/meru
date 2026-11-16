@@ -1,7 +1,30 @@
 {
-  "extends": "./tsconfig.base.json",
+  // The main side: Node and no DOM. The other configs extend this one and set
+  // their own environment.
   "compilerOptions": {
-    "types": ["node"]
+    "target": "esnext",
+    "lib": ["esnext"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "moduleDetection": "force",
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedSideEffectImports": true,
+
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+
+    "noEmit": true
   },
-  "include": ["scripts", "*.config.ts"]
+  "include": ["src/core", "src/platform", "src/main", "scripts", "*.config.ts"]
 }

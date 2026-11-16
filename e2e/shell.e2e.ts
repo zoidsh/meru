@@ -1,4 +1,5 @@
-import { createContentSecurityPolicy } from "../packages/main/src/content-security-policy.ts";
+import { createContentSecurityPolicy } from "#main/content-security-policy.ts";
+
 import { expect, test } from "./lib/app.ts";
 
 test("opens the shell window, named for a development build, with its title bar and content landmarks", async ({

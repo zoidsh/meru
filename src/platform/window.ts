@@ -1,6 +1,7 @@
-import { isSameSite } from "@meru/core/app-url";
-import type { Rectangle, Size } from "@meru/core/window-bounds";
 import { BrowserWindow } from "electron";
+
+import { isSameSite } from "#core/app-url.ts";
+import type { Rectangle, Size } from "#core/window-bounds.ts";
 
 export interface WindowOptions {
   title: string;

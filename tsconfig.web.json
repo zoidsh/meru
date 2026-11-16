@@ -1,0 +1,11 @@
+{
+  // The renderers: the DOM and no Node. `core` is here too, since both sides
+  // import it.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["vite/client"],
+    "jsx": "react-jsx"
+  },
+  "include": ["src/shell", "src/ui", "src/core"]
+}

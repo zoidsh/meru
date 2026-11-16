@@ -4,7 +4,7 @@ import path from "node:path";
 
 import type { Configuration } from "electron-builder";
 
-import { appIdentity } from "./packages/core/src/app-identity.ts";
+import { appIdentity } from "#core/app-identity.ts";
 
 /**
  * `release` is what users install. `e2e` is the end-to-end suite's build: the

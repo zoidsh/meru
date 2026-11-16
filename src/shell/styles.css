@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@meru/ui/theme.css";
+@import "#ui/theme.css";
 
 @layer base {
   html,

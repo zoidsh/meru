@@ -10,7 +10,7 @@ import { _electron, test as base } from "@playwright/test";
 import type { ElectronApplication, Page, TestInfo } from "@playwright/test";
 import { delay, withTimeout } from "es-toolkit";
 
-import { DEV_IDENTITY } from "../../packages/core/src/app-identity.ts";
+import { DEV_IDENTITY } from "#core/app-identity.ts";
 
 const run = promisify(execFile);
 

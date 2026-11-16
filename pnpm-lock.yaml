@@ -181,9 +181,24 @@ importers:
       '@playwright/test':
         specifier: 1.65.1
         version: 1.65.1
+      '@tailwindcss/vite':
+        specifier: 4.3.5
+        version: 4.3.5(vite@8.3.8(@types/node@26.6.6)(jiti@2.7.0)(yaml@2.9.1))
       '@types/node':
         specifier: 26.6.6
         version: 26.6.6
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: 6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@26.6.6)(jiti@2.7.0)(yaml@2.9.1))
+      clsx:
+        specifier: 2.1.1
+        version: 2.1.1
       electron:
         specifier: 45.2.3
         version: 45.2.3(supports-color@7.2.0)
@@ -202,9 +217,21 @@ importers:
       oxlint:
         specifier: 1.93.0
         version: 1.93.0
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
       rolldown:
         specifier: 1.3.2
         version: 1.3.2
+      tailwind-merge:
+        specifier: 3.7.0
+        version: 3.7.0
+      tailwindcss:
+        specifier: 4.3.5
+        version: 4.3.5
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -217,65 +244,6 @@ importers:
       vitest:
         specifier: 5.1.0
         version: 5.1.0(@types/node@26.6.6)(vite@8.3.8(@types/node@26.6.6)(jiti@2.7.0)(yaml@2.9.1))
-
-  packages/core:
-    devDependencies:
-      es-toolkit:
-        specifier: 1.53.2
-        version: 1.53.2
-
-  packages/main:
-    devDependencies:
-      '@meru/core':
-        specifier: workspace:*
-        version: link:../core
-      '@meru/platform':
-        specifier: workspace:*
-        version: link:../platform
-
-  packages/platform:
-    devDependencies:
-      '@meru/core':
-        specifier: workspace:*
-        version: link:../core
-
-  packages/preload-shell: {}
-
-  packages/shell:
-    devDependencies:
-      '@meru/ui':
-        specifier: workspace:*
-        version: link:../ui
-      '@tailwindcss/vite':
-        specifier: 4.3.5
-        version: 4.3.5(vite@8.3.8(@types/node@26.6.6)(jiti@2.7.0)(yaml@2.9.1))
-      '@types/react':
-        specifier: 19.3.0
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: 19.3.0
-        version: 19.3.0(@types/react@19.3.0)
-      '@vitejs/plugin-react':
-        specifier: 6.3.0
-        version: 6.3.0(vite@8.3.8(@types/node@26.6.6)(jiti@2.7.0)(yaml@2.9.1))
-      react:
-        specifier: 19.3.1
-        version: 19.3.1
-      react-dom:
-        specifier: 19.3.1
-        version: 19.3.1(react@19.3.1)
-      tailwindcss:
-        specifier: 4.3.5
-        version: 4.3.5
-
-  packages/ui:
-    devDependencies:
-      clsx:
-        specifier: 2.1.1
-        version: 2.1.1
-      tailwind-merge:
-        specifier: 3.7.0
-        version: 3.7.0
 
 packages:
 

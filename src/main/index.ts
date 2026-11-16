@@ -1,11 +1,11 @@
 import path from "node:path";
 
-import { createAppLifecycle } from "@meru/platform/app";
-import { createDevServerPolicy } from "@meru/platform/dev-server";
-import { createErrorDialog } from "@meru/platform/dialog";
-import { createDisplays } from "@meru/platform/displays";
-import { createAppProtocol } from "@meru/platform/protocol";
-import { createWindowFactory } from "@meru/platform/window";
+import { createAppLifecycle } from "#platform/app.ts";
+import { createDevServerPolicy } from "#platform/dev-server.ts";
+import { createErrorDialog } from "#platform/dialog.ts";
+import { createDisplays } from "#platform/displays.ts";
+import { createAppProtocol } from "#platform/protocol.ts";
+import { createWindowFactory } from "#platform/window.ts";
 
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";

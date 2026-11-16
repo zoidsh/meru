@@ -3,7 +3,7 @@ import path from "node:path";
 
 import type { BuildOptions } from "rolldown";
 
-import { appIdentity } from "../../packages/core/src/app-identity.ts";
+import { appIdentity } from "#core/app-identity.ts";
 
 /**
  * What a build is for. `e2e` is a production build that also carries what only
@@ -17,12 +17,7 @@ export const repositoryRoot = path.resolve(import.meta.dirname, "..", "..");
 export const outDir = (target: BuildTarget) =>
   path.join(repositoryRoot, "out", target);
 
-export const shellViteConfig = path.join(
-  repositoryRoot,
-  "packages",
-  "shell",
-  "vite.config.ts"
-);
+export const shellViteConfig = path.join(repositoryRoot, "vite.config.ts");
 
 interface RootManifest {
   name: string;
@@ -74,7 +69,7 @@ export const appBundles = (
 
   return [
     {
-      input: path.join(repositoryRoot, "packages", "main", "src", "index.ts"),
+      input: path.join(repositoryRoot, "src", "main", "index.ts"),
       platform: "node",
       external: ["electron"],
       transform: {
@@ -92,13 +87,7 @@ export const appBundles = (
       },
     },
     {
-      input: path.join(
-        repositoryRoot,
-        "packages",
-        "preload-shell",
-        "src",
-        "index.ts"
-      ),
+      input: path.join(repositoryRoot, "src", "preload", "shell", "index.ts"),
       // A sandboxed preload cannot load modules, so it is one CommonJS file.
       platform: "browser",
       external: ["electron"],

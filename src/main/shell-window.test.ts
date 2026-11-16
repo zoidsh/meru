@@ -1,9 +1,10 @@
+import { describe, expect, it } from "vitest";
+
 import type {
   AppWindow,
   WindowLoadEvent,
   WindowOptions,
-} from "@meru/platform/window";
-import { describe, expect, it } from "vitest";
+} from "#platform/window.ts";
 
 import { createShellWindow, revealWindow } from "./shell-window.ts";
 

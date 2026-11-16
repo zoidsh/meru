@@ -1,8 +1,9 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { resolveAppFile } from "@meru/core/app-url";
 import { net, protocol } from "electron";
+
+import { resolveAppFile } from "#core/app-url.ts";
 
 export interface ServeOptions {
   scheme: string;

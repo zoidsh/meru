@@ -1,0 +1,8 @@
+{
+  // A preload runs in the page and reaches Electron, so it sees both.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["esnext", "dom"]
+  },
+  "include": ["."]
+}

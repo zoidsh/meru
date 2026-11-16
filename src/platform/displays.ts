@@ -1,5 +1,6 @@
-import type { Display } from "@meru/core/window-bounds";
 import { screen } from "electron";
+
+import type { Display } from "#core/window-bounds.ts";
 
 export interface Displays {
   getAll: () => Display[];

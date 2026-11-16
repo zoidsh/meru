@@ -1,14 +1,6 @@
-packages:
-  - packages/*
-
 # Lefthook's postinstall installs the git hooks, and skips CI.
 allowBuilds:
   electron: true
   lefthook: true
   # Squirrel.Windows, a target Meru does not build.
   electron-winstaller: false
-
-# Workspace packages export their `.ts` source, which Node runs only through
-# pnpm's symlinks; an injected copy lands in node_modules, where Node refuses to
-# strip types.
-injectWorkspacePackages: false
