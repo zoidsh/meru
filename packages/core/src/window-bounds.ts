@@ -1,3 +1,5 @@
+import { clamp } from "es-toolkit";
+
 export interface Size {
   width: number;
   height: number;
@@ -33,9 +35,6 @@ const intersectionArea = (a: Rectangle, b: Rectangle) => {
 
   return width > 0 && height > 0 ? width * height : 0;
 };
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
 
 /** Shrinks `bounds` to fit `area` where it must, then keeps them inside it. */
 const fitInto = (bounds: Rectangle, area: Rectangle): Rectangle => {

@@ -4,9 +4,9 @@ import { once } from "node:events";
 import { rmSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { setTimeout as sleep } from "node:timers/promises";
 
 import electronPath from "electron";
+import { delay, TimeoutError, withTimeout } from "es-toolkit";
 
 import { repositoryRoot } from "./bundles.ts";
 import { defaultProfileFor } from "./launch-args.ts";
@@ -87,7 +87,7 @@ export const reportDebugPort = async (
     return;
   }
 
-  await sleep(DEBUG_PORT_POLL_MS);
+  await delay(DEBUG_PORT_POLL_MS);
 
   return reportDebugPort(child, userDataDir, deadline);
 };
@@ -165,12 +165,13 @@ export const stopElectron = async (
 
   child.kill("SIGTERM");
 
-  const timedOut = await Promise.race([
-    exited.then(() => false),
-    sleep(timeoutMs).then(() => true),
-  ]);
+  try {
+    await withTimeout(() => exited, timeoutMs);
+  } catch (error) {
+    if (!(error instanceof TimeoutError)) {
+      throw error;
+    }
 
-  if (timedOut && isRunning(child)) {
     console.log(`Electron (pid ${child.pid}) did not quit in time; killing it`);
     child.kill("SIGKILL");
     await exited;

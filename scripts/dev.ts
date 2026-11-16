@@ -1,6 +1,7 @@
 import type { ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
 
+import { Mutex } from "es-toolkit";
 import { watch } from "rolldown";
 import type { RolldownWatcher } from "rolldown";
 import { createServer } from "vite";
@@ -32,22 +33,18 @@ let isStopping = false;
  * Starting and stopping Electron run one at a time, in order, so a restart
  * never overlaps another or a shutdown.
  */
-let queue: Promise<void> = Promise.resolve();
+const electronLock = new Mutex();
 
-const enqueue = (task: () => Promise<void>) => {
-  const previous = queue;
+const enqueue = async (task: () => Promise<void>) => {
+  await electronLock.acquire();
 
-  queue = (async () => {
-    await previous;
-
-    try {
-      await task();
-    } catch (error) {
-      console.error(error);
-    }
-  })();
-
-  return queue;
+  try {
+    await task();
+  } catch (error) {
+    console.error(error);
+  } finally {
+    electronLock.release();
+  }
 };
 
 let setup: Promise<void> = Promise.resolve();

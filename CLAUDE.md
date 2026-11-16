@@ -39,6 +39,8 @@ Import boundaries, enforced in `oxlint.config.ts` with `no-restricted-imports`, 
 - A workspace package is imported by its `@meru/` name, never by a relative path that climbs out of its own package (two `../` levels from `src`) or an absolute one.
 - Nothing outside `scripts/` uses `require` or `createRequire`.
 
+A general utility (delay, debounce, clamp, retry, a timeout, a mutex, deep equality and the like) comes from `es-toolkit`; write one here only when es-toolkit has none that fits.
+
 TypeScript stays runnable by Node's type stripping: explicit `.ts` extensions on relative imports, `import type` for types, no enums, parameter properties or path aliases. Lint and format config is Ultracite's oxlint and oxfmt presets and nothing of our own beyond the import boundaries.
 
 ## Builds

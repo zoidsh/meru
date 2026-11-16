@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/node": "26.6.6",
     "electron": "45.2.3",
+    "es-toolkit": "1.53.2",
     "lefthook": "2.2.2",
     "oxfmt": "0.78.0",
     "oxlint": "1.93.0",

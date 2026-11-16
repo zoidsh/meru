@@ -181,6 +181,9 @@ importers:
       electron:
         specifier: 45.2.3
         version: 45.2.3
+      es-toolkit:
+        specifier: 1.53.2
+        version: 1.53.2
       lefthook:
         specifier: 2.2.2
         version: 2.2.2
@@ -1169,6 +1172,9 @@ packages:
 
   es-module-lexer@2.3.2:
     resolution: {integrity: sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw==}
+
+  es-toolkit@1.53.2:
+    resolution: {integrity: sha512-iUqZ+NlwH4jUgRmXZUxFBsV/9762TQEa1O4IXLFBmDEjVHScBytKuseX23I0+v9ShZ5MYxEx6WKNzm6IPnex8g==}
 
   estree-walker@3.0.3:
     resolution: {integrity: sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==}
@@ -2365,6 +2371,8 @@ snapshots:
   environment@1.1.0: {}
 
   es-module-lexer@2.3.2: {}
+
+  es-toolkit@1.53.2: {}
 
   estree-walker@3.0.3:
     dependencies:
