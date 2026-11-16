@@ -11,13 +11,19 @@
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "package": "node scripts/package.ts",
+    "package:installers": "node scripts/package.ts --installers",
     "start": "node scripts/start.ts",
     "test": "vitest run",
-    "types": "tsc && pnpm --recursive run types"
+    "test:e2e": "node scripts/e2e.ts",
+    "types": "tsc && tsc -p e2e && pnpm --recursive run types"
   },
   "devDependencies": {
+    "@electron/fuses": "2.1.3",
+    "@playwright/test": "1.65.1",
     "@types/node": "26.6.6",
     "electron": "45.2.3",
+    "electron-builder": "26.18.1",
     "es-toolkit": "1.53.2",
     "lefthook": "2.2.2",
     "oxfmt": "0.78.0",

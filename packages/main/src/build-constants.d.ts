@@ -3,5 +3,10 @@
 // folds the literal comparison and drops a development-only branch, with
 // everything only that branch imports, from a production bundle.
 declare const MERU_BUILD_MODE: "dev" | "prod";
+/**
+ * True only in the end-to-end suite's build, whose test-only switches a release
+ * cannot carry. Test it directly, as with `MERU_BUILD_MODE`.
+ */
+declare const MERU_E2E_BUILD: boolean;
 declare const MERU_APP_ID: string;
 declare const MERU_PRODUCT_NAME: string;

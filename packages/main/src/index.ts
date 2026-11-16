@@ -83,6 +83,15 @@ const start = async () => {
     lifecycle.setUserDataPath(userDataDir);
   }
 
+  // The suite reads where a build would keep its data without starting it,
+  // which would create the folder and take its lock.
+  if (MERU_E2E_BUILD && process.argv.includes("--print-user-data")) {
+    console.log(lifecycle.getPath("userData"));
+    lifecycle.exit(0);
+
+    return;
+  }
+
   const refusal = refuseUserDataDir({
     isPackaged: lifecycle.isPackaged,
     userData: lifecycle.getPath("userData"),
@@ -99,7 +108,16 @@ const start = async () => {
     throw new Error(refusal);
   }
 
-  const { background } = options;
+  // The suite's app is never used by anyone, so it never comes in front of
+  // whatever someone is working in, whatever a test shows or focuses.
+  const isTestBackground =
+    MERU_E2E_BUILD && process.env.MERU_TEST_BACKGROUND === "1";
+
+  if (isTestBackground) {
+    lifecycle.preventActivation();
+  }
+
+  const background = options.background || isTestBackground;
 
   if (!lifecycle.requestSingleInstanceLock()) {
     lifecycle.quit();

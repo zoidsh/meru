@@ -4,3 +4,5 @@ out
 .build
 *.tsbuildinfo
 .DS_Store
+dist
+test-results

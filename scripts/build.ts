@@ -9,30 +9,36 @@ import {
   cleanOutDir,
   outDir,
   readRootManifest,
+  repositoryRoot,
   shellViteConfig,
   writeAppManifest,
 } from "./lib/bundles.ts";
-import { findForbiddenMarkers } from "./lib/forbidden-markers.ts";
+import {
+  FORBIDDEN_IN_PROD,
+  FORBIDDEN_IN_RELEASE,
+  findForbiddenMarkers,
+} from "./lib/forbidden-markers.ts";
+
+const target = process.argv.includes("--e2e") ? "e2e" : "prod";
+const out = outDir(target);
+const label = path.relative(repositoryRoot, out);
 
 const manifest = await readRootManifest();
 
-await cleanOutDir("prod");
+await cleanOutDir(target);
 
 await Promise.all([
-  ...appBundles("prod", manifest).map((options) => bundle(options)),
+  ...appBundles(target, manifest).map((options) => bundle(options)),
   buildRenderer({
     configFile: shellViteConfig,
     mode: "production",
     logLevel: "warn",
-    build: { outDir: path.join(outDir("prod"), "shell"), emptyOutDir: true },
+    build: { outDir: path.join(out, "shell"), emptyOutDir: true },
   }),
-  writeAppManifest("prod", manifest),
+  writeAppManifest(target, manifest),
 ]);
 
-const entries = await readdir(outDir("prod"), {
-  recursive: true,
-  withFileTypes: true,
-});
+const entries = await readdir(out, { recursive: true, withFileTypes: true });
 
 const files = await Promise.all(
   entries
@@ -41,25 +47,30 @@ const files = await Promise.all(
       const filePath = path.join(entry.parentPath, entry.name);
 
       return {
-        path: path.relative(outDir("prod"), filePath),
+        path: path.relative(out, filePath),
         contents: await readFile(filePath, "utf-8"),
       };
     })
 );
 
-const hits = findForbiddenMarkers(files);
+const hits = findForbiddenMarkers(
+  files,
+  target === "prod"
+    ? [...FORBIDDEN_IN_PROD, ...FORBIDDEN_IN_RELEASE]
+    : FORBIDDEN_IN_PROD
+);
 
 if (hits.length > 0) {
   for (const hit of hits) {
-    console.error(`out/prod/${hit.path} holds "${hit.marker}": ${hit.why}`);
+    console.error(`${label}/${hit.path} holds "${hit.marker}": ${hit.why}`);
   }
 
-  // A rejected build must not be left for `pnpm start` to run.
-  await rm(outDir("prod"), { recursive: true, force: true });
-  console.error("Removed out/prod.");
+  // A rejected build must not be left for `pnpm start` or packaging to use.
+  await rm(out, { recursive: true, force: true });
+  console.error(`Removed ${label}.`);
   process.exit(1);
 }
 
 console.log(
-  `Built ${manifest.productName} ${manifest.version} into out/prod; checked ${files.length} files for development-only markers`
+  `Built ${manifest.productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold`
 );

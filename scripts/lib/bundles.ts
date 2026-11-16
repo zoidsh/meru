@@ -3,13 +3,17 @@ import path from "node:path";
 
 import type { BuildOptions } from "rolldown";
 
-export type BuildMode = "dev" | "prod";
+/**
+ * What a build is for. `e2e` is a production build that also carries what only
+ * the end-to-end suite may switch on; a release is only ever built as `prod`.
+ */
+export type BuildTarget = "dev" | "prod" | "e2e";
 
 export const repositoryRoot = path.resolve(import.meta.dirname, "..", "..");
 
-/** Each mode builds into a folder of its own, which is a complete app. */
-export const outDir = (mode: BuildMode) =>
-  path.join(repositoryRoot, "out", mode);
+/** Each target builds into a folder of its own, which is a complete app. */
+export const outDir = (target: BuildTarget) =>
+  path.join(repositoryRoot, "out", target);
 
 export const shellViteConfig = path.join(
   repositoryRoot,
@@ -30,18 +34,18 @@ export const readRootManifest = async () =>
     await readFile(path.join(repositoryRoot, "package.json"), "utf-8")
   ) as RootManifest;
 
-export const cleanOutDir = async (mode: BuildMode) => {
-  await rm(outDir(mode), { recursive: true, force: true });
-  await mkdir(outDir(mode), { recursive: true });
+export const cleanOutDir = async (target: BuildTarget) => {
+  await rm(outDir(target), { recursive: true, force: true });
+  await mkdir(outDir(target), { recursive: true });
 };
 
 /** The `package.json` Electron reads the app's name, version and entry from. */
 export const writeAppManifest = async (
-  mode: BuildMode,
+  target: BuildTarget,
   manifest: RootManifest
 ) => {
   await writeFile(
-    path.join(outDir(mode), "package.json"),
+    path.join(outDir(target), "package.json"),
     `${JSON.stringify(
       {
         name: manifest.name,
@@ -58,9 +62,10 @@ export const writeAppManifest = async (
 
 /** The main process and the preloads, which rolldown bundles. */
 export const appBundles = (
-  mode: BuildMode,
+  target: BuildTarget,
   manifest: RootManifest
 ): BuildOptions[] => {
+  const mode = target === "dev" ? "dev" : "prod";
   const minify = mode === "prod" ? { mangle: { keepNames: true } } : false;
 
   return [
@@ -71,12 +76,13 @@ export const appBundles = (
       transform: {
         define: {
           MERU_BUILD_MODE: JSON.stringify(mode),
+          MERU_E2E_BUILD: JSON.stringify(target === "e2e"),
           MERU_APP_ID: JSON.stringify(manifest.meru.appId),
           MERU_PRODUCT_NAME: JSON.stringify(manifest.productName),
         },
       },
       output: {
-        file: path.join(outDir(mode), "main.mjs"),
+        file: path.join(outDir(target), "main.mjs"),
         format: "esm",
         minify,
         sourcemap: mode === "dev",
@@ -94,7 +100,7 @@ export const appBundles = (
       platform: "browser",
       external: ["electron"],
       output: {
-        file: path.join(outDir(mode), "preload-shell.cjs"),
+        file: path.join(outDir(target), "preload-shell.cjs"),
         format: "cjs",
         minify,
         sourcemap: mode === "dev",

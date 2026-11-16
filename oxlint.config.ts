@@ -104,6 +104,69 @@ const restrict = ({
   ];
 };
 
+const BY_ROLE =
+  "Find it through the accessibility tree: getByRole with a name, or getByLabel or getByText.";
+
+/**
+ * Everything in Playwright that finds an element by CSS, XPath or a test id.
+ * The page-level actions take a selector, and the fixtures name a page `shell`
+ * or `page`, so those two are held to locators.
+ */
+const SELECTOR_METHODS = [
+  "locator",
+  "frameLocator",
+  "getByTestId",
+  "$",
+  "$$",
+  "$eval",
+  "$$eval",
+  "waitForSelector",
+];
+
+const SELECTOR_ACTIONS = [
+  "check",
+  "click",
+  "dblclick",
+  "dispatchEvent",
+  "dragAndDrop",
+  "fill",
+  "focus",
+  "getAttribute",
+  "hover",
+  "innerHTML",
+  "innerText",
+  "inputValue",
+  "isChecked",
+  "isDisabled",
+  "isEditable",
+  "isEnabled",
+  "isHidden",
+  "isVisible",
+  "press",
+  "selectOption",
+  "setChecked",
+  "setInputFiles",
+  "tap",
+  "textContent",
+  "type",
+  "uncheck",
+];
+
+const NO_SELECTORS: [
+  "error",
+  ...{ object?: string; property: string; message: string }[],
+] = [
+  "error",
+  ...SELECTOR_METHODS.map((property) => ({ property, message: BY_ROLE })),
+  ...["shell", "page"].flatMap((object) =>
+    SELECTOR_ACTIONS.map((property) => ({
+      object,
+      property,
+      message: `${object}.${property} takes a selector; act on a locator from getByRole instead.`,
+    }))
+  ),
+];
+
 /** `require` reaches past the import boundaries; only scripts/ may use it. */
 const NO_REQUIRE: ["error", string] = ["error", "require"];
 
@@ -121,6 +184,23 @@ export default defineConfig({
         "no-restricted-imports": "off",
         "no-restricted-globals": "off",
         "typescript/no-require-imports": "off",
+      },
+    },
+    {
+      files: ["e2e/**"],
+      rules: {
+        "no-restricted-properties": NO_SELECTORS,
+        // A Playwright fixture must destructure its first argument even when
+        // it needs no other fixture, and its `use` is not React's hook.
+        "no-empty-pattern": "off",
+        "react-hooks/rules-of-hooks": "off",
+      },
+    },
+    {
+      // `${productName}` and the like are electron-builder's own macros.
+      files: ["electron-builder.config.ts"],
+      rules: {
+        "no-template-curly-in-string": "off",
       },
     },
     {

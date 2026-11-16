@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // For what a test evaluates in the page.
+    "lib": ["esnext", "dom"],
+    "types": ["node"]
+  },
+  "include": ["."]
+}

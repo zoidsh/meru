@@ -18,8 +18,11 @@ Meru is an Electron desktop client for Gmail and Google Workspace. This branch i
 | Unit tests | `pnpm test` |
 | One test file | `pnpm test packages/core/src/window-bounds` |
 | One test by name | `pnpm test -t "name"` |
+| Pack the unpacked app into `dist/` | `pnpm package` |
+| Pack this platform's installers | `pnpm package:installers` |
+| End-to-end suite (packs first) | `pnpm test:e2e`; on Linux `xvfb-run -a pnpm test:e2e` |
 
-Run `pnpm check` and `pnpm test` before committing.
+Run `pnpm check` and `pnpm test` before committing, and `pnpm test:e2e` when a change shows in a window.
 
 ## Packages
 
@@ -49,6 +52,8 @@ TypeScript stays runnable by Node's type stripping: explicit `.ts` extensions on
 
 The built shell is served from `meru-app://shell/` with a strict Content-Security-Policy, never from `file://`. In development the shell loads from the Vite dev server, and the policy allows exactly that origin, its hot-reload socket and a per-run nonce Vite stamps on what it injects.
 
+`scripts/package.ts` builds, then packs with electron-builder from `electron-builder.config.ts`, which packs only the built app, into an asar, and flips the Electron fuses. Every build is unsigned for now. `--e2e` makes the end-to-end variant: built into `out/e2e` with `MERU_E2E_BUILD` true, which compiles in `MERU_TEST_BACKGROUND` and `--print-user-data`, and packed into `dist/e2e` with the inspector fuse on for Playwright. It is never packed into installers, and a release build fails if either name appears in it. A packaged build whose version is a `-dev` prerelease keeps its data in `Meru Dev`, never an installed Meru's `Meru`, unless `--user-data-dir` is passed.
+
 ## Dev and start runs
 
 - `pnpm dev` starts Vite on `PORT`, or a free port when it is unset, rebuilds `main` and `preload-shell` on change and restarts Electron, one restart at a time. SIGINT, SIGTERM or SIGHUP at any moment, repeated or not, stops Electron (killing it after 5 seconds if it has not quit) and Vite. Quitting the app ends the script; Electron dying of a signal the script did not send ends it with a failure.
@@ -57,3 +62,11 @@ The built shell is served from `meru-app://shell/` with a strict Content-Securit
 - `--background`, or `MERU_BACKGROUND=1` (which `.claude/settings.json` sets for Claude Code sessions), opens the window with `showInactive()` so it never takes the foreground or focus. On this shared Mac drive it over CDP, never by raising it.
 - Any other flag passes through to Electron, such as `--disable-gpu`.
 - Electron downloads its binary on first use, so the first run after a fresh install takes longer.
+
+## End-to-end tests
+
+- `pnpm test:e2e` packs the e2e variant, then runs Playwright on it; extra arguments go to Playwright, such as a file name or `-g "name"`. `MERU_SKIP_BUILD=1` reuses `dist/e2e`, and `MERU_EXECUTABLE` names any packed e2e app. Run Electron with the Bash sandbox off, or it hangs without a window.
+- A test is `e2e/<area>.e2e.ts`, never `.test.ts` or `.spec.ts`, and imports `test` and `expect` from `e2e/lib/app.ts`. Its fixtures launch the app per test on a fresh temporary user data directory: `app` is the Electron application, `shell` the loaded shell window, `userDataDir` its directory. Teardown removes the directory and ends the app's whole process tree, pass or fail; start any other process through `spawnApp`, whose `stop` does the same.
+- Controls are found through the accessibility tree only: `getByRole` with a name, or `getByLabel` or `getByText`. Lint rejects `locator`, `getByTestId`, `$`, `$$` and the page-level actions that take a selector, so a control without a role and name cannot be tested until it has one.
+- Every launch sets `MERU_TEST_BACKGROUND=1`, under which the app on macOS can never be activated, whatever a test shows or focuses; `e2e/background.e2e.ts` proves it. Drive it through Playwright, never by raising it.
+- A failed test keeps its trace and a screenshot of each window under `test-results/`; `pnpm exec playwright show-trace <trace.zip>` opens one.

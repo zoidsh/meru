@@ -17,6 +17,12 @@ export interface AppLifecycle {
   /** Also fires for a quit that SIGINT or SIGTERM starts. */
   onBeforeQuit: (listener: () => void) => void;
   setAppUserModelId: (id: string) => void;
+  /**
+   * On macOS, keeps the app out of the Dock and from ever becoming the active
+   * app, whatever later shows or focuses a window. Elsewhere nothing: a window
+   * shown inactive takes no focus there.
+   */
+  preventActivation: () => void;
   quit: () => void;
   exit: (code: number) => void;
 }
@@ -47,6 +53,11 @@ export const createAppLifecycle = (): AppLifecycle => ({
     app.on("before-quit", listener);
   },
   setAppUserModelId: (id) => app.setAppUserModelId(id),
+  preventActivation: () => {
+    if (process.platform === "darwin") {
+      app.setActivationPolicy("prohibited");
+    }
+  },
   quit: () => app.quit(),
   exit: (code) => app.exit(code),
 });

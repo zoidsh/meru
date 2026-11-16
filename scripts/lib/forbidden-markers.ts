@@ -22,6 +22,22 @@ export const FORBIDDEN_IN_PROD: readonly { marker: string; why: string }[] = [
   },
 ];
 
+/**
+ * What only the end-to-end suite's build may hold, so that a release can never
+ * be kept from activating or made to print diagnostics.
+ */
+export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
+  [
+    {
+      marker: "MERU_TEST_BACKGROUND",
+      why: "only the end-to-end build may be kept from ever activating",
+    },
+    {
+      marker: "--print-user-data",
+      why: "the user data diagnostic belongs to the end-to-end build",
+    },
+  ];
+
 export interface OutputFile {
   path: string;
   contents: string;
