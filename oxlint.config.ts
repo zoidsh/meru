@@ -3,55 +3,167 @@ import core from "ultracite/oxlint/core";
 import react from "ultracite/oxlint/react";
 import vitest from "ultracite/oxlint/vitest";
 
-const ELECTRON_MODULES = [
-  "electron",
-  "electron/main",
-  "electron/common",
-  "electron/renderer",
+/*
+ * The import boundaries between workspace packages. An override replaces a
+ * rule's options rather than merging them, so each scope below states its
+ * whole set.
+ */
+
+interface RestrictedPath {
+  name: string;
+  message: string;
+  allowTypeImports?: boolean;
+  importNames?: string[];
+}
+
+interface RestrictedPattern {
+  message: string;
+  group?: string[];
+  regex?: string;
+}
+
+type ImportRestriction = [
+  "error",
+  { paths: RestrictedPath[]; patterns: RestrictedPattern[] },
 ];
 
-const electronImports = (
-  allowTypeImports: boolean,
-  message: string
-): [
-  "error",
-  { paths: { name: string; allowTypeImports: boolean; message: string }[] },
-] => [
-  "error",
+const NO_CREATE_REQUIRE: RestrictedPath[] = ["node:module", "module"].map(
+  (name) => ({
+    name,
+    importNames: ["createRequire"],
+    message:
+      "createRequire loads modules past the import boundaries; only scripts/ may use it.",
+  })
+);
+
+/*
+ * Without a resolver the rule sees only the specifier. Source lives one level
+ * down in each package's `src`, so climbing two levels is the only way a
+ * relative path reaches another package, and an absolute one always can.
+ */
+const NO_TUNNELS: RestrictedPattern[] = [
   {
-    paths: ELECTRON_MODULES.map((name) => ({
-      name,
-      allowTypeImports,
-      message,
-    })),
+    regex: String.raw`(^|[/\\])\.\.[/\\]\.\.([/\\]|$)`,
+    message:
+      "Import another workspace package by its @meru/ name, never by a relative path out of this package.",
+  },
+  {
+    regex: String.raw`^([/\\]|[A-Za-z]:|file:)`,
+    message: "Import by package name or a path relative to this file.",
   },
 ];
 
+const ELECTRON = "electron";
+
+const DEEP_ELECTRON: RestrictedPattern = {
+  regex: String.raw`^electron[/\\]`,
+  message: "Import Electron as `electron`, and only in @meru/platform.",
+};
+
+const restrict = ({
+  electron,
+  workspace = [],
+}: {
+  electron: "value" | "type" | "none";
+  workspace?: RestrictedPattern[];
+}): ImportRestriction => {
+  const electronRules: {
+    paths: RestrictedPath[];
+    patterns: RestrictedPattern[];
+  } = {
+    value: { paths: [], patterns: [] },
+    type: {
+      paths: [
+        {
+          name: ELECTRON,
+          allowTypeImports: true,
+          message:
+            "Only @meru/platform and the preloads import Electron by value; reach it through a platform adapter.",
+        },
+      ],
+      patterns: [DEEP_ELECTRON],
+    },
+    none: {
+      paths: [
+        {
+          name: ELECTRON,
+          message:
+            "@meru/core and @meru/contract are pure and import nothing of Electron, types included.",
+        },
+      ],
+      patterns: [DEEP_ELECTRON],
+    },
+  }[electron];
+
+  return [
+    "error",
+    {
+      paths: [...NO_CREATE_REQUIRE, ...electronRules.paths],
+      patterns: [...NO_TUNNELS, ...electronRules.patterns, ...workspace],
+    },
+  ];
+};
+
+/** `require` reaches past the import boundaries; only scripts/ may use it. */
+const NO_REQUIRE: ["error", string] = ["error", "require"];
+
 export default defineConfig({
   extends: [core, react, vitest],
+  rules: {
+    "no-restricted-imports": [
+      "error",
+      { paths: NO_CREATE_REQUIRE, patterns: [] },
+    ],
+    "no-restricted-globals": NO_REQUIRE,
+    "typescript/no-require-imports": "error",
+  },
   overrides: [
+    {
+      files: ["scripts/**"],
+      rules: {
+        "no-restricted-imports": "off",
+        "no-restricted-globals": "off",
+        "typescript/no-require-imports": "off",
+      },
+    },
     {
       files: ["packages/**"],
       rules: {
-        "no-restricted-imports": electronImports(
-          true,
-          "Only @meru/platform imports Electron by value; reach it through an adapter there."
-        ),
+        "no-restricted-imports": restrict({ electron: "type" }),
       },
     },
     {
-      files: ["packages/core/**", "packages/contract/**"],
+      files: ["packages/platform/**", "packages/preload-*/**"],
       rules: {
-        "no-restricted-imports": electronImports(
-          false,
-          "@meru/core and @meru/contract are pure and import nothing of Electron, types included."
-        ),
+        "no-restricted-imports": restrict({ electron: "value" }),
       },
     },
     {
-      files: ["packages/platform/**"],
+      files: ["packages/core/**"],
       rules: {
-        "no-restricted-imports": "off",
+        "no-restricted-imports": restrict({
+          electron: "none",
+          workspace: [
+            {
+              group: ["@meru/**"],
+              message: "@meru/core imports no other workspace package.",
+            },
+          ],
+        }),
+      },
+    },
+    {
+      files: ["packages/contract/**"],
+      rules: {
+        "no-restricted-imports": restrict({
+          electron: "none",
+          workspace: [
+            {
+              group: ["@meru/**", "!@meru/core", "!@meru/core/**"],
+              message: "@meru/contract imports only @meru/core.",
+            },
+          ],
+        }),
       },
     },
   ],
