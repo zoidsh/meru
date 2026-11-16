@@ -17,8 +17,8 @@ const setup = ({ load = Promise.resolve() } = {}) => {
   const logs: string[] = [];
 
   const window: GmailViewDeps["window"] = {
-    getContentSize: () => size,
-    onResize: (listener) => {
+    getContentAreaSize: () => size,
+    onContentAreaResize: (listener) => {
       resize = listener;
     },
     addContentView: (contentViewOptions) => {

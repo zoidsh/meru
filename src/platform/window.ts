@@ -28,8 +28,9 @@ export interface AppWindow {
   restore: () => void;
   isMinimized: () => boolean;
   isDestroyed: () => boolean;
-  getContentSize: () => Size;
-  onResize: (listener: () => void) => void;
+  /** The area child views are laid out in, below any menu bar. */
+  getContentAreaSize: () => Size;
+  onContentAreaResize: (listener: () => void) => void;
   addContentView: (options: ContentViewOptions) => ContentView;
 }
 
@@ -79,13 +80,15 @@ export const createWindowFactory = (): WindowFactory => ({
       restore: () => window.restore(),
       isMinimized: () => window.isMinimized(),
       isDestroyed: () => window.isDestroyed(),
-      getContentSize: () => {
-        const [width = 0, height = 0] = window.getContentSize();
+      // The root view rather than the window's content size, which on
+      // Windows changes after a hidden window is first shown with no `resize`.
+      getContentAreaSize: () => {
+        const { width, height } = window.contentView.getBounds();
 
         return { width, height };
       },
-      onResize: (listener) => {
-        window.on("resize", listener);
+      onContentAreaResize: (listener) => {
+        window.contentView.on("bounds-changed", listener);
       },
       addContentView: (contentViewOptions) =>
         addContentView(window, contentViewOptions),

@@ -4,7 +4,10 @@ import type { SystemBrowser } from "#platform/system-browser.ts";
 import type { AppWindow } from "#platform/window.ts";
 
 export interface GmailViewDeps {
-  window: Pick<AppWindow, "getContentSize" | "onResize" | "addContentView">;
+  window: Pick<
+    AppWindow,
+    "getContentAreaSize" | "onContentAreaResize" | "addContentView"
+  >;
   partition: string;
   url: string;
   /** Origins whose pop-ups open as child windows in the session. */
@@ -53,7 +56,7 @@ export const createGmailView = ({
   });
 
   const place = () => {
-    view.setBounds(contentViewBounds(window.getContentSize()));
+    view.setBounds(contentViewBounds(window.getContentAreaSize()));
   };
 
   const load = async () => {
@@ -65,6 +68,6 @@ export const createGmailView = ({
   };
 
   place();
-  window.onResize(place);
+  window.onContentAreaResize(place);
   load();
 };

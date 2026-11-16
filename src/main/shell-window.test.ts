@@ -33,8 +33,8 @@ const createFakeWindow = () => {
     },
     isMinimized: () => minimized,
     isDestroyed: () => false,
-    getContentSize: () => ({ width: 1280, height: 800 }),
-    onResize: () => false,
+    getContentAreaSize: () => ({ width: 1280, height: 800 }),
+    onContentAreaResize: () => false,
     addContentView: () => ({
       setBounds: () => false,
       loadURL: () => Promise.resolve(),
