@@ -1,6 +1,7 @@
 import { WebContentsView } from "electron";
 import type { BrowserWindow, WebContents } from "electron";
 
+import type { KeyInput } from "#core/accelerator.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
 
 /** What the view's page did, as Meru tracks it. */
@@ -36,6 +37,11 @@ export interface ContentViewOptions {
   ) => () => void;
   /** Told of the view's own page, never of its child windows'. */
   onEvent: (event: ContentViewEvent) => void;
+  /**
+   * Hears each key before the page does; one it says it handled goes no
+   * further, to the page or to the application menu.
+   */
+  onKey: (input: KeyInput) => boolean;
 }
 
 export interface ContentView {
@@ -44,6 +50,8 @@ export interface ContentView {
   setBorderRadius: (radius: number) => void;
   /** Rejects when the load does not commit. */
   loadURL: (url: string) => Promise<void>;
+  /** Loads the page it shows again. */
+  reload: () => void;
   /** Hidden, the page stays loaded. */
   setVisible: (visible: boolean) => void;
   /** Closes the page and every window it opened, and takes it off the window. */
@@ -159,6 +167,11 @@ export const addContentView = (
   const { webContents } = view;
 
   trackDestroyed(webContents, "content-view", onWebContents);
+  webContents.on("before-input-event", (event, input) => {
+    if (options.onKey(input)) {
+      event.preventDefault();
+    }
+  });
   reportEvents(webContents, options.onEvent);
   routeWindowOpens(webContents, window, options, children);
   window.contentView.addChildView(view);
@@ -188,6 +201,7 @@ export const addContentView = (
     setBounds: (bounds) => view.setBounds(bounds),
     setBorderRadius: (radius) => view.setBorderRadius(radius),
     loadURL: (url) => webContents.loadURL(url),
+    reload: () => webContents.reload(),
     setVisible: (visible) => view.setVisible(visible),
     close,
   };

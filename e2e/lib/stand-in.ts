@@ -24,6 +24,9 @@ export const ELSEWHERE_URL = "https://example.com/elsewhere";
 
 export const STAND_IN_COOKIE = "stand-in=kept";
 
+/** The name of the text field on the Gmail stand-in. */
+export const DRAFT_LABEL = "Draft";
+
 const page = (title: string, links: string) => `<!doctype html>
 <html lang="en">
   <head><meta charset="utf-8"><title>${title}</title></head>
@@ -141,7 +144,8 @@ export const startStandIn = async (): Promise<StandIn> => {
         `${ELSEWHERE_LINK}
     <a href="${links.signIn}${POPUP_PATH.slice(1)}" target="_blank">Open a pop-up</a>
     <a href="${links.calendar}" target="_blank">Open Calendar</a>
-    <a href="${links.drive}" target="_blank">Open Drive</a>`
+    <a href="${links.drive}" target="_blank">Open Drive</a>
+    <textarea aria-label="${DRAFT_LABEL}"></textarea>`
       ),
     }),
     current

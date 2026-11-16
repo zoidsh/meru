@@ -10,6 +10,7 @@ import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
+import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSessions } from "#platform/sessions.ts";
@@ -17,6 +18,9 @@ import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTextFile } from "#platform/text-file.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
+import { createApplicationMenu } from "./application-menu.ts";
+import { commandsFor } from "./commands.ts";
+import type { Platform } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
@@ -240,6 +244,10 @@ const start = async () => {
     design: () => settings.get("design"),
     openTab: profiles.openTab,
     newId,
+    // No key reaches a view before the menu below exists, as nothing between
+    // them awaits.
+    // oxlint-disable-next-line no-use-before-define -- the menu runs the views' commands
+    handleKey: (input) => menu.handleKey(input),
     prepareSession: (partition) => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
     },
@@ -250,6 +258,27 @@ const start = async () => {
   views.reconcile(profiles.get());
   profiles.onChange(views.reconcile);
   settings.onChange("design", views.relayout);
+
+  const menu = createApplicationMenu({
+    platform: process.platform as Platform,
+    appName: lifecycle.name,
+    commands: commandsFor(process.platform as Platform),
+    context: () => ({ state: profiles.get(), setting: settings.get }),
+    actions: {
+      setSetting: settings.set,
+      reloadSelectedTab: views.reloadFront,
+      selectTab: profiles.selectTab,
+      closeTab: profiles.closeTab,
+      selectProfile: profiles.select,
+      addProfile: profiles.add,
+    },
+    setMenu: setApplicationMenu,
+    log: console.error,
+  });
+
+  profiles.onChange(menu.refresh);
+  settings.onChange("design", menu.refresh);
+  settings.onChange("vibrancy", menu.refresh);
 
   serveShellContract({
     ipc: createIpc(),

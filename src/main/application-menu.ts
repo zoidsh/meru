@@ -1,0 +1,385 @@
+import { t } from "@lingui/core/macro";
+import type { MenuItemConstructorOptions } from "electron";
+import { isEqual } from "es-toolkit";
+
+import { matchesAccelerator } from "#core/accelerator.ts";
+import type { KeyInput } from "#core/accelerator.ts";
+
+import type {
+  Command,
+  CommandActions,
+  CommandContext,
+  Platform,
+} from "./commands.ts";
+
+export interface MenuTemplateInput {
+  platform: Platform;
+  appName: string;
+  commands: readonly Command[];
+  context: CommandContext;
+  /** Runs a command when its item is clicked or its shortcut pressed. */
+  run: (command: Command) => void;
+}
+
+const separator: MenuItemConstructorOptions = { type: "separator" };
+
+/**
+ * Meru's application menu: its own items from the registry, which a platform
+ * without a command simply leaves out, and the standard roles, which keep
+ * undo, copy, paste and select all working inside a page.
+ */
+export const buildMenuTemplate = ({
+  platform,
+  appName,
+  commands,
+  context,
+  run,
+}: MenuTemplateInput): MenuItemConstructorOptions[] => {
+  const isMacOS = platform === "darwin";
+
+  const item = (
+    id: string,
+    type?: "radio" | "checkbox"
+  ): MenuItemConstructorOptions[] => {
+    const command = commands.find((candidate) => candidate.id === id);
+
+    if (!command) {
+      return [];
+    }
+
+    return [
+      {
+        id,
+        label: command.title(),
+        ...(command.shortcut?.[platform] && {
+          accelerator: command.shortcut[platform],
+        }),
+        enabled: command.isAvailable?.(context) ?? true,
+        ...(type && {
+          type,
+          checked: command.isChecked?.(context) ?? false,
+        }),
+        click: () => {
+          run(command);
+        },
+      },
+    ];
+  };
+
+  const quit: MenuItemConstructorOptions = {
+    label: t({
+      message: `Quit ${appName}`,
+      comment:
+        "Menu item that quits the app; {appName} is the app's name, such as Meru",
+    }),
+    role: "quit",
+  };
+
+  const appMenu: MenuItemConstructorOptions = {
+    label: appName,
+    submenu: isMacOS
+      ? [
+          {
+            label: t({
+              message: `About ${appName}`,
+              comment:
+                "Menu item in the macOS app menu that shows the app's version; {appName} is the app's name",
+            }),
+            role: "about",
+          },
+          separator,
+          {
+            label: t({
+              message: "Services",
+              comment:
+                "The macOS app menu's submenu of system services, named as macOS names it",
+            }),
+            role: "services",
+          },
+          separator,
+          {
+            label: t({
+              message: `Hide ${appName}`,
+              comment:
+                "Menu item in the macOS app menu that hides the app; {appName} is the app's name",
+            }),
+            role: "hide",
+          },
+          {
+            label: t({
+              message: "Hide Others",
+              comment:
+                "Menu item in the macOS app menu that hides every other app",
+            }),
+            role: "hideOthers",
+          },
+          {
+            label: t({
+              message: "Show All",
+              comment:
+                "Menu item in the macOS app menu that shows every hidden app again",
+            }),
+            role: "unhide",
+          },
+          separator,
+          quit,
+        ]
+      : [quit],
+  };
+
+  const editMenu: MenuItemConstructorOptions = {
+    label: t({ message: "Edit", comment: "Name of the Edit menu" }),
+    submenu: [
+      {
+        label: t({ message: "Undo", comment: "Menu item in the Edit menu" }),
+        role: "undo",
+        id: "edit.undo",
+      },
+      {
+        label: t({ message: "Redo", comment: "Menu item in the Edit menu" }),
+        role: "redo",
+        id: "edit.redo",
+      },
+      separator,
+      {
+        label: t({ message: "Cut", comment: "Menu item in the Edit menu" }),
+        role: "cut",
+        id: "edit.cut",
+      },
+      {
+        label: t({ message: "Copy", comment: "Menu item in the Edit menu" }),
+        role: "copy",
+        id: "edit.copy",
+      },
+      {
+        label: t({ message: "Paste", comment: "Menu item in the Edit menu" }),
+        role: "paste",
+        id: "edit.paste",
+      },
+      {
+        label: t({
+          message: "Paste and Match Style",
+          comment:
+            "Menu item in the Edit menu that pastes text without its formatting",
+        }),
+        role: "pasteAndMatchStyle",
+        id: "edit.pasteAndMatchStyle",
+      },
+      {
+        label: t({
+          message: "Delete",
+          comment: "Menu item in the Edit menu that deletes the selected text",
+        }),
+        role: "delete",
+        id: "edit.delete",
+      },
+      {
+        label: t({
+          message: "Select All",
+          comment: "Menu item in the Edit menu",
+        }),
+        role: "selectAll",
+        id: "edit.selectAll",
+      },
+    ],
+  };
+
+  const vibrancy = item("vibrancy.toggle", "checkbox");
+
+  const viewMenu: MenuItemConstructorOptions = {
+    label: t({ message: "View", comment: "Name of the View menu" }),
+    submenu: [
+      ...item("design.modern", "radio"),
+      ...item("design.classic", "radio"),
+      separator,
+      ...(vibrancy.length > 0 ? [...vibrancy, separator] : []),
+      ...item("tab.reload"),
+    ],
+  };
+
+  const tabsMenu: MenuItemConstructorOptions = {
+    label: t({
+      message: "Tabs",
+      comment: "Name of the menu of commands on the selected profile's tabs",
+    }),
+    submenu: [
+      ...item("tab.next"),
+      ...item("tab.previous"),
+      separator,
+      ...item("tab.close"),
+    ],
+  };
+
+  const minimize: MenuItemConstructorOptions = {
+    label: t({
+      message: "Minimize",
+      comment: "Menu item in the Window menu",
+    }),
+    role: "minimize",
+  };
+
+  const profileItems = [
+    ...item("profile.next"),
+    ...item("profile.previous"),
+    separator,
+    ...item("profile.add"),
+  ];
+
+  const windowMenu: MenuItemConstructorOptions = {
+    label: t({ message: "Window", comment: "Name of the Window menu" }),
+    ...(isMacOS ? { role: "windowMenu" as const } : {}),
+    submenu: isMacOS
+      ? [
+          minimize,
+          {
+            label: t({
+              message: "Zoom",
+              comment:
+                "Menu item in the macOS Window menu that toggles the window between its size and filling the screen",
+            }),
+            role: "zoom",
+          },
+          separator,
+          ...profileItems,
+          separator,
+          {
+            label: t({
+              message: "Bring All to Front",
+              comment: "Menu item in the macOS Window menu",
+            }),
+            role: "front",
+          },
+        ]
+      : [
+          minimize,
+          {
+            label: t({
+              message: "Close",
+              comment: "Menu item in the Window menu that closes the window",
+            }),
+            role: "close",
+          },
+          separator,
+          ...profileItems,
+        ],
+  };
+
+  // On macOS the role gives the menu its search field; elsewhere a Help
+  // menu would be empty.
+  const helpMenu: MenuItemConstructorOptions[] = isMacOS
+    ? [
+        {
+          label: t({ message: "Help", comment: "Name of the Help menu" }),
+          role: "help",
+          submenu: [],
+        },
+      ]
+    : [];
+
+  return [appMenu, editMenu, viewMenu, tabsMenu, windowMenu, ...helpMenu];
+};
+
+export interface ApplicationMenuDeps {
+  platform: Platform;
+  appName: string;
+  commands: readonly Command[];
+  context: () => CommandContext;
+  actions: CommandActions;
+  setMenu: (template: MenuItemConstructorOptions[]) => void;
+  log: (message: string) => void;
+}
+
+const describe = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+/**
+ * Sets the application menu and sets it again whenever what a command
+ * offers, whether it is available or checked, has changed since.
+ */
+export const createApplicationMenu = ({
+  platform,
+  appName,
+  commands,
+  context,
+  actions,
+  setMenu,
+  log,
+}: ApplicationMenuDeps) => {
+  let shown: unknown;
+
+  const offered = (current: CommandContext) =>
+    commands.map((command) => [
+      command.id,
+      command.isAvailable?.(current) ?? true,
+      command.isChecked?.(current),
+    ]);
+
+  /**
+   * A command fails into the log. A choice's menu is set again after it
+   * either way, since Electron checks a clicked radio or checkbox item itself.
+   */
+  const run = async (command: Command) => {
+    try {
+      await command.run(context(), actions);
+    } catch (error) {
+      log(`Command ${command.id} failed: ${describe(error)}`);
+    }
+
+    // oxlint-disable-next-line no-use-before-define -- run and build call each other
+    build(command.isChecked !== undefined);
+  };
+
+  const build = (force: boolean) => {
+    const current = context();
+    const next = offered(current);
+
+    if (!force && isEqual(next, shown)) {
+      return;
+    }
+
+    shown = next;
+    setMenu(
+      buildMenuTemplate({
+        platform,
+        appName,
+        commands,
+        context: current,
+        run: (command) => {
+          run(command);
+        },
+      })
+    );
+  };
+
+  build(true);
+
+  return {
+    /** Sets the menu again if what it offers has changed. */
+    refresh: () => {
+      build(false);
+    },
+    /**
+     * Runs the available command whose shortcut a key in a page is, since
+     * the menu hears only what reaches it, which focus inside a page's view
+     * does not promise. Says whether it was one.
+     */
+    handleKey: (input: KeyInput) => {
+      const current = context();
+      const command = commands.find((candidate) => {
+        const shortcut = candidate.shortcut?.[platform];
+
+        return (
+          shortcut !== undefined &&
+          matchesAccelerator(shortcut, input, platform === "darwin") &&
+          (candidate.isAvailable?.(current) ?? true)
+        );
+      });
+
+      if (command) {
+        run(command);
+      }
+
+      return command !== undefined;
+    },
+  };
+};

@@ -1,3 +1,4 @@
+import type { KeyInput } from "#core/accelerator.ts";
 import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { TAB_STRIP_WIDTH, contentViewBounds, viewFrame } from "#core/layout.ts";
@@ -43,6 +44,8 @@ export interface TabViewsDeps {
     tabId: string
   ) => Promise<OpenedTab | undefined>;
   newId: () => string;
+  /** Runs the shortcut a key in a page is, if it is one. */
+  handleKey: (input: KeyInput) => boolean;
   /** Readies a profile's session before any page of it loads. */
   prepareSession: (partition: string) => void;
   updatePages: (updates: PageUpdate[]) => Promise<unknown>;
@@ -78,6 +81,7 @@ export const createTabViews = ({
   design,
   openTab,
   newId,
+  handleKey,
   prepareSession,
   updatePages,
   log,
@@ -159,6 +163,10 @@ export const createTabViews = ({
           load(key, tab.view, url);
         }
 
+        break;
+      }
+      case "reload": {
+        tab.view.reload();
         break;
       }
       case "schedule-retry": {
@@ -319,6 +327,7 @@ export const createTabViews = ({
       onEvent: (event) => {
         onEvent(key, tabKeyed, event);
       },
+      onKey: handleKey,
     });
 
     place(view);
@@ -388,6 +397,12 @@ export const createTabViews = ({
     /** What the machine has to hear from the tab's controls. */
     retry: (key: TabKey) => {
       dispatch(tabKey(key), { kind: "retry" });
+    },
+    /** Loads the front tab's page again; one that failed or crashed, its URL. */
+    reloadFront: () => {
+      if (front !== undefined) {
+        dispatch(front, { kind: "reload" });
+      }
     },
     /** Places every view again, as the design now has it, loading nothing. */
     relayout: placeAll,

@@ -46,6 +46,7 @@ interface FakeView {
   bounds: unknown[];
   radii: number[];
   loaded: string[];
+  reloads: number;
   visible: boolean | undefined;
   closed: boolean;
 }
@@ -98,6 +99,7 @@ const setup = async ({
           bounds: [],
           radii: [],
           loaded: [],
+          reloads: 0,
           visible: undefined,
           closed: false,
         };
@@ -109,6 +111,9 @@ const setup = async ({
         return {
           setBounds: (rectangle) => view.bounds.push(rectangle),
           setBorderRadius: (radius) => view.radii.push(radius),
+          reload: () => {
+            view.reloads += 1;
+          },
           loadURL: (url) => {
             view.loaded.push(url);
 
@@ -149,6 +154,7 @@ const setup = async ({
 
       return `new-${ids}`;
     },
+    handleKey: () => false,
     prepareSession: (partition) => {
       prepared.push([partition, views.length]);
     },
@@ -493,6 +499,24 @@ describe(createTabViews, () => {
     }
   });
 
+  it("reloads the front tab's page where it is, and a failed one from its URL", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+
+    window.emit(gmail, { kind: "loaded" });
+    window.tabs.reloadFront();
+
+    expect([gmail?.reloads, gmail?.loaded]).toStrictEqual([1, [GMAIL]]);
+    expect(
+      window.tabs.status({ profileId: "a", tabId: "gmail" })
+    ).toStrictEqual({ kind: "loading" });
+
+    window.emit(gmail, REFUSED);
+    window.tabs.reloadFront();
+
+    expect([gmail?.reloads, gmail?.loaded]).toStrictEqual([1, [GMAIL, GMAIL]]);
+  });
+
   it("places every view in the design's rectangle, rounded in modern, and moves them when it changes, loading nothing", async () => {
     const window = await setup({ design: "modern" });
 
@@ -517,5 +541,6 @@ describe(createTabViews, () => {
     }
 
     expect(window.views.map((view) => view.loaded.length)).toStrictEqual(loads);
+    expect(window.views.map((view) => view.reloads)).toStrictEqual([0, 0]);
   });
 });

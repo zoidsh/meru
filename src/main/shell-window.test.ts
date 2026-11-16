@@ -40,6 +40,7 @@ const createFakeWindow = () => {
       setBounds: () => false,
       setBorderRadius: () => false,
       loadURL: () => Promise.resolve(),
+      reload: () => false,
       setVisible: () => false,
       close: () => false,
     }),
