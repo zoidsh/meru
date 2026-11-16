@@ -1,3 +1,9 @@
+/** Every build that is not a release, whatever its version. */
+export const DEV_IDENTITY = {
+  productName: "Meru Dev",
+  appId: "sh.zoid.meru.dev",
+} as const;
+
 const isDevVersion = (version: string) =>
   /^\d+\.\d+\.\d+-dev(?:[.+]|$)/iu.test(version);
 
@@ -18,4 +24,4 @@ export const appIdentity = ({
 }) =>
   isRelease && !isDevVersion(version)
     ? { productName: "Meru", appId: "sh.zoid.meru" }
-    : { productName: "Meru Dev", appId: "sh.zoid.meru.dev" };
+    : DEV_IDENTITY;

@@ -7,11 +7,12 @@
  *                 --installers, so no installer can carry it
  */
 import { spawnSync } from "node:child_process";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 
 import { Arch, build, Platform } from "electron-builder";
 
-import { createConfig } from "../electron-builder.config.ts";
+import { createConfig, packOutputDir } from "../electron-builder.config.ts";
 import { repositoryRoot } from "./lib/bundles.ts";
 
 const args = new Set(process.argv.slice(2));
@@ -62,9 +63,15 @@ for (const name of [
   Reflect.deleteProperty(process.env, name);
 }
 
+const variant = isE2e ? "e2e" : "release";
+
+// A stale app from another version could carry another name and id, such as
+// the installed Meru's, beside the one packed now.
+await rm(packOutputDir(variant), { recursive: true, force: true });
+
 const outputs = await build({
   projectDir: repositoryRoot,
-  config: createConfig(isE2e ? "e2e" : "release"),
+  config: createConfig(variant),
   targets: isInstallers
     ? platform.createTarget()
     : platform.createTarget("dir", arch),

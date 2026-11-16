@@ -79,11 +79,7 @@ export const spawnElectron = ({
     ],
     {
       stdio: "inherit",
-      env: {
-        ...process.env,
-        ...env,
-        ...(args.background ? { MERU_BACKGROUND: "1" } : {}),
-      },
+      env: { ...process.env, ...env },
     }
   );
 

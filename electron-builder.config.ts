@@ -46,6 +46,9 @@ const copyAssetCatalog: Configuration["afterPack"] = async (context) => {
   );
 };
 
+export const packOutputDir = (variant: PackageVariant) =>
+  path.join(root, "dist", variant);
+
 export const createConfig = (variant: PackageVariant): Configuration => {
   const identity = appIdentity({ version, isRelease: variant === "release" });
   // A development build claims no link or mail scheme, so the system never
@@ -56,7 +59,7 @@ export const createConfig = (variant: PackageVariant): Configuration => {
     ...identity,
     directories: {
       app: path.join(root, "out", variant === "e2e" ? "e2e" : "prod"),
-      output: path.join(root, "dist", ...(variant === "e2e" ? ["e2e"] : [])),
+      output: packOutputDir(variant),
       buildResources: path.join(root, "build"),
     },
     // The built app is complete: everything is bundled and it has no

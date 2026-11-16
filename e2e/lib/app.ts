@@ -1,7 +1,6 @@
 // Linux needs a display: `xvfb-run -a pnpm test:e2e` where there is none.
 import { execFile, spawn } from "node:child_process";
 import { once } from "node:events";
-import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -11,20 +10,13 @@ import { _electron, test as base } from "@playwright/test";
 import type { ElectronApplication, Page, TestInfo } from "@playwright/test";
 import { delay, withTimeout } from "es-toolkit";
 
-import { appIdentity } from "../../packages/core/src/app-identity.ts";
+import { DEV_IDENTITY } from "../../packages/core/src/app-identity.ts";
 
 const run = promisify(execFile);
 
 const repositoryRoot = path.resolve(import.meta.dirname, "..", "..");
 
-const { productName } = appIdentity({
-  version: (
-    JSON.parse(
-      readFileSync(path.join(repositoryRoot, "package.json"), "utf-8")
-    ) as { version: string }
-  ).version,
-  isRelease: false,
-});
+const { productName } = DEV_IDENTITY;
 
 const unpackedExecutable = () => {
   const arm = process.arch === "arm64";

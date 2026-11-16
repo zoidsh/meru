@@ -16,8 +16,7 @@ describe(parseLaunchArgs, () => {
     ).toStrictEqual({
       profile: "signin",
       debugPort: "0",
-      background: true,
-      electronArgs: ["--disable-gpu", "--lang=de"],
+      electronArgs: ["--background", "--disable-gpu", "--lang=de"],
     });
   });
 
@@ -25,19 +24,29 @@ describe(parseLaunchArgs, () => {
     expect(parseLaunchArgs([])).toStrictEqual({
       profile: undefined,
       debugPort: undefined,
-      background: false,
       electronArgs: [],
     });
   });
 
   it("refuses a profile that is not one directory name, or none", () => {
-    for (const profile of ["", "..", ".", "a/b", String.raw`a\b`, "/abs"]) {
+    for (const profile of [
+      "",
+      "..",
+      ".",
+      "a/b",
+      String.raw`a\b`,
+      "/abs",
+      "-x",
+    ]) {
       expect(() => parseLaunchArgs([`--profile=${profile}`])).toThrow(
         /single directory name/u
       );
     }
 
     expect(() => parseLaunchArgs(["--profile"])).toThrow(
+      /single directory name/u
+    );
+    expect(() => parseLaunchArgs(["--profile", "--background"])).toThrow(
       /single directory name/u
     );
   });

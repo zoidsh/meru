@@ -4,7 +4,6 @@ export interface LaunchArgs {
   /** Set when `--profile` was given; otherwise the caller picks the default. */
   profile: string | undefined;
   debugPort: string | undefined;
-  background: boolean;
   /** Everything not declared here, for Electron and Chromium as typed. */
   electronArgs: string[];
 }
@@ -12,12 +11,14 @@ export interface LaunchArgs {
 const OPTIONS = {
   profile: { type: "string" },
   "debug-port": { type: "string" },
-  background: { type: "boolean" },
 } as const;
 
-/** One directory under `.meru`, so a profile never names a path elsewhere. */
+/**
+ * One directory under `.meru`, so a profile never names a path elsewhere, and
+ * never a leading `-`, so `--profile --background` is no profile.
+ */
 const isSafeProfileName = (name: string) =>
-  /^[\w.-]+$/u.test(name) && name !== "." && name !== "..";
+  /^[\w.][\w.-]*$/u.test(name) && name !== "." && name !== "..";
 
 export const parseLaunchArgs = (argv: readonly string[]): LaunchArgs => {
   const { values, tokens } = parseArgs({
@@ -51,7 +52,7 @@ export const parseLaunchArgs = (argv: readonly string[]): LaunchArgs => {
     (typeof profile !== "string" || !isSafeProfileName(profile))
   ) {
     throw new Error(
-      '--profile needs a single directory name of letters, digits, ".", "_" or "-".'
+      '--profile needs a single directory name of letters, digits, ".", "_" or "-", not starting with "-".'
     );
   }
 
@@ -62,7 +63,6 @@ export const parseLaunchArgs = (argv: readonly string[]): LaunchArgs => {
   return {
     profile,
     debugPort,
-    background: values.background === true,
     electronArgs,
   };
 };

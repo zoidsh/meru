@@ -18,7 +18,7 @@ Meru is an Electron desktop client for Gmail and Google Workspace. This branch i
 | Unit tests | `pnpm test` |
 | One test file | `pnpm test packages/core/src/window-bounds` |
 | One test by name | `pnpm test -t "name"` |
-| Pack the unpacked app into `dist/` | `pnpm package` |
+| Pack the unpacked app into `dist/release` | `pnpm package` |
 | Pack this platform's installers | `pnpm package:installers` |
 | End-to-end suite (packs first) | `pnpm test:e2e`; on Linux `xvfb-run -a pnpm test:e2e` |
 
@@ -52,9 +52,9 @@ TypeScript stays runnable by Node's type stripping: explicit `.ts` extensions on
 
 The built shell is served from `meru-app://shell/` with a strict Content-Security-Policy, never from `file://`. In development the shell loads from the Vite dev server, and the policy allows exactly that origin, its hot-reload socket and a per-run nonce Vite stamps on what it injects.
 
-`scripts/package.ts` builds, then packs with electron-builder from `electron-builder.config.ts`, which packs only the built app, into an asar, and flips the Electron fuses. Every build is unsigned for now. `--e2e` makes the end-to-end variant: built into `out/e2e` with `MERU_E2E_BUILD` true, which compiles in `MERU_TEST_BACKGROUND`, and packed into `dist/e2e` with the inspector fuse on for Playwright. It is never packed into installers, and a release build fails if `MERU_TEST_BACKGROUND` appears in it.
+`scripts/package.ts` builds, then packs with electron-builder from `electron-builder.config.ts`, which packs only the built app, into an asar, and flips the Electron fuses, into `dist/release`. It removes the variant's folder in `dist` first, so no app from another version sits beside the new one. Every build is unsigned for now. `--e2e` makes the end-to-end variant: built into `out/e2e` with `MERU_E2E_BUILD` true, which compiles in `MERU_TEST_BACKGROUND`, and packed into `dist/e2e` with the inspector fuse on for Playwright. It is never packed into installers, and a release build fails if `MERU_TEST_BACKGROUND` appears in it.
 
-`appIdentity` in `packages/core/src/app-identity.ts` names every build. A release build of a release or beta version is `Meru`, `sh.zoid.meru`; anything else, a `-dev` version or a dev, e2e or `start` build, is `Meru Dev`, `sh.zoid.meru.dev`, and claims no URL scheme. The name goes into the manifest Electron reads, so Electron's default user data folder for a development build is `Meru Dev`, never an installed Meru's, and the window title follows it.
+`appIdentity` in `packages/core/src/app-identity.ts` names every build. The `out/prod` build, which `pnpm build` and `pnpm package` make and `pnpm start` runs, is `Meru`, `sh.zoid.meru`, for a release or beta version and `Meru Dev`, `sh.zoid.meru.dev`, for every `-dev` version; dev and e2e builds are always `Meru Dev`. `Meru Dev` claims no URL scheme. The name goes into the manifest Electron reads, so Electron's default user data folder for a `Meru Dev` build is never an installed Meru's, and the window title follows it. `pnpm start` passes its own `.meru/<profile>` directory whatever the build is named.
 
 ## Dev and start runs
 
