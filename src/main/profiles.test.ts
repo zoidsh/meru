@@ -13,30 +13,37 @@ const two: State = {
   selectedProfileId: "b",
 };
 
+const describeState = (state: State) =>
+  `${state.profiles.map((profile) => profile.id).join(",")} to clear [${(state.profilesToClear ?? []).join(",")}]`;
+
 /**
  * Profiles over fakes that record each step in one log, in order, and fail
  * at the step named.
  */
-const setup = ({ fail }: { fail?: "save" | "close-view" | "clear" } = {}) => {
+const setup = ({
+  initial = two,
+  failSave = false,
+  failView = false,
+  failClear = [],
+}: {
+  initial?: State;
+  failSave?: boolean;
+  failView?: boolean;
+  /** Partitions whose clear fails. */
+  failClear?: string[];
+} = {}) => {
   const steps: string[] = [];
   const logs: string[] = [];
-  const saved: State[] = [];
   let ids = 0;
 
   const profiles = createProfiles({
-    initial: two,
+    initial,
     save: (state) => {
-      steps.push(
-        `save ${state.profiles.map((profile) => profile.id).join(",")}`
-      );
+      steps.push(`save ${describeState(state)}`);
 
-      if (fail === "save") {
-        return Promise.reject(new Error("disk full"));
-      }
-
-      saved.push(state);
-
-      return Promise.resolve();
+      return failSave
+        ? Promise.reject(new Error("disk full"))
+        : Promise.resolve();
     },
     newId: () => {
       ids += 1;
@@ -47,7 +54,7 @@ const setup = ({ fail }: { fail?: "save" | "close-view" | "clear" } = {}) => {
     clearSession: (partition) => {
       steps.push(`clear ${partition}`);
 
-      return fail === "clear"
+      return failClear.includes(partition)
         ? Promise.reject(new Error("locked"))
         : Promise.resolve();
     },
@@ -60,12 +67,12 @@ const setup = ({ fail }: { fail?: "save" | "close-view" | "clear" } = {}) => {
       `views ${state.profiles.map((profile) => profile.id).join(",")}`
     );
 
-    if (fail === "close-view") {
+    if (failView) {
       throw new Error("view gone wrong");
     }
   });
 
-  return { profiles, steps, logs, saved };
+  return { profiles, steps, logs };
 };
 
 describe(createProfiles, () => {
@@ -79,20 +86,24 @@ describe(createProfiles, () => {
       name: "Profile 3",
     });
     expect(profiles.get().selectedProfileId).toBe("new-1");
-    expect(steps).toStrictEqual(["save a,b,new-1", "views a,b,new-1"]);
+    expect(steps).toStrictEqual([
+      "save a,b,new-1 to clear []",
+      "views a,b,new-1",
+    ]);
   });
 
-  it("selects a listed profile and ignores another", async () => {
+  it("selects another listed profile, and writes nothing for the selected one or an unknown one", async () => {
     const { profiles, steps } = setup();
 
     await expect(profiles.select("a")).resolves.toBeTruthy();
+    await expect(profiles.select("a")).resolves.toBeFalsy();
     await expect(profiles.select("missing")).resolves.toBeFalsy();
 
     expect(profiles.get().selectedProfileId).toBe("a");
-    expect(steps).toStrictEqual(["save a,b", "views a,b"]);
+    expect(steps).toStrictEqual(["save a,b to clear []", "views a,b"]);
   });
 
-  it("removes a profile by saving the list without it, closing its view, then clearing its data", async () => {
+  it("removes a profile by saving it onto the list to clear, closing its view, clearing its data, then taking it off the list", async () => {
     const { profiles, steps, logs } = setup();
 
     await expect(profiles.remove("b")).resolves.toBeTruthy();
@@ -101,8 +112,15 @@ describe(createProfiles, () => {
       ...two,
       profiles: [{ id: "a", name: "Default" }],
       selectedProfileId: "a",
+      profilesToClear: [],
     });
-    expect(steps).toStrictEqual(["save a", "views a", "clear persist:b"]);
+    expect(steps).toStrictEqual([
+      "save a to clear [b]",
+      "views a",
+      "clear persist:b",
+      "save a to clear []",
+      "views a",
+    ]);
     expect(logs).toStrictEqual([]);
   });
 
@@ -118,36 +136,35 @@ describe(createProfiles, () => {
   });
 
   it("keeps the profile listed and its data whole when the save fails", async () => {
-    const { profiles, steps } = setup({ fail: "save" });
+    const { profiles, steps } = setup({ failSave: true });
 
     await expect(profiles.remove("b")).rejects.toThrow("disk full");
 
     expect(profiles.get()).toStrictEqual(two);
-    expect(steps).toStrictEqual(["save a"]);
+    expect(steps).toStrictEqual(["save a to clear [b]"]);
   });
 
   it("still clears the data, and logs, when closing the view fails", async () => {
-    const { profiles, steps, logs } = setup({ fail: "close-view" });
+    const { profiles, steps, logs } = setup({ failView: true });
+
+    await expect(profiles.remove("b")).resolves.toBeTruthy();
+
+    expect(steps).toContain("clear persist:b");
+    expect(profiles.get().profilesToClear).toStrictEqual([]);
+    expect(logs).toContain("A profiles listener failed: view gone wrong");
+  });
+
+  it("keeps a profile whose clear fails on the list, and logs where its data was left", async () => {
+    const { profiles, logs } = setup({ failClear: ["persist:b"] });
 
     await expect(profiles.remove("b")).resolves.toBeTruthy();
 
     expect(profiles.get().profiles).toStrictEqual([
       { id: "a", name: "Default" },
     ]);
-    expect(steps).toStrictEqual(["save a", "views a", "clear persist:b"]);
-    expect(logs).toStrictEqual(["A profiles listener failed: view gone wrong"]);
-  });
-
-  it("logs where the data was left when clearing it fails, with the profile already unlisted", async () => {
-    const { profiles, saved, logs } = setup({ fail: "clear" });
-
-    await expect(profiles.remove("b")).resolves.toBeTruthy();
-
-    expect(saved.at(-1)?.profiles).toStrictEqual([
-      { id: "a", name: "Default" },
-    ]);
+    expect(profiles.get().profilesToClear).toStrictEqual(["b"]);
     expect(logs).toStrictEqual([
-      "Removed profile b, but its data in persist:b was not deleted: locked",
+      "The data of removed profile b in persist:b was not deleted, and will be tried again at the next launch: locked",
     ]);
   });
 
@@ -160,15 +177,69 @@ describe(createProfiles, () => {
       profiles.remove("b"),
     ]);
 
-    expect(steps).toStrictEqual([
-      "save a,b,new-1",
-      "views a,b,new-1",
-      "save a,b,new-1",
-      "views a,b,new-1",
-      "save a,new-1",
-      "views a,new-1",
+    expect(steps.filter((step) => !step.startsWith("views"))).toStrictEqual([
+      "save a,b,new-1 to clear []",
+      "save a,b,new-1 to clear []",
+      "save a,new-1 to clear [b]",
       "clear persist:b",
+      "save a,new-1 to clear []",
     ]);
     expect(profiles.get().selectedProfileId).toBe("a");
+  });
+});
+
+/** Two profiles, with removals whose data a quit left uncleared. */
+const leftOver = (profilesToClear: string[]): State => ({
+  ...two,
+  profilesToClear,
+});
+
+describe("finishing clears at startup", () => {
+  it("clears each removed profile on the list and empties it", async () => {
+    const { profiles, steps } = setup({ initial: leftOver(["x", "y"]) });
+
+    await profiles.finishClears();
+
+    expect(steps).toStrictEqual([
+      "clear persist:x",
+      "clear persist:y",
+      "save a,b to clear []",
+      "views a,b",
+    ]);
+  });
+
+  it("keeps on the list, and logs, a profile whose clear fails again", async () => {
+    const { profiles, logs } = setup({
+      initial: leftOver(["x", "y"]),
+      failClear: ["persist:y"],
+    });
+
+    await profiles.finishClears();
+
+    expect(profiles.get().profilesToClear).toStrictEqual(["y"]);
+    expect(logs).toStrictEqual([
+      "The data of removed profile y in persist:y was not deleted, and will be tried again at the next launch: locked",
+    ]);
+  });
+
+  it("never clears an id that is still listed as a profile, and drops it from the list with a log line", async () => {
+    const { profiles, steps, logs } = setup({ initial: leftOver(["b", "x"]) });
+
+    await profiles.finishClears();
+
+    expect(steps).not.toContain("clear persist:b");
+    expect(steps).toContain("clear persist:x");
+    expect(profiles.get().profilesToClear).toStrictEqual([]);
+    expect(logs).toStrictEqual([
+      "Kept the data of profile b, which was on the list to clear but is still listed",
+    ]);
+  });
+
+  it("does nothing when nothing is left to clear", async () => {
+    const { profiles, steps } = setup();
+
+    await profiles.finishClears();
+
+    expect(steps).toStrictEqual([]);
   });
 });

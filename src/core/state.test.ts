@@ -5,11 +5,13 @@ import {
   canRemoveProfile,
   createInitialState,
   decodeState,
+  forgetProfilesToClear,
   nextProfileName,
   profilePartition,
   removeProfile,
   selectProfile,
   selectedProfile,
+  sortProfilesToClear,
 } from "./state.ts";
 import type { State } from "./state.ts";
 
@@ -141,8 +143,9 @@ describe(addProfile, () => {
 });
 
 describe(selectProfile, () => {
-  it("selects a listed profile and refuses another", () => {
+  it("selects a listed profile, and changes nothing for the selected one or another", () => {
     expect(selectProfile(three, "c")?.selectedProfileId).toBe("c");
+    expect(selectProfile(three, "b")).toBeUndefined();
     expect(selectProfile(three, "missing")).toBeUndefined();
   });
 });
@@ -153,6 +156,24 @@ const ids = (state: State | undefined) =>
     state.profiles.map((profile) => profile.id),
     state.selectedProfileId,
   ];
+
+describe(sortProfilesToClear, () => {
+  it("never offers to clear an id that is still listed as a profile", () => {
+    expect(
+      sortProfilesToClear({ ...three, profilesToClear: ["x", "b"] })
+    ).toStrictEqual({ clear: ["x"], stillListed: ["b"] });
+  });
+});
+
+describe(forgetProfilesToClear, () => {
+  it("takes ids off the list, and changes nothing for none", () => {
+    expect(
+      forgetProfilesToClear({ ...three, profilesToClear: ["x", "y"] }, ["x"])
+        ?.profilesToClear
+    ).toStrictEqual(["y"]);
+    expect(forgetProfilesToClear(three, [])).toBeUndefined();
+  });
+});
 
 describe(removeProfile, () => {
   it("leaves the selection alone when another profile goes", () => {
@@ -173,10 +194,38 @@ describe(removeProfile, () => {
   it("never removes the last profile, nor one that is not listed", () => {
     const one = createInitialState(() => "a");
 
-    expect(canRemoveProfile(one)).toBeFalsy();
+    expect(canRemoveProfile(one, "a")).toBeFalsy();
     expect(removeProfile(one, "a")).toBeUndefined();
-    expect(canRemoveProfile(three)).toBeTruthy();
+    expect(canRemoveProfile(three, "a")).toBeTruthy();
     expect(removeProfile(three, "missing")).toBeUndefined();
+  });
+
+  it("puts the removed profile on the list to clear, once", () => {
+    expect(
+      removeProfile({ ...three, profilesToClear: ["x", "c"] }, "c")
+        ?.profilesToClear
+    ).toStrictEqual(["x", "c"]);
+    expect(removeProfile(three, "a")?.profilesToClear).toStrictEqual(["a"]);
+  });
+
+  it("removes every entry of an id a hand-edited file lists twice, and never the only id left", () => {
+    const twice: State = {
+      ...three,
+      profiles: [
+        { id: "a", name: "Default" },
+        { id: "b", name: "Profile 2" },
+        { id: "a", name: "Again" },
+      ],
+      selectedProfileId: "a",
+    };
+
+    expect(ids(removeProfile(twice, "a"))).toStrictEqual([["b"], "b"]);
+    expect(
+      removeProfile(
+        { ...twice, profiles: [twice.profiles[0], twice.profiles[2]] } as State,
+        "a"
+      )
+    ).toBeUndefined();
   });
 
   it("leaves a state that still decodes", () => {

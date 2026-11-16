@@ -17,6 +17,11 @@ const stateSchema = z
     version: z.literal(STATE_VERSION),
     profiles: z.array(profileSchema).check(z.minLength(1)),
     selectedProfileId: z.string(),
+    /**
+     * Removed profiles whose session data is still to be deleted, so a quit
+     * between the removal and the clear is finished at the next launch.
+     */
+    profilesToClear: z.optional(z.array(z.string().check(z.minLength(1)))),
   })
   .check(
     z.refine(
@@ -98,32 +103,39 @@ export const addProfile = (state: State, profile: Profile): State => ({
 });
 
 /** Nothing when there is no such profile. */
+/** Nothing when there is no such profile or it is already selected. */
 export const selectProfile = (
   state: State,
   profileId: string
 ): State | undefined =>
+  state.selectedProfileId !== profileId &&
   state.profiles.some((profile) => profile.id === profileId)
     ? { ...state, selectedProfileId: profileId }
     : undefined;
 
-export const canRemoveProfile = (state: State) => state.profiles.length > 1;
+/** Whether the profile is listed and some other profile would be left. */
+export const canRemoveProfile = (state: State, profileId: string) =>
+  state.profiles.some((profile) => profile.id === profileId) &&
+  state.profiles.some((profile) => profile.id !== profileId);
 
 /**
  * Removing the selected profile selects the one to its right, or to its left
- * when it was the last; removing another leaves the selection alone. Nothing
- * when there is no such profile or it is the only one.
+ * when it was the last; removing another leaves the selection alone. The id
+ * goes on the list of profiles whose data is to be deleted. Every entry with
+ * the id goes, so a hand-edited file listing it twice never keeps a profile
+ * whose data is about to be cleared. Nothing when the profile cannot be
+ * removed.
  */
 export const removeProfile = (
   state: State,
   profileId: string
 ): State | undefined => {
-  const index = state.profiles.findIndex((profile) => profile.id === profileId);
-
-  if (index === -1 || !canRemoveProfile(state)) {
+  if (!canRemoveProfile(state, profileId)) {
     return;
   }
 
-  const profiles = state.profiles.filter((_, other) => other !== index);
+  const index = state.profiles.findIndex((profile) => profile.id === profileId);
+  const profiles = state.profiles.filter((profile) => profile.id !== profileId);
   const neighbour = profiles[Math.min(index, profiles.length - 1)];
 
   return {
@@ -133,6 +145,39 @@ export const removeProfile = (
       state.selectedProfileId === profileId && neighbour
         ? neighbour.id
         : state.selectedProfileId,
+    profilesToClear: [
+      ...(state.profilesToClear ?? []).filter((id) => id !== profileId),
+      profileId,
+    ],
+  };
+};
+
+/** Takes ids off the list of profiles whose data is to be deleted. */
+export const forgetProfilesToClear = (
+  state: State,
+  profileIds: readonly string[]
+): State | undefined =>
+  profileIds.length === 0
+    ? undefined
+    : {
+        ...state,
+        profilesToClear: (state.profilesToClear ?? []).filter(
+          (id) => !profileIds.includes(id)
+        ),
+      };
+
+/**
+ * The ids on the list to clear, split into those whose data may be deleted
+ * and those that are still listed as profiles, as in a hand-edited file,
+ * whose data must never be.
+ */
+export const sortProfilesToClear = (state: State) => {
+  const listed = new Set(state.profiles.map((profile) => profile.id));
+  const ids = state.profilesToClear ?? [];
+
+  return {
+    clear: ids.filter((id) => !listed.has(id)),
+    stillListed: ids.filter((id) => listed.has(id)),
   };
 };
 

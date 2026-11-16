@@ -147,6 +147,9 @@ const start = async () => {
     log: console.error,
   });
 
+  // Before any view exists, so no page holds a session being cleared.
+  await profiles.finishClears();
+
   const shellUrl = new URL(shellSource.url);
 
   shellUrl.searchParams.set("lang", language);

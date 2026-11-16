@@ -97,12 +97,13 @@ describe(loadState, () => {
     expect(logs).toHaveLength(1);
   });
 
-  it("keeps keys it does not know, at the top and in a profile, when it rewrites the file", async () => {
+  it("keeps the list to clear, and keys it does not know at the top and in a profile, when it rewrites the file", async () => {
     const { file, files } = createFakeFile(
       JSON.stringify({
         version: 1,
         profiles: [{ id: "kept-id", name: "Work", color: "teal" }],
         selectedProfileId: "kept-id",
+        profilesToClear: ["removed-id"],
         panes: [{ tab: 1 }],
       })
     );
@@ -114,6 +115,7 @@ describe(loadState, () => {
       version: 1,
       profiles: [{ id: "kept-id", name: "Work", color: "teal" }],
       selectedProfileId: "kept-id",
+      profilesToClear: ["removed-id"],
       panes: [{ tab: 1 }],
     });
   });

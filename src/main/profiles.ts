@@ -2,10 +2,12 @@ import { Mutex } from "es-toolkit";
 
 import {
   addProfile,
+  forgetProfilesToClear,
   nextProfileName,
   profilePartition,
   removeProfile,
   selectProfile,
+  sortProfilesToClear,
 } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
@@ -59,6 +61,32 @@ export const createProfiles = ({
     return true;
   };
 
+  /** Within `exclusive`. A failure is logged and the id kept for next time. */
+  const clearAndForget = async (profileIds: readonly string[]) => {
+    const results = await Promise.allSettled(
+      profileIds.map((profileId) => clearSession(profilePartition(profileId)))
+    );
+    const cleared = profileIds.filter((profileId, index) => {
+      const result = results[index];
+
+      if (result?.status === "rejected") {
+        log(
+          `The data of removed profile ${profileId} in ${profilePartition(profileId)} was not deleted, and will be tried again at the next launch: ${describe(result.reason)}`
+        );
+      }
+
+      return result?.status === "fulfilled";
+    });
+
+    try {
+      await commit(forgetProfilesToClear(state, cleared));
+    } catch (error) {
+      log(
+        `Deleted the data of ${cleared.join(", ")}, but the list of profiles to clear was not saved: ${describe(error)}`
+      );
+    }
+  };
+
   const exclusive = async <T>(work: () => Promise<T>) => {
     await mutex.acquire();
 
@@ -86,9 +114,10 @@ export const createProfiles = ({
         )
       ),
     /**
-     * Lists the profile no more, which closes its view, and then deletes its
-     * data, so data is never gone for a profile still listed. A clear that
-     * fails is logged with where the data is left.
+     * Lists the profile no more and puts it on the list to clear, in one
+     * write, which closes its view; then deletes its data and takes it off
+     * the list. Data is never gone for a profile still listed, and a clear
+     * that a failure or a quit interrupts is finished at the next launch.
      */
     remove: (profileId: string) =>
       exclusive(async () => {
@@ -96,17 +125,37 @@ export const createProfiles = ({
           return false;
         }
 
-        const partition = profilePartition(profileId);
+        await clearAndForget([profileId]);
 
-        try {
-          await clearSession(partition);
-        } catch (error) {
+        return true;
+      }),
+    /**
+     * Run once at startup, before any view exists: deletes the data of each
+     * profile a removal did not finish clearing. Never an id still listed as
+     * a profile, which a hand-edited file can hold; that one is only dropped
+     * from the list.
+     */
+    finishClears: () =>
+      exclusive(async () => {
+        const { clear, stillListed } = sortProfilesToClear(state);
+
+        for (const profileId of stillListed) {
           log(
-            `Removed profile ${profileId}, but its data in ${partition} was not deleted: ${describe(error)}`
+            `Kept the data of profile ${profileId}, which was on the list to clear but is still listed`
           );
         }
 
-        return true;
+        if (stillListed.length > 0) {
+          await commit(forgetProfilesToClear(state, stillListed)).catch(
+            (error: unknown) => {
+              log(
+                `The list of profiles to clear was not saved: ${describe(error)}`
+              );
+            }
+          );
+        }
+
+        await clearAndForget(clear);
       }),
   };
 };

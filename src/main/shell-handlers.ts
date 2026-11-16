@@ -64,7 +64,7 @@ export const createShellHandlers = ({
         window.showContextMenu([
           {
             label: removeProfileMenuLabel(name),
-            enabled: canRemoveProfile(state),
+            enabled: canRemoveProfile(state, profileId),
             click: () => {
               confirmAndRemove(profileId, name);
             },
