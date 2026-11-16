@@ -97,7 +97,7 @@ const killUnix = async (userDataDir: string, giveUpAt: number) => {
   await killUnix(userDataDir, giveUpAt);
 };
 
-/** Not yet run on Windows: the tree under each launched pid is killed. */
+/** On Windows the tree under each launched pid is killed. */
 const killAll = async (userDataDir: string, pids: number[]) => {
   if (process.platform !== "win32") {
     await killUnix(userDataDir, Date.now() + 15_000);
