@@ -1,5 +1,5 @@
 {
-  // The renderers: the DOM and no Node. `core` and `i18n` are here too, since
+  // The renderers: the DOM and no Node. `core`, `contract` and `i18n` are here too, since
   // both sides import them.
   "extends": "./tsconfig.json",
   "compilerOptions": {
@@ -7,5 +7,5 @@
     "types": ["vite/client"],
     "jsx": "react-jsx"
   },
-  "include": ["src/shell", "src/ui", "src/core", "src/i18n"]
+  "include": ["src/shell", "src/ui", "src/core", "src/contract", "src/i18n"]
 }

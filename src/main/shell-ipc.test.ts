@@ -1,0 +1,231 @@
+import { describe, expect, it } from "vitest";
+
+import { SHELL_CHANNELS } from "#contract/shell.ts";
+import type { ShellState } from "#contract/shell.ts";
+import type { Ipc } from "#platform/ipc.ts";
+
+import { createSenderRegistry } from "./senders.ts";
+import { RefusedCallError, serveShellContract } from "./shell-ipc.ts";
+import type { ShellHandlers } from "./shell-ipc.ts";
+
+const SHELL = 1;
+const OTHER_SHELL = 2;
+const CONTENT_VIEW = 3;
+const UNKNOWN = 99;
+
+const profilesSlice = (selectedProfileId: string) => ({
+  profiles: [
+    { id: "a", name: "Default" },
+    { id: "b", name: "Profile 2" },
+  ],
+  selectedProfileId,
+});
+
+const setup = () => {
+  const handled = new Map<
+    string,
+    (senderId: number, payload: unknown) => Promise<unknown>
+  >();
+  const listened = new Map<
+    string,
+    (senderId: number, payload: unknown) => void
+  >();
+  const sent: { to: number; channel: string; message: unknown }[] = [];
+  const calls: unknown[] = [];
+  const logs: string[] = [];
+  const changeListeners: (() => void)[] = [];
+  let state: ShellState = { profiles: profilesSlice("a") };
+
+  const ipc: Ipc = {
+    handle: (channel, handler) => {
+      handled.set(channel, handler);
+    },
+    on: (channel, listener) => {
+      listened.set(channel, listener);
+    },
+    send: (to, channel, message) => {
+      sent.push({ to, channel, message });
+    },
+  };
+
+  const senders = createSenderRegistry();
+
+  senders.register(SHELL, { role: "shell" });
+  senders.register(OTHER_SHELL, { role: "shell" });
+  senders.register(CONTENT_VIEW, { role: "content-view", profileId: "a" });
+
+  const handlers: ShellHandlers = {
+    selectProfile: (request) => {
+      calls.push(["selectProfile", request]);
+
+      return Promise.resolve();
+    },
+    addProfile: (request) => {
+      calls.push(["addProfile", request]);
+
+      return Promise.resolve();
+    },
+    openProfileMenu: (request) => {
+      calls.push(["openProfileMenu", request]);
+
+      return Promise.resolve();
+    },
+  };
+
+  serveShellContract({
+    ipc,
+    senders,
+    handlers,
+    state: {
+      read: () => state,
+      onChange: (listener) => {
+        changeListeners.push(listener);
+      },
+    },
+    log: (message) => logs.push(message),
+  });
+
+  const call = (senderId: number, name: string, payload: unknown) => {
+    const handler = handled.get(SHELL_CHANNELS.call(name as "addProfile"));
+
+    if (!handler) {
+      throw new Error(`No handler for ${name}`);
+    }
+
+    return handler(senderId, payload);
+  };
+
+  return {
+    call,
+    calls,
+    logs,
+    senders,
+    handshake: (senderId: number, payload: unknown = ["profiles"]) =>
+      listened.get(SHELL_CHANNELS.sync)?.(senderId, payload),
+    change: (next: ShellState) => {
+      state = next;
+
+      for (const listener of changeListeners) {
+        listener();
+      }
+    },
+    sentTo: (senderId: number) =>
+      sent
+        .filter(
+          ({ to, channel }) =>
+            to === senderId && channel === SHELL_CHANNELS.state
+        )
+        .map(({ message }) => message),
+  };
+};
+
+describe(serveShellContract, () => {
+  it("passes a valid call from the shell to its handler", async () => {
+    const shell = setup();
+
+    await shell.call(SHELL, "selectProfile", { profileId: "b" });
+    await shell.call(SHELL, "addProfile", {});
+
+    expect(shell.calls).toStrictEqual([
+      ["selectProfile", { profileId: "b" }],
+      ["addProfile", {}],
+    ]);
+  });
+
+  it("refuses a malformed call", async () => {
+    const shell = setup();
+
+    const results = await Promise.allSettled(
+      [undefined, {}, { profileId: 7 }, { profileId: "" }].map((payload) =>
+        shell.call(SHELL, "selectProfile", payload)
+      )
+    );
+
+    expect(
+      results.map(
+        (result) =>
+          result.status === "rejected" &&
+          result.reason instanceof RefusedCallError
+      )
+    ).toStrictEqual([true, true, true, true]);
+    expect(shell.calls).toStrictEqual([]);
+  });
+
+  it("refuses a call from a content view or an unknown sender", async () => {
+    const shell = setup();
+
+    await expect(
+      shell.call(CONTENT_VIEW, "addProfile", {})
+    ).rejects.toBeInstanceOf(RefusedCallError);
+    await expect(shell.call(UNKNOWN, "addProfile", {})).rejects.toBeInstanceOf(
+      RefusedCallError
+    );
+    expect(shell.calls).toStrictEqual([]);
+  });
+
+  it("sends nothing before the handshake", () => {
+    const shell = setup();
+
+    shell.change({ profiles: profilesSlice("b") });
+
+    expect(shell.sentTo(SHELL)).toStrictEqual([]);
+  });
+
+  it("sends a snapshot on the handshake, then a patch per change", () => {
+    const shell = setup();
+
+    shell.handshake(SHELL);
+    shell.change({ profiles: profilesSlice("b") });
+    // Unchanged slices send nothing.
+    shell.change({ profiles: profilesSlice("b") });
+
+    expect(shell.sentTo(SHELL)).toStrictEqual([
+      { kind: "snapshot", slices: { profiles: profilesSlice("a") } },
+      { kind: "patch", slice: "profiles", value: profilesSlice("b") },
+    ]);
+  });
+
+  it("serves a second subscriber its own snapshot, and both the patches", () => {
+    const shell = setup();
+
+    shell.handshake(SHELL);
+    shell.change({ profiles: profilesSlice("b") });
+    shell.handshake(OTHER_SHELL);
+    shell.change({ profiles: profilesSlice("a") });
+
+    expect(shell.sentTo(SHELL)).toStrictEqual([
+      { kind: "snapshot", slices: { profiles: profilesSlice("a") } },
+      { kind: "patch", slice: "profiles", value: profilesSlice("b") },
+      { kind: "patch", slice: "profiles", value: profilesSlice("a") },
+    ]);
+    expect(shell.sentTo(OTHER_SHELL)).toStrictEqual([
+      { kind: "snapshot", slices: { profiles: profilesSlice("b") } },
+      { kind: "patch", slice: "profiles", value: profilesSlice("a") },
+    ]);
+  });
+
+  it("refuses a handshake from a non-shell or naming an unknown slice", () => {
+    const shell = setup();
+
+    shell.handshake(CONTENT_VIEW);
+    shell.handshake(SHELL, ["profiles", "secrets"]);
+    shell.change({ profiles: profilesSlice("b") });
+
+    expect(shell.sentTo(CONTENT_VIEW)).toStrictEqual([]);
+    expect(shell.sentTo(SHELL)).toStrictEqual([]);
+    expect(shell.logs).toHaveLength(2);
+  });
+
+  it("stops sending to a shell whose webContents is gone", () => {
+    const shell = setup();
+    const unregister = shell.senders.register(4, { role: "shell" });
+
+    shell.handshake(4);
+    unregister();
+    shell.change({ profiles: profilesSlice("b") });
+
+    expect(shell.sentTo(4)).toStrictEqual([
+      { kind: "snapshot", slices: { profiles: profilesSlice("a") } },
+    ]);
+  });
+});

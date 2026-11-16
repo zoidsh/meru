@@ -66,6 +66,30 @@ export default defineConfig({
       },
     },
     {
+      files: ["src/contract/**"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "electron",
+                message:
+                  "contract imports nothing of Electron, types included.",
+              },
+            ],
+            patterns: [
+              {
+                regex: "^#(?!core/)",
+                message: "contract imports only core.",
+              },
+              NO_RELATIVE_CROSSING,
+            ],
+          },
+        ],
+      },
+    },
+    {
       // Catches a renderer's text left unwrapped for translation: a JSX text
       // child, or a literal in an attribute a person reads. Copy in any other
       // attribute, and in main, is left to review.
