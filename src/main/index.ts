@@ -184,6 +184,8 @@ const start = async () => {
   serveShellContract({
     ipc: createIpc(),
     senders,
+    // Built by hand: URL's `origin` is "null" for a scheme it does not know.
+    shellOrigin: `${shellUrl.protocol}//${shellUrl.host}`,
     handlers: createShellHandlers({
       profiles,
       window: shell.window,

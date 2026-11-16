@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { SHELL_CHANNELS } from "#contract/shell.ts";
 import type { ShellState } from "#contract/shell.ts";
-import type { Ipc } from "#platform/ipc.ts";
+import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
 import { createSenderRegistry } from "./senders.ts";
 import { RefusedCallError, serveShellContract } from "./shell-ipc.ts";
@@ -12,6 +12,14 @@ const SHELL = 1;
 const OTHER_SHELL = 2;
 const CONTENT_VIEW = 3;
 const UNKNOWN = 99;
+
+const SHELL_ORIGIN = "meru-app://shell";
+
+/** A webContents id stands for its main frame on the shell's origin. */
+const asSender = (sender: number | IpcSender): IpcSender =>
+  typeof sender === "number"
+    ? { webContentsId: sender, isMainFrame: true, origin: SHELL_ORIGIN }
+    : sender;
 
 const profilesSlice = (selectedProfileId: string) => ({
   profiles: [
@@ -24,11 +32,11 @@ const profilesSlice = (selectedProfileId: string) => ({
 const setup = () => {
   const handled = new Map<
     string,
-    (senderId: number, payload: unknown) => Promise<unknown>
+    (sender: IpcSender, payload: unknown) => Promise<unknown>
   >();
   const listened = new Map<
     string,
-    (senderId: number, payload: unknown) => void
+    (sender: IpcSender, payload: unknown) => void
   >();
   const sent: { to: number; channel: string; message: unknown }[] = [];
   const calls: unknown[] = [];
@@ -82,17 +90,18 @@ const setup = () => {
         changeListeners.push(listener);
       },
     },
+    shellOrigin: SHELL_ORIGIN,
     log: (message) => logs.push(message),
   });
 
-  const call = (senderId: number, name: string, payload: unknown) => {
+  const call = (sender: number | IpcSender, name: string, payload: unknown) => {
     const handler = handled.get(SHELL_CHANNELS.call(name as "addProfile"));
 
     if (!handler) {
       throw new Error(`No handler for ${name}`);
     }
 
-    return handler(senderId, payload);
+    return handler(asSender(sender), payload);
   };
 
   return {
@@ -100,8 +109,8 @@ const setup = () => {
     calls,
     logs,
     senders,
-    handshake: (senderId: number, payload: unknown = ["profiles"]) =>
-      listened.get(SHELL_CHANNELS.sync)?.(senderId, payload),
+    handshake: (sender: number | IpcSender, payload: unknown = ["profiles"]) =>
+      listened.get(SHELL_CHANNELS.sync)?.(asSender(sender), payload),
     change: (next: ShellState) => {
       state = next;
 
@@ -161,6 +170,36 @@ describe(serveShellContract, () => {
       RefusedCallError
     );
     expect(shell.calls).toStrictEqual([]);
+  });
+
+  it("refuses a call or a handshake from a subframe of the shell, or from another origin in it", async () => {
+    const shell = setup();
+    const strangers: IpcSender[] = [
+      { webContentsId: SHELL, isMainFrame: false, origin: SHELL_ORIGIN },
+      {
+        webContentsId: SHELL,
+        isMainFrame: true,
+        origin: "https://example.com",
+      },
+      { webContentsId: SHELL, isMainFrame: true, origin: undefined },
+    ];
+    const results = await Promise.allSettled(
+      strangers.map((sender) => shell.call(sender, "addProfile", {}))
+    );
+
+    for (const sender of strangers) {
+      shell.handshake(sender);
+    }
+
+    expect(
+      results.map(
+        (result) =>
+          result.status === "rejected" &&
+          result.reason instanceof RefusedCallError
+      )
+    ).toStrictEqual([true, true, true]);
+    expect(shell.calls).toStrictEqual([]);
+    expect(shell.sentTo(SHELL)).toStrictEqual([]);
   });
 
   it("sends nothing before the handshake", () => {
