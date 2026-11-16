@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { StartupError } from "./failures.ts";
-import { loadState } from "./state-store.ts";
+import { loadState, saveState } from "./state-store.ts";
 
 const DIR = path.join("/data", "Meru Dev");
 
@@ -95,6 +95,27 @@ describe(loadState, () => {
     );
     expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual(initial);
     expect(logs).toHaveLength(1);
+  });
+
+  it("keeps keys it does not know, at the top and in a profile, when it rewrites the file", async () => {
+    const { file, files } = createFakeFile(
+      JSON.stringify({
+        version: 1,
+        profiles: [{ id: "kept-id", name: "Work", color: "teal" }],
+        selectedProfileId: "kept-id",
+        panes: [{ tab: 1 }],
+      })
+    );
+    const state = await load(file).state;
+
+    await saveState(file, { ...state, selectedProfileId: "kept-id" });
+
+    expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual({
+      version: 1,
+      profiles: [{ id: "kept-id", name: "Work", color: "teal" }],
+      selectedProfileId: "kept-id",
+      panes: [{ tab: 1 }],
+    });
   });
 
   it("stops startup on a newer version's file and leaves it alone", async () => {

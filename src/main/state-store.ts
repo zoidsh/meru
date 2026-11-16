@@ -27,6 +27,10 @@ const parse = (text: string): unknown => {
 
 const serialize = (state: State) => `${JSON.stringify(state, undefined, 2)}\n`;
 
+/** Replaces the file whole; the caller sends one write at a time. */
+export const saveState = (file: TextFile, state: State) =>
+  file.write(serialize(state));
+
 /**
  * Reads the state, or starts from the initial state when there is none. A
  * file it cannot read is kept aside rather than overwritten. One a newer Meru
@@ -72,7 +76,7 @@ export const loadState = async ({
 
   const state = createInitialState(newId);
 
-  await file.write(serialize(state));
+  await saveState(file, state);
 
   return state;
 };

@@ -5,13 +5,15 @@ export const STATE_VERSION = 1;
 /** What v3 names its first account; kept in English and translated when shown. */
 export const DEFAULT_PROFILE_NAME = "Default";
 
-const profileSchema = z.object({
+// Loose at both levels: a key a later build added on the same version, as a
+// Beta may, survives this build rewriting the file.
+const profileSchema = z.looseObject({
   id: z.string().check(z.minLength(1)),
   name: z.string(),
 });
 
 const stateSchema = z
-  .object({
+  .looseObject({
     version: z.literal(STATE_VERSION),
     profiles: z.array(profileSchema).check(z.minLength(1)),
     selectedProfileId: z.string(),
@@ -72,6 +74,67 @@ export const createInitialState = (newId: () => string): State => {
 
 /** v3's partition name, so a profile's session is its v3 account's session. */
 export const profilePartition = (profileId: string) => `persist:${profileId}`;
+
+/** The first `name(n)`, counting from 2, that no profile already has. */
+export const nextProfileName = (
+  state: State,
+  name: (n: number) => string
+): string => {
+  const taken = new Set(state.profiles.map((profile) => profile.name));
+  let n = 2;
+
+  while (taken.has(name(n))) {
+    n += 1;
+  }
+
+  return name(n);
+};
+
+/** Appends a profile and selects it. */
+export const addProfile = (state: State, profile: Profile): State => ({
+  ...state,
+  profiles: [...state.profiles, profile],
+  selectedProfileId: profile.id,
+});
+
+/** Nothing when there is no such profile. */
+export const selectProfile = (
+  state: State,
+  profileId: string
+): State | undefined =>
+  state.profiles.some((profile) => profile.id === profileId)
+    ? { ...state, selectedProfileId: profileId }
+    : undefined;
+
+export const canRemoveProfile = (state: State) => state.profiles.length > 1;
+
+/**
+ * Removing the selected profile selects the one to its right, or to its left
+ * when it was the last; removing another leaves the selection alone. Nothing
+ * when there is no such profile or it is the only one.
+ */
+export const removeProfile = (
+  state: State,
+  profileId: string
+): State | undefined => {
+  const index = state.profiles.findIndex((profile) => profile.id === profileId);
+
+  if (index === -1 || !canRemoveProfile(state)) {
+    return;
+  }
+
+  const profiles = state.profiles.filter((_, other) => other !== index);
+  const neighbour = profiles[Math.min(index, profiles.length - 1)];
+
+  return {
+    ...state,
+    profiles,
+    selectedProfileId:
+      state.selectedProfileId === profileId && neighbour
+        ? neighbour.id
+        : state.selectedProfileId,
+  };
+};
 
 export const selectedProfile = (state: State): Profile => {
   const profile = state.profiles.find(
