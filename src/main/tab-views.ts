@@ -40,6 +40,8 @@ export interface TabViewsDeps {
     tabId: string
   ) => Promise<OpenedTab | undefined>;
   newId: () => string;
+  /** Readies a profile's session before any page of it loads. */
+  prepareSession: (partition: string) => void;
   updatePages: (updates: PageUpdate[]) => Promise<unknown>;
   log: (message: string) => void;
 }
@@ -72,6 +74,7 @@ export const createTabViews = ({
   state,
   openTab,
   newId,
+  prepareSession,
   updatePages,
   log,
 }: TabViewsDeps) => {
@@ -275,9 +278,12 @@ export const createTabViews = ({
   };
 
   const create = (key: string, tabKeyed: TabKey) => {
-    const { profileId } = tabKeyed;
+    const partition = profilePartition(tabKeyed.profileId);
+
+    prepareSession(partition);
+
     const view = window.addContentView({
-      partition: profilePartition(profileId),
+      partition,
       background,
       onWindowOpen: (url) => {
         const route = routeWindowOpen(url, {
@@ -289,7 +295,7 @@ export const createTabViews = ({
         if (route.kind === "system-browser") {
           openInSystemBrowser(url);
         } else if (route.kind === "tab") {
-          openAsTab(profileId, route.app, url);
+          openAsTab(tabKeyed.profileId, route.app, url);
         }
 
         return route.kind === "child-window" ? "allow" : "deny";

@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { APPS, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
+import { allowsPermission } from "#core/permissions.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
@@ -148,6 +149,7 @@ const start = async () => {
 
   activateLanguage(language);
 
+  const sessions = createSessions();
   const stateFile = createTextFile(
     path.join(lifecycle.userDataPath, STATE_FILE_NAME)
   );
@@ -161,7 +163,7 @@ const start = async () => {
     save: (state) => saveState(stateFile, state),
     newId,
     profileName: automaticProfileName,
-    clearSession: createSessions().clear,
+    clearSession: sessions.clear,
     log: console.error,
   });
 
@@ -198,6 +200,9 @@ const start = async () => {
     state: profiles.get,
     openTab: profiles.openTab,
     newId,
+    prepareSession: (partition) => {
+      sessions.guard(partition, (ask) => allowsPermission(apps, ask));
+    },
     updatePages: profiles.updatePages,
     log: console.error,
   });

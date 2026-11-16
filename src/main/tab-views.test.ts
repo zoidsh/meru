@@ -60,6 +60,8 @@ const setup = async ({ state = initial } = {}) => {
   const opened: string[] = [];
   const saves: State[] = [];
   const logs: string[] = [];
+  /** Each session readied, with how many views existed then. */
+  const prepared: [string, number][] = [];
   const senders = createSenderRegistry();
   let webContentsIds = 10;
   let ids = 0;
@@ -138,6 +140,9 @@ const setup = async ({ state = initial } = {}) => {
 
       return `new-${ids}`;
     },
+    prepareSession: (partition) => {
+      prepared.push([partition, views.length]);
+    },
     updatePages: profiles.updatePages,
     log: (message) => logs.push(message),
   });
@@ -157,6 +162,7 @@ const setup = async ({ state = initial } = {}) => {
     opened,
     saves,
     logs,
+    prepared,
     senders,
     viewOf,
     live: () =>
@@ -187,6 +193,7 @@ describe(createTabViews, () => {
     const window = await setup();
 
     expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+    expect(window.prepared).toStrictEqual([["persist:a", 0]]);
     expect(window.views[0]?.bounds).toStrictEqual([
       { x: 224, y: 40, width: 1056, height: 760 },
     ]);

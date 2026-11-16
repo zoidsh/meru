@@ -15,6 +15,11 @@ export interface App {
    * URL, rather than at its home.
    */
   restoresUrl: boolean;
+  /**
+   * Permissions its pages get beyond what every app's do, by Electron's
+   * names; see `allowsPermission`.
+   */
+  permissions: readonly string[];
 }
 
 /**
@@ -61,6 +66,7 @@ const entry = (
   claims,
   singleInstance: false,
   restoresUrl: true,
+  permissions: [],
 });
 
 /** Docs, Sheets and Slides share `docs.google.com`, told apart by path. */
@@ -71,8 +77,12 @@ export const APPS: readonly App[] = [
     singleInstance: true,
     // As v3: Gmail always opens at the inbox.
     restoresUrl: false,
+    permissions: ["notifications"],
   },
-  entry("calendar", "Calendar", googleSubdomain("calendar")),
+  {
+    ...entry("calendar", "Calendar", googleSubdomain("calendar")),
+    permissions: ["notifications"],
+  },
   entry("drive", "Drive", googleSubdomain("drive")),
   entry("docs", "Docs", [
     ...googleSubdomain("docs"),
@@ -86,7 +96,11 @@ export const APPS: readonly App[] = [
     ...googleSubdomain("slides"),
     ...googleSubdomain("docs", ["presentation"]),
   ]),
-  entry("meet", "Meet", googleSubdomain("meet")),
+  {
+    ...entry("meet", "Meet", googleSubdomain("meet")),
+    // Unprompted, as v3: macOS asks for the camera and microphone itself.
+    permissions: ["notifications", "media", "speaker-selection"],
+  },
 ];
 
 export const isAppId = (value: string): value is AppId =>
