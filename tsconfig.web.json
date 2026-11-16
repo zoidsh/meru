@@ -1,6 +1,7 @@
 {
-  // The renderers: the DOM and no Node. `core`, `contract` and `i18n` are here too, since
-  // both sides import them.
+  // The renderers: the DOM and no Node. `core`, `contract` and `i18n` are
+  // checked here as well as under the main side's config, since both import
+  // them.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "lib": ["esnext", "dom", "dom.iterable"],
