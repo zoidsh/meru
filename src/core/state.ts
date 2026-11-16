@@ -449,3 +449,41 @@ export const adjacentProfile = (
     ? profiles.at((index + offset) % profiles.length)?.id
     : undefined;
 };
+
+/**
+ * The longest name a profile may have, in UTF-16 code units as a text field
+ * counts them: room for an email address, which people name profiles by.
+ */
+export const PROFILE_NAME_MAX_LENGTH = 64;
+
+/**
+ * Names the profile `name`, trimmed, stored as typed and never translated.
+ * Duplicates are allowed, as in v3. Nothing when the name is empty, too long
+ * or what the profile is already called, or there is no such profile.
+ */
+export const renameProfile = (
+  state: State,
+  profileId: string,
+  name: string
+): State | undefined => {
+  const trimmed = name.trim();
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === profileId
+  );
+
+  if (
+    !profile ||
+    trimmed === "" ||
+    trimmed.length > PROFILE_NAME_MAX_LENGTH ||
+    trimmed === profile.name
+  ) {
+    return;
+  }
+
+  return {
+    ...state,
+    profiles: state.profiles.map((candidate) =>
+      candidate.id === profileId ? { ...candidate, name: trimmed } : candidate
+    ),
+  };
+};

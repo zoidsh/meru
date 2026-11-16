@@ -5,6 +5,8 @@ import {
   addProfile,
   adjacentProfile,
   canRemoveProfile,
+  DEFAULT_PROFILE_NAME,
+  PROFILE_NAME_MAX_LENGTH,
   createInitialState,
   decodeState,
   encodeState,
@@ -16,6 +18,7 @@ import {
   nextProfileName,
   profilePartition,
   removeProfile,
+  renameProfile,
   selectProfile,
   selectedProfile,
   sortProfilesToClear,
@@ -624,5 +627,53 @@ describe(adjacentProfile, () => {
         1
       )
     ).toBeUndefined();
+  });
+});
+
+const names = (state: State | undefined) =>
+  state?.profiles.map((profile) => profile.name);
+
+describe(renameProfile, () => {
+  it("stores the name trimmed and changes nothing else", () => {
+    const renamed = renameProfile(three, "c", "  Work  ");
+
+    expect(names(renamed)).toStrictEqual(["Default", "Profile 2", "Work"]);
+    expect(renamed?.selectedProfileId).toBe("b");
+  });
+
+  it("refuses an empty name, one over the limit, the same name and a missing profile", () => {
+    expect(renameProfile(three, "c", "   ")).toBeUndefined();
+    expect(
+      renameProfile(three, "c", "x".repeat(PROFILE_NAME_MAX_LENGTH + 1))
+    ).toBeUndefined();
+    expect(renameProfile(three, "c", " Profile 3 ")).toBeUndefined();
+    expect(renameProfile(three, "z", "Work")).toBeUndefined();
+    expect(
+      names(renameProfile(three, "c", "x".repeat(PROFILE_NAME_MAX_LENGTH)))
+    ).toHaveLength(3);
+  });
+
+  it("allows a name another profile has, as v3 does", () => {
+    expect(names(renameProfile(three, "c", "Profile 2"))).toStrictEqual([
+      "Default",
+      "Profile 2",
+      "Profile 2",
+    ]);
+  });
+
+  it("stores a renamed Default as typed, so it is no longer the name translated as shown", () => {
+    const renamed = renameProfile(three, "a", "Standard");
+
+    expect(names(renamed)?.[0]).toBe("Standard");
+    expect(renamed?.profiles[0]?.name).not.toBe(DEFAULT_PROFILE_NAME);
+  });
+
+  it("leaves the next automatic name the lowest number free", () => {
+    const renamed = renameProfile(three, "b", "Work") as State;
+
+    expect(nextProfileName(renamed, name)).toBe("Profile 2");
+    expect(
+      nextProfileName(renameProfile(three, "a", "Profile 4") as State, name)
+    ).toBe("Profile 5");
   });
 });
