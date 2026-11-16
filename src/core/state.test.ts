@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { APPS, findApp } from "./apps.ts";
 import {
   addProfile,
+  adjacentProfile,
   canRemoveProfile,
   createInitialState,
   decodeState,
@@ -599,5 +600,29 @@ describe(removeProfile, () => {
     const next = removeProfile(three, "b");
 
     expect(next && decodeState(next).kind).toBe("read");
+  });
+});
+
+const abc = (selectedProfileId: string): State => ({
+  version: 1,
+  profiles: ["a", "b", "c"].map((id) => newProfile(id, id)),
+  selectedProfileId,
+});
+
+describe(adjacentProfile, () => {
+  it("is the next or previous profile, wrapping round", () => {
+    expect(adjacentProfile(abc("a"), 1)).toBe("b");
+    expect(adjacentProfile(abc("c"), 1)).toBe("a");
+    expect(adjacentProfile(abc("a"), -1)).toBe("c");
+    expect(adjacentProfile(abc("b"), -1)).toBe("a");
+  });
+
+  it("is nothing when there is only the one", () => {
+    expect(
+      adjacentProfile(
+        createInitialState(() => "only"),
+        1
+      )
+    ).toBeUndefined();
   });
 });

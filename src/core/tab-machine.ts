@@ -26,6 +26,8 @@ export type TabEvent =
   | { kind: "crashed"; reason: string }
   /** Asked for from the tab's retry or reload control. */
   | { kind: "retry" }
+  /** Asked for by the Reload command. */
+  | { kind: "reload" }
   /** The backoff after a failure ran out. */
   | { kind: "retry-due" }
   /** The network came back. */
@@ -36,6 +38,8 @@ export type TabEvent =
 export type TabEffect =
   /** Loads the tab's URL in its view, creating the view if it has none. */
   | { kind: "load" }
+  /** Reloads the page the view shows, where it is now. */
+  | { kind: "reload" }
   /**
    * Replaces any retry scheduled before. One left over from an earlier failure
    * fires into a status that ignores it, so none is ever cancelled.
@@ -89,6 +93,13 @@ const whileLoaded = (
     case "navigate": {
       return load(status);
     }
+    // A retry under way loads the tab's URL again, as the error page is no
+    // page to reload.
+    case "reload": {
+      return status.kind === "failed"
+        ? load(status)
+        : { status: { kind: "loading" }, effects: [{ kind: "reload" }] };
+    }
     default: {
       return stay(status);
     }
@@ -102,6 +113,7 @@ const whileWaiting = (
 ): Transition => {
   switch (event.kind) {
     case "retry":
+    case "reload":
     case "retry-due":
     case "online":
     case "navigate": {
@@ -139,6 +151,7 @@ export const transition = (status: TabStatus, event: TabEvent): Transition => {
     case "crashed": {
       return event.kind === "select" ||
         event.kind === "retry" ||
+        event.kind === "reload" ||
         event.kind === "navigate"
         ? load({ kind: "loading" })
         : stay(status);

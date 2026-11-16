@@ -177,3 +177,23 @@ export const findTab = (state: State, { profileId, tabId }: TabKey) => {
 
   return profile && knownTabs(profile).find((tab) => tab.id === tabId);
 };
+
+/**
+ * The selected profile's shown tab `offset` places from its selected one,
+ * wrapping round as v3 does; nothing when it has only the one tab.
+ */
+export const adjacentTab = (
+  state: State,
+  offset: number
+): TabKey | undefined => {
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === state.selectedProfileId
+  );
+  const shown = profile ? knownTabs(profile) : [];
+  const index = shown.findIndex((tab) => tab.id === profile?.selectedTabId);
+  const tab = shown.at((index + offset) % shown.length);
+
+  return profile && tab && shown.length > 1
+    ? { profileId: profile.id, tabId: tab.id }
+    : undefined;
+};

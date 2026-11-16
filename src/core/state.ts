@@ -431,3 +431,21 @@ export const selectedProfile = (state: State): Profile => {
 
   return profile;
 };
+
+/**
+ * The profile `offset` places from the selected one, wrapping round as v3
+ * does; nothing when there is only the one.
+ */
+export const adjacentProfile = (
+  state: State,
+  offset: number
+): string | undefined => {
+  const { profiles } = state;
+  const index = profiles.findIndex(
+    (profile) => profile.id === state.selectedProfileId
+  );
+
+  return profiles.length > 1
+    ? profiles.at((index + offset) % profiles.length)?.id
+    : undefined;
+};

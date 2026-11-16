@@ -4,7 +4,13 @@ import { APPS, findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
 import { gmailTab, isTab, newProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
-import { closeTab, openTab, selectTab, updatePages } from "./tabs.ts";
+import {
+  adjacentTab,
+  closeTab,
+  openTab,
+  selectTab,
+  updatePages,
+} from "./tabs.ts";
 
 const app = (id: string) => findApp(APPS, id) as App;
 
@@ -175,5 +181,27 @@ describe(updatePages, () => {
       updatePages(before, [{ profileId: "p", tabId: "c1", title: "c1" }])
     ).toBeUndefined();
     expect(updatePages(before, [])).toBeUndefined();
+  });
+});
+
+describe(adjacentTab, () => {
+  it("is the next or previous shown tab of the selected profile, wrapping round", () => {
+    expect(adjacentTab(three("gmail"), 1)).toStrictEqual({
+      profileId: "p",
+      tabId: "c1",
+    });
+    expect(adjacentTab(three("d1"), 1)?.tabId).toBe("gmail");
+    expect(adjacentTab(three("gmail"), -1)?.tabId).toBe("d1");
+    expect(adjacentTab(three("c1"), -1)?.tabId).toBe("gmail");
+  });
+
+  it("skips a tab of an app this build does not know", () => {
+    expect(
+      adjacentTab(state([tab("x1", "later"), tab("c1", "calendar")]), 1)?.tabId
+    ).toBe("c1");
+  });
+
+  it("is nothing when Gmail's is the only tab", () => {
+    expect(adjacentTab(state([]), 1)).toBeUndefined();
   });
 });

@@ -11,6 +11,7 @@ const EVENTS: TabEvent[] = [
   { kind: "failed-to-load", reason: refused },
   { kind: "crashed", reason: "killed" },
   { kind: "retry" },
+  { kind: "reload" },
   { kind: "retry-due" },
   { kind: "online" },
   { kind: "navigate" },
@@ -30,6 +31,8 @@ const retrying = (attempt = 0): TabStatus => ({
 
 const LOAD = { kind: "load" };
 
+const RELOAD = { kind: "reload" };
+
 /** Each status against each event: the expected status and effects. */
 const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
   [
@@ -40,6 +43,7 @@ const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
       "failed-to-load": [{ kind: "unloaded" }, []],
       crashed: [{ kind: "unloaded" }, []],
       retry: [{ kind: "unloaded" }, []],
+      reload: [{ kind: "unloaded" }, []],
       "retry-due": [{ kind: "unloaded" }, []],
       online: [{ kind: "unloaded" }, []],
       // Its URL is loaded when it is first selected.
@@ -54,6 +58,7 @@ const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
       "failed-to-load": [waiting(0), [{ kind: "schedule-retry", delay: 1000 }]],
       crashed: [{ kind: "crashed", reason: "killed" }, []],
       retry: [{ kind: "loading" }, []],
+      reload: [{ kind: "loading" }, [RELOAD]],
       "retry-due": [{ kind: "loading" }, []],
       online: [{ kind: "loading" }, []],
       navigate: [{ kind: "loading" }, [LOAD]],
@@ -67,6 +72,7 @@ const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
       "failed-to-load": [waiting(0), [{ kind: "schedule-retry", delay: 1000 }]],
       crashed: [{ kind: "crashed", reason: "killed" }, []],
       retry: [{ kind: "live" }, []],
+      reload: [{ kind: "loading" }, [RELOAD]],
       "retry-due": [{ kind: "live" }, []],
       online: [{ kind: "live" }, []],
       navigate: [{ kind: "live" }, [LOAD]],
@@ -82,6 +88,7 @@ const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
       "failed-to-load": [waiting(2), []],
       crashed: [{ kind: "crashed", reason: "killed" }, []],
       retry: [retrying(2), [LOAD]],
+      reload: [retrying(2), [LOAD]],
       "retry-due": [retrying(2), [LOAD]],
       online: [retrying(2), [LOAD]],
       navigate: [retrying(2), [LOAD]],
@@ -95,6 +102,7 @@ const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
       "failed-to-load": [waiting(3), [{ kind: "schedule-retry", delay: 8000 }]],
       crashed: [{ kind: "crashed", reason: "killed" }, []],
       retry: [retrying(2), []],
+      reload: [retrying(2), [LOAD]],
       "retry-due": [retrying(2), []],
       online: [retrying(2), []],
       navigate: [retrying(2), [LOAD]],
@@ -108,6 +116,7 @@ const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
       "failed-to-load": [{ kind: "crashed", reason: "oom" }, []],
       crashed: [{ kind: "crashed", reason: "oom" }, []],
       retry: [{ kind: "loading" }, [LOAD]],
+      reload: [{ kind: "loading" }, [LOAD]],
       "retry-due": [{ kind: "crashed", reason: "oom" }, []],
       online: [{ kind: "crashed", reason: "oom" }, []],
       navigate: [{ kind: "loading" }, [LOAD]],
