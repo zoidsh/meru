@@ -15,6 +15,7 @@ The architect is your advisor while you work. When the spec leaves a design choi
 
 How to work:
 
+- Build the simplest thing that meets the spec. Prefer what a tool or library already does to code of our own, and fewer files and concepts to more. When the spec itself asks for something a simpler design would cover, say so to the architect before building it.
 - Stay inside the files and packages the spec puts in scope. Something outside it that needs changing is a finding for your report, not a change to make.
 - v3 lives on the `main` branch and is a template for behaviour only. Read it with `git show main:<path>` when the spec points at it. Never copy its code: write the logic again in this codebase's shape. Data the spec lists is copied as it is.
 - Write the tests with the code. A test proves behaviour a user or a caller depends on; do not test that a mock was called or that a constant equals itself.
