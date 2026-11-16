@@ -1,5 +1,7 @@
 import { z } from "zod/mini";
 
+import { DESIGNS } from "#core/settings.ts";
+
 import type { ShellCallName } from "./shell-channels.ts";
 
 export { SHELL_CALL_NAMES, SHELL_CHANNELS } from "./shell-channels.ts";
@@ -61,6 +63,12 @@ export const SHELL_STATE = {
         status: tabStatus,
       })
     ),
+  }),
+  /** The settings the shell draws by, as they apply on this platform. */
+  settings: z.object({
+    design: z.enum(DESIGNS),
+    /** Whether the window's vibrancy shows through the chrome. */
+    vibrancy: z.boolean(),
   }),
 } as const;
 

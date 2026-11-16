@@ -3,6 +3,8 @@ import path from "node:path";
 
 import type { ElectronApplication } from "@playwright/test";
 
+import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
+
 import { expect, findPage, test } from "./lib/app.ts";
 import {
   ELSEWHERE_URL,
@@ -48,17 +50,13 @@ test("shows the stand-in in the content rectangle below the titlebar and beside 
 
   const { content, views } = await readLayout(app);
 
-  expect(views).toStrictEqual([
-    {
-      x: 224,
-      y: 40,
-      width: content.width - 224,
-      height: content.height - 40,
-    },
-  ]);
+  // The modern design's, the default.
+  const bounds = contentViewBounds(content, TAB_STRIP_WIDTH, "modern");
+
+  expect(views).toStrictEqual([bounds]);
   expect(
     await view.evaluate(() => [window.innerWidth, window.innerHeight])
-  ).toStrictEqual([content.width - 224, content.height - 40]);
+  ).toStrictEqual([bounds.width, bounds.height]);
 
   const titlebar = await shell
     .getByRole("banner", { name: "Title bar" })
@@ -77,10 +75,10 @@ test("shows the stand-in in the content rectangle below the titlebar and beside 
 
       return layout.views;
     })
-    .toStrictEqual([{ x: 224, y: 40, width: 676, height: 600 }]);
+    .toStrictEqual([{ x: 232, y: 40, width: 660, height: 592 }]);
   await expect
     .poll(() => view.evaluate(() => [window.innerWidth, window.innerHeight]))
-    .toStrictEqual([676, 600]);
+    .toStrictEqual([660, 592]);
 });
 
 test("a second launch keeps the profile and its session's cookie", async ({

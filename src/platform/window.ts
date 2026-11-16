@@ -15,7 +15,13 @@ export interface WindowOptions {
   preloadPath: string;
   /** The window may navigate only within this URL's scheme and host. */
   contentUrl: string;
+  /** On macOS, whether the desktop shows through, blurred, where the page is clear. */
+  vibrancy: boolean;
 }
+
+// The sidebar material, kept active while the window is not the key window,
+// as a sidebar is.
+const VIBRANCY = "sidebar";
 
 export interface ContextMenuItem {
   label: string;
@@ -42,6 +48,8 @@ export interface AppWindow {
   restore: () => void;
   isMinimized: () => boolean;
   isDestroyed: () => boolean;
+  /** macOS only; elsewhere nothing. */
+  setVibrancy: (vibrancy: boolean) => void;
   /** The area child views are laid out in, below any menu bar. */
   getContentAreaSize: () => Size;
   onContentAreaResize: (listener: () => void) => void;
@@ -65,6 +73,16 @@ export const createWindowFactory = (): WindowFactory => ({
       minHeight: options.minimumSize.height,
       show: false,
       titleBarStyle: options.titleBarStyle,
+      // Windows and Linux show the application menu's bar only while Alt is
+      // held or after it is pressed, so the content keeps its height.
+      autoHideMenuBar: true,
+      // Clear, so the vibrancy shows through; the shell paints the window
+      // whole where there is none.
+      ...(process.platform === "darwin" && {
+        ...(options.vibrancy && { vibrancy: VIBRANCY }),
+        visualEffectState: "active" as const,
+        backgroundColor: "#00000000",
+      }),
       webPreferences: {
         preload: options.preloadPath,
         contextIsolation: true,
@@ -99,6 +117,11 @@ export const createWindowFactory = (): WindowFactory => ({
       restore: () => window.restore(),
       isMinimized: () => window.isMinimized(),
       isDestroyed: () => window.isDestroyed(),
+      setVibrancy: (vibrancy) => {
+        if (process.platform === "darwin") {
+          window.setVibrancy(vibrancy ? VIBRANCY : null);
+        }
+      },
       // The root view rather than the window's content size, which on
       // Windows changes after a hidden window is first shown with no `resize`.
       getContentAreaSize: () => {

@@ -6,7 +6,11 @@ import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import type { Confirmation, ContextMenuItem } from "#platform/window.ts";
 
-import { createShellHandlers, shellState } from "./shell-handlers.ts";
+import {
+  createShellHandlers,
+  shellSettings,
+  shellState,
+} from "./shell-handlers.ts";
 
 const two: State = {
   version: 1,
@@ -133,6 +137,8 @@ describe(createShellHandlers, () => {
   });
 });
 
+const SHOWN_SETTINGS = { design: "modern", vibrancy: true } as const;
+
 describe(shellState, () => {
   it("gives the shell the profiles with names to show, and nothing else of them", () => {
     expect(
@@ -144,7 +150,8 @@ describe(shellState, () => {
             newProfile("b", "Work"),
           ],
         },
-        () => ({ kind: "live" })
+        () => ({ kind: "live" }),
+        SHOWN_SETTINGS
       ).profiles
     ).toStrictEqual({
       profiles: [
@@ -185,7 +192,8 @@ describe(shellState, () => {
           ],
         },
         ({ profileId, tabId }) =>
-          statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" }
+          statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
+        SHOWN_SETTINGS
       ).tabs
     ).toStrictEqual({
       profileId: "a",
@@ -217,6 +225,19 @@ describe(shellState, () => {
           status: { kind: "crashed" },
         },
       ],
+    });
+  });
+});
+
+describe(shellSettings, () => {
+  const settings = { design: "classic", vibrancy: true } as const;
+  const get = <Key extends keyof typeof settings>(key: Key) => settings[key];
+
+  it("gives the shell the design, and vibrancy on macOS alone", () => {
+    expect(shellSettings(get, true)).toStrictEqual(settings);
+    expect(shellSettings(get, false)).toStrictEqual({
+      design: "classic",
+      vibrancy: false,
     });
   });
 });

@@ -49,7 +49,7 @@ declare global {
 let connection: ReturnType<typeof createShellSync> | undefined;
 
 const connect = () => {
-  connection ??= createShellSync(window.meru, ["profiles", "tabs"]);
+  connection ??= createShellSync(window.meru, ["profiles", "tabs", "settings"]);
 
   return connection;
 };

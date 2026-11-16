@@ -27,36 +27,102 @@ msgstr "{name} stopped working"
 msgid "{productName} could not start"
 msgstr "{productName} could not start"
 
+#. Menu item in the macOS app menu that shows the app's version; {appName} is the app's name
+#: src/main/application-menu.ts
+msgid "About {appName}"
+msgstr "About {appName}"
+
 #. Accessible name of the plus button in the title bar that adds a profile, read by screen readers
 #: src/shell/app.tsx
 msgid "Add profile"
 msgstr "Add profile"
+
+#. Menu item in the Window menu that adds a profile, signed in to no account yet, and selects it
+#: src/main/commands.ts
+msgid "Add Profile"
+msgstr "Add Profile"
+
+#. Menu item in the macOS Window menu
+#: src/main/application-menu.ts
+msgid "Bring All to Front"
+msgstr "Bring All to Front"
 
 #. Button in the dialog that confirms removing a profile, which keeps it
 #: src/main/profile-copy.ts
 msgid "Cancel"
 msgstr "Cancel"
 
+#. Menu item in the View menu that chooses the design where pages run edge to edge, as in earlier versions
+#: src/main/commands.ts
+msgctxt "design"
+msgid "Classic"
+msgstr "Classic"
+
+#. Menu item in the Window menu that closes the window
+#: src/main/application-menu.ts
+msgid "Close"
+msgstr "Close"
+
 #. Accessible name of the cross on a tab that closes it; {title} is the tab's title
 #: src/shell/tab-strip.tsx
 msgid "Close {title}"
 msgstr "Close {title}"
+
+#. Menu item in the Tabs menu that closes the selected tab
+#: src/main/commands.ts
+msgid "Close Tab"
+msgstr "Close Tab"
 
 #. Accessible name of the window's main area, below the title bar, read by screen readers
 #: src/shell/app.tsx
 msgid "Content"
 msgstr "Content"
 
+#. Menu item in the Edit menu
+#: src/main/application-menu.ts
+msgid "Copy"
+msgstr "Copy"
+
 #. Said by screen readers after a tab's title when its page could not load
 #: src/shell/tab-strip.tsx
 msgid "Couldn’t load"
 msgstr "Couldn’t load"
+
+#. Menu item in the Edit menu
+#: src/main/application-menu.ts
+msgid "Cut"
+msgstr "Cut"
 
 #. Name of the first profile until the person renames it, shown in the title bar
 #: src/main/profile-copy.ts
 msgctxt "profile name"
 msgid "Default"
 msgstr "Default"
+
+#. Menu item in the Edit menu that deletes the selected text
+#: src/main/application-menu.ts
+msgid "Delete"
+msgstr "Delete"
+
+#. Name of the Edit menu
+#: src/main/application-menu.ts
+msgid "Edit"
+msgstr "Edit"
+
+#. Name of the Help menu
+#: src/main/application-menu.ts
+msgid "Help"
+msgstr "Help"
+
+#. Menu item in the macOS app menu that hides the app; {appName} is the app's name
+#: src/main/application-menu.ts
+msgid "Hide {appName}"
+msgstr "Hide {appName}"
+
+#. Menu item in the macOS app menu that hides every other app
+#: src/main/application-menu.ts
+msgid "Hide Others"
+msgstr "Hide Others"
 
 #. Explanation under the heading in place of a tab's page that crashed
 #: src/shell/tab-strip.tsx
@@ -78,6 +144,27 @@ msgstr "Meru keeps trying by itself."
 msgid "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected."
 msgstr "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected."
 
+#. Menu item in the Window menu
+#: src/main/application-menu.ts
+msgid "Minimize"
+msgstr "Minimize"
+
+#. Menu item in the View menu that chooses the design where pages sit inset with rounded corners
+#: src/main/commands.ts
+msgctxt "design"
+msgid "Modern"
+msgstr "Modern"
+
+#. Menu item in the Edit menu
+#: src/main/application-menu.ts
+msgid "Paste"
+msgstr "Paste"
+
+#. Menu item in the Edit menu that pastes text without its formatting
+#: src/main/application-menu.ts
+msgid "Paste and Match Style"
+msgstr "Paste and Match Style"
+
 #. Name given to a newly added profile, where {n} is a number from 2 up; the person can rename it later
 #: src/main/profile-copy.ts
 msgid "Profile {n}"
@@ -88,7 +175,19 @@ msgstr "Profile {n}"
 msgid "Profiles"
 msgstr "Profiles"
 
+#. Menu item that quits the app; {appName} is the app's name, such as Meru
+#: src/main/application-menu.ts
+msgid "Quit {appName}"
+msgstr "Quit {appName}"
+
+#. Menu item in the Edit menu
+#: src/main/application-menu.ts
+msgid "Redo"
+msgstr "Redo"
+
 #. Button in place of a tab's page that crashed, which loads the page again
+#. Menu item in the View menu that loads the selected tab again
+#: src/main/commands.ts
 #: src/shell/tab-strip.tsx
 msgid "Reload"
 msgstr "Reload"
@@ -108,12 +207,49 @@ msgstr "Remove {name}…"
 msgid "Remove Profile"
 msgstr "Remove Profile"
 
+#. Menu item in the Edit menu
+#: src/main/application-menu.ts
+msgid "Select All"
+msgstr "Select All"
+
+#. Menu item in the Window menu that selects the profile right of the selected one, or the first after the last
+#: src/main/commands.ts
+msgid "Select Next Profile"
+msgstr "Select Next Profile"
+
+#. Menu item in the Tabs menu that selects the tab below the selected one, or the first after the last
+#: src/main/commands.ts
+msgid "Select Next Tab"
+msgstr "Select Next Tab"
+
+#. Menu item in the Window menu that selects the profile left of the selected one, or the last before the first
+#: src/main/commands.ts
+msgid "Select Previous Profile"
+msgstr "Select Previous Profile"
+
+#. Menu item in the Tabs menu that selects the tab above the selected one, or the last before the first
+#: src/main/commands.ts
+msgid "Select Previous Tab"
+msgstr "Select Previous Tab"
+
+#. The macOS app menu's submenu of system services, named as macOS names it
+#: src/main/application-menu.ts
+msgid "Services"
+msgstr "Services"
+
+#. Menu item in the macOS app menu that shows every hidden app again
+#: src/main/application-menu.ts
+msgid "Show All"
+msgstr "Show All"
+
 #. Said by screen readers after a tab's title when its page crashed
 #: src/shell/tab-strip.tsx
 msgid "Stopped working"
 msgstr "Stopped working"
 
 #. Accessible name of the list of the profile's tabs down the left of the window, read by screen readers
+#. Name of the menu of commands on the selected profile's tabs
+#: src/main/application-menu.ts
 #: src/shell/tab-strip.tsx
 msgid "Tabs"
 msgstr "Tabs"
@@ -138,7 +274,32 @@ msgstr "Try again"
 msgid "Trying again…"
 msgstr "Trying again…"
 
+#. Menu item in the Edit menu
+#: src/main/application-menu.ts
+msgid "Undo"
+msgstr "Undo"
+
+#. Menu item in the View menu, checked while the window's sidebar and title bar let the desktop show through, blurred, as macOS sidebars do
+#: src/main/commands.ts
+msgid "Vibrancy"
+msgstr "Vibrancy"
+
+#. Name of the View menu
+#: src/main/application-menu.ts
+msgid "View"
+msgstr "View"
+
+#. Name of the Window menu
+#: src/main/application-menu.ts
+msgid "Window"
+msgstr "Window"
+
 #. Heading shown in place of a tab's page that could not load because the computer is offline
 #: src/shell/tab-strip.tsx
 msgid "You’re offline"
 msgstr "You’re offline"
+
+#. Menu item in the macOS Window menu that toggles the window between its size and filling the screen
+#: src/main/application-menu.ts
+msgid "Zoom"
+msgstr "Zoom"

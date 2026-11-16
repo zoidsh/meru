@@ -56,7 +56,11 @@ const setup = () => {
   const calls: unknown[] = [];
   const logs: string[] = [];
   const changeListeners: (() => void)[] = [];
-  let state: ShellState = { profiles: profilesSlice("a"), tabs: TABS };
+  let state: ShellState = {
+    profiles: profilesSlice("a"),
+    tabs: TABS,
+    settings: { design: "modern", vibrancy: false },
+  };
 
   const ipc: Ipc = {
     handle: (channel, handler) => {

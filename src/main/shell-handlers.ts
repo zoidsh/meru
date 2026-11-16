@@ -1,4 +1,5 @@
 import type { ShellState } from "#contract/shell.ts";
+import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { canRemoveProfile, knownTabs, selectedProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -44,10 +45,20 @@ const shellTabStatus = (status: TabStatus): ShellTabStatus => {
   }
 };
 
+/** The settings the shell draws by; vibrancy is macOS's alone. */
+export const shellSettings = (
+  get: <Key extends SettingKey>(key: Key) => SettingValue<Key>,
+  isMacOS: boolean
+): ShellState["settings"] => ({
+  design: get("design"),
+  vibrancy: isMacOS && get("vibrancy"),
+});
+
 /** The slices the shell sees of main's state, names ready to show. */
 export const shellState = (
   state: State,
-  status: (key: TabKey) => TabStatus
+  status: (key: TabKey) => TabStatus,
+  settings: ShellState["settings"]
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -72,6 +83,7 @@ export const shellState = (
         ),
       })),
     },
+    settings,
   };
 };
 

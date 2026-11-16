@@ -1,6 +1,7 @@
 import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
-import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
+import { TAB_STRIP_WIDTH, contentViewBounds, viewFrame } from "#core/layout.ts";
+import type { Design } from "#core/settings.ts";
 import { knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { showsView, transition } from "#core/tab-machine.ts";
@@ -32,6 +33,8 @@ export interface TabViewsDeps {
   senders: Pick<SenderRegistry, "register">;
   /** Reads main's state as it is now. */
   state: () => State;
+  /** The design as it is now; `relayout` follows a change. */
+  design: () => Design;
   /** Opens the tab, under `tabId` when it is a new one. */
   openTab: (
     profileId: string,
@@ -72,6 +75,7 @@ export const createTabViews = ({
   network,
   senders,
   state,
+  design,
   openTab,
   newId,
   prepareSession,
@@ -84,8 +88,18 @@ export const createTabViews = ({
   const listeners = new Set<() => void>();
   let front: string | undefined;
 
-  const bounds = () =>
-    contentViewBounds(window.getContentAreaSize(), TAB_STRIP_WIDTH);
+  const place = (view: ContentView) => {
+    view.setBounds(
+      contentViewBounds(window.getContentAreaSize(), TAB_STRIP_WIDTH, design())
+    );
+    view.setBorderRadius(viewFrame(design()).radius);
+  };
+
+  const placeAll = () => {
+    for (const tab of tabs.values()) {
+      place(tab.view);
+    }
+  };
 
   const pages = createPageWriter(async (updates) => {
     try {
@@ -307,7 +321,7 @@ export const createTabViews = ({
       },
     });
 
-    view.setBounds(bounds());
+    place(view);
 
     return view;
   };
@@ -325,11 +339,7 @@ export const createTabViews = ({
     }
   };
 
-  window.onContentAreaResize(() => {
-    for (const tab of tabs.values()) {
-      tab.view.setBounds(bounds());
-    }
-  });
+  window.onContentAreaResize(placeAll);
 
   network.onOnline(() => {
     for (const key of tabs.keys()) {
@@ -379,6 +389,8 @@ export const createTabViews = ({
     retry: (key: TabKey) => {
       dispatch(tabKey(key), { kind: "retry" });
     },
+    /** Places every view again, as the design now has it, loading nothing. */
+    relayout: placeAll,
     /** Each tab's status; one with no view is not loaded. */
     status: (key: TabKey): TabStatus =>
       tabs.get(tabKey(key))?.status ?? { kind: "unloaded" },

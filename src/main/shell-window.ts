@@ -10,11 +10,16 @@ export interface ShellWindowDeps {
   preloadPath: string;
   isMacOS: boolean;
   background: boolean;
+  vibrancy: boolean;
 }
 
 const DEFAULT_SIZE = { width: 1280, height: 800 };
 
-const MINIMUM_SIZE = { width: 320, height: 256 };
+/**
+ * Leaves the content view 480px wide in the modern design beside the strip,
+ * about where Gmail's narrowest layout still shows a list.
+ */
+const MINIMUM_SIZE = { width: 720, height: 480 };
 
 /**
  * Opens the shell window and shows it once its page can paint: on
@@ -29,6 +34,7 @@ export const createShellWindow = ({
   preloadPath,
   isMacOS,
   background,
+  vibrancy,
 }: ShellWindowDeps) => {
   const window = windows.create({
     title,
@@ -42,6 +48,7 @@ export const createShellWindow = ({
     titleBarStyle: isMacOS ? "hiddenInset" : "default",
     preloadPath,
     contentUrl: url,
+    vibrancy,
   });
 
   let isShown = false;

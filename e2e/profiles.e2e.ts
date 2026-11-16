@@ -2,8 +2,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
+import { isEqual } from "es-toolkit";
 
 import type { ShellBridge } from "#contract/shell.ts";
+import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 
 import { expect, findPage, test } from "./lib/app.ts";
 import { STAND_IN_COOKIE, STAND_IN_TITLE } from "./lib/stand-in.ts";
@@ -111,22 +113,12 @@ test("adding a profile shows a second tab, selected, and a view in a session of 
   expect(views).toStrictEqual([
     {
       profileId: first,
-      bounds: {
-        x: 224,
-        y: 40,
-        width: content.width - 224,
-        height: content.height - 40,
-      },
+      bounds: contentViewBounds(content, TAB_STRIP_WIDTH, "modern"),
       visible: false,
     },
     {
       profileId: second,
-      bounds: {
-        x: 224,
-        y: 40,
-        width: content.width - 224,
-        height: content.height - 40,
-      },
+      bounds: contentViewBounds(content, TAB_STRIP_WIDTH, "modern"),
       visible: true,
     },
   ]);
@@ -159,11 +151,10 @@ test("switching back shows the first view in the content rectangle and hides the
 
       return views.map((view) => ({
         ...view,
-        inContent:
-          view.bounds.x === 224 &&
-          view.bounds.y === 40 &&
-          view.bounds.width === content.width - 224 &&
-          view.bounds.height === content.height - 40,
+        inContent: isEqual(
+          view.bounds,
+          contentViewBounds(content, TAB_STRIP_WIDTH, "modern")
+        ),
       }));
     })
     .toMatchObject([
@@ -372,7 +363,7 @@ test("at a narrow width with many profiles, the selected tab stays in view and t
 }) => {
   await findPage(app, standIn.url);
   await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0]?.setContentSize(600, 400);
+    BrowserWindow.getAllWindows()[0]?.setContentSize(900, 480);
   });
 
   const add = shell.getByRole("button", { name: "Add profile" });
@@ -422,9 +413,9 @@ test("at a narrow width with many profiles, the selected tab stays in view and t
   await select(ids[0]);
   await expect.poll(() => selectedTabIsInList("Default")).toBeTruthy();
 
-  // Narrower still, and the selection must stay in view.
+  // Narrower still, at the minimum width, and the selection must stay in view.
   await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0]?.setContentSize(420, 400);
+    BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
   });
   await expect.poll(() => selectedTabIsInList("Default")).toBeTruthy();
   await select(ids[8]);

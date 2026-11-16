@@ -40,6 +40,8 @@ export interface ContentViewOptions {
 
 export interface ContentView {
   setBounds: (bounds: Rectangle) => void;
+  /** Rounds all four corners, clipping the page. */
+  setBorderRadius: (radius: number) => void;
   /** Rejects when the load does not commit. */
   loadURL: (url: string) => Promise<void>;
   /** Hidden, the page stays loaded. */
@@ -184,6 +186,7 @@ export const addContentView = (
 
   return {
     setBounds: (bounds) => view.setBounds(bounds),
+    setBorderRadius: (radius) => view.setBorderRadius(radius),
     loadURL: (url) => webContents.loadURL(url),
     setVisible: (visible) => view.setVisible(visible),
     close,

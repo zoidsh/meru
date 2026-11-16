@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPS } from "#core/apps.ts";
+import type { Design } from "#core/settings.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { Size } from "#core/window-bounds.ts";
@@ -43,6 +44,7 @@ interface FakeView {
   partition: string;
   options: ContentViewOptions;
   bounds: unknown[];
+  radii: number[];
   loaded: string[];
   visible: boolean | undefined;
   closed: boolean;
@@ -52,8 +54,12 @@ interface FakeView {
  * The real profiles over a save that only records, a fake window, and a
  * network whose return the test announces.
  */
-const setup = async ({ state = initial } = {}) => {
+const setup = async ({
+  state = initial,
+  design = "classic" as Design,
+}: { state?: State; design?: Design } = {}) => {
   let size: Size = { width: 1280, height: 800 };
+  let currentDesign = design;
   let resize: (() => void) | undefined;
   let online: (() => void) | undefined;
   const views: FakeView[] = [];
@@ -90,6 +96,7 @@ const setup = async ({ state = initial } = {}) => {
           partition: options.partition,
           options,
           bounds: [],
+          radii: [],
           loaded: [],
           visible: undefined,
           closed: false,
@@ -101,6 +108,7 @@ const setup = async ({ state = initial } = {}) => {
 
         return {
           setBounds: (rectangle) => view.bounds.push(rectangle),
+          setBorderRadius: (radius) => view.radii.push(radius),
           loadURL: (url) => {
             view.loaded.push(url);
 
@@ -134,6 +142,7 @@ const setup = async ({ state = initial } = {}) => {
     },
     senders,
     state: profiles.get,
+    design: () => currentDesign,
     openTab: profiles.openTab,
     newId: () => {
       ids += 1;
@@ -176,6 +185,10 @@ const setup = async ({ state = initial } = {}) => {
     resizeTo: (next: Size) => {
       size = next;
       resize?.();
+    },
+    switchDesign: (next: Design) => {
+      currentDesign = next;
+      tabs.relayout();
     },
   };
 };
@@ -478,5 +491,31 @@ describe(createTabViews, () => {
         height: 560,
       });
     }
+  });
+
+  it("places every view in the design's rectangle, rounded in modern, and moves them when it changes, loading nothing", async () => {
+    const window = await setup({ design: "modern" });
+
+    await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
+
+    for (const view of window.views) {
+      expect([view.bounds.at(-1), view.radii.at(-1)]).toStrictEqual([
+        { x: 232, y: 40, width: 1040, height: 752 },
+        8,
+      ]);
+    }
+
+    const loads = window.views.map((view) => view.loaded.length);
+
+    window.switchDesign("classic");
+
+    for (const view of window.views) {
+      expect([view.bounds.at(-1), view.radii.at(-1)]).toStrictEqual([
+        { x: 224, y: 40, width: 1056, height: 760 },
+        0,
+      ]);
+    }
+
+    expect(window.views.map((view) => view.loaded.length)).toStrictEqual(loads);
   });
 });

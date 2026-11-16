@@ -23,7 +23,17 @@ import { createFailures } from "./failures.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfiles } from "./profiles.ts";
 import { createSenderRegistry } from "./senders.ts";
-import { createShellHandlers, shellState } from "./shell-handlers.ts";
+import {
+  SETTINGS_FILE_NAME,
+  createSettingsStore,
+  loadSettings,
+  saveSettings,
+} from "./settings.ts";
+import {
+  createShellHandlers,
+  shellSettings,
+  shellState,
+} from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
 import { createShellWindow, revealWindow } from "./shell-window.ts";
 import { STATE_FILE_NAME, loadState, saveState } from "./state-store.ts";
@@ -159,6 +169,7 @@ const start = async () => {
 
   activateLanguage(language);
 
+  const isMacOS = process.platform === "darwin";
   const sessions = createSessions();
   const stateFile = createTextFile(
     path.join(lifecycle.userDataPath, STATE_FILE_NAME)
@@ -177,6 +188,19 @@ const start = async () => {
     log: console.error,
   });
 
+  const settingsFile = createTextFile(
+    path.join(lifecycle.userDataPath, SETTINGS_FILE_NAME)
+  );
+  const settings = createSettingsStore({
+    initial: await loadSettings({
+      file: settingsFile,
+      now: Date.now,
+      log: console.error,
+    }),
+    save: (next) => saveSettings(settingsFile, next),
+    log: console.error,
+  });
+
   // Not awaited: the window must not wait on a clear that hangs, and no view
   // can hold these sessions, whose profiles are no longer listed.
   profiles.finishClears();
@@ -191,8 +215,13 @@ const start = async () => {
     title: lifecycle.name,
     url: shellUrl.href,
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
-    isMacOS: process.platform === "darwin",
+    isMacOS,
     background,
+    vibrancy: settings.get("vibrancy"),
+  });
+
+  settings.onChange("vibrancy", () => {
+    shell.window.setVibrancy(settings.get("vibrancy"));
   });
 
   const senders = createSenderRegistry();
@@ -208,6 +237,7 @@ const start = async () => {
     network: createNetwork(),
     senders,
     state: profiles.get,
+    design: () => settings.get("design"),
     openTab: profiles.openTab,
     newId,
     prepareSession: (partition) => {
@@ -219,6 +249,7 @@ const start = async () => {
 
   views.reconcile(profiles.get());
   profiles.onChange(views.reconcile);
+  settings.onChange("design", views.relayout);
 
   serveShellContract({
     ipc: createIpc(),
@@ -232,10 +263,17 @@ const start = async () => {
       log: console.error,
     }),
     state: {
-      read: () => shellState(profiles.get(), views.status),
+      read: () =>
+        shellState(
+          profiles.get(),
+          views.status,
+          shellSettings(settings.get, isMacOS)
+        ),
       onChange: (listener) => {
         profiles.onChange(listener);
         views.onChange(listener);
+        settings.onChange("design", listener);
+        settings.onChange("vibrancy", listener);
       },
     },
     log: console.error,
