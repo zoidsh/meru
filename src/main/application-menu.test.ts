@@ -1,7 +1,7 @@
 import type { MenuItemConstructorOptions } from "electron";
 import { describe, expect, it } from "vitest";
 
-import { newProfile } from "#core/state.ts";
+import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import {
@@ -197,10 +197,16 @@ const setup = () => {
     log: () => false,
   });
   let reloads = 0;
+  const selected: string[] = [];
   const actions = {
     updateSetting: settings.update,
     reloadSelectedTab: () => {
       reloads += 1;
+    },
+    selectTab: ({ tabId }) => {
+      selected.push(tabId);
+
+      return Promise.resolve();
     },
   } as Partial<CommandActions> as CommandActions;
   const menu = createApplicationMenu({
@@ -220,6 +226,7 @@ const setup = () => {
     menu,
     settings,
     reloads: () => reloads,
+    selected,
     setState: (next: State) => {
       state = next;
       menu.refresh();
@@ -270,6 +277,7 @@ describe(createApplicationMenu, () => {
         shift: false,
         alt: false,
         meta: false,
+        isAutoRepeat: false,
         ...modifiers,
       });
 
@@ -280,5 +288,38 @@ describe(createApplicationMenu, () => {
     expect(key("KeyX", { meta: true })).toBeFalsy();
     // There is no other profile to select.
     expect(key("BracketRight", { meta: true, shift: true })).toBeFalsy();
+  });
+
+  it("runs a held key's command once where repeating it would step on", () => {
+    const app = setup();
+
+    app.setState({
+      ...oneProfile,
+      profiles: [
+        {
+          ...newProfile("a", "Default"),
+          tabs: [gmailTab(), { id: "c1", app: "calendar", url: "", title: "" }],
+        },
+      ],
+    });
+
+    const nextTab = (isAutoRepeat: boolean) =>
+      app.menu.handleKey({
+        type: "keyDown",
+        key: "Tab",
+        code: "Tab",
+        control: true,
+        shift: false,
+        alt: false,
+        meta: false,
+        isAutoRepeat,
+      });
+
+    expect([nextTab(false), nextTab(true), nextTab(true)]).toStrictEqual([
+      true,
+      true,
+      true,
+    ]);
+    expect(app.selected).toStrictEqual(["c1"]);
   });
 });

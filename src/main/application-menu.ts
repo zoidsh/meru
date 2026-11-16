@@ -361,7 +361,8 @@ export const createApplicationMenu = ({
     /**
      * Runs the available command whose shortcut a key in a page is, since
      * the menu hears only what reaches it, which focus inside a page's view
-     * does not promise. Says whether it was one.
+     * does not promise. Says whether it was one; a held key repeating a
+     * command that runs once is one, run no further.
      */
     handleKey: (input: KeyInput) => {
       const current = context();
@@ -375,7 +376,7 @@ export const createApplicationMenu = ({
         );
       });
 
-      if (command) {
+      if (command && !(input.isAutoRepeat && command.once)) {
         run(command);
       }
 

@@ -15,6 +15,7 @@ const press = (
   shift: false,
   alt: false,
   meta: false,
+  isAutoRepeat: false,
   ...modifiers,
 });
 

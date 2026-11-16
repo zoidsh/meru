@@ -39,6 +39,11 @@ export interface Command {
   isAvailable?: (context: CommandContext) => boolean;
   /** A command with this is a choice that is on or off. */
   isChecked?: (context: CommandContext) => boolean;
+  /**
+   * Runs once for a held shortcut, since repeating it would close or step
+   * through more than the person meant.
+   */
+  once?: true;
   run: (context: CommandContext, actions: CommandActions) => Promise<unknown>;
 }
 
@@ -151,6 +156,7 @@ export const COMMANDS: readonly Command[] = [
       }),
     shortcut: { darwin: "Ctrl+Tab", win32: "Ctrl+Tab", linux: "Ctrl+Tab" },
     isAvailable: hasOtherTab,
+    once: true,
     run: selectAdjacentTab(1),
   },
   {
@@ -167,6 +173,7 @@ export const COMMANDS: readonly Command[] = [
       linux: "Ctrl+Shift+Tab",
     },
     isAvailable: hasOtherTab,
+    once: true,
     run: selectAdjacentTab(-1),
   },
   {
@@ -186,6 +193,7 @@ export const COMMANDS: readonly Command[] = [
 
       return tab !== undefined && canCloseTab(tab);
     },
+    once: true,
     run: ({ state }, { closeTab }) => closeTab(selectedTab(state)),
   },
   {
@@ -198,6 +206,7 @@ export const COMMANDS: readonly Command[] = [
       }),
     shortcut: { darwin: "Command+Shift+]" },
     isAvailable: hasOtherProfile,
+    once: true,
     run: selectAdjacentProfile(1),
   },
   {
@@ -210,6 +219,7 @@ export const COMMANDS: readonly Command[] = [
       }),
     shortcut: { darwin: "Command+Shift+[" },
     isAvailable: hasOtherProfile,
+    once: true,
     run: selectAdjacentProfile(-1),
   },
   {
@@ -220,6 +230,7 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Menu item in the Window menu that adds a profile, signed in to no account yet, and selects it",
       }),
+    once: true,
     run: (_context, { addProfile }) => addProfile(),
   },
 ];

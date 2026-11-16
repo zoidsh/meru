@@ -9,6 +9,8 @@ export interface KeyInput {
   shift: boolean;
   alt: boolean;
   meta: boolean;
+  /** Whether the key is held and this press is the system repeating it. */
+  isAutoRepeat: boolean;
 }
 
 /** Where the punctuation a shortcut names sits, for those that have one. */
