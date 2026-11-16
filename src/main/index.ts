@@ -1,13 +1,14 @@
 import path from "node:path";
 
-import { profilePartition, selectedProfile } from "#core/state.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
+import { createIpc } from "#platform/ipc.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
+import { createSessions } from "#platform/sessions.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTextFile } from "#platform/text-file.ts";
 import { createWindowFactory } from "#platform/window.ts";
@@ -15,9 +16,14 @@ import { createWindowFactory } from "#platform/window.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
-import { createGmailView } from "./gmail-view.ts";
+import { automaticProfileName } from "./profile-copy.ts";
+import { createProfileViews } from "./profile-views.ts";
+import { createProfiles } from "./profiles.ts";
+import { createSenderRegistry } from "./senders.ts";
+import { createShellHandlers, shellState } from "./shell-handlers.ts";
+import { serveShellContract } from "./shell-ipc.ts";
 import { createShellWindow, revealWindow } from "./shell-window.ts";
-import { STATE_FILE_NAME, loadState } from "./state-store.ts";
+import { STATE_FILE_NAME, loadState, saveState } from "./state-store.ts";
 
 const APP_SCHEME = "meru-app";
 
@@ -32,6 +38,9 @@ const gmailUrl = standInUrl || GMAIL_URL;
 const childWindowOrigins = standInUrl
   ? [new URL(standInUrl).origin]
   : SIGN_IN_ORIGINS;
+
+/** v3's account id, so a profile id is the account id v3 would have made. */
+const newId = () => crypto.randomUUID();
 
 const lifecycle = createAppLifecycle();
 const errorDialog = createErrorDialog();
@@ -121,10 +130,20 @@ const start = async () => {
 
   activateLanguage(language);
 
-  const state = await loadState({
-    file: createTextFile(path.join(lifecycle.userDataPath, STATE_FILE_NAME)),
-    newId: () => crypto.randomUUID(),
-    now: Date.now,
+  const stateFile = createTextFile(
+    path.join(lifecycle.userDataPath, STATE_FILE_NAME)
+  );
+  const profiles = createProfiles({
+    initial: await loadState({
+      file: stateFile,
+      newId,
+      now: Date.now,
+      log: console.error,
+    }),
+    save: (state) => saveState(stateFile, state),
+    newId,
+    profileName: automaticProfileName,
+    clearSession: createSessions().clear,
     log: console.error,
   });
 
@@ -142,13 +161,37 @@ const start = async () => {
     background,
   });
 
-  createGmailView({
+  const senders = createSenderRegistry();
+
+  senders.register(shell.window.webContentsId, { role: "shell" });
+
+  const views = createProfileViews({
     window: shell.window,
-    partition: profilePartition(selectedProfile(state).id),
     url: gmailUrl,
     childWindowOrigins,
     background,
     systemBrowser: createSystemBrowser(),
+    senders,
+    log: console.error,
+  });
+
+  views.reconcile(profiles.get());
+  profiles.onChange(views.reconcile);
+
+  serveShellContract({
+    ipc: createIpc(),
+    senders,
+    handlers: createShellHandlers({
+      profiles,
+      window: shell.window,
+      log: console.error,
+    }),
+    state: {
+      read: () => shellState(profiles.get()),
+      onChange: (listener) => {
+        profiles.onChange(listener);
+      },
+    },
     log: console.error,
   });
 

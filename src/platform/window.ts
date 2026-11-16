@@ -1,4 +1,4 @@
-import { BrowserWindow } from "electron";
+import { BrowserWindow, Menu, dialog } from "electron";
 
 import { isSameSite } from "#core/app-url.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
@@ -17,9 +17,23 @@ export interface WindowOptions {
   contentUrl: string;
 }
 
+export interface ContextMenuItem {
+  label: string;
+  enabled: boolean;
+  click: () => void;
+}
+
+export interface Confirmation {
+  message: string;
+  detail: string;
+  confirmLabel: string;
+  cancelLabel: string;
+}
+
 export type WindowLoadEvent = "ready-to-show" | "did-finish-load";
 
 export interface AppWindow {
+  readonly webContentsId: number;
   loadURL: (url: string) => Promise<void>;
   once: (event: WindowLoadEvent, listener: () => void) => void;
   show: () => void;
@@ -32,6 +46,10 @@ export interface AppWindow {
   getContentAreaSize: () => Size;
   onContentAreaResize: (listener: () => void) => void;
   addContentView: (options: ContentViewOptions) => ContentView;
+  /** A native menu at the pointer. */
+  showContextMenu: (items: ContextMenuItem[]) => void;
+  /** A native warning, modal to the window, with cancel the default. */
+  confirm: (confirmation: Confirmation) => Promise<boolean>;
 }
 
 export interface WindowFactory {
@@ -66,6 +84,7 @@ export const createWindowFactory = (): WindowFactory => ({
     webContents.setWindowOpenHandler(() => ({ action: "deny" }));
 
     return {
+      webContentsId: webContents.id,
       loadURL: (url) => window.loadURL(url),
       once: (event, listener) => {
         if (event === "ready-to-show") {
@@ -92,6 +111,22 @@ export const createWindowFactory = (): WindowFactory => ({
       },
       addContentView: (contentViewOptions) =>
         addContentView(window, contentViewOptions),
+      showContextMenu: (items) => {
+        Menu.buildFromTemplate(items).popup({ window });
+      },
+      confirm: async ({ message, detail, confirmLabel, cancelLabel }) => {
+        const { response } = await dialog.showMessageBox(window, {
+          type: "warning",
+          message,
+          detail,
+          buttons: [confirmLabel, cancelLabel],
+          defaultId: 1,
+          cancelId: 1,
+          noLink: true,
+        });
+
+        return response === 0;
+      },
     };
   },
 });

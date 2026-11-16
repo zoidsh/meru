@@ -14,13 +14,33 @@ export interface ContentViewOptions {
   onWindowOpen: (url: string) => "allow" | "deny";
   /** Child windows show without activating the app, as the shell window does. */
   background: boolean;
+  /**
+   * Told of the view's webContents and of each child window's as it is
+   * created; what it returns is called when that webContents is destroyed.
+   */
+  onWebContents: (
+    webContentsId: number,
+    kind: "content-view" | "child-window"
+  ) => () => void;
 }
 
 export interface ContentView {
   setBounds: (bounds: Rectangle) => void;
   /** Rejects when the load does not commit. */
   loadURL: (url: string) => Promise<void>;
+  /** Hidden, the page stays loaded. */
+  setVisible: (visible: boolean) => void;
+  /** Closes the page and every window it opened, and takes it off the window. */
+  close: () => void;
 }
+
+const trackDestroyed = (
+  webContents: WebContents,
+  kind: "content-view" | "child-window",
+  onWebContents: ContentViewOptions["onWebContents"]
+) => {
+  webContents.once("destroyed", onWebContents(webContents.id, kind));
+};
 
 /** Shown on whichever comes first, since Wayland can skip `ready-to-show`. */
 const showInactiveOnceReady = (window: BrowserWindow) => {
@@ -37,9 +57,10 @@ const showInactiveOnceReady = (window: BrowserWindow) => {
 const routeWindowOpens = (
   webContents: WebContents,
   parent: BrowserWindow,
-  options: Pick<ContentViewOptions, "onWindowOpen" | "background">
+  options: ContentViewOptions,
+  children: Set<BrowserWindow>
 ) => {
-  const { onWindowOpen, background } = options;
+  const { onWindowOpen, background, onWebContents } = options;
 
   webContents.setWindowOpenHandler(({ url }) =>
     onWindowOpen(url) === "allow"
@@ -50,11 +71,15 @@ const routeWindowOpens = (
       : { action: "deny" }
   );
   webContents.on("did-create-window", (child) => {
+    children.add(child);
+    child.once("closed", () => children.delete(child));
+    trackDestroyed(child.webContents, "child-window", onWebContents);
+
     if (background) {
       showInactiveOnceReady(child);
     }
 
-    routeWindowOpens(child.webContents, parent, options);
+    routeWindowOpens(child.webContents, parent, options, children);
   });
 };
 
@@ -66,7 +91,8 @@ export const addContentView = (
   window: BrowserWindow,
   options: ContentViewOptions
 ): ContentView => {
-  const { partition } = options;
+  const { partition, onWebContents } = options;
+  const children = new Set<BrowserWindow>();
   const view = new WebContentsView({
     webPreferences: {
       partition,
@@ -77,17 +103,33 @@ export const addContentView = (
   });
   const { webContents } = view;
 
-  routeWindowOpens(webContents, window, options);
+  trackDestroyed(webContents, "content-view", onWebContents);
+  routeWindowOpens(webContents, window, options, children);
   window.contentView.addChildView(view);
-  // Closing a window leaves the views in it alive.
-  window.once("closed", () => {
+
+  const close = () => {
+    for (const child of children) {
+      if (!child.isDestroyed()) {
+        child.destroy();
+      }
+    }
+
+    if (!window.isDestroyed()) {
+      window.contentView.removeChildView(view);
+    }
+
     if (!webContents.isDestroyed()) {
       webContents.close();
     }
-  });
+  };
+
+  // Closing a window leaves the views in it alive.
+  window.once("closed", close);
 
   return {
     setBounds: (bounds) => view.setBounds(bounds),
     loadURL: (url) => webContents.loadURL(url),
+    setVisible: (visible) => view.setVisible(visible),
+    close,
   };
 };

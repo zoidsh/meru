@@ -12,10 +12,56 @@ msgstr ""
 msgid "{productName} could not start"
 msgstr "{productName} could not start"
 
+#. Accessible name of the plus button in the title bar that adds a profile, read by screen readers
+#: src/shell/app.tsx
+msgid "Add profile"
+msgstr "Add profile"
+
+#. Button in the dialog that confirms removing a profile, which keeps it
+#: src/main/profile-copy.ts
+msgid "Cancel"
+msgstr "Cancel"
+
 #. Accessible name of the window's main area, below the title bar, read by screen readers
 #: src/shell/app.tsx
 msgid "Content"
 msgstr "Content"
+
+#. Name of the first profile until the person renames it, shown in the title bar
+#: src/main/profile-copy.ts
+msgctxt "profile name"
+msgid "Default"
+msgstr "Default"
+
+#. Explanation in the dialog that confirms removing a profile
+#: src/main/profile-copy.ts
+msgid "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected."
+msgstr "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected."
+
+#. Name given to a newly added profile, where {n} is a number from 2 up; the person can rename it later
+#: src/main/profile-copy.ts
+msgid "Profile {n}"
+msgstr "Profile {n}"
+
+#. Accessible name of the row of profile tabs in the title bar, read by screen readers
+#: src/shell/app.tsx
+msgid "Profiles"
+msgstr "Profiles"
+
+#. Question in the dialog that confirms removing a profile; {name} is the profile's name
+#: src/main/profile-copy.ts
+msgid "Remove {name}?"
+msgstr "Remove {name}?"
+
+#. Item in a profile's context menu in the title bar that asks to remove the profile; {name} is the profile's name
+#: src/main/profile-copy.ts
+msgid "Remove {name}…"
+msgstr "Remove {name}…"
+
+#. Button in the dialog that confirms removing a profile
+#: src/main/profile-copy.ts
+msgid "Remove Profile"
+msgstr "Remove Profile"
 
 #. Shown when the app is started on data that a later version of the app wrote, which this version cannot read
 #: src/main/state-store.ts

@@ -38,7 +38,12 @@ const createFakeWindow = () => {
     addContentView: () => ({
       setBounds: () => false,
       loadURL: () => Promise.resolve(),
+      setVisible: () => false,
+      close: () => false,
     }),
+    webContentsId: 1,
+    showContextMenu: () => false,
+    confirm: () => Promise.resolve(false),
   };
 
   return {
