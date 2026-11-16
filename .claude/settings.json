@@ -1,0 +1,8 @@
+{
+  "env": {
+    "MERU_BACKGROUND": "1"
+  },
+  "worktree": {
+    "baseRef": "head"
+  }
+}
