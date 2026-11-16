@@ -66,6 +66,16 @@ export default defineConfig({
       },
     },
     {
+      // The shadcn CLI writes these components, and they stay as it writes
+      // them, so the rules its style breaks are off here.
+      files: ["src/ui/**"],
+      rules: {
+        "func-style": "off",
+        "no-use-before-define": "off",
+        "import/consistent-type-specifier-style": "off",
+      },
+    },
+    {
       files: ["e2e/**"],
       rules: {
         "no-restricted-properties": [
