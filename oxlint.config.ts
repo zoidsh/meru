@@ -66,6 +66,25 @@ export default defineConfig({
       },
     },
     {
+      // Catches a renderer's text left unwrapped for translation: a JSX text
+      // child, or a literal in an attribute a person reads. Copy in any other
+      // attribute, and in main, is left to review.
+      files: ["src/**/*.tsx"],
+      rules: {
+        "react/jsx-no-literals": [
+          "error",
+          {
+            noStrings: true,
+            ignoreProps: true,
+            restrictedAttributes: ["aria-label", "title", "alt", "placeholder"],
+            allowedStrings: ["Meru"],
+            // Lingui's macro, whose children are the message, links included.
+            elementOverrides: { Trans: { allowElement: true } },
+          },
+        ],
+      },
+    },
+    {
       // The shadcn CLI writes these components, and they stay as it writes
       // them, so the rules its style breaks are off here.
       files: ["src/ui/**"],

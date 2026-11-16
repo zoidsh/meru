@@ -33,15 +33,20 @@ One package. Each area is a folder under `src`, with its tests beside the code:
 - `main`: the entry and composition root. Builds the adapters, registers the `meru-app://` scheme, opens the shell window.
 - `preload/shell`: the shell window's sandboxed preload, bundled to one CommonJS file.
 - `shell`: the shell renderer, React and Tailwind, built by Vite (`vite.config.ts`).
+- `i18n`: the languages, their catalogs in `locales`, and activation; imported by main and the renderers, so nothing of Electron.
 - `ui`: shadcn components on Base UI, and `styles.css`, the Tailwind entry and theme every renderer imports.
 
-An import across areas uses the `package.json` subpath alias, `#core/app-url.ts`; one within an area is relative. Both keep the `.ts` extension for Node's type stripping, which also rules out enums and parameter properties. `tsconfig.json` is the main side (Node, no DOM), `tsconfig.web.json` the renderers (DOM, no Node), and `src/preload` and `e2e` have their own with both; `core` is checked under the first two.
+An import across areas uses the `package.json` subpath alias, `#core/app-url.ts`; one within an area is relative. Both keep the `.ts` extension for Node's type stripping, which also rules out enums and parameter properties. `tsconfig.json` is the main side (Node, no DOM), `tsconfig.web.json` the renderers (DOM, no Node), and `src/preload` and `e2e` have their own with both; `core` and `i18n` are checked under the first two.
 
 `oxlint.config.ts` holds the boundaries: `core` imports no other area and nothing of `electron`; only `platform` and `preload` import `electron` by value; no relative path into another area. Ultracite's preset already refuses `require`.
 
 A general utility (delay, debounce, clamp, retry, a timeout, a mutex, deep equality and the like) comes from `es-toolkit`; write one here only when es-toolkit has none that fits.
 
 Components in `src/ui` come only from `pnpm exec shadcn add <name>`, never written or patched by hand where the CLI has one, and stay as it writes them: oxfmt skips them and oxlint drops the rules their style breaks. In `src/ui/styles.css` the `dark` variant and the media query around the dark tokens are ours, so a regenerated theme must keep them.
+
+## Strings
+
+Every string a person reads is wrapped for Lingui: `t` from `@lingui/core/macro` in main, `<Trans>` or `useLingui()`'s `t` from `@lingui/react/macro` in a renderer. A short or ambiguous one, or one with a placeholder, takes a translator comment through `t({ message, comment })` or `<Trans comment="…">`. Log lines, thrown errors and the product name stay unwrapped. Call `t` where the string is shown, never at module load, so a language switched while running reaches it. `pnpm i18n:extract` rewrites `src/i18n/locales/en.po`, which is committed and which `pnpm check` compares with the source; the bundlers and Vitest load `.po` files directly, so there is nothing to compile. Main resolves the language once at startup and names it to a renderer in its URL's `lang` parameter. Lint catches a bare JSX text child and a literal `aria-label`, `title`, `alt` or `placeholder` in a renderer; other attributes, strings main passes to a dialog or a menu, and a `t` at module load are for review to catch.
 
 ## Builds
 
@@ -72,4 +77,4 @@ The built shell is served from `meru-app://shell/` with a strict Content-Securit
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push to `v4`: `check` (lint with GitHub annotations, format check, types), `test`, the end-to-end suite on Linux under `xvfb-run` and on Windows, and `pnpm package:installers` on macOS, Windows and Linux, unsigned and not kept. A newer push cancels the run in progress. `gh workflow run ci.yml --ref v4` runs it on demand. There is no hosted macOS end-to-end job: run `pnpm test:e2e` on the Mac mini before pushing. A failed end-to-end job uploads `test-results/`, traces included, as the run's `e2e-linux` or `e2e-windows` artifact; `gh run download <run id> -n e2e-linux` fetches it.
+`.github/workflows/ci.yml` runs on every push to `v4`: `check` (lint with GitHub annotations, format check, types, catalog sync), `test`, the end-to-end suite on Linux under `xvfb-run` and on Windows, and `pnpm package:installers` on macOS, Windows and Linux, unsigned and not kept. A newer push cancels the run in progress. `gh workflow run ci.yml --ref v4` runs it on demand. There is no hosted macOS end-to-end job: run `pnpm test:e2e` on the Mac mini before pushing. A failed end-to-end job uploads `test-results/`, traces included, as the run's `e2e-linux` or `e2e-windows` artifact; `gh run download <run id> -n e2e-linux` fetches it.
