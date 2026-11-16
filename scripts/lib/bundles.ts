@@ -5,6 +5,8 @@ import type { BuildOptions } from "rolldown";
 
 import { appIdentity } from "#core/app-identity.ts";
 
+import { linguiForRolldown } from "./lingui.ts";
+
 /**
  * What a build is for. `e2e` is a production build that also carries what only
  * the end-to-end suite may switch on; a release is only ever built as `prod`.
@@ -72,11 +74,18 @@ export const appBundles = (
       input: path.join(repositoryRoot, "src", "main", "index.ts"),
       platform: "node",
       external: ["electron"],
+      plugins: linguiForRolldown(mode === "prod"),
       transform: {
         define: {
           MERU_BUILD_MODE: JSON.stringify(mode),
           MERU_E2E_BUILD: JSON.stringify(target === "e2e"),
           MERU_APP_ID: JSON.stringify(identityFor(target, manifest).appId),
+          // Libraries drop their development-only code on it, such as
+          // Lingui's message compiler, which a catalog compiled at build time
+          // makes dead weight.
+          "process.env.NODE_ENV": JSON.stringify(
+            mode === "prod" ? "production" : "development"
+          ),
         },
       },
       output: {

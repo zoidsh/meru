@@ -34,6 +34,7 @@ jobs:
       - run: pnpm lint --format github
       - run: pnpm fmt:check
       - run: pnpm types
+      - run: pnpm i18n:check
 
   test:
     runs-on: ubuntu-latest

@@ -26,5 +26,12 @@
 
     "noEmit": true
   },
-  "include": ["src/core", "src/platform", "src/main", "scripts", "*.config.ts"]
+  "include": [
+    "src/core",
+    "src/i18n",
+    "src/platform",
+    "src/main",
+    "scripts",
+    "*.config.ts"
+  ]
 }
