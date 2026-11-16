@@ -1,21 +1,32 @@
 import path from "node:path";
 
+import { profilePartition, selectedProfile } from "#core/state.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
+import { createSystemBrowser } from "#platform/system-browser.ts";
+import { createTextFile } from "#platform/text-file.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
+import { createGmailView } from "./gmail-view.ts";
 import { createShellWindow, revealWindow } from "./shell-window.ts";
+import { STATE_FILE_NAME, loadState } from "./state-store.ts";
 
 const APP_SCHEME = "meru-app";
 
 const SHELL_HOST = "shell";
+
+const GMAIL_URL = "https://mail.google.com/mail/u/0";
+
+// The suite's stand-in for Gmail, which only its build reads.
+const gmailUrl =
+  (MERU_E2E_BUILD && process.env.MERU_TEST_GMAIL_URL) || GMAIL_URL;
 
 const lifecycle = createAppLifecycle();
 const errorDialog = createErrorDialog();
@@ -105,6 +116,13 @@ const start = async () => {
 
   activateLanguage(language);
 
+  const state = await loadState({
+    file: createTextFile(path.join(lifecycle.userDataPath, STATE_FILE_NAME)),
+    newId: () => crypto.randomUUID(),
+    now: Date.now,
+    log: console.error,
+  });
+
   const shellUrl = new URL(shellSource.url);
 
   shellUrl.searchParams.set("lang", language);
@@ -117,6 +135,14 @@ const start = async () => {
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
     isMacOS: process.platform === "darwin",
     background,
+  });
+
+  createGmailView({
+    window: shell.window,
+    partition: profilePartition(selectedProfile(state).id),
+    url: gmailUrl,
+    systemBrowser: createSystemBrowser(),
+    log: console.error,
   });
 
   lifecycle.onSecondInstance(() => {

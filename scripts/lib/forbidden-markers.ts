@@ -29,6 +29,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       marker: "MERU_TEST_BACKGROUND",
       why: "only the end-to-end build may be kept from ever activating",
     },
+    {
+      marker: "MERU_TEST_GMAIL_URL",
+      why: "only the end-to-end build may load a stand-in in place of Gmail",
+    },
   ];
 
 export interface OutputFile {

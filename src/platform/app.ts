@@ -2,6 +2,8 @@ import { app } from "electron";
 
 export interface AppLifecycle {
   readonly name: string;
+  /** Where this run keeps its data, a `--user-data-dir` given to it included. */
+  readonly userDataPath: string;
   appendSwitch: (name: string, value?: string) => void;
   /** False when another instance already holds this user data directory. */
   requestSingleInstanceLock: () => boolean;
@@ -26,6 +28,9 @@ export interface AppLifecycle {
 export const createAppLifecycle = (): AppLifecycle => ({
   get name() {
     return app.name;
+  },
+  get userDataPath() {
+    return app.getPath("userData");
   },
   appendSwitch: (name, value) => app.commandLine.appendSwitch(name, value),
   requestSingleInstanceLock: () => app.requestSingleInstanceLock(),

@@ -9,6 +9,10 @@ test("a second instance on the same user data exits and leaves the first running
 
   expect(await spawnApp().exited).toBe(0);
   expect(app.process().exitCode).toBeNull();
-  expect(app.windows()).toHaveLength(1);
+  expect(
+    await app.evaluate(
+      ({ BrowserWindow }) => BrowserWindow.getAllWindows().length
+    )
+  ).toBe(1);
   await expect(shell.getByRole("main", { name: "Content" })).toBeVisible();
 });

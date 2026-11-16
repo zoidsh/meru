@@ -6,11 +6,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { _electron, test as base } from "@playwright/test";
+import { _electron, expect, test as base } from "@playwright/test";
 import type { ElectronApplication, Page, TestInfo } from "@playwright/test";
 import { delay, withTimeout } from "es-toolkit";
 
 import { DEV_IDENTITY } from "#core/app-identity.ts";
+
+import { startStandIn } from "./stand-in.ts";
+import type { StandIn } from "./stand-in.ts";
 
 const run = promisify(execFile);
 
@@ -141,10 +144,28 @@ const saveFailure = async (app: ElectronApplication, testInfo: TestInfo) => {
   }
 };
 
+/** The first of the app's pages whose URL starts with `prefix`, once loaded. */
+export const findPage = async (app: ElectronApplication, prefix: string) => {
+  const find = () =>
+    app.windows().find((page) => page.url().startsWith(prefix));
+
+  await expect.poll(() => find() !== undefined).toBe(true);
+
+  const page = find() as Page;
+
+  await page.waitForLoadState("load");
+
+  return page;
+};
+
 interface AppFixtures {
   /** The pids this test launched, for the teardown on Windows. */
   launched: number[];
   userDataDir: string;
+  /** Served in place of Gmail to every app the test launches. */
+  standIn: StandIn;
+  /** Launches the app on the test's user data; closed when the test ends. */
+  launchApp: () => Promise<ElectronApplication>;
   app: ElectronApplication;
   /** The shell window, once it has loaded. */
   shell: Page;
@@ -172,41 +193,62 @@ export const test = base.extend<AppFixtures>({
       });
     }
   },
-  app: async ({ userDataDir, launched }, use, testInfo) => {
-    const app = await _electron.launch({
-      executablePath,
-      args: launchArgs(userDataDir),
-      env,
-    });
-    const { pid } = app.process();
-
-    if (pid !== undefined) {
-      launched.push(pid);
-    }
+  standIn: async ({}, use) => {
+    const standIn = await startStandIn();
 
     try {
-      await app.context().tracing.start({ screenshots: true, snapshots: true });
-      await use(app);
+      await use(standIn);
+    } finally {
+      await standIn.close();
+    }
+  },
+  launchApp: async ({ userDataDir, launched, standIn }, use) => {
+    const apps: ElectronApplication[] = [];
 
-      if (testInfo.status !== testInfo.expectedStatus) {
-        await saveFailure(app, testInfo);
-      }
+    try {
+      await use(async () => {
+        const app = await _electron.launch({
+          executablePath,
+          args: launchArgs(userDataDir),
+          env: { ...env, MERU_TEST_GMAIL_URL: standIn.url },
+        });
+        const { pid } = app.process();
+
+        if (pid !== undefined) {
+          launched.push(pid);
+        }
+
+        apps.push(app);
+
+        return app;
+      });
     } finally {
       // A close that hangs, as on a blocking dialog, is not waited out: the
       // user data directory's teardown kills whatever is left.
-      await withTimeout(() => app.close(), 10_000).catch(() => false);
+      await Promise.all(
+        apps.map((app) =>
+          withTimeout(() => app.close(), 10_000).catch(() => false)
+        )
+      );
+    }
+  },
+  app: async ({ launchApp }, use, testInfo) => {
+    const app = await launchApp();
+
+    await app.context().tracing.start({ screenshots: true, snapshots: true });
+    await use(app);
+
+    if (testInfo.status !== testInfo.expectedStatus) {
+      await saveFailure(app, testInfo);
     }
   },
   shell: async ({ app }, use) => {
-    const window = await app.firstWindow();
-
-    await window.waitForLoadState("load");
-    await use(window);
+    await use(await findPage(app, "meru-app:"));
   },
-  spawnApp: async ({ userDataDir, launched }, use) => {
+  spawnApp: async ({ userDataDir, launched, standIn }, use) => {
     await use(() => {
       const child = spawn(executablePath, launchArgs(userDataDir), {
-        env,
+        env: { ...env, MERU_TEST_GMAIL_URL: standIn.url },
         stdio: "ignore",
       });
 

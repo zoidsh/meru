@@ -3,6 +3,9 @@ import { BrowserWindow } from "electron";
 import { isSameSite } from "#core/app-url.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
 
+import { addContentView } from "./content-view.ts";
+import type { ContentView, ContentViewOptions } from "./content-view.ts";
+
 export interface WindowOptions {
   title: string;
   bounds: Rectangle;
@@ -25,6 +28,9 @@ export interface AppWindow {
   restore: () => void;
   isMinimized: () => boolean;
   isDestroyed: () => boolean;
+  getContentSize: () => Size;
+  onResize: (listener: () => void) => void;
+  addContentView: (options: ContentViewOptions) => ContentView;
 }
 
 export interface WindowFactory {
@@ -73,6 +79,16 @@ export const createWindowFactory = (): WindowFactory => ({
       restore: () => window.restore(),
       isMinimized: () => window.isMinimized(),
       isDestroyed: () => window.isDestroyed(),
+      getContentSize: () => {
+        const [width = 0, height = 0] = window.getContentSize();
+
+        return { width, height };
+      },
+      onResize: (listener) => {
+        window.on("resize", listener);
+      },
+      addContentView: (contentViewOptions) =>
+        addContentView(window, contentViewOptions),
     };
   },
 });

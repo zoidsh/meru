@@ -1,5 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 
+import { TITLEBAR_HEIGHT } from "#core/layout.ts";
+
 export const App = () => {
   const { t } = useLingui();
 
@@ -12,7 +14,8 @@ export const App = () => {
           comment:
             "Accessible name of the strip across the top of the window, read by screen readers",
         })}
-        className="flex h-10 shrink-0 items-center justify-center border-b border-border bg-sidebar px-3 [app-region:drag] in-data-[platform=darwin]:pl-20"
+        style={{ height: TITLEBAR_HEIGHT }}
+        className="flex shrink-0 items-center justify-center border-b border-border bg-sidebar px-3 [app-region:drag] in-data-[platform=darwin]:pl-20"
       >
         <span className="text-xs font-medium text-muted-foreground">Meru</span>
       </header>
