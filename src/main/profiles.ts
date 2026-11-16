@@ -91,6 +91,37 @@ export const createProfiles = ({
     }
   };
 
+  /**
+   * Within `exclusive`: deletes the data of each of `profileIds` on the list
+   * to clear, but never of an id an entry still holds, readable or not, as a
+   * hand-edited file can; that one is only dropped from the list.
+   */
+  const settleClears = async (profileIds: readonly string[]) => {
+    const sorted = sortProfilesToClear(state);
+    const clear = sorted.clear.filter((id) => profileIds.includes(id));
+    const stillListed = sorted.stillListed.filter((id) =>
+      profileIds.includes(id)
+    );
+
+    for (const profileId of stillListed) {
+      log(
+        `Kept the data of profile ${profileId}, which was on the list to clear but is still listed`
+      );
+    }
+
+    if (stillListed.length > 0) {
+      await commit(forgetProfilesToClear(state, stillListed)).catch(
+        (error: unknown) => {
+          log(
+            `The list of profiles to clear was not saved: ${describe(error)}`
+          );
+        }
+      );
+    }
+
+    await clearAndForget(clear);
+  };
+
   const exclusive = async <T>(work: () => Promise<T>) => {
     await mutex.acquire();
 
@@ -140,38 +171,16 @@ export const createProfiles = ({
           return false;
         }
 
-        await clearAndForget([profileId]);
+        await settleClears([profileId]);
 
         return true;
       }),
     /**
      * Run once at startup, before any view exists: deletes the data of each
-     * profile a removal did not finish clearing. Never an id still listed as
-     * a profile, which a hand-edited file can hold; that one is only dropped
-     * from the list.
+     * profile a removal did not finish clearing.
      */
     finishClears: () =>
-      exclusive(async () => {
-        const { clear, stillListed } = sortProfilesToClear(state);
-
-        for (const profileId of stillListed) {
-          log(
-            `Kept the data of profile ${profileId}, which was on the list to clear but is still listed`
-          );
-        }
-
-        if (stillListed.length > 0) {
-          await commit(forgetProfilesToClear(state, stillListed)).catch(
-            (error: unknown) => {
-              log(
-                `The list of profiles to clear was not saved: ${describe(error)}`
-              );
-            }
-          );
-        }
-
-        await clearAndForget(clear);
-      }),
+      exclusive(() => settleClears(state.profilesToClear ?? [])),
   };
 };
 

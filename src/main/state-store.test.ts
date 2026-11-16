@@ -189,6 +189,24 @@ describe(loadState, () => {
     });
   });
 
+  it("still starts on a new first profile, and logs, when saving it fails", async () => {
+    const { file } = createFakeFile(
+      JSON.stringify({ version: 1, profiles: [], selectedProfileId: "" })
+    );
+    const failing: TextFile = {
+      ...file,
+      write: () => Promise.reject(new Error("disk full")),
+    };
+    const { state, logs } = load(failing);
+
+    await expect(state).resolves.toMatchObject({
+      selectedProfileId: "new-id",
+    });
+    expect(logs).toStrictEqual([
+      "The new first profile was not saved: Error: disk full",
+    ]);
+  });
+
   it("stops startup on a newer version's file and leaves it alone", async () => {
     const newer = JSON.stringify({ version: 2, profiles: {} });
     const { file, files } = createFakeFile(newer);

@@ -35,11 +35,7 @@ const stateSchema = z.looseObject({
   version: z.literal(STATE_VERSION),
   profiles: z.array(z.unknown()),
   selectedProfileId: z.optional(z.unknown()),
-  /**
-   * Removed profiles whose session data is still to be deleted, so a quit
-   * between the removal and the clear is finished at the next launch.
-   */
-  profilesToClear: z.optional(z.array(z.string().check(z.minLength(1)))),
+  profilesToClear: z.optional(z.unknown()),
 });
 
 export type Tab = z.infer<typeof tabSchema>;
@@ -48,6 +44,14 @@ export type Tab = z.infer<typeof tabSchema>;
 const UNREAD = Symbol("unread tab");
 const TABS_AS_FOUND = Symbol("tabs as found");
 const UNREAD_PROFILES = Symbol("unread profiles");
+const CLEAR_AS_FOUND = Symbol("profiles to clear as found");
+
+/**
+ * What of `profilesToClear` is not a profile id: entries written back after
+ * the ids, or a value that is not a list, written back while the list is
+ * empty.
+ */
+type ClearAsFound = { entries: unknown[] } | { whole: unknown };
 
 /**
  * An entry in the profiles that does not parse, kept as it was found and
@@ -92,8 +96,13 @@ export interface State {
   /** The profiles that parse; the rest are kept but never shown. */
   profiles: Profile[];
   selectedProfileId: string;
-  profilesToClear?: StoredState["profilesToClear"];
+  /**
+   * Removed profiles whose session data is still to be deleted, so a quit
+   * between the removal and the clear is finished at the next launch.
+   */
+  profilesToClear?: string[];
   [UNREAD_PROFILES]?: readonly UnreadProfile[];
+  [CLEAR_AS_FOUND]?: ClearAsFound;
 }
 
 export const gmailTab = (): Tab => ({
@@ -124,8 +133,9 @@ const readTabs = (stored: unknown): TabEntry[] =>
  */
 const normalizeProfile = (profile: StoredProfile): Profile => {
   const stored = readTabs(profile.tabs);
+  const gmails = stored.filter(isTab).filter((tab) => tab.app === "gmail");
   const gmail =
-    stored.filter(isTab).find((tab) => tab.app === "gmail") ?? gmailTab();
+    gmails.find((tab) => tab.id === GMAIL_TAB_ID) ?? gmails[0] ?? gmailTab();
   const seen = new Set<string>();
   const tabs = [
     gmail,
@@ -181,8 +191,18 @@ export const encodeState = (state: State): unknown => {
       .filter((entry) => Math.min(entry.after, length) === count)
       .map((entry) => entry.raw);
 
+  const asFound = state[CLEAR_AS_FOUND];
+  let profilesToClear: unknown = state.profilesToClear;
+
+  if (asFound && "entries" in asFound) {
+    profilesToClear = [...(state.profilesToClear ?? []), ...asFound.entries];
+  } else if (asFound && (state.profilesToClear ?? []).length === 0) {
+    profilesToClear = asFound.whole;
+  }
+
   return {
     ...state,
+    ...(profilesToClear === undefined ? {} : { profilesToClear }),
     profiles: [
       ...placedAfter(0),
       ...state.profiles.flatMap((profile, index) => [
@@ -223,6 +243,9 @@ const readVersion = (value: unknown) =>
     ? value.version
     : undefined;
 
+const isId = (entry: unknown): entry is string =>
+  typeof entry === "string" && entry !== "";
+
 export const decodeState = (value: unknown): DecodedState => {
   const version = readVersion(value);
 
@@ -249,9 +272,16 @@ export const decodeState = (value: unknown): DecodedState => {
     }
   }
 
-  const { selectedProfileId } = result.data;
+  const { selectedProfileId, profilesToClear, ...rest } = result.data;
   const state: State = {
-    ...result.data,
+    ...rest,
+    ...(profilesToClear === undefined
+      ? {}
+      : {
+          profilesToClear: Array.isArray(profilesToClear)
+            ? profilesToClear.filter(isId)
+            : [],
+        }),
     profiles,
     selectedProfileId: profiles.some(
       (profile) => profile.id === selectedProfileId
@@ -262,6 +292,14 @@ export const decodeState = (value: unknown): DecodedState => {
 
   if (unread.length > 0) {
     state[UNREAD_PROFILES] = unread;
+  }
+
+  if (profilesToClear !== undefined && !Array.isArray(profilesToClear)) {
+    state[CLEAR_AS_FOUND] = { whole: profilesToClear };
+  } else if (profilesToClear?.some((entry) => !isId(entry))) {
+    state[CLEAR_AS_FOUND] = {
+      entries: profilesToClear.filter((entry) => !isId(entry)),
+    };
   }
 
   return { kind: "state", state };

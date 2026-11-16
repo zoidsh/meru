@@ -126,6 +126,52 @@ const decodeProfiles = (profiles: unknown[], selected: unknown) => {
   return decoded.state;
 };
 
+describe("decoding the top level", () => {
+  it.each([
+    ["selectedProfileId", 7],
+    ["selectedProfileId", null],
+    ["profilesToClear", "a"],
+    ["profilesToClear", [7, "", "gone"]],
+    ["profilesToClear", null],
+    ["panes", 5],
+  ])("reads a file whose %s is %j", (key, value) => {
+    expect(decodeState({ ...valid, [key]: value }).kind).toBe("state");
+  });
+
+  it("clears only the ids on the list, and writes the rest back as found", () => {
+    const decoded = decodeState({
+      ...valid,
+      profilesToClear: [7, "gone", ""],
+    });
+
+    if (decoded.kind !== "state") {
+      throw new Error(decoded.kind);
+    }
+
+    expect(sortProfilesToClear(decoded.state).clear).toStrictEqual(["gone"]);
+    expect(encodeState(decoded.state)).toMatchObject({
+      profilesToClear: ["gone", 7, ""],
+    });
+  });
+
+  it("writes a list to clear that is not a list back as found, until an id goes on it", () => {
+    const decoded = decodeState({ ...valid, profilesToClear: "x" });
+
+    if (decoded.kind !== "state") {
+      throw new Error(decoded.kind);
+    }
+
+    expect(encodeState(decoded.state)).toMatchObject({ profilesToClear: "x" });
+
+    const id = valid.profiles[0]?.id ?? "";
+    const removed = removeProfile(decoded.state, id);
+
+    expect(removed && encodeState(removed)).toMatchObject({
+      profilesToClear: [id],
+    });
+  });
+});
+
 describe("decoding profiles", () => {
   const work = { id: "w", name: "Work" };
   const home = { id: "h", name: "Home" };
@@ -255,6 +301,19 @@ describe("decoding tabs", () => {
       selected: "gmail",
     });
     expect(decodeTabs([])).toStrictEqual({ ids: ["gmail"], selected: "gmail" });
+  });
+
+  it("keeps the Gmail tab whose id is Gmail's when several claim to be Gmail", () => {
+    const profile = decodeProfile([
+      { ...tab("g2", "gmail"), url: "first" },
+      { ...tab("gmail", "gmail"), url: "fixed", kept: true },
+    ]);
+
+    expect(profile.tabs[0]).toStrictEqual({
+      ...tab("gmail", "gmail"),
+      url: "fixed",
+      kept: true,
+    });
   });
 
   it("keeps one Gmail tab and one tab of each id, the first", () => {

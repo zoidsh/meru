@@ -58,7 +58,10 @@ export const loadState = async ({
       const state = withAProfile(decoded.state, newId);
 
       if (state !== decoded.state) {
-        await saveState(file, state);
+        // Meru still starts on the profile in memory, or it never would.
+        await saveState(file, state).catch((error: unknown) => {
+          log(`The new first profile was not saved: ${String(error)}`);
+        });
       }
 
       return state;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { newProfile } from "#core/state.ts";
+import { decodeState, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createProfiles } from "./profiles.ts";
@@ -119,6 +119,32 @@ describe(createProfiles, () => {
       "views a",
     ]);
     expect(logs).toStrictEqual([]);
+  });
+
+  it("never clears the data of an id an unreadable entry still holds when a readable profile of that id is removed", async () => {
+    const decoded = decodeState({
+      version: 1,
+      profiles: [
+        { id: "a", name: "A" },
+        { id: "a", name: 5 },
+        { id: "b", name: "B" },
+      ],
+      selectedProfileId: "b",
+    });
+
+    if (decoded.kind !== "state") {
+      throw new Error(decoded.kind);
+    }
+
+    const { profiles, steps, logs } = setup({ initial: decoded.state });
+
+    await expect(profiles.remove("a")).resolves.toBeTruthy();
+
+    expect(steps).not.toContain("clear persist:a");
+    expect(profiles.get().profilesToClear).toStrictEqual([]);
+    expect(logs).toStrictEqual([
+      "Kept the data of profile a, which was on the list to clear but is still listed",
+    ]);
   });
 
   it("refuses to remove the last profile and touches nothing", async () => {
