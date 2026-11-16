@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { SHELL_CALL_NAMES, SHELL_CHANNELS } from "#contract/shell.ts";
+import { SHELL_CALL_NAMES, SHELL_CHANNELS } from "#contract/shell-channels.ts";
 import type {
   ShellBridge,
   ShellCalls,

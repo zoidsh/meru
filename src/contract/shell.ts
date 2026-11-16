@@ -1,5 +1,10 @@
 import { z } from "zod/mini";
 
+import type { ShellCallName } from "./shell-channels.ts";
+
+export { SHELL_CALL_NAMES, SHELL_CHANNELS } from "./shell-channels.ts";
+export type { ShellCallName } from "./shell-channels.ts";
+
 const profileId = z.string().check(z.minLength(1));
 
 const none = z.object({});
@@ -13,7 +18,10 @@ export const SHELL_CALLS = {
     request: z.object({ profileId }),
     response: z.undefined(),
   },
-} as const;
+} as const satisfies Record<
+  ShellCallName,
+  { request: z.ZodMiniType; response: z.ZodMiniType }
+>;
 
 /** The slices of main's state the shell may subscribe to. */
 export const SHELL_STATE = {
@@ -22,8 +30,6 @@ export const SHELL_STATE = {
     selectedProfileId: profileId,
   }),
 } as const;
-
-export type ShellCallName = keyof typeof SHELL_CALLS;
 
 export type ShellCalls = {
   [Name in ShellCallName]: (
@@ -60,13 +66,3 @@ export interface ShellBridge {
     listener: (message: ShellSyncMessage) => void
   ) => () => void;
 }
-
-export const SHELL_CHANNELS = {
-  call: (name: ShellCallName) => `shell:call:${name}`,
-  /** Renderer to main: the handshake, naming the slices. */
-  sync: "shell:sync",
-  /** Main to renderer: each `ShellSyncMessage`. */
-  state: "shell:state",
-} as const;
-
-export const SHELL_CALL_NAMES = Object.keys(SHELL_CALLS) as ShellCallName[];
