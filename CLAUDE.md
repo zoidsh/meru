@@ -4,7 +4,7 @@ Meru is an Electron desktop client for Gmail and Google Workspace. This branch i
 
 ## Commands
 
-`mise.toml` pins Node and pnpm, so setup is `mise install`, then `pnpm install --frozen-lockfile`. After changing a version in `mise.toml`, run `mise lock`. Lefthook formats and lint-fixes staged files at every commit. A fresh clone needs nothing more: `pnpm install` runs `scripts/install-hooks.ts`, which writes a `pre-commit` hook that names no worktree and runs lefthook from whichever worktree is committing. It skips in CI and leaves a hook it did not write alone, and `lefthook.yml` sets `no_auto_install` so lefthook never rewrites the shared hook with one worktree's path.
+`mise.toml` pins Node and pnpm, so setup is `mise install`, then `pnpm install --frozen-lockfile`. After changing a version in `mise.toml`, run `mise lock`. Lefthook formats and lint-fixes staged files at every commit. `pnpm install` installs the hook through lefthook's own postinstall, which skips CI.
 
 | Task | Command |
 | --- | --- |

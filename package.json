@@ -11,7 +11,6 @@
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "prepare": "node scripts/install-hooks.ts",
     "start": "node scripts/start.ts",
     "test": "vitest run",
     "types": "tsc && pnpm --recursive run types"
