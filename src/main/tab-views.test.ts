@@ -440,6 +440,23 @@ describe(createTabViews, () => {
     expect(window.saves.length - before).toBe(2);
   });
 
+  it("keeps no URL or title of the page shown while a tab failed or crashed", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+    const before = window.profiles.get().profiles[0]?.tabs[0];
+
+    window.emit(gmail, REFUSED);
+    window.emit(gmail, { kind: "titled", title: "mail.google.com" });
+    window.emit(gmail, { kind: "crashed", reason: "killed" });
+    window.emit(gmail, {
+      kind: "navigated",
+      url: "chrome-error://chromewebdata/",
+    });
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(window.profiles.get().profiles[0]?.tabs[0]).toStrictEqual(before);
+  });
+
   it("moves every view, hidden ones too, when the content area resizes", async () => {
     const window = await setup();
 

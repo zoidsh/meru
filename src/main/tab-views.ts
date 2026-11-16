@@ -185,6 +185,21 @@ export const createTabViews = ({
     }
   };
 
+  /**
+   * Chromium's error page, shown once a load failed and until the next one
+   * starts, and a crashed page are not where the tab is. A retry's page is,
+   * and its title can come before it finishes loading.
+   */
+  const showsPage = (key: string) => {
+    const status = tabs.get(key)?.status;
+
+    return (
+      status !== undefined &&
+      status.kind !== "crashed" &&
+      !(status.kind === "failed" && !status.retrying)
+    );
+  };
+
   const onEvent = (key: string, tabKeyed: TabKey, event: ContentViewEvent) => {
     switch (event.kind) {
       case "loaded": {
@@ -205,11 +220,17 @@ export const createTabViews = ({
         break;
       }
       case "navigated": {
-        pages.record({ ...tabKeyed, url: event.url });
+        if (showsPage(key)) {
+          pages.record({ ...tabKeyed, url: event.url });
+        }
+
         break;
       }
       case "titled": {
-        pages.record({ ...tabKeyed, title: event.title });
+        if (showsPage(key)) {
+          pages.record({ ...tabKeyed, title: event.title });
+        }
+
         break;
       }
       default: {
