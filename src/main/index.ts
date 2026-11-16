@@ -147,8 +147,9 @@ const start = async () => {
     log: console.error,
   });
 
-  // Before any view exists, so no page holds a session being cleared.
-  await profiles.finishClears();
+  // Not awaited: the window must not wait on a clear that hangs, and no view
+  // can hold these sessions, whose profiles are no longer listed.
+  profiles.finishClears();
 
   const shellUrl = new URL(shellSource.url);
 
