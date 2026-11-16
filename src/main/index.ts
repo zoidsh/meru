@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
@@ -101,11 +102,19 @@ const start = async () => {
 
   shellSource.apply(appProtocol);
 
+  const language = resolveLanguage(lifecycle.preferredLanguages());
+
+  activateLanguage(language);
+
+  const shellUrl = new URL(shellSource.url);
+
+  shellUrl.searchParams.set("lang", language);
+
   const shell = createShellWindow({
     windows: createWindowFactory(),
     displays: createDisplays(),
     title: lifecycle.name,
-    url: shellSource.url,
+    url: shellUrl.href,
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
     isMacOS: process.platform === "darwin",
     background,

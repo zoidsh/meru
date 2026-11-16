@@ -1,3 +1,5 @@
+import { t } from "@lingui/core/macro";
+
 export interface FailureDeps {
   productName: string;
   /** Blocks until dismissed; Chromium handles no signal meanwhile. */
@@ -49,7 +51,14 @@ export const createFailures = ({
       if (phase === "starting") {
         phase = "failed";
         log(`${productName} could not start: ${detail}`);
-        showErrorDialog(`${productName} could not start`, detail);
+        showErrorDialog(
+          t({
+            message: `${productName} could not start`,
+            comment:
+              "Title of the error dialog shown when the app fails to open; {productName} is the app's name",
+          }),
+          detail
+        );
         exit(1);
       } else if (phase === "running") {
         log(`Unexpected error in the main process: ${detail}`);

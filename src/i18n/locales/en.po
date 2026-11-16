@@ -6,3 +6,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
+
+#. Title of the error dialog shown when the app fails to open; {productName} is the app's name
+#: src/main/failures.ts
+msgid "{productName} could not start"
+msgstr "{productName} could not start"
+
+#. Accessible name of the window's main area, below the title bar, read by screen readers
+#: src/shell/app.tsx
+msgid "Content"
+msgstr "Content"
+
+#. Accessible name of the strip across the top of the window, read by screen readers
+#: src/shell/app.tsx
+msgid "Title bar"
+msgstr "Title bar"
