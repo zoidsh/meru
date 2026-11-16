@@ -1,13 +1,17 @@
+import { Tabs } from "@base-ui/react/tabs";
 import { Trans, useLingui } from "@lingui/react/macro";
+import { cn } from "cn";
 import { CircleAlertIcon, LoaderCircleIcon, XIcon } from "lucide-react";
+import { useState } from "react";
+import type { KeyboardEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
 import { TAB_STRIP_WIDTH } from "#core/layout.ts";
 import { Button } from "#ui/button.tsx";
-import { Tabs, TabsList, TabsTrigger } from "#ui/tabs.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
+import { keepInView } from "./keep-in-view.ts";
 import { shellCalls } from "./sync.ts";
 
 type ShellTab = ShellState["tabs"]["tabs"][number];
@@ -61,89 +65,197 @@ const TabStatusIcon = ({ status }: { status: ShellTab["status"] }) => {
   }
 };
 
-/** The selected profile's tabs, down the left below the titlebar. */
+/**
+ * The selected profile's tabs, down the left below the titlebar, scrolling
+ * when they do not fit. Built on Base UI's tabs directly, since the shadcn
+ * component does not hand its orientation to them, which a vertical list's
+ * arrow keys need.
+ *
+ * A close button is not part of its tab, so the list holds tabs alone and
+ * arrows through them: Delete or Backspace closes the focused tab, and the
+ * buttons, for the pointer, sit over the list out of the tab order.
+ */
 export const TabStrip = ({ tabs }: { tabs: ShellState["tabs"] }) => {
   const { t } = useLingui();
   const { profileId } = tabs;
+  const [hovered, setHovered] = useState<string>();
+  const close = (tabId: string) => {
+    shellCalls().closeTab({ profileId, tabId });
+  };
+
+  const hover = (tabId: string) => ({
+    onPointerEnter: () => {
+      setHovered(tabId);
+    },
+    onPointerLeave: () => {
+      setHovered((current) => (current === tabId ? undefined : current));
+    },
+  });
 
   return (
-    <Tabs
+    <Tabs.Root
       orientation="vertical"
       value={tabs.selectedTabId}
       onValueChange={(tabId: string) => {
         shellCalls().selectTab({ profileId, tabId });
       }}
       style={{ width: TAB_STRIP_WIDTH }}
-      className="shrink-0 border-r border-border bg-sidebar p-2"
+      className="flex min-h-0 shrink-0 flex-col border-r border-border bg-sidebar"
     >
-      <TabsList
-        variant="line"
-        aria-label={t({
-          message: "Tabs",
-          comment:
-            "Accessible name of the list of the profile's tabs down the left of the window, read by screen readers",
-        })}
-        className="w-full items-stretch"
+      <div
+        data-tab-scroller
+        className="relative min-h-0 flex-1 overflow-y-auto p-2"
       >
-        {tabs.tabs.map((tab) => {
-          const title = tabTitle(tab);
+        <Tabs.List
+          aria-label={t({
+            message: "Tabs",
+            comment:
+              "Accessible name of the list of the profile's tabs down the left of the window, read by screen readers",
+          })}
+          className="flex flex-col gap-1"
+        >
+          {tabs.tabs.map((tab) => (
+            <Tabs.Tab
+              key={tab.id}
+              value={tab.id}
+              ref={tab.id === tabs.selectedTabId ? keepInView : undefined}
+              onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
+                if (
+                  tab.closable &&
+                  (event.key === "Delete" || event.key === "Backspace")
+                ) {
+                  event.preventDefault();
+                  // Gmail's tab, first and never closed, is always a neighbour.
+                  const neighbour =
+                    event.currentTarget.nextElementSibling ??
+                    event.currentTarget.previousElementSibling;
 
-          return (
-            <div key={tab.id} className="group/tab relative flex items-center">
-              <TabsTrigger
-                value={tab.id}
-                className="h-8 min-w-0 gap-2 pr-8 data-active:bg-background"
+                  if (neighbour instanceof HTMLElement) {
+                    neighbour.focus();
+                  }
+
+                  close(tab.id);
+                }
+              }}
+              {...hover(tab.id)}
+              className="flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 pr-8 text-sm font-medium text-foreground/60 outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:text-muted-foreground dark:hover:text-foreground data-active:bg-background data-active:text-foreground dark:data-active:bg-input/30 dark:data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            >
+              {isAppId(tab.app) && <AppIcon app={tab.app} aria-hidden />}
+              <span className="min-w-0 flex-1 truncate text-left">
+                {tabTitle(tab)}
+              </span>
+              <TabStatusIcon status={tab.status} />
+            </Tabs.Tab>
+          ))}
+        </Tabs.List>
+        <div className="pointer-events-none absolute inset-x-2 top-2 flex flex-col gap-1">
+          {tabs.tabs.map((tab) => {
+            const title = tabTitle(tab);
+
+            return (
+              <div
+                key={tab.id}
+                className="flex h-8 items-center justify-end pr-1"
               >
-                {isAppId(tab.app) && <AppIcon app={tab.app} aria-hidden />}
-                <span className="min-w-0 flex-1 truncate text-left">
-                  {title}
-                </span>
-                <TabStatusIcon status={tab.status} />
-              </TabsTrigger>
-              {tab.closable && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label={t({
-                    message: `Close ${title}`,
-                    comment:
-                      "Accessible name of the cross on a tab that closes it; {title} is the tab's title",
-                  })}
-                  className="absolute right-1 opacity-0 group-hover/tab:opacity-100 focus-visible:opacity-100"
-                  onClick={() => {
-                    shellCalls().closeTab({ profileId, tabId: tab.id });
-                  }}
-                >
-                  <XIcon />
-                </Button>
-              )}
-            </div>
-          );
-        })}
-      </TabsList>
-    </Tabs>
+                {tab.closable && (
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    tabIndex={-1}
+                    aria-label={t({
+                      message: `Close ${title}`,
+                      comment:
+                        "Accessible name of the cross on a tab that closes it; {title} is the tab's title",
+                    })}
+                    {...hover(tab.id)}
+                    className={cn(
+                      "pointer-events-auto opacity-0",
+                      hovered === tab.id && "opacity-100"
+                    )}
+                    onClick={() => {
+                      close(tab.id);
+                    }}
+                  >
+                    <XIcon />
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </Tabs.Root>
   );
 };
 
 const OFFLINE = "ERR_INTERNET_DISCONNECTED";
 
+type Problem = Extract<ShellTab["status"], { kind: "failed" | "crashed" }>;
+
+const isProblem = (status: ShellTab["status"]): status is Problem =>
+  status.kind === "failed" || status.kind === "crashed";
+
 /**
  * Where the selected tab's view would be, which is hidden while its page
- * failed or crashed, so this is what shows.
+ * failed or crashed, so this is what shows. Its heading is also said by a
+ * screen reader as it appears, and not again while retries come and go.
  */
 export const TabProblem = ({ tabs }: { tabs: ShellState["tabs"] }) => {
   const { t } = useLingui();
   const tab = tabs.tabs.find(
     (candidate) => candidate.id === tabs.selectedTabId
   );
+  const status = tab && isProblem(tab.status) ? tab.status : undefined;
+  const name = tab ? appName(tab.app) : "";
+  let heading: string | undefined;
 
-  if (!tab || (tab.status.kind !== "failed" && tab.status.kind !== "crashed")) {
-    return null;
+  if (status?.kind === "crashed") {
+    heading = t({
+      message: `${name} stopped working`,
+      comment:
+        "Heading shown in place of a tab's page that crashed; {name} is the app, such as Gmail or Calendar",
+    });
+  } else if (status?.reason === OFFLINE) {
+    heading = t({
+      message: "You’re offline",
+      comment:
+        "Heading shown in place of a tab's page that could not load because the computer is offline",
+    });
+  } else if (status) {
+    heading = t({
+      message: `${name} couldn’t load`,
+      comment:
+        "Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar",
+    });
   }
 
-  const name = appName(tab.app);
-  const key = { profileId: tabs.profileId, tabId: tab.id };
-  const { status } = tab;
+  return (
+    <>
+      <output className="sr-only">{heading}</output>
+      {tab && status && heading && (
+        <ProblemPanel
+          tabKey={{ profileId: tabs.profileId, tabId: tab.id }}
+          name={name}
+          status={status}
+          heading={heading}
+        />
+      )}
+    </>
+  );
+};
+
+const ProblemPanel = ({
+  tabKey,
+  name,
+  status,
+  heading,
+}: {
+  tabKey: { profileId: string; tabId: string };
+  name: string;
+  status: Problem;
+  heading: string;
+}) => {
+  const { t } = useLingui();
 
   return (
     <section
@@ -154,15 +266,7 @@ export const TabProblem = ({ tabs }: { tabs: ShellState["tabs"] }) => {
       {status.kind === "failed" ? (
         <>
           <h1 id="tab-problem-heading" className="text-lg font-semibold">
-            {status.reason === OFFLINE ? (
-              <Trans comment="Heading shown in place of a tab's page that could not load because the computer is offline">
-                You’re offline
-              </Trans>
-            ) : (
-              <Trans comment="Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar">
-                {name} couldn’t load
-              </Trans>
-            )}
+            {heading}
           </h1>
           <p className="max-w-sm text-sm text-muted-foreground">
             {status.reason === OFFLINE ? (
@@ -182,7 +286,7 @@ export const TabProblem = ({ tabs }: { tabs: ShellState["tabs"] }) => {
             variant="outline"
             disabled={status.retrying}
             onClick={() => {
-              shellCalls().retryTab(key);
+              shellCalls().retryTab(tabKey);
             }}
           >
             {status.retrying
@@ -201,9 +305,7 @@ export const TabProblem = ({ tabs }: { tabs: ShellState["tabs"] }) => {
       ) : (
         <>
           <h1 id="tab-problem-heading" className="text-lg font-semibold">
-            <Trans comment="Heading shown in place of a tab's page that crashed; {name} is the app, such as Gmail or Calendar">
-              {name} stopped working
-            </Trans>
+            {heading}
           </h1>
           <p className="max-w-sm text-sm text-muted-foreground">
             <Trans comment="Explanation under the heading in place of a tab's page that crashed">
@@ -213,7 +315,7 @@ export const TabProblem = ({ tabs }: { tabs: ShellState["tabs"] }) => {
           <Button
             variant="outline"
             onClick={() => {
-              shellCalls().retryTab(key);
+              shellCalls().retryTab(tabKey);
             }}
           >
             {t({
