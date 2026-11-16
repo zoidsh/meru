@@ -1,7 +1,10 @@
+import { readFileSync } from "node:fs";
 import { copyFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
 import type { Configuration } from "electron-builder";
+
+import { appIdFor } from "./packages/core/src/app-identity.ts";
 
 /**
  * `release` is what users install. `e2e` is the end-to-end suite's build: the
@@ -16,6 +19,13 @@ const SCHEMES = ["meru", "mailto", "http", "https"];
 const ARCHES: ("x64" | "arm64")[] = ["x64", "arm64"];
 
 const root = import.meta.dirname;
+
+const { version } = JSON.parse(
+  readFileSync(path.join(root, "package.json"), "utf-8")
+) as { version: string };
+
+/** What the end-to-end suite checks for before it launches anything. */
+export const E2E_MARKER = { meruBuild: "e2e" } as const;
 
 /**
  * macOS 26 draws the icon from the compiled asset catalog that
@@ -39,91 +49,105 @@ const copyAssetCatalog: Configuration["afterPack"] = async (context) => {
   );
 };
 
-export const createConfig = (variant: PackageVariant): Configuration => ({
-  appId: "sh.zoid.meru",
-  productName: "Meru",
-  directories: {
-    app: path.join(root, "out", variant === "e2e" ? "e2e" : "prod"),
-    output: path.join(root, "dist", ...(variant === "e2e" ? ["e2e"] : [])),
-    buildResources: path.join(root, "build"),
-  },
-  // The built app is complete: everything is bundled and it has no
-  // node_modules, so there is nothing to install or rebuild.
-  files: ["**/*", "!**/node_modules/**", "!**/*.map"],
-  npmRebuild: false,
-  nodeGypRebuild: false,
-  asar: true,
-  extraMetadata: {
-    description:
-      "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
-    author: { name: "Tim Cheung", email: "tim@meru.so" },
-  },
-  electronFuses: {
-    runAsNode: false,
-    // One-way: Chromium drops every cookie it cannot decrypt, so a downgrade
-    // past a build with it on would sign every profile out of Gmail.
-    enableCookieEncryption: false,
-    enableNodeOptionsEnvironmentVariable: false,
-    // `_electron.launch` passes `--inspect=0` and waits for the debugger.
-    enableNodeCliInspectArguments: variant === "e2e",
-    enableEmbeddedAsarIntegrityValidation: true,
-    onlyLoadAppFromAsar: true,
-    // The renderer is served from `meru-app://`, never from `file://`.
-    grantFileProtocolExtraPrivileges: false,
-    // Flipping a fuse breaks the signature, and an unsigned arm64 app whose
-    // signature is broken is killed at launch.
-    resetAdHocDarwinSignature: true,
-  },
-  protocols: { name: "Meru", schemes: SCHEMES },
-  // Signing, notarisation and publishing are not configured yet, so every
-  // build is unsigned whatever identities the keychain or environment holds.
-  publish: null,
-  afterPack: copyAssetCatalog,
-  mac: {
-    identity: null,
-    category: "public.app-category.productivity",
-    minimumSystemVersion: "13.0.0",
-    icon: "build/icon.icns",
-    darkModeSupport: true,
-    target: { target: "default", arch: ARCHES },
-    extendInfo: {
-      CFBundleIconName: "AppIcon",
-      CFBundleURLSchemes: SCHEMES,
-      NSCameraUsageDescription:
-        "Meru uses your camera for video calls in Google apps such as Meet and Chat.",
-      NSMicrophoneUsageDescription:
-        "Meru uses your microphone for calls and voice input in Google apps such as Meet and Chat.",
+const RELEASE_APP_ID = "sh.zoid.meru";
+
+export const createConfig = (variant: PackageVariant): Configuration => {
+  const appId = appIdFor(RELEASE_APP_ID, {
+    version,
+    isRelease: variant === "release",
+  });
+  // A development build has an id of its own and claims no link or mail
+  // scheme, so the system never hands it what the installed Meru should get.
+  const schemes = appId === RELEASE_APP_ID ? SCHEMES : [];
+
+  return {
+    appId,
+    productName: "Meru",
+    directories: {
+      app: path.join(root, "out", variant === "e2e" ? "e2e" : "prod"),
+      output: path.join(root, "dist", ...(variant === "e2e" ? ["e2e"] : [])),
+      buildResources: path.join(root, "build"),
     },
-  },
-  win: {
-    icon: "build/icon.ico",
-    target: [
-      { target: "nsis", arch: ARCHES },
-      { target: "portable", arch: ARCHES },
-    ],
-  },
-  nsis: {
-    oneClick: false,
-    perMachine: false,
-    allowToChangeInstallationDirectory: true,
-  },
-  linux: {
-    icon: "build/icons/",
-    target: [
-      { target: "AppImage", arch: ARCHES },
-      { target: "deb", arch: ARCHES },
-      { target: "rpm", arch: ARCHES },
-    ],
-    synopsis: "The Gmail experience you deserve",
-    description:
-      "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
-    category: "Network;Office",
-  },
-  appImage: {
-    artifactName: "${productName}-${version}-${arch}.${ext}",
-  },
-  // This toolset's static runtime is what lets the AppImage run without FUSE.
-  toolsets: { appimage: "1.0.3" },
-});
+    // The built app is complete: everything is bundled and it has no
+    // node_modules, so there is nothing to install or rebuild.
+    files: ["**/*", "!**/node_modules/**", "!**/*.map"],
+    npmRebuild: false,
+    nodeGypRebuild: false,
+    asar: true,
+    extraMetadata: {
+      description:
+        "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
+      author: { name: "Tim Cheung", email: "tim@meru.so" },
+      repository: "zoidsh/meru",
+      ...(variant === "e2e" ? E2E_MARKER : {}),
+    },
+    electronFuses: {
+      runAsNode: false,
+      // One-way: Chromium drops every cookie it cannot decrypt, so a downgrade
+      // past a build with it on would sign every profile out of Gmail.
+      enableCookieEncryption: false,
+      enableNodeOptionsEnvironmentVariable: false,
+      // `_electron.launch` passes `--inspect=0` and waits for the debugger.
+      enableNodeCliInspectArguments: variant === "e2e",
+      enableEmbeddedAsarIntegrityValidation: true,
+      onlyLoadAppFromAsar: true,
+      // The renderer is served from `meru-app://`, never from `file://`.
+      grantFileProtocolExtraPrivileges: false,
+      // Flipping a fuse breaks the signature, and an unsigned arm64 app whose
+      // signature is broken is killed at launch.
+      resetAdHocDarwinSignature: true,
+    },
+    ...(schemes.length > 0 ? { protocols: { name: "Meru", schemes } } : {}),
+    // Signing, notarisation and publishing are not configured yet, so every
+    // build is unsigned whatever identities the keychain or environment holds.
+    publish: null,
+    afterPack: copyAssetCatalog,
+    mac: {
+      identity: null,
+      category: "public.app-category.productivity",
+      minimumSystemVersion: "13.0.0",
+      icon: "build/icon.icns",
+      darkModeSupport: true,
+      target: { target: "default", arch: ARCHES },
+      extendInfo: {
+        CFBundleIconName: "AppIcon",
+        ...(schemes.length > 0 ? { CFBundleURLSchemes: schemes } : {}),
+        NSCameraUsageDescription:
+          "Meru uses your camera for video calls in Google apps such as Meet and Chat.",
+        NSMicrophoneUsageDescription:
+          "Meru uses your microphone for calls and voice input in Google apps such as Meet and Chat.",
+      },
+    },
+    win: {
+      icon: "build/icon.ico",
+      target: [
+        { target: "nsis", arch: ARCHES },
+        { target: "portable", arch: ARCHES },
+      ],
+    },
+    nsis: {
+      oneClick: false,
+      perMachine: false,
+      allowToChangeInstallationDirectory: true,
+    },
+    linux: {
+      icon: "build/icons/",
+      target: [
+        { target: "AppImage", arch: ARCHES },
+        { target: "deb", arch: ARCHES },
+        { target: "rpm", arch: ARCHES },
+      ],
+      synopsis: "The Gmail experience you deserve",
+      description:
+        "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
+      category: "Network;Office",
+    },
+    appImage: {
+      artifactName: "${productName}-${version}-${arch}.${ext}",
+    },
+    // This toolset's static runtime is what lets the AppImage run without FUSE.
+    toolsets: { appimage: "1.0.3" },
+  };
+};
 
 export default createConfig("release");
