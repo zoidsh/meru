@@ -108,6 +108,8 @@ export const addContentView = (
   window.contentView.addChildView(view);
 
   const close = () => {
+    window.off("closed", close);
+
     for (const child of children) {
       if (!child.isDestroyed()) {
         child.destroy();
