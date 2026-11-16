@@ -22,12 +22,13 @@ const tabSchema = z.looseObject({
   title: z.string(),
 });
 
+// The tabs are decoded one by one, so nothing in them can make the profile, or
+// the file and with it every profile's sign-in, unreadable.
 const profileSchema = z.looseObject({
   id: z.string().check(z.minLength(1)),
   name: z.string(),
-  // Optional, so every file slice 1.2 wrote reads as it is.
-  tabs: z.optional(z.array(tabSchema)),
-  selectedTabId: z.optional(z.string()),
+  tabs: z.optional(z.unknown()),
+  selectedTabId: z.optional(z.unknown()),
 });
 
 const stateSchema = z
@@ -53,10 +54,34 @@ const stateSchema = z
 
 export type Tab = z.infer<typeof tabSchema>;
 
+// Symbols, which a key read from JSON can never be and JSON never writes.
+const UNREAD = Symbol("unread tab");
+const TABS_AS_FOUND = Symbol("tabs as found");
+
+/** An entry in a profile's tabs that does not parse, kept as it was found. */
+export interface UnreadTab {
+  [UNREAD]: unknown;
+}
+
+export type TabEntry = Tab | UnreadTab;
+
+export const isTab = (entry: TabEntry): entry is Tab => !(UNREAD in entry);
+
 type StoredProfile = z.infer<typeof profileSchema>;
 
 /** A profile once decoded: its tabs start with Gmail's, and one is selected. */
-export type Profile = StoredProfile & { tabs: Tab[]; selectedTabId: string };
+export interface Profile {
+  [key: string]: unknown;
+  id: string;
+  name: string;
+  tabs: TabEntry[];
+  selectedTabId: string;
+  /**
+   * A `tabs` that is not a list, written back in its place; the tabs the
+   * profile has instead live only in memory.
+   */
+  [TABS_AS_FOUND]?: unknown;
+}
 
 type StoredState = z.infer<typeof stateSchema>;
 
@@ -76,9 +101,19 @@ export const gmailTab = (): Tab => ({
   title: "",
 });
 
-/** The tabs of apps this build knows; the rest are kept but not shown. */
-export const knownTabs = (profile: Pick<Profile, "tabs">) =>
-  profile.tabs.filter((tab) => isAppId(tab.app));
+/**
+ * The tabs of apps this build knows; the rest, and entries that do not parse,
+ * are kept but not shown.
+ */
+export const knownTabs = (profile: Pick<Profile, "tabs">): Tab[] =>
+  profile.tabs.filter((entry) => isTab(entry) && isAppId(entry.app)) as Tab[];
+
+const readTabs = (stored: unknown): TabEntry[] =>
+  (Array.isArray(stored) ? stored : []).map((entry: unknown) => {
+    const parsed = tabSchema.safeParse(entry);
+
+    return parsed.success ? parsed.data : { [UNREAD]: entry };
+  });
 
 /**
  * Puts a profile's tabs in the shape every reader relies on, rather than
@@ -86,32 +121,55 @@ export const knownTabs = (profile: Pick<Profile, "tabs">) =>
  * tab that is shown, else Gmail's.
  */
 const normalizeProfile = (profile: StoredProfile): Profile => {
-  const stored = profile.tabs ?? [];
-  const gmail = stored.find((tab) => tab.app === "gmail") ?? gmailTab();
+  const stored = readTabs(profile.tabs);
+  const gmail =
+    stored.filter(isTab).find((tab) => tab.app === "gmail") ?? gmailTab();
   const seen = new Set<string>();
-  const tabs = [gmail, ...stored.filter((tab) => tab.app !== "gmail")].filter(
-    (tab) => {
-      if (seen.has(tab.id)) {
-        return false;
-      }
-
-      seen.add(tab.id);
-
+  const tabs = [
+    gmail,
+    ...stored.filter((entry) => !isTab(entry) || entry.app !== "gmail"),
+  ].filter((entry) => {
+    if (!isTab(entry)) {
       return true;
     }
-  );
-  const { selectedTabId } = profile;
 
-  return {
+    if (seen.has(entry.id)) {
+      return false;
+    }
+
+    seen.add(entry.id);
+
+    return true;
+  });
+  const { selectedTabId } = profile;
+  const decoded: Profile = {
     ...profile,
     tabs,
     selectedTabId:
-      selectedTabId !== undefined &&
+      typeof selectedTabId === "string" &&
       knownTabs({ tabs }).some((tab) => tab.id === selectedTabId)
         ? selectedTabId
         : gmail.id,
   };
+
+  if (profile.tabs !== undefined && !Array.isArray(profile.tabs)) {
+    decoded[TABS_AS_FOUND] = profile.tabs;
+  }
+
+  return decoded;
 };
+
+/** The state as its file holds it, with every tab entry as it was found. */
+export const encodeState = (state: State): unknown => ({
+  ...state,
+  profiles: state.profiles.map((profile) => ({
+    ...profile,
+    tabs:
+      TABS_AS_FOUND in profile
+        ? profile[TABS_AS_FOUND]
+        : profile.tabs.map((entry) => (isTab(entry) ? entry : entry[UNREAD])),
+  })),
+});
 
 /** A profile with only its Gmail tab. */
 export const newProfile = (id: string, name: string): Profile => ({

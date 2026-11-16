@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPS } from "#core/apps.ts";
-import { gmailTab, newProfile } from "#core/state.ts";
+import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { Size } from "#core/window-bounds.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
@@ -327,7 +327,7 @@ describe(createTabViews, () => {
 
     const [tabs] = window.profiles.get().profiles;
 
-    expect(tabs?.tabs.map((tab) => tab.id)).toStrictEqual([
+    expect(tabs && knownTabs(tabs).map((tab) => tab.id)).toStrictEqual([
       "gmail",
       "c1",
       "new-1",

@@ -121,6 +121,27 @@ describe(loadState, () => {
     });
   });
 
+  it("reads a profile with tabs it cannot read, and writes them back as they were", async () => {
+    const tabs = [
+      { id: "gmail", app: "gmail", url: "", title: "" },
+      { id: "t1", app: "drive", url: null },
+    ];
+    const saved = {
+      version: 1,
+      profiles: [
+        { id: "a", name: "Work", tabs, selectedTabId: "gmail" },
+        { id: "b", name: "Home", tabs: "tabs", selectedTabId: "gmail" },
+      ],
+      selectedProfileId: "a",
+    };
+    const { file, files } = createFakeFile(JSON.stringify(saved));
+    const state = await load(file).state;
+
+    await saveState(file, state);
+
+    expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual(saved);
+  });
+
   it("stops startup on a newer version's file and leaves it alone", async () => {
     const newer = JSON.stringify({ version: 2, profiles: {} });
     const { file, files } = createFakeFile(newer);

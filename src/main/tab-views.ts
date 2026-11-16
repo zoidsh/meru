@@ -1,7 +1,7 @@
 import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
-import { profilePartition } from "#core/state.ts";
+import { knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { showsView, transition } from "#core/tab-machine.ts";
 import type { TabEffect, TabEvent, TabStatus } from "#core/tab-machine.ts";
@@ -253,11 +253,13 @@ export const createTabViews = ({
    * is sent to it after.
    */
   const openAsTab = async (profileId: string, app: App, url: string) => {
-    const existing = app.singleInstance
-      ? state()
-          .profiles.find((profile) => profile.id === profileId)
-          ?.tabs.find((tab) => tab.app === app.id)
-      : undefined;
+    const profile = state().profiles.find(
+      (candidate) => candidate.id === profileId
+    );
+    const existing =
+      app.singleInstance && profile
+        ? knownTabs(profile).find((tab) => tab.app === app.id)
+        : undefined;
     const tabId = existing?.id ?? newId();
     const key = tabKey({ profileId, tabId });
 

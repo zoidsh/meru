@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { APPS, findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
-import { gmailTab, newProfile } from "./state.ts";
+import { gmailTab, isTab, newProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
 import { closeTab, openTab, selectTab, updatePages } from "./tabs.ts";
 
@@ -28,8 +28,14 @@ const state = (tabs: Tab[], selectedTabId = "gmail"): State => ({
   selectedProfileId: "p",
 });
 
-const tabsOf = (next: State | undefined, profileId = "p") =>
-  next?.profiles.find((profile) => profile.id === profileId);
+/** The profile, with every tab that parsed. */
+const tabsOf = (next: State | undefined, profileId = "p") => {
+  const profile = next?.profiles.find(
+    (candidate) => candidate.id === profileId
+  );
+
+  return profile && { ...profile, tabs: profile.tabs.filter(isTab) };
+};
 
 const ids = (next: State | undefined) => {
   const profile = tabsOf(next);

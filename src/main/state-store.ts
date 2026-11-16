@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { t } from "@lingui/core/macro";
 
-import { createInitialState, decodeState } from "#core/state.ts";
+import { createInitialState, decodeState, encodeState } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
@@ -25,7 +25,8 @@ const parse = (text: string): unknown => {
   }
 };
 
-const serialize = (state: State) => `${JSON.stringify(state, undefined, 2)}\n`;
+const serialize = (state: State) =>
+  `${JSON.stringify(encodeState(state), undefined, 2)}\n`;
 
 /** Replaces the file whole; the caller sends one write at a time. */
 export const saveState = (file: TextFile, state: State) =>

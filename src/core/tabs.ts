@@ -1,5 +1,5 @@
 import type { App } from "./apps.ts";
-import { knownTabs } from "./state.ts";
+import { isTab, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 
 /** A tab is named by its profile and its id, which is unique only within it. */
@@ -52,7 +52,7 @@ export const openTab = (
 
   const next = updateProfile(state, profileId, (profile) => {
     const existing = app.singleInstance
-      ? profile.tabs.find((tab) => tab.app === app.id)
+      ? knownTabs(profile).find((tab) => tab.app === app.id)
       : undefined;
 
     if (existing) {
@@ -145,6 +145,10 @@ export const updatePages = (
     return {
       ...profile,
       tabs: profile.tabs.map((tab) => {
+        if (!isTab(tab)) {
+          return tab;
+        }
+
         const next = { ...tab };
 
         for (const { tabId, url, title } of mine) {
@@ -168,7 +172,10 @@ export const updatePages = (
   return changed ? { ...state, profiles } : undefined;
 };
 
-export const findTab = (state: State, { profileId, tabId }: TabKey) =>
-  state.profiles
-    .find((profile) => profile.id === profileId)
-    ?.tabs.find((tab) => tab.id === tabId);
+export const findTab = (state: State, { profileId, tabId }: TabKey) => {
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === profileId
+  );
+
+  return profile && knownTabs(profile).find((tab) => tab.id === tabId);
+};

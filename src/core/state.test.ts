@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
+import { APPS, findApp } from "./apps.ts";
 import {
   addProfile,
   canRemoveProfile,
   createInitialState,
   decodeState,
+  encodeState,
   forgetProfilesToClear,
   gmailTab,
+  isTab,
   knownTabs,
   newProfile,
   nextProfileName,
@@ -17,6 +20,7 @@ import {
   sortProfilesToClear,
 } from "./state.ts";
 import type { State } from "./state.ts";
+import { openTab } from "./tabs.ts";
 
 const valid = {
   version: 1,
@@ -107,6 +111,21 @@ describe(decodeState, () => {
   });
 });
 
+/** The profile whose tabs and selection a file names so, decoded. */
+const decodeProfile = (tabs: unknown, selectedTabId?: unknown) => {
+  const decoded = decodeState({
+    ...valid,
+    profiles: [{ ...valid.profiles[0], tabs, selectedTabId }],
+    selectedProfileId: valid.profiles[0]?.id,
+  });
+
+  if (decoded.kind !== "state" || !decoded.state.profiles[0]) {
+    throw new Error("The file did not decode");
+  }
+
+  return decoded.state.profiles[0];
+};
+
 /** The profile's tabs as a file names them, decoded. */
 const decodeTabs = (tabs: unknown, selectedTabId?: string) => {
   const decoded = decodeState({
@@ -122,7 +141,7 @@ const decodeTabs = (tabs: unknown, selectedTabId?: string) => {
   const [profile] = decoded.state.profiles;
 
   return {
-    ids: profile?.tabs.map((tab) => tab.id),
+    ids: profile?.tabs.filter(isTab).map((tab) => tab.id),
     selected: profile?.selectedTabId,
   };
 };
@@ -171,19 +190,92 @@ describe("decoding tabs", () => {
     ]);
   });
 
-  it("sets aside a file whose tabs are the wrong shape", () => {
-    for (const tabs of [
-      "tabs",
-      [{ id: "", app: "gmail", url: "", title: "" }],
-      [{ id: "t", app: "gmail" }],
+  it("keeps an entry that does not parse where it was, unshown, and the profile readable", () => {
+    for (const entry of [
+      { id: "t2", app: "drive", url: "" },
+      { id: "t2", app: "drive", url: null, title: "" },
+      { id: "", app: "drive", url: "", title: "" },
+      "t2",
+      null,
     ]) {
-      expect(
-        decodeState({
-          ...valid,
-          profiles: [{ ...valid.profiles[0], tabs }, valid.profiles[1]],
-        }).kind
-      ).toBe("unreadable");
+      const profile = decodeProfile([tab("t1", "calendar"), entry], "t1");
+
+      expect(profile.tabs).toHaveLength(3);
+      expect(knownTabs(profile).map((known) => known.id)).toStrictEqual([
+        "gmail",
+        "t1",
+      ]);
+      expect(profile.selectedTabId).toBe("t1");
     }
+  });
+
+  it("gives a profile whose tabs are not a list its Gmail tab", () => {
+    for (const tabs of ["tabs", { gmail: {} }, 3]) {
+      const profile = decodeProfile(tabs, "gmail");
+
+      expect(knownTabs(profile)).toStrictEqual([gmailTab()]);
+      expect(profile.selectedTabId).toBe("gmail");
+    }
+  });
+
+  it("selects Gmail when the selected tab is not a string", () => {
+    expect(decodeProfile([tab("t1", "drive")], 7).selectedTabId).toBe("gmail");
+  });
+});
+
+const fileWith = (tabs: unknown) => ({
+  ...valid,
+  profiles: [{ ...valid.profiles[0], tabs, selectedTabId: "gmail" }],
+  selectedProfileId: valid.profiles[0]?.id,
+});
+
+/** The file as written after decoding it and making the change. */
+const rewrite = (file: unknown, change: (state: State) => State) => {
+  const decoded = decodeState(file);
+
+  if (decoded.kind !== "state") {
+    throw new Error(decoded.kind);
+  }
+
+  return encodeState(change(decoded.state)) as {
+    profiles: { tabs: unknown }[];
+  };
+};
+
+describe(encodeState, () => {
+  it("writes each entry that did not parse back in its place among the tabs", () => {
+    const broken = { id: "t2", app: "drive", url: null, title: "" };
+    const drive = findApp(APPS, "drive");
+
+    if (!drive) {
+      throw new Error("no Drive");
+    }
+
+    const written = rewrite(
+      fileWith([gmailTab(), broken, tab("t1", "calendar"), "t3"]),
+      (state) =>
+        openTab(
+          state,
+          valid.profiles[0]?.id ?? "",
+          drive,
+          drive.home,
+          () => "t4"
+        )?.state ?? state
+    );
+
+    expect(written.profiles[0]?.tabs).toStrictEqual([
+      gmailTab(),
+      broken,
+      tab("t1", "calendar"),
+      "t3",
+      { id: "t4", app: "drive", url: drive.home, title: "" },
+    ]);
+  });
+
+  it("writes a tabs that is not a list back as it was found", () => {
+    const written = rewrite(fileWith("tabs"), (state) => state);
+
+    expect(written.profiles[0]?.tabs).toBe("tabs");
   });
 });
 
