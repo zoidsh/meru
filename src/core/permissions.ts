@@ -13,6 +13,11 @@ export interface PermissionAsk {
   permission: string;
   /** The URL or origin of the frame asking, never of the page embedding it. */
   requestingUrl: string;
+  /**
+   * The URL or origin of the page the frame is in, which alone is judged for
+   * `fullscreen`, when Electron says.
+   */
+  topLevelUrl?: string;
   /** For `media`, what it asks for, when Electron says. */
   mediaTypes?: readonly string[];
 }
@@ -23,13 +28,17 @@ const originOf = (url: string) =>
 /**
  * Whether a page may have a permission: only a frame on an origin an app
  * claims, and only what that app needs, so a third-party frame inside an app,
- * or a page no app claims, gets nothing.
+ * an `about:blank` frame, or a page no app claims, gets nothing. Fullscreen
+ * is judged by the page instead, so a video another site embeds in an app
+ * can fill the screen; a frame can ask for it only if its parent let it.
  */
 export const allowsPermission = (
   apps: readonly App[],
-  { permission, requestingUrl, mediaTypes }: PermissionAsk
+  { permission, requestingUrl, topLevelUrl, mediaTypes }: PermissionAsk
 ): boolean => {
-  const origin = originOf(requestingUrl);
+  const origin = originOf(
+    permission === "fullscreen" ? (topLevelUrl ?? requestingUrl) : requestingUrl
+  );
   const claiming = apps.filter((app) =>
     app.claims.some((claim) => claim.origin === origin)
   );

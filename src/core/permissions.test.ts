@@ -6,13 +6,17 @@ import { allowsPermission } from "./permissions.ts";
 const allows = (
   permission: string,
   requestingUrl: string,
-  mediaTypes?: string[]
+  mediaTypes?: string[],
+  topLevelUrl?: string
 ) =>
   allowsPermission(APPS, {
     permission,
     requestingUrl,
     ...(mediaTypes ? { mediaTypes } : {}),
+    ...(topLevelUrl ? { topLevelUrl } : {}),
   });
+
+const YOUTUBE = "https://www.youtube.com/embed/abc";
 
 describe(allowsPermission, () => {
   it.each([
@@ -51,6 +55,50 @@ describe(allowsPermission, () => {
   ])("gives nothing to %s, which no app claims", (url) => {
     expect(allows("fullscreen", url)).toBeFalsy();
     expect(allows("media", url)).toBeFalsy();
+  });
+
+  it("judges fullscreen by the page, so a video another site embeds in an app fills the screen", () => {
+    expect(
+      allows(
+        "fullscreen",
+        YOUTUBE,
+        undefined,
+        "https://mail.google.com/mail/u/0/"
+      )
+    ).toBeTruthy();
+    expect(
+      allows("fullscreen", YOUTUBE, undefined, "https://example.com/")
+    ).toBeFalsy();
+    expect(
+      allows(
+        "fullscreen",
+        "https://drive.google.com",
+        undefined,
+        "https://example.com/"
+      )
+    ).toBeFalsy();
+  });
+
+  it("judges everything else by the frame that asks, whatever page it is in", () => {
+    expect(
+      allows(
+        "clipboard-sanitized-write",
+        YOUTUBE,
+        undefined,
+        "https://mail.google.com"
+      )
+    ).toBeFalsy();
+    expect(
+      allows("media", YOUTUBE, ["audio"], "https://meet.google.com")
+    ).toBeFalsy();
+    expect(
+      allows(
+        "notifications",
+        "about:blank",
+        undefined,
+        "https://mail.google.com"
+      )
+    ).toBeFalsy();
   });
 
   it("gives Meet audio and video, and nothing else riding on media", () => {

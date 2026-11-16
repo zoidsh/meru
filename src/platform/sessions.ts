@@ -1,11 +1,6 @@
 import { session } from "electron";
 
-/** A permission a frame asks for or checks, as `allows` is given it. */
-export interface PermissionAsk {
-  permission: string;
-  requestingUrl: string;
-  mediaTypes?: readonly string[];
-}
+import type { PermissionAsk } from "#core/permissions.ts";
 
 export interface Sessions {
   /** Every kind of data the partition's session holds, cache included. */
@@ -32,14 +27,17 @@ export const createSessions = (): Sessions => {
 
       guarded.add(guarding);
       guarding.setPermissionRequestHandler(
-        (_webContents, permission, answer, details) => {
+        (webContents, permission, answer, details) => {
+          const media: Partial<Electron.MediaAccessPermissionRequest> =
+            "mediaTypes" in details ? details : {};
+
           answer(
             allows({
               permission,
-              requestingUrl: details.requestingUrl,
-              ...("mediaTypes" in details && details.mediaTypes
-                ? { mediaTypes: details.mediaTypes }
-                : {}),
+              // For media, the origin the camera or microphone is asked for.
+              requestingUrl: media.securityOrigin ?? details.requestingUrl,
+              topLevelUrl: webContents.getURL(),
+              ...(media.mediaTypes ? { mediaTypes: media.mediaTypes } : {}),
             })
           );
         }
@@ -49,6 +47,7 @@ export const createSessions = (): Sessions => {
           allows({
             permission,
             requestingUrl: requestingOrigin,
+            topLevelUrl: details.embeddingOrigin ?? requestingOrigin,
             ...(details.mediaType ? { mediaTypes: [details.mediaType] } : {}),
           })
       );
