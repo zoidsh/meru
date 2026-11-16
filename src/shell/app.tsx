@@ -5,43 +5,9 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { Button } from "#ui/button.tsx";
 import { Tabs, TabsList, TabsTrigger } from "#ui/tabs.tsx";
 
+import { keepInView } from "./keep-in-view.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TabProblem, TabStrip } from "./tab-strip.tsx";
-
-/** Scrolls the tab's list just far enough to show the tab whole. */
-const scrollIntoList = (tab: HTMLElement, list: HTMLElement) => {
-  const listBox = list.getBoundingClientRect();
-  const tabBox = tab.getBoundingClientRect();
-
-  if (tabBox.left < listBox.left) {
-    list.scrollLeft -= listBox.left - tabBox.left;
-  } else if (tabBox.right > listBox.right) {
-    list.scrollLeft += tabBox.right - listBox.right;
-  }
-};
-
-/**
- * The selected tab's ref: keeps it in view when it becomes selected and
- * whenever its list changes size.
- */
-const keepInView = (tab: HTMLButtonElement | null) => {
-  const list = tab?.closest<HTMLElement>('[role="tablist"]');
-
-  if (!tab || !list) {
-    return;
-  }
-
-  const observer = new ResizeObserver(() => {
-    scrollIntoList(tab, list);
-  });
-
-  // Observing reports the current size at once, which scrolls it into view.
-  observer.observe(list);
-
-  return () => {
-    observer.disconnect();
-  };
-};
 
 const Profiles = () => {
   const { t } = useLingui();
@@ -66,6 +32,7 @@ const Profiles = () => {
             comment:
               "Accessible name of the row of profile tabs in the title bar, read by screen readers",
           })}
+          data-tab-scroller
           className="h-8 max-w-full [scrollbar-width:none] justify-start overflow-x-auto"
         >
           {profiles.profiles.map((profile) => (
