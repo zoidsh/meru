@@ -273,6 +273,9 @@ const start = async () => {
       addProfile: profiles.add,
     },
     setMenu: setApplicationMenu,
+    ...(MERU_BUILD_MODE === "dev" && {
+      developerTools: { role: "toggleDevTools" as const },
+    }),
     log: console.error,
   });
 

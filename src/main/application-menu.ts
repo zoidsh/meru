@@ -19,6 +19,8 @@ export interface MenuTemplateInput {
   context: CommandContext;
   /** Runs a command when its item is clicked or its shortcut pressed. */
   run: (command: Command) => void;
+  /** Ends the View menu; given by a development build alone. */
+  developerTools?: MenuItemConstructorOptions;
 }
 
 const separator: MenuItemConstructorOptions = { type: "separator" };
@@ -34,6 +36,7 @@ export const buildMenuTemplate = ({
   commands,
   context,
   run,
+  developerTools,
 }: MenuTemplateInput): MenuItemConstructorOptions[] => {
   const isMacOS = platform === "darwin";
 
@@ -73,6 +76,8 @@ export const buildMenuTemplate = ({
         "Menu item that quits the app; {appName} is the app's name, such as Meru",
     }),
     role: "quit",
+    // The role has no key on Windows; v3 gives Quit this one everywhere.
+    ...(!isMacOS && { accelerator: "CommandOrControl+Q" }),
   };
 
   const appMenu: MenuItemConstructorOptions = {
@@ -194,6 +199,43 @@ export const buildMenuTemplate = ({
       separator,
       ...(vibrancy.length > 0 ? [...vibrancy, separator] : []),
       ...item("tab.reload"),
+      separator,
+      // Each acts on the web contents with focus: a tab's page, or the shell.
+      {
+        label: t({
+          message: "Actual Size",
+          comment:
+            "Menu item in the View menu that sets the page's zoom back to 100%",
+        }),
+        role: "resetZoom",
+        id: "view.resetZoom",
+      },
+      {
+        label: t({
+          message: "Zoom In",
+          comment: "Menu item in the View menu that makes the page larger",
+        }),
+        role: "zoomIn",
+        id: "view.zoomIn",
+      },
+      {
+        label: t({
+          message: "Zoom Out",
+          comment: "Menu item in the View menu that makes the page smaller",
+        }),
+        role: "zoomOut",
+        id: "view.zoomOut",
+      },
+      separator,
+      {
+        label: t({
+          message: "Toggle Full Screen",
+          comment:
+            "Menu item in the View menu that makes the window fill the screen, or stop filling it",
+        }),
+        role: "togglefullscreen",
+      },
+      ...(developerTools ? [separator, developerTools] : []),
     ],
   };
 
@@ -239,6 +281,14 @@ export const buildMenuTemplate = ({
             }),
             role: "zoom",
           },
+          {
+            label: t({
+              message: "Close Window",
+              comment: "Menu item in the macOS Window menu",
+            }),
+            role: "close",
+            id: "window.close",
+          },
           separator,
           ...profileItems,
           separator,
@@ -252,12 +302,18 @@ export const buildMenuTemplate = ({
         ]
       : [
           minimize,
+          // Not the role, whose Ctrl+W would close the window, and so quit
+          // Meru, from a page where people press it to close a tab or a
+          // draft; Alt+F4 still closes it.
           {
             label: t({
               message: "Close",
               comment: "Menu item in the Window menu that closes the window",
             }),
-            role: "close",
+            id: "window.close",
+            click: (_item, window) => {
+              window?.close();
+            },
           },
           separator,
           ...profileItems,
@@ -281,6 +337,7 @@ export const buildMenuTemplate = ({
 
 export interface ApplicationMenuDeps {
   platform: Platform;
+  developerTools?: MenuItemConstructorOptions;
   appName: string;
   commands: readonly Command[];
   context: () => CommandContext;
@@ -298,6 +355,7 @@ const describe = (error: unknown) =>
  */
 export const createApplicationMenu = ({
   platform,
+  developerTools,
   appName,
   commands,
   context,
@@ -347,6 +405,7 @@ export const createApplicationMenu = ({
         run: (command) => {
           run(command);
         },
+        ...(developerTools && { developerTools }),
       })
     );
   };

@@ -111,6 +111,16 @@ const readViewBounds = async (app: ElectronApplication) => {
   return views;
 };
 
+const zoomOf = (app: ElectronApplication, url: string) =>
+  app.evaluate(
+    ({ webContents }, prefix) =>
+      webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.getURL().startsWith(prefix))
+        ?.getZoomLevel(),
+    url
+  );
+
 const readSettings = async (userDataDir: string) =>
   JSON.parse(
     await readFile(path.join(userDataDir, "settings.json"), "utf-8")
@@ -178,6 +188,26 @@ test("the View menu switches between the modern and classic designs without load
   expect(await menuItemState(relaunched, "design.classic")).toMatchObject({
     checked: true,
   });
+});
+
+test("the View menu's zoom items zoom the page with focus, and Actual Size sets it back", async ({
+  app,
+  standIn,
+}) => {
+  await findPage(app, standIn.url);
+
+  await clickMenuItem(app, "view.zoomIn", standIn.url);
+  await clickMenuItem(app, "view.zoomIn", standIn.url);
+  await clickMenuItem(app, "view.zoomOut", standIn.url);
+
+  expect([
+    await zoomOf(app, standIn.url),
+    await zoomOf(app, "meru-app:"),
+  ]).toStrictEqual([0.5, 0]);
+
+  await clickMenuItem(app, "view.resetZoom", standIn.url);
+
+  expect(await zoomOf(app, standIn.url)).toBe(0);
 });
 
 const selectedTab = (shell: Page) =>

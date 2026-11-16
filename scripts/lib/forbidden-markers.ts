@@ -20,6 +20,10 @@ export const FORBIDDEN_IN_PROD: readonly { marker: string; why: string }[] = [
     marker: "onHeadersReceived",
     why: "only a development build rewrites a dev server's headers",
   },
+  {
+    marker: "toggleDevTools",
+    why: "only a development build offers the developer tools in its menu",
+  },
 ];
 
 /** What only the end-to-end suite's build may hold. */

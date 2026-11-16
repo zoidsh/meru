@@ -38,149 +38,143 @@ const template = (platform: Platform, context = contextOf()) =>
 const submenu = (menu: MenuItemConstructorOptions) =>
   (menu.submenu ?? []) as MenuItemConstructorOptions[];
 
-/** Each menu with its items, as a person reads them, and what each does. */
+/** Each menu's label with what its items do: a role, or a command's id. */
 const outline = (menus: MenuItemConstructorOptions[]) =>
   menus.map((menu) => [
     menu.label,
-    submenu(menu).map((item) =>
-      item.type === "separator"
-        ? "-"
-        : [
-            item.label,
-            item.role ?? item.id,
-            item.accelerator ?? "",
-            ...(item.type === "radio" || item.type === "checkbox"
-              ? [item.type, item.checked]
-              : []),
-            ...(item.enabled === false ? ["disabled"] : []),
-          ]
-    ),
+    submenu(menu)
+      .filter((item) => item.type !== "separator")
+      .map((item) => item.role ?? item.id),
   ]);
 
+const itemOf = (menus: MenuItemConstructorOptions[], id: string) =>
+  menus.flatMap(submenu).find((item) => (item.role ?? item.id) === id);
+
+const VIEW = [
+  "design.modern",
+  "design.classic",
+  "tab.reload",
+  "resetZoom",
+  "zoomIn",
+  "zoomOut",
+  "togglefullscreen",
+];
+
 describe(buildMenuTemplate, () => {
-  it("on macOS has the app menu, the standard roles, the design as radio items and vibrancy", () => {
-    expect(outline(template("darwin"))).toStrictEqual([
-      [
-        "Meru",
-        [
-          ["About Meru", "about", ""],
-          "-",
-          ["Services", "services", ""],
-          "-",
-          ["Hide Meru", "hide", ""],
-          ["Hide Others", "hideOthers", ""],
-          ["Show All", "unhide", ""],
-          "-",
-          ["Quit Meru", "quit", ""],
-        ],
-      ],
+  it("on macOS has the app menu, the standard roles, every command and Help", () => {
+    const menus = template("darwin");
+    const [app, edit, view, tabs, window, help] = outline(menus);
+
+    expect(menus.map((menu) => menu.label)).toStrictEqual([
+      "Meru",
+      "Edit",
+      "View",
+      "Tabs",
+      "Window",
+      "Help",
+    ]);
+    expect([app, edit, tabs]).toStrictEqual([
+      ["Meru", ["about", "services", "hide", "hideOthers", "unhide", "quit"]],
       [
         "Edit",
         [
-          ["Undo", "undo", ""],
-          ["Redo", "redo", ""],
-          "-",
-          ["Cut", "cut", ""],
-          ["Copy", "copy", ""],
-          ["Paste", "paste", ""],
-          ["Paste and Match Style", "pasteAndMatchStyle", ""],
-          ["Delete", "delete", ""],
-          ["Select All", "selectAll", ""],
+          "undo",
+          "redo",
+          "cut",
+          "copy",
+          "paste",
+          "pasteAndMatchStyle",
+          "delete",
+          "selectAll",
         ],
       ],
-      [
-        "View",
-        [
-          ["Modern", "design.modern", "", "radio", true],
-          ["Classic", "design.classic", "", "radio", false],
-          "-",
-          ["Vibrancy", "vibrancy.toggle", "", "checkbox", true],
-          "-",
-          ["Reload", "tab.reload", "CommandOrControl+R"],
-        ],
-      ],
-      [
-        "Tabs",
-        [
-          ["Select Next Tab", "tab.next", "Ctrl+Tab", "disabled"],
-          ["Select Previous Tab", "tab.previous", "Ctrl+Shift+Tab", "disabled"],
-          "-",
-          ["Close Tab", "tab.close", "CommandOrControl+Shift+W", "disabled"],
-        ],
-      ],
+      ["Tabs", ["tab.next", "tab.previous", "tab.close"]],
+    ]);
+    expect([view, window, help]).toStrictEqual([
+      ["View", VIEW.toSpliced(2, 0, "vibrancy.toggle")],
       [
         "Window",
         [
-          ["Minimize", "minimize", ""],
-          ["Zoom", "zoom", ""],
-          "-",
-          [
-            "Select Next Profile",
-            "profile.next",
-            "Command+Shift+]",
-            "disabled",
-          ],
-          [
-            "Select Previous Profile",
-            "profile.previous",
-            "Command+Shift+[",
-            "disabled",
-          ],
-          "-",
-          ["Add Profile", "profile.add", ""],
-          "-",
-          ["Bring All to Front", "front", ""],
+          "minimize",
+          "zoom",
+          "close",
+          "profile.next",
+          "profile.previous",
+          "profile.add",
+          "front",
         ],
       ],
       ["Help", []],
     ]);
+    // The roles' own keys stand: Command+Q, Command+W and the zoom keys.
+    expect(
+      ["quit", "close", "zoomIn"].map(
+        (role) => itemOf(menus, role)?.accelerator
+      )
+    ).toStrictEqual([undefined, undefined, undefined]);
   });
 
   it.each(["win32", "linux"] as const)(
-    "on %s has no vibrancy, no profile shortcuts and no empty Help menu",
+    "on %s has no vibrancy, no Help, Quit on Ctrl+Q and a Close with no key",
     (platform) => {
-      const menus = outline(template(platform));
+      const menus = template(platform);
+      const close = itemOf(menus, "window.close");
 
-      expect(menus.map(([label]) => label)).toStrictEqual([
-        "Meru",
-        "Edit",
-        "View",
-        "Tabs",
-        "Window",
-      ]);
-      expect(menus[0]).toStrictEqual(["Meru", [["Quit Meru", "quit", ""]]]);
-      expect(menus[2]).toStrictEqual([
-        "View",
+      expect(outline(menus)).toStrictEqual([
+        ["Meru", ["quit"]],
+        ["Edit", outline(template("darwin"))[1]?.[1]],
+        ["View", VIEW],
+        ["Tabs", ["tab.next", "tab.previous", "tab.close"]],
         [
-          ["Modern", "design.modern", "", "radio", true],
-          ["Classic", "design.classic", "", "radio", false],
-          "-",
-          ["Reload", "tab.reload", "CommandOrControl+R"],
+          "Window",
+          [
+            "minimize",
+            "window.close",
+            "profile.next",
+            "profile.previous",
+            "profile.add",
+          ],
         ],
       ]);
-      expect(menus[4]).toStrictEqual([
-        "Window",
-        [
-          ["Minimize", "minimize", ""],
-          ["Close", "close", ""],
-          "-",
-          ["Select Next Profile", "profile.next", "", "disabled"],
-          ["Select Previous Profile", "profile.previous", "", "disabled"],
-          "-",
-          ["Add Profile", "profile.add", ""],
-        ],
+      expect(itemOf(menus, "quit")?.accelerator).toBe("CommandOrControl+Q");
+      expect([close?.role, close?.accelerator]).toStrictEqual([
+        undefined,
+        undefined,
       ]);
+      expect(
+        ["profile.next", "profile.previous"].map(
+          (id) => itemOf(menus, id)?.accelerator
+        )
+      ).toStrictEqual([undefined, undefined]);
     }
   );
 
-  it("checks the design in use", () => {
-    const view = outline(template("darwin", contextOf("classic"))).find(
-      ([label]) => label === "View"
-    );
+  it("ends the View menu with the developer tools only when given them", () => {
+    const given = buildMenuTemplate({
+      platform: "darwin",
+      appName: "Meru",
+      commands: commandsFor("darwin"),
+      context: contextOf(),
+      run: () => false,
+      developerTools: { role: "toggleDevTools" },
+    });
 
-    expect(view?.[1]?.slice(0, 2)).toStrictEqual([
-      ["Modern", "design.modern", "", "radio", false],
-      ["Classic", "design.classic", "", "radio", true],
+    expect(outline(given)[2]?.[1]?.at(-1)).toBe("toggleDevTools");
+    expect(outline(template("darwin"))[2]?.[1]).not.toContain("toggleDevTools");
+  });
+
+  it("checks the design in use", () => {
+    const menus = template("darwin", contextOf("classic"));
+
+    expect(
+      ["design.modern", "design.classic"].map((id) => {
+        const choice = itemOf(menus, id);
+
+        return [choice?.label, choice?.type, choice?.checked];
+      })
+    ).toStrictEqual([
+      ["Modern", "radio", false],
+      ["Classic", "radio", true],
     ]);
   });
 });

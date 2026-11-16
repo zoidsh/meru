@@ -32,6 +32,11 @@ msgstr "{productName} could not start"
 msgid "About {appName}"
 msgstr "About {appName}"
 
+#. Menu item in the View menu that sets the page's zoom back to 100%
+#: src/main/application-menu.ts
+msgid "Actual Size"
+msgstr "Actual Size"
+
 #. Accessible name of the plus button in the title bar that adds a profile, read by screen readers
 #: src/shell/app.tsx
 msgid "Add profile"
@@ -72,6 +77,11 @@ msgstr "Close {title}"
 #: src/main/commands.ts
 msgid "Close Tab"
 msgstr "Close Tab"
+
+#. Menu item in the macOS Window menu
+#: src/main/application-menu.ts
+msgid "Close Window"
+msgstr "Close Window"
 
 #. Accessible name of the window's main area, below the title bar, read by screen readers
 #: src/shell/app.tsx
@@ -264,6 +274,11 @@ msgstr "This data was saved by a newer version. Open it with that version, or up
 msgid "Title bar"
 msgstr "Title bar"
 
+#. Menu item in the View menu that makes the window fill the screen, or stop filling it
+#: src/main/application-menu.ts
+msgid "Toggle Full Screen"
+msgstr "Toggle Full Screen"
+
 #. Button in place of a tab's page that could not load, which tries to load it again now
 #: src/shell/tab-strip.tsx
 msgid "Try again"
@@ -303,3 +318,13 @@ msgstr "You’re offline"
 #: src/main/application-menu.ts
 msgid "Zoom"
 msgstr "Zoom"
+
+#. Menu item in the View menu that makes the page larger
+#: src/main/application-menu.ts
+msgid "Zoom In"
+msgstr "Zoom In"
+
+#. Menu item in the View menu that makes the page smaller
+#: src/main/application-menu.ts
+msgid "Zoom Out"
+msgstr "Zoom Out"
