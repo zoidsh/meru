@@ -152,11 +152,6 @@ export const createTabViews = ({
         }, effect.delay);
         break;
       }
-      case "cancel-retry": {
-        clearTimeout(tab.retry);
-        tab.retry = undefined;
-        break;
-      }
       default: {
         break;
       }

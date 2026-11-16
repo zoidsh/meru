@@ -55,12 +55,7 @@ describe(openTab, () => {
       () => "new"
     );
 
-    expect(
-      opened && { tabId: opened.tabId, reused: opened.reused }
-    ).toStrictEqual({
-      tabId: "new",
-      reused: false,
-    });
+    expect(opened?.tabId).toBe("new");
     expect(ids(opened?.state)).toStrictEqual([["gmail", "new"], "new"]);
     expect(tabsOf(opened?.state)?.tabs[1]).toStrictEqual({
       id: "new",
@@ -92,7 +87,6 @@ describe(openTab, () => {
       () => "never"
     );
 
-    expect(opened?.reused).toBeTruthy();
     expect(opened?.tabId).toBe("gmail");
     expect(ids(opened?.state)).toStrictEqual([["gmail", "c1"], "gmail"]);
     expect(tabsOf(opened?.state)?.tabs[0]?.url).toBe(

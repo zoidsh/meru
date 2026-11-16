@@ -33,8 +33,6 @@ const updateProfile = (
 export interface OpenedTab {
   state: State;
   tabId: string;
-  /** An existing tab of a single-instance app was taken, to be navigated. */
-  reused: boolean;
 }
 
 /**
@@ -56,7 +54,7 @@ export const openTab = (
       : undefined;
 
     if (existing) {
-      opened = { tabId: existing.id, reused: true };
+      opened = { tabId: existing.id };
 
       return {
         ...profile,
@@ -69,7 +67,7 @@ export const openTab = (
 
     const tab: Tab = { id: newId(), app: app.id, url, title: "" };
 
-    opened = { tabId: tab.id, reused: false };
+    opened = { tabId: tab.id };
 
     return {
       ...profile,

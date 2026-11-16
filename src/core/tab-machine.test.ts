@@ -30,8 +30,6 @@ const retrying = (attempt = 0): TabStatus => ({
 
 const LOAD = { kind: "load" };
 
-const CANCEL = { kind: "cancel-retry" };
-
 /** Each status against each event: the expected status and effects. */
 const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
   [
@@ -82,11 +80,11 @@ const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
       // The error page that follows a failure.
       loaded: [waiting(2), []],
       "failed-to-load": [waiting(2), []],
-      crashed: [{ kind: "crashed", reason: "killed" }, [CANCEL]],
-      retry: [retrying(2), [CANCEL, LOAD]],
-      "retry-due": [retrying(2), [CANCEL, LOAD]],
-      online: [retrying(2), [CANCEL, LOAD]],
-      navigate: [retrying(2), [CANCEL, LOAD]],
+      crashed: [{ kind: "crashed", reason: "killed" }, []],
+      retry: [retrying(2), [LOAD]],
+      "retry-due": [retrying(2), [LOAD]],
+      online: [retrying(2), [LOAD]],
+      navigate: [retrying(2), [LOAD]],
     },
   ],
   [

@@ -36,8 +36,11 @@ export type TabEvent =
 export type TabEffect =
   /** Loads the tab's URL in its view, creating the view if it has none. */
   | { kind: "load" }
-  | { kind: "schedule-retry"; delay: number }
-  | { kind: "cancel-retry" };
+  /**
+   * Replaces any retry scheduled before. One left over from an earlier failure
+   * fires into a status that ignores it, so none is ever cancelled.
+   */
+  | { kind: "schedule-retry"; delay: number };
 
 export interface Transition {
   status: TabStatus;
@@ -54,9 +57,9 @@ export const retryDelay = (attempt: number) =>
 
 const stay = (status: TabStatus): Transition => ({ status, effects: [] });
 
-const load = (status: TabStatus, ...before: TabEffect[]): Transition => ({
+const load = (status: TabStatus): Transition => ({
   status,
-  effects: [...before, { kind: "load" }],
+  effects: [{ kind: "load" }],
 });
 
 const fail = (reason: LoadFailure, attempt: number): Transition => ({
@@ -102,13 +105,10 @@ const whileWaiting = (
     case "retry-due":
     case "online":
     case "navigate": {
-      return load({ ...status, retrying: true }, { kind: "cancel-retry" });
+      return load({ ...status, retrying: true });
     }
     case "crashed": {
-      return {
-        status: { kind: "crashed", reason: event.reason },
-        effects: [{ kind: "cancel-retry" }],
-      };
+      return stay({ kind: "crashed", reason: event.reason });
     }
     // `loaded` here is the error page that follows a failure.
     default: {
