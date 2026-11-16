@@ -4,8 +4,10 @@
  */
 export type WindowOpenRoute = "child-window" | "system-browser" | "deny";
 
-/** Google's sign-in and its own pop-ups, the host v3 lets open as a window. */
-const CHILD_WINDOW_HOSTS = new Set(["accounts.google.com"]);
+/** Google's sign-in and its own pop-ups, the origin v3 lets open as a window. */
+export const SIGN_IN_ORIGINS: readonly string[] = [
+  "https://accounts.google.com",
+];
 
 /**
  * Refused until the slice that gives each a home: Gmail's pop-outs, which
@@ -16,10 +18,13 @@ const LATER_SLICE = [
   (url: URL) => url.host === "mail.google.com",
   (url: URL) =>
     url.host === "accounts.google.com" &&
-    url.pathname.startsWith("/AddSession"),
+    url.pathname.toLowerCase().startsWith("/addsession"),
 ];
 
-export const routeWindowOpen = (url: string): WindowOpenRoute => {
+export const routeWindowOpen = (
+  url: string,
+  childWindowOrigins: readonly string[]
+): WindowOpenRoute => {
   let parsed: URL;
 
   try {
@@ -36,7 +41,7 @@ export const routeWindowOpen = (url: string): WindowOpenRoute => {
     return "deny";
   }
 
-  if (parsed.protocol === "https:" && CHILD_WINDOW_HOSTS.has(parsed.host)) {
+  if (childWindowOrigins.includes(parsed.origin)) {
     return "child-window";
   }
 

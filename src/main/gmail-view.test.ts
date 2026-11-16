@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Rectangle, Size } from "#core/window-bounds.ts";
+import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import type { ContentViewOptions } from "#platform/content-view.ts";
 
 import { createGmailView } from "./gmail-view.ts";
@@ -38,6 +39,8 @@ const setup = ({ load = Promise.resolve() } = {}) => {
     window,
     partition: "persist:f00d",
     url: "https://mail.google.com/mail/u/0",
+    childWindowOrigins: SIGN_IN_ORIGINS,
+    background: true,
     systemBrowser: {
       open: (url) => {
         opened.push(url);

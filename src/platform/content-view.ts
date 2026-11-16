@@ -8,9 +8,12 @@ export interface ContentViewOptions {
   partition: string;
   /**
    * Answers each window the page asks to open, and each one a window it opened
-   * asks for in turn. An allowed one opens as a child window in the session.
+   * asks for in turn. An allowed one opens in the session as a child of the
+   * view's window, so it closes with it.
    */
   onWindowOpen: (url: string) => "allow" | "deny";
+  /** Child windows show without activating the app, as the shell window does. */
+  background: boolean;
 }
 
 export interface ContentView {
@@ -19,15 +22,39 @@ export interface ContentView {
   loadURL: (url: string) => Promise<void>;
 }
 
+/** Shown on whichever comes first, since Wayland can skip `ready-to-show`. */
+const showInactiveOnceReady = (window: BrowserWindow) => {
+  const show = () => {
+    if (!window.isDestroyed() && !window.isVisible()) {
+      window.showInactive();
+    }
+  };
+
+  window.once("ready-to-show", show);
+  window.webContents.once("did-finish-load", show);
+};
+
 const routeWindowOpens = (
   webContents: WebContents,
-  onWindowOpen: ContentViewOptions["onWindowOpen"]
+  parent: BrowserWindow,
+  options: Pick<ContentViewOptions, "onWindowOpen" | "background">
 ) => {
-  webContents.setWindowOpenHandler(({ url }) => ({
-    action: onWindowOpen(url),
-  }));
+  const { onWindowOpen, background } = options;
+
+  webContents.setWindowOpenHandler(({ url }) =>
+    onWindowOpen(url) === "allow"
+      ? {
+          action: "allow",
+          overrideBrowserWindowOptions: { parent, show: !background },
+        }
+      : { action: "deny" }
+  );
   webContents.on("did-create-window", (child) => {
-    routeWindowOpens(child.webContents, onWindowOpen);
+    if (background) {
+      showInactiveOnceReady(child);
+    }
+
+    routeWindowOpens(child.webContents, parent, options);
   });
 };
 
@@ -37,8 +64,9 @@ const routeWindowOpens = (
  */
 export const addContentView = (
   window: BrowserWindow,
-  { partition, onWindowOpen }: ContentViewOptions
+  options: ContentViewOptions
 ): ContentView => {
+  const { partition } = options;
   const view = new WebContentsView({
     webPreferences: {
       partition,
@@ -49,7 +77,7 @@ export const addContentView = (
   });
   const { webContents } = view;
 
-  routeWindowOpens(webContents, onWindowOpen);
+  routeWindowOpens(webContents, window, options);
   window.contentView.addChildView(view);
   // Closing a window leaves the views in it alive.
   window.once("closed", () => {

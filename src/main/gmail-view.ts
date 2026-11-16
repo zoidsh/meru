@@ -7,6 +7,9 @@ export interface GmailViewDeps {
   window: Pick<AppWindow, "getContentSize" | "onResize" | "addContentView">;
   partition: string;
   url: string;
+  /** Origins whose pop-ups open as child windows in the session. */
+  childWindowOrigins: readonly string[];
+  background: boolean;
   systemBrowser: SystemBrowser;
   log: (message: string) => void;
 }
@@ -22,6 +25,8 @@ export const createGmailView = ({
   window,
   partition,
   url,
+  childWindowOrigins,
+  background,
   systemBrowser,
   log,
 }: GmailViewDeps) => {
@@ -35,8 +40,9 @@ export const createGmailView = ({
 
   const view = window.addContentView({
     partition,
+    background,
     onWindowOpen: (openedUrl) => {
-      const route = routeWindowOpen(openedUrl);
+      const route = routeWindowOpen(openedUrl, childWindowOrigins);
 
       if (route === "system-browser") {
         openInSystemBrowser(openedUrl);

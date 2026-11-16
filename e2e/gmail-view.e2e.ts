@@ -6,6 +6,7 @@ import type { ElectronApplication } from "@playwright/test";
 import { expect, findPage, test } from "./lib/app.ts";
 import {
   ELSEWHERE_URL,
+  POPUP_TITLE,
   STAND_IN_COOKIE,
   STAND_IN_TITLE,
 } from "./lib/stand-in.ts";
@@ -115,13 +116,9 @@ test("a second launch keeps the profile and its session's cookie", async ({
   ).toStrictEqual([STAND_IN_COOKIE]);
 });
 
-test("hands a link to another site to the system browser", async ({
-  app,
-  standIn,
-}) => {
-  const view = await findPage(app, standIn.url);
-
-  await app.evaluate(({ shell }) => {
+/** Records what would open in the system browser, opening nothing. */
+const stubSystemBrowser = (app: ElectronApplication) =>
+  app.evaluate(({ shell }) => {
     const opened: string[] = [];
 
     Reflect.set(globalThis, "openedExternally", opened);
@@ -132,14 +129,20 @@ test("hands a link to another site to the system browser", async ({
     };
   });
 
+const readOpenedExternally = (app: ElectronApplication) =>
+  app.evaluate(() => Reflect.get(globalThis, "openedExternally") as string[]);
+
+test("hands a link to another site to the system browser", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+
+  await stubSystemBrowser(app);
   await view.getByRole("link", { name: "Another site" }).click();
 
   await expect
-    .poll(() =>
-      app.evaluate(
-        () => Reflect.get(globalThis, "openedExternally") as string[]
-      )
-    )
+    .poll(() => readOpenedExternally(app))
     .toStrictEqual([ELSEWHERE_URL]);
   expect(
     await app.evaluate(
@@ -147,6 +150,42 @@ test("hands a link to another site to the system browser", async ({
     )
   ).toBe(1);
   expect(view.url()).toBe(standIn.url);
+});
+
+test("opens a sign-in pop-up as a child of the shell window in the same session", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+
+  await stubSystemBrowser(app);
+  await view.getByRole("link", { name: "Open a pop-up" }).click();
+
+  const popup = await findPage(app, `${standIn.url}popup`);
+
+  await expect(popup.getByRole("heading", { name: POPUP_TITLE })).toBeVisible();
+  expect(standIn.popupCookieHeaders).toStrictEqual([STAND_IN_COOKIE]);
+  expect(
+    await app.evaluate(({ BrowserWindow }, popupUrl) => {
+      const child = BrowserWindow.getAllWindows().find(
+        (window) => window.webContents.getURL() === popupUrl
+      );
+
+      return {
+        parent: child?.getParentWindow()?.webContents.getURL() ?? "",
+        visible: child?.isVisible(),
+      };
+    }, `${standIn.url}popup`)
+  ).toStrictEqual({
+    parent: expect.stringMatching(/^meru-app:/u),
+    visible: true,
+  });
+
+  await popup.getByRole("link", { name: "Another site" }).click();
+
+  await expect
+    .poll(() => readOpenedExternally(app))
+    .toStrictEqual([ELSEWHERE_URL]);
 });
 
 test("keeps an unreadable state file aside and still starts", async ({

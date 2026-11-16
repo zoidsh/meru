@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { profilePartition, selectedProfile } from "#core/state.ts";
+import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
@@ -24,9 +25,13 @@ const SHELL_HOST = "shell";
 
 const GMAIL_URL = "https://mail.google.com/mail/u/0";
 
-// The suite's stand-in for Gmail, which only its build reads.
-const gmailUrl =
-  (MERU_E2E_BUILD && process.env.MERU_TEST_GMAIL_URL) || GMAIL_URL;
+// The suite's stand-in for Gmail, which only its build reads, opens its own
+// pop-ups as sign-in's would open.
+const standInUrl = MERU_E2E_BUILD ? process.env.MERU_TEST_GMAIL_URL : undefined;
+const gmailUrl = standInUrl || GMAIL_URL;
+const childWindowOrigins = standInUrl
+  ? [new URL(standInUrl).origin]
+  : SIGN_IN_ORIGINS;
 
 const lifecycle = createAppLifecycle();
 const errorDialog = createErrorDialog();
@@ -141,6 +146,8 @@ const start = async () => {
     window: shell.window,
     partition: profilePartition(selectedProfile(state).id),
     url: gmailUrl,
+    childWindowOrigins,
+    background,
     systemBrowser: createSystemBrowser(),
     log: console.error,
   });

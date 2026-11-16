@@ -1,14 +1,28 @@
 import { describe, expect, it } from "vitest";
 
-import { routeWindowOpen } from "./window-open.ts";
+import { SIGN_IN_ORIGINS, routeWindowOpen } from "./window-open.ts";
 
 describe(routeWindowOpen, () => {
   it("opens Google's sign-in as a child window", () => {
-    expect(
-      routeWindowOpen("https://accounts.google.com/v3/signin/identifier")
-    ).toBe("child-window");
-    expect(routeWindowOpen("https://accounts.google.com/")).toBe(
+    for (const url of [
+      "https://accounts.google.com/v3/signin/identifier",
+      "https://accounts.google.com/",
+    ]) {
+      expect(routeWindowOpen(url, SIGN_IN_ORIGINS)).toBe("child-window");
+    }
+  });
+
+  it("opens only the origins it is given as child windows", () => {
+    const standIn = ["http://127.0.0.1:4321"];
+
+    expect(routeWindowOpen("http://127.0.0.1:4321/popup", standIn)).toBe(
       "child-window"
+    );
+    expect(routeWindowOpen("http://127.0.0.1:9999/popup", standIn)).toBe(
+      "system-browser"
+    );
+    expect(routeWindowOpen("https://accounts.google.com/", standIn)).toBe(
+      "system-browser"
     );
   });
 
@@ -21,7 +35,7 @@ describe(routeWindowOpen, () => {
       "https://accounts.google.com.example.com/",
       "https://drive.google.com/file/d/1",
     ]) {
-      expect(routeWindowOpen(url)).toBe("system-browser");
+      expect(routeWindowOpen(url, SIGN_IN_ORIGINS)).toBe("system-browser");
     }
   });
 
@@ -36,7 +50,7 @@ describe(routeWindowOpen, () => {
       "not a url",
       "",
     ]) {
-      expect(routeWindowOpen(url)).toBe("deny");
+      expect(routeWindowOpen(url, SIGN_IN_ORIGINS)).toBe("deny");
     }
   });
 
@@ -45,8 +59,10 @@ describe(routeWindowOpen, () => {
       "https://mail.google.com/mail/u/0/?view=cm&fs=1",
       "https://mail.google.com/mail/u/0/popout?ver=1",
       "https://accounts.google.com/AddSession?continue=x",
+      "https://accounts.google.com/addsession",
+      "https://accounts.google.com/ADDSESSION/identifier",
     ]) {
-      expect(routeWindowOpen(url)).toBe("deny");
+      expect(routeWindowOpen(url, SIGN_IN_ORIGINS)).toBe("deny");
     }
   });
 });
