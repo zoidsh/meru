@@ -6,10 +6,13 @@ import {
   decodeSettings,
   readSetting,
   readSettingOf,
-  usesReservedName,
   writeSetting,
 } from "./settings.ts";
-import type { SettingDefinition, Settings } from "./settings.ts";
+import type {
+  SettingDeclarations,
+  SettingDefinition,
+  Settings,
+} from "./settings.ts";
 
 const read = (value: unknown): Settings => {
   const decoded = decodeSettings(value);
@@ -88,8 +91,6 @@ const PROFILE_SCOPED = {
     schema: z.enum(["compact", "roomy"]),
     default: "roomy",
     scope: "profile",
-    tier: "free",
-    restart: false,
   } as SettingDefinition<"compact" | "roomy">,
 };
 
@@ -156,14 +157,18 @@ describe(writeSetting, () => {
   });
 });
 
-describe(usesReservedName, () => {
-  it("refuses a setting named for the file's version or its profiles", () => {
-    expect(usesReservedName({ version: {} })).toBeTruthy();
-    expect(usesReservedName({ profiles: {} })).toBeTruthy();
-    expect(usesReservedName({ design: {} })).toBeFalsy();
-  });
+describe("setting declarations", () => {
+  it("refuses, as a type error, a setting named for the file's version or its profiles", () => {
+    const declared = {
+      design: SETTINGS.design,
+      // @ts-expect-error -- `version` is the file's own
+      version: SETTINGS.design,
+    } satisfies SettingDeclarations;
+    const profiles = {
+      // @ts-expect-error -- `profiles` is the file's own
+      profiles: SETTINGS.vibrancy,
+    } satisfies SettingDeclarations;
 
-  it("holds for every declared setting", () => {
-    expect(usesReservedName(SETTINGS)).toBeFalsy();
+    expect(Object.keys({ ...declared, ...profiles })).toHaveLength(3);
   });
 });

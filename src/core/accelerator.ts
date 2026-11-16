@@ -11,19 +11,13 @@ export interface KeyInput {
   meta: boolean;
 }
 
+/** Where the punctuation a shortcut names sits, for those that have one. */
 const CODES: Record<string, string> = {
   "[": "BracketLeft",
   "]": "BracketRight",
-  ",": "Comma",
-  ".": "Period",
-  "-": "Minus",
-  "=": "Equal",
-  "/": "Slash",
-  ";": "Semicolon",
 };
 
-const codeOf = (key: string) =>
-  CODES[key] ?? (/^\d$/u.test(key) ? `Digit${key}` : undefined);
+const codeOf = (key: string) => CODES[key];
 
 /**
  * Whether a key press is an Electron accelerator such as

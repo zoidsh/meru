@@ -13,10 +13,11 @@ export interface SettingDefinition<Value = unknown> {
   default: Value;
   /** `profile`: global, with an override a profile may hold. */
   scope: "global" | "profile";
-  tier: "free" | "pro";
-  /** Whether a change waits for the next launch. */
-  restart: boolean;
 }
+
+/** What `SETTINGS` may declare: any name but the file's own. */
+export type SettingDeclarations = Record<string, SettingDefinition> &
+  Partial<Record<(typeof RESERVED_SETTING_NAMES)[number], never>>;
 
 const setting = <Value>(definition: SettingDefinition<Value>) => definition;
 
@@ -30,18 +31,14 @@ export const SETTINGS = {
     schema: z.enum(DESIGNS),
     default: "modern",
     scope: "global",
-    tier: "free",
-    restart: false,
   }),
   /** Read on macOS alone. */
   vibrancy: setting<boolean>({
     schema: z.boolean(),
     default: true,
     scope: "global",
-    tier: "free",
-    restart: false,
   }),
-};
+} satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;
 
@@ -49,16 +46,6 @@ export type SettingValue<Key extends SettingKey> =
   (typeof SETTINGS)[Key]["default"];
 
 export const SETTING_KEYS = Object.keys(SETTINGS) as SettingKey[];
-
-/** Whether a set of definitions leaves the file's own names alone. */
-export const usesReservedName = (definitions: Record<string, unknown>) =>
-  RESERVED_SETTING_NAMES.some((name) => Object.hasOwn(definitions, name));
-
-if (usesReservedName(SETTINGS)) {
-  throw new Error(
-    `A setting may not be named ${RESERVED_SETTING_NAMES.join(" or ")}`
-  );
-}
 
 /**
  * The file as it was found, with whatever the person set since. Values are
