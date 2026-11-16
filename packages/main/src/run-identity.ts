@@ -49,6 +49,47 @@ export const refuseUserDataDir = ({
 };
 
 /**
+ * The folder in `appData` a packaged build keeps its user data in. A `-dev`
+ * prerelease is a build from this branch, and gets a folder of its own so it
+ * can never open, or take the single instance lock of, an installed Meru's
+ * profiles.
+ */
+export const userDataNameFor = (productName: string, version: string) =>
+  /^\d+\.\d+\.\d+-dev(?:[.+]|$)/u.test(version)
+    ? `${productName} Dev`
+    : productName;
+
+export interface PackagedUserDataCheck {
+  isPackaged: boolean;
+  productName: string;
+  version: string;
+  appData: string;
+  /** Whether `--user-data-dir` was passed, which always wins. */
+  hasUserDataDirSwitch: boolean;
+}
+
+/**
+ * The user data directory a packaged build must move to before anything uses
+ * it, or nothing when Electron's default, `appData` joined with the product
+ * name, is already right.
+ */
+export const packagedUserDataDir = ({
+  isPackaged,
+  productName,
+  version,
+  appData,
+  hasUserDataDirSwitch,
+}: PackagedUserDataCheck): string | undefined => {
+  if (!isPackaged || hasUserDataDirSwitch) {
+    return;
+  }
+
+  const name = userDataNameFor(productName, version);
+
+  return name === productName ? undefined : path.join(appData, name);
+};
+
+/**
  * Windows groups taskbar buttons and notifications by this id, so a run from
  * the repository takes one of its own rather than an installed Meru's.
  */

@@ -11,7 +11,12 @@ import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
 import { readLaunchOptions } from "./launch-options.ts";
-import { appUserModelIdFor, refuseUserDataDir } from "./run-identity.ts";
+import {
+  appUserModelIdFor,
+  packagedUserDataDir,
+  refuseUserDataDir,
+  userDataNameFor,
+} from "./run-identity.ts";
 import { createShellWindow, revealWindow } from "./shell-window.ts";
 
 const APP_SCHEME = "meru-app";
@@ -66,17 +71,35 @@ const start = async () => {
   const options = readLaunchOptions({ argv: process.argv, env: process.env });
   const shellSource = resolveShell();
 
+  const userDataDir = packagedUserDataDir({
+    isPackaged: lifecycle.isPackaged,
+    productName: MERU_PRODUCT_NAME,
+    version: lifecycle.version,
+    appData: lifecycle.getPath("appData"),
+    hasUserDataDirSwitch: lifecycle.hasSwitch("user-data-dir"),
+  });
+
+  if (userDataDir) {
+    lifecycle.setUserDataPath(userDataDir);
+  }
+
   const refusal = refuseUserDataDir({
     isPackaged: lifecycle.isPackaged,
     userData: lifecycle.getPath("userData"),
     appData: lifecycle.getPath("appData"),
-    appNames: [MERU_PRODUCT_NAME, lifecycle.name],
+    appNames: [
+      MERU_PRODUCT_NAME,
+      lifecycle.name,
+      userDataNameFor(MERU_PRODUCT_NAME, lifecycle.version),
+    ],
     platform: process.platform,
   });
 
   if (refusal) {
     throw new Error(refusal);
   }
+
+  const { background } = options;
 
   if (!lifecycle.requestSingleInstanceLock()) {
     lifecycle.quit();
@@ -110,11 +133,11 @@ const start = async () => {
     url: shellSource.url,
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
     isMacOS: process.platform === "darwin",
-    background: options.background,
+    background,
   });
 
   lifecycle.onSecondInstance(() => {
-    revealWindow(shell.window, options.background);
+    revealWindow(shell.window, background);
   });
 
   lifecycle.onWindowAllClosed(() => {
