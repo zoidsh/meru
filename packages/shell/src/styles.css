@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "@meru/ui/theme.css";
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased select-none;
+  }
+}

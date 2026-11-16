@@ -1,0 +1,13 @@
+packages:
+  - packages/*
+
+# Lefthook's postinstall would rewrite the hook script that every worktree of
+# this repository shares; that script already finds lefthook in node_modules.
+allowBuilds:
+  electron: true
+  lefthook: false
+
+# Workspace packages export their `.ts` source, which Node runs only through
+# pnpm's symlinks; an injected copy lands in node_modules, where Node refuses to
+# strip types.
+injectWorkspacePackages: false

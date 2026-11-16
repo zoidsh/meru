@@ -1,0 +1,16 @@
+{
+  "name": "@meru/main",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "types": "tsc"
+  },
+  "devDependencies": {
+    "@meru/core": "workspace:*",
+    "@meru/platform": "workspace:*"
+  }
+}
