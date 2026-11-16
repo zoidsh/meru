@@ -17,8 +17,20 @@ export interface Failures {
   report: (error: unknown) => void;
 }
 
-const describe = (error: unknown) =>
-  error instanceof Error ? (error.stack ?? error.message) : String(error);
+/** A failure whose message is written for the person, shown without a stack. */
+export class StartupError extends Error {
+  override name = "StartupError";
+}
+
+const describe = (error: unknown) => {
+  if (error instanceof StartupError) {
+    return error.message;
+  }
+
+  return error instanceof Error
+    ? (error.stack ?? error.message)
+    : String(error);
+};
 
 /**
  * Decides what an error means by when it happens. During startup it ends the

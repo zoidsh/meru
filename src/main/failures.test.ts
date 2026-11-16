@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createFailures } from "./failures.ts";
+import { StartupError, createFailures } from "./failures.ts";
 
 const setup = () => {
   const calls: string[] = [];
@@ -56,5 +56,19 @@ describe(createFailures, () => {
     expect(calls).toStrictEqual([
       "log: Unexpected error in the main process: Error: late",
     ]);
+  });
+
+  it("shows a failure written for the person without a stack", () => {
+    const details: string[] = [];
+    const failures = createFailures({
+      productName: "Meru",
+      showErrorDialog: (_title, message) => details.push(message),
+      log: () => false,
+      exit: () => false,
+    });
+
+    failures.report(new StartupError("Saved by a newer version."));
+
+    expect(details).toStrictEqual(["Saved by a newer version."]);
   });
 });

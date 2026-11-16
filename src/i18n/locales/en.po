@@ -17,6 +17,11 @@ msgstr "{productName} could not start"
 msgid "Content"
 msgstr "Content"
 
+#. Shown when the app is started on data that a later version of the app wrote, which this version cannot read
+#: src/main/state-store.ts
+msgid "This data was saved by a newer version. Open it with that version, or update to it."
+msgstr "This data was saved by a newer version. Open it with that version, or update to it."
+
 #. Accessible name of the strip across the top of the window, read by screen readers
 #: src/shell/app.tsx
 msgid "Title bar"
