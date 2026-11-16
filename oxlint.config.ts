@@ -108,9 +108,10 @@ const BY_ROLE =
   "Find it through the accessibility tree: getByRole with a name, or getByLabel or getByText.";
 
 /**
- * Everything in Playwright that finds an element by CSS, XPath or a test id.
- * The page-level actions take a selector, and the fixtures name a page `shell`
- * or `page`, so those two are held to locators.
+ * What finds an element by CSS, XPath or a test id, whatever it is called on:
+ * Playwright's selector methods, and the DOM's queries inside `evaluate`. The
+ * page-level actions that take a selector are recognised by their arguments in
+ * `scripts/lint/e2e-plugin.ts`.
  */
 const SELECTOR_METHODS = [
   "locator",
@@ -121,8 +122,19 @@ const SELECTOR_METHODS = [
   "$eval",
   "$$eval",
   "waitForSelector",
+  "querySelector",
+  "querySelectorAll",
+  "getElementById",
+  "getElementsByClassName",
+  "getElementsByName",
+  "getElementsByTagName",
 ];
 
+/**
+ * The fixtures hand tests the shell window as `shell`, so its page-level
+ * actions are rejected even when the selector is a variable, which the
+ * argument check cannot see.
+ */
 const SELECTOR_ACTIONS = [
   "check",
   "click",
@@ -158,13 +170,11 @@ const NO_SELECTORS: [
 ] = [
   "error",
   ...SELECTOR_METHODS.map((property) => ({ property, message: BY_ROLE })),
-  ...["shell", "page"].flatMap((object) =>
-    SELECTOR_ACTIONS.map((property) => ({
-      object,
-      property,
-      message: `${object}.${property} takes a selector; act on a locator from getByRole instead.`,
-    }))
-  ),
+  ...SELECTOR_ACTIONS.map((property) => ({
+    object: "shell",
+    property,
+    message: `shell.${property} takes a selector; act on a locator from getByRole instead.`,
+  })),
 ];
 
 /** `require` reaches past the import boundaries; only scripts/ may use it. */
@@ -172,6 +182,7 @@ const NO_REQUIRE: ["error", string] = ["error", "require"];
 
 export default defineConfig({
   extends: [core, react, vitest],
+  jsPlugins: ["./scripts/lint/e2e-plugin.ts"],
   rules: {
     "no-restricted-imports": ["error", { paths: NO_NODE_MODULE, patterns: [] }],
     "no-restricted-globals": NO_REQUIRE,
@@ -190,6 +201,7 @@ export default defineConfig({
       files: ["e2e/**"],
       rules: {
         "no-restricted-properties": NO_SELECTORS,
+        "meru-e2e/no-selector-arguments": "error",
         // A Playwright fixture must destructure its first argument even when
         // it needs no other fixture, and its `use` is not React's hook.
         "no-empty-pattern": "off",
