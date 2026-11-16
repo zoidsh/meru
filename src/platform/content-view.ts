@@ -101,10 +101,23 @@ const reportEvents = (
   webContents: WebContents,
   onEvent: ContentViewOptions["onEvent"]
 ) => {
-  webContents.on("did-finish-load", () => onEvent({ kind: "loaded" }));
+  // Not `did-finish-load`: when a page starts a navigation of its own before
+  // its load finishes, as Gmail served by its service worker does, and that
+  // navigation is aborted, the page shows but `did-finish-load` never fires.
+  let failed = false;
+
+  webContents.on("did-start-loading", () => {
+    failed = false;
+  });
   webContents.on("did-fail-load", (_event, code, name, _url, isMainFrame) => {
     if (isMainFrame && code !== ERR_ABORTED) {
+      failed = true;
       onEvent({ kind: "failed-to-load", code, name });
+    }
+  });
+  webContents.on("did-stop-loading", () => {
+    if (!failed) {
+      onEvent({ kind: "loaded" });
     }
   });
   webContents.on("render-process-gone", (_event, { reason }) =>
