@@ -25,6 +25,10 @@ The simplest thing that meets the requirement wins. Before writing a spec, ask w
 
 `06-process.md` in the plan docs holds the seven principles and is the authority. In short: build features end to end and take structure from real use; guard against accidents, not intent; go slowly only on what cannot be taken back; treat every setting as a permanent cost; prove the riskiest assumption first; keep `v4` runnable for Tim every day; end each milestone with a deletion pass. Turn down a review finding that needs deliberate effort to trigger, unless it sits on a one-way door.
 
+## Improving the loop
+
+When something slows the work down, or a slice shows a better way to work, change this skill, the agent definitions or `06-process.md` right then, and tell Tim what changed. At the end of each milestone, name that milestone's bottleneck and remove it.
+
 ## Rules
 
 - Push to `v4` only. Never to `main` or `beta`, and never tag or release.
