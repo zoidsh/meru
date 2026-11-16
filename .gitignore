@@ -2,7 +2,6 @@ node_modules
 out
 .meru
 .build
-*.tsbuildinfo
 .DS_Store
 dist
 test-results

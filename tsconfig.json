@@ -5,22 +5,16 @@
     "target": "esnext",
     "lib": ["esnext"],
     "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "moduleDetection": "force",
     "types": ["node"],
 
-    "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
     "exactOptionalPropertyTypes": true,
-    "noUncheckedSideEffectImports": true,
 
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
-    "rewriteRelativeImportExtensions": false,
-    "resolveJsonModule": true,
     "isolatedModules": true,
     "skipLibCheck": true,
 

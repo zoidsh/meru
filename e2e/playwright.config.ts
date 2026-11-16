@@ -5,7 +5,6 @@ import { defineConfig } from "@playwright/test";
 const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
-  testDir: import.meta.dirname,
   // Never *.spec.ts or *.test.ts, which Vitest would claim.
   testMatch: "**/*.e2e.ts",
   outputDir: path.join(import.meta.dirname, "..", "test-results"),
