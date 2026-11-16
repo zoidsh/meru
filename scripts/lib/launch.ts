@@ -1,28 +1,16 @@
 import { spawn, spawnSync } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { once } from "node:events";
-import { readFile, rm } from "node:fs/promises";
+import { rmSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { parseArgs } from "node:util";
 
 import electronPath from "electron";
 
 import { repositoryRoot } from "./bundles.ts";
-
-export interface LaunchArgs {
-  profile: string;
-  debugPort: string | undefined;
-  background: boolean;
-  /** Everything not declared here, for Electron and Chromium as typed. */
-  electronArgs: string[];
-}
-
-const OPTIONS = {
-  profile: { type: "string" },
-  "debug-port": { type: "string" },
-  background: { type: "boolean" },
-} as const;
+import { defaultProfileFor } from "./launch-args.ts";
+import type { GitCheckout, LaunchArgs } from "./launch-args.ts";
 
 const git = (...args: string[]) => {
   const result = spawnSync("git", args, {
@@ -30,71 +18,40 @@ const git = (...args: string[]) => {
     encoding: "utf-8",
   });
 
-  return result.status === 0 ? result.stdout.trim() : "";
+  return result.status === 0 ? result.stdout.trim() : undefined;
 };
 
-/**
- * A linked worktree takes a profile named after its branch, so that its run
- * holds a single instance lock of its own beside the main checkout's.
- */
-const defaultProfile = () => {
-  const [gitDir, commonDir] = git(
-    "rev-parse",
-    "--path-format=absolute",
-    "--git-dir",
-    "--git-common-dir"
+const readGitCheckout = (): GitCheckout | undefined => {
+  const [gitDir, commonDir, toplevel] = (
+    git(
+      "rev-parse",
+      "--path-format=absolute",
+      "--git-dir",
+      "--git-common-dir",
+      "--show-toplevel"
+    ) ?? ""
   ).split("\n");
 
-  if (!(gitDir && commonDir) || gitDir === commonDir) {
-    return "default";
+  if (!(gitDir && commonDir && toplevel)) {
+    return;
   }
 
-  const branch =
-    git("symbolic-ref", "--quiet", "--short", "HEAD") ||
-    path.basename(repositoryRoot);
-
-  return branch.replaceAll(/[^\w.-]+/gu, "-");
-};
-
-export const parseLaunchArgs = (argv: string[]): LaunchArgs => {
-  const { values, tokens } = parseArgs({
-    args: argv,
-    options: OPTIONS,
-    strict: false,
-    allowPositionals: true,
-    tokens: true,
-  });
-
-  const electronArgs = tokens.flatMap((token) => {
-    if (token.kind === "positional") {
-      return [token.value];
-    }
-
-    if (token.kind === "option" && !(token.name in OPTIONS)) {
-      return [
-        token.value === undefined
-          ? token.rawName
-          : `${token.rawName}=${token.value}`,
-      ];
-    }
-
-    return [];
-  });
-
   return {
-    profile:
-      typeof values.profile === "string" ? values.profile : defaultProfile(),
-    debugPort:
-      typeof values["debug-port"] === "string"
-        ? values["debug-port"]
-        : undefined,
-    background: values.background === true,
-    electronArgs,
+    gitDir,
+    commonDir,
+    toplevel,
+    branch: git("symbolic-ref", "--quiet", "--short", "HEAD") || undefined,
   };
 };
 
+export const resolveProfile = (args: LaunchArgs) =>
+  args.profile ?? defaultProfileFor(readGitCheckout());
+
 export const userDataDirFor = (profile: string) =>
   path.join(repositoryRoot, ".meru", profile);
+
+const isRunning = (child: ChildProcess) =>
+  child.exitCode === null && child.signalCode === null;
 
 const DEBUG_PORT_TIMEOUT_MS = 15_000;
 
@@ -102,12 +59,18 @@ const DEBUG_PORT_POLL_MS = 100;
 
 /**
  * Chromium writes the port it picked into the user data directory a moment
- * after it starts, and nothing else reports it.
+ * after it starts, and nothing else reports it. Stops looking once the child
+ * has exited.
  */
-const printDebugPort = async (
+export const reportDebugPort = async (
+  child: ChildProcess,
   userDataDir: string,
   deadline = Date.now() + DEBUG_PORT_TIMEOUT_MS
 ): Promise<void> => {
+  if (!isRunning(child)) {
+    return;
+  }
+
   const file = path.join(userDataDir, "DevToolsActivePort");
   const contents = await readFile(file, "utf-8").catch(() => "");
   const [port] = contents.split("\n");
@@ -126,25 +89,28 @@ const printDebugPort = async (
 
   await sleep(DEBUG_PORT_POLL_MS);
 
-  return printDebugPort(userDataDir, deadline);
+  return reportDebugPort(child, userDataDir, deadline);
 };
 
 export interface ElectronLaunch {
   appDir: string;
   args: LaunchArgs;
+  profile: string;
   env?: Record<string, string>;
 }
 
-export const launchElectron = async ({
+/** Starts Electron at once, so the caller holds the child from the start. */
+export const spawnElectron = ({
   appDir,
   args,
+  profile,
   env,
-}: ElectronLaunch): Promise<ChildProcess> => {
-  const userDataDir = userDataDirFor(args.profile);
+}: ElectronLaunch) => {
+  const userDataDir = userDataDirFor(profile);
 
   // A killed run leaves its file behind, which reads exactly like a new one.
   if (args.debugPort === "0") {
-    await rm(path.join(userDataDir, "DevToolsActivePort"), { force: true });
+    rmSync(path.join(userDataDir, "DevToolsActivePort"), { force: true });
   }
 
   const child = spawn(
@@ -167,23 +133,46 @@ export const launchElectron = async ({
     }
   );
 
-  console.log(`Profile: ${args.profile} (${userDataDir}), pid ${child.pid}`);
+  console.log(`Profile: ${profile} (${userDataDir}), pid ${child.pid}`);
 
-  if (args.debugPort === "0") {
-    await printDebugPort(userDataDir);
-  }
-
-  return child;
+  return { child, userDataDir };
 };
 
-/** Asks Electron to quit, which lets Chromium flush its cookies, and waits. */
-export const stopElectron = async (child: ChildProcess) => {
-  if (child.exitCode !== null || child.signalCode !== null) {
+const stoppedByScript = new WeakSet<ChildProcess>();
+
+export const wasStoppedByScript = (child: ChildProcess) =>
+  stoppedByScript.has(child);
+
+const STOP_TIMEOUT_MS = 5000;
+
+/**
+ * Asks Electron to quit and waits, killing it outright if it has not gone in
+ * time, as when a blocking dialog holds its main thread. On macOS and Linux
+ * SIGTERM starts Electron's own quit, which lets Chromium flush its cookies; on
+ * Windows Node has no such signal and SIGTERM ends the process at once.
+ */
+export const stopElectron = async (
+  child: ChildProcess,
+  timeoutMs = STOP_TIMEOUT_MS
+) => {
+  stoppedByScript.add(child);
+
+  if (!isRunning(child)) {
     return;
   }
 
   const exited = once(child, "exit");
 
   child.kill("SIGTERM");
-  await exited;
+
+  const timedOut = await Promise.race([
+    exited.then(() => false),
+    sleep(timeoutMs).then(() => true),
+  ]);
+
+  if (timedOut && isRunning(child)) {
+    console.log(`Electron (pid ${child.pid}) did not quit in time; killing it`);
+    child.kill("SIGKILL");
+    await exited;
+  }
 };

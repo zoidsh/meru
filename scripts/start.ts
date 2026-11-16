@@ -2,26 +2,61 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { outDir } from "./lib/bundles.ts";
-import { launchElectron, parseLaunchArgs, stopElectron } from "./lib/launch.ts";
+import { exitCodeFor, parseLaunchArgs } from "./lib/launch-args.ts";
+import {
+  reportDebugPort,
+  resolveProfile,
+  spawnElectron,
+  stopElectron,
+  wasStoppedByScript,
+} from "./lib/launch.ts";
 
 if (!existsSync(path.join(outDir("prod"), "package.json"))) {
   console.error("Nothing is built in out/prod; run `pnpm build` first.");
   process.exit(1);
 }
 
-const electron = await launchElectron({
+let args: ReturnType<typeof parseLaunchArgs>;
+
+try {
+  args = parseLaunchArgs(process.argv.slice(2));
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}
+
+const { child, userDataDir } = spawnElectron({
   appDir: outDir("prod"),
-  args: parseLaunchArgs(process.argv.slice(2)),
+  args,
+  profile: resolveProfile(args),
 });
 
 const stop = async () => {
-  await stopElectron(electron);
+  await stopElectron(child);
   process.exit(0);
 };
 
-process.once("SIGINT", stop);
-process.once("SIGTERM", stop);
+for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
+  process.once(signal, () => {
+    void stop();
+  });
+}
 
-electron.once("exit", (code) => {
-  process.exit(code ?? 0);
+process.once("exit", () => {
+  if (child.exitCode === null && child.signalCode === null) {
+    child.kill("SIGKILL");
+  }
 });
+
+child.once("error", (error) => {
+  console.error(error);
+  process.exit(1);
+});
+
+child.once("exit", (code, signal) => {
+  if (!wasStoppedByScript(child)) {
+    process.exit(exitCodeFor(code, signal, false));
+  }
+});
+
+void reportDebugPort(child, userDataDir);
