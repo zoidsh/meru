@@ -40,6 +40,5 @@ export const matchLanguage = <T extends string>(
   return available[0];
 };
 
-/** The language to show for the system's preferred tags, English at worst. */
 export const resolveLanguage = (preferred: readonly string[]): Language =>
   matchLanguage(preferred, LANGUAGES);

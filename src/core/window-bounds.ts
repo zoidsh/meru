@@ -36,7 +36,6 @@ const intersectionArea = (a: Rectangle, b: Rectangle) => {
   return width > 0 && height > 0 ? width * height : 0;
 };
 
-/** Shrinks `bounds` to fit `area` where it must, then keeps them inside it. */
 const fitInto = (bounds: Rectangle, area: Rectangle): Rectangle => {
   const width = Math.min(bounds.width, area.width);
   const height = Math.min(bounds.height, area.height);

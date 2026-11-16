@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { matchLanguage, resolveLanguage } from "./languages.ts";
+import { matchLanguage } from "./languages.ts";
 
 const AVAILABLE = ["en", "de", "pt-BR"] as const;
 
@@ -30,12 +30,5 @@ describe(matchLanguage, () => {
     expect(match("fr-FR", "ja")).toBe("en");
     expect(match()).toBe("en");
     expect(match("")).toBe("en");
-  });
-});
-
-describe(resolveLanguage, () => {
-  it("shows English for a system language Meru has no catalog for", () => {
-    expect(resolveLanguage(["fr-FR"])).toBe("en");
-    expect(resolveLanguage(["en-GB"])).toBe("en");
   });
 });

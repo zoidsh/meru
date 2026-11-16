@@ -20,7 +20,6 @@ export interface AppWindow {
   loadURL: (url: string) => Promise<void>;
   once: (event: WindowLoadEvent, listener: () => void) => void;
   show: () => void;
-  /** Shows the window without activating the app or taking focus. */
   showInactive: () => void;
   focus: () => void;
   restore: () => void;

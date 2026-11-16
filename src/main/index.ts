@@ -32,7 +32,6 @@ process.on("unhandledRejection", failures.report);
 
 lifecycle.onBeforeQuit(failures.markQuitting);
 
-/** The shell's URL, and the policy that lets it load. */
 const resolveShell = () => {
   if (MERU_BUILD_MODE === "dev") {
     const devServer = readDevServer(process.env);

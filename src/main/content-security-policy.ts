@@ -13,7 +13,6 @@ export const LOCKED_DOWN = {
   "object-src": ["'none'"],
 } as const;
 
-/** The app's own pages are served from its scheme and load only from it. */
 export const createContentSecurityPolicy = () =>
   serializePolicy({
     ...LOCKED_DOWN,
