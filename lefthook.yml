@@ -1,3 +1,7 @@
+# The hook script is shared by every worktree; scripts/install-hooks.ts writes
+# one that names no worktree, and lefthook must not rewrite it on each run.
+no_auto_install: true
+
 pre-commit:
   commands:
     fmt:
