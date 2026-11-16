@@ -44,6 +44,27 @@ describe(parseLaunchArgs, () => {
     );
   });
 
+  it.each([
+    ["after --", ["--", "--user-data-dir=/tmp/x"]],
+    [
+      "after -- with an empty value",
+      ["--background", "--", "--user-data-dir="],
+    ],
+    ["behind one dash", ["-user-data-dir=/tmp/x"]],
+    ["behind three dashes", ["---user-data-dir", "/tmp/x"]],
+    ["behind a slash", ["/user-data-dir=/tmp/x"]],
+    ["in another letter case", ["--User-Data-Dir=/tmp/x"]],
+  ])("refuses a user-data-dir switch %s", (_, argv) => {
+    expect(() => parseLaunchArgs(argv)).toThrow(/--profile/u);
+  });
+
+  it("passes on a switch that only starts with user-data-dir's name", () => {
+    expect(
+      parseLaunchArgs(["--user-data-directory-x", "--", "user-data-dir"])
+        .electronArgs
+    ).toStrictEqual(["--user-data-directory-x", "user-data-dir"]);
+  });
+
   it("refuses --profile and --debug-port without a value", () => {
     expect(() => parseLaunchArgs(["--profile"])).toThrow(/needs a value/u);
     expect(() => parseLaunchArgs(["--profile", "--background"])).toThrow(

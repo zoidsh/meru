@@ -19,7 +19,20 @@ const OPTIONS = {
 export const isSafeProfileName = (name: string) =>
   /^[\w.-]+$/u.test(name) && name !== "." && name !== "..";
 
+/*
+ * Chromium reads a switch behind any run of dashes, and on Windows behind `/`
+ * and in any letter case, so `-USER-DATA-DIR=` would still choose the directory.
+ * Every argument is checked, those after `--` too, since they reach Electron.
+ */
+const USER_DATA_DIR_SWITCH = /^(?:-+|\/)user-data-dir(?:=|$)/iu;
+
 export const parseLaunchArgs = (argv: readonly string[]): LaunchArgs => {
+  if (argv.some((arg) => USER_DATA_DIR_SWITCH.test(arg))) {
+    throw new Error(
+      "--user-data-dir is decided by the profile; pass --profile <name> instead."
+    );
+  }
+
   const { values, tokens } = parseArgs({
     args: [...argv],
     options: OPTIONS,
@@ -34,12 +47,6 @@ export const parseLaunchArgs = (argv: readonly string[]): LaunchArgs => {
     if (token.kind === "positional") {
       electronArgs.push(token.value);
     } else if (token.kind === "option") {
-      if (token.name === "user-data-dir") {
-        throw new Error(
-          "--user-data-dir is decided by the profile; pass --profile <name> instead."
-        );
-      }
-
       if (token.name in OPTIONS) {
         const isMissingValue =
           token.value === undefined ||

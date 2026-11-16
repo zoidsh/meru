@@ -36,8 +36,8 @@ Import boundaries, enforced in `oxlint.config.ts` with `no-restricted-imports`, 
 
 - `core` imports no other workspace package and nothing of `electron`, types included. `contract` imports only `core`, and nothing of `electron`.
 - `platform` and the `preload-*` packages may import `electron` by value; every other package may only `import type` from `electron`, and no package imports a deep path such as `electron/main`.
-- A workspace package is imported by its `@meru/` name, never by a relative path that climbs out of its own package (two `../` levels from `src`) or an absolute one.
-- Nothing outside `scripts/` uses `require` or `createRequire`.
+- A workspace package is imported by its `@meru/` name, never by a relative path that climbs out of its own package (two `..` levels from `src`, however spelled) or an absolute one.
+- Nothing outside `scripts/` uses `require` or imports `node:module`.
 
 A general utility (delay, debounce, clamp, retry, a timeout, a mutex, deep equality and the like) comes from `es-toolkit`; write one here only when es-toolkit has none that fits.
 
@@ -51,7 +51,7 @@ The built shell is served from `meru-app://shell/` with a strict Content-Securit
 
 ## Dev and start runs
 
-- `pnpm dev` starts Vite on `PORT`, or a free port when it is unset, rebuilds `main` and `preload-shell` on change and restarts Electron, one restart at a time. SIGINT, SIGTERM or SIGHUP at any moment stops Electron (killing it after 5 seconds if it has not quit) and Vite. Quitting the app ends the script; Electron dying of a signal the script did not send ends it with a failure.
+- `pnpm dev` starts Vite on `PORT`, or a free port when it is unset, rebuilds `main` and `preload-shell` on change and restarts Electron, one restart at a time. SIGINT, SIGTERM or SIGHUP at any moment, repeated or not, stops Electron (killing it after 5 seconds if it has not quit) and Vite. Quitting the app ends the script; Electron dying of a signal the script did not send ends it with a failure.
 - `--profile <name>` uses `.meru/<name>` in the repository as the user data directory; the name is one plain directory name. Without it, a linked worktree uses a profile named after its branch and the main checkout uses `default`. The scripts refuse `--user-data-dir`, and an unpackaged app refuses to start when its user data directory resolves to an installed Meru's or to nothing, as an empty `--user-data-dir` does. On Windows an unpackaged run also takes its own AppUserModelId, `sh.zoid.meru.dev`.
 - `--debug-port <n>` opens Chromium's remote debugging port; `0` lets Chromium pick and the script prints the port.
 - `--background`, or `MERU_BACKGROUND=1` (which `.claude/settings.json` sets for Claude Code sessions), opens the window with `showInactive()` so it never takes the foreground or focus. On this shared Mac drive it over CDP, never by raising it.

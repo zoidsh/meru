@@ -1,6 +1,8 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
+import { once } from "es-toolkit";
+
 import { outDir } from "./lib/bundles.ts";
 import { exitCodeFor, parseLaunchArgs } from "./lib/launch-args.ts";
 import {
@@ -31,13 +33,14 @@ const { child, userDataDir } = spawnElectron({
   profile: resolveProfile(args),
 });
 
-const stop = async () => {
+const stop = once(async () => {
   await stopElectron(child);
   process.exit(0);
-};
+});
 
+// A repeated signal, such as a second Ctrl-C, joins the shutdown under way.
 for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
-  process.once(signal, () => {
+  process.on(signal, () => {
     void stop();
   });
 }

@@ -27,23 +27,23 @@ type ImportRestriction = [
   { paths: RestrictedPath[]; patterns: RestrictedPattern[] },
 ];
 
-const NO_CREATE_REQUIRE: RestrictedPath[] = ["node:module", "module"].map(
+const NO_NODE_MODULE: RestrictedPath[] = ["node:module", "module"].map(
   (name) => ({
     name,
-    importNames: ["createRequire"],
     message:
-      "createRequire loads modules past the import boundaries; only scripts/ may use it.",
+      "node:module loads modules past the import boundaries; only scripts/ may use it.",
   })
 );
 
 /*
  * Without a resolver the rule sees only the specifier. Source lives one level
  * down in each package's `src`, so climbing two levels is the only way a
- * relative path reaches another package, and an absolute one always can.
+ * relative path reaches another package, however its separators and `.`
+ * segments are spelled, and an absolute one always can.
  */
 const NO_TUNNELS: RestrictedPattern[] = [
   {
-    regex: String.raw`(^|[/\\])\.\.[/\\]\.\.([/\\]|$)`,
+    regex: String.raw`(^|[/\\])\.\.([/\\]+(\.[/\\]+)*)\.\.([/\\]|$)`,
     message:
       "Import another workspace package by its @meru/ name, never by a relative path out of this package.",
   },
@@ -98,7 +98,7 @@ const restrict = ({
   return [
     "error",
     {
-      paths: [...NO_CREATE_REQUIRE, ...electronRules.paths],
+      paths: [...NO_NODE_MODULE, ...electronRules.paths],
       patterns: [...NO_TUNNELS, ...electronRules.patterns, ...workspace],
     },
   ];
@@ -110,10 +110,7 @@ const NO_REQUIRE: ["error", string] = ["error", "require"];
 export default defineConfig({
   extends: [core, react, vitest],
   rules: {
-    "no-restricted-imports": [
-      "error",
-      { paths: NO_CREATE_REQUIRE, patterns: [] },
-    ],
+    "no-restricted-imports": ["error", { paths: NO_NODE_MODULE, patterns: [] }],
     "no-restricted-globals": NO_REQUIRE,
     "typescript/no-require-imports": "error",
   },

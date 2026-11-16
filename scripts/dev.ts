@@ -68,8 +68,9 @@ const shutdown = async (code: number) => {
   process.exit(code);
 };
 
+// A repeated signal, such as a second Ctrl-C, joins the shutdown under way.
 for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
-  process.once(signal, () => {
+  process.on(signal, () => {
     void shutdown(0);
   });
 }

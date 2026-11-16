@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 import { build as bundle } from "rolldown";
@@ -54,6 +54,9 @@ if (hits.length > 0) {
     console.error(`out/prod/${hit.path} holds "${hit.marker}": ${hit.why}`);
   }
 
+  // A rejected build must not be left for `pnpm start` to run.
+  await rm(outDir("prod"), { recursive: true, force: true });
+  console.error("Removed out/prod.");
   process.exit(1);
 }
 

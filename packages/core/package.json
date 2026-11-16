@@ -8,5 +8,8 @@
   },
   "scripts": {
     "types": "tsc"
+  },
+  "devDependencies": {
+    "es-toolkit": "1.53.2"
   }
 }
