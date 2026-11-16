@@ -33,29 +33,39 @@ const APP_SCHEME = "meru-app";
 
 const SHELL_HOST = "shell";
 
-/** A JSON object of app ids and the stand-in URL each loads in its place. */
-const readStandInUrls = (json: string | undefined) => {
+/**
+ * A JSON object of app ids and the stand-in URL each loads in its place, and
+ * under `signIn` the stand-in for sign-in's origin.
+ */
+const readStandIns = (json: string | undefined) => {
   const urls: Partial<Record<AppId, string>> = {};
+  let signIn: string | undefined;
 
   for (const [id, url] of Object.entries(
     JSON.parse(json ?? "{}") as Record<string, unknown>
   )) {
-    if (isAppId(id) && typeof url === "string") {
+    if (typeof url !== "string") {
+      continue;
+    }
+
+    if (isAppId(id)) {
       urls[id] = url;
+    } else if (id === "signIn") {
+      signIn = new URL(url).origin;
     }
   }
 
-  return urls;
+  return { urls, signIn };
 };
 
-// The suite's stand-ins for the apps, which only its build reads. Gmail's
-// opens its own pop-ups as sign-in's would open.
-const standInUrls = MERU_E2E_BUILD
-  ? readStandInUrls(process.env.MERU_TEST_APP_URLS)
+// The suite's stand-ins for the apps and for sign-in, which only its build
+// reads.
+const standIns = MERU_E2E_BUILD
+  ? readStandIns(process.env.MERU_TEST_APP_URLS)
   : undefined;
-const apps = standInUrls ? standInApps(standInUrls) : APPS;
-const childWindowOrigins = standInUrls?.gmail
-  ? [new URL(standInUrls.gmail).origin]
+const apps = standIns ? standInApps(standIns.urls) : APPS;
+const childWindowOrigins = standIns?.signIn
+  ? [standIns.signIn]
   : SIGN_IN_ORIGINS;
 
 /** v3's account id, so a profile id is the account id v3 would have made. */

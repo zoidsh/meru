@@ -1,10 +1,16 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { expect, findPage, test } from "./lib/app.ts";
-import { CALENDAR_TITLE, DRIVE_TITLE, STAND_IN_TITLE } from "./lib/stand-in.ts";
+import {
+  CALENDAR_TITLE,
+  DRIVE_TITLE,
+  GMAIL_LINK_HASH,
+  NEXT_WEEK_PATH,
+  STAND_IN_TITLE,
+} from "./lib/stand-in.ts";
 
 interface SavedState {
   profiles: {
@@ -38,6 +44,7 @@ const tabs = (shell: Page) =>
 const tab = (shell: Page, title: string) =>
   shell.getByRole("tablist", { name: "Tabs" }).getByRole("tab", {
     name: title,
+    exact: true,
   });
 
 /** Each content view: its page's URL, its session's partition, whether it shows. */
@@ -58,11 +65,11 @@ const readViews = (app: ElectronApplication, partition: string) =>
     });
   }, partition);
 
-const openFromGmail = async (gmail: Page, link: string) => {
-  await gmail.getByRole("link", { name: link }).click();
+const openFrom = async (page: Page, link: string) => {
+  await page.getByRole("link", { name: link }).click();
 };
 
-test("a link opens a tab of its app in the same session, selected, and tabs select and close, but not Gmail's", async ({
+test("a link opens a tab of its app in the same session, selected; a link to Gmail selects Gmail's; tabs select, and close but not Gmail's", async ({
   app,
   shell,
   standIn,
@@ -70,7 +77,7 @@ test("a link opens a tab of its app in the same session, selected, and tabs sele
 }) => {
   const gmail = await findPage(app, standIn.url);
 
-  await openFromGmail(gmail, "Open Calendar");
+  await openFrom(gmail, "Open Calendar");
 
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, CALENDAR_TITLE]);
   await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
@@ -87,29 +94,47 @@ test("a link opens a tab of its app in the same session, selected, and tabs sele
       { url: standIn.url, inSession: true, visible: false },
       { url: standIn.calendarUrl, inSession: true, visible: true },
     ]);
+
+  await openFrom(await findPage(app, standIn.calendarUrl), "Open Gmail");
+
+  await expect(tabs(shell)).toHaveCount(2);
+  await expect(tab(shell, STAND_IN_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect
+    .poll(() => readViews(app, partition))
+    .toStrictEqual([
+      {
+        url: `${standIn.url}${GMAIL_LINK_HASH}`,
+        inSession: true,
+        visible: true,
+      },
+      { url: standIn.calendarUrl, inSession: true, visible: false },
+    ]);
+
+  // The close buttons are for the pointer, outside the list; keys close too.
+  await expect(tabs(shell).getByRole("button")).toHaveCount(0);
   await expect(
     shell.getByRole("button", { name: `Close ${STAND_IN_TITLE}` })
   ).toHaveCount(0);
+  await expect(
+    shell.getByRole("button", { name: `Close ${CALENDAR_TITLE}` })
+  ).toHaveCount(1);
+  await tab(shell, STAND_IN_TITLE).press("Delete");
+  await expect(tabs(shell)).toHaveCount(2);
 
-  await tab(shell, STAND_IN_TITLE).click();
-  await expect
-    .poll(() =>
-      readViews(app, partition).then((views) =>
-        views.map((view) => view.visible)
-      )
-    )
-    .toStrictEqual([true, false]);
-
-  await shell.getByRole("button", { name: `Close ${CALENDAR_TITLE}` }).click();
+  await tab(shell, CALENDAR_TITLE).press("Delete");
 
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE]);
+  await expect(tab(shell, STAND_IN_TITLE)).toBeFocused();
   await expect.poll(() => readViews(app, partition)).toHaveLength(1);
   const { tabs: left } = await readProfile(userDataDir);
 
   expect(left).toHaveLength(1);
 });
 
-test("a relaunch restores the tabs and the selection, and loads only the selected tab", async ({
+test("a relaunch restores the tabs, each where it was, and the selection, and loads only the selected tab", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -117,16 +142,19 @@ test("a relaunch restores the tabs and the selection, and loads only the selecte
   const first = await launchApp();
   const gmail = await findPage(first, standIn.url);
   const firstShell = await findPage(first, "meru-app:");
+  const nextWeek = new URL(NEXT_WEEK_PATH, standIn.calendarUrl).href;
 
-  await openFromGmail(gmail, "Open Calendar");
-  await expect(tabs(firstShell)).toHaveCount(2);
+  await openFrom(gmail, "Open Calendar");
+  await openFrom(await findPage(first, standIn.calendarUrl), "Next week");
+  await findPage(first, nextWeek);
   await tab(firstShell, STAND_IN_TITLE).click();
-  await openFromGmail(gmail, "Open Drive");
+  await openFrom(gmail, "Open Drive");
   await expect(tabs(firstShell)).toHaveText([
     STAND_IN_TITLE,
     CALENDAR_TITLE,
     DRIVE_TITLE,
   ]);
+  await tab(firstShell, CALENDAR_TITLE).click();
   // Where each tab's page is, written within a second of its load.
   await expect
     .poll(() =>
@@ -134,7 +162,7 @@ test("a relaunch restores the tabs and the selection, and loads only the selecte
         saved.tabs.map((each) => each.url)
       )
     )
-    .toStrictEqual([standIn.url, standIn.calendarUrl, standIn.driveUrl]);
+    .toStrictEqual([standIn.url, nextWeek, standIn.driveUrl]);
   await first.close();
 
   const before = standIn.requests();
@@ -146,19 +174,76 @@ test("a relaunch restores the tabs and the selection, and loads only the selecte
     CALENDAR_TITLE,
     DRIVE_TITLE,
   ]);
-  await expect(tab(shell, DRIVE_TITLE)).toHaveAttribute(
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"
   );
   await expect
     .poll(() => standIn.requests())
-    .toStrictEqual({ ...before, drive: before.drive + 1 });
+    .toStrictEqual({ ...before, calendar: before.calendar + 1 });
 
   const profile = await readProfile(userDataDir);
 
   expect(await readViews(second, `persist:${profile.id}`)).toStrictEqual([
-    { url: standIn.driveUrl, inSession: true, visible: true },
+    { url: nextWeek, inSession: true, visible: true },
   ]);
+});
+
+test("the strip scrolls to keep the selected tab in view, and its arrow keys go up and down", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const titles = Array.from({ length: 30 }, (_, index) => `Week ${index + 1}`);
+
+  await writeFile(
+    path.join(userDataDir, "state.json"),
+    JSON.stringify({
+      version: 1,
+      profiles: [
+        {
+          id: "p",
+          name: "Default",
+          tabs: [
+            { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+            ...titles.map((title, index) => ({
+              id: `c${index}`,
+              app: "calendar",
+              url: standIn.calendarUrl,
+              title,
+            })),
+          ],
+          selectedTabId: "c29",
+        },
+      ],
+      selectedProfileId: "p",
+    })
+  );
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const last = tab(shell, "Week 30");
+
+  await expect(last).toHaveAttribute("aria-selected", "true");
+  await expect(last).toBeInViewport();
+  await expect(tab(shell, "Week 1")).not.toBeInViewport();
+  await expect(shell.getByRole("tablist", { name: "Tabs" })).toHaveAttribute(
+    "aria-orientation",
+    "vertical"
+  );
+
+  await last.focus();
+  await last.press("ArrowUp");
+  await expect(tab(shell, "Week 29")).toBeFocused();
+  await tab(shell, "Week 29").press("Home");
+  // Never loaded, so named for its app.
+  const gmail = tab(shell, "Gmail");
+
+  await expect(gmail).toBeFocused();
+  await gmail.press("Enter");
+
+  await expect(gmail).toHaveAttribute("aria-selected", "true");
+  await expect(gmail).toBeInViewport();
 });
 
 test("a tab that cannot load at launch says so in the shell, and loads by itself once its server answers", async ({

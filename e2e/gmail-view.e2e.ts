@@ -166,7 +166,7 @@ test("opens a sign-in pop-up as a child of the shell window in the same session"
   await stubSystemBrowser(app);
   await view.getByRole("link", { name: "Open a pop-up" }).click();
 
-  const popup = await findPage(app, `${standIn.url}popup`);
+  const popup = await findPage(app, standIn.popupUrl);
 
   await expect(popup.getByRole("heading", { name: POPUP_TITLE })).toBeVisible();
   expect(standIn.popupCookieHeaders).toStrictEqual([STAND_IN_COOKIE]);
@@ -180,7 +180,7 @@ test("opens a sign-in pop-up as a child of the shell window in the same session"
         parent: child?.getParentWindow()?.webContents.getURL() ?? "",
         visible: child?.isVisible(),
       };
-    }, `${standIn.url}popup`)
+    }, standIn.popupUrl)
   ).toStrictEqual({
     parent: expect.stringMatching(/^meru-app:/u),
     visible: true,
