@@ -12,7 +12,9 @@ test("opens the shell window, named for a development build, with its title bar 
     ])
   ).toStrictEqual(["Meru Dev", ["Meru Dev"]]);
   await expect(shell.getByRole("banner", { name: "Title bar" })).toBeVisible();
-  await expect(shell.getByRole("main", { name: "Content" })).toBeVisible();
+  await expect(
+    shell.getByRole("main", { name: "Deliberately wrong" })
+  ).toBeVisible();
 });
 
 test("serves the shell from meru-app:// under the strict policy, with no console error", async ({
