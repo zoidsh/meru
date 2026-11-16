@@ -3,6 +3,8 @@ import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
 
+import type { ShellBridge } from "#contract/shell.ts";
+
 import { expect, findPage, test } from "./lib/app.ts";
 import { STAND_IN_COOKIE } from "./lib/stand-in.ts";
 
@@ -340,6 +342,91 @@ test("cancelling the confirmation keeps the profile", async ({
   await clickMenuItem(app, 0);
 
   await expect.poll(() => readConfirmations(app)).toHaveLength(1);
+
+  // Main applies changes in order, so once this selection shows, a removal
+  // the confirmation started would have shown first.
+  await shell.getByRole("tab", { name: "Default" }).click();
+  await expect(shell.getByRole("tab", { name: "Default" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+
   await expect(profileTabs(shell)).toHaveText(["Default", "Profile 2"]);
   expect(await readProfileIds(userDataDir)).toHaveLength(2);
+});
+
+test("at a narrow width with many profiles, the selected tab stays in view and the title bar keeps room to drag", async ({
+  app,
+  shell,
+  standIn,
+  userDataDir,
+}) => {
+  await findPage(app, standIn.url);
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setContentSize(600, 400);
+  });
+
+  const add = shell.getByRole("button", { name: "Add profile" });
+
+  for (let count = 2; count <= 10; count += 1) {
+    // Each waits for the last to show, as a person clicking would.
+    // oxlint-disable-next-line no-await-in-loop
+    await add.click();
+    // oxlint-disable-next-line no-await-in-loop
+    await expect(profileTabs(shell)).toHaveCount(count);
+  }
+
+  const list = shell.getByRole("tablist", { name: "Profiles" });
+
+  const selectedTabIsInList = async (name: string) => {
+    const tab = shell.getByRole("tab", { name, exact: true });
+
+    await expect(tab).toHaveAttribute("aria-selected", "true");
+
+    const [tabBox, listBox] = await Promise.all([
+      tab.boundingBox(),
+      list.boundingBox(),
+    ]);
+
+    return (
+      tabBox !== null &&
+      listBox !== null &&
+      tabBox.x >= listBox.x - 0.5 &&
+      tabBox.x + tabBox.width <= listBox.x + listBox.width + 0.5
+    );
+  };
+
+  expect(await selectedTabIsInList("Profile 10")).toBeTruthy();
+
+  // Selected through the contract, since a Playwright click would scroll the
+  // tab into view itself.
+  const ids = await readProfileIds(userDataDir);
+  const select = (profileId: string | undefined) =>
+    shell.evaluate(
+      (id) =>
+        (window as unknown as { meru: ShellBridge }).meru.calls.selectProfile({
+          profileId: id ?? "",
+        }),
+      profileId
+    );
+
+  await select(ids[0]);
+  await expect.poll(() => selectedTabIsInList("Default")).toBeTruthy();
+
+  // Narrower still, and the selection must stay in view.
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setContentSize(420, 400);
+  });
+  await expect.poll(() => selectedTabIsInList("Default")).toBeTruthy();
+  await select(ids[8]);
+  await expect.poll(() => selectedTabIsInList("Profile 9")).toBeTruthy();
+
+  const [banner, addBox] = await Promise.all([
+    shell.getByRole("banner", { name: "Title bar" }).boundingBox(),
+    add.boundingBox(),
+  ]);
+
+  expect(
+    (banner?.width ?? 0) - ((addBox?.x ?? 0) + (addBox?.width ?? 0))
+  ).toBeGreaterThanOrEqual(64);
 });
