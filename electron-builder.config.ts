@@ -24,9 +24,6 @@ const { version } = JSON.parse(
   readFileSync(path.join(root, "package.json"), "utf-8")
 ) as { version: string };
 
-/** What the end-to-end suite checks for before it launches anything. */
-export const E2E_MARKER = { meruBuild: "e2e" } as const;
-
 /**
  * macOS 26 draws the icon from the compiled asset catalog that
  * `CFBundleIconName` names; `icon.icns` stays for older systems.
@@ -73,7 +70,6 @@ export const createConfig = (variant: PackageVariant): Configuration => {
         "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
       author: { name: "Tim Cheung", email: "tim@meru.so" },
       repository: "zoidsh/meru",
-      ...(variant === "e2e" ? E2E_MARKER : {}),
     },
     electronFuses: {
       runAsNode: false,

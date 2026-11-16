@@ -1,18 +1,19 @@
 // Linux needs a display: `xvfb-run -a pnpm test:e2e` where there is none.
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { once } from "node:events";
 import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import { _electron, test as base } from "@playwright/test";
 import type { ElectronApplication, Page, TestInfo } from "@playwright/test";
-import { withTimeout } from "es-toolkit";
+import { delay, withTimeout } from "es-toolkit";
 
 import { appIdentity } from "../../packages/core/src/app-identity.ts";
-import { killApp, readProcess } from "./process-tree.ts";
-import type { AppProcesses } from "./process-tree.ts";
+
+const run = promisify(execFile);
 
 const repositoryRoot = path.resolve(import.meta.dirname, "..", "..");
 
@@ -44,90 +45,79 @@ const unpackedExecutable = () => {
         `${productName}.exe`,
       ];
     }
-    case "linux": {
+    default: {
       // electron-builder names the Linux executable after the package.
       return [arm ? "linux-arm64-unpacked" : "linux-unpacked", "meru"];
-    }
-    default: {
-      throw new Error(
-        `No unpacked app is known for ${process.platform}; set MERU_EXECUTABLE to one.`
-      );
     }
   }
 };
 
-export const executablePath =
-  process.env.MERU_EXECUTABLE ??
-  path.join(repositoryRoot, "dist", "e2e", ...unpackedExecutable());
+const executablePath = path.join(
+  repositoryRoot,
+  "dist",
+  "e2e",
+  ...unpackedExecutable()
+);
 
 /** Only the e2e build honours `MERU_TEST_BACKGROUND`. */
-const launchEnv = (): Record<string, string> => ({
-  ...(Object.fromEntries(
-    Object.entries(process.env).filter(([, value]) => value !== undefined)
-  ) as Record<string, string>),
-  MERU_TEST_BACKGROUND: "1",
-});
+const env = { ...process.env, MERU_TEST_BACKGROUND: "1" } as Record<
+  string,
+  string
+>;
 
-const userDataArgument = (userDataDir: string) =>
-  `--user-data-dir=${userDataDir}`;
-
-/** Arguments for any launch on this user data directory, the lock's scope. */
-export const launchArgs = (userDataDir: string) => [
-  userDataArgument(userDataDir),
+const launchArgs = (userDataDir: string) => [
+  `--user-data-dir=${userDataDir}`,
   // An unpacked Linux build's chrome-sandbox lacks its setuid bit.
   ...(process.platform === "linux" ? ["--no-sandbox"] : []),
 ];
 
-export const createUserDataDir = () =>
-  mkdtemp(path.join(tmpdir(), "meru4-e2e-"));
-
-/** Windows can hold a file a moment after its process has gone. */
-export const removeUserDataDir = (dir: string) =>
-  rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
-
-export interface SpawnedApp {
-  /** Resolves with the exit code, or null when a signal ended it. */
-  exited: Promise<number | null>;
-  stdout: () => string;
-  stderr: () => string;
-}
-
-const spawnOne = async (args: string[]) => {
-  const child = spawn(executablePath, args, {
-    env: launchEnv(),
-    stdio: ["ignore", "pipe", "pipe"],
+/**
+ * Every process of an app carries its user data directory on its command
+ * line, the helpers and the crash handler too, so the directory finds them
+ * all, even after the main process has died.
+ */
+const killUnix = async (userDataDir: string, giveUpAt: number) => {
+  const { stdout } = await run("ps", ["-A", "-ww", "-o", "pid=,args="], {
+    maxBuffer: 64 * 1024 * 1024,
   });
-  const exited = once(child, "exit").then(() => child.exitCode);
-  let stdout = "";
-  let stderr = "";
+  const left = stdout
+    .split("\n")
+    .filter((line) => line.includes(userDataDir))
+    .map((line) => Number(line.trim().split(" ", 1)[0]));
 
-  child.stdout.setEncoding("utf-8").on("data", (chunk: string) => {
-    stdout += chunk;
-  });
-  child.stderr.setEncoding("utf-8").on("data", (chunk: string) => {
-    stderr += chunk;
-  });
+  if (left.length === 0) {
+    return;
+  }
 
-  const processes: AppProcesses = {
-    root: child.pid === undefined ? undefined : await readProcess(child.pid),
-    argument: args.find((arg) => arg.startsWith("--user-data-dir=")),
-  };
+  if (Date.now() > giveUpAt) {
+    throw new Error(`Processes ${left.join(", ")} outlived the test`);
+  }
 
-  return {
-    app: { exited, stdout: () => stdout, stderr: () => stderr },
-    processes,
-  };
+  for (const pid of left) {
+    try {
+      process.kill(pid, "SIGKILL");
+    } catch {
+      // Gone in the meantime.
+    }
+  }
+
+  await delay(100);
+  await killUnix(userDataDir, giveUpAt);
 };
 
-const CLOSE_TIMEOUT_MS = 10_000;
+/** Not yet run on Windows: the tree under each launched pid is killed. */
+const killAll = async (userDataDir: string, pids: number[]) => {
+  if (process.platform !== "win32") {
+    await killUnix(userDataDir, Date.now() + 15_000);
 
-/**
- * A close that hangs, as on a blocking dialog, or fails, as after a crash, is
- * not waited out: whatever is left is killed.
- */
-const closeApp = async (app: ElectronApplication, processes: AppProcesses) => {
-  await withTimeout(() => app.close(), CLOSE_TIMEOUT_MS).catch(() => false);
-  await killApp(processes);
+    return;
+  }
+
+  await Promise.all(
+    pids.map((pid) =>
+      run("taskkill", ["/T", "/F", "/PID", String(pid)]).catch(() => false)
+    )
+  );
 };
 
 const saveFailure = async (app: ElectronApplication, testInfo: TestInfo) => {
@@ -160,38 +150,47 @@ const saveFailure = async (app: ElectronApplication, testInfo: TestInfo) => {
 };
 
 interface AppFixtures {
+  /** The pids this test launched, for the teardown on Windows. */
+  launched: number[];
   userDataDir: string;
   app: ElectronApplication;
   /** The shell window, once it has loaded. */
   shell: Page;
-  /**
-   * Starts the app outside Playwright, as a second instance or for a
-   * diagnostic. Whatever it starts is ended at teardown, however the test ends.
-   */
-  spawnApp: (args: string[]) => Promise<SpawnedApp>;
+  /** Starts a second instance on the test's user data, outside Playwright. */
+  spawnApp: () => { exited: Promise<number | null> };
 }
 
 export const test = base.extend<AppFixtures>({
-  userDataDir: async ({}, use) => {
-    const dir = await createUserDataDir();
+  launched: async ({}, use) => {
+    await use([]);
+  },
+  userDataDir: async ({ launched }, use) => {
+    const dir = await mkdtemp(path.join(tmpdir(), "meru4-e2e-"));
 
     try {
       await use(dir);
     } finally {
-      await removeUserDataDir(dir);
+      await killAll(dir, launched);
+      // Windows can hold a file a moment after its process has gone.
+      await rm(dir, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 200,
+      });
     }
   },
-  app: async ({ userDataDir }, use, testInfo) => {
+  app: async ({ userDataDir, launched }, use, testInfo) => {
     const app = await _electron.launch({
       executablePath,
       args: launchArgs(userDataDir),
-      env: launchEnv(),
+      env,
     });
     const { pid } = app.process();
-    const processes: AppProcesses = {
-      root: pid === undefined ? undefined : await readProcess(pid),
-      argument: userDataArgument(userDataDir),
-    };
+
+    if (pid !== undefined) {
+      launched.push(pid);
+    }
 
     try {
       await app.context().tracing.start({ screenshots: true, snapshots: true });
@@ -201,7 +200,9 @@ export const test = base.extend<AppFixtures>({
         await saveFailure(app, testInfo);
       }
     } finally {
-      await closeApp(app, processes);
+      // A close that hangs, as on a blocking dialog, is not waited out: the
+      // user data directory's teardown kills whatever is left.
+      await withTimeout(() => app.close(), 10_000).catch(() => false);
     }
   },
   shell: async ({ app }, use) => {
@@ -210,26 +211,19 @@ export const test = base.extend<AppFixtures>({
     await window.waitForLoadState("load");
     await use(window);
   },
-  spawnApp: async ({ userDataDir }, use) => {
-    const started: AppProcesses[] = [];
-
-    try {
-      await use(async (args) => {
-        const { app, processes } = await spawnOne(args);
-
-        // The `app` fixture's own processes carry the same argument, and are
-        // its teardown's to end.
-        started.push(
-          processes.argument === userDataArgument(userDataDir)
-            ? { ...processes, argument: undefined }
-            : processes
-        );
-
-        return app;
+  spawnApp: async ({ userDataDir, launched }, use) => {
+    await use(() => {
+      const child = spawn(executablePath, launchArgs(userDataDir), {
+        env,
+        stdio: "ignore",
       });
-    } finally {
-      await Promise.all(started.map((processes) => killApp(processes)));
-    }
+
+      if (child.pid !== undefined) {
+        launched.push(child.pid);
+      }
+
+      return { exited: once(child, "exit").then(() => child.exitCode) };
+    });
   },
 });
 

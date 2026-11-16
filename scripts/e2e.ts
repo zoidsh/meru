@@ -1,7 +1,6 @@
 /*
  * Packs the end-to-end build for this machine, then runs the suite on it.
- * `MERU_SKIP_BUILD=1` reuses the build in dist/e2e and `MERU_EXECUTABLE`
- * names any packed e2e app; either skips packing. Other arguments go to
+ * `MERU_SKIP_BUILD=1` reuses the build in dist/e2e. Other arguments go to
  * Playwright.
  */
 import { spawn } from "node:child_process";
@@ -49,7 +48,7 @@ const run = async (args: string[]) => {
   return exitCodeFor(code, signal);
 };
 
-if (!(process.env.MERU_EXECUTABLE || process.env.MERU_SKIP_BUILD === "1")) {
+if (process.env.MERU_SKIP_BUILD !== "1") {
   const status = await run([
     path.join(repositoryRoot, "scripts", "package.ts"),
     "--e2e",
