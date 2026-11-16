@@ -23,7 +23,7 @@ One package; each area is a folder under `src` with its tests beside the code: `
 
 A general utility (delay, debounce, clamp, retry, a timeout, a mutex, deep equality and the like) comes from `es-toolkit`; write one only when es-toolkit has none that fits.
 
-Components in `src/ui` come only from `pnpm exec shadcn add <name>`, never written or patched by hand, and stay as the CLI writes them. In `src/ui/styles.css` the `dark` variant and the media query around the dark tokens are ours, so a regenerated theme must keep them.
+Components in `src/ui` come only from `pnpm exec shadcn add <name>`, never written or patched by hand, and stay as the CLI writes them. In `src/ui/styles.css` the `dark` variant, the `@source` naming `src/ui` and the media query around the dark tokens are ours, so a regenerated theme must keep them.
 
 ## Strings
 

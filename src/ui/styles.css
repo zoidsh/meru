@@ -10,6 +10,12 @@
  */
 @custom-variant dark (@media (prefers-color-scheme: dark));
 
+/*
+ * Ours too: Tailwind scans from each renderer's Vite root, which holds none of
+ * the components here, so their classes are named as a source.
+ */
+@source ".";
+
 @layer base {
   html,
   body,
