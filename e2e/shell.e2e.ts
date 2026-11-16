@@ -1,10 +1,16 @@
 import { createContentSecurityPolicy } from "../packages/main/src/content-security-policy.ts";
 import { expect, test } from "./lib/app.ts";
 
-test("opens the shell window with its title bar and content landmarks", async ({
+test("opens the shell window, named for a development build, with its title bar and content landmarks", async ({
+  app,
   shell,
 }) => {
-  await expect(shell).toHaveTitle("Meru");
+  expect(
+    await app.evaluate(({ app: electronApp, BrowserWindow }) => [
+      electronApp.getName(),
+      BrowserWindow.getAllWindows().map((window) => window.getTitle()),
+    ])
+  ).toStrictEqual(["Meru Dev", ["Meru Dev"]]);
   await expect(shell.getByRole("banner", { name: "Title bar" })).toBeVisible();
   await expect(shell.getByRole("main", { name: "Content" })).toBeVisible();
 });

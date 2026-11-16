@@ -15,24 +15,11 @@ const OPTIONS = {
   background: { type: "boolean" },
 } as const;
 
-/** One directory name under `.meru`: no separator, no `.` or `..`. */
-export const isSafeProfileName = (name: string) =>
+/** One directory under `.meru`, so a profile never names a path elsewhere. */
+const isSafeProfileName = (name: string) =>
   /^[\w.-]+$/u.test(name) && name !== "." && name !== "..";
 
-/*
- * Chromium reads a switch behind any run of dashes, and on Windows behind `/`
- * and in any letter case, so `-USER-DATA-DIR=` would still choose the directory.
- * Every argument is checked, those after `--` too, since they reach Electron.
- */
-const USER_DATA_DIR_SWITCH = /^(?:-+|\/)user-data-dir(?:=|$)/iu;
-
 export const parseLaunchArgs = (argv: readonly string[]): LaunchArgs => {
-  if (argv.some((arg) => USER_DATA_DIR_SWITCH.test(arg))) {
-    throw new Error(
-      "--user-data-dir is decided by the profile; pass --profile <name> instead."
-    );
-  }
-
   const { values, tokens } = parseArgs({
     args: [...argv],
     options: OPTIONS,
@@ -41,49 +28,35 @@ export const parseLaunchArgs = (argv: readonly string[]): LaunchArgs => {
     tokens: true,
   });
 
-  const electronArgs: string[] = [];
-
-  for (const token of tokens) {
+  const electronArgs = tokens.flatMap((token) => {
     if (token.kind === "positional") {
-      electronArgs.push(token.value);
-    } else if (token.kind === "option") {
-      if (token.name in OPTIONS) {
-        const isMissingValue =
-          token.value === undefined ||
-          (token.inlineValue === false && token.value.startsWith("-"));
-
-        if (
-          OPTIONS[token.name as keyof typeof OPTIONS].type === "string" &&
-          isMissingValue
-        ) {
-          throw new Error(`--${token.name} needs a value.`);
-        }
-      } else {
-        electronArgs.push(
-          token.value === undefined
-            ? token.rawName
-            : `${token.rawName}=${token.value}`
-        );
-      }
+      return [token.value];
     }
-  }
 
-  const profile =
-    typeof values.profile === "string" ? values.profile : undefined;
+    if (token.kind !== "option" || token.name in OPTIONS) {
+      return [];
+    }
 
-  if (profile !== undefined && !isSafeProfileName(profile)) {
+    return [
+      token.value === undefined
+        ? token.rawName
+        : `${token.rawName}=${token.value}`,
+    ];
+  });
+
+  const { profile, "debug-port": debugPort } = values;
+
+  if (
+    profile !== undefined &&
+    (typeof profile !== "string" || !isSafeProfileName(profile))
+  ) {
     throw new Error(
-      `--profile ${JSON.stringify(profile)} is not a single directory name of letters, digits, ".", "_" or "-".`
+      '--profile needs a single directory name of letters, digits, ".", "_" or "-".'
     );
   }
 
-  const debugPort =
-    typeof values["debug-port"] === "string" ? values["debug-port"] : undefined;
-
-  if (debugPort !== undefined && !/^\d+$/u.test(debugPort)) {
-    throw new Error(
-      `--debug-port ${JSON.stringify(debugPort)} is not a port number.`
-    );
+  if (debugPort !== undefined && typeof debugPort !== "string") {
+    throw new Error("--debug-port needs a port number.");
   }
 
   return {
@@ -123,21 +96,10 @@ export const defaultProfileFor = (checkout: GitCheckout | undefined) => {
 };
 
 /**
- * The exit code a launcher script ends with when Electron exits: Electron's own,
- * or a failure when a signal the script did not send killed it, such as a crash.
+ * The exit code a launcher script ends with when Electron exits on its own:
+ * Electron's, or a failure when a signal killed it, such as a crash.
  */
 export const exitCodeFor = (
   code: number | null,
-  signal: NodeJS.Signals | null,
-  stoppedByScript: boolean
-) => {
-  if (stoppedByScript) {
-    return 0;
-  }
-
-  if (signal) {
-    return 1;
-  }
-
-  return code ?? 1;
-};
+  signal: NodeJS.Signals | null
+) => (signal ? 1 : (code ?? 1));

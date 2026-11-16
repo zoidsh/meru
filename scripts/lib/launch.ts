@@ -1,12 +1,10 @@
 import { spawn, spawnSync } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { once } from "node:events";
-import { rmSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import electronPath from "electron";
-import { delay, TimeoutError, withTimeout } from "es-toolkit";
+import { TimeoutError, withTimeout } from "es-toolkit";
 
 import { repositoryRoot } from "./bundles.ts";
 import { defaultProfileFor } from "./launch-args.ts";
@@ -47,50 +45,11 @@ const readGitCheckout = (): GitCheckout | undefined => {
 export const resolveProfile = (args: LaunchArgs) =>
   args.profile ?? defaultProfileFor(readGitCheckout());
 
-export const userDataDirFor = (profile: string) =>
+const userDataDirFor = (profile: string) =>
   path.join(repositoryRoot, ".meru", profile);
 
 const isRunning = (child: ChildProcess) =>
   child.exitCode === null && child.signalCode === null;
-
-const DEBUG_PORT_TIMEOUT_MS = 15_000;
-
-const DEBUG_PORT_POLL_MS = 100;
-
-/**
- * Chromium writes the port it picked into the user data directory a moment
- * after it starts, and nothing else reports it. Stops looking once the child
- * has exited.
- */
-export const reportDebugPort = async (
-  child: ChildProcess,
-  userDataDir: string,
-  deadline = Date.now() + DEBUG_PORT_TIMEOUT_MS
-): Promise<void> => {
-  if (!isRunning(child)) {
-    return;
-  }
-
-  const file = path.join(userDataDir, "DevToolsActivePort");
-  const contents = await readFile(file, "utf-8").catch(() => "");
-  const [port] = contents.split("\n");
-
-  if (port && /^\d+$/u.test(port)) {
-    console.log(`Debug port: ${port} (http://127.0.0.1:${port}/json/version)`);
-
-    return;
-  }
-
-  if (Date.now() > deadline) {
-    console.log(`No debug port was written to ${file}`);
-
-    return;
-  }
-
-  await delay(DEBUG_PORT_POLL_MS);
-
-  return reportDebugPort(child, userDataDir, deadline);
-};
 
 export interface ElectronLaunch {
   appDir: string;
@@ -107,11 +66,6 @@ export const spawnElectron = ({
   env,
 }: ElectronLaunch) => {
   const userDataDir = userDataDirFor(profile);
-
-  // A killed run leaves its file behind, which reads exactly like a new one.
-  if (args.debugPort === "0") {
-    rmSync(path.join(userDataDir, "DevToolsActivePort"), { force: true });
-  }
 
   const child = spawn(
     // Outside Electron the package exports its binary's path, which its types
@@ -135,7 +89,7 @@ export const spawnElectron = ({
 
   console.log(`Profile: ${profile} (${userDataDir}), pid ${child.pid}`);
 
-  return { child, userDataDir };
+  return child;
 };
 
 const stoppedByScript = new WeakSet<ChildProcess>();
@@ -151,10 +105,7 @@ const STOP_TIMEOUT_MS = 5000;
  * SIGTERM starts Electron's own quit, which lets Chromium flush its cookies; on
  * Windows Node has no such signal and SIGTERM ends the process at once.
  */
-export const stopElectron = async (
-  child: ChildProcess,
-  timeoutMs = STOP_TIMEOUT_MS
-) => {
+export const stopElectron = async (child: ChildProcess) => {
   stoppedByScript.add(child);
 
   if (!isRunning(child)) {
@@ -166,7 +117,7 @@ export const stopElectron = async (
   child.kill("SIGTERM");
 
   try {
-    await withTimeout(() => exited, timeoutMs);
+    await withTimeout(() => exited, STOP_TIMEOUT_MS);
   } catch (error) {
     if (!(error instanceof TimeoutError)) {
       throw error;

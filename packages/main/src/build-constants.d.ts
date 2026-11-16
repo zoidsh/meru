@@ -9,4 +9,3 @@ declare const MERU_BUILD_MODE: "dev" | "prod";
  */
 declare const MERU_E2E_BUILD: boolean;
 declare const MERU_APP_ID: string;
-declare const MERU_PRODUCT_NAME: string;

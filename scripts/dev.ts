@@ -17,7 +17,6 @@ import {
 } from "./lib/bundles.ts";
 import { exitCodeFor, parseLaunchArgs } from "./lib/launch-args.ts";
 import {
-  reportDebugPort,
   resolveProfile,
   spawnElectron,
   stopElectron,
@@ -104,13 +103,12 @@ if (!Number.isInteger(port) || port < 0) {
 }
 
 const startElectron = (devServerUrl: string) => {
-  const launched = spawnElectron({
+  const child = spawnElectron({
     appDir: outDir("dev"),
     args,
     profile,
     env: { MERU_DEV_SERVER_URL: devServerUrl, MERU_DEV_CSP_NONCE: nonce },
   });
-  const { child } = launched;
 
   electron = child;
 
@@ -122,11 +120,9 @@ const startElectron = (devServerUrl: string) => {
   // Quitting the app, or its crashing, ends the run.
   child.once("exit", (code, signal) => {
     if (electron === child && !wasStoppedByScript(child)) {
-      void shutdown(exitCodeFor(code, signal, false));
+      void shutdown(exitCodeFor(code, signal));
     }
   });
-
-  void reportDebugPort(child, launched.userDataDir);
 };
 
 let isRestartQueued = false;

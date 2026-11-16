@@ -1,39 +1,33 @@
 import { describe, expect, it } from "vitest";
 
-import { appIdFor, isDevVersion } from "./app-identity.ts";
+import { appIdentity } from "./app-identity.ts";
 
-describe(isDevVersion, () => {
-  it("matches a -dev prerelease however it is cased", () => {
-    expect(isDevVersion("4.0.0-dev.0")).toBeTruthy();
-    expect(isDevVersion("4.0.0-dev")).toBeTruthy();
-    expect(isDevVersion("4.0.0-dev+abc123")).toBeTruthy();
-    expect(isDevVersion("4.0.0-DEV.1")).toBeTruthy();
-    expect(isDevVersion("4.0.0-Dev")).toBeTruthy();
-  });
+const RELEASE = { productName: "Meru", appId: "sh.zoid.meru" };
+const DEV = { productName: "Meru Dev", appId: "sh.zoid.meru.dev" };
 
-  it("does not match a release, a beta or a lookalike", () => {
-    expect(isDevVersion("4.0.0")).toBeFalsy();
-    expect(isDevVersion("4.0.0-beta.1")).toBeFalsy();
-    expect(isDevVersion("4.0.0-devops.1")).toBeFalsy();
-  });
-});
-
-describe(appIdFor, () => {
-  it("keeps the id for a release build of a release version", () => {
+describe(appIdentity, () => {
+  it("names a release build of a release or beta version Meru", () => {
+    expect(appIdentity({ version: "4.0.0", isRelease: true })).toStrictEqual(
+      RELEASE
+    );
     expect(
-      appIdFor("sh.zoid.meru", { version: "4.0.0", isRelease: true })
-    ).toBe("sh.zoid.meru");
+      appIdentity({ version: "4.0.0-beta.1", isRelease: true })
+    ).toStrictEqual(RELEASE);
   });
 
-  it("gives a -dev version, packaged or not, an id of its own", () => {
+  it("names a -dev version Meru Dev, however it is spelled", () => {
+    for (const version of ["4.0.0-dev.0", "4.0.0-dev", "4.0.0-DEV+abc"]) {
+      expect(appIdentity({ version, isRelease: true })).toStrictEqual(DEV);
+    }
+
     expect(
-      appIdFor("sh.zoid.meru", { version: "4.0.0-dev.0", isRelease: true })
-    ).toBe("sh.zoid.meru.dev");
+      appIdentity({ version: "4.0.0-devops.1", isRelease: true })
+    ).toStrictEqual(RELEASE);
   });
 
-  it("gives a build that is not a release an id of its own whatever its version", () => {
-    expect(
-      appIdFor("sh.zoid.meru", { version: "4.0.0", isRelease: false })
-    ).toBe("sh.zoid.meru.dev");
+  it("names a build that is not a release Meru Dev whatever its version", () => {
+    expect(appIdentity({ version: "4.0.0", isRelease: false })).toStrictEqual(
+      DEV
+    );
   });
 });

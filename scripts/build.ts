@@ -7,6 +7,7 @@ import { build as buildRenderer } from "vite";
 import {
   appBundles,
   cleanOutDir,
+  identityFor,
   outDir,
   readRootManifest,
   repositoryRoot,
@@ -72,5 +73,5 @@ if (hits.length > 0) {
 }
 
 console.log(
-  `Built ${manifest.productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold`
+  `Built ${identityFor(target, manifest).productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold`
 );

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  defaultProfileFor,
-  exitCodeFor,
-  parseLaunchArgs,
-} from "./launch-args.ts";
+import { defaultProfileFor, parseLaunchArgs } from "./launch-args.ts";
 
 describe(parseLaunchArgs, () => {
   it("reads its own flags and passes the rest to Electron as typed", () => {
@@ -34,64 +30,15 @@ describe(parseLaunchArgs, () => {
     });
   });
 
-  it("refuses --user-data-dir, which the profile decides", () => {
-    expect(() => parseLaunchArgs(["--user-data-dir=/tmp/x"])).toThrow(
-      /--profile/u
-    );
-    expect(() => parseLaunchArgs(["--user-data-dir="])).toThrow(/--profile/u);
-    expect(() => parseLaunchArgs(["--user-data-dir", "/tmp/x"])).toThrow(
-      /--profile/u
-    );
-  });
-
-  it.each([
-    ["after --", ["--", "--user-data-dir=/tmp/x"]],
-    [
-      "after -- with an empty value",
-      ["--background", "--", "--user-data-dir="],
-    ],
-    ["behind one dash", ["-user-data-dir=/tmp/x"]],
-    ["behind three dashes", ["---user-data-dir", "/tmp/x"]],
-    ["behind a slash", ["/user-data-dir=/tmp/x"]],
-    ["in another letter case", ["--User-Data-Dir=/tmp/x"]],
-  ])("refuses a user-data-dir switch %s", (_, argv) => {
-    expect(() => parseLaunchArgs(argv)).toThrow(/--profile/u);
-  });
-
-  it("passes on a switch that only starts with user-data-dir's name", () => {
-    expect(
-      parseLaunchArgs(["--user-data-directory-x", "--", "user-data-dir"])
-        .electronArgs
-    ).toStrictEqual(["--user-data-directory-x", "user-data-dir"]);
-  });
-
-  it("refuses --profile and --debug-port without a value", () => {
-    expect(() => parseLaunchArgs(["--profile"])).toThrow(/needs a value/u);
-    expect(() => parseLaunchArgs(["--profile", "--background"])).toThrow(
-      /needs a value/u
-    );
-    expect(() => parseLaunchArgs(["--debug-port"])).toThrow(/needs a value/u);
-  });
-
-  it("refuses a profile that is not one plain directory name", () => {
-    for (const profile of [
-      "",
-      "..",
-      ".",
-      "a/b",
-      String.raw`a\b`,
-      "../x",
-      "/abs",
-    ]) {
+  it("refuses a profile that is not one directory name, or none", () => {
+    for (const profile of ["", "..", ".", "a/b", String.raw`a\b`, "/abs"]) {
       expect(() => parseLaunchArgs([`--profile=${profile}`])).toThrow(
-        /not a single directory name/u
+        /single directory name/u
       );
     }
-  });
 
-  it("refuses a debug port that is not a number", () => {
-    expect(() => parseLaunchArgs(["--debug-port=abc"])).toThrow(
-      /not a port number/u
+    expect(() => parseLaunchArgs(["--profile"])).toThrow(
+      /single directory name/u
     );
   });
 });
@@ -129,22 +76,5 @@ describe(defaultProfileFor, () => {
         toplevel: "/repo/.claude/worktrees/rebase",
       })
     ).toBe("rebase");
-  });
-});
-
-describe(exitCodeFor, () => {
-  it("passes on Electron's exit code", () => {
-    expect(exitCodeFor(0, null, false)).toBe(0);
-    expect(exitCodeFor(3, null, false)).toBe(3);
-  });
-
-  it("fails when a signal the script did not send killed Electron", () => {
-    expect(exitCodeFor(null, "SIGSEGV", false)).toBe(1);
-    expect(exitCodeFor(null, "SIGKILL", false)).toBe(1);
-  });
-
-  it("succeeds when the script stopped Electron itself", () => {
-    expect(exitCodeFor(null, "SIGTERM", true)).toBe(0);
-    expect(exitCodeFor(null, "SIGKILL", true)).toBe(0);
   });
 });

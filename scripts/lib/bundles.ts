@@ -3,6 +3,8 @@ import path from "node:path";
 
 import type { BuildOptions } from "rolldown";
 
+import { appIdentity } from "../../packages/core/src/app-identity.ts";
+
 /**
  * What a build is for. `e2e` is a production build that also carries what only
  * the end-to-end suite may switch on; a release is only ever built as `prod`.
@@ -24,10 +26,12 @@ export const shellViteConfig = path.join(
 
 interface RootManifest {
   name: string;
-  productName: string;
   version: string;
-  meru: { appId: string };
 }
+
+/** Only `prod` builds a release; `pnpm start` runs the same build. */
+export const identityFor = (target: BuildTarget, { version }: RootManifest) =>
+  appIdentity({ version, isRelease: target === "prod" });
 
 export const readRootManifest = async () =>
   JSON.parse(
@@ -49,7 +53,7 @@ export const writeAppManifest = async (
     `${JSON.stringify(
       {
         name: manifest.name,
-        productName: manifest.productName,
+        productName: identityFor(target, manifest).productName,
         version: manifest.version,
         private: true,
         main: "main.mjs",
@@ -77,8 +81,7 @@ export const appBundles = (
         define: {
           MERU_BUILD_MODE: JSON.stringify(mode),
           MERU_E2E_BUILD: JSON.stringify(target === "e2e"),
-          MERU_APP_ID: JSON.stringify(manifest.meru.appId),
-          MERU_PRODUCT_NAME: JSON.stringify(manifest.productName),
+          MERU_APP_ID: JSON.stringify(identityFor(target, manifest).appId),
         },
       },
       output: {

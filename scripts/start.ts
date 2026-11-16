@@ -6,7 +6,6 @@ import { once } from "es-toolkit";
 import { outDir } from "./lib/bundles.ts";
 import { exitCodeFor, parseLaunchArgs } from "./lib/launch-args.ts";
 import {
-  reportDebugPort,
   resolveProfile,
   spawnElectron,
   stopElectron,
@@ -27,7 +26,7 @@ try {
   process.exit(1);
 }
 
-const { child, userDataDir } = spawnElectron({
+const child = spawnElectron({
   appDir: outDir("prod"),
   args,
   profile: resolveProfile(args),
@@ -58,8 +57,6 @@ child.once("error", (error) => {
 
 child.once("exit", (code, signal) => {
   if (!wasStoppedByScript(child)) {
-    process.exit(exitCodeFor(code, signal, false));
+    process.exit(exitCodeFor(code, signal));
   }
 });
-
-void reportDebugPort(child, userDataDir);

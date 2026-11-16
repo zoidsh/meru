@@ -38,9 +38,5 @@
   "engines": {
     "node": ">=26.13.1"
   },
-  "packageManager": "pnpm@12.21.0",
-  "meru": {
-    "appId": "sh.zoid.meru"
-  },
-  "productName": "Meru"
+  "packageManager": "pnpm@12.21.0"
 }

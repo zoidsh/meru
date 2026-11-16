@@ -46,7 +46,7 @@ const run = async (args: string[]) => {
 
   current = undefined;
 
-  return exitCodeFor(code, signal, false);
+  return exitCodeFor(code, signal);
 };
 
 if (!(process.env.MERU_EXECUTABLE || process.env.MERU_SKIP_BUILD === "1")) {

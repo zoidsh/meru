@@ -1,14 +1,7 @@
 import { app } from "electron";
 
 export interface AppLifecycle {
-  readonly isPackaged: boolean;
   readonly name: string;
-  readonly version: string;
-  getPath: (name: "userData" | "appData") => string;
-  /** Must run before the app is ready, while nothing has used the folder. */
-  setUserDataPath: (dir: string) => void;
-  /** A switch's value, empty when given bare, undefined when not given. */
-  getSwitchValue: (name: string) => string | undefined;
   appendSwitch: (name: string, value?: string) => void;
   /** False when another instance already holds this user data directory. */
   requestSingleInstanceLock: () => boolean;
@@ -29,21 +22,9 @@ export interface AppLifecycle {
 }
 
 export const createAppLifecycle = (): AppLifecycle => ({
-  get isPackaged() {
-    return app.isPackaged;
-  },
   get name() {
     return app.name;
   },
-  get version() {
-    return app.getVersion();
-  },
-  getPath: (name) => app.getPath(name),
-  setUserDataPath: (dir) => app.setPath("userData", dir),
-  getSwitchValue: (name) =>
-    app.commandLine.hasSwitch(name)
-      ? app.commandLine.getSwitchValue(name)
-      : undefined,
   appendSwitch: (name, value) => app.commandLine.appendSwitch(name, value),
   requestSingleInstanceLock: () => app.requestSingleInstanceLock(),
   whenReady: () => app.whenReady(),

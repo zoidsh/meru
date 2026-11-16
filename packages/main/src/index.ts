@@ -1,6 +1,5 @@
 import path from "node:path";
 
-import { appIdFor } from "@meru/core/app-identity";
 import { createAppLifecycle } from "@meru/platform/app";
 import { createDevServerPolicy } from "@meru/platform/dev-server";
 import { createErrorDialog } from "@meru/platform/dialog";
@@ -11,8 +10,6 @@ import { createWindowFactory } from "@meru/platform/window";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
-import { readLaunchOptions } from "./launch-options.ts";
-import { decideUserData } from "./run-identity.ts";
 import { createShellWindow, revealWindow } from "./shell-window.ts";
 
 const APP_SCHEME = "meru-app";
@@ -23,7 +20,7 @@ const lifecycle = createAppLifecycle();
 const errorDialog = createErrorDialog();
 
 const failures = createFailures({
-  productName: MERU_PRODUCT_NAME,
+  productName: lifecycle.name,
   showErrorDialog: errorDialog.show,
   log: console.error,
   exit: lifecycle.exit,
@@ -64,43 +61,7 @@ const resolveShell = () => {
 };
 
 const start = async () => {
-  const options = readLaunchOptions({ argv: process.argv, env: process.env });
   const shellSource = resolveShell();
-
-  const userData = decideUserData({
-    isPackaged: lifecycle.isPackaged,
-    productName: MERU_PRODUCT_NAME,
-    version: lifecycle.version,
-    appData: lifecycle.getPath("appData"),
-    installedNames: [MERU_PRODUCT_NAME, lifecycle.name],
-    userDataDirSwitch: lifecycle.getSwitchValue("user-data-dir"),
-    platform: process.platform,
-  });
-
-  // Before anything else: Electron creates its default folder, an installed
-  // Meru's, on the way out of even a run that never used it.
-  if (userData.kind === "use" && userData.move) {
-    lifecycle.setUserDataPath(userData.dir);
-  }
-
-  // The suite asks where a build would keep its data without starting it,
-  // which would create the folder and take its lock, and without the dialog a
-  // refusal shows.
-  if (MERU_E2E_BUILD && process.argv.includes("--print-user-data")) {
-    if (userData.kind === "refuse") {
-      console.error(userData.reason);
-      lifecycle.exit(2);
-    } else {
-      console.log(userData.dir);
-      lifecycle.exit(0);
-    }
-
-    return;
-  }
-
-  if (userData.kind === "refuse") {
-    throw new Error(userData.reason);
-  }
 
   // The suite's app is never used by anyone, so it never comes in front of
   // whatever someone is working in, whatever a test shows or focuses.
@@ -111,7 +72,11 @@ const start = async () => {
     lifecycle.preventActivation();
   }
 
-  const background = options.background || isTestBackground;
+  // For a desktop other sessions share: open behind whatever is in front.
+  const background =
+    isTestBackground ||
+    process.env.MERU_BACKGROUND === "1" ||
+    process.argv.includes("--background");
 
   if (!lifecycle.requestSingleInstanceLock()) {
     lifecycle.quit();
@@ -125,12 +90,7 @@ const start = async () => {
   }
 
   if (process.platform === "win32") {
-    lifecycle.setAppUserModelId(
-      appIdFor(MERU_APP_ID, {
-        version: lifecycle.version,
-        isRelease: lifecycle.isPackaged && !MERU_E2E_BUILD,
-      })
-    );
+    lifecycle.setAppUserModelId(MERU_APP_ID);
   }
 
   const appProtocol = createAppProtocol();
@@ -144,7 +104,7 @@ const start = async () => {
   const shell = createShellWindow({
     windows: createWindowFactory(),
     displays: createDisplays(),
-    title: MERU_PRODUCT_NAME,
+    title: lifecycle.name,
     url: shellSource.url,
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
     isMacOS: process.platform === "darwin",

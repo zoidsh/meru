@@ -4,7 +4,7 @@ import path from "node:path";
 
 import type { Configuration } from "electron-builder";
 
-import { appIdFor } from "./packages/core/src/app-identity.ts";
+import { appIdentity } from "./packages/core/src/app-identity.ts";
 
 /**
  * `release` is what users install. `e2e` is the end-to-end suite's build: the
@@ -49,20 +49,14 @@ const copyAssetCatalog: Configuration["afterPack"] = async (context) => {
   );
 };
 
-const RELEASE_APP_ID = "sh.zoid.meru";
-
 export const createConfig = (variant: PackageVariant): Configuration => {
-  const appId = appIdFor(RELEASE_APP_ID, {
-    version,
-    isRelease: variant === "release",
-  });
-  // A development build has an id of its own and claims no link or mail
-  // scheme, so the system never hands it what the installed Meru should get.
-  const schemes = appId === RELEASE_APP_ID ? SCHEMES : [];
+  const identity = appIdentity({ version, isRelease: variant === "release" });
+  // A development build claims no link or mail scheme, so the system never
+  // hands it what the installed Meru should get.
+  const schemes = identity.productName === "Meru" ? SCHEMES : [];
 
   return {
-    appId,
-    productName: "Meru",
+    ...identity,
     directories: {
       app: path.join(root, "out", variant === "e2e" ? "e2e" : "prod"),
       output: path.join(root, "dist", ...(variant === "e2e" ? ["e2e"] : [])),
