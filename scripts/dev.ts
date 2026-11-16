@@ -11,13 +11,12 @@ import {
   appBundles,
   cleanOutDir,
   outDir,
-  readRootManifest,
   shellViteConfig,
   writeAppManifest,
 } from "./lib/bundles.ts";
-import { exitCodeFor, parseLaunchArgs } from "./lib/launch-args.ts";
+import { exitCodeFor } from "./lib/launch-args.ts";
 import {
-  resolveProfile,
+  readLaunchArgs,
   spawnElectron,
   stopElectron,
   wasStoppedByScript,
@@ -81,16 +80,7 @@ process.once("exit", () => {
   }
 });
 
-let args: ReturnType<typeof parseLaunchArgs>;
-
-try {
-  args = parseLaunchArgs(process.argv.slice(2));
-} catch (error) {
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-}
-
-const profile = resolveProfile(args);
+const { args, profile } = readLaunchArgs();
 
 /** One per run, stamped by Vite on what it injects and allowed by the app. */
 const nonce = randomBytes(16).toString("base64url");
@@ -152,10 +142,8 @@ const queueRestart = (devServerUrl: string) => {
 };
 
 setup = (async () => {
-  const manifest = await readRootManifest();
-
   await cleanOutDir("dev");
-  await writeAppManifest("dev", manifest);
+  await writeAppManifest("dev");
 
   vite = await createServer({
     configFile: shellViteConfig,
@@ -183,7 +171,7 @@ setup = (async () => {
     return;
   }
 
-  watcher = watch(appBundles("dev", manifest));
+  watcher = watch(appBundles("dev"));
 
   /** A round that failed keeps the running app, rather than one that cannot start. */
   let hasRoundFailed = false;

@@ -7,7 +7,7 @@ import electronPath from "electron";
 import { TimeoutError, withTimeout } from "es-toolkit";
 
 import { repositoryRoot } from "./bundles.ts";
-import { defaultProfileFor } from "./launch-args.ts";
+import { defaultProfileFor, parseLaunchArgs } from "./launch-args.ts";
 import type { GitCheckout, LaunchArgs } from "./launch-args.ts";
 
 const git = (...args: string[]) => {
@@ -42,8 +42,20 @@ const readGitCheckout = (): GitCheckout | undefined => {
   };
 };
 
-export const resolveProfile = (args: LaunchArgs) =>
-  args.profile ?? defaultProfileFor(readGitCheckout());
+/** The script's arguments and the profile they pick; a bad one ends the script. */
+export const readLaunchArgs = () => {
+  try {
+    const args = parseLaunchArgs(process.argv.slice(2));
+
+    return {
+      args,
+      profile: args.profile ?? defaultProfileFor(readGitCheckout()),
+    };
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
+};
 
 const userDataDirFor = (profile: string) =>
   path.join(repositoryRoot, ".meru", profile);

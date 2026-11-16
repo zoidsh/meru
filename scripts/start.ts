@@ -4,9 +4,9 @@ import path from "node:path";
 import { once } from "es-toolkit";
 
 import { outDir } from "./lib/bundles.ts";
-import { exitCodeFor, parseLaunchArgs } from "./lib/launch-args.ts";
+import { exitCodeFor } from "./lib/launch-args.ts";
 import {
-  resolveProfile,
+  readLaunchArgs,
   spawnElectron,
   stopElectron,
   wasStoppedByScript,
@@ -17,20 +17,7 @@ if (!existsSync(path.join(outDir("prod"), "package.json"))) {
   process.exit(1);
 }
 
-let args: ReturnType<typeof parseLaunchArgs>;
-
-try {
-  args = parseLaunchArgs(process.argv.slice(2));
-} catch (error) {
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-}
-
-const child = spawnElectron({
-  appDir: outDir("prod"),
-  args,
-  profile: resolveProfile(args),
-});
+const child = spawnElectron({ appDir: outDir("prod"), ...readLaunchArgs() });
 
 const stop = once(async () => {
   await stopElectron(child);

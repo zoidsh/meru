@@ -1,10 +1,11 @@
-import { readFileSync } from "node:fs";
 import { copyFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
 import type { Configuration } from "electron-builder";
 
 import { appIdentity } from "#core/app-identity.ts";
+
+import manifest from "./package.json" with { type: "json" };
 
 /**
  * `release` is what users install. `e2e` is the end-to-end suite's build: the
@@ -19,10 +20,6 @@ const SCHEMES = ["meru", "mailto", "http", "https"];
 const ARCHES: ("x64" | "arm64")[] = ["x64", "arm64"];
 
 const root = import.meta.dirname;
-
-const { version } = JSON.parse(
-  readFileSync(path.join(root, "package.json"), "utf-8")
-) as { version: string };
 
 /**
  * macOS 26 draws the icon from the compiled asset catalog that
@@ -50,7 +47,10 @@ export const packOutputDir = (variant: PackageVariant) =>
   path.join(root, "dist", variant);
 
 export const createConfig = (variant: PackageVariant): Configuration => {
-  const identity = appIdentity({ version, isRelease: variant === "release" });
+  const identity = appIdentity({
+    version: manifest.version,
+    isRelease: variant === "release",
+  });
   // A development build claims no link or mail scheme, so the system never
   // hands it what the installed Meru should get.
   const schemes = identity.productName === "Meru" ? SCHEMES : [];
@@ -142,5 +142,3 @@ export const createConfig = (variant: PackageVariant): Configuration => {
     toolsets: { appimage: "1.0.3" },
   };
 };
-
-export default createConfig("release");

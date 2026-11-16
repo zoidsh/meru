@@ -4,12 +4,12 @@ import path from "node:path";
 import { build as bundle } from "rolldown";
 import { build as buildRenderer } from "vite";
 
+import manifest from "../package.json" with { type: "json" };
 import {
   appBundles,
   cleanOutDir,
   identityFor,
   outDir,
-  readRootManifest,
   repositoryRoot,
   shellViteConfig,
   writeAppManifest,
@@ -24,19 +24,17 @@ const target = process.argv.includes("--e2e") ? "e2e" : "prod";
 const out = outDir(target);
 const label = path.relative(repositoryRoot, out);
 
-const manifest = await readRootManifest();
-
 await cleanOutDir(target);
 
 await Promise.all([
-  ...appBundles(target, manifest).map((options) => bundle(options)),
+  ...appBundles(target).map((options) => bundle(options)),
   buildRenderer({
     configFile: shellViteConfig,
     mode: "production",
     logLevel: "warn",
     build: { outDir: path.join(out, "shell"), emptyOutDir: true },
   }),
-  writeAppManifest(target, manifest),
+  writeAppManifest(target),
 ]);
 
 const entries = await readdir(out, { recursive: true, withFileTypes: true });
@@ -73,5 +71,5 @@ if (hits.length > 0) {
 }
 
 console.log(
-  `Built ${identityFor(target, manifest).productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold`
+  `Built ${identityFor(target).productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold`
 );

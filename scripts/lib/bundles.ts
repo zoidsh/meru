@@ -1,10 +1,11 @@
-import { readFile, rm, mkdir, writeFile } from "node:fs/promises";
+import { rm, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { BuildOptions } from "rolldown";
 
 import { appIdentity } from "#core/app-identity.ts";
 
+import manifest from "../../package.json" with { type: "json" };
 import { linguiForRolldown } from "./lingui.ts";
 
 /**
@@ -21,19 +22,9 @@ export const outDir = (target: BuildTarget) =>
 
 export const shellViteConfig = path.join(repositoryRoot, "vite.config.ts");
 
-interface RootManifest {
-  name: string;
-  version: string;
-}
-
 /** Only `prod` builds a release; `pnpm start` runs the same build. */
-export const identityFor = (target: BuildTarget, { version }: RootManifest) =>
-  appIdentity({ version, isRelease: target === "prod" });
-
-export const readRootManifest = async () =>
-  JSON.parse(
-    await readFile(path.join(repositoryRoot, "package.json"), "utf-8")
-  ) as RootManifest;
+export const identityFor = (target: BuildTarget) =>
+  appIdentity({ version: manifest.version, isRelease: target === "prod" });
 
 export const cleanOutDir = async (target: BuildTarget) => {
   await rm(outDir(target), { recursive: true, force: true });
@@ -41,16 +32,13 @@ export const cleanOutDir = async (target: BuildTarget) => {
 };
 
 /** The `package.json` Electron reads the app's name, version and entry from. */
-export const writeAppManifest = async (
-  target: BuildTarget,
-  manifest: RootManifest
-) => {
+export const writeAppManifest = async (target: BuildTarget) => {
   await writeFile(
     path.join(outDir(target), "package.json"),
     `${JSON.stringify(
       {
         name: manifest.name,
-        productName: identityFor(target, manifest).productName,
+        productName: identityFor(target).productName,
         version: manifest.version,
         private: true,
         main: "main.mjs",
@@ -61,11 +49,7 @@ export const writeAppManifest = async (
   );
 };
 
-/** The main process and the preloads, which rolldown bundles. */
-export const appBundles = (
-  target: BuildTarget,
-  manifest: RootManifest
-): BuildOptions[] => {
+export const appBundles = (target: BuildTarget): BuildOptions[] => {
   const mode = target === "dev" ? "dev" : "prod";
   const minify = mode === "prod" ? { mangle: { keepNames: true } } : false;
 
@@ -79,7 +63,7 @@ export const appBundles = (
         define: {
           MERU_BUILD_MODE: JSON.stringify(mode),
           MERU_E2E_BUILD: JSON.stringify(target === "e2e"),
-          MERU_APP_ID: JSON.stringify(identityFor(target, manifest).appId),
+          MERU_APP_ID: JSON.stringify(identityFor(target).appId),
           // Libraries drop their development-only code on it, such as
           // Lingui's message compiler, which a catalog compiled at build time
           // makes dead weight.
