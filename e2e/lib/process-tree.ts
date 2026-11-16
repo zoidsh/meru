@@ -1,8 +1,9 @@
 /*
- * An app's processes, found from the outside, so teardown can end every one of
- * them. On Windows Playwright starts Electron through cmd.exe, so the pid it
- * holds is the shell's, and a process left running keeps the user data
- * directory's files open, which Windows then refuses to delete.
+ * An app's processes, found from the outside. On Windows Playwright starts
+ * Electron through cmd.exe, so the pid it holds is the shell's; and once the
+ * main process has died, nothing leads from its pid to the helpers it left.
+ * A process left running keeps the user data directory's files open, which
+ * Windows then refuses to delete.
  */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -12,60 +13,73 @@ import { delay } from "es-toolkit";
 const run = promisify(execFile);
 
 /**
- * A pid alone names a process only until it exits: Windows hands pids out
- * again within seconds. With its start time it names one process for good.
+ * Windows hands a freed pid out again within seconds, so a process is named by
+ * its pid and start time together.
  */
 export interface ProcessEntry {
   pid: number;
   ppid: number;
   startedAt: number;
+  commandLine: string;
 }
 
 const LIST_WINDOWS =
-  'Get-CimInstance Win32_Process | ForEach-Object { "$($_.ProcessId) $($_.ParentProcessId) $($_.CreationDate.Ticks)" }';
+  "Get-CimInstance Win32_Process | ForEach-Object { [pscustomobject]@{ pid = $_.ProcessId; ppid = $_.ParentProcessId; startedAt = $_.CreationDate.Ticks; commandLine = [string]$_.CommandLine } } | ConvertTo-Json -Compress";
 
-const listProcesses = async (): Promise<ProcessEntry[]> => {
-  const isWindows = process.platform === "win32";
-  const { stdout } = isWindows
-    ? await run(
-        "powershell",
-        ["-NoProfile", "-NonInteractive", "-Command", LIST_WINDOWS],
-        { maxBuffer: 16 * 1024 * 1024 }
-      )
-    : await run("ps", ["-A", "-o", "pid=,ppid=,lstart="], {
-        maxBuffer: 16 * 1024 * 1024,
-      });
+const MAX_BUFFER = 64 * 1024 * 1024;
+
+const listWindows = async (): Promise<ProcessEntry[]> => {
+  const { stdout } = await run(
+    "powershell",
+    ["-NoProfile", "-NonInteractive", "-Command", LIST_WINDOWS],
+    { maxBuffer: MAX_BUFFER }
+  );
+
+  return JSON.parse(stdout) as ProcessEntry[];
+};
+
+// `lstart` is always five fields, such as "Mon Nov 16 16:52:03 2026".
+const PS_LINE =
+  /^\s*(?<pid>\d+)\s+(?<ppid>\d+)\s+(?<start>\S+\s+\S+\s+\S+\s+\S+\s+\S+)\s+(?<args>.*)$/u;
+
+const listUnix = async (): Promise<ProcessEntry[]> => {
+  const { stdout } = await run(
+    "ps",
+    ["-A", "-ww", "-o", "pid=,ppid=,lstart=,args="],
+    {
+      maxBuffer: MAX_BUFFER,
+    }
+  );
 
   return stdout.split("\n").flatMap((line) => {
-    const groups = /^\s*(?<pid>\d+)\s+(?<ppid>\d+)\s+(?<start>.+?)\s*$/u.exec(
-      line
-    )?.groups;
+    const groups = PS_LINE.exec(line)?.groups;
+    const startedAt = Date.parse(groups?.start ?? "");
 
-    if (!(groups?.pid && groups.ppid && groups.start)) {
-      return [];
-    }
-
-    // Windows gives ticks; ps a date such as "Mon Nov 16 16:52:03 2026".
-    const startedAt = isWindows
-      ? Number(groups.start)
-      : Date.parse(groups.start);
-
-    return Number.isNaN(startedAt)
-      ? []
-      : [{ pid: Number(groups.pid), ppid: Number(groups.ppid), startedAt }];
+    return groups?.pid && groups.ppid && !Number.isNaN(startedAt)
+      ? [
+          {
+            pid: Number(groups.pid),
+            ppid: Number(groups.ppid),
+            startedAt,
+            commandLine: groups.args ?? "",
+          },
+        ]
+      : [];
   });
 };
+
+const listProcesses = () =>
+  process.platform === "win32" ? listWindows() : listUnix();
 
 const isSame = (a: ProcessEntry, b: ProcessEntry) =>
   a.pid === b.pid && a.startedAt === b.startedAt;
 
 /**
- * The root and its descendants among `processes`. A child must have started no
- * earlier than its parent: Windows never rewrites a parent id, so an orphan can
- * name a pid that now belongs to an unrelated process.
+ * A child must have started no earlier than its parent: Windows never rewrites
+ * a parent id, so an orphan can name a pid that now belongs to a stranger.
  */
-const descendTree = (rootPid: number, processes: ProcessEntry[]) => {
-  const tree = processes.filter(({ pid }) => pid === rootPid);
+const descendTree = (root: ProcessEntry, processes: ProcessEntry[]) => {
+  const tree = processes.filter((entry) => isSame(entry, root));
 
   for (const parent of tree) {
     tree.push(
@@ -81,20 +95,43 @@ const descendTree = (rootPid: number, processes: ProcessEntry[]) => {
   return tree;
 };
 
-/**
- * The process and all it has started so far. Read it before asking the app to
- * quit: once a parent exits, its children are reparented and nothing leads to
- * them from the pid any more.
- */
-export const readProcessTree = async (rootPid: number) =>
-  descendTree(rootPid, await listProcesses());
-
-/** Which of these processes are still running, by pid and start time. */
-const survivorsOf = async (tree: readonly ProcessEntry[]) => {
+/** Read straight after launch, while the pid still names the process. */
+export const readProcess = async (pid: number) => {
   const processes = await listProcesses();
 
-  return processes.filter((entry) =>
-    tree.some((member) => isSame(member, entry))
+  return processes.find((entry) => entry.pid === pid);
+};
+
+/**
+ * What identifies an app's processes: the root it was launched as, and an
+ * argument every one of its processes carries, which Chromium passes on to its
+ * helpers. The argument finds them after the root has died.
+ */
+export interface AppProcesses {
+  root: ProcessEntry | undefined;
+  argument: string | undefined;
+}
+
+const carries = (entry: ProcessEntry, argument: string) => {
+  const at = entry.commandLine.indexOf(argument);
+  const next = entry.commandLine[at + argument.length];
+
+  return at !== -1 && (next === undefined || next === " " || next === '"');
+};
+
+const findAll = async ({ root, argument }: AppProcesses) => {
+  const processes = await listProcesses();
+  const found = [
+    ...(root ? descendTree(root, processes) : []),
+    ...(argument
+      ? processes.filter(
+          (entry) => entry.pid !== process.pid && carries(entry, argument)
+        )
+      : []),
+  ];
+
+  return found.filter(
+    (entry, index) => found.findIndex((other) => isSame(other, entry)) === index
   );
 };
 
@@ -103,10 +140,10 @@ const EXIT_TIMEOUT_MS = 15_000;
 const EXIT_POLL_MS = 100;
 
 const waitForExit = async (
-  tree: readonly ProcessEntry[],
+  app: AppProcesses,
   giveUpAt: number
 ): Promise<void> => {
-  const survivors = await survivorsOf(tree);
+  const survivors = await findAll(app);
 
   if (survivors.length === 0) {
     return;
@@ -118,30 +155,7 @@ const waitForExit = async (
     );
   }
 
-  await delay(EXIT_POLL_MS);
-
-  return waitForExit(tree, giveUpAt);
-};
-
-/**
- * Kills whatever of the tree is still running, matched by pid and start time so
- * a reused pid is never hit, and waits until all of it has gone. Throws, naming
- * the pids, when something outlives the wait.
- */
-export const killProcessTree = async (tree: readonly ProcessEntry[]) => {
-  const [root] = tree;
-  const processes = await listProcesses();
-  const targets = [
-    ...processes.filter((entry) =>
-      tree.some((member) => isSame(member, entry))
-    ),
-    // Anything the root has started since the tree was read.
-    ...(root && processes.some((entry) => isSame(entry, root))
-      ? descendTree(root.pid, processes)
-      : []),
-  ];
-
-  for (const { pid } of targets) {
+  for (const { pid } of survivors) {
     try {
       process.kill(pid, "SIGKILL");
     } catch {
@@ -149,5 +163,11 @@ export const killProcessTree = async (tree: readonly ProcessEntry[]) => {
     }
   }
 
-  await waitForExit([...tree, ...targets], Date.now() + EXIT_TIMEOUT_MS);
+  await delay(EXIT_POLL_MS);
+
+  return waitForExit(app, giveUpAt);
 };
+
+/** Throws, naming them, when processes outlive the wait. */
+export const killApp = (app: AppProcesses) =>
+  waitForExit(app, Date.now() + EXIT_TIMEOUT_MS);

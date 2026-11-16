@@ -19,6 +19,7 @@
     "types": "tsc && tsc -p e2e && pnpm --recursive run types"
   },
   "devDependencies": {
+    "@electron/asar": "4.3.2",
     "@electron/fuses": "2.1.3",
     "@playwright/test": "1.65.1",
     "@types/node": "26.6.6",

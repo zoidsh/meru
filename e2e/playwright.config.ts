@@ -8,6 +8,7 @@ export default defineConfig({
   testDir: import.meta.dirname,
   // Never *.spec.ts or *.test.ts, which Vitest would claim.
   testMatch: "**/*.e2e.ts",
+  globalSetup: path.join(import.meta.dirname, "global-setup.ts"),
   outputDir: path.join(import.meta.dirname, "..", "test-results"),
   // Each test launches its own app on a user data directory of its own, so
   // tests rather than files spread across workers.

@@ -7,13 +7,22 @@ import { expect, test } from "./lib/app.ts";
 
 const run = promisify(execFile);
 
+/** Through Launch Services, which needs no Automation grant. */
 const frontmostPid = async () => {
-  const { stdout } = await run("osascript", [
-    "-e",
-    'tell application "System Events" to get unix id of first process whose frontmost is true',
+  const { stdout: front } = await run("lsappinfo", ["front"]);
+  const { stdout } = await run("lsappinfo", [
+    "info",
+    "-only",
+    "pid",
+    front.trim(),
   ]);
+  const pid = /"?pid"?\s*=\s*(?<pid>\d+)/u.exec(stdout)?.groups?.pid;
 
-  return Number(stdout.trim());
+  if (!pid) {
+    throw new Error(`lsappinfo gave no pid: ${stdout}`);
+  }
+
+  return Number(pid);
 };
 
 test("never comes to the front on macOS, even when told to", async ({
@@ -33,7 +42,7 @@ test("never comes to the front on macOS, even when told to", async ({
     electronApp.focus({ steal: true });
   });
 
-  // Activation lands asynchronously, so a stolen focus is given time to show.
+  // Activation lands asynchronously.
   await delay(1000);
   expect(await frontmostPid()).not.toBe(app.process().pid);
 });
