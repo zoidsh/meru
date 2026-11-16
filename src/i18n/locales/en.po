@@ -7,6 +7,21 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#. Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar
+#: src/shell/tab-strip.tsx
+msgid "{name} couldn’t load"
+msgstr "{name} couldn’t load"
+
+#. Explanation under the offline heading in place of a tab's page; {name} is the app, such as Gmail or Calendar
+#: src/shell/tab-strip.tsx
+msgid "{name} loads by itself when you’re back online."
+msgstr "{name} loads by itself when you’re back online."
+
+#. Heading shown in place of a tab's page that crashed; {name} is the app, such as Gmail or Calendar
+#: src/shell/tab-strip.tsx
+msgid "{name} stopped working"
+msgstr "{name} stopped working"
+
 #. Title of the error dialog shown when the app fails to open; {productName} is the app's name
 #: src/main/failures.ts
 msgid "{productName} could not start"
@@ -22,16 +37,41 @@ msgstr "Add profile"
 msgid "Cancel"
 msgstr "Cancel"
 
+#. Accessible name of the cross on a tab that closes it; {title} is the tab's title
+#: src/shell/tab-strip.tsx
+msgid "Close {title}"
+msgstr "Close {title}"
+
 #. Accessible name of the window's main area, below the title bar, read by screen readers
 #: src/shell/app.tsx
 msgid "Content"
 msgstr "Content"
+
+#. Said by screen readers after a tab's title when its page could not load
+#: src/shell/tab-strip.tsx
+msgid "Couldn’t load"
+msgstr "Couldn’t load"
 
 #. Name of the first profile until the person renames it, shown in the title bar
 #: src/main/profile-copy.ts
 msgctxt "profile name"
 msgid "Default"
 msgstr "Default"
+
+#. Explanation under the heading in place of a tab's page that crashed
+#: src/shell/tab-strip.tsx
+msgid "Its page quit unexpectedly. Reload it to carry on."
+msgstr "Its page quit unexpectedly. Reload it to carry on."
+
+#. Said by screen readers after a tab's title while its page loads
+#: src/shell/tab-strip.tsx
+msgid "Loading"
+msgstr "Loading"
+
+#. Explanation under the heading in place of a tab's page that could not load
+#: src/shell/tab-strip.tsx
+msgid "Meru keeps trying by itself."
+msgstr "Meru keeps trying by itself."
 
 #. Explanation in the dialog that confirms removing a profile
 #: src/main/profile-copy.ts
@@ -48,6 +88,11 @@ msgstr "Profile {n}"
 msgid "Profiles"
 msgstr "Profiles"
 
+#. Button in place of a tab's page that crashed, which loads the page again
+#: src/shell/tab-strip.tsx
+msgid "Reload"
+msgstr "Reload"
+
 #. Question in the dialog that confirms removing a profile; {name} is the profile's name
 #: src/main/profile-copy.ts
 msgid "Remove {name}?"
@@ -63,6 +108,16 @@ msgstr "Remove {name}…"
 msgid "Remove Profile"
 msgstr "Remove Profile"
 
+#. Said by screen readers after a tab's title when its page crashed
+#: src/shell/tab-strip.tsx
+msgid "Stopped working"
+msgstr "Stopped working"
+
+#. Accessible name of the list of the profile's tabs down the left of the window, read by screen readers
+#: src/shell/tab-strip.tsx
+msgid "Tabs"
+msgstr "Tabs"
+
 #. Shown when the app is started on data that a later version of the app wrote, which this version cannot read
 #: src/main/state-store.ts
 msgid "This data was saved by a newer version. Open it with that version, or update to it."
@@ -72,3 +127,18 @@ msgstr "This data was saved by a newer version. Open it with that version, or up
 #: src/shell/app.tsx
 msgid "Title bar"
 msgstr "Title bar"
+
+#. Button in place of a tab's page that could not load, which tries to load it again now
+#: src/shell/tab-strip.tsx
+msgid "Try again"
+msgstr "Try again"
+
+#. Label of the disabled button in place of a tab's page while it tries to load the page again
+#: src/shell/tab-strip.tsx
+msgid "Trying again…"
+msgstr "Trying again…"
+
+#. Heading shown in place of a tab's page that could not load because the computer is offline
+#: src/shell/tab-strip.tsx
+msgid "You’re offline"
+msgstr "You’re offline"

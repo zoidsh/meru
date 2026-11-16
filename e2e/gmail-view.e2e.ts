@@ -35,7 +35,7 @@ const readState = async (userDataDir: string) =>
     selectedProfileId: string;
   };
 
-test("shows the stand-in in the content rectangle below the titlebar, and follows a resize", async ({
+test("shows the stand-in in the content rectangle below the titlebar and beside the tab strip, and follows a resize", async ({
   app,
   shell,
   standIn,
@@ -49,11 +49,16 @@ test("shows the stand-in in the content rectangle below the titlebar, and follow
   const { content, views } = await readLayout(app);
 
   expect(views).toStrictEqual([
-    { x: 0, y: 40, width: content.width, height: content.height - 40 },
+    {
+      x: 224,
+      y: 40,
+      width: content.width - 224,
+      height: content.height - 40,
+    },
   ]);
   expect(
     await view.evaluate(() => [window.innerWidth, window.innerHeight])
-  ).toStrictEqual([content.width, content.height - 40]);
+  ).toStrictEqual([content.width - 224, content.height - 40]);
 
   const titlebar = await shell
     .getByRole("banner", { name: "Title bar" })
@@ -72,10 +77,10 @@ test("shows the stand-in in the content rectangle below the titlebar, and follow
 
       return layout.views;
     })
-    .toStrictEqual([{ x: 0, y: 40, width: 900, height: 600 }]);
+    .toStrictEqual([{ x: 224, y: 40, width: 676, height: 600 }]);
   await expect
     .poll(() => view.evaluate(() => [window.innerWidth, window.innerHeight]))
-    .toStrictEqual([900, 600]);
+    .toStrictEqual([676, 600]);
 });
 
 test("a second launch keeps the profile and its session's cookie", async ({
@@ -89,7 +94,7 @@ test("a second launch keeps the profile and its session's cookie", async ({
 
   const { profiles, selectedProfileId } = await readState(userDataDir);
 
-  expect(profiles).toStrictEqual([{ id: selectedProfileId, name: "Default" }]);
+  expect(profiles).toMatchObject([{ id: selectedProfileId, name: "Default" }]);
   expect(standIn.cookieHeaders).toStrictEqual([""]);
 
   await first.close();

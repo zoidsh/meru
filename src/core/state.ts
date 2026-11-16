@@ -1,15 +1,33 @@
 import { z } from "zod/mini";
 
+import { APPS, isAppId } from "./apps.ts";
+
 export const STATE_VERSION = 1;
 
 /** What v3 names its first account; kept in English and translated when shown. */
 export const DEFAULT_PROFILE_NAME = "Default";
 
-// Loose at both levels: a key a later build added on the same version, as a
+/** v3's id for the Gmail tab, which every profile has, first. */
+export const GMAIL_TAB_ID = "gmail";
+
+const GMAIL_HOME = APPS.find((app) => app.id === "gmail")?.home ?? "";
+
+// Loose at every level: a key a later build added on the same version, as a
 // Beta may, survives this build rewriting the file.
+const tabSchema = z.looseObject({
+  id: z.string().check(z.minLength(1)),
+  /** A string rather than the known ids, so a later build's app is kept. */
+  app: z.string(),
+  url: z.string(),
+  title: z.string(),
+});
+
 const profileSchema = z.looseObject({
   id: z.string().check(z.minLength(1)),
   name: z.string(),
+  // Optional, so every file slice 1.2 wrote reads as it is.
+  tabs: z.optional(z.array(tabSchema)),
+  selectedTabId: z.optional(z.string()),
 });
 
 const stateSchema = z
@@ -33,9 +51,75 @@ const stateSchema = z
     )
   );
 
-export type Profile = z.infer<typeof profileSchema>;
+export type Tab = z.infer<typeof tabSchema>;
 
-export type State = z.infer<typeof stateSchema>;
+type StoredProfile = z.infer<typeof profileSchema>;
+
+/** A profile once decoded: its tabs start with Gmail's, and one is selected. */
+export type Profile = StoredProfile & { tabs: Tab[]; selectedTabId: string };
+
+type StoredState = z.infer<typeof stateSchema>;
+
+// Spelled out, since `Omit` drops every named key of a loose object's type.
+export interface State {
+  [key: string]: unknown;
+  version: StoredState["version"];
+  profiles: Profile[];
+  selectedProfileId: string;
+  profilesToClear?: StoredState["profilesToClear"];
+}
+
+export const gmailTab = (): Tab => ({
+  id: GMAIL_TAB_ID,
+  app: "gmail",
+  url: GMAIL_HOME,
+  title: "",
+});
+
+/** The tabs of apps this build knows; the rest are kept but not shown. */
+export const knownTabs = (profile: Pick<Profile, "tabs">) =>
+  profile.tabs.filter((tab) => isAppId(tab.app));
+
+/**
+ * Puts a profile's tabs in the shape every reader relies on, rather than
+ * refusing a file over them: one Gmail tab, first, ids unique, and a selected
+ * tab that is shown, else Gmail's.
+ */
+const normalizeProfile = (profile: StoredProfile): Profile => {
+  const stored = profile.tabs ?? [];
+  const gmail = stored.find((tab) => tab.app === "gmail") ?? gmailTab();
+  const seen = new Set<string>();
+  const tabs = [gmail, ...stored.filter((tab) => tab.app !== "gmail")].filter(
+    (tab) => {
+      if (seen.has(tab.id)) {
+        return false;
+      }
+
+      seen.add(tab.id);
+
+      return true;
+    }
+  );
+  const { selectedTabId } = profile;
+
+  return {
+    ...profile,
+    tabs,
+    selectedTabId:
+      selectedTabId !== undefined &&
+      knownTabs({ tabs }).some((tab) => tab.id === selectedTabId)
+        ? selectedTabId
+        : gmail.id,
+  };
+};
+
+/** A profile with only its Gmail tab. */
+export const newProfile = (id: string, name: string): Profile => ({
+  id,
+  name,
+  tabs: [gmailTab()],
+  selectedTabId: GMAIL_TAB_ID,
+});
 
 export type DecodedState =
   | { kind: "state"; state: State }
@@ -58,7 +142,13 @@ export const decodeState = (value: unknown): DecodedState => {
   const result = stateSchema.safeParse(value);
 
   return result.success
-    ? { kind: "state", state: result.data }
+    ? {
+        kind: "state",
+        state: {
+          ...result.data,
+          profiles: result.data.profiles.map(normalizeProfile),
+        },
+      }
     : { kind: "unreadable", reason: z.prettifyError(result.error) };
 };
 
@@ -72,7 +162,7 @@ export const createInitialState = (newId: () => string): State => {
 
   return {
     version: STATE_VERSION,
-    profiles: [{ id, name: DEFAULT_PROFILE_NAME }],
+    profiles: [newProfile(id, DEFAULT_PROFILE_NAME)],
     selectedProfileId: id,
   };
 };
@@ -102,7 +192,6 @@ export const addProfile = (state: State, profile: Profile): State => ({
   selectedProfileId: profile.id,
 });
 
-/** Nothing when there is no such profile. */
 /** Nothing when there is no such profile or it is already selected. */
 export const selectProfile = (
   state: State,

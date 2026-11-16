@@ -9,6 +9,21 @@ const profileId = z.string().check(z.minLength(1));
 
 const none = z.object({});
 
+const tabKey = z.object({ profileId, tabId: z.string().check(z.minLength(1)) });
+
+const tabStatus = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("unloaded") }),
+  z.object({ kind: z.literal("loading") }),
+  z.object({ kind: z.literal("live") }),
+  z.object({
+    kind: z.literal("failed"),
+    /** Chromium's error name, such as `ERR_CONNECTION_REFUSED`. */
+    reason: z.string(),
+    retrying: z.boolean(),
+  }),
+  z.object({ kind: z.literal("crashed") }),
+]);
+
 /** What the shell renderer may ask of main. Main validates every request. */
 export const SHELL_CALLS = {
   selectProfile: { request: z.object({ profileId }), response: z.undefined() },
@@ -18,6 +33,10 @@ export const SHELL_CALLS = {
     request: z.object({ profileId }),
     response: z.undefined(),
   },
+  selectTab: { request: tabKey, response: z.undefined() },
+  closeTab: { request: tabKey, response: z.undefined() },
+  /** Loads a tab that failed or crashed again, now. */
+  retryTab: { request: tabKey, response: z.undefined() },
 } as const satisfies Record<
   ShellCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -28,6 +47,20 @@ export const SHELL_STATE = {
   profiles: z.object({
     profiles: z.array(z.object({ id: profileId, name: z.string() })),
     selectedProfileId: profileId,
+  }),
+  /** The selected profile's tabs, in the strip's order. */
+  tabs: z.object({
+    profileId,
+    selectedTabId: z.string(),
+    tabs: z.array(
+      z.object({
+        id: z.string(),
+        app: z.string(),
+        title: z.string(),
+        closable: z.boolean(),
+        status: tabStatus,
+      })
+    ),
   }),
 } as const;
 

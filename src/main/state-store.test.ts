@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { newProfile } from "#core/state.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { StartupError } from "./failures.ts";
@@ -58,7 +59,7 @@ const load = (file: TextFile) => {
 
 const initial = {
   version: 1,
-  profiles: [{ id: "new-id", name: "Default" }],
+  profiles: [newProfile("new-id", "Default")],
   selectedProfileId: "new-id",
 };
 
@@ -70,7 +71,7 @@ describe(loadState, () => {
     expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual(initial);
   });
 
-  it("reads the saved state and writes nothing", async () => {
+  it("reads a file slice 1.2 wrote, giving each profile its Gmail tab, and writes nothing", async () => {
     const saved = JSON.stringify({
       version: 1,
       profiles: [{ id: "kept-id", name: "Work" }],
@@ -78,10 +79,10 @@ describe(loadState, () => {
     });
     const { file, files } = createFakeFile(saved);
 
-    await expect(load(file).state).resolves.toHaveProperty(
-      "selectedProfileId",
-      "kept-id"
-    );
+    const state = await load(file).state;
+
+    expect(state.selectedProfileId).toBe("kept-id");
+    expect(state.profiles).toStrictEqual([newProfile("kept-id", "Work")]);
     expect([...files]).toStrictEqual([[STATE_PATH, saved]]);
   });
 
@@ -113,7 +114,7 @@ describe(loadState, () => {
 
     expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual({
       version: 1,
-      profiles: [{ id: "kept-id", name: "Work", color: "teal" }],
+      profiles: [{ ...newProfile("kept-id", "Work"), color: "teal" }],
       selectedProfileId: "kept-id",
       profilesToClear: ["removed-id"],
       panes: [{ tab: 1 }],

@@ -5,6 +5,9 @@ export const SHELL_CALL_NAMES = [
   "selectProfile",
   "addProfile",
   "openProfileMenu",
+  "selectTab",
+  "closeTab",
+  "retryTab",
 ] as const;
 
 export type ShellCallName = (typeof SHELL_CALL_NAMES)[number];

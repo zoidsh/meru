@@ -21,6 +21,20 @@ const asSender = (sender: number | IpcSender): IpcSender =>
     ? { webContentsId: sender, isMainFrame: true, origin: SHELL_ORIGIN }
     : sender;
 
+const TABS: ShellState["tabs"] = {
+  profileId: "a",
+  selectedTabId: "gmail",
+  tabs: [
+    {
+      id: "gmail",
+      app: "gmail",
+      title: "",
+      closable: false,
+      status: { kind: "live" },
+    },
+  ],
+};
+
 const profilesSlice = (selectedProfileId: string) => ({
   profiles: [
     { id: "a", name: "Default" },
@@ -42,7 +56,7 @@ const setup = () => {
   const calls: unknown[] = [];
   const logs: string[] = [];
   const changeListeners: (() => void)[] = [];
-  let state: ShellState = { profiles: profilesSlice("a") };
+  let state: ShellState = { profiles: profilesSlice("a"), tabs: TABS };
 
   const ipc: Ipc = {
     handle: (channel, handler) => {
@@ -60,7 +74,11 @@ const setup = () => {
 
   senders.register(SHELL, { role: "shell" });
   senders.register(OTHER_SHELL, { role: "shell" });
-  senders.register(CONTENT_VIEW, { role: "content-view", profileId: "a" });
+  senders.register(CONTENT_VIEW, {
+    role: "content-view",
+    profileId: "a",
+    tabId: "gmail",
+  });
 
   const handlers: ShellHandlers = {
     selectProfile: (request) => {
@@ -75,6 +93,21 @@ const setup = () => {
     },
     openProfileMenu: (request) => {
       calls.push(["openProfileMenu", request]);
+
+      return Promise.resolve();
+    },
+    selectTab: (request) => {
+      calls.push(["selectTab", request]);
+
+      return Promise.resolve();
+    },
+    closeTab: (request) => {
+      calls.push(["closeTab", request]);
+
+      return Promise.resolve();
+    },
+    retryTab: (request) => {
+      calls.push(["retryTab", request]);
 
       return Promise.resolve();
     },
@@ -111,8 +144,8 @@ const setup = () => {
     senders,
     handshake: (sender: number | IpcSender, payload: unknown = ["profiles"]) =>
       listened.get(SHELL_CHANNELS.sync)?.(asSender(sender), payload),
-    change: (next: ShellState) => {
-      state = next;
+    change: (next: Partial<ShellState>) => {
+      state = { ...state, ...next };
 
       for (const listener of changeListeners) {
         listener();

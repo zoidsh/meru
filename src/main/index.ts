@@ -1,5 +1,7 @@
 import path from "node:path";
 
+import { APPS, isAppId, standInApps } from "#core/apps.ts";
+import type { AppId } from "#core/apps.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
@@ -7,6 +9,7 @@ import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
+import { createNetwork } from "#platform/network.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSessions } from "#platform/sessions.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
@@ -17,26 +20,41 @@ import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
 import { automaticProfileName } from "./profile-copy.ts";
-import { createProfileViews } from "./profile-views.ts";
 import { createProfiles } from "./profiles.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { createShellHandlers, shellState } from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
 import { createShellWindow, revealWindow } from "./shell-window.ts";
 import { STATE_FILE_NAME, loadState, saveState } from "./state-store.ts";
+import { createTabViews } from "./tab-views.ts";
 
 const APP_SCHEME = "meru-app";
 
 const SHELL_HOST = "shell";
 
-const GMAIL_URL = "https://mail.google.com/mail/u/0";
+/** A JSON object of app ids and the stand-in URL each loads in its place. */
+const readStandInUrls = (json: string | undefined) => {
+  const urls: Partial<Record<AppId, string>> = {};
 
-// The suite's stand-in for Gmail, which only its build reads, opens its own
-// pop-ups as sign-in's would open.
-const standInUrl = MERU_E2E_BUILD ? process.env.MERU_TEST_GMAIL_URL : undefined;
-const gmailUrl = standInUrl || GMAIL_URL;
-const childWindowOrigins = standInUrl
-  ? [new URL(standInUrl).origin]
+  for (const [id, url] of Object.entries(
+    JSON.parse(json ?? "{}") as Record<string, unknown>
+  )) {
+    if (isAppId(id) && typeof url === "string") {
+      urls[id] = url;
+    }
+  }
+
+  return urls;
+};
+
+// The suite's stand-ins for the apps, which only its build reads. Gmail's
+// opens its own pop-ups as sign-in's would open.
+const standInUrls = MERU_E2E_BUILD
+  ? readStandInUrls(process.env.MERU_TEST_APP_URLS)
+  : undefined;
+const apps = standInUrls ? standInApps(standInUrls) : APPS;
+const childWindowOrigins = standInUrls?.gmail
+  ? [new URL(standInUrls.gmail).origin]
   : SIGN_IN_ORIGINS;
 
 /** v3's account id, so a profile id is the account id v3 would have made. */
@@ -169,13 +187,18 @@ const start = async () => {
 
   senders.register(shell.window.webContentsId, { role: "shell" });
 
-  const views = createProfileViews({
+  const views = createTabViews({
     window: shell.window,
-    url: gmailUrl,
+    apps,
     childWindowOrigins,
     background,
     systemBrowser: createSystemBrowser(),
+    network: createNetwork(),
     senders,
+    state: profiles.get,
+    openTab: profiles.openTab,
+    newId,
+    updatePages: profiles.updatePages,
     log: console.error,
   });
 
@@ -189,13 +212,15 @@ const start = async () => {
     shellOrigin: `${shellUrl.protocol}//${shellUrl.host}`,
     handlers: createShellHandlers({
       profiles,
+      tabs: views,
       window: shell.window,
       log: console.error,
     }),
     state: {
-      read: () => shellState(profiles.get()),
+      read: () => shellState(profiles.get(), views.status),
       onChange: (listener) => {
         profiles.onChange(listener);
+        views.onChange(listener);
       },
     },
     log: console.error,

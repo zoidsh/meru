@@ -1,8 +1,10 @@
 import { Mutex } from "es-toolkit";
 
+import type { App } from "#core/apps.ts";
 import {
   addProfile,
   forgetProfilesToClear,
+  newProfile,
   nextProfileName,
   profilePartition,
   removeProfile,
@@ -10,6 +12,8 @@ import {
   sortProfilesToClear,
 } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import { closeTab, openTab, selectTab, updatePages } from "#core/tabs.ts";
+import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
 
 export interface ProfilesDeps {
   initial: State;
@@ -107,12 +111,23 @@ export const createProfiles = ({
     add: () =>
       exclusive(() =>
         commit(
-          addProfile(state, {
-            id: newId(),
-            name: nextProfileName(state, profileName),
-          })
+          addProfile(
+            state,
+            newProfile(newId(), nextProfileName(state, profileName))
+          )
         )
       ),
+    /** Opens a link as a tab of `app`, selected; a new tab gets `tabId`. */
+    openTab: (profileId: string, app: App, url: string, tabId: string) =>
+      exclusive(async (): Promise<OpenedTab | undefined> => {
+        const opened = openTab(state, profileId, app, url, () => tabId);
+
+        return opened && (await commit(opened.state)) ? opened : undefined;
+      }),
+    selectTab: (key: TabKey) => exclusive(() => commit(selectTab(state, key))),
+    closeTab: (key: TabKey) => exclusive(() => commit(closeTab(state, key))),
+    updatePages: (updates: PageUpdate[]) =>
+      exclusive(() => commit(updatePages(state, updates))),
     /**
      * Lists the profile no more and puts it on the list to clear, in one
      * write, which closes its view; then deletes its data and takes it off

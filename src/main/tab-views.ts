@@ -1,0 +1,367 @@
+import { findApp, restoreUrl } from "#core/apps.ts";
+import type { App } from "#core/apps.ts";
+import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
+import { profilePartition } from "#core/state.ts";
+import type { State } from "#core/state.ts";
+import { showsView, transition } from "#core/tab-machine.ts";
+import type { TabEffect, TabEvent, TabStatus } from "#core/tab-machine.ts";
+import { findTab, tabKey } from "#core/tabs.ts";
+import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
+import { planViews } from "#core/views.ts";
+import { routeWindowOpen } from "#core/window-open.ts";
+import type { ContentView, ContentViewEvent } from "#platform/content-view.ts";
+import type { Network } from "#platform/network.ts";
+import type { SystemBrowser } from "#platform/system-browser.ts";
+import type { AppWindow } from "#platform/window.ts";
+
+import { createPageWriter } from "./page-writer.ts";
+import type { SenderRegistry } from "./senders.ts";
+
+export interface TabViewsDeps {
+  window: Pick<
+    AppWindow,
+    "getContentAreaSize" | "onContentAreaResize" | "addContentView"
+  >;
+  /** The registry, or the suite's stand-ins for it. */
+  apps: readonly App[];
+  /** Origins whose pop-ups open as child windows in the session. */
+  childWindowOrigins: readonly string[];
+  background: boolean;
+  systemBrowser: SystemBrowser;
+  network: Network;
+  senders: Pick<SenderRegistry, "register">;
+  /** Reads main's state as it is now. */
+  state: () => State;
+  /** Opens the tab, under `tabId` when it is a new one. */
+  openTab: (
+    profileId: string,
+    app: App,
+    url: string,
+    tabId: string
+  ) => Promise<OpenedTab | undefined>;
+  newId: () => string;
+  updatePages: (updates: PageUpdate[]) => Promise<unknown>;
+  log: (message: string) => void;
+}
+
+const describe = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+interface TabView {
+  key: TabKey;
+  view: ContentView;
+  status: TabStatus;
+  retry: ReturnType<typeof setTimeout> | undefined;
+}
+
+/**
+ * Keeps the window's content views matching the tabs: one for each tab once
+ * it has been on screen, in its profile's session, beside the strip, with
+ * only the front tab's showing, and hidden while it failed or crashed. Each
+ * tab's status changes only through `transition`, whose effects run before
+ * the status is committed.
+ */
+export const createTabViews = ({
+  window,
+  apps,
+  childWindowOrigins,
+  background,
+  systemBrowser,
+  network,
+  senders,
+  state,
+  openTab,
+  newId,
+  updatePages,
+  log,
+}: TabViewsDeps) => {
+  const tabs = new Map<string, TabView>();
+  /** A URL a tab was opened or sent to, for its next load. */
+  const pendingUrls = new Map<string, string>();
+  const listeners = new Set<() => void>();
+  let front: string | undefined;
+
+  const bounds = () =>
+    contentViewBounds(window.getContentAreaSize(), TAB_STRIP_WIDTH);
+
+  const pages = createPageWriter(async (updates) => {
+    try {
+      await updatePages(updates);
+    } catch (error) {
+      log(`Where the tabs' pages are was not saved: ${describe(error)}`);
+    }
+  });
+
+  const notify = () => {
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+
+  const showFront = () => {
+    for (const [key, tab] of tabs) {
+      tab.view.setVisible(key === front && showsView(tab.status));
+    }
+  };
+
+  const urlToLoad = (key: string, { profileId, tabId }: TabKey) => {
+    const pending = pendingUrls.get(key);
+
+    if (pending !== undefined) {
+      pendingUrls.delete(key);
+
+      return pending;
+    }
+
+    const tab = findTab(state(), { profileId, tabId });
+    const app = tab && findApp(apps, tab.app);
+
+    return tab && app ? restoreUrl(apps, app, tab.url) : undefined;
+  };
+
+  /** A failure arrives as `did-fail-load` too, which the machine hears. */
+  const load = async (key: string, view: ContentView, url: string) => {
+    try {
+      await view.loadURL(url);
+    } catch (error) {
+      log(`Tab ${key} did not load: ${describe(error)}`);
+    }
+  };
+
+  const run = (
+    key: string,
+    tab: TabView,
+    effect: TabEffect,
+    onRetryDue: () => void
+  ) => {
+    switch (effect.kind) {
+      case "load": {
+        const url = urlToLoad(key, tab.key);
+
+        if (url !== undefined) {
+          load(key, tab.view, url);
+        }
+
+        break;
+      }
+      case "schedule-retry": {
+        clearTimeout(tab.retry);
+        tab.retry = setTimeout(() => {
+          tab.retry = undefined;
+          onRetryDue();
+        }, effect.delay);
+        break;
+      }
+      case "cancel-retry": {
+        clearTimeout(tab.retry);
+        tab.retry = undefined;
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  };
+
+  const dispatch = (key: string, event: TabEvent) => {
+    const tab = tabs.get(key);
+
+    if (!tab) {
+      return;
+    }
+
+    const next = transition(tab.status, event);
+
+    for (const effect of next.effects) {
+      run(key, tab, effect, () => {
+        dispatch(key, { kind: "retry-due" });
+      });
+    }
+
+    if (next.status !== tab.status) {
+      tab.status = next.status;
+      showFront();
+      notify();
+    }
+  };
+
+  const onEvent = (key: string, tabKeyed: TabKey, event: ContentViewEvent) => {
+    switch (event.kind) {
+      case "loaded": {
+        dispatch(key, { kind: "loaded" });
+        break;
+      }
+      case "failed-to-load": {
+        log(`Tab ${key} could not load: ${event.name} (${event.code})`);
+        dispatch(key, {
+          kind: "failed-to-load",
+          reason: { code: event.code, name: event.name },
+        });
+        break;
+      }
+      case "crashed": {
+        log(`The page of tab ${key} is gone: ${event.reason}`);
+        dispatch(key, { kind: "crashed", reason: event.reason });
+        break;
+      }
+      case "navigated": {
+        pages.record({ ...tabKeyed, url: event.url });
+        break;
+      }
+      case "titled": {
+        pages.record({ ...tabKeyed, title: event.title });
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  };
+
+  const openInSystemBrowser = async (url: string) => {
+    try {
+      await systemBrowser.open(url);
+    } catch (error) {
+      log(`The system browser did not open a link: ${describe(error)}`);
+    }
+  };
+
+  /**
+   * The URL waits for the tab's next load. Committing the tab makes it the
+   * front one, whose first load takes the URL; a tab that was loaded already
+   * is sent to it after.
+   */
+  const openAsTab = async (profileId: string, app: App, url: string) => {
+    const existing = app.singleInstance
+      ? state()
+          .profiles.find((profile) => profile.id === profileId)
+          ?.tabs.find((tab) => tab.app === app.id)
+      : undefined;
+    const tabId = existing?.id ?? newId();
+    const key = tabKey({ profileId, tabId });
+
+    pendingUrls.set(key, url);
+
+    try {
+      const opened = await openTab(profileId, app, url, tabId);
+
+      if (!opened) {
+        pendingUrls.delete(key);
+      } else if (pendingUrls.has(key)) {
+        dispatch(key, { kind: "navigate" });
+      }
+    } catch (error) {
+      pendingUrls.delete(key);
+      log(`A link did not open as a tab: ${describe(error)}`);
+    }
+  };
+
+  const create = (key: string, tabKeyed: TabKey) => {
+    const { profileId } = tabKeyed;
+    const view = window.addContentView({
+      partition: profilePartition(profileId),
+      background,
+      onWindowOpen: (url) => {
+        const route = routeWindowOpen(url, {
+          childWindowOrigins,
+          apps,
+          openerApp: findTab(state(), tabKeyed)?.app ?? "",
+        });
+
+        if (route.kind === "system-browser") {
+          openInSystemBrowser(url);
+        } else if (route.kind === "tab") {
+          openAsTab(profileId, route.app, url);
+        }
+
+        return route.kind === "child-window" ? "allow" : "deny";
+      },
+      onWebContents: (webContentsId, role) =>
+        senders.register(webContentsId, { role, ...tabKeyed }),
+      onEvent: (event) => {
+        onEvent(key, tabKeyed, event);
+      },
+    });
+
+    view.setBounds(bounds());
+
+    return view;
+  };
+
+  const close = (key: string, tab: TabView) => {
+    tabs.delete(key);
+    pendingUrls.delete(key);
+    pages.forget(key);
+    clearTimeout(tab.retry);
+
+    try {
+      tab.view.close();
+    } catch (error) {
+      log(`The view of tab ${key} did not close: ${describe(error)}`);
+    }
+  };
+
+  window.onContentAreaResize(() => {
+    for (const tab of tabs.values()) {
+      tab.view.setBounds(bounds());
+    }
+  });
+
+  network.onOnline(() => {
+    for (const key of tabs.keys()) {
+      dispatch(key, { kind: "online" });
+    }
+  });
+
+  return {
+    /** Creates, closes, shows and hides views until the window matches. */
+    reconcile: (current: State) => {
+      const plan = planViews(current, [...tabs.keys()]);
+      const planned = new Map(plan.views.map((key) => [tabKey(key), key]));
+      let changed = false;
+
+      for (const [key, tab] of tabs) {
+        if (!planned.has(key)) {
+          close(key, tab);
+          changed = true;
+        }
+      }
+
+      for (const [key, tabKeyed] of planned) {
+        if (!tabs.has(key)) {
+          tabs.set(key, {
+            key: tabKeyed,
+            view: create(key, tabKeyed),
+            status: { kind: "unloaded" },
+            retry: undefined,
+          });
+        }
+      }
+
+      const nextFront = tabKey(plan.front);
+
+      if (nextFront !== front) {
+        front = nextFront;
+        dispatch(front, { kind: "select" });
+      }
+
+      showFront();
+
+      if (changed) {
+        notify();
+      }
+    },
+    /** What the machine has to hear from the tab's controls. */
+    retry: (key: TabKey) => {
+      dispatch(tabKey(key), { kind: "retry" });
+    },
+    /** Each tab's status; one with no view is not loaded. */
+    status: (key: TabKey): TabStatus =>
+      tabs.get(tabKey(key))?.status ?? { kind: "unloaded" },
+    onChange: (listener: () => void) => {
+      listeners.add(listener);
+    },
+  };
+};
+
+export type TabViews = ReturnType<typeof createTabViews>;

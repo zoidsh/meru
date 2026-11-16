@@ -3,6 +3,18 @@ import type { BrowserWindow, WebContents } from "electron";
 
 import type { Rectangle } from "#core/window-bounds.ts";
 
+/** What the view's page did, as Meru tracks it. */
+export type ContentViewEvent =
+  /** The main frame finished loading; an error page's finish follows a failure. */
+  | { kind: "loaded" }
+  | { kind: "failed-to-load"; code: number; name: string }
+  | { kind: "crashed"; reason: string }
+  | { kind: "navigated"; url: string }
+  | { kind: "titled"; title: string };
+
+// The page cancelling a load it started itself, which is no failure.
+const ERR_ABORTED = -3;
+
 export interface ContentViewOptions {
   /** The session's partition, which the page and every window it opens share. */
   partition: string;
@@ -22,6 +34,8 @@ export interface ContentViewOptions {
     webContentsId: number,
     kind: "content-view" | "child-window"
   ) => () => void;
+  /** Told of the view's own page, never of its child windows'. */
+  onEvent: (event: ContentViewEvent) => void;
 }
 
 export interface ContentView {
@@ -83,6 +97,32 @@ const routeWindowOpens = (
   });
 };
 
+const reportEvents = (
+  webContents: WebContents,
+  onEvent: ContentViewOptions["onEvent"]
+) => {
+  webContents.on("did-finish-load", () => onEvent({ kind: "loaded" }));
+  webContents.on("did-fail-load", (_event, code, name, _url, isMainFrame) => {
+    if (isMainFrame && code !== ERR_ABORTED) {
+      onEvent({ kind: "failed-to-load", code, name });
+    }
+  });
+  webContents.on("render-process-gone", (_event, { reason }) =>
+    onEvent({ kind: "crashed", reason })
+  );
+  webContents.on("did-navigate", (_event, url) =>
+    onEvent({ kind: "navigated", url })
+  );
+  webContents.on("did-navigate-in-page", (_event, url, isMainFrame) => {
+    if (isMainFrame) {
+      onEvent({ kind: "navigated", url });
+    }
+  });
+  webContents.on("page-title-updated", (_event, title) =>
+    onEvent({ kind: "titled", title })
+  );
+};
+
 /**
  * A sandboxed, context-isolated view with no preload, for a page Meru does not
  * own, attached to `window`.
@@ -104,6 +144,7 @@ export const addContentView = (
   const { webContents } = view;
 
   trackDestroyed(webContents, "content-view", onWebContents);
+  reportEvents(webContents, options.onEvent);
   routeWindowOpens(webContents, window, options, children);
   window.contentView.addChildView(view);
 

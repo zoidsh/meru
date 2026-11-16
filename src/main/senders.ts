@@ -1,7 +1,7 @@
 export type SenderIdentity =
   | { role: "shell" }
-  | { role: "content-view"; profileId: string }
-  | { role: "child-window"; profileId: string };
+  | { role: "content-view"; profileId: string; tabId: string }
+  | { role: "child-window"; profileId: string; tabId: string };
 
 /**
  * Every webContents Meru creates, by id, with what it is. Entered when it is

@@ -6,6 +6,9 @@ import {
   createInitialState,
   decodeState,
   forgetProfilesToClear,
+  gmailTab,
+  knownTabs,
+  newProfile,
   nextProfileName,
   profilePartition,
   removeProfile,
@@ -25,15 +28,40 @@ const valid = {
 };
 
 describe(decodeState, () => {
-  it("reads a valid state", () => {
-    expect(decodeState(valid)).toStrictEqual({ kind: "state", state: valid });
+  it("reads a file slice 1.2 wrote, each profile with only its Gmail tab, selected", () => {
+    expect(decodeState(valid)).toStrictEqual({
+      kind: "state",
+      state: {
+        ...valid,
+        profiles: valid.profiles.map((profile) => ({
+          ...profile,
+          tabs: [gmailTab()],
+          selectedTabId: "gmail",
+        })),
+      },
+    });
   });
 
-  it("keeps keys it does not know, at the top and in a profile", () => {
+  it("keeps keys it does not know, at the top, in a profile and in a tab", () => {
+    const calendar = {
+      id: "t1",
+      app: "calendar",
+      url: "https://calendar.google.com/",
+      title: "Calendar",
+      zoom: 1.5,
+    };
     const withUnknown = {
       ...valid,
       panes: [],
-      profiles: [{ ...valid.profiles[0], color: "teal" }, valid.profiles[1]],
+      profiles: [
+        {
+          ...valid.profiles[0],
+          color: "teal",
+          tabs: [gmailTab(), calendar],
+          selectedTabId: "t1",
+        },
+        { ...valid.profiles[1], tabs: [gmailTab()], selectedTabId: "gmail" },
+      ],
     };
 
     expect(decodeState(withUnknown)).toStrictEqual({
@@ -79,20 +107,111 @@ describe(decodeState, () => {
   });
 });
 
+/** The profile's tabs as a file names them, decoded. */
+const decodeTabs = (tabs: unknown, selectedTabId?: string) => {
+  const decoded = decodeState({
+    ...valid,
+    profiles: [{ ...valid.profiles[0], tabs, selectedTabId }],
+    selectedProfileId: valid.profiles[0]?.id,
+  });
+
+  if (decoded.kind !== "state") {
+    throw new Error(decoded.kind);
+  }
+
+  const [profile] = decoded.state.profiles;
+
+  return {
+    ids: profile?.tabs.map((tab) => tab.id),
+    selected: profile?.selectedTabId,
+  };
+};
+
+const tab = (id: string, app: string) => ({ id, app, url: "", title: "" });
+
+describe("decoding tabs", () => {
+  it("puts the Gmail tab first, or adds it when there is none", () => {
+    expect(
+      decodeTabs([tab("t1", "calendar"), tab("gmail", "gmail")], "t1")
+    ).toStrictEqual({ ids: ["gmail", "t1"], selected: "t1" });
+    expect(decodeTabs([tab("t1", "drive")])).toStrictEqual({
+      ids: ["gmail", "t1"],
+      selected: "gmail",
+    });
+    expect(decodeTabs([])).toStrictEqual({ ids: ["gmail"], selected: "gmail" });
+  });
+
+  it("keeps one Gmail tab and one tab of each id, the first", () => {
+    expect(
+      decodeTabs([
+        tab("gmail", "gmail"),
+        tab("t1", "calendar"),
+        tab("g2", "gmail"),
+        tab("t1", "drive"),
+      ])
+    ).toStrictEqual({ ids: ["gmail", "t1"], selected: "gmail" });
+  });
+
+  it("selects Gmail when the selected tab is missing or of an app this build does not know", () => {
+    expect(decodeTabs([tab("gmail", "gmail")], "gone").selected).toBe("gmail");
+    expect(
+      decodeTabs([tab("gmail", "gmail"), tab("t9", "tasks")], "t9")
+    ).toStrictEqual({ ids: ["gmail", "t9"], selected: "gmail" });
+  });
+
+  it("keeps a tab of an app this build does not know, but does not show it", () => {
+    const profile = {
+      ...newProfile("a", "Default"),
+      tabs: [gmailTab(), tab("t9", "tasks"), tab("t1", "meet")],
+    };
+
+    expect(knownTabs(profile).map((known) => known.id)).toStrictEqual([
+      "gmail",
+      "t1",
+    ]);
+  });
+
+  it("sets aside a file whose tabs are the wrong shape", () => {
+    for (const tabs of [
+      "tabs",
+      [{ id: "", app: "gmail", url: "", title: "" }],
+      [{ id: "t", app: "gmail" }],
+    ]) {
+      expect(
+        decodeState({
+          ...valid,
+          profiles: [{ ...valid.profiles[0], tabs }, valid.profiles[1]],
+        }).kind
+      ).toBe("unreadable");
+    }
+  });
+});
+
 describe(createInitialState, () => {
   it("creates one selected profile named as v3 names its first account", () => {
     const state = createInitialState(() => "f00d");
 
     expect(state).toStrictEqual({
       version: 1,
-      profiles: [{ id: "f00d", name: "Default" }],
+      profiles: [
+        {
+          id: "f00d",
+          name: "Default",
+          tabs: [
+            {
+              id: "gmail",
+              app: "gmail",
+              url: "https://mail.google.com/mail/u/0",
+              title: "",
+            },
+          ],
+          selectedTabId: "gmail",
+        },
+      ],
       selectedProfileId: "f00d",
     });
     expect(decodeState(state)).toStrictEqual({ kind: "state", state });
-    expect(selectedProfile(state)).toStrictEqual({
-      id: "f00d",
-      name: "Default",
-    });
+    expect(selectedProfile(state).id).toBe("f00d");
   });
 });
 
@@ -105,9 +224,9 @@ describe(profilePartition, () => {
 const three: State = {
   version: 1,
   profiles: [
-    { id: "a", name: "Default" },
-    { id: "b", name: "Profile 2" },
-    { id: "c", name: "Profile 3" },
+    newProfile("a", "Default"),
+    newProfile("b", "Profile 2"),
+    newProfile("c", "Profile 3"),
   ],
   selectedProfileId: "b",
 };
@@ -134,9 +253,9 @@ describe(nextProfileName, () => {
 
 describe(addProfile, () => {
   it("appends the profile and selects it", () => {
-    expect(addProfile(three, { id: "d", name: "Profile 4" })).toStrictEqual({
+    expect(addProfile(three, newProfile("d", "Profile 4"))).toStrictEqual({
       ...three,
-      profiles: [...three.profiles, { id: "d", name: "Profile 4" }],
+      profiles: [...three.profiles, newProfile("d", "Profile 4")],
       selectedProfileId: "d",
     });
   });
@@ -212,9 +331,9 @@ describe(removeProfile, () => {
     const twice: State = {
       ...three,
       profiles: [
-        { id: "a", name: "Default" },
-        { id: "b", name: "Profile 2" },
-        { id: "a", name: "Again" },
+        newProfile("a", "Default"),
+        newProfile("b", "Profile 2"),
+        newProfile("a", "Again"),
       ],
       selectedProfileId: "a",
     };

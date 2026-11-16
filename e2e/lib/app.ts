@@ -210,7 +210,7 @@ export const test = base.extend<AppFixtures>({
         const app = await _electron.launch({
           executablePath,
           args: launchArgs(userDataDir),
-          env: { ...env, MERU_TEST_GMAIL_URL: standIn.url },
+          env: { ...env, MERU_TEST_APP_URLS: standIn.appUrls },
         });
         const { pid } = app.process();
 
@@ -248,7 +248,7 @@ export const test = base.extend<AppFixtures>({
   spawnApp: async ({ userDataDir, launched, standIn }, use) => {
     await use(() => {
       const child = spawn(executablePath, launchArgs(userDataDir), {
-        env: { ...env, MERU_TEST_GMAIL_URL: standIn.url },
+        env: { ...env, MERU_TEST_APP_URLS: standIn.appUrls },
         stdio: "ignore",
       });
 

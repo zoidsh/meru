@@ -6,10 +6,10 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import type { ShellBridge } from "#contract/shell.ts";
 
 import { expect, findPage, test } from "./lib/app.ts";
-import { STAND_IN_COOKIE } from "./lib/stand-in.ts";
+import { STAND_IN_COOKIE, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
 interface SavedState {
-  profiles: { id: string; name: string }[];
+  profiles: { id: string; name: string; tabs?: { title: string }[] }[];
   selectedProfileId: string;
 }
 
@@ -112,9 +112,9 @@ test("adding a profile shows a second tab, selected, and a view in a session of 
     {
       profileId: first,
       bounds: {
-        x: 0,
+        x: 224,
         y: 40,
-        width: content.width,
+        width: content.width - 224,
         height: content.height - 40,
       },
       visible: false,
@@ -122,9 +122,9 @@ test("adding a profile shows a second tab, selected, and a view in a session of 
     {
       profileId: second,
       bounds: {
-        x: 0,
+        x: 224,
         y: 40,
-        width: content.width,
+        width: content.width - 224,
         height: content.height - 40,
       },
       visible: true,
@@ -160,8 +160,9 @@ test("switching back shows the first view in the content rectangle and hides the
       return views.map((view) => ({
         ...view,
         inContent:
+          view.bounds.x === 224 &&
           view.bounds.y === 40 &&
-          view.bounds.width === content.width &&
+          view.bounds.width === content.width - 224 &&
           view.bounds.height === content.height - 40,
       }));
     })
@@ -183,6 +184,14 @@ test("a relaunch restores both profiles and the selection, and creates only the 
 
   await addProfile(firstShell);
   await expect.poll(() => standIn.cookieHeaders.length).toBe(2);
+  // Where each Gmail tab's page is, written within a second of its load.
+  await expect
+    .poll(async () => {
+      const { profiles } = await readState(userDataDir);
+
+      return profiles.map((profile) => profile.tabs?.[0]?.title);
+    })
+    .toStrictEqual([STAND_IN_TITLE, STAND_IN_TITLE]);
 
   const saved = await readState(userDataDir);
 

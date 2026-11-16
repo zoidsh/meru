@@ -147,7 +147,12 @@ export const serveShellContract = ({
 
       for (const slice of changed) {
         if (slices.includes(slice)) {
-          send(senderId, { kind: "patch", slice, value: next[slice] });
+          // The value is the named slice's, which TypeScript cannot follow.
+          send(senderId, {
+            kind: "patch",
+            slice,
+            value: next[slice],
+          } as ShellSyncMessage);
         }
       }
     }

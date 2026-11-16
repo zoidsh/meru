@@ -1,22 +1,22 @@
 import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
+import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import type { TabStatus } from "#core/tab-machine.ts";
 import type { Confirmation, ContextMenuItem } from "#platform/window.ts";
 
 import { createShellHandlers, shellState } from "./shell-handlers.ts";
 
 const two: State = {
   version: 1,
-  profiles: [
-    { id: "a", name: "Default" },
-    { id: "b", name: "Work" },
-  ],
+  profiles: [newProfile("a", "Default"), newProfile("b", "Work")],
   selectedProfileId: "a",
 };
 
 const setup = ({ state = two, confirmed = true } = {}) => {
   const removed: string[] = [];
+  const calls: unknown[] = [];
   const menus: ContextMenuItem[][] = [];
   const confirmations: Confirmation[] = [];
 
@@ -30,6 +30,21 @@ const setup = ({ state = two, confirmed = true } = {}) => {
 
         return Promise.resolve(true);
       },
+      selectTab: (key) => {
+        calls.push(["select", key]);
+
+        return Promise.resolve(true);
+      },
+      closeTab: (key) => {
+        calls.push(["close", key]);
+
+        return Promise.resolve(true);
+      },
+    },
+    tabs: {
+      retry: (key) => {
+        calls.push(["retry", key]);
+      },
     },
     window: {
       showContextMenu: (items) => menus.push(items),
@@ -42,7 +57,7 @@ const setup = ({ state = two, confirmed = true } = {}) => {
     log: () => false,
   });
 
-  return { handlers, removed, menus, confirmations };
+  return { handlers, removed, calls, menus, confirmations };
 };
 
 const settle = () => delay(0);
@@ -86,12 +101,27 @@ describe(createShellHandlers, () => {
 
   it("offers removal of the last profile disabled", async () => {
     const shell = setup({
-      state: { ...two, profiles: [{ id: "a", name: "Default" }] },
+      state: { ...two, profiles: [newProfile("a", "Default")] },
     });
 
     await shell.handlers.openProfileMenu({ profileId: "a" });
 
     expect(shell.menus[0]?.[0]?.enabled).toBeFalsy();
+  });
+
+  it("hands each tab control's call to the tabs", async () => {
+    const shell = setup();
+    const key = { profileId: "a", tabId: "t1" };
+
+    await shell.handlers.selectTab(key);
+    await shell.handlers.closeTab(key);
+    await shell.handlers.retryTab(key);
+
+    expect(shell.calls).toStrictEqual([
+      ["select", key],
+      ["close", key],
+      ["retry", key],
+    ]);
   });
 
   it("shows no menu for a profile that is not listed", async () => {
@@ -106,21 +136,87 @@ describe(createShellHandlers, () => {
 describe(shellState, () => {
   it("gives the shell the profiles with names to show, and nothing else of them", () => {
     expect(
-      shellState({
-        ...two,
-        profiles: [
-          { id: "a", name: "Default", color: "teal" },
-          { id: "b", name: "Work" },
-        ],
-      })
+      shellState(
+        {
+          ...two,
+          profiles: [
+            { ...newProfile("a", "Default"), color: "teal" },
+            newProfile("b", "Work"),
+          ],
+        },
+        () => ({ kind: "live" })
+      ).profiles
     ).toStrictEqual({
-      profiles: {
-        profiles: [
-          { id: "a", name: "Default" },
-          { id: "b", name: "Work" },
-        ],
-        selectedProfileId: "a",
+      profiles: [
+        { id: "a", name: "Default" },
+        { id: "b", name: "Work" },
+      ],
+      selectedProfileId: "a",
+    });
+  });
+
+  it("gives the shell the selected profile's shown tabs, which it may close, and how each is", () => {
+    const statuses: Record<string, TabStatus> = {
+      "a/c1": {
+        kind: "failed",
+        reason: { code: -106, name: "ERR_INTERNET_DISCONNECTED" },
+        attempt: 2,
+        retrying: false,
       },
+      "a/d1": { kind: "crashed", reason: "oom" },
+    };
+
+    expect(
+      shellState(
+        {
+          ...two,
+          profiles: [
+            {
+              ...newProfile("a", "Default"),
+              tabs: [
+                { ...gmailTab(), title: "Inbox" },
+                { id: "c1", app: "calendar", url: "", title: "Week" },
+                { id: "t9", app: "tasks", url: "", title: "Later" },
+                { id: "d1", app: "drive", url: "", title: "" },
+              ],
+              selectedTabId: "c1",
+            },
+            newProfile("b", "Work"),
+          ],
+        },
+        ({ profileId, tabId }) =>
+          statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" }
+      ).tabs
+    ).toStrictEqual({
+      profileId: "a",
+      selectedTabId: "c1",
+      tabs: [
+        {
+          id: "gmail",
+          app: "gmail",
+          title: "Inbox",
+          closable: false,
+          status: { kind: "unloaded" },
+        },
+        {
+          id: "c1",
+          app: "calendar",
+          title: "Week",
+          closable: true,
+          status: {
+            kind: "failed",
+            reason: "ERR_INTERNET_DISCONNECTED",
+            retrying: false,
+          },
+        },
+        {
+          id: "d1",
+          app: "drive",
+          title: "",
+          closable: true,
+          status: { kind: "crashed" },
+        },
+      ],
     });
   });
 });

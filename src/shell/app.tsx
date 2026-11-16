@@ -6,6 +6,7 @@ import { Button } from "#ui/button.tsx";
 import { Tabs, TabsList, TabsTrigger } from "#ui/tabs.tsx";
 
 import { shellCalls, useShellState } from "./sync.ts";
+import { TabProblem, TabStrip } from "./tab-strip.tsx";
 
 /** Scrolls the tab's list just far enough to show the tab whole. */
 const scrollIntoList = (tab: HTMLElement, list: HTMLElement) => {
@@ -107,6 +108,7 @@ const Profiles = () => {
 
 export const App = () => {
   const { t } = useLingui();
+  const tabs = useShellState("tabs");
 
   return (
     <div className="flex h-full flex-col">
@@ -124,14 +126,19 @@ export const App = () => {
         {/* Keeps part of the title bar for dragging the window, however many profiles there are. */}
         <div aria-hidden className="h-full min-w-16 flex-1" />
       </header>
-      <main
-        aria-label={t({
-          message: "Content",
-          comment:
-            "Accessible name of the window's main area, below the title bar, read by screen readers",
-        })}
-        className="min-h-0 flex-1"
-      />
+      <div className="flex min-h-0 flex-1">
+        {tabs && <TabStrip tabs={tabs} />}
+        <main
+          aria-label={t({
+            message: "Content",
+            comment:
+              "Accessible name of the window's main area, below the title bar, read by screen readers",
+          })}
+          className="min-w-0 flex-1"
+        >
+          {tabs && <TabProblem tabs={tabs} />}
+        </main>
+      </div>
     </div>
   );
 };

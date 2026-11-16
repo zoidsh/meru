@@ -30,8 +30,8 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may be kept from ever activating",
     },
     {
-      marker: "MERU_TEST_GMAIL_URL",
-      why: "only the end-to-end build may load a stand-in in place of Gmail",
+      marker: "MERU_TEST_APP_URLS",
+      why: "only the end-to-end build may load stand-ins in place of the apps",
     },
   ];
 

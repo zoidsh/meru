@@ -1,15 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createProfiles } from "./profiles.ts";
 
 const two: State = {
   version: 1,
-  profiles: [
-    { id: "a", name: "Default" },
-    { id: "b", name: "Profile 2" },
-  ],
+  profiles: [newProfile("a", "Default"), newProfile("b", "Profile 2")],
   selectedProfileId: "b",
 };
 
@@ -81,10 +79,9 @@ describe(createProfiles, () => {
 
     await expect(profiles.add()).resolves.toBeTruthy();
 
-    expect(profiles.get().profiles.at(-1)).toStrictEqual({
-      id: "new-1",
-      name: "Profile 3",
-    });
+    expect(profiles.get().profiles.at(-1)).toStrictEqual(
+      newProfile("new-1", "Profile 3")
+    );
     expect(profiles.get().selectedProfileId).toBe("new-1");
     expect(steps).toStrictEqual([
       "save a,b,new-1 to clear []",
@@ -110,7 +107,7 @@ describe(createProfiles, () => {
 
     expect(profiles.get()).toStrictEqual({
       ...two,
-      profiles: [{ id: "a", name: "Default" }],
+      profiles: [newProfile("a", "Default")],
       selectedProfileId: "a",
       profilesToClear: [],
     });
@@ -159,9 +156,7 @@ describe(createProfiles, () => {
 
     await expect(profiles.remove("b")).resolves.toBeTruthy();
 
-    expect(profiles.get().profiles).toStrictEqual([
-      { id: "a", name: "Default" },
-    ]);
+    expect(profiles.get().profiles).toStrictEqual([newProfile("a", "Default")]);
     expect(profiles.get().profilesToClear).toStrictEqual(["b"]);
     expect(logs).toStrictEqual([
       "The data of removed profile b in persist:b was not deleted, and will be tried again at the next launch: locked",
