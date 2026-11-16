@@ -7,7 +7,8 @@ import {
 import type { State } from "#core/state.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
-import { loadStore, saveStore } from "./store-file.ts";
+import { openStore, saveStore } from "./store-file.ts";
+import type { OpenedStore } from "./store-file.ts";
 
 export const STATE_FILE_NAME = "state.json";
 
@@ -23,16 +24,16 @@ export const saveState = (file: TextFile, state: State) =>
   saveStore({ file, encode: encodeState }, state);
 
 /**
- * Reads the state as `loadStore` does, with a first profile made when none
- * of the file's could be read.
+ * Opens the state as `openStore` does, with a first profile made when none
+ * of the file's could be read, saved when the store settles.
  */
-export const loadState = async ({
+export const openState = async ({
   file,
   newId,
   now,
   log,
-}: StateStoreDeps): Promise<State> => {
-  const loaded = await loadStore({
+}: StateStoreDeps): Promise<OpenedStore<State>> => {
+  const opened = await openStore({
     file,
     name: "state",
     decode: decodeState,
@@ -41,14 +42,19 @@ export const loadState = async ({
     now,
     log,
   });
-  const state = withAProfile(loaded, newId);
+  const state = withAProfile(opened.value, newId);
 
-  if (state !== loaded) {
-    // Meru still starts on the profile in memory, or it never would.
-    await saveState(file, state).catch((error: unknown) => {
-      log(`The new first profile was not saved: ${String(error)}`);
-    });
-  }
+  return {
+    value: state,
+    settle: async () => {
+      await opened.settle();
 
-  return state;
+      if (state !== opened.value) {
+        // Meru still starts on the profile in memory, or it never would.
+        await saveState(file, state).catch((error: unknown) => {
+          log(`The new first profile was not saved: ${String(error)}`);
+        });
+      }
+    },
+  };
 };

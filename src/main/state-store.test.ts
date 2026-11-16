@@ -6,7 +6,7 @@ import { newProfile } from "#core/state.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { StartupError } from "./failures.ts";
-import { loadState, saveState } from "./state-store.ts";
+import { openState, saveState } from "./state-store.ts";
 
 const DIR = path.join("/data", "Meru Dev");
 
@@ -47,11 +47,15 @@ const createFakeFile = (contents?: string) => {
 
 const load = (file: TextFile) => {
   const logs: string[] = [];
-  const state = loadState({
+  const state = openState({
     file,
     newId: () => "new-id",
     now: () => 1_763_290_000_000,
     log: (message) => logs.push(message),
+  }).then(async (opened) => {
+    await opened.settle();
+
+    return opened.value;
   });
 
   return { state, logs };
@@ -63,7 +67,7 @@ const initial = {
   selectedProfileId: "new-id",
 };
 
-describe(loadState, () => {
+describe(openState, () => {
   it("creates and saves the first profile when there is no state", async () => {
     const { file, files } = createFakeFile();
 

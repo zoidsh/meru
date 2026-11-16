@@ -30,7 +30,6 @@ import { createSenderRegistry } from "./senders.ts";
 import {
   SETTINGS_FILE_NAME,
   createSettingsStore,
-  loadSettings,
   saveSettings,
 } from "./settings.ts";
 import {
@@ -40,7 +39,8 @@ import {
 } from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
 import { createShellWindow, revealWindow } from "./shell-window.ts";
-import { STATE_FILE_NAME, loadState, saveState } from "./state-store.ts";
+import { STATE_FILE_NAME, saveState } from "./state-store.ts";
+import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
 
 const APP_SCHEME = "meru-app";
@@ -178,13 +178,18 @@ const start = async () => {
   const stateFile = createTextFile(
     path.join(lifecycle.userDataPath, STATE_FILE_NAME)
   );
+  const settingsFile = createTextFile(
+    path.join(lifecycle.userDataPath, SETTINGS_FILE_NAME)
+  );
+  const stores = await loadStores({
+    stateFile,
+    settingsFile,
+    newId,
+    now: Date.now,
+    log: console.error,
+  });
   const profiles = createProfiles({
-    initial: await loadState({
-      file: stateFile,
-      newId,
-      now: Date.now,
-      log: console.error,
-    }),
+    initial: stores.state,
     save: (state) => saveState(stateFile, state),
     newId,
     profileName: automaticProfileName,
@@ -192,15 +197,8 @@ const start = async () => {
     log: console.error,
   });
 
-  const settingsFile = createTextFile(
-    path.join(lifecycle.userDataPath, SETTINGS_FILE_NAME)
-  );
   const settings = createSettingsStore({
-    initial: await loadSettings({
-      file: settingsFile,
-      now: Date.now,
-      log: console.error,
-    }),
+    initial: stores.settings,
     save: (next) => saveSettings(settingsFile, next),
     log: console.error,
   });

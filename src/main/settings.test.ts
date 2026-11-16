@@ -6,7 +6,7 @@ import type { Settings } from "#core/settings.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { StartupError } from "./failures.ts";
-import { createSettingsStore, loadSettings } from "./settings.ts";
+import { createSettingsStore, openSettings } from "./settings.ts";
 
 const SETTINGS_PATH = path.join("/data", "Meru Dev", "settings.json");
 
@@ -36,10 +36,27 @@ const createFakeFile = (contents?: string) => {
   return { file, files };
 };
 
-const load = (file: TextFile) =>
-  loadSettings({ file, now: () => 1_763_290_000_000, log: () => {} });
+const load = async (file: TextFile) => {
+  const opened = await openSettings({
+    file,
+    now: () => 1_763_290_000_000,
+    log: () => {},
+  });
 
-describe(loadSettings, () => {
+  await opened.settle();
+
+  return opened.value;
+};
+
+describe(openSettings, () => {
+  it("touches nothing on disk until it settles", async () => {
+    const { file, files } = createFakeFile("{ not json");
+
+    await openSettings({ file, now: () => 1, log: () => {} });
+
+    expect([...files]).toStrictEqual([[SETTINGS_PATH, "{ not json"]]);
+  });
+
   it("starts and saves an empty file when there is none", async () => {
     const { file, files } = createFakeFile();
 

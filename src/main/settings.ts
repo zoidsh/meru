@@ -10,7 +10,7 @@ import {
 import type { SettingKey, SettingValue, Settings } from "#core/settings.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
-import { loadStore, saveStore } from "./store-file.ts";
+import { openStore, saveStore } from "./store-file.ts";
 
 export const SETTINGS_FILE_NAME = "settings.json";
 
@@ -19,12 +19,13 @@ const encode = (settings: Settings): unknown => settings;
 export const saveSettings = (file: TextFile, settings: Settings) =>
   saveStore({ file, encode }, settings);
 
-export const loadSettings = (deps: {
+/** Opens the settings as `openStore` does. */
+export const openSettings = (deps: {
   file: TextFile;
   now: () => number;
   log: (message: string) => void;
 }) =>
-  loadStore({
+  openStore({
     ...deps,
     name: "settings",
     decode: decodeSettings,

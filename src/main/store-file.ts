@@ -33,48 +33,62 @@ export const saveStore = <T>(
   value: T
 ) => file.write(`${JSON.stringify(encode(value), undefined, 2)}\n`);
 
+/** A store as read, with the writes reading it owes still to make. */
+export interface OpenedStore<T> {
+  value: T;
+  /** Keeps an unreadable file aside and writes the value the store starts from. */
+  settle: () => Promise<void>;
+}
+
+const settled = () => Promise.resolve();
+
 /**
- * Reads the store, or starts it from its initial value when there is none. A
- * file it cannot read is kept aside rather than overwritten. One a newer Meru
- * wrote stops startup with nothing on disk touched, since writing over it would
- * lose the way back to that version.
+ * Reads the store, or starts it from its initial value when there is none,
+ * touching nothing on disk until `settle`, so that a second store found newer
+ * can still stop startup with neither file changed. A file it cannot read is
+ * kept aside rather than overwritten. One a newer Meru wrote stops startup,
+ * since writing over it would lose the way back to that version.
  */
-export const loadStore = async <T>(store: StoreFile<T>): Promise<T> => {
+export const openStore = async <T>(
+  store: StoreFile<T>
+): Promise<OpenedStore<T>> => {
   const { file, name, decode, initial, now, log } = store;
   const text = await file.read();
+  const decoded = text === undefined ? undefined : decode(parse(text));
 
-  if (text !== undefined) {
-    const decoded = decode(parse(text));
+  if (decoded?.kind === "read") {
+    return { value: decoded.value, settle: settled };
+  }
 
-    if (decoded.kind === "read") {
-      return decoded.value;
-    }
-
-    if (decoded.kind === "newer") {
-      throw new StartupError(
-        t({
-          message:
-            "This data was saved by a newer version. Open it with that version, or update to it.",
-          comment:
-            "Shown when the app is started on data that a later version of the app wrote, which this version cannot read",
-        })
-      );
-    }
-
-    const aside = path.join(
-      path.dirname(file.path),
-      `${name}.corrupt-${now()}.json`
-    );
-
-    await file.moveTo(aside);
-    log(
-      `Kept the unreadable ${file.path} as ${aside} and started afresh: ${decoded.reason}`
+  if (decoded?.kind === "newer") {
+    throw new StartupError(
+      t({
+        message:
+          "This data was saved by a newer version. Open it with that version, or update to it.",
+        comment:
+          "Shown when the app is started on data that a later version of the app wrote, which this version cannot read",
+      })
     );
   }
 
   const value = initial();
 
-  await saveStore(store, value);
+  return {
+    value,
+    settle: async () => {
+      if (decoded) {
+        const aside = path.join(
+          path.dirname(file.path),
+          `${name}.corrupt-${now()}.json`
+        );
 
-  return value;
+        await file.moveTo(aside);
+        log(
+          `Kept the unreadable ${file.path} as ${aside} and started afresh: ${decoded.reason}`
+        );
+      }
+
+      await saveStore(store, value);
+    },
+  };
 };
