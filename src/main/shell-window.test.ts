@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
 import type {
   AppWindow,
   WindowLoadEvent,
@@ -27,6 +28,13 @@ const createFakeWindow = () => {
     focus: () => {
       calls.push("focus");
     },
+    isFocused: () => false,
+    isVisible: () => false,
+    on: () => false,
+    focusPage: () => false,
+    onPageFocus: () => false,
+    onPageMouseDown: () => false,
+    onOverlay: () => false,
     restore: () => {
       minimized = false;
       calls.push("restore");
@@ -43,6 +51,7 @@ const createFakeWindow = () => {
       reload: () => false,
       setVisible: () => false,
       close: () => false,
+      focus: () => false,
     }),
     webContentsId: 1,
     showContextMenu: () => false,
@@ -117,6 +126,17 @@ describe(createShellWindow, () => {
   it("insets the titlebar on macOS only", () => {
     expect(open({ isMacOS: true }).options?.titleBarStyle).toBe("hiddenInset");
     expect(open({ isMacOS: false }).options?.titleBarStyle).toBe("default");
+  });
+
+  it("lets the page open its overlay's blank document and nothing else", () => {
+    const allows = open().options?.allowsWindowOpen;
+
+    expect(
+      allows?.({ url: "about:blank", frameName: OVERLAY_FRAME_NAME })
+    ).toBeTruthy();
+    expect(
+      allows?.({ url: "https://example.com/", frameName: OVERLAY_FRAME_NAME })
+    ).toBeFalsy();
   });
 });
 

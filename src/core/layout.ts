@@ -54,3 +54,30 @@ export const contentViewBounds = (
     height: Math.max(0, contentSize.height - y - inset.bottom),
   };
 };
+
+/**
+ * Kept clear inside an overlay's view around what it draws, for its shadow,
+ * since the view clips whatever falls outside it.
+ */
+export const OVERLAY_MARGIN = 12;
+
+/**
+ * Where an overlay of `size` sits: at the top centre of the content view, no
+ * wider than it.
+ */
+export const overlayBounds = (
+  contentSize: Size,
+  stripWidth: number,
+  design: Design,
+  size: Size
+): Rectangle => {
+  const view = contentViewBounds(contentSize, stripWidth, design);
+  const width = Math.min(size.width, view.width);
+
+  return {
+    x: view.x + Math.floor((view.width - width) / 2),
+    y: view.y,
+    width,
+    height: Math.min(size.height, view.height),
+  };
+};

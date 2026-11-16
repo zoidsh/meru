@@ -2,6 +2,8 @@ import path from "node:path";
 
 import { APPS, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
+import { TAB_STRIP_WIDTH, overlayBounds } from "#core/layout.ts";
+import { overlaySize } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
@@ -24,6 +26,8 @@ import type { Platform } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
+import { createFocus } from "./focus.ts";
+import { createOverlays } from "./overlay.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfiles } from "./profiles.ts";
 import { createSenderRegistry } from "./senders.ts";
@@ -232,6 +236,59 @@ const start = async () => {
 
   senders.register(shell.window.webContentsId, { role: "shell" });
 
+  const focus = createFocus({
+    window: shell.window,
+    focusWhileInactive: isTestBackground,
+    resolve: (target) => {
+      switch (target.kind) {
+        case "shell": {
+          return shell.window.focusPage;
+        }
+        case "overlay": {
+          // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
+          return overlays.focuser();
+        }
+        case "tab": {
+          // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
+          return views.focuser(target.key);
+        }
+        default: {
+          // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
+          return views.focuser();
+        }
+      }
+    },
+  });
+
+  const overlays = createOverlays({
+    focus,
+    initial: profiles.get(),
+    bounds: (overlay) =>
+      overlayBounds(
+        shell.window.getContentAreaSize(),
+        TAB_STRIP_WIDTH,
+        settings.get("design"),
+        overlaySize(overlay)
+      ),
+    log: console.error,
+  });
+
+  shell.window.onOverlay((view) => {
+    view.onDestroyed(senders.register(view.webContentsId, { role: "overlay" }));
+    view.onFocus(() => {
+      focus.noteFocused({ kind: "overlay" });
+    });
+    overlays.adopt(view);
+  });
+  shell.window.onPageFocus(() => {
+    focus.noteFocused({ kind: "shell" });
+  });
+  // A press anywhere but in the overlay closes it, and goes on to where it
+  // was pressed.
+  shell.window.onPageMouseDown(overlays.close);
+  shell.window.on("blur", overlays.close);
+  shell.window.onContentAreaResize(overlays.relayout);
+
   const views = createTabViews({
     window: shell.window,
     apps,
@@ -252,12 +309,23 @@ const start = async () => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
     },
     updatePages: profiles.updatePages,
+    onFocus: (key) => {
+      focus.noteFocused({ kind: "tab", key });
+    },
+    onMouseDown: overlays.close,
+    // At launch and after a switch, typing reaches the page without a click.
+    onFront: () => {
+      focus.focus([{ kind: "front" }]);
+    },
     log: console.error,
   });
 
   views.reconcile(profiles.get());
   profiles.onChange(views.reconcile);
+  // After the views, so focus handed back finds the new front tab's.
+  profiles.onChange(overlays.follow);
   settings.onChange("design", views.relayout);
+  settings.onChange("design", overlays.relayout);
 
   const menu = createApplicationMenu({
     platform: process.platform as Platform,
@@ -271,6 +339,9 @@ const start = async () => {
       closeTab: profiles.closeTab,
       selectProfile: profiles.select,
       addProfile: profiles.add,
+      openRenameProfile: (profileId) => {
+        overlays.open({ kind: "rename-profile", profileId });
+      },
     },
     setMenu: setApplicationMenu,
     ...(MERU_BUILD_MODE === "dev" && {
@@ -290,6 +361,7 @@ const start = async () => {
     shellOrigin: `${shellUrl.protocol}//${shellUrl.host}`,
     handlers: createShellHandlers({
       profiles,
+      overlays,
       tabs: views,
       window: shell.window,
       log: console.error,
@@ -299,11 +371,13 @@ const start = async () => {
         shellState(
           profiles.get(),
           views.status,
-          shellSettings(settings.get, isMacOS)
+          shellSettings(settings.get, isMacOS),
+          overlays.current()
         ),
       onChange: (listener) => {
         profiles.onChange(listener);
         views.onChange(listener);
+        overlays.onChange(listener);
         settings.onChange("design", listener);
         settings.onChange("vibrancy", listener);
       },

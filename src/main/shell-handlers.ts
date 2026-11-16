@@ -1,4 +1,5 @@
 import type { ShellState } from "#contract/shell.ts";
+import type { Overlay } from "#core/overlay.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { canRemoveProfile, knownTabs, selectedProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -7,10 +8,12 @@ import { canCloseTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow } from "#platform/window.ts";
 
+import type { Overlays } from "./overlay.ts";
 import {
   profileDisplayName,
   removeProfileConfirmation,
   removeProfileMenuLabel,
+  renameProfileMenuLabel,
 } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
 import type { ShellHandlers } from "./shell-ipc.ts";
@@ -18,8 +21,9 @@ import type { ShellHandlers } from "./shell-ipc.ts";
 export interface ShellHandlersDeps {
   profiles: Pick<
     Profiles,
-    "get" | "select" | "add" | "remove" | "selectTab" | "closeTab"
+    "get" | "select" | "add" | "remove" | "rename" | "selectTab" | "closeTab"
   >;
+  overlays: Pick<Overlays, "open" | "close" | "current">;
   tabs: { retry: (key: TabKey) => void };
   window: Pick<AppWindow, "showContextMenu" | "confirm">;
   log: (message: string) => void;
@@ -54,11 +58,29 @@ export const shellSettings = (
   vibrancy: isMacOS && get("vibrancy"),
 });
 
+const shellOverlay = (
+  state: State,
+  overlay: Overlay | undefined
+): ShellState["overlay"] => {
+  const profile =
+    overlay &&
+    state.profiles.find((candidate) => candidate.id === overlay.profileId);
+
+  return overlay && profile
+    ? {
+        kind: "rename-profile",
+        profileId: profile.id,
+        name: profileDisplayName(profile),
+      }
+    : { kind: "none" };
+};
+
 /** The slices the shell sees of main's state, names ready to show. */
 export const shellState = (
   state: State,
   status: (key: TabKey) => TabStatus,
-  settings: ShellState["settings"]
+  settings: ShellState["settings"],
+  overlay: Overlay | undefined
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -84,11 +106,13 @@ export const shellState = (
       })),
     },
     settings,
+    overlay: shellOverlay(state, overlay),
   };
 };
 
 export const createShellHandlers = ({
   profiles,
+  overlays,
   tabs,
   window,
   log,
@@ -123,6 +147,33 @@ export const createShellHandlers = ({
 
       return Promise.resolve();
     },
+    renameProfile: async ({ profileId, name }) => {
+      const open = overlays.current();
+      const profile = profiles
+        .get()
+        .profiles.find((candidate) => candidate.id === profileId);
+
+      if (open?.kind !== "rename-profile" || open.profileId !== profileId) {
+        log(`Refused to rename profile ${profileId}, whose rename is not open`);
+
+        return;
+      }
+
+      try {
+        // The field starts with the name as shown, which for the first
+        // profile is "Default" translated; left so, it stays in English.
+        if (profile && name.trim() !== profileDisplayName(profile)) {
+          await profiles.rename(profileId, name);
+        }
+      } finally {
+        overlays.close();
+      }
+    },
+    closeOverlay: () => {
+      overlays.close();
+
+      return Promise.resolve();
+    },
     openProfileMenu: ({ profileId }) => {
       const state = profiles.get();
       const profile = state.profiles.find(
@@ -133,6 +184,13 @@ export const createShellHandlers = ({
         const name = profileDisplayName(profile);
 
         window.showContextMenu([
+          {
+            label: renameProfileMenuLabel(),
+            enabled: true,
+            click: () => {
+              overlays.open({ kind: "rename-profile", profileId });
+            },
+          },
           {
             label: removeProfileMenuLabel(name),
             enabled: canRemoveProfile(state, profileId),

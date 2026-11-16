@@ -180,6 +180,11 @@ msgstr "Paste and Match Style"
 msgid "Profile {n}"
 msgstr "Profile {n}"
 
+#. Accessible name of the field that holds a profile's name while it is renamed, read by screen readers
+#: src/shell/overlay.tsx
+msgid "Profile name"
+msgstr "Profile name"
+
 #. Accessible name of the row of profile tabs in the title bar, read by screen readers
 #: src/shell/app.tsx
 msgid "Profiles"
@@ -216,6 +221,22 @@ msgstr "Remove {name}…"
 #: src/main/profile-copy.ts
 msgid "Remove Profile"
 msgstr "Remove Profile"
+
+#. Accessible name of the small panel over the page with a field for a profile's new name, read by screen readers
+#: src/shell/overlay.tsx
+msgid "Rename profile"
+msgstr "Rename profile"
+
+#. Menu item in the Window menu that shows a field to change the selected profile's name
+#: src/main/commands.ts
+msgid "Rename Profile…"
+msgstr "Rename Profile…"
+
+#. Item in a profile's context menu in the title bar that shows a field to change the profile's name
+#: src/main/profile-copy.ts
+msgctxt "profile"
+msgid "Rename…"
+msgstr "Rename…"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts

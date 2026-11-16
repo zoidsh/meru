@@ -265,6 +265,7 @@ export const buildMenuTemplate = ({
     ...item("profile.previous"),
     separator,
     ...item("profile.add"),
+    ...item("profile.rename"),
   ];
 
   const windowMenu: MenuItemConstructorOptions = {

@@ -11,6 +11,7 @@ import type { ShellHandlers } from "./shell-ipc.ts";
 const SHELL = 1;
 const OTHER_SHELL = 2;
 const CONTENT_VIEW = 3;
+const OVERLAY = 4;
 const UNKNOWN = 99;
 
 const SHELL_ORIGIN = "meru-app://shell";
@@ -60,6 +61,7 @@ const setup = () => {
     profiles: profilesSlice("a"),
     tabs: TABS,
     settings: { design: "modern", vibrancy: false },
+    overlay: { kind: "none" },
   };
 
   const ipc: Ipc = {
@@ -83,6 +85,7 @@ const setup = () => {
     profileId: "a",
     tabId: "gmail",
   });
+  senders.register(OVERLAY, { role: "overlay" });
 
   const handlers: ShellHandlers = {
     selectProfile: (request) => {
@@ -112,6 +115,16 @@ const setup = () => {
     },
     retryTab: (request) => {
       calls.push(["retryTab", request]);
+
+      return Promise.resolve();
+    },
+    renameProfile: (request) => {
+      calls.push(["renameProfile", request]);
+
+      return Promise.resolve();
+    },
+    closeOverlay: (request) => {
+      calls.push(["closeOverlay", request]);
 
       return Promise.resolve();
     },
@@ -199,6 +212,11 @@ describe(serveShellContract, () => {
 
   it("refuses a call from a content view or an unknown sender", async () => {
     const shell = setup();
+
+    // The overlay's document is on the shell's origin, which it inherits.
+    await expect(
+      shell.call(OVERLAY, "closeOverlay", {})
+    ).rejects.toBeInstanceOf(RefusedCallError);
 
     await expect(
       shell.call(CONTENT_VIEW, "addProfile", {})

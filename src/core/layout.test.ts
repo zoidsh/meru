@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { TAB_STRIP_WIDTH, contentViewBounds, viewFrame } from "./layout.ts";
+import {
+  TAB_STRIP_WIDTH,
+  contentViewBounds,
+  overlayBounds,
+  viewFrame,
+} from "./layout.ts";
 
 describe(contentViewBounds, () => {
   it("in classic fills the window below the 40px titlebar and beside the strip", () => {
@@ -32,5 +37,38 @@ describe(viewFrame, () => {
   it("rounds the view's corners in modern alone", () => {
     expect(viewFrame("modern").radius).toBe(8);
     expect(viewFrame("classic").radius).toBe(0);
+  });
+});
+
+describe(overlayBounds, () => {
+  it("sits at the top centre of the content view", () => {
+    const size = { width: 1280, height: 800 };
+    const view = contentViewBounds(size, TAB_STRIP_WIDTH, "modern");
+    const bounds = overlayBounds(size, TAB_STRIP_WIDTH, "modern", {
+      width: 400,
+      height: 80,
+    });
+
+    expect(bounds).toStrictEqual({
+      x: view.x + (view.width - 400) / 2,
+      y: view.y,
+      width: 400,
+      height: 80,
+    });
+    expect(
+      overlayBounds(size, TAB_STRIP_WIDTH, "classic", {
+        width: 400,
+        height: 80,
+      }).y
+    ).toBe(40);
+  });
+
+  it("is no larger than the content view", () => {
+    expect(
+      overlayBounds({ width: 500, height: 100 }, TAB_STRIP_WIDTH, "classic", {
+        width: 400,
+        height: 80,
+      })
+    ).toStrictEqual({ x: TAB_STRIP_WIDTH, y: 40, width: 276, height: 60 });
   });
 });

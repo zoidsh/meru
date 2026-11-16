@@ -101,6 +101,7 @@ describe(buildMenuTemplate, () => {
           "profile.next",
           "profile.previous",
           "profile.add",
+          "profile.rename",
           "front",
         ],
       ],
@@ -133,6 +134,7 @@ describe(buildMenuTemplate, () => {
             "profile.next",
             "profile.previous",
             "profile.add",
+            "profile.rename",
           ],
         ],
       ]);

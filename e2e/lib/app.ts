@@ -131,6 +131,11 @@ const saveFailure = async (app: ElectronApplication, testInfo: TestInfo) => {
         .map(async (window, index) => {
           const shotPath = testInfo.outputPath(`window-${index + 1}.png`);
 
+          // The overlay's page has no size while it is closed.
+          if ((await window.evaluate(() => innerWidth * innerHeight)) === 0) {
+            return;
+          }
+
           await window.screenshot({ path: shotPath });
           await testInfo.attach(`window ${index + 1}`, {
             path: shotPath,

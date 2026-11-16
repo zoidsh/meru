@@ -1,6 +1,7 @@
 import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
+import type { Overlay } from "#core/overlay.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -18,8 +19,15 @@ const two: State = {
   selectedProfileId: "a",
 };
 
-const setup = ({ state = two, confirmed = true } = {}) => {
+const setup = ({
+  state = two,
+  confirmed = true,
+  overlay = undefined as Overlay | undefined,
+} = {}) => {
   const removed: string[] = [];
+  const renamed: [string, string][] = [];
+  let open = overlay;
+  const overlays: (Overlay | "closed")[] = [];
   const calls: unknown[] = [];
   const menus: ContextMenuItem[][] = [];
   const confirmations: Confirmation[] = [];
@@ -34,6 +42,11 @@ const setup = ({ state = two, confirmed = true } = {}) => {
 
         return Promise.resolve(true);
       },
+      rename: (profileId, name) => {
+        renamed.push([profileId, name]);
+
+        return Promise.resolve(true);
+      },
       selectTab: (key) => {
         calls.push(["select", key]);
 
@@ -44,6 +57,17 @@ const setup = ({ state = two, confirmed = true } = {}) => {
 
         return Promise.resolve(true);
       },
+    },
+    overlays: {
+      open: (next) => {
+        open = next;
+        overlays.push(next);
+      },
+      close: () => {
+        open = undefined;
+        overlays.push("closed");
+      },
+      current: () => open,
     },
     tabs: {
       retry: (key) => {
@@ -61,7 +85,7 @@ const setup = ({ state = two, confirmed = true } = {}) => {
     log: () => false,
   });
 
-  return { handlers, removed, calls, menus, confirmations };
+  return { handlers, removed, renamed, overlays, calls, menus, confirmations };
 };
 
 const settle = () => delay(0);
@@ -72,7 +96,7 @@ describe(createShellHandlers, () => {
 
     await shell.handlers.openProfileMenu({ profileId: "b" });
 
-    const [item] = shell.menus[0] ?? [];
+    const [, item] = shell.menus[0] ?? [];
 
     expect(item?.label).toBe("Remove Work…");
     expect(item?.enabled).toBeTruthy();
@@ -96,7 +120,7 @@ describe(createShellHandlers, () => {
     const shell = setup({ confirmed: false });
 
     await shell.handlers.openProfileMenu({ profileId: "a" });
-    shell.menus[0]?.[0]?.click();
+    shell.menus[0]?.[1]?.click();
     await settle();
 
     expect(shell.confirmations[0]?.message).toBe("Remove Default?");
@@ -110,7 +134,60 @@ describe(createShellHandlers, () => {
 
     await shell.handlers.openProfileMenu({ profileId: "a" });
 
-    expect(shell.menus[0]?.[0]?.enabled).toBeFalsy();
+    expect(shell.menus[0]?.[1]?.enabled).toBeFalsy();
+  });
+
+  it("offers to rename a profile above removing it, which opens its rename overlay", async () => {
+    const shell = setup();
+
+    await shell.handlers.openProfileMenu({ profileId: "b" });
+
+    const [item] = shell.menus[0] ?? [];
+
+    expect(item).toMatchObject({ label: "Rename…", enabled: true });
+
+    item?.click();
+
+    expect(shell.overlays).toStrictEqual([
+      { kind: "rename-profile", profileId: "b" },
+    ]);
+  });
+
+  it("renames the profile whose rename is open and closes it", async () => {
+    const shell = setup({
+      overlay: { kind: "rename-profile", profileId: "b" },
+    });
+
+    await shell.handlers.renameProfile({ profileId: "b", name: " Home " });
+
+    expect(shell.renamed).toStrictEqual([["b", " Home "]]);
+    expect(shell.overlays).toStrictEqual(["closed"]);
+  });
+
+  it("keeps the first profile's stored name when its shown name is left as it was", async () => {
+    const shell = setup({
+      overlay: { kind: "rename-profile", profileId: "a" },
+    });
+
+    await shell.handlers.renameProfile({ profileId: "a", name: "Default " });
+
+    expect(shell.renamed).toStrictEqual([]);
+    expect(shell.overlays).toStrictEqual(["closed"]);
+  });
+
+  it("refuses to rename a profile whose rename is not open", async () => {
+    const shell = setup({
+      overlay: { kind: "rename-profile", profileId: "a" },
+    });
+
+    await shell.handlers.renameProfile({ profileId: "b", name: "Home" });
+
+    expect(shell.renamed).toStrictEqual([]);
+    expect(shell.overlays).toStrictEqual([]);
+
+    await shell.handlers.closeOverlay({});
+
+    expect(shell.overlays).toStrictEqual(["closed"]);
   });
 
   it("hands each tab control's call to the tabs", async () => {
@@ -151,7 +228,8 @@ describe(shellState, () => {
           ],
         },
         () => ({ kind: "live" }),
-        SHOWN_SETTINGS
+        SHOWN_SETTINGS,
+        undefined
       ).profiles
     ).toStrictEqual({
       profiles: [
@@ -193,7 +271,8 @@ describe(shellState, () => {
         },
         ({ profileId, tabId }) =>
           statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
-        SHOWN_SETTINGS
+        SHOWN_SETTINGS,
+        undefined
       ).tabs
     ).toStrictEqual({
       profileId: "a",
@@ -226,6 +305,34 @@ describe(shellState, () => {
         },
       ],
     });
+  });
+});
+
+const overlaySlice = (open: Overlay | undefined) =>
+  shellState(two, () => ({ kind: "live" }), SHOWN_SETTINGS, open).overlay;
+
+describe("the overlay slice", () => {
+  it("is none while nothing is open", () => {
+    expect(overlaySlice(undefined)).toStrictEqual({ kind: "none" });
+  });
+
+  it("names the profile being renamed as shown, Default translated", () => {
+    expect(
+      overlaySlice({ kind: "rename-profile", profileId: "a" })
+    ).toStrictEqual({
+      kind: "rename-profile",
+      profileId: "a",
+      name: "Default",
+    });
+    expect(
+      overlaySlice({ kind: "rename-profile", profileId: "b" })
+    ).toStrictEqual({ kind: "rename-profile", profileId: "b", name: "Work" });
+  });
+
+  it("is none for a profile that is gone", () => {
+    expect(
+      overlaySlice({ kind: "rename-profile", profileId: "gone" })
+    ).toStrictEqual({ kind: "none" });
   });
 });
 

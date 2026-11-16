@@ -41,6 +41,7 @@ const setup = (initial: State = twoProfiles) => {
     log: () => false,
   });
   let reloads = 0;
+  const renames: string[] = [];
   const actions: CommandActions = {
     updateSetting: settings.update,
     reloadSelectedTab: () => {
@@ -50,6 +51,9 @@ const setup = (initial: State = twoProfiles) => {
     closeTab: profiles.closeTab,
     selectProfile: profiles.select,
     addProfile: profiles.add,
+    openRenameProfile: (profileId) => {
+      renames.push(profileId);
+    },
   };
   const context = (): CommandContext => ({
     state: profiles.get(),
@@ -60,6 +64,7 @@ const setup = (initial: State = twoProfiles) => {
     profiles,
     settings,
     reloads: () => reloads,
+    renames,
     isAvailable: (id: string) => commandOf(id).isAvailable?.(context()) ?? true,
     isChecked: (id: string) => commandOf(id).isChecked?.(context()),
     run: (id: string) => commandOf(id).run(context(), actions),
@@ -175,6 +180,15 @@ describe("the command registry", () => {
 
     expect(app.profiles.get().profiles).toHaveLength(2);
     expect(app.isAvailable("profile.next")).toBeTruthy();
+  });
+
+  it("opens the rename of the selected profile", async () => {
+    const app = setup();
+
+    await app.run("profile.add");
+    await app.run("profile.rename");
+
+    expect(app.renames).toStrictEqual(["new"]);
   });
 
   it("reloads the selected tab", async () => {

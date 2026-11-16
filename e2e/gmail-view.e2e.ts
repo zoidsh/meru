@@ -15,7 +15,7 @@ import {
 
 /** The window's content size and where each of its child views sits. */
 const readLayout = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow }) => {
+  app.evaluate(({ BrowserWindow, session }) => {
     const [window] = BrowserWindow.getAllWindows();
 
     if (!window) {
@@ -26,7 +26,14 @@ const readLayout = (app: ElectronApplication) =>
 
     return {
       content: { width, height },
-      views: window.contentView.children.map((view) => view.getBounds()),
+      // The overlay's view shows the shell's page, in the default session.
+      views: window.contentView.children
+        .filter(
+          (view) =>
+            (view as Electron.WebContentsView).webContents.session !==
+            session.defaultSession
+        )
+        .map((view) => view.getBounds()),
     };
   });
 

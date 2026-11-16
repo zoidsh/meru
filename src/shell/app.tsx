@@ -8,6 +8,7 @@ import { Button } from "#ui/button.tsx";
 import { Tabs, TabsList, TabsTrigger } from "#ui/tabs.tsx";
 
 import { keepInView } from "./keep-in-view.ts";
+import { OverlayLayer } from "./overlay.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TabProblem, TabStrip } from "./tab-strip.tsx";
 
@@ -137,6 +138,7 @@ export const App = () => {
           </div>
         </main>
       </div>
+      <OverlayLayer />
     </div>
   );
 };

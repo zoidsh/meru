@@ -1,6 +1,7 @@
 import { z } from "zod/mini";
 
 import { DESIGNS } from "#core/settings.ts";
+import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import type { ShellCallName } from "./shell-channels.ts";
 
@@ -39,6 +40,18 @@ export const SHELL_CALLS = {
   closeTab: { request: tabKey, response: z.undefined() },
   /** Loads a tab that failed or crashed again, now. */
   retryTab: { request: tabKey, response: z.undefined() },
+  /**
+   * Names the profile, from its rename overlay, and closes the overlay; a
+   * name left empty or as it was changes nothing.
+   */
+  renameProfile: {
+    request: z.object({
+      profileId,
+      name: z.string().check(z.maxLength(PROFILE_NAME_MAX_LENGTH)),
+    }),
+    response: z.undefined(),
+  },
+  closeOverlay: { request: none, response: z.undefined() },
 } as const satisfies Record<
   ShellCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -70,6 +83,16 @@ export const SHELL_STATE = {
     /** Whether the window's vibrancy shows through the chrome. */
     vibrancy: z.boolean(),
   }),
+  /** What the overlay over the content views shows, if anything. */
+  overlay: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("none") }),
+    z.object({
+      kind: z.literal("rename-profile"),
+      profileId,
+      /** The profile's name as shown, which the field starts with. */
+      name: z.string(),
+    }),
+  ]),
 } as const;
 
 export type ShellCalls = {

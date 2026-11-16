@@ -35,16 +35,23 @@ const readViews = (app: ElectronApplication, profileIds: string[]) =>
 
     return {
       content: { width, height },
-      views: window.contentView.children.map((view) => ({
-        profileId: ids.find(
-          (id) =>
-            "webContents" in view &&
-            (view as Electron.WebContentsView).webContents.session ===
-              session.fromPartition(`persist:${id}`)
-        ),
-        bounds: view.getBounds(),
-        visible: view.getVisible(),
-      })),
+      // The overlay's view shows the shell's page, in the default session.
+      views: window.contentView.children
+        .filter(
+          (view) =>
+            (view as Electron.WebContentsView).webContents.session !==
+            session.defaultSession
+        )
+        .map((view) => ({
+          profileId: ids.find(
+            (id) =>
+              "webContents" in view &&
+              (view as Electron.WebContentsView).webContents.session ===
+                session.fromPartition(`persist:${id}`)
+          ),
+          bounds: view.getBounds(),
+          visible: view.getVisible(),
+        })),
     };
   }, profileIds);
 
@@ -285,9 +292,12 @@ test("removing a profile from its tab's menu, once confirmed, removes its tab, i
 
   await expect
     .poll(() => readMenu(app))
-    .toStrictEqual([{ label: "Remove Profile 2…", enabled: true }]);
+    .toStrictEqual([
+      { label: "Rename…", enabled: true },
+      { label: "Remove Profile 2…", enabled: true },
+    ]);
 
-  await clickMenuItem(app, 0);
+  await clickMenuItem(app, 1);
 
   await expect(profileTabs(shell)).toHaveText(["Default"]);
   await expect(shell.getByRole("tab", { name: "Default" })).toHaveAttribute(
@@ -321,7 +331,10 @@ test("removing a profile from its tab's menu, once confirmed, removes its tab, i
   await shell.getByRole("tab", { name: "Default" }).click({ button: "right" });
   await expect
     .poll(() => readMenu(app))
-    .toStrictEqual([{ label: "Remove Default…", enabled: false }]);
+    .toStrictEqual([
+      { label: "Rename…", enabled: true },
+      { label: "Remove Default…", enabled: false },
+    ]);
 });
 
 test("cancelling the confirmation keeps the profile", async ({
@@ -338,8 +351,11 @@ test("cancelling the confirmation keeps the profile", async ({
     .click({ button: "right" });
   await expect
     .poll(() => readMenu(app))
-    .toStrictEqual([{ label: "Remove Profile 2…", enabled: true }]);
-  await clickMenuItem(app, 0);
+    .toStrictEqual([
+      { label: "Rename…", enabled: true },
+      { label: "Remove Profile 2…", enabled: true },
+    ]);
+  await clickMenuItem(app, 1);
 
   await expect.poll(() => readConfirmations(app)).toHaveLength(1);
 

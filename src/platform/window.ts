@@ -1,10 +1,13 @@
 import { BrowserWindow, Menu, dialog } from "electron";
+import type { WebContents } from "electron";
 
 import { isSameSite } from "#core/app-url.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
 
 import { addContentView } from "./content-view.ts";
 import type { ContentView, ContentViewOptions } from "./content-view.ts";
+import { adoptOverlayView } from "./overlay-view.ts";
+import type { OverlayView } from "./overlay-view.ts";
 
 export interface WindowOptions {
   title: string;
@@ -17,6 +20,11 @@ export interface WindowOptions {
   contentUrl: string;
   /** On macOS, whether the desktop shows through, blurred, where the page is clear. */
   vibrancy: boolean;
+  /**
+   * Whether the page may open the window it asks for, which becomes an
+   * overlay view; every other open is refused.
+   */
+  allowsWindowOpen: (request: { url: string; frameName: string }) => boolean;
 }
 
 // The sidebar material, kept active while the window is not the key window,
@@ -38,6 +46,9 @@ export interface Confirmation {
 
 export type WindowLoadEvent = "ready-to-show" | "did-finish-load";
 
+/** The window becoming the one keys go to, or no longer, or shown. */
+export type WindowFocusEvent = "focus" | "blur" | "show";
+
 export interface AppWindow {
   readonly webContentsId: number;
   loadURL: (url: string) => Promise<void>;
@@ -45,6 +56,21 @@ export interface AppWindow {
   show: () => void;
   showInactive: () => void;
   focus: () => void;
+  /** Whether keys go to this window, which an inactive app never is. */
+  isFocused: () => boolean;
+  isVisible: () => boolean;
+  on: (event: WindowFocusEvent, listener: () => void) => void;
+  /**
+   * Gives the page keyboard focus. Electron brings the window forward and
+   * activates the app with it on macOS and Linux, so only once it is focused.
+   */
+  focusPage: () => void;
+  /** Told when the page gains keyboard focus. */
+  onPageFocus: (listener: () => void) => void;
+  /** Told of each mouse button pressed in the page, before the page hears it. */
+  onPageMouseDown: (listener: () => void) => void;
+  /** Told of each overlay view the page opens, as `allowsWindowOpen` lets it. */
+  onOverlay: (listener: (overlay: OverlayView) => void) => void;
   restore: () => void;
   isMinimized: () => boolean;
   isDestroyed: () => boolean;
@@ -99,7 +125,44 @@ export const createWindowFactory = (): WindowFactory => ({
       }
     });
 
-    webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    const overlayListeners = new Set<(overlay: OverlayView) => void>();
+    let overlay: OverlayView | undefined;
+
+    const closeOverlay = () => {
+      overlay?.close();
+      overlay = undefined;
+    };
+
+    // The overlay's document belongs to the page that opened it. Left open,
+    // a reloaded page opening it again by name would get the old one,
+    // navigated to a new blank document as it draws into it.
+    webContents.on("did-start-navigation", (details) => {
+      if (details.isMainFrame && !details.isSameDocument) {
+        closeOverlay();
+      }
+    });
+
+    webContents.setWindowOpenHandler(({ url, frameName }) =>
+      options.allowsWindowOpen({ url, frameName })
+        ? {
+            action: "allow",
+            createWindow: (created) => {
+              const { webContents: opened } = created as {
+                webContents: WebContents;
+              };
+
+              closeOverlay();
+              overlay = adoptOverlayView(window, opened);
+
+              for (const listener of overlayListeners) {
+                listener(overlay);
+              }
+
+              return opened;
+            },
+          }
+        : { action: "deny" }
+    );
 
     return {
       webContentsId: webContents.id,
@@ -114,6 +177,25 @@ export const createWindowFactory = (): WindowFactory => ({
       show: () => window.show(),
       showInactive: () => window.showInactive(),
       focus: () => window.focus(),
+      isFocused: () => window.isFocused(),
+      isVisible: () => window.isVisible(),
+      on: (event, listener) => {
+        window.on(event as "focus", listener);
+      },
+      focusPage: () => webContents.focus(),
+      onPageFocus: (listener) => {
+        webContents.on("focus", listener);
+      },
+      onPageMouseDown: (listener) => {
+        webContents.on("before-mouse-event", (_event, mouse) => {
+          if (mouse.type === "mouseDown") {
+            listener();
+          }
+        });
+      },
+      onOverlay: (listener) => {
+        overlayListeners.add(listener);
+      },
       restore: () => window.restore(),
       isMinimized: () => window.isMinimized(),
       isDestroyed: () => window.isDestroyed(),

@@ -42,6 +42,10 @@ export interface ContentViewOptions {
    * further, to the page or to the application menu.
    */
   onKey: (input: KeyInput) => boolean;
+  /** Told when the page gains keyboard focus. */
+  onFocus: () => void;
+  /** Told of each mouse button pressed in the page, before the page hears it. */
+  onMouseDown: () => void;
 }
 
 export interface ContentView {
@@ -54,6 +58,11 @@ export interface ContentView {
   reload: () => void;
   /** Hidden, the page stays loaded. */
   setVisible: (visible: boolean) => void;
+  /**
+   * Gives the page keyboard focus. Electron brings the window forward and
+   * activates the app with it on macOS and Linux, so only once it is focused.
+   */
+  focus: () => void;
   /** Closes the page and every window it opened, and takes it off the window. */
   close: () => void;
 }
@@ -172,6 +181,12 @@ export const addContentView = (
       event.preventDefault();
     }
   });
+  webContents.on("focus", options.onFocus);
+  webContents.on("before-mouse-event", (_event, mouse) => {
+    if (mouse.type === "mouseDown") {
+      options.onMouseDown();
+    }
+  });
   reportEvents(webContents, options.onEvent);
   routeWindowOpens(webContents, window, options, children);
   window.contentView.addChildView(view);
@@ -203,6 +218,7 @@ export const addContentView = (
     loadURL: (url) => webContents.loadURL(url),
     reload: () => webContents.reload(),
     setVisible: (visible) => view.setVisible(visible),
+    focus: () => webContents.focus(),
     close,
   };
 };

@@ -49,6 +49,7 @@ interface FakeView {
   reloads: number;
   visible: boolean | undefined;
   closed: boolean;
+  focuses: number;
 }
 
 /**
@@ -72,6 +73,7 @@ const setup = async ({
   const senders = createSenderRegistry();
   let webContentsIds = 10;
   let ids = 0;
+  let fronts = 0;
 
   const profiles = createProfiles({
     initial: state,
@@ -102,6 +104,7 @@ const setup = async ({
           reloads: 0,
           visible: undefined,
           closed: false,
+          focuses: 0,
         };
 
         views.push(view);
@@ -124,6 +127,9 @@ const setup = async ({
           },
           close: () => {
             view.closed = true;
+          },
+          focus: () => {
+            view.focuses += 1;
           },
         };
       },
@@ -159,6 +165,11 @@ const setup = async ({
       prepared.push([partition, views.length]);
     },
     updatePages: profiles.updatePages,
+    onFocus: () => false,
+    onMouseDown: () => false,
+    onFront: () => {
+      fronts += 1;
+    },
     log: (message) => logs.push(message),
   });
 
@@ -188,6 +199,7 @@ const setup = async ({
       view?.options.onEvent(event);
     },
     goOnline: () => online?.(),
+    fronts: () => fronts,
     resizeTo: (next: Size) => {
       size = next;
       resize?.();
@@ -247,6 +259,36 @@ describe(createTabViews, () => {
     expect(window.views.map((view) => view.loaded.length)).toStrictEqual([
       1, 1,
     ]);
+  });
+
+  it("tells when another tab comes to the front, and focuses only the front tab's view while it shows", async () => {
+    const window = await setup();
+    const gmail = { profileId: "a", tabId: "gmail" };
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    expect(window.fronts()).toBe(1);
+
+    await window.profiles.selectTab(calendar);
+    await window.profiles.select("b");
+    await window.profiles.select("a");
+
+    expect(window.fronts()).toBe(4);
+    expect(window.tabs.focuser(gmail)).toBeUndefined();
+
+    window.tabs.focuser()?.();
+    window.tabs.focuser(calendar)?.();
+
+    expect(
+      window.views.map((view) => [view.partition, view.focuses])
+    ).toStrictEqual([
+      ["persist:a", 0],
+      ["persist:a", 2],
+      ["persist:b", 0],
+    ]);
+
+    window.emit(window.viewOf("persist:a", 1), REFUSED);
+
+    expect(window.tabs.focuser()).toBeUndefined();
   });
 
   it("gives another profile's selected tab a view of its session when that profile is selected", async () => {

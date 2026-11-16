@@ -23,6 +23,14 @@ export const profileDisplayName = (profile: Pick<Profile, "name">) =>
       })
     : profile.name;
 
+export const renameProfileMenuLabel = () =>
+  t({
+    message: "Rename…",
+    context: "profile",
+    comment:
+      "Item in a profile's context menu in the title bar that shows a field to change the profile's name",
+  });
+
 export const removeProfileMenuLabel = (name: string) =>
   t({
     message: `Remove ${name}…`,

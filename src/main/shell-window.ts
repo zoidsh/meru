@@ -1,3 +1,4 @@
+import { allowsShellWindowOpen } from "#core/overlay.ts";
 import { resolveWindowBounds } from "#core/window-bounds.ts";
 import type { Displays } from "#platform/displays.ts";
 import type { AppWindow, WindowFactory } from "#platform/window.ts";
@@ -51,6 +52,7 @@ export const createShellWindow = ({
     preloadPath,
     contentUrl: url,
     vibrancy,
+    allowsWindowOpen: allowsShellWindowOpen,
   });
 
   let isShown = false;

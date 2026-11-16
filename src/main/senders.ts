@@ -1,5 +1,7 @@
 export type SenderIdentity =
   | { role: "shell" }
+  /** The shell's overlay document, which the shell draws into; never a caller. */
+  | { role: "overlay" }
   | { role: "content-view"; profileId: string; tabId: string }
   | { role: "child-window"; profileId: string; tabId: string };
 

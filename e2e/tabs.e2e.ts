@@ -54,15 +54,22 @@ const readViews = (app: ElectronApplication, partition: string) =>
       (candidate) => !candidate.getParentWindow()
     );
 
-    return (window?.contentView.children ?? []).map((view) => {
-      const { webContents } = view as Electron.WebContentsView;
+    // The overlay's view shows the shell's page, in the default session.
+    return (window?.contentView.children ?? [])
+      .filter(
+        (view) =>
+          (view as Electron.WebContentsView).webContents.session !==
+          session.defaultSession
+      )
+      .map((view) => {
+        const { webContents } = view as Electron.WebContentsView;
 
-      return {
-        url: webContents.getURL(),
-        inSession: webContents.session === session.fromPartition(expected),
-        visible: view.getVisible(),
-      };
-    });
+        return {
+          url: webContents.getURL(),
+          inSession: webContents.session === session.fromPartition(expected),
+          visible: view.getVisible(),
+        };
+      });
   }, partition);
 
 const openFrom = async (page: Page, link: string) => {

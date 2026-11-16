@@ -49,6 +49,12 @@ export interface TabViewsDeps {
   /** Readies a profile's session before any page of it loads. */
   prepareSession: (partition: string) => void;
   updatePages: (updates: PageUpdate[]) => Promise<unknown>;
+  /** Told when a tab's page gains keyboard focus. */
+  onFocus: (key: TabKey) => void;
+  /** Told of each mouse button pressed in a tab's page. */
+  onMouseDown: () => void;
+  /** Told when another tab comes to the front, the first one included. */
+  onFront: () => void;
   log: (message: string) => void;
 }
 
@@ -84,6 +90,9 @@ export const createTabViews = ({
   handleKey,
   prepareSession,
   updatePages,
+  onFocus,
+  onMouseDown,
+  onFront,
   log,
 }: TabViewsDeps) => {
   const tabs = new Map<string, TabView>();
@@ -328,6 +337,10 @@ export const createTabViews = ({
         onEvent(key, tabKeyed, event);
       },
       onKey: handleKey,
+      onFocus: () => {
+        onFocus(tabKeyed);
+      },
+      onMouseDown,
     });
 
     place(view);
@@ -383,12 +396,18 @@ export const createTabViews = ({
 
       const nextFront = tabKey(plan.front);
 
-      if (nextFront !== front) {
+      const frontChanged = nextFront !== front;
+
+      if (frontChanged) {
         front = nextFront;
         dispatch(front, { kind: "select" });
       }
 
       showFront();
+
+      if (frontChanged) {
+        onFront();
+      }
 
       if (changed) {
         notify();
@@ -403,6 +422,18 @@ export const createTabViews = ({
       if (front !== undefined) {
         dispatch(front, { kind: "reload" });
       }
+    },
+    /**
+     * What focuses the tab's view, the front tab's by default; nothing
+     * unless it is in front and showing.
+     */
+    focuser: (key?: TabKey) => {
+      const wanted = key ? tabKey(key) : front;
+      const tab = wanted === undefined ? undefined : tabs.get(wanted);
+
+      return tab && wanted === front && showsView(tab.status)
+        ? tab.view.focus
+        : undefined;
     },
     /** Places every view again, as the design now has it, loading nothing. */
     relayout: placeAll,

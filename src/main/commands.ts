@@ -26,6 +26,8 @@ export interface CommandActions {
   closeTab: (key: TabKey) => Promise<unknown>;
   selectProfile: (profileId: string) => Promise<unknown>;
   addProfile: () => Promise<unknown>;
+  /** Opens the overlay with a field for the profile's name. */
+  openRenameProfile: (profileId: string) => void;
 }
 
 export interface Command {
@@ -232,6 +234,20 @@ export const COMMANDS: readonly Command[] = [
       }),
     once: true,
     run: (_context, { addProfile }) => addProfile(),
+  },
+  {
+    id: "profile.rename",
+    title: () =>
+      t({
+        message: "Rename Profile…",
+        comment:
+          "Menu item in the Window menu that shows a field to change the selected profile's name",
+      }),
+    run: ({ state }, { openRenameProfile }) => {
+      openRenameProfile(state.selectedProfileId);
+
+      return Promise.resolve();
+    },
   },
 ];
 

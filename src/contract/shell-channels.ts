@@ -8,6 +8,8 @@ export const SHELL_CALL_NAMES = [
   "selectTab",
   "closeTab",
   "retryTab",
+  "renameProfile",
+  "closeOverlay",
 ] as const;
 
 export type ShellCallName = (typeof SHELL_CALL_NAMES)[number];
