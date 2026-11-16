@@ -11,8 +11,8 @@ export default defineConfig({
   // Each test launches its own app on a user data directory of its own, so
   // tests rather than files spread across workers.
   fullyParallel: true,
-  // Locally Playwright's own default; CI's smallest runner, macOS, has three
-  // cores.
+  // Locally Playwright's own default, which on CI's four-core runners would
+  // be two.
   workers: isCI ? 3 : "50%",
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
