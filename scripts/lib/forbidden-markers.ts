@@ -1,0 +1,44 @@
+/**
+ * Text that must never appear in a production build's output: what only a
+ * development build may hold. Add to it whatever else must stay out, such as a
+ * development signing key or a stub server's address.
+ */
+export const FORBIDDEN_IN_PROD: readonly { marker: string; why: string }[] = [
+  {
+    marker: "MERU_DEV_SERVER_URL",
+    why: "a production build must never load the shell from a dev server",
+  },
+  {
+    marker: "MERU_DEV_CSP_NONCE",
+    why: "the dev server's nonce belongs to development builds",
+  },
+  {
+    marker: "'nonce-",
+    why: "the development content security policy must be compiled out",
+  },
+  {
+    marker: "onHeadersReceived",
+    why: "only a development build rewrites a dev server's headers",
+  },
+];
+
+export interface OutputFile {
+  path: string;
+  contents: string;
+}
+
+export interface MarkerHit {
+  path: string;
+  marker: string;
+  why: string;
+}
+
+export const findForbiddenMarkers = (
+  files: readonly OutputFile[],
+  markers: readonly { marker: string; why: string }[] = FORBIDDEN_IN_PROD
+): MarkerHit[] =>
+  files.flatMap((file) =>
+    markers
+      .filter(({ marker }) => file.contents.includes(marker))
+      .map(({ marker, why }) => ({ path: file.path, marker, why }))
+  );

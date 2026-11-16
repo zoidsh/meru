@@ -1,4 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // For URL, which main and the renderers both have; nothing else of the
+    // DOM is for core to use.
+    "lib": ["esnext", "dom"]
+  },
   "include": ["src"]
 }

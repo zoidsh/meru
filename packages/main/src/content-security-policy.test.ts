@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
+import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 
 const directive = (policy: string, name: string) =>
   policy
@@ -17,15 +18,18 @@ describe(createContentSecurityPolicy, () => {
     expect(directive(policy, "script-src")).toStrictEqual(["'self'"]);
     expect(directive(policy, "style-src")).toStrictEqual(["'self'"]);
     expect(directive(policy, "connect-src")).toStrictEqual(["'self'"]);
-    expect(policy).not.toMatch(/unsafe|https?:|ws:/u);
+    expect(policy).not.toMatch(/unsafe|https?:|ws:|nonce/u);
   });
+});
 
+describe(createDevContentSecurityPolicy, () => {
   it("lets a development page load from exactly the dev server", () => {
-    const policy = createContentSecurityPolicy({
+    const policy = createDevContentSecurityPolicy({
       url: "http://127.0.0.1:5173/",
       nonce: "abc123",
     });
 
+    expect(directive(policy, "default-src")).toStrictEqual(["'none'"]);
     expect(directive(policy, "script-src")).toStrictEqual([
       "http://127.0.0.1:5173",
       "'nonce-abc123'",
@@ -39,5 +43,20 @@ describe(createContentSecurityPolicy, () => {
       "ws://127.0.0.1:5173",
     ]);
     expect(policy).not.toMatch(/unsafe|'self'|\*/u);
+  });
+});
+
+describe(readDevServer, () => {
+  it("reads the dev server a development build is given", () => {
+    expect(
+      readDevServer({
+        MERU_DEV_SERVER_URL: "http://127.0.0.1:5173/",
+        MERU_DEV_CSP_NONCE: "abc123",
+      })
+    ).toStrictEqual({ url: "http://127.0.0.1:5173/", nonce: "abc123" });
+  });
+
+  it("refuses a development build with no dev server", () => {
+    expect(() => readDevServer({})).toThrow(/MERU_DEV_SERVER_URL/u);
   });
 });

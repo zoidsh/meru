@@ -1,3 +1,4 @@
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { build as bundle } from "rolldown";
@@ -11,6 +12,7 @@ import {
   shellViteConfig,
   writeAppManifest,
 } from "./lib/bundles.ts";
+import { findForbiddenMarkers } from "./lib/forbidden-markers.ts";
 
 const manifest = await readRootManifest();
 
@@ -27,4 +29,34 @@ await Promise.all([
   writeAppManifest("prod", manifest),
 ]);
 
-console.log(`Built ${manifest.productName} ${manifest.version} into out/prod`);
+const entries = await readdir(outDir("prod"), {
+  recursive: true,
+  withFileTypes: true,
+});
+
+const files = await Promise.all(
+  entries
+    .filter((entry) => entry.isFile())
+    .map(async (entry) => {
+      const filePath = path.join(entry.parentPath, entry.name);
+
+      return {
+        path: path.relative(outDir("prod"), filePath),
+        contents: await readFile(filePath, "utf-8"),
+      };
+    })
+);
+
+const hits = findForbiddenMarkers(files);
+
+if (hits.length > 0) {
+  for (const hit of hits) {
+    console.error(`out/prod/${hit.path} holds "${hit.marker}": ${hit.why}`);
+  }
+
+  process.exit(1);
+}
+
+console.log(
+  `Built ${manifest.productName} ${manifest.version} into out/prod; checked ${files.length} files for development-only markers`
+);

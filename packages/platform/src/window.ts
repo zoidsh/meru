@@ -1,3 +1,4 @@
+import { isSameSite } from "@meru/core/app-url";
 import type { Rectangle, Size } from "@meru/core/window-bounds";
 import { BrowserWindow } from "electron";
 
@@ -29,21 +30,6 @@ export interface AppWindow {
 export interface WindowFactory {
   create: (options: WindowOptions) => AppWindow;
 }
-
-/**
- * Compared by scheme and host rather than `URL.origin`, which Node's URL gives
- * as `"null"` for every scheme it does not know, `meru-app:` included.
- */
-const isSameSite = (url: string, contentUrl: string) => {
-  try {
-    const target = new URL(url);
-    const content = new URL(contentUrl);
-
-    return target.protocol === content.protocol && target.host === content.host;
-  } catch {
-    return false;
-  }
-};
 
 export const createWindowFactory = (): WindowFactory => ({
   create: (options) => {

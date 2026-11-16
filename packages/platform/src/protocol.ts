@@ -1,7 +1,8 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { net, protocol, session } from "electron";
+import { resolveAppFile } from "@meru/core/app-url";
+import { net, protocol } from "electron";
 
 export interface ServeOptions {
   scheme: string;
@@ -11,47 +12,13 @@ export interface ServeOptions {
   contentSecurityPolicy: string;
 }
 
-export interface DevServerOptions {
-  origin: string;
-  contentSecurityPolicy: string;
-}
-
 export interface AppProtocol {
   /** Must run before the app is ready, as Chromium fixes schemes at startup. */
   registerPrivilegedScheme: (scheme: string) => void;
   serve: (options: ServeOptions) => void;
-  /** Gives a dev server's pages the policy the app's own scheme would. */
-  applyToDevServer: (options: DevServerOptions) => void;
 }
 
 const notFound = () => new Response(null, { status: 404 });
-
-/** The file a request names, or nothing when it would climb out of `root`. */
-const resolveFile = (
-  root: string,
-  hosts: readonly string[],
-  requestUrl: string
-) => {
-  const url = new URL(requestUrl);
-
-  if (!hosts.includes(url.host)) {
-    return;
-  }
-
-  const hostRoot = path.join(root, url.host);
-  const pathname = decodeURIComponent(url.pathname);
-  const filePath = path.join(
-    hostRoot,
-    pathname === "/" ? "index.html" : pathname
-  );
-  const relative = path.relative(hostRoot, filePath);
-
-  if (relative.startsWith("..") || path.isAbsolute(relative)) {
-    return;
-  }
-
-  return filePath;
-};
 
 export const createAppProtocol = (): AppProtocol => ({
   registerPrivilegedScheme: (scheme) => {
@@ -64,36 +31,28 @@ export const createAppProtocol = (): AppProtocol => ({
   },
   serve: ({ scheme, root, hosts, contentSecurityPolicy }) => {
     protocol.handle(scheme, async (request) => {
-      const filePath = resolveFile(root, hosts, request.url);
+      const file = resolveAppFile(request.url, scheme, hosts);
 
-      if (!filePath) {
+      if (!file) {
         return notFound();
       }
 
       try {
-        const file = await net.fetch(pathToFileURL(filePath).href);
-        const headers = new Headers(file.headers);
+        const response = await net.fetch(
+          pathToFileURL(path.join(root, file.host, ...file.segments)).href
+        );
+        const headers = new Headers(response.headers);
 
         headers.set("Content-Security-Policy", contentSecurityPolicy);
         headers.set("X-Content-Type-Options", "nosniff");
 
-        return new Response(file.body, { status: file.status, headers });
+        return new Response(response.body, {
+          status: response.status,
+          headers,
+        });
       } catch {
         return notFound();
       }
     });
-  },
-  applyToDevServer: ({ origin, contentSecurityPolicy }) => {
-    session.defaultSession.webRequest.onHeadersReceived(
-      { urls: [`${origin}/*`] },
-      (details, respond) => {
-        respond({
-          responseHeaders: {
-            ...details.responseHeaders,
-            "Content-Security-Policy": [contentSecurityPolicy],
-          },
-        });
-      }
-    );
   },
 });

@@ -70,11 +70,9 @@ export const appBundles = (
       external: ["electron"],
       transform: {
         define: {
-          MERU_BUILD: JSON.stringify({
-            mode,
-            appId: manifest.meru.appId,
-            productName: manifest.productName,
-          }),
+          MERU_BUILD_MODE: JSON.stringify(mode),
+          MERU_APP_ID: JSON.stringify(manifest.meru.appId),
+          MERU_PRODUCT_NAME: JSON.stringify(manifest.productName),
         },
       },
       output: {
