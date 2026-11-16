@@ -1,0 +1,33 @@
+name: setup
+description: Installs the toolchain and the dependencies, with the pnpm store and Electron's downloads cached.
+
+inputs:
+  electron:
+    description: Whether the job launches or packs Electron; without it the binary is not downloaded.
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
+    - if: inputs.electron != 'true'
+      shell: bash
+      run: echo "ELECTRON_SKIP_BINARY_DOWNLOAD=1" >> "$GITHUB_ENV"
+    - id: pnpm-store
+      shell: bash
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: pnpm-${{ runner.os }}-
+    # Electron's own install and electron-builder's packing both download
+    # through @electron/get, into this folder.
+    - if: inputs.electron == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.os == 'Linux' && '~/.cache/electron' || runner.os == 'macOS' && '~/Library/Caches/electron' || '~\AppData\Local\electron\Cache' }}
+        key: electron-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: electron-${{ runner.os }}-
+    - shell: bash
+      run: pnpm install --frozen-lockfile
