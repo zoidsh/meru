@@ -18,6 +18,7 @@ import {
   selectProfile,
   selectedProfile,
   sortProfilesToClear,
+  withAProfile,
 } from "./state.ts";
 import type { State } from "./state.ts";
 import { openTab } from "./tabs.ts";
@@ -98,16 +99,112 @@ describe(decodeState, () => {
       42,
       [],
       {},
-      { ...valid, profiles: [] },
-      { ...valid, profiles: [{ id: "", name: "Default" }] },
-      { ...valid, profiles: [{ id: "a" }] },
-      { ...valid, selectedProfileId: "missing" },
+      { ...valid, profiles: "profiles" },
+      { ...valid, profiles: { a: {} } },
+      { ...valid, version: 0 },
     ]) {
       const decoded = decodeState(value);
 
       expect(decoded.kind).toBe("unreadable");
       expect(decoded.kind === "unreadable" && decoded.reason).not.toBe("");
     }
+  });
+});
+
+/** The state a file holding `profiles`, selecting `selected`, decodes to. */
+const decodeProfiles = (profiles: unknown[], selected: unknown) => {
+  const decoded = decodeState({
+    ...valid,
+    profiles,
+    selectedProfileId: selected,
+  });
+
+  if (decoded.kind !== "state") {
+    throw new Error(decoded.kind);
+  }
+
+  return decoded.state;
+};
+
+describe("decoding profiles", () => {
+  const work = { id: "w", name: "Work" };
+  const home = { id: "h", name: "Home" };
+
+  it.each([
+    { id: "", name: "Blank" },
+    { id: "x" },
+    { id: "x", name: 7 },
+    "profile",
+    null,
+  ])("keeps %j, which does not parse, unshown and unselectable", (entry) => {
+    const state = decodeProfiles([work, entry, home], "x");
+
+    expect(state.profiles.map((profile) => profile.id)).toStrictEqual([
+      "w",
+      "h",
+    ]);
+    expect(state.selectedProfileId).toBe("w");
+  });
+
+  it("selects the first readable profile when the selection names a missing one or is not a string", () => {
+    expect(decodeProfiles([work, home], "gone").selectedProfileId).toBe("w");
+    expect(decodeProfiles([work, home], 3).selectedProfileId).toBe("w");
+    expect(decodeProfiles([work, home], "h").selectedProfileId).toBe("h");
+  });
+
+  it("reads a file none of whose profiles parse as having none", () => {
+    const state = decodeProfiles([{ id: "x" }], "x");
+
+    expect(state.profiles).toStrictEqual([]);
+    expect(withAProfile(state, () => "new").profiles).toStrictEqual([
+      newProfile("new", "Default"),
+    ]);
+    expect(withAProfile(state, () => "new").selectedProfileId).toBe("new");
+  });
+
+  it("counts only readable profiles when one may be removed", () => {
+    const state = decodeProfiles([work, { id: "x" }], "w");
+
+    expect(canRemoveProfile(state, "w")).toBeFalsy();
+    expect(canRemoveProfile(state, "x")).toBeFalsy();
+  });
+
+  it("never clears a listed profile's data, readable or not", () => {
+    const decoded = decodeState({
+      ...valid,
+      profiles: [work, { id: "x" }],
+      selectedProfileId: "w",
+      profilesToClear: ["x", "w", "gone"],
+    });
+
+    if (decoded.kind !== "state") {
+      throw new Error(decoded.kind);
+    }
+
+    expect(sortProfilesToClear(decoded.state)).toStrictEqual({
+      clear: ["gone"],
+      stillListed: ["x", "w"],
+    });
+  });
+
+  it("writes each profile that did not parse back in its place, and a new one after it", () => {
+    const broken = { id: "x", name: 7, color: "teal" };
+    const state = decodeProfiles([work, broken, home, "last"], "w");
+
+    expect(
+      (encodeState(state) as { profiles: unknown[] }).profiles
+    ).toStrictEqual([
+      newProfile("w", "Work"),
+      broken,
+      newProfile("h", "Home"),
+      "last",
+    ]);
+
+    const fresh = withAProfile(decodeProfiles([broken], "x"), () => "new");
+
+    expect(
+      (encodeState(fresh) as { profiles: unknown[] }).profiles
+    ).toStrictEqual([broken, newProfile("new", "Default")]);
   });
 });
 

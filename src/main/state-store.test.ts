@@ -142,6 +142,53 @@ describe(loadState, () => {
     expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual(saved);
   });
 
+  it("keeps profiles and tabs it cannot read in their places when it rewrites the file", async () => {
+    const saved = {
+      version: 1,
+      profiles: [
+        { id: "x", name: 7 },
+        {
+          id: "a",
+          name: "Work",
+          tabs: [
+            { id: "gmail", app: "gmail", url: "", title: "" },
+            { id: "t1", app: "drive" },
+          ],
+          selectedTabId: "gmail",
+        },
+        "broken",
+      ],
+      selectedProfileId: "x",
+    };
+    const { file, files } = createFakeFile(JSON.stringify(saved));
+    const state = await load(file).state;
+
+    expect(state.selectedProfileId).toBe("a");
+    await saveState(file, state);
+
+    expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual({
+      ...saved,
+      selectedProfileId: "a",
+    });
+  });
+
+  it("adds a first profile when none can be read, keeping those in the file", async () => {
+    const saved = {
+      version: 1,
+      profiles: [{ id: "x" }],
+      selectedProfileId: "x",
+    };
+    const { file, files } = createFakeFile(JSON.stringify(saved));
+    const state = await load(file).state;
+
+    expect(state.profiles).toStrictEqual([newProfile("new-id", "Default")]);
+    expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual({
+      ...saved,
+      profiles: [{ id: "x" }, newProfile("new-id", "Default")],
+      selectedProfileId: "new-id",
+    });
+  });
+
   it("stops startup on a newer version's file and leaves it alone", async () => {
     const newer = JSON.stringify({ version: 2, profiles: {} });
     const { file, files } = createFakeFile(newer);

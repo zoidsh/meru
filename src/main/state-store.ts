@@ -2,7 +2,12 @@ import path from "node:path";
 
 import { t } from "@lingui/core/macro";
 
-import { createInitialState, decodeState, encodeState } from "#core/state.ts";
+import {
+  createInitialState,
+  decodeState,
+  encodeState,
+  withAProfile,
+} from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
@@ -50,7 +55,13 @@ export const loadState = async ({
     const decoded = decodeState(parse(text));
 
     if (decoded.kind === "state") {
-      return decoded.state;
+      const state = withAProfile(decoded.state, newId);
+
+      if (state !== decoded.state) {
+        await saveState(file, state);
+      }
+
+      return state;
     }
 
     if (decoded.kind === "newer") {

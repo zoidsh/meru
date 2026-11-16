@@ -22,8 +22,8 @@ const tabSchema = z.looseObject({
   title: z.string(),
 });
 
-// The tabs are decoded one by one, so nothing in them can make the profile, or
-// the file and with it every profile's sign-in, unreadable.
+// Profiles and their tabs are decoded one by one, so no one entry can make the
+// file, and with it every profile's sign-in, unreadable.
 const profileSchema = z.looseObject({
   id: z.string().check(z.minLength(1)),
   name: z.string(),
@@ -31,32 +31,32 @@ const profileSchema = z.looseObject({
   selectedTabId: z.optional(z.unknown()),
 });
 
-const stateSchema = z
-  .looseObject({
-    version: z.literal(STATE_VERSION),
-    profiles: z.array(profileSchema).check(z.minLength(1)),
-    selectedProfileId: z.string(),
-    /**
-     * Removed profiles whose session data is still to be deleted, so a quit
-     * between the removal and the clear is finished at the next launch.
-     */
-    profilesToClear: z.optional(z.array(z.string().check(z.minLength(1)))),
-  })
-  .check(
-    z.refine(
-      (state) =>
-        state.profiles.some(
-          (profile) => profile.id === state.selectedProfileId
-        ),
-      { message: "The selected profile is not among the profiles" }
-    )
-  );
+const stateSchema = z.looseObject({
+  version: z.literal(STATE_VERSION),
+  profiles: z.array(z.unknown()),
+  selectedProfileId: z.optional(z.unknown()),
+  /**
+   * Removed profiles whose session data is still to be deleted, so a quit
+   * between the removal and the clear is finished at the next launch.
+   */
+  profilesToClear: z.optional(z.array(z.string().check(z.minLength(1)))),
+});
 
 export type Tab = z.infer<typeof tabSchema>;
 
 // Symbols, which a key read from JSON can never be and JSON never writes.
 const UNREAD = Symbol("unread tab");
 const TABS_AS_FOUND = Symbol("tabs as found");
+const UNREAD_PROFILES = Symbol("unread profiles");
+
+/**
+ * An entry in the profiles that does not parse, kept as it was found and
+ * written back after as many readable profiles as it followed.
+ */
+interface UnreadProfile {
+  after: number;
+  raw: unknown;
+}
 
 /** An entry in a profile's tabs that does not parse, kept as it was found. */
 export interface UnreadTab {
@@ -89,9 +89,11 @@ type StoredState = z.infer<typeof stateSchema>;
 export interface State {
   [key: string]: unknown;
   version: StoredState["version"];
+  /** The profiles that parse; the rest are kept but never shown. */
   profiles: Profile[];
   selectedProfileId: string;
   profilesToClear?: StoredState["profilesToClear"];
+  [UNREAD_PROFILES]?: readonly UnreadProfile[];
 }
 
 export const gmailTab = (): Tab => ({
@@ -159,17 +161,48 @@ const normalizeProfile = (profile: StoredProfile): Profile => {
   return decoded;
 };
 
-/** The state as its file holds it, with every tab entry as it was found. */
-export const encodeState = (state: State): unknown => ({
-  ...state,
-  profiles: state.profiles.map((profile) => ({
-    ...profile,
-    tabs:
-      TABS_AS_FOUND in profile
-        ? profile[TABS_AS_FOUND]
-        : profile.tabs.map((entry) => (isTab(entry) ? entry : entry[UNREAD])),
-  })),
+const encodeProfile = (profile: Profile) => ({
+  ...profile,
+  tabs:
+    TABS_AS_FOUND in profile
+      ? profile[TABS_AS_FOUND]
+      : profile.tabs.map((entry) => (isTab(entry) ? entry : entry[UNREAD])),
 });
+
+/**
+ * The state as its file holds it, with every profile and tab entry that did
+ * not parse as it was found, in its place.
+ */
+export const encodeState = (state: State): unknown => {
+  const unread = state[UNREAD_PROFILES] ?? [];
+  const { length } = state.profiles;
+  const placedAfter = (count: number) =>
+    unread
+      .filter((entry) => Math.min(entry.after, length) === count)
+      .map((entry) => entry.raw);
+
+  return {
+    ...state,
+    profiles: [
+      ...placedAfter(0),
+      ...state.profiles.flatMap((profile, index) => [
+        encodeProfile(profile),
+        ...placedAfter(index + 1),
+      ]),
+    ],
+  };
+};
+
+/** The ids of profiles that do not parse, where an id can be read. */
+const unreadProfileIds = (state: State) =>
+  (state[UNREAD_PROFILES] ?? []).flatMap(({ raw }) =>
+    typeof raw === "object" &&
+    raw !== null &&
+    "id" in raw &&
+    typeof raw.id === "string"
+      ? [raw.id]
+      : []
+  );
 
 /** A profile with only its Gmail tab. */
 export const newProfile = (id: string, name: string): Profile => ({
@@ -199,16 +232,49 @@ export const decodeState = (value: unknown): DecodedState => {
 
   const result = stateSchema.safeParse(value);
 
-  return result.success
-    ? {
-        kind: "state",
-        state: {
-          ...result.data,
-          profiles: result.data.profiles.map(normalizeProfile),
-        },
-      }
-    : { kind: "unreadable", reason: z.prettifyError(result.error) };
+  if (!result.success) {
+    return { kind: "unreadable", reason: z.prettifyError(result.error) };
+  }
+
+  const profiles: Profile[] = [];
+  const unread: UnreadProfile[] = [];
+
+  for (const entry of result.data.profiles) {
+    const parsed = profileSchema.safeParse(entry);
+
+    if (parsed.success) {
+      profiles.push(normalizeProfile(parsed.data));
+    } else {
+      unread.push({ after: profiles.length, raw: entry });
+    }
+  }
+
+  const { selectedProfileId } = result.data;
+  const state: State = {
+    ...result.data,
+    profiles,
+    selectedProfileId: profiles.some(
+      (profile) => profile.id === selectedProfileId
+    )
+      ? String(selectedProfileId)
+      : (profiles[0]?.id ?? ""),
+  };
+
+  if (unread.length > 0) {
+    state[UNREAD_PROFILES] = unread;
+  }
+
+  return { kind: "state", state };
 };
+
+/**
+ * The state with a first profile, selected, when none of its profiles could
+ * be read; those stay in the file.
+ */
+export const withAProfile = (state: State, newId: () => string): State =>
+  state.profiles.length > 0
+    ? state
+    : addProfile(state, newProfile(newId(), DEFAULT_PROFILE_NAME));
 
 /**
  * The state Meru starts from when it has none: one profile, selected, as v3
@@ -315,11 +381,14 @@ export const forgetProfilesToClear = (
 
 /**
  * The ids on the list to clear, split into those whose data may be deleted
- * and those that are still listed as profiles, as in a hand-edited file,
- * whose data must never be.
+ * and those that are still listed as profiles, readable or not, as in a
+ * hand-edited file, whose data must never be.
  */
 export const sortProfilesToClear = (state: State) => {
-  const listed = new Set(state.profiles.map((profile) => profile.id));
+  const listed = new Set([
+    ...state.profiles.map((profile) => profile.id),
+    ...unreadProfileIds(state),
+  ]);
   const ids = state.profilesToClear ?? [];
 
   return {
