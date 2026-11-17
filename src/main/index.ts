@@ -11,6 +11,7 @@ import { knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
 import { totalUnread } from "#core/unread.ts";
+import { extractVerificationCode } from "#core/verification-code.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
@@ -409,6 +410,7 @@ const start = async () => {
       notifier: MERU_E2E_BUILD ? createCapturedNotifier() : createNotifier(),
       // Nor writes the clipboard, which the whole desktop shares.
       clipboard: MERU_E2E_BUILD ? createCapturedClipboard() : createClipboard(),
+      extractCode: extractVerificationCode,
       setting: settings.get,
       state: profiles.get,
       hasSubtitle: isMacOS,

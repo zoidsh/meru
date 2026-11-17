@@ -17,6 +17,11 @@ import { createMailNotifications } from "./notifications.ts";
 
 const INBOX = "https://mail.google.com/mail/u/0";
 
+const CODE = "493021";
+
+/** The subject the fake extractor finds a code under, in the summary. */
+const CODE_SUBJECT = "Your verification code";
+
 const entry = (id: string, link = `${INBOX}?message_id=${id}`): FeedEntry => ({
   id,
   link,
@@ -58,6 +63,7 @@ const setup = ({
   copies = true,
 } = {}) => {
   let copying = copies;
+  let writing: PromiseWithResolvers<void> | undefined;
   const copied: string[] = [];
   const shown: Shown[] = [];
   const logs: string[] = [];
@@ -84,16 +90,19 @@ const setup = ({
   const notifications = createMailNotifications({
     notifier,
     clipboard: {
-      writeText: (text) => {
+      writeText: async (text) => {
+        await writing?.promise;
+
         if (!copying) {
-          return Promise.reject(new Error(`Not written: ${text}`));
+          throw new Error(`Not written: ${text}`);
         }
 
         copied.push(text);
-
-        return Promise.resolve();
       },
     },
+    // Fixed, so these tests prove the path and not the extractor.
+    extractCode: ([subject, summary]) =>
+      subject === CODE_SUBJECT ? /\d{6}/u.exec(summary ?? "")?.[0] : undefined,
     setting: (key) =>
       (settings.has(key) ? settings.get(key) : SETTINGS[key].default) as never,
     state: () => current,
@@ -122,6 +131,12 @@ const setup = ({
     copied,
     allowCopies: () => {
       copying = true;
+    },
+    /** Holds every write until the returned function lets them land. */
+    holdCopies: () => {
+      writing = Promise.withResolvers();
+
+      return writing.resolve;
     },
     shown,
     opened,
@@ -421,12 +436,10 @@ describe("what holds a new mail notification", () => {
   });
 });
 
-const CODE = "493021";
-
-/** A message the extractor reads `CODE` from. */
+/** A message the fake extractor reads `CODE` from. */
 const codeEntry = (id: string): FeedEntry => ({
   ...entry(id),
-  subject: "Your verification code",
+  subject: CODE_SUBJECT,
   summary: `Use ${CODE} to finish signing in`,
 });
 

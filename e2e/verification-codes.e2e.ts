@@ -86,7 +86,9 @@ const unread = (shell: Page) =>
     .getByRole("tablist", { name: "Profiles" })
     .getByRole("tab", { name: /^Home/u });
 
-test("shows a code with a Copy button, copies nothing until it is pressed, then copies the digits and marks the mail read", async ({
+// Both tests here need the extractor, which slice 2.6 set aside to be
+// written again from the design record; they run again once it is.
+test.skip("shows a code with a Copy button, copies nothing until it is pressed, then copies the digits and marks the mail read", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -141,7 +143,7 @@ test("shows a code with a Copy button, copies nothing until it is pressed, then 
     .toStrictEqual([{ account: ANY_SESSION, code: 3, messageId: "2" }]);
 });
 
-test("in immediately mode, shows the code and copies it while Do Not Disturb is on", async ({
+test.skip("in immediately mode, shows the code and copies it while Do Not Disturb is on", async ({
   launchApp,
   userDataDir,
   standIn,

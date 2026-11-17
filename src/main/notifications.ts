@@ -23,7 +23,6 @@ import type {
 } from "#core/notifications.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
 import type { DoNotDisturb, Profile, State } from "#core/state.ts";
-import { extractVerificationCode } from "#core/verification-code.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type {
   NotificationContent,
@@ -38,6 +37,8 @@ export interface MailNotificationsDeps {
   notifier: Notifier;
   /** Written with a verification code's digits and nothing else. */
   clipboard: Clipboard;
+  /** The digits of the code `[subject, summary]` carries, if any. */
+  extractCode: (texts: readonly string[]) => string | undefined;
   /** Read as each notification is made, so a change applies to the next. */
   setting: <Key extends SettingKey>(key: Key) => SettingValue<Key>;
   state: () => State;
@@ -127,6 +128,7 @@ const copy = (): NotificationCopy => ({
 export const createMailNotifications = ({
   notifier,
   clipboard,
+  extractCode,
   setting,
   state,
   hasSubtitle,
@@ -340,7 +342,7 @@ export const createMailNotifications = ({
 
       for (const entry of taken.fresh) {
         const code = setting("verificationCodes")
-          ? extractVerificationCode([entry.subject, entry.summary])
+          ? extractCode([entry.subject, entry.summary])
           : undefined;
 
         if (code === undefined) {
