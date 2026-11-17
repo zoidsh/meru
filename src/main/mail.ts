@@ -71,6 +71,9 @@ export const createMailPoller = ({
 }: MailPollerDeps) => {
   const polls = new Map<string, Polled>();
   const listeners = new Set<() => void>();
+  const pollListeners = new Set<
+    (profileId: string, outcome: FeedOutcome) => void
+  >();
 
   const notify = () => {
     for (const listener of listeners) {
@@ -104,6 +107,10 @@ export const createMailPoller = ({
         polled.failures += 1;
         break;
       }
+    }
+
+    for (const listener of pollListeners) {
+      listener(profileId, outcome);
     }
 
     if (
@@ -257,6 +264,10 @@ export const createMailPoller = ({
     /** Called when a profile's status or count changes. */
     onChange: (listener: () => void) => {
       listeners.add(listener);
+    },
+    /** Called as each poll of a listed profile ends, with what it read. */
+    onPoll: (listener: (profileId: string, outcome: FeedOutcome) => void) => {
+      pollListeners.add(listener);
     },
   };
 };

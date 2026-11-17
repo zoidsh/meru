@@ -387,6 +387,24 @@ describe(createMailPoller, () => {
     expect(changes).toHaveBeenCalledOnce();
   });
 
+  it("tells each poll's outcome as it ends, failures included, but none of a removed profile", async () => {
+    const { poller, answer } = setup();
+    const polls: [string, FeedOutcome][] = [];
+
+    poller.onPoll((profileId, outcome) => polls.push([profileId, outcome]));
+    poller.reconcile(["a", "b"]);
+    await answer("a", feed(1));
+    await answer("b", FAILED);
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+    poller.reconcile(["b"]);
+    await answer("a", feed(2));
+
+    expect(polls).toStrictEqual([
+      ["a", feed(1)],
+      ["b", FAILED],
+    ]);
+  });
+
   it("logs the status and count, never what a message says", async () => {
     const { poller, answer, logs } = setup();
 
