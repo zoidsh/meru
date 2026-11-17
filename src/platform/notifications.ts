@@ -1,5 +1,7 @@
 import { Notification } from "electron";
 
+import { escapeNotificationMarkup } from "#core/notifications.ts";
+
 /** Plain text, which the system shows as text. */
 export interface NotificationContent {
   title: string;
@@ -30,7 +32,7 @@ export interface Notifier {
  * At most this many are held at once, the oldest closed past it, so ones the
  * system never reports closed cannot pile up.
  */
-export const MOST_HELD = 100;
+const MOST_HELD = 100;
 
 /**
  * Holds each shown notification until it is clicked, closed or fails, since
@@ -76,7 +78,12 @@ export const createNotifier = (): Notifier => {
         return;
       }
 
-      const notification = new Notification(content);
+      // Only Linux's servers read a body as markup.
+      const notification = new Notification(
+        process.platform === "linux"
+          ? { ...content, body: escapeNotificationMarkup(content.body) }
+          : content
+      );
 
       notification.once("click", () => {
         holder.release(notification);
@@ -102,7 +109,7 @@ export const createNotifier = (): Notifier => {
 };
 
 /** One the end-to-end build has captured in place of showing it. */
-export interface CapturedNotification extends NotificationContent {
+interface CapturedNotification extends NotificationContent {
   /** Whether it is still where the system would show it. */
   shown: boolean;
   click: () => void;

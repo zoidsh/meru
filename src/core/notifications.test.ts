@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { FeedEntry, FeedOutcome } from "./feed.ts";
 import {
   SEEN_LIMIT,
+  escapeNotificationMarkup,
   messageUrl,
   noticesFor,
   takeNewMail,
@@ -227,6 +228,12 @@ describe(messageUrl, () => {
     );
   });
 
+  it("reads a backslash as a slash, as a browser does, so the link stays on Gmail", () => {
+    expect(
+      messageUrl(String.raw`https://mail.google.com\@evil.example.com/`, INBOX)
+    ).toBe("https://mail.google.com/@evil.example.com/");
+  });
+
   it.each([
     undefined,
     "https://example.com/mail/u/0?message_id=a",
@@ -234,8 +241,21 @@ describe(messageUrl, () => {
     "https://mail.google.com.example.com/",
     "https://someone@mail.google.com/mail/u/0",
     "data:text/html,<p>mail</p>",
+    "//evil.example.com/mail/u/0",
+    "https://mail.google.com:8443/mail/u/0",
+    `${"javascript"}:alert(1)`,
     "not a url",
   ])("opens the inbox in place of %s", (link) => {
     expect(messageUrl(link, INBOX)).toBe(INBOX);
+  });
+});
+
+describe(escapeNotificationMarkup, () => {
+  it("keeps markup in mail as the text it is", () => {
+    expect(
+      escapeNotificationMarkup(`<b>Ada</b> <ada@example.com> & "co" 'n' &amp;`)
+    ).toBe(
+      `&lt;b&gt;Ada&lt;/b&gt; &lt;ada@example.com&gt; &amp; "co" 'n' &amp;amp;`
+    );
   });
 });

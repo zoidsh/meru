@@ -137,3 +137,10 @@ export const messageUrl = (link: string | undefined, inbox: string) => {
     return inbox;
   }
 };
+
+/**
+ * Text as libnotify's servers show it: they read a body as markup, and
+ * Electron passes it on unescaped, so a tag in mail would format it or drop.
+ */
+export const escapeNotificationMarkup = (text: string) =>
+  text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
