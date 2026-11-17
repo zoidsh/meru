@@ -75,7 +75,7 @@ describe(openState, () => {
     expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual(initial);
   });
 
-  it("reads a file slice 1.2 wrote, giving each profile its Gmail tab, and writes nothing", async () => {
+  it("reads a file whose profiles hold no tabs, giving each its Gmail tab, and writes nothing", async () => {
     const saved = JSON.stringify({
       version: 1,
       profiles: [{ id: "kept-id", name: "Work" }],

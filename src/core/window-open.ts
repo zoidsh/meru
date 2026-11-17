@@ -25,8 +25,8 @@ export interface WindowOpenContext {
 }
 
 /**
- * Adding a Google account, refused until the slice that answers it with the
- * profile settings, as v3 does.
+ * Adding a Google account, refused: v3 answers it with the profile settings,
+ * which do not exist yet.
  */
 const isAddSession = (url: URL) =>
   url.host === "accounts.google.com" &&
@@ -62,8 +62,8 @@ export const routeWindowOpen = (
     return { kind: "system-browser" };
   }
 
-  // Its own pop-outs, such as Gmail's compose window, which belong in a
-  // window of the profile's session until their slice.
+  // Its own pop-outs, such as Gmail's compose window, belong in a window of
+  // the profile's session, which does not exist yet.
   if (app.singleInstance && app.id === openerApp) {
     return { kind: "deny" };
   }

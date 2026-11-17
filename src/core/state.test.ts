@@ -37,7 +37,7 @@ const valid = {
 };
 
 describe(decodeState, () => {
-  it("reads a file slice 1.2 wrote, each profile with only its Gmail tab, selected", () => {
+  it("reads a file whose profiles hold no tabs as each with only its Gmail tab, selected", () => {
     expect(decodeState(valid)).toStrictEqual({
       kind: "read",
       value: {

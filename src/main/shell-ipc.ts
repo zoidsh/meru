@@ -88,7 +88,6 @@ export const serveShellContract = ({
         throw new RefusedCallError(`${name} was malformed`);
       }
 
-      // Each name's handler takes that name's request.
       const handler = handlers[name] as (request: unknown) => Promise<void>;
 
       try {
@@ -139,7 +138,6 @@ export const serveShellContract = ({
     last = next;
 
     for (const [senderId, slices] of subscribers) {
-      // Its webContents is gone.
       if (!isShell(senderId)) {
         subscribers.delete(senderId);
         continue;
