@@ -4,6 +4,7 @@ import path from "node:path";
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { expect, findPage, readViews, test } from "./lib/app.ts";
+import { DESIGNS, THEMES, onlyWithShots, shotPath } from "./lib/shots.ts";
 import type { StandIn, StandInMail } from "./lib/stand-in.ts";
 import { ACCOUNT_COOKIE, messageLink } from "./lib/stand-in.ts";
 
@@ -323,8 +324,6 @@ test("shows the same list after the shell reloads, since main keeps it, and clos
   await expect.poll(() => shownViews(app)).toStrictEqual(home);
 });
 
-const SHOTS = path.join(import.meta.dirname, "..", "test-results", "inbox");
-
 /** Rows that stretch a row: a long subject and sender, a right-to-left subject, no summary. */
 const SHOT_MAIL: StandInMail[] = [
   {
@@ -354,16 +353,13 @@ const SHOT_MAIL: StandInMail[] = [
   },
 ];
 
-for (const design of ["modern", "classic"] as const) {
+for (const design of DESIGNS) {
   test(`draws the inbox in the ${design} design, light and dark`, async ({
     launchApp,
     userDataDir,
     standIn,
   }) => {
-    test.skip(
-      process.env.MERU_E2E_SHOTS !== "1",
-      "Screenshots are taken with MERU_E2E_SHOTS=1"
-    );
+    onlyWithShots();
 
     const { app, shell } = await launch(launchApp, userDataDir, standIn, {
       design,
@@ -379,16 +375,16 @@ for (const design of ["modern", "classic"] as const) {
     await openInbox(shell);
     await expect(grid(shell).getByRole("row")).toHaveCount(5);
 
-    const shoot = async (colorScheme: "light" | "dark") => {
-      await shell.emulateMedia({ colorScheme });
+    for (const theme of THEMES) {
+      // The inbox is the shell's own, drawn where the tab's view would be.
+      // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+      await shell.emulateMedia({ colorScheme: theme });
+      // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
       await shell.screenshot({
-        path: path.join(SHOTS, `${design}-${colorScheme}.png`),
+        path: shotPath("inbox", design, theme),
         // Ends the colour transitions the scheme just started.
         animations: "disabled",
       });
-    };
-
-    await shoot("light");
-    await shoot("dark");
+    }
   });
 }

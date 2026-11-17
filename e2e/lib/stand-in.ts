@@ -3,6 +3,8 @@ import { createServer } from "node:http";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
+import type { Page } from "@playwright/test";
+
 export const STAND_IN_TITLE = "Gmail stand-in";
 
 export const CALENDAR_TITLE = "Calendar stand-in";
@@ -142,6 +144,16 @@ export const threadMarkup = (count: number) => `<style>
     </style>
     <h2 data-legacy-thread-id="t1">Thread</h2>
     <div role="list">${Array.from({ length: count }, (_, index) => threadMessage(index + 1)).join("")}</div>`;
+
+/** Moves the stand-in to an open thread of `count` messages, as Gmail draws one. */
+export const openThread = (view: Page, count: number) =>
+  view.evaluate((markup) => {
+    document.querySelector('[gh="tl"]')?.setAttribute("hidden", "");
+    document
+      .querySelector('[role="main"]')
+      ?.insertAdjacentHTML("beforeend", markup);
+    location.hash = "#inbox/t1";
+  }, threadMarkup(count));
 
 /** Where the feed sends a signed-out account, which Gmail's view can show too. */
 export const SIGN_IN_PATH = "/signin";

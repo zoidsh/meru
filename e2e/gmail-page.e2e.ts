@@ -12,7 +12,7 @@ import {
   POPUP_TITLE,
   SIGN_IN_TITLE,
   THREAD_PARTS,
-  threadMarkup,
+  openThread,
   threadMessage,
 } from "./lib/stand-in.ts";
 
@@ -299,16 +299,6 @@ const ALL_ON: ThreadSwitches = {
   moveAttachmentsToTop: true,
   showTrimmedContent: true,
 };
-
-/** Moves the stand-in to an open thread of `count` messages, as Gmail draws one. */
-const openThread = (view: Page, count: number) =>
-  view.evaluate((markup) => {
-    document.querySelector('[gh="tl"]')?.setAttribute("hidden", "");
-    document
-      .querySelector('[role="main"]')
-      ?.insertAdjacentHTML("beforeend", markup);
-    location.hash = "#inbox/t1";
-  }, threadMarkup(count));
 
 const top = async (view: Page, text: string) => {
   const box = await view.getByText(text, { exact: true }).boundingBox();
