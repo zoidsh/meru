@@ -192,7 +192,8 @@ const start = async () => {
 
   activateLanguage(language);
 
-  const isMacOS = process.platform === "darwin";
+  const platform = process.platform as Platform;
+  const isMacOS = platform === "darwin";
   const sessions = createSessions();
   const stateFile = createTextFile(
     path.join(lifecycle.userDataPath, STATE_FILE_NAME)
@@ -219,6 +220,7 @@ const start = async () => {
   const settings = createSettingsStore({
     initial: stores.settings,
     save: (next) => saveSettings(settingsFile, next),
+    platform,
     log: console.error,
   });
 
@@ -422,9 +424,9 @@ const start = async () => {
   settings.onChange("design", overlays.relayout);
 
   const menu = createApplicationMenu({
-    platform: process.platform as Platform,
+    platform,
     appName: lifecycle.name,
-    commands: commandsFor(process.platform as Platform),
+    commands: commandsFor(platform),
     context: () => ({ state: profiles.get(), setting: settings.get }),
     actions: {
       updateSetting: settings.update,

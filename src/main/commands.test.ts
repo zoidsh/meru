@@ -38,6 +38,7 @@ const setup = (initial: State = twoProfiles) => {
   const settings = createSettingsStore({
     initial: { version: 1 },
     save: () => Promise.resolve(),
+    platform: "darwin",
     log: () => false,
   });
   let reloads = 0;

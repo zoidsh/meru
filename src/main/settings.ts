@@ -1,5 +1,6 @@
 import { Mutex, isEqual } from "es-toolkit";
 
+import type { Platform } from "#core/platform.ts";
 import {
   SETTING_KEYS,
   createInitialSettings,
@@ -36,6 +37,8 @@ export const openSettings = (deps: {
 export interface SettingsStoreDeps {
   initial: Settings;
   save: (settings: Settings) => Promise<void>;
+  /** Picks the defaults that differ by platform. */
+  platform: Platform;
   log: (message: string) => void;
 }
 
@@ -51,13 +54,15 @@ const describe = (error: unknown) =>
 export const createSettingsStore = ({
   initial,
   save,
+  platform,
   log,
 }: SettingsStoreDeps) => {
   const mutex = new Mutex();
   const listeners = new Map<SettingKey, Set<() => void>>();
   let settings = initial;
 
-  const get = <Key extends SettingKey>(key: Key) => readSetting(settings, key);
+  const get = <Key extends SettingKey>(key: Key) =>
+    readSetting(settings, key, platform);
 
   /**
    * Sets the global value to what `change` makes of it, read after every
@@ -74,8 +79,8 @@ export const createSettingsStore = ({
       const changed = SETTING_KEYS.filter(
         (candidate) =>
           !isEqual(
-            readSetting(next, candidate),
-            readSetting(settings, candidate)
+            readSetting(next, candidate, platform),
+            readSetting(settings, candidate, platform)
           )
       );
 

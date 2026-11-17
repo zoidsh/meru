@@ -99,6 +99,7 @@ const setup = (initial: Settings, failSave = false) => {
 
       return Promise.resolve();
     },
+    platform: "darwin",
     log: () => {},
   });
 
