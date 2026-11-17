@@ -1,6 +1,8 @@
+import { delay } from "es-toolkit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ActionRequest, ActionResponse } from "#core/mail-actions.ts";
+import { newProfile } from "#core/state.ts";
 
 import { ACTION_TIMEOUT, createMailActions } from "./mail-actions.ts";
 
@@ -73,6 +75,23 @@ const keyThen =
       : Promise.resolve(action);
   };
 
+/** Never answers, and rejects with the signal's reason once it aborts. */
+const hang = (signal: AbortSignal) => {
+  const { promise, reject } = Promise.withResolvers<ActionResponse>();
+
+  signal.addEventListener("abort", () => {
+    reject(signal.reason);
+  });
+
+  return promise;
+};
+
+/** Answers the key request with a key, and never answers the action. */
+const keyThenHang = (request: ActionRequest, signal: AbortSignal) =>
+  new URL(request.path, "https://x").searchParams.get("ik") === ""
+    ? Promise.resolve(KEY_ANSWER)
+    : hang(signal);
+
 describe(createMailActions, () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -141,18 +160,27 @@ describe(createMailActions, () => {
   it("gives up on both requests together after 15 s", async () => {
     vi.useFakeTimers();
 
-    const { actions, logged } = setup((_request, signal) => {
-      const { promise, reject } = Promise.withResolvers<ActionResponse>();
+    const { actions, sent, logged } = setup(async (request, signal) => {
+      // The key request takes most of the limit, the action the rest.
+      if (new URL(request.path, "https://x").searchParams.get("ik") === "") {
+        await delay(ACTION_TIMEOUT - 1000);
 
-      signal.addEventListener("abort", () => {
-        reject(signal.reason);
-      });
+        return KEY_ANSWER;
+      }
 
-      return promise;
+      return hang(signal);
     });
     const outcome = actions.run("p1", "archive", MESSAGE);
 
-    await vi.advanceTimersByTimeAsync(ACTION_TIMEOUT);
+    await vi.advanceTimersByTimeAsync(ACTION_TIMEOUT - 1000);
+
+    expect(sent).toHaveLength(2);
+
+    await vi.advanceTimersByTimeAsync(999);
+
+    expect(logged).toStrictEqual([]);
+
+    await vi.advanceTimersByTimeAsync(1);
 
     await expect(outcome).resolves.toStrictEqual({
       kind: "failed",
@@ -161,5 +189,38 @@ describe(createMailActions, () => {
     expect(logged).toStrictEqual([
       "Mail action archive of profile p1: failed (timed out)",
     ]);
+  });
+
+  it("aborts a removed profile's running action, before its data is cleared, and leaves the others", async () => {
+    const { actions, sent, logged } = setup(keyThenHang);
+    const removed = actions.run("p1", "archive", MESSAGE);
+    const kept = actions.run("p2", "archive", MESSAGE);
+
+    await vi.waitFor(() => {
+      expect(sent).toHaveLength(4);
+    });
+    actions.follow({
+      version: 1,
+      profiles: [newProfile("p2", "Work")],
+      selectedProfileId: "p2",
+    });
+
+    await expect(removed).resolves.toStrictEqual({
+      kind: "failed",
+      reason: "profile removed",
+    });
+    expect(logged).toStrictEqual([
+      "Mail action archive of profile p1: failed (profile removed)",
+    ]);
+    await expect(
+      Promise.race([kept, delay(20).then(() => "running")])
+    ).resolves.toBe("running");
+
+    actions.follow({ version: 1, profiles: [], selectedProfileId: "" });
+
+    await expect(kept).resolves.toStrictEqual({
+      kind: "failed",
+      reason: "profile removed",
+    });
   });
 });

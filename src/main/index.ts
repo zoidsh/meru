@@ -407,6 +407,8 @@ const start = async () => {
       },
     });
 
+    // A removed profile's actions stop here, before its data is cleared.
+    profiles.onChange(mailActions.follow);
     mail.onPoll(mailNotifications.polled);
     profiles.onChange(mailNotifications.follow);
   }
