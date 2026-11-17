@@ -253,8 +253,15 @@ export interface StandIn {
   setFeedAfterAction: (account: string, answer: FeedAnswer) => void;
   /** Every action the endpoint took, in order. */
   actions: StandInAction[];
+  /** Every action the endpoint refused, in order, as it was asked. */
+  refusedActions: StandInAction[];
   /** Has the action endpoint refuse every action for `account`, as Gmail's error 10. */
   failActions: (account: string) => void;
+  /**
+   * Has the action endpoint keep each answer, a refusal included, until the
+   * returned function sends them.
+   */
+  holdActions: () => () => void;
   /** Refuses connections to the Gmail stand-in until it answers again. */
   refuse: () => Promise<void>;
   answer: () => Promise<void>;
@@ -276,7 +283,16 @@ export const startStandIn = async (): Promise<StandIn> => {
   const feeds = new Map<string, FeedAnswer>();
   const feedsAfterAction = new Map<string, FeedAnswer>();
   const actions: StandInAction[] = [];
+  const refusedActions: StandInAction[] = [];
   const failing = new Set<string>();
+  let held: (() => void)[] | undefined;
+  const send = (answer: () => void) => {
+    if (held) {
+      held.push(answer);
+    } else {
+      answer();
+    }
+  };
   /**
    * Gmail's private action endpoint: a request without the key and token is
    * refused with both, one with them takes its action.
@@ -305,9 +321,12 @@ export const startStandIn = async (): Promise<StandIn> => {
       }
 
       if (action && failing.has(account)) {
-        response
-          .writeHead(200, headers)
-          .end(actionAnswer([null, "Refused", 10]));
+        refusedActions.push({ account, ...action });
+        send(() => {
+          response
+            .writeHead(200, headers)
+            .end(actionAnswer([null, "Refused", 10]));
+        });
 
         return;
       }
@@ -322,7 +341,9 @@ export const startStandIn = async (): Promise<StandIn> => {
         }
       }
 
-      response.writeHead(200, headers).end(actionAnswer(null));
+      send(() => {
+        response.writeHead(200, headers).end(actionAnswer(null));
+      });
     });
   };
   const answerMail = (request: IncomingMessage, response: ServerResponse) => {
@@ -427,8 +448,22 @@ export const startStandIn = async (): Promise<StandIn> => {
       feedsAfterAction.set(account, answer);
     },
     actions,
+    refusedActions,
     failActions: (account) => {
       failing.add(account);
+    },
+    holdActions: () => {
+      held = [];
+
+      return () => {
+        const answers = held ?? [];
+
+        held = undefined;
+
+        for (const answer of answers) {
+          answer();
+        }
+      };
     },
     requests: () => ({
       gmail: gmail.requests.length,

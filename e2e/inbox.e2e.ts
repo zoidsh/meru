@@ -63,15 +63,20 @@ const profileTab = (shell: Page, name: string) =>
 const grid = (shell: Page) =>
   shell.getByRole("grid", { name: "Unread messages" });
 
-/** The subject of each row, top to bottom. */
-const subjects = (shell: Page) =>
-  grid(shell)
-    .getByRole("row")
-    .evaluateAll((rows) =>
-      rows.map(
-        (row) => row.querySelector("td:nth-child(3) > span > span")?.textContent
-      )
-    );
+/** The subject of each row, top to bottom, from the cell that shows it with the summary. */
+const subjects = async (shell: Page) => {
+  const rows = await grid(shell).getByRole("row").all();
+
+  return Promise.all(
+    rows.map((row) =>
+      row
+        .getByRole("gridcell")
+        .nth(2)
+        .getByText(/^Subject /u)
+        .textContent()
+    )
+  );
+};
 
 /** The URL and session of each view that shows. */
 const shownViews = async (app: ElectronApplication) => {
@@ -131,7 +136,7 @@ const openInbox = async (shell: Page) => {
   await expect(grid(shell)).toBeVisible();
 };
 
-test("lists every profile's mail newest first in place of the tab, says which profile is signed out, and closes from the menu", async ({
+test("lists every profile's mail newest first in place of the tab, says which profile is signed out or has more, and closes from the menu", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -141,6 +146,14 @@ test("lists every profile's mail newest first in place of the tab, says which pr
     name: "Unified inbox",
     exact: true,
   });
+
+  standIn.setFeed("persist:p1", { unreadCount: 40, mail: WORK_MAIL });
+  await pollAll(app);
+  await expect(profileTab(shell, "Work")).toHaveAccessibleName(
+    "Work, 40 unread messages"
+  );
+
+  const gmailPages = standIn.requests().gmail;
 
   await expect(button).toHaveAttribute("aria-pressed", "false");
   await openInbox(shell);
@@ -153,6 +166,9 @@ test("lists every profile's mail newest first in place of the tab, says which pr
     grid(shell).getByRole("row", { name: /Subject b2/u })
   ).toContainText("Work");
   await expect(shell.getByText("Club is signed out.")).toBeVisible();
+  await expect(
+    shell.getByText("Work: the newest 1 of 40 unread")
+  ).toBeVisible();
   // The tab's view is hidden under it, still loaded.
   await expect.poll(() => shownViews(app)).toStrictEqual([]);
   // Opening put focus on the first row.
@@ -168,6 +184,8 @@ test("lists every profile's mail newest first in place of the tab, says which pr
   await expect
     .poll(() => shownViews(app))
     .toStrictEqual([{ url: standIn.url, partition: "persist:p0" }]);
+  // Shown again without a reload.
+  expect(standIn.requests().gmail).toBe(gmailPages);
 });
 
 test("opens a row's message in its profile's Gmail, selecting the profile", async ({
@@ -240,7 +258,7 @@ test("removes a row an action runs on, sends it for the row's profile, and the c
   ]);
 });
 
-test("puts back a row whose action failed and says so", async ({
+test("hides a row while its action runs, then puts it back when Gmail refuses it, and says so", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -248,8 +266,19 @@ test("puts back a row whose action failed and says so", async ({
   const { shell } = await launch(launchApp, userDataDir, standIn);
 
   standIn.failActions("persist:p0");
+
+  const release = standIn.holdActions();
+
   await openInbox(shell);
   await shell.keyboard.press("#");
+
+  await expect
+    .poll(() => standIn.refusedActions)
+    .toStrictEqual([{ account: "persist:p0", code: 9, messageId: "a1" }]);
+  await expect
+    .poll(() => subjects(shell))
+    .toStrictEqual(["Subject b2", "Subject a3"]);
+  release();
 
   await expect(
     shell.getByText(
@@ -262,12 +291,13 @@ test("puts back a row whose action failed and says so", async ({
   expect(standIn.actions).toStrictEqual([]);
 });
 
-test("shows the same list after the shell reloads, since main keeps it", async ({
+test("shows the same list after the shell reloads, since main keeps it, and closes on Escape or the selected profile's tab", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  const { shell } = await launch(launchApp, userDataDir, standIn);
+  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+  const home = [{ url: standIn.url, partition: "persist:p0" }];
 
   await openInbox(shell);
   await shell.reload();
@@ -278,6 +308,19 @@ test("shows the same list after the shell reloads, since main keeps it", async (
   await expect(
     shell.getByRole("button", { name: "Unified inbox", exact: true })
   ).toHaveAttribute("aria-pressed", "true");
+
+  await expect(grid(shell).getByRole("row").first()).toBeFocused();
+  await shell.keyboard.press("Escape");
+
+  await expect(grid(shell)).toBeHidden();
+  await expect.poll(() => shownViews(app)).toStrictEqual(home);
+
+  // Asking for what is selected already shows it.
+  await openInbox(shell);
+  await profileTab(shell, "Home").click();
+
+  await expect(grid(shell)).toBeHidden();
+  await expect.poll(() => shownViews(app)).toStrictEqual(home);
 });
 
 const SHOTS = path.join(import.meta.dirname, "..", "test-results", "inbox");
@@ -317,6 +360,11 @@ for (const design of ["modern", "classic"] as const) {
     userDataDir,
     standIn,
   }) => {
+    test.skip(
+      process.env.MERU_E2E_SHOTS !== "1",
+      "Screenshots are taken with MERU_E2E_SHOTS=1"
+    );
+
     const { app, shell } = await launch(launchApp, userDataDir, standIn, {
       design,
       // A clear page, which a screenshot shows white, would hide the chrome.
@@ -329,10 +377,7 @@ for (const design of ["modern", "classic"] as const) {
       "Work, 40 unread messages"
     );
     await openInbox(shell);
-    await expect.poll(() => subjects(shell)).toHaveLength(5);
-    await expect(
-      shell.getByText("Work: the newest 3 of 40 unread")
-    ).toBeVisible();
+    await expect(grid(shell).getByRole("row")).toHaveCount(5);
 
     const shoot = async (colorScheme: "light" | "dark") => {
       await shell.emulateMedia({ colorScheme });

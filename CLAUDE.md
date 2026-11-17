@@ -53,6 +53,7 @@ Compare `MERU_BUILD_MODE` and `MERU_E2E_BUILD` directly, never through a variabl
 - Controls are found by role and name (`getByRole` with a name, `getByLabel`, `getByText`); lint bans the selector APIs.
 - Every launch sets `MERU_TEST_BACKGROUND=1`, under which the app on macOS can never be activated; drive it through Playwright, never by raising it. On Windows and Linux each launch takes the desktop's focus, so a test that needs its window to keep it belongs in a file `e2e/playwright.config.ts` runs alone.
 - Playwright makes every page claim focus until `Emulation.setFocusEmulationEnabled` is off, as in `overlay.e2e.ts`, and emulates the light theme.
+- `MERU_E2E_SHOTS=1` also runs the screenshot tests, which write under `test-results/` for a person to look at and assert nothing of the picture.
 - A failed test keeps its trace and window screenshots under `test-results/`; `pnpm exec playwright show-trace <trace.zip>` opens one.
 
 ## CI
