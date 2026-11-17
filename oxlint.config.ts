@@ -46,6 +46,32 @@ export default defineConfig({
       },
     },
     {
+      // Gmail's preload runs in every Gmail page and is held to a byte budget;
+      // the budget alone would let zod in under it.
+      files: ["src/preload/gmail/**"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "#contract/gmail.ts",
+                message:
+                  "Gmail's preload checks messages with #contract/gmail-channels.ts, which carries no zod.",
+              },
+            ],
+            patterns: [
+              {
+                regex: "^zod(/|$)",
+                message: "Gmail's preload bundles no zod.",
+              },
+              NO_RELATIVE_CROSSING,
+            ],
+          },
+        ],
+      },
+    },
+    {
       files: ["src/core/**"],
       rules: {
         "no-restricted-imports": [
