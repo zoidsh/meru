@@ -22,7 +22,7 @@
  * regenerated theme keeps these blocks.
  */
 :root {
-  --shell: oklch(0.94 0 0);
+  --shell: #ebebeb;
 }
 
 @media (prefers-color-scheme: dark) {

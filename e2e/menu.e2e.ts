@@ -65,7 +65,7 @@ test("the view sits beside the strip as the shell draws it, on the shell grey th
         (titlebar) =>
           getComputedStyle(titlebar.parentElement ?? titlebar).backgroundColor
       )
-  ).toBe("oklch(0.94 0 0)");
+  ).toBe("rgb(235, 235, 235)");
 
   const window = await app.evaluate(({ BrowserWindow, nativeTheme }) => ({
     color: BrowserWindow.getAllWindows()[0]?.getBackgroundColor(),
