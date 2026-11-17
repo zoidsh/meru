@@ -10,11 +10,7 @@ import {
   writeState,
 } from "./lib/app.ts";
 import type { StandIn } from "./lib/stand-in.ts";
-import {
-  ACCOUNT_COOKIE,
-  CALENDAR_TITLE,
-  STAND_IN_TITLE,
-} from "./lib/stand-in.ts";
+import { CALENDAR_TITLE, STAND_IN_TITLE, signIn } from "./lib/stand-in.ts";
 
 const { productName } = DEV_IDENTITY;
 
@@ -137,16 +133,6 @@ const closeWindow = (app: ElectronApplication) =>
     }, 0);
   });
 
-const signIn = (app: ElectronApplication, standIn: StandIn) =>
-  app.evaluate(
-    async ({ session }, { url, name }) => {
-      await session
-        .fromPartition("persist:p0")
-        .cookies.set({ url, name, value: "persist:p0" });
-    },
-    { url: standIn.url, name: ACCOUNT_COOKIE }
-  );
-
 /** Gmail puts the count in its title, which polls the feed again. */
 const retitle = (app: ElectronApplication, standIn: StandIn, title: string) =>
   app.evaluate(
@@ -190,7 +176,7 @@ test("shows the total on the badge and the tray, clears both at zero, and jumps 
   const shell = await findPage(app, "meru-app:");
 
   await findPage(app, standIn.url);
-  await signIn(app, standIn);
+  await signIn(app, standIn, "p0");
   standIn.setFeed("persist:p0", { unreadCount: 120 });
   await retitle(app, standIn, "Inbox (120)");
 

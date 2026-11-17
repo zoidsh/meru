@@ -200,6 +200,67 @@ export const readViews = (app: ElectronApplication) =>
     };
   });
 
+/** The URL and session of each view that shows. */
+export const shownViews = async (app: ElectronApplication) => {
+  const { views } = await readViews(app);
+
+  return views
+    .filter((view) => view.visible)
+    .map(({ url, partition }) => ({ url, partition }));
+};
+
+/** Records what would open in the system browser, opening nothing. */
+export const stubSystemBrowser = (app: ElectronApplication) =>
+  app.evaluate(({ shell }) => {
+    const opened: string[] = [];
+
+    Reflect.set(globalThis, "openedExternally", opened);
+    shell.openExternal = (url) => {
+      opened.push(url);
+
+      return Promise.resolve();
+    };
+  });
+
+export const readOpenedExternally = (app: ElectronApplication) =>
+  app.evaluate(() => Reflect.get(globalThis, "openedExternally") as string[]);
+
+/**
+ * Clicks the application menu's item, as a person choosing it would with
+ * focus in the page at `focusedUrl`. The suite's app is never the active app,
+ * so the system says of no page that it has focus.
+ */
+export const clickMenuItem = (
+  app: ElectronApplication,
+  id: string,
+  focusedUrl?: string
+) =>
+  app.evaluate(
+    ({ Menu, BrowserWindow, webContents }, { itemId, url }) => {
+      const item = Menu.getApplicationMenu()?.getMenuItemById(itemId);
+
+      if (!item) {
+        throw new Error(`The application menu has no ${itemId}`);
+      }
+
+      const focused =
+        url === undefined
+          ? undefined
+          : webContents
+              .getAllWebContents()
+              .find((candidate) => candidate.getURL().startsWith(url));
+
+      item.click(undefined, BrowserWindow.getAllWindows()[0], focused);
+    },
+    { itemId: id, url: focusedUrl }
+  );
+
+/** What Gmail's tab would do as mail comes: change its title, a poke. */
+export const retitle = (page: Page, title: string) =>
+  page.evaluate((next) => {
+    document.title = next;
+  }, title);
+
 /** Seeds `state.json` before a launch; the store's current version is 1. */
 export const writeState = (userDataDir: string, state: object) =>
   writeFile(

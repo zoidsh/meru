@@ -5,6 +5,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
 import {
+  clickMenuItem,
   expect,
   findPage,
   readState,
@@ -13,18 +14,6 @@ import {
   writeState,
 } from "./lib/app.ts";
 import { GMAIL_PARTS } from "./lib/stand-in.ts";
-
-/** Clicks the application menu's item, as a person choosing it would. */
-const clickMenuItem = (app: ElectronApplication, id: string) =>
-  app.evaluate(({ Menu, BrowserWindow }, itemId) => {
-    const item = Menu.getApplicationMenu()?.getMenuItemById(itemId);
-
-    if (!item) {
-      throw new Error(`The application menu has no ${itemId}`);
-    }
-
-    item.click(undefined, BrowserWindow.getAllWindows()[0], undefined);
-  }, id);
 
 const menuItem = (app: ElectronApplication, id: string) =>
   app.evaluate(({ Menu }, itemId) => {

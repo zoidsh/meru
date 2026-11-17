@@ -3,14 +3,13 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import {
   expect,
   findPage,
+  retitle,
   test,
   writeSettings,
   writeState,
 } from "./lib/app.ts";
 import type { StandInMail } from "./lib/stand-in.ts";
-
-/** A session with no account cookie, which the profile here is. */
-const ANY_SESSION = "";
+import { ANY_SESSION } from "./lib/stand-in.ts";
 
 const CODE = "493021";
 
@@ -63,12 +62,6 @@ const HOME = {
   profiles: [{ id: "p0", name: "Home" }],
   selectedProfileId: "p0",
 };
-
-/** What Gmail's tab would do as mail comes: change its title, a poke. */
-const retitle = (page: Page, title: string) =>
-  page.evaluate((next) => {
-    document.title = next;
-  }, title);
 
 const unread = (shell: Page) =>
   shell

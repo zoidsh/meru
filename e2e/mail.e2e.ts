@@ -2,7 +2,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { expect, findPage, test, writeState } from "./lib/app.ts";
 import type { StandIn } from "./lib/stand-in.ts";
-import { ACCOUNT_COOKIE } from "./lib/stand-in.ts";
+import { signIn } from "./lib/stand-in.ts";
 
 const PROFILES = [
   { id: "p0", name: "Home" },
@@ -23,27 +23,6 @@ const launch = async (
 
   return { app, shell: await findPage(app, "meru-app:") };
 };
-
-/** Signs the profile's session in to the stand-in's feed as `account`. */
-const signIn = (
-  app: ElectronApplication,
-  standIn: StandIn,
-  profileId: string
-) =>
-  app.evaluate(
-    async ({ session }, { partition, url, name }) => {
-      await session.fromPartition(partition).cookies.set({
-        url,
-        name,
-        value: partition,
-      });
-    },
-    {
-      partition: `persist:${profileId}`,
-      url: standIn.url,
-      name: ACCOUNT_COOKIE,
-    }
-  );
 
 /** Sets the title of the profile's Gmail page, as Gmail does as mail comes. */
 const retitle = (

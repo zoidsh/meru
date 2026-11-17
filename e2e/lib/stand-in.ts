@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import type { Page } from "@playwright/test";
+import type { ElectronApplication, Page } from "@playwright/test";
 
 export const STAND_IN_TITLE = "Gmail stand-in";
 
@@ -283,6 +283,30 @@ const PRIMARY_FEED_PATH = `${FEED_PATH}/^sq_ig_i_personal`;
 /** The cookie that tells the feed whose mail to answer with. */
 export const ACCOUNT_COOKIE = "account";
 
+/** A session with no account cookie, which the feed answers alike. */
+export const ANY_SESSION = "";
+
+/** Signs the profile's session in to the stand-in's feed, as its own account. */
+export const signIn = (
+  app: ElectronApplication,
+  standIn: StandIn,
+  profileId: string
+) =>
+  app.evaluate(
+    async ({ session }, { partition, url, name }) => {
+      await session.fromPartition(partition).cookies.set({
+        url,
+        name,
+        value: partition,
+      });
+    },
+    {
+      partition: `persist:${profileId}`,
+      url: standIn.url,
+      name: ACCOUNT_COOKIE,
+    }
+  );
+
 /** Where Meru sends an action on a message. */
 export const ACTION_PATH = "/mail/u/0/s/";
 
@@ -307,6 +331,23 @@ export interface StandInMail {
   /** When it arrived, as the feed writes it; 17 November 2026, 09:00 UTC when not given. */
   issued?: string;
 }
+
+export const message = (
+  id: string,
+  summary = `Summary ${id}`
+): StandInMail => ({
+  id,
+  subject: `Subject ${id}`,
+  summary,
+  senderName: `Sender ${id}`,
+  senderAddress: `sender${id}@example.com`,
+});
+
+/** The feed lists these messages, newest first, as all that is unread. */
+export const listing = (...ids: string[]) => ({
+  unreadCount: ids.length,
+  mail: ids.map((id) => message(id)),
+});
 
 /**
  * What the feed answers an account with: a count and the messages it lists,
@@ -351,12 +392,12 @@ const feed = (
 <fullcount>${unreadCount}</fullcount>
 ${mail
   .map(
-    (message) => `<entry>
-<title>${escapeXml(message.subject)}</title>
-<summary>${escapeXml(message.summary)}</summary>
-<link rel="alternate" href="${escapeXml(messageLink(gmailUrl, message.id))}" type="text/html" />
-<issued>${message.issued ?? "2026-11-17T09:00:00Z"}</issued>
-<author><name>${escapeXml(message.senderName)}</name><email>${escapeXml(message.senderAddress)}</email></author>
+    (entry) => `<entry>
+<title>${escapeXml(entry.subject)}</title>
+<summary>${escapeXml(entry.summary)}</summary>
+<link rel="alternate" href="${escapeXml(messageLink(gmailUrl, entry.id))}" type="text/html" />
+<issued>${entry.issued ?? "2026-11-17T09:00:00Z"}</issued>
+<author><name>${escapeXml(entry.senderName)}</name><email>${escapeXml(entry.senderAddress)}</email></author>
 </entry>`
   )
   .join("\n")}
@@ -648,7 +689,7 @@ export const startStandIn = async (): Promise<StandIn> => {
       const listed =
         path === FEED_PATH
           ? mail
-          : mail.filter((message) => named?.includes(message.id));
+          : mail.filter((entry) => named?.includes(entry.id));
 
       response
         .writeHead(200, {
@@ -699,7 +740,7 @@ export const startStandIn = async (): Promise<StandIn> => {
     return { "/": body, [NEXT_WEEK_PATH]: body };
   }, current);
   const drive = await listen(() => ({ "/": page(DRIVE_TITLE, "") }), current);
-  const signIn = await listen(
+  const signInServer = await listen(
     () => ({
       [POPUP_PATH]: page(POPUP_TITLE, ELSEWHERE_LINK),
       // An Upgrade button no Gmail hide may reach off Gmail's origin.
@@ -715,26 +756,26 @@ export const startStandIn = async (): Promise<StandIn> => {
     gmail: gmail.url(),
     calendar: calendar.url(),
     drive: drive.url(),
-    signIn: signIn.url(),
+    signIn: signInServer.url(),
   };
 
   return {
     url: gmail.url(),
     calendarUrl: calendar.url(),
     driveUrl: drive.url(),
-    popupUrl: `${signIn.url()}${POPUP_PATH.slice(1)}`,
-    signInUrl: `${signIn.url()}${SIGN_IN_PATH.slice(1)}`,
+    popupUrl: `${signInServer.url()}${POPUP_PATH.slice(1)}`,
+    signInUrl: `${signInServer.url()}${SIGN_IN_PATH.slice(1)}`,
     appUrls: JSON.stringify({
       gmail: gmail.url(),
       calendar: calendar.url(),
       drive: drive.url(),
-      signIn: signIn.url(),
+      signIn: signInServer.url(),
     }),
     get cookieHeaders() {
       return gmail.requests.map((request) => request.cookie);
     },
     get popupCookieHeaders() {
-      return signIn.requests.map((request) => request.cookie);
+      return signInServer.requests.map((request) => request.cookie);
     },
     setFeed: (account, answer) => {
       feeds.set(account, answer);
@@ -779,7 +820,7 @@ export const startStandIn = async (): Promise<StandIn> => {
         gmail.stop(),
         calendar.stop(),
         drive.stop(),
-        signIn.stop(),
+        signInServer.stop(),
       ]);
     },
   };

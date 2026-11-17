@@ -2,7 +2,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { overlayRectangle } from "#core/overlay.ts";
 
-import { expect, findPage, readState, test } from "./lib/app.ts";
+import { clickMenuItem, expect, findPage, readState, test } from "./lib/app.ts";
 import { CALENDAR_TITLE, DRAFT_LABEL } from "./lib/stand-in.ts";
 
 /**
@@ -51,17 +51,6 @@ const readOverlayView = (app: ElectronApplication) =>
         window?.webContents.getOSProcessId(),
     };
   });
-
-const clickMenuItem = (app: ElectronApplication, id: string) =>
-  app.evaluate(({ Menu, BrowserWindow }, itemId) => {
-    const item = Menu.getApplicationMenu()?.getMenuItemById(itemId);
-
-    if (!item) {
-      throw new Error(`The application menu has no ${itemId}`);
-    }
-
-    item.click(undefined, BrowserWindow.getAllWindows()[0]);
-  }, id);
 
 /** As the system hands keys to the page, which Playwright's keyboard is not. */
 const typeInto = (app: ElectronApplication, url: string, text: string) =>

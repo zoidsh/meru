@@ -1,6 +1,12 @@
 import type { ElectronApplication } from "@playwright/test";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  readOpenedExternally,
+  stubSystemBrowser,
+  test,
+} from "./lib/app.ts";
 import {
   ELSEWHERE_URL,
   FULL_MESSAGE_PATH,
@@ -9,22 +15,6 @@ import {
   POPOUT_SIZE,
   POPOUT_TITLE,
 } from "./lib/stand-in.ts";
-
-/** Records what would open in the system browser, opening nothing. */
-const stubSystemBrowser = (app: ElectronApplication) =>
-  app.evaluate(({ shell }) => {
-    const opened: string[] = [];
-
-    Reflect.set(globalThis, "openedExternally", opened);
-    shell.openExternal = (url) => {
-      opened.push(url);
-
-      return Promise.resolve();
-    };
-  });
-
-const readOpenedExternally = (app: ElectronApplication) =>
-  app.evaluate(() => Reflect.get(globalThis, "openedExternally") as string[]);
 
 /** The page of each window, the shell's first. */
 const readWindows = (app: ElectronApplication) =>

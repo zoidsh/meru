@@ -1,11 +1,17 @@
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { ElectronApplication } from "@playwright/test";
-
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 
-import { expect, findPage, readState, readViews, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  readOpenedExternally,
+  readState,
+  readViews,
+  stubSystemBrowser,
+  test,
+} from "./lib/app.ts";
 import {
   ELSEWHERE_URL,
   POPUP_TITLE,
@@ -101,22 +107,6 @@ test("a second launch keeps the profile and its session's cookie", async ({
     )
   ).toStrictEqual([STAND_IN_COOKIE]);
 });
-
-/** Records what would open in the system browser, opening nothing. */
-const stubSystemBrowser = (app: ElectronApplication) =>
-  app.evaluate(({ shell }) => {
-    const opened: string[] = [];
-
-    Reflect.set(globalThis, "openedExternally", opened);
-    shell.openExternal = (url) => {
-      opened.push(url);
-
-      return Promise.resolve();
-    };
-  });
-
-const readOpenedExternally = (app: ElectronApplication) =>
-  app.evaluate(() => Reflect.get(globalThis, "openedExternally") as string[]);
 
 test("hands a link to another site to the system browser, and opens a sign-in pop-up as a window of its own in the same session", async ({
   app,

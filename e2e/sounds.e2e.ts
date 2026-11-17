@@ -7,26 +7,11 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import type { StandIn, StandInMail } from "./lib/stand-in.ts";
+import type { StandIn } from "./lib/stand-in.ts";
+import { ANY_SESSION, listing } from "./lib/stand-in.ts";
 
 // The suite's build captures every sound on `meruTestSounds` and never sends
 // one to the shell, so nothing here is ever heard.
-
-/** A session with no account cookie, which every profile here is. */
-const ANY_SESSION = "";
-
-const message = (id: string): StandInMail => ({
-  id,
-  subject: `Subject ${id}`,
-  summary: `Summary ${id}`,
-  senderName: `Sender ${id}`,
-  senderAddress: `sender${id}@example.com`,
-});
-
-const listing = (...ids: string[]) => ({
-  unreadCount: ids.length,
-  mail: ids.map((id) => message(id)),
-});
 
 interface Captured {
   title: string;

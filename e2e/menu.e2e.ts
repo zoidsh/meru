@@ -5,7 +5,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 
-import { expect, findPage, readViews, test } from "./lib/app.ts";
+import { clickMenuItem, expect, findPage, readViews, test } from "./lib/app.ts";
 import { CALENDAR_TITLE, DRAFT_LABEL, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
 /**
@@ -44,36 +44,6 @@ const recordRadii = (app: ElectronApplication) =>
 
 const readRadii = (app: ElectronApplication) =>
   app.evaluate(() => Reflect.get(globalThis, "radii") as number[]);
-
-/**
- * Clicks the application menu's item, as a person choosing it would with
- * focus in the page at `focusedUrl`. The suite's app is never the active app,
- * so the system says of no page that it has focus.
- */
-const clickMenuItem = (
-  app: ElectronApplication,
-  id: string,
-  focusedUrl?: string
-) =>
-  app.evaluate(
-    ({ Menu, BrowserWindow, webContents }, { itemId, url }) => {
-      const item = Menu.getApplicationMenu()?.getMenuItemById(itemId);
-
-      if (!item) {
-        throw new Error(`The application menu has no ${itemId}`);
-      }
-
-      const focused =
-        url === undefined
-          ? undefined
-          : webContents
-              .getAllWebContents()
-              .find((candidate) => candidate.getURL().startsWith(url));
-
-      item.click(undefined, BrowserWindow.getAllWindows()[0], focused);
-    },
-    { itemId: id, url: focusedUrl }
-  );
 
 const menuItemState = (app: ElectronApplication, id: string) =>
   app.evaluate(({ Menu }, itemId) => {

@@ -4,37 +4,24 @@ import {
   expect,
   findPage,
   readState,
-  readViews,
+  retitle,
+  shownViews,
   test,
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import type { StandIn, StandInMail } from "./lib/stand-in.ts";
+import type { StandIn } from "./lib/stand-in.ts";
 import {
-  ACCOUNT_COOKIE,
+  ANY_SESSION,
   CALENDAR_TITLE,
   DRAFT_LABEL,
   STAND_IN_TITLE,
+  listing,
+  message,
   messageLink,
   refreshedTimes,
+  signIn,
 } from "./lib/stand-in.ts";
-
-/** A session with no account cookie, which every profile here is. */
-const ANY_SESSION = "";
-
-const message = (id: string): StandInMail => ({
-  id,
-  subject: `Subject ${id}`,
-  summary: `Summary ${id} <b>&amp;</b>`,
-  senderName: `Sender ${id}`,
-  senderAddress: `sender${id}@example.com`,
-});
-
-/** The feed lists these messages, newest first, as all that is unread. */
-const listing = (...ids: string[]) => ({
-  unreadCount: ids.length,
-  mail: ids.map((id) => message(id)),
-});
 
 interface Captured {
   title: string;
@@ -85,28 +72,16 @@ const click = (app: ElectronApplication, text: string) =>
       ?.click();
   }, text);
 
-/** The URL and session of each view that shows. */
-const shownViews = async (app: ElectronApplication) => {
-  const { views } = await readViews(app);
+/** Markup a summary carries, which the notification shows as text. */
+const MARKUP_SUMMARY = "Summary 2 <b>&amp;</b>";
 
-  return views
-    .filter((view) => view.visible)
-    .map(({ url, partition }) => ({ url, partition }));
-};
-
-const BODY = "Subject 2\nSummary 2 <b>&amp;</b>";
+const BODY = `Subject 2\n${MARKUP_SUMMARY}`;
 
 /** Where the profile's name is: the subtitle on macOS, else atop the body. */
 const naming = (name: string) =>
   process.platform === "darwin"
     ? { subtitle: name, body: BODY }
     : { body: `${name}\n${BODY}` };
-
-/** What Gmail's tab would do as mail comes: change its title, a poke. */
-const retitle = (page: Page, title: string) =>
-  page.evaluate((next) => {
-    document.title = next;
-  }, title);
 
 const profileTab = (shell: Page, name: string) =>
   shell
@@ -166,7 +141,10 @@ test("notifies mail that arrives after the first poll, in each profile, and a cl
   );
   expect(await captured(app)).toStrictEqual([]);
 
-  standIn.setFeed(ANY_SESSION, listing("2", "1"));
+  standIn.setFeed(ANY_SESSION, {
+    unreadCount: 2,
+    mail: [message("2", MARKUP_SUMMARY), message("1")],
+  });
   // Waking polls every profile, Work's with no page among them.
   await app.evaluate(({ powerMonitor }) => {
     powerMonitor.emit("resume");
@@ -259,27 +237,6 @@ test("tells four new messages as one, which opens the inbox", async ({
     .poll(() => shownViews(app))
     .toStrictEqual([{ url: standIn.url, partition: "persist:p0" }]);
 });
-
-/** Signs the profile's session in to the stand-in as an account of its own. */
-const signIn = (
-  app: ElectronApplication,
-  standIn: StandIn,
-  profileId: string
-) =>
-  app.evaluate(
-    async ({ session }, { partition, url, name }) => {
-      await session.fromPartition(partition).cookies.set({
-        url,
-        name,
-        value: partition,
-      });
-    },
-    {
-      partition: `persist:${profileId}`,
-      url: standIn.url,
-      name: ACCOUNT_COOKIE,
-    }
-  );
 
 test("a notification's action runs on its message in its profile, with no page, and the count follows", async ({
   launchApp,

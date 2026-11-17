@@ -3,14 +3,14 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import {
   expect,
   findPage,
-  readViews,
+  shownViews,
   test,
   writeSettings,
   writeState,
 } from "./lib/app.ts";
 import { DESIGNS, THEMES, onlyWithShots, shotPath } from "./lib/shots.ts";
 import type { StandIn, StandInMail } from "./lib/stand-in.ts";
-import { ACCOUNT_COOKIE, messageLink } from "./lib/stand-in.ts";
+import { messageLink, signIn } from "./lib/stand-in.ts";
 
 const PROFILES = [
   { id: "p0", name: "Home" },
@@ -32,27 +32,6 @@ const HOME_MAIL = [
   mail("a3", "2026-11-17T08:00:00Z"),
 ];
 const WORK_MAIL = [mail("b2", "2026-11-17T09:00:00Z")];
-
-/** Signs the profile's session in to the stand-in's feed, as its own account. */
-const signIn = (
-  app: ElectronApplication,
-  standIn: StandIn,
-  profileId: string
-) =>
-  app.evaluate(
-    async ({ session }, { partition, url, name }) => {
-      await session.fromPartition(partition).cookies.set({
-        url,
-        name,
-        value: partition,
-      });
-    },
-    {
-      partition: `persist:${profileId}`,
-      url: standIn.url,
-      name: ACCOUNT_COOKIE,
-    }
-  );
 
 /** Waking polls every profile at once. */
 const pollAll = (app: ElectronApplication) =>
@@ -81,15 +60,6 @@ const subjects = async (shell: Page) => {
         .textContent()
     )
   );
-};
-
-/** The URL and session of each view that shows. */
-const shownViews = async (app: ElectronApplication) => {
-  const { views } = await readViews(app);
-
-  return views
-    .filter((view) => view.visible)
-    .map(({ url, partition }) => ({ url, partition }));
 };
 
 /**
