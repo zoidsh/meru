@@ -265,7 +265,8 @@ describe("an end no date holds", () => {
           undefined,
           () => ({ status: "unknown", unreadCount: null }),
           current,
-          { open: false, profiles: [], rows: [], notice: null }
+          { open: false, profiles: [], rows: [], notice: null },
+          { shortcuts: {} }
         ).doNotDisturb
       ).toStrictEqual({ on: false, until: null });
       doNotDisturb.dispose();

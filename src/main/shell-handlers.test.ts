@@ -7,7 +7,11 @@ import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import type { Confirmation, ContextMenuItem } from "#platform/window.ts";
 
-import { createShellHandlers, shellState } from "./shell-handlers.ts";
+import {
+  createShellHandlers,
+  shellShortcuts,
+  shellState,
+} from "./shell-handlers.ts";
 
 const two: State = {
   version: 1,
@@ -270,7 +274,25 @@ describe(createShellHandlers, () => {
 
 const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
 
+const CHROME = { shortcuts: {} };
+
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;
+
+describe(shellShortcuts, () => {
+  it("gives each command's shortcut on the platform as a person reads it, and leaves out one with none there", () => {
+    const commands = [
+      { id: "a", shortcut: { darwin: "CmdOrCtrl+S", win32: "CmdOrCtrl+S" } },
+      { id: "b", shortcut: { darwin: "Command+Shift+]" } },
+      { id: "c" },
+    ];
+
+    expect(shellShortcuts(commands, "darwin")).toStrictEqual({
+      a: "⌘S",
+      b: "⇧⌘]",
+    });
+    expect(shellShortcuts(commands, "win32")).toStrictEqual({ a: "Ctrl+S" });
+  });
+});
 
 describe(shellState, () => {
   it("gives the shell the profiles with names to show and their mail, and nothing else of them", () => {
@@ -288,7 +310,8 @@ describe(shellState, () => {
         (profileId) =>
           profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL,
         undefined,
-        CLOSED_INBOX
+        CLOSED_INBOX,
+        CHROME
       ).profiles
     ).toStrictEqual({
       profiles: [
@@ -333,7 +356,8 @@ describe(shellState, () => {
         undefined,
         () => NO_MAIL,
         undefined,
-        CLOSED_INBOX
+        CLOSED_INBOX,
+        CHROME
       ).tabs
     ).toStrictEqual({
       profileId: "a",
@@ -376,7 +400,8 @@ const overlaySlice = (open: Overlay | undefined) =>
     open,
     () => NO_MAIL,
     undefined,
-    CLOSED_INBOX
+    CLOSED_INBOX,
+    CHROME
   ).overlay;
 
 describe("the overlay slice", () => {
@@ -411,7 +436,8 @@ const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
     undefined,
     () => NO_MAIL,
     doNotDisturb,
-    CLOSED_INBOX
+    CLOSED_INBOX,
+    CHROME
   ).doNotDisturb;
 
 describe("Do Not Disturb in the shell", () => {

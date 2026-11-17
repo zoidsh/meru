@@ -118,6 +118,11 @@ export const SHELL_STATE = {
       })
     ),
   }),
+  /**
+   * Each command's shortcut on this platform as a person reads it, such as
+   * `⌘S`, by command id; a command with none is absent.
+   */
+  shortcuts: z.record(z.string(), z.string()),
   /** Whether Do Not Disturb holds, and until when: `null` for until turned off. */
   doNotDisturb: z.object({
     on: z.boolean(),

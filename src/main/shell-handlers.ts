@@ -1,5 +1,7 @@
 import type { ShellState } from "#contract/shell.ts";
+import { formatAccelerator } from "#core/accelerator.ts";
 import type { Overlay } from "#core/overlay.ts";
+import type { Platform } from "#core/platform.ts";
 import { canRemoveProfile, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -7,6 +9,7 @@ import { canCloseTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
+import type { Command } from "./commands.ts";
 import type { Inbox } from "./inbox.ts";
 import type { Mail } from "./mail.ts";
 import type { Overlays } from "./overlay.ts";
@@ -72,6 +75,21 @@ const shellOverlay = (
     : { kind: "none" };
 };
 
+/** The registry's shortcuts as the shell shows them, by command id. */
+export const shellShortcuts = (
+  commands: readonly Pick<Command, "id" | "shortcut">[],
+  platform: Platform
+): ShellState["shortcuts"] =>
+  Object.fromEntries(
+    commands.flatMap(({ id, shortcut }) => {
+      const accelerator = shortcut?.[platform];
+
+      return accelerator
+        ? [[id, formatAccelerator(accelerator, platform)]]
+        : [];
+    })
+  );
+
 /** The slices the shell sees of main's state, names ready to show. */
 export const shellState = (
   state: State,
@@ -79,7 +97,8 @@ export const shellState = (
   overlay: Overlay | undefined,
   mail: (profileId: string) => Mail,
   doNotDisturb: DoNotDisturb | undefined,
-  inbox: ShellState["inbox"]
+  inbox: ShellState["inbox"],
+  fixed: Pick<ShellState, "shortcuts">
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -111,6 +130,7 @@ export const shellState = (
     },
     overlay: shellOverlay(state, overlay),
     inbox,
+    ...fixed,
   };
 };
 

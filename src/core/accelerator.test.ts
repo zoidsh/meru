@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { matchesAccelerator } from "./accelerator.ts";
+import { formatAccelerator, matchesAccelerator } from "./accelerator.ts";
 import type { KeyInput } from "./accelerator.ts";
 
 const press = (
@@ -101,5 +101,22 @@ describe(matchesAccelerator, () => {
         true
       )
     ).toBeFalsy();
+  });
+});
+
+describe(formatAccelerator, () => {
+  it("shows macOS's symbols in its order, and names elsewhere", () => {
+    expect(
+      ["CmdOrCtrl+S", "CommandOrControl+Shift+W", "Ctrl+Shift+Tab"].map(
+        (accelerator) => [
+          formatAccelerator(accelerator, "darwin"),
+          formatAccelerator(accelerator, "win32"),
+        ]
+      )
+    ).toStrictEqual([
+      ["⌘S", "Ctrl+S"],
+      ["⇧⌘W", "Ctrl+Shift+W"],
+      ["⌃⇧Tab", "Ctrl+Shift+Tab"],
+    ]);
   });
 });

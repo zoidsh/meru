@@ -72,7 +72,11 @@ import {
   saveSettings,
 } from "./settings.ts";
 import type { SettingsStore } from "./settings.ts";
-import { createShellHandlers, shellState } from "./shell-handlers.ts";
+import {
+  createShellHandlers,
+  shellShortcuts,
+  shellState,
+} from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
 import {
   createShellWindow,
@@ -686,6 +690,8 @@ const start = async () => {
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);
 
+  const shortcuts = shellShortcuts(COMMANDS, platform);
+
   serveShellContract({
     ipc,
     senders,
@@ -708,7 +714,8 @@ const start = async () => {
           overlays.current(),
           mail.mail,
           doNotDisturb.current(),
-          inbox.shellSlice()
+          inbox.shellSlice(),
+          { shortcuts }
         ),
       onChange: (listener) => {
         profiles.onChange(listener);
