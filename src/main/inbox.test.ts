@@ -349,6 +349,24 @@ describe(createInbox, () => {
     expect(app.inbox.shellSlice().notice).toBeNull();
   });
 
+  it("tells nothing on the next open of a failure that landed while it was closed", async () => {
+    const app = setup();
+
+    app.inbox.setOpen(true);
+
+    const failing = app.inbox.runAction("a", "a1", "archive");
+
+    app.inbox.setOpen(false);
+    app.runs[0]?.settle({ kind: "failed", reason: "timed out" });
+    await failing;
+    app.inbox.setOpen(true);
+
+    expect([app.rows(), app.inbox.shellSlice().notice]).toStrictEqual([
+      ["a/a1", "b/b1", "a/a2"],
+      null,
+    ]);
+  });
+
   it("forgets a removed profile's actions, and ignores what they come to", async () => {
     const app = setup();
 

@@ -119,6 +119,7 @@ export const createInbox = ({
 
       closeOverlay();
       isOpen = true;
+      notice = null;
       notify();
       focus.focus([{ kind: "shell" }]);
     },
@@ -202,11 +203,16 @@ export const createInbox = ({
       }
 
       pending.delete(key);
-      notice = {
-        action,
-        profileId,
-        reason: outcome.kind === "signedOut" ? "signedOut" : "failed",
-      };
+
+      // A failure that lands after a close is not told on the next open.
+      if (isOpen) {
+        notice = {
+          action,
+          profileId,
+          reason: outcome.kind === "signedOut" ? "signedOut" : "failed",
+        };
+      }
+
       notify();
     },
     /** Told as each poll ends, which may confirm or give back hidden rows. */
