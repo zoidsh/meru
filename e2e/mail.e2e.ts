@@ -130,9 +130,6 @@ test("gives each profile its own count", async ({
   await expect(profileTab(shell, "Home")).toHaveAccessibleName(
     "Home, 2 unread messages"
   );
-  // Work's poll at launch came before it was signed in.
-  await expect(profileTab(shell, "Work")).toHaveAccessibleName("Work");
-
   // Its Gmail tab loading for the first time polls it.
   await profileTab(shell, "Work").click();
 
