@@ -52,11 +52,12 @@ const setup = ({
   hasSubtitle = true,
   // Tuesday 17 November 2026, 14:00 by the local clock.
   now = new Date(2026, 10, 17, 14),
-  doNotDisturb = undefined as State["doNotDisturb"],
+  doNotDisturb: holding = undefined as State["doNotDisturb"],
   important = (): Promise<ReadonlySet<string> | null> => Promise.resolve(null),
 } = {}) => {
   const shown: Shown[] = [];
   const logs: string[] = [];
+  let doNotDisturb = holding;
   const askedImportant: string[] = [];
   const opened: [string, string][] = [];
   const acted: [string, MailAction, string][] = [];
@@ -108,6 +109,9 @@ const setup = ({
     acted,
     logs,
     askedImportant,
+    switchDoNotDisturb: (next: State["doNotDisturb"]) => {
+      doNotDisturb = next;
+    },
     set: (key: SettingKey, value: unknown) => {
       settings.set(key, value);
     },
@@ -359,6 +363,25 @@ describe("what holds a new mail notification", () => {
     expect(titles(app.shown)).toStrictEqual(["Sender 1", "Sender 2"]);
     expect(app.logs).toStrictEqual([
       "The Important feed of profile a was not read, so all new mail is notified",
+    ]);
+  });
+
+  it("holds what Do Not Disturb, switched on while the Important feed was read, holds", async () => {
+    const answer = Promise.withResolvers<ReadonlySet<string>>();
+    const app = setup({ important: () => answer.promise });
+
+    app.set("notificationImportantOnly", true);
+    await app.notifications.polled("a", feed());
+
+    const polled = app.notifications.polled("a", feed(entry("1")));
+
+    app.switchDoNotDisturb({ until: null });
+    answer.resolve(new Set(["1"]));
+    await polled;
+
+    expect(app.shown).toStrictEqual([]);
+    expect(app.logs).toStrictEqual([
+      "Held 1 new mail notification(s) of profile a: doNotDisturb",
     ]);
   });
 

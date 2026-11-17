@@ -161,19 +161,25 @@ export const createMailNotifications = ({
         return;
       }
 
-      const decision = decideNotification({
-        kind: "newMail",
-        notifications: setting("notifications"),
-        quietHours: setting("quietHours"),
-        doNotDisturb: doNotDisturb(),
-        now: momentOf(now()),
-      });
+      const held = () => {
+        const decision = decideNotification({
+          kind: "newMail",
+          notifications: setting("notifications"),
+          quietHours: setting("quietHours"),
+          doNotDisturb: doNotDisturb(),
+          now: momentOf(now()),
+        });
 
-      if (!decision.show) {
-        log(
-          `Held ${taken.fresh.length} new mail notification(s) of profile ${profileId}: ${decision.reason}`
-        );
+        if (!decision.show) {
+          log(
+            `Held ${taken.fresh.length} new mail notification(s) of profile ${profileId}: ${decision.reason}`
+          );
+        }
 
+        return !decision.show;
+      };
+
+      if (held()) {
         return;
       }
 
@@ -189,6 +195,11 @@ export const createMailNotifications = ({
         }
 
         fresh = importantOnly(fresh, ids);
+
+        // Asked again, since what holds may have begun during the read.
+        if (held()) {
+          return;
+        }
       }
 
       const current = state();
