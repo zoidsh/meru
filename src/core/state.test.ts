@@ -653,6 +653,16 @@ describe(renameProfile, () => {
     ).toHaveLength(3);
   });
 
+  it("drops control characters and keeps the joiners an emoji sequence needs", () => {
+    expect(names(renameProfile(three, "c", "\tWo\nrk\u0000\u007F "))?.[2]).toBe(
+      "Work"
+    );
+    expect(names(renameProfile(three, "c", "\u0007\u001B"))).toBeUndefined();
+    expect(names(renameProfile(three, "c", "Team 👩\u200D💻\uFE0F"))?.[2]).toBe(
+      "Team 👩\u200D💻\uFE0F"
+    );
+  });
+
   it("allows a name another profile has, as v3 does", () => {
     expect(names(renameProfile(three, "c", "Profile 2"))).toStrictEqual([
       "Default",

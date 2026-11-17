@@ -457,7 +457,9 @@ export const adjacentProfile = (
 export const PROFILE_NAME_MAX_LENGTH = 64;
 
 /**
- * Names the profile `name`, trimmed, stored as typed and never translated.
+ * Names the profile `name`, without control characters and trimmed, stored
+ * as typed and never translated. Format characters stay, since emoji
+ * sequences are built with them.
  * Duplicates are allowed, as in v3. Nothing when the name is empty, too long
  * or what the profile is already called, or there is no such profile.
  */
@@ -466,7 +468,7 @@ export const renameProfile = (
   profileId: string,
   name: string
 ): State | undefined => {
-  const trimmed = name.trim();
+  const trimmed = name.replaceAll(/\p{Cc}/gu, "").trim();
   const profile = state.profiles.find(
     (candidate) => candidate.id === profileId
   );
