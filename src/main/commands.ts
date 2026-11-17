@@ -14,7 +14,12 @@ import {
   savedSearchName,
   savedSearches,
 } from "#core/saved-searches.ts";
-import { adjacentProfile, knownTabs, selectedProfile } from "#core/state.ts";
+import {
+  adjacentProfile,
+  canRemoveProfile,
+  knownTabs,
+  selectedProfile,
+} from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import { adjacentTab, canCloseTab, findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -37,6 +42,8 @@ export interface CommandActions {
   closeTab: (key: TabKey) => Promise<unknown>;
   selectProfile: (profileId: string) => Promise<unknown>;
   addProfile: () => Promise<unknown>;
+  /** Asks to remove the profile, and removes it once confirmed. */
+  removeProfile: (profileId: string) => Promise<unknown>;
   /** Opens the overlay with a field for the profile's name. */
   openRenameProfile: (profileId: string) => void;
   /** Switches Do Not Disturb on for the duration, or off. */
@@ -106,6 +113,13 @@ const selectAdjacentProfile = (offset: number): Command["run"] => {
 
   return run;
 };
+
+/** How many profiles a shortcut each selects, the first ones in the row. */
+export const PROFILE_SHORTCUT_COUNT = 9;
+
+/** The id of the command that selects the profile at `position`, from 1. */
+export const selectProfileCommandId = (position: number) =>
+  `profile.select.${position}`;
 
 /** The id of the command that switches Do Not Disturb on for `duration`. */
 export const doNotDisturbCommandId = (duration: DoNotDisturbDuration) =>
@@ -376,6 +390,49 @@ export const COMMANDS: readonly Command[] = [
       return Promise.resolve();
     },
   },
+  {
+    id: "profile.remove",
+    title: () =>
+      t({
+        message: "Remove Profile…",
+        comment:
+          "Menu item in the Window menu that asks to remove the selected profile, signing out of it and deleting its data on this device",
+      }),
+    isAvailable: ({ state }) =>
+      canRemoveProfile(state, state.selectedProfileId),
+    once: true,
+    run: ({ state }, { removeProfile }) =>
+      removeProfile(state.selectedProfileId),
+  },
+  // v3's: Alt on Linux, whose desktops take Ctrl with a digit.
+  ...Array.from({ length: PROFILE_SHORTCUT_COUNT }, (_, index): Command => {
+    const position = index + 1;
+
+    return {
+      id: selectProfileCommandId(position),
+      title: () =>
+        t({
+          message: `Select Profile ${position}`,
+          comment:
+            "Command that selects the profile at this place in the title bar's row, counting from 1; the Window menu shows the profile's name instead",
+        }),
+      shortcut: {
+        darwin: `CommandOrControl+${position}`,
+        win32: `CommandOrControl+${position}`,
+        linux: `Alt+${position}`,
+      },
+      isAvailable: ({ state }) => state.profiles.length > index,
+      once: true,
+      run: async ({ state }, { selectProfile, setInboxOpen }) => {
+        const profile = state.profiles[index];
+
+        if (profile) {
+          await selectProfile(profile.id);
+          setInboxOpen(false);
+        }
+      },
+    };
+  }),
   {
     id: "gmail.compose",
     title: () =>

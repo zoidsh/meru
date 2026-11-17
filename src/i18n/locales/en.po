@@ -438,6 +438,11 @@ msgstr "Remove {name}…"
 msgid "Remove Profile"
 msgstr "Remove Profile"
 
+#. Menu item in the Window menu that asks to remove the selected profile, signing out of it and deleting its data on this device
+#: src/main/commands.ts
+msgid "Remove Profile…"
+msgstr "Remove Profile…"
+
 #. Submenu of the Saved Searches menu listing each saved search, to remove the one chosen
 #: src/main/application-menu.ts
 msgid "Remove Saved Search"
@@ -499,6 +504,11 @@ msgstr "Select Previous Profile"
 #: src/main/commands.ts
 msgid "Select Previous Tab"
 msgstr "Select Previous Tab"
+
+#. Command that selects the profile at this place in the title bar's row, counting from 1; the Window menu shows the profile's name instead
+#: src/main/commands.ts
+msgid "Select Profile {position}"
+msgstr "Select Profile {position}"
 
 #. The macOS app menu's submenu of system services, named as macOS names it
 #: src/main/application-menu.ts

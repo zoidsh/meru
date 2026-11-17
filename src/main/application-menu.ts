@@ -7,9 +7,10 @@ import type { KeyInput } from "#core/accelerator.ts";
 import type { Platform } from "#core/platform.ts";
 import { menuText } from "#core/tray.ts";
 
-import { savedSearchCommands } from "./commands.ts";
+import { savedSearchCommands, selectProfileCommandId } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { doNotDisturbItems } from "./do-not-disturb.ts";
+import { profileDisplayName } from "./profile-copy.ts";
 
 export interface MenuTemplateInput {
   platform: Platform;
@@ -329,12 +330,23 @@ export const buildMenuTemplate = ({
     role: "minimize",
   };
 
+  // Each profile with a shortcut, by the name the title bar shows.
+  const profileSelectItems = context.state.profiles.flatMap((profile, index) =>
+    item(selectProfileCommandId(index + 1)).map((each) => ({
+      ...each,
+      label: profileDisplayName(profile),
+    }))
+  );
+
   const profileItems = [
+    ...profileSelectItems,
+    separator,
     ...item("profile.next"),
     ...item("profile.previous"),
     separator,
     ...item("profile.add"),
     ...item("profile.rename"),
+    ...item("profile.remove"),
   ];
 
   const windowMenu: MenuItemConstructorOptions = {
@@ -449,6 +461,7 @@ export const createApplicationMenu = ({
   // it lists.
   const offered = (current: CommandContext) => [
     current.doNotDisturb?.until,
+    current.state.profiles.map((profile) => profile.name),
     savedSearchCommands(current.state).map(({ open }) => [
       open.id,
       open.title(),

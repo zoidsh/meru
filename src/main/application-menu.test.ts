@@ -114,6 +114,32 @@ describe(buildMenuTemplate, () => {
     ]);
   });
 
+  it("lists each profile with a shortcut by its name in the Window menu, then the profile commands", () => {
+    const context: CommandContext = {
+      ...contextOf(),
+      state: {
+        ...oneProfile,
+        profiles: [newProfile("a", "Default"), newProfile("b", "Work")],
+      },
+    };
+    const menus = template("darwin", context);
+    const windowItems = submenu(menus.at(-2) ?? {}).filter(
+      (item) => item.id?.startsWith("profile.") ?? false
+    );
+
+    expect(
+      windowItems.map(({ id, label, accelerator }) => [id, label, accelerator])
+    ).toStrictEqual([
+      ["profile.select.1", "Default", "CommandOrControl+1"],
+      ["profile.select.2", "Work", "CommandOrControl+2"],
+      ["profile.next", "Select Next Profile", "Command+Shift+]"],
+      ["profile.previous", "Select Previous Profile", "Command+Shift+["],
+      ["profile.add", "Add Profile", undefined],
+      ["profile.rename", "Rename Profile…", undefined],
+      ["profile.remove", "Remove Profile…", undefined],
+    ]);
+  });
+
   it("lists the selected profile's saved searches by name, to run and to remove, with & kept as text", () => {
     const context: CommandContext = {
       ...contextOf(),

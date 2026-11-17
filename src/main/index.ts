@@ -64,6 +64,7 @@ import { createOverlays } from "./overlay.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfiles } from "./profiles.ts";
 import type { Profiles } from "./profiles.ts";
+import { createRemoveProfile } from "./remove-profile.ts";
 import { createSenderRegistry } from "./senders.ts";
 import type { SenderRegistry } from "./senders.ts";
 import {
@@ -676,6 +677,11 @@ const start = async () => {
       closeTab: profiles.closeTab,
       selectProfile: profiles.select,
       addProfile: profiles.add,
+      removeProfile: createRemoveProfile({
+        profiles,
+        window: shell.window,
+        log: console.error,
+      }),
       openRenameProfile: (profileId) => {
         overlays.open({ kind: "rename-profile", profileId });
       },

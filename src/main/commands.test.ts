@@ -57,6 +57,7 @@ const setup = (initial: State = twoProfiles) => {
     closeTab: profiles.closeTab,
     selectProfile: profiles.select,
     addProfile: profiles.add,
+    removeProfile: (profileId) => profiles.remove(profileId),
     openRenameProfile: (profileId) => {
       renames.push(profileId);
     },
@@ -214,6 +215,41 @@ describe("the command registry", () => {
     await app.run("inbox.toggle");
 
     expect(app.isChecked("inbox.toggle")).toBeFalsy();
+  });
+
+  it("selects the first nine profiles by place, on v3's keys, offering each only while it exists", async () => {
+    const app = setup();
+
+    expect(
+      [1, 2, 3].map((position) => app.isAvailable(`profile.select.${position}`))
+    ).toStrictEqual([true, true, false]);
+    expect(
+      COMMANDS.filter((command) => command.id.startsWith("profile.select."))
+    ).toHaveLength(9);
+    expect(commandOf("profile.select.9").shortcut).toStrictEqual({
+      darwin: "CommandOrControl+9",
+      win32: "CommandOrControl+9",
+      linux: "Alt+9",
+    });
+
+    await app.run("inbox.toggle");
+    await app.run("profile.select.2");
+
+    expect(app.profiles.get().selectedProfileId).toBe("b");
+    expect(app.isChecked("inbox.toggle")).toBeFalsy();
+  });
+
+  it("removes the selected profile, offered only while another is left", async () => {
+    const app = setup();
+
+    expect(app.isAvailable("profile.remove")).toBeTruthy();
+
+    await app.run("profile.remove");
+
+    expect(app.profiles.get().profiles.map(({ id }) => id)).toStrictEqual([
+      "b",
+    ]);
+    expect(app.isAvailable("profile.remove")).toBeFalsy();
   });
 
   it.each(["tab.next", "profile.next", "profile.add"])(
