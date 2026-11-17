@@ -22,6 +22,7 @@ const PROMO = "<div data-rp-onramp-container><p>promo</p></div>";
 const UPGRADE =
   '<header><div data-pep-id="global-pep-gmail" data-rp-onramp-container></div></header>';
 const LIST = '<div gh="tl"><table></table></div>';
+const REFRESH = '<div act="20"></div>';
 
 const page = (body: string, hash = "#inbox") => {
   const { document } = parseHTML(`<html><body>${body}</body></html>`);
@@ -42,7 +43,9 @@ describe(checkHealth, () => {
   });
 
   it("matches every hook in an inbox that has them all", () => {
-    expect(checkHealth(inbox(`${PROMO}${LIST}${FOOTER}`))).toStrictEqual({
+    expect(
+      checkHealth(inbox(`${PROMO}${REFRESH}${LIST}${FOOTER}`))
+    ).toStrictEqual({
       views: ["list"],
       hooks: {
         logo: "matched",
@@ -53,8 +56,19 @@ describe(checkHealth, () => {
         attachments: "absent",
         trimmed: "absent",
         trimmedToggle: "absent",
+        refresh: "matched",
       },
     });
+  });
+
+  it("calls Refresh broken in a list without it, and only absent in a thread", () => {
+    expect(checkHealth(inbox(LIST)).hooks.refresh).toBe("broken");
+    expect(
+      checkHealth(inbox(`<div hidden>${REFRESH}${LIST}</div>`)).hooks.refresh
+    ).toBe("matched");
+    expect(
+      checkHealth(inbox('<h2 data-legacy-thread-id="1"></h2>')).hooks.refresh
+    ).toBe("absent");
   });
 
   it("tells a thread, compose and settings by their own anchors", () => {

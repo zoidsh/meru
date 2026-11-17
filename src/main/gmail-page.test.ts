@@ -36,6 +36,7 @@ const HEALTH: GmailHealth = {
     attachments: "matched",
     trimmed: "matched",
     trimmedToggle: "matched",
+    refresh: "matched",
   },
   ms: 2,
 };
@@ -221,6 +222,46 @@ describe(serveGmailContract, () => {
     contract.page.push();
 
     expect(contract.sent).toHaveLength(1);
+  });
+
+  it("tells the profile's page that shook hands to catch up, its main frame on Gmail's origin alone", () => {
+    const contract = setup();
+
+    contract.page.catchUp("a");
+
+    expect(contract.sent).toStrictEqual([]);
+
+    contract.shake(from(GMAIL_VIEW));
+    contract.shake(from(CALENDAR_VIEW));
+    contract.page.catchUp("b");
+    contract.page.catchUp("a");
+
+    expect(contract.sent.slice(1)).toStrictEqual([
+      {
+        to: GMAIL_VIEW,
+        channel: GMAIL_CHANNELS.catchUp,
+        message: undefined,
+        options: { mainFrameOrigin: GMAIL_ORIGIN },
+      },
+    ]);
+  });
+
+  it("tells no page to catch up once it left Gmail or is gone", () => {
+    const left = setup();
+
+    left.shake(from(GMAIL_VIEW));
+    left.shake(from(GMAIL_VIEW, { origin: "https://accounts.google.com" }));
+    left.page.catchUp("a");
+
+    expect(left.sent).toHaveLength(1);
+
+    const gone = setup();
+
+    gone.shake(from(GMAIL_VIEW));
+    gone.dropGmailView();
+    gone.page.catchUp("a");
+
+    expect(gone.sent).toHaveLength(1);
   });
 
   it("logs a page's health by hook names once per change, and tells it on", () => {

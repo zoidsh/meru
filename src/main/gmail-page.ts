@@ -154,6 +154,25 @@ export const serveGmailContract = ({
   });
 
   return {
+    /**
+     * Tells each page of the profile that shook hands, while its main frame
+     * is still on Gmail's origin, to catch up.
+     */
+    catchUp: (profileId: string) => {
+      for (const [webContentsId, key] of pages) {
+        if (key.profileId !== profileId) {
+          continue;
+        }
+
+        if (gmailTabOf(webContentsId)) {
+          ipc.send(webContentsId, GMAIL_CHANNELS.catchUp, undefined, {
+            mainFrameOrigin: gmailOrigin,
+          });
+        } else {
+          forget(webContentsId);
+        }
+      }
+    },
     /** Sends the switches as they are now to every page that shook hands. */
     push: () => {
       for (const webContentsId of pages.keys()) {

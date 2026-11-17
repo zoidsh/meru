@@ -8,8 +8,10 @@ import type { StandIn, StandInMail } from "./lib/stand-in.ts";
 import {
   ACCOUNT_COOKIE,
   CALENDAR_TITLE,
+  DRAFT_LABEL,
   STAND_IN_TITLE,
   messageLink,
+  refreshedTimes,
 } from "./lib/stand-in.ts";
 
 /** A session with no account cookie, which every profile here is. */
@@ -501,6 +503,130 @@ for (const [said, expression] of [
     expect(standIn.feedLabels).not.toContain(PRIMARY);
   });
 }
+
+/** Presses the button labelled `label` on the first notification captured. */
+const pressAction = (app: ElectronApplication, label: string) =>
+  app.evaluate((_electron, wanted) => {
+    const [notification] = Reflect.get(
+      globalThis,
+      "meruTestNotifications"
+    ) as (Captured & { act: (index: number) => void })[];
+
+    notification?.act(notification.actions?.indexOf(wanted) ?? -1);
+  }, label);
+
+/** Home alone, with one message notified on its open Gmail page. */
+const launchNotified = async (
+  launchApp: () => Promise<ElectronApplication>,
+  userDataDir: string,
+  standIn: StandIn
+) => {
+  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  standIn.setFeed(ANY_SESSION, listing("1"));
+
+  const launched = await launchOn(launchApp, standIn);
+
+  await expect(profileTab(launched.shell, "Home")).toHaveAccessibleName(
+    "Home, 1 unread message"
+  );
+  standIn.setFeed(ANY_SESSION, listing("2", "1"));
+  standIn.setFeedAfterAction(ANY_SESSION, listing("1"));
+  await retitle(launched.gmail, "Inbox (2)");
+  await expect
+    .poll(() => capturedTitles(launched.app))
+    .toStrictEqual(["Sender 2"]);
+
+  return launched;
+};
+
+/** Longer than main waits between two catch-ups of a profile's page. */
+const PAST_CATCH_UP_MS = 2500;
+
+test("an action from a notification has the open page press Gmail's Refresh once, keeping the draft and its focus", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, gmail } = await launchNotified(launchApp, userDataDir, standIn);
+  const draft = gmail.getByRole("textbox", { name: DRAFT_LABEL });
+
+  await expect(gmail.getByText(refreshedTimes(0))).toBeVisible();
+  await draft.fill("Half a reply");
+  await draft.focus();
+  await pressAction(app, "Mark as Read");
+
+  await expect(gmail.getByText(refreshedTimes(1))).toBeVisible();
+  await expect(draft).toHaveValue("Half a reply");
+  await expect(draft).toBeFocused();
+  expect(standIn.actions).toHaveLength(1);
+
+  await gmail.waitForTimeout(PAST_CATCH_UP_MS);
+
+  await expect(gmail.getByText(refreshedTimes(1))).toBeVisible();
+});
+
+test("an action Gmail refuses has the page press nothing", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  standIn.failActions(ANY_SESSION);
+
+  const { app, gmail } = await launchNotified(launchApp, userDataDir, standIn);
+
+  await pressAction(app, "Archive");
+  await expect.poll(() => standIn.refusedActions).toHaveLength(1);
+  await gmail.waitForTimeout(PAST_CATCH_UP_MS);
+
+  await expect(gmail.getByText(refreshedTimes(0))).toBeVisible();
+});
+
+test("waking has each open Gmail page press Refresh", async ({
+  app,
+  standIn,
+}) => {
+  const gmail = await findPage(app, standIn.url);
+
+  await expect(gmail.getByText(refreshedTimes(0))).toBeVisible();
+  await app.evaluate(({ powerMonitor }) => {
+    powerMonitor.emit("resume");
+  });
+
+  await expect(gmail.getByText(refreshedTimes(1))).toBeVisible();
+});
+
+test("a page without Gmail's Refresh is reported broken there, and an action presses nothing", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  standIn.dropRefresh();
+
+  const { app, gmail } = await launchNotified(launchApp, userDataDir, standIn);
+  const draft = gmail.getByRole("textbox", { name: DRAFT_LABEL });
+
+  await expect
+    .poll(() =>
+      app.evaluate(
+        () =>
+          (
+            Reflect.get(globalThis, "meruTestGmailPage") as {
+              health: { hooks: Record<string, string> }[];
+            }
+          ).health.at(-1)?.hooks.refresh
+      )
+    )
+    .toBe("broken");
+  await draft.fill("Half a reply");
+  await draft.focus();
+  await pressAction(app, "Mark as Read");
+  await expect.poll(() => standIn.actions).toHaveLength(1);
+  await gmail.waitForTimeout(PAST_CATCH_UP_MS);
+
+  await expect(draft).toHaveValue("Half a reply");
+  await expect(draft).toBeFocused();
+  await expect(gmail.getByText(refreshedTimes(0))).toBeHidden();
+});
 
 test("counts the whole inbox for a poll that finds no Primary feed", async ({
   launchApp,

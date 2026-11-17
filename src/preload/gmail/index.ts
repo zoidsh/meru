@@ -5,6 +5,7 @@ import type { GmailHealth } from "#contract/gmail-channels.ts";
 import { GMAIL_FEATURES, featureStylesheet } from "#core/gmail-hooks.ts";
 import type { GmailFeature } from "#core/gmail-hooks.ts";
 
+import { pressRefresh } from "./catch-up.ts";
 import { RECHECK_MS, checkHealth } from "./health.ts";
 
 // Gmail draws a view some time after it moves to it, so a check waits for it
@@ -110,6 +111,9 @@ ipcRenderer.on(GMAIL_CHANNELS.features, (_event, message: unknown) => {
   }
 
   startChecking();
+});
+ipcRenderer.on(GMAIL_CHANNELS.catchUp, () => {
+  pressRefresh(document);
 });
 // A view's first, empty document is no page to ask about.
 if (location.protocol !== "about:") {

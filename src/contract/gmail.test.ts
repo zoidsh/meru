@@ -52,6 +52,7 @@ describe("the health report's schema", () => {
       attachments: "absent",
       trimmed: "absent",
       trimmedToggle: "absent",
+      refresh: "matched",
     },
     ms: 2,
   };

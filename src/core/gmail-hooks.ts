@@ -29,6 +29,7 @@ export const HOOK_NAMES = [
   "attachments",
   "trimmed",
   "trimmedToggle",
+  "refresh",
 ] as const;
 
 export type HookName = (typeof HOOK_NAMES)[number];
@@ -135,6 +136,14 @@ export const HOOKS: readonly Hook[] = [
     scope: "body",
     anchors: [TRIMMED_TOGGLE],
     requiredIn: [],
+  },
+  {
+    name: "refresh",
+    scope: "chrome",
+    // Gmail's action code for its Refresh control, which stays in the page,
+    // hidden, while a thread is open.
+    anchors: ['div[act="20"]'],
+    requiredIn: ["list"],
   },
 ];
 

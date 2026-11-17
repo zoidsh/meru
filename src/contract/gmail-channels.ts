@@ -17,6 +17,11 @@ export const GMAIL_CHANNELS = {
   features: "gmail:features",
   /** Page to main: a `GmailHealth`, when it differs from the last one sent. */
   health: "gmail:health",
+  /**
+   * Main to page, with no payload: show what changed in the mailbox, by
+   * Gmail's own Refresh, never a reload.
+   */
+  catchUp: "gmail:catch-up",
 } as const;
 
 /** What the page found once a view settled. */

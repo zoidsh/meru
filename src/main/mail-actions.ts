@@ -21,6 +21,8 @@ export interface MailActionsDeps {
   ) => Promise<ActionResponse>;
   /** Polls the profile's feed soon, so its count follows. */
   poke: (profileId: string) => void;
+  /** Has the profile's open Gmail page show what an action changed. */
+  catchUp: (profileId: string) => void;
   log: (message: string) => void;
   now?: () => number;
 }
@@ -39,6 +41,7 @@ export const ACTION_TIMEOUT = 15_000;
 export const createMailActions = ({
   post,
   poke,
+  catchUp,
   log,
   now = Date.now,
 }: MailActionsDeps) => {
@@ -108,6 +111,7 @@ export const createMailActions = ({
 
       if (outcome.kind === "ok") {
         poke(profileId);
+        catchUp(profileId);
       } else {
         log(
           `Mail action ${action} of profile ${profileId}: ${outcome.kind}${outcome.kind === "failed" ? ` (${outcome.reason})` : ""}`

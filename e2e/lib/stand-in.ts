@@ -67,10 +67,39 @@ const GMAIL_MARKUP = `<header>
       <div data-pep-id="global-pep-gmail" data-rp-onramp-container><a href="#upgrade">${GMAIL_PARTS.upgrade}</a></div>
     </header>
     <div role="main">
+      REFRESH_CONTROL
       <div data-rp-onramp-container><p>${GMAIL_PARTS.promo}</p></div>
       <div gh="tl"><table aria-label="${GMAIL_PARTS.list}"><tr><td>Row</td></tr></table></div>
       <div role="contentinfo"><a href="https://www.google.com/gmail/about/policy/">${GMAIL_PARTS.policy}</a></div>
     </div>`;
+
+/** What the stand-in's Refresh says once pressed `n` times. */
+export const refreshedTimes = (n: number) => `Refreshed ${n} times`;
+
+/**
+ * Gmail's Refresh, which counts a press only as Gmail's does, by the whole
+ * pointer and mouse sequence, so `click()` alone is no press.
+ */
+const REFRESH_MARKUP = `<div gh="mtb"><div act="20" role="button" tabindex="0">Refresh</div></div>
+      <p id="refreshed">${refreshedTimes(0)}</p>
+      <script>
+        (() => {
+          const control = document.querySelector('[act="20"]');
+          let seen = [];
+          let presses = 0;
+          for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup"]) {
+            control.addEventListener(type, () => seen.push(type));
+          }
+          control.addEventListener("mousedown", () => control.focus());
+          control.addEventListener("click", () => {
+            if (seen.join() === "pointerdown,mousedown,pointerup,mouseup") {
+              presses += 1;
+              document.getElementById("refreshed").textContent = "Refreshed " + presses + " times";
+            }
+            seen = [];
+          });
+        })();
+      </script>`;
 
 /** Names of a stand-in thread's parts, as a person reads them. */
 export const THREAD_PARTS = {
@@ -372,6 +401,8 @@ export interface StandIn {
    * which can throw; none, as at first, leaves it unset.
    */
   setInboxType: (expression: string | undefined) => void;
+  /** Has the Gmail stand-in's page, from its next load, have no Refresh. */
+  dropRefresh: () => void;
   /** The label of each feed asked for, in order, `""` for the whole inbox. */
   feedLabels: string[];
   /** Every action the endpoint took, in order. */
@@ -410,6 +441,7 @@ export const startStandIn = async (): Promise<StandIn> => {
   const failing = new Set<string>();
   const feedLabels: string[] = [];
   let inboxType: string | undefined;
+  let refreshControl = true;
   let held: (() => void)[] | undefined;
   const send = (answer: () => void) => {
     if (held) {
@@ -539,7 +571,7 @@ export const startStandIn = async (): Promise<StandIn> => {
     <a href="${links.calendar}" target="_blank">Open Calendar</a>
     <a href="${links.drive}" target="_blank">Open Drive</a>
     <textarea aria-label="${DRAFT_LABEL}"></textarea>
-    ${GMAIL_MARKUP}
+    ${GMAIL_MARKUP.replace("REFRESH_CONTROL", refreshControl ? REFRESH_MARKUP : "")}
     ${inboxType === undefined ? "" : `<script>Object.defineProperty(window, "GM_INBOX_TYPE", { get: () => (${inboxType}) });</script>`}`
       ),
       [POPOUT_PATH]: page(
@@ -608,6 +640,9 @@ export const startStandIn = async (): Promise<StandIn> => {
     },
     setInboxType: (expression) => {
       inboxType = expression;
+    },
+    dropRefresh: () => {
+      refreshControl = false;
     },
     feedLabels,
     actions,

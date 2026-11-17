@@ -46,6 +46,7 @@ import { createWindowFactory } from "#platform/window.ts";
 
 import { createApplicationMenu } from "./application-menu.ts";
 import { createUnreadBadge } from "./badge.ts";
+import { createCatchUp } from "./catch-up.ts";
 import { commandsFor } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
@@ -135,7 +136,8 @@ const devToolsAccelerator = (platform: Platform) =>
 
 /**
  * Gmail's page contract, its switches following the settings, which the
- * suite's build alone may also switch from outside.
+ * suite's build alone may also switch from outside. Answers with what tells
+ * a profile's page to catch up, at most every 2 s.
  */
 const serveGmailPage = ({
   gmailOrigin,
@@ -154,7 +156,7 @@ const serveGmailPage = ({
   }
 
   if (gmailOrigin === undefined) {
-    return;
+    return createCatchUp(() => false);
   }
 
   const gmailPage = serveGmailContract({
@@ -170,6 +172,8 @@ const serveGmailPage = ({
   for (const feature of GMAIL_FEATURES) {
     settings.onChange(feature, gmailPage.push);
   }
+
+  return createCatchUp(gmailPage.catchUp);
 };
 
 const lifecycle = createAppLifecycle();
@@ -484,6 +488,15 @@ const start = async () => {
     },
     log: console.error,
   });
+  const catchUp = serveGmailPage({ gmailOrigin, senders, profiles, settings });
+
+  // A removed profile's pending catch-up is dropped with it.
+  profiles.onChange(catchUp.follow);
+  // Gmail's own push channel can stay down for minutes after a wake.
+  power.onResume(() => {
+    catchUp.requestAll(profiles.get());
+  });
+
   const mailActions =
     gmailOrigin === undefined
       ? undefined
@@ -496,6 +509,7 @@ const start = async () => {
               signal
             ),
           poke: mail.poke,
+          catchUp: catchUp.request,
           log: console.error,
         });
   const inbox = createInbox({
@@ -610,8 +624,6 @@ const start = async () => {
     }),
     log: console.error,
   });
-
-  serveGmailPage({ gmailOrigin, senders, profiles, settings });
 
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);

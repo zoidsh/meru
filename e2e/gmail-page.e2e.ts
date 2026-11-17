@@ -208,6 +208,7 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
       attachments: "absent",
       trimmed: "absent",
       trimmedToggle: "absent",
+      refresh: "matched",
     });
   // A broken hook does nothing: the policy link it no longer reaches shows.
   await expect(parts(view).hideInboxFooter).toBeVisible();

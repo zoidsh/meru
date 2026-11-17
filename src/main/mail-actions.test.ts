@@ -44,6 +44,7 @@ const setup = (
 ) => {
   const sent: [string, URLSearchParams][] = [];
   const poked: string[] = [];
+  const caughtUp: string[] = [];
   const logged: string[] = [];
   const actions = createMailActions({
     post: (profileId, request, signal) => {
@@ -54,13 +55,16 @@ const setup = (
     poke: (profileId) => {
       poked.push(profileId);
     },
+    catchUp: (profileId) => {
+      caughtUp.push(profileId);
+    },
     log: (message) => {
       logged.push(message);
     },
     now: () => 1,
   });
 
-  return { actions, sent, poked, logged };
+  return { actions, sent, poked, caughtUp, logged };
 };
 
 /** Answers the key request with a key, and the action with `action`. */
@@ -97,8 +101,10 @@ describe(createMailActions, () => {
     vi.useRealTimers();
   });
 
-  it("sends the action with the key and token the first answer gave, then pokes the feed", async () => {
-    const { actions, sent, poked, logged } = setup(keyThen(response(null)));
+  it("sends the action with the key and token the first answer gave, then pokes the feed and has the page catch up", async () => {
+    const { actions, sent, poked, caughtUp, logged } = setup(
+      keyThen(response(null))
+    );
 
     await expect(
       actions.run("p1", "markAsRead", MESSAGE)
@@ -114,11 +120,12 @@ describe(createMailActions, () => {
       ["p1", IK, AT],
     ]);
     expect(poked).toStrictEqual(["p1"]);
+    expect(caughtUp).toStrictEqual(["p1"]);
     expect(logged).toStrictEqual([]);
   });
 
-  it("fails on Gmail's error, logging its code and nothing of its text, and does not poke", async () => {
-    const { actions, poked, logged } = setup(
+  it("fails on Gmail's error, logging its code and nothing of its text, and neither pokes nor has the page catch up", async () => {
+    const { actions, poked, caughtUp, logged } = setup(
       keyThen(response([null, `Invalid action token for ${MESSAGE} ${IK}`, 10]))
     );
 
@@ -127,6 +134,7 @@ describe(createMailActions, () => {
       reason: "Gmail error 10",
     });
     expect(poked).toStrictEqual([]);
+    expect(caughtUp).toStrictEqual([]);
     expect(logged).toStrictEqual([
       "Mail action archive of profile p1: failed (Gmail error 10)",
     ]);
