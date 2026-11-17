@@ -6,7 +6,6 @@ import type { ActionOutcome, MailAction } from "#core/mail-actions.ts";
 import { messageUrl } from "#core/notifications.ts";
 import type { State } from "#core/state.ts";
 
-import type { Focus } from "./focus.ts";
 import type { MailPoller } from "./mail.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 
@@ -24,8 +23,12 @@ export interface InboxDeps {
   inbox: string;
   /** Main's state when the inbox starts following it. */
   initial: State;
-  focus: Pick<Focus, "focus">;
-  closeOverlay: () => void;
+  /** The overlay it shows in, which keeps whether it is open. */
+  overlay: {
+    isOpen: () => boolean;
+    open: () => void;
+    close: () => void;
+  };
   now?: () => number;
   log: (message: string) => void;
 }
@@ -43,7 +46,7 @@ const CLOSED: ShellState["inbox"] = {
 const inboxAvailable = (state: State) => state.profiles.length > 1;
 
 /**
- * The unified inbox: whether it covers the content area, the rows it shows,
+ * The unified inbox, an overlay: the rows it shows,
  * and the actions started from it. A row an action is running on, or has
  * just run on, is hidden until a poll that started after the action ended
  * says what the feed lists; one whose action failed comes back with a
@@ -56,14 +59,12 @@ export const createInbox = ({
   open,
   inbox,
   initial,
-  focus,
-  closeOverlay,
+  overlay,
   now = Date.now,
   log,
 }: InboxDeps) => {
   const listeners = new Set<() => void>();
   let state = initial;
-  let isOpen = false;
   let notice: Notice = null;
   let pending = new Map<string, PendingAction>();
 
@@ -73,15 +74,12 @@ export const createInbox = ({
     }
   };
 
-  const close = () => {
-    if (!isOpen) {
-      return;
-    }
+  const isOpen = () => overlay.isOpen();
 
-    isOpen = false;
-    notice = null;
-    notify();
-    focus.focus([{ kind: "front" }, { kind: "shell" }]);
+  const close = () => {
+    if (isOpen()) {
+      overlay.close();
+    }
   };
 
   /** The entry, if the profile's feed reads and lists the message. */
@@ -92,7 +90,7 @@ export const createInbox = ({
       : undefined;
 
   return {
-    isOpen: () => isOpen,
+    isOpen,
     setOpen: (next: boolean) => {
       if (!next) {
         close();
@@ -100,7 +98,7 @@ export const createInbox = ({
         return;
       }
 
-      if (isOpen) {
+      if (isOpen()) {
         return;
       }
 
@@ -110,15 +108,12 @@ export const createInbox = ({
         return;
       }
 
-      closeOverlay();
-      isOpen = true;
       notice = null;
-      notify();
-      focus.focus([{ kind: "shell" }]);
+      overlay.open();
     },
     /** The shell's `inbox` slice; nothing of any mail while it is closed. */
     shellSlice: (): ShellState["inbox"] => {
-      if (!isOpen) {
+      if (!isOpen()) {
         return CLOSED;
       }
 
@@ -150,7 +145,7 @@ export const createInbox = ({
       };
     },
     openMessage: async (profileId: string, messageId: string) => {
-      const entry = isOpen ? listed(profileId, messageId) : undefined;
+      const entry = isOpen() ? listed(profileId, messageId) : undefined;
 
       if (!entry) {
         log(
@@ -170,7 +165,7 @@ export const createInbox = ({
     ) => {
       const key = inboxKey(profileId, messageId);
 
-      if (!isOpen || pending.has(key) || !listed(profileId, messageId)) {
+      if (!isOpen() || pending.has(key) || !listed(profileId, messageId)) {
         log(
           `Refused ${action} on a message the inbox does not offer, of profile ${profileId}`
         );
@@ -198,7 +193,7 @@ export const createInbox = ({
       pending.delete(key);
 
       // A failure that lands after a close is not told on the next open.
-      if (isOpen) {
+      if (isOpen()) {
         notice = {
           action,
           profileId,
@@ -223,7 +218,7 @@ export const createInbox = ({
         );
       }
 
-      if (isOpen) {
+      if (isOpen()) {
         notify();
       }
     },
@@ -247,7 +242,7 @@ export const createInbox = ({
 
       if (!inboxAvailable(next)) {
         close();
-      } else if (isOpen) {
+      } else if (isOpen()) {
         notify();
       }
     },

@@ -41,7 +41,7 @@ export interface TabViewsDeps {
   state: () => State;
   /** The sidebar as it is now; `relayout` follows a change. */
   sidebar: () => SidebarState;
-  /** Whether the unified inbox covers the content area; `reconcile` follows a change. */
+  /** Whether the unified inbox is open, under which the front tab offers no navigation. */
   inboxOpen: () => boolean;
   /** Opens the tab, under `tabId` when it is a new one. */
   openTab: (
@@ -149,12 +149,9 @@ export const createTabViews = ({
     }
   };
 
-  /**
-   * The one test of whether a view shows: the front tab's, while its page
-   * can, and not under the unified inbox, which leaves its status alone.
-   */
+  /** The one test of whether a view shows: the front tab's, while its page can. */
   const shows = (key: string, tab: TabView) =>
-    key === front && !inboxOpen() && showsView(tab.status);
+    key === front && showsView(tab.status);
 
   const showFront = () => {
     for (const [key, tab] of tabs) {

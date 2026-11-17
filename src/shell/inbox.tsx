@@ -7,17 +7,32 @@ import {
   MailOpenIcon,
   OctagonAlertIcon,
   Trash2Icon,
-  XIcon,
 } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { dateForm, inboxKey } from "#core/inbox.ts";
 import type { MailAction } from "#core/mail-actions.ts";
+import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "#ui/empty.tsx";
 
-import { shellCalls } from "./sync.ts";
+import { OverlayCard } from "./overlay-card.tsx";
+import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
 
 type InboxState = ShellState["inbox"];
@@ -30,6 +45,14 @@ const keyOf = (row: Row) => inboxKey(row.profileId, row.messageId);
 const ACTION_KEYS: Record<MailAction, string> = {
   archive: "e",
   markAsRead: "I",
+  delete: "#",
+  markAsSpam: "!",
+};
+
+/** The same keys, as `aria-keyshortcuts` names them. */
+const ACTION_SHORTCUTS: Record<MailAction, string> = {
+  archive: "E",
+  markAsRead: "Shift+I",
   delete: "#",
   markAsSpam: "!",
 };
@@ -152,85 +175,6 @@ const useDates = () => {
   }, [i18n.locale]);
 };
 
-/** What a profile that adds no rows says in place of them. */
-const ProfileNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
-  const { t } = useLingui();
-  const notes = profiles.flatMap((profile) => {
-    const { name } = profile;
-
-    switch (profile.status) {
-      case "unknown": {
-        return [
-          {
-            profile,
-            text: t({
-              message: `Checking ${name} for mail…`,
-              comment:
-                "Shown in the unified inbox while a profile's unread mail has not been read yet; {name} is the profile",
-            }),
-          },
-        ];
-      }
-      case "signedOut": {
-        return [
-          {
-            profile,
-            text: t({
-              message: `${name} is signed out.`,
-              comment:
-                "Shown in the unified inbox for a profile whose Google account is signed out, so its mail is missing from the list; {name} is the profile",
-            }),
-          },
-        ];
-      }
-      case "failed": {
-        return [
-          {
-            profile,
-            text: t({
-              message: `Couldn’t check ${name} for mail.`,
-              comment:
-                "Shown in the unified inbox for a profile whose unread mail could not be read, so its mail is missing from the list; {name} is the profile",
-            }),
-          },
-        ];
-      }
-      default: {
-        return [];
-      }
-    }
-  });
-
-  if (notes.length === 0) {
-    return null;
-  }
-
-  return (
-    <ul className="flex flex-col gap-1 px-4 pb-2 text-sm text-muted-foreground">
-      {notes.map(({ profile, profile: { name }, text }) => (
-        <li key={profile.id} className="flex items-center gap-2">
-          <span>{text}</span>
-          {profile.status === "signedOut" && (
-            <Button
-              variant="link"
-              size="xs"
-              onClick={() => {
-                shellCalls().selectProfile({ profileId: profile.id });
-              }}
-            >
-              {t({
-                message: `Open ${name}`,
-                comment:
-                  "Button beside a signed-out profile in the unified inbox that shows that profile, where it can be signed in; {name} is the profile",
-              })}
-            </Button>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-};
-
 /** Where a profile's feed lists fewer than are unread, as it does past 20. */
 const MoreNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
   const { t } = useLingui();
@@ -245,7 +189,7 @@ const MoreNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
   }
 
   return (
-    <ul className="flex flex-col gap-1 px-4 py-3 text-sm text-muted-foreground">
+    <ul className="flex flex-col gap-1 px-2 py-2 text-xs text-muted-foreground">
       {more.map(({ id, name, listed, unreadCount }) => (
         <li key={id}>
           {t({
@@ -268,6 +212,7 @@ type ActionLabels = ReturnType<typeof useActionLabels>;
 const InboxRow = ({
   row,
   profileName,
+  profileColor,
   dates,
   labels,
   selected,
@@ -277,6 +222,7 @@ const InboxRow = ({
 }: {
   row: Row;
   profileName: string;
+  profileColor: string | undefined;
   dates: Dates;
   labels: ActionLabels;
   selected: boolean;
@@ -286,6 +232,9 @@ const InboxRow = ({
 }) => {
   const { short, full } = dates(row.issued);
   const sender = row.senderName || row.senderAddress;
+  // Each cell draws the row's fill, as a table row has no rounded corners.
+  const cell =
+    "h-8 py-0 group-hover:bg-muted/60 group-focus-visible:bg-muted group-data-selected:bg-muted";
 
   return (
     <tr
@@ -293,7 +242,7 @@ const InboxRow = ({
       tabIndex={selected ? 0 : -1}
       aria-selected={selected}
       data-selected={selected || undefined}
-      className="group h-10 cursor-default border-b border-border text-sm outline-none hover:bg-muted/60 focus-visible:bg-muted data-selected:bg-muted/60"
+      className="group cursor-default text-sm outline-none"
       onFocus={onSelect}
       onKeyDown={onKeyDown}
       onClick={() => {
@@ -303,62 +252,64 @@ const InboxRow = ({
         });
       }}
     >
-      <td
-        className="truncate py-0 pr-3 pl-4 text-xs text-muted-foreground"
-        title={profileName}
-      >
-        {profileName}
+      {/* Named by the profile's name inside, which the rule does not read. */}
+      {/* oxlint-disable-next-line jsx-a11y/control-has-associated-label */}
+      <td className={cn(cell, "rounded-l-[10px] pl-2")}>
+        <span className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className="size-2 shrink-0 rounded-full"
+            style={{ backgroundColor: profileColor }}
+          />
+          <span className="truncate text-xs text-muted-foreground">
+            {profileName}
+          </span>
+        </span>
       </td>
       <td
         dir="auto"
         // A right-to-left name keeps its own direction but lines up with the
         // column, as the subject does.
-        className="truncate pr-3 text-left font-medium"
-        title={`${row.senderName} <${row.senderAddress}>`}
+        className={cn(cell, "truncate pl-3 text-left font-medium")}
       >
         {sender}
       </td>
-      <td className="pr-3">
-        <span className="flex min-w-0 gap-2">
-          <span
-            dir="auto"
-            className="max-w-[60%] shrink-0 truncate text-left"
-            title={row.subject}
-          >
+      <td className={cn(cell, "pl-3")}>
+        <span className="flex min-w-0 gap-1">
+          <span dir="auto" className="max-w-[60%] shrink-0 truncate text-left">
             {row.subject}
           </span>
           {row.summary && (
             <span
               dir="auto"
-              className="min-w-0 truncate text-left text-muted-foreground"
-              title={row.summary}
+              className="min-w-0 truncate text-left text-muted-foreground before:mr-1 before:content-['-']"
             >
               {row.summary}
             </span>
           )}
         </span>
       </td>
-      <td className="relative pr-4 text-right">
+      <td
+        className={cn(cell, "relative rounded-r-[10px] pr-2 pl-3 text-right")}
+      >
         <time
           dateTime={new Date(row.issued).toISOString()}
           title={full}
-          className="text-xs whitespace-nowrap text-muted-foreground tabular-nums group-focus-within:invisible group-hover:invisible group-data-selected:invisible"
+          className="text-xs whitespace-nowrap text-muted-foreground tabular-nums group-hover:invisible group-data-selected:invisible"
         >
           {short}
         </time>
         {/* Not hit-testable while hidden, so a click there opens the row. */}
-        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center gap-1 opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-selected:pointer-events-auto group-data-selected:opacity-100">
+        <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center gap-0.5 rounded-r-[10px] bg-linear-to-r from-transparent to-muted to-[16px] pl-4 opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-data-selected:pointer-events-auto group-data-selected:opacity-100">
           {ACTIONS.map((action) => (
             <Button
               key={action}
               variant="ghost"
-              size="icon-sm"
+              size="icon-xs"
               // The list's keys are the keyboard's way to them.
               tabIndex={-1}
               aria-label={labels[action]}
-              aria-keyshortcuts={
-                action === "markAsRead" ? "Shift+I" : ACTION_KEYS[action]
-              }
+              aria-keyshortcuts={ACTION_SHORTCUTS[action]}
               title={labels[action]}
               // Keeps focus on the row, which the keys act from.
               onMouseDown={(event) => {
@@ -383,17 +334,19 @@ const InboxRow = ({
 };
 
 /**
- * Every profile's unread mail in the content area, in place of the tab:
- * main sends the rows while it is open and keeps them, so a reload shows
- * the same list. Gmail's keys move, open and act on the selected row, and
- * only while focus is in the list.
+ * Every profile's unread mail in an overlay over the page: main sends the
+ * rows while it is open and keeps them, so a reload shows the same list.
+ * The arrows and Gmail's keys move, open and act on the selected row.
  */
 export const Inbox = ({ inbox }: { inbox: InboxState }) => {
   const { t } = useLingui();
   const { rows, profiles } = inbox;
+  const colors = useShellState("profiles");
   // The index stands in once its row is gone, so the row that took its
   // place is selected.
   const [selection, setSelection] = useState({ key: "", index: 0 });
+  const headingId = useId();
+  const emptyId = useId();
   const gridRef = useRef<HTMLTableElement>(null);
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
   const focusedOnOpen = useRef(false);
@@ -404,6 +357,8 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
     () => new Map(profiles.map((profile) => [profile.id, profile.name])),
     [profiles]
   );
+  const colorOf = (profileId: string) =>
+    colors?.profiles.find((profile) => profile.id === profileId)?.color;
 
   const foundIndex = rows.findIndex((row) => keyOf(row) === selection.key);
   const selectedIndex =
@@ -418,21 +373,20 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
     }
   };
 
-  // A row an action took away hands focus, which would fall to the page, to
-  // the row that took its place.
+  // A row an action took away hands focus, which would fall to the
+  // document's body, to the row that took its place.
   useLayoutEffect(() => {
-    const active = document.activeElement;
+    const grid = gridRef.current;
+    const active = grid?.ownerDocument.activeElement;
     const inList =
-      active === document.body || (active && gridRef.current?.contains(active));
+      active === grid?.ownerDocument.body || (active && grid?.contains(active));
 
     if (!inList) {
       return;
     }
 
     const element =
-      selectedRowKey === undefined
-        ? gridRef.current
-        : rowRefs.current.get(selectedRowKey);
+      selectedRowKey === undefined ? grid : rowRefs.current.get(selectedRowKey);
 
     element?.focus({ preventScroll: true });
     element?.scrollIntoView({ block: "nearest" });
@@ -467,19 +421,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     // The window's shortcuts go to the menu.
-    if (event.metaKey || event.ctrlKey || event.altKey) {
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      shellCalls().setInboxOpen({ open: false });
-
-      return;
-    }
-
-    // A row's own keys; the list hears only what bubbles past them.
-    if (!selected || event.currentTarget === gridRef.current) {
+    if (event.metaKey || event.ctrlKey || event.altKey || !selected) {
       return;
     }
 
@@ -534,49 +476,32 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
   };
 
   return (
-    <section
-      aria-labelledby="inbox-heading"
-      className="flex h-full min-h-0 flex-col"
-    >
-      <header className="flex shrink-0 items-center gap-2 px-4 py-3">
-        <h2 id="inbox-heading" className="flex-1 text-base font-semibold">
+    <OverlayCard kind="inbox" labelledBy={headingId}>
+      <header className="flex h-11 shrink-0 items-center gap-2 pr-2 pl-3">
+        <h2 id={headingId} className="text-base leading-5 font-medium">
           {t({
             message: "Unified inbox",
             comment:
-              "Heading of the list of every profile's unread mail, shown in place of the tab",
+              "Title of the overlay over the page that lists every profile's unread mail",
           })}
         </h2>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={t({
-            message: "Close unified inbox",
-            comment:
-              "Accessible name and tooltip of the button that closes the unified inbox and shows the tab again",
-          })}
-          title={t({
-            message: "Close unified inbox",
-            comment:
-              "Accessible name and tooltip of the button that closes the unified inbox and shows the tab again",
-          })}
-          onClick={() => {
-            shellCalls().setInboxOpen({ open: false });
-          }}
-        >
-          <XIcon />
-        </Button>
+        {rows.length > 0 && (
+          <Badge variant="secondary" className="tabular-nums">
+            {rows.length}
+          </Badge>
+        )}
       </header>
+      <div className="-mx-1 h-px shrink-0 bg-foreground/10" />
       <output
         aria-live="polite"
         className={cn(
-          "mx-4 mb-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive",
+          "mx-1 mt-1 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive",
           !failure && "sr-only"
         )}
       >
         {failure}
       </output>
-      <ProfileNotes profiles={profiles} />
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 overflow-y-auto pt-1">
         <table
           ref={gridRef}
           // A data grid the keys move through, as ARIA's grid pattern has it.
@@ -587,20 +512,15 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
             comment:
               "Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers",
           })}
-          aria-describedby={rows.length === 0 ? "inbox-empty" : undefined}
+          aria-describedby={rows.length === 0 ? emptyId : undefined}
           tabIndex={rows.length === 0 ? 0 : -1}
-          className="w-full table-fixed border-collapse border-t border-border outline-none"
-          onKeyDown={(event) => {
-            if (event.target === event.currentTarget) {
-              onKeyDown(event);
-            }
-          }}
+          className="w-full table-fixed border-separate border-spacing-0 outline-none"
         >
           <colgroup>
-            <col className="w-28" />
-            <col className="w-48" />
+            <col className="w-[92px]" />
+            <col className="w-[152px]" />
             <col />
-            <col className="w-36" />
+            <col className="w-20" />
           </colgroup>
           <tbody>
             {rows.map((row, index) => {
@@ -611,6 +531,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
                   key={key}
                   row={row}
                   profileName={names.get(row.profileId) ?? ""}
+                  profileColor={colorOf(row.profileId)}
                   dates={dates}
                   labels={labels}
                   selected={key === selectedRowKey}
@@ -631,35 +552,36 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
           </tbody>
         </table>
         {rows.length === 0 && (
-          <div
-            id="inbox-empty"
-            className="flex flex-col items-center gap-2 px-8 py-16 text-center"
-          >
-            <InboxIcon aria-hidden className="size-6 text-muted-foreground" />
-            <p className="font-medium">
-              {t({
-                message: "No unread messages",
-                comment:
-                  "Heading of the unified inbox when no profile has unread mail",
-              })}
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t({
-                message:
-                  "The unified inbox shows the unread mail of every profile in one place. A message leaves the list once it is read.",
-                comment:
-                  "Shown in the unified inbox when no profile has unread mail",
-              })}
-            </p>
-          </div>
+          <Empty id={emptyId} className="p-12">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <InboxIcon />
+              </EmptyMedia>
+              <EmptyTitle>
+                {t({
+                  message: "No unread messages",
+                  comment:
+                    "Heading of the unified inbox when no profile has unread mail",
+                })}
+              </EmptyTitle>
+              <EmptyDescription>
+                {t({
+                  message:
+                    "Unread mail from all your profiles shows here. A message leaves the list once you read it.",
+                  comment:
+                    "Shown in the unified inbox when no profile has unread mail",
+                })}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
         <MoreNotes profiles={profiles} />
       </div>
-    </section>
+    </OverlayCard>
   );
 };
 
-/** The titlebar's button that shows the unified inbox, or the tab again. */
+/** The titlebar's button that opens the unified inbox, or closes it. */
 export const InboxButton = ({
   open,
   profileCount,
@@ -683,6 +605,7 @@ export const InboxButton = ({
 
   return (
     <TitlebarButton
+      data-opens="inbox"
       pressed={open}
       label={label}
       shortcut={shortcut}

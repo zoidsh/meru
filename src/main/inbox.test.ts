@@ -5,7 +5,6 @@ import type { ActionOutcome, MailAction } from "#core/mail-actions.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
-import type { FocusTarget } from "./focus.ts";
 import { createInbox } from "./inbox.ts";
 
 const GMAIL = "https://mail.google.com/mail/u/0/";
@@ -49,9 +48,8 @@ const setup = (initial: State = two) => {
     settle: (outcome: ActionOutcome) => void;
   }[] = [];
   const opened: [string, string][] = [];
-  const focused: FocusTarget[][] = [];
   const logs: string[] = [];
-  let overlayCloses = 0;
+  const overlay = { open: false, opens: 0, closes: 0 };
   let changes = 0;
   let clock = 1000;
 
@@ -77,13 +75,16 @@ const setup = (initial: State = two) => {
     },
     inbox: GMAIL,
     initial,
-    focus: {
-      focus: (preferences) => {
-        focused.push([...preferences]);
+    overlay: {
+      isOpen: () => overlay.open,
+      open: () => {
+        overlay.open = true;
+        overlay.opens += 1;
       },
-    },
-    closeOverlay: () => {
-      overlayCloses += 1;
+      close: () => {
+        overlay.open = false;
+        overlay.closes += 1;
+      },
     },
     now: () => clock,
     log: (message) => logs.push(message),
@@ -101,10 +102,9 @@ const setup = (initial: State = two) => {
     feeds,
     runs,
     opened,
-    focused,
     logs,
     rows,
-    overlayCloses: () => overlayCloses,
+    overlay,
     changes: () => changes,
     tick: (ms: number) => {
       clock += ms;
@@ -149,7 +149,7 @@ describe(createInbox, () => {
     ]);
   });
 
-  it("closes the overlay and focuses the shell as it opens, and gives focus back to the tab as it closes", () => {
+  it("opens its overlay once and closes it once, however often asked", () => {
     const app = setup();
 
     app.inbox.setOpen(true);
@@ -157,12 +157,7 @@ describe(createInbox, () => {
     app.inbox.setOpen(false);
     app.inbox.setOpen(false);
 
-    expect(app.overlayCloses()).toBe(1);
-    expect(app.focused).toStrictEqual([
-      [{ kind: "shell" }],
-      [{ kind: "front" }, { kind: "shell" }],
-    ]);
-    expect(app.changes()).toBe(2);
+    expect([app.overlay.opens, app.overlay.closes]).toStrictEqual([1, 1]);
   });
 
   it("does not open with one profile, and closes when one is left", () => {
@@ -381,7 +376,7 @@ describe(createInbox, () => {
     app.inbox.setOpen(true);
     app.poll("a", [entry("a3", 40)], 0);
 
-    expect(app.changes()).toBe(2);
+    expect(app.changes()).toBe(1);
     expect(app.rows()).toStrictEqual(["a/a3", "b/b1"]);
   });
 });

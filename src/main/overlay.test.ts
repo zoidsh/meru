@@ -49,7 +49,11 @@ const setup = () => {
   });
 
   overlays.onChange(() => {
-    events.push(`shell told ${overlays.current()?.profileId ?? "closed"}`);
+    const current = overlays.current();
+
+    events.push(
+      `shell told ${current?.kind === "rename-profile" ? current.profileId : (current?.kind ?? "closed")}`
+    );
   });
 
   const adopt = () => {

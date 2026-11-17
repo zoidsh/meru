@@ -62,11 +62,15 @@ const shellOverlay = (
   state: State,
   overlay: Overlay | undefined
 ): ShellState["overlay"] => {
+  if (overlay?.kind === "inbox") {
+    return { kind: "inbox" };
+  }
+
   const profile =
     overlay &&
     state.profiles.find((candidate) => candidate.id === overlay.profileId);
 
-  return overlay && profile
+  return profile
     ? {
         kind: "rename-profile",
         profileId: profile.id,

@@ -5,10 +5,9 @@ import type { State } from "./state.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** What an overlay over the content views shows; one at a time. */
-export interface Overlay {
-  kind: "rename-profile";
-  profileId: string;
-}
+export type Overlay =
+  | { kind: "rename-profile"; profileId: string }
+  | { kind: "inbox" };
 
 /** The card's width for each width class, in CSS pixels. */
 export const OVERLAY_WIDTHS = { narrow: 320, medium: 448, wide: 704 } as const;
@@ -18,6 +17,9 @@ export type OverlayWidth = keyof typeof OVERLAY_WIDTHS;
 /** Each overlay's width class. */
 export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
   switch (overlay.kind) {
+    case "inbox": {
+      return "wide";
+    }
     default: {
       return "narrow";
     }
@@ -49,7 +51,8 @@ const selection = (state: State) => {
 
 /**
  * The overlay open after `event`. What is underneath changing, another
- * profile or tab selected, closes it, as does its profile going.
+ * profile or tab selected, closes the rename panel, as does its profile
+ * going. The unified inbox, over every profile, keeps its own rules.
  */
 export const transitionOverlay = (
   current: Overlay | undefined,
@@ -63,6 +66,10 @@ export const transitionOverlay = (
       return undefined;
     }
     default: {
+      if (current?.kind === "inbox") {
+        return current;
+      }
+
       if (
         !current ||
         selection(event.previous) !== selection(event.next) ||

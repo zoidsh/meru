@@ -1,16 +1,15 @@
 import { Trans } from "@lingui/react/macro";
-import { cn } from "cn";
 import { useEffect, useId } from "react";
-import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import type { ShellState } from "#contract/shell.ts";
-import { OVERLAY_FRAME_NAME, OVERLAY_WIDTHS } from "#core/overlay.ts";
-import type { OverlayWidth } from "#core/overlay.ts";
+import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Input } from "#ui/input.tsx";
 import { Label } from "#ui/label.tsx";
 
+import { Inbox } from "./inbox.tsx";
+import { OverlayCard } from "./overlay-card.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
 
 const STYLESHEETS = 'style, link[rel="stylesheet"]';
@@ -76,39 +75,6 @@ const focusAndSelect = (input: HTMLInputElement | null) => {
   input?.select();
 };
 
-/**
- * The card every overlay draws in, placed in the view that covers the
- * content area: 64px below its top, centred, as tall as what it holds and
- * at most to 16px above its bottom. A press beside it closes the overlay.
- */
-const OverlayCard = ({
-  width,
-  labelledBy,
-  className,
-  children,
-}: {
-  width: OverlayWidth;
-  labelledBy: string;
-  className?: string;
-  children: ReactNode;
-}) => (
-  <div className="pointer-events-none fixed inset-x-0 top-16 bottom-4 flex items-start justify-center px-2">
-    {/* Open but not modal: the page beside it stays in view. */}
-    <dialog
-      open
-      aria-labelledby={labelledBy}
-      data-overlay-card
-      style={{ width: OVERLAY_WIDTHS[width] }}
-      className={cn(
-        "pointer-events-auto relative m-0 flex max-h-full max-w-full flex-col overflow-hidden rounded-[14px] border-0 bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10",
-        className
-      )}
-    >
-      {children}
-    </dialog>
-  </div>
-);
-
 const RenameProfile = ({
   profileId,
   name,
@@ -117,7 +83,7 @@ const RenameProfile = ({
   const fieldId = useId();
 
   return (
-    <OverlayCard width="narrow" labelledBy={headingId}>
+    <OverlayCard kind="rename-profile" labelledBy={headingId}>
       <form
         className="flex flex-col gap-2 p-2"
         onSubmit={(event) => {
@@ -221,6 +187,7 @@ const useCloseOnShellPress = (kind: string | undefined) => {
 /** Draws the open overlay, if any, into the overlay's document. */
 export const OverlayLayer = () => {
   const overlay = useShellState("overlay");
+  const inbox = useShellState("inbox");
   const target = openOverlayDocument();
   const open = overlay && overlay.kind !== "none" ? overlay : undefined;
 
@@ -232,7 +199,11 @@ export const OverlayLayer = () => {
   }
 
   return createPortal(
-    <RenameProfile key={open.profileId} {...open} />,
+    open.kind === "inbox" ? (
+      inbox?.open && <Inbox inbox={inbox} />
+    ) : (
+      <RenameProfile key={open.profileId} {...open} />
+    ),
     target.body
   );
 };

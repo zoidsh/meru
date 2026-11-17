@@ -468,8 +468,7 @@ const start = async () => {
     network,
     senders,
     state: profiles.get,
-    // oxlint-disable-next-line no-use-before-define -- the inbox opens messages in the views
-    inboxOpen: () => inbox.isOpen(),
+    inboxOpen: () => overlays.current()?.kind === "inbox",
     openTab: profiles.openTab,
     newId,
     addProfile: async () => {
@@ -578,11 +577,18 @@ const start = async () => {
         : Promise.resolve({ kind: "failed", reason: "no Gmail" }),
     open: async (profileId, url) => {
       await showGmail.openMessage(profileId, url);
+      // Not back to the inbox's button: the message is what was asked for.
+      focus.focus([{ kind: "front" }]);
     },
     inbox: gmailHome,
     initial: profiles.get(),
-    focus,
-    closeOverlay: overlays.close,
+    overlay: {
+      isOpen: () => overlays.current()?.kind === "inbox",
+      open: () => {
+        overlays.open({ kind: "inbox" });
+      },
+      close: overlays.close,
+    },
     log: console.error,
   });
 
@@ -641,13 +647,8 @@ const start = async () => {
 
   views.reconcile(profiles.get());
   pollProfiles(profiles.get());
-  // Ahead of the views, so a switch that closes the inbox shows the new
-  // front tab in one pass.
   profiles.onChange(inbox.follow);
   profiles.onChange(views.reconcile);
-  inbox.onChange(() => {
-    views.reconcile(profiles.get());
-  });
   // After the views, so focus handed back finds the new front tab's.
   profiles.onChange(overlays.follow);
   sidebar.onChange(views.relayout);
@@ -704,6 +705,8 @@ const start = async () => {
 
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);
+  // Opening and closing the inbox, which Back, Forward and Reload follow.
+  overlays.onChange(menu.refresh);
   sidebar.onChange(menu.refresh);
   // A load starting or stopping, or the history moving, changes what Back,
   // Forward and Stop offer.

@@ -164,6 +164,37 @@ export const findPage = async (app: ElectronApplication, prefix: string) => {
 };
 
 /**
+ * A blank document the shell opened under `name` and draws into: the
+ * overlay's, or the tooltips'. A page's own blank windows have no such name.
+ */
+export const findShellDocument = async (
+  app: ElectronApplication,
+  name: "meru-overlay" | "meru-tooltip"
+) => {
+  const find = async () => {
+    const blank = app
+      .windows()
+      .filter((page) => !page.isClosed() && page.url() === "about:blank");
+    const names = await Promise.all(
+      blank.map((page) => page.evaluate(() => window.name).catch(() => ""))
+    );
+
+    return blank[names.indexOf(name)];
+  };
+  let found: Page | undefined;
+
+  await expect
+    .poll(async () => {
+      found = await find();
+
+      return found !== undefined;
+    })
+    .toBe(true);
+
+  return found as Page;
+};
+
+/**
  * The shell window's root view and content size, whether its menu bar shows,
  * and each content view: its page, its session's partition, where it sits and
  * whether it shows. The overlay's view, which the shell opened, is left out.

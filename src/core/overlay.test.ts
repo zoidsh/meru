@@ -4,6 +4,7 @@ import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
   allowsShellWindowOpen,
+  overlayWidth,
   transitionOverlay,
 } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
@@ -73,6 +74,12 @@ describe(transitionOverlay, () => {
     expect(changed(renameB, withoutB)).toBeUndefined();
   });
 
+  it("keeps the unified inbox open through another profile selected, which closes it itself", () => {
+    expect(changed({ kind: "inbox" }, selectProfile(two, "b"))).toStrictEqual({
+      kind: "inbox",
+    });
+  });
+
   it("stays open through a change that leaves what is underneath", () => {
     const renamed: State = {
       ...two,
@@ -82,6 +89,15 @@ describe(transitionOverlay, () => {
     expect(changed(renameA, renamed)).toStrictEqual(renameA);
     expect(changed(renameB, renamed)).toStrictEqual(renameB);
     expect(changed(undefined, renamed)).toBeUndefined();
+  });
+});
+
+describe(overlayWidth, () => {
+  it("is wide for the unified inbox and narrow for the rename panel", () => {
+    expect([
+      overlayWidth({ kind: "inbox" }),
+      overlayWidth(renameA),
+    ]).toStrictEqual(["wide", "narrow"]);
   });
 });
 

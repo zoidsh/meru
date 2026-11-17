@@ -72,7 +72,7 @@ export const SHELL_CALLS = {
   toggleDoNotDisturb: { request: none, response: z.undefined() },
   /** Pops up the Do Not Disturb menu at the pointer. */
   openDoNotDisturbMenu: { request: none, response: z.undefined() },
-  /** Shows the unified inbox in the content area, or puts the tab back. */
+  /** Opens the unified inbox's overlay, or closes it. */
   setInboxOpen: {
     request: z.object({ open: z.boolean() }),
     response: z.undefined(),
@@ -150,8 +150,9 @@ export const SHELL_STATE = {
     until: z.nullable(z.number()),
   }),
   /**
-   * The unified inbox. Its profiles and rows are sent only while it is
-   * open, so what mail says leaves main only while someone looks at it.
+   * The unified inbox, open while its overlay is. Its profiles and rows are
+   * sent only while it is open, so what mail says leaves main only while
+   * someone looks at it.
    */
   inbox: z.object({
     open: z.boolean(),
@@ -192,6 +193,7 @@ export const SHELL_STATE = {
   /** What the overlay over the content views shows, if anything. */
   overlay: z.discriminatedUnion("kind", [
     z.object({ kind: z.literal("none") }),
+    z.object({ kind: z.literal("inbox") }),
     z.object({
       kind: z.literal("rename-profile"),
       profileId,

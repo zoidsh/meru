@@ -1,14 +1,22 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  clickMenuItem,
   expect,
   findPage,
+  findShellDocument,
   shownViews,
   test,
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import { THEMES, onlyWithShots, shotPath } from "./lib/shots.ts";
+import {
+  THEMES,
+  emulateTheme,
+  onlyWithShots,
+  shootWindow,
+  shotPath,
+} from "./lib/shots.ts";
 import type { StandIn, StandInMail } from "./lib/stand-in.ts";
 import { messageLink, signIn } from "./lib/stand-in.ts";
 
@@ -44,12 +52,17 @@ const profileTab = (shell: Page, name: string) =>
     .getByRole("group", { name: "Profiles" })
     .getByRole("button", { name: new RegExp(`^${name}`, "u") });
 
-const grid = (shell: Page) =>
-  shell.getByRole("grid", { name: "Unread messages" });
+const inboxButton = (shell: Page) =>
+  shell.getByRole("button", { name: "Unified inbox", exact: true });
+
+const grid = (overlay: Page) =>
+  overlay
+    .getByRole("dialog", { name: "Unified inbox" })
+    .getByRole("grid", { name: "Unread messages" });
 
 /** The subject of each row, top to bottom, from the cell that shows it with the summary. */
-const subjects = async (shell: Page) => {
-  const rows = await grid(shell).getByRole("row").all();
+const subjects = async (overlay: Page) => {
+  const rows = await grid(overlay).getByRole("row").all();
 
   return Promise.all(
     rows.map((row) =>
@@ -61,6 +74,20 @@ const subjects = async (shell: Page) => {
     )
   );
 };
+
+/** The overlay's view, which the shell opened and draws the inbox in. */
+const overlayShown = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) => {
+    const [window] = BrowserWindow.getAllWindows();
+
+    return (window?.contentView.children ?? []).some(
+      (view) =>
+        (view as Electron.WebContentsView).webContents.opener ===
+          window?.webContents.mainFrame &&
+        view.getVisible() &&
+        view.getBounds().width > 400
+    );
+  });
 
 /**
  * Home and Work signed in with mail, Club signed out, Home selected; the
@@ -98,26 +125,22 @@ const launch = async (
     "Work, 1 unread message"
   );
 
-  return { app, shell };
+  return { app, shell, overlay: await findShellDocument(app, "meru-overlay") };
 };
 
-const openInbox = async (shell: Page) => {
-  await shell
-    .getByRole("button", { name: "Unified inbox", exact: true })
-    .click();
-  await expect(grid(shell)).toBeVisible();
+const openInbox = async (shell: Page, overlay: Page) => {
+  await inboxButton(shell).click();
+  await expect(grid(overlay)).toBeVisible();
 };
 
-test("lists every profile's mail newest first in place of the tab, says which profile is signed out or has more, and closes from the menu", async ({
+test("lists every profile's mail newest first in an overlay over the page, says which profile has more, names no signed-out one, and closes from the menu", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  const { app, shell } = await launch(launchApp, userDataDir, standIn);
-  const button = shell.getByRole("button", {
-    name: "Unified inbox",
-    exact: true,
-  });
+  const { app, shell, overlay } = await launch(launchApp, userDataDir, standIn);
+  const home = [{ url: standIn.url, partition: "persist:p0" }];
+  const back = shell.getByRole("button", { name: "Back" });
 
   standIn.setFeed("persist:p1", { unreadCount: 40, mail: WORK_MAIL });
   await pollAll(app);
@@ -125,54 +148,50 @@ test("lists every profile's mail newest first in place of the tab, says which pr
     "Work, 40 unread messages"
   );
 
-  const gmailPages = standIn.requests().gmail;
+  await expect(inboxButton(shell)).toHaveAttribute("aria-pressed", "false");
+  await openInbox(shell, overlay);
 
-  await expect(button).toHaveAttribute("aria-pressed", "false");
-  await openInbox(shell);
-
-  await expect(button).toHaveAttribute("aria-pressed", "true");
+  await expect(inboxButton(shell)).toHaveAttribute("aria-pressed", "true");
   await expect
-    .poll(() => subjects(shell))
+    .poll(() => subjects(overlay))
     .toStrictEqual(["Subject a1", "Subject b2", "Subject a3"]);
   await expect(
-    grid(shell).getByRole("row", { name: /Subject b2/u })
+    grid(overlay).getByRole("row", { name: /Subject b2/u })
   ).toContainText("Work");
-  await expect(shell.getByText("Club is signed out.")).toBeVisible();
+  await expect(overlay.getByText(/Club/u)).toHaveCount(0);
   await expect(
-    shell.getByText("Work: the newest 1 of 40 unread")
+    overlay.getByText("Work: the newest 1 of 40 unread")
   ).toBeVisible();
-  // The tab's view is hidden under it, still loaded.
-  await expect.poll(() => shownViews(app)).toStrictEqual([]);
+  // The page stays in view under it, and Back, Forward and Reload wait.
+  expect(await overlayShown(app)).toBeTruthy();
+  await expect.poll(() => shownViews(app)).toStrictEqual(home);
+  await expect(back).toBeDisabled();
+  await expect(shell.getByRole("button", { name: "Reload" })).toBeDisabled();
   // Opening put focus on the first row.
-  await expect(grid(shell).getByRole("row").first()).toBeFocused();
+  await expect(grid(overlay).getByRole("row").first()).toBeFocused();
 
-  await app.evaluate(({ Menu, BrowserWindow }) => {
-    Menu.getApplicationMenu()
-      ?.getMenuItemById("inbox.toggle")
-      ?.click(undefined, BrowserWindow.getAllWindows()[0], undefined);
-  });
+  await clickMenuItem(app, "inbox.toggle");
 
-  await expect(grid(shell)).toBeHidden();
-  await expect
-    .poll(() => shownViews(app))
-    .toStrictEqual([{ url: standIn.url, partition: "persist:p0" }]);
-  // Shown again without a reload.
-  expect(standIn.requests().gmail).toBe(gmailPages);
+  await expect(grid(overlay)).toBeHidden();
+  await expect.poll(() => overlayShown(app)).toBeFalsy();
+  await expect(shell.getByRole("button", { name: "Reload" })).toBeEnabled();
 });
 
-test("opens a row's message in its profile's Gmail, selecting the profile", async ({
+test("opens the selected row's message with Enter in its profile's Gmail, selecting the profile, and a click opens one too", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+  const { app, shell, overlay } = await launch(launchApp, userDataDir, standIn);
 
-  await openInbox(shell);
-  await grid(shell)
-    .getByRole("row", { name: /Subject b2/u })
-    .click();
+  await openInbox(shell, overlay);
+  await overlay.keyboard.press("ArrowDown");
+  await expect(
+    grid(overlay).getByRole("row", { name: /Subject b2/u })
+  ).toBeFocused();
+  await overlay.keyboard.press("Enter");
 
-  await expect(grid(shell)).toBeHidden();
+  await expect(grid(overlay)).toBeHidden();
   await expect(profileTab(shell, "Work")).toHaveAttribute(
     "aria-pressed",
     "true"
@@ -182,6 +201,22 @@ test("opens a row's message in its profile's Gmail, selecting the profile", asyn
     .toStrictEqual([
       { url: messageLink(standIn.url, "b2"), partition: "persist:p1" },
     ]);
+
+  await openInbox(shell, overlay);
+  await grid(overlay)
+    .getByRole("row", { name: /Subject a3/u })
+    .click();
+
+  await expect(grid(overlay)).toBeHidden();
+  await expect(profileTab(shell, "Home")).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  await expect
+    .poll(() => shownViews(app))
+    .toStrictEqual([
+      { url: messageLink(standIn.url, "a3"), partition: "persist:p0" },
+    ]);
 });
 
 test("removes a row an action runs on, sends it for the row's profile, and the count follows", async ({
@@ -189,38 +224,38 @@ test("removes a row an action runs on, sends it for the row's profile, and the c
   userDataDir,
   standIn,
 }) => {
-  const { shell } = await launch(launchApp, userDataDir, standIn);
+  const { shell, overlay } = await launch(launchApp, userDataDir, standIn);
 
   standIn.setFeedAfterAction("persist:p1", { unreadCount: 0, mail: [] });
   standIn.setFeedAfterAction("persist:p0", {
     unreadCount: 1,
     mail: [HOME_MAIL[0] as StandInMail],
   });
-  await openInbox(shell);
+  await openInbox(shell, overlay);
 
   // Gmail's keys: down to Work's row, and e archives it.
-  await shell.keyboard.press("j");
+  await overlay.keyboard.press("j");
   await expect(
-    grid(shell).getByRole("row", { name: /Subject b2/u })
+    grid(overlay).getByRole("row", { name: /Subject b2/u })
   ).toBeFocused();
-  await shell.keyboard.press("e");
+  await overlay.keyboard.press("e");
 
   await expect
-    .poll(() => subjects(shell))
+    .poll(() => subjects(overlay))
     .toStrictEqual(["Subject a1", "Subject a3"]);
   // The row that took its place has the focus.
   await expect(
-    grid(shell).getByRole("row", { name: /Subject a3/u })
+    grid(overlay).getByRole("row", { name: /Subject a3/u })
   ).toBeFocused();
   await expect(profileTab(shell, "Work")).toHaveAccessibleName("Work");
 
   // And a row's button, for the pointer.
-  const row = grid(shell).getByRole("row", { name: /Subject a3/u });
+  const row = grid(overlay).getByRole("row", { name: /Subject a3/u });
 
   await row.hover();
   await row.getByRole("button", { name: "Mark as read" }).click();
 
-  await expect.poll(() => subjects(shell)).toStrictEqual(["Subject a1"]);
+  await expect.poll(() => subjects(overlay)).toStrictEqual(["Subject a1"]);
   await expect(profileTab(shell, "Home")).toHaveAccessibleName(
     "Home, 1 unread message"
   );
@@ -235,64 +270,78 @@ test("hides a row while its action runs, then puts it back when Gmail refuses it
   userDataDir,
   standIn,
 }) => {
-  const { shell } = await launch(launchApp, userDataDir, standIn);
+  const { shell, overlay } = await launch(launchApp, userDataDir, standIn);
 
   standIn.failActions("persist:p0");
 
   const release = standIn.holdActions();
 
-  await openInbox(shell);
-  await shell.keyboard.press("#");
+  await openInbox(shell, overlay);
+  await overlay.keyboard.press("#");
 
   await expect
     .poll(() => standIn.refusedActions)
     .toStrictEqual([{ account: "persist:p0", code: 9, messageId: "a1" }]);
   await expect
-    .poll(() => subjects(shell))
+    .poll(() => subjects(overlay))
     .toStrictEqual(["Subject b2", "Subject a3"]);
   release();
 
   await expect(
-    shell.getByText(
+    overlay.getByText(
       "Couldn’t move the message to Trash. It’s back in the list."
     )
   ).toBeVisible();
   await expect
-    .poll(() => subjects(shell))
+    .poll(() => subjects(overlay))
     .toStrictEqual(["Subject a1", "Subject b2", "Subject a3"]);
   expect(standIn.actions).toStrictEqual([]);
 });
 
-test("shows the same list after the shell reloads, since main keeps it, and closes on Escape or the selected profile's tab", async ({
+test("closes as the shell reloads, which takes the overlay's document with it, and on Escape, a second click on its button, or the selected profile's button", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  const { app, shell } = await launch(launchApp, userDataDir, standIn);
-  const home = [{ url: standIn.url, partition: "persist:p0" }];
+  const {
+    app,
+    shell,
+    overlay: first,
+  } = await launch(launchApp, userDataDir, standIn);
 
-  await openInbox(shell);
+  await openInbox(shell, first);
   await shell.reload();
 
+  const overlay = await findShellDocument(app, "meru-overlay");
+
+  await expect(inboxButton(shell)).toHaveAttribute("aria-pressed", "false");
+  await expect.poll(() => overlayShown(app)).toBeFalsy();
+
+  await openInbox(shell, overlay);
   await expect
-    .poll(() => subjects(shell))
+    .poll(() => subjects(overlay))
     .toStrictEqual(["Subject a1", "Subject b2", "Subject a3"]);
-  await expect(
-    shell.getByRole("button", { name: "Unified inbox", exact: true })
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(grid(overlay).getByRole("row").first()).toBeFocused();
+  await overlay.keyboard.press("Escape");
 
-  await expect(grid(shell).getByRole("row").first()).toBeFocused();
-  await shell.keyboard.press("Escape");
+  await expect(grid(overlay)).toBeHidden();
+  await expect.poll(() => overlayShown(app)).toBeFalsy();
 
-  await expect(grid(shell)).toBeHidden();
-  await expect.poll(() => shownViews(app)).toStrictEqual(home);
+  // Its button closes what it opened rather than opening it again.
+  await openInbox(shell, overlay);
+  await inboxButton(shell).click();
+
+  await expect(grid(overlay)).toBeHidden();
+  await expect(inboxButton(shell)).toHaveAttribute("aria-pressed", "false");
 
   // Asking for what is selected already shows it.
-  await openInbox(shell);
+  await openInbox(shell, overlay);
   await profileTab(shell, "Home").click();
 
-  await expect(grid(shell)).toBeHidden();
-  await expect.poll(() => shownViews(app)).toStrictEqual(home);
+  await expect(grid(overlay)).toBeHidden();
+  await expect
+    .poll(() => shownViews(app))
+    .toStrictEqual([{ url: standIn.url, partition: "persist:p0" }]);
 });
 
 /** Rows that stretch a row: a long subject and sender, a right-to-left subject, no summary. */
@@ -331,25 +380,23 @@ test("draws the inbox, light and dark", async ({
 }) => {
   onlyWithShots();
 
-  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+  const { app, shell, overlay } = await launch(launchApp, userDataDir, standIn);
 
   standIn.setFeed("persist:p1", { unreadCount: 40, mail: SHOT_MAIL });
   await pollAll(app);
   await expect(profileTab(shell, "Work")).toHaveAccessibleName(
     "Work, 40 unread messages"
   );
-  await openInbox(shell);
-  await expect(grid(shell).getByRole("row")).toHaveCount(5);
+  await openInbox(shell, overlay);
+  await expect(grid(overlay).getByRole("row")).toHaveCount(5);
+  // Away from the rows, so none shows its actions.
+  await overlay.mouse.move(4, 4);
 
   for (const theme of THEMES) {
-    // The inbox is the shell's own, drawn where the tab's view would be.
+    // The inbox's overlay over the page, as the window shows both.
     // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
-    await shell.emulateMedia({ colorScheme: theme });
+    await emulateTheme(app, theme);
     // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
-    await shell.screenshot({
-      path: shotPath("inbox", theme),
-      // Ends the colour transitions the scheme just started.
-      animations: "disabled",
-    });
+    await shootWindow(app, shell, shotPath("inbox", theme));
   }
 });

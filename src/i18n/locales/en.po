@@ -50,7 +50,6 @@ msgid "{name} couldn’t load"
 msgstr "{name} couldn’t load"
 
 #. Second sentence after an action in the unified inbox failed because the profile's Google account is signed out; {name} is the profile
-#. Shown in the unified inbox for a profile whose Google account is signed out, so its mail is missing from the list; {name} is the profile
 #: src/shell/inbox.tsx
 msgid "{name} is signed out."
 msgstr "{name} is signed out."
@@ -123,11 +122,6 @@ msgstr "Bring All to Front"
 msgid "Cancel"
 msgstr "Cancel"
 
-#. Shown in the unified inbox while a profile's unread mail has not been read yet; {name} is the profile
-#: src/shell/inbox.tsx
-msgid "Checking {name} for mail…"
-msgstr "Checking {name} for mail…"
-
 #. Menu item in the Window menu that closes the window
 #: src/main/application-menu.ts
 msgid "Close"
@@ -142,12 +136,6 @@ msgstr "Close {title}"
 #: src/main/commands.ts
 msgid "Close Tab"
 msgstr "Close Tab"
-
-#. Accessible name and tooltip of the button that closes the unified inbox and shows the tab again
-#. Accessible name and tooltip of the button that closes the unified inbox and shows the tab again
-#: src/shell/inbox.tsx
-msgid "Close unified inbox"
-msgstr "Close unified inbox"
 
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
@@ -180,11 +168,6 @@ msgstr "Copy"
 #: src/shell/inbox.tsx
 msgid "Couldn’t archive the message."
 msgstr "Couldn’t archive the message."
-
-#. Shown in the unified inbox for a profile whose unread mail could not be read, so its mail is missing from the list; {name} is the profile
-#: src/shell/inbox.tsx
-msgid "Couldn’t check {name} for mail."
-msgstr "Couldn’t check {name} for mail."
 
 #. Said by screen readers after a tab's title when its page could not load
 #: src/shell/tab-strip.tsx
@@ -383,11 +366,6 @@ msgstr "On Until {time}"
 msgid "On Until Turned Off"
 msgstr "On Until Turned Off"
 
-#. Button beside a signed-out profile in the unified inbox that shows that profile, where it can be signed in; {name} is the profile
-#: src/shell/inbox.tsx
-msgid "Open {name}"
-msgstr "Open {name}"
-
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Paste"
@@ -581,11 +559,6 @@ msgstr "Stopped working"
 msgid "Tabs"
 msgstr "Tabs"
 
-#. Shown in the unified inbox when no profile has unread mail
-#: src/shell/inbox.tsx
-msgid "The unified inbox shows the unread mail of every profile in one place. A message leaves the list once it is read."
-msgstr "The unified inbox shows the unread mail of every profile in one place. A message leaves the list once it is read."
-
 #. Shown when the app is started on data that a later version of the app wrote, which this version cannot read
 #: src/main/store-file.ts
 msgid "This data was saved by a newer version. Open it with that version, or update to it."
@@ -622,7 +595,7 @@ msgid "Undo"
 msgstr "Undo"
 
 #. Accessible name and tooltip of the inbox button in the title bar, pressed while the list of every profile's unread mail shows
-#. Heading of the list of every profile's unread mail, shown in place of the tab
+#. Title of the overlay over the page that lists every profile's unread mail
 #: src/shell/inbox.tsx
 msgid "Unified inbox"
 msgstr "Unified inbox"
@@ -631,6 +604,11 @@ msgstr "Unified inbox"
 #: src/main/commands.ts
 msgid "Unified Inbox"
 msgstr "Unified Inbox"
+
+#. Shown in the unified inbox when no profile has unread mail
+#: src/shell/inbox.tsx
+msgid "Unread mail from all your profiles shows here. A message leaves the list once you read it."
+msgstr "Unread mail from all your profiles shows here. A message leaves the list once you read it."
 
 #. Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers
 #: src/shell/inbox.tsx
