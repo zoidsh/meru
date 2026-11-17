@@ -17,7 +17,11 @@ const open = () => {
   window.contentView.addChildView(view);
   fit();
   window.on("resize", fit);
-  window.showInactive();
+  // Shown before the page has anything to draw, behind the front app, the
+  // window never paints Gmail, which then costs less than it does on screen.
+  view.webContents.once("dom-ready", () => {
+    window.showInactive();
+  });
   void view.webContents.loadURL("https://mail.google.com/mail/u/0/");
 };
 
