@@ -67,6 +67,9 @@ export interface TabViewsDeps {
   log: (message: string) => void;
 }
 
+/** How long after a page's request to add an account another is dropped. */
+const ADD_PROFILE_PAUSE_MS = 1000;
+
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -330,11 +333,26 @@ export const createTabViews = ({
     }
   };
 
+  /** A page can ask for many at once and needs no click to ask. */
+  let addingProfile = false;
+
   const addProfileFromPage = async () => {
+    if (addingProfile) {
+      log("Dropped a repeated request to add an account");
+
+      return;
+    }
+
+    addingProfile = true;
+
     try {
       await addProfile();
     } catch (error) {
       log(`Adding a profile for a new account failed: ${describe(error)}`);
+    } finally {
+      setTimeout(() => {
+        addingProfile = false;
+      }, ADD_PROFILE_PAUSE_MS);
     }
   };
 

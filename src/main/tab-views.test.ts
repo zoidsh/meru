@@ -547,6 +547,32 @@ describe(createTabViews, () => {
     expect(window.opened).toStrictEqual([]);
   });
 
+  it("adds one profile for a burst of requests to add an account, and another a second after", async () => {
+    const window = await setup();
+    const { onWindowOpen } = window.views[0]?.options ?? {};
+    const addSession = "https://accounts.google.com/AddSession?continue=x";
+
+    for (let n = 0; n < 4; n += 1) {
+      onWindowOpen?.(addSession);
+    }
+
+    await vi.advanceTimersByTimeAsync(999);
+    onWindowOpen?.(addSession);
+    expect(window.profilesAdded()).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    onWindowOpen?.(addSession);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(window.profilesAdded()).toBe(2);
+    expect(window.logs).toStrictEqual(
+      Array.from(
+        { length: 4 },
+        () => "Dropped a repeated request to add an account"
+      )
+    );
+  });
+
   it("keeps a window a page opened on its app and sign-in, routing anywhere else as a link", async () => {
     const window = await setup();
     const { onChildNavigation } = window.views[0]?.options ?? {};
