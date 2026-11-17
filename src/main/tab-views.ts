@@ -524,9 +524,9 @@ export const createTabViews = ({
         dispatch(front, { kind: "reload" });
       }
     },
-    /** What focuses the front tab's view; nothing unless it is showing. */
     /** Places every view again, as the sidebar now has it, loading nothing. */
     relayout: placeAll,
+    /** What focuses the front tab's view; nothing unless it is showing. */
     focuser: () => {
       const tab = front === undefined ? undefined : tabs.get(front);
 
