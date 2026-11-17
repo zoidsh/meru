@@ -58,7 +58,8 @@ export type PendingAction =
 /**
  * What stays hidden once a poll of `profileId` that started at `startedAt`
  * has listed `listed`: a running action stays, a done one stays only while
- * the poll started before it ended and the feed still lists its message.
+ * the poll started no later than the millisecond it ended, which cannot say
+ * whether the feed was read after it, and the feed still lists its message.
  * Another profile's are left as they were.
  */
 export const afterPoll = (
@@ -74,7 +75,7 @@ export const afterPoll = (
       }
 
       return (
-        startedAt < action.at && listed.has(key.slice(profileId.length + 1))
+        startedAt <= action.at && listed.has(key.slice(profileId.length + 1))
       );
     })
   );

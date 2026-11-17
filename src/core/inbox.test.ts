@@ -101,6 +101,12 @@ describe(afterPoll, () => {
     ]).toStrictEqual(["a/01", "a/02", "b/04"]);
   });
 
+  it("keeps it hidden through a poll that started in the millisecond it ended", () => {
+    expect([
+      ...afterPoll(pending, "a", 100, new Set(["01", "02"])).keys(),
+    ]).toStrictEqual(["a/01", "a/02", "b/04"]);
+  });
+
   it("lets a poll that started after the action decide, and keeps the running one", () => {
     expect([
       ...afterPoll(pending, "a", 150, new Set(["01", "02", "03"])).keys(),
