@@ -118,8 +118,8 @@ test("a link opens a tab of its app in the same session, selected; a link to Gma
 
   await tab(shell, CALENDAR_TITLE).press("Delete");
 
-  await expect(tabs(shell)).toHaveText([STAND_IN_TITLE]);
-  await expect(tab(shell, STAND_IN_TITLE)).toBeFocused();
+  // One tab left hides the sidebar, and its list with it.
+  await expect(tabs(shell)).toHaveCount(0);
   await expect.poll(() => readTabViews(app)).toHaveLength(1);
   const { tabs: left } = await readProfile(userDataDir);
 
@@ -253,7 +253,6 @@ test("a tab that cannot load at launch says so in the shell, and loads by itself
 
   await expect(problem).toBeHidden({ timeout: 15_000 });
   await findPage(app, standIn.url);
-  await expect(tabs(shell)).toHaveText([STAND_IN_TITLE]);
 });
 
 test("a tab whose renderer is killed says it stopped working, and reloads on the control", async ({
@@ -262,7 +261,6 @@ test("a tab whose renderer is killed says it stopped working, and reloads on the
   standIn,
 }) => {
   await findPage(app, standIn.url);
-  await expect(tabs(shell)).toHaveText([STAND_IN_TITLE]);
 
   await app.evaluate(({ webContents }, url) => {
     webContents

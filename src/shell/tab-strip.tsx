@@ -1,18 +1,27 @@
 import { Tabs } from "@base-ui/react/tabs";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
-import { CircleAlertIcon, LoaderCircleIcon, XIcon } from "lucide-react";
+import {
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
+  CircleAlertIcon,
+  LoaderCircleIcon,
+  XIcon,
+} from "lucide-react";
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
-import { TAB_STRIP_WIDTH } from "#core/layout.ts";
-import { Button } from "#ui/button.tsx";
+import { sidebarWidth } from "#core/sidebar.ts";
+import { Button, buttonVariants } from "#ui/button.tsx";
+import { ScrollArea } from "#ui/scroll-area.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
 import { keepInView } from "./keep-in-view.ts";
 import { shellCalls } from "./sync.ts";
+import { UnreadBadge } from "./unread-badge.tsx";
 
 type ShellTab = ShellState["tabs"]["tabs"][number];
 
@@ -65,20 +74,42 @@ const TabStatusIcon = ({ status }: { status: ShellTab["status"] }) => {
   }
 };
 
+/** The tab after or before `tab` in its list, to take focus as it closes. */
+const neighbourOf = (tab: HTMLElement) => {
+  const all = [
+    ...(tab
+      .closest('[role="tablist"]')
+      ?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []),
+  ];
+  const index = all.indexOf(tab);
+
+  return all[index + 1] ?? all[index - 1];
+};
+
 /**
- * The selected profile's tabs, down the left below the titlebar, scrolling
- * when they do not fit. Built on Base UI's tabs directly, since the shadcn
- * component does not hand its orientation to them, which a vertical list's
- * arrow keys need.
+ * The selected profile's tabs, down the left below the titlebar: square
+ * tiles when narrow, rows with their titles when wide, scrolling when they do
+ * not fit. Built on Base UI's tabs directly, since the shadcn component does
+ * not hand its orientation to them, which a vertical list's arrow keys need.
  *
  * A close button is not part of its tab, so the list holds tabs alone and
  * arrows through them: Delete or Backspace closes the focused tab, and the
  * buttons, for the pointer, sit over the list out of the tab order.
  */
-export const TabStrip = ({ tabs }: { tabs: ShellState["tabs"] }) => {
+export const Sidebar = ({
+  tabs,
+  state,
+  unreadCount,
+}: {
+  tabs: ShellState["tabs"];
+  state: "narrow" | "wide";
+  /** The profile's unread mail, shown on Gmail's tile. */
+  unreadCount: number;
+}) => {
   const { t } = useLingui();
   const { profileId } = tabs;
   const [hovered, setHovered] = useState<string>();
+  const wide = state === "wide";
   const close = (tabId: string) => {
     shellCalls().closeTab({ profileId, tabId });
   };
@@ -92,6 +123,18 @@ export const TabStrip = ({ tabs }: { tabs: ShellState["tabs"] }) => {
     },
   });
 
+  const widthLabel = wide
+    ? t({
+        message: "Narrow sidebar",
+        comment:
+          "Accessible name and tooltip of the button at the foot of the wide list of tabs that makes it narrow, showing icons alone",
+      })
+    : t({
+        message: "Widen sidebar",
+        comment:
+          "Accessible name and tooltip of the button at the foot of the narrow list of tabs that makes it wide, showing each tab's title",
+      });
+
   return (
     <Tabs.Root
       orientation="vertical"
@@ -99,99 +142,183 @@ export const TabStrip = ({ tabs }: { tabs: ShellState["tabs"] }) => {
       onValueChange={(tabId: string) => {
         shellCalls().selectTab({ profileId, tabId });
       }}
-      style={{ width: TAB_STRIP_WIDTH }}
-      className="flex min-h-0 shrink-0 flex-col"
+      style={{ width: sidebarWidth(state) }}
+      className={cn(
+        "group/sidebar flex min-h-0 shrink-0 flex-col py-3",
+        wide ? "px-3" : "px-4"
+      )}
     >
-      <div
-        data-tab-scroller
-        className="relative min-h-0 flex-1 overflow-y-auto p-2"
-      >
-        <Tabs.List
-          aria-label={t({
-            message: "Tabs",
-            comment:
-              "Accessible name of the list of the profile's tabs down the left of the window, read by screen readers",
-          })}
-          className="flex flex-col gap-1"
-        >
-          {tabs.tabs.map((tab) => (
-            <Tabs.Tab
-              key={tab.id}
-              value={tab.id}
-              ref={tab.id === tabs.selectedTabId ? keepInView : undefined}
-              // The tabs tell only of a change; asking for the selected tab
-              // still shows it in place of the unified inbox.
-              onClick={
-                tab.id === tabs.selectedTabId
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="relative">
+          <Tabs.List
+            aria-label={t({
+              message: "Tabs",
+              comment:
+                "Accessible name of the list of the profile's tabs down the left of the window, read by screen readers",
+            })}
+            className={cn(
+              "flex flex-col",
+              wide ? "gap-1" : "items-center gap-2"
+            )}
+          >
+            {tabs.tabs.map((tab) => {
+              const title = tabTitle(tab);
+              const selected = tab.id === tabs.selectedTabId;
+              const live =
+                tab.status.kind === "live" || tab.status.kind === "unloaded";
+              const tabProps = {
+                value: tab.id,
+                ref: selected ? keepInView : undefined,
+                // The tabs tell only of a change; asking for the selected tab
+                // still shows it in place of the unified inbox.
+                onClick: selected
                   ? () => {
                       shellCalls().selectTab({ profileId, tabId: tab.id });
                     }
-                  : undefined
-              }
-              onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
-                if (
-                  tab.closable &&
-                  (event.key === "Delete" || event.key === "Backspace")
-                ) {
-                  event.preventDefault();
-                  // Gmail's tab, first and never closed, is always a neighbour.
-                  const neighbour =
-                    event.currentTarget.nextElementSibling ??
-                    event.currentTarget.previousElementSibling;
-
-                  if (neighbour instanceof HTMLElement) {
-                    neighbour.focus();
+                  : undefined,
+                onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+                  if (
+                    tab.closable &&
+                    (event.key === "Delete" || event.key === "Backspace")
+                  ) {
+                    event.preventDefault();
+                    neighbourOf(event.currentTarget)?.focus();
+                    close(tab.id);
                   }
+                },
+                ...hover(tab.id),
+                className: cn(
+                  buttonVariants({
+                    variant: selected ? "secondary" : "ghost",
+                    size: wide ? "sm" : "icon-sm",
+                  }),
+                  "relative font-medium",
+                  wide && "w-full justify-start gap-2 pr-8",
+                  !selected && "text-muted-foreground"
+                ),
+              };
 
-                  close(tab.id);
-                }
-              }}
-              {...hover(tab.id)}
-              className="flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 pr-8 text-sm font-medium text-foreground/60 outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:text-muted-foreground dark:hover:text-foreground data-active:bg-background data-active:text-foreground dark:data-active:bg-input/30 dark:data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-            >
-              {isAppId(tab.app) && <AppIcon app={tab.app} aria-hidden />}
-              <span className="min-w-0 flex-1 truncate text-left">
-                {tabTitle(tab)}
-              </span>
-              <TabStatusIcon status={tab.status} />
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-        <div className="pointer-events-none absolute inset-x-2 top-2 flex flex-col gap-1">
-          {tabs.tabs.map((tab) => {
-            const title = tabTitle(tab);
+              if (wide) {
+                return (
+                  <Tabs.Tab key={tab.id} {...tabProps}>
+                    {isAppId(tab.app) && <AppIcon app={tab.app} aria-hidden />}
+                    <span className="min-w-0 flex-1 truncate text-left">
+                      {title}
+                    </span>
+                    <TabStatusIcon status={tab.status} />
+                  </Tabs.Tab>
+                );
+              }
 
-            return (
-              <div
-                key={tab.id}
-                className="flex h-8 items-center justify-end pr-1"
-              >
-                {tab.closable && (
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    tabIndex={-1}
-                    aria-label={t({
-                      message: `Close ${title}`,
-                      comment:
-                        "Accessible name of the cross on a tab that closes it; {title} is the tab's title",
-                    })}
-                    {...hover(tab.id)}
-                    className={cn(
-                      "pointer-events-auto opacity-0",
-                      hovered === tab.id && "opacity-100"
+              return (
+                <Tooltip key={tab.id}>
+                  <TooltipTrigger render={<Tabs.Tab {...tabProps} />}>
+                    {live && isAppId(tab.app) && (
+                      <AppIcon app={tab.app} aria-hidden />
                     )}
-                    onClick={() => {
-                      close(tab.id);
-                    }}
-                  >
-                    <XIcon />
-                  </Button>
-                )}
-              </div>
-            );
-          })}
+                    <span className="sr-only">{title}</span>
+                    <TabStatusIcon status={tab.status} />
+                    {tab.app === "gmail" && (
+                      <UnreadBadge
+                        count={unreadCount}
+                        className="pointer-events-none absolute -top-1.5 -right-2 px-1"
+                      />
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{title}</TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </Tabs.List>
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-x-0 top-0 flex flex-col",
+              wide ? "gap-1" : "items-center gap-2"
+            )}
+          >
+            {tabs.tabs.map((tab) => {
+              const title = tabTitle(tab);
+              const label = t({
+                message: `Close ${title}`,
+                comment:
+                  "Accessible name of the cross on a tab that closes it; {title} is the tab's title",
+              });
+
+              return (
+                <div
+                  key={tab.id}
+                  className={cn(
+                    "relative h-8",
+                    wide ? "flex items-center justify-end pr-1" : "w-8"
+                  )}
+                >
+                  {tab.closable &&
+                    (wide ? (
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        tabIndex={-1}
+                        aria-label={label}
+                        {...hover(tab.id)}
+                        className={cn(
+                          "pointer-events-auto opacity-0",
+                          hovered === tab.id && "opacity-100"
+                        )}
+                        onClick={() => {
+                          close(tab.id);
+                        }}
+                      >
+                        <XIcon />
+                      </Button>
+                    ) : (
+                      // Below shadcn's smallest button, kept from v3 to fit
+                      // a tile's corner.
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={label}
+                        {...hover(tab.id)}
+                        className={cn(
+                          "pointer-events-auto absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground opacity-0 ring-1 ring-shell [&_svg]:size-2.5",
+                          hovered === tab.id && "opacity-100"
+                        )}
+                        onClick={() => {
+                          close(tab.id);
+                        }}
+                      >
+                        <XIcon />
+                      </button>
+                    ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
+      </ScrollArea>
+      <div
+        className={cn(
+          "flex pt-2 opacity-0 transition-opacity group-hover/sidebar:opacity-100 has-focus-visible:opacity-100",
+          wide ? "justify-end" : "justify-center"
+        )}
+      >
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={widthLabel}
+                className="text-muted-foreground"
+                onClick={() => {
+                  shellCalls().toggleSidebarWidth({});
+                }}
+              />
+            }
+          >
+            {wide ? <ChevronsLeftIcon /> : <ChevronsRightIcon />}
+          </TooltipTrigger>
+          <TooltipContent side="right">{widthLabel}</TooltipContent>
+        </Tooltip>
       </div>
     </Tabs.Root>
   );

@@ -45,7 +45,11 @@ const setup = (initial: State = twoProfiles) => {
   let inboxOpen = false;
   const renames: string[] = [];
   const navigations: string[] = [];
+  let sidebarShown = false;
   const actions: CommandActions = {
+    toggleSidebar: () => {
+      sidebarShown = !sidebarShown;
+    },
     reloadSelectedTab: () => {
       reloads += 1;
     },
@@ -75,6 +79,7 @@ const setup = (initial: State = twoProfiles) => {
     state: profiles.get(),
     doNotDisturb: doNotDisturb.current(),
     inboxOpen,
+    sidebarShown,
   });
 
   onTestFinished(doNotDisturb.dispose);
@@ -109,6 +114,21 @@ describe("the command registry", () => {
     for (const command of COMMANDS) {
       expect(command.title()).not.toBe("");
     }
+  });
+
+  it("shows or hides the sidebar on Cmd or Ctrl+S, checked while it shows", async () => {
+    const app = setup();
+
+    expect(app.isChecked("sidebar.toggle")).toBeFalsy();
+
+    await app.run("sidebar.toggle");
+
+    expect(app.isChecked("sidebar.toggle")).toBeTruthy();
+    expect(commandOf("sidebar.toggle").shortcut).toStrictEqual({
+      darwin: "CommandOrControl+S",
+      win32: "CommandOrControl+S",
+      linux: "CommandOrControl+S",
+    });
   });
 
   it("closes the selected tab, but never Gmail's", async () => {

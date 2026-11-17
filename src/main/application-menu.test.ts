@@ -22,6 +22,7 @@ const contextOf = (): CommandContext => ({
   state: oneProfile,
   doNotDisturb: undefined,
   inboxOpen: false,
+  sidebarShown: false,
 });
 
 const template = (platform: Platform, context = contextOf()) =>
@@ -237,6 +238,7 @@ const setup = () => {
       state,
       doNotDisturb: undefined,
       inboxOpen,
+      sidebarShown: false,
     }),
     actions,
     locale: () => "en",

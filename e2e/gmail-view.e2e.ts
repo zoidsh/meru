@@ -1,7 +1,7 @@
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
+import { contentViewBounds } from "#core/layout.ts";
 
 import {
   expect,
@@ -25,7 +25,7 @@ interface SavedState {
   selectedProfileId: string;
 }
 
-test("shows the stand-in in the content rectangle below the titlebar and beside the tab strip, and follows a resize", async ({
+test("shows the stand-in in the content rectangle below the titlebar and 8px from the left edge with the sidebar hidden, and follows a resize", async ({
   app,
   shell,
   standIn,
@@ -38,7 +38,7 @@ test("shows the stand-in in the content rectangle below the titlebar and beside 
 
   const { area, views } = await readViews(app);
 
-  const bounds = contentViewBounds(area, TAB_STRIP_WIDTH);
+  const bounds = contentViewBounds(area, "hidden");
 
   expect(views.map((each) => each.bounds)).toStrictEqual([bounds]);
   expect(
@@ -62,10 +62,10 @@ test("shows the stand-in in the content rectangle below the titlebar and beside 
 
       return layout.views.map((each) => each.bounds);
     })
-    .toStrictEqual([{ x: 224, y: 40, width: 668, height: 592 }]);
+    .toStrictEqual([{ x: 8, y: 40, width: 884, height: 592 }]);
   await expect
     .poll(() => view.evaluate(() => [window.innerWidth, window.innerHeight]))
-    .toStrictEqual([668, 592]);
+    .toStrictEqual([884, 592]);
 });
 
 test("a second launch keeps the profile and its session's cookie", async ({

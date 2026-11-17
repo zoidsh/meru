@@ -1,7 +1,8 @@
 import type { KeyInput } from "#core/accelerator.ts";
 import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
-import { TAB_STRIP_WIDTH, contentViewBounds, viewFrame } from "#core/layout.ts";
+import { contentViewBounds, viewFrame } from "#core/layout.ts";
+import type { SidebarState } from "#core/sidebar.ts";
 import { knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { showsView, transition } from "#core/tab-machine.ts";
@@ -34,6 +35,8 @@ export interface TabViewsDeps {
   senders: Pick<SenderRegistry, "register">;
   /** Reads main's state as it is now. */
   state: () => State;
+  /** The sidebar as it is now; `relayout` follows a change. */
+  sidebar: () => SidebarState;
   /** Whether the unified inbox covers the content area; `reconcile` follows a change. */
   inboxOpen: () => boolean;
   /** Opens the tab, under `tabId` when it is a new one. */
@@ -98,6 +101,7 @@ export const createTabViews = ({
   network,
   senders,
   state,
+  sidebar,
   inboxOpen,
   openTab,
   newId,
@@ -120,10 +124,8 @@ export const createTabViews = ({
   let front: string | undefined;
 
   const place = (view: ContentView) => {
-    view.setBounds(
-      contentViewBounds(window.getContentAreaSize(), TAB_STRIP_WIDTH)
-    );
-    view.setBorderRadius(viewFrame().radius);
+    view.setBounds(contentViewBounds(window.getContentAreaSize(), sidebar()));
+    view.setBorderRadius(viewFrame(sidebar()).radius);
   };
 
   const placeAll = () => {
@@ -523,6 +525,8 @@ export const createTabViews = ({
       }
     },
     /** What focuses the front tab's view; nothing unless it is showing. */
+    /** Places every view again, as the sidebar now has it, loading nothing. */
+    relayout: placeAll,
     focuser: () => {
       const tab = front === undefined ? undefined : tabs.get(front);
 

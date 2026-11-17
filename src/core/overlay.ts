@@ -1,4 +1,5 @@
-import { OVERLAY_MARGIN, TAB_STRIP_WIDTH, overlayBounds } from "./layout.ts";
+import { OVERLAY_MARGIN, overlayBounds } from "./layout.ts";
+import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
@@ -34,14 +35,10 @@ const overlaySize = (overlay: Overlay): Size => {
 /** Where the overlay's view sits in a window's content area. */
 export const overlayRectangle = (
   contentSize: Size,
+  sidebar: SidebarState,
   overlay: Overlay
 ): Rectangle =>
-  overlayBounds(
-    contentSize,
-    TAB_STRIP_WIDTH,
-    overlaySize(overlay),
-    OVERLAY_OFFSET
-  );
+  overlayBounds(contentSize, sidebar, overlaySize(overlay), OVERLAY_OFFSET);
 
 export type OverlayEvent =
   /** Replaces whatever is open. */

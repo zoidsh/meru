@@ -10,6 +10,8 @@ export const SHELL_CALL_NAMES = [
   "retryTab",
   "renameProfile",
   "closeOverlay",
+  "toggleSidebar",
+  "toggleSidebarWidth",
   "toggleDoNotDisturb",
   "openDoNotDisturbMenu",
   "setInboxOpen",

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPS } from "#core/apps.ts";
+import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -59,6 +60,7 @@ interface FakeView {
  */
 const setup = async ({ state = initial }: { state?: State } = {}) => {
   let size: Size = { width: 1280, height: 800 };
+  let sidebar: SidebarState = "wide";
   let resize: (() => void) | undefined;
   let online: (() => void) | undefined;
   const views: FakeView[] = [];
@@ -157,6 +159,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     },
     senders,
     state: profiles.get,
+    sidebar: () => sidebar,
     inboxOpen: () => inboxOpen,
     openTab: profiles.openTab,
     newId: () => {
@@ -220,6 +223,10 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     profilesAdded: () => profilesAdded,
     pageChanges,
     loads,
+    setSidebar: (next: SidebarState) => {
+      sidebar = next;
+      tabs.relayout();
+    },
     resizeTo: (next: Size) => {
       size = next;
       resize?.();
@@ -731,11 +738,26 @@ describe(createTabViews, () => {
     expect([gmail?.reloads, gmail?.loaded]).toStrictEqual([1, [GMAIL, GMAIL]]);
   });
 
-  it("rounds every view's corners by 8px", async () => {
+  it("rounds every view's corners by 8px, and moves every view as the sidebar changes, loading nothing", async () => {
     const window = await setup();
 
     await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
 
     expect(window.views.map((view) => view.radii.at(-1))).toStrictEqual([8, 8]);
+
+    const loads = window.views.map((view) => view.loaded.length);
+
+    window.setSidebar("hidden");
+
+    for (const view of window.views) {
+      expect(view.bounds.at(-1)).toStrictEqual({
+        x: 8,
+        y: 40,
+        width: 1264,
+        height: 752,
+      });
+    }
+
+    expect(window.views.map((view) => view.loaded.length)).toStrictEqual(loads);
   });
 });

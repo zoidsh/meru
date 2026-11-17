@@ -3,6 +3,7 @@ import { z } from "zod/mini";
 import { MAIL_STATUSES } from "#core/feed.ts";
 import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
+import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import type { ShellCallName } from "./shell-channels.ts";
@@ -63,6 +64,10 @@ export const SHELL_CALLS = {
     response: z.undefined(),
   },
   closeOverlay: { request: none, response: z.undefined() },
+  /** Shows the sidebar or hides it, as the titlebar's toggle asks. */
+  toggleSidebar: { request: none, response: z.undefined() },
+  /** Narrows the sidebar or widens it, as its own toggle asks. */
+  toggleSidebarWidth: { request: none, response: z.undefined() },
   /** On until turned off, or off, as the titlebar button's click asks. */
   toggleDoNotDisturb: { request: none, response: z.undefined() },
   /** Pops up the Do Not Disturb menu at the pointer. */
@@ -118,6 +123,8 @@ export const SHELL_STATE = {
       })
     ),
   }),
+  /** How the sidebar shows, which also sets where the content view sits. */
+  sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),
   /**
    * Each command's shortcut on this platform as a person reads it, such as
    * `⌘S`, by command id; a command with none is absent.

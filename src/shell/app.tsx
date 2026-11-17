@@ -1,20 +1,26 @@
 import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
-import { MoonIcon, PlusIcon } from "lucide-react";
+import { MoonIcon, PanelLeftIcon, PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 
 import { TITLEBAR_HEIGHT, viewFrame } from "#core/layout.ts";
-import { MAX_SHOWN_UNREAD } from "#core/unread.ts";
-import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
+import { Kbd } from "#ui/kbd.tsx";
 import { Tabs, TabsList, TabsTrigger } from "#ui/tabs.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "#ui/tooltip.tsx";
 
 import { Inbox, InboxButton } from "./inbox.tsx";
 import { keepInView } from "./keep-in-view.ts";
 import { OverlayLayer } from "./overlay.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
-import { TabProblem, TabStrip } from "./tab-strip.tsx";
+import { Sidebar, TabProblem } from "./tab-strip.tsx";
+import { UnreadBadge } from "./unread-badge.tsx";
 
 const Profiles = () => {
   const { t } = useLingui();
@@ -81,17 +87,7 @@ const Profiles = () => {
                 }}
               >
                 <span className="truncate">{name}</span>
-                {count > 0 && (
-                  <Badge aria-hidden className="h-4 px-1.5 tabular-nums">
-                    {count > MAX_SHOWN_UNREAD
-                      ? t({
-                          message: `${MAX_SHOWN_UNREAD}+`,
-                          comment:
-                            "Shown on a profile's unread badge in the title bar when more messages are unread than the number before the plus",
-                        })
-                      : count}
-                  </Badge>
-                )}
+                <UnreadBadge count={count} />
               </TabsTrigger>
             );
           })}
@@ -183,66 +179,130 @@ const DoNotDisturbButton = () => {
   );
 };
 
+/** Shows the sidebar or hides it, pressed while it shows. */
+const SidebarToggle = ({ shown }: { shown: boolean }) => {
+  const { t } = useLingui();
+  const shortcut = useShellState("shortcuts")?.["sidebar.toggle"];
+  const tooltip = shown
+    ? t({
+        message: "Hide sidebar",
+        comment:
+          "Tooltip of the title bar button that hides the list of tabs down the left of the window",
+      })
+    : t({
+        message: "Show sidebar",
+        comment:
+          "Tooltip of the title bar button that shows the list of tabs down the left of the window",
+      });
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-pressed={shown}
+            aria-label={t({
+              message: "Sidebar",
+              comment:
+                "Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed",
+            })}
+            className={cn(
+              "[app-region:no-drag]",
+              shown && "bg-muted text-foreground"
+            )}
+            onClick={() => {
+              shellCalls().toggleSidebar({});
+            }}
+          />
+        }
+      >
+        <PanelLeftIcon />
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {tooltip}
+        {shortcut && <Kbd>{shortcut}</Kbd>}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
 export const App = () => {
   const { t } = useLingui();
   const tabs = useShellState("tabs");
   const profiles = useShellState("profiles");
   const inbox = useShellState("inbox");
-  const { inset, radius } = viewFrame();
+  const sidebar = useShellState("sidebar")?.state ?? "hidden";
+  const { inset, radius } = viewFrame(sidebar);
+  const selected = profiles?.profiles.find(
+    (profile) => profile.id === profiles.selectedProfileId
+  );
 
   return (
-    <div className="flex h-full flex-col bg-shell">
-      {/* The preload stamps data-platform; the traffic lights take the left end on macOS. */}
-      <header
-        aria-label={t({
-          message: "Title bar",
-          comment:
-            "Accessible name of the strip across the top of the window, read by screen readers",
-        })}
-        style={{ height: TITLEBAR_HEIGHT }}
-        className="flex shrink-0 items-center px-3 [app-region:drag] in-data-[platform=darwin]:pl-20"
-      >
-        <Profiles />
-        {/* Keeps part of the title bar for dragging the window, however many profiles there are. */}
-        <div aria-hidden className="h-full min-w-16 flex-1" />
-        <div className="flex items-center gap-1">
-          <InboxButton
-            open={inbox?.open ?? false}
-            profileCount={profiles?.profiles.length ?? 0}
-          />
-          <DoNotDisturbButton />
-        </div>
-      </header>
-      <div className="flex min-h-0 flex-1">
-        {tabs && <TabStrip tabs={tabs} />}
-        {/* Drawn where main places the view, by the same measurements. */}
-        <main
+    <TooltipProvider>
+      <div className="flex h-full flex-col bg-shell">
+        {/* The preload stamps data-platform; the traffic lights take the left end on macOS. */}
+        <header
           aria-label={t({
-            message: "Content",
+            message: "Title bar",
             comment:
-              "Accessible name of the window's main area, below the title bar, read by screen readers",
+              "Accessible name of the strip across the top of the window, read by screen readers",
           })}
-          style={{
-            paddingTop: inset.top,
-            paddingRight: inset.right,
-            paddingBottom: inset.bottom,
-            paddingLeft: inset.left,
-          }}
-          className="flex min-w-0 flex-1"
+          style={{ height: TITLEBAR_HEIGHT }}
+          className="flex shrink-0 items-center px-3 [app-region:drag] in-data-[platform=darwin]:pl-20"
         >
-          <div
-            style={{ borderRadius: radius }}
-            className="min-w-0 flex-1 overflow-hidden bg-background"
-          >
-            {inbox?.open ? (
-              <Inbox inbox={inbox} />
-            ) : (
-              tabs && <TabProblem tabs={tabs} />
-            )}
+          <div className="mr-2 flex items-center">
+            <SidebarToggle shown={sidebar !== "hidden"} />
           </div>
-        </main>
+          <Profiles />
+          {/* Keeps part of the title bar for dragging the window, however many profiles there are. */}
+          <div aria-hidden className="h-full min-w-16 flex-1" />
+          <div className="flex items-center gap-1">
+            <InboxButton
+              open={inbox?.open ?? false}
+              profileCount={profiles?.profiles.length ?? 0}
+            />
+            <DoNotDisturbButton />
+          </div>
+        </header>
+        <div className="flex min-h-0 flex-1">
+          {tabs && sidebar !== "hidden" && (
+            <Sidebar
+              tabs={tabs}
+              state={sidebar}
+              unreadCount={selected?.mail.unreadCount ?? 0}
+            />
+          )}
+          {/* Drawn where main places the view, by the same measurements. */}
+          <main
+            aria-label={t({
+              message: "Content",
+              comment:
+                "Accessible name of the window's main area, below the title bar, read by screen readers",
+            })}
+            style={{
+              paddingTop: inset.top,
+              paddingRight: inset.right,
+              paddingBottom: inset.bottom,
+              paddingLeft: inset.left,
+            }}
+            className="flex min-w-0 flex-1"
+          >
+            <div
+              style={{ borderRadius: radius }}
+              className="min-w-0 flex-1 overflow-hidden bg-background"
+            >
+              {inbox?.open ? (
+                <Inbox inbox={inbox} />
+              ) : (
+                tabs && <TabProblem tabs={tabs} />
+              )}
+            </div>
+          </main>
+        </div>
+        <OverlayLayer />
       </div>
-      <OverlayLayer />
-    </div>
+    </TooltipProvider>
   );
 };

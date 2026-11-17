@@ -21,6 +21,7 @@ import {
 } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
 import type { ShellHandlers } from "./shell-ipc.ts";
+import type { Sidebar } from "./sidebar.ts";
 
 export interface ShellHandlersDeps {
   profiles: Pick<
@@ -31,6 +32,7 @@ export interface ShellHandlersDeps {
   tabs: { retry: (key: TabKey) => void };
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   window: Pick<AppWindow, "showContextMenu" | "confirm">;
+  sidebar: Pick<Sidebar, "toggleWidth">;
   /** Runs a command of the registry, as its menu item would. */
   runCommand: (id: string) => void;
   /** The Do Not Disturb menu as the application menu has it now. */
@@ -98,7 +100,7 @@ export const shellState = (
   mail: (profileId: string) => Mail,
   doNotDisturb: DoNotDisturb | undefined,
   inbox: ShellState["inbox"],
-  fixed: Pick<ShellState, "shortcuts">
+  fixed: Pick<ShellState, "sidebar" | "shortcuts">
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -140,6 +142,7 @@ export const createShellHandlers = ({
   tabs,
   inbox,
   window,
+  sidebar,
   runCommand,
   doNotDisturbItems,
   log,
@@ -203,6 +206,16 @@ export const createShellHandlers = ({
     },
     closeOverlay: () => {
       overlays.close();
+
+      return Promise.resolve();
+    },
+    toggleSidebar: () => {
+      runCommand("sidebar.toggle");
+
+      return Promise.resolve();
+    },
+    toggleSidebarWidth: () => {
+      sidebar.toggleWidth();
 
       return Promise.resolve();
     },

@@ -27,10 +27,10 @@ msgstr "{count, plural, one {# unread message} other {# unread messages}}"
 msgid "{hours, plural, one {For # Hour} other {For # Hours}}"
 msgstr "{hours, plural, one {For # Hour} other {For # Hours}}"
 
-#. Shown on a profile's unread badge in the title bar when more messages are unread than the number before the plus
 #. Shown on an unread badge when more messages are unread than the number before the plus
+#. Shown on an unread badge, on a profile's tab in the title bar or on Gmail's tab, when more messages are unread than the number before the plus
 #: src/main/badge.ts
-#: src/shell/app.tsx
+#: src/shell/unread-badge.tsx
 msgid "{MAX_SHOWN_UNREAD}+"
 msgstr "{MAX_SHOWN_UNREAD}+"
 
@@ -283,6 +283,11 @@ msgstr "Hide {productName}"
 msgid "Hide Others"
 msgstr "Hide Others"
 
+#. Tooltip of the title bar button that hides the list of tabs down the left of the window
+#: src/shell/app.tsx
+msgid "Hide sidebar"
+msgstr "Hide sidebar"
+
 #. Second sentence after an action in the unified inbox failed: the message shows in the list again
 #: src/shell/inbox.tsx
 msgid "It’s back in the list."
@@ -333,6 +338,11 @@ msgstr "Meru signs out of this profile and deletes its data on this device. Your
 #: src/main/application-menu.ts
 msgid "Minimize"
 msgstr "Minimize"
+
+#. Accessible name and tooltip of the button at the foot of the wide list of tabs that makes it narrow, showing icons alone
+#: src/shell/tab-strip.tsx
+msgid "Narrow sidebar"
+msgstr "Narrow sidebar"
 
 #. Title of a notification for an email that arrived, when the person chose not to show who sent it
 #: src/main/notifications.ts
@@ -505,6 +515,18 @@ msgstr "Show {productName}"
 msgid "Show All"
 msgstr "Show All"
 
+#. Tooltip of the title bar button that shows the list of tabs down the left of the window
+#: src/shell/app.tsx
+msgid "Show sidebar"
+msgstr "Show sidebar"
+
+#. Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed
+#. Menu item in the View menu, checked while the list of the profile's tabs shows down the left of the window
+#: src/main/commands.ts
+#: src/shell/app.tsx
+msgid "Sidebar"
+msgstr "Sidebar"
+
 #. Said by screen readers after a tab's title when its page crashed
 #: src/shell/tab-strip.tsx
 msgid "Stopped working"
@@ -592,6 +614,11 @@ msgstr "Verification code {verificationCode}"
 #: src/main/application-menu.ts
 msgid "View"
 msgstr "View"
+
+#. Accessible name and tooltip of the button at the foot of the narrow list of tabs that makes it wide, showing each tab's title
+#: src/shell/tab-strip.tsx
+msgid "Widen sidebar"
+msgstr "Widen sidebar"
 
 #. Name of the Window menu
 #: src/main/application-menu.ts

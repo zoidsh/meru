@@ -84,6 +84,7 @@ import {
   revealWindow,
 } from "./shell-window.ts";
 import { createShowGmail } from "./show-gmail.ts";
+import { createSidebar } from "./sidebar.ts";
 import { createSoundOutput } from "./sounds.ts";
 import type { SoundOutput } from "./sounds.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
@@ -318,6 +319,9 @@ const start = async () => {
     now: Date.now,
     log: console.error,
   });
+  // Ahead of every other listener of the profiles, so each reads the
+  // sidebar as the change leaves it.
+  const sidebar = createSidebar({ profiles });
   const doNotDisturb = createDoNotDisturb({
     profiles,
     now: () => new Date(),
@@ -383,7 +387,11 @@ const start = async () => {
     focus,
     initial: profiles.get(),
     bounds: (overlay) =>
-      overlayRectangle(shell.window.getContentAreaSize(), overlay),
+      overlayRectangle(
+        shell.window.getContentAreaSize(),
+        sidebar.current(),
+        overlay
+      ),
     log: console.error,
   });
 
@@ -457,6 +465,7 @@ const start = async () => {
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
   ]);
   const views = createTabViews({
+    sidebar: sidebar.current,
     window: shell.window,
     apps,
     signInOrigins,
@@ -648,6 +657,8 @@ const start = async () => {
   });
   // After the views, so focus handed back finds the new front tab's.
   profiles.onChange(overlays.follow);
+  sidebar.onChange(views.relayout);
+  sidebar.onChange(overlays.relayout);
 
   const menu = createApplicationMenu({
     platform,
@@ -657,6 +668,7 @@ const start = async () => {
       state: profiles.get(),
       doNotDisturb: doNotDisturb.current(),
       inboxOpen: inbox.isOpen(),
+      sidebarShown: sidebar.current() !== "hidden",
     }),
     actions: {
       reloadSelectedTab: views.reloadFront,
@@ -672,6 +684,7 @@ const start = async () => {
           ? doNotDisturb.switchOff()
           : doNotDisturb.switchOn(choice),
       setInboxOpen: inbox.setOpen,
+      toggleSidebar: sidebar.toggleShown,
       navigateGmail,
       saveSearch: profiles.saveSearch,
       removeSavedSearch: profiles.removeSavedSearch,
@@ -689,6 +702,7 @@ const start = async () => {
 
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);
+  sidebar.onChange(menu.refresh);
 
   const shortcuts = shellShortcuts(COMMANDS, platform);
 
@@ -702,6 +716,7 @@ const start = async () => {
       tabs: views,
       inbox,
       window: shell.window,
+      sidebar,
       runCommand: menu.runCommand,
       doNotDisturbItems: menu.doNotDisturbItems,
       log: console.error,
@@ -715,7 +730,7 @@ const start = async () => {
           mail.mail,
           doNotDisturb.current(),
           inbox.shellSlice(),
-          { shortcuts }
+          { sidebar: { state: sidebar.current() }, shortcuts }
         ),
       onChange: (listener) => {
         profiles.onChange(listener);
@@ -723,6 +738,7 @@ const start = async () => {
         views.onChange(listener);
         overlays.onChange(listener);
         inbox.onChange(listener);
+        sidebar.onChange(listener);
       },
     },
     log: console.error,

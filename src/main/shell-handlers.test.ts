@@ -110,6 +110,11 @@ const setup = ({
         return Promise.resolve(confirmed);
       },
     },
+    sidebar: {
+      toggleWidth: () => {
+        calls.push(["toggleWidth"]);
+      },
+    },
     runCommand: (id) => {
       ran.push(id);
     },
@@ -274,7 +279,7 @@ describe(createShellHandlers, () => {
 
 const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
 
-const CHROME = { shortcuts: {} };
+const CHROME = { sidebar: { state: "hidden" }, shortcuts: {} } as const;
 
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;
 
@@ -439,6 +444,20 @@ const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
     CLOSED_INBOX,
     CHROME
   ).doNotDisturb;
+
+describe("the sidebar's toggles", () => {
+  it("show or hide it through the registry's command, and narrow or widen it", async () => {
+    const shell = setup();
+
+    await shell.handlers.toggleSidebar({});
+    await shell.handlers.toggleSidebarWidth({});
+
+    expect([shell.ran, shell.calls]).toStrictEqual([
+      ["sidebar.toggle"],
+      [["toggleWidth"]],
+    ]);
+  });
+});
 
 describe("Do Not Disturb in the shell", () => {
   it("toggles through the registry's command and pops up the shared menu", async () => {

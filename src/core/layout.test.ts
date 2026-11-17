@@ -1,21 +1,31 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  TAB_STRIP_WIDTH,
-  contentViewBounds,
-  overlayBounds,
-  viewFrame,
-} from "./layout.ts";
+import { contentViewBounds, overlayBounds, viewFrame } from "./layout.ts";
+
+const WINDOW = { width: 1280, height: 800 };
 
 describe(contentViewBounds, () => {
-  it("sits flush below the 40px titlebar and beside the strip, 8px from the window's right edge and its bottom", () => {
-    expect(
-      contentViewBounds({ width: 1280, height: 800 }, TAB_STRIP_WIDTH)
-    ).toStrictEqual({ x: 224, y: 40, width: 1048, height: 752 });
+  it("sits flush below the 40px titlebar and beside the sidebar, 8px from the window's right edge and its bottom", () => {
+    expect([
+      contentViewBounds(WINDOW, "narrow"),
+      contentViewBounds(WINDOW, "wide"),
+    ]).toStrictEqual([
+      { x: 64, y: 40, width: 1208, height: 752 },
+      { x: 224, y: 40, width: 1048, height: 752 },
+    ]);
+  });
+
+  it("keeps 8px from the window's left edge too while the sidebar is hidden", () => {
+    expect(contentViewBounds(WINDOW, "hidden")).toStrictEqual({
+      x: 8,
+      y: 40,
+      width: 1264,
+      height: 752,
+    });
   });
 
   it("never gives a negative size", () => {
-    const bounds = contentViewBounds({ width: 100, height: 30 }, 224);
+    const bounds = contentViewBounds({ width: 100, height: 30 }, "wide");
 
     expect([bounds.width, bounds.height]).toStrictEqual([0, 0]);
   });
@@ -23,17 +33,16 @@ describe(contentViewBounds, () => {
 
 describe(viewFrame, () => {
   it("rounds the view's corners by 8px", () => {
-    expect(viewFrame().radius).toBe(8);
+    expect(viewFrame("wide").radius).toBe(8);
   });
 });
 
 describe(overlayBounds, () => {
   it("sits at the top centre of the content view", () => {
-    const size = { width: 1280, height: 800 };
-    const view = contentViewBounds(size, TAB_STRIP_WIDTH);
+    const view = contentViewBounds(WINDOW, "narrow");
 
     expect(
-      overlayBounds(size, TAB_STRIP_WIDTH, { width: 400, height: 80 }, 8)
+      overlayBounds(WINDOW, "narrow", { width: 400, height: 80 }, 8)
     ).toStrictEqual({
       x: view.x + (view.width - 400) / 2,
       y: 48,
@@ -46,10 +55,10 @@ describe(overlayBounds, () => {
     expect(
       overlayBounds(
         { width: 500, height: 100 },
-        TAB_STRIP_WIDTH,
+        "wide",
         { width: 400, height: 80 },
         8
       )
-    ).toStrictEqual({ x: TAB_STRIP_WIDTH, y: 48, width: 268, height: 44 });
+    ).toStrictEqual({ x: 224, y: 48, width: 268, height: 44 });
   });
 });

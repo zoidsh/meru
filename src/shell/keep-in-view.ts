@@ -21,7 +21,9 @@ const scrollIntoScroller = (tab: HTMLElement, scroller: HTMLElement) => {
  * whenever the element it scrolls in changes size.
  */
 export const keepInView = (tab: HTMLElement | null) => {
-  const scroller = tab?.closest<HTMLElement>("[data-tab-scroller]");
+  const scroller = tab?.closest<HTMLElement>(
+    "[data-tab-scroller], [data-slot=scroll-area-viewport]"
+  );
 
   if (!tab || !scroller) {
     return;

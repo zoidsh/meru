@@ -62,6 +62,7 @@ const setup = () => {
   let state: ShellState = {
     profiles: profilesSlice("a"),
     tabs: TABS,
+    sidebar: { state: "hidden" },
     shortcuts: {},
     doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },
@@ -131,6 +132,16 @@ const setup = () => {
     },
     closeOverlay: (request) => {
       calls.push(["closeOverlay", request]);
+
+      return Promise.resolve();
+    },
+    toggleSidebar: (request) => {
+      calls.push(["toggleSidebar", request]);
+
+      return Promise.resolve();
+    },
+    toggleSidebarWidth: (request) => {
+      calls.push(["toggleSidebarWidth", request]);
 
       return Promise.resolve();
     },

@@ -26,6 +26,8 @@ export interface CommandContext {
   doNotDisturb: DoNotDisturb | undefined;
   /** Whether the unified inbox covers the content area. */
   inboxOpen: boolean;
+  /** Whether the sidebar shows. */
+  sidebarShown: boolean;
 }
 
 /** What commands do, each through the module that owns it. */
@@ -41,6 +43,8 @@ export interface CommandActions {
   switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
   /** Shows the unified inbox, or puts the tab back. */
   setInboxOpen: (open: boolean) => void;
+  /** Shows the sidebar where it is hidden, else hides it. */
+  toggleSidebar: () => void;
   /** Shows the profile's Gmail tab and sends its page to `hash`. */
   navigateGmail: (profileId: string, hash: string) => Promise<unknown>;
   /** Adds `query` to the profile's saved searches, if it can be saved. */
@@ -204,6 +208,27 @@ export const savedSearchCommands = (state: State) =>
  * the command.
  */
 export const COMMANDS: readonly Command[] = [
+  {
+    id: "sidebar.toggle",
+    title: () =>
+      t({
+        message: "Sidebar",
+        comment:
+          "Menu item in the View menu, checked while the list of the profile's tabs shows down the left of the window",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+S",
+      win32: "CommandOrControl+S",
+      linux: "CommandOrControl+S",
+    },
+    isChecked: ({ sidebarShown }) => sidebarShown,
+    once: true,
+    run: (_context, { toggleSidebar }) => {
+      toggleSidebar();
+
+      return Promise.resolve();
+    },
+  },
   {
     id: "inbox.toggle",
     title: () =>

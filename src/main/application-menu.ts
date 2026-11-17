@@ -213,6 +213,7 @@ export const buildMenuTemplate = ({
   const viewMenu: MenuItemConstructorOptions = {
     label: t({ message: "View", comment: "Name of the View menu" }),
     submenu: [
+      ...item("sidebar.toggle", "checkbox"),
       ...item("inbox.toggle", "checkbox"),
       separator,
       ...item("tab.reload"),

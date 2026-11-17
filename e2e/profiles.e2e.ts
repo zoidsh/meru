@@ -2,7 +2,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { isEqual } from "es-toolkit";
 
 import type { ShellBridge } from "#contract/shell.ts";
-import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
+import { contentViewBounds } from "#core/layout.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import {
@@ -120,12 +120,12 @@ test("adding a profile shows a second tab, selected, and a view in a session of 
   expect(views).toStrictEqual([
     {
       profileId: first,
-      bounds: contentViewBounds(content, TAB_STRIP_WIDTH),
+      bounds: contentViewBounds(content, "hidden"),
       visible: false,
     },
     {
       profileId: second,
-      bounds: contentViewBounds(content, TAB_STRIP_WIDTH),
+      bounds: contentViewBounds(content, "hidden"),
       visible: true,
     },
   ]);
@@ -158,10 +158,7 @@ test("switching back shows the first view in the content rectangle and hides the
 
       return views.map((view) => ({
         ...view,
-        inContent: isEqual(
-          view.bounds,
-          contentViewBounds(content, TAB_STRIP_WIDTH)
-        ),
+        inContent: isEqual(view.bounds, contentViewBounds(content, "hidden")),
       }));
     })
     .toMatchObject([

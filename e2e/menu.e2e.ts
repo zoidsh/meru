@@ -1,6 +1,6 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
+import { contentViewBounds } from "#core/layout.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 
 import {
@@ -36,7 +36,7 @@ const zoomOf = (app: ElectronApplication, url: string) =>
     url
   );
 
-test("the view sits beside the strip as the shell draws it, on the shell grey the window has too, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
+test("the view sits as the shell draws it, on the shell grey the window has too, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -54,9 +54,9 @@ test("the view sits beside the strip as the shell draws it, on the shell grey th
   expect(menuBarVisible).toBe(process.platform === "darwin");
   expect(area).toStrictEqual(content);
   expect(views.map((view) => view.bounds)).toStrictEqual([
-    contentViewBounds(area, TAB_STRIP_WIDTH),
+    contentViewBounds(area, "hidden"),
   ]);
-  await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px 0px");
+  await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px");
   // Playwright emulates the light theme in the page, not in main.
   expect(
     await shell

@@ -2,7 +2,13 @@
 // nothing of what they show.
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, test, writeSettings } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  test,
+  writeSettings,
+  writeState,
+} from "./lib/app.ts";
 import {
   THEMES,
   emulateTheme,
@@ -48,15 +54,41 @@ const shootEachWay = async (
   }
 };
 
-test("the window with Gmail's page", async ({
+test("the window with the sidebar narrow, wide and hidden", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          { id: "c1", app: "calendar", url: standIn.calendarUrl, title: "" },
+        ],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
   const { app, shell } = await launch(launchApp, userDataDir);
+  // Away from every control, so no tooltip or hover shows in the picture.
+  const rest = () => shell.mouse.move(700, 20);
 
   await findPage(app, standIn.url);
-  await shootEachWay(app, shell, "window");
+  await shootEachWay(app, shell, "window-narrow");
+
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await rest();
+  await shootEachWay(app, shell, "window-wide");
+
+  await shell.getByRole("button", { name: "Sidebar", exact: true }).click();
+  await rest();
+  await expect(shell.getByRole("tablist", { name: "Tabs" })).toHaveCount(0);
+  await shootEachWay(app, shell, "window-hidden");
 });
 
 test("the rename profile overlay", async ({
