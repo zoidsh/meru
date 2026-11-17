@@ -1,5 +1,3 @@
-import { debounce } from "es-toolkit";
-
 import type { FeedEntry, FeedOutcome, MailStatus } from "#core/feed.ts";
 
 /** What the shell is told of a profile's mail. */
@@ -20,17 +18,23 @@ export const POLL_INTERVAL = 30_000;
 export const MAX_BACKOFF = 5 * 60_000;
 export const SIGNED_OUT_INTERVAL = 5 * 60_000;
 export const FETCH_TIMEOUT = 15_000;
-/** How long pokes gather before they poll, so a burst is one poll. */
-export const POKE_WAIT = 1000;
+/**
+ * How soon after a profile's last poll ended a poke may poll it again, so a
+ * title that keeps changing costs a request every 5 s at most.
+ */
+export const POKE_THROTTLE = 5000;
 
 interface Polled extends Mail {
   entries: readonly FeedEntry[];
   failures: number;
   timer: ReturnType<typeof setTimeout> | undefined;
+  /** When `timer` fires, in milliseconds since the epoch. */
+  dueAt: number;
+  /** When the last poll ended; a poke waits until 5 s after it. */
+  lastEnded: number;
   inFlight: AbortController | undefined;
   /** Poked while a poll was in flight: poll once more as it ends. */
   again: boolean;
-  poke: ReturnType<typeof debounce<() => void>>;
 }
 
 const NO_MAIL: Mail = { status: "unknown", unreadCount: null };
@@ -55,8 +59,9 @@ const nextDelay = (polled: Polled) => {
 /**
  * Polls every profile's feed, one poll of a profile at a time: at the start,
  * then 30 s after each poll ends, backing off from a failure and slowing
- * down while signed out. While offline nothing is polled; `pokeAll` when the
- * network returns picks up from there. Only a status and a count are logged,
+ * down while signed out. A poll due while offline is skipped and the next
+ * one scheduled as usual; `pokeAll` when the network returns only brings it
+ * forward. Only a status and a count are logged,
  * never what a message says or who sent it.
  */
 export const createMailPoller = ({
@@ -112,17 +117,37 @@ export const createMailPoller = ({
     }
   };
 
-  const poll = async (profileId: string, polled: Polled) => {
+  const schedule = (profileId: string, polled: Polled, delay: number) => {
+    clearTimeout(polled.timer);
+    polled.dueAt = Date.now() + delay;
+    polled.timer = setTimeout(() => {
+      // oxlint-disable-next-line no-use-before-define -- each poll schedules the next
+      poll(profileId, polled);
+    }, delay);
+  };
+
+  /** Polls when 5 s have passed since the last poll ended, unless one is due sooner. */
+  const poke = (profileId: string, polled: Polled) => {
     if (polled.inFlight) {
       polled.again = true;
 
       return;
     }
 
+    const delay = Math.max(0, polled.lastEnded + POKE_THROTTLE - Date.now());
+
+    if (polled.timer === undefined || Date.now() + delay < polled.dueAt) {
+      schedule(profileId, polled, delay);
+    }
+  };
+
+  const poll = async (profileId: string, polled: Polled) => {
     clearTimeout(polled.timer);
     polled.timer = undefined;
 
     if (!isOnline()) {
+      schedule(profileId, polled, nextDelay(polled));
+
       return;
     }
 
@@ -141,6 +166,7 @@ export const createMailPoller = ({
     } finally {
       clearTimeout(timeout);
       polled.inFlight = undefined;
+      polled.lastEnded = Date.now();
     }
 
     // Removed while the poll was in flight.
@@ -150,16 +176,12 @@ export const createMailPoller = ({
 
     settle(profileId, polled, outcome);
 
+    schedule(profileId, polled, nextDelay(polled));
+
     if (polled.again) {
       polled.again = false;
-      poll(profileId, polled);
-
-      return;
+      poke(profileId, polled);
     }
-
-    polled.timer = setTimeout(() => {
-      poll(profileId, polled);
-    }, nextDelay(polled));
   };
 
   const start = (profileId: string) => {
@@ -168,11 +190,10 @@ export const createMailPoller = ({
       entries: [],
       failures: 0,
       timer: undefined,
+      dueAt: 0,
+      lastEnded: Number.NEGATIVE_INFINITY,
       inFlight: undefined,
       again: false,
-      poke: debounce(() => {
-        poll(profileId, polled);
-      }, POKE_WAIT),
     };
 
     polls.set(profileId, polled);
@@ -182,7 +203,6 @@ export const createMailPoller = ({
   const stop = (profileId: string, polled: Polled) => {
     polls.delete(profileId);
     clearTimeout(polled.timer);
-    polled.poke.cancel();
     polled.inFlight?.abort(new Error("profile removed"));
   };
 
@@ -208,13 +228,20 @@ export const createMailPoller = ({
         notify();
       }
     },
-    /** Polls soon, gathering a burst into one poll, or once more after the one in flight. */
+    /**
+     * Polls now, or 5 s after the last poll ended, or once more after the one
+     * in flight, so a burst of pokes costs a poll now and at most one more.
+     */
     poke: (profileId: string) => {
-      polls.get(profileId)?.poke();
+      const polled = polls.get(profileId);
+
+      if (polled) {
+        poke(profileId, polled);
+      }
     },
     pokeAll: () => {
-      for (const polled of polls.values()) {
-        polled.poke();
+      for (const [profileId, polled] of polls) {
+        poke(profileId, polled);
       }
     },
     mail: (profileId: string): Mail => {

@@ -5,7 +5,7 @@ import type { FeedOutcome } from "#core/feed.ts";
 import {
   FETCH_TIMEOUT,
   MAX_BACKOFF,
-  POKE_WAIT,
+  POKE_THROTTLE,
   POLL_INTERVAL,
   SIGNED_OUT_INTERVAL,
   createMailPoller,
@@ -163,7 +163,7 @@ describe(createMailPoller, () => {
     });
 
     poller.poke("a");
-    await vi.advanceTimersByTimeAsync(POKE_WAIT);
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
     await answer("a", { kind: "signedOut" });
 
     expect(poller.mail("a")).toStrictEqual({
@@ -243,7 +243,7 @@ describe(createMailPoller, () => {
     expect(fetchesOf("a")).toBe(2);
   });
 
-  it("gathers a burst of pokes into one poll", async () => {
+  it("polls on a poke no sooner than 5 s after the last poll ended, a burst as one", async () => {
     const { poller, answer, fetchesOf } = setup();
 
     poller.reconcile(["a"]);
@@ -255,7 +255,11 @@ describe(createMailPoller, () => {
       await vi.advanceTimersByTimeAsync(100);
     }
 
-    await vi.advanceTimersByTimeAsync(POKE_WAIT);
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE - 501);
+
+    expect(fetchesOf("a")).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1);
 
     expect(fetchesOf("a")).toBe(2);
 
@@ -266,22 +270,53 @@ describe(createMailPoller, () => {
     expect(fetchesOf("a")).toBe(2);
   });
 
+  it("polls at once on a poke long after the last poll", async () => {
+    const { poller, answer, fetchesOf } = setup();
+
+    poller.reconcile(["a"]);
+    await answer("a", feed(1));
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
+    poller.poke("a");
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(fetchesOf("a")).toBe(2);
+  });
+
+  it("costs a poll every 5 s at most while the title keeps changing", async () => {
+    const { poller, answer, fetchesOf } = setup();
+
+    poller.reconcile(["a"]);
+    await answer("a", feed(1));
+
+    for (let tick = 0; tick < 40; tick += 1) {
+      poller.poke("a");
+      // oxlint-disable-next-line no-await-in-loop -- the clock moves in turn
+      await vi.advanceTimersByTimeAsync(500);
+      // oxlint-disable-next-line no-await-in-loop -- each answer in turn
+      await answer("a", feed(1));
+    }
+
+    // 20 s of pokes: the launch poll and one every 5 s.
+    expect(fetchesOf("a")).toBe(5);
+  });
+
   it("never polls a profile twice at once, and polls once more after a poke in flight", async () => {
     const { poller, answer, fetchesOf } = setup();
 
     poller.reconcile(["a"]);
     poller.poke("a");
-    await vi.advanceTimersByTimeAsync(POKE_WAIT);
     poller.poke("a");
-    await vi.advanceTimersByTimeAsync(POKE_WAIT);
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
 
     expect(fetchesOf("a")).toBe(1);
 
     await answer("a", feed(1));
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
 
     expect(fetchesOf("a")).toBe(2);
 
     await answer("a", feed(2));
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
 
     expect(fetchesOf("a")).toBe(2);
     expect(poller.mail("a").unreadCount).toBe(2);
@@ -294,26 +329,39 @@ describe(createMailPoller, () => {
     await answer("a", feed(1));
     await answer("b", feed(1));
     poller.pokeAll();
-    await vi.advanceTimersByTimeAsync(POKE_WAIT);
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
 
     expect([fetchesOf("a"), fetchesOf("b")]).toStrictEqual([2, 2]);
   });
 
-  it("polls nothing while offline, until poked once back online", async () => {
+  it("skips a poll due while offline and polls on the next timer once back, with no poke", async () => {
     const { poller, answer, fetchesOf, goOffline, goOnline } = setup();
 
     poller.reconcile(["a"]);
     await answer("a", feed(1));
     goOffline();
-    await vi.advanceTimersByTimeAsync(POLL_INTERVAL * 10);
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
     poller.poke("a");
-    await vi.advanceTimersByTimeAsync(POKE_WAIT);
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
 
     expect(fetchesOf("a")).toBe(1);
 
     goOnline();
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+    expect(fetchesOf("a")).toBe(2);
+  });
+
+  it("polls at once when poked as the network returns", async () => {
+    const { poller, answer, fetchesOf, goOffline, goOnline } = setup();
+
+    poller.reconcile(["a"]);
+    await answer("a", feed(1));
+    goOffline();
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+    goOnline();
     poller.pokeAll();
-    await vi.advanceTimersByTimeAsync(POKE_WAIT);
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(fetchesOf("a")).toBe(2);
   });
