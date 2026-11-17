@@ -19,6 +19,7 @@ import {
 import type { KeyboardEvent, ReactNode } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
+import { inboxKeyCommand } from "#core/inbox-keys.ts";
 import { dateForm, inboxKey } from "#core/inbox.ts";
 import type { MailAction } from "#core/mail-actions.ts";
 import { Badge } from "#ui/badge.tsx";
@@ -44,15 +45,7 @@ type InboxProfile = InboxState["profiles"][number];
 
 const keyOf = (row: Row) => inboxKey(row.profileId, row.messageId);
 
-/** The keys Gmail gives each action, which the list answers too. */
-const ACTION_KEYS: Record<MailAction, string> = {
-  archive: "e",
-  markAsRead: "I",
-  delete: "#",
-  markAsSpam: "!",
-};
-
-/** The same keys as a person reads them, in a tooltip. */
+/** Each action's key, which `inboxKeyCommand` answers, as a person reads it. */
 const ACTION_KEY_LABELS: Record<MailAction, string> = {
   archive: "E",
   markAsRead: "⇧I",
@@ -75,7 +68,7 @@ const ACTION_ICONS: Record<MailAction, ReactNode> = {
   markAsSpam: <OctagonAlertIcon />,
 };
 
-const ACTIONS = Object.keys(ACTION_KEYS) as MailAction[];
+const ACTIONS = Object.keys(ACTION_KEY_LABELS) as MailAction[];
 
 const useActionLabels = (): Record<MailAction, string> => {
   const { t } = useLingui();
@@ -448,49 +441,27 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
       profileId: selected.profileId,
       messageId: selected.messageId,
     };
-    const action = ACTIONS.find(
-      (candidate) => ACTION_KEYS[candidate] === event.key
-    );
+    const command = inboxKeyCommand(event);
 
-    if (action) {
-      event.preventDefault();
-      shellCalls().runInboxAction({ ...message, action });
-
+    if (!command) {
       return;
     }
 
-    switch (event.key) {
-      case "ArrowDown":
-      case "j": {
-        event.preventDefault();
-        move(selectedIndex + 1);
-        break;
-      }
-      case "ArrowUp":
-      case "k": {
-        event.preventDefault();
-        move(selectedIndex - 1);
-        break;
-      }
-      case "Home": {
-        event.preventDefault();
-        move(0);
-        break;
-      }
-      case "End": {
-        event.preventDefault();
-        move(rows.length - 1);
-        break;
-      }
-      case "Enter":
-      case "o": {
-        event.preventDefault();
-        shellCalls().openInboxMessage(message);
-        break;
-      }
-      default: {
-        break;
-      }
+    event.preventDefault();
+
+    if (command.kind === "action") {
+      shellCalls().runInboxAction({ ...message, action: command.action });
+    } else if (command.kind === "open") {
+      shellCalls().openInboxMessage(message);
+    } else {
+      move(
+        {
+          next: selectedIndex + 1,
+          previous: selectedIndex - 1,
+          first: 0,
+          last: rows.length - 1,
+        }[command.to]
+      );
     }
   };
 
