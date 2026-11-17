@@ -5,6 +5,8 @@ import type { TNode } from "txml/txml";
 export interface FeedEntry {
   /** The `message_id` of the entry's link. */
   id: string;
+  /** Where Gmail shows the message, as the feed gives it; not checked. */
+  link: string;
   subject: string;
   /** A snippet of the message, cut short by Gmail. */
   summary: string;
@@ -64,12 +66,13 @@ const parseEntry = (entry: TNode): FeedEntry | undefined => {
     return;
   }
 
-  if (!id || !senderAddress || Number.isNaN(issued)) {
+  if (!href || !id || !senderAddress || Number.isNaN(issued)) {
     return;
   }
 
   return {
     id,
+    link: href,
     subject: textOf(childNamed(entry, "title")) ?? "",
     summary: textOf(childNamed(entry, "summary")) ?? "",
     senderName: textOf(childNamed(author, "name")) ?? "",

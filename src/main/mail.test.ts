@@ -18,6 +18,7 @@ const feed = (unreadCount: number): FeedOutcome => ({
     entries: [
       {
         id: "m1",
+        link: "https://mail.google.com/mail/u/0?message_id=m1",
         subject: "Hello",
         summary: "",
         senderName: "Ada",

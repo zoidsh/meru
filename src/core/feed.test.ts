@@ -5,6 +5,10 @@ import { feedOutcome, parseFeed } from "./feed.ts";
 const link = (messageId: string) =>
   `<link rel="alternate" href="https://mail.google.com/mail/u/0?account_id=me@example.com&amp;message_id=${messageId}&amp;view=conv&amp;extsrc=atom" type="text/html" />`;
 
+/** The link `link` writes, decoded. */
+const linkOf = (messageId: string) =>
+  `https://mail.google.com/mail/u/0?account_id=me@example.com&message_id=${messageId}&view=conv&extsrc=atom`;
+
 const entry = ({
   id = "19a0000000000001",
   title = "Lunch",
@@ -60,6 +64,7 @@ describe(parseFeed, () => {
       entries: [
         {
           id: "19a0000000000001",
+          link: linkOf("19a0000000000001"),
           subject: "Lunch",
           summary: "Are we still on?",
           senderName: "Ada Lovelace",
@@ -68,6 +73,7 @@ describe(parseFeed, () => {
         },
         {
           id: "19a0000000000002",
+          link: linkOf("19a0000000000002"),
           subject: "Invoice",
           summary: "",
           senderName: "",
