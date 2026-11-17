@@ -1,6 +1,7 @@
 import type { MenuItemConstructorOptions } from "electron";
 import { describe, expect, it } from "vitest";
 
+import type { Platform } from "#core/platform.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
@@ -9,7 +10,7 @@ import {
   createApplicationMenu,
 } from "./application-menu.ts";
 import { commandsFor } from "./commands.ts";
-import type { CommandActions, CommandContext, Platform } from "./commands.ts";
+import type { CommandActions, CommandContext } from "./commands.ts";
 import { createSettingsStore } from "./settings.ts";
 
 const oneProfile: State = {

@@ -1,12 +1,11 @@
 import { t } from "@lingui/core/macro";
 
+import type { Platform } from "#core/platform.ts";
 import type { Design, SettingKey, SettingValue } from "#core/settings.ts";
 import { adjacentProfile, selectedProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { adjacentTab, canCloseTab, findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
-
-export type Platform = "darwin" | "win32" | "linux";
 
 /** What a command decides from: main's state and settings as they are now. */
 export interface CommandContext {

@@ -5,6 +5,7 @@ import type { AppId } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome } from "#core/feed.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
+import type { Platform } from "#core/platform.ts";
 import { profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
@@ -30,7 +31,6 @@ import { createWindowFactory } from "#platform/window.ts";
 
 import { createApplicationMenu } from "./application-menu.ts";
 import { commandsFor } from "./commands.ts";
-import type { Platform } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";

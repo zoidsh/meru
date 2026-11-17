@@ -4,13 +4,9 @@ import { isEqual } from "es-toolkit";
 
 import { matchesAccelerator } from "#core/accelerator.ts";
 import type { KeyInput } from "#core/accelerator.ts";
+import type { Platform } from "#core/platform.ts";
 
-import type {
-  Command,
-  CommandActions,
-  CommandContext,
-  Platform,
-} from "./commands.ts";
+import type { Command, CommandActions, CommandContext } from "./commands.ts";
 
 export interface MenuTemplateInput {
   platform: Platform;
