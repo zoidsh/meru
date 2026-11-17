@@ -65,13 +65,4 @@ describe(planViews, () => {
   it("never gives a tab of an app this build does not know a view", () => {
     expect(keys(planViews(state, ["a/a2"]))).toStrictEqual(["a/a1"]);
   });
-
-  it("keeps the front tab's view, made if it is not yet, hidden while the inbox is open", () => {
-    const covered = planViews(state, [], { inboxOpen: true });
-
-    expect(keys(covered)).toStrictEqual(["a/a1"]);
-    expect(covered.front).toStrictEqual({ profileId: "a", tabId: "a1" });
-    expect(covered.frontShown).toBeFalsy();
-    expect(planViews(state, ["a/a1"]).frontShown).toBeTruthy();
-  });
 });

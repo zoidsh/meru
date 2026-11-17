@@ -106,7 +106,6 @@ export const createTabViews = ({
   const pendingUrls = new Map<string, string>();
   const listeners = new Set<() => void>();
   let front: string | undefined;
-  let frontShown = true;
 
   const place = (view: ContentView) => {
     view.setBounds(
@@ -135,9 +134,16 @@ export const createTabViews = ({
     }
   };
 
+  /**
+   * The one test of whether a view shows: the front tab's, while its page
+   * can, and not under the unified inbox, which leaves its status alone.
+   */
+  const shows = (key: string, tab: TabView) =>
+    key === front && !inboxOpen() && showsView(tab.status);
+
   const showFront = () => {
     for (const [key, tab] of tabs) {
-      tab.view.setVisible(key === front && frontShown && showsView(tab.status));
+      tab.view.setVisible(shows(key, tab));
     }
   };
 
@@ -379,9 +385,7 @@ export const createTabViews = ({
   return {
     /** Creates, closes, shows and hides views until the window matches. */
     reconcile: (current: State) => {
-      const plan = planViews(current, [...tabs.keys()], {
-        inboxOpen: inboxOpen(),
-      });
+      const plan = planViews(current, [...tabs.keys()]);
       const planned = new Map(plan.views.map((key) => [tabKey(key), key]));
       let changed = false;
 
@@ -406,8 +410,6 @@ export const createTabViews = ({
       const nextFront = tabKey(plan.front);
 
       const frontChanged = nextFront !== front;
-
-      ({ frontShown } = plan);
 
       if (frontChanged) {
         front = nextFront;
@@ -444,7 +446,7 @@ export const createTabViews = ({
     focuser: () => {
       const tab = front === undefined ? undefined : tabs.get(front);
 
-      return tab && frontShown && showsView(tab.status)
+      return front !== undefined && tab && shows(front, tab)
         ? tab.view.focus
         : undefined;
     },
