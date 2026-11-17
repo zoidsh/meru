@@ -4,5 +4,5 @@
   "compilerOptions": {
     "lib": ["esnext", "dom"]
   },
-  "include": ["."]
+  "include": [".", "../main/build-constants.d.ts"]
 }

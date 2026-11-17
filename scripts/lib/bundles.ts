@@ -124,6 +124,9 @@ export const appBundles = (target: BuildTarget): BuildOptions[] => {
       input: path.join(repositoryRoot, "src", "preload", "gmail", "index.ts"),
       platform: "browser",
       external: ["electron"],
+      transform: {
+        define: { MERU_E2E_BUILD: JSON.stringify(target === "e2e") },
+      },
       output: {
         file: path.join(outDir(target), GMAIL_PRELOAD),
         format: "cjs",

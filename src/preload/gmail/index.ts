@@ -5,15 +5,13 @@ import type { GmailHealth } from "#contract/gmail-channels.ts";
 import { GMAIL_FEATURES, featureStylesheet } from "#core/gmail-hooks.ts";
 import type { GmailFeature } from "#core/gmail-hooks.ts";
 
-import { checkHealth } from "./health.ts";
+import { RECHECK_MS, checkHealth } from "./health.ts";
 
 // Gmail draws a view some time after it moves to it, so a check waits for it
 // to settle and looks once more before calling a required hook broken.
 const SETTLE_MS = 1000;
-const RECHECK_MS = 3000;
 const MIN_GAP_MS = 2000;
 
-/** Each hide that is on, by the key of the stylesheet it inserted. */
 const inserted = new Map<GmailFeature, string>();
 
 let checking = false;

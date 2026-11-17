@@ -9,6 +9,12 @@ import {
 } from "#core/gmail-hooks.ts";
 import type { HookName, HookStatus, Witness } from "#core/gmail-hooks.ts";
 
+/**
+ * How long a check waits to look again before calling a hook broken. The
+ * suite's build waits 500 ms, so its tests do not spend their time waiting.
+ */
+export const RECHECK_MS = MERU_E2E_BUILD ? 500 : 3000;
+
 export interface HealthPage {
   root: ParentNode;
   hash: string;
