@@ -203,7 +203,7 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
   await expectUntouched(view);
 });
 
-test("refuses the handshake of a document off Gmail's origin in Gmail's view, which then hides nothing", async ({
+test("drops the handshake of a document off Gmail's origin in Gmail's view, which then hides nothing", async ({
   app,
   standIn,
 }) => {
@@ -216,14 +216,13 @@ test("refuses the handshake of a document off Gmail's origin in Gmail's view, wh
   await expect(
     view.getByRole("heading", { name: SIGN_IN_TITLE })
   ).toBeVisible();
-  await expect
-    .poll(() => readRefused(app))
-    .toStrictEqual([new URL(standIn.signInUrl).origin]);
   await expect(parts(view).hideUpgradeButton).toBeVisible();
 
   await setSetting(app, "hideUpgradeButton", false);
   await setSetting(app, "hideUpgradeButton", true);
   await expect(parts(view).hideUpgradeButton).toBeVisible();
+  // A Gmail tab's hop through sign-in is ordinary, so it is dropped silently.
+  expect(await readRefused(app)).toStrictEqual([]);
 });
 
 test("gives Gmail's preload to Gmail's view alone: not to another app's, nor to a window Gmail opens", async ({

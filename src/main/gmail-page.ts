@@ -1,5 +1,3 @@
-import { z } from "zod/mini";
-
 import { GMAIL_CHANNELS, GMAIL_HEALTH_SCHEMA } from "#contract/gmail.ts";
 import type { GmailFeatures, GmailHealth } from "#contract/gmail.ts";
 import { HOOK_NAMES } from "#core/gmail-hooks.ts";
@@ -11,7 +9,7 @@ import type { SenderRegistry } from "./senders.ts";
 
 export interface GmailPageDeps {
   ipc: Pick<Ipc, "on" | "send">;
-  senders: Pick<SenderRegistry, "identify">;
+  senders: Pick<SenderRegistry, "identify" | "onDropped">;
   /** Whether the tab is Gmail's, whose view alone gets Gmail's preload. */
   isGmailTab: (key: TabKey) => boolean;
   /** Gmail's origin, or the suite's stand-in's. */
@@ -84,6 +82,8 @@ export const serveGmailContract = ({
     reports.delete(webContentsId);
   };
 
+  senders.onDropped(forget);
+
   const refuse = (sender: IpcSender, what: string) => {
     log(`Refused Gmail's ${what} from ${describeSender(sender)}`);
     onRefused?.(sender.origin);
@@ -101,11 +101,19 @@ export const serveGmailContract = ({
     if (!key) {
       // The view's next document shakes hands too, so one that left Gmail
       // stops hearing its switches here.
-      if (sender.isMainFrame) {
-        forget(sender.webContentsId);
+      if (!sender.isMainFrame) {
+        refuse(sender, "handshake");
+
+        return;
       }
 
-      refuse(sender, "handshake");
+      forget(sender.webContentsId);
+
+      // A Gmail tab passes through sign-in, single sign-on and error pages on
+      // other origins, which is no attack and no news.
+      if (!gmailTabOf(sender.webContentsId)) {
+        refuse(sender, "handshake");
+      }
 
       return;
     }
@@ -127,9 +135,8 @@ export const serveGmailContract = ({
     const health = GMAIL_HEALTH_SCHEMA.safeParse(payload);
 
     if (!health.success) {
-      log(
-        `Refused a malformed Gmail health report: ${z.prettifyError(health.error)}`
-      );
+      // What the page sent may quote the page, so none of it is logged.
+      log("Refused a malformed Gmail health report");
 
       return;
     }

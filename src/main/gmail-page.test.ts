@@ -107,6 +107,7 @@ const setup = () => {
     logs,
     reports,
     refused,
+    senders,
     dropGmailView,
     shake: (sender: IpcSender) => emit(GMAIL_CHANNELS.sync, sender),
     report: (sender: IpcSender, payload: unknown) =>
@@ -142,9 +143,7 @@ describe(serveGmailContract, () => {
       from(SHELL),
       from(99),
       from(GMAIL_VIEW, { isMainFrame: false }),
-      from(GMAIL_VIEW, { origin: "https://accounts.google.com" }),
-      from(GMAIL_VIEW, { origin: "null" }),
-      from(GMAIL_VIEW, { origin: undefined }),
+      from(CALENDAR_VIEW, { origin: "https://calendar.google.com" }),
     ]) {
       contract.shake(sender);
     }
@@ -156,13 +155,23 @@ describe(serveGmailContract, () => {
       GMAIL_ORIGIN,
       GMAIL_ORIGIN,
       GMAIL_ORIGIN,
-      "https://accounts.google.com",
-      "null",
-      undefined,
+      "https://calendar.google.com",
     ]);
     expect(contract.logs).toContain(
-      "Refused Gmail's handshake from webContents 11 (main frame, https://accounts.google.com)"
+      `Refused Gmail's handshake from webContents ${CALENDAR_VIEW} (main frame, https://calendar.google.com)`
     );
+  });
+
+  it("answers nothing, and says nothing, when a Gmail view's page is on another origin, as sign-in and error pages are", () => {
+    const contract = setup();
+
+    for (const origin of ["https://accounts.google.com", "null", undefined]) {
+      contract.shake(from(GMAIL_VIEW, { origin }));
+    }
+
+    expect(contract.sent).toStrictEqual([]);
+    expect(contract.refused).toStrictEqual([]);
+    expect(contract.logs).toStrictEqual([]);
   });
 
   it("pushes a change of the switches to each page that shook hands", () => {
@@ -196,6 +205,12 @@ describe(serveGmailContract, () => {
 
     contract.shake(from(GMAIL_VIEW));
     contract.dropGmailView();
+    // A later view given the same id has not shaken hands.
+    contract.senders.register(GMAIL_VIEW, {
+      role: "content-view",
+      profileId: "a",
+      tabId: "gmail",
+    });
     contract.page.push();
 
     expect(contract.sent).toHaveLength(1);
@@ -235,5 +250,12 @@ describe(serveGmailContract, () => {
     expect(
       contract.logs.filter((line) => line.startsWith("Refused"))
     ).toHaveLength(5);
+    // Nothing the page sent reaches the log.
+    expect(
+      contract.logs.filter((line) => line.includes("malformed"))
+    ).toStrictEqual([
+      "Refused a malformed Gmail health report",
+      "Refused a malformed Gmail health report",
+    ]);
   });
 });

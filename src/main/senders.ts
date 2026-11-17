@@ -12,6 +12,7 @@ export type SenderIdentity =
  */
 export const createSenderRegistry = () => {
   const identities = new Map<number, SenderIdentity>();
+  const dropListeners = new Set<(webContentsId: number) => void>();
 
   return {
     /** Returns what drops it again. */
@@ -20,9 +21,17 @@ export const createSenderRegistry = () => {
 
       return () => {
         identities.delete(webContentsId);
+
+        for (const listener of dropListeners) {
+          listener(webContentsId);
+        }
       };
     },
     identify: (webContentsId: number) => identities.get(webContentsId),
+    /** Tells the listener of each webContents dropped, by id. */
+    onDropped: (listener: (webContentsId: number) => void) => {
+      dropListeners.add(listener);
+    },
   };
 };
 
