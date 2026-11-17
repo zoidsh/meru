@@ -7,6 +7,16 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#. Accessible name of a profile's tab in the title bar while its inbox has unread mail, read by screen readers: the profile's name, then how many messages are unread
+#: src/shell/app.tsx
+msgid "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
+msgstr "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
+
+#. Shown on a profile's unread badge in the title bar when more messages are unread than the number before the plus
+#: src/shell/app.tsx
+msgid "{MAX_SHOWN_UNREAD}+"
+msgstr "{MAX_SHOWN_UNREAD}+"
+
 #. Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar
 #: src/shell/tab-strip.tsx
 msgid "{name} couldn’t load"

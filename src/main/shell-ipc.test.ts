@@ -36,10 +36,12 @@ const TABS: ShellState["tabs"] = {
   ],
 };
 
+const NO_MAIL = { status: "unknown", unreadCount: null } as const;
+
 const profilesSlice = (selectedProfileId: string) => ({
   profiles: [
-    { id: "a", name: "Default" },
-    { id: "b", name: "Profile 2" },
+    { id: "a", name: "Default", mail: NO_MAIL },
+    { id: "b", name: "Profile 2", mail: NO_MAIL },
   ],
   selectedProfileId,
 });

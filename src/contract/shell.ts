@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import { MAIL_STATUSES } from "#core/feed.ts";
 import { DESIGNS } from "#core/settings.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
@@ -60,7 +61,17 @@ export const SHELL_CALLS = {
 /** The slices of main's state the shell may subscribe to. */
 export const SHELL_STATE = {
   profiles: z.object({
-    profiles: z.array(z.object({ id: profileId, name: z.string() })),
+    profiles: z.array(
+      z.object({
+        id: profileId,
+        name: z.string(),
+        /** What the profile's feed last said; no count until one is read. */
+        mail: z.object({
+          status: z.enum(MAIL_STATUSES),
+          unreadCount: z.nullable(z.int().check(z.nonnegative())),
+        }),
+      })
+    ),
     selectedProfileId: profileId,
   }),
   /** The selected profile's tabs, in the strip's order. */

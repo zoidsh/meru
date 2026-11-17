@@ -4,6 +4,7 @@ import { APPS } from "#core/apps.ts";
 import type { Design } from "#core/settings.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import type { TabKey } from "#core/tabs.ts";
 import type { Size } from "#core/window-bounds.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import type {
@@ -74,6 +75,7 @@ const setup = async ({
   let webContentsIds = 10;
   let ids = 0;
   let fronts = 0;
+  const pageChanges: TabKey[] = [];
 
   const profiles = createProfiles({
     initial: state,
@@ -170,6 +172,9 @@ const setup = async ({
     onFront: () => {
       fronts += 1;
     },
+    onPageChange: (key) => {
+      pageChanges.push(key);
+    },
     log: (message) => logs.push(message),
   });
 
@@ -200,6 +205,7 @@ const setup = async ({
     },
     goOnline: () => online?.(),
     fronts: () => fronts,
+    pageChanges,
     resizeTo: (next: Size) => {
       size = next;
       resize?.();
@@ -503,6 +509,19 @@ describe(createTabViews, () => {
 
     await vi.advanceTimersByTimeAsync(5000);
     expect(window.saves.length - before).toBe(2);
+  });
+
+  it("tells of each load a tab's page finishes and each title it takes, but not an error page's", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+    const key = { profileId: "a", tabId: "gmail" };
+
+    window.emit(gmail, { kind: "loaded" });
+    window.emit(gmail, { kind: "titled", title: "Inbox (2)" });
+    window.emit(gmail, REFUSED);
+    window.emit(gmail, { kind: "titled", title: "mail.google.com" });
+
+    expect(window.pageChanges).toStrictEqual([key, key]);
   });
 
   it("keeps no URL or title of the page shown while a tab failed or crashed", async () => {

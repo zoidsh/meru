@@ -1,9 +1,13 @@
 import path from "node:path";
 
-import { APPS, isAppId, standInApps } from "#core/apps.ts";
+import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
+import { FEED_PATH, feedOutcome } from "#core/feed.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
+import { profilePartition } from "#core/state.ts";
+import type { State } from "#core/state.ts";
+import { findTab } from "#core/tabs.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
@@ -13,6 +17,7 @@ import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
+import { createPower } from "#platform/power.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSessions } from "#platform/sessions.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
@@ -26,6 +31,7 @@ import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
+import { createMailPoller } from "./mail.ts";
 import { createOverlays } from "./overlay.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfiles } from "./profiles.ts";
@@ -283,13 +289,39 @@ const start = async () => {
   shell.window.on("blur", overlays.close);
   shell.window.onContentAreaResize(overlays.relayout);
 
+  const network = createNetwork();
+  const gmail = findApp(apps, "gmail");
+  // The registry's Gmail, or the suite's stand-in for it.
+  const feedUrl = gmail && `${new URL(gmail.home).origin}${FEED_PATH}`;
+  const mail = createMailPoller({
+    fetchFeed: async (profileId, signal) => {
+      if (!feedUrl) {
+        return { kind: "failed", reason: "no Gmail" };
+      }
+
+      return feedOutcome(
+        await sessions.get(profilePartition(profileId), feedUrl, signal)
+      );
+    },
+    isOnline: network.isOnline,
+    log: console.error,
+  });
+  const pollProfiles = (current: State) => {
+    mail.reconcile(current.profiles.map((profile) => profile.id));
+  };
+
+  // A removed profile's polling stops here, before its data is cleared.
+  profiles.onChange(pollProfiles);
+  network.onOnline(mail.pokeAll);
+  createPower().onResume(mail.pokeAll);
+
   const views = createTabViews({
     window: shell.window,
     apps,
     childWindowOrigins,
     background,
     systemBrowser: createSystemBrowser(),
-    network: createNetwork(),
+    network,
     senders,
     state: profiles.get,
     design: () => settings.get("design"),
@@ -311,10 +343,17 @@ const start = async () => {
     onFront: () => {
       focus.focus([{ kind: "front" }]);
     },
+    // Gmail puts the count in its title, so the badge follows the page.
+    onPageChange: (key) => {
+      if (findTab(profiles.get(), key)?.app === "gmail") {
+        mail.poke(key.profileId);
+      }
+    },
     log: console.error,
   });
 
   views.reconcile(profiles.get());
+  pollProfiles(profiles.get());
   profiles.onChange(views.reconcile);
   // After the views, so focus handed back finds the new front tab's.
   profiles.onChange(overlays.follow);
@@ -366,10 +405,12 @@ const start = async () => {
           profiles.get(),
           views.status,
           shellSettings(settings.get, isMacOS),
-          overlays.current()
+          overlays.current(),
+          mail.mail
         ),
       onChange: (listener) => {
         profiles.onChange(listener);
+        mail.onChange(listener);
         views.onChange(listener);
         overlays.onChange(listener);
         settings.onChange("design", listener);

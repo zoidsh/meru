@@ -5,7 +5,13 @@ import type { ShellSyncMessage } from "#contract/shell.ts";
 import { createShellSync } from "./sync.ts";
 
 const slice = (selectedProfileId: string) => ({
-  profiles: [{ id: "a", name: "Default" }],
+  profiles: [
+    {
+      id: "a",
+      name: "Default",
+      mail: { status: "unknown" as const, unreadCount: null },
+    },
+  ],
   selectedProfileId,
 });
 

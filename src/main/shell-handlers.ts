@@ -8,6 +8,7 @@ import { canCloseTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow } from "#platform/window.ts";
 
+import type { Mail } from "./mail.ts";
 import type { Overlays } from "./overlay.ts";
 import {
   profileDisplayName,
@@ -80,7 +81,8 @@ export const shellState = (
   state: State,
   status: (key: TabKey) => TabStatus,
   settings: ShellState["settings"],
-  overlay: Overlay | undefined
+  overlay: Overlay | undefined,
+  mail: (profileId: string) => Mail
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -89,6 +91,7 @@ export const shellState = (
       profiles: state.profiles.map((candidate) => ({
         id: candidate.id,
         name: profileDisplayName(candidate),
+        mail: mail(candidate.id),
       })),
       selectedProfileId: state.selectedProfileId,
     },

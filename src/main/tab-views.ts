@@ -30,7 +30,7 @@ export interface TabViewsDeps {
   childWindowOrigins: readonly string[];
   background: boolean;
   systemBrowser: SystemBrowser;
-  network: Network;
+  network: Pick<Network, "onOnline">;
   senders: Pick<SenderRegistry, "register">;
   /** Reads main's state as it is now. */
   state: () => State;
@@ -55,6 +55,8 @@ export interface TabViewsDeps {
   onMouseDown: () => void;
   /** Told when another tab comes to the front, the first one included. */
   onFront: () => void;
+  /** Told when a tab's page finishes a load or changes its title. */
+  onPageChange: (key: TabKey) => void;
   log: (message: string) => void;
 }
 
@@ -93,6 +95,7 @@ export const createTabViews = ({
   onFocus,
   onMouseDown,
   onFront,
+  onPageChange,
   log,
 }: TabViewsDeps) => {
   const tabs = new Map<string, TabView>();
@@ -233,6 +236,7 @@ export const createTabViews = ({
     switch (event.kind) {
       case "loaded": {
         dispatch(key, { kind: "loaded" });
+        onPageChange(tabKeyed);
         break;
       }
       case "failed-to-load": {
@@ -258,6 +262,7 @@ export const createTabViews = ({
       case "titled": {
         if (showsPage(key)) {
           pages.record({ ...tabKeyed, title: event.title });
+          onPageChange(tabKeyed);
         }
 
         break;

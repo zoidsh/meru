@@ -1,9 +1,11 @@
+import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 
 import { TITLEBAR_HEIGHT, viewFrame } from "#core/layout.ts";
+import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
 import { Tabs, TabsList, TabsTrigger } from "#ui/tabs.tsx";
 
@@ -11,6 +13,8 @@ import { keepInView } from "./keep-in-view.ts";
 import { OverlayLayer } from "./overlay.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TabProblem, TabStrip } from "./tab-strip.tsx";
+
+const MAX_SHOWN_UNREAD = 99;
 
 const Profiles = () => {
   const { t } = useLingui();
@@ -38,27 +42,50 @@ const Profiles = () => {
           data-tab-scroller
           className="h-8 max-w-full [scrollbar-width:none] justify-start overflow-x-auto"
         >
-          {profiles.profiles.map((profile) => (
-            <TabsTrigger
-              key={profile.id}
-              value={profile.id}
-              ref={
-                profile.id === profiles.selectedProfileId
-                  ? keepInView
-                  : undefined
-              }
-              // A long name is cut short, so other profiles stay in reach;
-              // the tooltip has it whole.
-              title={profile.name}
-              className="max-w-40 flex-none px-3 text-xs"
-              onContextMenu={(event) => {
-                event.preventDefault();
-                shellCalls().openProfileMenu({ profileId: profile.id });
-              }}
-            >
-              <span className="truncate">{profile.name}</span>
-            </TabsTrigger>
-          ))}
+          {profiles.profiles.map(({ id, name, mail }) => {
+            const count = mail.unreadCount ?? 0;
+
+            return (
+              <TabsTrigger
+                key={id}
+                value={id}
+                ref={id === profiles.selectedProfileId ? keepInView : undefined}
+                // A long name is cut short, so other profiles stay in reach;
+                // the tooltip has it whole.
+                title={name}
+                aria-label={
+                  count > 0
+                    ? t({
+                        message: plural(count, {
+                          one: `${name}, # unread message`,
+                          other: `${name}, # unread messages`,
+                        }),
+                        comment:
+                          "Accessible name of a profile's tab in the title bar while its inbox has unread mail, read by screen readers: the profile's name, then how many messages are unread",
+                      })
+                    : undefined
+                }
+                className="max-w-40 flex-none px-3 text-xs"
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  shellCalls().openProfileMenu({ profileId: id });
+                }}
+              >
+                <span className="truncate">{name}</span>
+                {count > 0 && (
+                  <Badge aria-hidden className="h-4 px-1.5 tabular-nums">
+                    {count > MAX_SHOWN_UNREAD
+                      ? t({
+                          message: `${MAX_SHOWN_UNREAD}+`,
+                          comment:
+                            "Shown on a profile's unread badge in the title bar when more messages are unread than the number before the plus",
+                        })
+                      : count}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
       </Tabs>
       <Button

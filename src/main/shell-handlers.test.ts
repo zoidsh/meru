@@ -216,8 +216,10 @@ describe(createShellHandlers, () => {
 
 const SHOWN_SETTINGS = { design: "modern", vibrancy: true } as const;
 
+const NO_MAIL = { status: "unknown", unreadCount: null } as const;
+
 describe(shellState, () => {
-  it("gives the shell the profiles with names to show, and nothing else of them", () => {
+  it("gives the shell the profiles with names to show and their mail, and nothing else of them", () => {
     expect(
       shellState(
         {
@@ -229,12 +231,14 @@ describe(shellState, () => {
         },
         () => ({ kind: "live" }),
         SHOWN_SETTINGS,
-        undefined
+        undefined,
+        (profileId) =>
+          profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL
       ).profiles
     ).toStrictEqual({
       profiles: [
-        { id: "a", name: "Default" },
-        { id: "b", name: "Work" },
+        { id: "a", name: "Default", mail: { status: "ok", unreadCount: 4 } },
+        { id: "b", name: "Work", mail: NO_MAIL },
       ],
       selectedProfileId: "a",
     });
@@ -272,7 +276,8 @@ describe(shellState, () => {
         ({ profileId, tabId }) =>
           statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
         SHOWN_SETTINGS,
-        undefined
+        undefined,
+        () => NO_MAIL
       ).tabs
     ).toStrictEqual({
       profileId: "a",
@@ -309,7 +314,13 @@ describe(shellState, () => {
 });
 
 const overlaySlice = (open: Overlay | undefined) =>
-  shellState(two, () => ({ kind: "live" }), SHOWN_SETTINGS, open).overlay;
+  shellState(
+    two,
+    () => ({ kind: "live" }),
+    SHOWN_SETTINGS,
+    open,
+    () => NO_MAIL
+  ).overlay;
 
 describe("the overlay slice", () => {
   it("is none while nothing is open", () => {

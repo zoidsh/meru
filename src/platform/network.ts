@@ -1,6 +1,7 @@
 import { net } from "electron";
 
 export interface Network {
+  isOnline: () => boolean;
   /** Called each time the network comes back. Returns what stops it. */
   onOnline: (listener: () => void) => () => void;
 }
@@ -10,6 +11,7 @@ export interface Network {
 const POLL_INTERVAL = 5000;
 
 export const createNetwork = (): Network => ({
+  isOnline: () => net.isOnline(),
   onOnline: (listener) => {
     let wasOnline = net.isOnline();
     const timer = setInterval(() => {

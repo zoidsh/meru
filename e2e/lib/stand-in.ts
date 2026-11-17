@@ -1,6 +1,6 @@
 import { once } from "node:events";
 import { createServer } from "node:http";
-import type { Server } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
 export const STAND_IN_TITLE = "Gmail stand-in";
@@ -38,10 +38,40 @@ const page = (title: string, links: string) => `<!doctype html>
 
 const ELSEWHERE_LINK = `<a href="${ELSEWHERE_URL}" target="_blank">Another site</a>`;
 
+/** Where Meru reads the unread mail of a Gmail session. */
+export const FEED_PATH = "/mail/u/0/feed/atom";
+
+/** The cookie that tells the feed whose mail to answer with. */
+export const ACCOUNT_COOKIE = "account";
+
+/** What the feed answers an account with: a count, or sign-in. */
+export type FeedAnswer = { unreadCount: number } | { redirect: true };
+
+const feed = (unreadCount: number) => `<?xml version="1.0" encoding="UTF-8"?>
+<feed version="0.3" xmlns="http://purl.org/atom/ns#">
+<title>Gmail - Inbox for stand-in@example.com</title>
+<fullcount>${unreadCount}</fullcount>
+<entry>
+<title>Stand-in &amp; mail</title>
+<summary>Nothing to read</summary>
+<link rel="alternate" href="https://mail.google.com/mail/u/0?account_id=stand-in@example.com&amp;message_id=1&amp;view=conv" type="text/html" />
+<issued>2026-11-17T09:00:00Z</issued>
+<author><name>Stand-in</name><email>stand-in@example.com</email></author>
+</entry>
+</feed>`;
+
+const accountOf = (request: IncomingMessage) =>
+  (request.headers.cookie ?? "")
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${ACCOUNT_COOKIE}=`))
+    ?.slice(ACCOUNT_COOKIE.length + 1);
+
 /** A server on loopback, which can stop answering and answer again on its port. */
 const listen = async (
   pages: (origins: Origins) => Record<string, string>,
-  origins: () => Origins
+  origins: () => Origins,
+  /** Answers a request itself, outside `requests`, when it returns true. */
+  answers?: (request: IncomingMessage, response: ServerResponse) => boolean
 ) => {
   const requests: { path: string; cookie: string }[] = [];
   let server: Server | undefined;
@@ -49,6 +79,10 @@ const listen = async (
 
   const start = async () => {
     const next = createServer((request, response) => {
+      if (answers?.(request, response)) {
+        return;
+      }
+
       const body = pages(origins())[request.url ?? ""];
 
       if (body === undefined) {
@@ -117,6 +151,11 @@ export interface StandIn {
   popupCookieHeaders: string[];
   /** Where that pop-up is. */
   popupUrl: string;
+  /**
+   * Has the Gmail stand-in's feed answer the session whose `account` cookie
+   * is `account` this way; one it has not been told of is sent to sign-in.
+   */
+  setFeed: (account: string, answer: FeedAnswer) => void;
   /** How many times each app's stand-in page was asked for. */
   requests: () => { gmail: number; calendar: number; drive: number };
   /** Refuses connections to the Gmail stand-in until it answers again. */
@@ -137,6 +176,26 @@ export interface StandIn {
 export const startStandIn = async (): Promise<StandIn> => {
   let origins: Origins = { gmail: "", calendar: "", drive: "", signIn: "" };
   const current = () => origins;
+  const feeds = new Map<string, FeedAnswer>();
+  const answerFeed = (request: IncomingMessage, response: ServerResponse) => {
+    if (request.url !== FEED_PATH) {
+      return false;
+    }
+
+    const answer = feeds.get(accountOf(request) ?? "") ?? { redirect: true };
+
+    if ("redirect" in answer) {
+      response.writeHead(302, { Location: `${origins.signIn}signin` }).end();
+    } else {
+      response
+        .writeHead(200, {
+          "Content-Type": "application/atom+xml; charset=utf-8",
+        })
+        .end(feed(answer.unreadCount));
+    }
+
+    return true;
+  };
   const gmail = await listen(
     (links) => ({
       "/": page(
@@ -148,7 +207,8 @@ export const startStandIn = async (): Promise<StandIn> => {
     <textarea aria-label="${DRAFT_LABEL}"></textarea>`
       ),
     }),
-    current
+    current,
+    answerFeed
   );
   const calendar = await listen((links) => {
     const body = page(
@@ -188,6 +248,9 @@ export const startStandIn = async (): Promise<StandIn> => {
     },
     get popupCookieHeaders() {
       return signIn.requests.map((request) => request.cookie);
+    },
+    setFeed: (account, answer) => {
+      feeds.set(account, answer);
     },
     requests: () => ({
       gmail: gmail.requests.length,
