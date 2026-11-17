@@ -80,7 +80,7 @@ export const createMailPoller = ({
   const polls = new Map<string, Polled>();
   const listeners = new Set<() => void>();
   const pollListeners = new Set<
-    (profileId: string, outcome: FeedOutcome) => void
+    (profileId: string, outcome: FeedOutcome, startedAt: number) => void
   >();
 
   const notify = () => {
@@ -89,7 +89,12 @@ export const createMailPoller = ({
     }
   };
 
-  const settle = (profileId: string, polled: Polled, outcome: FeedOutcome) => {
+  const settle = (
+    profileId: string,
+    polled: Polled,
+    outcome: FeedOutcome,
+    startedAt: number
+  ) => {
     const before: Mail = {
       status: polled.status,
       unreadCount: polled.unreadCount,
@@ -118,7 +123,7 @@ export const createMailPoller = ({
     }
 
     for (const listener of pollListeners) {
-      listener(profileId, outcome);
+      listener(profileId, outcome, startedAt);
     }
 
     if (
@@ -167,6 +172,7 @@ export const createMailPoller = ({
     }
 
     const controller = new AbortController();
+    const startedAt = Date.now();
     const timeout = setTimeout(() => {
       controller.abort(new Error("timed out"));
     }, FETCH_TIMEOUT);
@@ -189,7 +195,7 @@ export const createMailPoller = ({
       return;
     }
 
-    settle(profileId, polled, outcome);
+    settle(profileId, polled, outcome, startedAt);
 
     schedule(profileId, polled, nextDelay(polled));
 
@@ -295,8 +301,17 @@ export const createMailPoller = ({
     onChange: (listener: () => void) => {
       listeners.add(listener);
     },
-    /** Called as each poll of a listed profile ends, with what it read. */
-    onPoll: (listener: (profileId: string, outcome: FeedOutcome) => void) => {
+    /**
+     * Called as each poll of a listed profile ends, with what it read and
+     * when, in milliseconds since the epoch, its request started.
+     */
+    onPoll: (
+      listener: (
+        profileId: string,
+        outcome: FeedOutcome,
+        startedAt: number
+      ) => void
+    ) => {
       pollListeners.add(listener);
     },
   };

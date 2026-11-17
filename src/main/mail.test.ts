@@ -409,6 +409,19 @@ describe(createMailPoller, () => {
     ]);
   });
 
+  it("tells when each poll's request started, not when it ended", async () => {
+    const { poller, answer } = setup();
+    const started: number[] = [];
+    const before = Date.now();
+
+    poller.onPoll((_profileId, _outcome, startedAt) => started.push(startedAt));
+    poller.reconcile(["a"]);
+    await vi.advanceTimersByTimeAsync(1000);
+    await answer("a", feed(1));
+
+    expect(started).toStrictEqual([before]);
+  });
+
   it("logs the status and count, never what a message says", async () => {
     const { poller, answer, logs } = setup();
 
