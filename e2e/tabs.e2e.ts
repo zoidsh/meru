@@ -116,6 +116,24 @@ test("a link opens a tab of its app in the same session, selected; a link to Gma
   await tab(shell, STAND_IN_TITLE).press("Delete");
   await expect(tabs(shell)).toHaveCount(2);
 
+  // A second Calendar tab widens the sidebar; closing it narrows it again,
+  // and focus stays in the list, on the tab before it.
+  await openFrom(gmail, "Open Calendar");
+  await expect(tabs(shell)).toHaveText([
+    STAND_IN_TITLE,
+    CALENDAR_TITLE,
+    CALENDAR_TITLE,
+  ]);
+  await expect(
+    shell.getByRole("button", { name: "Narrow sidebar" })
+  ).toBeAttached();
+  await tabs(shell).nth(2).press("Delete");
+  await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, CALENDAR_TITLE]);
+  await expect(
+    shell.getByRole("button", { name: "Widen sidebar" })
+  ).toBeAttached();
+  await expect(tab(shell, CALENDAR_TITLE)).toBeFocused();
+
   await tab(shell, CALENDAR_TITLE).press("Delete");
 
   // One tab left hides the sidebar, and its list with it.
@@ -236,11 +254,34 @@ test("the strip scrolls to keep the selected tab in view, and its arrow keys go 
   await expect(gmail).toBeInViewport();
 });
 
+/** Gmail, selected, and a Calendar tab, so the sidebar shows. */
+const seedTwoTabs = (
+  userDataDir: string,
+  gmailUrl: string,
+  calendarUrl: string
+) =>
+  writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: gmailUrl, title: "" },
+          { id: "c", app: "calendar", url: calendarUrl, title: CALENDAR_TITLE },
+        ],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
 test("a tab that cannot load at launch says so in the shell, and loads by itself once its server answers", async ({
   launchApp,
   standIn,
+  userDataDir,
 }) => {
   await standIn.refuse();
+  await seedTwoTabs(userDataDir, standIn.url, standIn.calendarUrl);
 
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
@@ -253,14 +294,21 @@ test("a tab that cannot load at launch says so in the shell, and loads by itself
 
   await expect(problem).toBeHidden({ timeout: 15_000 });
   await findPage(app, standIn.url);
+  await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, CALENDAR_TITLE]);
 });
 
 test("a tab whose renderer is killed says it stopped working, and reloads on the control", async ({
-  app,
-  shell,
+  launchApp,
   standIn,
+  userDataDir,
 }) => {
+  await seedTwoTabs(userDataDir, standIn.url, standIn.calendarUrl);
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+
   await findPage(app, standIn.url);
+  await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, CALENDAR_TITLE]);
 
   await app.evaluate(({ webContents }, url) => {
     webContents
