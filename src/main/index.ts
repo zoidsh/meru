@@ -367,13 +367,22 @@ const start = async () => {
       hasSubtitle: isMacOS,
       inbox: gmail.home,
       open: async (profileId, url) => {
+        await views.open(profileId, gmail, url);
+
         try {
-          await views.open(profileId, gmail, url);
           await profiles.select(profileId);
         } catch (error) {
           console.error(
-            `A notification's message did not open: ${String(error)}`
+            `A notification's profile was not selected: ${String(error)}`
           );
+
+          return;
+        }
+
+        if (
+          !profiles.get().profiles.some((profile) => profile.id === profileId)
+        ) {
+          return;
         }
 
         // The one place main takes the foreground, since the person asked
