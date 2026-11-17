@@ -27,10 +27,16 @@ export interface ContentViewOptions {
   preload?: string;
   /**
    * Answers each window the page asks to open, and each one a window it opened
-   * asks for in turn. An allowed one opens in the session as a child of the
-   * view's window, so it closes with it.
+   * asks for in turn. An allowed one opens in the session as a window of its
+   * own, never attached to the view's, so hiding that leaves it; it closes
+   * with the view.
    */
   onWindowOpen: (url: string) => "allow" | "deny";
+  /**
+   * Answers each place a window the page opened is about to go, its first
+   * load and redirects included; a refused one stays where it was.
+   */
+  onChildNavigation: (url: string) => "allow" | "deny";
   /** Child windows show without activating the app, as the shell window does. */
   background: boolean;
   /**
@@ -93,19 +99,35 @@ const showInactiveOnceReady = (window: BrowserWindow) => {
   window.webContents.once("did-finish-load", show);
 };
 
+const guardNavigation = (
+  webContents: WebContents,
+  onChildNavigation: ContentViewOptions["onChildNavigation"]
+) => {
+  webContents.on("will-navigate", (event) => {
+    if (onChildNavigation(event.url) === "deny") {
+      event.preventDefault();
+    }
+  });
+  webContents.on("will-redirect", (event) => {
+    if (event.isMainFrame && onChildNavigation(event.url) === "deny") {
+      event.preventDefault();
+    }
+  });
+};
+
 const routeWindowOpens = (
   webContents: WebContents,
-  parent: BrowserWindow,
   options: ContentViewOptions,
   children: Set<BrowserWindow>
 ) => {
-  const { onWindowOpen, background, onWebContents } = options;
+  const { onWindowOpen, onChildNavigation, background, onWebContents } =
+    options;
 
   webContents.setWindowOpenHandler(({ url }) =>
     onWindowOpen(url) === "allow"
       ? {
           action: "allow",
-          overrideBrowserWindowOptions: { parent, show: !background },
+          overrideBrowserWindowOptions: { show: !background },
         }
       : { action: "deny" }
   );
@@ -113,12 +135,13 @@ const routeWindowOpens = (
     children.add(child);
     child.once("closed", () => children.delete(child));
     trackDestroyed(child.webContents, "child-window", onWebContents);
+    guardNavigation(child.webContents, onChildNavigation);
 
     if (background) {
       showInactiveOnceReady(child);
     }
 
-    routeWindowOpens(child.webContents, parent, options, children);
+    routeWindowOpens(child.webContents, options, children);
   });
 };
 
@@ -195,7 +218,7 @@ export const addContentView = (
     }
   });
   reportEvents(webContents, options.onEvent);
-  routeWindowOpens(webContents, window, options, children);
+  routeWindowOpens(webContents, options, children);
   window.contentView.addChildView(view);
 
   const close = () => {

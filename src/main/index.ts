@@ -122,9 +122,7 @@ const standIns = MERU_E2E_BUILD
   ? readStandIns(process.env.MERU_TEST_APP_URLS)
   : undefined;
 const apps = standIns ? standInApps(standIns.urls) : APPS;
-const childWindowOrigins = standIns?.signIn
-  ? [standIns.signIn]
-  : SIGN_IN_ORIGINS;
+const signInOrigins = standIns?.signIn ? [standIns.signIn] : SIGN_IN_ORIGINS;
 
 /** v3's account id, so a profile id is the account id v3 would have made. */
 const newId = () => crypto.randomUUID();
@@ -411,7 +409,7 @@ const start = async () => {
   const views = createTabViews({
     window: shell.window,
     apps,
-    childWindowOrigins,
+    signInOrigins,
     background,
     systemBrowser: createSystemBrowser(),
     network,
@@ -422,6 +420,11 @@ const start = async () => {
     inboxOpen: () => inbox.isOpen(),
     openTab: profiles.openTab,
     newId,
+    addProfile: async () => {
+      await profiles.add();
+      // oxlint-disable-next-line no-use-before-define -- as the shell's Add Profile, adding closes the inbox
+      inbox.setOpen(false);
+    },
     // No key reaches a view before the menu below exists, as nothing between
     // them awaits.
     // oxlint-disable-next-line no-use-before-define -- the menu runs the views' commands

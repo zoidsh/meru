@@ -10,7 +10,8 @@ import type { TabEffect, TabEvent, TabStatus } from "#core/tab-machine.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
 import { planViews } from "#core/views.ts";
-import { routeWindowOpen } from "#core/window-open.ts";
+import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
+import type { WindowOpenRoute } from "#core/window-open.ts";
 import type { ContentView, ContentViewEvent } from "#platform/content-view.ts";
 import type { Network } from "#platform/network.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
@@ -26,8 +27,8 @@ export interface TabViewsDeps {
   >;
   /** The registry, or the suite's stand-ins for it. */
   apps: readonly App[];
-  /** Origins whose pop-ups open as child windows in the session. */
-  childWindowOrigins: readonly string[];
+  /** Google's sign-in, or the suite's stand-in for it. */
+  signInOrigins: readonly string[];
   background: boolean;
   systemBrowser: SystemBrowser;
   network: Pick<Network, "onOnline">;
@@ -46,6 +47,8 @@ export interface TabViewsDeps {
     tabId: string
   ) => Promise<OpenedTab | undefined>;
   newId: () => string;
+  /** Answers Google's "Add another account". */
+  addProfile: () => Promise<unknown>;
   /** Runs the shortcut a key in a page is, if it is one. */
   handleKey: (input: KeyInput) => boolean;
   /** The preload an app's view gets, if any. */
@@ -84,7 +87,7 @@ interface TabView {
 export const createTabViews = ({
   window,
   apps,
-  childWindowOrigins,
+  signInOrigins,
   background,
   systemBrowser,
   network,
@@ -94,6 +97,7 @@ export const createTabViews = ({
   inboxOpen,
   openTab,
   newId,
+  addProfile,
   handleKey,
   preloadFor,
   prepareSession,
@@ -326,30 +330,74 @@ export const createTabViews = ({
     }
   };
 
+  const addProfileFromPage = async () => {
+    try {
+      await addProfile();
+    } catch (error) {
+      log(`Adding a profile for a new account failed: ${describe(error)}`);
+    }
+  };
+
+  const follow = (route: WindowOpenRoute, url: string, profileId: string) => {
+    switch (route.kind) {
+      case "system-browser": {
+        openInSystemBrowser(route.url);
+        break;
+      }
+      case "tab": {
+        openAsTab(profileId, route.app, url);
+        break;
+      }
+      case "add-profile": {
+        addProfileFromPage();
+        break;
+      }
+      case "deny": {
+        log("Refused a window a page asked for");
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  };
+
   const create = (key: string, tabKeyed: TabKey) => {
     const partition = profilePartition(tabKeyed.profileId);
 
     prepareSession(partition);
 
     const preload = preloadFor(findTab(state(), tabKeyed)?.app ?? "");
+    const opening = () => ({
+      signInOrigins,
+      apps,
+      openerApp: findTab(state(), tabKeyed)?.app ?? "",
+    });
     const view = window.addContentView({
       partition,
       ...(preload !== undefined && { preload }),
       background,
       onWindowOpen: (url) => {
-        const route = routeWindowOpen(url, {
-          childWindowOrigins,
-          apps,
-          openerApp: findTab(state(), tabKeyed)?.app ?? "",
-        });
+        const route = routeWindowOpen(url, opening());
 
-        if (route.kind === "system-browser") {
-          openInSystemBrowser(url);
-        } else if (route.kind === "tab") {
-          openAsTab(tabKeyed.profileId, route.app, url);
-        }
+        follow(route, url, tabKeyed.profileId);
 
         return route.kind === "child-window" ? "allow" : "deny";
+      },
+      onChildNavigation: (url) => {
+        if (allowsChildNavigation(url, opening())) {
+          return "allow";
+        }
+
+        const route = routeWindowOpen(url, opening());
+
+        log("Kept a window a page opened from leaving its app");
+
+        if (route.kind !== "child-window" && route.kind !== "deny") {
+          follow(route, url, tabKeyed.profileId);
+        }
+
+        return "deny";
       },
       onWebContents: (webContentsId, role) =>
         senders.register(webContentsId, { role, ...tabKeyed }),

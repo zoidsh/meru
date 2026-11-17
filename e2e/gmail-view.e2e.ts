@@ -118,7 +118,7 @@ const stubSystemBrowser = (app: ElectronApplication) =>
 const readOpenedExternally = (app: ElectronApplication) =>
   app.evaluate(() => Reflect.get(globalThis, "openedExternally") as string[]);
 
-test("hands a link to another site to the system browser, and opens a sign-in pop-up as a child of the shell window in the same session", async ({
+test("hands a link to another site to the system browser, and opens a sign-in pop-up as a window of its own in the same session", async ({
   app,
   standIn,
 }) => {
@@ -154,10 +154,7 @@ test("hands a link to another site to the system browser, and opens a sign-in po
         visible: child?.isVisible(),
       };
     }, standIn.popupUrl)
-  ).toStrictEqual({
-    parent: expect.stringMatching(/^meru-app:/u),
-    visible: true,
-  });
+  ).toStrictEqual({ parent: "", visible: true });
 
   await popup.getByRole("link", { name: "Another site" }).click();
 

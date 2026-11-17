@@ -76,6 +76,7 @@ const setup = async ({
   let ids = 0;
   let fronts = 0;
   let inboxOpen = false;
+  let profilesAdded = 0;
   const pageChanges: TabKey[] = [];
 
   const profiles = createProfiles({
@@ -139,7 +140,7 @@ const setup = async ({
       },
     },
     apps: APPS,
-    childWindowOrigins: SIGN_IN_ORIGINS,
+    signInOrigins: SIGN_IN_ORIGINS,
     background: true,
     systemBrowser: {
       open: (url) => {
@@ -164,6 +165,11 @@ const setup = async ({
       ids += 1;
 
       return `new-${ids}`;
+    },
+    addProfile: () => {
+      profilesAdded += 1;
+
+      return Promise.resolve();
     },
     handleKey: () => false,
     preloadFor: (app) =>
@@ -210,6 +216,7 @@ const setup = async ({
     },
     goOnline: () => online?.(),
     fronts: () => fronts,
+    profilesAdded: () => profilesAdded,
     pageChanges,
     resizeTo: (next: Size) => {
       size = next;
@@ -458,13 +465,24 @@ describe(createTabViews, () => {
     expect(window.opened).toStrictEqual([]);
   });
 
-  it("sends Gmail's tab to a Gmail link another tab opens, and refuses Gmail's own pop-outs", async () => {
+  it("lets Gmail's own pop-outs open as windows", async () => {
+    const window = await setup();
+    const { onWindowOpen } = window.viewOf("persist:a")?.options ?? {};
+
+    expect(
+      [`${GMAIL}/popout?ver=1`, `${GMAIL}/?view=lg`].map((url) =>
+        onWindowOpen?.(url)
+      )
+    ).toStrictEqual(["allow", "allow"]);
+    expect(window.opened).toStrictEqual([]);
+  });
+
+  it("sends Gmail's tab to a Gmail link another tab opens", async () => {
     const window = await setup();
     const gmail = window.viewOf("persist:a");
     const link = `${GMAIL}/#inbox/abc`;
 
     window.emit(gmail, { kind: "loaded" });
-    expect(gmail?.options.onWindowOpen(`${GMAIL}/?view=cm`)).toBe("deny");
     await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
 
     const calendar = window.viewOf("persist:a", 1);
@@ -501,10 +519,61 @@ describe(createTabViews, () => {
     const window = await setup();
     const { onWindowOpen } = window.views[0]?.options ?? {};
 
-    expect(onWindowOpen?.("https://accounts.google.com/signin")).toBe("allow");
-    expect(onWindowOpen?.("https://example.com/")).toBe("deny");
-    expect(onWindowOpen?.("file:///etc/passwd")).toBe("deny");
-    expect(window.opened).toStrictEqual(["https://example.com/"]);
+    expect(
+      [
+        "https://accounts.google.com/signin",
+        "https://example.com/",
+        "https://www.google.com/url?q=https://example.com/a",
+        "file:///etc/passwd",
+      ].map((url) => onWindowOpen?.(url))
+    ).toStrictEqual(["allow", "deny", "deny", "deny"]);
+    expect(window.opened).toStrictEqual([
+      "https://example.com/",
+      "https://example.com/a",
+    ]);
+    expect(window.logs).toStrictEqual(["Refused a window a page asked for"]);
+  });
+
+  it("answers adding a Google account with a new profile, opening no window", async () => {
+    const window = await setup();
+    const { onWindowOpen } = window.views[0]?.options ?? {};
+
+    expect(
+      onWindowOpen?.("https://accounts.google.com/AddSession?continue=x")
+    ).toBe("deny");
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(window.profilesAdded()).toBe(1);
+    expect(window.opened).toStrictEqual([]);
+  });
+
+  it("keeps a window a page opened on its app and sign-in, routing anywhere else as a link", async () => {
+    const window = await setup();
+    const { onChildNavigation } = window.views[0]?.options ?? {};
+
+    expect(
+      [
+        `${GMAIL}/popout?ver=1`,
+        "https://accounts.google.com/signin",
+        "https://example.com/",
+        "https://www.google.com/url?q=https://example.com/b",
+        `${"javascript"}:alert(1)`,
+        "https://drive.google.com/file/d/1",
+      ].map((url) => onChildNavigation?.(url))
+    ).toStrictEqual(["allow", "allow", "deny", "deny", "deny", "deny"]);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(window.opened).toStrictEqual([
+      "https://example.com/",
+      "https://example.com/b",
+    ]);
+    expect(window.profiles.get().profiles[0]?.selectedTabId).toBe("new-1");
+    expect(window.logs).toStrictEqual(
+      Array.from(
+        { length: 4 },
+        () => "Kept a window a page opened from leaving its app"
+      )
+    );
   });
 
   it("closes a closed tab's view and drops its pending retry", async () => {

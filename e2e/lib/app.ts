@@ -170,12 +170,12 @@ export const findPage = async (app: ElectronApplication, prefix: string) => {
  */
 export const readViews = (app: ElectronApplication) =>
   app.evaluate(({ BrowserWindow }) => {
-    const window = BrowserWindow.getAllWindows().find(
-      (candidate) => !candidate.getParentWindow()
+    const window = BrowserWindow.getAllWindows().find((candidate) =>
+      candidate.webContents.getURL().startsWith("meru-app:")
     );
 
     if (!window) {
-      throw new Error("The app has no window");
+      throw new Error("The app has no shell window");
     }
 
     const { width, height } = window.contentView.getBounds();
