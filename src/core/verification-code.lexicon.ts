@@ -27,16 +27,23 @@ const entry = (source: string, anchor: Anchor = "word"): LexiconEntry => ({
 /**
  * Words that name a one-time code. A PIN on its own is a standing one (a
  * card's, a door's, a meeting's), so only a one-time or sign-in PIN counts.
+ * `kod`, `kode` and `koodi` are anchored at each end in turn, for suffixed
+ * forms ("kodunuz", "kódu") and compounds ("verifieringskod", "engangskode",
+ * "vahvistuskoodi") alike. A TAN is a bank's one-time code.
  */
 export const CODE_WORDS: readonly LexiconEntry[] = [
   entry("code", "end"),
-  entry("kod", "start"),
+  entry("k[oó]d", "start"),
+  entry("k[oó]de?", "end"),
   entry("c[oó]digo"),
   entry("codice"),
-  entry("koodi"),
+  entry("koodi", "start"),
+  entry("koodi", "end"),
   entry("mã"),
   entry("otp"),
+  entry("(?:m|sms|push|chip|photo|app)?tan"),
   entry(String.raw`one[-\s]?time\s?password`),
+  entry("ワンタイムパスワード", "none"),
   entry("passcode"),
   entry(
     String.raw`(?:one[-\s]?time|verification|log[-\s]?in|sign[-\s]?in)\s+pin`
@@ -98,11 +105,28 @@ export const DELIVERY_WORDS: readonly LexiconEntry[] = [
   entry("liefer", "start"),
   entry("zustell", "start"),
   entry("livrais", "start"),
+  entry("colis"),
+  entry("retrait"),
+  entry("relais"),
   entry("entrega", "start"),
+  entry("paquete", "start"),
+  entry("recogida", "start"),
   entry("consegna", "start"),
+  entry("pacc[oh]i?"),
+  entry("ritiro"),
+  entry("spedizion", "start"),
+  entry("pacote", "start"),
   entry("dostaw", "start"),
+  entry("paczk", "start"),
+  entry("paczkomat", "start"),
+  entry("odbi[oó]r", "start"),
+  entry("pakket", "start"),
+  entry("af(?:haal|halen)", "start"),
+  entry("op(?:haal|halen)", "start"),
   entry("teslim", "start"),
   entry("доставк", "none"),
+  entry("выдач", "start"),
+  entry("получени", "start"),
   entry("配送|配達", "none"),
   entry("快递|快遞", "none"),
   entry("배송", "none"),
@@ -150,21 +174,24 @@ export const ORDER_WORDS: readonly LexiconEntry[] = [
 
 /**
  * Words of codes that stand rather than expire: a meeting's passcode, a
- * class's join code, a door's or a gate's. They are typed at a keypad or a
- * phone, or kept, never pasted once into a sign-in.
+ * class's join code, a door's or a gate's, a club's or a gym's check-in. They
+ * are typed at a keypad or a phone, or kept, never pasted once into a sign-in.
  */
 export const STANDING_WORDS: readonly LexiconEntry[] = [
   entry("meeting", "start"),
   entry("invitation"),
   entry("webinar"),
   entry(String.raw`dial[-\s]?in`),
-  entry("conference"),
+  entry("conferences?"),
   entry(String.raw`zoom\.us`),
   entry("class(?:room)?"),
   entry("door"),
   entry("gate"),
   entry("garage"),
   entry("keypad"),
+  entry("club"),
+  entry("gym"),
+  entry(String.raw`check[-\s]?in`),
 ];
 
 /**
@@ -203,6 +230,12 @@ export const OTHER_KINDS_BEFORE: readonly string[] = [
   "abhol",
   "liefer",
   "paket",
+  "afhaal",
+  "ophaal",
+  "pakket",
+  String.raw`check[\s-]?in`,
+  "club",
+  "gym",
   "rabatt",
   "gutschein",
   "werbe",
@@ -247,6 +280,17 @@ export const OTHER_KINDS_AFTER: readonly string[] = [
   "rastreamento",
   "seguimiento",
   "suivi",
+  "retrait",
+  "livraison",
+  "recogida",
+  "entrega",
+  "ritiro",
+  "consegna",
+  "retirada",
+  String.raw`odbi[oó]r\p{L}*`,
+  String.raw`получени\p{L}*`,
+  String.raw`выдач\p{L}*`,
+  String.raw`доставк\p{L}*`,
   String.raw`zam[oó]wieni\p{L}*`,
   "pedido",
   "commande",

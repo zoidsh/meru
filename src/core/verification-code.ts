@@ -95,7 +95,7 @@ const OTHER_KIND_BEFORE = new RegExp(
   "iu"
 );
 const OTHER_KIND_AFTER = new RegExp(
-  String.raw`^[\s:]*(?:(?:de la|de|del|du|des|di|della|do|da|of)\s+)?(?:${anyOf(
+  String.raw`^[\s:]*(?:(?:de la|de|del|du|des|di|della|do|da|of|для)\s+)?(?:${anyOf(
     OTHER_KINDS_AFTER
   )})${NOT_AFTER}`,
   "iu"
