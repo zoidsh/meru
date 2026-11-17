@@ -6,6 +6,7 @@ import { isEqual } from "es-toolkit";
 
 import type { ShellBridge } from "#contract/shell.ts";
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
+import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import { expect, findPage, test } from "./lib/app.ts";
 import { STAND_IN_COOKIE, STAND_IN_TITLE } from "./lib/stand-in.ts";
@@ -445,4 +446,60 @@ test("at a narrow width with many profiles, the selected tab stays in view and t
   expect(
     (banner?.width ?? 0) - ((addBox?.x ?? 0) + (addBox?.width ?? 0))
   ).toBeGreaterThanOrEqual(64);
+});
+
+test("a name of the longest length is cut short in its tab, whole in its tooltip, and leaves the other profiles in reach at the minimum width", async ({
+  app,
+  shell,
+  standIn,
+}) => {
+  await findPage(app, standIn.url);
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
+  });
+
+  const add = shell.getByRole("button", { name: "Add profile" });
+
+  await add.click();
+  await expect(profileTabs(shell)).toHaveCount(2);
+  await add.click();
+  await expect(profileTabs(shell)).toHaveCount(3);
+
+  const longest = "W".repeat(PROFILE_NAME_MAX_LENGTH);
+  const overlay = await findPage(app, "about:blank");
+
+  await app.evaluate(({ Menu, BrowserWindow }) => {
+    Menu.getApplicationMenu()
+      ?.getMenuItemById("profile.rename")
+      ?.click(undefined, BrowserWindow.getAllWindows()[0]);
+  });
+  await overlay.getByRole("textbox", { name: "Rename profile" }).fill(longest);
+  await overlay.keyboard.press("Enter");
+
+  const long = shell.getByRole("tab", { name: longest });
+
+  await expect(long).toHaveAttribute("title", longest);
+
+  const [list, banner, longBox, addBox, ...others] = await Promise.all([
+    shell.getByRole("tablist", { name: "Profiles" }).boundingBox(),
+    shell.getByRole("banner", { name: "Title bar" }).boundingBox(),
+    long.boundingBox(),
+    add.boundingBox(),
+    shell.getByRole("tab", { name: "Default" }).boundingBox(),
+    shell.getByRole("tab", { name: "Profile 2" }).boundingBox(),
+  ]);
+
+  expect(longBox?.width).toBeLessThanOrEqual(160);
+
+  // Every other tab shows whole, with no scrolling, and so does Add.
+  for (const box of others) {
+    expect(box?.x).toBeGreaterThanOrEqual((list?.x ?? 0) - 0.5);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(
+      (list?.x ?? 0) + (list?.width ?? 0) + 0.5
+    );
+  }
+
+  expect((addBox?.x ?? 0) + (addBox?.width ?? 0)).toBeLessThanOrEqual(
+    banner?.width ?? 0
+  );
 });

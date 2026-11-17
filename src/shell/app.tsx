@@ -47,13 +47,16 @@ const Profiles = () => {
                   ? keepInView
                   : undefined
               }
-              className="flex-none px-3 text-xs"
+              // A long name is cut short, so other profiles stay in reach;
+              // the tooltip has it whole.
+              title={profile.name}
+              className="max-w-40 flex-none px-3 text-xs"
               onContextMenu={(event) => {
                 event.preventDefault();
                 shellCalls().openProfileMenu({ profileId: profile.id });
               }}
             >
-              {profile.name}
+              <span className="truncate">{profile.name}</span>
             </TabsTrigger>
           ))}
         </TabsList>
