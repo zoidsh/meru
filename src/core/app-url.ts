@@ -27,15 +27,13 @@ export const resolveAppFile = (
   scheme: string,
   hosts: readonly string[]
 ): AppFile | undefined => {
-  let parsed: URL;
+  const parsed = URL.parse(url);
 
-  try {
-    parsed = new URL(url);
-  } catch {
-    return;
-  }
-
-  if (parsed.protocol !== `${scheme}:` || !hosts.includes(parsed.host)) {
+  if (
+    !parsed ||
+    parsed.protocol !== `${scheme}:` ||
+    !hosts.includes(parsed.host)
+  ) {
     return;
   }
 
@@ -72,12 +70,8 @@ export const resolveAppFile = (
  * outside a browser it is `"null"` for every scheme it does not know.
  */
 export const isSameSite = (url: string, other: string) => {
-  try {
-    const a = new URL(url);
-    const b = new URL(other);
+  const a = URL.parse(url);
+  const b = URL.parse(other);
 
-    return a.protocol === b.protocol && a.host === b.host;
-  } catch {
-    return false;
-  }
+  return !!a && !!b && a.protocol === b.protocol && a.host === b.host;
 };

@@ -141,17 +141,14 @@ export const messageUrl = (link: string | undefined, inbox: string) => {
     return inbox;
   }
 
-  try {
-    const url = new URL(link);
+  const url = URL.parse(link);
 
-    return url.origin === new URL(inbox).origin &&
-      url.username === "" &&
-      url.password === ""
-      ? url.href
-      : inbox;
-  } catch {
-    return inbox;
-  }
+  return url &&
+    url.origin === URL.parse(inbox)?.origin &&
+    url.username === "" &&
+    url.password === ""
+    ? url.href
+    : inbox;
 };
 
 /**

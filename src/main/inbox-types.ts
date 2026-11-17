@@ -20,13 +20,7 @@ export interface InboxTypesDeps {
   log: (message: string) => void;
 }
 
-const originOf = (url: string) => {
-  try {
-    return new URL(url).origin;
-  } catch {
-    return "";
-  }
-};
+const originOf = (url: string) => URL.parse(url)?.origin ?? "";
 
 const readInboxType = async (page: LoadedPage) => {
   try {

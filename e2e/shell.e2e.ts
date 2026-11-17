@@ -13,6 +13,9 @@ test("opens the shell window, named for a development build, with its title bar 
       BrowserWindow.getAllWindows().map((window) => window.getTitle()),
     ])
   ).toStrictEqual(["Meru Dev", ["Meru Dev"]]);
+  // Core parses URLs with `URL.parse`, in main and in what a preload may import.
+  expect(await app.evaluate(() => typeof URL.parse)).toBe("function");
+  expect(await shell.evaluate(() => typeof URL.parse)).toBe("function");
   await expect(shell.getByRole("banner", { name: "Title bar" })).toBeVisible();
   await expect(shell.getByRole("main", { name: "Content" })).toBeVisible();
 

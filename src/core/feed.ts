@@ -82,13 +82,7 @@ const parseEntry = (entry: TNode): FeedEntry | undefined => {
   const author = childNamed(entry, "author");
   const senderAddress = textOf(childNamed(author, "email"));
   const issued = Date.parse(textOf(childNamed(entry, "issued")) ?? "");
-  let id: string | null | undefined;
-
-  try {
-    id = href ? new URL(href).searchParams.get("message_id") : undefined;
-  } catch {
-    return;
-  }
+  const id = href && URL.parse(href)?.searchParams.get("message_id");
 
   if (
     !href ||

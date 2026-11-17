@@ -22,8 +22,7 @@ export interface PermissionAsk {
   mediaTypes?: readonly string[];
 }
 
-const originOf = (url: string) =>
-  URL.canParse(url) ? new URL(url).origin : undefined;
+const originOf = (url: string) => URL.parse(url)?.origin;
 
 /**
  * Whether a page may have a permission: only a frame on an origin an app

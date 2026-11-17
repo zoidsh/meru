@@ -1,6 +1,10 @@
 import { appForUrl } from "./apps.ts";
 import type { App } from "./apps.ts";
-import { isGoogleRedirect, unwrapGoogleRedirect } from "./google-redirect.ts";
+import {
+  isGoogleRedirect,
+  isWebUrl,
+  unwrapGoogleRedirect,
+} from "./google-redirect.ts";
 
 /**
  * What happens to a window a page in a content view, or a window it opened,
@@ -28,19 +32,9 @@ export interface WindowOpenContext {
 }
 
 const parseWebUrl = (url: string) => {
-  let parsed: URL;
+  const parsed = URL.parse(url);
 
-  try {
-    parsed = new URL(url);
-  } catch {
-    return;
-  }
-
-  return (parsed.protocol === "https:" || parsed.protocol === "http:") &&
-    !parsed.username &&
-    !parsed.password
-    ? parsed
-    : undefined;
+  return parsed && isWebUrl(parsed) ? parsed : undefined;
 };
 
 /** Google's "Add another account", which Meru answers with a profile. */

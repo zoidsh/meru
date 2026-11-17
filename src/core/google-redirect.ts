@@ -12,7 +12,8 @@ const KEPT_WRAPPED_HOSTS: ReadonlySet<string> = new Set([
   "myaccount.google.com",
 ]);
 
-const isWebUrl = (url: URL) =>
+/** An `http` or `https` URL with no username or password. */
+export const isWebUrl = (url: URL) =>
   (url.protocol === "https:" || url.protocol === "http:") &&
   !url.username &&
   !url.password;
@@ -27,15 +28,9 @@ export const isGoogleRedirect = (url: URL) =>
  * is `undefined`, and the redirect is opened as it is.
  */
 export const unwrapGoogleRedirect = (url: string): string | undefined => {
-  let wrapper: URL;
+  const wrapper = URL.parse(url);
 
-  try {
-    wrapper = new URL(url);
-  } catch {
-    return;
-  }
-
-  if (!isWebUrl(wrapper) || !isGoogleRedirect(wrapper)) {
+  if (!wrapper || !isWebUrl(wrapper) || !isGoogleRedirect(wrapper)) {
     return;
   }
 
@@ -45,15 +40,10 @@ export const unwrapGoogleRedirect = (url: string): string | undefined => {
     return;
   }
 
-  let target: URL;
-
-  try {
-    target = new URL(query);
-  } catch {
-    return;
-  }
+  const target = URL.parse(query);
 
   if (
+    !target ||
     !isWebUrl(target) ||
     isGoogleRedirect(target) ||
     KEPT_WRAPPED_HOSTS.has(target.hostname.replace(/\.$/u, ""))

@@ -1,3 +1,5 @@
+import { isWebUrl } from "./google-redirect.ts";
+
 /**
  * A workspace app: what a tab of it is called, where it starts, the URLs it
  * claims and whether a profile may have more than one tab of it. Its icon is
@@ -140,19 +142,9 @@ export const appForUrl = (
   apps: readonly App[],
   url: string
 ): App | undefined => {
-  let parsed: URL;
+  const parsed = URL.parse(url);
 
-  try {
-    parsed = new URL(url);
-  } catch {
-    return;
-  }
-
-  if (
-    (parsed.protocol !== "https:" && parsed.protocol !== "http:") ||
-    parsed.username ||
-    parsed.password
-  ) {
+  if (!parsed || !isWebUrl(parsed)) {
     return;
   }
 

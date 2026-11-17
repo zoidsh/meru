@@ -52,15 +52,9 @@ export const normalizeQuery = (query: string) => {
  * page shows no search or the hash does not decode.
  */
 export const searchQueryOf = (url: string) => {
-  let hash: string;
+  const hash = URL.parse(url)?.hash;
 
-  try {
-    ({ hash } = new URL(url));
-  } catch {
-    return;
-  }
-
-  if (!hash.startsWith(SEARCH_PREFIX)) {
+  if (!hash?.startsWith(SEARCH_PREFIX)) {
     return;
   }
 
