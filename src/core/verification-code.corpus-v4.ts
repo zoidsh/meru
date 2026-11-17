@@ -1,13 +1,15 @@
 // Labelled messages v4 added to v3's corpus, in its shape, kept apart from
 // v3's file so that one stays as it was carried. Each is synthetic. `expected`
-// is the right answer; one marked `knownMiss` gets that answer wrong today,
-// and the test asserts `knownMiss.answer`, so a change that fixes or worsens
-// it is loud.
+// is the right answer; one marked `knownMiss` (a code not found) or
+// `knownFalsePositive` (a code given where there is none) gets that answer
+// wrong today, and the test asserts its `answer`, so a change that fixes or
+// worsens it is loud.
 
 import type { CorpusEntry } from "./verification-code.corpus.ts";
 
 export interface V4CorpusEntry extends CorpusEntry {
   knownMiss?: { answer: string | null; why: string };
+  knownFalsePositive?: { answer: string; why: string };
 }
 
 export const corpusV4: V4CorpusEntry[] = [

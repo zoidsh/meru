@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { corpusFresh } from "./verification-code.corpus-fresh.ts";
+import { corpusHeldOut } from "./verification-code.corpus-heldout.ts";
 import { corpusV4 } from "./verification-code.corpus-v4.ts";
+import type { V4CorpusEntry } from "./verification-code.corpus-v4.ts";
 import { corpus } from "./verification-code.corpus.ts";
+import type { CorpusEntry } from "./verification-code.corpus.ts";
 import {
   MAX_TEXT_LENGTH,
   extractVerificationCode,
@@ -14,12 +17,22 @@ const code = (subject: string, summary = "") =>
 const answerOf = ({ subject, summary }: { subject: string; summary: string }) =>
   code(subject, summary) ?? null;
 
-const tally = (
-  answer: (entry: (typeof corpusFresh)[number]) => string | null
+/** The answer a test asserts: the right one, or the known wrong one. */
+const assertedOf = ({
+  expected,
+  knownMiss,
+  knownFalsePositive,
+}: V4CorpusEntry) =>
+  (knownMiss ? knownMiss.answer : (knownFalsePositive?.answer ?? expected)) ??
+  undefined;
+
+const tally = <Entry extends CorpusEntry>(
+  entries: readonly Entry[],
+  answer: (entry: Entry) => string | null
 ) => {
   const counts = { found: 0, falsePositives: 0, wrong: 0 };
 
-  for (const entry of corpusFresh) {
+  for (const entry of entries) {
     const given = answer(entry);
 
     if (given === null) {
@@ -48,32 +61,35 @@ describe("the extractor", () => {
     }
   );
 
-  it.each(corpusV4)(
-    "v4's corpus, $language: $subject",
-    ({ subject, summary, expected, knownMiss }) => {
-      expect(code(subject, summary)).toBe(
-        (knownMiss ? knownMiss.answer : expected) ?? undefined
-      );
-    }
-  );
-
-  it.each(corpusFresh)(
-    "the fresh corpus, $language: $subject",
-    ({ subject, summary, expected, knownMiss }) => {
-      expect(code(subject, summary)).toBe(
-        (knownMiss ? knownMiss.answer : expected) ?? undefined
-      );
-    }
-  );
-
-  it("finds at least as many of the fresh codes as v3 did, with no more false positives and never wrong digits", () => {
-    const ours = tally(answerOf);
-    const v3 = tally((entry) => entry.v3);
-
-    expect(ours.found).toBeGreaterThanOrEqual(v3.found);
-    expect(ours.falsePositives).toBeLessThanOrEqual(v3.falsePositives);
-    expect(ours.wrong).toBe(0);
+  it.each(corpusV4)("v4's corpus, $language: $subject", (entry) => {
+    expect(answerOf(entry) ?? undefined).toBe(assertedOf(entry));
   });
+
+  it.each(corpusFresh)("the fresh corpus, $language: $subject", (entry) => {
+    expect(answerOf(entry) ?? undefined).toBe(assertedOf(entry));
+  });
+
+  it.each(corpusHeldOut)(
+    "the held-out corpus, $language: $subject",
+    (entry) => {
+      expect(answerOf(entry) ?? undefined).toBe(assertedOf(entry));
+    }
+  );
+
+  it.each([
+    ["fresh", corpusFresh],
+    ["held-out", corpusHeldOut],
+  ] as const)(
+    "finds at least as many of the %s codes as v3 did, with no more false positives and never wrong digits",
+    (_name, entries: readonly (CorpusEntry & { v3: string | null })[]) => {
+      const ours = tally(entries, answerOf);
+      const v3 = tally(entries, (entry) => entry.v3);
+
+      expect(ours.found).toBeGreaterThanOrEqual(v3.found);
+      expect(ours.falsePositives).toBeLessThanOrEqual(v3.falsePositives);
+      expect(ours.wrong).toBe(0);
+    }
+  );
 
   it("does not let a code word in the other text alone lift a bare four-digit number", () => {
     expect(code("Your code", "4829")).toBeUndefined();
@@ -140,7 +156,7 @@ describe("the extractor", () => {
   });
 
   it("takes well under a millisecond a message on the corpora", () => {
-    const messages = [...corpus, ...corpusV4, ...corpusFresh];
+    const messages = [...corpus, ...corpusV4, ...corpusFresh, ...corpusHeldOut];
     const started = performance.now();
 
     for (const message of messages) {
@@ -152,13 +168,15 @@ describe("the extractor", () => {
 });
 
 describe("the corpora", () => {
-  it("hold v3's 71 codes and 44 messages with none, v4's 22 entries, and the fresh 84 codes and 66 with none", () => {
+  it("hold v3's 71 codes and 44 messages with none, v4's 22 entries, the fresh 84 codes and 66 with none, and the held-out 60 and 60", () => {
     expect([
       corpus.filter((entry) => entry.expected !== null).length,
       corpus.filter((entry) => entry.expected === null).length,
       corpusV4.length,
       corpusFresh.filter((entry) => entry.expected !== null).length,
       corpusFresh.filter((entry) => entry.expected === null).length,
-    ]).toStrictEqual([71, 44, 22, 84, 66]);
+      corpusHeldOut.filter((entry) => entry.expected !== null).length,
+      corpusHeldOut.filter((entry) => entry.expected === null).length,
+    ]).toStrictEqual([71, 44, 22, 84, 66, 60, 60]);
   });
 });
