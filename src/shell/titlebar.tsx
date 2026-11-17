@@ -18,6 +18,7 @@ import type { KeyboardEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
+import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
 import { Kbd } from "#ui/kbd.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
@@ -389,7 +390,7 @@ const ProfileRow = ({
             profile={profile}
             selected={profile.id === profiles.selectedProfileId}
             focusable={profile.id === focusable}
-            shortcut={shortcuts?.[`profile.select.${index + 1}`]}
+            shortcut={shortcuts?.[selectProfileCommandId(index + 1)]}
             onFocus={() => {
               setFocused(profile.id);
             }}
