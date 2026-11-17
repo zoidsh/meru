@@ -90,13 +90,14 @@ describe(createUnreadBadge, () => {
     expect(mac.shown[0]?.overlay).toStrictEqual([]);
   });
 
-  it("clears on quit", () => {
+  it("clears on quit and stays clear, whatever a late poll brings", () => {
     const app = setup();
 
     app.setTotal(2);
-    app.badge.clear();
-    app.setTotal(2);
+    app.badge.close();
+    app.setTotal(7);
+    app.setEnabled(true);
 
-    expect(app.texts()).toStrictEqual(["2", undefined, "2"]);
+    expect(app.texts()).toStrictEqual(["2", undefined]);
   });
 });

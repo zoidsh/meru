@@ -34,10 +34,15 @@ export const createUnreadBadge = ({
   total,
 }: UnreadBadgeDeps) => {
   let shownCount = 0;
+  let closed = false;
 
   return {
     /** Called whenever the count or the setting may have changed. */
     update: () => {
+      if (closed) {
+        return;
+      }
+
       const count = enabled() ? total() : 0;
 
       if (count === shownCount) {
@@ -66,8 +71,12 @@ export const createUnreadBadge = ({
           : undefined
       );
     },
-    /** On quit, so no badge is left behind on a launcher that keeps it. */
-    clear: () => {
+    /**
+     * On quit: clears the badge for good, so no late poll sets it again and
+     * none is left on a launcher that keeps it.
+     */
+    close: () => {
+      closed = true;
       shownCount = 0;
       badge.show(undefined);
     },

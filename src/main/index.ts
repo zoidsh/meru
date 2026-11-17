@@ -560,6 +560,8 @@ const start = async () => {
   // The menu's Show or Hide follows the window.
   shell.window.on("show", tray.update);
   shell.window.on("hide", tray.update);
+  shell.window.on("minimize", tray.update);
+  shell.window.on("restore", tray.update);
   showUnread();
 
   const closing = hideOnClose({
@@ -570,8 +572,8 @@ const start = async () => {
 
   lifecycle.onBeforeQuit(() => {
     closing.markQuitting();
-    badge.clear();
-    tray.destroy();
+    badge.close();
+    tray.close();
   });
 
   lifecycle.onActivate(reveal);

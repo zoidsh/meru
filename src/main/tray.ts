@@ -29,7 +29,7 @@ export interface TrayDeps {
   state: () => State;
   /** The profile's count as its feed last gave it. */
   unread: (profileId: string) => number | null;
-  window: Pick<AppWindow, "isVisible" | "hide">;
+  window: Pick<AppWindow, "isVisible" | "isMinimized" | "hide">;
   /** Shows the window, through `revealWindow`. */
   reveal: () => void;
   /** Selects the profile and its Gmail tab. */
@@ -167,12 +167,16 @@ export const createTray = ({
       }
     });
 
+  // A minimized window is visible to Electron but not on screen, and the
+  // tray brings it back rather than hiding it.
+  const windowShown = () => window.isVisible() && !window.isMinimized();
+
   const entriesNow = () =>
-    trayEntries({ profiles: profiles(), windowVisible: window.isVisible() });
+    trayEntries({ profiles: profiles(), windowVisible: windowShown() });
 
   const click = () => {
     const action = trayClick({
-      windowVisible: window.isVisible(),
+      windowVisible: windowShown(),
       jumpsToUnread: setting("trayJumpsToUnread"),
       profiles: profiles(),
     });
@@ -208,12 +212,14 @@ export const createTray = ({
     shown = undefined;
   };
 
+  let closed = false;
+
   return {
     /** Whether the icon is there, which closing the window depends on. */
     isShown: () => tray !== undefined,
     /** Called whenever the counts, profiles, window, theme or settings change. */
     update: () => {
-      if (!setting("tray")) {
+      if (closed || !setting("tray")) {
         destroy();
 
         return;
@@ -243,7 +249,7 @@ export const createTray = ({
       }
 
       const entries = trayMenuOpensOnClick(platform)
-        ? trayEntries({ profiles: listed, windowVisible: window.isVisible() })
+        ? trayEntries({ profiles: listed, windowVisible: windowShown() })
         : undefined;
 
       if (entries && !isEqual(entries, shown?.menu)) {
@@ -252,7 +258,11 @@ export const createTray = ({
 
       shown = { image, title, ...(entries && { menu: entries }) };
     },
-    destroy,
+    /** On quit: takes the icon away for good, whatever changes after. */
+    close: () => {
+      closed = true;
+      destroy();
+    },
   };
 };
 

@@ -114,6 +114,7 @@ const setup = ({
   const calls: string[] = [];
   const values = { ...createInitialSettings(), tray: true, ...settings };
   let visible = true;
+  let minimized = false;
   let dark = false;
 
   const tray = createTray({
@@ -127,6 +128,7 @@ const setup = ({
     unread: (profileId) => counts.get(profileId) ?? null,
     window: {
       isVisible: () => visible,
+      isMinimized: () => minimized,
       hide: () => {
         calls.push("hide");
         visible = false;
@@ -135,6 +137,7 @@ const setup = ({
     reveal: () => {
       calls.push("reveal");
       visible = true;
+      minimized = false;
     },
     jumpTo: (profileId) => {
       calls.push(`jump ${profileId}`);
@@ -161,6 +164,10 @@ const setup = ({
     },
     setVisible: (next: boolean) => {
       visible = next;
+      tray.update();
+    },
+    minimize: () => {
+      minimized = true;
       tray.update();
     },
     setDark: (next: boolean) => {
@@ -336,6 +343,30 @@ describe(createTray, () => {
     await settle();
 
     expect(jumping.calls).toStrictEqual(["jump p1", "reveal"]);
+  });
+
+  it("brings a minimized window back rather than hiding it, from its click and its menu", () => {
+    const app = setup({ platform: "linux", names: ["Home"] });
+
+    app.minimize();
+
+    expect(labels(app.icon()?.contextMenu)).toContain("Show Meru");
+
+    app.icon()?.click?.();
+
+    expect(app.calls).toStrictEqual(["reveal"]);
+  });
+
+  it("does nothing more once closed for the quit, whatever changes after", () => {
+    const app = setup();
+
+    app.count("p0", 2);
+    app.tray.close();
+    app.count("p0", 3);
+    app.set("trayIconColor", "light");
+
+    expect(app.events).toStrictEqual(["create", "destroy"]);
+    expect(app.tray.isShown()).toBeFalsy();
   });
 
   it("quits from its last item", () => {

@@ -47,8 +47,17 @@ export interface Confirmation {
 
 export type WindowLoadEvent = "ready-to-show" | "did-finish-load";
 
-/** The window becoming the one keys go to, or no longer, or shown or hidden. */
-export type WindowFocusEvent = "focus" | "blur" | "show" | "hide";
+/**
+ * The window becoming the one keys go to, or no longer, shown or hidden, or
+ * minimized or restored.
+ */
+export type WindowFocusEvent =
+  | "focus"
+  | "blur"
+  | "show"
+  | "hide"
+  | "minimize"
+  | "restore";
 
 export interface AppWindow {
   readonly webContentsId: number;
