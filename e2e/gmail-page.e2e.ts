@@ -251,7 +251,7 @@ test("gives Gmail's preload to Gmail's view alone: not to another app's, nor to 
 
       return {
         url: each.getURL(),
-        preload: script && script.filePath.split("/").at(-1),
+        preload: script && script.filePath.split(/[\\/]/u).at(-1),
       };
     })
   );
