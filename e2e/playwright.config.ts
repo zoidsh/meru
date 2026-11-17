@@ -4,6 +4,14 @@ import { defineConfig } from "@playwright/test";
 
 const isCI = Boolean(process.env.CI);
 
+/**
+ * On Windows and Linux every launch of the suite's app takes the desktop's
+ * focus, and an overlay closes when its window loses it, so these run alone,
+ * after the rest. On macOS the suite's app is never activated.
+ */
+const NEEDS_THE_FOCUS = "**/overlay.e2e.ts";
+const takesTheFocus = process.platform !== "darwin";
+
 export default defineConfig({
   // Never *.spec.ts or *.test.ts, which Vitest would claim.
   testMatch: "**/*.e2e.ts",
@@ -19,4 +27,12 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   reporter: [["list"]],
+  projects: [
+    { name: "shared", testIgnore: NEEDS_THE_FOCUS },
+    {
+      name: "alone",
+      testMatch: NEEDS_THE_FOCUS,
+      ...(takesTheFocus && { workers: 1, dependencies: ["shared"] }),
+    },
+  ],
 });
