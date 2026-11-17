@@ -29,6 +29,15 @@ const appName = (app: string) => findApp(APPS, app)?.name ?? app;
 
 const tabTitle = (tab: ShellTab) => tab.title || appName(tab.app);
 
+// The Scroll Area's bar is styled from here, as `src/ui` stays as the CLI
+// wrote it: an 8px thumb, shown while the pointer is over the list. Where
+// the component's own classes match as strongly, `!` wins.
+const SCROLLBAR = cn(
+  "[&_[data-slot=scroll-area-scrollbar]]:w-2! [&_[data-slot=scroll-area-scrollbar]]:border-0! [&_[data-slot=scroll-area-scrollbar]]:p-0",
+  "[&_[data-slot=scroll-area-scrollbar]]:opacity-0 [&_[data-slot=scroll-area-scrollbar]]:transition-opacity hover:[&_[data-slot=scroll-area-scrollbar]]:opacity-100",
+  "[&_[data-slot=scroll-area-thumb]]:bg-foreground/20"
+);
+
 /** Said after the title, to a screen reader, where the tab is not live. */
 const TabStatusIcon = ({ status }: { status: ShellTab["status"] }) => {
   switch (status.kind) {
@@ -148,7 +157,15 @@ export const Sidebar = ({
         wide ? "px-3" : "px-4"
       )}
     >
-      <ScrollArea className="min-h-0 flex-1">
+      {/* Reaching into the sidebar's padding far enough to centre the bar
+          in it, padded back so the list stays where it was. */}
+      <ScrollArea
+        className={cn(
+          "min-h-0 flex-1",
+          wide ? "-mr-2.5 pr-2.5" : "-mr-3 pr-3",
+          SCROLLBAR
+        )}
+      >
         <div className="relative">
           <Tabs.List
             aria-label={t({
@@ -251,7 +268,7 @@ export const Sidebar = ({
                   {tab.closable &&
                     (wide ? (
                       <Button
-                        variant="ghost"
+                        variant="secondary"
                         size="icon-xs"
                         tabIndex={-1}
                         aria-label={label}
