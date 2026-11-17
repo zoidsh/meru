@@ -1,11 +1,9 @@
-import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow } from "#platform/window.ts";
 
 /** A web contents of the window that can hold keyboard focus. */
 export type FocusTarget =
   | { kind: "shell" }
   | { kind: "overlay" }
-  | { kind: "tab"; key: TabKey }
   /** The selected tab's view, whichever that is when focus moves. */
   | { kind: "front" };
 

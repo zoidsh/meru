@@ -49,8 +49,8 @@ export interface TabViewsDeps {
   /** Readies a profile's session before any page of it loads. */
   prepareSession: (partition: string) => void;
   updatePages: (updates: PageUpdate[]) => Promise<unknown>;
-  /** Told when a tab's page gains keyboard focus. */
-  onFocus: (key: TabKey) => void;
+  /** Told when a tab's page gains keyboard focus, the front one's alone. */
+  onFocus: () => void;
   /** Told of each mouse button pressed in a tab's page. */
   onMouseDown: () => void;
   /** Told when another tab comes to the front, the first one included. */
@@ -337,9 +337,7 @@ export const createTabViews = ({
         onEvent(key, tabKeyed, event);
       },
       onKey: handleKey,
-      onFocus: () => {
-        onFocus(tabKeyed);
-      },
+      onFocus,
       onMouseDown,
     });
 
@@ -423,17 +421,11 @@ export const createTabViews = ({
         dispatch(front, { kind: "reload" });
       }
     },
-    /**
-     * What focuses the tab's view, the front tab's by default; nothing
-     * unless it is in front and showing.
-     */
-    focuser: (key?: TabKey) => {
-      const wanted = key ? tabKey(key) : front;
-      const tab = wanted === undefined ? undefined : tabs.get(wanted);
+    /** What focuses the front tab's view; nothing unless it is showing. */
+    focuser: () => {
+      const tab = front === undefined ? undefined : tabs.get(front);
 
-      return tab && wanted === front && showsView(tab.status)
-        ? tab.view.focus
-        : undefined;
+      return tab && showsView(tab.status) ? tab.view.focus : undefined;
     },
     /** Places every view again, as the design now has it, loading nothing. */
     relayout: placeAll,

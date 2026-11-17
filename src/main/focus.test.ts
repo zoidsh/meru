@@ -3,18 +3,13 @@ import { describe, expect, it } from "vitest";
 import { createFocus } from "./focus.ts";
 import type { FocusTarget } from "./focus.ts";
 
-const name = (target: FocusTarget) =>
-  target.kind === "tab"
-    ? `${target.key.profileId}/${target.key.tabId}`
-    : target.kind;
-
 /** A window and web contents that record which of them was focused, in order. */
 const setup = ({ focusWhileInactive = false } = {}) => {
   const listeners = new Map<string, (() => void)[]>();
   const focused: string[] = [];
   const window = { focused: false, visible: false };
   /** The web contents there to focus, by name; a gone one is missing. */
-  const present = new Set(["shell", "overlay", "a/gmail", "front"]);
+  const present = new Set(["shell", "overlay", "front"]);
 
   const focus = createFocus({
     window: {
@@ -26,9 +21,9 @@ const setup = ({ focusWhileInactive = false } = {}) => {
     },
     focusWhileInactive,
     resolve: (target) =>
-      present.has(name(target))
+      present.has(target.kind)
         ? () => {
-            focused.push(name(target));
+            focused.push(target.kind);
           }
         : undefined,
   });
@@ -42,31 +37,28 @@ const setup = ({ focusWhileInactive = false } = {}) => {
   return { focus, focused, window, present, emit };
 };
 
-const gmail: FocusTarget = {
-  kind: "tab",
-  key: { profileId: "a", tabId: "gmail" },
-};
+const overlay: FocusTarget = { kind: "overlay" };
 
 describe(createFocus, () => {
   it("focuses the first preference there to focus, at once while the window has focus", () => {
     const { focus, focused, window, present } = setup();
 
     window.focused = true;
-    focus.focus([gmail, { kind: "front" }]);
-    present.delete("a/gmail");
-    focus.focus([gmail, { kind: "front" }, { kind: "shell" }]);
+    focus.focus([overlay, { kind: "front" }]);
+    present.delete("overlay");
+    focus.focus([overlay, { kind: "front" }, { kind: "shell" }]);
     present.delete("front");
-    focus.focus([gmail, { kind: "front" }, { kind: "shell" }]);
+    focus.focus([overlay, { kind: "front" }, { kind: "shell" }]);
 
-    expect(focused).toStrictEqual(["a/gmail", "front", "shell"]);
+    expect(focused).toStrictEqual(["overlay", "front", "shell"]);
   });
 
   it("waits until the window has focus, and then focuses only the last asked for", () => {
     const { focus, focused, window, emit } = setup();
 
     window.visible = true;
-    focus.focus([{ kind: "overlay" }]);
-    focus.focus([gmail]);
+    focus.focus([{ kind: "shell" }]);
+    focus.focus([overlay]);
     emit("show");
 
     expect(focused).toStrictEqual([]);
@@ -75,14 +67,14 @@ describe(createFocus, () => {
     emit("focus");
     emit("focus");
 
-    expect(focused).toStrictEqual(["a/gmail"]);
+    expect(focused).toStrictEqual(["overlay"]);
   });
 
   it("chooses when the window comes forward, so a view gone meanwhile is passed over", () => {
     const { focus, focused, window, present, emit } = setup();
 
-    focus.focus([gmail, { kind: "front" }]);
-    present.delete("a/gmail");
+    focus.focus([overlay, { kind: "front" }]);
+    present.delete("overlay");
     window.focused = true;
     emit("focus");
 
@@ -94,7 +86,7 @@ describe(createFocus, () => {
       focusWhileInactive: true,
     });
 
-    focus.focus([gmail]);
+    focus.focus([overlay]);
 
     expect(focused).toStrictEqual([]);
 
@@ -102,7 +94,7 @@ describe(createFocus, () => {
     emit("show");
     focus.focus([{ kind: "shell" }]);
 
-    expect(focused).toStrictEqual(["a/gmail", "shell"]);
+    expect(focused).toStrictEqual(["overlay", "shell"]);
   });
 
   it("remembers which web contents last gained focus", () => {
@@ -110,9 +102,9 @@ describe(createFocus, () => {
 
     expect(focus.focused()).toBeUndefined();
 
-    focus.noteFocused(gmail);
-    focus.noteFocused({ kind: "overlay" });
+    focus.noteFocused({ kind: "front" });
+    focus.noteFocused(overlay);
 
-    expect(focus.focused()).toStrictEqual({ kind: "overlay" });
+    expect(focus.focused()).toStrictEqual(overlay);
   });
 });

@@ -248,10 +248,6 @@ const start = async () => {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
           return overlays.focuser();
         }
-        case "tab": {
-          // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
-          return views.focuser(target.key);
-        }
         default: {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
           return views.focuser();
@@ -309,8 +305,8 @@ const start = async () => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
     },
     updatePages: profiles.updatePages,
-    onFocus: (key) => {
-      focus.noteFocused({ kind: "tab", key });
+    onFocus: () => {
+      focus.noteFocused({ kind: "front" });
     },
     onMouseDown: overlays.close,
     // At launch and after a switch, typing reaches the page without a click.

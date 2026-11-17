@@ -4,7 +4,6 @@ import { newProfile, selectProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createFocus } from "./focus.ts";
-import type { FocusTarget } from "./focus.ts";
 import { createOverlays } from "./overlay.ts";
 
 const two: State = {
@@ -13,16 +12,6 @@ const two: State = {
   selectedProfileId: "a",
 };
 
-const gmailA: FocusTarget = {
-  kind: "tab",
-  key: { profileId: "a", tabId: "gmail" },
-};
-
-const name = (target: FocusTarget) =>
-  target.kind === "tab"
-    ? `${target.key.profileId}/${target.key.tabId}`
-    : target.kind;
-
 /**
  * Overlays over the real focus, in a focused window whose web contents
  * record each focus and report it as gained, and a fake overlay view.
@@ -30,7 +19,7 @@ const name = (target: FocusTarget) =>
 const setup = () => {
   /** What happened, in order: the view's changes, focus and the shell told. */
   const events: string[] = [];
-  const present = new Set(["shell", "a/gmail", "front"]);
+  const present = new Set<string>(["shell", "front"]);
   let destroy: (() => void) | undefined;
   let bounds = { x: 0, y: 0, width: 100, height: 50 };
 
@@ -43,9 +32,9 @@ const setup = () => {
         return overlays.focuser();
       }
 
-      return present.has(name(target))
+      return present.has(target.kind)
         ? () => {
-            events.push(`focus ${name(target)}`);
+            events.push(`focus ${target.kind}`);
             focus.noteFocused(target);
           }
         : undefined;
@@ -103,7 +92,7 @@ describe(createOverlays, () => {
   it("shows and focuses the view before the shell hears, and hides it and gives focus back on close", () => {
     const { overlays, focus, events } = setup();
 
-    focus.noteFocused(gmailA);
+    focus.noteFocused({ kind: "front" });
     overlays.open(renameA);
     overlays.close();
 
@@ -114,7 +103,7 @@ describe(createOverlays, () => {
       "shell told a",
       "hide",
       "shell told closed",
-      "focus a/gmail",
+      "focus front",
     ]);
     expect(overlays.current()).toBeUndefined();
   });
@@ -134,9 +123,9 @@ describe(createOverlays, () => {
   it("gives focus to the selected tab's view when what had it is gone", () => {
     const { overlays, focus, events, present } = setup();
 
-    focus.noteFocused(gmailA);
+    focus.noteFocused({ kind: "shell" });
     overlays.open(renameA);
-    present.delete("a/gmail");
+    present.delete("shell");
     events.length = 0;
     overlays.close();
 

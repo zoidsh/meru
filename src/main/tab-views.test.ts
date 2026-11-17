@@ -263,7 +263,6 @@ describe(createTabViews, () => {
 
   it("tells when another tab comes to the front, and focuses only the front tab's view while it shows", async () => {
     const window = await setup();
-    const gmail = { profileId: "a", tabId: "gmail" };
     const calendar = { profileId: "a", tabId: "c1" };
 
     expect(window.fronts()).toBe(1);
@@ -273,10 +272,8 @@ describe(createTabViews, () => {
     await window.profiles.select("a");
 
     expect(window.fronts()).toBe(4);
-    expect(window.tabs.focuser(gmail)).toBeUndefined();
-
     window.tabs.focuser()?.();
-    window.tabs.focuser(calendar)?.();
+    window.tabs.focuser()?.();
 
     expect(
       window.views.map((view) => [view.partition, view.focuses])
