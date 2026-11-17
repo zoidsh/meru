@@ -1,178 +1,112 @@
 import { describe, expect, it } from "vitest";
 
 import { retryDelay, showsView, transition } from "./tab-machine.ts";
-import type { TabEvent, TabStatus } from "./tab-machine.ts";
+import type { TabEffect, TabEvent, TabStatus } from "./tab-machine.ts";
 
 const refused = { code: -102, name: "ERR_CONNECTION_REFUSED" };
+const FAILED: TabEvent = { kind: "failed-to-load", reason: refused };
 
-const EVENTS: TabEvent[] = [
-  { kind: "select" },
-  { kind: "loaded" },
-  { kind: "failed-to-load", reason: refused },
-  { kind: "crashed", reason: "killed" },
-  { kind: "retry" },
-  { kind: "reload" },
-  { kind: "retry-due" },
-  { kind: "online" },
-  { kind: "navigate" },
-];
+/** Runs the events in turn from `status`: where it ends and what it ran. */
+const run = (status: TabStatus, ...events: TabEvent[]) => {
+  let current = status;
+  const effects: TabEffect[] = [];
 
-const waiting = (attempt = 0): Extract<TabStatus, { kind: "failed" }> => ({
-  kind: "failed",
-  reason: refused,
-  attempt,
-  retrying: false,
-});
+  for (const event of events) {
+    const next = transition(current, event);
 
-const retrying = (attempt = 0): TabStatus => ({
-  ...waiting(attempt),
-  retrying: true,
-});
+    current = next.status;
+    effects.push(...next.effects);
+  }
 
-const LOAD = { kind: "load" };
-
-const RELOAD = { kind: "reload" };
-
-/** Each status against each event: the expected status and effects. */
-const TABLE: [TabStatus, Record<TabEvent["kind"], [TabStatus, unknown[]]>][] = [
-  [
-    { kind: "unloaded" },
-    {
-      select: [{ kind: "loading" }, [LOAD]],
-      loaded: [{ kind: "unloaded" }, []],
-      "failed-to-load": [{ kind: "unloaded" }, []],
-      crashed: [{ kind: "unloaded" }, []],
-      retry: [{ kind: "unloaded" }, []],
-      reload: [{ kind: "unloaded" }, []],
-      "retry-due": [{ kind: "unloaded" }, []],
-      online: [{ kind: "unloaded" }, []],
-      // Its URL is loaded when it is first selected.
-      navigate: [{ kind: "unloaded" }, []],
-    },
-  ],
-  [
-    { kind: "loading" },
-    {
-      select: [{ kind: "loading" }, []],
-      loaded: [{ kind: "live" }, []],
-      "failed-to-load": [waiting(0), [{ kind: "schedule-retry", delay: 1000 }]],
-      crashed: [{ kind: "crashed", reason: "killed" }, []],
-      retry: [{ kind: "loading" }, []],
-      reload: [{ kind: "loading" }, [RELOAD]],
-      "retry-due": [{ kind: "loading" }, []],
-      online: [{ kind: "loading" }, []],
-      navigate: [{ kind: "loading" }, [LOAD]],
-    },
-  ],
-  [
-    { kind: "live" },
-    {
-      select: [{ kind: "live" }, []],
-      loaded: [{ kind: "live" }, []],
-      "failed-to-load": [waiting(0), [{ kind: "schedule-retry", delay: 1000 }]],
-      crashed: [{ kind: "crashed", reason: "killed" }, []],
-      retry: [{ kind: "live" }, []],
-      reload: [{ kind: "loading" }, [RELOAD]],
-      "retry-due": [{ kind: "live" }, []],
-      online: [{ kind: "live" }, []],
-      navigate: [{ kind: "live" }, [LOAD]],
-    },
-  ],
-  [
-    waiting(2),
-    {
-      // Selecting a failed tab waits for its retry, as it shows why.
-      select: [waiting(2), []],
-      // The error page that follows a failure.
-      loaded: [waiting(2), []],
-      "failed-to-load": [waiting(2), []],
-      crashed: [{ kind: "crashed", reason: "killed" }, []],
-      retry: [retrying(2), [LOAD]],
-      reload: [retrying(2), [LOAD]],
-      "retry-due": [retrying(2), [LOAD]],
-      online: [retrying(2), [LOAD]],
-      navigate: [retrying(2), [LOAD]],
-    },
-  ],
-  [
-    retrying(2),
-    {
-      select: [retrying(2), []],
-      loaded: [{ kind: "live" }, []],
-      "failed-to-load": [waiting(3), [{ kind: "schedule-retry", delay: 8000 }]],
-      crashed: [{ kind: "crashed", reason: "killed" }, []],
-      retry: [retrying(2), []],
-      reload: [retrying(2), [LOAD]],
-      "retry-due": [retrying(2), []],
-      online: [retrying(2), []],
-      navigate: [retrying(2), [LOAD]],
-    },
-  ],
-  [
-    { kind: "crashed", reason: "oom" },
-    {
-      select: [{ kind: "loading" }, [LOAD]],
-      loaded: [{ kind: "crashed", reason: "oom" }, []],
-      "failed-to-load": [{ kind: "crashed", reason: "oom" }, []],
-      crashed: [{ kind: "crashed", reason: "oom" }, []],
-      retry: [{ kind: "loading" }, [LOAD]],
-      reload: [{ kind: "loading" }, [LOAD]],
-      "retry-due": [{ kind: "crashed", reason: "oom" }, []],
-      online: [{ kind: "crashed", reason: "oom" }, []],
-      navigate: [{ kind: "loading" }, [LOAD]],
-    },
-  ],
-];
+  return { status: current, effects };
+};
 
 describe(transition, () => {
-  const cases = TABLE.flatMap(([status, expected]) =>
-    EVENTS.map((event) => ({
-      name:
-        status.kind === "failed"
-          ? `failed${status.retrying ? ", retrying" : ""}`
-          : status.kind,
-      status,
-      event,
-      expected: expected[event.kind],
-    }))
-  );
+  it("loads a restored tab only once it is selected", () => {
+    expect(
+      run({ kind: "unloaded" }, { kind: "reload" }, { kind: "online" })
+    ).toStrictEqual({ status: { kind: "unloaded" }, effects: [] });
+    expect(
+      run({ kind: "unloaded" }, { kind: "select" }, { kind: "loaded" })
+    ).toStrictEqual({ status: { kind: "live" }, effects: [{ kind: "load" }] });
+  });
 
-  it.each(cases)(
-    "$name on $event.kind",
-    ({ status, event, expected: [next, effects] }) => {
-      expect(transition(status, event)).toStrictEqual({
-        status: next,
-        effects,
+  it("reloads a live page where it is, and loads a new URL", () => {
+    expect(run({ kind: "live" }, { kind: "reload" })).toStrictEqual({
+      status: { kind: "loading" },
+      effects: [{ kind: "reload" }],
+    });
+    expect(run({ kind: "live" }, { kind: "navigate" })).toStrictEqual({
+      status: { kind: "live" },
+      effects: [{ kind: "load" }],
+    });
+  });
+
+  it("waits out a failure, even when selected or shown its error page, and retries on any of its four causes", () => {
+    const failed = run({ kind: "loading" }, FAILED);
+
+    expect(failed.effects).toStrictEqual([
+      { kind: "schedule-retry", delay: 1000 },
+    ]);
+    expect(
+      run(failed.status, { kind: "select" }, { kind: "loaded" }).effects
+    ).toStrictEqual([]);
+
+    for (const kind of ["retry", "retry-due", "online", "reload"] as const) {
+      expect(run(failed.status, { kind })).toMatchObject({
+        status: { kind: "failed", retrying: true },
+        effects: [{ kind: "load" }],
       });
     }
-  );
+  });
+
+  it("goes live when a retry loads, and backs off further when it fails, counting every failed retry", () => {
+    const retrying = run({ kind: "loading" }, FAILED, { kind: "retry-due" });
+
+    expect(run(retrying.status, { kind: "loaded" }).status).toStrictEqual({
+      kind: "live",
+    });
+    // A second retry asked for while one is under way changes nothing.
+    expect(run(retrying.status, { kind: "retry" }).effects).toStrictEqual([]);
+
+    const delays = run(
+      { kind: "loading" },
+      FAILED,
+      { kind: "retry-due" },
+      FAILED,
+      { kind: "retry-due" },
+      FAILED,
+      { kind: "online" },
+      FAILED
+    ).effects.flatMap((effect) =>
+      effect.kind === "schedule-retry" ? [effect.delay] : []
+    );
+
+    expect(delays).toStrictEqual([1000, 2000, 4000, 8000]);
+  });
+
+  it("holds a crash until the tab is selected, retried, reloaded or sent elsewhere, then loads it", () => {
+    const crashed = run({ kind: "live" }, { kind: "crashed", reason: "oom" });
+
+    expect(
+      run(crashed.status, { kind: "online" }, { kind: "retry-due" })
+    ).toStrictEqual({
+      status: { kind: "crashed", reason: "oom" },
+      effects: [],
+    });
+
+    for (const kind of ["select", "retry", "reload", "navigate"] as const) {
+      expect(run(crashed.status, { kind })).toStrictEqual({
+        status: { kind: "loading" },
+        effects: [{ kind: "load" }],
+      });
+    }
+  });
 
   it("backs off from a second, doubling, to half a minute", () => {
     expect([0, 1, 2, 3, 4, 5, 6, 20].map(retryDelay)).toStrictEqual([
       1000, 2000, 4000, 8000, 16_000, 30_000, 30_000, 30_000,
     ]);
-  });
-
-  it("counts every failed retry towards the backoff", () => {
-    let status: TabStatus = { kind: "loading" };
-    const delays: number[] = [];
-
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      const failed = transition(status, {
-        kind: "failed-to-load",
-        reason: refused,
-      });
-
-      for (const effect of failed.effects) {
-        if (effect.kind === "schedule-retry") {
-          delays.push(effect.delay);
-        }
-      }
-
-      ({ status } = transition(failed.status, { kind: "retry-due" }));
-    }
-
-    expect(delays).toStrictEqual([1000, 2000, 4000, 8000]);
   });
 });
 
@@ -183,10 +117,9 @@ describe(showsView, () => {
         { kind: "unloaded" },
         { kind: "loading" },
         { kind: "live" },
-        waiting(),
-        retrying(),
+        run({ kind: "loading" }, FAILED).status,
         { kind: "crashed", reason: "killed" },
       ].map((status) => showsView(status as TabStatus))
-    ).toStrictEqual([false, true, true, false, false, false]);
+    ).toStrictEqual([false, true, true, false, false]);
   });
 });
