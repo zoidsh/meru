@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import type { TextFile } from "#platform/text-file.ts";
+import { fakeTextFile } from "#platform/text-file.fake.ts";
 
 import { StartupError } from "./failures.ts";
 import { loadStores } from "./stores.ts";
@@ -15,25 +15,7 @@ const createFakeDirectory = (contents: Record<string, string>) => {
     Object.entries(contents).map(([name, text]) => [path.join(DIR, name), text])
   );
 
-  const fileAt = (name: string): TextFile => {
-    const filePath = path.join(DIR, name);
-
-    return {
-      path: filePath,
-      read: () => Promise.resolve(files.get(filePath)),
-      write: (text) => {
-        files.set(filePath, text);
-
-        return Promise.resolve();
-      },
-      moveTo: (newPath) => {
-        files.set(newPath, files.get(filePath) ?? "");
-        files.delete(filePath);
-
-        return Promise.resolve();
-      },
-    };
-  };
+  const fileAt = (name: string) => fakeTextFile(path.join(DIR, name), files);
 
   return {
     files,

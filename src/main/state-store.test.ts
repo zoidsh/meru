@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { newProfile } from "#core/state.ts";
+import { fakeTextFile } from "#platform/text-file.fake.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { StartupError } from "./failures.ts";
@@ -14,35 +15,11 @@ const STATE_PATH = path.join(DIR, "state.json");
 
 /** A directory of files in memory, holding `state.json` with `contents`. */
 const createFakeFile = (contents?: string) => {
-  const files = new Map<string, string>();
+  const files = new Map<string, string>(
+    contents === undefined ? [] : [[STATE_PATH, contents]]
+  );
 
-  if (contents !== undefined) {
-    files.set(STATE_PATH, contents);
-  }
-
-  const file: TextFile = {
-    path: STATE_PATH,
-    read: () => Promise.resolve(files.get(STATE_PATH)),
-    write: (text) => {
-      files.set(STATE_PATH, text);
-
-      return Promise.resolve();
-    },
-    moveTo: (newPath) => {
-      const text = files.get(STATE_PATH);
-
-      if (text === undefined) {
-        return Promise.reject(new Error("ENOENT"));
-      }
-
-      files.delete(STATE_PATH);
-      files.set(newPath, text);
-
-      return Promise.resolve();
-    },
-  };
-
-  return { file, files };
+  return { file: fakeTextFile(STATE_PATH, files), files };
 };
 
 const load = (file: TextFile) => {

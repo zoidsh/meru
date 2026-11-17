@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import type { Settings } from "#core/settings.ts";
+import { fakeTextFile } from "#platform/text-file.fake.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { StartupError } from "./failures.ts";
@@ -11,29 +12,11 @@ import { createSettingsStore, openSettings } from "./settings.ts";
 const SETTINGS_PATH = path.join("/data", "Meru Dev", "settings.json");
 
 const createFakeFile = (contents?: string) => {
-  const files = new Map<string, string>();
+  const files = new Map<string, string>(
+    contents === undefined ? [] : [[SETTINGS_PATH, contents]]
+  );
 
-  if (contents !== undefined) {
-    files.set(SETTINGS_PATH, contents);
-  }
-
-  const file: TextFile = {
-    path: SETTINGS_PATH,
-    read: () => Promise.resolve(files.get(SETTINGS_PATH)),
-    write: (text) => {
-      files.set(SETTINGS_PATH, text);
-
-      return Promise.resolve();
-    },
-    moveTo: (newPath) => {
-      files.set(newPath, files.get(SETTINGS_PATH) ?? "");
-      files.delete(SETTINGS_PATH);
-
-      return Promise.resolve();
-    },
-  };
-
-  return { file, files };
+  return { file: fakeTextFile(SETTINGS_PATH, files), files };
 };
 
 const load = async (file: TextFile) => {
