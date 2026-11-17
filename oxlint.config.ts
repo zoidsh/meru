@@ -110,9 +110,11 @@ export default defineConfig({
     },
     {
       // The shadcn CLI writes these components, and they stay as it writes
-      // them, so the rules its style breaks are off here.
+      // them, so the rules its style breaks are off here. A label is tied to
+      // its control where it is used, through `htmlFor`.
       files: ["src/ui/**"],
       rules: {
+        "jsx-a11y/label-has-associated-control": "off",
         "func-style": "off",
         "no-use-before-define": "off",
         "import/consistent-type-specifier-style": "off",
