@@ -22,12 +22,22 @@ msgstr "{count, plural, one {# new message} other {# new messages}}"
 msgid "{count, plural, one {# unread message} other {# unread messages}}"
 msgstr "{count, plural, one {# unread message} other {# unread messages}}"
 
+#. Item in the Do Not Disturb menu that holds notifications for this many hours
+#: src/main/commands.ts
+msgid "{hours, plural, one {For # Hour} other {For # Hours}}"
+msgstr "{hours, plural, one {For # Hour} other {For # Hours}}"
+
 #. Shown on a profile's unread badge in the title bar when more messages are unread than the number before the plus
 #. Shown on an unread badge when more messages are unread than the number before the plus
 #: src/main/badge.ts
 #: src/shell/app.tsx
 msgid "{MAX_SHOWN_UNREAD}+"
 msgstr "{MAX_SHOWN_UNREAD}+"
+
+#. Item in the Do Not Disturb menu that holds notifications for this many minutes
+#: src/main/commands.ts
+msgid "{minutes, plural, one {For # Minute} other {For # Minutes}}"
+msgstr "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 
 #. A profile in the tray's menu with its unread count; {name} is the profile's name and {count} the number of unread messages
 #: src/main/tray.ts
@@ -148,6 +158,30 @@ msgstr "Default"
 msgid "Delete"
 msgstr "Delete"
 
+#. Accessible name of the moon button in the title bar that holds new mail notifications, read by screen readers with whether it is pressed
+#. Command that turns Do Not Disturb on until turned off, or off, checked while it holds new mail notifications
+#. Submenu of the app menu with how long to hold new mail notifications for, or to stop
+#: src/main/application-menu.ts
+#: src/main/commands.ts
+#: src/shell/app.tsx
+msgid "Do Not Disturb"
+msgstr "Do Not Disturb"
+
+#. Tooltip of the moon button in the title bar while new mail notifications show; a click turns Do Not Disturb on
+#: src/shell/app.tsx
+msgid "Do Not Disturb is off"
+msgstr "Do Not Disturb is off"
+
+#. Tooltip of the moon button in the title bar while it holds new mail notifications; {time} is the time of day it ends, such as 14:30
+#: src/shell/app.tsx
+msgid "Do Not Disturb is on until {time}"
+msgstr "Do Not Disturb is on until {time}"
+
+#. Tooltip of the moon button in the title bar while it holds new mail notifications until the person turns it off
+#: src/shell/app.tsx
+msgid "Do Not Disturb is on until turned off"
+msgstr "Do Not Disturb is on until turned off"
+
 #. Name of the Edit menu
 #: src/main/application-menu.ts
 msgid "Edit"
@@ -224,6 +258,16 @@ msgstr "Modern"
 #: src/main/notifications.ts
 msgid "New message"
 msgstr "New message"
+
+#. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
+#: src/main/do-not-disturb.ts
+msgid "On Until {time}"
+msgstr "On Until {time}"
+
+#. Line, not clickable, atop the Do Not Disturb menu while it holds notifications until the person turns it off
+#: src/main/do-not-disturb.ts
+msgid "On Until Turned Off"
+msgstr "On Until Turned Off"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -382,10 +426,25 @@ msgstr "Try again"
 msgid "Trying again…"
 msgstr "Trying again…"
 
+#. Item in the Do Not Disturb menu that turns Do Not Disturb off, so notifications show again
+#: src/main/commands.ts
+msgid "Turn Off"
+msgstr "Turn Off"
+
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Undo"
 msgstr "Undo"
+
+#. Item in the Do Not Disturb menu that holds notifications until midnight tonight
+#: src/main/commands.ts
+msgid "Until Tomorrow"
+msgstr "Until Tomorrow"
+
+#. Item in the Do Not Disturb menu that holds notifications until the person turns Do Not Disturb off
+#: src/main/commands.ts
+msgid "Until Turned Off"
+msgstr "Until Turned Off"
 
 #. Menu item in the View menu, checked while the window's sidebar and title bar let the desktop show through, blurred, as macOS sidebars do
 #: src/main/commands.ts

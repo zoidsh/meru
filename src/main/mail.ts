@@ -8,8 +8,15 @@ export interface Mail {
 }
 
 export interface MailPollerDeps {
-  /** Reads the profile's feed; rejects on a network error or an abort. */
-  fetchFeed: (profileId: string, signal: AbortSignal) => Promise<FeedOutcome>;
+  /**
+   * Reads the profile's feed, or the feed of one of its labels; rejects on a
+   * network error or an abort.
+   */
+  fetchFeed: (
+    profileId: string,
+    signal: AbortSignal,
+    label?: string
+  ) => Promise<FeedOutcome>;
   isOnline: () => boolean;
   log: (message: string) => void;
 }
@@ -257,6 +264,28 @@ export const createMailPoller = ({
       return polled
         ? { status: polled.status, unreadCount: polled.unreadCount }
         : NO_MAIL;
+    },
+    /**
+     * Reads the feed of one of a polled profile's labels within a poll's
+     * time; a failure is an outcome, never a rejection.
+     */
+    readLabel: async (
+      profileId: string,
+      label: string
+    ): Promise<FeedOutcome> => {
+      if (!polls.has(profileId)) {
+        return { kind: "failed", reason: "profile not polled" };
+      }
+
+      try {
+        return await fetchFeed(
+          profileId,
+          AbortSignal.timeout(FETCH_TIMEOUT),
+          label
+        );
+      } catch (error) {
+        return { kind: "failed", reason: describe(error) };
+      }
     },
     /** The unread messages the last feed listed, for the features built on it. */
     entries: (profileId: string): readonly FeedEntry[] =>

@@ -1,5 +1,7 @@
 import { z } from "zod/mini";
 
+import { quietWindowSchema } from "./notification-gate.ts";
+import type { QuietWindow } from "./notification-gate.ts";
 import type { Platform } from "./platform.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
@@ -56,6 +58,19 @@ export const SETTINGS = {
   notificationSummary: setting<boolean>({
     schema: z.boolean(),
     default: true,
+  }),
+  /** Notifies only the new mail Gmail's Important feed also lists. */
+  notificationImportantOnly: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
+  /**
+   * When new-mail notifications are held. A list where one window does not
+   * parse is read as none, so nothing is held by a value Meru cannot read.
+   */
+  quietHours: setting<QuietWindow[]>({
+    schema: z.array(quietWindowSchema),
+    default: [],
   }),
   /**
    * The tray or menu bar icon. Off on macOS, where the Dock already shows the

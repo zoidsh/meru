@@ -21,6 +21,10 @@ const two: State = {
   selectedProfileId: "a",
 };
 
+type Item = Exclude<ContextMenuItem, { type: "separator" }>;
+
+const isItem = (item: ContextMenuItem): item is Item => !("type" in item);
+
 const setup = ({
   state = two,
   confirmed = true,
@@ -31,7 +35,8 @@ const setup = ({
   let open = overlay;
   const overlays: (Overlay | "closed")[] = [];
   const calls: unknown[] = [];
-  const menus: ContextMenuItem[][] = [];
+  const menus: Item[][] = [];
+  const ran: string[] = [];
   const confirmations: Confirmation[] = [];
 
   const handlers = createShellHandlers({
@@ -77,17 +82,32 @@ const setup = ({
       },
     },
     window: {
-      showContextMenu: (items) => menus.push(items),
+      showContextMenu: (items) => menus.push(items.filter(isItem)),
       confirm: (confirmation) => {
         confirmations.push(confirmation);
 
         return Promise.resolve(confirmed);
       },
     },
+    runCommand: (id) => {
+      ran.push(id);
+    },
+    doNotDisturbItems: () => [
+      { label: "For 5 Minutes", enabled: true, click: () => {} },
+    ],
     log: () => false,
   });
 
-  return { handlers, removed, renamed, overlays, calls, menus, confirmations };
+  return {
+    handlers,
+    removed,
+    renamed,
+    overlays,
+    calls,
+    menus,
+    confirmations,
+    ran,
+  };
 };
 
 const settle = () => delay(0);
@@ -103,7 +123,7 @@ describe(createShellHandlers, () => {
     expect(item?.label).toBe("Remove Work…");
     expect(item?.enabled).toBeTruthy();
 
-    item?.click();
+    item?.click?.();
     await settle();
 
     expect(shell.confirmations).toStrictEqual([
@@ -122,7 +142,7 @@ describe(createShellHandlers, () => {
     const shell = setup({ confirmed: false });
 
     await shell.handlers.openProfileMenu({ profileId: "a" });
-    shell.menus[0]?.[1]?.click();
+    shell.menus[0]?.[1]?.click?.();
     await settle();
 
     expect(shell.confirmations[0]?.message).toBe("Remove Default?");
@@ -148,7 +168,7 @@ describe(createShellHandlers, () => {
 
     expect(item).toMatchObject({ label: "Rename…", enabled: true });
 
-    item?.click();
+    item?.click?.();
 
     expect(shell.overlays).toStrictEqual([
       { kind: "rename-profile", profileId: "b" },
@@ -235,7 +255,8 @@ describe(shellState, () => {
         SHOWN_SETTINGS,
         undefined,
         (profileId) =>
-          profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL
+          profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL,
+        undefined
       ).profiles
     ).toStrictEqual({
       profiles: [
@@ -279,7 +300,8 @@ describe(shellState, () => {
           statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
         SHOWN_SETTINGS,
         undefined,
-        () => NO_MAIL
+        () => NO_MAIL,
+        undefined
       ).tabs
     ).toStrictEqual({
       profileId: "a",
@@ -321,7 +343,8 @@ const overlaySlice = (open: Overlay | undefined) =>
     () => ({ kind: "live" }),
     SHOWN_SETTINGS,
     open,
-    () => NO_MAIL
+    () => NO_MAIL,
+    undefined
   ).overlay;
 
 describe("the overlay slice", () => {
@@ -362,5 +385,41 @@ describe(shellSettings, () => {
       design: "classic",
       vibrancy: false,
     });
+  });
+});
+
+const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
+  shellState(
+    two,
+    () => ({ kind: "live" }),
+    SHOWN_SETTINGS,
+    undefined,
+    () => NO_MAIL,
+    doNotDisturb
+  ).doNotDisturb;
+
+describe("Do Not Disturb in the shell", () => {
+  it("toggles through the registry's command and pops up the shared menu", async () => {
+    const shell = setup();
+
+    await shell.handlers.toggleDoNotDisturb({});
+    await shell.handlers.openDoNotDisturbMenu({});
+
+    expect(shell.ran).toStrictEqual(["doNotDisturb.toggle"]);
+    expect(
+      shell.menus.map((items) => items.map(({ label }) => label))
+    ).toStrictEqual([["For 5 Minutes"]]);
+  });
+
+  it("tells the shell whether it holds, and until when", () => {
+    expect([
+      doNotDisturbSlice(undefined),
+      doNotDisturbSlice({ until: null }),
+      doNotDisturbSlice({ until: 5000 }),
+    ]).toStrictEqual([
+      { on: false, until: null },
+      { on: true, until: null },
+      { on: true, until: 5000 },
+    ]);
   });
 });

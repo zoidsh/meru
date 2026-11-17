@@ -53,6 +53,10 @@ export const SHELL_CALLS = {
     response: z.undefined(),
   },
   closeOverlay: { request: none, response: z.undefined() },
+  /** On until turned off, or off, as the titlebar button's click asks. */
+  toggleDoNotDisturb: { request: none, response: z.undefined() },
+  /** Pops up the Do Not Disturb menu at the pointer. */
+  openDoNotDisturbMenu: { request: none, response: z.undefined() },
 } as const satisfies Record<
   ShellCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -93,6 +97,11 @@ export const SHELL_STATE = {
     design: z.enum(DESIGNS),
     /** Whether the window's vibrancy shows through the chrome. */
     vibrancy: z.boolean(),
+  }),
+  /** Whether Do Not Disturb holds, and until when: `null` for until turned off. */
+  doNotDisturb: z.object({
+    on: z.boolean(),
+    until: z.nullable(z.number()),
   }),
   /** What the overlay over the content views shows, if anything. */
   overlay: z.discriminatedUnion("kind", [

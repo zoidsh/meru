@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished } from "vitest";
 
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { COMMANDS, commandsFor } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
+import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createProfiles } from "./profiles.ts";
 import { createSettingsStore } from "./settings.ts";
 import { shellSettings } from "./shell-handlers.ts";
@@ -42,6 +43,12 @@ const setup = (initial: State = twoProfiles) => {
     platform: "darwin",
     log: () => false,
   });
+  // 17 November 2026, 14:00 by the local clock.
+  const doNotDisturb = createDoNotDisturb({
+    profiles,
+    now: () => new Date(2026, 10, 17, 14),
+    log: () => false,
+  });
   let reloads = 0;
   const renames: string[] = [];
   const actions: CommandActions = {
@@ -56,11 +63,18 @@ const setup = (initial: State = twoProfiles) => {
     openRenameProfile: (profileId) => {
       renames.push(profileId);
     },
+    switchDoNotDisturb: (choice) =>
+      choice === "off"
+        ? doNotDisturb.switchOff()
+        : doNotDisturb.switchOn(choice),
   };
   const context = (): CommandContext => ({
     state: profiles.get(),
     setting: settings.get,
+    doNotDisturb: doNotDisturb.current(),
   });
+
+  onTestFinished(doNotDisturb.dispose);
 
   return {
     profiles,
@@ -212,5 +226,47 @@ describe(commandsFor, () => {
       hasVibrancy("win32"),
       hasVibrancy("linux"),
     ]).toStrictEqual([true, false, false]);
+  });
+
+  it("switches Do Not Disturb on for a duration and until tomorrow", async () => {
+    const app = setup();
+
+    expect([
+      app.isChecked("doNotDisturb.toggle"),
+      app.isAvailable("doNotDisturb.off"),
+    ]).toStrictEqual([false, false]);
+
+    await app.run("doNotDisturb.30m");
+
+    expect(app.profiles.get().doNotDisturb).toStrictEqual({
+      until: new Date(2026, 10, 17, 14, 30).getTime(),
+    });
+    expect([
+      app.isChecked("doNotDisturb.toggle"),
+      app.isAvailable("doNotDisturb.off"),
+    ]).toStrictEqual([true, true]);
+
+    await app.run("doNotDisturb.untilTomorrow");
+
+    expect(app.profiles.get().doNotDisturb).toStrictEqual({
+      until: new Date(2026, 10, 18).getTime(),
+    });
+  });
+
+  it("toggles Do Not Disturb between until turned off and off, and turns it off", async () => {
+    const app = setup();
+
+    await app.run("doNotDisturb.30m");
+    await app.run("doNotDisturb.toggle");
+
+    expect(app.profiles.get()).not.toHaveProperty("doNotDisturb");
+
+    await app.run("doNotDisturb.toggle");
+
+    expect(app.profiles.get().doNotDisturb).toStrictEqual({ until: null });
+
+    await app.run("doNotDisturb.off");
+
+    expect(app.profiles.get()).not.toHaveProperty("doNotDisturb");
   });
 });

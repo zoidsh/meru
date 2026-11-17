@@ -63,6 +63,7 @@ const setup = () => {
     profiles: profilesSlice("a"),
     tabs: TABS,
     settings: { design: "modern", vibrancy: false },
+    doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },
   };
 
@@ -127,6 +128,16 @@ const setup = () => {
     },
     closeOverlay: (request) => {
       calls.push(["closeOverlay", request]);
+
+      return Promise.resolve();
+    },
+    toggleDoNotDisturb: (request) => {
+      calls.push(["toggleDoNotDisturb", request]);
+
+      return Promise.resolve();
+    },
+    openDoNotDisturbMenu: (request) => {
+      calls.push(["openDoNotDisturbMenu", request]);
 
       return Promise.resolve();
     },

@@ -10,6 +10,8 @@ export const SHELL_CALL_NAMES = [
   "retryTab",
   "renameProfile",
   "closeOverlay",
+  "toggleDoNotDisturb",
+  "openDoNotDisturbMenu",
 ] as const;
 
 export type ShellCallName = (typeof SHELL_CALL_NAMES)[number];

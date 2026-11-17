@@ -1,9 +1,11 @@
-import { t } from "@lingui/core/macro";
+import { plural, t } from "@lingui/core/macro";
 
+import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
+import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
 import type { Platform } from "#core/platform.ts";
 import type { Design, SettingKey, SettingValue } from "#core/settings.ts";
 import { adjacentProfile, selectedProfile } from "#core/state.ts";
-import type { State } from "#core/state.ts";
+import type { DoNotDisturb, State } from "#core/state.ts";
 import { adjacentTab, canCloseTab, findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 
@@ -11,6 +13,8 @@ import type { TabKey } from "#core/tabs.ts";
 export interface CommandContext {
   state: State;
   setting: <Key extends SettingKey>(key: Key) => SettingValue<Key>;
+  /** Do Not Disturb while it holds, else `undefined`. */
+  doNotDisturb: DoNotDisturb | undefined;
 }
 
 /** What commands do, each through the module that owns it. */
@@ -27,6 +31,8 @@ export interface CommandActions {
   addProfile: () => Promise<unknown>;
   /** Opens the overlay with a field for the profile's name. */
   openRenameProfile: (profileId: string) => void;
+  /** Switches Do Not Disturb on for the duration, or off. */
+  switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
 }
 
 export interface Command {
@@ -88,6 +94,54 @@ const selectAdjacentProfile = (offset: number): Command["run"] => {
 
   return run;
 };
+
+/** The id of the command that switches Do Not Disturb on for `duration`. */
+export const doNotDisturbCommandId = (duration: DoNotDisturbDuration) =>
+  `doNotDisturb.${duration.id}`;
+
+const durationTitle = (duration: DoNotDisturbDuration) => {
+  switch (duration.id) {
+    case "untilOff": {
+      return t({
+        message: "Until Turned Off",
+        comment:
+          "Item in the Do Not Disturb menu that holds notifications until the person turns Do Not Disturb off",
+      });
+    }
+    case "untilTomorrow": {
+      return t({
+        message: "Until Tomorrow",
+        comment:
+          "Item in the Do Not Disturb menu that holds notifications until midnight tonight",
+      });
+    }
+    default: {
+      const { minutes } = duration;
+      const hours = minutes / 60;
+
+      return minutes < 60
+        ? t({
+            message: plural(minutes, {
+              one: "For # Minute",
+              other: "For # Minutes",
+            }),
+            comment:
+              "Item in the Do Not Disturb menu that holds notifications for this many minutes",
+          })
+        : t({
+            message: plural(hours, {
+              one: "For # Hour",
+              other: "For # Hours",
+            }),
+            comment:
+              "Item in the Do Not Disturb menu that holds notifications for this many hours",
+          });
+    }
+  }
+};
+
+const isDoNotDisturbOn = ({ doNotDisturb }: CommandContext) =>
+  doNotDisturb !== undefined;
 
 const hasOtherTab = ({ state }: CommandContext) =>
   adjacentTab(state, 1) !== undefined;
@@ -248,6 +302,36 @@ export const COMMANDS: readonly Command[] = [
       return Promise.resolve();
     },
   },
+  {
+    id: "doNotDisturb.toggle",
+    title: () =>
+      t({
+        message: "Do Not Disturb",
+        comment:
+          "Command that turns Do Not Disturb on until turned off, or off, checked while it holds new mail notifications",
+      }),
+    isChecked: isDoNotDisturbOn,
+    run: (context, { switchDoNotDisturb }) =>
+      switchDoNotDisturb(
+        isDoNotDisturbOn(context) ? "off" : DO_NOT_DISTURB_DURATIONS[0]
+      ),
+  },
+  {
+    id: "doNotDisturb.off",
+    title: () =>
+      t({
+        message: "Turn Off",
+        comment:
+          "Item in the Do Not Disturb menu that turns Do Not Disturb off, so notifications show again",
+      }),
+    isAvailable: isDoNotDisturbOn,
+    run: (_context, { switchDoNotDisturb }) => switchDoNotDisturb("off"),
+  },
+  ...DO_NOT_DISTURB_DURATIONS.map((duration): Command => ({
+    id: doNotDisturbCommandId(duration),
+    title: () => durationTitle(duration),
+    run: (_context, { switchDoNotDisturb }) => switchDoNotDisturb(duration),
+  })),
 ];
 
 /** The commands that exist on `platform`. */

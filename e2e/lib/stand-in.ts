@@ -41,6 +41,9 @@ const ELSEWHERE_LINK = `<a href="${ELSEWHERE_URL}" target="_blank">Another site<
 /** Where Meru reads the unread mail of a Gmail session. */
 export const FEED_PATH = "/mail/u/0/feed/atom";
 
+/** Where Meru reads the unread mail Gmail marks as important. */
+const IMPORTANT_FEED_PATH = `${FEED_PATH}/^iim`;
+
 /** The cookie that tells the feed whose mail to answer with. */
 export const ACCOUNT_COOKIE = "account";
 
@@ -69,10 +72,11 @@ export interface StandInMail {
 
 /**
  * What the feed answers an account with: a count and the messages it lists,
- * newest first, or sign-in.
+ * newest first, or sign-in. The Important feed lists those of the messages
+ * whose ids `important` names, none when it names none.
  */
 export type FeedAnswer =
-  | { unreadCount: number; mail?: StandInMail[] }
+  | { unreadCount: number; mail?: StandInMail[]; important?: string[] }
   | { redirect: true };
 
 const DEFAULT_MAIL: StandInMail[] = [
@@ -318,7 +322,9 @@ export const startStandIn = async (): Promise<StandIn> => {
       return true;
     }
 
-    if (request.url !== FEED_PATH) {
+    const path = decodeURIComponent(request.url ?? "");
+
+    if (path !== FEED_PATH && path !== IMPORTANT_FEED_PATH) {
       return false;
     }
 
@@ -327,12 +333,22 @@ export const startStandIn = async (): Promise<StandIn> => {
     if ("redirect" in answer) {
       response.writeHead(302, { Location: `${origins.signIn}signin` }).end();
     } else {
+      const mail = answer.mail ?? DEFAULT_MAIL;
+      const listed =
+        path === FEED_PATH
+          ? mail
+          : mail.filter((message) => answer.important?.includes(message.id));
+
       response
         .writeHead(200, {
           "Content-Type": "application/atom+xml; charset=utf-8",
         })
         .end(
-          feed(answer.unreadCount, answer.mail ?? DEFAULT_MAIL, origins.gmail)
+          feed(
+            path === FEED_PATH ? answer.unreadCount : listed.length,
+            listed,
+            origins.gmail
+          )
         );
     }
 

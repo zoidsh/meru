@@ -362,3 +362,82 @@ test("a notification's action runs on its message in its profile, with no page, 
     "true"
   );
 });
+
+const capturedTitles = async (app: ElectronApplication) => {
+  const notifications = await captured(app);
+
+  return notifications.map(({ title }) => title);
+};
+
+const doNotDisturbButton = (shell: Page) =>
+  shell
+    .getByRole("banner", { name: "Title bar" })
+    .getByRole("button", { name: "Do Not Disturb" });
+
+test("holds mail while Do Not Disturb is on, never shows it later, and notifies again once it is off", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  standIn.setFeed(ANY_SESSION, listing("1"));
+
+  const { app, shell, gmail } = await launchOn(launchApp, standIn);
+  const home = profileTab(shell, "Home");
+  const button = doNotDisturbButton(shell);
+
+  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+  await expect(button).toHaveAttribute("aria-pressed", "false");
+
+  await button.click();
+
+  await expect(button).toHaveAttribute("aria-pressed", "true");
+  await expect(button).toHaveAttribute(
+    "title",
+    "Do Not Disturb is on until turned off"
+  );
+
+  standIn.setFeed(ANY_SESSION, listing("2", "1"));
+  await retitle(gmail, "Inbox (2)");
+
+  // The count follows held mail.
+  await expect(home).toHaveAccessibleName("Home, 2 unread messages");
+  expect(await captured(app)).toStrictEqual([]);
+
+  await button.click();
+
+  await expect(button).toHaveAttribute("aria-pressed", "false");
+
+  standIn.setFeed(ANY_SESSION, listing("3", "2", "1"));
+  await retitle(gmail, "Inbox (3)");
+
+  await expect(home).toHaveAccessibleName("Home, 3 unread messages");
+  await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 3"]);
+});
+
+test("with important only, notifies just the new mail the Important feed lists", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  await writeFile(
+    path.join(userDataDir, "settings.json"),
+    JSON.stringify({ version: 1, notificationImportantOnly: true })
+  );
+  standIn.setFeed(ANY_SESSION, listing("1"));
+
+  const { app, shell, gmail } = await launchOn(launchApp, standIn);
+  const home = profileTab(shell, "Home");
+
+  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+
+  standIn.setFeed(ANY_SESSION, {
+    ...listing("3", "2", "1"),
+    important: ["2", "1"],
+  });
+  await retitle(gmail, "Inbox (3)");
+
+  await expect(home).toHaveAccessibleName("Home, 3 unread messages");
+  await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 2"]);
+});

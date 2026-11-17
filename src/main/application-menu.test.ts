@@ -25,6 +25,7 @@ const contextOf = (
   state: oneProfile,
   setting: ((key: string) =>
     key === "design" ? design : true) as CommandContext["setting"],
+  doNotDisturb: undefined,
 });
 
 const template = (platform: Platform, context = contextOf()) =>
@@ -34,6 +35,7 @@ const template = (platform: Platform, context = contextOf()) =>
     commands: commandsFor(platform),
     context,
     run: () => false,
+    locale: "en",
   });
 
 const submenu = (menu: MenuItemConstructorOptions) =>
@@ -92,6 +94,7 @@ describe(buildMenuTemplate, () => {
       commands: commandsFor("darwin"),
       context: contextOf(),
       run: () => false,
+      locale: "en",
       developerTools: { role: "toggleDevTools" },
     });
 
@@ -144,8 +147,9 @@ const setup = () => {
     platform: "darwin",
     appName: "Meru",
     commands: commandsFor("darwin"),
-    context: () => ({ state, setting: settings.get }),
+    context: () => ({ state, setting: settings.get, doNotDisturb: undefined }),
     actions,
+    locale: () => "en",
     setMenu: (next) => set.push(next),
     log: () => false,
   });

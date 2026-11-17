@@ -7,6 +7,7 @@ import type { KeyInput } from "#core/accelerator.ts";
 import type { Platform } from "#core/platform.ts";
 
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
+import { doNotDisturbItems } from "./do-not-disturb.ts";
 
 export interface MenuTemplateInput {
   platform: Platform;
@@ -15,6 +16,8 @@ export interface MenuTemplateInput {
   context: CommandContext;
   /** Runs a command when its item is clicked or its shortcut pressed. */
   run: (command: Command) => void;
+  /** The app's language, which times are written in. */
+  locale: string;
   /** Ends the View menu; given by a development build alone. */
   developerTools?: MenuItemConstructorOptions;
 }
@@ -32,6 +35,7 @@ export const buildMenuTemplate = ({
   commands,
   context,
   run,
+  locale,
   developerTools,
 }: MenuTemplateInput): MenuItemConstructorOptions[] => {
   const isMacOS = platform === "darwin";
@@ -76,6 +80,15 @@ export const buildMenuTemplate = ({
     ...(!isMacOS && { accelerator: "CommandOrControl+Q" }),
   };
 
+  const doNotDisturb: MenuItemConstructorOptions = {
+    label: t({
+      message: "Do Not Disturb",
+      comment:
+        "Submenu of the app menu with how long to hold new mail notifications for, or to stop",
+    }),
+    submenu: doNotDisturbItems(commands, context, locale, run),
+  };
+
   const appMenu: MenuItemConstructorOptions = {
     label: appName,
     submenu: isMacOS
@@ -88,6 +101,8 @@ export const buildMenuTemplate = ({
             }),
             role: "about",
           },
+          separator,
+          doNotDisturb,
           separator,
           {
             label: t({
@@ -125,7 +140,7 @@ export const buildMenuTemplate = ({
           separator,
           quit,
         ]
-      : [quit],
+      : [doNotDisturb, separator, quit],
   };
 
   const editMenu: MenuItemConstructorOptions = {
@@ -339,6 +354,7 @@ export interface ApplicationMenuDeps {
   commands: readonly Command[];
   context: () => CommandContext;
   actions: CommandActions;
+  locale: () => string;
   setMenu: (template: MenuItemConstructorOptions[]) => void;
   log: (message: string) => void;
 }
@@ -357,17 +373,21 @@ export const createApplicationMenu = ({
   commands,
   context,
   actions,
+  locale,
   setMenu,
   log,
 }: ApplicationMenuDeps) => {
   let shown: unknown;
 
-  const offered = (current: CommandContext) =>
-    commands.map((command) => [
+  // With Do Not Disturb's end, which its menu says.
+  const offered = (current: CommandContext) => [
+    current.doNotDisturb?.until,
+    ...commands.map((command) => [
       command.id,
       command.isAvailable?.(current) ?? true,
       command.isChecked?.(current),
-    ]);
+    ]),
+  ];
 
   /**
    * A command fails into the log. A choice's menu is set again after it
@@ -402,6 +422,7 @@ export const createApplicationMenu = ({
         run: (command) => {
           run(command);
         },
+        locale: locale(),
         ...(developerTools && { developerTools }),
       })
     );
@@ -410,6 +431,19 @@ export const createApplicationMenu = ({
   build(true);
 
   return {
+    /** Runs the command with `id`, as its menu item would. */
+    runCommand: (id: string) => {
+      const command = commands.find((candidate) => candidate.id === id);
+
+      if (command) {
+        void run(command);
+      }
+    },
+    /** The Do Not Disturb menu as the application menu has it now. */
+    doNotDisturbItems: () =>
+      doNotDisturbItems(commands, context(), locale(), (command) => {
+        void run(command);
+      }),
     /** Sets the menu again if what it offers has changed. */
     refresh: () => {
       build(false);

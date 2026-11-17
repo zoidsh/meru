@@ -32,11 +32,14 @@ export interface WindowOptions {
 // as a sidebar is.
 const VIBRANCY = "sidebar";
 
-export interface ContextMenuItem {
-  label: string;
-  enabled: boolean;
-  click: () => void;
-}
+export type ContextMenuItem =
+  | {
+      label: string;
+      enabled: boolean;
+      /** None for a line that only says something. */
+      click?: () => void;
+    }
+  | { type: "separator" };
 
 export interface Confirmation {
   message: string;

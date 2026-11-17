@@ -3,6 +3,7 @@ import path from "node:path";
 import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome } from "#core/feed.ts";
+import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
@@ -11,7 +12,7 @@ import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
 import { totalUnread } from "#core/unread.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
-import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
+import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createBadge, createCapturedBadge } from "#platform/badge.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
@@ -41,6 +42,7 @@ import { createUnreadBadge } from "./badge.ts";
 import { commandsFor } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
+import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
 import { createMailActions } from "./mail-actions.ts";
@@ -224,6 +226,12 @@ const start = async () => {
     newId,
     profileName: automaticProfileName,
     clearSession: sessions.clear,
+    now: Date.now,
+    log: console.error,
+  });
+  const doNotDisturb = createDoNotDisturb({
+    profiles,
+    now: () => new Date(),
     log: console.error,
   });
 
@@ -312,13 +320,17 @@ const start = async () => {
   // The registry's Gmail, or the suite's stand-in for it.
   const feedUrl = gmail && `${new URL(gmail.home).origin}${FEED_PATH}`;
   const mail = createMailPoller({
-    fetchFeed: async (profileId, signal) => {
+    fetchFeed: async (profileId, signal, label) => {
       if (!feedUrl) {
         return { kind: "failed", reason: "no Gmail" };
       }
 
       return feedOutcome(
-        await sessions.get(profilePartition(profileId), feedUrl, signal)
+        await sessions.get(
+          profilePartition(profileId),
+          label === undefined ? feedUrl : `${feedUrl}/${label}`,
+          signal
+        )
       );
     },
     isOnline: network.isOnline,
@@ -331,7 +343,11 @@ const start = async () => {
   // A removed profile's polling stops here, before its data is cleared.
   profiles.onChange(pollProfiles);
   network.onOnline(mail.pokeAll);
-  createPower().onResume(mail.pokeAll);
+
+  const power = createPower();
+
+  power.onResume(mail.pokeAll);
+  power.onResume(doNotDisturb.resume);
 
   const views = createTabViews({
     window: shell.window,
@@ -417,11 +433,23 @@ const start = async () => {
       act: (profileId, action, messageId) => {
         void mailActions.run(profileId, action, messageId);
       },
+      doNotDisturb: () => profiles.get().doNotDisturb,
+      now: () => new Date(),
+      important: async (profileId) => {
+        const outcome = await mail.readLabel(profileId, IMPORTANT_LABEL);
+
+        return outcome.kind === "feed"
+          ? new Set(outcome.feed.entries.map((entry) => entry.id))
+          : null;
+      },
+      log: console.error,
     });
 
     // A removed profile's actions stop here, before its data is cleared.
     profiles.onChange(mailActions.follow);
-    mail.onPoll(mailNotifications.polled);
+    mail.onPoll((profileId, outcome) => {
+      void mailNotifications.polled(profileId, outcome);
+    });
     profiles.onChange(mailNotifications.follow);
   }
 
@@ -437,7 +465,11 @@ const start = async () => {
     platform,
     appName: lifecycle.name,
     commands: commandsFor(platform),
-    context: () => ({ state: profiles.get(), setting: settings.get }),
+    context: () => ({
+      state: profiles.get(),
+      setting: settings.get,
+      doNotDisturb: doNotDisturb.current(),
+    }),
     actions: {
       updateSetting: settings.update,
       reloadSelectedTab: views.reloadFront,
@@ -448,7 +480,12 @@ const start = async () => {
       openRenameProfile: (profileId) => {
         overlays.open({ kind: "rename-profile", profileId });
       },
+      switchDoNotDisturb: (choice) =>
+        choice === "off"
+          ? doNotDisturb.switchOff()
+          : doNotDisturb.switchOn(choice),
     },
+    locale: () => i18n.locale,
     setMenu: setApplicationMenu,
     ...(MERU_BUILD_MODE === "dev" && {
       developerTools: { role: "toggleDevTools" as const },
@@ -470,6 +507,8 @@ const start = async () => {
       overlays,
       tabs: views,
       window: shell.window,
+      runCommand: menu.runCommand,
+      doNotDisturbItems: menu.doNotDisturbItems,
       log: console.error,
     }),
     state: {
@@ -479,7 +518,8 @@ const start = async () => {
           views.status,
           shellSettings(settings.get, isMacOS),
           overlays.current(),
-          mail.mail
+          mail.mail,
+          doNotDisturb.current()
         ),
       onChange: (listener) => {
         profiles.onChange(listener);
@@ -572,6 +612,7 @@ const start = async () => {
 
   lifecycle.onBeforeQuit(() => {
     closing.markQuitting();
+    doNotDisturb.dispose();
     badge.close();
     tray.close();
   });

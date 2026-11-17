@@ -1,8 +1,8 @@
 import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
-import { PlusIcon } from "lucide-react";
-import { useEffect } from "react";
+import { MoonIcon, PlusIcon } from "lucide-react";
+import { useEffect, useMemo } from "react";
 
 import { TITLEBAR_HEIGHT, viewFrame } from "#core/layout.ts";
 import { MAX_SHOWN_UNREAD } from "#core/unread.ts";
@@ -105,6 +105,74 @@ const Profiles = () => {
   );
 };
 
+/**
+ * Do Not Disturb's button: a click turns it on until turned off, or off, and
+ * the context menu, as the app menu's submenu, offers how long.
+ */
+const DoNotDisturbButton = () => {
+  const { i18n, t } = useLingui();
+  const doNotDisturb = useShellState("doNotDisturb");
+  const timeFormat = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.locale, {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+    [i18n.locale]
+  );
+
+  if (!doNotDisturb) {
+    return null;
+  }
+
+  const { on, until } = doNotDisturb;
+  let tooltip = t({
+    message: "Do Not Disturb is off",
+    comment:
+      "Tooltip of the moon button in the title bar while new mail notifications show; a click turns Do Not Disturb on",
+  });
+
+  if (on && until === null) {
+    tooltip = t({
+      message: "Do Not Disturb is on until turned off",
+      comment:
+        "Tooltip of the moon button in the title bar while it holds new mail notifications until the person turns it off",
+    });
+  } else if (on && until !== null) {
+    const time = timeFormat.format(until);
+
+    tooltip = t({
+      message: `Do Not Disturb is on until ${time}`,
+      comment:
+        "Tooltip of the moon button in the title bar while it holds new mail notifications; {time} is the time of day it ends, such as 14:30",
+    });
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-pressed={on}
+      aria-label={t({
+        message: "Do Not Disturb",
+        comment:
+          "Accessible name of the moon button in the title bar that holds new mail notifications, read by screen readers with whether it is pressed",
+      })}
+      title={tooltip}
+      className={cn("[app-region:no-drag]", on && "bg-muted text-foreground")}
+      onClick={() => {
+        shellCalls().toggleDoNotDisturb({});
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        shellCalls().openDoNotDisturbMenu({});
+      }}
+    >
+      <MoonIcon className={cn(on && "fill-current")} />
+    </Button>
+  );
+};
+
 export const App = () => {
   const { t } = useLingui();
   const tabs = useShellState("tabs");
@@ -141,6 +209,7 @@ export const App = () => {
         <Profiles />
         {/* Keeps part of the title bar for dragging the window, however many profiles there are. */}
         <div aria-hidden className="h-full min-w-16 flex-1" />
+        <DoNotDisturbButton />
       </header>
       <div className="flex min-h-0 flex-1">
         {tabs && <TabStrip tabs={tabs} bordered={design === "classic"} />}

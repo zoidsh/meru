@@ -2,11 +2,11 @@ import type { ShellState } from "#contract/shell.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { canRemoveProfile, knownTabs, selectedProfile } from "#core/state.ts";
-import type { State } from "#core/state.ts";
+import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import { canCloseTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
-import type { AppWindow } from "#platform/window.ts";
+import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
 import type { Mail } from "./mail.ts";
 import type { Overlays } from "./overlay.ts";
@@ -27,6 +27,10 @@ export interface ShellHandlersDeps {
   overlays: Pick<Overlays, "open" | "close" | "current">;
   tabs: { retry: (key: TabKey) => void };
   window: Pick<AppWindow, "showContextMenu" | "confirm">;
+  /** Runs a command of the registry, as its menu item would. */
+  runCommand: (id: string) => void;
+  /** The Do Not Disturb menu as the application menu has it now. */
+  doNotDisturbItems: () => ContextMenuItem[];
   log: (message: string) => void;
 }
 
@@ -82,7 +86,8 @@ export const shellState = (
   status: (key: TabKey) => TabStatus,
   settings: ShellState["settings"],
   overlay: Overlay | undefined,
-  mail: (profileId: string) => Mail
+  mail: (profileId: string) => Mail,
+  doNotDisturb: DoNotDisturb | undefined
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -109,6 +114,10 @@ export const shellState = (
       })),
     },
     settings,
+    doNotDisturb: {
+      on: doNotDisturb !== undefined,
+      until: doNotDisturb?.until ?? null,
+    },
     overlay: shellOverlay(state, overlay),
   };
 };
@@ -118,6 +127,8 @@ export const createShellHandlers = ({
   overlays,
   tabs,
   window,
+  runCommand,
+  doNotDisturbItems,
   log,
 }: ShellHandlersDeps): ShellHandlers => {
   const confirmAndRemove = async (profileId: string, name: string) => {
@@ -174,6 +185,16 @@ export const createShellHandlers = ({
     },
     closeOverlay: () => {
       overlays.close();
+
+      return Promise.resolve();
+    },
+    toggleDoNotDisturb: () => {
+      runCommand("doNotDisturb.toggle");
+
+      return Promise.resolve();
+    },
+    openDoNotDisturbMenu: () => {
+      window.showContextMenu(doNotDisturbItems());
 
       return Promise.resolve();
     },

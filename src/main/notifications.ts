@@ -3,10 +3,15 @@ import { plural, t } from "@lingui/core/macro";
 import type { FeedOutcome } from "#core/feed.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import type { MailAction } from "#core/mail-actions.ts";
+import {
+  decideNotification,
+  importantOnly,
+  momentOf,
+} from "#core/notification-gate.ts";
 import { messageUrl, noticesFor, takeNewMail } from "#core/notifications.ts";
 import type { Notice, NotificationCopy, Seen } from "#core/notifications.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
-import type { State } from "#core/state.ts";
+import type { DoNotDisturb, State } from "#core/state.ts";
 import type { Notifier, ShownNotification } from "#platform/notifications.ts";
 
 import { profileDisplayName } from "./profile-copy.ts";
@@ -24,6 +29,12 @@ export interface MailNotificationsDeps {
   open: (profileId: string, url: string) => void;
   /** Runs an action on a message, leaving the window where it is. */
   act: (profileId: string, action: MailAction, messageId: string) => void;
+  /** As the state holds it; one that has ended holds nothing. */
+  doNotDisturb: () => DoNotDisturb | undefined;
+  now: () => Date;
+  /** The ids the profile's Important feed lists, or `null` if it failed. */
+  important: (profileId: string) => Promise<ReadonlySet<string> | null>;
+  log: (message: string) => void;
 }
 
 const actionLabels = (): Record<MailAction, string> => ({
@@ -81,6 +92,10 @@ export const createMailNotifications = ({
   inbox,
   open,
   act,
+  doNotDisturb,
+  now,
+  important,
+  log,
 }: MailNotificationsDeps) => {
   const seen = new Map<string, Seen>();
   const shown = new Map<string, Set<ShownNotification>>();
@@ -125,14 +140,16 @@ export const createMailNotifications = ({
   };
 
   return {
-    /** Told of each poll of a listed profile as it ends. */
-    polled: (profileId: string, outcome: FeedOutcome) => {
-      const current = state();
-      const profile = current.profiles.find(
-        (candidate) => candidate.id === profileId
-      );
+    /**
+     * Told of each poll of a listed profile as it ends. Held mail stays seen
+     * and is never notified later. Important only asks the Important feed
+     * just when there is something to notify.
+     */
+    polled: async (profileId: string, outcome: FeedOutcome) => {
+      const listed = () =>
+        state().profiles.find((candidate) => candidate.id === profileId);
 
-      if (!profile) {
+      if (!listed()) {
         return;
       }
 
@@ -140,11 +157,48 @@ export const createMailNotifications = ({
 
       seen.set(profileId, taken.seen);
 
-      if (taken.fresh.length === 0 || !setting("notifications")) {
+      if (taken.fresh.length === 0) {
         return;
       }
 
-      const notices = noticesFor(taken.fresh, {
+      const decision = decideNotification({
+        kind: "newMail",
+        notifications: setting("notifications"),
+        quietHours: setting("quietHours"),
+        doNotDisturb: doNotDisturb(),
+        now: momentOf(now()),
+      });
+
+      if (!decision.show) {
+        log(
+          `Held ${taken.fresh.length} new mail notification(s) of profile ${profileId}: ${decision.reason}`
+        );
+
+        return;
+      }
+
+      let { fresh } = taken;
+
+      if (setting("notificationImportantOnly")) {
+        const ids = await important(profileId);
+
+        if (ids === null) {
+          log(
+            `The Important feed of profile ${profileId} was not read, so all new mail is notified`
+          );
+        }
+
+        fresh = importantOnly(fresh, ids);
+      }
+
+      const current = state();
+      const profile = listed();
+
+      if (fresh.length === 0 || !profile) {
+        return;
+      }
+
+      const notices = noticesFor(fresh, {
         parts: {
           sender: setting("notificationSender"),
           subject: setting("notificationSubject"),

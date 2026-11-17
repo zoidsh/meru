@@ -53,6 +53,7 @@ const connect = () => {
     "profiles",
     "tabs",
     "settings",
+    "doNotDisturb",
     "overlay",
   ]);
 
