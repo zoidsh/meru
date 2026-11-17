@@ -25,8 +25,8 @@ const entry = (source: string, anchor: Anchor = "word"): LexiconEntry => ({
 });
 
 /**
- * Words that name a one-time code. `pin` is a whole word so that it never
- * matches inside "shipping".
+ * Words that name a one-time code. A PIN on its own is a standing one (a
+ * card's, a door's, a meeting's), so only a one-time or sign-in PIN counts.
  */
 export const CODE_WORDS: readonly LexiconEntry[] = [
   entry("code", "end"),
@@ -38,7 +38,9 @@ export const CODE_WORDS: readonly LexiconEntry[] = [
   entry("otp"),
   entry(String.raw`one[-\s]?time\s?password`),
   entry("passcode"),
-  entry("pin"),
+  entry(
+    String.raw`(?:one[-\s]?time|verification|log[-\s]?in|sign[-\s]?in)\s+pin`
+  ),
   entry("2fa"),
   entry("код", "none"),
   entry("कोड", "none"),
@@ -64,6 +66,8 @@ export const CONTEXT_WORDS: readonly LexiconEntry[] = [
   entry("security"),
   entry("authentic", "start"),
   entry(String.raw`two[-\s]?factor`),
+  entry(String.raw`password\s+reset|reset\s+(?:the\s+|your\s+)?password`),
+  entry("passwort", "start"),
   entry("x[áa]c minh", "start"),
   entry("подтвержд", "none"),
   entry("認証", "none"),
@@ -85,6 +89,11 @@ export const DELIVERY_WORDS: readonly LexiconEntry[] = [
   entry("ship", "start"),
   entry("track", "start"),
   entry("courier"),
+  entry("driver"),
+  entry("parcel", "start"),
+  entry("packstation"),
+  entry("locker", "start"),
+  entry("counter"),
   entry("dispatch", "start"),
   entry("liefer", "start"),
   entry("zustell", "start"),
@@ -101,7 +110,9 @@ export const DELIVERY_WORDS: readonly LexiconEntry[] = [
 
 /** Words of discounts and shopping, whose numeric codes look like sign-in ones. */
 export const PROMO_WORDS: readonly LexiconEntry[] = [
-  entry(String.raw`\d\s?%\s?off|percent\s?off`, "none"),
+  entry(String.raw`\d\s?%|percent\s?off`, "none"),
+  entry("sparen"),
+  entry("ahorra", "start"),
   entry("discount", "start"),
   entry("promo", "start"),
   entry("referral", "start"),
@@ -120,6 +131,40 @@ export const PROMO_WORDS: readonly LexiconEntry[] = [
   entry("折扣|优惠|優惠", "none"),
   entry("割引|クーポン", "none"),
   entry("할인|쿠폰", "none"),
+];
+
+/** Words of orders, whose numbers sit beside a code they are not. */
+export const ORDER_WORDS: readonly LexiconEntry[] = [
+  entry("order", "start"),
+  entry("bestell", "start"),
+  entry("commande", "start"),
+  entry("pedido", "start"),
+  entry("encomenda", "start"),
+  entry("ordine"),
+  entry("zam[oó]wieni", "start"),
+  entry("sipari[şs]", "start"),
+  entry("заказ", "none"),
+  entry("注文|订单|訂單", "none"),
+  entry("주문", "none"),
+];
+
+/**
+ * Words of codes that stand rather than expire: a meeting's passcode, a
+ * class's join code, a door's or a gate's. They are typed at a keypad or a
+ * phone, or kept, never pasted once into a sign-in.
+ */
+export const STANDING_WORDS: readonly LexiconEntry[] = [
+  entry("meeting", "start"),
+  entry("invitation"),
+  entry("webinar"),
+  entry(String.raw`dial[-\s]?in`),
+  entry("conference"),
+  entry(String.raw`zoom\.us`),
+  entry("class(?:room)?"),
+  entry("door"),
+  entry("gate"),
+  entry("garage"),
+  entry("keypad"),
 ];
 
 /**
@@ -164,13 +209,44 @@ export const OTHER_KINDS_BEFORE: readonly string[] = [
   "aktions",
   "empfehlungs",
   "geschenk",
+  "промо",
+  "ticket",
+  "reference",
+  "ref",
+  "customer",
+  "client",
+  "account",
+  "member",
+  "product",
+  "sort",
+  "tax",
+  "vat",
+  "tariff",
+  "class",
+  "door",
+  "gate",
+  "garage",
+  "meeting",
+  "source",
+  "clean",
 ];
 
 /**
  * The same, in languages that write the kind after the code word: Polish "kod
- * zamówienia", Spanish "código del pedido", French "code de commande".
+ * zamówienia", Spanish "código del pedido", French "code de commande". English
+ * puts a program's source here: "code review", "code of conduct".
  */
 export const OTHER_KINDS_AFTER: readonly string[] = [
+  "review",
+  "freeze",
+  "coverage",
+  "walkthrough",
+  "conduct",
+  "practice",
+  "rastreio",
+  "rastreamento",
+  "seguimiento",
+  "suivi",
   String.raw`zam[oó]wieni\p{L}*`,
   "pedido",
   "commande",
@@ -185,11 +261,36 @@ export const OTHER_KINDS_AFTER: readonly string[] = [
 ];
 
 /**
- * Words a number follows that is not a code: orders, invoices, tickets,
- * flights, and accounts and tax numbers when a number word follows them
- * ("account number", "VAT no.").
+ * Words a number follows that is not a code, directly or through a number word
+ * from `NUMBER_WORDS` ("account number", "VAT no.", "注文番号"): orders,
+ * invoices, tickets, flights, accounts, tax numbers, card endings, the
+ * references of software (pull requests, issues, builds, releases, incidents)
+ * and of places (rooms, sections, servers).
  */
 export const REFERENCE_WORDS: readonly string[] = [
+  "pr",
+  "issue",
+  "build",
+  "job",
+  "runner",
+  "release",
+  "version",
+  "deployment",
+  "incident",
+  "alert",
+  "case",
+  "sku",
+  "document",
+  "meter",
+  "id",
+  "room",
+  "section",
+  "server",
+  "host",
+  "line",
+  "seat",
+  "booking",
+  String.raw`ending(?:\s+in)?`,
   "order",
   "invoice",
   "receipt",
@@ -233,8 +334,113 @@ export const REFERENCE_WORDS: readonly string[] = [
   "card",
 ];
 
-/** What a number before one of these counts, so it is an amount, not a code. */
+/** Words that stand between a reference word and its number. */
+export const NUMBER_WORDS: readonly string[] = [
+  "number",
+  String.raw`no\.?`,
+  String.raw`nr\.?`,
+  "n[°º]",
+  "№",
+  "#",
+  ":",
+  "nummer",
+  "num[ée]ro",
+  "n[úu]mero",
+  "numer",
+  "номер",
+  "番号",
+  "号",
+  "번호",
+  "رقم",
+];
+
+/**
+ * Words a phone number follows. "Phone" alone is not one: "enter this code on
+ * your phone: 492018" is a code.
+ */
+export const PHONE_WORDS: readonly string[] = [
+  "call",
+  "tel",
+  "telephone",
+  String.raw`dial(?:-in)?`,
+  "helpline",
+  "hotline",
+  "fax",
+  String.raw`phone\s+number`,
+];
+
+/** Words a time of day follows, as in "at 1700". */
+export const TIME_BEFORE: readonly string[] = [
+  "at",
+  "from",
+  "until",
+  "till",
+  "before",
+  "after",
+  "um",
+  "à",
+  "a las",
+];
+
+/** Words a time of day comes before, as in "1700 UTC". */
+export const TIME_AFTER: readonly string[] = [
+  "utc",
+  "gmt",
+  "cet",
+  "cest",
+  "hrs?",
+  "h",
+  "uhr",
+];
+
+/** Currencies a price is written beside, as symbols or codes. */
+export const CURRENCIES: readonly string[] = [
+  "[$€£¥₹₽₩₺₫₪]",
+  "usd",
+  "eur",
+  "gbp",
+  "chf",
+  "jpy",
+  "cny",
+  "pln",
+  "rub",
+  "inr",
+  "krw",
+  "aud",
+  "cad",
+  String.raw`rs\.?`,
+  "zł",
+  "kr",
+  "tl",
+  "руб",
+  "元",
+  "円",
+  "원",
+];
+
+/**
+ * What a number before one of these counts, so it is an amount, not a code.
+ * Matched in lower case only, so that "482910 Times are in UTC" still reads the
+ * capital as the start of a sentence.
+ */
 export const UNITS: readonly string[] = [
+  "messages?",
+  "emails?",
+  "requests?",
+  "events?",
+  "errors?",
+  "alerts?",
+  "readers?",
+  "subscribers?",
+  "features?",
+  "orders?",
+  "votes?",
+  "likes?",
+  "comments?",
+  "results?",
+  "bytes?",
+  "kwh",
+  "kWh",
   "points?",
   "lines?",
   "users?",
@@ -265,4 +471,14 @@ export const UNITS: readonly string[] = [
   "coins?",
   "punkte",
   "puntos",
+];
+
+/** Words a count may put between its number and its unit: "4829 unread messages". */
+export const UNIT_ADJECTIVES: readonly string[] = [
+  "new",
+  "unread",
+  "active",
+  "more",
+  "other",
+  "total",
 ];

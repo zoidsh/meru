@@ -3,15 +3,44 @@ import { describe, expect, it } from "vitest";
 import { corpusFresh } from "./verification-code.corpus-fresh.ts";
 import { corpusV4 } from "./verification-code.corpus-v4.ts";
 import { corpus } from "./verification-code.corpus.ts";
-import { extractVerificationCode } from "./verification-code.ts";
+import {
+  MAX_TEXT_LENGTH,
+  extractVerificationCode,
+} from "./verification-code.ts";
 
 const code = (subject: string, summary = "") =>
   extractVerificationCode([subject, summary]);
 
-// Slice 2.6 set the extractor aside to be written again from the design
-// record. This is the bar it is written to, skipped here alone until it is.
-// oxlint-disable-next-line vitest/no-disabled-tests
-describe.skip("the extractor, set aside in slice 2.6", () => {
+const answerOf = ({ subject, summary }: { subject: string; summary: string }) =>
+  code(subject, summary) ?? null;
+
+const tally = (
+  answer: (entry: (typeof corpusFresh)[number]) => string | null
+) => {
+  const counts = { found: 0, falsePositives: 0, wrong: 0 };
+
+  for (const entry of corpusFresh) {
+    const given = answer(entry);
+
+    if (given === null) {
+      continue;
+    }
+    if (entry.expected === null) {
+      counts.falsePositives += 1;
+    } else if (given === entry.expected) {
+      counts.found += 1;
+    } else {
+      counts.wrong += 1;
+    }
+  }
+
+  return counts;
+};
+
+const fill = (unit: string, length: number) =>
+  unit.repeat(Math.floor(length / unit.length));
+
+describe("the extractor", () => {
   it.each(corpus)(
     "v3's corpus, $language: $subject",
     ({ subject, summary, expected }) => {
@@ -28,7 +57,50 @@ describe.skip("the extractor, set aside in slice 2.6", () => {
     }
   );
 
-  it("never reads a shorter code into a run of digits a cap on its input cuts through", () => {
+  it.each(corpusFresh)(
+    "the fresh corpus, $language: $subject",
+    ({ subject, summary, expected, knownMiss }) => {
+      expect(code(subject, summary)).toBe(
+        (knownMiss ? knownMiss.answer : expected) ?? undefined
+      );
+    }
+  );
+
+  it("finds at least as many of the fresh codes as v3 did, with no more false positives and never wrong digits", () => {
+    const ours = tally(answerOf);
+    const v3 = tally((entry) => entry.v3);
+
+    expect(ours.found).toBeGreaterThanOrEqual(v3.found);
+    expect(ours.falsePositives).toBeLessThanOrEqual(v3.falsePositives);
+    expect(ours.wrong).toBe(0);
+  });
+
+  it("does not let a code word in the other text alone lift a bare four-digit number", () => {
+    expect(code("Your code", "4829")).toBeUndefined();
+    expect(code("4829", "Your code")).toBeUndefined();
+  });
+
+  it("does not read a text longer than the limit after normalising, and reads one at it", () => {
+    const at = `Your code is 482910 ${"x".repeat(MAX_TEXT_LENGTH - 20)}`;
+
+    expect(at).toHaveLength(MAX_TEXT_LENGTH);
+    expect(code(at)).toBe("482910");
+    expect(code(`${at}x`)).toBeUndefined();
+    expect(code("Your code", `${at}x`)).toBeUndefined();
+  });
+
+  it("measures the limit after normalising, which can lengthen a text", () => {
+    const subject = `${"ﬀ".repeat(495)} code 4930217`;
+
+    expect(subject.length).toBeLessThan(MAX_TEXT_LENGTH);
+    expect(code(subject)).toBeUndefined();
+  });
+
+  it("reads one text when the other is too long to", () => {
+    expect(code("x".repeat(5000), "Your code is 482910")).toBe("482910");
+  });
+
+  it("never reads a shorter code into a long run of digits", () => {
     for (const length of [1000, 2000, 5000]) {
       const before = "Your code is ready: ";
       const filler = "x".repeat(length - before.length - 6);
@@ -39,20 +111,23 @@ describe.skip("the extractor, set aside in slice 2.6", () => {
     }
   });
 
-  it("is not misled by normalising that lengthens a text, as NFKC does", () => {
-    expect(code(`${"ﬀ".repeat(495)} code 4930217`)).not.toBe("4930");
-  });
-
-  it("answers a long hostile subject and summary quickly", () => {
-    const hostile = [
-      "code ".repeat(10_000),
-      "1 ".repeat(10_000),
-      "1-".repeat(10_000),
-      `${"discount ".repeat(2000)}code`,
-      `+${"(1) ".repeat(5000)}`,
-      `order${" ".repeat(10_000)}#`,
-      `${"코드".repeat(5000)}${"1 ".repeat(5000)}`,
+  it("answers hostile subjects and summaries quickly, at the limit and at a megabyte", () => {
+    const shapes = [
+      "code ",
+      "1 ",
+      "1-",
+      "code 4829. ",
+      "discount code ",
+      "(1) +",
+      "order #",
+      "코드1 ",
+      "ﬀ",
+      "Promo-",
     ];
+    const hostile = shapes.flatMap((shape) => [
+      fill(shape, MAX_TEXT_LENGTH),
+      fill(shape, 1024 * 1024),
+    ]);
     const started = performance.now();
 
     for (const subject of hostile) {
@@ -61,7 +136,18 @@ describe.skip("the extractor, set aside in slice 2.6", () => {
       }
     }
 
-    expect(performance.now() - started).toBeLessThan(1000);
+    expect(performance.now() - started).toBeLessThan(2000);
+  });
+
+  it("takes well under a millisecond a message on the corpora", () => {
+    const messages = [...corpus, ...corpusV4, ...corpusFresh];
+    const started = performance.now();
+
+    for (const message of messages) {
+      answerOf(message);
+    }
+
+    expect((performance.now() - started) / messages.length).toBeLessThan(1);
   });
 });
 
