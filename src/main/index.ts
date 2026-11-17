@@ -427,6 +427,8 @@ const start = async () => {
   });
   shell.window.on("blur", overlays.close);
   shell.window.onContentAreaResize(overlays.relayout);
+  // Its trigger moves with the window, and the view would stay behind.
+  shell.window.onContentAreaResize(tooltips.hide);
 
   const network = createNetwork();
   const gmail = findApp(apps, "gmail");
