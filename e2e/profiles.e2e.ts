@@ -342,7 +342,7 @@ const pressShortcutInPage = (
     { pageUrl: url, keyCode: key, platform: process.platform }
   );
 
-test("at a narrow width with many profiles, the row scrolls with an arrow over each clipped end, a profile chosen by its shortcut scrolls into view, a name of the longest length is cut short and whole in its tooltip, and the title bar keeps room to drag", async ({
+test("at a narrow width with many profiles, the row scrolls with an arrow over each clipped end, a profile chosen by its shortcut scrolls into view clear of the fades, a name of the longest length is cut short and whole in its tooltip, and the title bar keeps room to drag", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -384,8 +384,24 @@ test("at a narrow width with many profiles, the row scrolls with an arrow over e
   await pressShortcutInPage(app, standIn.url, "9");
 
   await expect(ninth).toHaveAttribute("aria-pressed", "true");
-  await expect(ninth).toBeInViewport();
   await expect(scrollLeft).toBeVisible();
+  // The longest name still follows it.
+  await expect(scrollRight).toBeVisible();
+
+  // Clear of the 40px fade over each clipped end, not only in view.
+  const clearOfFades = () =>
+    ninth.evaluate((button) => {
+      const row = button.closest("fieldset")?.getBoundingClientRect();
+      const box = button.getBoundingClientRect();
+
+      return (
+        row !== undefined &&
+        box.left >= row.left + 40 - 0.5 &&
+        box.right <= row.right - 40 + 0.5
+      );
+    });
+
+  await expect.poll(clearOfFades).toBe(true);
 
   // The arrow scrolls by most of the row.
   const scrolled = () =>

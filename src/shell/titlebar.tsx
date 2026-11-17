@@ -23,7 +23,7 @@ import { Kbd } from "#ui/kbd.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { InboxButton } from "./inbox.tsx";
-import { keepInView } from "./keep-in-view.ts";
+import { keepInViewBy } from "./keep-in-view.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
 import { UnreadBadge } from "./unread-badge.tsx";
@@ -190,6 +190,9 @@ const useClippedEnds = (scroller: HTMLElement | null) => {
   return clipped;
 };
 
+/** The selected profile scrolls clear of the fade over a clipped end, `w-10`. */
+const keepClearOfFades = keepInViewBy(40);
+
 /** Left and Right, Home and End, move focus within the row. */
 const moveFocus = (event: KeyboardEvent<HTMLElement>) => {
   const buttons = [
@@ -268,7 +271,7 @@ const ProfileButton = ({
             aria-pressed={selected}
             aria-label={label}
             tabIndex={focusable ? 0 : -1}
-            ref={selected ? keepInView : undefined}
+            ref={selected ? keepClearOfFades : undefined}
             // A long name is cut short, so other profiles stay in reach; the
             // tooltip has it whole.
             className="max-w-40 flex-none gap-1 px-2.5"
