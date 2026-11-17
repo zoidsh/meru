@@ -3,6 +3,7 @@ import { Mutex } from "es-toolkit";
 import type { App } from "#core/apps.ts";
 import {
   addProfile,
+  forgetEndedDoNotDisturb,
   forgetProfilesToClear,
   newProfile,
   nextProfileName,
@@ -11,6 +12,7 @@ import {
   renameProfile,
   selectProfile,
   sortProfilesToClear,
+  switchDoNotDisturb,
 } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { closeTab, openTab, selectTab, updatePages } from "#core/tabs.ts";
@@ -24,6 +26,8 @@ export interface ProfilesDeps {
   profileName: (n: number) => string;
   /** Deletes everything the session holds on disk. */
   clearSession: (partition: string) => Promise<void>;
+  /** Milliseconds since the epoch, by which a write drops an ended Do Not Disturb. */
+  now: () => number;
   log: (message: string) => void;
 }
 
@@ -41,6 +45,7 @@ export const createProfiles = ({
   newId,
   profileName,
   clearSession,
+  now,
   log,
 }: ProfilesDeps) => {
   const mutex = new Mutex();
@@ -52,8 +57,11 @@ export const createProfiles = ({
       return false;
     }
 
-    await save(next);
-    state = next;
+    // Dropped with a write that happens anyway, never by one of its own.
+    const written = forgetEndedDoNotDisturb(next, now());
+
+    await save(written);
+    state = written;
 
     for (const listener of listeners) {
       try {
@@ -179,6 +187,9 @@ export const createProfiles = ({
 
         return true;
       }),
+    /** On until `until`, `null` for until turned off, or off with `undefined`. */
+    switchDoNotDisturb: (until: number | null | undefined) =>
+      exclusive(() => commit(switchDoNotDisturb(state, until))),
     /**
      * Run once at startup, before any view exists: deletes the data of each
      * profile a removal did not finish clearing.

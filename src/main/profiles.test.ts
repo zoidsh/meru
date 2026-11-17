@@ -23,8 +23,11 @@ const setup = ({
   failSave = false,
   failView = false,
   failClear = [],
+  now = 0,
 }: {
   initial?: State;
+  /** What the clock reads, in milliseconds since the epoch. */
+  now?: number;
   failSave?: boolean;
   failView?: boolean;
   /** Partitions whose clear fails. */
@@ -32,12 +35,14 @@ const setup = ({
 } = {}) => {
   const steps: string[] = [];
   const logs: string[] = [];
+  const saved: State[] = [];
   let ids = 0;
 
   const profiles = createProfiles({
     initial,
     save: (state) => {
       steps.push(`save ${describeState(state)}`);
+      saved.push(state);
 
       return failSave
         ? Promise.reject(new Error("disk full"))
@@ -56,6 +61,7 @@ const setup = ({
         ? Promise.reject(new Error("locked"))
         : Promise.resolve();
     },
+    now: () => now,
     log: (message) => logs.push(message),
   });
 
@@ -70,7 +76,7 @@ const setup = ({
     }
   });
 
-  return { profiles, steps, logs };
+  return { profiles, steps, logs, saved };
 };
 
 describe(createProfiles, () => {
@@ -262,5 +268,47 @@ describe("finishing clears at startup", () => {
     await profiles.finishClears();
 
     expect(steps).toStrictEqual([]);
+  });
+});
+
+describe("Do Not Disturb in the profiles' state", () => {
+  it("saves it switched on and off", async () => {
+    const { profiles, saved } = setup();
+
+    await profiles.switchDoNotDisturb(5000);
+    await profiles.switchDoNotDisturb(null);
+    await profiles.switchDoNotDisturb(undefined);
+
+    expect(saved.map((state) => state.doNotDisturb)).toStrictEqual([
+      { until: 5000 },
+      { until: null },
+      undefined,
+    ]);
+  });
+
+  it("drops one that has ended with the next write, which is not its own", async () => {
+    const { profiles, steps, saved } = setup({
+      initial: { ...two, doNotDisturb: { until: 1000 } },
+      now: 2000,
+    });
+
+    expect(steps).toStrictEqual([]);
+    expect(profiles.get().doNotDisturb).toStrictEqual({ until: 1000 });
+
+    await profiles.select("a");
+
+    expect(saved[0]).not.toHaveProperty("doNotDisturb");
+    expect(profiles.get()).not.toHaveProperty("doNotDisturb");
+  });
+
+  it("keeps one that has not ended through other writes", async () => {
+    const { profiles, saved } = setup({
+      initial: { ...two, doNotDisturb: { until: 3000 } },
+      now: 2000,
+    });
+
+    await profiles.select("a");
+
+    expect(saved[0]?.doNotDisturb).toStrictEqual({ until: 3000 });
   });
 });

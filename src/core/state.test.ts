@@ -10,6 +10,7 @@ import {
   createInitialState,
   decodeState,
   encodeState,
+  forgetEndedDoNotDisturb,
   forgetProfilesToClear,
   gmailTab,
   isTab,
@@ -22,6 +23,7 @@ import {
   selectProfile,
   selectedProfile,
   sortProfilesToClear,
+  switchDoNotDisturb,
   withAProfile,
 } from "./state.ts";
 import type { State } from "./state.ts";
@@ -685,5 +687,114 @@ describe(renameProfile, () => {
     expect(
       nextProfileName(renameProfile(three, "a", "Profile 4") as State, name)
     ).toBe("Profile 5");
+  });
+});
+
+const read = (value: unknown): State => {
+  const decoded = decodeState(value);
+
+  if (decoded.kind !== "read") {
+    throw new Error(decoded.kind);
+  }
+
+  return decoded.value;
+};
+
+/** What the file holds for Do Not Disturb, after a decode and an encode. */
+const written = (state: State) =>
+  (encodeState(state) as Record<string, unknown>).doNotDisturb;
+
+describe("Do Not Disturb in the state", () => {
+  it("reads a file without it, as every older one is, as off, and writes none", () => {
+    const state = read(valid);
+
+    expect(state).not.toHaveProperty("doNotDisturb");
+    expect(encodeState(state)).not.toHaveProperty("doNotDisturb");
+  });
+
+  it("reads one until a time, and one until turned off", () => {
+    expect([
+      read({ ...valid, doNotDisturb: { until: 1_800_000_000_000 } })
+        .doNotDisturb,
+      read({ ...valid, doNotDisturb: { until: null } }).doNotDisturb,
+    ]).toStrictEqual([{ until: 1_800_000_000_000 }, { until: null }]);
+  });
+
+  it("keeps keys it does not know inside it, on and when switched again", () => {
+    const state = read({
+      ...valid,
+      doNotDisturb: { until: null, reason: "focus" },
+    });
+
+    expect(written(state)).toStrictEqual({ until: null, reason: "focus" });
+    expect(written(switchDoNotDisturb(state, 5000))).toStrictEqual({
+      until: 5000,
+      reason: "focus",
+    });
+  });
+
+  it.each([
+    ["a string", { until: "soon" }],
+    ["missing its end", {}],
+    ["an end that is not finite", JSON.parse('{"until": 1e400}') as unknown],
+    ["not an object", true],
+    ["null", null],
+  ])(
+    "reads one that is %s as off, keeps the file readable, and writes it back as found",
+    (_name, value) => {
+      const state = read({ ...valid, doNotDisturb: value });
+
+      expect(state).not.toHaveProperty("doNotDisturb");
+      expect(state.profiles).toHaveLength(2);
+      expect(written(state)).toStrictEqual(value);
+    }
+  );
+
+  it("writes one that did not decode back only until it is next switched", () => {
+    const state = read({ ...valid, doNotDisturb: { until: "soon" } });
+
+    expect(written(switchDoNotDisturb(state, null))).toStrictEqual({
+      until: null,
+    });
+    expect(
+      encodeState(switchDoNotDisturb(state, undefined))
+    ).not.toHaveProperty("doNotDisturb");
+  });
+
+  it("switches it on until a time, until turned off, and off", () => {
+    const state = read(valid);
+    const on = switchDoNotDisturb(state, 5000);
+
+    expect([
+      written(on),
+      written(switchDoNotDisturb(on, null)),
+      written(switchDoNotDisturb(on, undefined)),
+    ]).toStrictEqual([{ until: 5000 }, { until: null }, undefined]);
+  });
+
+  it("keeps one that has ended as read, to be dropped by the next write rather than at once", () => {
+    const state = read({ ...valid, doNotDisturb: { until: 1000 } });
+
+    expect(state.doNotDisturb).toStrictEqual({ until: 1000 });
+    expect(written(forgetEndedDoNotDisturb(state, 999))).toStrictEqual({
+      until: 1000,
+    });
+    expect(written(forgetEndedDoNotDisturb(state, 1000))).toBeUndefined();
+  });
+
+  it("never drops one until turned off, nor one that did not decode, for having ended", () => {
+    const untilOff = read({ ...valid, doNotDisturb: { until: null } });
+    const asFound = read({ ...valid, doNotDisturb: { until: "soon" } });
+
+    expect([
+      written(forgetEndedDoNotDisturb(untilOff, Number.MAX_SAFE_INTEGER)),
+      written(forgetEndedDoNotDisturb(asFound, Number.MAX_SAFE_INTEGER)),
+    ]).toStrictEqual([{ until: null }, { until: "soon" }]);
+  });
+
+  it("stays on version 1", () => {
+    expect(encodeState(switchDoNotDisturb(read(valid), null))).toMatchObject({
+      version: 1,
+    });
   });
 });

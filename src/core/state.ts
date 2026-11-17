@@ -47,6 +47,18 @@ const UNREAD = Symbol("unread tab");
 const TABS_AS_FOUND = Symbol("tabs as found");
 const UNREAD_PROFILES = Symbol("unread profiles");
 const CLEAR_AS_FOUND = Symbol("profiles to clear as found");
+const DO_NOT_DISTURB_AS_FOUND = Symbol("do not disturb as found");
+
+const doNotDisturbSchema = z.looseObject({
+  /** Milliseconds since the epoch, or `null` for until turned off. */
+  until: z.nullable(z.number().check(z.refine(Number.isFinite))),
+});
+
+/**
+ * Do Not Disturb while it is switched on, which a restart keeps. Keys a later
+ * build adds are kept.
+ */
+export type DoNotDisturb = z.infer<typeof doNotDisturbSchema>;
 
 /**
  * What of `profilesToClear` is not a profile id: entries written back after
@@ -103,8 +115,12 @@ export interface State {
    * between the removal and the clear is finished at the next launch.
    */
   profilesToClear?: string[];
+  /** Absent while off; one that has ended still reads as off. */
+  doNotDisturb?: DoNotDisturb;
   [UNREAD_PROFILES]?: readonly UnreadProfile[];
   [CLEAR_AS_FOUND]?: ClearAsFound;
+  /** A `doNotDisturb` that does not decode, written back until it is switched. */
+  [DO_NOT_DISTURB_AS_FOUND]?: unknown;
 }
 
 export const gmailTab = (): Tab => ({
@@ -205,6 +221,9 @@ export const encodeState = (state: State): unknown => {
   return {
     ...state,
     ...(profilesToClear === undefined ? {} : { profilesToClear }),
+    ...(DO_NOT_DISTURB_AS_FOUND in state && {
+      doNotDisturb: state[DO_NOT_DISTURB_AS_FOUND],
+    }),
     profiles: [
       ...placedAfter(0),
       ...state.profiles.flatMap((profile, index) => [
@@ -257,7 +276,12 @@ export const decodeState = (value: unknown): Decoded<State> => {
     }
   }
 
-  const { selectedProfileId, profilesToClear, ...rest } = result.value;
+  const { selectedProfileId, profilesToClear, doNotDisturb, ...rest } =
+    result.value;
+  const decodedDoNotDisturb =
+    doNotDisturb === undefined
+      ? undefined
+      : doNotDisturbSchema.safeParse(doNotDisturb);
   const state: State = {
     ...rest,
     ...(profilesToClear === undefined
@@ -267,6 +291,9 @@ export const decodeState = (value: unknown): Decoded<State> => {
             ? profilesToClear.filter(isId)
             : [],
         }),
+    ...(decodedDoNotDisturb?.success && {
+      doNotDisturb: decodedDoNotDisturb.data,
+    }),
     profiles,
     selectedProfileId: profiles.some(
       (profile) => profile.id === selectedProfileId
@@ -277,6 +304,10 @@ export const decodeState = (value: unknown): Decoded<State> => {
 
   if (unread.length > 0) {
     state[UNREAD_PROFILES] = unread;
+  }
+
+  if (decodedDoNotDisturb && !decodedDoNotDisturb.success) {
+    state[DO_NOT_DISTURB_AS_FOUND] = doNotDisturb;
   }
 
   if (profilesToClear !== undefined && !Array.isArray(profilesToClear)) {
@@ -489,3 +520,27 @@ export const renameProfile = (
     ),
   };
 };
+
+/**
+ * Switches Do Not Disturb on until `until`, `null` for until turned off, or
+ * off with `undefined`. Keys a later build put in it stay while it is on, and
+ * a value that did not decode is replaced.
+ */
+export const switchDoNotDisturb = (
+  state: State,
+  until: number | null | undefined
+): State => {
+  const { doNotDisturb, [DO_NOT_DISTURB_AS_FOUND]: _asFound, ...rest } = state;
+
+  return until === undefined
+    ? rest
+    : { ...rest, doNotDisturb: { ...doNotDisturb, until } };
+};
+
+/** The state without a Do Not Disturb that ended by `time`, else as it is. */
+export const forgetEndedDoNotDisturb = (state: State, time: number): State =>
+  state.doNotDisturb?.until !== null &&
+  state.doNotDisturb !== undefined &&
+  state.doNotDisturb.until <= time
+    ? switchDoNotDisturb(state, undefined)
+    : state;

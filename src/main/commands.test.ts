@@ -33,6 +33,7 @@ const setup = (initial: State = twoProfiles) => {
     newId: () => "new",
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
+    now: () => 0,
     log: () => false,
   });
   const settings = createSettingsStore({

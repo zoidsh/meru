@@ -87,6 +87,7 @@ const setup = async ({
     newId: () => "unused",
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
+    now: () => 0,
     log: (message) => logs.push(message),
   });
 
