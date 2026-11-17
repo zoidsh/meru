@@ -89,7 +89,11 @@ test("opens Gmail's pop-out as a window of its own in the profile's session, wit
   });
   expect(await readWindows(app)).toHaveLength(2);
 
-  await popout.getByRole("button", { name: "Send" }).click();
+  // The click closes its own page, which Playwright can report as a failed click.
+  await popout
+    .getByRole("button", { name: "Send" })
+    .click()
+    .catch(() => null);
 
   await expect.poll(() => readWindows(app)).toHaveLength(1);
 });
