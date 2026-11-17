@@ -15,7 +15,13 @@ import {
   shotPath,
 } from "./lib/shots.ts";
 import type { Design } from "./lib/shots.ts";
-import { POPOUT_PATH, THREAD_PARTS, openThread } from "./lib/stand-in.ts";
+import {
+  DARK_PARTS,
+  POPOUT_PATH,
+  THREAD_PARTS,
+  openDarkThread,
+  openThread,
+} from "./lib/stand-in.ts";
 
 test.beforeEach(() => {
   onlyWithShots();
@@ -120,6 +126,38 @@ test("a thread with every thread feature on", async ({
   await openThread(view, 3);
   await expect(view.getByText(THREAD_PARTS.quoted(1))).toBeVisible();
   await shootEachWay(app, shell, "thread");
+});
+
+test("a thread and a docked compose while Gmail is Dark, with the dark theme on and off", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const view = await findPage(app, standIn.url);
+  const pane = view.getByRole("region", { name: DARK_PARTS.pane });
+  const background = () =>
+    pane.evaluate((element) => getComputedStyle(element).backgroundColor);
+
+  await openDarkThread(view, true);
+  await emulateTheme(app, "dark");
+
+  for (const on of [true, false]) {
+    // oxlint-disable-next-line no-await-in-loop -- one state at a time
+    await app.evaluate(async (_electron, value) => {
+      const settings = Reflect.get(globalThis, "meruTestSettings") as {
+        set: (key: string, value: unknown) => Promise<void>;
+      };
+
+      await settings.set("extendDarkTheme", value);
+    }, on);
+    // oxlint-disable-next-line no-await-in-loop -- one state at a time
+    await expect
+      .poll(background)
+      .toBe(on ? "rgba(0, 0, 0, 0)" : "rgb(255, 255, 255)");
+    // oxlint-disable-next-line no-await-in-loop -- one state at a time
+    await shootWindow(app, shell, shotPath(`gmail-dark-${on ? "on" : "off"}`));
+  }
 });
 
 test("Gmail's pop-out, which shows Gmail's page alone in either design and theme", async ({
