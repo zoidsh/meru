@@ -65,11 +65,8 @@ export const HOOKS: readonly Hook[] = [
   },
   {
     name: "promo",
-    anchors: [
-      // The upgrade button is an onramp container too, but in the header.
-      '[role="main"] [data-rp-onramp-container]',
-      '[data-elevated-container-view-type="timely_bump"]',
-    ],
+    // The upgrade button is an onramp container too, but in the header.
+    anchors: ['[role="main"] [data-rp-onramp-container]'],
     requiredIn: [],
   },
   {
@@ -81,17 +78,42 @@ export const HOOKS: readonly Hook[] = [
   },
 ];
 
+/** What no hide may ever take, nor anything holding it. */
+const PROTECTED = [
+  '[gh="tl"]',
+  "[data-legacy-thread-id]",
+  "[data-message-id]",
+  "[data-compose-id]",
+  '[role="main"]',
+  '[role="navigation"]',
+  "input",
+  "textarea",
+  "[contenteditable]",
+].join(", ");
+
 /**
- * Whatever an anchor matches, it is never something that holds the list, a
- * thread, a message, compose, the main or navigation region, or a field, so a
- * hook Gmail's markup moved under does nothing rather than hide the wrong
- * thing.
+ * Where what matches is a person's mail or writing, not Gmail's chrome: a
+ * message linking to Gmail's policy page is no footer.
  */
-export const HOOK_GUARD =
-  ':not(:has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]))';
+const AUTHORED = [
+  "[data-message-id] *",
+  "[data-compose-id] *",
+  "[contenteditable] *",
+].join(", ");
+
+/**
+ * Whatever an anchor matches, it is never something protected, nor holds one,
+ * nor sits in mail, so a hook Gmail's markup moved does nothing rather than
+ * hide the wrong thing.
+ */
+export const HOOK_GUARD = `:not(${PROTECTED}, :has(${PROTECTED}), ${AUTHORED})`;
 
 /** What an anchor's rule and the health check both select. */
 export const guardedSelector = (anchor: string) => `${anchor}${HOOK_GUARD}`;
+
+/** A witness in mail says nothing of Gmail's own parts. */
+export const witnessSelector = (witness: string) =>
+  `${witness}:not(${AUTHORED})`;
 
 export const GMAIL_FEATURES = [
   "hideGmailLogo",

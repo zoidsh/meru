@@ -11,12 +11,18 @@ import {
   detectViews,
   findHook,
   gmailFeatures,
+  guardedSelector,
   hideStylesheet,
+  witnessSelector,
 } from "./gmail-hooks.ts";
 import { SETTINGS } from "./settings.ts";
 
-const anchorsAndWitnesses = [
-  ...HOOKS.flatMap((hook) => [...hook.anchors, hook.witness ?? ""]),
+/** Every selector the page is read by, as the rules and the check use it. */
+const everySelector = [
+  ...HOOKS.flatMap((hook) => [
+    ...hook.anchors.map(guardedSelector),
+    ...(hook.witness === undefined ? [] : [witnessSelector(hook.witness)]),
+  ]),
   ...Object.values(VIEW_ANCHORS),
 ];
 
@@ -34,9 +40,9 @@ describe("the registry", () => {
   });
 
   it("reads nothing Gmail translates", () => {
-    for (const selector of anchorsAndWitnesses) {
+    for (const selector of everySelector) {
       expect(selector).not.toMatch(
-        /aria-label|data-tooltip|\[title|\balt\b|placeholder|:contains/u
+        /aria-label|aria-description|aria-roledescription|aria-valuetext|data-tooltip|data-name|\[title|\balt\b|placeholder|:contains/u
       );
     }
   });

@@ -5,6 +5,7 @@ import {
   decideHook,
   detectViews,
   guardedSelector,
+  witnessSelector,
 } from "#core/gmail-hooks.ts";
 import type { HookName, HookStatus, Witness } from "#core/gmail-hooks.ts";
 
@@ -47,7 +48,7 @@ export const checkHealth = ({
       const witnesses =
         hook.witness === undefined
           ? []
-          : select(root, hook.witness).filter(isVisible);
+          : select(root, witnessSelector(hook.witness)).filter(isVisible);
       let witness: Witness = "none";
 
       if (witnesses.length > 0) {

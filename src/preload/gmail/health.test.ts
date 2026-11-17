@@ -116,6 +116,14 @@ describe(checkHealth, () => {
     ).toBe("absent");
   });
 
+  it("takes no witness from mail: a message linking to Gmail's policy page leaves the footer matched", () => {
+    expect(
+      checkHealth(
+        inbox(`${LIST}${FOOTER}<div data-message-id="m"><p>${POLICY}</p></div>`)
+      ).hooks.footer
+    ).toBe("matched");
+  });
+
   it("treats a selector the engine cannot parse as matching nothing", () => {
     expect(() => checkHealth(page("<p></p>", ""))).not.toThrow();
   });
@@ -155,21 +163,113 @@ const SWALLOWING: Record<HookName, readonly ((inside: string) => string)[]> = {
   promo: [
     (inside) =>
       `<div role="main"><div data-rp-onramp-container>${inside}</div></div>`,
-    (inside) =>
-      `<div data-elevated-container-view-type="timely_bump">${inside}</div>`,
   ],
   upgrade: [(inside) => `<div data-pep-id="global-pep-gmail">${inside}</div>`],
 };
 
-const guardCases = GMAIL_FEATURES.flatMap((feature) =>
+const marking = (attribute: string, value: string) => (element: Element) => {
+  element.setAttribute(attribute, value);
+};
+
+/** Each protected kind, as an anchor's own match could be made into it. */
+const BECOMING: Record<string, (element: Element) => void> = {
+  list: marking("gh", "tl"),
+  thread: marking("data-legacy-thread-id", "1"),
+  message: marking("data-message-id", "m"),
+  compose: marking("data-compose-id", "c"),
+  main: marking("role", "main"),
+  navigation: marking("role", "navigation"),
+  editor: marking("contenteditable", "true"),
+  ...Object.fromEntries(
+    ["input", "textarea"].map((tag) => [
+      tag,
+      (element: Element) => {
+        const replacement = element.ownerDocument.createElement(tag);
+
+        for (const { name, value } of element.attributes) {
+          replacement.setAttribute(name, value);
+        }
+
+        element.replaceWith(replacement);
+      },
+    ])
+  ),
+};
+
+/** Mail and writing, where nothing matched is Gmail's own part. */
+const AUTHORED: Record<string, (html: string) => string> = {
+  message: (html) => `<div data-message-id="m"><p>${html}</p></div>`,
+  compose: (html) => `<div data-compose-id="c">${html}</div>`,
+  editor: (html) => `<div contenteditable="true">${html}</div>`,
+};
+
+const select = (root: ParentNode, selector: string) => [
+  ...root.querySelectorAll(selector),
+];
+
+const anchorCases = GMAIL_FEATURES.flatMap((feature) =>
   HIDES[feature].flatMap((name) =>
-    SWALLOWING[name].flatMap((wrap, index) =>
-      Object.entries(PRECIOUS).map(
-        ([what, inside]) => [feature, name, index, what, wrap(inside)] as const
-      )
+    SWALLOWING[name].map(
+      (wrap, index) =>
+        [
+          feature,
+          name,
+          index,
+          findHook(name).anchors[index] ?? "",
+          wrap,
+        ] as const
     )
   )
 );
+
+const guardCases = anchorCases.flatMap(([feature, name, index, , wrap]) =>
+  Object.entries(PRECIOUS).map(
+    ([what, inside]) => [feature, name, index, what, wrap(inside)] as const
+  )
+);
+
+/**
+ * The anchor's own match made into each protected kind, kept only where the
+ * anchor would still take it: a footer's contentinfo cannot also be the main.
+ */
+const selfCases = anchorCases.flatMap(([feature, name, index, anchor, wrap]) =>
+  Object.entries(BECOMING).flatMap(([what, become]) => {
+    const { document } = parseHTML(`<html><body>${wrap("")}</body></html>`);
+    const [match] = select(document, anchor);
+
+    if (!match) {
+      return [];
+    }
+
+    become(match);
+
+    return select(document, anchor).length > 0
+      ? [[feature, name, index, what, document.body.innerHTML] as const]
+      : [];
+  })
+);
+
+const authoredCases = anchorCases.flatMap(([feature, name, index, , wrap]) =>
+  Object.entries(AUTHORED).map(
+    ([what, around]) => [feature, name, index, what, around(wrap(""))] as const
+  )
+);
+
+/**
+ * What the anchor alone takes, and what it takes guarded, as its rule and the
+ * health check both select.
+ */
+const takes = (name: HookName, html: string) => {
+  const { root } = page(html);
+  const { anchors } = findHook(name);
+
+  return {
+    unguarded: anchors.some((anchor) => select(root, anchor).length > 0),
+    guarded: anchors.flatMap((anchor) => select(root, guardedSelector(anchor))),
+  };
+};
+
+const GUARDED = { unguarded: true, guarded: [] };
 
 describe("the guard on every hide", () => {
   it("has a swallowing container for every anchor", () => {
@@ -180,21 +280,30 @@ describe("the guard on every hide", () => {
     }
   });
 
+  it("makes every protected kind some anchor's own match", () => {
+    expect(new Set(selfCases.map((selfCase) => selfCase[3]))).toStrictEqual(
+      new Set(Object.keys(BECOMING))
+    );
+  });
+
   it.each(guardCases)(
     "keeps %s from hiding a %s container (fixture %i) that holds the %s",
     (_feature, name, _index, _what, html) => {
-      const { root } = page(html);
-      const select = (selector: string) => [...root.querySelectorAll(selector)];
-      const { anchors } = findHook(name);
+      expect(takes(name, html)).toStrictEqual(GUARDED);
+    }
+  );
 
-      // The anchor alone would take it; guarded, as its rule and the health
-      // check both select, nothing.
-      expect(
-        anchors.flatMap((anchor) => select(anchor)).length
-      ).toBeGreaterThan(0);
-      expect(
-        anchors.flatMap((anchor) => select(guardedSelector(anchor)))
-      ).toStrictEqual([]);
+  it.each(selfCases)(
+    "keeps %s from hiding a %s match (fixture %i) that is itself the %s",
+    (_feature, name, _index, _what, html) => {
+      expect(takes(name, html)).toStrictEqual(GUARDED);
+    }
+  );
+
+  it.each(authoredCases)(
+    "keeps %s from hiding a %s match (fixture %i) inside a %s",
+    (_feature, name, _index, _what, html) => {
+      expect(takes(name, html)).toStrictEqual(GUARDED);
     }
   );
 });
