@@ -169,6 +169,26 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   // The page kept its own focused field.
   await typeInto(app, standIn.url, "hi");
   await expect(draft).toHaveValue("hi");
+
+  // Opening a page by the overlay's own name leaves the overlay's document,
+  // which draws the next rename. Last, and read through `evaluate`, since
+  // Playwright waits on the refused navigation as though it were under way.
+  await shell.evaluate(() => {
+    window.open("https://example.com/", "meru-overlay");
+  });
+  await clickMenuItem(app, "profile.rename");
+  await expect
+    .poll(() =>
+      overlay.evaluate(() => [
+        document.body.textContent,
+        document.activeElement?.getAttribute("name"),
+      ])
+    )
+    .toStrictEqual(["Rename profile", "name"]);
+  expect(await readOverlayView(app)).toMatchObject({
+    url: "about:blank",
+    visible: true,
+  });
 });
 
 /**
