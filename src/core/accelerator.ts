@@ -110,8 +110,27 @@ const OTHER_MODIFIERS = [
   ["meta", "Super"],
 ] as const;
 
+/** Named keys as macOS's menus show them, by Electron's name, lower case. */
+const MAC_KEYS: Record<string, string> = {
+  up: "↑",
+  down: "↓",
+  left: "←",
+  right: "→",
+  backspace: "⌫",
+  delete: "⌦",
+  enter: "↩",
+  return: "↩",
+  escape: "⎋",
+  esc: "⎋",
+  tab: "⇥",
+  space: "Space",
+  plus: "+",
+};
+
+const OTHER_KEYS: Record<string, string> = { plus: "+" };
+
 /**
- * An Electron accelerator as a person reads it on `platform`: `⌘⇧W` on
+ * An Electron accelerator as a person reads it on `platform`: `⇧⌘W` on
  * macOS, `Ctrl+Shift+W` elsewhere.
  */
 export const formatAccelerator = (accelerator: string, platform: Platform) => {
@@ -119,11 +138,12 @@ export const formatAccelerator = (accelerator: string, platform: Platform) => {
   const parts = accelerator.split("+");
   const key = parts.pop() ?? "";
   const held = new Set(parts.map((part) => modifierOf(part, isMacOS)));
+  const named = (isMacOS ? MAC_KEYS : OTHER_KEYS)[key.toLowerCase()];
   const shown = [
     ...(isMacOS ? MAC_MODIFIERS : OTHER_MODIFIERS)
       .filter(([modifier]) => held.has(modifier))
       .map(([, symbol]) => symbol),
-    key.length === 1 ? key.toUpperCase() : key,
+    named ?? (key.length === 1 ? key.toUpperCase() : key),
   ];
 
   return shown.join(isMacOS ? "" : "+");

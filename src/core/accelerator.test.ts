@@ -116,7 +116,27 @@ describe(formatAccelerator, () => {
     ).toStrictEqual([
       ["⌘S", "Ctrl+S"],
       ["⇧⌘W", "Ctrl+Shift+W"],
-      ["⌃⇧Tab", "Ctrl+Shift+Tab"],
+      ["⌃⇧⇥", "Ctrl+Shift+Tab"],
     ]);
+  });
+
+  it.each([
+    ["Alt+Up", "⌥↑", "Alt+Up"],
+    ["Alt+Down", "⌥↓", "Alt+Down"],
+    ["CmdOrCtrl+Left", "⌘←", "Ctrl+Left"],
+    ["CmdOrCtrl+Right", "⌘→", "Ctrl+Right"],
+    ["CmdOrCtrl+Backspace", "⌘⌫", "Ctrl+Backspace"],
+    ["Shift+Delete", "⇧⌦", "Shift+Delete"],
+    ["CmdOrCtrl+Enter", "⌘↩", "Ctrl+Enter"],
+    ["Return", "↩", "Return"],
+    ["Escape", "⎋", "Escape"],
+    ["Esc", "⎋", "Esc"],
+    ["Ctrl+Space", "⌃Space", "Ctrl+Space"],
+    ["CmdOrCtrl+Plus", "⌘+", "Ctrl++"],
+  ])("shows %s as %s on macOS and %s elsewhere", (accelerator, mac, other) => {
+    expect([
+      formatAccelerator(accelerator, "darwin"),
+      formatAccelerator(accelerator, "linux"),
+    ]).toStrictEqual([mac, other]);
   });
 });
