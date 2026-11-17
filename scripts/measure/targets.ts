@@ -126,8 +126,14 @@ const visitCalendar = async (inspector: Inspector, profileId: string) => {
   await select(gmailTab().id);
 };
 
+/**
+ * A copy of the signed-in profile that both targets run on, one at a time. A
+ * second copy of the same Google session was signed out within an hour.
+ */
+const PROFILE = "measure-v4";
+
 export const v4Target = (): Target => {
-  const userDataDir = profileDir("measure-v4");
+  const userDataDir = profileDir(PROFILE);
   const profileId = signedInProfileId(userDataDir);
 
   return {
@@ -141,9 +147,9 @@ export const v4Target = (): Target => {
     launch: () =>
       spawnElectron({
         appDir: outDir("prod"),
-        profile: "measure-v4",
+        profile: PROFILE,
         args: {
-          profile: "measure-v4",
+          profile: PROFILE,
           debugPort: undefined,
           electronArgs: ["--inspect=0"],
         },
@@ -159,9 +165,8 @@ export const v4Target = (): Target => {
 };
 
 export const floorTarget = (): Target => {
-  const userDataDir = profileDir("measure-floor");
-  // A copy of v4's profile, whose session lives in that profile's partition.
-  const partition = `persist:${signedInProfileId(userDataDir)}`;
+  // v4 keeps the session in the signed-in profile's partition.
+  const partition = `persist:${signedInProfileId(profileDir(PROFILE))}`;
 
   return {
     name: "floor",
@@ -171,9 +176,9 @@ export const floorTarget = (): Target => {
     launch: () =>
       spawnElectron({
         appDir: path.join(import.meta.dirname, "floor"),
-        profile: "measure-floor",
+        profile: PROFILE,
         args: {
-          profile: "measure-floor",
+          profile: PROFILE,
           debugPort: undefined,
           electronArgs: [`--partition=${partition}`, "--inspect=0"],
         },
