@@ -1,6 +1,5 @@
 import { plural, t } from "@lingui/core/macro";
 
-import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import type { MailAction } from "#core/mail-actions.ts";
@@ -33,6 +32,7 @@ import type {
 } from "#platform/notifications.ts";
 
 import { profileDisplayName } from "./profile-copy.ts";
+import type { SoundOutput } from "./sounds.ts";
 
 export interface MailNotificationsDeps {
   notifier: Notifier;
@@ -56,8 +56,8 @@ export interface MailNotificationsDeps {
   now: () => Date;
   /** The ids the profile's Important feed lists, or `null` if it failed. */
   important: (profileId: string) => Promise<ReadonlySet<string> | null>;
-  /** Plays one of Meru's sounds, in the shell or the suite's capture. */
-  playSound: (request: SoundRequest) => void;
+  /** Where Meru's own sounds play, and whether every notification is silent. */
+  sound: SoundOutput;
   log: (message: string) => void;
 }
 
@@ -141,7 +141,7 @@ export const createMailNotifications = ({
   doNotDisturb,
   now,
   important,
-  playSound,
+  sound: output,
   log,
 }: MailNotificationsDeps) => {
   const seen = new Map<string, Seen>();
@@ -168,7 +168,7 @@ export const createMailNotifications = ({
 
     shown.set(profileId, held);
     notification = notifier.show(
-      { ...content, silent: sound.silent },
+      { ...content, silent: output.quiet || sound.silent },
       {
         ...events,
         onGone: () => {
@@ -192,7 +192,7 @@ export const createMailNotifications = ({
     }
 
     if (sound.play) {
-      playSound({
+      output.play({
         sound: sound.play,
         volume: setting("notificationSoundVolume"),
       });

@@ -1,7 +1,5 @@
 import path from "node:path";
 
-import { SHELL_CHANNELS } from "#contract/shell-channels.ts";
-import type { SoundRequest } from "#contract/shell-sound.ts";
 import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
@@ -28,7 +26,6 @@ import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
-import type { Ipc } from "#platform/ipc.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
 import {
@@ -88,6 +85,8 @@ import {
   revealWindow,
 } from "./shell-window.ts";
 import { createShowGmail } from "./show-gmail.ts";
+import { createSoundOutput } from "./sounds.ts";
+import type { SoundOutput } from "./sounds.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
@@ -148,39 +147,16 @@ const devToolsAccelerator = (platform: Platform) =>
   platform === "darwin" ? "Alt+Command+I" : "F12";
 
 /**
- * Plays a sound in the shell's page. The suite's build captures it and a run
- * under the background flag only logs it, so neither makes one on a desktop
- * other sessions share.
+ * The suite's build, always under the background flag, captures each sound
+ * in place of playing it and leaves each notification's `silent` as decided,
+ * since its notifier shows nothing and its tests read the decision.
  */
-const soundPlayer = ({
-  ipc,
-  shellId,
-  shellOrigin,
-  background,
-}: {
-  ipc: Ipc;
-  shellId: number;
-  shellOrigin: string;
-  background: boolean;
-}) => {
-  if (MERU_E2E_BUILD) {
-    return captureSounds();
-  }
-
-  return (request: SoundRequest) => {
-    if (background) {
-      console.error(
-        `Did not play the ${request.sound} sound under the background flag`
-      );
-
-      return;
-    }
-
-    ipc.send(shellId, SHELL_CHANNELS.sound, request, {
-      mainFrameOrigin: shellOrigin,
-    });
-  };
-};
+const soundOutput = (
+  options: Parameters<typeof createSoundOutput>[0]
+): SoundOutput =>
+  MERU_E2E_BUILD
+    ? { quiet: false, play: captureSounds() }
+    : createSoundOutput(options);
 
 /**
  * Gmail's page contract, its switches following the settings, which the
@@ -650,11 +626,12 @@ const start = async () => {
           ? new Set(outcome.feed.entries.map((entry) => entry.id))
           : null;
       },
-      playSound: soundPlayer({
+      sound: soundOutput({
         ipc,
         shellId: shell.window.webContentsId,
         shellOrigin,
         background,
+        log: console.error,
       }),
       log: console.error,
     });

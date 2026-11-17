@@ -7,74 +7,66 @@ import {
   soundVolumeSchema,
   sounds,
 } from "./sounds.ts";
-import type { SoundChoice } from "./sounds.ts";
 
-/** Each notification at its time, the quiet period followed as a caller does. */
-const run = (choice: SoundChoice, times: readonly number[]) => {
-  let last: number | undefined;
-
-  return times.map((now) => {
-    const decision = decideSound(choice, now, last);
-
-    if (sounds(decision)) {
-      last = now;
-    }
-
-    return decision;
-  });
-};
+// How a burst follows from these, kept by `createMailNotifications`, is
+// proven in src/main/notifications.test.ts.
 
 describe(decideSound, () => {
-  it("plays Meru's sound with a silent notification, once for notifications shown together", () => {
-    expect(run("linen", [1000, 1000, 1000, 5999])).toStrictEqual([
-      { silent: true, play: "linen" },
-      { silent: true, play: undefined },
-      { silent: true, play: undefined },
-      { silent: true, play: undefined },
-    ]);
-  });
-
-  it("times the quiet period from the last sound, so a steady stream still sounds every 5 s", () => {
-    expect(
-      run("chime", [0, 4000, 8000, 12_000, 16_000]).map(({ play }) => play)
-    ).toStrictEqual(["chime", undefined, "chime", undefined, "chime"]);
-  });
-
-  it("sounds again once the quiet period has passed", () => {
-    expect(
-      run("duet", [0, SOUND_QUIET_PERIOD - 1, SOUND_QUIET_PERIOD]).map(
-        ({ play }) => play
-      )
-    ).toStrictEqual(["duet", undefined, "duet"]);
-  });
-
-  it("lets the system sound only the first of a burst, and Meru plays nothing", () => {
-    expect(run("system", [0, 1000, 6000])).toStrictEqual([
-      { silent: false, play: undefined },
-      { silent: true, play: undefined },
-      { silent: false, play: undefined },
-    ]);
-  });
-
-  it("makes no sound at all with none, and starts no quiet period", () => {
-    expect(run("none", [0, 1000])).toStrictEqual([
-      { silent: true, play: undefined },
-      { silent: true, play: undefined },
-    ]);
-    expect(sounds(decideSound("none", 0, undefined))).toBeFalsy();
-  });
-
-  it("ends the quiet period when the clock is set back before the last sound", () => {
-    expect(decideSound("knock", 1000, 50_000).play).toBe("knock");
-  });
-
-  it("plays every one of Meru's sounds as chosen", () => {
+  it("plays each of Meru's sounds with a silent notification when none has played", () => {
     for (const sound of NOTIFICATION_SOUNDS) {
       expect(decideSound(sound, 0, undefined)).toStrictEqual({
         silent: true,
         play: sound,
       });
     }
+  });
+
+  it("plays none within the quiet period after the last sound, and plays again at its end", () => {
+    expect([
+      decideSound("linen", 1000, 1000),
+      decideSound("linen", 1000 + SOUND_QUIET_PERIOD - 1, 1000),
+      decideSound("linen", 1000 + SOUND_QUIET_PERIOD, 1000),
+    ]).toStrictEqual([
+      { silent: true, play: undefined },
+      { silent: true, play: undefined },
+      { silent: true, play: "linen" },
+    ]);
+  });
+
+  it("lets the system sound only outside the quiet period, and Meru plays nothing", () => {
+    expect([
+      decideSound("system", 0, undefined),
+      decideSound("system", 1000, 0),
+      decideSound("system", SOUND_QUIET_PERIOD, 0),
+    ]).toStrictEqual([
+      { silent: false, play: undefined },
+      { silent: true, play: undefined },
+      { silent: false, play: undefined },
+    ]);
+  });
+
+  it("makes no sound with none, whenever the last one was", () => {
+    expect([
+      decideSound("none", 0, undefined),
+      decideSound("none", SOUND_QUIET_PERIOD, 0),
+    ]).toStrictEqual([
+      { silent: true, play: undefined },
+      { silent: true, play: undefined },
+    ]);
+  });
+
+  it("ends the quiet period when the clock is set back before the last sound", () => {
+    expect(decideSound("knock", 1000, 50_000).play).toBe("knock");
+  });
+});
+
+describe(sounds, () => {
+  it("is a sound of Meru's or the system's, which starts a quiet period, and not a silent one", () => {
+    expect([
+      sounds({ silent: true, play: "duet" }),
+      sounds({ silent: false, play: undefined }),
+      sounds({ silent: true, play: undefined }),
+    ]).toStrictEqual([true, true, false]);
   });
 });
 

@@ -63,6 +63,7 @@ const setup = ({
   important = (): Promise<ReadonlySet<string> | null> => Promise.resolve(null),
   copies = true,
   supported = true,
+  quiet = false,
 } = {}) => {
   let copying = copies;
   let writing: PromiseWithResolvers<void> | undefined;
@@ -76,10 +77,11 @@ const setup = ({
   const settings = new Map<SettingKey, unknown>();
   const played: SoundRequest[] = [];
   let clock = now;
+  let showing = supported;
   let current = state;
   const notifier: Notifier = {
     show: (content, events) => {
-      if (!supported) {
+      if (!showing) {
         return;
       }
 
@@ -129,8 +131,11 @@ const setup = ({
 
       return important();
     },
-    playSound: (request) => {
-      played.push(request);
+    sound: {
+      quiet,
+      play: (request) => {
+        played.push(request);
+      },
     },
     log: (message) => {
       logs.push(message);
@@ -151,6 +156,10 @@ const setup = ({
     },
     shown,
     played,
+    /** From now on the system shows notifications. */
+    support: () => {
+      showing = true;
+    },
     /** Moves the clock on by `milliseconds`. */
     advance: (milliseconds: number) => {
       clock = new Date(clock.getTime() + milliseconds);
@@ -902,11 +911,50 @@ describe("sounds", () => {
     expect(silences(app.shown)).toStrictEqual([false, true, false]);
   });
 
-  it("plays nothing where the system shows no notification", async () => {
+  it("plays nothing for a notification the system did not show, which starts no quiet period", async () => {
     const app = setup({ supported: false });
 
     await arrive(app, entry("1"));
 
     expect(app.played).toStrictEqual([]);
+
+    app.support();
+    await app.notifications.polled("a", feed(entry("2"), entry("1")));
+
+    expect(app.played).toStrictEqual([{ sound: "linen", volume: 1 }]);
+  });
+
+  it("sounds every 5 s under a notification every 4 s, timing the quiet period from the last sound", async () => {
+    const app = setup();
+    const ids: string[] = [];
+
+    await app.notifications.polled("a", feed());
+
+    for (const id of ["1", "2", "3", "4", "5"]) {
+      ids.unshift(id);
+      // Each poll after the one before it, as the poller runs them.
+      // oxlint-disable-next-line no-await-in-loop
+      await app.notifications.polled(
+        "a",
+        feed(...ids.map((each) => entry(each)))
+      );
+      app.advance(4000);
+    }
+
+    expect(app.shown).toHaveLength(5);
+    expect(app.played).toHaveLength(3);
+  });
+
+  it("under the background flag shows every notification silent, the system's sound too", async () => {
+    const app = setup({ quiet: true });
+
+    app.set("notificationSound", "system");
+    await arrive(app, entry("1"));
+    app.set("notificationSound", "chime");
+    app.advance(5000);
+    await app.notifications.polled("a", feed(entry("2"), entry("1")));
+
+    expect(silences(app.shown)).toStrictEqual([true, true]);
+    expect(app.played).toStrictEqual([{ sound: "chime", volume: 1 }]);
   });
 });
