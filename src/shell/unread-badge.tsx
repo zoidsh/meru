@@ -19,7 +19,13 @@ export const UnreadBadge = ({
   }
 
   return (
-    <Badge aria-hidden className={cn("h-4 px-1.5 tabular-nums", className)}>
+    <Badge
+      aria-hidden
+      className={cn(
+        "h-4 bg-[#ec3128] px-1.5 text-white tabular-nums",
+        className
+      )}
+    >
       {count > MAX_SHOWN_UNREAD
         ? t({
             message: `${MAX_SHOWN_UNREAD}+`,
