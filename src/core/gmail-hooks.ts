@@ -177,6 +177,13 @@ const within = (selectors: readonly string[]) =>
   selectors.map((selector) => `${selector} *`).join(", ");
 
 /**
+ * Another list of messages below the subject. Spelled from the subject's
+ * children because linkedom, which the unit tests select with, lets a bare
+ * `:has(a b)` find `a` at the subject itself.
+ */
+const NESTED_LIST = `> [role="list"] ${MESSAGE}, > * [role="list"] ${MESSAGE}`;
+
+/**
  * Each scope's guard. A part of a message is inside one, and is never a
  * message, the body or a draft, nor holds one, nor sits in a draft; Gmail's
  * own part around the body never sits in it either. The thread's list is in
@@ -185,13 +192,6 @@ const within = (selectors: readonly string[]) =>
  * messages: reordering hides nothing, so it may hold a draft, which moves
  * with its message.
  */
-/**
- * Another list of messages below the subject. Spelled from the subject's
- * children because linkedom, which the unit tests select with, lets a bare
- * `:has(a b)` find `a` at the subject itself.
- */
-const NESTED_LIST = `> [role="list"] ${MESSAGE}, > * [role="list"] ${MESSAGE}`;
-
 const GUARDS: Record<HookScope, string> = {
   chrome: HOOK_GUARD,
   message: `:is(${MESSAGE} *):not(${isOrHolds([MESSAGE, BODY, ...EDITING])}, ${within([BODY, ...EDITING])})`,
