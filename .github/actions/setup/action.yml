@@ -21,13 +21,17 @@ runs:
         path: ${{ steps.pnpm-store.outputs.path }}
         key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
         restore-keys: pnpm-${{ runner.os }}-
+    - if: inputs.electron == 'true'
+      id: electron
+      shell: bash
+      run: echo "version=$(node -p 'require("./package.json").devDependencies.electron')" >> "$GITHUB_OUTPUT"
     # Electron's own install and electron-builder's packing both download
-    # through @electron/get, into this folder.
+    # through @electron/get, into this folder. Keyed on the version alone, with
+    # no fallback, so a saved cache never carries an older Electron along.
     - if: inputs.electron == 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ runner.os == 'Linux' && '~/.cache/electron' || runner.os == 'macOS' && '~/Library/Caches/electron' || '~\AppData\Local\electron\Cache' }}
-        key: electron-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-        restore-keys: electron-${{ runner.os }}-
+        key: electron-${{ runner.os }}-${{ steps.electron.outputs.version }}
     - shell: bash
       run: pnpm install --frozen-lockfile
