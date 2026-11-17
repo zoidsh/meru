@@ -20,9 +20,25 @@ export const VIEW_ANCHORS = {
   compose: "[data-compose-id]",
 } as const satisfies Record<Exclude<GmailView, "settings">, string>;
 
-export const HOOK_NAMES = ["logo", "footer", "promo", "upgrade"] as const;
+export const HOOK_NAMES = [
+  "logo",
+  "footer",
+  "promo",
+  "upgrade",
+  "conversation",
+  "attachments",
+  "trimmed",
+  "trimmedToggle",
+] as const;
 
 export type HookName = (typeof HOOK_NAMES)[number];
+
+/**
+ * Where in Gmail's page a hook's part lives, which decides what its guard
+ * keeps it from: Gmail's chrome, Gmail's own part of a message around its
+ * body, what Gmail inserts into a body, or the list of a thread's messages.
+ */
+export type HookScope = "chrome" | "message" | "body" | "conversation";
 
 /**
  * One hook into Gmail's page. Every anchor applies, the most stable first;
@@ -31,6 +47,7 @@ export type HookName = (typeof HOOK_NAMES)[number];
  */
 export interface Hook {
   name: HookName;
+  scope: HookScope;
   anchors: readonly string[];
   /** Where a page with no match is broken; elsewhere it is only absent. */
   requiredIn: readonly GmailView[] | "any";
@@ -45,14 +62,24 @@ const POLICY_LINK = 'a[href*="/gmail/about/policy/"]';
 
 const STORAGE_LINK = 'a[href*="/settings/storage"]';
 
+const MESSAGE = "[data-message-id]";
+
+/** A message's text as the sender wrote it, which Gmail renders in here. */
+const BODY = ".a3s";
+
+/** Gmail inserts its trimmed parts as children of the body's one wrapper. */
+const BODY_TOP = `.adO > ${BODY} > div`;
+
 export const HOOKS: readonly Hook[] = [
   {
     name: "logo",
+    scope: "chrome",
     anchors: ['header div:has(> div > a[href="#inbox"] > img)'],
     requiredIn: "any",
   },
   {
     name: "footer",
+    scope: "chrome",
     anchors: [
       `[role="contentinfo"]:has(${POLICY_LINK})`,
       // With the reading pane on, the footer's parts are in the pane's
@@ -65,16 +92,45 @@ export const HOOKS: readonly Hook[] = [
   },
   {
     name: "promo",
+    scope: "chrome",
     // The upgrade button is an onramp container too, but in the header.
     anchors: ['[role="main"] [data-rp-onramp-container]'],
     requiredIn: [],
   },
   {
     name: "upgrade",
+    scope: "chrome",
     anchors: ['[data-pep-id="global-pep-gmail"]'],
     requiredIn: [],
     // The button is itself one of Google's onramp containers.
     witness: "header [data-rp-onramp-container]",
+  },
+  {
+    name: "conversation",
+    scope: "conversation",
+    // A collapsed message's item holds no message id; the open one's does.
+    anchors: [`[role="list"]:has(> [role="listitem"] ${MESSAGE})`],
+    requiredIn: ["thread"],
+    witness: MESSAGE,
+  },
+  {
+    name: "attachments",
+    scope: "message",
+    anchors: [".hq.gt"],
+    requiredIn: [],
+    witness: "[download_url]",
+  },
+  {
+    name: "trimmed",
+    scope: "body",
+    anchors: [`${BODY_TOP} > .adL`, `${BODY_TOP} > .adL > .h5`],
+    requiredIn: [],
+  },
+  {
+    name: "trimmedToggle",
+    scope: "body",
+    anchors: [`${BODY_TOP} > .ajU`],
+    requiredIn: [],
   },
 ];
 
@@ -108,30 +164,130 @@ const AUTHORED = [
  */
 export const HOOK_GUARD = `:not(${PROTECTED}, :has(${PROTECTED}), ${AUTHORED})`;
 
-/** What an anchor's rule and the health check both select. */
-export const guardedSelector = (anchor: string) => `${anchor}${HOOK_GUARD}`;
+const EDITING = ["[data-compose-id]", "[contenteditable]"];
+
+const isOrHolds = (selectors: readonly string[]) =>
+  `${selectors.join(", ")}, :has(${selectors.join(", ")})`;
+
+const within = (selectors: readonly string[]) =>
+  selectors.map((selector) => `${selector} *`).join(", ");
+
+/**
+ * Each scope's guard. A part of a message is inside one, and is never a
+ * message, the body or a draft, nor holds one, nor sits in a draft; Gmail's
+ * own part around the body never sits in it either. The thread's list is in
+ * the main region and never in mail, and is never the inbox's list, the
+ * navigation or the main region, nor holds them: reordering hides nothing,
+ * so it may hold a draft, which moves with its message.
+ */
+const GUARDS: Record<HookScope, string> = {
+  chrome: HOOK_GUARD,
+  message: `:is(${MESSAGE} *):not(${isOrHolds([MESSAGE, BODY, ...EDITING])}, ${within([BODY, ...EDITING])})`,
+  body: `:is(${MESSAGE} ${BODY} *):not(${isOrHolds([MESSAGE, BODY, ...EDITING])}, ${within(EDITING)})`,
+  conversation: `:is([role="main"] *):not(${isOrHolds(['[gh="tl"]', '[role="navigation"]', '[role="main"]'])}, ${within([MESSAGE, ...EDITING])})`,
+};
+
+/**
+ * The part of a message that holds its attachment block, and so the body
+ * beside it: in a message, never in its body or a draft, never a message or a
+ * draft nor holding one.
+ */
+const HOLDER_GUARD = `:is(${MESSAGE} *):not(${isOrHolds([MESSAGE, ...EDITING])}, ${within([BODY, ...EDITING])})`;
 
 /** A witness in mail says nothing of Gmail's own parts. */
-export const witnessSelector = (witness: string) =>
-  `${witness}:not(${AUTHORED})`;
+const WITNESS_GUARDS: Record<HookScope, string> = {
+  chrome: `:not(${AUTHORED})`,
+  message: `:is(${MESSAGE} *):not(${within([BODY, ...EDITING])})`,
+  body: `:is(${MESSAGE} ${BODY} *):not(${within(EDITING)})`,
+  conversation: `:is([role="main"] *):not(${within([MESSAGE, ...EDITING])})`,
+};
+
+/** What an anchor's rule and the health check both select. */
+export const guardedSelector = (hook: Hook, anchor: string) =>
+  `${anchor}${GUARDS[hook.scope]}`;
+
+export const witnessSelector = (hook: Hook, witness: string) =>
+  `${witness}${WITNESS_GUARDS[hook.scope]}`;
 
 export const GMAIL_FEATURES = [
   "hideGmailLogo",
   "hideInboxFooter",
   "hidePromoBanner",
   "hideUpgradeButton",
+  "reverseConversation",
+  "moveAttachmentsToTop",
+  "showTrimmedContent",
 ] as const satisfies readonly SettingKey[];
 
 export type GmailFeature = (typeof GMAIL_FEATURES)[number];
 
 export type GmailFeatures = Record<GmailFeature, boolean>;
 
-/** The hooks each hide hides, by name. */
-export const HIDES: Record<GmailFeature, readonly HookName[]> = {
-  hideGmailLogo: ["logo"],
-  hideInboxFooter: ["footer"],
-  hidePromoBanner: ["promo"],
-  hideUpgradeButton: ["upgrade"],
+/**
+ * One rule of a feature's stylesheet: one per anchor of its hook, taking each
+ * guarded match, or what `target` reaches from it.
+ */
+export interface FeatureRule {
+  hook: HookName;
+  target?: (match: string, anchor: string) => string;
+  declarations: string;
+}
+
+const hide = (hook: HookName): FeatureRule => ({
+  hook,
+  declarations: "display: none !important;",
+});
+
+/** Gmail's own line between messages, drawn above every one but the first. */
+const SEPARATOR = (item: string) => (list: string) =>
+  `${list} > [role="listitem"]${item} > .Bk > .G2`;
+
+/** The rules each feature inserts while on, by the hooks they take. */
+export const FEATURE_RULES: Record<GmailFeature, readonly FeatureRule[]> = {
+  hideGmailLogo: [hide("logo")],
+  hideInboxFooter: [hide("footer")],
+  hidePromoBanner: [hide("promo")],
+  hideUpgradeButton: [hide("upgrade")],
+  // Visual only: focus, Gmail's n and p and a screen reader keep the DOM's
+  // order, oldest first. reading-flow would make Tab follow the screen, but
+  // Chromium then skips every message, since each item has tabindex -1.
+  reverseConversation: [
+    {
+      hook: "conversation",
+      declarations:
+        "display: flex !important; flex-direction: column-reverse !important;",
+    },
+    {
+      hook: "conversation",
+      target: SEPARATOR(""),
+      declarations:
+        "border-top: 1px solid rgba(100, 121, 143, 0.12) !important;",
+    },
+    {
+      hook: "conversation",
+      target: SEPARATOR(":last-child"),
+      declarations: "border-top: none !important;",
+    },
+  ],
+  // The block's own message part becomes a column it heads, so no node moves;
+  // without a guarded block, the column keeps the DOM's order.
+  moveAttachmentsToTop: [
+    {
+      hook: "attachments",
+      target: (_block, anchor) => `:has(> ${anchor})${HOLDER_GUARD}`,
+      declarations:
+        "display: flex !important; flex-direction: column !important;",
+    },
+    {
+      hook: "attachments",
+      declarations:
+        "order: -1 !important; padding-bottom: 16px !important; border-bottom: 1px dotted rgb(216, 216, 216) !important;",
+    },
+  ],
+  showTrimmedContent: [
+    { hook: "trimmed", declarations: "display: block !important;" },
+    hide("trimmedToggle"),
+  ],
 };
 
 export const findHook = (name: HookName): Hook => {
@@ -153,13 +309,20 @@ export const gmailFeatures = (
   ) as GmailFeatures;
 
 /**
- * The stylesheet a hide inserts while on: one rule per anchor, since a
+ * The stylesheet a feature inserts while on: one rule per anchor, since a
  * selector the engine cannot parse drops the whole rule it is in.
  */
-export const hideStylesheet = (feature: GmailFeature) =>
-  HIDES[feature]
-    .flatMap((name) => findHook(name).anchors)
-    .map((anchor) => `${guardedSelector(anchor)} { display: none !important; }`)
+export const featureStylesheet = (feature: GmailFeature) =>
+  FEATURE_RULES[feature]
+    .flatMap(({ hook: name, target, declarations }) => {
+      const hook = findHook(name);
+
+      return hook.anchors.map((anchor) => {
+        const match = guardedSelector(hook, anchor);
+
+        return `${target ? target(match, anchor) : match} { ${declarations} }`;
+      });
+    })
     .join("\n");
 
 export const HOOK_STATUSES = ["matched", "broken", "absent"] as const;

@@ -2,7 +2,7 @@ import { ipcRenderer, webFrame } from "electron";
 
 import { GMAIL_CHANNELS, isGmailFeatures } from "#contract/gmail-channels.ts";
 import type { GmailHealth } from "#contract/gmail-channels.ts";
-import { GMAIL_FEATURES, hideStylesheet } from "#core/gmail-hooks.ts";
+import { GMAIL_FEATURES, featureStylesheet } from "#core/gmail-hooks.ts";
 import type { GmailFeature } from "#core/gmail-hooks.ts";
 
 import { checkHealth } from "./health.ts";
@@ -93,7 +93,7 @@ const apply = (feature: GmailFeature, on: boolean) => {
   const key = inserted.get(feature);
 
   if (on && key === undefined) {
-    inserted.set(feature, webFrame.insertCSS(hideStylesheet(feature)));
+    inserted.set(feature, webFrame.insertCSS(featureStylesheet(feature)));
   } else if (!on && key !== undefined) {
     webFrame.removeInsertedCSS(key);
     inserted.delete(feature);

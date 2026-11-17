@@ -155,6 +155,21 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: true,
   }),
+  /** An open conversation newest message first, on screen only. */
+  reverseConversation: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
+  /** Each message's attachments above its text rather than below. */
+  moveAttachmentsToTop: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
+  /** The quoted text Gmail folds behind its ••• button, shown. */
+  showTrimmedContent: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
 } satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;

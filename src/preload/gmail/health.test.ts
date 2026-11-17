@@ -2,10 +2,12 @@ import { parseHTML } from "linkedom";
 import { describe, expect, it } from "vitest";
 
 import {
+  FEATURE_RULES,
   GMAIL_FEATURES,
-  HIDES,
+  featureStylesheet,
   findHook,
   guardedSelector,
+  witnessSelector,
 } from "#core/gmail-hooks.ts";
 import type { HookName } from "#core/gmail-hooks.ts";
 
@@ -43,6 +45,10 @@ describe(checkHealth, () => {
         footer: "matched",
         promo: "matched",
         upgrade: "matched",
+        conversation: "absent",
+        attachments: "absent",
+        trimmed: "absent",
+        trimmedToggle: "absent",
       },
     });
   });
@@ -148,7 +154,9 @@ const PRECIOUS = {
  * For each anchor of each hide's hooks, a container it takes, wrapped around
  * whatever else Gmail might have moved inside it.
  */
-const SWALLOWING: Record<HookName, readonly ((inside: string) => string)[]> = {
+const SWALLOWING: Partial<
+  Record<HookName, readonly ((inside: string) => string)[]>
+> = {
   logo: [
     (inside) =>
       `<header><div><div><a href="#inbox"><img></a></div>${inside}</div></header>`,
@@ -207,18 +215,17 @@ const select = (root: ParentNode, selector: string) => [
   ...root.querySelectorAll(selector),
 ];
 
-const anchorCases = GMAIL_FEATURES.flatMap((feature) =>
-  HIDES[feature].flatMap((name) =>
-    SWALLOWING[name].map(
-      (wrap, index) =>
-        [
-          feature,
-          name,
-          index,
-          findHook(name).anchors[index] ?? "",
-          wrap,
-        ] as const
-    )
+/** Each hide and the hook of Gmail's chrome it takes. */
+const HIDES = GMAIL_FEATURES.flatMap((feature) =>
+  FEATURE_RULES[feature]
+    .filter(({ hook }) => findHook(hook).scope === "chrome")
+    .map(({ hook }) => [feature, hook] as const)
+);
+
+const anchorCases = HIDES.flatMap(([feature, name]) =>
+  (SWALLOWING[name] ?? []).map(
+    (wrap, index) =>
+      [feature, name, index, findHook(name).anchors[index] ?? "", wrap] as const
   )
 );
 
@@ -265,7 +272,9 @@ const takes = (name: HookName, html: string) => {
 
   return {
     unguarded: anchors.some((anchor) => select(root, anchor).length > 0),
-    guarded: anchors.flatMap((anchor) => select(root, guardedSelector(anchor))),
+    guarded: anchors.flatMap((anchor) =>
+      select(root, guardedSelector(findHook(name), anchor))
+    ),
   };
 };
 
@@ -273,10 +282,8 @@ const GUARDED = { unguarded: true, guarded: [] };
 
 describe("the guard on every hide", () => {
   it("has a swallowing container for every anchor", () => {
-    for (const feature of GMAIL_FEATURES) {
-      for (const name of HIDES[feature]) {
-        expect(SWALLOWING[name]).toHaveLength(findHook(name).anchors.length);
-      }
+    for (const [, name] of HIDES) {
+      expect(SWALLOWING[name]).toHaveLength(findHook(name).anchors.length);
     }
   });
 
@@ -306,4 +313,268 @@ describe("the guard on every hide", () => {
       expect(takes(name, html)).toStrictEqual(GUARDED);
     }
   );
+});
+
+// A thread as Gmail draws it, cut to the anchors and the classes the thread
+// features take.
+const ATTACHMENTS =
+  '<div class="hq gt"><div class="hp"></div><span download_url="x"></span></div>';
+const TRIMMED =
+  '<div class="adL"><div class="adm"></div><div class="h5">q</div></div>';
+const TOGGLE = '<div class="ajU"><div class="ajR" role="button"></div></div>';
+
+/** A message's body, with what Gmail inserts at its top level. */
+const body = (inserted = "", mail = "<p>text</p>") =>
+  `<div class="ii gt adO"><div class="a3s"><div>${mail}${inserted}</div></div></div>`;
+
+/** An open message: its body, then its attachment block. */
+const message = (inner = `${body()}${ATTACHMENTS}`) =>
+  `<div data-message-id="#msg-a:r1"><div class="gs"><div>${inner}</div></div></div>`;
+
+const item = (inner: string) =>
+  `<div role="listitem"><div class="Bk"><div class="G2">${inner}</div></div></div>`;
+
+const thread = (list: string) =>
+  page(
+    `${LOGO}<div role="main"><h2 data-legacy-thread-id="1"></h2>${list}</div>`,
+    "#inbox/1"
+  );
+
+const MESSAGES = (items: string) => `<div role="list">${items}</div>`;
+
+const FULL = MESSAGES(
+  `${item("")}${item(message(`${body(`${TOGGLE}${TRIMMED}`)}${ATTACHMENTS}`))}`
+);
+
+describe("the thread's hooks", () => {
+  it("matches each in a thread that has them all", () => {
+    expect(checkHealth(thread(FULL))).toMatchObject({
+      views: ["thread"],
+      hooks: {
+        conversation: "matched",
+        attachments: "matched",
+        trimmed: "matched",
+        trimmedToggle: "matched",
+      },
+    });
+  });
+
+  it("calls the conversation broken when the thread's messages sit in no list", () => {
+    expect(
+      checkHealth(thread(`<div>${item(message())}</div>`)).hooks.conversation
+    ).toBe("broken");
+  });
+
+  it("calls the attachments broken when a download tile shows outside every block", () => {
+    const renamed = message(
+      `${body()}<div class="renamed"><span download_url="x"></span></div>`
+    );
+
+    expect(checkHealth(thread(MESSAGES(item(renamed)))).hooks.attachments).toBe(
+      "broken"
+    );
+  });
+
+  it("takes no witness from mail: a download tile in a body leaves attachments absent", () => {
+    const tile = '<span download_url="x"></span>';
+
+    expect(
+      checkHealth(thread(MESSAGES(item(message(body("", tile)))))).hooks
+        .attachments
+    ).toBe("absent");
+  });
+
+  it("never calls trimmed content broken, having no witness", () => {
+    expect(checkHealth(thread(MESSAGES(item(message())))).hooks).toMatchObject({
+      trimmed: "absent",
+      trimmedToggle: "absent",
+    });
+  });
+});
+
+/** What each guarded anchor of a hook takes in a page. */
+const taken = (name: HookName, html: string) => {
+  const { root } = page(html);
+  const hook = findHook(name);
+
+  return {
+    unguarded: hook.anchors.some((anchor) => select(root, anchor).length > 0),
+    guarded: hook.anchors.flatMap((anchor) =>
+      select(root, guardedSelector(hook, anchor))
+    ),
+  };
+};
+
+const IN_MAIN = (html: string) => `<div role="main">${html}</div>`;
+
+/**
+ * For each hook of a thread feature, where its anchors would match but must
+ * take nothing: in a body as mail, in a draft, in an editable region, and
+ * wherever its own match is or holds what it must never be.
+ */
+const WRONG: Record<
+  "conversation" | "attachments" | "trimmed" | "trimmedToggle",
+  Record<string, string>
+> = {
+  conversation: {
+    "a body": IN_MAIN(message(body("", MESSAGES(item(message()))))),
+    "a draft": IN_MAIN(
+      `<div data-compose-id="c">${MESSAGES(item(message()))}</div>`
+    ),
+    "an editable region": IN_MAIN(
+      `<div contenteditable="true">${MESSAGES(item(message()))}</div>`
+    ),
+    "the inbox's list": IN_MAIN(
+      `<div role="list" gh="tl">${item(message())}</div>`
+    ),
+    "a list holding the inbox's list": IN_MAIN(
+      MESSAGES(`${item(message())}<div gh="tl"></div>`)
+    ),
+    "a list holding the navigation": IN_MAIN(
+      MESSAGES(`${item(message())}<div role="navigation"></div>`)
+    ),
+    "a list outside the main region": MESSAGES(item(message())),
+  },
+  attachments: {
+    "a body": IN_MAIN(message(body("", ATTACHMENTS))),
+    "a draft": IN_MAIN(
+      message(`<div data-compose-id="c">${ATTACHMENTS}</div>`)
+    ),
+    "an editable region": IN_MAIN(
+      message(`<div contenteditable="true">${ATTACHMENTS}</div>`)
+    ),
+    "a block that is the body": IN_MAIN(
+      message('<div class="hq gt a3s"><span download_url="x"></span></div>')
+    ),
+    "a block holding the body": IN_MAIN(
+      message(`<div class="hq gt">${body()}</div>`)
+    ),
+    "a block holding the message": IN_MAIN(
+      `<div data-message-id="o"><div class="hq gt">${message(body())}</div></div>`
+    ),
+    "a block outside any message": IN_MAIN(ATTACHMENTS),
+  },
+  trimmed: {
+    "a body, deeper than Gmail inserts": IN_MAIN(
+      message(body("", `<div>${TRIMMED}</div>`))
+    ),
+    "a draft": IN_MAIN(
+      `<div data-message-id="m"><div data-compose-id="c">${body(TRIMMED)}</div></div>`
+    ),
+    "an editable region": IN_MAIN(
+      `<div data-message-id="m"><div contenteditable="true">${body(TRIMMED)}</div></div>`
+    ),
+    "a body outside any message": IN_MAIN(body(TRIMMED)),
+    "a part holding a message": IN_MAIN(
+      message(body(`<div class="adL">${message()}</div>`))
+    ),
+  },
+  trimmedToggle: {
+    "a body, deeper than Gmail inserts": IN_MAIN(
+      message(body("", `<div>${TOGGLE}</div>`))
+    ),
+    "a draft": IN_MAIN(
+      `<div data-message-id="m"><div data-compose-id="c">${body(TOGGLE)}</div></div>`
+    ),
+    "an editable region": IN_MAIN(
+      `<div data-message-id="m"><div contenteditable="true">${body(TOGGLE)}</div></div>`
+    ),
+    "a toggle that is editable": IN_MAIN(
+      message(body('<div class="ajU" contenteditable="true"></div>'))
+    ),
+  },
+};
+
+const wrongCases = Object.entries(WRONG).flatMap(([name, cases]) =>
+  Object.entries(cases).map(
+    ([what, html]) => [name as HookName, what, html] as const
+  )
+);
+
+describe("the guard on every thread feature", () => {
+  it.each(Object.keys(WRONG) as HookName[])(
+    "lets %s take its part where Gmail draws it",
+    (name) => {
+      expect(taken(name, IN_MAIN(FULL)).guarded).not.toHaveLength(0);
+    }
+  );
+
+  it.each(wrongCases)(
+    "keeps %s from taking a match in %s",
+    (name, what, html) => {
+      // Each fixture fools the bare anchor, and the guard is what holds;
+      // trimmed content deeper in a body is refused by the anchor's own depth.
+      expect(taken(name, html)).toStrictEqual(
+        what.includes("deeper") ? { unguarded: false, guarded: [] } : GUARDED
+      );
+    }
+  );
+});
+
+/** The rules of a feature's stylesheet, by their selectors. */
+const selectorsOf = (stylesheet: string) =>
+  stylesheet.split("\n").map((rule) => rule.slice(0, rule.lastIndexOf(" { ")));
+
+const isOrHoldsBody = (element: Element) =>
+  element.matches(".a3s") || element.querySelector(".a3s") !== null;
+
+describe("attachments at the top", () => {
+  const [holder = "", block = ""] = selectorsOf(
+    featureStylesheet("moveAttachmentsToTop")
+  );
+
+  it("heads the message's own part with its block, and nothing else", () => {
+    const { root } = page(IN_MAIN(message()));
+
+    expect(select(root, block).map((each) => each.className)).toStrictEqual([
+      "hq gt",
+    ]);
+    expect(select(root, holder)).toStrictEqual(
+      select(root, ".hq.gt").map((each) => each.parentElement)
+    );
+  });
+
+  it.each(Object.entries(WRONG.attachments))(
+    "never moves the body: in %s, what heads the column neither is nor holds it",
+    (_what, html) => {
+      const { root } = page(html);
+
+      expect(select(root, block).filter(isOrHoldsBody)).toStrictEqual([]);
+      expect(
+        select(root, holder).filter((each) => each.closest(".a3s") !== null)
+      ).toStrictEqual([]);
+    }
+  );
+});
+
+describe("reversed conversations", () => {
+  it("reverses the thread's list alone, and redraws its separators on that list's items", () => {
+    const { root } = page(IN_MAIN(FULL));
+    const [list = "", every = "", last = ""] = selectorsOf(
+      featureStylesheet("reverseConversation")
+    );
+
+    expect(select(root, list)).toStrictEqual(select(root, '[role="list"]'));
+    expect(select(root, every)).toHaveLength(2);
+    expect(select(root, last)).toStrictEqual(
+      select(root, '[role="listitem"]:last-child .G2')
+    );
+  });
+});
+
+describe(witnessSelector, () => {
+  it("reads a thread hook's witness only in Gmail's own part of a message", () => {
+    const { root } = page(
+      IN_MAIN(
+        message(`${body("", '<span download_url="m"></span>')}${ATTACHMENTS}`)
+      )
+    );
+
+    expect(
+      select(
+        root,
+        witnessSelector(findHook("attachments"), "[download_url]")
+      ).map((each) => each.getAttribute("download_url"))
+    ).toStrictEqual(["x"]);
+  });
 });

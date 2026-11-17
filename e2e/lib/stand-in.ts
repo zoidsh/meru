@@ -56,6 +56,45 @@ const GMAIL_MARKUP = `<header>
       <div role="contentinfo"><a href="https://www.google.com/gmail/about/policy/">${GMAIL_PARTS.policy}</a></div>
     </div>`;
 
+/** Names of a stand-in thread's parts, as a person reads them. */
+export const THREAD_PARTS = {
+  message: (n: number) => `Message ${n}`,
+  text: (n: number) => `Text of message ${n}`,
+  attachment: (n: number) => `attachment-${n}.pdf`,
+  quoted: (n: number) => `Quoted in message ${n}`,
+  showTrimmed: "Show trimmed content",
+} as const;
+
+/**
+ * One open message of a thread in Gmail's markup, cut to what the thread
+ * features take: its body with the quote Gmail folds behind its toggle, and
+ * its attachment block below.
+ */
+export const threadMessage = (
+  n: number
+) => `<div role="listitem" aria-label="${THREAD_PARTS.message(n)}">
+      <div class="Bk"><div class="G2"><div data-message-id="#msg-a:r${n}"><div class="gs"><div>
+        <div class="ii gt adO"><div class="a3s"><div>
+          <p>${THREAD_PARTS.text(n)}</p>
+          <div class="ajU"><div class="ajR" role="button" tabindex="0" aria-label="${THREAD_PARTS.showTrimmed}">•••</div></div>
+          <div class="adL"><div class="adm"></div><div class="h5"><p>${THREAD_PARTS.quoted(n)}</p></div></div>
+        </div></div></div>
+        <div class="hq gt"><div class="hp"></div><span download_url="x"><a href="#download-${n}">${THREAD_PARTS.attachment(n)}</a></span></div>
+      </div></div></div></div></div>
+    </div>`;
+
+/**
+ * An open thread of `count` messages, oldest first, with Gmail's own rules
+ * for what it folds: put in the stand-in's main region, as Gmail draws one.
+ */
+export const threadMarkup = (count: number) => `<style>
+      .adL, .h5 { display: none; }
+      .G2 { border-top: 1px solid gray; }
+      [role="listitem"]:first-child .G2 { border-top: none; }
+    </style>
+    <h2 data-legacy-thread-id="t1">Thread</h2>
+    <div role="list">${Array.from({ length: count }, (_, index) => threadMessage(index + 1)).join("")}</div>`;
+
 /** Where the feed sends a signed-out account, which Gmail's view can show too. */
 export const SIGN_IN_PATH = "/signin";
 

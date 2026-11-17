@@ -43,12 +43,12 @@ export const checkHealth = ({
   const hooks = Object.fromEntries(
     HOOKS.map((hook) => {
       const matches = hook.anchors.flatMap((anchor) =>
-        select(root, guardedSelector(anchor))
+        select(root, guardedSelector(hook, anchor))
       );
       const witnesses =
         hook.witness === undefined
           ? []
-          : select(root, witnessSelector(hook.witness)).filter(isVisible);
+          : select(root, witnessSelector(hook, hook.witness)).filter(isVisible);
       let witness: Witness = "none";
 
       if (witnesses.length > 0) {

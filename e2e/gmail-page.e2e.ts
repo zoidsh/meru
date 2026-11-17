@@ -7,7 +7,14 @@ import type { GmailHealth } from "#contract/gmail.ts";
 import type { GmailFeature } from "#core/gmail-hooks.ts";
 
 import { expect, findPage, test } from "./lib/app.ts";
-import { GMAIL_PARTS, POPUP_TITLE, SIGN_IN_TITLE } from "./lib/stand-in.ts";
+import {
+  GMAIL_PARTS,
+  POPUP_TITLE,
+  SIGN_IN_TITLE,
+  THREAD_PARTS,
+  threadMarkup,
+  threadMessage,
+} from "./lib/stand-in.ts";
 
 interface Captured {
   health: (GmailHealth & { profileId: string; tabId: string })[];
@@ -141,8 +148,8 @@ test("switches each hide off and on again while the page stays loaded, touching 
   });
 
   for (const [feature, part] of Object.entries(all) as [
-    GmailFeature,
-    (typeof all)[GmailFeature],
+    keyof typeof all,
+    (typeof all)[keyof typeof all],
   ][]) {
     // oxlint-disable-next-line no-await-in-loop -- one switch at a time
     await setSetting(app, feature, false);
@@ -197,6 +204,10 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
       footer: "broken",
       promo: "absent",
       upgrade: "matched",
+      conversation: "absent",
+      attachments: "absent",
+      trimmed: "absent",
+      trimmedToggle: "absent",
     });
   // A broken hook does nothing: the policy link it no longer reaches shows.
   await expect(parts(view).hideInboxFooter).toBeVisible();
@@ -266,4 +277,194 @@ test("gives Gmail's preload to Gmail's view alone: not to another app's, nor to 
   expect(
     preloads.filter((each) => each.preload === "preload-gmail.cjs")
   ).toHaveLength(1);
+});
+
+const THREAD_FEATURES = [
+  "reverseConversation",
+  "moveAttachmentsToTop",
+  "showTrimmedContent",
+] as const satisfies readonly GmailFeature[];
+
+type ThreadSwitches = Record<(typeof THREAD_FEATURES)[number], boolean>;
+
+const ALL_OFF: ThreadSwitches = {
+  reverseConversation: false,
+  moveAttachmentsToTop: false,
+  showTrimmedContent: false,
+};
+
+const ALL_ON: ThreadSwitches = {
+  reverseConversation: true,
+  moveAttachmentsToTop: true,
+  showTrimmedContent: true,
+};
+
+/** Moves the stand-in to an open thread of `count` messages, as Gmail draws one. */
+const openThread = (view: Page, count: number) =>
+  view.evaluate((markup) => {
+    document.querySelector('[gh="tl"]')?.setAttribute("hidden", "");
+    document
+      .querySelector('[role="main"]')
+      ?.insertAdjacentHTML("beforeend", markup);
+    location.hash = "#inbox/t1";
+  }, threadMarkup(count));
+
+const top = async (view: Page, text: string) => {
+  const box = await view.getByText(text, { exact: true }).boundingBox();
+
+  return box?.y ?? Number.NaN;
+};
+
+/** The thread's messages by name, top of the screen first. */
+const messageOrder = async (view: Page) => {
+  const items = await view.getByRole("listitem").all();
+  const placed = await Promise.all(
+    items.map(async (item) => {
+      const box = await item.boundingBox();
+
+      return {
+        name: (await item.getAttribute("aria-label")) ?? "",
+        y: box?.y ?? Number.NaN,
+      };
+    })
+  );
+
+  return placed.toSorted((a, b) => a.y - b.y).map((each) => each.name);
+};
+
+const messages = (...numbers: number[]) =>
+  numbers.map((n) => THREAD_PARTS.message(n));
+
+/** Whether message `n`'s attachment shows above its text. */
+const attachmentOnTop = async (view: Page, n: number) =>
+  (await top(view, THREAD_PARTS.attachment(n))) <
+  (await top(view, THREAD_PARTS.text(n)));
+
+/** What the thread features do to an open thread, and to its message `n`. */
+const expectThread = async (
+  view: Page,
+  count: number,
+  on: ThreadSwitches,
+  n = 1
+) => {
+  const numbers = Array.from({ length: count }, (_, index) => index + 1);
+
+  await expect
+    .poll(() => messageOrder(view))
+    .toStrictEqual(
+      messages(...(on.reverseConversation ? numbers.toReversed() : numbers))
+    );
+  await expect
+    .poll(() => attachmentOnTop(view, n))
+    .toBe(on.moveAttachmentsToTop);
+
+  const quoted = view.getByText(THREAD_PARTS.quoted(n));
+  const toggle = view
+    .getByRole("listitem", { name: THREAD_PARTS.message(n) })
+    .getByRole("button", { name: THREAD_PARTS.showTrimmed });
+
+  await (on.showTrimmedContent
+    ? Promise.all([expect(quoted).toBeVisible(), expect(toggle).toBeHidden()])
+    : Promise.all([expect(quoted).toBeHidden(), expect(toggle).toBeVisible()]));
+};
+
+/** The thread's markup, which no thread feature may change. */
+const threadMarkupNow = (view: Page) =>
+  view.evaluate(() => document.querySelector('[role="list"]')?.innerHTML);
+
+test("switches each thread feature on and off on an open thread, changing no message and touching the others not", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+
+  await openThread(view, 3);
+  await expectThread(view, 3, ALL_OFF);
+  await expect
+    .poll(() => lastHooks(app), { timeout: 15_000 })
+    .toMatchObject({
+      conversation: "matched",
+      attachments: "matched",
+      trimmed: "matched",
+      trimmedToggle: "matched",
+    });
+
+  const before = await threadMarkupNow(view);
+
+  await view.evaluate(() => {
+    Reflect.set(window, "keptAcrossSwitches", true);
+  });
+
+  for (const feature of THREAD_FEATURES) {
+    // oxlint-disable-next-line no-await-in-loop -- one switch at a time
+    await setSetting(app, feature, true);
+    // oxlint-disable-next-line no-await-in-loop -- one switch at a time
+    await expectThread(view, 3, { ...ALL_OFF, [feature]: true });
+    // oxlint-disable-next-line no-await-in-loop -- one switch at a time
+    await setSetting(app, feature, false);
+    // oxlint-disable-next-line no-await-in-loop -- one switch at a time
+    await expectThread(view, 3, ALL_OFF);
+  }
+
+  expect(await threadMarkupNow(view)).toBe(before);
+  expect(
+    await view.evaluate(() => Reflect.get(window, "keptAcrossSwitches"))
+  ).toBe(true);
+});
+
+test("applies the thread features on at launch, and to a message that arrives in an open thread", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeFile(
+    path.join(userDataDir, "settings.json"),
+    JSON.stringify({ version: 1, ...ALL_ON })
+  );
+
+  const app = await launchApp();
+  const view = await findPage(app, standIn.url);
+
+  await openThread(view, 2);
+  await expectThread(view, 2, ALL_ON);
+  await view.evaluate((markup) => {
+    document
+      .querySelector('[role="list"]')
+      ?.insertAdjacentHTML("beforeend", markup);
+  }, threadMessage(3));
+  await expectThread(view, 3, ALL_ON, 3);
+});
+
+test("reports a thread hook broken when Gmail's markup moves, and its feature then does nothing", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+
+  await openThread(view, 2);
+
+  for (const feature of THREAD_FEATURES) {
+    // oxlint-disable-next-line no-await-in-loop -- one switch at a time
+    await setSetting(app, feature, true);
+  }
+
+  await expectThread(view, 2, ALL_ON);
+  // As Gmail might rename its markup: the list loses its role, and the first
+  // message's attachment block its classes while its download tile stays.
+  await view.evaluate(() => {
+    document.querySelector('[role="list"]')?.setAttribute("role", "group");
+    document.querySelector(".hq.gt")?.setAttribute("class", "renamed");
+    location.hash = "#inbox/t1/renamed";
+  });
+
+  await expect
+    .poll(() => lastHooks(app), { timeout: 15_000 })
+    .toMatchObject({
+      conversation: "broken",
+      attachments: "broken",
+      trimmed: "matched",
+    });
+  expect(await messageOrder(view)).toStrictEqual(messages(1, 2));
+  expect(await attachmentOnTop(view, 1)).toBe(false);
+  expect(await attachmentOnTop(view, 2)).toBe(true);
 });

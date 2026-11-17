@@ -20,6 +20,9 @@ const ON: GmailFeatures = {
   hideInboxFooter: true,
   hidePromoBanner: true,
   hideUpgradeButton: true,
+  reverseConversation: true,
+  moveAttachmentsToTop: false,
+  showTrimmedContent: true,
 };
 
 const HEALTH: GmailHealth = {
@@ -29,6 +32,10 @@ const HEALTH: GmailHealth = {
     footer: "broken",
     promo: "absent",
     upgrade: "matched",
+    conversation: "matched",
+    attachments: "matched",
+    trimmed: "matched",
+    trimmedToggle: "matched",
   },
   ms: 2,
 };

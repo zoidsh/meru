@@ -11,6 +11,9 @@ const FEATURES = {
   hideInboxFooter: false,
   hidePromoBanner: true,
   hideUpgradeButton: false,
+  reverseConversation: false,
+  moveAttachmentsToTop: false,
+  showTrimmedContent: true,
 };
 
 describe(isGmailFeatures, () => {
@@ -45,6 +48,10 @@ describe("the health report's schema", () => {
       footer: "broken",
       promo: "absent",
       upgrade: "matched",
+      conversation: "matched",
+      attachments: "absent",
+      trimmed: "absent",
+      trimmedToggle: "absent",
     },
     ms: 2,
   };

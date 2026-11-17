@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  FEATURE_RULES,
   GMAIL_FEATURES,
-  HIDES,
   HOOKS,
   HOOK_GUARD,
   HOOK_NAMES,
   VIEW_ANCHORS,
   decideHook,
   detectViews,
+  featureStylesheet,
   findHook,
   gmailFeatures,
   guardedSelector,
-  hideStylesheet,
   witnessSelector,
 } from "./gmail-hooks.ts";
 import { SETTINGS } from "./settings.ts";
@@ -20,21 +20,23 @@ import { SETTINGS } from "./settings.ts";
 /** Every selector the page is read by, as the rules and the check use it. */
 const everySelector = [
   ...HOOKS.flatMap((hook) => [
-    ...hook.anchors.map(guardedSelector),
-    ...(hook.witness === undefined ? [] : [witnessSelector(hook.witness)]),
+    ...hook.anchors.map((anchor) => guardedSelector(hook, anchor)),
+    ...(hook.witness === undefined
+      ? []
+      : [witnessSelector(hook, hook.witness)]),
   ]),
   ...Object.values(VIEW_ANCHORS),
 ];
 
 describe("the registry", () => {
-  it("names each hook once, and every hide names hooks it holds", () => {
+  it("names each hook once, and every feature's rules name hooks it holds", () => {
     expect(HOOKS.map((hook) => hook.name)).toStrictEqual([...HOOK_NAMES]);
 
     for (const feature of GMAIL_FEATURES) {
-      expect(HIDES[feature].length).toBeGreaterThan(0);
+      expect(FEATURE_RULES[feature].length).toBeGreaterThan(0);
 
-      for (const name of HIDES[feature]) {
-        expect(findHook(name).name).toBe(name);
+      for (const { hook } of FEATURE_RULES[feature]) {
+        expect(findHook(hook).name).toBe(hook);
       }
     }
   });
@@ -57,10 +59,20 @@ describe("the registry", () => {
     }
   });
 
-  it("switches each feature by a boolean setting that is on by default, as in v3", () => {
-    for (const feature of GMAIL_FEATURES) {
-      expect(SETTINGS[feature].default).toBeTruthy();
-    }
+  it("switches each feature by a boolean setting with v3's default", () => {
+    expect(
+      Object.fromEntries(
+        GMAIL_FEATURES.map((feature) => [feature, SETTINGS[feature].default])
+      )
+    ).toStrictEqual({
+      hideGmailLogo: true,
+      hideInboxFooter: true,
+      hidePromoBanner: true,
+      hideUpgradeButton: true,
+      reverseConversation: false,
+      moveAttachmentsToTop: false,
+      showTrimmedContent: false,
+    });
   });
 });
 
@@ -73,24 +85,58 @@ describe(gmailFeatures, () => {
       hideInboxFooter: true,
       hidePromoBanner: false,
       hideUpgradeButton: true,
+      reverseConversation: true,
+      moveAttachmentsToTop: true,
+      showTrimmedContent: true,
     });
   });
 });
 
-describe(hideStylesheet, () => {
-  it("is one guarded rule per anchor of the hide's hooks", () => {
-    const rules = hideStylesheet("hideInboxFooter").split("\n");
+/** The hides' stylesheets as slice 2.8 shipped them, which nothing may change. */
+const SHIPPED_HIDES = {
+  hideGmailLogo:
+    'header div:has(> div > a[href="#inbox"] > img):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }',
+  hideInboxFooter:
+    '[role="contentinfo"]:has(a[href*="/gmail/about/policy/"]):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }\n.apa .apO:has(a[href*="/gmail/about/policy/"]):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }\n.apa .apc:has(a[href*="/settings/storage"]):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }',
+  hidePromoBanner:
+    '[role="main"] [data-rp-onramp-container]:not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }',
+  hideUpgradeButton:
+    '[data-pep-id="global-pep-gmail"]:not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }',
+};
 
-    expect(rules).toHaveLength(findHook("footer").anchors.length);
-
-    for (const [index, anchor] of findHook("footer").anchors.entries()) {
-      expect(rules[index]).toBe(
-        `${anchor}${HOOK_GUARD} { display: none !important; }`
+describe(featureStylesheet, () => {
+  it("leaves each hide's stylesheet as shipped, byte for byte", () => {
+    for (const [feature, stylesheet] of Object.entries(SHIPPED_HIDES)) {
+      expect(featureStylesheet(feature as keyof typeof SHIPPED_HIDES)).toBe(
+        stylesheet
       );
     }
   });
-});
 
+  it("is one rule per anchor of each rule's hook, its guarded match where it targets nothing else", () => {
+    for (const feature of GMAIL_FEATURES) {
+      const expected = FEATURE_RULES[feature].flatMap(
+        ({ hook, target, declarations }) =>
+          findHook(hook).anchors.map((anchor) =>
+            target
+              ? undefined
+              : `${guardedSelector(findHook(hook), anchor)} { ${declarations} }`
+          )
+      );
+      const rules = featureStylesheet(feature).split("\n");
+
+      expect(rules).toHaveLength(expected.length);
+
+      expect(
+        rules.filter((_rule, index) => expected[index] !== undefined)
+      ).toStrictEqual(expected.filter((rule) => rule !== undefined));
+    }
+  });
+
+  it("guards every hide with the guard slice 2.8 shipped", () => {
+    expect(guardedSelector(findHook("logo"), "x")).toBe(`x${HOOK_GUARD}`);
+  });
+});
 describe(decideHook, () => {
   const logo = findHook("logo");
   const footer = findHook("footer");
