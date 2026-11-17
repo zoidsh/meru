@@ -81,6 +81,7 @@ const mailFingerprint = (view: Page) =>
       "opacity",
       "font-size",
       "display",
+      "width",
     ];
 
     return [
@@ -213,3 +214,52 @@ test("reports the pane broken when Gmail renames it in a thread, which then stay
     .toMatchObject({ darkPane: "broken", bodyCard: "matched" });
   expect(await paneBackground(view)).toBe(WHITE);
 });
+
+const CARDS = [
+  {
+    card: "bodyCard",
+    what: "a body",
+    at: ".ii.gt",
+    renamed: "renamed gt",
+    back: "ii gt",
+  },
+  {
+    card: "editorCard",
+    what: "the editor",
+    at: "td.Ap",
+    renamed: "renamed",
+    back: "Ap",
+  },
+] as const;
+
+for (const { card, what, at, renamed, back } of CARDS) {
+  test(`takes the whole dark theme off while ${what} shows outside its card, and puts it back once inside again`, async ({
+    app,
+    standIn,
+  }) => {
+    const view = await findPage(app, standIn.url);
+    const setClass = (selector: string, value: string, hash: string) =>
+      view.evaluate(
+        ([match, name, next]) => {
+          document.querySelector(match)?.setAttribute("class", name);
+          location.hash = next;
+        },
+        [selector, value, hash] as const
+      );
+
+    await openDarkThread(view, true);
+    await expect.poll(() => paneBackground(view)).toBe(CLEAR);
+
+    await setClass(at, renamed, "#inbox/t1/renamed");
+    await expect
+      .poll(() => lastHooks(app), { timeout: 15_000 })
+      .toMatchObject({ [card]: "broken" });
+    await expect.poll(() => paneBackground(view)).toBe(WHITE);
+
+    await setClass(".renamed", back, "#inbox/t1");
+    await expect
+      .poll(() => lastHooks(app), { timeout: 15_000 })
+      .toMatchObject({ [card]: "matched" });
+    await expect.poll(() => paneBackground(view)).toBe(CLEAR);
+  });
+}
