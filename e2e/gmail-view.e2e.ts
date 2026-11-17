@@ -142,7 +142,7 @@ const stubSystemBrowser = (app: ElectronApplication) =>
 const readOpenedExternally = (app: ElectronApplication) =>
   app.evaluate(() => Reflect.get(globalThis, "openedExternally") as string[]);
 
-test("hands a link to another site to the system browser", async ({
+test("hands a link to another site to the system browser, and opens a sign-in pop-up as a child of the shell window in the same session", async ({
   app,
   standIn,
 }) => {
@@ -160,15 +160,7 @@ test("hands a link to another site to the system browser", async ({
     )
   ).toBe(1);
   expect(view.url()).toBe(standIn.url);
-});
 
-test("opens a sign-in pop-up as a child of the shell window in the same session", async ({
-  app,
-  standIn,
-}) => {
-  const view = await findPage(app, standIn.url);
-
-  await stubSystemBrowser(app);
   await view.getByRole("link", { name: "Open a pop-up" }).click();
 
   const popup = await findPage(app, standIn.popupUrl);
@@ -195,7 +187,7 @@ test("opens a sign-in pop-up as a child of the shell window in the same session"
 
   await expect
     .poll(() => readOpenedExternally(app))
-    .toStrictEqual([ELSEWHERE_URL]);
+    .toStrictEqual([ELSEWHERE_URL, ELSEWHERE_URL]);
 });
 
 test("keeps an unreadable state file aside and still starts", async ({

@@ -2,9 +2,10 @@ import { createContentSecurityPolicy } from "#main/content-security-policy.ts";
 
 import { expect, test } from "./lib/app.ts";
 
-test("opens the shell window, named for a development build, with its title bar and content landmarks", async ({
+test("opens the shell window, named for a development build, with its title bar and content landmarks, served from meru-app:// under the strict policy with no console error; a second instance exits and leaves it running", async ({
   app,
   shell,
+  spawnApp,
 }) => {
   expect(
     await app.evaluate(({ app: electronApp, BrowserWindow }) => [
@@ -14,11 +15,7 @@ test("opens the shell window, named for a development build, with its title bar 
   ).toStrictEqual(["Meru Dev", ["Meru Dev"]]);
   await expect(shell.getByRole("banner", { name: "Title bar" })).toBeVisible();
   await expect(shell.getByRole("main", { name: "Content" })).toBeVisible();
-});
 
-test("serves the shell from meru-app:// under the strict policy, with no console error", async ({
-  shell,
-}) => {
   const errors: string[] = [];
 
   shell.on("console", (message) => {
@@ -44,4 +41,13 @@ test("serves the shell from meru-app:// under the strict policy, with no console
 
   expect(policy).toBe(createContentSecurityPolicy());
   expect(errors).toStrictEqual([]);
+
+  expect(await spawnApp().exited).toBe(0);
+  expect(app.process().exitCode).toBeNull();
+  expect(
+    await app.evaluate(
+      ({ BrowserWindow }) => BrowserWindow.getAllWindows().length
+    )
+  ).toBe(1);
+  await expect(shell.getByRole("main", { name: "Content" })).toBeVisible();
 });
