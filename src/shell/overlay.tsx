@@ -1,4 +1,5 @@
-import { useLingui } from "@lingui/react/macro";
+import { Trans } from "@lingui/react/macro";
+import { useId } from "react";
 import { createPortal } from "react-dom";
 
 import type { ShellState } from "#contract/shell.ts";
@@ -6,6 +7,7 @@ import { OVERLAY_MARGIN } from "#core/layout.ts";
 import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Input } from "#ui/input.tsx";
+import { Label } from "#ui/label.tsx";
 
 import { shellCalls, useShellState } from "./sync.ts";
 
@@ -76,17 +78,17 @@ const RenameProfile = ({
   profileId,
   name,
 }: Extract<ShellState["overlay"], { kind: "rename-profile" }>) => {
-  const { t } = useLingui();
+  const headingId = useId();
+  const fieldId = useId();
 
   return (
+    // The margin holds the card's shadow inside the view.
     <div style={{ padding: OVERLAY_MARGIN }}>
       <form
-        aria-label={t({
-          message: "Rename profile",
-          comment:
-            "Accessible name of the small panel over the page with a field for a profile's new name, read by screen readers",
-        })}
-        className="rounded-lg bg-popover p-2 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+        aria-labelledby={headingId}
+        // The ring is of the text colour, so it reads against the page under
+        // it whichever theme both follow.
+        className="flex flex-col gap-2 rounded-lg bg-popover p-3 text-popover-foreground shadow-lg ring-1 ring-foreground/20"
         onSubmit={(event) => {
           event.preventDefault();
 
@@ -98,17 +100,18 @@ const RenameProfile = ({
           });
         }}
       >
+        <Label id={headingId} htmlFor={fieldId} className="leading-5">
+          <Trans comment="Heading of the small panel over the page with a field for a profile's new name, and the field's label">
+            Rename profile
+          </Trans>
+        </Label>
         <Input
+          id={fieldId}
           name="name"
           defaultValue={name}
           maxLength={PROFILE_NAME_MAX_LENGTH}
           autoComplete="off"
           spellCheck={false}
-          aria-label={t({
-            message: "Profile name",
-            comment:
-              "Accessible name of the field that holds a profile's name while it is renamed, read by screen readers",
-          })}
           // Not by viewport: this document's is the overlay's own small view.
           className="text-sm select-text"
           ref={focusAndSelect}

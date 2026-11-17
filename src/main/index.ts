@@ -2,8 +2,7 @@ import path from "node:path";
 
 import { APPS, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
-import { TAB_STRIP_WIDTH, overlayBounds } from "#core/layout.ts";
-import { overlaySize } from "#core/overlay.ts";
+import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
@@ -260,11 +259,10 @@ const start = async () => {
     focus,
     initial: profiles.get(),
     bounds: (overlay) =>
-      overlayBounds(
+      overlayRectangle(
         shell.window.getContentAreaSize(),
-        TAB_STRIP_WIDTH,
         settings.get("design"),
-        overlaySize(overlay)
+        overlay
       ),
     log: console.error,
   });

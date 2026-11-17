@@ -44,31 +44,40 @@ describe(overlayBounds, () => {
   it("sits at the top centre of the content view", () => {
     const size = { width: 1280, height: 800 };
     const view = contentViewBounds(size, TAB_STRIP_WIDTH, "modern");
-    const bounds = overlayBounds(size, TAB_STRIP_WIDTH, "modern", {
-      width: 400,
-      height: 80,
-    });
+    const bounds = overlayBounds(
+      size,
+      TAB_STRIP_WIDTH,
+      "modern",
+      { width: 400, height: 80 },
+      8
+    );
 
     expect(bounds).toStrictEqual({
       x: view.x + (view.width - 400) / 2,
-      y: view.y,
+      y: view.y + 8,
       width: 400,
       height: 80,
     });
     expect(
-      overlayBounds(size, TAB_STRIP_WIDTH, "classic", {
-        width: 400,
-        height: 80,
-      }).y
-    ).toBe(40);
+      overlayBounds(
+        size,
+        TAB_STRIP_WIDTH,
+        "classic",
+        { width: 400, height: 80 },
+        8
+      ).y
+    ).toBe(48);
   });
 
   it("is no larger than the content view", () => {
     expect(
-      overlayBounds({ width: 500, height: 100 }, TAB_STRIP_WIDTH, "classic", {
-        width: 400,
-        height: 80,
-      })
-    ).toStrictEqual({ x: TAB_STRIP_WIDTH, y: 40, width: 276, height: 60 });
+      overlayBounds(
+        { width: 500, height: 100 },
+        TAB_STRIP_WIDTH,
+        "classic",
+        { width: 400, height: 80 },
+        8
+      )
+    ).toStrictEqual({ x: TAB_STRIP_WIDTH, y: 48, width: 276, height: 52 });
   });
 });

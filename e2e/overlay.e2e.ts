@@ -3,8 +3,7 @@ import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { TAB_STRIP_WIDTH, overlayBounds } from "#core/layout.ts";
-import { overlaySize } from "#core/overlay.ts";
+import { overlayRectangle } from "#core/overlay.ts";
 
 import { expect, findPage, test } from "./lib/app.ts";
 import { CALENDAR_TITLE, DRAFT_LABEL } from "./lib/stand-in.ts";
@@ -81,7 +80,7 @@ const typeInto = (app: ElectronApplication, url: string, text: string) =>
   );
 
 const field = (overlay: Page) =>
-  overlay.getByRole("textbox", { name: "Profile name" });
+  overlay.getByRole("textbox", { name: "Rename profile" });
 
 const openFromMenu = async (app: ElectronApplication, overlay: Page) => {
   await clickMenuItem(app, "profile.rename");
@@ -128,6 +127,7 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   await expect(
     overlay.getByRole("form", { name: "Rename profile" })
   ).toBeVisible();
+  await expect(overlay.getByText("Rename profile")).toBeVisible();
   await expect(field(overlay)).toHaveValue("Default");
   expect(
     await field(overlay).evaluate((input: HTMLInputElement) => [
@@ -146,12 +146,10 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
     sharesShellProcess: true,
   });
   expect(view.bounds).toStrictEqual(
-    overlayBounds(
-      view.area ?? { width: 0, height: 0 },
-      TAB_STRIP_WIDTH,
-      "modern",
-      overlaySize({ kind: "rename-profile", profileId: "" })
-    )
+    overlayRectangle(view.area ?? { width: 0, height: 0 }, "modern", {
+      kind: "rename-profile",
+      profileId: "",
+    })
   );
 
   await overlay.keyboard.type("  Work ");

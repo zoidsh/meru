@@ -1,7 +1,8 @@
-import { OVERLAY_MARGIN } from "./layout.ts";
+import { OVERLAY_MARGIN, TAB_STRIP_WIDTH, overlayBounds } from "./layout.ts";
+import type { Design } from "./settings.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
-import type { Size } from "./window-bounds.ts";
+import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** What an overlay over the content views shows; one at a time. */
 export interface Overlay {
@@ -10,20 +11,40 @@ export interface Overlay {
 }
 
 /**
+ * How far below the top of the content view an overlay's view sits, so what
+ * it draws reads as over the page rather than part of the titlebar.
+ */
+export const OVERLAY_OFFSET = 8;
+
+/**
  * The view's size for each overlay, its margin included, so main can place
- * the view before the shell draws into it: the rename field is a 36px input
- * in a card with 8px of padding.
+ * the view before the shell draws into it: the rename card is 360px wide,
+ * with 12px of padding around a 20px heading, an 8px gap and a 36px field.
  */
 export const overlaySize = (overlay: Overlay): Size => {
   switch (overlay.kind) {
     default: {
       return {
         width: 360 + OVERLAY_MARGIN * 2,
-        height: 36 + 8 * 2 + OVERLAY_MARGIN * 2,
+        height: 12 + 20 + 8 + 36 + 12 + OVERLAY_MARGIN * 2,
       };
     }
   }
 };
+
+/** Where the overlay's view sits in a window's content area. */
+export const overlayRectangle = (
+  contentSize: Size,
+  design: Design,
+  overlay: Overlay
+): Rectangle =>
+  overlayBounds(
+    contentSize,
+    TAB_STRIP_WIDTH,
+    design,
+    overlaySize(overlay),
+    OVERLAY_OFFSET
+  );
 
 export type OverlayEvent =
   /** Replaces whatever is open. */
