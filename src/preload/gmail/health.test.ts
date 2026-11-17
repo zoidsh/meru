@@ -11,7 +11,7 @@ import {
 } from "#core/gmail-hooks.ts";
 import type { HookName } from "#core/gmail-hooks.ts";
 
-import { checkHealth } from "./health.ts";
+import { RECHECK_MS, checkHealth } from "./health.ts";
 
 // Small, hand-written stand-ins for Gmail's markup, carrying only the anchors.
 const LOGO =
@@ -37,6 +37,10 @@ const inbox = (main: string, header = LOGO) =>
   page(`${header}${UPGRADE}<div role="main">${main}</div>`);
 
 describe(checkHealth, () => {
+  it("looks again 3 s later before calling a hook broken in a release", () => {
+    expect(RECHECK_MS).toBe(3000);
+  });
+
   it("matches every hook in an inbox that has them all", () => {
     expect(checkHealth(inbox(`${PROMO}${LIST}${FOOTER}`))).toStrictEqual({
       views: ["list"],
@@ -321,7 +325,10 @@ const ATTACHMENTS =
   '<div class="hq gt"><div class="hp"></div><span download_url="x"></span></div>';
 const TRIMMED =
   '<div class="adL"><div class="adm"></div><div class="h5">q</div></div>';
-const TOGGLE = '<div class="ajU"><div class="ajR" role="button"></div></div>';
+/** Gmail's ••• button, which it puts before the quote it folds. */
+const TOGGLE =
+  '<div class="yj6qo ajU"><div class="ajR" role="button"></div></div>';
+const GMAIL_TRIM = `${TOGGLE}${TRIMMED}`;
 
 /** A message's body, with what Gmail inserts at its top level. */
 const body = (inserted = "", mail = "<p>text</p>") =>
@@ -433,6 +440,9 @@ const WRONG: Record<
     "a list holding the navigation": IN_MAIN(
       MESSAGES(`${item(message())}<div role="navigation"></div>`)
     ),
+    "a list holding the main region": IN_MAIN(
+      MESSAGES(`${item(message())}<div role="main"></div>`)
+    ),
     "a list outside the main region": MESSAGES(item(message())),
   },
   attachments: {
@@ -453,26 +463,29 @@ const WRONG: Record<
       `<div data-message-id="o"><div class="hq gt">${message(body())}</div></div>`
     ),
     "a block outside any message": IN_MAIN(ATTACHMENTS),
+    "a block whose holder is the body": IN_MAIN(
+      message(`<div class="a3s"><p>text</p>${ATTACHMENTS}</div>`)
+    ),
   },
   trimmed: {
-    "a body, deeper than Gmail inserts": IN_MAIN(
-      message(body("", `<div>${TRIMMED}</div>`))
-    ),
     "a draft": IN_MAIN(
-      `<div data-message-id="m"><div data-compose-id="c">${body(TRIMMED)}</div></div>`
+      `<div data-message-id="m"><div data-compose-id="c">${body(GMAIL_TRIM)}</div></div>`
     ),
     "an editable region": IN_MAIN(
-      `<div data-message-id="m"><div contenteditable="true">${body(TRIMMED)}</div></div>`
+      `<div data-message-id="m"><div contenteditable="true">${body(GMAIL_TRIM)}</div></div>`
     ),
-    "a body outside any message": IN_MAIN(body(TRIMMED)),
+    "a body outside any message": IN_MAIN(body(GMAIL_TRIM)),
     "a part holding a message": IN_MAIN(
-      message(body(`<div class="adL">${message()}</div>`))
+      message(body(`${TOGGLE}<div class="adL">${message()}</div>`))
+    ),
+    "a part that is the body": IN_MAIN(
+      message(body(`${TOGGLE}<div class="adL a3s"></div>`))
+    ),
+    "a part holding the body": IN_MAIN(
+      message(body(`${TOGGLE}<div class="adL"><div class="a3s"></div></div>`))
     ),
   },
   trimmedToggle: {
-    "a body, deeper than Gmail inserts": IN_MAIN(
-      message(body("", `<div>${TOGGLE}</div>`))
-    ),
     "a draft": IN_MAIN(
       `<div data-message-id="m"><div data-compose-id="c">${body(TOGGLE)}</div></div>`
     ),
@@ -480,10 +493,71 @@ const WRONG: Record<
       `<div data-message-id="m"><div contenteditable="true">${body(TOGGLE)}</div></div>`
     ),
     "a toggle that is editable": IN_MAIN(
-      message(body('<div class="ajU" contenteditable="true"></div>'))
+      message(
+        body(
+          '<div class="yj6qo ajU" contenteditable="true"><div class="ajR" role="button"></div></div>'
+        )
+      )
+    ),
+    "a toggle holding a draft": IN_MAIN(
+      message(
+        body(
+          '<div class="yj6qo ajU"><div class="ajR" role="button"></div><div data-compose-id="c"></div></div>'
+        )
+      )
+    ),
+    "a toggle holding an editable region": IN_MAIN(
+      message(
+        body(
+          '<div class="yj6qo ajU"><div class="ajR" role="button"></div><div contenteditable="true"></div></div>'
+        )
+      )
+    ),
+    "a toggle holding the body": IN_MAIN(
+      message(
+        body(
+          '<div class="yj6qo ajU"><div class="ajR" role="button"></div><div class="a3s"></div></div>'
+        )
+      )
     ),
   },
 };
+
+/**
+ * Where Gmail's trimmed parts' own shape refuses a match: a sender's
+ * top-level element with Gmail's class, out of Gmail's order or without its
+ * button, and anything deeper in the mail.
+ */
+const REFUSED: Record<"trimmed" | "trimmedToggle", Record<string, string>> = {
+  trimmed: {
+    "a sender's top-level .adL with no toggle before it": IN_MAIN(
+      message(body('<div class="adL" style="display:none">s</div>'))
+    ),
+    "a sender's top-level .adL before Gmail's toggle": IN_MAIN(
+      message(body(`${TRIMMED}${TOGGLE}`))
+    ),
+    "trimmed content deeper than Gmail inserts it": IN_MAIN(
+      message(body("", `<div>${GMAIL_TRIM}</div>`))
+    ),
+  },
+  trimmedToggle: {
+    "a sender's top-level .ajU": IN_MAIN(
+      message(body('<div class="ajU">s</div>'))
+    ),
+    "a sender's toggle without Gmail's button": IN_MAIN(
+      message(body('<div class="yj6qo ajU"><div class="ajR">s</div></div>'))
+    ),
+    "a toggle deeper than Gmail inserts it": IN_MAIN(
+      message(body("", `<div>${TOGGLE}</div>`))
+    ),
+  },
+};
+
+const refusedCases = Object.entries(REFUSED).flatMap(([name, cases]) =>
+  Object.entries(cases).map(
+    ([what, html]) => [name as HookName, what, html] as const
+  )
+);
 
 const wrongCases = Object.entries(WRONG).flatMap(([name, cases]) =>
   Object.entries(cases).map(
@@ -501,14 +575,31 @@ describe("the guard on every thread feature", () => {
 
   it.each(wrongCases)(
     "keeps %s from taking a match in %s",
-    (name, what, html) => {
-      // Each fixture fools the bare anchor, and the guard is what holds;
-      // trimmed content deeper in a body is refused by the anchor's own depth.
-      expect(taken(name, html)).toStrictEqual(
-        what.includes("deeper") ? { unguarded: false, guarded: [] } : GUARDED
-      );
+    (name, _what, html) => {
+      // Each fixture fools the bare anchor; the guard is what holds.
+      expect(taken(name, html)).toStrictEqual(GUARDED);
     }
   );
+
+  it.each(refusedCases)(
+    "keeps %s from taking %s by its anchor's own shape",
+    (name, _what, html) => {
+      expect(taken(name, html)).toStrictEqual({
+        unguarded: false,
+        guarded: [],
+      });
+    }
+  );
+
+  it("reverses only the innermost list when a list wraps the thread's", () => {
+    const html = IN_MAIN(
+      `<div role="list" id="outer"><div role="listitem">${MESSAGES(item(message()))}</div></div>`
+    );
+
+    expect(
+      taken("conversation", html).guarded.map((each) => each.id)
+    ).toStrictEqual([""]);
+  });
 });
 
 /** The rules of a feature's stylesheet, by their selectors. */

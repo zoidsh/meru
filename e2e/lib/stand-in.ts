@@ -76,7 +76,7 @@ export const threadMessage = (
       <div class="Bk"><div class="G2"><div data-message-id="#msg-a:r${n}"><div class="gs"><div>
         <div class="ii gt adO"><div class="a3s"><div>
           <p>${THREAD_PARTS.text(n)}</p>
-          <div class="ajU"><div class="ajR" role="button" tabindex="0" aria-label="${THREAD_PARTS.showTrimmed}">•••</div></div>
+          <div class="yj6qo ajU"><div class="ajR" role="button" tabindex="0" aria-label="${THREAD_PARTS.showTrimmed}">•••</div></div>
           <div class="adL"><div class="adm"></div><div class="h5"><p>${THREAD_PARTS.quoted(n)}</p></div></div>
         </div></div></div>
         <div class="hq gt"><div class="hp"></div><span download_url="x"><a href="#download-${n}">${THREAD_PARTS.attachment(n)}</a></span></div>

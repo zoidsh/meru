@@ -67,8 +67,12 @@ const MESSAGE = "[data-message-id]";
 /** A message's text as the sender wrote it, which Gmail renders in here. */
 const BODY = ".a3s";
 
-/** Gmail inserts its trimmed parts as children of the body's one wrapper. */
-const BODY_TOP = `.adO > ${BODY} > div`;
+/**
+ * Gmail inserts its trimmed parts beside the sender's own top-level elements,
+ * in the body's one wrapper: its ••• button, then the folded quote after it.
+ * Only these classes and this shape tell them from mail.
+ */
+const TRIMMED_TOGGLE = `.adO > ${BODY} > div > .yj6qo.ajU:has(> .ajR[role="button"])`;
 
 export const HOOKS: readonly Hook[] = [
   {
@@ -123,13 +127,13 @@ export const HOOKS: readonly Hook[] = [
   {
     name: "trimmed",
     scope: "body",
-    anchors: [`${BODY_TOP} > .adL`, `${BODY_TOP} > .adL > .h5`],
+    anchors: [`${TRIMMED_TOGGLE} ~ .adL`, `${TRIMMED_TOGGLE} ~ .adL > .h5`],
     requiredIn: [],
   },
   {
     name: "trimmedToggle",
     scope: "body",
-    anchors: [`${BODY_TOP} > .ajU`],
+    anchors: [TRIMMED_TOGGLE],
     requiredIn: [],
   },
 ];
@@ -177,22 +181,30 @@ const within = (selectors: readonly string[]) =>
  * message, the body or a draft, nor holds one, nor sits in a draft; Gmail's
  * own part around the body never sits in it either. The thread's list is in
  * the main region and never in mail, and is never the inbox's list, the
- * navigation or the main region, nor holds them: reordering hides nothing,
- * so it may hold a draft, which moves with its message.
+ * navigation or the main region, nor holds them or another list of
+ * messages: reordering hides nothing, so it may hold a draft, which moves
+ * with its message.
  */
+/**
+ * Another list of messages below the subject. Spelled from the subject's
+ * children because linkedom, which the unit tests select with, lets a bare
+ * `:has(a b)` find `a` at the subject itself.
+ */
+const NESTED_LIST = `> [role="list"] ${MESSAGE}, > * [role="list"] ${MESSAGE}`;
+
 const GUARDS: Record<HookScope, string> = {
   chrome: HOOK_GUARD,
   message: `:is(${MESSAGE} *):not(${isOrHolds([MESSAGE, BODY, ...EDITING])}, ${within([BODY, ...EDITING])})`,
   body: `:is(${MESSAGE} ${BODY} *):not(${isOrHolds([MESSAGE, BODY, ...EDITING])}, ${within(EDITING)})`,
-  conversation: `:is([role="main"] *):not(${isOrHolds(['[gh="tl"]', '[role="navigation"]', '[role="main"]'])}, ${within([MESSAGE, ...EDITING])})`,
+  conversation: `:is([role="main"] *):not(${isOrHolds(['[gh="tl"]', '[role="navigation"]', '[role="main"]'])}, :has(${NESTED_LIST}), ${within([MESSAGE, ...EDITING])})`,
 };
 
 /**
  * The part of a message that holds its attachment block, and so the body
- * beside it: in a message, never in its body or a draft, never a message or a
- * draft nor holding one.
+ * beside it: in a message, never the body nor in it, never in a draft, never a
+ * message or a draft nor holding one.
  */
-const HOLDER_GUARD = `:is(${MESSAGE} *):not(${isOrHolds([MESSAGE, ...EDITING])}, ${within([BODY, ...EDITING])})`;
+const HOLDER_GUARD = `:is(${MESSAGE} *):not(${isOrHolds([MESSAGE, ...EDITING])}, ${BODY}, ${within([BODY, ...EDITING])})`;
 
 /** A witness in mail says nothing of Gmail's own parts. */
 const WITNESS_GUARDS: Record<HookScope, string> = {
@@ -240,7 +252,9 @@ const hide = (hook: HookName): FeatureRule => ({
 
 /** Gmail's own line between messages, drawn above every one but the first. */
 const SEPARATOR = (item: string) => (list: string) =>
-  `${list} > [role="listitem"]${item} > .Bk > .G2`;
+  `${list} > ${item} > .Bk > .G2`;
+
+const ITEM = '[role="listitem"]';
 
 /** The rules each feature inserts while on, by the hooks they take. */
 export const FEATURE_RULES: Record<GmailFeature, readonly FeatureRule[]> = {
@@ -259,13 +273,13 @@ export const FEATURE_RULES: Record<GmailFeature, readonly FeatureRule[]> = {
     },
     {
       hook: "conversation",
-      target: SEPARATOR(""),
+      target: SEPARATOR(ITEM),
       declarations:
         "border-top: 1px solid rgba(100, 121, 143, 0.12) !important;",
     },
     {
       hook: "conversation",
-      target: SEPARATOR(":last-child"),
+      target: SEPARATOR(`:nth-last-child(1 of ${ITEM})`),
       declarations: "border-top: none !important;",
     },
   ],

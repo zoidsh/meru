@@ -340,6 +340,20 @@ const attachmentOnTop = async (view: Page, n: number) =>
   (await top(view, THREAD_PARTS.attachment(n))) <
   (await top(view, THREAD_PARTS.text(n)));
 
+/** The style of each message's separator, top of the screen first. */
+const separatorsOnScreen = (view: Page) =>
+  view.evaluate(() =>
+    [...document.querySelectorAll('[role="list"] > [role="listitem"]')]
+      .toSorted(
+        (a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top
+      )
+      .map((item) => {
+        const line = item.querySelector(":scope > .Bk > .G2");
+
+        return line ? getComputedStyle(line).borderTopStyle : "missing";
+      })
+  );
+
 /** What the thread features do to an open thread, and to its message `n`. */
 const expectThread = async (
   view: Page,
@@ -354,6 +368,11 @@ const expectThread = async (
     .toStrictEqual(
       messages(...(on.reverseConversation ? numbers.toReversed() : numbers))
     );
+  // Gmail's line between messages: none above the top one on screen, one
+  // above every other, whichever way round they are.
+  await expect
+    .poll(() => separatorsOnScreen(view))
+    .toStrictEqual(["none", ...numbers.slice(1).map(() => "solid")]);
   await expect
     .poll(() => attachmentOnTop(view, n))
     .toBe(on.moveAttachmentsToTop);
