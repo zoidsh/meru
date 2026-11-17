@@ -148,14 +148,16 @@ test("a relaunch restores the tabs, each where it was, and the selection, and lo
     DRIVE_TITLE,
   ]);
   await tab(firstShell, CALENDAR_TITLE).click();
-  // Where each tab's page is, written within a second of its load.
+  // Where each tab's page is, written within a second of its load, and the
+  // selection, which the click writes after it reaches main.
   await expect
     .poll(() =>
-      readProfile(userDataDir).then((saved) =>
-        saved.tabs.map((each) => each.url)
-      )
+      readProfile(userDataDir).then((saved) => [
+        saved.tabs.map((each) => each.url),
+        saved.tabs.find((each) => each.id === saved.selectedTabId)?.url,
+      ])
     )
-    .toStrictEqual([standIn.url, nextWeek, standIn.driveUrl]);
+    .toStrictEqual([[standIn.url, nextWeek, standIn.driveUrl], nextWeek]);
   await first.close();
 
   const before = standIn.requests();
