@@ -2,7 +2,9 @@ import { clamp } from "es-toolkit";
 
 import type { Rectangle, Size } from "./window-bounds.ts";
 
-export type TooltipSide = "top" | "bottom" | "left" | "right";
+export const TOOLTIP_SIDES = ["top", "bottom", "left", "right"] as const;
+
+export type TooltipSide = (typeof TOOLTIP_SIDES)[number];
 
 /** Between the trigger and its tooltip, as shadcn's Tooltip has it. */
 export const TOOLTIP_OFFSET = 4;
@@ -68,17 +70,22 @@ export const tooltipRectangle = (
 };
 
 /**
- * The view a tooltip at `rectangle` is drawn in, with room for its arrow,
- * kept inside `area`, the window's content.
+ * The view a tooltip at `rectangle` on `side` of its trigger is drawn in,
+ * with room for its arrow, kept inside `area`, the window's content. Toward
+ * the trigger it reaches no further than the gap between them, since a clear
+ * view takes every click in its bounds and would take the trigger's.
  */
 export const tooltipViewBounds = (
   rectangle: Rectangle,
+  side: TooltipSide,
   area: Size
 ): Rectangle => {
-  const x = Math.max(0, rectangle.x - TOOLTIP_VIEW_PADDING);
-  const y = Math.max(0, rectangle.y - TOOLTIP_VIEW_PADDING);
-  const right = rectangle.x + rectangle.width + TOOLTIP_VIEW_PADDING;
-  const bottom = rectangle.y + rectangle.height + TOOLTIP_VIEW_PADDING;
+  const pad = (toward: TooltipSide) =>
+    toward === side ? TOOLTIP_OFFSET : TOOLTIP_VIEW_PADDING;
+  const x = Math.max(0, rectangle.x - pad("right"));
+  const y = Math.max(0, rectangle.y - pad("bottom"));
+  const right = rectangle.x + rectangle.width + pad("left");
+  const bottom = rectangle.y + rectangle.height + pad("top");
 
   return {
     x,

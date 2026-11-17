@@ -395,6 +395,15 @@ const start = async () => {
 
   const tooltips = createTooltips({
     area: () => shell.window.getContentAreaSize(),
+    refocus: () => {
+      const had = focus.focused();
+
+      focus.focus([
+        ...(had ? [had] : []),
+        { kind: "front" },
+        { kind: "shell" },
+      ]);
+    },
   });
 
   shell.window.onShellDocument((name, view) => {

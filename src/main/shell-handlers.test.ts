@@ -72,8 +72,8 @@ const setup = ({
       current: () => open,
     },
     tooltips: {
-      show: (rectangle) => {
-        calls.push(["tooltip", rectangle]);
+      show: (rectangle, side) => {
+        calls.push(["tooltip", rectangle, side]);
       },
       hide: () => {
         calls.push(["tooltip", "hidden"]);
@@ -205,11 +205,11 @@ describe(createShellHandlers, () => {
     const shell = setup();
     const rectangle = { x: 10, y: 44, width: 60, height: 26 };
 
-    await shell.handlers.showTooltip(rectangle);
+    await shell.handlers.showTooltip({ ...rectangle, side: "bottom" });
     await shell.handlers.hideTooltip({});
 
     expect(shell.calls).toStrictEqual([
-      ["tooltip", rectangle],
+      ["tooltip", rectangle, "bottom"],
       ["tooltip", "hidden"],
     ]);
   });

@@ -204,8 +204,8 @@ export const createShellHandlers = ({
 
     return Promise.resolve();
   },
-  showTooltip: (rectangle) => {
-    tooltips.show(rectangle);
+  showTooltip: ({ side, ...rectangle }) => {
+    tooltips.show(rectangle, side);
 
     return Promise.resolve();
   },

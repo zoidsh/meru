@@ -65,26 +65,28 @@ export const ShellTooltip = ({
 /** Which box shows the tooltips' view, so a late close hides only its own. */
 let showing: string | undefined;
 
+// An 8px square turned, its centre 1px inside the box, so its tip stays in
+// the 4px the view keeps toward the trigger.
 const arrowStyle = (
   side: TooltipSide,
   anchor: Rectangle,
   box: Rectangle
 ): CSSProperties => {
-  const alongX = anchor.x + anchor.width / 2 - box.x - 5;
-  const alongY = anchor.y + anchor.height / 2 - box.y - 5;
+  const alongX = anchor.x + anchor.width / 2 - box.x - 4;
+  const alongY = anchor.y + anchor.height / 2 - box.y - 4;
 
   switch (side) {
     case "top": {
-      return { left: alongX, bottom: -4 };
+      return { left: alongX, bottom: -3 };
     }
     case "left": {
-      return { top: alongY, right: -4 };
+      return { top: alongY, right: -3 };
     }
     case "right": {
-      return { top: alongY, left: -4 };
+      return { top: alongY, left: -3 };
     }
     default: {
-      return { left: alongX, top: -4 };
+      return { left: alongX, top: -3 };
     }
   }
 };
@@ -138,11 +140,11 @@ const TooltipBox = ({
       );
 
       if (inShell) {
-        const bounds = tooltipViewBounds(rectangle, area);
+        const bounds = tooltipViewBounds(rectangle, side, area);
 
         setPlaced({ anchor: anchorRectangle, box: rectangle, origin: bounds });
         showing = id;
-        void shellCalls().showTooltip(rectangle);
+        void shellCalls().showTooltip({ ...rectangle, side });
       } else {
         setPlaced({
           anchor: anchorRectangle,
@@ -197,7 +199,7 @@ const TooltipBox = ({
         <span
           aria-hidden
           style={arrowStyle(side, placed.anchor, placed.box)}
-          className="absolute -z-10 size-2.5 rotate-45 rounded-[2px] bg-foreground"
+          className="absolute -z-10 size-2 rotate-45 rounded-[2px] bg-foreground"
         />
       )}
     </div>,
