@@ -23,6 +23,7 @@ const contextOf = (): CommandContext => ({
   doNotDisturb: undefined,
   inboxOpen: false,
   sidebarShown: false,
+  navigation: null,
 });
 
 const template = (platform: Platform, context = contextOf()) =>
@@ -263,6 +264,7 @@ const setup = () => {
     context: () => ({
       state,
       doNotDisturb: undefined,
+      navigation: { canGoBack: false, canGoForward: false, loading: false },
       inboxOpen,
       sidebarShown: false,
     }),

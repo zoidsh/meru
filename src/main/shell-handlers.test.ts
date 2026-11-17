@@ -303,7 +303,11 @@ describe(createShellHandlers, () => {
 
 const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
 
-const CHROME = { sidebar: { state: "hidden" }, shortcuts: {} } as const;
+const CHROME = {
+  sidebar: { state: "hidden" },
+  shortcuts: {},
+  navigation: null,
+} as const;
 
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;
 

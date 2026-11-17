@@ -3,6 +3,7 @@ import { describe, expect, it, onTestFinished } from "vitest";
 import { savedSearches } from "#core/saved-searches.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import type { Navigation } from "#platform/content-view.ts";
 
 import { COMMANDS, currentSearch, savedSearchCommands } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
@@ -46,12 +47,23 @@ const setup = (initial: State = twoProfiles) => {
   const renames: string[] = [];
   const navigations: string[] = [];
   let sidebarShown = false;
+  let navigation: Navigation | null = null;
+  const moves: string[] = [];
   const actions: CommandActions = {
     toggleSidebar: () => {
       sidebarShown = !sidebarShown;
     },
     reloadSelectedTab: () => {
       reloads += 1;
+    },
+    goBack: () => {
+      moves.push("back");
+    },
+    goForward: () => {
+      moves.push("forward");
+    },
+    stopLoading: () => {
+      moves.push("stop");
     },
     selectTab: profiles.selectTab,
     closeTab: profiles.closeTab,
@@ -81,6 +93,7 @@ const setup = (initial: State = twoProfiles) => {
     doNotDisturb: doNotDisturb.current(),
     inboxOpen,
     sidebarShown,
+    navigation,
   });
 
   onTestFinished(doNotDisturb.dispose);
@@ -88,6 +101,10 @@ const setup = (initial: State = twoProfiles) => {
   return {
     profiles,
     reloads: () => reloads,
+    moves,
+    setNavigation: (next: Navigation | null) => {
+      navigation = next;
+    },
     renames,
     navigations,
     context,
@@ -270,6 +287,35 @@ describe("the command registry", () => {
     await app.run("tab.reload");
 
     expect(app.reloads()).toBe(1);
+  });
+
+  it("offers Back, Forward, Reload and Stop as the front tab's page allows, and none with no page", async () => {
+    const app = setup();
+    const offered = () =>
+      ["tab.back", "tab.forward", "tab.reload", "tab.stop"].map((id) =>
+        app.isAvailable(id)
+      );
+
+    expect(offered()).toStrictEqual([false, false, false, false]);
+
+    app.setNavigation({ canGoBack: true, canGoForward: false, loading: true });
+
+    expect(offered()).toStrictEqual([true, false, true, true]);
+
+    app.setNavigation({ canGoBack: false, canGoForward: true, loading: false });
+
+    expect(offered()).toStrictEqual([false, true, true, false]);
+
+    await app.run("tab.back");
+    await app.run("tab.forward");
+    await app.run("tab.stop");
+
+    expect(app.moves).toStrictEqual(["back", "forward", "stop"]);
+    expect(commandOf("tab.back").shortcut).toStrictEqual({
+      darwin: "Command+[",
+      win32: "Alt+Left",
+      linux: "Alt+Left",
+    });
   });
 });
 

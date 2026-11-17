@@ -102,7 +102,7 @@ export const shellState = (
   mail: (profileId: string) => Mail,
   doNotDisturb: DoNotDisturb | undefined,
   inbox: ShellState["inbox"],
-  fixed: Pick<ShellState, "sidebar" | "shortcuts">
+  fixed: Pick<ShellState, "sidebar" | "shortcuts" | "navigation">
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -219,6 +219,11 @@ export const createShellHandlers = ({
     },
     toggleSidebar: () => {
       runCommand("sidebar.toggle");
+
+      return Promise.resolve();
+    },
+    navigate: ({ action }) => {
+      runCommand(`tab.${action}`);
 
       return Promise.resolve();
     },

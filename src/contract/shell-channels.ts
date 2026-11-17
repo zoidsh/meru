@@ -11,6 +11,7 @@ export const SHELL_CALL_NAMES = [
   "renameProfile",
   "closeOverlay",
   "toggleSidebar",
+  "navigate",
   "toggleSidebarWidth",
   "toggleDoNotDisturb",
   "openDoNotDisturbMenu",
@@ -18,6 +19,9 @@ export const SHELL_CALL_NAMES = [
   "openInboxMessage",
   "runInboxAction",
 ] as const;
+
+/** What the titlebar's navigation buttons ask of the front tab. */
+export const NAVIGATE_ACTIONS = ["back", "forward", "reload", "stop"] as const;
 
 export type ShellCallName = (typeof SHELL_CALL_NAMES)[number];
 

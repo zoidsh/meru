@@ -10,6 +10,7 @@ import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import type {
   ContentViewEvent,
   ContentViewOptions,
+  Navigation,
 } from "#platform/content-view.ts";
 
 import { createProfiles } from "./profiles.ts";
@@ -52,6 +53,9 @@ interface FakeView {
   visible: boolean | undefined;
   closed: boolean;
   focuses: number;
+  /** What the page answers of its history and load, and what was asked of it. */
+  navigation: Navigation;
+  moves: string[];
 }
 
 /**
@@ -109,6 +113,8 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           visible: undefined,
           closed: false,
           focuses: 0,
+          navigation: { canGoBack: false, canGoForward: false, loading: false },
+          moves: [],
         };
 
         views.push(view);
@@ -121,6 +127,10 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           reload: () => {
             view.reloads += 1;
           },
+          goBack: () => view.moves.push("back"),
+          goForward: () => view.moves.push("forward"),
+          stop: () => view.moves.push("stop"),
+          navigation: () => view.navigation,
           url: () => view.loaded.at(-1) ?? "",
           evaluate: () => Promise.resolve(view.partition),
           loadURL: (url) => {
@@ -261,6 +271,48 @@ describe(createTabViews, () => {
     expect(window.tabs.status({ profileId: "a", tabId: "c1" })).toStrictEqual({
       kind: "unloaded",
     });
+  });
+
+  it("answers the front tab's history and load, null under the unified inbox, moves only the front view, and tells of every load", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+    let changes = 0;
+
+    window.tabs.onChange(() => {
+      changes += 1;
+    });
+
+    if (gmail) {
+      gmail.navigation = {
+        canGoBack: true,
+        canGoForward: false,
+        loading: true,
+      };
+    }
+
+    window.emit(gmail, { kind: "load-started" });
+    window.emit(gmail, { kind: "load-stopped" });
+    window.emit(gmail, { kind: "navigated", url: `${GMAIL}/#sent` });
+
+    expect(changes).toBe(3);
+    expect(window.tabs.navigation()).toStrictEqual({
+      canGoBack: true,
+      canGoForward: false,
+      loading: true,
+    });
+
+    window.tabs.goBack();
+    window.tabs.goForward();
+    window.tabs.stopFront();
+    await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
+    window.tabs.goBack();
+
+    expect(gmail?.moves).toStrictEqual(["back", "forward", "stop"]);
+    expect(window.viewOf("persist:a", 1)?.moves).toStrictEqual(["back"]);
+
+    window.setInboxOpen(true);
+
+    expect(window.tabs.navigation()).toBeNull();
   });
 
   it("gives Gmail's view Gmail's preload and another app's view none", async () => {

@@ -12,7 +12,11 @@ import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
 import { planViews } from "#core/views.ts";
 import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
 import type { WindowOpenRoute } from "#core/window-open.ts";
-import type { ContentView, ContentViewEvent } from "#platform/content-view.ts";
+import type {
+  ContentView,
+  ContentViewEvent,
+  Navigation,
+} from "#platform/content-view.ts";
 import type { Network } from "#platform/network.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 import type { AppWindow } from "#platform/window.ts";
@@ -288,6 +292,12 @@ export const createTabViews = ({
           pages.record({ ...tabKeyed, url: event.url });
         }
 
+        notify();
+        break;
+      }
+      case "load-started":
+      case "load-stopped": {
+        notify();
         break;
       }
       case "titled": {
@@ -456,6 +466,8 @@ export const createTabViews = ({
     }
   };
 
+  const frontTab = () => (front === undefined ? undefined : tabs.get(front));
+
   window.onContentAreaResize(placeAll);
 
   network.onOnline(() => {
@@ -523,6 +535,24 @@ export const createTabViews = ({
       if (front !== undefined) {
         dispatch(front, { kind: "reload" });
       }
+    },
+    /**
+     * Where the front tab's page can go and whether it loads, or `null` with
+     * no front tab or under the unified inbox, which is no page.
+     */
+    navigation: (): Navigation | null => {
+      const tab = frontTab();
+
+      return tab && !inboxOpen() ? tab.view.navigation() : null;
+    },
+    goBack: () => {
+      frontTab()?.view.goBack();
+    },
+    goForward: () => {
+      frontTab()?.view.goForward();
+    },
+    stopFront: () => {
+      frontTab()?.view.stop();
     },
     /** Places every view again, as the sidebar now has it, loading nothing. */
     relayout: placeAll,

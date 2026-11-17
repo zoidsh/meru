@@ -64,6 +64,7 @@ const setup = () => {
     tabs: TABS,
     sidebar: { state: "hidden" },
     shortcuts: {},
+    navigation: null,
     doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },
     inbox: { open: false, profiles: [], rows: [], notice: null },
@@ -107,6 +108,11 @@ const setup = () => {
     },
     openProfileMenu: (request) => {
       calls.push(["openProfileMenu", request]);
+
+      return Promise.resolve();
+    },
+    navigate: (request) => {
+      calls.push(["navigate", request]);
 
       return Promise.resolve();
     },

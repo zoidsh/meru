@@ -23,6 +23,7 @@ import {
 import type { DoNotDisturb, State } from "#core/state.ts";
 import { adjacentTab, canCloseTab, findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
+import type { Navigation } from "#platform/content-view.ts";
 
 /** What a command decides from: main's state as it is now. */
 export interface CommandContext {
@@ -33,11 +34,16 @@ export interface CommandContext {
   inboxOpen: boolean;
   /** Whether the sidebar shows. */
   sidebarShown: boolean;
+  /** The front tab's page, or `null` with none or under the unified inbox. */
+  navigation: Navigation | null;
 }
 
 /** What commands do, each through the module that owns it. */
 export interface CommandActions {
   reloadSelectedTab: () => void;
+  goBack: () => void;
+  goForward: () => void;
+  stopLoading: () => void;
   selectTab: (key: TabKey) => Promise<unknown>;
   closeTab: (key: TabKey) => Promise<unknown>;
   selectProfile: (profileId: string) => Promise<unknown>;
@@ -280,8 +286,56 @@ export const COMMANDS: readonly Command[] = [
       win32: "CommandOrControl+R",
       linux: "CommandOrControl+R",
     },
+    isAvailable: ({ navigation }) => navigation !== null,
     run: (_context, { reloadSelectedTab }) => {
       reloadSelectedTab();
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.back",
+    title: () =>
+      t({
+        message: "Back",
+        comment:
+          "Menu item in the View menu that goes to the page the selected tab showed before",
+      }),
+    shortcut: { darwin: "Command+[", win32: "Alt+Left", linux: "Alt+Left" },
+    isAvailable: ({ navigation }) => navigation?.canGoBack ?? false,
+    run: (_context, { goBack }) => {
+      goBack();
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.forward",
+    title: () =>
+      t({
+        message: "Forward",
+        comment:
+          "Menu item in the View menu that goes to the page the selected tab left by going back",
+      }),
+    shortcut: { darwin: "Command+]", win32: "Alt+Right", linux: "Alt+Right" },
+    isAvailable: ({ navigation }) => navigation?.canGoForward ?? false,
+    run: (_context, { goForward }) => {
+      goForward();
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.stop",
+    title: () =>
+      t({
+        message: "Stop",
+        comment:
+          "Menu item in the View menu that stops the selected tab's page loading",
+      }),
+    isAvailable: ({ navigation }) => navigation?.loading ?? false,
+    run: (_context, { stopLoading }) => {
+      stopLoading();
 
       return Promise.resolve();
     },

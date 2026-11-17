@@ -8,6 +8,9 @@ import type { Rectangle } from "#core/window-bounds.ts";
 export type ContentViewEvent =
   /** The main frame finished loading; an error page's finish follows a failure. */
   | { kind: "loaded" }
+  /** Any load, the first or a later one, started or stopped. */
+  | { kind: "load-started" }
+  | { kind: "load-stopped" }
   | { kind: "failed-to-load"; code: number; name: string }
   | { kind: "crashed"; reason: string }
   | { kind: "navigated"; url: string }
@@ -60,6 +63,13 @@ export interface ContentViewOptions {
   onMouseDown: () => void;
 }
 
+/** Where the page can go in its history, and whether it is loading now. */
+export interface Navigation {
+  canGoBack: boolean;
+  canGoForward: boolean;
+  loading: boolean;
+}
+
 export interface ContentView {
   setBounds: (bounds: Rectangle) => void;
   /** Rounds all four corners, clipping the page. */
@@ -68,6 +78,12 @@ export interface ContentView {
   loadURL: (url: string) => Promise<void>;
   /** Loads the page it shows again. */
   reload: () => void;
+  /** Each does nothing where the history has no page that way. */
+  goBack: () => void;
+  goForward: () => void;
+  /** Stops the load in progress, if any. */
+  stop: () => void;
+  navigation: () => Navigation;
   /** Where the main frame is now. */
   url: () => string;
   /**
@@ -184,6 +200,7 @@ const reportEvents = (
 
   webContents.on("did-start-loading", () => {
     failed = false;
+    onEvent({ kind: "load-started" });
   });
   webContents.on("did-fail-load", (_event, code, name, _url, isMainFrame) => {
     if (isMainFrame && code !== ERR_ABORTED) {
@@ -195,6 +212,8 @@ const reportEvents = (
     if (!failed) {
       onEvent({ kind: "loaded" });
     }
+
+    onEvent({ kind: "load-stopped" });
   });
   webContents.on("render-process-gone", (_event, { reason }) =>
     onEvent({ kind: "crashed", reason })
@@ -275,6 +294,22 @@ export const addContentView = (
     setBorderRadius: (radius) => view.setBorderRadius(radius),
     loadURL: (url) => webContents.loadURL(url),
     reload: () => webContents.reload(),
+    goBack: () => {
+      if (webContents.navigationHistory.canGoBack()) {
+        webContents.navigationHistory.goBack();
+      }
+    },
+    goForward: () => {
+      if (webContents.navigationHistory.canGoForward()) {
+        webContents.navigationHistory.goForward();
+      }
+    },
+    stop: () => webContents.stop(),
+    navigation: () => ({
+      canGoBack: webContents.navigationHistory.canGoBack(),
+      canGoForward: webContents.navigationHistory.canGoForward(),
+      loading: webContents.isLoading(),
+    }),
     url: () => webContents.getURL(),
     evaluate: (expression) => webContents.executeJavaScript(expression),
     setVisible: (visible) => view.setVisible(visible),

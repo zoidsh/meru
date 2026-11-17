@@ -6,6 +6,7 @@ import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
+import { NAVIGATE_ACTIONS } from "./shell-channels.ts";
 import type { ShellCallName } from "./shell-channels.ts";
 
 export { SHELL_CALL_NAMES, SHELL_CHANNELS } from "./shell-channels.ts";
@@ -66,6 +67,11 @@ export const SHELL_CALLS = {
   closeOverlay: { request: none, response: z.undefined() },
   /** Shows the sidebar or hides it, as the titlebar's toggle asks. */
   toggleSidebar: { request: none, response: z.undefined() },
+  /** Back, Forward, Reload or Stop on the front tab, as the titlebar asks. */
+  navigate: {
+    request: z.object({ action: z.enum(NAVIGATE_ACTIONS) }),
+    response: z.undefined(),
+  },
   /** Narrows the sidebar or widens it, as its own toggle asks. */
   toggleSidebarWidth: { request: none, response: z.undefined() },
   /** On until turned off, or off, as the titlebar button's click asks. */
@@ -130,6 +136,18 @@ export const SHELL_STATE = {
    * `⌘S`, by command id; a command with none is absent.
    */
   shortcuts: z.record(z.string(), z.string()),
+  /**
+   * Where the front tab's page can go and whether it is loading, for the
+   * titlebar's Back, Forward and Reload; `null` with no front tab or under
+   * the unified inbox.
+   */
+  navigation: z.nullable(
+    z.object({
+      canGoBack: z.boolean(),
+      canGoForward: z.boolean(),
+      loading: z.boolean(),
+    })
+  ),
   /** Whether Do Not Disturb holds, and until when: `null` for until turned off. */
   doNotDisturb: z.object({
     on: z.boolean(),

@@ -217,7 +217,10 @@ export const buildMenuTemplate = ({
       ...item("sidebar.toggle", "checkbox"),
       ...item("inbox.toggle", "checkbox"),
       separator,
+      ...item("tab.back"),
+      ...item("tab.forward"),
       ...item("tab.reload"),
+      ...item("tab.stop"),
       separator,
       // Each acts on the web contents with focus: a tab's page, or the shell.
       {

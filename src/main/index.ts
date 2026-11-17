@@ -670,9 +670,13 @@ const start = async () => {
       doNotDisturb: doNotDisturb.current(),
       inboxOpen: inbox.isOpen(),
       sidebarShown: sidebar.current() !== "hidden",
+      navigation: views.navigation(),
     }),
     actions: {
       reloadSelectedTab: views.reloadFront,
+      goBack: views.goBack,
+      goForward: views.goForward,
+      stopLoading: views.stopFront,
       selectTab: profiles.selectTab,
       closeTab: profiles.closeTab,
       selectProfile: profiles.select,
@@ -709,6 +713,9 @@ const start = async () => {
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);
   sidebar.onChange(menu.refresh);
+  // A load starting or stopping, or the history moving, changes what Back,
+  // Forward and Stop offer.
+  views.onChange(menu.refresh);
 
   const shortcuts = shellShortcuts(COMMANDS, platform);
 
@@ -737,7 +744,11 @@ const start = async () => {
           mail.mail,
           doNotDisturb.current(),
           inbox.shellSlice(),
-          { sidebar: { state: sidebar.current() }, shortcuts }
+          {
+            sidebar: { state: sidebar.current() },
+            shortcuts,
+            navigation: views.navigation(),
+          }
         ),
       onChange: (listener) => {
         profiles.onChange(listener);

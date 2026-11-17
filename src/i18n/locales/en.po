@@ -106,6 +106,11 @@ msgctxt "inbox action"
 msgid "Archive"
 msgstr "Archive"
 
+#. Menu item in the View menu that goes to the page the selected tab showed before
+#: src/main/commands.ts
+msgid "Back"
+msgstr "Back"
+
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
 msgid "Bring All to Front"
@@ -257,6 +262,11 @@ msgstr "Edit"
 msgctxt "Windows"
 msgid "Exit"
 msgstr "Exit"
+
+#. Menu item in the View menu that goes to the page the selected tab left by going back
+#: src/main/commands.ts
+msgid "Forward"
+msgstr "Forward"
 
 #. Menu item in the Mail menu that opens Gmail's own settings in the selected profile's Gmail tab
 #: src/main/commands.ts
@@ -541,6 +551,11 @@ msgstr "Sidebar"
 msgctxt "View menu"
 msgid "Sidebar"
 msgstr "Sidebar"
+
+#. Menu item in the View menu that stops the selected tab's page loading
+#: src/main/commands.ts
+msgid "Stop"
+msgstr "Stop"
 
 #. Said by screen readers after a tab's title when its page crashed
 #: src/shell/tab-strip.tsx
