@@ -53,8 +53,8 @@ export type HookName = (typeof HOOK_NAMES)[number];
  * body, what Gmail inserts into a body, or the list of a thread's messages.
  * The dark theme recolours rather than hides: a surface may hold mail, ink
  * is a colour that a card sets back, a leaf paints over what it holds and so
- * never holds mail, a card holds a body or the editor, and a popup is a menu
- * or dialog of Gmail's own, never one in mail.
+ * never holds or sits in mail, a card holds a body or the editor, and a popup
+ * is a menu or dialog of Gmail's own, or its text, never one in a message.
  */
 export type HookScope =
   | "chrome"
@@ -112,7 +112,20 @@ const parts = (surface: string, names: readonly string[]) =>
 const DARK_TEXT = {
   pane: {
     primary: parts(PANE, [".hP", ".gD"]),
-    secondary: parts(PANE, [".go", ".g3", ".hb", ".g2", ".aVW", ".aV3"]),
+    secondary: parts(PANE, [
+      ".go",
+      ".g3",
+      ".hb",
+      ".g2",
+      ".aVW",
+      // A collapsed message's snippet.
+      ".g6",
+      // The AI overview's line below its card and its link.
+      ".lnBNA",
+      ".R6DxZc",
+      // A text button's label, such as Add to Drive.
+      ".mUIrbf-anl",
+    ]),
     button: parts(PANE, [".ams"]),
     icon: parts(PANE, ["svg.aoH"]),
   },
@@ -126,7 +139,6 @@ const DARK_TEXT = {
     primary: parts(MENU, [".J-N-Jz", ".VO", ".a21", ".Q2", ".ST"]),
     secondary: parts(MENU, [".asd", ".OG", ".Q5 > div"]),
     link: parts(MENU, [".Tj", ".OD"]),
-    divider: parts(MENU, [".J-Kh"]),
   },
   dialog: {
     primary: parts(DIALOG, [".uW2Fw-bHp", "label", "input"]),
@@ -142,13 +154,22 @@ const DARK_PAINT = {
   menu: {
     hover: parts(MENU, [".J-N-JT"]),
     sprite: parts(MENU, [".J-N-JX"]),
+    divider: parts(MENU, [".J-Kh"]),
   },
 } as const;
 
 const PANE_SURFACE = {
   pane: [PANE],
-  // The white of the sticky reply bar around a reply's own card.
-  bars: parts(PANE, [".btDi4d", ".nr.wR", ".aC2"]),
+  // The reply bar sticks to the pane's bottom over the thread, so it takes
+  // the pane's own colour, opaque, as Gmail's white is.
+  stickyBar: parts(PANE, [".btDi4d"]),
+  // The white around a reply's own card.
+  bars: parts(PANE, [".nr.wR", ".aC2"]),
+  // The reply's Send bar, once it sticks to the bottom: Gmail draws its white
+  // 8 px wider than the reply's card, as a pseudo-element, and a white strip
+  // below it that hides what scrolls beneath, both unseen on its white pane.
+  sendBar: parts(PANE, [".aDj.ahe"]),
+  belowSendBar: parts(PANE, [".aC3"]),
 } as const;
 
 const COMPOSE_SURFACE = {
@@ -294,7 +315,7 @@ export const HOOKS: readonly Hook[] = [
   },
   {
     name: "darkMenuText",
-    scope: "ink",
+    scope: "popup",
     anchors: Object.values(DARK_TEXT.menu).flat(),
     requiredIn: [],
   },
@@ -312,7 +333,7 @@ export const HOOKS: readonly Hook[] = [
   },
   {
     name: "darkDialogText",
-    scope: "ink",
+    scope: "popup",
     anchors: Object.values(DARK_TEXT.dialog).flat(),
     requiredIn: [],
   },
@@ -372,23 +393,29 @@ const NESTED_LIST = `> [role="list"] ${MESSAGE}, > * [role="list"] ${MESSAGE}`;
  * messages: reordering hides nothing, so it may hold a draft, which moves
  * with its message.
  *
- * Ink and popups never test what they hold: a `:has` on each of the dark
- * theme's text rules made opening a thread recalculate style about 8 to 15%
- * longer, against 3.5% without. Ink only sets colours, which the card at
- * each body and editor sets back to Gmail's own, and a popup is still
- * refused inside mail. Whatever paints over what it holds is a leaf, which
- * keeps the test.
+ * Surfaces, ink and popups never test what they hold: a `:has` on each of
+ * the dark theme's text rules made opening a thread recalculate style about
+ * 8 to 15% longer, against 3.5% without. A surface and ink set only colours
+ * and a background, which the card at each body and editor sets back to
+ * Gmail's own, so both take the same guard and may sit in a message. A popup
+ * and its text are refused anywhere in a message, since Gmail draws its
+ * menus and dialogs outside them. Whatever paints over what it holds is a
+ * leaf, which keeps the test.
  */
+const OUTSIDE_MAIL = `:not(${MESSAGE}, ${BODY}, ${EDITOR}, ${within([BODY, EDITOR])})`;
+
+const OUTSIDE_MESSAGES = `:not(${MESSAGE}, ${BODY}, ${EDITOR}, ${within([MESSAGE, BODY, EDITOR])})`;
+
 const GUARDS: Record<HookScope, string> = {
   chrome: HOOK_GUARD,
   message: `:is(${MESSAGE} *):not(${isOrHolds([MESSAGE, BODY, ...EDITING])}, ${within([BODY, ...EDITING])})`,
   body: `:is(${MESSAGE} ${BODY} *):not(${isOrHolds([MESSAGE, BODY, ...EDITING])}, ${within(EDITING)})`,
   conversation: `:is([role="main"] *):not(${isOrHolds(['[gh="tl"]', '[role="navigation"]', '[role="main"]'])}, :has(${NESTED_LIST}), ${within([MESSAGE, ...EDITING])})`,
-  surface: `:not(${MESSAGE}, ${BODY}, ${EDITOR}, ${within([BODY, EDITOR])})`,
-  ink: `:not(${MESSAGE}, ${BODY}, ${EDITOR}, ${within([BODY, EDITOR])})`,
-  leaf: `:not(${isOrHolds([MESSAGE, BODY, EDITOR])}, ${within([BODY, EDITOR])})`,
+  surface: OUTSIDE_MAIL,
+  ink: OUTSIDE_MAIL,
+  leaf: `:not(${isOrHolds([MESSAGE, BODY, EDITOR])}, ${within([MESSAGE, BODY, EDITOR])})`,
   card: `:is(${MESSAGE} *, [data-compose-id] *):not(${MESSAGE}, ${BODY}, ${EDITOR}, :has(${MESSAGE}), ${within([BODY, EDITOR])})`,
-  popup: `:not(${MESSAGE}, ${BODY}, ${EDITOR}, ${within([MESSAGE, BODY, EDITOR])})`,
+  popup: OUTSIDE_MESSAGES,
 };
 
 /**
@@ -487,6 +514,17 @@ const CARD = {
   "border-radius": "8px",
 };
 
+/**
+ * A body's card reaches past it on either side by two copies of itself
+ * rather than padding, so mail keeps the width Gmail gives it; Gmail leaves
+ * 8 px above a body, too little for a spread, so it grows downward instead.
+ */
+const BODY_CARD = {
+  ...CARD,
+  "padding-block": "12px",
+  "box-shadow": `-12px 0 0 ${DARK.card}, 12px 0 0 ${DARK.card}`,
+};
+
 /** The rules each feature inserts while on, by the hooks they take. */
 export const FEATURE_RULES: Record<GmailFeature, readonly FeatureRule[]> = {
   hideGmailLogo: [hide("logo")],
@@ -536,10 +574,26 @@ export const FEATURE_RULES: Record<GmailFeature, readonly FeatureRule[]> = {
   // Inserted only while Gmail itself is Dark. Inherited colour is set on the
   // surfaces above mail and set back to Gmail's own at each card.
   extendDarkTheme: [
-    paint("darkPane", undefined, {
+    paint("darkPane", [...PANE_SURFACE.pane, ...PANE_SURFACE.bars], {
       "background-color": "transparent",
       ...TEXT,
     }),
+    paint("darkPane", PANE_SURFACE.sendBar, {
+      "background-color": DARK.card,
+    }),
+    {
+      ...paint("darkPane", PANE_SURFACE.sendBar, {
+        "background-color": "transparent",
+      }),
+      target: (match) => `${match}::after`,
+    },
+    paint(
+      "darkPane",
+      [...PANE_SURFACE.stickyBar, ...PANE_SURFACE.belowSendBar],
+      {
+        "background-color": DARK.surface,
+      }
+    ),
     paint("darkPaneText", DARK_TEXT.pane.primary, TEXT),
     paint("darkPaneText", DARK_TEXT.pane.secondary, SECONDARY),
     paint("darkPaneText", DARK_TEXT.pane.button, {
@@ -564,7 +618,7 @@ export const FEATURE_RULES: Record<GmailFeature, readonly FeatureRule[]> = {
     paint("darkComposeText", DARK_TEXT.compose.divider, DIVIDER),
     paint("darkComposeText", DARK_TEXT.compose.icon, ICON),
     paint("editorCard", undefined, CARD),
-    paint("bodyCard", undefined, { ...CARD, padding: "12px" }),
+    paint("bodyCard", undefined, BODY_CARD),
     paint("darkMenu", undefined, {
       "background-color": DARK.surface,
       ...TEXT,
@@ -575,7 +629,7 @@ export const FEATURE_RULES: Record<GmailFeature, readonly FeatureRule[]> = {
     paint("darkMenuPaint", DARK_PAINT.menu.hover, {
       "background-color": DARK.hover,
     }),
-    paint("darkMenuText", DARK_TEXT.menu.divider, DIVIDER),
+    paint("darkMenuPaint", DARK_PAINT.menu.divider, DIVIDER),
     paint("darkMenuPaint", DARK_PAINT.menu.sprite, SPRITE),
     paint("darkDialog", undefined, {
       "background-color": DARK.surface,
@@ -606,14 +660,15 @@ export const gmailFeatures = (
 
 /**
  * What a page inserts: each switch as it is, but the dark theme only while
- * Gmail's own theme is Dark.
+ * Gmail's own theme is Dark and no card is broken, since mail outside its
+ * card would be the sender's dark text on the dark pane.
  */
 export const insertedFeatures = (
   switches: GmailFeatures,
-  gmailDark: boolean
+  page: { dark: boolean; cardsBroken: boolean }
 ): GmailFeatures => ({
   ...switches,
-  extendDarkTheme: switches.extendDarkTheme && gmailDark,
+  extendDarkTheme: switches.extendDarkTheme && page.dark && !page.cardsBroken,
 });
 
 /**

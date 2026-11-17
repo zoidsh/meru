@@ -13,6 +13,16 @@ import type { GmailFeatures, HookName } from "#core/gmail-hooks.ts";
 
 import { checkHealth } from "./health.ts";
 
+/** Gmail's menu, quick settings among its kind, and a dialog. */
+const POPUPS = `<div role="menu" class="J-M">
+    <div class="J-N J-N-JT"><div class="J-N-Jz">Item<div class="J-N-JX"></div></div></div>
+    <div class="asd">More</div><div class="J-Kh"></div>
+    <div class="VO">Quick settings</div><div class="a21">Apps</div><div class="Q2">Default</div><div class="ST">Show</div>
+    <div class="OG">Density</div><div class="Q5"><div>Inbox type</div></div>
+    <button class="Tj">See all</button><button class="OD">Customise</button>
+  </div>
+  <div role="alertdialog"><h2 class="uW2Fw-bHp">New label</h2><label>Name</label><input><span class="mUIrbf-anl">Create</span></div>`;
+
 /**
  * Gmail's surfaces cut to the classes and roles the dark theme takes: a
  * thread in its pane with an inline reply, a docked compose, a menu and a
@@ -21,16 +31,17 @@ import { checkHealth } from "./health.ts";
 const gmail = (mail: string, pane = "nH a98 iY", docked = "AD") => `
   <div role="main"><div class="${pane}">
     <h2 class="hP" data-legacy-thread-id="t1">Subject</h2>
+    <div class="lnBNA">By Gemini <a class="R6DxZc">Learn more</a></div>
     <div role="list"><div role="listitem"><div data-message-id="m1">
-      <span class="gD">Sender</span><span class="go">address</span><span class="g3">date</span>
+      <span class="gD">Sender</span><span class="go">address</span><span class="g3">date</span><div class="iA g6"><span>snippet</span></div>
       <span class="hb"><span class="g2">to</span></span>
       <div class="gs"><div><div class="ii gt"><div class="a3s">${mail}</div></div>
-        <div class="hq gt"><span class="aVW">One attachment</span><span class="aV3">scanned</span></div>
+        <div class="hq gt"><span class="aVW">One attachment</span><span class="mUIrbf-anl">Add to Drive</span></div>
       </div></div>
     </div></div></div>
     <span class="ams" role="link">Reply</span><svg class="aoH"></svg>
     <div class="btDi4d"><div class="nr wR"></div><div class="aC2"></div>
-      <div data-compose-id="r1"><table><tr><td class="I5"><table><tr><td class="Ap"><div g_editable="true" contenteditable="true">${mail}</div></td></tr></table></td></tr></table></div>
+      <div data-compose-id="r1"><table><tr><td class="I5"><table><tr><td class="Ap"><div g_editable="true" contenteditable="true">${mail}</div></td></tr></table></td></tr></table><div class="aDj ahe"><div class="aC3"></div></div></div>
     </div>
   </div></div>
   <div class="${docked}"><div role="dialog">
@@ -43,14 +54,7 @@ const gmail = (mail: string, pane = "nH a98 iY", docked = "AD") => `
       <div class="aoD"></div><svg class="aoH"></svg>
     </div></div>
   </div></div>
-  <div role="menu" class="J-M">
-    <div class="J-N J-N-JT"><div class="J-N-Jz">Item<div class="J-N-JX"></div></div></div>
-    <div class="asd">More</div><div class="J-Kh"></div>
-    <div class="VO">Quick settings</div><div class="a21">Apps</div><div class="Q2">Default</div><div class="ST">Show</div>
-    <div class="OG">Density</div><div class="Q5"><div>Inbox type</div></div>
-    <button class="Tj">See all</button><button class="OD">Customise</button>
-  </div>
-  <div role="alertdialog"><h2 class="uW2Fw-bHp">New label</h2><label>Name</label><input><span class="mUIrbf-anl">Create</span></div>`;
+  ${POPUPS}`;
 
 /** A sender's mail written in Gmail's own classes and roles, as anyone can. */
 const MIMIC = gmail("").replaceAll(
@@ -77,10 +81,12 @@ const DARK_RULES = FEATURE_RULES.extendDarkTheme;
 
 const DARK_HOOKS = [...new Set(DARK_RULES.map(({ hook }) => hook))];
 
-/** Each rule of the dark theme's stylesheet, by its selector and hook. */
+/** What each rule of the dark theme's stylesheet styles, a pseudo-element by its own element. */
 const RULES = featureStylesheet("extendDarkTheme")
   .split("\n")
-  .map((rule) => rule.slice(0, rule.lastIndexOf(" { ")));
+  .map((rule) =>
+    rule.slice(0, rule.lastIndexOf(" { ")).replace(/::after$/u, "")
+  );
 
 const CARDS = DARK_RULES.flatMap(({ hook, only }) =>
   findHook(hook).scope === "card"
@@ -96,11 +102,18 @@ const scoped = (scope: string) =>
     ({ declarations }) => declarations
   );
 
-/** What a rule may set with no test of what it holds: what a card sets back. */
-const INK = new Set(["color", "fill", "border-color"]);
+/**
+ * What ink may set with no test of what it holds: the colour a card sets
+ * back, and a border, which reaches nothing it holds.
+ */
+const INK = new Set(["color", "border-color"]);
 
-/** A tag that holds no mail, so whatever it paints paints no mail. */
-const HOLDS_NOTHING = /(?:^|[\s>+~])(?:img|svg)(?:[.:[#]|$)/u;
+/** What a popup may set: its own surface and the colour its text inherits. */
+const POPUP = new Set(["background-color", "color"]);
+
+/** An anchor whose subject is an image or an icon, which holds no mail. */
+const holdsNothing = (anchor: string) =>
+  /^(?:img|svg)(?![\w-])/u.test(anchor.split(/[\s>+~]+/u).at(-1) ?? "");
 
 const properties = (declarations: string) =>
   declarations
@@ -160,15 +173,23 @@ const switches = (extendDarkTheme: boolean): GmailFeatures => ({
 
 describe(insertedFeatures, () => {
   it("inserts the dark theme only while it is on and Gmail is Dark", () => {
-    expect(insertedFeatures(switches(true), true)).toStrictEqual(
+    const whole = { dark: true, cardsBroken: false };
+
+    expect(insertedFeatures(switches(true), whole)).toStrictEqual(
       switches(true)
     );
-    expect(insertedFeatures(switches(true), false)).toStrictEqual(
+    expect(
+      insertedFeatures(switches(true), { ...whole, dark: false })
+    ).toStrictEqual(switches(false));
+    expect(insertedFeatures(switches(false), whole)).toStrictEqual(
       switches(false)
     );
-    expect(insertedFeatures(switches(false), true)).toStrictEqual(
-      switches(false)
-    );
+  });
+
+  it("inserts no dark theme while a body or the editor is outside its card", () => {
+    expect(
+      insertedFeatures(switches(true), { dark: true, cardsBroken: true })
+    ).toStrictEqual(switches(false));
   });
 });
 
@@ -222,10 +243,30 @@ describe("the dark theme's rules", () => {
       ink.filter(
         ({ hook, only, declarations }) =>
           !properties(declarations).every((property) => INK.has(property)) &&
-          !(only ?? findHook(hook).anchors).every((anchor) =>
-            HOLDS_NOTHING.test(anchor)
-          )
+          !(only ?? findHook(hook).anchors).every(holdsNothing)
       )
+    ).toStrictEqual([]);
+  });
+
+  it("tell an image or an icon by the subject of its anchor alone", () => {
+    expect(
+      [
+        ".iY svg.aoH",
+        "svg .aoH",
+        "img",
+        ".a > img:hover",
+        "svg-like",
+        ".x svg span",
+      ].map(holdsNothing)
+    ).toStrictEqual([true, false, true, true, false, false]);
+  });
+
+  it("set only a popup's surface and colour on a menu, a dialog and their text", () => {
+    expect(scoped("popup")).not.toHaveLength(0);
+    expect(
+      scoped("popup")
+        .flatMap(properties)
+        .filter((property) => !POPUP.has(property))
     ).toStrictEqual([]);
   });
 
@@ -285,6 +326,20 @@ describe("the dark theme's menus and dialogs", () => {
       select(root, guardedSelector(findHook(name), `[role="${role}"]`))
     ).toStrictEqual([]);
   });
+});
+
+describe("the dark theme's menus and dialogs, written in a message", () => {
+  it.each(Object.entries(POPUP_REFUSED))(
+    "take nothing of one %s, their text included",
+    (_where, wrap) => {
+      const { root } = page(wrap(POPUPS));
+
+      expect(select(root, ".J-N-Jz")).toHaveLength(1);
+      expect(
+        RULES.filter((selector) => select(root, selector).length > 0)
+      ).toStrictEqual([]);
+    }
+  );
 });
 
 const hooksOf = (html: string) => checkHealth(page(html)).hooks;

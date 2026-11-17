@@ -26,6 +26,11 @@ let switches: GmailFeatures | undefined;
 /** Whether Gmail's own theme is Dark, which the dark theme's layer needs. */
 let gmailDark = false;
 
+/** Whether the last settled check found a body or the editor outside its card. */
+let cardsBroken = false;
+
+let themeFrame = 0;
+
 let userStylesKey: string | undefined;
 
 let checking = false;
@@ -50,7 +55,10 @@ const applyAll = () => {
     return;
   }
 
-  const inserting = insertedFeatures(switches, gmailDark);
+  const inserting = insertedFeatures(switches, {
+    dark: gmailDark,
+    cardsBroken,
+  });
 
   for (const feature of GMAIL_FEATURES) {
     insert(feature, inserting[feature]);
@@ -58,9 +66,9 @@ const applyAll = () => {
 };
 
 /**
- * Reads Gmail's theme once the page is ready, at each move between views and
- * at each health check, with no observer: a theme changed with no move shows
- * at the next move.
+ * Reads Gmail's theme once the page is ready, at each move between views, at
+ * each health check and after each press, with no observer: a theme changed
+ * with neither shows at the next.
  */
 const readTheme = () => {
   const dark =
@@ -97,6 +105,14 @@ const check = (): number | undefined => {
     rechecked = true;
 
     return RECHECK_MS;
+  }
+
+  const broken =
+    found.hooks.bodyCard === "broken" || found.hooks.editorCard === "broken";
+
+  if (broken !== cardsBroken) {
+    cardsBroken = broken;
+    applyAll();
   }
 
   const key = JSON.stringify(found);
@@ -141,6 +157,19 @@ const startChecking = () => {
   // Gmail moves between views by the history API as well as by the hash,
   // which only the Navigation API hears.
   navigation.addEventListener("currententrychange", viewChanged);
+  // Gmail's theme picker changes the theme with no move, on a press.
+  document.addEventListener(
+    "pointerup",
+    () => {
+      if (themeFrame === 0) {
+        themeFrame = requestAnimationFrame(() => {
+          themeFrame = 0;
+          readTheme();
+        });
+      }
+    },
+    { capture: true, passive: true }
+  );
   viewChanged();
 };
 
