@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import type { ChildProcess } from "node:child_process";
+import type { ChildProcess, StdioOptions } from "node:child_process";
 import { once } from "node:events";
 import path from "node:path";
 
@@ -68,6 +68,7 @@ export interface ElectronLaunch {
   args: LaunchArgs;
   profile: string;
   env?: Record<string, string>;
+  stdio?: StdioOptions;
 }
 
 /** Starts Electron at once, so the caller holds the child from the start. */
@@ -76,6 +77,7 @@ export const spawnElectron = ({
   args,
   profile,
   env,
+  stdio = "inherit",
 }: ElectronLaunch) => {
   const userDataDir = userDataDirFor(profile);
 
@@ -90,7 +92,7 @@ export const spawnElectron = ({
       ...args.electronArgs,
     ],
     {
-      stdio: "inherit",
+      stdio,
       env: { ...process.env, ...env },
     }
   );
