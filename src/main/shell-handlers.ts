@@ -8,6 +8,7 @@ import { canCloseTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
+import type { Inbox } from "./inbox.ts";
 import type { Mail } from "./mail.ts";
 import type { Overlays } from "./overlay.ts";
 import {
@@ -26,6 +27,7 @@ export interface ShellHandlersDeps {
   >;
   overlays: Pick<Overlays, "open" | "close" | "current">;
   tabs: { retry: (key: TabKey) => void };
+  inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   window: Pick<AppWindow, "showContextMenu" | "confirm">;
   /** Runs a command of the registry, as its menu item would. */
   runCommand: (id: string) => void;
@@ -87,7 +89,8 @@ export const shellState = (
   settings: ShellState["settings"],
   overlay: Overlay | undefined,
   mail: (profileId: string) => Mail,
-  doNotDisturb: DoNotDisturb | undefined
+  doNotDisturb: DoNotDisturb | undefined,
+  inbox: ShellState["inbox"]
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -119,6 +122,7 @@ export const shellState = (
       until: doNotDisturb?.until ?? null,
     },
     overlay: shellOverlay(state, overlay),
+    inbox,
   };
 };
 
@@ -126,6 +130,7 @@ export const createShellHandlers = ({
   profiles,
   overlays,
   tabs,
+  inbox,
   window,
   runCommand,
   doNotDisturbItems,
@@ -197,6 +202,17 @@ export const createShellHandlers = ({
       window.showContextMenu(doNotDisturbItems());
 
       return Promise.resolve();
+    },
+    setInboxOpen: ({ open }) => {
+      inbox.setOpen(open);
+
+      return Promise.resolve();
+    },
+    openInboxMessage: async ({ profileId, messageId }) => {
+      await inbox.openMessage(profileId, messageId);
+    },
+    runInboxAction: async ({ profileId, messageId, action }) => {
+      await inbox.runAction(profileId, messageId, action);
     },
     openProfileMenu: ({ profileId }) => {
       const state = profiles.get();

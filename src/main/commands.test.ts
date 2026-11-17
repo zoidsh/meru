@@ -50,6 +50,7 @@ const setup = (initial: State = twoProfiles) => {
     log: () => false,
   });
   let reloads = 0;
+  let inboxOpen = false;
   const renames: string[] = [];
   const actions: CommandActions = {
     updateSetting: settings.update,
@@ -63,6 +64,9 @@ const setup = (initial: State = twoProfiles) => {
     openRenameProfile: (profileId) => {
       renames.push(profileId);
     },
+    setInboxOpen: (open) => {
+      inboxOpen = open;
+    },
     switchDoNotDisturb: (choice) =>
       choice === "off"
         ? doNotDisturb.switchOff()
@@ -72,6 +76,7 @@ const setup = (initial: State = twoProfiles) => {
     state: profiles.get(),
     setting: settings.get,
     doNotDisturb: doNotDisturb.current(),
+    inboxOpen,
   });
 
   onTestFinished(doNotDisturb.dispose);
@@ -205,6 +210,29 @@ describe("the command registry", () => {
     await app.run("profile.rename");
 
     expect(app.renames).toStrictEqual(["new"]);
+  });
+
+  it("opens and closes the unified inbox, offered only with another profile or while it is open", async () => {
+    const one = setup({
+      version: 1,
+      profiles: [newProfile("a", "Default")],
+      selectedProfileId: "a",
+    });
+
+    expect(one.isAvailable("inbox.toggle")).toBeFalsy();
+
+    const app = setup();
+
+    expect(app.isAvailable("inbox.toggle")).toBeTruthy();
+    expect(app.isChecked("inbox.toggle")).toBeFalsy();
+
+    await app.run("inbox.toggle");
+
+    expect(app.isChecked("inbox.toggle")).toBeTruthy();
+
+    await app.run("inbox.toggle");
+
+    expect(app.isChecked("inbox.toggle")).toBeFalsy();
   });
 
   it("reloads the selected tab", async () => {

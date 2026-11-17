@@ -15,6 +15,8 @@ export interface CommandContext {
   setting: <Key extends SettingKey>(key: Key) => SettingValue<Key>;
   /** Do Not Disturb while it holds, else `undefined`. */
   doNotDisturb: DoNotDisturb | undefined;
+  /** Whether the unified inbox covers the content area. */
+  inboxOpen: boolean;
 }
 
 /** What commands do, each through the module that owns it. */
@@ -33,6 +35,8 @@ export interface CommandActions {
   openRenameProfile: (profileId: string) => void;
   /** Switches Do Not Disturb on for the duration, or off. */
   switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
+  /** Shows the unified inbox, or puts the tab back. */
+  setInboxOpen: (open: boolean) => void;
 }
 
 export interface Command {
@@ -182,6 +186,30 @@ export const COMMANDS: readonly Command[] = [
     isChecked: ({ setting }) => setting("vibrancy"),
     run: (_context, { updateSetting }) =>
       updateSetting("vibrancy", (isOn) => !isOn),
+  },
+  {
+    id: "inbox.toggle",
+    title: () =>
+      t({
+        message: "Unified Inbox",
+        comment:
+          "Menu item in the View menu, checked while the list of every profile's unread mail fills the window in place of the tab",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+Shift+I",
+      win32: "CommandOrControl+Shift+I",
+      linux: "CommandOrControl+Shift+I",
+    },
+    // Available while open too, so its key and item close it.
+    isAvailable: ({ state, inboxOpen }) =>
+      inboxOpen || state.profiles.length > 1,
+    isChecked: ({ inboxOpen }) => inboxOpen,
+    once: true,
+    run: ({ inboxOpen }, { setInboxOpen }) => {
+      setInboxOpen(!inboxOpen);
+
+      return Promise.resolve();
+    },
   },
   {
     id: "tab.reload",

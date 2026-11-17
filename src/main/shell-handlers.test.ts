@@ -81,6 +81,21 @@ const setup = ({
         calls.push(["retry", key]);
       },
     },
+    inbox: {
+      setOpen: (next) => {
+        calls.push(["inbox", next]);
+      },
+      openMessage: (profileId, messageId) => {
+        calls.push(["openMessage", profileId, messageId]);
+
+        return Promise.resolve();
+      },
+      runAction: (profileId, messageId, action) => {
+        calls.push(["action", profileId, messageId, action]);
+
+        return Promise.resolve();
+      },
+    },
     window: {
       showContextMenu: (items) => menus.push(items.filter(isItem)),
       confirm: (confirmation) => {
@@ -238,6 +253,8 @@ describe(createShellHandlers, () => {
 
 const SHOWN_SETTINGS = { design: "modern", vibrancy: true } as const;
 
+const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
+
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;
 
 describe(shellState, () => {
@@ -256,7 +273,8 @@ describe(shellState, () => {
         undefined,
         (profileId) =>
           profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL,
-        undefined
+        undefined,
+        CLOSED_INBOX
       ).profiles
     ).toStrictEqual({
       profiles: [
@@ -301,7 +319,8 @@ describe(shellState, () => {
         SHOWN_SETTINGS,
         undefined,
         () => NO_MAIL,
-        undefined
+        undefined,
+        CLOSED_INBOX
       ).tabs
     ).toStrictEqual({
       profileId: "a",
@@ -344,7 +363,8 @@ const overlaySlice = (open: Overlay | undefined) =>
     SHOWN_SETTINGS,
     open,
     () => NO_MAIL,
-    undefined
+    undefined,
+    CLOSED_INBOX
   ).overlay;
 
 describe("the overlay slice", () => {
@@ -395,7 +415,8 @@ const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
     SHOWN_SETTINGS,
     undefined,
     () => NO_MAIL,
-    doNotDisturb
+    doNotDisturb,
+    CLOSED_INBOX
   ).doNotDisturb;
 
 describe("Do Not Disturb in the shell", () => {

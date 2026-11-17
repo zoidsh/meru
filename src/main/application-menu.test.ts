@@ -26,6 +26,7 @@ const contextOf = (
   setting: ((key: string) =>
     key === "design" ? design : true) as CommandContext["setting"],
   doNotDisturb: undefined,
+  inboxOpen: false,
 });
 
 const template = (platform: Platform, context = contextOf()) =>
@@ -147,7 +148,12 @@ const setup = () => {
     platform: "darwin",
     appName: "Meru",
     commands: commandsFor("darwin"),
-    context: () => ({ state, setting: settings.get, doNotDisturb: undefined }),
+    context: () => ({
+      state,
+      setting: settings.get,
+      doNotDisturb: undefined,
+      inboxOpen: false,
+    }),
     actions,
     locale: () => "en",
     setMenu: (next) => set.push(next),

@@ -36,6 +36,8 @@ export interface TabViewsDeps {
   state: () => State;
   /** The design as it is now; `relayout` follows a change. */
   design: () => Design;
+  /** Whether the unified inbox covers the content area; `reconcile` follows a change. */
+  inboxOpen: () => boolean;
   /** Opens the tab, under `tabId` when it is a new one. */
   openTab: (
     profileId: string,
@@ -87,6 +89,7 @@ export const createTabViews = ({
   senders,
   state,
   design,
+  inboxOpen,
   openTab,
   newId,
   handleKey,
@@ -103,6 +106,7 @@ export const createTabViews = ({
   const pendingUrls = new Map<string, string>();
   const listeners = new Set<() => void>();
   let front: string | undefined;
+  let frontShown = true;
 
   const place = (view: ContentView) => {
     view.setBounds(
@@ -133,7 +137,7 @@ export const createTabViews = ({
 
   const showFront = () => {
     for (const [key, tab] of tabs) {
-      tab.view.setVisible(key === front && showsView(tab.status));
+      tab.view.setVisible(key === front && frontShown && showsView(tab.status));
     }
   };
 
@@ -375,7 +379,9 @@ export const createTabViews = ({
   return {
     /** Creates, closes, shows and hides views until the window matches. */
     reconcile: (current: State) => {
-      const plan = planViews(current, [...tabs.keys()]);
+      const plan = planViews(current, [...tabs.keys()], {
+        inboxOpen: inboxOpen(),
+      });
       const planned = new Map(plan.views.map((key) => [tabKey(key), key]));
       let changed = false;
 
@@ -400,6 +406,8 @@ export const createTabViews = ({
       const nextFront = tabKey(plan.front);
 
       const frontChanged = nextFront !== front;
+
+      ({ frontShown } = plan);
 
       if (frontChanged) {
         front = nextFront;
@@ -436,7 +444,9 @@ export const createTabViews = ({
     focuser: () => {
       const tab = front === undefined ? undefined : tabs.get(front);
 
-      return tab && showsView(tab.status) ? tab.view.focus : undefined;
+      return tab && frontShown && showsView(tab.status)
+        ? tab.view.focus
+        : undefined;
     },
     /** Places every view again, as the design now has it, loading nothing. */
     relayout: placeAll,

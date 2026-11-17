@@ -49,6 +49,12 @@ msgstr "{name} ({count})"
 msgid "{name} couldn’t load"
 msgstr "{name} couldn’t load"
 
+#. Second sentence after an action in the unified inbox failed because the profile's Google account is signed out; {name} is the profile
+#. Shown in the unified inbox for a profile whose Google account is signed out, so its mail is missing from the list; {name} is the profile
+#: src/shell/inbox.tsx
+msgid "{name} is signed out."
+msgstr "{name} is signed out."
+
 #. Explanation under the offline heading in place of a tab's page; {name} is the app, such as Gmail or Calendar
 #: src/shell/tab-strip.tsx
 msgid "{name} loads by itself when you’re back online."
@@ -58,6 +64,12 @@ msgstr "{name} loads by itself when you’re back online."
 #: src/shell/tab-strip.tsx
 msgid "{name} stopped working"
 msgstr "{name} stopped working"
+
+#. Below the unified inbox when a profile has more unread mail than the list shows, since Gmail lists only the newest; {name} is the profile, {listed} how many are shown, {unreadCount} how many are unread
+#. placeholder {0}: unreadCount ?? 0
+#: src/shell/inbox.tsx
+msgid "{name}: the newest {listed} of {0} unread"
+msgstr "{name}: the newest {listed} of {0} unread"
 
 #. Title of the error dialog shown when the app fails to open; {productName} is the app's name
 #: src/main/failures.ts
@@ -89,6 +101,12 @@ msgstr "Add Profile"
 msgid "Archive"
 msgstr "Archive"
 
+#. Button on a message in the unified inbox that archives it. Gmail's own word for the action
+#: src/shell/inbox.tsx
+msgctxt "inbox action"
+msgid "Archive"
+msgstr "Archive"
+
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
 msgid "Bring All to Front"
@@ -98,6 +116,11 @@ msgstr "Bring All to Front"
 #: src/main/profile-copy.ts
 msgid "Cancel"
 msgstr "Cancel"
+
+#. Shown in the unified inbox while a profile's unread mail has not been read yet; {name} is the profile
+#: src/shell/inbox.tsx
+msgid "Checking {name} for mail…"
+msgstr "Checking {name} for mail…"
 
 #. Menu item in the View menu that chooses the design where pages run edge to edge, as in earlier versions
 #: src/main/commands.ts
@@ -119,6 +142,12 @@ msgstr "Close {title}"
 #: src/main/commands.ts
 msgid "Close Tab"
 msgstr "Close Tab"
+
+#. Accessible name and tooltip of the button that closes the unified inbox and shows the tab again
+#. Accessible name and tooltip of the button that closes the unified inbox and shows the tab again
+#: src/shell/inbox.tsx
+msgid "Close unified inbox"
+msgstr "Close unified inbox"
 
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
@@ -142,10 +171,35 @@ msgstr "Copied verification code {verificationCode}"
 msgid "Copy"
 msgstr "Copy"
 
+#. Said in the unified inbox when archiving a message failed and the message was put back in the list
+#: src/shell/inbox.tsx
+msgid "Couldn’t archive the message."
+msgstr "Couldn’t archive the message."
+
+#. Shown in the unified inbox for a profile whose unread mail could not be read, so its mail is missing from the list; {name} is the profile
+#: src/shell/inbox.tsx
+msgid "Couldn’t check {name} for mail."
+msgstr "Couldn’t check {name} for mail."
+
 #. Said by screen readers after a tab's title when its page could not load
 #: src/shell/tab-strip.tsx
 msgid "Couldn’t load"
 msgstr "Couldn’t load"
+
+#. Said in the unified inbox when marking a message read failed and the message was put back in the list
+#: src/shell/inbox.tsx
+msgid "Couldn’t mark the message as read."
+msgstr "Couldn’t mark the message as read."
+
+#. Said in the unified inbox when deleting a message failed and the message was put back in the list
+#: src/shell/inbox.tsx
+msgid "Couldn’t move the message to Trash."
+msgstr "Couldn’t move the message to Trash."
+
+#. Said in the unified inbox when reporting a message as spam failed and the message was put back in the list
+#: src/shell/inbox.tsx
+msgid "Couldn’t report the message as spam."
+msgstr "Couldn’t report the message as spam."
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -162,6 +216,12 @@ msgstr "Default"
 #. Menu item in the Edit menu that deletes the selected text
 #: src/main/application-menu.ts
 #: src/main/notifications.ts
+msgid "Delete"
+msgstr "Delete"
+
+#. Button on a message in the unified inbox that moves it to Trash. Gmail's own word for the action
+#: src/shell/inbox.tsx
+msgctxt "inbox action"
 msgid "Delete"
 msgstr "Delete"
 
@@ -220,6 +280,11 @@ msgstr "Hide {productName}"
 msgid "Hide Others"
 msgstr "Hide Others"
 
+#. Second sentence after an action in the unified inbox failed: the message shows in the list again
+#: src/shell/inbox.tsx
+msgid "It’s back in the list."
+msgstr "It’s back in the list."
+
 #. Explanation under the heading in place of a tab's page that crashed
 #: src/shell/tab-strip.tsx
 msgid "Its page quit unexpectedly. Reload it to carry on."
@@ -229,6 +294,12 @@ msgstr "Its page quit unexpectedly. Reload it to carry on."
 #: src/shell/tab-strip.tsx
 msgid "Loading"
 msgstr "Loading"
+
+#. Button on a message in the unified inbox that marks it read. Gmail's own words for the action
+#: src/shell/inbox.tsx
+msgctxt "inbox action"
+msgid "Mark as read"
+msgstr "Mark as read"
 
 #. Button on a new email notification that marks the email read. Gmail's own words for the action
 #: src/main/notifications.ts
@@ -266,6 +337,11 @@ msgstr "Modern"
 msgid "New message"
 msgstr "New message"
 
+#. Heading of the unified inbox when no profile has unread mail
+#: src/shell/inbox.tsx
+msgid "No unread messages"
+msgstr "No unread messages"
+
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
 #: src/main/do-not-disturb.ts
 msgid "On Until {time}"
@@ -275,6 +351,12 @@ msgstr "On Until {time}"
 #: src/main/do-not-disturb.ts
 msgid "On Until Turned Off"
 msgstr "On Until Turned Off"
+
+#. Button beside a signed-out profile in the unified inbox that shows that profile, where it can be signed in; {name} is the profile
+#. placeholder {0}: profile.name
+#: src/shell/inbox.tsx
+msgid "Open {0}"
+msgstr "Open {0}"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -356,6 +438,12 @@ msgctxt "profile"
 msgid "Rename…"
 msgstr "Rename…"
 
+#. Button on a message in the unified inbox that reports it as spam. Gmail's own words for the action
+#: src/shell/inbox.tsx
+msgctxt "inbox action"
+msgid "Report spam"
+msgstr "Report spam"
+
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Select All"
@@ -408,6 +496,11 @@ msgstr "Stopped working"
 msgid "Tabs"
 msgstr "Tabs"
 
+#. Shown in the unified inbox when no profile has unread mail
+#: src/shell/inbox.tsx
+msgid "The unified inbox shows the unread mail of every profile in one place. A message leaves the list once it is read."
+msgstr "The unified inbox shows the unread mail of every profile in one place. A message leaves the list once it is read."
+
 #. Shown when the app is started on data that a later version of the app wrote, which this version cannot read
 #: src/main/store-file.ts
 msgid "This data was saved by a newer version. Open it with that version, or update to it."
@@ -442,6 +535,22 @@ msgstr "Turn Off"
 #: src/main/application-menu.ts
 msgid "Undo"
 msgstr "Undo"
+
+#. Accessible name and tooltip of the inbox button in the title bar, pressed while the list of every profile's unread mail shows
+#. Heading of the list of every profile's unread mail, shown in place of the tab
+#: src/shell/inbox.tsx
+msgid "Unified inbox"
+msgstr "Unified inbox"
+
+#. Menu item in the View menu, checked while the list of every profile's unread mail fills the window in place of the tab
+#: src/main/commands.ts
+msgid "Unified Inbox"
+msgstr "Unified Inbox"
+
+#. Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers
+#: src/shell/inbox.tsx
+msgid "Unread messages"
+msgstr "Unread messages"
 
 #. Item in the Do Not Disturb menu that holds notifications until midnight tonight
 #: src/main/commands.ts

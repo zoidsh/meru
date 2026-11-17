@@ -10,6 +10,7 @@ import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
 import { Tabs, TabsList, TabsTrigger } from "#ui/tabs.tsx";
 
+import { Inbox, InboxButton } from "./inbox.tsx";
 import { keepInView } from "./keep-in-view.ts";
 import { OverlayLayer } from "./overlay.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
@@ -177,6 +178,8 @@ export const App = () => {
   const { t } = useLingui();
   const tabs = useShellState("tabs");
   const settings = useShellState("settings");
+  const profiles = useShellState("profiles");
+  const inbox = useShellState("inbox");
   const design = settings?.design ?? "modern";
   const vibrant = settings?.vibrancy ?? false;
   const { inset, radius } = viewFrame(design);
@@ -209,7 +212,13 @@ export const App = () => {
         <Profiles />
         {/* Keeps part of the title bar for dragging the window, however many profiles there are. */}
         <div aria-hidden className="h-full min-w-16 flex-1" />
-        <DoNotDisturbButton />
+        <div className="flex items-center gap-1">
+          <InboxButton
+            open={inbox?.open ?? false}
+            profileCount={profiles?.profiles.length ?? 0}
+          />
+          <DoNotDisturbButton />
+        </div>
       </header>
       <div className="flex min-h-0 flex-1">
         {tabs && <TabStrip tabs={tabs} bordered={design === "classic"} />}
@@ -232,7 +241,11 @@ export const App = () => {
             style={{ borderRadius: radius }}
             className="min-w-0 flex-1 overflow-hidden bg-background"
           >
-            {tabs && <TabProblem tabs={tabs} />}
+            {inbox?.open ? (
+              <Inbox inbox={inbox} />
+            ) : (
+              tabs && <TabProblem tabs={tabs} />
+            )}
           </div>
         </main>
       </div>

@@ -75,6 +75,7 @@ const setup = async ({
   let webContentsIds = 10;
   let ids = 0;
   let fronts = 0;
+  let inboxOpen = false;
   const pageChanges: TabKey[] = [];
 
   const profiles = createProfiles({
@@ -157,6 +158,7 @@ const setup = async ({
     senders,
     state: profiles.get,
     design: () => currentDesign,
+    inboxOpen: () => inboxOpen,
     openTab: profiles.openTab,
     newId: () => {
       ids += 1;
@@ -214,6 +216,10 @@ const setup = async ({
     switchDesign: (next: Design) => {
       currentDesign = next;
       tabs.relayout();
+    },
+    setInboxOpen: (open: boolean) => {
+      inboxOpen = open;
+      tabs.reconcile(profiles.get());
     },
   };
 };
@@ -293,6 +299,33 @@ describe(createTabViews, () => {
     window.emit(window.viewOf("persist:a", 1), REFUSED);
 
     expect(window.tabs.focuser()).toBeUndefined();
+  });
+
+  it("hides the front tab's view under the inbox without reloading it or taking it for failed, and shows it again", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+
+    window.emit(gmail, { kind: "loaded" });
+    window.setInboxOpen(true);
+
+    expect([
+      window.live(),
+      window.tabs.status({ profileId: "a", tabId: "gmail" }),
+      window.tabs.focuser(),
+    ]).toStrictEqual([
+      [["persist:a", GMAIL, false]],
+      { kind: "live" },
+      undefined,
+    ]);
+
+    window.setInboxOpen(false);
+
+    expect([
+      window.live(),
+      gmail?.loaded.length,
+      gmail?.reloads,
+      typeof window.tabs.focuser(),
+    ]).toStrictEqual([[["persist:a", GMAIL, true]], 1, 0, "function"]);
   });
 
   it("gives another profile's selected tab a view of its session when that profile is selected", async () => {

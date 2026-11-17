@@ -68,6 +68,8 @@ export interface StandInMail {
   summary: string;
   senderName: string;
   senderAddress: string;
+  /** When it arrived, as the feed writes it; 17 November 2026, 09:00 UTC when not given. */
+  issued?: string;
 }
 
 /**
@@ -110,7 +112,7 @@ ${mail
 <title>${escapeXml(message.subject)}</title>
 <summary>${escapeXml(message.summary)}</summary>
 <link rel="alternate" href="${escapeXml(messageLink(gmailUrl, message.id))}" type="text/html" />
-<issued>2026-11-17T09:00:00Z</issued>
+<issued>${message.issued ?? "2026-11-17T09:00:00Z"}</issued>
 <author><name>${escapeXml(message.senderName)}</name><email>${escapeXml(message.senderAddress)}</email></author>
 </entry>`
   )
@@ -251,6 +253,8 @@ export interface StandIn {
   setFeedAfterAction: (account: string, answer: FeedAnswer) => void;
   /** Every action the endpoint took, in order. */
   actions: StandInAction[];
+  /** Has the action endpoint refuse every action for `account`, as Gmail's error 10. */
+  failActions: (account: string) => void;
   /** Refuses connections to the Gmail stand-in until it answers again. */
   refuse: () => Promise<void>;
   answer: () => Promise<void>;
@@ -272,6 +276,7 @@ export const startStandIn = async (): Promise<StandIn> => {
   const feeds = new Map<string, FeedAnswer>();
   const feedsAfterAction = new Map<string, FeedAnswer>();
   const actions: StandInAction[] = [];
+  const failing = new Set<string>();
   /**
    * Gmail's private action endpoint: a request without the key and token is
    * refused with both, one with them takes its action.
@@ -295,6 +300,14 @@ export const startStandIn = async (): Promise<StandIn> => {
             "Set-Cookie": `GMAIL_AT=${ACTION_TOKEN}; Path=${ACTION_PATH}`,
           })
           .end(actionAnswer([null, "Invalid request ID key", 12]));
+
+        return;
+      }
+
+      if (action && failing.has(account)) {
+        response
+          .writeHead(200, headers)
+          .end(actionAnswer([null, "Refused", 10]));
 
         return;
       }
@@ -414,6 +427,9 @@ export const startStandIn = async (): Promise<StandIn> => {
       feedsAfterAction.set(account, answer);
     },
     actions,
+    failActions: (account) => {
+      failing.add(account);
+    },
     requests: () => ({
       gmail: gmail.requests.length,
       calendar: calendar.requests.length,

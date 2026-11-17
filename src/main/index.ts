@@ -50,6 +50,7 @@ import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
+import { createInbox } from "./inbox.ts";
 import { createMailActions } from "./mail-actions.ts";
 import { createMailPoller } from "./mail.ts";
 import { createMailNotifications } from "./notifications.ts";
@@ -364,6 +365,8 @@ const start = async () => {
     senders,
     state: profiles.get,
     design: () => settings.get("design"),
+    // oxlint-disable-next-line no-use-before-define -- the inbox opens messages in the views
+    inboxOpen: () => inbox.isOpen(),
     openTab: profiles.openTab,
     newId,
     // No key reaches a view before the menu below exists, as nothing between
@@ -391,19 +394,58 @@ const start = async () => {
     log: console.error,
   });
 
-  if (gmail) {
-    const gmailOrigin = new URL(gmail.home).origin;
-    const mailActions = createMailActions({
-      post: (profileId, request, signal) =>
-        sessions.post(
-          profilePartition(profileId),
-          `${gmailOrigin}${request.path}`,
-          request.body,
-          signal
-        ),
-      poke: mail.poke,
-      log: console.error,
-    });
+  /** Shows `url` in the profile's Gmail tab, then selects the profile. */
+  const openInGmail = async (profileId: string, url: string) => {
+    if (!gmail) {
+      return false;
+    }
+
+    await views.open(profileId, gmail, url);
+
+    try {
+      await profiles.select(profileId);
+    } catch (error) {
+      console.error(`A message's profile was not selected: ${String(error)}`);
+
+      return false;
+    }
+
+    return profiles.get().profiles.some((profile) => profile.id === profileId);
+  };
+  const gmailOrigin = gmail && new URL(gmail.home).origin;
+  const mailActions =
+    gmailOrigin === undefined
+      ? undefined
+      : createMailActions({
+          post: (profileId, request, signal) =>
+            sessions.post(
+              profilePartition(profileId),
+              `${gmailOrigin}${request.path}`,
+              request.body,
+              signal
+            ),
+          poke: mail.poke,
+          log: console.error,
+        });
+  const inbox = createInbox({
+    mail,
+    run: (profileId, action, messageId) =>
+      mailActions
+        ? mailActions.run(profileId, action, messageId)
+        : Promise.resolve({ kind: "failed", reason: "no Gmail" }),
+    open: async (profileId, url) => {
+      await openInGmail(profileId, url);
+    },
+    inbox: gmail?.home ?? "",
+    initial: profiles.get(),
+    focus,
+    closeOverlay: overlays.close,
+    log: console.error,
+  });
+
+  mail.onPoll(inbox.polled);
+
+  if (gmail && mailActions) {
     const mailNotifications = createMailNotifications({
       // The suite's build captures every notification, so a test never puts
       // one on the desktop.
@@ -416,21 +458,7 @@ const start = async () => {
       hasSubtitle: isMacOS,
       inbox: gmail.home,
       open: async (profileId, url) => {
-        await views.open(profileId, gmail, url);
-
-        try {
-          await profiles.select(profileId);
-        } catch (error) {
-          console.error(
-            `A notification's profile was not selected: ${String(error)}`
-          );
-
-          return;
-        }
-
-        if (
-          !profiles.get().profiles.some((profile) => profile.id === profileId)
-        ) {
+        if (!(await openInGmail(profileId, url))) {
           return;
         }
 
@@ -463,7 +491,13 @@ const start = async () => {
 
   views.reconcile(profiles.get());
   pollProfiles(profiles.get());
+  // Ahead of the views, so a switch that closes the inbox shows the new
+  // front tab in one pass.
+  profiles.onChange(inbox.follow);
   profiles.onChange(views.reconcile);
+  inbox.onChange(() => {
+    views.reconcile(profiles.get());
+  });
   // After the views, so focus handed back finds the new front tab's.
   profiles.onChange(overlays.follow);
   settings.onChange("design", views.relayout);
@@ -477,6 +511,7 @@ const start = async () => {
       state: profiles.get(),
       setting: settings.get,
       doNotDisturb: doNotDisturb.current(),
+      inboxOpen: inbox.isOpen(),
     }),
     actions: {
       updateSetting: settings.update,
@@ -492,6 +527,7 @@ const start = async () => {
         choice === "off"
           ? doNotDisturb.switchOff()
           : doNotDisturb.switchOn(choice),
+      setInboxOpen: inbox.setOpen,
     },
     locale: () => i18n.locale,
     setMenu: setApplicationMenu,
@@ -502,6 +538,7 @@ const start = async () => {
   });
 
   profiles.onChange(menu.refresh);
+  inbox.onChange(menu.refresh);
   settings.onChange("design", menu.refresh);
   settings.onChange("vibrancy", menu.refresh);
 
@@ -514,6 +551,7 @@ const start = async () => {
       profiles,
       overlays,
       tabs: views,
+      inbox,
       window: shell.window,
       runCommand: menu.runCommand,
       doNotDisturbItems: menu.doNotDisturbItems,
@@ -527,13 +565,15 @@ const start = async () => {
           shellSettings(settings.get, isMacOS),
           overlays.current(),
           mail.mail,
-          doNotDisturb.current()
+          doNotDisturb.current(),
+          inbox.shellSlice()
         ),
       onChange: (listener) => {
         profiles.onChange(listener);
         mail.onChange(listener);
         views.onChange(listener);
         overlays.onChange(listener);
+        inbox.onChange(listener);
         settings.onChange("design", listener);
         settings.onChange("vibrancy", listener);
       },

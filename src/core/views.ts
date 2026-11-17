@@ -8,16 +8,20 @@ export interface ViewPlan {
   views: TabKey[];
   /** The selected tab of the selected profile. */
   front: TabKey;
+  /** Whether the front tab's view shows, which it does not under the inbox. */
+  frontShown: boolean;
 }
 
 /**
  * A tab gets its view when it is first on screen and keeps it, hidden, while
  * another is, until it is closed or its profile removed. `existing` is the
- * keys of the tabs that have a view now.
+ * keys of the tabs that have a view now. While the unified inbox fills the
+ * content area the front tab keeps its view, hidden under it.
  */
 export const planViews = (
   state: State,
-  existing: readonly string[]
+  existing: readonly string[],
+  { inboxOpen = false }: { inboxOpen?: boolean } = {}
 ): ViewPlan => {
   const profile = selectedProfile(state);
   const front = { profileId: profile.id, tabId: profile.selectedTabId };
@@ -34,5 +38,6 @@ export const planViews = (
         })
     ),
     front,
+    frontShown: !inboxOpen,
   };
 };

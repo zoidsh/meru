@@ -12,6 +12,9 @@ export const SHELL_CALL_NAMES = [
   "closeOverlay",
   "toggleDoNotDisturb",
   "openDoNotDisturbMenu",
+  "setInboxOpen",
+  "openInboxMessage",
+  "runInboxAction",
 ] as const;
 
 export type ShellCallName = (typeof SHELL_CALL_NAMES)[number];

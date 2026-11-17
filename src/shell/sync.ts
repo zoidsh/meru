@@ -55,6 +55,7 @@ const connect = () => {
     "settings",
     "doNotDisturb",
     "overlay",
+    "inbox",
   ]);
 
   return connection;

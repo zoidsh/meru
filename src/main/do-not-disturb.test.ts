@@ -200,6 +200,7 @@ const labels = (context: Partial<CommandContext>) =>
       state: one,
       setting: (() => true) as CommandContext["setting"],
       doNotDisturb: undefined,
+      inboxOpen: false,
       ...context,
     },
     "en-GB",
@@ -265,7 +266,8 @@ describe("an end no date holds", () => {
           { design: "modern", vibrancy: false },
           undefined,
           () => ({ status: "unknown", unreadCount: null }),
-          current
+          current,
+          { open: false, profiles: [], rows: [], notice: null }
         ).doNotDisturb
       ).toStrictEqual({ on: false, until: null });
       doNotDisturb.dispose();

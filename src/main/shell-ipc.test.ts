@@ -65,6 +65,7 @@ const setup = () => {
     settings: { design: "modern", vibrancy: false },
     doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },
+    inbox: { open: false, profiles: [], rows: [], notice: null },
   };
 
   const ipc: Ipc = {
@@ -138,6 +139,21 @@ const setup = () => {
     },
     openDoNotDisturbMenu: (request) => {
       calls.push(["openDoNotDisturbMenu", request]);
+
+      return Promise.resolve();
+    },
+    setInboxOpen: (request) => {
+      calls.push(["setInboxOpen", request]);
+
+      return Promise.resolve();
+    },
+    openInboxMessage: (request) => {
+      calls.push(["openInboxMessage", request]);
+
+      return Promise.resolve();
+    },
+    runInboxAction: (request) => {
+      calls.push(["runInboxAction", request]);
 
       return Promise.resolve();
     },
@@ -221,6 +237,64 @@ describe(serveShellContract, () => {
       )
     ).toStrictEqual([true, true, true, true]);
     expect(shell.calls).toStrictEqual([]);
+  });
+
+  it("passes the inbox's calls with a listed shape and refuses every other", async () => {
+    const shell = setup();
+    const refused = async (name: string, payload: unknown) => {
+      try {
+        await shell.call(SHELL, name, payload);
+
+        return false;
+      } catch (error) {
+        return error instanceof RefusedCallError;
+      }
+    };
+
+    await shell.call(SHELL, "setInboxOpen", { open: true });
+    await shell.call(SHELL, "openInboxMessage", {
+      profileId: "a",
+      messageId: "18c2f0a9",
+    });
+    await shell.call(SHELL, "runInboxAction", {
+      profileId: "a",
+      messageId: "18c2f0a9",
+      action: "archive",
+    });
+
+    await expect(
+      Promise.all([
+        refused("setInboxOpen", {}),
+        refused("setInboxOpen", { open: "yes" }),
+        refused("openInboxMessage", { profileId: "a" }),
+        refused("openInboxMessage", { profileId: "", messageId: "18c2" }),
+        // Not the feed's lowercase hex: a URL, a path, upper case, too long.
+        refused("openInboxMessage", {
+          profileId: "a",
+          messageId: "https://mail.google.com/",
+        }),
+        refused("openInboxMessage", { profileId: "a", messageId: "../18c2" }),
+        refused("openInboxMessage", { profileId: "a", messageId: "18C2" }),
+        refused("openInboxMessage", {
+          profileId: "a",
+          messageId: "a".repeat(33),
+        }),
+        refused("runInboxAction", {
+          profileId: "a",
+          messageId: "18c2",
+          action: "forward",
+        }),
+        refused("runInboxAction", { profileId: "a", messageId: "18c2" }),
+      ])
+    ).resolves.toStrictEqual(Array.from({ length: 10 }, () => true));
+    expect(shell.calls).toStrictEqual([
+      ["setInboxOpen", { open: true }],
+      ["openInboxMessage", { profileId: "a", messageId: "18c2f0a9" }],
+      [
+        "runInboxAction",
+        { profileId: "a", messageId: "18c2f0a9", action: "archive" },
+      ],
+    ]);
   });
 
   it("refuses a call from a content view or an unknown sender", async () => {

@@ -209,6 +209,8 @@ export const buildMenuTemplate = ({
       ...item("design.classic", "radio"),
       separator,
       ...(vibrancy.length > 0 ? [...vibrancy, separator] : []),
+      ...item("inbox.toggle", "checkbox"),
+      separator,
       ...item("tab.reload"),
       separator,
       // Each acts on the web contents with focus: a tab's page, or the shell.
