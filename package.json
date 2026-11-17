@@ -16,6 +16,7 @@
     "i18n:extract": "lingui extract --clean",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "measure": "node scripts/measure/index.ts",
     "package": "node scripts/package.ts",
     "package:installers": "node scripts/package.ts --installers",
     "start": "node scripts/start.ts",
