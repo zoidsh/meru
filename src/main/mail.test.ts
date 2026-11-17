@@ -97,6 +97,10 @@ describe(createMailPoller, () => {
     vi.useRealTimers();
   });
 
+  it("lets a poke poll no sooner than 5 s after the last poll in a release", () => {
+    expect(POKE_THROTTLE).toBe(5000);
+  });
+
   it("polls every profile at the start, then 30 s after each poll ends", async () => {
     const { poller, answer, fetchesOf } = setup();
 
