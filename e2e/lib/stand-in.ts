@@ -44,20 +44,59 @@ export const FEED_PATH = "/mail/u/0/feed/atom";
 /** The cookie that tells the feed whose mail to answer with. */
 export const ACCOUNT_COOKIE = "account";
 
-/** What the feed answers an account with: a count, or sign-in. */
-export type FeedAnswer = { unreadCount: number } | { redirect: true };
+/** An unread message the feed lists. */
+export interface StandInMail {
+  id: string;
+  subject: string;
+  summary: string;
+  senderName: string;
+  senderAddress: string;
+}
 
-const feed = (unreadCount: number) => `<?xml version="1.0" encoding="UTF-8"?>
+/**
+ * What the feed answers an account with: a count and the messages it lists,
+ * newest first, or sign-in.
+ */
+export type FeedAnswer =
+  | { unreadCount: number; mail?: StandInMail[] }
+  | { redirect: true };
+
+const DEFAULT_MAIL: StandInMail[] = [
+  {
+    id: "1",
+    subject: "Stand-in & mail",
+    summary: "Nothing to read",
+    senderName: "Stand-in",
+    senderAddress: "stand-in@example.com",
+  },
+];
+
+/** Where the stand-in's feed says a message is, by its id as Gmail's link has it. */
+export const messageLink = (gmailUrl: string, id: string) =>
+  `${gmailUrl}?view=conv&message_id=${id}`;
+
+const escapeXml = (text: string) =>
+  text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+const feed = (
+  unreadCount: number,
+  mail: StandInMail[],
+  gmailUrl: string
+) => `<?xml version="1.0" encoding="UTF-8"?>
 <feed version="0.3" xmlns="http://purl.org/atom/ns#">
 <title>Gmail - Inbox for stand-in@example.com</title>
 <fullcount>${unreadCount}</fullcount>
-<entry>
-<title>Stand-in &amp; mail</title>
-<summary>Nothing to read</summary>
-<link rel="alternate" href="https://mail.google.com/mail/u/0?account_id=stand-in@example.com&amp;message_id=1&amp;view=conv" type="text/html" />
+${mail
+  .map(
+    (message) => `<entry>
+<title>${escapeXml(message.subject)}</title>
+<summary>${escapeXml(message.summary)}</summary>
+<link rel="alternate" href="${escapeXml(messageLink(gmailUrl, message.id))}" type="text/html" />
 <issued>2026-11-17T09:00:00Z</issued>
-<author><name>Stand-in</name><email>stand-in@example.com</email></author>
-</entry>
+<author><name>${escapeXml(message.senderName)}</name><email>${escapeXml(message.senderAddress)}</email></author>
+</entry>`
+  )
+  .join("\n")}
 </feed>`;
 
 const accountOf = (request: IncomingMessage) =>
@@ -83,7 +122,8 @@ const listen = async (
         return;
       }
 
-      const body = pages(origins())[request.url ?? ""];
+      // A query, as a message's link has, is the page without it.
+      const body = pages(origins())[request.url?.split("?", 1)[0] ?? ""];
 
       if (body === undefined) {
         response.writeHead(404).end();
@@ -153,7 +193,8 @@ export interface StandIn {
   popupUrl: string;
   /**
    * Has the Gmail stand-in's feed answer the session whose `account` cookie
-   * is `account` this way; one it has not been told of is sent to sign-in.
+   * is `account` this way, and `""` every session with no such cookie; one
+   * it has not been told of is sent to sign-in.
    */
   setFeed: (account: string, answer: FeedAnswer) => void;
   /** How many times each app's stand-in page was asked for. */
@@ -191,7 +232,9 @@ export const startStandIn = async (): Promise<StandIn> => {
         .writeHead(200, {
           "Content-Type": "application/atom+xml; charset=utf-8",
         })
-        .end(feed(answer.unreadCount));
+        .end(
+          feed(answer.unreadCount, answer.mail ?? DEFAULT_MAIL, origins.gmail)
+        );
     }
 
     return true;

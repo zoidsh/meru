@@ -17,6 +17,10 @@ import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
+import {
+  createCapturedNotifier,
+  createNotifier,
+} from "#platform/notifications.ts";
 import { createPower } from "#platform/power.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSessions } from "#platform/sessions.ts";
@@ -32,6 +36,7 @@ import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
 import { createMailPoller } from "./mail.ts";
+import { createMailNotifications } from "./notifications.ts";
 import { createOverlays } from "./overlay.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfiles } from "./profiles.ts";
@@ -351,6 +356,35 @@ const start = async () => {
     },
     log: console.error,
   });
+
+  if (gmail) {
+    const mailNotifications = createMailNotifications({
+      // The suite's build captures every notification, so a test never puts
+      // one on the desktop.
+      notifier: MERU_E2E_BUILD ? createCapturedNotifier() : createNotifier(),
+      setting: settings.get,
+      state: profiles.get,
+      hasSubtitle: isMacOS,
+      inbox: gmail.home,
+      open: async (profileId, url) => {
+        try {
+          await views.open(profileId, gmail, url);
+          await profiles.select(profileId);
+        } catch (error) {
+          console.error(
+            `A notification's message did not open: ${String(error)}`
+          );
+        }
+
+        // The one place main takes the foreground, since the person asked
+        // for it by clicking; never under the background flag.
+        revealWindow(shell.window, background);
+      },
+    });
+
+    mail.onPoll(mailNotifications.polled);
+    profiles.onChange(mailNotifications.follow);
+  }
 
   views.reconcile(profiles.get());
   pollProfiles(profiles.get());

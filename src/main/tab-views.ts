@@ -416,6 +416,12 @@ export const createTabViews = ({
         notify();
       }
     },
+    /**
+     * Opens `url` as a tab of `app` in the profile, selected there, or sends
+     * a single-instance app's one tab to it, loading it in the view now or
+     * as the view is first made.
+     */
+    open: openAsTab,
     /** What the machine has to hear from the tab's controls. */
     retry: (key: TabKey) => {
       dispatch(tabKey(key), { kind: "retry" });

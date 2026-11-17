@@ -37,6 +37,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       marker: "MERU_TEST_APP_URLS",
       why: "only the end-to-end build may load stand-ins in place of the apps",
     },
+    {
+      marker: "meruTestNotifications",
+      why: "only the end-to-end build may capture notifications in place of showing them",
+    },
   ];
 
 export interface OutputFile {

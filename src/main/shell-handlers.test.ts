@@ -2,6 +2,8 @@ import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import type { Overlay } from "#core/overlay.ts";
+import { SETTINGS } from "#core/settings.ts";
+import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -349,7 +351,10 @@ describe("the overlay slice", () => {
 
 describe(shellSettings, () => {
   const settings = { design: "classic", vibrancy: true } as const;
-  const get = <Key extends keyof typeof settings>(key: Key) => settings[key];
+  const get = <Key extends SettingKey>(key: Key) =>
+    (key in settings
+      ? settings[key as keyof typeof settings]
+      : SETTINGS[key].default) as SettingValue<Key>;
 
   it("gives the shell the design, and vibrancy on macOS alone", () => {
     expect(shellSettings(get, true)).toStrictEqual(settings);

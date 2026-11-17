@@ -12,6 +12,11 @@ msgstr ""
 msgid "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
 msgstr "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
 
+#. Title of the one notification for several emails that arrived at once in a profile, which opens its inbox when clicked
+#: src/main/notifications.ts
+msgid "{count, plural, one {# new message} other {# new messages}}"
+msgstr "{count, plural, one {# new message} other {# new messages}}"
+
 #. Shown on a profile's unread badge in the title bar when more messages are unread than the number before the plus
 #: src/shell/app.tsx
 msgid "{MAX_SHOWN_UNREAD}+"
@@ -174,6 +179,11 @@ msgstr "Minimize"
 msgctxt "design"
 msgid "Modern"
 msgstr "Modern"
+
+#. Title of a notification for an email that arrived, when the person chose not to show who sent it
+#: src/main/notifications.ts
+msgid "New message"
+msgstr "New message"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
