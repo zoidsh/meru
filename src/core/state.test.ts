@@ -13,6 +13,7 @@ import {
   forgetEndedDoNotDisturb,
   forgetProfilesToClear,
   gmailTab,
+  hasTabbedInbox,
   isTab,
   knownTabs,
   newProfile,
@@ -22,6 +23,7 @@ import {
   renameProfile,
   selectProfile,
   selectedProfile,
+  setTabbedInbox,
   sortProfilesToClear,
   switchDoNotDisturb,
   withAProfile,
@@ -821,4 +823,65 @@ describe("Do Not Disturb in the state", () => {
       version: 1,
     });
   });
+});
+
+const firstWritten = (state: State) =>
+  (encodeState(state) as { profiles: Record<string, unknown>[] }).profiles[0];
+
+describe("a profile's tabbed inbox in the state", () => {
+  const WORK = valid.profiles[0]?.id ?? "";
+
+  it("reads a file without it, as every older one is, as not tabbed, and writes none", () => {
+    const state = read(valid);
+
+    expect(hasTabbedInbox(state, WORK)).toBeFalsy();
+    expect(firstWritten(state)).not.toHaveProperty("tabbedInbox");
+  });
+
+  it("writes what the page said, either way", () => {
+    const tabbed = setTabbedInbox(read(valid), WORK, true);
+    const untabbed = tabbed && setTabbedInbox(tabbed, WORK, false);
+
+    expect(tabbed && hasTabbedInbox(tabbed, WORK)).toBeTruthy();
+    expect(tabbed && firstWritten(tabbed)).toMatchObject({ tabbedInbox: true });
+    expect(untabbed && firstWritten(untabbed)).toMatchObject({
+      tabbedInbox: false,
+    });
+  });
+
+  it("writes nothing when it already reads so or there is no such profile", () => {
+    const tabbed = setTabbedInbox(read(valid), WORK, true);
+
+    expect(tabbed && setTabbedInbox(tabbed, WORK, true)).toBeUndefined();
+    expect(setTabbedInbox(read(valid), WORK, false)).toBeUndefined();
+    expect(setTabbedInbox(read(valid), "gone", true)).toBeUndefined();
+  });
+
+  it.each([
+    ["a string", "yes"],
+    ["a number", 1],
+    ["an object", { tabbed: true }],
+    ["null", null],
+  ])(
+    "reads one that is %s as not tabbed and writes it back as found, until the page says tabbed",
+    (_name, value) => {
+      const state = read({
+        ...valid,
+        profiles: [
+          { ...valid.profiles[0], tabbedInbox: value },
+          valid.profiles[1],
+        ],
+      });
+
+      expect(hasTabbedInbox(state, WORK)).toBeFalsy();
+      expect(firstWritten(state)).toMatchObject({ tabbedInbox: value });
+      expect(setTabbedInbox(state, WORK, false)).toBeUndefined();
+
+      const tabbed = setTabbedInbox(state, WORK, true);
+
+      expect(tabbed && firstWritten(tabbed)).toMatchObject({
+        tabbedInbox: true,
+      });
+    }
+  );
 });

@@ -2,13 +2,13 @@ import path from "node:path";
 
 import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
-import { FEED_PATH, feedOutcome } from "#core/feed.ts";
+import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
 import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
-import { profilePartition } from "#core/state.ts";
+import { hasTabbedInbox, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -385,13 +385,16 @@ const start = async () => {
   const inboxTypes = createInboxTypes({
     gmailOrigin,
     isGmailTab,
+    isTabbed: (profileId) => hasTabbedInbox(profiles.get(), profileId),
+    setTabbed: profiles.setTabbedInbox,
     // The badge follows at once rather than at the next poll.
     // oxlint-disable-next-line no-use-before-define -- the poller reads what this learns
     onChange: (profileId) => mail.poke(profileId),
     log: console.error,
   });
   const mail = createMailPoller({
-    inboxLabel: inboxTypes.label,
+    inboxLabel: (profileId) =>
+      inboxLabel(hasTabbedInbox(profiles.get(), profileId)),
     fetchFeed: async (profileId, signal, label) => {
       if (!feedUrl) {
         return { kind: "failed", reason: "no Gmail" };
@@ -414,7 +417,6 @@ const start = async () => {
 
   // A removed profile's polling stops here, before its data is cleared.
   profiles.onChange(pollProfiles);
-  profiles.onChange(inboxTypes.follow);
   network.onOnline(mail.pokeAll);
 
   const power = createPower();

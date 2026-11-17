@@ -1,18 +1,20 @@
 import { withTimeout } from "es-toolkit";
 
-import { INBOX_TYPE_EXPRESSION, inboxLabel, isSectioned } from "#core/feed.ts";
-import type { State } from "#core/state.ts";
+import { INBOX_TYPE_EXPRESSION, isSectioned } from "#core/feed.ts";
 import type { TabKey } from "#core/tabs.ts";
 
 import type { LoadedPage } from "./tab-views.ts";
 
-/** How long a page may take to answer before it counts as no tabbed inbox. */
+/** How long a page may take to answer before its answer is not waited for. */
 export const INBOX_TYPE_TIMEOUT = 5000;
 
 export interface InboxTypesDeps {
   /** Gmail's origin, or the suite's stand-in's; none when there is no Gmail. */
   gmailOrigin: string | undefined;
   isGmailTab: (key: TabKey) => boolean;
+  isTabbed: (profileId: string) => boolean;
+  /** Saves the profile's inbox type; false when nothing was written. */
+  setTabbed: (profileId: string, tabbed: boolean) => Promise<boolean>;
   /** Told of a profile whose inbox type changed, so its count can follow. */
   onChange: (profileId: string) => void;
   log: (message: string) => void;
@@ -26,78 +28,78 @@ const originOf = (url: string) => {
   }
 };
 
-/** A throw or no answer in time counts as no tabbed inbox. */
-const readSectioned = async (page: LoadedPage) => {
+const readInboxType = async (page: LoadedPage) => {
   try {
-    return isSectioned(
-      await withTimeout(
-        () => page.evaluate(INBOX_TYPE_EXPRESSION),
-        INBOX_TYPE_TIMEOUT
-      )
+    const answer = await withTimeout(
+      () => page.evaluate(INBOX_TYPE_EXPRESSION),
+      INBOX_TYPE_TIMEOUT
     );
+
+    if (typeof answer === "string") {
+      return answer;
+    }
   } catch {
-    return false;
+    // A page that throws or is too busy to answer says nothing.
   }
 };
 
 /**
  * Learns from each load of a profile's Gmail page whether its inbox is
  * tabbed, by the one constant expression Gmail's own world answers, and
- * keeps it in memory for that profile's feed. Only Gmail's tabbed inbox
- * counts, so a page can never make main read more than its own profile's
- * inbox, and at worst narrows its count to Primary.
+ * saves it with the profile, so a profile whose page has not loaded this run
+ * reads the right feed. Only a string answers: an error page, another of
+ * Gmail's apps or a busy renderer leaves what was known, since each change
+ * starts the notifications afresh. Only Gmail's tabbed inbox counts, so a
+ * page can never make main read more than its own profile's inbox, and at
+ * worst narrows its count to Primary.
  */
 export const createInboxTypes = ({
   gmailOrigin,
   isGmailTab,
+  isTabbed,
+  setTabbed,
   onChange,
   log,
-}: InboxTypesDeps) => {
-  const sectioned = new Map<string, boolean>();
+}: InboxTypesDeps) => ({
+  /** Told of each tab's finished load. */
+  loaded: async (key: TabKey, page: LoadedPage) => {
+    if (
+      gmailOrigin === undefined ||
+      !isGmailTab(key) ||
+      originOf(page.url()) !== gmailOrigin
+    ) {
+      return;
+    }
 
-  return {
-    /** Told of each tab's finished load. */
-    loaded: async (key: TabKey, page: LoadedPage) => {
-      if (
-        gmailOrigin === undefined ||
-        !isGmailTab(key) ||
-        originOf(page.url()) !== gmailOrigin
-      ) {
+    const answer = await readInboxType(page);
+
+    if (answer === undefined) {
+      return;
+    }
+
+    const tabbed = isSectioned(answer);
+
+    if (isTabbed(key.profileId) === tabbed) {
+      return;
+    }
+
+    try {
+      if (!(await setTabbed(key.profileId, tabbed))) {
         return;
       }
-
-      const next = await readSectioned(page);
-      const before = sectioned.get(key.profileId) ?? false;
-
-      // Its profile may have gone while the page answered.
-      if (!isGmailTab(key)) {
-        return;
-      }
-
-      sectioned.set(key.profileId, next);
-
-      if (before === next) {
-        return;
-      }
-
+    } catch (error) {
       log(
-        `Gmail's inbox in profile ${key.profileId} is ${next ? "tabbed, so Primary is read" : "not tabbed, so the whole inbox is read"}`
+        `The inbox type of profile ${key.profileId} was not saved: ${error instanceof Error ? error.message : String(error)}`
       );
-      onChange(key.profileId);
-    },
-    /** The label of the profile's inbox feed, none for the whole inbox. */
-    label: (profileId: string) => inboxLabel(sectioned.get(profileId) ?? false),
-    /** Forgets each profile no longer listed. */
-    follow: (current: State) => {
-      const listed = new Set(current.profiles.map((profile) => profile.id));
 
-      for (const profileId of sectioned.keys()) {
-        if (!listed.has(profileId)) {
-          sectioned.delete(profileId);
-        }
-      }
-    },
-  };
-};
+      return;
+    }
+
+    log(
+      `Gmail's inbox in profile ${key.profileId} is ${tabbed ? "tabbed, so Primary is read" : "not tabbed, so the whole inbox is read"}`
+    );
+    onChange(key.profileId);
+  },
+});
 
 export type InboxTypes = ReturnType<typeof createInboxTypes>;

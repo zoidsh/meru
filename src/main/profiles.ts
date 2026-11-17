@@ -11,6 +11,7 @@ import {
   removeProfile,
   renameProfile,
   selectProfile,
+  setTabbedInbox,
   sortProfilesToClear,
   switchDoNotDisturb,
 } from "#core/state.ts";
@@ -197,6 +198,9 @@ export const createProfiles = ({
 
         return next === state ? Promise.resolve(false) : commit(next);
       }),
+    /** Writes only a change, so a page saying the same again costs nothing. */
+    setTabbedInbox: (profileId: string, tabbed: boolean) =>
+      exclusive(() => commit(setTabbedInbox(state, profileId, tabbed))),
     /** On until `until`, `null` for until turned off, or off with `undefined`. */
     switchDoNotDisturb: (until: number | null | undefined) =>
       exclusive(() => commit(switchDoNotDisturb(state, until))),

@@ -103,6 +103,8 @@ export interface Profile {
   name: string;
   tabs: TabEntry[];
   selectedTabId: string;
+  /** `true` once Gmail's page said the inbox is tabbed; read through `hasTabbedInbox`. */
+  tabbedInbox?: unknown;
   /**
    * A `tabs` that is not a list, written back in its place; the tabs the
    * profile has instead live only in memory.
@@ -542,6 +544,33 @@ export const renameProfile = (
     ),
   };
 };
+
+/**
+ * Whether the profile's Gmail inbox was last seen tabbed. Anything but `true`
+ * in the file, absent included, reads as not, and stays as found until the
+ * page says otherwise.
+ */
+export const hasTabbedInbox = (state: State, profileId: string) =>
+  state.profiles.find((profile) => profile.id === profileId)?.tabbedInbox ===
+  true;
+
+/** Nothing when there is no such profile or it already reads so. */
+export const setTabbedInbox = (
+  state: State,
+  profileId: string,
+  tabbed: boolean
+): State | undefined =>
+  state.profiles.some((profile) => profile.id === profileId) &&
+  hasTabbedInbox(state, profileId) !== tabbed
+    ? {
+        ...state,
+        profiles: state.profiles.map((profile) =>
+          profile.id === profileId
+            ? { ...profile, tabbedInbox: tabbed }
+            : profile
+        ),
+      }
+    : undefined;
 
 /**
  * Switches Do Not Disturb on until `until`, `null` for until turned off, or

@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
@@ -113,6 +113,13 @@ const writeState = (userDataDir: string, profiles: unknown[]) =>
     path.join(userDataDir, "state.json"),
     JSON.stringify({ version: 1, profiles, selectedProfileId: "p0" })
   );
+
+const savedProfiles = async (userDataDir: string) =>
+  (
+    JSON.parse(
+      await readFile(path.join(userDataDir, "state.json"), "utf-8")
+    ) as { profiles: unknown[] }
+  ).profiles;
 
 const launchOn = async (
   launchApp: () => Promise<ElectronApplication>,
@@ -475,6 +482,31 @@ test("on a tabbed inbox, counts and notifies the mail in Primary alone", async (
   await expect(home).toHaveAccessibleName("Home, 2 unread messages");
   await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 4"]);
   expect(standIn.feedLabels.at(-1)).toBe(PRIMARY);
+  await expect
+    .poll(() => savedProfiles(userDataDir))
+    .toStrictEqual([expect.objectContaining({ id: "p0", tabbedInbox: true })]);
+});
+
+test("a profile saved as tabbed reads Primary from its first poll, with no page loaded", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, [
+    { id: "p0", name: "Home" },
+    { id: "p1", name: "Work", tabbedInbox: true },
+  ]);
+  standIn.setFeed(ANY_SESSION, { ...listing("2", "1"), primary: ["1"] });
+
+  const { shell } = await launchOn(launchApp, standIn);
+
+  await expect(profileTab(shell, "Work")).toHaveAccessibleName(
+    "Work, 1 unread message"
+  );
+  await expect(profileTab(shell, "Home")).toHaveAccessibleName(
+    "Home, 2 unread messages"
+  );
+  expect(standIn.feedLabels).toContain(PRIMARY);
 });
 
 for (const [said, expression] of [

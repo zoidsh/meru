@@ -106,6 +106,17 @@ describe(createProfiles, () => {
     expect(steps).toStrictEqual(["save a,b to clear []", "views a,b"]);
   });
 
+  it("saves a profile's inbox as tabbed once, and writes nothing when the page says the same again", async () => {
+    const { profiles, saved } = setup();
+
+    await expect(profiles.setTabbedInbox("a", true)).resolves.toBeTruthy();
+    await expect(profiles.setTabbedInbox("a", true)).resolves.toBeFalsy();
+    await expect(profiles.setTabbedInbox("missing", true)).resolves.toBeFalsy();
+
+    expect(saved).toHaveLength(1);
+    expect(saved[0]?.profiles[0]).toMatchObject({ tabbedInbox: true });
+  });
+
   it("removes a profile by saving it onto the list to clear, closing its view, clearing its data, then taking it off the list", async () => {
     const { profiles, steps, logs } = setup();
 
