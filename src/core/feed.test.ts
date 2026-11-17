@@ -118,19 +118,20 @@ describe(parseFeed, () => {
       parseFeed(
         feed(
           "1",
-          entry({ id: "abc&amp;def", name: "Smith &amp; Sons" }).replace(
-            "message_id=abc&amp;def",
-            "message_id=abc%26def"
+          entry({ id: "abcdef", name: "Smith &amp; Sons" }).replace(
+            "message_id=abcdef",
+            "message_id=%61bc%64ef"
           )
         )
       )?.entries ?? [];
 
-    expect(read?.id).toBe("abc&def");
+    expect(read?.id).toBe("abcdef");
     expect(read?.senderName).toBe("Smith & Sons");
   });
 
   it.each([
     ["no message id", entry().replace(/message_id=[^&]+&amp;/u, "")],
+    ["a message id that is not lowercase hex", entry({ id: "19A0-not-hex" })],
     ["no link", entry().replace(/<link[^>]*>/u, "")],
     ["no sender's address", entry({ email: "" })],
     ["no date", entry({ issued: "yesterday" })],

@@ -3,7 +3,7 @@ import type { TNode } from "txml/txml";
 
 /** One unread message, as Gmail's Atom feed describes it. */
 export interface FeedEntry {
-  /** The `message_id` of the entry's link. */
+  /** The `message_id` of the entry's link, lowercase hex, which names a message. */
   id: string;
   /** Where Gmail shows the message, as the feed gives it; not checked. */
   link: string;
@@ -66,7 +66,13 @@ const parseEntry = (entry: TNode): FeedEntry | undefined => {
     return;
   }
 
-  if (!href || !id || !senderAddress || Number.isNaN(issued)) {
+  if (
+    !href ||
+    !id ||
+    !/^[\da-f]+$/u.test(id) ||
+    !senderAddress ||
+    Number.isNaN(issued)
+  ) {
     return;
   }
 
