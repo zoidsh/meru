@@ -4,6 +4,7 @@ import {
   expect,
   findPage,
   readState,
+  readUnreadTotal,
   retitle,
   shownViews,
   test,
@@ -85,8 +86,8 @@ const naming = (name: string) =>
 
 const profileTab = (shell: Page, name: string) =>
   shell
-    .getByRole("tablist", { name: "Profiles" })
-    .getByRole("tab", { name: new RegExp(`^${name}`, "u") });
+    .getByRole("group", { name: "Profiles" })
+    .getByRole("button", { name: new RegExp(`^${name}`, "u") });
 
 const seedProfiles = (userDataDir: string, profiles: unknown[]) =>
   writeState(userDataDir, { profiles, selectedProfileId: "p0" });
@@ -162,7 +163,7 @@ test("notifies mail that arrives after the first poll, in each profile, and a cl
   await click(app, "Work");
 
   await expect(profileTab(shell, "Work")).toHaveAttribute(
-    "aria-selected",
+    "aria-pressed",
     "true"
   );
   await expect(
@@ -194,15 +195,13 @@ test("shows no notification while notifications are off", async ({
   await writeSettings(userDataDir, { notifications: false });
   standIn.setFeed(ANY_SESSION, listing("1"));
 
-  const { app, shell, gmail } = await launchOn(launchApp, standIn);
-  const home = profileTab(shell, "Home");
-
-  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+  const { app, gmail } = await launchOn(launchApp, standIn);
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
 
   standIn.setFeed(ANY_SESSION, listing("2", "1"));
   await retitle(gmail, "Inbox (2)");
 
-  await expect(home).toHaveAccessibleName("Home, 2 unread messages");
+  await expect.poll(() => readUnreadTotal(app)).toBe(2);
   expect(await captured(app)).toStrictEqual([]);
 });
 
@@ -214,11 +213,9 @@ test("tells four new messages as one, which opens the inbox", async ({
   await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
   standIn.setFeed(ANY_SESSION, listing("1"));
 
-  const { app, shell, gmail } = await launchOn(launchApp, standIn);
+  const { app, gmail } = await launchOn(launchApp, standIn);
 
-  await expect(profileTab(shell, "Home")).toHaveAccessibleName(
-    "Home, 1 unread message"
-  );
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
 
   standIn.setFeed(ANY_SESSION, listing("5", "4", "3", "2", "1"));
   await retitle(gmail, "Inbox (5)");
@@ -322,7 +319,7 @@ test("a notification's action runs on its message in its profile, with no page, 
 
   expect(acted?.shown).toBe(false);
   await expect(profileTab(shell, "Home")).toHaveAttribute(
-    "aria-selected",
+    "aria-pressed",
     "true"
   );
 });
@@ -347,25 +344,24 @@ test("holds mail while Do Not Disturb is on, never shows it later, and notifies 
   standIn.setFeed(ANY_SESSION, listing("1"));
 
   const { app, shell, gmail } = await launchOn(launchApp, standIn);
-  const home = profileTab(shell, "Home");
   const button = doNotDisturbButton(shell);
 
-  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
   await expect(button).toHaveAttribute("aria-pressed", "false");
 
   await button.click();
 
   await expect(button).toHaveAttribute("aria-pressed", "true");
-  await expect(button).toHaveAttribute(
-    "title",
-    "Do Not Disturb is on until turned off"
-  );
+  await button.hover();
+  await expect(
+    shell.getByText("Do Not Disturb is on until turned off")
+  ).toBeVisible();
 
   standIn.setFeed(ANY_SESSION, listing("2", "1"));
   await retitle(gmail, "Inbox (2)");
 
   // The count follows held mail.
-  await expect(home).toHaveAccessibleName("Home, 2 unread messages");
+  await expect.poll(() => readUnreadTotal(app)).toBe(2);
   expect(await captured(app)).toStrictEqual([]);
 
   await button.click();
@@ -375,7 +371,7 @@ test("holds mail while Do Not Disturb is on, never shows it later, and notifies 
   standIn.setFeed(ANY_SESSION, listing("3", "2", "1"));
   await retitle(gmail, "Inbox (3)");
 
-  await expect(home).toHaveAccessibleName("Home, 3 unread messages");
+  await expect.poll(() => readUnreadTotal(app)).toBe(3);
   await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 3"]);
 });
 
@@ -388,10 +384,8 @@ test("with important only, notifies just the new mail the Important feed lists",
   await writeSettings(userDataDir, { notificationImportantOnly: true });
   standIn.setFeed(ANY_SESSION, listing("1"));
 
-  const { app, shell, gmail } = await launchOn(launchApp, standIn);
-  const home = profileTab(shell, "Home");
-
-  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+  const { app, gmail } = await launchOn(launchApp, standIn);
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
 
   standIn.setFeed(ANY_SESSION, {
     ...listing("3", "2", "1"),
@@ -399,7 +393,7 @@ test("with important only, notifies just the new mail the Important feed lists",
   });
   await retitle(gmail, "Inbox (3)");
 
-  await expect(home).toHaveAccessibleName("Home, 3 unread messages");
+  await expect.poll(() => readUnreadTotal(app)).toBe(3);
   await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 2"]);
 });
 
@@ -414,10 +408,8 @@ test("on a tabbed inbox, counts and notifies the mail in Primary alone", async (
   standIn.setInboxType('"SECTIONED"');
   standIn.setFeed(ANY_SESSION, { ...listing("2", "1"), primary: ["1"] });
 
-  const { app, shell, gmail } = await launchOn(launchApp, standIn);
-  const home = profileTab(shell, "Home");
-
-  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+  const { app, gmail } = await launchOn(launchApp, standIn);
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
 
   // A promotion, then mail in Primary.
   const asked = standIn.feedLabels.length;
@@ -431,7 +423,7 @@ test("on a tabbed inbox, counts and notifies the mail in Primary alone", async (
   });
   await retitle(gmail, "Inbox (2)");
 
-  await expect(home).toHaveAccessibleName("Home, 2 unread messages");
+  await expect.poll(() => readUnreadTotal(app)).toBe(2);
   await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 4"]);
   expect(standIn.feedLabels.at(-1)).toBe(PRIMARY);
   await expect
@@ -484,9 +476,7 @@ const launchNotified = async (
 
   const launched = await launchOn(launchApp, standIn);
 
-  await expect(profileTab(launched.shell, "Home")).toHaveAccessibleName(
-    "Home, 1 unread message"
-  );
+  await expect.poll(() => readUnreadTotal(launched.app)).toBe(1);
   standIn.setFeed(ANY_SESSION, listing("2", "1"));
   standIn.setFeedAfterAction(ANY_SESSION, listing("1"));
   await retitle(launched.gmail, "Inbox (2)");
@@ -592,13 +582,11 @@ test("counts the whole inbox for a poll that finds no Primary feed", async ({
   standIn.setInboxType('"SECTIONED"');
   standIn.setFeed(ANY_SESSION, listing("2", "1"));
 
-  const { shell, gmail } = await launchOn(launchApp, standIn);
+  const { app, gmail } = await launchOn(launchApp, standIn);
 
   await retitle(gmail, "Inbox (2)");
   await expect
     .poll(() => standIn.feedLabels.slice(-2))
     .toStrictEqual([PRIMARY, ""]);
-  await expect(profileTab(shell, "Home")).toHaveAccessibleName(
-    "Home, 2 unread messages"
-  );
+  await expect.poll(() => readUnreadTotal(app)).toBe(2);
 });

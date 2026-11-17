@@ -91,6 +91,62 @@ test("the window with the sidebar narrow, wide and hidden", async ({
   await shootEachWay(app, shell, "window-hidden");
 });
 
+test("the titlebar with two profiles, and with more than fit", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const names = [
+    "Personal",
+    "Dev",
+    "Work",
+    "Side project",
+    "Family",
+    "Community garden volunteers",
+    "Freelance",
+    "School",
+  ];
+
+  await writeState(userDataDir, {
+    profiles: names.map((name, index) => ({ id: `p${index}`, name })),
+    selectedProfileId: "p0",
+  });
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const rest = () => shell.mouse.move(700, 300);
+
+  await findPage(app, standIn.url);
+  await expect(
+    shell.getByRole("group", { name: "Profiles" }).getByRole("button")
+  ).toHaveCount(8);
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setContentSize(900, 560);
+  });
+  await expect(
+    shell.getByRole("button", { name: "Scroll profiles right" })
+  ).toBeVisible();
+  await rest();
+  await shootEachWay(app, shell, "titlebar-overflow");
+
+  // Two of them, the second selected, at the same size.
+  await writeState(userDataDir, {
+    profiles: names
+      .slice(0, 2)
+      .map((name, index) => ({ id: `p${index}`, name })),
+    selectedProfileId: "p1",
+  });
+  await app.close();
+
+  const two = await launch(launchApp, userDataDir);
+
+  await findPage(two.app, standIn.url);
+  await expect(
+    two.shell.getByRole("group", { name: "Profiles" }).getByRole("button")
+  ).toHaveCount(2);
+  await two.shell.mouse.move(700, 300);
+  await shootEachWay(two.app, two.shell, "titlebar-two");
+});
+
 test("the rename profile overlay", async ({
   launchApp,
   userDataDir,

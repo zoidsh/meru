@@ -31,6 +31,35 @@
   }
 }
 
+/*
+ * Ours too: the profile tint. Where `data-tint` sets `--tint` to the selected
+ * profile's colour, the shell grey takes 6% of it, and the titlebar and the
+ * sidebar, marked `data-tinted`, mix it into their hover (7%), selected and
+ * outline (8%) fills. The page, overlays and tooltips keep their own greys.
+ * Mixed here and not in `[data-tinted]`, where a token naming itself would be
+ * a cycle.
+ */
+[data-tint] {
+  --tint-shell: color-mix(in oklch, var(--shell), var(--tint, var(--shell)) 6%);
+  --tint-hover: color-mix(in oklch, var(--muted), var(--tint, var(--muted)) 7%);
+  --tint-selected: color-mix(
+    in oklch,
+    var(--secondary),
+    var(--tint, var(--secondary)) 8%
+  );
+  --tint-outline: color-mix(
+    in oklch,
+    var(--border),
+    var(--tint, var(--border)) 8%
+  );
+}
+
+[data-tinted] {
+  --muted: var(--tint-hover);
+  --secondary: var(--tint-selected);
+  --border: var(--tint-outline);
+}
+
 @layer base {
   html,
   body,
@@ -50,7 +79,7 @@
 }
 
 @theme inline {
-  --color-shell: var(--shell);
+  --color-shell: var(--tint-shell, var(--shell));
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);

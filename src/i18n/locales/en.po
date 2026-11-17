@@ -7,8 +7,8 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
-#. Accessible name of a profile's tab in the title bar while its inbox has unread mail, read by screen readers: the profile's name, then how many messages are unread
-#: src/shell/app.tsx
+#. Accessible name of a profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, then how many messages are unread
+#: src/shell/titlebar.tsx
 msgid "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
 msgstr "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
 
@@ -65,6 +65,11 @@ msgstr "{name} loads by itself when you’re back online."
 msgid "{name} stopped working"
 msgstr "{name} stopped working"
 
+#. Accessible name of a profile's button in the title bar while its Google account is signed out, read by screen readers
+#: src/shell/titlebar.tsx
+msgid "{name}, sign in required"
+msgstr "{name}, sign in required"
+
 #. Title of the error dialog shown when the app fails to open; {productName} is the app's name
 #: src/main/failures.ts
 msgid "{productName} could not start"
@@ -85,11 +90,6 @@ msgstr "About {appName}"
 msgid "Actual Size"
 msgstr "Actual Size"
 
-#. Accessible name of the plus button in the title bar that adds a profile, read by screen readers
-#: src/shell/app.tsx
-msgid "Add profile"
-msgstr "Add profile"
-
 #. Menu item in the Window menu that adds a profile, signed in to no account yet, and selects it
 #: src/main/commands.ts
 msgid "Add Profile"
@@ -106,8 +106,10 @@ msgctxt "inbox action"
 msgid "Archive"
 msgstr "Archive"
 
+#. Accessible name and tooltip of the title bar button that goes to the page the tab showed before
 #. Menu item in the View menu that goes to the page the selected tab showed before
 #: src/main/commands.ts
+#: src/shell/titlebar.tsx
 msgid "Back"
 msgstr "Back"
 
@@ -233,22 +235,22 @@ msgstr "Delete"
 #. Submenu of the app menu with how long to hold new mail notifications for, or to stop
 #: src/main/application-menu.ts
 #: src/main/commands.ts
-#: src/shell/app.tsx
+#: src/shell/titlebar.tsx
 msgid "Do Not Disturb"
 msgstr "Do Not Disturb"
 
 #. Tooltip of the moon button in the title bar while new mail notifications show; a click turns Do Not Disturb on
-#: src/shell/app.tsx
+#: src/shell/titlebar.tsx
 msgid "Do Not Disturb is off"
 msgstr "Do Not Disturb is off"
 
 #. Tooltip of the moon button in the title bar while it holds new mail notifications; {time} is the time of day it ends, such as 14:30
-#: src/shell/app.tsx
+#: src/shell/titlebar.tsx
 msgid "Do Not Disturb is on until {time}"
 msgstr "Do Not Disturb is on until {time}"
 
 #. Tooltip of the moon button in the title bar while it holds new mail notifications until the person turns it off
-#: src/shell/app.tsx
+#: src/shell/titlebar.tsx
 msgid "Do Not Disturb is on until turned off"
 msgstr "Do Not Disturb is on until turned off"
 
@@ -263,8 +265,10 @@ msgctxt "Windows"
 msgid "Exit"
 msgstr "Exit"
 
+#. Accessible name and tooltip of the title bar button that goes to the page the tab left by going back
 #. Menu item in the View menu that goes to the page the selected tab left by going back
 #: src/main/commands.ts
+#: src/shell/titlebar.tsx
 msgid "Forward"
 msgstr "Forward"
 
@@ -294,7 +298,7 @@ msgid "Hide Others"
 msgstr "Hide Others"
 
 #. Tooltip of the title bar button that hides the list of tabs down the left of the window
-#: src/shell/app.tsx
+#: src/shell/titlebar.tsx
 msgid "Hide sidebar"
 msgstr "Hide sidebar"
 
@@ -399,8 +403,8 @@ msgstr "Paste and Match Style"
 msgid "Profile {n}"
 msgstr "Profile {n}"
 
-#. Accessible name of the row of profile tabs in the title bar, read by screen readers
-#: src/shell/app.tsx
+#. Accessible name of the row of profile buttons in the title bar, read by screen readers
+#: src/shell/titlebar.tsx
 msgid "Profiles"
 msgstr "Profiles"
 
@@ -426,10 +430,12 @@ msgstr "Quit {productName}"
 msgid "Redo"
 msgstr "Redo"
 
+#. Accessible name and tooltip of the title bar button that loads the page again
 #. Button in place of a tab's page that crashed, which loads the page again
 #. Menu item in the View menu that loads the selected tab again
 #: src/main/commands.ts
 #: src/shell/tab-strip.tsx
+#: src/shell/titlebar.tsx
 msgid "Reload"
 msgstr "Reload"
 
@@ -437,11 +443,6 @@ msgstr "Reload"
 #: src/main/profile-copy.ts
 msgid "Remove {name}?"
 msgstr "Remove {name}?"
-
-#. Item in a profile's context menu in the title bar that asks to remove the profile; {name} is the profile's name
-#: src/main/profile-copy.ts
-msgid "Remove {name}…"
-msgstr "Remove {name}…"
 
 #. Button in the dialog that confirms removing a profile
 #: src/main/profile-copy.ts
@@ -468,12 +469,6 @@ msgstr "Rename profile"
 msgid "Rename Profile…"
 msgstr "Rename Profile…"
 
-#. Item in a profile's context menu in the title bar that shows a field to change the profile's name
-#: src/main/profile-copy.ts
-msgctxt "profile"
-msgid "Rename…"
-msgstr "Rename…"
-
 #. Button on a message in the unified inbox that reports it as spam. Gmail's own words for the action
 #: src/shell/inbox.tsx
 msgctxt "inbox action"
@@ -489,6 +484,16 @@ msgstr "Save Current Search"
 #: src/main/application-menu.ts
 msgid "Saved Searches"
 msgstr "Saved Searches"
+
+#. Accessible name and tooltip of the arrow over the left end of the title bar's row of profiles, when some do not fit
+#: src/shell/titlebar.tsx
+msgid "Scroll profiles left"
+msgstr "Scroll profiles left"
+
+#. Accessible name and tooltip of the arrow over the right end of the title bar's row of profiles, when some do not fit
+#: src/shell/titlebar.tsx
+msgid "Scroll profiles right"
+msgstr "Scroll profiles right"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -536,12 +541,12 @@ msgid "Show All"
 msgstr "Show All"
 
 #. Tooltip of the title bar button that shows the list of tabs down the left of the window
-#: src/shell/app.tsx
+#: src/shell/titlebar.tsx
 msgid "Show sidebar"
 msgstr "Show sidebar"
 
 #. Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed
-#: src/shell/app.tsx
+#: src/shell/titlebar.tsx
 msgctxt "title bar button"
 msgid "Sidebar"
 msgstr "Sidebar"
@@ -552,8 +557,15 @@ msgctxt "View menu"
 msgid "Sidebar"
 msgstr "Sidebar"
 
+#. Tooltip of a profile's button in the title bar, and said by screen readers, while its Google account is signed out
+#: src/shell/titlebar.tsx
+msgid "Sign in required"
+msgstr "Sign in required"
+
+#. Accessible name and tooltip of the title bar button that stops the page loading, shown in place of Reload while it loads
 #. Menu item in the View menu that stops the selected tab's page loading
 #: src/main/commands.ts
+#: src/shell/titlebar.tsx
 msgid "Stop"
 msgstr "Stop"
 
@@ -580,7 +592,7 @@ msgid "This data was saved by a newer version. Open it with that version, or upd
 msgstr "This data was saved by a newer version. Open it with that version, or update to it."
 
 #. Accessible name of the strip across the top of the window, read by screen readers
-#: src/shell/app.tsx
+#: src/shell/titlebar.tsx
 msgid "Title bar"
 msgstr "Title bar"
 

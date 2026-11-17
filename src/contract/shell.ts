@@ -44,11 +44,6 @@ const tabStatus = z.discriminatedUnion("kind", [
 export const SHELL_CALLS = {
   selectProfile: { request: z.object({ profileId }), response: z.undefined() },
   addProfile: { request: none, response: z.undefined() },
-  /** Pops up the profile's context menu at the pointer. */
-  openProfileMenu: {
-    request: z.object({ profileId }),
-    response: z.undefined(),
-  },
   selectTab: { request: tabKey, response: z.undefined() },
   closeTab: { request: tabKey, response: z.undefined() },
   /** Loads a tab that failed or crashed again, now. */

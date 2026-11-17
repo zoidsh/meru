@@ -1,6 +1,7 @@
 import type { ElectronApplication } from "@playwright/test";
 
 import {
+  clickMenuItem,
   expect,
   findPage,
   readOpenedExternally,
@@ -176,10 +177,11 @@ test("answers Add another account with a new profile, selected, opening no windo
   await stubSystemBrowser(app);
   await view.getByRole("link", { name: "Add another account" }).click();
 
-  await expect(shell.getByRole("tab", { name: "Profile 2" })).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
+  await expect(
+    shell
+      .getByRole("group", { name: "Profiles" })
+      .getByRole("button", { name: /^Profile 2/u })
+  ).toHaveAttribute("aria-pressed", "true");
   expect(await readWindows(app)).toHaveLength(1);
   expect(await readOpenedExternally(app)).toStrictEqual([]);
 });
@@ -215,40 +217,24 @@ test("keeps a pop-out open while the main window is hidden, and closes it with i
   await setShellShown(true);
 
   await view.getByRole("link", { name: "Add another account" }).click();
-  await expect(shell.getByRole("tab", { name: "Profile 2" })).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
+  const profile = (name: string) =>
+    shell
+      .getByRole("group", { name: "Profiles" })
+      .getByRole("button", { name: new RegExp(`^${name}`, "u") });
 
-  // The native menu and confirmation would show on the desktop.
-  await app.evaluate(({ dialog, Menu }) => {
-    const menus: Electron.Menu[] = [];
+  await expect(profile("Profile 2")).toHaveAttribute("aria-pressed", "true");
 
-    Reflect.set(globalThis, "poppedUpMenus", menus);
-    Menu.prototype.popup = function popup(this: Electron.Menu) {
-      menus.push(this);
-    };
+  // The confirmation would show on the desktop.
+  await app.evaluate(({ dialog }) => {
     dialog.showMessageBox = (() =>
       Promise.resolve({
         response: 0,
         checkboxChecked: false,
       })) as typeof dialog.showMessageBox;
   });
-  await shell.getByRole("tab", { name: "Default" }).click({ button: "right" });
-  await expect
-    .poll(() =>
-      app.evaluate(
-        () =>
-          (Reflect.get(globalThis, "poppedUpMenus") as Electron.Menu[]).at(-1)
-            ?.items[1]?.label
-      )
-    )
-    .toBe("Remove Default…");
-  await app.evaluate(() => {
-    (Reflect.get(globalThis, "poppedUpMenus") as Electron.Menu[])
-      .at(-1)
-      ?.items[1]?.click();
-  });
+  await profile("Default").click();
+  await expect(profile("Default")).toHaveAttribute("aria-pressed", "true");
+  await clickMenuItem(app, "profile.remove");
 
   await expect
     .poll(() => readWindows(app))

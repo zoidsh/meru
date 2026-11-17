@@ -1,11 +1,11 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 import { isEqual } from "es-toolkit";
 
-import type { ShellBridge } from "#contract/shell.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import {
+  clickMenuItem,
   expect,
   findPage,
   readState as readSavedState,
@@ -53,50 +53,38 @@ const readCookies = (
     { partition: `persist:${profileId}`, url }
   );
 
-const profileTabs = (shell: Page) =>
-  shell.getByRole("tablist", { name: "Profiles" }).getByRole("tab");
+const profileRow = (shell: Page) =>
+  shell.getByRole("group", { name: "Profiles" });
 
-/** Starts the app on a state file holding these profiles, the last selected. */
-const launchWithProfiles = async (
-  launchApp: () => Promise<ElectronApplication>,
-  userDataDir: string,
-  names: string[]
-) => {
-  const profiles = names.map((name, index) => ({ id: `p${index}`, name }));
+const profileTabs = (shell: Page) => profileRow(shell).getByRole("button");
 
-  await writeState(userDataDir, {
-    profiles,
-    selectedProfileId: profiles.at(-1)?.id,
+/** By the name it starts with: a profile not signed in also says so. */
+const profileButton = (shell: Page, name: string) =>
+  profileRow(shell).getByRole("button", {
+    name: new RegExp(`^${name}(,|$)`, "u"),
   });
 
-  const app = await launchApp();
-
-  return { app, shell: await findPage(app, "meru-app:") };
-};
-
-const addProfile = async (shell: Page) => {
-  await shell.getByRole("button", { name: "Add profile" }).click();
+/** Adds a profile from the Window menu, the titlebar having no button for it. */
+const addProfile = async (app: ElectronApplication, shell: Page) => {
+  await clickMenuItem(app, "profile.add");
   await expect(profileTabs(shell)).toHaveCount(2);
 };
 
-test("adding a profile shows a second tab, selected, and a view in a session of its own", async ({
+test("adding a profile draws the profile row, the new one selected, and a view in a session of its own", async ({
   app,
   shell,
   standIn,
   userDataDir,
 }) => {
   await findPage(app, standIn.url);
-  await expect(profileTabs(shell)).toHaveText(["Default"]);
-  await expect(shell.getByRole("tab", { name: "Default" })).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
+  // One profile draws no row.
+  await expect(profileRow(shell)).toHaveCount(0);
 
-  await addProfile(shell);
+  await addProfile(app, shell);
 
   await expect(profileTabs(shell)).toHaveText(["Default", "Profile 2"]);
-  await expect(shell.getByRole("tab", { name: "Profile 2" })).toHaveAttribute(
-    "aria-selected",
+  await expect(profileButton(shell, "Profile 2")).toHaveAttribute(
+    "aria-pressed",
     "true"
   );
 
@@ -138,13 +126,13 @@ test("switching back shows the first view in the content rectangle and hides the
   userDataDir,
 }) => {
   await findPage(app, standIn.url);
-  await addProfile(shell);
+  await addProfile(app, shell);
   await expect.poll(() => standIn.cookieHeaders.length).toBe(2);
 
-  await shell.getByRole("tab", { name: "Default" }).click();
+  await profileButton(shell, "Default").click();
 
-  await expect(shell.getByRole("tab", { name: "Default" })).toHaveAttribute(
-    "aria-selected",
+  await expect(profileButton(shell, "Default")).toHaveAttribute(
+    "aria-pressed",
     "true"
   );
 
@@ -177,7 +165,7 @@ test("a relaunch restores both profiles and the selection, and creates only the 
   const first = await launchApp();
   const firstShell = await findPage(first, "meru-app:");
 
-  await addProfile(firstShell);
+  await addProfile(first, firstShell);
   await expect.poll(() => standIn.cookieHeaders.length).toBe(2);
   // Where each Gmail tab's page is, written within a second of its load.
   await expect
@@ -196,8 +184,8 @@ test("a relaunch restores both profiles and the selection, and creates only the 
   const shell = await findPage(second, "meru-app:");
 
   await expect(profileTabs(shell)).toHaveText(["Default", "Profile 2"]);
-  await expect(shell.getByRole("tab", { name: "Profile 2" })).toHaveAttribute(
-    "aria-selected",
+  await expect(profileButton(shell, "Profile 2")).toHaveAttribute(
+    "aria-pressed",
     "true"
   );
   await expect.poll(() => standIn.cookieHeaders.length).toBe(3);
@@ -211,20 +199,14 @@ test("a relaunch restores both profiles and the selection, and creates only the 
 });
 
 /**
- * Stands in for the native menu and confirmation, which would show on the
- * desktop: a popped-up menu is kept for the test to click an item of, and
- * the confirmation is recorded and answered with `response`.
+ * Stands in for the native confirmation, which would show on the desktop: it
+ * is recorded and answered with `response`.
  */
-const stubNativeMenuAndDialog = (app: ElectronApplication, response: number) =>
-  app.evaluate(({ dialog, Menu }, answer) => {
+const stubConfirmation = (app: ElectronApplication, response: number) =>
+  app.evaluate(({ dialog }, answer) => {
     const confirmations: unknown[] = [];
-    const menus: Electron.Menu[] = [];
 
     Reflect.set(globalThis, "confirmations", confirmations);
-    Reflect.set(globalThis, "poppedUpMenus", menus);
-    Menu.prototype.popup = function popup(this: Electron.Menu) {
-      menus.push(this);
-    };
     dialog.showMessageBox = ((...args: unknown[]) => {
       confirmations.push(args.at(-1));
 
@@ -232,26 +214,16 @@ const stubNativeMenuAndDialog = (app: ElectronApplication, response: number) =>
     }) as typeof dialog.showMessageBox;
   }, response);
 
-/** The items of the menu popped up last. */
-const readMenu = (app: ElectronApplication) =>
-  app.evaluate(() => {
-    const menus = Reflect.get(globalThis, "poppedUpMenus") as Electron.Menu[];
-
-    return (
-      menus.at(-1)?.items.map(({ label, enabled }) => ({ label, enabled })) ??
-      []
-    );
-  });
-
-const clickMenuItem = (app: ElectronApplication, index: number) =>
-  app.evaluate((_electron, itemIndex) => {
-    const menus = Reflect.get(globalThis, "poppedUpMenus") as Electron.Menu[];
-
-    menus.at(-1)?.items[itemIndex]?.click();
-  }, index);
-
 const readConfirmations = (app: ElectronApplication) =>
   app.evaluate(() => Reflect.get(globalThis, "confirmations") as unknown[]);
+
+/** Whether the Window menu offers its item now. */
+const menuOffers = (app: ElectronApplication, id: string) =>
+  app.evaluate(
+    ({ Menu }, itemId) =>
+      Menu.getApplicationMenu()?.getMenuItemById(itemId)?.enabled,
+    id
+  );
 
 const readProfileIds = async (userDataDir: string) => {
   const { profiles } = await readState(userDataDir);
@@ -265,14 +237,14 @@ const readViewList = async (app: ElectronApplication) => {
   return views;
 };
 
-test("removing a profile from its tab's menu, once confirmed, removes its tab, its view and its session's cookie", async ({
+test("removing the selected profile from the Window menu, once confirmed, removes its button, its view and its session's cookie", async ({
   app,
   shell,
   standIn,
   userDataDir,
 }) => {
   await findPage(app, standIn.url);
-  await addProfile(shell);
+  await addProfile(app, shell);
   await expect.poll(() => standIn.cookieHeaders.length).toBe(2);
 
   const ids = (await readProfileIds(userDataDir)) as [string, string];
@@ -281,25 +253,12 @@ test("removing a profile from its tab's menu, once confirmed, removes its tab, i
     .poll(() => readCookies(app, ids[1], standIn.url))
     .toStrictEqual([STAND_IN_COOKIE]);
 
-  await stubNativeMenuAndDialog(app, 0);
-  await shell
-    .getByRole("tab", { name: "Profile 2" })
-    .click({ button: "right" });
+  await stubConfirmation(app, 0);
+  expect(await menuOffers(app, "profile.remove")).toBeTruthy();
+  await clickMenuItem(app, "profile.remove");
 
-  await expect
-    .poll(() => readMenu(app))
-    .toStrictEqual([
-      { label: "Rename…", enabled: true },
-      { label: "Remove Profile 2…", enabled: true },
-    ]);
-
-  await clickMenuItem(app, 1);
-
-  await expect(profileTabs(shell)).toHaveText(["Default"]);
-  await expect(shell.getByRole("tab", { name: "Default" })).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
+  // One profile left draws no row.
+  await expect(profileRow(shell)).toHaveCount(0);
   expect(await readConfirmations(app)).toStrictEqual([
     expect.objectContaining({
       message: "Remove Profile 2?",
@@ -323,14 +282,8 @@ test("removing a profile from its tab's menu, once confirmed, removes its tab, i
     STAND_IN_COOKIE,
   ]);
 
-  // The last profile's menu offers removal disabled.
-  await shell.getByRole("tab", { name: "Default" }).click({ button: "right" });
-  await expect
-    .poll(() => readMenu(app))
-    .toStrictEqual([
-      { label: "Rename…", enabled: true },
-      { label: "Remove Default…", enabled: false },
-    ]);
+  // The last profile cannot be removed.
+  await expect.poll(() => menuOffers(app, "profile.remove")).toBeFalsy();
 });
 
 test("cancelling the confirmation keeps the profile", async ({
@@ -340,26 +293,19 @@ test("cancelling the confirmation keeps the profile", async ({
   userDataDir,
 }) => {
   await findPage(app, standIn.url);
-  await addProfile(shell);
-  await stubNativeMenuAndDialog(app, 1);
-  await shell
-    .getByRole("tab", { name: "Profile 2" })
-    .click({ button: "right" });
-  await expect
-    .poll(() => readMenu(app))
-    .toStrictEqual([
-      { label: "Rename…", enabled: true },
-      { label: "Remove Profile 2…", enabled: true },
-    ]);
-  await clickMenuItem(app, 1);
+  await addProfile(app, shell);
+  await stubConfirmation(app, 1);
+  await clickMenuItem(app, "profile.remove");
 
-  await expect.poll(() => readConfirmations(app)).toHaveLength(1);
+  await expect
+    .poll(() => readConfirmations(app))
+    .toStrictEqual([expect.objectContaining({ message: "Remove Profile 2?" })]);
 
   // Main applies changes in order, so once this selection shows, a removal
   // the confirmation started would have shown first.
-  await shell.getByRole("tab", { name: "Default" }).click();
-  await expect(shell.getByRole("tab", { name: "Default" })).toHaveAttribute(
-    "aria-selected",
+  await profileButton(shell, "Default").click();
+  await expect(profileButton(shell, "Default")).toHaveAttribute(
+    "aria-pressed",
     "true"
   );
 
@@ -367,85 +313,107 @@ test("cancelling the confirmation keeps the profile", async ({
   expect(await readProfileIds(userDataDir)).toHaveLength(2);
 });
 
-test("at a narrow width with many profiles, the selected tab stays in view, a name of the longest length is cut short in its tab and whole in its tooltip, and the title bar keeps room to drag", async ({
+/** Presses Cmd, or Ctrl or Alt, and `key` in the page at `url`, as the system hands keys to it. */
+const pressShortcutInPage = (
+  app: ElectronApplication,
+  url: string,
+  key: string
+) =>
+  app.evaluate(
+    ({ webContents }, { pageUrl, keyCode, platform }) => {
+      const page = webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.getURL().startsWith(pageUrl));
+      // As the registry's profile shortcuts are on each platform.
+      const modifiers: Record<string, "meta" | "alt"> = {
+        darwin: "meta",
+        linux: "alt",
+      };
+      const modifier = modifiers[platform] ?? "control";
+
+      for (const type of ["keyDown", "keyUp"] as const) {
+        page?.sendInputEvent({
+          type,
+          keyCode,
+          modifiers: [modifier],
+        });
+      }
+    },
+    { pageUrl: url, keyCode: key, platform: process.platform }
+  );
+
+test("at a narrow width with many profiles, the row scrolls with an arrow over each clipped end, a profile chosen by its shortcut scrolls into view, a name of the longest length is cut short and whole in its tooltip, and the title bar keeps room to drag", async ({
   launchApp,
+  standIn,
   userDataDir,
 }) => {
   const longest = "W".repeat(PROFILE_NAME_MAX_LENGTH);
-  const { app, shell } = await launchWithProfiles(launchApp, userDataDir, [
+  const names = [
     "Default",
     ...Array.from({ length: 8 }, (_, index) => `Profile ${index + 2}`),
     longest,
-  ]);
+  ];
 
-  await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0]?.setContentSize(900, 480);
+  await writeState(userDataDir, {
+    profiles: names.map((name, index) => ({ id: `p${index}`, name })),
+    selectedProfileId: "p0",
   });
-  await expect(profileTabs(shell)).toHaveCount(10);
 
-  const add = shell.getByRole("button", { name: "Add profile" });
-  const list = shell.getByRole("tablist", { name: "Profiles" });
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
 
-  const selectedTabIsInList = async (name: string) => {
-    const tab = shell.getByRole("tab", { name, exact: true });
-
-    await expect(tab).toHaveAttribute("aria-selected", "true");
-
-    const [tabBox, listBox] = await Promise.all([
-      tab.boundingBox(),
-      list.boundingBox(),
-    ]);
-
-    return (
-      tabBox !== null &&
-      listBox !== null &&
-      tabBox.x >= listBox.x - 0.5 &&
-      tabBox.x + tabBox.width <= listBox.x + listBox.width + 0.5
-    );
-  };
-
-  expect(await selectedTabIsInList(longest)).toBeTruthy();
-
-  // Selected through the contract, since a Playwright click would scroll the
-  // tab into view itself.
-  const ids = await readProfileIds(userDataDir);
-  const select = (profileId: string | undefined) =>
-    shell.evaluate(
-      (id) =>
-        (window as unknown as { meru: ShellBridge }).meru.calls.selectProfile({
-          profileId: id ?? "",
-        }),
-      profileId
-    );
-
-  await select(ids[0]);
-  await expect.poll(() => selectedTabIsInList("Default")).toBeTruthy();
-
-  // Narrower still, at the minimum width, and the selection must stay in view.
+  await findPage(app, standIn.url);
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
   });
-  await expect.poll(() => selectedTabIsInList("Default")).toBeTruthy();
-  await select(ids[8]);
-  await expect.poll(() => selectedTabIsInList("Profile 9")).toBeTruthy();
+  await expect(profileTabs(shell)).toHaveCount(10);
 
-  const [banner, addBox] = await Promise.all([
-    shell.getByRole("banner", { name: "Title bar" }).boundingBox(),
-    add.boundingBox(),
+  const ninth = profileButton(shell, "Profile 9");
+  const scrollLeft = shell.getByRole("button", {
+    name: "Scroll profiles left",
+  });
+  const scrollRight = shell.getByRole("button", {
+    name: "Scroll profiles right",
+  });
+
+  await expect(profileButton(shell, "Default")).toBeInViewport();
+  await expect(ninth).not.toBeInViewport();
+  await expect(scrollRight).toBeVisible();
+  await expect(scrollLeft).toHaveCount(0);
+
+  await pressShortcutInPage(app, standIn.url, "9");
+
+  await expect(ninth).toHaveAttribute("aria-pressed", "true");
+  await expect(ninth).toBeInViewport();
+  await expect(scrollLeft).toBeVisible();
+
+  // The arrow scrolls by most of the row.
+  const scrolled = () =>
+    profileRow(shell).evaluate((row) => Math.round(row.scrollLeft));
+  const before = await scrolled();
+
+  await scrollLeft.click();
+  await expect.poll(scrolled).toBeLessThan(before);
+
+  const [row, inbox] = await Promise.all([
+    profileRow(shell).boundingBox(),
+    shell.getByRole("button", { name: "Unified inbox" }).boundingBox(),
   ]);
 
   expect(
-    (banner?.width ?? 0) - ((addBox?.x ?? 0) + (addBox?.width ?? 0))
+    (inbox?.x ?? 0) - ((row?.x ?? 0) + (row?.width ?? 0))
   ).toBeGreaterThanOrEqual(64);
 
-  await select(ids.at(-1));
-  await expect.poll(() => selectedTabIsInList(longest)).toBeTruthy();
+  const long = profileButton(shell, longest);
 
-  const long = shell.getByRole("tab", { name: longest });
-
-  await expect(long).toHaveAttribute("title", longest);
-
+  await long.click();
+  await expect(long).toHaveAttribute("aria-pressed", "true");
+  await expect(long).toBeInViewport();
   const longBox = await long.boundingBox();
 
   expect(longBox?.width).toBeLessThanOrEqual(160);
+
+  // Cut short in the button, whole in the tooltip.
+  await long.hover();
+  await expect(shell.getByText(longest, { exact: true })).toHaveCount(2);
 });

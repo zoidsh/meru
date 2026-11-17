@@ -26,7 +26,7 @@ Main's two stores, `state.json` (profiles and tabs) and `settings.json`, load th
 
 A general utility (delay, debounce, clamp, retry, a timeout, a mutex, deep equality and the like) comes from `es-toolkit`; write one only when es-toolkit has none that fits.
 
-Components in `src/ui` come only from `pnpm exec shadcn add <name>`, never written or patched by hand, and stay as the CLI writes them. In `src/ui/styles.css` the `dark` variant, the `@source` naming `src/ui`, the `--shell` token and the media query around the dark tokens are ours, so a regenerated theme must keep them.
+Components in `src/ui` come only from `pnpm exec shadcn add <name>`, never written or patched by hand, and stay as the CLI writes them. In `src/ui/styles.css` the `dark` variant, the `@source` naming `src/ui`, the `--shell` token, the profile tint (`data-tint`, `data-tinted` and the `--tint-*` tokens, with `--color-shell` reading `--tint-shell`) and the media query around the dark tokens are ours, so a regenerated theme must keep them.
 
 ## Strings
 

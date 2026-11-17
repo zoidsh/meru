@@ -1,4 +1,3 @@
-import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import type { Overlay } from "#core/overlay.ts";
@@ -6,7 +5,7 @@ import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
-import type { Confirmation, ContextMenuItem } from "#platform/window.ts";
+import type { ContextMenuItem } from "#platform/window.ts";
 
 import {
   createShellHandlers,
@@ -26,18 +25,15 @@ const isItem = (item: ContextMenuItem): item is Item => !("type" in item);
 
 const setup = ({
   state = two,
-  confirmed = true,
   overlay = undefined as Overlay | undefined,
   sidebar = "narrow" as SidebarState,
 } = {}) => {
-  const removed: string[] = [];
   const renamed: [string, string][] = [];
   let open = overlay;
   const overlays: (Overlay | "closed")[] = [];
   const calls: unknown[] = [];
   const menus: Item[][] = [];
   const ran: string[] = [];
-  const confirmations: Confirmation[] = [];
   const focused: unknown[] = [];
 
   const handlers = createShellHandlers({
@@ -50,11 +46,6 @@ const setup = ({
       },
       add: () => {
         calls.push(["add"]);
-
-        return Promise.resolve(true);
-      },
-      remove: (profileId) => {
-        removed.push(profileId);
 
         return Promise.resolve(true);
       },
@@ -107,11 +98,6 @@ const setup = ({
     },
     window: {
       showContextMenu: (items) => menus.push(items.filter(isItem)),
-      confirm: (confirmation) => {
-        confirmations.push(confirmation);
-
-        return Promise.resolve(confirmed);
-      },
     },
     sidebar: {
       current: () => sidebar,
@@ -135,82 +121,16 @@ const setup = ({
 
   return {
     handlers,
-    removed,
     renamed,
     overlays,
     calls,
     menus,
-    confirmations,
     ran,
     focused,
   };
 };
 
-const settle = () => delay(0);
-
 describe(createShellHandlers, () => {
-  it("offers to remove a profile and removes it once confirmed", async () => {
-    const shell = setup();
-
-    await shell.handlers.openProfileMenu({ profileId: "b" });
-
-    const [, item] = shell.menus[0] ?? [];
-
-    expect(item?.label).toBe("Remove Work…");
-    expect(item?.enabled).toBeTruthy();
-
-    item?.click?.();
-    await settle();
-
-    expect(shell.confirmations).toStrictEqual([
-      {
-        message: "Remove Work?",
-        detail:
-          "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected.",
-        confirmLabel: "Remove Profile",
-        cancelLabel: "Cancel",
-      },
-    ]);
-    expect(shell.removed).toStrictEqual(["b"]);
-  });
-
-  it("removes nothing when the confirmation is cancelled", async () => {
-    const shell = setup({ confirmed: false });
-
-    await shell.handlers.openProfileMenu({ profileId: "a" });
-    shell.menus[0]?.[1]?.click?.();
-    await settle();
-
-    expect(shell.confirmations[0]?.message).toBe("Remove Default?");
-    expect(shell.removed).toStrictEqual([]);
-  });
-
-  it("offers removal of the last profile disabled", async () => {
-    const shell = setup({
-      state: { ...two, profiles: [newProfile("a", "Default")] },
-    });
-
-    await shell.handlers.openProfileMenu({ profileId: "a" });
-
-    expect(shell.menus[0]?.[1]?.enabled).toBeFalsy();
-  });
-
-  it("offers to rename a profile above removing it, which opens its rename overlay", async () => {
-    const shell = setup();
-
-    await shell.handlers.openProfileMenu({ profileId: "b" });
-
-    const [item] = shell.menus[0] ?? [];
-
-    expect(item).toMatchObject({ label: "Rename…", enabled: true });
-
-    item?.click?.();
-
-    expect(shell.overlays).toStrictEqual([
-      { kind: "rename-profile", profileId: "b" },
-    ]);
-  });
-
   it("renames the profile whose rename is open and closes it", async () => {
     const shell = setup({
       overlay: { kind: "rename-profile", profileId: "b" },
@@ -290,14 +210,6 @@ describe(createShellHandlers, () => {
       ["add"],
       ["inbox", false],
     ]);
-  });
-
-  it("shows no menu for a profile that is not listed", async () => {
-    const shell = setup();
-
-    await shell.handlers.openProfileMenu({ profileId: "gone" });
-
-    expect(shell.menus).toStrictEqual([]);
   });
 });
 

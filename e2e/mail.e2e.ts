@@ -52,8 +52,8 @@ const retitle = (
 
 const profileTab = (shell: Page, name: string) =>
   shell
-    .getByRole("tablist", { name: "Profiles" })
-    .getByRole("tab", { name: new RegExp(`^${name}`, "u") });
+    .getByRole("group", { name: "Profiles" })
+    .getByRole("button", { name: new RegExp(`^${name}`, "u") });
 
 test("shows a profile's unread count and follows it as the page's title changes", async ({
   launchApp,
@@ -112,7 +112,7 @@ test("gives each profile its own count", async ({
   );
 });
 
-test("shows no count once the feed sends the session to sign in", async ({
+test("shows the sign-in mark in place of the count once the feed sends the session to sign in", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -130,6 +130,6 @@ test("shows no count once the feed sends the session to sign in", async ({
   standIn.setFeed("persist:p0", { redirect: true });
   await retitle(app, standIn, "p0", "Sign in");
 
-  await expect(home).toHaveAccessibleName("Home");
+  await expect(home).toHaveAccessibleName("Home, sign in required");
   await expect(home).toHaveText("Home");
 });

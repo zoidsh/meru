@@ -18,6 +18,7 @@ import type { MailAction } from "#core/mail-actions.ts";
 import { Button } from "#ui/button.tsx";
 
 import { shellCalls } from "./sync.ts";
+import { TitlebarButton } from "./titlebar-button.tsx";
 
 type InboxState = ShellState["inbox"];
 type Row = InboxState["rows"][number];
@@ -662,9 +663,11 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
 export const InboxButton = ({
   open,
   profileCount,
+  shortcut,
 }: {
   open: boolean;
   profileCount: number;
+  shortcut: string | undefined;
 }) => {
   const { t } = useLingui();
 
@@ -679,18 +682,15 @@ export const InboxButton = ({
   });
 
   return (
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      aria-pressed={open}
-      aria-label={label}
-      title={label}
-      className={cn("[app-region:no-drag]", open && "bg-muted text-foreground")}
+    <TitlebarButton
+      pressed={open}
+      label={label}
+      shortcut={shortcut}
       onClick={() => {
         shellCalls().setInboxOpen({ open: !open });
       }}
     >
       <InboxIcon />
-    </Button>
+    </TitlebarButton>
   );
 };

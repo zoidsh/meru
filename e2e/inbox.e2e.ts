@@ -41,8 +41,8 @@ const pollAll = (app: ElectronApplication) =>
 
 const profileTab = (shell: Page, name: string) =>
   shell
-    .getByRole("tablist", { name: "Profiles" })
-    .getByRole("tab", { name: new RegExp(`^${name}`, "u") });
+    .getByRole("group", { name: "Profiles" })
+    .getByRole("button", { name: new RegExp(`^${name}`, "u") });
 
 const grid = (shell: Page) =>
   shell.getByRole("grid", { name: "Unread messages" });
@@ -174,7 +174,7 @@ test("opens a row's message in its profile's Gmail, selecting the profile", asyn
 
   await expect(grid(shell)).toBeHidden();
   await expect(profileTab(shell, "Work")).toHaveAttribute(
-    "aria-selected",
+    "aria-pressed",
     "true"
   );
   await expect

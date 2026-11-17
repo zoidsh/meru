@@ -66,7 +66,9 @@ test("the sidebar is hidden for one tab, narrow for two apps and wide for two ta
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
   const profile = (name: string) =>
-    shell.getByRole("tablist", { name: "Profiles" }).getByRole("tab", { name });
+    shell
+      .getByRole("group", { name: "Profiles" })
+      .getByRole("button", { name });
 
   await findPage(app, standIn.url);
   await expectSidebar(app, shell, "hidden", 8);

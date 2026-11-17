@@ -146,6 +146,7 @@ export const Sidebar = ({
 
   return (
     <Tabs.Root
+      data-tinted
       orientation="vertical"
       value={tabs.selectedTabId}
       onValueChange={(tabId: string) => {

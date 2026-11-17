@@ -3,7 +3,7 @@ import { formatAccelerator } from "#core/accelerator.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
-import { canRemoveProfile, knownTabs, selectedProfile } from "#core/state.ts";
+import { knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import { canCloseTab } from "#core/tabs.ts";
@@ -15,12 +15,7 @@ import type { Focus } from "./focus.ts";
 import type { Inbox } from "./inbox.ts";
 import type { Mail } from "./mail.ts";
 import type { Overlays } from "./overlay.ts";
-import {
-  profileDisplayName,
-  removeProfileConfirmation,
-  removeProfileMenuLabel,
-  renameProfileMenuLabel,
-} from "./profile-copy.ts";
+import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
 import type { ShellHandlers } from "./shell-ipc.ts";
 import type { Sidebar } from "./sidebar.ts";
@@ -28,12 +23,12 @@ import type { Sidebar } from "./sidebar.ts";
 export interface ShellHandlersDeps {
   profiles: Pick<
     Profiles,
-    "get" | "select" | "add" | "remove" | "rename" | "selectTab" | "closeTab"
+    "get" | "select" | "add" | "rename" | "selectTab" | "closeTab"
   >;
   overlays: Pick<Overlays, "open" | "close" | "current">;
   tabs: { retry: (key: TabKey) => void };
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
-  window: Pick<AppWindow, "showContextMenu" | "confirm">;
+  window: Pick<AppWindow, "showContextMenu">;
   sidebar: Pick<Sidebar, "current" | "toggleWidth">;
   focus: Pick<Focus, "focus">;
   /** Runs a command of the registry, as its menu item would. */
@@ -151,138 +146,95 @@ export const createShellHandlers = ({
   runCommand,
   doNotDisturbItems,
   log,
-}: ShellHandlersDeps): ShellHandlers => {
-  const confirmAndRemove = async (profileId: string, name: string) => {
-    try {
-      if (await window.confirm(removeProfileConfirmation(name))) {
-        await profiles.remove(profileId);
-      }
-    } catch (error) {
-      log(
-        `Profile ${profileId} was not removed: ${error instanceof Error ? error.message : String(error)}`
-      );
+}: ShellHandlersDeps): ShellHandlers => ({
+  // Each that selects closes the unified inbox, even when what it asks for
+  // is selected already, since the person asked to see it.
+  selectProfile: async ({ profileId }) => {
+    await profiles.select(profileId);
+    inbox.setOpen(false);
+  },
+  addProfile: async () => {
+    await profiles.add();
+    inbox.setOpen(false);
+  },
+  selectTab: async (key) => {
+    await profiles.selectTab(key);
+    inbox.setOpen(false);
+  },
+  closeTab: async (key) => {
+    await profiles.closeTab(key);
+
+    // The sidebar, and the tab that had focus in it, is gone.
+    if (sidebar.current() === "hidden") {
+      focus.focus([{ kind: "front" }]);
     }
-  };
+  },
+  retryTab: (key) => {
+    tabs.retry(key);
 
-  return {
-    // Each that selects closes the unified inbox, even when what it asks for
-    // is selected already, since the person asked to see it.
-    selectProfile: async ({ profileId }) => {
-      await profiles.select(profileId);
-      inbox.setOpen(false);
-    },
-    addProfile: async () => {
-      await profiles.add();
-      inbox.setOpen(false);
-    },
-    selectTab: async (key) => {
-      await profiles.selectTab(key);
-      inbox.setOpen(false);
-    },
-    closeTab: async (key) => {
-      await profiles.closeTab(key);
+    return Promise.resolve();
+  },
+  renameProfile: async ({ profileId, name }) => {
+    const open = overlays.current();
+    const profile = profiles
+      .get()
+      .profiles.find((candidate) => candidate.id === profileId);
 
-      // The sidebar, and the tab that had focus in it, is gone.
-      if (sidebar.current() === "hidden") {
-        focus.focus([{ kind: "front" }]);
+    if (open?.kind !== "rename-profile" || open.profileId !== profileId) {
+      log(`Refused to rename profile ${profileId}, whose rename is not open`);
+
+      return;
+    }
+
+    try {
+      // The field starts with the name as shown, which for the first
+      // profile is "Default" translated; left so, it stays in English.
+      if (profile && name.trim() !== profileDisplayName(profile)) {
+        await profiles.rename(profileId, name);
       }
-    },
-    retryTab: (key) => {
-      tabs.retry(key);
-
-      return Promise.resolve();
-    },
-    renameProfile: async ({ profileId, name }) => {
-      const open = overlays.current();
-      const profile = profiles
-        .get()
-        .profiles.find((candidate) => candidate.id === profileId);
-
-      if (open?.kind !== "rename-profile" || open.profileId !== profileId) {
-        log(`Refused to rename profile ${profileId}, whose rename is not open`);
-
-        return;
-      }
-
-      try {
-        // The field starts with the name as shown, which for the first
-        // profile is "Default" translated; left so, it stays in English.
-        if (profile && name.trim() !== profileDisplayName(profile)) {
-          await profiles.rename(profileId, name);
-        }
-      } finally {
-        overlays.close();
-      }
-    },
-    closeOverlay: () => {
+    } finally {
       overlays.close();
+    }
+  },
+  closeOverlay: () => {
+    overlays.close();
 
-      return Promise.resolve();
-    },
-    toggleSidebar: () => {
-      runCommand("sidebar.toggle");
+    return Promise.resolve();
+  },
+  toggleSidebar: () => {
+    runCommand("sidebar.toggle");
 
-      return Promise.resolve();
-    },
-    navigate: ({ action }) => {
-      runCommand(`tab.${action}`);
+    return Promise.resolve();
+  },
+  navigate: ({ action }) => {
+    runCommand(`tab.${action}`);
 
-      return Promise.resolve();
-    },
-    toggleSidebarWidth: () => {
-      sidebar.toggleWidth();
+    return Promise.resolve();
+  },
+  toggleSidebarWidth: () => {
+    sidebar.toggleWidth();
 
-      return Promise.resolve();
-    },
-    toggleDoNotDisturb: () => {
-      runCommand("doNotDisturb.toggle");
+    return Promise.resolve();
+  },
+  toggleDoNotDisturb: () => {
+    runCommand("doNotDisturb.toggle");
 
-      return Promise.resolve();
-    },
-    openDoNotDisturbMenu: () => {
-      window.showContextMenu(doNotDisturbItems());
+    return Promise.resolve();
+  },
+  openDoNotDisturbMenu: () => {
+    window.showContextMenu(doNotDisturbItems());
 
-      return Promise.resolve();
-    },
-    setInboxOpen: ({ open }) => {
-      inbox.setOpen(open);
+    return Promise.resolve();
+  },
+  setInboxOpen: ({ open }) => {
+    inbox.setOpen(open);
 
-      return Promise.resolve();
-    },
-    openInboxMessage: async ({ profileId, messageId }) => {
-      await inbox.openMessage(profileId, messageId);
-    },
-    runInboxAction: async ({ profileId, messageId, action }) => {
-      await inbox.runAction(profileId, messageId, action);
-    },
-    openProfileMenu: ({ profileId }) => {
-      const state = profiles.get();
-      const profile = state.profiles.find(
-        (candidate) => candidate.id === profileId
-      );
-
-      if (profile) {
-        const name = profileDisplayName(profile);
-
-        window.showContextMenu([
-          {
-            label: renameProfileMenuLabel(),
-            enabled: true,
-            click: () => {
-              overlays.open({ kind: "rename-profile", profileId });
-            },
-          },
-          {
-            label: removeProfileMenuLabel(name),
-            enabled: canRemoveProfile(state, profileId),
-            click: () => {
-              confirmAndRemove(profileId, name);
-            },
-          },
-        ]);
-      }
-
-      return Promise.resolve();
-    },
-  };
-};
+    return Promise.resolve();
+  },
+  openInboxMessage: async ({ profileId, messageId }) => {
+    await inbox.openMessage(profileId, messageId);
+  },
+  runInboxAction: async ({ profileId, messageId, action }) => {
+    await inbox.runAction(profileId, messageId, action);
+  },
+});

@@ -4,7 +4,6 @@
 export const SHELL_CALL_NAMES = [
   "selectProfile",
   "addProfile",
-  "openProfileMenu",
   "selectTab",
   "closeTab",
   "retryTab",

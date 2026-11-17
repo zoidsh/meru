@@ -152,8 +152,8 @@ const retitle = (app: ElectronApplication, standIn: StandIn, title: string) =>
 
 const profileTab = (shell: Page, name: string) =>
   shell
-    .getByRole("tablist", { name: "Profiles" })
-    .getByRole("tab", { name: new RegExp(`^${name}`, "u") });
+    .getByRole("group", { name: "Profiles" })
+    .getByRole("button", { name: new RegExp(`^${name}`, "u") });
 
 const isMacOS = process.platform === "darwin";
 
@@ -213,7 +213,7 @@ test("shows the total on the badge and the tray, clears both at zero, and jumps 
   await clickTrayItem(app, "Work");
 
   await expect(profileTab(shell, "Work")).toHaveAttribute(
-    "aria-selected",
+    "aria-pressed",
     "true"
   );
   await expect(

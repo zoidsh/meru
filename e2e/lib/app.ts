@@ -255,6 +255,28 @@ export const clickMenuItem = (
     { itemId: id, url: focusedUrl }
   );
 
+/** The label of the application menu's item, as it is now. */
+export const readMenuLabel = (app: ElectronApplication, id: string) =>
+  app.evaluate(
+    ({ Menu }, itemId) =>
+      Menu.getApplicationMenu()?.getMenuItemById(itemId)?.label,
+    id
+  );
+
+/**
+ * The unread mail across profiles, as the badge would count it: what a test
+ * with one profile, whose titlebar has no profile row, waits on.
+ */
+export const readUnreadTotal = (app: ElectronApplication) =>
+  app.evaluate(
+    () =>
+      (
+        Reflect.get(globalThis, "meruTestBadge") as
+          | { count: number }
+          | undefined
+      )?.count ?? 0
+  );
+
 /** What Gmail's tab would do as mail comes: change its title, a poke. */
 export const retitle = (page: Page, title: string) =>
   page.evaluate((next) => {

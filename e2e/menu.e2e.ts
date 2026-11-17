@@ -36,7 +36,7 @@ const zoomOf = (app: ElectronApplication, url: string) =>
     url
   );
 
-test("the view sits as the shell draws it, on the shell grey the window has too, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
+test("the view sits as the shell draws it, on the shell grey the window has too tinted by the profile's colour, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -57,15 +57,28 @@ test("the view sits as the shell draws it, on the shell grey the window has too,
     contentViewBounds(area, "hidden"),
   ]);
   await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px");
-  // Playwright emulates the light theme in the page, not in main.
-  expect(
-    await shell
-      .getByRole("banner", { name: "Title bar" })
-      .evaluate(
-        (titlebar) =>
-          getComputedStyle(titlebar.parentElement ?? titlebar).backgroundColor
-      )
-  ).toBe("rgb(235, 235, 235)");
+  // Playwright emulates the light theme in the page, not in main. The first
+  // profile's colour is the palette's first.
+  const [drawn, tinted] = await shell
+    .getByRole("banner", { name: "Title bar" })
+    .evaluate((titlebar) => {
+      const probe = document.createElement("div");
+
+      probe.style.backgroundColor =
+        "color-mix(in oklch, rgb(235, 235, 235), #2d52d2 6%)";
+      document.body.append(probe);
+
+      const expected = getComputedStyle(probe).backgroundColor;
+
+      probe.remove();
+
+      return [
+        getComputedStyle(titlebar.parentElement ?? titlebar).backgroundColor,
+        expected,
+      ];
+    });
+
+  expect(drawn).toBe(tinted);
 
   const window = await app.evaluate(({ BrowserWindow, nativeTheme }) => ({
     color: BrowserWindow.getAllWindows()[0]?.getBackgroundColor(),

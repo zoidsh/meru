@@ -106,11 +106,6 @@ const setup = () => {
 
       return Promise.resolve();
     },
-    openProfileMenu: (request) => {
-      calls.push(["openProfileMenu", request]);
-
-      return Promise.resolve();
-    },
     navigate: (request) => {
       calls.push(["navigate", request]);
 

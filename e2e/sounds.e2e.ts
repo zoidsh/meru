@@ -1,8 +1,9 @@
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { ElectronApplication } from "@playwright/test";
 
 import {
   expect,
   findPage,
+  readUnreadTotal,
   test,
   writeSettings,
   writeState,
@@ -31,11 +32,6 @@ const sounds = (app: ElectronApplication) =>
     ...(Reflect.get(globalThis, "meruTestSounds") as unknown[]),
   ]);
 
-const profileTab = (shell: Page, name: string) =>
-  shell
-    .getByRole("tablist", { name: "Profiles" })
-    .getByRole("tab", { name: new RegExp(`^${name}`, "u") });
-
 const HOME = {
   profiles: [{ id: "p0", name: "Home" }],
   selectedProfileId: "p0",
@@ -50,11 +46,9 @@ const arrive = async (
   standIn.setFeed(ANY_SESSION, listing("1"));
 
   const app = await launchApp();
-  const shell = await findPage(app, "meru-app:");
   const gmail = await findPage(app, standIn.url);
-  const home = profileTab(shell, "Home");
 
-  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
 
   standIn.setFeed(ANY_SESSION, listing(...ids));
   // What Gmail's tab does as mail comes, which pokes the poll.
@@ -62,9 +56,7 @@ const arrive = async (
     document.title = `Inbox (${count})`;
   }, ids.length);
 
-  await expect(home).toHaveAccessibleName(
-    `Home, ${ids.length} unread messages`
-  );
+  await expect.poll(() => readUnreadTotal(app)).toBe(ids.length);
 
   return app;
 };

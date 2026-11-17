@@ -1,8 +1,9 @@
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { ElectronApplication } from "@playwright/test";
 
 import {
   expect,
   findPage,
+  readUnreadTotal,
   retitle,
   test,
   writeSettings,
@@ -63,11 +64,6 @@ const HOME = {
   selectedProfileId: "p0",
 };
 
-const unread = (shell: Page) =>
-  shell
-    .getByRole("tablist", { name: "Profiles" })
-    .getByRole("tab", { name: /^Home/u });
-
 test("shows a code with a Copy button, copies nothing until it is pressed, then copies the digits and marks the mail read", async ({
   launchApp,
   userDataDir,
@@ -78,10 +74,9 @@ test("shows a code with a Copy button, copies nothing until it is pressed, then 
   standIn.setFeed(ANY_SESSION, { unreadCount: 1, mail: [plain] });
 
   const app = await launchApp();
-  const shell = await findPage(app, "meru-app:");
   const gmail = await findPage(app, standIn.url);
 
-  await expect(unread(shell)).toHaveAccessibleName("Home, 1 unread message");
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
 
   standIn.setFeed(ANY_SESSION, { unreadCount: 2, mail: [withCode, plain] });
   await retitle(gmail, "Inbox (2)");
@@ -103,7 +98,7 @@ test("shows a code with a Copy button, copies nothing until it is pressed, then 
     mail: [later, withCode, plain],
   });
   await retitle(gmail, "Inbox (3)");
-  await expect(unread(shell)).toHaveAccessibleName("Home, 3 unread messages");
+  await expect.poll(() => readUnreadTotal(app)).toBe(3);
   expect(await copied(app)).toStrictEqual([]);
   expect(standIn.actions).toStrictEqual([]);
 
@@ -137,7 +132,7 @@ test("in immediately mode, shows the code and copies it while Do Not Disturb is 
   const shell = await findPage(app, "meru-app:");
   const gmail = await findPage(app, standIn.url);
 
-  await expect(unread(shell)).toHaveAccessibleName("Home, 1 unread message");
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
   await expect(
     shell
       .getByRole("banner", { name: "Title bar" })

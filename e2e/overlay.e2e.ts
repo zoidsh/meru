@@ -2,7 +2,14 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { overlayRectangle } from "#core/overlay.ts";
 
-import { clickMenuItem, expect, findPage, readState, test } from "./lib/app.ts";
+import {
+  clickMenuItem,
+  expect,
+  findPage,
+  readMenuLabel,
+  readState,
+  test,
+} from "./lib/app.ts";
 import { CALENDAR_TITLE, DRAFT_LABEL } from "./lib/stand-in.ts";
 
 /**
@@ -143,10 +150,8 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   await overlay.keyboard.type("  Work ");
   await overlay.keyboard.press("Enter");
 
-  await expect(shell.getByRole("tab", { name: "Work" })).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
+  // With one profile the titlebar has no row; the Window menu names it.
+  await expect.poll(() => readMenuLabel(app, "profile.select.1")).toBe("Work");
   await expect.poll(() => readNames(userDataDir)).toStrictEqual(["Work"]);
   await expectClosed(app, overlay);
   await expect.poll(gmailHasFocus).toBeTruthy();
@@ -177,30 +182,6 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   });
 });
 
-/**
- * Stands in for the native menu, which would show on the desktop: a
- * popped-up menu is kept for the test to click an item of.
- */
-const keepPoppedUpMenus = (app: ElectronApplication) =>
-  app.evaluate(({ Menu }) => {
-    const menus: Electron.Menu[] = [];
-
-    Reflect.set(globalThis, "poppedUpMenus", menus);
-    Menu.prototype.popup = function popup(this: Electron.Menu) {
-      menus.push(this);
-    };
-  });
-
-const clickPoppedUpItem = (app: ElectronApplication, label: string) =>
-  app.evaluate((_electron, itemLabel) => {
-    const menus = Reflect.get(globalThis, "poppedUpMenus") as Electron.Menu[];
-
-    menus
-      .at(-1)
-      ?.items.find((item) => item.label === itemLabel)
-      ?.click();
-  }, label);
-
 test("Escape, a click on the page, a tab switch and the window losing focus each close it and leave the name", async ({
   app,
   shell,
@@ -218,11 +199,8 @@ test("Escape, a click on the page, a tab switch and the window losing focus each
 
   const overlay = await findPage(app, "about:blank");
 
-  // From the profile's own menu, emptied: Escape keeps the name.
-  await keepPoppedUpMenus(app);
-  await shell.getByRole("tab", { name: "Default" }).click({ button: "right" });
-  await clickPoppedUpItem(app, "Rename…");
-  await expect(field(overlay)).toBeFocused();
+  // Emptied, Escape keeps the name.
+  await openFromMenu(app, overlay);
   expect(
     await overlay
       .getByRole("form", { name: "Rename profile" })
@@ -273,7 +251,7 @@ test("Escape, a click on the page, a tab switch and the window losing focus each
   expect(await calendarHasFocus()).toBeFalsy();
   await expect.poll(await followRealFocus(gmail)).toBeTruthy();
 
-  await expect(shell.getByRole("tab", { name: "Default" })).toBeVisible();
+  expect(await readMenuLabel(app, "profile.select.1")).toBe("Default");
   expect(await readNames(userDataDir)).toStrictEqual(["Default"]);
 });
 

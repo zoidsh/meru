@@ -322,7 +322,11 @@ test("a tab whose renderer is killed says it stopped working, and reloads on the
   ).toBeVisible();
   expect(standIn.requests().gmail).toBe(1);
 
-  await shell.getByRole("button", { name: "Reload" }).click();
+  // The panel's, not the titlebar's.
+  await shell
+    .getByRole("main", { name: "Content" })
+    .getByRole("button", { name: "Reload" })
+    .click();
 
   await expect(
     shell.getByRole("heading", { name: "Gmail stopped working" })
