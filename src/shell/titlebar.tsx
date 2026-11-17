@@ -220,6 +220,7 @@ const ProfileButton = ({
   focusable,
   shortcut,
   onFocus,
+  onLeave,
 }: {
   profile: ShellProfile;
   selected: boolean;
@@ -227,6 +228,8 @@ const ProfileButton = ({
   focusable: boolean;
   shortcut: string | undefined;
   onFocus: () => void;
+  /** Focus moved out of the row. */
+  onLeave: () => void;
 }) => {
   const { t } = useLingui();
   const signedOut = mail.status === "signedOut";
@@ -270,6 +273,15 @@ const ProfileButton = ({
             // tooltip has it whole.
             className="max-w-40 flex-none gap-1 px-2.5"
             onFocus={onFocus}
+            onBlur={(event) => {
+              if (
+                !event.currentTarget
+                  .closest("fieldset")
+                  ?.contains(event.relatedTarget)
+              ) {
+                onLeave();
+              }
+            }}
             onKeyDown={moveFocus}
             onClick={() => {
               shellCalls().selectProfile({ profileId: id });
@@ -317,7 +329,7 @@ const ProfileRow = ({
   const clipped = useClippedEnds(scroller);
   const [focused, setFocused] = useState<string>();
   const ids = profiles.profiles.map(({ id }) => id);
-  // The selected profile, until focus is moved within the row.
+  // The selected profile, or the focused one while focus is in the row.
   const focusable =
     focused !== undefined && ids.includes(focused)
       ? focused
@@ -377,6 +389,9 @@ const ProfileRow = ({
             shortcut={shortcuts?.[`profile.select.${index + 1}`]}
             onFocus={() => {
               setFocused(profile.id);
+            }}
+            onLeave={() => {
+              setFocused(undefined);
             }}
           />
         ))}

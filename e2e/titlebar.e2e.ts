@@ -24,7 +24,7 @@ const drawnRgb = (element: Element) => {
   return [red, green, blue] as const;
 };
 
-test("with two profiles a click selects the other and the shell takes its colour; Back and Forward follow the page's history, and Reload loads it again", async ({
+test("with two profiles the row's tab stop follows the selection once focus leaves it, a click selects the other and the shell takes its colour; Back and Forward follow the page's history, and Reload loads it again", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -95,6 +95,21 @@ test("with two profiles a click selects the other and the shell takes its colour
 
   expect(shellRgb[2]).toBeGreaterThan(shellRgb[0]);
   expect(selectedRgb[2]).toBeGreaterThan(selectedRgb[0]);
+
+  // An arrow moves the row's one tab stop; once focus leaves the row it goes
+  // back to the selected profile.
+  await profile("Home").focus();
+  await shell.keyboard.press("ArrowRight");
+
+  await expect(profile("Work")).toBeFocused();
+  await expect(profile("Work")).toHaveAttribute("tabindex", "0");
+  await expect(profile("Home")).toHaveAttribute("tabindex", "-1");
+
+  await shell.keyboard.press("Shift+Tab");
+
+  await expect(profile("Work")).not.toBeFocused();
+  await expect(profile("Home")).toHaveAttribute("tabindex", "0");
+  await expect(profile("Work")).toHaveAttribute("tabindex", "-1");
   await profile("Work").click();
 
   await expect(profile("Work")).toHaveAttribute("aria-pressed", "true");
