@@ -35,8 +35,12 @@ describe("the registry", () => {
     for (const feature of GMAIL_FEATURES) {
       expect(FEATURE_RULES[feature].length).toBeGreaterThan(0);
 
-      for (const { hook } of FEATURE_RULES[feature]) {
+      for (const { hook, only = [] } of FEATURE_RULES[feature]) {
         expect(findHook(hook).name).toBe(hook);
+
+        for (const anchor of only) {
+          expect(findHook(hook).anchors).toContain(anchor);
+        }
       }
     }
   });
@@ -59,7 +63,7 @@ describe("the registry", () => {
     }
   });
 
-  it("switches each feature by a boolean setting with v3's default", () => {
+  it("switches each feature by a boolean setting, with v3's default where v3 had one", () => {
     expect(
       Object.fromEntries(
         GMAIL_FEATURES.map((feature) => [feature, SETTINGS[feature].default])
@@ -72,6 +76,7 @@ describe("the registry", () => {
       reverseConversation: false,
       moveAttachmentsToTop: false,
       showTrimmedContent: false,
+      extendDarkTheme: true,
     });
   });
 });
@@ -88,6 +93,7 @@ describe(gmailFeatures, () => {
       reverseConversation: true,
       moveAttachmentsToTop: true,
       showTrimmedContent: true,
+      extendDarkTheme: true,
     });
   });
 });
@@ -116,8 +122,8 @@ describe(featureStylesheet, () => {
   it("is one rule per anchor of each rule's hook, its guarded match where it targets nothing else", () => {
     for (const feature of GMAIL_FEATURES) {
       const expected = FEATURE_RULES[feature].flatMap(
-        ({ hook, target, declarations }) =>
-          findHook(hook).anchors.map((anchor) =>
+        ({ hook, only, target, declarations }) =>
+          (only ?? findHook(hook).anchors).map((anchor) =>
             target
               ? undefined
               : `${guardedSelector(findHook(hook), anchor)} { ${declarations} }`

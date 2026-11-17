@@ -2,9 +2,14 @@ import { ipcRenderer, webFrame } from "electron";
 
 import { GMAIL_CHANNELS, isGmailFeatures } from "#contract/gmail-channels.ts";
 import type { GmailHealth } from "#contract/gmail-channels.ts";
+import { isDarkBackground } from "#core/gmail-dark.ts";
 import { isGmailHash } from "#core/gmail-hash.ts";
-import { GMAIL_FEATURES, featureStylesheet } from "#core/gmail-hooks.ts";
-import type { GmailFeature } from "#core/gmail-hooks.ts";
+import {
+  GMAIL_FEATURES,
+  featureStylesheet,
+  insertedFeatures,
+} from "#core/gmail-hooks.ts";
+import type { GmailFeature, GmailFeatures } from "#core/gmail-hooks.ts";
 
 import { pressRefresh } from "./catch-up.ts";
 import { RECHECK_MS, checkHealth } from "./health.ts";
@@ -16,6 +21,11 @@ const MIN_GAP_MS = 2000;
 
 const inserted = new Map<GmailFeature, string>();
 
+let switches: GmailFeatures | undefined;
+
+/** Whether Gmail's own theme is Dark, which the dark theme's layer needs. */
+let gmailDark = false;
+
 let userStylesKey: string | undefined;
 
 let checking = false;
@@ -23,6 +33,45 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 let lastRun = Number.NEGATIVE_INFINITY;
 let rechecked = false;
 let lastSent = "";
+
+const insert = (feature: GmailFeature, on: boolean) => {
+  const key = inserted.get(feature);
+
+  if (on && key === undefined) {
+    inserted.set(feature, webFrame.insertCSS(featureStylesheet(feature)));
+  } else if (!on && key !== undefined) {
+    webFrame.removeInsertedCSS(key);
+    inserted.delete(feature);
+  }
+};
+
+const applyAll = () => {
+  if (!switches) {
+    return;
+  }
+
+  const inserting = insertedFeatures(switches, gmailDark);
+
+  for (const feature of GMAIL_FEATURES) {
+    insert(feature, inserting[feature]);
+  }
+};
+
+/**
+ * Reads Gmail's theme once the page is ready, at each move between views and
+ * at each health check, with no observer: a theme changed with no move shows
+ * at the next move.
+ */
+const readTheme = () => {
+  const dark =
+    document.body !== null &&
+    isDarkBackground(getComputedStyle(document.body).backgroundColor);
+
+  if (dark !== gmailDark) {
+    gmailDark = dark;
+    applyAll();
+  }
+};
 
 /** Checks the page, and says how long to wait before checking again, if at all. */
 const check = (): number | undefined => {
@@ -33,6 +82,7 @@ const check = (): number | undefined => {
   }
 
   lastRun = performance.now();
+  readTheme();
 
   const found = checkHealth({
     root: document,
@@ -74,6 +124,9 @@ const schedule = (delay: number) => {
 };
 
 const viewChanged = () => {
+  // Gmail moves to its first view as it draws it, after its theme is set, so
+  // the theme is read here too: the settled check would come a second late.
+  readTheme();
   rechecked = false;
   schedule(SETTLE_MS);
 };
@@ -91,17 +144,6 @@ const startChecking = () => {
   viewChanged();
 };
 
-const apply = (feature: GmailFeature, on: boolean) => {
-  const key = inserted.get(feature);
-
-  if (on && key === undefined) {
-    inserted.set(feature, webFrame.insertCSS(featureStylesheet(feature)));
-  } else if (!on && key !== undefined) {
-    webFrame.removeInsertedCSS(key);
-    inserted.delete(feature);
-  }
-};
-
 // Main answers only a Gmail view's own page on Gmail's origin, so on any
 // other document this view shows, nothing below ever runs.
 ipcRenderer.on(GMAIL_CHANNELS.features, (_event, message: unknown) => {
@@ -109,10 +151,9 @@ ipcRenderer.on(GMAIL_CHANNELS.features, (_event, message: unknown) => {
     return;
   }
 
-  for (const feature of GMAIL_FEATURES) {
-    apply(feature, message[feature]);
-  }
-
+  switches = message;
+  readTheme();
+  applyAll();
   startChecking();
 });
 ipcRenderer.on(GMAIL_CHANNELS.catchUp, () => {
@@ -139,5 +180,6 @@ ipcRenderer.on(GMAIL_CHANNELS.userStyles, (_event, css: unknown) => {
 });
 // A view's first, empty document is no page to ask about.
 if (location.protocol !== "about:") {
+  document.addEventListener("DOMContentLoaded", readTheme, { once: true });
   ipcRenderer.send(GMAIL_CHANNELS.sync);
 }

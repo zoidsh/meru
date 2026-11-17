@@ -28,6 +28,7 @@ const ON: GmailFeatures = {
   reverseConversation: true,
   moveAttachmentsToTop: false,
   showTrimmedContent: true,
+  extendDarkTheme: true,
 };
 
 const HEALTH: GmailHealth = {
@@ -42,6 +43,18 @@ const HEALTH: GmailHealth = {
     trimmed: "matched",
     trimmedToggle: "matched",
     refresh: "matched",
+    darkPane: "matched",
+    darkPaneText: "matched",
+    darkCompose: "matched",
+    darkComposeText: "matched",
+    darkComposePaint: "matched",
+    editorCard: "matched",
+    bodyCard: "matched",
+    darkMenu: "matched",
+    darkMenuText: "matched",
+    darkMenuPaint: "matched",
+    darkDialog: "matched",
+    darkDialogText: "matched",
   },
   ms: 2,
 };

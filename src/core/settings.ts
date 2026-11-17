@@ -185,6 +185,14 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: false,
   }),
+  /**
+   * Gmail's own Dark theme carried to the surfaces it leaves white, while
+   * Gmail itself is Dark, whatever Meru's theme.
+   */
+  extendDarkTheme: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
 } satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;

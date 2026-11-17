@@ -57,6 +57,18 @@ describe(checkHealth, () => {
         trimmed: "absent",
         trimmedToggle: "absent",
         refresh: "matched",
+        darkPane: "absent",
+        darkPaneText: "absent",
+        darkCompose: "absent",
+        darkComposeText: "absent",
+        darkComposePaint: "absent",
+        editorCard: "absent",
+        bodyCard: "absent",
+        darkMenu: "absent",
+        darkMenuText: "absent",
+        darkMenuPaint: "absent",
+        darkDialog: "absent",
+        darkDialogText: "absent",
       },
     });
   });

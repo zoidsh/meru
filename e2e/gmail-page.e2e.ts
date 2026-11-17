@@ -209,6 +209,18 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
       trimmed: "absent",
       trimmedToggle: "absent",
       refresh: "matched",
+      darkPane: "absent",
+      darkPaneText: "absent",
+      darkCompose: "absent",
+      darkComposeText: "absent",
+      darkComposePaint: "absent",
+      editorCard: "absent",
+      bodyCard: "absent",
+      darkMenu: "absent",
+      darkMenuText: "absent",
+      darkMenuPaint: "absent",
+      darkDialog: "absent",
+      darkDialogText: "absent",
     });
   // A broken hook does nothing: the policy link it no longer reaches shows.
   await expect(parts(view).hideInboxFooter).toBeVisible();

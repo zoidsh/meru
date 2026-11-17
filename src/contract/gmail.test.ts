@@ -14,6 +14,7 @@ const FEATURES = {
   reverseConversation: false,
   moveAttachmentsToTop: false,
   showTrimmedContent: true,
+  extendDarkTheme: true,
 };
 
 describe(isGmailFeatures, () => {
@@ -53,6 +54,18 @@ describe("the health report's schema", () => {
       trimmed: "absent",
       trimmedToggle: "absent",
       refresh: "matched",
+      darkPane: "absent",
+      darkPaneText: "absent",
+      darkCompose: "absent",
+      darkComposeText: "absent",
+      darkComposePaint: "absent",
+      editorCard: "absent",
+      bodyCard: "absent",
+      darkMenu: "absent",
+      darkMenuText: "absent",
+      darkMenuPaint: "absent",
+      darkDialog: "absent",
+      darkDialogText: "absent",
     },
     ms: 2,
   };
