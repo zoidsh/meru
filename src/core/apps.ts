@@ -77,7 +77,8 @@ export const APPS: readonly App[] = [
     singleInstance: true,
     // As v3: Gmail always opens at the inbox.
     restoresUrl: false,
-    permissions: ["notifications"],
+    // Its own web notifications would double the ones main makes from the feed.
+    permissions: [],
   },
   {
     ...entry("calendar", "Calendar", googleSubdomain("calendar")),

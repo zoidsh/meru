@@ -23,7 +23,6 @@ describe(allowsPermission, () => {
     ["fullscreen", "https://drive.google.com/drive/my-drive"],
     ["clipboard-sanitized-write", "https://docs.google.com/document/d/1"],
     ["fullscreen", "https://docs.google.com/presentation/d/1"],
-    ["notifications", "https://mail.google.com/mail/u/0/"],
     ["notifications", "https://calendar.google.com"],
     ["notifications", "https://meet.google.com/abc-defg-hij"],
     ["media", "https://meet.google.com/abc-defg-hij"],
@@ -34,6 +33,7 @@ describe(allowsPermission, () => {
 
   it.each([
     ["notifications", "https://drive.google.com"],
+    ["notifications", "https://mail.google.com/mail/u/0/"],
     ["media", "https://mail.google.com"],
     ["media", "https://calendar.google.com"],
     ["display-capture", "https://meet.google.com"],
