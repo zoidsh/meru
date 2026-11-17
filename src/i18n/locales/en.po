@@ -130,7 +130,7 @@ msgstr "Close Window"
 msgid "Content"
 msgstr "Content"
 
-#. Text of the notification for an email that carries a one-time code, already copied to the clipboard
+#. Text of the notification for an email that carries a one-time code, already copied to the clipboard. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts
 msgid "Copied verification code {verificationCode}"
 msgstr "Copied verification code {verificationCode}"
@@ -453,7 +453,7 @@ msgstr "Until Tomorrow"
 msgid "Until Turned Off"
 msgstr "Until Turned Off"
 
-#. Text of the notification for an email that carries a one-time code, which its Copy button copies
+#. Text of the notification for an email that carries a one-time code, which its Copy button copies. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts
 msgid "Verification code {verificationCode}"
 msgstr "Verification code {verificationCode}"

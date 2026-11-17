@@ -57,6 +57,7 @@ const setup = ({
   important = (): Promise<ReadonlySet<string> | null> => Promise.resolve(null),
   copies = true,
 } = {}) => {
+  let copying = copies;
   const copied: string[] = [];
   const shown: Shown[] = [];
   const logs: string[] = [];
@@ -84,7 +85,7 @@ const setup = ({
     notifier,
     clipboard: {
       writeText: (text) => {
-        if (!copies) {
+        if (!copying) {
           return Promise.reject(new Error(`Not written: ${text}`));
         }
 
@@ -119,6 +120,9 @@ const setup = ({
   return {
     notifications,
     copied,
+    allowCopies: () => {
+      copying = true;
+    },
     shown,
     opened,
     acted,
@@ -517,18 +521,50 @@ describe("verification codes", () => {
     expect(app.acted).toStrictEqual([["a", "delete", "1"]]);
   });
 
-  it("touches no mail when the copy fails, and logs no code", async () => {
+  it("when the copy as it arrives fails, touches no mail, logs no code and offers Copy instead", async () => {
     const app = setup({ copies: false });
 
     app.set("verificationCodeCopyMode", "immediately");
     app.set("verificationCodeTrash", true);
     await arrive(app, codeEntry("1"));
 
+    expect(content(app.shown)).toStrictEqual([
+      {
+        title: "Sender 1",
+        body: `Verification code ${CODE}`,
+        actions: ["Copy"],
+      },
+    ]);
     expect(app.acted).toStrictEqual([]);
     expect(app.logs).toStrictEqual([
       "Found a verification code in a new message of profile a, copying it",
       "A verification code of profile a was not copied",
     ]);
+
+    app.allowCopies();
+    app.shown[0]?.events.onAction?.(0);
+    await settle();
+
+    expect([app.copied, app.acted]).toStrictEqual([
+      [CODE],
+      [["a", "delete", "1"]],
+    ]);
+  });
+
+  it("copies and moves the mail once, however often it is asked", async () => {
+    const app = setup();
+
+    app.set("verificationCodeTrash", true);
+    await arrive(app, codeEntry("1"));
+    app.shown[0]?.events.onAction?.(0);
+    app.shown[0]?.events.onClick();
+    await settle();
+
+    expect([app.copied, app.acted]).toStrictEqual([
+      [CODE],
+      [["a", "delete", "1"]],
+    ]);
+    expect(app.opened).toStrictEqual([["a", `${INBOX}?message_id=1`]]);
   });
 
   it("shows through every hold while the mail beside it is held", async () => {

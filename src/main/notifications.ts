@@ -1,4 +1,5 @@
 import { plural, t } from "@lingui/core/macro";
+import { once } from "es-toolkit";
 
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
@@ -84,13 +85,13 @@ const codeCopy = () => ({
     t({
       message: `Verification code ${verificationCode}`,
       comment:
-        "Text of the notification for an email that carries a one-time code, which its Copy button copies",
+        "Text of the notification for an email that carries a one-time code, which its Copy button copies. {verificationCode} is the code's digits, such as 482910",
     }),
   copied: (verificationCode: string) =>
     t({
       message: `Copied verification code ${verificationCode}`,
       comment:
-        "Text of the notification for an email that carries a one-time code, already copied to the clipboard",
+        "Text of the notification for an email that carries a one-time code, already copied to the clipboard. {verificationCode} is the code's digits, such as 482910",
     }),
   copy: t({
     message: "Copy",
@@ -192,8 +193,8 @@ export const createMailNotifications = ({
 
   /**
    * Copies the code, then marks its message read or moves it to Trash as
-   * set, Trash winning; nothing touches the mail unless the code landed. The
-   * code is never logged.
+   * set, Trash winning, and answers whether it was copied; nothing touches
+   * the mail unless the code landed. The code is never logged.
    */
   const copyCode = async (
     profileId: string,
@@ -205,7 +206,7 @@ export const createMailNotifications = ({
     } catch {
       log(`A verification code of profile ${profileId} was not copied`);
 
-      return;
+      return false;
     }
 
     let followUp: MailAction | undefined;
@@ -223,9 +224,11 @@ export const createMailNotifications = ({
     log(
       `Copied a verification code of profile ${profileId}${followUp ? `, then ran ${followUp}` : ""}`
     );
+
+    return true;
   };
 
-  const showCode = (
+  const showCode = async (
     profileId: string,
     entry: FeedEntry,
     code: string,
@@ -249,23 +252,38 @@ export const createMailNotifications = ({
       log(
         `Found a verification code in a new message of profile ${profileId}, copying it`
       );
-      showFor(
-        profileId,
-        codeNoticeFor(entry, codeCopy().copied(code), options),
-        {
-          onClick: () => {
-            open(profileId, url);
-          },
-        }
-      );
-      void copyCode(profileId, code, entry.id);
 
-      return;
+      const copied = await copyCode(profileId, code, entry.id);
+
+      if (!state().profiles.some((profile) => profile.id === profileId)) {
+        return;
+      }
+
+      // "Copied" only once it is; otherwise the person can still ask.
+      if (copied) {
+        showFor(
+          profileId,
+          codeNoticeFor(entry, codeCopy().copied(code), options),
+          {
+            onClick: () => {
+              open(profileId, url);
+            },
+          }
+        );
+
+        return;
+      }
+    } else {
+      log(
+        `Found a verification code in a new message of profile ${profileId}, copying it when asked`
+      );
     }
 
-    log(
-      `Found a verification code in a new message of profile ${profileId}, copying it when asked`
-    );
+    // The button and a body click after it must not move the mail twice.
+    const copyOnce = once(() => {
+      void copyCode(profileId, code, entry.id);
+    });
+
     showFor(
       profileId,
       {
@@ -275,11 +293,9 @@ export const createMailNotifications = ({
       {
         // The button copies without bringing Meru forward, which a body
         // click on macOS always does, so the body is the fallback.
-        onAction: () => {
-          void copyCode(profileId, code, entry.id);
-        },
+        onAction: copyOnce,
         onClick: () => {
-          void copyCode(profileId, code, entry.id);
+          copyOnce();
           open(profileId, url);
         },
       }
@@ -296,7 +312,9 @@ export const createMailNotifications = ({
       const listed = () =>
         state().profiles.find((candidate) => candidate.id === profileId);
 
-      if (!listed()) {
+      const profile = listed();
+
+      if (!profile) {
         return;
       }
 
@@ -304,14 +322,14 @@ export const createMailNotifications = ({
 
       seen.set(profileId, taken.seen);
 
-      const optionsFor = (profile: Profile): NoticeOptions => ({
+      const optionsFor = (named: Profile): NoticeOptions => ({
         parts: {
           sender: setting("notificationSender"),
           subject: setting("notificationSubject"),
           summary: setting("notificationSummary"),
         },
         profileName:
-          state().profiles.length > 1 ? profileDisplayName(profile) : undefined,
+          state().profiles.length > 1 ? profileDisplayName(named) : undefined,
         hasSubtitle,
         copy: copy(),
       });
@@ -319,7 +337,6 @@ export const createMailNotifications = ({
       // Ahead of every hold and of Important only, which a code passes, and
       // never told as one of many or counted toward that.
       let fresh: FeedEntry[] = [];
-      const profile = listed();
 
       for (const entry of taken.fresh) {
         const code = setting("verificationCodes")
@@ -328,8 +345,8 @@ export const createMailNotifications = ({
 
         if (code === undefined) {
           fresh.push(entry);
-        } else if (profile) {
-          showCode(profileId, entry, code, optionsFor(profile));
+        } else {
+          void showCode(profileId, entry, code, optionsFor(profile));
         }
       }
 
