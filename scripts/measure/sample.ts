@@ -2,7 +2,7 @@ import type { ProcessType } from "./processes.ts";
 import type { Metrics } from "./report.ts";
 
 /** A page main reported, from a web contents or one of its frames. */
-export interface PageInProcess {
+interface PageInProcess {
   pid: number;
   /** Chromium's own id for the process, which a service worker reports. */
   processId: number;
@@ -11,7 +11,7 @@ export interface PageInProcess {
 }
 
 /** A running service worker, which main names by Chromium's id alone. */
-export interface WorkerInProcess {
+interface WorkerInProcess {
   processId: number;
   scope: string;
 }
@@ -98,7 +98,7 @@ export const nameRenderers = ({
   return names;
 };
 
-export interface SampledProcess {
+interface SampledProcess {
   pid: number;
   type: ProcessType;
   /** What a renderer shows, when main could say. */

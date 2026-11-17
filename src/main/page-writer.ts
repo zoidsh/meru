@@ -4,7 +4,7 @@ import { tabKey } from "#core/tabs.ts";
 import type { PageUpdate } from "#core/tabs.ts";
 
 /** How often at most where the tabs' pages are is written to state. */
-export const PAGE_WRITE_INTERVAL = 1000;
+const PAGE_WRITE_INTERVAL = 1000;
 
 /**
  * Gathers each tab's latest URL and title and hands them to `write` at most

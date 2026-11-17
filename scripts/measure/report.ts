@@ -11,7 +11,7 @@ export interface Summary {
 }
 
 /** Each metric's median and range over the runs that took it. */
-export const summarize = (runs: readonly Metrics[]) => {
+const summarize = (runs: readonly Metrics[]) => {
   const values = new Map<string, number[]>();
 
   for (const metrics of runs) {
@@ -38,7 +38,7 @@ export const summarize = (runs: readonly Metrics[]) => {
  * with whether the difference is larger than the two ranges' widths together,
  * the least that cannot be put down to the spread between runs.
  */
-export const compareSummaries = (
+const compareSummaries = (
   current: ReadonlyMap<string, Summary>,
   baseline: ReadonlyMap<string, Summary>
 ) =>
@@ -95,7 +95,7 @@ const rank = (name: string) => {
 };
 
 /** Metrics in reading order: memory by process, totals, then the rest. */
-export const orderMetrics = (names: Iterable<string>) =>
+const orderMetrics = (names: Iterable<string>) =>
   [...new Set(names)].toSorted(
     (a, b) => rank(a) - rank(b) || a.localeCompare(b)
   );

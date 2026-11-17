@@ -437,5 +437,3 @@ export const createTabViews = ({
     },
   };
 };
-
-export type TabViews = ReturnType<typeof createTabViews>;

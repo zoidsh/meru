@@ -44,7 +44,7 @@ const BACKGROUND = { MERU_BACKGROUND: "1" };
 const profileDir = (name: string) => path.join(repositoryRoot, ".meru", name);
 
 /** The first profile in a copied v4 user data directory that has a session on disk. */
-export const signedInProfileId = (userDataDir: string) => {
+const signedInProfileId = (userDataDir: string) => {
   const state = JSON.parse(
     readFileSync(path.join(userDataDir, "state.json"), "utf-8")
   ) as { profiles?: { id?: unknown }[] };
@@ -70,7 +70,7 @@ const SECOND_PROFILE_ID = "measure-second";
 const calendarHome = APPS.find((app) => app.id === "calendar")?.home ?? "";
 
 /** v4's state file for a scenario, around the signed-in profile. */
-export const v4StateFor = (scenario: Scenario, profileId: string) => {
+const v4StateFor = (scenario: Scenario, profileId: string) => {
   const first = {
     id: profileId,
     name: "Default",

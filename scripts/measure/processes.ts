@@ -73,7 +73,7 @@ export const treeOf = (entries: readonly ProcessEntry[], rootPid: number) => {
   return tree;
 };
 
-export type ProcessKind =
+type ProcessKind =
   | "browser"
   | "gpu"
   | "network"

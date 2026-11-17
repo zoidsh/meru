@@ -23,7 +23,7 @@ export type ShellHandlers = {
   ) => Promise<void>;
 };
 
-export interface ShellStateSource {
+interface ShellStateSource {
   read: () => ShellState;
   /** Called after every change of main's state. */
   onChange: (listener: () => void) => void;
