@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
@@ -53,6 +53,28 @@ const readCookies = (
 
 const profileTabs = (shell: Page) =>
   shell.getByRole("tablist", { name: "Profiles" }).getByRole("tab");
+
+/** Starts the app on a state file holding these profiles, the last selected. */
+const launchWithProfiles = async (
+  launchApp: () => Promise<ElectronApplication>,
+  userDataDir: string,
+  names: string[]
+) => {
+  const profiles = names.map((name, index) => ({ id: `p${index}`, name }));
+
+  await writeFile(
+    path.join(userDataDir, "state.json"),
+    JSON.stringify({
+      version: 1,
+      profiles,
+      selectedProfileId: profiles.at(-1)?.id,
+    })
+  );
+
+  const app = await launchApp();
+
+  return { app, shell: await findPage(app, "meru-app:") };
+};
 
 const addProfile = async (shell: Page) => {
   await shell.getByRole("button", { name: "Add profile" }).click();
@@ -351,26 +373,20 @@ test("cancelling the confirmation keeps the profile", async ({
 });
 
 test("at a narrow width with many profiles, the selected tab stays in view and the title bar keeps room to drag", async ({
-  app,
-  shell,
-  standIn,
+  launchApp,
   userDataDir,
 }) => {
-  await findPage(app, standIn.url);
+  const { app, shell } = await launchWithProfiles(launchApp, userDataDir, [
+    "Default",
+    ...Array.from({ length: 9 }, (_, index) => `Profile ${index + 2}`),
+  ]);
+
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.setContentSize(900, 480);
   });
+  await expect(profileTabs(shell)).toHaveCount(10);
 
   const add = shell.getByRole("button", { name: "Add profile" });
-
-  for (let count = 2; count <= 10; count += 1) {
-    // Each waits for the last to show, as a person clicking would.
-    // oxlint-disable-next-line no-await-in-loop
-    await add.click();
-    // oxlint-disable-next-line no-await-in-loop
-    await expect(profileTabs(shell)).toHaveCount(count);
-  }
-
   const list = shell.getByRole("tablist", { name: "Profiles" });
 
   const selectedTabIsInList = async (name: string) => {
@@ -427,33 +443,21 @@ test("at a narrow width with many profiles, the selected tab stays in view and t
 });
 
 test("a name of the longest length is cut short in its tab, whole in its tooltip, and leaves the other profiles in reach at the minimum width", async ({
-  app,
-  shell,
-  standIn,
+  launchApp,
+  userDataDir,
 }) => {
-  await findPage(app, standIn.url);
+  const longest = "W".repeat(PROFILE_NAME_MAX_LENGTH);
+  const { app, shell } = await launchWithProfiles(launchApp, userDataDir, [
+    "Default",
+    "Profile 2",
+    longest,
+  ]);
+
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
   });
 
   const add = shell.getByRole("button", { name: "Add profile" });
-
-  await add.click();
-  await expect(profileTabs(shell)).toHaveCount(2);
-  await add.click();
-  await expect(profileTabs(shell)).toHaveCount(3);
-
-  const longest = "W".repeat(PROFILE_NAME_MAX_LENGTH);
-  const overlay = await findPage(app, "about:blank");
-
-  await app.evaluate(({ Menu, BrowserWindow }) => {
-    Menu.getApplicationMenu()
-      ?.getMenuItemById("profile.rename")
-      ?.click(undefined, BrowserWindow.getAllWindows()[0]);
-  });
-  await overlay.getByRole("textbox", { name: "Rename profile" }).fill(longest);
-  await overlay.keyboard.press("Enter");
-
   const long = shell.getByRole("tab", { name: longest });
 
   await expect(long).toHaveAttribute("title", longest);
