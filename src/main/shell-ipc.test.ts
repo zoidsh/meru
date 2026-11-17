@@ -77,6 +77,8 @@ const setup = () => {
     },
     send: (to, channel, message) => {
       sent.push({ to, channel, message });
+
+      return true;
     },
   };
 

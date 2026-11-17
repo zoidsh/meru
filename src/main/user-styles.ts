@@ -44,7 +44,9 @@ export const createUserStyles =
         return "";
       }
       default: {
-        return result.text;
+        // Editors on Windows save one, and the page would read it as part of
+        // the first selector.
+        return result.text.replace(/^\uFEFF/u, "");
       }
     }
   };

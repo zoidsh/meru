@@ -2,7 +2,7 @@ import type { MenuItemConstructorOptions } from "electron";
 import { describe, expect, it } from "vitest";
 
 import type { Platform } from "#core/platform.ts";
-import { gmailTab, newProfile } from "#core/state.ts";
+import { decodeState, gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import {
@@ -118,25 +118,14 @@ describe(buildMenuTemplate, () => {
     ]);
   });
 
-  it("puts the Mail menu between View and Tabs, with its access key on Windows and Linux alone", () => {
-    expect(labels(template("darwin")).slice(2, 5)).toStrictEqual([
-      "View",
-      "Mail",
-      "Tabs",
-    ]);
-
-    for (const platform of ["win32", "linux"] as const) {
+  it("puts the Mail menu between View and Tabs, with no access key, as no other menu has one", () => {
+    for (const platform of ["darwin", "win32", "linux"] as const) {
       const menus = template(platform);
 
-      expect(labels(menus).slice(2, 5)).toStrictEqual([
-        "View",
-        "&Mail",
-        "Tabs",
-      ]);
-      // The one access key in the menu bar.
+      expect(labels(menus).slice(2, 5)).toStrictEqual(["View", "Mail", "Tabs"]);
       expect(
         labels(menus).filter((label) => label?.includes("&"))
-      ).toHaveLength(1);
+      ).toHaveLength(0);
     }
 
     expect(outline(template("darwin"))[3]?.[1]).toStrictEqual([
@@ -195,6 +184,27 @@ describe(buildMenuTemplate, () => {
         ["savedSearch.remove.s2", "Stars"],
       ]);
     }
+  });
+
+  it("builds at startup from a saved query that is not well formed, which it leaves out", () => {
+    const decoded = decodeState(
+      JSON.parse(
+        String.raw`{"version":1,"selectedProfileId":"a","profiles":[{"id":"a","name":"Default","savedSearches":[{"id":"b","query":"x\ud800"}]}]}`
+      )
+    );
+
+    if (decoded.kind !== "read") {
+      throw new Error("The state did not decode");
+    }
+
+    const context = { ...contextOf(), state: decoded.value };
+    const searches = submenu(
+      template("darwin", context)[3] as MenuItemConstructorOptions
+    ).find(
+      (item) => item.label === "Saved Searches"
+    ) as MenuItemConstructorOptions;
+
+    expect(submenu(searches)[0]?.label).toBe("No Saved Searches");
   });
 
   it("says there are no saved searches, and offers none to remove, while there are none", () => {

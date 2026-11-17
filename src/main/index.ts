@@ -522,6 +522,12 @@ const start = async () => {
     send: gmailPage.navigate,
     jumpTo: showGmail.jumpTo,
     openMessage: showGmail.openMessage,
+    // The person asked for it from the menu or a shortcut, so, as a
+    // notification's click, it may take the foreground; never under the
+    // background flag.
+    reveal: () => {
+      revealWindow(shell.window, background);
+    },
     home: gmailHome,
   });
 

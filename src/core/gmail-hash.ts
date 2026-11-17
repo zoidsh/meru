@@ -3,13 +3,18 @@ export const COMPOSE_HASH = "#compose";
 
 export const SETTINGS_HASH = "#settings";
 
-/** The longest hash main sends a page, and a page takes. */
-export const GMAIL_HASH_MAX_LENGTH = 2048;
-
 /** The longest query a saved search holds. */
 export const SEARCH_QUERY_MAX_LENGTH = 1000;
 
 const SEARCH_PREFIX = "#search/";
+
+/**
+ * The longest hash main sends a page, and a page takes: the search for the
+ * longest query, since `encodeURIComponent` writes at most nine characters
+ * for each of a well-formed string's code units.
+ */
+export const GMAIL_HASH_MAX_LENGTH =
+  SEARCH_PREFIX.length + 9 * SEARCH_QUERY_MAX_LENGTH;
 
 /** What main may send Gmail's page to go to, as the page checks it too. */
 export const isGmailHash = (value: unknown): value is string =>
@@ -26,13 +31,16 @@ export const searchHash = (query: string) =>
   `${SEARCH_PREFIX}${encodeURIComponent(query)}`;
 
 /**
- * A query as a saved search keeps it: trimmed, and neither empty nor longer
- * than a saved search holds.
+ * A query as a saved search keeps it: trimmed, neither empty nor longer than
+ * a saved search holds, and well formed, since `encodeURIComponent` throws on
+ * a lone surrogate.
  */
 export const normalizeQuery = (query: string) => {
   const trimmed = query.trim();
 
-  return trimmed.length > 0 && trimmed.length <= SEARCH_QUERY_MAX_LENGTH
+  return trimmed.length > 0 &&
+    trimmed.length <= SEARCH_QUERY_MAX_LENGTH &&
+    trimmed.isWellFormed()
     ? trimmed
     : undefined;
 };

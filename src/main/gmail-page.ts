@@ -203,9 +203,9 @@ export const serveGmailContract = ({
     },
     /**
      * Sends the profile's Gmail page to `hash`, while its main frame is
-     * still on Gmail's origin; false when no page of the profile shook hands.
-     * A page that left Gmail since shook hands again from where it went, and
-     * is no longer listed.
+     * still on Gmail's origin; false when no page of the profile took it,
+     * having not shaken hands or left Gmail since (for sign-in, say), so the
+     * caller loads Gmail instead.
      */
     navigate: (profileId: string, hash: string) => {
       let sent = false;
@@ -220,10 +220,10 @@ export const serveGmailContract = ({
         }
 
         if (gmailTabOf(webContentsId)) {
-          ipc.send(webContentsId, GMAIL_CHANNELS.navigate, hash, {
-            mainFrameOrigin: gmailOrigin,
-          });
-          sent = true;
+          sent =
+            ipc.send(webContentsId, GMAIL_CHANNELS.navigate, hash, {
+              mainFrameOrigin: gmailOrigin,
+            }) || sent;
         } else {
           forget(webContentsId);
         }

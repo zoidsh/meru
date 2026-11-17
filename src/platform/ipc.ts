@@ -22,13 +22,14 @@ export interface Ipc {
   /**
    * Nothing when the receiver is gone, or, given `mainFrameOrigin`, when its
    * main frame is on another origin by now; then only the main frame hears it.
+   * Whether it was sent.
    */
   send: (
     webContentsId: number,
     channel: string,
     message: unknown,
     options?: { mainFrameOrigin: string }
-  ) => void;
+  ) => boolean;
 }
 
 const describeSender = (
@@ -58,13 +59,21 @@ export const createIpc = (): Ipc => ({
     const receiver = webContents.fromId(webContentsId);
 
     if (!receiver || receiver.isDestroyed()) {
-      return;
+      return false;
     }
 
     if (options === undefined) {
       receiver.send(channel, message);
-    } else if (receiver.mainFrame.origin === options.mainFrameOrigin) {
-      receiver.mainFrame.send(channel, message);
+
+      return true;
     }
+
+    if (receiver.mainFrame.origin !== options.mainFrameOrigin) {
+      return false;
+    }
+
+    receiver.mainFrame.send(channel, message);
+
+    return true;
   },
 });

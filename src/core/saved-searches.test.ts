@@ -74,6 +74,31 @@ describe(savedSearches, () => {
     expect(written(state)).toStrictEqual(entries);
   });
 
+  it("hides a query or label that is not well formed, and keeps it as found", () => {
+    const entries = JSON.parse(
+      String.raw`[{"id":"b","query":"x\ud800"},{"id":"c","query":"y","label":"\udc00"},{"id":"d","query":"z"}]`
+    ) as unknown[];
+    const state = stateWith(entries);
+
+    expect(savedSearches(state, PROFILE)).toStrictEqual([
+      { id: "d", query: "z" },
+    ]);
+    expect(written(state)).toStrictEqual(entries);
+  });
+
+  it("shows the first of two searches with one id, and keeps the later as found", () => {
+    const entries = [
+      { id: "a", query: "x" },
+      { id: "a", query: "y" },
+    ];
+    const state = stateWith(entries);
+
+    expect(savedSearches(state, PROFILE)).toStrictEqual([
+      { id: "a", query: "x" },
+    ]);
+    expect(written(state)).toStrictEqual(entries);
+  });
+
   it("reads a value that is not a list as none, and keeps it", () => {
     const state = stateWith({ id: "a", query: "x" });
 
@@ -108,7 +133,7 @@ describe(saveSearch, () => {
     ]);
   });
 
-  it("refuses a query saved already, an empty or overlong one, an unknown profile and a full list", () => {
+  it("refuses a query saved already, an empty, overlong or ill-formed one, an unknown profile and a full list", () => {
     const state = stateWith([{ id: "a", query: "x" }]);
     const full = stateWith(
       Array.from({ length: SAVED_SEARCHES_MAX }, (_, index) => ({
@@ -127,6 +152,7 @@ describe(saveSearch, () => {
           "a".repeat(SEARCH_QUERY_MAX_LENGTH + 1),
           newId
         ),
+        saveSearch(state, PROFILE, "x\uD800", newId),
         saveSearch(state, "gone", "y", newId),
         saveSearch(full, PROFILE, "y", newId),
       ].every((next) => next === undefined)
@@ -144,6 +170,26 @@ describe(removeSavedSearch, () => {
     );
 
     expect(state && written(state)).toStrictEqual([7, { id: "b", query: "y" }]);
+  });
+
+  it("removes only the shown one of two searches with one id", () => {
+    const state = removeSavedSearch(
+      stateWith([
+        { id: "a", query: "   " },
+        { id: "a", query: "x" },
+        { id: "a", query: "y" },
+      ]),
+      PROFILE,
+      "a"
+    );
+
+    expect(state && written(state)).toStrictEqual([
+      { id: "a", query: "   " },
+      { id: "a", query: "y" },
+    ]);
+    expect(state && savedSearches(state, PROFILE)).toStrictEqual([
+      { id: "a", query: "y" },
+    ]);
   });
 
   it("changes nothing for an id it does not list", () => {

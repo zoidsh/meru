@@ -20,6 +20,9 @@ const setup = (pageIsUp: boolean) => {
 
       return Promise.resolve();
     },
+    reveal: () => {
+      calls.push("reveal");
+    },
     home: "https://mail.google.com/mail/u/0",
   });
 
@@ -27,15 +30,19 @@ const setup = (pageIsUp: boolean) => {
 };
 
 describe(createGmailNavigation, () => {
-  it("moves the page that is up by its hash, then shows it", async () => {
+  it("moves the page that is up by its hash, then shows it and the window", async () => {
     const { calls, navigate } = setup(true);
 
     await navigate("p1", "#search/%22x%22");
 
-    expect(calls).toStrictEqual(["send p1 #search/%22x%22", "jump p1"]);
+    expect(calls).toStrictEqual([
+      "send p1 #search/%22x%22",
+      "jump p1",
+      "reveal",
+    ]);
   });
 
-  it("loads Gmail's home at the hash in a tab with no page up", async () => {
+  it("loads Gmail's home at the hash in a tab with no page up, then shows the window", async () => {
     const { calls, navigate } = setup(false);
 
     await navigate("p1", "#settings");
@@ -43,6 +50,7 @@ describe(createGmailNavigation, () => {
     expect(calls).toStrictEqual([
       "send p1 #settings",
       "open p1 https://mail.google.com/mail/u/0#settings",
+      "reveal",
     ]);
   });
 });

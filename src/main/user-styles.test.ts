@@ -57,6 +57,12 @@ describe(createUserStyles, () => {
     expect(logs).toStrictEqual([]);
   });
 
+  it("leaves off a byte order mark at the start, and only there", async () => {
+    const { read } = stylesOf(await fileWith("\uFEFFa { color: red }\uFEFF"));
+
+    await expect(read()).resolves.toBe("a { color: red }\uFEFF");
+  });
+
   it("gives nothing, quietly, when there is no file", async () => {
     const { read, logs } = stylesOf(await fileWith());
 

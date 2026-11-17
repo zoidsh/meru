@@ -89,16 +89,31 @@ describe(searchQueryOf, () => {
 });
 
 describe(normalizeQuery, () => {
-  it("trims, and refuses an empty or overlong query", () => {
+  it("trims, and refuses an empty, overlong or ill-formed query", () => {
     expect(normalizeQuery("  from:me  ")).toBe("from:me");
-    expect(normalizeQuery(" \n ")).toBeUndefined();
     expect(
-      normalizeQuery("a".repeat(SEARCH_QUERY_MAX_LENGTH + 1))
-    ).toBeUndefined();
+      [
+        normalizeQuery(" \n "),
+        normalizeQuery("a".repeat(SEARCH_QUERY_MAX_LENGTH + 1)),
+        normalizeQuery("x\uD800"),
+        normalizeQuery("\uDC00x"),
+      ].every((query) => query === undefined)
+    ).toBeTruthy();
   });
 });
 
 describe(isGmailHash, () => {
+  it.each([
+    "中".repeat(SEARCH_QUERY_MAX_LENGTH),
+    '"'.repeat(SEARCH_QUERY_MAX_LENGTH),
+    "😀".repeat(SEARCH_QUERY_MAX_LENGTH / 2),
+  ])(
+    "takes the search for the longest query %#, however it encodes",
+    (query) => {
+      expect(isGmailHash(searchHash(query))).toBeTruthy();
+    }
+  );
+
   it("takes a hash of at most its length", () => {
     expect(isGmailHash("#settings")).toBeTruthy();
     expect(isGmailHash(searchHash('"x"'))).toBeTruthy();

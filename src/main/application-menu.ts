@@ -270,9 +270,7 @@ export const buildMenuTemplate = ({
   });
 
   const mailMenu: MenuItemConstructorOptions = {
-    // No other menu has an access key, so the name's first letter collides
-    // with none.
-    label: isMacOS ? mailName : `&${menuText(mailName, platform)}`,
+    label: mailName,
     submenu: [
       ...item("gmail.compose"),
       separator,

@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { GMAIL_CHANNELS } from "#contract/gmail.ts";
 import type { GmailFeatures, GmailHealth } from "#contract/gmail.ts";
+import {
+  GMAIL_HASH_MAX_LENGTH,
+  SEARCH_QUERY_MAX_LENGTH,
+  searchHash,
+} from "#core/gmail-hash.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
@@ -69,6 +74,8 @@ const setup = (
   const refused: (string | undefined)[] = [];
   let features = ON;
   const senders = createSenderRegistry();
+  /** Views whose main frame is off Gmail's origin and has not shaken hands. */
+  const away = new Set<number>();
 
   senders.register(SHELL, { role: "shell" });
   const dropGmailView = senders.register(GMAIL_VIEW, {
@@ -92,7 +99,13 @@ const setup = (
       listeners.set(channel, listener);
     },
     send: (to, channel, message, options) => {
+      if (away.has(to)) {
+        return false;
+      }
+
       sent.push({ to, channel, message, options });
+
+      return true;
     },
   };
 
@@ -120,6 +133,7 @@ const setup = (
     refused,
     senders,
     dropGmailView,
+    leave: (webContentsId: number) => away.add(webContentsId),
     shake: (sender: IpcSender) => emit(GMAIL_CHANNELS.sync, sender),
     report: (sender: IpcSender, payload: unknown) =>
       emit(GMAIL_CHANNELS.health, sender, payload),
@@ -336,7 +350,9 @@ describe(serveGmailContract, () => {
     contract.shake(from(GMAIL_VIEW));
 
     expect(contract.page.navigate("a", "settings")).toBeFalsy();
-    expect(contract.page.navigate("a", `#${"a".repeat(2048)}`)).toBeFalsy();
+    expect(
+      contract.page.navigate("a", `#${"a".repeat(GMAIL_HASH_MAX_LENGTH)}`)
+    ).toBeFalsy();
 
     contract.shake(from(GMAIL_VIEW, { origin: "https://accounts.google.com" }));
 
@@ -350,6 +366,32 @@ describe(serveGmailContract, () => {
     expect(gone.page.navigate("a", "#settings")).toBeFalsy();
     expect([contract.sent.length, gone.sent.length]).toStrictEqual([1, 1]);
   });
+
+  it("says no page took it when the page's frame left Gmail without shaking hands again", () => {
+    // As for sign-in, which has no preload to shake hands from.
+    const contract = setup();
+
+    contract.shake(from(GMAIL_VIEW));
+    contract.leave(GMAIL_VIEW);
+
+    expect(contract.page.navigate("a", "#settings")).toBeFalsy();
+    expect(contract.sent).toHaveLength(1);
+  });
+
+  it.each([
+    "中".repeat(SEARCH_QUERY_MAX_LENGTH),
+    '"'.repeat(SEARCH_QUERY_MAX_LENGTH),
+  ])(
+    "sends the search for the longest query %#, however it encodes",
+    (query) => {
+      const contract = setup();
+
+      contract.shake(from(GMAIL_VIEW));
+
+      expect(contract.page.navigate("a", searchHash(query))).toBeTruthy();
+      expect(contract.sent.at(-1)?.message).toBe(searchHash(query));
+    }
+  );
 
   it("sends each document that shakes hands the user styles as read then", async () => {
     const files = ["a { color: red }", ""];

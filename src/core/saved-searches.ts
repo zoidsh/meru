@@ -12,25 +12,44 @@ export const SAVED_SEARCH_LABEL_MAX_LENGTH = 64;
 /** How much of a long name a menu shows. */
 const SHOWN_NAME_MAX_LENGTH = 60;
 
+const isWellFormed = (value: string) => value.isWellFormed();
+
 // Loose, so a key a later build adds survives this one writing the list.
 const savedSearchSchema = z.looseObject({
   id: z.string().check(z.minLength(1)),
-  query: z.string().check(z.minLength(1), z.maxLength(SEARCH_QUERY_MAX_LENGTH)),
+  query: z
+    .string()
+    .check(
+      z.minLength(1),
+      z.maxLength(SEARCH_QUERY_MAX_LENGTH),
+      z.refine(isWellFormed)
+    ),
   /** Absent until the person names it; the query stands in for it. */
   label: z.optional(
-    z.string().check(z.maxLength(SAVED_SEARCH_LABEL_MAX_LENGTH))
+    z
+      .string()
+      .check(z.maxLength(SAVED_SEARCH_LABEL_MAX_LENGTH), z.refine(isWellFormed))
   ),
 });
 
 export type SavedSearch = z.infer<typeof savedSearchSchema>;
+
+const readable = (entry: unknown) => {
+  const parsed = savedSearchSchema.safeParse(entry);
+
+  return parsed.success && normalizeQuery(parsed.data.query)
+    ? parsed.data
+    : undefined;
+};
 
 const stored = (state: State, profileId: string) =>
   state.profiles.find((profile) => profile.id === profileId)?.savedSearches;
 
 /**
  * The profile's saved searches that can be read, in their order. An entry
- * that does not parse is kept in the file where it was, and not shown; a
- * `savedSearches` that is not a list reads as none and is kept as found.
+ * that does not parse, or repeats an earlier one's id, is kept in the file
+ * where it was, and not shown; a `savedSearches` that is not a list reads as
+ * none and is kept as found.
  */
 export const savedSearches = (
   state: State,
@@ -38,15 +57,23 @@ export const savedSearches = (
 ): SavedSearch[] => {
   const entries = stored(state, profileId);
 
-  return Array.isArray(entries)
-    ? entries.flatMap((entry: unknown) => {
-        const parsed = savedSearchSchema.safeParse(entry);
+  if (!Array.isArray(entries)) {
+    return [];
+  }
 
-        return parsed.success && normalizeQuery(parsed.data.query)
-          ? [parsed.data]
-          : [];
-      })
-    : [];
+  const ids = new Set<string>();
+
+  return entries.flatMap((entry: unknown) => {
+    const search = readable(entry);
+
+    if (!search || ids.has(search.id)) {
+      return [];
+    }
+
+    ids.add(search.id);
+
+    return [search];
+  });
 };
 
 /** What a menu shows for the search: its name, else its query, cut short. */
@@ -120,8 +147,9 @@ export const saveSearch = (
 };
 
 /**
- * Without the profile's searches whose id is `searchId`; entries that do not
- * parse stay where they were. Nothing when there is none to remove.
+ * Without the profile's search whose id is `searchId`, the one shown: a later
+ * entry repeating its id, and entries that do not parse, stay where they
+ * were. Nothing when there is none to remove.
  */
 export const removeSavedSearch = (
   state: State,
@@ -129,11 +157,11 @@ export const removeSavedSearch = (
   searchId: string
 ): State | undefined =>
   savedSearches(state, profileId).some((search) => search.id === searchId)
-    ? withSearches(state, profileId, (entries) =>
-        entries.filter((entry) => {
-          const parsed = savedSearchSchema.safeParse(entry);
+    ? withSearches(state, profileId, (entries) => {
+        const index = entries.findIndex(
+          (entry) => readable(entry)?.id === searchId
+        );
 
-          return !parsed.success || parsed.data.id !== searchId;
-        })
-      )
+        return entries.filter((_, at) => at !== index);
+      })
     : undefined;
