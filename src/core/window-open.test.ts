@@ -153,6 +153,12 @@ describe(routeWindowOpen, () => {
     }
 
     expect(route("https://example.com/AddSession")).toBe("system-browser");
+    expect(route("https://accounts.google.com/AddSessionX")).toBe(
+      "child-window"
+    );
+    expect(route("https://accounts.google.com/addsessions/x")).toBe(
+      "child-window"
+    );
     expect(route("http://accounts.google.com/AddSession")).toBe(
       "system-browser"
     );
@@ -216,6 +222,16 @@ describe(allowsChildNavigation, () => {
     expect(
       allowsChildNavigation("https://calendar.google.com/", fromCalendar)
     ).toBeTruthy();
+  });
+
+  it("keeps a sign-in window from adding an account itself, which the router answers", () => {
+    for (const url of [
+      "https://accounts.google.com/AddSession?continue=x",
+      "https://accounts.google.com/addsession/identifier",
+    ]) {
+      expect(allowsChildNavigation(url, fromGmail)).toBeFalsy();
+      expect(route(url)).toBe("add-profile");
+    }
   });
 
   it("keeps it from anywhere else", () => {

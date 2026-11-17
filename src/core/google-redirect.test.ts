@@ -101,6 +101,8 @@ describe(unwrapGoogleRedirect, () => {
       "http://accounts.google.com/",
       "https://accounts.google.com:443/",
       "https://myaccount.google.com/security",
+      "https://accounts.google.com./signin",
+      "https://MyAccount.Google.Com./",
     ]) {
       expect(unwrapGoogleRedirect(wrap(target))).toBeUndefined();
     }

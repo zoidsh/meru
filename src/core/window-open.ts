@@ -44,9 +44,14 @@ const parseWebUrl = (url: string) => {
 };
 
 /** Google's "Add another account", which Meru answers with a profile. */
-const isAddSession = (url: URL, signInOrigins: readonly string[]) =>
-  signInOrigins.includes(url.origin) &&
-  url.pathname.toLowerCase().startsWith("/addsession");
+const isAddSession = (url: URL, signInOrigins: readonly string[]) => {
+  const path = url.pathname.toLowerCase();
+
+  return (
+    signInOrigins.includes(url.origin) &&
+    (path === "/addsession" || path.startsWith("/addsession/"))
+  );
+};
 
 /** Gmail's inbox at `/`, `/mail/u/<n>` or `/mail/u/<n>/`, with no query. */
 const isInboxRoot = (url: URL) =>
@@ -92,7 +97,8 @@ export const routeWindowOpen = (
 
 /**
  * Whether a window a page opened may go to `url` itself: sign-in, or a page
- * of the app whose tab opened it. Anything else is routed as a window open.
+ * of the app whose tab opened it. Anything else, "Add another account"
+ * included, is routed as a window open.
  */
 export const allowsChildNavigation = (
   url: string,
@@ -102,6 +108,7 @@ export const allowsChildNavigation = (
 
   return (
     parsed !== undefined &&
+    !isAddSession(parsed, signInOrigins) &&
     (signInOrigins.includes(parsed.origin) ||
       appForUrl(apps, url)?.id === openerApp)
   );

@@ -56,7 +56,7 @@ export const unwrapGoogleRedirect = (url: string): string | undefined => {
   if (
     !isWebUrl(target) ||
     isGoogleRedirect(target) ||
-    KEPT_WRAPPED_HOSTS.has(target.hostname)
+    KEPT_WRAPPED_HOSTS.has(target.hostname.replace(/\.$/u, ""))
   ) {
     return;
   }
