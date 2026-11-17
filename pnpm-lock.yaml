@@ -190,12 +190,6 @@ importers:
       lucide-react:
         specifier: ^1.73.0
         version: 1.73.0(@types/react@19.3.0)(react@19.3.1)
-      shadcn:
-        specifier: ^4.23.0
-        version: 4.23.0(supports-color@7.2.0)
-      tw-animate-css:
-        specifier: ^1.4.0
-        version: 1.4.0
     devDependencies:
       '@lingui/cli':
         specifier: 6.12.0
@@ -260,9 +254,15 @@ importers:
       rolldown:
         specifier: 1.2.19
         version: 1.2.19
+      shadcn:
+        specifier: ^4.23.0
+        version: 4.23.0(supports-color@7.2.0)
       tailwindcss:
         specifier: 4.3.5
         version: 4.3.5
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
       txml:
         specifier: 6.0.3
         version: 6.0.3
