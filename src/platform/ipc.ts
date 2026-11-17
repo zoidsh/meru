@@ -19,8 +19,16 @@ export interface Ipc {
     channel: string,
     listener: (sender: IpcSender, payload: unknown) => void
   ) => void;
-  /** Nothing when the receiver is gone. */
-  send: (webContentsId: number, channel: string, message: unknown) => void;
+  /**
+   * Nothing when the receiver is gone, or, given `mainFrameOrigin`, when its
+   * main frame is on another origin by now; then only the main frame hears it.
+   */
+  send: (
+    webContentsId: number,
+    channel: string,
+    message: unknown,
+    options?: { mainFrameOrigin: string }
+  ) => void;
 }
 
 const describeSender = (
@@ -46,11 +54,17 @@ export const createIpc = (): Ipc => ({
       listener(describeSender(event), payload);
     });
   },
-  send: (webContentsId, channel, message) => {
+  send: (webContentsId, channel, message, options) => {
     const receiver = webContents.fromId(webContentsId);
 
-    if (receiver && !receiver.isDestroyed()) {
+    if (!receiver || receiver.isDestroyed()) {
+      return;
+    }
+
+    if (options === undefined) {
       receiver.send(channel, message);
+    } else if (receiver.mainFrame.origin === options.mainFrameOrigin) {
+      receiver.mainFrame.send(channel, message);
     }
   },
 });
