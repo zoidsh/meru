@@ -129,6 +129,15 @@ export const TabStrip = ({
               key={tab.id}
               value={tab.id}
               ref={tab.id === tabs.selectedTabId ? keepInView : undefined}
+              // The tabs tell only of a change; asking for the selected tab
+              // still shows it in place of the unified inbox.
+              onClick={
+                tab.id === tabs.selectedTabId
+                  ? () => {
+                      shellCalls().selectTab({ profileId, tabId: tab.id });
+                    }
+                  : undefined
+              }
               onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
                 if (
                   tab.closable &&

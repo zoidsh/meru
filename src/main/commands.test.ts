@@ -235,6 +235,18 @@ describe("the command registry", () => {
     expect(app.isChecked("inbox.toggle")).toBeFalsy();
   });
 
+  it.each(["tab.next", "profile.next", "profile.add"])(
+    "closes the unified inbox on %s",
+    async (id) => {
+      const app = setup();
+
+      await app.run("inbox.toggle");
+      await app.run(id);
+
+      expect(app.isChecked("inbox.toggle")).toBeFalsy();
+    }
+  );
+
   it("reloads the selected tab", async () => {
     const app = setup();
 

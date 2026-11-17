@@ -7,7 +7,7 @@ import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
-import { knownTabs, profilePartition } from "#core/state.ts";
+import { profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
 import { totalUnread } from "#core/unread.ts";
@@ -75,6 +75,7 @@ import {
   hideOnClose,
   revealWindow,
 } from "./shell-window.ts";
+import { createShowGmail } from "./show-gmail.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
@@ -394,24 +395,21 @@ const start = async () => {
     log: console.error,
   });
 
-  /** Shows `url` in the profile's Gmail tab, then selects the profile. */
-  const openInGmail = async (profileId: string, url: string) => {
-    if (!gmail) {
-      return false;
-    }
-
-    await views.open(profileId, gmail, url);
-
-    try {
-      await profiles.select(profileId);
-    } catch (error) {
-      console.error(`A message's profile was not selected: ${String(error)}`);
-
-      return false;
-    }
-
-    return profiles.get().profiles.some((profile) => profile.id === profileId);
-  };
+  const showGmail = createShowGmail({
+    state: profiles.get,
+    openInGmailTab: async (profileId, url) => {
+      if (gmail) {
+        await views.open(profileId, gmail, url);
+      }
+    },
+    selectTab: profiles.selectTab,
+    selectProfile: profiles.select,
+    closeInbox: () => {
+      // oxlint-disable-next-line no-use-before-define -- the inbox opens messages through this
+      inbox.setOpen(false);
+    },
+    log: console.error,
+  });
   const gmailOrigin = gmail && new URL(gmail.home).origin;
   const mailActions =
     gmailOrigin === undefined
@@ -434,7 +432,7 @@ const start = async () => {
         ? mailActions.run(profileId, action, messageId)
         : Promise.resolve({ kind: "failed", reason: "no Gmail" }),
     open: async (profileId, url) => {
-      await openInGmail(profileId, url);
+      await showGmail.openMessage(profileId, url);
     },
     inbox: gmail?.home ?? "",
     initial: profiles.get(),
@@ -458,7 +456,7 @@ const start = async () => {
       hasSubtitle: isMacOS,
       inbox: gmail.home,
       open: async (profileId, url) => {
-        if (!(await openInGmail(profileId, url))) {
+        if (!(await showGmail.openMessage(profileId, url))) {
           return;
         }
 
@@ -600,21 +598,7 @@ const start = async () => {
     unread,
     window: shell.window,
     reveal,
-    // Gmail's tab first, so selecting the profile never makes a view for
-    // the tab it had selected.
-    jumpTo: async (profileId) => {
-      const profile = profiles
-        .get()
-        .profiles.find((candidate) => candidate.id === profileId);
-      const gmailTab =
-        profile && knownTabs(profile).find((tab) => tab.app === "gmail");
-
-      if (gmailTab) {
-        await profiles.selectTab({ profileId, tabId: gmailTab.id });
-      }
-
-      await profiles.select(profileId);
-    },
+    jumpTo: showGmail.jumpTo,
     quit: lifecycle.quit,
     log: console.error,
   });

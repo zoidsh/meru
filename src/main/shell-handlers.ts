@@ -149,14 +149,19 @@ export const createShellHandlers = ({
   };
 
   return {
+    // Each that selects closes the unified inbox, even when what it asks for
+    // is selected already, since the person asked to see it.
     selectProfile: async ({ profileId }) => {
       await profiles.select(profileId);
+      inbox.setOpen(false);
     },
     addProfile: async () => {
       await profiles.add();
+      inbox.setOpen(false);
     },
     selectTab: async (key) => {
       await profiles.selectTab(key);
+      inbox.setOpen(false);
     },
     closeTab: async (key) => {
       await profiles.closeTab(key);

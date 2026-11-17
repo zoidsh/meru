@@ -76,11 +76,15 @@ const chooseDesign = (
 });
 
 const selectAdjacentTab = (offset: number): Command["run"] => {
-  const run: Command["run"] = async ({ state }, { selectTab }) => {
+  const run: Command["run"] = async (
+    { state },
+    { selectTab, setInboxOpen }
+  ) => {
     const key = adjacentTab(state, offset);
 
     if (key) {
       await selectTab(key);
+      setInboxOpen(false);
     }
   };
 
@@ -88,11 +92,15 @@ const selectAdjacentTab = (offset: number): Command["run"] => {
 };
 
 const selectAdjacentProfile = (offset: number): Command["run"] => {
-  const run: Command["run"] = async ({ state }, { selectProfile }) => {
+  const run: Command["run"] = async (
+    { state },
+    { selectProfile, setInboxOpen }
+  ) => {
     const profileId = adjacentProfile(state, offset);
 
     if (profileId !== undefined) {
       await selectProfile(profileId);
+      setInboxOpen(false);
     }
   };
 
@@ -314,7 +322,10 @@ export const COMMANDS: readonly Command[] = [
           "Menu item in the Window menu that adds a profile, signed in to no account yet, and selects it",
       }),
     once: true,
-    run: (_context, { addProfile }) => addProfile(),
+    run: async (_context, { addProfile, setInboxOpen }) => {
+      await addProfile();
+      setInboxOpen(false);
+    },
   },
   {
     id: "profile.rename",

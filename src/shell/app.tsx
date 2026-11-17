@@ -66,6 +66,15 @@ const Profiles = () => {
                     : undefined
                 }
                 className="max-w-40 flex-none px-3 text-xs"
+                // The tabs tell only of a change; asking for the selected
+                // profile still shows it in place of the unified inbox.
+                onClick={
+                  id === profiles.selectedProfileId
+                    ? () => {
+                        shellCalls().selectProfile({ profileId: id });
+                      }
+                    : undefined
+                }
                 onContextMenu={(event) => {
                   event.preventDefault();
                   shellCalls().openProfileMenu({ profileId: id });

@@ -180,32 +180,17 @@ describe(createInbox, () => {
     expect(app.inbox.isOpen()).toBeFalsy();
   });
 
-  it("closes when another profile or tab is selected, and stays open for any other change", () => {
+  it("stays open when another profile or tab is selected, which closes it through the request that selected", () => {
     const app = setup();
 
     app.inbox.setOpen(true);
     app.inbox.follow({ ...two, doNotDisturb: { until: null } });
-
-    expect(app.inbox.isOpen()).toBeTruthy();
-
     app.inbox.follow({ ...two, selectedProfileId: "b" });
 
-    expect(app.inbox.isOpen()).toBeFalsy();
-
-    app.inbox.setOpen(true);
-    app.inbox.follow({
-      ...two,
-      selectedProfileId: "b",
-      profiles: [
-        two.profiles[0],
-        { ...newProfile("b", "Work"), selectedTabId: "x" },
-      ].filter((profile) => profile !== undefined),
-    });
-
-    expect(app.inbox.isOpen()).toBeFalsy();
+    expect(app.inbox.isOpen()).toBeTruthy();
   });
 
-  it("opens a listed message at its link in its profile, then closes", async () => {
+  it("opens a listed message at its link in its profile, leaving the close to what shows it", async () => {
     const app = setup();
 
     app.inbox.setOpen(true);
@@ -214,7 +199,6 @@ describe(createInbox, () => {
     expect(app.opened).toStrictEqual([
       ["b", "https://mail.google.com/mail/u/0/?view=cv&message_id=b1"],
     ]);
-    expect(app.inbox.isOpen()).toBeFalsy();
   });
 
   it("opens Gmail's inbox for a link that is not Gmail's", async () => {

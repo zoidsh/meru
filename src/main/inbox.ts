@@ -4,7 +4,6 @@ import { afterPoll, inboxKey, inboxRows } from "#core/inbox.ts";
 import type { PendingAction } from "#core/inbox.ts";
 import type { ActionOutcome, MailAction } from "#core/mail-actions.ts";
 import { messageUrl } from "#core/notifications.ts";
-import { selectedProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import type { Focus } from "./focus.ts";
@@ -38,12 +37,6 @@ const CLOSED: ShellState["inbox"] = {
   profiles: [],
   rows: [],
   notice: null,
-};
-
-const selection = (state: State) => {
-  const profile = selectedProfile(state);
-
-  return `${profile.id}/${profile.selectedTabId}`;
 };
 
 /** The inbox is for more than one profile, as v3's is. */
@@ -167,8 +160,8 @@ export const createInbox = ({
         return;
       }
 
+      // Which closes the inbox, as every request to show a profile does.
       await open(profileId, messageUrl(entry.link, inbox));
-      close();
     },
     runAction: async (
       profileId: string,
@@ -235,12 +228,12 @@ export const createInbox = ({
       }
     },
     /**
-     * Told of each change of main's state: another profile or tab selected,
-     * or one profile left, closes it, and a removed profile's actions are
-     * forgotten.
+     * Told of each change of main's state: one profile left closes it, and a
+     * removed profile's actions are forgotten. Selecting is not followed:
+     * each request that selects closes it itself, the selection unchanged
+     * included.
      */
     follow: (next: State) => {
-      const previous = state;
       const ids = new Set(next.profiles.map((profile) => profile.id));
 
       state = next;
@@ -252,7 +245,7 @@ export const createInbox = ({
         notice = null;
       }
 
-      if (selection(previous) !== selection(next) || !inboxAvailable(next)) {
+      if (!inboxAvailable(next)) {
         close();
       } else if (isOpen) {
         notify();
