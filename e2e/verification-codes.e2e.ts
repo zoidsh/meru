@@ -19,6 +19,12 @@ const plain: StandInMail = {
   senderAddress: "ada@example.com",
 };
 
+const later: StandInMail = {
+  ...plain,
+  id: "3",
+  subject: "Dinner",
+};
+
 const withCode: StandInMail = {
   id: "2",
   subject: "Your verification code",
@@ -109,6 +115,14 @@ test("shows a code with a Copy button, copies nothing until it is pressed, then 
         actions: ["Copy"],
       },
     ]);
+  // A later poll ends after any request the detection could have sent, so
+  // nothing sent by then proves the mail waits for the copy.
+  standIn.setFeed(ANY_SESSION, {
+    unreadCount: 3,
+    mail: [later, withCode, plain],
+  });
+  await retitle(gmail, "Inbox (3)");
+  await expect(unread(shell)).toHaveAccessibleName("Home, 3 unread messages");
   expect(await copied(app)).toStrictEqual([]);
   expect(standIn.actions).toStrictEqual([]);
 
