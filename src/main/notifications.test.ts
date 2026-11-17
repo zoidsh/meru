@@ -580,6 +580,53 @@ describe("verification codes", () => {
     expect(app.opened).toStrictEqual([["a", `${INBOX}?message_id=1`]]);
   });
 
+  it("copies once while a copy is still being written, after it lands, and again after one fails", async () => {
+    const app = setup({ copies: false });
+
+    app.set("verificationCodeTrash", true);
+    await arrive(app, codeEntry("1"));
+
+    const press = () => app.shown[0]?.events.onAction?.(0);
+
+    press();
+    await settle();
+
+    expect([app.copied, app.acted]).toStrictEqual([[], []]);
+
+    app.allowCopies();
+
+    const land = app.holdCopies();
+
+    press();
+    press();
+    land();
+    await settle();
+    press();
+    await settle();
+
+    expect([app.copied, app.acted]).toStrictEqual([
+      [CODE],
+      [["a", "delete", "1"]],
+    ]);
+  });
+
+  it("touches no mail and shows nothing for a profile removed while the code was copied as it arrived", async () => {
+    const app = setup({ state: two });
+
+    app.set("verificationCodeCopyMode", "immediately");
+    app.set("verificationCodeMarkRead", true);
+    await app.notifications.polled("b", feed());
+
+    const land = app.holdCopies();
+
+    await app.notifications.polled("b", feed(codeEntry("1")));
+    app.setState(one);
+    land();
+    await settle();
+
+    expect([app.copied, app.acted, app.shown]).toStrictEqual([[CODE], [], []]);
+  });
+
   it("shows through every hold while the mail beside it is held", async () => {
     const app = setup({
       doNotDisturb: { until: null },

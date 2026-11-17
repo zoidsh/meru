@@ -1,5 +1,4 @@
 import { plural, t } from "@lingui/core/macro";
-import { once } from "es-toolkit";
 
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
@@ -211,6 +210,11 @@ export const createMailNotifications = ({
       return false;
     }
 
+    // A profile removed while the write was pending has no mail to touch.
+    if (!state().profiles.some((profile) => profile.id === profileId)) {
+      return true;
+    }
+
     let followUp: MailAction | undefined;
 
     if (setting("verificationCodeTrash")) {
@@ -281,10 +285,18 @@ export const createMailNotifications = ({
       );
     }
 
-    // The button and a body click after it must not move the mail twice.
-    const copyOnce = once(() => {
-      void copyCode(profileId, code, entry.id);
-    });
+    // The button and a body click after it must not move the mail twice, but
+    // a copy that failed may be asked for again.
+    let copying: Promise<boolean> | undefined;
+    const copyOnce = () => {
+      copying ??= copyCode(profileId, code, entry.id).then((copied) => {
+        if (!copied) {
+          copying = undefined;
+        }
+
+        return copied;
+      });
+    };
 
     showFor(
       profileId,
