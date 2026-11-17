@@ -54,15 +54,10 @@ const googleSubdomain = (
     `https://${subdomain}.usercontent.google.com`,
   ].map((origin) => (paths ? { origin, paths } : { origin }));
 
-const entry = (
-  id: AppId,
-  name: string,
-  claims: readonly Claim[],
-  home = claims[0]?.origin ?? ""
-): App => ({
+const entry = (id: AppId, name: string, claims: readonly Claim[]): App => ({
   id,
   name,
-  home,
+  home: claims[0]?.origin ?? "",
   claims,
   singleInstance: false,
   restoresUrl: true,

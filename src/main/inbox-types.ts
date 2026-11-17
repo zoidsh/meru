@@ -101,5 +101,3 @@ export const createInboxTypes = ({
     onChange(key.profileId);
   },
 });
-
-export type InboxTypes = ReturnType<typeof createInboxTypes>;

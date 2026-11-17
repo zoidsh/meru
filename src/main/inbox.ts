@@ -40,7 +40,7 @@ const CLOSED: ShellState["inbox"] = {
 };
 
 /** The inbox is for more than one profile, as v3's is. */
-export const inboxAvailable = (state: State) => state.profiles.length > 1;
+const inboxAvailable = (state: State) => state.profiles.length > 1;
 
 /**
  * The unified inbox: whether it covers the content area, the rows it shows,

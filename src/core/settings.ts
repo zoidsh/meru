@@ -11,7 +11,7 @@ import type { Decoded } from "./store-file.ts";
 export const SETTINGS_VERSION = 1;
 
 /** Names of the file's own, which no setting may take. */
-export const RESERVED_SETTING_NAMES = ["version", "profiles"] as const;
+const RESERVED_SETTING_NAMES = ["version", "profiles"] as const;
 
 export interface SettingDefinition<Value = unknown> {
   schema: z.ZodMiniType<Value>;

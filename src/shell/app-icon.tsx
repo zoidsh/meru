@@ -534,7 +534,7 @@ export const AppIcon = ({
         </svg>
       );
     }
-    case "meet": {
+    default: {
       return (
         <svg
           viewBox="0 0 24 24"
@@ -636,11 +636,6 @@ export const AppIcon = ({
           </defs>
         </svg>
       );
-    }
-    // Drawn by hand in the style of the icons around it — the account avatar as
-    // Meru renders it, not Google's own artwork.
-    default: {
-      return null;
     }
   }
 };

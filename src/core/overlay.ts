@@ -14,14 +14,14 @@ export interface Overlay {
  * How far below the top of the content view an overlay's view sits, so what
  * it draws reads as over the page rather than part of the titlebar.
  */
-export const OVERLAY_OFFSET = 8;
+const OVERLAY_OFFSET = 8;
 
 /**
  * The view's size for each overlay, its margin included, so main can place
  * the view before the shell draws into it: the rename card is 360px wide,
  * with 12px of padding around a 20px heading, an 8px gap and a 36px field.
  */
-export const overlaySize = (overlay: Overlay): Size => {
+const overlaySize = (overlay: Overlay): Size => {
   switch (overlay.kind) {
     default: {
       return {

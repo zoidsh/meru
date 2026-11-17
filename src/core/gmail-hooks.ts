@@ -695,7 +695,7 @@ export type HookStatus = (typeof HOOK_STATUSES)[number];
 /** Whether a hook's witness is on the page, and if so inside a match. */
 export type Witness = "none" | "covered" | "uncovered";
 
-export const isRequired = (hook: Hook, views: readonly GmailView[]) =>
+const isRequired = (hook: Hook, views: readonly GmailView[]) =>
   hook.requiredIn === "any"
     ? views.length > 0
     : hook.requiredIn.some((view) => views.includes(view));

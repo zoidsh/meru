@@ -139,5 +139,3 @@ export const createMailActions = ({
     },
   };
 };
-
-export type MailActions = ReturnType<typeof createMailActions>;

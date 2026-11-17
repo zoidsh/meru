@@ -137,7 +137,7 @@ export const threadMessage = (
  * An open thread of `count` messages, oldest first, with Gmail's own rules
  * for what it folds: put in the stand-in's main region, as Gmail draws one.
  */
-export const threadMarkup = (count: number) => `<style>
+const threadMarkup = (count: number) => `<style>
       .adL, .h5 { display: none; }
       .G2 { border-top: 1px solid gray; }
       [role="listitem"]:first-child .G2 { border-top: none; }

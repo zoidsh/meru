@@ -146,8 +146,6 @@ export const DO_NOT_DISTURB_DURATIONS = [
 
 export type DoNotDisturbDuration = (typeof DO_NOT_DISTURB_DURATIONS)[number];
 
-export type DoNotDisturbDurationId = DoNotDisturbDuration["id"];
-
 /**
  * When Do Not Disturb switched on at `now` for `duration` ends: `null` for
  * until turned off, and the next local midnight for until tomorrow.

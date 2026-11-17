@@ -4,7 +4,7 @@ import type { FeedEntry, FeedOutcome } from "./feed.ts";
 export const SEEN_LIMIT = 500;
 
 /** More new messages than this in one poll are told as one notification. */
-export const MOST_TOLD_APART = 3;
+const MOST_TOLD_APART = 3;
 
 /**
  * The ids of the messages a profile has been told of or found at its first

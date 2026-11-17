@@ -265,5 +265,3 @@ export const createTray = ({
     },
   };
 };
-
-export type AppTray = ReturnType<typeof createTray>;

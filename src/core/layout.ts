@@ -8,10 +8,10 @@ export const TITLEBAR_HEIGHT = 40;
 export const TAB_STRIP_WIDTH = 224;
 
 /** How far the modern design keeps the view from the strip and the window's edges. */
-export const MODERN_INSET = 8;
+const MODERN_INSET = 8;
 
 /** The modern design's corner radius of the view. */
-export const MODERN_RADIUS = 8;
+const MODERN_RADIUS = 8;
 
 export interface ViewFrame {
   /** Kept free around the view, below the titlebar and beside the strip. */

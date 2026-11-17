@@ -114,10 +114,7 @@ export const createDoNotDisturb = ({
 };
 
 /** What the Do Not Disturb menus say while it holds, by the local clock. */
-export const doNotDisturbStatus = (
-  doNotDisturb: DoNotDisturb,
-  locale: string
-) => {
+const doNotDisturbStatus = (doNotDisturb: DoNotDisturb, locale: string) => {
   if (doNotDisturb.until === null) {
     return t({
       message: "On Until Turned Off",
