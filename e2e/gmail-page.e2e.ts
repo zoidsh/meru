@@ -238,12 +238,32 @@ test("gives Gmail's preload to Gmail's view alone: not to another app's, nor to 
   await expect(popup.getByRole("heading", { name: POPUP_TITLE })).toBeVisible();
   await view.getByRole("link", { name: "Open Calendar" }).click();
   await findPage(app, standIn.calendarUrl);
-  // The preload shakes hands as it starts, before its page has loaded, and
-  // main refuses every page but Gmail's: had Calendar's view or the pop-up
-  // run it, a refusal from its origin would be here by now. Gmail's view ran
-  // it, and reported.
-  await expect
-    .poll(() => readHealth(app))
-    .toMatchObject([{ tabId: "gmail", views: ["list"] }]);
-  expect(await readRefused(app)).toStrictEqual([]);
+
+  const preloads = await app.evaluate(({ webContents }) =>
+    webContents.getAllWebContents().map((each) => {
+      // getLastWebPreferences() leaves the preload out; this is what
+      // Electron's own sandbox loader reads it from.
+      const script = (
+        Reflect.get(each, "_getPreloadScript") as () => {
+          filePath: string;
+        } | null
+      ).call(each);
+
+      return {
+        url: each.getURL(),
+        preload: script && script.filePath.split("/").at(-1),
+      };
+    })
+  );
+  const preloadOf = (url: string) =>
+    preloads
+      .filter((each) => each.url.startsWith(url))
+      .map((each) => each.preload);
+
+  expect(preloadOf(standIn.url)).toStrictEqual(["preload-gmail.cjs"]);
+  expect(preloadOf(standIn.calendarUrl)).toStrictEqual([null]);
+  expect(preloadOf(standIn.popupUrl)).toStrictEqual([null]);
+  expect(
+    preloads.filter((each) => each.preload === "preload-gmail.cjs")
+  ).toHaveLength(1);
 });
