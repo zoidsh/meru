@@ -322,9 +322,11 @@ export const createMailNotifications = ({
     /**
      * Told of each poll of a listed profile as it ends, with the label whose
      * feed it read. Held mail stays seen and is never notified later. The
-     * first feed of another label is only recorded, since what it lists
-     * beyond the last label's is not new. Important only asks the Important
-     * feed just when there is something to notify.
+     * first feed of the whole inbox after a label's is only recorded, since
+     * what it lists beyond the label's is not new; a label's feed after the
+     * whole inbox's lists nothing the inbox did not, so its new mail is
+     * still notified. Important only asks the Important feed just when there
+     * is something to notify.
      */
     polled: async (profileId: string, outcome: FeedOutcome, label?: string) => {
       const listed = () =>
@@ -336,17 +338,17 @@ export const createMailNotifications = ({
         return;
       }
 
-      const relabeled =
+      const widened =
         outcome.kind === "feed" &&
-        feedLabels.has(profileId) &&
-        feedLabels.get(profileId) !== label;
+        label === undefined &&
+        feedLabels.get(profileId) !== undefined;
 
       if (outcome.kind === "feed") {
         feedLabels.set(profileId, label);
       }
 
       const taken = takeNewMail(
-        relabeled ? undefined : seen.get(profileId),
+        widened ? undefined : seen.get(profileId),
         outcome
       );
 

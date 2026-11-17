@@ -173,7 +173,7 @@ describe(createMailNotifications, () => {
     expect(shown[0]).not.toHaveProperty("subtitle");
   });
 
-  it("only records the first feed of another label, and notifies what comes after it", () => {
+  it("only records the first feed of the whole inbox after Primary's, and still notifies Primary's new mail after the whole inbox's", () => {
     const { notifications, shown } = setup();
 
     notifications.polled("a", feed(entry("1")), "^sq_ig_i_personal");
@@ -192,13 +192,18 @@ describe(createMailNotifications, () => {
       expect.objectContaining({ title: "Sender 4" }),
     ]);
 
+    // A Primary feed lists nothing the whole inbox did not, so what is new
+    // in it is new mail, as after a poll that found no Primary feed.
     notifications.polled(
       "a",
-      feed(entry("5"), entry("1")),
+      feed(entry("5"), entry("4"), entry("1")),
       "^sq_ig_i_personal"
     );
 
-    expect(shown).toHaveLength(1);
+    expect(shown.map((notification) => notification.title)).toStrictEqual([
+      "Sender 4",
+      "Sender 5",
+    ]);
   });
 
   it("keeps what it saw through a failed poll of another label", () => {
