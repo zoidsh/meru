@@ -1,62 +1,23 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 
-import { clickMenuItem, expect, findPage, readViews, test } from "./lib/app.ts";
+import {
+  clickMenuItem,
+  expect,
+  findPage,
+  readViews,
+  test,
+  writeSettings,
+} from "./lib/app.ts";
 import { CALENDAR_TITLE, DRAFT_LABEL, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
-/**
- * Records the radius each view is given from now on, since a view has no
- * getter for it.
- */
-const recordRadii = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow }) => {
-    const radii: number[] = [];
-    const [view] = BrowserWindow.getAllWindows()[0]?.contentView.children ?? [];
-    let owner: object | null = view ?? null;
-
-    while (owner && !Object.hasOwn(owner, "setBorderRadius")) {
-      owner = Object.getPrototypeOf(owner) as object | null;
-    }
-
-    if (!owner) {
-      throw new Error("No view to record the radius of");
-    }
-
-    const original = Reflect.get(owner, "setBorderRadius") as (
-      this: Electron.View,
-      radius: number
-    ) => void;
-
-    Reflect.set(globalThis, "radii", radii);
-    Reflect.set(
-      owner,
-      "setBorderRadius",
-      function setBorderRadius(this: Electron.View, radius: number) {
-        radii.push(radius);
-        original.call(this, radius);
-      }
-    );
-  });
-
-const readRadii = (app: ElectronApplication) =>
-  app.evaluate(() => Reflect.get(globalThis, "radii") as number[]);
-
-const menuItemState = (app: ElectronApplication, id: string) =>
-  app.evaluate(({ Menu }, itemId) => {
-    const item = Menu.getApplicationMenu()?.getMenuItemById(itemId);
-
-    return { checked: item?.checked, enabled: item?.enabled };
-  }, id);
-
-const readViewBounds = async (app: ElectronApplication) => {
-  const { views } = await readViews(app);
-
-  return views.map((view) => view.bounds);
-};
+const hasMenuItem = (app: ElectronApplication, id: string) =>
+  app.evaluate(
+    ({ Menu }, itemId) =>
+      Boolean(Menu.getApplicationMenu()?.getMenuItemById(itemId)),
+    id
+  );
 
 /** The padding the shell gives its content area, around where the view sits. */
 const drawnPadding = (shell: Page) =>
@@ -74,76 +35,37 @@ const zoomOf = (app: ElectronApplication, url: string) =>
     url
   );
 
-const readSettings = async (userDataDir: string) =>
-  JSON.parse(
-    await readFile(path.join(userDataDir, "settings.json"), "utf-8")
-  ) as Record<string, unknown>;
-
-test("the View menu switches between the modern and classic designs without loading the page again, and the choice survives a relaunch", async ({
+test("the view sits beside the strip as the shell draws it, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
   launchApp,
   standIn,
   userDataDir,
 }) => {
+  await writeSettings(userDataDir, { design: "classic", vibrancy: false });
+
   const app = await launchApp();
 
   await findPage(app, standIn.url);
 
   const shell = await findPage(app, "meru-app:");
-  const first = await readViews(app);
+  const { area, content, menuBarVisible, views } = await readViews(app);
 
   // On Windows and Linux the menu bar stays hidden and takes no height.
-  expect(first.menuBarVisible).toBe(process.platform === "darwin");
-  expect(first.area).toStrictEqual(first.content);
-  expect(first.views.map((view) => view.bounds)).toStrictEqual([
-    contentViewBounds(first.area, TAB_STRIP_WIDTH, "modern"),
-  ]);
-  expect(await menuItemState(app, "design.modern")).toStrictEqual({
-    checked: true,
-    enabled: true,
-  });
-  await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px");
-
-  await recordRadii(app);
-  await clickMenuItem(app, "design.classic");
-
-  await expect
-    .poll(() => readViewBounds(app))
-    .toStrictEqual([contentViewBounds(first.area, TAB_STRIP_WIDTH, "classic")]);
-  expect(await readRadii(app)).toStrictEqual([0]);
-  await expect.poll(() => drawnPadding(shell)).toBe("0px");
-  await expect
-    .poll(() => menuItemState(app, "design.classic"))
-    .toStrictEqual({ checked: true, enabled: true });
-  expect(await readSettings(userDataDir)).toMatchObject({ design: "classic" });
-
-  await clickMenuItem(app, "design.modern");
-
-  await expect
-    .poll(() => readViewBounds(app))
-    .toStrictEqual([contentViewBounds(first.area, TAB_STRIP_WIDTH, "modern")]);
-  expect(await readRadii(app)).toStrictEqual([0, 8]);
-
-  await clickMenuItem(app, "design.classic");
-  await expect
-    .poll(() => readSettings(userDataDir))
-    .toMatchObject({ design: "classic" });
-  // The page was asked for once, at launch.
-  expect(standIn.requests().gmail).toBe(1);
-
-  await app.close();
-
-  const relaunched = await launchApp();
-
-  await findPage(relaunched, standIn.url);
-
-  const { area, views } = await readViews(relaunched);
-
+  expect(menuBarVisible).toBe(process.platform === "darwin");
+  expect(area).toStrictEqual(content);
   expect(views.map((view) => view.bounds)).toStrictEqual([
-    contentViewBounds(area, TAB_STRIP_WIDTH, "classic"),
+    contentViewBounds(area, TAB_STRIP_WIDTH),
   ]);
-  expect(await menuItemState(relaunched, "design.classic")).toMatchObject({
-    checked: true,
-  });
+  await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px 0px");
+  expect(
+    await Promise.all(
+      [
+        "design.modern",
+        "design.classic",
+        "vibrancy.toggle",
+        "inbox.toggle",
+      ].map((id) => hasMenuItem(app, id))
+    )
+  ).toStrictEqual([false, false, false, true]);
 });
 
 test("the View menu's zoom items zoom the page with focus, and Actual Size sets it back", async ({

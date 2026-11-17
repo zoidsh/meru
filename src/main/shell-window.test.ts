@@ -67,7 +67,6 @@ const createFakeWindow = () => {
       sessionEnd = listener;
     },
     setOverlayIcon: () => false,
-    setVibrancy: () => false,
     getContentAreaSize: () => ({ width: 1280, height: 800 }),
     onContentAreaResize: () => false,
     addContentView: () => ({
@@ -135,7 +134,6 @@ const open = ({ background = false, isMacOS = true } = {}) => {
     },
     title: "Meru",
     url: "meru-app://shell/index.html",
-    vibrancy: true,
     preloadPath: "/app/preload-shell.cjs",
     isMacOS,
     background,

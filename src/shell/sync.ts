@@ -52,7 +52,6 @@ const connect = () => {
   connection ??= createShellSync(window.meru, [
     "profiles",
     "tabs",
-    "settings",
     "doNotDisturb",
     "overlay",
     "inbox",

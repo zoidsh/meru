@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPS } from "#core/apps.ts";
-import type { Design } from "#core/settings.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -58,12 +57,8 @@ interface FakeView {
  * The real profiles over a save that only records, a fake window, and a
  * network whose return the test announces.
  */
-const setup = async ({
-  state = initial,
-  design = "classic" as Design,
-}: { state?: State; design?: Design } = {}) => {
+const setup = async ({ state = initial }: { state?: State } = {}) => {
   let size: Size = { width: 1280, height: 800 };
-  let currentDesign = design;
   let resize: (() => void) | undefined;
   let online: (() => void) | undefined;
   const views: FakeView[] = [];
@@ -162,7 +157,6 @@ const setup = async ({
     },
     senders,
     state: profiles.get,
-    design: () => currentDesign,
     inboxOpen: () => inboxOpen,
     openTab: profiles.openTab,
     newId: () => {
@@ -230,10 +224,6 @@ const setup = async ({
       size = next;
       resize?.();
     },
-    switchDesign: (next: Design) => {
-      currentDesign = next;
-      tabs.relayout();
-    },
     setInboxOpen: (open: boolean) => {
       inboxOpen = open;
       tabs.reconcile(profiles.get());
@@ -256,7 +246,7 @@ describe(createTabViews, () => {
     expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
     expect(window.prepared).toStrictEqual([["persist:a", 0]]);
     expect(window.views[0]?.bounds).toStrictEqual([
-      { x: 224, y: 40, width: 1056, height: 760 },
+      { x: 224, y: 40, width: 1048, height: 752 },
     ]);
     expect(
       window.tabs.status({ profileId: "a", tabId: "gmail" })
@@ -717,8 +707,8 @@ describe(createTabViews, () => {
       expect(view.bounds.at(-1)).toStrictEqual({
         x: 224,
         y: 40,
-        width: 676,
-        height: 560,
+        width: 668,
+        height: 552,
       });
     }
   });
@@ -741,30 +731,11 @@ describe(createTabViews, () => {
     expect([gmail?.reloads, gmail?.loaded]).toStrictEqual([1, [GMAIL, GMAIL]]);
   });
 
-  it("places every view in the design's rectangle, rounded in modern, and moves them when it changes, loading nothing", async () => {
-    const window = await setup({ design: "modern" });
+  it("rounds every view's corners by 8px", async () => {
+    const window = await setup();
 
     await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
 
-    for (const view of window.views) {
-      expect([view.bounds.at(-1), view.radii.at(-1)]).toStrictEqual([
-        { x: 232, y: 40, width: 1040, height: 752 },
-        8,
-      ]);
-    }
-
-    const loads = window.views.map((view) => view.loaded.length);
-
-    window.switchDesign("classic");
-
-    for (const view of window.views) {
-      expect([view.bounds.at(-1), view.radii.at(-1)]).toStrictEqual([
-        { x: 224, y: 40, width: 1056, height: 760 },
-        0,
-      ]);
-    }
-
-    expect(window.views.map((view) => view.loaded.length)).toStrictEqual(loads);
-    expect(window.views.map((view) => view.reloads)).toStrictEqual([0, 0]);
+    expect(window.views.map((view) => view.radii.at(-1))).toStrictEqual([8, 8]);
   });
 });

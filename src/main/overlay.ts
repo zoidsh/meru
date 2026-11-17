@@ -12,7 +12,7 @@ export interface OverlaysDeps {
   focus: Pick<Focus, "focus" | "focused">;
   /** Main's state when the overlays start following it. */
   initial: State;
-  /** Where the view sits for `overlay`, as the window and design are now. */
+  /** Where the view sits for `overlay`, as the window is now. */
   bounds: (overlay: Overlay) => Rectangle;
   log: (message: string) => void;
 }
@@ -117,7 +117,7 @@ export const createOverlays = ({
       state = next;
       dispatch({ kind: "state-changed", previous, next });
     },
-    /** Places the view again, as the window or the design now has it. */
+    /** Places the view again, as the window now has it. */
     relayout: () => {
       if (open && view) {
         view.setBounds(bounds(open));

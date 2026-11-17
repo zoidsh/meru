@@ -8,7 +8,7 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import { DESIGNS, THEMES, onlyWithShots, shotPath } from "./lib/shots.ts";
+import { THEMES, onlyWithShots, shotPath } from "./lib/shots.ts";
 import type { StandIn, StandInMail } from "./lib/stand-in.ts";
 import { messageLink, signIn } from "./lib/stand-in.ts";
 
@@ -324,38 +324,32 @@ const SHOT_MAIL: StandInMail[] = [
   },
 ];
 
-for (const design of DESIGNS) {
-  test(`draws the inbox in the ${design} design, light and dark`, async ({
-    launchApp,
-    userDataDir,
-    standIn,
-  }) => {
-    onlyWithShots();
+test("draws the inbox, light and dark", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  onlyWithShots();
 
-    const { app, shell } = await launch(launchApp, userDataDir, standIn, {
-      design,
-      // A clear page, which a screenshot shows white, would hide the chrome.
-      vibrancy: false,
+  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+
+  standIn.setFeed("persist:p1", { unreadCount: 40, mail: SHOT_MAIL });
+  await pollAll(app);
+  await expect(profileTab(shell, "Work")).toHaveAccessibleName(
+    "Work, 40 unread messages"
+  );
+  await openInbox(shell);
+  await expect(grid(shell).getByRole("row")).toHaveCount(5);
+
+  for (const theme of THEMES) {
+    // The inbox is the shell's own, drawn where the tab's view would be.
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await shell.emulateMedia({ colorScheme: theme });
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await shell.screenshot({
+      path: shotPath("inbox", theme),
+      // Ends the colour transitions the scheme just started.
+      animations: "disabled",
     });
-
-    standIn.setFeed("persist:p1", { unreadCount: 40, mail: SHOT_MAIL });
-    await pollAll(app);
-    await expect(profileTab(shell, "Work")).toHaveAccessibleName(
-      "Work, 40 unread messages"
-    );
-    await openInbox(shell);
-    await expect(grid(shell).getByRole("row")).toHaveCount(5);
-
-    for (const theme of THEMES) {
-      // The inbox is the shell's own, drawn where the tab's view would be.
-      // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
-      await shell.emulateMedia({ colorScheme: theme });
-      // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
-      await shell.screenshot({
-        path: shotPath("inbox", design, theme),
-        // Ends the colour transitions the scheme just started.
-        animations: "disabled",
-      });
-    }
-  });
-}
+  }
+});

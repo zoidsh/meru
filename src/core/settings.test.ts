@@ -20,13 +20,13 @@ const read = (value: unknown): Settings => {
 
 describe(decodeSettings, () => {
   it("reads a file as it was found, unknown keys included", () => {
-    const file = { version: 1, design: "classic", later: { a: 1 } };
+    const file = { version: 1, trayIconColor: "dark", later: { a: 1 } };
 
     expect(decodeSettings(file)).toStrictEqual({ kind: "read", value: file });
   });
 
   it("leaves a newer version to the Meru that wrote it", () => {
-    expect(decodeSettings({ version: 2, design: [] })).toStrictEqual({
+    expect(decodeSettings({ version: 2, trayIconColor: [] })).toStrictEqual({
       kind: "newer",
       version: 2,
     });
@@ -38,7 +38,7 @@ describe(decodeSettings, () => {
       null,
       "settings",
       [],
-      { design: "classic" },
+      { trayIconColor: "dark" },
       { version: 0 },
       { version: -1 },
       { version: 1.5 },
@@ -51,11 +51,11 @@ describe(decodeSettings, () => {
 
 describe(readSetting, () => {
   it("is the default for a key the file does not hold", () => {
-    expect(readSetting(read({ version: 1 }), "design", "darwin")).toBe(
-      "modern"
+    expect(readSetting(read({ version: 1 }), "trayIconColor", "darwin")).toBe(
+      "system"
     );
     expect(
-      readSetting(read({ version: 1 }), "vibrancy", "darwin")
+      readSetting(read({ version: 1 }), "unreadBadge", "darwin")
     ).toBeTruthy();
   });
 
@@ -130,27 +130,35 @@ describe(readSetting, () => {
   });
 
   it("is the value the file holds", () => {
-    const settings = read({ version: 1, design: "classic", vibrancy: false });
+    const settings = read({
+      version: 1,
+      trayIconColor: "dark",
+      unreadBadge: false,
+    });
 
-    expect(readSetting(settings, "design", "darwin")).toBe("classic");
-    expect(readSetting(settings, "vibrancy", "darwin")).toBeFalsy();
+    expect(readSetting(settings, "trayIconColor", "darwin")).toBe("dark");
+    expect(readSetting(settings, "unreadBadge", "darwin")).toBeFalsy();
   });
 
   it("is the default, in memory, for a value that does not parse", () => {
-    const settings = read({ version: 1, design: "glass", vibrancy: "yes" });
+    const settings = read({
+      version: 1,
+      trayIconColor: "glass",
+      unreadBadge: "yes",
+    });
 
-    expect(readSetting(settings, "design", "darwin")).toBe("modern");
-    expect(readSetting(settings, "vibrancy", "darwin")).toBeTruthy();
+    expect(readSetting(settings, "trayIconColor", "darwin")).toBe("system");
+    expect(readSetting(settings, "unreadBadge", "darwin")).toBeTruthy();
   });
 
   it("ignores a profile's override", () => {
     const settings = read({
       version: 1,
-      design: "classic",
-      profiles: { p: { design: "modern" } },
+      trayIconColor: "dark",
+      profiles: { p: { trayIconColor: "light" } },
     });
 
-    expect(readSetting(settings, "design", "darwin")).toBe("classic");
+    expect(readSetting(settings, "trayIconColor", "darwin")).toBe("dark");
   });
 });
 
@@ -158,30 +166,30 @@ describe(writeSetting, () => {
   it("writes everything back as found but the key set, which then reads back", () => {
     const malformed = {
       version: 1,
-      design: "glass",
-      vibrancy: "yes",
+      trayIconColor: "glass",
+      unreadBadge: "yes",
       later: { kept: true },
-      profiles: { p: "not an entry", q: { design: 7, later: [1] } },
+      profiles: { p: "not an entry", q: { trayIconColor: 7, later: [1] } },
     };
-    const changed = writeSetting(read(malformed), "vibrancy", false);
+    const changed = writeSetting(read(malformed), "unreadBadge", false);
     const reread = read(structuredClone(changed));
 
-    expect(reread).toStrictEqual({ ...malformed, vibrancy: false });
-    expect(readSetting(reread, "vibrancy", "darwin")).toBeFalsy();
-    expect(readSetting(reread, "design", "darwin")).toBe("modern");
+    expect(reread).toStrictEqual({ ...malformed, unreadBadge: false });
+    expect(readSetting(reread, "unreadBadge", "darwin")).toBeFalsy();
+    expect(readSetting(reread, "trayIconColor", "darwin")).toBe("system");
   });
 });
 
 describe("setting declarations", () => {
   it("refuses, as a type error, a setting named for the file's version or its profiles", () => {
     const declared = {
-      design: SETTINGS.design,
+      tray: SETTINGS.tray,
       // @ts-expect-error -- `version` is the file's own
-      version: SETTINGS.design,
+      version: SETTINGS.tray,
     } satisfies SettingDeclarations;
     const profiles = {
       // @ts-expect-error -- `profiles` is the file's own
-      profiles: SETTINGS.vibrancy,
+      profiles: SETTINGS.unreadBadge,
     } satisfies SettingDeclarations;
 
     expect(Object.keys({ ...declared, ...profiles })).toHaveLength(3);

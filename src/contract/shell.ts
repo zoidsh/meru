@@ -3,7 +3,6 @@ import { z } from "zod/mini";
 import { MAIL_STATUSES } from "#core/feed.ts";
 import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
-import { DESIGNS } from "#core/settings.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import type { ShellCallName } from "./shell-channels.ts";
@@ -118,12 +117,6 @@ export const SHELL_STATE = {
         status: tabStatus,
       })
     ),
-  }),
-  /** The settings the shell draws by, as they apply on this platform. */
-  settings: z.object({
-    design: z.enum(DESIGNS),
-    /** Whether the window's vibrancy shows through the chrome. */
-    vibrancy: z.boolean(),
   }),
   /** Whether Do Not Disturb holds, and until when: `null` for until turned off. */
   doNotDisturb: z.object({

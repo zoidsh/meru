@@ -1,4 +1,3 @@
-import type { Design } from "./settings.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** Main places the content view below it and the shell draws it this tall. */
@@ -7,12 +6,6 @@ export const TITLEBAR_HEIGHT = 40;
 /** v3's wide strip, the one width until the settings that choose another. */
 export const TAB_STRIP_WIDTH = 224;
 
-/** How far the modern design keeps the view from the strip and the window's edges. */
-const MODERN_INSET = 8;
-
-/** The modern design's corner radius of the view. */
-const MODERN_RADIUS = 8;
-
 export interface ViewFrame {
   /** Kept free around the view, below the titlebar and beside the strip. */
   inset: { top: number; right: number; bottom: number; left: number };
@@ -20,30 +13,21 @@ export interface ViewFrame {
 }
 
 /**
- * How the view sits in its area: edge to edge in classic, as in v3; in modern
- * inset from the strip and the window's sides and bottom, with rounded
- * corners. Main places the view by it and the shell draws its chrome by it.
+ * How the view sits in its area: inset from the window's right and bottom
+ * edges, flush with the titlebar and the strip, with rounded corners. Main
+ * places the view by it and the shell draws its chrome by it.
  */
-export const viewFrame = (design: Design): ViewFrame =>
-  design === "modern"
-    ? {
-        inset: {
-          top: 0,
-          right: MODERN_INSET,
-          bottom: MODERN_INSET,
-          left: MODERN_INSET,
-        },
-        radius: MODERN_RADIUS,
-      }
-    : { inset: { top: 0, right: 0, bottom: 0, left: 0 }, radius: 0 };
+export const viewFrame = (): ViewFrame => ({
+  inset: { top: 0, right: 8, bottom: 8, left: 0 },
+  radius: 8,
+});
 
 /** Where the content view sits in a window's content area. */
 export const contentViewBounds = (
   contentSize: Size,
-  stripWidth: number,
-  design: Design
+  stripWidth: number
 ): Rectangle => {
-  const { inset } = viewFrame(design);
+  const { inset } = viewFrame();
   const x = stripWidth + inset.left;
   const y = TITLEBAR_HEIGHT + inset.top;
 
@@ -68,11 +52,10 @@ export const OVERLAY_MARGIN = 20;
 export const overlayBounds = (
   contentSize: Size,
   stripWidth: number,
-  design: Design,
   size: Size,
   offset: number
 ): Rectangle => {
-  const view = contentViewBounds(contentSize, stripWidth, design);
+  const view = contentViewBounds(contentSize, stripWidth);
   const width = Math.min(size.width, view.width);
 
   return {

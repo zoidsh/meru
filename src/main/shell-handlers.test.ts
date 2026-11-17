@@ -2,18 +2,12 @@ import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import type { Overlay } from "#core/overlay.ts";
-import { SETTINGS } from "#core/settings.ts";
-import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import type { Confirmation, ContextMenuItem } from "#platform/window.ts";
 
-import {
-  createShellHandlers,
-  shellSettings,
-  shellState,
-} from "./shell-handlers.ts";
+import { createShellHandlers, shellState } from "./shell-handlers.ts";
 
 const two: State = {
   version: 1,
@@ -274,8 +268,6 @@ describe(createShellHandlers, () => {
   });
 });
 
-const SHOWN_SETTINGS = { design: "modern", vibrancy: true } as const;
-
 const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
 
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;
@@ -292,7 +284,6 @@ describe(shellState, () => {
           ],
         },
         () => ({ kind: "live" }),
-        SHOWN_SETTINGS,
         undefined,
         (profileId) =>
           profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL,
@@ -339,7 +330,6 @@ describe(shellState, () => {
         },
         ({ profileId, tabId }) =>
           statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
-        SHOWN_SETTINGS,
         undefined,
         () => NO_MAIL,
         undefined,
@@ -383,7 +373,6 @@ const overlaySlice = (open: Overlay | undefined) =>
   shellState(
     two,
     () => ({ kind: "live" }),
-    SHOWN_SETTINGS,
     open,
     () => NO_MAIL,
     undefined,
@@ -415,27 +404,10 @@ describe("the overlay slice", () => {
   });
 });
 
-describe(shellSettings, () => {
-  const settings = { design: "classic", vibrancy: true } as const;
-  const get = <Key extends SettingKey>(key: Key) =>
-    (key in settings
-      ? settings[key as keyof typeof settings]
-      : SETTINGS[key].default) as SettingValue<Key>;
-
-  it("gives the shell the design, and vibrancy on macOS alone", () => {
-    expect(shellSettings(get, true)).toStrictEqual(settings);
-    expect(shellSettings(get, false)).toStrictEqual({
-      design: "classic",
-      vibrancy: false,
-    });
-  });
-});
-
 const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
   shellState(
     two,
     () => ({ kind: "live" }),
-    SHOWN_SETTINGS,
     undefined,
     () => NO_MAIL,
     doNotDisturb,

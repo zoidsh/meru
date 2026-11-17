@@ -38,8 +38,7 @@ test("shows the stand-in in the content rectangle below the titlebar and beside 
 
   const { area, views } = await readViews(app);
 
-  // The modern design's, the default.
-  const bounds = contentViewBounds(area, TAB_STRIP_WIDTH, "modern");
+  const bounds = contentViewBounds(area, TAB_STRIP_WIDTH);
 
   expect(views.map((each) => each.bounds)).toStrictEqual([bounds]);
   expect(
@@ -63,10 +62,10 @@ test("shows the stand-in in the content rectangle below the titlebar and beside 
 
       return layout.views.map((each) => each.bounds);
     })
-    .toStrictEqual([{ x: 232, y: 40, width: 660, height: 592 }]);
+    .toStrictEqual([{ x: 224, y: 40, width: 668, height: 592 }]);
   await expect
     .poll(() => view.evaluate(() => [window.innerWidth, window.innerHeight]))
-    .toStrictEqual([660, 592]);
+    .toStrictEqual([668, 592]);
 });
 
 test("a second launch keeps the profile and its session's cookie", async ({

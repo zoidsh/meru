@@ -1,6 +1,5 @@
 import type { ShellState } from "#contract/shell.ts";
 import type { Overlay } from "#core/overlay.ts";
-import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { canRemoveProfile, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -56,15 +55,6 @@ const shellTabStatus = (status: TabStatus): ShellTabStatus => {
   }
 };
 
-/** The settings the shell draws by; vibrancy is macOS's alone. */
-export const shellSettings = (
-  get: <Key extends SettingKey>(key: Key) => SettingValue<Key>,
-  isMacOS: boolean
-): ShellState["settings"] => ({
-  design: get("design"),
-  vibrancy: isMacOS && get("vibrancy"),
-});
-
 const shellOverlay = (
   state: State,
   overlay: Overlay | undefined
@@ -86,7 +76,6 @@ const shellOverlay = (
 export const shellState = (
   state: State,
   status: (key: TabKey) => TabStatus,
-  settings: ShellState["settings"],
   overlay: Overlay | undefined,
   mail: (profileId: string) => Mail,
   doNotDisturb: DoNotDisturb | undefined,
@@ -116,7 +105,6 @@ export const shellState = (
         ),
       })),
     },
-    settings,
     doNotDisturb: {
       on: doNotDisturb !== undefined,
       until: doNotDisturb?.until ?? null,

@@ -44,7 +44,7 @@ export const buildMenuTemplate = ({
 
   const commandItem = (
     command: Command,
-    type?: "radio" | "checkbox",
+    type?: "checkbox",
     asText = false
   ): MenuItemConstructorOptions => {
     const title = command.title();
@@ -68,7 +68,7 @@ export const buildMenuTemplate = ({
 
   const item = (
     id: string,
-    type?: "radio" | "checkbox"
+    type?: "checkbox"
   ): MenuItemConstructorOptions[] => {
     const command = commands.find((candidate) => candidate.id === id);
 
@@ -210,15 +210,9 @@ export const buildMenuTemplate = ({
     ],
   };
 
-  const vibrancy = item("vibrancy.toggle", "checkbox");
-
   const viewMenu: MenuItemConstructorOptions = {
     label: t({ message: "View", comment: "Name of the View menu" }),
     submenu: [
-      ...item("design.modern", "radio"),
-      ...item("design.classic", "radio"),
-      separator,
-      ...(vibrancy.length > 0 ? [...vibrancy, separator] : []),
       ...item("inbox.toggle", "checkbox"),
       separator,
       ...item("tab.reload"),
@@ -467,7 +461,7 @@ export const createApplicationMenu = ({
 
   /**
    * A command fails into the log. A choice's menu is set again after it
-   * either way, since Electron checks a clicked radio or checkbox item itself.
+   * either way, since Electron checks a clicked checkbox item itself.
    */
   const run = async (command: Command) => {
     try {

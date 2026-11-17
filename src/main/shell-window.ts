@@ -5,8 +5,6 @@ import { resolveWindowBounds } from "#core/window-bounds.ts";
 import type { Displays } from "#platform/displays.ts";
 import type { AppWindow, WindowFactory } from "#platform/window.ts";
 
-import type { SettingsStore } from "./settings.ts";
-
 export interface ShellWindowDeps {
   windows: WindowFactory;
   displays: Displays;
@@ -15,13 +13,12 @@ export interface ShellWindowDeps {
   preloadPath: string;
   isMacOS: boolean;
   background: boolean;
-  vibrancy: boolean;
 }
 
 const DEFAULT_SIZE = { width: 1280, height: 800 };
 
 /**
- * Leaves the content view 480px wide in the modern design beside the strip,
+ * Leaves the content view 488px wide beside the strip,
  * about where Gmail's narrowest layout still shows a list.
  */
 const MINIMUM_SIZE = { width: 720, height: 480 };
@@ -39,7 +36,6 @@ export const createShellWindow = ({
   preloadPath,
   isMacOS,
   background,
-  vibrancy,
 }: ShellWindowDeps) => {
   const window = windows.create({
     title,
@@ -53,7 +49,6 @@ export const createShellWindow = ({
     titleBarStyle: isMacOS ? "hiddenInset" : "default",
     preloadPath,
     contentUrl: url,
-    vibrancy,
     allowsWindowOpen: allowsShellWindowOpen,
   });
 
@@ -77,16 +72,6 @@ export const createShellWindow = ({
   window.once("did-finish-load", showOnce);
 
   return { window, load: () => window.loadURL(url) };
-};
-
-/** Gives the window the vibrancy the settings hold, each time they change it. */
-export const followVibrancy = (
-  window: Pick<AppWindow, "setVibrancy">,
-  settings: Pick<SettingsStore, "get" | "onChange">
-) => {
-  settings.onChange("vibrancy", () => {
-    window.setVibrancy(settings.get("vibrancy"));
-  });
 };
 
 /**

@@ -134,7 +134,7 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
     sharesShellProcess: true,
   });
   expect(view.bounds).toStrictEqual(
-    overlayRectangle(view.area ?? { width: 0, height: 0 }, "modern", {
+    overlayRectangle(view.area ?? { width: 0, height: 0 }, {
       kind: "rename-profile",
       profileId: "",
     })

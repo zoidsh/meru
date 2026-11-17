@@ -14,16 +14,14 @@ import {
   savedSearchName,
   savedSearches,
 } from "#core/saved-searches.ts";
-import type { Design, SettingKey, SettingValue } from "#core/settings.ts";
 import { adjacentProfile, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import { adjacentTab, canCloseTab, findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 
-/** What a command decides from: main's state and settings as they are now. */
+/** What a command decides from: main's state as it is now. */
 export interface CommandContext {
   state: State;
-  setting: <Key extends SettingKey>(key: Key) => SettingValue<Key>;
   /** Do Not Disturb while it holds, else `undefined`. */
   doNotDisturb: DoNotDisturb | undefined;
   /** Whether the unified inbox covers the content area. */
@@ -32,11 +30,6 @@ export interface CommandContext {
 
 /** What commands do, each through the module that owns it. */
 export interface CommandActions {
-  /** Sets a setting to what `change` makes of it once earlier changes are in. */
-  updateSetting: <Key extends SettingKey>(
-    key: Key,
-    change: (value: SettingValue<Key>) => SettingValue<Key>
-  ) => Promise<void>;
   reloadSelectedTab: () => void;
   selectTab: (key: TabKey) => Promise<unknown>;
   closeTab: (key: TabKey) => Promise<unknown>;
@@ -61,8 +54,6 @@ export interface Command {
   title: () => string;
   /** An Electron accelerator per platform; none where the platform has no key. */
   shortcut?: Partial<Record<Platform, string>>;
-  /** Where the command exists; everywhere when not given. */
-  platforms?: readonly Platform[];
   isAvailable?: (context: CommandContext) => boolean;
   /** A command with this is a choice that is on or off. */
   isChecked?: (context: CommandContext) => boolean;
@@ -79,17 +70,6 @@ const selectedTab = (state: State): TabKey => {
 
   return { profileId: profile.id, tabId: profile.selectedTabId };
 };
-
-const chooseDesign = (
-  id: string,
-  design: Design,
-  title: () => string
-): Command => ({
-  id,
-  title,
-  isChecked: ({ setting }) => setting("design") === design,
-  run: (_context, { updateSetting }) => updateSetting("design", () => design),
-});
 
 const selectAdjacentTab = (offset: number): Command["run"] => {
   const run: Command["run"] = async (
@@ -224,35 +204,6 @@ export const savedSearchCommands = (state: State) =>
  * the command.
  */
 export const COMMANDS: readonly Command[] = [
-  chooseDesign("design.modern", "modern", () =>
-    t({
-      message: "Modern",
-      context: "design",
-      comment:
-        "Menu item in the View menu that chooses the design where pages sit inset with rounded corners",
-    })
-  ),
-  chooseDesign("design.classic", "classic", () =>
-    t({
-      message: "Classic",
-      context: "design",
-      comment:
-        "Menu item in the View menu that chooses the design where pages run edge to edge, as in earlier versions",
-    })
-  ),
-  {
-    id: "vibrancy.toggle",
-    title: () =>
-      t({
-        message: "Vibrancy",
-        comment:
-          "Menu item in the View menu, checked while the window's sidebar and title bar let the desktop show through, blurred, as macOS sidebars do",
-      }),
-    platforms: ["darwin"],
-    isChecked: ({ setting }) => setting("vibrancy"),
-    run: (_context, { updateSetting }) =>
-      updateSetting("vibrancy", (isOn) => !isOn),
-  },
   {
     id: "inbox.toggle",
     title: () =>
@@ -480,9 +431,3 @@ export const COMMANDS: readonly Command[] = [
     run: (_context, { switchDoNotDisturb }) => switchDoNotDisturb(duration),
   })),
 ];
-
-/** The commands that exist on `platform`. */
-export const commandsFor = (platform: Platform) =>
-  COMMANDS.filter(
-    (command) => !command.platforms || command.platforms.includes(platform)
-  );

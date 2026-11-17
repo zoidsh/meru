@@ -4,14 +4,12 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { expect, findPage, test, writeSettings } from "./lib/app.ts";
 import {
-  DESIGNS,
   THEMES,
   emulateTheme,
   onlyWithShots,
   shootWindow,
   shotPath,
 } from "./lib/shots.ts";
-import type { Design } from "./lib/shots.ts";
 import {
   DARK_PARTS,
   POPOUT_PATH,
@@ -29,45 +27,24 @@ const launch = async (
   userDataDir: string,
   settings: object = {}
 ) => {
-  // A clear window, which a capture shows white, would hide the chrome.
-  await writeSettings(userDataDir, { vibrancy: false, ...settings });
+  await writeSettings(userDataDir, settings);
 
   const app = await launchApp();
 
   return { app, shell: await findPage(app, "meru-app:") };
 };
 
-const setDesign = (app: ElectronApplication, design: Design) =>
-  app.evaluate(async (_electron, value) => {
-    const settings = Reflect.get(globalThis, "meruTestSettings") as {
-      set: (key: string, value: unknown) => Promise<void>;
-    };
-
-    await settings.set("design", value);
-  }, design);
-
-/**
- * Shoots the whole window as `surface` in each design and theme; `around`
- * readies what is shown in a design, shooting in between.
- */
+/** Shoots the whole window as `surface` in each theme. */
 const shootEachWay = async (
   app: ElectronApplication,
   shell: Page,
-  surface: string,
-  around: (shoot: () => Promise<void>) => Promise<void> = (shoot) => shoot()
+  surface: string
 ) => {
-  for (const design of DESIGNS) {
-    // oxlint-disable-next-line no-await-in-loop -- one design at a time
-    await setDesign(app, design);
-    // oxlint-disable-next-line no-await-in-loop -- one design at a time
-    await around(async () => {
-      for (const theme of THEMES) {
-        // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
-        await emulateTheme(app, theme);
-        // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
-        await shootWindow(app, shell, shotPath(surface, design, theme));
-      }
-    });
+  for (const theme of THEMES) {
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await emulateTheme(app, theme);
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await shootWindow(app, shell, shotPath(surface, theme));
   }
 };
 
@@ -92,17 +69,13 @@ test("the rename profile overlay", async ({
   const field = overlay.getByRole("textbox", { name: "Rename profile" });
 
   await findPage(app, standIn.url);
-  await shootEachWay(app, shell, "rename", async (shoot) => {
-    await app.evaluate(({ Menu, BrowserWindow }) => {
-      Menu.getApplicationMenu()
-        ?.getMenuItemById("profile.rename")
-        ?.click(undefined, BrowserWindow.getAllWindows()[0]);
-    });
-    await expect(field).toBeFocused();
-    await shoot();
-    await overlay.keyboard.press("Escape");
-    await expect(field).toHaveCount(0);
+  await app.evaluate(({ Menu, BrowserWindow }) => {
+    Menu.getApplicationMenu()
+      ?.getMenuItemById("profile.rename")
+      ?.click(undefined, BrowserWindow.getAllWindows()[0]);
   });
+  await expect(field).toBeFocused();
+  await shootEachWay(app, shell, "rename");
 });
 
 test("a thread with every thread feature on", async ({
@@ -154,7 +127,7 @@ test("a thread and a docked compose while Gmail is Dark, with the dark theme on 
   }
 });
 
-test("Gmail's pop-out, which shows Gmail's page alone in either design and theme", async ({
+test("Gmail's pop-out, which shows Gmail's page alone", async ({
   app,
   standIn,
 }) => {

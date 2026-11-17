@@ -90,20 +90,30 @@ const setup = (initial: Settings, failSave = false) => {
 };
 
 describe(createSettingsStore, () => {
+  it("keeps the design and vibrancy an earlier build wrote when another setting changes", async () => {
+    const found = { version: 1, design: "classic", vibrancy: false };
+    const { file } = createFakeFile(JSON.stringify(found));
+    const { settings, saved } = setup(await load(file));
+
+    await settings.update("unreadBadge", () => false);
+
+    expect(saved).toStrictEqual([{ ...found, unreadBadge: false }]);
+  });
+
   it("saves a change before it reads back, and keeps the rest of the file as found", async () => {
     const { settings, saved } = setup({
       version: 1,
-      design: "glass",
+      trayIconColor: "glass",
       later: 1,
     });
 
-    expect(settings.get("design")).toBe("modern");
+    expect(settings.get("trayIconColor")).toBe("system");
 
-    await settings.update("vibrancy", () => false);
+    await settings.update("unreadBadge", () => false);
 
-    expect(settings.get("vibrancy")).toBeFalsy();
+    expect(settings.get("unreadBadge")).toBeFalsy();
     expect(saved).toStrictEqual([
-      { version: 1, design: "glass", later: 1, vibrancy: false },
+      { version: 1, trayIconColor: "glass", later: 1, unreadBadge: false },
     ]);
   });
 
@@ -111,37 +121,39 @@ describe(createSettingsStore, () => {
     const { settings } = setup({ version: 1 });
     const heard: string[] = [];
 
-    settings.onChange("design", () => heard.push(settings.get("design")));
-    settings.onChange("vibrancy", () => heard.push("vibrancy"));
+    settings.onChange("trayIconColor", () =>
+      heard.push(settings.get("trayIconColor"))
+    );
+    settings.onChange("unreadBadge", () => heard.push("unreadBadge"));
 
-    await settings.update("design", () => "classic");
-    await settings.update("design", () => "classic");
-    await settings.update("design", () => "modern");
+    await settings.update("trayIconColor", () => "dark");
+    await settings.update("trayIconColor", () => "dark");
+    await settings.update("trayIconColor", () => "system");
 
-    expect(heard).toStrictEqual(["classic", "modern"]);
+    expect(heard).toStrictEqual(["dark", "system"]);
   });
 
   it("announces nothing for setting a value that did not parse to its default", async () => {
-    const { settings, saved } = setup({ version: 1, design: "glass" });
+    const { settings, saved } = setup({ version: 1, trayIconColor: "glass" });
     const heard: string[] = [];
 
-    settings.onChange("design", () => heard.push("design"));
-    await settings.update("design", () => "modern");
+    settings.onChange("trayIconColor", () => heard.push("trayIconColor"));
+    await settings.update("trayIconColor", () => "system");
 
     expect(heard).toStrictEqual([]);
-    expect(saved).toStrictEqual([{ version: 1, design: "modern" }]);
+    expect(saved).toStrictEqual([{ version: 1, trayIconColor: "system" }]);
   });
 
   it("leaves the old value standing when the save fails", async () => {
     const { settings } = setup({ version: 1 }, true);
     const heard: string[] = [];
 
-    settings.onChange("design", () => heard.push("design"));
+    settings.onChange("trayIconColor", () => heard.push("trayIconColor"));
 
-    await expect(settings.update("design", () => "classic")).rejects.toThrow(
-      "disk full"
-    );
-    expect(settings.get("design")).toBe("modern");
+    await expect(
+      settings.update("trayIconColor", () => "dark")
+    ).rejects.toThrow("disk full");
+    expect(settings.get("trayIconColor")).toBe("system");
     expect(heard).toStrictEqual([]);
   });
 });

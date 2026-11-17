@@ -14,11 +14,7 @@ const SHOTS = path.join(
   "shots"
 );
 
-export type Design = "modern" | "classic";
-
 export type Theme = "light" | "dark";
-
-export const DESIGNS: Design[] = ["modern", "classic"];
 
 export const THEMES: Theme[] = ["light", "dark"];
 
@@ -30,9 +26,9 @@ export const onlyWithShots = () => {
   );
 };
 
-/** `test-results/shots/<surface>[-<design>][-<theme>].png`. */
-export const shotPath = (surface: string, design?: Design, theme?: Theme) =>
-  path.join(SHOTS, `${[surface, design, theme].filter(Boolean).join("-")}.png`);
+/** `test-results/shots/<surface>[-<theme>].png`. */
+export const shotPath = (surface: string, theme?: Theme) =>
+  path.join(SHOTS, `${[surface, theme].filter(Boolean).join("-")}.png`);
 
 /** Has every page of the app take the scheme, as Playwright emulates it. */
 export const emulateTheme = async (app: ElectronApplication, theme: Theme) => {

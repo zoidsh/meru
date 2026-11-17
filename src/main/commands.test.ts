@@ -4,18 +4,10 @@ import { savedSearches } from "#core/saved-searches.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
-import {
-  COMMANDS,
-  commandsFor,
-  currentSearch,
-  savedSearchCommands,
-} from "./commands.ts";
+import { COMMANDS, currentSearch, savedSearchCommands } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createProfiles } from "./profiles.ts";
-import { createSettingsStore } from "./settings.ts";
-import { shellSettings } from "./shell-handlers.ts";
-import { followVibrancy } from "./shell-window.ts";
 
 const twoProfiles: State = {
   version: 1,
@@ -32,7 +24,7 @@ const twoProfiles: State = {
 const commandOf = (id: string) =>
   COMMANDS.find((candidate) => candidate.id === id) as Command;
 
-/** The real profiles and settings, saving nowhere, behind the actions. */
+/** The real profiles, saving nowhere, behind the actions. */
 const setup = (initial: State = twoProfiles) => {
   const profiles = createProfiles({
     initial,
@@ -41,12 +33,6 @@ const setup = (initial: State = twoProfiles) => {
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: () => 0,
-    log: () => false,
-  });
-  const settings = createSettingsStore({
-    initial: { version: 1 },
-    save: () => Promise.resolve(),
-    platform: "darwin",
     log: () => false,
   });
   // 17 November 2026, 14:00 by the local clock.
@@ -60,7 +46,6 @@ const setup = (initial: State = twoProfiles) => {
   const renames: string[] = [];
   const navigations: string[] = [];
   const actions: CommandActions = {
-    updateSetting: settings.update,
     reloadSelectedTab: () => {
       reloads += 1;
     },
@@ -88,7 +73,6 @@ const setup = (initial: State = twoProfiles) => {
   };
   const context = (): CommandContext => ({
     state: profiles.get(),
-    setting: settings.get,
     doNotDisturb: doNotDisturb.current(),
     inboxOpen,
   });
@@ -97,7 +81,6 @@ const setup = (initial: State = twoProfiles) => {
 
   return {
     profiles,
-    settings,
     reloads: () => reloads,
     renames,
     navigations,
@@ -126,45 +109,6 @@ describe("the command registry", () => {
     for (const command of COMMANDS) {
       expect(command.title()).not.toBe("");
     }
-  });
-
-  it("checks the design in use and switches it", async () => {
-    const app = setup();
-
-    expect([
-      app.isChecked("design.modern"),
-      app.isChecked("design.classic"),
-    ]).toStrictEqual([true, false]);
-
-    await app.run("design.classic");
-
-    expect(app.settings.get("design")).toBe("classic");
-    expect([
-      app.isChecked("design.modern"),
-      app.isChecked("design.classic"),
-    ]).toStrictEqual([false, true]);
-  });
-
-  it("toggles vibrancy in the window and the shell's slice, once for each of two queued clicks", async () => {
-    const app = setup();
-    const applied: boolean[] = [];
-
-    followVibrancy({ setVibrancy: (isOn) => applied.push(isOn) }, app.settings);
-
-    expect(app.isChecked("vibrancy.toggle")).toBeTruthy();
-
-    await app.run("vibrancy.toggle");
-
-    expect([
-      applied,
-      shellSettings(app.settings.get, true).vibrancy,
-      app.isChecked("vibrancy.toggle"),
-    ]).toStrictEqual([[false], false, false]);
-
-    await Promise.all([app.run("vibrancy.toggle"), app.run("vibrancy.toggle")]);
-
-    expect(applied).toStrictEqual([false, true, false]);
-    expect(shellSettings(app.settings.get, true).vibrancy).toBeFalsy();
   });
 
   it("closes the selected tab, but never Gmail's", async () => {
@@ -273,9 +217,6 @@ describe("the command registry", () => {
   });
 });
 
-const hasVibrancy = (platform: "darwin" | "win32" | "linux") =>
-  commandsFor(platform).some((command) => command.id === "vibrancy.toggle");
-
 /** The two profiles, with the selected one's Gmail tab at `url`. */
 const gmailAt = (url: string, selectedTabId = "gmail"): State => ({
   ...twoProfiles,
@@ -370,15 +311,7 @@ describe("the Mail menu's commands", () => {
   });
 });
 
-describe(commandsFor, () => {
-  it("has the vibrancy command on macOS alone", () => {
-    expect([
-      hasVibrancy("darwin"),
-      hasVibrancy("win32"),
-      hasVibrancy("linux"),
-    ]).toStrictEqual([true, false, false]);
-  });
-
+describe("Do Not Disturb's commands", () => {
   it("switches Do Not Disturb on for a duration and until tomorrow", async () => {
     const app = setup();
 

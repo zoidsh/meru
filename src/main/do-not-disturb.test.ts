@@ -198,7 +198,6 @@ const labels = (context: Partial<CommandContext>) =>
     COMMANDS,
     {
       state: one,
-      setting: (() => true) as CommandContext["setting"],
       doNotDisturb: undefined,
       inboxOpen: false,
       ...context,
@@ -263,7 +262,6 @@ describe("an end no date holds", () => {
         shellState(
           decoded.value,
           () => ({ kind: "live" }),
-          { design: "modern", vibrancy: false },
           undefined,
           () => ({ status: "unknown", unreadCount: null }),
           current,

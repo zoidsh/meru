@@ -25,13 +25,9 @@ export type SettingDeclarations = Record<string, SettingDefinition> &
 
 const setting = <Value>(definition: SettingDefinition<Value>) => definition;
 
-export const DESIGNS = ["modern", "classic"] as const;
-
 export const TRAY_ICON_COLORS = ["system", "light", "dark"] as const;
 
 export type TrayIconColor = (typeof TRAY_ICON_COLORS)[number];
-
-export type Design = (typeof DESIGNS)[number];
 
 /** The default first. */
 export const VERIFICATION_CODE_COPY_MODES = [
@@ -44,15 +40,6 @@ export type VerificationCodeCopyMode =
 
 /** Every setting, declared once. */
 export const SETTINGS = {
-  design: setting<Design>({
-    schema: z.enum(DESIGNS),
-    default: "modern",
-  }),
-  /** Read on macOS alone. */
-  vibrancy: setting<boolean>({
-    schema: z.boolean(),
-    default: true,
-  }),
   /** A notification for mail that arrives. */
   notifications: setting<boolean>({
     schema: z.boolean(),

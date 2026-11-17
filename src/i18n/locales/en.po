@@ -121,12 +121,6 @@ msgstr "Cancel"
 msgid "Checking {name} for mail…"
 msgstr "Checking {name} for mail…"
 
-#. Menu item in the View menu that chooses the design where pages run edge to edge, as in earlier versions
-#: src/main/commands.ts
-msgctxt "design"
-msgid "Classic"
-msgstr "Classic"
-
 #. Menu item in the Window menu that closes the window
 #: src/main/application-menu.ts
 msgid "Close"
@@ -339,12 +333,6 @@ msgstr "Meru signs out of this profile and deletes its data on this device. Your
 #: src/main/application-menu.ts
 msgid "Minimize"
 msgstr "Minimize"
-
-#. Menu item in the View menu that chooses the design where pages sit inset with rounded corners
-#: src/main/commands.ts
-msgctxt "design"
-msgid "Modern"
-msgstr "Modern"
 
 #. Title of a notification for an email that arrived, when the person chose not to show who sent it
 #: src/main/notifications.ts
@@ -599,11 +587,6 @@ msgstr "Until Turned Off"
 #: src/main/notifications.ts
 msgid "Verification code {verificationCode}"
 msgstr "Verification code {verificationCode}"
-
-#. Menu item in the View menu, checked while the window's sidebar and title bar let the desktop show through, blurred, as macOS sidebars do
-#: src/main/commands.ts
-msgid "Vibrancy"
-msgstr "Vibrancy"
 
 #. Name of the View menu
 #: src/main/application-menu.ts

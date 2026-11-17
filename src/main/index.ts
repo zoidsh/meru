@@ -47,7 +47,7 @@ import { createWindowFactory } from "#platform/window.ts";
 import { createApplicationMenu } from "./application-menu.ts";
 import { createUnreadBadge } from "./badge.ts";
 import { createCatchUp } from "./catch-up.ts";
-import { commandsFor } from "./commands.ts";
+import { COMMANDS } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
@@ -72,15 +72,10 @@ import {
   saveSettings,
 } from "./settings.ts";
 import type { SettingsStore } from "./settings.ts";
-import {
-  createShellHandlers,
-  shellSettings,
-  shellState,
-} from "./shell-handlers.ts";
+import { createShellHandlers, shellState } from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
 import {
   createShellWindow,
-  followVibrancy,
   hideOnClose,
   revealWindow,
 } from "./shell-window.ts";
@@ -352,10 +347,7 @@ const start = async () => {
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
     isMacOS,
     background,
-    vibrancy: settings.get("vibrancy"),
   });
-
-  followVibrancy(shell.window, settings);
 
   const senders = createSenderRegistry();
 
@@ -385,11 +377,7 @@ const start = async () => {
     focus,
     initial: profiles.get(),
     bounds: (overlay) =>
-      overlayRectangle(
-        shell.window.getContentAreaSize(),
-        settings.get("design"),
-        overlay
-      ),
+      overlayRectangle(shell.window.getContentAreaSize(), overlay),
     log: console.error,
   });
 
@@ -471,7 +459,6 @@ const start = async () => {
     network,
     senders,
     state: profiles.get,
-    design: () => settings.get("design"),
     // oxlint-disable-next-line no-use-before-define -- the inbox opens messages in the views
     inboxOpen: () => inbox.isOpen(),
     openTab: profiles.openTab,
@@ -655,21 +642,17 @@ const start = async () => {
   });
   // After the views, so focus handed back finds the new front tab's.
   profiles.onChange(overlays.follow);
-  settings.onChange("design", views.relayout);
-  settings.onChange("design", overlays.relayout);
 
   const menu = createApplicationMenu({
     platform,
     appName: lifecycle.name,
-    commands: commandsFor(platform),
+    commands: COMMANDS,
     context: () => ({
       state: profiles.get(),
-      setting: settings.get,
       doNotDisturb: doNotDisturb.current(),
       inboxOpen: inbox.isOpen(),
     }),
     actions: {
-      updateSetting: settings.update,
       reloadSelectedTab: views.reloadFront,
       selectTab: profiles.selectTab,
       closeTab: profiles.closeTab,
@@ -700,8 +683,6 @@ const start = async () => {
 
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);
-  settings.onChange("design", menu.refresh);
-  settings.onChange("vibrancy", menu.refresh);
 
   serveShellContract({
     ipc,
@@ -722,7 +703,6 @@ const start = async () => {
         shellState(
           profiles.get(),
           views.status,
-          shellSettings(settings.get, isMacOS),
           overlays.current(),
           mail.mail,
           doNotDisturb.current(),
@@ -734,8 +714,6 @@ const start = async () => {
         views.onChange(listener);
         overlays.onChange(listener);
         inbox.onChange(listener);
-        settings.onChange("design", listener);
-        settings.onChange("vibrancy", listener);
       },
     },
     log: console.error,

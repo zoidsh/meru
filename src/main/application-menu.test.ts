@@ -9,9 +9,8 @@ import {
   buildMenuTemplate,
   createApplicationMenu,
 } from "./application-menu.ts";
-import { commandsFor } from "./commands.ts";
+import { COMMANDS } from "./commands.ts";
 import type { CommandActions, CommandContext } from "./commands.ts";
-import { createSettingsStore } from "./settings.ts";
 
 const oneProfile: State = {
   version: 1,
@@ -19,12 +18,8 @@ const oneProfile: State = {
   selectedProfileId: "a",
 };
 
-const contextOf = (
-  design: "modern" | "classic" = "modern"
-): CommandContext => ({
+const contextOf = (): CommandContext => ({
   state: oneProfile,
-  setting: ((key: string) =>
-    key === "design" ? design : true) as CommandContext["setting"],
   doNotDisturb: undefined,
   inboxOpen: false,
 });
@@ -33,7 +28,7 @@ const template = (platform: Platform, context = contextOf()) =>
   buildMenuTemplate({
     platform,
     appName: "Meru",
-    commands: commandsFor(platform),
+    commands: COMMANDS,
     context,
     run: () => false,
     locale: "en",
@@ -58,11 +53,10 @@ const labels = (menus: MenuItemConstructorOptions[]) =>
   menus.map((menu) => menu.label);
 
 describe(buildMenuTemplate, () => {
-  it("on macOS keeps the roles' own keys and has vibrancy and Help", () => {
+  it("on macOS keeps the roles' own keys and has Help", () => {
     const menus = template("darwin");
 
     expect(labels(menus)).toContain("Help");
-    expect(itemOf(menus, "vibrancy.toggle")).toBeDefined();
     // Command+Q, Command+W and the zoom keys.
     expect(
       ["quit", "close", "zoomIn"].map(
@@ -72,13 +66,12 @@ describe(buildMenuTemplate, () => {
   });
 
   it.each(["win32", "linux"] as const)(
-    "on %s has no vibrancy, no Help, Quit on Ctrl+Q and a Close with no key, so Ctrl+W in a page cannot quit",
+    "on %s has no Help, Quit on Ctrl+Q and a Close with no key, so Ctrl+W in a page cannot quit",
     (platform) => {
       const menus = template(platform);
       const close = itemOf(menus, "window.close");
 
       expect(labels(menus)).not.toContain("Help");
-      expect(itemOf(menus, "vibrancy.toggle")).toBeUndefined();
       expect(itemOf(menus, "quit")?.accelerator).toBe("CommandOrControl+Q");
       expect(close).toBeDefined();
       expect([close?.role, close?.accelerator]).toStrictEqual([
@@ -92,7 +85,7 @@ describe(buildMenuTemplate, () => {
     const given = buildMenuTemplate({
       platform: "darwin",
       appName: "Meru",
-      commands: commandsFor("darwin"),
+      commands: COMMANDS,
       context: contextOf(),
       run: () => false,
       locale: "en",
@@ -101,21 +94,6 @@ describe(buildMenuTemplate, () => {
 
     expect(outline(given)[2]?.[1]?.at(-1)).toBe("toggleDevTools");
     expect(outline(template("darwin"))[2]?.[1]).not.toContain("toggleDevTools");
-  });
-
-  it("checks the design in use", () => {
-    const menus = template("darwin", contextOf("classic"));
-
-    expect(
-      ["design.modern", "design.classic"].map((id) => {
-        const choice = itemOf(menus, id);
-
-        return [choice?.label, choice?.type, choice?.checked];
-      })
-    ).toStrictEqual([
-      ["Modern", "radio", false],
-      ["Classic", "radio", true],
-    ]);
   });
 
   it("puts the Mail menu between View and Tabs, with no access key, as no other menu has one", () => {
@@ -235,16 +213,13 @@ const viewItem = (menus: MenuItemConstructorOptions[], id: string) =>
 const setup = () => {
   const set: MenuItemConstructorOptions[][] = [];
   let state = oneProfile;
-  const settings = createSettingsStore({
-    initial: { version: 1 },
-    save: () => Promise.resolve(),
-    platform: "darwin",
-    log: () => false,
-  });
   let reloads = 0;
+  let inboxOpen = false;
   const selected: string[] = [];
   const actions = {
-    updateSetting: settings.update,
+    setInboxOpen: (open: boolean) => {
+      inboxOpen = open;
+    },
     reloadSelectedTab: () => {
       reloads += 1;
     },
@@ -257,12 +232,11 @@ const setup = () => {
   const menu = createApplicationMenu({
     platform: "darwin",
     appName: "Meru",
-    commands: commandsFor("darwin"),
+    commands: COMMANDS,
     context: () => ({
       state,
-      setting: settings.get,
       doNotDisturb: undefined,
-      inboxOpen: false,
+      inboxOpen,
     }),
     actions,
     locale: () => "en",
@@ -270,12 +244,9 @@ const setup = () => {
     log: () => false,
   });
 
-  settings.onChange("design", menu.refresh);
-
   return {
     set,
     menu,
-    settings,
     reloads: () => reloads,
     selected,
     setState: (next: State) => {
@@ -317,14 +288,15 @@ describe(createApplicationMenu, () => {
   it("runs a clicked item's command and checks what it chose", async () => {
     const app = setup();
 
-    viewItem(app.set[0] ?? [], "design.classic")?.click?.(
+    expect(viewItem(app.set[0] ?? [], "inbox.toggle")?.checked).toBeFalsy();
+
+    viewItem(app.set[0] ?? [], "inbox.toggle")?.click?.(
       ...([] as unknown as Parameters<
         NonNullable<MenuItemConstructorOptions["click"]>
       >)
     );
-    await expect.poll(() => app.settings.get("design")).toBe("classic");
     await expect
-      .poll(() => viewItem(app.set.at(-1) ?? [], "design.classic")?.checked)
+      .poll(() => viewItem(app.set.at(-1) ?? [], "inbox.toggle")?.checked)
       .toBeTruthy();
   });
 

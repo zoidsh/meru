@@ -120,12 +120,12 @@ test("adding a profile shows a second tab, selected, and a view in a session of 
   expect(views).toStrictEqual([
     {
       profileId: first,
-      bounds: contentViewBounds(content, TAB_STRIP_WIDTH, "modern"),
+      bounds: contentViewBounds(content, TAB_STRIP_WIDTH),
       visible: false,
     },
     {
       profileId: second,
-      bounds: contentViewBounds(content, TAB_STRIP_WIDTH, "modern"),
+      bounds: contentViewBounds(content, TAB_STRIP_WIDTH),
       visible: true,
     },
   ]);
@@ -160,7 +160,7 @@ test("switching back shows the first view in the content rectangle and hides the
         ...view,
         inContent: isEqual(
           view.bounds,
-          contentViewBounds(content, TAB_STRIP_WIDTH, "modern")
+          contentViewBounds(content, TAB_STRIP_WIDTH)
         ),
       }));
     })

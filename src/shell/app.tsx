@@ -2,7 +2,7 @@ import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 import { MoonIcon, PlusIcon } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 import { TITLEBAR_HEIGHT, viewFrame } from "#core/layout.ts";
 import { MAX_SHOWN_UNREAD } from "#core/unread.ts";
@@ -186,25 +186,12 @@ const DoNotDisturbButton = () => {
 export const App = () => {
   const { t } = useLingui();
   const tabs = useShellState("tabs");
-  const settings = useShellState("settings");
   const profiles = useShellState("profiles");
   const inbox = useShellState("inbox");
-  const design = settings?.design ?? "modern";
-  const vibrant = settings?.vibrancy ?? false;
-  const { inset, radius } = viewFrame(design);
-
-  // The window's vibrancy shows through wherever the page is clear.
-  useEffect(() => {
-    document.body.classList.toggle("bg-transparent", vibrant);
-  }, [vibrant]);
+  const { inset, radius } = viewFrame();
 
   return (
-    <div
-      className={cn(
-        "flex h-full flex-col",
-        vibrant ? "bg-transparent" : "bg-sidebar"
-      )}
-    >
+    <div className="flex h-full flex-col bg-sidebar">
       {/* The preload stamps data-platform; the traffic lights take the left end on macOS. */}
       <header
         aria-label={t({
@@ -213,10 +200,7 @@ export const App = () => {
             "Accessible name of the strip across the top of the window, read by screen readers",
         })}
         style={{ height: TITLEBAR_HEIGHT }}
-        className={cn(
-          "flex shrink-0 items-center px-3 [app-region:drag] in-data-[platform=darwin]:pl-20",
-          design === "classic" && "border-b border-border"
-        )}
+        className="flex shrink-0 items-center px-3 [app-region:drag] in-data-[platform=darwin]:pl-20"
       >
         <Profiles />
         {/* Keeps part of the title bar for dragging the window, however many profiles there are. */}
@@ -230,7 +214,7 @@ export const App = () => {
         </div>
       </header>
       <div className="flex min-h-0 flex-1">
-        {tabs && <TabStrip tabs={tabs} bordered={design === "classic"} />}
+        {tabs && <TabStrip tabs={tabs} />}
         {/* Drawn where main places the view, by the same measurements. */}
         <main
           aria-label={t({

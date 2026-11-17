@@ -62,7 +62,6 @@ const setup = () => {
   let state: ShellState = {
     profiles: profilesSlice("a"),
     tabs: TABS,
-    settings: { design: "modern", vibrancy: false },
     doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },
     inbox: { open: false, profiles: [], rows: [], notice: null },

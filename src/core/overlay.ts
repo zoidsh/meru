@@ -1,5 +1,4 @@
 import { OVERLAY_MARGIN, TAB_STRIP_WIDTH, overlayBounds } from "./layout.ts";
-import type { Design } from "./settings.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
@@ -35,13 +34,11 @@ const overlaySize = (overlay: Overlay): Size => {
 /** Where the overlay's view sits in a window's content area. */
 export const overlayRectangle = (
   contentSize: Size,
-  design: Design,
   overlay: Overlay
 ): Rectangle =>
   overlayBounds(
     contentSize,
     TAB_STRIP_WIDTH,
-    design,
     overlaySize(overlay),
     OVERLAY_OFFSET
   );

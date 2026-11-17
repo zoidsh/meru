@@ -75,14 +75,7 @@ const TabStatusIcon = ({ status }: { status: ShellTab["status"] }) => {
  * arrows through them: Delete or Backspace closes the focused tab, and the
  * buttons, for the pointer, sit over the list out of the tab order.
  */
-export const TabStrip = ({
-  tabs,
-  bordered,
-}: {
-  tabs: ShellState["tabs"];
-  /** Classic's line between the strip and the view. */
-  bordered: boolean;
-}) => {
+export const TabStrip = ({ tabs }: { tabs: ShellState["tabs"] }) => {
   const { t } = useLingui();
   const { profileId } = tabs;
   const [hovered, setHovered] = useState<string>();
@@ -107,10 +100,7 @@ export const TabStrip = ({
         shellCalls().selectTab({ profileId, tabId });
       }}
       style={{ width: TAB_STRIP_WIDTH }}
-      className={cn(
-        "flex min-h-0 shrink-0 flex-col",
-        bordered && "border-r border-border"
-      )}
+      className="flex min-h-0 shrink-0 flex-col"
     >
       <div
         data-tab-scroller

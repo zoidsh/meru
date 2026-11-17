@@ -8,65 +8,38 @@ import {
 } from "./layout.ts";
 
 describe(contentViewBounds, () => {
-  it("in classic fills the window below the 40px titlebar and beside the strip", () => {
+  it("sits flush below the 40px titlebar and beside the strip, 8px from the window's right edge and its bottom", () => {
     expect(
-      contentViewBounds(
-        { width: 1280, height: 800 },
-        TAB_STRIP_WIDTH,
-        "classic"
-      )
-    ).toStrictEqual({ x: 224, y: 40, width: 1056, height: 760 });
-  });
-
-  it("in modern keeps 8px from the strip, the window's right edge and its bottom", () => {
-    expect(
-      contentViewBounds({ width: 1280, height: 800 }, TAB_STRIP_WIDTH, "modern")
-    ).toStrictEqual({ x: 232, y: 40, width: 1040, height: 752 });
+      contentViewBounds({ width: 1280, height: 800 }, TAB_STRIP_WIDTH)
+    ).toStrictEqual({ x: 224, y: 40, width: 1048, height: 752 });
   });
 
   it("never gives a negative size", () => {
-    for (const design of ["classic", "modern"] as const) {
-      const bounds = contentViewBounds({ width: 100, height: 30 }, 224, design);
+    const bounds = contentViewBounds({ width: 100, height: 30 }, 224);
 
-      expect([bounds.width, bounds.height]).toStrictEqual([0, 0]);
-    }
+    expect([bounds.width, bounds.height]).toStrictEqual([0, 0]);
   });
 });
 
 describe(viewFrame, () => {
-  it("rounds the view's corners in modern alone", () => {
-    expect(viewFrame("modern").radius).toBe(8);
-    expect(viewFrame("classic").radius).toBe(0);
+  it("rounds the view's corners by 8px", () => {
+    expect(viewFrame().radius).toBe(8);
   });
 });
 
 describe(overlayBounds, () => {
   it("sits at the top centre of the content view", () => {
     const size = { width: 1280, height: 800 };
-    const view = contentViewBounds(size, TAB_STRIP_WIDTH, "modern");
-    const bounds = overlayBounds(
-      size,
-      TAB_STRIP_WIDTH,
-      "modern",
-      { width: 400, height: 80 },
-      8
-    );
+    const view = contentViewBounds(size, TAB_STRIP_WIDTH);
 
-    expect(bounds).toStrictEqual({
+    expect(
+      overlayBounds(size, TAB_STRIP_WIDTH, { width: 400, height: 80 }, 8)
+    ).toStrictEqual({
       x: view.x + (view.width - 400) / 2,
-      y: view.y + 8,
+      y: 48,
       width: 400,
       height: 80,
     });
-    expect(
-      overlayBounds(
-        size,
-        TAB_STRIP_WIDTH,
-        "classic",
-        { width: 400, height: 80 },
-        8
-      ).y
-    ).toBe(48);
   });
 
   it("is no larger than the content view", () => {
@@ -74,10 +47,9 @@ describe(overlayBounds, () => {
       overlayBounds(
         { width: 500, height: 100 },
         TAB_STRIP_WIDTH,
-        "classic",
         { width: 400, height: 80 },
         8
       )
-    ).toStrictEqual({ x: TAB_STRIP_WIDTH, y: 48, width: 276, height: 52 });
+    ).toStrictEqual({ x: TAB_STRIP_WIDTH, y: 48, width: 268, height: 44 });
   });
 });
