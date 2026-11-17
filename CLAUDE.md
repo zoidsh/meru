@@ -20,7 +20,7 @@ Run `pnpm check` and `pnpm test` before committing, and `pnpm test:e2e` when a c
 
 ## Layout
 
-One package; each area is a folder under `src` with its tests beside the code: `core` (pure logic, no Electron), `contract` (the IPC calls and state each renderer may use, importing only `core`), `platform` (thin adapters over Electron, each behind an exported interface so features test against fakes), `main` (entry and composition root), `preload/shell`, `shell` (the React and Tailwind renderer), `i18n` (languages and catalogs, nothing of Electron) and `ui` (shadcn components and `styles.css`). An import across areas uses the subpath alias, `#core/app-url.ts`; one within an area is relative; both keep the `.ts` extension. `oxlint.config.ts` enforces the boundaries.
+One package; each area is a folder under `src` with its tests beside the code: `core` (pure logic, no Electron), `contract` (the IPC calls and state each renderer may use, importing only `core`), `platform` (thin adapters over Electron, each behind an exported interface so features test against fakes), `main` (entry and composition root), `preload` (`shell` for the shell, `gmail` for Gmail's page, which `pnpm build` holds to a byte budget and lint keeps free of `zod`), `shell` (the React and Tailwind renderer), `i18n` (languages and catalogs, nothing of Electron) and `ui` (shadcn components and `styles.css`). An import across areas uses the subpath alias, `#core/app-url.ts`; one within an area is relative; both keep the `.ts` extension. `oxlint.config.ts` enforces the boundaries.
 
 Main's two stores, `state.json` (profiles and tabs) and `settings.json`, load through `src/main/stores.ts`. A file that does not decode is set aside, never deleted; what a build cannot read is written back as found; a newer version stops startup untouched. Anything added to either keeps those rules.
 
@@ -54,7 +54,7 @@ Compare `MERU_BUILD_MODE` and `MERU_E2E_BUILD` directly, never through a variabl
 - Controls are found by role and name (`getByRole` with a name, `getByLabel`, `getByText`); lint bans the selector APIs.
 - Every launch sets `MERU_TEST_BACKGROUND=1`, under which the app on macOS can never be activated; drive it through Playwright, never by raising it. On Windows and Linux each launch takes the desktop's focus, so a test that needs its window to keep it belongs in a file `e2e/playwright.config.ts` runs alone.
 - Playwright makes every page claim focus until `Emulation.setFocusEmulationEnabled` is off, as in `overlay.e2e.ts`, and emulates the light theme.
-- `MERU_E2E_SHOTS=1` also runs the screenshot tests (`e2e/screens.e2e.ts` and the inbox's), which write `test-results/shots/<surface>-<design>-<theme>.png` for a person to look at and assert nothing of the picture. `shootWindow` in `e2e/lib/shots.ts` pictures the whole window by drawing each shown view over the shell's capture, since a window's `capturePage()` holds the shell alone; it never captures the display.
+- `MERU_E2E_SHOTS=1` also runs the screenshot tests (in `e2e/screens.e2e.ts` and `e2e/inbox.e2e.ts`), which write `test-results/shots/<surface>[-<design>][-<theme>].png` for a person to look at and assert nothing of the picture. `shootWindow` in `e2e/lib/shots.ts` pictures the whole window by drawing each shown view over the shell's capture, since a window's `capturePage()` holds the shell alone; it never captures the display.
 - A failed test keeps its trace and window screenshots under `test-results/`; `pnpm exec playwright show-trace <trace.zip>` opens one.
 
 ## CI
