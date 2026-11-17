@@ -62,8 +62,6 @@ export interface TabViewsDeps {
   updatePages: (updates: PageUpdate[]) => Promise<unknown>;
   /** Told when a tab's page gains keyboard focus, the front one's alone. */
   onFocus: () => void;
-  /** Told of each mouse button pressed in a tab's page. */
-  onMouseDown: () => void;
   /** Told when another tab comes to the front, the first one included. */
   onFront: () => void;
   /** Told when a tab's page finishes a load or changes its title. */
@@ -115,7 +113,6 @@ export const createTabViews = ({
   prepareSession,
   updatePages,
   onFocus,
-  onMouseDown,
   onFront,
   onPageChange,
   onLoaded,
@@ -445,7 +442,6 @@ export const createTabViews = ({
       },
       onKey: handleKey,
       onFocus,
-      onMouseDown,
     });
 
     place(view);

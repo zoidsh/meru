@@ -59,8 +59,6 @@ export interface ContentViewOptions {
   onKey: (input: KeyInput) => boolean;
   /** Told when the page gains keyboard focus. */
   onFocus: () => void;
-  /** Told of each mouse button pressed in the page, before the page hears it. */
-  onMouseDown: () => void;
 }
 
 /** Where the page can go in its history, and whether it is loading now. */
@@ -259,11 +257,6 @@ export const addContentView = (
     }
   });
   webContents.on("focus", options.onFocus);
-  webContents.on("before-mouse-event", (_event, mouse) => {
-    if (mouse.type === "mouseDown") {
-      options.onMouseDown();
-    }
-  });
   reportEvents(webContents, options.onEvent);
   routeWindowOpens(webContents, options, children);
   window.contentView.addChildView(view);

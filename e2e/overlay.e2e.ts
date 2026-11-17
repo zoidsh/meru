@@ -83,7 +83,7 @@ const openFromMenu = async (app: ElectronApplication, overlay: Page) => {
 };
 
 const expectClosed = async (app: ElectronApplication, overlay: Page) => {
-  await expect(overlay.getByRole("form")).toHaveCount(0);
+  await expect(overlay.getByRole("dialog")).toHaveCount(0);
   const view = await readOverlayView(app);
 
   expect(view.visible).toBeFalsy();
@@ -120,7 +120,7 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   await openFromMenu(app, overlay);
 
   await expect(
-    overlay.getByRole("form", { name: "Rename profile" })
+    overlay.getByRole("dialog", { name: "Rename profile" })
   ).toBeVisible();
   await expect(overlay.getByText("Rename profile")).toBeVisible();
   await expect(field(overlay)).toHaveValue("Default");
@@ -141,10 +141,7 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
     sharesShellProcess: true,
   });
   expect(view.bounds).toStrictEqual(
-    overlayRectangle(view.area ?? { width: 0, height: 0 }, "hidden", {
-      kind: "rename-profile",
-      profileId: "",
-    })
+    overlayRectangle(view.area ?? { width: 0, height: 0 }, "hidden")
   );
 
   await overlay.keyboard.type("  Work ");
@@ -182,7 +179,7 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   });
 });
 
-test("Escape, a click on the page, a tab switch and the window losing focus each close it and leave the name", async ({
+test("Escape, a click beside the card, a tab switch and the window losing focus each close it and leave the name", async ({
   app,
   shell,
   standIn,
@@ -203,10 +200,10 @@ test("Escape, a click on the page, a tab switch and the window losing focus each
   await openFromMenu(app, overlay);
   expect(
     await overlay
-      .getByRole("form", { name: "Rename profile" })
-      .evaluate((form) => [
-        getComputedStyle(form).backgroundColor,
-        getComputedStyle(form.ownerDocument.body).backgroundColor,
+      .getByRole("dialog", { name: "Rename profile" })
+      .evaluate((card) => [
+        getComputedStyle(card).backgroundColor,
+        getComputedStyle(card.ownerDocument.body).backgroundColor,
       ])
   ).toStrictEqual(["oklch(1 0 0)", "rgba(0, 0, 0, 0)"]);
   await field(overlay).fill("");
@@ -219,11 +216,13 @@ test("Escape, a click on the page, a tab switch and the window losing focus each
   await overlay.keyboard.press("Enter");
   await expectClosed(app, overlay);
 
-  // A click on the page closes it and reaches the page.
+  // A click beside the card, over the page, closes it and stops there.
+  await draft.focus();
   await openFromMenu(app, overlay);
-  await draft.click();
+  await overlay.mouse.click(8, 400);
   await expectClosed(app, overlay);
   await expect(draft).toBeFocused();
+  await expect(draft).toHaveValue("");
 
   // Losing the window's focus closes it.
   await openFromMenu(app, overlay);
@@ -293,6 +292,6 @@ test("when the shell's renderer is gone, the overlay's view goes with it and not
 
   const overlay = await findPage(app, "about:blank");
 
-  await expect(overlay.getByRole("form")).toHaveCount(0);
+  await expect(overlay.getByRole("dialog")).toHaveCount(0);
   await openFromMenu(app, overlay);
 });

@@ -1,10 +1,12 @@
 import { Trans } from "@lingui/react/macro";
-import { useId } from "react";
+import { cn } from "cn";
+import { useEffect, useId } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import type { ShellState } from "#contract/shell.ts";
-import { OVERLAY_MARGIN } from "#core/layout.ts";
-import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
+import { OVERLAY_FRAME_NAME, OVERLAY_WIDTHS } from "#core/overlay.ts";
+import type { OverlayWidth } from "#core/overlay.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Input } from "#ui/input.tsx";
 import { Label } from "#ui/label.tsx";
@@ -74,6 +76,39 @@ const focusAndSelect = (input: HTMLInputElement | null) => {
   input?.select();
 };
 
+/**
+ * The card every overlay draws in, placed in the view that covers the
+ * content area: 64px below its top, centred, as tall as what it holds and
+ * at most to 16px above its bottom. A press beside it closes the overlay.
+ */
+const OverlayCard = ({
+  width,
+  labelledBy,
+  className,
+  children,
+}: {
+  width: OverlayWidth;
+  labelledBy: string;
+  className?: string;
+  children: ReactNode;
+}) => (
+  <div className="pointer-events-none fixed inset-x-0 top-16 bottom-4 flex items-start justify-center px-2">
+    {/* Open but not modal: the page beside it stays in view. */}
+    <dialog
+      open
+      aria-labelledby={labelledBy}
+      data-overlay-card
+      style={{ width: OVERLAY_WIDTHS[width] }}
+      className={cn(
+        "pointer-events-auto relative m-0 flex max-h-full max-w-full flex-col overflow-hidden rounded-[14px] border-0 bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10",
+        className
+      )}
+    >
+      {children}
+    </dialog>
+  </div>
+);
+
 const RenameProfile = ({
   profileId,
   name,
@@ -82,13 +117,9 @@ const RenameProfile = ({
   const fieldId = useId();
 
   return (
-    // The margin holds the card's shadow inside the view.
-    <div style={{ padding: OVERLAY_MARGIN }}>
+    <OverlayCard width="narrow" labelledBy={headingId}>
       <form
-        aria-labelledby={headingId}
-        // The ring is of the text colour, so it reads against the page under
-        // it whichever theme both follow.
-        className="flex flex-col gap-2 rounded-lg bg-popover p-3 text-popover-foreground shadow-lg ring-1 ring-foreground/20"
+        className="flex flex-col gap-2 p-2"
         onSubmit={(event) => {
           event.preventDefault();
 
@@ -112,32 +143,96 @@ const RenameProfile = ({
           maxLength={PROFILE_NAME_MAX_LENGTH}
           autoComplete="off"
           spellCheck={false}
-          // Not by viewport: this document's is the overlay's own small view.
+          // Not by viewport: this document's is the overlay's own view.
           className="text-sm select-text"
           ref={focusAndSelect}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.preventDefault();
-              shellCalls().closeOverlay({});
-            }
-          }}
         />
       </form>
-    </div>
+    </OverlayCard>
   );
+};
+
+/**
+ * Escape anywhere in the overlay's document, and a press outside its card,
+ * close the overlay.
+ */
+const useClosers = (target: Document | undefined) => {
+  useEffect(() => {
+    if (!target) {
+      return;
+    }
+
+    const close = () => {
+      shellCalls().closeOverlay({});
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        close();
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      // Of the overlay's document, so not an instance of this one's Element.
+      const pressed = event.target as Partial<Element> | null;
+
+      if (!pressed?.closest?.("[data-overlay-card]")) {
+        close();
+      }
+    };
+
+    target.addEventListener("keydown", onKeyDown);
+    target.addEventListener("pointerdown", onPointerDown);
+
+    return () => {
+      target.removeEventListener("keydown", onKeyDown);
+      target.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [target]);
+};
+
+/**
+ * In the shell's own document, a press closes the open overlay, except on
+ * the button that opened it, marked `data-opens` with its kind, whose click
+ * closes it instead of opening it again.
+ */
+const useCloseOnShellPress = (kind: string | undefined) => {
+  useEffect(() => {
+    if (!kind) {
+      return;
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (
+        !(event.target instanceof Element) ||
+        !event.target.closest(`[data-opens="${kind}"]`)
+      ) {
+        shellCalls().closeOverlay({});
+      }
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [kind]);
 };
 
 /** Draws the open overlay, if any, into the overlay's document. */
 export const OverlayLayer = () => {
   const overlay = useShellState("overlay");
   const target = openOverlayDocument();
+  const open = overlay && overlay.kind !== "none" ? overlay : undefined;
 
-  if (!target || overlay?.kind !== "rename-profile") {
+  useClosers(target);
+  useCloseOnShellPress(open?.kind);
+
+  if (!target || !open) {
     return null;
   }
 
   return createPortal(
-    <RenameProfile key={overlay.profileId} {...overlay} />,
+    <RenameProfile key={open.profileId} {...open} />,
     target.body
   );
 };

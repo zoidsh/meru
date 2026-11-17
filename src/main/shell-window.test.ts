@@ -48,7 +48,6 @@ const createFakeWindow = () => {
     on: () => false,
     focusPage: () => false,
     onPageFocus: () => false,
-    onPageMouseDown: () => false,
     onOverlay: () => false,
     restore: () => {
       minimized = false;

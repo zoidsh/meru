@@ -77,8 +77,6 @@ export interface AppWindow {
   focusPage: () => void;
   /** Told when the page gains keyboard focus. */
   onPageFocus: (listener: () => void) => void;
-  /** Told of each mouse button pressed in the page, before the page hears it. */
-  onPageMouseDown: (listener: () => void) => void;
   /** Told of each overlay view the page opens, as `allowsWindowOpen` lets it. */
   onOverlay: (listener: (overlay: OverlayView) => void) => void;
   restore: () => void;
@@ -206,13 +204,6 @@ export const createWindowFactory = (): WindowFactory => ({
       focusPage: () => webContents.focus(),
       onPageFocus: (listener) => {
         webContents.on("focus", listener);
-      },
-      onPageMouseDown: (listener) => {
-        webContents.on("before-mouse-event", (_event, mouse) => {
-          if (mouse.type === "mouseDown") {
-            listener();
-          }
-        });
       },
       onOverlay: (listener) => {
         overlayListeners.add(listener);

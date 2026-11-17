@@ -387,12 +387,8 @@ const start = async () => {
   const overlays = createOverlays({
     focus,
     initial: profiles.get(),
-    bounds: (overlay) =>
-      overlayRectangle(
-        shell.window.getContentAreaSize(),
-        sidebar.current(),
-        overlay
-      ),
+    bounds: () =>
+      overlayRectangle(shell.window.getContentAreaSize(), sidebar.current()),
     log: console.error,
   });
 
@@ -406,9 +402,6 @@ const start = async () => {
   shell.window.onPageFocus(() => {
     focus.noteFocused({ kind: "shell" });
   });
-  // A press anywhere but in the overlay closes it, and goes on to where it
-  // was pressed.
-  shell.window.onPageMouseDown(overlays.close);
   shell.window.on("blur", overlays.close);
   shell.window.onContentAreaResize(overlays.relayout);
 
@@ -496,7 +489,6 @@ const start = async () => {
     onFocus: () => {
       focus.noteFocused({ kind: "front" });
     },
-    onMouseDown: overlays.close,
     // At launch and after a switch, typing reaches the page without a click.
     onFront: () => {
       focus.focus([{ kind: "front" }]);

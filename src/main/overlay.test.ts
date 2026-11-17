@@ -44,7 +44,7 @@ const setup = () => {
   const overlays = createOverlays({
     focus,
     initial: two,
-    bounds: (overlay) => ({ ...bounds, x: overlay.profileId === "a" ? 1 : 2 }),
+    bounds: () => bounds,
     log: (message) => events.push(`log ${message}`),
   });
 
@@ -55,7 +55,7 @@ const setup = () => {
   const adopt = () => {
     overlays.adopt({
       webContentsId: 3,
-      setBounds: (rectangle) => events.push(`bounds ${rectangle.x}`),
+      setBounds: (rectangle) => events.push(`bounds ${rectangle.width}`),
       show: () => events.push("show"),
       hide: () => events.push("hide"),
       focus: () => {
@@ -97,7 +97,7 @@ describe(createOverlays, () => {
     overlays.close();
 
     expect(events).toStrictEqual([
-      "bounds 1",
+      "bounds 100",
       "show",
       "focus overlay",
       "shell told a",
@@ -188,8 +188,8 @@ describe(createOverlays, () => {
     overlays.relayout();
 
     expect(events.filter((event) => event.startsWith("bounds"))).toStrictEqual([
-      "bounds 2",
-      "bounds 2",
+      "bounds 100",
+      "bounds 50",
     ]);
   });
 });

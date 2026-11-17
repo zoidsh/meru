@@ -1,4 +1,4 @@
-import { OVERLAY_MARGIN, overlayBounds } from "./layout.ts";
+import { contentViewBounds } from "./layout.ts";
 import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
@@ -10,35 +10,29 @@ export interface Overlay {
   profileId: string;
 }
 
-/**
- * How far below the top of the content view an overlay's view sits, so what
- * it draws reads as over the page rather than part of the titlebar.
- */
-const OVERLAY_OFFSET = 8;
+/** The card's width for each width class, in CSS pixels. */
+export const OVERLAY_WIDTHS = { narrow: 320, medium: 448, wide: 704 } as const;
 
-/**
- * The view's size for each overlay, its margin included, so main can place
- * the view before the shell draws into it: the rename card is 360px wide,
- * with 12px of padding around a 20px heading, an 8px gap and a 36px field.
- */
-const overlaySize = (overlay: Overlay): Size => {
+export type OverlayWidth = keyof typeof OVERLAY_WIDTHS;
+
+/** Each overlay's width class. */
+export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
   switch (overlay.kind) {
     default: {
-      return {
-        width: 360 + OVERLAY_MARGIN * 2,
-        height: 12 + 20 + 8 + 36 + 12 + OVERLAY_MARGIN * 2,
-      };
+      return "narrow";
     }
   }
 };
 
-/** Where the overlay's view sits in a window's content area. */
+/**
+ * Where the overlay's view sits while one is open: over the whole content
+ * area, so the card can be placed in it by CSS and a press beside it lands
+ * in the view, which closes it.
+ */
 export const overlayRectangle = (
   contentSize: Size,
-  sidebar: SidebarState,
-  overlay: Overlay
-): Rectangle =>
-  overlayBounds(contentSize, sidebar, overlaySize(overlay), OVERLAY_OFFSET);
+  sidebar: SidebarState
+): Rectangle => contentViewBounds(contentSize, sidebar);
 
 export type OverlayEvent =
   /** Replaces whatever is open. */

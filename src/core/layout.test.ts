@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { contentViewBounds, overlayBounds, viewFrame } from "./layout.ts";
+import { contentViewBounds, viewFrame } from "./layout.ts";
 
 const WINDOW = { width: 1280, height: 800 };
 
@@ -34,31 +34,5 @@ describe(contentViewBounds, () => {
 describe(viewFrame, () => {
   it("rounds the view's corners by 8px", () => {
     expect(viewFrame("wide").radius).toBe(8);
-  });
-});
-
-describe(overlayBounds, () => {
-  it("sits at the top centre of the content view", () => {
-    const view = contentViewBounds(WINDOW, "narrow");
-
-    expect(
-      overlayBounds(WINDOW, "narrow", { width: 400, height: 80 }, 8)
-    ).toStrictEqual({
-      x: view.x + (view.width - 400) / 2,
-      y: 48,
-      width: 400,
-      height: 80,
-    });
-  });
-
-  it("is no larger than the content view", () => {
-    expect(
-      overlayBounds(
-        { width: 500, height: 100 },
-        "wide",
-        { width: 400, height: 80 },
-        8
-      )
-    ).toStrictEqual({ x: 224, y: 48, width: 268, height: 44 });
   });
 });

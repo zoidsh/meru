@@ -190,7 +190,6 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     },
     updatePages: profiles.updatePages,
     onFocus: () => false,
-    onMouseDown: () => false,
     onFront: () => {
       fronts += 1;
     },
