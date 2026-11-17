@@ -18,8 +18,8 @@ export interface OverlayView {
   focus: () => void;
   /** Told when its page gains keyboard focus. */
   onFocus: (listener: () => void) => void;
-  /** Told once its page is gone. */
-  onDestroyed: (listener: () => void) => void;
+  /** Told once, when its page is closed or destroyed. */
+  onGone: (listener: () => void) => void;
   /** Closes its page and takes it off the window. */
   close: () => void;
 }
@@ -46,13 +46,26 @@ export const adoptOverlayView = (
   });
   webContents.setWindowOpenHandler(() => ({ action: "deny" }));
 
-  const remove = () => {
+  const goneListeners = new Set<() => void>();
+  let gone = false;
+
+  const markGone = () => {
+    if (gone) {
+      return;
+    }
+
+    gone = true;
+
     if (!window.isDestroyed()) {
       window.contentView.removeChildView(view);
     }
+
+    for (const listener of goneListeners) {
+      listener();
+    }
   };
 
-  webContents.once("destroyed", remove);
+  webContents.once("destroyed", markGone);
 
   return {
     webContentsId: webContents.id,
@@ -67,11 +80,11 @@ export const adoptOverlayView = (
     onFocus: (listener) => {
       webContents.on("focus", listener);
     },
-    onDestroyed: (listener) => {
-      webContents.once("destroyed", listener);
+    onGone: (listener) => {
+      goneListeners.add(listener);
     },
     close: () => {
-      remove();
+      markGone();
 
       if (!webContents.isDestroyed()) {
         webContents.close();

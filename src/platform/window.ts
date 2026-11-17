@@ -141,6 +141,8 @@ export const createWindowFactory = (): WindowFactory => ({
         closeOverlay();
       }
     });
+    // The overlay's document lives in the page's process, gone with it.
+    webContents.on("render-process-gone", closeOverlay);
 
     webContents.setWindowOpenHandler(({ url, frameName }) =>
       options.allowsWindowOpen({ url, frameName })

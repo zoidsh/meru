@@ -44,6 +44,8 @@ const readOverlayView = (app: ElectronApplication) =>
 
     return {
       visible: view?.getVisible(),
+      url: view?.webContents.getURL(),
+      children: children.length,
       onTop: index === children.length - 1,
       bounds: view?.getBounds(),
       area: window?.contentView.getBounds(),
@@ -267,4 +269,46 @@ test("Escape, a click on the page, a tab switch and the window losing focus each
 
   await expect(shell.getByRole("tab", { name: "Default" })).toBeVisible();
   expect(await readNames(userDataDir)).toStrictEqual(["Default"]);
+});
+
+test("when the shell's renderer is gone, the overlay's view goes with it and nothing is left open", async ({
+  app,
+  standIn,
+}) => {
+  await findPage(app, standIn.url);
+
+  const first = await findPage(app, "about:blank");
+
+  await openFromMenu(app, first);
+
+  const before = await readOverlayView(app);
+
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.forcefullyCrashRenderer();
+  });
+  await expect
+    .poll(async () => {
+      const after = await readOverlayView(app);
+
+      return after.children;
+    })
+    .toBe(before.children - 1);
+  expect(await readOverlayView(app)).toMatchObject({ visible: undefined });
+
+  // A shell loaded again draws no overlay, since main has none open.
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.webContents.reload();
+  });
+  await expect
+    .poll(() =>
+      app
+        .windows()
+        .some((page) => page !== first && page.url() === "about:blank")
+    )
+    .toBeTruthy();
+
+  const overlay = await findPage(app, "about:blank");
+
+  await expect(overlay.getByRole("form")).toHaveCount(0);
+  await openFromMenu(app, overlay);
 });

@@ -94,7 +94,7 @@ export const createOverlays = ({
      */
     adopt: (next: OverlayView) => {
       view = next;
-      next.onDestroyed(() => {
+      next.onGone(() => {
         if (view === next) {
           view = undefined;
 

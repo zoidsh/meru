@@ -268,7 +268,7 @@ const start = async () => {
   });
 
   shell.window.onOverlay((view) => {
-    view.onDestroyed(senders.register(view.webContentsId, { role: "overlay" }));
+    view.onGone(senders.register(view.webContentsId, { role: "overlay" }));
     view.onFocus(() => {
       focus.noteFocused({ kind: "overlay" });
     });
