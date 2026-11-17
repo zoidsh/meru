@@ -102,21 +102,22 @@ export const actionRequest = (
 
 const PREFIX = ")]}'\n";
 
-/** The first chunk of a framed answer, `)]}'\n<length>&<json>…`. */
+/**
+ * The first chunk of a framed answer, `)]}'\n<length>&<json>…`, whose
+ * length is in characters. Gmail sends one chunk per request entry, so a
+ * body may run on past the first; one that ends short of it is refused.
+ */
 const firstChunk = (body: string): unknown[] | undefined => {
   const framing = /^(?<length>\d+)&/u.exec(body.slice(PREFIX.length));
-  const length = framing?.groups?.length;
+  const length = Number(framing?.groups?.length);
+  const start = PREFIX.length + (framing?.[0].length ?? 0);
 
-  if (!framing || length === undefined) {
+  if (!framing || start + length > body.length) {
     return;
   }
 
-  const start = PREFIX.length + framing[0].length;
-
   try {
-    const chunk: unknown = JSON.parse(
-      body.slice(start, start + Number(length))
-    );
+    const chunk: unknown = JSON.parse(body.slice(start, start + length));
 
     return Array.isArray(chunk) ? chunk : undefined;
   } catch {
@@ -124,19 +125,31 @@ const firstChunk = (body: string): unknown[] | undefined => {
   }
 };
 
-/** Gmail's numeric code where the first request's error is, `[null, text, code]`. */
-const errorCode = (chunk: unknown[]) => {
+/**
+ * What the first request's result, `chunk[1][0]`, says: done only when its
+ * error, `[1]`, is an explicit `null`, else Gmail's numeric code from
+ * `[null, text, code]`.
+ */
+const resultOf = (chunk: unknown[]): ActionOutcome => {
   const results: unknown = chunk[1];
   const first: unknown = Array.isArray(results) ? results[0] : undefined;
-  const error: unknown = Array.isArray(first) ? first[1] : undefined;
 
-  if (error === null || error === undefined) {
-    return;
+  if (!Array.isArray(first)) {
+    return { kind: "failed", reason: "not an answer" };
+  }
+
+  const error: unknown = first[1];
+
+  if (error === null) {
+    return { kind: "ok" };
   }
 
   const code: unknown = Array.isArray(error) ? error[2] : undefined;
 
-  return typeof code === "number" ? String(code) : "unknown";
+  return {
+    kind: "failed",
+    reason: `Gmail error ${typeof code === "number" ? String(code) : "unknown"}`,
+  };
 };
 
 type Read<Value> =
@@ -217,9 +230,5 @@ export const actionOutcome = (response: ActionResponse): ActionOutcome => {
     return read;
   }
 
-  const code = errorCode(read.value);
-
-  return code === undefined
-    ? { kind: "ok" }
-    : { kind: "failed", reason: `Gmail error ${code}` };
+  return resultOf(read.value);
 };

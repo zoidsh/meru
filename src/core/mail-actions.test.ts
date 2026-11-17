@@ -184,8 +184,57 @@ describe(actionOutcome, () => {
     });
   });
 
-  it.each([")]}'\n", ")]}'\n9&[null,", ")]}'\n4&null"])(
-    "fails on a framed answer it cannot read, %j",
+  it("is ok on the shape of Gmail's live success, alone or with the chunks a longer request adds", () => {
+    const success = [
+      null,
+      [
+        [
+          null,
+          null,
+          null,
+          null,
+          [],
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          0,
+          0,
+        ],
+      ],
+      2,
+      0,
+      KEY.ik,
+    ];
+
+    expect(actionOutcome(answer(framed(success)))).toStrictEqual({
+      kind: "ok",
+    });
+    expect(
+      actionOutcome(answer(framed(success, chunk(null), chunk(null))))
+    ).toStrictEqual({ kind: "ok" });
+  });
+
+  it.each([
+    ")]}'\n",
+    ")]}'\n9&[null,",
+    ")]}'\n4&null",
+    ")]}'\n2&[]",
+    framed([null, null, 2, 0, "k"]),
+    framed([null, {}, 2]),
+    framed([null, [], 2]),
+    framed([null, [null], 2]),
+    ")]}'\n2&[]garbage",
+    ")]}'\n99999999999999999999&[1]",
+    `${framed(chunk(null)).slice(0, -1)}`,
+  ])(
+    "fails on a framed answer that does not show the action done, %j",
     (body) => {
       expect(actionOutcome(answer(body))).toStrictEqual({
         kind: "failed",
