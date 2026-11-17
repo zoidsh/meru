@@ -1,0 +1,165 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import type { ActionRequest, ActionResponse } from "#core/mail-actions.ts";
+
+import { ACTION_TIMEOUT, createMailActions } from "./mail-actions.ts";
+
+const IK = "0a1b2c3d4e";
+const AT = "AF6bupNfake_tokenValue0123456789ab";
+const MESSAGE = "1a1e09987b6d8188";
+
+const framed = (chunk: unknown) => {
+  const json = JSON.stringify(chunk);
+
+  return `)]}'\n${json.length}&${json}`;
+};
+
+const response = (
+  error: unknown,
+  setCookies: string[] = []
+): ActionResponse => ({
+  kind: "response",
+  status: 200,
+  body: framed([null, [[null, error]], 2, 0, IK]),
+  setCookies,
+});
+
+/** Gmail's refusal of the key request, quoting the key, with a token cookie. */
+const KEY_ANSWER = response(
+  [
+    null,
+    `Invalid request ID key: '' does not match current user key '${IK}'`,
+    12,
+  ],
+  [`GMAIL_AT=${AT}; Path=/mail/u/0/s/; Secure`]
+);
+
+const setup = (
+  answers: (
+    request: ActionRequest,
+    signal: AbortSignal
+  ) => Promise<ActionResponse>
+) => {
+  const sent: [string, URLSearchParams][] = [];
+  const poked: string[] = [];
+  const logged: string[] = [];
+  const actions = createMailActions({
+    post: (profileId, request, signal) => {
+      sent.push([profileId, new URL(request.path, "https://x").searchParams]);
+
+      return answers(request, signal);
+    },
+    poke: (profileId) => {
+      poked.push(profileId);
+    },
+    log: (message) => {
+      logged.push(message);
+    },
+    now: () => 1,
+  });
+
+  return { actions, sent, poked, logged };
+};
+
+/** Answers the key request with a key, and the action with `action`. */
+const keyThen =
+  (action: ActionResponse | Error) => (request: ActionRequest) => {
+    if (new URL(request.path, "https://x").searchParams.get("ik") === "") {
+      return Promise.resolve(KEY_ANSWER);
+    }
+
+    return action instanceof Error
+      ? Promise.reject(action)
+      : Promise.resolve(action);
+  };
+
+describe(createMailActions, () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("sends the action with the key and token the first answer gave, then pokes the feed", async () => {
+    const { actions, sent, poked, logged } = setup(keyThen(response(null)));
+
+    await expect(
+      actions.run("p1", "markAsRead", MESSAGE)
+    ).resolves.toStrictEqual({ kind: "ok" });
+    expect(
+      sent.map(([profileId, query]) => [
+        profileId,
+        query.get("ik"),
+        query.get("at"),
+      ])
+    ).toStrictEqual([
+      ["p1", "", ""],
+      ["p1", IK, AT],
+    ]);
+    expect(poked).toStrictEqual(["p1"]);
+    expect(logged).toStrictEqual([]);
+  });
+
+  it("fails on Gmail's error, logging its code and nothing of its text, and does not poke", async () => {
+    const { actions, poked, logged } = setup(
+      keyThen(response([null, `Invalid action token for ${MESSAGE} ${IK}`, 10]))
+    );
+
+    await expect(actions.run("p1", "archive", MESSAGE)).resolves.toStrictEqual({
+      kind: "failed",
+      reason: "Gmail error 10",
+    });
+    expect(poked).toStrictEqual([]);
+    expect(logged).toStrictEqual([
+      "Mail action archive of profile p1: failed (Gmail error 10)",
+    ]);
+  });
+
+  it("stops at the key request when it finds the profile signed out", async () => {
+    const { actions, sent, logged } = setup(() =>
+      Promise.resolve({ kind: "redirect" })
+    );
+
+    await expect(actions.run("p1", "delete", MESSAGE)).resolves.toStrictEqual({
+      kind: "signedOut",
+    });
+    expect(sent).toHaveLength(1);
+    expect(logged).toStrictEqual([
+      "Mail action delete of profile p1: signedOut",
+    ]);
+  });
+
+  it("fails without the error's text when a request rejects", async () => {
+    const { actions, logged } = setup(
+      keyThen(new Error(`net::ERR_FAILED at=${AT}`))
+    );
+
+    await expect(
+      actions.run("p1", "markAsSpam", MESSAGE)
+    ).resolves.toStrictEqual({ kind: "failed", reason: "request failed" });
+    expect(logged.join("\n")).not.toContain(AT);
+  });
+
+  it("gives up on both requests together after 15 s", async () => {
+    vi.useFakeTimers();
+
+    const { actions, logged } = setup((_request, signal) => {
+      const { promise, reject } = Promise.withResolvers<ActionResponse>();
+
+      signal.addEventListener("abort", () => {
+        reject(signal.reason);
+      });
+
+      return promise;
+    });
+    const outcome = actions.run("p1", "archive", MESSAGE);
+
+    await vi.advanceTimersByTimeAsync(ACTION_TIMEOUT);
+
+    await expect(outcome).resolves.toStrictEqual({
+      kind: "failed",
+      reason: "timed out",
+    });
+    expect(logged).toStrictEqual([
+      "Mail action archive of profile p1: failed (timed out)",
+    ]);
+  });
+});

@@ -1,6 +1,7 @@
 import { net, session } from "electron";
 
 import type { FeedResponse } from "#core/feed.ts";
+import type { ActionResponse } from "#core/mail-actions.ts";
 import type { PermissionAsk } from "#core/permissions.ts";
 
 export interface Sessions {
@@ -22,6 +23,16 @@ export interface Sessions {
     url: string,
     signal: AbortSignal
   ) => Promise<FeedResponse>;
+  /**
+   * POSTs the urlencoded `body` to `url` as `get` asks, and answers with the
+   * `Set-Cookie` headers too, which the session also keeps.
+   */
+  post: (
+    partition: string,
+    url: string,
+    body: string,
+    signal: AbortSignal
+  ) => Promise<ActionResponse>;
 }
 
 // A feed of 20 entries is a few kilobytes.
@@ -29,10 +40,16 @@ const MAX_BODY_BYTES = 1024 * 1024;
 
 // `session.fetch` rejects a redirect it was told not to follow with the same
 // kind of error as a network failure, so the request is made by hand.
-const get: Sessions["get"] = (partition, url, signal) => {
-  const { promise, resolve, reject } = Promise.withResolvers<FeedResponse>();
+const send = (
+  partition: string,
+  url: string,
+  body: string | undefined,
+  signal: AbortSignal
+) => {
+  const { promise, resolve, reject } = Promise.withResolvers<ActionResponse>();
   const request = net.request({
     url,
+    method: body === undefined ? "GET" : "POST",
     session: session.fromPartition(partition),
     redirect: "manual",
     useSessionCookies: true,
@@ -87,13 +104,25 @@ const get: Sessions["get"] = (partition, url, signal) => {
     });
     response.on("end", () => {
       settle();
+      const setCookies = response.headers["set-cookie"] ?? [];
+
       resolve({
         kind: "response",
         status: response.statusCode,
         body: Buffer.concat(chunks).toString("utf-8"),
+        setCookies: Array.isArray(setCookies) ? setCookies : [setCookies],
       });
     });
   });
+
+  if (body !== undefined) {
+    request.setHeader(
+      "Content-Type",
+      "application/x-www-form-urlencoded;charset=utf-8"
+    );
+    request.write(body);
+  }
+
   request.end();
 
   return promise;
@@ -103,7 +132,8 @@ export const createSessions = (): Sessions => {
   const guarded = new WeakSet<Electron.Session>();
 
   return {
-    get,
+    get: (partition, url, signal) => send(partition, url, undefined, signal),
+    post: send,
     clear: (partition) => session.fromPartition(partition).clearData(),
     guard: (partition, allows) => {
       const guarding = session.fromPartition(partition);
