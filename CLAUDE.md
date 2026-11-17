@@ -14,6 +14,7 @@ Setup is `mise install`, then `pnpm install --frozen-lockfile`; after changing a
 | Unit tests, one file, one name | `pnpm test`, `pnpm test src/core/window-bounds`, `pnpm test -t "name"` |
 | Pack the unpacked app / the installers | `pnpm package` / `pnpm package:installers` |
 | End-to-end suite (packs first) | `pnpm test:e2e`; on Linux `xvfb-run -a pnpm test:e2e` |
+| Memory, processes and idle CPU against a minimal Electron app (Mac mini only, needs `pnpm build` and signed-in `.meru/measure-*` profiles) | `pnpm measure`, `pnpm measure --help` |
 
 Run `pnpm check` and `pnpm test` before committing, and `pnpm test:e2e` when a change shows in a window.
 
