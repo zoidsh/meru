@@ -112,7 +112,7 @@ describe(createOverlays, () => {
     expect(overlays.current()).toBeUndefined();
   });
 
-  it("replaces an open overlay with the next, and gives focus back to what had it before the first", () => {
+  it("replaces an open overlay with the next, and gives focus to the page, not the shell whose button opened it", () => {
     const { overlays, focus, events } = setup();
 
     focus.noteFocused({ kind: "shell" });
@@ -121,19 +121,19 @@ describe(createOverlays, () => {
     events.length = 0;
     overlays.close();
 
-    expect(events).toStrictEqual(["hide", "shell told closed", "focus shell"]);
+    expect(events).toStrictEqual(["hide", "shell told closed", "focus front"]);
   });
 
-  it("gives focus to the selected tab's view when what had it is gone", () => {
+  it("gives focus to the shell when there is no selected tab's view", () => {
     const { overlays, focus, events, present } = setup();
 
-    focus.noteFocused({ kind: "shell" });
+    focus.noteFocused({ kind: "front" });
     overlays.open(renameA);
-    present.delete("shell");
+    present.delete("front");
     events.length = 0;
     overlays.close();
 
-    expect(events.at(-1)).toBe("focus front");
+    expect(events.at(-1)).toBe("focus shell");
   });
 
   it("closes when another profile is selected, and stays through a change that leaves what is underneath", () => {

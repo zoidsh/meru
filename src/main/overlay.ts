@@ -6,10 +6,10 @@ import type { State } from "#core/state.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
 import type { OverlayView } from "#platform/overlay-view.ts";
 
-import type { Focus, FocusTarget } from "./focus.ts";
+import type { Focus } from "./focus.ts";
 
 export interface OverlaysDeps {
-  focus: Pick<Focus, "focus" | "focused">;
+  focus: Pick<Focus, "focus">;
   /** Main's state when the overlays start following it. */
   initial: State;
   /** Where the view sits while an overlay is open, as the window is now. */
@@ -20,8 +20,10 @@ export interface OverlaysDeps {
 /**
  * Which overlay is open over the content views, in the one view the shell's
  * overlay document shows in. Opening shows the view and focuses it before
- * the shell hears of it; closing hides it and gives focus back to whichever
- * web contents had it, or the selected tab's view when that one is gone.
+ * the shell hears of it; closing hides it and gives focus to the selected
+ * tab's view, or the shell when there is none. Never back to the shell when
+ * the shell had it: that is the button that opened the overlay, and focus
+ * left in the titlebar would leave Gmail's keys dead.
  */
 export const createOverlays = ({
   focus,
@@ -32,7 +34,6 @@ export const createOverlays = ({
   const listeners = new Set<() => void>();
   let view: OverlayView | undefined;
   let open: Overlay | undefined;
-  let returnTo: FocusTarget | undefined;
   let state = initial;
 
   const notify = () => {
@@ -48,10 +49,6 @@ export const createOverlays = ({
       return;
     }
 
-    if (!open) {
-      returnTo = focus.focused();
-    }
-
     view.setBounds(bounds());
     view.show();
     open = overlay;
@@ -60,17 +57,10 @@ export const createOverlays = ({
   };
 
   const hide = () => {
-    const target = returnTo;
-
     open = undefined;
-    returnTo = undefined;
     view?.hide();
     notify();
-    focus.focus([
-      ...(target && target.kind !== "overlay" ? [target] : []),
-      { kind: "front" },
-      { kind: "shell" },
-    ]);
+    focus.focus([{ kind: "front" }, { kind: "shell" }]);
   };
 
   const dispatch = (event: OverlayEvent) => {
