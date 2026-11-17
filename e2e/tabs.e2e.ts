@@ -54,12 +54,12 @@ const readViews = (app: ElectronApplication, partition: string) =>
       (candidate) => !candidate.getParentWindow()
     );
 
-    // The overlay's view shows the shell's page, in the default session.
+    // The overlay's view is the page the shell's own frame opened.
     return (window?.contentView.children ?? [])
       .filter(
         (view) =>
-          (view as Electron.WebContentsView).webContents.session !==
-          session.defaultSession
+          (view as Electron.WebContentsView).webContents.opener !==
+          window?.webContents.mainFrame
       )
       .map((view) => {
         const { webContents } = view as Electron.WebContentsView;

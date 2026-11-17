@@ -50,7 +50,7 @@ const readRadii = (app: ElectronApplication) =>
  * bar's height where one shows, and where the view sits.
  */
 const readLayout = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow, session }) => {
+  app.evaluate(({ BrowserWindow }) => {
     const [window] = BrowserWindow.getAllWindows();
 
     if (!window) {
@@ -64,12 +64,12 @@ const readLayout = (app: ElectronApplication) =>
       area: { width, height },
       content: { width: contentWidth, height: contentHeight },
       menuBarVisible: window.isMenuBarVisible(),
-      // The overlay's view shows the shell's page, in the default session.
+      // The overlay's view is the page the shell's own frame opened.
       views: window.contentView.children
         .filter(
           (view) =>
-            (view as Electron.WebContentsView).webContents.session !==
-            session.defaultSession
+            (view as Electron.WebContentsView).webContents.opener !==
+            window.webContents.mainFrame
         )
         .map((view) => view.getBounds()),
     };

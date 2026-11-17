@@ -30,15 +30,15 @@ const readNames = async (userDataDir: string) => {
   return profiles.map((profile) => profile.name);
 };
 
-/** The overlay's view, which shows the shell's page in the default session. */
+/** The overlay's view, the page the shell's own frame opened. */
 const readOverlayView = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow, session }) => {
+  app.evaluate(({ BrowserWindow }) => {
     const [window] = BrowserWindow.getAllWindows();
     const children = window?.contentView.children ?? [];
     const index = children.findIndex(
       (view) =>
-        (view as Electron.WebContentsView).webContents.session ===
-        session.defaultSession
+        (view as Electron.WebContentsView).webContents.opener ===
+        window?.webContents.mainFrame
     );
     const view = children[index] as Electron.WebContentsView | undefined;
 
