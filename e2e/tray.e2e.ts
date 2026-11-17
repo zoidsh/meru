@@ -213,7 +213,15 @@ test("shows the total on the badge and the tray, clears both at zero, and jumps 
   await retitle(app, standIn, "Inbox");
 
   await expect.poll(() => readBadge(app)).toBeUndefined();
-  await expect.poll(() => readTrayMenu(app)).toContain("Home");
+  await expect
+    .poll(() => readTray(app))
+    .toStrictEqual({
+      image: isMacOS
+        ? "IconMenuBarTemplate.png"
+        : expect.stringMatching(/^IconTray-/u),
+      title: "",
+      menu: ["Home", "Work", "-", `Hide ${productName}`, "-", QUIT],
+    });
 
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()
@@ -235,8 +243,9 @@ test("shows the total on the badge and the tray, clears both at zero, and jumps 
   await expect.poll(() => windowVisible(app)).toBeTruthy();
 });
 
-test("closing the window with the tray shown hides it, and the tray's Show brings it back", async ({
+test("closing the window with the tray shown hides it, and the tray's Show or a second launch brings it back", async ({
   launchApp,
+  spawnApp,
   userDataDir,
   standIn,
 }) => {
@@ -253,6 +262,14 @@ test("closing the window with the tray shown hides it, and the tray's Show bring
 
   await clickTrayItem(app, `Show ${productName}`);
 
+  await expect.poll(() => windowVisible(app)).toBeTruthy();
+
+  await closeWindow(app);
+
+  await expect.poll(() => windowVisible(app)).toBeFalsy();
+
+  // The second instance hands over to the first and exits.
+  expect(await spawnApp().exited).toBe(0);
   await expect.poll(() => windowVisible(app)).toBeTruthy();
 });
 
