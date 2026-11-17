@@ -99,18 +99,35 @@ const showInactiveOnceReady = (window: BrowserWindow) => {
   window.webContents.once("did-finish-load", show);
 };
 
+/**
+ * A window refused before its first page committed would stay open and
+ * blank, so it is closed instead.
+ */
 const guardNavigation = (
-  webContents: WebContents,
+  child: BrowserWindow,
   onChildNavigation: ContentViewOptions["onChildNavigation"]
 ) => {
+  const { webContents } = child;
+  const refuse = (event: Electron.Event) => {
+    event.preventDefault();
+
+    if (webContents.getURL() === "") {
+      setImmediate(() => {
+        if (!child.isDestroyed()) {
+          child.destroy();
+        }
+      });
+    }
+  };
+
   webContents.on("will-navigate", (event) => {
     if (onChildNavigation(event.url) === "deny") {
-      event.preventDefault();
+      refuse(event);
     }
   });
   webContents.on("will-redirect", (event) => {
     if (event.isMainFrame && onChildNavigation(event.url) === "deny") {
-      event.preventDefault();
+      refuse(event);
     }
   });
 };
@@ -135,7 +152,10 @@ const routeWindowOpens = (
     children.add(child);
     child.once("closed", () => children.delete(child));
     trackDestroyed(child.webContents, "child-window", onWebContents);
-    guardNavigation(child.webContents, onChildNavigation);
+    guardNavigation(child, onChildNavigation);
+    // Windows and Linux would give it the app's menu, whose commands act on
+    // the main window.
+    child.removeMenu();
 
     if (background) {
       showInactiveOnceReady(child);

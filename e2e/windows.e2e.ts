@@ -155,6 +155,23 @@ test("keeps a pop-out on Gmail, handing a link that would leave it to the browse
   ]);
 });
 
+test("closes a pop-out whose first load is redirected off Gmail, handing the link to the browser", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+
+  await stubSystemBrowser(app);
+  await view.getByRole("button", { name: "Pop out elsewhere" }).click();
+
+  await expect
+    .poll(() => readOpenedExternally(app))
+    .toStrictEqual([ELSEWHERE_URL]);
+  await expect
+    .poll(() => readWindows(app))
+    .toStrictEqual([expect.stringMatching(/^meru-app:/u)]);
+});
+
 test("answers Add another account with a new profile, selected, opening no window", async ({
   app,
   shell,

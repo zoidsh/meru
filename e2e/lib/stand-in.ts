@@ -23,6 +23,9 @@ export const FULL_MESSAGE_TITLE = "Gmail full message stand-in";
 /** Gmail's "View entire message" and print pages, told apart by query. */
 export const FULL_MESSAGE_PATH = "/mail/u/0/";
 
+/** A pop-out whose first load is redirected to another site. */
+export const POPOUT_REDIRECT_PATH = "/mail/u/0/popout-redirect";
+
 /** The size the stand-in's pop-out asks for, as Gmail's features string does. */
 export const POPOUT_SIZE = { width: 640, height: 480 };
 
@@ -135,7 +138,8 @@ const gmailWindowLinks = (
     <a href="${FULL_MESSAGE_PATH}?ui=2&amp;ik=1&amp;view=lg&amp;permmsgid=msg-a:r1" target="_blank">View entire message</a>
     <a href="https://www.google.com/url?q=${encodeURIComponent(ELSEWHERE_URL)}&amp;source=gmail&amp;ust=1&amp;usg=x" target="_blank">A link in mail</a>
     <a href="${signIn}AddSession?continue=x" target="_blank">Add another account</a>
-    <button type="button" onclick="window.open('about:blank')">Open a blank window</button>`;
+    <button type="button" onclick="window.open('about:blank')">Open a blank window</button>
+    <button type="button" onclick="window.open('${POPOUT_REDIRECT_PATH}', 'redirected', 'width=${POPOUT_SIZE.width},height=${POPOUT_SIZE.height}')">Pop out elsewhere</button>`;
 
 /** Where Meru reads the unread mail of a Gmail session. */
 export const FEED_PATH = "/mail/u/0/feed/atom";
@@ -448,6 +452,12 @@ export const startStandIn = async (): Promise<StandIn> => {
     });
   };
   const answerMail = (request: IncomingMessage, response: ServerResponse) => {
+    if (request.url === POPOUT_REDIRECT_PATH) {
+      response.writeHead(302, { Location: ELSEWHERE_URL }).end();
+
+      return true;
+    }
+
     if (
       request.method === "POST" &&
       request.url?.startsWith(`${ACTION_PATH}?`)
