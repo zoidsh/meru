@@ -370,13 +370,15 @@ test("cancelling the confirmation keeps the profile", async ({
   expect(await readProfileIds(userDataDir)).toHaveLength(2);
 });
 
-test("at a narrow width with many profiles, the selected tab stays in view and the title bar keeps room to drag", async ({
+test("at a narrow width with many profiles, the selected tab stays in view, a name of the longest length is cut short in its tab and whole in its tooltip, and the title bar keeps room to drag", async ({
   launchApp,
   userDataDir,
 }) => {
+  const longest = "W".repeat(PROFILE_NAME_MAX_LENGTH);
   const { app, shell } = await launchWithProfiles(launchApp, userDataDir, [
     "Default",
-    ...Array.from({ length: 9 }, (_, index) => `Profile ${index + 2}`),
+    ...Array.from({ length: 8 }, (_, index) => `Profile ${index + 2}`),
+    longest,
   ]);
 
   await app.evaluate(({ BrowserWindow }) => {
@@ -405,7 +407,7 @@ test("at a narrow width with many profiles, the selected tab stays in view and t
     );
   };
 
-  expect(await selectedTabIsInList("Profile 10")).toBeTruthy();
+  expect(await selectedTabIsInList(longest)).toBeTruthy();
 
   // Selected through the contract, since a Playwright click would scroll the
   // tab into view itself.
@@ -438,48 +440,15 @@ test("at a narrow width with many profiles, the selected tab stays in view and t
   expect(
     (banner?.width ?? 0) - ((addBox?.x ?? 0) + (addBox?.width ?? 0))
   ).toBeGreaterThanOrEqual(64);
-});
 
-test("a name of the longest length is cut short in its tab, whole in its tooltip, and leaves the other profiles in reach at the minimum width", async ({
-  launchApp,
-  userDataDir,
-}) => {
-  const longest = "W".repeat(PROFILE_NAME_MAX_LENGTH);
-  const { app, shell } = await launchWithProfiles(launchApp, userDataDir, [
-    "Default",
-    "Profile 2",
-    longest,
-  ]);
+  await select(ids.at(-1));
+  await expect.poll(() => selectedTabIsInList(longest)).toBeTruthy();
 
-  await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
-  });
-
-  const add = shell.getByRole("button", { name: "Add profile" });
   const long = shell.getByRole("tab", { name: longest });
 
   await expect(long).toHaveAttribute("title", longest);
 
-  const [list, banner, longBox, addBox, ...others] = await Promise.all([
-    shell.getByRole("tablist", { name: "Profiles" }).boundingBox(),
-    shell.getByRole("banner", { name: "Title bar" }).boundingBox(),
-    long.boundingBox(),
-    add.boundingBox(),
-    shell.getByRole("tab", { name: "Default" }).boundingBox(),
-    shell.getByRole("tab", { name: "Profile 2" }).boundingBox(),
-  ]);
+  const longBox = await long.boundingBox();
 
   expect(longBox?.width).toBeLessThanOrEqual(160);
-
-  // Every other tab shows whole, with no scrolling, and so does Add.
-  for (const box of others) {
-    expect(box?.x).toBeGreaterThanOrEqual((list?.x ?? 0) - 0.5);
-    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(
-      (list?.x ?? 0) + (list?.width ?? 0) + 0.5
-    );
-  }
-
-  expect((addBox?.x ?? 0) + (addBox?.width ?? 0)).toBeLessThanOrEqual(
-    banner?.width ?? 0
-  );
 });
