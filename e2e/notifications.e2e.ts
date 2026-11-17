@@ -627,12 +627,12 @@ test("waking has each open Gmail page press Refresh", async ({
   await expect(gmail.getByText(refreshedTimes(1))).toBeVisible();
 });
 
-test("a page without Gmail's Refresh is reported broken there, and an action presses nothing", async ({
+test("a page whose Refresh Gmail renamed is reported broken there, and an action presses nothing", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  standIn.dropRefresh();
+  standIn.renameRefresh();
 
   const { app, gmail } = await launchNotified(launchApp, userDataDir, standIn);
   const draft = gmail.getByRole("textbox", { name: DRAFT_LABEL });
@@ -657,7 +657,7 @@ test("a page without Gmail's Refresh is reported broken there, and an action pre
 
   await expect(draft).toHaveValue("Half a reply");
   await expect(draft).toBeFocused();
-  await expect(gmail.getByText(refreshedTimes(0))).toBeHidden();
+  await expect(gmail.getByText(refreshedTimes(0))).toBeVisible();
 });
 
 test("counts the whole inbox for a poll that finds no Primary feed", async ({

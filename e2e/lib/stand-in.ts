@@ -78,13 +78,16 @@ export const refreshedTimes = (n: number) => `Refreshed ${n} times`;
 
 /**
  * Gmail's Refresh, which counts a press only as Gmail's does, by the whole
- * pointer and mouse sequence, so `click()` alone is no press.
+ * pointer and mouse sequence, so `click()` alone is no press. Under another
+ * action code it stands for a Refresh Gmail has renamed.
  */
-const REFRESH_MARKUP = `<div gh="mtb"><div act="20" role="button" tabindex="0">Refresh</div></div>
+const refreshMarkup = (
+  act: string
+) => `<div gh="mtb"><div act="${act}" role="button" tabindex="0">Refresh</div></div>
       <p id="refreshed">${refreshedTimes(0)}</p>
       <script>
         (() => {
-          const control = document.querySelector('[act="20"]');
+          const control = document.querySelector('[act="${act}"]');
           let seen = [];
           let presses = 0;
           for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup"]) {
@@ -401,8 +404,11 @@ export interface StandIn {
    * which can throw; none, as at first, leaves it unset.
    */
   setInboxType: (expression: string | undefined) => void;
-  /** Has the Gmail stand-in's page, from its next load, have no Refresh. */
-  dropRefresh: () => void;
+  /**
+   * Has the Gmail stand-in's page, from its next load, have its Refresh
+   * under another action code, which still counts its presses.
+   */
+  renameRefresh: () => void;
   /** The label of each feed asked for, in order, `""` for the whole inbox. */
   feedLabels: string[];
   /** Every action the endpoint took, in order. */
@@ -441,7 +447,7 @@ export const startStandIn = async (): Promise<StandIn> => {
   const failing = new Set<string>();
   const feedLabels: string[] = [];
   let inboxType: string | undefined;
-  let refreshControl = true;
+  let refreshAct = "20";
   let held: (() => void)[] | undefined;
   const send = (answer: () => void) => {
     if (held) {
@@ -571,7 +577,7 @@ export const startStandIn = async (): Promise<StandIn> => {
     <a href="${links.calendar}" target="_blank">Open Calendar</a>
     <a href="${links.drive}" target="_blank">Open Drive</a>
     <textarea aria-label="${DRAFT_LABEL}"></textarea>
-    ${GMAIL_MARKUP.replace("REFRESH_CONTROL", refreshControl ? REFRESH_MARKUP : "")}
+    ${GMAIL_MARKUP.replace("REFRESH_CONTROL", refreshMarkup(refreshAct))}
     ${inboxType === undefined ? "" : `<script>Object.defineProperty(window, "GM_INBOX_TYPE", { get: () => (${inboxType}) });</script>`}`
       ),
       [POPOUT_PATH]: page(
@@ -641,8 +647,8 @@ export const startStandIn = async (): Promise<StandIn> => {
     setInboxType: (expression) => {
       inboxType = expression;
     },
-    dropRefresh: () => {
-      refreshControl = false;
+    renameRefresh: () => {
+      refreshAct = "19";
     },
     feedLabels,
     actions,

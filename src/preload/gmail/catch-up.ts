@@ -13,6 +13,12 @@ const eventOf = (type: string, init: MouseEventInit) =>
     ? new PointerEvent(type, init)
     : new MouseEvent(type, init);
 
+/** An HTML or SVG element, either of which can hold focus. */
+const focusable = (
+  element: Element | null
+): element is Element & HTMLOrSVGElement =>
+  element !== null && "focus" in element && "blur" in element;
+
 /** Gmail's Refresh control, never anything in mail or a draft. */
 export const findRefresh = (root: ParentNode): Element | undefined => {
   for (const anchor of REFRESH.anchors) {
@@ -59,9 +65,9 @@ export const pressRefresh = (document: Document) => {
   }
 
   if (document.activeElement === control) {
-    if (focused instanceof HTMLElement && focused !== document.body) {
+    if (focusable(focused) && focused !== document.body) {
       focused.focus();
-    } else if (control instanceof HTMLElement) {
+    } else if (focusable(control)) {
       control.blur();
     }
   }
