@@ -14,8 +14,8 @@ export interface Sessions {
   guard: (partition: string, allows: (ask: PermissionAsk) => boolean) => void;
   /**
    * GETs `url` in the partition's session, with its cookies and never from the
-   * cache. A redirect is answered, not followed. Rejects on a network error or
-   * once `signal` aborts.
+   * cache. A redirect is answered, not followed. Rejects on a network error,
+   * a body over 1 MB, or once `signal` aborts.
    */
   get: (
     partition: string,
@@ -23,6 +23,9 @@ export interface Sessions {
     signal: AbortSignal
   ) => Promise<FeedResponse>;
 }
+
+// A feed of 20 entries is a few kilobytes.
+const MAX_BODY_BYTES = 1024 * 1024;
 
 // `session.fetch` rejects a redirect it was told not to follow with the same
 // kind of error as a network failure, so the request is made by hand.
@@ -63,8 +66,19 @@ const get: Sessions["get"] = (partition, url, signal) => {
   });
   request.on("response", (response) => {
     const chunks: Buffer[] = [];
+    let size = 0;
 
     response.on("data", (chunk) => {
+      size += chunk.length;
+
+      if (size > MAX_BODY_BYTES) {
+        settle();
+        request.abort();
+        reject(new Error(`the body is over ${MAX_BODY_BYTES} bytes`));
+
+        return;
+      }
+
       chunks.push(chunk);
     });
     response.on("error", (error: Error) => {
