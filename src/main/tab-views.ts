@@ -48,6 +48,8 @@ export interface TabViewsDeps {
   newId: () => string;
   /** Runs the shortcut a key in a page is, if it is one. */
   handleKey: (input: KeyInput) => boolean;
+  /** The preload an app's view gets, if any. */
+  preloadFor: (app: string) => string | undefined;
   /** Readies a profile's session before any page of it loads. */
   prepareSession: (partition: string) => void;
   updatePages: (updates: PageUpdate[]) => Promise<unknown>;
@@ -93,6 +95,7 @@ export const createTabViews = ({
   openTab,
   newId,
   handleKey,
+  preloadFor,
   prepareSession,
   updatePages,
   onFocus,
@@ -328,8 +331,10 @@ export const createTabViews = ({
 
     prepareSession(partition);
 
+    const preload = preloadFor(findTab(state(), tabKeyed)?.app ?? "");
     const view = window.addContentView({
       partition,
+      ...(preload !== undefined && { preload }),
       background,
       onWindowOpen: (url) => {
         const route = routeWindowOpen(url, {

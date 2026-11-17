@@ -49,6 +49,7 @@
     "electron-builder": "26.18.1",
     "es-toolkit": "1.53.2",
     "lefthook": "2.2.2",
+    "linkedom": "0.18.15",
     "oxfmt": "0.78.0",
     "oxlint": "1.93.0",
     "react": "19.3.1",

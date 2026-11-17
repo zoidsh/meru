@@ -3,6 +3,7 @@ import path from "node:path";
 import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome } from "#core/feed.ts";
+import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
@@ -50,6 +51,7 @@ import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
+import { serveGmailContract } from "./gmail-page.ts";
 import { createInbox } from "./inbox.ts";
 import { createMailActions } from "./mail-actions.ts";
 import { createMailPoller } from "./mail.ts";
@@ -57,12 +59,15 @@ import { createMailNotifications } from "./notifications.ts";
 import { createOverlays } from "./overlay.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfiles } from "./profiles.ts";
+import type { Profiles } from "./profiles.ts";
 import { createSenderRegistry } from "./senders.ts";
+import type { SenderRegistry } from "./senders.ts";
 import {
   SETTINGS_FILE_NAME,
   createSettingsStore,
   saveSettings,
 } from "./settings.ts";
+import type { SettingsStore } from "./settings.ts";
 import {
   createShellHandlers,
   shellSettings,
@@ -79,6 +84,7 @@ import { createShowGmail } from "./show-gmail.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
+import { captureGmailPage, exposeTestSettings } from "./test-hooks.ts";
 import { createTray } from "./tray.ts";
 
 const APP_SCHEME = "meru-app";
@@ -126,6 +132,45 @@ const newId = () => crypto.randomUUID();
 /** The role's own key on Windows and Linux, Ctrl+Shift+I, is the unified inbox's. */
 const devToolsAccelerator = (platform: Platform) =>
   platform === "darwin" ? "Alt+Command+I" : "F12";
+
+/**
+ * Gmail's page contract, its switches following the settings, which the
+ * suite's build alone may also switch from outside.
+ */
+const serveGmailPage = ({
+  gmailOrigin,
+  senders,
+  profiles,
+  settings,
+}: {
+  gmailOrigin: string | undefined;
+  senders: SenderRegistry;
+  profiles: Pick<Profiles, "get">;
+  settings: SettingsStore;
+}) => {
+  // The suite switches settings while the app runs, as a settings page will.
+  if (MERU_E2E_BUILD) {
+    exposeTestSettings(settings);
+  }
+
+  if (gmailOrigin === undefined) {
+    return;
+  }
+
+  const gmailPage = serveGmailContract({
+    ipc: createIpc(),
+    senders,
+    isGmailTab: (key) => findTab(profiles.get(), key)?.app === "gmail",
+    gmailOrigin,
+    features: () => gmailFeatures(settings.get),
+    ...(MERU_E2E_BUILD && captureGmailPage()),
+    log: console.error,
+  });
+
+  for (const feature of GMAIL_FEATURES) {
+    settings.onChange(feature, gmailPage.push);
+  }
+};
 
 const lifecycle = createAppLifecycle();
 const errorDialog = createErrorDialog();
@@ -360,6 +405,9 @@ const start = async () => {
   power.onResume(mail.pokeAll);
   power.onResume(doNotDisturb.resume);
 
+  const preloads = new Map([
+    ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
+  ]);
   const views = createTabViews({
     window: shell.window,
     apps,
@@ -378,6 +426,7 @@ const start = async () => {
     // them awaits.
     // oxlint-disable-next-line no-use-before-define -- the menu runs the views' commands
     handleKey: (input) => menu.handleKey(input),
+    preloadFor: (app) => preloads.get(app),
     prepareSession: (partition) => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
     },
@@ -541,6 +590,8 @@ const start = async () => {
     }),
     log: console.error,
   });
+
+  serveGmailPage({ gmailOrigin, senders, profiles, settings });
 
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);

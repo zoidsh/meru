@@ -69,6 +69,15 @@ export const copyTrayImages = async (target: BuildTarget) => {
   );
 };
 
+/** Gmail's preload, which loads with every document in Gmail's view. */
+export const GMAIL_PRELOAD = "preload-gmail.cjs";
+
+/**
+ * What a production build allows Gmail's preload, minified: room to grow by
+ * the page features, and a wall against a library pulled in by accident.
+ */
+export const GMAIL_PRELOAD_BUDGET = 16 * 1024;
+
 export const appBundles = (target: BuildTarget): BuildOptions[] => {
   const mode = target === "dev" ? "dev" : "prod";
   const minify = mode === "prod" ? { mangle: { keepNames: true } } : false;
@@ -106,6 +115,17 @@ export const appBundles = (target: BuildTarget): BuildOptions[] => {
       external: ["electron"],
       output: {
         file: path.join(outDir(target), "preload-shell.cjs"),
+        format: "cjs",
+        minify,
+        sourcemap: mode === "dev",
+      },
+    },
+    {
+      input: path.join(repositoryRoot, "src", "preload", "gmail", "index.ts"),
+      platform: "browser",
+      external: ["electron"],
+      output: {
+        file: path.join(outDir(target), GMAIL_PRELOAD),
         format: "cjs",
         minify,
         sourcemap: mode === "dev",

@@ -166,6 +166,8 @@ const setup = async ({
       return `new-${ids}`;
     },
     handleKey: () => false,
+    preloadFor: (app) =>
+      app === "gmail" ? "/app/preload-gmail.cjs" : undefined,
     prepareSession: (partition) => {
       prepared.push([partition, views.length]);
     },
@@ -247,6 +249,17 @@ describe(createTabViews, () => {
     expect(window.tabs.status({ profileId: "a", tabId: "c1" })).toStrictEqual({
       kind: "unloaded",
     });
+  });
+
+  it("gives Gmail's view Gmail's preload and another app's view none", async () => {
+    const window = await setup();
+
+    await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
+
+    expect(window.views.map((view) => view.options.preload)).toStrictEqual([
+      "/app/preload-gmail.cjs",
+      undefined,
+    ]);
   });
 
   it("registers each view's webContents with its profile and tab", async () => {

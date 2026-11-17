@@ -20,6 +20,12 @@ export interface ContentViewOptions {
   /** The session's partition, which the page and every window it opens share. */
   partition: string;
   /**
+   * A preload for the view's own documents. Windows the page opens never get
+   * it, since Electron gives a child only the security preferences it
+   * inherits and the options its open handler names.
+   */
+  preload?: string;
+  /**
    * Answers each window the page asks to open, and each one a window it opened
    * asks for in turn. An allowed one opens in the session as a child of the
    * view's window, so it closes with it.
@@ -156,18 +162,19 @@ const reportEvents = (
 };
 
 /**
- * A sandboxed, context-isolated view with no preload, for a page Meru does not
- * own, attached to `window`.
+ * A sandboxed, context-isolated view for a page Meru does not own, attached to
+ * `window`.
  */
 export const addContentView = (
   window: BrowserWindow,
   options: ContentViewOptions
 ): ContentView => {
-  const { partition, onWebContents } = options;
+  const { partition, preload, onWebContents } = options;
   const children = new Set<BrowserWindow>();
   const view = new WebContentsView({
     webPreferences: {
       partition,
+      ...(preload !== undefined && { preload }),
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,

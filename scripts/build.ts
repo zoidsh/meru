@@ -6,6 +6,8 @@ import { build as buildRenderer } from "vite";
 
 import manifest from "../package.json" with { type: "json" };
 import {
+  GMAIL_PRELOAD,
+  GMAIL_PRELOAD_BUDGET,
   appBundles,
   cleanOutDir,
   copyTrayImages,
@@ -54,6 +56,21 @@ const files = await Promise.all(
     })
 );
 
+const gmailPreload = files.find((file) => file.path === GMAIL_PRELOAD);
+const gmailPreloadBytes = Buffer.byteLength(gmailPreload?.contents ?? "");
+const preloadProblems = [
+  ...(gmailPreload ? [] : [`${GMAIL_PRELOAD} is missing`]),
+  ...(gmailPreloadBytes > GMAIL_PRELOAD_BUDGET
+    ? [
+        `${GMAIL_PRELOAD} is ${gmailPreloadBytes} bytes, over its budget of ${GMAIL_PRELOAD_BUDGET}`,
+      ]
+    : []),
+  // Gmail's preload exposes nothing to the page's world.
+  ...(gmailPreload?.contents.includes("contextBridge")
+    ? [`${GMAIL_PRELOAD} reaches contextBridge`]
+    : []),
+];
+
 const hits = findForbiddenMarkers(
   files,
   target === "prod"
@@ -61,9 +78,13 @@ const hits = findForbiddenMarkers(
     : FORBIDDEN_IN_PROD
 );
 
-if (hits.length > 0) {
+if (hits.length > 0 || preloadProblems.length > 0) {
   for (const hit of hits) {
     console.error(`${label}/${hit.path} holds "${hit.marker}": ${hit.why}`);
+  }
+
+  for (const problem of preloadProblems) {
+    console.error(`${label}/${problem}`);
   }
 
   // A rejected build must not be left for `pnpm start` or packaging to use.
@@ -73,5 +94,5 @@ if (hits.length > 0) {
 }
 
 console.log(
-  `Built ${identityFor(target).productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold`
+  `Built ${identityFor(target).productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold, and ${GMAIL_PRELOAD} (${gmailPreloadBytes} bytes) against its budget of ${GMAIL_PRELOAD_BUDGET} and for contextBridge`
 );

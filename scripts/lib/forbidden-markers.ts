@@ -53,6 +53,14 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       marker: "meruTestBadge",
       why: "only the end-to-end build may capture the unread badge in place of showing it",
     },
+    {
+      marker: "meruTestGmailPage",
+      why: "only the end-to-end build may capture what Gmail's pages report",
+    },
+    {
+      marker: "meruTestSettings",
+      why: "only the end-to-end build may switch settings from outside the app",
+    },
   ];
 
 export interface OutputFile {

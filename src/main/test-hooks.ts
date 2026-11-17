@@ -1,0 +1,38 @@
+// Only the suite's build calls these, behind `MERU_E2E_BUILD`, and a release
+// build fails if either global's name is in its output.
+
+import type { GmailHealth } from "#contract/gmail.ts";
+import type { SettingKey, SettingValue } from "#core/settings.ts";
+import type { TabKey } from "#core/tabs.ts";
+
+import type { SettingsStore } from "./settings.ts";
+
+/**
+ * What Gmail's pages reported and what was refused, in order, on the main
+ * process's global under `meruTestGmailPage`.
+ */
+export const captureGmailPage = () => {
+  const captured = {
+    health: [] as (TabKey & GmailHealth)[],
+    refused: [] as (string | undefined)[],
+  };
+
+  Reflect.set(globalThis, "meruTestGmailPage", captured);
+
+  return {
+    onHealth: (key: TabKey, health: GmailHealth) => {
+      captured.health.push({ ...key, ...health });
+    },
+    onRefused: (origin: string | undefined) => {
+      captured.refused.push(origin);
+    },
+  };
+};
+
+/** Sets a setting as a settings page would, under `meruTestSettings`. */
+export const exposeTestSettings = (settings: SettingsStore) => {
+  Reflect.set(globalThis, "meruTestSettings", {
+    set: <Key extends SettingKey>(key: Key, value: SettingValue<Key>) =>
+      settings.update(key, () => value),
+  });
+};
