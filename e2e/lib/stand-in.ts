@@ -27,6 +27,40 @@ export const STAND_IN_COOKIE = "stand-in=kept";
 /** The name of the text field on the Gmail stand-in. */
 export const DRAFT_LABEL = "Draft";
 
+/** Names of the stand-in's parts that Meru's hides take, as a person reads them. */
+export const GMAIL_PARTS = {
+  logo: "Gmail logo",
+  promo: "Workspace offer",
+  upgrade: "Upgrade",
+  policy: "Programme policies",
+  search: "Search mail",
+  list: "Messages",
+} as const;
+
+/** One pixel, so the logo is an image without a request. */
+const PIXEL =
+  "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+
+/**
+ * Just the anchors Meru's hooks into Gmail look for, in Gmail's own
+ * attributes and nothing of its classes or layout.
+ */
+const GMAIL_MARKUP = `<header>
+      <div><div><a href="#inbox"><img alt="${GMAIL_PARTS.logo}" src="${PIXEL}"></a></div></div>
+      <form><input aria-label="${GMAIL_PARTS.search}"></form>
+      <div data-pep-id="global-pep-gmail" data-rp-onramp-container><a href="#upgrade">${GMAIL_PARTS.upgrade}</a></div>
+    </header>
+    <div role="main">
+      <div data-rp-onramp-container><p>${GMAIL_PARTS.promo}</p></div>
+      <div gh="tl"><table aria-label="${GMAIL_PARTS.list}"><tr><td>Row</td></tr></table></div>
+      <div role="contentinfo"><a href="https://www.google.com/gmail/about/policy/">${GMAIL_PARTS.policy}</a></div>
+    </div>`;
+
+/** Where the feed sends a signed-out account, which Gmail's view can show too. */
+export const SIGN_IN_PATH = "/signin";
+
+export const SIGN_IN_TITLE = "Sign-in stand-in";
+
 const page = (title: string, links: string) => `<!doctype html>
 <html lang="en">
   <head><meta charset="utf-8"><title>${title}</title></head>
@@ -238,6 +272,8 @@ export interface StandIn {
   popupCookieHeaders: string[];
   /** Where that pop-up is. */
   popupUrl: string;
+  /** The sign-in stand-in's page, on an origin of its own. */
+  signInUrl: string;
   /**
    * Has the Gmail stand-in's feed answer the session whose `account` cookie
    * is `account` this way, and `""` every session with no such cookie; one
@@ -396,7 +432,8 @@ export const startStandIn = async (): Promise<StandIn> => {
     <a href="${links.signIn}${POPUP_PATH.slice(1)}" target="_blank">Open a pop-up</a>
     <a href="${links.calendar}" target="_blank">Open Calendar</a>
     <a href="${links.drive}" target="_blank">Open Drive</a>
-    <textarea aria-label="${DRAFT_LABEL}"></textarea>`
+    <textarea aria-label="${DRAFT_LABEL}"></textarea>
+    ${GMAIL_MARKUP}`
       ),
     }),
     current,
@@ -413,7 +450,14 @@ export const startStandIn = async (): Promise<StandIn> => {
   }, current);
   const drive = await listen(() => ({ "/": page(DRIVE_TITLE, "") }), current);
   const signIn = await listen(
-    () => ({ [POPUP_PATH]: page(POPUP_TITLE, ELSEWHERE_LINK) }),
+    () => ({
+      [POPUP_PATH]: page(POPUP_TITLE, ELSEWHERE_LINK),
+      // An Upgrade button no Gmail hide may reach off Gmail's origin.
+      [SIGN_IN_PATH]: page(
+        SIGN_IN_TITLE,
+        `<div data-pep-id="global-pep-gmail"><a href="#upgrade">${GMAIL_PARTS.upgrade}</a></div>`
+      ),
+    }),
     current
   );
 
@@ -429,6 +473,7 @@ export const startStandIn = async (): Promise<StandIn> => {
     calendarUrl: calendar.url(),
     driveUrl: drive.url(),
     popupUrl: `${signIn.url()}${POPUP_PATH.slice(1)}`,
+    signInUrl: `${signIn.url()}${SIGN_IN_PATH.slice(1)}`,
     appUrls: JSON.stringify({
       gmail: gmail.url(),
       calendar: calendar.url(),
