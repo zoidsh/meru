@@ -1,3 +1,4 @@
+import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
@@ -54,7 +55,9 @@ const setup = ({
   now = new Date(2026, 10, 17, 14),
   doNotDisturb: holding = undefined as State["doNotDisturb"],
   important = (): Promise<ReadonlySet<string> | null> => Promise.resolve(null),
+  copies = true,
 } = {}) => {
+  const copied: string[] = [];
   const shown: Shown[] = [];
   const logs: string[] = [];
   let doNotDisturb = holding;
@@ -79,6 +82,17 @@ const setup = ({
   };
   const notifications = createMailNotifications({
     notifier,
+    clipboard: {
+      writeText: (text) => {
+        if (!copies) {
+          return Promise.reject(new Error(`Not written: ${text}`));
+        }
+
+        copied.push(text);
+
+        return Promise.resolve();
+      },
+    },
     setting: (key) =>
       (settings.has(key) ? settings.get(key) : SETTINGS[key].default) as never,
     state: () => current,
@@ -104,6 +118,7 @@ const setup = ({
 
   return {
     notifications,
+    copied,
     shown,
     opened,
     acted,
@@ -399,5 +414,214 @@ describe("what holds a new mail notification", () => {
     await polled;
 
     expect(app.shown).toStrictEqual([]);
+  });
+});
+
+const CODE = "493021";
+
+/** A message the extractor reads `CODE` from. */
+const codeEntry = (id: string): FeedEntry => ({
+  ...entry(id),
+  subject: "Your verification code",
+  summary: `Use ${CODE} to finish signing in`,
+});
+
+/** Lets a copy, which settles after the call that starts it, land. */
+const settle = () => delay(0);
+
+/** Polls once to see the feed, then brings `entries` as new. */
+const arrive = async (
+  app: ReturnType<typeof setup>,
+  ...entries: FeedEntry[]
+) => {
+  await app.notifications.polled("a", feed());
+  await app.notifications.polled("a", feed(...entries));
+  await settle();
+};
+
+const content = (shown: Shown[]) =>
+  shown.map(({ title, subtitle, body, actions }) => ({
+    title,
+    ...(subtitle === undefined ? {} : { subtitle }),
+    body,
+    actions,
+  }));
+
+describe("verification codes", () => {
+  it("shows the code with a Copy button and copies nothing, touching no mail, until it is pressed", async () => {
+    const app = setup();
+
+    app.set("verificationCodeMarkRead", true);
+    await arrive(app, codeEntry("1"));
+
+    expect(content(app.shown)).toStrictEqual([
+      {
+        title: "Sender 1",
+        body: `Verification code ${CODE}`,
+        actions: ["Copy"],
+      },
+    ]);
+    expect([app.copied, app.acted]).toStrictEqual([[], []]);
+
+    app.shown[0]?.events.onAction?.(0);
+    await settle();
+
+    expect(app.copied).toStrictEqual([CODE]);
+    expect(app.acted).toStrictEqual([["a", "markAsRead", "1"]]);
+    expect(app.opened).toStrictEqual([]);
+  });
+
+  it("copies on a body click too, and opens the message", async () => {
+    const app = setup();
+
+    await arrive(app, codeEntry("1"));
+    app.shown[0]?.events.onClick();
+    await settle();
+
+    expect(app.copied).toStrictEqual([CODE]);
+    expect(app.opened).toStrictEqual([["a", `${INBOX}?message_id=1`]]);
+    expect(app.acted).toStrictEqual([]);
+  });
+
+  it("copies as it shows in immediately mode, and the mail follows the copy", async () => {
+    const app = setup();
+
+    app.set("verificationCodeCopyMode", "immediately");
+    app.set("verificationCodeMarkRead", true);
+    await arrive(app, codeEntry("1"));
+
+    expect(content(app.shown)).toStrictEqual([
+      {
+        title: "Sender 1",
+        body: `Copied verification code ${CODE}`,
+        actions: undefined,
+      },
+    ]);
+    expect(app.copied).toStrictEqual([CODE]);
+    expect(app.acted).toStrictEqual([["a", "markAsRead", "1"]]);
+
+    app.shown[0]?.events.onClick();
+
+    expect(app.opened).toStrictEqual([["a", `${INBOX}?message_id=1`]]);
+    expect(app.copied).toStrictEqual([CODE]);
+  });
+
+  it("moves the mail to Trash rather than marking it read when both are on", async () => {
+    const app = setup();
+
+    app.set("verificationCodeCopyMode", "immediately");
+    app.set("verificationCodeMarkRead", true);
+    app.set("verificationCodeTrash", true);
+    await arrive(app, codeEntry("1"));
+
+    expect(app.acted).toStrictEqual([["a", "delete", "1"]]);
+  });
+
+  it("touches no mail when the copy fails, and logs no code", async () => {
+    const app = setup({ copies: false });
+
+    app.set("verificationCodeCopyMode", "immediately");
+    app.set("verificationCodeTrash", true);
+    await arrive(app, codeEntry("1"));
+
+    expect(app.acted).toStrictEqual([]);
+    expect(app.logs).toStrictEqual([
+      "Found a verification code in a new message of profile a, copying it",
+      "A verification code of profile a was not copied",
+    ]);
+  });
+
+  it("shows through every hold while the mail beside it is held", async () => {
+    const app = setup({
+      doNotDisturb: { until: null },
+      important: () => Promise.resolve(new Set()),
+    });
+
+    app.set("notifications", false);
+    app.set("quietHours", [{ start: "00:00", end: "00:00" }]);
+    app.set("notificationImportantOnly", true);
+    await arrive(app, entry("2"), codeEntry("1"));
+
+    expect(titles(app.shown)).toStrictEqual(["Sender 1"]);
+    expect(app.logs).toStrictEqual([
+      "Found a verification code in a new message of profile a, copying it when asked",
+      "Held 1 new mail notification(s) of profile a: off",
+    ]);
+  });
+
+  it("passes important only, which keeps none of the mail beside it", async () => {
+    const app = setup({ important: () => Promise.resolve(new Set()) });
+
+    app.set("notificationImportantOnly", true);
+    await arrive(app, entry("2"), codeEntry("1"));
+
+    expect(titles(app.shown)).toStrictEqual(["Sender 1"]);
+  });
+
+  it("is never told as one of many, nor counted toward that", async () => {
+    const app = setup();
+
+    await arrive(app, entry("4"), entry("3"), codeEntry("2"), entry("1"));
+    await app.notifications.polled(
+      "a",
+      feed(entry("9"), entry("8"), entry("7"), entry("6"), codeEntry("5"))
+    );
+
+    expect(
+      content(app.shown).map(({ title, body }) => [title, body])
+    ).toStrictEqual([
+      ["Sender 2", `Verification code ${CODE}`],
+      ["Sender 1", "Subject 1\nSummary 1"],
+      ["Sender 3", "Subject 3\nSummary 3"],
+      ["Sender 4", "Subject 4\nSummary 4"],
+      ["Sender 5", `Verification code ${CODE}`],
+      ["4 new messages", ""],
+    ]);
+  });
+
+  it("names the profile as a new mail notification does, and leaves the sender out when asked", async () => {
+    const app = setup({ state: two });
+
+    app.set("notificationSender", false);
+    await app.notifications.polled("b", feed());
+    await app.notifications.polled("b", feed(codeEntry("1")));
+
+    expect(content(app.shown)).toStrictEqual([
+      {
+        title: "New message",
+        subtitle: "Work",
+        body: `Verification code ${CODE}`,
+        actions: ["Copy"],
+      },
+    ]);
+  });
+
+  it("notifies the mail as any other with verification codes off", async () => {
+    const app = setup();
+
+    app.set("verificationCodes", false);
+    await arrive(app, codeEntry("1"));
+
+    expect(content(app.shown)).toStrictEqual([
+      {
+        title: "Sender 1",
+        body: `Your verification code\nUse ${CODE} to finish signing in`,
+        actions: ["Archive", "Mark as Read", "Delete", "Mark as Spam"],
+      },
+    ]);
+    expect(app.logs).toStrictEqual([]);
+  });
+
+  it("logs that a code was found and what was done, never the code or its mail", async () => {
+    const app = setup();
+
+    app.set("verificationCodeCopyMode", "immediately");
+    app.set("verificationCodeTrash", true);
+    await arrive(app, codeEntry("1"));
+
+    expect(app.logs).toStrictEqual([
+      "Found a verification code in a new message of profile a, copying it",
+      "Copied a verification code of profile a, then ran delete",
+    ]);
   });
 });

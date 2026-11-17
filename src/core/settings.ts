@@ -31,6 +31,15 @@ export type TrayIconColor = (typeof TRAY_ICON_COLORS)[number];
 
 export type Design = (typeof DESIGNS)[number];
 
+/** The default first. */
+export const VERIFICATION_CODE_COPY_MODES = [
+  "notificationClick",
+  "immediately",
+] as const;
+
+export type VerificationCodeCopyMode =
+  (typeof VERIFICATION_CODE_COPY_MODES)[number];
+
 /** Every setting, declared once. */
 export const SETTINGS = {
   design: setting<Design>({
@@ -71,6 +80,32 @@ export const SETTINGS = {
   quietHours: setting<QuietWindow[]>({
     schema: z.array(quietWindowSchema),
     default: [],
+  }),
+  /**
+   * A new message with a one-time code gets a notification with the code,
+   * shown whatever holds new-mail ones, and the code is copied.
+   */
+  verificationCodes: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /** When the code is copied: from its notification, or as it shows. */
+  verificationCodeCopyMode: setting<VerificationCodeCopyMode>({
+    schema: z.enum(VERIFICATION_CODE_COPY_MODES),
+    default: "notificationClick",
+  }),
+  /** Marks the message read once its code is copied, never on detection. */
+  verificationCodeMarkRead: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
+  /**
+   * Moves the message to Trash once its code is copied, in place of marking
+   * it read when both are on.
+   */
+  verificationCodeTrash: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
   }),
   /**
    * The tray or menu bar icon. Off on macOS, where the Dock already shows the

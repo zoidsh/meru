@@ -83,6 +83,17 @@ describe(decideNotification, () => {
     ]);
   });
 
+  it("shows a verification code's through every hold at once", () => {
+    expect(
+      decide({
+        kind: "verificationCode",
+        notifications: false,
+        doNotDisturb: { until: null },
+        quietHours: [{ start: "00:00", end: "00:00" }],
+      })
+    ).toStrictEqual({ show: true });
+  });
+
   it("names Do Not Disturb before quiet hours when both hold", () => {
     expect(
       decide({

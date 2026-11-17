@@ -15,6 +15,10 @@ import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createBadge, createCapturedBadge } from "#platform/badge.ts";
+import {
+  createCapturedClipboard,
+  createClipboard,
+} from "#platform/clipboard.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
@@ -403,6 +407,8 @@ const start = async () => {
       // The suite's build captures every notification, so a test never puts
       // one on the desktop.
       notifier: MERU_E2E_BUILD ? createCapturedNotifier() : createNotifier(),
+      // Nor writes the clipboard, which the whole desktop shares.
+      clipboard: MERU_E2E_BUILD ? createCapturedClipboard() : createClipboard(),
       setting: settings.get,
       state: profiles.get,
       hasSubtitle: isMacOS,

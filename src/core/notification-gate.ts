@@ -65,7 +65,7 @@ export const isDoNotDisturbOn = (
   (doNotDisturb.until === null || doNotDisturb.until > time);
 
 /** Every kind a notification may be; each later kind joins here. */
-export type NotificationKind = "newMail";
+export type NotificationKind = "newMail" | "verificationCode";
 
 export type HoldReason = "off" | "doNotDisturb" | "quietHours";
 
@@ -87,11 +87,18 @@ export interface NotificationGates {
  * later: what it was for still counts as seen and unread.
  */
 export const decideNotification = ({
+  kind,
   notifications,
   quietHours,
   doNotDisturb,
   now,
 }: NotificationGates): NotificationDecision => {
+  // A code arrives while the person is signing in, and in the click-to-copy
+  // mode the notification is the only way to it, so nothing holds one.
+  if (kind === "verificationCode") {
+    return { show: true };
+  }
+
   if (!notifications) {
     return { show: false, reason: "off" };
   }

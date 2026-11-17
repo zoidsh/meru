@@ -130,8 +130,15 @@ msgstr "Close Window"
 msgid "Content"
 msgstr "Content"
 
+#. Text of the notification for an email that carries a one-time code, already copied to the clipboard
+#: src/main/notifications.ts
+msgid "Copied verification code {verificationCode}"
+msgstr "Copied verification code {verificationCode}"
+
+#. Button on a notification that copies the verification code
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
+#: src/main/notifications.ts
 msgid "Copy"
 msgstr "Copy"
 
@@ -445,6 +452,11 @@ msgstr "Until Tomorrow"
 #: src/main/commands.ts
 msgid "Until Turned Off"
 msgstr "Until Turned Off"
+
+#. Text of the notification for an email that carries a one-time code, which its Copy button copies
+#: src/main/notifications.ts
+msgid "Verification code {verificationCode}"
+msgstr "Verification code {verificationCode}"
 
 #. Menu item in the View menu, checked while the window's sidebar and title bar let the desktop show through, blurred, as macOS sidebars do
 #: src/main/commands.ts

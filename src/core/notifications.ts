@@ -97,6 +97,9 @@ const withProfile = (
     : { title, body: [profileName, ...lines].join("\n") };
 };
 
+const titleOf = (entry: FeedEntry, { parts, copy }: NoticeOptions) =>
+  parts.sender ? entry.senderName || entry.senderAddress : copy.newMessage;
+
 /** What to show for a poll's new messages, oldest first. */
 export const noticesFor = (
   fresh: readonly FeedEntry[],
@@ -106,11 +109,11 @@ export const noticesFor = (
     return [withProfile(options.copy.newMessages(fresh.length), [], options)];
   }
 
-  const { parts, copy } = options;
+  const { parts } = options;
 
   return fresh.map((entry) => ({
     ...withProfile(
-      parts.sender ? entry.senderName || entry.senderAddress : copy.newMessage,
+      titleOf(entry, options),
       [
         parts.subject ? entry.subject : "",
         parts.summary ? entry.summary : "",
@@ -121,6 +124,16 @@ export const noticesFor = (
     messageId: entry.id,
   }));
 };
+
+/**
+ * What to show for a message with a one-time code: titled and placed as a
+ * new-mail notice, with `line`, which names the code, as its only text.
+ */
+export const codeNoticeFor = (
+  entry: FeedEntry,
+  line: string,
+  options: NoticeOptions
+): Notice => withProfile(titleOf(entry, options), [line], options);
 
 /** The link when it is on Gmail's origin with no credentials, else Gmail's inbox. */
 export const messageUrl = (link: string | undefined, inbox: string) => {

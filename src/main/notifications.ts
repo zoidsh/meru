@@ -1,6 +1,6 @@
 import { plural, t } from "@lingui/core/macro";
 
-import type { FeedOutcome } from "#core/feed.ts";
+import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import type { MailAction } from "#core/mail-actions.ts";
 import {
@@ -8,16 +8,35 @@ import {
   importantOnly,
   momentOf,
 } from "#core/notification-gate.ts";
-import { messageUrl, noticesFor, takeNewMail } from "#core/notifications.ts";
-import type { Notice, NotificationCopy, Seen } from "#core/notifications.ts";
+import {
+  codeNoticeFor,
+  messageUrl,
+  noticesFor,
+  takeNewMail,
+} from "#core/notifications.ts";
+import type {
+  Notice,
+  NoticeOptions,
+  NotificationCopy,
+  Seen,
+} from "#core/notifications.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
-import type { DoNotDisturb, State } from "#core/state.ts";
-import type { Notifier, ShownNotification } from "#platform/notifications.ts";
+import type { DoNotDisturb, Profile, State } from "#core/state.ts";
+import { extractVerificationCode } from "#core/verification-code.ts";
+import type { Clipboard } from "#platform/clipboard.ts";
+import type {
+  NotificationContent,
+  NotificationEvents,
+  Notifier,
+  ShownNotification,
+} from "#platform/notifications.ts";
 
 import { profileDisplayName } from "./profile-copy.ts";
 
 export interface MailNotificationsDeps {
   notifier: Notifier;
+  /** Written with a verification code's digits and nothing else. */
+  clipboard: Clipboard;
   /** Read as each notification is made, so a change applies to the next. */
   setting: <Key extends SettingKey>(key: Key) => SettingValue<Key>;
   state: () => State;
@@ -60,6 +79,25 @@ const actionLabels = (): Record<MailAction, string> => ({
   }),
 });
 
+const codeCopy = () => ({
+  code: (verificationCode: string) =>
+    t({
+      message: `Verification code ${verificationCode}`,
+      comment:
+        "Text of the notification for an email that carries a one-time code, which its Copy button copies",
+    }),
+  copied: (verificationCode: string) =>
+    t({
+      message: `Copied verification code ${verificationCode}`,
+      comment:
+        "Text of the notification for an email that carries a one-time code, already copied to the clipboard",
+    }),
+  copy: t({
+    message: "Copy",
+    comment: "Button on a notification that copies the verification code",
+  }),
+});
+
 const copy = (): NotificationCopy => ({
   newMessage: t({
     message: "New message",
@@ -82,10 +120,12 @@ const copy = (): NotificationCopy => ({
  * decides, and opens it in its profile when one is clicked. One for a
  * single message offers `MAIL_ACTIONS` as its buttons. What was seen
  * is kept in memory only, and a profile's is dropped, with its notifications
- * closed, as it is removed.
+ * closed, as it is removed. A message with a verification code gets the
+ * code's notification in place of its own, which nothing holds.
  */
 export const createMailNotifications = ({
   notifier,
+  clipboard,
   setting,
   state,
   hasSubtitle,
@@ -100,16 +140,38 @@ export const createMailNotifications = ({
   const seen = new Map<string, Seen>();
   const shown = new Map<string, Set<ShownNotification>>();
 
-  const show = (profileId: string, notice: Notice) => {
-    const { link, messageId, ...content } = notice;
+  /** Shows it, held by its profile until it is gone or the profile is. */
+  const showFor = (
+    profileId: string,
+    content: NotificationContent,
+    events: Omit<NotificationEvents, "onGone">
+  ) => {
     const held = shown.get(profileId) ?? new Set<ShownNotification>();
     let notification: ShownNotification | undefined;
 
     shown.set(profileId, held);
+    notification = notifier.show(content, {
+      ...events,
+      onGone: () => {
+        if (notification) {
+          held.delete(notification);
+        }
 
+        notification = undefined;
+      },
+    });
+
+    if (notification) {
+      held.add(notification);
+    }
+  };
+
+  const show = (profileId: string, notice: Notice) => {
+    const { link, messageId, ...content } = notice;
     const labels = actionLabels();
 
-    notification = notifier.show(
+    showFor(
+      profileId,
       messageId === undefined
         ? content
         : { ...content, actions: MAIL_ACTIONS.map((action) => labels[action]) },
@@ -124,19 +186,104 @@ export const createMailNotifications = ({
             act(profileId, action, messageId);
           }
         },
-        onGone: () => {
-          if (notification) {
-            held.delete(notification);
-          }
+      }
+    );
+  };
 
-          notification = undefined;
+  /**
+   * Copies the code, then marks its message read or moves it to Trash as
+   * set, Trash winning; nothing touches the mail unless the code landed. The
+   * code is never logged.
+   */
+  const copyCode = async (
+    profileId: string,
+    code: string,
+    messageId: string
+  ) => {
+    try {
+      await clipboard.writeText(code);
+    } catch {
+      log(`A verification code of profile ${profileId} was not copied`);
+
+      return;
+    }
+
+    let followUp: MailAction | undefined;
+
+    if (setting("verificationCodeTrash")) {
+      followUp = "delete";
+    } else if (setting("verificationCodeMarkRead")) {
+      followUp = "markAsRead";
+    }
+
+    if (followUp) {
+      act(profileId, followUp, messageId);
+    }
+
+    log(
+      `Copied a verification code of profile ${profileId}${followUp ? `, then ran ${followUp}` : ""}`
+    );
+  };
+
+  const showCode = (
+    profileId: string,
+    entry: FeedEntry,
+    code: string,
+    options: NoticeOptions
+  ) => {
+    const decision = decideNotification({
+      kind: "verificationCode",
+      notifications: setting("notifications"),
+      quietHours: setting("quietHours"),
+      doNotDisturb: doNotDisturb(),
+      now: momentOf(now()),
+    });
+
+    if (!decision.show) {
+      return;
+    }
+
+    const url = messageUrl(entry.link, inbox);
+
+    if (setting("verificationCodeCopyMode") === "immediately") {
+      log(
+        `Found a verification code in a new message of profile ${profileId}, copying it`
+      );
+      showFor(
+        profileId,
+        codeNoticeFor(entry, codeCopy().copied(code), options),
+        {
+          onClick: () => {
+            open(profileId, url);
+          },
+        }
+      );
+      void copyCode(profileId, code, entry.id);
+
+      return;
+    }
+
+    log(
+      `Found a verification code in a new message of profile ${profileId}, copying it when asked`
+    );
+    showFor(
+      profileId,
+      {
+        ...codeNoticeFor(entry, codeCopy().code(code), options),
+        actions: [codeCopy().copy],
+      },
+      {
+        // The button copies without bringing Meru forward, which a body
+        // click on macOS always does, so the body is the fallback.
+        onAction: () => {
+          void copyCode(profileId, code, entry.id);
+        },
+        onClick: () => {
+          void copyCode(profileId, code, entry.id);
+          open(profileId, url);
         },
       }
     );
-
-    if (notification) {
-      held.add(notification);
-    }
   };
 
   return {
@@ -157,7 +304,36 @@ export const createMailNotifications = ({
 
       seen.set(profileId, taken.seen);
 
-      if (taken.fresh.length === 0) {
+      const optionsFor = (profile: Profile): NoticeOptions => ({
+        parts: {
+          sender: setting("notificationSender"),
+          subject: setting("notificationSubject"),
+          summary: setting("notificationSummary"),
+        },
+        profileName:
+          state().profiles.length > 1 ? profileDisplayName(profile) : undefined,
+        hasSubtitle,
+        copy: copy(),
+      });
+
+      // Ahead of every hold and of Important only, which a code passes, and
+      // never told as one of many or counted toward that.
+      let fresh: FeedEntry[] = [];
+      const profile = listed();
+
+      for (const entry of taken.fresh) {
+        const code = setting("verificationCodes")
+          ? extractVerificationCode([entry.subject, entry.summary])
+          : undefined;
+
+        if (code === undefined) {
+          fresh.push(entry);
+        } else if (profile) {
+          showCode(profileId, entry, code, optionsFor(profile));
+        }
+      }
+
+      if (fresh.length === 0) {
         return;
       }
 
@@ -172,7 +348,7 @@ export const createMailNotifications = ({
 
         if (!decision.show) {
           log(
-            `Held ${taken.fresh.length} new mail notification(s) of profile ${profileId}: ${decision.reason}`
+            `Held ${fresh.length} new mail notification(s) of profile ${profileId}: ${decision.reason}`
           );
         }
 
@@ -182,8 +358,6 @@ export const createMailNotifications = ({
       if (held()) {
         return;
       }
-
-      let { fresh } = taken;
 
       if (setting("notificationImportantOnly")) {
         const ids = await important(profileId);
@@ -202,26 +376,13 @@ export const createMailNotifications = ({
         }
       }
 
-      const current = state();
-      const profile = listed();
+      const stillListed = listed();
 
-      if (fresh.length === 0 || !profile) {
+      if (fresh.length === 0 || !stillListed) {
         return;
       }
 
-      const notices = noticesFor(fresh, {
-        parts: {
-          sender: setting("notificationSender"),
-          subject: setting("notificationSubject"),
-          summary: setting("notificationSummary"),
-        },
-        profileName:
-          current.profiles.length > 1 ? profileDisplayName(profile) : undefined,
-        hasSubtitle,
-        copy: copy(),
-      });
-
-      for (const notice of notices) {
+      for (const notice of noticesFor(fresh, optionsFor(stillListed))) {
         show(profileId, notice);
       }
     },

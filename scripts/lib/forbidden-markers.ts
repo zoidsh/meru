@@ -46,6 +46,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may capture its tray in place of showing one",
     },
     {
+      marker: "meruTestClipboard",
+      why: "only the end-to-end build may capture clipboard writes in place of making them",
+    },
+    {
       marker: "meruTestBadge",
       why: "only the end-to-end build may capture the unread badge in place of showing it",
     },
