@@ -64,8 +64,13 @@ export interface TabViewsDeps {
   onFront: () => void;
   /** Told when a tab's page finishes a load or changes its title. */
   onPageChange: (key: TabKey) => void;
+  /** Told when a tab's page finishes a load, with what can read it. */
+  onLoaded: (key: TabKey, page: LoadedPage) => void;
   log: (message: string) => void;
 }
+
+/** What of a tab's view a reader of its page gets. */
+export type LoadedPage = Pick<ContentView, "url" | "evaluate">;
 
 /** How long after a page's request to add an account another is dropped. */
 const ADD_PROFILE_PAUSE_MS = 1000;
@@ -109,6 +114,7 @@ export const createTabViews = ({
   onMouseDown,
   onFront,
   onPageChange,
+  onLoaded,
   log,
 }: TabViewsDeps) => {
   const tabs = new Map<string, TabView>();
@@ -257,6 +263,13 @@ export const createTabViews = ({
       case "loaded": {
         dispatch(key, { kind: "loaded" });
         onPageChange(tabKeyed);
+
+        const view = tabs.get(key)?.view;
+
+        if (view) {
+          onLoaded(tabKeyed, { url: view.url, evaluate: view.evaluate });
+        }
+
         break;
       }
       case "failed-to-load": {

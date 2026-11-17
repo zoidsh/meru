@@ -1,4 +1,12 @@
+import { isNotFound } from "#core/feed.ts";
 import type { FeedEntry, FeedOutcome, MailStatus } from "#core/feed.ts";
+
+type PollListener = (
+  profileId: string,
+  outcome: FeedOutcome,
+  startedAt: number,
+  label: string | undefined
+) => void;
 
 /** What the shell is told of a profile's mail. */
 export interface Mail {
@@ -17,6 +25,8 @@ export interface MailPollerDeps {
     signal: AbortSignal,
     label?: string
   ) => Promise<FeedOutcome>;
+  /** The label of the profile's inbox feed as it is now, none for the whole inbox. */
+  inboxLabel: (profileId: string) => string | undefined;
   isOnline: () => boolean;
   log: (message: string) => void;
 }
@@ -69,19 +79,19 @@ const nextDelay = (polled: Polled) => {
  * then 30 s after each poll ends, backing off from a failure and slowing
  * down while signed out. A poll due while offline is skipped and the next
  * one scheduled as usual; `pokeAll` when the network returns only brings it
- * forward. Only a status and a count are logged,
- * never what a message says or who sent it.
+ * forward. A profile whose inbox has a label reads that label's feed, and
+ * the whole inbox's for a poll the label's feed is not found. Only a status
+ * and a count are logged, never what a message says or who sent it.
  */
 export const createMailPoller = ({
   fetchFeed,
+  inboxLabel,
   isOnline,
   log,
 }: MailPollerDeps) => {
   const polls = new Map<string, Polled>();
   const listeners = new Set<() => void>();
-  const pollListeners = new Set<
-    (profileId: string, outcome: FeedOutcome, startedAt: number) => void
-  >();
+  const pollListeners = new Set<PollListener>();
 
   const notify = () => {
     for (const listener of listeners) {
@@ -93,7 +103,8 @@ export const createMailPoller = ({
     profileId: string,
     polled: Polled,
     outcome: FeedOutcome,
-    startedAt: number
+    startedAt: number,
+    label: string | undefined
   ) => {
     const before: Mail = {
       status: polled.status,
@@ -123,7 +134,7 @@ export const createMailPoller = ({
     }
 
     for (const listener of pollListeners) {
-      listener(profileId, outcome, startedAt);
+      listener(profileId, outcome, startedAt, label);
     }
 
     if (
@@ -177,11 +188,20 @@ export const createMailPoller = ({
       controller.abort(new Error("timed out"));
     }, FETCH_TIMEOUT);
     let outcome: FeedOutcome;
+    let label = inboxLabel(profileId);
 
     polled.inFlight = controller;
 
     try {
-      outcome = await fetchFeed(profileId, controller.signal);
+      outcome = await fetchFeed(profileId, controller.signal, label);
+
+      if (label !== undefined && isNotFound(outcome)) {
+        log(
+          `Mail of profile ${profileId}: its inbox's label has no feed, so the whole inbox was read`
+        );
+        label = undefined;
+        outcome = await fetchFeed(profileId, controller.signal);
+      }
     } catch (error) {
       outcome = { kind: "failed", reason: describe(error) };
     } finally {
@@ -195,7 +215,7 @@ export const createMailPoller = ({
       return;
     }
 
-    settle(profileId, polled, outcome, startedAt);
+    settle(profileId, polled, outcome, startedAt, label);
 
     schedule(profileId, polled, nextDelay(polled));
 
@@ -302,16 +322,11 @@ export const createMailPoller = ({
       listeners.add(listener);
     },
     /**
-     * Called as each poll of a listed profile ends, with what it read and
-     * when, in milliseconds since the epoch, its request started.
+     * Called as each poll of a listed profile ends, with what it read, when,
+     * in milliseconds since the epoch, its request started, and the label
+     * whose feed it read, none for the whole inbox.
      */
-    onPoll: (
-      listener: (
-        profileId: string,
-        outcome: FeedOutcome,
-        startedAt: number
-      ) => void
-    ) => {
+    onPoll: (listener: PollListener) => {
       pollListeners.add(listener);
     },
   };

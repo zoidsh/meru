@@ -35,6 +35,30 @@ export type FeedResponse =
 
 export const FEED_PATH = "/mail/u/0/feed/atom";
 
+/** The label of Gmail's Primary category, as a path segment after the feed's. */
+export const PRIMARY_LABEL = "^sq_ig_i_personal";
+
+/**
+ * What main runs in Gmail's page to learn its inbox type, which only the
+ * page's own world can see. It is constant and never built from anything.
+ */
+export const INBOX_TYPE_EXPRESSION = "window.GM_INBOX_TYPE";
+
+/**
+ * Whether what the page answered is Gmail's tabbed inbox. Nothing else a page
+ * says changes what is read, so a page that lies can at most narrow its own
+ * profile's count to Primary.
+ */
+export const isSectioned = (value: unknown) => value === "SECTIONED";
+
+/**
+ * The label of the feed a profile's count, notifications and unified inbox
+ * read: Primary on a tabbed inbox, which is what Gmail counts there, else
+ * none, the whole inbox.
+ */
+export const inboxLabel = (sectioned: boolean) =>
+  sectioned ? PRIMARY_LABEL : undefined;
+
 /** Where a profile's feed stands, `unknown` until its first poll ends. */
 export const MAIL_STATUSES = ["unknown", "ok", "signedOut", "failed"] as const;
 
@@ -123,6 +147,15 @@ export const parseFeed = (text: string): Feed | undefined => {
   };
 };
 
+const NOT_FOUND = "HTTP 404";
+
+/**
+ * Gmail answers a label it has no feed for with 404 rather than an empty
+ * feed, so a label that stops existing reads as a failure.
+ */
+export const isNotFound = (outcome: FeedOutcome) =>
+  outcome.kind === "failed" && outcome.reason === NOT_FOUND;
+
 /** A redirect, 401 or 403 is the session signed out of Google. */
 export const feedOutcome = (response: FeedResponse): FeedOutcome => {
   if (
@@ -131,6 +164,10 @@ export const feedOutcome = (response: FeedResponse): FeedOutcome => {
     response.status === 403
   ) {
     return { kind: "signedOut" };
+  }
+
+  if (response.status === 404) {
+    return { kind: "failed", reason: NOT_FOUND };
   }
 
   if (response.status !== 200) {

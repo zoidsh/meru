@@ -11,6 +11,7 @@ import type { Platform } from "#core/platform.ts";
 import { profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
+import type { TabKey } from "#core/tabs.ts";
 import { totalUnread } from "#core/unread.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
@@ -52,6 +53,7 @@ import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
 import { serveGmailContract } from "./gmail-page.ts";
+import { createInboxTypes } from "./inbox-types.ts";
 import { createInbox } from "./inbox.ts";
 import { createMailActions } from "./mail-actions.ts";
 import { createMailPoller } from "./mail.ts";
@@ -372,8 +374,20 @@ const start = async () => {
   const network = createNetwork();
   const gmail = findApp(apps, "gmail");
   // The registry's Gmail, or the suite's stand-in for it.
-  const feedUrl = gmail && `${new URL(gmail.home).origin}${FEED_PATH}`;
+  const gmailOrigin = gmail && new URL(gmail.home).origin;
+  const feedUrl = gmailOrigin && `${gmailOrigin}${FEED_PATH}`;
+  const isGmailTab = (key: TabKey) =>
+    findTab(profiles.get(), key)?.app === "gmail";
+  const inboxTypes = createInboxTypes({
+    gmailOrigin,
+    isGmailTab,
+    // The badge follows at once rather than at the next poll.
+    // oxlint-disable-next-line no-use-before-define -- the poller reads what this learns
+    onChange: (profileId) => mail.poke(profileId),
+    log: console.error,
+  });
   const mail = createMailPoller({
+    inboxLabel: inboxTypes.label,
     fetchFeed: async (profileId, signal, label) => {
       if (!feedUrl) {
         return { kind: "failed", reason: "no Gmail" };
@@ -396,6 +410,7 @@ const start = async () => {
 
   // A removed profile's polling stops here, before its data is cleared.
   profiles.onChange(pollProfiles);
+  profiles.onChange(inboxTypes.follow);
   network.onOnline(mail.pokeAll);
 
   const power = createPower();
@@ -444,9 +459,12 @@ const start = async () => {
     },
     // Gmail puts the count in its title, so the badge follows the page.
     onPageChange: (key) => {
-      if (findTab(profiles.get(), key)?.app === "gmail") {
+      if (isGmailTab(key)) {
         mail.poke(key.profileId);
       }
+    },
+    onLoaded: (key, page) => {
+      void inboxTypes.loaded(key, page);
     },
     log: console.error,
   });
@@ -466,7 +484,6 @@ const start = async () => {
     },
     log: console.error,
   });
-  const gmailOrigin = gmail && new URL(gmail.home).origin;
   const mailActions =
     gmailOrigin === undefined
       ? undefined
@@ -537,8 +554,8 @@ const start = async () => {
 
     // A removed profile's actions stop here, before its data is cleared.
     profiles.onChange(mailActions.follow);
-    mail.onPoll((profileId, outcome) => {
-      void mailNotifications.polled(profileId, outcome);
+    mail.onPoll((profileId, outcome, _startedAt, label) => {
+      void mailNotifications.polled(profileId, outcome, label);
     });
     profiles.onChange(mailNotifications.follow);
   }

@@ -75,6 +75,8 @@ const createFakeWindow = () => {
       setBorderRadius: () => false,
       loadURL: () => Promise.resolve(),
       reload: () => false,
+      url: () => "",
+      evaluate: () => Promise.resolve(),
       setVisible: () => false,
       close: () => false,
       focus: () => false,

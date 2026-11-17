@@ -441,3 +441,83 @@ test("with important only, notifies just the new mail the Important feed lists",
   await expect(home).toHaveAccessibleName("Home, 3 unread messages");
   await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 2"]);
 });
+
+const PRIMARY = "^sq_ig_i_personal";
+
+test("on a tabbed inbox, counts and notifies the mail in Primary alone", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  standIn.setInboxType('"SECTIONED"');
+  standIn.setFeed(ANY_SESSION, { ...listing("2", "1"), primary: ["1"] });
+
+  const { app, shell, gmail } = await launchOn(launchApp, standIn);
+  const home = profileTab(shell, "Home");
+
+  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+
+  // A promotion, then mail in Primary.
+  const asked = standIn.feedLabels.length;
+
+  standIn.setFeed(ANY_SESSION, { ...listing("3", "2", "1"), primary: ["1"] });
+  await retitle(gmail, "Inbox (1)");
+  await expect.poll(() => standIn.feedLabels.length).toBeGreaterThan(asked);
+  standIn.setFeed(ANY_SESSION, {
+    ...listing("4", "3", "2", "1"),
+    primary: ["4", "1"],
+  });
+  await retitle(gmail, "Inbox (2)");
+
+  await expect(home).toHaveAccessibleName("Home, 2 unread messages");
+  await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 4"]);
+  expect(standIn.feedLabels.at(-1)).toBe(PRIMARY);
+});
+
+for (const [said, expression] of [
+  ["Gmail's tabbed inbox as an object", '({ type: "SECTIONED" })'],
+  ["another case", '"sectioned"'],
+  ["nothing but a throw", '(() => { throw new Error("no inbox type"); })()'],
+] as const) {
+  test(`counts the whole inbox when the page says ${said}`, async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+    standIn.setInboxType(expression);
+    standIn.setFeed(ANY_SESSION, { ...listing("2", "1"), primary: ["1"] });
+
+    const { shell, gmail } = await launchOn(launchApp, standIn);
+    const home = profileTab(shell, "Home");
+
+    await expect(home).toHaveAccessibleName("Home, 2 unread messages");
+    // Past the page's load, which is when it is asked.
+    await retitle(gmail, "Inbox (2)");
+    await expect.poll(() => standIn.feedLabels.length).toBeGreaterThan(1);
+
+    await expect(home).toHaveAccessibleName("Home, 2 unread messages");
+    expect(standIn.feedLabels).not.toContain(PRIMARY);
+  });
+}
+
+test("counts the whole inbox for a poll that finds no Primary feed", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  standIn.setInboxType('"SECTIONED"');
+  standIn.setFeed(ANY_SESSION, listing("2", "1"));
+
+  const { shell, gmail } = await launchOn(launchApp, standIn);
+
+  await retitle(gmail, "Inbox (2)");
+  await expect
+    .poll(() => standIn.feedLabels.slice(-2))
+    .toStrictEqual([PRIMARY, ""]);
+  await expect(profileTab(shell, "Home")).toHaveAccessibleName(
+    "Home, 2 unread messages"
+  );
+});

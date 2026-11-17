@@ -68,6 +68,14 @@ export interface ContentView {
   loadURL: (url: string) => Promise<void>;
   /** Loads the page it shows again. */
   reload: () => void;
+  /** Where the main frame is now. */
+  url: () => string;
+  /**
+   * Runs an expression in the page's own world and answers its value. The
+   * page owns that world, so the expression is a constant, never built from
+   * anything, and what it answers is checked as the page's word.
+   */
+  evaluate: (expression: string) => Promise<unknown>;
   /** Hidden, the page stays loaded. */
   setVisible: (visible: boolean) => void;
   /**
@@ -267,6 +275,8 @@ export const addContentView = (
     setBorderRadius: (radius) => view.setBorderRadius(radius),
     loadURL: (url) => webContents.loadURL(url),
     reload: () => webContents.reload(),
+    url: () => webContents.getURL(),
+    evaluate: (expression) => webContents.executeJavaScript(expression),
     setVisible: (visible) => view.setVisible(visible),
     focus: () => webContents.focus(),
     close,

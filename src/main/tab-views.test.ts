@@ -15,6 +15,7 @@ import type {
 import { createProfiles } from "./profiles.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { createTabViews } from "./tab-views.ts";
+import type { LoadedPage } from "./tab-views.ts";
 
 const GMAIL = "https://mail.google.com/mail/u/0";
 
@@ -78,6 +79,7 @@ const setup = async ({
   let inboxOpen = false;
   let profilesAdded = 0;
   const pageChanges: TabKey[] = [];
+  const loads: { key: TabKey; page: LoadedPage }[] = [];
 
   const profiles = createProfiles({
     initial: state,
@@ -122,6 +124,8 @@ const setup = async ({
           reload: () => {
             view.reloads += 1;
           },
+          url: () => view.loaded.at(-1) ?? "",
+          evaluate: () => Promise.resolve(view.partition),
           loadURL: (url) => {
             view.loaded.push(url);
 
@@ -186,6 +190,9 @@ const setup = async ({
     onPageChange: (key) => {
       pageChanges.push(key);
     },
+    onLoaded: (key, page) => {
+      loads.push({ key, page });
+    },
     log: (message) => logs.push(message),
   });
 
@@ -218,6 +225,7 @@ const setup = async ({
     fronts: () => fronts,
     profilesAdded: () => profilesAdded,
     pageChanges,
+    loads,
     resizeTo: (next: Size) => {
       size = next;
       resize?.();
@@ -664,6 +672,22 @@ describe(createTabViews, () => {
     window.emit(gmail, { kind: "titled", title: "mail.google.com" });
 
     expect(window.pageChanges).toStrictEqual([key, key]);
+  });
+
+  it("hands each finished load the tab's own page to read, and no error page's", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+
+    window.emit(gmail, { kind: "loaded" });
+    window.emit(gmail, REFUSED);
+
+    expect(window.loads.map(({ key }) => key)).toStrictEqual([
+      { profileId: "a", tabId: "gmail" },
+    ]);
+    await expect(window.loads[0]?.page.evaluate("1")).resolves.toBe(
+      "persist:a"
+    );
+    expect(window.loads[0]?.page.url()).toBe(gmail?.loaded.at(-1));
   });
 
   it("keeps no URL or title of the page shown while a tab failed or crashed", async () => {

@@ -147,6 +147,9 @@ export const FEED_PATH = "/mail/u/0/feed/atom";
 /** Where Meru reads the unread mail Gmail marks as important. */
 const IMPORTANT_FEED_PATH = `${FEED_PATH}/^iim`;
 
+/** Where Meru reads the unread mail in a tabbed inbox's Primary. */
+const PRIMARY_FEED_PATH = `${FEED_PATH}/^sq_ig_i_personal`;
+
 /** The cookie that tells the feed whose mail to answer with. */
 export const ACCOUNT_COOKIE = "account";
 
@@ -178,10 +181,17 @@ export interface StandInMail {
 /**
  * What the feed answers an account with: a count and the messages it lists,
  * newest first, or sign-in. The Important feed lists those of the messages
- * whose ids `important` names, none when it names none.
+ * whose ids `important` names, none when it names none. The Primary feed
+ * lists those `primary` names, and is not found, as Gmail answers a label it
+ * has no feed for, when it names none.
  */
 export type FeedAnswer =
-  | { unreadCount: number; mail?: StandInMail[]; important?: string[] }
+  | {
+      unreadCount: number;
+      mail?: StandInMail[];
+      important?: string[];
+      primary?: string[];
+    }
   | { redirect: true };
 
 const DEFAULT_MAIL: StandInMail[] = [
@@ -356,6 +366,14 @@ export interface StandIn {
    * that account's feed this way, as Gmail's would after it.
    */
   setFeedAfterAction: (account: string, answer: FeedAnswer) => void;
+  /**
+   * Has the Gmail stand-in's page, from its next load, answer
+   * `GM_INBOX_TYPE` with what this expression evaluates to as it is read,
+   * which can throw; none, as at first, leaves it unset.
+   */
+  setInboxType: (expression: string | undefined) => void;
+  /** The label of each feed asked for, in order, `""` for the whole inbox. */
+  feedLabels: string[];
   /** Every action the endpoint took, in order. */
   actions: StandInAction[];
   /** Every action the endpoint refused, in order, as it was asked. */
@@ -390,6 +408,8 @@ export const startStandIn = async (): Promise<StandIn> => {
   const actions: StandInAction[] = [];
   const refusedActions: StandInAction[] = [];
   const failing = new Set<string>();
+  const feedLabels: string[] = [];
+  let inboxType: string | undefined;
   let held: (() => void)[] | undefined;
   const send = (answer: () => void) => {
     if (held) {
@@ -469,20 +489,30 @@ export const startStandIn = async (): Promise<StandIn> => {
 
     const path = decodeURIComponent(request.url ?? "");
 
-    if (path !== FEED_PATH && path !== IMPORTANT_FEED_PATH) {
+    if (
+      path !== FEED_PATH &&
+      path !== IMPORTANT_FEED_PATH &&
+      path !== PRIMARY_FEED_PATH
+    ) {
       return false;
     }
 
     const answer = feeds.get(accountOf(request) ?? "") ?? { redirect: true };
 
+    feedLabels.push(path === FEED_PATH ? "" : path.slice(FEED_PATH.length + 1));
+
     if ("redirect" in answer) {
       response.writeHead(302, { Location: `${origins.signIn}signin` }).end();
+    } else if (path === PRIMARY_FEED_PATH && answer.primary === undefined) {
+      response.writeHead(404, { "Content-Type": "text/html" }).end();
     } else {
       const mail = answer.mail ?? DEFAULT_MAIL;
+      const named =
+        path === PRIMARY_FEED_PATH ? answer.primary : answer.important;
       const listed =
         path === FEED_PATH
           ? mail
-          : mail.filter((message) => answer.important?.includes(message.id));
+          : mail.filter((message) => named?.includes(message.id));
 
       response
         .writeHead(200, {
@@ -509,7 +539,8 @@ export const startStandIn = async (): Promise<StandIn> => {
     <a href="${links.calendar}" target="_blank">Open Calendar</a>
     <a href="${links.drive}" target="_blank">Open Drive</a>
     <textarea aria-label="${DRAFT_LABEL}"></textarea>
-    ${GMAIL_MARKUP}`
+    ${GMAIL_MARKUP}
+    ${inboxType === undefined ? "" : `<script>Object.defineProperty(window, "GM_INBOX_TYPE", { get: () => (${inboxType}) });</script>`}`
       ),
       [POPOUT_PATH]: page(
         POPOUT_TITLE,
@@ -575,6 +606,10 @@ export const startStandIn = async (): Promise<StandIn> => {
     setFeedAfterAction: (account, answer) => {
       feedsAfterAction.set(account, answer);
     },
+    setInboxType: (expression) => {
+      inboxType = expression;
+    },
+    feedLabels,
     actions,
     refusedActions,
     failActions: (account) => {

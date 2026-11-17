@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { feedOutcome, parseFeed } from "./feed.ts";
+import {
+  PRIMARY_LABEL,
+  feedOutcome,
+  inboxLabel,
+  isNotFound,
+  isSectioned,
+  parseFeed,
+} from "./feed.ts";
 
 const link = (messageId: string) =>
   `<link rel="alternate" href="https://mail.google.com/mail/u/0?account_id=me@example.com&amp;message_id=${messageId}&amp;view=conv&amp;extsrc=atom" type="text/html" />`;
@@ -177,5 +184,53 @@ describe(feedOutcome, () => {
     [{ kind: "response", status: 200, body: "<html></html>" } as const],
   ])("fails on %j", (response) => {
     expect(feedOutcome(response).kind).toBe("failed");
+  });
+});
+
+describe(isNotFound, () => {
+  it("is a 404 alone", () => {
+    expect(
+      isNotFound(feedOutcome({ kind: "response", status: 404, body: "" }))
+    ).toBeTruthy();
+    expect(
+      isNotFound(feedOutcome({ kind: "response", status: 500, body: "" }))
+    ).toBeFalsy();
+    expect(
+      isNotFound(
+        feedOutcome({ kind: "response", status: 200, body: feed("0") })
+      )
+    ).toBeFalsy();
+    expect(isNotFound({ kind: "signedOut" })).toBeFalsy();
+  });
+});
+
+describe(isSectioned, () => {
+  it("is Gmail's tabbed inbox", () => {
+    expect(isSectioned("SECTIONED")).toBeTruthy();
+  });
+
+  it.each([
+    ["another type", "PRIORITY_INBOX"],
+    ["another case", "sectioned"],
+    ["padded", " SECTIONED"],
+    ["longer", "SECTIONED_INBOX"],
+    ["empty", ""],
+    ["undefined", undefined],
+    ["null", null],
+    ["a number", 1],
+    ["a boolean", true],
+    ["an array holding it", ["SECTIONED"]],
+    ["an object holding it", { type: "SECTIONED" }],
+    ["an object that prints as it", { toString: () => "SECTIONED" }],
+    ["a long string", "SECTIONED".repeat(1000)],
+  ])("is not %s", (_name, value) => {
+    expect(isSectioned(value)).toBeFalsy();
+  });
+});
+
+describe(inboxLabel, () => {
+  it("reads Primary on a tabbed inbox and the whole inbox otherwise", () => {
+    expect(inboxLabel(true)).toBe(PRIMARY_LABEL);
+    expect(inboxLabel(false)).toBeUndefined();
   });
 });

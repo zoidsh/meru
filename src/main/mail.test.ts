@@ -33,6 +33,7 @@ const FAILED: FeedOutcome = { kind: "failed", reason: "HTTP 500" };
 
 interface Fetch {
   profileId: string;
+  label: string | undefined;
   signal: AbortSignal;
   resolve: (outcome: FeedOutcome) => void;
   reject: (error: Error) => void;
@@ -42,18 +43,20 @@ interface Fetch {
 const setup = () => {
   const fetches: Fetch[] = [];
   const logs: string[] = [];
+  const labels = new Map<string, string>();
   let online = true;
   const poller = createMailPoller({
-    fetchFeed: (profileId, signal) => {
+    fetchFeed: (profileId, signal, label) => {
       const { promise, resolve, reject } = Promise.withResolvers<FeedOutcome>();
 
-      fetches.push({ profileId, signal, resolve, reject });
+      fetches.push({ profileId, label, signal, resolve, reject });
       signal.addEventListener("abort", () => {
         reject(signal.reason as Error);
       });
 
       return promise;
     },
+    inboxLabel: (profileId) => labels.get(profileId),
     isOnline: () => online,
     log: (message) => logs.push(message),
   });
@@ -76,6 +79,7 @@ const setup = () => {
     poller,
     fetches,
     logs,
+    labels,
     changes,
     answer,
     fetchesOf,
@@ -152,6 +156,70 @@ describe(createMailPoller, () => {
     await answer("a", feed(4));
 
     expect(changes).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads the label each poll finds for the profile's inbox, and tells it with the poll", async () => {
+    const { poller, fetches, labels, answer } = setup();
+    const heard: [string, string | undefined][] = [];
+
+    poller.onPoll((profileId, _outcome, _startedAt, label) => {
+      heard.push([profileId, label]);
+    });
+    poller.reconcile(["a"]);
+    await answer("a", feed(3));
+    labels.set("a", "^sq_ig_i_personal");
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+    await answer("a", feed(1));
+
+    expect(fetches.map(({ label }) => label)).toStrictEqual([
+      undefined,
+      "^sq_ig_i_personal",
+    ]);
+    expect(heard).toStrictEqual([
+      ["a", undefined],
+      ["a", "^sq_ig_i_personal"],
+    ]);
+    expect(poller.mail("a")).toStrictEqual({ status: "ok", unreadCount: 1 });
+  });
+
+  it("reads the whole inbox for a poll whose label's feed is not found, and the label again next", async () => {
+    const { poller, fetches, labels, logs, answer } = setup();
+    const heard: (string | undefined)[] = [];
+
+    poller.onPoll((_profileId, _outcome, _startedAt, label) => {
+      heard.push(label);
+    });
+    labels.set("a", "^sq_ig_i_personal");
+    poller.reconcile(["a"]);
+    await answer("a", { kind: "failed", reason: "HTTP 404" });
+
+    expect(fetches.map(({ label }) => label)).toStrictEqual([
+      "^sq_ig_i_personal",
+      undefined,
+    ]);
+
+    await answer("a", feed(5));
+
+    expect(poller.mail("a")).toStrictEqual({ status: "ok", unreadCount: 5 });
+    expect(heard).toStrictEqual([undefined]);
+    expect(logs).toContain(
+      "Mail of profile a: its inbox's label has no feed, so the whole inbox was read"
+    );
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+    expect(fetches.at(-1)?.label).toBe("^sq_ig_i_personal");
+  });
+
+  it("never falls back for another failure of the label's feed", async () => {
+    const { poller, fetches, labels, answer } = setup();
+
+    labels.set("a", "^sq_ig_i_personal");
+    poller.reconcile(["a"]);
+    await answer("a", FAILED);
+
+    expect(fetches).toHaveLength(1);
+    expect(poller.mail("a").status).toBe("failed");
   });
 
   it("keeps the count through a failure and clears it once signed out", async () => {

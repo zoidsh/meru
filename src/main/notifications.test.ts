@@ -173,6 +173,50 @@ describe(createMailNotifications, () => {
     expect(shown[0]).not.toHaveProperty("subtitle");
   });
 
+  it("only records the first feed of another label, and notifies what comes after it", () => {
+    const { notifications, shown } = setup();
+
+    notifications.polled("a", feed(entry("1")), "^sq_ig_i_personal");
+    // The whole inbox lists Promotions too, which is no new mail.
+    notifications.polled("a", feed(entry("3"), entry("2"), entry("1")));
+    notifications.polled("a", feed(entry("3"), entry("2"), entry("1")));
+
+    expect(shown).toStrictEqual([]);
+
+    notifications.polled(
+      "a",
+      feed(entry("4"), entry("3"), entry("2"), entry("1"))
+    );
+
+    expect(shown).toStrictEqual([
+      expect.objectContaining({ title: "Sender 4" }),
+    ]);
+
+    notifications.polled(
+      "a",
+      feed(entry("5"), entry("1")),
+      "^sq_ig_i_personal"
+    );
+
+    expect(shown).toHaveLength(1);
+  });
+
+  it("keeps what it saw through a failed poll of another label", () => {
+    const { notifications, shown } = setup();
+
+    notifications.polled("a", feed(entry("1")), "^sq_ig_i_personal");
+    notifications.polled("a", { kind: "failed", reason: "HTTP 500" });
+    notifications.polled(
+      "a",
+      feed(entry("2"), entry("1")),
+      "^sq_ig_i_personal"
+    );
+
+    expect(shown).toStrictEqual([
+      expect.objectContaining({ title: "Sender 2" }),
+    ]);
+  });
+
   it("names the profile when there is more than one, as the system can", () => {
     const mac = setup({ state: two });
     const elsewhere = setup({ state: two, hasSubtitle: false });

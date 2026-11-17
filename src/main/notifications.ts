@@ -140,6 +140,8 @@ export const createMailNotifications = ({
   log,
 }: MailNotificationsDeps) => {
   const seen = new Map<string, Seen>();
+  /** The label whose feed each profile's last feed came from. */
+  const feedLabels = new Map<string, string | undefined>();
   const shown = new Map<string, Set<ShownNotification>>();
 
   /** Shows it, held by its profile until it is gone or the profile is. */
@@ -318,11 +320,13 @@ export const createMailNotifications = ({
 
   return {
     /**
-     * Told of each poll of a listed profile as it ends. Held mail stays seen
-     * and is never notified later. Important only asks the Important feed
-     * just when there is something to notify.
+     * Told of each poll of a listed profile as it ends, with the label whose
+     * feed it read. Held mail stays seen and is never notified later. The
+     * first feed of another label is only recorded, since what it lists
+     * beyond the last label's is not new. Important only asks the Important
+     * feed just when there is something to notify.
      */
-    polled: async (profileId: string, outcome: FeedOutcome) => {
+    polled: async (profileId: string, outcome: FeedOutcome, label?: string) => {
       const listed = () =>
         state().profiles.find((candidate) => candidate.id === profileId);
 
@@ -332,7 +336,19 @@ export const createMailNotifications = ({
         return;
       }
 
-      const taken = takeNewMail(seen.get(profileId), outcome);
+      const relabeled =
+        outcome.kind === "feed" &&
+        feedLabels.has(profileId) &&
+        feedLabels.get(profileId) !== label;
+
+      if (outcome.kind === "feed") {
+        feedLabels.set(profileId, label);
+      }
+
+      const taken = takeNewMail(
+        relabeled ? undefined : seen.get(profileId),
+        outcome
+      );
 
       seen.set(profileId, taken.seen);
 
@@ -424,6 +440,7 @@ export const createMailNotifications = ({
       for (const profileId of new Set([...seen.keys(), ...shown.keys()])) {
         if (!listed.has(profileId)) {
           seen.delete(profileId);
+          feedLabels.delete(profileId);
 
           for (const notification of shown.get(profileId) ?? []) {
             notification.close();
