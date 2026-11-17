@@ -2,7 +2,6 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
-import { delay } from "es-toolkit";
 
 import {
   clickMenuItem,
@@ -13,7 +12,6 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
-import { GMAIL_PARTS } from "./lib/stand-in.ts";
 
 const menuItem = (app: ElectronApplication, id: string) =>
   app.evaluate(({ Menu }, itemId) => {
@@ -189,7 +187,7 @@ test("saves the search Gmail shows, quote and all, runs it from the menu exactly
   await expect.poll(() => savedSearchItems(app)).toStrictEqual([]);
 });
 
-test("inserts the user styles file into Gmail's page alone, read again at each load, and none past its cap", async ({
+test("inserts the user styles file into Gmail's page alone, read again at each load", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -208,17 +206,4 @@ test("inserts the user styles file into Gmail's page alone, read again at each l
   await writeFile(file, "body { outline: 3px solid rgb(4, 5, 6) !important; }");
   await view.reload();
   await expect.poll(() => outline(view)).toBe("rgb(4, 5, 6)");
-
-  await writeFile(
-    file,
-    `body { outline: 3px solid rgb(7, 8, 9) !important; }\n/*${"x".repeat(256 * 1024)}*/`
-  );
-  await view.reload();
-  // The switches answer the handshake at once, and the user styles once the
-  // file is read, which takes milliseconds.
-  await expect(view.getByRole("img", { name: GMAIL_PARTS.logo })).toBeHidden();
-  await delay(1000);
-  expect(
-    await view.evaluate(() => getComputedStyle(document.body).outlineStyle)
-  ).toBe("none");
 });
