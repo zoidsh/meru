@@ -21,10 +21,11 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
 import { Kbd } from "#ui/kbd.tsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
+import { TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
+import { ShellTooltip, ShellTooltipContent } from "./shell-tooltip.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
 import { UnreadBadge } from "./unread-badge.tsx";
@@ -263,7 +264,7 @@ const ProfileButton = ({
   }
 
   return (
-    <Tooltip>
+    <ShellTooltip>
       <TooltipTrigger
         render={
           <Button
@@ -305,14 +306,14 @@ const ProfileButton = ({
           <UnreadBadge count={count} />
         )}
       </TooltipTrigger>
-      <TooltipContent side="bottom">
+      <ShellTooltipContent side="bottom">
         <span className="flex flex-col">
           <span className="break-all">{name}</span>
           {signedOut && <span>{signInRequired}</span>}
         </span>
         {shortcut && <Kbd>{shortcut}</Kbd>}
-      </TooltipContent>
-    </Tooltip>
+      </ShellTooltipContent>
+    </ShellTooltip>
   );
 };
 
@@ -412,7 +413,7 @@ const ProfileRow = ({
                   : "right-0 justify-end bg-linear-to-l"
               )}
             >
-              <Tooltip>
+              <ShellTooltip>
                 <TooltipTrigger
                   render={
                     <Button
@@ -429,8 +430,8 @@ const ProfileRow = ({
                 >
                   {icon}
                 </TooltipTrigger>
-                <TooltipContent side="bottom">{label}</TooltipContent>
-              </Tooltip>
+                <ShellTooltipContent side="bottom">{label}</ShellTooltipContent>
+              </ShellTooltip>
             </div>
           )
       )}

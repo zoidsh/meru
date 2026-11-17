@@ -7,7 +7,12 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { _electron, expect, test as base } from "@playwright/test";
-import type { ElectronApplication, Page, TestInfo } from "@playwright/test";
+import type {
+  ElectronApplication,
+  Locator,
+  Page,
+  TestInfo,
+} from "@playwright/test";
 import { delay, withTimeout } from "es-toolkit";
 
 import { DEV_IDENTITY } from "#core/app-identity.ts";
@@ -192,6 +197,61 @@ export const findShellDocument = async (
     .toBe(true);
 
   return found as Page;
+};
+
+/**
+ * The view the shell's tooltips are drawn in: whether it shows, where, and
+ * whether it is above every other view of the window.
+ */
+export const readTooltipView = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) => {
+    const window = BrowserWindow.getAllWindows().find((candidate) =>
+      candidate.webContents.getURL().startsWith("meru-app:")
+    );
+    const children = window?.contentView.children ?? [];
+    // A crashed page's frame throws when read.
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- runs in main, which sees nothing outside
+    const nameOf = (view: Electron.View) => {
+      try {
+        return (view as Electron.WebContentsView).webContents?.mainFrame.name;
+      } catch {
+        return "";
+      }
+    };
+    const index = children.findIndex((view) => nameOf(view) === "meru-tooltip");
+    const view = children[index];
+
+    return {
+      visible: view?.getVisible() ?? false,
+      bounds: view?.getBounds(),
+      onTop: index !== -1 && index === children.length - 1,
+    };
+  });
+
+/**
+ * Opens `trigger`'s tooltip by the pointer coming onto it, from away, so it
+ * enters even when the pointer is already there after a click.
+ */
+export const pointAt = async (trigger: Locator) => {
+  await trigger.page().mouse.move(1, 1);
+  await trigger.hover();
+};
+
+/**
+ * Waits until a tooltip saying `text` shows above the page: drawn in the
+ * tooltips' document, with its view shown and on top.
+ */
+export const expectTooltip = async (app: ElectronApplication, text: string) => {
+  const tooltips = await findShellDocument(app, "meru-tooltip");
+
+  await expect(tooltips.getByText(text)).toBeVisible();
+  await expect
+    .poll(async () => {
+      const { visible, onTop } = await readTooltipView(app);
+
+      return visible && onTop;
+    })
+    .toBe(true);
 };
 
 /**

@@ -5,7 +5,7 @@ import type { AppId } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
 import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
-import { overlayRectangle } from "#core/overlay.ts";
+import { TOOLTIP_FRAME_NAME, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
 import { hasTabbedInbox, profilePartition } from "#core/state.ts";
@@ -96,6 +96,7 @@ import {
   captureSounds,
   exposeTestSettings,
 } from "./test-hooks.ts";
+import { createTooltips } from "./tooltips.ts";
 import { createTray } from "./tray.ts";
 import {
   USER_STYLES_FILE_NAME,
@@ -392,13 +393,26 @@ const start = async () => {
     log: console.error,
   });
 
-  shell.window.onOverlay((view) => {
+  const tooltips = createTooltips({
+    area: () => shell.window.getContentAreaSize(),
+  });
+
+  shell.window.onShellDocument((name, view) => {
+    // Neither has a bridge of its own; the shell draws into both.
     view.onGone(senders.register(view.webContentsId, { role: "overlay" }));
+
+    if (name === TOOLTIP_FRAME_NAME) {
+      tooltips.adopt(view);
+
+      return;
+    }
+
     view.onFocus(() => {
       focus.noteFocused({ kind: "overlay" });
     });
     overlays.adopt(view);
   });
+  shell.window.on("blur", tooltips.hide);
   shell.window.onPageFocus(() => {
     focus.noteFocused({ kind: "shell" });
   });
@@ -721,6 +735,7 @@ const start = async () => {
     handlers: createShellHandlers({
       profiles,
       overlays,
+      tooltips,
       tabs: views,
       inbox,
       window: shell.window,

@@ -19,6 +19,7 @@ import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
 import type { ShellHandlers } from "./shell-ipc.ts";
 import type { Sidebar } from "./sidebar.ts";
+import type { Tooltips } from "./tooltips.ts";
 
 export interface ShellHandlersDeps {
   profiles: Pick<
@@ -26,6 +27,7 @@ export interface ShellHandlersDeps {
     "get" | "select" | "rename" | "selectTab" | "closeTab"
   >;
   overlays: Pick<Overlays, "open" | "close" | "current">;
+  tooltips: Pick<Tooltips, "show" | "hide">;
   tabs: { retry: (key: TabKey) => void };
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   window: Pick<AppWindow, "showContextMenu">;
@@ -142,6 +144,7 @@ export const shellState = (
 export const createShellHandlers = ({
   profiles,
   overlays,
+  tooltips,
   tabs,
   inbox,
   window,
@@ -198,6 +201,16 @@ export const createShellHandlers = ({
   },
   closeOverlay: () => {
     overlays.close();
+
+    return Promise.resolve();
+  },
+  showTooltip: (rectangle) => {
+    tooltips.show(rectangle);
+
+    return Promise.resolve();
+  },
+  hideTooltip: () => {
+    tooltips.hide();
 
     return Promise.resolve();
   },

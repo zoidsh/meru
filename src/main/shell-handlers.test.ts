@@ -71,6 +71,14 @@ const setup = ({
       },
       current: () => open,
     },
+    tooltips: {
+      show: (rectangle) => {
+        calls.push(["tooltip", rectangle]);
+      },
+      hide: () => {
+        calls.push(["tooltip", "hidden"]);
+      },
+    },
     tabs: {
       retry: (key) => {
         calls.push(["retry", key]);
@@ -190,6 +198,19 @@ describe(createShellHandlers, () => {
       ["inbox", false],
       ["close", key],
       ["retry", key],
+    ]);
+  });
+
+  it("shows the tooltips' view where the shell drew one, and hides it", async () => {
+    const shell = setup();
+    const rectangle = { x: 10, y: 44, width: 60, height: 26 };
+
+    await shell.handlers.showTooltip(rectangle);
+    await shell.handlers.hideTooltip({});
+
+    expect(shell.calls).toStrictEqual([
+      ["tooltip", rectangle],
+      ["tooltip", "hidden"],
     ]);
   });
 

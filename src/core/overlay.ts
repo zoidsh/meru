@@ -83,17 +83,29 @@ export const transitionOverlay = (
   }
 };
 
-/** The one name the shell's `window.open` may use, for the overlay's document. */
+/** The name the shell's `window.open` gives the overlay's document. */
 export const OVERLAY_FRAME_NAME = "meru-overlay";
 
+/** The name it gives the document its tooltips are drawn in, above the page. */
+export const TOOLTIP_FRAME_NAME = "meru-tooltip";
+
+export type ShellDocumentName =
+  | typeof OVERLAY_FRAME_NAME
+  | typeof TOOLTIP_FRAME_NAME;
+
 /**
- * The shell may open exactly one thing, the overlay's own blank document,
- * which then lives in the shell's process for its React tree to draw into.
+ * Which of its own blank documents the shell opens, if it asks for one: the
+ * only things it may open, each of which then lives in the shell's process
+ * for its React tree to draw into.
  */
-export const allowsShellWindowOpen = ({
+export const shellDocumentName = ({
   url,
   frameName,
 }: {
   url: string;
   frameName: string;
-}) => url === "about:blank" && frameName === OVERLAY_FRAME_NAME;
+}): ShellDocumentName | undefined =>
+  url === "about:blank" &&
+  (frameName === OVERLAY_FRAME_NAME || frameName === TOOLTIP_FRAME_NAME)
+    ? frameName
+    : undefined;

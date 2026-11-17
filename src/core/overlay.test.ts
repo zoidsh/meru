@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
-  allowsShellWindowOpen,
+  TOOLTIP_FRAME_NAME,
   overlayWidth,
+  shellDocumentName,
   transitionOverlay,
 } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
@@ -101,34 +102,24 @@ describe(overlayWidth, () => {
   });
 });
 
-describe(allowsShellWindowOpen, () => {
-  it("allows only the overlay's blank document", () => {
+describe(shellDocumentName, () => {
+  it("names only the overlay's and the tooltips' blank documents", () => {
     expect(
-      allowsShellWindowOpen({
-        url: "about:blank",
-        frameName: OVERLAY_FRAME_NAME,
-      })
-    ).toBeTruthy();
+      [OVERLAY_FRAME_NAME, TOOLTIP_FRAME_NAME, "", "elsewhere"].map(
+        (frameName) => shellDocumentName({ url: "about:blank", frameName })
+      )
+    ).toStrictEqual([
+      OVERLAY_FRAME_NAME,
+      TOOLTIP_FRAME_NAME,
+      undefined,
+      undefined,
+    ]);
     expect(
-      allowsShellWindowOpen({ url: "about:blank", frameName: "" })
-    ).toBeFalsy();
-    expect(
-      allowsShellWindowOpen({
-        url: "https://mail.google.com/",
-        frameName: OVERLAY_FRAME_NAME,
-      })
-    ).toBeFalsy();
-    expect(
-      allowsShellWindowOpen({
-        url: "about:blank#x",
-        frameName: OVERLAY_FRAME_NAME,
-      })
-    ).toBeFalsy();
-    expect(
-      allowsShellWindowOpen({
-        url: "meru-app://shell/index.html",
-        frameName: OVERLAY_FRAME_NAME,
-      })
-    ).toBeFalsy();
+      [
+        "https://mail.google.com/",
+        "about:blank#x",
+        "meru-app://shell/index.html",
+      ].map((url) => shellDocumentName({ url, frameName: OVERLAY_FRAME_NAME }))
+    ).toStrictEqual([undefined, undefined, undefined]);
   });
 });

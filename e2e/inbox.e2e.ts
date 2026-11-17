@@ -79,11 +79,19 @@ const subjects = async (overlay: Page) => {
 const overlayShown = (app: ElectronApplication) =>
   app.evaluate(({ BrowserWindow }) => {
     const [window] = BrowserWindow.getAllWindows();
+    // A crashed page's frame throws when read.
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- runs in main, which sees nothing outside
+    const nameOf = (view: Electron.View) => {
+      try {
+        return (view as Electron.WebContentsView).webContents?.mainFrame.name;
+      } catch {
+        return "";
+      }
+    };
 
     return (window?.contentView.children ?? []).some(
       (view) =>
-        (view as Electron.WebContentsView).webContents.opener ===
-          window?.webContents.mainFrame &&
+        nameOf(view) === "meru-overlay" &&
         view.getVisible() &&
         view.getBounds().width > 400
     );

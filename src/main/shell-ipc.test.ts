@@ -131,6 +131,16 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    showTooltip: (request) => {
+      calls.push(["showTooltip", request]);
+
+      return Promise.resolve();
+    },
+    hideTooltip: (request) => {
+      calls.push(["hideTooltip", request]);
+
+      return Promise.resolve();
+    },
     toggleSidebar: (request) => {
       calls.push(["toggleSidebar", request]);
 

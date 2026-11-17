@@ -3,7 +3,9 @@ import type { ComponentProps, ReactNode } from "react";
 
 import { Button } from "#ui/button.tsx";
 import { Kbd } from "#ui/kbd.tsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
+import { TooltipTrigger } from "#ui/tooltip.tsx";
+
+import { ShellTooltip, ShellTooltipContent } from "./shell-tooltip.tsx";
 
 /**
  * An icon button of the titlebar: ghost, or secondary while pressed or its
@@ -27,7 +29,7 @@ export const TitlebarButton = ({
   /** Set for a button that is on or off; left out for one that acts. */
   pressed?: boolean;
 }) => (
-  <Tooltip>
+  <ShellTooltip>
     <TooltipTrigger
       render={
         <Button
@@ -46,9 +48,9 @@ export const TitlebarButton = ({
     >
       {children}
     </TooltipTrigger>
-    <TooltipContent side="bottom">
+    <ShellTooltipContent side="bottom">
       {tooltip}
       {shortcut && <Kbd>{shortcut}</Kbd>}
-    </TooltipContent>
-  </Tooltip>
+    </ShellTooltipContent>
+  </ShellTooltip>
 );

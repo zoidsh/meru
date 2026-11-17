@@ -7,7 +7,9 @@ import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import {
   clickMenuItem,
   expect,
+  expectTooltip,
   findPage,
+  pointAt,
   readState as readSavedState,
   readViews,
   test,
@@ -429,7 +431,7 @@ test("at a narrow width with many profiles, the row scrolls with an arrow over e
 
   expect(longBox?.width).toBeLessThanOrEqual(160);
 
-  // Cut short in the button, whole in the tooltip.
-  await long.hover();
-  await expect(shell.getByText(longest, { exact: true })).toHaveCount(2);
+  // Cut short in the button, whole in the tooltip above the page.
+  await pointAt(long);
+  await expectTooltip(app, longest);
 });

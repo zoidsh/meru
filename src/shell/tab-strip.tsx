@@ -16,10 +16,11 @@ import { APPS, findApp, isAppId } from "#core/apps.ts";
 import { sidebarWidth } from "#core/sidebar.ts";
 import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
-import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
+import { TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
 import { keepInView } from "./keep-in-view.ts";
+import { ShellTooltip, ShellTooltipContent } from "./shell-tooltip.tsx";
 import { shellCalls } from "./sync.ts";
 import { UnreadBadge } from "./unread-badge.tsx";
 
@@ -219,7 +220,7 @@ export const Sidebar = ({
               // One element tree in either width, so a tab keeps its
               // element, and with it focus, as the sidebar changes width.
               return (
-                <Tooltip key={tab.id} disabled={wide}>
+                <ShellTooltip key={tab.id} disabled={wide}>
                   <TooltipTrigger render={<Tabs.Tab {...tabProps} />}>
                     {(wide || live) && isAppId(tab.app) && (
                       <AppIcon app={tab.app} aria-hidden />
@@ -239,8 +240,10 @@ export const Sidebar = ({
                       />
                     )}
                   </TooltipTrigger>
-                  <TooltipContent side="right">{title}</TooltipContent>
-                </Tooltip>
+                  <ShellTooltipContent side="right">
+                    {title}
+                  </ShellTooltipContent>
+                </ShellTooltip>
               );
             })}
           </Tabs.List>
@@ -315,7 +318,7 @@ export const Sidebar = ({
           wide ? "justify-end" : "justify-center"
         )}
       >
-        <Tooltip>
+        <ShellTooltip>
           <TooltipTrigger
             render={
               <Button
@@ -331,8 +334,8 @@ export const Sidebar = ({
           >
             {wide ? <ChevronsLeftIcon /> : <ChevronsRightIcon />}
           </TooltipTrigger>
-          <TooltipContent side="right">{widthLabel}</TooltipContent>
-        </Tooltip>
+          <ShellTooltipContent side="right">{widthLabel}</ShellTooltipContent>
+        </ShellTooltip>
       </div>
     </Tabs.Root>
   );

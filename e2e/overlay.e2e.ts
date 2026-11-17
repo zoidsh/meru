@@ -35,16 +35,21 @@ const readNames = async (userDataDir: string) => {
   return profiles.map((profile) => profile.name);
 };
 
-/** The overlay's view, the page the shell's own frame opened. */
+/** The overlay's view, the page the shell's own frame opened by that name. */
 const readOverlayView = (app: ElectronApplication) =>
   app.evaluate(({ BrowserWindow }) => {
     const [window] = BrowserWindow.getAllWindows();
     const children = window?.contentView.children ?? [];
-    const index = children.findIndex(
-      (view) =>
-        (view as Electron.WebContentsView).webContents.opener ===
-        window?.webContents.mainFrame
-    );
+    // A crashed page's frame throws when read.
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- runs in main, which sees nothing outside
+    const nameOf = (view: Electron.View) => {
+      try {
+        return (view as Electron.WebContentsView).webContents?.mainFrame.name;
+      } catch {
+        return "";
+      }
+    };
+    const index = children.findIndex((view) => nameOf(view) === "meru-overlay");
     const view = children[index] as Electron.WebContentsView | undefined;
 
     return {
@@ -265,19 +270,16 @@ test("when the shell's renderer is gone, the overlay's view goes with it and not
 
   await openFromMenu(app, first);
 
-  const before = await readOverlayView(app);
-
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.webContents.forcefullyCrashRenderer();
   });
   await expect
     .poll(async () => {
-      const after = await readOverlayView(app);
+      const { visible } = await readOverlayView(app);
 
-      return after.children;
+      return visible;
     })
-    .toBe(before.children - 1);
-  expect(await readOverlayView(app)).toMatchObject({ visible: undefined });
+    .toBeUndefined();
 
   // A shell loaded again draws no overlay, since main has none open.
   await app.evaluate(({ BrowserWindow }) => {

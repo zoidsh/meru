@@ -10,64 +10,8 @@ import { Label } from "#ui/label.tsx";
 
 import { Inbox } from "./inbox.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
+import { openShellDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
-
-const STYLESHEETS = 'style, link[rel="stylesheet"]';
-
-/** Gives the overlay's document the shell's styles, again whenever they change. */
-const mirrorStyles = (target: Document) => {
-  const copy = () => {
-    for (const node of target.head.querySelectorAll(STYLESHEETS)) {
-      node.remove();
-    }
-
-    for (const node of document.head.querySelectorAll(STYLESHEETS)) {
-      // A clone keeps the nonce the dev server's CSP asks of its styles.
-      target.head.append(node.cloneNode(true));
-    }
-  };
-
-  copy();
-  // The dev server adds and rewrites styles as their sources change.
-  new MutationObserver(copy).observe(document.head, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
-};
-
-let overlayDocument: Document | undefined;
-
-/**
- * The document of the view main shows over the content views, opened once:
- * a blank page of the shell's, in its process, which this tree draws into.
- * Main allows the shell to open this and nothing else.
- */
-const openOverlayDocument = () => {
-  if (overlayDocument) {
-    return overlayDocument;
-  }
-
-  const opened = window.open("about:blank", OVERLAY_FRAME_NAME);
-
-  if (!opened) {
-    return;
-  }
-
-  const target = opened.document;
-
-  target.documentElement.lang = document.documentElement.lang;
-  Object.assign(
-    target.documentElement.dataset,
-    document.documentElement.dataset
-  );
-  mirrorStyles(target);
-  // Clear wherever the overlay draws nothing, so the page shows through.
-  target.body.className = "bg-transparent";
-  overlayDocument = target;
-
-  return target;
-};
 
 /** Stable, so a render of the field does not select what is typed again. */
 const focusAndSelect = (input: HTMLInputElement | null) => {
@@ -188,7 +132,7 @@ const useCloseOnShellPress = (kind: string | undefined) => {
 export const OverlayLayer = () => {
   const overlay = useShellState("overlay");
   const inbox = useShellState("inbox");
-  const target = openOverlayDocument();
+  const target = openShellDocument(OVERLAY_FRAME_NAME);
   const open = overlay && overlay.kind !== "none" ? overlay : undefined;
 
   useClosers(target);

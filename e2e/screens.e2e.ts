@@ -4,8 +4,10 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
   expect,
+  expectTooltip,
   findPage,
   findShellDocument,
+  pointAt,
   test,
   writeSettings,
   writeState,
@@ -165,6 +167,23 @@ test("the rename profile overlay", async ({
   });
   await expect(field).toBeFocused();
   await shootEachWay(app, shell, "rename");
+});
+
+test("a titlebar tooltip over the page", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const reload = shell
+    .getByRole("banner", { name: "Title bar" })
+    .getByRole("button", { name: "Reload" });
+
+  await findPage(app, standIn.url);
+  await expect(reload).toBeEnabled();
+  await pointAt(reload);
+  await expectTooltip(app, "Reload");
+  await shootEachWay(app, shell, "tooltip");
 });
 
 test("a thread with every thread feature on", async ({
