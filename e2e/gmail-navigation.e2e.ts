@@ -165,7 +165,11 @@ test("saves the search Gmail shows, quote and all, runs it from the menu exactly
 
   expect(await menuItem(app, itemId)).toStrictEqual({
     enabled: true,
-    label: 'subject:"out of office" & c++',
+    // Windows and Linux read a lone & in a menu label as an access key.
+    label:
+      process.platform === "darwin"
+        ? 'subject:"out of office" & c++'
+        : 'subject:"out of office" && c++',
   });
   expect(await menuItem(app, "savedSearch.save")).toMatchObject({
     enabled: false,
