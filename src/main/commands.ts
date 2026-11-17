@@ -34,7 +34,7 @@ export interface CommandContext {
   state: State;
   /** Do Not Disturb while it holds, else `undefined`. */
   doNotDisturb: DoNotDisturb | undefined;
-  /** Whether the unified inbox covers the content area. */
+  /** Whether the unified inbox is open over the page. */
   inboxOpen: boolean;
   /** Whether the sidebar shows. */
   sidebarShown: boolean;
@@ -253,7 +253,7 @@ export const COMMANDS: readonly Command[] = [
       t({
         message: "Unified Inbox",
         comment:
-          "Menu item in the View menu, checked while the list of every profile's unread mail fills the window in place of the tab",
+          "Menu item in the View menu, checked while the list of every profile's unread mail is open over the page",
       }),
     shortcut: {
       darwin: "CommandOrControl+Shift+I",

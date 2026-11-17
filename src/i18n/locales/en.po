@@ -600,7 +600,7 @@ msgstr "Undo"
 msgid "Unified inbox"
 msgstr "Unified inbox"
 
-#. Menu item in the View menu, checked while the list of every profile's unread mail fills the window in place of the tab
+#. Menu item in the View menu, checked while the list of every profile's unread mail is open over the page
 #: src/main/commands.ts
 msgid "Unified Inbox"
 msgstr "Unified Inbox"
