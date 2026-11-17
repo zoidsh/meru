@@ -1,3 +1,4 @@
+import { isEqual } from "es-toolkit";
 import { z } from "zod/mini";
 
 import { APPS, isAppId } from "./apps.ts";
@@ -49,9 +50,17 @@ const UNREAD_PROFILES = Symbol("unread profiles");
 const CLEAR_AS_FOUND = Symbol("profiles to clear as found");
 const DO_NOT_DISTURB_AS_FOUND = Symbol("do not disturb as found");
 
+/** The furthest from the epoch, either way, a `Date` holds, in milliseconds. */
+const LONGEST_DATE = 8.64e15;
+
 const doNotDisturbSchema = z.looseObject({
-  /** Milliseconds since the epoch, or `null` for until turned off. */
-  until: z.nullable(z.number().check(z.refine(Number.isFinite))),
+  /**
+   * Milliseconds since the epoch, or `null` for until turned off; one no
+   * `Date` holds would make writing its time throw.
+   */
+  until: z.nullable(
+    z.number().check(z.gte(-LONGEST_DATE), z.lte(LONGEST_DATE))
+  ),
 });
 
 /**
@@ -256,6 +265,13 @@ export const newProfile = (id: string, name: string): Profile => ({
 const isId = (entry: unknown): entry is string =>
   typeof entry === "string" && entry !== "";
 
+/** Whether JSON writes `value` back as what reading it gave. */
+const writesBackAsRead = (value: unknown) => {
+  const written = JSON.stringify(value);
+
+  return written !== undefined && isEqual(JSON.parse(written), value);
+};
+
 export const decodeState = (value: unknown): Decoded<State> => {
   const result = decodeVersioned(value, STATE_VERSION, stateSchema);
 
@@ -306,7 +322,13 @@ export const decodeState = (value: unknown): Decoded<State> => {
     state[UNREAD_PROFILES] = unread;
   }
 
-  if (decodedDoNotDisturb && !decodedDoNotDisturb.success) {
+  // One JSON cannot write back as it was, such as an end that read as
+  // Infinity and would be written as null, is dropped rather than turned on.
+  if (
+    decodedDoNotDisturb &&
+    !decodedDoNotDisturb.success &&
+    writesBackAsRead(doNotDisturb)
+  ) {
     state[DO_NOT_DISTURB_AS_FOUND] = doNotDisturb;
   }
 

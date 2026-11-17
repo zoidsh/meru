@@ -736,7 +736,9 @@ describe("Do Not Disturb in the state", () => {
   it.each([
     ["a string", { until: "soon" }],
     ["missing its end", {}],
-    ["an end that is not finite", JSON.parse('{"until": 1e400}') as unknown],
+    ["an end no date holds", { until: 1e300 }],
+    ["an end just past what a date holds", { until: 8.64e15 + 1 }],
+    ["a start just before what a date holds", { until: -8.64e15 - 1 }],
     ["not an object", true],
     ["null", null],
   ])(
@@ -790,6 +792,28 @@ describe("Do Not Disturb in the state", () => {
       written(forgetEndedDoNotDisturb(untilOff, Number.MAX_SAFE_INTEGER)),
       written(forgetEndedDoNotDisturb(asFound, Number.MAX_SAFE_INTEGER)),
     ]).toStrictEqual([{ until: null }, { until: "soon" }]);
+  });
+
+  it("reads the furthest ends a date holds", () => {
+    expect([
+      read({ ...valid, doNotDisturb: { until: 8.64e15 } }).doNotDisturb,
+      read({ ...valid, doNotDisturb: { until: -8.64e15 } }).doNotDisturb,
+    ]).toStrictEqual([{ until: 8.64e15 }, { until: -8.64e15 }]);
+  });
+
+  it("drops one JSON cannot write back as read, rather than turn it on with the next write", () => {
+    // 1e999 reads as Infinity, which JSON writes as null: until turned off.
+    const state = read(
+      JSON.parse(
+        `{"version": 1, "profiles": [{"id": "a", "name": "A"}], "doNotDisturb": {"until": 1e999}}`
+      )
+    );
+
+    expect(state).not.toHaveProperty("doNotDisturb");
+    expect(encodeState(state)).not.toHaveProperty("doNotDisturb");
+    const file = JSON.stringify(encodeState(state));
+
+    expect(read(JSON.parse(file))).not.toHaveProperty("doNotDisturb");
   });
 
   it("stays on version 1", () => {
