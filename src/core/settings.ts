@@ -135,6 +135,26 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: true,
   }),
+  /** The Gmail logo in the top left of Gmail's page. */
+  hideGmailLogo: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /** The storage, policy and account activity footer below Gmail's list. */
+  hideInboxFooter: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /** Google's promotional banners above Gmail's list. */
+  hidePromoBanner: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /** Gmail's own Upgrade button. */
+  hideUpgradeButton: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
 } satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;
