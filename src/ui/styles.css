@@ -37,18 +37,19 @@
  * sidebar, marked `data-tinted`, mix it into their hover (7%), selected and
  * outline (8%) fills. The page, overlays and tooltips keep their own greys.
  * Mixed here and not in `[data-tinted]`, where a token naming itself would be
- * a cycle.
+ * a cycle. Mixed in oklab, since in oklch shadcn's greys, `oklch(L 0 0)`, name
+ * a hue of 0 that pulls every tint's hue toward it, which is pink.
  */
 [data-tint] {
-  --tint-shell: color-mix(in oklch, var(--shell), var(--tint, var(--shell)) 6%);
-  --tint-hover: color-mix(in oklch, var(--muted), var(--tint, var(--muted)) 7%);
+  --tint-shell: color-mix(in oklab, var(--shell), var(--tint, var(--shell)) 6%);
+  --tint-hover: color-mix(in oklab, var(--muted), var(--tint, var(--muted)) 7%);
   --tint-selected: color-mix(
-    in oklch,
+    in oklab,
     var(--secondary),
     var(--tint, var(--secondary)) 8%
   );
   --tint-outline: color-mix(
-    in oklch,
+    in oklab,
     var(--border),
     var(--tint, var(--border)) 8%
   );

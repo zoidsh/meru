@@ -5,6 +5,25 @@ import { expect, findPage, test, writeState } from "./lib/app.ts";
 const titlebar = (shell: Page) =>
   shell.getByRole("banner", { name: "Title bar" });
 
+/**
+ * An element's background as drawn, red, green and blue: a computed
+ * `color-mix` stays in its mixing space, so a canvas converts it.
+ */
+const drawnRgb = (element: Element) => {
+  const context = document.createElement("canvas").getContext("2d");
+
+  if (!context) {
+    throw new Error("No 2D canvas");
+  }
+
+  context.fillStyle = getComputedStyle(element).backgroundColor;
+  context.fillRect(0, 0, 1, 1);
+
+  const [red = 0, green = 0, blue = 0] = context.getImageData(0, 0, 1, 1).data;
+
+  return [red, green, blue] as const;
+};
+
 test("with two profiles a click selects the other and the shell takes its colour; Back and Forward follow the page's history, and Reload loads it again", async ({
   launchApp,
   standIn,
@@ -66,6 +85,16 @@ test("with two profiles a click selects the other and the shell takes its colour
   const homeColour = await shellColour();
 
   await expect(profile("Home")).toHaveAttribute("aria-pressed", "true");
+
+  // Home's colour is the palette's blue: its shell and its selected button
+  // lean blue, not toward the hue a grey's oklch form names.
+  const [shellRgb, selectedRgb] = await Promise.all([
+    bar.evaluate(drawnRgb),
+    profile("Home").evaluate(drawnRgb),
+  ]);
+
+  expect(shellRgb[2]).toBeGreaterThan(shellRgb[0]);
+  expect(selectedRgb[2]).toBeGreaterThan(selectedRgb[0]);
   await profile("Work").click();
 
   await expect(profile("Work")).toHaveAttribute("aria-pressed", "true");
