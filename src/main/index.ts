@@ -466,7 +466,7 @@ const start = async () => {
     // Gmail puts the count in its title, so the badge follows the page.
     onPageChange: (key) => {
       if (isGmailTab(key)) {
-        mail.poke(key.profileId);
+        mail.pokeForPage(key.profileId);
       }
     },
     onLoaded: (key, page) => {

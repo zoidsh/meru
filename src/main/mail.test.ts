@@ -5,6 +5,7 @@ import type { FeedOutcome } from "#core/feed.ts";
 import {
   FETCH_TIMEOUT,
   MAX_BACKOFF,
+  PAGE_SYNC_WAIT,
   POKE_THROTTLE,
   POLL_INTERVAL,
   SIGNED_OUT_INTERVAL,
@@ -103,6 +104,43 @@ describe(createMailPoller, () => {
 
   it("lets a poke poll no sooner than 5 s after the last poll in a release", () => {
     expect(POKE_THROTTLE).toBe(5000);
+  });
+
+  it("polls 2 s after a page change in a release", () => {
+    expect(PAGE_SYNC_WAIT).toBe(2000);
+  });
+
+  it("polls a page change's profile once Gmail has had time to sync, a burst as one", async () => {
+    const { poller, answer, fetchesOf } = setup();
+
+    poller.reconcile(["a"]);
+    await answer("a", feed(1));
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
+    poller.pokeForPage("a");
+    await vi.advanceTimersByTimeAsync(PAGE_SYNC_WAIT / 2);
+    poller.pokeForPage("a");
+    await vi.advanceTimersByTimeAsync(PAGE_SYNC_WAIT / 2 - 1);
+
+    expect(fetchesOf("a")).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(fetchesOf("a")).toBe(2);
+  });
+
+  it("still waits 5 s after the last poll for a page change", async () => {
+    const { poller, answer, fetchesOf } = setup();
+
+    poller.reconcile(["a"]);
+    await answer("a", feed(1));
+    poller.pokeForPage("a");
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE - 1);
+
+    expect(fetchesOf("a")).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(fetchesOf("a")).toBe(2);
   });
 
   it("polls every profile at the start, then 30 s after each poll ends", async () => {

@@ -41,6 +41,13 @@ export const FETCH_TIMEOUT = 15_000;
  * build waits 500 ms, so its tests do not spend their time waiting it out.
  */
 export const POKE_THROTTLE = MERU_E2E_BUILD ? 500 : 5000;
+/**
+ * How long after its page changed a profile is polled. Gmail changes its
+ * title as soon as mail is read in the page but reaches the server about a
+ * second later, so a feed read at once can miss it until the next poll. The
+ * suite's build waits 200 ms.
+ */
+export const PAGE_SYNC_WAIT = MERU_E2E_BUILD ? 200 : 2000;
 
 interface Polled extends Mail {
   entries: readonly FeedEntry[];
@@ -157,15 +164,18 @@ export const createMailPoller = ({
     }, delay);
   };
 
-  /** Polls when 5 s have passed since the last poll ended, unless one is due sooner. */
-  const poke = (profileId: string, polled: Polled) => {
+  /**
+   * Polls when 5 s have passed since the last poll ended and `wait` from
+   * now, unless one is due sooner.
+   */
+  const poke = (profileId: string, polled: Polled, wait = 0) => {
     if (polled.inFlight) {
       polled.again = true;
 
       return;
     }
 
-    const delay = Math.max(0, polled.lastEnded + POKE_THROTTLE - Date.now());
+    const delay = Math.max(wait, polled.lastEnded + POKE_THROTTLE - Date.now());
 
     if (polled.timer === undefined || Date.now() + delay < polled.dueAt) {
       schedule(profileId, polled, delay);
@@ -278,6 +288,14 @@ export const createMailPoller = ({
 
       if (polled) {
         poke(profileId, polled);
+      }
+    },
+    /** A poke for a change in the profile's Gmail page, once it has had time to sync. */
+    pokeForPage: (profileId: string) => {
+      const polled = polls.get(profileId);
+
+      if (polled) {
+        poke(profileId, polled, PAGE_SYNC_WAIT);
       }
     },
     pokeAll: () => {
