@@ -44,6 +44,20 @@ export const FEED_PATH = "/mail/u/0/feed/atom";
 /** The cookie that tells the feed whose mail to answer with. */
 export const ACCOUNT_COOKIE = "account";
 
+/** Where Meru sends an action on a message. */
+export const ACTION_PATH = "/mail/u/0/s/";
+
+/** The key and token the stand-in's action endpoint hands out and asks for. */
+const ACTION_KEY = "0a1b2c3d4e";
+const ACTION_TOKEN = "stand-in-token";
+
+/** An action the endpoint took, by Gmail's code, on a message id. */
+export interface StandInAction {
+  account: string;
+  code: number;
+  messageId: string;
+}
+
 /** An unread message the feed lists. */
 export interface StandInMail {
   id: string;
@@ -104,6 +118,33 @@ const accountOf = (request: IncomingMessage) =>
     .split("; ")
     .find((cookie) => cookie.startsWith(`${ACCOUNT_COOKIE}=`))
     ?.slice(ACCOUNT_COOKIE.length + 1);
+
+/** One chunk as Gmail frames it, carrying the key and the first request's error. */
+const actionAnswer = (error: unknown) => {
+  const json = JSON.stringify([null, [[null, error]], 2, 0, ACTION_KEY]);
+
+  return `)]}'\n${json.length}&${json}`;
+};
+
+/** The code and message id of the action an `s_jr` body asks for, if any. */
+const actionOf = (body: string) => {
+  let sjr: unknown = null;
+
+  try {
+    sjr = JSON.parse(new URLSearchParams(body).get("s_jr") ?? "");
+  } catch {
+    // Not an action, like the key request's body.
+  }
+
+  const call = Array.isArray(sjr)
+    ? ((sjr as unknown[][][][])[1]?.[0]?.[3] as unknown[] | undefined)
+    : undefined;
+  const [, code, messageId] = call ?? [];
+
+  return typeof code === "number" && typeof messageId === "string"
+    ? { code, messageId }
+    : undefined;
+};
 
 /** A server on loopback, which can stop answering and answer again on its port. */
 const listen = async (
@@ -199,6 +240,13 @@ export interface StandIn {
   setFeed: (account: string, answer: FeedAnswer) => void;
   /** How many times each app's stand-in page was asked for. */
   requests: () => { gmail: number; calendar: number; drive: number };
+  /**
+   * Has the action endpoint, once it takes an action for `account`, answer
+   * that account's feed this way, as Gmail's would after it.
+   */
+  setFeedAfterAction: (account: string, answer: FeedAnswer) => void;
+  /** Every action the endpoint took, in order. */
+  actions: StandInAction[];
   /** Refuses connections to the Gmail stand-in until it answers again. */
   refuse: () => Promise<void>;
   answer: () => Promise<void>;
@@ -218,7 +266,58 @@ export const startStandIn = async (): Promise<StandIn> => {
   let origins: Origins = { gmail: "", calendar: "", drive: "", signIn: "" };
   const current = () => origins;
   const feeds = new Map<string, FeedAnswer>();
-  const answerFeed = (request: IncomingMessage, response: ServerResponse) => {
+  const feedsAfterAction = new Map<string, FeedAnswer>();
+  const actions: StandInAction[] = [];
+  /**
+   * Gmail's private action endpoint: a request without the key and token is
+   * refused with both, one with them takes its action.
+   */
+  const answerAction = (request: IncomingMessage, response: ServerResponse) => {
+    const chunks: Buffer[] = [];
+
+    request.on("data", (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+    request.on("end", () => {
+      const query = new URL(request.url ?? "", origins.gmail).searchParams;
+      const account = accountOf(request) ?? "";
+      const action = actionOf(Buffer.concat(chunks).toString("utf-8"));
+      const headers = { "Content-Type": "text/javascript; charset=UTF-8" };
+
+      if (query.get("ik") !== ACTION_KEY || query.get("at") !== ACTION_TOKEN) {
+        response
+          .writeHead(200, {
+            ...headers,
+            "Set-Cookie": `GMAIL_AT=${ACTION_TOKEN}; Path=${ACTION_PATH}`,
+          })
+          .end(actionAnswer([null, "Invalid request ID key", 12]));
+
+        return;
+      }
+
+      if (action) {
+        actions.push({ account, ...action });
+
+        const after = feedsAfterAction.get(account);
+
+        if (after) {
+          feeds.set(account, after);
+        }
+      }
+
+      response.writeHead(200, headers).end(actionAnswer(null));
+    });
+  };
+  const answerMail = (request: IncomingMessage, response: ServerResponse) => {
+    if (
+      request.method === "POST" &&
+      request.url?.startsWith(`${ACTION_PATH}?`)
+    ) {
+      answerAction(request, response);
+
+      return true;
+    }
+
     if (request.url !== FEED_PATH) {
       return false;
     }
@@ -251,7 +350,7 @@ export const startStandIn = async (): Promise<StandIn> => {
       ),
     }),
     current,
-    answerFeed
+    answerMail
   );
   const calendar = await listen((links) => {
     const body = page(
@@ -295,6 +394,10 @@ export const startStandIn = async (): Promise<StandIn> => {
     setFeed: (account, answer) => {
       feeds.set(account, answer);
     },
+    setFeedAfterAction: (account, answer) => {
+      feedsAfterAction.set(account, answer);
+    },
+    actions,
     requests: () => ({
       gmail: gmail.requests.length,
       calendar: calendar.requests.length,

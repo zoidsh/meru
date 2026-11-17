@@ -157,6 +157,7 @@ describe(noticesFor, () => {
       title,
       body,
       link: `${INBOX}?message_id=a`,
+      messageId: "a",
     });
   });
 
@@ -184,6 +185,7 @@ describe(noticesFor, () => {
       title: "Sender a",
       body: "Work\nSubject a\nSummary a",
       link: `${INBOX}?message_id=a`,
+      messageId: "a",
     });
     expect(
       one(entry("a"), {

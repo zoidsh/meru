@@ -35,6 +35,7 @@ import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
+import { createMailActions } from "./mail-actions.ts";
 import { createMailPoller } from "./mail.ts";
 import { createMailNotifications } from "./notifications.ts";
 import { createOverlays } from "./overlay.ts";
@@ -358,6 +359,18 @@ const start = async () => {
   });
 
   if (gmail) {
+    const gmailOrigin = new URL(gmail.home).origin;
+    const mailActions = createMailActions({
+      post: (profileId, request, signal) =>
+        sessions.post(
+          profilePartition(profileId),
+          `${gmailOrigin}${request.path}`,
+          request.body,
+          signal
+        ),
+      poke: mail.poke,
+      log: console.error,
+    });
     const mailNotifications = createMailNotifications({
       // The suite's build captures every notification, so a test never puts
       // one on the desktop.
@@ -388,6 +401,9 @@ const start = async () => {
         // The one place main takes the foreground, since the person asked
         // for it by clicking; never under the background flag.
         revealWindow(shell.window, background);
+      },
+      act: (profileId, action, messageId) => {
+        void mailActions.run(profileId, action, messageId);
       },
     });
 

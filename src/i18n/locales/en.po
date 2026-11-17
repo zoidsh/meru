@@ -62,6 +62,11 @@ msgstr "Add profile"
 msgid "Add Profile"
 msgstr "Add Profile"
 
+#. Button on a new email notification that archives the email. Gmail's own word for the action
+#: src/main/notifications.ts
+msgid "Archive"
+msgstr "Archive"
+
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
 msgid "Bring All to Front"
@@ -124,8 +129,10 @@ msgctxt "profile name"
 msgid "Default"
 msgstr "Default"
 
+#. Button on a new email notification that moves the email to Gmail's Trash. Gmail's own word for the action
 #. Menu item in the Edit menu that deletes the selected text
 #: src/main/application-menu.ts
+#: src/main/notifications.ts
 msgid "Delete"
 msgstr "Delete"
 
@@ -158,6 +165,16 @@ msgstr "Its page quit unexpectedly. Reload it to carry on."
 #: src/shell/tab-strip.tsx
 msgid "Loading"
 msgstr "Loading"
+
+#. Button on a new email notification that marks the email read. Gmail's own words for the action
+#: src/main/notifications.ts
+msgid "Mark as Read"
+msgstr "Mark as Read"
+
+#. Button on a new email notification that reports the email as spam. Gmail's own words for the action
+#: src/main/notifications.ts
+msgid "Mark as Spam"
+msgstr "Mark as Spam"
 
 #. Explanation under the heading in place of a tab's page that could not load
 #: src/shell/tab-strip.tsx

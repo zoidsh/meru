@@ -70,6 +70,8 @@ export interface Notice {
   body: string;
   /** The message's link as the feed gave it; none opens the inbox. */
   link?: string;
+  /** The message the notification is for, which its actions act on; none for many. */
+  messageId?: string;
 }
 
 export interface NoticeOptions {
@@ -116,6 +118,7 @@ export const noticesFor = (
       options
     ),
     link: entry.link,
+    messageId: entry.id,
   }));
 };
 

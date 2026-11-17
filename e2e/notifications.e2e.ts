@@ -5,7 +5,12 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { expect, findPage, readViews, test } from "./lib/app.ts";
 import type { StandIn, StandInMail } from "./lib/stand-in.ts";
-import { CALENDAR_TITLE, STAND_IN_TITLE, messageLink } from "./lib/stand-in.ts";
+import {
+  ACCOUNT_COOKIE,
+  CALENDAR_TITLE,
+  STAND_IN_TITLE,
+  messageLink,
+} from "./lib/stand-in.ts";
 
 /** A session with no account cookie, which every profile here is. */
 const ANY_SESSION = "";
@@ -29,6 +34,7 @@ interface Captured {
   subtitle?: string;
   body: string;
   shown: boolean;
+  actions?: string[];
 }
 
 type Placed = Pick<Captured, "subtitle" | "body">;
@@ -245,4 +251,114 @@ test("tells four new messages as one, which opens the inbox", async ({
   await expect
     .poll(() => shownViews(app))
     .toStrictEqual([{ url: standIn.url, partition: "persist:p0" }]);
+});
+
+/** Signs the profile's session in to the stand-in as an account of its own. */
+const signIn = (
+  app: ElectronApplication,
+  standIn: StandIn,
+  profileId: string
+) =>
+  app.evaluate(
+    async ({ session }, { partition, url, name }) => {
+      await session.fromPartition(partition).cookies.set({
+        url,
+        name,
+        value: partition,
+      });
+    },
+    {
+      partition: `persist:${profileId}`,
+      url: standIn.url,
+      name: ACCOUNT_COOKIE,
+    }
+  );
+
+test("a notification's action runs on its message in its profile, with no page, and the count follows", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  // Work's Gmail tab has no view, so the action has no page to go through.
+  await writeState(userDataDir, [
+    { id: "p0", name: "Home" },
+    {
+      id: "p1",
+      name: "Work",
+      tabs: [
+        {
+          id: "c",
+          app: "calendar",
+          url: standIn.calendarUrl,
+          title: CALENDAR_TITLE,
+        },
+      ],
+      selectedTabId: "c",
+    },
+  ]);
+  standIn.setFeed(ANY_SESSION, listing("1"));
+  standIn.setFeed("persist:p1", listing("1"));
+
+  const { app, shell } = await launchOn(launchApp, standIn);
+  const wake = () =>
+    app.evaluate(({ powerMonitor }) => {
+      powerMonitor.emit("resume");
+    });
+
+  await signIn(app, standIn, "p1");
+  await wake();
+  await expect(profileTab(shell, "Work")).toHaveAccessibleName(
+    "Work, 1 unread message"
+  );
+
+  standIn.setFeed("persist:p1", listing("2", "1"));
+  standIn.setFeedAfterAction("persist:p1", listing("1"));
+  await wake();
+
+  await expect
+    .poll(() =>
+      app.evaluate(() =>
+        (Reflect.get(globalThis, "meruTestNotifications") as Captured[]).map(
+          ({ title, subtitle, body, actions }) => ({
+            title,
+            name: subtitle ?? body.split("\n", 1)[0],
+            actions,
+          })
+        )
+      )
+    )
+    .toStrictEqual([
+      {
+        title: "Sender 2",
+        name: "Work",
+        actions: ["Archive", "Mark as Read", "Delete", "Mark as Spam"],
+      },
+    ]);
+  await expect(profileTab(shell, "Work")).toHaveAccessibleName(
+    "Work, 2 unread messages"
+  );
+
+  await app.evaluate((_electron, label) => {
+    const [notification] = Reflect.get(
+      globalThis,
+      "meruTestNotifications"
+    ) as (Captured & { act: (index: number) => void })[];
+
+    notification?.act(notification.actions?.indexOf(label) ?? -1);
+  }, "Mark as Read");
+
+  await expect
+    .poll(() => standIn.actions)
+    .toStrictEqual([{ account: "persist:p1", code: 3, messageId: "2" }]);
+  // Past the poke's throttle, the count follows.
+  await expect(profileTab(shell, "Work")).toHaveAccessibleName(
+    "Work, 1 unread message"
+  );
+  const [acted] = await captured(app);
+
+  expect(acted?.shown).toBe(false);
+  await expect(profileTab(shell, "Home")).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
 });

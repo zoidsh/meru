@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
+import type { MailAction } from "#core/mail-actions.ts";
 import { SETTINGS } from "#core/settings.ts";
 import type { SettingKey } from "#core/settings.ts";
 import { newProfile } from "#core/state.ts";
@@ -49,6 +50,7 @@ interface Shown extends NotificationContent {
 const setup = ({ state = one, hasSubtitle = true } = {}) => {
   const shown: Shown[] = [];
   const opened: [string, string][] = [];
+  const acted: [string, MailAction, string][] = [];
   const settings = new Map<SettingKey, unknown>();
   let current = state;
   const notifier: Notifier = {
@@ -75,12 +77,16 @@ const setup = ({ state = one, hasSubtitle = true } = {}) => {
     open: (profileId, url) => {
       opened.push([profileId, url]);
     },
+    act: (profileId, action, messageId) => {
+      acted.push([profileId, action, messageId]);
+    },
   });
 
   return {
     notifications,
     shown,
     opened,
+    acted,
     set: (key: SettingKey, value: unknown) => {
       settings.set(key, value);
     },
@@ -189,6 +195,39 @@ describe(createMailNotifications, () => {
       ["b", INBOX],
       ["b", INBOX],
     ]);
+  });
+
+  it("offers v3's four actions on one message, and none on many", () => {
+    const { notifications, shown } = setup();
+
+    notifications.polled("a", feed());
+    notifications.polled("a", feed(entry("1")));
+    notifications.polled(
+      "a",
+      feed(entry("5"), entry("4"), entry("3"), entry("2"), entry("1"))
+    );
+
+    expect(shown.map((notification) => notification.actions)).toStrictEqual([
+      ["Archive", "Mark as Read", "Delete", "Mark as Spam"],
+      undefined,
+    ]);
+  });
+
+  it("runs the pressed action on its message in its profile, opening nothing", () => {
+    const { notifications, shown, opened, acted } = setup({ state: two });
+
+    notifications.polled("b", feed());
+    notifications.polled("b", feed(entry("2"), entry("1")));
+
+    for (const [index, notification] of shown.entries()) {
+      notification.events.onAction?.(index === 0 ? 3 : 1);
+    }
+
+    expect(acted).toStrictEqual([
+      ["b", "markAsSpam", "1"],
+      ["b", "markAsRead", "2"],
+    ]);
+    expect(opened).toStrictEqual([]);
   });
 
   it("closes a removed profile's notifications and forgets what it saw", () => {

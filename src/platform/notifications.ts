@@ -8,10 +8,14 @@ export interface NotificationContent {
   /** Shown on macOS alone. */
   subtitle?: string;
   body: string;
+  /** Labels of its buttons, in order. */
+  actions?: readonly string[];
 }
 
 export interface NotificationEvents {
   onClick: () => void;
+  /** The index in `actions` of the button pressed, after which it closes. */
+  onAction?: (index: number) => void;
   /** Once, as it is clicked, closed or fails, after which nothing comes of it. */
   onGone: () => void;
 }
@@ -73,21 +77,31 @@ export const createNotifier = (): Notifier => {
   });
 
   return {
-    show: (content, { onClick, onGone }) => {
+    show: (content, { onClick, onAction, onGone }) => {
       if (!Notification.isSupported()) {
         return;
       }
 
-      // Only Linux's servers read a body as markup.
-      const notification = new Notification(
-        process.platform === "linux"
-          ? { ...content, body: escapeNotificationMarkup(content.body) }
-          : content
-      );
+      const { actions, ...shown } = content;
+      const notification = new Notification({
+        ...shown,
+        // Only Linux's servers read a body as markup.
+        ...(process.platform === "linux"
+          ? { body: escapeNotificationMarkup(content.body) }
+          : {}),
+        ...(actions
+          ? { actions: actions.map((text) => ({ type: "button", text })) }
+          : {}),
+      });
 
       notification.once("click", () => {
         holder.release(notification);
         onClick();
+      });
+      notification.once("action", ({ actionIndex }) => {
+        holder.release(notification);
+        notification.close();
+        onAction?.(actionIndex);
       });
       notification.once("close", () => {
         holder.release(notification);
@@ -113,6 +127,8 @@ interface CapturedNotification extends NotificationContent {
   /** Whether it is still where the system would show it. */
   shown: boolean;
   click: () => void;
+  /** Presses the button at `index` in `actions`. */
+  act: (index: number) => void;
 }
 
 /**
@@ -129,7 +145,7 @@ export const createCapturedNotifier = (): Notifier => {
   Reflect.set(globalThis, "meruTestNotifications", captured);
 
   return {
-    show: (content, { onClick, onGone }) => {
+    show: (content, { onClick, onAction, onGone }) => {
       const notification: CapturedNotification = {
         ...content,
         shown: true,
@@ -138,6 +154,13 @@ export const createCapturedNotifier = (): Notifier => {
             notification.shown = false;
             holder.release(notification);
             onClick();
+          }
+        },
+        act: (index) => {
+          if (notification.shown) {
+            notification.shown = false;
+            holder.release(notification);
+            onAction?.(index);
           }
         },
       };
