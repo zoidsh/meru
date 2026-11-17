@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
+import { windowBackground } from "#core/shell-grey.ts";
 
 import {
   clickMenuItem,
@@ -35,7 +36,7 @@ const zoomOf = (app: ElectronApplication, url: string) =>
     url
   );
 
-test("the view sits beside the strip as the shell draws it, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
+test("the view sits beside the strip as the shell draws it, on the shell grey the window has too, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -56,6 +57,22 @@ test("the view sits beside the strip as the shell draws it, whatever design and 
     contentViewBounds(area, TAB_STRIP_WIDTH),
   ]);
   await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px 0px");
+  // Playwright emulates the light theme in the page, not in main.
+  expect(
+    await shell
+      .getByRole("banner", { name: "Title bar" })
+      .evaluate(
+        (titlebar) =>
+          getComputedStyle(titlebar.parentElement ?? titlebar).backgroundColor
+      )
+  ).toBe("oklch(0.94 0 0)");
+
+  const window = await app.evaluate(({ BrowserWindow, nativeTheme }) => ({
+    color: BrowserWindow.getAllWindows()[0]?.getBackgroundColor(),
+    isDark: nativeTheme.shouldUseDarkColors,
+  }));
+
+  expect(window.color?.toLowerCase()).toBe(windowBackground(window.isDark));
   expect(
     await Promise.all(
       [

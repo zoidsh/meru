@@ -191,7 +191,7 @@ export const App = () => {
   const { inset, radius } = viewFrame();
 
   return (
-    <div className="flex h-full flex-col bg-sidebar">
+    <div className="flex h-full flex-col bg-shell">
       {/* The preload stamps data-platform; the traffic lights take the left end on macOS. */}
       <header
         aria-label={t({

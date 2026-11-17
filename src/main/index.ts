@@ -339,6 +339,7 @@ const start = async () => {
   const shellOrigin = `${shellUrl.protocol}//${shellUrl.host}`;
   const ipc = createIpc();
 
+  const theme = createTheme();
   const shell = createShellWindow({
     windows: createWindowFactory(),
     displays: createDisplays(),
@@ -347,6 +348,7 @@ const start = async () => {
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
     isMacOS,
     background,
+    theme,
   });
 
   const senders = createSenderRegistry();
@@ -722,7 +724,6 @@ const start = async () => {
   const reveal = () => {
     revealWindow(shell.window, background);
   };
-  const theme = createTheme();
   const unread = (profileId: string) => mail.mail(profileId).unreadCount;
   const tray = createTray({
     // The suite's build captures its tray, so a test never puts one in the

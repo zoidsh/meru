@@ -16,6 +16,21 @@
  */
 @source ".";
 
+/*
+ * Ours as well: the shell's grey behind the titlebar and the strip, which
+ * `SHELL_GREY` in `src/core/shell-grey.ts` gives the window too, so a
+ * regenerated theme keeps these blocks.
+ */
+:root {
+  --shell: oklch(0.94 0 0);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shell: #1d1d1d;
+  }
+}
+
 @layer base {
   html,
   body,
@@ -35,6 +50,7 @@
 }
 
 @theme inline {
+  --color-shell: var(--shell);
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);

@@ -1,8 +1,10 @@
 import { allowsShellWindowOpen } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
+import { windowBackground } from "#core/shell-grey.ts";
 import { closeHides } from "#core/tray.ts";
 import { resolveWindowBounds } from "#core/window-bounds.ts";
 import type { Displays } from "#platform/displays.ts";
+import type { Theme } from "#platform/theme.ts";
 import type { AppWindow, WindowFactory } from "#platform/window.ts";
 
 export interface ShellWindowDeps {
@@ -13,6 +15,7 @@ export interface ShellWindowDeps {
   preloadPath: string;
   isMacOS: boolean;
   background: boolean;
+  theme: Theme;
 }
 
 const DEFAULT_SIZE = { width: 1280, height: 800 };
@@ -36,6 +39,7 @@ export const createShellWindow = ({
   preloadPath,
   isMacOS,
   background,
+  theme,
 }: ShellWindowDeps) => {
   const window = windows.create({
     title,
@@ -49,7 +53,12 @@ export const createShellWindow = ({
     titleBarStyle: isMacOS ? "hiddenInset" : "default",
     preloadPath,
     contentUrl: url,
+    backgroundColor: windowBackground(theme.isDark()),
     allowsWindowOpen: allowsShellWindowOpen,
+  });
+
+  theme.onChange(() => {
+    window.setBackgroundColor(windowBackground(theme.isDark()));
   });
 
   let isShown = false;

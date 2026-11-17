@@ -19,6 +19,8 @@ export interface WindowOptions {
   preloadPath: string;
   /** The window may navigate only within this URL's scheme and host. */
   contentUrl: string;
+  /** Shown where the page has not painted, as `#rrggbb`. */
+  backgroundColor: string;
   /**
    * Whether the page may open the window it asks for, which becomes an
    * overlay view; every other open is refused.
@@ -97,6 +99,7 @@ export interface AppWindow {
     images: readonly Bitmap[] | undefined,
     description: string
   ) => void;
+  setBackgroundColor: (color: string) => void;
   /** The area child views are laid out in, below any menu bar. */
   getContentAreaSize: () => Size;
   onContentAreaResize: (listener: () => void) => void;
@@ -120,6 +123,7 @@ export const createWindowFactory = (): WindowFactory => ({
       minHeight: options.minimumSize.height,
       show: false,
       titleBarStyle: options.titleBarStyle,
+      backgroundColor: options.backgroundColor,
       // Windows and Linux show the application menu's bar only while Alt is
       // held or after it is pressed, so the content keeps its height.
       autoHideMenuBar: true,
@@ -257,6 +261,9 @@ export const createWindowFactory = (): WindowFactory => ({
         }
 
         window.setOverlayIcon(image, description);
+      },
+      setBackgroundColor: (color) => {
+        window.setBackgroundColor(color);
       },
       // The root view rather than the window's content size, which on
       // Windows changes after a hidden window is first shown with no `resize`.

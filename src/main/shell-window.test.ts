@@ -1,7 +1,11 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
+import { SHELL_GREY } from "#core/shell-grey.ts";
 import type {
   AppWindow,
   WindowLoadEvent,
@@ -67,6 +71,9 @@ const createFakeWindow = () => {
       sessionEnd = listener;
     },
     setOverlayIcon: () => false,
+    setBackgroundColor: (color) => {
+      calls.push(`setBackgroundColor ${color}`);
+    },
     getContentAreaSize: () => ({ width: 1280, height: 800 }),
     onContentAreaResize: () => false,
     addContentView: () => ({
@@ -118,6 +125,8 @@ const createFakeWindow = () => {
 const open = ({ background = false, isMacOS = true } = {}) => {
   const fake = createFakeWindow();
   const created: WindowOptions[] = [];
+  let isDark = false;
+  let themeChanged: (() => void) | undefined;
 
   createShellWindow({
     windows: {
@@ -137,9 +146,22 @@ const open = ({ background = false, isMacOS = true } = {}) => {
     preloadPath: "/app/preload-shell.cjs",
     isMacOS,
     background,
+    theme: {
+      isDark: () => isDark,
+      onChange: (listener) => {
+        themeChanged = listener;
+      },
+    },
   });
 
-  return { ...fake, options: created[0] };
+  return {
+    ...fake,
+    options: created[0],
+    turnDark: () => {
+      isDark = true;
+      themeChanged?.();
+    },
+  };
 };
 
 describe(createShellWindow, () => {
@@ -167,6 +189,28 @@ describe(createShellWindow, () => {
       width: 1280,
       height: 800,
     });
+  });
+
+  it("opens in the light shell grey and takes the dark one with the theme", () => {
+    const shell = open();
+
+    expect(shell.options?.backgroundColor).toBe("#ebebeb");
+
+    shell.turnDark();
+
+    expect(shell.calls).toStrictEqual(["setBackgroundColor #1d1d1d"]);
+  });
+
+  it("takes the shell grey the shell paints, light and dark", async () => {
+    const css = await readFile(
+      path.join(import.meta.dirname, "..", "ui", "styles.css"),
+      "utf-8"
+    );
+    const tokens = [...css.matchAll(/--shell: (?<value>[^;]+);/gu)].map(
+      (match) => match.groups?.value
+    );
+
+    expect(tokens).toStrictEqual([SHELL_GREY.light, SHELL_GREY.dark]);
   });
 
   it("insets the titlebar on macOS only", () => {
