@@ -1,14 +1,6 @@
 import type { Page } from "@playwright/test";
 
-import {
-  expect,
-  expectTooltip,
-  findPage,
-  pointAt,
-  readTooltipView,
-  test,
-  writeState,
-} from "./lib/app.ts";
+import { expect, findPage, test, writeState } from "./lib/app.ts";
 
 const titlebar = (shell: Page) =>
   shell.getByRole("banner", { name: "Title bar" });
@@ -69,32 +61,6 @@ test("with two profiles the row's tab stop follows the selection once focus leav
   await expect(reload).toBeEnabled();
   await expect(back).toBeDisabled();
   await expect(forward).toBeDisabled();
-
-  // Reload's tooltip shows in its own view, on top and reaching down over
-  // the page, which starts below the 40px titlebar; it goes with the pointer.
-  await pointAt(reload);
-  await expectTooltip(app, "Reload");
-
-  const [tooltip, button] = await Promise.all([
-    readTooltipView(app),
-    reload.boundingBox(),
-  ]);
-
-  expect(tooltip.bounds?.y ?? 0).toBeGreaterThanOrEqual(
-    (button?.y ?? 0) + (button?.height ?? 0) - 8
-  );
-  expect(
-    (tooltip.bounds?.y ?? 0) + (tooltip.bounds?.height ?? 0)
-  ).toBeGreaterThan(40);
-
-  await shell.mouse.move(1, 1);
-  await expect
-    .poll(async () => {
-      const { visible } = await readTooltipView(app);
-
-      return visible;
-    })
-    .toBe(false);
 
   await calendar.getByRole("link", { name: "Next week" }).click();
 

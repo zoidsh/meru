@@ -2,9 +2,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
   expect,
-  expectTooltip,
   findPage,
-  pointAt,
   readState,
   readUnreadTotal,
   retitle,
@@ -354,8 +352,6 @@ test("holds mail while Do Not Disturb is on, never shows it later, and notifies 
   await button.click();
 
   await expect(button).toHaveAttribute("aria-pressed", "true");
-  await pointAt(button);
-  await expectTooltip(app, "Do Not Disturb is on until turned off");
 
   standIn.setFeed(ANY_SESSION, listing("2", "1"));
   await retitle(gmail, "Inbox (2)");

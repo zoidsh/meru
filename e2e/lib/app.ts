@@ -229,12 +229,24 @@ export const readTooltipView = (app: ElectronApplication) =>
   });
 
 /**
- * Opens `trigger`'s tooltip by the pointer coming onto it, from away, so it
- * enters even when the pointer is already there after a click.
+ * Opens `trigger`'s tooltip by the pointer coming onto its centre from away,
+ * so it enters even when the pointer is already there after a click.
  */
 export const pointAt = async (trigger: Locator) => {
-  await trigger.page().mouse.move(1, 1);
-  await trigger.hover();
+  const { mouse } = trigger.page();
+
+  await expect(trigger).toBeVisible();
+  await mouse.move(1, 1);
+
+  const box = await trigger.boundingBox();
+
+  if (!box) {
+    throw new Error("The tooltip's trigger has no box to point at");
+  }
+
+  await mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+    steps: 4,
+  });
 };
 
 /**

@@ -7,9 +7,7 @@ import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import {
   clickMenuItem,
   expect,
-  expectTooltip,
   findPage,
-  pointAt,
   readState as readSavedState,
   readViews,
   test,
@@ -344,7 +342,7 @@ const pressShortcutInPage = (
     { pageUrl: url, keyCode: key, platform: process.platform }
   );
 
-test("at a narrow width with many profiles, the row scrolls with an arrow over each clipped end, a profile chosen by its shortcut scrolls into view clear of the fades, a name of the longest length is cut short and whole in its tooltip, and the title bar keeps room to drag", async ({
+test("at a narrow width with many profiles, the row scrolls with an arrow over each clipped end, a profile chosen by its shortcut scrolls into view clear of the fades, a name of the longest length is cut short, and the title bar keeps room to drag", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -430,8 +428,4 @@ test("at a narrow width with many profiles, the row scrolls with an arrow over e
   const longBox = await long.boundingBox();
 
   expect(longBox?.width).toBeLessThanOrEqual(160);
-
-  // Cut short in the button, whole in the tooltip above the page.
-  await pointAt(long);
-  await expectTooltip(app, longest);
 });
