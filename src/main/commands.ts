@@ -140,7 +140,7 @@ const durationTitle = (duration: DoNotDisturbDuration) => {
   }
 };
 
-const isDoNotDisturbOn = ({ doNotDisturb }: CommandContext) =>
+const doNotDisturbHolds = ({ doNotDisturb }: CommandContext) =>
   doNotDisturb !== undefined;
 
 const hasOtherTab = ({ state }: CommandContext) =>
@@ -310,10 +310,10 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Command that turns Do Not Disturb on until turned off, or off, checked while it holds new mail notifications",
       }),
-    isChecked: isDoNotDisturbOn,
+    isChecked: doNotDisturbHolds,
     run: (context, { switchDoNotDisturb }) =>
       switchDoNotDisturb(
-        isDoNotDisturbOn(context) ? "off" : DO_NOT_DISTURB_DURATIONS[0]
+        doNotDisturbHolds(context) ? "off" : DO_NOT_DISTURB_DURATIONS[0]
       ),
   },
   {
@@ -324,7 +324,7 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Item in the Do Not Disturb menu that turns Do Not Disturb off, so notifications show again",
       }),
-    isAvailable: isDoNotDisturbOn,
+    isAvailable: doNotDisturbHolds,
     run: (_context, { switchDoNotDisturb }) => switchDoNotDisturb("off"),
   },
   ...DO_NOT_DISTURB_DURATIONS.map((duration): Command => ({
