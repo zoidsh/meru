@@ -44,11 +44,6 @@ const setup = ({
 
         return Promise.resolve(true);
       },
-      add: () => {
-        calls.push(["add"]);
-
-        return Promise.resolve(true);
-      },
       rename: (profileId, name) => {
         renamed.push([profileId, name]);
 
@@ -198,16 +193,13 @@ describe(createShellHandlers, () => {
     ]);
   });
 
-  it("closes the unified inbox after selecting or adding a profile", async () => {
+  it("closes the unified inbox after selecting a profile", async () => {
     const shell = setup();
 
     await shell.handlers.selectProfile({ profileId: "a" });
-    await shell.handlers.addProfile({});
 
     expect(shell.calls).toStrictEqual([
       ["selectProfile", "a"],
-      ["inbox", false],
-      ["add"],
       ["inbox", false],
     ]);
   });

@@ -3,7 +3,6 @@
 
 export const SHELL_CALL_NAMES = [
   "selectProfile",
-  "addProfile",
   "selectTab",
   "closeTab",
   "retryTab",

@@ -43,7 +43,6 @@ const tabStatus = z.discriminatedUnion("kind", [
 /** What the shell renderer may ask of main. Main validates every request. */
 export const SHELL_CALLS = {
   selectProfile: { request: z.object({ profileId }), response: z.undefined() },
-  addProfile: { request: none, response: z.undefined() },
   selectTab: { request: tabKey, response: z.undefined() },
   closeTab: { request: tabKey, response: z.undefined() },
   /** Loads a tab that failed or crashed again, now. */

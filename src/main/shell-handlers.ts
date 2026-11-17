@@ -23,7 +23,7 @@ import type { Sidebar } from "./sidebar.ts";
 export interface ShellHandlersDeps {
   profiles: Pick<
     Profiles,
-    "get" | "select" | "add" | "rename" | "selectTab" | "closeTab"
+    "get" | "select" | "rename" | "selectTab" | "closeTab"
   >;
   overlays: Pick<Overlays, "open" | "close" | "current">;
   tabs: { retry: (key: TabKey) => void };
@@ -151,10 +151,6 @@ export const createShellHandlers = ({
   // is selected already, since the person asked to see it.
   selectProfile: async ({ profileId }) => {
     await profiles.select(profileId);
-    inbox.setOpen(false);
-  },
-  addProfile: async () => {
-    await profiles.add();
     inbox.setOpen(false);
   },
   selectTab: async (key) => {

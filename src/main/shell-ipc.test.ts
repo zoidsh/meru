@@ -101,11 +101,6 @@ const setup = () => {
 
       return Promise.resolve();
     },
-    addProfile: (request) => {
-      calls.push(["addProfile", request]);
-
-      return Promise.resolve();
-    },
     navigate: (request) => {
       calls.push(["navigate", request]);
 
@@ -188,7 +183,7 @@ const setup = () => {
   });
 
   const call = (sender: number | IpcSender, name: string, payload: unknown) => {
-    const handler = handled.get(SHELL_CHANNELS.call(name as "addProfile"));
+    const handler = handled.get(SHELL_CHANNELS.call(name as "toggleSidebar"));
 
     if (!handler) {
       throw new Error(`No handler for ${name}`);
@@ -226,11 +221,11 @@ describe(serveShellContract, () => {
     const shell = setup();
 
     await shell.call(SHELL, "selectProfile", { profileId: "b" });
-    await shell.call(SHELL, "addProfile", {});
+    await shell.call(SHELL, "toggleSidebar", {});
 
     expect(shell.calls).toStrictEqual([
       ["selectProfile", { profileId: "b" }],
-      ["addProfile", {}],
+      ["toggleSidebar", {}],
     ]);
   });
 
@@ -320,11 +315,11 @@ describe(serveShellContract, () => {
     ).rejects.toBeInstanceOf(RefusedCallError);
 
     await expect(
-      shell.call(CONTENT_VIEW, "addProfile", {})
+      shell.call(CONTENT_VIEW, "toggleSidebar", {})
     ).rejects.toBeInstanceOf(RefusedCallError);
-    await expect(shell.call(UNKNOWN, "addProfile", {})).rejects.toBeInstanceOf(
-      RefusedCallError
-    );
+    await expect(
+      shell.call(UNKNOWN, "toggleSidebar", {})
+    ).rejects.toBeInstanceOf(RefusedCallError);
     expect(shell.calls).toStrictEqual([]);
   });
 
@@ -340,7 +335,7 @@ describe(serveShellContract, () => {
       { webContentsId: SHELL, isMainFrame: true, origin: undefined },
     ];
     const results = await Promise.allSettled(
-      strangers.map((sender) => shell.call(sender, "addProfile", {}))
+      strangers.map((sender) => shell.call(sender, "toggleSidebar", {}))
     );
 
     for (const sender of strangers) {
