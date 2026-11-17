@@ -123,6 +123,10 @@ const childWindowOrigins = standIns?.signIn
 /** v3's account id, so a profile id is the account id v3 would have made. */
 const newId = () => crypto.randomUUID();
 
+/** The role's own key on Windows and Linux, Ctrl+Shift+I, is the unified inbox's. */
+const devToolsAccelerator = (platform: Platform) =>
+  platform === "darwin" ? "Alt+Command+I" : "F12";
+
 const lifecycle = createAppLifecycle();
 const errorDialog = createErrorDialog();
 
@@ -530,7 +534,10 @@ const start = async () => {
     locale: () => i18n.locale,
     setMenu: setApplicationMenu,
     ...(MERU_BUILD_MODE === "dev" && {
-      developerTools: { role: "toggleDevTools" as const },
+      developerTools: {
+        role: "toggleDevTools" as const,
+        accelerator: devToolsAccelerator(platform),
+      },
     }),
     log: console.error,
   });
