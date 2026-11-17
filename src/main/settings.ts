@@ -57,8 +57,7 @@ export const createSettingsStore = ({
   const listeners = new Map<SettingKey, Set<() => void>>();
   let settings = initial;
 
-  const get = <Key extends SettingKey>(key: Key, profileId?: string) =>
-    readSetting(settings, key, profileId);
+  const get = <Key extends SettingKey>(key: Key) => readSetting(settings, key);
 
   /**
    * Sets the global value to what `change` makes of it, read after every

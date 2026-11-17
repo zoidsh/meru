@@ -1,18 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { z } from "zod/mini";
 
 import {
   SETTINGS,
   decodeSettings,
   readSetting,
-  readSettingOf,
   writeSetting,
 } from "./settings.ts";
-import type {
-  SettingDeclarations,
-  SettingDefinition,
-  Settings,
-} from "./settings.ts";
+import type { SettingDeclarations, Settings } from "./settings.ts";
 
 const read = (value: unknown): Settings => {
   const decoded = decodeSettings(value);
@@ -75,67 +69,14 @@ describe(readSetting, () => {
     expect(readSetting(settings, "vibrancy")).toBeTruthy();
   });
 
-  it("ignores an override of a global key", () => {
+  it("ignores a profile's override", () => {
     const settings = read({
       version: 1,
       design: "classic",
       profiles: { p: { design: "modern" } },
     });
 
-    expect(readSetting(settings, "design", "p")).toBe("classic");
-  });
-});
-
-const PROFILE_SCOPED = {
-  density: {
-    schema: z.enum(["compact", "roomy"]),
-    default: "roomy",
-    scope: "profile",
-  } as SettingDefinition<"compact" | "roomy">,
-};
-
-const withProfiles = (profiles: unknown) =>
-  read({ version: 1, density: "compact", profiles });
-
-describe(readSettingOf, () => {
-  it("is a profile's override where it has one, and the global value elsewhere", () => {
-    const settings = withProfiles({ p: { density: "roomy" } });
-
-    expect(readSettingOf(PROFILE_SCOPED, settings, "density", "p")).toBe(
-      "roomy"
-    );
-    expect(readSettingOf(PROFILE_SCOPED, settings, "density", "q")).toBe(
-      "compact"
-    );
-    expect(readSettingOf(PROFILE_SCOPED, settings, "density")).toBe("compact");
-  });
-
-  it("falls back to the global value past an override of any malformed shape", () => {
-    for (const profiles of [
-      "not a map",
-      null,
-      [],
-      { p: "not an entry" },
-      { p: null },
-      { p: { density: 3 } },
-      { p: {} },
-    ]) {
-      expect(
-        readSettingOf(PROFILE_SCOPED, withProfiles(profiles), "density", "p")
-      ).toBe("compact");
-    }
-  });
-
-  it("falls back to the default when neither the override nor the global value parses", () => {
-    const settings = read({
-      version: 1,
-      density: "huge",
-      profiles: { p: { density: "tiny" } },
-    });
-
-    expect(readSettingOf(PROFILE_SCOPED, settings, "density", "p")).toBe(
-      "roomy"
-    );
+    expect(readSetting(settings, "design")).toBe("classic");
   });
 });
 
