@@ -20,6 +20,12 @@ describe(createContentSecurityPolicy, () => {
     expect(directive(policy, "connect-src")).toStrictEqual(["'self'"]);
     expect(policy).not.toMatch(/unsafe|https?:|ws:|nonce/u);
   });
+
+  it("plays media, the bundled sounds, only from its own origin", () => {
+    expect(directive(createContentSecurityPolicy(), "media-src")).toStrictEqual(
+      ["'self'"]
+    );
+  });
 });
 
 describe(createDevContentSecurityPolicy, () => {
@@ -43,6 +49,18 @@ describe(createDevContentSecurityPolicy, () => {
       "ws://127.0.0.1:5173",
     ]);
     expect(policy).not.toMatch(/unsafe|'self'|\*/u);
+  });
+
+  it("plays media only from the dev server", () => {
+    expect(
+      directive(
+        createDevContentSecurityPolicy({
+          url: "http://127.0.0.1:5173/",
+          nonce: "abc123",
+        }),
+        "media-src"
+      )
+    ).toStrictEqual(["http://127.0.0.1:5173"]);
   });
 });
 

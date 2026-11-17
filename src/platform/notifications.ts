@@ -10,6 +10,8 @@ export interface NotificationContent {
   body: string;
   /** Labels of its buttons, in order. */
   actions?: readonly string[];
+  /** Shown with no sound of the system's. */
+  silent?: boolean;
 }
 
 export interface NotificationEvents {

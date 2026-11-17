@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
 
 import { App } from "./app.tsx";
+import { playSounds } from "./sound.ts";
 
 const root = document.querySelector("#root");
 
@@ -21,6 +22,7 @@ const language = resolveLanguage([
 
 activateLanguage(language);
 document.documentElement.lang = language;
+playSounds(window.meru);
 
 createRoot(root).render(
   <StrictMode>

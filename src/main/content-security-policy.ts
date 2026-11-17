@@ -20,5 +20,6 @@ export const createContentSecurityPolicy = () =>
     "style-src": ["'self'"],
     "img-src": ["'self'"],
     "font-src": ["'self'"],
+    "media-src": ["'self'"],
     "connect-src": ["'self'"],
   });

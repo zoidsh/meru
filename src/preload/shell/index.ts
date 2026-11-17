@@ -36,6 +36,17 @@ const bridge: ShellBridge = {
       ipcRenderer.off(SHELL_CHANNELS.state, receive);
     };
   },
+  onSound: (listener) => {
+    const receive = (_event: unknown, request: unknown) => {
+      listener(request);
+    };
+
+    ipcRenderer.on(SHELL_CHANNELS.sound, receive);
+
+    return () => {
+      ipcRenderer.off(SHELL_CHANNELS.sound, receive);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld("meru", bridge);

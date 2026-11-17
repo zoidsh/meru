@@ -1,5 +1,7 @@
 import path from "node:path";
 
+import { SHELL_CHANNELS } from "#contract/shell-channels.ts";
+import type { SoundRequest } from "#contract/shell-sound.ts";
 import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
@@ -26,6 +28,7 @@ import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
+import type { Ipc } from "#platform/ipc.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
 import {
@@ -88,7 +91,11 @@ import { createShowGmail } from "./show-gmail.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
-import { captureGmailPage, exposeTestSettings } from "./test-hooks.ts";
+import {
+  captureGmailPage,
+  captureSounds,
+  exposeTestSettings,
+} from "./test-hooks.ts";
 import { createTray } from "./tray.ts";
 import {
   USER_STYLES_FILE_NAME,
@@ -139,6 +146,41 @@ const newId = () => crypto.randomUUID();
 /** The role's own key on Windows and Linux, Ctrl+Shift+I, is the unified inbox's. */
 const devToolsAccelerator = (platform: Platform) =>
   platform === "darwin" ? "Alt+Command+I" : "F12";
+
+/**
+ * Plays a sound in the shell's page. The suite's build captures it and a run
+ * under the background flag only logs it, so neither makes one on a desktop
+ * other sessions share.
+ */
+const soundPlayer = ({
+  ipc,
+  shellId,
+  shellOrigin,
+  background,
+}: {
+  ipc: Ipc;
+  shellId: number;
+  shellOrigin: string;
+  background: boolean;
+}) => {
+  if (MERU_E2E_BUILD) {
+    return captureSounds();
+  }
+
+  return (request: SoundRequest) => {
+    if (background) {
+      console.error(
+        `Did not play the ${request.sound} sound under the background flag`
+      );
+
+      return;
+    }
+
+    ipc.send(shellId, SHELL_CHANNELS.sound, request, {
+      mainFrameOrigin: shellOrigin,
+    });
+  };
+};
 
 /**
  * Gmail's page contract, its switches following the settings, which the
@@ -321,6 +363,10 @@ const start = async () => {
   const shellUrl = new URL(shellSource.url);
 
   shellUrl.searchParams.set("lang", language);
+
+  // Built by hand: URL's `origin` is "null" for a scheme it does not know.
+  const shellOrigin = `${shellUrl.protocol}//${shellUrl.host}`;
+  const ipc = createIpc();
 
   const shell = createShellWindow({
     windows: createWindowFactory(),
@@ -604,6 +650,12 @@ const start = async () => {
           ? new Set(outcome.feed.entries.map((entry) => entry.id))
           : null;
       },
+      playSound: soundPlayer({
+        ipc,
+        shellId: shell.window.webContentsId,
+        shellOrigin,
+        background,
+      }),
       log: console.error,
     });
 
@@ -675,10 +727,9 @@ const start = async () => {
   settings.onChange("vibrancy", menu.refresh);
 
   serveShellContract({
-    ipc: createIpc(),
+    ipc,
     senders,
-    // Built by hand: URL's `origin` is "null" for a scheme it does not know.
-    shellOrigin: `${shellUrl.protocol}//${shellUrl.host}`,
+    shellOrigin,
     handlers: createShellHandlers({
       profiles,
       overlays,

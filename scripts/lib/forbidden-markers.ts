@@ -50,6 +50,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may capture clipboard writes in place of making them",
     },
     {
+      marker: "meruTestSounds",
+      why: "only the end-to-end build may capture sounds in place of playing them",
+    },
+    {
       marker: "meruTestBadge",
       why: "only the end-to-end build may capture the unread badge in place of showing it",
     },

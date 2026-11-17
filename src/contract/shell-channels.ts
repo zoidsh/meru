@@ -25,4 +25,6 @@ export const SHELL_CHANNELS = {
   sync: "shell:sync",
   /** Main to renderer: each `ShellSyncMessage`. */
   state: "shell:state",
+  /** Main to renderer: a `SoundRequest` to play now. */
+  sound: "shell:sound",
 } as const;

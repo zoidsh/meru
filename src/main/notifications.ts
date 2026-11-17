@@ -1,5 +1,6 @@
 import { plural, t } from "@lingui/core/macro";
 
+import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import type { MailAction } from "#core/mail-actions.ts";
@@ -21,6 +22,7 @@ import type {
   Seen,
 } from "#core/notifications.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
+import { decideSound, sounds } from "#core/sounds.ts";
 import type { DoNotDisturb, Profile, State } from "#core/state.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type {
@@ -54,6 +56,8 @@ export interface MailNotificationsDeps {
   now: () => Date;
   /** The ids the profile's Important feed lists, or `null` if it failed. */
   important: (profileId: string) => Promise<ReadonlySet<string> | null>;
+  /** Plays one of Meru's sounds, in the shell or the suite's capture. */
+  playSound: (request: SoundRequest) => void;
   log: (message: string) => void;
 }
 
@@ -137,36 +141,61 @@ export const createMailNotifications = ({
   doNotDisturb,
   now,
   important,
+  playSound,
   log,
 }: MailNotificationsDeps) => {
   const seen = new Map<string, Seen>();
   /** The label whose feed each profile's last feed came from. */
   const feedLabels = new Map<string, string | undefined>();
   const shown = new Map<string, Set<ShownNotification>>();
+  /** When a notification of any profile last made a sound. */
+  let lastSoundAt: number | undefined;
 
-  /** Shows it, held by its profile until it is gone or the profile is. */
+  /**
+   * Shows it, held by its profile until it is gone or the profile is, with
+   * the sound `notificationSound` and the quiet period since the last sound
+   * give it.
+   */
   const showFor = (
     profileId: string,
     content: NotificationContent,
     events: Omit<NotificationEvents, "onGone">
   ) => {
     const held = shown.get(profileId) ?? new Set<ShownNotification>();
+    const time = now().getTime();
+    const sound = decideSound(setting("notificationSound"), time, lastSoundAt);
     let notification: ShownNotification | undefined;
 
     shown.set(profileId, held);
-    notification = notifier.show(content, {
-      ...events,
-      onGone: () => {
-        if (notification) {
-          held.delete(notification);
-        }
+    notification = notifier.show(
+      { ...content, silent: sound.silent },
+      {
+        ...events,
+        onGone: () => {
+          if (notification) {
+            held.delete(notification);
+          }
 
-        notification = undefined;
-      },
-    });
+          notification = undefined;
+        },
+      }
+    );
 
-    if (notification) {
-      held.add(notification);
+    if (!notification) {
+      return;
+    }
+
+    held.add(notification);
+
+    if (sounds(sound)) {
+      lastSoundAt = time;
+    }
+
+    if (sound.play) {
+      playSound({
+        sound: sound.play,
+        volume: setting("notificationSoundVolume"),
+      });
     }
   };
 

@@ -1,7 +1,8 @@
 // Only the suite's build calls these, behind `MERU_E2E_BUILD`, and a release
-// build fails if either global's name is in its output.
+// build fails if any global's name here is in its output.
 
 import type { GmailHealth } from "#contract/gmail.ts";
+import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
 import type { TabKey } from "#core/tabs.ts";
 
@@ -26,6 +27,20 @@ export const captureGmailPage = () => {
     onRefused: (origin: string | undefined) => {
       captured.refused.push(origin);
     },
+  };
+};
+
+/**
+ * Each sound asked for, in order, on the main process's global under
+ * `meruTestSounds`, in place of playing it: the suite never makes a sound.
+ */
+export const captureSounds = () => {
+  const captured: SoundRequest[] = [];
+
+  Reflect.set(globalThis, "meruTestSounds", captured);
+
+  return (request: SoundRequest) => {
+    captured.push(request);
   };
 };
 

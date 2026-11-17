@@ -216,4 +216,9 @@ export interface ShellBridge {
     slices: readonly ShellSliceName[],
     listener: (message: ShellSyncMessage) => void
   ) => () => void;
+  /**
+   * `listener` gets each sound main asks for, unchecked, which
+   * `soundRequestSchema` validates. Returns what stops listening.
+   */
+  onSound: (listener: (request: unknown) => void) => () => void;
 }

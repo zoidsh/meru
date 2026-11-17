@@ -3,6 +3,8 @@ import { z } from "zod/mini";
 import { quietWindowSchema } from "./notification-gate.ts";
 import type { QuietWindow } from "./notification-gate.ts";
 import type { Platform } from "./platform.ts";
+import { SOUND_CHOICES, soundVolumeSchema } from "./sounds.ts";
+import type { SoundChoice } from "./sounds.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
 
@@ -80,6 +82,19 @@ export const SETTINGS = {
   quietHours: setting<QuietWindow[]>({
     schema: z.array(quietWindowSchema),
     default: [],
+  }),
+  /**
+   * What a new-mail or verification-code notification sounds like: one of
+   * Meru's own sounds, the system's, or none.
+   */
+  notificationSound: setting<SoundChoice>({
+    schema: z.enum(SOUND_CHOICES),
+    default: "linen",
+  }),
+  /** The volume of Meru's own sounds, from 0.05 to 1. */
+  notificationSoundVolume: setting<number>({
+    schema: soundVolumeSchema,
+    default: 1,
   }),
   /**
    * A new message with a one-time code gets a notification with the code,

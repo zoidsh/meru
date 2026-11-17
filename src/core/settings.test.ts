@@ -87,6 +87,48 @@ describe(readSetting, () => {
     }
   });
 
+  it("plays Linen at full volume by default, and reads any other choice the file holds", () => {
+    const defaults = read({ version: 1 });
+
+    expect(readSetting(defaults, "notificationSound", "linux")).toBe("linen");
+    expect(readSetting(defaults, "notificationSoundVolume", "linux")).toBe(1);
+
+    const chosen = read({
+      version: 1,
+      notificationSound: "none",
+      notificationSoundVolume: 0.05,
+    });
+
+    expect(readSetting(chosen, "notificationSound", "linux")).toBe("none");
+    expect(readSetting(chosen, "notificationSoundVolume", "linux")).toBe(0.05);
+    expect(
+      readSetting(
+        read({ version: 1, notificationSound: "system" }),
+        "notificationSound",
+        "linux"
+      )
+    ).toBe("system");
+  });
+
+  it("reads an unknown sound, and a volume out of range or not finite, as the default", () => {
+    for (const file of [
+      '{ "version": 1, "notificationSound": "bell", "notificationSoundVolume": 0 }',
+      '{ "version": 1, "notificationSound": null, "notificationSoundVolume": 1.5 }',
+      '{ "version": 1, "notificationSoundVolume": 1e999 }',
+      '{ "version": 1, "notificationSoundVolume": -1e999 }',
+      '{ "version": 1, "notificationSoundVolume": "0.5" }',
+    ]) {
+      const settings = read(JSON.parse(file));
+
+      expect(readSetting(settings, "notificationSound", "darwin")).toBe(
+        "linen"
+      );
+      expect(readSetting(settings, "notificationSoundVolume", "darwin")).toBe(
+        1
+      );
+    }
+  });
+
   it("is the value the file holds", () => {
     const settings = read({ version: 1, design: "classic", vibrancy: false });
 

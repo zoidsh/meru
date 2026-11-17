@@ -1,6 +1,7 @@
 import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
+import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import type { MailAction } from "#core/mail-actions.ts";
 import { SETTINGS } from "#core/settings.ts";
@@ -61,6 +62,7 @@ const setup = ({
   doNotDisturb: holding = undefined as State["doNotDisturb"],
   important = (): Promise<ReadonlySet<string> | null> => Promise.resolve(null),
   copies = true,
+  supported = true,
 } = {}) => {
   let copying = copies;
   let writing: PromiseWithResolvers<void> | undefined;
@@ -72,9 +74,15 @@ const setup = ({
   const opened: [string, string][] = [];
   const acted: [string, MailAction, string][] = [];
   const settings = new Map<SettingKey, unknown>();
+  const played: SoundRequest[] = [];
+  let clock = now;
   let current = state;
   const notifier: Notifier = {
     show: (content, events) => {
+      if (!supported) {
+        return;
+      }
+
       const notification: Shown = { ...content, events, closed: false };
 
       shown.push(notification);
@@ -115,11 +123,14 @@ const setup = ({
       acted.push([profileId, action, messageId]);
     },
     doNotDisturb: () => doNotDisturb,
-    now: () => now,
+    now: () => clock,
     important: (profileId) => {
       askedImportant.push(profileId);
 
       return important();
+    },
+    playSound: (request) => {
+      played.push(request);
     },
     log: (message) => {
       logs.push(message);
@@ -139,6 +150,11 @@ const setup = ({
       return writing.resolve;
     },
     shown,
+    played,
+    /** Moves the clock on by `milliseconds`. */
+    advance: (milliseconds: number) => {
+      clock = new Date(clock.getTime() + milliseconds);
+    },
     opened,
     acted,
     logs,
@@ -768,5 +784,129 @@ describe("verification codes", () => {
       "Found a verification code in a new message of profile a, copying it",
       "Copied a verification code of profile a, then ran delete",
     ]);
+  });
+});
+
+const silences = (shown: Shown[]) =>
+  shown.map((notification) => notification.silent);
+
+describe("sounds", () => {
+  it("plays the chosen sound at the chosen volume once for a poll of several, each notification silent", async () => {
+    const app = setup();
+
+    app.set("notificationSound", "knock");
+    app.set("notificationSoundVolume", 0.35);
+    await arrive(app, entry("3"), entry("2"), entry("1"));
+
+    expect(app.played).toStrictEqual([{ sound: "knock", volume: 0.35 }]);
+    expect(silences(app.shown)).toStrictEqual([true, true, true]);
+  });
+
+  it("plays one for the notification that tells many at once", async () => {
+    const app = setup();
+
+    await arrive(app, entry("5"), entry("4"), entry("3"), entry("2"));
+
+    expect(titles(app.shown)).toStrictEqual(["4 new messages"]);
+    expect(app.played).toStrictEqual([{ sound: "linen", volume: 1 }]);
+    expect(silences(app.shown)).toStrictEqual([true]);
+  });
+
+  it("plays one for profiles polled together, and again once 5 s have passed since it", async () => {
+    const app = setup({ state: two });
+
+    await app.notifications.polled("a", feed());
+    await app.notifications.polled("b", feed());
+    await app.notifications.polled("a", feed(entry("1")));
+    app.advance(4999);
+    await app.notifications.polled("b", feed(entry("2")));
+
+    expect(app.shown).toHaveLength(2);
+    expect(app.played).toHaveLength(1);
+
+    app.advance(1);
+    await app.notifications.polled("a", feed(entry("3"), entry("1")));
+
+    expect(app.played).toHaveLength(2);
+  });
+
+  it("reads the sound and its volume as each notification is made", async () => {
+    const app = setup();
+
+    await app.notifications.polled("a", feed());
+    app.set("notificationSound", "duet");
+    app.set("notificationSoundVolume", 0.5);
+    await app.notifications.polled("a", feed(entry("1")));
+
+    expect(app.played).toStrictEqual([{ sound: "duet", volume: 0.5 }]);
+  });
+
+  it.each(["off", "doNotDisturb", "quietHours", "important"])(
+    "asks for no sound while the gate holds the mail: %s",
+    async (hold) => {
+      const app = setup({
+        doNotDisturb: hold === "doNotDisturb" ? { until: null } : undefined,
+        important: () => Promise.resolve(new Set()),
+      });
+
+      app.set("notifications", hold !== "off");
+      app.set(
+        "quietHours",
+        hold === "quietHours" ? [{ start: "00:00", end: "00:00" }] : []
+      );
+      app.set("notificationImportantOnly", hold === "important");
+      await arrive(app, entry("1"));
+
+      expect([app.shown, app.played]).toStrictEqual([[], []]);
+    }
+  );
+
+  it("sounds for a verification code while the mail beside it is held, in the same quiet period", async () => {
+    const app = setup({ doNotDisturb: { until: null } });
+
+    app.set("notificationSound", "breeze");
+    await arrive(app, entry("2"), codeEntry("1"));
+
+    expect(app.played).toStrictEqual([{ sound: "breeze", volume: 1 }]);
+    expect(silences(app.shown)).toStrictEqual([true]);
+
+    await app.notifications.polled("a", feed(codeEntry("3"), entry("2")));
+    await settle();
+
+    expect(app.shown).toHaveLength(2);
+    expect(app.played).toHaveLength(1);
+  });
+
+  it("makes no sound with none: Meru plays nothing and every notification is silent", async () => {
+    const app = setup();
+
+    app.set("notificationSound", "none");
+    await arrive(app, entry("2"), codeEntry("1"));
+
+    expect(app.played).toStrictEqual([]);
+    expect(silences(app.shown)).toStrictEqual([true, true]);
+  });
+
+  it("lets the system sound only the first notification of a burst with system, and plays nothing of Meru's", async () => {
+    const app = setup();
+
+    app.set("notificationSound", "system");
+    await arrive(app, entry("2"), entry("1"));
+    app.advance(5000);
+    await app.notifications.polled(
+      "a",
+      feed(entry("3"), entry("2"), entry("1"))
+    );
+
+    expect(app.played).toStrictEqual([]);
+    expect(silences(app.shown)).toStrictEqual([false, true, false]);
+  });
+
+  it("plays nothing where the system shows no notification", async () => {
+    const app = setup({ supported: false });
+
+    await arrive(app, entry("1"));
+
+    expect(app.played).toStrictEqual([]);
   });
 });
