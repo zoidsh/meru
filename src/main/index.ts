@@ -717,6 +717,7 @@ const start = async () => {
       inbox,
       window: shell.window,
       sidebar,
+      focus,
       runCommand: menu.runCommand,
       doNotDisturbItems: menu.doNotDisturbItems,
       log: console.error,

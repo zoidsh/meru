@@ -10,6 +10,7 @@ import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
 import type { Command } from "./commands.ts";
+import type { Focus } from "./focus.ts";
 import type { Inbox } from "./inbox.ts";
 import type { Mail } from "./mail.ts";
 import type { Overlays } from "./overlay.ts";
@@ -32,7 +33,8 @@ export interface ShellHandlersDeps {
   tabs: { retry: (key: TabKey) => void };
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   window: Pick<AppWindow, "showContextMenu" | "confirm">;
-  sidebar: Pick<Sidebar, "toggleWidth">;
+  sidebar: Pick<Sidebar, "current" | "toggleWidth">;
+  focus: Pick<Focus, "focus">;
   /** Runs a command of the registry, as its menu item would. */
   runCommand: (id: string) => void;
   /** The Do Not Disturb menu as the application menu has it now. */
@@ -143,6 +145,7 @@ export const createShellHandlers = ({
   inbox,
   window,
   sidebar,
+  focus,
   runCommand,
   doNotDisturbItems,
   log,
@@ -176,6 +179,11 @@ export const createShellHandlers = ({
     },
     closeTab: async (key) => {
       await profiles.closeTab(key);
+
+      // The sidebar, and the tab that had focus in it, is gone.
+      if (sidebar.current() === "hidden") {
+        focus.focus([{ kind: "front" }]);
+      }
     },
     retryTab: (key) => {
       tabs.retry(key);

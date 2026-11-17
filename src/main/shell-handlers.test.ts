@@ -2,6 +2,7 @@ import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import type { Overlay } from "#core/overlay.ts";
+import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -27,6 +28,7 @@ const setup = ({
   state = two,
   confirmed = true,
   overlay = undefined as Overlay | undefined,
+  sidebar = "narrow" as SidebarState,
 } = {}) => {
   const removed: string[] = [];
   const renamed: [string, string][] = [];
@@ -36,6 +38,7 @@ const setup = ({
   const menus: Item[][] = [];
   const ran: string[] = [];
   const confirmations: Confirmation[] = [];
+  const focused: unknown[] = [];
 
   const handlers = createShellHandlers({
     profiles: {
@@ -111,8 +114,14 @@ const setup = ({
       },
     },
     sidebar: {
+      current: () => sidebar,
       toggleWidth: () => {
         calls.push(["toggleWidth"]);
+      },
+    },
+    focus: {
+      focus: (preferences) => {
+        focused.push(preferences);
       },
     },
     runCommand: (id) => {
@@ -133,6 +142,7 @@ const setup = ({
     menus,
     confirmations,
     ran,
+    focused,
   };
 };
 
@@ -236,6 +246,20 @@ describe(createShellHandlers, () => {
     await shell.handlers.closeOverlay({});
 
     expect(shell.overlays).toStrictEqual(["closed"]);
+  });
+
+  it("gives focus to the front tab's page when a close hides the sidebar, and only then", async () => {
+    const shown = setup({ sidebar: "narrow" });
+    const hidden = setup({ sidebar: "hidden" });
+    const key = { profileId: "a", tabId: "t1" };
+
+    await shown.handlers.closeTab(key);
+    await hidden.handlers.closeTab(key);
+
+    expect([shown.focused, hidden.focused]).toStrictEqual([
+      [],
+      [[{ kind: "front" }]],
+    ]);
   });
 
   it("hands each tab control's call to the tabs", async () => {

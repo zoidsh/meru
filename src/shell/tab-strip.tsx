@@ -198,27 +198,23 @@ export const Sidebar = ({
                 ),
               };
 
-              if (wide) {
-                return (
-                  <Tabs.Tab key={tab.id} {...tabProps}>
-                    {isAppId(tab.app) && <AppIcon app={tab.app} aria-hidden />}
-                    <span className="min-w-0 flex-1 truncate text-left">
+              // One element tree in either width, so a tab keeps its
+              // element, and with it focus, as the sidebar changes width.
+              return (
+                <Tooltip key={tab.id} disabled={wide}>
+                  <TooltipTrigger render={<Tabs.Tab {...tabProps} />}>
+                    {(wide || live) && isAppId(tab.app) && (
+                      <AppIcon app={tab.app} aria-hidden />
+                    )}
+                    <span
+                      className={
+                        wide ? "min-w-0 flex-1 truncate text-left" : "sr-only"
+                      }
+                    >
                       {title}
                     </span>
                     <TabStatusIcon status={tab.status} />
-                  </Tabs.Tab>
-                );
-              }
-
-              return (
-                <Tooltip key={tab.id}>
-                  <TooltipTrigger render={<Tabs.Tab {...tabProps} />}>
-                    {live && isAppId(tab.app) && (
-                      <AppIcon app={tab.app} aria-hidden />
-                    )}
-                    <span className="sr-only">{title}</span>
-                    <TabStatusIcon status={tab.status} />
-                    {tab.app === "gmail" && (
+                    {!wide && tab.app === "gmail" && (
                       <UnreadBadge
                         count={unreadCount}
                         className="pointer-events-none absolute -top-1.5 -right-2 px-1"
