@@ -65,16 +65,15 @@ msgstr "{name} loads by itself when you’re back online."
 msgid "{name} stopped working"
 msgstr "{name} stopped working"
 
-#. Below the unified inbox when a profile has more unread mail than the list shows, since Gmail lists only the newest; {name} is the profile, {listed} how many are shown, {unreadCount} how many are unread
-#. placeholder {0}: unreadCount ?? 0
-#: src/shell/inbox.tsx
-msgid "{name}: the newest {listed} of {0} unread"
-msgstr "{name}: the newest {listed} of {0} unread"
-
 #. Title of the error dialog shown when the app fails to open; {productName} is the app's name
 #: src/main/failures.ts
 msgid "{productName} could not start"
 msgstr "{productName} could not start"
+
+#. Below the unified inbox when a profile has more unread mail than the list shows, since Gmail lists only the newest; {name} is the profile, {listed} how many are shown, # how many are unread
+#: src/shell/inbox.tsx
+msgid "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
+msgstr "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
 
 #. Menu item in the macOS app menu that shows the app's version; {appName} is the app's name
 #: src/main/application-menu.ts
@@ -353,10 +352,9 @@ msgid "On Until Turned Off"
 msgstr "On Until Turned Off"
 
 #. Button beside a signed-out profile in the unified inbox that shows that profile, where it can be signed in; {name} is the profile
-#. placeholder {0}: profile.name
 #: src/shell/inbox.tsx
-msgid "Open {0}"
-msgstr "Open {0}"
+msgid "Open {name}"
+msgstr "Open {name}"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts

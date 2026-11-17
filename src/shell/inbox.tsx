@@ -1,3 +1,4 @@
+import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 import {
@@ -205,7 +206,7 @@ const ProfileNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
 
   return (
     <ul className="flex flex-col gap-1 px-4 pb-2 text-sm text-muted-foreground">
-      {notes.map(({ profile, text }) => (
+      {notes.map(({ profile, profile: { name }, text }) => (
         <li key={profile.id} className="flex items-center gap-2">
           <span>{text}</span>
           {profile.status === "signedOut" && (
@@ -217,7 +218,7 @@ const ProfileNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
               }}
             >
               {t({
-                message: `Open ${profile.name}`,
+                message: `Open ${name}`,
                 comment:
                   "Button beside a signed-out profile in the unified inbox that shows that profile, where it can be signed in; {name} is the profile",
               })}
@@ -232,11 +233,10 @@ const ProfileNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
 /** Where a profile's feed lists fewer than are unread, as it does past 20. */
 const MoreNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
   const { t } = useLingui();
-  const more = profiles.filter(
-    (profile) =>
-      profile.status === "ok" &&
-      profile.unreadCount !== null &&
-      profile.unreadCount > profile.listed
+  const more = profiles.flatMap(({ id, name, status, listed, unreadCount }) =>
+    status === "ok" && unreadCount !== null && unreadCount > listed
+      ? [{ id, name, listed, unreadCount }]
+      : []
   );
 
   if (more.length === 0) {
@@ -248,9 +248,12 @@ const MoreNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
       {more.map(({ id, name, listed, unreadCount }) => (
         <li key={id}>
           {t({
-            message: `${name}: the newest ${listed} of ${unreadCount ?? 0} unread`,
+            message: plural(unreadCount, {
+              one: `${name}: the newest ${listed} of # unread`,
+              other: `${name}: the newest ${listed} of # unread`,
+            }),
             comment:
-              "Below the unified inbox when a profile has more unread mail than the list shows, since Gmail lists only the newest; {name} is the profile, {listed} how many are shown, {unreadCount} how many are unread",
+              "Below the unified inbox when a profile has more unread mail than the list shows, since Gmail lists only the newest; {name} is the profile, {listed} how many are shown, # how many are unread",
           })}
         </li>
       ))}
@@ -258,9 +261,14 @@ const MoreNotes = ({ profiles }: { profiles: readonly InboxProfile[] }) => {
   );
 };
 
+type Dates = ReturnType<typeof useDates>;
+type ActionLabels = ReturnType<typeof useActionLabels>;
+
 const InboxRow = ({
   row,
   profileName,
+  dates,
+  labels,
   selected,
   rowRef,
   onSelect,
@@ -268,13 +276,13 @@ const InboxRow = ({
 }: {
   row: Row;
   profileName: string;
+  dates: Dates;
+  labels: ActionLabels;
   selected: boolean;
   rowRef: (element: HTMLTableRowElement | null) => void;
   onSelect: () => void;
   onKeyDown: (event: KeyboardEvent<HTMLTableRowElement>) => void;
 }) => {
-  const labels = useActionLabels();
-  const dates = useDates();
   const { short, full } = dates(row.issued);
   const sender = row.senderName || row.senderAddress;
 
@@ -302,7 +310,9 @@ const InboxRow = ({
       </td>
       <td
         dir="auto"
-        className="truncate pr-3 font-medium"
+        // A right-to-left name keeps its own direction but lines up with the
+        // column, as the subject does.
+        className="truncate pr-3 text-left font-medium"
         title={`${row.senderName} <${row.senderAddress}>`}
       >
         {sender}
@@ -311,7 +321,7 @@ const InboxRow = ({
         <span className="flex min-w-0 gap-2">
           <span
             dir="auto"
-            className="max-w-[60%] shrink-0 truncate"
+            className="max-w-[60%] shrink-0 truncate text-left"
             title={row.subject}
           >
             {row.subject}
@@ -319,7 +329,7 @@ const InboxRow = ({
           {row.summary && (
             <span
               dir="auto"
-              className="min-w-0 truncate text-muted-foreground"
+              className="min-w-0 truncate text-left text-muted-foreground"
               title={row.summary}
             >
               {row.summary}
@@ -335,7 +345,8 @@ const InboxRow = ({
         >
           {short}
         </time>
-        <span className="absolute inset-y-0 right-3 flex items-center gap-1 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 group-data-selected:opacity-100">
+        {/* Not hit-testable while hidden, so a click there opens the row. */}
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center gap-1 opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-selected:pointer-events-auto group-data-selected:opacity-100">
           {ACTIONS.map((action) => (
             <Button
               key={action}
@@ -386,6 +397,8 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
   const focusedOnOpen = useRef(false);
   const failure = useFailureText(inbox.notice, profiles);
+  const dates = useDates();
+  const labels = useActionLabels();
   const names = useMemo(
     () => new Map(profiles.map((profile) => [profile.id, profile.name])),
     [profiles]
@@ -597,6 +610,8 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
                   key={key}
                   row={row}
                   profileName={names.get(row.profileId) ?? ""}
+                  dates={dates}
+                  labels={labels}
                   selected={key === selectedRowKey}
                   rowRef={(element) => {
                     if (element) {
