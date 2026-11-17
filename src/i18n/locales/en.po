@@ -521,9 +521,14 @@ msgid "Show sidebar"
 msgstr "Show sidebar"
 
 #. Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed
+#: src/shell/app.tsx
+msgctxt "title bar button"
+msgid "Sidebar"
+msgstr "Sidebar"
+
 #. Menu item in the View menu, checked while the list of the profile's tabs shows down the left of the window
 #: src/main/commands.ts
-#: src/shell/app.tsx
+msgctxt "View menu"
 msgid "Sidebar"
 msgstr "Sidebar"
 

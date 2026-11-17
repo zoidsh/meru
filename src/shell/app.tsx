@@ -205,6 +205,7 @@ const SidebarToggle = ({ shown }: { shown: boolean }) => {
             aria-pressed={shown}
             aria-label={t({
               message: "Sidebar",
+              context: "title bar button",
               comment:
                 "Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed",
             })}

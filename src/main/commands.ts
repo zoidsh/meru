@@ -213,6 +213,7 @@ export const COMMANDS: readonly Command[] = [
     title: () =>
       t({
         message: "Sidebar",
+        context: "View menu",
         comment:
           "Menu item in the View menu, checked while the list of the profile's tabs shows down the left of the window",
       }),
