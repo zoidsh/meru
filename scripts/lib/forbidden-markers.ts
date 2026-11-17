@@ -41,6 +41,14 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       marker: "meruTestNotifications",
       why: "only the end-to-end build may capture notifications in place of showing them",
     },
+    {
+      marker: "meruTestTray",
+      why: "only the end-to-end build may capture its tray in place of showing one",
+    },
+    {
+      marker: "meruTestBadge",
+      why: "only the end-to-end build may capture the unread badge in place of showing it",
+    },
   ];
 
 export interface OutputFile {

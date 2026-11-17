@@ -10,6 +10,7 @@ import type { ViteDevServer } from "vite";
 import {
   appBundles,
   cleanOutDir,
+  copyTrayImages,
   outDir,
   shellViteConfig,
   writeAppManifest,
@@ -144,6 +145,7 @@ const queueRestart = (devServerUrl: string) => {
 setup = (async () => {
   await cleanOutDir("dev");
   await writeAppManifest("dev");
+  await copyTrayImages("dev");
 
   vite = await createServer({
     configFile: shellViteConfig,

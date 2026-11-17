@@ -1,9 +1,11 @@
-import { rm, mkdir, writeFile } from "node:fs/promises";
+import { copyFile, rm, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { BuildOptions } from "rolldown";
 
 import { appIdentity } from "#core/app-identity.ts";
+import type { Platform } from "#core/platform.ts";
+import { trayImageNames } from "#core/tray.ts";
 
 import manifest from "../../package.json" with { type: "json" };
 import { linguiForRolldown } from "./lingui.ts";
@@ -46,6 +48,24 @@ export const writeAppManifest = async (target: BuildTarget) => {
       undefined,
       2
     )}\n`
+  );
+};
+
+/**
+ * The tray's images for the platform this builds on, which is the one it
+ * packs for, into `tray` beside main's bundle.
+ */
+export const copyTrayImages = async (target: BuildTarget) => {
+  const directory = path.join(outDir(target), "tray");
+
+  await mkdir(directory, { recursive: true });
+  await Promise.all(
+    trayImageNames(process.platform as Platform).map((name) =>
+      copyFile(
+        path.join(repositoryRoot, "resources", "tray", name),
+        path.join(directory, name)
+      )
+    )
   );
 };
 

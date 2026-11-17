@@ -8,6 +8,7 @@ import manifest from "../package.json" with { type: "json" };
 import {
   appBundles,
   cleanOutDir,
+  copyTrayImages,
   identityFor,
   outDir,
   repositoryRoot,
@@ -35,6 +36,7 @@ await Promise.all([
     build: { outDir: path.join(out, "shell"), emptyOutDir: true },
   }),
   writeAppManifest(target),
+  copyTrayImages(target),
 ]);
 
 const entries = await readdir(out, { recursive: true, withFileTypes: true });
