@@ -335,8 +335,13 @@ const formatPrior = ({ digits, groups }: Candidate) => {
     : WEIGHTS.otherLengths;
 };
 
+// A subject says what the whole mail is about, so a topic word there weighs
+// as if it sat in the candidate's own sentence.
 const topicPenalty = (candidate: Candidate, readings: readonly Reading[]) => {
+  const [subject] = readings;
+
   if (
+    (subject?.topics.length ?? 0) > 0 ||
     candidate.reading.topics.some(
       (word) => word.sentence === candidate.sentence
     )
