@@ -369,6 +369,8 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
     () => new Map(profiles.map((profile) => [profile.id, profile.name])),
     [profiles]
   );
+  // Before any feed has read, an empty list says nothing of the mail.
+  const checked = profiles.some((profile) => profile.status === "ok");
   const colorOf = (profileId: string) =>
     colors?.profiles.find((profile) => profile.id === profileId)?.color;
 
@@ -502,7 +504,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
             comment:
               "Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers",
           })}
-          aria-describedby={rows.length === 0 ? emptyId : undefined}
+          aria-describedby={rows.length === 0 && checked ? emptyId : undefined}
           tabIndex={rows.length === 0 ? 0 : -1}
           className="w-full table-fixed border-separate border-spacing-0 outline-none"
         >
@@ -541,7 +543,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
             })}
           </tbody>
         </table>
-        {rows.length === 0 && (
+        {rows.length === 0 && checked && (
           <Empty id={emptyId} className="p-12">
             <EmptyHeader>
               <EmptyMedia variant="icon">
