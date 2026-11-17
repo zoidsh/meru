@@ -130,7 +130,8 @@ export const appBundles = (target: BuildTarget): BuildOptions[] => {
       output: {
         file: path.join(outDir(target), GMAIL_PRELOAD),
         format: "cjs",
-        minify,
+        // Its names would count against the budget, and it logs no stack.
+        minify: mode === "prod",
         sourcemap: mode === "dev",
       },
     },
