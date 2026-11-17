@@ -31,7 +31,8 @@ const USAGE = `pnpm measure [options]
   --scenario <list>  ${SCENARIOS.join(", ")} (default gmail)
   --runs <n>         runs per target and scenario (default 3)
   --settle <s>       seconds to wait once the inbox is usable (default 30)
-  --idle <s>         seconds of the idle CPU window (default 30)`;
+  --idle <s>         seconds of the idle CPU window (default 30)
+Both targets run on .meru/measure-v4, a copy of the signed-in profile.`;
 
 const { values: options } = parseArgs({
   options: {
