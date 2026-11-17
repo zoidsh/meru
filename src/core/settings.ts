@@ -34,6 +34,23 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: true,
   }),
+  /** A notification for mail that arrives. */
+  notifications: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  notificationSender: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  notificationSubject: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  notificationSummary: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
 } satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;

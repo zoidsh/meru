@@ -55,6 +55,17 @@ describe(readSetting, () => {
     expect(readSetting(read({ version: 1 }), "vibrancy")).toBeTruthy();
   });
 
+  it("shows notifications with the sender, subject and summary by default", () => {
+    for (const key of [
+      "notifications",
+      "notificationSender",
+      "notificationSubject",
+      "notificationSummary",
+    ] as const) {
+      expect(readSetting(read({ version: 1 }), key)).toBeTruthy();
+    }
+  });
+
   it("is the value the file holds", () => {
     const settings = read({ version: 1, design: "classic", vibrancy: false });
 
