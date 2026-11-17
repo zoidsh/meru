@@ -2,6 +2,7 @@ import type { ShellState } from "#contract/shell.ts";
 import { formatAccelerator } from "#core/accelerator.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
+import { profileColor } from "#core/profile-color.ts";
 import { canRemoveProfile, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -111,6 +112,7 @@ export const shellState = (
       profiles: state.profiles.map((candidate) => ({
         id: candidate.id,
         name: profileDisplayName(candidate),
+        color: profileColor(state, candidate.id),
         mail: mail(candidate.id),
       })),
       selectedProfileId: state.selectedProfileId,

@@ -328,7 +328,7 @@ describe(shellShortcuts, () => {
 });
 
 describe(shellState, () => {
-  it("gives the shell the profiles with names to show and their mail, and nothing else of them", () => {
+  it("gives the shell the profiles with names to show, their colours by place, and their mail, and nothing else of them", () => {
     expect(
       shellState(
         {
@@ -348,8 +348,13 @@ describe(shellState, () => {
       ).profiles
     ).toStrictEqual({
       profiles: [
-        { id: "a", name: "Default", mail: { status: "ok", unreadCount: 4 } },
-        { id: "b", name: "Work", mail: NO_MAIL },
+        {
+          id: "a",
+          name: "Default",
+          color: "#2d52d2",
+          mail: { status: "ok", unreadCount: 4 },
+        },
+        { id: "b", name: "Work", color: "#ff6227", mail: NO_MAIL },
       ],
       selectedProfileId: "a",
     });

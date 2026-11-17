@@ -109,6 +109,8 @@ export const SHELL_STATE = {
       z.object({
         id: profileId,
         name: z.string(),
+        /** The profile's colour as CSS, for its dot and the shell's tint. */
+        color: z.string(),
         /** What the profile's feed last said; no count until one is read. */
         mail: z.object({ status: mailStatus, unreadCount }),
       })
