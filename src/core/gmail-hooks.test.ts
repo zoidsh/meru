@@ -98,7 +98,7 @@ describe(gmailFeatures, () => {
   });
 });
 
-/** The hides' stylesheets as slice 2.8 shipped them, which nothing may change. */
+/** The hides' stylesheets as they ship, which nothing may change. */
 const SHIPPED_HIDES = {
   hideGmailLogo:
     'header div:has(> div > a[href="#inbox"] > img):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }',
@@ -139,7 +139,7 @@ describe(featureStylesheet, () => {
     }
   });
 
-  it("guards every hide with the guard slice 2.8 shipped", () => {
+  it("guards every hide with the shipped guard", () => {
     expect(guardedSelector(findHook("logo"), "x")).toBe(`x${HOOK_GUARD}`);
   });
 });

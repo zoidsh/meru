@@ -1,4 +1,4 @@
-// Labelled messages a reviewer of slice 2.6 wrote fresh, apart from v3's
+// Labelled messages a reviewer wrote fresh, apart from v3's
 // corpus and v4's, to measure the extractor on mail neither was tuned on. Each
 // is synthetic. `expected` is what a careful person would say the one-time
 // code is, not what any extractor gives. `set` is "realistic" for ordinary
