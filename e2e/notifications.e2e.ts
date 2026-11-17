@@ -461,13 +461,14 @@ test("a profile saved as tabbed reads Primary from its first poll, with no page 
   expect(standIn.feedLabels).toContain(PRIMARY);
 });
 
-/** Presses the button labelled `label` on the first notification captured. */
+/** Presses the button labelled `label` on the last notification captured. */
 const pressAction = (app: ElectronApplication, label: string) =>
   app.evaluate((_electron, wanted) => {
-    const [notification] = Reflect.get(
-      globalThis,
-      "meruTestNotifications"
-    ) as (Captured & { act: (index: number) => void })[];
+    const notification = (
+      Reflect.get(globalThis, "meruTestNotifications") as (Captured & {
+        act: (index: number) => void;
+      })[]
+    ).at(-1);
 
     notification?.act(notification.actions?.indexOf(wanted) ?? -1);
   }, label);
@@ -522,22 +523,6 @@ test("an action from a notification has the open page press Gmail's Refresh once
   await expect(gmail.getByText(refreshedTimes(1))).toBeVisible();
 });
 
-test("an action Gmail refuses has the page press nothing", async ({
-  launchApp,
-  userDataDir,
-  standIn,
-}) => {
-  standIn.failActions(ANY_SESSION);
-
-  const { app, gmail } = await launchNotified(launchApp, userDataDir, standIn);
-
-  await pressAction(app, "Archive");
-  await expect.poll(() => standIn.refusedActions).toHaveLength(1);
-  await gmail.waitForTimeout(PAST_CATCH_UP_MS);
-
-  await expect(gmail.getByText(refreshedTimes(0))).toBeVisible();
-});
-
 test("waking has each open Gmail page press Refresh", async ({
   app,
   standIn,
@@ -552,7 +537,7 @@ test("waking has each open Gmail page press Refresh", async ({
   await expect(gmail.getByText(refreshedTimes(1))).toBeVisible();
 });
 
-test("a page whose Refresh Gmail renamed is reported broken there, and an action presses nothing", async ({
+test("a page whose Refresh Gmail renamed is reported broken there, and neither an action Gmail takes nor one it refuses presses anything", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -582,6 +567,19 @@ test("a page whose Refresh Gmail renamed is reported broken there, and an action
 
   await expect(draft).toHaveValue("Half a reply");
   await expect(draft).toBeFocused();
+  await expect(gmail.getByText(refreshedTimes(0))).toBeVisible();
+
+  standIn.failActions(ANY_SESSION);
+  standIn.setFeed(ANY_SESSION, listing("3", "2", "1"));
+  await retitle(gmail, "Inbox (3)");
+  await expect
+    .poll(() => capturedTitles(app))
+    .toStrictEqual(["Sender 2", "Sender 3"]);
+
+  await pressAction(app, "Archive");
+  await expect.poll(() => standIn.refusedActions).toHaveLength(1);
+  await gmail.waitForTimeout(PAST_CATCH_UP_MS);
+
   await expect(gmail.getByText(refreshedTimes(0))).toBeVisible();
 });
 
