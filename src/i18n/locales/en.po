@@ -17,10 +17,22 @@ msgstr "{count, plural, one {{name}, # unread message} other {{name}, # unread m
 msgid "{count, plural, one {# new message} other {# new messages}}"
 msgstr "{count, plural, one {# new message} other {# new messages}}"
 
+#. Read out by a screen reader for the unread badge on Meru's taskbar button on Windows
+#: src/main/badge.ts
+msgid "{count, plural, one {# unread message} other {# unread messages}}"
+msgstr "{count, plural, one {# unread message} other {# unread messages}}"
+
 #. Shown on a profile's unread badge in the title bar when more messages are unread than the number before the plus
+#. Shown on an unread badge when more messages are unread than the number before the plus
+#: src/main/badge.ts
 #: src/shell/app.tsx
 msgid "{MAX_SHOWN_UNREAD}+"
 msgstr "{MAX_SHOWN_UNREAD}+"
+
+#. A profile in the tray's menu with its unread count; {name} is the profile's name and {count} the number of unread messages
+#: src/main/tray.ts
+msgid "{name} ({count})"
+msgstr "{name} ({count})"
 
 #. Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar
 #: src/shell/tab-strip.tsx
@@ -141,6 +153,12 @@ msgstr "Delete"
 msgid "Edit"
 msgstr "Edit"
 
+#. Tray menu item that quits Meru
+#: src/main/tray.ts
+msgctxt "Windows"
+msgid "Exit"
+msgstr "Exit"
+
 #. Name of the Help menu
 #: src/main/application-menu.ts
 msgid "Help"
@@ -150,6 +168,11 @@ msgstr "Help"
 #: src/main/application-menu.ts
 msgid "Hide {appName}"
 msgstr "Hide {appName}"
+
+#. Tray menu item that hides Meru's window; {productName} is Meru
+#: src/main/tray.ts
+msgid "Hide {productName}"
+msgstr "Hide {productName}"
 
 #. Menu item in the macOS app menu that hides every other app
 #: src/main/application-menu.ts
@@ -222,10 +245,22 @@ msgstr "Profile {n}"
 msgid "Profiles"
 msgstr "Profiles"
 
+#. Tray menu item that quits Meru
+#: src/main/tray.ts
+msgctxt "Linux"
+msgid "Quit"
+msgstr "Quit"
+
 #. Menu item that quits the app; {appName} is the app's name, such as Meru
 #: src/main/application-menu.ts
 msgid "Quit {appName}"
 msgstr "Quit {appName}"
+
+#. Menu bar icon's menu item that quits Meru; {productName} is Meru
+#: src/main/tray.ts
+msgctxt "macOS"
+msgid "Quit {productName}"
+msgstr "Quit {productName}"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -299,6 +334,11 @@ msgstr "Select Previous Tab"
 #: src/main/application-menu.ts
 msgid "Services"
 msgstr "Services"
+
+#. Tray menu item that brings Meru's window back; {productName} is Meru
+#: src/main/tray.ts
+msgid "Show {productName}"
+msgstr "Show {productName}"
 
 #. Menu item in the macOS app menu that shows every hidden app again
 #: src/main/application-menu.ts

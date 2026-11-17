@@ -1,7 +1,8 @@
-import { BrowserWindow, Menu, dialog } from "electron";
+import { BrowserWindow, Menu, dialog, nativeImage } from "electron";
 import type { WebContents } from "electron";
 
 import { isSameSite } from "#core/app-url.ts";
+import type { Bitmap } from "#core/badge-image.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
 
 import { addContentView } from "./content-view.ts";
@@ -46,8 +47,8 @@ export interface Confirmation {
 
 export type WindowLoadEvent = "ready-to-show" | "did-finish-load";
 
-/** The window becoming the one keys go to, or no longer, or shown. */
-export type WindowFocusEvent = "focus" | "blur" | "show";
+/** The window becoming the one keys go to, or no longer, or shown or hidden. */
+export type WindowFocusEvent = "focus" | "blur" | "show" | "hide";
 
 export interface AppWindow {
   readonly webContentsId: number;
@@ -55,6 +56,7 @@ export interface AppWindow {
   once: (event: WindowLoadEvent, listener: () => void) => void;
   show: () => void;
   showInactive: () => void;
+  hide: () => void;
   focus: () => void;
   /** Whether keys go to this window, which an inactive app never is. */
   isFocused: () => boolean;
@@ -74,6 +76,21 @@ export interface AppWindow {
   restore: () => void;
   isMinimized: () => boolean;
   isDestroyed: () => boolean;
+  /** Told as the window is asked to close; `preventDefault` keeps it open. */
+  onClose: (listener: (event: { preventDefault: () => void }) => void) => void;
+  isFullScreen: () => boolean;
+  /** Leaves full screen, then runs `then` once the window has. */
+  leaveFullScreen: (then: () => void) => void;
+  /** Windows alone: the session ends, for a shutdown, restart or sign-out. */
+  onSessionEnd: (listener: () => void) => void;
+  /**
+   * Windows alone: a small image over the taskbar button, one bitmap for
+   * each scale; nothing takes it away.
+   */
+  setOverlayIcon: (
+    images: readonly Bitmap[] | undefined,
+    description: string
+  ) => void;
   /** macOS only; elsewhere nothing. */
   setVibrancy: (vibrancy: boolean) => void;
   /** The area child views are laid out in, below any menu bar. */
@@ -178,6 +195,7 @@ export const createWindowFactory = (): WindowFactory => ({
       },
       show: () => window.show(),
       showInactive: () => window.showInactive(),
+      hide: () => window.hide(),
       focus: () => window.focus(),
       isFocused: () => window.isFocused(),
       isVisible: () => window.isVisible(),
@@ -201,6 +219,48 @@ export const createWindowFactory = (): WindowFactory => ({
       restore: () => window.restore(),
       isMinimized: () => window.isMinimized(),
       isDestroyed: () => window.isDestroyed(),
+      onClose: (listener) => {
+        window.on("close", listener);
+      },
+      isFullScreen: () => window.isFullScreen(),
+      leaveFullScreen: (then) => {
+        window.once("leave-full-screen", then);
+        window.setFullScreen(false);
+      },
+      onSessionEnd: (listener) => {
+        window.on("session-end", listener);
+      },
+      setOverlayIcon: (images, description) => {
+        if (process.platform !== "win32") {
+          return;
+        }
+
+        const [first, ...rest] = images ?? [];
+
+        if (!first) {
+          window.setOverlayIcon(null, "");
+
+          return;
+        }
+
+        const image = nativeImage.createFromBitmap(Buffer.from(first.pixels), {
+          width: first.width,
+          height: first.height,
+        });
+
+        // Windows picks the representation for the display's scale, the
+        // overlay being 16 logical pixels.
+        for (const bitmap of rest) {
+          image.addRepresentation({
+            scaleFactor: bitmap.width / first.width,
+            width: bitmap.width,
+            height: bitmap.height,
+            buffer: Buffer.from(bitmap.pixels),
+          });
+        }
+
+        window.setOverlayIcon(image, description);
+      },
       setVibrancy: (vibrancy) => {
         if (process.platform === "darwin") {
           window.setVibrancy(vibrancy ? VIBRANCY : null);

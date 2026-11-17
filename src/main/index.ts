@@ -6,12 +6,14 @@ import { FEED_PATH, feedOutcome } from "#core/feed.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
-import { profilePartition } from "#core/state.ts";
+import { knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
+import { totalUnread } from "#core/unread.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
+import { createBadge, createCapturedBadge } from "#platform/badge.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
@@ -27,9 +29,15 @@ import { createAppProtocol } from "#platform/protocol.ts";
 import { createSessions } from "#platform/sessions.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTextFile } from "#platform/text-file.ts";
+import { createTheme } from "#platform/theme.ts";
+import {
+  createCapturedTrayFactory,
+  createTrayFactory,
+} from "#platform/tray.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
 import { createApplicationMenu } from "./application-menu.ts";
+import { createUnreadBadge } from "./badge.ts";
 import { commandsFor } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
@@ -56,11 +64,13 @@ import { serveShellContract } from "./shell-ipc.ts";
 import {
   createShellWindow,
   followVibrancy,
+  hideOnClose,
   revealWindow,
 } from "./shell-window.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
+import { createTray } from "./tray.ts";
 
 const APP_SCHEME = "meru-app";
 
@@ -483,9 +493,89 @@ const start = async () => {
     log: console.error,
   });
 
-  lifecycle.onSecondInstance(() => {
+  const reveal = () => {
     revealWindow(shell.window, background);
+  };
+  const theme = createTheme();
+  const unread = (profileId: string) => mail.mail(profileId).unreadCount;
+  const tray = createTray({
+    // The suite's build captures its tray, so a test never puts one in the
+    // menu bar or the notification area.
+    trays: MERU_E2E_BUILD
+      ? createCapturedTrayFactory()
+      : createTrayFactory(path.join(import.meta.dirname, "tray")),
+    platform,
+    productName: lifecycle.name,
+    setting: settings.get,
+    isDark: theme.isDark,
+    state: profiles.get,
+    unread,
+    window: shell.window,
+    reveal,
+    // Gmail's tab first, so selecting the profile never makes a view for
+    // the tab it had selected.
+    jumpTo: async (profileId) => {
+      const profile = profiles
+        .get()
+        .profiles.find((candidate) => candidate.id === profileId);
+      const gmailTab =
+        profile && knownTabs(profile).find((tab) => tab.app === "gmail");
+
+      if (gmailTab) {
+        await profiles.selectTab({ profileId, tabId: gmailTab.id });
+      }
+
+      await profiles.select(profileId);
+    },
+    quit: lifecycle.quit,
+    log: console.error,
   });
+  const badge = createUnreadBadge({
+    badge: MERU_E2E_BUILD ? createCapturedBadge() : createBadge(shell.window),
+    platform,
+    enabled: () => settings.get("unreadBadge"),
+    total: () =>
+      totalUnread(profiles.get().profiles.map((profile) => unread(profile.id))),
+  });
+  const showUnread = () => {
+    tray.update();
+    badge.update();
+  };
+
+  mail.onChange(showUnread);
+  profiles.onChange(showUnread);
+  settings.onChange("unreadBadge", badge.update);
+  settings.onChange("trayIconColor", tray.update);
+  settings.onChange("trayUnreadCount", tray.update);
+  settings.onChange("tray", () => {
+    tray.update();
+
+    // Off, the tray can no longer bring a hidden window back on Windows and
+    // Linux.
+    if (!tray.isShown() && !isMacOS && !shell.window.isVisible()) {
+      reveal();
+    }
+  });
+  theme.onChange(tray.update);
+  // The menu's Show or Hide follows the window.
+  shell.window.on("show", tray.update);
+  shell.window.on("hide", tray.update);
+  showUnread();
+
+  const closing = hideOnClose({
+    window: shell.window,
+    platform,
+    trayShown: tray.isShown,
+  });
+
+  lifecycle.onBeforeQuit(() => {
+    closing.markQuitting();
+    badge.clear();
+    tray.destroy();
+  });
+
+  lifecycle.onActivate(reveal);
+  lifecycle.onSecondInstance(reveal);
 
   lifecycle.onWindowAllClosed(() => {
     lifecycle.quit();

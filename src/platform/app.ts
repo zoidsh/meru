@@ -10,6 +10,8 @@ export interface AppLifecycle {
   whenReady: () => Promise<void>;
   onSecondInstance: (listener: () => void) => void;
   onWindowAllClosed: (listener: () => void) => void;
+  /** macOS: the Dock icon clicked, or Meru opened again while it runs. */
+  onActivate: (listener: () => void) => void;
   /** Also fires for a quit that SIGINT or SIGTERM starts. */
   onBeforeQuit: (listener: () => void) => void;
   setAppUserModelId: (id: string) => void;
@@ -40,6 +42,9 @@ export const createAppLifecycle = (): AppLifecycle => ({
   },
   onWindowAllClosed: (listener) => {
     app.on("window-all-closed", listener);
+  },
+  onActivate: (listener) => {
+    app.on("activate", listener);
   },
   onBeforeQuit: (listener) => {
     app.on("before-quit", listener);

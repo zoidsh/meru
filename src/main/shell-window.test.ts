@@ -1,18 +1,29 @@
 import { describe, expect, it } from "vitest";
 
 import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
+import type { Platform } from "#core/platform.ts";
 import type {
   AppWindow,
   WindowLoadEvent,
   WindowOptions,
 } from "#platform/window.ts";
 
-import { createShellWindow, revealWindow } from "./shell-window.ts";
+import {
+  createShellWindow,
+  hideOnClose,
+  revealWindow,
+} from "./shell-window.ts";
 
 const createFakeWindow = () => {
   const listeners = new Map<WindowLoadEvent, () => void>();
   const calls: string[] = [];
   let minimized = false;
+  let fullScreen = false;
+  let leftFullScreen: (() => void) | undefined;
+  let closeListener:
+    | ((event: { preventDefault: () => void }) => void)
+    | undefined;
+  let sessionEnd: (() => void) | undefined;
 
   const window: AppWindow = {
     loadURL: () => Promise.resolve(),
@@ -41,6 +52,21 @@ const createFakeWindow = () => {
     },
     isMinimized: () => minimized,
     isDestroyed: () => false,
+    hide: () => {
+      calls.push("hide");
+    },
+    onClose: (listener) => {
+      closeListener = listener;
+    },
+    isFullScreen: () => fullScreen,
+    leaveFullScreen: (then) => {
+      calls.push("leaveFullScreen");
+      leftFullScreen = then;
+    },
+    onSessionEnd: (listener) => {
+      sessionEnd = listener;
+    },
+    setOverlayIcon: () => false,
     setVibrancy: () => false,
     getContentAreaSize: () => ({ width: 1280, height: 800 }),
     onContentAreaResize: () => false,
@@ -65,6 +91,26 @@ const createFakeWindow = () => {
     minimize: () => {
       minimized = true;
     },
+    enterFullScreen: () => {
+      fullScreen = true;
+    },
+    finishLeavingFullScreen: () => {
+      fullScreen = false;
+      leftFullScreen?.();
+    },
+    /** Asks the window to close; whether it stays open. */
+    close: () => {
+      let prevented = false;
+
+      closeListener?.({
+        preventDefault: () => {
+          prevented = true;
+        },
+      });
+
+      return prevented;
+    },
+    endSession: () => sessionEnd?.(),
   };
 };
 
@@ -156,5 +202,65 @@ describe(revealWindow, () => {
     revealWindow(fake.window, true);
 
     expect(fake.calls).toStrictEqual(["showInactive"]);
+  });
+});
+
+const follow = (platform: Platform, trayShown: () => boolean) => {
+  const fake = createFakeWindow();
+  const closing = hideOnClose({ window: fake.window, platform, trayShown });
+
+  return { ...fake, ...closing };
+};
+
+describe(hideOnClose, () => {
+  it("hides the window on macOS, tray or not", () => {
+    const shell = follow("darwin", () => false);
+
+    expect(shell.close()).toBeTruthy();
+    expect(shell.calls).toStrictEqual(["hide"]);
+  });
+
+  it("hides on Windows and Linux only while the tray shows, read at each close", () => {
+    for (const platform of ["win32", "linux"] as const) {
+      let trayShown = true;
+      const shell = follow(platform, () => trayShown);
+
+      expect(shell.close()).toBeTruthy();
+
+      trayShown = false;
+
+      expect(shell.close()).toBeFalsy();
+      expect(shell.calls).toStrictEqual(["hide"]);
+    }
+  });
+
+  it("lets the window close once Meru quits", () => {
+    const shell = follow("darwin", () => true);
+
+    shell.markQuitting();
+
+    expect(shell.close()).toBeFalsy();
+    expect(shell.calls).toStrictEqual([]);
+  });
+
+  it("lets a shutdown or sign-out close it", () => {
+    const shell = follow("win32", () => true);
+
+    shell.endSession();
+
+    expect(shell.close()).toBeFalsy();
+  });
+
+  it("leaves full screen on macOS before it hides", () => {
+    const shell = follow("darwin", () => false);
+
+    shell.enterFullScreen();
+
+    expect(shell.close()).toBeTruthy();
+    expect(shell.calls).toStrictEqual(["leaveFullScreen"]);
+
+    shell.finishLeavingFullScreen();
+
+    expect(shell.calls).toStrictEqual(["leaveFullScreen", "hide"]);
   });
 });
