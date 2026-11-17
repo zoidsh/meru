@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { corpusFresh } from "./verification-code.corpus-fresh.ts";
 import { corpusV4 } from "./verification-code.corpus-v4.ts";
 import { corpus } from "./verification-code.corpus.ts";
 import { extractVerificationCode } from "./verification-code.ts";
@@ -65,11 +66,13 @@ describe.skip("the extractor, set aside in slice 2.6", () => {
 });
 
 describe("the corpora", () => {
-  it("hold v3's 71 codes and 44 messages with none, and v4's 22 entries", () => {
+  it("hold v3's 71 codes and 44 messages with none, v4's 22 entries, and the fresh 84 codes and 66 with none", () => {
     expect([
       corpus.filter((entry) => entry.expected !== null).length,
       corpus.filter((entry) => entry.expected === null).length,
       corpusV4.length,
-    ]).toStrictEqual([71, 44, 22]);
+      corpusFresh.filter((entry) => entry.expected !== null).length,
+      corpusFresh.filter((entry) => entry.expected === null).length,
+    ]).toStrictEqual([71, 44, 22, 84, 66]);
   });
 });
