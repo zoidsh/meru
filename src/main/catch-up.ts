@@ -3,8 +3,11 @@ import type { ThrottledFunction } from "es-toolkit";
 
 import type { State } from "#core/state.ts";
 
-/** How often at most a profile's page is told to catch up. */
-export const CATCH_UP_INTERVAL = 2000;
+/**
+ * How often at most a profile's page is told to catch up. The suite's build
+ * waits 300 ms, so its tests do not spend their time waiting it out.
+ */
+export const CATCH_UP_INTERVAL = MERU_E2E_BUILD ? 300 : 2000;
 
 /**
  * Tells a profile's Gmail page to catch up at most every 2 s: at once, and

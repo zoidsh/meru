@@ -524,7 +524,7 @@ const launchNotified = async (
 };
 
 /** Longer than main waits between two catch-ups of a profile's page. */
-const PAST_CATCH_UP_MS = 2500;
+const PAST_CATCH_UP_MS = 500;
 
 test("an action from a notification has the open page press Gmail's Refresh once, keeping the draft and its focus", async ({
   launchApp,
