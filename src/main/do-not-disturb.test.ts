@@ -1,13 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
-import { newProfile } from "#core/state.ts";
+import { decodeState, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { COMMANDS } from "./commands.ts";
 import type { CommandContext } from "./commands.ts";
 import { createDoNotDisturb, doNotDisturbItems } from "./do-not-disturb.ts";
 import { createProfiles } from "./profiles.ts";
+import { shellState } from "./shell-handlers.ts";
 
 const START = new Date(2026, 10, 17, 14).getTime();
 const MINUTE = 60_000;
@@ -20,12 +21,12 @@ const one: State = {
 
 const setup = (initial: State = one) => {
   const saved: State[] = [];
+  let gate: Promise<undefined> | undefined;
   const profiles = createProfiles({
     initial,
-    save: (state) => {
+    save: async (state) => {
+      await gate;
       saved.push(state);
-
-      return Promise.resolve();
     },
     newId: () => "new",
     profileName: (n) => `Profile ${n}`,
@@ -39,7 +40,21 @@ const setup = (initial: State = one) => {
     log: () => false,
   });
 
-  return { profiles, doNotDisturb, saved };
+  return {
+    profiles,
+    doNotDisturb,
+    saved,
+    /** Holds every save until the returned function is called. */
+    holdSaves: () => {
+      const held = Promise.withResolvers<undefined>();
+
+      gate = held.promise;
+
+      return () => {
+        held.resolve(undefined);
+      };
+    },
+  };
 };
 
 const duration = (id: string) => {
@@ -127,6 +142,28 @@ describe(createDoNotDisturb, () => {
     doNotDisturb.dispose();
   });
 
+  it("never undoes a switch the person makes as its end comes", async () => {
+    const { profiles, doNotDisturb, holdSaves } = setup();
+
+    await doNotDisturb.switchOn(duration("5m"));
+    await vi.advanceTimersByTimeAsync(5 * MINUTE - 1);
+
+    // Switched on again a moment before the end, its write still in flight
+    // as the timer for the old end fires.
+    const release = holdSaves();
+    const switching = doNotDisturb.switchOn(duration("15m"));
+
+    await vi.advanceTimersByTimeAsync(1);
+    release();
+    await switching;
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(profiles.get().doNotDisturb).toStrictEqual({
+      until: START + 5 * MINUTE - 1 + 15 * MINUTE,
+    });
+    doNotDisturb.dispose();
+  });
+
   it("never ends one until turned off", async () => {
     const { doNotDisturb } = setup();
 
@@ -198,5 +235,48 @@ describe(doNotDisturbItems, () => {
       ["On Until 14:30", "Turn Off", "—", ...DURATIONS],
       ["On Until Turned Off", "Turn Off", "—", ...DURATIONS],
     ]);
+  });
+});
+
+describe("an end no date holds", () => {
+  it("never reaches the menu's or the tooltip's time formatter", () => {
+    const formatter = vi.spyOn(Intl, "DateTimeFormat");
+
+    for (const until of [1e300, 8.64e15 + 1]) {
+      const decoded = decodeState({
+        ...one,
+        profiles: [{ id: "a", name: "Default" }],
+        doNotDisturb: { until },
+      });
+
+      if (decoded.kind !== "read") {
+        throw new Error(decoded.kind);
+      }
+
+      const { doNotDisturb } = setup(decoded.value);
+      const current = doNotDisturb.current();
+
+      expect(current).toBeUndefined();
+      expect(labels({ doNotDisturb: current })[0]).toBe("Until Turned Off");
+      expect(
+        shellState(
+          decoded.value,
+          () => ({ kind: "live" }),
+          { design: "modern", vibrancy: false },
+          undefined,
+          () => ({ status: "unknown", unreadCount: null }),
+          current
+        ).doNotDisturb
+      ).toStrictEqual({ on: false, until: null });
+      doNotDisturb.dispose();
+    }
+
+    expect(formatter).not.toHaveBeenCalled();
+
+    // The spy sees the formatter an end in range does reach.
+    labels({ doNotDisturb: { until: START } });
+
+    expect(formatter).toHaveBeenCalledOnce();
+    formatter.mockRestore();
   });
 });

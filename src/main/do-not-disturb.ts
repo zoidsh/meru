@@ -17,7 +17,10 @@ import type { Profiles } from "./profiles.ts";
 const LONGEST_TIMER = 2_147_483_647;
 
 export interface DoNotDisturbDeps {
-  profiles: Pick<Profiles, "get" | "onChange" | "switchDoNotDisturb">;
+  profiles: Pick<
+    Profiles,
+    "get" | "onChange" | "switchDoNotDisturb" | "forgetEndedDoNotDisturb"
+  >;
   now: () => Date;
   log: (message: string) => void;
 }
@@ -54,6 +57,21 @@ export const createDoNotDisturb = ({
     }
   };
 
+  /**
+   * Whether it ended is decided in turn with the person's own switches, so
+   * one they make meanwhile is never undone; set again when nothing ended.
+   */
+  const forgetIfEnded = async () => {
+    try {
+      if (!(await profiles.forgetEndedDoNotDisturb())) {
+        // oxlint-disable-next-line no-use-before-define -- the timer and arm call each other
+        arm(profiles.get());
+      }
+    } catch (error) {
+      log(`An ended Do Not Disturb was not switched off: ${describe(error)}`);
+    }
+  };
+
   const arm = (state: State) => {
     clearTimeout(timer);
     timer = undefined;
@@ -67,12 +85,7 @@ export const createDoNotDisturb = ({
     timer = setTimeout(
       () => {
         timer = undefined;
-
-        if (current() === undefined) {
-          void switchTo(undefined);
-        } else {
-          arm(profiles.get());
-        }
+        void forgetIfEnded();
       },
       Math.min(until - now().getTime(), LONGEST_TIMER)
     );
@@ -92,13 +105,7 @@ export const createDoNotDisturb = ({
      * sleeps; one that ended meanwhile is switched off.
      */
     resume: () => {
-      const { doNotDisturb } = profiles.get();
-
-      if (doNotDisturb !== undefined && current() === undefined) {
-        void switchTo(undefined);
-      } else {
-        arm(profiles.get());
-      }
+      void forgetIfEnded();
     },
     dispose: () => {
       clearTimeout(timer);

@@ -187,6 +187,16 @@ export const createProfiles = ({
 
         return true;
       }),
+    /**
+     * Forgets a Do Not Disturb that has ended by now, deciding so in turn
+     * with every other change, and writes only if there was one to forget.
+     */
+    forgetEndedDoNotDisturb: () =>
+      exclusive(() => {
+        const next = forgetEndedDoNotDisturb(state, now());
+
+        return next === state ? Promise.resolve(false) : commit(next);
+      }),
     /** On until `until`, `null` for until turned off, or off with `undefined`. */
     switchDoNotDisturb: (until: number | null | undefined) =>
       exclusive(() => commit(switchDoNotDisturb(state, until))),
