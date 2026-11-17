@@ -152,7 +152,9 @@ describe("the extractor", () => {
       }
     }
 
-    expect(performance.now() - started).toBeLessThan(2000);
+    // A pattern that backtracks takes minutes here; a hosted runner takes one
+    // to two seconds on a slow day, so the bound sits well above that.
+    expect(performance.now() - started).toBeLessThan(10_000);
   });
 
   it("takes well under a millisecond a message on the corpora", () => {
