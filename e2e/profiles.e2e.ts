@@ -8,7 +8,7 @@ import type { ShellBridge } from "#contract/shell.ts";
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import { expect, findPage, readViews, test } from "./lib/app.ts";
 import { STAND_IN_COOKIE, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
 interface SavedState {
@@ -22,39 +22,18 @@ const readState = async (userDataDir: string) =>
   ) as SavedState;
 
 /** Each content view: whose session it is in, where it sits, and whether it shows. */
-const readViews = (app: ElectronApplication, profileIds: string[]) =>
-  app.evaluate(({ BrowserWindow, session }, ids) => {
-    const window = BrowserWindow.getAllWindows().find(
-      (candidate) => !candidate.getParentWindow()
-    );
+const readProfileViews = async (app: ElectronApplication) => {
+  const { area, views } = await readViews(app);
 
-    if (!window) {
-      throw new Error("The app has no window");
-    }
-
-    const { width, height } = window.contentView.getBounds();
-
-    return {
-      content: { width, height },
-      // The overlay's view is the page the shell's own frame opened.
-      views: window.contentView.children
-        .filter(
-          (view) =>
-            (view as Electron.WebContentsView).webContents.opener !==
-            window.webContents.mainFrame
-        )
-        .map((view) => ({
-          profileId: ids.find(
-            (id) =>
-              "webContents" in view &&
-              (view as Electron.WebContentsView).webContents.session ===
-                session.fromPartition(`persist:${id}`)
-          ),
-          bounds: view.getBounds(),
-          visible: view.getVisible(),
-        })),
-    };
-  }, profileIds);
+  return {
+    content: area,
+    views: views.map(({ partition, bounds, visible }) => ({
+      profileId: partition.replace(/^persist:/u, ""),
+      bounds,
+      visible,
+    })),
+  };
+};
 
 const readCookies = (
   app: ElectronApplication,
@@ -116,7 +95,7 @@ test("adding a profile shows a second tab, selected, and a view in a session of 
   // The second view's first request carried none of the first one's cookie.
   await expect.poll(() => standIn.cookieHeaders).toStrictEqual(["", ""]);
 
-  const { content, views } = await readViews(app, [first, second]);
+  const { content, views } = await readProfileViews(app);
 
   expect(views).toStrictEqual([
     {
@@ -155,7 +134,7 @@ test("switching back shows the first view in the content rectangle and hides the
   expect(selectedProfileId).toBe(ids[0]);
   await expect
     .poll(async () => {
-      const { content, views } = await readViews(app, ids);
+      const { content, views } = await readProfileViews(app);
 
       return views.map((view) => ({
         ...view,
@@ -206,8 +185,7 @@ test("a relaunch restores both profiles and the selection, and creates only the 
   );
   await expect.poll(() => standIn.cookieHeaders.length).toBe(3);
 
-  const ids = saved.profiles.map((profile) => profile.id);
-  const { views } = await readViews(second, ids);
+  const { views } = await readProfileViews(second);
 
   expect(
     views.map(({ profileId, visible }) => ({ profileId, visible }))
@@ -264,8 +242,8 @@ const readProfileIds = async (userDataDir: string) => {
   return profiles.map((profile) => profile.id);
 };
 
-const readViewList = async (app: ElectronApplication, ids: string[]) => {
-  const { views } = await readViews(app, ids);
+const readViewList = async (app: ElectronApplication) => {
+  const { views } = await readProfileViews(app);
 
   return views;
 };
@@ -319,7 +297,7 @@ test("removing a profile from its tab's menu, once confirmed, removes its tab, i
   expect(profiles.map((profile) => profile.id)).toStrictEqual([ids[0]]);
   expect(selectedProfileId).toBe(ids[0]);
   await expect
-    .poll(() => readViewList(app, ids))
+    .poll(() => readViewList(app))
     .toMatchObject([{ profileId: ids[0], visible: true }]);
   await expect
     .poll(() => readCookies(app, ids[1], standIn.url))

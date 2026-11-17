@@ -5,7 +5,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import { expect, findPage, readViews, test } from "./lib/app.ts";
 import { CALENDAR_TITLE, DRAFT_LABEL, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
 /**
@@ -46,36 +46,6 @@ const readRadii = (app: ElectronApplication) =>
   app.evaluate(() => Reflect.get(globalThis, "radii") as number[]);
 
 /**
- * The root view's size and the window's content size, which differ by a menu
- * bar's height where one shows, and where the view sits.
- */
-const readLayout = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow }) => {
-    const [window] = BrowserWindow.getAllWindows();
-
-    if (!window) {
-      throw new Error("The app has no window");
-    }
-
-    const { width, height } = window.contentView.getBounds();
-    const [contentWidth = 0, contentHeight = 0] = window.getContentSize();
-
-    return {
-      area: { width, height },
-      content: { width: contentWidth, height: contentHeight },
-      menuBarVisible: window.isMenuBarVisible(),
-      // The overlay's view is the page the shell's own frame opened.
-      views: window.contentView.children
-        .filter(
-          (view) =>
-            (view as Electron.WebContentsView).webContents.opener !==
-            window.webContents.mainFrame
-        )
-        .map((view) => view.getBounds()),
-    };
-  });
-
-/**
  * Clicks the application menu's item, as a person choosing it would with
  * focus in the page at `focusedUrl`. The suite's app is never the active app,
  * so the system says of no page that it has focus.
@@ -113,9 +83,9 @@ const menuItemState = (app: ElectronApplication, id: string) =>
   }, id);
 
 const readViewBounds = async (app: ElectronApplication) => {
-  const { views } = await readLayout(app);
+  const { views } = await readViews(app);
 
-  return views;
+  return views.map((view) => view.bounds);
 };
 
 /** The padding the shell gives its content area, around where the view sits. */
@@ -149,12 +119,12 @@ test("the View menu switches between the modern and classic designs without load
   await findPage(app, standIn.url);
 
   const shell = await findPage(app, "meru-app:");
-  const first = await readLayout(app);
+  const first = await readViews(app);
 
   // On Windows and Linux the menu bar stays hidden and takes no height.
   expect(first.menuBarVisible).toBe(process.platform === "darwin");
   expect(first.area).toStrictEqual(first.content);
-  expect(first.views).toStrictEqual([
+  expect(first.views.map((view) => view.bounds)).toStrictEqual([
     contentViewBounds(first.area, TAB_STRIP_WIDTH, "modern"),
   ]);
   expect(await menuItemState(app, "design.modern")).toStrictEqual({
@@ -196,9 +166,9 @@ test("the View menu switches between the modern and classic designs without load
 
   await findPage(relaunched, standIn.url);
 
-  const { area, views } = await readLayout(relaunched);
+  const { area, views } = await readViews(relaunched);
 
-  expect(views).toStrictEqual([
+  expect(views.map((view) => view.bounds)).toStrictEqual([
     contentViewBounds(area, TAB_STRIP_WIDTH, "classic"),
   ]);
   expect(await menuItemState(relaunched, "design.classic")).toMatchObject({

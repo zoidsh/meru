@@ -3,7 +3,7 @@ import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import { expect, findPage, readViews, test } from "./lib/app.ts";
 import {
   CALENDAR_TITLE,
   DRIVE_TITLE,
@@ -47,30 +47,16 @@ const tab = (shell: Page, title: string) =>
     exact: true,
   });
 
-/** Each content view: its page's URL, its session's partition, whether it shows. */
-const readViews = (app: ElectronApplication, partition: string) =>
-  app.evaluate(({ BrowserWindow, session }, expected) => {
-    const window = BrowserWindow.getAllWindows().find(
-      (candidate) => !candidate.getParentWindow()
-    );
+/** Each content view's page, its session's partition and whether it shows. */
+const readTabViews = async (app: ElectronApplication) => {
+  const { views } = await readViews(app);
 
-    // The overlay's view is the page the shell's own frame opened.
-    return (window?.contentView.children ?? [])
-      .filter(
-        (view) =>
-          (view as Electron.WebContentsView).webContents.opener !==
-          window?.webContents.mainFrame
-      )
-      .map((view) => {
-        const { webContents } = view as Electron.WebContentsView;
-
-        return {
-          url: webContents.getURL(),
-          inSession: webContents.session === session.fromPartition(expected),
-          visible: view.getVisible(),
-        };
-      });
-  }, partition);
+  return views.map(({ url, partition, visible }) => ({
+    url,
+    partition,
+    visible,
+  }));
+};
 
 const openFrom = async (page: Page, link: string) => {
   await page.getByRole("link", { name: link }).click();
@@ -96,10 +82,10 @@ test("a link opens a tab of its app in the same session, selected; a link to Gma
   const partition = `persist:${profile.id}`;
 
   await expect
-    .poll(() => readViews(app, partition))
+    .poll(() => readTabViews(app))
     .toStrictEqual([
-      { url: standIn.url, inSession: true, visible: false },
-      { url: standIn.calendarUrl, inSession: true, visible: true },
+      { url: standIn.url, partition, visible: false },
+      { url: standIn.calendarUrl, partition, visible: true },
     ]);
 
   await openFrom(await findPage(app, standIn.calendarUrl), "Open Gmail");
@@ -110,14 +96,14 @@ test("a link opens a tab of its app in the same session, selected; a link to Gma
     "true"
   );
   await expect
-    .poll(() => readViews(app, partition))
+    .poll(() => readTabViews(app))
     .toStrictEqual([
       {
         url: `${standIn.url}${GMAIL_LINK_HASH}`,
-        inSession: true,
+        partition,
         visible: true,
       },
-      { url: standIn.calendarUrl, inSession: true, visible: false },
+      { url: standIn.calendarUrl, partition, visible: false },
     ]);
 
   // The close buttons are for the pointer, outside the list; keys close too.
@@ -135,7 +121,7 @@ test("a link opens a tab of its app in the same session, selected; a link to Gma
 
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE]);
   await expect(tab(shell, STAND_IN_TITLE)).toBeFocused();
-  await expect.poll(() => readViews(app, partition)).toHaveLength(1);
+  await expect.poll(() => readTabViews(app)).toHaveLength(1);
   const { tabs: left } = await readProfile(userDataDir);
 
   expect(left).toHaveLength(1);
@@ -191,8 +177,8 @@ test("a relaunch restores the tabs, each where it was, and the selection, and lo
 
   const profile = await readProfile(userDataDir);
 
-  expect(await readViews(second, `persist:${profile.id}`)).toStrictEqual([
-    { url: nextWeek, inSession: true, visible: true },
+  expect(await readTabViews(second)).toStrictEqual([
+    { url: nextWeek, partition: `persist:${profile.id}`, visible: true },
   ]);
 });
 

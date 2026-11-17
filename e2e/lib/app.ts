@@ -163,6 +163,43 @@ export const findPage = async (app: ElectronApplication, prefix: string) => {
   return page;
 };
 
+/**
+ * The shell window's root view and content size, whether its menu bar shows,
+ * and each content view: its page, its session's partition, where it sits and
+ * whether it shows. The overlay's view, which the shell opened, is left out.
+ */
+export const readViews = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) => {
+    const window = BrowserWindow.getAllWindows().find(
+      (candidate) => !candidate.getParentWindow()
+    );
+
+    if (!window) {
+      throw new Error("The app has no window");
+    }
+
+    const { width, height } = window.contentView.getBounds();
+    const [contentWidth = 0, contentHeight = 0] = window.getContentSize();
+
+    return {
+      area: { width, height },
+      content: { width: contentWidth, height: contentHeight },
+      menuBarVisible: window.isMenuBarVisible(),
+      views: window.contentView.children
+        .map((view) => view as Electron.WebContentsView)
+        .filter(
+          (view) => view.webContents.opener !== window.webContents.mainFrame
+        )
+        .map((view) => ({
+          url: view.webContents.getURL(),
+          // A persistent partition's folder is named after it.
+          partition: `persist:${view.webContents.session.storagePath?.split(/[/\\]/u).at(-1) ?? ""}`,
+          bounds: view.getBounds(),
+          visible: view.getVisible(),
+        })),
+    };
+  });
+
 interface AppFixtures {
   /** The pids this test launched, for the teardown on Windows. */
   launched: number[];

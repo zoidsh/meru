@@ -5,37 +5,13 @@ import type { ElectronApplication } from "@playwright/test";
 
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import { expect, findPage, readViews, test } from "./lib/app.ts";
 import {
   ELSEWHERE_URL,
   POPUP_TITLE,
   STAND_IN_COOKIE,
   STAND_IN_TITLE,
 } from "./lib/stand-in.ts";
-
-/** The window's content size and where each of its child views sits. */
-const readLayout = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow }) => {
-    const [window] = BrowserWindow.getAllWindows();
-
-    if (!window) {
-      throw new Error("The app has no window");
-    }
-
-    const [width = 0, height = 0] = window.getContentSize();
-
-    return {
-      content: { width, height },
-      // The overlay's view is the page the shell's own frame opened.
-      views: window.contentView.children
-        .filter(
-          (view) =>
-            (view as Electron.WebContentsView).webContents.opener !==
-            window.webContents.mainFrame
-        )
-        .map((view) => view.getBounds()),
-    };
-  });
 
 const readState = async (userDataDir: string) =>
   JSON.parse(await readFile(path.join(userDataDir, "state.json"), "utf-8")) as {
@@ -55,12 +31,12 @@ test("shows the stand-in in the content rectangle below the titlebar and beside 
     view.getByRole("heading", { name: STAND_IN_TITLE })
   ).toBeVisible();
 
-  const { content, views } = await readLayout(app);
+  const { area, views } = await readViews(app);
 
   // The modern design's, the default.
-  const bounds = contentViewBounds(content, TAB_STRIP_WIDTH, "modern");
+  const bounds = contentViewBounds(area, TAB_STRIP_WIDTH, "modern");
 
-  expect(views).toStrictEqual([bounds]);
+  expect(views.map((each) => each.bounds)).toStrictEqual([bounds]);
   expect(
     await view.evaluate(() => [window.innerWidth, window.innerHeight])
   ).toStrictEqual([bounds.width, bounds.height]);
@@ -78,9 +54,9 @@ test("shows the stand-in in the content rectangle below the titlebar and beside 
 
   await expect
     .poll(async () => {
-      const layout = await readLayout(app);
+      const layout = await readViews(app);
 
-      return layout.views;
+      return layout.views.map((each) => each.bounds);
     })
     .toStrictEqual([{ x: 232, y: 40, width: 660, height: 592 }]);
   await expect
