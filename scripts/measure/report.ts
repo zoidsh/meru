@@ -1,5 +1,63 @@
-import { compareSummaries, summarize } from "./stats.ts";
-import type { Metrics, Summary } from "./stats.ts";
+import { median } from "es-toolkit";
+
+/** One run's figures, by metric name; a metric a run could not take is absent. */
+export type Metrics = Record<string, number>;
+
+export interface Summary {
+  median: number;
+  min: number;
+  max: number;
+  runs: number;
+}
+
+/** Each metric's median and range over the runs that took it. */
+export const summarize = (runs: readonly Metrics[]) => {
+  const values = new Map<string, number[]>();
+
+  for (const metrics of runs) {
+    for (const [name, value] of Object.entries(metrics)) {
+      values.set(name, [...(values.get(name) ?? []), value]);
+    }
+  }
+
+  return new Map<string, Summary>(
+    [...values].map(([name, list]) => [
+      name,
+      {
+        median: median(list),
+        min: Math.min(...list),
+        max: Math.max(...list),
+        runs: list.length,
+      },
+    ])
+  );
+};
+
+/**
+ * Medians of `current` less those of `baseline`, for each metric both have,
+ * with whether the difference is larger than the two ranges' widths together,
+ * the least that cannot be put down to the spread between runs.
+ */
+export const compareSummaries = (
+  current: ReadonlyMap<string, Summary>,
+  baseline: ReadonlyMap<string, Summary>
+) =>
+  new Map(
+    [...current].flatMap(([name, summary]) => {
+      const before = baseline.get(name);
+
+      if (!before) {
+        return [];
+      }
+
+      const difference = summary.median - before.median;
+      const noise = summary.max - summary.min + (before.max - before.min);
+
+      return [
+        [name, { difference, isBeyondSpread: Math.abs(difference) > noise }],
+      ];
+    })
+  );
 
 export interface TargetResult {
   target: string;
@@ -23,7 +81,6 @@ const ORDER = [
   "window shown ms",
   "inbox usable ms",
   "idle CPU %",
-  "app size MB",
 ];
 
 const rank = (name: string) => {
@@ -145,41 +202,4 @@ export const formatScenario = (
     ran.length > 0 ? renderTable([header, ...rows]) : "Nothing ran.",
     ...skipped,
   ].join("\n");
-};
-
-/** Each target and scenario both runs measured, now against then. */
-export const formatComparison = (
-  current: readonly TargetResult[],
-  earlier: readonly TargetResult[]
-) => {
-  const sections = current.flatMap((result) => {
-    const before = earlier.find(
-      (candidate) =>
-        candidate.target === result.target &&
-        candidate.scenario === result.scenario &&
-        !candidate.skipped
-    );
-
-    if (result.skipped || !before) {
-      return [];
-    }
-
-    const now = summarize(result.runs);
-    const then = summarize(before.runs);
-    const differences = compareSummaries(now, then);
-    const rows = orderMetrics(now.keys()).map((name) => [
-      name,
-      formatSummary(name, then.get(name)),
-      formatSummary(name, now.get(name)),
-      formatDifference(name, differences.get(name)),
-    ]);
-
-    return [
-      `${result.target}, ${result.scenario}\n${renderTable([["", "earlier", "now", "difference"], ...rows])}`,
-    ];
-  });
-
-  return sections.length > 0
-    ? sections.join("\n\n")
-    : "No target and scenario was measured in both runs.";
 };

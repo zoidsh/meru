@@ -1,4 +1,3 @@
-import { execFileSync, spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
@@ -30,29 +29,17 @@ export interface Target {
   cannotRun?: (scenario: Scenario) => string | undefined;
   /** Sets the user data directory up for the scenario before a launch. */
   prepare: (scenario: Scenario) => Promise<void>;
-  /** Starts the target behind whatever is in front, with stderr piped. */
+  /**
+   * Starts the target behind whatever is in front, with stderr piped and
+   * main's inspector open, which times the inbox and names renderers.
+   */
   launch: () => ChildProcess;
-  /** Whether it opens main's inspector, which times the inbox and names renderers. */
-  hasInspector: boolean;
   /** Anything the scenario does once the inbox is usable, through main. */
   afterUsable?: (inspector: Inspector, scenario: Scenario) => Promise<void>;
-  electronVersion: string;
-  /** Bytes on disk, for a packaged app. */
-  appBytes?: number;
 }
 
 const STDIO = ["ignore", "ignore", "pipe"] as const;
 const BACKGROUND = { MERU_BACKGROUND: "1" };
-
-const electronVersion = () =>
-  (
-    JSON.parse(
-      readFileSync(
-        path.join(repositoryRoot, "node_modules", "electron", "package.json"),
-        "utf-8"
-      )
-    ) as { version: string }
-  ).version;
 
 const profileDir = (name: string) => path.join(repositoryRoot, ".meru", name);
 
@@ -163,13 +150,11 @@ export const v4Target = (): Target => {
         env: BACKGROUND,
         stdio: [...STDIO],
       }),
-    hasInspector: true,
     afterUsable: async (inspector, scenario) => {
       if (scenario === "gmail-calendar") {
         await visitCalendar(inspector, profileId);
       }
     },
-    electronVersion: electronVersion(),
   };
 };
 
@@ -194,57 +179,5 @@ export const floorTarget = (): Target => {
         },
         stdio: [...STDIO],
       }),
-    hasInspector: true,
-    electronVersion: electronVersion(),
-  };
-};
-
-const plistValue = (file: string, key: string) =>
-  execFileSync("plutil", ["-extract", key, "raw", "-o", "-", file], {
-    encoding: "utf-8",
-  }).trim();
-
-const bytesOnDisk = (directory: string) =>
-  Number(
-    execFileSync("du", ["-sk", directory], { encoding: "utf-8" }).split("\t")[0]
-  ) * 1024;
-
-/**
- * An installed Meru 3, launched by path on a user data directory given by
- * path. Its release build has the inspector fuse off, so the inbox is not
- * timed and renderers go unnamed.
- */
-export const v3Target = (appPath: string, userDataDir: string): Target => {
-  const contents = path.join(appPath, "Contents");
-  const executable = path.join(
-    contents,
-    "MacOS",
-    plistValue(path.join(contents, "Info.plist"), "CFBundleExecutable")
-  );
-
-  return {
-    name: "v3",
-    cannotRun: (scenario) =>
-      scenario === "gmail"
-        ? undefined
-        : "writing v3's config for this scenario is not built",
-    prepare: () => Promise.resolve(),
-    launch: () =>
-      spawn(executable, [`--user-data-dir=${userDataDir}`], {
-        stdio: [...STDIO],
-        env: { ...process.env, ...BACKGROUND },
-      }),
-    hasInspector: false,
-    electronVersion: plistValue(
-      path.join(
-        contents,
-        "Frameworks",
-        "Electron Framework.framework",
-        "Resources",
-        "Info.plist"
-      ),
-      "CFBundleVersion"
-    ),
-    appBytes: bytesOnDisk(appPath),
   };
 };

@@ -35,7 +35,7 @@ export const watchStderr = (child: ChildProcess) => {
     reject: rejectUrl,
   } = Promise.withResolvers<string>();
 
-  // Unawaited when a target has no inspector.
+  // Not awaited until a window shows, so an earlier exit must not go unhandled.
   inspectorUrl.catch(noop);
 
   child.stderr?.on("data", (chunk: Buffer) => {

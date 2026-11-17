@@ -1,5 +1,5 @@
 import type { ProcessType } from "./processes.ts";
-import type { Metrics } from "./stats.ts";
+import type { Metrics } from "./report.ts";
 
 /** A page main reported, from a web contents or one of its frames. */
 export interface PageInProcess {
@@ -107,8 +107,8 @@ export interface SampledProcess {
 }
 
 export interface RunSample {
-  windowShownMs?: number;
-  inboxUsableMs?: number;
+  windowShownMs: number;
+  inboxUsableMs: number;
   /** CPU over the idle window, as a percentage of one core. */
   idleCpuPercent: number;
   processes: SampledProcess[];
@@ -170,14 +170,8 @@ export const metricsOf = (sample: RunSample): Metrics => {
   metrics["memory total, shared once"] = sample.sharedOnceBytes / MB;
   metrics.processes = sample.processes.length;
   metrics["idle CPU %"] = sample.idleCpuPercent;
-
-  if (sample.windowShownMs !== undefined) {
-    metrics["window shown ms"] = sample.windowShownMs;
-  }
-
-  if (sample.inboxUsableMs !== undefined) {
-    metrics["inbox usable ms"] = sample.inboxUsableMs;
-  }
+  metrics["window shown ms"] = sample.windowShownMs;
+  metrics["inbox usable ms"] = sample.inboxUsableMs;
 
   return metrics;
 };

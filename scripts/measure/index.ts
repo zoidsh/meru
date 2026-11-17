@@ -1,31 +1,25 @@
-import { execFile, execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs, promisify } from "node:util";
 
-import { isEqual } from "es-toolkit";
-
-import { outDir, repositoryRoot } from "../lib/bundles.ts";
+import { outDir } from "../lib/bundles.ts";
 import { stopElectron } from "../lib/launch.ts";
 import { readFootprint } from "./footprint.ts";
 import { connectInspector, watchStderr } from "./inspector.ts";
 import type { Inspector } from "./inspector.ts";
 import { POLL_MS, pollUntil } from "./poll.ts";
 import { listProcesses, processTypeOf, treeOf } from "./processes.ts";
-import { formatComparison, formatScenario } from "./report.ts";
-import type { TargetResult } from "./report.ts";
+import { formatScenario } from "./report.ts";
+import type { Metrics, TargetResult } from "./report.ts";
 import { metricsOf, nameRenderers } from "./sample.ts";
 import type { RendererPages, RunSample } from "./sample.ts";
-import type { Metrics } from "./stats.ts";
 import {
   SCENARIOS,
   SCENARIO_DESCRIPTIONS,
   floorTarget,
-  v3Target,
   v4Target,
 } from "./targets.ts";
 import type { Scenario, Target } from "./targets.ts";
@@ -33,14 +27,11 @@ import type { Scenario, Target } from "./targets.ts";
 const run = promisify(execFile);
 
 const USAGE = `pnpm measure [options]
-  --target <list>      v4, floor, v3, comma-separated (default v4,floor)
-  --scenario <list>    ${SCENARIOS.join(", ")} (default gmail)
-  --runs <n>           runs per target and scenario (default 3)
-  --settle <s>         seconds to wait once the inbox is usable, or for v3 the window shows (default 30)
-  --idle <s>           seconds of the idle CPU window (default 30)
-  --v3-app <path>      an installed Meru 3's .app, for the v3 target
-  --v3-user-data <dir> the user data directory v3 runs on, never a real one by default
-  --compare <file>     an earlier run's JSON to print the difference against`;
+  --target <list>    v4, floor, comma-separated (default v4,floor)
+  --scenario <list>  ${SCENARIOS.join(", ")} (default gmail)
+  --runs <n>         runs per target and scenario (default 3)
+  --settle <s>       seconds to wait once the inbox is usable (default 30)
+  --idle <s>         seconds of the idle CPU window (default 30)`;
 
 const { values: options } = parseArgs({
   options: {
@@ -49,9 +40,6 @@ const { values: options } = parseArgs({
     runs: { type: "string", default: "3" },
     settle: { type: "string", default: "30" },
     idle: { type: "string", default: "30" },
-    "v3-app": { type: "string" },
-    "v3-user-data": { type: "string" },
-    compare: { type: "string" },
     help: { type: "boolean", default: false },
   },
 });
@@ -96,14 +84,6 @@ const makeTarget = (name: string): Target => {
     }
     case "floor": {
       return floorTarget();
-    }
-    case "v3": {
-      const app = options["v3-app"];
-      const userData = options["v3-user-data"];
-
-      return app && userData
-        ? v3Target(path.resolve(app), path.resolve(userData))
-        : fail("The v3 target needs --v3-app and --v3-user-data.");
     }
     default: {
       return fail(`Unknown target ${name}.`);
@@ -208,7 +188,7 @@ const withInspector = async <T>(
 const measureOnce = async (
   target: Target,
   scenario: Scenario
-): Promise<{ metrics: Metrics; sample: RunSample; front: string[] }> => {
+): Promise<{ metrics: Metrics; front: string[] }> => {
   const front = [await frontApp()];
 
   await target.prepare(scenario);
@@ -230,30 +210,26 @@ const measureOnce = async (
           : undefined,
       "A window showing"
     );
-    let inboxUsableMs: number | undefined;
+    // Attached once a window shows, since a `require("electron")` while
+    // Electron is still loading leaves main a module without its APIs, and
+    // closed before the app settles, so no debugger is attached while it is
+    // measured; it is attached again after the samples to name renderers.
+    const inboxUsableMs = await withInspector(
+      stderr.inspectorUrl,
+      async (inspector) => {
+        const usable = await pollUntil(
+          async () =>
+            (await inspector.evaluate<boolean>(IS_INBOX_USABLE))
+              ? performance.now() - start
+              : undefined,
+          "The inbox becoming usable"
+        );
 
-    if (target.hasInspector) {
-      // Attached once a window shows, since a `require("electron")` while
-      // Electron is still loading leaves main a module without its APIs, and
-      // closed before the app settles, so no debugger is attached while it is
-      // measured; it is attached again after the samples to name renderers.
-      inboxUsableMs = await withInspector(
-        stderr.inspectorUrl,
-        async (inspector) => {
-          const usable = await pollUntil(
-            async () =>
-              (await inspector.evaluate<boolean>(IS_INBOX_USABLE))
-                ? performance.now() - start
-                : undefined,
-            "The inbox becoming usable"
-          );
+        await target.afterUsable?.(inspector, scenario);
 
-          await target.afterUsable?.(inspector, scenario);
-
-          return usable;
-        }
-      );
-    }
+        return usable;
+      }
+    );
 
     await sleep(settleSeconds * 1000);
 
@@ -278,19 +254,17 @@ const measureOnce = async (
     const types = new Map(
       after.map((entry) => [entry.pid, processTypeOf(entry, rootPid)])
     );
-    const names = target.hasInspector
-      ? nameRenderers({
-          ...(await withInspector(stderr.inspectorUrl, (inspector) =>
-            inspector.evaluate<Omit<RendererPages, "rendererPids">>(PAGES)
-          )),
-          rendererPids: after
-            .filter((entry) => types.get(entry.pid)?.kind === "renderer")
-            .map((entry) => entry.pid),
-        })
-      : new Map<number, string>();
+    const names = nameRenderers({
+      ...(await withInspector(stderr.inspectorUrl, (inspector) =>
+        inspector.evaluate<Omit<RendererPages, "rendererPids">>(PAGES)
+      )),
+      rendererPids: after
+        .filter((entry) => types.get(entry.pid)?.kind === "renderer")
+        .map((entry) => entry.pid),
+    });
     const sample: RunSample = {
       windowShownMs,
-      ...(inboxUsableMs === undefined ? {} : { inboxUsableMs }),
+      inboxUsableMs,
       idleCpuPercent: (cpuSeconds / idleSeconds) * 100,
       processes: after.map((entry) => {
         const name = names.get(entry.pid);
@@ -304,13 +278,7 @@ const measureOnce = async (
       }),
       sharedOnceBytes: footprint.total,
     };
-    const metrics = metricsOf(sample);
-
-    if (target.appBytes !== undefined) {
-      metrics["app size MB"] = target.appBytes / 1024 / 1024;
-    }
-
-    return { metrics, sample, front };
+    return { metrics: metricsOf(sample), front };
   } catch (error) {
     console.error(stderr.tail().slice(-2000));
     throw error;
@@ -335,27 +303,14 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
   process.once(signal, stopOnSignal);
 }
 
-const git = (...args: string[]) =>
-  execFileSync("git", args, { cwd: repositoryRoot, encoding: "utf-8" }).trim();
-
-const command = (file: string, ...args: string[]) =>
-  execFileSync(file, args, { encoding: "utf-8" }).trim();
-
-type MeasuredResult = TargetResult & {
-  electronVersion: string;
-  samples: RunSample[];
-};
-
 const plan = scenarios.flatMap((scenario) =>
   targets.map((target) => {
     const skipped = target.cannotRun?.(scenario);
-    const result: MeasuredResult = {
+    const result: TargetResult = {
       target: target.name,
       scenario,
-      electronVersion: target.electronVersion,
       ...(skipped === undefined ? {} : { skipped }),
       runs: [],
-      samples: [],
     };
 
     return { target, result };
@@ -377,12 +332,11 @@ for (const scenario of scenarios) {
       }
 
       // oxlint-disable-next-line no-await-in-loop -- one app at a time
-      const { metrics, sample, front } = await measureOnce(target, scenario);
+      const { metrics, front } = await measureOnce(target, scenario);
 
       result.runs.push(metrics);
-      result.samples.push(sample);
       console.log(
-        `${scenario} ${target.name} run ${index + 1}: ${metrics["memory total"]?.toFixed(1)} MB, ${sample.processes.length} processes; front app ${front.join(" → ")}${front[0] === front[1] ? "" : " CHANGED"}`
+        `${scenario} ${target.name} run ${index + 1}: ${metrics["memory total"]?.toFixed(1)} MB, ${metrics.processes} processes; front app ${front.join(" → ")}${front[0] === front[1] ? "" : " CHANGED"}`
       );
     }
   }
@@ -402,45 +356,5 @@ for (const scenario of scenarios) {
 console.log(
   "Memory: phys_footprint per process from `footprint`, in MB of 2^20 bytes; median (min–max). Idle CPU: % of one core. `~`: within the two targets' spread."
 );
-
-const report = {
-  version: 1,
-  date: new Date().toISOString(),
-  commit: git("rev-parse", "HEAD"),
-  isDirty: git("status", "--porcelain").length > 0,
-  machine: {
-    model: command("sysctl", "-n", "hw.model"),
-    cpu: os.cpus()[0]?.model,
-    cpus: os.cpus().length,
-    memoryBytes: os.totalmem(),
-  },
-  os: `macOS ${command("sw_vers", "-productVersion")} (${command("sw_vers", "-buildVersion")})`,
-  settings: { runsPerTarget, settleSeconds, idleSeconds },
-  results,
-};
-const reportDir = path.join(repositoryRoot, ".meru", "measure");
-const reportFile = path.join(
-  reportDir,
-  `${report.date.replaceAll(/[:.]/gu, "-")}.json`
-);
-
-await mkdir(reportDir, { recursive: true });
-await writeFile(reportFile, `${JSON.stringify(report, null, 2)}\n`);
-console.log(`Raw samples: ${reportFile}`);
-
-if (options.compare) {
-  const earlier = JSON.parse(readFileSync(options.compare, "utf-8")) as {
-    results: TargetResult[];
-    settings?: unknown;
-  };
-  // Memory falls through the settle, so runs with other windows differ by it.
-  const settingsNote = isEqual(earlier.settings, report.settings)
-    ? ""
-    : `\nThe earlier run's settings differ: ${JSON.stringify(earlier.settings)}`;
-
-  console.log(
-    `\nAgainst ${options.compare}:${settingsNote}\n${formatComparison(results, earlier.results)}`
-  );
-}
 
 process.exit(0);
