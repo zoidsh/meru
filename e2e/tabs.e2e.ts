@@ -1,9 +1,13 @@
-import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, readViews, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  readState,
+  readViews,
+  test,
+  writeState,
+} from "./lib/app.ts";
 import {
   CALENDAR_TITLE,
   DRIVE_TITLE,
@@ -20,16 +24,11 @@ interface SavedState {
   }[];
 }
 
-const readState = async (userDataDir: string) =>
-  JSON.parse(
-    await readFile(path.join(userDataDir, "state.json"), "utf-8")
-  ) as SavedState;
-
 /** The first profile, as state.json holds it. */
 const readProfile = async (userDataDir: string) => {
   const {
     profiles: [profile],
-  } = await readState(userDataDir);
+  } = await readState<SavedState>(userDataDir);
 
   if (!profile) {
     throw new Error("state.json holds no profile");
@@ -191,29 +190,25 @@ test("the strip scrolls to keep the selected tab in view, and its arrow keys go 
 }) => {
   const titles = Array.from({ length: 30 }, (_, index) => `Week ${index + 1}`);
 
-  await writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({
-      version: 1,
-      profiles: [
-        {
-          id: "p",
-          name: "Default",
-          tabs: [
-            { id: "gmail", app: "gmail", url: standIn.url, title: "" },
-            ...titles.map((title, index) => ({
-              id: `c${index}`,
-              app: "calendar",
-              url: standIn.calendarUrl,
-              title,
-            })),
-          ],
-          selectedTabId: "c29",
-        },
-      ],
-      selectedProfileId: "p",
-    })
-  );
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          ...titles.map((title, index) => ({
+            id: `c${index}`,
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title,
+          })),
+        ],
+        selectedTabId: "c29",
+      },
+    ],
+    selectedProfileId: "p",
+  });
 
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");

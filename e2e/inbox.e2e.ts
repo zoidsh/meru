@@ -1,9 +1,13 @@
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, readViews, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  readViews,
+  test,
+  writeSettings,
+  writeState,
+} from "./lib/app.ts";
 import { DESIGNS, THEMES, onlyWithShots, shotPath } from "./lib/shots.ts";
 import type { StandIn, StandInMail } from "./lib/stand-in.ts";
 import { ACCOUNT_COOKIE, messageLink } from "./lib/stand-in.ts";
@@ -98,16 +102,13 @@ const launch = async (
   standIn: StandIn,
   settings?: object
 ) => {
-  await writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({ version: 1, profiles: PROFILES, selectedProfileId: "p0" })
-  );
+  await writeState(userDataDir, {
+    profiles: PROFILES,
+    selectedProfileId: "p0",
+  });
 
   if (settings) {
-    await writeFile(
-      path.join(userDataDir, "settings.json"),
-      JSON.stringify({ version: 1, ...settings })
-    );
+    await writeSettings(userDataDir, settings);
   }
 
   standIn.setFeed("persist:p0", { unreadCount: 2, mail: HOME_MAIL });

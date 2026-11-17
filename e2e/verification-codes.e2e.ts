@@ -1,9 +1,12 @@
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  test,
+  writeSettings,
+  writeState,
+} from "./lib/app.ts";
 import type { StandInMail } from "./lib/stand-in.ts";
 
 /** A session with no account cookie, which the profile here is. */
@@ -56,23 +59,9 @@ const copied = (app: ElectronApplication) =>
       | undefined) ?? []),
   ]);
 
-const writeStores = async (
-  userDataDir: string,
-  { settings = {}, state = {} }: { settings?: object; state?: object }
-) => {
-  await writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({
-      version: 1,
-      profiles: [{ id: "p0", name: "Home" }],
-      selectedProfileId: "p0",
-      ...state,
-    })
-  );
-  await writeFile(
-    path.join(userDataDir, "settings.json"),
-    JSON.stringify({ version: 1, ...settings })
-  );
+const HOME = {
+  profiles: [{ id: "p0", name: "Home" }],
+  selectedProfileId: "p0",
 };
 
 /** What Gmail's tab would do as mail comes: change its title, a poke. */
@@ -91,9 +80,8 @@ test("shows a code with a Copy button, copies nothing until it is pressed, then 
   userDataDir,
   standIn,
 }) => {
-  await writeStores(userDataDir, {
-    settings: { verificationCodeMarkRead: true },
-  });
+  await writeState(userDataDir, HOME);
+  await writeSettings(userDataDir, { verificationCodeMarkRead: true });
   standIn.setFeed(ANY_SESSION, { unreadCount: 1, mail: [plain] });
 
   const app = await launchApp();
@@ -146,9 +134,9 @@ test("in immediately mode, shows the code and copies it while Do Not Disturb is 
   userDataDir,
   standIn,
 }) => {
-  await writeStores(userDataDir, {
-    settings: { verificationCodeCopyMode: "immediately" },
-    state: { doNotDisturb: { until: null } },
+  await writeState(userDataDir, { ...HOME, doNotDisturb: { until: null } });
+  await writeSettings(userDataDir, {
+    verificationCodeCopyMode: "immediately",
   });
   standIn.setFeed(ANY_SESSION, { unreadCount: 1, mail: [plain] });
 

@@ -1,11 +1,8 @@
 // Pictures for a person to look at, taken with MERU_E2E_SHOTS=1; they assert
 // nothing of what they show.
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import { expect, findPage, test, writeSettings } from "./lib/app.ts";
 import {
   DESIGNS,
   THEMES,
@@ -32,11 +29,8 @@ const launch = async (
   userDataDir: string,
   settings: object = {}
 ) => {
-  await writeFile(
-    path.join(userDataDir, "settings.json"),
-    // A clear window, which a capture shows white, would hide the chrome.
-    JSON.stringify({ version: 1, vibrancy: false, ...settings })
-  );
+  // A clear window, which a capture shows white, would hide the chrome.
+  await writeSettings(userDataDir, { vibrancy: false, ...settings });
 
   const app = await launchApp();
 

@@ -1,9 +1,14 @@
-import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, readViews, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  readState,
+  readViews,
+  test,
+  writeSettings,
+  writeState,
+} from "./lib/app.ts";
 import type { StandIn, StandInMail } from "./lib/stand-in.ts";
 import {
   ACCOUNT_COOKIE,
@@ -108,18 +113,14 @@ const profileTab = (shell: Page, name: string) =>
     .getByRole("tablist", { name: "Profiles" })
     .getByRole("tab", { name: new RegExp(`^${name}`, "u") });
 
-const writeState = (userDataDir: string, profiles: unknown[]) =>
-  writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({ version: 1, profiles, selectedProfileId: "p0" })
-  );
+const seedProfiles = (userDataDir: string, profiles: unknown[]) =>
+  writeState(userDataDir, { profiles, selectedProfileId: "p0" });
 
-const savedProfiles = async (userDataDir: string) =>
-  (
-    JSON.parse(
-      await readFile(path.join(userDataDir, "state.json"), "utf-8")
-    ) as { profiles: unknown[] }
-  ).profiles;
+const savedProfiles = async (userDataDir: string) => {
+  const { profiles } = await readState<{ profiles: unknown[] }>(userDataDir);
+
+  return profiles;
+};
 
 const launchOn = async (
   launchApp: () => Promise<ElectronApplication>,
@@ -137,7 +138,7 @@ test("notifies mail that arrives after the first poll, in each profile, and a cl
   standIn,
 }) => {
   // Work was never selected, so its Gmail tab has no view until the click.
-  await writeState(userDataDir, [
+  await seedProfiles(userDataDir, [
     { id: "p0", name: "Home" },
     {
       id: "p1",
@@ -211,11 +212,8 @@ test("shows no notification while notifications are off", async ({
   userDataDir,
   standIn,
 }) => {
-  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
-  await writeFile(
-    path.join(userDataDir, "settings.json"),
-    JSON.stringify({ version: 1, notifications: false })
-  );
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
+  await writeSettings(userDataDir, { notifications: false });
   standIn.setFeed(ANY_SESSION, listing("1"));
 
   const { app, shell, gmail } = await launchOn(launchApp, standIn);
@@ -235,7 +233,7 @@ test("tells four new messages as one, which opens the inbox", async ({
   userDataDir,
   standIn,
 }) => {
-  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
   standIn.setFeed(ANY_SESSION, listing("1"));
 
   const { app, shell, gmail } = await launchOn(launchApp, standIn);
@@ -289,7 +287,7 @@ test("a notification's action runs on its message in its profile, with no page, 
   standIn,
 }) => {
   // Work's Gmail tab has no view, so the action has no page to go through.
-  await writeState(userDataDir, [
+  await seedProfiles(userDataDir, [
     { id: "p0", name: "Home" },
     {
       id: "p1",
@@ -388,7 +386,7 @@ test("holds mail while Do Not Disturb is on, never shows it later, and notifies 
   userDataDir,
   standIn,
 }) => {
-  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
   standIn.setFeed(ANY_SESSION, listing("1"));
 
   const { app, shell, gmail } = await launchOn(launchApp, standIn);
@@ -429,11 +427,8 @@ test("with important only, notifies just the new mail the Important feed lists",
   userDataDir,
   standIn,
 }) => {
-  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
-  await writeFile(
-    path.join(userDataDir, "settings.json"),
-    JSON.stringify({ version: 1, notificationImportantOnly: true })
-  );
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
+  await writeSettings(userDataDir, { notificationImportantOnly: true });
   standIn.setFeed(ANY_SESSION, listing("1"));
 
   const { app, shell, gmail } = await launchOn(launchApp, standIn);
@@ -458,7 +453,7 @@ test("on a tabbed inbox, counts and notifies the mail in Primary alone", async (
   userDataDir,
   standIn,
 }) => {
-  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
   standIn.setInboxType('"SECTIONED"');
   standIn.setFeed(ANY_SESSION, { ...listing("2", "1"), primary: ["1"] });
 
@@ -492,7 +487,7 @@ test("a profile saved as tabbed reads Primary from its first poll, with no page 
   userDataDir,
   standIn,
 }) => {
-  await writeState(userDataDir, [
+  await seedProfiles(userDataDir, [
     { id: "p0", name: "Home" },
     { id: "p1", name: "Work", tabbedInbox: true },
   ]);
@@ -519,7 +514,7 @@ for (const [said, expression] of [
     userDataDir,
     standIn,
   }) => {
-    await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+    await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
     standIn.setInboxType(expression);
     standIn.setFeed(ANY_SESSION, { ...listing("2", "1"), primary: ["1"] });
 
@@ -553,7 +548,7 @@ const launchNotified = async (
   userDataDir: string,
   standIn: StandIn
 ) => {
-  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
   standIn.setFeed(ANY_SESSION, listing("1"));
 
   const launched = await launchOn(launchApp, standIn);
@@ -665,7 +660,7 @@ test("counts the whole inbox for a poll that finds no Primary feed", async ({
   userDataDir,
   standIn,
 }) => {
-  await writeState(userDataDir, [{ id: "p0", name: "Home" }]);
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
   standIn.setInboxType('"SECTIONED"');
   standIn.setFeed(ANY_SESSION, listing("2", "1"));
 

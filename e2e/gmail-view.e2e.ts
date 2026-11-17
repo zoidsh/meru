@@ -5,7 +5,7 @@ import type { ElectronApplication } from "@playwright/test";
 
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 
-import { expect, findPage, readViews, test } from "./lib/app.ts";
+import { expect, findPage, readState, readViews, test } from "./lib/app.ts";
 import {
   ELSEWHERE_URL,
   POPUP_TITLE,
@@ -13,12 +13,11 @@ import {
   STAND_IN_TITLE,
 } from "./lib/stand-in.ts";
 
-const readState = async (userDataDir: string) =>
-  JSON.parse(await readFile(path.join(userDataDir, "state.json"), "utf-8")) as {
-    version: number;
-    profiles: { id: string; name: string }[];
-    selectedProfileId: string;
-  };
+interface SavedState {
+  version: number;
+  profiles: { id: string; name: string }[];
+  selectedProfileId: string;
+}
 
 test("shows the stand-in in the content rectangle below the titlebar and beside the tab strip, and follows a resize", async ({
   app,
@@ -73,7 +72,8 @@ test("a second launch keeps the profile and its session's cookie", async ({
 
   await findPage(first, standIn.url);
 
-  const { profiles, selectedProfileId } = await readState(userDataDir);
+  const { profiles, selectedProfileId } =
+    await readState<SavedState>(userDataDir);
 
   expect(profiles).toMatchObject([{ id: selectedProfileId, name: "Default" }]);
   expect(standIn.cookieHeaders).toStrictEqual([""]);
@@ -84,7 +84,7 @@ test("a second launch keeps the profile and its session's cookie", async ({
 
   await findPage(second, standIn.url);
 
-  const relaunched = await readState(userDataDir);
+  const relaunched = await readState<SavedState>(userDataDir);
 
   expect(relaunched.selectedProfileId).toBe(selectedProfileId);
   expect(standIn.cookieHeaders).toStrictEqual(["", STAND_IN_COOKIE]);
@@ -186,7 +186,7 @@ test("keeps an unreadable state file aside and still starts", async ({
   expect(await readFile(path.join(userDataDir, aside[0] ?? ""), "utf-8")).toBe(
     "{ not json"
   );
-  const fresh = await readState(userDataDir);
+  const fresh = await readState<SavedState>(userDataDir);
 
   expect(fresh.profiles).toHaveLength(1);
 });

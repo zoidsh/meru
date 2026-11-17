@@ -1,6 +1,3 @@
-import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 import { isEqual } from "es-toolkit";
 
@@ -8,7 +5,14 @@ import type { ShellBridge } from "#contract/shell.ts";
 import { TAB_STRIP_WIDTH, contentViewBounds } from "#core/layout.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
-import { expect, findPage, readViews, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  readState as readSavedState,
+  readViews,
+  test,
+  writeState,
+} from "./lib/app.ts";
 import { STAND_IN_COOKIE, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
 interface SavedState {
@@ -16,10 +20,8 @@ interface SavedState {
   selectedProfileId: string;
 }
 
-const readState = async (userDataDir: string) =>
-  JSON.parse(
-    await readFile(path.join(userDataDir, "state.json"), "utf-8")
-  ) as SavedState;
+const readState = (userDataDir: string) =>
+  readSavedState<SavedState>(userDataDir);
 
 /** Each content view: whose session it is in, where it sits, and whether it shows. */
 const readProfileViews = async (app: ElectronApplication) => {
@@ -62,14 +64,10 @@ const launchWithProfiles = async (
 ) => {
   const profiles = names.map((name, index) => ({ id: `p${index}`, name }));
 
-  await writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({
-      version: 1,
-      profiles,
-      selectedProfileId: profiles.at(-1)?.id,
-    })
-  );
+  await writeState(userDataDir, {
+    profiles,
+    selectedProfileId: profiles.at(-1)?.id,
+  });
 
   const app = await launchApp();
 

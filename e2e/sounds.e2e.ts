@@ -1,9 +1,12 @@
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  test,
+  writeSettings,
+  writeState,
+} from "./lib/app.ts";
 import type { StandIn, StandInMail } from "./lib/stand-in.ts";
 
 // The suite's build captures every sound on `meruTestSounds` and never sends
@@ -48,24 +51,9 @@ const profileTab = (shell: Page, name: string) =>
     .getByRole("tablist", { name: "Profiles" })
     .getByRole("tab", { name: new RegExp(`^${name}`, "u") });
 
-const prepare = async (
-  userDataDir: string,
-  settings: Record<string, unknown>,
-  state: Record<string, unknown> = {}
-) => {
-  await writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({
-      version: 1,
-      profiles: [{ id: "p0", name: "Home" }],
-      selectedProfileId: "p0",
-      ...state,
-    })
-  );
-  await writeFile(
-    path.join(userDataDir, "settings.json"),
-    JSON.stringify({ version: 1, ...settings })
-  );
+const HOME = {
+  profiles: [{ id: "p0", name: "Home" }],
+  selectedProfileId: "p0",
 };
 
 /** Launches on one unread message, then brings `ids` as the inbox. */
@@ -101,7 +89,8 @@ test("new mail asks for one sound, the chosen one at the chosen volume, and each
   userDataDir,
   standIn,
 }) => {
-  await prepare(userDataDir, {
+  await writeState(userDataDir, HOME);
+  await writeSettings(userDataDir, {
     notificationSound: "chime",
     notificationSoundVolume: 0.4,
   });
@@ -122,7 +111,8 @@ test("mail Do Not Disturb holds asks for no sound", async ({
   userDataDir,
   standIn,
 }) => {
-  await prepare(userDataDir, {}, { doNotDisturb: { until: null } });
+  await writeState(userDataDir, { ...HOME, doNotDisturb: { until: null } });
+  await writeSettings(userDataDir, {});
 
   const app = await arrive(launchApp, standIn, ["2", "1"]);
 
@@ -135,7 +125,8 @@ test("with the system's sound, Meru plays none and the notification is not silen
   userDataDir,
   standIn,
 }) => {
-  await prepare(userDataDir, { notificationSound: "system" });
+  await writeState(userDataDir, HOME);
+  await writeSettings(userDataDir, { notificationSound: "system" });
 
   const app = await arrive(launchApp, standIn, ["2", "1"]);
 

@@ -1,11 +1,14 @@
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { DEV_IDENTITY } from "#core/app-identity.ts";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  test,
+  writeSettings,
+  writeState,
+} from "./lib/app.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import {
   ACCOUNT_COOKIE,
@@ -21,39 +24,32 @@ const seed = async (
   standIn: StandIn,
   settings: Record<string, unknown>
 ) => {
-  await writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({
-      version: 1,
-      profiles: [
-        { id: "p0", name: "Home" },
-        {
-          id: "p1",
-          name: "Work",
-          tabs: [
-            {
-              id: "gmail",
-              app: "gmail",
-              url: standIn.url,
-              title: STAND_IN_TITLE,
-            },
-            {
-              id: "calendar",
-              app: "calendar",
-              url: standIn.calendarUrl,
-              title: CALENDAR_TITLE,
-            },
-          ],
-          selectedTabId: "calendar",
-        },
-      ],
-      selectedProfileId: "p0",
-    })
-  );
-  await writeFile(
-    path.join(userDataDir, "settings.json"),
-    JSON.stringify({ version: 1, ...settings })
-  );
+  await writeState(userDataDir, {
+    profiles: [
+      { id: "p0", name: "Home" },
+      {
+        id: "p1",
+        name: "Work",
+        tabs: [
+          {
+            id: "gmail",
+            app: "gmail",
+            url: standIn.url,
+            title: STAND_IN_TITLE,
+          },
+          {
+            id: "calendar",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: CALENDAR_TITLE,
+          },
+        ],
+        selectedTabId: "calendar",
+      },
+    ],
+    selectedProfileId: "p0",
+  });
+  await writeSettings(userDataDir, settings);
 };
 
 interface TrayState {

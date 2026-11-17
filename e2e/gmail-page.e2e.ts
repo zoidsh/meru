@@ -1,12 +1,9 @@
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import type { GmailHealth } from "#contract/gmail.ts";
 import type { GmailFeature } from "#core/gmail-hooks.ts";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import { expect, findPage, test, writeSettings } from "./lib/app.ts";
 import {
   GMAIL_PARTS,
   POPUP_TITLE,
@@ -114,16 +111,12 @@ test("shows each part whose hide is off at launch", async ({
   standIn,
   userDataDir,
 }) => {
-  await writeFile(
-    path.join(userDataDir, "settings.json"),
-    JSON.stringify({
-      version: 1,
-      hideGmailLogo: false,
-      hideInboxFooter: false,
-      hidePromoBanner: false,
-      hideUpgradeButton: false,
-    })
-  );
+  await writeSettings(userDataDir, {
+    hideGmailLogo: false,
+    hideInboxFooter: false,
+    hidePromoBanner: false,
+    hideUpgradeButton: false,
+  });
 
   const app = await launchApp();
   const view = await findPage(app, standIn.url);
@@ -439,10 +432,7 @@ test("applies the thread features on at launch, and to a message that arrives in
   standIn,
   userDataDir,
 }) => {
-  await writeFile(
-    path.join(userDataDir, "settings.json"),
-    JSON.stringify({ version: 1, ...ALL_ON })
-  );
+  await writeSettings(userDataDir, ALL_ON);
 
   const app = await launchApp();
   const view = await findPage(app, standIn.url);

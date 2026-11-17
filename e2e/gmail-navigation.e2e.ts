@@ -1,10 +1,17 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
-import { expect, findPage, readViews, test } from "./lib/app.ts";
+import {
+  expect,
+  findPage,
+  readState,
+  readViews,
+  test,
+  writeState,
+} from "./lib/app.ts";
 import { GMAIL_PARTS } from "./lib/stand-in.ts";
 
 /** Clicks the application menu's item, as a person choosing it would. */
@@ -48,9 +55,9 @@ const savedSearchItems = (app: ElectronApplication) =>
 
 /** The first profile's saved searches as the file holds them. */
 const readSaved = async (userDataDir: string) => {
-  const { profiles } = JSON.parse(
-    await readFile(path.join(userDataDir, "state.json"), "utf-8")
-  ) as { profiles: { savedSearches?: unknown }[] };
+  const { profiles } = await readState<{
+    profiles: { savedSearches?: unknown }[];
+  }>(userDataDir);
 
   return profiles[0]?.savedSearches;
 };
@@ -93,29 +100,25 @@ test("Gmail Settings shows Gmail's tab from another tab, loading Gmail at its se
   standIn,
   userDataDir,
 }) => {
-  await writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({
-      version: 1,
-      profiles: [
-        {
-          id: "p",
-          name: "Default",
-          tabs: [
-            { id: "gmail", app: "gmail", url: standIn.url, title: "" },
-            {
-              id: "c1",
-              app: "calendar",
-              url: standIn.calendarUrl,
-              title: "Week",
-            },
-          ],
-          selectedTabId: "c1",
-        },
-      ],
-      selectedProfileId: "p",
-    })
-  );
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          {
+            id: "c1",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: "Week",
+          },
+        ],
+        selectedTabId: "c1",
+      },
+    ],
+    selectedProfileId: "p",
+  });
 
   const app = await launchApp();
 

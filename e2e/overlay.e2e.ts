@@ -1,11 +1,8 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { overlayRectangle } from "#core/overlay.ts";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import { expect, findPage, readState, test } from "./lib/app.ts";
 import { CALENDAR_TITLE, DRAFT_LABEL } from "./lib/stand-in.ts";
 
 /**
@@ -23,9 +20,9 @@ const followRealFocus = async (page: Page) => {
 };
 
 const readNames = async (userDataDir: string) => {
-  const { profiles } = JSON.parse(
-    await readFile(path.join(userDataDir, "state.json"), "utf-8")
-  ) as { profiles: { name: string }[] };
+  const { profiles } = await readState<{ profiles: { name: string }[] }>(
+    userDataDir
+  );
 
   return profiles.map((profile) => profile.name);
 };

@@ -1,9 +1,6 @@
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, findPage, test } from "./lib/app.ts";
+import { expect, findPage, test, writeState } from "./lib/app.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import { ACCOUNT_COOKIE } from "./lib/stand-in.ts";
 
@@ -17,10 +14,10 @@ const launch = async (
   launchApp: () => Promise<ElectronApplication>,
   userDataDir: string
 ) => {
-  await writeFile(
-    path.join(userDataDir, "state.json"),
-    JSON.stringify({ version: 1, profiles: PROFILES, selectedProfileId: "p0" })
-  );
+  await writeState(userDataDir, {
+    profiles: PROFILES,
+    selectedProfileId: "p0",
+  });
 
   const app = await launchApp();
 

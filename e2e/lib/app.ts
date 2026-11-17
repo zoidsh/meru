@@ -1,7 +1,7 @@
 // Linux needs a display: `xvfb-run -a pnpm test:e2e` where there is none.
 import { execFile, spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -199,6 +199,26 @@ export const readViews = (app: ElectronApplication) =>
         })),
     };
   });
+
+/** Seeds `state.json` before a launch; the store's current version is 1. */
+export const writeState = (userDataDir: string, state: object) =>
+  writeFile(
+    path.join(userDataDir, "state.json"),
+    JSON.stringify({ version: 1, ...state })
+  );
+
+/** Seeds `settings.json` before a launch; the store's current version is 1. */
+export const writeSettings = (userDataDir: string, settings: object) =>
+  writeFile(
+    path.join(userDataDir, "settings.json"),
+    JSON.stringify({ version: 1, ...settings })
+  );
+
+/** `state.json` as the app left it, read as whatever the test asserts on. */
+export const readState = async <State>(userDataDir: string) =>
+  JSON.parse(
+    await readFile(path.join(userDataDir, "state.json"), "utf-8")
+  ) as State;
 
 interface AppFixtures {
   /** The pids this test launched, for the teardown on Windows. */
