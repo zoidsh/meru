@@ -89,22 +89,17 @@ test("shows a profile's unread count and follows it as the page's title changes"
 
   await findPage(app, standIn.url);
   await signIn(app, standIn, "p0");
-  standIn.setFeed("persist:p0", { unreadCount: 3 });
-  await retitle(app, standIn, "p0", "Inbox (3)");
-
-  await expect(home).toHaveAccessibleName("Home, 3 unread messages");
-  await expect(home).toContainText("3");
-
-  standIn.setFeed("persist:p0", { unreadCount: 1 });
-  await retitle(app, standIn, "p0", "Inbox (1)");
-
-  await expect(home).toHaveAccessibleName("Home, 1 unread message");
-
   standIn.setFeed("persist:p0", { unreadCount: 120 });
   await retitle(app, standIn, "p0", "Inbox (120)");
 
   await expect(home).toHaveAccessibleName("Home, 120 unread messages");
   await expect(home).toHaveText("Home99+");
+
+  standIn.setFeed("persist:p0", { unreadCount: 1 });
+  await retitle(app, standIn, "p0", "Inbox (1)");
+
+  await expect(home).toHaveAccessibleName("Home, 1 unread message");
+  await expect(home).toHaveText("Home1");
 
   standIn.setFeed("persist:p0", { unreadCount: 0 });
   await retitle(app, standIn, "p0", "Inbox");
