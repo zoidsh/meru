@@ -10,6 +10,10 @@ import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
 import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
 import type { Platform } from "#core/platform.ts";
 import {
+  PROFILE_SHORTCUT_COUNT,
+  selectProfileCommandId,
+} from "#core/profile-shortcuts.ts";
+import {
   canSaveSearch,
   savedSearchName,
   savedSearches,
@@ -119,13 +123,6 @@ const selectAdjacentProfile = (offset: number): Command["run"] => {
 
   return run;
 };
-
-/** How many profiles a shortcut each selects, the first ones in the row. */
-export const PROFILE_SHORTCUT_COUNT = 9;
-
-/** The id of the command that selects the profile at `position`, from 1. */
-export const selectProfileCommandId = (position: number) =>
-  `profile.select.${position}`;
 
 /** The id of the command that switches Do Not Disturb on for `duration`. */
 export const doNotDisturbCommandId = (duration: DoNotDisturbDuration) =>

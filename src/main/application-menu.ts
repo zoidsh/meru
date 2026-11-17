@@ -5,9 +5,10 @@ import { isEqual } from "es-toolkit";
 import { matchesAccelerator } from "#core/accelerator.ts";
 import type { KeyInput } from "#core/accelerator.ts";
 import type { Platform } from "#core/platform.ts";
+import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { menuText } from "#core/tray.ts";
 
-import { savedSearchCommands, selectProfileCommandId } from "./commands.ts";
+import { savedSearchCommands } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { doNotDisturbItems } from "./do-not-disturb.ts";
 import { profileDisplayName } from "./profile-copy.ts";
