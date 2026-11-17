@@ -27,9 +27,10 @@ export const SIGNED_OUT_INTERVAL = 5 * 60_000;
 export const FETCH_TIMEOUT = 15_000;
 /**
  * How soon after a profile's last poll ended a poke may poll it again, so a
- * title that keeps changing costs a request every 5 s at most.
+ * title that keeps changing costs a request every 5 s at most. The suite's
+ * build waits 500 ms, so its tests do not spend their time waiting it out.
  */
-export const POKE_THROTTLE = 5000;
+export const POKE_THROTTLE = MERU_E2E_BUILD ? 500 : 5000;
 
 interface Polled extends Mail {
   entries: readonly FeedEntry[];
