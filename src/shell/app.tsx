@@ -5,6 +5,7 @@ import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 
 import { TITLEBAR_HEIGHT, viewFrame } from "#core/layout.ts";
+import { MAX_SHOWN_UNREAD } from "#core/unread.ts";
 import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
 import { Tabs, TabsList, TabsTrigger } from "#ui/tabs.tsx";
@@ -13,8 +14,6 @@ import { keepInView } from "./keep-in-view.ts";
 import { OverlayLayer } from "./overlay.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TabProblem, TabStrip } from "./tab-strip.tsx";
-
-const MAX_SHOWN_UNREAD = 99;
 
 const Profiles = () => {
   const { t } = useLingui();
