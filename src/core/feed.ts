@@ -94,13 +94,18 @@ export const parseFeed = (text: string): Feed | undefined => {
 
   const feed = nodes.filter(isNode).find((node) => node.tagName === "feed");
   const fullcount = textOf(childNamed(feed, "fullcount")) ?? "";
+  const unreadCount = Number(fullcount);
 
-  if (!feed || !/^\d+$/u.test(fullcount)) {
+  if (
+    !feed ||
+    !/^\d+$/u.test(fullcount) ||
+    !Number.isSafeInteger(unreadCount)
+  ) {
     return;
   }
 
   return {
-    unreadCount: Number(fullcount),
+    unreadCount,
     entries: feed.children
       .filter(isNode)
       .filter((child) => child.tagName === "entry")

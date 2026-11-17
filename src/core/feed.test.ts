@@ -141,6 +141,7 @@ describe(parseFeed, () => {
     ],
     ["a feed with no count", feed("")],
     ["a feed with a count that is no number", feed("-1")],
+    ["a feed with a count past the safe integers", feed("9007199254740993")],
     ["text that is not markup", "Service Unavailable"],
     ["nothing", ""],
     ["markup that does not close", "<feed><fullcount>1</fullcount></entry>"],
