@@ -1,10 +1,21 @@
 import { plural, t } from "@lingui/core/macro";
 
+import {
+  COMPOSE_HASH,
+  SETTINGS_HASH,
+  searchHash,
+  searchQueryOf,
+} from "#core/gmail-hash.ts";
 import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
 import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
 import type { Platform } from "#core/platform.ts";
+import {
+  canSaveSearch,
+  savedSearchName,
+  savedSearches,
+} from "#core/saved-searches.ts";
 import type { Design, SettingKey, SettingValue } from "#core/settings.ts";
-import { adjacentProfile, selectedProfile } from "#core/state.ts";
+import { adjacentProfile, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import { adjacentTab, canCloseTab, findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -37,6 +48,11 @@ export interface CommandActions {
   switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
   /** Shows the unified inbox, or puts the tab back. */
   setInboxOpen: (open: boolean) => void;
+  /** Shows the profile's Gmail tab and sends its page to `hash`. */
+  navigateGmail: (profileId: string, hash: string) => Promise<unknown>;
+  /** Adds `query` to the profile's saved searches, if it can be saved. */
+  saveSearch: (profileId: string, query: string) => Promise<unknown>;
+  removeSavedSearch: (profileId: string, searchId: string) => Promise<unknown>;
 }
 
 export interface Command {
@@ -160,6 +176,48 @@ const hasOtherTab = ({ state }: CommandContext) =>
 
 const hasOtherProfile = ({ state }: CommandContext) =>
   adjacentProfile(state, 1) !== undefined;
+
+/**
+ * The query of the search the selected profile's Gmail tab shows while it is
+ * the tab in front, as main last heard its URL.
+ */
+export const currentSearch = (state: State) => {
+  const profile = selectedProfile(state);
+  const tab = knownTabs(profile).find(
+    (candidate) => candidate.id === profile.selectedTabId
+  );
+
+  return tab?.app === "gmail" ? searchQueryOf(tab.url) : undefined;
+};
+
+const navigateTo =
+  (hash: string): Command["run"] =>
+  ({ state }, { navigateGmail }) =>
+    navigateGmail(state.selectedProfileId, hash);
+
+/**
+ * The selected profile's saved searches, as a command each that runs it and
+ * one that removes it. Made from the state as it is, so the menu lists them
+ * and the registry does not.
+ */
+export const savedSearchCommands = (state: State) =>
+  savedSearches(state, state.selectedProfileId).map((search) => {
+    const name = () => savedSearchName(search);
+
+    return {
+      open: {
+        id: `savedSearch.open.${search.id}`,
+        title: name,
+        run: navigateTo(searchHash(search.query)),
+      } satisfies Command,
+      remove: {
+        id: `savedSearch.remove.${search.id}`,
+        title: name,
+        run: ({ state: current }, { removeSavedSearch }) =>
+          removeSavedSearch(current.selectedProfileId, search.id),
+      } satisfies Command,
+    };
+  });
 
 /**
  * Every command, declared once. The default shortcuts are v3's where v3 has
@@ -339,6 +397,56 @@ export const COMMANDS: readonly Command[] = [
       openRenameProfile(state.selectedProfileId);
 
       return Promise.resolve();
+    },
+  },
+  {
+    id: "gmail.compose",
+    title: () =>
+      t({
+        message: "Compose",
+        comment:
+          "Menu item in the Mail menu that opens a new message in the selected profile's Gmail",
+      }),
+    run: navigateTo(COMPOSE_HASH),
+  },
+  {
+    id: "gmail.settings",
+    title: () =>
+      t({
+        message: "Gmail Settings",
+        comment:
+          "Menu item in the Mail menu that opens Gmail's own settings in the selected profile's Gmail tab",
+      }),
+    // v3's. Gmail's own keys use Ctrl with a comma, not with Shift too.
+    shortcut: {
+      darwin: "CommandOrControl+Shift+,",
+      win32: "CommandOrControl+Shift+,",
+      linux: "CommandOrControl+Shift+,",
+    },
+    run: navigateTo(SETTINGS_HASH),
+  },
+  {
+    id: "savedSearch.save",
+    title: () =>
+      t({
+        message: "Save Current Search",
+        comment:
+          "Menu item in the Saved Searches menu that keeps the search Gmail shows now, to run again later",
+      }),
+    isAvailable: ({ state }) => {
+      const query = currentSearch(state);
+
+      return (
+        query !== undefined &&
+        canSaveSearch(state, state.selectedProfileId, query)
+      );
+    },
+    run: ({ state }, { saveSearch }) => {
+      const query = currentSearch(state);
+
+      return query === undefined
+        ? Promise.resolve()
+        : saveSearch(state.selectedProfileId, query);
     },
   },
   {

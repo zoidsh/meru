@@ -51,7 +51,9 @@ const from = (
   ...overrides,
 });
 
-const setup = () => {
+const setup = (
+  userStyles: () => Promise<string> = () => Promise.resolve("")
+) => {
   const listeners = new Map<
     string,
     (sender: IpcSender, payload: unknown) => void
@@ -100,6 +102,7 @@ const setup = () => {
     isGmailTab: (key) => key.tabId === "gmail",
     gmailOrigin: GMAIL_ORIGIN,
     features: () => features,
+    userStyles,
     onHealth: (key, health) => reports.push({ ...key, ...health }),
     onRefused: (origin) => refused.push(origin),
     log: (message) => logs.push(message),
@@ -305,5 +308,92 @@ describe(serveGmailContract, () => {
       "Refused a malformed Gmail health report",
       "Refused a malformed Gmail health report",
     ]);
+  });
+
+  it("sends the profile's page that shook hands to a hash, its main frame on Gmail's origin alone", () => {
+    const contract = setup();
+
+    expect(contract.page.navigate("a", "#settings")).toBeFalsy();
+
+    contract.shake(from(GMAIL_VIEW));
+    contract.shake(from(CALENDAR_VIEW));
+
+    expect(contract.page.navigate("b", "#settings")).toBeFalsy();
+    expect(contract.page.navigate("a", "#search/%22x%22")).toBeTruthy();
+    expect(contract.sent.slice(1)).toStrictEqual([
+      {
+        to: GMAIL_VIEW,
+        channel: GMAIL_CHANNELS.navigate,
+        message: "#search/%22x%22",
+        options: { mainFrameOrigin: GMAIL_ORIGIN },
+      },
+    ]);
+  });
+
+  it("sends no page anything that is not a hash, nor a page that left Gmail or is gone", () => {
+    const contract = setup();
+
+    contract.shake(from(GMAIL_VIEW));
+
+    expect(contract.page.navigate("a", "settings")).toBeFalsy();
+    expect(contract.page.navigate("a", `#${"a".repeat(2048)}`)).toBeFalsy();
+
+    contract.shake(from(GMAIL_VIEW, { origin: "https://accounts.google.com" }));
+
+    expect(contract.page.navigate("a", "#settings")).toBeFalsy();
+
+    const gone = setup();
+
+    gone.shake(from(GMAIL_VIEW));
+    gone.dropGmailView();
+
+    expect(gone.page.navigate("a", "#settings")).toBeFalsy();
+    expect([contract.sent.length, gone.sent.length]).toStrictEqual([1, 1]);
+  });
+
+  it("sends each document that shakes hands the user styles as read then", async () => {
+    const files = ["a { color: red }", ""];
+    const contract = setup(() => Promise.resolve(files.shift() ?? ""));
+
+    contract.shake(from(GMAIL_VIEW));
+    await expect
+      .poll(() => contract.sent.map(({ channel }) => channel))
+      .toStrictEqual([GMAIL_CHANNELS.features, GMAIL_CHANNELS.userStyles]);
+
+    contract.shake(from(GMAIL_VIEW));
+    await expect.poll(() => contract.sent).toHaveLength(4);
+
+    expect(
+      contract.sent
+        .filter(({ channel }) => channel === GMAIL_CHANNELS.userStyles)
+        .map(({ message, options }) => ({ message, options }))
+    ).toStrictEqual([
+      {
+        message: "a { color: red }",
+        options: { mainFrameOrigin: GMAIL_ORIGIN },
+      },
+      { message: "", options: { mainFrameOrigin: GMAIL_ORIGIN } },
+    ]);
+  });
+
+  it("sends no user styles to a page gone or off Gmail by the time they are read, nor any it could not read", async () => {
+    const read = Promise.withResolvers<string>();
+    const contract = setup(() => read.promise);
+
+    contract.shake(from(GMAIL_VIEW));
+    contract.dropGmailView();
+    read.resolve("a {}");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(contract.sent).toHaveLength(1);
+
+    const failing = setup(() => Promise.reject(new Error("EACCES /secret")));
+
+    failing.shake(from(GMAIL_VIEW));
+    await expect
+      .poll(() => failing.logs)
+      .toStrictEqual(["Gmail's user styles were not read"]);
+    expect(failing.sent).toHaveLength(1);
   });
 });

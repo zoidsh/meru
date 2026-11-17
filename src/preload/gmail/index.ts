@@ -2,6 +2,7 @@ import { ipcRenderer, webFrame } from "electron";
 
 import { GMAIL_CHANNELS, isGmailFeatures } from "#contract/gmail-channels.ts";
 import type { GmailHealth } from "#contract/gmail-channels.ts";
+import { isGmailHash } from "#core/gmail-hash.ts";
 import { GMAIL_FEATURES, featureStylesheet } from "#core/gmail-hooks.ts";
 import type { GmailFeature } from "#core/gmail-hooks.ts";
 
@@ -14,6 +15,8 @@ const SETTLE_MS = 1000;
 const MIN_GAP_MS = 2000;
 
 const inserted = new Map<GmailFeature, string>();
+
+let userStylesKey: string | undefined;
 
 let checking = false;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -114,6 +117,25 @@ ipcRenderer.on(GMAIL_CHANNELS.features, (_event, message: unknown) => {
 });
 ipcRenderer.on(GMAIL_CHANNELS.catchUp, () => {
   pressRefresh(document);
+});
+ipcRenderer.on(GMAIL_CHANNELS.navigate, (_event, hash: unknown) => {
+  if (isGmailHash(hash)) {
+    location.hash = hash;
+  }
+});
+ipcRenderer.on(GMAIL_CHANNELS.userStyles, (_event, css: unknown) => {
+  if (typeof css !== "string") {
+    return;
+  }
+
+  if (userStylesKey !== undefined) {
+    webFrame.removeInsertedCSS(userStylesKey);
+    userStylesKey = undefined;
+  }
+
+  if (css !== "") {
+    userStylesKey = webFrame.insertCSS(css, { cssOrigin: "author" });
+  }
 });
 // A view's first, empty document is no page to ask about.
 if (location.protocol !== "about:") {

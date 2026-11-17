@@ -117,6 +117,106 @@ describe(buildMenuTemplate, () => {
       ["Classic", "radio", true],
     ]);
   });
+
+  it("puts the Mail menu between View and Tabs, with its access key on Windows and Linux alone", () => {
+    expect(labels(template("darwin")).slice(2, 5)).toStrictEqual([
+      "View",
+      "Mail",
+      "Tabs",
+    ]);
+
+    for (const platform of ["win32", "linux"] as const) {
+      const menus = template(platform);
+
+      expect(labels(menus).slice(2, 5)).toStrictEqual([
+        "View",
+        "&Mail",
+        "Tabs",
+      ]);
+      // The one access key in the menu bar.
+      expect(
+        labels(menus).filter((label) => label?.includes("&"))
+      ).toHaveLength(1);
+    }
+
+    expect(outline(template("darwin"))[3]?.[1]).toStrictEqual([
+      "gmail.compose",
+      undefined,
+      "gmail.settings",
+    ]);
+  });
+
+  it("lists the selected profile's saved searches by name, to run and to remove, with & kept as text", () => {
+    const context: CommandContext = {
+      ...contextOf(),
+      state: {
+        ...oneProfile,
+        profiles: [
+          {
+            ...newProfile("a", "Default"),
+            savedSearches: [
+              { id: "s1", query: "from:a&b" },
+              { id: "s2", query: "is:starred", label: "Stars" },
+            ],
+          },
+        ],
+      },
+    };
+
+    for (const platform of ["darwin", "linux"] as const) {
+      const mail = template(platform, context)[3] as MenuItemConstructorOptions;
+      const searches = submenu(mail).find(
+        (item) => item.label === "Saved Searches"
+      ) as MenuItemConstructorOptions;
+      const remove = submenu(searches).find(
+        (item) => item.label === "Remove Saved Search"
+      ) as MenuItemConstructorOptions;
+      const name = platform === "darwin" ? "from:a&b" : "from:a&&b";
+
+      expect(
+        submenu(searches).map((item) => item.id ?? item.type)
+      ).toStrictEqual([
+        "savedSearch.open.s1",
+        "savedSearch.open.s2",
+        "separator",
+        "savedSearch.save",
+        undefined,
+      ]);
+      expect(
+        submenu(searches)
+          .slice(0, 2)
+          .map((item) => item.label)
+      ).toStrictEqual([name, "Stars"]);
+      expect(remove.enabled).toBeTruthy();
+      expect(
+        submenu(remove).map((item) => [item.id, item.label])
+      ).toStrictEqual([
+        ["savedSearch.remove.s1", name],
+        ["savedSearch.remove.s2", "Stars"],
+      ]);
+    }
+  });
+
+  it("says there are no saved searches, and offers none to remove, while there are none", () => {
+    const mail = template("darwin")[3] as MenuItemConstructorOptions;
+    const searches = submenu(mail).find(
+      (item) => item.label === "Saved Searches"
+    ) as MenuItemConstructorOptions;
+
+    expect(
+      submenu(searches).map((item) => [item.label, item.enabled])
+    ).toStrictEqual([
+      ["No Saved Searches", false],
+      [undefined, undefined],
+      ["Save Current Search", false],
+      ["Remove Saved Search", false],
+    ]);
+  });
+});
+
+const withSearches = (savedSearches: unknown[]): State => ({
+  ...oneProfile,
+  profiles: [{ ...newProfile("a", "Default"), savedSearches }],
 });
 
 const viewItem = (menus: MenuItemConstructorOptions[], id: string) =>
@@ -191,6 +291,17 @@ describe(createApplicationMenu, () => {
 
     expect(app.set).toHaveLength(2);
     expect(viewItem(app.set[1] ?? [], "profile.next")?.enabled).toBeTruthy();
+  });
+
+  it("sets the menu again when the saved searches it lists change", () => {
+    const app = setup();
+
+    app.setState(withSearches([{ id: "s1", query: "x" }]));
+    app.setState(withSearches([{ id: "s1", query: "x" }]));
+    app.setState(withSearches([{ id: "s1", query: "x", label: "Named" }]));
+    app.setState(withSearches([]));
+
+    expect(app.set).toHaveLength(4);
   });
 
   it("runs a clicked item's command and checks what it chose", async () => {

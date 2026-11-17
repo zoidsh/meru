@@ -153,6 +153,11 @@ msgstr "Close unified inbox"
 msgid "Close Window"
 msgstr "Close Window"
 
+#. Menu item in the Mail menu that opens a new message in the selected profile's Gmail
+#: src/main/commands.ts
+msgid "Compose"
+msgstr "Compose"
+
 #. Accessible name of the window's main area, below the title bar, read by screen readers
 #: src/shell/app.tsx
 msgid "Content"
@@ -259,6 +264,11 @@ msgctxt "Windows"
 msgid "Exit"
 msgstr "Exit"
 
+#. Menu item in the Mail menu that opens Gmail's own settings in the selected profile's Gmail tab
+#: src/main/commands.ts
+msgid "Gmail Settings"
+msgstr "Gmail Settings"
+
 #. Name of the Help menu
 #: src/main/application-menu.ts
 msgid "Help"
@@ -293,6 +303,11 @@ msgstr "Its page quit unexpectedly. Reload it to carry on."
 #: src/shell/tab-strip.tsx
 msgid "Loading"
 msgstr "Loading"
+
+#. Name of the menu of commands on the selected profile's Gmail: compose, saved searches and Gmail's settings
+#: src/main/application-menu.ts
+msgid "Mail"
+msgstr "Mail"
 
 #. Button on a message in the unified inbox that marks it read. Gmail's own words for the action
 #: src/shell/inbox.tsx
@@ -335,6 +350,11 @@ msgstr "Modern"
 #: src/main/notifications.ts
 msgid "New message"
 msgstr "New message"
+
+#. Item of the Saved Searches menu, not clickable, while the selected profile has none
+#: src/main/application-menu.ts
+msgid "No Saved Searches"
+msgstr "No Saved Searches"
 
 #. Heading of the unified inbox when no profile has unread mail
 #: src/shell/inbox.tsx
@@ -420,6 +440,11 @@ msgstr "Remove {name}…"
 msgid "Remove Profile"
 msgstr "Remove Profile"
 
+#. Submenu of the Saved Searches menu listing each saved search, to remove the one chosen
+#: src/main/application-menu.ts
+msgid "Remove Saved Search"
+msgstr "Remove Saved Search"
+
 #. Heading of the small panel over the page with a field for a profile's new name, and the field's label
 #: src/shell/overlay.tsx
 msgid "Rename profile"
@@ -441,6 +466,16 @@ msgstr "Rename…"
 msgctxt "inbox action"
 msgid "Report spam"
 msgstr "Report spam"
+
+#. Menu item in the Saved Searches menu that keeps the search Gmail shows now, to run again later
+#: src/main/commands.ts
+msgid "Save Current Search"
+msgstr "Save Current Search"
+
+#. Submenu of the Mail menu listing the selected profile's saved Gmail searches, each of which runs its search
+#: src/main/application-menu.ts
+msgid "Saved Searches"
+msgstr "Saved Searches"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts

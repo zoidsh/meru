@@ -105,6 +105,8 @@ export interface Profile {
   selectedTabId: string;
   /** `true` once Gmail's page said the inbox is tabbed; read through `hasTabbedInbox`. */
   tabbedInbox?: unknown;
+  /** The profile's saved searches; read through `savedSearches`. */
+  savedSearches?: unknown;
   /**
    * A `tabs` that is not a list, written back in its place; the tabs the
    * profile has instead live only in memory.

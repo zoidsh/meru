@@ -15,6 +15,7 @@ export interface KeyInput {
 
 /** Where the punctuation a shortcut names sits, for those that have one. */
 const CODES: Record<string, string> = {
+  ",": "Comma",
   "[": "BracketLeft",
   "]": "BracketRight",
 };

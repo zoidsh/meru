@@ -1,5 +1,6 @@
 import { GMAIL_CHANNELS, GMAIL_HEALTH_SCHEMA } from "#contract/gmail.ts";
 import type { GmailFeatures, GmailHealth } from "#contract/gmail.ts";
+import { isGmailHash } from "#core/gmail-hash.ts";
 import { HOOK_NAMES } from "#core/gmail-hooks.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -16,6 +17,8 @@ export interface GmailPageDeps {
   gmailOrigin: string;
   /** The switches as the settings have them now. */
   features: () => GmailFeatures;
+  /** The person's own CSS for the page as it is now, empty for none. */
+  userStyles: () => Promise<string>;
   /** Told of each report that differs from the tab's last. */
   onHealth?: (key: TabKey, health: GmailHealth) => void;
   /** Told of each message refused, by the sender's origin alone. */
@@ -51,6 +54,7 @@ export const serveGmailContract = ({
   isGmailTab,
   gmailOrigin,
   features,
+  userStyles,
   onHealth,
   onRefused,
   log,
@@ -95,6 +99,29 @@ export const serveGmailContract = ({
     });
   };
 
+  /**
+   * Read afresh for each document, so a change to the file shows on the next
+   * load. A later document of the same page that shook hands meanwhile gets
+   * them again, in place of these.
+   */
+  const sendUserStyles = async (webContentsId: number) => {
+    let css: string;
+
+    try {
+      css = await userStyles();
+    } catch {
+      log("Gmail's user styles were not read");
+
+      return;
+    }
+
+    if (pages.has(webContentsId) && gmailTabOf(webContentsId)) {
+      ipc.send(webContentsId, GMAIL_CHANNELS.userStyles, css, {
+        mainFrameOrigin: gmailOrigin,
+      });
+    }
+  };
+
   ipc.on(GMAIL_CHANNELS.sync, (sender) => {
     const key = accepted(sender);
 
@@ -121,6 +148,7 @@ export const serveGmailContract = ({
     pages.set(sender.webContentsId, key);
     reports.delete(sender.webContentsId);
     send(sender.webContentsId);
+    void sendUserStyles(sender.webContentsId);
   });
 
   ipc.on(GMAIL_CHANNELS.health, (sender, payload) => {
@@ -172,6 +200,36 @@ export const serveGmailContract = ({
           forget(webContentsId);
         }
       }
+    },
+    /**
+     * Sends the profile's Gmail page to `hash`, while its main frame is
+     * still on Gmail's origin; false when no page of the profile shook hands.
+     * A page that left Gmail since shook hands again from where it went, and
+     * is no longer listed.
+     */
+    navigate: (profileId: string, hash: string) => {
+      let sent = false;
+
+      if (!isGmailHash(hash)) {
+        return sent;
+      }
+
+      for (const [webContentsId, key] of pages) {
+        if (key.profileId !== profileId) {
+          continue;
+        }
+
+        if (gmailTabOf(webContentsId)) {
+          ipc.send(webContentsId, GMAIL_CHANNELS.navigate, hash, {
+            mainFrameOrigin: gmailOrigin,
+          });
+          sent = true;
+        } else {
+          forget(webContentsId);
+        }
+      }
+
+      return sent;
     },
     /** Sends the switches as they are now to every page that shook hands. */
     push: () => {

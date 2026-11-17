@@ -1,4 +1,4 @@
-import { readFile, rename, writeFile } from "node:fs/promises";
+import { open, readFile, rename, writeFile } from "node:fs/promises";
 
 export interface TextFile {
   readonly path: string;
@@ -34,3 +34,41 @@ export const createTextFile = (path: string): TextFile => ({
   },
   moveTo: (newPath) => rename(path, newPath),
 });
+
+export type CappedRead =
+  | { kind: "missing" }
+  | { kind: "tooLarge"; bytes: number }
+  | { kind: "read"; text: string };
+
+/**
+ * Reads a file of at most `maxBytes` as UTF-8; of a larger one, no more than
+ * tells it is larger.
+ */
+export const readTextUpTo = async (
+  path: string,
+  maxBytes: number
+): Promise<CappedRead> => {
+  let file: Awaited<ReturnType<typeof open>>;
+
+  try {
+    file = await open(path, "r");
+  } catch (error) {
+    if (isMissing(error)) {
+      return { kind: "missing" };
+    }
+
+    throw error;
+  }
+
+  try {
+    const { size } = await file.stat();
+    const buffer = Buffer.alloc(maxBytes + 1);
+    const { bytesRead } = await file.read(buffer, 0, maxBytes + 1, 0);
+
+    return bytesRead > maxBytes
+      ? { kind: "tooLarge", bytes: Math.max(size, bytesRead) }
+      : { kind: "read", text: buffer.toString("utf-8", 0, bytesRead) };
+  } finally {
+    await file.close();
+  }
+};

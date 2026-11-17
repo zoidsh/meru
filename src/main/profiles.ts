@@ -1,6 +1,7 @@
 import { Mutex } from "es-toolkit";
 
 import type { App } from "#core/apps.ts";
+import { removeSavedSearch, saveSearch } from "#core/saved-searches.ts";
 import {
   addProfile,
   forgetEndedDoNotDisturb,
@@ -201,6 +202,11 @@ export const createProfiles = ({
     /** Writes only a change, so a page saying the same again costs nothing. */
     setTabbedInbox: (profileId: string, tabbed: boolean) =>
       exclusive(() => commit(setTabbedInbox(state, profileId, tabbed))),
+    /** Nothing when it cannot be saved, as when the profile has it already. */
+    saveSearch: (profileId: string, query: string) =>
+      exclusive(() => commit(saveSearch(state, profileId, query, newId))),
+    removeSavedSearch: (profileId: string, searchId: string) =>
+      exclusive(() => commit(removeSavedSearch(state, profileId, searchId))),
     /** On until `until`, `null` for until turned off, or off with `undefined`. */
     switchDoNotDisturb: (until: number | null | undefined) =>
       exclusive(() => commit(switchDoNotDisturb(state, until))),

@@ -5,7 +5,9 @@ import { isEqual } from "es-toolkit";
 import { matchesAccelerator } from "#core/accelerator.ts";
 import type { KeyInput } from "#core/accelerator.ts";
 import type { Platform } from "#core/platform.ts";
+import { menuText } from "#core/tray.ts";
 
+import { savedSearchCommands } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { doNotDisturbItems } from "./do-not-disturb.ts";
 
@@ -40,6 +42,30 @@ export const buildMenuTemplate = ({
 }: MenuTemplateInput): MenuItemConstructorOptions[] => {
   const isMacOS = platform === "darwin";
 
+  const commandItem = (
+    command: Command,
+    type?: "radio" | "checkbox",
+    asText = false
+  ): MenuItemConstructorOptions => {
+    const title = command.title();
+
+    return {
+      id: command.id,
+      label: asText ? menuText(title, platform) : title,
+      ...(command.shortcut?.[platform] && {
+        accelerator: command.shortcut[platform],
+      }),
+      enabled: command.isAvailable?.(context) ?? true,
+      ...(type && {
+        type,
+        checked: command.isChecked?.(context) ?? false,
+      }),
+      click: () => {
+        run(command);
+      },
+    };
+  };
+
   const item = (
     id: string,
     type?: "radio" | "checkbox"
@@ -50,23 +76,7 @@ export const buildMenuTemplate = ({
       return [];
     }
 
-    return [
-      {
-        id,
-        label: command.title(),
-        ...(command.shortcut?.[platform] && {
-          accelerator: command.shortcut[platform],
-        }),
-        enabled: command.isAvailable?.(context) ?? true,
-        ...(type && {
-          type,
-          checked: command.isChecked?.(context) ?? false,
-        }),
-        click: () => {
-          run(command);
-        },
-      },
-    ];
+    return [commandItem(command, type)];
   };
 
   const quit: MenuItemConstructorOptions = {
@@ -252,6 +262,59 @@ export const buildMenuTemplate = ({
     ],
   };
 
+  const searches = savedSearchCommands(context.state);
+  const mailName = t({
+    message: "Mail",
+    comment:
+      "Name of the menu of commands on the selected profile's Gmail: compose, saved searches and Gmail's settings",
+  });
+
+  const mailMenu: MenuItemConstructorOptions = {
+    // No other menu has an access key, so the name's first letter collides
+    // with none.
+    label: isMacOS ? mailName : `&${menuText(mailName, platform)}`,
+    submenu: [
+      ...item("gmail.compose"),
+      separator,
+      {
+        label: t({
+          message: "Saved Searches",
+          comment:
+            "Submenu of the Mail menu listing the selected profile's saved Gmail searches, each of which runs its search",
+        }),
+        submenu: [
+          ...(searches.length > 0
+            ? searches.map(({ open }) => commandItem(open, undefined, true))
+            : [
+                {
+                  label: t({
+                    message: "No Saved Searches",
+                    comment:
+                      "Item of the Saved Searches menu, not clickable, while the selected profile has none",
+                  }),
+                  enabled: false,
+                },
+              ]),
+          separator,
+          ...item("savedSearch.save"),
+          {
+            label: t({
+              message: "Remove Saved Search",
+              comment:
+                "Submenu of the Saved Searches menu listing each saved search, to remove the one chosen",
+            }),
+            enabled: searches.length > 0,
+            submenu: searches.map(({ remove }) =>
+              commandItem(remove, undefined, true)
+            ),
+          },
+        ],
+      },
+      separator,
+      ...item("gmail.settings"),
+    ],
+  };
+
   const tabsMenu: MenuItemConstructorOptions = {
     label: t({
       message: "Tabs",
@@ -346,7 +409,15 @@ export const buildMenuTemplate = ({
       ]
     : [];
 
-  return [appMenu, editMenu, viewMenu, tabsMenu, windowMenu, ...helpMenu];
+  return [
+    appMenu,
+    editMenu,
+    viewMenu,
+    mailMenu,
+    tabsMenu,
+    windowMenu,
+    ...helpMenu,
+  ];
 };
 
 export interface ApplicationMenuDeps {
@@ -381,9 +452,14 @@ export const createApplicationMenu = ({
 }: ApplicationMenuDeps) => {
   let shown: unknown;
 
-  // With Do Not Disturb's end, which its menu says.
+  // With Do Not Disturb's end, which its menu says, and the saved searches
+  // it lists.
   const offered = (current: CommandContext) => [
     current.doNotDisturb?.until,
+    savedSearchCommands(current.state).map(({ open }) => [
+      open.id,
+      open.title(),
+    ]),
     ...commands.map((command) => [
       command.id,
       command.isAvailable?.(current) ?? true,

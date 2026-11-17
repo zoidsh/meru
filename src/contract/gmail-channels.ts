@@ -22,6 +22,13 @@ export const GMAIL_CHANNELS = {
    * Gmail's own Refresh, never a reload.
    */
   catchUp: "gmail:catch-up",
+  /** Main to page: a hash to go to, as `isGmailHash` holds it. */
+  navigate: "gmail:navigate",
+  /**
+   * Main to page, after each handshake: the person's own CSS for the page,
+   * in place of what the last one inserted; empty for none.
+   */
+  userStyles: "gmail:user-styles",
 } as const;
 
 /** What the page found once a view settled. */

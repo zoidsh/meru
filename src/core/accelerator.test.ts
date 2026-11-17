@@ -56,6 +56,13 @@ describe(matchesAccelerator, () => {
   it("matches a shifted key by where it is, and a letter by what it typed", () => {
     expect(
       matchesAccelerator(
+        "CommandOrControl+Shift+,",
+        press("<", "Comma", { meta: true, shift: true }),
+        true
+      )
+    ).toBeTruthy();
+    expect(
+      matchesAccelerator(
         "Command+Shift+]",
         press("}", "BracketRight", { meta: true, shift: true }),
         true

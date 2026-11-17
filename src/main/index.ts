@@ -36,7 +36,7 @@ import { createPower } from "#platform/power.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSessions } from "#platform/sessions.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
-import { createTextFile } from "#platform/text-file.ts";
+import { createTextFile, readTextUpTo } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
 import {
   createCapturedTrayFactory,
@@ -53,6 +53,7 @@ import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
+import { createGmailNavigation } from "./gmail-navigation.ts";
 import { serveGmailContract } from "./gmail-page.ts";
 import { createInboxTypes } from "./inbox-types.ts";
 import { createInbox } from "./inbox.ts";
@@ -89,6 +90,11 @@ import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
 import { captureGmailPage, exposeTestSettings } from "./test-hooks.ts";
 import { createTray } from "./tray.ts";
+import {
+  USER_STYLES_FILE_NAME,
+  USER_STYLES_MAX_BYTES,
+  createUserStyles,
+} from "./user-styles.ts";
 
 const APP_SCHEME = "meru-app";
 
@@ -144,11 +150,13 @@ const serveGmailPage = ({
   senders,
   profiles,
   settings,
+  userStyles,
 }: {
   gmailOrigin: string | undefined;
   senders: SenderRegistry;
   profiles: Pick<Profiles, "get">;
   settings: SettingsStore;
+  userStyles: () => Promise<string>;
 }) => {
   // The suite switches settings while the app runs, as a settings page will.
   if (MERU_E2E_BUILD) {
@@ -156,7 +164,7 @@ const serveGmailPage = ({
   }
 
   if (gmailOrigin === undefined) {
-    return createCatchUp(() => false);
+    return { catchUp: createCatchUp(() => false), navigate: () => false };
   }
 
   const gmailPage = serveGmailContract({
@@ -165,6 +173,7 @@ const serveGmailPage = ({
     isGmailTab: (key) => findTab(profiles.get(), key)?.app === "gmail",
     gmailOrigin,
     features: () => gmailFeatures(settings.get),
+    userStyles,
     ...(MERU_E2E_BUILD && captureGmailPage()),
     log: console.error,
   });
@@ -173,7 +182,10 @@ const serveGmailPage = ({
     settings.onChange(feature, gmailPage.push);
   }
 
-  return createCatchUp(gmailPage.catchUp);
+  return {
+    catchUp: createCatchUp(gmailPage.catchUp),
+    navigate: gmailPage.navigate,
+  };
 };
 
 const lifecycle = createAppLifecycle();
@@ -377,6 +389,7 @@ const start = async () => {
 
   const network = createNetwork();
   const gmail = findApp(apps, "gmail");
+  const gmailHome = gmail?.home ?? "";
   // The registry's Gmail, or the suite's stand-in for it.
   const gmailOrigin = gmail && new URL(gmail.home).origin;
   const feedUrl = gmailOrigin && `${gmailOrigin}${FEED_PATH}`;
@@ -490,7 +503,27 @@ const start = async () => {
     },
     log: console.error,
   });
-  const catchUp = serveGmailPage({ gmailOrigin, senders, profiles, settings });
+  const gmailPage = serveGmailPage({
+    gmailOrigin,
+    senders,
+    profiles,
+    settings,
+    userStyles: createUserStyles({
+      read: () =>
+        readTextUpTo(
+          path.join(lifecycle.userDataPath, USER_STYLES_FILE_NAME),
+          USER_STYLES_MAX_BYTES
+        ),
+      log: console.error,
+    }),
+  });
+  const { catchUp } = gmailPage;
+  const navigateGmail = createGmailNavigation({
+    send: gmailPage.navigate,
+    jumpTo: showGmail.jumpTo,
+    openMessage: showGmail.openMessage,
+    home: gmailHome,
+  });
 
   // A removed profile's pending catch-up is dropped with it.
   profiles.onChange(catchUp.follow);
@@ -523,7 +556,7 @@ const start = async () => {
     open: async (profileId, url) => {
       await showGmail.openMessage(profileId, url);
     },
-    inbox: gmail?.home ?? "",
+    inbox: gmailHome,
     initial: profiles.get(),
     focus,
     closeOverlay: overlays.close,
@@ -615,6 +648,9 @@ const start = async () => {
           ? doNotDisturb.switchOff()
           : doNotDisturb.switchOn(choice),
       setInboxOpen: inbox.setOpen,
+      navigateGmail,
+      saveSearch: profiles.saveSearch,
+      removeSavedSearch: profiles.removeSavedSearch,
     },
     locale: () => i18n.locale,
     setMenu: setApplicationMenu,

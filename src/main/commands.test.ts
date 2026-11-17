@@ -1,9 +1,15 @@
 import { describe, expect, it, onTestFinished } from "vitest";
 
+import { savedSearches } from "#core/saved-searches.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
-import { COMMANDS, commandsFor } from "./commands.ts";
+import {
+  COMMANDS,
+  commandsFor,
+  currentSearch,
+  savedSearchCommands,
+} from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createProfiles } from "./profiles.ts";
@@ -52,6 +58,7 @@ const setup = (initial: State = twoProfiles) => {
   let reloads = 0;
   let inboxOpen = false;
   const renames: string[] = [];
+  const navigations: string[] = [];
   const actions: CommandActions = {
     updateSetting: settings.update,
     reloadSelectedTab: () => {
@@ -71,6 +78,13 @@ const setup = (initial: State = twoProfiles) => {
       choice === "off"
         ? doNotDisturb.switchOff()
         : doNotDisturb.switchOn(choice),
+    navigateGmail: (profileId, hash) => {
+      navigations.push(`${profileId} ${hash}`);
+
+      return Promise.resolve();
+    },
+    saveSearch: profiles.saveSearch,
+    removeSavedSearch: profiles.removeSavedSearch,
   };
   const context = (): CommandContext => ({
     state: profiles.get(),
@@ -86,6 +100,9 @@ const setup = (initial: State = twoProfiles) => {
     settings,
     reloads: () => reloads,
     renames,
+    navigations,
+    context,
+    actions,
     isAvailable: (id: string) => commandOf(id).isAvailable?.(context()) ?? true,
     isChecked: (id: string) => commandOf(id).isChecked?.(context()),
     run: (id: string) => commandOf(id).run(context(), actions),
@@ -258,6 +275,100 @@ describe("the command registry", () => {
 
 const hasVibrancy = (platform: "darwin" | "win32" | "linux") =>
   commandsFor(platform).some((command) => command.id === "vibrancy.toggle");
+
+/** The two profiles, with the selected one's Gmail tab at `url`. */
+const gmailAt = (url: string, selectedTabId = "gmail"): State => ({
+  ...twoProfiles,
+  profiles: twoProfiles.profiles.map((profile, index) =>
+    index === 0
+      ? {
+          ...profile,
+          selectedTabId,
+          tabs: profile.tabs.map((tab) =>
+            "id" in tab && tab.id === "gmail" ? { ...tab, url } : tab
+          ),
+        }
+      : profile
+  ),
+});
+
+const INBOX = "https://mail.google.com/mail/u/0/";
+
+describe("the Mail menu's commands", () => {
+  it("sends the selected profile's Gmail to compose and to its settings", async () => {
+    const app = setup();
+
+    await app.run("gmail.compose");
+    await app.profiles.select("b");
+    await app.run("gmail.settings");
+
+    expect(app.navigations).toStrictEqual(["a #compose", "b #settings"]);
+    expect(app.isAvailable("gmail.compose")).toBeTruthy();
+    expect(app.isAvailable("gmail.settings")).toBeTruthy();
+  });
+
+  it("takes no shortcut for compose, and v3's for Gmail's settings", () => {
+    expect(commandOf("gmail.compose").shortcut).toBeUndefined();
+    expect(commandOf("gmail.settings").shortcut).toStrictEqual({
+      darwin: "CommandOrControl+Shift+,",
+      win32: "CommandOrControl+Shift+,",
+      linux: "CommandOrControl+Shift+,",
+    });
+  });
+
+  it("reads the search the selected profile's Gmail shows while it is in front", () => {
+    expect(currentSearch(gmailAt(`${INBOX}#search/subject%3A%22a+b%22`))).toBe(
+      'subject:"a b"'
+    );
+    expect(currentSearch(gmailAt(`${INBOX}#inbox`))).toBeUndefined();
+    expect(currentSearch(gmailAt(`${INBOX}#search/x`, "c1"))).toBeUndefined();
+  });
+
+  it("saves the current search once, for the selected profile alone", async () => {
+    const app = setup(gmailAt(`${INBOX}#search/subject%3A%22out+of+office%22`));
+
+    expect(app.isAvailable("savedSearch.save")).toBeTruthy();
+
+    await app.run("savedSearch.save");
+
+    expect(savedSearches(app.profiles.get(), "a")).toStrictEqual([
+      { id: "new", query: 'subject:"out of office"' },
+    ]);
+    expect(savedSearches(app.profiles.get(), "b")).toStrictEqual([]);
+    expect(app.isAvailable("savedSearch.save")).toBeFalsy();
+  });
+
+  it("runs a saved search and removes it from the menu's items", async () => {
+    const app = setup(gmailAt(`${INBOX}#search/subject%3A%22out+of+office%22`));
+
+    await app.run("savedSearch.save");
+
+    const [search] = savedSearchCommands(app.profiles.get());
+
+    expect(search?.open.title()).toBe('subject:"out of office"');
+
+    await search?.open.run(app.context(), app.actions);
+
+    expect(app.navigations).toStrictEqual([
+      "a #search/subject%3A%22out%20of%20office%22",
+    ]);
+
+    await search?.remove.run(app.context(), app.actions);
+
+    expect(savedSearches(app.profiles.get(), "a")).toStrictEqual([]);
+    expect(app.isAvailable("savedSearch.save")).toBeTruthy();
+  });
+
+  it("offers no save without a search in front", async () => {
+    const app = setup(gmailAt(`${INBOX}#inbox`));
+
+    expect(app.isAvailable("savedSearch.save")).toBeFalsy();
+
+    await app.run("savedSearch.save");
+
+    expect(savedSearches(app.profiles.get(), "a")).toStrictEqual([]);
+  });
+});
 
 describe(commandsFor, () => {
   it("has the vibrancy command on macOS alone", () => {
