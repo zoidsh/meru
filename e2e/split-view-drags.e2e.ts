@@ -359,7 +359,7 @@ test("near the view's outer edge a tab goes along it with a third of the view; a
   await staysUnchanged(overlay, userDataDir, "row(o c d)");
 });
 
-test("over a maximized split, which shows as one pane, a tab takes half the view and the whole split, restored, the other half", async ({
+test("over a maximized split no drop lands over the pages, in the middle or along an edge, and it stays maximized", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -373,33 +373,26 @@ test("over a maximized split, which shows as one pane, a tab takes half the view
   await findPage(app, standIn.calendarUrl);
   await sizeWindow(app, 1000, 700);
 
-  const [width, height] = await areaSize(shell);
-  const half = Math.round(height / 2);
+  for (const [across, down] of [
+    [0.5, 0.8],
+    [0.01, 0.5],
+  ] as const) {
+    // oxlint-disable-next-line no-await-in-loop -- one drag after another
+    await holdOver(shell, "o", await pointOf(shell, AREA, across, down));
+    // oxlint-disable-next-line no-await-in-loop -- one drag after another
+    await shell.mouse.up();
+    // oxlint-disable-next-line no-await-in-loop -- one drag after another
+    await staysUnchanged(overlay, userDataDir, "row(c d)");
+  }
 
-  await holdOver(shell, "o", await pointOf(shell, AREA, 0.5, 0.8));
-  await expect
-    .poll(() => zoneShown(overlay))
-    .toMatchObject({
-      kind: "pane",
-      label: "Split this pane",
-      rect: [0, height - half, width, half],
-    });
-  await shell.mouse.up();
-  await expect.poll(() => storedTree(userDataDir)).toBe("column(row(c d) o)");
+  const { splits: [kept] = [] } = (await stored(userDataDir)) ?? {};
 
-  const { splits: [split] = [] } = (await stored(userDataDir)) ?? {};
-
-  expect(split?.maximized).toBeUndefined();
-  expect(split?.root.children.map(({ size }) => size)).toStrictEqual([
-    0.5, 0.5,
-  ]);
-  await expect
-    .poll(() =>
-      readViews(app).then(
-        ({ views }) => views.filter((view) => view.visible).length
-      )
+  expect(kept?.maximized).toBe(true);
+  expect(
+    await readViews(app).then(
+      ({ views }) => views.filter((view) => view.visible).length
     )
-    .toBe(3);
+  ).toBe(1);
 });
 
 test("a tab dropped on the page of a tab shown alone in no split starts a second split, the first kept", async ({

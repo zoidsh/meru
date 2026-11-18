@@ -129,10 +129,10 @@ export const inViewReach = (
  * of left, right, top and bottom where two are as near, takes the tab along
  * it beside everything else on screen. Elsewhere the nearest half of the
  * pane under the pointer splits that pane that way, a tab shown alone being
- * a pane filling the area, and so a maximized split, whose other half the
- * whole split takes, restored. Beside a tab in no split that starts one,
- * and a tab of another split leaves it. Nothing over the tab's own page, in
- * a gap, or where the split would be refused.
+ * a pane filling the area. Beside a tab in no split that starts one, and a
+ * tab of another split leaves it. Nothing over the tab's own page, in a gap,
+ * where the split would be refused, or anywhere while the split is
+ * maximized, which the sidebar's drops restore.
  */
 export const viewDrop = (
   profile: Profile,
@@ -140,6 +140,10 @@ export const viewDrop = (
   point: { x: number; y: number },
   tabId: string
 ): ViewDrop | undefined => {
+  if (isMaximized(profile)) {
+    return undefined;
+  }
+
   // Main passes the area's bounds in the window, whose origin is not the point's.
   const area = { x: 0, y: 0, width: size.width, height: size.height };
   const distances = {
@@ -175,19 +179,13 @@ export const viewDrop = (
     top: down,
     bottom: 1 - down,
   });
-  const direction = directionOf(side);
-  // A maximized split looks like one pane, so its half takes the tab and
-  // the whole split, restored, takes the other half.
-  const next = isMaximized(profile)
-    ? splitAlongEdge(
-        profile,
-        tabId,
-        direction,
-        isFirst(side),
-        direction === "row" ? size.width : size.height,
-        1 / 2
-      )
-    : splitBeside(profile, tabId, pane.tabId, direction, isFirst(side));
+  const next = splitBeside(
+    profile,
+    tabId,
+    pane.tabId,
+    directionOf(side),
+    isFirst(side)
+  );
 
   return next
     ? {

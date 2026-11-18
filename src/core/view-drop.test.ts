@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { paneTabs } from "./pane-tree.ts";
 import type { PaneTree, Split } from "./pane-tree.ts";
-import { isMaximized, shownSplit, splitsOf } from "./split.ts";
+import { shownSplit, splitsOf } from "./split.ts";
 import { gmailTab, newProfile } from "./state.ts";
 import type { Profile, Tab } from "./state.ts";
 import { viewDrop } from "./view-drop.ts";
@@ -186,48 +186,16 @@ describe(viewDrop, () => {
     ]).toStrictEqual([["pane", "right", true, ["a", "b", "c"]], 1]);
   });
 
-  it("gives a maximized split's half to the tab and the other half to the whole split, restored", () => {
-    const maximized = profile("a", {
-      ...split("a", "b", "c"),
-      maximized: true,
-    });
-    const drop = viewDrop(maximized, WIDE, { x: 100, y: 400 }, "d");
-    const root = drop && shownSplit(drop.next)?.root;
-
-    expect(drop).toMatchObject({
-      kind: "pane",
-      side: "left",
-      zone: { x: 0, y: 0, width: 600, height: 800 },
-      fits: false,
-    });
-    expect(root && paneTabs(root)).toStrictEqual(["d", "a", "b", "c"]);
-    expect(
-      typeof root === "object" &&
-        root.children.map(({ size }) => Math.round(size * 1000))
-    ).toStrictEqual([500, 167, 167, 167]);
-    expect(drop && isMaximized(drop.next)).toBeFalsy();
-    expect(aim(maximized, 600, 700, "d")).toStrictEqual([
-      "pane",
-      "bottom",
-      true,
-      ["a", "b", "c", "d"],
-    ]);
-  });
-
-  it("takes a tab of a maximized split out of its pane first, and lands nothing over the page it shows", () => {
+  it("lands nothing over the pages while the split is maximized, neither beside the pane it shows nor along an edge", () => {
     const maximized = profile("a", {
       ...split("a", "b", "c"),
       maximized: true,
     });
 
     expect([
-      aim(maximized, 1100, 400, "b"),
-      aim(
-        profile("b", { ...split("a", "b", "c"), maximized: true }),
-        600,
-        400,
-        "b"
-      ),
-    ]).toStrictEqual([["pane", "right", true, ["a", "c", "b"]], undefined]);
+      viewDrop(maximized, WIDE, { x: 100, y: 400 }, "d"),
+      viewDrop(maximized, WIDE, { x: 5, y: 400 }, "d"),
+      viewDrop(maximized, WIDE, { x: 1100, y: 400 }, "b"),
+    ]).toStrictEqual([undefined, undefined, undefined]);
   });
 });

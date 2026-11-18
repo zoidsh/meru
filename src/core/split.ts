@@ -378,10 +378,10 @@ export const splitBeside = (
 
 /**
  * The profile with `tabId` in a new pane along one edge of everything on
- * screen, `direction` of it and first or last, selected: `least` of
- * `length`, the page area's along that way, a third unless given, or as
- * much as a pane's minimum takes where that is less. A maximized split is
- * restored beside it. A tab with a pane already leaves it first, and a
+ * screen, `direction` of it and first or last, selected: a third of
+ * `length`, the page area's along that way, or as much as a pane's minimum
+ * takes where a third is less. A maximized split is restored beside it. A
+ * tab with a pane already leaves it first, and a
  * split it leaves with one pane ends. Nothing for a tab not shown or
  * nothing else on screen to sit beside.
  */
@@ -390,8 +390,7 @@ export const splitAlongEdge = (
   tabId: string,
   direction: PaneDirection,
   first: boolean,
-  length: number,
-  least = 1 / 3
+  length: number
 ): Profile | undefined => {
   const shown = new Set(knownTabs(profile).map((tab) => tab.id));
   const { selectedTabId } = profile;
@@ -418,7 +417,7 @@ export const splitAlongEdge = (
       ? base.children.length
       : 1;
   const share = Math.max(
-    least,
+    1 / 3,
     (PANE_MINIMUM + 1) / Math.max(1, length - gaps * PANE_GAP)
   );
   // Under the minimum anyway where it takes nearly all, which the fit refuses.
