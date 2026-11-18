@@ -396,7 +396,7 @@ msgstr "On Until Turned Off"
 msgid "Open app"
 msgstr "Open app"
 
-#. Name and tooltip of the button, in the sidebar or the title bar, that lists Google's apps over the page to open one as a tab
+#. Name of the button, in the sidebar, the title bar or the page area of a profile with no app open, that lists Google's apps over the page to open one as a tab; also the tooltip of the first two
 #: src/shell/open-app.tsx
 msgctxt "button"
 msgid "Open app"

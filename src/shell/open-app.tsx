@@ -100,7 +100,7 @@ const useOpenAppButton = () => {
     message: "Open app",
     context: "button",
     comment:
-      "Name and tooltip of the button, in the sidebar or the title bar, that lists Google's apps over the page to open one as a tab",
+      "Name of the button, in the sidebar, the title bar or the page area of a profile with no app open, that lists Google's apps over the page to open one as a tab; also the tooltip of the first two",
   });
   const shortcut = useShellState("shortcuts")?.["app.open"];
 

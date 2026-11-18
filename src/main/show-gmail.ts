@@ -16,10 +16,10 @@ export interface ShowGmailDeps {
 }
 
 /**
- * The two ways main shows a profile's Gmail when asked from outside the
- * shell, a notification's click and the tray's jump: each ends with the
- * inbox closed, since what was asked for is what is selected, even when it
- * was selected already.
+ * How main shows a profile's Gmail when asked from outside its page, by a
+ * notification's click, an inbox row, the tray's profile item, the Mail
+ * menu or Sign in: each ends with the inbox closed, since what was asked for
+ * is what is selected, even when it was selected already.
  */
 export const createShowGmail = ({
   state,
