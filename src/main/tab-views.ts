@@ -766,6 +766,9 @@ export const createTabViews = ({
         ? tab.view.focus
         : undefined;
     },
+    /** Whether any tab of the profile has a view, shown or hidden. */
+    hasView: (profileId: string) =>
+      [...tabs.values()].some((tab) => tab.key.profileId === profileId),
     /** Each tab's status; one with no view, asleep or never loaded, is unloaded. */
     status: (key: TabKey): TabStatus =>
       tabs.get(tabKey(key))?.status ?? { kind: "unloaded" },

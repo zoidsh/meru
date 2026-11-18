@@ -4,6 +4,12 @@ import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
 import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
+import {
+  KEEP_ALIVE_TIMING,
+  KEEP_ALIVE_URL,
+  ROTATING_COOKIE,
+} from "#core/keep-alive.ts";
+import type { KeepAliveTiming } from "#core/keep-alive.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
@@ -26,6 +32,7 @@ import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
+import { createKeepAlivePages } from "#platform/keep-alive.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
 import {
@@ -57,6 +64,7 @@ import { createGmailNavigation } from "./gmail-navigation.ts";
 import { serveGmailContract } from "./gmail-page.ts";
 import { createInboxTypes } from "./inbox-types.ts";
 import { createInbox } from "./inbox.ts";
+import { createKeepAlive } from "./keep-alive.ts";
 import { createMailActions } from "./mail-actions.ts";
 import { createMailPoller } from "./mail.ts";
 import { createMailNotifications } from "./notifications.ts";
@@ -142,6 +150,16 @@ const standIns = MERU_E2E_BUILD
   : undefined;
 const apps = standIns ? standInApps(standIns.urls) : APPS;
 const signInOrigins = standIns?.signIn ? [standIns.signIn] : SIGN_IN_ORIGINS;
+// The sign-in stand-in's rotation page sets the cookie as Google's does.
+const keepAliveUrl = standIns?.signIn
+  ? `${standIns.signIn}/RotateCookiesPage`
+  : KEEP_ALIVE_URL;
+
+/** Seconds in place of days, for the suite's tests of it alone. */
+const keepAliveTiming: KeepAliveTiming =
+  MERU_E2E_BUILD && process.env.MERU_TEST_KEEP_ALIVE === "1"
+    ? { age: 2000, firstCheck: 500, interval: 500, timeout: 5000, retry: 2000 }
+    : KEEP_ALIVE_TIMING;
 
 /** v3's account id, so a profile id is the account id v3 would have made. */
 const newId = () => crypto.randomUUID();
@@ -679,6 +697,27 @@ const start = async () => {
   profiles.onChange(views.reconcile);
   // After the views, so focus handed back finds the new front tab's.
   profiles.onChange(overlays.follow);
+
+  const keepAlive = createKeepAlive({
+    pages: createKeepAlivePages(),
+    profileIds: () => profiles.get().profiles.map((profile) => profile.id),
+    hasView: views.hasView,
+    signedOut: (profileId) => mail.mail(profileId).status === "signedOut",
+    isOnline: network.isOnline,
+    prepareSession: (partition) => {
+      sessions.guard(partition, (ask) => allowsPermission(apps, ask));
+    },
+    url: keepAliveUrl,
+    cookie: ROTATING_COOKIE,
+    timing: keepAliveTiming,
+    now: Date.now,
+    log: console.error,
+  });
+
+  // After the views, so a profile given one closes its keep-alive.
+  profiles.onChange(keepAlive.follow);
+  views.onChange(keepAlive.follow);
+  lifecycle.onBeforeQuit(keepAlive.dispose);
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
 
