@@ -5,6 +5,7 @@ import {
   expect,
   findPage,
   findOverlayDocument,
+  readState,
   shownViews,
   test,
   writeSettings,
@@ -105,12 +106,10 @@ const launch = async (
   launchApp: () => Promise<ElectronApplication>,
   userDataDir: string,
   standIn: StandIn,
-  settings?: object
+  settings?: object,
+  profiles: object[] = PROFILES
 ) => {
-  await writeState(userDataDir, {
-    profiles: PROFILES,
-    selectedProfileId: "p0",
-  });
+  await writeState(userDataDir, { profiles, selectedProfileId: "p0" });
 
   if (settings) {
     await writeSettings(userDataDir, settings);
@@ -225,6 +224,52 @@ test("opens the selected row's message with Enter in its profile's Gmail, select
     .toStrictEqual([
       { url: messageLink(standIn.url, "a3"), partition: "persist:p0" },
     ]);
+});
+
+test("opens a row's message in Gmail where its profile's Gmail was closed", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, overlay } = await launch(
+    launchApp,
+    userDataDir,
+    standIn,
+    undefined,
+    PROFILES.map((profile) =>
+      profile.id === "p1"
+        ? { ...profile, tabs: [], selectedTabId: "" }
+        : profile
+    )
+  );
+
+  await openInbox(shell, overlay);
+  await grid(overlay)
+    .getByRole("row", { name: /Subject b2/u })
+    .click();
+
+  await expect(grid(overlay)).toBeHidden();
+  await expect(profileTab(shell, "Work")).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  await expect
+    .poll(() => shownViews(app))
+    .toStrictEqual([
+      { url: messageLink(standIn.url, "b2"), partition: "persist:p1" },
+    ]);
+  await expect
+    .poll(async () => {
+      const { profiles } = await readState<{
+        profiles: { tabs?: { id: string }[]; selectedTabId?: string }[];
+      }>(userDataDir);
+
+      return [
+        profiles[1]?.tabs?.map((tab) => tab.id),
+        profiles[1]?.selectedTabId,
+      ];
+    })
+    .toStrictEqual([["gmail"], "gmail"]);
 });
 
 test("removes a row an action runs on, sends it for the row's profile, and the count follows", async ({
