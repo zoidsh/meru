@@ -1,5 +1,12 @@
 import type { App } from "./apps.ts";
-import { GMAIL_TAB_ID, isPinned, isTab, knownTabs } from "./state.ts";
+import {
+  GMAIL_TAB_ID,
+  awake,
+  isAsleep,
+  isPinned,
+  isTab,
+  knownTabs,
+} from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 
 /** A tab is named by its profile and its id, which is unique only within it. */
@@ -42,7 +49,8 @@ export const newTabId = (app: App, newId: () => string) =>
 /**
  * Opens `url` as a tab of `app` in the profile, selected: appended, or put
  * right after the tab `after` names, or for a single-instance app with a tab
- * already, that tab, given the URL.
+ * already, that tab, given the URL. Opening a page in a sleeping profile
+ * wakes it.
  */
 export const openTab = (
   state: State,
@@ -63,7 +71,7 @@ export const openTab = (
       opened = { tabId: existing.id };
 
       return {
-        ...profile,
+        ...awake(profile),
         tabs: profile.tabs.map((tab) =>
           tab === existing ? { ...tab, url } : tab
         ),
@@ -88,7 +96,7 @@ export const openTab = (
     const at = before === -1 ? profile.tabs.length : before + 1;
 
     return {
-      ...profile,
+      ...awake(profile),
       tabs: profile.tabs.toSpliced(at, 0, tab),
       selectedTabId: tab.id,
     };
@@ -97,15 +105,18 @@ export const openTab = (
   return next && opened ? { state: next, ...opened } : undefined;
 };
 
-/** Nothing when the tab is not shown or already selected. */
+/**
+ * Selecting a tab wakes its profile. Nothing when the tab is not shown, or
+ * already selected in a profile awake.
+ */
 export const selectTab = (
   state: State,
   { profileId, tabId }: TabKey
 ): State | undefined =>
   updateProfile(state, profileId, (profile) =>
-    profile.selectedTabId !== tabId &&
+    (profile.selectedTabId !== tabId || isAsleep(profile)) &&
     knownTabs(profile).some((tab) => tab.id === tabId)
-      ? { ...profile, selectedTabId: tabId }
+      ? { ...awake(profile), selectedTabId: tabId }
       : undefined
   );
 

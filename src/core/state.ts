@@ -110,6 +110,8 @@ export interface Profile {
   tabbedInbox?: unknown;
   /** The profile's saved searches; read through `savedSearches`. */
   savedSearches?: unknown;
+  /** `true` while the profile is put to sleep; read through `isAsleep`. */
+  asleep?: unknown;
   /**
    * A `tabs` that is not a list, written back in its place; the tabs the
    * profile has instead live only in memory.
@@ -427,15 +429,96 @@ export const addProfile = (state: State, profile: Profile): State => ({
   selectedProfileId: profile.id,
 });
 
-/** Nothing when there is no such profile or it is already selected. */
-export const selectProfile = (
+/**
+ * Whether the profile is put to sleep: it has no pages, but its mail is
+ * still checked. Anything but `true` in the file, absent included, reads as
+ * awake, and stays as found until the profile is put to sleep or woken.
+ */
+export const isAsleep = (profile: Profile) => profile.asleep === true;
+
+/** The profile awake, its key gone, as a profile never put to sleep has none. */
+export const awake = (profile: Profile): Profile => {
+  if (!isAsleep(profile)) {
+    return profile;
+  }
+
+  const { asleep: _asleep, ...rest } = profile;
+
+  return rest as Profile;
+};
+
+/**
+ * Wakes the profile if it sleeps, as anything that shows it or opens a page
+ * in it does; nothing when it is awake or not listed.
+ */
+export const wakeProfile = (
   state: State,
   profileId: string
 ): State | undefined =>
-  state.selectedProfileId !== profileId &&
-  state.profiles.some((profile) => profile.id === profileId)
+  state.profiles.some(
+    (profile) => profile.id === profileId && isAsleep(profile)
+  )
+    ? {
+        ...state,
+        profiles: state.profiles.map((profile) =>
+          profile.id === profileId ? awake(profile) : profile
+        ),
+      }
+    : undefined;
+
+/**
+ * Selects the profile, waking it, so selecting is how every way to a
+ * sleeping profile wakes it. Nothing when there is no such profile, or it is
+ * selected and awake.
+ */
+export const selectProfile = (
+  state: State,
+  profileId: string
+): State | undefined => {
+  const woken = wakeProfile(state, profileId);
+
+  if (woken) {
+    return { ...woken, selectedProfileId: profileId };
+  }
+
+  return state.selectedProfileId !== profileId &&
+    state.profiles.some((profile) => profile.id === profileId)
     ? { ...state, selectedProfileId: profileId }
     : undefined;
+};
+
+/**
+ * Puts the profile to sleep. Asleep, the selected profile gives way to the
+ * next awake one in the row, wrapping round, and stays selected when no
+ * other is awake. Nothing when it sleeps already or is not listed.
+ */
+export const sleepProfile = (
+  state: State,
+  profileId: string
+): State | undefined => {
+  const index = state.profiles.findIndex((profile) => profile.id === profileId);
+  const profile = state.profiles[index];
+
+  if (!profile || isAsleep(profile)) {
+    return;
+  }
+
+  const profiles = state.profiles.map((candidate) =>
+    candidate === profile ? { ...candidate, asleep: true } : candidate
+  );
+  const next =
+    state.selectedProfileId === profileId
+      ? [...profiles.slice(index + 1), ...profiles.slice(0, index)].find(
+          (candidate) => !isAsleep(candidate)
+        )
+      : undefined;
+
+  return {
+    ...state,
+    profiles,
+    selectedProfileId: next?.id ?? state.selectedProfileId,
+  };
+};
 
 /** Whether the profile is listed and some other profile would be left. */
 export const canRemoveProfile = (state: State, profileId: string) =>

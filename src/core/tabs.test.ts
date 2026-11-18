@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { APPS, findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
-import { decodeState, gmailTab, isTab, newProfile } from "./state.ts";
+import {
+  decodeState,
+  gmailTab,
+  isAsleep,
+  isTab,
+  newProfile,
+  sleepProfile,
+} from "./state.ts";
 import type { State, Tab } from "./state.ts";
 import {
   adjacentTab,
@@ -410,5 +417,39 @@ describe(adjacentTab, () => {
 
   it("is nothing when Gmail's is the only tab", () => {
     expect(adjacentTab(state([]), 1)).toBeUndefined();
+  });
+});
+
+describe("a sleeping profile's tabs", () => {
+  const asleep: State = {
+    version: 1,
+    profiles: [
+      {
+        ...newProfile("a", "Default"),
+        tabs: [gmailTab(), { id: "c", app: "calendar", url: "", title: "" }],
+      },
+      newProfile("b", "Work"),
+    ],
+    selectedProfileId: "b",
+  };
+  const slept = sleepProfile(asleep, "a") ?? asleep;
+  const calendar = findApp(APPS, "calendar") as App;
+
+  it("wake their profile when one is selected, the selected one included, or a page opens in it", () => {
+    expect(
+      [
+        selectTab(slept, { profileId: "a", tabId: "c" }),
+        selectTab(slept, { profileId: "a", tabId: "gmail" }),
+        openTab(slept, "a", calendar, calendar.home, () => "new")?.state,
+      ].map((next) => next && isAsleep(next.profiles[0] ?? newProfile("", "")))
+    ).toStrictEqual([false, false, false]);
+  });
+
+  it("leave it asleep for anything else, such as a move or a close", () => {
+    const moved = closeTab(slept, { profileId: "a", tabId: "c" });
+
+    expect(
+      moved && isAsleep(moved.profiles[0] ?? newProfile("", ""))
+    ).toBeTruthy();
   });
 });

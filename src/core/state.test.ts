@@ -14,6 +14,7 @@ import {
   forgetProfilesToClear,
   gmailTab,
   hasTabbedInbox,
+  isAsleep,
   isPinned,
   isTab,
   knownTabs,
@@ -26,6 +27,8 @@ import {
   selectProfile,
   selectedProfile,
   setTabbedInbox,
+  sleepProfile,
+  wakeProfile,
   sortProfilesToClear,
   switchDoNotDisturb,
   withAProfile,
@@ -550,11 +553,112 @@ describe(addProfile, () => {
   });
 });
 
+/** The ids of the sleeping profiles, then the selected one. */
+const sleepers = (state: State | undefined) =>
+  state && [
+    state.profiles.filter(isAsleep).map((profile) => profile.id),
+    state.selectedProfileId,
+  ];
+
 describe(selectProfile, () => {
   it("selects a listed profile, and changes nothing for the selected one or another", () => {
     expect(selectProfile(three, "c")?.selectedProfileId).toBe("c");
     expect(selectProfile(three, "b")).toBeUndefined();
     expect(selectProfile(three, "missing")).toBeUndefined();
+  });
+
+  it("wakes the profile it selects, the selected one asleep included", () => {
+    const cAsleep = sleepProfile(three, "c");
+    const allAsleep = sleepProfile(
+      sleepProfile(sleepProfile(three, "a") ?? three, "c") ?? three,
+      "b"
+    );
+
+    expect([
+      sleepers(selectProfile(cAsleep ?? three, "c")),
+      sleepers(selectProfile(allAsleep ?? three, "b")),
+    ]).toStrictEqual([
+      [[], "c"],
+      [["a", "c"], "b"],
+    ]);
+  });
+});
+
+describe(sleepProfile, () => {
+  const asleep = sleepers;
+
+  it("puts a background profile to sleep, leaving the selection", () => {
+    expect(asleep(sleepProfile(three, "a"))).toStrictEqual([["a"], "b"]);
+  });
+
+  it("selects the next awake profile in the row when the selected one sleeps, wrapping round", () => {
+    const cAsleep = sleepProfile(three, "c") ?? three;
+
+    expect([
+      asleep(sleepProfile(three, "b")),
+      asleep(sleepProfile(cAsleep, "b")),
+      asleep(sleepProfile({ ...three, selectedProfileId: "c" }, "c")),
+    ]).toStrictEqual([
+      [["b"], "c"],
+      [["b", "c"], "a"],
+      [["c"], "a"],
+    ]);
+  });
+
+  it("keeps the only awake profile selected as it sleeps", () => {
+    const only = createInitialState(() => "only");
+
+    expect(asleep(sleepProfile(only, "only"))).toStrictEqual([
+      ["only"],
+      "only",
+    ]);
+  });
+
+  it("changes nothing for a profile asleep already or not listed", () => {
+    expect(
+      sleepProfile(sleepProfile(three, "a") ?? three, "a")
+    ).toBeUndefined();
+    expect(sleepProfile(three, "missing")).toBeUndefined();
+  });
+});
+
+describe(wakeProfile, () => {
+  it("wakes a sleeping profile, dropping its key, and changes nothing for one awake", () => {
+    const woken = wakeProfile(sleepProfile(three, "a") ?? three, "a");
+
+    expect(woken?.profiles[0]).toStrictEqual(newProfile("a", "Default"));
+    expect(woken?.selectedProfileId).toBe("b");
+    expect(wakeProfile(three, "a")).toBeUndefined();
+  });
+});
+
+describe(isAsleep, () => {
+  it("keeps a profile asleep through the file, and anything but true as found, read awake", () => {
+    const stored = {
+      version: 1,
+      profiles: [
+        { id: "a", name: "A", asleep: true },
+        { id: "b", name: "B", asleep: "yes" },
+        { id: "c", name: "C" },
+      ],
+      selectedProfileId: "c",
+    };
+    const decoded = decodeState(stored);
+
+    if (decoded.kind !== "read") {
+      throw new Error("The state did not decode");
+    }
+
+    expect(decoded.value.profiles.map(isAsleep)).toStrictEqual([
+      true,
+      false,
+      false,
+    ]);
+    expect(
+      (
+        encodeState(decoded.value) as { profiles: Record<string, unknown>[] }
+      ).profiles.map((profile) => profile.asleep)
+    ).toStrictEqual([true, "yes", undefined]);
   });
 });
 

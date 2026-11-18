@@ -114,6 +114,29 @@ describe(planViews, () => {
     expect(keys(asleepAtLaunch.views)).toStrictEqual(["a/a1"]);
   });
 
+  it("gives a sleeping profile no view, selected or not, opens none of its Open at Launch tabs, and closes those it had", () => {
+    const asleepA = {
+      ...state,
+      profiles: state.profiles.map((profile) =>
+        profile.id === "a" ? { ...profile, asleep: true } : profile
+      ),
+    };
+    const atLaunch = plan(asleepA);
+    const afterSwitch = plan(
+      { ...asleepA, selectedProfileId: "b" },
+      ["a/gmail", "a/a1"],
+      ["a"]
+    );
+
+    expect([
+      keys(atLaunch.views),
+      atLaunch.front,
+      keys(atLaunch.opening),
+      atLaunch.launched,
+    ]).toStrictEqual([[], undefined, [], []]);
+    expect(keys(afterSwitch.views)).toStrictEqual(["b/gmail", "b/b1", "b/b2"]);
+  });
+
   it("never gives a tab of an app this build does not know a view", () => {
     expect(keys(plan(state, ["a/a2"], ["a"]).views)).toStrictEqual(["a/a1"]);
   });
