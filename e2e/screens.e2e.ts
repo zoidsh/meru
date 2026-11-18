@@ -665,9 +665,10 @@ test("a sleeping pane in a split", async ({
 });
 
 /**
- * Gmail, Docs and Meet pinned, then Calendar, Sheets, Drive and Slides,
- * with `root` as the split and Calendar selected; no app has two tabs, so
- * the sidebar starts narrow.
+ * Gmail, Drive and Meet pinned, then Calendar, Sheets, Drive and Slides,
+ * with `root` as the split and Calendar selected; no app has two tabs
+ * that are not pinned, so the sidebar starts narrow. Only Gmail, Calendar
+ * and Drive go in a pane, whose stand-ins their apps claim.
  */
 const withBox = (standIn: StandIn, root: unknown) => ({
   profiles: [
@@ -684,7 +685,7 @@ const withBox = (standIn: StandIn, root: unknown) => ({
         },
         {
           id: "k",
-          app: "docs",
+          app: "drive",
           url: standIn.driveUrl,
           title: "Plans",
           pinned: true,
@@ -753,6 +754,7 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
   const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
 
   await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
   await findPage(app, standIn.url);
 
   // Whether the width chosen before the relaunch is kept is not this shot's

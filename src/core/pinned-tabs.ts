@@ -12,14 +12,6 @@ export const selectPinnedCommandId = (position: number) =>
  */
 export const pinnedShortcut = (position: number) => `Control+Shift+${position}`;
 
-/** The pinned tabs, for the pinned area, and the rest, for the list, each in order. */
-export const splitPinned = <T extends { pinned: boolean }>(
-  tabs: readonly T[]
-) => ({
-  pinned: tabs.filter((tab) => tab.pinned),
-  listed: tabs.filter((tab) => !tab.pinned),
-});
-
 /**
  * Whether the pinned tile at `index` of `count` spans both columns of the
  * wide sidebar's two: the last of an odd count, alone in its row.

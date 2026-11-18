@@ -13,7 +13,9 @@ import type { KeyboardEvent, MouseEvent, PointerEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
-import { spansPinnedRow, splitPinned } from "#core/pinned-tabs.ts";
+import { itemTabs, sidebarLayout } from "#core/drawn-tabs.ts";
+import type { SidebarItem } from "#core/drawn-tabs.ts";
+import { spansPinnedRow } from "#core/pinned-tabs.ts";
 import { sidebarWidth } from "#core/sidebar.ts";
 import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
@@ -27,9 +29,6 @@ import { useTabDrag } from "./tab-drag.ts";
 import { UnreadBadge } from "./unread-badge.tsx";
 
 type ShellTab = ShellState["tabs"]["tabs"][number];
-
-/** The split's box among the tabs of an area. */
-const BOX = "split box";
 
 const appName = (app: string) => findApp(APPS, app)?.name ?? app;
 
@@ -203,13 +202,18 @@ const keepFocus = (event: { preventDefault: () => void }) => {
 
 /** Left or Right on a wide pinned tile: the other tile of its row, if any. */
 const sideways = (tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => {
-  const tiles = [...(tab.parentElement?.children ?? [])];
+  // The tiles alone: a split's box before them in the grid is no tile.
+  const tiles = [
+    ...(tab.parentElement?.querySelectorAll<HTMLElement>(
+      ':scope > [role="tab"]'
+    ) ?? []),
+  ];
   const index = tiles.indexOf(tab);
   const other = key === "ArrowRight" ? index + 1 : index - 1;
 
   // A row holds an even index and the next.
   if ((key === "ArrowRight") === (index % 2 === 0)) {
-    (tiles[other] as HTMLElement | undefined)?.focus();
+    tiles[other]?.focus();
   }
 };
 
@@ -322,6 +326,7 @@ const TabButton = ({
     <Tabs.Tab
       value={tab.id}
       data-tab-id={tab.id}
+      data-drop-id={tab.id}
       ref={selected ? keepInView : undefined}
       onContextMenu={(event: MouseEvent<HTMLElement>) => {
         event.preventDefault();
@@ -416,47 +421,6 @@ const TabButton = ({
 };
 
 /**
- * Where the split's box goes: first in the pinned area when it holds a
- * pinned tab, else in the list where its first tab would be; and the tabs
- * of either area outside it, which alone move by the keyboard or a drag.
- */
-const boxLayout = (tabs: ShellState["tabs"]) => {
-  const { listed } = splitPinned(tabs.tabs);
-  const boxTabs = (tabs.box ?? []).flatMap(
-    (tabId) => tabs.tabs.find((tab) => tab.id === tabId) ?? []
-  );
-  const boxed = new Set(boxTabs.length > 1 ? boxTabs.map((tab) => tab.id) : []);
-  const outside = splitPinned(tabs.tabs.filter((tab) => !boxed.has(tab.id)));
-  const boxPinned = boxTabs.filter((tab) => tab.pinned);
-  const boxInPinned = boxed.size > 0 && boxPinned.length > 0;
-  const boxInListed = boxed.size > 0 && !boxInPinned;
-  const listedItems: (ShellTab | typeof BOX)[] = [...outside.listed];
-
-  if (boxInListed) {
-    const first = listed.findIndex((tab) => boxed.has(tab.id));
-
-    listedItems.splice(
-      listed.slice(0, first).filter((tab) => !boxed.has(tab.id)).length,
-      0,
-      BOX
-    );
-  }
-
-  return {
-    boxed,
-    boxPinned,
-    boxListed: boxTabs.filter((tab) => !tab.pinned),
-    outside,
-    pinnedItems: (boxInPinned ? [BOX, ...outside.pinned] : outside.pinned) as (
-      | ShellTab
-      | typeof BOX
-    )[],
-    listedItems,
-    listedCount: outside.listed.length + (boxInListed ? boxed.size : 0),
-  };
-};
-
-/**
  * The selected profile's tabs, down the left below the titlebar: the pinned
  * ones in the pinned area at the top, as tiles in either width, then the rest
  * in the list, square tiles when narrow and rows with their titles when
@@ -488,17 +452,22 @@ export const Sidebar = ({
   const [hovered, setHovered] = useState<string>();
   const wide = state === "wide";
   const gap = wide ? 4 : 8;
-  const { pinned } = splitPinned(tabs.tabs);
-  const {
-    boxed,
-    boxPinned,
-    boxListed,
-    outside,
-    pinnedItems,
-    listedItems,
-    listedCount,
-  } = boxLayout(tabs);
-  const boxHeight = 6 + boxed.size * 32 + (boxed.size - 1) * gap;
+  const pinned = tabs.tabs.filter((tab) => tab.pinned);
+  const layout = sidebarLayout(tabs.tabs, tabs.box ?? undefined);
+  const boxTabs = [...layout.pinned, ...layout.listed].flatMap((item) =>
+    item.kind === "box" ? item.tabs : []
+  );
+  const boxed = new Set(boxTabs.map((tab) => tab.id));
+  // Where a tab moved beside the box lands: next to its first stored tab,
+  // since the box stands where that one does.
+  const boxFirst = tabs.tabs.find((tab) => boxed.has(tab.id))?.id;
+  const placeOf = (item: SidebarItem<ShellTab> | undefined) =>
+    item?.kind === "box" ? boxFirst : item?.tab.id;
+  // A box in the pinned area is always first, so no tab moves past it.
+  const areaOf = (tab: ShellTab) =>
+    tab.pinned
+      ? layout.pinned.filter((item) => item.kind === "tab")
+      : layout.listed;
   const close = (tabId: string) => {
     shellCalls().closeTab({ profileId, tabId });
   };
@@ -592,7 +561,7 @@ export const Sidebar = ({
     }
 
     if (moved.announce) {
-      const area = tab.pinned ? outside.pinned : outside.listed;
+      const area = itemTabs(areaOf(tab).filter((item) => item.kind === "tab"));
       const title = tabTitle(tab);
       const position = area.indexOf(tab) + 1;
       const count = area.length;
@@ -626,8 +595,9 @@ export const Sidebar = ({
       return false;
     }
 
-    const area = tab.pinned ? outside.pinned : outside.listed;
-    const to = area.indexOf(tab) + step;
+    const area = areaOf(tab);
+    const to =
+      area.findIndex((item) => item.kind === "tab" && item.tab === tab) + step;
 
     if (to < 0 || to >= area.length) {
       const title = tabTitle(tab);
@@ -649,7 +619,7 @@ export const Sidebar = ({
       return false;
     }
 
-    move(tab.id, area[step < 0 ? to : to + 1]?.id, true);
+    move(tab.id, placeOf(area[step < 0 ? to : to + 1]), true);
 
     return true;
   };
@@ -714,62 +684,77 @@ export const Sidebar = ({
     });
   };
 
-  /** Where a listed tab's cross lies, over the tab's place. */
-  const closeSlot = (tab: ShellTab, className?: string) => (
+  /**
+   * A listed tab with its cross, which lies over it for the pointer alone,
+   * out of the tab order and hidden from assistive technology, since a
+   * tablist holds only tabs.
+   */
+  const listedTab = (tab: ShellTab) => (
     <div
       key={tab.id}
-      className={cn(
-        "relative h-8",
-        wide ? "flex items-center justify-end pr-1" : "w-8",
-        className
-      )}
+      data-drop-id={tab.id}
+      className={cn("relative", wide ? "w-full" : "w-8")}
     >
-      {wide ? (
-        <Button
-          variant="secondary"
-          size="icon-xs"
-          tabIndex={-1}
-          aria-label={closeLabel(tab)}
-          {...hover(tab.id)}
-          onMouseDown={keepFocus}
-          className={cn(
-            "pointer-events-auto opacity-0",
-            hovered === tab.id && "opacity-100"
-          )}
-          onClick={() => {
-            close(tab.id);
-          }}
-        >
-          <XIcon />
-        </Button>
-      ) : (
-        // Below shadcn's smallest button, kept from v3 to fit a tile's
-        // corner.
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-label={closeLabel(tab)}
-          {...hover(tab.id)}
-          onMouseDown={keepFocus}
-          className={cn(
-            "pointer-events-auto absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground opacity-0 ring-1 ring-shell [&_svg]:size-2.5",
-            hovered === tab.id && "opacity-100"
-          )}
-          onClick={() => {
-            close(tab.id);
-          }}
-        >
-          <XIcon />
-        </button>
-      )}
+      {button(tab, !wide)}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0",
+          wide && "flex items-center justify-end pr-1"
+        )}
+      >
+        {wide ? (
+          <Button
+            variant="secondary"
+            size="icon-xs"
+            tabIndex={-1}
+            aria-label={closeLabel(tab)}
+            {...hover(tab.id)}
+            onMouseDown={keepFocus}
+            className={cn(
+              "pointer-events-auto opacity-0",
+              hovered === tab.id && "opacity-100"
+            )}
+            onClick={() => {
+              close(tab.id);
+            }}
+          >
+            <XIcon />
+          </Button>
+        ) : (
+          // Below shadcn's smallest button, kept from v3 to fit a tile's
+          // corner.
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={closeLabel(tab)}
+            {...hover(tab.id)}
+            onMouseDown={keepFocus}
+            className={cn(
+              "pointer-events-auto absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground opacity-0 ring-1 ring-shell [&_svg]:size-2.5",
+              hovered === tab.id && "opacity-100"
+            )}
+            onClick={() => {
+              close(tab.id);
+            }}
+          >
+            <XIcon />
+          </button>
+        )}
+      </div>
     </div>
   );
 
-  // Its tabs are not the area's own, so a drag in the area passes them by.
-  const box = (
+  const boxPinned = boxTabs.filter((tab) => tab.pinned);
+
+  // Its tabs are not the area's own, so a drag passes them by; in the list
+  // the box is one place to land above or below, standing for its first
+  // stored tab, and in the pinned area, always first, none.
+  const box = (inList: boolean) => (
     <div
-      key={BOX}
+      key="split box"
       data-split-box
+      data-drop-id={inList ? boxFirst : undefined}
       className={cn(
         "-mx-[3px] flex flex-col rounded-[12px] bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)] p-[3px]",
         wide ? "col-span-2 gap-1" : "items-center gap-2"
@@ -787,14 +772,7 @@ export const Sidebar = ({
       ) : (
         boxPinned.map((tab) => button(tab, true))
       )}
-      {boxListed.map((tab) => (
-        <div key={tab.id} className={cn("relative", wide ? "w-full" : "w-8")}>
-          {button(tab, !wide)}
-          <div aria-hidden className="pointer-events-none absolute inset-0">
-            {closeSlot(tab)}
-          </div>
-        </div>
-      ))}
+      {boxTabs.filter((tab) => !tab.pinned).map(listedTab)}
     </div>
   );
 
@@ -853,7 +831,7 @@ export const Sidebar = ({
         })}
         className={cn("flex min-h-0 shrink flex-col", wide ? "gap-1" : "gap-2")}
       >
-        {pinnedItems.length > 0 && (
+        {layout.pinned.length > 0 && (
           <ScrollArea className={cn(scroller, "shrink")}>
             {/* One parent in either width, so a tile keeps its element,
                 and with it focus, as the width changes. */}
@@ -866,16 +844,16 @@ export const Sidebar = ({
                 inset
               )}
             >
-              {pinnedItems.map((item) =>
-                item === BOX
-                  ? box
-                  : button(item, true, {
+              {layout.pinned.map((item, index) =>
+                item.kind === "box"
+                  ? box(false)
+                  : button(item.tab, true, {
                       // Counted from after the box, which takes its own row.
                       spansRow:
                         wide &&
                         spansPinnedRow(
-                          outside.pinned.indexOf(item),
-                          outside.pinned.length
+                          index - (boxPinned.length > 0 ? 1 : 0),
+                          layout.pinned.length - (boxPinned.length > 0 ? 1 : 0)
                         ),
                       grid: wide,
                     })
@@ -883,43 +861,24 @@ export const Sidebar = ({
             </div>
           </ScrollArea>
         )}
-        {listedItems.length > 0 && (
+        {layout.listed.length > 0 && (
           <ScrollArea
-            style={{ minHeight: listRoom(listedCount, gap) }}
+            style={{
+              minHeight: listRoom(itemTabs(layout.listed).length, gap),
+            }}
             className={cn(scroller, "shrink-[1000]")}
           >
-            <div className={cn("relative", inset)}>
-              <div
-                data-tab-area="listed"
-                className={cn(
-                  "flex flex-col",
-                  wide ? "gap-1" : "items-center gap-2"
-                )}
-              >
-                {listedItems.map((item) =>
-                  item === BOX ? box : button(item, !wide)
-                )}
-              </div>
-              <div
-                aria-hidden
-                className={cn(
-                  "pointer-events-none absolute inset-x-0 top-1.5 flex flex-col",
-                  wide ? "gap-1" : "items-center gap-2"
-                )}
-              >
-                {listedItems.map((item) =>
-                  item === BOX ? (
-                    // The box's own crosses lie over its tabs.
-                    <div
-                      key={BOX}
-                      className="shrink-0"
-                      style={{ height: boxHeight }}
-                    />
-                  ) : (
-                    closeSlot(item)
-                  )
-                )}
-              </div>
+            <div
+              data-tab-area="listed"
+              className={cn(
+                "flex flex-col",
+                wide ? "gap-1" : "items-center gap-2",
+                inset
+              )}
+            >
+              {layout.listed.map((item) =>
+                item.kind === "box" ? box(true) : listedTab(item.tab)
+              )}
             </div>
           </ScrollArea>
         )}

@@ -409,6 +409,52 @@ describe(adjacentTab, () => {
     expect(adjacentTab(three("c1"), -1)?.tabId).toBe("gmail");
   });
 
+  it("goes in the order the sidebar draws, a split's box where its first tab stands", () => {
+    const current = state(
+      [
+        tab("a", "calendar"),
+        tab("b", "sheets"),
+        tab("c", "slides"),
+        tab("n", "drive"),
+      ],
+      "a"
+    );
+    const [profile] = current.profiles;
+    const boxed: State = {
+      ...current,
+      profiles: profile
+        ? [
+            {
+              ...profile,
+              split: {
+                root: {
+                  direction: "row",
+                  children: [
+                    { size: 0.5, pane: "a" },
+                    { size: 0.5, pane: "n" },
+                  ],
+                },
+              },
+            },
+          ]
+        : [],
+    };
+
+    expect([
+      adjacentTab(boxed, 1)?.tabId,
+      adjacentTab(
+        {
+          ...boxed,
+          profiles: boxed.profiles.map((each) => ({
+            ...each,
+            selectedTabId: "b",
+          })),
+        },
+        -1
+      )?.tabId,
+    ]).toStrictEqual(["n", "n"]);
+  });
+
   it("skips a tab of an app this build does not know", () => {
     expect(
       adjacentTab(state([tab("x1", "later"), tab("c1", "calendar")]), 1)?.tabId

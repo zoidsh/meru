@@ -238,6 +238,50 @@ describe(closeTabsBelow, () => {
   });
 });
 
+/** A, B, C, then N split beside A: drawn A, N in the box, then B, C. */
+const boxed = (): State => {
+  const current = state(
+    [
+      tab("a", "calendar"),
+      tab("b", "sheets"),
+      tab("c", "slides"),
+      tab("n", "drive"),
+    ],
+    "a"
+  );
+  const [profile] = current.profiles;
+
+  return {
+    ...current,
+    profiles: profile
+      ? [
+          {
+            ...profile,
+            split: {
+              root: {
+                direction: "row",
+                children: [
+                  { size: 0.5, pane: "a" },
+                  { size: 0.5, pane: "n" },
+                ],
+              },
+            },
+          },
+        ]
+      : [],
+  };
+};
+
+describe("Close tabs below with a split's box in the list", () => {
+  it("counts as drawn: below B is C alone, and below N are B and C", () => {
+    expect([
+      ids(closeTabsBelow(boxed(), { profileId: "p", tabId: "b" }))?.[0],
+      ids(closeTabsBelow(boxed(), { profileId: "p", tabId: "n" }))?.[0],
+      offered(boxed(), "n")?.includes("closeBelow"),
+    ]).toStrictEqual([["gmail", "a", "b", "n"], ["gmail", "a", "n"], true]);
+  });
+});
+
 describe(duplicatePlace, () => {
   it("puts a copy right after its tab, or at the list's end for a pinned one", () => {
     expect([

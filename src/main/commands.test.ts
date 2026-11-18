@@ -464,6 +464,37 @@ describe("the command registry", () => {
     expect(app.isAvailable("tab.pinned.2")).toBeFalsy();
   });
 
+  it("numbers the pinned tabs as drawn, a split's box holding one first", () => {
+    const app = setup({
+      ...twoProfiles,
+      profiles: [
+        {
+          ...newProfile("a", "Default"),
+          tabs: [
+            gmailTab(),
+            { id: "c1", app: "calendar", url: "", title: "Week" },
+            { id: "d1", app: "drive", url: "", title: "", pinned: true },
+          ],
+          split: {
+            root: {
+              direction: "row",
+              children: [
+                { size: 0.5, pane: "c1" },
+                { size: 0.5, pane: "d1" },
+              ],
+            },
+          },
+        },
+      ],
+    });
+    const label = (id: string) => commandOf(id).label?.(app.context());
+
+    expect([label("tab.pinned.1"), label("tab.pinned.2")]).toStrictEqual([
+      "Drive",
+      "Gmail",
+    ]);
+  });
+
   it("removes the selected profile, offered only while another is left", async () => {
     const app = setup();
 

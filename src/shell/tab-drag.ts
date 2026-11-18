@@ -90,9 +90,9 @@ export const useTabDrag = ({
 
     return tabDrop(
       [
-        ...parts.area.querySelectorAll<HTMLElement>(":scope > [data-tab-id]"),
+        ...parts.area.querySelectorAll<HTMLElement>(":scope > [data-drop-id]"),
       ].map((tile) => ({
-        id: tile.dataset.tabId ?? "",
+        id: tile.dataset.dropId ?? "",
         box: tile.getBoundingClientRect(),
       })),
       current.tabId,

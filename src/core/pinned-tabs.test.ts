@@ -4,28 +4,7 @@ import {
   spansPinnedRow,
   pinnedShortcut,
   selectPinnedCommandId,
-  splitPinned,
 } from "./pinned-tabs.ts";
-
-describe(splitPinned, () => {
-  it("puts the pinned tabs in the pinned area and the rest in the list, each in its order", () => {
-    const tabs = [
-      { id: "a", pinned: false },
-      { id: "b", pinned: true },
-      { id: "c", pinned: false },
-      { id: "d", pinned: true },
-    ];
-    const { pinned, listed } = splitPinned(tabs);
-
-    expect([
-      pinned.map((tab) => tab.id),
-      listed.map((tab) => tab.id),
-    ]).toStrictEqual([
-      ["b", "d"],
-      ["a", "c"],
-    ]);
-  });
-});
 
 describe(spansPinnedRow, () => {
   it("spans the row with the last tile of an odd count alone", () => {

@@ -1,5 +1,6 @@
 import { findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
+import { drawnTabs } from "./drawn-tabs.ts";
 import { isWebUrl } from "./google-redirect.ts";
 import { menuPointInside } from "./overlay.ts";
 import { isInSplit } from "./split.ts";
@@ -62,16 +63,6 @@ export interface TabMenuRequest extends TabKey {
   y: number;
 }
 
-/** The profile's tabs in the order the sidebar draws them: pinned first. */
-const sidebarOrder = (profile: Pick<Profile, "tabs">) => {
-  const shown = knownTabs(profile);
-
-  return [
-    ...shown.filter((tab) => isPinned(tab)),
-    ...shown.filter((tab) => !isPinned(tab)),
-  ];
-};
-
 const profileOf = (state: State, profileId: string) =>
   state.profiles.find((candidate) => candidate.id === profileId);
 
@@ -81,7 +72,7 @@ const othersOf = (profile: Profile, tab: Tab) =>
 
 /** The tabs Close tabs below closes: those drawn after it that can close. */
 const belowOf = (profile: Profile, tab: Tab) => {
-  const order = sidebarOrder(profile);
+  const order = drawnTabs(profile);
 
   return order.slice(order.indexOf(tab) + 1).filter(canCloseTab);
 };

@@ -1,4 +1,5 @@
 import type { App } from "./apps.ts";
+import { drawnTabs } from "./drawn-tabs.ts";
 import type { PaneDirection } from "./pane-tree.ts";
 import { isInSplit, splitTarget, splitWith, withoutPane } from "./split.ts";
 import { GMAIL_TAB_ID, isPinned, isTab, knownTabs } from "./state.ts";
@@ -324,8 +325,9 @@ export const findTab = (state: State, { profileId, tabId }: TabKey) => {
 };
 
 /**
- * The selected profile's shown tab `offset` places from its selected one,
- * wrapping round as v3 does; nothing when it has only the one tab.
+ * The selected profile's shown tab `offset` places from its selected one in
+ * the order the sidebar draws them, wrapping round as v3 does; nothing when
+ * it has only the one tab.
  */
 export const adjacentTab = (
   state: State,
@@ -334,7 +336,7 @@ export const adjacentTab = (
   const profile = state.profiles.find(
     (candidate) => candidate.id === state.selectedProfileId
   );
-  const shown = profile ? knownTabs(profile) : [];
+  const shown = profile ? drawnTabs(profile) : [];
   const index = shown.findIndex((tab) => tab.id === profile?.selectedTabId);
   const tab = shown.at((index + offset) % shown.length);
 

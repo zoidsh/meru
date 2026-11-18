@@ -494,6 +494,7 @@ test("a split that would leave a pane under the minimum is refused with a toast,
 });
 
 const PINNED_DOCS = "Docs pinned";
+const SLIDES = "Slides listed";
 const LISTED_SHEETS = "Sheets listed";
 
 /**
@@ -573,6 +574,44 @@ const storedOrder = async (userDataDir: string) => {
   return profiles[0]?.tabs.map((each) => each.id);
 };
 
+/** Records, for `prevented`, whether each key pressed in the shell was taken. */
+const followPrevented = (shell: Page) =>
+  shell.evaluate(() => {
+    globalThis.addEventListener("keydown", (event) => {
+      Reflect.set(globalThis, "meruPrevented", event.defaultPrevented);
+    });
+  });
+
+const prevented = (shell: Page) =>
+  shell.evaluate(() => Reflect.get(globalThis, "meruPrevented") as boolean);
+
+/** A point of the box, `down` of the way from its top. */
+const pointOfBox = (shell: Page, down: number) =>
+  shell.evaluate((share) => {
+    const box = document
+      .querySelector("[data-split-box]")
+      ?.getBoundingClientRect();
+
+    return {
+      x: (box?.x ?? 0) + (box?.width ?? 0) / 2,
+      y: (box?.y ?? 0) + (box?.height ?? 0) * share,
+    };
+  }, down);
+
+/** Drags `target` in steps to `to`, as a person does. */
+const dragTo = async (
+  shell: Page,
+  target: Locator,
+  to: { x: number; y: number }
+) => {
+  const from = await middleOf(target);
+
+  await shell.mouse.move(from.x, from.y);
+  await shell.mouse.down();
+  await shell.mouse.move(to.x, to.y, { steps: 8 });
+  await shell.mouse.up();
+};
+
 const middleOf = async (target: Locator, down = 0.5) => {
   const box = await target.boundingBox();
 
@@ -605,9 +644,20 @@ test("a split's tabs sit in one box in the list where its first tab was, in read
     });
   await expect(calendar).toHaveAccessibleDescription("In split view");
 
+  // Each press on its own, so a move and its way back cannot pass for none:
+  // a move takes the key at once.
+  await followPrevented(shell);
   await calendar.focus();
-  await calendar.press("Alt+ArrowUp");
-  await calendar.press("Alt+ArrowDown");
+
+  for (const key of ["Alt+ArrowUp", "Alt+ArrowDown"]) {
+    // oxlint-disable-next-line no-await-in-loop -- one press at a time
+    await calendar.press(key);
+    // oxlint-disable-next-line no-await-in-loop -- one press at a time
+    expect(await prevented(shell)).toBe(false);
+    // oxlint-disable-next-line no-await-in-loop -- one press at a time
+    expect(await sidebarOrder(shell)).toMatchObject({ tabs: order });
+  }
+
   await expect(calendar).toBeFocused();
 
   const from = await middleOf(calendar);
@@ -627,7 +677,9 @@ test("a split's tabs sit in one box in the list where its first tab was, in read
     "d",
   ]);
 
-  await tab(shell, LISTED_SHEETS).click();
+  // Gmail, outside the split; a Sheets tab would load Google's own page,
+  // since its stand-in address is not one Sheets claims.
+  await tab(shell, "Gmail").click();
   await expect.poll(() => drawnPanes(shell)).toStrictEqual([]);
   expect(await sidebarOrder(shell)).toMatchObject({ box: ["d", "c"] });
 
@@ -710,4 +762,151 @@ test("a split holding a pinned tab puts its box first in the pinned area, its pi
       box: [],
       area: undefined,
     });
+});
+
+test("a tab outside moves past a box in the list as past one place, above or below it and never into it, by the keyboard and by a drag", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          {
+            id: "gmail",
+            app: "gmail",
+            url: standIn.url,
+            title: "",
+            pinned: true,
+          },
+          { id: "s", app: "slides", url: standIn.driveUrl, title: SLIDES },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: CALENDAR_TITLE,
+          },
+          {
+            id: "o",
+            app: "sheets",
+            url: standIn.driveUrl,
+            title: LISTED_SHEETS,
+          },
+          { id: "d", app: "drive", url: standIn.driveUrl, title: DRIVE_TITLE },
+        ],
+        selectedTabId: "c",
+        split: { root: row("d", "c") },
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const sheets = tab(shell, LISTED_SHEETS);
+  const slides = tab(shell, SLIDES);
+  const drawn = (...ids: string[]) =>
+    expect
+      .poll(() => sidebarOrder(shell).then(({ tabs }) => tabs))
+      .toStrictEqual(["gmail", ...ids]);
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+  await drawn("s", "d", "c", "o");
+
+  await sheets.focus();
+  await sheets.press("Alt+ArrowUp");
+  await drawn("s", "o", "d", "c");
+  await expect(sheets).toBeFocused();
+  await sheets.press("Alt+ArrowDown");
+  await drawn("s", "d", "c", "o");
+
+  await slides.focus();
+  await slides.press("Alt+ArrowDown");
+  await drawn("d", "c", "s", "o");
+  await slides.press("Alt+ArrowUp");
+  await drawn("s", "d", "c", "o");
+
+  // The box's top and bottom edges are the gaps above and below it; its
+  // middle lands nothing.
+  await dragTo(shell, sheets, await pointOfBox(shell, 0.5));
+  await dragTo(shell, sheets, await pointOfBox(shell, 0.05));
+  await drawn("s", "o", "d", "c");
+  await dragTo(shell, sheets, await pointOfBox(shell, 0.95));
+  await drawn("s", "d", "c", "o");
+  await dragTo(shell, slides, await pointOfBox(shell, 0.95));
+  await drawn("d", "c", "s", "o");
+  await dragTo(shell, slides, await pointOfBox(shell, 0.05));
+  await drawn("s", "d", "c", "o");
+});
+
+test("Left and Right in the wide pinned grid go between the two tiles of a row, counted after a box first in the pinned area", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const pinnedTab = (id: string, app: string, title: string) => ({
+    id,
+    app,
+    url: standIn.driveUrl,
+    title,
+    pinned: true,
+  });
+
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          {
+            id: "gmail",
+            app: "gmail",
+            url: standIn.url,
+            title: "",
+            pinned: true,
+          },
+          pinnedTab("k", "docs", PINNED_DOCS),
+          pinnedTab("q", "sheets", "Sheets pinned"),
+          pinnedTab("r", "slides", "Slides pinned"),
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: CALENDAR_TITLE,
+          },
+        ],
+        selectedTabId: "c",
+        split: { root: row("c", "gmail") },
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const docs = tab(shell, PINNED_DOCS);
+  const sheets = tab(shell, "Sheets pinned");
+  const slides = tab(shell, "Slides pinned");
+
+  await findPage(app, standIn.calendarUrl);
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await expect
+    .poll(() => sidebarOrder(shell))
+    .toMatchObject({ area: "pinned", box: ["gmail", "c"] });
+
+  await docs.focus();
+  await docs.press("ArrowRight");
+  await expect(sheets).toBeFocused();
+  await sheets.press("ArrowRight");
+  await expect(sheets).toBeFocused();
+  await sheets.press("ArrowLeft");
+  await expect(docs).toBeFocused();
+  await slides.focus();
+  await slides.press("ArrowRight");
+  await slides.press("ArrowLeft");
+  await expect(slides).toBeFocused();
 });

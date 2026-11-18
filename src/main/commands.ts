@@ -1,6 +1,7 @@
 import { plural, t } from "@lingui/core/macro";
 
 import { APPS, findApp } from "#core/apps.ts";
+import { drawnTabs } from "#core/drawn-tabs.ts";
 import {
   COMPOSE_HASH,
   SETTINGS_HASH,
@@ -700,8 +701,9 @@ export const COMMANDS: readonly Command[] = [
   }),
   ...Array.from({ length: PINNED_SHORTCUT_COUNT }, (_, index): Command => {
     const position = index + 1;
+    // Counted as drawn, a split's box among the pinned coming first.
     const pinnedTab = (state: State) =>
-      knownTabs(selectedProfile(state)).filter(isPinned)[index];
+      drawnTabs(selectedProfile(state)).filter(isPinned)[index];
 
     return {
       id: selectPinnedCommandId(position),
