@@ -157,21 +157,21 @@ test("a right-click on a tab pops up its native menu at the pointer in the main 
     "Reload CommandOrControl+R",
     "Duplicate",
     "Copy URL",
-    "Open in default browser",
+    "Open in Default Browser",
     "—",
     "Pin",
-    "Bookmark tab CommandOrControl+D",
+    "Bookmark Tab CommandOrControl+D",
     "—",
-    "Split right CommandOrControl+Alt+N",
-    "Split down CommandOrControl+Alt+Shift+N",
-    "Maximize pane (off) CommandOrControl+Shift+Enter",
-    "Separate from split (off)",
+    "Split Right CommandOrControl+Alt+N",
+    "Split Down CommandOrControl+Alt+Shift+N",
+    "Maximize Pane (off) CommandOrControl+Shift+Enter",
+    "Separate from Split (off)",
     "—",
-    "Move to new window CommandOrControl+Shift+N",
+    "Move to New Window CommandOrControl+Shift+N",
     "—",
-    "Close tab CommandOrControl+Shift+W",
-    "Close other tabs",
-    "Close tabs below",
+    "Close Tab CommandOrControl+Shift+W",
+    "Close Other Tabs",
+    "Close Tabs Below",
   ]);
 
   // Drive has no page yet, and Gmail is pinned and cannot be bookmarked.
@@ -194,8 +194,8 @@ test("a right-click on a tab pops up its native menu at the pointer in the main 
   ]);
   expect(gmail.items.slice(-3)).toStrictEqual([
     "—",
-    "Close other tabs",
-    "Close tabs below",
+    "Close Other Tabs",
+    "Close Tabs Below",
   ]);
 });
 
@@ -248,7 +248,7 @@ test("Reload, Copy URL and Open in default browser act on the menu's tab and sel
     .toBe(false);
 
   await choose(app, shell, DRIVE_TITLE, "Copy URL");
-  await choose(app, shell, DRIVE_TITLE, "Open in default browser");
+  await choose(app, shell, DRIVE_TITLE, "Open in Default Browser");
 
   await expect
     .poll(async () => [
@@ -303,7 +303,7 @@ test("Pin, Open at Launch and Unpin, then Close tab, Close other tabs and Close 
   const pinned = await openMenu(app, shell, DRIVE_TITLE);
 
   expect(pinned.items).toContain("Open at Launch [ ]");
-  expect(pinned.items).not.toContain("Close tab CommandOrControl+Shift+W");
+  expect(pinned.items).not.toContain("Close Tab CommandOrControl+Shift+W");
   await chooseContextMenuItem(app, "Open at Launch");
   await expect
     .poll(async () => {
@@ -323,24 +323,24 @@ test("Pin, Open at Launch and Unpin, then Close tab, Close other tabs and Close 
     DRIVE_TITLE,
   ]);
 
-  await choose(app, shell, DRIVE_TITLE, "Close tab");
+  await choose(app, shell, DRIVE_TITLE, "Close Tab");
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, CALENDAR_TITLE]);
 
   await choose(app, shell, CALENDAR_TITLE, "Duplicate");
   await expect(tabs(shell)).toHaveCount(3);
-  await choose(app, shell, STAND_IN_TITLE, "Close tabs below");
+  await choose(app, shell, STAND_IN_TITLE, "Close Tabs Below");
   await expect(tabs(shell)).toHaveCount(0);
   await expect.poll(() => storedIds(userDataDir)).toStrictEqual(["gmail"]);
 });
 
-test("Close other tabs keeps the menu's tab and the pinned ones, and selects it where the selected one closed", async ({
+test("Close Other Tabs keeps the menu's tab and the pinned ones, and selects it where the selected one closed", async ({
   launchApp,
   standIn,
   userDataDir,
 }) => {
   const { app, shell } = await launch(launchApp, userDataDir, standIn);
 
-  await choose(app, shell, DRIVE_TITLE, "Close other tabs");
+  await choose(app, shell, DRIVE_TITLE, "Close Other Tabs");
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, DRIVE_TITLE]);
   await expect(tab(shell, DRIVE_TITLE)).toHaveAttribute(
     "aria-selected",
@@ -348,31 +348,31 @@ test("Close other tabs keeps the menu's tab and the pinned ones, and selects it 
   );
 });
 
-test("Bookmark tab bookmarks the menu's page, which the next menu offers to remove", async ({
+test("Bookmark Tab bookmarks the menu's page, which the next menu offers to remove", async ({
   launchApp,
   standIn,
   userDataDir,
 }) => {
   const { app, shell } = await launch(launchApp, userDataDir, standIn);
 
-  await choose(app, shell, CALENDAR_TITLE, "Bookmark tab");
+  await choose(app, shell, CALENDAR_TITLE, "Bookmark Tab");
   await expect
     .poll(() => menuItems(app, shell, CALENDAR_TITLE))
-    .toContain("Remove bookmark CommandOrControl+D");
-  await chooseContextMenuItem(app, "Remove bookmark");
+    .toContain("Remove Bookmark CommandOrControl+D");
+  await chooseContextMenuItem(app, "Remove Bookmark");
   await expect
     .poll(() => menuItems(app, shell, CALENDAR_TITLE))
-    .toContain("Bookmark tab CommandOrControl+D");
+    .toContain("Bookmark Tab CommandOrControl+D");
 });
 
-test("Move to new window, then the own window's tab in the sidebar and its More options offer Move to main window, which puts it back", async ({
+test("Move to New Window, then the own window's tab in the sidebar and its More options offer Move to main window, which puts it back", async ({
   launchApp,
   standIn,
   userDataDir,
 }) => {
   const { app, shell } = await launch(launchApp, userDataDir, standIn);
 
-  await choose(app, shell, CALENDAR_TITLE, "Move to new window");
+  await choose(app, shell, CALENDAR_TITLE, "Move to New Window");
 
   const titlebar = await findTitlebar(app);
   const more = titlebar
@@ -381,7 +381,7 @@ test("Move to new window, then the own window's tab in the sidebar and its More 
   const sidebar = await openMenu(app, shell, CALENDAR_TITLE);
 
   expect(sidebar.items).toContain(
-    "Move to main window CommandOrControl+Shift+M"
+    "Move to Main Window CommandOrControl+Shift+M"
   );
   expect(sidebar.items).not.toContain("Sleep");
 
@@ -394,9 +394,9 @@ test("Move to new window, then the own window's tab in the sidebar and its More 
     y: Math.round((box?.y ?? 0) + (box?.height ?? 0)),
   });
   expect(options.items).toStrictEqual([
-    "Move to main window CommandOrControl+Shift+M",
+    "Move to Main Window CommandOrControl+Shift+M",
     "Copy URL",
-    "Open in default browser",
+    "Open in Default Browser",
   ]);
 
   await chooseContextMenuItem(app, "Copy URL");
@@ -404,7 +404,7 @@ test("Move to new window, then the own window's tab in the sidebar and its More 
     .poll(() => readClipboard(app))
     .toStrictEqual([standIn.calendarUrl]);
   await openContextMenu(app, () => more.click());
-  await chooseContextMenuItem(app, "Move to main window");
+  await chooseContextMenuItem(app, "Move to Main Window");
   await expect
     .poll(async () => {
       const calendar = await storedTab(userDataDir, 1);

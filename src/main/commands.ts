@@ -51,6 +51,8 @@ import {
 import type { TabKey } from "#core/tabs.ts";
 import type { Navigation } from "#platform/content-view.ts";
 
+import { MENU_LABELS } from "./menu-labels.ts";
+
 /** What a command decides from: main's state as it is now. */
 export interface CommandContext {
   state: State;
@@ -379,11 +381,7 @@ export const COMMANDS: readonly Command[] = [
   {
     id: "tab.reload",
     inOwnWindow: true,
-    title: () =>
-      t({
-        message: "Reload",
-        comment: "Menu item in the View menu that loads the selected tab again",
-      }),
+    title: () => MENU_LABELS.reload(),
     shortcut: {
       darwin: "CommandOrControl+R",
       win32: "CommandOrControl+R",
@@ -536,24 +534,11 @@ export const COMMANDS: readonly Command[] = [
   {
     id: "tab.bookmark",
     inOwnWindow: true,
-    title: () =>
-      t({
-        message: "Bookmark Tab",
-        comment:
-          "Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile",
-      }),
+    title: () => MENU_LABELS.bookmarkTab(),
     label: ({ bookmarked }) =>
       bookmarked === true
-        ? t({
-            message: "Remove Bookmark",
-            comment:
-              "Menu item in the Tabs menu, in place of Bookmark Tab while the selected tab's page is bookmarked",
-          })
-        : t({
-            message: "Bookmark Tab",
-            comment:
-              "Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile",
-          }),
+        ? MENU_LABELS.removeBookmark()
+        : MENU_LABELS.bookmarkTab(),
     shortcut: {
       darwin: "CommandOrControl+D",
       win32: "CommandOrControl+D",
@@ -567,12 +552,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.splitRight",
-    title: () =>
-      t({
-        message: "Split Right",
-        comment:
-          "Menu item in the Tabs menu that lists apps to open in a new pane to the right of the focused one",
-      }),
+    title: () => MENU_LABELS.splitRight(),
     shortcut: {
       darwin: "CommandOrControl+Alt+N",
       win32: "CommandOrControl+Alt+N",
@@ -589,12 +569,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.splitDown",
-    title: () =>
-      t({
-        message: "Split Down",
-        comment:
-          "Menu item in the Tabs menu that lists apps to open in a new pane below the focused one",
-      }),
+    title: () => MENU_LABELS.splitDown(),
     shortcut: {
       darwin: "CommandOrControl+Alt+Shift+N",
       win32: "CommandOrControl+Alt+Shift+N",
@@ -611,12 +586,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.separate",
-    title: () =>
-      t({
-        message: "Separate from Split",
-        comment:
-          "Menu item in the Tabs menu that takes the focused pane's tab out of its split, to show alone",
-      }),
+    title: () => MENU_LABELS.separateFromSplit(),
     isAvailable: ({ state }) => {
       const profile = selectedProfile(state);
 
@@ -626,12 +596,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.moveToNewWindow",
-    title: () =>
-      t({
-        message: "Move to New Window",
-        comment:
-          "Menu item in the Tabs menu that moves the selected tab's page into a window of its own, keeping the tab in the sidebar",
-      }),
+    title: () => MENU_LABELS.moveToNewWindow(),
     shortcut: {
       darwin: "CommandOrControl+Shift+N",
       win32: "CommandOrControl+Shift+N",
@@ -648,12 +613,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.moveToMainWindow",
-    title: () =>
-      t({
-        message: "Move to Main Window",
-        comment:
-          "Menu item in the Tabs menu, while a tab's own window has focus, that puts its page back in the main window as a tab and closes that window",
-      }),
+    title: () => MENU_LABELS.moveToMainWindow(),
     shortcut: {
       darwin: "CommandOrControl+Shift+M",
       win32: "CommandOrControl+Shift+M",
@@ -667,19 +627,10 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.maximize",
-    title: () =>
-      t({
-        message: "Maximize Pane",
-        comment:
-          "Menu item in the Tabs menu that shows the focused pane of a split view alone, keeping the split",
-      }),
+    title: () => MENU_LABELS.maximizePane(),
     label(context) {
       return isMaximized(selectedProfile(context.state))
-        ? t({
-            message: "Restore Panes",
-            comment:
-              "Menu item in the Tabs menu, in place of Maximize Pane while one pane shows alone, that shows every pane of the split again",
-          })
+        ? MENU_LABELS.restorePanes()
         : this.title();
     },
     shortcut: {
@@ -725,11 +676,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.close",
-    title: () =>
-      t({
-        message: "Close Tab",
-        comment: "Menu item in the Tabs menu that closes the selected tab",
-      }),
+    title: () => MENU_LABELS.closeTab(),
     shortcut: {
       darwin: "CommandOrControl+Shift+W",
       win32: "CommandOrControl+Shift+W",
@@ -803,12 +750,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.openAtLaunch",
-    title: () =>
-      t({
-        message: "Open at Launch",
-        comment:
-          "Menu item in the Tabs menu, checked while the selected pinned tab loads when Meru starts rather than when first selected",
-      }),
+    title: () => MENU_LABELS.openAtLaunch(),
     isAvailable: ({ state }) => {
       const tab = findTab(state, selectedTab(state));
 

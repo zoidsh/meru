@@ -242,9 +242,7 @@ msgstr "Bookmark {title}"
 msgid "Bookmark removed"
 msgstr "Bookmark removed"
 
-#. Item of a tab's context menu that adds its page to the profile's bookmarks
 #. Tooltip of the bookmark button on a tab's row in the wide sidebar, which saves its page as a bookmark
-#: src/main/tab-menu.ts
 #: src/shell/tab-strip.tsx
 msgid "Bookmark tab"
 msgstr "Bookmark tab"
@@ -255,9 +253,8 @@ msgctxt "button"
 msgid "Bookmark tab"
 msgstr "Bookmark tab"
 
-#. Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile
-#. Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu, that saves the tab's page as a bookmark of its profile
+#: src/main/menu-labels.ts
 msgid "Bookmark Tab"
 msgstr "Bookmark Tab"
 
@@ -295,23 +292,18 @@ msgstr "Close {title}"
 
 #. Item of a tab's context menu that closes every other tab of the profile but pinned ones
 #: src/main/tab-menu.ts
-msgid "Close other tabs"
-msgstr "Close other tabs"
+msgid "Close Other Tabs"
+msgstr "Close Other Tabs"
 
-#. Item of a tab's context menu that closes it
-#: src/main/tab-menu.ts
-msgid "Close tab"
-msgstr "Close tab"
-
-#. Menu item in the Tabs menu that closes the selected tab
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu, that closes the tab
+#: src/main/menu-labels.ts
 msgid "Close Tab"
 msgstr "Close Tab"
 
 #. Item of a tab's context menu that closes the tabs below it in the sidebar but pinned ones
 #: src/main/tab-menu.ts
-msgid "Close tabs below"
-msgstr "Close tabs below"
+msgid "Close Tabs Below"
+msgstr "Close Tabs Below"
 
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
@@ -547,13 +539,8 @@ msgstr "Mark as Read"
 msgid "Mark as Spam"
 msgstr "Mark as Spam"
 
-#. Item of a tab's context menu in a split view that shows the tab's pane alone, keeping the split
-#: src/main/tab-menu.ts
-msgid "Maximize pane"
-msgstr "Maximize pane"
-
-#. Menu item in the Tabs menu that shows the focused pane of a split view alone, keeping the split
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu in a split view, that shows the pane alone, keeping the split
+#: src/main/menu-labels.ts
 msgid "Maximize Pane"
 msgstr "Maximize Pane"
 
@@ -582,23 +569,13 @@ msgstr "Minimize"
 msgid "More options"
 msgstr "More options"
 
-#. Item of a tab's context menu, for a tab in a window of its own, that puts its page back in the main window and closes that window
-#: src/main/tab-menu.ts
-msgid "Move to main window"
-msgstr "Move to main window"
-
-#. Menu item in the Tabs menu, while a tab's own window has focus, that puts its page back in the main window as a tab and closes that window
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu, a tab's context menu and More options of a tab's own window, that puts its page back in the main window and closes that window
+#: src/main/menu-labels.ts
 msgid "Move to Main Window"
 msgstr "Move to Main Window"
 
-#. Item of a tab's context menu that moves its page into a window of its own, the tab staying in the sidebar
-#: src/main/tab-menu.ts
-msgid "Move to new window"
-msgstr "Move to new window"
-
-#. Menu item in the Tabs menu that moves the selected tab's page into a window of its own, keeping the tab in the sidebar
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu, that moves the tab's page into a window of its own, the tab staying in the sidebar
+#: src/main/menu-labels.ts
 msgid "Move to New Window"
 msgstr "Move to New Window"
 
@@ -683,10 +660,8 @@ msgstr "On Until Turned Off"
 msgid "Open app or bookmark"
 msgstr "Open app or bookmark"
 
-#. Checkbox item of a pinned tab's context menu: whether it loads when Meru starts rather than when first selected
-#. Menu item in the Tabs menu, checked while the selected pinned tab loads when Meru starts rather than when first selected
-#: src/main/commands.ts
-#: src/main/tab-menu.ts
+#. Checkbox menu item, in the Tabs menu and a pinned tab's context menu: whether the tab loads when Meru starts rather than when first selected
+#: src/main/menu-labels.ts
 msgid "Open at Launch"
 msgstr "Open at Launch"
 
@@ -702,8 +677,8 @@ msgstr "Open Gmail, Calendar or another Google app in this profile."
 
 #. Item of a tab's context menu that opens its page in the system's web browser
 #: src/main/tab-menu.ts
-msgid "Open in default browser"
-msgstr "Open in default browser"
+msgid "Open in Default Browser"
+msgstr "Open in Default Browser"
 
 #. Heading over the list of Google's apps and bookmarks whose pick opens in a new pane of the split view
 #: src/shell/open-app.tsx
@@ -769,10 +744,8 @@ msgstr "Redo"
 
 #. Accessible name and tooltip of the title bar button that loads the page again
 #. Button in place of a tab's page that crashed, which loads the page again
-#. Item of a tab's context menu that loads its page again
-#. Menu item in the View menu that loads the selected tab again
-#: src/main/commands.ts
-#: src/main/tab-menu.ts
+#. Menu item, in the View menu and a tab's context menu, that loads the page again
+#: src/main/menu-labels.ts
 #: src/shell/tab-problem.tsx
 #: src/shell/titlebar.tsx
 msgid "Reload"
@@ -784,9 +757,7 @@ msgid "Remove {name}?"
 msgstr "Remove {name}?"
 
 #. Accessible name and tooltip of the cross on a bookmark's row in the New tab launcher, which deletes that bookmark
-#. Item of a tab's context menu, in place of Bookmark tab while its page is bookmarked, that removes that bookmark
 #. Tooltip of the filled bookmark button on a tab's row in the wide sidebar, which removes its page's bookmark
-#: src/main/tab-menu.ts
 #: src/shell/open-app.tsx
 #: src/shell/tab-strip.tsx
 msgid "Remove bookmark"
@@ -798,8 +769,8 @@ msgctxt "button"
 msgid "Remove bookmark"
 msgstr "Remove bookmark"
 
-#. Menu item in the Tabs menu, in place of Bookmark Tab while the selected tab's page is bookmarked
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu, in place of Bookmark Tab while the tab's page is bookmarked, that removes that bookmark
+#: src/main/menu-labels.ts
 msgid "Remove Bookmark"
 msgstr "Remove Bookmark"
 
@@ -845,14 +816,12 @@ msgid "Resize panes"
 msgstr "Resize panes"
 
 #. Accessible name and tooltip of the button in the sidebar's box of a split view, while one pane shows alone, that shows every pane again
-#. Item of a tab's context menu, in place of Maximize pane while one pane shows alone, that shows every pane of the split again
-#: src/main/tab-menu.ts
 #: src/shell/tab-strip.tsx
 msgid "Restore panes"
 msgstr "Restore panes"
 
-#. Menu item in the Tabs menu, in place of Maximize Pane while one pane shows alone, that shows every pane of the split again
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu, in place of Maximize Pane while one pane shows alone, that shows every pane of the split again
+#: src/main/menu-labels.ts
 msgid "Restore Panes"
 msgstr "Restore Panes"
 
@@ -911,13 +880,8 @@ msgstr "Select Previous Tab"
 msgid "Select Profile {position}"
 msgstr "Select Profile {position}"
 
-#. Item of a tab's context menu that takes it out of the split view, to show alone
-#: src/main/tab-menu.ts
-msgid "Separate from split"
-msgstr "Separate from split"
-
-#. Menu item in the Tabs menu that takes the focused pane's tab out of its split, to show alone
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu, that takes the tab out of the split view, to show alone
+#: src/main/menu-labels.ts
 msgid "Separate from Split"
 msgstr "Separate from Split"
 
@@ -980,23 +944,13 @@ msgstr "Sleep Profile"
 msgid "Sleep Tab"
 msgstr "Sleep Tab"
 
-#. Item of a tab's context menu that lists apps to open in a new pane below the tab's
-#: src/main/tab-menu.ts
-msgid "Split down"
-msgstr "Split down"
-
-#. Menu item in the Tabs menu that lists apps to open in a new pane below the focused one
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu, that lists apps and bookmarks to open in a new pane below the tab's
+#: src/main/menu-labels.ts
 msgid "Split Down"
 msgstr "Split Down"
 
-#. Item of a tab's context menu that lists apps to open in a new pane to the right of the tab's
-#: src/main/tab-menu.ts
-msgid "Split right"
-msgstr "Split right"
-
-#. Menu item in the Tabs menu that lists apps to open in a new pane to the right of the focused one
-#: src/main/commands.ts
+#. Menu item, in the Tabs menu and a tab's context menu, that lists apps and bookmarks to open in a new pane to the right of the tab's
+#: src/main/menu-labels.ts
 msgid "Split Right"
 msgstr "Split Right"
 

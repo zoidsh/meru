@@ -410,7 +410,7 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
   await openContextMenu(first, () =>
     tab(shell, STAND_IN_TITLE).click({ button: "right" })
   );
-  await chooseContextMenuItem(first, "Maximize pane");
+  await chooseContextMenuItem(first, "Maximize Pane");
   await expect
     .poll(() => shownWidths(first).then((shown) => shown.map(({ url }) => url)))
     .toStrictEqual([standIn.url]);
@@ -438,7 +438,7 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
   await openContextMenu(app, () =>
     tab(again, STAND_IN_TITLE).click({ button: "right" })
   );
-  await chooseContextMenuItem(app, "Restore panes");
+  await chooseContextMenuItem(app, "Restore Panes");
   await expect.poll(() => shownWidths(app)).toHaveLength(2);
   await findPage(app, standIn.calendarUrl);
 });

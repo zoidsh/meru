@@ -181,21 +181,21 @@ describe(createTabMenu, () => {
       "Reload CommandOrControl+R",
       "Duplicate",
       "Copy URL",
-      "Open in default browser",
+      "Open in Default Browser",
       "—",
       "Pin",
-      "Bookmark tab",
+      "Bookmark Tab",
       "—",
-      "Split right",
-      "Split down",
-      "Maximize pane (off)",
-      "Separate from split (off)",
+      "Split Right",
+      "Split Down",
+      "Maximize Pane (off)",
+      "Separate from Split (off)",
       "—",
-      "Move to new window",
+      "Move to New Window",
       "—",
-      "Close tab CommandOrControl+W",
-      "Close other tabs",
-      "Close tabs below",
+      "Close Tab CommandOrControl+W",
+      "Close Other Tabs",
+      "Close Tabs Below",
     ]);
   });
 
@@ -209,7 +209,7 @@ describe(createTabMenu, () => {
       "Unpin",
       "Open at Launch [x]",
     ]);
-    expect(labels(popups[0])).not.toContain("Bookmark tab");
+    expect(labels(popups[0])).not.toContain("Bookmark Tab");
   });
 
   it("runs each item on the menu's tab, which need not be selected", async () => {
@@ -221,14 +221,14 @@ describe(createTabMenu, () => {
       "Reload",
       "Duplicate",
       "Copy URL",
-      "Open in default browser",
+      "Open in Default Browser",
       "Pin",
-      "Bookmark tab",
-      "Split right",
-      "Move to new window",
-      "Close tab",
-      "Close other tabs",
-      "Close tabs below",
+      "Bookmark Tab",
+      "Split Right",
+      "Move to New Window",
+      "Close Tab",
+      "Close Other Tabs",
+      "Close Tabs Below",
     ]) {
       // oxlint-disable-next-line no-await-in-loop -- one menu at a time
       ran.push(await choose("c", label));
@@ -259,7 +259,7 @@ describe(createTabMenu, () => {
     expect([
       await choose("gmail", "Unpin"),
       await choose("gmail", "Open at Launch"),
-      await choose("c", "Remove bookmark"),
+      await choose("c", "Remove Bookmark"),
     ]).toStrictEqual([
       [["pinned", "p/gmail", false]],
       [["openAtLaunch", "p/gmail", false]],
@@ -288,7 +288,7 @@ describe(createTabMenu, () => {
       })),
     });
 
-    await expect(click("Close tab")).resolves.toStrictEqual([
+    await expect(click("Close Tab")).resolves.toStrictEqual([
       ["log", "Refused the tab menu's close, which it does not offer"],
     ]);
   });
@@ -302,12 +302,12 @@ describe(createTabMenu, () => {
       [
         "own",
         { x: 760, y: 40 },
-        ["Move to main window", "Copy URL", "Open in default browser"],
+        ["Move to Main Window", "Copy URL", "Open in Default Browser"],
       ]
     );
     expect([
       await click("Copy URL"),
-      await click("Move to main window"),
+      await click("Move to Main Window"),
     ]).toStrictEqual([
       [["clipboard", "https://docs.google.com/document/d/1"]],
       [["moveToMainWindow", "p/w"]],

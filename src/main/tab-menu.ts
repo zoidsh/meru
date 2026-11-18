@@ -21,6 +21,7 @@ import type { SystemBrowser } from "#platform/system-browser.ts";
 
 import type { Bookmarks } from "./bookmarks.ts";
 import { nativeMenu } from "./context-menu.ts";
+import { MENU_LABELS } from "./menu-labels.ts";
 import type { Profiles } from "./profiles.ts";
 
 type MenuWindow = Pick<PlainWindow, "showContextMenu" | "getContentAreaSize">;
@@ -88,11 +89,7 @@ const LABELS: Record<TabMenuItemId, () => string> = {
       comment:
         "Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it",
     }),
-  reload: () =>
-    t({
-      message: "Reload",
-      comment: "Item of a tab's context menu that loads its page again",
-    }),
+  reload: MENU_LABELS.reload,
   duplicate: () =>
     t({
       message: "Duplicate",
@@ -106,7 +103,7 @@ const LABELS: Record<TabMenuItemId, () => string> = {
     }),
   openInBrowser: () =>
     t({
-      message: "Open in default browser",
+      message: "Open in Default Browser",
       comment:
         "Item of a tab's context menu that opens its page in the system's web browser",
     }),
@@ -122,80 +119,26 @@ const LABELS: Record<TabMenuItemId, () => string> = {
       comment:
         "Item of a pinned tab's context menu that unpins it, so it can close",
     }),
-  openAtLaunch: () =>
-    t({
-      message: "Open at Launch",
-      comment:
-        "Checkbox item of a pinned tab's context menu: whether it loads when Meru starts rather than when first selected",
-    }),
-  bookmark: () =>
-    t({
-      message: "Bookmark tab",
-      comment:
-        "Item of a tab's context menu that adds its page to the profile's bookmarks",
-    }),
-  removeBookmark: () =>
-    t({
-      message: "Remove bookmark",
-      comment:
-        "Item of a tab's context menu, in place of Bookmark tab while its page is bookmarked, that removes that bookmark",
-    }),
-  splitRight: () =>
-    t({
-      message: "Split right",
-      comment:
-        "Item of a tab's context menu that lists apps to open in a new pane to the right of the tab's",
-    }),
-  splitDown: () =>
-    t({
-      message: "Split down",
-      comment:
-        "Item of a tab's context menu that lists apps to open in a new pane below the tab's",
-    }),
-  maximize: () =>
-    t({
-      message: "Maximize pane",
-      comment:
-        "Item of a tab's context menu in a split view that shows the tab's pane alone, keeping the split",
-    }),
-  restore: () =>
-    t({
-      message: "Restore panes",
-      comment:
-        "Item of a tab's context menu, in place of Maximize pane while one pane shows alone, that shows every pane of the split again",
-    }),
-  separate: () =>
-    t({
-      message: "Separate from split",
-      comment:
-        "Item of a tab's context menu that takes it out of the split view, to show alone",
-    }),
-  moveToNewWindow: () =>
-    t({
-      message: "Move to new window",
-      comment:
-        "Item of a tab's context menu that moves its page into a window of its own, the tab staying in the sidebar",
-    }),
-  moveToMainWindow: () =>
-    t({
-      message: "Move to main window",
-      comment:
-        "Item of a tab's context menu, for a tab in a window of its own, that puts its page back in the main window and closes that window",
-    }),
-  close: () =>
-    t({
-      message: "Close tab",
-      comment: "Item of a tab's context menu that closes it",
-    }),
+  openAtLaunch: MENU_LABELS.openAtLaunch,
+  bookmark: MENU_LABELS.bookmarkTab,
+  removeBookmark: MENU_LABELS.removeBookmark,
+  splitRight: MENU_LABELS.splitRight,
+  splitDown: MENU_LABELS.splitDown,
+  maximize: MENU_LABELS.maximizePane,
+  restore: MENU_LABELS.restorePanes,
+  separate: MENU_LABELS.separateFromSplit,
+  moveToNewWindow: MENU_LABELS.moveToNewWindow,
+  moveToMainWindow: MENU_LABELS.moveToMainWindow,
+  close: MENU_LABELS.closeTab,
   closeOthers: () =>
     t({
-      message: "Close other tabs",
+      message: "Close Other Tabs",
       comment:
         "Item of a tab's context menu that closes every other tab of the profile but pinned ones",
     }),
   closeBelow: () =>
     t({
-      message: "Close tabs below",
+      message: "Close Tabs Below",
       comment:
         "Item of a tab's context menu that closes the tabs below it in the sidebar but pinned ones",
     }),

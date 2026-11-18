@@ -471,7 +471,7 @@ test("a split that would leave a pane under the minimum is refused with a toast,
 
   // From the tab's menu, which takes no focus: the page keeps it.
   await openContextMenu(app, () => calendarTab.click({ button: "right" }));
-  await chooseContextMenuItem(app, "Split down");
+  await chooseContextMenuItem(app, "Split Down");
   await expect(toast).toBeVisible();
   await expect.poll(where).toBe("calendar");
   await expect(toast).toHaveCount(0, { timeout: 8000 });
