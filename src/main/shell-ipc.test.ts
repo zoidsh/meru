@@ -30,7 +30,7 @@ const TABS: ShellState["tabs"] = {
       id: "gmail",
       app: "gmail",
       title: "",
-      closable: false,
+      pinned: true,
       status: { kind: "live" },
     },
   ],

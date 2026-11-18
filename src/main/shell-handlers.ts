@@ -5,10 +5,9 @@ import { openableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
-import { knownTabs, selectedProfile } from "#core/state.ts";
+import { isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
-import { canCloseTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
@@ -140,7 +139,7 @@ export const shellState = (
         id: tab.id,
         app: tab.app,
         title: tab.title,
-        closable: canCloseTab(tab),
+        pinned: isPinned(tab),
         status: shellTabStatus(
           status({ profileId: profile.id, tabId: tab.id })
         ),

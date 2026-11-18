@@ -21,10 +21,12 @@ import {
   ANY_SESSION,
   DARK_PARTS,
   POPOUT_PATH,
+  STAND_IN_TITLE,
   THREAD_PARTS,
   openDarkThread,
   openThread,
 } from "./lib/stand-in.ts";
+import type { StandIn } from "./lib/stand-in.ts";
 
 test.beforeEach(() => {
   onlyWithShots();
@@ -92,6 +94,84 @@ test("the window with the sidebar narrow, wide and hidden", async ({
   await expect(shell.getByRole("tablist", { name: "Tabs" })).toHaveCount(0);
   await shootEachWay(app, shell, "window-hidden");
 });
+
+/**
+ * Gmail and the first `count - 1` of Calendar and Drive pinned, Drive
+ * selected, and Docs and Sheets in the list, which no app has two of so the
+ * sidebar starts narrow.
+ */
+const withPinned = (standIn: StandIn, count: number) => ({
+  profiles: [
+    {
+      id: "p",
+      name: "Default",
+      tabs: [
+        { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+        {
+          id: "c1",
+          app: "calendar",
+          url: standIn.calendarUrl,
+          title: "",
+          pinned: count > 1,
+        },
+        {
+          id: "d1",
+          app: "drive",
+          url: standIn.driveUrl,
+          title: "",
+          pinned: count > 2,
+        },
+        // Never selected, so never loaded.
+        { id: "o", app: "docs", url: standIn.driveUrl, title: "" },
+        { id: "s", app: "sheets", url: standIn.driveUrl, title: "" },
+      ],
+      selectedTabId: "d1",
+    },
+  ],
+  selectedProfileId: "p",
+});
+
+for (const { count, signedIn } of [
+  { count: 1, signedIn: true },
+  { count: 2, signedIn: true },
+  { count: 3, signedIn: true },
+  { count: 3, signedIn: false },
+]) {
+  const surface = `pinned-${count}${signedIn ? "" : "-signed-out"}`;
+
+  test(`the pinned area with ${count} pinned, ${signedIn ? "with Gmail's unread count" : "with the sign-in mark"}, narrow and wide`, async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    if (signedIn) {
+      standIn.setFeed(ANY_SESSION, { unreadCount: 12 });
+    }
+
+    await writeState(userDataDir, withPinned(standIn, count));
+
+    const { app, shell } = await launch(launchApp, userDataDir);
+    const gmail = shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { name: STAND_IN_TITLE, exact: true });
+    const rest = () => shell.mouse.move(700, 20);
+
+    await findPage(app, standIn.driveUrl);
+    await findPage(app, standIn.url);
+    await (signedIn
+      ? expect(gmail).toHaveText(/12$/u)
+      : expect(gmail).toHaveAttribute(
+          "title",
+          `${STAND_IN_TITLE}, sign in required`
+        ));
+    await rest();
+    await shootEachWay(app, shell, `${surface}-narrow`);
+
+    await shell.getByRole("button", { name: "Widen sidebar" }).click();
+    await rest();
+    await shootEachWay(app, shell, `${surface}-wide`);
+  });
+}
 
 test("the titlebar with two profiles, and with more than fit", async ({
   launchApp,

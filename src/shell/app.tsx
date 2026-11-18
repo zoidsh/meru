@@ -34,6 +34,7 @@ export const App = () => {
               tabs={tabs}
               state={sidebar}
               unreadCount={selected?.mail.unreadCount ?? 0}
+              signedOut={selected?.mail.status === "signedOut"}
             />
           )}
           {/* Drawn where main places the view, by the same measurements. */}

@@ -133,7 +133,8 @@ export const SHELL_STATE = {
         id: z.string(),
         app: z.string(),
         title: z.string(),
-        closable: z.boolean(),
+        /** Drawn in the pinned area, with no close button. */
+        pinned: z.boolean(),
         status: tabStatus,
       })
     ),

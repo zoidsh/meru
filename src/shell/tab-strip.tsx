@@ -13,6 +13,7 @@ import type { KeyboardEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
+import { pinnedRows, splitPinned } from "#core/pinned-tabs.ts";
 import { sidebarWidth } from "#core/sidebar.ts";
 import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
@@ -83,7 +84,7 @@ const TabStatusIcon = ({ status }: { status: ShellTab["status"] }) => {
   }
 };
 
-/** The tab after or before `tab` in its list, to take focus as it closes. */
+/** The tab after or before `tab` in the tablist, to take focus as it closes. */
 const neighbourOf = (tab: HTMLElement) => {
   const all = [
     ...(tab
@@ -96,29 +97,171 @@ const neighbourOf = (tab: HTMLElement) => {
 };
 
 /**
- * The selected profile's tabs, down the left below the titlebar: square
- * tiles when narrow, rows with their titles when wide, scrolling when they do
- * not fit. Built on Base UI's tabs directly, since the shadcn component does
- * not hand its orientation to them, which a vertical list's arrow keys need.
+ * The height of `count` tabs, the list keeping room for up to three, and the
+ * inset above the first.
+ */
+const listRoom = (count: number, gap: number) => {
+  const rows = Math.min(count, 3);
+
+  return rows === 0 ? 0 : 6 + rows * 32 + (rows - 1) * gap;
+};
+
+const tabVariant = (selected: boolean, pinned: boolean) => {
+  if (selected) {
+    return "secondary";
+  }
+
+  return pinned ? "outline" : "ghost";
+};
+
+/** At the corner of Gmail's tile: the unread count, or the sign-in mark in its place. */
+const GmailMark = ({
+  unreadCount,
+  signedOut,
+}: {
+  unreadCount: number;
+  signedOut: boolean;
+}) =>
+  signedOut ? (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute -top-[5px] -right-[5px] flex size-3.5 rounded-full bg-shell text-destructive [&_svg]:size-3.5!"
+    >
+      <CircleAlertIcon />
+    </span>
+  ) : (
+    <UnreadBadge
+      count={unreadCount}
+      className="pointer-events-none absolute -top-1.5 -right-2 px-1"
+    />
+  );
+
+interface TabButtonProps {
+  tab: ShellTab;
+  /** A square tile, or, in the wide list, a row with the title. */
+  tile: boolean;
+  /** Takes its row's width, as a wide pinned tile does. */
+  full: boolean;
+  selected: boolean;
+  profileId: string;
+  unreadCount: number;
+  signedOut: boolean;
+  hover: {
+    onPointerEnter: () => void;
+    onPointerLeave: () => void;
+  };
+  onDelete: (tab: HTMLElement) => void;
+}
+
+const TabButton = ({
+  tab,
+  tile,
+  full,
+  selected,
+  profileId,
+  unreadCount,
+  signedOut,
+  hover,
+  onDelete,
+}: TabButtonProps) => {
+  const { t } = useLingui();
+  const title = tabTitle(tab);
+  const live = tab.status.kind === "live" || tab.status.kind === "unloaded";
+  const marked = tile && tab.app === "gmail";
+  // Unlike the name, which stays the title; Chromium then reads it as the
+  // tile's description.
+  const tooltip =
+    marked && signedOut
+      ? t({
+          message: `${title}, sign in required`,
+          comment:
+            "Tooltip of Gmail's tile in the sidebar while the profile's Google account is signed out; {title} is the tab's title",
+        })
+      : title;
+
+  // One element tree in either width, so a tab keeps its element, and with
+  // it focus, as the sidebar changes width. A row shows its title in full
+  // and needs no tooltip.
+  return (
+    <Tabs.Tab
+      value={tab.id}
+      ref={selected ? keepInView : undefined}
+      // The tabs tell only of a change; asking for the selected tab still
+      // shows it in place of the unified inbox.
+      onClick={
+        selected
+          ? () => {
+              shellCalls().selectTab({ profileId, tabId: tab.id });
+            }
+          : undefined
+      }
+      onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
+        if (
+          !tab.pinned &&
+          (event.key === "Delete" || event.key === "Backspace")
+        ) {
+          event.preventDefault();
+          onDelete(event.currentTarget);
+        }
+      }}
+      {...hover}
+      title={tile ? tooltip : undefined}
+      className={cn(
+        buttonVariants({
+          variant: tabVariant(selected, tab.pinned),
+          size: tile ? "icon-sm" : "sm",
+        }),
+        "relative font-medium",
+        full && "flex-1",
+        !tile && "w-full justify-start gap-2 pr-8",
+        !selected && "text-muted-foreground"
+      )}
+    >
+      {(!tile || live) && isAppId(tab.app) && (
+        <AppIcon app={tab.app} aria-hidden />
+      )}
+      <span className={tile ? "sr-only" : "min-w-0 flex-1 truncate text-left"}>
+        {title}
+      </span>
+      <TabStatusIcon status={tab.status} />
+      {marked && <GmailMark unreadCount={unreadCount} signedOut={signedOut} />}
+    </Tabs.Tab>
+  );
+};
+
+/**
+ * The selected profile's tabs, down the left below the titlebar: the pinned
+ * ones in the pinned area at the top, as tiles in either width, then the rest
+ * in the list, square tiles when narrow and rows with their titles when
+ * wide. The two scroll apart and are one tablist, so the arrow keys go from
+ * one into the other. Built on Base UI's tabs directly, since the shadcn
+ * component does not hand its orientation to them, which a vertical list's
+ * arrow keys need.
  *
- * A close button is not part of its tab, so the list holds tabs alone and
- * arrows through them: Delete or Backspace closes the focused tab, and the
- * buttons, for the pointer, sit over the list out of the tab order.
+ * A close button is not part of its tab, and lies over the list for the
+ * pointer alone, hidden from assistive technology, since nothing but tabs
+ * may be in a tablist: Delete or Backspace closes the focused tab, and Close
+ * Tab the selected one.
  */
 export const Sidebar = ({
   tabs,
   state,
   unreadCount,
+  signedOut,
 }: {
   tabs: ShellState["tabs"];
   state: "narrow" | "wide";
   /** The profile's unread mail, shown on Gmail's tile. */
   unreadCount: number;
+  /** Whether the profile's Google account is signed out, marked on Gmail's tile. */
+  signedOut: boolean;
 }) => {
   const { t } = useLingui();
   const { profileId } = tabs;
   const [hovered, setHovered] = useState<string>();
   const wide = state === "wide";
+  const gap = wide ? 4 : 8;
+  const { pinned, listed } = splitPinned(tabs.tabs);
   const close = (tabId: string) => {
     shellCalls().closeTab({ profileId, tabId });
   };
@@ -132,6 +275,24 @@ export const Sidebar = ({
     },
   });
 
+  const button = (tab: ShellTab, tile: boolean, full = false) => (
+    <TabButton
+      key={tab.id}
+      tab={tab}
+      tile={tile}
+      full={full}
+      selected={tab.id === tabs.selectedTabId}
+      profileId={profileId}
+      unreadCount={unreadCount}
+      signedOut={signedOut}
+      hover={hover(tab.id)}
+      onDelete={(element) => {
+        neighbourOf(element)?.focus();
+        close(tab.id);
+      }}
+    />
+  );
+
   const widthLabel = wide
     ? t({
         message: "Narrow sidebar",
@@ -143,6 +304,12 @@ export const Sidebar = ({
         comment:
           "Accessible name and tooltip of the button at the foot of the narrow list of tabs that makes it wide, showing each tab's title",
       });
+
+  // Reaching into the sidebar's padding far enough to centre the bar in it,
+  // and above the first tab, padded back inside the viewport so the tabs stay
+  // where they were and a mark or cross at a corner is not clipped.
+  const scroller = cn("-mt-1.5 min-h-0", wide ? "-mr-2.5" : "-mr-3", SCROLLBAR);
+  const inset = cn("pt-1.5", wide ? "pr-2.5" : "pr-3");
 
   return (
     <Tabs.Root
@@ -158,159 +325,112 @@ export const Sidebar = ({
         wide ? "px-3" : "px-4"
       )}
     >
-      {/* Reaching into the sidebar's padding far enough to centre the bar
-          in it, padded back so the list stays where it was. */}
-      <ScrollArea
-        className={cn(
-          "min-h-0 shrink",
-          wide ? "-mr-2.5 pr-2.5" : "-mr-3 pr-3",
-          SCROLLBAR
-        )}
+      <Tabs.List
+        aria-label={t({
+          message: "Tabs",
+          comment:
+            "Accessible name of the list of the profile's tabs down the left of the window, read by screen readers",
+        })}
+        className={cn("flex min-h-0 shrink flex-col", wide ? "gap-1" : "gap-2")}
       >
-        <div className="relative">
-          <Tabs.List
-            aria-label={t({
-              message: "Tabs",
-              comment:
-                "Accessible name of the list of the profile's tabs down the left of the window, read by screen readers",
-            })}
-            className={cn(
-              "flex flex-col",
-              wide ? "gap-1" : "items-center gap-2"
+        {pinned.length > 0 && (
+          <ScrollArea className={cn(scroller, "shrink")}>
+            {wide ? (
+              <div className={cn("flex flex-col gap-1", inset)}>
+                {pinnedRows(pinned).map((row) => (
+                  <div key={row[0]?.id} className="flex gap-2">
+                    {row.map((tab) => button(tab, true, true))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={cn("flex flex-col items-center gap-2", inset)}>
+                {pinned.map((tab) => button(tab, true))}
+              </div>
             )}
+          </ScrollArea>
+        )}
+        {listed.length > 0 && (
+          <ScrollArea
+            style={{ minHeight: listRoom(listed.length, gap) }}
+            className={cn(scroller, "shrink-[1000]")}
           >
-            {tabs.tabs.map((tab) => {
-              const title = tabTitle(tab);
-              const selected = tab.id === tabs.selectedTabId;
-              const live =
-                tab.status.kind === "live" || tab.status.kind === "unloaded";
-              const tabProps = {
-                value: tab.id,
-                ref: selected ? keepInView : undefined,
-                // The tabs tell only of a change; asking for the selected tab
-                // still shows it in place of the unified inbox.
-                onClick: selected
-                  ? () => {
-                      shellCalls().selectTab({ profileId, tabId: tab.id });
-                    }
-                  : undefined,
-                onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
-                  if (
-                    tab.closable &&
-                    (event.key === "Delete" || event.key === "Backspace")
-                  ) {
-                    event.preventDefault();
-                    neighbourOf(event.currentTarget)?.focus();
-                    close(tab.id);
-                  }
-                },
-                ...hover(tab.id),
-                className: cn(
-                  buttonVariants({
-                    variant: selected ? "secondary" : "ghost",
-                    size: wide ? "sm" : "icon-sm",
-                  }),
-                  "relative font-medium",
-                  wide && "w-full justify-start gap-2 pr-8",
-                  !selected && "text-muted-foreground"
-                ),
-              };
+            <div className={cn("relative", inset)}>
+              <div
+                className={cn(
+                  "flex flex-col",
+                  wide ? "gap-1" : "items-center gap-2"
+                )}
+              >
+                {listed.map((tab) => button(tab, !wide))}
+              </div>
+              <div
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute inset-x-0 top-1.5 flex flex-col",
+                  wide ? "gap-1" : "items-center gap-2"
+                )}
+              >
+                {listed.map((tab) => {
+                  const title = tabTitle(tab);
+                  const label = t({
+                    message: `Close ${title}`,
+                    comment:
+                      "Accessible name of the cross on a tab that closes it; {title} is the tab's title",
+                  });
 
-              // One element tree in either width, so a tab keeps its
-              // element, and with it focus, as the sidebar changes width.
-              // Wide, its title shows in full and needs no tooltip.
-              return (
-                <Tabs.Tab
-                  key={tab.id}
-                  {...tabProps}
-                  title={wide ? undefined : title}
-                >
-                  {(wide || live) && isAppId(tab.app) && (
-                    <AppIcon app={tab.app} aria-hidden />
-                  )}
-                  <span
-                    className={
-                      wide ? "min-w-0 flex-1 truncate text-left" : "sr-only"
-                    }
-                  >
-                    {title}
-                  </span>
-                  <TabStatusIcon status={tab.status} />
-                  {!wide && tab.app === "gmail" && (
-                    <UnreadBadge
-                      count={unreadCount}
-                      className="pointer-events-none absolute -top-1.5 -right-2 px-1"
-                    />
-                  )}
-                </Tabs.Tab>
-              );
-            })}
-          </Tabs.List>
-          <div
-            className={cn(
-              "pointer-events-none absolute inset-x-0 top-0 flex flex-col",
-              wide ? "gap-1" : "items-center gap-2"
-            )}
-          >
-            {tabs.tabs.map((tab) => {
-              const title = tabTitle(tab);
-              const label = t({
-                message: `Close ${title}`,
-                comment:
-                  "Accessible name of the cross on a tab that closes it; {title} is the tab's title",
-              });
-
-              return (
-                <div
-                  key={tab.id}
-                  className={cn(
-                    "relative h-8",
-                    wide ? "flex items-center justify-end pr-1" : "w-8"
-                  )}
-                >
-                  {tab.closable &&
-                    (wide ? (
-                      <Button
-                        variant="secondary"
-                        size="icon-xs"
-                        tabIndex={-1}
-                        aria-label={label}
-                        {...hover(tab.id)}
-                        className={cn(
-                          "pointer-events-auto opacity-0",
-                          hovered === tab.id && "opacity-100"
-                        )}
-                        onClick={() => {
-                          close(tab.id);
-                        }}
-                      >
-                        <XIcon />
-                      </Button>
-                    ) : (
-                      // Below shadcn's smallest button, kept from v3 to fit
-                      // a tile's corner.
-                      <button
-                        type="button"
-                        tabIndex={-1}
-                        aria-label={label}
-                        {...hover(tab.id)}
-                        className={cn(
-                          "pointer-events-auto absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground opacity-0 ring-1 ring-shell [&_svg]:size-2.5",
-                          hovered === tab.id && "opacity-100"
-                        )}
-                        onClick={() => {
-                          close(tab.id);
-                        }}
-                      >
-                        <XIcon />
-                      </button>
-                    ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </ScrollArea>
+                  return (
+                    <div
+                      key={tab.id}
+                      className={cn(
+                        "relative h-8",
+                        wide ? "flex items-center justify-end pr-1" : "w-8"
+                      )}
+                    >
+                      {wide ? (
+                        <Button
+                          variant="secondary"
+                          size="icon-xs"
+                          tabIndex={-1}
+                          aria-label={label}
+                          {...hover(tab.id)}
+                          className={cn(
+                            "pointer-events-auto opacity-0",
+                            hovered === tab.id && "opacity-100"
+                          )}
+                          onClick={() => {
+                            close(tab.id);
+                          }}
+                        >
+                          <XIcon />
+                        </Button>
+                      ) : (
+                        // Below shadcn's smallest button, kept from v3 to
+                        // fit a tile's corner.
+                        <button
+                          type="button"
+                          tabIndex={-1}
+                          aria-label={label}
+                          {...hover(tab.id)}
+                          className={cn(
+                            "pointer-events-auto absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground opacity-0 ring-1 ring-shell [&_svg]:size-2.5",
+                            hovered === tab.id && "opacity-100"
+                          )}
+                          onClick={() => {
+                            close(tab.id);
+                          }}
+                        >
+                          <XIcon />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </ScrollArea>
+        )}
+      </Tabs.List>
       <div
         className={cn("flex shrink-0", wide ? "pt-1" : "justify-center pt-2")}
       >
