@@ -65,21 +65,22 @@ test("a sleeping profile whose sign-in went stale loads the rotation page in its
     }
   );
 
-  // Its first keep-alive, and the next once the shortened age has passed
-  // again, by which time Home's cookie, set as its page loaded, is stale too.
-  await expect
-    .poll(
-      () =>
-        standIn
-          .rotationCookieHeaders()
-          .filter((cookie) => cookie.includes("account=persist:p1")).length
-    )
-    .toBeGreaterThanOrEqual(2);
+  const workRequests = () =>
+    standIn
+      .rotationCookieHeaders()
+      .filter((cookie) => cookie.includes("account=persist:p1")).length;
+
+  await expect.poll(workRequests).toBeGreaterThanOrEqual(1);
   expect(standIn.rotationCookieHeaders()[0]).toContain(
     `${ROTATING_COOKIE}=stale`
   );
+  // Closed by the rotation, the shell's and Home's left: well inside the
+  // shortened 5 s timeout, which would close it too, and before the next run.
+  await expect.poll(() => countRenderers(app), { timeout: 1500 }).toBe(2);
 
-  // Rotated, it closes; the shell's and Home's are left.
+  // The next once the shortened age has passed again, by which time Home's
+  // cookie, set as its page loaded, is stale too.
+  await expect.poll(workRequests).toBeGreaterThanOrEqual(2);
   await expect.poll(() => countRenderers(app)).toBe(2);
 
   const { views } = await readViews(app);
