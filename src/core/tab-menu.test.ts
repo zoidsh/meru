@@ -91,21 +91,23 @@ describe(tabMenuItems, () => {
     ]);
   });
 
-  it("offers Separate from split for a tab in the split, and no split beside a tab outside it", () => {
+  it("offers Separate from split for a tab in the split, and a new split, without Maximize or Separate, beside a tab outside it", () => {
     const split = state([tab("c", "calendar"), tab("d", "drive")]);
     const current: State = {
       ...split,
       profiles: split.profiles.map((profile) => ({
         ...profile,
-        split: {
-          root: {
-            direction: "row",
-            children: [
-              { size: 0.5, pane: "gmail" },
-              { size: 0.5, pane: "c" },
-            ],
+        splits: [
+          {
+            root: {
+              direction: "row",
+              children: [
+                { size: 0.5, pane: "gmail" },
+                { size: 0.5, pane: "c" },
+              ],
+            },
           },
-        },
+        ],
       })),
     };
     const splitItems = (tabId: string) =>
@@ -116,13 +118,15 @@ describe(tabMenuItems, () => {
       ...current,
       profiles: current.profiles.map((profile) => ({
         ...profile,
-        ...(profile.split && { split: { ...profile.split, maximized: true } }),
+        ...(profile.splits && {
+          splits: profile.splits.map((each) => ({ ...each, maximized: true })),
+        }),
       })),
     };
 
     expect([splitItems("c"), splitItems("d")]).toStrictEqual([
       ["splitRight", "splitDown", "maximize", "separate"],
-      ["splitRight off", "splitDown off", "maximize off", "separate off"],
+      ["splitRight", "splitDown", "maximize off", "separate off"],
     ]);
     expect(
       offered(maximized, "c")?.filter((item) => item.startsWith("restore"))
@@ -269,15 +273,17 @@ const boxed = (): State => {
       ? [
           {
             ...profile,
-            split: {
-              root: {
-                direction: "row",
-                children: [
-                  { size: 0.5, pane: "a" },
-                  { size: 0.5, pane: "n" },
-                ],
+            splits: [
+              {
+                root: {
+                  direction: "row",
+                  children: [
+                    { size: 0.5, pane: "a" },
+                    { size: 0.5, pane: "n" },
+                  ],
+                },
               },
-            },
+            ],
           },
         ]
       : [],

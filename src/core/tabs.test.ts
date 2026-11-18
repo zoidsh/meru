@@ -426,15 +426,17 @@ describe(adjacentTab, () => {
         ? [
             {
               ...profile,
-              split: {
-                root: {
-                  direction: "row",
-                  children: [
-                    { size: 0.5, pane: "a" },
-                    { size: 0.5, pane: "n" },
-                  ],
+              splits: [
+                {
+                  root: {
+                    direction: "row",
+                    children: [
+                      { size: 0.5, pane: "a" },
+                      { size: 0.5, pane: "n" },
+                    ],
+                  },
                 },
-              },
+              ],
             },
           ]
         : [],

@@ -7,6 +7,7 @@ import type { PaneDirection, Split } from "./pane-tree.ts";
 import {
   isInSplit,
   splitBeside,
+  splitOf,
   splitTarget,
   splitWith,
   withBoxMove,
@@ -131,8 +132,8 @@ export const openTab = (
 };
 
 /**
- * Selecting a tab in the split focuses its pane. Nothing when the tab is not
- * shown or already selected.
+ * Selecting a tab in a split shows that split, its pane focused. Nothing
+ * when the tab is not shown or already selected.
  */
 export const selectTab = (
   state: State,
@@ -184,7 +185,8 @@ export const closeTab = (
 
 /**
  * Puts the tab in a new pane `direction` of the focused pane, or of the
- * selected tab where the profile has no split, focused and selected.
+ * selected tab where it is in no split, which starts one, focused and
+ * selected; a tab of another split leaves it.
  */
 export const splitTab = (
   state: State,
@@ -208,9 +210,9 @@ export const separateTab = (
   );
 
 /**
- * Maximize shows the tab's pane alone, selecting it, and keeps the split;
- * Restore brings every pane back and selects nothing. Nothing for a tab
- * outside the split, or when it is already so.
+ * Maximize shows the tab's pane alone and keeps its split; Restore brings
+ * every pane of the tab's split back. Either selects the tab, which shows
+ * its split. Nothing for a tab in no split, or when it is already so.
  */
 export const maximizePane = (
   state: State,
@@ -219,27 +221,29 @@ export const maximizePane = (
 ): State | undefined =>
   updateProfile(state, profileId, (profile) =>
     isInSplit(profile, tabId)
-      ? withMaximized(on ? { ...profile, selectedTabId: tabId } : profile, on)
+      ? withMaximized({ ...profile, selectedTabId: tabId }, on)
       : undefined
   );
 
 /**
- * The profile's split with new sizes, resized or evened out; nothing when it
- * no longer holds the same panes, as when one closed meanwhile, or when
- * nothing changes.
+ * The profile's split holding the same panes as `split`, with its new
+ * sizes, resized or evened out; nothing when none holds them any more, as
+ * when one closed meanwhile, or when nothing changes.
  */
 export const resizeSplit = (
   state: State,
   profileId: string,
   split: Split
 ): State | undefined =>
-  updateProfile(state, profileId, (profile) =>
-    profile.split &&
-    !isEqual(profile.split, split) &&
-    isEqual(paneTabs(profile.split.root), paneTabs(split.root))
-      ? withSplit(profile, split)
-      : undefined
-  );
+  updateProfile(state, profileId, (profile) => {
+    const previous = splitOf(profile, paneTabs(split.root)[0] ?? "");
+
+    return previous &&
+      !isEqual(previous, split) &&
+      isEqual(paneTabs(previous.root), paneTabs(split.root))
+      ? withSplit(profile, previous, split)
+      : undefined;
+  });
 
 const updateTab = (
   state: State,
@@ -322,25 +326,28 @@ export const updatePages = (
 };
 
 /**
- * The tab `before` names as a tab moving out of the split lands before it:
- * a tab of the box stands for the box, which the sidebar draws where its
+ * The tab `before` names as a tab moving out of its split lands before it:
+ * a tab of a box stands for that box, which the sidebar draws where its
  * first stored tab other than the moving one stands.
  */
 const placeBefore = (
   profile: Profile,
   tabId: string,
   before: string | undefined
-) =>
-  before !== undefined && isInSplit(profile, before)
-    ? (knownTabs(profile).find(
-        (tab) => tab.id !== tabId && isInSplit(profile, tab.id)
-      )?.id ?? before)
+) => {
+  const box = before === undefined ? undefined : splitOf(profile, before);
+  const boxed = new Set(box ? paneTabs(box.root) : []);
+
+  return box
+    ? (knownTabs(profile).find((tab) => tab.id !== tabId && boxed.has(tab.id))
+        ?.id ?? before)
     : before;
+};
 
 /**
  * Moves a shown tab of the selected profile within its area, the pinned
  * tabs or the rest, to just before the tab `before` names, or after the
- * area's last tab when it names none. A tab in the split leaves it on the
+ * area's last tab when it names none. A tab in a split leaves it on the
  * way, its space going to the panes beside it, and lands before the box
  * where `before` is a tab of the box. Every other entry, those not shown
  * included, keeps its place among its neighbours. Nothing across areas, for
@@ -392,7 +399,7 @@ export const moveTab = (
     : undefined;
 
 /**
- * Moves a tab of the split's box that is not pinned among the box's other
+ * Moves a tab of a split's box that is not pinned among the box's other
  * such tabs, to just before `before` or after the last, its pane with it.
  */
 export const moveInBox = (

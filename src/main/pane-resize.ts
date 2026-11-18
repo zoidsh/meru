@@ -4,7 +4,9 @@ import type { PaneGapEnd, PaneTree, Split } from "#core/pane-tree.ts";
 import {
   evenedSplit,
   gapTravel,
+  panesOf,
   resizedSplit,
+  shownSplit,
   splitPanes,
 } from "#core/split.ts";
 import { selectedProfile } from "#core/state.ts";
@@ -77,11 +79,9 @@ export const createPaneResize = ({
     const profile = selectedProfile(state());
 
     if (gesture?.id !== id || gesture.profileId !== profile.id) {
-      gesture = profile.split && {
-        id,
-        profileId: profile.id,
-        base: profile.split,
-      };
+      const shown = shownSplit(profile);
+
+      gesture = shown && { id, profileId: profile.id, base: shown };
     }
 
     const { base } = gesture ?? {};
@@ -101,7 +101,7 @@ export const createPaneResize = ({
     }
 
     if (!done) {
-      preview(splitPanes({ ...profile, split: next }));
+      preview(panesOf(profile, next));
 
       return;
     }
@@ -124,13 +124,15 @@ export const createPaneResize = ({
   }: Pick<PaneResize, "before" | "after">) => {
     const profile = selectedProfile(state());
 
-    if (!splitPanes(profile) || !profile.split) {
+    const shown = shownSplit(profile);
+
+    if (!splitPanes(profile) || !shown) {
       log(`Refused to even out the panes at ${before}|${after}`);
 
       return;
     }
 
-    await resizeSplit(profile.id, evenedSplit(profile.split, before, after));
+    await resizeSplit(profile.id, evenedSplit(shown, before, after));
   };
 
   return {

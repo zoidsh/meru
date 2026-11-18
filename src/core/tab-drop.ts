@@ -60,7 +60,7 @@ const rowsOf = (tiles: readonly DropTile[]) => {
  * `point`, and the line that shows it: across between two rows, or in a row
  * of tiles side by side, down between two of them. Nothing over the middle
  * of a tile, nor where the tab would land in its own place; a tab from
- * outside the tiles, as one leaving the split's box, has no own place.
+ * outside the tiles, as one leaving a split's box, has no own place.
  */
 export const tabDrop = (
   tiles: readonly DropTile[],
@@ -177,28 +177,32 @@ export const tabDrop = (
 
 /** A tab's button anywhere in the sidebar, which a tab can be dropped onto. */
 export interface DropTarget extends DropTile {
-  /** In the split's box. */
-  boxed: boolean;
+  /** Which of `boxes` it is in, by place; none outside every box. */
+  inBox: number | undefined;
+}
+
+/** A split's box as drawn, with its tabs that are not pinned, in its order. */
+export interface DropBox {
+  box: Box;
+  rows: readonly DropTile[];
 }
 
 /** What a drop in the sidebar does, and what shows it. */
 export type SidebarDrop =
   /** Onto a tab, which rings: the two split, the dragged tab on the right. */
   | { kind: "onto"; target: string; ring: Box }
-  /** Within the box, an inset line: the tab and its pane move among its tabs. */
+  /** Within its box, an inset line: the tab and its pane move among its tabs. */
   | { kind: "box"; before: string | undefined; line: Box }
-  /** A line in the area: the tab moves there, out of the split if in it. */
+  /** A line in the area: the tab moves there, out of its split if in one. */
   | { kind: "move"; before: string | undefined; line: Box };
 
 export interface SidebarDropInput {
-  dragged: { id: string; pinned: boolean; boxed: boolean };
+  dragged: { id: string; pinned: boolean; inBox: number | undefined };
   point: { x: number; y: number };
   /** Every tab's button. */
   tabs: readonly DropTarget[];
-  /** Whether the profile has a split, which a tab outside it cannot join. */
-  split: boolean;
-  /** The box, with its tabs that are not pinned, in its order. */
-  box?: { box: Box; rows: readonly DropTile[] } | undefined;
+  /** Every split's box as drawn. */
+  boxes: readonly DropBox[];
   /**
    * The places of the area the dragged tab moves in, the pinned tiles or the
    * list, while the pointer is over it; none elsewhere. A box first in the
@@ -296,21 +300,23 @@ const onto = (target: DropTarget): SidebarDrop => ({
 const areaMove = ({
   dragged,
   point,
-  box,
+  boxes,
   area,
   noList,
-}: Omit<SidebarDropInput, "tabs" | "split">): SidebarDrop | undefined => {
-  // A tab of the box has no place of its own among the area's: the box
+}: Omit<SidebarDropInput, "tabs">): SidebarDrop | undefined => {
+  const own = dragged.inBox === undefined ? undefined : boxes[dragged.inBox];
+  // A tab of a box has no place of its own among the area's: the box
   // stands for its first stored tab, which may be this one.
-  const line = area && tabDrop(area, dragged.boxed ? "" : dragged.id, point);
+  const line = area && tabDrop(area, own ? "" : dragged.id, point);
 
   if (line) {
     return { kind: "move", before: line.before, line: line.line };
   }
 
-  // A pinned tab of a box that is all the pinned area holds lands after it.
-  if (box && dragged.boxed && area?.length === 0) {
-    return endLine(box.box, box.box.bottom + GAP / 2);
+  // A pinned tab of a box, where boxes are all the pinned area holds,
+  // lands after its box.
+  if (own && area?.length === 0) {
+    return endLine(own.box, own.box.bottom + GAP / 2);
   }
 
   if (!dragged.pinned && noList && inside(noList.below, point)) {
@@ -323,51 +329,46 @@ const areaMove = ({
 /**
  * What dropping a dragged tab with the pointer at `point` in the sidebar
  * does. Over the middle of another tab it rings that tab, which a drop
- * splits with the dragged one, unless a split exists that the target is not
- * in, since a profile has one split. Inside the box, a tab of the box that
- * is not pinned moves among the others by an inset line, a pinned one not
- * at all, and a tab from outside only rings a tab of the box. Elsewhere in
- * its area, a line between places moves it there, out of the split if it
- * was in it.
+ * splits with the dragged one, joining the target's split or starting one.
+ * Inside its own box, a tab that is not pinned moves among the box's others
+ * by an inset line, a pinned one not at all; inside another box, a tab only
+ * rings a tab of that box. Elsewhere in its area, a line between places,
+ * between two boxes included, moves it there, out of its split if in one.
  */
 export const sidebarDrop = ({
   dragged,
   point,
   tabs,
-  split,
-  box,
+  boxes,
   area,
   noList,
 }: SidebarDropInput): SidebarDrop | undefined => {
   const over = tabs.find(
     (tab) => tab.id !== dragged.id && inside(tab.box, point)
   );
-  const inBox =
-    box !== undefined &&
+  const under = boxes.findIndex(({ box }) =>
     inside(
-      {
-        ...box.box,
-        top: box.box.top + BOX_BAND,
-        bottom: box.box.bottom - BOX_BAND,
-      },
+      { ...box, top: box.top + BOX_BAND, bottom: box.bottom - BOX_BAND },
       point
-    );
+    )
+  );
+  const inBox = boxes[under];
 
-  if (box && inBox) {
-    if (!dragged.boxed) {
-      return over?.boxed ? onto(over) : undefined;
+  if (inBox) {
+    if (dragged.inBox !== under) {
+      return over?.inBox === under ? onto(over) : undefined;
     }
 
-    return dragged.pinned ? undefined : boxLine(box.rows, dragged.id, point);
+    return dragged.pinned ? undefined : boxLine(inBox.rows, dragged.id, point);
   }
 
-  if (over && !over.boxed) {
+  if (over && over.inBox === undefined) {
     const share = shareAcross(over, tabs, point);
 
     if (share > EDGE && share < 1 - EDGE) {
-      return split ? undefined : onto(over);
+      return onto(over);
     }
   }
 
-  return areaMove({ dragged, point, box, area, noList });
+  return areaMove({ dragged, point, boxes, area, noList });
 };

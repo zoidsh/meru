@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "./apps.ts";
-import { filterApps, openableApps } from "./open-app.ts";
+import { filterApps, openableApps, splittableApps } from "./open-app.ts";
 import { gmailTab, newProfile } from "./state.ts";
 
 const ids = (apps: readonly { id: string }[]) => apps.map((app) => app.id);
@@ -44,6 +44,40 @@ describe(openableApps, () => {
     };
 
     expect(ids(openableApps(apps, profile))).toStrictEqual(["gmail"]);
+  });
+});
+
+const half = (a: string, b: string) => ({
+  root: {
+    direction: "row" as const,
+    children: [
+      { size: 0.5, pane: a },
+      { size: 0.5, pane: b },
+    ],
+  },
+});
+
+describe(splittableApps, () => {
+  const profile = {
+    tabs: [
+      gmailTab(),
+      { id: "c1", app: "calendar", url: "", title: "" },
+      { id: "d1", app: "drive", url: "", title: "" },
+      { id: "m1", app: "meet", url: "", title: "" },
+    ],
+    splits: [half("gmail", "c1"), half("d1", "m1")],
+  };
+  const apps = [
+    { id: "gmail", singleInstance: true },
+    { id: "calendar", singleInstance: true },
+    { id: "drive", singleInstance: true },
+  ] as const;
+
+  it("lists a single-instance app whose tab is in another split, to move it here, but not one in the shown split", () => {
+    expect([
+      ids(splittableApps(apps, { ...profile, selectedTabId: "c1" })),
+      ids(splittableApps(apps, { ...profile, selectedTabId: "m1" })),
+    ]).toStrictEqual([["drive"], ["gmail", "calendar"]]);
   });
 });
 

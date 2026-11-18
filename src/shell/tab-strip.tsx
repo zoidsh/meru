@@ -122,7 +122,7 @@ const useTooltip = (title: string, asleep: boolean, mustSignIn: boolean) => {
 
 /**
  * What a screen reader says after a tab's title: a row's sleep, or for a
- * tab in the split's box, that and what a tile's tooltip says, which a
+ * tab in a split's box, that and what a tile's tooltip says, which a
  * description given replaces.
  */
 const useDescription = ({
@@ -543,15 +543,17 @@ const ListedTab = ({
 };
 
 /**
- * The split's box: its pinned tabs as tiles, then its other tabs, then,
- * while the split shows one pane alone, the button that restores the rest.
- * Its tabs are not the area's own, so a drag passes them by; in the list the
- * box is one place to land above or below, standing for its first stored
- * tab, and in the pinned area, always first, none.
+ * A split's box: its pinned tabs as tiles, then its other tabs, then,
+ * while the split shows one pane alone, the button that restores the rest,
+ * selecting `restoring`. Its tabs are not the area's own, so a drag passes
+ * them by; in the list the box is one place to land above or below,
+ * standing for its first stored tab, and in the pinned area, where the
+ * boxes come first, none.
  */
 const SplitBox = ({
   tabs,
   profileId,
+  restoring,
   wide,
   maximized,
   dropId,
@@ -561,6 +563,7 @@ const SplitBox = ({
   /** The box's tabs, in its own order. */
   tabs: ShellTab[];
   profileId: string;
+  restoring: ShellTab | undefined;
   wide: boolean;
   maximized: boolean;
   dropId: string | undefined;
@@ -574,7 +577,6 @@ const SplitBox = ({
   const shortcuts = useShellState("shortcuts");
   const shortcutTitle = useShortcutTitle();
   const pinned = tabs.filter((tab) => tab.pinned);
-  const [first] = tabs;
   const restoreLabel = t({
     message: "Restore panes",
     comment:
@@ -610,7 +612,7 @@ const SplitBox = ({
       {/* Out of the tab order and hidden from assistive technology, as a
           tab's cross is, since a tablist holds only tabs; Restore Panes in
           the menu and its shortcut reach it from the keyboard. */}
-      {maximized && first && (
+      {maximized && restoring && (
         <Button
           variant="ghost"
           size={wide ? "sm" : "icon-sm"}
@@ -622,7 +624,7 @@ const SplitBox = ({
           onClick={() => {
             shellCalls().maximizePane({
               profileId,
-              tabId: first.id,
+              tabId: restoring.id,
               on: false,
             });
           }}
@@ -685,19 +687,32 @@ export const Sidebar = ({
   const wide = state === "wide";
   const gap = wide ? 4 : 8;
   const pinned = tabs.tabs.filter((tab) => tab.pinned);
-  const layout = sidebarLayout(tabs.tabs, tabs.box ?? undefined);
-  const boxed = new Set(layout.box.map((tab) => tab.id));
-  const boxPinned = layout.pinned.some((item) => item.kind === "box");
-  const boxRows = layout.box.filter((tab) => !tab.pinned);
-  // A box in the pinned area is always first, so no tab moves past it.
+  const layout = sidebarLayout(
+    tabs.tabs,
+    tabs.boxes.map((box) => box.tabs)
+  );
+  const boxOfTab = new Map(
+    layout.boxes.flatMap((box) => box.map((tab) => [tab.id, box] as const))
+  );
+  const boxed = new Set(boxOfTab.keys());
+  const boxRowsOf = (tab: ShellTab) =>
+    (boxOfTab.get(tab.id) ?? []).filter((each) => !each.pinned);
+  // Boxes in the pinned area come first, so no tab moves past them.
+  const pinnedBoxes = layout.pinned.flatMap((item) =>
+    item.kind === "box" ? [item.tabs] : []
+  );
   const pinnedTabs = layout.pinned.flatMap((item) =>
     item.kind === "tab" ? [item] : []
   );
-  // Where a tab moved beside the box lands: next to its first stored tab,
+  // Where a tab moved beside a box lands: next to its first stored tab,
   // since the box stands where that one does.
-  const boxFirst = tabs.tabs.find((tab) => boxed.has(tab.id))?.id;
+  const firstOf = (box: readonly ShellTab[]) =>
+    tabs.tabs.find((tab) => box.includes(tab))?.id;
   const placeOf = (item: SidebarItem<ShellTab> | undefined) =>
-    item?.kind === "box" ? boxFirst : item?.tab.id;
+    item?.kind === "box" ? firstOf(item.tabs) : item?.tab.id;
+  const maximizedOf = (box: readonly ShellTab[]) =>
+    tabs.boxes.find((each) => each.tabs.includes(box[0]?.id ?? ""))
+      ?.maximized === true;
   const areaOf = (tab: ShellTab) => (tab.pinned ? pinnedTabs : layout.listed);
   const close = (tabId: string) => {
     shellCalls().closeTab({ profileId, tabId });
@@ -710,8 +725,10 @@ export const Sidebar = ({
   const focusInList = useRef(false);
   const pinnedIds = [
     ...pinned.map((tab) => tab.id).toSorted(),
-    "in the box:",
-    ...[...boxed].toSorted(),
+    ...layout.boxes.flatMap((box) => [
+      "in a box:",
+      ...box.map((tab) => tab.id).toSorted(),
+    ]),
   ].join(" ");
   const drawnPinned = useRef(pinnedIds);
 
@@ -763,11 +780,13 @@ export const Sidebar = ({
   const moving = useRef<{ tabId: string; announce: boolean }>(undefined);
   // Written in place rather than through state, as the list is drawn.
   const announcement = useRef<HTMLOutputElement>(null);
-  // The box's order too, which a move within it changes alone.
+  // The boxes' order too, which a move within one changes alone.
   const order = [
     ...tabs.tabs.map((tab) => tab.id),
-    "in the box:",
-    ...layout.box.map((tab) => tab.id),
+    ...layout.boxes.flatMap((box) => [
+      "in a box:",
+      ...box.map((tab) => tab.id),
+    ]),
   ].join(" ");
   const drawnOrder = useRef(order);
 
@@ -798,7 +817,7 @@ export const Sidebar = ({
 
     if (moved.announce) {
       const area = boxed.has(tab.id)
-        ? boxRows
+        ? boxRowsOf(tab)
         : itemTabs(areaOf(tab).filter((item) => item.kind === "tab"));
       const title = tabTitle(tab);
       const position = area.indexOf(tab) + 1;
@@ -836,13 +855,14 @@ export const Sidebar = ({
   };
 
   const moveBy = (tab: ShellTab, step: number) => {
-    // A pinned tab in the box keeps its place; another moves among the
+    // A pinned tab in a box keeps its place; another moves among the
     // box's others, its pane with it.
     if (boxed.has(tab.id) && tab.pinned) {
       return false;
     }
 
     const inBox = boxed.has(tab.id);
+    const boxRows = boxRowsOf(tab);
     const area = areaOf(tab);
     const to =
       (inBox
@@ -936,7 +956,7 @@ export const Sidebar = ({
       cell={wide && tab.pinned}
       spansRow={spansRow}
       boxed={boxed.has(tab.id)}
-      maximized={boxed.has(tab.id) && tabs.maximized}
+      maximized={maximizedOf(boxOfTab.get(tab.id) ?? [])}
       selected={tab.id === tabs.selectedTabId}
       profileId={profileId}
       unreadCount={unreadCount}
@@ -970,14 +990,17 @@ export const Sidebar = ({
     </ListedTab>
   );
 
-  const box = (inList: boolean) => (
+  const box = (tabsOfBox: ShellTab[], inList: boolean) => (
     <SplitBox
-      key="split box"
-      tabs={layout.box}
+      key={`split box ${tabsOfBox[0]?.id ?? ""}`}
+      tabs={tabsOfBox}
       profileId={profileId}
+      restoring={
+        tabsOfBox.find((tab) => tab.id === tabs.selectedTabId) ?? tabsOfBox[0]
+      }
       wide={wide}
-      maximized={tabs.maximized}
-      dropId={inList ? boxFirst : undefined}
+      maximized={maximizedOf(tabsOfBox)}
+      dropId={inList ? firstOf(tabsOfBox) : undefined}
       tile={(tab, cell) => button(tab, true, cell)}
       listed={listedTab}
     />
@@ -1051,7 +1074,7 @@ export const Sidebar = ({
                 inset
               )}
             >
-              {boxPinned && box(false)}
+              {pinnedBoxes.map((each) => box(each, false))}
               {pinnedTabs.map(({ tab }, index) =>
                 button(tab, true, {
                   // Counted among the tiles alone: the box takes its own row.
@@ -1079,7 +1102,7 @@ export const Sidebar = ({
               )}
             >
               {layout.listed.map((item) =>
-                item.kind === "box" ? box(true) : listedTab(item.tab)
+                item.kind === "box" ? box(item.tabs, true) : listedTab(item.tab)
               )}
             </div>
           </ScrollArea>

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { paneTabs } from "./pane-tree.ts";
 import type { PaneTree, Split } from "./pane-tree.ts";
-import { isMaximized } from "./split.ts";
+import { isMaximized, shownSplit, splitsOf } from "./split.ts";
 import { gmailTab, newProfile } from "./state.ts";
 import type { Profile, Tab } from "./state.ts";
 import { viewDrop } from "./view-drop.ts";
@@ -19,11 +19,11 @@ const row = (...tabs: string[]): PaneTree => ({
   children: tabs.map((pane) => ({ size: 1 / tabs.length, pane })),
 });
 
-const profile = (selectedTabId: string, split?: Split): Profile => ({
+const profile = (selectedTabId: string, ...splits: Split[]): Profile => ({
   ...newProfile("p", "Default"),
   tabs: [gmailTab(), ...["a", "b", "c", "d"].map((id) => tab(id))],
   selectedTabId,
-  ...(split && { split }),
+  ...(splits.length > 0 && { splits }),
 });
 
 const split = (...tabs: string[]): Split => ({
@@ -32,7 +32,7 @@ const split = (...tabs: string[]): Split => ({
 
 const WIDE = { width: 1200, height: 800 };
 
-/** The drop's kind and side, whether it fits, and the panes after it in reading order. */
+/** The drop's kind and side, whether it fits, and the shown panes after it in reading order. */
 const aim = (
   current: Profile,
   x: number,
@@ -47,7 +47,7 @@ const aim = (
       drop.kind,
       drop.side,
       drop.fits,
-      drop.next.split ? paneTabs(drop.next.split.root) : [],
+      paneTabs(shownSplit(drop.next)?.root ?? drop.next.selectedTabId),
     ]
   );
 };
@@ -155,11 +155,35 @@ describe(viewDrop, () => {
     ]);
   });
 
-  it("refuses a second split beside a tab shown alone while the profile has one", () => {
+  it("starts a second split beside a tab shown alone while the profile has one, the first kept", () => {
+    const drops = [
+      viewDrop(profile("c", split("a", "b")), WIDE, { x: 900, y: 400 }, "d"),
+      viewDrop(profile("c", split("a", "b")), WIDE, { x: 5, y: 400 }, "d"),
+    ];
+
+    expect(
+      drops.map(
+        (drop) => drop && splitsOf(drop.next).map(({ root }) => paneTabs(root))
+      )
+    ).toStrictEqual([
+      [
+        ["a", "b"],
+        ["c", "d"],
+      ],
+      [
+        ["a", "b"],
+        ["d", "c"],
+      ],
+    ]);
+  });
+
+  it("moves a tab of another split into the shown one, the other ending at one pane", () => {
+    const two = profile("a", split("a", "b"), split("c", "d"));
+
     expect([
-      aim(profile("c", split("a", "b")), 600, 400, "d"),
-      aim(profile("c", split("a", "b")), 5, 400, "d"),
-    ]).toStrictEqual([undefined, undefined]);
+      aim(two, 1100, 400, "c"),
+      viewDrop(two, WIDE, { x: 1100, y: 400 }, "c")?.next.splits?.length,
+    ]).toStrictEqual([["pane", "right", true, ["a", "b", "c"]], 1]);
   });
 
   it("gives a maximized split's half to the tab and the other half to the whole split, restored", () => {
@@ -168,7 +192,7 @@ describe(viewDrop, () => {
       maximized: true,
     });
     const drop = viewDrop(maximized, WIDE, { x: 100, y: 400 }, "d");
-    const root = drop?.next.split?.root;
+    const root = drop && shownSplit(drop.next)?.root;
 
     expect(drop).toMatchObject({
       kind: "pane",

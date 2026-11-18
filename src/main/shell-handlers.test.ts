@@ -420,7 +420,7 @@ describe(shellShortcuts, () => {
   });
 });
 
-/** The box the shell is given with `c1` and pinned `d1` split, or nothing. */
+/** The boxes the shell is given with `c1` and pinned `d1` split, or none. */
 const boxOf = (selectedTabId: string, split = true) =>
   shellState(
     {
@@ -435,15 +435,17 @@ const boxOf = (selectedTabId: string, split = true) =>
           ],
           selectedTabId,
           ...(split && {
-            split: {
-              root: {
-                direction: "row",
-                children: [
-                  { size: 0.5, pane: "c1" },
-                  { size: 0.5, pane: "d1" },
-                ],
+            splits: [
+              {
+                root: {
+                  direction: "row",
+                  children: [
+                    { size: 0.5, pane: "c1" },
+                    { size: 0.5, pane: "d1" },
+                  ],
+                },
               },
-            },
+            ],
           }),
         },
         newProfile("b", "Work"),
@@ -457,7 +459,7 @@ const boxOf = (selectedTabId: string, split = true) =>
     CLOSED_INBOX,
     CHROME,
     APPS
-  ).tabs.box;
+  ).tabs.boxes;
 
 describe(shellState, () => {
   it("gives the shell the profiles with names to show, their colours by place, their mail and whether each sleeps, and nothing else of them", () => {
@@ -573,16 +575,17 @@ describe(shellState, () => {
       ],
       panes: null,
       handles: [],
-      box: null,
-      maximized: false,
+      boxes: [],
     });
   });
 
   it("gives the shell the split's box in its order whichever tab is selected, and none without a split", () => {
+    const box = [{ tabs: ["d1", "c1"], maximized: false }];
+
     expect([boxOf("c1"), boxOf("gmail"), boxOf("c1", false)]).toStrictEqual([
-      ["d1", "c1"],
-      ["d1", "c1"],
-      null,
+      box,
+      box,
+      [],
     ]);
   });
 });

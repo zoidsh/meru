@@ -55,7 +55,7 @@ const seed = (
           { id: "d", app: "drive", url: standIn.driveUrl, title: DRIVE_TITLE },
         ],
         selectedTabId: "c",
-        split: { root, ...(maximized && { maximized }) },
+        splits: [{ root, ...(maximized && { maximized }) }],
       },
     ],
     selectedProfileId: "p",
@@ -91,10 +91,10 @@ const paneWidths = (shell: Page) =>
 
 const storedSplit = async (userDataDir: string) => {
   const { profiles } = await readState<{
-    profiles: { split?: { root: Tree; maximized?: unknown } }[];
+    profiles: { splits?: { root: Tree; maximized?: unknown }[] }[];
   }>(userDataDir);
 
-  return profiles[0]?.split;
+  return profiles[0]?.splits?.[0];
 };
 
 const storedShares = async (userDataDir: string) => {
@@ -380,13 +380,15 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
   await expect
     .poll(() => shownWidths(first).then((shown) => shown.map(({ url }) => url)))
     .toStrictEqual([standIn.driveUrl]);
-  // Restore needs no tab of the split selected, and selects none.
+  // Restore from outside the split selects the box's first tab, Gmail,
+  // which the store pins, and so shows the split.
   await restore.click();
   await expect(restore).toHaveCount(0);
-  await expect(tab(shell, DRIVE_TITLE)).toHaveAttribute(
+  await expect(tab(shell, STAND_IN_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"
   );
+  await expect.poll(() => shownWidths(first)).toHaveLength(2);
   await expect.poll(() => boxFill(shell)).toBe(evenFill);
 
   await tab(shell, CALENDAR_TITLE).click();

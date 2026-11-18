@@ -18,16 +18,20 @@ export const openableApps = <Listed extends Pick<App, "id" | "singleInstance">>(
 
 /**
  * What Open in split lists: every app, a single-instance one included,
- * whose tab is then used, unless that tab already has a pane or is the
- * selected one, which the new pane goes beside.
+ * whose tab is then used, moved from another split if in one, unless that
+ * tab already has a pane in the shown split or is the selected one, which
+ * the new pane goes beside.
  */
 export const splittableApps = <
   Listed extends Pick<App, "id" | "singleInstance">,
 >(
   apps: readonly Listed[],
-  profile: Pick<Profile, "tabs" | "split" | "selectedTabId">
+  profile: Pick<Profile, "tabs" | "splits" | "selectedTabId">
 ): Listed[] => {
-  const paned = new Set([...splitTabs(profile), profile.selectedTabId]);
+  const paned = new Set([
+    ...splitTabs(profile, profile.selectedTabId),
+    profile.selectedTabId,
+  ]);
   const inPanes = new Set(
     knownTabs(profile)
       .filter((tab) => paned.has(tab.id))

@@ -56,12 +56,13 @@ const split = (...tabs: string[]): Split => ({
 const profile = (
   selectedTabId: string,
   stored?: Split,
-  tabs: Tab[] = ["a", "b", "c", "d"].map((id) => tab(id))
+  tabs: Tab[] = ["a", "b", "c", "d"].map((id) => tab(id)),
+  more: Split[] = []
 ): Profile => ({
   ...newProfile("p", "Default"),
   tabs: [gmailTab(), ...tabs],
   selectedTabId,
-  ...(stored && { split: stored }),
+  ...(stored && { splits: [stored, ...more] }),
 });
 
 const state = (current: Profile): State => ({
@@ -73,7 +74,14 @@ const state = (current: Profile): State => ({
 const of = (next: State | undefined) => {
   const [first] = next?.profiles ?? [];
 
-  return first && { selected: first.selectedTabId, split: first.split };
+  return first && { selected: first.selectedTabId, split: first.splits?.[0] };
+};
+
+/** The box of the profile's first split, or none without one. */
+const boxOf = (current: Profile) => {
+  const [first] = current.splits ?? [];
+
+  return first && boxOrder(current, first);
 };
 
 const key = (tabId: string) => ({ profileId: "p", tabId });
@@ -88,13 +96,13 @@ const readBack = (stored: unknown) => {
 const later = { ...tab("x"), app: "keep" };
 
 describe(splitTarget, () => {
-  it("is the selected tab while it is in the split or there is none, and nothing outside one", () => {
+  it("is the selected tab, in a split or not, and nothing for one not shown", () => {
     expect([
       splitTarget(profile("b", split("a", "b"))),
       splitTarget(profile("c")),
       splitTarget(profile("c", split("a", "b"))),
       splitTarget(profile("gone")),
-    ]).toStrictEqual(["b", "c", undefined, undefined]);
+    ]).toStrictEqual(["b", "c", "c", undefined]);
   });
 });
 
@@ -145,8 +153,8 @@ describe(boxOrder, () => {
     };
 
     expect([
-      boxOrder(profile("gmail", nested, tabs)),
-      boxOrder(profile("a", split("c", "a"), tabs)),
+      boxOf(profile("gmail", nested, tabs)),
+      boxOf(profile("a", split("c", "a"), tabs)),
     ]).toStrictEqual([
       ["b", "d", "c", "a"],
       ["c", "a"],
@@ -155,14 +163,14 @@ describe(boxOrder, () => {
 
   it("is none without a split, or with fewer than two of its tabs shown", () => {
     expect([
-      boxOrder(profile("a")),
-      boxOrder(profile("a", split("a", "x"), [tab("a"), later])),
+      boxOf(profile("a")),
+      boxOf(profile("a", split("a", "x"), [tab("a"), later])),
     ]).toStrictEqual([undefined, undefined]);
   });
 });
 
 describe(splitFits, () => {
-  it("fits a new pane only where every pane keeps the minimum", () => {
+  it("fits a new pane only where every pane keeps the minimum, a tab in no split starting one of its own", () => {
     expect([
       splitFits(profile("a"), "row", { width: 488, height: 600 }),
       splitFits(profile("a"), "row", { width: 487, height: 600 }),
@@ -175,10 +183,10 @@ describe(splitFits, () => {
         height: 600,
       }),
       splitFits(profile("c", split("a", "b")), "row", {
-        width: 2000,
-        height: 2000,
+        width: 600,
+        height: 600,
       }),
-    ]).toStrictEqual([true, false, false, true, false]);
+    ]).toStrictEqual([true, false, false, true, true]);
   });
 });
 
@@ -186,16 +194,23 @@ describe(splitWith, () => {
   it("starts a split beside the selected tab, the new pane selected", () => {
     expect(splitWith(profile("a"), "b", "row")).toMatchObject({
       selectedTabId: "b",
-      split: { root: row("a", "b") },
+      splits: [{ root: row("a", "b") }],
     });
   });
 
-  it("refuses the target itself, a tab with a pane, one not shown, or no target", () => {
+  it("starts a second split beside a tab in none, and moves a tab of another split there, which ends at one pane", () => {
+    expect([
+      splitWith(profile("c", split("a", "b")), "d", "row")?.splits,
+      splitWith(profile("c", split("a", "b")), "b", "row")?.splits,
+    ]).toStrictEqual([[split("a", "b"), split("c", "d")], [split("c", "b")]]);
+  });
+
+  it("refuses the target itself, a tab with a pane beside it, one not shown, or no target", () => {
     expect([
       splitWith(profile("a"), "a", "row"),
       splitWith(profile("a", split("a", "b")), "b", "row"),
       splitWith(profile("a"), "gone", "row"),
-      splitWith(profile("c", split("a", "b")), "d", "row"),
+      splitWith(profile("gone"), "a", "row"),
     ]).toStrictEqual([undefined, undefined, undefined, undefined]);
   });
 });
@@ -322,6 +337,115 @@ describe("the tab operations on a split", () => {
   });
 });
 
+const storedWith = (fields: object) => ({
+  version: 1,
+  selectedProfileId: "p",
+  profiles: [{ ...profile("a"), ...fields }],
+});
+const readSplits = (read: State | undefined) => read?.profiles[0]?.splits;
+const writtenSplits = (read: State | undefined) =>
+  (encodeState(read as State) as { profiles: { splits?: unknown }[] })
+    .profiles[0]?.splits;
+const twoSplits = (selected: string) =>
+  profile(selected, split("a", "b"), undefined, [split("c", "d")]);
+
+describe("several splits", () => {
+  it("reads the previous builds' one split as a list of one, and writes the list alone", () => {
+    const read = readBack(storedWith({ split: split("a", "b") }));
+    const written = encodeState(read as State) as {
+      profiles: Record<string, unknown>[];
+    };
+
+    expect([
+      readSplits(read),
+      written.profiles[0]?.splits,
+      "split" in (written.profiles[0] ?? {}),
+    ]).toStrictEqual([[split("a", "b")], [split("a", "b")], false]);
+  });
+
+  it("keeps a tab two stored splits name in the first, ending a second left with one pane", () => {
+    expect([
+      readSplits(
+        readBack(
+          storedWith({ splits: [split("a", "b"), split("b", "c", "d")] })
+        )
+      ),
+      readSplits(
+        readBack(storedWith({ splits: [split("a", "b"), split("b", "c")] }))
+      ),
+    ]).toStrictEqual([
+      [
+        split("a", "b"),
+        {
+          root: {
+            direction: "row",
+            children: [
+              { size: 0.5, pane: "c" },
+              { size: 0.5, pane: "d" },
+            ],
+          },
+        },
+      ],
+      [split("a", "b")],
+    ]);
+  });
+
+  it("repairs each split on its own, a tab gone losing its pane and a split of one ending", () => {
+    expect(
+      readSplits(
+        readBack(
+          storedWith({
+            splits: [split("a", "gone"), split("b", "c", "gone"), split("d")],
+          })
+        )
+      )
+    ).toStrictEqual([
+      {
+        root: {
+          direction: "row",
+          children: [
+            { size: 0.5, pane: "b" },
+            { size: 0.5, pane: "c" },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("keeps a splits entry or list it cannot read as found, after the others", () => {
+    const entries = readBack(storedWith({ splits: [5, split("a", "b")] }));
+    const whole = readBack(storedWith({ splits: "no" }));
+
+    expect([
+      readSplits(entries),
+      writtenSplits(entries),
+      readSplits(whole),
+      writtenSplits(whole),
+    ]).toStrictEqual([
+      [split("a", "b")],
+      [split("a", "b"), 5],
+      undefined,
+      "no",
+    ]);
+  });
+
+  it("shows the split holding the selected tab, and a tab in none alone", () => {
+    expect(
+      ["a", "d", "gmail"].map((selected) => splitPanes(twoSplits(selected)))
+    ).toStrictEqual([row("a", "b"), row("c", "d"), undefined]);
+  });
+
+  it("maximizes the shown split alone, another keeping its own", () => {
+    const two = profile("d", split("a", "b"), undefined, [maximized("c", "d")]);
+
+    expect([
+      isMaximized(two),
+      isMaximized({ ...two, selectedTabId: "a" }),
+      withMaximized({ ...two, selectedTabId: "a" }, true)?.splits,
+    ]).toStrictEqual([true, false, [maximized("a", "b"), maximized("c", "d")]]);
+  });
+});
+
 describe("a stored split", () => {
   it("comes back from the file as it went, and a tab gone from the list loses its pane", () => {
     const stored = structuredClone(
@@ -357,7 +481,7 @@ describe("a stored split", () => {
 
     expect(of(read)?.split).toStrictEqual(split("a", "x", "y"));
     expect(
-      (encodeState(read as State) as typeof stored).profiles[0]?.split
+      (encodeState(read as State) as typeof stored).profiles[0]?.splits?.[0]
     ).toStrictEqual(split("a", "x", "y"));
   });
 
@@ -394,15 +518,15 @@ describe(withMaximized, () => {
     const on = withMaximized(profile("b", split("a", "b")), true);
 
     expect([
-      on?.split,
+      on?.splits,
       on && shownPanes(on),
       on && splitPanes(on),
-      on && withMaximized(on, false)?.split,
+      on && withMaximized(on, false)?.splits,
     ]).toStrictEqual([
-      maximized("a", "b"),
+      [maximized("a", "b")],
       undefined,
       row("a", "b"),
-      split("a", "b"),
+      [split("a", "b")],
     ]);
   });
 
@@ -418,7 +542,10 @@ describe(withMaximized, () => {
   it("reads only true as maximized", () => {
     expect(
       [true, "yes", 1, undefined].map((value) =>
-        isMaximized({ split: { ...split("a", "b"), maximized: value } })
+        isMaximized({
+          splits: [{ ...split("a", "b"), maximized: value }],
+          selectedTabId: "a",
+        })
       )
     ).toStrictEqual([true, false, false, false]);
   });
@@ -455,15 +582,15 @@ describe("a maximized split", () => {
     ]).toStrictEqual([undefined, split("a", "b"), split("a", "b")]);
   });
 
-  it("is restored while a tab outside the split is selected", () => {
+  it("is restored by its tab while one outside the split is selected, which Restore selects", () => {
     expect(
       of(
         maximizePane(state(profile("c", maximized("a", "b"))), key("a"), false)
       )
-    ).toStrictEqual({ selected: "c", split: split("a", "b") });
+    ).toStrictEqual({ selected: "a", split: split("a", "b") });
   });
 
-  it("is maximized and restored by its tab, which Maximize selects", () => {
+  it("is maximized and restored by its tab, which either selects", () => {
     const current = state(profile("a", split("a", "b")));
     const on = maximizePane(current, key("b"), true);
 
@@ -473,7 +600,7 @@ describe("a maximized split", () => {
       maximizePane(current, key("c"), true),
     ]).toStrictEqual([
       { selected: "b", split: maximized("a", "b") },
-      { selected: "b", split: split("a", "b") },
+      { selected: "a", split: split("a", "b") },
       undefined,
     ]);
   });
@@ -540,11 +667,11 @@ describe(resizedSplit, () => {
     ).toMatchObject({ maximized: true, later: 1 });
   });
 
-  it("is nothing while the split does not show", () => {
+  it("is nothing for a gap the split does not have", () => {
     const base = split("a", "b");
 
     expect(
-      resizedSplit(profile("c", base), base, area, "a", "b", 100)
+      resizedSplit(profile("a", base), base, area, "a", "c", 100)
     ).toBeUndefined();
   });
 });
@@ -601,7 +728,7 @@ describe(resizeSplit, () => {
 });
 
 const leaves = (next: Profile | undefined) =>
-  next?.split && paneTabsOf(next.split.root);
+  next?.splits?.[0] && paneTabsOf(next.splits[0].root);
 
 const order = (next: State | undefined) =>
   next?.profiles[0]?.tabs.flatMap((each) => ("id" in each ? [each.id] : []));
@@ -630,9 +757,10 @@ describe(splitBeside, () => {
 
   it("puts the tab beside a target in the split, and moves a tab of the split there from its own pane", () => {
     expect([
-      splitBeside(profile("a", split("a", "b")), "c", "b", "row")?.split,
-      splitBeside(profile("a", split("a", "b", "c")), "a", "c", "row")?.split,
-      splitBeside(profile("a", split("a", "b")), "a", "b", "row")?.split,
+      splitBeside(profile("a", split("a", "b")), "c", "b", "row")?.splits?.[0],
+      splitBeside(profile("a", split("a", "b", "c")), "a", "c", "row")
+        ?.splits?.[0],
+      splitBeside(profile("a", split("a", "b")), "a", "b", "row")?.splits?.[0],
     ]).toStrictEqual([
       {
         root: {
@@ -665,18 +793,43 @@ describe(splitBeside, () => {
         "c",
         "a",
         "row"
-      )?.split?.maximized
+      )?.splits?.[0]?.maximized
     ).toBeUndefined();
   });
 
-  it("refuses a tab put beside itself, a tab or target not shown, and a target outside the split while there is one", () => {
+  it("starts a second split beside a target in none, and moves a tab from one split into another, the first ending at one pane", () => {
+    const two = profile("a", split("a", "b"), undefined, [split("c", "d")]);
+
+    expect([
+      splitBeside(profile("a", split("a", "b")), "c", "d", "row")?.splits,
+      splitBeside(profile("a", split("a", "b")), "a", "d", "row")?.splits,
+      splitBeside(two, "b", "c", "row")?.splits,
+      splitBeside(two, "b", "c", "row")?.selectedTabId,
+    ]).toStrictEqual([
+      [split("a", "b"), split("d", "c")],
+      [split("d", "a")],
+      [
+        {
+          root: {
+            direction: "row",
+            children: [
+              { size: 0.25, pane: "c" },
+              { size: 0.25, pane: "b" },
+              { size: 0.5, pane: "d" },
+            ],
+          },
+        },
+      ],
+      "b",
+    ]);
+  });
+
+  it("refuses a tab put beside itself, or a tab or target not shown", () => {
     expect([
       splitBeside(profile("a"), "a", "a", "row"),
       splitBeside(profile("a"), "gone", "a", "row"),
       splitBeside(profile("a"), "a", "gone", "row"),
-      splitBeside(profile("a", split("a", "b")), "c", "d", "row"),
-      splitBeside(profile("a", split("a", "b")), "a", "d", "row"),
-    ]).toStrictEqual([undefined, undefined, undefined, undefined, undefined]);
+    ]).toStrictEqual([undefined, undefined, undefined]);
   });
 });
 
@@ -723,7 +876,7 @@ describe(withBoxMove, () => {
     expect([
       leaves(moved),
       leaves(withBoxMove(profile("a", stored, tabs), "a")),
-      moved?.split?.root.children.map((child) => child.size),
+      moved?.splits?.[0]?.root.children.map((child) => child.size),
     ]).toStrictEqual([
       ["c", "p", "a", "b"],
       ["b", "p", "c", "a"],
@@ -760,10 +913,17 @@ describe("the sidebar's drops on a split", () => {
     ]);
   });
 
-  it("refuses a drop onto a tab outside the split while there is one", () => {
-    expect(
-      splitOntoTab(state(profile("a", split("a", "b"))), key("c"), "d")
-    ).toBeUndefined();
+  it("starts a second split with a tab dropped onto a tab in none", () => {
+    const next = splitOntoTab(
+      state(profile("a", split("a", "b"))),
+      key("c"),
+      "d"
+    );
+
+    expect([next?.profiles[0]?.splits, of(next)?.selected]).toStrictEqual([
+      [split("a", "b"), split("d", "c")],
+      "c",
+    ]);
   });
 
   it("moves a tab of the box among the others, its pane with it", () => {

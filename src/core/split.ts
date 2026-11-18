@@ -24,40 +24,60 @@ import { isPinned, knownTabs, withSplit } from "./state.ts";
 import type { Profile } from "./state.ts";
 import type { Size } from "./window-bounds.ts";
 
+/** The profile's splits, in the order they were made. */
+export const splitsOf = (profile: Pick<Profile, "splits">): Split[] =>
+  profile.splits ?? [];
+
+/** The split holding `tabId`'s pane, if any; a tab is in one at most. */
+export const splitOf = (
+  profile: Pick<Profile, "splits">,
+  tabId: string
+): Split | undefined =>
+  splitsOf(profile).find((split) => paneTabs(split.root).includes(tabId));
+
+/** The split that shows: the one holding the selected tab, if any. */
+export const shownSplit = (
+  profile: Pick<Profile, "splits" | "selectedTabId">
+): Split | undefined => splitOf(profile, profile.selectedTabId);
+
 /**
- * The tabs of the profile's panes in reading order, a pane kept for a tab
- * this build does not show among them; none without a split.
+ * The tabs of the panes of the split holding `tabId` in reading order, a
+ * pane kept for a tab this build does not show among them; none outside
+ * every split.
  */
-export const splitTabs = (profile: Pick<Profile, "split">): string[] =>
-  profile.split ? paneTabs(profile.split.root) : [];
+export const splitTabs = (
+  profile: Pick<Profile, "splits">,
+  tabId: string
+): string[] => {
+  const split = splitOf(profile, tabId);
 
-export const isInSplit = (profile: Pick<Profile, "split">, tabId: string) =>
-  splitTabs(profile).includes(tabId);
+  return split ? paneTabs(split.root) : [];
+};
 
-/** Whether the focused pane shows alone, the split kept. */
-export const isMaximized = (profile: Pick<Profile, "split">) =>
-  profile.split?.maximized === true;
+export const isInSplit = (profile: Pick<Profile, "splits">, tabId: string) =>
+  splitOf(profile, tabId) !== undefined;
+
+/** Whether the shown split's focused pane shows alone, the split kept. */
+export const isMaximized = (
+  profile: Pick<Profile, "splits" | "selectedTabId">
+) => shownSplit(profile)?.maximized === true;
 
 /** The split without its Maximize, which any change to it ends. */
 const restored = ({ maximized: _maximized, ...split }: Split): Split => split;
 
 /**
- * The split's panes while the selected tab is in it, the focused one being
- * the selected tab's: the stored tree without the panes of tabs this build
- * does not show, which stay stored for a build that does. None when fewer
- * than two are left. Maximized or not.
+ * `split`'s panes as they show: the stored tree without the panes of tabs
+ * this build does not show, which stay stored for a build that does. None
+ * when fewer than two are left.
  */
-export const splitPanes = (
-  profile: Pick<Profile, "split" | "selectedTabId" | "tabs">
+export const panesOf = (
+  profile: Pick<Profile, "tabs">,
+  split: Split
 ): PaneTree | undefined => {
-  if (!profile.split || !isInSplit(profile, profile.selectedTabId)) {
-    return undefined;
-  }
-
   const known = new Set(knownTabs(profile).map((tab) => tab.id));
-  let shown: PaneTree | undefined = profile.split.root;
+  let shown: PaneTree | undefined = split.root;
 
-  for (const tabId of splitTabs(profile)) {
+  for (const tabId of paneTabs(split.root)) {
     if (shown && !known.has(tabId)) {
       shown = removePane(shown, tabId);
     }
@@ -66,24 +86,37 @@ export const splitPanes = (
   return typeof shown === "string" ? undefined : shown;
 };
 
-/** The panes on screen: the split's, unless the focused one shows alone. */
+/**
+ * The shown split's panes, the focused one being the selected tab's; none
+ * while the selected tab is in no split. Maximized or not.
+ */
+export const splitPanes = (
+  profile: Pick<Profile, "splits" | "selectedTabId" | "tabs">
+): PaneTree | undefined => {
+  const split = shownSplit(profile);
+
+  return split && panesOf(profile, split);
+};
+
+/** The panes on screen: the shown split's, unless the focused one shows alone. */
 export const shownPanes = (
-  profile: Pick<Profile, "split" | "selectedTabId" | "tabs">
+  profile: Pick<Profile, "splits" | "selectedTabId" | "tabs">
 ): PaneTree | undefined =>
   isMaximized(profile) ? undefined : splitPanes(profile);
 
 /**
- * The tabs of the split's box in the sidebar, in the box's order: its pinned
+ * The tabs of `split`'s box in the sidebar, in the box's order: its pinned
  * tabs first, in their order among the pinned, then the others in their
  * panes' reading order. None while fewer than two of its tabs are shown,
  * when there is no split to show.
  */
 export const boxOrder = (
-  profile: Pick<Profile, "split" | "tabs">
+  profile: Pick<Profile, "tabs">,
+  split: Split
 ): string[] | undefined => {
   const known = knownTabs(profile);
   const shown = new Set(known.map((tab) => tab.id));
-  const reading = splitTabs(profile).filter((tabId) => shown.has(tabId));
+  const reading = paneTabs(split.root).filter((tabId) => shown.has(tabId));
 
   if (reading.length < 2) {
     return undefined;
@@ -97,14 +130,25 @@ export const boxOrder = (
 };
 
 /**
+ * The boxes of the profile's splits in the sidebar, in the splits' order:
+ * each its tabs in the box's order and whether it is maximized. A split with
+ * fewer than two tabs shown has none.
+ */
+export const splitBoxes = (
+  profile: Pick<Profile, "splits" | "tabs">
+): { tabs: string[]; maximized: boolean }[] =>
+  splitsOf(profile).flatMap((split) => {
+    const tabs = boxOrder(profile, split);
+
+    return tabs ? [{ tabs, maximized: split.maximized === true }] : [];
+  });
+
+/**
  * The tab a new pane goes beside: the selected tab, which is the focused
- * pane's while the split shows, or which starts one where the profile has
- * none. None while the selected tab is outside the split, since a profile
- * has one split.
+ * pane's while its split shows, or which starts a split where it is in none.
  */
 export const splitTarget = (profile: Profile): string | undefined =>
-  knownTabs(profile).some((tab) => tab.id === profile.selectedTabId) &&
-  (!profile.split || isInSplit(profile, profile.selectedTabId))
+  knownTabs(profile).some((tab) => tab.id === profile.selectedTabId)
     ? profile.selectedTabId
     : undefined;
 
@@ -132,9 +176,9 @@ export const splitFits = (
 
 /**
  * The profile with `tabId` in a new pane `direction` of `target`'s, the
- * selected tab's by default, and selected, which focuses it. Nothing when
- * there is no target, the tab is not shown, is the target or already has a
- * pane.
+ * selected tab's by default, and selected, which focuses it; a tab in
+ * another split leaves it first. Nothing when there is no target, or the
+ * tab is not shown, is the target or has a pane in the target's split.
  */
 export const splitWith = (
   profile: Profile,
@@ -145,23 +189,26 @@ export const splitWith = (
   if (
     target === undefined ||
     target === tabId ||
-    isInSplit(profile, tabId) ||
-    !knownTabs(profile).some((tab) => tab.id === tabId)
+    !knownTabs(profile).some((tab) => tab.id === tabId) ||
+    (isInSplit(profile, target) &&
+      splitOf(profile, target) === splitOf(profile, tabId))
   ) {
     return undefined;
   }
 
+  const left = withoutPane(profile, tabId).profile;
+  const previous = splitOf(left, target);
   const split: Split = {
-    ...(profile.split && restored(profile.split)),
+    ...(previous && restored(previous)),
     root: addPane(
-      profile.split?.root ?? target,
+      previous?.root ?? target,
       target,
       tabId,
       direction
     ) as PaneSplit,
   };
 
-  return { ...withSplit(profile, split), selectedTabId: tabId };
+  return { ...withSplit(left, previous, split), selectedTabId: tabId };
 };
 
 /**
@@ -174,9 +221,9 @@ export const withoutPane = (
   profile: Profile,
   tabId: string
 ): { profile: Profile; next?: string } => {
-  const { split } = profile;
+  const split = splitOf(profile, tabId);
 
-  if (!split || !isInSplit(profile, tabId)) {
+  if (!split) {
     return { profile };
   }
 
@@ -191,22 +238,22 @@ export const withoutPane = (
   return {
     profile:
       root === undefined || typeof root === "string"
-        ? withSplit(profile, undefined)
-        : withSplit(profile, { ...restored(split), root }),
+        ? withSplit(profile, split, undefined)
+        : withSplit(profile, split, { ...restored(split), root }),
     ...(next !== undefined && { next }),
   };
 };
 
 /**
- * The profile's split with the focused pane shown alone, or all its panes
- * again, whichever tab is selected; nothing while the selected tab's pane is
- * not on screen to maximize, or when it is already so.
+ * The shown split with the focused pane shown alone, or all its panes
+ * again; nothing while the selected tab's pane is not on screen to
+ * maximize, or when it is already so. Another split keeps its own.
  */
 export const withMaximized = (
   profile: Profile,
   on: boolean
 ): Profile | undefined => {
-  const { split } = profile;
+  const split = shownSplit(profile);
 
   if (!split || isMaximized(profile) === on || (on && !splitPanes(profile))) {
     return undefined;
@@ -214,6 +261,7 @@ export const withMaximized = (
 
   return withSplit(
     profile,
+    split,
     on ? { ...split, maximized: true } : restored(split)
   );
 };
@@ -233,7 +281,7 @@ export const resizedSplit = (
   after: string,
   by: number
 ): Split | undefined => {
-  const shown = splitPanes({ ...profile, split: base });
+  const shown = panesOf(profile, base);
   const resized =
     shown === undefined
       ? undefined
@@ -267,7 +315,7 @@ export const gapTravel = (
   after: string,
   to: PaneGapEnd
 ): number | undefined => {
-  const shown = splitPanes({ ...profile, split });
+  const shown = panesOf(profile, split);
   const handle =
     shown === undefined
       ? undefined
@@ -291,10 +339,10 @@ export const evenedSplit = (
 
 /**
  * The profile with `tabId` in a new pane `direction` of `target`'s, before
- * it with `first`, and selected, which focuses it; a tab with a pane already
- * leaves it first, its space going to the panes beside it. Nothing for a tab
- * put beside itself, a tab or target not shown, or a target outside the
- * split while there is one, since a profile has one split.
+ * it with `first`, and selected, which focuses it, starting a split where
+ * the target is in none; a tab with a pane already leaves it first, its
+ * space going to the panes beside it, and a split it leaves with one pane
+ * ends. Nothing for a tab put beside itself or a tab or target not shown.
  */
 export const splitBeside = (
   profile: Profile,
@@ -305,25 +353,23 @@ export const splitBeside = (
 ): Profile | undefined => {
   const shown = new Set(knownTabs(profile).map((tab) => tab.id));
 
-  if (
-    tabId === target ||
-    !shown.has(tabId) ||
-    !shown.has(target) ||
-    (profile.split && !isInSplit(profile, target))
-  ) {
+  if (tabId === target || !shown.has(tabId) || !shown.has(target)) {
     return undefined;
   }
 
-  const base = profile.split
-    ? (removePane(profile.split.root, tabId) ?? target)
-    : target;
+  const left =
+    splitOf(profile, tabId) === splitOf(profile, target)
+      ? profile
+      : withoutPane(profile, tabId).profile;
+  const previous = splitOf(left, target);
+  const base = previous ? (removePane(previous.root, tabId) ?? target) : target;
   const root = addPane(base, target, tabId, direction, first);
 
   return typeof root === "string"
     ? undefined
     : {
-        ...withSplit(profile, {
-          ...(profile.split && restored(profile.split)),
+        ...withSplit(left, previous, {
+          ...(previous && restored(previous)),
           root,
         }),
         selectedTabId: tabId,
@@ -335,10 +381,9 @@ export const splitBeside = (
  * screen, `direction` of it and first or last, selected: `least` of
  * `length`, the page area's along that way, a third unless given, or as
  * much as a pane's minimum takes where that is less. A maximized split is
- * restored beside it. A tab with a pane already leaves it first.
- * Nothing for a tab not shown, nothing else on screen to sit beside, or a
- * tab shown alone while a split it is not in exists, since a profile has
- * one split.
+ * restored beside it. A tab with a pane already leaves it first, and a
+ * split it leaves with one pane ends. Nothing for a tab not shown or
+ * nothing else on screen to sit beside.
  */
 export const splitAlongEdge = (
   profile: Profile,
@@ -349,16 +394,17 @@ export const splitAlongEdge = (
   least = 1 / 3
 ): Profile | undefined => {
   const shown = new Set(knownTabs(profile).map((tab) => tab.id));
-  const { split, selectedTabId } = profile;
+  const { selectedTabId } = profile;
 
-  if (
-    !shown.has(tabId) ||
-    !shown.has(selectedTabId) ||
-    (split && !isInSplit(profile, selectedTabId))
-  ) {
+  if (!shown.has(tabId) || !shown.has(selectedTabId)) {
     return undefined;
   }
 
+  const left =
+    splitOf(profile, tabId) === shownSplit(profile)
+      ? profile
+      : withoutPane(profile, tabId).profile;
+  const split = shownSplit(left);
   const base = split ? removePane(split.root, tabId) : selectedTabId;
 
   if (base === undefined || base === tabId) {
@@ -387,18 +433,18 @@ export const splitAlongEdge = (
   return typeof root === "string"
     ? undefined
     : {
-        ...withSplit(profile, { ...(split && restored(split)), root }),
+        ...withSplit(left, split, { ...(split && restored(split)), root }),
         selectedTabId: tabId,
       };
 };
 
 /**
- * Whether every pane of the profile's split, as it shows with the selected
+ * Whether every pane of the shown split, as it shows with the selected
  * tab's pane focused, is at least the minimum each way in a page area of
  * `size`; with no split on screen there is nothing to fit.
  */
 export const splitRoomy = (
-  profile: Pick<Profile, "split" | "selectedTabId" | "tabs">,
+  profile: Pick<Profile, "splits" | "selectedTabId" | "tabs">,
   size: Size
 ) => {
   const panes = splitPanes(profile);
@@ -407,7 +453,7 @@ export const splitRoomy = (
 };
 
 /**
- * The profile with `tabId`, a tab of the split's box that is not pinned,
+ * The profile with `tabId`, a tab of its split's box that is not pinned,
  * moved among those tabs to just before `before`, or after the last, and
  * its pane with it: those tabs' panes take them in their new order, so the
  * splits and their sizes stay. Nothing for a pinned tab, which keeps its
@@ -418,8 +464,8 @@ export const withBoxMove = (
   tabId: string,
   before?: string
 ): Profile | undefined => {
-  const { split } = profile;
-  const box = boxOrder(profile) ?? [];
+  const split = splitOf(profile, tabId);
+  const box = (split && boxOrder(profile, split)) ?? [];
   const pinned = new Set(
     knownTabs(profile)
       .filter((tab) => isPinned(tab))
@@ -449,7 +495,7 @@ export const withBoxMove = (
 
   const renamed = new Map(rows.map((each, index) => [each, order[index]]));
 
-  return withSplit(profile, {
+  return withSplit(profile, split, {
     ...restored(split),
     root: renamePanes(
       split.root,

@@ -28,8 +28,7 @@ const TABS: ShellState["tabs"] = {
   selectedAsleep: false,
   panes: null,
   handles: [],
-  box: null,
-  maximized: false,
+  boxes: [],
   tabs: [
     {
       id: "gmail",

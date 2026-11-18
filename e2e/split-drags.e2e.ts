@@ -53,7 +53,7 @@ const seed = (userDataDir: string, standIn: StandIn, root?: Tree) =>
           { id: "s", app: "drive", url: standIn.driveUrl, title: "Drive s" },
         ],
         selectedTabId: "c",
-        ...(root && { split: { root } }),
+        ...(root && { splits: [{ root }] }),
       },
     ],
     selectedProfileId: "p",
@@ -62,7 +62,7 @@ const seed = (userDataDir: string, standIn: StandIn, root?: Tree) =>
 interface Stored {
   tabs: { id: string; pinned?: boolean }[];
   selectedTabId: string;
-  split?: { root: Tree };
+  splits?: { root: Tree }[];
 }
 
 const stored = async (userDataDir: string) => {
@@ -80,7 +80,9 @@ const leaves = (tree: string | Tree): string[] =>
 const storedPanes = async (userDataDir: string) => {
   const profile = await stored(userDataDir);
 
-  return profile?.split ? leaves(profile.split.root) : [];
+  const split = profile?.splits?.[0];
+
+  return split ? leaves(split.root) : [];
 };
 
 const storedOrder = async (userDataDir: string) => {
@@ -105,7 +107,7 @@ const storedSelected = async (userDataDir: string) => {
 const storedShares = async (userDataDir: string) => {
   const profile = await stored(userDataDir);
 
-  return profile?.split?.root.children.map(({ size }) =>
+  return profile?.splits?.[0]?.root.children.map(({ size }) =>
     Math.round(size * 1000)
   );
 };
@@ -239,7 +241,7 @@ const markShown = (shell: Page) =>
 const noRoom = (overlay: Page) =>
   overlay.getByText("Not enough room to split", { exact: true });
 
-test("a tab dropped onto another tab's middle, which shows a ring, splits the two with it on the right; onto a tab outside the split nothing drops; with no room the toast says so", async ({
+test("a tab dropped onto another tab's middle, which shows a ring, splits the two with it on the right; with no room the toast says so", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -261,12 +263,6 @@ test("a tab dropped onto another tab's middle, which shows a ring, splits the tw
     .poll(() => drawn(shell).then(({ box }) => box))
     .toStrictEqual(["c", "d"]);
   await expect(noRoom(overlay)).toHaveCount(0);
-
-  // Gmail is outside the split, and a profile has one.
-  await holdOver(shell, "o", await pointOf(shell, "gmail"));
-  await expect.poll(() => markShown(shell)).toBe("none");
-  await shell.mouse.up();
-  expect(await storedPanes(userDataDir)).toStrictEqual(["c", "d"]);
 
   // Halving Drive's pane would leave both halves under the minimum.
   await sizeWindow(app, 720, 480);

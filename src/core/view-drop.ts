@@ -130,9 +130,9 @@ export const inViewReach = (
  * it beside everything else on screen. Elsewhere the nearest half of the
  * pane under the pointer splits that pane that way, a tab shown alone being
  * a pane filling the area, and so a maximized split, whose other half the
- * whole split takes, restored. Nothing over the tab's own page, in a gap, or
- * where the split would be refused, as beside a tab outside the profile's
- * split while it has one.
+ * whole split takes, restored. Beside a tab in no split that starts one,
+ * and a tab of another split leaves it. Nothing over the tab's own page, in
+ * a gap, or where the split would be refused.
  */
 export const viewDrop = (
   profile: Profile,

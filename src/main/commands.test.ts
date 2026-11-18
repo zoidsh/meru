@@ -476,15 +476,17 @@ describe("the command registry", () => {
             { id: "c1", app: "calendar", url: "", title: "Week" },
             { id: "d1", app: "drive", url: "", title: "", pinned: true },
           ],
-          split: {
-            root: {
-              direction: "row",
-              children: [
-                { size: 0.5, pane: "c1" },
-                { size: 0.5, pane: "d1" },
-              ],
+          splits: [
+            {
+              root: {
+                direction: "row",
+                children: [
+                  { size: 0.5, pane: "c1" },
+                  { size: 0.5, pane: "d1" },
+                ],
+              },
             },
-          },
+          ],
         },
       ],
     });
@@ -574,10 +576,10 @@ describe("the command registry", () => {
     await app.profiles.selectTab({ profileId: "a", tabId: "gmail" });
     await app.run("tab.separate");
 
-    expect([offered(), app.profiles.get().profiles[0]?.split]).toStrictEqual([
-      [true, true, false],
-      undefined,
-    ]);
+    expect([
+      offered(),
+      app.profiles.get().profiles[0]?.splits?.[0],
+    ]).toStrictEqual([[true, true, false], undefined]);
     expect(commandOf("tab.splitRight").shortcut?.darwin).toBe(
       "CommandOrControl+Alt+N"
     );
@@ -589,7 +591,8 @@ describe("the command registry", () => {
   it("maximizes the focused pane and restores the panes, labelled as it is, only in a split", async () => {
     const app = setup();
     const label = () => commandOf("tab.maximize").label?.(app.context());
-    const maximized = () => app.profiles.get().profiles[0]?.split?.maximized;
+    const maximized = () =>
+      app.profiles.get().profiles[0]?.splits?.[0]?.maximized;
 
     expect(app.isAvailable("tab.maximize")).toBeFalsy();
 

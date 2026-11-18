@@ -62,16 +62,16 @@ export const SHELL_CALLS = {
   /**
    * Moves a tab of the selected profile within its area, the pinned tabs or
    * the rest, to just before the tab `before` names, or to the area's end;
-   * a tab of the split leaves it on the way.
+   * a tab of a split leaves it on the way.
    */
   moveTab: {
     request: z.object({ profileId, tabId, before: z.optional(tabId) }),
     response: z.undefined(),
   },
   /**
-   * Moves a tab of the selected profile's split box that is not pinned among
-   * the box's other such tabs, to just before `before` or after the last,
-   * its pane with it.
+   * Moves a tab of one of the selected profile's split boxes that is not
+   * pinned among the box's other such tabs, to just before `before` or after
+   * the last, its pane with it.
    */
   moveInBox: {
     request: z.object({ profileId, tabId, before: z.optional(tabId) }),
@@ -132,8 +132,8 @@ export const SHELL_CALLS = {
     response: z.undefined(),
   },
   /**
-   * Shows the pane of a tab in the profile's split alone, selecting it, or
-   * every pane again, as the box's Restore asks.
+   * Shows the pane of a tab in one of the profile's splits alone, selecting
+   * it, or every pane of its split again, as the box's Restore asks.
    */
   maximizePane: {
     request: z.object({ profileId, tabId, on: z.boolean() }),
@@ -304,12 +304,11 @@ export const SHELL_STATE = {
       })
     ),
     /**
-     * The profile's split's tabs, in the order of its box in the sidebar,
-     * whichever tab is selected; `null` without a split.
+     * Each of the profile's splits' boxes in the sidebar, in the splits'
+     * order, whichever tab is selected: its tabs in the box's order, and
+     * whether the split shows its focused pane alone.
      */
-    box: z.nullable(z.array(tabId)),
-    /** Whether the split shows its focused pane alone. */
-    maximized: z.boolean(),
+    boxes: z.array(z.object({ tabs: z.array(tabId), maximized: z.boolean() })),
   }),
   /** How the sidebar shows, which also sets where the content view sits. */
   sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),

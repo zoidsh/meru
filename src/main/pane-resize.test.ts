@@ -27,7 +27,7 @@ const setup = (split: Split | null = even) => {
         ...newProfile("p", "Default"),
         tabs: [gmailTab(), { id: "c", app: "calendar", url: "", title: "" }],
         selectedTabId: "c",
-        ...(split && { split }),
+        ...(split && { splits: [split] }),
       },
     ],
     selectedProfileId: "p",
@@ -58,7 +58,7 @@ const setup = (split: Split | null = even) => {
     previews,
     stored,
     logged,
-    split: () => state.profiles[0]?.split,
+    split: () => state.profiles[0]?.splits?.[0],
   };
 };
 

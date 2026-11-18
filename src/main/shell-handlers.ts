@@ -8,7 +8,7 @@ import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
 import { profileMenuItems } from "#core/profile-menu.ts";
-import { boxOrder, isMaximized, splitRoomy } from "#core/split.ts";
+import { splitBoxes, splitRoomy } from "#core/split.ts";
 import { isAsleep, isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -255,8 +255,7 @@ export const shellState = (
       })),
       panes: page.panes,
       handles: page.handles,
-      box: boxOrder(profile) ?? null,
-      maximized: isMaximized(profile),
+      boxes: splitBoxes(profile),
     },
     doNotDisturb: {
       on: doNotDisturb !== undefined,

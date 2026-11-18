@@ -1,4 +1,4 @@
-import { boxOrder } from "./split.ts";
+import { splitBoxes } from "./split.ts";
 import { knownTabs } from "./state.ts";
 import type { Profile, Tab } from "./state.ts";
 
@@ -7,7 +7,7 @@ interface DrawnTab {
   pinned?: boolean | undefined;
 }
 
-/** One place in an area of the sidebar: a tab, or the split's box of tabs. */
+/** One place in an area of the sidebar: a tab, or a split's box of tabs. */
 export type SidebarItem<T extends DrawnTab> =
   | { kind: "tab"; tab: T }
   | { kind: "box"; tabs: T[] };
@@ -15,39 +15,50 @@ export type SidebarItem<T extends DrawnTab> =
 export interface SidebarLayout<T extends DrawnTab> {
   pinned: SidebarItem<T>[];
   listed: SidebarItem<T>[];
-  /** The box's tabs in its own order, or none when no box is drawn. */
-  box: T[];
+  /** Each drawn box's tabs in its own order, in the splits' order. */
+  boxes: T[][];
 }
 
 const isPinned = (tab: DrawnTab) => tab.pinned === true;
 
 /**
  * The sidebar's two areas as drawn, from the shown tabs in stored order and
- * the split's box in its own order. The box goes first in the pinned area
- * when it holds a pinned tab, and otherwise in the list where its first tab
- * stands; a box of fewer than two shown tabs is none.
+ * each split's box in its own order, in the splits' order. Every box
+ * holding a pinned tab goes first in the pinned area, in the splits' order,
+ * before the plain pinned tiles; any other goes in the list where its first
+ * tab stands. A box of fewer than two shown tabs is none.
  */
 export const sidebarLayout = <T extends DrawnTab>(
   tabs: readonly T[],
-  box: readonly string[] | undefined
+  boxes: readonly (readonly string[])[]
 ): SidebarLayout<T> => {
-  const boxTabs = (box ?? []).flatMap(
-    (tabId) => tabs.find((tab) => tab.id === tabId) ?? []
+  const drawnBoxes = boxes
+    .map((box) =>
+      box.flatMap((tabId) => tabs.find((tab) => tab.id === tabId) ?? [])
+    )
+    .filter((box) => box.length > 1);
+  const items = new Map(
+    drawnBoxes.flatMap((box) => {
+      const item: SidebarItem<T> = { kind: "box", tabs: box };
+
+      return box.map((tab) => [tab.id, item] as const);
+    })
   );
-  const boxed = new Set(boxTabs.length > 1 ? boxTabs.map((tab) => tab.id) : []);
-  const boxItem: SidebarItem<T> = { kind: "box", tabs: boxTabs };
-  const boxPinned = boxed.size > 0 && boxTabs.some(isPinned);
   const layout: SidebarLayout<T> = {
-    pinned: boxPinned ? [boxItem] : [],
+    pinned: drawnBoxes
+      .filter((box) => box.some(isPinned))
+      .map((box) => items.get(box[0]?.id ?? "") as SidebarItem<T>),
     listed: [],
-    box: boxed.size > 0 ? boxTabs : [],
+    boxes: drawnBoxes,
   };
 
   for (const tab of tabs) {
-    if (!boxed.has(tab.id)) {
+    const item = items.get(tab.id);
+
+    if (!item) {
       layout[isPinned(tab) ? "pinned" : "listed"].push({ kind: "tab", tab });
-    } else if (!boxPinned && !layout.listed.includes(boxItem)) {
-      layout.listed.push(boxItem);
+    } else if (!layout.pinned.includes(item) && !layout.listed.includes(item)) {
+      layout.listed.push(item);
     }
   }
 
@@ -64,10 +75,10 @@ export const itemTabs = <T extends DrawnTab>(
  * The profile's shown tabs in the order the sidebar draws them, which Close
  * tabs below, the next and previous tab and the pinned shortcuts count in.
  */
-export const drawnTabs = (profile: Pick<Profile, "tabs" | "split">): Tab[] => {
+export const drawnTabs = (profile: Pick<Profile, "tabs" | "splits">): Tab[] => {
   const { pinned, listed } = sidebarLayout(
     knownTabs(profile),
-    boxOrder(profile)
+    splitBoxes(profile).map((box) => box.tabs)
   );
 
   return itemTabs([...pinned, ...listed]);

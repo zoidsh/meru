@@ -158,7 +158,7 @@ const urlOf = (app: ElectronApplication, prefix: string) =>
 
 interface SavedProfile {
   selectedTabId: string;
-  split?: { root: unknown };
+  splits?: { root: unknown }[];
 }
 
 const savedSplit = async (userDataDir: string) => {
@@ -166,7 +166,7 @@ const savedSplit = async (userDataDir: string) => {
     userDataDir
   );
 
-  return profiles[0]?.split;
+  return profiles[0]?.splits?.[0];
 };
 
 test("Split right picks an app from Open in split and shows it beside the page, ringed as focused; Split down nests; focus in a pane selects its tab, and Back and Reload act on that pane alone", async ({
@@ -538,7 +538,7 @@ const seedBox = (userDataDir: string, standIn: StandIn, root: unknown) =>
           { id: "d", app: "drive", url: standIn.driveUrl, title: DRIVE_TITLE },
         ],
         selectedTabId: "c",
-        split: { root },
+        splits: [{ root }],
       },
     ],
     selectedProfileId: "p",
@@ -746,7 +746,7 @@ test("a tab outside moves past a box in the list as past one place, above or bel
           { id: "d", app: "drive", url: standIn.driveUrl, title: DRIVE_TITLE },
         ],
         selectedTabId: "c",
-        split: { root: row("d", "c") },
+        splits: [{ root: row("d", "c") }],
       },
     ],
     selectedProfileId: "p",
@@ -826,7 +826,7 @@ test("Left and Right in the wide pinned grid go between the two tiles of a row, 
           },
         ],
         selectedTabId: "c",
-        split: { root: row("c", "gmail") },
+        splits: [{ root: row("c", "gmail") }],
       },
     ],
     selectedProfileId: "p",

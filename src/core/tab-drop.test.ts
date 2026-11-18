@@ -86,33 +86,42 @@ describe(tabDrop, () => {
 });
 
 describe(sidebarDrop, () => {
-  // a, then the box of b and c, then d, down a 32px-wide list.
+  // a, then the box of b and c, then the box of e and f, then d, down a
+  // 32px-wide list.
   const a = tile("a", 16, 0);
   const b = tile("b", 16, 46);
   const c = tile("c", 16, 86);
-  const d = tile("d", 16, 136);
-  const box = {
-    box: { left: 13, top: 40, right: 51, bottom: 124 },
-    rows: [b, c],
-  };
-  const tabs = [
-    { ...a, boxed: false },
-    { ...b, boxed: true },
-    { ...c, boxed: true },
-    { ...d, boxed: false },
+  const e = tile("e", 16, 138);
+  const f = tile("f", 16, 178);
+  const d = tile("d", 16, 228);
+  const boxes = [
+    { box: { left: 13, top: 40, right: 51, bottom: 124 }, rows: [b, c] },
+    { box: { left: 13, top: 132, right: 51, bottom: 216 }, rows: [e, f] },
   ];
-  const area = [a, { id: "b", box: box.box }, d];
+  const tabs = [
+    { ...a, inBox: undefined },
+    { ...b, inBox: 0 },
+    { ...c, inBox: 0 },
+    { ...e, inBox: 1 },
+    { ...f, inBox: 1 },
+    { ...d, inBox: undefined },
+  ];
+  const area = [
+    a,
+    { id: "b", box: boxes[0]?.box ?? a.box },
+    { id: "e", box: boxes[1]?.box ?? a.box },
+    d,
+  ];
   const drop = (
     id: string,
     y: number,
-    { boxed = false, pinned = false, split = true } = {}
+    { inBox = undefined as number | undefined, pinned = false } = {}
   ) => {
     const result = sidebarDrop({
-      dragged: { id, pinned, boxed },
+      dragged: { id, pinned, inBox },
       point: { x: 30, y },
       tabs,
-      split,
-      box,
+      boxes,
       area,
     });
 
@@ -124,42 +133,66 @@ describe(sidebarDrop, () => {
     );
   };
 
-  it("rings a tab under the middle of the pointer, unless a split exists that it is not in", () => {
+  it("rings a tab under the middle of the pointer, in a box or not, a tab of another box included", () => {
     expect([
-      drop("a", 150, { split: false }),
-      drop("a", 150),
+      drop("a", 244),
       drop("a", 100),
       drop("d", 60),
-    ]).toStrictEqual([["onto", "d"], undefined, ["onto", "c"], ["onto", "b"]]);
+      drop("b", 194, { inBox: 0 }),
+      drop("e", 16, { inBox: 1 }),
+    ]).toStrictEqual([
+      ["onto", "d"],
+      ["onto", "c"],
+      ["onto", "b"],
+      ["onto", "f"],
+      ["onto", "a"],
+    ]);
   });
 
-  it("moves a tab of the box among its tabs by an inset line, and a pinned one of it not at all", () => {
-    expect([
-      drop("c", 50, { boxed: true }),
-      drop("b", 110, { boxed: true }),
-      drop("b", 60, { boxed: true }),
-      drop("b", 110, { boxed: true, pinned: true }),
-    ]).toStrictEqual([["box", "b"], ["box", "end"], undefined, undefined]);
+  it("in a box, rings only its tabs, a line above it landing outside", () => {
+    expect([drop("a", 128), drop("a", 174)]).toStrictEqual([
+      ["move", "e"],
+      undefined,
+    ]);
   });
 
-  it("moves a tab of the box out of it by a line outside it: above it, below it and at the end", () => {
+  it("moves a tab of a box among its tabs by an inset line, and a pinned one of it not at all", () => {
     expect([
-      drop("b", 2, { boxed: true }),
-      drop("b", 42, { boxed: true }),
-      drop("c", 122, { boxed: true }),
-      drop("c", 300, { boxed: true }),
+      drop("c", 50, { inBox: 0 }),
+      drop("b", 110, { inBox: 0 }),
+      drop("b", 60, { inBox: 0 }),
+      drop("b", 110, { inBox: 0, pinned: true }),
+      drop("f", 142, { inBox: 1 }),
+    ]).toStrictEqual([
+      ["box", "b"],
+      ["box", "end"],
+      undefined,
+      undefined,
+      ["box", "e"],
+    ]);
+  });
+
+  it("moves a tab of a box out of it by a line outside it: above it, between two boxes, below them and at the end", () => {
+    expect([
+      drop("b", 2, { inBox: 0 }),
+      drop("b", 42, { inBox: 0 }),
+      drop("c", 128, { inBox: 0 }),
+      drop("f", 222, { inBox: 1 }),
+      drop("c", 300, { inBox: 0 }),
     ]).toStrictEqual([
       ["move", "a"],
       ["move", "b"],
+      ["move", "e"],
       ["move", "d"],
       ["move", "end"],
     ]);
   });
 
-  it("moves a tab outside past the box as past one place", () => {
-    expect([drop("a", 130), drop("d", 42)]).toStrictEqual([
-      ["move", "d"],
+  it("moves a tab outside past each box as past one place, between two boxes included", () => {
+    expect([drop("a", 128), drop("d", 42), drop("d", 128)]).toStrictEqual([
+      ["move", "e"],
       ["move", "b"],
+      ["move", "e"],
     ]);
   });
 });
@@ -171,8 +204,8 @@ describe("sidebarDrop with the box all the pinned area holds", () => {
   const b = tile("b", 16, 46);
   const box = { left: 13, top: 0, right: 51, bottom: 84 };
   const tabs = [
-    { ...a, boxed: true },
-    { ...b, boxed: true },
+    { ...a, inBox: 0 },
+    { ...b, inBox: 0 },
   ];
   const noList = {
     below: { left: 0, top: 92, right: 64, bottom: 400 },
@@ -180,11 +213,10 @@ describe("sidebarDrop with the box all the pinned area holds", () => {
   };
   const drop = (pinned: boolean, y: number, withArea = true) =>
     sidebarDrop({
-      dragged: { id: "b", pinned, boxed: true },
+      dragged: { id: "b", pinned, inBox: 0 },
       point: { x: 30, y },
       tabs,
-      split: true,
-      box: { box, rows: pinned ? [] : [b] },
+      boxes: [{ box, rows: pinned ? [] : [b] }],
       area: withArea ? [] : undefined,
       noList: pinned ? undefined : noList,
     });

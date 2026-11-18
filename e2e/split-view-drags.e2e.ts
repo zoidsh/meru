@@ -59,7 +59,7 @@ const seed = (
           { id: "s", app: "drive", url: standIn.driveUrl, title: "Drive s" },
         ],
         selectedTabId: "c",
-        ...(root && { split: { root, ...(maximized && { maximized }) } }),
+        ...(root && { splits: [{ root, ...(maximized && { maximized }) }] }),
       },
     ],
     selectedProfileId: "p",
@@ -67,7 +67,7 @@ const seed = (
 
 interface Stored {
   selectedTabId: string;
-  split?: { root: Tree; maximized?: boolean };
+  splits?: { root: Tree; maximized?: boolean }[];
 }
 
 const stored = async (userDataDir: string) => {
@@ -85,14 +85,16 @@ const describeTree = (tree: string | Tree): string =>
 const storedTree = async (userDataDir: string) => {
   const profile = await stored(userDataDir);
 
-  return profile?.split ? describeTree(profile.split.root) : "none";
+  const split = profile?.splits?.[0];
+
+  return split ? describeTree(split.root) : "none";
 };
 
 /** The outer panes' shares, in thousandths. */
 const storedShares = async (userDataDir: string) => {
   const profile = await stored(userDataDir);
 
-  return profile?.split?.root.children.map(({ size }) =>
+  return profile?.splits?.[0]?.root.children.map(({ size }) =>
     Math.round(size * 1000)
   );
 };
@@ -385,7 +387,7 @@ test("over a maximized split, which shows as one pane, a tab takes half the view
   await shell.mouse.up();
   await expect.poll(() => storedTree(userDataDir)).toBe("column(row(c d) o)");
 
-  const { split } = (await stored(userDataDir)) ?? {};
+  const { splits: [split] = [] } = (await stored(userDataDir)) ?? {};
 
   expect(split?.maximized).toBeUndefined();
   expect(split?.root.children.map(({ size }) => size)).toStrictEqual([

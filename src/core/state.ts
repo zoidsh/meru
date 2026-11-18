@@ -2,7 +2,7 @@ import { isEqual } from "es-toolkit";
 import { z } from "zod/mini";
 
 import { APPS, isAppId } from "./apps.ts";
-import { readSplit } from "./pane-tree.ts";
+import { paneTabs, readSplit } from "./pane-tree.ts";
 import type { Split } from "./pane-tree.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
@@ -49,6 +49,7 @@ export type Tab = z.infer<typeof tabSchema>;
 const UNREAD = Symbol("unread tab");
 const TABS_AS_FOUND = Symbol("tabs as found");
 const SPLIT_AS_FOUND = Symbol("split as found");
+const SPLITS_AS_FOUND = Symbol("splits as found");
 const UNREAD_PROFILES = Symbol("unread profiles");
 const CLEAR_AS_FOUND = Symbol("profiles to clear as found");
 const DO_NOT_DISTURB_AS_FOUND = Symbol("do not disturb as found");
@@ -115,15 +116,23 @@ export interface Profile {
   savedSearches?: unknown;
   /** `true` while the profile is put to sleep; read through `isAsleep`. */
   asleep?: unknown;
-  /** The profile's panes, repaired as read; set through `withSplit`. */
-  split?: Split;
+  /**
+   * The profile's splits, each holding tabs no other does, repaired as
+   * read; set through `withSplit`.
+   */
+  splits?: Split[];
   /**
    * A `tabs` that is not a list, written back in its place; the tabs the
    * profile has instead live only in memory.
    */
   [TABS_AS_FOUND]?: unknown;
-  /** A `split` that is no split, written back until a split replaces it. */
+  /** A `split`, the previous builds' one split, that is no split, written back. */
   [SPLIT_AS_FOUND]?: unknown;
+  /**
+   * The `splits` entries that are no split, written back after the others,
+   * or a `splits` that is not a list, written back while there are none.
+   */
+  [SPLITS_AS_FOUND]?: { entries: unknown[] } | { whole: unknown };
 }
 
 type StoredState = z.infer<typeof stateSchema>;
@@ -251,26 +260,82 @@ const normalizeProfile = (profile: StoredProfile): Profile => {
     decoded[TABS_AS_FOUND] = profile.tabs;
   }
 
-  if ("split" in profile) {
-    // A tab of an app this build does not know keeps its pane, for a build
-    // that does; only a tab gone from the list loses it.
-    const listed = new Set(tabs.flatMap(entryId));
-    const read = readSplit(profile.split, (tabId) => listed.has(tabId));
-
+  if ("splits" in profile || "split" in profile) {
     delete decoded.split;
-
-    if (read.kind === "split") {
-      decoded.split = read.split;
-    } else if (read.kind === "as-found") {
-      decoded[SPLIT_AS_FOUND] = profile.split;
-    }
+    delete decoded.splits;
+    decodeSplits(decoded, profile, new Set(tabs.flatMap(entryId)));
   }
 
   return decoded;
 };
 
+/**
+ * Sets a stored profile's splits on `decoded`, read back: `splits`, or the
+ * previous builds' one `split` as a list of one, which is not written
+ * again. A tab of an app this build does not know keeps its pane, for a
+ * build that does; only a tab gone from the list loses it, and a tab an
+ * earlier split holds too.
+ */
+const decodeSplits = (
+  decoded: Profile,
+  profile: Record<string, unknown>,
+  listed: ReadonlySet<string>
+) => {
+  const isNew = "splits" in profile;
+  const stored = isNew ? profile.splits : [profile.split];
+
+  if (!Array.isArray(stored)) {
+    decoded[SPLITS_AS_FOUND] = { whole: stored };
+
+    return;
+  }
+
+  const claimed = new Set<string>();
+  const splits: Split[] = [];
+  const entries: unknown[] = [];
+
+  for (const value of stored) {
+    const read = readSplit(
+      value,
+      (tabId) => listed.has(tabId) && !claimed.has(tabId)
+    );
+
+    if (read.kind === "split") {
+      splits.push(read.split);
+
+      for (const tabId of paneTabs(read.split.root)) {
+        claimed.add(tabId);
+      }
+    } else if (read.kind === "as-found") {
+      entries.push(value);
+    }
+  }
+
+  if (splits.length > 0) {
+    decoded.splits = splits;
+  }
+
+  if (entries.length > 0 && isNew) {
+    decoded[SPLITS_AS_FOUND] = { entries };
+  } else if (entries.length > 0) {
+    decoded[SPLIT_AS_FOUND] = profile.split;
+  }
+};
+
+const encodeSplits = (profile: Profile) => {
+  const asFound = profile[SPLITS_AS_FOUND];
+  const splits = profile.splits ?? [];
+
+  if (asFound && "entries" in asFound) {
+    return { splits: [...splits, ...asFound.entries] };
+  }
+
+  return asFound && splits.length === 0 ? { splits: asFound.whole } : {};
+};
+
 const encodeProfile = (profile: Profile) => ({
   ...profile,
+  ...encodeSplits(profile),
   ...(SPLIT_AS_FOUND in profile && { split: profile[SPLIT_AS_FOUND] }),
   tabs:
     TABS_AS_FOUND in profile
@@ -327,16 +392,23 @@ const unreadProfileIds = (state: State) =>
   );
 
 /**
- * The profile with `split` as its panes, or none; either replaces a stored
- * `split` kept as found.
+ * The profile with `next` in place of `previous`, one of its splits; with no
+ * `previous`, `next` is added after the others, and with no `next`,
+ * `previous` ends.
  */
 export const withSplit = (
   profile: Profile,
-  split: Split | undefined
+  previous: Split | undefined,
+  next: Split | undefined
 ): Profile => {
-  const { split: _previous, [SPLIT_AS_FOUND]: _asFound, ...rest } = profile;
+  const { splits: _splits, ...rest } = profile;
+  const kept = profile.splits ?? [];
+  const added = next ? [next] : [];
+  const splits = previous
+    ? kept.flatMap((split) => (split === previous ? added : [split]))
+    : [...kept, ...added];
 
-  return split ? { ...rest, split } : rest;
+  return splits.length > 0 ? { ...rest, splits } : rest;
 };
 
 /** A profile with only its Gmail tab, pinned and opening at launch. */

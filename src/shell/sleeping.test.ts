@@ -10,8 +10,7 @@ const tabs = (selectedAsleep: boolean): ShellState["tabs"] => ({
   selectedAsleep,
   panes: null,
   handles: [],
-  box: null,
-  maximized: false,
+  boxes: [],
   tabs: [
     {
       id: "o",

@@ -86,9 +86,9 @@ const belowOf = (profile: Profile, tab: Tab) => {
  * shown. A tab with a page offers Sleep, one without, asleep, Wake; Reload
  * wakes one asleep. Duplicate needs an app that can have more than one tab;
  * a pinned tab has Open at Launch and no Close tab. Split right and Split
- * down split beside the tab, so not beside one outside the profile's split;
- * Maximize pane, or Restore panes while the split is maximized, and Separate
- * from split take one in it.
+ * down split beside the tab, starting a split where it is in none; Maximize
+ * pane, or Restore panes while its split is maximized, and Separate from
+ * split take one in a split.
  */
 export const tabMenuItems = (
   state: State,
@@ -106,9 +106,8 @@ export const tabMenuItems = (
   const app = findApp(apps, tab.app);
   const pinned = isPinned(tab);
   const paned = isInSplit(profile, tab.id);
-  const splitsBeside = paned || profile.split === undefined;
-  const maximizes =
-    paned && splitPanes({ ...profile, selectedTabId: tab.id }) !== undefined;
+  const asSelected = { ...profile, selectedTabId: tab.id };
+  const maximizes = paned && splitPanes(asSelected) !== undefined;
 
   return [
     { id: loaded ? "sleep" : "wake", enabled: true },
@@ -129,9 +128,12 @@ export const tabMenuItems = (
           },
         ]
       : []),
-    { id: "splitRight", enabled: splitsBeside },
-    { id: "splitDown", enabled: splitsBeside },
-    { id: isMaximized(profile) ? "restore" : "maximize", enabled: maximizes },
+    { id: "splitRight", enabled: true },
+    { id: "splitDown", enabled: true },
+    {
+      id: isMaximized(asSelected) ? "restore" : "maximize",
+      enabled: maximizes,
+    },
     { id: "separate", enabled: paned },
     ...(canCloseTab(tab) ? [{ id: "close" as const, enabled: true }] : []),
     { id: "closeOthers", enabled: othersOf(profile, tab).length > 0 },

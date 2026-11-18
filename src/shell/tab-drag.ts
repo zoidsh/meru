@@ -168,30 +168,32 @@ export const useTabDrag = ({
   /** Where the drag would land with the pointer where it is. */
   const aim = (current: Drag) => {
     const root = sidebar.current;
-    const box = root?.querySelector("[data-split-box]") ?? undefined;
 
     if (!root) {
       return;
     }
 
+    const boxes = [...root.querySelectorAll("[data-split-box]")];
     const bounds = boxOf(root);
     const tabs = [...root.querySelectorAll<HTMLElement>("[data-tab-id]")].map(
-      (tab) => ({
-        id: tab.dataset.tabId ?? "",
-        box: boxOf(tab),
-        boxed: box?.contains(tab) ?? false,
-      })
-    );
+      (tab) => {
+        const inBox = boxes.findIndex((box) => box.contains(tab));
 
-    const boxed = tabs.some((tab) => tab.id === current.tabId && tab.boxed);
+        return {
+          id: tab.dataset.tabId ?? "",
+          box: boxOf(tab),
+          inBox: inBox === -1 ? undefined : inBox,
+        };
+      }
+    );
+    const inBox = tabs.find((tab) => tab.id === current.tabId)?.inBox;
 
     return sidebarDrop({
-      dragged: { id: current.tabId, pinned: current.pinned, boxed },
+      dragged: { id: current.tabId, pinned: current.pinned, inBox },
       point: current.point,
       tabs,
-      split: box !== undefined,
-      box: box && { box: boxOf(box), rows: tilesOf(box) },
-      area: placesAt(current, bounds, boxed),
+      boxes: boxes.map((box) => ({ box: boxOf(box), rows: tilesOf(box) })),
+      area: placesAt(current, bounds, inBox !== undefined),
       noList: noListAt(current, bounds),
     });
   };

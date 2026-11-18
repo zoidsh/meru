@@ -14,10 +14,18 @@ const names = (items: SidebarItem<{ id: string }>[]) =>
       : item.tab.id
   );
 
-const layout = (box?: string[]) => {
+const layout = (...boxes: string[][]) => {
   const { pinned, listed } = sidebarLayout(
-    [tab("g", true), tab("p", true), tab("a"), tab("b"), tab("c"), tab("n")],
-    box
+    [
+      tab("g", true),
+      tab("p", true),
+      tab("q", true),
+      tab("a"),
+      tab("b"),
+      tab("c"),
+      tab("n"),
+    ],
+    boxes
   );
 
   return [names(pinned), names(listed)];
@@ -26,36 +34,66 @@ const layout = (box?: string[]) => {
 describe(sidebarLayout, () => {
   it("puts the box in the list where its first tab stands, in its own order", () => {
     expect(layout(["n", "b"])).toStrictEqual([
-      ["g", "p"],
+      ["g", "p", "q"],
       ["a", "[n b]", "c"],
     ]);
   });
 
-  it("puts a box holding a pinned tab first in the pinned area", () => {
-    expect(layout(["p", "c"])).toStrictEqual([
-      ["[p c]", "g"],
-      ["a", "b", "n"],
+  it("puts each box in the list where its first tab stands, two side by side included", () => {
+    expect([
+      layout(["n", "b"], ["c", "a"]),
+      layout(["b", "a"], ["n", "c"]),
+    ]).toStrictEqual([
+      [
+        ["g", "p", "q"],
+        ["[c a]", "[n b]"],
+      ],
+      [
+        ["g", "p", "q"],
+        ["[b a]", "[n c]"],
+      ],
     ]);
   });
 
-  it("gives the box's tabs in its own order, or none when it is not drawn", () => {
-    const tabs = [tab("g", true), tab("a"), tab("b")];
+  it("puts every box holding a pinned tab first in the pinned area, in the splits' order", () => {
+    expect([
+      layout(["q", "c"], ["p", "a"]),
+      layout(["q", "c"], ["n", "a"]),
+    ]).toStrictEqual([
+      [
+        ["[q c]", "[p a]", "g"],
+        ["b", "n"],
+      ],
+      [
+        ["[q c]", "g", "p"],
+        ["[n a]", "b"],
+      ],
+    ]);
+  });
+
+  it("gives each drawn box's tabs in its own order, leaving out one not drawn", () => {
+    const tabs = [tab("g", true), tab("a"), tab("b"), tab("c"), tab("d")];
 
     expect(
-      [["b", "a"], ["a", "gone"], undefined].map((box) =>
-        sidebarLayout(tabs, box).box.map(({ id }) => id)
-      )
-    ).toStrictEqual([["b", "a"], [], []]);
+      sidebarLayout(tabs, [
+        ["b", "a"],
+        ["c", "gone"],
+        ["d", "c"],
+      ]).boxes.map((box) => box.map(({ id }) => id))
+    ).toStrictEqual([
+      ["b", "a"],
+      ["d", "c"],
+    ]);
   });
 
   it("draws no box for none, or for fewer than two of its tabs shown", () => {
     expect([layout(), layout(["a", "gone"])]).toStrictEqual([
       [
-        ["g", "p"],
+        ["g", "p", "q"],
         ["a", "b", "c", "n"],
       ],
       [
-        ["g", "p"],
+        ["g", "p", "q"],
         ["a", "b", "c", "n"],
       ],
     ]);
@@ -70,7 +108,7 @@ const listedTab = (id: string, app = "calendar"): Tab => ({
 });
 
 describe(drawnTabs, () => {
-  it("is the profile's shown tabs top to bottom as the sidebar draws them", () => {
+  it("is the profile's shown tabs top to bottom as the sidebar draws them, a box in each area", () => {
     expect(
       drawnTabs({
         ...newProfile("p", "Default"),
@@ -82,16 +120,27 @@ describe(drawnTabs, () => {
           listedTab("c"),
           listedTab("n", "drive"),
         ],
-        split: {
-          root: {
-            direction: "row",
-            children: [
-              { size: 0.5, pane: "a" },
-              { size: 0.5, pane: "n" },
-            ],
+        splits: [
+          {
+            root: {
+              direction: "row",
+              children: [
+                { size: 0.5, pane: "c" },
+                { size: 0.5, pane: "gmail" },
+              ],
+            },
           },
-        },
+          {
+            root: {
+              direction: "row",
+              children: [
+                { size: 0.5, pane: "a" },
+                { size: 0.5, pane: "n" },
+              ],
+            },
+          },
+        ],
       }).map(({ id }) => id)
-    ).toStrictEqual(["gmail", "a", "n", "b", "c"]);
+    ).toStrictEqual(["gmail", "c", "a", "n", "b"]);
   });
 });

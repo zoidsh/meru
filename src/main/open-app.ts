@@ -106,7 +106,7 @@ export const createOpenApp = ({
       const profile = selectedProfile(state());
 
       if (splitTarget(profile) === undefined) {
-        log("Refused a split beside a tab outside the profile's split");
+        log("Refused a split with no known tab selected");
 
         return;
       }
