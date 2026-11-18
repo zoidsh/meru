@@ -553,7 +553,7 @@ test("a bookmark's cross in New tab removes it, the launcher staying open with i
   ]);
 });
 
-test("New tab with no bookmarks has no Bookmarks group, its Apps heading still shown", async ({
+test("New tab with no bookmarks says so in its Bookmarks group, a line that is no row to choose and no result, gone once something is typed", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -562,15 +562,32 @@ test("New tab with no bookmarks has no Bookmarks group, its Apps heading still s
 
   const app = await launchApp();
   const overlay = await findOverlayDocument(app);
-  const { field, apps, bookmarks, card } = launcher(overlay);
+  const { field, apps, bookmarks, card, options, selected } = launcher(overlay);
+  const none = bookmarks.getByText("No bookmarks yet", { exact: true });
 
   await findPage(app, standIn.calendarUrl);
   await clickMenuItem(app, "app.open");
   await expect(field).toBeFocused();
-  await expect(apps).toBeVisible();
   await expect(card.getByText("Apps", { exact: true })).toBeVisible();
+  await expect(card.getByText("Bookmarks", { exact: true })).toBeVisible();
+  await expect(none).toBeVisible();
+  await expect(
+    bookmarks.getByText(/^Bookmark a page with .+D$/u)
+  ).toBeVisible();
+  await expect(bookmarks.getByRole("option")).toHaveCount(0);
+  await expect(options).toHaveCount(APP_NAMES.length);
+
+  // The last stop down the list is the last app.
+  await field.press("End");
+  await expect(selected).toHaveText("Meet");
+
+  await field.fill("cal");
   await expect(bookmarks).toHaveCount(0);
-  await expect(card.getByText("Bookmarks", { exact: true })).toHaveCount(0);
+  await expect(apps.getByRole("option")).toHaveText(["Calendar"]);
+
+  await field.fill("zz");
+  await expect(card.getByText("No results.", { exact: true })).toBeVisible();
+  await expect(none).toHaveCount(0);
 });
 
 test("Open in split lists the bookmarks too, and one chosen opens as a new tab in the new pane though a tab is at its page, moving nothing", async ({

@@ -237,6 +237,11 @@ msgstr "Beside the focused pane"
 msgid "Bookmark {title}"
 msgstr "Bookmark {title}"
 
+#. Muted hint beside No bookmarks yet in the New tab launcher; {bookmarkShortcut} is Bookmark Tab's shortcut, such as ⌘D
+#: src/shell/open-app.tsx
+msgid "Bookmark a page with {bookmarkShortcut}"
+msgstr "Bookmark a page with {bookmarkShortcut}"
+
 #. Short notice at the foot of the window once the selected tab's page is no longer bookmarked
 #: src/shell/toast.tsx
 msgid "Bookmark removed"
@@ -614,6 +619,11 @@ msgstr "Next match"
 #: src/shell/nothing-open.tsx
 msgid "No apps open"
 msgstr "No apps open"
+
+#. Muted line in the New tab launcher's Bookmarks group while the profile has no bookmarks; not something to choose
+#: src/shell/open-app.tsx
+msgid "No bookmarks yet"
+msgstr "No bookmarks yet"
 
 #. Said in the New tab launcher when no app or bookmark matches what was typed
 #: src/shell/open-app.tsx

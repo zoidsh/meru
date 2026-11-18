@@ -65,6 +65,10 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
     ...listed.bookmarks.map((bookmark) => bookmarkValue(bookmark.id)),
   ];
   const [highlighted, setHighlighted] = useState(values[0] ?? "");
+  const bookmarkShortcut = useShellState("shortcuts")?.["tab.bookmark"];
+  // A line in place of the group's rows, which is no result: typing hides
+  // it, as it hides a group with no match.
+  const noBookmarksYet = bookmarks.length === 0 && query.trim() === "";
   const label = t({
     message: "New tab",
     comment:
@@ -173,7 +177,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
               ))}
             </CommandGroup>
           )}
-          {listed.bookmarks.length > 0 && (
+          {(listed.bookmarks.length > 0 || noBookmarksYet) && (
             <CommandGroup
               heading={t({
                 message: "Bookmarks",
@@ -182,6 +186,24 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
               })}
               className="p-0"
             >
+              {noBookmarksYet && (
+                <div className="flex h-8 items-center justify-between gap-2 px-2 text-sm text-muted-foreground">
+                  <span>
+                    <Trans comment="Muted line in the New tab launcher's Bookmarks group while the profile has no bookmarks; not something to choose">
+                      No bookmarks yet
+                    </Trans>
+                  </span>
+                  {bookmarkShortcut && (
+                    <span className="text-xs">
+                      {t({
+                        message: `Bookmark a page with ${bookmarkShortcut}`,
+                        comment:
+                          "Muted hint beside No bookmarks yet in the New tab launcher; {bookmarkShortcut} is Bookmark Tab's shortcut, such as ⌘D",
+                      })}
+                    </span>
+                  )}
+                </div>
+              )}
               {listed.bookmarks.map((bookmark) => (
                 <CommandItem
                   key={bookmark.id}
