@@ -34,6 +34,7 @@ import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
 import { createKeepAlivePages } from "#platform/keep-alive.ts";
+import { keepToLoopback } from "#platform/loopback-only.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
 import {
@@ -150,6 +151,12 @@ const standIns = MERU_E2E_BUILD
   ? readStandIns(process.env.MERU_TEST_APP_URLS)
   : undefined;
 const apps = standIns ? standInApps(standIns.urls) : APPS;
+
+// The suite never reaches the network: whatever its stand-ins do not serve is
+// refused and said, so no test loads a real Google page.
+if (MERU_E2E_BUILD) {
+  keepToLoopback();
+}
 const signInOrigins = standIns?.signIn ? [standIns.signIn] : SIGN_IN_ORIGINS;
 // The sign-in stand-in's rotation page sets the cookie as Google's does.
 const keepAliveUrl = standIns?.signIn

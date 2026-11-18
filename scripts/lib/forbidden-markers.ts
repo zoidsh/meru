@@ -38,6 +38,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may load stand-ins in place of the apps",
     },
     {
+      marker: "MERU_E2E_REFUSED",
+      why: "only the end-to-end build may refuse every request off this machine",
+    },
+    {
       marker: "meruTestNotifications",
       why: "only the end-to-end build may capture notifications in place of showing them",
     },

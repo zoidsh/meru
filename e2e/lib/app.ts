@@ -11,6 +11,7 @@ import type { ElectronApplication, Page, TestInfo } from "@playwright/test";
 import { delay, withTimeout } from "es-toolkit";
 
 import { DEV_IDENTITY } from "#core/app-identity.ts";
+import { REFUSED_MARKER } from "#core/loopback.ts";
 
 import { startStandIn } from "./stand-in.ts";
 import type { StandIn } from "./stand-in.ts";
@@ -392,6 +393,8 @@ export const test = base.extend<AppFixtures>({
   },
   launchApp: async ({ userDataDir, launched, standIn }, use) => {
     const apps: ElectronApplication[] = [];
+    // Every request the app's build refused for leaving this machine.
+    const refused: string[] = [];
 
     try {
       await use(async (added = {}) => {
@@ -400,6 +403,15 @@ export const test = base.extend<AppFixtures>({
           args: launchArgs(userDataDir),
           env: { ...env, ...added, MERU_TEST_APP_URLS: standIn.appUrls },
         });
+
+        app.process().stderr?.on("data", (chunk: Buffer) => {
+          for (const line of String(chunk).split("\n")) {
+            if (line.startsWith(REFUSED_MARKER)) {
+              refused.push(line.slice(REFUSED_MARKER.length + 1));
+            }
+          }
+        });
+
         const { pid } = app.process();
 
         if (pid !== undefined) {
@@ -417,6 +429,13 @@ export const test = base.extend<AppFixtures>({
         apps.map((app) =>
           withTimeout(() => app.close(), 10_000).catch(() => false)
         )
+      );
+    }
+
+    // After the closes, so a request made while closing counts too.
+    if (refused.length > 0) {
+      throw new Error(
+        `The app asked to reach the network, which the suite's build refused: ${[...new Set(refused)].join(", ")}`
       );
     }
   },

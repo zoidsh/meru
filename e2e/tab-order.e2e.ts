@@ -259,13 +259,17 @@ test("a drag across areas, onto a tile's middle, into the page or ended with Esc
     "true"
   );
 
-  const sheets = await pointOf(tab(shell, SHEETS), 0.5, 0.5);
+  // Drive, whose stand-in its app claims; Sheets would load Google's own.
+  const drive = await pointOf(tab(shell, DRIVE_TITLE), 0.5, 0.5);
 
-  await shell.mouse.move(sheets.x, sheets.y);
+  await shell.mouse.move(drive.x, drive.y);
   await shell.mouse.down();
-  await shell.mouse.move(sheets.x + 2, sheets.y + 1);
+  await shell.mouse.move(drive.x + 2, drive.y + 1);
   await shell.mouse.up();
-  await expect(tab(shell, SHEETS)).toHaveAttribute("aria-selected", "true");
+  await expect(tab(shell, DRIVE_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
   await expect(tabs(shell)).toHaveText(before);
 });
 
