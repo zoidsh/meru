@@ -485,6 +485,26 @@ describe(createMailPoller, () => {
     expect(fetchesOf("a")).toBe(2);
   });
 
+  it("tells a first poll skipped while offline as failed, and polls once back", async () => {
+    const { poller, answer, fetchesOf, changes, goOffline, goOnline } = setup();
+
+    goOffline();
+    poller.reconcile(["a"]);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect([fetchesOf("a"), poller.mail("a").status]).toStrictEqual([
+      0,
+      "failed",
+    ]);
+    expect(changes).toHaveBeenCalledOnce();
+
+    goOnline();
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+    await answer("a", feed(2));
+
+    expect(poller.mail("a")).toStrictEqual({ status: "ok", unreadCount: 2 });
+  });
+
   it("polls at once when poked as the network returns", async () => {
     const { poller, answer, fetchesOf, goOffline, goOnline } = setup();
 

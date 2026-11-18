@@ -192,6 +192,18 @@ export const createMailPoller = ({
     polled.timer = undefined;
 
     if (!isOnline()) {
+      // The page area of a profile with no tab shows nothing until a first
+      // poll ends, so a launch offline is told as a failure, not left so.
+      if (polled.status === "unknown") {
+        settle(
+          profileId,
+          polled,
+          { kind: "failed", reason: "offline" },
+          Date.now(),
+          undefined
+        );
+      }
+
       schedule(profileId, polled, nextDelay(polled));
 
       return;
