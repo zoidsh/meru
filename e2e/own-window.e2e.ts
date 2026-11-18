@@ -486,6 +486,90 @@ test("Cmd or Ctrl+F in a tab's own window opens its find bar over that page's to
   await expect(again.field).toBeFocused();
 });
 
+const cycle = async (open: () => Promise<void>, close: () => Promise<void>) => {
+  await open();
+  await close();
+};
+
+/**
+ * How many documents the shell's renderer holds once its garbage is
+ * collected, its own and every one it opened that is still referenced.
+ */
+const shellDocuments = async (shell: Page) => {
+  const cdp = await shell.context().newCDPSession(shell);
+
+  await cdp.send("HeapProfiler.collectGarbage");
+
+  const { documents } = await cdp.send("Memory.getDOMCounters");
+
+  await cdp.detach();
+
+  return documents;
+};
+
+test("the shell's renderer lets go of the documents of find bars and titlebars closed, over thirty rounds of each", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  test.setTimeout(120_000);
+
+  const { app, shell, calendar } = await launch(
+    launchApp,
+    userDataDir,
+    standIn
+  );
+
+  await pressShifted(app, standIn.calendarUrl, "N");
+  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
+
+  const findOpen = async () => {
+    await press(app, standIn.calendarUrl, "F");
+    await expect.poll(() => ownWindowFindOpen(app)).toBe(true);
+  };
+  const findClose = async () => {
+    await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "Escape", { plain: true });
+    await expect.poll(() => ownWindowFindOpen(app)).toBe(false);
+  };
+
+  // Once first, so what opening one leaves for good is in the count.
+  await cycle(findOpen, findClose);
+
+  const beforeFind = await shellDocuments(shell);
+
+  for (let round = 0; round < 30; round += 1) {
+    // oxlint-disable-next-line no-await-in-loop -- one round after another
+    await cycle(findOpen, findClose);
+  }
+
+  const afterFind = await shellDocuments(shell);
+
+  const windowOpen = async () => {
+    await pressShifted(app, standIn.calendarUrl, "N");
+    await expect.poll(() => ownWindowCount(app)).toBe(1);
+  };
+  const windowClose = async () => {
+    await pressShifted(app, standIn.calendarUrl, "M");
+    await expect.poll(() => ownWindowCount(app)).toBe(0);
+  };
+
+  await windowClose();
+
+  const beforeWindows = await shellDocuments(shell);
+
+  for (let round = 0; round < 30; round += 1) {
+    // oxlint-disable-next-line no-await-in-loop -- one round after another
+    await cycle(windowOpen, windowClose);
+  }
+
+  const afterWindows = await shellDocuments(shell);
+
+  console.log(
+    `shell documents: find ${beforeFind} -> ${afterFind}, windows ${beforeWindows} -> ${afterWindows}`
+  );
+  expect([afterFind, afterWindows]).toStrictEqual([beforeFind, beforeWindows]);
+});
+
 test("moving a tab back to the main window with its find bar open closes the bar with its document; the main window opens none", async ({
   launchApp,
   userDataDir,
