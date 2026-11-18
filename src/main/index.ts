@@ -10,17 +10,13 @@ import {
 } from "#core/overlay.ts";
 import { ownWindowFindOfFrame, ownWindowOfFrame } from "#core/own-window.ts";
 import { allowsPermission } from "#core/permissions.ts";
-import { windowBackground } from "#core/shell-grey.ts";
-import { gmailOwnWindow } from "#core/state.ts";
 import { tabKey } from "#core/tabs.ts";
-import type { TabKey } from "#core/tabs.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
-import { createOwnWindowFactory } from "#platform/own-window.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTheme } from "#platform/theme.ts";
@@ -31,19 +27,17 @@ import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
 import { createFind } from "./find.ts";
 import { createFocus } from "./focus.ts";
-import type { FocusTarget } from "./focus.ts";
 import { createOverlays } from "./overlay.ts";
-import { createOwnWindows } from "./own-windows.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { createShellWindow } from "./shell-window.ts";
 import { createTabViews } from "./tab-views.ts";
-import { revealWindow } from "./windows.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
 import { wireLauncher } from "./wiring/launcher.ts";
 import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireNotifications } from "./wiring/notifications.ts";
+import { wireOwnWindows } from "./wiring/own-windows.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import { wireStores } from "./wiring/stores.ts";
 import {
@@ -57,20 +51,11 @@ const APP_SCHEME = "meru-app";
 
 const SHELL_HOST = "shell";
 
-/** The longest a quit waits for the last writes of the state. */
-const QUIT_WAIT_MS = 3000;
-
 const { apps, signInOrigins, keepAliveUrl, keepAliveTiming, contextMenus } =
   testBuildSetup();
 
 /** v3's account id, so a profile id is the account id v3 would have made. */
 const newId = () => crypto.randomUUID();
-
-/** Where keys go in a tab's own window: its find bar while open, else its page. */
-const inOwnWindow = (key: TabKey): FocusTarget[] => [
-  { kind: "windowFind", key },
-  { kind: "window", key },
-];
 
 const lifecycle = createAppLifecycle();
 const errorDialog = createErrorDialog();
@@ -243,36 +228,19 @@ const start = async () => {
     log: console.error,
   });
 
-  const ownWindows = createOwnWindows({
-    windows: createOwnWindowFactory(contextMenus),
-    displays,
+  const { ownWindows, showOwnWindow, revealGmail } = wireOwnWindows({
     apps,
-    state: profiles.get,
     isMacOS,
     background,
-    backgroundColor: () => windowBackground(theme.isDark()),
-    closeTab: profiles.closeTab,
-    saveBounds: profiles.setOwnWindowBounds,
-    // Keys go to its find bar while that is open, else its page, as in the
-    // main window, so typing after switching back never reaches the page's
-    // own shortcuts.
-    onFocus: (key) => {
-      focus.focusInWindow(key, inOwnWindow(key));
-    },
-    log: console.error,
+    isTestBackground,
+    lifecycle,
+    contextMenus,
+    displays,
+    theme,
+    shell,
+    profiles,
+    focus,
   });
-
-  theme.onChange(ownWindows.recolor);
-  profiles.onChange(ownWindows.retitle);
-  // Before the windows close, so closing them leaves their tabs where they are.
-  lifecycle.onBeforeQuit(ownWindows.markQuitting);
-  shell.window.onSessionEnd(ownWindows.markQuitting);
-  // Where each window was, saved as they close, and any other change still
-  // being written.
-  lifecycle.holdQuitFor(
-    () => Promise.allSettled([ownWindows.saved(), profiles.settled()]),
-    QUIT_WAIT_MS
-  );
 
   /** The web contents of the shell's documents open now, which never zoom. */
   const shellDocumentIds = new Set<number>();
@@ -422,33 +390,6 @@ const start = async () => {
     },
     log: console.error,
   });
-
-  /**
-   * Brings a tab's own window forward with keys going to its page, as Move
-   * to New Window and a click on its tab do. Focusing a page activates the
-   * app, so only where it is in front or can never be activated.
-   */
-  const showOwnWindow = (key: TabKey) => {
-    ownWindows.reveal(key);
-
-    if (!background || isTestBackground) {
-      focus.focusInWindow(key, inOwnWindow(key));
-    }
-  };
-
-  /**
-   * Brings forward the window that shows the profile's Gmail, a message
-   * just opened in it: its own window, or the main one.
-   */
-  const revealGmail = (profileId: string) => {
-    const own = gmailOwnWindow(profiles.get(), profileId);
-
-    if (own) {
-      showOwnWindow(own);
-    } else {
-      revealWindow(shell.window, background);
-    }
-  };
 
   /** Tabs in their own windows whose find bar's view, still to come, takes focus. */
   const barsAwaited = new Set<string>();
