@@ -6,7 +6,7 @@ export interface LoadFailure {
 }
 
 export type TabStatus =
-  /** Restored and never selected since: it has no view. */
+  /** Restored and neither selected nor opened since: it has no page. */
   | { kind: "unloaded" }
   | { kind: "loading" }
   | { kind: "live" }
@@ -21,6 +21,8 @@ export type TabStatus =
 export type TabEvent =
   /** The tab became the one on screen. */
   | { kind: "select" }
+  /** Loads the tab without showing it, as Open at Launch does. */
+  | { kind: "open" }
   | { kind: "loaded" }
   | { kind: "failed-to-load"; reason: LoadFailure }
   | { kind: "crashed"; reason: string }
@@ -137,7 +139,9 @@ const whileWaiting = (
 export const transition = (status: TabStatus, event: TabEvent): Transition => {
   switch (status.kind) {
     case "unloaded": {
-      return event.kind === "select" ? load({ kind: "loading" }) : stay(status);
+      return event.kind === "select" || event.kind === "open"
+        ? load({ kind: "loading" })
+        : stay(status);
     }
     case "loading":
     case "live": {

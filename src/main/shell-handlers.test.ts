@@ -171,7 +171,7 @@ describe(createShellHandlers, () => {
     expect(shell.overlays).toStrictEqual(["closed"]);
   });
 
-  it("gives focus to the front tab's page when a close hides the sidebar, and only then", async () => {
+  it("gives focus to the front tab's page, or the shell with none left, when a close hides the sidebar, and only then", async () => {
     const shown = setup({ sidebar: "narrow" });
     const hidden = setup({ sidebar: "hidden" });
     const key = { profileId: "a", tabId: "t1" };
@@ -181,7 +181,7 @@ describe(createShellHandlers, () => {
 
     expect([shown.focused, hidden.focused]).toStrictEqual([
       [],
-      [[{ kind: "front" }]],
+      [[{ kind: "front" }, { kind: "shell" }]],
     ]);
   });
 

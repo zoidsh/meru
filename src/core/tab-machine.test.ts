@@ -22,13 +22,23 @@ const run = (status: TabStatus, ...events: TabEvent[]) => {
 };
 
 describe(transition, () => {
-  it("loads a restored tab only once it is selected", () => {
+  it("loads a restored tab only once it is selected or opened, and once", () => {
     expect(
       run({ kind: "unloaded" }, { kind: "reload" }, { kind: "online" })
     ).toStrictEqual({ status: { kind: "unloaded" }, effects: [] });
     expect(
-      run({ kind: "unloaded" }, { kind: "select" }, { kind: "loaded" })
-    ).toStrictEqual({ status: { kind: "live" }, effects: [{ kind: "load" }] });
+      ["select", "open"].map((kind) =>
+        run(
+          { kind: "unloaded" },
+          { kind } as TabEvent,
+          { kind: "select" },
+          { kind: "loaded" }
+        )
+      )
+    ).toStrictEqual([
+      { status: { kind: "live" }, effects: [{ kind: "load" }] },
+      { status: { kind: "live" }, effects: [{ kind: "load" }] },
+    ]);
   });
 
   it("reloads a live page where it is, and loads a new URL", () => {

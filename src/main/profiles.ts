@@ -17,7 +17,14 @@ import {
   switchDoNotDisturb,
 } from "#core/state.ts";
 import type { State } from "#core/state.ts";
-import { closeTab, openTab, selectTab, updatePages } from "#core/tabs.ts";
+import {
+  closeTab,
+  openTab,
+  selectTab,
+  setOpenAtLaunch,
+  setPinned,
+  updatePages,
+} from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
 
 export interface ProfilesDeps {
@@ -171,6 +178,10 @@ export const createProfiles = ({
       }),
     selectTab: (key: TabKey) => exclusive(() => commit(selectTab(state, key))),
     closeTab: (key: TabKey) => exclusive(() => commit(closeTab(state, key))),
+    setPinned: (key: TabKey, pinned: boolean) =>
+      exclusive(() => commit(setPinned(state, key, pinned))),
+    setOpenAtLaunch: (key: TabKey, on: boolean) =>
+      exclusive(() => commit(setOpenAtLaunch(state, key, on))),
     updatePages: (updates: PageUpdate[]) =>
       exclusive(() => commit(updatePages(state, updates))),
     /**

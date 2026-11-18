@@ -1,6 +1,6 @@
 import { isEqual } from "es-toolkit";
 
-import { knownTabs, selectedProfile } from "./state.ts";
+import { isPinned, knownTabs, selectedProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
 
 export const SIDEBAR_STATES = ["hidden", "narrow", "wide"] as const;
@@ -25,24 +25,23 @@ export interface SidebarOverride {
 }
 
 /**
- * Hidden for one tab or none, wide while some app has two or more tabs,
- * narrow otherwise.
+ * Hidden for one tab or none, wide while some app has two or more tabs that
+ * are not pinned, narrow otherwise.
  */
-export const sidebarRule = (
-  tabs: readonly Pick<Tab, "app">[]
-): SidebarState => {
+export const sidebarRule = (tabs: readonly Tab[]): SidebarState => {
   if (tabs.length <= 1) {
     return "hidden";
   }
 
-  const apps = new Set(tabs.map((tab) => tab.app));
+  const unpinned = tabs.filter((tab) => !isPinned(tab));
+  const apps = new Set(unpinned.map((tab) => tab.app));
 
-  return apps.size < tabs.length ? "wide" : "narrow";
+  return apps.size < unpinned.length ? "wide" : "narrow";
 };
 
 /** The rule, as the person's choices override it; shown by hand, at least narrow. */
 export const sidebarState = (
-  tabs: readonly Pick<Tab, "app">[],
+  tabs: readonly Tab[],
   override: SidebarOverride
 ): SidebarState => {
   const rule = sidebarRule(tabs);

@@ -7,9 +7,9 @@ import { knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { showsView, transition } from "#core/tab-machine.ts";
 import type { TabEffect, TabEvent, TabStatus } from "#core/tab-machine.ts";
-import { findTab, tabKey } from "#core/tabs.ts";
+import { findTab, newTabId, tabKey } from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
-import { planViews } from "#core/views.ts";
+import { opensLaunchTabs, planViews } from "#core/views.ts";
 import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
 import type { WindowOpenRoute } from "#core/window-open.ts";
 import type {
@@ -122,6 +122,8 @@ export const createTabViews = ({
   /** A URL a tab was opened or sent to, for its next load. */
   const pendingUrls = new Map<string, string>();
   const listeners = new Set<() => void>();
+  /** The profiles whose Open at Launch tabs were opened this session. */
+  const launched = new Set<string>();
   let front: string | undefined;
 
   const place = (view: ContentView) => {
@@ -329,7 +331,7 @@ export const createTabViews = ({
       app.singleInstance && profile
         ? knownTabs(profile).find((tab) => tab.app === app.id)
         : undefined;
-    const tabId = existing?.id ?? newId();
+    const tabId = existing?.id ?? newTabId(app, newId);
     const key = tabKey({ profileId, tabId });
 
     pendingUrls.set(key, url);
@@ -472,7 +474,12 @@ export const createTabViews = ({
   return {
     /** Creates, closes, shows and hides views until the window matches. */
     reconcile: (current: State) => {
-      const plan = planViews(current, [...tabs.keys()]);
+      const plan = planViews(
+        current,
+        [...tabs.keys()],
+        launched,
+        opensLaunchTabs
+      );
       const planned = new Map(plan.views.map((key) => [tabKey(key), key]));
       let changed = false;
 
@@ -494,13 +501,23 @@ export const createTabViews = ({
         }
       }
 
-      const nextFront = tabKey(plan.front);
+      for (const profileId of plan.launched) {
+        launched.add(profileId);
+      }
 
+      for (const key of plan.opening) {
+        dispatch(tabKey(key), { kind: "open" });
+      }
+
+      const nextFront = plan.front && tabKey(plan.front);
       const frontChanged = nextFront !== front;
 
       if (frontChanged) {
         front = nextFront;
-        dispatch(front, { kind: "select" });
+
+        if (front !== undefined) {
+          dispatch(front, { kind: "select" });
+        }
       }
 
       showFront();

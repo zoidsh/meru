@@ -11,7 +11,8 @@ import {
 import { gmailTab, newProfile } from "./state.ts";
 import type { State } from "./state.ts";
 
-const apps = (...names: string[]) => names.map((app) => ({ app }));
+const apps = (...names: string[]) =>
+  names.map((app, index) => ({ id: `t${index}`, app, url: "", title: "" }));
 
 describe(sidebarRule, () => {
   it("hides the sidebar for one tab or none", () => {
@@ -27,6 +28,18 @@ describe(sidebarRule, () => {
       sidebarRule(apps("gmail", "calendar", "docs")),
       sidebarRule(apps("gmail", "docs", "docs")),
     ]).toStrictEqual(["narrow", "narrow", "wide"]);
+  });
+
+  it("counts a pinned tab toward shown but not toward wide", () => {
+    const [docs, pinnedDocs] = apps("docs", "docs").map((tab, index) => ({
+      ...tab,
+      pinned: index === 1,
+    }));
+
+    expect([
+      sidebarRule([docs as never, pinnedDocs as never]),
+      sidebarRule([{ ...gmailTab() }]),
+    ]).toStrictEqual(["narrow", "hidden"]);
   });
 });
 

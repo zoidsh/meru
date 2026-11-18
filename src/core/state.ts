@@ -10,7 +10,7 @@ export const STATE_VERSION = 1;
 /** What v3 names its first account; kept in English and translated when shown. */
 export const DEFAULT_PROFILE_NAME = "Default";
 
-/** v3's id for the Gmail tab, which every profile has, first. */
+/** v3's id for the Gmail tab, which a new profile has, pinned. */
 export const GMAIL_TAB_ID = "gmail";
 
 const GMAIL_HOME = APPS.find((app) => app.id === "gmail")?.home ?? "";
@@ -96,7 +96,10 @@ export const isTab = (entry: TabEntry): entry is Tab => !(UNREAD in entry);
 
 type StoredProfile = z.infer<typeof profileSchema>;
 
-/** A profile once decoded: its tabs start with Gmail's, and one is selected. */
+/**
+ * A profile once decoded: at most one Gmail tab, and the selected tab one
+ * that is shown, or `""` when none is.
+ */
 export interface Profile {
   [key: string]: unknown;
   id: string;
@@ -141,7 +144,20 @@ export const gmailTab = (): Tab => ({
   app: "gmail",
   url: GMAIL_HOME,
   title: "",
+  pinned: true,
+  openAtLaunch: true,
 });
+
+/**
+ * Whether the tab is pinned, which keeps it from closing. Anything but `true`
+ * in the file, absent included, reads as not, and stays as found until the
+ * tab is pinned or unpinned.
+ */
+export const isPinned = (tab: Tab) => tab.pinned === true;
+
+/** Whether a pinned tab loads at launch, before it is first selected. */
+export const opensAtLaunch = (tab: Tab) =>
+  isPinned(tab) && tab.openAtLaunch === true;
 
 /**
  * The tabs of apps this build knows; the rest, and entries that do not parse,
@@ -158,41 +174,56 @@ const readTabs = (stored: unknown): TabEntry[] =>
   });
 
 /**
+ * A Gmail tab written before tabs could be pinned was the one every profile
+ * had, so it reads as a new profile's: pinned and opening at launch.
+ */
+const pinnedByDefault = (tab: Tab): Tab =>
+  tab.app === "gmail" && !("pinned" in tab)
+    ? { ...tab, pinned: true, openAtLaunch: tab.openAtLaunch ?? true }
+    : tab;
+
+/**
  * Puts a profile's tabs in the shape every reader relies on, rather than
- * refusing a file over them: one Gmail tab, first, ids unique, and a selected
- * tab that is shown, else Gmail's.
+ * refusing a file over them: in the order stored, one Gmail tab, ids unique,
+ * and a selected tab that is shown, else the first shown, else none. A
+ * profile written with no tabs, or with tabs that are not a list, has a new
+ * profile's; an empty list is none.
  */
 const normalizeProfile = (profile: StoredProfile): Profile => {
-  const stored = readTabs(profile.tabs);
+  const stored = Array.isArray(profile.tabs)
+    ? readTabs(profile.tabs)
+    : [gmailTab()];
   const gmails = stored.filter(isTab).filter((tab) => tab.app === "gmail");
-  const gmail =
-    gmails.find((tab) => tab.id === GMAIL_TAB_ID) ?? gmails[0] ?? gmailTab();
+  const gmail = gmails.find((tab) => tab.id === GMAIL_TAB_ID) ?? gmails[0];
   const seen = new Set<string>();
-  const tabs = [
-    gmail,
-    ...stored.filter((entry) => !isTab(entry) || entry.app !== "gmail"),
-  ].filter((entry) => {
-    if (!isTab(entry)) {
+  const tabs = stored
+    .filter(
+      (entry) => !isTab(entry) || entry.app !== "gmail" || entry === gmail
+    )
+    .filter((entry) => {
+      if (!isTab(entry)) {
+        return true;
+      }
+
+      if (seen.has(entry.id)) {
+        return false;
+      }
+
+      seen.add(entry.id);
+
       return true;
-    }
-
-    if (seen.has(entry.id)) {
-      return false;
-    }
-
-    seen.add(entry.id);
-
-    return true;
-  });
+    })
+    .map((entry) => (isTab(entry) ? pinnedByDefault(entry) : entry));
+  const shown = knownTabs({ tabs });
   const { selectedTabId } = profile;
   const decoded: Profile = {
     ...profile,
     tabs,
     selectedTabId:
       typeof selectedTabId === "string" &&
-      knownTabs({ tabs }).some((tab) => tab.id === selectedTabId)
+      shown.some((tab) => tab.id === selectedTabId)
         ? selectedTabId
-        : gmail.id,
+        : (shown[0]?.id ?? ""),
   };
 
   if (profile.tabs !== undefined && !Array.isArray(profile.tabs)) {
@@ -258,7 +289,7 @@ const unreadProfileIds = (state: State) =>
       : []
   );
 
-/** A profile with only its Gmail tab. */
+/** A profile with only its Gmail tab, pinned and opening at launch. */
 export const newProfile = (id: string, name: string): Profile => ({
   id,
   name,

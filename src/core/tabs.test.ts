@@ -9,6 +9,8 @@ import {
   closeTab,
   openTab,
   selectTab,
+  setOpenAtLaunch,
+  setPinned,
   updatePages,
 } from "./tabs.ts";
 
@@ -100,6 +102,35 @@ describe(openTab, () => {
     );
   });
 
+  it("opens Gmail where it was closed under its own id, unpinned, the key written so it is not read as a Gmail tab from before pinning", () => {
+    const closed = {
+      ...state([]),
+      profiles: [
+        { ...newProfile("p", "Default"), tabs: [], selectedTabId: "" },
+      ],
+    };
+    const opened = openTab(
+      closed,
+      "p",
+      app("gmail"),
+      "https://mail.google.com/mail/u/0",
+      () => "never"
+    );
+
+    expect([opened?.tabId, tabsOf(opened?.state)?.tabs]).toStrictEqual([
+      "gmail",
+      [
+        {
+          id: "gmail",
+          app: "gmail",
+          url: "https://mail.google.com/mail/u/0",
+          title: "",
+          pinned: false,
+        },
+      ],
+    ]);
+  });
+
   it("opens nothing in a profile that is not listed", () => {
     expect(
       openTab(
@@ -132,10 +163,31 @@ const three = (selected: string) =>
   state([tab("c1", "calendar"), tab("d1", "drive")], selected);
 
 describe(closeTab, () => {
-  it("never closes Gmail's tab", () => {
-    expect(
-      closeTab(three("gmail"), { profileId: "p", tabId: "gmail" })
-    ).toBeUndefined();
+  it("never closes a pinned tab, and closes Gmail's once it is unpinned", () => {
+    const gmail = { profileId: "p", tabId: "gmail" };
+
+    expect([
+      closeTab(three("gmail"), gmail),
+      ids(closeTab(setPinned(three("gmail"), gmail, false) as State, gmail)),
+    ]).toStrictEqual([undefined, [["c1", "d1"], "c1"]]);
+  });
+
+  it("leaves no tab selected when it closes the only one", () => {
+    const only = {
+      ...state([], "c1"),
+      profiles: [
+        {
+          ...newProfile("p", "Default"),
+          tabs: [tab("c1", "calendar")],
+          selectedTabId: "c1",
+        },
+      ],
+    };
+
+    expect(ids(closeTab(only, { profileId: "p", tabId: "c1" }))).toStrictEqual([
+      [],
+      "",
+    ]);
   });
 
   it("selects the tab to the right of the selected one it closes, or to the left when it was last", () => {
@@ -159,6 +211,58 @@ describe(closeTab, () => {
     expect(
       ids(closeTab(hidden, { profileId: "p", tabId: "c1" }))
     ).toStrictEqual([["gmail", "t9"], "gmail"]);
+  });
+});
+
+describe(setPinned, () => {
+  it("pins and unpins a shown tab, leaving its Open at Launch as it is", () => {
+    const key = { profileId: "p", tabId: "c1" };
+    const pinned = setPinned(
+      state([{ ...tab("c1", "calendar"), openAtLaunch: true }]),
+      key,
+      true
+    );
+    const unpinned = pinned && setPinned(pinned, key, false);
+
+    expect(
+      [pinned, unpinned].map((next) =>
+        tabsOf(next)?.tabs.find((candidate) => candidate.id === "c1")
+      )
+    ).toStrictEqual([
+      { ...tab("c1", "calendar"), openAtLaunch: true, pinned: true },
+      { ...tab("c1", "calendar"), openAtLaunch: true, pinned: false },
+    ]);
+  });
+
+  it("changes nothing for a tab that already reads so or is not shown", () => {
+    const before = state([tab("c1", "calendar"), tab("t9", "tasks")]);
+
+    expect([
+      setPinned(before, { profileId: "p", tabId: "gmail" }, true),
+      setPinned(before, { profileId: "p", tabId: "c1" }, false),
+      setPinned(before, { profileId: "p", tabId: "t9" }, true),
+    ]).toStrictEqual([undefined, undefined, undefined]);
+  });
+});
+
+describe(setOpenAtLaunch, () => {
+  it("switches a pinned tab's Open at Launch, and nothing for a tab that is not pinned", () => {
+    const before = state([tab("c1", "calendar")]);
+    const off = setOpenAtLaunch(
+      before,
+      { profileId: "p", tabId: "gmail" },
+      false
+    );
+
+    expect([
+      tabsOf(off)?.tabs[0],
+      setOpenAtLaunch(before, { profileId: "p", tabId: "gmail" }, true),
+      setOpenAtLaunch(before, { profileId: "p", tabId: "c1" }, true),
+    ]).toStrictEqual([
+      { ...gmailTab(), openAtLaunch: false },
+      undefined,
+      undefined,
+    ]);
   });
 });
 

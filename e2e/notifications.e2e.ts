@@ -113,7 +113,7 @@ test("notifies mail that arrives after the first poll, in each profile, and a cl
   userDataDir,
   standIn,
 }) => {
-  // Work was never selected, so its Gmail tab has no view until the click.
+  // Work has no Gmail tab, so the click opens one.
   await seedProfiles(userDataDir, [
     { id: "p0", name: "Home" },
     {

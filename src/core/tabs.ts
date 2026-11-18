@@ -1,5 +1,5 @@
 import type { App } from "./apps.ts";
-import { isTab, knownTabs } from "./state.ts";
+import { GMAIL_TAB_ID, isPinned, isTab, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 
 /** A tab is named by its profile and its id, which is unique only within it. */
@@ -39,6 +39,10 @@ export interface OpenedTab {
  * Opens `url` as a tab of `app` in the profile, selected: appended, or for a
  * single-instance app with a tab already, that tab, given the URL.
  */
+/** Gmail's tab keeps its id however often it is closed and opened again. */
+export const newTabId = (app: App, newId: () => string) =>
+  app.id === "gmail" ? GMAIL_TAB_ID : newId();
+
 export const openTab = (
   state: State,
   profileId: string,
@@ -65,7 +69,14 @@ export const openTab = (
       };
     }
 
-    const tab: Tab = { id: newId(), app: app.id, url, title: "" };
+    const tab: Tab = {
+      id: newTabId(app, newId),
+      app: app.id,
+      url,
+      title: "",
+      // Gmail with no pinned key reads as pinned, as it was before pinning.
+      ...(app.id === "gmail" && { pinned: false }),
+    };
 
     opened = { tabId: tab.id };
 
@@ -91,12 +102,13 @@ export const selectTab = (
       : undefined
   );
 
-export const canCloseTab = (tab: Pick<Tab, "app">) => tab.app !== "gmail";
+/** Any tab but a pinned one, which is unpinned first. */
+export const canCloseTab = (tab: Tab) => !isPinned(tab);
 
 /**
  * Closing the selected tab selects the shown tab to its right, or to its left
- * when it was last, as removing a profile does. Nothing for Gmail's tab or one
- * that is not shown.
+ * when it was last, as removing a profile does, and none when it was the only
+ * one. Nothing for a pinned tab or one that is not shown.
  */
 export const closeTab = (
   state: State,
@@ -118,11 +130,45 @@ export const closeTab = (
       ...profile,
       tabs: profile.tabs.filter((candidate) => candidate !== tab),
       selectedTabId:
-        profile.selectedTabId === tabId && neighbour
-          ? neighbour.id
+        profile.selectedTabId === tabId
+          ? (neighbour?.id ?? "")
           : profile.selectedTabId,
     };
   });
+
+const updateTab = (
+  state: State,
+  { profileId, tabId }: TabKey,
+  update: (tab: Tab) => Tab | undefined
+): State | undefined =>
+  updateProfile(state, profileId, (profile) => {
+    const tab = knownTabs(profile).find((candidate) => candidate.id === tabId);
+    const next = tab && update(tab);
+
+    return next
+      ? {
+          ...profile,
+          tabs: profile.tabs.map((entry) => (entry === tab ? next : entry)),
+        }
+      : undefined;
+  });
+
+/**
+ * Pins the tab or unpins it; its Open at Launch stays as it is. Nothing when
+ * it already reads so or is not shown.
+ */
+export const setPinned = (state: State, key: TabKey, pinned: boolean) =>
+  updateTab(state, key, (tab) =>
+    isPinned(tab) === pinned ? undefined : { ...tab, pinned }
+  );
+
+/** Nothing for a tab that is not pinned or not shown, or already reads so. */
+export const setOpenAtLaunch = (state: State, key: TabKey, on: boolean) =>
+  updateTab(state, key, (tab) =>
+    !isPinned(tab) || (tab.openAtLaunch === true) === on
+      ? undefined
+      : { ...tab, openAtLaunch: on }
+  );
 
 export type PageUpdate = TabKey & Partial<Pick<Tab, "url" | "title">>;
 

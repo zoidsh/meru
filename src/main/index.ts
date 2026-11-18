@@ -490,9 +490,10 @@ const start = async () => {
     onFocus: () => {
       focus.noteFocused({ kind: "front" });
     },
-    // At launch and after a switch, typing reaches the page without a click.
+    // At launch and after a switch, typing reaches the page without a click;
+    // with no tab open, the shell, whose Open app is what there is to do.
     onFront: () => {
-      focus.focus([{ kind: "front" }]);
+      focus.focus([{ kind: "front" }, { kind: "shell" }]);
     },
     // Gmail puts the count in its title, so the badge follows the page.
     onPageChange: (key) => {

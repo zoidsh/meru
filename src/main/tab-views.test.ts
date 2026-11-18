@@ -529,7 +529,15 @@ describe(createTabViews, () => {
         ...initial,
         profiles: [
           {
-            ...(initial.profiles[0] as State["profiles"][number]),
+            ...newProfile("a", "Default"),
+            tabs: [
+              {
+                ...gmailTab(),
+                url: `${GMAIL}/#inbox/kept`,
+                openAtLaunch: false,
+              },
+              { id: "c1", app: "calendar", url: CALENDAR, title: "Week" },
+            ],
             selectedTabId: "c1",
           },
         ],
@@ -541,6 +549,30 @@ describe(createTabViews, () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(window.viewOf("persist:a", 1)?.loaded).toStrictEqual([link]);
+  });
+
+  it("opens a Gmail link where Gmail was closed as Gmail's tab again, loading the link once", async () => {
+    const window = await setup({
+      state: {
+        ...initial,
+        profiles: [
+          {
+            ...newProfile("a", "Default"),
+            tabs: [{ id: "c1", app: "calendar", url: CALENDAR, title: "Week" }],
+            selectedTabId: "c1",
+          },
+        ],
+      },
+    });
+    const link = `${GMAIL}/#inbox/abc`;
+
+    window.viewOf("persist:a")?.options.onWindowOpen(link);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect([
+      window.profiles.get().profiles[0]?.selectedTabId,
+      window.viewOf("persist:a", 1)?.loaded,
+    ]).toStrictEqual(["gmail", [link]]);
   });
 
   it("opens sign-in as a child window, other links in the system browser, and refuses the rest", async () => {
@@ -644,6 +676,22 @@ describe(createTabViews, () => {
     expect(calendar?.closed).toBeTruthy();
     expect(calendar?.loaded).toHaveLength(1);
     expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+  });
+
+  it("leaves no front, telling of it, and nothing to focus once the last tab closes", async () => {
+    const window = await setup();
+    const gmail = { profileId: "a", tabId: "gmail" };
+
+    await window.profiles.closeTab({ profileId: "a", tabId: "c1" });
+    await window.profiles.setPinned(gmail, false);
+    await window.profiles.closeTab(gmail);
+
+    expect([
+      window.live(),
+      window.fronts(),
+      window.tabs.focuser(),
+      window.tabs.navigation(),
+    ]).toStrictEqual([[], 2, undefined, null]);
   });
 
   it("closes the views of every tab of a removed profile", async () => {

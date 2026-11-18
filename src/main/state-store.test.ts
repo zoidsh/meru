@@ -44,6 +44,15 @@ const initial = {
   selectedProfileId: "new-id",
 };
 
+const pinnedGmail = {
+  id: "gmail",
+  app: "gmail",
+  url: "",
+  title: "",
+  pinned: true,
+  openAtLaunch: true,
+};
+
 describe(openState, () => {
   it("creates and saves the first profile when there is no state", async () => {
     const { file, files } = createFakeFile();
@@ -120,7 +129,14 @@ describe(openState, () => {
 
     await saveState(file, state);
 
-    expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual(saved);
+    // A Gmail tab from before pinning is written back pinned.
+    expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual({
+      ...saved,
+      profiles: [
+        { ...saved.profiles[0], tabs: [pinnedGmail, tabs[1]] },
+        saved.profiles[1],
+      ],
+    });
   });
 
   it("keeps profiles and tabs it cannot read in their places when it rewrites the file", async () => {
@@ -149,6 +165,14 @@ describe(openState, () => {
 
     expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual({
       ...saved,
+      profiles: [
+        saved.profiles[0],
+        {
+          ...(saved.profiles[1] as object),
+          tabs: [pinnedGmail, { id: "t1", app: "drive" }],
+        },
+        saved.profiles[2],
+      ],
       selectedProfileId: "a",
     });
   });

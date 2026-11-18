@@ -1,38 +1,68 @@
-import { knownTabs, selectedProfile } from "./state.ts";
-import type { State } from "./state.ts";
+import { knownTabs, opensAtLaunch, selectedProfile } from "./state.ts";
+import type { Profile, State } from "./state.ts";
 import { tabKey } from "./tabs.ts";
 import type { TabKey } from "./tabs.ts";
+
+/**
+ * Whether a profile's Open at Launch tabs open now, once a session: the
+ * selected profile's, so each profile's open when it is first selected and
+ * launch loads no page for the others, whose mail needs none. Every profile,
+ * as v3 loads them, would be `() => true`.
+ */
+export const opensLaunchTabs = (profile: Profile, state: State) =>
+  profile.id === state.selectedProfileId;
 
 export interface ViewPlan {
   /** The tabs that have a view, in the order of the profiles and their tabs. */
   views: TabKey[];
-  /** The selected tab of the selected profile. */
-  front: TabKey;
+  /** The selected tab of the selected profile, unless it has none. */
+  front?: TabKey;
+  /** Open at Launch tabs to load now, without showing them. */
+  opening: TabKey[];
+  /** The profiles whose Open at Launch tabs those are, opened once. */
+  launched: string[];
 }
 
 /**
- * A tab gets its view when it is first on screen and keeps it, hidden, while
- * another is, until it is closed or its profile removed. `existing` is the
- * keys of the tabs that have a view now.
+ * A tab gets its view when it is first on screen, or opened as its profile's
+ * Open at Launch tabs are, and keeps it, hidden, while another is on screen,
+ * until it is closed or its profile removed. `existing` is the keys of the
+ * tabs that have a view now, and `launched` the profiles whose Open at Launch
+ * tabs were opened this session.
  */
 export const planViews = (
   state: State,
-  existing: readonly string[]
+  existing: readonly string[],
+  launched: ReadonlySet<string>,
+  opensLaunch: (profile: Profile, state: State) => boolean
 ): ViewPlan => {
   const profile = selectedProfile(state);
-  const front = { profileId: profile.id, tabId: profile.selectedTabId };
-  const frontKey = tabKey(front);
+  const shown = knownTabs(profile);
+  const front = shown.some((tab) => tab.id === profile.selectedTabId)
+    ? { profileId: profile.id, tabId: profile.selectedTabId }
+    : undefined;
+  const launching = state.profiles.filter(
+    (candidate) => !launched.has(candidate.id) && opensLaunch(candidate, state)
+  );
+  const opening = launching.flatMap((candidate) =>
+    knownTabs(candidate)
+      .filter(opensAtLaunch)
+      .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
+  );
+  const kept = new Set([
+    ...existing,
+    ...opening.map(tabKey),
+    ...(front ? [tabKey(front)] : []),
+  ]);
 
   return {
     views: state.profiles.flatMap((candidate) =>
       knownTabs(candidate)
         .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
-        .filter((key) => {
-          const id = tabKey(key);
-
-          return id === frontKey || existing.includes(id);
-        })
+        .filter((key) => kept.has(tabKey(key)))
     ),
-    front,
+    ...(front && { front }),
+    opening,
+    launched: launching.map((candidate) => candidate.id),
   };
 };

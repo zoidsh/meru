@@ -14,10 +14,12 @@ import {
   forgetProfilesToClear,
   gmailTab,
   hasTabbedInbox,
+  isPinned,
   isTab,
   knownTabs,
   newProfile,
   nextProfileName,
+  opensAtLaunch,
   profilePartition,
   removeProfile,
   renameProfile,
@@ -41,7 +43,7 @@ const valid = {
 };
 
 describe(decodeState, () => {
-  it("reads a file whose profiles hold no tabs as each with only its Gmail tab, selected", () => {
+  it("reads a file whose profiles hold no tabs key as each with a new profile's Gmail tab, pinned and selected", () => {
     expect(decodeState(valid)).toStrictEqual({
       kind: "read",
       value: {
@@ -300,15 +302,43 @@ const decodeTabs = (tabs: unknown, selectedTabId?: string) => {
 const tab = (id: string, app: string) => ({ id, app, url: "", title: "" });
 
 describe("decoding tabs", () => {
-  it("puts the Gmail tab first, or adds it when there is none", () => {
+  it("keeps the tabs in the order stored, adds no Gmail tab, and reads an empty list as none, selected", () => {
+    expect([
+      decodeTabs([tab("t1", "calendar"), tab("gmail", "gmail")], "t1"),
+      decodeTabs([tab("t1", "drive")]),
+      decodeTabs([]),
+    ]).toStrictEqual([
+      { ids: ["t1", "gmail"], selected: "t1" },
+      { ids: ["t1"], selected: "t1" },
+      { ids: [], selected: "" },
+    ]);
+  });
+
+  it("reads a Gmail tab stored with no pinned key as pinned and opening at launch, and every other tab's keys as found", () => {
+    const profile = decodeProfile([
+      tab("gmail", "gmail"),
+      { ...tab("t1", "calendar"), pinned: true, openAtLaunch: false },
+      { ...tab("t2", "drive"), pinned: "yes" },
+    ]);
+    const unpinned = decodeProfile([
+      { ...tab("gmail", "gmail"), pinned: false, openAtLaunch: true },
+    ]);
+
+    expect([knownTabs(profile), knownTabs(unpinned)]).toStrictEqual([
+      [
+        { ...tab("gmail", "gmail"), pinned: true, openAtLaunch: true },
+        { ...tab("t1", "calendar"), pinned: true, openAtLaunch: false },
+        { ...tab("t2", "drive"), pinned: "yes" },
+      ],
+      [{ ...tab("gmail", "gmail"), pinned: false, openAtLaunch: true }],
+    ]);
     expect(
-      decodeTabs([tab("t1", "calendar"), tab("gmail", "gmail")], "t1")
-    ).toStrictEqual({ ids: ["gmail", "t1"], selected: "t1" });
-    expect(decodeTabs([tab("t1", "drive")])).toStrictEqual({
-      ids: ["gmail", "t1"],
-      selected: "gmail",
-    });
-    expect(decodeTabs([])).toStrictEqual({ ids: ["gmail"], selected: "gmail" });
+      knownTabs(profile).map((known) => [isPinned(known), opensAtLaunch(known)])
+    ).toStrictEqual([
+      [true, true],
+      [true, false],
+      [false, false],
+    ]);
   });
 
   it("keeps the Gmail tab whose id is Gmail's when several claim to be Gmail", () => {
@@ -317,11 +347,15 @@ describe("decoding tabs", () => {
       { ...tab("gmail", "gmail"), url: "fixed", kept: true },
     ]);
 
-    expect(profile.tabs[0]).toStrictEqual({
-      ...tab("gmail", "gmail"),
-      url: "fixed",
-      kept: true,
-    });
+    expect(knownTabs(profile)).toStrictEqual([
+      {
+        ...tab("gmail", "gmail"),
+        url: "fixed",
+        kept: true,
+        pinned: true,
+        openAtLaunch: true,
+      },
+    ]);
   });
 
   it("keeps one Gmail tab and one tab of each id, the first", () => {
@@ -364,16 +398,13 @@ describe("decoding tabs", () => {
     ]) {
       const profile = decodeProfile([tab("t1", "calendar"), entry], "t1");
 
-      expect(profile.tabs).toHaveLength(3);
-      expect(knownTabs(profile).map((known) => known.id)).toStrictEqual([
-        "gmail",
-        "t1",
-      ]);
+      expect(profile.tabs).toHaveLength(2);
+      expect(knownTabs(profile).map((known) => known.id)).toStrictEqual(["t1"]);
       expect(profile.selectedTabId).toBe("t1");
     }
   });
 
-  it("gives a profile whose tabs are not a list its Gmail tab", () => {
+  it("gives a profile whose tabs are not a list a new profile's Gmail tab", () => {
     for (const tabs of ["tabs", { gmail: {} }, 3]) {
       const profile = decodeProfile(tabs, "gmail");
 
@@ -382,8 +413,8 @@ describe("decoding tabs", () => {
     }
   });
 
-  it("selects Gmail when the selected tab is not a string", () => {
-    expect(decodeProfile([tab("t1", "drive")], 7).selectedTabId).toBe("gmail");
+  it("selects the first shown tab when the selected tab is not a string", () => {
+    expect(decodeProfile([tab("t1", "drive")], 7).selectedTabId).toBe("t1");
   });
 });
 
@@ -459,6 +490,8 @@ describe(createInitialState, () => {
               app: "gmail",
               url: "https://mail.google.com/mail/u/0",
               title: "",
+              pinned: true,
+              openAtLaunch: true,
             },
           ],
           selectedTabId: "gmail",

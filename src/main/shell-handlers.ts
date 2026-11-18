@@ -182,7 +182,7 @@ export const createShellHandlers = ({
 
     // The sidebar, and the tab that had focus in it, is gone.
     if (sidebar.current() === "hidden") {
-      focus.focus([{ kind: "front" }]);
+      focus.focus([{ kind: "front" }, { kind: "shell" }]);
     }
   },
   retryTab: (key) => {
