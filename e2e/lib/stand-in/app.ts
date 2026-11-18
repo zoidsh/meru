@@ -30,6 +30,7 @@ import {
 import {
   CALENDAR_TITLE,
   DRIVE_TITLE,
+  FIND_LINE,
   ELSEWHERE_LINK,
   ELSEWHERE_URL,
   FULL_MESSAGE_PATH,
@@ -316,7 +317,8 @@ export const startStandIn = async (): Promise<StandIn> => {
     const body = page(
       CALENDAR_TITLE,
       `<a href="${NEXT_WEEK_PATH}">Next week</a>
-    <a href="${links.gmail}${GMAIL_LINK_HASH}" target="_blank">Open Gmail</a>`
+    <a href="${links.gmail}${GMAIL_LINK_HASH}" target="_blank">Open Gmail</a>
+    ${FIND_LINE}`
     );
 
     return { "/": body, [NEXT_WEEK_PATH]: body };

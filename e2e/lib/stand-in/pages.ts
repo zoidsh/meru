@@ -1,5 +1,12 @@
 export const CALENDAR_TITLE = "Calendar stand-in";
 
+/** A word the Calendar stand-in's page has `FIND_MATCHES` times, for Find. */
+export const FIND_WORD = "standup";
+
+export const FIND_MATCHES = 3;
+
+export const FIND_LINE = `<p>Monday standup, Wednesday standup, Friday standup.</p>`;
+
 export const DRIVE_TITLE = "Drive stand-in";
 
 export const POPUP_TITLE = "Stand-in pop-up";

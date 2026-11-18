@@ -23,6 +23,8 @@ import {
   CALENDAR_TITLE,
   DARK_PARTS,
   DRIVE_TITLE,
+  FIND_MATCHES,
+  FIND_WORD,
   POPOUT_PATH,
   STAND_IN_TITLE,
   THREAD_PARTS,
@@ -630,6 +632,74 @@ test("split panes: two side by side, and three nested with the sidebar narrow an
   await shell.getByRole("button", { name: "Widen sidebar" }).click();
   await rest();
   await shootEachWay(app, shell, "split-nested-wide");
+});
+
+/** Opens Find over the selected page and searches it for `term`, counted as `count`. */
+const findInPage = async (
+  app: ElectronApplication,
+  term: string,
+  count: string
+) => {
+  const overlay = await findOverlayDocument(app);
+  const bar = overlay.getByRole("search", { name: "Find in page" });
+  const field = bar.getByRole("textbox", { name: "Find in page" });
+
+  await app.evaluate(({ Menu, BrowserWindow }) => {
+    Menu.getApplicationMenu()
+      ?.getMenuItemById("tab.find")
+      ?.click(undefined, BrowserWindow.getAllWindows()[0]);
+  });
+  await expect(field).toBeFocused();
+  await field.fill(term);
+  await expect(bar.getByText(count, { exact: true })).toBeVisible();
+};
+
+test("the find bar with matches and with none, and over the focused pane of a split", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          { id: "c1", app: "calendar", url: standIn.calendarUrl, title: "" },
+        ],
+        selectedTabId: "c1",
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+  const first = await launch(launchApp, userDataDir);
+
+  await findPage(first.app, standIn.calendarUrl);
+  await first.shell.mouse.move(700, 20);
+  await findInPage(first.app, FIND_WORD, `1/${FIND_MATCHES}`);
+  await shootEachWay(first.app, first.shell, "find");
+  await findInPage(first.app, "nowhere in it", "0/0");
+  await shootEachWay(first.app, first.shell, "find-none");
+  await first.app.close();
+
+  await writeState(
+    userDataDir,
+    withSplit(
+      standIn,
+      { direction: "row", children: [pane(0.5, "c1"), pane(0.5, "d1")] },
+      "c1"
+    )
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+  await shell.mouse.move(700, 20);
+  await findInPage(app, FIND_WORD, `1/${FIND_MATCHES}`);
+  await shootEachWay(app, shell, "find-split");
 });
 
 test("a sleeping pane in a split", async ({
