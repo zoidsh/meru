@@ -4,7 +4,7 @@ import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
   overlayWidth,
-  shellDocumentName,
+  isOverlayDocument,
   transitionOverlay,
 } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
@@ -101,19 +101,19 @@ describe(overlayWidth, () => {
   });
 });
 
-describe(shellDocumentName, () => {
-  it("names only the overlay's blank document", () => {
+describe(isOverlayDocument, () => {
+  it("is only the overlay's blank document", () => {
     expect(
-      [OVERLAY_FRAME_NAME, "meru-tooltip", "", "elsewhere"].map((frameName) =>
-        shellDocumentName({ url: "about:blank", frameName })
+      [OVERLAY_FRAME_NAME, "another-name", "", "elsewhere"].map((frameName) =>
+        isOverlayDocument({ url: "about:blank", frameName })
       )
-    ).toStrictEqual([OVERLAY_FRAME_NAME, undefined, undefined, undefined]);
+    ).toStrictEqual([true, false, false, false]);
     expect(
       [
         "https://mail.google.com/",
         "about:blank#x",
         "meru-app://shell/index.html",
-      ].map((url) => shellDocumentName({ url, frameName: OVERLAY_FRAME_NAME }))
-    ).toStrictEqual([undefined, undefined, undefined]);
+      ].map((url) => isOverlayDocument({ url, frameName: OVERLAY_FRAME_NAME }))
+    ).toStrictEqual([false, false, false]);
   });
 });

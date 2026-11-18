@@ -164,13 +164,10 @@ export const findPage = async (app: ElectronApplication, prefix: string) => {
 };
 
 /**
- * A blank document the shell opened under `name` and draws into: the
- * overlay's. A page's own blank windows have no such name.
+ * The overlay's blank document, which the shell opened under its name and
+ * draws into. A page's own blank windows have no such name.
  */
-export const findShellDocument = async (
-  app: ElectronApplication,
-  name: "meru-overlay"
-) => {
+export const findOverlayDocument = async (app: ElectronApplication) => {
   const find = async () => {
     const blank = app
       .windows()
@@ -179,7 +176,7 @@ export const findShellDocument = async (
       blank.map((page) => page.evaluate(() => window.name).catch(() => ""))
     );
 
-    return blank[names.indexOf(name)];
+    return blank[names.indexOf("meru-overlay")];
   };
   let found: Page | undefined;
 

@@ -3,7 +3,6 @@ import type { WebContents } from "electron";
 
 import { isSameSite } from "#core/app-url.ts";
 import type { Bitmap } from "#core/badge-image.ts";
-import type { ShellDocumentName } from "#core/overlay.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
 
 import { addContentView } from "./content-view.ts";
@@ -23,13 +22,10 @@ export interface WindowOptions {
   /** Shown where the page has not painted, as `#rrggbb`. */
   backgroundColor: string;
   /**
-   * Which of its own documents the page opens, if it asks for one, each of
-   * which becomes a view over the content; every other open is refused.
+   * Whether the page is opening the overlay's document, which becomes a view
+   * over the content; every other open is refused.
    */
-  shellDocument: (request: {
-    url: string;
-    frameName: string;
-  }) => ShellDocumentName | undefined;
+  isOverlayDocument: (request: { url: string; frameName: string }) => boolean;
 }
 
 export type ContextMenuItem =
@@ -81,10 +77,8 @@ export interface AppWindow {
   focusPage: () => void;
   /** Told when the page gains keyboard focus. */
   onPageFocus: (listener: () => void) => void;
-  /** Told of each view of its own documents the page opens, by name. */
-  onShellDocument: (
-    listener: (name: ShellDocumentName, view: OverlayView) => void
-  ) => void;
+  /** Told of each view of the overlay's document the page opens. */
+  onOverlayDocument: (listener: (view: OverlayView) => void) => void;
   restore: () => void;
   isMinimized: () => boolean;
   isDestroyed: () => boolean;
@@ -147,36 +141,27 @@ export const createWindowFactory = (): WindowFactory => ({
       }
     });
 
-    const documentListeners = new Set<
-      (name: ShellDocumentName, view: OverlayView) => void
-    >();
-    const documents = new Map<ShellDocumentName, OverlayView>();
+    const documentListeners = new Set<(view: OverlayView) => void>();
+    let overlayDocument: OverlayView | undefined;
 
-    const closeDocument = (name: ShellDocumentName) => {
-      documents.get(name)?.close();
-      documents.delete(name);
-    };
-    const closeDocuments = () => {
-      for (const name of documents.keys()) {
-        closeDocument(name);
-      }
+    const closeDocument = () => {
+      overlayDocument?.close();
+      overlayDocument = undefined;
     };
 
-    // Its documents belong to the page that opened them. Left open, a
-    // reloaded page opening one again by name would get the old one,
+    // The document belongs to the page that opened it. Left open, a
+    // reloaded page opening it again by name would get the old one,
     // navigated to a new blank document as it draws into it.
     webContents.on("did-start-navigation", (details) => {
       if (details.isMainFrame && !details.isSameDocument) {
-        closeDocuments();
+        closeDocument();
       }
     });
-    // They live in the page's process, gone with it.
-    webContents.on("render-process-gone", closeDocuments);
+    // It lives in the page's process, gone with it.
+    webContents.on("render-process-gone", closeDocument);
 
-    webContents.setWindowOpenHandler(({ url, frameName }) => {
-      const name = options.shellDocument({ url, frameName });
-
-      return name
+    webContents.setWindowOpenHandler((request) =>
+      options.isOverlayDocument(request)
         ? {
             action: "allow",
             createWindow: (created) => {
@@ -184,21 +169,18 @@ export const createWindowFactory = (): WindowFactory => ({
                 webContents: WebContents;
               };
 
-              closeDocument(name);
-
-              const view = adoptOverlayView(window, opened);
-
-              documents.set(name, view);
+              closeDocument();
+              overlayDocument = adoptOverlayView(window, opened);
 
               for (const listener of documentListeners) {
-                listener(name, view);
+                listener(overlayDocument);
               }
 
               return opened;
             },
           }
-        : { action: "deny" };
-    });
+        : { action: "deny" }
+    );
 
     return {
       webContentsId: webContents.id,
@@ -223,7 +205,7 @@ export const createWindowFactory = (): WindowFactory => ({
       onPageFocus: (listener) => {
         webContents.on("focus", listener);
       },
-      onShellDocument: (listener) => {
+      onOverlayDocument: (listener) => {
         documentListeners.add(listener);
       },
       restore: () => window.restore(),

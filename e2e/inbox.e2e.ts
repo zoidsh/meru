@@ -4,7 +4,7 @@ import {
   clickMenuItem,
   expect,
   findPage,
-  findShellDocument,
+  findOverlayDocument,
   shownViews,
   test,
   writeSettings,
@@ -133,7 +133,7 @@ const launch = async (
     "Work, 1 unread message"
   );
 
-  return { app, shell, overlay: await findShellDocument(app, "meru-overlay") };
+  return { app, shell, overlay: await findOverlayDocument(app) };
 };
 
 const openInbox = async (shell: Page, overlay: Page) => {
@@ -320,7 +320,7 @@ test("closes as the shell reloads, which takes the overlay's document with it, a
   await openInbox(shell, first);
   await shell.reload();
 
-  const overlay = await findShellDocument(app, "meru-overlay");
+  const overlay = await findOverlayDocument(app);
 
   await expect(inboxButton(shell)).toHaveAttribute("aria-pressed", "false");
   await expect.poll(() => overlayShown(app)).toBeFalsy();

@@ -86,20 +86,15 @@ export const transitionOverlay = (
 /** The name the shell's `window.open` gives the overlay's document. */
 export const OVERLAY_FRAME_NAME = "meru-overlay";
 
-export type ShellDocumentName = typeof OVERLAY_FRAME_NAME;
-
 /**
- * Which of its own blank documents the shell opens, if it asks for one: the
- * only things it may open, each of which then lives in the shell's process
- * for its React tree to draw into.
+ * Whether the shell is opening the overlay's blank document: the only thing
+ * it may open, which then lives in the shell's process for its React tree to
+ * draw into.
  */
-export const shellDocumentName = ({
+export const isOverlayDocument = ({
   url,
   frameName,
 }: {
   url: string;
   frameName: string;
-}): ShellDocumentName | undefined =>
-  url === "about:blank" && frameName === OVERLAY_FRAME_NAME
-    ? frameName
-    : undefined;
+}) => url === "about:blank" && frameName === OVERLAY_FRAME_NAME;

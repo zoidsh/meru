@@ -6,7 +6,7 @@ import {
   clickMenuItem,
   expect,
   findPage,
-  findShellDocument,
+  findOverlayDocument,
   readMenuLabel,
   readState,
   test,
@@ -102,7 +102,7 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   userDataDir,
 }) => {
   const gmail = await findPage(app, standIn.url);
-  const overlay = await findShellDocument(app, "meru-overlay");
+  const overlay = await findOverlayDocument(app);
   const gmailHasFocus = await followRealFocus(gmail);
   const shellHasFocus = await followRealFocus(shell);
   const overlayHasFocus = await followRealFocus(overlay);
@@ -195,12 +195,12 @@ test("Escape, a click beside the card, a tab switch and the window losing focus 
   const draft = gmail.getByRole("textbox", { name: DRAFT_LABEL });
 
   // A reloaded shell opens a new overlay document, which its styles reach.
-  const first = await findShellDocument(app, "meru-overlay");
+  const first = await findOverlayDocument(app);
 
   await shell.reload();
   await expect.poll(() => first.isClosed()).toBeTruthy();
 
-  const overlay = await findShellDocument(app, "meru-overlay");
+  const overlay = await findOverlayDocument(app);
 
   // Emptied, Escape keeps the name.
   await openFromMenu(app, overlay);
@@ -266,7 +266,7 @@ test("when the shell's renderer is gone, the overlay's view goes with it and not
 }) => {
   await findPage(app, standIn.url);
 
-  const first = await findShellDocument(app, "meru-overlay");
+  const first = await findOverlayDocument(app);
 
   await openFromMenu(app, first);
 
@@ -293,7 +293,7 @@ test("when the shell's renderer is gone, the overlay's view goes with it and not
     )
     .toBeTruthy();
 
-  const overlay = await findShellDocument(app, "meru-overlay");
+  const overlay = await findOverlayDocument(app);
 
   await expect(overlay.getByRole("dialog")).toHaveCount(0);
   await openFromMenu(app, overlay);

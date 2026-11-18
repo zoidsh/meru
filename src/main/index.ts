@@ -392,7 +392,7 @@ const start = async () => {
     log: console.error,
   });
 
-  shell.window.onShellDocument((_name, view) => {
+  shell.window.onOverlayDocument((view) => {
     // It has no bridge of its own; the shell draws into it.
     view.onGone(senders.register(view.webContentsId, { role: "overlay" }));
     view.onFocus(() => {

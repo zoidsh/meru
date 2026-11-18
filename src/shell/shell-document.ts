@@ -1,4 +1,4 @@
-import type { ShellDocumentName } from "#core/overlay.ts";
+import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
 
 const STYLESHEETS = 'style, link[rel="stylesheet"]';
 
@@ -24,21 +24,19 @@ const mirrorStyles = (target: Document) => {
   });
 };
 
-const opened = new Map<ShellDocumentName, Document>();
+let opened: Document | undefined;
 
 /**
- * A document of a view main shows over the content views, opened once by
- * its name: a blank page of the shell's, in its process, which this tree
- * draws into. Main allows the shell to open these and nothing else.
+ * The overlay's document, of the view main shows over the content views,
+ * opened once: a blank page of the shell's, in its process, which this tree
+ * draws into. Main allows the shell to open it and nothing else.
  */
-export const openShellDocument = (name: ShellDocumentName) => {
-  const known = opened.get(name);
-
-  if (known) {
-    return known;
+export const openOverlayDocument = () => {
+  if (opened) {
+    return opened;
   }
 
-  const target = window.open("about:blank", name)?.document;
+  const target = window.open("about:blank", OVERLAY_FRAME_NAME)?.document;
 
   if (!target) {
     return;
@@ -52,7 +50,7 @@ export const openShellDocument = (name: ShellDocumentName) => {
   mirrorStyles(target);
   // Clear wherever nothing is drawn, so the page shows through.
   target.body.className = "bg-transparent";
-  opened.set(name, target);
+  opened = target;
 
   return target;
 };

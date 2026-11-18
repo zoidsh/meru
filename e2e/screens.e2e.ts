@@ -5,7 +5,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import {
   expect,
   findPage,
-  findShellDocument,
+  findOverlayDocument,
   test,
   writeSettings,
   writeState,
@@ -154,7 +154,7 @@ test("the rename profile overlay", async ({
   standIn,
 }) => {
   const { app, shell } = await launch(launchApp, userDataDir);
-  const overlay = await findShellDocument(app, "meru-overlay");
+  const overlay = await findOverlayDocument(app);
   const field = overlay.getByRole("textbox", { name: "Rename profile" });
 
   await findPage(app, standIn.url);

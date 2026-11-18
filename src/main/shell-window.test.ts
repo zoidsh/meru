@@ -48,7 +48,7 @@ const createFakeWindow = () => {
     on: () => false,
     focusPage: () => false,
     onPageFocus: () => false,
-    onShellDocument: () => false,
+    onOverlayDocument: () => false,
     restore: () => {
       minimized = false;
       calls.push("restore");
@@ -225,15 +225,15 @@ describe(createShellWindow, () => {
     expect(open({ isMacOS: false }).options?.titleBarStyle).toBe("default");
   });
 
-  it("lets the page open its own blank documents and nothing else", () => {
-    const name = open().options?.shellDocument;
+  it("lets the page open the overlay's blank document and nothing else", () => {
+    const allowed = open().options?.isOverlayDocument;
 
-    expect(name?.({ url: "about:blank", frameName: OVERLAY_FRAME_NAME })).toBe(
-      OVERLAY_FRAME_NAME
-    );
     expect(
-      name?.({ url: "https://example.com/", frameName: OVERLAY_FRAME_NAME })
-    ).toBeUndefined();
+      allowed?.({ url: "about:blank", frameName: OVERLAY_FRAME_NAME })
+    ).toBeTruthy();
+    expect(
+      allowed?.({ url: "https://example.com/", frameName: OVERLAY_FRAME_NAME })
+    ).toBeFalsy();
   });
 });
 

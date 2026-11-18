@@ -3,14 +3,13 @@ import { useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 
 import type { ShellState } from "#contract/shell.ts";
-import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Input } from "#ui/input.tsx";
 import { Label } from "#ui/label.tsx";
 
 import { Inbox } from "./inbox.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
-import { openShellDocument } from "./shell-document.ts";
+import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 
 /** Stable, so a render of the field does not select what is typed again. */
@@ -132,7 +131,7 @@ const useCloseOnShellPress = (kind: string | undefined) => {
 export const OverlayLayer = () => {
   const overlay = useShellState("overlay");
   const inbox = useShellState("inbox");
-  const target = openShellDocument(OVERLAY_FRAME_NAME);
+  const target = openOverlayDocument();
   const open = overlay && overlay.kind !== "none" ? overlay : undefined;
 
   useClosers(target);
