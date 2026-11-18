@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 import { useEffect, useRef } from "react";
-import type { KeyboardEvent, PointerEvent } from "react";
+import type { KeyboardEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import type { PaneGapEnd } from "#core/pane-tree.ts";
@@ -22,11 +22,20 @@ const nextGesture = () => {
   return gestures;
 };
 
+/**
+ * How long a move with no button held waits for a move with one, or a
+ * release, before it ends the drag as a release that went missing.
+ */
+const RELEASE_GRACE = 150;
+
 interface Drag {
   gesture: number;
   start: number;
   by: number;
   frame: number | undefined;
+  /** Ends the drag unless a move with the button held comes first. */
+  released: ReturnType<typeof setTimeout> | undefined;
+  stop?: () => void;
 }
 
 /**
@@ -54,10 +63,7 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
     }
 
     drag.current = undefined;
-
-    if (current.frame !== undefined) {
-      cancelAnimationFrame(current.frame);
-    }
+    current.stop?.();
 
     // A drag cut short still stores where it got to, as its last move showed.
     send(current.by, current.gesture, done);
@@ -65,14 +71,90 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
 
   useEffect(
     () => () => {
-      if (drag.current?.frame !== undefined) {
-        cancelAnimationFrame(drag.current.frame);
-      }
+      drag.current?.stop?.();
     },
     []
   );
 
-  const at = (event: PointerEvent) => (across ? event.clientX : event.clientY);
+  const at = (event: { clientX: number; clientY: number }) =>
+    across ? event.clientX : event.clientY;
+
+  /**
+   * Follows the pointer through the window rather than the gap, which the
+   * capture keeps it on only while the system says the button is held. On
+   * Linux and Windows, Chromium makes up a move where the system's cursor
+   * is as the views under it change size, which a drag does, with the
+   * buttons the system holds; a press it did not see, as one sent through
+   * the DevTools protocol, then reads as let go. A move with the button
+   * held soon after shows it was not.
+   */
+  const follow = (pointerId: number, element: HTMLElement, current: Drag) => {
+    const move = (event: globalThis.PointerEvent) => {
+      if (event.pointerId !== pointerId || drag.current !== current) {
+        return;
+      }
+
+      if (event.buttons === 0) {
+        if (current.released === undefined) {
+          current.released = setTimeout(() => {
+            end(true);
+          }, RELEASE_GRACE);
+        }
+
+        return;
+      }
+
+      clearTimeout(current.released);
+      current.released = undefined;
+      current.by = Math.round(at(event) - current.start);
+      if (current.frame === undefined) {
+        current.frame = requestAnimationFrame(() => {
+          current.frame = undefined;
+
+          if (drag.current === current) {
+            send(current.by, current.gesture, false);
+          }
+        });
+      }
+    };
+
+    const up = (event: globalThis.PointerEvent) => {
+      if (event.pointerId !== pointerId) {
+        return;
+      }
+
+      // Where it is let go, which a move Chromium held for the next frame
+      // may not have told.
+      current.by = Math.round(at(event) - current.start);
+      end(true);
+    };
+
+    const cancel = (event: globalThis.PointerEvent) => {
+      if (event.pointerId === pointerId) {
+        end(true);
+      }
+    };
+
+    globalThis.addEventListener("pointermove", move, true);
+    globalThis.addEventListener("pointerup", up, true);
+    globalThis.addEventListener("pointercancel", cancel, true);
+
+    current.stop = () => {
+      clearTimeout(current.released);
+
+      if (current.frame !== undefined) {
+        cancelAnimationFrame(current.frame);
+      }
+
+      globalThis.removeEventListener("pointermove", move, true);
+      globalThis.removeEventListener("pointerup", up, true);
+      globalThis.removeEventListener("pointercancel", cancel, true);
+
+      if (element.hasPointerCapture(pointerId)) {
+        element.releasePointerCapture(pointerId);
+      }
+    };
+  };
 
   const step = (by: number) => {
     send(by, nextGesture(), true);
@@ -178,54 +260,21 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
           return;
         }
 
+        // A press left over from a drag whose release never came.
+        end(true);
         event.preventDefault();
         event.currentTarget.setPointerCapture(event.pointerId);
-        drag.current = {
+
+        const current: Drag = {
           gesture: nextGesture(),
           start: at(event),
           by: 0,
           frame: undefined,
+          released: undefined,
         };
-      }}
-      onPointerMove={(event) => {
-        const { current } = drag;
 
-        if (!current) {
-          return;
-        }
-
-        // The release went missing, as outside the window it can.
-        if (event.buttons === 0) {
-          end(true);
-
-          return;
-        }
-
-        current.by = Math.round(at(event) - current.start);
-        if (current.frame === undefined) {
-          current.frame = requestAnimationFrame(() => {
-            current.frame = undefined;
-
-            if (drag.current === current) {
-              send(current.by, current.gesture, false);
-            }
-          });
-        }
-      }}
-      onPointerUp={(event) => {
-        // Where it is let go, which a move Chromium held for the next frame
-        // may not have told.
-        if (drag.current) {
-          drag.current.by = Math.round(at(event) - drag.current.start);
-        }
-
-        end(true);
-      }}
-      onPointerCancel={() => {
-        end(true);
-      }}
-      onLostPointerCapture={() => {
-        end(true);
+        drag.current = current;
+        follow(event.pointerId, event.currentTarget, current);
       }}
       onDoubleClick={() => {
         shellCalls().evenOutPanes({ before, after });
