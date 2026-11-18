@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  clickMenuItem,
   expect,
   findPage,
   readState,
@@ -184,6 +185,48 @@ test("notifies mail that arrives after the first poll, in each profile, and a cl
         { title: "Sender 2", shown: false, ...naming("Work") },
       ].toSorted(inOrder)
     );
+});
+
+test("Gmail put to sleep still counts and notifies its mail, and a notification's click wakes it on the message", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
+  standIn.setFeed(ANY_SESSION, listing("1"));
+
+  const { app, shell } = await launchOn(launchApp, standIn);
+
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
+  await clickMenuItem(app, "tab.sleep");
+  await expect(
+    shell.getByRole("region", { name: `${STAND_IN_TITLE} is sleeping` })
+  ).toBeVisible();
+  await expect.poll(() => shownViews(app)).toStrictEqual([]);
+
+  standIn.setFeed(ANY_SESSION, {
+    unreadCount: 2,
+    mail: [message("2", MARKUP_SUMMARY), message("1")],
+  });
+  await app.evaluate(({ powerMonitor }) => {
+    powerMonitor.emit("resume");
+  });
+
+  await expect.poll(() => readUnreadTotal(app)).toBe(2);
+  await expect
+    .poll(() => captured(app))
+    .toMatchObject([{ title: "Sender 2", shown: true }]);
+
+  await click(app, "Sender 2");
+
+  await expect
+    .poll(() => shownViews(app))
+    .toStrictEqual([
+      { url: messageLink(standIn.url, "2"), partition: "persist:p0" },
+    ]);
+  await expect(
+    shell.getByRole("region", { name: `${STAND_IN_TITLE} is sleeping` })
+  ).toHaveCount(0);
 });
 
 test("shows no notification while notifications are off", async ({
