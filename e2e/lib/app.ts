@@ -148,9 +148,9 @@ const keep = async (what: string, save: () => Promise<unknown>) => {
 /**
  * What a failed test's app showed: the whole window drawn as a person sees
  * it, each view over the shell, and the accessibility tree of the shell and
- * of the overlay's document, which holds the toast, the menus and the
- * cards; Playwright's own report has the shell's tree alone. `name` tells
- * a test's second app from its first.
+ * of the overlay's document, which holds the toast and the cards;
+ * Playwright's own report has the shell's tree alone. `name` tells a
+ * test's second app from its first.
  */
 const saveFailure = async (
   app: ElectronApplication,
@@ -333,6 +333,105 @@ export const clickMenuItem = (
     },
     { itemId: id, url: focusedUrl }
   );
+
+/**
+ * A native menu the app popped up, as the end-to-end build records it in
+ * place of showing it: each item as its label, "(off)" after a disabled
+ * one, "[x]" or "[ ]" after a checkbox, its shortcut after that, and
+ * "—" for a line.
+ */
+export interface ContextMenu {
+  /** The id of the window it popped up in. */
+  windowId: number;
+  at: { x: number; y: number } | null;
+  items: string[];
+}
+
+const contextMenuCount = (app: ElectronApplication) =>
+  app.evaluate(
+    () => (Reflect.get(globalThis, "meruTestContextMenus") as unknown[]).length
+  );
+
+/** The last native menu the app popped up, if any. */
+export const readContextMenu = (app: ElectronApplication) =>
+  app.evaluate((): ContextMenu | undefined => {
+    const menus = Reflect.get(globalThis, "meruTestContextMenus") as {
+      windowId: number;
+      at: { x: number; y: number } | null;
+      items: (
+        | {
+            label: string;
+            enabled: boolean;
+            checked: boolean | null;
+            accelerator: string | null;
+          }
+        | { separator: true }
+      )[];
+    }[];
+    const last = menus.at(-1);
+
+    return (
+      last && {
+        windowId: last.windowId,
+        at: last.at,
+        items: last.items.map((item) => {
+          if ("separator" in item) {
+            return "—";
+          }
+
+          const checks = { true: " [x]", false: " [ ]", null: "" };
+          const check = checks[`${item.checked}`];
+
+          return [
+            `${item.label}${item.enabled ? "" : " (off)"}${check}`,
+            item.accelerator,
+          ]
+            .filter(Boolean)
+            .join(" ");
+        }),
+      }
+    );
+  });
+
+/**
+ * Runs `open`, which should pop up a native menu, and gives that menu once
+ * main has recorded it.
+ */
+export const openContextMenu = async (
+  app: ElectronApplication,
+  open: () => Promise<unknown>
+) => {
+  const before = await contextMenuCount(app);
+
+  await open();
+  await expect.poll(() => contextMenuCount(app)).toBe(before + 1);
+
+  const menu = await readContextMenu(app);
+
+  if (!menu) {
+    throw new Error("No menu popped up");
+  }
+
+  return menu;
+};
+
+/** Chooses the enabled item with this label of the last native menu. */
+export const chooseContextMenuItem = (
+  app: ElectronApplication,
+  label: string
+) =>
+  app.evaluate((_modules, name) => {
+    const menus = Reflect.get(globalThis, "meruTestContextMenus") as {
+      choose: (label: string) => void;
+    }[];
+    const last = menus.at(-1);
+
+    if (!last) {
+      throw new Error("No menu popped up");
+    }
+
+    last.choose(name);
+  }, label);
 
 /** The label of the application menu's item, as it is now. */
 export const readMenuLabel = (app: ElectronApplication, id: string) =>

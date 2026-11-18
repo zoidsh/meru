@@ -1,10 +1,12 @@
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
 
 import {
+  chooseContextMenuItem,
   clickMenuItem,
   expect,
   findOverlayDocument,
   findPage,
+  openContextMenu,
   readState,
   readViews,
   test,
@@ -367,11 +369,10 @@ test("a pane's tab put to sleep shows the sleeping placeholder in its pane, and 
   await findPage(app, standIn.calendarUrl);
   await split(app, "right", "Gmail");
   await findPage(app, standIn.url);
-  await tab(shell, STAND_IN_TITLE).click({ button: "right" });
-
-  const overlay = await findOverlayDocument(app);
-
-  await overlay.getByRole("menuitem", { name: "Sleep", exact: true }).click();
+  await openContextMenu(app, () =>
+    tab(shell, STAND_IN_TITLE).click({ button: "right" })
+  );
+  await chooseContextMenuItem(app, "Sleep");
 
   const placeholder = shell.getByRole("region", {
     name: `${STAND_IN_TITLE} is sleeping`,
@@ -411,7 +412,7 @@ const followRealFocus = async (page: Page) => {
   return () => page.evaluate(() => document.hasFocus());
 };
 
-test("a split that would leave a pane under the minimum is refused with a toast, which takes no focus, gives back what a menu or a card it replaces took, and closes by itself", async ({
+test("a split that would leave a pane under the minimum is refused with a toast, which takes no focus, leaves the page focus a tab's menu left it, gives back what a card it replaces took, and closes by itself", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -468,18 +469,11 @@ test("a split that would leave a pane under the minimum is refused with a toast,
   await expect(toast).toHaveCount(0, { timeout: 8000 });
   expect(await where()).toBe("calendar");
 
-  // From the tab's menu, which had focus: back on the menu's tab.
-  await calendarTab.click({ button: "right" });
-  await expect(
-    overlay.getByRole("menu", { name: CALENDAR_TITLE })
-  ).toBeVisible();
-  await expect.poll(where).toBe("overlay");
-  await overlay
-    .getByRole("menuitem", { name: "Split down", exact: true })
-    .click();
+  // From the tab's menu, which takes no focus: the page keeps it.
+  await openContextMenu(app, () => calendarTab.click({ button: "right" }));
+  await chooseContextMenuItem(app, "Split down");
   await expect(toast).toBeVisible();
-  await expect.poll(where).toBe("meru-app");
-  await expect(calendarTab).toBeFocused();
+  await expect.poll(where).toBe("calendar");
   await expect(toast).toHaveCount(0, { timeout: 8000 });
 
   // Over the rename card, which had focus: back in the page.

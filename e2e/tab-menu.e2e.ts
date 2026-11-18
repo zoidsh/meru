@@ -1,15 +1,17 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  chooseContextMenuItem,
   expect,
-  findOverlayDocument,
   findPage,
+  openContextMenu,
   readOpenedExternally,
   readState,
   stubSystemBrowser,
   test,
   writeState,
 } from "./lib/app.ts";
+import { findTitlebar } from "./lib/own-window.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import { CALENDAR_TITLE, DRIVE_TITLE, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
@@ -62,42 +64,30 @@ const launch = async (
   return { app, shell };
 };
 
-/** Right-clicks the tab and gives the menu that opens, in the overlay's document. */
-const openMenu = async (
+/** Right-clicks the tab and gives the native menu it pops up. */
+const openMenu = (app: ElectronApplication, shell: Page, title: string) =>
+  openContextMenu(app, () => tab(shell, title).click({ button: "right" }));
+
+/** The items of the menu the tab's right-click pops up. */
+const menuItems = async (
   app: ElectronApplication,
   shell: Page,
   title: string
 ) => {
-  await tab(shell, title).click({ button: "right" });
+  const { items } = await openMenu(app, shell, title);
 
-  const overlay = await findOverlayDocument(app);
-  const menu = overlay.getByRole("menu", { name: title });
-
-  await expect(menu).toBeVisible();
-  // A key pressed before the menu takes focus goes nowhere.
-  await expect
-    .poll(() =>
-      menu.evaluate((element) => element.contains(document.activeElement))
-    )
-    .toBe(true);
-
-  return { overlay, menu };
+  return items;
 };
 
-const item = (overlay: Page, label: string) =>
-  overlay.getByRole("menuitem", { name: label, exact: true });
-
-/** Opens the tab's menu and chooses the item. */
+/** Pops up the tab's menu and chooses the item. */
 const choose = async (
   app: ElectronApplication,
   shell: Page,
   title: string,
   label: string
 ) => {
-  const { overlay, menu } = await openMenu(app, shell, title);
-
-  await item(overlay, label).click();
-  await expect(menu).toHaveCount(0);
+  await openMenu(app, shell, title);
+  await chooseContextMenuItem(app, label);
 };
 
 const readTabs = async (userDataDir: string) => {
@@ -108,6 +98,7 @@ const readTabs = async (userDataDir: string) => {
         url: string;
         pinned?: boolean;
         openAtLaunch?: boolean;
+        ownWindow?: boolean;
       }[];
       selectedTabId: string;
     }[];
@@ -129,56 +120,86 @@ const storedIds = async (userDataDir: string) => {
   return profile?.tabs.map((each) => each.id);
 };
 
-/**
- * Lets `document.hasFocus()` in the page say whether it holds Chromium's
- * keyboard focus, which Playwright otherwise makes every page claim.
- */
-const followRealFocus = async (page: Page) => {
-  const cdp = await page.context().newCDPSession(page);
-
-  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
-
-  return () => page.evaluate(() => document.hasFocus());
-};
-
-const viewport = (page: Page) =>
-  page.evaluate(() => [window.innerWidth, window.innerHeight]);
-
 const readClipboard = (app: ElectronApplication) =>
   app.evaluate(() => Reflect.get(globalThis, "meruTestClipboard") as string[]);
 
-test("a right-click on a tab opens its menu reaching over the sidebar, where the arrows, typeahead and Escape work, and focus goes back to the tab", async ({
+/** Whether the window with this id is the main window, not a tab's own. */
+const isMainWindow = (app: ElectronApplication, id: number) =>
+  app.evaluate(
+    ({ BrowserWindow }, windowId) =>
+      BrowserWindow.getAllWindows().some((window) => window.id === windowId),
+    id
+  );
+
+test("a right-click on a tab pops up its native menu at the pointer in the main window, its items for the tab with their shortcuts", async ({
   launchApp,
   standIn,
   userDataDir,
 }) => {
   const { app, shell } = await launch(launchApp, userDataDir, standIn);
-  const { overlay, menu } = await openMenu(app, shell, DRIVE_TITLE);
-  const sidebar = await shell
-    .getByRole("tablist", { name: "Tabs" })
-    .boundingBox();
-  const box = await menu.boundingBox();
-
-  expect(
-    (box?.x ?? 0) < (sidebar?.x ?? 0) + (sidebar?.width ?? 0) &&
-      (box?.x ?? 0) + (box?.width ?? 0) >
-        (sidebar?.x ?? 0) + (sidebar?.width ?? 0)
-  ).toBeTruthy();
-
-  await expect(item(overlay, "Reload")).toHaveAttribute(
-    "aria-keyshortcuts",
-    process.platform === "darwin" ? "Meta+R" : "Control+R"
+  const box = await tab(shell, CALENDAR_TITLE).boundingBox();
+  const calendar = await openContextMenu(app, () =>
+    tab(shell, CALENDAR_TITLE).click({
+      button: "right",
+      position: { x: 10, y: 8 },
+    })
   );
-  await overlay.keyboard.press("ArrowDown");
-  await expect(item(overlay, "Wake")).toBeFocused();
-  await overlay.keyboard.press("c");
-  await expect(item(overlay, "Copy URL")).toBeFocused();
-  await overlay.keyboard.press("Escape");
-  await expect(menu).toHaveCount(0);
-  await expect(tab(shell, DRIVE_TITLE)).toBeFocused();
+
+  // Where the click landed, which Chromium takes to the whole pixel.
+  expect(
+    Math.abs((calendar.at?.x ?? 0) - (box?.x ?? 0) - 10) +
+      Math.abs((calendar.at?.y ?? 0) - (box?.y ?? 0) - 8)
+  ).toBeLessThanOrEqual(2);
+  expect(await isMainWindow(app, calendar.windowId)).toBe(true);
+  expect(calendar.items).toStrictEqual([
+    "Sleep",
+    "—",
+    "Reload CommandOrControl+R",
+    "Duplicate",
+    "Copy URL",
+    "Open in default browser",
+    "—",
+    "Pin",
+    "Bookmark tab CommandOrControl+D",
+    "—",
+    "Split right CommandOrControl+Alt+N",
+    "Split down CommandOrControl+Alt+Shift+N",
+    "Maximize pane (off) CommandOrControl+Shift+Enter",
+    "Separate from split (off)",
+    "—",
+    "Move to new window CommandOrControl+Shift+N",
+    "—",
+    "Close tab CommandOrControl+Shift+W",
+    "Close other tabs",
+    "Close tabs below",
+  ]);
+
+  // Drive has no page yet, and Gmail is pinned and cannot be bookmarked.
+  const drive = await openContextMenu(app, () =>
+    tab(shell, DRIVE_TITLE).click({ button: "right" })
+  );
+  const gmail = await openContextMenu(app, () =>
+    tab(shell, STAND_IN_TITLE).click({ button: "right" })
+  );
+
+  expect([drive.items.slice(0, 2), drive.items.slice(6, 8)]).toStrictEqual([
+    ["Wake", "—"],
+    ["—", "Pin"],
+  ]);
+  expect(gmail.items.slice(6, 10)).toStrictEqual([
+    "—",
+    "Unpin",
+    "Open at Launch [x]",
+    "—",
+  ]);
+  expect(gmail.items.slice(-3)).toStrictEqual([
+    "—",
+    "Close other tabs",
+    "Close tabs below",
+  ]);
 });
 
-test("Shift+F10 and the Menu key on a focused tab open its menu beside it", async ({
+test("Shift+F10 and the Menu key on a focused tab pop its menu up beside it, and focus stays on the tab", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -187,72 +208,20 @@ test("Shift+F10 and the Menu key on a focused tab open its menu beside it", asyn
   const drive = tab(shell, DRIVE_TITLE);
 
   await drive.focus();
-  await drive.press("Shift+F10");
 
-  const overlay = await findOverlayDocument(app);
-  const menu = overlay.getByRole("menu", { name: DRIVE_TITLE });
-
-  await expect(menu).toBeVisible();
-  // It grows in from its corner, so its box is only where it rests after.
-  await menu.evaluate((element) =>
-    Promise.all(element.getAnimations().map(({ finished }) => finished))
-  );
-
-  const box = await menu.boundingBox();
+  const shifted = await openContextMenu(app, () => drive.press("Shift+F10"));
   const tile = await drive.boundingBox();
-  // At the tile's right edge, to the pixel the point is rounded to.
-  expect(
-    Math.abs((box?.x ?? 0) - (tile?.x ?? 0) - (tile?.width ?? 0))
-  ).toBeLessThan(2);
 
-  await overlay.keyboard.press("Escape");
-  await expect(drive).toBeFocused();
-  await drive.press("ContextMenu");
-  await expect(menu).toBeVisible();
-});
-
-test("a click beside the menu, on the overlay that covers the whole content area, closes it, selects nothing and gives focus back to the tab", async ({
-  launchApp,
-  standIn,
-  userDataDir,
-}) => {
-  const { app, shell } = await launch(launchApp, userDataDir, standIn);
-  const gmail = await tab(shell, STAND_IN_TITLE).boundingBox();
-  const { overlay, menu } = await openMenu(app, shell, DRIVE_TITLE);
-
-  // So the click lands on the overlay, where the shell's tile is beneath it.
-  expect(await viewport(overlay)).toStrictEqual(await viewport(shell));
-
-  await overlay.mouse.click(
-    (gmail?.x ?? 0) + (gmail?.width ?? 0) / 2,
-    (gmail?.y ?? 0) + (gmail?.height ?? 0) / 2
-  );
-  await expect(menu).toHaveCount(0);
-  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
-  await expect(tab(shell, DRIVE_TITLE)).toBeFocused();
-});
-
-test("a menu the window's losing focus closes gives focus to the selected tab's page", async ({
-  launchApp,
-  standIn,
-  userDataDir,
-}) => {
-  const { app, shell } = await launch(launchApp, userDataDir, standIn);
-  const calendarHasFocus = await followRealFocus(
-    await findPage(app, standIn.calendarUrl)
-  );
-  const { menu } = await openMenu(app, shell, DRIVE_TITLE);
-
-  expect(await calendarHasFocus()).toBe(false);
-
-  await app.evaluate(({ BaseWindow }) => {
-    BaseWindow.getAllWindows()[0]?.emit("blur");
+  expect(shifted.at).toStrictEqual({
+    x: Math.round((tile?.x ?? 0) + (tile?.width ?? 0)),
+    y: Math.round(tile?.y ?? 0),
   });
-  await expect(menu).toHaveCount(0);
-  await expect.poll(calendarHasFocus).toBe(true);
+  await expect(drive).toBeFocused();
+
+  const keyed = await openContextMenu(app, () => drive.press("ContextMenu"));
+
+  expect(keyed.items[0]).toBe("Wake");
+  await expect(drive).toBeFocused();
 });
 
 test("Reload, Copy URL and Open in default browser act on the menu's tab and select nothing", async ({
@@ -271,17 +240,22 @@ test("Reload, Copy URL and Open in default browser act on the menu's tab and sel
   await choose(app, shell, STAND_IN_TITLE, "Reload");
   await expect
     .poll(() =>
-      gmail.evaluate(() => Reflect.get(window, "meruBeforeReload") === true)
+      gmail
+        .evaluate(() => Reflect.get(window, "meruBeforeReload") === true)
+        // The page going as it reloads.
+        .catch(() => true)
     )
     .toBe(false);
 
   await choose(app, shell, DRIVE_TITLE, "Copy URL");
   await choose(app, shell, DRIVE_TITLE, "Open in default browser");
 
-  expect([
-    await readClipboard(app),
-    await readOpenedExternally(app),
-  ]).toStrictEqual([[standIn.driveUrl], [standIn.driveUrl]]);
+  await expect
+    .poll(async () => [
+      await readClipboard(app),
+      await readOpenedExternally(app),
+    ])
+    .toStrictEqual([[standIn.driveUrl], [standIn.driveUrl]]);
   await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"
@@ -325,16 +299,12 @@ test("Pin, Open at Launch and Unpin, then Close tab, Close other tabs and Close 
     DRIVE_TITLE,
     CALENDAR_TITLE,
   ]);
-  await expect(tab(shell, DRIVE_TITLE)).toBeFocused();
 
-  const { overlay } = await openMenu(app, shell, DRIVE_TITLE);
-  const launches = overlay.getByRole("menuitemcheckbox", {
-    name: "Open at Launch",
-  });
+  const pinned = await openMenu(app, shell, DRIVE_TITLE);
 
-  await expect(launches).not.toBeChecked();
-  await expect(item(overlay, "Close tab")).toHaveCount(0);
-  await launches.click();
+  expect(pinned.items).toContain("Open at Launch [ ]");
+  expect(pinned.items).not.toContain("Close tab CommandOrControl+Shift+W");
+  await chooseContextMenuItem(app, "Open at Launch");
   await expect
     .poll(async () => {
       const drive = await storedTab(userDataDir, 2);
@@ -342,6 +312,9 @@ test("Pin, Open at Launch and Unpin, then Close tab, Close other tabs and Close 
       return drive?.openAtLaunch;
     })
     .toBe(true);
+  await expect
+    .poll(() => menuItems(app, shell, DRIVE_TITLE))
+    .toContain("Open at Launch [x]");
 
   await choose(app, shell, DRIVE_TITLE, "Unpin");
   await expect(tabs(shell)).toHaveText([
@@ -349,12 +322,9 @@ test("Pin, Open at Launch and Unpin, then Close tab, Close other tabs and Close 
     CALENDAR_TITLE,
     DRIVE_TITLE,
   ]);
-  await expect(tab(shell, DRIVE_TITLE)).toBeFocused();
 
   await choose(app, shell, DRIVE_TITLE, "Close tab");
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, CALENDAR_TITLE]);
-  // The menu's tab is gone, so focus goes to the selected one.
-  await expect(tab(shell, CALENDAR_TITLE)).toBeFocused();
 
   await choose(app, shell, CALENDAR_TITLE, "Duplicate");
   await expect(tabs(shell)).toHaveCount(3);
@@ -373,6 +343,77 @@ test("Close other tabs keeps the menu's tab and the pinned ones, and selects it 
   await choose(app, shell, DRIVE_TITLE, "Close other tabs");
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, DRIVE_TITLE]);
   await expect(tab(shell, DRIVE_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+});
+
+test("Bookmark tab bookmarks the menu's page, which the next menu offers to remove", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+
+  await choose(app, shell, CALENDAR_TITLE, "Bookmark tab");
+  await expect
+    .poll(() => menuItems(app, shell, CALENDAR_TITLE))
+    .toContain("Remove bookmark CommandOrControl+D");
+  await chooseContextMenuItem(app, "Remove bookmark");
+  await expect
+    .poll(() => menuItems(app, shell, CALENDAR_TITLE))
+    .toContain("Bookmark tab CommandOrControl+D");
+});
+
+test("Move to new window, then the own window's tab in the sidebar and its More options offer Move to main window, which puts it back", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+
+  await choose(app, shell, CALENDAR_TITLE, "Move to new window");
+
+  const titlebar = await findTitlebar(app);
+  const more = titlebar
+    .getByRole("banner", { name: "Title bar" })
+    .getByRole("button", { name: "More options" });
+  const sidebar = await openMenu(app, shell, CALENDAR_TITLE);
+
+  expect(sidebar.items).toContain(
+    "Move to main window CommandOrControl+Shift+M"
+  );
+  expect(sidebar.items).not.toContain("Sleep");
+
+  const box = await more.boundingBox();
+  const options = await openContextMenu(app, () => more.click());
+
+  expect(await isMainWindow(app, options.windowId)).toBe(false);
+  expect(options.at).toStrictEqual({
+    x: Math.round(box?.x ?? 0),
+    y: Math.round((box?.y ?? 0) + (box?.height ?? 0)),
+  });
+  expect(options.items).toStrictEqual([
+    "Move to main window CommandOrControl+Shift+M",
+    "Open at Launch (off) [ ]",
+    "Copy URL",
+    "Open in default browser",
+  ]);
+
+  await chooseContextMenuItem(app, "Copy URL");
+  await expect
+    .poll(() => readClipboard(app))
+    .toStrictEqual([standIn.calendarUrl]);
+  await openContextMenu(app, () => more.click());
+  await chooseContextMenuItem(app, "Move to main window");
+  await expect
+    .poll(async () => {
+      const calendar = await storedTab(userDataDir, 1);
+
+      return calendar?.ownWindow ?? false;
+    })
+    .toBe(false);
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"
   );

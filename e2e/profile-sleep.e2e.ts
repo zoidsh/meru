@@ -1,10 +1,11 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  chooseContextMenuItem,
   clickMenuItem,
   expect,
-  findOverlayDocument,
   findPage,
+  openContextMenu,
   readMenuItem,
   readState,
   readViews,
@@ -69,22 +70,19 @@ const followRealFocus = async (page: Page) => {
   return () => page.evaluate(() => document.hasFocus());
 };
 
-/** Right-clicks the profile's button and chooses the item of its menu. */
+/** Right-clicks the profile's button and chooses the only item of its menu. */
 const choose = async (
   app: ElectronApplication,
   shell: Page,
   name: string,
   label: string
 ) => {
-  await profileButton(shell, name).click({ button: "right" });
+  const menu = await openContextMenu(app, () =>
+    profileButton(shell, name).click({ button: "right" })
+  );
 
-  const overlay = await findOverlayDocument(app);
-  const menu = overlay.getByRole("menu", { name });
-
-  await expect(menu).toBeVisible();
-  await expect(overlay.getByRole("menuitem")).toHaveText([label]);
-  await overlay.getByRole("menuitem", { name: label, exact: true }).click();
-  await expect(menu).toHaveCount(0);
+  expect(menu.items).toStrictEqual([label]);
+  await chooseContextMenuItem(app, label);
 };
 
 test("Sleep in a background profile's menu closes its views and renderer and dims its button, whose badge keeps counting, and a notification's click wakes and selects it", async ({
@@ -256,15 +254,11 @@ test("Sleep is disabled for the last awake profile, in its menu and the Window m
     .poll(() => readMenuItem(app, "profile.sleep"))
     .toMatchObject({ label: "Sleep Profile", enabled: false });
 
-  await profileButton(shell, "Home").click({ button: "right" });
+  const home = await openContextMenu(app, () =>
+    profileButton(shell, "Home").click({ button: "right" })
+  );
 
-  const overlay = await findOverlayDocument(app);
-
-  await expect(overlay.getByRole("menu", { name: "Home" })).toBeVisible();
-  await expect(
-    overlay.getByRole("menuitem", { name: "Sleep", exact: true })
-  ).toBeDisabled();
-  await overlay.keyboard.press("Escape");
+  expect(home.items).toStrictEqual(["Sleep (off)"]);
   await app.close();
 
   await writeState(userDataDir, {
@@ -343,7 +337,7 @@ test("a restart keeps a profile asleep, loading nothing of it until it is select
   await expect(profileButton(thirdShell, "Work")).toHaveCSS("opacity", "0.5");
 });
 
-test("Shift+F10 and the Menu key on a focused profile button open its menu below it, and Escape gives focus back to the button", async ({
+test("Shift+F10 and the Menu key on a focused profile button pop its menu up below it, and focus stays on the button", async ({
   launchApp,
   userDataDir,
 }) => {
@@ -360,20 +354,18 @@ test("Shift+F10 and the Menu key on a focused profile button open its menu below
   const work = profileButton(shell, "Work");
 
   await work.focus();
-  await work.press("Shift+F10");
 
-  const overlay = await findOverlayDocument(app);
-  const menu = overlay.getByRole("menu", { name: "Work" });
+  const shifted = await openContextMenu(app, () => work.press("Shift+F10"));
+  const box = await work.boundingBox();
 
-  await expect(menu).toBeVisible();
-  await expect
-    .poll(() =>
-      menu.evaluate((element) => element.contains(document.activeElement))
-    )
-    .toBe(true);
-  await overlay.keyboard.press("Escape");
-  await expect(menu).toHaveCount(0);
+  expect(shifted.at).toStrictEqual({
+    x: Math.round(box?.x ?? 0),
+    y: Math.round((box?.y ?? 0) + (box?.height ?? 0)),
+  });
   await expect(work).toBeFocused();
-  await work.press("ContextMenu");
-  await expect(menu).toBeVisible();
+
+  const keyed = await openContextMenu(app, () => work.press("ContextMenu"));
+
+  expect(keyed.items).toStrictEqual(["Sleep"]);
+  await expect(work).toBeFocused();
 });

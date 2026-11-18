@@ -1,10 +1,11 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  chooseContextMenuItem,
   clickMenuItem,
   expect,
-  findOverlayDocument,
   findPage,
+  openContextMenu,
   readMenuLabel,
   readState,
   readViews,
@@ -406,11 +407,10 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
   await tab(shell, CALENDAR_TITLE).click();
   await expect.poll(() => shownWidths(first)).toHaveLength(2);
 
-  await tab(shell, STAND_IN_TITLE).click({ button: "right" });
-
-  const overlay = await findOverlayDocument(first);
-
-  await overlay.getByRole("menuitem", { name: /^Maximize pane/u }).click();
+  await openContextMenu(first, () =>
+    tab(shell, STAND_IN_TITLE).click({ button: "right" })
+  );
+  await chooseContextMenuItem(first, "Maximize pane");
   await expect
     .poll(() => shownWidths(first).then((shown) => shown.map(({ url }) => url)))
     .toStrictEqual([standIn.url]);
@@ -435,10 +435,10 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
     .poll(() => shownWidths(app).then((shown) => shown.map(({ url }) => url)))
     .toStrictEqual([standIn.url]);
 
-  const menu = await findOverlayDocument(app);
-
-  await tab(again, STAND_IN_TITLE).click({ button: "right" });
-  await menu.getByRole("menuitem", { name: /^Restore panes/u }).click();
+  await openContextMenu(app, () =>
+    tab(again, STAND_IN_TITLE).click({ button: "right" })
+  );
+  await chooseContextMenuItem(app, "Restore panes");
   await expect.poll(() => shownWidths(app)).toHaveLength(2);
   await findPage(app, standIn.calendarUrl);
 });

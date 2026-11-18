@@ -1,9 +1,11 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  chooseContextMenuItem,
   clickMenuItem,
   expect,
   findPage,
+  openContextMenu,
   readState,
   readUnreadTotal,
   retitle,
@@ -412,6 +414,42 @@ test("holds mail while Do Not Disturb is on, never shows it later, and notifies 
 
   await expect.poll(() => readUnreadTotal(app)).toBe(3);
   await expect.poll(() => capturedTitles(app)).toStrictEqual(["Sender 3"]);
+});
+
+test("a right-click on the Do Not Disturb button pops up its native menu at the pointer: the durations, and while on, what it holds until and Turn Off", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
+
+  const { app, shell } = await launchOn(launchApp, standIn);
+  const button = doNotDisturbButton(shell);
+  const off = await openContextMenu(app, () =>
+    button.click({ button: "right" })
+  );
+
+  expect(off.at).toBeNull();
+  expect(off.items.slice(0, 3)).toStrictEqual([
+    "Until Turned Off",
+    "For 5 Minutes",
+    "For 10 Minutes",
+  ]);
+  await chooseContextMenuItem(app, "For 1 Hour");
+  await expect(button).toHaveAttribute("aria-pressed", "true");
+
+  const on = await openContextMenu(app, () =>
+    button.click({ button: "right" })
+  );
+
+  expect(on.items[0]).toMatch(/^On Until .+ \(off\)$/u);
+  expect(on.items.slice(1, 4)).toStrictEqual([
+    "Turn Off",
+    "—",
+    "Until Turned Off",
+  ]);
+  await chooseContextMenuItem(app, "Turn Off");
+  await expect(button).toHaveAttribute("aria-pressed", "false");
 });
 
 test("with important only, notifies just the new mail the Important feed lists", async ({

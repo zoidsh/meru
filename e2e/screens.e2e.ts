@@ -4,9 +4,11 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
 import {
+  chooseContextMenuItem,
   expect,
   findPage,
   findOverlayDocument,
+  openContextMenu,
   test,
   writeSettings,
   writeState,
@@ -241,47 +243,6 @@ test("the line a dragged tab would land at, in the list and in the wide pinned g
   await letGo();
 });
 
-test("a tab's menu on a pinned tile and on a listed tab", async ({
-  launchApp,
-  userDataDir,
-  standIn,
-}) => {
-  standIn.setFeed(ANY_SESSION, { unreadCount: 3 });
-  await writeState(userDataDir, withPinned(standIn, 2));
-
-  const { app, shell } = await launch(launchApp, userDataDir);
-  const list = shell.getByRole("tablist", { name: "Tabs" });
-
-  await findPage(app, standIn.driveUrl);
-  await findPage(app, standIn.url);
-
-  for (const [title, surface] of [
-    [STAND_IN_TITLE, "tab-menu-pinned"],
-    ["Docs", "tab-menu"],
-  ] as const) {
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    await list.getByRole("tab", { name: title, exact: true }).click({
-      button: "right",
-    });
-
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    const overlay = await findOverlayDocument(app);
-    const menu = overlay.getByRole("menu", { name: title });
-
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    await expect(menu).toBeVisible();
-    // Away from every item, so none is highlighted in the picture.
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    await overlay.mouse.move(900, 600);
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    await shootEachWay(app, shell, surface);
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    await overlay.keyboard.press("Escape");
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    await expect(menu).toHaveCount(0);
-  }
-});
-
 test("sleeping tiles and rows, and the sleeping pane of the selected tab put to sleep, wide and narrow", async ({
   launchApp,
   userDataDir,
@@ -297,13 +258,12 @@ test("sleeping tiles and rows, and the sleeping pane of the selected tab put to 
   await findPage(app, standIn.driveUrl);
   await findPage(app, standIn.url);
   await shell.getByRole("button", { name: "Widen sidebar" }).click();
-  await list.getByRole("tab", { name: DRIVE_TITLE, exact: true }).click({
-    button: "right",
-  });
-
-  const overlay = await findOverlayDocument(app);
-
-  await overlay.getByRole("menuitem", { name: "Sleep", exact: true }).click();
+  await openContextMenu(app, () =>
+    list.getByRole("tab", { name: DRIVE_TITLE, exact: true }).click({
+      button: "right",
+    })
+  );
+  await chooseContextMenuItem(app, "Sleep");
   await expect(
     shell.getByRole("button", { name: "Wake", exact: true })
   ).toBeFocused();
@@ -371,7 +331,7 @@ test("the titlebar with two profiles, and with more than fit", async ({
   await shootEachWay(two.app, two.shell, "titlebar-two");
 });
 
-test("a sleeping profile in the titlebar, and its menu", async ({
+test("a sleeping profile in the titlebar", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -396,27 +356,6 @@ test("a sleeping profile in the titlebar, and its menu", async ({
   ).toBeVisible();
   await rest();
   await shootEachWay(app, shell, "titlebar-sleeping");
-
-  const menuOf = async (name: string) => {
-    await row
-      .getByRole("button", { name: new RegExp(`^${name}`, "u") })
-      .click({ button: "right" });
-
-    const overlay = await findOverlayDocument(app);
-    const menu = overlay.getByRole("menu", { name });
-
-    await expect(menu).toBeVisible();
-
-    return { overlay, menu };
-  };
-
-  const work = await menuOf("Work");
-
-  // Away from the item, so it is not highlighted in the picture.
-  await work.overlay.mouse.move(900, 600);
-  await shootEachWay(app, shell, "profile-menu");
-  await work.overlay.keyboard.press("Escape");
-  await expect(work.menu).toHaveCount(0);
 });
 
 test("the rename profile overlay", async ({
@@ -726,14 +665,13 @@ test("a sleeping pane in a split", async ({
 
   await findPage(app, standIn.calendarUrl);
   await findPage(app, standIn.url);
-  await shell
-    .getByRole("tablist", { name: "Tabs" })
-    .getByRole("tab", { name: STAND_IN_TITLE, exact: true })
-    .click({ button: "right" });
-
-  const overlay = await findOverlayDocument(app);
-
-  await overlay.getByRole("menuitem", { name: "Sleep", exact: true }).click();
+  await openContextMenu(app, () =>
+    shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { name: STAND_IN_TITLE, exact: true })
+      .click({ button: "right" })
+  );
+  await chooseContextMenuItem(app, "Sleep");
   await expect(
     shell.getByRole("region", { name: `${STAND_IN_TITLE} is sleeping` })
   ).toBeVisible();

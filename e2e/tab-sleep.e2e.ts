@@ -1,10 +1,11 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  chooseContextMenuItem,
   clickMenuItem,
   expect,
-  findOverlayDocument,
   findPage,
+  openContextMenu,
   readMenuLabel,
   readViews,
   test,
@@ -82,14 +83,10 @@ const choose = async (
   title: string,
   label: string
 ) => {
-  await tab(shell, title).click({ button: "right" });
-
-  const overlay = await findOverlayDocument(app);
-  const menu = overlay.getByRole("menu", { name: title });
-
-  await expect(menu).toBeVisible();
-  await overlay.getByRole("menuitem", { name: label, exact: true }).click();
-  await expect(menu).toHaveCount(0);
+  await openContextMenu(app, () =>
+    tab(shell, title).click({ button: "right" })
+  );
+  await chooseContextMenuItem(app, label);
 };
 
 /** The page of each content view and whether it shows. */

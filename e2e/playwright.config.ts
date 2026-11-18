@@ -6,10 +6,10 @@ const isCI = Boolean(process.env.CI);
 
 /**
  * On Windows and Linux every launch of the suite's app takes the desktop's
- * focus, and an overlay, the unified inbox and the menus among them,
- * closes when its window loses it, and a test that follows real focus sees
- * it taken, so these run alone, after the rest. On macOS the suite's app is
- * never activated.
+ * focus, and an overlay, the unified inbox among them, closes when its
+ * window loses it, and a test that follows real focus sees it taken, so
+ * these run alone, after the rest. On macOS the suite's app is never
+ * activated.
  */
 const NEEDS_THE_FOCUS = [
   "**/overlay.e2e.ts",
