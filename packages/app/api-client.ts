@@ -11,4 +11,5 @@ const apiUrl = process.env.MERU_API_URL || undefined;
 
 export const apiClient = createMeruApiSafeClient(apiUrl);
 
+// Some networks block .so domains, so the fallback lives outside .so.
 export const apiFallbackClient = createMeruApiSafeClient("https://api.getmeru.app/rpc");
