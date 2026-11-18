@@ -14,7 +14,8 @@ export type ContentViewEvent =
   | { kind: "load-stopped" }
   | { kind: "failed-to-load"; code: number; name: string }
   | { kind: "crashed"; reason: string }
-  | { kind: "navigated"; url: string }
+  /** The main frame went to `url`, within its document or to a new one. */
+  | { kind: "navigated"; url: string; inPage?: boolean }
   | { kind: "titled"; title: string };
 
 // The page cancelling a load it started itself, which is no failure.
@@ -244,11 +245,11 @@ const reportEvents = (
     onEvent({ kind: "crashed", reason })
   );
   webContents.on("did-navigate", (_event, url) =>
-    onEvent({ kind: "navigated", url })
+    onEvent({ kind: "navigated", url, inPage: false })
   );
   webContents.on("did-navigate-in-page", (_event, url, isMainFrame) => {
     if (isMainFrame) {
-      onEvent({ kind: "navigated", url });
+      onEvent({ kind: "navigated", url, inPage: true });
     }
   });
   webContents.on("page-title-updated", (_event, title) =>

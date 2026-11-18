@@ -5,7 +5,32 @@ export const FIND_WORD = "standup";
 
 export const FIND_MATCHES = 3;
 
-export const FIND_LINE = `<p>Monday standup, Wednesday standup, Friday standup.</p>`;
+export const FIND_LINE = `<p id="find-line">Monday standup, Wednesday standup, Friday standup.</p>`;
+
+/** Where the Calendar stand-in moves within its page, as Gmail opens a thread. */
+export const THREAD_PATH = "/thread";
+
+/** The Calendar stand-in's frame, which loads into its page on a click. */
+export const FRAME_PATH = "/frame";
+
+/**
+ * Open thread moves to `THREAD_PATH` within the page, with `FIND_WORD` there
+ * once; Load a frame loads one into the page, with no `FIND_WORD` in it.
+ */
+export const FIND_MOVES = `<button type="button" id="open-thread">Open thread</button>
+    <button type="button" id="load-frame">Load a frame</button>
+    <script>
+      document.getElementById("open-thread").addEventListener("click", () => {
+        history.pushState(null, "", "${THREAD_PATH}");
+        document.getElementById("find-line").textContent = "Thread: the standup moved.";
+      });
+      document.getElementById("load-frame").addEventListener("click", () => {
+        const frame = document.createElement("iframe");
+        frame.title = "Frame";
+        frame.src = "${FRAME_PATH}";
+        document.body.append(frame);
+      });
+    </script>`;
 
 export const DRIVE_TITLE = "Drive stand-in";
 

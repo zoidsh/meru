@@ -208,8 +208,8 @@ describe(overlayRectangle, () => {
         { x: 0, y: 326, width: 928, height: 326 }
       ),
     ]).toStrictEqual([
-      { x: 592, y: 40, width: 400, height: 56 },
-      { x: 592, y: 366, width: 400, height: 56 },
+      { x: 631, y: 48, width: 353, height: 40 },
+      { x: 631, y: 374, width: 353, height: 40 },
     ]);
   });
 });

@@ -115,6 +115,9 @@ const setup = ({
       step: (forward) => {
         calls.push(["findStep", forward]);
       },
+      close: () => {
+        calls.push(["findClose"]);
+      },
     },
     tabs: {
       retry: (key) => {
@@ -246,6 +249,16 @@ describe(createShellHandlers, () => {
     await shell.handlers.closeOverlay({});
 
     expect(shell.overlays).toStrictEqual(["closed"]);
+  });
+
+  it("closes the find bar through find, which ends its search", async () => {
+    const shell = setup({
+      overlay: { kind: "find", profileId: "a", tabId: "gmail" },
+    });
+
+    await shell.handlers.closeOverlay({});
+
+    expect([shell.calls, shell.overlays]).toStrictEqual([[["findClose"]], []]);
   });
 
   it("passes the find bar's term and steps to the search", async () => {
@@ -425,6 +438,14 @@ const CHROME = {
 
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;
 
+/** The shell's own keys, which every platform's shortcuts carry. */
+const keys = (platform: "darwin" | "win32") =>
+  Object.fromEntries(
+    Object.entries(shellShortcuts([], platform)).filter(([id]) =>
+      id.startsWith("key:")
+    )
+  );
+
 describe(shellShortcuts, () => {
   it("gives each command's shortcut on the platform as a person reads it, and leaves out one with none there", () => {
     const commands = [
@@ -436,8 +457,32 @@ describe(shellShortcuts, () => {
     expect(shellShortcuts(commands, "darwin")).toStrictEqual({
       a: "⌘S",
       b: "⇧⌘]",
+      ...keys("darwin"),
     });
-    expect(shellShortcuts(commands, "win32")).toStrictEqual({ a: "Ctrl+S" });
+    expect(shellShortcuts(commands, "win32")).toStrictEqual({
+      a: "Ctrl+S",
+      ...keys("win32"),
+    });
+  });
+
+  it("gives the shell's own keys, which are no command's, the same way", () => {
+    expect([
+      shellShortcuts([], "darwin"),
+      shellShortcuts([], "linux"),
+      shellShortcuts([], "linux", true),
+    ]).toStrictEqual([
+      { "key:Enter": "↩", "key:Shift+Enter": "⇧↩", "key:Escape": "⎋" },
+      {
+        "key:Enter": "Enter",
+        "key:Shift+Enter": "Shift+Enter",
+        "key:Escape": "Escape",
+      },
+      {
+        "key:Enter": "Enter",
+        "key:Shift+Enter": "Shift+Enter",
+        "key:Escape": "Escape",
+      },
+    ]);
   });
 });
 
@@ -458,21 +503,23 @@ const overlayWith = (find?: FindBar) =>
 describe("the find bar as the shell is given it", () => {
   const bar: FindBar = {
     key: { profileId: "a", tabId: "gmail" },
+    open: true,
     term: "apple",
     ordinal: 2,
-    matches: 0,
+    matches: 5,
     requestId: 4,
+    awaitingLoad: false,
     opened: 3,
   };
 
-  it("shows the bar over its tab's page, 0/0 with no match", () => {
+  it("shows the bar over its tab's page with its term and count", () => {
     expect(overlayWith(bar)).toStrictEqual({
       kind: "find",
       profileId: "a",
       tabId: "gmail",
       term: "apple",
-      ordinal: 0,
-      matches: 0,
+      ordinal: 2,
+      matches: 5,
       opened: 3,
     });
   });

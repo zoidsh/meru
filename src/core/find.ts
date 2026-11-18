@@ -2,7 +2,8 @@ import { tabKey } from "./tabs.ts";
 import type { TabKey } from "./tabs.ts";
 import type { Rectangle } from "./window-bounds.ts";
 
-const sameTab = (a: TabKey, b: TabKey) => tabKey(a) === tabKey(b);
+const sameTab = (a: TabKey | undefined, b: TabKey | undefined) =>
+  a !== undefined && b !== undefined && tabKey(a) === tabKey(b);
 
 /** The longest term the bar searches for. */
 export const FIND_TERM_MAX_LENGTH = 1000;
@@ -15,10 +16,15 @@ export interface FoundInPage {
   matches: number;
 }
 
-/** The find bar over a tab's page while it is open. */
+/**
+ * A tab's find bar: open or closed, and its term, kept for the session
+ * until the tab closes or sleeps.
+ */
 export interface FindBar {
   key: TabKey;
+  open: boolean;
   term: string;
+  /** The match shown, 1-based; 0 with none. */
   ordinal: number;
   matches: number;
   /**
@@ -26,36 +32,63 @@ export interface FindBar {
    * bar shows; an earlier one may answer late or never.
    */
   requestId: number | undefined;
-  /** Counts each open, so the shell selects the field's text again on one. */
+  /**
+   * A new document is loading, whose load searches again; a frame's load
+   * within the page does not.
+   */
+  awaitingLoad: boolean;
+  /** Counts each open, so the shell puts the field's caret back at its end. */
   opened: number;
 }
 
 export interface FindState {
-  bar: FindBar | undefined;
-  /** The last term typed, for the next open; kept for the session alone. */
-  remembered: string;
+  /** Each tab's bar, by `tabKey`. */
+  bars: Readonly<Record<string, FindBar>>;
+  /** The front tab with a page to search, whose bar alone shows. */
+  front: TabKey | undefined;
   opens: number;
 }
 
-export const NO_FIND: FindState = { bar: undefined, remembered: "", opens: 0 };
+export const NO_FIND: FindState = { bars: {}, front: undefined, opens: 0 };
+
+/** The front tab's bar while it is open, the one that shows. */
+export const shownBar = ({ bars, front }: FindState) => {
+  const bar = front && bars[tabKey(front)];
+
+  return bar && bar.open ? bar : undefined;
+};
+
+/** Whether Find Next and Previous have a term to go on with on the front tab. */
+export const canGoOn = (state: FindState) => {
+  const bar = state.front && state.bars[tabKey(state.front)];
+
+  return bar !== undefined && (bar.open || bar.term !== "");
+};
 
 export type FindEvent =
-  /** Find: opens the bar over the tab's page, or selects its text again. */
-  | { kind: "open"; key: TabKey }
+  /** Another tab, or none, is now the front with a page to search. */
+  | { kind: "front"; key: TabKey | undefined }
+  /** Find: opens the front tab's bar, or puts the caret back in its field. */
+  | { kind: "open" }
   /**
-   * Find Next or Previous: steps while the bar is open over the tab, else
-   * opens it and searches for the remembered term that way.
+   * Find Next or Previous: steps while the front tab's bar is open, else
+   * opens it and searches for its term that way.
    */
-  | { kind: "again"; key: TabKey; forward: boolean }
+  | { kind: "again"; forward: boolean }
   | { kind: "type"; term: string }
   /** Enter, Shift+Enter or the bar's buttons. */
   | { kind: "step"; forward: boolean }
   /** The page took a search and gave it this id. */
   | { kind: "requested"; key: TabKey; requestId: number }
   | { kind: "found"; key: TabKey; result: FoundInPage }
-  /** The tab's page finished a load, which leaves nothing found. */
+  /** The tab's main frame went elsewhere, within its document or to a new one. */
+  | { kind: "navigated"; key: TabKey; inPage: boolean }
+  /** The tab's page stopped loading, a frame of it or a new document. */
   | { kind: "loaded"; key: TabKey }
-  | { kind: "close" };
+  /** Escape or Close on the bar that shows. */
+  | { kind: "close" }
+  /** The tab closed or slept, taking its bar and term with it. */
+  | { kind: "forget"; key: TabKey };
 
 export type FindEffect =
   /** `findNext` starts a new search, else steps through the one going on. */
@@ -74,65 +107,108 @@ interface Transition {
 }
 
 const search = (
-  key: TabKey,
-  term: string,
+  bar: FindBar,
   { findNext = true, forward = true } = {}
 ): FindEffect[] =>
-  term === "" ? [] : [{ kind: "search", key, term, findNext, forward }];
-
-const opened = (state: FindState, key: TabKey, forward = true): Transition => {
-  const opens = state.opens + 1;
-  const closing: FindEffect[] = state.bar
-    ? [{ kind: "stop", key: state.bar.key, keepSelection: false }]
-    : [];
-
-  return {
-    state: {
-      ...state,
-      opens,
-      bar: {
-        key,
-        term: state.remembered,
-        ordinal: 0,
-        matches: 0,
-        requestId: undefined,
-        opened: opens,
-      },
-    },
-    effects: [...closing, ...search(key, state.remembered, { forward })],
-  };
-};
+  bar.term === ""
+    ? []
+    : [{ kind: "search", key: bar.key, term: bar.term, findNext, forward }];
 
 const step = (bar: FindBar, forward: boolean) =>
   // With nothing found yet there is no search to step through.
-  search(bar.key, bar.term, { findNext: bar.matches === 0, forward });
+  search(bar, { findNext: bar.matches === 0, forward });
+
+const withBar = (state: FindState, bar: FindBar): FindState => ({
+  ...state,
+  bars: { ...state.bars, [tabKey(bar.key)]: bar },
+});
+
+const freshBar = (key: TabKey): FindBar => ({
+  key,
+  open: false,
+  term: "",
+  ordinal: 0,
+  matches: 0,
+  requestId: undefined,
+  awaitingLoad: false,
+  opened: 0,
+});
+
+/**
+ * Another front. The bar that showed hides with its search going on in its
+ * page, which a new search could not resume at its match, so it comes back
+ * where it was.
+ */
+const toFront = (state: FindState, key: TabKey | undefined): Transition =>
+  sameTab(state.front, key) || (!state.front && !key)
+    ? { state, effects: [] }
+    : { state: { ...state, front: key }, effects: [] };
+
+const opened = (state: FindState, forward: boolean | undefined): Transition => {
+  const { front } = state;
+
+  if (!front) {
+    return { state, effects: [] };
+  }
+
+  const bar = state.bars[tabKey(front)] ?? freshBar(front);
+  const opens = state.opens + 1;
+  const next = { ...withBar(state, { ...bar, opened: opens }), opens };
+
+  if (bar.open) {
+    return {
+      state: next,
+      effects: forward === undefined ? [] : step(bar, forward),
+    };
+  }
+
+  const shown: FindBar = {
+    ...bar,
+    open: true,
+    ordinal: 0,
+    matches: 0,
+    requestId: undefined,
+    opened: opens,
+  };
+
+  return {
+    state: withBar(next, shown),
+    effects: search(shown, { forward: forward ?? true }),
+  };
+};
 
 const typed = (state: FindState, bar: FindBar, term: string): Transition => {
-  const next = { ...state, remembered: term, bar: { ...bar, term } };
-
   if (term !== "") {
-    return { state: next, effects: search(bar.key, term) };
+    const next = { ...bar, term };
+
+    return { state: withBar(state, next), effects: search(next) };
   }
 
   return {
-    state: {
-      ...next,
-      bar: { ...next.bar, ordinal: 0, matches: 0, requestId: undefined },
-    },
+    state: withBar(state, {
+      ...bar,
+      term,
+      ordinal: 0,
+      matches: 0,
+      requestId: undefined,
+    }),
     effects: [{ kind: "stop", key: bar.key, keepSelection: false }],
   };
 };
 
-/** What the bar's own page told of it: a search's id, an answer or a load. */
+/** What a tab's page told of its bar: a search's id, an answer or a load. */
 const fromPage = (
   state: FindState,
   bar: FindBar,
-  event: Extract<FindEvent, { kind: "requested" | "found" | "loaded" }>
+  event: Extract<
+    FindEvent,
+    { kind: "requested" | "found" | "navigated" | "loaded" }
+  >
 ): Transition => {
   switch (event.kind) {
     case "requested": {
       return {
-        state: { ...state, bar: { ...bar, requestId: event.requestId } },
+        state: withBar(state, { ...bar, requestId: event.requestId }),
         effects: [],
       };
     }
@@ -141,87 +217,111 @@ const fromPage = (
 
       return requestId === bar.requestId && bar.term !== ""
         ? {
-            state: { ...state, bar: { ...bar, ordinal, matches } },
+            state: withBar(state, {
+              ...bar,
+              ordinal: matches === 0 ? 0 : ordinal,
+              matches,
+            }),
             effects: [],
           }
         : { state, effects: [] };
     }
+    case "navigated": {
+      if (event.inPage) {
+        return { state, effects: bar.open ? search(bar) : [] };
+      }
+
+      return {
+        state: withBar(state, { ...bar, awaitingLoad: true }),
+        effects: [],
+      };
+    }
     default: {
-      return { state, effects: search(bar.key, bar.term) };
+      return bar.awaitingLoad
+        ? {
+            state: withBar(state, { ...bar, awaitingLoad: false }),
+            effects: bar.open ? search(bar) : [],
+          }
+        : { state, effects: [] };
     }
   }
 };
 
 /**
- * The find bar after `event`, with what to ask of the pages. Only the
- * answer to the latest search counts; a load searches again, as the page
- * that held the matches is gone.
+ * The find bars after `event`, with what to ask of the pages. Each tab has
+ * its own, and only the front tab's shows, though a hidden one's search goes
+ * on; only the answer to the latest search counts; a new document, once
+ * loaded, or a move within the page is searched again, a frame's load is
+ * not.
  */
 export const transitionFind = (
   state: FindState,
   event: FindEvent
 ): Transition => {
-  const { bar } = state;
+  const shown = shownBar(state);
   const unchanged = { state, effects: [] };
-  const onBar = (key: TabKey) => bar !== undefined && sameTab(bar.key, key);
 
   switch (event.kind) {
+    case "front": {
+      return toFront(state, event.key);
+    }
     case "open": {
-      if (bar && onBar(event.key)) {
-        const opens = state.opens + 1;
-
-        return {
-          state: { ...state, opens, bar: { ...bar, opened: opens } },
-          effects: [],
-        };
-      }
-
-      return opened(state, event.key);
+      return opened(state, undefined);
     }
     case "again": {
-      return bar && onBar(event.key)
-        ? { state, effects: step(bar, event.forward) }
-        : opened(state, event.key, event.forward);
+      return opened(state, event.forward);
     }
     case "type": {
-      return bar && bar.term !== event.term
-        ? typed(state, bar, event.term)
+      return shown && shown.term !== event.term
+        ? typed(state, shown, event.term)
         : unchanged;
     }
     case "step": {
-      return bar ? { state, effects: step(bar, event.forward) } : unchanged;
+      return shown ? { state, effects: step(shown, event.forward) } : unchanged;
     }
-    case "requested":
-    case "found":
-    case "loaded": {
-      return bar && onBar(event.key) ? fromPage(state, bar, event) : unchanged;
-    }
-    default: {
-      return bar
+    case "close": {
+      return shown
         ? {
-            state: { ...state, bar: undefined },
-            effects: [{ kind: "stop", key: bar.key, keepSelection: true }],
+            state: withBar(state, {
+              ...shown,
+              open: false,
+              requestId: undefined,
+            }),
+            effects: [{ kind: "stop", key: shown.key, keepSelection: true }],
           }
         : unchanged;
+    }
+    case "forget": {
+      const id = tabKey(event.key);
+
+      if (!(id in state.bars)) {
+        return unchanged;
+      }
+
+      const bars = Object.fromEntries(
+        Object.entries(state.bars).filter(([other]) => other !== id)
+      );
+
+      return { state: { ...state, bars }, effects: [] };
+    }
+    default: {
+      const bar = state.bars[tabKey(event.key)];
+
+      return bar ? fromPage(state, bar, event) : unchanged;
     }
   }
 };
 
-/** The count as the bar shows it, such as 2/14; 0/0 with no match. */
-export const findCount = ({
-  ordinal,
-  matches,
-}: Pick<FindBar, "ordinal" | "matches">) => ({
-  ordinal: matches === 0 ? 0 : ordinal,
-  matches,
-});
+/** The bar's own size, which its view has exactly, so the page takes every press beside it. */
+export const FIND_BAR = { width: 353, height: 40 } as const;
 
-/** The view the bar is drawn in, at the top right of its page. */
-export const FIND_VIEW = { width: 400, height: 56 } as const;
+/** How far the bar sits in from its page's top and right edges. */
+export const FIND_INSET = 8;
 
 /**
- * Where the bar's view sits: at the top right of the pane, placed in the
- * page area, or of the whole page area outside a split.
+ * Where the bar's view sits: `FIND_INSET` in from the top right of the
+ * pane, placed in the page area, or of the whole page area outside a split,
+ * and never past its left or bottom edge.
  */
 export const findRectangle = (
   area: Rectangle,
@@ -230,8 +330,19 @@ export const findRectangle = (
   const page = pane
     ? { ...pane, x: area.x + pane.x, y: area.y + pane.y }
     : area;
-  const width = Math.min(FIND_VIEW.width, page.width);
-  const height = Math.min(FIND_VIEW.height, page.height);
+  const width = Math.max(
+    0,
+    Math.min(FIND_BAR.width, page.width - FIND_INSET * 2)
+  );
+  const height = Math.max(
+    0,
+    Math.min(FIND_BAR.height, page.height - FIND_INSET * 2)
+  );
 
-  return { x: page.x + page.width - width, y: page.y, width, height };
+  return {
+    x: page.x + page.width - FIND_INSET - width,
+    y: page.y + FIND_INSET,
+    width,
+    height,
+  };
 };

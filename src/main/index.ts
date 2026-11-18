@@ -1,5 +1,7 @@
 import path from "node:path";
 
+import { isEqual } from "es-toolkit";
+
 import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
@@ -562,6 +564,10 @@ const start = async () => {
       // oxlint-disable-next-line no-use-before-define -- no page loads before the find bar exists
       find.loaded(key);
     },
+    onNavigated: (key, inPage) => {
+      // oxlint-disable-next-line no-use-before-define -- no page navigates before the find bar exists
+      find.navigated(key, inPage);
+    },
     onFound: (key, result) => {
       // oxlint-disable-next-line no-use-before-define -- no page answers before the find bar exists
       find.found(key, result);
@@ -573,8 +579,19 @@ const start = async () => {
 
   overlays.onChange(find.follow);
   views.onChange(find.follow);
-  // The find bar sits on its pane, which moves with the split.
-  views.onChange(overlays.relayout);
+
+  // The find bar sits on its pane, which moves with the split; the views
+  // also change on every page event, which must not move it.
+  let panesLaidOut = views.panes();
+
+  views.onChange(() => {
+    const panes = views.panes();
+
+    if (!isEqual(panes, panesLaidOut)) {
+      panesLaidOut = panes;
+      overlays.relayout();
+    }
+  });
 
   const showGmail = createShowGmail({
     state: profiles.get,

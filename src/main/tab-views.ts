@@ -89,6 +89,8 @@ export interface TabViewsDeps {
   onPageChange: (key: TabKey) => void;
   /** Told when a tab's page finishes a load, with what can read it. */
   onLoaded: (key: TabKey, page: LoadedPage) => void;
+  /** Told when a tab's main frame goes elsewhere, within its document or to a new one. */
+  onNavigated: (key: TabKey, inPage: boolean) => void;
   /** Told of each answer a tab's page gives to a search `find` asked of it. */
   onFound: (key: TabKey, result: FoundInPage) => void;
   log: (message: string) => void;
@@ -160,6 +162,7 @@ export const createTabViews = ({
   onFront,
   onPageChange,
   onLoaded,
+  onNavigated,
   onFound,
   log,
 }: TabViewsDeps) => {
@@ -426,6 +429,8 @@ export const createTabViews = ({
         if (showsPage(key)) {
           pages.record({ ...tabKeyed, url: event.url });
         }
+
+        onNavigated(tabKeyed, event.inPage ?? false);
 
         notify();
         break;
@@ -774,14 +779,13 @@ export const createTabViews = ({
       dispatch(tabKey(key), { kind: "open" });
     }
 
-    const frontChanged = selected !== front;
-    // The front tab, woken, has a new view to load.
-    const frontWoken =
-      !frontChanged && front !== undefined && created.has(front);
+    // Another front, or the front tab woken with a new view to load.
+    const frontMoved =
+      selected !== front || (front !== undefined && created.has(front));
 
     front = selected;
 
-    if ((frontChanged || frontWoken) && front !== undefined) {
+    if (frontMoved && front !== undefined) {
       dispatch(front, { kind: "select" });
     }
 
@@ -793,11 +797,12 @@ export const createTabViews = ({
 
     showFront();
 
-    if (frontChanged || frontWoken) {
+    if (frontMoved) {
       onFront();
     }
 
-    if (changed) {
+    // The find bar follows the front, and the overlay's view the panes.
+    if (changed || frontMoved || placesChanged) {
       notify();
     }
   };
@@ -915,6 +920,8 @@ export const createTabViews = ({
         ? tab.key
         : undefined;
     },
+    /** Whether the tab has a page, shown or hidden; one closed or asleep has none. */
+    hasPage: (key: TabKey) => tabs.has(tabKey(key)),
     /** Searches the tab's page, if it has a view; answers the search's id. */
     findInPage: (key: TabKey, term: string, options: FindOptions) =>
       tabs.get(tabKey(key))?.view.findInPage(term, options),

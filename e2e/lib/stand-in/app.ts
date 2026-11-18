@@ -31,6 +31,8 @@ import {
   CALENDAR_TITLE,
   DRIVE_TITLE,
   FIND_LINE,
+  FIND_MOVES,
+  FRAME_PATH,
   ELSEWHERE_LINK,
   ELSEWHERE_URL,
   FULL_MESSAGE_PATH,
@@ -318,10 +320,15 @@ export const startStandIn = async (): Promise<StandIn> => {
       CALENDAR_TITLE,
       `<a href="${NEXT_WEEK_PATH}">Next week</a>
     <a href="${links.gmail}${GMAIL_LINK_HASH}" target="_blank">Open Gmail</a>
-    ${FIND_LINE}`
+    ${FIND_LINE}
+    ${FIND_MOVES}`
     );
 
-    return { "/": body, [NEXT_WEEK_PATH]: body };
+    return {
+      "/": body,
+      [NEXT_WEEK_PATH]: body,
+      [FRAME_PATH]: page("Frame", "<p>Notes</p>"),
+    };
   }, current);
   const drive = await listen(() => ({ "/": page(DRIVE_TITLE, "") }), current);
   const signInServer = await listen(

@@ -11,10 +11,11 @@ import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 
 /**
- * The find bar, drawn at the top right of the overlay's view, which main
- * places at the top right of the page it searches: the field, searched for
- * as it is typed, the count, and Previous, Next and Close. Enter and
- * Shift+Enter step, Escape closes as in every overlay.
+ * The find bar, filling the overlay's view, which main sizes to it and
+ * places at the top right of the page it searches, so a click beside it
+ * reaches the page: the field, searched for as it is typed, the count, and
+ * Previous, Next and Close. Enter and Shift+Enter step, Escape closes as in
+ * every overlay.
  */
 export const FindBar = ({
   term: initial,
@@ -50,11 +51,14 @@ export const FindBar = ({
     comment: "Button in the find bar that ends the search and hides the bar",
   });
 
-  // Stable, so only a new field, as each open makes, is focused and selected.
-  const focusAndSelect = useCallback((input: HTMLInputElement | null) => {
+  // Stable, so only a new field, as each open makes, is focused.
+  const focusAtEnd = useCallback((input: HTMLInputElement | null) => {
     field.current = input;
-    input?.focus();
-    input?.select();
+
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
   }, []);
 
   const step = (forward: boolean) => {
@@ -66,12 +70,13 @@ export const FindBar = ({
     <search
       aria-label={label}
       data-overlay-card
-      className="fixed top-2 right-2 flex items-center gap-1 rounded-[10px] bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+      // No shadow: the view ends at the bar's edge and would cut it off.
+      className="fixed inset-0 flex items-center gap-1 rounded-[10px] border border-foreground/10 bg-popover p-1 text-popover-foreground"
     >
       <Input
-        // Each open gives the field focus with its text selected, to type over.
+        // Each open gives the field focus, the caret after its term.
         key={opened}
-        ref={focusAndSelect}
+        ref={focusAtEnd}
         value={term}
         aria-label={label}
         placeholder={label}
@@ -79,7 +84,7 @@ export const FindBar = ({
         autoComplete="off"
         spellCheck={false}
         // Not by viewport: this document's is the overlay's own view.
-        className="h-8 w-[180px] border-0 bg-transparent px-2 text-sm shadow-none select-text focus-visible:ring-0 dark:bg-transparent"
+        className="h-8 min-w-0 flex-1 border-0 bg-transparent px-2 text-sm shadow-none select-text focus-visible:ring-0 dark:bg-transparent"
         onChange={(event) => {
           setTerm(event.target.value);
           shellCalls().findInPage({ term: event.target.value });
@@ -93,7 +98,7 @@ export const FindBar = ({
       />
       <span
         aria-live="polite"
-        className="min-w-8 pr-1 text-right text-xs text-muted-foreground tabular-nums"
+        className="w-12 shrink-0 pr-1 text-right text-xs text-muted-foreground tabular-nums"
       >
         {count}
       </span>
@@ -102,7 +107,7 @@ export const FindBar = ({
         variant="ghost"
         size="icon-sm"
         aria-label={previous}
-        title={shortcutTitle(previous, shortcuts?.["tab.findPrevious"])}
+        title={shortcutTitle(previous, shortcuts?.["key:Shift+Enter"])}
         disabled={matches === 0}
         onClick={() => {
           step(false);
@@ -114,7 +119,7 @@ export const FindBar = ({
         variant="ghost"
         size="icon-sm"
         aria-label={next}
-        title={shortcutTitle(next, shortcuts?.["tab.findNext"])}
+        title={shortcutTitle(next, shortcuts?.["key:Enter"])}
         disabled={matches === 0}
         onClick={() => {
           step(true);
@@ -125,7 +130,8 @@ export const FindBar = ({
       <Button
         variant="ghost"
         size="icon-sm"
-        title={close}
+        aria-label={close}
+        title={shortcutTitle(close, shortcuts?.["key:Escape"])}
         onClick={() => {
           shellCalls().closeOverlay({});
         }}

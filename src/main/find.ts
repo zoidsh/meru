@@ -1,10 +1,5 @@
-import { NO_FIND, transitionFind } from "#core/find.ts";
-import type {
-  FindBar,
-  FindEffect,
-  FindEvent,
-  FoundInPage,
-} from "#core/find.ts";
+import { NO_FIND, canGoOn, shownBar, transitionFind } from "#core/find.ts";
+import type { FindEffect, FindEvent, FoundInPage } from "#core/find.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { FindOptions } from "#platform/content-view.ts";
@@ -16,6 +11,8 @@ export interface FindDeps {
   pages: {
     /** The front tab while its page shows and can be searched, else `undefined`. */
     findable: () => TabKey | undefined;
+    /** Whether the tab has a page, which a closed or sleeping one has not. */
+    hasPage: (key: TabKey) => boolean;
     /** Searches the tab's page; `undefined` when it has none. */
     findInPage: (
       key: TabKey,
@@ -29,11 +26,11 @@ export interface FindDeps {
 }
 
 /**
- * Find in page: the bar over the front tab's page, drawn in the overlay's
- * view, and the search it runs there. The overlay holding the bar is what
- * keeps it open, so whatever closes that, Escape, Close, another tab or
- * pane selected or another overlay opening, ends the search; so does the
- * page going, asleep or failed.
+ * Find in page: each tab's bar, of which the front tab's shows, drawn in the
+ * overlay's view, and the search it runs in its page. Another tab or pane
+ * selected hides it, and it shows again, focus left where it is, when its
+ * tab comes back; while a card or a toast holds the overlay's view it waits
+ * under it. Escape or Close closes it, the tab keeping its term.
  */
 export const createFind = ({ pages, overlays, focus }: FindDeps) => {
   const listeners = new Set<() => void>();
@@ -72,67 +69,63 @@ export const createFind = ({ pages, overlays, focus }: FindDeps) => {
     }
   };
 
-  const holdsBar = (bar: FindBar) => {
-    const open = overlays.current();
-    const front = pages.findable();
-
-    return (
-      open?.kind === "find" &&
-      tabKey(open) === tabKey(bar.key) &&
-      front !== undefined &&
-      tabKey(front) === tabKey(bar.key)
-    );
-  };
-
-  /** Ends the search once what held the bar has gone. */
+  /**
+   * Keeps the bars with the pages and the overlay's view: forgets those of
+   * tabs gone or asleep, follows the front, and shows the front's bar while
+   * the view is free, or hides it.
+   */
   const follow = () => {
-    const { bar } = state;
-
-    if (!bar || holdsBar(bar)) {
-      return;
+    for (const bar of Object.values(state.bars)) {
+      if (!pages.hasPage(bar.key)) {
+        dispatch({ kind: "forget", key: bar.key });
+      }
     }
 
-    dispatch({ kind: "close" });
+    dispatch({ kind: "front", key: pages.findable() });
 
-    if (overlays.current()?.kind === "find") {
+    const shown = shownBar(state);
+    const open = overlays.current();
+
+    if (shown && !open) {
+      overlays.open({ kind: "find", ...shown.key }, { takeFocus: false });
+    } else if (
+      open?.kind === "find" &&
+      (!shown || tabKey(open) !== tabKey(shown.key))
+    ) {
       overlays.close();
     }
   };
 
-  const show = (key: TabKey, event: FindEvent) => {
-    const open = overlays.current();
-
+  /** Opens the front tab's bar, focused, or gives its field focus back. */
+  const reveal = (event: FindEvent) => {
+    dispatch({ kind: "front", key: pages.findable() });
     dispatch(event);
 
-    if (open?.kind === "find" && tabKey(open) === tabKey(key)) {
-      // Open already, its field takes focus back from the page.
-      focus.focus([{ kind: "overlay" }]);
-    } else {
-      overlays.open({ kind: "find", ...key });
+    const shown = shownBar(state);
+    const open = overlays.current();
+
+    if (!shown) {
+      return;
     }
 
-    follow();
+    if (open?.kind === "find" && tabKey(open) === tabKey(shown.key)) {
+      focus.focus([{ kind: "overlay" }]);
+    } else {
+      overlays.open({ kind: "find", ...shown.key });
+    }
   };
 
   return {
-    /** Find: opens the bar over the front tab's page, its text selected. */
+    /** Find: opens the front tab's bar, its caret at the end of its term. */
     open: () => {
-      const key = pages.findable();
-
-      if (key) {
-        show(key, { kind: "open", key });
-      }
+      reveal({ kind: "open" });
     },
     /**
      * Find Next or Previous: steps while the bar is open, else opens it and
-     * goes on with the remembered term.
+     * goes on with the tab's term.
      */
     again: (forward: boolean) => {
-      const key = pages.findable();
-
-      if (key) {
-        show(key, { kind: "again", key, forward });
-      }
+      reveal({ kind: "again", forward });
     },
     /** The field's term, searched for as it is typed. */
     type: (term: string) => {
@@ -142,19 +135,31 @@ export const createFind = ({ pages, overlays, focus }: FindDeps) => {
     step: (forward: boolean) => {
       dispatch({ kind: "step", forward });
     },
+    /** Escape or Close: ends the search and the bar, focus back on the page. */
+    close: () => {
+      dispatch({ kind: "close" });
+
+      if (overlays.current()?.kind === "find") {
+        overlays.close();
+      }
+    },
     found: (key: TabKey, result: FoundInPage) => {
       dispatch({ kind: "found", key, result });
     },
-    /** A tab's page finished a load, which the bar over it searches again. */
+    /** A tab's main frame went elsewhere, within its document or to a new one. */
+    navigated: (key: TabKey, inPage: boolean) => {
+      dispatch({ kind: "navigated", key, inPage });
+    },
+    /** A tab's page stopped loading, a frame of it or a new document. */
     loaded: (key: TabKey) => {
       dispatch({ kind: "loaded", key });
     },
-    /** Told when the overlays or the pages change, either of which can end it. */
+    /** Told when the overlays or the pages change. */
     follow,
-    /** The bar while it is open. */
-    current: () => state.bar,
+    /** The bar that shows, the front tab's while it is open. */
+    current: () => shownBar(state),
     /** Whether Find Next and Previous have a term to go on with. */
-    canGoOn: () => state.bar !== undefined || state.remembered !== "",
+    canGoOn: () => canGoOn(state),
     onChange: (listener: () => void) => {
       listeners.add(listener);
     },

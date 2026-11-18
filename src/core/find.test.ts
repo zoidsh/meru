@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { findCount, findRectangle, NO_FIND, transitionFind } from "./find.ts";
+import {
+  FIND_BAR,
+  NO_FIND,
+  canGoOn,
+  findRectangle,
+  shownBar,
+  transitionFind,
+} from "./find.ts";
 import type { FindEvent, FindState } from "./find.ts";
 
 const mail = { profileId: "a", tabId: "gmail" };
@@ -17,30 +24,55 @@ const after = (events: FindEvent[], from: FindState = NO_FIND) => {
   return last;
 };
 
+/** Gmail in front with its bar open, searching for `term` as request 1. */
 const searching = (term: string): FindEvent[] => [
-  { kind: "open", key: mail },
+  { kind: "front", key: mail },
+  { kind: "open" },
   { kind: "type", term },
   { kind: "requested", key: mail, requestId: 1 },
 ];
 
-describe(transitionFind, () => {
-  it("opens empty over the tab, searching for nothing yet", () => {
-    const { state, effects } = after([{ kind: "open", key: mail }]);
+const found = (
+  requestId: number,
+  ordinal: number,
+  matches: number,
+  key = mail
+): FindEvent => ({
+  kind: "found",
+  key,
+  result: { requestId, ordinal, matches },
+});
 
-    expect(state.bar).toStrictEqual({
+describe(transitionFind, () => {
+  it("opens the front tab's bar empty, searching for nothing yet", () => {
+    const { state, effects } = after([
+      { kind: "front", key: mail },
+      { kind: "open" },
+    ]);
+
+    expect(shownBar(state)).toStrictEqual({
       key: mail,
+      open: true,
       term: "",
       ordinal: 0,
       matches: 0,
       requestId: undefined,
+      awaitingLoad: false,
       opened: 1,
     });
     expect(effects).toStrictEqual([]);
   });
 
+  it("opens nothing with no front page", () => {
+    expect(after([{ kind: "open" }]).state).toStrictEqual({
+      ...NO_FIND,
+    });
+  });
+
   it("searches as the term is typed and shows the answer to it", () => {
     const typed = after([
-      { kind: "open", key: mail },
+      { kind: "front", key: mail },
+      { kind: "open" },
       { kind: "type", term: "apple" },
     ]);
 
@@ -53,35 +85,26 @@ describe(transitionFind, () => {
         forward: true,
       },
     ]);
-
-    const { state } = after(
-      [
-        { kind: "requested", key: mail, requestId: 1 },
-        {
-          kind: "found",
-          key: mail,
-          result: { requestId: 1, ordinal: 1, matches: 3 },
-        },
-      ],
-      typed.state
-    );
-
-    expect(state.bar).toMatchObject({ term: "apple", ordinal: 1, matches: 3 });
-    expect(state.remembered).toBe("apple");
+    expect(
+      shownBar(
+        after(
+          [{ kind: "requested", key: mail, requestId: 1 }, found(1, 1, 3)],
+          typed.state
+        ).state
+      )
+    ).toMatchObject({ term: "apple", ordinal: 1, matches: 3 });
   });
 
-  it("steps through the search going on, either way", () => {
-    const found = after([
-      ...searching("apple"),
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 1, ordinal: 1, matches: 3 },
-      },
-    ]);
+  it("steps through the search going on, either way, and starts one with nothing found yet", () => {
+    const pending = after(searching("apple"));
+    const going = after([found(1, 1, 3)], pending.state);
 
     expect(
-      transitionFind(found.state, { kind: "step", forward: true }).effects
+      [
+        transitionFind(going.state, { kind: "step", forward: true }),
+        transitionFind(going.state, { kind: "step", forward: false }),
+        transitionFind(pending.state, { kind: "step", forward: false }),
+      ].map(({ effects }) => effects[0])
     ).toStrictEqual([
       {
         kind: "search",
@@ -90,15 +113,18 @@ describe(transitionFind, () => {
         findNext: false,
         forward: true,
       },
-    ]);
-    expect(
-      transitionFind(found.state, { kind: "step", forward: false }).effects
-    ).toStrictEqual([
       {
         kind: "search",
         key: mail,
         term: "apple",
         findNext: false,
+        forward: false,
+      },
+      {
+        kind: "search",
+        key: mail,
+        term: "apple",
+        findNext: true,
         forward: false,
       },
     ]);
@@ -107,134 +133,84 @@ describe(transitionFind, () => {
   it("shows the page's wrap from the last match to the first", () => {
     const { state } = after([
       ...searching("apple"),
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 1, ordinal: 3, matches: 3 },
-      },
+      found(1, 3, 3),
       { kind: "step", forward: true },
       { kind: "requested", key: mail, requestId: 2 },
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 2, ordinal: 1, matches: 3 },
-      },
+      found(2, 1, 3),
     ]);
 
-    expect(state.bar).toMatchObject({ ordinal: 1, matches: 3 });
+    expect(shownBar(state)).toMatchObject({ ordinal: 1, matches: 3 });
   });
 
-  it("starts a new search when stepping with nothing found yet", () => {
-    const { effects } = after([
-      ...searching("apple"),
-      { kind: "step", forward: false },
-    ]);
-
-    expect(effects).toStrictEqual([
-      {
-        kind: "search",
-        key: mail,
-        term: "apple",
-        findNext: true,
-        forward: false,
-      },
-    ]);
-  });
-
-  it("drops an answer to an earlier search, late or out of order", () => {
+  it("drops an answer to an earlier search, late or out of order, and one from another tab's page", () => {
     const { state } = after([
-      { kind: "open", key: mail },
+      { kind: "front", key: mail },
+      { kind: "open" },
       { kind: "type", term: "ap" },
       { kind: "requested", key: mail, requestId: 1 },
       { kind: "type", term: "apple" },
       { kind: "requested", key: mail, requestId: 2 },
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 2, ordinal: 1, matches: 3 },
-      },
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 1, ordinal: 4, matches: 9 },
-      },
+      found(2, 1, 3),
+      found(1, 4, 9),
+      found(2, 2, 7, week),
     ]);
 
-    expect(state.bar).toMatchObject({ term: "apple", ordinal: 1, matches: 3 });
+    expect(shownBar(state)).toMatchObject({
+      term: "apple",
+      ordinal: 1,
+      matches: 3,
+    });
   });
 
-  it("drops an answer from another tab's page", () => {
-    const { state } = after([
-      ...searching("apple"),
-      {
-        kind: "found",
-        key: week,
-        result: { requestId: 1, ordinal: 1, matches: 7 },
-      },
-    ]);
+  it("stores 0/0 for no match, whatever ordinal the page gives", () => {
+    const { state } = after([...searching("pear"), found(1, 1, 0)]);
 
-    expect(state.bar).toMatchObject({ ordinal: 0, matches: 0 });
+    expect(shownBar(state)).toMatchObject({ ordinal: 0, matches: 0 });
   });
 
   it("clears the highlights and the count when the field is emptied", () => {
     const { state, effects } = after([
       ...searching("apple"),
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 1, ordinal: 2, matches: 3 },
-      },
+      found(1, 2, 3),
       { kind: "type", term: "" },
     ]);
 
     expect(effects).toStrictEqual([
       { kind: "stop", key: mail, keepSelection: false },
     ]);
-    expect(state.bar).toMatchObject({
+    expect(shownBar(state)).toMatchObject({
       term: "",
       ordinal: 0,
       matches: 0,
       requestId: undefined,
     });
-    expect(
-      transitionFind(state, {
-        kind: "found",
-        key: mail,
-        result: { requestId: 1, ordinal: 2, matches: 3 },
-      }).state.bar
-    ).toMatchObject({ matches: 0 });
   });
 
-  it("closes ending the search, the match kept selected, and remembers the term", () => {
+  it("closes ending the search with the match kept selected, and keeps the tab's term for Find Next", () => {
     const { state, effects } = after([
       ...searching("apple"),
       { kind: "close" },
     ]);
 
-    expect(effects).toStrictEqual([
-      { kind: "stop", key: mail, keepSelection: true },
+    expect([effects, shownBar(state), canGoOn(state)]).toStrictEqual([
+      [{ kind: "stop", key: mail, keepSelection: true }],
+      undefined,
+      true,
     ]);
-    expect(state.bar).toBeUndefined();
-    expect(state.remembered).toBe("apple");
   });
 
-  it("opens again with the remembered term and searches for it", () => {
+  it("opens again with the tab's term and searches for it, the caret moved back", () => {
     const { state, effects } = after([
       ...searching("apple"),
       { kind: "close" },
-      { kind: "open", key: week },
+      { kind: "open" },
     ]);
 
-    expect(state.bar).toMatchObject({
-      key: week,
-      term: "apple",
-      ordinal: 0,
-      opened: 2,
-    });
+    expect(shownBar(state)).toMatchObject({ term: "apple", opened: 2 });
     expect(effects).toStrictEqual([
       {
         kind: "search",
-        key: week,
+        key: mail,
         term: "apple",
         findNext: true,
         forward: true,
@@ -242,66 +218,44 @@ describe(transitionFind, () => {
     ]);
   });
 
-  it("selects the text again when opened while open, searching nothing", () => {
-    const { state, effects } = after([
-      ...searching("apple"),
-      { kind: "open", key: mail },
-    ]);
+  it("moves the caret back when opened while open, searching nothing", () => {
+    const { state, effects } = after([...searching("apple"), { kind: "open" }]);
 
-    expect(state.bar).toMatchObject({ term: "apple", requestId: 1, opened: 2 });
-    expect(effects).toStrictEqual([]);
+    expect([
+      shownBar(state)?.opened,
+      shownBar(state)?.requestId,
+      effects,
+    ]).toStrictEqual([2, 1, []]);
   });
 
-  it("moves to another tab's page, ending the first one's search", () => {
-    const { state, effects } = after([
+  it("keeps a term to each tab: another tab opens empty and has nothing to go on with", () => {
+    const { state } = after([
       ...searching("apple"),
-      { kind: "open", key: week },
+      { kind: "front", key: week },
     ]);
+    const other = after([{ kind: "open" }], state);
 
-    expect(state.bar).toMatchObject({ key: week, term: "apple" });
-    expect(effects).toStrictEqual([
-      { kind: "stop", key: mail, keepSelection: false },
-      {
-        kind: "search",
-        key: week,
-        term: "apple",
-        findNext: true,
-        forward: true,
-      },
+    expect([canGoOn(state), shownBar(other.state)?.term]).toStrictEqual([
+      false,
+      "",
     ]);
   });
 
-  it("goes on with the remembered term from closed, opening that way", () => {
-    const { state, effects } = after([
+  it("hides the bar when another tab comes to the front, its search going on, and shows it again on return where it was", () => {
+    const away = after([
       ...searching("apple"),
-      { kind: "close" },
-      { kind: "again", key: mail, forward: false },
+      found(1, 2, 3),
+      { kind: "front", key: week },
     ]);
+    const back = transitionFind(away.state, { kind: "front", key: mail });
+    const step = transitionFind(back.state, { kind: "step", forward: true });
 
-    expect(state.bar).toMatchObject({ key: mail, term: "apple" });
-    expect(effects).toStrictEqual([
-      {
-        kind: "search",
-        key: mail,
-        term: "apple",
-        findNext: true,
-        forward: false,
-      },
+    expect([away.effects, shownBar(away.state)]).toStrictEqual([[], undefined]);
+    expect([back.effects, shownBar(back.state)]).toStrictEqual([
+      [],
+      shownBar(after([...searching("apple"), found(1, 2, 3)]).state),
     ]);
-  });
-
-  it("steps when going on while open", () => {
-    const { effects } = after([
-      ...searching("apple"),
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 1, ordinal: 1, matches: 3 },
-      },
-      { kind: "again", key: mail, forward: true },
-    ]);
-
-    expect(effects).toStrictEqual([
+    expect(step.effects).toStrictEqual([
       {
         kind: "search",
         key: mail,
@@ -312,92 +266,135 @@ describe(transitionFind, () => {
     ]);
   });
 
-  it("searches again when its page loads, and only its page", () => {
-    const found = after([
+  it("keeps a hidden bar's count with its page, searching again on its moves", () => {
+    const away = after([
       ...searching("apple"),
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 1, ordinal: 2, matches: 3 },
-      },
+      found(1, 2, 3),
+      { kind: "front", key: week },
+      { kind: "navigated", key: mail, inPage: true },
     ]);
+    const answered = after(
+      [{ kind: "requested", key: mail, requestId: 2 }, found(2, 1, 1)],
+      away.state
+    );
 
-    expect(
-      transitionFind(found.state, { kind: "loaded", key: mail }).effects
-    ).toStrictEqual([
-      {
-        kind: "search",
-        key: mail,
-        term: "apple",
-        findNext: true,
-        forward: true,
-      },
-    ]);
-    expect(
-      transitionFind(found.state, { kind: "loaded", key: week }).effects
-    ).toStrictEqual([]);
+    expect(away.effects).toHaveLength(1);
+    expect(answered.state.bars["a/gmail"]).toMatchObject({
+      ordinal: 1,
+      matches: 1,
+    });
   });
 
-  it("does nothing closed but open and go on", () => {
+  it("goes on with the tab's term from closed, opening that way, and steps while open", () => {
+    const closed = after([
+      ...searching("apple"),
+      found(1, 1, 3),
+      { kind: "close" },
+      { kind: "again", forward: false },
+    ]);
+    const open = after([
+      ...searching("apple"),
+      found(1, 1, 3),
+      { kind: "again", forward: true },
+    ]);
+
+    expect([closed.effects, open.effects]).toStrictEqual([
+      [
+        {
+          kind: "search",
+          key: mail,
+          term: "apple",
+          findNext: true,
+          forward: false,
+        },
+      ],
+      [
+        {
+          kind: "search",
+          key: mail,
+          term: "apple",
+          findNext: false,
+          forward: true,
+        },
+      ],
+    ]);
+  });
+
+  it("searches again on a move within the page, and on a new document once it has loaded, never on a frame's load", () => {
+    const going = after([...searching("apple"), found(1, 2, 3)]);
+
+    expect(
+      [
+        [{ kind: "navigated", key: mail, inPage: true }],
+        [{ kind: "loaded", key: mail }],
+        [{ kind: "navigated", key: mail, inPage: false }],
+        [
+          { kind: "navigated", key: mail, inPage: false },
+          { kind: "loaded", key: mail },
+        ],
+        [
+          { kind: "navigated", key: mail, inPage: false },
+          { kind: "loaded", key: mail },
+          { kind: "loaded", key: mail },
+        ],
+      ].map(
+        (events) => after(events as FindEvent[], going.state).effects.length
+      )
+    ).toStrictEqual([1, 0, 0, 1, 0]);
+  });
+
+  it("forgets a tab's bar and term when the tab closes or sleeps", () => {
+    const { state } = after([
+      ...searching("apple"),
+      { kind: "close" },
+      { kind: "forget", key: mail },
+    ]);
+
+    expect([canGoOn(state), state.bars]).toStrictEqual([false, {}]);
+  });
+
+  it("does nothing with no bar shown but open and go on", () => {
+    const front = after([{ kind: "front", key: mail }]).state;
+
     for (const event of [
       { kind: "type", term: "apple" },
       { kind: "step", forward: true },
       { kind: "requested", key: mail, requestId: 1 },
-      {
-        kind: "found",
-        key: mail,
-        result: { requestId: 1, ordinal: 1, matches: 1 },
-      },
+      found(1, 1, 1),
+      { kind: "navigated", key: mail, inPage: true },
       { kind: "loaded", key: mail },
       { kind: "close" },
+      { kind: "forget", key: mail },
+      { kind: "front", key: mail },
     ] satisfies FindEvent[]) {
-      expect(transitionFind(NO_FIND, event)).toStrictEqual({
-        state: NO_FIND,
+      expect(transitionFind(front, event)).toStrictEqual({
+        state: front,
         effects: [],
       });
     }
   });
 });
 
-describe(findCount, () => {
-  it("shows 0/0 with no match", () => {
-    expect(findCount({ ordinal: 1, matches: 0 })).toStrictEqual({
-      ordinal: 0,
-      matches: 0,
-    });
-    expect(findCount({ ordinal: 2, matches: 14 })).toStrictEqual({
-      ordinal: 2,
-      matches: 14,
-    });
-  });
-});
-
 describe(findRectangle, () => {
   const area = { x: 240, y: 40, width: 1000, height: 700 };
 
-  it("sits at the top right of the page area outside a split", () => {
+  it("sits 8px in from the top right of the page area outside a split, the bar's size", () => {
     expect(findRectangle(area, undefined)).toStrictEqual({
-      x: 840,
-      y: 40,
-      width: 400,
-      height: 56,
+      x: 1240 - 8 - FIND_BAR.width,
+      y: 48,
+      ...FIND_BAR,
     });
   });
 
-  it("sits at the top right of the pane, which the page area places", () => {
+  it("sits 8px in from the top right of the pane, which the page area places", () => {
     expect(
       findRectangle(area, { x: 504, y: 352, width: 496, height: 348 })
-    ).toStrictEqual({ x: 840, y: 392, width: 400, height: 56 });
+    ).toStrictEqual({ x: 1240 - 8 - FIND_BAR.width, y: 400, ...FIND_BAR });
   });
 
-  it("keeps inside a pane narrower than the bar's view", () => {
+  it("keeps inside a pane narrower than the bar", () => {
     expect(
       findRectangle(area, { x: 0, y: 0, width: 300, height: 40 })
-    ).toStrictEqual({
-      x: 240,
-      y: 40,
-      width: 300,
-      height: 40,
-    });
+    ).toStrictEqual({ x: 248, y: 48, width: 284, height: 24 });
   });
 });

@@ -224,6 +224,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     onLoaded: (key, page) => {
       loads.push({ key, page });
     },
+    onNavigated: () => false,
     onFound: (key, result) => {
       found.push({ key, result });
     },
@@ -324,7 +325,11 @@ describe(createTabViews, () => {
 
     window.emit(gmail, { kind: "load-started" });
     window.emit(gmail, { kind: "load-stopped" });
-    window.emit(gmail, { kind: "navigated", url: `${GMAIL}/#sent` });
+    window.emit(gmail, {
+      kind: "navigated",
+      url: `${GMAIL}/#sent`,
+      inPage: true,
+    });
 
     expect(changes).toBe(3);
     expect(window.tabs.navigation()).toStrictEqual({
@@ -416,17 +421,22 @@ describe(createTabViews, () => {
     ]);
   });
 
-  it("tells when another tab comes to the front, and focuses only the front tab's view while it shows", async () => {
+  it("tells when another tab comes to the front, its listeners too, and focuses only the front tab's view while it shows", async () => {
     const window = await setup();
     const calendar = { profileId: "a", tabId: "c1" };
+    let changes = 0;
 
     expect(window.fronts()).toBe(1);
 
     await window.profiles.selectTab(calendar);
     await window.profiles.select("b");
+    window.tabs.onChange(() => {
+      changes += 1;
+    });
+    // Its views made already, only the front moves.
     await window.profiles.select("a");
 
-    expect(window.fronts()).toBe(4);
+    expect([window.fronts(), changes]).toStrictEqual([4, 1]);
     window.tabs.focuser()?.();
     window.tabs.focuser()?.();
 
@@ -831,9 +841,17 @@ describe(createTabViews, () => {
     const gmail = window.viewOf("persist:a");
     const before = window.saves.length;
 
-    window.emit(gmail, { kind: "navigated", url: `${GMAIL}/#inbox` });
+    window.emit(gmail, {
+      kind: "navigated",
+      url: `${GMAIL}/#inbox`,
+      inPage: true,
+    });
     window.emit(gmail, { kind: "titled", title: "Inbox" });
-    window.emit(gmail, { kind: "navigated", url: `${GMAIL}/#sent` });
+    window.emit(gmail, {
+      kind: "navigated",
+      url: `${GMAIL}/#sent`,
+      inPage: true,
+    });
     window.emit(gmail, { kind: "titled", title: "Sent" });
     await vi.advanceTimersByTimeAsync(0);
 

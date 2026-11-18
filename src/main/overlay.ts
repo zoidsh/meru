@@ -63,7 +63,7 @@ export const createOverlays = ({
     );
   };
 
-  const show = (overlay: Overlay) => {
+  const show = (overlay: Overlay, takeFocus: boolean) => {
     if (!view) {
       log(`The ${overlay.kind} overlay has no view to open in yet`);
 
@@ -86,13 +86,13 @@ export const createOverlays = ({
       }, TOAST_DURATION);
     }
 
-    if (!takesNoFocus(overlay)) {
+    if (takeFocus && !takesNoFocus(overlay)) {
       focus.focus([{ kind: "overlay" }]);
     }
 
     notify();
 
-    if (takesNoFocus(overlay)) {
+    if (!takeFocus || takesNoFocus(overlay)) {
       // What it replaced gives its own focus back, since this takes none.
       giveBack(replaced, false);
     }
@@ -108,7 +108,7 @@ export const createOverlays = ({
     giveBack(closed, toPage);
   };
 
-  const dispatch = (event: OverlayEvent, closing = {}) => {
+  const dispatch = (event: OverlayEvent, closing = {}, takeFocus = true) => {
     const next = transitionOverlay(open, event);
 
     if (isEqual(next, open)) {
@@ -116,7 +116,7 @@ export const createOverlays = ({
     }
 
     if (next) {
-      show(next);
+      show(next, takeFocus);
     } else {
       hide(closing);
     }
@@ -139,8 +139,13 @@ export const createOverlays = ({
         }
       });
     },
-    open: (overlay: Overlay) => {
-      dispatch({ kind: "open", overlay });
+    /**
+     * Opens `overlay` in place of what is open; without `takeFocus` it
+     * leaves focus where it is, as the find bar shown again on its tab's
+     * return does.
+     */
+    open: (overlay: Overlay, { takeFocus = true } = {}) => {
+      dispatch({ kind: "open", overlay }, {}, takeFocus);
     },
     /**
      * Closes what is open; `toPage` gives focus to the page even from a menu,

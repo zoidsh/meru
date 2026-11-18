@@ -2,7 +2,6 @@ import type { ShellState } from "#contract/shell.ts";
 import { ariaKeyShortcut, formatAccelerator } from "#core/accelerator.ts";
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
-import { findCount } from "#core/find.ts";
 import type { FindBar } from "#core/find.ts";
 import { viewFrame } from "#core/layout.ts";
 import { openableApps, splittableApps } from "#core/open-app.ts";
@@ -52,7 +51,7 @@ export interface ShellHandlersDeps {
   /** The page area's size, which a split's panes must fit. */
   pageSize: () => Size;
   overlays: Pick<Overlays, "open" | "close" | "current">;
-  find: Pick<Find, "type" | "step">;
+  find: Pick<Find, "type" | "step" | "close">;
   /** Selecting a tab through them wakes it if it sleeps. */
   tabs: {
     retry: (key: TabKey) => void;
@@ -131,7 +130,8 @@ const shellFind = (
         profileId: overlay.profileId,
         tabId: overlay.tabId,
         term: bar.term,
-        ...findCount(bar),
+        ordinal: bar.ordinal,
+        matches: bar.matches,
         opened: bar.opened,
       }
     : { kind: "none" };
@@ -204,31 +204,33 @@ const shellOverlay = (
       };
 };
 
+/** Keys a control in the shell acts on that are no command's, by Electron's name. */
+const SHELL_KEYS = ["Enter", "Shift+Enter", "Escape"];
+
 /**
  * The registry's shortcuts as the shell shows them, or with `aria` as
- * `aria-keyshortcuts` names them, by command id.
+ * `aria-keyshortcuts` names them, by command id, and the shell's own keys
+ * by `key:` and their name, such as `key:Shift+Enter`.
  */
 export const shellShortcuts = (
   commands: readonly Pick<Command, "id" | "shortcut">[],
   platform: Platform,
   aria = false
-): ShellState["shortcuts"] =>
-  Object.fromEntries(
-    commands.flatMap(({ id, shortcut }) => {
+): ShellState["shortcuts"] => {
+  const written = (accelerator: string) =>
+    aria
+      ? ariaKeyShortcut(accelerator, platform)
+      : formatAccelerator(accelerator, platform);
+
+  return Object.fromEntries([
+    ...commands.flatMap(({ id, shortcut }) => {
       const accelerator = shortcut?.[platform];
 
-      return accelerator
-        ? [
-            [
-              id,
-              aria
-                ? ariaKeyShortcut(accelerator, platform)
-                : formatAccelerator(accelerator, platform),
-            ],
-          ]
-        : [];
-    })
-  );
+      return accelerator ? [[id, written(accelerator)]] : [];
+    }),
+    ...SHELL_KEYS.map((key) => [`key:${key}`, written(key)]),
+  ]);
+};
 
 /** The slices the shell sees of main's state, names ready to show. */
 export const shellState = (
@@ -446,7 +448,11 @@ export const createShellHandlers = ({
     }
   },
   closeOverlay: () => {
-    overlays.close();
+    if (overlays.current()?.kind === "find") {
+      find.close();
+    } else {
+      overlays.close();
+    }
 
     return Promise.resolve();
   },
