@@ -652,9 +652,12 @@ const SplitBox = ({
       data-maximized={maximized || undefined}
       data-drop-id={dropId}
       className={cn(
-        // Its padding reaches into the gaps around it, so its tabs keep
-        // the stack's column and rhythm.
-        "-m-[3px] flex flex-col rounded-[12px] p-[3px]",
+        // Only a fill reaching into the gaps around it, so its tabs keep
+        // the stack's column and pitch; a box right after another starts
+        // where its gap does, so their edges stand as far apart as a box's
+        // from a tab.
+        "-mx-[3px] flex flex-col rounded-[12px] px-[3px] [[data-split-box]+&]:mt-0",
+        wide ? "-my-px py-px" : "-my-[3px] py-[3px]",
         maximized
           ? "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_85%)]"
           : "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)]",
