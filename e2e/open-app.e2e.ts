@@ -387,6 +387,12 @@ test("Open app's field has focus over a split whose other page takes focus as it
           .find((contents) => contents.getURL().startsWith(pageUrl))
           ?.focus();
       }, url);
+      // The card takes it back on the next turn, so a second grab before
+      // then would land while the first is still being undone.
+      // oxlint-disable-next-line no-await-in-loop -- one page after the other
+      await expect
+        .poll(() => focusHolders({ calendar, grabby, overlay }))
+        .toStrictEqual(["overlay"]);
     }
 
     for (let check = 0; check < 5; check += 1) {
