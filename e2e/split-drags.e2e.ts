@@ -323,12 +323,26 @@ test("in the box an inset line moves a tab among its tabs and its pane with it, 
     expect.poll(() => drawn(shell).then(({ box }) => box)).toStrictEqual(ids);
 
   await boxShows("d", "c", "o");
+  // Marks the box as drawn, to tell whether a move draws it anew.
+  await shell.evaluate(() => {
+    const box = document.querySelector<HTMLElement>("[data-split-box]");
+
+    if (box) {
+      box.dataset.seen = "";
+    }
+  });
   await focusTab(shell, "d");
   await shell.keyboard.press("Alt+ArrowDown");
   await expect
     .poll(() => storedPanes(userDataDir))
     .toStrictEqual(["c", "d", "o"]);
   await boxShows("c", "d", "o");
+  // Moving the box's first tab keeps the box it is in.
+  expect(
+    await shell.evaluate(
+      () => document.querySelectorAll("[data-split-box][data-seen]").length
+    )
+  ).toBe(1);
   await expect.poll(() => focusedTab(shell)).toBe("d");
   await expect(
     shell.getByRole("status").filter({ hasText: "position" })

@@ -701,6 +701,7 @@ export const Sidebar = ({
   const pinnedBoxes = layout.pinned.flatMap((item) =>
     item.kind === "box" ? [item.tabs] : []
   );
+  const listedBoxes = layout.listed.filter((item) => item.kind === "box");
   const pinnedTabs = layout.pinned.flatMap((item) =>
     item.kind === "tab" ? [item] : []
   );
@@ -990,9 +991,11 @@ export const Sidebar = ({
     </ListedTab>
   );
 
-  const box = (tabsOfBox: ShellTab[], inList: boolean) => (
+  // Keyed by its place among the area's boxes, which a move within it
+  // keeps, so a moved tab keeps its focus; a split has no id of its own.
+  const box = (tabsOfBox: ShellTab[], inList: boolean, place: number) => (
     <SplitBox
-      key={`split box ${tabsOfBox[0]?.id ?? ""}`}
+      key={`split box ${inList ? "listed" : "pinned"} ${place}`}
       tabs={tabsOfBox}
       profileId={profileId}
       restoring={
@@ -1074,7 +1077,7 @@ export const Sidebar = ({
                 inset
               )}
             >
-              {pinnedBoxes.map((each) => box(each, false))}
+              {pinnedBoxes.map((each, place) => box(each, false, place))}
               {pinnedTabs.map(({ tab }, index) =>
                 button(tab, true, {
                   // Counted among the tiles alone: the box takes its own row.
@@ -1102,7 +1105,9 @@ export const Sidebar = ({
               )}
             >
               {layout.listed.map((item) =>
-                item.kind === "box" ? box(item.tabs, true) : listedTab(item.tab)
+                item.kind === "box"
+                  ? box(item.tabs, true, listedBoxes.indexOf(item))
+                  : listedTab(item.tab)
               )}
             </div>
           </ScrollArea>
