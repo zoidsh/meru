@@ -353,6 +353,20 @@ describe(transitionFind, () => {
     expect([canGoOn(state), state.bars]).toStrictEqual([false, {}]);
   });
 
+  it("ends a moved tab's search, clearing its highlights, and forgets its bar; nothing for a tab with none", () => {
+    const moved = after([...searching("apple"), { kind: "moved", key: mail }]);
+
+    expect([
+      moved.state.bars,
+      moved.effects,
+      after([{ kind: "moved", key: week }]).effects,
+    ]).toStrictEqual([
+      {},
+      [{ kind: "stop", key: mail, keepSelection: false }],
+      [],
+    ]);
+  });
+
   it("does nothing with no bar shown but open and go on", () => {
     const front = after([{ kind: "front", key: mail }]).state;
 

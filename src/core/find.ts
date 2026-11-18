@@ -88,7 +88,12 @@ export type FindEvent =
   /** Escape or Close on the bar that shows. */
   | { kind: "close" }
   /** The tab closed or slept, taking its bar and term with it. */
-  | { kind: "forget"; key: TabKey };
+  | { kind: "forget"; key: TabKey }
+  /**
+   * The tab's page moved to another window, where it has no bar yet: its
+   * search ends, taking its highlights, and its bar and term go.
+   */
+  | { kind: "moved"; key: TabKey };
 
 export type FindEffect =
   /** `findNext` starts a new search, else steps through the one going on. */
@@ -291,7 +296,8 @@ export const transitionFind = (
           }
         : unchanged;
     }
-    case "forget": {
+    case "forget":
+    case "moved": {
       const id = tabKey(event.key);
 
       if (!(id in state.bars)) {
@@ -302,7 +308,13 @@ export const transitionFind = (
         Object.entries(state.bars).filter(([other]) => other !== id)
       );
 
-      return { state: { ...state, bars }, effects: [] };
+      return {
+        state: { ...state, bars },
+        effects:
+          event.kind === "moved"
+            ? [{ kind: "stop", key: event.key, keepSelection: false }]
+            : [],
+      };
     }
     default: {
       const bar = state.bars[tabKey(event.key)];

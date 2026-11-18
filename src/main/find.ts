@@ -154,6 +154,10 @@ export const createFind = ({ pages, overlays, focus }: FindDeps) => {
     loaded: (key: TabKey) => {
       dispatch({ kind: "loaded", key });
     },
+    /** A tab's page moved to its own window or back, where it has no bar yet. */
+    moved: (key: TabKey) => {
+      dispatch({ kind: "moved", key });
+    },
     /** Told when the overlays or the pages change. */
     follow,
     /** The bar that shows, the front tab's while it is open. */
