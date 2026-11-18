@@ -5,7 +5,9 @@ import {
   expect,
   findOverlayDocument,
   findPage,
+  readMenuItem,
   readState,
+  readViews,
   test,
   writeState,
 } from "./lib/app.ts";
@@ -39,6 +41,11 @@ const pressOpenApp = (app: ElectronApplication, url: string) =>
       }
     },
     { url, modifier: isMacOS ? ("meta" as const) : ("control" as const) }
+  );
+
+const noPageHasFocus = (app: ElectronApplication) => () =>
+  app.evaluate(({ webContents }) =>
+    webContents.getAllWebContents().every((contents) => !contents.isFocused())
   );
 
 const options = (overlay: Page) => overlay.getByRole("option");
@@ -203,4 +210,91 @@ test("Open app is first in the titlebar's right-hand group while the sidebar is 
   await header.getByRole("button", { name: "Sidebar", exact: true }).click();
   await expect(sidebar).toHaveCount(0);
   await expect(titlebarButton).toBeVisible();
+});
+
+test("Gmail, unpinned, closes like any tab, leaving no tab, focus in the shell and Close Tab off, and Open app lists it to open again; a relaunch keeps it all", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+
+  await findPage(app, standIn.url);
+  const shellHasFocus = await followRealFocus(shell);
+  const menuItem = (id: string) =>
+    readMenuItem(app, id).then(({ label, enabled }) => [label, enabled]);
+  const stored = () =>
+    readState<{
+      profiles: { tabs: object[]; selectedTabId: string }[];
+    }>(userDataDir).then(({ profiles: [profile] }) => [
+      profile?.tabs,
+      profile?.selectedTabId,
+    ]);
+
+  expect([
+    await menuItem("tab.pin"),
+    await menuItem("tab.close"),
+  ]).toStrictEqual([
+    ["Unpin Tab", true],
+    ["Close Tab", false],
+  ]);
+
+  await clickMenuItem(app, "tab.pin");
+  await expect
+    .poll(() => menuItem("tab.close"))
+    .toStrictEqual(["Close Tab", true]);
+  await clickMenuItem(app, "tab.close", standIn.url);
+
+  await expect
+    .poll(() => readViews(app).then(({ views }) => views))
+    .toStrictEqual([]);
+  // On macOS the suite's app is never active, and the window's own page then
+  // takes no focus, though a view's does; that no page kept it is what shows.
+  await expect.poll(isMacOS ? noPageHasFocus(app) : shellHasFocus).toBeTruthy();
+  await expect.poll(stored).toStrictEqual([[], ""]);
+  expect([
+    await menuItem("tab.pin"),
+    await menuItem("tab.close"),
+  ]).toStrictEqual([
+    ["Pin Tab", false],
+    ["Close Tab", false],
+  ]);
+  await app.close();
+
+  const second = await launchApp();
+  const secondShell = await findPage(second, "meru-app:");
+  const secondOverlay = await findOverlayDocument(second);
+
+  await expect
+    .poll(() => readViews(second).then(({ views }) => views))
+    .toStrictEqual([]);
+  await secondShell
+    .getByRole("banner", { name: "Title bar" })
+    .getByRole("button", { name: "Open app" })
+    .click();
+  await expect(options(secondOverlay)).toHaveText([
+    "Gmail",
+    "Calendar",
+    "Drive",
+    "Docs",
+    "Sheets",
+    "Slides",
+    "Meet",
+  ]);
+  await secondOverlay.getByRole("option", { name: "Gmail" }).click();
+
+  await findPage(second, standIn.url);
+  await expect.poll(stored).toStrictEqual([
+    [
+      {
+        id: "gmail",
+        app: "gmail",
+        url: standIn.url,
+        title: expect.any(String),
+        pinned: false,
+      },
+    ],
+    "gmail",
+  ]);
 });

@@ -291,6 +291,18 @@ export const readMenuLabel = (app: ElectronApplication, id: string) =>
     id
   );
 
+/** The application menu's item's label, and whether it is enabled and checked. */
+export const readMenuItem = (app: ElectronApplication, id: string) =>
+  app.evaluate(({ Menu }, itemId) => {
+    const item = Menu.getApplicationMenu()?.getMenuItemById(itemId);
+
+    return {
+      label: item?.label,
+      enabled: item?.enabled,
+      checked: item?.checked,
+    };
+  }, id);
+
 /**
  * The unread mail across profiles, as the badge would count it: what a test
  * with one profile, whose titlebar has no profile row, waits on.

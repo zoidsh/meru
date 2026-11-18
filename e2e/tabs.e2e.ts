@@ -1,8 +1,10 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  clickMenuItem,
   expect,
   findPage,
+  readMenuItem,
   readState,
   readViews,
   test,
@@ -144,7 +146,7 @@ test("a link opens a tab of its app in the same session, selected; a link to Gma
   expect(left).toHaveLength(1);
 });
 
-test("a relaunch restores the tabs, each where it was, and the selection, and loads only the selected tab", async ({
+test("a relaunch restores the tabs, each where it was, and the selection, and loads the selected tab and Gmail, which opens at launch, alone", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -192,13 +194,21 @@ test("a relaunch restores the tabs, each where it was, and the selection, and lo
   );
   await expect
     .poll(() => standIn.requests())
-    .toStrictEqual({ ...before, calendar: before.calendar + 1 });
+    .toStrictEqual({
+      gmail: before.gmail + 1,
+      calendar: before.calendar + 1,
+      drive: before.drive,
+    });
 
   const profile = await readProfile(userDataDir);
+  const partition = `persist:${profile.id}`;
 
-  expect(await readTabViews(second)).toStrictEqual([
-    { url: nextWeek, partition: `persist:${profile.id}`, visible: true },
-  ]);
+  await expect
+    .poll(() => readTabViews(second))
+    .toStrictEqual([
+      { url: standIn.url, partition, visible: false },
+      { url: nextWeek, partition, visible: true },
+    ]);
 });
 
 test("the strip scrolls to keep the selected tab in view, and its arrow keys go up and down", async ({
@@ -214,7 +224,14 @@ test("the strip scrolls to keep the selected tab in view, and its arrow keys go 
         id: "p",
         name: "Default",
         tabs: [
-          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          {
+            id: "gmail",
+            app: "gmail",
+            url: standIn.url,
+            title: "",
+            pinned: true,
+            openAtLaunch: false,
+          },
           ...titles.map((title, index) => ({
             id: `c${index}`,
             app: "calendar",
@@ -332,4 +349,153 @@ test("a tab whose renderer is killed says it stopped working, and reloads on the
     shell.getByRole("heading", { name: "Gmail stopped working" })
   ).toBeHidden();
   await expect.poll(() => standIn.requests().gmail).toBe(2);
+});
+
+const pinned = (openAtLaunch: boolean) => ({ pinned: true, openAtLaunch });
+
+test("the selected profile's Open at Launch tabs load at launch and another profile's when it is first selected, a pinned tab with it off only once selected, and a relaunch keeps the switch", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const requests = () => standIn.requests();
+
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "a",
+        name: "Default",
+        tabs: [
+          {
+            id: "gmail",
+            app: "gmail",
+            url: standIn.url,
+            title: "",
+            ...pinned(false),
+          },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: "",
+            ...pinned(true),
+          },
+          { id: "d", app: "drive", url: standIn.driveUrl, title: "" },
+        ],
+        selectedTabId: "d",
+      },
+      {
+        id: "b",
+        name: "Work",
+        // From before pinning, so read as pinned and opening at launch.
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: "",
+            ...pinned(true),
+          },
+        ],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "a",
+  });
+
+  const first = await launchApp();
+
+  await findPage(first, standIn.driveUrl);
+  await expect
+    .poll(requests)
+    .toStrictEqual({ gmail: 0, calendar: 1, drive: 1 });
+
+  await clickMenuItem(first, "tab.previous");
+  await expect
+    .poll(() =>
+      readMenuItem(first, "tab.openAtLaunch").then(({ checked }) => checked)
+    )
+    .toBe(true);
+  await clickMenuItem(first, "tab.openAtLaunch");
+  await expect
+    .poll(() =>
+      readMenuItem(first, "tab.openAtLaunch").then(({ checked }) => checked)
+    )
+    .toBe(false);
+  await clickMenuItem(first, "tab.previous");
+  await expect
+    .poll(requests)
+    .toStrictEqual({ gmail: 1, calendar: 1, drive: 1 });
+
+  await clickMenuItem(first, "profile.next");
+  await expect
+    .poll(requests)
+    .toStrictEqual({ gmail: 2, calendar: 2, drive: 1 });
+  await expect
+    .poll(async () => {
+      const { profiles, selectedProfileId } = await readState<{
+        profiles: {
+          tabs: { id: string; pinned?: boolean; openAtLaunch?: boolean }[];
+          selectedTabId: string;
+        }[];
+        selectedProfileId: string;
+      }>(userDataDir);
+
+      return [
+        selectedProfileId,
+        profiles.map((profile) => [
+          profile.tabs.map(({ id, pinned: isPinned, openAtLaunch }) => [
+            id,
+            isPinned,
+            openAtLaunch,
+          ]),
+          profile.selectedTabId,
+        ]),
+      ];
+    })
+    .toStrictEqual([
+      "b",
+      [
+        [
+          [
+            ["gmail", true, false],
+            ["c", true, false],
+            ["d", undefined, undefined],
+          ],
+          "gmail",
+        ],
+        [
+          [
+            ["gmail", true, true],
+            ["c", true, true],
+          ],
+          "gmail",
+        ],
+      ],
+    ]);
+  await first.close();
+
+  // Work's two load at launch; Default's Gmail once Default is selected,
+  // and its Calendar, switched off, not at all.
+  const second = await launchApp();
+
+  await expect
+    .poll(requests)
+    .toStrictEqual({ gmail: 3, calendar: 3, drive: 1 });
+  await clickMenuItem(second, "profile.next");
+  await expect
+    .poll(requests)
+    .toStrictEqual({ gmail: 4, calendar: 3, drive: 1 });
+  await expect
+    .poll(() =>
+      readTabViews(second).then((views) =>
+        views.map(({ url, partition }) => [partition, url])
+      )
+    )
+    .toStrictEqual([
+      ["persist:b", standIn.url],
+      ["persist:b", standIn.calendarUrl],
+      ["persist:a", standIn.url],
+    ]);
 });
