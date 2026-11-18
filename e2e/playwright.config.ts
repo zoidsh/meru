@@ -19,6 +19,7 @@ const NEEDS_THE_FOCUS = [
   "**/tab-sleep.e2e.ts",
   "**/profile-sleep.e2e.ts",
   "**/split.e2e.ts",
+  "**/split-resize.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 
