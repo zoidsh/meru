@@ -652,7 +652,9 @@ const SplitBox = ({
       data-maximized={maximized || undefined}
       data-drop-id={dropId}
       className={cn(
-        "-mx-[3px] flex flex-col rounded-[12px] p-[3px]",
+        // Its padding reaches into the gaps around it, so its tabs keep
+        // the stack's column and rhythm.
+        "-m-[3px] flex flex-col rounded-[12px] p-[3px]",
         maximized
           ? "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_85%)]"
           : "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)]",
