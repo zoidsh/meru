@@ -69,6 +69,8 @@ const setup = (initial: State = twoProfiles) => {
     },
     selectTab: profiles.selectTab,
     closeTab: profiles.closeTab,
+    setTabPinned: profiles.setPinned,
+    setTabOpenAtLaunch: profiles.setOpenAtLaunch,
     selectProfile: profiles.select,
     addProfile: profiles.add,
     removeProfile: (profileId) => profiles.remove(profileId),
@@ -184,7 +186,7 @@ describe("the command registry", () => {
     }
   );
 
-  it("closes the selected tab, but never Gmail's", async () => {
+  it("closes the selected tab, but never a pinned one", async () => {
     const app = setup();
 
     expect(app.isAvailable("tab.close")).toBeFalsy();
@@ -197,6 +199,58 @@ describe("the command registry", () => {
     await app.run("tab.close");
 
     expect(app.profiles.get().profiles[0]?.tabs).toStrictEqual([gmailTab()]);
+  });
+
+  it("pins and unpins the selected tab, labelled as it reads, leaving Open at Launch as it was", async () => {
+    const app = setup();
+    const label = () => commandOf("tab.pin").label?.(app.context());
+    const gmail = () => app.profiles.get().profiles[0]?.tabs[0];
+
+    expect([label(), app.isAvailable("tab.close")]).toStrictEqual([
+      "Unpin Tab",
+      false,
+    ]);
+
+    await app.run("tab.pin");
+
+    expect([label(), app.isAvailable("tab.close"), gmail()]).toStrictEqual([
+      "Pin Tab",
+      true,
+      { ...gmailTab(), pinned: false },
+    ]);
+    expect(app.isAvailable("tab.openAtLaunch")).toBeFalsy();
+
+    await app.run("tab.close");
+    await app.run("tab.close");
+
+    expect([
+      app.profiles.get().profiles[0]?.tabs,
+      app.isAvailable("tab.close"),
+      app.isAvailable("tab.pin"),
+    ]).toStrictEqual([[], false, false]);
+  });
+
+  it("switches Open at Launch for a pinned tab, checked while it is on", async () => {
+    const app = setup();
+
+    expect([
+      app.isAvailable("tab.openAtLaunch"),
+      app.isChecked("tab.openAtLaunch"),
+    ]).toStrictEqual([true, true]);
+
+    await app.run("tab.openAtLaunch");
+
+    expect([
+      app.isChecked("tab.openAtLaunch"),
+      app.profiles.get().profiles[0]?.tabs[0],
+    ]).toStrictEqual([false, { ...gmailTab(), openAtLaunch: false }]);
+
+    await app.run("tab.next");
+
+    expect([
+      app.isAvailable("tab.openAtLaunch"),
+      app.isChecked("tab.openAtLaunch"),
+    ]).toStrictEqual([false, false]);
   });
 
   it("selects the next and previous tab and profile, wrapping round", async () => {

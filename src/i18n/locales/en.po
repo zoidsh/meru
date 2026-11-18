@@ -397,6 +397,11 @@ msgstr "Open app"
 msgid "Open App…"
 msgstr "Open App…"
 
+#. Menu item in the Tabs menu, checked while the selected pinned tab loads when Meru starts rather than when first selected
+#: src/main/commands.ts
+msgid "Open at Launch"
+msgstr "Open at Launch"
+
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Paste"
@@ -406,6 +411,12 @@ msgstr "Paste"
 #: src/main/application-menu.ts
 msgid "Paste and Match Style"
 msgstr "Paste and Match Style"
+
+#. Menu item in the Tabs menu that pins the selected tab, which keeps it from closing
+#. Menu item in the Tabs menu that pins the selected tab, which keeps it from closing
+#: src/main/commands.ts
+msgid "Pin Tab"
+msgstr "Pin Tab"
 
 #. Name given to a newly added profile, where {n} is a number from 2 up; the person can rename it later
 #: src/main/profile-copy.ts
@@ -630,6 +641,11 @@ msgstr "Unified inbox"
 #: src/main/commands.ts
 msgid "Unified Inbox"
 msgstr "Unified Inbox"
+
+#. Menu item in the Tabs menu, in place of Pin Tab while the selected tab is pinned, that unpins it so it can close
+#: src/main/commands.ts
+msgid "Unpin Tab"
+msgstr "Unpin Tab"
 
 #. Shown in the unified inbox when no profile has unread mail
 #: src/shell/inbox.tsx

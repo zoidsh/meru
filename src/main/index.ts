@@ -684,6 +684,8 @@ const start = async () => {
       stopLoading: views.stopFront,
       selectTab: profiles.selectTab,
       closeTab: profiles.closeTab,
+      setTabPinned: profiles.setPinned,
+      setTabOpenAtLaunch: profiles.setOpenAtLaunch,
       selectProfile: profiles.select,
       addProfile: profiles.add,
       removeProfile: createRemoveProfile({

@@ -21,6 +21,7 @@ import {
 import {
   adjacentProfile,
   canRemoveProfile,
+  isPinned,
   knownTabs,
   selectedProfile,
 } from "#core/state.ts";
@@ -52,6 +53,8 @@ export interface CommandActions {
   stopLoading: () => void;
   selectTab: (key: TabKey) => Promise<unknown>;
   closeTab: (key: TabKey) => Promise<unknown>;
+  setTabPinned: (key: TabKey, pinned: boolean) => Promise<unknown>;
+  setTabOpenAtLaunch: (key: TabKey, on: boolean) => Promise<unknown>;
   selectProfile: (profileId: string) => Promise<unknown>;
   addProfile: () => Promise<unknown>;
   /** Asks to remove the profile, and removes it once confirmed. */
@@ -77,6 +80,8 @@ export interface Command {
   id: string;
   /** Called each time the command is shown, so it is in the language of the day. */
   title: () => string;
+  /** Its menu item's label where it follows the state, else the title. */
+  label?: (context: CommandContext) => string;
   /** An Electron accelerator per platform; none where the platform has no key. */
   shortcut?: Partial<Record<Platform, string>>;
   isAvailable?: (context: CommandContext) => boolean;
@@ -415,6 +420,65 @@ export const COMMANDS: readonly Command[] = [
     },
     once: true,
     run: ({ state }, { closeTab }) => closeTab(selectedTab(state)),
+  },
+  {
+    id: "tab.pin",
+    title: () =>
+      t({
+        message: "Pin Tab",
+        comment:
+          "Menu item in the Tabs menu that pins the selected tab, which keeps it from closing",
+      }),
+    label: ({ state }) => {
+      const tab = findTab(state, selectedTab(state));
+
+      return tab && isPinned(tab)
+        ? t({
+            message: "Unpin Tab",
+            comment:
+              "Menu item in the Tabs menu, in place of Pin Tab while the selected tab is pinned, that unpins it so it can close",
+          })
+        : t({
+            message: "Pin Tab",
+            comment:
+              "Menu item in the Tabs menu that pins the selected tab, which keeps it from closing",
+          });
+    },
+    isAvailable: ({ state }) =>
+      findTab(state, selectedTab(state)) !== undefined,
+    run: ({ state }, { setTabPinned }) => {
+      const key = selectedTab(state);
+      const tab = findTab(state, key);
+
+      return tab ? setTabPinned(key, !isPinned(tab)) : Promise.resolve();
+    },
+  },
+  {
+    id: "tab.openAtLaunch",
+    title: () =>
+      t({
+        message: "Open at Launch",
+        comment:
+          "Menu item in the Tabs menu, checked while the selected pinned tab loads when Meru starts rather than when first selected",
+      }),
+    isAvailable: ({ state }) => {
+      const tab = findTab(state, selectedTab(state));
+
+      return tab !== undefined && isPinned(tab);
+    },
+    isChecked: ({ state }) => {
+      const tab = findTab(state, selectedTab(state));
+
+      return tab !== undefined && isPinned(tab) && tab.openAtLaunch === true;
+    },
+    run: ({ state }, { setTabOpenAtLaunch }) => {
+      const key = selectedTab(state);
+      const tab = findTab(state, key);
+
+      return tab
+        ? setTabOpenAtLaunch(key, tab.openAtLaunch !== true)
+        : Promise.resolve();
+    },
   },
   {
     id: "profile.next",

@@ -317,6 +317,33 @@ describe(createApplicationMenu, () => {
     expect(app.set).toHaveLength(4);
   });
 
+  it("sets the menu again when the selected tab is pinned or unpinned, its item labelled as it reads", () => {
+    const app = setup();
+    const unpinned: State = {
+      ...oneProfile,
+      profiles: [
+        {
+          ...newProfile("a", "Default"),
+          tabs: [{ ...gmailTab(), pinned: false }],
+        },
+      ],
+    };
+    const pin = (index: number) => viewItem(app.set[index] ?? [], "tab.pin");
+    const atLaunch = (index: number) =>
+      viewItem(app.set[index] ?? [], "tab.openAtLaunch");
+
+    app.setState(unpinned);
+
+    expect([
+      pin(0)?.label,
+      atLaunch(0)?.type,
+      atLaunch(0)?.checked,
+      pin(1)?.label,
+      atLaunch(1)?.enabled,
+      atLaunch(1)?.checked,
+    ]).toStrictEqual(["Unpin Tab", "checkbox", true, "Pin Tab", false, false]);
+  });
+
   it("runs a clicked item's command and checks what it chose", async () => {
     const app = setup();
 

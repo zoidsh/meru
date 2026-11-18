@@ -49,7 +49,7 @@ export const buildMenuTemplate = ({
     type?: "checkbox",
     asText = false
   ): MenuItemConstructorOptions => {
-    const title = command.title();
+    const title = command.label?.(context) ?? command.title();
 
     return {
       id: command.id,
@@ -324,6 +324,9 @@ export const buildMenuTemplate = ({
       ...item("tab.next"),
       ...item("tab.previous"),
       separator,
+      ...item("tab.pin"),
+      ...item("tab.openAtLaunch", "checkbox"),
+      separator,
       ...item("tab.close"),
     ],
   };
@@ -474,6 +477,7 @@ export const createApplicationMenu = ({
     ]),
     ...commands.map((command) => [
       command.id,
+      command.label?.(current),
       command.isAvailable?.(current) ?? true,
       command.isChecked?.(current),
     ]),
