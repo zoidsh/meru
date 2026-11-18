@@ -5,10 +5,10 @@ import type { ShellState } from "#contract/shell.ts";
 
 /**
  * What a tab dragged over the pages would do, drawn in the overlay's view
- * over the page area: the half of a pane it would split, lit; or the band
- * along the view's edge it would take, darker and dashed; either red with
- * Not enough room where it would leave a pane too small. The drag in the
- * shell keeps the pointer, so this takes none.
+ * over the page area: the half of a pane it would split, tinted and ringed;
+ * or the band along the view's edge it would take, darker and dashed;
+ * either red with Not enough room where it would leave a pane too small. The
+ * drag in the shell keeps the pointer, so this takes none.
  */
 export const DropZone = ({
   x,
@@ -48,12 +48,15 @@ export const DropZone = ({
       className={cn(
         "pointer-events-none fixed box-border rounded-lg",
         !fits && "bg-destructive/12 inset-ring-2 inset-ring-destructive/60",
+        // The page under it keeps its own colours whatever the shell's
+        // theme, so a dark fill, which reads over a light page, with a light
+        // line, which reads over a dark one.
         fits &&
           along === "pane" &&
-          "bg-foreground/12 inset-ring-2 inset-ring-foreground/45",
+          "bg-black/25 inset-ring-2 inset-ring-white/70",
         fits &&
           along === "edge" &&
-          "bg-foreground/20 outline-2 -outline-offset-2 outline-foreground/75 outline-dashed"
+          "bg-black/35 outline-2 -outline-offset-2 outline-white/85 outline-dashed"
       )}
     >
       <span
