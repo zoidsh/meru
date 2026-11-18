@@ -55,6 +55,11 @@ export interface TabMenuDeps {
   openSplit: (direction: PaneDirection) => void;
   /** Whether the tab has a page, else it sleeps. */
   isLoaded: (key: TabKey) => boolean;
+  /**
+   * The URL the tab's page shows now, where it has a live one: the saved
+   * URL is written at most once a second, so it can lag behind.
+   */
+  pageUrl: (key: TabKey) => string | undefined;
   /** Loads the tab's page again, or wakes and selects it where it sleeps. */
   reload: (key: TabKey) => Promise<unknown>;
   sleep: (key: TabKey) => void;
@@ -164,6 +169,7 @@ export const createTabMenu = ({
   moveToOwnWindow,
   moveToMainWindow,
   isLoaded,
+  pageUrl,
   reload,
   sleep,
   wake,
@@ -218,6 +224,7 @@ export const createTabMenu = ({
     }
 
     const placing = placeTab(item, key);
+    const url = pageUrl(key) ?? tab.url;
 
     if (placing) {
       await placing;
@@ -242,17 +249,17 @@ export const createTabMenu = ({
         const app = findApp(apps, tab.app);
 
         if (app) {
-          await openTab(key.profileId, app, tab.url, duplicatePlace(tab));
+          await openTab(key.profileId, app, url, duplicatePlace(tab));
         }
 
         break;
       }
       case "copyUrl": {
-        await clipboard.writeText(tab.url);
+        await clipboard.writeText(url);
         break;
       }
       case "openInBrowser": {
-        await systemBrowser.open(tab.url);
+        await systemBrowser.open(url);
         break;
       }
       case "pin":
@@ -286,6 +293,7 @@ export const createTabMenu = ({
   const menuOf = (key: TabKey) =>
     tabMenu(state(), key, apps, {
       loaded: isLoaded(key),
+      url: pageUrl(key),
       bookmarked: bookmarks.bookmarked(key),
     });
 
@@ -362,7 +370,7 @@ export const createTabMenu = ({
         return;
       }
 
-      popup(target, () => ownWindowMenu(state(), key), request);
+      popup(target, () => ownWindowMenu(state(), key, pageUrl(key)), request);
     },
   };
 };

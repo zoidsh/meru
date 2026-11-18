@@ -15,7 +15,12 @@ const two: State = {
   selectedProfileId: "b",
 };
 
-const setup = (initial?: Overlay, start: State = two, pageSize?: Size) => {
+const setup = (
+  initial?: Overlay,
+  start: State = two,
+  pageSize?: Size,
+  pages: Partial<Record<string, string>> = {}
+) => {
   let state = start;
   let open = initial;
   const events: unknown[] = [];
@@ -68,6 +73,7 @@ const setup = (initial?: Overlay, start: State = two, pageSize?: Size) => {
 
       return Promise.resolve();
     },
+    pageUrl: (key) => pages[key.tabId],
     pageSize: () => pageSize ?? { width: 1000, height: 700 },
     log: () => false,
   });
@@ -217,6 +223,30 @@ describe(createOpenApp, () => {
       opened,
       ["close"],
       ["tab", "a", "sheets", SHEET],
+    ]);
+  });
+
+  it("matches a bookmark against the page a tab shows now, not its saved URL, which lags behind it", async () => {
+    const { openApp, events } = setup(undefined, withBookmarks, undefined, {
+      c1: `${WEEK}#day`,
+      d1: SHEET,
+    });
+
+    for (const id of ["w", "s"]) {
+      openApp.setOpen(true);
+      // oxlint-disable-next-line no-await-in-loop -- one choice at a time
+      await openApp.chooseBookmark(id);
+    }
+
+    const opened = ["open", { kind: "open-app", profileId: "a" }];
+
+    expect(events).toStrictEqual([
+      opened,
+      ["close"],
+      ["tab", "a", "calendar", WEEK],
+      opened,
+      ["close"],
+      ["own window", "d1"],
     ]);
   });
 

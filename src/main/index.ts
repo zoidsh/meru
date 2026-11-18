@@ -869,6 +869,10 @@ const start = async () => {
 
   mail.onPoll(inbox.polled);
 
+  const livePageUrl = (key: TabKey) =>
+    views.status(key).kind === "live"
+      ? views.page(key)?.url || undefined
+      : undefined;
   const openApp = createOpenApp({
     apps,
     state: profiles.get,
@@ -878,6 +882,7 @@ const start = async () => {
     selectTab: views.select,
     showOwnWindow,
     removeBookmark: profiles.removeBookmark,
+    pageUrl: livePageUrl,
     pageSize: () =>
       contentViewBounds(shell.window.getContentAreaSize(), sidebar.current()),
     log: console.error,
@@ -1148,6 +1153,7 @@ const start = async () => {
     moveToOwnWindow,
     moveToMainWindow,
     isLoaded: (key) => views.status(key).kind !== "unloaded",
+    pageUrl: livePageUrl,
     reload: views.reload,
     sleep: views.sleep,
     wake: views.select,

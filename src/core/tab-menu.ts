@@ -55,6 +55,11 @@ export interface TabPage {
   /** Whether it has a page, else it sleeps. */
   loaded: boolean;
   /**
+   * The URL its page shows now, where it has a page; the saved one, which
+   * lags behind it, is used otherwise.
+   */
+  url?: string | undefined;
+  /**
    * Whether its page is bookmarked, or `undefined` while it cannot be, as a
    * Gmail, sleeping, loading or failed page.
    */
@@ -83,8 +88,8 @@ const item = (
   more: Pick<Item, "checked" | "command"> = {}
 ): Item => ({ kind: "item", id, enabled, ...more });
 
-const opensInBrowser = (tab: Tab) =>
-  URL.canParse(tab.url) && isWebUrl(new URL(tab.url));
+const opensInBrowser = (url: string) =>
+  URL.canParse(url) && isWebUrl(new URL(url));
 
 /** Bookmark tab or Remove bookmark, while the page can be bookmarked. */
 const bookmarkItems = (bookmarked: boolean | undefined): Item[] =>
@@ -135,7 +140,7 @@ export const tabMenu = (
       item("reload", true, { command: "tab.reload" }),
       item("duplicate", app !== undefined && !app.singleInstance),
       item("copyUrl", true),
-      item("openInBrowser", opensInBrowser(tab)),
+      item("openInBrowser", opensInBrowser(page.url ?? tab.url)),
     ],
     [
       item(pinned ? "unpin" : "pin", !own, { command: "tab.pin" }),
@@ -177,7 +182,8 @@ export const tabMenu = (
  */
 export const ownWindowMenu = (
   state: State,
-  key: TabKey
+  key: TabKey,
+  url?: string
 ): MenuEntry<OwnWindowMenuItemId>[] | undefined => {
   const tab = findTab(state, key);
 
@@ -193,7 +199,11 @@ export const ownWindowMenu = (
       command: "tab.moveToMainWindow",
     },
     { kind: "item", id: "copyUrl", enabled: true },
-    { kind: "item", id: "openInBrowser", enabled: opensInBrowser(tab) },
+    {
+      kind: "item",
+      id: "openInBrowser",
+      enabled: opensInBrowser(url ?? tab.url),
+    },
   ];
 };
 

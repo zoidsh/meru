@@ -34,6 +34,11 @@ export interface OpenAppDeps {
   /** Brings the tab's own window forward, its page focused. */
   showOwnWindow: (key: TabKey) => void;
   removeBookmark: (profileId: string, id: string) => Promise<unknown>;
+  /**
+   * The URL the tab's page shows now, where it has a live one: the saved
+   * URL is written at most once a second, so it can lag behind.
+   */
+  pageUrl: (key: TabKey) => string | undefined;
   /** The page area's size now, which a split must leave room in. */
   pageSize: () => Size;
   log: (message: string) => void;
@@ -58,6 +63,7 @@ export const createOpenApp = ({
   selectTab,
   showOwnWindow,
   removeBookmark,
+  pageUrl,
   pageSize,
   log,
 }: OpenAppDeps) => {
@@ -170,7 +176,8 @@ export const createOpenApp = ({
         state().profiles.find(
           ({ id: candidate }) => candidate === open.profileId
         );
-      const choice = profile && chooseBookmark(state(), profile.id, id);
+      const choice =
+        profile && chooseBookmark(state(), profile.id, id, pageUrl);
       const app = choice && findApp(apps, choice.bookmark.app);
 
       if (!open || !profile || !choice || !app) {

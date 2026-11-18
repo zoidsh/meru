@@ -66,7 +66,11 @@ const labels = (popup: Popup | undefined) =>
   );
 
 /** The menus over fakes that record what each item reaches, in order. */
-const setup = ({ state = initial, bookmarked = false } = {}) => {
+const setup = ({
+  state = initial,
+  bookmarked = false,
+  pages = {} as Partial<Record<string, string>>,
+} = {}) => {
   const done: unknown[] = [];
   const popups: Popup[] = [];
   const recorded =
@@ -107,6 +111,7 @@ const setup = ({ state = initial, bookmarked = false } = {}) => {
     moveToOwnWindow: (each) => recorded("moveToOwnWindow")(key(each)),
     moveToMainWindow: (each) => recorded("moveToMainWindow")(key(each)),
     isLoaded: (each) => each.tabId !== "x",
+    pageUrl: (each) => pages[each.tabId],
     reload: (each) => recorded("reload")(key(each)),
     sleep: (each) => {
       done.push(["sleep", key(each)]);
@@ -312,6 +317,34 @@ describe(createTabMenu, () => {
     ]).toStrictEqual([
       [["clipboard", "https://docs.google.com/document/d/1"]],
       [["moveToMainWindow", "p/w"]],
+    ]);
+  });
+
+  it("copies, duplicates and opens in the browser the page a tab shows now, not its saved URL, which lags behind it", async () => {
+    const day = "https://calendar.google.com/r/day";
+    const { menu, popups, choose, click } = setup({
+      pages: { c: day, w: "about:blank" },
+    });
+
+    expect([
+      await choose("c", "Duplicate"),
+      await choose("c", "Copy URL"),
+      await choose("c", "Open in Default Browser"),
+    ]).toStrictEqual([
+      [["openTab", "p", "calendar", day, "c"]],
+      [["clipboard", day]],
+      [["browser", day]],
+    ]);
+
+    menu.openOwnWindow({ ...at("w"), x: 760, y: 40 });
+
+    expect(labels(popups.at(-1))).toStrictEqual([
+      "Move to Main Window",
+      "Copy URL",
+      "Open in Default Browser (off)",
+    ]);
+    await expect(click("Copy URL")).resolves.toStrictEqual([
+      ["clipboard", "about:blank"],
     ]);
   });
 

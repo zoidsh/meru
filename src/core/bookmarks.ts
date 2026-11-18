@@ -218,12 +218,15 @@ export type BookmarkChoice =
 /**
  * What choosing the profile's bookmark `id` does: a tab of the profile at
  * exactly its URL, as the bookmark matches, is selected; otherwise a new
- * tab of its app opens there. Nothing for a bookmark the profile has not.
+ * tab of its app opens there. A tab's URL is its page's now, `pageUrl`,
+ * where it has a page, else its saved one. Nothing for a bookmark the
+ * profile has not.
  */
 export const chooseBookmark = (
   state: State,
   profileId: string,
-  id: string
+  id: string,
+  pageUrl?: (key: TabKey) => string | undefined
 ): BookmarkChoice | undefined => {
   const profile = state.profiles.find(
     (candidate) => candidate.id === profileId
@@ -236,7 +239,10 @@ export const chooseBookmark = (
     return;
   }
 
-  const open = knownTabs(profile).find((tab) => tab.url === bookmark.url);
+  const open = knownTabs(profile).find(
+    (tab) =>
+      (pageUrl?.({ profileId, tabId: tab.id }) ?? tab.url) === bookmark.url
+  );
 
   return open
     ? {
