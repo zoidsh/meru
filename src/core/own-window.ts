@@ -8,19 +8,28 @@ import type { Rectangle, Size } from "./window-bounds.ts";
  */
 export const OWN_WINDOW_FRAME_PREFIX = "meru-window:";
 
-export const ownWindowFrameName = ({ profileId, tabId }: TabKey) =>
-  `${OWN_WINDOW_FRAME_PREFIX}${JSON.stringify([profileId, tabId])}`;
+/**
+ * The start of the name of a tab's own window's find bar document, which
+ * main shows over the page while the bar is open.
+ */
+export const OWN_WINDOW_FIND_FRAME_PREFIX = "meru-window-find:";
 
-/** The tab whose own window's titlebar a frame name is, if it is one. */
-export const ownWindowOfFrame = (frameName: string): TabKey | undefined => {
-  if (!frameName.startsWith(OWN_WINDOW_FRAME_PREFIX)) {
+const frameName = (prefix: string, { profileId, tabId }: TabKey) =>
+  `${prefix}${JSON.stringify([profileId, tabId])}`;
+
+export const ownWindowFrameName = (key: TabKey) =>
+  frameName(OWN_WINDOW_FRAME_PREFIX, key);
+
+export const ownWindowFindFrameName = (key: TabKey) =>
+  frameName(OWN_WINDOW_FIND_FRAME_PREFIX, key);
+
+const keyOfFrame = (prefix: string, name: string): TabKey | undefined => {
+  if (!name.startsWith(prefix)) {
     return;
   }
 
   try {
-    const parsed: unknown = JSON.parse(
-      frameName.slice(OWN_WINDOW_FRAME_PREFIX.length)
-    );
+    const parsed: unknown = JSON.parse(name.slice(prefix.length));
 
     return Array.isArray(parsed) &&
       parsed.length === 2 &&
@@ -31,6 +40,14 @@ export const ownWindowOfFrame = (frameName: string): TabKey | undefined => {
     return undefined;
   }
 };
+
+/** The tab whose own window's titlebar a frame name is, if it is one. */
+export const ownWindowOfFrame = (name: string) =>
+  keyOfFrame(OWN_WINDOW_FRAME_PREFIX, name);
+
+/** The tab whose own window's find bar a frame name is, if it is one. */
+export const ownWindowFindOfFrame = (name: string) =>
+  keyOfFrame(OWN_WINDOW_FIND_FRAME_PREFIX, name);
 
 /** How far the page sits in from a tab's own window's sides and bottom. */
 export const OWN_WINDOW_INSET = 8;

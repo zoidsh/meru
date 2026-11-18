@@ -203,6 +203,7 @@ const titlebar = (): FakeTitlebar => {
       show: () => calls.push("show"),
       hide: () => calls.push("hide"),
       moveUnder: ({ hostId }) => calls.push(`under ${hostId}`),
+      moveOver: ({ hostId }) => calls.push(`over ${hostId}`),
       focus: () => calls.push("focus"),
       onFocus: noop,
       onKey: noop,
@@ -404,6 +405,26 @@ describe(createOwnWindows, () => {
     expect([first.calls, second.calls]).toStrictEqual([
       ["under 2", "bounds 900x600", "bounds 900x600"],
       ["under 2", "bounds 900x600", "close"],
+    ]);
+  });
+
+  it("puts the shell's find bar over the page at its top right, focused, follows the window's size, and closes it with the window", () => {
+    const { windows, created } = setup();
+
+    windows.open(CALENDAR);
+    const [window] = created;
+    const bar = titlebar();
+    const stray = titlebar();
+
+    windows.adoptFind(CALENDAR, bar.view);
+    windows.focusFind(CALENDAR);
+    window?.resize();
+    windows.close(CALENDAR);
+    windows.adoptFind(CALENDAR, stray.view);
+
+    expect([bar.calls, stray.calls]).toStrictEqual([
+      ["over 2", "bounds 353x40", "focus", "focus", "bounds 353x40", "close"],
+      ["close"],
     ]);
   });
 

@@ -70,6 +70,7 @@ const setup = () => {
       onFocus: () => false,
       onKey: () => false,
       moveUnder: () => false,
+      moveOver: () => false,
       onGone: (listener) => {
         destroy = listener;
       },

@@ -1,5 +1,6 @@
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
+import { findRectangle } from "#core/find.ts";
 import { ownWindowPageBounds } from "#core/own-window.ts";
 import { inOwnWindow, ownWindowBounds } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -46,6 +47,8 @@ interface Entry {
   key: TabKey;
   window: OwnWindow;
   titlebar: OverlayView | undefined;
+  /** The find bar's view, over the page while the bar is open. */
+  find: OverlayView | undefined;
   saveBounds: ReturnType<typeof keepBounds>;
 }
 
@@ -90,6 +93,9 @@ export const createOwnWindows = ({
     const { width, height } = entry.window.getContentAreaSize();
 
     entry.titlebar?.setBounds({ x: 0, y: 0, width, height });
+    entry.find?.setBounds(
+      findRectangle(ownWindowPageBounds({ width, height }), undefined)
+    );
   };
 
   const save = (key: TabKey, bounds: Rectangle) => {
@@ -118,6 +124,7 @@ export const createOwnWindows = ({
     entries.delete(tabKey(key));
     entry.saveBounds.flush();
     entry.titlebar?.close();
+    entry.find?.close();
     entry.window.destroy();
   };
 
@@ -165,6 +172,7 @@ export const createOwnWindows = ({
       key,
       window,
       titlebar: undefined,
+      find: undefined,
       saveBounds: keepBounds(window, (bounds) => {
         save(key, bounds);
       }),
@@ -255,6 +263,38 @@ export const createOwnWindows = ({
       });
       view.moveUnder(entry.window.host);
       placeTitlebar(entry);
+    },
+    /**
+     * Puts the shell's find bar document for the tab's window over its
+     * page, at the page's top right, and gives its field focus; one for a
+     * window that is not open is closed. It goes as the shell closes it.
+     */
+    adoptFind: (key: TabKey, view: OverlayView) => {
+      const entry = entries.get(tabKey(key));
+
+      if (!entry) {
+        view.close();
+
+        return;
+      }
+
+      if (entry.find !== view) {
+        entry.find?.close();
+      }
+
+      entry.find = view;
+      view.onGone(() => {
+        if (entry.find === view) {
+          entry.find = undefined;
+        }
+      });
+      view.moveOver(entry.window.host);
+      placeTitlebar(entry);
+      view.focus();
+    },
+    /** Gives the tab's window's find bar focus, while it is there. */
+    focusFind: (key: TabKey) => {
+      entries.get(tabKey(key))?.find?.focus();
     },
     /** Titles each window after its page, as its tab is. */
     retitle: () => {

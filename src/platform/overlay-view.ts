@@ -24,6 +24,11 @@ export interface OverlayView {
    * own window's titlebar is drawn behind its page.
    */
   moveUnder: (host: ViewHost) => void;
+  /**
+   * Puts it in another window, shown above every view there, as a tab's
+   * own window's find bar is drawn over its page.
+   */
+  moveOver: (host: ViewHost) => void;
   focus: () => void;
   /** Told when its page gains keyboard focus. */
   onFocus: (listener: () => void) => void;
@@ -83,6 +88,28 @@ export const adoptOverlayView = (
 
   webContents.once("destroyed", markGone);
 
+  const moveTo = (host: ViewHost, under: boolean) => {
+    const next = hostWindow(host);
+
+    if (!next || gone) {
+      return;
+    }
+
+    if (next !== owner && !owner.isDestroyed()) {
+      owner.contentView.removeChildView(view);
+    }
+
+    owner = next;
+
+    if (under) {
+      owner.contentView.addChildView(view, 0);
+    } else {
+      owner.contentView.addChildView(view);
+    }
+
+    view.setVisible(true);
+  };
+
   return {
     webContentsId: webContents.id,
     setBounds: (bounds) => view.setBounds(bounds),
@@ -93,19 +120,10 @@ export const adoptOverlayView = (
     },
     hide: () => view.setVisible(false),
     moveUnder: (host) => {
-      const next = hostWindow(host);
-
-      if (!next || gone) {
-        return;
-      }
-
-      if (next !== owner && !owner.isDestroyed()) {
-        owner.contentView.removeChildView(view);
-      }
-
-      owner = next;
-      owner.contentView.addChildView(view, 0);
-      view.setVisible(true);
+      moveTo(host, true);
+    },
+    moveOver: (host) => {
+      moveTo(host, false);
     },
     focus: () => webContents.focus(),
     onFocus: (listener) => {

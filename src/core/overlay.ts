@@ -1,6 +1,6 @@
 import { findRectangle } from "./find.ts";
 import { contentViewBounds } from "./layout.ts";
-import { ownWindowOfFrame } from "./own-window.ts";
+import { ownWindowFindOfFrame, ownWindowOfFrame } from "./own-window.ts";
 import type { PaneDirection } from "./pane-tree.ts";
 import type { ProfileMenuRequest } from "./profile-menu.ts";
 import type { SidebarState } from "./sidebar.ts";
@@ -205,7 +205,7 @@ export const OVERLAY_FRAME_NAME = "meru-overlay";
 
 /**
  * Whether the shell is opening one of its own blank documents, the
- * overlay's or a tab's own window's titlebar: the only things it may open,
+ * overlay's, or a tab's own window's titlebar or find bar: the only things it may open,
  * which then live in the shell's process for its React tree to draw into.
  */
 export const isShellDocument = ({
@@ -217,4 +217,5 @@ export const isShellDocument = ({
 }) =>
   url === "about:blank" &&
   (frameName === OVERLAY_FRAME_NAME ||
-    ownWindowOfFrame(frameName) !== undefined);
+    ownWindowOfFrame(frameName) !== undefined ||
+    ownWindowFindOfFrame(frameName) !== undefined);
