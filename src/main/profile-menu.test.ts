@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import type { MenuPoint } from "#core/context-menu.ts";
 import { isAsleep, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
-import type { ContextMenuItem, MenuPoint } from "#platform/context-menu.ts";
+import type { ContextMenuItem } from "#platform/context-menu.ts";
 
 import { createProfileMenu } from "./profile-menu.ts";
 import { createProfiles } from "./profiles.ts";

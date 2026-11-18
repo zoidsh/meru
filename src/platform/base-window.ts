@@ -1,13 +1,10 @@
 import type { BaseWindow, BaseWindowConstructorOptions } from "electron";
 
+import type { MenuPoint } from "#core/context-menu.ts";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
 
-import type {
-  ContextMenuItem,
-  ContextMenus,
-  MenuPoint,
-} from "./context-menu.ts";
+import type { ContextMenuItem, ContextMenus } from "./context-menu.ts";
 import { viewHost } from "./view-host.ts";
 import type { ViewHost } from "./view-host.ts";
 

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
+import type { MenuPoint } from "#core/context-menu.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
-import type { ContextMenuItem, MenuPoint } from "#platform/context-menu.ts";
+import type { ContextMenuItem } from "#platform/context-menu.ts";
 
 import { createTabMenu } from "./tab-menu.ts";
 

@@ -1,6 +1,8 @@
 import { Menu } from "electron";
 import type { BaseWindow, MenuItemConstructorOptions } from "electron";
 
+import type { MenuPoint } from "#core/context-menu.ts";
+
 /** An item of a native menu, its label already in the person's language. */
 export type ContextMenuItem =
   | {
@@ -18,14 +20,8 @@ export type ContextMenuItem =
     }
   | { type: "separator" };
 
-/** Where a menu opens, in the window's content area; else at the pointer. */
-export interface MenuPoint {
-  x: number;
-  y: number;
-}
-
 export interface ContextMenus {
-  /** Pops the menu up in `window`, at `at` or at the pointer. */
+  /** Pops the menu up in `window`, at `at` in its content area or at the pointer. */
   popup: (
     window: BaseWindow,
     items: readonly ContextMenuItem[],
