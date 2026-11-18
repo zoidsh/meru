@@ -2,7 +2,6 @@ import path from "node:path";
 
 import { isEqual } from "es-toolkit";
 
-import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import {
   OVERLAY_FRAME_NAME,
   coversPage,
@@ -16,7 +15,6 @@ import { windowBackground } from "#core/shell-grey.ts";
 import { gmailOwnWindow } from "#core/state.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
-import { extractVerificationCode } from "#core/verification-code.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
@@ -38,7 +36,6 @@ import { createFailures } from "./failures.ts";
 import { createFind } from "./find.ts";
 import { createFocus } from "./focus.ts";
 import type { FocusTarget } from "./focus.ts";
-import { createMailNotifications } from "./notifications.ts";
 import { createOverlays } from "./overlay.ts";
 import { createOwnWindows } from "./own-windows.ts";
 import { automaticProfileName } from "./profile-copy.ts";
@@ -60,12 +57,11 @@ import { wireKeepAlive } from "./wiring/keep-alive.ts";
 import { wireLauncher } from "./wiring/launcher.ts";
 import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
+import { wireNotifications } from "./wiring/notifications.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import {
-  soundOutput,
   suiteRunsInBackground,
   systemClipboard,
-  systemNotifier,
   testBuildSetup,
 } from "./wiring/test-build.ts";
 import { wireTray } from "./wiring/tray.ts";
@@ -568,53 +564,21 @@ const start = async () => {
     showOwnWindow,
   });
 
-  if (gmail && mailActions) {
-    const mailNotifications = createMailNotifications({
-      notifier: systemNotifier(),
-      clipboard,
-      extractCode: extractVerificationCode,
-      setting: settings.get,
-      state: profiles.get,
-      hasSubtitle: isMacOS,
-      inbox: gmail.home,
-      open: async (profileId, url) => {
-        if (!(await showGmail.openMessage(profileId, url))) {
-          return;
-        }
-
-        // The one place main takes the foreground, since the person asked
-        // for it by clicking; never under the background flag.
-        revealGmail(profileId);
-      },
-      act: (profileId, action, messageId) => {
-        void mailActions.run(profileId, action, messageId);
-      },
-      doNotDisturb: () => profiles.get().doNotDisturb,
-      now: () => new Date(),
-      important: async (profileId) => {
-        const outcome = await mail.readLabel(profileId, IMPORTANT_LABEL);
-
-        return outcome.kind === "feed"
-          ? new Set(outcome.feed.entries.map((entry) => entry.id))
-          : null;
-      },
-      sound: soundOutput({
-        ipc,
-        shellId: shell.window.webContentsId,
-        shellOrigin,
-        background,
-        log: console.error,
-      }),
-      log: console.error,
-    });
-
-    // A removed profile's actions stop here, before its data is cleared.
-    profiles.onChange(mailActions.follow);
-    mail.onPoll((profileId, outcome, _startedAt, label) => {
-      void mailNotifications.polled(profileId, outcome, label);
-    });
-    profiles.onChange(mailNotifications.follow);
-  }
+  wireNotifications({
+    isMacOS,
+    background,
+    ipc,
+    shell,
+    shellOrigin,
+    settings,
+    profiles,
+    mail,
+    gmail,
+    mailActions,
+    showGmail,
+    revealGmail,
+    clipboard,
+  });
 
   views.reconcile(profiles.get());
   pollProfiles(profiles.get());
