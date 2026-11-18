@@ -235,6 +235,41 @@ test("Cmd or Ctrl+D right after the page moves within its document and retitles 
     ]);
 });
 
+test("Cmd or Ctrl+D with the find bar open bookmarks the page without a toast, the bar left open", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seed(userDataDir, standIn);
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const overlay = await findOverlayDocument(app);
+  const bar = overlay.getByRole("search", { name: "Find in page" });
+
+  await findPage(app, standIn.calendarUrl);
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await expect
+    .poll(() => readBookmarkItem(app))
+    .toStrictEqual({ label: "Bookmark Tab", enabled: true });
+  await clickMenuItem(app, "tab.find");
+  await expect(bar).toBeVisible();
+  await pressBookmark(app, standIn.calendarUrl);
+  await expect
+    .poll(() => readBookmarks(userDataDir))
+    .toStrictEqual([`calendar ${CALENDAR_TITLE}`]);
+  await expect
+    .poll(() => readBookmarkItem(app))
+    .toStrictEqual({ label: "Remove Bookmark", enabled: true });
+  await expect(
+    rowButton(shell, `Remove bookmark of ${CALENDAR_TITLE}`)
+  ).toHaveCount(1);
+  await expect(bar).toBeVisible();
+  await expect(
+    overlay.getByRole("region", { name: "Notifications" })
+  ).toHaveCount(0);
+});
+
 test("the wide row's bookmark button shows on hover and bookmarks that row's page, not the selected tab's", async ({
   launchApp,
   userDataDir,

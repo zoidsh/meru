@@ -147,6 +147,18 @@ describe(createBookmarks, () => {
     expect([bookmarks.bookmarked(CALENDAR)]).toStrictEqual([false]);
   });
 
+  it("announces nothing over the find bar, which stays open", async () => {
+    const find: Overlay = { kind: "find", profileId: "a", tabId: "c1" };
+    const { bookmarks, overlay } = setup(initial, find);
+
+    await bookmarks.toggle(CALENDAR, true);
+
+    expect([bookmarks.bookmarked(CALENDAR), overlay()]).toStrictEqual([
+      true,
+      find,
+    ]);
+  });
+
   it("announces nothing for a tab's own window, or with a card over the page", async () => {
     const { bookmarks, overlay } = setup(initial, {
       kind: "inbox",

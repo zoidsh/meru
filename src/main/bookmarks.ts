@@ -134,7 +134,8 @@ export const createBookmarks = ({
     },
     /**
      * Bookmark Tab or Remove Bookmark on the tab's page; with `announce`, a
-     * toast says which, unless a card covers the page.
+     * toast says which, unless a card or the find bar is open, which it
+     * would replace.
      */
     toggle: async (key: TabKey, announce: boolean) => {
       const bookmarkable = pageOf(key);
@@ -147,7 +148,14 @@ export const createBookmarks = ({
 
       const now = await toggle(key.profileId, bookmarkable);
 
-      if (now === undefined || !announce || coversPage(overlays.current())) {
+      const open = overlays.current();
+
+      if (
+        now === undefined ||
+        !announce ||
+        coversPage(open) ||
+        open?.kind === "find"
+      ) {
         return;
       }
 
