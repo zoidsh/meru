@@ -21,3 +21,4 @@ This file is the draft of the next release, written one line at a time as work l
 - **Windows and Linux:** **Meru Pro** no longer starts without a window when your system language has no spellchecker dictionary and you've added spellchecker languages
 - Extensions that keep their settings in Chrome's synced storage can now save them. The settings stay on this device and are not synced
 - Windows opened from a workspace app, such as a compose window or a pop-out, now follow a theme change in their title bar
+- **macOS:** Meru's window no longer comes in front of the app you're using when you switch back to its Space or move a window off it

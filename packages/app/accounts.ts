@@ -226,15 +226,13 @@ class Accounts {
 
   /**
    * The one place that decides where keyboard focus goes when an account's
-   * content comes back to the front, so no caller has to. It also takes focus
-   * off whatever the renderer had, which otherwise keeps its focus ring while
-   * the view in front of it takes the keys.
-   */
-  /**
-   * `blurRenderer` is off for the window regaining focus. That event arrives
+   * content comes back to the front. It also blurs the renderer, which would
+   * otherwise keep its focus ring while the view in front of it takes the keys.
+   *
+   * `blurRenderer` is off for the window regaining focus: that event arrives
    * before the click that caused it reaches the page, so a blur sent from there
-   * lands after the click has focused something and takes it away again; the
-   * focus call below is synchronous, so the click still wins against it.
+   * would land after the click has focused something and take it away again.
+   * The focus call is synchronous, so the click still wins against it.
    */
   focusActiveView({ blurRenderer = true }: { blurRenderer?: boolean } = {}) {
     const { instance } = this.getSelectedAccount();
@@ -265,10 +263,11 @@ class Accounts {
       ipc.renderer.send(main.window.webContents, "window.blurFocusedElement");
     }
 
-    // On macOS `webContents.focus()` also focuses its window, which activates
-    // the app. The window's own focus listener calls this again once it is
+    // On macOS `webContents.focus()` also orders its window front, even while
+    // another app is active, and the window emits `show` whenever it is
+    // uncovered. The window's own focus listener calls this again once it is
     // brought forward, so the view still gets the keys then.
-    if (main.shouldStayBehindUntilFocused && !main.window.isFocused()) {
+    if ((platform.isMacOS || main.shouldStayBehindUntilFocused) && !main.window.isFocused()) {
       return;
     }
 
