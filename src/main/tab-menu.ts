@@ -28,9 +28,13 @@ export interface TabMenuDeps {
     | "closeOtherTabs"
     | "closeTabsBelow"
   >;
-  /** Whether the tab has a page, which Reload needs. */
+  /** Whether the tab has a page, else it sleeps. */
   isLoaded: (key: TabKey) => boolean;
-  reload: (key: TabKey) => void;
+  /** Loads the tab's page again, or wakes and selects it where it sleeps. */
+  reload: (key: TabKey) => Promise<unknown>;
+  sleep: (key: TabKey) => void;
+  /** Wakes the tab and selects it. */
+  wake: (key: TabKey) => Promise<unknown>;
   /** Opens `url` as a new tab of `app`, selected, after the tab `after` names. */
   openTab: (
     profileId: string,
@@ -59,6 +63,8 @@ export const createTabMenu = ({
   profiles,
   isLoaded,
   reload,
+  sleep,
+  wake,
   openTab,
   clipboard,
   systemBrowser,
@@ -74,8 +80,16 @@ export const createTabMenu = ({
     }
 
     switch (item) {
+      case "sleep": {
+        sleep(key);
+        break;
+      }
+      case "wake": {
+        await wake(key);
+        break;
+      }
       case "reload": {
-        reload(key);
+        await reload(key);
         break;
       }
       case "duplicate": {

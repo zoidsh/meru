@@ -72,9 +72,11 @@ const setup = ({ held = false } = {}) => {
       closeTabsBelow: (each) => recorded("closeBelow")(key(each)),
     },
     isLoaded: (each) => each.tabId !== "x",
-    reload: (each) => {
-      done.push(["reload", key(each)]);
+    reload: (each) => recorded("reload")(key(each)),
+    sleep: (each) => {
+      done.push(["sleep", key(each)]);
     },
+    wake: (each) => recorded("wake")(key(each)),
     openTab: async (profileId, app, url, after) => {
       await recorded("openTab")(profileId, app.id, url, after);
 
@@ -136,6 +138,7 @@ describe(createTabMenu, () => {
     const ran = [];
 
     for (const item of [
+      "sleep",
       "reload",
       "duplicate",
       "copyUrl",
@@ -150,6 +153,7 @@ describe(createTabMenu, () => {
     }
 
     expect(ran).toStrictEqual([
+      [["sleep", "p/c"], ["closed"]],
       [["reload", "p/c"], ["closed"]],
       [
         ["openTab", "p", "calendar", "https://calendar.google.com/r/week", "c"],
@@ -176,12 +180,24 @@ describe(createTabMenu, () => {
     ]);
   });
 
+  it("wakes a tab with no page, and reloads it, waking it too", async () => {
+    const { choose } = setup();
+
+    expect([
+      [...(await choose("x", "wake"))],
+      [...(await choose("x", "reload"))],
+    ]).toStrictEqual([
+      [["wake", "p/x"], ["closed"]],
+      [["reload", "p/x"], ["closed"]],
+    ]);
+  });
+
   it("refuses what the menu does not offer its tab, such as a page that is not on the web, and still closes", async () => {
     const { choose } = setup();
 
     expect([
       [...(await choose("gmail", "duplicate"))],
-      [...(await choose("x", "reload"))],
+      [...(await choose("x", "sleep"))],
       [...(await choose("x", "openInBrowser"))],
     ]).toStrictEqual([
       [
@@ -189,7 +205,7 @@ describe(createTabMenu, () => {
         ["closed"],
       ],
       [
-        ["log", "Refused the tab menu's reload, which it does not offer"],
+        ["log", "Refused the tab menu's sleep, which it does not offer"],
         ["closed"],
       ],
       [

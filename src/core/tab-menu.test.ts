@@ -55,6 +55,7 @@ const ids = (next: State | undefined) => {
 describe(tabMenuItems, () => {
   it("offers Gmail alone, pinned, no Duplicate, no Close tab and nothing to close beside it", () => {
     expect(offered(state([]), "gmail")).toStrictEqual([
+      "sleep",
       "reload",
       "duplicate off",
       "copyUrl",
@@ -66,11 +67,12 @@ describe(tabMenuItems, () => {
     ]);
   });
 
-  it("offers a listed tab Duplicate and Close tab but no Open at Launch, and Reload only with a page", () => {
+  it("offers a listed tab Duplicate and Close tab but no Open at Launch, and Wake in place of Sleep without a page", () => {
     expect(
       offered(state([tab("c", "calendar"), tab("d", "drive")]), "c", false)
     ).toStrictEqual([
-      "reload off",
+      "wake",
+      "reload",
       "duplicate",
       "copyUrl",
       "openInBrowser",

@@ -203,6 +203,7 @@ const labels = (context: Partial<CommandContext>) =>
       inboxOpen: false,
       openAppOpen: false,
       sidebarShown: false,
+      selectedTabAsleep: false,
       ...context,
     },
     "en-GB",

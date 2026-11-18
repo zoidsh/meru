@@ -25,6 +25,7 @@ const contextOf = (): CommandContext => ({
   openAppOpen: false,
   sidebarShown: false,
   navigation: null,
+  selectedTabAsleep: false,
 });
 
 const template = (platform: Platform, context = contextOf()) =>
@@ -142,7 +143,7 @@ describe(buildMenuTemplate, () => {
     ]);
   });
 
-  it("lists each pinned tab with a shortcut by its app in the Tabs menu, between the tab steps and Pin Tab", () => {
+  it("lists each pinned tab with a shortcut by its app in the Tabs menu, between the tab steps and Sleep Tab", () => {
     const context: CommandContext = {
       ...contextOf(),
       state: {
@@ -178,6 +179,7 @@ describe(buildMenuTemplate, () => {
       ["tab.previous", expect.any(String), expect.any(String)],
       ["tab.pinned.1", "Gmail", "Control+Shift+1"],
       ["tab.pinned.2", "Drive", "Control+Shift+2"],
+      ["tab.sleep", "Sleep Tab", undefined],
       ["tab.pin", "Unpin Tab", undefined],
       ["tab.openAtLaunch", "Open at Launch", undefined],
       ["tab.close", expect.any(String), expect.any(String)],
@@ -311,6 +313,7 @@ const setup = () => {
       inboxOpen,
       openAppOpen: false,
       sidebarShown: false,
+      selectedTabAsleep: false,
     }),
     actions,
     locale: () => "en",

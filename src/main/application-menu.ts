@@ -339,6 +339,8 @@ export const buildMenuTemplate = ({
       ...item("tab.previous"),
       separator,
       ...(pinnedItems.length > 0 ? [...pinnedItems, separator] : []),
+      ...item("tab.sleep"),
+      separator,
       ...item("tab.pin"),
       ...item("tab.openAtLaunch", "checkbox"),
       separator,

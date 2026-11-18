@@ -445,6 +445,7 @@ describe("the overlay slice", () => {
       title: "Gmail",
       pinned: true,
       items: [
+        { id: "sleep", enabled: true },
         { id: "reload", enabled: true },
         { id: "duplicate", enabled: false },
         { id: "copyUrl", enabled: true },

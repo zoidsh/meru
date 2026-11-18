@@ -643,6 +643,8 @@ export const createTabViews = ({
       }
     },
     select,
+    /** Whether the front tab was put to sleep, and so has no page. */
+    frontAsleep: () => front !== undefined && !tabs.has(front),
     /**
      * Frees the tab's page, keeping where it was for when it is selected
      * again or woken; the front tab stays the front, with no page.

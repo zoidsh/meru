@@ -50,7 +50,9 @@ const setup = (initial: State = twoProfiles) => {
   const navigations: string[] = [];
   let sidebarShown = false;
   let navigation: Navigation | null = null;
+  let selectedTabAsleep = false;
   const moves: string[] = [];
+  const sleeps: string[] = [];
   const actions: CommandActions = {
     toggleSidebar: () => {
       sidebarShown = !sidebarShown;
@@ -67,7 +69,14 @@ const setup = (initial: State = twoProfiles) => {
     stopLoading: () => {
       moves.push("stop");
     },
-    selectTab: profiles.selectTab,
+    selectTab: async (key) => {
+      selectedTabAsleep = false;
+      await profiles.selectTab(key);
+    },
+    sleepTab: (key) => {
+      sleeps.push(`${key.profileId}/${key.tabId}`);
+      selectedTabAsleep = true;
+    },
     closeTab: profiles.closeTab,
     setTabPinned: profiles.setPinned,
     setTabOpenAtLaunch: profiles.setOpenAtLaunch,
@@ -102,6 +111,7 @@ const setup = (initial: State = twoProfiles) => {
     openAppOpen,
     sidebarShown,
     navigation,
+    selectedTabAsleep,
   });
 
   onTestFinished(doNotDisturb.dispose);
@@ -110,6 +120,7 @@ const setup = (initial: State = twoProfiles) => {
     profiles,
     reloads: () => reloads,
     moves,
+    sleeps,
     setNavigation: (next: Navigation | null) => {
       navigation = next;
     },
@@ -427,6 +438,30 @@ describe("the command registry", () => {
     await app.run("tab.reload");
 
     expect(app.reloads()).toBe(1);
+  });
+
+  it("puts the selected tab to sleep and wakes it, labelled as it is, with no shortcut, and offers Reload to wake it", async () => {
+    const app = setup();
+    const label = () => commandOf("tab.sleep").label?.(app.context());
+    const gmail = selected(app.profiles.get()).join("/");
+
+    expect([label(), app.isAvailable("tab.reload")]).toStrictEqual([
+      "Sleep Tab",
+      false,
+    ]);
+
+    await app.run("tab.sleep");
+
+    expect([label(), app.isAvailable("tab.reload"), app.sleeps]).toStrictEqual([
+      "Wake Tab",
+      true,
+      [gmail],
+    ]);
+
+    await app.run("tab.sleep");
+
+    expect([label(), app.sleeps]).toStrictEqual(["Sleep Tab", [gmail]]);
+    expect(commandOf("tab.sleep").shortcut).toBeUndefined();
   });
 
   it("offers Back, Forward, Reload and Stop as the front tab's page allows, and none with no page", async () => {

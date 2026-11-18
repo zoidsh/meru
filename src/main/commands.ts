@@ -50,6 +50,8 @@ export interface CommandContext {
   sidebarShown: boolean;
   /** The front tab's page, or `null` with none or under the unified inbox. */
   navigation: Navigation | null;
+  /** Whether the selected tab was put to sleep, and so has no page. */
+  selectedTabAsleep: boolean;
 }
 
 /** What commands do, each through the module that owns it. */
@@ -58,7 +60,9 @@ export interface CommandActions {
   goBack: () => void;
   goForward: () => void;
   stopLoading: () => void;
+  /** Selects the tab, waking it if it sleeps. */
   selectTab: (key: TabKey) => Promise<unknown>;
+  sleepTab: (key: TabKey) => void;
   closeTab: (key: TabKey) => Promise<unknown>;
   setTabPinned: (key: TabKey, pinned: boolean) => Promise<unknown>;
   setTabOpenAtLaunch: (key: TabKey, on: boolean) => Promise<unknown>;
@@ -303,7 +307,9 @@ export const COMMANDS: readonly Command[] = [
       win32: "CommandOrControl+R",
       linux: "CommandOrControl+R",
     },
-    isAvailable: ({ navigation }) => navigation !== null,
+    // A sleeping tab has no page, and Reload wakes it.
+    isAvailable: ({ navigation, selectedTabAsleep, inboxOpen }) =>
+      navigation !== null || (selectedTabAsleep && !inboxOpen),
     run: (_context, { reloadSelectedTab }) => {
       reloadSelectedTab();
 
@@ -427,6 +433,35 @@ export const COMMANDS: readonly Command[] = [
     },
     once: true,
     run: ({ state }, { closeTab }) => closeTab(selectedTab(state)),
+  },
+  {
+    id: "tab.sleep",
+    title: () =>
+      t({
+        message: "Sleep Tab",
+        comment:
+          "Menu item in the Tabs menu that frees the selected tab's page until it is woken, keeping its place",
+      }),
+    label(context) {
+      return context.selectedTabAsleep
+        ? t({
+            message: "Wake Tab",
+            comment:
+              "Menu item in the Tabs menu, in place of Sleep Tab while the selected tab sleeps, that loads its page again",
+          })
+        : this.title();
+    },
+    isAvailable: ({ state }) =>
+      findTab(state, selectedTab(state)) !== undefined,
+    run: async ({ state, selectedTabAsleep }, { sleepTab, selectTab }) => {
+      const key = selectedTab(state);
+
+      if (selectedTabAsleep) {
+        await selectTab(key);
+      } else {
+        sleepTab(key);
+      }
+    },
   },
   {
     id: "tab.pin",

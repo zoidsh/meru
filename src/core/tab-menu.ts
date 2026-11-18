@@ -9,6 +9,8 @@ import type { Size } from "./window-bounds.ts";
 
 /** Every item a tab's context menu can hold, in the design's order. */
 export const TAB_MENU_ITEMS = [
+  "sleep",
+  "wake",
   "reload",
   "duplicate",
   "copyUrl",
@@ -24,9 +26,10 @@ export type TabMenuItemId = (typeof TAB_MENU_ITEMS)[number];
 
 /**
  * The menu's groups, drawn with a separator between each; the groups that
- * Sleep, the split commands and Move to new window bring fit between them.
+ * the split commands and Move to new window bring fit between them.
  */
 export const TAB_MENU_GROUPS: readonly (readonly TabMenuItemId[])[] = [
+  ["sleep", "wake"],
   ["reload", "duplicate", "copyUrl", "openInBrowser"],
   ["pin", "openAtLaunch"],
   ["close", "closeOthers", "closeBelow"],
@@ -77,8 +80,9 @@ const belowOf = (profile: Profile, tab: Tab) => {
 
 /**
  * What the tab's menu offers, in order; nothing for a tab that is not
- * shown. Reload needs a page; Duplicate an app that can have more than one
- * tab; a pinned tab has Open at Launch and no Close tab.
+ * shown. A tab with a page offers Sleep, one without, asleep, Wake; Reload
+ * wakes one asleep. Duplicate needs an app that can have more than one tab;
+ * a pinned tab has Open at Launch and no Close tab.
  */
 export const tabMenuItems = (
   state: State,
@@ -97,7 +101,8 @@ export const tabMenuItems = (
   const pinned = isPinned(tab);
 
   return [
-    { id: "reload", enabled: loaded },
+    { id: loaded ? "sleep" : "wake", enabled: true },
+    { id: "reload", enabled: true },
     { id: "duplicate", enabled: app !== undefined && !app.singleInstance },
     { id: "copyUrl", enabled: true },
     {

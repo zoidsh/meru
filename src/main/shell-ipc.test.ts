@@ -367,7 +367,7 @@ describe(serveShellContract, () => {
       shell.call(SHELL, "openTabMenu", { ...tab, x: 1.5, y: 2 }),
       shell.call(SHELL, "openTabMenu", { ...tab, x: -1, y: 2 }),
       shell.call(SHELL, "openTabMenu", { ...tab, x: 1 }),
-      shell.call(SHELL, "runTabMenuItem", { item: "sleep" }),
+      shell.call(SHELL, "runTabMenuItem", { item: "hibernate" }),
     ]);
 
     await shell.call(SHELL, "openTabMenu", { ...tab, x: 12, y: 40 });

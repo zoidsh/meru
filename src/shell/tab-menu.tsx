@@ -5,6 +5,7 @@ import {
   LinkIcon,
   PinIcon,
   PinOffIcon,
+  PowerIcon,
   RotateCwIcon,
   XIcon,
 } from "lucide-react";
@@ -64,6 +65,26 @@ export const TabMenu = ({
 
   const label = (id: TabMenuItemId): { icon?: ReactNode; text: string } => {
     switch (id) {
+      case "sleep": {
+        return {
+          icon: <PowerIcon />,
+          text: t({
+            message: "Sleep",
+            comment:
+              "Item of a tab's context menu that frees its page until it is woken, keeping its place",
+          }),
+        };
+      }
+      case "wake": {
+        return {
+          icon: <PowerIcon />,
+          text: t({
+            message: "Wake",
+            comment:
+              "Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it",
+          }),
+        };
+      }
       case "reload": {
         return {
           icon: <RotateCwIcon />,
