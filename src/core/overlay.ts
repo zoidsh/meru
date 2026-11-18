@@ -7,6 +7,8 @@ import type { Rectangle, Size } from "./window-bounds.ts";
 /** What an overlay over the content views shows; one at a time. */
 export type Overlay =
   | { kind: "rename-profile"; profileId: string }
+  /** Lists the apps the profile can open a tab of. */
+  | { kind: "open-app"; profileId: string }
   | { kind: "inbox" };
 
 /** The card's width for each width class, in CSS pixels. */
@@ -51,8 +53,9 @@ const selection = (state: State) => {
 
 /**
  * The overlay open after `event`. What is underneath changing, another
- * profile or tab selected, closes the rename panel, as does its profile
- * going. The unified inbox, over every profile, keeps its own rules.
+ * profile or tab selected, closes the rename panel and Open app, as does
+ * their profile going. The unified inbox, over every profile, keeps its own
+ * rules.
  */
 export const transitionOverlay = (
   current: Overlay | undefined,
