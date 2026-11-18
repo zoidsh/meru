@@ -417,6 +417,8 @@ const start = async () => {
   const focus = createFocus({
     window: shell.window,
     focusWhileInactive: isTestBackground,
+    // oxlint-disable-next-line no-use-before-define -- asked as focus moves, once both exist
+    overlayCoversPages: () => coversPage(overlays.current()),
     resolve: (target) => {
       switch (target.kind) {
         case "shell": {
@@ -618,7 +620,7 @@ const start = async () => {
     },
     updatePages: profiles.updatePages,
     onFocus: () => {
-      focus.noteFocused({ kind: "front" });
+      focus.frontFocused();
     },
     onOwnWindowFocus: (key) => {
       focus.noteFocused({ kind: "window", key });

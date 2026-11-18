@@ -26,6 +26,7 @@ const setup = () => {
   const focus = createFocus({
     window: { isFocused: () => true, isVisible: () => true, on: () => false },
     focusWhileInactive: false,
+    overlayCoversPages: () => false,
     resolve: (target) => {
       if (target.kind === "overlay") {
         // oxlint-disable-next-line no-use-before-define -- resolved when focus moves

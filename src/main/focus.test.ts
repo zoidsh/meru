@@ -7,7 +7,7 @@ import type { FocusTarget } from "./focus.ts";
 const setup = ({ focusWhileInactive = false } = {}) => {
   const listeners = new Map<string, (() => void)[]>();
   const focused: string[] = [];
-  const window = { focused: false, visible: false };
+  const window = { focused: false, visible: false, covered: false };
   /** The web contents there to focus, by name; a gone one is missing. */
   const present = new Set(["shell", "overlay", "front", "window"]);
 
@@ -26,6 +26,7 @@ const setup = ({ focusWhileInactive = false } = {}) => {
             focused.push(target.kind);
           }
         : undefined,
+    overlayCoversPages: () => window.covered,
   });
 
   const emit = (event: string) => {
@@ -119,6 +120,35 @@ describe(createFocus, () => {
     focus.giveBack();
 
     expect(focused).toStrictEqual(["front", "overlay", "front"]);
+  });
+
+  it("notes the front page gaining focus, but while a card or a menu covers the pages gives it to the overlay", () => {
+    const { focus, focused, window } = setup();
+
+    window.focused = true;
+    focus.frontFocused();
+    const noted = focus.focused();
+
+    focus.noteFocused(overlay);
+    window.covered = true;
+    focus.frontFocused();
+
+    expect([noted, focus.focused(), focused]).toStrictEqual([
+      { kind: "front" },
+      overlay,
+      ["overlay"],
+    ]);
+  });
+
+  it("gives focus another page took unasked to the overlay while a card or a menu covers the pages", () => {
+    const { focus, focused, window } = setup();
+
+    window.focused = true;
+    window.covered = true;
+    focus.noteFocused({ kind: "front" });
+    focus.giveBack();
+
+    expect(focused).toStrictEqual(["overlay"]);
   });
 
   it("never gives focus back to a tab's own window, but to the front tab's view", () => {

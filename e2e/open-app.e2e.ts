@@ -1,4 +1,5 @@
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { ElectronApplication, Locator, Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import {
   clickMenuItem,
@@ -11,7 +12,7 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
-import { ANY_SESSION, CALENDAR_TITLE } from "./lib/stand-in.ts";
+import { ANY_SESSION, CALENDAR_TITLE, GRABBY_PATH } from "./lib/stand-in.ts";
 
 const isMacOS = process.platform === "darwin";
 
@@ -309,4 +310,106 @@ test("Gmail, unpinned, closes like any tab, leaving No apps open, focus in the s
     ],
     "gmail",
   ]);
+});
+
+/**
+ * Which of the named pages holds Chromium's keyboard focus, each followed
+ * for real; main's `isFocused` is false for all under the test flag, whose
+ * app is never active.
+ */
+const focusHolders = async (pages: Record<string, Page>) => {
+  const holding = await Promise.all(
+    Object.entries(pages).map(async ([name, page]) =>
+      (await page.evaluate(() => document.hasFocus())) ? [name] : []
+    )
+  );
+
+  return holding.flat();
+};
+
+test("Open app's field has focus over a split whose other page takes focus as it loads and whenever it loses it, and keeps it once the pages settle", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const grabbyUrl = `${standIn.driveUrl}${GRABBY_PATH.slice(1)}`;
+
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
+          { id: "d", app: "drive", url: grabbyUrl, title: "" },
+        ],
+        selectedTabId: "d",
+        splits: [
+          {
+            root: {
+              direction: "row",
+              children: [
+                { size: 0.5, pane: "c" },
+                { size: 0.5, pane: "d" },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+  const app = await launchApp();
+  const calendar = await findPage(app, standIn.calendarUrl);
+  const grabby = await findPage(app, grabbyUrl);
+  const overlay = await findOverlayDocument(app);
+
+  // Every page as Chromium has it, so the stand-in's grab is real.
+  await followRealFocus(calendar);
+  await followRealFocus(grabby);
+  await followRealFocus(overlay);
+
+  /**
+   * Each page taking focus after a card took it, as a page's own grab does
+   * where the app is active, which the suite's never is; then the card's
+   * field has it, checked again a while later, since such a grab comes late.
+   */
+  const keepsFocus = async (field: Locator) => {
+    await expect(field).toBeFocused();
+
+    for (const url of [grabbyUrl, standIn.calendarUrl]) {
+      // oxlint-disable-next-line no-await-in-loop -- one page after the other
+      await app.evaluate(({ webContents }, pageUrl) => {
+        webContents
+          .getAllWebContents()
+          .find((contents) => contents.getURL().startsWith(pageUrl))
+          ?.focus();
+      }, url);
+    }
+
+    for (let check = 0; check < 5; check += 1) {
+      // oxlint-disable-next-line no-await-in-loop -- one check after another
+      await expect(field).toBeFocused();
+      // oxlint-disable-next-line no-await-in-loop -- one check after another
+      await expect
+        .poll(() => focusHolders({ calendar, grabby, overlay }))
+        .toStrictEqual(["overlay"]);
+      // oxlint-disable-next-line no-await-in-loop -- one check after another
+      await delay(200);
+    }
+  };
+
+  await expect
+    .poll(() => grabby.evaluate(() => document.activeElement?.id))
+    .toBe("grabby");
+  await pressOpenApp(app, grabbyUrl);
+  await expect(overlay.getByRole("dialog", { name: "Open app" })).toBeVisible();
+  await keepsFocus(overlay.getByRole("combobox", { name: "Open app" }));
+
+  await overlay.keyboard.press("Escape");
+  await expect(overlay.getByRole("dialog")).toHaveCount(0);
+  await clickMenuItem(app, "profile.rename");
+  await keepsFocus(overlay.getByRole("textbox", { name: "Rename profile" }));
 });

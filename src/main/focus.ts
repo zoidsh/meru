@@ -20,6 +20,11 @@ export interface FocusDeps {
   focusWhileInactive: boolean;
   /** What focuses `target`; nothing when it is gone or not showing. */
   resolve: (target: FocusTarget) => (() => void) | undefined;
+  /**
+   * Whether a card or a menu is open over the pages, which no page can be
+   * clicked through, so a page that takes focus took it unasked.
+   */
+  overlayCoversPages: () => boolean;
 }
 
 /**
@@ -31,6 +36,7 @@ export const createFocus = ({
   window,
   focusWhileInactive,
   resolve,
+  overlayCoversPages,
 }: FocusDeps) => {
   let focused: FocusTarget | undefined;
   let pending: readonly FocusTarget[] | undefined;
@@ -84,13 +90,40 @@ export const createFocus = ({
       flush();
     },
     /**
+     * Told as the main window's front page gains focus: noted, unless a card
+     * or a menu covers the pages, which takes it back, as a page that grabs
+     * focus for a field of its own would leave the card's field dead.
+     */
+    frontFocused: () => {
+      if (overlayCoversPages()) {
+        pending = [{ kind: "overlay" }];
+        flush();
+
+        return;
+      }
+
+      focused = { kind: "front" };
+
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+    /**
      * Gives focus back to the main window's web contents that held it, or
      * the front tab's view, after one took it unasked, as a pane's page can
      * as it first loads; a move already waiting for the window wins. Never
      * to a tab's own window, which would come forward over the main one.
+     * While a card or a menu covers the pages, the overlay takes it.
      */
     giveBack: () => {
       if (pending) {
+        return;
+      }
+
+      if (overlayCoversPages()) {
+        pending = [{ kind: "overlay" }];
+        flush();
+
         return;
       }
 

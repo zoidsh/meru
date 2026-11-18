@@ -73,6 +73,27 @@ export const ROTATION_PATH = "/RotateCookiesPage";
 
 export const ROTATION_TITLE = "Rotation stand-in";
 
+/**
+ * A Drive page whose field takes focus as it loads and again whenever it
+ * loses it, as Google's sign-in page does with its own.
+ */
+export const GRABBY_PATH = "/grabby";
+
+export const GRABBY_TITLE = "Grabby stand-in";
+
+export const GRABBY_FIELD = `<input id="grabby" aria-label="Email or phone">
+    <script>
+      const field = document.getElementById("grabby");
+      field.focus();
+      field.addEventListener("blur", () =>
+        setTimeout(() => {
+          window.focus();
+          field.focus();
+        }, 0)
+      );
+      window.addEventListener("focus", () => field.focus());
+    </script>`;
+
 export const page = (title: string, links: string) => `<!doctype html>
 <html lang="en">
   <head><meta charset="utf-8"><title>${title}</title></head>

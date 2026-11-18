@@ -38,6 +38,9 @@ import {
   FULL_MESSAGE_PATH,
   FULL_MESSAGE_TITLE,
   GMAIL_LINK_HASH,
+  GRABBY_FIELD,
+  GRABBY_PATH,
+  GRABBY_TITLE,
   NEXT_WEEK_PATH,
   OPENER_LINE,
   POPOUT_PATH,
@@ -330,7 +333,13 @@ export const startStandIn = async (): Promise<StandIn> => {
       [FRAME_PATH]: page("Frame", "<p>Notes</p>"),
     };
   }, current);
-  const drive = await listen(() => ({ "/": page(DRIVE_TITLE, "") }), current);
+  const drive = await listen(
+    () => ({
+      "/": page(DRIVE_TITLE, ""),
+      [GRABBY_PATH]: page(GRABBY_TITLE, GRABBY_FIELD),
+    }),
+    current
+  );
   const signInServer = await listen(
     () => ({
       [POPUP_PATH]: page(POPUP_TITLE, ELSEWHERE_LINK),
