@@ -2,6 +2,7 @@ import type { ShellState } from "#contract/shell.ts";
 import { ariaKeyShortcut, formatAccelerator } from "#core/accelerator.ts";
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
+import { viewFrame } from "#core/layout.ts";
 import { openableApps, splittableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
@@ -14,7 +15,7 @@ import type { TabStatus } from "#core/tab-machine.ts";
 import { tabMenuItems } from "#core/tab-menu.ts";
 import { findTab, splitOntoTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
-import { viewDrop } from "#core/view-drop.ts";
+import { inViewReach, viewDrop } from "#core/view-drop.ts";
 import type { Size } from "#core/window-bounds.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
@@ -315,9 +316,12 @@ export const createShellHandlers = ({
   },
   aimTab: ({ profileId, tabId, point }) => {
     const state = profiles.get();
+    const size = pageSize();
     const drop =
-      point && profileId === state.selectedProfileId
-        ? viewDrop(selectedProfile(state), pageSize(), point, tabId)
+      point &&
+      profileId === state.selectedProfileId &&
+      inViewReach(size, viewFrame(sidebar.current()).inset, point)
+        ? viewDrop(selectedProfile(state), size, point, tabId)
         : undefined;
 
     if (drop) {
@@ -338,8 +342,12 @@ export const createShellHandlers = ({
       overlays.close();
     }
 
-    if (profileId === profiles.get().selectedProfileId) {
-      await profiles.dropInView({ profileId, tabId }, pageSize(), { x, y });
+    const size = pageSize();
+
+    if (!inViewReach(size, viewFrame(sidebar.current()).inset, { x, y })) {
+      log(`Refused to drop tab ${profileId}/${tabId} outside the page area`);
+    } else if (profileId === profiles.get().selectedProfileId) {
+      await profiles.dropInView({ profileId, tabId }, size, { x, y });
     } else {
       log(
         `Refused to drop tab ${profileId}/${tabId} of a profile not selected`

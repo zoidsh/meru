@@ -108,6 +108,20 @@ const alongEdge = (
 };
 
 /**
+ * Whether `point`, in the page area of `size`, lies in it or in the
+ * window's `inset` around it, where the shell reports a drag over the pages.
+ */
+export const inViewReach = (
+  size: Size,
+  inset: { top: number; right: number; bottom: number; left: number },
+  { x, y }: { x: number; y: number }
+) =>
+  x >= -inset.left &&
+  x <= size.width + inset.right &&
+  y >= -inset.top &&
+  y <= size.height + inset.bottom;
+
+/**
  * What dropping `tabId`, dragged with the pointer at `point` over the
  * selected profile's page area of `size`, does; `point` is in the area,
  * whose top left is 0, 0, and may lie past its edges in the window's inset.

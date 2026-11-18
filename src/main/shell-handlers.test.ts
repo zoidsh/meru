@@ -344,6 +344,10 @@ describe(createShellHandlers, () => {
     await shell.handlers.dropTab({ ...key, x: 900, y: 300 });
     await shell.handlers.aimTab({ ...key, point: null });
     await shell.handlers.dropTab({ profileId: "b", tabId: "t1", x: 1, y: 1 });
+    // Further outside the page area than the window's inset.
+    await shell.handlers.aimTab({ ...key, point: { x: -900, y: 300 } });
+    await shell.handlers.aimTab({ ...key, point: { x: 900, y: 620 } });
+    await shell.handlers.dropTab({ ...key, x: -900, y: 300 });
 
     expect([shell.overlays, shell.calls, shell.logged]).toStrictEqual([
       [
@@ -354,7 +358,10 @@ describe(createShellHandlers, () => {
         "closed",
       ],
       [["dropInView", key, { width: 1000, height: 600 }, { x: 900, y: 300 }]],
-      ["Refused to drop tab b/t1 of a profile not selected"],
+      [
+        "Refused to drop tab b/t1 of a profile not selected",
+        "Refused to drop tab a/t1 outside the page area",
+      ],
     ]);
   });
 
