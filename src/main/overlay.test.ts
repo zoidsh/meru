@@ -80,6 +80,7 @@ const setup = () => {
   };
 
   adopt();
+  events.length = 0;
 
   return {
     overlays,
@@ -254,6 +255,18 @@ describe(createOverlays, () => {
 
     expect(overlays.current()).toBeUndefined();
     expect(events.at(-2)).toBe("shell told closed");
+  });
+
+  it("tells its followers of a view adopted after the shell reloads, opening nothing itself", () => {
+    const { overlays, events, destroy, adopt } = setup();
+
+    overlays.open({ kind: "toast", message: "no-room" });
+    destroy();
+    events.length = 0;
+    adopt();
+
+    expect(events).toStrictEqual(["shell told closed"]);
+    expect(overlays.current()).toBeUndefined();
   });
 
   it("places the open view again when asked", () => {

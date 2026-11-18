@@ -58,22 +58,28 @@ const setup = () => {
     log: () => false,
   });
 
-  overlays.adopt({
-    webContentsId: 3,
-    setBounds: () => false,
-    show: () => false,
-    hide: () => false,
-    focus: () => {
-      focused.push("overlay");
-      focus.noteFocused({ kind: "overlay" });
-    },
-    onFocus: () => false,
-    onKey: () => false,
-    onGone: () => false,
-    moveUnder: () => false,
-    moveOver: () => false,
-    close: () => false,
-  });
+  let viewGone: (() => void) | undefined;
+  const adoptView = () =>
+    overlays.adopt({
+      webContentsId: 3,
+      setBounds: () => false,
+      show: () => false,
+      hide: () => false,
+      focus: () => {
+        focused.push("overlay");
+        focus.noteFocused({ kind: "overlay" });
+      },
+      onFocus: () => false,
+      onKey: () => false,
+      onGone: (listener) => {
+        viewGone = listener;
+      },
+      moveUnder: () => false,
+      moveOver: () => false,
+      close: () => false,
+    });
+
+  adoptView();
 
   const find = createFind({
     pages: {
@@ -125,6 +131,11 @@ const setup = () => {
       find.follow();
     },
     lastId: () => requestId,
+    /** The shell's renderer dies, its overlay view with it, and loads again. */
+    reloadShell: () => {
+      viewGone?.();
+      adoptView();
+    },
     /** The tab's page fails or crashes, or shows again. */
     breakPage: (key: TabKey, isBroken: boolean) => {
       const id = `${key.profileId}/${key.tabId}`;
@@ -146,6 +157,26 @@ const setup = () => {
 };
 
 describe(createFind, () => {
+  it("shows the front tab's bar again in the overlay's new view once the shell is back, its term and count kept and the search not run again", () => {
+    const { find, overlays, asked, lastId, reloadShell } = setup();
+
+    find.open();
+    find.type("pear");
+    find.found(mail, { requestId: lastId(), ordinal: 2, matches: 5 });
+
+    const searches = asked.length;
+
+    reloadShell();
+
+    const bar = find.current();
+
+    expect([
+      overlays.current(),
+      bar && [bar.term, bar.ordinal, bar.matches],
+      asked.length,
+    ]).toStrictEqual([{ kind: "find", ...mail }, ["pear", 2, 5], searches]);
+  });
+
   it("opens the bar of the tab in its own window there, not in the overlay, and steps, counts and closes it with focus back on that window's page", () => {
     const { find, overlays, asked, focused, lastId } = setup();
 

@@ -134,6 +134,8 @@ export const createOverlays = ({
           }
         }
       });
+      // What follows the overlays, the find bar, opens again in it.
+      notify();
     },
     /**
      * Opens `overlay` in place of what is open; without `takeFocus` it
