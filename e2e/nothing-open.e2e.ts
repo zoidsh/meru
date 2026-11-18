@@ -82,6 +82,38 @@ test("a profile with no app open says Sign in required while its account is sign
     ]);
 });
 
+test("a 64-character name with no space wraps inside the description's column", async ({
+  launchApp,
+  userDataDir,
+}) => {
+  const name = "W".repeat(64);
+
+  await writeState(userDataDir, {
+    profiles: [{ id: "p0", name, tabs: [], selectedTabId: "" }],
+    selectedProfileId: "p0",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const description = shell
+    .getByRole("region", { name: "Sign in required" })
+    .getByText(`${name}'s Google account is signed out`);
+
+  await expect(description).toBeVisible();
+  expect(
+    await description.evaluate((element) => {
+      const column = element.parentElement?.getBoundingClientRect();
+      const own = element.getBoundingClientRect();
+
+      return [
+        element.scrollWidth <= element.clientWidth,
+        own.left >= (column?.left ?? Infinity),
+        own.right <= (column?.right ?? -Infinity),
+      ];
+    })
+  ).toStrictEqual([true, true, true]);
+});
+
 test("a profile with no app open shows nothing there until its first poll ends", async ({
   launchApp,
   standIn,

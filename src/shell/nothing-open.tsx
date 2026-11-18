@@ -28,7 +28,7 @@ export const NothingOpen = () => {
   );
 
   // Until the first poll ends either state could be the wrong one.
-  if (!profile || profile.mail.status === "unknown") {
+  if (!profiles || !profile || profile.mail.status === "unknown") {
     return null;
   }
 
@@ -42,7 +42,7 @@ export const NothingOpen = () => {
       comment:
         "Description under Sign in required in the page area of a profile with no app open; {name} is the profile's name",
     });
-  } else if ((profiles?.profiles.length ?? 0) > 1) {
+  } else if (profiles.profiles.length > 1) {
     description = t({
       message: `Open Gmail, Calendar or another Google app in ${name}.`,
       comment:
@@ -79,7 +79,9 @@ export const NothingOpen = () => {
               )}
             </h1>
           </EmptyTitle>
-          <EmptyDescription>{description}</EmptyDescription>
+          <EmptyDescription className="wrap-anywhere">
+            {description}
+          </EmptyDescription>
         </EmptyHeader>
         <EmptyContent className="flex-row justify-center gap-2">
           {signedOut && (
