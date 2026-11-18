@@ -35,14 +35,14 @@ export interface OpenedTab {
   tabId: string;
 }
 
-/**
- * Opens `url` as a tab of `app` in the profile, selected: appended, or for a
- * single-instance app with a tab already, that tab, given the URL.
- */
 /** Gmail's tab keeps its id however often it is closed and opened again. */
 export const newTabId = (app: App, newId: () => string) =>
   app.id === "gmail" ? GMAIL_TAB_ID : newId();
 
+/**
+ * Opens `url` as a tab of `app` in the profile, selected: appended, or for a
+ * single-instance app with a tab already, that tab, given the URL.
+ */
 export const openTab = (
   state: State,
   profileId: string,

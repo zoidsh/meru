@@ -6,8 +6,7 @@ import type { TabKey } from "./tabs.ts";
 /**
  * Whether a profile's Open at Launch tabs open now, once a session: the
  * selected profile's, so each profile's open when it is first selected and
- * launch loads no page for the others, whose mail needs none. Every profile,
- * as v3 loads them, would be `() => true`.
+ * launch loads no page for the others, whose mail needs none.
  */
 export const opensLaunchTabs = (profile: Profile, state: State) =>
   profile.id === state.selectedProfileId;
@@ -33,8 +32,7 @@ export interface ViewPlan {
 export const planViews = (
   state: State,
   existing: readonly string[],
-  launched: ReadonlySet<string>,
-  opensLaunch: (profile: Profile, state: State) => boolean
+  launched: ReadonlySet<string>
 ): ViewPlan => {
   const profile = selectedProfile(state);
   const shown = knownTabs(profile);
@@ -42,7 +40,8 @@ export const planViews = (
     ? { profileId: profile.id, tabId: profile.selectedTabId }
     : undefined;
   const launching = state.profiles.filter(
-    (candidate) => !launched.has(candidate.id) && opensLaunch(candidate, state)
+    (candidate) =>
+      !launched.has(candidate.id) && opensLaunchTabs(candidate, state)
   );
   const opening = launching.flatMap((candidate) =>
     knownTabs(candidate)

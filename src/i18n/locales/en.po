@@ -413,7 +413,6 @@ msgid "Paste and Match Style"
 msgstr "Paste and Match Style"
 
 #. Menu item in the Tabs menu that pins the selected tab, which keeps it from closing
-#. Menu item in the Tabs menu that pins the selected tab, which keeps it from closing
 #: src/main/commands.ts
 msgid "Pin Tab"
 msgstr "Pin Tab"

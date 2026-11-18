@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { gmailTab, newProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
-import { opensLaunchTabs, planViews } from "./views.ts";
+import { planViews } from "./views.ts";
 
 const tab = (id: string, app = "calendar", pins: Partial<Tab> = {}): Tab => ({
   id,
@@ -47,9 +47,8 @@ const keys = (list: readonly { profileId: string; tabId: string }[]) =>
 const plan = (
   current: State,
   existing: string[] = [],
-  launched: string[] = [],
-  opensLaunch = opensLaunchTabs
-) => planViews(current, existing, new Set(launched), opensLaunch);
+  launched: string[] = []
+) => planViews(current, existing, new Set(launched));
 
 describe(planViews, () => {
   it("at first gives the selected tab a view and opens the selected profile's Open at Launch tabs alone", () => {
@@ -82,14 +81,6 @@ describe(planViews, () => {
       ["a/gmail", "a/a1", "b/gmail", "b/b1", "b/b2"],
     ]);
     expect([keys(backToA.opening), backToA.launched]).toStrictEqual([[], []]);
-  });
-
-  it("opens every profile's at launch when the predicate says so, as v3 did", () => {
-    expect(keys(plan(state, [], [], () => true).opening)).toStrictEqual([
-      "a/gmail",
-      "b/gmail",
-      "b/b2",
-    ]);
   });
 
   it("has no front for a profile with no tab", () => {

@@ -23,6 +23,7 @@ import {
   canRemoveProfile,
   isPinned,
   knownTabs,
+  opensAtLaunch,
   selectedProfile,
 } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
@@ -429,8 +430,8 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Menu item in the Tabs menu that pins the selected tab, which keeps it from closing",
       }),
-    label: ({ state }) => {
-      const tab = findTab(state, selectedTab(state));
+    label(context) {
+      const tab = findTab(context.state, selectedTab(context.state));
 
       return tab && isPinned(tab)
         ? t({
@@ -438,11 +439,7 @@ export const COMMANDS: readonly Command[] = [
             comment:
               "Menu item in the Tabs menu, in place of Pin Tab while the selected tab is pinned, that unpins it so it can close",
           })
-        : t({
-            message: "Pin Tab",
-            comment:
-              "Menu item in the Tabs menu that pins the selected tab, which keeps it from closing",
-          });
+        : this.title();
     },
     isAvailable: ({ state }) =>
       findTab(state, selectedTab(state)) !== undefined,
@@ -469,7 +466,7 @@ export const COMMANDS: readonly Command[] = [
     isChecked: ({ state }) => {
       const tab = findTab(state, selectedTab(state));
 
-      return tab !== undefined && isPinned(tab) && tab.openAtLaunch === true;
+      return tab !== undefined && opensAtLaunch(tab);
     },
     run: ({ state }, { setTabOpenAtLaunch }) => {
       const key = selectedTab(state);

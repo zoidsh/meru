@@ -9,7 +9,7 @@ import { showsView, transition } from "#core/tab-machine.ts";
 import type { TabEffect, TabEvent, TabStatus } from "#core/tab-machine.ts";
 import { findTab, newTabId, tabKey } from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
-import { opensLaunchTabs, planViews } from "#core/views.ts";
+import { planViews } from "#core/views.ts";
 import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
 import type { WindowOpenRoute } from "#core/window-open.ts";
 import type {
@@ -474,12 +474,7 @@ export const createTabViews = ({
   return {
     /** Creates, closes, shows and hides views until the window matches. */
     reconcile: (current: State) => {
-      const plan = planViews(
-        current,
-        [...tabs.keys()],
-        launched,
-        opensLaunchTabs
-      );
+      const plan = planViews(current, [...tabs.keys()], launched);
       const planned = new Map(plan.views.map((key) => [tabKey(key), key]));
       let changed = false;
 

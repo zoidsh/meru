@@ -31,13 +31,13 @@ describe(sidebarRule, () => {
   });
 
   it("counts a pinned tab toward shown but not toward wide", () => {
-    const [docs, pinnedDocs] = apps("docs", "docs").map((tab, index) => ({
+    const onePinned = apps("docs", "docs").map((tab, index) => ({
       ...tab,
       pinned: index === 1,
     }));
 
     expect([
-      sidebarRule([docs as never, pinnedDocs as never]),
+      sidebarRule(onePinned),
       sidebarRule([{ ...gmailTab() }]),
     ]).toStrictEqual(["narrow", "hidden"]);
   });

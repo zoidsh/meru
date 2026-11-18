@@ -545,6 +545,9 @@ describe(createTabViews, () => {
     });
     const link = `${GMAIL}/#inbox/abc`;
 
+    // Calendar is in front, and Gmail, off at launch, has no view yet.
+    expect(window.live()).toStrictEqual([["persist:a", CALENDAR, true]]);
+
     window.viewOf("persist:a")?.options.onWindowOpen(link);
     await vi.advanceTimersByTimeAsync(0);
 

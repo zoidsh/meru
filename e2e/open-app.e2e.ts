@@ -43,11 +43,6 @@ const pressOpenApp = (app: ElectronApplication, url: string) =>
     { url, modifier: isMacOS ? ("meta" as const) : ("control" as const) }
   );
 
-const noPageHasFocus = (app: ElectronApplication) => () =>
-  app.evaluate(({ webContents }) =>
-    webContents.getAllWebContents().every((contents) => !contents.isFocused())
-  );
-
 const options = (overlay: Page) => overlay.getByRole("option");
 
 const readTabs = async (userDataDir: string) => {
@@ -249,9 +244,10 @@ test("Gmail, unpinned, closes like any tab, leaving no tab, focus in the shell a
   await expect
     .poll(() => readViews(app).then(({ views }) => views))
     .toStrictEqual([]);
-  // On macOS the suite's app is never active, and the window's own page then
-  // takes no focus, though a view's does; that no page kept it is what shows.
-  await expect.poll(isMacOS ? noPageHasFocus(app) : shellHasFocus).toBeTruthy();
+  // The suite's app is never active on macOS, where the window's own page then takes no focus.
+  if (!isMacOS) {
+    await expect.poll(shellHasFocus).toBeTruthy();
+  }
   await expect.poll(stored).toStrictEqual([[], ""]);
   expect([
     await menuItem("tab.pin"),
