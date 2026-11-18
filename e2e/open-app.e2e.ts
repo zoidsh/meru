@@ -127,6 +127,12 @@ test("Cmd or Ctrl+T opens New tab over the page, listing every app but the profi
   await expect(overlay.getByRole("dialog")).toHaveCount(0);
 
   await pressOpenApp(app, standIn.calendarUrl);
+  // Home first, since the pointer resting over the card may have
+  // highlighted a row, as on Windows and Linux.
+  await field.press("Home");
+  await expect(
+    overlay.getByRole("option", { name: "Calendar", selected: true })
+  ).toBeVisible();
   await field.press("ArrowDown");
   await field.press("ArrowDown");
   await field.press("ArrowUp");
