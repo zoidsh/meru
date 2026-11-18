@@ -7,12 +7,12 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
-#. Accessible name of a profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, then how many messages are unread
+#. Accessible name of a profile's button in the title bar, read by screen readers, while its inbox has unread mail; {name} is the profile's name, # how many messages are unread
 #: src/shell/titlebar.tsx
 msgid "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
 msgstr "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
 
-#. Accessible name of a sleeping profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, that it sleeps, then how many messages are unread
+#. Accessible name of a profile's button in the title bar, read by screen readers, while the profile sleeps and its inbox has unread mail; {name} is the profile's name, # how many messages are unread
 #: src/shell/titlebar.tsx
 msgid "{count, plural, one {{name}, asleep, # unread message} other {{name}, asleep, # unread messages}}"
 msgstr "{count, plural, one {{name}, asleep, # unread message} other {{name}, asleep, # unread messages}}"
@@ -49,6 +49,16 @@ msgstr "{MAX_SHOWN_UNREAD}+"
 msgid "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 msgstr "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 
+#. Tooltip of a profile's button in the title bar while the profile sleeps: its pages are closed, its mail still checked; {name} is the profile's name
+#: src/shell/titlebar.tsx
+msgid "{name} · asleep"
+msgstr "{name} · asleep"
+
+#. Tooltip of a profile's button in the title bar while the profile sleeps and its Google account is signed out; {name} is the profile's name
+#: src/shell/titlebar.tsx
+msgid "{name} · asleep · sign in required"
+msgstr "{name} · asleep · sign in required"
+
 #. A profile in the tray's menu with its unread count; {name} is the profile's name and {count} the number of unread messages
 #: src/main/tray.ts
 msgid "{name} ({count})"
@@ -74,17 +84,17 @@ msgstr "{name} loads by itself when you’re back online."
 msgid "{name} stopped working"
 msgstr "{name} stopped working"
 
-#. Tooltip of a profile's button in the title bar while it sleeps: its pages are closed, its mail still checked
+#. Accessible name of a profile's button in the title bar, read by screen readers, while the profile sleeps: its pages are closed, its mail still checked; {name} is the profile's name
 #: src/shell/titlebar.tsx
 msgid "{name}, asleep"
 msgstr "{name}, asleep"
 
-#. Accessible name and tooltip of a profile's button in the title bar while it sleeps and its Google account is signed out
+#. Accessible name of a profile's button in the title bar, read by screen readers, while the profile sleeps and its Google account is signed out; {name} is the profile's name
 #: src/shell/titlebar.tsx
 msgid "{name}, asleep, sign in required"
 msgstr "{name}, asleep, sign in required"
 
-#. Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out
+#. Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out; {name} is the profile's name
 #: src/shell/titlebar.tsx
 msgid "{name}, sign in required"
 msgstr "{name}, sign in required"

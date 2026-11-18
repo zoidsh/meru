@@ -234,51 +234,73 @@ const useProfileLabels = (
   count: number
 ) => {
   const { t } = useLingui();
-  let tooltip = name;
 
   if (asleep && signedOut) {
-    tooltip = t({
-      message: `${name}, asleep, sign in required`,
-      comment:
-        "Accessible name and tooltip of a profile's button in the title bar while it sleeps and its Google account is signed out",
-    });
-  } else if (asleep) {
-    tooltip = t({
-      message: `${name}, asleep`,
-      comment:
-        "Tooltip of a profile's button in the title bar while it sleeps: its pages are closed, its mail still checked",
-    });
-  } else if (signedOut) {
-    tooltip = t({
+    return {
+      label: t({
+        message: `${name}, asleep, sign in required`,
+        comment:
+          "Accessible name of a profile's button in the title bar, read by screen readers, while the profile sleeps and its Google account is signed out; {name} is the profile's name",
+      }),
+      tooltip: t({
+        message: `${name} · asleep · sign in required`,
+        comment:
+          "Tooltip of a profile's button in the title bar while the profile sleeps and its Google account is signed out; {name} is the profile's name",
+      }),
+    };
+  }
+
+  if (signedOut) {
+    const label = t({
       message: `${name}, sign in required`,
       comment:
-        "Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out",
+        "Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out; {name} is the profile's name",
     });
+
+    return { label, tooltip: label };
   }
 
-  if (signedOut || count === 0) {
-    return { label: tooltip === name ? undefined : tooltip, tooltip };
-  }
-
-  const label = asleep
+  const tooltip = asleep
     ? t({
-        message: plural(count, {
-          one: `${name}, asleep, # unread message`,
-          other: `${name}, asleep, # unread messages`,
-        }),
+        message: `${name} · asleep`,
         comment:
-          "Accessible name of a sleeping profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, that it sleeps, then how many messages are unread",
+          "Tooltip of a profile's button in the title bar while the profile sleeps: its pages are closed, its mail still checked; {name} is the profile's name",
       })
-    : t({
-        message: plural(count, {
-          one: `${name}, # unread message`,
-          other: `${name}, # unread messages`,
-        }),
-        comment:
-          "Accessible name of a profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, then how many messages are unread",
-      });
+    : name;
 
-  return { label, tooltip };
+  if (count > 0) {
+    return {
+      label: asleep
+        ? t({
+            message: plural(count, {
+              one: `${name}, asleep, # unread message`,
+              other: `${name}, asleep, # unread messages`,
+            }),
+            comment:
+              "Accessible name of a profile's button in the title bar, read by screen readers, while the profile sleeps and its inbox has unread mail; {name} is the profile's name, # how many messages are unread",
+          })
+        : t({
+            message: plural(count, {
+              one: `${name}, # unread message`,
+              other: `${name}, # unread messages`,
+            }),
+            comment:
+              "Accessible name of a profile's button in the title bar, read by screen readers, while its inbox has unread mail; {name} is the profile's name, # how many messages are unread",
+          }),
+      tooltip,
+    };
+  }
+
+  return {
+    label: asleep
+      ? t({
+          message: `${name}, asleep`,
+          comment:
+            "Accessible name of a profile's button in the title bar, read by screen readers, while the profile sleeps: its pages are closed, its mail still checked; {name} is the profile's name",
+        })
+      : undefined,
+    tooltip,
+  };
 };
 
 /** Asks for the profile's menu at a point of the window. */
