@@ -1,11 +1,13 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  clickMenuItem,
   expect,
   findOverlayDocument,
   findPage,
   readState,
   test,
+  writeState,
 } from "./lib/app.ts";
 import { CALENDAR_TITLE } from "./lib/stand-in.ts";
 
@@ -64,6 +66,7 @@ test("Cmd or Ctrl+T opens Open app over the page, listing every app but the prof
   await expect(overlay.getByRole("dialog", { name: "Open app" })).toBeVisible();
   await expect(field).toBeFocused();
   await expect.poll(overlayHasFocus).toBeTruthy();
+  await expect(overlay.getByRole("listbox", { name: "Apps" })).toBeVisible();
   await expect(options(overlay)).toHaveText([
     "Calendar",
     "Drive",
@@ -110,7 +113,9 @@ test("Cmd or Ctrl+T opens Open app over the page, listing every app but the prof
     "Slides",
     "Meet",
   ]);
-  await pressOpenApp(app, standIn.calendarUrl);
+  // A person's second press lands in the overlay's document, which only the
+  // menu's accelerator hears.
+  await clickMenuItem(app, "app.open");
   await expect(overlay.getByRole("dialog")).toHaveCount(0);
 
   await pressOpenApp(app, standIn.calendarUrl);
@@ -130,10 +135,23 @@ test("Cmd or Ctrl+T opens Open app over the page, listing every app but the prof
     .toStrictEqual(["gmail", "calendar", "drive"]);
 });
 
-test("Open app is first in the titlebar's right-hand group while the sidebar is hidden and below the last tab while it shows, pressed while open, and a second click closes it", async ({
-  app,
-  shell,
+test("Open app is first in the titlebar's right-hand group while the sidebar is hidden and below the last tab while it shows, pressed while open; a second click closes it, and Escape gives focus back to the page", async ({
+  launchApp,
+  standIn,
+  userDataDir,
 }) => {
+  await writeState(userDataDir, {
+    profiles: [
+      { id: "a", name: "Default" },
+      { id: "b", name: "Work" },
+    ],
+    selectedProfileId: "a",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const gmail = await findPage(app, standIn.url);
+  const gmailHasFocus = await followRealFocus(gmail);
   const overlay = await findOverlayDocument(app);
   const header = shell.getByRole("banner", { name: "Title bar" });
   const titlebarButton = header.getByRole("button", { name: "Open app" });
@@ -141,12 +159,23 @@ test("Open app is first in the titlebar's right-hand group while the sidebar is 
   const dialog = overlay.getByRole("dialog", { name: "Open app" });
 
   await expect(titlebarButton).toHaveAttribute("title", /^Open app \(.+T\)$/u);
-  const [open, moon] = await Promise.all([
-    titlebarButton.boundingBox(),
-    header.getByRole("button", { name: "Do Not Disturb" }).boundingBox(),
-  ]);
 
-  expect((open?.x ?? 0) < (moon?.x ?? 0)).toBeTruthy();
+  const [open, inbox] = await Promise.all(
+    [titlebarButton, header.getByRole("button", { name: "Unified inbox" })].map(
+      (button) => button.boundingBox()
+    )
+  );
+
+  // Right before Unified inbox, 4px apart.
+  expect(
+    Math.round((inbox?.x ?? 0) - (open?.x ?? 0) - (open?.width ?? 0))
+  ).toBe(4);
+
+  await titlebarButton.click();
+  await expect(dialog).toBeVisible();
+  await overlay.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect.poll(gmailHasFocus).toBeTruthy();
 
   await titlebarButton.click();
   await expect(dialog).toBeVisible();
@@ -159,7 +188,6 @@ test("Open app is first in the titlebar's right-hand group while the sidebar is 
   await expect(sidebar).toBeVisible();
   await expect(titlebarButton).toHaveCount(0);
 
-  // The titlebar's is gone, so this is the sidebar's.
   const sidebarButton = shell.getByRole("button", { name: "Open app" });
 
   await expect(sidebarButton).toHaveCount(1);

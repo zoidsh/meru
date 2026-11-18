@@ -61,7 +61,13 @@ export const OpenAppOverlay = ({
           // Not by viewport: this document's is the overlay's own view.
           className="text-sm"
         />
-        <CommandList>
+        <CommandList
+          label={t({
+            message: "Apps",
+            comment:
+              "Accessible name of the list of Google's apps under the Open app search field, read by screen readers",
+          })}
+        >
           <CommandEmpty>
             <Trans comment="Said in the list of Google's apps over the page when none has a name holding what was typed">
               No apps found.

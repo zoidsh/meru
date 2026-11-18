@@ -99,6 +99,11 @@ msgstr "Actual Size"
 msgid "Add Profile"
 msgstr "Add Profile"
 
+#. Accessible name of the list of Google's apps under the Open app search field, read by screen readers
+#: src/shell/open-app.tsx
+msgid "Apps"
+msgstr "Apps"
+
 #. Button on a new email notification that archives the email. Gmail's own word for the action
 #: src/main/notifications.ts
 msgid "Archive"
