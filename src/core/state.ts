@@ -185,10 +185,12 @@ export const opensAtLaunch = (tab: Tab) =>
   isPinned(tab) && tab.openAtLaunch === true;
 
 /**
- * Whether the tab was moved to a window of its own, pinned or not. Anything
- * but `true` reads as not, and stays as found until the tab is moved.
+ * Whether the tab was moved to a window of its own. Anything but `true`
+ * reads as not, and a pinned tab never is, since a pinned app cannot be
+ * moved; either stays as found until the tab is moved.
  */
-export const inOwnWindow = (tab: Tab) => tab.ownWindow === true;
+export const inOwnWindow = (tab: Tab) =>
+  tab.ownWindow === true && !isPinned(tab);
 
 /**
  * Where the tab's own window last was, kept after it moves back so it opens

@@ -328,14 +328,14 @@ describe("decoding tabs", () => {
     ).toStrictEqual({ ids: ["t1", "t2"], selected: "t2" });
   });
 
-  it("reads a tab as in its own window only for true, pinned or not", () => {
+  it("reads a tab as in its own window only for true, and never a pinned one", () => {
     expect(
       [
         { ...tab("t1", "calendar"), ownWindow: true },
         { ...tab("t2", "calendar"), ownWindow: "yes" },
         { ...tab("t3", "calendar"), ownWindow: true, pinned: true },
       ].map(inOwnWindow)
-    ).toStrictEqual([true, false, true]);
+    ).toStrictEqual([true, false, false]);
   });
 
   it("reads where a tab's own window was only from four finite numbers", () => {

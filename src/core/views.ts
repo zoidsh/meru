@@ -92,10 +92,9 @@ export const planViews = (
     (candidate) =>
       !launched.has(candidate.id) && opensLaunchTabs(candidate, state)
   );
-  // One in its own window opens there, with `windows`.
   const opening = launching.flatMap((candidate) =>
     knownTabs(candidate)
-      .filter((tab) => opensAtLaunch(tab) && !inOwnWindow(tab))
+      .filter(opensAtLaunch)
       .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
   );
   const opensNow = new Set(launching.map((candidate) => candidate.id));

@@ -33,15 +33,23 @@ interface StoredTab {
   windowBounds?: unknown;
 }
 
-/** Gmail, Calendar, selected, and Drive, with `fields` added to the profile. */
-const seed = (userDataDir: string, standIn: StandIn, fields: object = {}) =>
+/**
+ * Gmail, Calendar, selected, and Drive, with `fields` added to the profile
+ * and `gmail` to Gmail's tab.
+ */
+const seed = (
+  userDataDir: string,
+  standIn: StandIn,
+  fields: object = {},
+  gmail: object = {}
+) =>
   writeState(userDataDir, {
     profiles: [
       {
         id: "p",
         name: "Default",
         tabs: [
-          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          { id: "gmail", app: "gmail", url: standIn.url, title: "", ...gmail },
           { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
           { id: "d", app: "drive", url: standIn.driveUrl, title: "" },
         ],
@@ -426,12 +434,17 @@ const mainWindowVisible = (app: ElectronApplication) =>
     )
   );
 
-test("Gmail, pinned, moves to its own window keeping its pin and its mark on the tile, and goes on counting and notifying its mail and opening and closing its pop-outs", async ({
+test("Gmail, unpinned, moves to its own window and goes on counting and notifying its mail and opening and closing its pop-outs", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  await seed(userDataDir, standIn, { selectedTabId: "gmail" });
+  await seed(
+    userDataDir,
+    standIn,
+    { selectedTabId: "gmail" },
+    { pinned: false }
+  );
   standIn.setFeed(ANY_SESSION, listing("1"));
 
   const app = await launchApp();

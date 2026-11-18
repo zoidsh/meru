@@ -253,7 +253,7 @@ describe("the command registry", () => {
     expect(app.profiles.get().profiles[0]?.tabs).toStrictEqual([gmailTab()]);
   });
 
-  it("moves the selected tab to a window of its own, a pinned one too, and back from that window, selected", async () => {
+  it("moves the selected tab to a window of its own, never a pinned one, and back from that window, selected", async () => {
     const app = setup();
     const calendar = { profileId: "a", tabId: "c1" };
     const offered = [app.isAvailable("tab.moveToNewWindow")];
@@ -277,7 +277,7 @@ describe("the command registry", () => {
       app.profiles.get().profiles[0]?.tabs.filter(isTab)[1]?.ownWindow,
       selected(app.profiles.get()),
     ]).toStrictEqual([
-      [true, true, true],
+      [false, true, true],
       [true, ["a", "gmail"], false],
       undefined,
       ["a", "c1"],

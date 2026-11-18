@@ -543,20 +543,14 @@ describe(moveToOwnWindow, () => {
     ).toStrictEqual([["c1", "d1"], "gmail"]);
   });
 
-  it("moves a pinned tab, Gmail's included, keeping its pin", () => {
-    const gmail = tabsOf(moveToOwnWindow(three("gmail"), key("gmail")))
-      ?.tabs[0];
-
-    expect([gmail?.ownWindow, gmail?.pinned]).toStrictEqual([true, true]);
-  });
-
-  it("refuses a tab already moved and one that is missing", () => {
+  it("refuses a pinned tab, one already moved and one that is missing", () => {
     const once = out(three("gmail"), "c1");
 
     expect([
+      moveToOwnWindow(three("gmail"), key("gmail")),
       moveToOwnWindow(once, key("c1")),
       moveToOwnWindow(once, key("gone")),
-    ]).toStrictEqual([undefined, undefined]);
+    ]).toStrictEqual([undefined, undefined, undefined]);
   });
 
   it("takes a tab out of its split first", () => {
