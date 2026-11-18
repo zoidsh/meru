@@ -138,6 +138,15 @@ const releaseUntold = async (
   });
 };
 
+/** Gives the page at `url` keyboard focus, as a click in it would. */
+const focusPage = (app: ElectronApplication, url: string) =>
+  app.evaluate(({ webContents }, prefix) => {
+    webContents
+      .getAllWebContents()
+      .find((candidate) => candidate.getURL().startsWith(prefix))
+      ?.focus();
+  }, url);
+
 /** Presses Maximize's shortcut in the page at `url`, as the system hands it the key. */
 const pressMaximize = (app: ElectronApplication, url: string) =>
   app.evaluate(
@@ -331,6 +340,13 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
   const evenFill = await boxFill(shell);
 
   expect(await readMenuLabel(first, "tab.maximize")).toBe("Maximize Pane");
+  // The key goes to the page with focus, as a click there gives it; which
+  // pane's page holds focus after launch differs by platform.
+  await focusPage(first, standIn.calendarUrl);
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
   await pressMaximize(first, standIn.calendarUrl);
   await expect
     .poll(() => shownWidths(first).then((shown) => shown.map(({ url }) => url)))
