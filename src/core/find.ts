@@ -51,33 +51,54 @@ export interface FindState {
 
 export const NO_FIND: FindState = { bars: {}, front: undefined, opens: 0 };
 
-/** The front tab's bar while it is open, the one that shows. */
-export const shownBar = ({ bars, front }: FindState) => {
-  const bar = front && bars[tabKey(front)];
+/**
+ * The tab's bar while it is open, the one that shows over its page, in its
+ * own window: a tab there is never the front, and its window shows it alone.
+ */
+export const openBar = ({ bars }: FindState, key: TabKey) => {
+  const bar = bars[tabKey(key)];
 
   return bar && bar.open ? bar : undefined;
 };
 
-/** Whether Find Next and Previous have a term to go on with on the front tab. */
-export const canGoOn = (state: FindState) => {
-  const bar = state.front && state.bars[tabKey(state.front)];
+/** The front tab's bar while it is open, the one that shows in the main window. */
+export const shownBar = (state: FindState) =>
+  state.front && openBar(state, state.front);
+
+/**
+ * Whether Find Next and Previous have a term to go on with on the tab, the
+ * front tab unless named.
+ */
+export const canGoOn = (
+  state: FindState,
+  key: TabKey | undefined = state.front
+) => {
+  const bar = key && state.bars[tabKey(key)];
 
   return bar !== undefined && (bar.open || bar.term !== "");
 };
 
+/**
+ * The bar an event of the person's acts on: the tab in its own window that
+ * `key` names, else the front tab's.
+ */
+interface Aimed {
+  key?: TabKey;
+}
+
 export type FindEvent =
   /** Another tab, or none, is now the front with a page to search. */
   | { kind: "front"; key: TabKey | undefined }
-  /** Find: opens the front tab's bar, or puts the caret back in its field. */
-  | { kind: "open" }
+  /** Find: opens the bar, or puts the caret back in its field. */
+  | ({ kind: "open" } & Aimed)
   /**
-   * Find Next or Previous: steps while the front tab's bar is open, else
-   * opens it and searches for its term that way.
+   * Find Next or Previous: steps while the bar is open, else opens it and
+   * searches for its term that way.
    */
-  | { kind: "again"; forward: boolean }
-  | { kind: "type"; term: string }
+  | ({ kind: "again"; forward: boolean } & Aimed)
+  | ({ kind: "type"; term: string } & Aimed)
   /** Enter, Shift+Enter or the bar's buttons. */
-  | { kind: "step"; forward: boolean }
+  | ({ kind: "step"; forward: boolean } & Aimed)
   /** The page took a search and gave it this id. */
   | { kind: "requested"; key: TabKey; requestId: number }
   | { kind: "found"; key: TabKey; result: FoundInPage }
@@ -86,7 +107,7 @@ export type FindEvent =
   /** The tab's page stopped loading, a frame of it or a new document. */
   | { kind: "loaded"; key: TabKey }
   /** Escape or Close on the bar that shows. */
-  | { kind: "close" }
+  | ({ kind: "close" } & Aimed)
   /** The tab closed or slept, taking its bar and term with it. */
   | { kind: "forget"; key: TabKey }
   /**
@@ -149,14 +170,16 @@ const toFront = (state: FindState, key: TabKey | undefined): Transition =>
     ? { state, effects: [] }
     : { state: { ...state, front: key }, effects: [] };
 
-const opened = (state: FindState, forward: boolean | undefined): Transition => {
-  const { front } = state;
-
-  if (!front) {
+const opened = (
+  state: FindState,
+  target: TabKey | undefined,
+  forward: boolean | undefined
+): Transition => {
+  if (!target) {
     return { state, effects: [] };
   }
 
-  const bar = state.bars[tabKey(front)] ?? freshBar(front);
+  const bar = state.bars[tabKey(target)] ?? freshBar(target);
   const opens = state.opens + 1;
   const next = { ...withBar(state, { ...bar, opened: opens }), opens };
 
@@ -263,7 +286,8 @@ export const transitionFind = (
   state: FindState,
   event: FindEvent
 ): Transition => {
-  const shown = shownBar(state);
+  const aimed = (key: TabKey | undefined) =>
+    key ? openBar(state, key) : shownBar(state);
   const unchanged = { state, effects: [] };
 
   switch (event.kind) {
@@ -271,20 +295,26 @@ export const transitionFind = (
       return toFront(state, event.key);
     }
     case "open": {
-      return opened(state, undefined);
+      return opened(state, event.key ?? state.front, undefined);
     }
     case "again": {
-      return opened(state, event.forward);
+      return opened(state, event.key ?? state.front, event.forward);
     }
     case "type": {
+      const shown = aimed(event.key);
+
       return shown && shown.term !== event.term
         ? typed(state, shown, event.term)
         : unchanged;
     }
     case "step": {
+      const shown = aimed(event.key);
+
       return shown ? { state, effects: step(shown, event.forward) } : unchanged;
     }
     case "close": {
+      const shown = aimed(event.key);
+
       return shown
         ? {
             state: withBar(state, {

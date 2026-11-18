@@ -5,6 +5,7 @@ import {
   NO_FIND,
   canGoOn,
   findRectangle,
+  openBar,
   shownBar,
   transitionFind,
 } from "./find.ts";
@@ -351,6 +352,57 @@ describe(transitionFind, () => {
     ]);
 
     expect([canGoOn(state), state.bars]).toStrictEqual([false, {}]);
+  });
+
+  it("opens, types into, steps and closes the bar of a tab in its own window that the event names, the front tab's bar left as it is", () => {
+    const away = { profileId: "a", tabId: "w" };
+    const opened = after([
+      ...searching("apple"),
+      { kind: "open", key: away },
+      { kind: "type", term: "pear", key: away },
+    ]);
+    const stepped = transitionFind(opened.state, {
+      kind: "step",
+      forward: false,
+      key: away,
+    });
+    const closed = transitionFind(opened.state, { kind: "close", key: away });
+
+    expect([
+      openBar(opened.state, away)?.term,
+      shownBar(opened.state)?.term,
+      opened.effects,
+      stepped.effects,
+      openBar(closed.state, away),
+      shownBar(closed.state)?.term,
+      closed.effects,
+      canGoOn(closed.state, away),
+    ]).toStrictEqual([
+      "pear",
+      "apple",
+      [
+        {
+          kind: "search",
+          key: away,
+          term: "pear",
+          findNext: true,
+          forward: true,
+        },
+      ],
+      [
+        {
+          kind: "search",
+          key: away,
+          term: "pear",
+          findNext: true,
+          forward: false,
+        },
+      ],
+      undefined,
+      "apple",
+      [{ kind: "stop", key: away, keepSelection: true }],
+      true,
+    ]);
   });
 
   it("ends a moved tab's search, clearing its highlights, and forgets its bar; nothing for a tab with none", () => {
