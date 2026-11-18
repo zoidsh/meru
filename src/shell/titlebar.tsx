@@ -23,6 +23,7 @@ import { Button } from "#ui/button.tsx";
 
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
+import { OpenAppTitlebarButton } from "./open-app.tsx";
 import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
@@ -487,8 +488,9 @@ const DoNotDisturbButton = () => {
 
 /**
  * The row across the top: the sidebar toggle and the page's navigation, the
- * profiles, a gap that drags the window, then the unified inbox and Do Not
- * Disturb. The whole of it drags the window but for its controls.
+ * profiles, a gap that drags the window, then Open app while the sidebar is
+ * hidden, the unified inbox and Do Not Disturb. The whole of it drags the
+ * window but for its controls.
  */
 export const Titlebar = ({ sidebarShown }: { sidebarShown: boolean }) => {
   const { t } = useLingui();
@@ -519,6 +521,7 @@ export const Titlebar = ({ sidebarShown }: { sidebarShown: boolean }) => {
       {/* Keeps part of the title bar for dragging the window, however many profiles there are. */}
       <div aria-hidden className="h-full min-w-16 flex-1" />
       <div className="flex items-center gap-1">
+        {!sidebarShown && <OpenAppTitlebarButton />}
         <InboxButton
           open={inbox?.open ?? false}
           profileCount={profileCount}

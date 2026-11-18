@@ -167,6 +167,25 @@ test("the rename profile overlay", async ({
   await shootEachWay(app, shell, "rename");
 });
 
+// Its button, in the titlebar and below the narrow and wide sidebar's last
+// tab, is in the window shots above.
+test("the Open app overlay", async ({ launchApp, userDataDir, standIn }) => {
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const overlay = await findOverlayDocument(app);
+
+  await findPage(app, standIn.url);
+  await shell.mouse.move(700, 20);
+  await app.evaluate(({ Menu, BrowserWindow }) => {
+    Menu.getApplicationMenu()
+      ?.getMenuItemById("app.open")
+      ?.click(undefined, BrowserWindow.getAllWindows()[0]);
+  });
+  await expect(
+    overlay.getByRole("combobox", { name: "Open app" })
+  ).toBeFocused();
+  await shootEachWay(app, shell, "open-app");
+});
+
 test("a thread with every thread feature on", async ({
   launchApp,
   userDataDir,

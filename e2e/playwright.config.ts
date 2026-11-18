@@ -10,7 +10,11 @@ const isCI = Boolean(process.env.CI);
  * loses it, so these run alone, after the rest. On
  * macOS the suite's app is never activated.
  */
-const NEEDS_THE_FOCUS = ["**/overlay.e2e.ts", "**/inbox.e2e.ts"];
+const NEEDS_THE_FOCUS = [
+  "**/overlay.e2e.ts",
+  "**/inbox.e2e.ts",
+  "**/open-app.e2e.ts",
+];
 const takesTheFocus = process.platform !== "darwin";
 
 export default defineConfig({

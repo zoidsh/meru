@@ -19,6 +19,7 @@ import { ScrollArea } from "#ui/scroll-area.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
 import { keepInView } from "./keep-in-view.ts";
+import { OpenAppSidebarButton } from "./open-app.tsx";
 import { shellCalls } from "./sync.ts";
 import { UnreadBadge } from "./unread-badge.tsx";
 
@@ -161,7 +162,7 @@ export const Sidebar = ({
           in it, padded back so the list stays where it was. */}
       <ScrollArea
         className={cn(
-          "min-h-0 flex-1",
+          "min-h-0 shrink",
           wide ? "-mr-2.5 pr-2.5" : "-mr-3 pr-3",
           SCROLLBAR
         )}
@@ -310,9 +311,15 @@ export const Sidebar = ({
           </div>
         </div>
       </ScrollArea>
+      {/* Below the last tab, outside the list's scroll. */}
+      <div
+        className={cn("flex shrink-0", wide ? "pt-1" : "justify-center pt-2")}
+      >
+        <OpenAppSidebarButton wide={wide} />
+      </div>
       <div
         className={cn(
-          "flex pt-2 opacity-0 transition-opacity group-hover/sidebar:opacity-100 has-focus-visible:opacity-100",
+          "mt-auto flex pt-2 opacity-0 transition-opacity group-hover/sidebar:opacity-100 has-focus-visible:opacity-100",
           wide ? "justify-end" : "justify-center"
         )}
       >
