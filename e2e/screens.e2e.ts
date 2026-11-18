@@ -572,7 +572,7 @@ const withSplit = (standIn: StandIn, root: unknown, selected: string) => ({
         { id: "o", app: "docs", url: standIn.driveUrl, title: "" },
       ],
       selectedTabId: selected,
-      split: { root, focused: selected },
+      split: { root },
     },
   ],
   selectedProfileId: "p",

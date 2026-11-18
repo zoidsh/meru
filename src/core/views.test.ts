@@ -143,7 +143,7 @@ describe(planViews, () => {
       ...state,
       profiles: state.profiles.map((profile) =>
         profile.id === "a"
-          ? { ...profile, selectedTabId, split: { root, focused: "a1" } }
+          ? { ...profile, selectedTabId, split: { root } }
           : profile
       ),
     });
@@ -173,9 +173,7 @@ describe(planViews, () => {
     const split: State = {
       ...state,
       profiles: state.profiles.map((profile) =>
-        profile.id === "a"
-          ? { ...profile, split: { root, focused: "a1" } }
-          : profile
+        profile.id === "a" ? { ...profile, split: { root } } : profile
       ),
     };
     const sleeping = plan(split, ["a/gmail", "a/a1"], ["a"], ["a/gmail"]);

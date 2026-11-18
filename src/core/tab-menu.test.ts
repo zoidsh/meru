@@ -103,7 +103,6 @@ describe(tabMenuItems, () => {
               { size: 0.5, pane: "c" },
             ],
           },
-          focused: "gmail",
         },
       })),
     };

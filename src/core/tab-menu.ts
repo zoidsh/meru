@@ -2,7 +2,7 @@ import { findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
 import { isWebUrl } from "./google-redirect.ts";
 import { menuPointInside } from "./overlay.ts";
-import { focusSelected, isInSplit } from "./split.ts";
+import { isInSplit } from "./split.ts";
 import { isPinned, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 import { canCloseTab, closeTab, findTab } from "./tabs.ts";
@@ -183,7 +183,7 @@ const closeAll = (
         ...next,
         profiles: next.profiles.map((profile) =>
           profile.id === key.profileId
-            ? focusSelected({ ...profile, selectedTabId: key.tabId })
+            ? { ...profile, selectedTabId: key.tabId }
             : profile
         ),
       }

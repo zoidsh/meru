@@ -175,6 +175,18 @@ export const opensAtLaunch = (tab: Tab) =>
 export const knownTabs = (profile: Pick<Profile, "tabs">): Tab[] =>
   profile.tabs.filter((entry) => isTab(entry) && isAppId(entry.app)) as Tab[];
 
+/** A tab entry's id, also of one that does not parse, where it has one. */
+const entryId = (entry: TabEntry): string[] => {
+  const raw: unknown = isTab(entry) ? entry : entry[UNREAD];
+
+  return typeof raw === "object" &&
+    raw !== null &&
+    "id" in raw &&
+    typeof raw.id === "string"
+    ? [raw.id]
+    : [];
+};
+
 const readTabs = (stored: unknown): TabEntry[] =>
   (Array.isArray(stored) ? stored : []).map((entry: unknown) => {
     const parsed = tabSchema.safeParse(entry);
@@ -240,9 +252,10 @@ const normalizeProfile = (profile: StoredProfile): Profile => {
   }
 
   if ("split" in profile) {
-    const read = readSplit(profile.split, (tabId) =>
-      shown.some((tab) => tab.id === tabId)
-    );
+    // A tab of an app this build does not know keeps its pane, for a build
+    // that does; only a tab gone from the list loses it.
+    const listed = new Set(tabs.flatMap(entryId));
+    const read = readSplit(profile.split, (tabId) => listed.has(tabId));
 
     delete decoded.split;
 

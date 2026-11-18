@@ -287,8 +287,6 @@ export const readPaneTree = (
 /** A profile's panes, stored on it: the tree and the pane last focused. */
 export interface Split {
   root: PaneSplit;
-  /** The tab whose pane has focus while the split shows, and gets it back. */
-  focused: string;
 }
 
 /**
@@ -317,11 +315,5 @@ export const readSplit = (
     return { kind: "none" };
   }
 
-  const tabs = paneTabs(root);
-  const focused =
-    typeof value.focused === "string" && tabs.includes(value.focused)
-      ? value.focused
-      : (tabs[0] ?? "");
-
-  return { kind: "split", split: { ...value, root, focused } };
+  return { kind: "split", split: { ...value, root } };
 };

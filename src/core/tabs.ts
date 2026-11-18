@@ -1,12 +1,6 @@
 import type { App } from "./apps.ts";
 import type { PaneDirection } from "./pane-tree.ts";
-import {
-  focusSelected,
-  isInSplit,
-  splitTarget,
-  splitWith,
-  withoutPane,
-} from "./split.ts";
+import { isInSplit, splitTarget, splitWith, withoutPane } from "./split.ts";
 import { GMAIL_TAB_ID, isPinned, isTab, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 
@@ -127,7 +121,7 @@ export const selectTab = (
   updateProfile(state, profileId, (profile) =>
     profile.selectedTabId !== tabId &&
     knownTabs(profile).some((tab) => tab.id === tabId)
-      ? focusSelected({ ...profile, selectedTabId: tabId })
+      ? { ...profile, selectedTabId: tabId }
       : undefined
   );
 
@@ -157,18 +151,15 @@ export const closeTab = (
     const left = shown.filter((candidate) => candidate !== tab);
     const neighbour = left[Math.min(index, left.length - 1)];
     const paned = withoutPane(profile, tabId);
-    const inPane = isInSplit(profile, tabId)
-      ? (paned.profile.split?.focused ?? paned.alone)
-      : undefined;
 
-    return focusSelected({
+    return {
       ...paned.profile,
       tabs: profile.tabs.filter((candidate) => candidate !== tab),
       selectedTabId:
         profile.selectedTabId === tabId
-          ? (inPane ?? neighbour?.id ?? "")
+          ? (paned.next ?? neighbour?.id ?? "")
           : profile.selectedTabId,
-    });
+    };
   });
 
 /**

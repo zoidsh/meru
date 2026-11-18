@@ -197,23 +197,16 @@ describe(readPaneTree, () => {
 describe(readSplit, () => {
   const root = row([0.5, "a"], [0.5, "b"]);
 
-  it("keeps the focused pane and any key it does not know", () => {
-    expect(readSplit({ root, focused: "b", later: true }, all)).toStrictEqual({
+  it("keeps any key it does not know", () => {
+    expect(readSplit({ root, later: true }, all)).toStrictEqual({
       kind: "split",
-      split: { root, focused: "b", later: true },
-    });
-  });
-
-  it("focuses the first pane when the focused one is gone", () => {
-    expect(readSplit({ root, focused: "x" }, all)).toStrictEqual({
-      kind: "split",
-      split: { root, focused: "a" },
+      split: { root, later: true },
     });
   });
 
   it("ends a split left with one pane, and keeps what is no split as found", () => {
     expect([
-      readSplit({ root, focused: "a" }, (tabId) => tabId === "a"),
+      readSplit({ root }, (tabId) => tabId === "a"),
       readSplit("split", all),
       readSplit({ root: 3 }, all),
     ]).toStrictEqual([

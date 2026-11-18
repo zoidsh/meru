@@ -158,7 +158,7 @@ const urlOf = (app: ElectronApplication, prefix: string) =>
 
 interface SavedProfile {
   selectedTabId: string;
-  split?: { root: unknown; focused: string };
+  split?: { root: unknown };
 }
 
 const savedSplit = async (userDataDir: string) => {
@@ -312,7 +312,6 @@ test("selecting a tab outside the split shows it alone and a tab in it brings th
           { size: 0.5, pane: "gmail" },
         ],
       },
-      focused: "c",
     });
   await first.close();
 

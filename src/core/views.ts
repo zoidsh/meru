@@ -1,6 +1,6 @@
 import { paneRectangles, paneTabs } from "./pane-tree.ts";
 import type { PaneRectangle, PaneTree } from "./pane-tree.ts";
-import { shownSplit } from "./split.ts";
+import { shownPanes } from "./split.ts";
 import {
   isAsleep,
   knownTabs,
@@ -71,10 +71,10 @@ export const planViews = (
   const front = shown.some((tab) => tab.id === profile.selectedTabId)
     ? { profileId: profile.id, tabId: profile.selectedTabId }
     : undefined;
-  const split = front && shownSplit(profile);
+  const panes = front && shownPanes(profile);
   const alone = front ? [front] : [];
-  const onScreen: TabKey[] = split
-    ? paneTabs(split.root).map((tabId) => ({ profileId: profile.id, tabId }))
+  const onScreen: TabKey[] = panes
+    ? paneTabs(panes).map((tabId) => ({ profileId: profile.id, tabId }))
     : alone;
   const launching = state.profiles.filter(
     (candidate) =>
@@ -99,7 +99,7 @@ export const planViews = (
     ),
     ...(front && { front }),
     shown: onScreen,
-    ...(split && { panes: split.root }),
+    ...(panes && { panes }),
     opening,
     launched: launching.map((candidate) => candidate.id),
   };
