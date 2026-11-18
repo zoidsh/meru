@@ -2,13 +2,7 @@ import path from "node:path";
 
 import { isEqual } from "es-toolkit";
 
-import {
-  OVERLAY_FRAME_NAME,
-  coversPage,
-  overlayRectangle,
-  staysOpenOutside,
-} from "#core/overlay.ts";
-import { ownWindowFindOfFrame, ownWindowOfFrame } from "#core/own-window.ts";
+import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import { tabKey } from "#core/tabs.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
@@ -39,6 +33,7 @@ import { wireMenu } from "./wiring/menu.ts";
 import { wireNotifications } from "./wiring/notifications.ts";
 import { wireOwnWindows } from "./wiring/own-windows.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
+import { wireShellDocuments } from "./wiring/shell-documents.ts";
 import { wireStores } from "./wiring/stores.ts";
 import {
   suiteRunsInBackground,
@@ -242,69 +237,15 @@ const start = async () => {
     focus,
   });
 
-  /** The web contents of the shell's documents open now, which never zoom. */
-  const shellDocumentIds = new Set<number>();
-
-  shell.window.onShellDocument((view, frameName) => {
-    const id = view.webContentsId;
-
-    shellDocumentIds.add(id);
-    view.onGone(() => shellDocumentIds.delete(id));
-    // None has a bridge of its own; the shell draws into each.
-    view.onGone(senders.register(view.webContentsId, { role: "overlay" }));
+  const { shellDocumentIds, barsAwaited } = wireShellDocuments({
+    shell,
+    senders,
+    focus,
+    overlays,
+    ownWindows,
     // oxlint-disable-next-line no-use-before-define -- no key reaches a document before the menu exists
-    view.onKey((input) => menu.handleKey(input));
-
-    const findWindow = ownWindowFindOfFrame(frameName);
-
-    if (findWindow) {
-      // Keys there act on that window's tab, as in its page.
-      view.onFocus(() => {
-        focus.noteFocused({ kind: "window", key: findWindow });
-      });
-      ownWindows.adoptFind(findWindow, view);
-
-      // oxlint-disable-next-line no-use-before-define -- no document opens before startup ends
-      if (barsAwaited.delete(tabKey(findWindow))) {
-        focus.focusInWindow(findWindow, [
-          { kind: "windowFind", key: findWindow },
-        ]);
-      }
-
-      return;
-    }
-
-    const ownWindow = ownWindowOfFrame(frameName);
-
-    if (ownWindow) {
-      view.onFocus(() => {
-        focus.noteFocused({ kind: "window", key: ownWindow });
-      });
-      ownWindows.adoptTitlebar(ownWindow, view);
-
-      return;
-    }
-
-    if (frameName !== OVERLAY_FRAME_NAME) {
-      view.close();
-
-      return;
-    }
-
-    view.onFocus(() => {
-      focus.noteFocused({ kind: "overlay" });
-    });
-    overlays.adopt(view);
+    handleKey: (input) => menu.handleKey(input),
   });
-  shell.window.onPageFocus(() => {
-    focus.noteFocused({ kind: "shell" });
-  });
-  shell.window.on("blur", () => {
-    if (!staysOpenOutside(overlays.current())) {
-      overlays.close();
-    }
-  });
-  shell.window.onContentAreaResize(overlays.relayout);
 
   const {
     network,
@@ -390,9 +331,6 @@ const start = async () => {
     },
     log: console.error,
   });
-
-  /** Tabs in their own windows whose find bar's view, still to come, takes focus. */
-  const barsAwaited = new Set<string>();
 
   const find = createFind({
     pages: views,
