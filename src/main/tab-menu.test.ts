@@ -33,10 +33,14 @@ const key = (each: TabKey) => `${each.profileId}/${each.tabId}`;
 
 const at = (tabId: string) => ({ profileId: "p", tabId, x: 20, y: 80 });
 
-/** The menu over fakes that record what each item reaches, in order. */
-const setup = () => {
+/**
+ * The menu over fakes that record what each item reaches, in order; with
+ * `held`, opening a tab waits for `release`.
+ */
+const setup = ({ held = false } = {}) => {
   const done: unknown[] = [];
   let open: Overlay | undefined;
+  const { promise: released, resolve: release } = Promise.withResolvers();
   const recorded =
     (name: string) =>
     (...args: unknown[]) => {
@@ -71,8 +75,13 @@ const setup = () => {
     reload: (each) => {
       done.push(["reload", key(each)]);
     },
-    openTab: (profileId, app, url, after) =>
-      recorded("openTab")(profileId, app.id, url, after),
+    openTab: async (profileId, app, url, after) => {
+      await recorded("openTab")(profileId, app.id, url, after);
+
+      if (held) {
+        await released;
+      }
+    },
     clipboard: {
       writeText: async (text) => {
         await recorded("clipboard")(text);
@@ -98,7 +107,13 @@ const setup = () => {
     return done;
   };
 
-  return { menu, done, choose };
+  /** Opens another overlay, as the shell would while an item runs. */
+  const cover = (next: Overlay) => {
+    open = next;
+    done.push(["open", next]);
+  };
+
+  return { menu, done, choose, release, cover };
 };
 
 describe(createTabMenu, () => {
@@ -184,6 +199,24 @@ describe(createTabMenu, () => {
         ],
         ["closed"],
       ],
+    ]);
+  });
+
+  it("runs one item at a time, and leaves open what opened while it ran", async () => {
+    const { menu, done, release, cover } = setup({ held: true });
+
+    menu.open(at("c"));
+    done.length = 0;
+    const first = menu.run("duplicate");
+    await menu.run("duplicate");
+    cover({ kind: "rename-profile", profileId: "p" });
+    release(undefined);
+    await first;
+
+    expect(done).toStrictEqual([
+      ["openTab", "p", "calendar", "https://calendar.google.com/r/week", "c"],
+      ["log", "Refused the tab menu's duplicate while another item runs"],
+      ["open", { kind: "rename-profile", profileId: "p" }],
     ]);
   });
 

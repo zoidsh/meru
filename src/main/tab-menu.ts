@@ -64,6 +64,8 @@ export const createTabMenu = ({
   systemBrowser,
   log,
 }: TabMenuDeps) => {
+  let running = false;
+
   const act = async (item: TabMenuItemId, key: TabKey) => {
     const tab = findTab(state(), key);
 
@@ -129,7 +131,10 @@ export const createTabMenu = ({
 
       overlays.open({ kind: "tab-menu", ...at });
     },
-    /** Runs the item on the open menu's tab, if the menu offers it, and closes it. */
+    /**
+     * Runs the item on the open menu's tab, if the menu offers it, and closes
+     * that menu, one item at a time.
+     */
     run: async (item: TabMenuItemId) => {
       const open = overlays.current();
 
@@ -138,6 +143,15 @@ export const createTabMenu = ({
 
         return;
       }
+
+      // A second press before main closes the menu would run it again.
+      if (running) {
+        log(`Refused the tab menu's ${item} while another item runs`);
+
+        return;
+      }
+
+      running = true;
 
       const key = { profileId: open.profileId, tabId: open.tabId };
       const offered = tabMenuItems(state(), key, apps, isLoaded(key))?.find(
@@ -153,7 +167,12 @@ export const createTabMenu = ({
       } catch (error) {
         log(`The tab menu's ${item} failed: ${describe(error)}`);
       } finally {
-        overlays.close();
+        running = false;
+
+        // Whatever opened while a slow item ran is not this menu's to close.
+        if (overlays.current() === open) {
+          overlays.close();
+        }
       }
     },
   };
