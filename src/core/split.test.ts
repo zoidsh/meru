@@ -346,6 +346,9 @@ const readSplits = (read: State | undefined) => read?.profiles[0]?.splits;
 const writtenSplits = (read: State | undefined) =>
   (encodeState(read as State) as { profiles: { splits?: unknown }[] })
     .profiles[0]?.splits;
+const writtenProfile = (read: State | undefined) =>
+  (encodeState(read as State) as { profiles: Record<string, unknown>[] })
+    .profiles[0];
 const twoSplits = (selected: string) =>
   profile(selected, split("a", "b"), undefined, [split("c", "d")]);
 
@@ -412,8 +415,10 @@ describe("several splits", () => {
     ]);
   });
 
-  it("keeps a splits entry or list it cannot read as found, after the others", () => {
-    const entries = readBack(storedWith({ splits: [5, split("a", "b")] }));
+  it("keeps a splits entry or list it cannot read as found, each entry in its place", () => {
+    const entries = readBack(
+      storedWith({ splits: [5, split("a", "b"), "x", split("c", "d")] })
+    );
     const whole = readBack(storedWith({ splits: "no" }));
 
     expect([
@@ -422,10 +427,41 @@ describe("several splits", () => {
       readSplits(whole),
       writtenSplits(whole),
     ]).toStrictEqual([
-      [split("a", "b")],
-      [split("a", "b"), 5],
+      [split("a", "b"), split("c", "d")],
+      [5, split("a", "b"), "x", split("c", "d")],
       undefined,
       "no",
+    ]);
+  });
+
+  it("puts an entry kept as found back at its place once a split has ended, or after the last", () => {
+    const read = readBack(
+      storedWith({ splits: [split("a", "b"), 5, split("c", "d")] })
+    );
+    const ended = encodeState({
+      ...(read as State),
+      profiles: (read as State).profiles.map((each) => ({
+        ...each,
+        splits: [split("c", "d")],
+      })),
+    }) as { profiles: { splits?: unknown }[] };
+
+    expect(ended.profiles[0]?.splits).toStrictEqual([split("c", "d"), 5]);
+  });
+
+  it("keeps a split stored beside splits as found, unread, whether it reads or not", () => {
+    const both = (old: unknown) =>
+      readBack(storedWith({ split: old, splits: [split("c", "d")] }));
+
+    expect(
+      [split("a", "b"), { root: 5 }].map((old) => [
+        readSplits(both(old)),
+        writtenProfile(both(old))?.split,
+        writtenProfile(both(old))?.splits,
+      ])
+    ).toStrictEqual([
+      [[split("c", "d")], split("a", "b"), [split("c", "d")]],
+      [[split("c", "d")], { root: 5 }, [split("c", "d")]],
     ]);
   });
 

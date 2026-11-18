@@ -126,13 +126,19 @@ export interface Profile {
    * profile has instead live only in memory.
    */
   [TABS_AS_FOUND]?: unknown;
-  /** A `split`, the previous builds' one split, that is no split, written back. */
+  /**
+   * A `split`, the previous builds' one split, written back as found: one
+   * that is no split, or any beside a `splits`, which is what is read.
+   */
   [SPLIT_AS_FOUND]?: unknown;
   /**
-   * The `splits` entries that are no split, written back after the others,
-   * or a `splits` that is not a list, written back while there are none.
+   * The `splits` entries that are no split, each written back at its place
+   * in the list, or a `splits` that is not a list, written back while there
+   * are none.
    */
-  [SPLITS_AS_FOUND]?: { entries: unknown[] } | { whole: unknown };
+  [SPLITS_AS_FOUND]?:
+    | { entries: { index: number; value: unknown }[] }
+    | { whole: unknown };
 }
 
 type StoredState = z.infer<typeof stateSchema>;
@@ -272,9 +278,10 @@ const normalizeProfile = (profile: StoredProfile): Profile => {
 /**
  * Sets a stored profile's splits on `decoded`, read back: `splits`, or the
  * previous builds' one `split` as a list of one, which is not written
- * again. A tab of an app this build does not know keeps its pane, for a
- * build that does; only a tab gone from the list loses it, and a tab an
- * earlier split holds too.
+ * again. A `split` beside a `splits` is kept as found, unread, for the
+ * build that wrote it. A tab of an app this build does not know keeps its
+ * pane, for a build that does; only a tab gone from the list loses it, and
+ * a tab an earlier split holds too.
  */
 const decodeSplits = (
   decoded: Profile,
@@ -284,6 +291,10 @@ const decodeSplits = (
   const isNew = "splits" in profile;
   const stored = isNew ? profile.splits : [profile.split];
 
+  if (isNew && "split" in profile) {
+    decoded[SPLIT_AS_FOUND] = profile.split;
+  }
+
   if (!Array.isArray(stored)) {
     decoded[SPLITS_AS_FOUND] = { whole: stored };
 
@@ -292,9 +303,9 @@ const decodeSplits = (
 
   const claimed = new Set<string>();
   const splits: Split[] = [];
-  const entries: unknown[] = [];
+  const entries: { index: number; value: unknown }[] = [];
 
-  for (const value of stored) {
+  for (const [index, value] of stored.entries()) {
     const read = readSplit(
       value,
       (tabId) => listed.has(tabId) && !claimed.has(tabId)
@@ -307,7 +318,7 @@ const decodeSplits = (
         claimed.add(tabId);
       }
     } else if (read.kind === "as-found") {
-      entries.push(value);
+      entries.push({ index, value });
     }
   }
 
@@ -322,12 +333,26 @@ const decodeSplits = (
   }
 };
 
+/** `splits` with each entry kept as found back at its stored place. */
+const withEntries = (
+  splits: readonly Split[],
+  entries: readonly { index: number; value: unknown }[]
+) => {
+  const written: unknown[] = [...splits];
+
+  for (const { index, value } of entries) {
+    written.splice(Math.min(index, written.length), 0, value);
+  }
+
+  return written;
+};
+
 const encodeSplits = (profile: Profile) => {
   const asFound = profile[SPLITS_AS_FOUND];
   const splits = profile.splits ?? [];
 
   if (asFound && "entries" in asFound) {
-    return { splits: [...splits, ...asFound.entries] };
+    return { splits: withEntries(splits, asFound.entries) };
   }
 
   return asFound && splits.length === 0 ? { splits: asFound.whole } : {};
