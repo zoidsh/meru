@@ -364,7 +364,25 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
   await findPage(app, standIn.calendarUrl);
 });
 
-test("Maximize is unavailable outside a split, where its shortcut does nothing", async ({
+/** Records the Enter presses the page itself gets. */
+const followEnters = (page: Page) =>
+  page.evaluate(() => {
+    Reflect.set(globalThis, "meruEnters", 0);
+    globalThis.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        Reflect.set(
+          globalThis,
+          "meruEnters",
+          (Reflect.get(globalThis, "meruEnters") as number) + 1
+        );
+      }
+    });
+  });
+
+const enters = (page: Page) =>
+  page.evaluate(() => Reflect.get(globalThis, "meruEnters") as number);
+
+test("Maximize's shortcut is taken from the page in a split, and outside one is left to the page, the command unavailable", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -372,12 +390,16 @@ test("Maximize is unavailable outside a split, where its shortcut does nothing",
   await seed(userDataDir, standIn, row([0.5, "c"], [0.5, "gmail"]), true);
 
   const app = await launchApp();
-  const shell = await findPage(app, "meru-app:");
+  const calendar = await findPage(app, standIn.calendarUrl);
 
-  await findPage(app, standIn.calendarUrl);
   await expect
     .poll(() => shownWidths(app).then((shown) => shown.map(({ url }) => url)))
     .toStrictEqual([standIn.calendarUrl]);
+  await followEnters(calendar);
+
+  await pressMaximize(app, standIn.calendarUrl);
+  await expect.poll(() => shownWidths(app)).toHaveLength(2);
+  expect(await enters(calendar)).toBe(0);
 
   await clickMenuItem(app, "tab.separate");
   await expect.poll(() => storedSplit(userDataDir)).toBeUndefined();
@@ -390,9 +412,6 @@ test("Maximize is unavailable outside a split, where its shortcut does nothing",
     )
     .toBe(false);
   await pressMaximize(app, standIn.calendarUrl);
-  await expect.poll(() => storedSplit(userDataDir)).toBeUndefined();
-  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
+  await expect.poll(() => enters(calendar)).toBe(1);
+  expect(await storedSplit(userDataDir)).toBeUndefined();
 });
