@@ -49,6 +49,7 @@ const createFakeWindow = () => {
     focusPage: () => false,
     onPageFocus: () => false,
     onOverlayDocument: () => false,
+    onPageGone: () => false,
     restore: () => {
       minimized = false;
       calls.push("restore");

@@ -120,6 +120,14 @@ export const createPaneResize = ({
     /** Gives the split where the two part equal shares, and stores it. */
     evenOut: (gap: Pick<PaneResize, "before" | "after">) =>
       oneAtATime(() => evenOut(gap)),
+    /**
+     * Ends a drag that will send no release, as when the shell's page loads
+     * anew or its process goes: the panes go back to their stored sizes.
+     */
+    cancel: () => {
+      gesture = undefined;
+      preview(undefined);
+    },
   };
 };
 

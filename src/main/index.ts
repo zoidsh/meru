@@ -810,6 +810,8 @@ const start = async () => {
     preview: views.preview,
     log: console.error,
   });
+  shell.window.onPageGone(paneResize.cancel);
+
   const tabMenu = createTabMenu({
     state: profiles.get,
     apps,

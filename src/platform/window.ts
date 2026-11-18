@@ -79,6 +79,8 @@ export interface AppWindow {
   onPageFocus: (listener: () => void) => void;
   /** Told of each view of the overlay's document the page opens. */
   onOverlayDocument: (listener: (view: OverlayView) => void) => void;
+  /** Told when the page's document goes, loaded anew or its process gone. */
+  onPageGone: (listener: () => void) => void;
   restore: () => void;
   isMinimized: () => boolean;
   isDestroyed: () => boolean;
@@ -144,9 +146,17 @@ export const createWindowFactory = (): WindowFactory => ({
     const documentListeners = new Set<(view: OverlayView) => void>();
     let overlayDocument: OverlayView | undefined;
 
+    const pageGoneListeners = new Set<() => void>();
     const closeDocument = () => {
       overlayDocument?.close();
       overlayDocument = undefined;
+    };
+    const pageGone = () => {
+      closeDocument();
+
+      for (const listener of pageGoneListeners) {
+        listener();
+      }
     };
 
     // The document belongs to the page that opened it. Left open, a
@@ -154,11 +164,11 @@ export const createWindowFactory = (): WindowFactory => ({
     // navigated to a new blank document as it draws into it.
     webContents.on("did-start-navigation", (details) => {
       if (details.isMainFrame && !details.isSameDocument) {
-        closeDocument();
+        pageGone();
       }
     });
     // It lives in the page's process, gone with it.
-    webContents.on("render-process-gone", closeDocument);
+    webContents.on("render-process-gone", pageGone);
 
     webContents.setWindowOpenHandler((request) =>
       options.isOverlayDocument(request)
@@ -207,6 +217,9 @@ export const createWindowFactory = (): WindowFactory => ({
       },
       onOverlayDocument: (listener) => {
         documentListeners.add(listener);
+      },
+      onPageGone: (listener) => {
+        pageGoneListeners.add(listener);
       },
       restore: () => window.restore(),
       isMinimized: () => window.isMinimized(),

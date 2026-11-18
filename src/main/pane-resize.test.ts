@@ -111,6 +111,19 @@ describe(createPaneResize, () => {
     expect(sizes(split()?.root)).toStrictEqual([0.7, 0.3]);
   });
 
+  it("puts the panes back as stored when the drag is cut off, and stores nothing of it", async () => {
+    const { resizer, previews, stored, split } = setup();
+
+    await resizer.resize(move(100, 1));
+    resizer.cancel();
+
+    expect([previews.map(sizes), stored, split()]).toStrictEqual([
+      [[0.6, 0.4], undefined],
+      [],
+      even,
+    ]);
+  });
+
   it("evens out the split where the two part", async () => {
     const { resizer, split } = setup();
 
