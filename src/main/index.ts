@@ -2,8 +2,6 @@ import path from "node:path";
 
 import { isEqual } from "es-toolkit";
 
-import { findApp } from "#core/apps.ts";
-import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
 import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
@@ -17,12 +15,7 @@ import { ownWindowFindOfFrame, ownWindowOfFrame } from "#core/own-window.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
-import {
-  gmailOwnWindow,
-  hasTabbedInbox,
-  profilePartition,
-} from "#core/state.ts";
-import type { State } from "#core/state.ts";
+import { gmailOwnWindow, profilePartition } from "#core/state.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
@@ -32,9 +25,7 @@ import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
-import { createNetwork } from "#platform/network.ts";
 import { createOwnWindowFactory } from "#platform/own-window.ts";
-import { createPower } from "#platform/power.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSessions } from "#platform/sessions.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
@@ -53,10 +44,8 @@ import { createFocus } from "./focus.ts";
 import type { FocusTarget } from "./focus.ts";
 import { createGmailNavigation } from "./gmail-navigation.ts";
 import { serveGmailContract } from "./gmail-page.ts";
-import { createInboxTypes } from "./inbox-types.ts";
 import { createInbox } from "./inbox.ts";
 import { createMailActions } from "./mail-actions.ts";
-import { createMailPoller } from "./mail.ts";
 import { createMailNotifications } from "./notifications.ts";
 import { createOpenApp } from "./open-app.ts";
 import { createOverlays } from "./overlay.ts";
@@ -85,6 +74,7 @@ import {
 } from "./user-styles.ts";
 import { revealWindow } from "./windows.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
+import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import {
@@ -463,55 +453,17 @@ const start = async () => {
   });
   shell.window.onContentAreaResize(overlays.relayout);
 
-  const network = createNetwork();
-  const gmail = findApp(apps, "gmail");
-  const gmailHome = gmail?.home ?? "";
-  // The registry's Gmail, or the suite's stand-in for it.
-  const gmailOrigin = gmail && new URL(gmail.home).origin;
-  const feedUrl = gmailOrigin && `${gmailOrigin}${FEED_PATH}`;
-  const isGmailTab = (key: TabKey) =>
-    findTab(profiles.get(), key)?.app === "gmail";
-  const inboxTypes = createInboxTypes({
+  const {
+    network,
+    gmail,
+    gmailHome,
     gmailOrigin,
     isGmailTab,
-    isTabbed: (profileId) => hasTabbedInbox(profiles.get(), profileId),
-    setTabbed: profiles.setTabbedInbox,
-    // The badge follows at once rather than at the next poll.
-    // oxlint-disable-next-line no-use-before-define -- the poller reads what this learns
-    onChange: (profileId) => mail.poke(profileId),
-    log: console.error,
-  });
-  const mail = createMailPoller({
-    inboxLabel: (profileId) =>
-      inboxLabel(hasTabbedInbox(profiles.get(), profileId)),
-    fetchFeed: async (profileId, signal, label) => {
-      if (!feedUrl) {
-        return { kind: "failed", reason: "no Gmail" };
-      }
-
-      return feedOutcome(
-        await sessions.get(
-          profilePartition(profileId),
-          label === undefined ? feedUrl : `${feedUrl}/${label}`,
-          signal
-        )
-      );
-    },
-    isOnline: network.isOnline,
-    log: console.error,
-  });
-  const pollProfiles = (current: State) => {
-    mail.reconcile(current.profiles.map((profile) => profile.id));
-  };
-
-  // A removed profile's polling stops here, before its data is cleared.
-  profiles.onChange(pollProfiles);
-  network.onOnline(mail.pokeAll);
-
-  const power = createPower();
-
-  power.onResume(mail.pokeAll);
-  power.onResume(doNotDisturb.resume);
+    inboxTypes,
+    mail,
+    pollProfiles,
+    power,
+  } = wireMailFeed({ apps, sessions, profiles, doNotDisturb });
 
   const systemBrowser = createSystemBrowser();
   const clipboard = systemClipboard();
