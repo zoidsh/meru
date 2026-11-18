@@ -29,7 +29,7 @@ import type { TabMenu } from "./tab-menu.ts";
 export interface ShellHandlersDeps {
   profiles: Pick<
     Profiles,
-    "get" | "select" | "rename" | "selectTab" | "closeTab"
+    "get" | "select" | "rename" | "selectTab" | "closeTab" | "moveTab"
   >;
   overlays: Pick<Overlays, "open" | "close" | "current">;
   tabs: { retry: (key: TabKey) => void };
@@ -229,6 +229,15 @@ export const createShellHandlers = ({
   selectTab: async (key) => {
     await profiles.selectTab(key);
     inbox.setOpen(false);
+  },
+  moveTab: async ({ profileId, tabId, before }) => {
+    if (profileId === profiles.get().selectedProfileId) {
+      await profiles.moveTab({ profileId, tabId }, before);
+    } else {
+      log(
+        `Refused to move tab ${profileId}/${tabId} of a profile not selected`
+      );
+    }
   },
   closeTab: async (key) => {
     await profiles.closeTab(key);

@@ -36,6 +36,7 @@ const setup = ({
   const menus: Item[][] = [];
   const ran: string[] = [];
   const focused: unknown[] = [];
+  const logged: string[] = [];
 
   const handlers = createShellHandlers({
     profiles: {
@@ -57,6 +58,11 @@ const setup = ({
       },
       closeTab: (key) => {
         calls.push(["close", key]);
+
+        return Promise.resolve(true);
+      },
+      moveTab: (key, before) => {
+        calls.push(["move", key, before]);
 
         return Promise.resolve(true);
       },
@@ -134,11 +140,14 @@ const setup = ({
     doNotDisturbItems: () => [
       { label: "For 5 Minutes", enabled: true, click: () => {} },
     ],
-    log: () => false,
+    log: (message) => {
+      logged.push(message);
+    },
   });
 
   return {
     handlers,
+    logged,
     renamed,
     overlays,
     calls,
@@ -197,6 +206,22 @@ describe(createShellHandlers, () => {
     expect([shown.focused, hidden.focused]).toStrictEqual([
       [],
       [[{ kind: "front" }, { kind: "shell" }]],
+    ]);
+  });
+
+  it("moves a tab of the selected profile, and refuses one of another", async () => {
+    const shell = setup();
+
+    await shell.handlers.moveTab({
+      profileId: "a",
+      tabId: "t1",
+      before: "gmail",
+    });
+    await shell.handlers.moveTab({ profileId: "b", tabId: "gmail" });
+
+    expect([shell.calls, shell.logged]).toStrictEqual([
+      [["move", { profileId: "a", tabId: "t1" }, "gmail"]],
+      ["Refused to move tab b/gmail of a profile not selected"],
     ]);
   });
 

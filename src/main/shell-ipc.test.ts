@@ -117,6 +117,11 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    moveTab: (request) => {
+      calls.push(["moveTab", request]);
+
+      return Promise.resolve();
+    },
     retryTab: (request) => {
       calls.push(["retryTab", request]);
 
@@ -380,6 +385,32 @@ describe(serveShellContract, () => {
       [
         ["openTabMenu", { ...tab, x: 12, y: 40 }],
         ["runTabMenuItem", { item: "closeBelow" }],
+      ],
+    ]);
+  });
+
+  it("passes a move of a tab before another or to its area's end, and refuses one before nothing", async () => {
+    const shell = setup();
+    const tab = { profileId: "a", tabId: "t1" };
+    const refused = await Promise.allSettled([
+      shell.call(SHELL, "moveTab", { ...tab, before: "" }),
+    ]);
+
+    await shell.call(SHELL, "moveTab", { ...tab, before: "gmail" });
+    await shell.call(SHELL, "moveTab", tab);
+
+    expect([
+      refused.map(
+        (result) =>
+          result.status === "rejected" &&
+          result.reason instanceof RefusedCallError
+      ),
+      shell.calls,
+    ]).toStrictEqual([
+      [true],
+      [
+        ["moveTab", { ...tab, before: "gmail" }],
+        ["moveTab", tab],
       ],
     ]);
   });

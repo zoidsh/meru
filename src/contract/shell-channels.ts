@@ -5,6 +5,7 @@ export const SHELL_CALL_NAMES = [
   "selectProfile",
   "selectTab",
   "closeTab",
+  "moveTab",
   "retryTab",
   "renameProfile",
   "closeOverlay",

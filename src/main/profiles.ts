@@ -20,6 +20,7 @@ import type { State } from "#core/state.ts";
 import { closeOtherTabs, closeTabsBelow } from "#core/tab-menu.ts";
 import {
   closeTab,
+  moveTab,
   openTab,
   selectTab,
   setOpenAtLaunch,
@@ -188,6 +189,8 @@ export const createProfiles = ({
       }),
     selectTab: (key: TabKey) => exclusive(() => commit(selectTab(state, key))),
     closeTab: (key: TabKey) => exclusive(() => commit(closeTab(state, key))),
+    moveTab: (key: TabKey, before?: string) =>
+      exclusive(() => commit(moveTab(state, key, before))),
     closeOtherTabs: (key: TabKey) =>
       exclusive(() => commit(closeOtherTabs(state, key))),
     closeTabsBelow: (key: TabKey) =>

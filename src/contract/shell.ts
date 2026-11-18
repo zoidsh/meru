@@ -54,6 +54,14 @@ export const SHELL_CALLS = {
   selectProfile: { request: z.object({ profileId }), response: z.undefined() },
   selectTab: { request: tabKey, response: z.undefined() },
   closeTab: { request: tabKey, response: z.undefined() },
+  /**
+   * Moves a tab of the selected profile within its area, the pinned tabs or
+   * the rest, to just before the tab `before` names, or to the area's end.
+   */
+  moveTab: {
+    request: z.object({ profileId, tabId, before: z.optional(tabId) }),
+    response: z.undefined(),
+  },
   /** Loads a tab that failed or crashed again, now. */
   retryTab: { request: tabKey, response: z.undefined() },
   /**
