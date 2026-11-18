@@ -132,10 +132,14 @@ const saveTrace = async (app: ElectronApplication, testInfo: TestInfo) => {
   }
 };
 
-/** Runs `save`, warning rather than failing where the app has nothing left to give. */
+/**
+ * Runs `save`, warning rather than failing where the app has nothing left
+ * to give, and giving up after a few seconds, so a hung main or renderer
+ * cannot hold the teardown that closes and kills it.
+ */
 const keep = async (what: string, save: () => Promise<unknown>) => {
   try {
-    await save();
+    await withTimeout(save, 5000);
   } catch (error) {
     console.warn(`Kept no ${what}: ${String(error)}`);
   }
@@ -158,7 +162,9 @@ const saveFailure = async (
   const names = await Promise.all(
     pages.map((page) =>
       page.url() === "about:blank"
-        ? page.evaluate(() => window.name).catch(() => "")
+        ? withTimeout(() => page.evaluate(() => window.name), 5000).catch(
+            () => ""
+          )
         : ""
     )
   );
