@@ -1,3 +1,4 @@
+import { isEqual } from "es-toolkit";
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 
@@ -13,9 +14,7 @@ const SCROLL_STEP = 8;
 
 interface Drag {
   tabId: string;
-  pointerId: number;
   element: HTMLElement;
-  start: { x: number; y: number };
   point: { x: number; y: number };
   live: boolean;
   /** Escape or the window losing focus ended it before the pointer came up. */
@@ -101,9 +100,14 @@ export const useTabDrag = ({
     );
   };
 
+  /** Sets the line, redrawing the sidebar only when it moves. */
+  const draw = (next: Box | undefined) => {
+    setLine((previous) => (isEqual(previous, next) ? previous : next));
+  };
+
   const show = (current: Drag) => {
     current.drop = current.cancelled ? undefined : aim(current);
-    setLine(current.drop?.line);
+    draw(current.drop?.line);
   };
 
   const scroll = (current: Drag) => {
@@ -127,7 +131,9 @@ export const useTabDrag = ({
         }
       }
 
-      scroll(current);
+      if (!current.cancelled) {
+        scroll(current);
+      }
     });
   };
 
@@ -137,7 +143,13 @@ export const useTabDrag = ({
     if (current) {
       current.cancelled = true;
       current.drop = undefined;
-      setLine(undefined);
+
+      if (current.frame !== undefined) {
+        cancelAnimationFrame(current.frame);
+        current.frame = undefined;
+      }
+
+      draw(undefined);
     }
   };
 
@@ -150,7 +162,7 @@ export const useTabDrag = ({
 
     drag.current = undefined;
     current.stop();
-    setLine(undefined);
+    draw(undefined);
 
     if (current.live) {
       // The click that follows the release is the drag's, not a selection.
@@ -160,26 +172,16 @@ export const useTabDrag = ({
       }, 0);
     }
 
-    const bounds = sidebar.current?.getBoundingClientRect();
-
-    if (
-      dropped &&
-      current.live &&
-      current.drop &&
-      bounds &&
-      inside(bounds, current.point)
-    ) {
+    if (dropped && current.live && current.drop) {
       onMove(current.tabId, current.drop.before);
     }
   };
 
   // An overlay opening, or the tab going, ends the drag.
-  const tabList = tabIds.join(" ");
-
   useEffect(() => {
     const { current } = drag;
 
-    if (current && (blocked || !tabList.split(" ").includes(current.tabId))) {
+    if (current && (blocked || !tabIds.includes(current.tabId))) {
       cancel();
     }
   });
@@ -246,7 +248,12 @@ export const useTabDrag = ({
 
     const up = (next: PointerEvent) => {
       if (next.pointerId === pointerId) {
-        current.point = { x: next.clientX, y: next.clientY };
+        // Where it lands is where the pointer is let go.
+        if (current.live) {
+          current.point = { x: next.clientX, y: next.clientY };
+          show(current);
+        }
+
         finish(true);
       }
     };
@@ -267,9 +274,7 @@ export const useTabDrag = ({
 
     const current: Drag = {
       tabId,
-      pointerId,
       element,
-      start,
       point: start,
       live: false,
       cancelled: false,
