@@ -9,7 +9,7 @@ const setup = ({ focusWhileInactive = false } = {}) => {
   const focused: string[] = [];
   const window = { focused: false, visible: false };
   /** The web contents there to focus, by name; a gone one is missing. */
-  const present = new Set(["shell", "overlay", "front"]);
+  const present = new Set(["shell", "overlay", "front", "window"]);
 
   const focus = createFocus({
     window: {
@@ -119,6 +119,16 @@ describe(createFocus, () => {
     focus.giveBack();
 
     expect(focused).toStrictEqual(["front", "overlay", "front"]);
+  });
+
+  it("never gives focus back to a tab's own window, but to the front tab's view", () => {
+    const { focus, focused, window } = setup();
+
+    window.focused = true;
+    focus.noteFocused({ kind: "window", key: { profileId: "p", tabId: "c" } });
+    focus.giveBack();
+
+    expect(focused).toStrictEqual(["front"]);
   });
 
   it("gives nothing back while the window is in the background until it comes forward, and leaves a move already waiting", () => {

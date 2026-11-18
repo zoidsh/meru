@@ -84,9 +84,10 @@ export const createFocus = ({
       flush();
     },
     /**
-     * Gives focus back to the web contents that held it, or the front tab's
-     * view, after one took it unasked, as a pane's page can as it first
-     * loads; a move already waiting for the window wins.
+     * Gives focus back to the main window's web contents that held it, or
+     * the front tab's view, after one took it unasked, as a pane's page can
+     * as it first loads; a move already waiting for the window wins. Never
+     * to a tab's own window, which would come forward over the main one.
      */
     giveBack: () => {
       if (pending) {
@@ -94,7 +95,7 @@ export const createFocus = ({
       }
 
       pending = [
-        ...(focused ? [focused] : []),
+        ...(focused && focused.kind !== "window" ? [focused] : []),
         { kind: "front" },
         { kind: "shell" },
       ];
