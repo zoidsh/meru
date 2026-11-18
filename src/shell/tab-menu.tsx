@@ -163,8 +163,10 @@ export const TabMenu = ({
   return (
     <DropdownMenu
       open
-      onOpenChange={(open) => {
-        if (!open) {
+      onOpenChange={(open, { reason }) => {
+        // A chosen item is main's to act on, and main closes the menu after,
+        // so focus goes back to the tab as it is then.
+        if (!open && reason !== "item-press") {
           close();
         }
       }}

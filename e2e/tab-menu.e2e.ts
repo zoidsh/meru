@@ -275,6 +275,7 @@ test("Pin, Open at Launch and Unpin, then Close tab, Close other tabs and Close 
     DRIVE_TITLE,
     CALENDAR_TITLE,
   ]);
+  await expect(tab(shell, DRIVE_TITLE)).toBeFocused();
 
   const { overlay } = await openMenu(app, shell, DRIVE_TITLE);
   const launches = overlay.getByRole("menuitemcheckbox", {
@@ -298,9 +299,12 @@ test("Pin, Open at Launch and Unpin, then Close tab, Close other tabs and Close 
     CALENDAR_TITLE,
     DRIVE_TITLE,
   ]);
+  await expect(tab(shell, DRIVE_TITLE)).toBeFocused();
 
   await choose(app, shell, DRIVE_TITLE, "Close tab");
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, CALENDAR_TITLE]);
+  // The menu's tab is gone, so focus goes to the selected one.
+  await expect(tab(shell, CALENDAR_TITLE)).toBeFocused();
 
   await choose(app, shell, CALENDAR_TITLE, "Duplicate");
   await expect(tabs(shell)).toHaveCount(3);
