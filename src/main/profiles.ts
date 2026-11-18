@@ -162,7 +162,7 @@ export const createProfiles = ({
     /** Nothing when the name is empty, too long or the one it has. */
     rename: (profileId: string, name: string) =>
       exclusive(() => commit(renameProfile(state, profileId, name))),
-    /** Opens a link as a tab of `app`, selected; a new tab gets `tabId`. */
+    /** Opens `url` as a tab of `app`, selected; a new tab gets `tabId`. */
     openTab: (profileId: string, app: App, url: string, tabId: string) =>
       exclusive(async (): Promise<OpenedTab | undefined> => {
         const opened = openTab(state, profileId, app, url, () => tabId);

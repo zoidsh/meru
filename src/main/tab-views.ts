@@ -344,7 +344,7 @@ export const createTabViews = ({
       }
     } catch (error) {
       pendingUrls.delete(key);
-      log(`A link did not open as a tab: ${describe(error)}`);
+      log(`A tab did not open: ${describe(error)}`);
     }
   };
 
