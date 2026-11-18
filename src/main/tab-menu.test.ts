@@ -302,12 +302,7 @@ describe(createTabMenu, () => {
       [
         "own",
         { x: 760, y: 40 },
-        [
-          "Move to main window",
-          "Open at Launch (off) [ ]",
-          "Copy URL",
-          "Open in default browser",
-        ],
+        ["Move to main window", "Copy URL", "Open in default browser"],
       ]
     );
     expect([

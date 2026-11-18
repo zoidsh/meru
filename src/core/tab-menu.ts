@@ -41,7 +41,6 @@ export type TabMenuItemId = (typeof TAB_MENU_ITEMS)[number];
 /** What More options in a tab's own window holds, in the design's order. */
 export const OWN_WINDOW_MENU_ITEMS = [
   "moveToMainWindow",
-  "openAtLaunch",
   "copyUrl",
   "openInBrowser",
 ] as const satisfies readonly TabMenuItemId[];
@@ -172,9 +171,9 @@ export const tabMenu = (
 
 /**
  * More options in the titlebar of the tab's own window: Move to main
- * window, Open at Launch, which only a pinned tab has and so is never on
- * there, since a pinned tab never moves to a window of its own, Copy URL
- * and Open in default browser. Nothing for a tab not in its own window.
+ * window, Copy URL and Open in default browser. Open at Launch is left out,
+ * since only a pinned tab has it and a pinned tab never moves to a window
+ * of its own. Nothing for a tab not in its own window.
  */
 export const ownWindowMenu = (
   state: State,
@@ -192,12 +191,6 @@ export const ownWindowMenu = (
       id: "moveToMainWindow",
       enabled: true,
       command: "tab.moveToMainWindow",
-    },
-    {
-      kind: "item",
-      id: "openAtLaunch",
-      enabled: isPinned(tab),
-      checked: tab.openAtLaunch === true,
     },
     { kind: "item", id: "copyUrl", enabled: true },
     { kind: "item", id: "openInBrowser", enabled: opensInBrowser(tab) },

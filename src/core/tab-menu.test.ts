@@ -279,17 +279,12 @@ describe(tabMenu, () => {
 });
 
 describe(ownWindowMenu, () => {
-  it("offers Move to main window, Open at Launch never on there, Copy URL and Open in default browser", () => {
+  it("offers Move to main window, Copy URL and Open in default browser", () => {
     const current = state([{ ...tab("c", "calendar"), ownWindow: true }]);
 
     expect(
       shown(ownWindowMenu(current, { profileId: "p", tabId: "c" }))
-    ).toStrictEqual([
-      "moveToMainWindow",
-      "openAtLaunch off unchecked",
-      "copyUrl",
-      "openInBrowser",
-    ]);
+    ).toStrictEqual(["moveToMainWindow", "copyUrl", "openInBrowser"]);
   });
 
   it("offers nothing for a tab in the main window or not shown", () => {

@@ -395,7 +395,6 @@ test("Move to new window, then the own window's tab in the sidebar and its More 
   });
   expect(options.items).toStrictEqual([
     "Move to main window CommandOrControl+Shift+M",
-    "Open at Launch (off) [ ]",
     "Copy URL",
     "Open in default browser",
   ]);
