@@ -51,7 +51,6 @@ import { createBookmarks } from "./bookmarks.ts";
 import { createCatchUp } from "./catch-up.ts";
 import { COMMANDS } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
-import { commandAccelerator } from "./context-menu.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
@@ -69,9 +68,7 @@ import { createMailNotifications } from "./notifications.ts";
 import { createOpenApp } from "./open-app.ts";
 import { createOverlays } from "./overlay.ts";
 import { createOwnWindows } from "./own-windows.ts";
-import { createPaneResize } from "./pane-resize.ts";
 import { automaticProfileName } from "./profile-copy.ts";
-import { createProfileMenu } from "./profile-menu.ts";
 import { createProfiles } from "./profiles.ts";
 import type { Profiles } from "./profiles.ts";
 import { createRemoveProfile } from "./remove-profile.ts";
@@ -83,19 +80,11 @@ import {
   saveSettings,
 } from "./settings.ts";
 import type { SettingsStore } from "./settings.ts";
-import {
-  createShellHandlers,
-  shellShortcuts,
-  shellState,
-  shellTabStatus,
-} from "./shell-handlers.ts";
-import { serveShellContract } from "./shell-ipc.ts";
 import { createShellWindow } from "./shell-window.ts";
 import { createShowGmail } from "./show-gmail.ts";
 import { createSidebar } from "./sidebar.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
-import { createTabMenu } from "./tab-menu.ts";
 import { createTabViews } from "./tab-views.ts";
 import {
   USER_STYLES_FILE_NAME,
@@ -103,6 +92,7 @@ import {
   createUserStyles,
 } from "./user-styles.ts";
 import { revealWindow } from "./windows.ts";
+import { wireShellContract } from "./wiring/shell-contract.ts";
 import {
   exposeSettingsToSuite,
   gmailPageCapture,
@@ -1030,152 +1020,33 @@ const start = async () => {
   // which commands run.
   focus.onFocused(menu.refresh);
 
-  const shortcuts = shellShortcuts(COMMANDS, platform);
-  const ariaShortcuts = shellShortcuts(COMMANDS, platform, true);
-  const paneResize = createPaneResize({
-    state: profiles.get,
-    resizeSplit: profiles.resizeSplit,
-    areaSize: views.areaSize,
-    preview: views.preview,
-    log: console.error,
-  });
-  shell.window.onPageGone(paneResize.cancel);
-
-  const tabMenu = createTabMenu({
-    state: profiles.get,
+  wireShellContract({
+    platform,
     apps,
-    window: shell.window,
-    ownWindow: (key) => ownWindows.window(key),
-    accelerator: commandAccelerator(COMMANDS, platform),
-    bookmarks,
-    profiles,
-    moveToOwnWindow,
-    moveToMainWindow,
-    isLoaded: (key) => views.status(key).kind !== "unloaded",
-    pageUrl: livePageUrl,
-    reload: views.reload,
-    sleep: views.sleep,
-    wake: views.select,
-    openTab: views.open,
-    openSplit: openApp.openSplit,
-    clipboard,
-    systemBrowser,
-    log: console.error,
-  });
-  const profileMenu = createProfileMenu({
-    state: profiles.get,
-    window: shell.window,
-    profiles,
-    log: console.error,
-  });
-
-  serveShellContract({
     ipc,
     senders,
     shellOrigin,
-    handlers: createShellHandlers({
-      profiles,
-      overlays,
-      find,
-      tabs: views,
-      revealOwnWindow: showOwnWindow,
-      navigateTab: async (key, action) => {
-        switch (action) {
-          case "back": {
-            views.goBack(key);
-            break;
-          }
-          case "forward": {
-            views.goForward(key);
-            break;
-          }
-          case "stop": {
-            views.stopFront(key);
-            break;
-          }
-          default: {
-            await views.reload(key);
-          }
-        }
-      },
-      inbox,
-      openApp,
-      bookmarks,
-      tabMenu,
-      panes: paneResize,
-      pageSize: () =>
-        contentViewBounds(shell.window.getContentAreaSize(), sidebar.current()),
-      profileMenu,
-      openGmail: showGmail.jumpTo,
-      window: shell.window,
-      sidebar,
-      focus,
-      runCommand: menu.runCommand,
-      doNotDisturbItems: menu.doNotDisturbItems,
-      log: console.error,
-    }),
-    state: {
-      read: () =>
-        shellState(
-          profiles.get(),
-          views.status,
-          {
-            selectedAsleep: views.frontAsleep(),
-            panes: views.panes(),
-            handles: views.handles(),
-            find: find.current(),
-            bookmarked: bookmarks.bookmarked,
-            bookmarks: bookmarks.rows,
-          },
-          overlays.current(),
-          mail.mail,
-          doNotDisturb.current(),
-          inbox.shellSlice(),
-          {
-            sidebar: { state: sidebar.current() },
-            shortcuts,
-            ariaShortcuts,
-            navigation: views.navigation(),
-            windows: views.windowTabs().flatMap((key) => {
-              const tab = findTab(profiles.get(), key);
-              const navigation = views.navigation(key);
-              const bar = find.bar(key);
-
-              return tab && navigation
-                ? [
-                    {
-                      ...key,
-                      app: tab.app,
-                      title: tab.title,
-                      status: shellTabStatus(views.status(key)),
-                      navigation,
-                      bookmarked: bookmarks.bookmarked(key) ?? null,
-                      find: bar
-                        ? {
-                            term: bar.term,
-                            ordinal: bar.ordinal,
-                            matches: bar.matches,
-                            opened: bar.opened,
-                          }
-                        : null,
-                    },
-                  ]
-                : [];
-            }),
-          },
-          apps
-        ),
-      onChange: (listener) => {
-        profiles.onChange(listener);
-        mail.onChange(listener);
-        views.onChange(listener);
-        overlays.onChange(listener);
-        find.onChange(listener);
-        inbox.onChange(listener);
-        sidebar.onChange(listener);
-      },
-    },
-    log: console.error,
+    shell,
+    profiles,
+    views,
+    ownWindows,
+    overlays,
+    find,
+    focus,
+    sidebar,
+    inbox,
+    mail,
+    doNotDisturb,
+    openApp,
+    bookmarks,
+    menu,
+    showGmail,
+    showOwnWindow,
+    moveToOwnWindow,
+    moveToMainWindow,
+    livePageUrl,
+    clipboard,
+    systemBrowser,
   });
 
   wireTray({
