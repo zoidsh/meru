@@ -37,7 +37,7 @@ interface Drag {
  * it stops where a pane's minimum does.
  */
 export const PaneHandle = ({ handle }: { handle: Handle }) => {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const drag = useRef<Drag | undefined>(undefined);
   const across = handle.direction === "row";
   const { before, after } = handle;
@@ -124,6 +124,22 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
     event.preventDefault();
   };
 
+  const percent = i18n.number(
+    handle.span > 0 ? handle.size / handle.span : 0.5,
+    { style: "percent", maximumFractionDigits: 0 }
+  );
+  const valueText = across
+    ? t({
+        message: `Left pane ${percent}`,
+        comment:
+          "Said by screen readers of the gap between two panes side by side: how much of the two the left one takes; {percent} is a percentage, such as 60%",
+      })
+    : t({
+        message: `Upper pane ${percent}`,
+        comment:
+          "Said by screen readers of the gap between two panes one above the other: how much of the two the upper one takes; {percent} is a percentage, such as 60%",
+      });
+
   // A focusable separator is a widget, the window splitter of ARIA's
   // practices, which the lint's list of interactive roles leaves out.
   return (
@@ -140,6 +156,7 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
       aria-valuemin={handle.minimum}
       aria-valuemax={handle.maximum}
       aria-valuenow={handle.size}
+      aria-valuetext={valueText}
       data-pane-handle={`${before}|${after}`}
       style={{
         left: handle.x,
@@ -147,9 +164,11 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
         width: handle.width,
         height: handle.height,
       }}
+      // The ring is drawn inside the gap, since the pages' views cover
+      // anything past it.
       className={cn(
-        "absolute m-0 touch-none border-0 outline-none",
-        "after:pointer-events-none after:absolute after:rounded-[1px] after:bg-muted-foreground after:opacity-0 hover:after:opacity-60 focus-visible:after:opacity-60 active:after:opacity-60",
+        "absolute m-0 touch-none rounded-[4px] border-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+        "after:pointer-events-none after:absolute after:rounded-[1px] after:bg-muted-foreground after:opacity-0 hover:after:opacity-60 focus-visible:after:bg-foreground focus-visible:after:opacity-100 active:after:opacity-60",
         across
           ? "cursor-col-resize after:top-1/2 after:left-[3px] after:h-8 after:w-0.5 after:-translate-y-1/2"
           : "cursor-row-resize after:top-[3px] after:left-1/2 after:h-0.5 after:w-8 after:-translate-x-1/2"

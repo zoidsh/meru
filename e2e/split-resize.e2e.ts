@@ -244,6 +244,10 @@ test("a focused gap moves a step with an arrow key, to each minimum with Home an
   const total = left + right;
 
   await handle(shell).focus();
+  await expect(handle(shell)).toHaveAttribute(
+    "aria-valuetext",
+    "Left pane 50%"
+  );
   await shell.keyboard.press("ArrowRight");
   await expect
     .poll(() => paneWidths(shell))
@@ -301,6 +305,9 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
     .toBe(2);
   await expect(handle(shell)).toHaveCount(0);
   await expect(restore).toBeVisible();
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAccessibleDescription(
+    "In split view, maximized"
+  );
   await expect.poll(() => boxFill(shell)).not.toBe(evenFill);
   await expect
     .poll(() => readMenuLabel(first, "tab.maximize"))

@@ -92,7 +92,7 @@ export interface ShellPane extends Rectangle {
 }
 
 /** A gap between panes on screen, placed in the page area. */
-export type ShellHandle = Omit<PaneHandle, "bounds" | "span"> & Rectangle;
+export type ShellHandle = Omit<PaneHandle, "bounds"> & Rectangle;
 
 /** What of a tab's view a reader of its page gets. */
 export type LoadedPage = Pick<ContentView, "url" | "evaluate">;
@@ -909,9 +909,10 @@ export const createTabViews = ({
       const { panes } = laidOut();
 
       return panes
-        ? paneHandles(panes, pageArea()).map(
-            ({ bounds, span: _span, ...handle }) => ({ ...handle, ...bounds })
-          )
+        ? paneHandles(panes, pageArea()).map(({ bounds, ...handle }) => ({
+            ...handle,
+            ...bounds,
+          }))
         : [];
     },
     /** The page area's size, which the panes share. */

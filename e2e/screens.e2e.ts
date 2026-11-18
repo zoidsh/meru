@@ -770,7 +770,7 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
   await shootEachWay(app, shell, "split-box-pinned-wide");
 });
 
-test("uneven panes with a gap's handle hovered, and a maximized split's box, narrow and wide", async ({
+test("uneven panes with a gap's handle hovered and focused, and a maximized split's box, narrow and wide", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -791,6 +791,9 @@ test("uneven panes with a gap's handle hovered, and a maximized split's box, nar
   await findPage(first.app, standIn.driveUrl);
   await handle.hover();
   await shootEachWay(first.app, first.shell, "split-uneven");
+  await first.shell.mouse.move(700, 20);
+  await handle.focus();
+  await shootEachWay(first.app, first.shell, "split-handle-focused");
   await first.app.close();
 
   const maximized = withBox(standIn, {

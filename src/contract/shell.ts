@@ -256,6 +256,8 @@ export const SHELL_STATE = {
         width: coordinate,
         height: coordinate,
         size: coordinate,
+        /** The two panes' lengths together, of which `size` is the first's. */
+        span: coordinate,
         minimum: coordinate,
         maximum: coordinate,
       })

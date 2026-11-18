@@ -149,6 +149,11 @@ msgstr "{title}, position {position} of {count}"
 msgid "{told}, in split view"
 msgstr "{told}, in split view"
 
+#. Said by screen readers after the title of a tab in the sidebar's split view box while one pane shows alone; {told} is what is said of it otherwise, such as Asleep
+#: src/shell/tab-strip.tsx
+msgid "{told}, in split view, maximized"
+msgstr "{told}, in split view, maximized"
+
 #. Below the unified inbox when a profile has more unread mail than the list shows, since Gmail lists only the newest; {name} is the profile, {listed} how many are shown, # how many are unread
 #: src/shell/inbox.tsx
 msgid "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
@@ -410,6 +415,11 @@ msgstr "Hide sidebar"
 msgid "In split view"
 msgstr "In split view"
 
+#. Said by screen readers after the title of a tab in the sidebar's split view box while the focused pane shows alone, the others hidden until restored
+#: src/shell/tab-strip.tsx
+msgid "In split view, maximized"
+msgstr "In split view, maximized"
+
 #. Second sentence after an action in the unified inbox failed: the message shows in the list again
 #: src/shell/inbox.tsx
 msgid "It’s back in the list."
@@ -419,6 +429,11 @@ msgstr "It’s back in the list."
 #: src/shell/tab-strip.tsx
 msgid "Its page quit unexpectedly. Reload it to carry on."
 msgstr "Its page quit unexpectedly. Reload it to carry on."
+
+#. Said by screen readers of the gap between two panes side by side: how much of the two the left one takes; {percent} is a percentage, such as 60%
+#: src/shell/pane-handle.tsx
+msgid "Left pane {percent}"
+msgstr "Left pane {percent}"
 
 #. Said by screen readers after a tab's title while its page loads
 #: src/shell/tab-strip.tsx
@@ -918,6 +933,11 @@ msgstr "Until Tomorrow"
 #: src/main/commands.ts
 msgid "Until Turned Off"
 msgstr "Until Turned Off"
+
+#. Said by screen readers of the gap between two panes one above the other: how much of the two the upper one takes; {percent} is a percentage, such as 60%
+#: src/shell/pane-handle.tsx
+msgid "Upper pane {percent}"
+msgstr "Upper pane {percent}"
 
 #. Text of the notification for an email that carries a one-time code, which its Copy button copies. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts

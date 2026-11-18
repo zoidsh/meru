@@ -129,12 +129,15 @@ const useDescription = ({
   tile,
   asleep,
   boxed,
+  maximized,
   title,
   tooltip,
 }: {
   tile: boolean;
   asleep: boolean;
   boxed: boolean;
+  /** Whether the box's split shows its focused pane alone. */
+  maximized: boolean;
   title: string;
   tooltip: string;
 }) => {
@@ -151,6 +154,20 @@ const useDescription = ({
   }
 
   const told = tile && tooltip !== title ? tooltip : rowDescription;
+
+  if (maximized) {
+    return told
+      ? t({
+          message: `${told}, in split view, maximized`,
+          comment:
+            "Said by screen readers after the title of a tab in the sidebar's split view box while one pane shows alone; {told} is what is said of it otherwise, such as Asleep",
+        })
+      : t({
+          message: "In split view, maximized",
+          comment:
+            "Said by screen readers after the title of a tab in the sidebar's split view box while the focused pane shows alone, the others hidden until restored",
+        });
+  }
 
   return told
     ? t({
@@ -274,6 +291,8 @@ interface TabButtonProps {
   spansRow: boolean;
   /** In the split's box, whose fill it hovers over in its own shade. */
   boxed: boolean;
+  /** In a box whose split shows its focused pane alone. */
+  maximized: boolean;
   selected: boolean;
   profileId: string;
   unreadCount: number;
@@ -301,6 +320,7 @@ const TabButton = ({
   cell,
   spansRow,
   boxed,
+  maximized,
   selected,
   profileId,
   unreadCount,
@@ -319,7 +339,14 @@ const TabButton = ({
   // Unlike the name, which stays the title; Chromium then reads it as the
   // tile's description.
   const tooltip = useTooltip(title, asleep, marked && signedOut);
-  const description = useDescription({ tile, asleep, boxed, title, tooltip });
+  const description = useDescription({
+    tile,
+    asleep,
+    boxed,
+    maximized,
+    title,
+    tooltip,
+  });
 
   // One element tree in either width, so a tab keeps its element, and with
   // it focus, as the sidebar changes width. A row shows its title in full
@@ -658,6 +685,7 @@ export const Sidebar = ({
       cell={wide && tab.pinned}
       spansRow={spansRow}
       boxed={boxed.has(tab.id)}
+      maximized={boxed.has(tab.id) && tabs.maximized}
       selected={tab.id === tabs.selectedTabId}
       profileId={profileId}
       unreadCount={unreadCount}
