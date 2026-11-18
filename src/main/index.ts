@@ -411,7 +411,7 @@ const start = async () => {
     focus.noteFocused({ kind: "shell" });
   });
   shell.window.on("blur", () => {
-    overlays.close({ blurred: true });
+    overlays.close({ toPage: true });
   });
   shell.window.onContentAreaResize(overlays.relayout);
 

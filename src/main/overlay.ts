@@ -25,7 +25,8 @@ export interface OverlaysDeps {
  * the shell had it: that is the button that opened the overlay, and focus
  * left in the titlebar would leave Gmail's keys dead. A menu is the
  * exception: it gives focus to the shell, which puts it back on the control
- * the menu was opened on, unless the window losing focus closed it.
+ * the menu was opened on, unless the window losing focus closed it or
+ * another profile was selected, which give focus to the page.
  */
 export const createOverlays = ({
   focus,
@@ -58,14 +59,14 @@ export const createOverlays = ({
     notify();
   };
 
-  const hide = ({ blurred = false } = {}) => {
+  const hide = ({ toPage = false } = {}) => {
     const closed = open;
 
     open = undefined;
     view?.hide();
     notify();
     focus.focus(
-      isMenu(closed) && !blurred
+      isMenu(closed) && !toPage
         ? [{ kind: "shell" }]
         : [{ kind: "front" }, { kind: "shell" }]
     );
@@ -105,16 +106,23 @@ export const createOverlays = ({
     open: (overlay: Overlay) => {
       dispatch({ kind: "open", overlay });
     },
-    /** Closes what is open; `blurred` when the window losing focus did. */
-    close: ({ blurred = false } = {}) => {
-      dispatch({ kind: "close" }, { blurred });
+    /**
+     * Closes what is open; `toPage` gives focus to the page even from a menu,
+     * as when the window losing focus closed it.
+     */
+    close: ({ toPage = false } = {}) => {
+      dispatch({ kind: "close" }, { toPage });
     },
     /** Told of each change of main's state, which may close what is open. */
     follow: (next: State) => {
       const previous = state;
 
       state = next;
-      dispatch({ kind: "state-changed", previous, next });
+      // A menu closed by another profile selected gives focus to its page.
+      dispatch(
+        { kind: "state-changed", previous, next },
+        { toPage: previous.selectedProfileId !== next.selectedProfileId }
+      );
     },
     /** Places the view again, as the window now has it. */
     relayout: () => {

@@ -23,8 +23,8 @@ export const wholePoint = (x: number, y: number) => ({
 
 /**
  * Closing a menu gives focus back to the shell, which puts it on the control
- * the menu of `kind` was opened on, named by `subject`, through `restore`;
- * unless the item gave it to the page area, as Sleep gives it to Wake.
+ * the menu of `kind` was opened on, named by `subject`, through `restore`,
+ * when main gave it focus.
  */
 export const useMenuReturn = <Kind extends MenuKind>(
   kind: Kind,
@@ -41,11 +41,9 @@ export const useMenuReturn = <Kind extends MenuKind>(
 
     last.current = open;
 
-    if (
-      open === undefined &&
-      closed !== undefined &&
-      !document.activeElement?.closest("[data-sleeping-pane]")
-    ) {
+    // Main gives the page focus instead when the window lost it or another
+    // profile was selected; the shell then has none to place.
+    if (open === undefined && closed !== undefined && document.hasFocus()) {
       restore(closed);
     }
   });

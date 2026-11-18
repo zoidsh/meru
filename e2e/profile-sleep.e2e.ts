@@ -57,6 +57,18 @@ const notified = (app: ElectronApplication) =>
     () => (Reflect.get(globalThis, "meruTestNotifications") as unknown[]).length
   );
 
+/**
+ * Lets `document.hasFocus()` in the page say whether it holds Chromium's
+ * keyboard focus, which Playwright otherwise makes every page claim.
+ */
+const followRealFocus = async (page: Page) => {
+  const cdp = await page.context().newCDPSession(page);
+
+  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
+
+  return () => page.evaluate(() => document.hasFocus());
+};
+
 /** Right-clicks the profile's button and chooses the item of its menu. */
 const choose = async (
   app: ElectronApplication,
@@ -110,7 +122,7 @@ test("Sleep in a background profile's menu closes its views and renderer and dim
   await expect.poll(() => countRenderers(app)).toBe(2);
   await expect(work).toHaveCSS("opacity", "0.5");
   await expect(work).toHaveAccessibleName("Work, asleep, 1 unread message");
-  await expect(work).toHaveAttribute("title", /^Work, asleep/u);
+  await expect(work).toHaveAttribute("title", /^Work · asleep/u);
   await expect(work).toBeFocused();
   await expect(profileButton(shell, "Home")).toHaveCSS("opacity", "1");
   await expect(profileButton(shell, "Home")).toHaveAttribute(
@@ -139,6 +151,37 @@ test("Sleep in a background profile's menu closes its views and renderer and dim
     .toStrictEqual([
       { url: messageLink(standIn.url, "2"), partition: "persist:p1" },
     ]);
+});
+
+test("Sleep in the selected profile's menu selects the first awake one and gives focus to its page", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      { id: "p0", name: "Home" },
+      { id: "p1", name: "Work" },
+    ],
+    selectedProfileId: "p1",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+
+  await findPage(app, standIn.url);
+  await choose(app, shell, "Work", "Sleep");
+  await expect(profileButton(shell, "Home")).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  await expect.poll(() => viewPartitions(app)).toStrictEqual(["persist:p0"]);
+
+  // Work's page is gone, so the one left is Home's.
+  const home = await findPage(app, standIn.url);
+  const homeHasFocus = await followRealFocus(home);
+
+  await expect.poll(homeHasFocus).toBe(true);
 });
 
 test("Sleep Profile on the selected profile selects the first awake one in the row, and Next Profile landing on it wakes it", async ({

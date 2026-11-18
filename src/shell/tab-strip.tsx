@@ -434,11 +434,16 @@ export const Sidebar = ({
   const overlay = useShellState("overlay");
 
   // Back on the tab its menu was opened on, or the selected tab once that
-  // is gone.
+  // is gone, unless the item gave focus to the page area, as Sleep gives it
+  // to Wake.
   useMenuReturn(
     "tab-menu",
     (menu) => menu.tabId,
     (tabId) => {
+      if (document.activeElement?.closest("[data-sleeping-tab]")) {
+        return;
+      }
+
       (
         list.current?.querySelector<HTMLElement>(
           `[data-tab-id="${CSS.escape(tabId)}"]`

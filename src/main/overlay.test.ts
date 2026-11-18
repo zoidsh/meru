@@ -152,7 +152,18 @@ describe(createOverlays, () => {
       y: 60,
     });
     events.length = 0;
-    overlays.close({ blurred: true });
+    overlays.close({ toPage: true });
+
+    expect(events).toStrictEqual(["hide", "shell told closed", "focus front"]);
+  });
+
+  it("gives focus to the page when another profile selected closes a profile's menu", () => {
+    const { overlays, focus, events } = setup();
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open({ kind: "profile-menu", profileId: "a", x: 120, y: 20 });
+    events.length = 0;
+    overlays.follow(selectProfile(two, "b") as State);
 
     expect(events).toStrictEqual(["hide", "shell told closed", "focus front"]);
   });
