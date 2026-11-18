@@ -598,6 +598,11 @@ msgstr "Not enough room"
 msgid "Not enough room to split"
 msgstr "Not enough room to split"
 
+#. Accessible name of the region at the foot of the window that holds Meru's short notices, such as one saying there is not enough room to split
+#: src/shell/toast.tsx
+msgid "Notifications"
+msgstr "Notifications"
+
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
 #: src/main/do-not-disturb.ts
 msgid "On Until {time}"

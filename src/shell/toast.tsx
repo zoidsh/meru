@@ -59,7 +59,13 @@ export const Toast = ({
   return (
     <ToastProvider toastManager={notices}>
       <ToastPortal container={target.body}>
-        <ToastViewport>
+        <ToastViewport
+          aria-label={t({
+            message: "Notifications",
+            comment:
+              "Accessible name of the region at the foot of the window that holds Meru's short notices, such as one saying there is not enough room to split",
+          })}
+        >
           <NoticeList />
         </ToastViewport>
       </ToastPortal>

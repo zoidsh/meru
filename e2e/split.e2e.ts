@@ -446,7 +446,9 @@ test("a split that would leave a pane under the minimum is refused with a toast,
 
     return url === "about:blank" ? "overlay" : url.split(":")[0];
   };
-  const toast = overlay.getByText("Not enough room to split", { exact: true });
+  const toast = overlay
+    .getByRole("region", { name: "Notifications" })
+    .getByText("Not enough room to split", { exact: true });
   const calendarTab = tab(shell, CALENDAR_TITLE);
 
   // The window's least size, whose page area is too short for two panes.
