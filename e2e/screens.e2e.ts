@@ -1253,3 +1253,172 @@ test("the find bar over a tab's page in its own window", async ({
   await titlebar.mouse.move(600, 300);
   await shootOwnWindowEachWay(app, shell, "own-window-find");
 });
+
+/** Gmail, Calendar, selected, and Drive, Calendar's page bookmarked, with `more` after it. */
+const withBookmarks = (standIn: StandIn, more: object[] = []) => ({
+  profiles: [
+    {
+      id: "p",
+      name: "Default",
+      tabs: [
+        { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+        { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
+        { id: "d", app: "drive", url: standIn.driveUrl, title: "" },
+      ],
+      selectedTabId: "c",
+      bookmarks: [
+        {
+          id: "b0",
+          url: standIn.calendarUrl,
+          title: CALENDAR_TITLE,
+          app: "calendar",
+        },
+        ...more,
+      ],
+    },
+  ],
+  selectedProfileId: "p",
+});
+
+const openBookmarks = async (app: ElectronApplication, overlay: Page) => {
+  await app.evaluate(({ Menu, BrowserWindow }) => {
+    Menu.getApplicationMenu()
+      ?.getMenuItemById("bookmarks.toggle")
+      ?.click(undefined, BrowserWindow.getAllWindows()[0]);
+  });
+  await expect(
+    overlay.getByRole("dialog", { name: "Bookmarks" })
+  ).toBeVisible();
+};
+
+test("the Bookmarks overlay with bookmarks and with none", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(
+    userDataDir,
+    withBookmarks(standIn, [
+      {
+        id: "b1",
+        url: "https://docs.google.com/document/d/plan/edit",
+        title: "Q4 planning notes",
+        app: "docs",
+      },
+      {
+        id: "b2",
+        url: "https://docs.google.com/spreadsheets/d/budget/edit",
+        title: "Team budget 2026, with a title long enough to be cut short",
+        app: "sheets",
+      },
+      {
+        id: "b3",
+        url: "https://drive.google.com/drive/folders/shared",
+        title: "Shared with the design team",
+        app: "drive",
+      },
+      {
+        id: "b4",
+        url: "https://meet.google.com/abc-defg-hij",
+        title: "Weekly standup",
+        app: "meet",
+      },
+    ])
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const overlay = await findOverlayDocument(app);
+
+  await findPage(app, standIn.calendarUrl);
+  await rest(shell);
+  await openBookmarks(app, overlay);
+  await expect(overlay.getByRole("option")).toHaveCount(5);
+  await shootEachWay(app, shell, "bookmarks");
+  await app.close();
+
+  await writeState(userDataDir, {
+    ...withBookmarks(standIn),
+    profiles: withBookmarks(standIn).profiles.map((profile) => ({
+      ...profile,
+      bookmarks: [],
+    })),
+  });
+
+  const empty = await launch(launchApp, userDataDir);
+  const emptyOverlay = await findOverlayDocument(empty.app);
+
+  await findPage(empty.app, standIn.calendarUrl);
+  await rest(empty.shell);
+  await openBookmarks(empty.app, emptyOverlay);
+  await expect(emptyOverlay.getByText("No bookmarks yet")).toBeVisible();
+  await shootEachWay(empty.app, empty.shell, "bookmarks-empty");
+});
+
+test("a wide row bookmarked at rest, and a row's bookmark button on hover", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, withBookmarks(standIn));
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const tabs = shell.getByRole("tablist", { name: "Tabs" });
+
+  await findPage(app, standIn.calendarUrl);
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  // Drive's page loads once shown, so its row can be bookmarked too.
+  await tabs.getByRole("tab", { name: "Drive", exact: true }).click();
+  await findPage(app, standIn.driveUrl);
+  await tabs.getByRole("tab", { name: CALENDAR_TITLE, exact: true }).click();
+  await rest(shell);
+  await expect(
+    shell.getByRole("button", {
+      name: `Remove bookmark of ${CALENDAR_TITLE}`,
+      includeHidden: true,
+    })
+  ).toHaveCSS("opacity", "1");
+  await shootEachWay(app, shell, "bookmark-row");
+
+  await tabs.getByRole("tab", { name: DRIVE_TITLE, exact: true }).hover();
+  await expect(
+    shell.getByRole("button", {
+      name: `Bookmark ${DRIVE_TITLE}`,
+      includeHidden: true,
+    })
+  ).toHaveCSS("opacity", "1");
+  await shootEachWay(app, shell, "bookmark-row-hover");
+});
+
+test("a tab's own window with its page bookmarked", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const state = withOwnWindow(standIn, ["Default"]);
+
+  await writeState(userDataDir, {
+    ...state,
+    profiles: state.profiles.map((profile) => ({
+      ...profile,
+      bookmarks: [
+        {
+          id: "b0",
+          url: standIn.calendarUrl,
+          title: CALENDAR_TITLE,
+          app: "calendar",
+        },
+      ],
+    })),
+  });
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const titlebar = await ownWindowDrawn(app);
+
+  await expect(
+    titlebar
+      .getByRole("banner", { name: "Title bar" })
+      .getByRole("button", { name: /^Remove bookmark/u })
+  ).toBeVisible();
+  await titlebar.mouse.move(600, 300);
+  await shootOwnWindowEachWay(app, shell, "own-window-bookmark");
+});
