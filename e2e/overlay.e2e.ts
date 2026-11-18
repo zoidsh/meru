@@ -1,4 +1,5 @@
 import type { ElectronApplication, Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import { overlayRectangle } from "#core/overlay.ts";
 
@@ -78,6 +79,36 @@ const typeInto = (app: ElectronApplication, url: string, text: string) =>
       }
     },
     { pageUrl: url, characters: [...text] }
+  );
+
+/**
+ * A key in the overlay's view as the system hands it there, so its view
+ * hears it first; a letter also types.
+ */
+const keyInOverlay = (
+  app: ElectronApplication,
+  keyCode: string,
+  modifiers: ("control" | "shift" | "meta")[] = []
+) =>
+  app.evaluate(
+    ({ webContents }, request) => {
+      const overlay = webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.mainFrame.name === "meru-overlay");
+      const types =
+        request.keyCode.length === 1 && request.modifiers.length === 0
+          ? (["keyDown", "char", "keyUp"] as const)
+          : (["keyDown", "keyUp"] as const);
+
+      for (const type of types) {
+        overlay?.sendInputEvent({
+          type,
+          keyCode: request.keyCode,
+          modifiers: request.modifiers,
+        });
+      }
+    },
+    { keyCode, modifiers }
   );
 
 const field = (overlay: Page) =>
@@ -260,6 +291,34 @@ test("Escape, a click beside the card, a tab switch and the window losing focus 
 
   expect(await readMenuLabel(app, "profile.select.1")).toBe("Default");
   expect(await readNames(userDataDir)).toStrictEqual(["Default"]);
+});
+
+test("in the rename field a plain letter types, and a command's key acts once on the tab underneath", async ({
+  app,
+  shell,
+  standIn,
+}) => {
+  const gmail = await findPage(app, standIn.url);
+  const overlay = await findOverlayDocument(app);
+  const calendarSelected = (selected: boolean) =>
+    expect(
+      shell.getByRole("tab", { name: CALENDAR_TITLE, selected })
+    ).toBeVisible();
+
+  await gmail.getByRole("link", { name: "Open Calendar" }).click();
+  await calendarSelected(true);
+
+  await openFromMenu(app, overlay);
+  await field(overlay).fill("");
+  await keyInOverlay(app, "x");
+  await expect(field(overlay)).toHaveValue("x");
+
+  // Next tab, which run twice would wrap back to Calendar.
+  await keyInOverlay(app, "Tab", ["control"]);
+  await expectClosed(app, overlay);
+  await calendarSelected(false);
+  await delay(500);
+  await calendarSelected(false);
 });
 
 test("when the shell's renderer is gone, the overlay's view goes with it and nothing is left open", async ({
