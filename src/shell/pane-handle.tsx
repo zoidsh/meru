@@ -6,6 +6,7 @@ import type { KeyboardEvent } from "react";
 import type { ShellState } from "#contract/shell.ts";
 import type { PaneGapEnd } from "#core/pane-tree.ts";
 
+import { followPointer } from "./follow-pointer.ts";
 import { shellCalls } from "./sync.ts";
 
 type Handle = ShellState["tabs"]["handles"][number];
@@ -22,19 +23,11 @@ const nextGesture = () => {
   return gestures;
 };
 
-/**
- * How long a move with no button held waits for a move with one, or a
- * release, before it ends the drag as a release that went missing.
- */
-const RELEASE_GRACE = 150;
-
 interface Drag {
   gesture: number;
   start: number;
   by: number;
   frame: number | undefined;
-  /** Ends the drag unless a move with the button held comes first. */
-  released: ReturnType<typeof setTimeout> | undefined;
   stop?: () => void;
 }
 
@@ -79,76 +72,42 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
   const at = (event: { clientX: number; clientY: number }) =>
     across ? event.clientX : event.clientY;
 
-  /**
-   * Follows the pointer through the window rather than the gap, which the
-   * capture keeps it on only while the system says the button is held. On
-   * Linux and Windows, Chromium makes up a move where the system's cursor
-   * is as the views under it change size, which a drag does, with the
-   * buttons the system holds; a press it did not see, as one sent through
-   * the DevTools protocol, then reads as let go. A move with the button
-   * held soon after shows it was not.
-   */
   const follow = (pointerId: number, element: HTMLElement, current: Drag) => {
-    const move = (event: globalThis.PointerEvent) => {
-      if (event.pointerId !== pointerId || drag.current !== current) {
-        return;
-      }
-
-      if (event.buttons === 0) {
-        if (current.released === undefined) {
-          current.released = setTimeout(() => {
-            end(true);
-          }, RELEASE_GRACE);
+    const stopFollowing = followPointer(globalThis, pointerId, {
+      move: (event) => {
+        if (drag.current !== current) {
+          return;
         }
 
-        return;
-      }
+        current.by = Math.round(at(event) - current.start);
 
-      clearTimeout(current.released);
-      current.released = undefined;
-      current.by = Math.round(at(event) - current.start);
-      if (current.frame === undefined) {
-        current.frame = requestAnimationFrame(() => {
-          current.frame = undefined;
+        if (current.frame === undefined) {
+          current.frame = requestAnimationFrame(() => {
+            current.frame = undefined;
 
-          if (drag.current === current) {
-            send(current.by, current.gesture, false);
-          }
-        });
-      }
-    };
-
-    const up = (event: globalThis.PointerEvent) => {
-      if (event.pointerId !== pointerId) {
-        return;
-      }
-
-      // Where it is let go, which a move Chromium held for the next frame
-      // may not have told.
-      current.by = Math.round(at(event) - current.start);
-      end(true);
-    };
-
-    const cancel = (event: globalThis.PointerEvent) => {
-      if (event.pointerId === pointerId) {
+            if (drag.current === current) {
+              send(current.by, current.gesture, false);
+            }
+          });
+        }
+      },
+      up: (event) => {
+        // Where it is let go, which a move Chromium held for the next frame
+        // may not have told.
+        current.by = Math.round(at(event) - current.start);
         end(true);
-      }
-    };
-
-    globalThis.addEventListener("pointermove", move, true);
-    globalThis.addEventListener("pointerup", up, true);
-    globalThis.addEventListener("pointercancel", cancel, true);
+      },
+      lost: () => {
+        end(true);
+      },
+    });
 
     current.stop = () => {
-      clearTimeout(current.released);
+      stopFollowing();
 
       if (current.frame !== undefined) {
         cancelAnimationFrame(current.frame);
       }
-
-      globalThis.removeEventListener("pointermove", move, true);
-      globalThis.removeEventListener("pointerup", up, true);
-      globalThis.removeEventListener("pointercancel", cancel, true);
 
       if (element.hasPointerCapture(pointerId)) {
         element.releasePointerCapture(pointerId);
@@ -270,7 +229,6 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
           start: at(event),
           by: 0,
           frame: undefined,
-          released: undefined,
         };
 
         drag.current = current;
