@@ -537,3 +537,105 @@ test("on macOS closing the main window hides it, the tab's own window still clos
   await expect.poll(() => mainWindowVisible(app)).toBeTruthy();
   await expect.poll(() => ownWindowCount(app)).toBe(0);
 });
+
+/** Whether any web contents still shows a page under `url`. */
+const pageOpen = (app: ElectronApplication, url: string) =>
+  app.evaluate(
+    ({ webContents }, wanted) =>
+      webContents
+        .getAllWebContents()
+        .some((contents) => contents.getURL().startsWith(wanted)),
+    url
+  );
+
+test("a page that crashed in its own window says so there, and reloads on the control", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, calendar } = await launch(launchApp, userDataDir, standIn);
+
+  await clickMenuItem(app, "tab.moveToNewWindow");
+  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
+
+  const titlebar = await findTitlebar(app);
+  const loads = standIn.requests().calendar;
+
+  await app.evaluate(({ webContents }, url) => {
+    webContents
+      .getAllWebContents()
+      .find((contents) => contents.getURL().startsWith(url))
+      ?.forcefullyCrashRenderer();
+  }, standIn.calendarUrl);
+
+  const heading = titlebar.getByRole("heading", {
+    name: "Calendar stopped working",
+  });
+
+  await expect(heading).toBeVisible();
+  // The panel's, not the titlebar's.
+  await titlebar
+    .getByRole("region", { name: "Calendar stopped working" })
+    .getByRole("button", { name: "Reload" })
+    .click();
+  await expect(heading).toBeHidden();
+  await expect.poll(() => standIn.requests().calendar).toBe(loads + 1);
+  expect(await ownWindowCount(app)).toBe(1);
+});
+
+test("removing a profile closes its tabs' own windows with their pages", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
+        selectedTabId: "gmail",
+      },
+      {
+        id: "q",
+        name: "Work",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: "",
+            ownWindow: true,
+          },
+        ],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "q",
+  });
+
+  const app = await launchApp();
+
+  await findPage(app, standIn.calendarUrl);
+  await expect.poll(() => ownWindowPage(app)).toBe(standIn.calendarUrl);
+
+  // Stands in for the native confirmation, which would show on the desktop.
+  await app.evaluate(({ dialog }) => {
+    dialog.showMessageBox = (() =>
+      Promise.resolve({
+        response: 0,
+        checkboxChecked: false,
+      })) as typeof dialog.showMessageBox;
+  });
+  await clickMenuItem(app, "profile.remove");
+
+  await expect.poll(() => ownWindowCount(app)).toBe(0);
+  await expect.poll(() => pageOpen(app, standIn.calendarUrl)).toBeFalsy();
+
+  const { profiles } = await readState<{ profiles: { id: string }[] }>(
+    userDataDir
+  );
+
+  expect(profiles.map((profile) => profile.id)).toStrictEqual(["p"]);
+});
