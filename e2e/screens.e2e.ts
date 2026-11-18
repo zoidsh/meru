@@ -173,6 +173,47 @@ for (const { count, signedIn } of [
   });
 }
 
+test("a tab's menu on a pinned tile and on a listed tab", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  standIn.setFeed(ANY_SESSION, { unreadCount: 3 });
+  await writeState(userDataDir, withPinned(standIn, 2));
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const list = shell.getByRole("tablist", { name: "Tabs" });
+
+  await findPage(app, standIn.driveUrl);
+  await findPage(app, standIn.url);
+
+  for (const [title, surface] of [
+    [STAND_IN_TITLE, "tab-menu-pinned"],
+    ["Docs", "tab-menu"],
+  ] as const) {
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    await list.getByRole("tab", { name: title, exact: true }).click({
+      button: "right",
+    });
+
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    const overlay = await findOverlayDocument(app);
+    const menu = overlay.getByRole("menu", { name: title });
+
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    await expect(menu).toBeVisible();
+    // Away from every item, so none is highlighted in the picture.
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    await overlay.mouse.move(900, 600);
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    await shootEachWay(app, shell, surface);
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    await overlay.keyboard.press("Escape");
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    await expect(menu).toHaveCount(0);
+  }
+});
+
 test("the titlebar with two profiles, and with more than fit", async ({
   launchApp,
   userDataDir,

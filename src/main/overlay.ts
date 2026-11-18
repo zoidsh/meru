@@ -12,8 +12,8 @@ export interface OverlaysDeps {
   focus: Pick<Focus, "focus">;
   /** Main's state when the overlays start following it. */
   initial: State;
-  /** Where the view sits while an overlay is open, as the window is now. */
-  bounds: () => Rectangle;
+  /** Where the view sits while `overlay` is open, as the window is now. */
+  bounds: (overlay: Overlay) => Rectangle;
   log: (message: string) => void;
 }
 
@@ -23,7 +23,9 @@ export interface OverlaysDeps {
  * the shell hears of it; closing hides it and gives focus to the selected
  * tab's view, or the shell when there is none. Never back to the shell when
  * the shell had it: that is the button that opened the overlay, and focus
- * left in the titlebar would leave Gmail's keys dead.
+ * left in the titlebar would leave Gmail's keys dead. A tab's menu is the
+ * exception: it gives focus to the shell, which puts it on the tab the menu
+ * was opened on.
  */
 export const createOverlays = ({
   focus,
@@ -49,7 +51,7 @@ export const createOverlays = ({
       return;
     }
 
-    view.setBounds(bounds());
+    view.setBounds(bounds(overlay));
     view.show();
     open = overlay;
     focus.focus([{ kind: "overlay" }]);
@@ -57,10 +59,16 @@ export const createOverlays = ({
   };
 
   const hide = () => {
+    const closed = open;
+
     open = undefined;
     view?.hide();
     notify();
-    focus.focus([{ kind: "front" }, { kind: "shell" }]);
+    focus.focus(
+      closed?.kind === "tab-menu"
+        ? [{ kind: "shell" }]
+        : [{ kind: "front" }, { kind: "shell" }]
+    );
   };
 
   const dispatch = (event: OverlayEvent) => {
@@ -110,7 +118,7 @@ export const createOverlays = ({
     /** Places the view again, as the window now has it. */
     relayout: () => {
       if (open && view) {
-        view.setBounds(bounds());
+        view.setBounds(bounds(open));
       }
     },
     current: () => open,

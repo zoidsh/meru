@@ -6,6 +6,7 @@ import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
+import { TAB_MENU_ITEMS } from "#core/tab-menu.ts";
 
 import { NAVIGATE_ACTIONS } from "./shell-channels.ts";
 import type { ShellCallName } from "./shell-channels.ts";
@@ -26,7 +27,14 @@ const mailStatus = z.enum(MAIL_STATUSES);
 
 const unreadCount = z.nullable(z.int().check(z.nonnegative()));
 
-const tabKey = z.object({ profileId, tabId: z.string().check(z.minLength(1)) });
+const tabId = z.string().check(z.minLength(1));
+
+const tabKey = z.object({ profileId, tabId });
+
+/** A point of the window's content area, in whole CSS pixels. */
+const coordinate = z.int().check(z.nonnegative());
+
+const tabMenuItem = z.enum(TAB_MENU_ITEMS);
 
 const tabStatus = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unloaded") }),
@@ -104,6 +112,19 @@ export const SHELL_CALLS = {
    * which Google sends to its sign-in page while the account is signed out.
    */
   openGmail: { request: z.object({ profileId }), response: z.undefined() },
+  /**
+   * Opens the tab's context menu at a point of the content area, which main
+   * refuses outside it or for a tab that is not shown.
+   */
+  openTabMenu: {
+    request: z.object({ profileId, tabId, x: coordinate, y: coordinate }),
+    response: z.undefined(),
+  },
+  /** Runs an item of the open tab menu on its tab, and closes the menu. */
+  runTabMenuItem: {
+    request: z.object({ item: tabMenuItem }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   ShellCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -219,6 +240,25 @@ export const SHELL_STATE = {
       profileId,
       /** What the profile can open, in the registry's order. */
       apps: z.array(z.object({ id: z.enum(APP_IDS), name: z.string() })),
+    }),
+    z.object({
+      kind: z.literal("tab-menu"),
+      profileId,
+      tabId,
+      /** Where it was asked for, in the content area, which the menu's view covers. */
+      x: coordinate,
+      y: coordinate,
+      /** The tab's title, which names the menu. */
+      title: z.string(),
+      pinned: z.boolean(),
+      /** What it offers, in order. */
+      items: z.array(
+        z.object({
+          id: tabMenuItem,
+          enabled: z.boolean(),
+          checked: z.optional(z.boolean()),
+        })
+      ),
     }),
   ]),
 } as const;

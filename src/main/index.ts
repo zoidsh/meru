@@ -91,6 +91,7 @@ import { createSoundOutput } from "./sounds.ts";
 import type { SoundOutput } from "./sounds.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
+import { createTabMenu } from "./tab-menu.ts";
 import { createTabViews } from "./tab-views.ts";
 import {
   captureGmailPage,
@@ -388,8 +389,12 @@ const start = async () => {
   const overlays = createOverlays({
     focus,
     initial: profiles.get(),
-    bounds: () =>
-      overlayRectangle(shell.window.getContentAreaSize(), sidebar.current()),
+    bounds: (overlay) =>
+      overlayRectangle(
+        shell.window.getContentAreaSize(),
+        sidebar.current(),
+        overlay
+      ),
     log: console.error,
   });
 
@@ -457,6 +462,12 @@ const start = async () => {
   power.onResume(mail.pokeAll);
   power.onResume(doNotDisturb.resume);
 
+  const systemBrowser = createSystemBrowser();
+  // The suite's build never writes the clipboard, which the whole desktop
+  // shares.
+  const clipboard = MERU_E2E_BUILD
+    ? createCapturedClipboard()
+    : createClipboard();
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
   ]);
@@ -466,7 +477,7 @@ const start = async () => {
     apps,
     signInOrigins,
     background,
-    systemBrowser: createSystemBrowser(),
+    systemBrowser,
     network,
     senders,
     state: profiles.get,
@@ -611,8 +622,7 @@ const start = async () => {
       // The suite's build captures every notification, so a test never puts
       // one on the desktop.
       notifier: MERU_E2E_BUILD ? createCapturedNotifier() : createNotifier(),
-      // Nor writes the clipboard, which the whole desktop shares.
-      clipboard: MERU_E2E_BUILD ? createCapturedClipboard() : createClipboard(),
+      clipboard,
       extractCode: extractVerificationCode,
       setting: settings.get,
       state: profiles.get,
@@ -729,6 +739,19 @@ const start = async () => {
   views.onChange(menu.refresh);
 
   const shortcuts = shellShortcuts(COMMANDS, platform);
+  const tabMenu = createTabMenu({
+    state: profiles.get,
+    apps,
+    contentSize: () => shell.window.getContentAreaSize(),
+    overlays,
+    profiles,
+    isLoaded: (key) => views.status(key).kind !== "unloaded",
+    reload: views.reload,
+    openTab: views.open,
+    clipboard,
+    systemBrowser,
+    log: console.error,
+  });
 
   serveShellContract({
     ipc,
@@ -740,6 +763,7 @@ const start = async () => {
       tabs: views,
       inbox,
       openApp,
+      tabMenu,
       openGmail: showGmail.jumpTo,
       window: shell.window,
       sidebar,

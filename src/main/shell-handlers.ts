@@ -1,5 +1,6 @@
 import type { ShellState } from "#contract/shell.ts";
 import { formatAccelerator } from "#core/accelerator.ts";
+import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { openableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
@@ -8,6 +9,8 @@ import { profileColor } from "#core/profile-color.ts";
 import { isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
+import { tabMenuItems } from "#core/tab-menu.ts";
+import { findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
@@ -21,6 +24,7 @@ import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
 import type { ShellHandlers } from "./shell-ipc.ts";
 import type { Sidebar } from "./sidebar.ts";
+import type { TabMenu } from "./tab-menu.ts";
 
 export interface ShellHandlersDeps {
   profiles: Pick<
@@ -31,6 +35,7 @@ export interface ShellHandlersDeps {
   tabs: { retry: (key: TabKey) => void };
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   openApp: Pick<OpenApp, "choose">;
+  tabMenu: Pick<TabMenu, "open" | "run">;
   /** Selects the profile's Gmail as the tray's profile item does. */
   openGmail: (profileId: string) => Promise<unknown>;
   window: Pick<AppWindow, "showContextMenu">;
@@ -63,13 +68,44 @@ const shellTabStatus = (status: TabStatus): ShellTabStatus => {
   }
 };
 
+const shellTabMenu = (
+  state: State,
+  overlay: Extract<Overlay, { kind: "tab-menu" }>,
+  status: (key: TabKey) => TabStatus,
+  apps: readonly App[]
+): ShellState["overlay"] => {
+  const { profileId, tabId, x, y } = overlay;
+  const tab = findTab(state, overlay);
+  const items =
+    tab &&
+    tabMenuItems(state, overlay, apps, status(overlay).kind !== "unloaded");
+
+  return tab && items
+    ? {
+        kind: "tab-menu",
+        profileId,
+        tabId,
+        x,
+        y,
+        title: tab.title || (findApp(apps, tab.app)?.name ?? tab.app),
+        pinned: isPinned(tab),
+        items,
+      }
+    : { kind: "none" };
+};
+
 const shellOverlay = (
   state: State,
   overlay: Overlay | undefined,
+  status: (key: TabKey) => TabStatus,
   apps: readonly App[]
 ): ShellState["overlay"] => {
   if (overlay?.kind === "inbox") {
     return { kind: "inbox" };
+  }
+
+  if (overlay?.kind === "tab-menu") {
+    return shellTabMenu(state, overlay, status, apps);
   }
 
   const profile =
@@ -149,7 +185,7 @@ export const shellState = (
       on: doNotDisturb !== undefined,
       until: doNotDisturb?.until ?? null,
     },
-    overlay: shellOverlay(state, overlay, apps),
+    overlay: shellOverlay(state, overlay, status, apps),
     inbox,
     ...fixed,
   };
@@ -161,6 +197,7 @@ export const createShellHandlers = ({
   tabs,
   inbox,
   openApp,
+  tabMenu,
   openGmail,
   window,
   sidebar,
@@ -265,5 +302,13 @@ export const createShellHandlers = ({
   },
   openGmail: async ({ profileId }) => {
     await openGmail(profileId);
+  },
+  openTabMenu: (request) => {
+    tabMenu.open(request);
+
+    return Promise.resolve();
+  },
+  runTabMenuItem: async ({ item }) => {
+    await tabMenu.run(item);
   },
 });

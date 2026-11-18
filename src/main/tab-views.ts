@@ -43,12 +43,13 @@ export interface TabViewsDeps {
   sidebar: () => SidebarState;
   /** Whether the unified inbox is open, under which the front tab offers no navigation. */
   inboxOpen: () => boolean;
-  /** Opens the tab, under `tabId` when it is a new one. */
+  /** Opens the tab, under `tabId` when it is a new one, after the tab `after` names. */
   openTab: (
     profileId: string,
     app: App,
     url: string,
-    tabId: string
+    tabId: string,
+    after?: string
   ) => Promise<OpenedTab | undefined>;
   newId: () => string;
   /** Answers Google's "Add another account". */
@@ -323,7 +324,12 @@ export const createTabViews = ({
    * front one, whose first load takes the URL; a tab that was loaded already
    * is sent to it after.
    */
-  const openAsTab = async (profileId: string, app: App, url: string) => {
+  const openAsTab = async (
+    profileId: string,
+    app: App,
+    url: string,
+    after?: string
+  ) => {
     const profile = state().profiles.find(
       (candidate) => candidate.id === profileId
     );
@@ -337,7 +343,7 @@ export const createTabViews = ({
     pendingUrls.set(key, url);
 
     try {
-      const opened = await openTab(profileId, app, url, tabId);
+      const opened = await openTab(profileId, app, url, tabId, after);
 
       if (!opened) {
         pendingUrls.delete(key);
@@ -534,6 +540,14 @@ export const createTabViews = ({
     /** What the machine has to hear from the tab's controls. */
     retry: (key: TabKey) => {
       dispatch(tabKey(key), { kind: "retry" });
+    },
+    /** Loads the tab's page again, if it has one; one that failed or crashed, its URL. */
+    reload: (key: TabKey) => {
+      const keyed = tabKey(key);
+
+      if (tabs.has(keyed)) {
+        dispatch(keyed, { kind: "reload" });
+      }
     },
     /** Loads the front tab's page again; one that failed or crashed, its URL. */
     reloadFront: () => {

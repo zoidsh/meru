@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
+  overlayRectangle,
   overlayWidth,
   isOverlayDocument,
   transitionOverlay,
@@ -10,7 +11,7 @@ import {
 import type { Overlay } from "./overlay.ts";
 import { newProfile, removeProfile, selectProfile } from "./state.ts";
 import type { State } from "./state.ts";
-import { openTab, selectTab } from "./tabs.ts";
+import { closeTab, openTab, selectTab } from "./tabs.ts";
 
 const two: State = {
   version: 1,
@@ -77,6 +78,42 @@ describe(transitionOverlay, () => {
     expect(changed(renameB, withoutB)).toBeUndefined();
   });
 
+  it("closes a tab's menu when its tab goes, and keeps it through a change of another", () => {
+    const calendar = findApp(APPS, "calendar");
+
+    if (!calendar) {
+      throw new Error("No Calendar in the registry");
+    }
+
+    const withCalendar = openTab(two, "a", calendar, calendar.home, () => "cal")
+      ?.state as State;
+    const withTwo = openTab(
+      withCalendar,
+      "a",
+      calendar,
+      calendar.home,
+      () => "cal2"
+    )?.state as State;
+    const menu: Overlay = {
+      kind: "tab-menu",
+      profileId: "a",
+      tabId: "cal",
+      x: 10,
+      y: 60,
+    };
+    const after = (next: State) =>
+      transitionOverlay(menu, {
+        kind: "state-changed",
+        previous: withTwo,
+        next,
+      });
+
+    expect([
+      after(closeTab(withTwo, { profileId: "a", tabId: "cal" }) as State),
+      after({ ...withTwo, doNotDisturb: { until: null } }),
+    ]).toStrictEqual([undefined, menu]);
+  });
+
   it("keeps the unified inbox open through another profile selected, which closes it itself", () => {
     expect(changed({ kind: "inbox" }, selectProfile(two, "b"))).toStrictEqual({
       kind: "inbox",
@@ -93,6 +130,20 @@ describe(transitionOverlay, () => {
     expect(changed(renameB, renamed)).toStrictEqual(renameB);
     expect(changed(openAppA, renamed)).toStrictEqual(openAppA);
     expect(changed(undefined, renamed)).toBeUndefined();
+  });
+});
+
+describe(overlayRectangle, () => {
+  it("puts a card's view over the page area, and a menu's over the whole content area", () => {
+    const size = { width: 1000, height: 700 };
+
+    expect([
+      overlayRectangle(size, "narrow", { kind: "open-app" }),
+      overlayRectangle(size, "narrow", { kind: "tab-menu" }),
+    ]).toStrictEqual([
+      { x: 64, y: 40, width: 928, height: 652 },
+      { x: 0, y: 0, width: 1000, height: 700 },
+    ]);
   });
 });
 

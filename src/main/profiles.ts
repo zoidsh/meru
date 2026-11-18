@@ -17,6 +17,7 @@ import {
   switchDoNotDisturb,
 } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import { closeOtherTabs, closeTabsBelow } from "#core/tab-menu.ts";
 import {
   closeTab,
   openTab,
@@ -169,15 +170,28 @@ export const createProfiles = ({
     /** Nothing when the name is empty, too long or the one it has. */
     rename: (profileId: string, name: string) =>
       exclusive(() => commit(renameProfile(state, profileId, name))),
-    /** Opens `url` as a tab of `app`, selected; a new tab gets `tabId`. */
-    openTab: (profileId: string, app: App, url: string, tabId: string) =>
+    /**
+     * Opens `url` as a tab of `app`, selected; a new tab gets `tabId`, and
+     * goes after the tab `after` names, if any.
+     */
+    openTab: (
+      profileId: string,
+      app: App,
+      url: string,
+      tabId: string,
+      after?: string
+    ) =>
       exclusive(async (): Promise<OpenedTab | undefined> => {
-        const opened = openTab(state, profileId, app, url, () => tabId);
+        const opened = openTab(state, profileId, app, url, () => tabId, after);
 
         return opened && (await commit(opened.state)) ? opened : undefined;
       }),
     selectTab: (key: TabKey) => exclusive(() => commit(selectTab(state, key))),
     closeTab: (key: TabKey) => exclusive(() => commit(closeTab(state, key))),
+    closeOtherTabs: (key: TabKey) =>
+      exclusive(() => commit(closeOtherTabs(state, key))),
+    closeTabsBelow: (key: TabKey) =>
+      exclusive(() => commit(closeTabsBelow(state, key))),
     setPinned: (key: TabKey, pinned: boolean) =>
       exclusive(() => commit(setPinned(state, key, pinned))),
     setOpenAtLaunch: (key: TabKey, on: boolean) =>

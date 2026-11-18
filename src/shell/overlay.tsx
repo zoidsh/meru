@@ -13,6 +13,7 @@ import { OpenAppOverlay } from "./open-app.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
+import { TabMenu } from "./tab-menu.tsx";
 
 /** Stable, so a render of the field does not select what is typed again. */
 const focusAndSelect = (input: HTMLInputElement | null) => {
@@ -152,6 +153,16 @@ export const OverlayLayer = () => {
     }
     case "open-app": {
       drawn = <OpenAppOverlay key={open.profileId} {...open} />;
+      break;
+    }
+    case "tab-menu": {
+      drawn = (
+        <TabMenu
+          key={`${open.profileId}/${open.tabId}/${open.x},${open.y}`}
+          menu={open}
+          target={target}
+        />
+      );
       break;
     }
     default: {

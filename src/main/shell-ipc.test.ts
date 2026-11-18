@@ -181,6 +181,16 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    openTabMenu: (request) => {
+      calls.push(["openTabMenu", request]);
+
+      return Promise.resolve();
+    },
+    runTabMenuItem: (request) => {
+      calls.push(["runTabMenuItem", request]);
+
+      return Promise.resolve();
+    },
   };
 
   serveShellContract({
@@ -341,6 +351,35 @@ describe(serveShellContract, () => {
     ]).toStrictEqual([
       [true, true, true],
       [["openApp", { appId: "calendar" }]],
+    ]);
+  });
+
+  it("passes a tab menu at a whole point of the window and an item it can hold, and refuses any other", async () => {
+    const shell = setup();
+    const tab = { profileId: "a", tabId: "gmail" };
+    const refusals = await Promise.allSettled([
+      shell.call(SHELL, "openTabMenu", { ...tab, x: 1.5, y: 2 }),
+      shell.call(SHELL, "openTabMenu", { ...tab, x: -1, y: 2 }),
+      shell.call(SHELL, "openTabMenu", { ...tab, x: 1 }),
+      shell.call(SHELL, "runTabMenuItem", { item: "sleep" }),
+    ]);
+
+    await shell.call(SHELL, "openTabMenu", { ...tab, x: 12, y: 40 });
+    await shell.call(SHELL, "runTabMenuItem", { item: "closeBelow" });
+
+    expect([
+      refusals.map(
+        (result) =>
+          result.status === "rejected" &&
+          result.reason instanceof RefusedCallError
+      ),
+      shell.calls,
+    ]).toStrictEqual([
+      [true, true, true, true],
+      [
+        ["openTabMenu", { ...tab, x: 12, y: 40 }],
+        ["runTabMenuItem", { item: "closeBelow" }],
+      ],
     ]);
   });
 

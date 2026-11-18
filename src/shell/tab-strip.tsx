@@ -8,8 +8,8 @@ import {
   LoaderCircleIcon,
   XIcon,
 } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
@@ -21,7 +21,7 @@ import { ScrollArea } from "#ui/scroll-area.tsx";
 import { AppIcon } from "./app-icon.tsx";
 import { keepInView } from "./keep-in-view.ts";
 import { OpenAppSidebarButton } from "./open-app.tsx";
-import { shellCalls } from "./sync.ts";
+import { shellCalls, useShellState } from "./sync.ts";
 import { UnreadBadge } from "./unread-badge.tsx";
 
 type ShellTab = ShellState["tabs"]["tabs"][number];
@@ -105,6 +105,25 @@ const listRoom = (count: number, gap: number) => {
 
   return rows === 0 ? 0 : 6 + rows * 32 + (rows - 1) * gap;
 };
+
+/** Asks for the tab's context menu at a point of the window, in whole CSS pixels. */
+const openTabMenu = (
+  profileId: string,
+  tabId: string,
+  x: number,
+  y: number
+) => {
+  shellCalls().openTabMenu({
+    profileId,
+    tabId,
+    x: Math.max(0, Math.round(x)),
+    y: Math.max(0, Math.round(y)),
+  });
+};
+
+/** Shift+F10 or the Menu key, which open a focused tab's menu beside it. */
+const isMenuKey = (event: KeyboardEvent) =>
+  event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey);
 
 /** A press that leaves focus where it was, for a control hidden from assistive technology. */
 const keepFocus = (event: { preventDefault: () => void }) => {
@@ -210,7 +229,12 @@ const TabButton = ({
   return (
     <Tabs.Tab
       value={tab.id}
+      data-tab-id={tab.id}
       ref={selected ? keepInView : undefined}
+      onContextMenu={(event: MouseEvent<HTMLElement>) => {
+        event.preventDefault();
+        openTabMenu(profileId, tab.id, event.clientX, event.clientY);
+      }}
       // The tabs tell only of a change; asking for the selected tab still
       // shows it in place of the unified inbox.
       onClick={
@@ -221,6 +245,14 @@ const TabButton = ({
           : undefined
       }
       onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
+        if (isMenuKey(event)) {
+          event.preventDefault();
+
+          const { right, top } = event.currentTarget.getBoundingClientRect();
+
+          openTabMenu(profileId, tab.id, right, top);
+        }
+
         if (
           onSideways &&
           (event.key === "ArrowLeft" || event.key === "ArrowRight")
@@ -322,6 +354,29 @@ export const Sidebar = ({
       list.current
         ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
         ?.focus();
+    }
+  });
+
+  // Closing a tab's menu gives focus back to the shell, which puts it on
+  // the tab the menu was opened on, or on the selected tab once that is gone.
+  const overlay = useShellState("overlay");
+  const menuTab = overlay?.kind === "tab-menu" ? overlay.tabId : undefined;
+  const lastMenuTab = useRef<string>(undefined);
+
+  useEffect(() => {
+    const tabId = lastMenuTab.current;
+
+    lastMenuTab.current = menuTab;
+
+    if (menuTab === undefined && tabId !== undefined) {
+      (
+        list.current?.querySelector<HTMLElement>(
+          `[data-tab-id="${CSS.escape(tabId)}"]`
+        ) ??
+        list.current?.querySelector<HTMLElement>(
+          '[role="tab"][aria-selected="true"]'
+        )
+      )?.focus();
     }
   });
 

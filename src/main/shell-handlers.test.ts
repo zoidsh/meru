@@ -99,6 +99,16 @@ const setup = ({
         return Promise.resolve();
       },
     },
+    tabMenu: {
+      open: (request) => {
+        calls.push(["openTabMenu", request]);
+      },
+      run: (item) => {
+        calls.push(["runTabMenuItem", item]);
+
+        return Promise.resolve();
+      },
+    },
     openGmail: (profileId) => {
       calls.push(["openGmail", profileId]);
 
@@ -391,6 +401,45 @@ describe("the overlay slice", () => {
     });
   });
 
+  it("gives a tab's menu its point, the tab's title or else its app's name, and what it offers", () => {
+    expect(
+      overlaySlice({
+        kind: "tab-menu",
+        profileId: "a",
+        tabId: "gmail",
+        x: 10,
+        y: 60,
+      })
+    ).toStrictEqual({
+      kind: "tab-menu",
+      profileId: "a",
+      tabId: "gmail",
+      x: 10,
+      y: 60,
+      title: "Gmail",
+      pinned: true,
+      items: [
+        { id: "reload", enabled: true },
+        { id: "duplicate", enabled: false },
+        { id: "copyUrl", enabled: true },
+        { id: "openInBrowser", enabled: true },
+        { id: "pin", enabled: true },
+        { id: "openAtLaunch", enabled: true, checked: true },
+        { id: "closeOthers", enabled: false },
+        { id: "closeBelow", enabled: false },
+      ],
+    });
+    expect(
+      overlaySlice({
+        kind: "tab-menu",
+        profileId: "a",
+        tabId: "gone",
+        x: 10,
+        y: 60,
+      })
+    ).toStrictEqual({ kind: "none" });
+  });
+
   it("is none for a profile that is gone", () => {
     expect(
       overlaySlice({ kind: "rename-profile", profileId: "gone" })
@@ -420,6 +469,19 @@ describe("Open app in the shell", () => {
     expect([shell.ran, shell.calls]).toStrictEqual([
       ["app.open"],
       [["openApp", "drive"]],
+    ]);
+  });
+
+  it("hands a tab menu's point and its item to the tab menu", async () => {
+    const shell = setup();
+    const request = { profileId: "a", tabId: "gmail", x: 4, y: 50 };
+
+    await shell.handlers.openTabMenu(request);
+    await shell.handlers.runTabMenuItem({ item: "pin" });
+
+    expect(shell.calls).toStrictEqual([
+      ["openTabMenu", request],
+      ["runTabMenuItem", "pin"],
     ]);
   });
 

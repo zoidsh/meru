@@ -112,6 +112,23 @@ describe(createOverlays, () => {
     expect(overlays.current()).toBeUndefined();
   });
 
+  it("gives focus to the shell when a tab's menu closes, which puts it on the menu's tab", () => {
+    const { overlays, focus, events } = setup();
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open({
+      kind: "tab-menu",
+      profileId: "a",
+      tabId: "gmail",
+      x: 10,
+      y: 60,
+    });
+    events.length = 0;
+    overlays.close();
+
+    expect(events).toStrictEqual(["hide", "shell told closed", "focus shell"]);
+  });
+
   it("replaces an open overlay with the next, and gives focus to the page, not the shell whose button opened it", () => {
     const { overlays, focus, events } = setup();
 

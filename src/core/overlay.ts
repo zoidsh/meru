@@ -2,6 +2,8 @@ import { contentViewBounds } from "./layout.ts";
 import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
+import type { TabMenuRequest } from "./tab-menu.ts";
+import { findTab } from "./tabs.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** What an overlay over the content views shows; one at a time. */
@@ -9,7 +11,9 @@ export type Overlay =
   | { kind: "rename-profile"; profileId: string }
   /** Lists the apps the profile can open a tab of. */
   | { kind: "open-app"; profileId: string }
-  | { kind: "inbox" };
+  | { kind: "inbox" }
+  /** A tab's context menu, at the point it was asked for. */
+  | ({ kind: "tab-menu" } & TabMenuRequest);
 
 /** The card's width for each width class, in CSS pixels. */
 export const OVERLAY_WIDTHS = { narrow: 320, medium: 448, wide: 704 } as const;
@@ -29,14 +33,20 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
 };
 
 /**
- * Where the overlay's view sits while one is open: over the whole content
+ * Where the overlay's view sits while one is open: a card's over the page
  * area, so the card can be placed in it by CSS and a press beside it lands
- * in the view, which closes it.
+ * in the view, which closes it; a menu's over the window's whole content
+ * area, titlebar and sidebar too, so it can reach over them from the tab it
+ * belongs to and takes the press that closes it.
  */
 export const overlayRectangle = (
   contentSize: Size,
-  sidebar: SidebarState
-): Rectangle => contentViewBounds(contentSize, sidebar);
+  sidebar: SidebarState,
+  overlay: Pick<Overlay, "kind">
+): Rectangle =>
+  overlay.kind === "tab-menu"
+    ? { x: 0, y: 0, ...contentSize }
+    : contentViewBounds(contentSize, sidebar);
 
 export type OverlayEvent =
   /** Replaces whatever is open. */
@@ -53,9 +63,9 @@ const selection = (state: State) => {
 
 /**
  * The overlay open after `event`. What is underneath changing, another
- * profile or tab selected, closes the rename panel and Open app, as does
- * their profile going. The unified inbox, over every profile, keeps its own
- * rules.
+ * profile or tab selected, closes the rename panel, Open app and a tab's
+ * menu, as does their profile going, and the menu's tab. The unified inbox,
+ * over every profile, keeps its own rules.
  */
 export const transitionOverlay = (
   current: Overlay | undefined,
@@ -76,7 +86,10 @@ export const transitionOverlay = (
       if (
         !current ||
         selection(event.previous) !== selection(event.next) ||
-        !event.next.profiles.some((profile) => profile.id === current.profileId)
+        !event.next.profiles.some(
+          (profile) => profile.id === current.profileId
+        ) ||
+        (current.kind === "tab-menu" && !findTab(event.next, current))
       ) {
         return undefined;
       }

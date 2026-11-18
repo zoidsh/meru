@@ -152,10 +152,25 @@ msgstr "Close"
 msgid "Close {title}"
 msgstr "Close {title}"
 
+#. Item of a tab's context menu that closes every other tab of the profile but pinned ones
+#: src/shell/tab-menu.tsx
+msgid "Close other tabs"
+msgstr "Close other tabs"
+
+#. Item of a tab's context menu that closes it
+#: src/shell/tab-menu.tsx
+msgid "Close tab"
+msgstr "Close tab"
+
 #. Menu item in the Tabs menu that closes the selected tab
 #: src/main/commands.ts
 msgid "Close Tab"
 msgstr "Close Tab"
+
+#. Item of a tab's context menu that closes the tabs below it in the sidebar but pinned ones
+#: src/shell/tab-menu.tsx
+msgid "Close tabs below"
+msgstr "Close tabs below"
 
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
@@ -183,6 +198,11 @@ msgstr "Copied verification code {verificationCode}"
 #: src/main/notifications.ts
 msgid "Copy"
 msgstr "Copy"
+
+#. Item of a tab's context menu that copies its page's address
+#: src/shell/tab-menu.tsx
+msgid "Copy URL"
+msgstr "Copy URL"
 
 #. Said in the unified inbox when archiving a message failed and the message was put back in the list
 #: src/shell/inbox.tsx
@@ -256,6 +276,11 @@ msgstr "Do Not Disturb is on until {time}"
 #: src/shell/titlebar.tsx
 msgid "Do Not Disturb is on until turned off"
 msgstr "Do Not Disturb is on until turned off"
+
+#. Item of a tab's context menu that opens another tab of the same app at the same page
+#: src/shell/tab-menu.tsx
+msgid "Duplicate"
+msgstr "Duplicate"
 
 #. Name of the Edit menu
 #: src/main/application-menu.ts
@@ -412,8 +437,10 @@ msgstr "Open app"
 msgid "Open App…"
 msgstr "Open App…"
 
+#. Checkbox item of a pinned tab's context menu: whether it loads when Meru starts rather than when first selected
 #. Menu item in the Tabs menu, checked while the selected pinned tab loads when Meru starts rather than when first selected
 #: src/main/commands.ts
+#: src/shell/tab-menu.tsx
 msgid "Open at Launch"
 msgstr "Open at Launch"
 
@@ -427,6 +454,11 @@ msgstr "Open Gmail, Calendar or another Google app in {name}."
 msgid "Open Gmail, Calendar or another Google app in this profile."
 msgstr "Open Gmail, Calendar or another Google app in this profile."
 
+#. Item of a tab's context menu that opens its page in the system's web browser
+#: src/shell/tab-menu.tsx
+msgid "Open in default browser"
+msgstr "Open in default browser"
+
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Paste"
@@ -436,6 +468,11 @@ msgstr "Paste"
 #: src/main/application-menu.ts
 msgid "Paste and Match Style"
 msgstr "Paste and Match Style"
+
+#. Item of a tab's context menu that pins it to the top of the sidebar, which keeps it from closing
+#: src/shell/tab-menu.tsx
+msgid "Pin"
+msgstr "Pin"
 
 #. Menu item in the Tabs menu that pins the selected tab, which keeps it from closing
 #: src/main/commands.ts
@@ -476,8 +513,10 @@ msgstr "Redo"
 
 #. Accessible name and tooltip of the title bar button that loads the page again
 #. Button in place of a tab's page that crashed, which loads the page again
+#. Item of a tab's context menu that loads its page again
 #. Menu item in the View menu that loads the selected tab again
 #: src/main/commands.ts
+#: src/shell/tab-menu.tsx
 #: src/shell/tab-strip.tsx
 #: src/shell/titlebar.tsx
 msgid "Reload"
@@ -680,6 +719,11 @@ msgstr "Unified inbox"
 #: src/main/commands.ts
 msgid "Unified Inbox"
 msgstr "Unified Inbox"
+
+#. Item of a pinned tab's context menu that unpins it, so it can close
+#: src/shell/tab-menu.tsx
+msgid "Unpin"
+msgstr "Unpin"
 
 #. Menu item in the Tabs menu, in place of Pin Tab while the selected tab is pinned, that unpins it so it can close
 #: src/main/commands.ts
