@@ -10,7 +10,6 @@ import {
 } from "#core/overlay.ts";
 import { ownWindowFindOfFrame, ownWindowOfFrame } from "#core/own-window.ts";
 import { allowsPermission } from "#core/permissions.ts";
-import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 import { gmailOwnWindow } from "#core/state.ts";
 import { tabKey } from "#core/tabs.ts";
@@ -23,33 +22,20 @@ import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
 import { createOwnWindowFactory } from "#platform/own-window.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
-import { createSessions } from "#platform/sessions.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
-import { createTextFile } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
-import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
 import { createFind } from "./find.ts";
 import { createFocus } from "./focus.ts";
 import type { FocusTarget } from "./focus.ts";
 import { createOverlays } from "./overlay.ts";
 import { createOwnWindows } from "./own-windows.ts";
-import { automaticProfileName } from "./profile-copy.ts";
-import { createProfiles } from "./profiles.ts";
 import { createSenderRegistry } from "./senders.ts";
-import {
-  SETTINGS_FILE_NAME,
-  createSettingsStore,
-  saveSettings,
-} from "./settings.ts";
 import { createShellWindow } from "./shell-window.ts";
-import { createSidebar } from "./sidebar.ts";
-import { STATE_FILE_NAME, saveState } from "./state-store.ts";
-import { loadStores } from "./stores.ts";
 import { createTabViews } from "./tab-views.ts";
 import { revealWindow } from "./windows.ts";
 import { wireGmail } from "./wiring/gmail.ts";
@@ -59,6 +45,7 @@ import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireNotifications } from "./wiring/notifications.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
+import { wireStores } from "./wiring/stores.ts";
 import {
   suiteRunsInBackground,
   systemClipboard,
@@ -170,50 +157,15 @@ const start = async () => {
 
   activateLanguage(language);
 
-  const platform = process.platform as Platform;
-  const isMacOS = platform === "darwin";
-  const sessions = createSessions();
-  const stateFile = createTextFile(
-    path.join(lifecycle.userDataPath, STATE_FILE_NAME)
-  );
-  const settingsFile = createTextFile(
-    path.join(lifecycle.userDataPath, SETTINGS_FILE_NAME)
-  );
-  const stores = await loadStores({
-    stateFile,
-    settingsFile,
-    newId,
-    now: Date.now,
-    log: console.error,
-  });
-  const profiles = createProfiles({
-    initial: stores.state,
-    save: (state) => saveState(stateFile, state),
-    newId,
-    profileName: automaticProfileName,
-    clearSession: sessions.clear,
-    now: Date.now,
-    log: console.error,
-  });
-  // Ahead of every other listener of the profiles, so each reads the
-  // sidebar as the change leaves it.
-  const sidebar = createSidebar({ profiles });
-  const doNotDisturb = createDoNotDisturb({
-    profiles,
-    now: () => new Date(),
-    log: console.error,
-  });
-
-  const settings = createSettingsStore({
-    initial: stores.settings,
-    save: (next) => saveSettings(settingsFile, next),
+  const {
     platform,
-    log: console.error,
-  });
-
-  // Not awaited: the window must not wait on a clear that hangs, and no view
-  // can hold these sessions, whose profiles are no longer listed.
-  profiles.finishClears();
+    isMacOS,
+    sessions,
+    profiles,
+    sidebar,
+    doNotDisturb,
+    settings,
+  } = await wireStores({ lifecycle, newId });
 
   const shellUrl = new URL(shellSource.url);
 
