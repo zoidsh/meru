@@ -32,11 +32,11 @@ const appName = (app: string) => findApp(APPS, app)?.name ?? app;
 const tabTitle = (tab: ShellTab) => tab.title || appName(tab.app);
 
 // The Scroll Area's bar is styled from here, as `src/ui` stays as the CLI
-// wrote it: an 8px thumb, shown while the pointer is over the list. Where
-// the component's own classes match as strongly, `!` wins.
+// wrote it: an 8px thumb, shown while the pointer is over a list that
+// overflows. Where the component's own classes match as strongly, `!` wins.
 const SCROLLBAR = cn(
   "[&_[data-slot=scroll-area-scrollbar]]:w-2! [&_[data-slot=scroll-area-scrollbar]]:border-0! [&_[data-slot=scroll-area-scrollbar]]:p-0",
-  "[&_[data-slot=scroll-area-scrollbar]]:opacity-0 [&_[data-slot=scroll-area-scrollbar]]:transition-opacity hover:[&_[data-slot=scroll-area-scrollbar]]:opacity-100",
+  "[&_[data-slot=scroll-area-scrollbar]]:opacity-0 [&_[data-slot=scroll-area-scrollbar]]:transition-opacity hover:[&_[data-slot=scroll-area-scrollbar][data-has-overflow-y]]:opacity-100",
   "[&_[data-slot=scroll-area-thumb]]:bg-foreground/20"
 );
 
@@ -320,7 +320,10 @@ const TabButton = ({
           variant: tabVariant(selected, tab.pinned),
           size: tile ? "icon-sm" : "sm",
         }),
-        "relative font-medium",
+        // No pressed nudge: a held tab, as in a drag, would push the list's
+        // last row a pixel past its viewport, which the Scroll Area then
+        // takes for overflow and keeps showing a bar for.
+        "relative font-medium active:not-aria-[haspopup]:translate-y-0",
         cell && "w-full",
         spansRow && "col-span-2",
         !tile && "w-full justify-start gap-2 pr-8",
