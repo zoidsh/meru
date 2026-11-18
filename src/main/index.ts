@@ -464,7 +464,7 @@ const start = async () => {
     isMacOS,
     background,
     backgroundColor: () => windowBackground(theme.isDark()),
-    moveToMainWindow: (key) => profiles.moveToMainWindow(key, false),
+    closeTab: profiles.closeTab,
     saveBounds: profiles.setOwnWindowBounds,
     // Keys go to its page, as they go to the front tab's in the main window.
     onFocus: (key) => {

@@ -24,8 +24,8 @@ export interface OwnWindowsDeps {
   background: boolean;
   /** The shell grey as the theme has it now. */
   backgroundColor: () => string;
-  /** Puts the tab back in the main window, unselected, as closing its window does. */
-  moveToMainWindow: (key: TabKey) => Promise<unknown>;
+  /** Closes the tab, as closing its window does, as Close Tab would. */
+  closeTab: (key: TabKey) => Promise<unknown>;
   saveBounds: (key: TabKey, bounds: Rectangle) => Promise<unknown>;
   /** Told when a tab's own window becomes the one keys go to. */
   onFocus: (key: TabKey) => void;
@@ -56,7 +56,8 @@ const describe = (error: unknown) =>
  * The windows of the tabs moved to windows of their own, one each, which
  * the tabs' views are put in: opened where the tab's window last was,
  * without focus, kept where it is moved, and closed once the tab is back in
- * the main window. Closing one by its control puts the tab back, unselected;
+ * the main window. Closing one by its control closes its tab, as Close Tab
+ * does; only Move to Main Window puts a tab back;
  * quitting, or the session ending, closes them and keeps the tabs where they
  * are, to open again at the next launch. Each window's titlebar is a
  * document of the shell's, put behind the page.
@@ -69,7 +70,7 @@ export const createOwnWindows = ({
   isMacOS,
   background,
   backgroundColor,
-  moveToMainWindow,
+  closeTab,
   saveBounds,
   onFocus,
   log,
@@ -132,14 +133,14 @@ export const createOwnWindows = ({
     }
   };
 
-  const moveBack = async (key: TabKey) => {
+  const closeWithTab = async (key: TabKey) => {
     try {
-      await moveToMainWindow(key);
+      await closeTab(key);
     } catch (error) {
-      log(`A tab did not move back to the main window: ${describe(error)}`);
+      log(`A tab in its own window did not close: ${describe(error)}`);
     }
 
-    // Moving back closes the window; should it not have, a close still does.
+    // Closing the tab closes the window; should it not have, a close still does.
     const current = findTab(state(), key);
 
     if (!current || !inOwnWindow(current)) {
@@ -186,7 +187,7 @@ export const createOwnWindows = ({
 
       event.preventDefault();
       entry.saveBounds.flush();
-      void moveBack(key);
+      void closeWithTab(key);
     });
     // A shutdown or sign-out waits on every window that will not close.
     window.onSessionEnd(markQuitting);

@@ -169,6 +169,48 @@ const marked = (page: Page) =>
     .evaluate(() => Reflect.get(window, "meruMark") as unknown)
     .catch(() => null);
 
+/** The titles of the notifications the suite's build captured in place of showing. */
+const notified = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as { title: string }[]
+    ).map(({ title }) => title)
+  );
+
+/** Asks a window to close, as its close button does: the main one or the tab's own. */
+const closeWindow = (app: ElectronApplication, which: "main" | "own") =>
+  app.evaluate(({ BaseWindow, BrowserWindow }, wanted) => {
+    setTimeout(() => {
+      BaseWindow.getAllWindows()
+        .find((window) =>
+          wanted === "main"
+            ? window instanceof BrowserWindow &&
+              window.webContents.getURL().startsWith("meru-app:")
+            : !(window instanceof BrowserWindow)
+        )
+        ?.close();
+    }, 0);
+  }, which);
+
+const mainWindowVisible = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().some(
+      (window) =>
+        window.webContents.getURL().startsWith("meru-app:") &&
+        window.isVisible()
+    )
+  );
+
+/** Whether any web contents still shows a page under `url`. */
+const pageOpen = (app: ElectronApplication, url: string) =>
+  app.evaluate(
+    ({ webContents }, wanted) =>
+      webContents
+        .getAllWebContents()
+        .some((contents) => contents.getURL().startsWith(wanted)),
+    url
+  );
+
 test("Move to New Window puts the selected tab's page in a window of its own as it was, marks its tab and selects the next", async ({
   launchApp,
   userDataDir,
@@ -270,40 +312,25 @@ test("Cmd or Ctrl+Shift+N in the page moves it; a click on its tab focuses that 
   expect(await marked(calendar)).toBe(42);
 });
 
-test("closing the window by its control puts the tab back unselected, its page as it was", async ({
+test("closing the window by its control closes its tab, as Close Tab does, the main window's selection kept", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  const { app, shell, calendar } = await launch(
-    launchApp,
-    userDataDir,
-    standIn
-  );
+  const { app, shell } = await launch(launchApp, userDataDir, standIn);
 
-  await mark(calendar);
   await clickMenuItem(app, "tab.moveToNewWindow");
-  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
-
-  await app.evaluate(({ BaseWindow, BrowserWindow }) => {
-    BaseWindow.getAllWindows()
-      .find((window) => !(window instanceof BrowserWindow))
-      ?.close();
-  });
+  await expect.poll(() => ownWindowPage(app)).toBe(standIn.calendarUrl);
+  await closeWindow(app, "own");
 
   await expect.poll(() => ownWindowCount(app)).toBe(0);
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveCount(0);
   await expect(tab(shell, DRIVE_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"
   );
-  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
-    "title",
-    CALENDAR_TITLE
-  );
-  expect(await marked(calendar)).toBe(42);
-  await expect
-    .poll(() => storedField(userDataDir, "ownWindow"))
-    .toBeUndefined();
+  await expect.poll(() => storedTab(userDataDir, "c")).toBeUndefined();
+  await expect.poll(() => pageOpen(app, standIn.calendarUrl)).toBeFalsy();
 });
 
 test("Back and Reload in the window's titlebar act on its page", async ({
@@ -402,38 +429,6 @@ test("with the shell's renderer gone and loaded again, the window's page keeps i
   expect(await ownWindowPage(app)).toBe(calendar.url());
 });
 
-/** The titles of the notifications the suite's build captured in place of showing. */
-const notified = (app: ElectronApplication) =>
-  app.evaluate(() =>
-    (
-      Reflect.get(globalThis, "meruTestNotifications") as { title: string }[]
-    ).map(({ title }) => title)
-  );
-
-/** Asks a window to close, as its close button does: the main one or the tab's own. */
-const closeWindow = (app: ElectronApplication, which: "main" | "own") =>
-  app.evaluate(({ BaseWindow, BrowserWindow }, wanted) => {
-    setTimeout(() => {
-      BaseWindow.getAllWindows()
-        .find((window) =>
-          wanted === "main"
-            ? window instanceof BrowserWindow &&
-              window.webContents.getURL().startsWith("meru-app:")
-            : !(window instanceof BrowserWindow)
-        )
-        ?.close();
-    }, 0);
-  }, which);
-
-const mainWindowVisible = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow }) =>
-    BrowserWindow.getAllWindows().some(
-      (window) =>
-        window.webContents.getURL().startsWith("meru-app:") &&
-        window.isVisible()
-    )
-  );
-
 test("Gmail, unpinned, moves to its own window and goes on counting and notifying its mail and opening and closing its pop-outs", async ({
   launchApp,
   userDataDir,
@@ -509,7 +504,7 @@ test("with the tray off on Windows and Linux, closing the main window quits Meru
   expect(await storedField(userDataDir, "ownWindow")).toBe(true);
 });
 
-test("on macOS closing the main window hides it, the tab's own window still closes by its control, and Move to Main Window shows the main window again", async ({
+test("on macOS closing the main window hides it, the tab's own window still closes by its control, closing its tab, and Move to Main Window shows the main window again", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -525,28 +520,16 @@ test("on macOS closing the main window hides it, the tab's own window still clos
 
   await closeWindow(app, "own");
   await expect.poll(() => ownWindowCount(app)).toBe(0);
-  await expect
-    .poll(() => storedField(userDataDir, "ownWindow"))
-    .toBeUndefined();
+  await expect.poll(() => storedTab(userDataDir, "c")).toBeUndefined();
   expect(await mainWindowVisible(app)).toBeFalsy();
 
-  // Calendar came back unselected, so Drive, selected, is the one to move.
+  // Calendar closed with its window, so Drive, selected, is the one to move.
   await clickMenuItem(app, "tab.moveToNewWindow");
   await expect.poll(() => ownWindowPage(app)).toBe(standIn.driveUrl);
   await clickMenuItem(app, "tab.moveToMainWindow");
   await expect.poll(() => mainWindowVisible(app)).toBeTruthy();
   await expect.poll(() => ownWindowCount(app)).toBe(0);
 });
-
-/** Whether any web contents still shows a page under `url`. */
-const pageOpen = (app: ElectronApplication, url: string) =>
-  app.evaluate(
-    ({ webContents }, wanted) =>
-      webContents
-        .getAllWebContents()
-        .some((contents) => contents.getURL().startsWith(wanted)),
-    url
-  );
 
 test("a page that crashed in its own window says so there, and reloads on the control", async ({
   launchApp,

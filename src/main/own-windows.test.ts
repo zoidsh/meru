@@ -56,7 +56,7 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
   const heldSaves: (() => void)[] = [];
   let color = "#eeeeee";
   const created: FakeWindow[] = [];
-  const movedBack: string[] = [];
+  const closedTabs: string[] = [];
   const saved: [string, Rectangle][] = [];
   const focused: string[] = [];
   const resized: string[] = [];
@@ -140,8 +140,8 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
     isMacOS: true,
     background,
     backgroundColor: () => color,
-    moveToMainWindow: (key) => {
-      movedBack.push(tabKey(key));
+    closeTab: (key) => {
+      closedTabs.push(tabKey(key));
 
       return Promise.resolve();
     },
@@ -167,7 +167,7 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
   return {
     windows,
     created,
-    movedBack,
+    closedTabs,
     saved,
     focused,
     resized,
@@ -176,8 +176,8 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
         finish();
       }
     },
-    /** The tab back in the main window, as moving it back leaves it. */
-    moveBackInState: () => {
+    /** The tab gone from its own window, as closing it leaves it. */
+    closeInState: () => {
       state = stateWith(false);
     },
     setColor: (next: string) => {
@@ -276,30 +276,30 @@ describe(createOwnWindows, () => {
     ]);
   });
 
-  it("keeps a window open when closed by its control, puts its tab back, and closes it once the tab is back", async () => {
-    const { windows, created, movedBack, moveBackInState } = setup();
+  it("keeps a window open when closed by its control, closes its tab, and closes the window once the tab is gone", async () => {
+    const { windows, created, closedTabs, closeInState } = setup();
 
     windows.open(CALENDAR);
     const [window] = created;
     const kept = window?.close();
 
-    moveBackInState();
+    closeInState();
     windows.close(CALENDAR);
     await vi.advanceTimersByTimeAsync(0);
 
     expect([
       kept,
-      movedBack,
+      closedTabs,
       window?.destroyed,
       windows.isOpen(CALENDAR),
     ]).toStrictEqual([true, ["p/c1"], true, false]);
   });
 
-  it("closes a window its tab has left, or whose move back left nothing to close it, once the move is done", async () => {
-    const { windows, created, moveBackInState } = setup();
+  it("closes a window whose tab closing left it open, once the tab has closed", async () => {
+    const { windows, created, closeInState } = setup();
 
     windows.open(CALENDAR);
-    moveBackInState();
+    closeInState();
     const [window] = created;
     const kept = window?.close();
 
@@ -313,14 +313,14 @@ describe(createOwnWindows, () => {
   });
 
   it("treats the session ending as a quit: every window closes with its tab kept", () => {
-    const { windows, created, movedBack } = setup();
+    const { windows, created, closedTabs } = setup();
 
     windows.open(CALENDAR);
     const [window] = created;
 
     window?.endSession();
 
-    expect([window?.close(), movedBack]).toStrictEqual([false, []]);
+    expect([window?.close(), closedTabs]).toStrictEqual([false, []]);
   });
 
   it("settles a quit's wait once each save of where a window is has", async () => {
@@ -345,7 +345,7 @@ describe(createOwnWindows, () => {
   });
 
   it("while quitting lets each window close with its tab kept where it is, and saves where it was", () => {
-    const { windows, created, movedBack, saved } = setup();
+    const { windows, created, closedTabs, saved } = setup();
 
     windows.open(CALENDAR);
     const [window] = created;
@@ -357,7 +357,7 @@ describe(createOwnWindows, () => {
 
     windows.markQuitting();
 
-    expect([window?.close(), movedBack, saved]).toStrictEqual([
+    expect([window?.close(), closedTabs, saved]).toStrictEqual([
       false,
       [],
       [["p/c1", { x: 5, y: 6, width: 700, height: 500 }]],
