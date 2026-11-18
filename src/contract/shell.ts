@@ -210,6 +210,11 @@ export const SHELL_STATE = {
         })
       )
     ),
+    /**
+     * The profile's split's tabs, in the order of its box in the sidebar,
+     * whichever tab is selected; `null` without a split.
+     */
+    box: z.nullable(z.array(tabId)),
   }),
   /** How the sidebar shows, which also sets where the content view sits. */
   sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),

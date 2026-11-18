@@ -1,6 +1,6 @@
 import { addPane, paneTabs, panesFit, removePane } from "./pane-tree.ts";
 import type { PaneDirection, PaneSplit, PaneTree, Split } from "./pane-tree.ts";
-import { knownTabs, withSplit } from "./state.ts";
+import { isPinned, knownTabs, withSplit } from "./state.ts";
 import type { Profile } from "./state.ts";
 import type { Size } from "./window-bounds.ts";
 
@@ -37,6 +37,30 @@ export const shownPanes = (
   }
 
   return typeof shown === "string" ? undefined : shown;
+};
+
+/**
+ * The tabs of the split's box in the sidebar, in the box's order: its pinned
+ * tabs first, in their order among the pinned, then the others in their
+ * panes' reading order. None while fewer than two of its tabs are shown,
+ * when there is no split to show.
+ */
+export const boxOrder = (
+  profile: Pick<Profile, "split" | "tabs">
+): string[] | undefined => {
+  const known = knownTabs(profile);
+  const shown = new Set(known.map((tab) => tab.id));
+  const reading = splitTabs(profile).filter((tabId) => shown.has(tabId));
+
+  if (reading.length < 2) {
+    return undefined;
+  }
+
+  const pinned = known
+    .filter((tab) => isPinned(tab) && reading.includes(tab.id))
+    .map((tab) => tab.id);
+
+  return [...pinned, ...reading.filter((tabId) => !pinned.includes(tabId))];
 };
 
 /**

@@ -290,6 +290,45 @@ describe(shellShortcuts, () => {
   });
 });
 
+/** The box the shell is given with `c1` and pinned `d1` split, or nothing. */
+const boxOf = (selectedTabId: string, split = true) =>
+  shellState(
+    {
+      ...two,
+      profiles: [
+        {
+          ...newProfile("a", "Default"),
+          tabs: [
+            gmailTab(),
+            { id: "c1", app: "calendar", url: "", title: "" },
+            { id: "d1", app: "drive", url: "", title: "", pinned: true },
+          ],
+          selectedTabId,
+          ...(split && {
+            split: {
+              root: {
+                direction: "row",
+                children: [
+                  { size: 0.5, pane: "c1" },
+                  { size: 0.5, pane: "d1" },
+                ],
+              },
+            },
+          }),
+        },
+        newProfile("b", "Work"),
+      ],
+    },
+    () => ({ kind: "live" }),
+    { selectedAsleep: false, panes: null },
+    undefined,
+    () => NO_MAIL,
+    undefined,
+    CLOSED_INBOX,
+    CHROME,
+    APPS
+  ).tabs.box;
+
 describe(shellState, () => {
   it("gives the shell the profiles with names to show, their colours by place, their mail and whether each sleeps, and nothing else of them", () => {
     expect(
@@ -403,7 +442,16 @@ describe(shellState, () => {
         },
       ],
       panes: null,
+      box: null,
     });
+  });
+
+  it("gives the shell the split's box in its order whichever tab is selected, and none without a split", () => {
+    expect([boxOf("c1"), boxOf("gmail"), boxOf("c1", false)]).toStrictEqual([
+      ["d1", "c1"],
+      ["d1", "c1"],
+      null,
+    ]);
   });
 });
 

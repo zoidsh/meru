@@ -27,6 +27,7 @@ const TABS: ShellState["tabs"] = {
   selectedTabId: "gmail",
   selectedAsleep: false,
   panes: null,
+  box: null,
   tabs: [
     {
       id: "gmail",

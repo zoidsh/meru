@@ -4,6 +4,7 @@ import { APPS, findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
 import type { PaneTree, Split } from "./pane-tree.ts";
 import {
+  boxOrder,
   shownPanes,
   splitFits,
   splitTarget,
@@ -91,6 +92,52 @@ describe(shownPanes, () => {
       shownPanes(withLater),
       shownPanes(profile("a", split("a", "x"), [tab("a"), later])),
     ]).toStrictEqual([row("a", "b"), undefined, row("a", "b"), undefined]);
+  });
+});
+
+describe(boxOrder, () => {
+  it("lists the split's pinned tabs first in their pin order, then the rest in reading order, whichever tab is selected", () => {
+    const tabs = [
+      tab("a"),
+      { ...tab("b"), pinned: true },
+      tab("c"),
+      { ...tab("d"), pinned: true },
+      later,
+    ];
+    const nested: Split = {
+      root: {
+        direction: "row",
+        children: [
+          { size: 0.4, pane: row("c", "x") },
+          {
+            size: 0.4,
+            pane: {
+              direction: "column",
+              children: [
+                { size: 0.5, pane: "d" },
+                { size: 0.5, pane: "a" },
+              ],
+            },
+          },
+          { size: 0.2, pane: "b" },
+        ],
+      },
+    };
+
+    expect([
+      boxOrder(profile("gmail", nested, tabs)),
+      boxOrder(profile("a", split("c", "a"), tabs)),
+    ]).toStrictEqual([
+      ["b", "d", "c", "a"],
+      ["c", "a"],
+    ]);
+  });
+
+  it("is none without a split, or with fewer than two of its tabs shown", () => {
+    expect([
+      boxOrder(profile("a")),
+      boxOrder(profile("a", split("a", "x"), [tab("a"), later])),
+    ]).toStrictEqual([undefined, undefined]);
   });
 });
 

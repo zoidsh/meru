@@ -7,6 +7,7 @@ import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
 import { profileMenuItems } from "#core/profile-menu.ts";
+import { boxOrder } from "#core/split.ts";
 import { isAsleep, isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -228,6 +229,7 @@ export const shellState = (
         ),
       })),
       panes: page.panes,
+      box: boxOrder(profile) ?? null,
     },
     doNotDisturb: {
       on: doNotDisturb !== undefined,

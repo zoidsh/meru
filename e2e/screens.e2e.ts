@@ -664,6 +664,110 @@ test("a sleeping pane in a split", async ({
   await shootEachWay(app, shell, "split-sleeping");
 });
 
+/**
+ * Gmail, Docs and Meet pinned, then Calendar, Sheets, Drive and Slides,
+ * with `root` as the split and Calendar selected; no app has two tabs, so
+ * the sidebar starts narrow.
+ */
+const withBox = (standIn: StandIn, root: unknown) => ({
+  profiles: [
+    {
+      id: "p",
+      name: "Default",
+      tabs: [
+        {
+          id: "gmail",
+          app: "gmail",
+          url: standIn.url,
+          title: "",
+          pinned: true,
+        },
+        {
+          id: "k",
+          app: "docs",
+          url: standIn.driveUrl,
+          title: "Plans",
+          pinned: true,
+        },
+        {
+          id: "k2",
+          app: "meet",
+          url: standIn.driveUrl,
+          title: "Standup",
+          pinned: true,
+        },
+        { id: "c1", app: "calendar", url: standIn.calendarUrl, title: "" },
+        { id: "s", app: "sheets", url: standIn.driveUrl, title: "Budget" },
+        { id: "d1", app: "drive", url: standIn.driveUrl, title: "" },
+        { id: "l", app: "slides", url: standIn.driveUrl, title: "Pitch" },
+      ],
+      selectedTabId: "c1",
+      split: { root },
+    },
+  ],
+  selectedProfileId: "p",
+});
+
+/** Moves the pointer off the sidebar, so no tab shows its hover. */
+const rest = (shell: Page) => shell.mouse.move(700, 20);
+
+test("a split's box in the sidebar, in the list and in the pinned area, narrow and wide", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(
+    userDataDir,
+    withBox(standIn, {
+      direction: "row",
+      children: [pane(0.5, "d1"), pane(0.5, "c1")],
+    })
+  );
+
+  const first = await launch(launchApp, userDataDir);
+
+  await findPage(first.app, standIn.calendarUrl);
+  await findPage(first.app, standIn.driveUrl);
+  await rest(first.shell);
+  await shootEachWay(first.app, first.shell, "split-box-list-narrow");
+  await first.shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await rest(first.shell);
+  await shootEachWay(first.app, first.shell, "split-box-list-wide");
+  await first.app.close();
+
+  await writeState(
+    userDataDir,
+    withBox(standIn, {
+      direction: "row",
+      children: [
+        pane(0.5, "c1"),
+        pane(0.5, {
+          direction: "column",
+          children: [pane(0.5, "k"), pane(0.5, "gmail")],
+        }),
+      ],
+    })
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.url);
+
+  // Whether the width chosen before the relaunch is kept is not this shot's
+  // to say.
+  if ((await narrow.count()) > 0) {
+    await narrow.click();
+  }
+
+  await rest(shell);
+  await shootEachWay(app, shell, "split-box-pinned-narrow");
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await rest(shell);
+  await shootEachWay(app, shell, "split-box-pinned-wide");
+});
+
 /** Asks for a split the window has no room for, which shows the toast. */
 const refuseSplit = async (app: ElectronApplication, overlay: Page) => {
   await app.evaluate(({ Menu, BrowserWindow }) => {

@@ -1,4 +1,4 @@
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { ElectronApplication, Locator, Page } from "@playwright/test";
 
 import {
   clickMenuItem,
@@ -491,4 +491,223 @@ test("a split that would leave a pane under the minimum is refused with a toast,
   await expect.poll(where).toBe("calendar");
 
   expect(await savedSplit(userDataDir)).toBeUndefined();
+});
+
+const PINNED_DOCS = "Docs pinned";
+const LISTED_SHEETS = "Sheets listed";
+
+/**
+ * Gmail and Docs pinned, then Calendar, Sheets and Drive, with `root` as the
+ * split and Calendar selected; no app has two tabs, so the sidebar starts
+ * narrow.
+ */
+const seedBox = (userDataDir: string, standIn: StandIn, root: unknown) =>
+  writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          {
+            id: "gmail",
+            app: "gmail",
+            url: standIn.url,
+            title: "",
+            pinned: true,
+          },
+          {
+            id: "k",
+            app: "docs",
+            url: standIn.driveUrl,
+            title: PINNED_DOCS,
+            pinned: true,
+          },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: CALENDAR_TITLE,
+          },
+          {
+            id: "o",
+            app: "sheets",
+            url: standIn.driveUrl,
+            title: LISTED_SHEETS,
+          },
+          { id: "d", app: "drive", url: standIn.driveUrl, title: DRIVE_TITLE },
+        ],
+        selectedTabId: "c",
+        split: { root },
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+const row = (...tabIds: string[]) => ({
+  direction: "row",
+  children: tabIds.map((pane) => ({ size: 1 / tabIds.length, pane })),
+});
+
+/** The sidebar's tabs in order, and the box's tabs and the area it is in. */
+const sidebarOrder = (shell: Page) =>
+  shell.evaluate(() => {
+    const box = document.querySelector<HTMLElement>("[data-split-box]");
+    // oxlint-disable-next-line consistent-function-scoping -- runs in the page, which has only what this function holds
+    const ids = (within: Element | null) =>
+      [...(within?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [])].map(
+        (each) => each.dataset.tabId
+      );
+
+    return {
+      tabs: ids(document.querySelector('[role="tablist"]')),
+      box: ids(box),
+      area: box?.closest<HTMLElement>("[data-tab-area]")?.dataset.tabArea,
+    };
+  });
+
+const storedOrder = async (userDataDir: string) => {
+  const { profiles } = await readState<{
+    profiles: { tabs: { id: string }[] }[];
+  }>(userDataDir);
+
+  return profiles[0]?.tabs.map((each) => each.id);
+};
+
+const middleOf = async (target: Locator, down = 0.5) => {
+  const box = await target.boundingBox();
+
+  return {
+    x: (box?.x ?? 0) + (box?.width ?? 0) / 2,
+    y: (box?.y ?? 0) + (box?.height ?? 0) * down,
+  };
+};
+
+test("a split's tabs sit in one box in the list where its first tab was, in reading order; selecting one shows the split focused on it, one outside shows alone; neither the keyboard nor a drag moves them", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seedBox(userDataDir, standIn, row("d", "c"));
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const calendar = tab(shell, CALENDAR_TITLE);
+  const order = ["gmail", "k", "d", "c", "o"];
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+  await expect
+    .poll(() => sidebarOrder(shell))
+    .toStrictEqual({
+      tabs: order,
+      box: ["d", "c"],
+      area: "listed",
+    });
+  await expect(calendar).toHaveAccessibleDescription("In split view");
+
+  await calendar.focus();
+  await calendar.press("Alt+ArrowUp");
+  await calendar.press("Alt+ArrowDown");
+  await expect(calendar).toBeFocused();
+
+  const from = await middleOf(calendar);
+  const to = await middleOf(tab(shell, LISTED_SHEETS), 0.9);
+
+  await shell.mouse.move(from.x, from.y);
+  await shell.mouse.down();
+  await shell.mouse.move(to.x, to.y, { steps: 8 });
+  await shell.mouse.up();
+
+  expect(await sidebarOrder(shell)).toMatchObject({ tabs: order });
+  expect(await storedOrder(userDataDir)).toStrictEqual([
+    "gmail",
+    "k",
+    "c",
+    "o",
+    "d",
+  ]);
+
+  await tab(shell, LISTED_SHEETS).click();
+  await expect.poll(() => drawnPanes(shell)).toStrictEqual([]);
+  expect(await sidebarOrder(shell)).toMatchObject({ box: ["d", "c"] });
+
+  await tab(shell, DRIVE_TITLE).click();
+  await expect
+    .poll(() =>
+      drawnPanes(shell).then((panes) =>
+        panes.map(({ tabId, focused }) => ({ tabId, focused }))
+      )
+    )
+    .toStrictEqual([
+      { tabId: "d", focused: true },
+      { tabId: "c", focused: false },
+    ]);
+
+  // Each cross lies on its own tab's corner, below the box as in it.
+  const cross = (title: string) =>
+    shell.getByRole("button", { name: `Close ${title}`, includeHidden: true });
+
+  for (const title of [LISTED_SHEETS, DRIVE_TITLE]) {
+    // oxlint-disable-next-line no-await-in-loop -- one tab at a time
+    const tile = await tab(shell, title).boundingBox();
+    // oxlint-disable-next-line no-await-in-loop -- one tab at a time
+    const corner = await cross(title).boundingBox();
+
+    expect(corner?.y).toBeGreaterThan((tile?.y ?? 0) - 8);
+    expect(corner?.y).toBeLessThan(tile?.y ?? 0);
+  }
+
+  await tab(shell, DRIVE_TITLE).hover();
+  await cross(DRIVE_TITLE).click();
+  await expect
+    .poll(() => sidebarOrder(shell))
+    .toStrictEqual({
+      tabs: ["gmail", "k", "c", "o"],
+      box: [],
+      area: undefined,
+    });
+});
+
+test("a split holding a pinned tab puts its box first in the pinned area, its pinned tabs first, narrow and wide; separating ends it", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seedBox(userDataDir, standIn, row("c", "gmail"));
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const boxed = {
+    tabs: ["gmail", "c", "k", "o", "d"],
+    box: ["gmail", "c"],
+    area: "pinned",
+  };
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.url);
+  await expect.poll(() => sidebarOrder(shell)).toStrictEqual(boxed);
+
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  // A tile's tooltip, which is its description, is said first.
+  await expect(tab(shell, STAND_IN_TITLE)).toHaveAccessibleDescription(
+    `${STAND_IN_TITLE} · sign in required, in split view`
+  );
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAccessibleDescription(
+    "In split view"
+  );
+  expect(await sidebarOrder(shell)).toStrictEqual(boxed);
+
+  // A row with its title in the box, as in the list.
+  const calendar = await tab(shell, CALENDAR_TITLE).boundingBox();
+
+  expect(calendar?.width).toBeGreaterThan((calendar?.height ?? 0) * 3);
+
+  await clickMenuItem(app, "tab.separate");
+  await expect
+    .poll(() => sidebarOrder(shell))
+    .toStrictEqual({
+      tabs: ["gmail", "k", "c", "o", "d"],
+      box: [],
+      area: undefined,
+    });
 });
