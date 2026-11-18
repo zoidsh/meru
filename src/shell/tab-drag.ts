@@ -14,15 +14,29 @@ const THRESHOLD = 6;
 const SCROLL_EDGE = 24;
 const SCROLL_STEP = 8;
 
+interface Point {
+  x: number;
+  y: number;
+}
+
+/** Where a drag lands: in the sidebar, or over the pages at a point of their area. */
+export type TabDrop = SidebarDrop | ({ kind: "view" } & Point);
+
 interface Drag {
   tabId: string;
   pinned: boolean;
-  point: { x: number; y: number };
+  point: Point;
   live: boolean;
   /** Escape or the window losing focus ended it before the pointer came up. */
   cancelled: boolean;
   drop: SidebarDrop | undefined;
+  /** Over the pages, where in their area, whose top left is 0, 0. */
+  view: Point | undefined;
+  /** Whether main shows what a drop over the pages would do. */
+  aimed: boolean;
   frame: number | undefined;
+  /** The frame that next tells main where over the pages the drag is. */
+  aimFrame: number | undefined;
   stop: () => void;
 }
 
@@ -39,6 +53,23 @@ const tilesOf = (parent: Element): DropTile[] =>
   [...parent.querySelectorAll<HTMLElement>(":scope > [data-drop-id]")].map(
     (tile) => ({ id: tile.dataset.dropId ?? "", box: boxOf(tile) })
   );
+
+/**
+ * Where in the pages' area the pointer is while it is over the window's
+ * content, whose inset at the window's edge counts; none elsewhere.
+ */
+const viewAt = ({ x, y }: Point): Point | undefined => {
+  const area = document.querySelector("[data-page-area]");
+  const content = area?.closest("main");
+
+  if (!area || !content || !inside(boxOf(content), { x, y })) {
+    return;
+  }
+
+  const { left, top } = boxOf(area);
+
+  return { x: Math.round(x - left), y: Math.round(y - top) };
+};
 
 /** What shows where a drag would land: a line between places, or a ring on a tab. */
 export interface DragMark {
@@ -61,6 +92,7 @@ export const useTabDrag = ({
   sidebar,
   blocked,
   tabIds,
+  onAim,
   onDrop,
 }: {
   sidebar: RefObject<HTMLElement | null>;
@@ -68,7 +100,12 @@ export const useTabDrag = ({
   blocked: boolean;
   /** The profile's tabs, so a drag whose tab goes ends. */
   tabIds: readonly string[];
-  onDrop: (tabId: string, drop: SidebarDrop) => void;
+  /**
+   * Tells main where over the pages the drag is, for it to show what a drop
+   * there would do; none once it is not over them.
+   */
+  onAim: (tabId: string, point: Point | undefined) => void;
+  onDrop: (tabId: string, drop: TabDrop) => void;
 }) => {
   const [mark, setMark] = useState<DragMark>();
   const drag = useRef<Drag>(undefined);
@@ -164,8 +201,47 @@ export const useTabDrag = ({
     setMark((previous) => (isEqual(previous, next) ? previous : next));
   };
 
+  /** Tells main where over the pages the drag is, once a frame at most. */
+  const tell = (current: Drag) => {
+    if (current.aimFrame !== undefined) {
+      return;
+    }
+
+    current.aimFrame = requestAnimationFrame(() => {
+      current.aimFrame = undefined;
+
+      if (drag.current !== current) {
+        return;
+      }
+
+      if (current.view) {
+        current.aimed = true;
+        onAim(current.tabId, current.view);
+      } else if (current.aimed) {
+        current.aimed = false;
+        onAim(current.tabId, undefined);
+      }
+    });
+  };
+
+  /** Stops main showing a drop over the pages, at once. */
+  const unaim = (current: Drag) => {
+    if (current.aimFrame !== undefined) {
+      cancelAnimationFrame(current.aimFrame);
+      current.aimFrame = undefined;
+    }
+
+    if (current.aimed) {
+      current.aimed = false;
+      onAim(current.tabId, undefined);
+    }
+  };
+
   const show = (current: Drag) => {
     current.drop = current.cancelled ? undefined : aim(current);
+    current.view =
+      current.cancelled || current.drop ? undefined : viewAt(current.point);
+    tell(current);
 
     const { drop } = current;
 
@@ -210,6 +286,8 @@ export const useTabDrag = ({
     if (current) {
       current.cancelled = true;
       current.drop = undefined;
+      current.view = undefined;
+      unaim(current);
 
       if (current.frame !== undefined) {
         cancelAnimationFrame(current.frame);
@@ -231,6 +309,9 @@ export const useTabDrag = ({
     current.stop();
     draw(undefined);
 
+    const { view } = current;
+    const landed = dropped && current.live;
+
     if (current.live) {
       // The click that follows the release is the drag's, not a selection.
       swallowClick.current = true;
@@ -239,8 +320,15 @@ export const useTabDrag = ({
       }, 0);
     }
 
-    if (dropped && current.live && current.drop) {
+    if (landed && current.drop) {
       onDrop(current.tabId, current.drop);
+    }
+
+    // A drop over the pages stops main showing it as it lands.
+    if (landed && view) {
+      onDrop(current.tabId, { kind: "view", ...view });
+    } else {
+      unaim(current);
     }
   };
 
@@ -332,10 +420,18 @@ export const useTabDrag = ({
       live: false,
       cancelled: false,
       drop: undefined,
+      view: undefined,
+      aimed: false,
       frame: undefined,
+      aimFrame: undefined,
       stop: () => {
         if (current.frame !== undefined) {
           cancelAnimationFrame(current.frame);
+        }
+
+        if (current.aimFrame !== undefined) {
+          cancelAnimationFrame(current.aimFrame);
+          current.aimFrame = undefined;
         }
 
         stopFollowing();

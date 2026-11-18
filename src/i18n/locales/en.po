@@ -174,6 +174,11 @@ msgstr "Actual Size"
 msgid "Add Profile"
 msgstr "Add Profile"
 
+#. Label over the band along the window's edge that lights up while a tab is dragged near it; dropping it puts the tab there beside every pane
+#: src/shell/drop-zone.tsx
+msgid "Along the whole view"
+msgstr "Along the whole view"
+
 #. Accessible name of the list of Google's apps under the Open app search field, read by screen readers
 #: src/shell/open-app.tsx
 msgid "Apps"
@@ -521,6 +526,11 @@ msgstr "No Saved Searches"
 msgid "No unread messages"
 msgstr "No unread messages"
 
+#. Label over the part of the window a tab dragged there would take, when dropping it would leave a pane too small, so it does nothing
+#: src/shell/drop-zone.tsx
+msgid "Not enough room"
+msgstr "Not enough room"
+
 #. Short notice at the foot of the window when a split would leave a pane too small
 #: src/shell/toast.tsx
 msgid "Not enough room to split"
@@ -838,6 +848,11 @@ msgstr "Split right"
 #: src/main/commands.ts
 msgid "Split Right"
 msgstr "Split Right"
+
+#. Label over the half of a pane that lights up while a tab is dragged over it; dropping it puts the tab there beside that pane
+#: src/shell/drop-zone.tsx
+msgid "Split this pane"
+msgstr "Split this pane"
 
 #. Accessible name and tooltip of the title bar button that stops the page loading, shown in place of Reload while it loads
 #. Menu item in the View menu that stops the selected tab's page loading

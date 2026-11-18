@@ -8,6 +8,8 @@ export const SHELL_CALL_NAMES = [
   "moveTab",
   "moveInBox",
   "splitOntoTab",
+  "aimTab",
+  "dropTab",
   "resizePanes",
   "evenOutPanes",
   "maximizePane",

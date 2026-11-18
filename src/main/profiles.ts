@@ -22,6 +22,7 @@ import type { State } from "#core/state.ts";
 import { closeOtherTabs, closeTabsBelow } from "#core/tab-menu.ts";
 import {
   closeTab,
+  dropInView,
   maximizePane,
   moveInBox,
   moveTab,
@@ -36,6 +37,7 @@ import {
   updatePages,
 } from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
+import type { Size } from "#core/window-bounds.ts";
 
 export interface ProfilesDeps {
   initial: State;
@@ -224,6 +226,8 @@ export const createProfiles = ({
       exclusive(() => commit(moveInBox(state, key, before))),
     splitOntoTab: (key: TabKey, target: string) =>
       exclusive(() => commit(splitOntoTab(state, key, target))),
+    dropInView: (key: TabKey, size: Size, point: { x: number; y: number }) =>
+      exclusive(() => commit(dropInView(state, key, size, point))),
     closeOtherTabs: (key: TabKey) =>
       exclusive(() => commit(closeOtherTabs(state, key))),
     closeTabsBelow: (key: TabKey) =>

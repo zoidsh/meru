@@ -8,6 +8,7 @@ import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Input } from "#ui/input.tsx";
 import { Label } from "#ui/label.tsx";
 
+import { DropZone } from "./drop-zone.tsx";
 import { Inbox } from "./inbox.tsx";
 import { OpenAppOverlay } from "./open-app.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
@@ -184,6 +185,10 @@ export const OverlayLayer = () => {
     }
     case "toast": {
       drawn = <Toast {...open} />;
+      break;
+    }
+    case "drop": {
+      drawn = <DropZone {...open} />;
       break;
     }
     default: {

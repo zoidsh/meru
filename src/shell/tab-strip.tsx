@@ -646,6 +646,13 @@ const SplitBox = ({
 };
 
 /**
+ * Whether an overlay is open that a tab drag cannot start or go on under;
+ * what a drag over the pages shows is an overlay of its own.
+ */
+const blocksDrag = (overlay: ShellState["overlay"] | undefined) =>
+  overlay !== undefined && overlay.kind !== "none" && overlay.kind !== "drop";
+
+/**
  * The selected profile's tabs, down the left below the titlebar: the pinned
  * ones in the pinned area at the top, as tiles in either width, then the rest
  * in the list, square tiles when narrow and rows with their titles when
@@ -876,10 +883,17 @@ export const Sidebar = ({
 
   const drag = useTabDrag({
     sidebar,
-    blocked: overlay !== undefined && overlay.kind !== "none",
+    blocked: blocksDrag(overlay),
     tabIds: tabs.tabs.map((tab) => tab.id),
+    onAim: (tabId, point) => {
+      shellCalls().aimTab({ profileId, tabId, point: point ?? null });
+    },
     onDrop: (tabId, drop) => {
       switch (drop.kind) {
+        case "view": {
+          shellCalls().dropTab({ profileId, tabId, x: drop.x, y: drop.y });
+          break;
+        }
         case "onto": {
           shellCalls().splitOntoTab({ profileId, tabId, target: drop.target });
           break;

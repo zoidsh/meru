@@ -824,6 +824,81 @@ test("a tab dragged in the split's box: the inset line among its tabs, and the r
   await letGo();
 });
 
+test("a tab dragged over the pages: the lit half of a pane, the band along the view's edge, and Not enough room", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(
+    userDataDir,
+    withBox(standIn, {
+      direction: "row",
+      children: [pane(0.5, "d1"), pane(0.5, "c1")],
+    })
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const overlay = await findOverlayDocument(app);
+  const label = (text: string) => overlay.getByText(text, { exact: true });
+
+  /**
+   * Drags Budget to `across` and `down` of the way over `selector`'s
+   * element, and holds it there until what lights up says `shows`.
+   */
+  const hold = async (
+    selector: string,
+    across: number,
+    down: number,
+    shows: string
+  ) => {
+    const start = await shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { name: "Budget", exact: true })
+      .boundingBox();
+    const end = await shell.evaluate(
+      (each) => document.querySelector(each)?.getBoundingClientRect().toJSON(),
+      selector
+    );
+
+    await shell.mouse.move(
+      (start?.x ?? 0) + (start?.width ?? 0) / 2,
+      (start?.y ?? 0) + (start?.height ?? 0) / 2
+    );
+    await shell.mouse.down();
+    await shell.mouse.move(
+      (end?.x ?? 0) + (end?.width ?? 0) * across,
+      (end?.y ?? 0) + (end?.height ?? 0) * down,
+      { steps: 8 }
+    );
+    await expect(label(shows)).toBeVisible();
+  };
+
+  const letGo = async (shows: string) => {
+    await shell.keyboard.press("Escape");
+    await shell.mouse.up();
+    await expect(label(shows)).toHaveCount(0);
+  };
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+
+  await hold('[data-pane="c1"]', 0.8, 0.5, "Split this pane");
+  await shootEachWay(app, shell, "drag-view-half");
+  await letGo("Split this pane");
+
+  await hold("[data-page-area]", 0.005, 0.5, "Along the whole view");
+  await shootEachWay(app, shell, "drag-view-edge");
+  await letGo("Along the whole view");
+
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
+  });
+  await expect.poll(() => shell.evaluate(() => window.innerWidth)).toBe(720);
+  await hold('[data-pane="c1"]', 0.5, 0.2, "Not enough room");
+  await shootEachWay(app, shell, "drag-view-no-room");
+  await letGo("Not enough room");
+});
+
 test("uneven panes with a gap's handle hovered and focused, and a maximized split's box, narrow and wide", async ({
   launchApp,
   userDataDir,

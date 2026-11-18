@@ -14,6 +14,7 @@ import type { TabStatus } from "#core/tab-machine.ts";
 import { tabMenuItems } from "#core/tab-menu.ts";
 import { findTab, splitOntoTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
+import { viewDrop } from "#core/view-drop.ts";
 import type { Size } from "#core/window-bounds.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
@@ -41,6 +42,7 @@ export interface ShellHandlersDeps {
     | "moveTab"
     | "moveInBox"
     | "splitOntoTab"
+    | "dropInView"
     | "maximizePane"
   >;
   /** The page area's size, which a split's panes must fit. */
@@ -130,6 +132,15 @@ const shellOverlay = (
 
   if (overlay?.kind === "toast") {
     return { kind: "toast", message: overlay.message };
+  }
+
+  if (overlay?.kind === "drop") {
+    return {
+      kind: "drop",
+      ...overlay.zone,
+      along: overlay.along,
+      fits: overlay.fits,
+    };
   }
 
   const profile =
@@ -299,6 +310,39 @@ export const createShellHandlers = ({
     } else {
       log(
         `Refused to move tab ${profileId}/${tabId} of a profile not selected`
+      );
+    }
+  },
+  aimTab: ({ profileId, tabId, point }) => {
+    const state = profiles.get();
+    const drop =
+      point && profileId === state.selectedProfileId
+        ? viewDrop(selectedProfile(state), pageSize(), point, tabId)
+        : undefined;
+
+    if (drop) {
+      overlays.open({
+        kind: "drop",
+        zone: drop.zone,
+        along: drop.kind,
+        fits: drop.fits,
+      });
+    } else if (overlays.current()?.kind === "drop") {
+      overlays.close();
+    }
+
+    return Promise.resolve();
+  },
+  dropTab: async ({ profileId, tabId, x, y }) => {
+    if (overlays.current()?.kind === "drop") {
+      overlays.close();
+    }
+
+    if (profileId === profiles.get().selectedProfileId) {
+      await profiles.dropInView({ profileId, tabId }, pageSize(), { x, y });
+    } else {
+      log(
+        `Refused to drop tab ${profileId}/${tabId} of a profile not selected`
       );
     }
   },

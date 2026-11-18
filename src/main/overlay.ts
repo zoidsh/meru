@@ -1,6 +1,6 @@
 import { isEqual } from "es-toolkit";
 
-import { isMenu, transitionOverlay } from "#core/overlay.ts";
+import { isMenu, takesNoFocus, transitionOverlay } from "#core/overlay.ts";
 import type { Overlay, OverlayEvent } from "#core/overlay.ts";
 import type { State } from "#core/state.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
@@ -52,7 +52,7 @@ export const createOverlays = ({
 
   /** Gives back the focus `closed` took, as its kind does; a toast took none. */
   const giveBack = (closed: Overlay | undefined, toPage: boolean) => {
-    if (!closed || closed.kind === "toast") {
+    if (!closed || takesNoFocus(closed)) {
       return;
     }
 
@@ -84,14 +84,16 @@ export const createOverlays = ({
           hide();
         }
       }, TOAST_DURATION);
-    } else {
+    }
+
+    if (!takesNoFocus(overlay)) {
       focus.focus([{ kind: "overlay" }]);
     }
 
     notify();
 
-    if (overlay.kind === "toast") {
-      // A toast takes no focus, so what it replaced gives its own back.
+    if (takesNoFocus(overlay)) {
+      // What it replaced gives its own focus back, since this takes none.
       giveBack(replaced, false);
     }
   };

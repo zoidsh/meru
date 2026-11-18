@@ -23,6 +23,11 @@ export type Overlay =
   | { kind: "open-app"; profileId: string; split?: PaneDirection }
   /** A short notice at the page area's foot, which takes no focus. */
   | { kind: "toast"; message: ToastMessage }
+  /**
+   * What a tab dragged over the page area would do there, lit up over the
+   * pages; it takes no focus, and the drag in the shell keeps the pointer.
+   */
+  | { kind: "drop"; zone: Rectangle; along: "pane" | "edge"; fits: boolean }
   | { kind: "inbox" }
   /** A tab's context menu, at the point it was asked for. */
   | ({ kind: "tab-menu" } & TabMenuRequest)
@@ -36,6 +41,10 @@ export type Overlay =
 export const MENU_KINDS = ["tab-menu", "profile-menu"] as const;
 
 export type MenuKind = (typeof MENU_KINDS)[number];
+
+/** Whether an overlay leaves focus where it is, taking none and giving none back. */
+export const takesNoFocus = (overlay: Pick<Overlay, "kind"> | undefined) =>
+  overlay?.kind === "toast" || overlay?.kind === "drop";
 
 export const isMenu = (overlay: Pick<Overlay, "kind"> | undefined) =>
   overlay !== undefined &&
@@ -138,7 +147,11 @@ export const transitionOverlay = (
       return undefined;
     }
     default: {
-      if (current?.kind === "inbox" || current?.kind === "toast") {
+      if (
+        current?.kind === "inbox" ||
+        current?.kind === "toast" ||
+        current?.kind === "drop"
+      ) {
         return current;
       }
 

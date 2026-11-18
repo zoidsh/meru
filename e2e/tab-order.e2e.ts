@@ -229,7 +229,7 @@ test("a pinned tile moves within the narrow pinned column and the wide pinned gr
   ]);
 });
 
-test("a drag across areas, into the page or ended with Escape moves nothing, and a short press still selects", async ({
+test("a drag across areas, onto the titlebar or ended with Escape moves nothing, and a short press still selects", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -247,7 +247,8 @@ test("a drag across areas, into the page or ended with Escape moves nothing, and
     tab(shell, DRIVE_TITLE),
     await pointOf(tab(shell, CALENDAR_TITLE), 0.5, 0.9)
   );
-  await drag(shell, tab(shell, SLIDES), { x: 600, y: 300 });
+  // Into the page a drop splits; the titlebar is no place to drop.
+  await drag(shell, tab(shell, SLIDES), { x: 600, y: 20 });
   await hold(
     shell,
     tab(shell, SLIDES),

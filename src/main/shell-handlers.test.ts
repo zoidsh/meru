@@ -89,6 +89,11 @@ const setup = ({
 
         return Promise.resolve(true);
       },
+      dropInView: (key, size, point) => {
+        calls.push(["dropInView", key, size, point]);
+
+        return Promise.resolve(true);
+      },
     },
     pageSize: () => pageSize,
     overlays: {
@@ -301,6 +306,55 @@ describe(createShellHandlers, () => {
       [],
       [],
       [{ kind: "toast", message: "no-room" }],
+    ]);
+  });
+
+  it("shows what a tab dragged over the pages would do, nothing where it does nothing, and drops it there, closing what it showed", async () => {
+    const tabs: State = {
+      ...two,
+      profiles: [
+        {
+          ...newProfile("a", "Default"),
+          tabs: [
+            gmailTab(),
+            { id: "t1", app: "calendar", url: "https://c.test/", title: "" },
+          ],
+        },
+      ],
+    };
+    const shell = setup({ state: tabs });
+    const key = { profileId: "a", tabId: "t1" };
+
+    const right = {
+      kind: "drop",
+      zone: { x: 500, y: 0, width: 500, height: 600 },
+      along: "pane",
+      fits: true,
+    };
+
+    await shell.handlers.aimTab({ ...key, point: { x: 900, y: 300 } });
+    await shell.handlers.aimTab({ ...key, point: { x: 100, y: 300 } });
+    // Over Gmail's own page, which Gmail dragged does nothing on.
+    await shell.handlers.aimTab({
+      profileId: "a",
+      tabId: "gmail",
+      point: { x: 100, y: 300 },
+    });
+    await shell.handlers.aimTab({ ...key, point: { x: 900, y: 300 } });
+    await shell.handlers.dropTab({ ...key, x: 900, y: 300 });
+    await shell.handlers.aimTab({ ...key, point: null });
+    await shell.handlers.dropTab({ profileId: "b", tabId: "t1", x: 1, y: 1 });
+
+    expect([shell.overlays, shell.calls, shell.logged]).toStrictEqual([
+      [
+        right,
+        { ...right, zone: { x: 0, y: 0, width: 500, height: 600 } },
+        "closed",
+        right,
+        "closed",
+      ],
+      [["dropInView", key, { width: 1000, height: 600 }, { x: 900, y: 300 }]],
+      ["Refused to drop tab b/t1 of a profile not selected"],
     ]);
   });
 

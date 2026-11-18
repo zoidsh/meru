@@ -164,6 +164,16 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    aimTab: (request) => {
+      calls.push(["aimTab", request]);
+
+      return Promise.resolve();
+    },
+    dropTab: (request) => {
+      calls.push(["dropTab", request]);
+
+      return Promise.resolve();
+    },
     retryTab: (request) => {
       calls.push(["retryTab", request]);
 

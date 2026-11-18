@@ -86,6 +86,29 @@ export const SHELL_CALLS = {
     response: z.undefined(),
   },
   /**
+   * Shows what dropping a tab of the selected profile dragged over the page
+   * area, at `point` in it, whose top left is 0, 0, would do there; no
+   * point, or one where it would do nothing, shows nothing.
+   */
+  aimTab: {
+    request: z.object({
+      profileId,
+      tabId,
+      // Past the area's left edge in the window's inset, while the sidebar hides.
+      point: z.nullable(z.object({ x: z.int(), y: z.int() })),
+    }),
+    response: z.undefined(),
+  },
+  /**
+   * Drops a tab of the selected profile dragged over the page area at a
+   * point in it, splitting a pane or going along the view's edge as
+   * `aimTab` showed, and stops showing it.
+   */
+  dropTab: {
+    request: z.object({ profileId, tabId, x: z.int(), y: z.int() }),
+    response: z.undefined(),
+  },
+  /**
    * Moves the gap between the selected profile's panes of `before` and
    * `after`, the first tabs on each side of it, `by` pixels from where it
    * stood when the gesture began; each move places the pages, and the last,
@@ -380,6 +403,21 @@ export const SHELL_STATE = {
     z.object({
       kind: z.literal("toast"),
       message: z.enum(TOAST_MESSAGES),
+    }),
+    /**
+     * What a tab dragged over the page area would do: the zone that lights
+     * up, in the page area, which the overlay's view covers; whether it
+     * splits a pane or goes along the view's edge; and whether every pane
+     * would keep its minimum, without which it does nothing.
+     */
+    z.object({
+      kind: z.literal("drop"),
+      x: coordinate,
+      y: coordinate,
+      width: coordinate,
+      height: coordinate,
+      along: z.enum(["pane", "edge"]),
+      fits: z.boolean(),
     }),
     z.object({
       kind: z.literal("tab-menu"),

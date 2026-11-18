@@ -26,6 +26,7 @@ const Page = ({ tabs, radius }: { tabs: Tabs | undefined; radius: number }) => {
 
   return (
     <div
+      data-page-area
       style={{ borderRadius: radius }}
       className="min-w-0 flex-1 overflow-hidden bg-background"
     >
@@ -57,7 +58,7 @@ const Panes = ({
   panes: NonNullable<Tabs["panes"]>;
   radius: number;
 }) => (
-  <div data-panes className="relative min-w-0 flex-1">
+  <div data-panes data-page-area className="relative min-w-0 flex-1">
     {panes.map((pane) => {
       const tab = tabs.tabs.find(({ id }) => id === pane.tabId);
       const focused = pane.tabId === tabs.selectedTabId;
