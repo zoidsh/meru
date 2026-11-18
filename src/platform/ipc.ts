@@ -9,14 +9,6 @@ export interface IpcSender {
   origin: string | undefined;
 }
 
-/** A frame's origin carries no path, query or fragment, so it can be logged. */
-export const describeSender = ({
-  webContentsId,
-  isMainFrame,
-  origin,
-}: IpcSender) =>
-  `webContents ${webContentsId} (${isMainFrame ? "main frame" : "subframe"}, ${origin ?? "no origin"})`;
-
 export interface Ipc {
   /** Answers `invoke` on `channel`; a rejection reaches the caller. */
   handle: (

@@ -4,9 +4,9 @@ import { isGmailHash } from "#core/gmail-hash.ts";
 import { HOOK_NAMES } from "#core/gmail-hooks.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
-import { describeSender } from "#platform/ipc.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
+import { describeSender } from "./senders.ts";
 import type { SenderRegistry } from "./senders.ts";
 
 export interface GmailPageDeps {

@@ -13,9 +13,9 @@ import type {
   ShellState,
   ShellSyncMessage,
 } from "#contract/shell.ts";
-import { describeSender } from "#platform/ipc.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
+import { describeSender } from "./senders.ts";
 import type { SenderRegistry } from "./senders.ts";
 
 export type ShellHandlers = {

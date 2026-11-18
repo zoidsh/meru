@@ -184,10 +184,12 @@ export const gmailTab = (): Tab => ({
 /**
  * Whether the tab is pinned, which keeps it from closing. Anything but `true`
  * in the file, absent included, reads as not, and stays as found until the
- * tab is pinned or unpinned.
+ * tab is pinned or unpinned. A stored tab holds `pinned` only under its
+ * loose schema's index, which a type naming the key alone would refuse.
  */
-export const isPinned = (tab: { id: string; pinned?: unknown }) =>
-  tab.pinned === true;
+export const isPinned = (
+  tab: { readonly pinned?: unknown } | Readonly<Record<string, unknown>>
+) => tab.pinned === true;
 
 /** Whether a pinned tab loads at launch, before it is first selected. */
 export const opensAtLaunch = (tab: Tab) =>

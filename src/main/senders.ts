@@ -1,3 +1,5 @@
+import type { IpcSender } from "#platform/ipc.ts";
+
 export type SenderIdentity =
   | { role: "shell" }
   /** The shell's overlay document, which the shell draws into; never a caller. */
@@ -36,3 +38,11 @@ export const createSenderRegistry = () => {
 };
 
 export type SenderRegistry = ReturnType<typeof createSenderRegistry>;
+
+/** A frame's origin carries no path, query or fragment, so it can be logged. */
+export const describeSender = ({
+  webContentsId,
+  isMainFrame,
+  origin,
+}: IpcSender) =>
+  `webContents ${webContentsId} (${isMainFrame ? "main frame" : "subframe"}, ${origin ?? "no origin"})`;
