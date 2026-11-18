@@ -361,6 +361,70 @@ test("the titlebar with two profiles, and with more than fit", async ({
   await shootEachWay(two.app, two.shell, "titlebar-two");
 });
 
+test("a sleeping profile in the titlebar, a profile's menu, and the sleeping pane of the last profile put to sleep", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  standIn.setFeed(ANY_SESSION, { unreadCount: 3 });
+  await writeState(userDataDir, {
+    profiles: [
+      { id: "p0", name: "Personal" },
+      { id: "p1", name: "Work", asleep: true },
+      { id: "p2", name: "Dev" },
+    ],
+    selectedProfileId: "p0",
+  });
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const row = shell.getByRole("group", { name: "Profiles" });
+  const rest = () => shell.mouse.move(700, 300);
+
+  await findPage(app, standIn.url);
+  await expect(
+    row.getByRole("button", { name: "Work, asleep, 3 unread messages" })
+  ).toBeVisible();
+  await rest();
+  await shootEachWay(app, shell, "titlebar-sleeping");
+
+  const menuOf = async (name: string) => {
+    await row
+      .getByRole("button", { name: new RegExp(`^${name}`, "u") })
+      .click({ button: "right" });
+
+    const overlay = await findOverlayDocument(app);
+    const menu = overlay.getByRole("menu", { name });
+
+    await expect(menu).toBeVisible();
+
+    return { overlay, menu };
+  };
+
+  const work = await menuOf("Work");
+
+  // Away from the item, so it is not highlighted in the picture.
+  await work.overlay.mouse.move(900, 600);
+  await shootEachWay(app, shell, "profile-menu");
+  await work.overlay.keyboard.press("Escape");
+  await expect(work.menu).toHaveCount(0);
+
+  for (const name of ["Personal", "Dev"]) {
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    const { overlay, menu } = await menuOf(name);
+
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    await overlay.getByRole("menuitem", { name: "Sleep", exact: true }).click();
+    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
+    await expect(menu).toHaveCount(0);
+  }
+
+  await expect(
+    shell.getByRole("region", { name: "Dev is sleeping" })
+  ).toBeVisible();
+  await rest();
+  await shootEachWay(app, shell, "profile-sleeping");
+});
+
 test("the rename profile overlay", async ({
   launchApp,
   userDataDir,
