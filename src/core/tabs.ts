@@ -1,4 +1,12 @@
 import type { App } from "./apps.ts";
+import type { PaneDirection } from "./pane-tree.ts";
+import {
+  focusSelected,
+  isInSplit,
+  splitTarget,
+  splitWith,
+  withoutPane,
+} from "./split.ts";
 import { GMAIL_TAB_ID, isPinned, isTab, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 
@@ -42,8 +50,8 @@ export const newTabId = (app: App, newId: () => string) =>
 /**
  * Opens `url` as a tab of `app` in the profile, selected: appended, or put
  * right after the tab `after` names, or for a single-instance app with a tab
- * already, that tab, given the URL. Opening a page in a sleeping profile
- * wakes it.
+ * already, that tab, given the URL. With `split`, it goes in a new pane that
+ * way of the focused one, as Split right and Split down put it.
  */
 export const openTab = (
   state: State,
@@ -51,11 +59,12 @@ export const openTab = (
   app: App,
   url: string,
   newId: () => string,
-  after?: string
+  after?: string,
+  split?: PaneDirection
 ): OpenedTab | undefined => {
   let opened: Omit<OpenedTab, "state"> | undefined;
 
-  const next = updateProfile(state, profileId, (profile) => {
+  const openInProfile = (profile: Profile): Profile | undefined => {
     const existing = app.singleInstance
       ? knownTabs(profile).find((tab) => tab.app === app.id)
       : undefined;
@@ -93,12 +102,24 @@ export const openTab = (
       tabs: profile.tabs.toSpliced(at, 0, tab),
       selectedTabId: tab.id,
     };
+  };
+
+  const next = updateProfile(state, profileId, (profile) => {
+    const target = split && splitTarget(profile);
+    const opening = openInProfile(profile);
+
+    return split && opening && opened
+      ? (splitWith(opening, opened.tabId, split, target) ?? opening)
+      : opening;
   });
 
   return next && opened ? { state: next, ...opened } : undefined;
 };
 
-/** Nothing when the tab is not shown or already selected. */
+/**
+ * Selecting a tab in the split focuses its pane. Nothing when the tab is not
+ * shown or already selected.
+ */
 export const selectTab = (
   state: State,
   { profileId, tabId }: TabKey
@@ -106,7 +127,7 @@ export const selectTab = (
   updateProfile(state, profileId, (profile) =>
     profile.selectedTabId !== tabId &&
     knownTabs(profile).some((tab) => tab.id === tabId)
-      ? { ...profile, selectedTabId: tabId }
+      ? focusSelected({ ...profile, selectedTabId: tabId })
       : undefined
   );
 
@@ -116,7 +137,9 @@ export const canCloseTab = (tab: Tab) => !isPinned(tab);
 /**
  * Closing the selected tab selects the shown tab to its right, or to its left
  * when it was last, as removing a profile does, and none when it was the only
- * one. Nothing for a pinned tab or one that is not shown.
+ * one; in a split, the pane that takes its focus, or the one pane left. A
+ * closed tab's pane gives its space to those beside it. Nothing for a pinned
+ * tab or one that is not shown.
  */
 export const closeTab = (
   state: State,
@@ -133,16 +156,45 @@ export const closeTab = (
 
     const left = shown.filter((candidate) => candidate !== tab);
     const neighbour = left[Math.min(index, left.length - 1)];
+    const paned = withoutPane(profile, tabId);
+    const inPane = isInSplit(profile, tabId)
+      ? (paned.profile.split?.focused ?? paned.alone)
+      : undefined;
 
-    return {
-      ...profile,
+    return focusSelected({
+      ...paned.profile,
       tabs: profile.tabs.filter((candidate) => candidate !== tab),
       selectedTabId:
         profile.selectedTabId === tabId
-          ? (neighbour?.id ?? "")
+          ? (inPane ?? neighbour?.id ?? "")
           : profile.selectedTabId,
-    };
+    });
   });
+
+/**
+ * Puts the tab in a new pane `direction` of the focused pane, or of the
+ * selected tab where the profile has no split, focused and selected.
+ */
+export const splitTab = (
+  state: State,
+  { profileId, tabId }: TabKey,
+  direction: PaneDirection
+): State | undefined =>
+  updateProfile(state, profileId, (profile) =>
+    splitWith(profile, tabId, direction)
+  );
+
+/**
+ * Takes the tab out of its split, its space going to the panes beside it; a
+ * split left with one pane ends. The tab stays selected and shows alone.
+ */
+export const separateTab = (
+  state: State,
+  { profileId, tabId }: TabKey
+): State | undefined =>
+  updateProfile(state, profileId, (profile) =>
+    isInSplit(profile, tabId) ? withoutPane(profile, tabId).profile : undefined
+  );
 
 const updateTab = (
   state: State,

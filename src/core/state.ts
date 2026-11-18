@@ -2,6 +2,8 @@ import { isEqual } from "es-toolkit";
 import { z } from "zod/mini";
 
 import { APPS, isAppId } from "./apps.ts";
+import { readSplit } from "./pane-tree.ts";
+import type { Split } from "./pane-tree.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
 
@@ -46,6 +48,7 @@ export type Tab = z.infer<typeof tabSchema>;
 // Symbols, which a key read from JSON can never be and JSON never writes.
 const UNREAD = Symbol("unread tab");
 const TABS_AS_FOUND = Symbol("tabs as found");
+const SPLIT_AS_FOUND = Symbol("split as found");
 const UNREAD_PROFILES = Symbol("unread profiles");
 const CLEAR_AS_FOUND = Symbol("profiles to clear as found");
 const DO_NOT_DISTURB_AS_FOUND = Symbol("do not disturb as found");
@@ -112,11 +115,15 @@ export interface Profile {
   savedSearches?: unknown;
   /** `true` while the profile is put to sleep; read through `isAsleep`. */
   asleep?: unknown;
+  /** The profile's panes, repaired as read; set through `withSplit`. */
+  split?: Split;
   /**
    * A `tabs` that is not a list, written back in its place; the tabs the
    * profile has instead live only in memory.
    */
   [TABS_AS_FOUND]?: unknown;
+  /** A `split` that is no split, written back until a split replaces it. */
+  [SPLIT_AS_FOUND]?: unknown;
 }
 
 type StoredState = z.infer<typeof stateSchema>;
@@ -232,11 +239,26 @@ const normalizeProfile = (profile: StoredProfile): Profile => {
     decoded[TABS_AS_FOUND] = profile.tabs;
   }
 
+  if ("split" in profile) {
+    const read = readSplit(profile.split, (tabId) =>
+      shown.some((tab) => tab.id === tabId)
+    );
+
+    delete decoded.split;
+
+    if (read.kind === "split") {
+      decoded.split = read.split;
+    } else if (read.kind === "as-found") {
+      decoded[SPLIT_AS_FOUND] = profile.split;
+    }
+  }
+
   return decoded;
 };
 
 const encodeProfile = (profile: Profile) => ({
   ...profile,
+  ...(SPLIT_AS_FOUND in profile && { split: profile[SPLIT_AS_FOUND] }),
   tabs:
     TABS_AS_FOUND in profile
       ? profile[TABS_AS_FOUND]
@@ -290,6 +312,19 @@ const unreadProfileIds = (state: State) =>
       ? [raw.id]
       : []
   );
+
+/**
+ * The profile with `split` as its panes, or none; either replaces a stored
+ * `split` kept as found.
+ */
+export const withSplit = (
+  profile: Profile,
+  split: Split | undefined
+): Profile => {
+  const { split: _previous, [SPLIT_AS_FOUND]: _asFound, ...rest } = profile;
+
+  return split ? { ...rest, split } : rest;
+};
 
 /** A profile with only its Gmail tab, pinned and opening at launch. */
 export const newProfile = (id: string, name: string): Profile => ({
