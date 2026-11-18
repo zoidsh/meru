@@ -48,6 +48,8 @@ const createFakeWindow = () => {
     onPageFocus: () => false,
     onShellDocument: () => false,
     onPageGone: () => false,
+    onRendererGone: () => false,
+    reload: () => false,
     restore: () => {
       minimized = false;
       calls.push("restore");

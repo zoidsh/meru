@@ -1,3 +1,7 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+import { chromium } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { FIND_INSET } from "#core/find.ts";
@@ -7,6 +11,7 @@ import {
   clickMenuItem,
   readMenuItem,
   expect,
+  findOverlayDocument,
   findPage,
   readState,
   readUnreadTotal,
@@ -257,6 +262,35 @@ const firstWindowBounds = async (app: ElectronApplication) => {
   return window?.bounds;
 };
 
+/**
+ * The shell's page loaded again after its process died. Playwright holds a
+ * page whose process crashed as crashed for good, though Chromium loads it
+ * again in the same target, so it is reached over a connection of its own.
+ */
+const reachShell = async (userDataDir: string) => {
+  // Chromium writes the port it picked there, the suite asking for any.
+  const active = await readFile(
+    path.join(userDataDir, "DevToolsActivePort"),
+    "utf-8"
+  );
+  const [port] = active.split("\n");
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+  let found: Page | undefined;
+
+  await expect
+    .poll(() => {
+      found = browser
+        .contexts()
+        .flatMap((context) => context.pages())
+        .find((page) => page.url().startsWith("meru-app:"));
+
+      return found?.evaluate(() => document.readyState).catch(() => "gone");
+    })
+    .toBe("complete");
+
+  return found as Page;
+};
+
 /** A mark the page keeps only while it is not loaded again. */
 const mark = (page: Page) =>
   page.evaluate(() => {
@@ -311,7 +345,7 @@ const pageOpen = (app: ElectronApplication, url: string) =>
     url
   );
 
-test("Move to New Window puts the selected tab's page in a window of its own as it was, marks its tab and selects the next", async ({
+test("Move to New Window puts the selected tab's page in a window of its own as it was, marks its tab and selects the next; the shell's renderer dying, the shell comes back with its sidebar, titlebar and the window's titlebar, no card left open, the pages not loaded again", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -363,6 +397,71 @@ test("Move to New Window puts the selected tab's page in a window of its own as 
   await expect(header.getByRole("button", { name: /^Reload/u })).toBeEnabled();
   // One profile has no badge.
   await expect(header.getByText("Default")).toHaveCount(0);
+
+  // The shell's renderer dying with New tab open, the shell comes back in a
+  // new one and the pages, in processes of their own, stay as they were.
+  const drive = await findPage(app, standIn.driveUrl);
+  const newTab = shell.getByRole("button", { name: "New tab" });
+
+  const oldOverlay = await findOverlayDocument(app);
+
+  await mark(drive);
+  await newTab.click();
+  await expect(
+    oldOverlay.getByRole("dialog", { name: "New tab" })
+  ).toBeVisible();
+  await expect(newTab).toHaveAttribute("aria-pressed", "true");
+
+  const { calendar: calendarLoads, drive: driveLoads } = standIn.requests();
+
+  await app.evaluate(({ webContents }) => {
+    webContents
+      .getAllWebContents()
+      .find((contents) => contents.getURL().startsWith("meru-app:"))
+      ?.forcefullyCrashRenderer();
+  });
+
+  const reloaded = await reachShell(userDataDir);
+
+  await expect(tab(reloaded, DRIVE_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect(
+    reloaded.getByRole("banner", { name: "Title bar" })
+  ).toBeVisible();
+  await expect(tab(reloaded, CALENDAR_TITLE)).toHaveAccessibleDescription(
+    `${CALENDAR_TITLE} · in its own window`
+  );
+  const newTitlebar = await findTitlebar(app);
+
+  await expect(
+    newTitlebar
+      .getByRole("banner", { name: "Title bar" })
+      .getByText(CALENDAR_TITLE)
+  ).toBeVisible();
+  expect(titlebar.isClosed()).toBeTruthy();
+  expect(oldOverlay.isClosed()).toBeTruthy();
+  expect(await marked(calendar)).toBe(42);
+  expect(await marked(drive)).toBe(42);
+  expect(standIn.requests()).toMatchObject({
+    calendar: calendarLoads,
+    drive: driveLoads,
+  });
+
+  // New tab's card went with the old renderer, and main knows it.
+  const reloadedNewTab = reloaded.getByRole("button", { name: "New tab" });
+  const overlay = await findOverlayDocument(app);
+  const card = overlay.getByRole("dialog", { name: "New tab" });
+
+  await expect(reloadedNewTab).toHaveAttribute("aria-pressed", "false");
+  await expect(card).toHaveCount(0);
+  expect(await overlayShown(app)).toBeFalsy();
+  await reloadedNewTab.click();
+  await expect(card).toBeVisible();
+  await overlay.keyboard.press("Escape");
+  await expect(card).toHaveCount(0);
+  await expect.poll(() => overlayShown(app)).toBeFalsy();
 });
 
 test("Cmd or Ctrl+Shift+N in the page moves it; a click on its tab focuses that page and selects nothing; Cmd or Ctrl+Shift+M there moves it back, selected", async ({

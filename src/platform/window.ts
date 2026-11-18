@@ -67,6 +67,13 @@ export interface AppWindow extends PlainWindow {
   ) => void;
   /** Told when the page's document goes, loaded anew or its process gone. */
   onPageGone: (listener: () => void) => void;
+  /**
+   * Told when the page's process is gone, with Chromium's reason
+   * (`crashed`, `oom`, `killed`, `clean-exit` and the like).
+   */
+  onRendererGone: (listener: (reason: string) => void) => void;
+  /** Loads the page again, in a new process should its own be gone. */
+  reload: () => void;
   isFullScreen: () => boolean;
   /** Leaves full screen, then runs `then` once the window has. */
   leaveFullScreen: (then: () => void) => void;
@@ -193,6 +200,16 @@ export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
       },
       onPageGone: (listener) => {
         pageGoneListeners.add(listener);
+      },
+      onRendererGone: (listener) => {
+        webContents.on("render-process-gone", (_event, details) => {
+          listener(details.reason);
+        });
+      },
+      reload: () => {
+        if (!window.isDestroyed()) {
+          webContents.reload();
+        }
       },
       isFullScreen: () => window.isFullScreen(),
       leaveFullScreen: (then) => {

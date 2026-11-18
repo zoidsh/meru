@@ -335,7 +335,7 @@ test("in the rename field a plain letter types, and a command's key acts once on
   await calendarSelected(false);
 });
 
-test("when the shell's renderer is gone, the overlay's view goes with it and nothing is left open", async ({
+test("when the shell's renderer is gone, the overlay's view goes with it, and the shell main loads again opens a new one with nothing left open", async ({
   app,
   standIn,
 }) => {
@@ -349,27 +349,23 @@ test("when the shell's renderer is gone, the overlay's view goes with it and not
     BrowserWindow.getAllWindows()[0]?.webContents.forcefullyCrashRenderer();
   });
   await expect
-    .poll(async () => {
-      const { visible } = await readOverlayView(app);
-
-      return visible;
-    })
-    .toBeUndefined();
-
-  // A shell loaded again draws no overlay, since main has none open.
-  await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0]?.webContents.reload();
-  });
-  await expect
     .poll(() =>
       app
         .windows()
         .some((page) => page !== first && page.url() === "about:blank")
     )
     .toBeTruthy();
+  expect(first.isClosed()).toBeTruthy();
 
   const overlay = await findOverlayDocument(app);
 
   await expect(overlay.getByRole("dialog")).toHaveCount(0);
+  await expect
+    .poll(async () => {
+      const { visible } = await readOverlayView(app);
+
+      return visible;
+    })
+    .toBe(false);
   await openFromMenu(app, overlay);
 });

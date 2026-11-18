@@ -28,6 +28,7 @@ import { wireNotifications } from "./wiring/notifications.ts";
 import { wireOwnWindows } from "./wiring/own-windows.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import { wireShellDocuments } from "./wiring/shell-documents.ts";
+import { wireShellRecovery } from "./wiring/shell-recovery.ts";
 import { APP_SCHEME, resolveShell } from "./wiring/shell-source.ts";
 import { wireStores } from "./wiring/stores.ts";
 import {
@@ -134,6 +135,7 @@ const start = async () => {
   const senders = createSenderRegistry();
 
   senders.register(shell.window.webContentsId, { role: "shell" });
+  wireShellRecovery({ lifecycle, errorDialog, shell });
 
   const focus = createFocus({
     window: shell.window,

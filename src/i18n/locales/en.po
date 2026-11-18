@@ -109,6 +109,11 @@ msgstr "{name}'s Google account is signed out, so its mail is not checked."
 msgid "{ordinal}/{matches}"
 msgstr "{ordinal}/{matches}"
 
+#. Title of the error dialog shown when the app's window keeps failing to draw and the app quits; {productName} is the app's name
+#: src/main/shell-recovery.ts
+msgid "{productName} could not draw its window"
+msgstr "{productName} could not draw its window"
+
 #. Title of the error dialog shown when the app fails to open; {productName} is the app's name
 #: src/main/failures.ts
 msgid "{productName} could not start"
@@ -987,6 +992,11 @@ msgstr "Stopped working"
 #: src/shell/tab-strip.tsx
 msgid "Tabs"
 msgstr "Tabs"
+
+#. Body of the error dialog shown when the app's window keeps failing to draw; {productName} is the app's name
+#: src/main/shell-recovery.ts
+msgid "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
+msgstr "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
 
 #. Shown when the app is started on data that a later version of the app wrote, which this version cannot read
 #: src/main/store-file.ts
