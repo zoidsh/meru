@@ -24,6 +24,7 @@ const NEEDS_THE_FOCUS = [
   "**/split-view-drags.e2e.ts",
   "**/split-several.e2e.ts",
   "**/find.e2e.ts",
+  "**/own-window.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 

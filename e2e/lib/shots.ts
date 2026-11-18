@@ -38,4 +38,4 @@ export const emulateTheme = async (app: ElectronApplication, theme: Theme) => {
   await delay(500);
 };
 
-export { shootWindow } from "./window-shot.ts";
+export { shootOwnWindow, shootWindow } from "./window-shot.ts";

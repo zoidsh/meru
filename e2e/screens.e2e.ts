@@ -11,10 +11,12 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
+import { findTitlebar, readOwnWindows } from "./lib/own-window.ts";
 import {
   THEMES,
   emulateTheme,
   onlyWithShots,
+  shootOwnWindow,
   shootWindow,
   shotPath,
 } from "./lib/shots.ts";
@@ -1115,4 +1117,94 @@ test("the toast refusing a split in a small window", async ({
     // oxlint-disable-next-line no-await-in-loop -- one toast at a time
     await expect(toast).toHaveCount(0, { timeout: 8000 });
   }
+});
+
+/** Calendar in its own window, Drive selected, in each named profile. */
+const withOwnWindow = (standIn: StandIn, names: string[]) => ({
+  profiles: names.map((name, index) => ({
+    id: `p${index}`,
+    name,
+    tabs: [
+      { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+      {
+        id: "c",
+        app: "calendar",
+        url: standIn.calendarUrl,
+        title: "",
+        ...(index === 0 && {
+          ownWindow: true,
+          windowBounds: { x: 120, y: 120, width: 900, height: 600 },
+        }),
+      },
+      { id: "d", app: "drive", url: standIn.driveUrl, title: "" },
+    ],
+    selectedTabId: "d",
+  })),
+  selectedProfileId: "p0",
+});
+
+/** Waits for the own window's page and its titlebar's title. */
+const ownWindowDrawn = async (app: ElectronApplication) => {
+  const titlebar = await findTitlebar(app);
+
+  await expect(
+    titlebar
+      .getByRole("banner", { name: "Title bar" })
+      .getByText(CALENDAR_TITLE)
+  ).toBeVisible();
+  await expect
+    .poll(async () => {
+      const [window] = await readOwnWindows(app);
+
+      return window?.views.filter((view) => view.visible).length;
+    })
+    .toBe(2);
+
+  return titlebar;
+};
+
+/** Shoots the own window as `surface` in each theme. */
+const shootOwnWindowEachWay = async (
+  app: ElectronApplication,
+  shell: Page,
+  surface: string
+) => {
+  for (const theme of THEMES) {
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await emulateTheme(app, theme);
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await shootOwnWindow(app, shell, shotPath(surface, theme));
+  }
+};
+
+test("a tab in its own window with one profile and with two, and its mark in the sidebar narrow and wide", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, withOwnWindow(standIn, ["Default"]));
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const titlebar = await ownWindowDrawn(app);
+
+  await titlebar.mouse.move(600, 300);
+  await shootOwnWindowEachWay(app, shell, "own-window");
+
+  await rest(shell);
+  await shootEachWay(app, shell, "own-window-mark-narrow");
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await rest(shell);
+  await shootEachWay(app, shell, "own-window-mark-wide");
+  await app.close();
+
+  await writeState(userDataDir, withOwnWindow(standIn, ["Personal", "Work"]));
+
+  const two = await launch(launchApp, userDataDir);
+  const second = await ownWindowDrawn(two.app);
+
+  await expect(
+    second.getByRole("banner", { name: "Title bar" }).getByText("Personal")
+  ).toBeVisible();
+  await second.mouse.move(600, 300);
+  await shootOwnWindowEachWay(two.app, two.shell, "own-window-two");
 });
