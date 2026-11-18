@@ -113,6 +113,47 @@ describe(transition, () => {
     }
   });
 
+  it("puts a tab to sleep from any status that has a page, and wakes it as a restored one", () => {
+    const statuses: TabStatus[] = [
+      { kind: "loading" },
+      { kind: "live" },
+      run({ kind: "loading" }, FAILED).status,
+      run({ kind: "loading" }, FAILED, { kind: "retry-due" }).status,
+      { kind: "crashed", reason: "oom" },
+    ];
+
+    for (const status of statuses) {
+      expect(run(status, { kind: "sleep" })).toStrictEqual({
+        status: { kind: "unloaded" },
+        effects: [{ kind: "discard" }],
+      });
+    }
+
+    expect(run({ kind: "unloaded" }, { kind: "sleep" })).toStrictEqual({
+      status: { kind: "unloaded" },
+      effects: [],
+    });
+
+    for (const kind of ["select", "open"] as const) {
+      expect(run({ kind: "live" }, { kind: "sleep" }, { kind })).toStrictEqual({
+        status: { kind: "loading" },
+        effects: [{ kind: "discard" }, { kind: "load" }],
+      });
+    }
+
+    // Asleep, it hears no retry, reload or network, as nothing is loaded.
+    expect(
+      run(
+        { kind: "live" },
+        { kind: "sleep" },
+        { kind: "retry-due" },
+        { kind: "online" },
+        { kind: "reload" },
+        { kind: "navigate" }
+      ).status
+    ).toStrictEqual({ kind: "unloaded" });
+  });
+
   it("backs off from a second, doubling, to half a minute", () => {
     expect([0, 1, 2, 3, 4, 5, 6, 20].map(retryDelay)).toStrictEqual([
       1000, 2000, 4000, 8000, 16_000, 30_000, 30_000, 30_000,

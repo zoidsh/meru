@@ -47,8 +47,9 @@ const keys = (list: readonly { profileId: string; tabId: string }[]) =>
 const plan = (
   current: State,
   existing: string[] = [],
-  launched: string[] = []
-) => planViews(current, existing, new Set(launched));
+  launched: string[] = [],
+  sleeping: string[] = []
+) => planViews(current, existing, new Set(launched), new Set(sleeping));
 
 describe(planViews, () => {
   it("at first gives the selected tab a view and opens the selected profile's Open at Launch tabs alone", () => {
@@ -100,6 +101,17 @@ describe(planViews, () => {
     );
 
     expect(keys(after.views)).toStrictEqual(["a/gmail"]);
+  });
+
+  it("gives a sleeping tab no view, on screen or opened at launch, and keeps it the front", () => {
+    const asleepFront = plan(state, ["a/gmail"], ["a"], ["a/a1"]);
+    const asleepAtLaunch = plan(state, [], [], ["a/gmail"]);
+
+    expect([keys(asleepFront.views), asleepFront.front]).toStrictEqual([
+      ["a/gmail"],
+      { profileId: "a", tabId: "a1" },
+    ]);
+    expect(keys(asleepAtLaunch.views)).toStrictEqual(["a/a1"]);
   });
 
   it("never gives a tab of an app this build does not know a view", () => {

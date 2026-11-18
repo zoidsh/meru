@@ -25,14 +25,16 @@ export interface ViewPlan {
 /**
  * A tab gets its view when it is first on screen, or opened as its profile's
  * Open at Launch tabs are, and keeps it, hidden, while another is on screen,
- * until it is closed or its profile removed. `existing` is the keys of the
- * tabs that have a view now, and `launched` the profiles whose Open at Launch
- * tabs were opened this session.
+ * until it is closed, put to sleep or its profile removed. `existing` is the
+ * keys of the tabs that have a view now, `launched` the profiles whose Open
+ * at Launch tabs were opened this session, and `sleeping` the tabs put to
+ * sleep, which stay without a view even on screen.
  */
 export const planViews = (
   state: State,
   existing: readonly string[],
-  launched: ReadonlySet<string>
+  launched: ReadonlySet<string>,
+  sleeping: ReadonlySet<string> = new Set()
 ): ViewPlan => {
   const profile = selectedProfile(state);
   const shown = knownTabs(profile);
@@ -48,11 +50,13 @@ export const planViews = (
       .filter(opensAtLaunch)
       .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
   );
-  const kept = new Set([
-    ...existing,
-    ...opening.map(tabKey),
-    ...(front ? [tabKey(front)] : []),
-  ]);
+  const kept = new Set(
+    [
+      ...existing,
+      ...opening.map(tabKey),
+      ...(front ? [tabKey(front)] : []),
+    ].filter((key) => !sleeping.has(key))
+  );
 
   return {
     views: state.profiles.flatMap((candidate) =>

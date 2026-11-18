@@ -6,7 +6,10 @@ export interface LoadFailure {
 }
 
 export type TabStatus =
-  /** Restored and neither selected nor opened since: it has no page. */
+  /**
+   * It has no page: restored and neither selected nor opened since, or put to
+   * sleep. Either is asleep to a person.
+   */
   | { kind: "unloaded" }
   | { kind: "loading" }
   | { kind: "live" }
@@ -35,7 +38,9 @@ export type TabEvent =
   /** The network came back. */
   | { kind: "online" }
   /** Its URL changed in state, to be loaded. */
-  | { kind: "navigate" };
+  | { kind: "navigate" }
+  /** Asked for by the Sleep command, to free its page. */
+  | { kind: "sleep" };
 
 export type TabEffect =
   /** Loads the tab's URL in its view, creating the view if it has none. */
@@ -46,7 +51,12 @@ export type TabEffect =
    * Replaces any retry scheduled before. One left over from an earlier failure
    * fires into a status that ignores it, so none is ever cancelled.
    */
-  | { kind: "schedule-retry"; delay: number };
+  | { kind: "schedule-retry"; delay: number }
+  /**
+   * Closes the view, its page and any retry with it, keeping where the page
+   * was for the next load.
+   */
+  | { kind: "discard" };
 
 export interface Transition {
   status: TabStatus;
@@ -137,6 +147,12 @@ const whileWaiting = (
  * leaves it as it is with nothing to run.
  */
 export const transition = (status: TabStatus, event: TabEvent): Transition => {
+  if (event.kind === "sleep") {
+    return status.kind === "unloaded"
+      ? stay(status)
+      : { status: { kind: "unloaded" }, effects: [{ kind: "discard" }] };
+  }
+
   switch (status.kind) {
     case "unloaded": {
       return event.kind === "select" || event.kind === "open"
