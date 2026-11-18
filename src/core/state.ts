@@ -192,6 +192,22 @@ export const opensAtLaunch = (tab: Tab) =>
 export const inOwnWindow = (tab: Tab) =>
   tab.ownWindow === true && !isPinned(tab);
 
+/** The profile's Gmail tab while it is in its own window, which shows its mail there. */
+export const gmailOwnWindow = (
+  state: State,
+  profileId: string
+): { profileId: string; tabId: string } | undefined => {
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === profileId
+  );
+  const gmail =
+    profile && knownTabs(profile).find((tab) => tab.app === "gmail");
+
+  return gmail && inOwnWindow(gmail)
+    ? { profileId, tabId: gmail.id }
+    : undefined;
+};
+
 /**
  * Where the tab's own window last was, kept after it moves back so it opens
  * there again; anything but four finite numbers reads as none.

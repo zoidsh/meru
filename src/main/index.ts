@@ -24,7 +24,11 @@ import { ownWindowOfFrame } from "#core/own-window.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
-import { hasTabbedInbox, profilePartition } from "#core/state.ts";
+import {
+  gmailOwnWindow,
+  hasTabbedInbox,
+  profilePartition,
+} from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -652,6 +656,33 @@ const start = async () => {
     log: console.error,
   });
 
+  /**
+   * Brings a tab's own window forward with keys going to its page, as Move
+   * to New Window and a click on its tab do. Focusing a page activates the
+   * app, so only where it is in front or can never be activated.
+   */
+  const showOwnWindow = (key: TabKey) => {
+    ownWindows.reveal(key);
+
+    if (!background || isTestBackground) {
+      views.ownWindowFocuser(key)?.();
+    }
+  };
+
+  /**
+   * Brings forward the window that shows the profile's Gmail, a message
+   * just opened in it: its own window, or the main one.
+   */
+  const revealGmail = (profileId: string) => {
+    const own = gmailOwnWindow(profiles.get(), profileId);
+
+    if (own) {
+      showOwnWindow(own);
+    } else {
+      revealWindow(shell.window, background);
+    }
+  };
+
   const find = createFind({ pages: views, overlays, focus });
 
   overlays.onChange(find.follow);
@@ -744,8 +775,15 @@ const start = async () => {
         : Promise.resolve({ kind: "failed", reason: "no Gmail" }),
     open: async (profileId, url) => {
       await showGmail.openMessage(profileId, url);
+
+      const own = gmailOwnWindow(profiles.get(), profileId);
+
       // Not back to the inbox's button: the message is what was asked for.
-      focus.focus([{ kind: "front" }]);
+      if (own) {
+        showOwnWindow(own);
+      } else {
+        focus.focus([{ kind: "front" }]);
+      }
     },
     inbox: gmailHome,
     initial: profiles.get(),
@@ -792,7 +830,7 @@ const start = async () => {
 
         // The one place main takes the foreground, since the person asked
         // for it by clicking; never under the background flag.
-        revealWindow(shell.window, background);
+        revealGmail(profileId);
       },
       act: (profileId, action, messageId) => {
         void mailActions.run(profileId, action, messageId);
@@ -862,19 +900,6 @@ const start = async () => {
       views.windowTabs().some((key) => tabKey(key) === tabKey(focused.key))
       ? focused.key
       : undefined;
-  };
-
-  /**
-   * Brings a tab's own window forward with keys going to its page, as Move
-   * to New Window and a click on its tab do. Focusing a page activates the
-   * app, so only where it is in front or can never be activated.
-   */
-  const showOwnWindow = (key: TabKey) => {
-    ownWindows.reveal(key);
-
-    if (!background || isTestBackground) {
-      views.ownWindowFocuser(key)?.();
-    }
   };
 
   const moveToOwnWindow = async (key: TabKey) => {

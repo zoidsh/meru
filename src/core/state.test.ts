@@ -12,6 +12,7 @@ import {
   encodeState,
   forgetEndedDoNotDisturb,
   forgetProfilesToClear,
+  gmailOwnWindow,
   gmailTab,
   hasTabbedInbox,
   inOwnWindow,
@@ -336,6 +337,33 @@ describe("decoding tabs", () => {
         { ...tab("t3", "calendar"), ownWindow: true, pinned: true },
       ].map(inOwnWindow)
     ).toStrictEqual([true, false, false]);
+  });
+
+  it("names a profile's Gmail tab only while it is in its own window", () => {
+    const moved: State = {
+      version: 1,
+      profiles: [
+        {
+          ...newProfile("p", "Default"),
+          tabs: [{ ...gmailTab(), ownWindow: true }],
+        },
+      ],
+      selectedProfileId: "p",
+    };
+    const kept: State = {
+      ...moved,
+      profiles: [newProfile("p", "Default")],
+    };
+
+    expect([
+      gmailOwnWindow(moved, "p"),
+      gmailOwnWindow(kept, "p"),
+      gmailOwnWindow(moved, "gone"),
+    ]).toStrictEqual([
+      { profileId: "p", tabId: "gmail" },
+      undefined,
+      undefined,
+    ]);
   });
 
   it("reads where a tab's own window was only from four finite numbers", () => {
