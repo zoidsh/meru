@@ -110,7 +110,7 @@ test("a link opens a tab of its app in the same session, selected; a link to Gma
   // The close buttons are for the pointer, hidden from assistive technology
   // since a tablist holds tabs alone; keys close too. A pinned tab has none.
   await expect(
-    shell.getByRole("tablist", { name: "Tabs" }).getByRole("button")
+    shell.getByRole("button", { name: `Close ${CALENDAR_TITLE}` })
   ).toHaveCount(0);
   await expect(
     shell.getByRole("button", {

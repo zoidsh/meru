@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  pinnedRows,
+  spansPinnedRow,
   pinnedShortcut,
   selectPinnedCommandId,
   splitPinned,
@@ -27,20 +27,19 @@ describe(splitPinned, () => {
   });
 });
 
-describe(pinnedRows, () => {
-  it("puts the tiles two to a row, the last of an odd count alone", () => {
+describe(spansPinnedRow, () => {
+  it("spans the row with the last tile of an odd count alone", () => {
     expect(
       [1, 2, 3, 4].map((count) =>
-        pinnedRows(Array.from({ length: count }, (_, index) => index + 1))
+        Array.from({ length: count }, (_, index) =>
+          spansPinnedRow(index, count)
+        )
       )
     ).toStrictEqual([
-      [[1]],
-      [[1, 2]],
-      [[1, 2], [3]],
-      [
-        [1, 2],
-        [3, 4],
-      ],
+      [true],
+      [false, false],
+      [false, false, true],
+      [false, false, false, false],
     ]);
   });
 });

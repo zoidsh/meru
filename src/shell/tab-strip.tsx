@@ -8,12 +8,12 @@ import {
   LoaderCircleIcon,
   XIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
-import { pinnedRows, splitPinned } from "#core/pinned-tabs.ts";
+import { spansPinnedRow, splitPinned } from "#core/pinned-tabs.ts";
 import { sidebarWidth } from "#core/sidebar.ts";
 import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
@@ -106,6 +106,23 @@ const listRoom = (count: number, gap: number) => {
   return rows === 0 ? 0 : 6 + rows * 32 + (rows - 1) * gap;
 };
 
+/** A press that leaves focus where it was, for a control hidden from assistive technology. */
+const keepFocus = (event: { preventDefault: () => void }) => {
+  event.preventDefault();
+};
+
+/** Left or Right on a wide pinned tile: the other tile of its row, if any. */
+const sideways = (tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => {
+  const tiles = [...(tab.parentElement?.children ?? [])];
+  const index = tiles.indexOf(tab);
+  const other = key === "ArrowRight" ? index + 1 : index - 1;
+
+  // A row holds an even index and the next.
+  if ((key === "ArrowRight") === (index % 2 === 0)) {
+    (tiles[other] as HTMLElement | undefined)?.focus();
+  }
+};
+
 const tabVariant = (selected: boolean, pinned: boolean) => {
   if (selected) {
     return "secondary";
@@ -140,8 +157,10 @@ interface TabButtonProps {
   tab: ShellTab;
   /** A square tile, or, in the wide list, a row with the title. */
   tile: boolean;
-  /** Takes its row's width, as a wide pinned tile does. */
-  full: boolean;
+  /** Fills its cell of the wide pinned grid. */
+  cell: boolean;
+  /** Spans both of the wide pinned grid's columns, alone in its row. */
+  spansRow: boolean;
   selected: boolean;
   profileId: string;
   unreadCount: number;
@@ -151,18 +170,24 @@ interface TabButtonProps {
     onPointerLeave: () => void;
   };
   onDelete: (tab: HTMLElement) => void;
+  /** Left or Right on a wide pinned tile, toward the other tile of its row. */
+  onSideways?:
+    | ((tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => void)
+    | undefined;
 }
 
 const TabButton = ({
   tab,
   tile,
-  full,
+  cell,
+  spansRow,
   selected,
   profileId,
   unreadCount,
   signedOut,
   hover,
   onDelete,
+  onSideways,
 }: TabButtonProps) => {
   const { t } = useLingui();
   const title = tabTitle(tab);
@@ -197,6 +222,14 @@ const TabButton = ({
       }
       onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
         if (
+          onSideways &&
+          (event.key === "ArrowLeft" || event.key === "ArrowRight")
+        ) {
+          event.preventDefault();
+          onSideways(event.currentTarget, event.key);
+        }
+
+        if (
           !tab.pinned &&
           (event.key === "Delete" || event.key === "Backspace")
         ) {
@@ -212,7 +245,8 @@ const TabButton = ({
           size: tile ? "icon-sm" : "sm",
         }),
         "relative font-medium",
-        full && "flex-1",
+        cell && "w-full",
+        spansRow && "col-span-2",
         !tile && "w-full justify-start gap-2 pr-8",
         !selected && "text-muted-foreground"
       )}
@@ -266,6 +300,31 @@ export const Sidebar = ({
     shellCalls().closeTab({ profileId, tabId });
   };
 
+  // A tab pinned or unpinned moves to the other area and so is drawn anew,
+  // which drops the focus it had; the list gives it back to the selected tab.
+  const list = useRef<HTMLDivElement>(null);
+  const focusInList = useRef(false);
+  const pinnedIds = pinned.map((tab) => tab.id).join(" ");
+  const drawnPinned = useRef(pinnedIds);
+
+  useLayoutEffect(() => {
+    if (drawnPinned.current === pinnedIds) {
+      return;
+    }
+
+    drawnPinned.current = pinnedIds;
+
+    if (
+      focusInList.current &&
+      document.hasFocus() &&
+      document.activeElement === document.body
+    ) {
+      list.current
+        ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+        ?.focus();
+    }
+  });
+
   const hover = (tabId: string) => ({
     onPointerEnter: () => {
       setHovered(tabId);
@@ -275,12 +334,13 @@ export const Sidebar = ({
     },
   });
 
-  const button = (tab: ShellTab, tile: boolean, full = false) => (
+  const button = (tab: ShellTab, tile: boolean, index = 0) => (
     <TabButton
       key={tab.id}
       tab={tab}
       tile={tile}
-      full={full}
+      cell={wide && tab.pinned}
+      spansRow={wide && tab.pinned && spansPinnedRow(index, pinned.length)}
       selected={tab.id === tabs.selectedTabId}
       profileId={profileId}
       unreadCount={unreadCount}
@@ -290,6 +350,7 @@ export const Sidebar = ({
         neighbourOf(element)?.focus();
         close(tab.id);
       }}
+      onSideways={wide && tab.pinned ? sideways : undefined}
     />
   );
 
@@ -326,6 +387,20 @@ export const Sidebar = ({
       )}
     >
       <Tabs.List
+        ref={list}
+        onFocus={() => {
+          focusInList.current = true;
+        }}
+        onBlur={(event) => {
+          // Focus lost to nothing, as when its tab is drawn anew, stays the
+          // list's; only focus taken elsewhere leaves it.
+          if (
+            event.relatedTarget !== null &&
+            !event.currentTarget.contains(event.relatedTarget)
+          ) {
+            focusInList.current = false;
+          }
+        }}
         aria-label={t({
           message: "Tabs",
           comment:
@@ -335,19 +410,18 @@ export const Sidebar = ({
       >
         {pinned.length > 0 && (
           <ScrollArea className={cn(scroller, "shrink")}>
-            {wide ? (
-              <div className={cn("flex flex-col gap-1", inset)}>
-                {pinnedRows(pinned).map((row) => (
-                  <div key={row[0]?.id} className="flex gap-2">
-                    {row.map((tab) => button(tab, true, true))}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className={cn("flex flex-col items-center gap-2", inset)}>
-                {pinned.map((tab) => button(tab, true))}
-              </div>
-            )}
+            {/* One parent in either width, so a tile keeps its element,
+                and with it focus, as the width changes. */}
+            <div
+              className={cn(
+                wide
+                  ? "grid grid-cols-2 gap-x-2 gap-y-1"
+                  : "flex flex-col items-center gap-2",
+                inset
+              )}
+            >
+              {pinned.map((tab, index) => button(tab, true, index))}
+            </div>
           </ScrollArea>
         )}
         {listed.length > 0 && (
@@ -394,6 +468,7 @@ export const Sidebar = ({
                           tabIndex={-1}
                           aria-label={label}
                           {...hover(tab.id)}
+                          onMouseDown={keepFocus}
                           className={cn(
                             "pointer-events-auto opacity-0",
                             hovered === tab.id && "opacity-100"
@@ -412,6 +487,7 @@ export const Sidebar = ({
                           tabIndex={-1}
                           aria-label={label}
                           {...hover(tab.id)}
+                          onMouseDown={keepFocus}
                           className={cn(
                             "pointer-events-auto absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground opacity-0 ring-1 ring-shell [&_svg]:size-2.5",
                             hovered === tab.id && "opacity-100"

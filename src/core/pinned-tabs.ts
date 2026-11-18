@@ -1,5 +1,3 @@
-import { chunk } from "es-toolkit";
-
 /** How many pinned tabs a shortcut each selects, the first ones in the area. */
 export const PINNED_SHORTCUT_COUNT = 9;
 
@@ -23,7 +21,8 @@ export const splitPinned = <T extends { pinned: boolean }>(
 });
 
 /**
- * The wide sidebar's pinned tiles, two to a row; a tile alone in its row,
- * the last of an odd count, takes the row's whole width.
+ * Whether the pinned tile at `index` of `count` spans both columns of the
+ * wide sidebar's two: the last of an odd count, alone in its row.
  */
-export const pinnedRows = <T>(tiles: readonly T[]) => chunk([...tiles], 2);
+export const spansPinnedRow = (index: number, count: number) =>
+  count % 2 === 1 && index === count - 1;
