@@ -25,7 +25,7 @@ export interface OverlaysDeps {
  * the shell had it: that is the button that opened the overlay, and focus
  * left in the titlebar would leave Gmail's keys dead. A tab's menu is the
  * exception: it gives focus to the shell, which puts it on the tab the menu
- * was opened on.
+ * was opened on, unless the window losing focus closed it.
  */
 export const createOverlays = ({
   focus,
@@ -58,20 +58,20 @@ export const createOverlays = ({
     notify();
   };
 
-  const hide = () => {
+  const hide = ({ blurred = false } = {}) => {
     const closed = open;
 
     open = undefined;
     view?.hide();
     notify();
     focus.focus(
-      closed?.kind === "tab-menu"
+      closed?.kind === "tab-menu" && !blurred
         ? [{ kind: "shell" }]
         : [{ kind: "front" }, { kind: "shell" }]
     );
   };
 
-  const dispatch = (event: OverlayEvent) => {
+  const dispatch = (event: OverlayEvent, closing = {}) => {
     const next = transitionOverlay(open, event);
 
     if (isEqual(next, open)) {
@@ -81,7 +81,7 @@ export const createOverlays = ({
     if (next) {
       show(next);
     } else {
-      hide();
+      hide(closing);
     }
   };
 
@@ -105,8 +105,9 @@ export const createOverlays = ({
     open: (overlay: Overlay) => {
       dispatch({ kind: "open", overlay });
     },
-    close: () => {
-      dispatch({ kind: "close" });
+    /** Closes what is open; `blurred` when the window losing focus did. */
+    close: ({ blurred = false } = {}) => {
+      dispatch({ kind: "close" }, { blurred });
     },
     /** Told of each change of main's state, which may close what is open. */
     follow: (next: State) => {

@@ -129,6 +129,23 @@ describe(createOverlays, () => {
     expect(events).toStrictEqual(["hide", "shell told closed", "focus shell"]);
   });
 
+  it("gives focus to the page when the window losing focus closes a tab's menu", () => {
+    const { overlays, focus, events } = setup();
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open({
+      kind: "tab-menu",
+      profileId: "a",
+      tabId: "gmail",
+      x: 10,
+      y: 60,
+    });
+    events.length = 0;
+    overlays.close({ blurred: true });
+
+    expect(events).toStrictEqual(["hide", "shell told closed", "focus front"]);
+  });
+
   it("replaces an open overlay with the next, and gives focus to the page, not the shell whose button opened it", () => {
     const { overlays, focus, events } = setup();
 

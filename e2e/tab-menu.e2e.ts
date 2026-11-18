@@ -123,6 +123,21 @@ const storedIds = async (userDataDir: string) => {
   return profile?.tabs.map((each) => each.id);
 };
 
+/**
+ * Lets `document.hasFocus()` in the page say whether it holds Chromium's
+ * keyboard focus, which Playwright otherwise makes every page claim.
+ */
+const followRealFocus = async (page: Page) => {
+  const cdp = await page.context().newCDPSession(page);
+
+  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
+
+  return () => page.evaluate(() => document.hasFocus());
+};
+
+const viewport = (page: Page) =>
+  page.evaluate(() => [window.innerWidth, window.innerHeight]);
+
 const readClipboard = (app: ElectronApplication) =>
   app.evaluate(() => Reflect.get(globalThis, "meruTestClipboard") as string[]);
 
@@ -194,6 +209,9 @@ test("a click beside the menu closes it and reaches nothing under the pointer", 
   const gmail = await tab(shell, STAND_IN_TITLE).boundingBox();
   const { overlay, menu } = await openMenu(app, shell, DRIVE_TITLE);
 
+  // So the click lands on the overlay, where the shell's tile is beneath it.
+  expect(await viewport(overlay)).toStrictEqual(await viewport(shell));
+
   await overlay.mouse.click(
     (gmail?.x ?? 0) + (gmail?.width ?? 0) / 2,
     (gmail?.y ?? 0) + (gmail?.height ?? 0) / 2
@@ -203,6 +221,27 @@ test("a click beside the menu closes it and reaches nothing under the pointer", 
     "aria-selected",
     "true"
   );
+  await expect(tab(shell, DRIVE_TITLE)).toBeFocused();
+});
+
+test("a menu the window's losing focus closes gives focus to the selected tab's page", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+  const calendarHasFocus = await followRealFocus(
+    await findPage(app, standIn.calendarUrl)
+  );
+  const { menu } = await openMenu(app, shell, DRIVE_TITLE);
+
+  expect(await calendarHasFocus()).toBe(false);
+
+  await app.evaluate(({ BaseWindow }) => {
+    BaseWindow.getAllWindows()[0]?.emit("blur");
+  });
+  await expect(menu).toHaveCount(0);
+  await expect.poll(calendarHasFocus).toBe(true);
 });
 
 test("Reload, Copy URL and Open in default browser act on the menu's tab and select nothing", async ({

@@ -409,7 +409,9 @@ const start = async () => {
   shell.window.onPageFocus(() => {
     focus.noteFocused({ kind: "shell" });
   });
-  shell.window.on("blur", overlays.close);
+  shell.window.on("blur", () => {
+    overlays.close({ blurred: true });
+  });
   shell.window.onContentAreaResize(overlays.relayout);
 
   const network = createNetwork();
@@ -602,7 +604,9 @@ const start = async () => {
       open: () => {
         overlays.open({ kind: "inbox" });
       },
-      close: overlays.close,
+      close: () => {
+        overlays.close();
+      },
     },
     log: console.error,
   });
