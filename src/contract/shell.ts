@@ -197,8 +197,14 @@ export const SHELL_CALLS = {
   toggleSidebarWidth: { request: none, response: z.undefined() },
   /** On until turned off, or off, as the titlebar button's click asks. */
   toggleDoNotDisturb: { request: none, response: z.undefined() },
-  /** Pops up the Do Not Disturb menu at the pointer. */
-  openDoNotDisturbMenu: { request: none, response: z.undefined() },
+  /**
+   * Pops up the Do Not Disturb menu at a point of the content area, which
+   * main refuses outside it.
+   */
+  openDoNotDisturbMenu: {
+    request: z.object({ x: coordinate, y: coordinate }),
+    response: z.undefined(),
+  },
   /** Opens the unified inbox's overlay, or closes it. */
   setInboxOpen: {
     request: z.object({ open: z.boolean() }),

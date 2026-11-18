@@ -429,7 +429,7 @@ test("a right-click on the Do Not Disturb button pops up its native menu at the 
     button.click({ button: "right" })
   );
 
-  expect(off.at).toBeNull();
+  expect(off.at).not.toBeNull();
   expect(off.items.slice(0, 3)).toStrictEqual([
     "Until Turned Off",
     "For 5 Minutes",

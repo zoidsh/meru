@@ -594,7 +594,9 @@ const DoNotDisturbButton = () => {
       }}
       onContextMenu={(event) => {
         event.preventDefault();
-        shellCalls().openDoNotDisturbMenu({});
+        shellCalls().openDoNotDisturbMenu(
+          wholePoint(event.clientX, event.clientY)
+        );
       }}
     >
       <MoonIcon

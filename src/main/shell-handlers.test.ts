@@ -37,6 +37,7 @@ const setup = ({
   const overlays: (Overlay | "closed")[] = [];
   const calls: unknown[] = [];
   const menus: Item[][] = [];
+  const menuPoints: unknown[] = [];
   const ran: string[] = [];
   const focused: unknown[] = [];
   const logged: string[] = [];
@@ -196,7 +197,11 @@ const setup = ({
       return Promise.resolve();
     },
     window: {
-      showContextMenu: (items) => menus.push(items.filter(isItem)),
+      getContentAreaSize: () => ({ width: 1000, height: 700 }),
+      showContextMenu: (items, at) => {
+        menus.push(items.filter(isItem));
+        menuPoints.push(at);
+      },
     },
     sidebar: {
       current: () => sidebar,
@@ -227,6 +232,7 @@ const setup = ({
     overlays,
     calls,
     menus,
+    menuPoints,
     ran,
     focused,
   };
@@ -950,16 +956,24 @@ describe("the sidebar's toggles", () => {
 });
 
 describe("Do Not Disturb in the shell", () => {
-  it("toggles through the registry's command and pops up the shared menu", async () => {
+  it("toggles through the registry's command and pops up the shared menu at the point asked for, refusing one outside the content area", async () => {
     const shell = setup();
 
     await shell.handlers.toggleDoNotDisturb({});
-    await shell.handlers.openDoNotDisturbMenu({});
+    await shell.handlers.openDoNotDisturbMenu({ x: 900, y: 20 });
+    await shell.handlers.openDoNotDisturbMenu({ x: 1200, y: 20 });
 
-    expect(shell.ran).toStrictEqual(["doNotDisturb.toggle"]);
-    expect(
-      shell.menus.map((items) => items.map(({ label }) => label))
-    ).toStrictEqual([["For 5 Minutes"]]);
+    expect([
+      shell.ran,
+      shell.menus.map((items) => items.map(({ label }) => label)),
+      shell.menuPoints,
+      shell.logged,
+    ]).toStrictEqual([
+      ["doNotDisturb.toggle"],
+      [["For 5 Minutes"]],
+      [{ x: 900, y: 20 }],
+      ["Refused the Do Not Disturb menu at 1200,20"],
+    ]);
   });
 
   it("tells the shell whether it holds, and until when", () => {

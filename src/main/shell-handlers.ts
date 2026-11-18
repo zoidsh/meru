@@ -1,6 +1,7 @@
 import type { ShellCalls, ShellState } from "#contract/shell.ts";
 import { ariaKeyShortcut, formatAccelerator } from "#core/accelerator.ts";
 import type { App } from "#core/apps.ts";
+import { menuPointInside } from "#core/context-menu.ts";
 import type { FindBar } from "#core/find.ts";
 import { viewFrame } from "#core/layout.ts";
 import { openableApps, splittableApps } from "#core/open-app.ts";
@@ -77,7 +78,7 @@ export interface ShellHandlersDeps {
   profileMenu: Pick<ProfileMenu, "open">;
   /** Selects the profile's Gmail as the tray's profile item does. */
   openGmail: (profileId: string) => Promise<unknown>;
-  window: Pick<AppWindow, "showContextMenu">;
+  window: Pick<AppWindow, "showContextMenu" | "getContentAreaSize">;
   sidebar: Pick<Sidebar, "current" | "toggleWidth">;
   focus: Pick<Focus, "focus">;
   /** Runs a command of the registry, as its menu item would. */
@@ -529,8 +530,12 @@ export const createShellHandlers = ({
 
     return Promise.resolve();
   },
-  openDoNotDisturbMenu: () => {
-    window.showContextMenu(doNotDisturbItems());
+  openDoNotDisturbMenu: (point) => {
+    if (menuPointInside(point, window.getContentAreaSize())) {
+      window.showContextMenu(doNotDisturbItems(), point);
+    } else {
+      log(`Refused the Do Not Disturb menu at ${point.x},${point.y}`);
+    }
 
     return Promise.resolve();
   },
