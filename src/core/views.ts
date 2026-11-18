@@ -12,7 +12,8 @@ import type { TabKey } from "./tabs.ts";
  * Whether a profile's Open at Launch tabs open now, once a session: the
  * selected profile's, so each profile's open when it is first selected and
  * launch loads no page for the others, whose mail needs none. The selected
- * profile is never asleep, so a sleeping profile's wait until it is woken.
+ * profile is never asleep, so a sleeping profile's tabs wait until it is
+ * woken.
  */
 export const opensLaunchTabs = (profile: Profile, state: State) =>
   profile.id === state.selectedProfileId;

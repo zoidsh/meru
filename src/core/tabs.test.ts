@@ -435,23 +435,15 @@ describe("a sleeping profile's tabs", () => {
   const slept = sleepProfile(asleep, "a") ?? asleep;
   const calendar = findApp(APPS, "calendar") as App;
 
-  it("wake their profile when one is selected, the selected one included, or a page opens in it", () => {
+  it("leave it asleep when one is selected, a page opens in it or one closes, since only selecting the profile wakes it", () => {
     expect(
       [
         selectTab(slept, { profileId: "a", tabId: "c" }),
-        selectTab(slept, { profileId: "a", tabId: "gmail" }),
         openTab(slept, "a", calendar, calendar.home, () => "new")?.state,
+        closeTab(slept, { profileId: "a", tabId: "c" }),
       ].map(
         (next) => next && isAsleep(next, next.profiles[0] ?? newProfile("", ""))
       )
-    ).toStrictEqual([false, false, false]);
-  });
-
-  it("leave it asleep for anything else, such as a move or a close", () => {
-    const moved = closeTab(slept, { profileId: "a", tabId: "c" });
-
-    expect(
-      moved && isAsleep(moved, moved.profiles[0] ?? newProfile("", ""))
-    ).toBeTruthy();
+    ).toStrictEqual([true, true, true]);
   });
 });

@@ -580,7 +580,6 @@ export const createTabViews = ({
       : planned;
   };
 
-  /** Creates, closes, shows and hides views until the window matches. */
   /**
    * Takes away a view the window should no longer have: a sleeping
    * profile's tab sleeps, keeping its place, as Sleep would put it, and any
@@ -602,6 +601,7 @@ export const createTabViews = ({
     }
   };
 
+  /** Creates, closes, shows and hides views until the window matches. */
   const reconcile = (current: State) => {
     for (const profile of current.profiles) {
       if (isAsleep(current, profile)) {

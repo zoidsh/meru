@@ -423,7 +423,7 @@ export const nextProfileName = (
 };
 
 /** The profile with no sleep key, as a profile never put to sleep has none. */
-export const awake = (profile: Profile): Profile => {
+const awake = (profile: Profile): Profile => {
   if (profile.asleep === undefined) {
     return profile;
   }
@@ -465,25 +465,6 @@ export const addProfile = (state: State, profile: Profile): State =>
  */
 export const isAsleep = (state: State, profile: Profile) =>
   profile.asleep === true && profile.id !== state.selectedProfileId;
-
-/**
- * Wakes the profile if it sleeps, as anything that opens a page in it does;
- * nothing when it is awake or not listed.
- */
-export const wakeProfile = (
-  state: State,
-  profileId: string
-): State | undefined =>
-  state.profiles.some(
-    (profile) => profile.id === profileId && isAsleep(state, profile)
-  )
-    ? {
-        ...state,
-        profiles: state.profiles.map((profile) =>
-          profile.id === profileId ? awake(profile) : profile
-        ),
-      }
-    : undefined;
 
 /**
  * Selects the profile, waking it, so selecting is how every way to a
@@ -543,11 +524,12 @@ export const canRemoveProfile = (state: State, profileId: string) =>
 
 /**
  * Removing the selected profile selects the one to its right, or to its left
- * when it was the last; removing another leaves the selection alone. The id
- * goes on the list of profiles whose data is to be deleted. Every entry with
- * the id goes, so a hand-edited file listing it twice never keeps a profile
- * whose data is about to be cleared. Nothing when the profile cannot be
- * removed.
+ * when it was the last, unless that one sleeps: then the first awake profile,
+ * as putting it to sleep does, and with none awake that one, woken. Removing
+ * another leaves the selection alone. The id goes on the list of profiles
+ * whose data is to be deleted. Every entry with the id goes, so a
+ * hand-edited file listing it twice never keeps a profile whose data is about
+ * to be cleared. Nothing when the profile cannot be removed.
  */
 export const removeProfile = (
   state: State,
@@ -562,10 +544,14 @@ export const removeProfile = (
   const neighbour = profiles[Math.min(index, profiles.length - 1)];
 
   const kept = { ...state, profiles };
+  const next =
+    neighbour && !isAsleep(state, neighbour)
+      ? neighbour
+      : (profiles.find((profile) => !isAsleep(state, profile)) ?? neighbour);
 
   return {
-    ...(state.selectedProfileId === profileId && neighbour
-      ? withSelected(kept, neighbour.id)
+    ...(state.selectedProfileId === profileId && next
+      ? withSelected(kept, next.id)
       : kept),
     profilesToClear: [
       ...(state.profilesToClear ?? []).filter((id) => id !== profileId),

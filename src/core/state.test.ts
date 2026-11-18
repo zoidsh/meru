@@ -28,7 +28,6 @@ import {
   selectedProfile,
   setTabbedInbox,
   sleepProfile,
-  wakeProfile,
   canSleepProfile,
   sortProfilesToClear,
   switchDoNotDisturb,
@@ -647,16 +646,6 @@ describe(sleepProfile, () => {
   });
 });
 
-describe(wakeProfile, () => {
-  it("wakes a sleeping profile, dropping its key, and changes nothing for one awake", () => {
-    const woken = wakeProfile(sleepProfile(three, "a") ?? three, "a");
-
-    expect(woken?.profiles[0]).toStrictEqual(newProfile("a", "Default"));
-    expect(woken?.selectedProfileId).toBe("b");
-    expect(wakeProfile(three, "a")).toBeUndefined();
-  });
-});
-
 describe(isAsleep, () => {
   it("keeps a profile asleep through the file, and anything but true as found, read awake", () => {
     const stored = {
@@ -736,6 +725,31 @@ describe(forgetProfilesToClear, () => {
 });
 
 describe(removeProfile, () => {
+  it("selects the first awake profile in place of a sleeping neighbour, and wakes the neighbour when none is awake", () => {
+    const four: State = {
+      ...three,
+      profiles: [...three.profiles, newProfile("d", "Profile 4")],
+    };
+    const cAsleep = sleepProfile(four, "c") ?? four;
+    const allButBAsleep = {
+      ...four,
+      profiles: four.profiles.map((profile) =>
+        profile.id === "b" ? profile : { ...profile, asleep: true }
+      ),
+    };
+    const lastAwake = removeProfile(allButBAsleep, "b");
+
+    expect([
+      sleepers(removeProfile(cAsleep, "b")),
+      sleepers(lastAwake),
+      lastAwake?.profiles[1],
+    ]).toStrictEqual([
+      [["c"], "a"],
+      [["a", "d"], "c"],
+      newProfile("c", "Profile 3"),
+    ]);
+  });
+
   it("leaves the selection alone when another profile goes", () => {
     expect(ids(removeProfile(three, "a"))).toStrictEqual([["b", "c"], "b"]);
     expect(ids(removeProfile(three, "c"))).toStrictEqual([["a", "b"], "b"]);
