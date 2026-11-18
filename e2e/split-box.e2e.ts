@@ -80,6 +80,12 @@ const measure = (shell: Page) =>
       lastPinned: edges(pinned.at(-1)),
       newTab: edges(document.querySelector("[data-list-end] button")),
       clip: edges(box?.closest("[data-slot=scroll-area-viewport]")),
+      // What a native scrollbar takes from each scroll area's width.
+      nativeBars: [
+        ...document.querySelectorAll<HTMLElement>(
+          "[data-slot=scroll-area-viewport]"
+        ),
+      ].map((viewport) => viewport.offsetWidth - viewport.clientWidth),
     };
   });
 
@@ -136,6 +142,7 @@ const expectBoxDrawn = async (shell: Page, gap: number) => {
   expect(drawn.clip.left).toBeLessThanOrEqual(drawn.box.left);
   expect(drawn.clip.right).toBeGreaterThanOrEqual(drawn.box.right);
   expect(drawn.clip.top).toBeLessThanOrEqual(drawn.box.top);
+  expect(drawn.nativeBars).toStrictEqual(drawn.nativeBars.map(() => 0));
   // One gap between every two neighbours, the box's edges included.
   expect(gaps(drawn)).toStrictEqual(gaps(drawn).map(() => gap));
 };

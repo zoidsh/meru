@@ -17,6 +17,19 @@
 @source ".";
 
 /*
+ * Ours as well: Base UI hides a scroll area's native scrollbars with a style
+ * element it adds, which the shell's CSP refuses, so the rule is here; without
+ * it Windows and Linux draw classic scrollbars inside the sidebar.
+ */
+.base-ui-disable-scrollbar {
+  scrollbar-width: none;
+}
+
+.base-ui-disable-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/*
  * Ours as well: the shell's grey behind the titlebar and the strip, which
  * `SHELL_GREY` in `src/core/shell-grey.ts` gives the window too, so a
  * regenerated theme keeps these blocks.
