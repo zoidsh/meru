@@ -9,8 +9,8 @@ import {
   Minimize2Icon,
   XIcon,
 } from "lucide-react";
-import { useId, useLayoutEffect, useRef, useState } from "react";
-import type { KeyboardEvent, MouseEvent, PointerEvent } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import type { KeyboardEvent, MouseEvent, PointerEvent, ReactNode } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
@@ -32,7 +32,7 @@ import { UnreadBadge } from "./unread-badge.tsx";
 
 type ShellTab = ShellState["tabs"]["tabs"][number];
 
-const appName = (app: string) => findApp(APPS, app)?.name ?? app;
+export const appName = (app: string) => findApp(APPS, app)?.name ?? app;
 
 export const tabTitle = (tab: Pick<ShellTab, "title" | "app">) =>
   tab.title || appName(tab.app);
@@ -283,6 +283,11 @@ const GmailMark = ({
 
 interface TabButtonProps {
   tab: ShellTab;
+  /**
+   * The place a drag lands beside, given where the tab stands in its area
+   * itself rather than inside a wrapper that carries it.
+   */
+  dropId?: string | undefined;
   /** A square tile, or, in the wide list, a row with the title. */
   tile: boolean;
   /** Fills its cell of the wide pinned grid. */
@@ -316,6 +321,7 @@ interface TabButtonProps {
 
 const TabButton = ({
   tab,
+  dropId,
   tile,
   cell,
   spansRow,
@@ -355,7 +361,7 @@ const TabButton = ({
     <Tabs.Tab
       value={tab.id}
       data-tab-id={tab.id}
-      data-drop-id={tab.id}
+      data-drop-id={dropId}
       ref={selected ? keepInView : undefined}
       onContextMenu={(event: MouseEvent<HTMLElement>) => {
         event.preventDefault();
@@ -449,6 +455,196 @@ const TabButton = ({
   );
 };
 
+interface Hover {
+  onPointerEnter: () => void;
+  onPointerLeave: () => void;
+}
+
+/**
+ * A listed tab with its cross, which lies over it for the pointer alone,
+ * out of the tab order and hidden from assistive technology, since a
+ * tablist holds only tabs.
+ */
+const ListedTab = ({
+  tab,
+  wide,
+  hovered,
+  hover,
+  onClose,
+  children,
+}: {
+  tab: ShellTab;
+  wide: boolean;
+  /** Whether the pointer is over the tab or its cross, which shows it. */
+  hovered: boolean;
+  hover: Hover;
+  onClose: () => void;
+  /** The tab's own button. */
+  children: ReactNode;
+}) => {
+  const { t } = useLingui();
+  const title = tabTitle(tab);
+  const closeLabel = t({
+    message: `Close ${title}`,
+    comment:
+      "Accessible name of the cross on a tab that closes it; {title} is the tab's title",
+  });
+
+  return (
+    <div
+      data-drop-id={tab.id}
+      className={cn("relative", wide ? "w-full" : "w-8")}
+    >
+      {children}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0",
+          wide && "flex items-center justify-end pr-1"
+        )}
+      >
+        {wide ? (
+          <Button
+            variant="secondary"
+            size="icon-xs"
+            tabIndex={-1}
+            aria-label={closeLabel}
+            {...hover}
+            onMouseDown={keepFocus}
+            className={cn(
+              "pointer-events-auto opacity-0",
+              hovered && "opacity-100"
+            )}
+            onClick={onClose}
+          >
+            <XIcon />
+          </Button>
+        ) : (
+          // Below shadcn's smallest button, kept from v3 to fit a tile's
+          // corner.
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={closeLabel}
+            {...hover}
+            onMouseDown={keepFocus}
+            className={cn(
+              "pointer-events-auto absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground opacity-0 ring-1 ring-shell [&_svg]:size-2.5",
+              hovered && "opacity-100"
+            )}
+            onClick={onClose}
+          >
+            <XIcon />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * The split's box: its pinned tabs as tiles, then its other tabs, then,
+ * while the split shows one pane alone, the button that restores the rest.
+ * Its tabs are not the area's own, so a drag passes them by; in the list the
+ * box is one place to land above or below, standing for its first stored
+ * tab, and in the pinned area, always first, none.
+ */
+const SplitBox = ({
+  tabs,
+  profileId,
+  wide,
+  maximized,
+  dropId,
+  tile,
+  listed,
+}: {
+  /** The box's tabs, in its own order. */
+  tabs: ShellTab[];
+  profileId: string;
+  wide: boolean;
+  maximized: boolean;
+  dropId: string | undefined;
+  tile: (
+    tab: ShellTab,
+    cell?: { spansRow: boolean; grid: boolean }
+  ) => ReactNode;
+  listed: (tab: ShellTab) => ReactNode;
+}) => {
+  const { t } = useLingui();
+  const shortcuts = useShellState("shortcuts");
+  const shortcutTitle = useShortcutTitle();
+  const pinned = tabs.filter((tab) => tab.pinned);
+  const [first] = tabs;
+  const restoreLabel = t({
+    message: "Restore panes",
+    comment:
+      "Accessible name and tooltip of the button in the sidebar's box of a split view, while one pane shows alone, that shows every pane again",
+  });
+
+  return (
+    <div
+      data-split-box
+      data-maximized={maximized || undefined}
+      data-drop-id={dropId}
+      className={cn(
+        "-mx-[3px] flex flex-col rounded-[12px] p-[3px]",
+        maximized
+          ? "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_85%)]"
+          : "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)]",
+        wide ? "col-span-2 gap-1" : "items-center gap-2"
+      )}
+    >
+      {wide && pinned.length > 1 ? (
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+          {pinned.map((tab, index) =>
+            tile(tab, {
+              spansRow: spansPinnedRow(index, pinned.length),
+              grid: true,
+            })
+          )}
+        </div>
+      ) : (
+        pinned.map((tab) => tile(tab))
+      )}
+      {tabs.filter((tab) => !tab.pinned).map(listed)}
+      {/* Out of the tab order and hidden from assistive technology, as a
+          tab's cross is, since a tablist holds only tabs; Restore Panes in
+          the menu and its shortcut reach it from the keyboard. */}
+      {maximized && first && (
+        <Button
+          variant="ghost"
+          size={wide ? "sm" : "icon-sm"}
+          aria-hidden
+          aria-label={wide ? undefined : restoreLabel}
+          tabIndex={-1}
+          title={shortcutTitle(restoreLabel, shortcuts?.["tab.maximize"])}
+          onMouseDown={keepFocus}
+          onClick={() => {
+            shellCalls().maximizePane({
+              profileId,
+              tabId: first.id,
+              on: false,
+            });
+          }}
+          className={cn(
+            "font-medium text-muted-foreground",
+            wide && "w-full justify-start gap-2"
+          )}
+        >
+          <Minimize2Icon />
+          {wide && (
+            <span className="min-w-0 flex-1 truncate text-left">
+              <Trans comment="Label of the button in the wide sidebar's box of a split view while one pane shows alone; a click shows every pane again">
+                Maximized · Restore
+              </Trans>
+            </span>
+          )}
+        </Button>
+      )}
+    </div>
+  );
+};
+
 /**
  * The selected profile's tabs, down the left below the titlebar: the pinned
  * ones in the pinned area at the top, as tiles in either width, then the rest
@@ -477,28 +673,24 @@ export const Sidebar = ({
   signedOut: boolean;
 }) => {
   const { t } = useLingui();
-  const shortcuts = useShellState("shortcuts");
-  const shortcutTitle = useShortcutTitle();
   const { profileId } = tabs;
   const [hovered, setHovered] = useState<string>();
   const wide = state === "wide";
   const gap = wide ? 4 : 8;
   const pinned = tabs.tabs.filter((tab) => tab.pinned);
   const layout = sidebarLayout(tabs.tabs, tabs.box ?? undefined);
-  const boxTabs = [...layout.pinned, ...layout.listed].flatMap((item) =>
-    item.kind === "box" ? item.tabs : []
+  const boxed = new Set(layout.box.map((tab) => tab.id));
+  const boxPinned = layout.pinned.some((item) => item.kind === "box");
+  // A box in the pinned area is always first, so no tab moves past it.
+  const pinnedTabs = layout.pinned.flatMap((item) =>
+    item.kind === "tab" ? [item] : []
   );
-  const boxed = new Set(boxTabs.map((tab) => tab.id));
   // Where a tab moved beside the box lands: next to its first stored tab,
   // since the box stands where that one does.
   const boxFirst = tabs.tabs.find((tab) => boxed.has(tab.id))?.id;
   const placeOf = (item: SidebarItem<ShellTab> | undefined) =>
     item?.kind === "box" ? boxFirst : item?.tab.id;
-  // A box in the pinned area is always first, so no tab moves past it.
-  const areaOf = (tab: ShellTab) =>
-    tab.pinned
-      ? layout.pinned.filter((item) => item.kind === "tab")
-      : layout.listed;
+  const areaOf = (tab: ShellTab) => (tab.pinned ? pinnedTabs : layout.listed);
   const close = (tabId: string) => {
     shellCalls().closeTab({ profileId, tabId });
   };
@@ -676,11 +868,16 @@ export const Sidebar = ({
   const button = (
     tab: ShellTab,
     tile: boolean,
-    { spansRow = false, grid = false } = {}
+    {
+      spansRow = false,
+      grid = false,
+      dropId = undefined as string | undefined,
+    } = {}
   ) => (
     <TabButton
       key={tab.id}
       tab={tab}
+      dropId={dropId}
       tile={tile}
       cell={wide && tab.pinned}
       spansRow={spansRow}
@@ -706,159 +903,32 @@ export const Sidebar = ({
     />
   );
 
-  const closeLabel = (tab: ShellTab) => {
-    const title = tabTitle(tab);
-
-    return t({
-      message: `Close ${title}`,
-      comment:
-        "Accessible name of the cross on a tab that closes it; {title} is the tab's title",
-    });
-  };
-
-  /**
-   * A listed tab with its cross, which lies over it for the pointer alone,
-   * out of the tab order and hidden from assistive technology, since a
-   * tablist holds only tabs.
-   */
   const listedTab = (tab: ShellTab) => (
-    <div
+    <ListedTab
       key={tab.id}
-      data-drop-id={tab.id}
-      className={cn("relative", wide ? "w-full" : "w-8")}
+      tab={tab}
+      wide={wide}
+      hovered={hovered === tab.id}
+      hover={hover(tab.id)}
+      onClose={() => {
+        close(tab.id);
+      }}
     >
       {button(tab, !wide)}
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-0",
-          wide && "flex items-center justify-end pr-1"
-        )}
-      >
-        {wide ? (
-          <Button
-            variant="secondary"
-            size="icon-xs"
-            tabIndex={-1}
-            aria-label={closeLabel(tab)}
-            {...hover(tab.id)}
-            onMouseDown={keepFocus}
-            className={cn(
-              "pointer-events-auto opacity-0",
-              hovered === tab.id && "opacity-100"
-            )}
-            onClick={() => {
-              close(tab.id);
-            }}
-          >
-            <XIcon />
-          </Button>
-        ) : (
-          // Below shadcn's smallest button, kept from v3 to fit a tile's
-          // corner.
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-label={closeLabel(tab)}
-            {...hover(tab.id)}
-            onMouseDown={keepFocus}
-            className={cn(
-              "pointer-events-auto absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground opacity-0 ring-1 ring-shell [&_svg]:size-2.5",
-              hovered === tab.id && "opacity-100"
-            )}
-            onClick={() => {
-              close(tab.id);
-            }}
-          >
-            <XIcon />
-          </button>
-        )}
-      </div>
-    </div>
+    </ListedTab>
   );
 
-  const boxPinned = boxTabs.filter((tab) => tab.pinned);
-  const restoreLabel = t({
-    message: "Restore panes",
-    comment:
-      "Accessible name and tooltip of the button in the sidebar's box of a split view, while one pane shows alone, that shows every pane again",
-  });
-  const restoreTitle = shortcutTitle(restoreLabel, shortcuts?.["tab.maximize"]);
-
-  // Out of the tab order and hidden from assistive technology, as a tab's
-  // cross is, since a tablist holds only tabs; Restore Panes in the menu
-  // and its shortcut reach it from the keyboard.
-  const restore = () => {
-    const [first] = boxTabs;
-
-    return (
-      first && (
-        <Button
-          key="restore"
-          variant="ghost"
-          size={wide ? "sm" : "icon-sm"}
-          aria-hidden
-          aria-label={wide ? undefined : restoreLabel}
-          tabIndex={-1}
-          title={restoreTitle}
-          onMouseDown={keepFocus}
-          onClick={() => {
-            shellCalls().maximizePane({
-              profileId,
-              tabId: first.id,
-              on: false,
-            });
-          }}
-          className={cn(
-            "font-medium text-muted-foreground",
-            wide && "w-full justify-start gap-2"
-          )}
-        >
-          <Minimize2Icon />
-          {wide && (
-            <span className="min-w-0 flex-1 truncate text-left">
-              <Trans comment="Label of the button in the wide sidebar's box of a split view while one pane shows alone; a click shows every pane again">
-                Maximized · Restore
-              </Trans>
-            </span>
-          )}
-        </Button>
-      )
-    );
-  };
-
-  // Its tabs are not the area's own, so a drag passes them by; in the list
-  // the box is one place to land above or below, standing for its first
-  // stored tab, and in the pinned area, always first, none.
   const box = (inList: boolean) => (
-    <div
+    <SplitBox
       key="split box"
-      data-split-box
-      data-maximized={tabs.maximized || undefined}
-      data-drop-id={inList ? boxFirst : undefined}
-      className={cn(
-        "-mx-[3px] flex flex-col rounded-[12px] p-[3px]",
-        tabs.maximized
-          ? "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_85%)]"
-          : "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)]",
-        wide ? "col-span-2 gap-1" : "items-center gap-2"
-      )}
-    >
-      {wide && boxPinned.length > 1 ? (
-        <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-          {boxPinned.map((tab, index) =>
-            button(tab, true, {
-              spansRow: spansPinnedRow(index, boxPinned.length),
-              grid: true,
-            })
-          )}
-        </div>
-      ) : (
-        boxPinned.map((tab) => button(tab, true))
-      )}
-      {boxTabs.filter((tab) => !tab.pinned).map(listedTab)}
-      {tabs.maximized && restore()}
-    </div>
+      tabs={layout.box}
+      profileId={profileId}
+      wide={wide}
+      maximized={tabs.maximized}
+      dropId={inList ? boxFirst : undefined}
+      tile={(tab, cell) => button(tab, true, cell)}
+      listed={listedTab}
+    />
   );
 
   const widthLabel = wide
@@ -929,19 +999,14 @@ export const Sidebar = ({
                 inset
               )}
             >
-              {layout.pinned.map((item, index) =>
-                item.kind === "box"
-                  ? box(false)
-                  : button(item.tab, true, {
-                      // Counted from after the box, which takes its own row.
-                      spansRow:
-                        wide &&
-                        spansPinnedRow(
-                          index - (boxPinned.length > 0 ? 1 : 0),
-                          layout.pinned.length - (boxPinned.length > 0 ? 1 : 0)
-                        ),
-                      grid: wide,
-                    })
+              {boxPinned && box(false)}
+              {pinnedTabs.map(({ tab }, index) =>
+                button(tab, true, {
+                  // Counted among the tiles alone: the box takes its own row.
+                  spansRow: wide && spansPinnedRow(index, pinnedTabs.length),
+                  grid: wide,
+                  dropId: tab.id,
+                })
               )}
             </div>
           </ScrollArea>
@@ -1007,154 +1072,5 @@ export const Sidebar = ({
         </Button>
       </div>
     </Tabs.Root>
-  );
-};
-
-const OFFLINE = "ERR_INTERNET_DISCONNECTED";
-
-type Problem = Extract<ShellTab["status"], { kind: "failed" | "crashed" }>;
-
-const isProblem = (status: ShellTab["status"]): status is Problem =>
-  status.kind === "failed" || status.kind === "crashed";
-
-/**
- * Where the tab's view would be, the selected tab's or a pane's, which is
- * hidden while its page failed or crashed, so this is what shows. Its
- * heading is also said by a screen reader as it appears, and not again while
- * retries come and go.
- */
-export const TabProblem = ({
-  tabs,
-  tabId,
-}: {
-  tabs: ShellState["tabs"];
-  tabId?: string;
-}) => {
-  const { t } = useLingui();
-  const shown = tabId ?? tabs.selectedTabId;
-  const tab = tabs.tabs.find((candidate) => candidate.id === shown);
-  const status = tab && isProblem(tab.status) ? tab.status : undefined;
-  const name = tab ? appName(tab.app) : "";
-  let heading: string | undefined;
-
-  if (status?.kind === "crashed") {
-    heading = t({
-      message: `${name} stopped working`,
-      comment:
-        "Heading shown in place of a tab's page that crashed; {name} is the app, such as Gmail or Calendar",
-    });
-  } else if (status?.reason === OFFLINE) {
-    heading = t({
-      message: "You’re offline",
-      comment:
-        "Heading shown in place of a tab's page that could not load because the computer is offline",
-    });
-  } else if (status) {
-    heading = t({
-      message: `${name} couldn’t load`,
-      comment:
-        "Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar",
-    });
-  }
-
-  return (
-    <>
-      <output className="sr-only">{heading}</output>
-      {tab && status && heading && (
-        <ProblemPanel
-          tabKey={{ profileId: tabs.profileId, tabId: tab.id }}
-          name={name}
-          status={status}
-          heading={heading}
-        />
-      )}
-    </>
-  );
-};
-
-const ProblemPanel = ({
-  tabKey,
-  name,
-  status,
-  heading,
-}: {
-  tabKey: { profileId: string; tabId: string };
-  name: string;
-  status: Problem;
-  heading: string;
-}) => {
-  const { t } = useLingui();
-  const headingId = useId();
-
-  return (
-    <section
-      aria-labelledby={headingId}
-      className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center"
-    >
-      <CircleAlertIcon aria-hidden className="size-8 text-muted-foreground" />
-      {status.kind === "failed" ? (
-        <>
-          <h1 id={headingId} className="text-lg font-semibold">
-            {heading}
-          </h1>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            {status.reason === OFFLINE ? (
-              <Trans comment="Explanation under the offline heading in place of a tab's page; {name} is the app, such as Gmail or Calendar">
-                {name} loads by itself when you’re back online.
-              </Trans>
-            ) : (
-              <Trans comment="Explanation under the heading in place of a tab's page that could not load">
-                Meru keeps trying by itself.
-              </Trans>
-            )}
-          </p>
-          <p className="font-mono text-xs text-muted-foreground">
-            {status.reason}
-          </p>
-          <Button
-            variant="outline"
-            disabled={status.retrying}
-            onClick={() => {
-              shellCalls().retryTab(tabKey);
-            }}
-          >
-            {status.retrying
-              ? t({
-                  message: "Trying again…",
-                  comment:
-                    "Label of the disabled button in place of a tab's page while it tries to load the page again",
-                })
-              : t({
-                  message: "Try again",
-                  comment:
-                    "Button in place of a tab's page that could not load, which tries to load it again now",
-                })}
-          </Button>
-        </>
-      ) : (
-        <>
-          <h1 id={headingId} className="text-lg font-semibold">
-            {heading}
-          </h1>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            <Trans comment="Explanation under the heading in place of a tab's page that crashed">
-              Its page quit unexpectedly. Reload it to carry on.
-            </Trans>
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              shellCalls().retryTab(tabKey);
-            }}
-          >
-            {t({
-              message: "Reload",
-              comment:
-                "Button in place of a tab's page that crashed, which loads the page again",
-            })}
-          </Button>
-        </>
-      )}
-    </section>
   );
 };

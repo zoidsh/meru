@@ -38,6 +38,16 @@ describe(sidebarLayout, () => {
     ]);
   });
 
+  it("gives the box's tabs in its own order, or none when it is not drawn", () => {
+    const tabs = [tab("g", true), tab("a"), tab("b")];
+
+    expect(
+      [["b", "a"], ["a", "gone"], undefined].map((box) =>
+        sidebarLayout(tabs, box).box.map(({ id }) => id)
+      )
+    ).toStrictEqual([["b", "a"], [], []]);
+  });
+
   it("draws no box for none, or for fewer than two of its tabs shown", () => {
     expect([layout(), layout(["a", "gone"])]).toStrictEqual([
       [

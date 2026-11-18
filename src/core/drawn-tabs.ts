@@ -15,6 +15,8 @@ export type SidebarItem<T extends DrawnTab> =
 export interface SidebarLayout<T extends DrawnTab> {
   pinned: SidebarItem<T>[];
   listed: SidebarItem<T>[];
+  /** The box's tabs in its own order, or none when no box is drawn. */
+  box: T[];
 }
 
 const isPinned = (tab: DrawnTab) => tab.pinned === true;
@@ -38,6 +40,7 @@ export const sidebarLayout = <T extends DrawnTab>(
   const layout: SidebarLayout<T> = {
     pinned: boxPinned ? [boxItem] : [],
     listed: [],
+    box: boxed.size > 0 ? boxTabs : [],
   };
 
   for (const tab of tabs) {

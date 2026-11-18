@@ -11,7 +11,8 @@ import { PaneHandle } from "./pane-handle.tsx";
 import { SleepingTab } from "./sleeping-tab.tsx";
 import { sleepingSelectedTab } from "./sleeping.ts";
 import { useShellState } from "./sync.ts";
-import { Sidebar, TabProblem } from "./tab-strip.tsx";
+import { TabProblem } from "./tab-problem.tsx";
+import { Sidebar } from "./tab-strip.tsx";
 import { Titlebar } from "./titlebar.tsx";
 
 type Tabs = ShellState["tabs"];

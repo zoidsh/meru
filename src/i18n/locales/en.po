@@ -65,7 +65,7 @@ msgid "{name} ({count})"
 msgstr "{name} ({count})"
 
 #. Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 msgid "{name} couldn’t load"
 msgstr "{name} couldn’t load"
 
@@ -75,12 +75,12 @@ msgid "{name} is signed out."
 msgstr "{name} is signed out."
 
 #. Explanation under the offline heading in place of a tab's page; {name} is the app, such as Gmail or Calendar
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 msgid "{name} loads by itself when you’re back online."
 msgstr "{name} loads by itself when you’re back online."
 
 #. Heading shown in place of a tab's page that crashed; {name} is the app, such as Gmail or Calendar
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 msgid "{name} stopped working"
 msgstr "{name} stopped working"
 
@@ -426,7 +426,7 @@ msgid "It’s back in the list."
 msgstr "It’s back in the list."
 
 #. Explanation under the heading in place of a tab's page that crashed
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 msgid "Its page quit unexpectedly. Reload it to carry on."
 msgstr "Its page quit unexpectedly. Reload it to carry on."
 
@@ -477,7 +477,7 @@ msgid "Maximized · Restore"
 msgstr "Maximized · Restore"
 
 #. Explanation under the heading in place of a tab's page that could not load
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 msgid "Meru keeps trying by itself."
 msgstr "Meru keeps trying by itself."
 
@@ -637,7 +637,7 @@ msgstr "Redo"
 #. Menu item in the View menu that loads the selected tab again
 #: src/main/commands.ts
 #: src/shell/tab-menu.tsx
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 #: src/shell/titlebar.tsx
 msgid "Reload"
 msgstr "Reload"
@@ -874,12 +874,12 @@ msgid "Toggle Full Screen"
 msgstr "Toggle Full Screen"
 
 #. Button in place of a tab's page that could not load, which tries to load it again now
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 msgid "Try again"
 msgstr "Try again"
 
 #. Label of the disabled button in place of a tab's page while it tries to load the page again
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 msgid "Trying again…"
 msgstr "Trying again…"
 
@@ -974,7 +974,7 @@ msgid "Window"
 msgstr "Window"
 
 #. Heading shown in place of a tab's page that could not load because the computer is offline
-#: src/shell/tab-strip.tsx
+#: src/shell/tab-problem.tsx
 msgid "You’re offline"
 msgstr "You’re offline"
 
