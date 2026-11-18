@@ -338,6 +338,23 @@ describe(resizePanes, () => {
     ]);
   });
 
+  it("keeps a nested split's every pane at the minimum with its own shares uneven, however the gaps are moved in turn", () => {
+    const wide = { width: 1600, height: 900 };
+    const widths = (tree: PaneTree) =>
+      paneRectangles(tree, { x: 0, y: 0, ...wide }).map(
+        ({ tabId, bounds }) => [tabId, bounds.width] as const
+      );
+    // C|D first, to D's minimum, which leaves the inner shares uneven.
+    const inner = resizePanes(nested, wide, "c", "d", 4000);
+    const outer = resizePanes(inner, wide, "a", "b", 4000);
+
+    expect(Object.fromEntries(widths(inner)).d).toBe(PANE_MINIMUM);
+    expect(
+      widths(outer).every(([, width]) => width >= PANE_MINIMUM)
+    ).toBeTruthy();
+    expect(Object.fromEntries(widths(outer)).d).toBe(PANE_MINIMUM);
+  });
+
   it("in a window already too small, keeps the shares and refuses to shrink a pane further", () => {
     const small = { width: 408, height: 300 };
     const uneven = row([0.4, "a"], [0.6, "b"]);

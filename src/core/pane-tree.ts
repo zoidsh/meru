@@ -1,4 +1,4 @@
-import { clamp, sumBy } from "es-toolkit";
+import { clamp } from "es-toolkit";
 
 import type { Rectangle, Size } from "./window-bounds.ts";
 
@@ -212,7 +212,12 @@ export const paneRectangles = (
   );
 };
 
-/** The least length `tree` takes along `direction`, its gaps included. */
+/**
+ * The least length `tree` takes along `direction`, its gaps included, with
+ * its shares as they are: a split along it shares out what it gets in
+ * proportion, so it needs enough for the child that needs most for its
+ * share, and as `cut` rounds its pieces, a pixel or two more at times.
+ */
 const minimumLength = (tree: PaneTree, direction: PaneDirection): number => {
   if (typeof tree === "string") {
     return PANE_MINIMUM;
@@ -222,9 +227,28 @@ const minimumLength = (tree: PaneTree, direction: PaneDirection): number => {
     minimumLength(child.pane, direction)
   );
 
-  return tree.direction === direction
-    ? sumBy(lengths, (length) => length) + PANE_GAP * (tree.children.length - 1)
-    : Math.max(...lengths);
+  if (tree.direction !== direction) {
+    return Math.max(...lengths);
+  }
+
+  const shares = tree.children.map((child) => child.size);
+
+  // A child with no share gets nothing at any length.
+  if (shares.some((share) => share <= 0)) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const fits = (length: number) =>
+    cut(length, shares).every((piece, index) => piece >= (lengths[index] ?? 0));
+  let length = Math.ceil(
+    Math.max(...lengths.map((least, index) => least / (shares[index] ?? 1)))
+  );
+
+  while (Number.isFinite(length) && !fits(length)) {
+    length += 1;
+  }
+
+  return length + PANE_GAP * (tree.children.length - 1);
 };
 
 /** The gap between two neighbouring children of a split, which resizes them. */
