@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { OVERLAY_WIDTHS, overlayWidth } from "#core/overlay.ts";
 import type { Overlay } from "#core/overlay.ts";
 
+import { CARD_SHADOW } from "./card-shadow.ts";
+
 /**
  * The card every overlay draws in, placed in the view that covers the
  * content area: 64px below its top, centred, as tall as what it holds and
@@ -28,7 +30,8 @@ export const OverlayCard = ({
       data-overlay-card
       style={{ width: OVERLAY_WIDTHS[overlayWidth({ kind })] }}
       className={cn(
-        "pointer-events-auto relative m-0 flex max-h-full max-w-full flex-col overflow-hidden rounded-[14px] border-0 bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10",
+        "pointer-events-auto relative m-0 flex max-h-full max-w-full flex-col overflow-hidden rounded-[14px] border-0 bg-popover p-1 text-popover-foreground ring-1 ring-foreground/10",
+        CARD_SHADOW,
         className
       )}
     >

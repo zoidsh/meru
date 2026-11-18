@@ -60,8 +60,12 @@ export const staysOpenOutside = (overlay: Pick<Overlay, "kind"> | undefined) =>
 export const coversPage = (overlay: Pick<Overlay, "kind"> | undefined) =>
   overlay !== undefined && overlay.kind !== "find" && !takesNoFocus(overlay);
 
-/** The view a toast is drawn in, at the page area's bottom right corner. */
-export const TOAST_VIEW = { width: 400, height: 88 } as const;
+/**
+ * The view a toast is drawn in, at the page area's bottom right corner: the
+ * toast 16px in from its right and bottom, with 32px above and to its left
+ * for its shadow, which reaches 30px.
+ */
+export const TOAST_VIEW = { width: 432, height: 104 } as const;
 
 /** The card's width for each width class, in CSS pixels. */
 export const OVERLAY_WIDTHS = { narrow: 320, medium: 448, wide: 704 } as const;
