@@ -281,7 +281,8 @@ test("in the box an inset line moves a tab among its tabs and its pane with it, 
   await expect
     .poll(() => storedPanes(userDataDir))
     .toStrictEqual(["d", "c", "o"]);
-  // The sizes stay with the places, so the panes swap.
+  // The sizes stay with the places, and the panes take the tabs in their
+  // new order: Drive from last to first moves each other one place on.
   expect(await storedShares(userDataDir)).toStrictEqual([333, 333, 333]);
 
   await focusTab(shell, "d");

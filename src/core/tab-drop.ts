@@ -205,6 +205,13 @@ export interface SidebarDropInput {
    * pinned area is none of its places.
    */
   area?: readonly DropTile[] | undefined;
+  /**
+   * With no list drawn, as when every tab not pinned is in a box among the
+   * pinned tiles: the sidebar below the pinned area, which is the list's
+   * end to a tab not pinned, and the button after the list, which the
+   * line there goes above.
+   */
+  noList?: { below: Box; next: Box } | undefined;
 }
 
 /** How far inside the box's top and bottom edge the pointer still counts as outside it. */
@@ -267,11 +274,51 @@ const boxLine = (
   };
 };
 
+/** A move to the area's end, by a line at `y` across `span` and 3px past it. */
+const endLine = (span: Box, y: number): SidebarDrop => ({
+  kind: "move",
+  before: undefined,
+  line: {
+    left: span.left - 3,
+    top: y - LINE / 2,
+    right: span.right + 3,
+    bottom: y + LINE / 2,
+  },
+});
+
 const onto = (target: DropTarget): SidebarDrop => ({
   kind: "onto",
   target: target.id,
   ring: target.box,
 });
+
+/** A line in the dragged tab's area, or at its end where it has no places. */
+const areaMove = ({
+  dragged,
+  point,
+  box,
+  area,
+  noList,
+}: Omit<SidebarDropInput, "tabs" | "split">): SidebarDrop | undefined => {
+  // A tab of the box has no place of its own among the area's: the box
+  // stands for its first stored tab, which may be this one.
+  const line = area && tabDrop(area, dragged.boxed ? "" : dragged.id, point);
+
+  if (line) {
+    return { kind: "move", before: line.before, line: line.line };
+  }
+
+  // A pinned tab of a box that is all the pinned area holds lands after it.
+  if (box && dragged.boxed && area?.length === 0) {
+    return endLine(box.box, box.box.bottom + GAP / 2);
+  }
+
+  if (!dragged.pinned && noList && inside(noList.below, point)) {
+    return endLine(noList.next, (noList.below.top + noList.next.top) / 2);
+  }
+
+  return undefined;
+};
 
 /**
  * What dropping a dragged tab with the pointer at `point` in the sidebar
@@ -290,6 +337,7 @@ export const sidebarDrop = ({
   split,
   box,
   area,
+  noList,
 }: SidebarDropInput): SidebarDrop | undefined => {
   const over = tabs.find(
     (tab) => tab.id !== dragged.id && inside(tab.box, point)
@@ -321,29 +369,5 @@ export const sidebarDrop = ({
     }
   }
 
-  // A tab of the box has no place of its own among the area's: the box
-  // stands for its first stored tab, which may be this one.
-  const line = area && tabDrop(area, dragged.boxed ? "" : dragged.id, point);
-
-  if (line) {
-    return { kind: "move", before: line.before, line: line.line };
-  }
-
-  // A pinned tab of a box that is all the pinned area holds lands after it.
-  if (box && dragged.boxed && area?.length === 0) {
-    const top = box.box.bottom + GAP / 2 - LINE / 2;
-
-    return {
-      kind: "move",
-      before: undefined,
-      line: {
-        left: box.box.left - 3,
-        top,
-        right: box.box.right + 3,
-        bottom: top + LINE,
-      },
-    };
-  }
-
-  return undefined;
+  return areaMove({ dragged, point, box, area, noList });
 };

@@ -163,3 +163,48 @@ describe(sidebarDrop, () => {
     ]);
   });
 });
+
+describe("sidebarDrop with the box all the pinned area holds", () => {
+  // The box of pinned a and b first in the pinned area, with no list
+  // drawn, then Open app at 200.
+  const a = tile("a", 16, 6);
+  const b = tile("b", 16, 46);
+  const box = { left: 13, top: 0, right: 51, bottom: 84 };
+  const tabs = [
+    { ...a, boxed: true },
+    { ...b, boxed: true },
+  ];
+  const noList = {
+    below: { left: 0, top: 92, right: 64, bottom: 400 },
+    next: { left: 16, top: 200, right: 48, bottom: 232 },
+  };
+  const drop = (pinned: boolean, y: number, withArea = true) =>
+    sidebarDrop({
+      dragged: { id: "b", pinned, boxed: true },
+      point: { x: 30, y },
+      tabs,
+      split: true,
+      box: { box, rows: pinned ? [] : [b] },
+      area: withArea ? [] : undefined,
+      noList: pinned ? undefined : noList,
+    });
+
+  it("moves a pinned tab of it to the pinned area's end, by a line below the box", () => {
+    expect(drop(true, 150)).toStrictEqual({
+      kind: "move",
+      before: undefined,
+      line: { left: 10, top: 87, right: 54, bottom: 89 },
+    });
+  });
+
+  it("moves a tab not pinned out to the list's end, by a line above the button after it, only below the pinned area", () => {
+    expect([drop(false, 150, false), drop(false, 40, false)]).toStrictEqual([
+      {
+        kind: "move",
+        before: undefined,
+        line: { left: 13, top: 145, right: 51, bottom: 147 },
+      },
+      undefined,
+    ]);
+  });
+});

@@ -878,7 +878,6 @@ export const Sidebar = ({
     sidebar,
     blocked: overlay !== undefined && overlay.kind !== "none",
     tabIds: tabs.tabs.map((tab) => tab.id),
-    split: layout.box.length > 0,
     onDrop: (tabId, drop) => {
       switch (drop.kind) {
         case "onto": {

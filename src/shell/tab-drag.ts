@@ -61,7 +61,6 @@ export const useTabDrag = ({
   sidebar,
   blocked,
   tabIds,
-  split,
   onDrop,
 }: {
   sidebar: RefObject<HTMLElement | null>;
@@ -69,8 +68,6 @@ export const useTabDrag = ({
   blocked: boolean;
   /** The profile's tabs, so a drag whose tab goes ends. */
   tabIds: readonly string[];
-  /** Whether the profile has a split, which a tab outside it cannot join. */
-  split: boolean;
   onDrop: (tabId: string, drop: SidebarDrop) => void;
 }) => {
   const [mark, setMark] = useState<DragMark>();
@@ -116,32 +113,19 @@ export const useTabDrag = ({
   };
 
   /**
-   * With no list drawn, as when every tab not pinned is in a box among the
-   * pinned tiles, the sidebar below the pinned area is the list's end, a
-   * tab not pinned landing there by a line above Open app.
+   * With no list drawn, the sidebar below the pinned area and Open app
+   * after it, where a tab not pinned lands at the list's end.
    */
-  const listEnd = (current: Drag, bounds: Box): SidebarDrop | undefined => {
+  const noListAt = (current: Drag, bounds: Box) => {
     const root = sidebar.current;
-    const end = root?.querySelector("[data-list-end]");
+    const next = root?.querySelector("[data-list-end]");
     const pinned = root
       ?.querySelector('[data-tab-area="pinned"]')
       ?.closest('[data-slot="scroll-area"]');
 
-    if (current.pinned || areaOf(current) || !end || !pinned) {
-      return;
-    }
-
-    const top = boxOf(pinned).bottom;
-    const { left, right, top: endTop } = boxOf(end);
-    const y = (top + endTop) / 2 - 1;
-
-    return inside({ ...bounds, top }, current.point)
-      ? {
-          kind: "move",
-          before: undefined,
-          line: { left: left - 3, top: y, right: right + 3, bottom: y + 2 },
-        }
-      : undefined;
+    return current.pinned || areaOf(current) || !next || !pinned
+      ? undefined
+      : { below: { ...bounds, top: boxOf(pinned).bottom }, next: boxOf(next) };
   };
 
   /** Where the drag would land with the pointer where it is. */
@@ -164,16 +148,15 @@ export const useTabDrag = ({
 
     const boxed = tabs.some((tab) => tab.id === current.tabId && tab.boxed);
 
-    return (
-      sidebarDrop({
-        dragged: { id: current.tabId, pinned: current.pinned, boxed },
-        point: current.point,
-        tabs,
-        split,
-        box: box && { box: boxOf(box), rows: tilesOf(box) },
-        area: placesAt(current, bounds, boxed),
-      }) ?? listEnd(current, bounds)
-    );
+    return sidebarDrop({
+      dragged: { id: current.tabId, pinned: current.pinned, boxed },
+      point: current.point,
+      tabs,
+      split: box !== undefined,
+      box: box && { box: boxOf(box), rows: tilesOf(box) },
+      area: placesAt(current, bounds, boxed),
+      noList: noListAt(current, bounds),
+    });
   };
 
   /** Sets the mark, redrawing the sidebar only when it moves. */
