@@ -51,6 +51,8 @@ export interface TabViewsDeps {
     tabId: string,
     after?: string
   ) => Promise<OpenedTab | undefined>;
+  /** Makes the tab its profile's selected one. */
+  selectTab: (key: TabKey) => Promise<unknown>;
   newId: () => string;
   /** Answers Google's "Add another account". */
   addProfile: () => Promise<unknown>;
@@ -63,7 +65,10 @@ export interface TabViewsDeps {
   updatePages: (updates: PageUpdate[]) => Promise<unknown>;
   /** Told when a tab's page gains keyboard focus, the front one's alone. */
   onFocus: () => void;
-  /** Told when another tab comes to the front, the first one included. */
+  /**
+   * Told when another tab comes to the front, the first one included, and
+   * when the front tab's page is put to sleep or woken.
+   */
   onFront: () => void;
   /** Told when a tab's page finishes a load or changes its title. */
   onPageChange: (key: TabKey) => void;
@@ -91,7 +96,8 @@ interface TabView {
 /**
  * Keeps the window's content views matching the tabs: one for each tab once
  * it has been on screen, in its profile's session, beside the strip, with
- * only the front tab's showing, and hidden while it failed or crashed. Each
+ * only the front tab's showing, and hidden while it failed or crashed. Sleep
+ * closes a tab's view until the tab is selected again or woken. Each
  * tab's status changes only through `transition`, whose effects run before
  * the status is committed.
  */
@@ -107,6 +113,7 @@ export const createTabViews = ({
   sidebar,
   inboxOpen,
   openTab,
+  selectTab,
   newId,
   addProfile,
   handleKey,
@@ -125,6 +132,11 @@ export const createTabViews = ({
   const listeners = new Set<() => void>();
   /** The profiles whose Open at Launch tabs were opened this session. */
   const launched = new Set<string>();
+  /**
+   * The tabs put to sleep, which stay without a view while they are selected,
+   * until woken. Not kept across launches.
+   */
+  const sleeping = new Set<string>();
   let front: string | undefined;
 
   const place = (view: ContentView) => {
@@ -204,6 +216,15 @@ export const createTabViews = ({
       }
       case "reload": {
         tab.view.reload();
+        break;
+      }
+      // Where the page was stays in the page writer, to be written and loaded
+      // from on wake.
+      case "discard": {
+        tabs.delete(key);
+        clearTimeout(tab.retry);
+        // oxlint-disable-next-line no-use-before-define -- as Close closes a view
+        closeView(key, tab.view);
         break;
       }
       case "schedule-retry": {
@@ -341,6 +362,8 @@ export const createTabViews = ({
     const key = tabKey({ profileId, tabId });
 
     pendingUrls.set(key, url);
+    // oxlint-disable-next-line no-use-before-define -- the link wakes the tab it opens in
+    wake(key);
 
     try {
       const opened = await openTab(profileId, app, url, tabId, after);
@@ -454,17 +477,20 @@ export const createTabViews = ({
     return view;
   };
 
+  const closeView = (key: string, view: ContentView) => {
+    try {
+      view.close();
+    } catch (error) {
+      log(`The view of tab ${key} did not close: ${describe(error)}`);
+    }
+  };
+
   const close = (key: string, tab: TabView) => {
     tabs.delete(key);
     pendingUrls.delete(key);
     pages.forget(key);
     clearTimeout(tab.retry);
-
-    try {
-      tab.view.close();
-    } catch (error) {
-      log(`The view of tab ${key} did not close: ${describe(error)}`);
-    }
+    closeView(key, tab.view);
   };
 
   const frontTab = () => (front === undefined ? undefined : tabs.get(front));
@@ -477,60 +503,110 @@ export const createTabViews = ({
     }
   });
 
+  /**
+   * The views the window should have, after a closed tab leaves `sleeping`
+   * and a sleeping tab selected anew wakes.
+   */
+  const plan = (current: State) => {
+    const known = new Set(
+      current.profiles.flatMap((profile) =>
+        knownTabs(profile).map((tab) =>
+          tabKey({ profileId: profile.id, tabId: tab.id })
+        )
+      )
+    );
+
+    for (const key of sleeping) {
+      if (!known.has(key)) {
+        sleeping.delete(key);
+      }
+    }
+
+    const planned = planViews(current, [...tabs.keys()], launched, sleeping);
+    const selected = planned.front && tabKey(planned.front);
+
+    return selected !== front &&
+      selected !== undefined &&
+      sleeping.delete(selected)
+      ? planViews(current, [...tabs.keys()], launched, sleeping)
+      : planned;
+  };
+
+  /** Creates, closes, shows and hides views until the window matches. */
+  const reconcile = (current: State) => {
+    const next = plan(current);
+    const selected = next.front && tabKey(next.front);
+    const planned = new Map(next.views.map((key) => [tabKey(key), key]));
+    const created = new Set<string>();
+    let changed = false;
+
+    for (const [key, tab] of tabs) {
+      if (!planned.has(key)) {
+        close(key, tab);
+        changed = true;
+      }
+    }
+
+    for (const [key, tabKeyed] of planned) {
+      if (!tabs.has(key)) {
+        created.add(key);
+        tabs.set(key, {
+          key: tabKeyed,
+          view: create(key, tabKeyed),
+          status: { kind: "unloaded" },
+          retry: undefined,
+        });
+      }
+    }
+
+    for (const profileId of next.launched) {
+      launched.add(profileId);
+    }
+
+    for (const key of next.opening) {
+      dispatch(tabKey(key), { kind: "open" });
+    }
+
+    const frontChanged = selected !== front;
+    // The front tab, woken, has a new view to load.
+    const frontWoken =
+      !frontChanged && front !== undefined && created.has(front);
+
+    front = selected;
+
+    if ((frontChanged || frontWoken) && front !== undefined) {
+      dispatch(front, { kind: "select" });
+    }
+
+    showFront();
+
+    if (frontChanged || frontWoken) {
+      onFront();
+    }
+
+    if (changed) {
+      notify();
+    }
+  };
+
+  /**
+   * Takes the tab out of sleep. The front tab, which selecting would not
+   * change, gets its view again at once; any other gets one when selected.
+   */
+  const wake = (key: string) => {
+    if (sleeping.delete(key) && key === front) {
+      reconcile(state());
+    }
+  };
+
+  /** Selects the tab, waking it if it sleeps. */
+  const select = async (key: TabKey) => {
+    wake(tabKey(key));
+    await selectTab(key);
+  };
+
   return {
-    /** Creates, closes, shows and hides views until the window matches. */
-    reconcile: (current: State) => {
-      const plan = planViews(current, [...tabs.keys()], launched);
-      const planned = new Map(plan.views.map((key) => [tabKey(key), key]));
-      let changed = false;
-
-      for (const [key, tab] of tabs) {
-        if (!planned.has(key)) {
-          close(key, tab);
-          changed = true;
-        }
-      }
-
-      for (const [key, tabKeyed] of planned) {
-        if (!tabs.has(key)) {
-          tabs.set(key, {
-            key: tabKeyed,
-            view: create(key, tabKeyed),
-            status: { kind: "unloaded" },
-            retry: undefined,
-          });
-        }
-      }
-
-      for (const profileId of plan.launched) {
-        launched.add(profileId);
-      }
-
-      for (const key of plan.opening) {
-        dispatch(tabKey(key), { kind: "open" });
-      }
-
-      const nextFront = plan.front && tabKey(plan.front);
-      const frontChanged = nextFront !== front;
-
-      if (frontChanged) {
-        front = nextFront;
-
-        if (front !== undefined) {
-          dispatch(front, { kind: "select" });
-        }
-      }
-
-      showFront();
-
-      if (frontChanged) {
-        onFront();
-      }
-
-      if (changed) {
-        notify();
-      }
-    },
+    reconcile,
     /**
      * Opens `url` as a tab of `app` in the profile, selected there, or sends
      * a single-instance app's one tab to it, loading it in the view now or
@@ -541,18 +617,48 @@ export const createTabViews = ({
     retry: (key: TabKey) => {
       dispatch(tabKey(key), { kind: "retry" });
     },
-    /** Loads the tab's page again, if it has one; one that failed or crashed, its URL. */
-    reload: (key: TabKey) => {
+    /**
+     * Loads the tab's page again; one that failed or crashed, its URL. One
+     * asleep, with no page, is woken and selected.
+     */
+    reload: async (key: TabKey) => {
       const keyed = tabKey(key);
 
       if (tabs.has(keyed)) {
         dispatch(keyed, { kind: "reload" });
+      } else {
+        await select(key);
       }
     },
-    /** Loads the front tab's page again; one that failed or crashed, its URL. */
+    /** Loads the front tab's page again, as `reload` does. */
     reloadFront: () => {
-      if (front !== undefined) {
+      if (front === undefined) {
+        return;
+      }
+
+      if (tabs.has(front)) {
         dispatch(front, { kind: "reload" });
+      } else {
+        wake(front);
+      }
+    },
+    select,
+    /**
+     * Frees the tab's page, keeping where it was for when it is selected
+     * again or woken; the front tab stays the front, with no page.
+     */
+    sleep: (key: TabKey) => {
+      const keyed = tabKey(key);
+
+      if (!tabs.has(keyed)) {
+        return;
+      }
+
+      sleeping.add(keyed);
+      dispatch(keyed, { kind: "sleep" });
+
+      if (keyed === front) {
+        onFront();
       }
     },
     /**
@@ -583,7 +689,7 @@ export const createTabViews = ({
         ? tab.view.focus
         : undefined;
     },
-    /** Each tab's status; one with no view is not loaded. */
+    /** Each tab's status; one with no view, asleep or never loaded, is unloaded. */
     status: (key: TabKey): TabStatus =>
       tabs.get(tabKey(key))?.status ?? { kind: "unloaded" },
     onChange: (listener: () => void) => {

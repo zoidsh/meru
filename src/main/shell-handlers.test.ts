@@ -51,11 +51,6 @@ const setup = ({
 
         return Promise.resolve(true);
       },
-      selectTab: (key) => {
-        calls.push(["select", key]);
-
-        return Promise.resolve(true);
-      },
       closeTab: (key) => {
         calls.push(["close", key]);
 
@@ -81,6 +76,11 @@ const setup = ({
     tabs: {
       retry: (key) => {
         calls.push(["retry", key]);
+      },
+      select: (key) => {
+        calls.push(["select", key]);
+
+        return Promise.resolve();
       },
     },
     inbox: {

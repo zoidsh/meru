@@ -172,6 +172,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     sidebar: () => sidebar,
     inboxOpen: () => inboxOpen,
     openTab: profiles.openTab,
+    selectTab: profiles.selectTab,
     newId: () => {
       ids += 1;
 
@@ -792,6 +793,115 @@ describe(createTabViews, () => {
         height: 552,
       });
     }
+  });
+
+  it("puts a background tab to sleep, closing its view and any retry, and loads it where it was when it is selected", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+    const elsewhere = `${CALENDAR}?day=2`;
+
+    await window.profiles.selectTab(calendar);
+
+    const first = window.viewOf("persist:a", 1);
+
+    window.emit(first, { kind: "navigated", url: elsewhere });
+    window.emit(first, REFUSED);
+    await window.profiles.selectTab({ profileId: "a", tabId: "gmail" });
+    window.tabs.sleep(calendar);
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect([first?.closed, first?.loaded]).toStrictEqual([true, [CALENDAR]]);
+    expect(window.tabs.status(calendar)).toStrictEqual({ kind: "unloaded" });
+    expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+
+    await window.tabs.select(calendar);
+
+    expect(window.live()).toStrictEqual([
+      ["persist:a", GMAIL, false],
+      ["persist:a", elsewhere, true],
+    ]);
+  });
+
+  it("keeps the front tab put to sleep in front with no page, and loads it again when woken, Gmail at its inbox", async () => {
+    const window = await setup();
+    const gmail = { profileId: "a", tabId: "gmail" };
+    const view = window.viewOf("persist:a");
+
+    window.emit(view, { kind: "loaded" });
+    window.emit(view, { kind: "navigated", url: `${GMAIL}/#inbox/later` });
+    window.tabs.sleep(gmail);
+
+    expect([
+      view?.closed,
+      window.live(),
+      window.fronts(),
+      window.tabs.focuser(),
+      window.tabs.navigation(),
+      window.tabs.status(gmail),
+    ]).toStrictEqual([true, [], 2, undefined, null, { kind: "unloaded" }]);
+
+    // Selecting what is selected already, as a click on it does, wakes it.
+    await window.tabs.select(gmail);
+
+    expect([window.live(), window.fronts()]).toStrictEqual([
+      [["persist:a", GMAIL, true]],
+      3,
+    ]);
+    expect(window.tabs.focuser()).toBeDefined();
+  });
+
+  it("wakes the sleeping front tab by Reload, and selects and wakes a background one by its Reload", async () => {
+    const window = await setup();
+    const gmail = { profileId: "a", tabId: "gmail" };
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    window.tabs.sleep(gmail);
+    window.tabs.reloadFront();
+
+    expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+
+    await window.tabs.reload(calendar);
+
+    expect([
+      window.profiles.get().profiles[0]?.selectedTabId,
+      window.live(),
+    ]).toStrictEqual([
+      "c1",
+      [
+        ["persist:a", GMAIL, false],
+        ["persist:a", CALENDAR, true],
+      ],
+    ]);
+  });
+
+  it("wakes the sleeping front tab on a link opened in it, loading the link once", async () => {
+    const window = await setup();
+    const gmail = { profileId: "a", tabId: "gmail" };
+    const link = `${GMAIL}/#inbox/abc`;
+    const gmailApp = APPS.find((app) => app.id === "gmail");
+
+    window.tabs.sleep(gmail);
+
+    if (gmailApp) {
+      await window.tabs.open("a", gmailApp, link);
+    }
+
+    expect(window.live()).toStrictEqual([["persist:a", link, true]]);
+    expect(window.viewOf("persist:a")?.loaded).toStrictEqual([link]);
+  });
+
+  it("wakes a sleeping tab when another profile's selection brings it to the front again", async () => {
+    const window = await setup();
+    const gmail = { profileId: "a", tabId: "gmail" };
+
+    window.tabs.sleep(gmail);
+    await window.profiles.select("b");
+    await window.profiles.select("a");
+
+    expect(window.live()).toStrictEqual([
+      ["persist:b", GMAIL, false],
+      ["persist:a", GMAIL, true],
+    ]);
   });
 
   it("reloads the front tab's page where it is, and a failed one from its URL", async () => {

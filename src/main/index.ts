@@ -485,6 +485,7 @@ const start = async () => {
     state: profiles.get,
     inboxOpen: () => overlays.current()?.kind === "inbox",
     openTab: profiles.openTab,
+    selectTab: profiles.selectTab,
     newId,
     addProfile: async () => {
       await profiles.add();
@@ -527,7 +528,7 @@ const start = async () => {
         await views.open(profileId, gmail, url);
       }
     },
-    selectTab: profiles.selectTab,
+    selectTab: views.select,
     selectProfile: profiles.select,
     closeInbox: () => {
       // oxlint-disable-next-line no-use-before-define -- the inbox opens messages through this
@@ -697,7 +698,7 @@ const start = async () => {
       goBack: views.goBack,
       goForward: views.goForward,
       stopLoading: views.stopFront,
-      selectTab: profiles.selectTab,
+      selectTab: views.select,
       closeTab: profiles.closeTab,
       setTabPinned: profiles.setPinned,
       setTabOpenAtLaunch: profiles.setOpenAtLaunch,
