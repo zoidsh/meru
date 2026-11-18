@@ -1,7 +1,6 @@
 import type { App } from "#core/apps.ts";
 import { findApp } from "#core/apps.ts";
 import {
-  bookmarkOf,
   bookmarkablePage,
   bookmarks,
   chooseBookmark,
@@ -69,13 +68,31 @@ export const createBookmarks = ({
     return tab && bookmarkablePage(tab, page(key), appName);
   };
 
+  // The shell's state asks of every tab on each change, so each profile's
+  // list is read once per state rather than once per tab.
+  const urls = new WeakMap<State, Map<string, Set<string>>>();
+
+  const bookmarkedUrls = (profileId: string) => {
+    const now = state();
+    const profiles = urls.get(now) ?? new Map<string, Set<string>>();
+    const known = profiles.get(profileId);
+
+    if (known) {
+      return known;
+    }
+
+    const read = new Set(bookmarks(now, profileId).map(({ url }) => url));
+
+    profiles.set(profileId, read);
+    urls.set(now, profiles);
+
+    return read;
+  };
+
   const bookmarked = (key: TabKey) => {
     const bookmarkable = pageOf(key);
 
-    return (
-      bookmarkable &&
-      bookmarkOf(state(), key.profileId, bookmarkable.url) !== undefined
-    );
+    return bookmarkable && bookmarkedUrls(key.profileId).has(bookmarkable.url);
   };
 
   return {
