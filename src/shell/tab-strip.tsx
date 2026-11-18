@@ -311,7 +311,6 @@ export const Sidebar = ({
           </div>
         </div>
       </ScrollArea>
-      {/* Below the last tab, outside the list's scroll. */}
       <div
         className={cn("flex shrink-0", wide ? "pt-1" : "justify-center pt-2")}
       >
