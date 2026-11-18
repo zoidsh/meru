@@ -124,7 +124,28 @@ const drawn = (shell: Page) =>
   }));
 
 /** A point of the tab `tabId`'s button, `down` of the way from its top. */
-const pointOf = (shell: Page, tabId: string, down = 0.5) =>
+/** Whether `selector` names an element drawn with a size. */
+const isDrawn = (shell: Page, selector: string) =>
+  shell.evaluate(
+    (each) =>
+      (document.querySelector(each)?.getBoundingClientRect().width ?? 0) > 0,
+    selector
+  );
+
+/**
+ * Waits for `selector` to be drawn, as a person waits to see what they
+ * drag: the shell can draw the sidebar after the pages have loaded.
+ */
+const seen = (shell: Page, selector: string) =>
+  expect.poll(() => isDrawn(shell, selector)).toBe(true);
+
+const pointOf = async (shell: Page, tabId: string, down = 0.5) => {
+  await seen(shell, `[data-tab-id="${tabId}"]`);
+
+  return pointIn(shell, tabId, down);
+};
+
+const pointIn = (shell: Page, tabId: string, down: number) =>
   shell.evaluate(
     ([id, share]) => {
       const box = document
@@ -152,7 +173,13 @@ const focusedTab = (shell: Page) =>
   );
 
 /** A point of the box, `down` of the way from its top. */
-const pointOfBox = (shell: Page, down: number) =>
+const pointOfBox = async (shell: Page, down: number) => {
+  await seen(shell, "[data-split-box]");
+
+  return pointInBox(shell, down);
+};
+
+const pointInBox = (shell: Page, down: number) =>
   shell.evaluate((share) => {
     const box = document
       .querySelector("[data-split-box]")
@@ -285,12 +312,18 @@ test("in the box an inset line moves a tab among its tabs and its pane with it, 
   // new order: Drive from last to first moves each other one place on.
   expect(await storedShares(userDataDir)).toStrictEqual([333, 333, 333]);
 
+  // Each press once the box shows the last one's order, as a person sees it.
+  const boxShows = (...ids: string[]) =>
+    expect.poll(() => drawn(shell).then(({ box }) => box)).toStrictEqual(ids);
+
+  await boxShows("d", "c", "o");
   await focusTab(shell, "d");
   await shell.keyboard.press("Alt+ArrowDown");
   await expect
     .poll(() => storedPanes(userDataDir))
     .toStrictEqual(["c", "d", "o"]);
-  expect(await focusedTab(shell)).toBe("d");
+  await boxShows("c", "d", "o");
+  await expect.poll(() => focusedTab(shell)).toBe("d");
   await expect(
     shell.getByRole("status").filter({ hasText: "position" })
   ).toHaveText(`${DRIVE_TITLE}, position 2 of 3`);
@@ -298,6 +331,8 @@ test("in the box an inset line moves a tab among its tabs and its pane with it, 
   await expect
     .poll(() => storedPanes(userDataDir))
     .toStrictEqual(["d", "c", "o"]);
+  await boxShows("d", "c", "o");
+  await expect.poll(() => focusedTab(shell)).toBe("d");
   await shell.keyboard.press("Alt+ArrowUp");
   await expect(
     shell.getByRole("status").filter({ hasText: "already" })
