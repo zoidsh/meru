@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import {
   expect,
@@ -165,7 +166,33 @@ const holdOver = async (
   await shell.mouse.move(to.x, to.y, { steps: 8 });
 };
 
-/** What lights up over the pages, in the page area, and how it reads; none when nothing does. */
+/**
+ * Waits for nothing to show over the pages, then for a while that the
+ * stored split stays `tree`, so a drop that would change it has had time to.
+ */
+const staysUnchanged = async (
+  overlay: Page,
+  userDataDir: string,
+  tree: string
+) => {
+  await expect.poll(() => zoneShown(overlay)).toBe("none");
+
+  for (let check = 0; check < 5; check += 1) {
+    // oxlint-disable-next-line no-await-in-loop -- one check after another
+    expect(await storedTree(userDataDir)).toBe(tree);
+    // oxlint-disable-next-line no-await-in-loop -- spaced out over half a second
+    await delay(100);
+  }
+};
+
+/**
+ * What lights up over the pages, in the page area, and how it reads; none
+ * when nothing does. `drawnPointerEvents` is the zone's CSS alone: whether
+ * the pages under the overlay's native view would take a real press is the
+ * view's to say, not its document's, and Playwright's input reaches the
+ * shell alone, so the suite cannot send one there; mid-drag none should,
+ * since the shell holds the pointer's capture from the press.
+ */
 const zoneShown = (overlay: Page) =>
   overlay.evaluate(() => {
     const zone = document.querySelector<HTMLElement>("[data-drop-zone]");
@@ -180,7 +207,7 @@ const zoneShown = (overlay: Page) =>
       kind: zone.dataset.dropZone,
       label: zone.textContent,
       rect: [x, y, width, height].map((each) => Math.round(each)),
-      pointerEvents: getComputedStyle(zone).pointerEvents,
+      drawnPointerEvents: getComputedStyle(zone).pointerEvents,
     };
   });
 
@@ -190,7 +217,7 @@ const areaSize = async (shell: Page) => {
   return [Math.round(width), Math.round(height)] as const;
 };
 
-test("a tab dragged over the pages lights the nearest half of the pane under the pointer, which takes no pointer events, and its drop splits that pane that way; over its own page nothing lights", async ({
+test("a tab dragged over the pages lights the nearest half of the pane under the pointer, drawn to let the pointer through, and its drop splits that pane that way; over its own page nothing lights", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -215,7 +242,7 @@ test("a tab dragged over the pages lights the nearest half of the pane under the
       kind: "pane",
       label: "Split this pane",
       rect: [0, 0, half, height],
-      pointerEvents: "none",
+      drawnPointerEvents: "none",
     });
   await shell.mouse.move(...(await xy(shell, AREA, 0.9, 0.5)), { steps: 4 });
   await expect
@@ -257,7 +284,7 @@ test("a tab dragged over the pages lights the nearest half of the pane under the
   await holdOver(shell, "s", await pointOf(shell, pane("s"), 0.5, 0.5));
   await expect.poll(() => zoneShown(overlay)).toBe("none");
   await shell.mouse.up();
-  expect(await storedTree(userDataDir)).toBe("row(column(o d) column(c s))");
+  await staysUnchanged(overlay, userDataDir, "row(column(o d) column(c s))");
 });
 
 test("near the view's outer edge a tab goes along it with a third of the view; a drop that would leave a pane too small says so and does nothing; Escape ends the drag", async ({
@@ -293,7 +320,7 @@ test("near the view's outer edge a tab goes along it with a third of the view; a
     .toMatchObject({
       kind: "edge",
       label: "Along the whole view",
-      pointerEvents: "none",
+      drawnPointerEvents: "none",
     });
 
   const band = await zoneShown(overlay);
@@ -317,8 +344,7 @@ test("near the view's outer edge a tab goes along it with a third of the view; a
       label: "Not enough room",
     });
   await shell.mouse.up();
-  await expect.poll(() => zoneShown(overlay)).toBe("none");
-  expect(await storedTree(userDataDir)).toBe("row(o c d)");
+  await staysUnchanged(overlay, userDataDir, "row(o c d)");
   await expect(
     overlay.getByText("Not enough room to split", { exact: true })
   ).toHaveCount(0);
@@ -328,7 +354,7 @@ test("near the view's outer edge a tab goes along it with a third of the view; a
   await shell.keyboard.press("Escape");
   await expect.poll(() => zoneShown(overlay)).toBe("none");
   await shell.mouse.up();
-  expect(await storedTree(userDataDir)).toBe("row(o c d)");
+  await staysUnchanged(overlay, userDataDir, "row(o c d)");
 });
 
 test("over a maximized split, which shows as one pane, a tab takes half the view and the whole split, restored, the other half", async ({

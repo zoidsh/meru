@@ -131,6 +131,27 @@ describe(createOverlays, () => {
     vi.useRealTimers();
   });
 
+  it("shows where a dragged tab would land without taking focus from the page, and gives none back when it closes", () => {
+    const { overlays, focus, events } = setup();
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open({
+      kind: "drop",
+      zone: { x: 0, y: 0, width: 50, height: 100 },
+      along: "pane",
+      fits: true,
+    });
+    overlays.close();
+
+    expect(events).toStrictEqual([
+      "bounds 100",
+      "show",
+      "shell told drop",
+      "hide",
+      "shell told closed",
+    ]);
+  });
+
   it("gives back the focus a card or a menu took when a toast replaces it", () => {
     const { overlays, focus, events } = setup();
 
