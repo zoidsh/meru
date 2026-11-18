@@ -16,6 +16,7 @@ import {
 } from "./split.ts";
 import {
   GMAIL_TAB_ID,
+  inOwnWindow,
   isPinned,
   isTab,
   knownTabs,
@@ -23,7 +24,7 @@ import {
 } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 import { viewDrop } from "./view-drop.ts";
-import type { Size } from "./window-bounds.ts";
+import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** A tab is named by its profile and its id, which is unique only within it. */
 export interface TabKey {
@@ -32,6 +33,10 @@ export interface TabKey {
 }
 
 export const tabKey = ({ profileId, tabId }: TabKey) => `${profileId}/${tabId}`;
+
+/** Whether a tab of the profile is shown in the main window. */
+export const isMainWindowTab = (profile: Profile, tabId: string) =>
+  knownTabs(profile).some((tab) => tab.id === tabId && !inOwnWindow(tab));
 
 const updateProfile = (
   state: State,
@@ -92,7 +97,10 @@ export const openTab = (
         tabs: profile.tabs.map((tab) =>
           tab === existing ? { ...tab, url } : tab
         ),
-        selectedTabId: existing.id,
+        // One in its own window opens the URL there.
+        selectedTabId: inOwnWindow(existing)
+          ? profile.selectedTabId
+          : existing.id,
       };
     }
 
@@ -140,8 +148,7 @@ export const selectTab = (
   { profileId, tabId }: TabKey
 ): State | undefined =>
   updateProfile(state, profileId, (profile) =>
-    profile.selectedTabId !== tabId &&
-    knownTabs(profile).some((tab) => tab.id === tabId)
+    profile.selectedTabId !== tabId && isMainWindowTab(profile, tabId)
       ? { ...profile, selectedTabId: tabId }
       : undefined
   );
@@ -150,27 +157,38 @@ export const selectTab = (
 export const canCloseTab = (tab: Tab) => !isPinned(tab);
 
 /**
+ * The main window's tab a selection leaving `tab` goes to: the next shown
+ * one in the main window, or the last before it when there is none after.
+ */
+const successor = (profile: Profile, tab: Tab) => {
+  const shown = knownTabs(profile);
+  const index = shown.indexOf(tab);
+  const stays = (candidate: Tab) =>
+    candidate !== tab && !inOwnWindow(candidate);
+
+  return (
+    shown.slice(index + 1).find(stays) ?? shown.slice(0, index).findLast(stays)
+  );
+};
+
+/**
  * Closing the selected tab selects the shown tab to its right, or to its left
  * when it was last, as removing a profile does, and none when it was the only
  * one; in a split, the pane that takes its focus, or the one pane left. A
- * closed tab's pane gives its space to those beside it. Nothing for a pinned
- * tab or one that is not shown.
+ * tab in its own window is passed over. A closed tab's pane gives its space
+ * to those beside it. Nothing for a pinned tab or one that is not shown.
  */
 export const closeTab = (
   state: State,
   { profileId, tabId }: TabKey
 ): State | undefined =>
   updateProfile(state, profileId, (profile) => {
-    const shown = knownTabs(profile);
-    const index = shown.findIndex((tab) => tab.id === tabId);
-    const tab = shown[index];
+    const tab = knownTabs(profile).find((candidate) => candidate.id === tabId);
 
     if (!tab || !canCloseTab(tab)) {
       return;
     }
 
-    const left = shown.filter((candidate) => candidate !== tab);
-    const neighbour = left[Math.min(index, left.length - 1)];
     const paned = withoutPane(profile, tabId);
 
     return {
@@ -178,10 +196,76 @@ export const closeTab = (
       tabs: profile.tabs.filter((candidate) => candidate !== tab),
       selectedTabId:
         profile.selectedTabId === tabId
-          ? (paned.next ?? neighbour?.id ?? "")
+          ? (paned.next ?? successor(profile, tab)?.id ?? "")
           : profile.selectedTabId,
     };
   });
+
+/** A tab that is not pinned can go to a window of its own. */
+export const canMoveToOwnWindow = (tab: Tab) =>
+  !isPinned(tab) && !inOwnWindow(tab);
+
+/**
+ * Moves the tab to a window of its own: a tab in a split leaves it first, as
+ * Separate takes it, and a selected tab's selection goes where closing it
+ * would send it. Nothing for a pinned tab, one already in its own window or
+ * one that is not shown.
+ */
+export const moveToOwnWindow = (
+  state: State,
+  { profileId, tabId }: TabKey
+): State | undefined =>
+  updateProfile(state, profileId, (profile) => {
+    const tab = knownTabs(profile).find((candidate) => candidate.id === tabId);
+
+    if (!tab || !canMoveToOwnWindow(tab)) {
+      return;
+    }
+
+    const paned = withoutPane(profile, tabId);
+
+    return {
+      ...paned.profile,
+      tabs: profile.tabs.map((entry) =>
+        entry === tab ? { ...tab, ownWindow: true } : entry
+      ),
+      selectedTabId:
+        profile.selectedTabId === tabId
+          ? (paned.next ?? successor(profile, tab)?.id ?? "")
+          : profile.selectedTabId,
+    };
+  });
+
+/**
+ * Puts the tab back in the main window, at its place in the sidebar, and
+ * with `select` selects it and its profile. Its window's bounds are kept for
+ * the next time it moves out. Nothing for a tab not in its own window.
+ */
+export const moveToMainWindow = (
+  state: State,
+  { profileId, tabId }: TabKey,
+  select: boolean
+): State | undefined => {
+  const next = updateProfile(state, profileId, (profile) => {
+    const tab = knownTabs(profile).find((candidate) => candidate.id === tabId);
+
+    if (!tab || !inOwnWindow(tab)) {
+      return;
+    }
+
+    const { ownWindow: _moved, ...back } = tab;
+
+    return {
+      ...profile,
+      tabs: profile.tabs.map((entry) =>
+        entry === tab ? (back as Tab) : entry
+      ),
+      ...(select && { selectedTabId: tabId }),
+    };
+  });
+
+  return next && select ? { ...next, selectedProfileId: profileId } : next;
+};
 
 /**
  * Puts the tab in a new pane `direction` of the focused pane, or of the
@@ -194,7 +278,9 @@ export const splitTab = (
   direction: PaneDirection
 ): State | undefined =>
   updateProfile(state, profileId, (profile) =>
-    splitWith(profile, tabId, direction)
+    isMainWindowTab(profile, tabId)
+      ? splitWith(profile, tabId, direction)
+      : undefined
   );
 
 /**
@@ -277,6 +363,18 @@ export const setOpenAtLaunch = (state: State, key: TabKey, on: boolean) =>
     !isPinned(tab) || (tab.openAtLaunch === true) === on
       ? undefined
       : { ...tab, openAtLaunch: on }
+  );
+
+/** Keeps where the tab's own window is. Nothing when it is there already. */
+export const setOwnWindowBounds = (
+  state: State,
+  key: TabKey,
+  bounds: Rectangle
+) =>
+  updateTab(state, key, (tab) =>
+    isEqual(tab.windowBounds, bounds)
+      ? undefined
+      : { ...tab, windowBounds: bounds }
   );
 
 export type PageUpdate = TabKey & Partial<Pick<Tab, "url" | "title">>;
@@ -421,7 +519,9 @@ export const splitOntoTab = (
   target: string
 ): State | undefined =>
   updateProfile(state, profileId, (profile) =>
-    splitBeside(profile, tabId, target, "row")
+    isMainWindowTab(profile, tabId) && isMainWindowTab(profile, target)
+      ? splitBeside(profile, tabId, target, "row")
+      : undefined
   );
 
 /**
@@ -435,7 +535,9 @@ export const dropInView = (
   point: { x: number; y: number }
 ): State | undefined =>
   updateProfile(state, profileId, (profile) => {
-    const drop = viewDrop(profile, size, point, tabId);
+    const drop = isMainWindowTab(profile, tabId)
+      ? viewDrop(profile, size, point, tabId)
+      : undefined;
 
     return drop?.fits ? drop.next : undefined;
   });
@@ -460,7 +562,9 @@ export const adjacentTab = (
   const profile = state.profiles.find(
     (candidate) => candidate.id === state.selectedProfileId
   );
-  const shown = profile ? drawnTabs(profile) : [];
+  const shown = profile
+    ? drawnTabs(profile).filter((tab) => !inOwnWindow(tab))
+    : [];
   const index = shown.findIndex((tab) => tab.id === profile?.selectedTabId);
   const tab = shown.at((index + offset) % shown.length);
 

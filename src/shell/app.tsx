@@ -7,6 +7,7 @@ import { viewFrame } from "#core/layout.ts";
 
 import { NothingOpen } from "./nothing-open.tsx";
 import { OverlayLayer } from "./overlay.tsx";
+import { OwnWindows } from "./own-window.tsx";
 import { PaneHandle } from "./pane-handle.tsx";
 import { SleepingTab } from "./sleeping-tab.tsx";
 import { sleepingSelectedTab } from "./sleeping.ts";
@@ -150,6 +151,7 @@ export const App = () => {
         </div>
         <OverlayLayer />
       </div>
+      <OwnWindows />
     </>
   );
 };

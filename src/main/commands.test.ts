@@ -2,11 +2,17 @@ import { describe, expect, it, onTestFinished } from "vitest";
 
 import { matchesAccelerator } from "#core/accelerator.ts";
 import { savedSearches } from "#core/saved-searches.ts";
-import { gmailTab, isAsleep, newProfile } from "#core/state.ts";
+import { gmailTab, isAsleep, isTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import type { TabKey } from "#core/tabs.ts";
 import type { Navigation } from "#platform/content-view.ts";
 
-import { COMMANDS, currentSearch, savedSearchCommands } from "./commands.ts";
+import {
+  COMMANDS,
+  currentSearch,
+  isCommandAvailable,
+  savedSearchCommands,
+} from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createProfiles } from "./profiles.ts";
@@ -51,6 +57,7 @@ const setup = (initial: State = twoProfiles) => {
   let sidebarShown = false;
   let navigation: Navigation | null = null;
   let selectedTabAsleep = false;
+  let ownWindow: TabKey | undefined;
   const moves: string[] = [];
   const sleeps: string[] = [];
   const splits: string[] = [];
@@ -119,9 +126,16 @@ const setup = (initial: State = twoProfiles) => {
     findAgain: (forward) => {
       finds.push(forward ? "next" : "previous");
     },
+    moveToOwnWindow: async (key) => {
+      await profiles.moveToOwnWindow(key);
+    },
+    moveToMainWindow: async (key) => {
+      await profiles.moveToMainWindow(key, true);
+    },
   };
   const context = (): CommandContext => ({
     state: profiles.get(),
+    ownWindow,
     doNotDisturb: doNotDisturb.current(),
     inboxOpen,
     openAppOpen,
@@ -148,12 +162,15 @@ const setup = (initial: State = twoProfiles) => {
     setNavigation: (next: Navigation | null) => {
       navigation = next;
     },
+    setOwnWindow: (key: TabKey | undefined) => {
+      ownWindow = key;
+    },
     renames,
     navigations,
     openAppOpen: () => openAppOpen,
     context,
     actions,
-    isAvailable: (id: string) => commandOf(id).isAvailable?.(context()) ?? true,
+    isAvailable: (id: string) => isCommandAvailable(commandOf(id), context()),
     isChecked: (id: string) => commandOf(id).isChecked?.(context()),
     run: (id: string) => commandOf(id).run(context(), actions),
   };
@@ -234,6 +251,81 @@ describe("the command registry", () => {
     await app.run("tab.close");
 
     expect(app.profiles.get().profiles[0]?.tabs).toStrictEqual([gmailTab()]);
+  });
+
+  it("moves the selected tab to a window of its own, never a pinned one, and back from that window, selected", async () => {
+    const app = setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+    const offered = [app.isAvailable("tab.moveToNewWindow")];
+
+    await app.run("tab.next");
+    offered.push(app.isAvailable("tab.moveToNewWindow"));
+    await app.run("tab.moveToNewWindow");
+    const away = [
+      app.profiles.get().profiles[0]?.tabs.filter(isTab)[1]?.ownWindow,
+      selected(app.profiles.get()),
+      app.isAvailable("tab.moveToMainWindow"),
+    ];
+
+    app.setOwnWindow(calendar);
+    offered.push(app.isAvailable("tab.moveToMainWindow"));
+    await app.run("tab.moveToMainWindow");
+
+    expect([
+      offered,
+      away,
+      app.profiles.get().profiles[0]?.tabs.filter(isTab)[1]?.ownWindow,
+      selected(app.profiles.get()),
+    ]).toStrictEqual([
+      [false, true, true],
+      [true, ["a", "gmail"], false],
+      undefined,
+      ["a", "c1"],
+    ]);
+  });
+
+  it("while a tab's own window has focus offers only what acts on its page, and closes that tab", async () => {
+    const app = setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await app.profiles.moveToOwnWindow(calendar);
+    app.setOwnWindow(calendar);
+    app.setNavigation({ canGoBack: true, canGoForward: false, loading: false });
+
+    const offered = [
+      "tab.back",
+      "tab.reload",
+      "tab.close",
+      "doNotDisturb.toggle",
+      "tab.next",
+      "tab.splitRight",
+      "tab.moveToNewWindow",
+      "profile.add",
+      "sidebar.toggle",
+    ].map((id) => [id, Boolean(app.isAvailable(id))]);
+
+    await app.run("tab.close");
+
+    expect([
+      offered,
+      app.profiles
+        .get()
+        .profiles[0]?.tabs.filter(isTab)
+        .map((each) => each.id),
+    ]).toStrictEqual([
+      [
+        ["tab.back", true],
+        ["tab.reload", true],
+        ["tab.close", true],
+        ["doNotDisturb.toggle", true],
+        ["tab.next", false],
+        ["tab.splitRight", false],
+        ["tab.moveToNewWindow", false],
+        ["profile.add", false],
+        ["sidebar.toggle", false],
+      ],
+      ["gmail"],
+    ]);
   });
 
   it("pins and unpins the selected tab, labelled as it reads, leaving Open at Launch as it was", async () => {

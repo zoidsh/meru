@@ -5,10 +5,16 @@ import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
+import { OWN_WINDOW_RADIUS } from "#core/own-window.ts";
 import { FOCUS_RING, paneHandles, paneTabs } from "#core/pane-tree.ts";
 import type { PaneDirection, PaneHandle, PaneTree } from "#core/pane-tree.ts";
 import type { SidebarState } from "#core/sidebar.ts";
-import { isAsleep, knownTabs, profilePartition } from "#core/state.ts";
+import {
+  inOwnWindow,
+  isAsleep,
+  knownTabs,
+  profilePartition,
+} from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { showsView, transition } from "#core/tab-machine.ts";
 import type { TabEffect, TabEvent, TabStatus } from "#core/tab-machine.ts";
@@ -30,14 +36,17 @@ import type { SystemBrowser } from "#platform/system-browser.ts";
 import type { AppWindow } from "#platform/window.ts";
 import type { ZoomChange } from "#platform/zoom.ts";
 
+import type { OwnWindowPlace, OwnWindows } from "./own-windows.ts";
 import { createPageWriter } from "./page-writer.ts";
 import type { SenderRegistry } from "./senders.ts";
 
 export interface TabViewsDeps {
   window: Pick<
     AppWindow,
-    "getContentAreaSize" | "onContentAreaResize" | "addContentView"
+    "host" | "getContentAreaSize" | "onContentAreaResize" | "addContentView"
   >;
+  /** The tabs' own windows, which their views are put in. */
+  ownWindows: Pick<OwnWindows, "open" | "close" | "onResize">;
   /** The registry, or the suite's stand-ins for it. */
   apps: readonly App[];
   /** Google's sign-in, or the suite's stand-in for it. */
@@ -75,6 +84,8 @@ export interface TabViewsDeps {
   updatePages: (updates: PageUpdate[]) => Promise<unknown>;
   /** Told when a tab's page gains keyboard focus, the front one's alone. */
   onFocus: () => void;
+  /** Told when the page of a tab in its own window gains keyboard focus. */
+  onOwnWindowFocus: (key: TabKey) => void;
   /**
    * Told when a shown pane's page other than the front one takes keyboard
    * focus unasked, as on Linux one does as it first loads, so focus goes
@@ -141,6 +152,7 @@ interface TabView {
  */
 export const createTabViews = ({
   window,
+  ownWindows,
   apps,
   signInOrigins,
   background,
@@ -159,6 +171,7 @@ export const createTabViews = ({
   prepareSession,
   updatePages,
   onFocus,
+  onOwnWindowFocus,
   onStrayFocus,
   onFront,
   onPageChange,
@@ -189,6 +202,8 @@ export const createTabViews = ({
    */
   let preview: PaneTree | undefined;
   let shownKeys = new Set<string>();
+  /** The tabs whose views are in their own windows, and where. */
+  const inWindows = new Map<string, OwnWindowPlace & { key: TabKey }>();
 
   const laidOut = (): Pick<ViewPlan, "shown" | "panes"> =>
     preview && onScreen.panes ? { ...onScreen, panes: preview } : onScreen;
@@ -208,6 +223,15 @@ export const createTabViews = ({
    * ring's width, so the shell's ring around the focused one shows.
    */
   const place = (key: string, view: ContentView) => {
+    const own = inWindows.get(key);
+
+    if (own) {
+      view.setBounds(own.pageBounds());
+      view.setBorderRadius(OWN_WINDOW_RADIUS);
+
+      return;
+    }
+
     const area = contentViewBounds(window.getContentAreaSize(), sidebar());
     const { radius } = viewFrame(sidebar());
     const profileId = onScreen.shown[0]?.profileId;
@@ -254,9 +278,12 @@ export const createTabViews = ({
     }
   };
 
-  /** The one test of whether a view shows: a tab on screen's, while its page can. */
+  /**
+   * The one test of whether a view shows: a tab on screen's or in its own
+   * window, while its page can.
+   */
   const shows = (key: string, tab: TabView) =>
-    shownKeys.has(key) && showsView(tab.status);
+    (shownKeys.has(key) || inWindows.has(key)) && showsView(tab.status);
 
   const showFront = () => {
     for (const [key, tab] of tabs) {
@@ -595,7 +622,9 @@ export const createTabViews = ({
       onKey: handleKey,
       // A press, below, selects the pane; focus alone does not.
       onFocus: () => {
-        if (key !== front && shownKeys.has(key) && front !== undefined) {
+        if (inWindows.has(key)) {
+          onOwnWindowFocus(tabKeyed);
+        } else if (key !== front && shownKeys.has(key) && front !== undefined) {
           onStrayFocus();
         } else {
           onFocus();
@@ -640,6 +669,10 @@ export const createTabViews = ({
 
   const frontTab = () => (front === undefined ? undefined : tabs.get(front));
 
+  /** The tab `key` names, or the front tab without one. */
+  const target = (key: TabKey | undefined) =>
+    key === undefined ? frontTab() : tabs.get(tabKey(key));
+
   /** Places every view again; the shell hears of the panes' new places. */
   const relayout = () => {
     placeAll();
@@ -650,6 +683,13 @@ export const createTabViews = ({
   };
 
   window.onContentAreaResize(relayout);
+  ownWindows.onResize((key) => {
+    const tab = tabs.get(tabKey(key));
+
+    if (tab && inWindows.has(tabKey(key))) {
+      place(tabKey(key), tab.view);
+    }
+  });
 
   network.onOnline(() => {
     for (const key of tabs.keys()) {
@@ -674,6 +714,13 @@ export const createTabViews = ({
       if (!known.has(key)) {
         sleeping.delete(key);
         forget(key);
+      }
+    }
+
+    // A tab in its own window never sleeps, so one moved out wakes.
+    for (const profile of current.profiles) {
+      for (const tab of knownTabs(profile).filter(inOwnWindow)) {
+        sleeping.delete(tabKey({ profileId: profile.id, tabId: tab.id }));
       }
     }
 
@@ -737,6 +784,56 @@ export const createTabViews = ({
     }
   };
 
+  /**
+   * Puts each view the plan gives a window of its own in that window, a new
+   * one loading there, and each that left one back in the main window,
+   * closing the window; says whether any moved. A view moves with its page
+   * as it is.
+   */
+  const placeWindows = (next: ViewPlan, created: ReadonlySet<string>) => {
+    const planned = new Map(next.windows.map((key) => [tabKey(key), key]));
+    let moved = false;
+
+    for (const [key, own] of inWindows) {
+      if (planned.has(key)) {
+        continue;
+      }
+
+      inWindows.delete(key);
+
+      const tab = tabs.get(key);
+
+      if (tab) {
+        tab.view.moveTo(window.host);
+        place(key, tab.view);
+      }
+
+      ownWindows.close(own.key);
+      moved = true;
+    }
+
+    for (const [key, keyed] of planned) {
+      const tab = tabs.get(key);
+
+      if (!tab || inWindows.has(key)) {
+        continue;
+      }
+
+      const own = ownWindows.open(keyed);
+
+      inWindows.set(key, { ...own, key: keyed });
+      tab.view.moveTo(own.host);
+      place(key, tab.view);
+      moved = true;
+
+      if (created.has(key)) {
+        dispatch(key, { kind: "open" });
+      }
+    }
+
+    return moved;
+  };
+
   /** Creates, closes, shows and hides views until the window matches. */
   const reconcile = (current: State) => {
     for (const profile of current.profiles) {
@@ -792,6 +889,8 @@ export const createTabViews = ({
 
     openPanes(created);
 
+    const windowsChanged = placeWindows(next, created);
+
     if (placesChanged) {
       placeAll();
     }
@@ -802,8 +901,9 @@ export const createTabViews = ({
       onFront();
     }
 
-    // The find bar follows the front, and the overlay's view the panes.
-    if (changed || frontMoved || placesChanged) {
+    // The find bar follows the front, the overlay's view the panes, and the
+    // shell's titlebars the windows.
+    if (changed || frontMoved || placesChanged || windowsChanged) {
       notify();
     }
   };
@@ -871,7 +971,8 @@ export const createTabViews = ({
     sleep: (key: TabKey) => {
       const keyed = tabKey(key);
 
-      if (!tabs.has(keyed)) {
+      // A tab in its own window never sleeps.
+      if (!tabs.has(keyed) || inWindows.has(keyed)) {
         return;
       }
 
@@ -883,26 +984,41 @@ export const createTabViews = ({
       }
     },
     /**
-     * Where the front tab's page can go and whether it loads, or `null` with
-     * no front tab or under the unified inbox, which is no page.
+     * Where the page of the tab `key` names, or of the front tab, can go and
+     * whether it loads, or `null` with no such page; the front tab has none
+     * under the unified inbox.
      */
-    navigation: (): Navigation | null => {
-      const tab = frontTab();
+    navigation: (key?: TabKey): Navigation | null => {
+      const tab = target(key);
 
-      return tab && !inboxOpen() ? tab.view.navigation() : null;
+      return tab && (key !== undefined || !inboxOpen())
+        ? tab.view.navigation()
+        : null;
     },
-    goBack: () => {
-      frontTab()?.view.goBack();
+    /** Each on the page of the tab `key` names, or of the front tab. */
+    goBack: (key?: TabKey) => {
+      target(key)?.view.goBack();
     },
-    goForward: () => {
-      frontTab()?.view.goForward();
+    goForward: (key?: TabKey) => {
+      target(key)?.view.goForward();
     },
-    stopFront: () => {
-      frontTab()?.view.stop();
+    stopFront: (key?: TabKey) => {
+      target(key)?.view.stop();
     },
-    /** Zooms the front tab's page, the focused pane's in a split. */
-    zoomFront: (change: ZoomChange) => {
-      frontTab()?.view.zoom(change);
+    /** Zooms the front tab's page, the focused pane's in a split, or `key`'s. */
+    zoomFront: (change: ZoomChange, key?: TabKey) => {
+      target(key)?.view.zoom(change);
+    },
+    /** The tabs whose views are in their own windows. */
+    windowTabs: (): TabKey[] => [...inWindows.values()].map(({ key }) => key),
+    /** What focuses the page in the tab's own window, while it shows. */
+    ownWindowFocuser: (key: TabKey) => {
+      const keyed = tabKey(key);
+      const tab = tabs.get(keyed);
+
+      return inWindows.has(keyed) && tab && shows(keyed, tab)
+        ? tab.view.focus
+        : undefined;
     },
     /** Places every view again, as the sidebar now has it, loading nothing. */
     relayout,

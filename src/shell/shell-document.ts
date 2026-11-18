@@ -24,21 +24,48 @@ const mirrorStyles = (target: Document) => {
   });
 };
 
-let opened: Document | undefined;
+const opened = new Map<string, Window>();
+const listeners = new Set<() => void>();
+
+const notify = () => {
+  for (const listener of listeners) {
+    listener();
+  }
+};
+
+/** Told as a document is opened or closed; returns what stops it. */
+export const subscribeShellDocuments = (listener: () => void) => {
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
+/** The document under `name`, while it is open. */
+export const shellDocument = (name: string) => {
+  const open = opened.get(name);
+
+  return open && !open.closed ? open.document : undefined;
+};
 
 /**
- * The overlay's document, of the view main shows over the content views,
- * opened once: a blank page of the shell's, in its process, which this tree
- * draws into. Main allows the shell to open it and nothing else.
+ * A document of the shell's own under `name`, opened once and again only
+ * once it has been closed: a blank page of the shell's, in its process,
+ * which this tree draws into, and main shows in a view of its own. Main
+ * allows the shell to open these and nothing else.
  */
-export const openOverlayDocument = () => {
-  if (opened) {
-    return opened;
+export const openShellDocument = (name: string) => {
+  const open = opened.get(name);
+
+  if (open && !open.closed) {
+    return open.document;
   }
 
-  const target = window.open("about:blank", OVERLAY_FRAME_NAME)?.document;
+  const view = window.open("about:blank", name);
+  const target = view?.document;
 
-  if (!target) {
+  if (!view || !target) {
     return;
   }
 
@@ -50,7 +77,21 @@ export const openOverlayDocument = () => {
   mirrorStyles(target);
   // Clear wherever nothing is drawn, so the page shows through.
   target.body.className = "bg-transparent";
-  opened = target;
+  opened.set(name, view);
+  notify();
 
   return target;
 };
+
+/** Closes the document under `name`, which main's view goes with. */
+export const closeShellDocument = (name: string) => {
+  opened.get(name)?.close();
+  opened.delete(name);
+  notify();
+};
+
+/**
+ * The overlay's document, of the view main shows over the content views,
+ * which holds the menus, the cards, the find bar and the toasts.
+ */
+export const openOverlayDocument = () => openShellDocument(OVERLAY_FRAME_NAME);

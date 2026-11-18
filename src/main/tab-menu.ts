@@ -30,6 +30,8 @@ export interface TabMenuDeps {
     | "closeTabsBelow"
     | "separateTab"
     | "maximizePane"
+    | "moveToOwnWindow"
+    | "moveToMainWindow"
   >;
   /** Opens Open in split beside or below the selected tab's pane. */
   openSplit: (direction: PaneDirection) => void;
@@ -78,10 +80,55 @@ export const createTabMenu = ({
 }: TabMenuDeps) => {
   let running = false;
 
+  const split = async (key: TabKey, direction: "row" | "column") => {
+    // Beside this tab, which selecting focuses.
+    await wake(key);
+    openSplit(direction);
+  };
+
+  /**
+   * Starts an item that changes where the tab's page shows, in a split or a
+   * window of its own, or gives nothing for any other item. It gives the
+   * promise rather than awaiting it so the other items start in the same
+   * turn, as the one-at-a-time guard expects.
+   */
+  const placeTab = (item: TabMenuItemId, key: TabKey) => {
+    switch (item) {
+      case "splitRight":
+      case "splitDown": {
+        return split(key, item === "splitRight" ? "row" : "column");
+      }
+      case "separate": {
+        return profiles.separateTab(key);
+      }
+      case "maximize":
+      case "restore": {
+        return profiles.maximizePane(key, item === "maximize");
+      }
+      case "moveToNewWindow": {
+        return profiles.moveToOwnWindow(key);
+      }
+      case "moveToMainWindow": {
+        return profiles.moveToMainWindow(key, true);
+      }
+      default: {
+        return null;
+      }
+    }
+  };
+
   const act = async (item: TabMenuItemId, key: TabKey) => {
     const tab = findTab(state(), key);
 
     if (!tab) {
+      return;
+    }
+
+    const placing = placeTab(item, key);
+
+    if (placing) {
+      await placing;
+
       return;
     }
 
@@ -129,22 +176,6 @@ export const createTabMenu = ({
       }
       case "closeOthers": {
         await profiles.closeOtherTabs(key);
-        break;
-      }
-      case "splitRight":
-      case "splitDown": {
-        // Beside this tab, which selecting focuses.
-        await wake(key);
-        openSplit(item === "splitRight" ? "row" : "column");
-        break;
-      }
-      case "separate": {
-        await profiles.separateTab(key);
-        break;
-      }
-      case "maximize":
-      case "restore": {
-        await profiles.maximizePane(key, item === "maximize");
         break;
       }
       default: {

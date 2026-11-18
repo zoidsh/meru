@@ -1,8 +1,11 @@
 import { WebContentsView } from "electron";
-import type { BrowserWindow, WebContents } from "electron";
+import type { BaseWindow, WebContents } from "electron";
 
 import type { KeyInput } from "#core/accelerator.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
+
+import { hostWindow } from "./view-host.ts";
+import type { ViewHost } from "./view-host.ts";
 
 /**
  * The view the shell's overlay document shows in, above every content view,
@@ -16,6 +19,11 @@ export interface OverlayView {
   show: () => void;
   /** Hidden, since a clear view still takes every click in its bounds. */
   hide: () => void;
+  /**
+   * Puts it in another window, shown beneath every view there, as a tab's
+   * own window's titlebar is drawn behind its page.
+   */
+  moveUnder: (host: ViewHost) => void;
   focus: () => void;
   /** Told when its page gains keyboard focus. */
   onFocus: (listener: () => void) => void;
@@ -36,7 +44,7 @@ export interface OverlayView {
  * and open nothing.
  */
 export const adoptOverlayView = (
-  window: BrowserWindow,
+  window: BaseWindow,
   webContents: WebContents
 ): OverlayView => {
   const view = new WebContentsView({ webContents });
@@ -44,6 +52,8 @@ export const adoptOverlayView = (
   view.setBackgroundColor("#00000000");
   view.setVisible(false);
   window.contentView.addChildView(view);
+
+  let owner = window;
 
   webContents.on("will-navigate", (event) => {
     if (event.url !== "about:blank") {
@@ -62,8 +72,8 @@ export const adoptOverlayView = (
 
     gone = true;
 
-    if (!window.isDestroyed()) {
-      window.contentView.removeChildView(view);
+    if (!owner.isDestroyed()) {
+      owner.contentView.removeChildView(view);
     }
 
     for (const listener of goneListeners) {
@@ -78,10 +88,25 @@ export const adoptOverlayView = (
     setBounds: (bounds) => view.setBounds(bounds),
     show: () => {
       // Adding a child view again moves it to the top.
-      window.contentView.addChildView(view);
+      owner.contentView.addChildView(view);
       view.setVisible(true);
     },
     hide: () => view.setVisible(false),
+    moveUnder: (host) => {
+      const next = hostWindow(host);
+
+      if (!next || gone) {
+        return;
+      }
+
+      if (next !== owner && !owner.isDestroyed()) {
+        owner.contentView.removeChildView(view);
+      }
+
+      owner = next;
+      owner.contentView.addChildView(view, 0);
+      view.setVisible(true);
+    },
     focus: () => webContents.focus(),
     onFocus: (listener) => {
       webContents.on("focus", listener);

@@ -9,6 +9,8 @@ import { addContentView } from "./content-view.ts";
 import type { ContentView, ContentViewOptions } from "./content-view.ts";
 import { adoptOverlayView } from "./overlay-view.ts";
 import type { OverlayView } from "./overlay-view.ts";
+import { viewHost } from "./view-host.ts";
+import type { ViewHost } from "./view-host.ts";
 
 export interface WindowOptions {
   title: string;
@@ -22,10 +24,10 @@ export interface WindowOptions {
   /** Shown where the page has not painted, as `#rrggbb`. */
   backgroundColor: string;
   /**
-   * Whether the page is opening the overlay's document, which becomes a view
-   * over the content; every other open is refused.
+   * Whether the page is opening one of its own documents, which becomes a
+   * view of the window's, hidden until shown; every other open is refused.
    */
-  isOverlayDocument: (request: { url: string; frameName: string }) => boolean;
+  isShellDocument: (request: { url: string; frameName: string }) => boolean;
 }
 
 export type ContextMenuItem =
@@ -60,6 +62,8 @@ export type WindowFocusEvent =
 
 export interface AppWindow {
   readonly webContentsId: number;
+  /** What its content views are put back in from a tab's own window. */
+  readonly host: ViewHost;
   loadURL: (url: string) => Promise<void>;
   once: (event: WindowLoadEvent, listener: () => void) => void;
   show: () => void;
@@ -77,8 +81,14 @@ export interface AppWindow {
   focusPage: () => void;
   /** Told when the page gains keyboard focus. */
   onPageFocus: (listener: () => void) => void;
-  /** Told of each view of the overlay's document the page opens. */
-  onOverlayDocument: (listener: (view: OverlayView) => void) => void;
+  /**
+   * Told of each view of a document of its own the page opens, by the name
+   * the page opened it under; one opened again under a name replaces the
+   * last, which is closed.
+   */
+  onShellDocument: (
+    listener: (view: OverlayView, frameName: string) => void
+  ) => void;
   /** Told when the page's document goes, loaded anew or its process gone. */
   onPageGone: (listener: () => void) => void;
   restore: () => void;
@@ -143,23 +153,27 @@ export const createWindowFactory = (): WindowFactory => ({
       }
     });
 
-    const documentListeners = new Set<(view: OverlayView) => void>();
-    let overlayDocument: OverlayView | undefined;
+    const documentListeners = new Set<
+      (view: OverlayView, frameName: string) => void
+    >();
+    const documents = new Map<string, OverlayView>();
 
     const pageGoneListeners = new Set<() => void>();
-    const closeDocument = () => {
-      overlayDocument?.close();
-      overlayDocument = undefined;
+    const closeDocument = (frameName: string) => {
+      documents.get(frameName)?.close();
+      documents.delete(frameName);
     };
     const pageGone = () => {
-      closeDocument();
+      for (const frameName of documents.keys()) {
+        closeDocument(frameName);
+      }
 
       for (const listener of pageGoneListeners) {
         listener();
       }
     };
 
-    // The document belongs to the page that opened it. Left open, a
+    // A document belongs to the page that opened it. Left open, a
     // reloaded page opening it again by name would get the old one,
     // navigated to a new blank document as it draws into it.
     webContents.on("did-start-navigation", (details) => {
@@ -171,7 +185,7 @@ export const createWindowFactory = (): WindowFactory => ({
     webContents.on("render-process-gone", pageGone);
 
     webContents.setWindowOpenHandler((request) =>
-      options.isOverlayDocument(request)
+      options.isShellDocument(request)
         ? {
             action: "allow",
             createWindow: (created) => {
@@ -179,11 +193,21 @@ export const createWindowFactory = (): WindowFactory => ({
                 webContents: WebContents;
               };
 
-              closeDocument();
-              overlayDocument = adoptOverlayView(window, opened);
+              const { frameName } = request;
+
+              closeDocument(frameName);
+
+              const adopted = adoptOverlayView(window, opened);
+
+              documents.set(frameName, adopted);
+              adopted.onGone(() => {
+                if (documents.get(frameName) === adopted) {
+                  documents.delete(frameName);
+                }
+              });
 
               for (const listener of documentListeners) {
-                listener(overlayDocument);
+                listener(adopted, frameName);
               }
 
               return opened;
@@ -194,6 +218,7 @@ export const createWindowFactory = (): WindowFactory => ({
 
     return {
       webContentsId: webContents.id,
+      host: viewHost(window),
       loadURL: (url) => window.loadURL(url),
       once: (event, listener) => {
         if (event === "ready-to-show") {
@@ -215,7 +240,7 @@ export const createWindowFactory = (): WindowFactory => ({
       onPageFocus: (listener) => {
         webContents.on("focus", listener);
       },
-      onOverlayDocument: (listener) => {
+      onShellDocument: (listener) => {
         documentListeners.add(listener);
       },
       onPageGone: (listener) => {

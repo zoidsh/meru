@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { gmailTab, newProfile } from "./state.ts";
+import { gmailTab, isTab, newProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
 import { planViews } from "./views.ts";
 
@@ -182,6 +182,57 @@ describe(planViews, () => {
       ["a/a1", "a/gmail"],
       ["a/a1"],
     ]);
+  });
+
+  it("gives a tab in its own window a view that never sleeps and is never the front, once its profile's Open at Launch tabs open", () => {
+    const away: State = {
+      ...state,
+      profiles: state.profiles.map((profile) => ({
+        ...profile,
+        tabs: profile.tabs.map((each) =>
+          isTab(each) && (each.id === "a1" || each.id === "b1")
+            ? { ...each, ownWindow: true }
+            : each
+        ),
+      })),
+    };
+    const first = plan(away, [], [], ["a/a1"]);
+    const later = plan(away, ["a/gmail", "a/a1"], ["a", "b"], ["a/a1"]);
+
+    expect([
+      first.front,
+      keys(first.windows),
+      keys(first.views),
+      keys(later.windows),
+      keys(later.views),
+    ]).toStrictEqual([
+      undefined,
+      ["a/a1"],
+      ["a/gmail", "a/a1"],
+      ["a/a1", "b/b1"],
+      ["a/gmail", "a/a1", "b/b1"],
+    ]);
+  });
+
+  it("gives a sleeping profile's tab in its own window no window", () => {
+    const away: State = {
+      ...state,
+      profiles: state.profiles.map((profile) =>
+        profile.id === "b"
+          ? {
+              ...profile,
+              asleep: true,
+              tabs: profile.tabs.map((each) =>
+                isTab(each) && each.id === "b1"
+                  ? { ...each, ownWindow: true }
+                  : each
+              ),
+            }
+          : profile
+      ),
+    };
+
+    expect(keys(plan(away, [], ["a", "b"]).windows)).toStrictEqual([]);
   });
 
   it("never gives a tab of an app this build does not know a view", () => {

@@ -20,6 +20,7 @@ const oneProfile: State = {
 
 const contextOf = (): CommandContext => ({
   state: oneProfile,
+  ownWindow: undefined,
   doNotDisturb: undefined,
   inboxOpen: false,
   openAppOpen: false,
@@ -251,6 +252,12 @@ describe(buildMenuTemplate, () => {
       ["tab.splitDown", "Split Down", "CommandOrControl+Alt+Shift+N"],
       ["tab.maximize", "Maximize Pane", "CommandOrControl+Shift+Enter"],
       ["tab.separate", "Separate from Split", undefined],
+      ["tab.moveToNewWindow", "Move to New Window", "CommandOrControl+Shift+N"],
+      [
+        "tab.moveToMainWindow",
+        "Move to Main Window",
+        "CommandOrControl+Shift+M",
+      ],
       ["tab.pin", "Unpin Tab", undefined],
       ["tab.openAtLaunch", "Open at Launch", undefined],
       ["tab.close", expect.any(String), expect.any(String)],
@@ -380,6 +387,7 @@ const setup = () => {
     commands: COMMANDS,
     context: () => ({
       state,
+      ownWindow: undefined,
       doNotDisturb: undefined,
       navigation: { canGoBack: false, canGoForward: false, loading: false },
       inboxOpen,

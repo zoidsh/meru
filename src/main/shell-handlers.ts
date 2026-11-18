@@ -1,4 +1,4 @@
-import type { ShellState } from "#contract/shell.ts";
+import type { ShellCalls, ShellState } from "#contract/shell.ts";
 import { ariaKeyShortcut, formatAccelerator } from "#core/accelerator.ts";
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
@@ -10,11 +10,17 @@ import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
 import { profileMenuItems } from "#core/profile-menu.ts";
 import { splitBoxes, splitRoomy } from "#core/split.ts";
-import { isAsleep, isPinned, knownTabs, selectedProfile } from "#core/state.ts";
+import {
+  inOwnWindow,
+  isAsleep,
+  isPinned,
+  knownTabs,
+  selectedProfile,
+} from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import { tabMenuItems } from "#core/tab-menu.ts";
-import { findTab, splitOntoTab, tabKey } from "#core/tabs.ts";
+import { findTab, isMainWindowTab, splitOntoTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { inViewReach, viewDrop } from "#core/view-drop.ts";
 import type { Size } from "#core/window-bounds.ts";
@@ -57,6 +63,13 @@ export interface ShellHandlersDeps {
     retry: (key: TabKey) => void;
     select: (key: TabKey) => Promise<unknown>;
   };
+  /** Brings a tab's own window forward, its page focused, as clicking its tab does. */
+  revealOwnWindow: (key: TabKey) => void;
+  /** Goes back or forward on a tab's page, or reloads or stops it. */
+  navigateTab: (
+    key: TabKey,
+    action: Parameters<ShellCalls["navigate"]>[0]["action"]
+  ) => Promise<unknown>;
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   openApp: Pick<OpenApp, "choose">;
   tabMenu: Pick<TabMenu, "open" | "run">;
@@ -76,7 +89,7 @@ export interface ShellHandlersDeps {
 
 type ShellTabStatus = ShellState["tabs"]["tabs"][number]["status"];
 
-const shellTabStatus = (status: TabStatus): ShellTabStatus => {
+export const shellTabStatus = (status: TabStatus): ShellTabStatus => {
   switch (status.kind) {
     case "failed": {
       return {
@@ -250,7 +263,7 @@ export const shellState = (
   inbox: ShellState["inbox"],
   fixed: Pick<
     ShellState,
-    "sidebar" | "shortcuts" | "ariaShortcuts" | "navigation"
+    "sidebar" | "shortcuts" | "ariaShortcuts" | "navigation" | "windows"
   >,
   /** The registry, or the suite's stand-ins for it, which Open app lists. */
   apps: readonly App[]
@@ -277,6 +290,7 @@ export const shellState = (
         app: tab.app,
         title: tab.title,
         pinned: isPinned(tab),
+        ownWindow: inOwnWindow(tab),
         status: shellTabStatus(
           status({ profileId: profile.id, tabId: tab.id })
         ),
@@ -300,6 +314,8 @@ export const createShellHandlers = ({
   overlays,
   find,
   tabs,
+  revealOwnWindow,
+  navigateTab,
   inbox,
   openApp,
   tabMenu,
@@ -320,7 +336,16 @@ export const createShellHandlers = ({
     await profiles.select(profileId);
     inbox.setOpen(false);
   },
+  // A tab in its own window selects nothing in the main window.
   selectTab: async (key) => {
+    const tab = findTab(profiles.get(), key);
+
+    if (tab && inOwnWindow(tab)) {
+      revealOwnWindow(key);
+
+      return;
+    }
+
     await tabs.select(key);
     inbox.setOpen(false);
   },
@@ -348,6 +373,7 @@ export const createShellHandlers = ({
     const drop =
       point &&
       profileId === state.selectedProfileId &&
+      isMainWindowTab(selectedProfile(state), tabId) &&
       inViewReach(size, viewFrame(sidebar.current()).inset, point)
         ? viewDrop(selectedProfile(state), size, point, tabId)
         : undefined;
@@ -475,6 +501,9 @@ export const createShellHandlers = ({
     runCommand(`tab.${action}`);
 
     return Promise.resolve();
+  },
+  navigateTab: async ({ profileId, tabId, action }) => {
+    await navigateTab({ profileId, tabId }, action);
   },
   toggleSidebarWidth: () => {
     sidebar.toggleWidth();

@@ -20,6 +20,7 @@ export const SHELL_CALL_NAMES = [
   "findStep",
   "toggleSidebar",
   "navigate",
+  "navigateTab",
   "toggleSidebarWidth",
   "toggleDoNotDisturb",
   "openDoNotDisturbMenu",

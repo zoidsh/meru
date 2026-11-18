@@ -2,6 +2,7 @@ import { paneRectangles, paneTabs } from "./pane-tree.ts";
 import type { PaneRectangle, PaneTree } from "./pane-tree.ts";
 import { shownPanes } from "./split.ts";
 import {
+  inOwnWindow,
   isAsleep,
   knownTabs,
   opensAtLaunch,
@@ -36,7 +37,10 @@ export const opensLaunchTabs = (profile: Profile, state: State) =>
 export interface ViewPlan {
   /** The tabs that have a view, in the order of the profiles and their tabs. */
   views: TabKey[];
-  /** The selected tab of the selected profile, unless it has none or sleeps. */
+  /**
+   * The selected tab of the selected profile, unless it has none or sleeps;
+   * never a tab in its own window.
+   */
   front?: TabKey;
   /**
    * The tabs on screen: every pane's while the front tab is in its profile's
@@ -45,6 +49,12 @@ export interface ViewPlan {
   shown: TabKey[];
   /** The split's tree while it shows, which places the shown views. */
   panes?: PaneTree;
+  /**
+   * The tabs in windows of their own, each its window's one page, which
+   * never sleep: every one of an awake profile whose Open at Launch tabs
+   * have opened, as they open with them.
+   */
+  windows: TabKey[];
   /** Open at Launch tabs to load now, without showing them. */
   opening: TabKey[];
   /** The profiles whose Open at Launch tabs those are, opened once. */
@@ -68,7 +78,9 @@ export const planViews = (
 ): ViewPlan => {
   const profile = selectedProfile(state);
   const shown = knownTabs(profile);
-  const front = shown.some((tab) => tab.id === profile.selectedTabId)
+  const front = shown.some(
+    (tab) => tab.id === profile.selectedTabId && !inOwnWindow(tab)
+  )
     ? { profileId: profile.id, tabId: profile.selectedTabId }
     : undefined;
   const panes = front && shownPanes(profile);
@@ -85,11 +97,21 @@ export const planViews = (
       .filter(opensAtLaunch)
       .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
   );
-  const kept = new Set(
-    [...existing, ...opening.map(tabKey), ...onScreen.map(tabKey)].filter(
-      (key) => !sleeping.has(key)
-    )
+  const opensNow = new Set(launching.map((candidate) => candidate.id));
+  const windows = state.profiles.flatMap((candidate) =>
+    !isAsleep(state, candidate) &&
+    (launched.has(candidate.id) || opensNow.has(candidate.id))
+      ? knownTabs(candidate)
+          .filter(inOwnWindow)
+          .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
+      : []
   );
+  const kept = new Set([
+    ...[...existing, ...opening.map(tabKey), ...onScreen.map(tabKey)].filter(
+      (key) => !sleeping.has(key)
+    ),
+    ...windows.map(tabKey),
+  ]);
 
   return {
     views: state.profiles.flatMap((candidate) =>
@@ -100,6 +122,7 @@ export const planViews = (
     ...(front && { front }),
     shown: onScreen,
     ...(panes && { panes }),
+    windows,
     opening,
     launched: launching.map((candidate) => candidate.id),
   };

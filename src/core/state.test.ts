@@ -14,6 +14,7 @@ import {
   forgetProfilesToClear,
   gmailTab,
   hasTabbedInbox,
+  inOwnWindow,
   isAsleep,
   isPinned,
   isTab,
@@ -21,6 +22,7 @@ import {
   newProfile,
   nextProfileName,
   opensAtLaunch,
+  ownWindowBounds,
   profilePartition,
   removeProfile,
   renameProfile,
@@ -314,6 +316,51 @@ describe("decoding tabs", () => {
       { ids: ["t1", "gmail"], selected: "t1" },
       { ids: ["t1"], selected: "t1" },
       { ids: [], selected: "" },
+    ]);
+  });
+
+  it("never selects a tab in its own window, selecting the first in the main window instead", () => {
+    expect(
+      decodeTabs(
+        [{ ...tab("t1", "calendar"), ownWindow: true }, tab("t2", "drive")],
+        "t1"
+      )
+    ).toStrictEqual({ ids: ["t1", "t2"], selected: "t2" });
+  });
+
+  it("reads a tab as in its own window only for true, and never a pinned one", () => {
+    expect(
+      [
+        { ...tab("t1", "calendar"), ownWindow: true },
+        { ...tab("t2", "calendar"), ownWindow: "yes" },
+        { ...tab("t3", "calendar"), ownWindow: true, pinned: true },
+      ].map(inOwnWindow)
+    ).toStrictEqual([true, false, false]);
+  });
+
+  it("reads where a tab's own window was only from four finite numbers", () => {
+    const bounds = { x: -20, y: 30, width: 800, height: 600 };
+
+    expect(
+      [
+        bounds,
+        { ...bounds, extra: 1 },
+        { ...bounds, width: "800" },
+        { ...bounds, height: Number.POSITIVE_INFINITY },
+        { x: 1, y: 2, width: 3 },
+        "a place",
+        null,
+      ].map((windowBounds) =>
+        ownWindowBounds({ ...tab("t1", "calendar"), windowBounds })
+      )
+    ).toStrictEqual([
+      bounds,
+      bounds,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
     ]);
   });
 

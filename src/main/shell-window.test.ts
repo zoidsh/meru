@@ -48,7 +48,7 @@ const createFakeWindow = () => {
     on: () => false,
     focusPage: () => false,
     onPageFocus: () => false,
-    onOverlayDocument: () => false,
+    onShellDocument: () => false,
     onPageGone: () => false,
     restore: () => {
       minimized = false;
@@ -97,8 +97,10 @@ const createFakeWindow = () => {
       findInPage: () => 0,
       stopFindInPage: () => false,
       zoom: () => false,
+      moveTo: () => false,
     }),
     webContentsId: 1,
+    host: { hostId: 1 },
     showContextMenu: () => false,
     confirm: () => Promise.resolve(false),
   };
@@ -230,7 +232,7 @@ describe(createShellWindow, () => {
   });
 
   it("lets the page open the overlay's blank document and nothing else", () => {
-    const allowed = open().options?.isOverlayDocument;
+    const allowed = open().options?.isShellDocument;
 
     expect(
       allowed?.({ url: "about:blank", frameName: OVERLAY_FRAME_NAME })

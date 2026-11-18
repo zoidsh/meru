@@ -17,6 +17,7 @@ const tabs = (selectedAsleep: boolean): ShellState["tabs"] => ({
       app: "calendar",
       title: "",
       pinned: false,
+      ownWindow: false,
       status: { kind: "unloaded" },
     },
     {
@@ -24,6 +25,7 @@ const tabs = (selectedAsleep: boolean): ShellState["tabs"] => ({
       app: "gmail",
       title: "Inbox",
       pinned: true,
+      ownWindow: false,
       status: { kind: "unloaded" },
     },
   ],

@@ -1,4 +1,4 @@
-import { isOverlayDocument } from "#core/overlay.ts";
+import { isShellDocument } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 import { closeHides } from "#core/tray.ts";
@@ -54,7 +54,7 @@ export const createShellWindow = ({
     preloadPath,
     contentUrl: url,
     backgroundColor: windowBackground(theme.isDark()),
-    isOverlayDocument,
+    isShellDocument,
   });
 
   theme.onChange(() => {

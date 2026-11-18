@@ -2,6 +2,7 @@ import { Tabs } from "@base-ui/react/tabs";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 import {
+  AppWindowIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
   CircleAlertIcon,
@@ -91,9 +92,26 @@ const TabStatusIcon = ({ status }: { status: ShellTab["status"] }) => {
   }
 };
 
-/** A tile's title, then "asleep" and "sign in required" as they apply. */
-const useTooltip = (title: string, asleep: boolean, mustSignIn: boolean) => {
+/**
+ * A tile's title, then "in its own window", "asleep" and "sign in required"
+ * as they apply; a tab in its own window never sleeps, and a pinned tile,
+ * which Gmail's with its sign-in is, is never in one.
+ */
+const useTooltip = (
+  title: string,
+  ownWindow: boolean,
+  asleep: boolean,
+  mustSignIn: boolean
+) => {
   const { t } = useLingui();
+
+  if (ownWindow) {
+    return t({
+      message: `${title} · in its own window`,
+      comment:
+        "Tooltip of a tile in the sidebar whose tab was moved to a window of its own; a click brings that window forward; {title} is the tab's title",
+    });
+  }
 
   if (asleep && mustSignIn) {
     return t({
@@ -127,6 +145,7 @@ const useTooltip = (title: string, asleep: boolean, mustSignIn: boolean) => {
  */
 const useDescription = ({
   tile,
+  ownWindow,
   asleep,
   boxed,
   maximized,
@@ -134,6 +153,7 @@ const useDescription = ({
   tooltip,
 }: {
   tile: boolean;
+  ownWindow: boolean;
   asleep: boolean;
   boxed: boolean;
   /** Whether the box's split shows its focused pane alone. */
@@ -148,6 +168,16 @@ const useDescription = ({
       "Said by screen readers after a sidebar row's title while its tab sleeps: put to sleep, or not opened yet since Meru started",
   });
   const rowDescription = !tile && asleep ? asleepDescription : undefined;
+
+  if (ownWindow) {
+    return tile
+      ? tooltip
+      : t({
+          message: "In its own window",
+          comment:
+            "Said by screen readers after a sidebar row's title while its tab is moved to a window of its own, which a click brings forward",
+        });
+  }
 
   if (!boxed) {
     return rowDescription;
@@ -281,6 +311,36 @@ const GmailMark = ({
     />
   );
 
+/**
+ * The window mark of a tab in its own window: after the title in a row, at
+ * the bottom right of a tile.
+ */
+const OwnWindowMark = ({ shown, tile }: { shown: boolean; tile: boolean }) => {
+  if (!shown) {
+    return null;
+  }
+
+  return tile ? (
+    <span
+      aria-hidden
+      data-own-window-mark
+      className="pointer-events-none absolute -right-[3px] -bottom-[3px] flex rounded-[3px] bg-shell text-muted-foreground [&_svg]:size-3!"
+    >
+      <AppWindowIcon />
+    </span>
+  ) : (
+    <AppWindowIcon
+      aria-hidden
+      data-own-window-mark
+      className="text-muted-foreground"
+    />
+  );
+};
+
+/** Not loaded, so drawn asleep; a tab in its own window never sleeps. */
+const isAsleepTab = (tab: ShellTab) =>
+  !tab.ownWindow && tab.status.kind === "unloaded";
+
 interface TabButtonProps {
   tab: ShellTab;
   /**
@@ -339,14 +399,16 @@ const TabButton = ({
   onSideways,
 }: TabButtonProps) => {
   const title = tabTitle(tab);
-  const asleep = tab.status.kind === "unloaded";
+  const { ownWindow } = tab;
+  const asleep = isAsleepTab(tab);
   const live = tab.status.kind === "live" || asleep;
   const marked = tile && tab.app === "gmail";
   // Unlike the name, which stays the title; Chromium then reads it as the
   // tile's description.
-  const tooltip = useTooltip(title, asleep, marked && signedOut);
+  const tooltip = useTooltip(title, ownWindow, asleep, marked && signedOut);
   const description = useDescription({
     tile,
+    ownWindow,
     asleep,
     boxed,
     maximized,
@@ -450,6 +512,7 @@ const TabButton = ({
         {title}
       </span>
       <TabStatusIcon status={tab.status} />
+      <OwnWindowMark shown={ownWindow} tile={tile} />
       {marked && <GmailMark unreadCount={unreadCount} signedOut={signedOut} />}
     </Tabs.Tab>
   );

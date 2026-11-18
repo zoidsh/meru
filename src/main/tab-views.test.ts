@@ -5,6 +5,7 @@ import type { FoundInPage } from "#core/find.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { Size } from "#core/window-bounds.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
@@ -61,7 +62,12 @@ interface FakeView {
   moves: string[];
   /** Each search asked of the page, and each stop. */
   finds: string[];
+  /** The window it is in: the main window's 1, or a tab's own. */
+  host: number;
 }
+
+/** The main window's host. */
+const MAIN_HOST = 1;
 
 /**
  * The real profiles over a save that only records, a fake window, and a
@@ -88,6 +94,11 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
   const loads: { key: TabKey; page: LoadedPage }[] = [];
   const focusEvents: string[] = [];
   const found: { key: TabKey; result: FoundInPage }[] = [];
+  /** Each own window open, by its tab's key, and its host. */
+  const ownWindows = new Map<string, number>();
+  const windowEvents: string[] = [];
+  let hosts = MAIN_HOST;
+  let ownWindowResize: ((key: TabKey) => void) | undefined;
 
   const profiles = createProfiles({
     initial: state,
@@ -104,7 +115,31 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
   });
 
   const tabs = createTabViews({
+    ownWindows: {
+      open: (key) => {
+        const keyed = tabKey(key);
+
+        if (!ownWindows.has(keyed)) {
+          hosts += 1;
+          ownWindows.set(keyed, hosts);
+          windowEvents.push(`open ${keyed}`);
+        }
+
+        return {
+          host: { hostId: ownWindows.get(keyed) ?? 0 },
+          pageBounds: () => ({ x: 8, y: 40, width: 984, height: 652 }),
+        };
+      },
+      close: (key) => {
+        ownWindows.delete(tabKey(key));
+        windowEvents.push(`close ${tabKey(key)}`);
+      },
+      onResize: (listener) => {
+        ownWindowResize = listener;
+      },
+    },
     window: {
+      host: { hostId: MAIN_HOST },
       getContentAreaSize: () => size,
       onContentAreaResize: (listener) => {
         resize = listener;
@@ -124,6 +159,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           navigation: { canGoBack: false, canGoForward: false, loading: false },
           moves: [],
           finds: [],
+          host: MAIN_HOST,
         };
 
         views.push(view);
@@ -167,6 +203,9 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
             view.finds.push(`stop ${keepSelection}`);
           },
           zoom: (change) => view.moves.push(`zoom ${change}`),
+          moveTo: ({ hostId }) => {
+            view.host = hostId;
+          },
         };
       },
     },
@@ -212,6 +251,9 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     updatePages: profiles.updatePages,
     onFocus: () => {
       focusEvents.push("front");
+    },
+    onOwnWindowFocus: (key) => {
+      focusEvents.push(`window ${tabKey(key)}`);
     },
     onStrayFocus: () => {
       focusEvents.push("stray");
@@ -262,6 +304,9 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
       view?.options.onEvent(event);
     },
     goOnline: () => online?.(),
+    ownWindows,
+    windowEvents,
+    resizeOwnWindow: (key: TabKey) => ownWindowResize?.(key),
     fronts: () => fronts,
     profilesAdded: () => profilesAdded,
     pageChanges,
@@ -510,6 +555,95 @@ describe(createTabViews, () => {
       ["gmail", 0, 0, ["front", "stray"]],
       "c1",
     ]);
+  });
+
+  it("moves a tab's view to its own window and back without reloading it, Gmail's coming to the front meanwhile", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await window.profiles.selectTab(calendar);
+    const view = window.viewOf("persist:a", 1);
+
+    await window.profiles.moveToOwnWindow(calendar);
+    const away = [
+      view?.host,
+      view?.bounds.at(-1),
+      view?.visible,
+      window.tabs.windowTabs(),
+      window.viewOf("persist:a", 0)?.visible,
+    ];
+
+    await window.profiles.moveToMainWindow(calendar, true);
+
+    expect([
+      away,
+      [view?.host, view?.visible, view?.loaded.length, view?.reloads],
+      window.tabs.windowTabs(),
+      window.windowEvents,
+    ]).toStrictEqual([
+      [2, { x: 8, y: 40, width: 984, height: 652 }, true, [calendar], true],
+      [MAIN_HOST, true, 1, 0],
+      [],
+      ["open a/c1", "close a/c1"],
+    ]);
+  });
+
+  it("loads a tab moved out before it ever loaded in its window, and closes the window with the tab", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await window.profiles.moveToOwnWindow(calendar);
+    const view = window.viewOf("persist:a", 1);
+    const opened = [view?.host, view?.loaded, view?.visible];
+
+    await window.profiles.closeTab(calendar);
+
+    expect([opened, view?.closed, window.windowEvents]).toStrictEqual([
+      [2, [CALENDAR], true],
+      true,
+      ["open a/c1", "close a/c1"],
+    ]);
+  });
+
+  it("tells of focus on a page in its own window as that window's, never selecting it, and places it again when its window resizes", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await window.profiles.moveToOwnWindow(calendar);
+    const view = window.viewOf("persist:a", 1);
+    const placed = view?.bounds.length ?? 0;
+
+    view?.options.onFocus();
+    view?.options.onPointerDown();
+    await vi.advanceTimersByTimeAsync(0);
+    window.resizeOwnWindow(calendar);
+    window.tabs.ownWindowFocuser(calendar)?.();
+
+    expect([
+      window.focusEvents,
+      window.profiles.get().profiles[0]?.selectedTabId,
+      (view?.bounds.length ?? 0) > placed,
+      view?.focuses,
+    ]).toStrictEqual([["window a/c1"], "gmail", true, 1]);
+  });
+
+  it("closes a sleeping profile's own windows, the tab back in the main window with its view closed", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await window.profiles.moveToOwnWindow(calendar);
+    const view = window.viewOf("persist:a", 1);
+
+    await window.profiles.select("b");
+    await window.profiles.sleep("a");
+
+    expect([
+      view?.closed,
+      window.windowEvents,
+      window.profiles
+        .get()
+        .profiles[0]?.tabs.some((each) => "ownWindow" in each),
+    ]).toStrictEqual([true, ["open a/c1", "close a/c1"], false]);
   });
 
   it("gives another profile's selected tab a view of its session when that profile is selected", async () => {

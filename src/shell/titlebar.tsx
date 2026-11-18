@@ -16,7 +16,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { KeyboardEvent } from "react";
 
-import type { ShellState } from "#contract/shell.ts";
+import type { ShellCalls, ShellState } from "#contract/shell.ts";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
@@ -74,21 +74,26 @@ const SidebarToggle = ({
   );
 };
 
+type NavigateAction = Parameters<ShellCalls["navigate"]>[0]["action"];
+
 /**
- * Back, Forward and Reload on the front tab's page, none while there is no
- * page. Reload spins while the page loads, and is Stop then, which hovering
- * or focusing it shows.
+ * Back, Forward and Reload on a page, none while there is no page. Reload
+ * spins while the page loads, and is Stop then, which hovering or focusing
+ * it shows.
  */
-const NavigationButtons = ({
+export const NavigationButtons = ({
   shortcuts,
+  navigation,
+  reloadWakes,
+  navigate,
 }: {
   shortcuts: Shortcuts | undefined;
+  navigation: ShellState["navigation"];
+  /** Whether Reload wakes a sleeping tab, which has no page. */
+  reloadWakes: boolean;
+  navigate: (action: NavigateAction) => void;
 }) => {
   const { t } = useLingui();
-  const navigation = useShellState("navigation") ?? null;
-  const tabs = useShellState("tabs");
-  const inboxOpen = useShellState("inbox")?.open ?? false;
-  const reloadWakes = (tabs?.selectedAsleep ?? false) && !inboxOpen;
   const loading = navigation?.loading ?? false;
   const reloadLabel = loading
     ? t({
@@ -113,7 +118,7 @@ const NavigationButtons = ({
         shortcut={shortcuts?.["tab.back"]}
         disabled={!navigation?.canGoBack}
         onClick={() => {
-          shellCalls().navigate({ action: "back" });
+          navigate("back");
         }}
       >
         <ArrowLeftIcon />
@@ -127,7 +132,7 @@ const NavigationButtons = ({
         shortcut={shortcuts?.["tab.forward"]}
         disabled={!navigation?.canGoForward}
         onClick={() => {
-          shellCalls().navigate({ action: "forward" });
+          navigate("forward");
         }}
       >
         <ArrowRightIcon />
@@ -135,10 +140,9 @@ const NavigationButtons = ({
       <TitlebarButton
         label={reloadLabel}
         shortcut={loading ? undefined : shortcuts?.["tab.reload"]}
-        // Reload wakes a sleeping selected tab, which has no page.
         disabled={navigation === null && !reloadWakes}
         onClick={() => {
-          shellCalls().navigate({ action: loading ? "stop" : "reload" });
+          navigate(loading ? "stop" : "reload");
         }}
       >
         {loading ? (
@@ -157,6 +161,29 @@ const NavigationButtons = ({
         )}
       </TitlebarButton>
     </>
+  );
+};
+
+/** The navigation buttons on the front tab's page. */
+const FrontNavigationButtons = ({
+  shortcuts,
+}: {
+  shortcuts: Shortcuts | undefined;
+}) => {
+  const navigation = useShellState("navigation") ?? null;
+  const tabs = useShellState("tabs");
+  const inboxOpen = useShellState("inbox")?.open ?? false;
+
+  return (
+    <NavigationButtons
+      shortcuts={shortcuts}
+      navigation={navigation}
+      // Reload wakes a sleeping selected tab, which has no page.
+      reloadWakes={(tabs?.selectedAsleep ?? false) && !inboxOpen}
+      navigate={(action) => {
+        shellCalls().navigate({ action });
+      }}
+    />
   );
 };
 
@@ -619,7 +646,7 @@ export const Titlebar = ({ sidebarShown }: { sidebarShown: boolean }) => {
     >
       <div className="mr-2 flex items-center gap-1">
         <SidebarToggle shown={sidebarShown} shortcuts={shortcuts} />
-        <NavigationButtons shortcuts={shortcuts} />
+        <FrontNavigationButtons shortcuts={shortcuts} />
       </div>
       {profiles && profileCount >= 2 && (
         <ProfileRow profiles={profiles} shortcuts={shortcuts} />

@@ -64,6 +64,7 @@ const setup = () => {
     onFocus: () => false,
     onKey: () => false,
     onGone: () => false,
+    moveUnder: () => false,
     close: () => false,
   });
 

@@ -15,10 +15,14 @@ import {
   adjacentTab,
   closeTab,
   moveTab,
+  moveToMainWindow,
+  moveToOwnWindow,
   openTab,
   selectTab,
   setOpenAtLaunch,
+  setOwnWindowBounds,
   setPinned,
+  splitTab,
   updatePages,
 } from "./tabs.ts";
 
@@ -493,5 +497,156 @@ describe("a sleeping profile's tabs", () => {
         (next) => next && isAsleep(next, next.profiles[0] ?? newProfile("", ""))
       )
     ).toStrictEqual([true, true, true]);
+  });
+});
+
+const key = (tabId: string, profileId = "p") => ({ profileId, tabId });
+
+/** The profile's tabs in windows of their own, and its selected tab. */
+const moved = (next: State | undefined, profileId = "p") => {
+  const profile = tabsOf(next, profileId);
+
+  return (
+    profile && [
+      profile.tabs
+        .filter((each) => each.ownWindow === true)
+        .map((each) => each.id),
+      profile.selectedTabId,
+    ]
+  );
+};
+
+const out = (current: State, tabId: string) =>
+  moveToOwnWindow(current, key(tabId)) as State;
+
+describe(moveToOwnWindow, () => {
+  it("moves the selected tab out and selects the one closing it would", () => {
+    expect([
+      moved(moveToOwnWindow(three("c1"), key("c1"))),
+      moved(moveToOwnWindow(three("d1"), key("d1"))),
+    ]).toStrictEqual([
+      [["c1"], "d1"],
+      [["d1"], "c1"],
+    ]);
+  });
+
+  it("leaves the selection alone when another tab moves", () => {
+    expect(moved(moveToOwnWindow(three("d1"), key("c1")))).toStrictEqual([
+      ["c1"],
+      "d1",
+    ]);
+  });
+
+  it("passes over a tab already in its own window when choosing the next", () => {
+    expect(
+      moved(moveToOwnWindow(out(three("c1"), "d1"), key("c1")))
+    ).toStrictEqual([["c1", "d1"], "gmail"]);
+  });
+
+  it("refuses a pinned tab, one already moved and one that is missing", () => {
+    const once = out(three("gmail"), "c1");
+
+    expect([
+      moveToOwnWindow(three("gmail"), key("gmail")),
+      moveToOwnWindow(once, key("c1")),
+      moveToOwnWindow(once, key("gone")),
+    ]).toStrictEqual([undefined, undefined, undefined]);
+  });
+
+  it("takes a tab out of its split first", () => {
+    const current = state([tab("c1", "calendar"), tab("d1", "drive")], "c1");
+    const split = splitTab(current, key("d1"), "row") as State;
+    const next = moveToOwnWindow(split, key("d1"));
+
+    expect([
+      tabsOf(split)?.splits?.length,
+      tabsOf(next)?.splits ?? [],
+      moved(next),
+    ]).toStrictEqual([1, [], [["d1"], "c1"]]);
+  });
+});
+
+describe(moveToMainWindow, () => {
+  it("puts the tab back where it stood, unselected, keeping where its window was", () => {
+    const bounds = { x: 10, y: 20, width: 800, height: 600 };
+    const away = setOwnWindowBounds(
+      out(three("c1"), "c1"),
+      key("c1"),
+      bounds
+    ) as State;
+    const back = moveToMainWindow(away, key("c1"), false);
+
+    expect([
+      ids(back),
+      moved(back),
+      tabsOf(back)?.tabs.find((each) => each.id === "c1")?.windowBounds,
+    ]).toStrictEqual([[["gmail", "c1", "d1"], "d1"], [[], "d1"], bounds]);
+  });
+
+  it("with select selects the tab and its profile", () => {
+    const away = { ...out(three("c1"), "c1"), selectedProfileId: "q" };
+    const back = moveToMainWindow(away, key("c1"), true);
+
+    expect([moved(back), back?.selectedProfileId]).toStrictEqual([
+      [[], "c1"],
+      "p",
+    ]);
+  });
+
+  it("is nothing for a tab in the main window", () => {
+    expect(moveToMainWindow(three("c1"), key("c1"), true)).toBeUndefined();
+  });
+});
+
+describe(setOwnWindowBounds, () => {
+  it("is nothing when the bounds are those kept", () => {
+    const bounds = { x: 0, y: 0, width: 500, height: 400 };
+    const kept = setOwnWindowBounds(three("c1"), key("c1"), bounds) as State;
+
+    expect(setOwnWindowBounds(kept, key("c1"), { ...bounds })).toBeUndefined();
+  });
+});
+
+describe("a tab in its own window", () => {
+  const away = out(three("gmail"), "c1");
+
+  it("is never selected in the main window, and Open on its app's URL keeps the selection", () => {
+    const unpinned = setPinned(three("c1"), key("gmail"), false) as State;
+    const reopened = openTab(
+      out(unpinned, "gmail"),
+      "p",
+      app("gmail"),
+      "https://mail.google.com/mail/u/0#sent",
+      () => "g2"
+    )?.state;
+
+    expect([
+      selectTab(away, key("c1")),
+      tabsOf(reopened)?.selectedTabId,
+      tabsOf(reopened)?.tabs.map((each) => each.id),
+    ]).toStrictEqual([undefined, "c1", ["gmail", "c1", "d1"]]);
+  });
+
+  it("is passed over by the next and previous tab and by closing the selected one", () => {
+    expect([
+      adjacentTab(away, 1)?.tabId,
+      adjacentTab(away, -1)?.tabId,
+      ids(closeTab(out(three("d1"), "c1"), key("d1"))),
+    ]).toStrictEqual(["d1", "d1", [["gmail", "c1"], "gmail"]]);
+  });
+
+  it("goes into no split", () => {
+    expect(splitTab(away, key("c1"), "row")).toBeUndefined();
+  });
+
+  it("is back in the main window when its profile sleeps, its window's place kept", () => {
+    const bounds = { x: 1, y: 2, width: 600, height: 500 };
+    const placed = setOwnWindowBounds(away, key("c1"), bounds) as State;
+    const slept = sleepProfile(placed, "p");
+
+    expect([
+      moved(slept),
+      tabsOf(slept)?.tabs.find((each) => each.id === "c1")?.windowBounds,
+    ]).toStrictEqual([[[], "gmail"], bounds]);
   });
 });

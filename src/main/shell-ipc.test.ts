@@ -35,6 +35,7 @@ const TABS: ShellState["tabs"] = {
       app: "gmail",
       title: "",
       pinned: true,
+      ownWindow: false,
       status: { kind: "live" },
     },
   ],
@@ -82,6 +83,7 @@ const setup = () => {
     shortcuts: {},
     ariaShortcuts: {},
     navigation: null,
+    windows: [],
     doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },
     inbox: { open: false, profiles: [], rows: [], notice: null },
@@ -113,6 +115,11 @@ const setup = () => {
   senders.register(OVERLAY, { role: "overlay" });
 
   const handlers: ShellHandlers = {
+    navigateTab: (request) => {
+      calls.push(["navigateTab", request]);
+
+      return Promise.resolve();
+    },
     findInPage: (request) => {
       calls.push(["findInPage", request]);
 

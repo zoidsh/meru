@@ -4,9 +4,9 @@ import { drawnTabs } from "./drawn-tabs.ts";
 import { isWebUrl } from "./google-redirect.ts";
 import { menuPointInside } from "./overlay.ts";
 import { isInSplit, isMaximized, splitPanes } from "./split.ts";
-import { isPinned, knownTabs } from "./state.ts";
+import { inOwnWindow, isPinned, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
-import { canCloseTab, closeTab, findTab } from "./tabs.ts";
+import { canCloseTab, canMoveToOwnWindow, closeTab, findTab } from "./tabs.ts";
 import type { TabKey } from "./tabs.ts";
 import type { Size } from "./window-bounds.ts";
 
@@ -25,6 +25,8 @@ export const TAB_MENU_ITEMS = [
   "maximize",
   "restore",
   "separate",
+  "moveToNewWindow",
+  "moveToMainWindow",
   "close",
   "closeOthers",
   "closeBelow",
@@ -32,15 +34,13 @@ export const TAB_MENU_ITEMS = [
 
 export type TabMenuItemId = (typeof TAB_MENU_ITEMS)[number];
 
-/**
- * The menu's groups, drawn with a separator between each; Move to new
- * window's group fits before Close tab's.
- */
+/** The menu's groups, drawn with a separator between each. */
 export const TAB_MENU_GROUPS: readonly (readonly TabMenuItemId[])[] = [
   ["sleep", "wake"],
   ["reload", "duplicate", "copyUrl", "openInBrowser"],
   ["pin", "openAtLaunch"],
   ["splitRight", "splitDown", "maximize", "restore", "separate"],
+  ["moveToNewWindow", "moveToMainWindow"],
   ["close", "closeOthers", "closeBelow"],
 ];
 
@@ -51,6 +51,8 @@ export const TAB_MENU_COMMANDS: Partial<Record<TabMenuItemId, string>> = {
   splitDown: "tab.splitDown",
   maximize: "tab.maximize",
   restore: "tab.maximize",
+  moveToNewWindow: "tab.moveToNewWindow",
+  moveToMainWindow: "tab.moveToMainWindow",
   close: "tab.close",
 };
 
@@ -88,7 +90,10 @@ const belowOf = (profile: Profile, tab: Tab) => {
  * a pinned tab has Open at Launch and no Close tab. Split right and Split
  * down split beside the tab, starting a split where it is in none; Maximize
  * pane, or Restore panes while its split is maximized, and Separate from
- * split take one in a split.
+ * split take one in a split. A tab that is not pinned can move to a new
+ * window; one in its own window offers Move to main window in its place,
+ * no Sleep or Wake, since it never sleeps, and neither splitting nor
+ * pinning, which are the main window's.
  */
 export const tabMenuItems = (
   state: State,
@@ -105,12 +110,20 @@ export const tabMenuItems = (
 
   const app = findApp(apps, tab.app);
   const pinned = isPinned(tab);
+  const own = inOwnWindow(tab);
   const paned = isInSplit(profile, tab.id);
   const asSelected = { ...profile, selectedTabId: tab.id };
   const maximizes = paned && splitPanes(asSelected) !== undefined;
 
   return [
-    { id: loaded ? "sleep" : "wake", enabled: true },
+    ...(own
+      ? []
+      : [
+          {
+            id: loaded ? ("sleep" as const) : ("wake" as const),
+            enabled: true,
+          },
+        ]),
     { id: "reload", enabled: true },
     { id: "duplicate", enabled: app !== undefined && !app.singleInstance },
     { id: "copyUrl", enabled: true },
@@ -118,7 +131,7 @@ export const tabMenuItems = (
       id: "openInBrowser",
       enabled: URL.canParse(tab.url) && isWebUrl(new URL(tab.url)),
     },
-    { id: "pin", enabled: true },
+    { id: "pin", enabled: !own },
     ...(pinned
       ? [
           {
@@ -128,13 +141,16 @@ export const tabMenuItems = (
           },
         ]
       : []),
-    { id: "splitRight", enabled: true },
-    { id: "splitDown", enabled: true },
+    { id: "splitRight", enabled: !own },
+    { id: "splitDown", enabled: !own },
     {
       id: isMaximized(asSelected) ? "restore" : "maximize",
       enabled: maximizes,
     },
     { id: "separate", enabled: paned },
+    own
+      ? { id: "moveToMainWindow" as const, enabled: true }
+      : { id: "moveToNewWindow" as const, enabled: canMoveToOwnWindow(tab) },
     ...(canCloseTab(tab) ? [{ id: "close" as const, enabled: true }] : []),
     { id: "closeOthers", enabled: othersOf(profile, tab).length > 0 },
     { id: "closeBelow", enabled: belowOf(profile, tab).length > 0 },

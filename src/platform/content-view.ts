@@ -1,10 +1,12 @@
 import { WebContentsView } from "electron";
-import type { BrowserWindow, WebContents } from "electron";
+import type { BaseWindow, BrowserWindow, WebContents } from "electron";
 
 import type { KeyInput } from "#core/accelerator.ts";
 import type { FoundInPage } from "#core/find.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
 
+import { hostWindow } from "./view-host.ts";
+import type { ViewHost } from "./view-host.ts";
 import { zoomContents } from "./zoom.ts";
 import type { ZoomChange } from "./zoom.ts";
 
@@ -129,6 +131,11 @@ export interface ContentView {
    */
   stopFindInPage: (keepSelection: boolean) => void;
   zoom: (change: ZoomChange) => void;
+  /**
+   * Puts the view in another window with its page as it is, loading nothing;
+   * it closes with that window from then on.
+   */
+  moveTo: (host: ViewHost) => void;
   /** Closes the page and every window it opened, and takes it off the window. */
   close: () => void;
 }
@@ -266,7 +273,7 @@ const reportEvents = (
  * `window`.
  */
 export const addContentView = (
-  window: BrowserWindow,
+  window: BaseWindow,
   options: ContentViewOptions
 ): ContentView => {
   const { partition, preload, onWebContents } = options;
@@ -305,8 +312,10 @@ export const addContentView = (
   routeWindowOpens(webContents, options, children);
   window.contentView.addChildView(view);
 
+  let owner = window;
+
   const close = () => {
-    window.off("closed", close);
+    owner.off("closed", close);
 
     for (const child of children) {
       if (!child.isDestroyed()) {
@@ -314,8 +323,8 @@ export const addContentView = (
       }
     }
 
-    if (!window.isDestroyed()) {
-      window.contentView.removeChildView(view);
+    if (!owner.isDestroyed()) {
+      owner.contentView.removeChildView(view);
     }
 
     if (!webContents.isDestroyed()) {
@@ -324,7 +333,7 @@ export const addContentView = (
   };
 
   // Closing a window leaves the views in it alive.
-  window.once("closed", close);
+  owner.once("closed", close);
 
   return {
     setBounds: (bounds) => view.setBounds(bounds),
@@ -360,6 +369,23 @@ export const addContentView = (
     },
     zoom: (change) => {
       zoomContents(webContents, change);
+    },
+    moveTo: (host) => {
+      const next = hostWindow(host);
+
+      if (!next || next === owner) {
+        return;
+      }
+
+      owner.off("closed", close);
+
+      if (!owner.isDestroyed()) {
+        owner.contentView.removeChildView(view);
+      }
+
+      owner = next;
+      owner.contentView.addChildView(view);
+      owner.once("closed", close);
     },
     close,
   };

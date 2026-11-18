@@ -42,13 +42,23 @@ import {
   selectedProfile,
 } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
-import { adjacentTab, canCloseTab, findTab } from "#core/tabs.ts";
+import {
+  adjacentTab,
+  canCloseTab,
+  canMoveToOwnWindow,
+  findTab,
+} from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { Navigation } from "#platform/content-view.ts";
 
 /** What a command decides from: main's state as it is now. */
 export interface CommandContext {
   state: State;
+  /**
+   * The tab whose own window has focus, whose page the commands that run
+   * there act on; `undefined` while the main window has it.
+   */
+  ownWindow: TabKey | undefined;
   /** Do Not Disturb while it holds, else `undefined`. */
   doNotDisturb: DoNotDisturb | undefined;
   /** Whether the unified inbox is open over the page. */
@@ -57,7 +67,10 @@ export interface CommandContext {
   openAppOpen: boolean;
   /** Whether the sidebar shows. */
   sidebarShown: boolean;
-  /** The front tab's page, or `null` with none or under the unified inbox. */
+  /**
+   * The page of the tab whose own window has focus, else the front tab's,
+   * or `null` with none or under the unified inbox.
+   */
   navigation: Navigation | null;
   /** Whether the selected tab was put to sleep, and so has no page. */
   selectedTabAsleep: boolean;
@@ -72,10 +85,15 @@ export interface CommandContext {
 
 /** What commands do, each through the module that owns it. */
 export interface CommandActions {
+  /** Each of these four acts on the page `navigation` is. */
   reloadSelectedTab: () => void;
   goBack: () => void;
   goForward: () => void;
   stopLoading: () => void;
+  /** Moves the tab to a window of its own. */
+  moveToOwnWindow: (key: TabKey) => Promise<unknown>;
+  /** Puts the tab back in the main window, selected. */
+  moveToMainWindow: (key: TabKey) => Promise<unknown>;
   /** Selects the tab, waking it if it sleeps. */
   selectTab: (key: TabKey) => Promise<unknown>;
   sleepTab: (key: TabKey) => void;
@@ -134,14 +152,31 @@ export interface Command {
    * through more than the person meant.
    */
   once?: true;
+  /**
+   * Runs while a tab's own window has focus, on its page; every other
+   * command is the main window's and unavailable then.
+   */
+  inOwnWindow?: true;
   run: (context: CommandContext, actions: CommandActions) => Promise<unknown>;
 }
+
+/** Whether the command can run now, in the window that has focus. */
+export const isCommandAvailable = (
+  command: Pick<Command, "isAvailable" | "inOwnWindow">,
+  context: CommandContext
+) =>
+  (context.ownWindow === undefined || command.inOwnWindow === true) &&
+  (command.isAvailable?.(context) ?? true);
 
 const selectedTab = (state: State): TabKey => {
   const profile = selectedProfile(state);
 
   return { profileId: profile.id, tabId: profile.selectedTabId };
 };
+
+/** The tab in the window that has focus: its own window's, else the selected one. */
+const actingTab = ({ state, ownWindow }: CommandContext): TabKey =>
+  ownWindow ?? selectedTab(state);
 
 const selectAdjacentTab = (offset: number): Command["run"] => {
   const run: Command["run"] = async (
@@ -328,6 +363,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.reload",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Reload",
@@ -349,6 +385,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.back",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Back",
@@ -365,6 +402,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.forward",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Forward",
@@ -381,6 +419,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.stop",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Stop",
@@ -536,6 +575,47 @@ export const COMMANDS: readonly Command[] = [
     run: ({ state }, { separateTab }) => separateTab(selectedTab(state)),
   },
   {
+    id: "tab.moveToNewWindow",
+    title: () =>
+      t({
+        message: "Move to New Window",
+        comment:
+          "Menu item in the Tabs menu that moves the selected tab's page into a window of its own, keeping the tab in the sidebar",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+Shift+N",
+      win32: "CommandOrControl+Shift+N",
+      linux: "CommandOrControl+Shift+N",
+    },
+    isAvailable: ({ state }) => {
+      const tab = findTab(state, selectedTab(state));
+
+      return tab !== undefined && canMoveToOwnWindow(tab);
+    },
+    once: true,
+    run: ({ state }, { moveToOwnWindow }) =>
+      moveToOwnWindow(selectedTab(state)),
+  },
+  {
+    id: "tab.moveToMainWindow",
+    title: () =>
+      t({
+        message: "Move to Main Window",
+        comment:
+          "Menu item in the Tabs menu, while a tab's own window has focus, that puts its page back in the main window as a tab and closes that window",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+Shift+M",
+      win32: "CommandOrControl+Shift+M",
+      linux: "CommandOrControl+Shift+M",
+    },
+    inOwnWindow: true,
+    isAvailable: ({ ownWindow }) => ownWindow !== undefined,
+    once: true,
+    run: ({ ownWindow }, { moveToMainWindow }) =>
+      ownWindow ? moveToMainWindow(ownWindow) : Promise.resolve(),
+  },
+  {
     id: "tab.maximize",
     title: () =>
       t({
@@ -605,13 +685,14 @@ export const COMMANDS: readonly Command[] = [
       win32: "CommandOrControl+Shift+W",
       linux: "CommandOrControl+Shift+W",
     },
-    isAvailable: ({ state }) => {
-      const tab = findTab(state, selectedTab(state));
+    inOwnWindow: true,
+    isAvailable: (context) => {
+      const tab = findTab(context.state, actingTab(context));
 
       return tab !== undefined && canCloseTab(tab);
     },
     once: true,
-    run: ({ state }, { closeTab }) => closeTab(selectedTab(state)),
+    run: (context, { closeTab }) => closeTab(actingTab(context)),
   },
   {
     id: "tab.sleep",
@@ -899,6 +980,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "doNotDisturb.toggle",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Do Not Disturb",
@@ -913,6 +995,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "doNotDisturb.off",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Turn Off",
@@ -924,6 +1007,7 @@ export const COMMANDS: readonly Command[] = [
   },
   ...DO_NOT_DISTURB_DURATIONS.map((duration): Command => ({
     id: doNotDisturbCommandId(duration),
+    inOwnWindow: true,
     title: () => durationTitle(duration),
     run: (_context, { switchDoNotDisturb }) => switchDoNotDisturb(duration),
   })),

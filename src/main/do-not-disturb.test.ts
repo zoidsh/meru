@@ -198,6 +198,7 @@ const labels = (context: Partial<CommandContext>) =>
     COMMANDS,
     {
       state: one,
+      ownWindow: undefined,
       doNotDisturb: undefined,
       navigation: null,
       inboxOpen: false,
@@ -278,6 +279,7 @@ describe("an end no date holds", () => {
             shortcuts: {},
             ariaShortcuts: {},
             navigation: null,
+            windows: [],
           },
           []
         ).doNotDisturb

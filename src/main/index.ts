@@ -15,15 +15,18 @@ import type { KeepAliveTiming } from "#core/keep-alive.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import {
+  OVERLAY_FRAME_NAME,
   coversPage,
   overlayRectangle,
   staysOpenOutside,
 } from "#core/overlay.ts";
+import { ownWindowOfFrame } from "#core/own-window.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
+import { windowBackground } from "#core/shell-grey.ts";
 import { hasTabbedInbox, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
-import { findTab } from "#core/tabs.ts";
+import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { totalUnread } from "#core/unread.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
@@ -47,6 +50,7 @@ import {
   createCapturedNotifier,
   createNotifier,
 } from "#platform/notifications.ts";
+import { createOwnWindowFactory } from "#platform/own-window.ts";
 import { createPower } from "#platform/power.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSessions } from "#platform/sessions.ts";
@@ -80,6 +84,7 @@ import { createMailPoller } from "./mail.ts";
 import { createMailNotifications } from "./notifications.ts";
 import { createOpenApp } from "./open-app.ts";
 import { createOverlays } from "./overlay.ts";
+import { createOwnWindows } from "./own-windows.ts";
 import { createPaneResize } from "./pane-resize.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfileMenu } from "./profile-menu.ts";
@@ -98,6 +103,7 @@ import {
   createShellHandlers,
   shellShortcuts,
   shellState,
+  shellTabStatus,
 } from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
 import {
@@ -387,9 +393,10 @@ const start = async () => {
   const ipc = createIpc();
 
   const theme = createTheme();
+  const displays = createDisplays();
   const shell = createShellWindow({
     windows: createWindowFactory(),
-    displays: createDisplays(),
+    displays,
     title: lifecycle.name,
     url: shellUrl.href,
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
@@ -413,6 +420,10 @@ const start = async () => {
         case "overlay": {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
           return overlays.focuser();
+        }
+        case "window": {
+          // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
+          return views.ownWindowFocuser(target.key);
         }
         default: {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
@@ -438,17 +449,58 @@ const start = async () => {
     log: console.error,
   });
 
+  const ownWindows = createOwnWindows({
+    windows: createOwnWindowFactory(),
+    displays,
+    apps,
+    state: profiles.get,
+    isMacOS,
+    background,
+    backgroundColor: () => windowBackground(theme.isDark()),
+    moveToMainWindow: (key) => profiles.moveToMainWindow(key, false),
+    saveBounds: profiles.setOwnWindowBounds,
+    // Keys go to its page, as they go to the front tab's in the main window.
+    onFocus: (key) => {
+      // oxlint-disable-next-line no-use-before-define -- no window opens before the views exist
+      views.ownWindowFocuser(key)?.();
+    },
+    log: console.error,
+  });
+
+  theme.onChange(ownWindows.recolor);
+  profiles.onChange(ownWindows.retitle);
+  // Before the windows close, so closing them leaves their tabs where they are.
+  lifecycle.onBeforeQuit(ownWindows.markQuitting);
+
   let overlayContentsId: number | undefined;
 
-  shell.window.onOverlayDocument((view) => {
-    overlayContentsId = view.webContentsId;
-    // It has no bridge of its own; the shell draws into it.
+  shell.window.onShellDocument((view, frameName) => {
+    // None has a bridge of its own; the shell draws into each.
     view.onGone(senders.register(view.webContentsId, { role: "overlay" }));
+    // oxlint-disable-next-line no-use-before-define -- no key reaches a document before the menu exists
+    view.onKey((input) => menu.handleKey(input));
+
+    const ownWindow = ownWindowOfFrame(frameName);
+
+    if (ownWindow) {
+      view.onFocus(() => {
+        focus.noteFocused({ kind: "window", key: ownWindow });
+      });
+      ownWindows.adoptTitlebar(ownWindow, view);
+
+      return;
+    }
+
+    if (frameName !== OVERLAY_FRAME_NAME) {
+      view.close();
+
+      return;
+    }
+
+    overlayContentsId = view.webContentsId;
     view.onFocus(() => {
       focus.noteFocused({ kind: "overlay" });
     });
-    // oxlint-disable-next-line no-use-before-define -- no key reaches the overlay before the menu exists
-    view.onKey((input) => menu.handleKey(input));
     overlays.adopt(view);
   });
   shell.window.onPageFocus(() => {
@@ -523,6 +575,7 @@ const start = async () => {
   const views = createTabViews({
     sidebar: sidebar.current,
     window: shell.window,
+    ownWindows,
     apps,
     signInOrigins,
     background,
@@ -550,6 +603,9 @@ const start = async () => {
     updatePages: profiles.updatePages,
     onFocus: () => {
       focus.noteFocused({ kind: "front" });
+    },
+    onOwnWindowFocus: (key) => {
+      focus.noteFocused({ kind: "window", key });
     },
     onStrayFocus: focus.giveBack,
     // At launch and after a switch, typing reaches the page without a click;
@@ -781,34 +837,67 @@ const start = async () => {
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
 
+  /** The tab whose own window has focus, its page or its titlebar. */
+  const focusedOwnWindow = (): TabKey | undefined => {
+    const focused = focus.focused();
+
+    return focused?.kind === "window" &&
+      views.windowTabs().some((key) => tabKey(key) === tabKey(focused.key))
+      ? focused.key
+      : undefined;
+  };
+
   const menu = createApplicationMenu({
     platform,
     // A tab's page or the shell, whichever has focus; the find bar's view,
     // or none, zooms the page it sits over.
     zoom: (change) => {
       if (!zoomFocused(change, (id) => id !== overlayContentsId)) {
-        views.zoomFront(change);
+        views.zoomFront(change, focusedOwnWindow());
       }
     },
     appName: lifecycle.name,
     commands: COMMANDS,
-    context: () => ({
-      state: profiles.get(),
-      doNotDisturb: doNotDisturb.current(),
-      inboxOpen: inbox.isOpen(),
-      openAppOpen: openApp.isOpen(),
-      sidebarShown: sidebar.current() !== "hidden",
-      navigation: views.navigation(),
-      selectedTabAsleep: views.frontAsleep(),
-      findable:
-        views.findable() !== undefined && !coversPage(overlays.current()),
-      canFindAgain: find.canGoOn(),
-    }),
+    context: () => {
+      const ownWindow = focusedOwnWindow();
+
+      return {
+        state: profiles.get(),
+        ownWindow,
+        doNotDisturb: doNotDisturb.current(),
+        inboxOpen: inbox.isOpen(),
+        openAppOpen: openApp.isOpen(),
+        sidebarShown: sidebar.current() !== "hidden",
+        navigation: views.navigation(ownWindow),
+        selectedTabAsleep: ownWindow === undefined && views.frontAsleep(),
+        findable:
+          ownWindow === undefined &&
+          views.findable() !== undefined &&
+          !coversPage(overlays.current()),
+        canFindAgain: find.canGoOn(),
+      };
+    },
     actions: {
-      reloadSelectedTab: views.reloadFront,
-      goBack: views.goBack,
-      goForward: views.goForward,
-      stopLoading: views.stopFront,
+      reloadSelectedTab: () => {
+        const ownWindow = focusedOwnWindow();
+
+        if (ownWindow) {
+          void views.reload(ownWindow);
+        } else {
+          views.reloadFront();
+        }
+      },
+      goBack: () => {
+        views.goBack(focusedOwnWindow());
+      },
+      goForward: () => {
+        views.goForward(focusedOwnWindow());
+      },
+      stopLoading: () => {
+        views.stopFront(focusedOwnWindow());
+      },
+      moveToOwnWindow: profiles.moveToOwnWindow,
+      moveToMainWindow: (key) => profiles.moveToMainWindow(key, true),
       selectTab: views.select,
       sleepTab: views.sleep,
       closeTab: profiles.closeTab,
@@ -862,6 +951,9 @@ const start = async () => {
   // A load starting or stopping, or the history moving, changes what Back,
   // Forward and Stop offer.
   views.onChange(menu.refresh);
+  // Focus moving between the main window and a tab's own window changes
+  // which commands run.
+  focus.onFocused(menu.refresh);
 
   const shortcuts = shellShortcuts(COMMANDS, platform);
   const ariaShortcuts = shellShortcuts(COMMANDS, platform, true);
@@ -907,6 +999,34 @@ const start = async () => {
       overlays,
       find,
       tabs: views,
+      revealOwnWindow: (key) => {
+        ownWindows.reveal(key);
+
+        // Focusing a page activates the app, so only where it is in front
+        // or can never be activated.
+        if (!background || isTestBackground) {
+          views.ownWindowFocuser(key)?.();
+        }
+      },
+      navigateTab: async (key, action) => {
+        switch (action) {
+          case "back": {
+            views.goBack(key);
+            break;
+          }
+          case "forward": {
+            views.goForward(key);
+            break;
+          }
+          case "stop": {
+            views.stopFront(key);
+            break;
+          }
+          default: {
+            await views.reload(key);
+          }
+        }
+      },
       inbox,
       openApp,
       tabMenu,
@@ -942,6 +1062,22 @@ const start = async () => {
             shortcuts,
             ariaShortcuts,
             navigation: views.navigation(),
+            windows: views.windowTabs().flatMap((key) => {
+              const tab = findTab(profiles.get(), key);
+              const navigation = views.navigation(key);
+
+              return tab && navigation
+                ? [
+                    {
+                      ...key,
+                      app: tab.app,
+                      title: tab.title,
+                      status: shellTabStatus(views.status(key)),
+                      navigation,
+                    },
+                  ]
+                : [];
+            }),
           },
           apps
         ),

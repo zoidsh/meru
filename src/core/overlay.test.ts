@@ -8,11 +8,12 @@ import {
   menuPointInside,
   overlayRectangle,
   overlayWidth,
-  isOverlayDocument,
+  isShellDocument,
   staysOpenOutside,
   transitionOverlay,
 } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
+import { OWN_WINDOW_FRAME_PREFIX, ownWindowFrameName } from "./own-window.ts";
 import {
   newProfile,
   removeProfile,
@@ -286,19 +287,24 @@ describe(overlayWidth, () => {
   });
 });
 
-describe(isOverlayDocument, () => {
-  it("is only the overlay's blank document", () => {
+describe(isShellDocument, () => {
+  it("is only the overlay's blank document or an own window's titlebar", () => {
     expect(
-      [OVERLAY_FRAME_NAME, "another-name", "", "elsewhere"].map((frameName) =>
-        isOverlayDocument({ url: "about:blank", frameName })
-      )
-    ).toStrictEqual([true, false, false, false]);
+      [
+        OVERLAY_FRAME_NAME,
+        ownWindowFrameName({ profileId: "a", tabId: "t" }),
+        `${OWN_WINDOW_FRAME_PREFIX}["a"]`,
+        "another-name",
+        "",
+        "elsewhere",
+      ].map((frameName) => isShellDocument({ url: "about:blank", frameName }))
+    ).toStrictEqual([true, true, false, false, false, false]);
     expect(
       [
         "https://mail.google.com/",
         "about:blank#x",
         "meru-app://shell/index.html",
-      ].map((url) => isOverlayDocument({ url, frameName: OVERLAY_FRAME_NAME }))
+      ].map((url) => isShellDocument({ url, frameName: OVERLAY_FRAME_NAME }))
     ).toStrictEqual([false, false, false]);
   });
 });

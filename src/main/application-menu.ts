@@ -14,7 +14,7 @@ import { isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import { menuText } from "#core/tray.ts";
 import type { ZoomChange } from "#platform/zoom.ts";
 
-import { savedSearchCommands } from "./commands.ts";
+import { isCommandAvailable, savedSearchCommands } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { doNotDisturbItems } from "./do-not-disturb.ts";
 import { profileDisplayName } from "./profile-copy.ts";
@@ -77,7 +77,7 @@ export const buildMenuTemplate = ({
       ...(command.shortcut?.[platform] && {
         accelerator: command.shortcut[platform],
       }),
-      enabled: command.isAvailable?.(context) ?? true,
+      enabled: isCommandAvailable(command, context),
       ...(type && {
         type,
         checked: command.isChecked?.(context) ?? false,
@@ -375,6 +375,9 @@ export const buildMenuTemplate = ({
       ...item("tab.maximize"),
       ...item("tab.separate"),
       separator,
+      ...item("tab.moveToNewWindow"),
+      ...item("tab.moveToMainWindow"),
+      separator,
       ...item("tab.pin"),
       ...item("tab.openAtLaunch", "checkbox"),
       separator,
@@ -533,7 +536,7 @@ export const createApplicationMenu = ({
     ...commands.map((command) => [
       command.id,
       command.label?.(current),
-      command.isAvailable?.(current) ?? true,
+      isCommandAvailable(command, current),
       command.isChecked?.(current),
     ]),
   ];
@@ -612,7 +615,7 @@ export const createApplicationMenu = ({
         return (
           shortcut !== undefined &&
           matchesAccelerator(shortcut, input, platform === "darwin") &&
-          (candidate.isAvailable?.(current) ?? true)
+          isCommandAvailable(candidate, current)
         );
       });
 

@@ -1,11 +1,13 @@
 import { useLingui } from "@lingui/react/macro";
 import {
+  AppWindowIcon,
   Columns2Icon,
   CopyPlusIcon,
   ExternalLinkIcon,
   LinkIcon,
   Maximize2Icon,
   Minimize2Icon,
+  PanelLeftIcon,
   PinIcon,
   PinOffIcon,
   PowerIcon,
@@ -179,6 +181,26 @@ export const TabMenu = ({
             message: "Separate from split",
             comment:
               "Item of a tab's context menu that takes it out of the split view, to show alone",
+          }),
+        };
+      }
+      case "moveToNewWindow": {
+        return {
+          icon: <AppWindowIcon />,
+          text: t({
+            message: "Move to new window",
+            comment:
+              "Item of a tab's context menu that moves its page into a window of its own, the tab staying in the sidebar",
+          }),
+        };
+      }
+      case "moveToMainWindow": {
+        return {
+          icon: <PanelLeftIcon />,
+          text: t({
+            message: "Move to main window",
+            comment:
+              "Item of a tab's context menu, for a tab in a window of its own, that puts its page back in the main window and closes that window",
           }),
         };
       }

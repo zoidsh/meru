@@ -124,6 +124,11 @@ msgstr "{title} · asleep"
 msgid "{title} · asleep · sign in required"
 msgstr "{title} · asleep · sign in required"
 
+#. Tooltip of a tile in the sidebar whose tab was moved to a window of its own; a click brings that window forward; {title} is the tab's title
+#: src/shell/tab-strip.tsx
+msgid "{title} · in its own window"
+msgstr "{title} · in its own window"
+
 #. Tooltip of Gmail's tile in the sidebar while the profile's Google account is signed out; {title} is the tab's title
 #: src/shell/tab-strip.tsx
 msgid "{title} · sign in required"
@@ -442,6 +447,11 @@ msgstr "Hide Others"
 msgid "Hide sidebar"
 msgstr "Hide sidebar"
 
+#. Said by screen readers after a sidebar row's title while its tab is moved to a window of its own, which a click brings forward
+#: src/shell/tab-strip.tsx
+msgid "In its own window"
+msgstr "In its own window"
+
 #. Said by screen readers after the title of a tab in the sidebar's split view box, whose page is one of the panes shown side by side
 #: src/shell/tab-strip.tsx
 msgid "In split view"
@@ -522,6 +532,26 @@ msgstr "Meru signs out of this profile and deletes its data on this device. Your
 #: src/main/application-menu.ts
 msgid "Minimize"
 msgstr "Minimize"
+
+#. Item of a tab's context menu, for a tab in a window of its own, that puts its page back in the main window and closes that window
+#: src/shell/tab-menu.tsx
+msgid "Move to main window"
+msgstr "Move to main window"
+
+#. Menu item in the Tabs menu, while a tab's own window has focus, that puts its page back in the main window as a tab and closes that window
+#: src/main/commands.ts
+msgid "Move to Main Window"
+msgstr "Move to Main Window"
+
+#. Item of a tab's context menu that moves its page into a window of its own, the tab staying in the sidebar
+#: src/shell/tab-menu.tsx
+msgid "Move to new window"
+msgstr "Move to new window"
+
+#. Menu item in the Tabs menu that moves the selected tab's page into a window of its own, keeping the tab in the sidebar
+#: src/main/commands.ts
+msgid "Move to New Window"
+msgstr "Move to New Window"
 
 #. Accessible name and tooltip of the button at the foot of the wide list of tabs that makes it narrow, showing icons alone
 #: src/shell/tab-strip.tsx
@@ -916,6 +946,8 @@ msgid "This data was saved by a newer version. Open it with that version, or upd
 msgstr "This data was saved by a newer version. Open it with that version, or update to it."
 
 #. Accessible name of the strip across the top of the window, read by screen readers
+#. Accessible name of the strip across the top of the window, read by screen readers
+#: src/shell/own-window.tsx
 #: src/shell/titlebar.tsx
 msgid "Title bar"
 msgstr "Title bar"

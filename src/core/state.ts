@@ -6,6 +6,7 @@ import { paneTabs, readSplit } from "./pane-tree.ts";
 import type { Split } from "./pane-tree.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
+import type { Rectangle } from "./window-bounds.ts";
 
 export const STATE_VERSION = 1;
 
@@ -184,6 +185,34 @@ export const opensAtLaunch = (tab: Tab) =>
   isPinned(tab) && tab.openAtLaunch === true;
 
 /**
+ * Whether the tab was moved to a window of its own. Anything but `true`
+ * reads as not, and a pinned tab never is, since a pinned app cannot be
+ * moved; either stays as found until the tab is moved.
+ */
+export const inOwnWindow = (tab: Tab) =>
+  tab.ownWindow === true && !isPinned(tab);
+
+/**
+ * Where the tab's own window last was, kept after it moves back so it opens
+ * there again; anything but four finite numbers reads as none.
+ */
+export const ownWindowBounds = (tab: Tab): Rectangle | undefined => {
+  const bounds: unknown = tab.windowBounds;
+
+  if (typeof bounds !== "object" || bounds === null) {
+    return;
+  }
+
+  const { x, y, width, height } = bounds as Record<string, unknown>;
+
+  return [x, y, width, height].every(
+    (value) => typeof value === "number" && Number.isFinite(value)
+  )
+    ? ({ x, y, width, height } as Rectangle)
+    : undefined;
+};
+
+/**
  * The tabs of apps this build knows; the rest, and entries that do not parse,
  * are kept but not shown.
  */
@@ -250,7 +279,8 @@ const normalizeProfile = (profile: StoredProfile): Profile => {
       return true;
     })
     .map((entry) => (isTab(entry) ? pinnedByDefault(entry) : entry));
-  const shown = knownTabs({ tabs });
+  // A tab in its own window is never the main window's selected one.
+  const shown = knownTabs({ tabs }).filter((tab) => !inOwnWindow(tab));
   const { selectedTabId } = profile;
   const decoded: Profile = {
     ...profile,
@@ -634,8 +664,26 @@ export const canSleepProfile = (state: State, profileId: string) =>
     (profile) => profile.id !== profileId && !isAsleep(state, profile)
   );
 
+/** The profile with every tab in a window of its own back in the main window. */
+const withoutOwnWindows = (profile: Profile): Profile =>
+  profile.tabs.some((entry) => isTab(entry) && inOwnWindow(entry))
+    ? {
+        ...profile,
+        tabs: profile.tabs.map((entry) => {
+          if (!isTab(entry) || !inOwnWindow(entry)) {
+            return entry;
+          }
+
+          const { ownWindow: _moved, ...back } = entry;
+
+          return back as Tab;
+        }),
+      }
+    : profile;
+
 /**
- * Puts the profile to sleep; the selected profile gives way to the first
+ * Puts the profile to sleep, its tabs in windows of their own back in the
+ * main window and closed with the rest; the selected profile gives way to the first
  * awake one in the row. Nothing when it cannot sleep.
  */
 export const sleepProfile = (
@@ -653,7 +701,9 @@ export const sleepProfile = (
   return {
     ...state,
     profiles: state.profiles.map((profile) =>
-      profile.id === profileId ? { ...profile, asleep: true } : profile
+      profile.id === profileId
+        ? { ...withoutOwnWindows(profile), asleep: true }
+        : profile
     ),
     selectedProfileId:
       state.selectedProfileId === profileId && first

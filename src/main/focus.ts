@@ -1,11 +1,14 @@
+import type { TabKey } from "#core/tabs.ts";
 import type { AppWindow } from "#platform/window.ts";
 
-/** A web contents of the window that can hold keyboard focus. */
+/** A web contents of the app's windows that can hold keyboard focus. */
 export type FocusTarget =
   | { kind: "shell" }
   | { kind: "overlay" }
   /** The selected tab's view, whichever that is when focus moves. */
-  | { kind: "front" };
+  | { kind: "front" }
+  /** The page of a tab in its own window, or that window's titlebar. */
+  | { kind: "window"; key: TabKey };
 
 export interface FocusDeps {
   window: Pick<AppWindow, "isFocused" | "isVisible" | "on">;
@@ -31,6 +34,7 @@ export const createFocus = ({
 }: FocusDeps) => {
   let focused: FocusTarget | undefined;
   let pending: readonly FocusTarget[] | undefined;
+  const listeners = new Set<() => void>();
 
   const mayFocus = () =>
     window.isFocused() || (focusWhileInactive && window.isVisible());
@@ -63,6 +67,14 @@ export const createFocus = ({
     /** Told by each web contents as it gains focus. */
     noteFocused: (target: FocusTarget) => {
       focused = target;
+
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+    /** Told each time a web contents gains focus. */
+    onFocused: (listener: () => void) => {
+      listeners.add(listener);
     },
     /** The web contents that last gained focus. */
     focused: () => focused,

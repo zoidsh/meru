@@ -9,7 +9,7 @@ import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { ContextMenuItem } from "#platform/window.ts";
 
-import { doNotDisturbCommandId } from "./commands.ts";
+import { doNotDisturbCommandId, isCommandAvailable } from "./commands.ts";
 import type { Command, CommandContext } from "./commands.ts";
 import type { Profiles } from "./profiles.ts";
 
@@ -153,7 +153,7 @@ export const doNotDisturbItems = (
       ? [
           {
             label: command.title(),
-            enabled: command.isAvailable?.(context) ?? true,
+            enabled: isCommandAvailable(command, context),
             click: () => {
               run(command);
             },

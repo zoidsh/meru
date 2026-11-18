@@ -68,6 +68,7 @@ const setup = () => {
       },
       onFocus: () => false,
       onKey: () => false,
+      moveUnder: () => false,
       onGone: (listener) => {
         destroy = listener;
       },

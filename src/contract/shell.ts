@@ -173,6 +173,11 @@ export const SHELL_CALLS = {
     request: z.object({ action: z.enum(NAVIGATE_ACTIONS) }),
     response: z.undefined(),
   },
+  /** A tab's own window's titlebar asking the same of its page. */
+  navigateTab: {
+    request: z.object({ profileId, tabId, action: z.enum(NAVIGATE_ACTIONS) }),
+    response: z.undefined(),
+  },
   /** Narrows the sidebar or widens it, as its own toggle asks. */
   toggleSidebarWidth: { request: none, response: z.undefined() },
   /** On until turned off, or off, as the titlebar button's click asks. */
@@ -274,6 +279,8 @@ export const SHELL_STATE = {
         title: z.string(),
         /** Drawn in the pinned area, with no close button. */
         pinned: z.boolean(),
+        /** Moved to a window of its own, its page there. */
+        ownWindow: z.boolean(),
         status: tabStatus,
       })
     ),
@@ -324,6 +331,21 @@ export const SHELL_STATE = {
     boxes: z.array(z.object({ tabs: z.array(tabId), maximized: z.boolean() })),
   }),
   /** How the sidebar shows, which also sets where the content view sits. */
+  /** The tabs in windows of their own, each its window's titlebar to draw. */
+  windows: z.array(
+    z.object({
+      profileId,
+      tabId,
+      app: z.string(),
+      title: z.string(),
+      status: tabStatus,
+      navigation: z.object({
+        canGoBack: z.boolean(),
+        canGoForward: z.boolean(),
+        loading: z.boolean(),
+      }),
+    })
+  ),
   sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),
   /**
    * Each command's shortcut on this platform as a person reads it, such as

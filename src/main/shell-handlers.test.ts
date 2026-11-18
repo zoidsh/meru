@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { ShellState } from "#contract/shell.ts";
 import { APPS } from "#core/apps.ts";
 import type { FindBar } from "#core/find.ts";
 import type { Overlay } from "#core/overlay.ts";
@@ -118,6 +119,14 @@ const setup = ({
       close: () => {
         calls.push(["findClose"]);
       },
+    },
+    revealOwnWindow: (key) => {
+      calls.push(["revealOwnWindow", key]);
+    },
+    navigateTab: (key, action) => {
+      calls.push(["navigateTab", key, action]);
+
+      return Promise.resolve();
     },
     tabs: {
       retry: (key) => {
@@ -434,6 +443,7 @@ const CHROME = {
   shortcuts: {},
   ariaShortcuts: {},
   navigation: null,
+  windows: [] as ShellState["windows"],
 } as const;
 
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;
@@ -664,6 +674,7 @@ describe(shellState, () => {
           app: "gmail",
           title: "Inbox",
           pinned: true,
+          ownWindow: false,
           status: { kind: "unloaded" },
         },
         {
@@ -671,6 +682,7 @@ describe(shellState, () => {
           app: "calendar",
           title: "Week",
           pinned: false,
+          ownWindow: false,
           status: {
             kind: "failed",
             reason: "ERR_INTERNET_DISCONNECTED",
@@ -682,6 +694,7 @@ describe(shellState, () => {
           app: "drive",
           title: "",
           pinned: false,
+          ownWindow: false,
           status: { kind: "crashed" },
         },
       ],
@@ -786,6 +799,7 @@ describe("the overlay slice", () => {
         { id: "splitDown", enabled: true },
         { id: "maximize", enabled: false },
         { id: "separate", enabled: false },
+        { id: "moveToNewWindow", enabled: false },
         { id: "closeOthers", enabled: false },
         { id: "closeBelow", enabled: false },
       ],

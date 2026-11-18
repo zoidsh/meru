@@ -26,18 +26,21 @@ import {
   maximizePane,
   moveInBox,
   moveTab,
+  moveToMainWindow,
+  moveToOwnWindow,
   openTab,
   resizeSplit,
   selectTab,
   separateTab,
   setOpenAtLaunch,
+  setOwnWindowBounds,
   setPinned,
   splitOntoTab,
   splitTab,
   updatePages,
 } from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
-import type { Size } from "#core/window-bounds.ts";
+import type { Rectangle, Size } from "#core/window-bounds.ts";
 
 export interface ProfilesDeps {
   initial: State;
@@ -216,6 +219,12 @@ export const createProfiles = ({
       exclusive(() => commit(splitTab(state, key, direction))),
     separateTab: (key: TabKey) =>
       exclusive(() => commit(separateTab(state, key))),
+    moveToOwnWindow: (key: TabKey) =>
+      exclusive(() => commit(moveToOwnWindow(state, key))),
+    moveToMainWindow: (key: TabKey, select: boolean) =>
+      exclusive(() => commit(moveToMainWindow(state, key, select))),
+    setOwnWindowBounds: (key: TabKey, bounds: Rectangle) =>
+      exclusive(() => commit(setOwnWindowBounds(state, key, bounds))),
     maximizePane: (key: TabKey, on: boolean) =>
       exclusive(() => commit(maximizePane(state, key, on))),
     resizeSplit: (profileId: string, split: Split) =>
