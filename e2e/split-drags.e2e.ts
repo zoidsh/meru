@@ -5,7 +5,7 @@ import {
   findOverlayDocument,
   findPage,
   readState,
-  readViews,
+  sizeWindow,
   test,
   writeState,
 } from "./lib/app.ts";
@@ -123,7 +123,6 @@ const drawn = (shell: Page) =>
     ].map((each) => each.dataset.tabId),
   }));
 
-/** A point of the tab `tabId`'s button, `down` of the way from its top. */
 /** Whether `selector` names an element drawn with a size. */
 const isDrawn = (shell: Page, selector: string) =>
   shell.evaluate(
@@ -237,7 +236,10 @@ const markShown = (shell: Page) =>
         .dragMark ?? "none"
   );
 
-test("a tab dropped onto another tab's middle, which shows a ring, splits the two with it on the right; onto a tab outside the split nothing drops; a pinned tab keeps its pin; with no room the toast says so", async ({
+const noRoom = (overlay: Page) =>
+  overlay.getByText("Not enough room to split", { exact: true });
+
+test("a tab dropped onto another tab's middle, which shows a ring, splits the two with it on the right; onto a tab outside the split nothing drops; with no room the toast says so", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -246,8 +248,10 @@ test("a tab dropped onto another tab's middle, which shows a ring, splits the tw
 
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
+  const overlay = await findOverlayDocument(app);
 
   await findPage(app, standIn.calendarUrl);
+  await sizeWindow(app, 1000, 700);
   await holdOver(shell, "d", await pointOf(shell, "c"));
   await expect.poll(() => markShown(shell)).toBe("ring");
   await shell.mouse.up();
@@ -256,6 +260,7 @@ test("a tab dropped onto another tab's middle, which shows a ring, splits the tw
   await expect
     .poll(() => drawn(shell).then(({ box }) => box))
     .toStrictEqual(["c", "d"]);
+  await expect(noRoom(overlay)).toHaveCount(0);
 
   // Gmail is outside the split, and a profile has one.
   await holdOver(shell, "o", await pointOf(shell, "gmail"));
@@ -263,27 +268,32 @@ test("a tab dropped onto another tab's middle, which shows a ring, splits the tw
   await shell.mouse.up();
   expect(await storedPanes(userDataDir)).toStrictEqual(["c", "d"]);
 
-  // Gmail, pinned, onto Calendar in the split: beside it, pinned still.
+  // Halving Drive's pane would leave both halves under the minimum.
+  await sizeWindow(app, 720, 480);
+  await dragTo(shell, "o", await pointOf(shell, "d"));
+  await expect(noRoom(overlay)).toBeVisible();
+  expect(await storedPanes(userDataDir)).toStrictEqual(["c", "d"]);
+});
+
+test("a pinned tab dropped onto a tab splits the two and keeps its pin", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seed(userDataDir, standIn);
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const overlay = await findOverlayDocument(app);
+
+  await findPage(app, standIn.calendarUrl);
+  await sizeWindow(app, 1000, 700);
   await dragTo(shell, "gmail", await pointOf(shell, "c"));
   await expect
     .poll(() => storedPanes(userDataDir))
-    .toStrictEqual(["c", "gmail", "d"]);
+    .toStrictEqual(["c", "gmail"]);
   expect(await storedPinned(userDataDir, "gmail")).toBe(true);
-
-  // Three panes and a fourth would not fit the window's least width.
-  const overlay = await findOverlayDocument(app);
-
-  await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
-  });
-  await expect
-    .poll(() => readViews(app).then(({ area }) => area.height))
-    .toBe(480);
-  await dragTo(shell, "o", await pointOf(shell, "d"));
-  await expect(
-    overlay.getByText("Not enough room to split", { exact: true })
-  ).toBeVisible();
-  expect(await storedPanes(userDataDir)).toStrictEqual(["c", "gmail", "d"]);
+  await expect(noRoom(overlay)).toHaveCount(0);
 });
 
 test("in the box an inset line moves a tab among its tabs and its pane with it, by a drag and by Alt with an arrow; Escape ends a drag with nothing moved", async ({

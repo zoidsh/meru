@@ -318,6 +318,28 @@ export const readUnreadTotal = (app: ElectronApplication) =>
       )?.count ?? 0
   );
 
+/**
+ * Gives the window `width` by `height` of content and waits for its views
+ * to follow. A test whose panes need room sets it, since the default size
+ * does not fit a hosted Windows runner's 1024 by 768 desktop and the
+ * window there comes out smaller; it fits that desktop.
+ */
+export const sizeWindow = async (
+  app: ElectronApplication,
+  width: number,
+  height: number
+) => {
+  await app.evaluate(
+    ({ BrowserWindow }, size) => {
+      BrowserWindow.getAllWindows()[0]?.setContentSize(size.width, size.height);
+    },
+    { width, height }
+  );
+  await expect
+    .poll(() => readViews(app).then(({ area }) => area))
+    .toStrictEqual({ width, height });
+};
+
 /** What Gmail's tab would do as mail comes: change its title, a poke. */
 export const retitle = (page: Page, title: string) =>
   page.evaluate((next) => {
