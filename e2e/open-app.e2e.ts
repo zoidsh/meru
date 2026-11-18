@@ -11,7 +11,7 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
-import { CALENDAR_TITLE } from "./lib/stand-in.ts";
+import { ANY_SESSION, CALENDAR_TITLE } from "./lib/stand-in.ts";
 
 const isMacOS = process.platform === "darwin";
 
@@ -42,6 +42,9 @@ const pressOpenApp = (app: ElectronApplication, url: string) =>
     },
     { url, modifier: isMacOS ? ("meta" as const) : ("control" as const) }
   );
+
+const nothingOpen = (shell: Page) =>
+  shell.getByRole("region", { name: "No apps open" });
 
 const options = (overlay: Page) => overlay.getByRole("option");
 
@@ -207,11 +210,13 @@ test("Open app is first in the titlebar's right-hand group while the sidebar is 
   await expect(titlebarButton).toBeVisible();
 });
 
-test("Gmail, unpinned, closes like any tab, leaving no tab, focus in the shell and Close Tab off, and Open app lists it to open again; a relaunch keeps it all", async ({
+test("Gmail, unpinned, closes like any tab, leaving No apps open, focus in the shell and Close Tab off, and Open app there lists it to open again; a relaunch keeps it all", async ({
   launchApp,
   standIn,
   userDataDir,
 }) => {
+  standIn.setFeed(ANY_SESSION, { unreadCount: 0 });
+
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
 
@@ -249,6 +254,12 @@ test("Gmail, unpinned, closes like any tab, leaving no tab, focus in the shell a
     await expect.poll(shellHasFocus).toBeTruthy();
   }
   await expect.poll(stored).toStrictEqual([[], ""]);
+  await expect(nothingOpen(shell)).toBeVisible();
+  await expect(
+    nothingOpen(shell).getByText(
+      "Open Gmail, Calendar or another Google app in this profile."
+    )
+  ).toBeVisible();
   expect([
     await menuItem("tab.pin"),
     await menuItem("tab.close"),
@@ -265,8 +276,12 @@ test("Gmail, unpinned, closes like any tab, leaving no tab, focus in the shell a
   await expect
     .poll(() => readViews(second).then(({ views }) => views))
     .toStrictEqual([]);
-  await secondShell
-    .getByRole("banner", { name: "Title bar" })
+  await expect(
+    secondShell
+      .getByRole("banner", { name: "Title bar" })
+      .getByRole("button", { name: "Open app" })
+  ).toBeVisible();
+  await nothingOpen(secondShell)
     .getByRole("button", { name: "Open app" })
     .click();
   await expect(options(secondOverlay)).toHaveText([
@@ -281,6 +296,7 @@ test("Gmail, unpinned, closes like any tab, leaving no tab, focus in the shell a
   await secondOverlay.getByRole("option", { name: "Gmail" }).click();
 
   await findPage(second, standIn.url);
+  await expect(nothingOpen(secondShell)).toHaveCount(0);
   await expect.poll(stored).toStrictEqual([
     [
       {

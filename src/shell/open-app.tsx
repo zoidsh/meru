@@ -13,6 +13,7 @@ import {
   CommandItem,
   CommandList,
 } from "#ui/command.tsx";
+import { Kbd } from "#ui/kbd.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
@@ -128,6 +129,28 @@ export const OpenAppTitlebarButton = () => {
     >
       <LayoutGridIcon />
     </TitlebarButton>
+  );
+};
+
+/** Open app in the page area of a profile with no tab, its shortcut beside it. */
+export const OpenAppPanelButton = ({
+  variant,
+}: {
+  variant: "outline" | "ghost";
+}) => {
+  const { label, shortcut, open, toggle } = useOpenAppButton();
+
+  return (
+    <Button
+      data-opens="open-app"
+      variant={variant}
+      size="sm"
+      aria-pressed={open}
+      onClick={toggle}
+    >
+      {label}
+      {shortcut && <Kbd aria-hidden>{shortcut}</Kbd>}
+    </Button>
   );
 };
 

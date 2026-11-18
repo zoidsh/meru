@@ -18,6 +18,7 @@ import {
   shotPath,
 } from "./lib/shots.ts";
 import {
+  ANY_SESSION,
   DARK_PARTS,
   POPOUT_PATH,
   THREAD_PARTS,
@@ -185,6 +186,52 @@ test("the Open app overlay", async ({ launchApp, userDataDir, standIn }) => {
   ).toBeFocused();
   await shootEachWay(app, shell, "open-app");
 });
+
+const nothingOpen = (id: string, name: string) => ({
+  id,
+  name,
+  tabs: [],
+  selectedTabId: "",
+});
+
+for (const { signedIn, surface, heading } of [
+  { signedIn: true, surface: "nothing-open", heading: "No apps open" },
+  { signedIn: false, surface: "sign-in-required", heading: "Sign in required" },
+]) {
+  test(`the page area of a profile with no app open, ${signedIn ? "signed in" : "signed out"}, with one profile and two`, async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    if (signedIn) {
+      standIn.setFeed(ANY_SESSION, { unreadCount: 0 });
+    }
+
+    for (const profiles of [
+      [nothingOpen("p0", "Home")],
+      [nothingOpen("p0", "Home"), nothingOpen("p1", "Work")],
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- one launch at a time
+      await writeState(userDataDir, { profiles, selectedProfileId: "p0" });
+
+      // oxlint-disable-next-line no-await-in-loop -- one launch at a time
+      const { app, shell } = await launch(launchApp, userDataDir);
+
+      // oxlint-disable-next-line no-await-in-loop -- one launch at a time
+      await expect(shell.getByRole("heading", { name: heading })).toBeVisible();
+      // oxlint-disable-next-line no-await-in-loop -- one launch at a time
+      await shell.mouse.move(700, 20);
+      // oxlint-disable-next-line no-await-in-loop -- one launch at a time
+      await shootEachWay(
+        app,
+        shell,
+        profiles.length > 1 ? `${surface}-two-profiles` : surface
+      );
+      // oxlint-disable-next-line no-await-in-loop -- one launch at a time
+      await app.close();
+    }
+  });
+}
 
 test("a thread with every thread feature on", async ({
   launchApp,

@@ -74,6 +74,11 @@ msgstr "{name} stopped working"
 msgid "{name}, sign in required"
 msgstr "{name}, sign in required"
 
+#. Description under Sign in required in the page area of a profile with no app open; {name} is the profile's name
+#: src/shell/nothing-open.tsx
+msgid "{name}'s Google account is signed out, so its mail is not checked."
+msgstr "{name}'s Google account is signed out, so its mail is not checked."
+
 #. Title of the error dialog shown when the app fails to open; {productName} is the app's name
 #: src/main/failures.ts
 msgid "{productName} could not start"
@@ -361,6 +366,11 @@ msgstr "New message"
 msgid "No apps found."
 msgstr "No apps found."
 
+#. Heading in the page area of a profile with no app open, such as after its last tab was closed
+#: src/shell/nothing-open.tsx
+msgid "No apps open"
+msgstr "No apps open"
+
 #. Item of the Saved Searches menu, not clickable, while the selected profile has none
 #: src/main/application-menu.ts
 msgid "No Saved Searches"
@@ -401,6 +411,16 @@ msgstr "Open App…"
 #: src/main/commands.ts
 msgid "Open at Launch"
 msgstr "Open at Launch"
+
+#. Description under No apps open when there are several profiles; {name} is the selected profile's name
+#: src/shell/nothing-open.tsx
+msgid "Open Gmail, Calendar or another Google app in {name}."
+msgstr "Open Gmail, Calendar or another Google app in {name}."
+
+#. Description under No apps open when there is only one profile
+#: src/shell/nothing-open.tsx
+msgid "Open Gmail, Calendar or another Google app in this profile."
+msgstr "Open Gmail, Calendar or another Google app in this profile."
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -575,6 +595,16 @@ msgstr "Sidebar"
 msgctxt "View menu"
 msgid "Sidebar"
 msgstr "Sidebar"
+
+#. Button in the page area of a profile whose Google account is signed out; it opens Gmail, which shows Google's sign-in page
+#: src/shell/nothing-open.tsx
+msgid "Sign in"
+msgstr "Sign in"
+
+#. Heading in the page area of a profile with no app open whose Google account is signed out
+#: src/shell/nothing-open.tsx
+msgid "Sign in required"
+msgstr "Sign in required"
 
 #. Accessible name and tooltip of the title bar button that stops the page loading, shown in place of Reload while it loads
 #. Menu item in the View menu that stops the selected tab's page loading
