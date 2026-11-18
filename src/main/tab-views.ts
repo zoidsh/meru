@@ -859,7 +859,6 @@ export const createTabViews = ({
     /** Whether any tab of the profile has a view, shown or hidden. */
     hasView: (profileId: string) =>
       [...tabs.values()].some((tab) => tab.key.profileId === profileId),
-    /** Each tab's status; one with no view, asleep or never loaded, is unloaded. */
     /**
      * The panes on screen while a split shows, each where it sits in the
      * page area and whether its tab was put to sleep; `null` otherwise.
@@ -884,6 +883,7 @@ export const createTabViews = ({
         })
       );
     },
+    /** Each tab's status; one with no view, asleep or never loaded, is unloaded. */
     status: (key: TabKey): TabStatus =>
       tabs.get(tabKey(key))?.status ?? { kind: "unloaded" },
     onChange: (listener: () => void) => {
