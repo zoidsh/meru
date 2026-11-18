@@ -1,6 +1,9 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { OWN_WINDOW_FRAME_PREFIX } from "#core/own-window.ts";
+import {
+  OWN_WINDOW_FIND_FRAME_PREFIX,
+  OWN_WINDOW_FRAME_PREFIX,
+} from "#core/own-window.ts";
 
 import { expect } from "./app.ts";
 
@@ -29,7 +32,14 @@ export const readOwnWindows = (app: ElectronApplication) =>
   );
 
 /** The titlebar document of the tab's own window, which the shell draws into. */
-export const findTitlebar = async (app: ElectronApplication) => {
+export const findTitlebar = (app: ElectronApplication) =>
+  findDocument(app, OWN_WINDOW_FRAME_PREFIX);
+
+/** The find bar document of the tab's own window, while its bar is open. */
+export const findWindowFind = (app: ElectronApplication) =>
+  findDocument(app, OWN_WINDOW_FIND_FRAME_PREFIX);
+
+const findDocument = async (app: ElectronApplication, prefix: string) => {
   let found: Page | undefined;
 
   await expect
@@ -41,10 +51,7 @@ export const findTitlebar = async (app: ElectronApplication) => {
         blank.map((page) => page.evaluate(() => window.name).catch(() => ""))
       );
 
-      found =
-        blank[
-          names.findIndex((name) => name.startsWith(OWN_WINDOW_FRAME_PREFIX))
-        ];
+      found = blank[names.findIndex((name) => name.startsWith(prefix))];
 
       return found !== undefined;
     })

@@ -75,11 +75,11 @@ export interface CommandContext {
   /** Whether the selected tab was put to sleep, and so has no page. */
   selectedTabAsleep: boolean;
   /**
-   * Whether the front tab's page shows with no card or menu over it, so Find
-   * can search it.
+   * Whether the page Find would search shows: the page of the tab whose own
+   * window has focus, else the front tab's with no card or menu over it.
    */
   findable: boolean;
-  /** Whether Find Next and Previous have a term to go on with. */
+  /** Whether Find Next and Previous have a term to go on with on that page. */
   canFindAgain: boolean;
 }
 
@@ -130,10 +130,13 @@ export interface CommandActions {
   /** Adds `query` to the profile's saved searches, if it can be saved. */
   saveSearch: (profileId: string, query: string) => Promise<unknown>;
   removeSavedSearch: (profileId: string, searchId: string) => Promise<unknown>;
-  /** Opens the find bar over the front tab's page, or focuses it. */
-  openFind: () => void;
+  /**
+   * Opens the find bar over the front tab's page, or over the page of the
+   * tab in its own window `key` names, in that window; or focuses it.
+   */
+  openFind: (key?: TabKey) => void;
   /** Goes to the next or previous match, opening the bar if it is closed. */
-  findAgain: (forward: boolean) => void;
+  findAgain: (forward: boolean, key?: TabKey) => void;
 }
 
 export interface Command {
@@ -435,6 +438,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.find",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Find…",
@@ -448,14 +452,15 @@ export const COMMANDS: readonly Command[] = [
     },
     // Unavailable, the key reaches the page or the card over it.
     isAvailable: ({ findable }) => findable,
-    run: (_context, { openFind }) => {
-      openFind();
+    run: ({ ownWindow }, { openFind }) => {
+      openFind(ownWindow);
 
       return Promise.resolve();
     },
   },
   {
     id: "tab.findNext",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Find Next",
@@ -468,14 +473,15 @@ export const COMMANDS: readonly Command[] = [
       linux: "CommandOrControl+G",
     },
     isAvailable: ({ findable, canFindAgain }) => findable && canFindAgain,
-    run: (_context, { findAgain }) => {
-      findAgain(true);
+    run: ({ ownWindow }, { findAgain }) => {
+      findAgain(true, ownWindow);
 
       return Promise.resolve();
     },
   },
   {
     id: "tab.findPrevious",
+    inOwnWindow: true,
     title: () =>
       t({
         message: "Find Previous",
@@ -488,8 +494,8 @@ export const COMMANDS: readonly Command[] = [
       linux: "Shift+CommandOrControl+G",
     },
     isAvailable: ({ findable, canFindAgain }) => findable && canFindAgain,
-    run: (_context, { findAgain }) => {
-      findAgain(false);
+    run: ({ ownWindow }, { findAgain }) => {
+      findAgain(false, ownWindow);
 
       return Promise.resolve();
     },

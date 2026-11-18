@@ -130,6 +130,11 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    closeFind: (request) => {
+      calls.push(["closeFind", request]);
+
+      return Promise.resolve();
+    },
     resizePanes: (request) => {
       calls.push(["resizePanes", request]);
 

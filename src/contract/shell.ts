@@ -154,16 +154,29 @@ export const SHELL_CALLS = {
     response: z.undefined(),
   },
   closeOverlay: { request: none, response: z.undefined() },
-  /** The find bar's term as typed, searched for in its page; empty clears it. */
+  /**
+   * The find bar's term as typed, searched for in its page; empty clears
+   * it. `tab` names a tab in its own window, whose bar is there; without
+   * it, the bar over the main window's page.
+   */
   findInPage: {
     request: z.object({
       term: z.string().check(z.maxLength(FIND_TERM_MAX_LENGTH)),
+      tab: z.optional(z.object({ profileId, tabId })),
     }),
     response: z.undefined(),
   },
-  /** The find bar's next or previous match, wrapping. */
+  /** The find bar's next or previous match, wrapping; `tab` as for `findInPage`. */
   findStep: {
-    request: z.object({ forward: z.boolean() }),
+    request: z.object({
+      forward: z.boolean(),
+      tab: z.optional(z.object({ profileId, tabId })),
+    }),
+    response: z.undefined(),
+  },
+  /** Escape or Close on the find bar in a tab's own window. */
+  closeFind: {
+    request: z.object({ profileId, tabId }),
     response: z.undefined(),
   },
   /** Shows the sidebar or hides it, as the titlebar's toggle asks. */
@@ -344,6 +357,15 @@ export const SHELL_STATE = {
         canGoForward: z.boolean(),
         loading: z.boolean(),
       }),
+      /** Its find bar while it is open, drawn over the page in that window. */
+      find: z.nullable(
+        z.object({
+          term: z.string(),
+          ordinal: z.int().check(z.nonnegative()),
+          matches: z.int().check(z.nonnegative()),
+          opened: z.int().check(z.nonnegative()),
+        })
+      ),
     })
   ),
   sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),

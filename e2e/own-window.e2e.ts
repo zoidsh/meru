@@ -1,5 +1,8 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
+import { FIND_INSET } from "#core/find.ts";
+import { OWN_WINDOW_FIND_FRAME_PREFIX } from "#core/own-window.ts";
+
 import {
   clickMenuItem,
   readMenuItem,
@@ -12,12 +15,18 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import { findTitlebar, readOwnWindows } from "./lib/own-window.ts";
+import {
+  findTitlebar,
+  findWindowFind,
+  readOwnWindows,
+} from "./lib/own-window.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import {
   ANY_SESSION,
   CALENDAR_TITLE,
   DRIVE_TITLE,
+  FIND_MATCHES,
+  FIND_WORD,
   POPOUT_PATH,
   POPOUT_TITLE,
   STAND_IN_TITLE,
@@ -83,19 +92,25 @@ const ownWindowPage = async (app: ElectronApplication) => {
 };
 
 /**
- * Cmd or Ctrl, and Shift, with `keyCode` in the page whose URL starts with
- * `target`, as the system hands keys to it, so its view hears them first.
+ * Cmd or Ctrl with `keyCode`, and Shift with `shift`, in the page whose URL
+ * or document whose name starts with `target`, as the system hands keys to
+ * it, so its view hears them first; `plain` leaves out Cmd or Ctrl.
  */
-const pressShifted = (
+const press = (
   app: ElectronApplication,
   target: string,
-  keyCode: string
+  keyCode: string,
+  { shift = false, plain = false } = {}
 ) =>
   app.evaluate(
     ({ webContents }, request) => {
       const page = webContents
         .getAllWebContents()
-        .find((candidate) => candidate.getURL().startsWith(request.target));
+        .find(
+          (candidate) =>
+            candidate.getURL().startsWith(request.target) ||
+            candidate.mainFrame.name.startsWith(request.target)
+        );
 
       for (const type of ["keyDown", "keyUp"] as const) {
         page?.sendInputEvent({
@@ -109,11 +124,95 @@ const pressShifted = (
       target,
       keyCode,
       modifiers: [
-        isMacOS ? ("meta" as const) : ("control" as const),
-        "shift" as const,
+        ...(plain ? [] : [isMacOS ? ("meta" as const) : ("control" as const)]),
+        ...(shift ? (["shift"] as const) : []),
       ],
     }
   );
+
+const pressShifted = (
+  app: ElectronApplication,
+  target: string,
+  keyCode: string
+) => press(app, target, keyCode, { shift: true });
+
+/**
+ * Lets `document.hasFocus()` in the page say whether it holds Chromium's
+ * keyboard focus, which Playwright otherwise makes every page claim.
+ */
+const followRealFocus = async (page: Page) => {
+  const cdp = await page.context().newCDPSession(page);
+
+  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
+
+  return () => page.evaluate(() => document.hasFocus()).catch(() => false);
+};
+
+const zoomOf = (app: ElectronApplication, url: string) =>
+  app.evaluate(
+    ({ webContents }, wanted) =>
+      webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.getURL().startsWith(wanted))
+        ?.getZoomLevel(),
+    url
+  );
+
+/**
+ * The own window's find bar view, last over its page, and where it goes:
+ * `FIND_INSET` in from the page's top right, as their top right corners.
+ */
+const ownWindowFindPlace = async (app: ElectronApplication) => {
+  const [window] = await readOwnWindows(app);
+  const views = window?.views ?? [];
+  const page = views.find((view) => view.name === "")?.bounds;
+  const last = views.at(-1);
+
+  return {
+    last: last?.name.startsWith(OWN_WINDOW_FIND_FRAME_PREFIX),
+    bar: last && {
+      right: last.bounds.x + last.bounds.width,
+      top: last.bounds.y,
+    },
+    goes: page && {
+      right: page.x + page.width - FIND_INSET,
+      top: page.y + FIND_INSET,
+    },
+  };
+};
+
+/** Whether the main window's overlay view shows. */
+const overlayShown = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().some((window) =>
+      window.contentView.children.some(
+        (view) =>
+          (view as Electron.WebContentsView).webContents?.mainFrame.name ===
+            "meru-overlay" && view.getVisible()
+      )
+    )
+  );
+
+/** Whether the own window has a find bar view. */
+const ownWindowFindOpen = async (app: ElectronApplication) => {
+  const [window] = await readOwnWindows(app);
+
+  return (
+    window?.views.some((view) =>
+      view.name.startsWith(OWN_WINDOW_FIND_FRAME_PREFIX)
+    ) ?? false
+  );
+};
+
+const findParts = (document: Page) => {
+  const bar = document.getByRole("search", { name: "Find in page" });
+
+  return {
+    bar,
+    field: bar.getByRole("textbox", { name: "Find in page" }),
+    count: bar.getByText(/^\d+\/\d+$/u),
+  };
+};
 
 const menuEnabled = async (app: ElectronApplication, id: string) => {
   const { enabled } = await readMenuItem(app, id);
@@ -311,6 +410,118 @@ test("Cmd or Ctrl+Shift+N in the page moves it; a click on its tab focuses that 
     })
     .toBeTruthy();
   expect(await marked(calendar)).toBe(42);
+});
+
+test("Cmd or Ctrl+F in a tab's own window opens its find bar over that page's top right; it counts, steps, zooms the page, and Escape gives the focus back to that page, the main window staying behind", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, calendar } = await launch(
+    launchApp,
+    userDataDir,
+    standIn
+  );
+  const calendarHasFocus = await followRealFocus(calendar);
+  const shellHasFocus = await followRealFocus(shell);
+
+  await pressShifted(app, standIn.calendarUrl, "N");
+  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
+  await expect.poll(calendarHasFocus).toBeTruthy();
+
+  await press(app, standIn.calendarUrl, "F");
+
+  const document = await findWindowFind(app);
+  const findHasFocus = await followRealFocus(document);
+  const { field, count } = findParts(document);
+
+  await expect(field).toBeFocused();
+  await expect.poll(findHasFocus).toBeTruthy();
+  await expect
+    .poll(async () => {
+      const { last, bar: corner, goes } = await ownWindowFindPlace(app);
+
+      return (
+        last === true &&
+        corner !== undefined &&
+        goes !== undefined &&
+        Math.abs(corner.right - goes.right) <= 4 &&
+        Math.abs(corner.top - goes.top) <= 4
+      );
+    })
+    .toBe(true);
+  await expect(count).toHaveText("0/0");
+  // The main window's overlay shows no bar of its own.
+  expect(await overlayShown(app)).toBeFalsy();
+
+  await field.pressSequentially(FIND_WORD);
+  await expect(count).toHaveText(`1/${FIND_MATCHES}`);
+  await field.press("Enter");
+  await expect(count).toHaveText(`2/${FIND_MATCHES}`);
+  await field.press("Shift+Enter");
+  await expect(count).toHaveText(`1/${FIND_MATCHES}`);
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "G");
+  await expect(count).toHaveText(`2/${FIND_MATCHES}`);
+
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "=");
+  await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0.5);
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "0");
+  await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0);
+  await expect(field).toBeFocused();
+
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "Escape", { plain: true });
+  await expect.poll(() => ownWindowFindOpen(app)).toBe(false);
+  await expect.poll(() => document.isClosed()).toBe(true);
+  await expect.poll(calendarHasFocus).toBeTruthy();
+  expect(await shellHasFocus()).toBeFalsy();
+  expect(await menuEnabled(app, "tab.moveToMainWindow")).toBeTruthy();
+  expect(await ownWindowCount(app)).toBe(1);
+
+  // Opened again, the bar keeps its term, as the main window's does.
+  await press(app, standIn.calendarUrl, "F");
+
+  const again = findParts(await findWindowFind(app));
+
+  await expect(again.field).toHaveValue(FIND_WORD);
+  await expect(again.field).toBeFocused();
+});
+
+test("moving a tab back to the main window with its find bar open closes the bar with its document; the main window opens none", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, calendar } = await launch(
+    launchApp,
+    userDataDir,
+    standIn
+  );
+
+  await pressShifted(app, standIn.calendarUrl, "N");
+  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
+  await press(app, standIn.calendarUrl, "F");
+
+  const { field, count } = findParts(await findWindowFind(app));
+
+  await field.pressSequentially(FIND_WORD);
+  await expect(count).toHaveText(`1/${FIND_MATCHES}`);
+
+  await pressShifted(app, OWN_WINDOW_FIND_FRAME_PREFIX, "M");
+  await expect.poll(() => ownWindowCount(app)).toBe(0);
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  expect(await overlayShown(app)).toBeFalsy();
+  expect(
+    await app.evaluate(
+      ({ webContents }, prefix) =>
+        webContents
+          .getAllWebContents()
+          .some((contents) => contents.mainFrame.name.startsWith(prefix)),
+      OWN_WINDOW_FIND_FRAME_PREFIX
+    )
+  ).toBeFalsy();
 });
 
 test("closing the window by its control closes its tab, as Close Tab does, the main window's selection kept", async ({

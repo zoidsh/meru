@@ -9,11 +9,13 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import {
   OWN_WINDOW_INSET,
   OWN_WINDOW_RADIUS,
+  ownWindowFindFrameName,
   ownWindowFrameName,
 } from "#core/own-window.ts";
 import { Badge } from "#ui/badge.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
+import { FindBar } from "./find-bar.tsx";
 import {
   closeShellDocument,
   openShellDocument,
@@ -135,11 +137,70 @@ const OwnWindowDocument = ({ own }: { own: OwnWindow }) => {
     : null;
 };
 
+/**
+ * The find bar of a tab's own window, in a document of its own that main
+ * shows over the page, opened while the bar is open and closed after.
+ */
+const OwnWindowFind = ({
+  own,
+  bar,
+}: {
+  own: OwnWindow;
+  bar: NonNullable<OwnWindow["find"]>;
+}) => {
+  const name = ownWindowFindFrameName(own);
+  const target = useSyncExternalStore(subscribeShellDocuments, () =>
+    shellDocument(name)
+  );
+  const { profileId, tabId } = own;
+
+  useEffect(() => {
+    openShellDocument(name);
+
+    return () => {
+      closeShellDocument(name);
+    };
+  }, [name]);
+
+  // Escape anywhere in it closes it, as in the overlay's document.
+  useEffect(() => {
+    if (!target) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        shellCalls().closeFind({ profileId, tabId });
+      }
+    };
+
+    target.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      target.removeEventListener("keydown", onKeyDown);
+    };
+  }, [target, profileId, tabId]);
+
+  return target
+    ? createPortal(<FindBar {...bar} tab={{ profileId, tabId }} />, target.body)
+    : null;
+};
+
 /** The frame of each tab's own window, in a document of the shell's each. */
 export const OwnWindows = () => {
   const windows = useShellState("windows") ?? [];
 
-  return windows.map((own) => (
-    <OwnWindowDocument key={ownWindowFrameName(own)} own={own} />
-  ));
+  return windows.flatMap((own) => [
+    <OwnWindowDocument key={ownWindowFrameName(own)} own={own} />,
+    ...(own.find
+      ? [
+          <OwnWindowFind
+            key={ownWindowFindFrameName(own)}
+            own={own}
+            bar={own.find}
+          />,
+        ]
+      : []),
+  ]);
 };

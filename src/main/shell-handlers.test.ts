@@ -110,14 +110,14 @@ const setup = ({
       current: () => open,
     },
     find: {
-      type: (term) => {
-        calls.push(["findInPage", term]);
+      type: (term, key) => {
+        calls.push(["findInPage", term, ...(key ? [key.tabId] : [])]);
       },
-      step: (forward) => {
-        calls.push(["findStep", forward]);
+      step: (forward, key) => {
+        calls.push(["findStep", forward, ...(key ? [key.tabId] : [])]);
       },
-      close: () => {
-        calls.push(["findClose"]);
+      close: (key) => {
+        calls.push(["findClose", ...(key ? [key.tabId] : [])]);
       },
     },
     revealOwnWindow: (key) => {
@@ -273,12 +273,20 @@ describe(createShellHandlers, () => {
   it("passes the find bar's term and steps to the search", async () => {
     const shell = setup();
 
+    const away = { profileId: "a", tabId: "w" };
+
     await shell.handlers.findInPage({ term: "apple" });
     await shell.handlers.findStep({ forward: false });
+    await shell.handlers.findInPage({ term: "pear", tab: away });
+    await shell.handlers.findStep({ forward: true, tab: away });
+    await shell.handlers.closeFind(away);
 
     expect(shell.calls).toStrictEqual([
       ["findInPage", "apple"],
       ["findStep", false],
+      ["findInPage", "pear", "w"],
+      ["findStep", true, "w"],
+      ["findClose", "w"],
     ]);
   });
 

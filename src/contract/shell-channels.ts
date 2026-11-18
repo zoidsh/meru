@@ -18,6 +18,7 @@ export const SHELL_CALL_NAMES = [
   "closeOverlay",
   "findInPage",
   "findStep",
+  "closeFind",
   "toggleSidebar",
   "navigate",
   "navigateTab",

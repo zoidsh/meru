@@ -482,13 +482,18 @@ export const createShellHandlers = ({
 
     return Promise.resolve();
   },
-  findInPage: ({ term }) => {
-    find.type(term);
+  findInPage: ({ term, tab }) => {
+    find.type(term, tab);
 
     return Promise.resolve();
   },
-  findStep: ({ forward }) => {
-    find.step(forward);
+  findStep: ({ forward, tab }) => {
+    find.step(forward, tab);
+
+    return Promise.resolve();
+  },
+  closeFind: (key) => {
+    find.close(key);
 
     return Promise.resolve();
   },

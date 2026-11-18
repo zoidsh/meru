@@ -20,7 +20,7 @@ import {
   overlayRectangle,
   staysOpenOutside,
 } from "#core/overlay.ts";
-import { ownWindowOfFrame } from "#core/own-window.ts";
+import { ownWindowFindOfFrame, ownWindowOfFrame } from "#core/own-window.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
@@ -499,6 +499,18 @@ const start = async () => {
     // oxlint-disable-next-line no-use-before-define -- no key reaches a document before the menu exists
     view.onKey((input) => menu.handleKey(input));
 
+    const findWindow = ownWindowFindOfFrame(frameName);
+
+    if (findWindow) {
+      // Keys there act on that window's tab, as in its page.
+      view.onFocus(() => {
+        focus.noteFocused({ kind: "window", key: findWindow });
+      });
+      ownWindows.adoptFind(findWindow, view);
+
+      return;
+    }
+
     const ownWindow = ownWindowOfFrame(frameName);
 
     if (ownWindow) {
@@ -685,7 +697,17 @@ const start = async () => {
     }
   };
 
-  const find = createFind({ pages: views, overlays, focus });
+  const find = createFind({
+    pages: views,
+    overlays,
+    focus,
+    windows: {
+      focusBar: ownWindows.focusFind,
+      focusPage: (key) => {
+        views.ownWindowFocuser(key)?.();
+      },
+    },
+  });
 
   overlays.onChange(find.follow);
   views.onChange(find.follow);
@@ -947,10 +969,10 @@ const start = async () => {
         navigation: views.navigation(ownWindow),
         selectedTabAsleep: ownWindow === undefined && views.frontAsleep(),
         findable:
-          ownWindow === undefined &&
-          views.findable() !== undefined &&
-          !coversPage(overlays.current()),
-        canFindAgain: find.canGoOn(),
+          ownWindow === undefined
+            ? views.findable() !== undefined && !coversPage(overlays.current())
+            : views.ownWindowFocuser(ownWindow) !== undefined,
+        canFindAgain: find.canGoOn(ownWindow),
       };
     },
     actions: {
@@ -1144,6 +1166,9 @@ const start = async () => {
             windows: views.windowTabs().flatMap((key) => {
               const tab = findTab(profiles.get(), key);
               const navigation = views.navigation(key);
+              const bar = find
+                .windowBars()
+                .find((open) => tabKey(open.key) === tabKey(key));
 
               return tab && navigation
                 ? [
@@ -1153,6 +1178,14 @@ const start = async () => {
                       title: tab.title,
                       status: shellTabStatus(views.status(key)),
                       navigation,
+                      find: bar
+                        ? {
+                            term: bar.term,
+                            ordinal: bar.ordinal,
+                            matches: bar.matches,
+                            opened: bar.opened,
+                          }
+                        : null,
                     },
                   ]
                 : [];

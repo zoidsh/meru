@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { FIND_TERM_MAX_LENGTH } from "#core/find.ts";
+import type { TabKey } from "#core/tabs.ts";
 import { Button } from "#ui/button.tsx";
 import { Input } from "#ui/input.tsx";
 
@@ -11,18 +12,23 @@ import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 
 /**
- * The find bar, filling the overlay's view, which main sizes to it and
- * places at the top right of the page it searches, so a click beside it
- * reaches the page: the field, searched for as it is typed, the count, and
- * Previous, Next and Close. Enter and Shift+Enter step, Escape closes as in
- * every overlay.
+ * The find bar, filling its view, which main sizes to it and places at the
+ * top right of the page it searches, so a click beside it reaches the page:
+ * the field, searched for as it is typed, the count, and Previous, Next and
+ * Close. Enter and Shift+Enter step, Escape closes as in every overlay. In
+ * the main window it is the overlay's; `tab` names the tab in its own window
+ * whose bar this is, in a document of that window's.
  */
 export const FindBar = ({
   term: initial,
   ordinal,
   matches,
   opened,
-}: Extract<ShellState["overlay"], { kind: "find" }>) => {
+  tab,
+}: Pick<
+  Extract<ShellState["overlay"], { kind: "find" }>,
+  "term" | "ordinal" | "matches" | "opened"
+> & { tab?: TabKey }) => {
   const { t } = useLingui();
   const shortcuts = useShellState("shortcuts");
   const shortcutTitle = useShortcutTitle();
@@ -62,7 +68,7 @@ export const FindBar = ({
   }, []);
 
   const step = (forward: boolean) => {
-    shellCalls().findStep({ forward });
+    shellCalls().findStep({ forward, ...(tab && { tab }) });
     field.current?.focus();
   };
 
@@ -87,7 +93,10 @@ export const FindBar = ({
         className="h-8 min-w-0 flex-1 border-0 bg-transparent px-2 text-sm shadow-none select-text focus-visible:ring-0 dark:bg-transparent"
         onChange={(event) => {
           setTerm(event.target.value);
-          shellCalls().findInPage({ term: event.target.value });
+          shellCalls().findInPage({
+            term: event.target.value,
+            ...(tab && { tab }),
+          });
         }}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
@@ -133,7 +142,11 @@ export const FindBar = ({
         aria-label={close}
         title={shortcutTitle(close, shortcuts?.["key:Escape"])}
         onClick={() => {
-          shellCalls().closeOverlay({});
+          if (tab) {
+            shellCalls().closeFind(tab);
+          } else {
+            shellCalls().closeOverlay({});
+          }
         }}
       >
         <XIcon aria-hidden />

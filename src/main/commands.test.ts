@@ -120,11 +120,13 @@ const setup = (initial: State = twoProfiles) => {
     },
     saveSearch: profiles.saveSearch,
     removeSavedSearch: profiles.removeSavedSearch,
-    openFind: () => {
-      finds.push("open");
+    openFind: (key) => {
+      finds.push(`open${key ? ` ${key.tabId}` : ""}`);
     },
-    findAgain: (forward) => {
-      finds.push(forward ? "next" : "previous");
+    findAgain: (forward, key) => {
+      finds.push(
+        `${forward ? "next" : "previous"}${key ? ` ${key.tabId}` : ""}`
+      );
     },
     moveToOwnWindow: async (key) => {
       await profiles.moveToOwnWindow(key);
@@ -782,6 +784,26 @@ describe("the command registry", () => {
       "CommandOrControl+F",
       "CommandOrControl+G",
       "Shift+CommandOrControl+G",
+    ]);
+  });
+
+  it("runs Find, Find Next and Previous on the page of the tab whose own window has focus", async () => {
+    const app = setup();
+
+    app.setOwnWindow({ profileId: "p0", tabId: "w" });
+    app.setFind(true, true);
+    await app.run("tab.find");
+    await app.run("tab.findNext");
+    await app.run("tab.findPrevious");
+
+    expect([
+      ["tab.find", "tab.findNext", "tab.findPrevious"].map((id) =>
+        app.isAvailable(id)
+      ),
+      app.finds,
+    ]).toStrictEqual([
+      [true, true, true],
+      ["open w", "next w", "previous w"],
     ]);
   });
 });

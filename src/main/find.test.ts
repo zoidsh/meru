@@ -10,6 +10,7 @@ import { createOverlays } from "./overlay.ts";
 
 const mail = { profileId: "a", tabId: "gmail" };
 const week = { profileId: "a", tabId: "c1" };
+const ownTab = { profileId: "a", tabId: "w" };
 
 const initial: State = {
   version: 1,
@@ -30,7 +31,8 @@ const setup = () => {
   const asked: string[] = [];
   const focused: string[] = [];
   let front: TabKey | undefined = mail;
-  const withPages = new Set(["a/gmail", "a/c1"]);
+  const withPages = new Set(["a/gmail", "a/c1", "a/w"]);
+  const inWindows = new Set(["a/w"]);
   let requestId = 0;
 
   const focus = createFocus({
@@ -66,6 +68,7 @@ const setup = () => {
     onKey: () => false,
     onGone: () => false,
     moveUnder: () => false,
+    moveOver: () => false,
     close: () => false,
   });
 
@@ -84,9 +87,23 @@ const setup = () => {
       stopFindInPage: (key, keepSelection) => {
         asked.push(`${key.tabId} stop${keepSelection ? " kept" : ""}`);
       },
+      windowTabs: () =>
+        [...inWindows].map((id) => {
+          const [profileId = "", tabId = ""] = id.split("/");
+
+          return { profileId, tabId };
+        }),
     },
     overlays,
     focus,
+    windows: {
+      focusBar: (key) => {
+        focused.push(`bar ${key.tabId}`);
+      },
+      focusPage: (key) => {
+        focused.push(`page ${key.tabId}`);
+      },
+    },
   });
 
   overlays.onChange(find.follow);
@@ -106,10 +123,60 @@ const setup = () => {
       find.follow();
     },
     lastId: () => requestId,
+    /** Puts the tab back in the main window, as Move to Main Window does. */
+    moveBack: (key: TabKey) => {
+      inWindows.delete(`${key.profileId}/${key.tabId}`);
+      find.moved(key);
+    },
   };
 };
 
 describe(createFind, () => {
+  it("opens the bar of the tab in its own window there, not in the overlay, and steps, counts and closes it with focus back on that window's page", () => {
+    const { find, overlays, asked, focused, lastId } = setup();
+
+    find.open(ownTab);
+    find.type("pear", ownTab);
+    find.found(ownTab, { requestId: lastId(), ordinal: 1, matches: 2 });
+    find.step(true, ownTab);
+
+    expect([
+      overlays.current(),
+      find.current(),
+      find
+        .windowBars()
+        .map(({ key, term, ordinal, matches }) => [
+          key.tabId,
+          term,
+          ordinal,
+          matches,
+        ]),
+      focused,
+    ]).toStrictEqual([undefined, undefined, [["w", "pear", 1, 2]], ["bar w"]]);
+
+    find.close(ownTab);
+
+    expect([find.windowBars(), focused.at(-1), asked.at(-1)]).toStrictEqual([
+      [],
+      "page w",
+      "w stop kept",
+    ]);
+  });
+
+  it("forgets the own window's bar and clears its highlights when the tab moves back to the main window", () => {
+    const { find, asked, moveBack } = setup();
+
+    find.open(ownTab);
+    find.type("pear", ownTab);
+    moveBack(ownTab);
+
+    expect([
+      find.windowBars(),
+      asked.at(-1),
+      find.canGoOn(ownTab),
+    ]).toStrictEqual([[], "w stop", false]);
+  });
+
   it("opens the bar over the front tab's page in the overlay, focused, and shows what the page finds", () => {
     const { find, overlays, asked, focused, lastId } = setup();
 
