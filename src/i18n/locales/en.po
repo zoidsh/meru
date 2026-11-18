@@ -104,6 +104,11 @@ msgstr "{name}, sign in required"
 msgid "{name}'s Google account is signed out, so its mail is not checked."
 msgstr "{name}'s Google account is signed out, so its mail is not checked."
 
+#. The find bar's count: {ordinal} is the match shown, {matches} how many the page has, such as 2/14; 0/0 with none
+#: src/shell/find-bar.tsx
+msgid "{ordinal}/{matches}"
+msgstr "{ordinal}/{matches}"
+
 #. Title of the error dialog shown when the app fails to open; {productName} is the app's name
 #: src/main/failures.ts
 msgid "{productName} could not start"
@@ -227,8 +232,10 @@ msgstr "Bring All to Front"
 msgid "Cancel"
 msgstr "Cancel"
 
+#. Button in the find bar that ends the search and hides the bar
 #. Menu item in the Window menu that closes the window
 #: src/main/application-menu.ts
+#: src/shell/find-bar.tsx
 msgid "Close"
 msgstr "Close"
 
@@ -378,6 +385,26 @@ msgctxt "Windows"
 msgid "Exit"
 msgstr "Exit"
 
+#. Name and placeholder of the field in the small bar over the page that searches the page's text
+#: src/shell/find-bar.tsx
+msgid "Find in page"
+msgstr "Find in page"
+
+#. Menu item in the Edit menu that goes to the next match of the text searched for in the page
+#: src/main/commands.ts
+msgid "Find Next"
+msgstr "Find Next"
+
+#. Menu item in the Edit menu that goes to the previous match of the text searched for in the page
+#: src/main/commands.ts
+msgid "Find Previous"
+msgstr "Find Previous"
+
+#. Menu item in the Edit menu that opens a small bar over the page to search its text
+#: src/main/commands.ts
+msgid "Find…"
+msgstr "Find…"
+
 #. Accessible name and tooltip of the title bar button that goes to the page the tab left by going back
 #. Menu item in the View menu that goes to the page the selected tab left by going back
 #: src/main/commands.ts
@@ -506,6 +533,11 @@ msgstr "Narrow sidebar"
 msgid "New message"
 msgstr "New message"
 
+#. Button in the find bar that shows the match after this one
+#: src/shell/find-bar.tsx
+msgid "Next match"
+msgstr "Next match"
+
 #. Said in the list of Google's apps over the page when none has a name holding what was typed
 #: src/shell/open-app.tsx
 msgid "No apps found."
@@ -608,6 +640,11 @@ msgstr "Pin"
 #: src/main/commands.ts
 msgid "Pin Tab"
 msgstr "Pin Tab"
+
+#. Button in the find bar that shows the match before this one
+#: src/shell/find-bar.tsx
+msgid "Previous match"
+msgstr "Previous match"
 
 #. Name given to a newly added profile, where {n} is a number from 2 up; the person can rename it later
 #: src/main/profile-copy.ts

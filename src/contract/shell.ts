@@ -2,6 +2,7 @@ import { z } from "zod/mini";
 
 import { APP_IDS } from "#core/apps.ts";
 import { MAIL_STATUSES } from "#core/feed.ts";
+import { FIND_TERM_MAX_LENGTH } from "#core/find.ts";
 import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import { TOAST_MESSAGES } from "#core/overlay.ts";
@@ -153,6 +154,18 @@ export const SHELL_CALLS = {
     response: z.undefined(),
   },
   closeOverlay: { request: none, response: z.undefined() },
+  /** The find bar's term as typed, searched for in its page; empty clears it. */
+  findInPage: {
+    request: z.object({
+      term: z.string().check(z.maxLength(FIND_TERM_MAX_LENGTH)),
+    }),
+    response: z.undefined(),
+  },
+  /** The find bar's next or previous match, wrapping. */
+  findStep: {
+    request: z.object({ forward: z.boolean() }),
+    response: z.undefined(),
+  },
   /** Shows the sidebar or hides it, as the titlebar's toggle asks. */
   toggleSidebar: { request: none, response: z.undefined() },
   /** Back, Forward, Reload or Stop on the front tab, as the titlebar asks. */
@@ -436,6 +449,18 @@ export const SHELL_STATE = {
           checked: z.optional(z.boolean()),
         })
       ),
+    }),
+    /** The find bar over the tab's page, the focused pane's in a split. */
+    z.object({
+      kind: z.literal("find"),
+      profileId,
+      tabId,
+      term: z.string(),
+      /** The match shown, 1-based; 0 with none. */
+      ordinal: z.int().check(z.nonnegative()),
+      matches: z.int().check(z.nonnegative()),
+      /** Changes on each open, which selects the field's text again. */
+      opened: z.int().check(z.nonnegative()),
     }),
     z.object({
       kind: z.literal("profile-menu"),

@@ -61,6 +61,13 @@ export interface CommandContext {
   navigation: Navigation | null;
   /** Whether the selected tab was put to sleep, and so has no page. */
   selectedTabAsleep: boolean;
+  /**
+   * Whether the front tab's page shows with no card or menu over it, so Find
+   * can search it.
+   */
+  findable: boolean;
+  /** Whether Find Next and Previous have a term to go on with. */
+  canFindAgain: boolean;
 }
 
 /** What commands do, each through the module that owns it. */
@@ -105,6 +112,10 @@ export interface CommandActions {
   /** Adds `query` to the profile's saved searches, if it can be saved. */
   saveSearch: (profileId: string, query: string) => Promise<unknown>;
   removeSavedSearch: (profileId: string, searchId: string) => Promise<unknown>;
+  /** Opens the find bar over the front tab's page, or focuses it. */
+  openFind: () => void;
+  /** Goes to the next or previous match, opening the bar if it is closed. */
+  findAgain: (forward: boolean) => void;
 }
 
 export interface Command {
@@ -379,6 +390,67 @@ export const COMMANDS: readonly Command[] = [
     isAvailable: ({ navigation }) => navigation?.loading ?? false,
     run: (_context, { stopLoading }) => {
       stopLoading();
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.find",
+    title: () =>
+      t({
+        message: "Find…",
+        comment:
+          "Menu item in the Edit menu that opens a small bar over the page to search its text",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+F",
+      win32: "CommandOrControl+F",
+      linux: "CommandOrControl+F",
+    },
+    // Unavailable, the key reaches the page or the card over it.
+    isAvailable: ({ findable }) => findable,
+    run: (_context, { openFind }) => {
+      openFind();
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.findNext",
+    title: () =>
+      t({
+        message: "Find Next",
+        comment:
+          "Menu item in the Edit menu that goes to the next match of the text searched for in the page",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+G",
+      win32: "CommandOrControl+G",
+      linux: "CommandOrControl+G",
+    },
+    isAvailable: ({ findable, canFindAgain }) => findable && canFindAgain,
+    run: (_context, { findAgain }) => {
+      findAgain(true);
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.findPrevious",
+    title: () =>
+      t({
+        message: "Find Previous",
+        comment:
+          "Menu item in the Edit menu that goes to the previous match of the text searched for in the page",
+      }),
+    shortcut: {
+      darwin: "Shift+CommandOrControl+G",
+      win32: "Shift+CommandOrControl+G",
+      linux: "Shift+CommandOrControl+G",
+    },
+    isAvailable: ({ findable, canFindAgain }) => findable && canFindAgain,
+    run: (_context, { findAgain }) => {
+      findAgain(false);
 
       return Promise.resolve();
     },

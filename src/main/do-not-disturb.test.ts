@@ -204,6 +204,8 @@ const labels = (context: Partial<CommandContext>) =>
       openAppOpen: false,
       sidebarShown: false,
       selectedTabAsleep: false,
+      findable: false,
+      canFindAgain: false,
       ...context,
     },
     "en-GB",

@@ -2,6 +2,7 @@ import { WebContentsView } from "electron";
 import type { BrowserWindow, WebContents } from "electron";
 
 import type { KeyInput } from "#core/accelerator.ts";
+import type { FoundInPage } from "#core/find.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
 
 /** What the view's page did, as Meru tracks it. */
@@ -64,6 +65,17 @@ export interface ContentViewOptions {
   onFocus: () => void;
   /** Told when the person presses on the page, by mouse or by touch. */
   onPointerDown: () => void;
+  /**
+   * Told of each answer to a search `find` asked; an earlier search's can
+   * come late, or never once a later one is asked.
+   */
+  onFound: (result: FoundInPage) => void;
+}
+
+export interface FindOptions {
+  /** Starts a new search; without it, steps to the next or previous match. */
+  findNext: boolean;
+  forward: boolean;
 }
 
 /** Where the page can go in its history, and whether it is loading now. */
@@ -102,6 +114,16 @@ export interface ContentView {
    * activates the app with it on macOS and Linux, so only once it is focused.
    */
   focus: () => void;
+  /**
+   * Searches the page for `term`, highlighting each match and scrolling to
+   * the active one, and answers the id `onFound` gives its answer.
+   */
+  findInPage: (term: string, options: FindOptions) => number;
+  /**
+   * Ends the search and clears its highlights; `keepSelection` leaves the
+   * active match selected in the page.
+   */
+  stopFindInPage: (keepSelection: boolean) => void;
   /** Closes the page and every window it opened, and takes it off the window. */
   close: () => void;
 }
@@ -267,6 +289,13 @@ export const addContentView = (
       options.onPointerDown();
     }
   });
+  webContents.on("found-in-page", (_event, result) => {
+    options.onFound({
+      requestId: result.requestId,
+      ordinal: result.activeMatchOrdinal,
+      matches: result.matches,
+    });
+  });
   reportEvents(webContents, options.onEvent);
   routeWindowOpens(webContents, options, children);
   window.contentView.addChildView(view);
@@ -317,6 +346,13 @@ export const addContentView = (
     evaluate: (expression) => webContents.executeJavaScript(expression),
     setVisible: (visible) => view.setVisible(visible),
     focus: () => webContents.focus(),
+    findInPage: (term, { findNext, forward }) =>
+      webContents.findInPage(term, { findNext, forward }),
+    stopFindInPage: (keepSelection) => {
+      webContents.stopFindInPage(
+        keepSelection ? "keepSelection" : "clearSelection"
+      );
+    },
     close,
   };
 };

@@ -16,6 +16,8 @@ export const SHELL_CALL_NAMES = [
   "retryTab",
   "renameProfile",
   "closeOverlay",
+  "findInPage",
+  "findStep",
   "toggleSidebar",
   "navigate",
   "toggleSidebarWidth",

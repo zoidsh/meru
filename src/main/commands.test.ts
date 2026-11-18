@@ -54,6 +54,9 @@ const setup = (initial: State = twoProfiles) => {
   const moves: string[] = [];
   const sleeps: string[] = [];
   const splits: string[] = [];
+  const finds: string[] = [];
+  let findable = false;
+  let canFindAgain = false;
   const actions: CommandActions = {
     toggleSidebar: () => {
       sidebarShown = !sidebarShown;
@@ -110,6 +113,12 @@ const setup = (initial: State = twoProfiles) => {
     },
     saveSearch: profiles.saveSearch,
     removeSavedSearch: profiles.removeSavedSearch,
+    openFind: () => {
+      finds.push("open");
+    },
+    findAgain: (forward) => {
+      finds.push(forward ? "next" : "previous");
+    },
   };
   const context = (): CommandContext => ({
     state: profiles.get(),
@@ -119,6 +128,8 @@ const setup = (initial: State = twoProfiles) => {
     sidebarShown,
     navigation,
     selectedTabAsleep,
+    findable,
+    canFindAgain,
   });
 
   onTestFinished(doNotDisturb.dispose);
@@ -129,6 +140,11 @@ const setup = (initial: State = twoProfiles) => {
     moves,
     sleeps,
     splits,
+    finds,
+    setFind: (page: boolean, again: boolean) => {
+      findable = page;
+      canFindAgain = again;
+    },
     setNavigation: (next: Navigation | null) => {
       navigation = next;
     },
@@ -642,6 +658,39 @@ describe("the command registry", () => {
       win32: "Alt+Left",
       linux: "Alt+Left",
     });
+  });
+
+  it("offers Find over a page, and Find Next and Previous once there is a term, on Cmd or Ctrl+F and G", async () => {
+    const app = setup();
+    const offered = () =>
+      ["tab.find", "tab.findNext", "tab.findPrevious"].map((id) =>
+        app.isAvailable(id)
+      );
+    const noPage = offered();
+
+    app.setFind(true, false);
+    const noTerm = offered();
+
+    app.setFind(true, true);
+    await app.run("tab.find");
+    await app.run("tab.findNext");
+    await app.run("tab.findPrevious");
+
+    expect([noPage, noTerm, offered(), app.finds]).toStrictEqual([
+      [false, false, false],
+      [true, false, false],
+      [true, true, true],
+      ["open", "next", "previous"],
+    ]);
+    expect(
+      ["tab.find", "tab.findNext", "tab.findPrevious"].map(
+        (id) => commandOf(id).shortcut?.darwin
+      )
+    ).toStrictEqual([
+      "CommandOrControl+F",
+      "CommandOrControl+G",
+      "Shift+CommandOrControl+G",
+    ]);
   });
 });
 

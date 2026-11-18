@@ -113,6 +113,16 @@ const setup = () => {
   senders.register(OVERLAY, { role: "overlay" });
 
   const handlers: ShellHandlers = {
+    findInPage: (request) => {
+      calls.push(["findInPage", request]);
+
+      return Promise.resolve();
+    },
+    findStep: (request) => {
+      calls.push(["findStep", request]);
+
+      return Promise.resolve();
+    },
     resizePanes: (request) => {
       calls.push(["resizePanes", request]);
 

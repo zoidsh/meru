@@ -2,6 +2,8 @@ import type { ShellState } from "#contract/shell.ts";
 import { ariaKeyShortcut, formatAccelerator } from "#core/accelerator.ts";
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
+import { findCount } from "#core/find.ts";
+import type { FindBar } from "#core/find.ts";
 import { viewFrame } from "#core/layout.ts";
 import { openableApps, splittableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
@@ -13,13 +15,14 @@ import { isAsleep, isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import { tabMenuItems } from "#core/tab-menu.ts";
-import { findTab, splitOntoTab } from "#core/tabs.ts";
+import { findTab, splitOntoTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { inViewReach, viewDrop } from "#core/view-drop.ts";
 import type { Size } from "#core/window-bounds.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
 import type { Command } from "./commands.ts";
+import type { Find } from "./find.ts";
 import type { Focus } from "./focus.ts";
 import type { Inbox } from "./inbox.ts";
 import type { Mail } from "./mail.ts";
@@ -49,6 +52,7 @@ export interface ShellHandlersDeps {
   /** The page area's size, which a split's panes must fit. */
   pageSize: () => Size;
   overlays: Pick<Overlays, "open" | "close" | "current">;
+  find: Pick<Find, "type" | "step">;
   /** Selecting a tab through them wakes it if it sleeps. */
   tabs: {
     retry: (key: TabKey) => void;
@@ -117,14 +121,34 @@ const shellTabMenu = (
     : { kind: "none" };
 };
 
+const shellFind = (
+  overlay: Extract<Overlay, { kind: "find" }>,
+  bar: FindBar | undefined
+): ShellState["overlay"] =>
+  bar && tabKey(bar.key) === tabKey(overlay)
+    ? {
+        kind: "find",
+        profileId: overlay.profileId,
+        tabId: overlay.tabId,
+        term: bar.term,
+        ...findCount(bar),
+        opened: bar.opened,
+      }
+    : { kind: "none" };
+
 const shellOverlay = (
   state: State,
   overlay: Overlay | undefined,
   status: (key: TabKey) => TabStatus,
-  apps: readonly App[]
+  apps: readonly App[],
+  find: FindBar | undefined
 ): ShellState["overlay"] => {
   if (overlay?.kind === "inbox") {
     return { kind: "inbox" };
+  }
+
+  if (overlay?.kind === "find") {
+    return shellFind(overlay, find);
   }
 
   if (overlay?.kind === "tab-menu") {
@@ -215,6 +239,8 @@ export const shellState = (
     selectedAsleep: boolean;
     panes: ShellState["tabs"]["panes"];
     handles: ShellState["tabs"]["handles"];
+    /** The find bar, while it is open over a page. */
+    find?: FindBar | undefined;
   },
   overlay: Overlay | undefined,
   mail: (profileId: string) => Mail,
@@ -261,7 +287,7 @@ export const shellState = (
       on: doNotDisturb !== undefined,
       until: doNotDisturb?.until ?? null,
     },
-    overlay: shellOverlay(state, overlay, status, apps),
+    overlay: shellOverlay(state, overlay, status, apps, page.find),
     inbox,
     ...fixed,
   };
@@ -270,6 +296,7 @@ export const shellState = (
 export const createShellHandlers = ({
   profiles,
   overlays,
+  find,
   tabs,
   inbox,
   openApp,
@@ -420,6 +447,16 @@ export const createShellHandlers = ({
   },
   closeOverlay: () => {
     overlays.close();
+
+    return Promise.resolve();
+  },
+  findInPage: ({ term }) => {
+    find.type(term);
+
+    return Promise.resolve();
+  },
+  findStep: ({ forward }) => {
+    find.step(forward);
 
     return Promise.resolve();
   },

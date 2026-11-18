@@ -3,6 +3,7 @@ import { isEqual } from "es-toolkit";
 import type { KeyInput } from "#core/accelerator.ts";
 import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
+import type { FoundInPage } from "#core/find.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
 import { FOCUS_RING, paneHandles, paneTabs } from "#core/pane-tree.ts";
 import type { PaneDirection, PaneHandle, PaneTree } from "#core/pane-tree.ts";
@@ -21,6 +22,7 @@ import type { WindowOpenRoute } from "#core/window-open.ts";
 import type {
   ContentView,
   ContentViewEvent,
+  FindOptions,
   Navigation,
 } from "#platform/content-view.ts";
 import type { Network } from "#platform/network.ts";
@@ -87,6 +89,8 @@ export interface TabViewsDeps {
   onPageChange: (key: TabKey) => void;
   /** Told when a tab's page finishes a load, with what can read it. */
   onLoaded: (key: TabKey, page: LoadedPage) => void;
+  /** Told of each answer a tab's page gives to a search `find` asked of it. */
+  onFound: (key: TabKey, result: FoundInPage) => void;
   log: (message: string) => void;
 }
 
@@ -156,6 +160,7 @@ export const createTabViews = ({
   onFront,
   onPageChange,
   onLoaded,
+  onFound,
   log,
 }: TabViewsDeps) => {
   const tabs = new Map<string, TabView>();
@@ -595,6 +600,9 @@ export const createTabViews = ({
           void selectTab(tabKeyed);
         }
       },
+      onFound: (result) => {
+        onFound(tabKeyed, result);
+      },
     });
 
     place(key, view);
@@ -895,6 +903,23 @@ export const createTabViews = ({
       return front !== undefined && tab && shows(front, tab)
         ? tab.view.focus
         : undefined;
+    },
+    /**
+     * The front tab, while its page shows and no unified inbox covers it;
+     * a tab asleep, failed or not yet loaded has no page to search.
+     */
+    findable: (): TabKey | undefined => {
+      const tab = frontTab();
+
+      return front !== undefined && tab && shows(front, tab) && !inboxOpen()
+        ? tab.key
+        : undefined;
+    },
+    /** Searches the tab's page, if it has a view; answers the search's id. */
+    findInPage: (key: TabKey, term: string, options: FindOptions) =>
+      tabs.get(tabKey(key))?.view.findInPage(term, options),
+    stopFindInPage: (key: TabKey, keepSelection: boolean) => {
+      tabs.get(tabKey(key))?.view.stopFindInPage(keepSelection);
     },
     /** Whether any tab of the profile has a view, shown or hidden. */
     hasView: (profileId: string) =>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
+import type { FindBar } from "#core/find.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
@@ -106,6 +107,14 @@ const setup = ({
         overlays.push("closed");
       },
       current: () => open,
+    },
+    find: {
+      type: (term) => {
+        calls.push(["findInPage", term]);
+      },
+      step: (forward) => {
+        calls.push(["findStep", forward]);
+      },
     },
     tabs: {
       retry: (key) => {
@@ -237,6 +246,18 @@ describe(createShellHandlers, () => {
     await shell.handlers.closeOverlay({});
 
     expect(shell.overlays).toStrictEqual(["closed"]);
+  });
+
+  it("passes the find bar's term and steps to the search", async () => {
+    const shell = setup();
+
+    await shell.handlers.findInPage({ term: "apple" });
+    await shell.handlers.findStep({ forward: false });
+
+    expect(shell.calls).toStrictEqual([
+      ["findInPage", "apple"],
+      ["findStep", false],
+    ]);
   });
 
   it("gives focus to the front tab's page, or the shell with none left, when a close hides the sidebar, and only then", async () => {
@@ -417,6 +438,50 @@ describe(shellShortcuts, () => {
       b: "⇧⌘]",
     });
     expect(shellShortcuts(commands, "win32")).toStrictEqual({ a: "Ctrl+S" });
+  });
+});
+
+/** The overlay the shell is given with Gmail's find bar open and `find` the bar. */
+const overlayWith = (find?: FindBar) =>
+  shellState(
+    two,
+    () => ({ kind: "live" }),
+    { selectedAsleep: false, panes: null, handles: [], find },
+    { kind: "find", profileId: "a", tabId: "gmail" },
+    () => NO_MAIL,
+    undefined,
+    CLOSED_INBOX,
+    CHROME,
+    APPS
+  ).overlay;
+
+describe("the find bar as the shell is given it", () => {
+  const bar: FindBar = {
+    key: { profileId: "a", tabId: "gmail" },
+    term: "apple",
+    ordinal: 2,
+    matches: 0,
+    requestId: 4,
+    opened: 3,
+  };
+
+  it("shows the bar over its tab's page, 0/0 with no match", () => {
+    expect(overlayWith(bar)).toStrictEqual({
+      kind: "find",
+      profileId: "a",
+      tabId: "gmail",
+      term: "apple",
+      ordinal: 0,
+      matches: 0,
+      opened: 3,
+    });
+  });
+
+  it("shows nothing for a bar over another tab's page, or none", () => {
+    expect([
+      overlayWith({ ...bar, key: { profileId: "a", tabId: "c1" } }),
+      overlayWith(),
+    ]).toStrictEqual([{ kind: "none" }, { kind: "none" }]);
   });
 });
 

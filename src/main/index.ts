@@ -12,7 +12,11 @@ import {
 import type { KeepAliveTiming } from "#core/keep-alive.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
-import { overlayRectangle } from "#core/overlay.ts";
+import {
+  coversPage,
+  overlayRectangle,
+  staysOpenOutside,
+} from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
 import { hasTabbedInbox, profilePartition } from "#core/state.ts";
@@ -61,6 +65,7 @@ import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
+import { createFind } from "./find.ts";
 import { createFocus } from "./focus.ts";
 import { createGmailNavigation } from "./gmail-navigation.ts";
 import { serveGmailContract } from "./gmail-page.ts";
@@ -421,7 +426,11 @@ const start = async () => {
       overlayRectangle(
         shell.window.getContentAreaSize(),
         sidebar.current(),
-        overlay
+        overlay,
+        overlay.kind === "find"
+          ? // oxlint-disable-next-line no-use-before-define -- placed as the overlay opens, once both exist
+            views.panes()?.find((pane) => pane.tabId === overlay.tabId)
+          : undefined
       ),
     log: console.error,
   });
@@ -440,7 +449,9 @@ const start = async () => {
     focus.noteFocused({ kind: "shell" });
   });
   shell.window.on("blur", () => {
-    overlays.close({ toPage: true });
+    if (!staysOpenOutside(overlays.current())) {
+      overlays.close({ toPage: true });
+    }
   });
   shell.window.onContentAreaResize(overlays.relayout);
 
@@ -548,9 +559,22 @@ const start = async () => {
     },
     onLoaded: (key, page) => {
       void inboxTypes.loaded(key, page);
+      // oxlint-disable-next-line no-use-before-define -- no page loads before the find bar exists
+      find.loaded(key);
+    },
+    onFound: (key, result) => {
+      // oxlint-disable-next-line no-use-before-define -- no page answers before the find bar exists
+      find.found(key, result);
     },
     log: console.error,
   });
+
+  const find = createFind({ pages: views, overlays, focus });
+
+  overlays.onChange(find.follow);
+  views.onChange(find.follow);
+  // The find bar sits on its pane, which moves with the split.
+  views.onChange(overlays.relayout);
 
   const showGmail = createShowGmail({
     state: profiles.get,
@@ -748,6 +772,9 @@ const start = async () => {
       sidebarShown: sidebar.current() !== "hidden",
       navigation: views.navigation(),
       selectedTabAsleep: views.frontAsleep(),
+      findable:
+        views.findable() !== undefined && !coversPage(overlays.current()),
+      canFindAgain: find.canGoOn(),
     }),
     actions: {
       reloadSelectedTab: views.reloadFront,
@@ -783,6 +810,8 @@ const start = async () => {
       navigateGmail,
       saveSearch: profiles.saveSearch,
       removeSavedSearch: profiles.removeSavedSearch,
+      openFind: find.open,
+      findAgain: find.again,
     },
     locale: () => i18n.locale,
     setMenu: setApplicationMenu,
@@ -800,6 +829,8 @@ const start = async () => {
   // Opening and closing the inbox, which Back, Forward and Reload follow.
   overlays.onChange(menu.refresh);
   sidebar.onChange(menu.refresh);
+  // A term remembered, which Find Next and Previous need.
+  find.onChange(menu.refresh);
   // A load starting or stopping, or the history moving, changes what Back,
   // Forward and Stop offer.
   views.onChange(menu.refresh);
@@ -846,6 +877,7 @@ const start = async () => {
     handlers: createShellHandlers({
       profiles,
       overlays,
+      find,
       tabs: views,
       inbox,
       openApp,
@@ -871,6 +903,7 @@ const start = async () => {
             selectedAsleep: views.frontAsleep(),
             panes: views.panes(),
             handles: views.handles(),
+            find: find.current(),
           },
           overlays.current(),
           mail.mail,
@@ -889,6 +922,7 @@ const start = async () => {
         mail.onChange(listener);
         views.onChange(listener);
         overlays.onChange(listener);
+        find.onChange(listener);
         inbox.onChange(listener);
         sidebar.onChange(listener);
       },

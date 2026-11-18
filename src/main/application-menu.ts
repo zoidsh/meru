@@ -214,6 +214,10 @@ export const buildMenuTemplate = ({
         role: "selectAll",
         id: "edit.selectAll",
       },
+      separator,
+      ...item("tab.find"),
+      ...item("tab.findNext"),
+      ...item("tab.findPrevious"),
     ],
   };
 

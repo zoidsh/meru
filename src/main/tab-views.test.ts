@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPS } from "#core/apps.ts";
+import type { FoundInPage } from "#core/find.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -58,6 +59,8 @@ interface FakeView {
   /** What the page answers of its history and load, and what was asked of it. */
   navigation: Navigation;
   moves: string[];
+  /** Each search asked of the page, and each stop. */
+  finds: string[];
 }
 
 /**
@@ -84,6 +87,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
   const pageChanges: TabKey[] = [];
   const loads: { key: TabKey; page: LoadedPage }[] = [];
   const focusEvents: string[] = [];
+  const found: { key: TabKey; result: FoundInPage }[] = [];
 
   const profiles = createProfiles({
     initial: state,
@@ -119,6 +123,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           focuses: 0,
           navigation: { canGoBack: false, canGoForward: false, loading: false },
           moves: [],
+          finds: [],
         };
 
         views.push(view);
@@ -152,6 +157,14 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           },
           focus: () => {
             view.focuses += 1;
+          },
+          findInPage: (term, { findNext, forward }) => {
+            view.finds.push(`${term} ${findNext} ${forward}`);
+
+            return view.finds.length;
+          },
+          stopFindInPage: (keepSelection) => {
+            view.finds.push(`stop ${keepSelection}`);
           },
         };
       },
@@ -211,6 +224,9 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     onLoaded: (key, page) => {
       loads.push({ key, page });
     },
+    onFound: (key, result) => {
+      found.push({ key, result });
+    },
     log: (message) => logs.push(message),
   });
 
@@ -249,6 +265,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     pageChanges,
     loads,
     focusEvents,
+    found,
     setSidebar: (next: SidebarState) => {
       sidebar = next;
       tabs.relayout();
@@ -328,6 +345,39 @@ describe(createTabViews, () => {
     window.setInboxOpen(true);
 
     expect(window.tabs.navigation()).toBeNull();
+  });
+
+  it("searches a tab's page, tells of its answers, and offers only a front page that shows to search", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+    const key = { profileId: "a", tabId: "gmail" };
+
+    const offered = window.tabs.findable();
+    const id = window.tabs.findInPage(key, "apple", {
+      findNext: true,
+      forward: false,
+    });
+
+    window.tabs.stopFindInPage(key, true);
+    gmail?.options.onFound({ requestId: 1, ordinal: 1, matches: 3 });
+
+    expect([offered, id, gmail?.finds, window.found]).toStrictEqual([
+      key,
+      1,
+      ["apple true false", "stop true"],
+      [{ key, result: { requestId: 1, ordinal: 1, matches: 3 } }],
+    ]);
+
+    window.setInboxOpen(true);
+    const underInbox = window.tabs.findable();
+
+    window.setInboxOpen(false);
+    window.tabs.sleep(key);
+
+    expect([underInbox, window.tabs.findable()]).toStrictEqual([
+      undefined,
+      undefined,
+    ]);
   });
 
   it("gives Gmail's view Gmail's preload and another app's view none", async () => {

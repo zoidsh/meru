@@ -26,6 +26,8 @@ const contextOf = (): CommandContext => ({
   sidebarShown: false,
   navigation: null,
   selectedTabAsleep: false,
+  findable: false,
+  canFindAgain: false,
 });
 
 const template = (platform: Platform, context = contextOf()) =>
@@ -84,6 +86,14 @@ describe(buildMenuTemplate, () => {
       ]);
     }
   );
+
+  it("ends the Edit menu with Find, Find Next and Find Previous", () => {
+    expect(outline(template("darwin"))[1]?.[1]?.slice(-3)).toStrictEqual([
+      "tab.find",
+      "tab.findNext",
+      "tab.findPrevious",
+    ]);
+  });
 
   it("ends the View menu with the developer tools only when given them", () => {
     const given = buildMenuTemplate({
@@ -340,6 +350,8 @@ const setup = () => {
       openAppOpen: false,
       sidebarShown: false,
       selectedTabAsleep: false,
+      findable: false,
+      canFindAgain: false,
     }),
     actions,
     locale: () => "en",

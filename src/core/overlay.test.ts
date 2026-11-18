@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
+  coversPage,
   isMenu,
   menuPointInside,
   overlayRectangle,
   overlayWidth,
   isOverlayDocument,
+  staysOpenOutside,
   transitionOverlay,
 } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
@@ -30,6 +32,7 @@ const renameA: Overlay = { kind: "rename-profile", profileId: "a" };
 const renameB: Overlay = { kind: "rename-profile", profileId: "b" };
 const openAppA: Overlay = { kind: "open-app", profileId: "a" };
 const menuB: Overlay = { kind: "profile-menu", profileId: "b", x: 120, y: 20 };
+const findA: Overlay = { kind: "find", profileId: "a", tabId: "gmail" };
 
 const changed = (current: Overlay | undefined, next: State | undefined) =>
   transitionOverlay(current, {
@@ -63,8 +66,10 @@ describe(transitionOverlay, () => {
 
   it("closes when another profile is selected", () => {
     expect(
-      [renameA, openAppA].map((open) => changed(open, selectProfile(two, "b")))
-    ).toStrictEqual([undefined, undefined]);
+      [renameA, openAppA, findA].map((open) =>
+        changed(open, selectProfile(two, "b"))
+      )
+    ).toStrictEqual([undefined, undefined, undefined]);
   });
 
   it("closes when another tab of the profile is selected", () => {
@@ -77,16 +82,20 @@ describe(transitionOverlay, () => {
     const withCalendar = openTab(two, "a", calendar, calendar.home, () => "cal")
       ?.state as State;
 
+    const next = selectTab(withCalendar, {
+      profileId: "a",
+      tabId: "gmail",
+    }) as State;
+
     expect(
-      transitionOverlay(renameA, {
-        kind: "state-changed",
-        previous: withCalendar,
-        next: selectTab(withCalendar, {
-          profileId: "a",
-          tabId: "gmail",
-        }) as State,
-      })
-    ).toBeUndefined();
+      [renameA, { ...findA, tabId: "cal" } as const].map((open) =>
+        transitionOverlay(open, {
+          kind: "state-changed",
+          previous: withCalendar,
+          next,
+        })
+      )
+    ).toStrictEqual([undefined, undefined]);
   });
 
   it("closes when its profile goes", () => {
@@ -185,6 +194,52 @@ describe(overlayRectangle, () => {
       { x: 592, y: 604, width: 400, height: 88 },
       { x: 8, y: 40, width: 284, height: 52 },
     ]);
+  });
+
+  it("puts the find bar's view at the top right of the focused pane, or of the page area", () => {
+    const size = { width: 1000, height: 700 };
+
+    expect([
+      overlayRectangle(size, "narrow", { kind: "find" }),
+      overlayRectangle(
+        size,
+        "narrow",
+        { kind: "find" },
+        { x: 0, y: 326, width: 928, height: 326 }
+      ),
+    ]).toStrictEqual([
+      { x: 592, y: 40, width: 400, height: 56 },
+      { x: 592, y: 366, width: 400, height: 56 },
+    ]);
+  });
+});
+
+describe(coversPage, () => {
+  it("is a card or a menu, never the find bar, a toast or a drop", () => {
+    expect(
+      (
+        [
+          "open-app",
+          "inbox",
+          "rename-profile",
+          "tab-menu",
+          "find",
+          "toast",
+          "drop",
+        ] as const
+      ).map((kind) => coversPage({ kind }))
+    ).toStrictEqual([true, true, true, true, false, false, false]);
+    expect(coversPage(undefined)).toBeFalsy();
+  });
+});
+
+describe(staysOpenOutside, () => {
+  it("is the find bar alone", () => {
+    expect(
+      (["find", "open-app", "inbox", "tab-menu", "toast"] as const).map(
+        (kind) => staysOpenOutside({ kind })
+      )
+    ).toStrictEqual([true, false, false, false, false]);
   });
 });
 

@@ -4,11 +4,14 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import type { ShellState } from "#contract/shell.ts";
+import { staysOpenOutside } from "#core/overlay.ts";
+import type { Overlay } from "#core/overlay.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Input } from "#ui/input.tsx";
 import { Label } from "#ui/label.tsx";
 
 import { DropZone } from "./drop-zone.tsx";
+import { FindBar } from "./find-bar.tsx";
 import { Inbox } from "./inbox.tsx";
 import { OpenAppOverlay } from "./open-app.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
@@ -69,9 +72,14 @@ const RenameProfile = ({
 
 /**
  * Escape anywhere in the overlay's document, and a press outside its card,
- * close the overlay.
+ * close the overlay; the find bar stays through a press beside it.
  */
-const useClosers = (target: Document | undefined) => {
+const useClosers = (
+  target: Document | undefined,
+  kind: Overlay["kind"] | undefined
+) => {
+  const staysOutside = staysOpenOutside(kind && { kind });
+
   useEffect(() => {
     if (!target) {
       return;
@@ -90,7 +98,7 @@ const useClosers = (target: Document | undefined) => {
       // Of the overlay's document, so not an instance of this one's Element.
       const pressed = event.target as Partial<Element> | null;
 
-      if (!pressed?.closest?.("[data-overlay-card]")) {
+      if (!staysOutside && !pressed?.closest?.("[data-overlay-card]")) {
         close();
       }
     };
@@ -102,17 +110,18 @@ const useClosers = (target: Document | undefined) => {
       target.removeEventListener("keydown", onKeyDown);
       target.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [target]);
+  }, [target, staysOutside]);
 };
 
 /**
  * In the shell's own document, a press closes the open overlay, except on
  * the button that opened it, marked `data-opens` with its kind, whose click
- * closes it instead of opening it again.
+ * closes it instead of opening it again, and except the find bar, which a
+ * press that selects another tab closes in main.
  */
-const useCloseOnShellPress = (kind: string | undefined) => {
+const useCloseOnShellPress = (kind: Overlay["kind"] | undefined) => {
   useEffect(() => {
-    if (!kind) {
+    if (!kind || staysOpenOutside({ kind })) {
       return;
     }
 
@@ -140,7 +149,7 @@ export const OverlayLayer = () => {
   const target = openOverlayDocument();
   const open = overlay && overlay.kind !== "none" ? overlay : undefined;
 
-  useClosers(target);
+  useClosers(target, open?.kind);
   useCloseOnShellPress(open?.kind);
 
   if (!target || !open) {
@@ -189,6 +198,10 @@ export const OverlayLayer = () => {
     }
     case "drop": {
       drawn = <DropZone {...open} />;
+      break;
+    }
+    case "find": {
+      drawn = <FindBar key={`${open.profileId}/${open.tabId}`} {...open} />;
       break;
     }
     default: {

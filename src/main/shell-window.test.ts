@@ -94,6 +94,8 @@ const createFakeWindow = () => {
       setVisible: () => false,
       close: () => false,
       focus: () => false,
+      findInPage: () => 0,
+      stopFindInPage: () => false,
     }),
     webContentsId: 1,
     showContextMenu: () => false,
