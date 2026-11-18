@@ -162,7 +162,7 @@ for (const { count, signedIn } of [
       ? expect(gmail).toHaveText(/12$/u)
       : expect(gmail).toHaveAttribute(
           "title",
-          `${STAND_IN_TITLE}, sign in required`
+          `${STAND_IN_TITLE} · sign in required`
         ));
     await rest();
     await shootEachWay(app, shell, `${surface}-narrow`);

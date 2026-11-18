@@ -248,7 +248,7 @@ test("Gmail's tile carries the unread count, and the sign-in mark in its place w
   await findPage(signedOut, standIn.url);
   await expect(tab(signedOutShell, STAND_IN_TITLE)).toHaveAttribute(
     "title",
-    `${STAND_IN_TITLE}, sign in required`
+    `${STAND_IN_TITLE} · sign in required`
   );
   await signedOut.close();
 

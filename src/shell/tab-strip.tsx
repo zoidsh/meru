@@ -198,7 +198,7 @@ const TabButton = ({
   const tooltip =
     marked && signedOut
       ? t({
-          message: `${title}, sign in required`,
+          message: `${title} · sign in required`,
           comment:
             "Tooltip of Gmail's tile in the sidebar while the profile's Google account is signed out; {title} is the tab's title",
         })
