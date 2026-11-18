@@ -32,6 +32,12 @@ export interface PageNow {
   live: boolean;
   /** A new document is loading in it. */
   loading: boolean;
+  /**
+   * Where its page is and what it is called now, ahead of the tab's saved
+   * URL and title, which are written at most once a second.
+   */
+  url?: string;
+  title?: string | undefined;
 }
 
 const isWebAddress = (url: string) => {
@@ -94,7 +100,8 @@ export const bookmarkOf = (state: State, profileId: string, url: string) =>
  * The page of the tab to bookmark, while it can be: not Gmail's, which
  * v3 never bookmarked, of an app this build knows, at a web address, and
  * shown with no new document loading, so a sleeping, failed, crashed or
- * loading page has none. The title is the tab's, or its app's name.
+ * loading page has none. The URL and title are the page's now, else the
+ * tab's, and the title is its app's name when empty.
  */
 export const bookmarkablePage = (
   tab: Pick<Tab, "app" | "url" | "title">,
@@ -102,13 +109,15 @@ export const bookmarkablePage = (
   appName: (app: AppId) => string
 ): BookmarkedPage | undefined => {
   const { app } = tab;
+  const url = page.url ?? tab.url;
+  const title = page.title ?? tab.title;
 
   return isAppId(app) &&
     app !== "gmail" &&
     page.live &&
     !page.loading &&
-    isWebAddress(tab.url)
-    ? { url: tab.url, title: tab.title.trim() || appName(app), app }
+    isWebAddress(url)
+    ? { url, title: title.trim() || appName(app), app }
     : undefined;
 };
 

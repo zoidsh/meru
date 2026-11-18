@@ -149,6 +149,8 @@ interface TabView {
   view: ContentView;
   status: TabStatus;
   retry: ReturnType<typeof setTimeout> | undefined;
+  /** What the page is called now, once it has said since its document began. */
+  title?: string;
 }
 
 /**
@@ -504,6 +506,12 @@ export const createTabViews = ({
           pages.record({ ...tabKeyed, url: event.url });
         }
 
+        const navigatedTab = tabs.get(key);
+
+        if (navigatedTab && !event.inPage) {
+          navigatedTab.title = "";
+        }
+
         onNavigated(tabKeyed, event.inPage ?? false);
 
         notify();
@@ -515,6 +523,12 @@ export const createTabViews = ({
         break;
       }
       case "titled": {
+        const titledTab = tabs.get(key);
+
+        if (titledTab) {
+          titledTab.title = event.title;
+        }
+
         if (showsPage(key)) {
           pages.record({ ...tabKeyed, title: event.title });
           onPageChange(tabKeyed);
@@ -1196,6 +1210,15 @@ export const createTabViews = ({
       preview = next;
       placeAll();
       notify();
+    },
+    /**
+     * Where the tab's page is and, once it has said, what it is called, now
+     * rather than as last saved; nothing for a tab with no view.
+     */
+    page: (key: TabKey) => {
+      const tab = tabs.get(tabKey(key));
+
+      return tab && { url: tab.view.url(), title: tab.title };
     },
     /** Each tab's status; one with no view, asleep or never loaded, is unloaded. */
     status: (key: TabKey): TabStatus =>

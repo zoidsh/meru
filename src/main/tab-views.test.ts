@@ -1078,6 +1078,31 @@ describe(createTabViews, () => {
     expect(window.saves.length - before).toBe(2);
   });
 
+  it("answers where a tab's page is and what it is called now, ahead of state, its title cleared by a new document and nothing with no view", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+    const key = { profileId: "a", tabId: "gmail" };
+    const page = () => window.tabs.page(key);
+    const seen = [page()];
+
+    window.emit(gmail, {
+      kind: "navigated",
+      url: `${GMAIL}/#inbox`,
+      inPage: true,
+    });
+    window.emit(gmail, { kind: "titled", title: "Inbox" });
+    seen.push(page());
+    window.emit(gmail, { kind: "navigated", url: `${GMAIL}/next` });
+    seen.push(page(), window.tabs.page({ profileId: "a", tabId: "none" }));
+
+    expect(seen).toStrictEqual([
+      { url: "", title: undefined },
+      { url: `${GMAIL}/#inbox`, title: "Inbox" },
+      { url: `${GMAIL}/next`, title: "" },
+      undefined,
+    ]);
+  });
+
   it("tells of each load a tab's page finishes and each title it takes, but not an error page's", async () => {
     const window = await setup();
     const gmail = window.viewOf("persist:a");

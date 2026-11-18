@@ -20,7 +20,7 @@ export interface BookmarksDeps {
   apps: readonly App[];
   state: () => State;
   overlays: Pick<Overlays, "open" | "close" | "current">;
-  /** What the tab's page is doing now. */
+  /** What the tab's page is doing now, and where it is. */
   page: (key: TabKey) => PageNow;
   /** Says whether the page is bookmarked now, or nothing when nothing changed. */
   toggle: (

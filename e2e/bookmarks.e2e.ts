@@ -187,6 +187,54 @@ test("Cmd or Ctrl+D bookmarks the selected tab's page with a toast and removes i
   ).toHaveCount(0);
 });
 
+test("Cmd or Ctrl+D right after the page moves within its document and retitles bookmarks it where it is now, and back at the first page, its title back too, adds that rather than removing the other", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seed(userDataDir, standIn);
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const notices = overlay.getByRole("region", { name: "Notifications" });
+  const calendar = await findPage(app, standIn.calendarUrl);
+  const first = calendar.url();
+  const later = new URL("#later", first).href;
+
+  await expect
+    .poll(() => readBookmarkItem(app))
+    .toStrictEqual({ label: "Bookmark Tab", enabled: true });
+  await calendar.evaluate(() => {
+    history.pushState({}, "", "#later");
+    document.title = "Later";
+  });
+  await pressBookmark(app, standIn.calendarUrl);
+  await expect(
+    notices.getByText("Bookmarked Later", { exact: true })
+  ).toBeVisible();
+  await expect
+    .poll(() => readBookmarkItem(app))
+    .toStrictEqual({ label: "Remove Bookmark", enabled: true });
+
+  await calendar.evaluate(() => {
+    history.back();
+  });
+  await expect
+    .poll(() => readBookmarkItem(app))
+    .toStrictEqual({ label: "Bookmark Tab", enabled: true });
+  await pressBookmark(app, standIn.calendarUrl);
+  await expect
+    .poll(async () => {
+      const profile = await readProfile(userDataDir);
+
+      return profile?.bookmarks?.map(({ url, title }) => [url, title]);
+    })
+    .toStrictEqual([
+      [later, "Later"],
+      [first, CALENDAR_TITLE],
+    ]);
+});
+
 test("the wide row's bookmark button shows on hover and bookmarks that row's page, not the selected tab's", async ({
   launchApp,
   userDataDir,

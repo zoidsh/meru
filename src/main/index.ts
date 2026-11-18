@@ -887,6 +887,7 @@ const start = async () => {
     page: (key) => ({
       live: views.status(key).kind === "live",
       loading: views.navigation(key)?.loading ?? false,
+      ...views.page(key),
     }),
     toggle: profiles.toggleBookmark,
     remove: profiles.removeBookmark,

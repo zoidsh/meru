@@ -175,6 +175,18 @@ describe(bookmarkablePage, () => {
     ]).toStrictEqual([week, "calendar!"]);
   });
 
+  it("takes the page's URL and title now over the tab's saved ones", () => {
+    expect([
+      bookmarkablePage(tab, { ...live, url: DOC, title: "Plan" }, appName),
+      bookmarkablePage(tab, { ...live, title: "" }, appName)?.title,
+      bookmarkablePage(tab, { ...live, url: "about:blank" }, appName),
+    ]).toStrictEqual([
+      { url: DOC, title: "Plan", app: "calendar" },
+      "calendar!",
+      undefined,
+    ]);
+  });
+
   it("is none for Gmail, a page asleep, failed, crashed or loading, an unknown app or no web address", () => {
     expect([
       bookmarkablePage(

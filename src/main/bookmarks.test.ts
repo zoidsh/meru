@@ -120,6 +120,33 @@ describe(createBookmarks, () => {
     ]);
   });
 
+  it("bookmarks and tells of the page where it is now, ahead of the tab's saved URL and title", async () => {
+    const { bookmarks, profiles, overlay, setPage } = setup();
+
+    setPage(CALENDAR, { live: true, loading: false, url: DOC, title: "Plan" });
+
+    const before = bookmarks.bookmarked(CALENDAR);
+
+    await bookmarks.toggle(CALENDAR, true);
+
+    expect([
+      before,
+      bookmarks.bookmarked(CALENDAR),
+      overlay(),
+      bookmarksOf(profiles.get(), "a").map(({ url, title }) => [url, title]),
+    ]).toStrictEqual([
+      false,
+      true,
+      { kind: "toast", message: "bookmarked", title: "Plan" },
+      [[DOC, "Plan"]],
+    ]);
+
+    // Back at the saved page, which is not bookmarked.
+    setPage(CALENDAR, { live: true, loading: false, url: WEEK });
+
+    expect([bookmarks.bookmarked(CALENDAR)]).toStrictEqual([false]);
+  });
+
   it("announces nothing for a tab's own window, or with a card over the page", async () => {
     const { bookmarks, overlay } = setup(initial, {
       kind: "inbox",
