@@ -137,6 +137,8 @@ export const createTabViews = ({
   const tabs = new Map<string, TabView>();
   /** A URL a tab was opened or sent to, for its next load. */
   const pendingUrls = new Map<string, string>();
+  /** The URL a tab's view was asked to load, until its page commits one. */
+  const asked = new Map<string, string>();
   const listeners = new Set<() => void>();
   /** The profiles whose Open at Launch tabs were opened this session. */
   const launched = new Set<string>();
@@ -199,6 +201,8 @@ export const createTabViews = ({
 
   /** A failure arrives as `did-fail-load` too, which the machine hears. */
   const load = async (key: string, view: ContentView, url: string) => {
+    asked.set(key, url);
+
     try {
       await view.loadURL(url);
     } catch (error) {
@@ -206,10 +210,31 @@ export const createTabViews = ({
     }
   };
 
+  /**
+   * Where a tab put to sleep from `from` wakes, and the page to keep in
+   * state: a load not yet committed is where it was going, a page shown is
+   * where it is, and an error or crashed page leaves state's URL.
+   */
+  const placeOf = (key: string, tab: TabView, from: TabStatus) => {
+    const going = asked.get(key);
+
+    if (going !== undefined) {
+      return { wake: going, page: going };
+    }
+
+    const app = findApp(apps, findTab(state(), tab.key)?.app ?? "");
+    const page = tab.view.url();
+
+    return app && page !== "" && isWhereTabIs(from)
+      ? { wake: restoreUrl(apps, app, page), page }
+      : undefined;
+  };
+
   const run = (
     key: string,
     tab: TabView,
     effect: TabEffect,
+    from: TabStatus,
     onRetryDue: () => void
   ) => {
     switch (effect.kind) {
@@ -226,15 +251,21 @@ export const createTabViews = ({
         tab.view.reload();
         break;
       }
-      // Wakes where the page is now, by `restoreUrl`'s rule: the page writer
-      // may not have put it in state yet.
+      // The page writer may not have put the place in state yet, so it is
+      // the next load's URL, and written at once in case the app quits.
       case "discard": {
-        const app = findApp(apps, findTab(state(), tab.key)?.app ?? "");
+        const kept = placeOf(key, tab, from);
 
-        if (app && !pendingUrls.has(key) && isWhereTabIs(tab.status)) {
-          pendingUrls.set(key, restoreUrl(apps, app, tab.view.url()));
+        if (kept) {
+          if (!pendingUrls.has(key)) {
+            pendingUrls.set(key, kept.wake);
+          }
+
+          pages.record({ ...tab.key, url: kept.page });
+          pages.writeNow();
         }
 
+        asked.delete(key);
         tabs.delete(key);
         clearTimeout(tab.retry);
         // oxlint-disable-next-line no-use-before-define -- as Close closes a view
@@ -262,16 +293,19 @@ export const createTabViews = ({
       return;
     }
 
-    const next = transition(tab.status, event);
+    const from = tab.status;
+    const next = transition(from, event);
+
+    // Committed first, so no reader an effect reaches sees the status left.
+    tab.status = next.status;
 
     for (const effect of next.effects) {
-      run(key, tab, effect, () => {
+      run(key, tab, effect, from, () => {
         dispatch(key, { kind: "retry-due" });
       });
     }
 
-    if (next.status !== tab.status) {
-      tab.status = next.status;
+    if (next.status !== from) {
       showFront();
       notify();
     }
@@ -311,6 +345,8 @@ export const createTabViews = ({
         break;
       }
       case "navigated": {
+        asked.delete(key);
+
         if (showsPage(key)) {
           pages.record({ ...tabKeyed, url: event.url });
         }
@@ -490,10 +526,16 @@ export const createTabViews = ({
     }
   };
 
+  /** Drops what a closed tab, with a view or without, left waiting. */
+  const forget = (key: string) => {
+    pendingUrls.delete(key);
+    asked.delete(key);
+    pages.forget(key);
+  };
+
   const close = (key: string, tab: TabView) => {
     tabs.delete(key);
-    pendingUrls.delete(key);
-    pages.forget(key);
+    forget(key);
     clearTimeout(tab.retry);
     closeView(key, tab.view);
   };
@@ -524,6 +566,7 @@ export const createTabViews = ({
     for (const key of sleeping) {
       if (!known.has(key)) {
         sleeping.delete(key);
+        forget(key);
       }
     }
 

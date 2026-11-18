@@ -49,6 +49,8 @@ interface FakeView {
   bounds: unknown[];
   radii: number[];
   loaded: string[];
+  /** The URL its page last committed, which a load does not change until then. */
+  committed: string;
   reloads: number;
   visible: boolean | undefined;
   closed: boolean;
@@ -109,6 +111,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           bounds: [],
           radii: [],
           loaded: [],
+          committed: "",
           reloads: 0,
           visible: undefined,
           closed: false,
@@ -131,10 +134,12 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           goForward: () => view.moves.push("forward"),
           stop: () => view.moves.push("stop"),
           navigation: () => view.navigation,
-          url: () => view.loaded.at(-1) ?? "",
+          url: () => view.committed,
           evaluate: () => Promise.resolve(view.partition),
           loadURL: (url) => {
             view.loaded.push(url);
+            // As Electron's view tells of the load starting before it returns.
+            options.onEvent({ kind: "load-started" });
 
             return Promise.resolve();
           },
@@ -226,6 +231,10 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
         .filter((view) => !view.closed)
         .map((view) => [view.partition, view.loaded.at(-1), view.visible]),
     emit: (view: FakeView | undefined, event: ContentViewEvent) => {
+      if (view && event.kind === "navigated") {
+        view.committed = event.url;
+      }
+
       view?.options.onEvent(event);
     },
     goOnline: () => online?.(),
@@ -750,6 +759,7 @@ describe(createTabViews, () => {
     const window = await setup();
     const gmail = window.viewOf("persist:a");
 
+    window.emit(gmail, { kind: "navigated", url: GMAIL });
     window.emit(gmail, { kind: "loaded" });
     window.emit(gmail, REFUSED);
 
@@ -759,7 +769,7 @@ describe(createTabViews, () => {
     await expect(window.loads[0]?.page.evaluate("1")).resolves.toBe(
       "persist:a"
     );
-    expect(window.loads[0]?.page.url()).toBe(gmail?.loaded.at(-1));
+    expect(window.loads[0]?.page.url()).toBe(GMAIL);
   });
 
   it("keeps no URL or title of the page shown while a tab failed or crashed", async () => {
@@ -850,6 +860,20 @@ describe(createTabViews, () => {
     expect(window.tabs.focuser()).toBeDefined();
   });
 
+  it("tells of no change while a tab it loads still reads unloaded", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+    const seen: string[] = [];
+
+    window.tabs.onChange(() => {
+      seen.push(window.tabs.status(calendar).kind);
+    });
+    await window.profiles.selectTab(calendar);
+
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen).not.toContain("unloaded");
+  });
+
   it("wakes a tab where its page was, even before that was written to state", async () => {
     const window = await setup();
     const calendar = { profileId: "a", tabId: "c1" };
@@ -861,13 +885,81 @@ describe(createTabViews, () => {
 
     window.emit(view, { kind: "loaded" });
     window.emit(view, { kind: "navigated", url: `${CALENDAR}?day=2` });
-    // The fake's page is where it last loaded.
-    view?.loaded.push(later);
     window.emit(view, { kind: "navigated", url: later });
     window.tabs.sleep(calendar);
+
+    // Written at once, not when the page writer's second is up.
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(window.profiles.get().profiles[0]?.tabs[1]).toMatchObject({
+      url: later,
+    });
+
     window.tabs.reloadFront();
 
     expect(window.viewOf("persist:a", 1)?.loaded).toStrictEqual([later]);
+  });
+
+  it("wakes a tab put to sleep while it loaded a link at the link, before its page committed any URL", async () => {
+    const window = await setup();
+    const link = `${CALENDAR}?day=5`;
+    const calendarApp = APPS.find((app) => app.id === "calendar");
+
+    if (calendarApp) {
+      await window.tabs.open("a", calendarApp, link);
+    }
+
+    const opened = window.profiles.get().profiles[0]?.selectedTabId ?? "";
+
+    window.tabs.sleep({ profileId: "a", tabId: opened });
+    window.tabs.reloadFront();
+
+    expect(window.live()).toStrictEqual([
+      ["persist:a", GMAIL, false],
+      ["persist:a", link, true],
+    ]);
+  });
+
+  it("wakes a loaded tab sent a link and put to sleep before the link committed at the link", async () => {
+    const window = await setup();
+    const gmail = { profileId: "a", tabId: "gmail" };
+    const view = window.viewOf("persist:a");
+    const link = `${GMAIL}/#inbox/abc`;
+    const gmailApp = APPS.find((app) => app.id === "gmail");
+
+    window.emit(view, { kind: "navigated", url: GMAIL });
+    window.emit(view, { kind: "loaded" });
+
+    if (gmailApp) {
+      await window.tabs.open("a", gmailApp, link);
+    }
+
+    expect(view?.loaded).toStrictEqual([GMAIL, link]);
+
+    window.tabs.sleep(gmail);
+    window.tabs.reloadFront();
+
+    expect(window.viewOf("persist:a")?.loaded).toStrictEqual([link]);
+  });
+
+  it("forgets where a tab put to sleep was to wake when it is closed asleep", async () => {
+    const window = await setup();
+    const gmail = { profileId: "a", tabId: "gmail" };
+    const link = `${GMAIL}/#inbox/abc`;
+    const gmailApp = APPS.find((app) => app.id === "gmail");
+
+    if (!gmailApp) {
+      throw new Error("The registry has no Gmail");
+    }
+
+    // Asleep before the link committed, so it would wake at the link.
+    await window.tabs.open("a", gmailApp, link);
+    window.tabs.sleep(gmail);
+    await window.profiles.setPinned(gmail, false);
+    await window.profiles.closeTab(gmail);
+    await window.profiles.openTab("a", gmailApp, GMAIL, "gmail");
+
+    expect(window.viewOf("persist:a", 1)?.loaded).toStrictEqual([GMAIL]);
   });
 
   it("wakes the sleeping front tab by Reload, and selects and wakes a background one by its Reload", async () => {

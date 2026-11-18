@@ -34,6 +34,10 @@ export const createPageWriter = (write: (updates: PageUpdate[]) => void) => {
       pending.set(key, { ...pending.get(key), ...update });
       flush();
     },
+    /** Writes what waits now, rather than when the second is up. */
+    writeNow: () => {
+      flush.flush();
+    },
     /** Drops what a closed tab had waiting. */
     forget: (key: string) => {
       pending.delete(key);
