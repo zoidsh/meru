@@ -2,7 +2,7 @@ import { isEqual } from "es-toolkit";
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 
-import { sidebarDrop } from "#core/tab-drop.ts";
+import { inside, sidebarDrop } from "#core/tab-drop.ts";
 import type { Box, DropTile, SidebarDrop } from "#core/tab-drop.ts";
 
 import { followPointer } from "./follow-pointer.ts";
@@ -39,9 +39,6 @@ interface Drag {
   aimFrame: number | undefined;
   stop: () => void;
 }
-
-const inside = (box: Box, { x, y }: { x: number; y: number }) =>
-  x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
 
 const boxOf = (element: Element): Box => {
   const { left, top, right, bottom } = element.getBoundingClientRect();

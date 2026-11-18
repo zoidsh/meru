@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { corpusFresh } from "./verification-code.corpus-fresh.ts";
-import { corpusHeldOut } from "./verification-code.corpus-heldout.ts";
-import { corpusV4 } from "./verification-code.corpus-v4.ts";
-import type { V4CorpusEntry } from "./verification-code.corpus-v4.ts";
-import { corpus } from "./verification-code.corpus.ts";
-import type { CorpusEntry } from "./verification-code.corpus.ts";
+import { corpusFresh } from "./verification-code.corpus-fresh.test-data.ts";
+import { corpusHeldOut } from "./verification-code.corpus-heldout.test-data.ts";
+import { corpusV4 } from "./verification-code.corpus-v4.test-data.ts";
+import type { V4CorpusEntry } from "./verification-code.corpus-v4.test-data.ts";
+import { corpus } from "./verification-code.corpus.test-data.ts";
+import type { CorpusEntry } from "./verification-code.corpus.test-data.ts";
 import {
   MAX_TEXT_LENGTH,
   extractVerificationCode,

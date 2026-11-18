@@ -224,7 +224,8 @@ const BOX_BAND = 6;
 /** How far a line in the box is drawn in from each side of its rows. */
 const BOX_INSET = 6;
 
-const inside = (box: Box, { x, y }: { x: number; y: number }) =>
+/** Whether the point is within the box, its edges included. */
+export const inside = (box: Box, { x, y }: { x: number; y: number }) =>
   x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
 
 /** How far across `tab` the point is, along its row where it has a neighbour there, else down. */

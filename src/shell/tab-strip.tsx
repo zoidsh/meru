@@ -16,15 +16,22 @@ import type { KeyboardEvent, MouseEvent, PointerEvent, ReactNode } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
-import { itemTabs, sidebarLayout } from "#core/drawn-tabs.ts";
+import {
+  itemTabs,
+  listRoom,
+  moveStep,
+  sidebarLayout,
+  sideways,
+  spansPinnedRow,
+} from "#core/drawn-tabs.ts";
 import type { SidebarItem } from "#core/drawn-tabs.ts";
-import { spansPinnedRow } from "#core/pinned-tabs.ts";
 import { sidebarWidth } from "#core/sidebar.ts";
 import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
 import { isKeyMadeMenu, isMenuKey, wholePoint } from "./context-menu.ts";
+import { keepFocus } from "./keep-focus.ts";
 import { keepInView } from "./keep-in-view.ts";
 import { OpenAppSidebarButton } from "./open-app.tsx";
 import { useShortcutTitle } from "./shortcut-title.ts";
@@ -225,16 +232,6 @@ const neighbourOf = (tab: HTMLElement) => {
   return all[index + 1] ?? all[index - 1];
 };
 
-/**
- * The height of `count` tabs, the list keeping room for up to three, and the
- * inset above the first.
- */
-const listRoom = (count: number, gap: number) => {
-  const rows = Math.min(count, 3);
-
-  return rows === 0 ? 0 : 6 + rows * 32 + (rows - 1) * gap;
-};
-
 /** Asks for the tab's context menu at a point of the window. */
 const openTabMenu = (
   profileId: string,
@@ -245,41 +242,19 @@ const openTabMenu = (
   shellCalls().openTabMenu({ profileId, tabId, ...wholePoint(x, y) });
 };
 
-/** A press that leaves focus where it was, for a control hidden from assistive technology. */
-const keepFocus = (event: { preventDefault: () => void }) => {
-  event.preventDefault();
-};
-
 /** Left or Right on a wide pinned tile: the other tile of its row, if any. */
-const sideways = (tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => {
+const focusSideways = (tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => {
   // The tiles alone: a split's box before them in the grid is no tile.
   const tiles = [
     ...(tab.parentElement?.querySelectorAll<HTMLElement>(
       ':scope > [role="tab"]'
     ) ?? []),
   ];
-  const index = tiles.indexOf(tab);
-  const other = key === "ArrowRight" ? index + 1 : index - 1;
+  const other = sideways(tiles.indexOf(tab), key);
 
-  // A row holds an even index and the next.
-  if ((key === "ArrowRight") === (index % 2 === 0)) {
+  if (other !== undefined) {
     tiles[other]?.focus();
   }
-};
-
-/**
- * Alt with Up or Down on a focused tab, or Left or Right on a tile of the
- * wide pinned grid, which moves it a place back or on in its area: Option
- * on macOS. Base UI's tablist leaves arrows with a modifier alone.
- */
-const moveStep = (event: KeyboardEvent, grid: boolean) => {
-  const steps: Record<string, number> = grid
-    ? { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -1, ArrowRight: 1 }
-    : { ArrowUp: -1, ArrowDown: 1 };
-
-  return event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey
-    ? steps[event.key]
-    : undefined;
 };
 
 const tabVariant = (selected: boolean, pinned: boolean) => {
@@ -1135,7 +1110,7 @@ export const Sidebar = ({
       }}
       isDragClick={drag.isDragClick}
       onMoveBy={(step) => moveBy(tab, step)}
-      onSideways={grid ? sideways : undefined}
+      onSideways={grid ? focusSideways : undefined}
       roomy={roomy}
     />
   );

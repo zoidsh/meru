@@ -686,12 +686,3 @@ export const Titlebar = ({
     </header>
   );
 };
-
-/** The selected profile's colour, which the shell mixes into its greys. */
-export const useTint = () => {
-  const profiles = useShellState("profiles");
-
-  return profiles?.profiles.find(
-    (profile) => profile.id === profiles.selectedProfileId
-  )?.color;
-};

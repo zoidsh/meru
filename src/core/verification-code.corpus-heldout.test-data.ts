@@ -7,7 +7,7 @@
 // `knownFalsePositive` is answered wrong today, and the test asserts that
 // answer, so a change that fixes or worsens it is loud.
 
-import type { V4CorpusEntry } from "./verification-code.corpus-v4.ts";
+import type { V4CorpusEntry } from "./verification-code.corpus-v4.test-data.ts";
 
 export interface HeldOutEntry extends V4CorpusEntry {
   note: string;

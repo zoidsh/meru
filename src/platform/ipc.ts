@@ -9,6 +9,14 @@ export interface IpcSender {
   origin: string | undefined;
 }
 
+/** A frame's origin carries no path, query or fragment, so it can be logged. */
+export const describeSender = ({
+  webContentsId,
+  isMainFrame,
+  origin,
+}: IpcSender) =>
+  `webContents ${webContentsId} (${isMainFrame ? "main frame" : "subframe"}, ${origin ?? "no origin"})`;
+
 export interface Ipc {
   /** Answers `invoke` on `channel`; a rejection reaches the caller. */
   handle: (
@@ -32,9 +40,7 @@ export interface Ipc {
   ) => boolean;
 }
 
-const describeSender = (
-  event: IpcMainEvent | IpcMainInvokeEvent
-): IpcSender => {
+const senderOf = (event: IpcMainEvent | IpcMainInvokeEvent): IpcSender => {
   const frame = event.senderFrame;
 
   return {
@@ -47,12 +53,12 @@ const describeSender = (
 export const createIpc = (): Ipc => ({
   handle: (channel, handler) => {
     ipcMain.handle(channel, (event, payload: unknown) =>
-      handler(describeSender(event), payload)
+      handler(senderOf(event), payload)
     );
   },
   on: (channel, listener) => {
     ipcMain.on(channel, (event, payload: unknown) => {
-      listener(describeSender(event), payload);
+      listener(senderOf(event), payload);
     });
   },
   send: (webContentsId, channel, message, options) => {

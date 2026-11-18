@@ -13,6 +13,7 @@ import type {
   ShellState,
   ShellSyncMessage,
 } from "#contract/shell.ts";
+import { describeSender } from "#platform/ipc.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
 import type { SenderRegistry } from "./senders.ts";
@@ -42,9 +43,6 @@ export interface ShellIpcDeps {
 const SLICE_NAMES = Object.keys(SHELL_STATE) as ShellSliceName[];
 
 const syncRequest = z.array(z.enum(SLICE_NAMES));
-
-const describeSender = ({ webContentsId, isMainFrame, origin }: IpcSender) =>
-  `webContents ${webContentsId} (${isMainFrame ? "main frame" : "subframe"}, ${origin ?? "no origin"})`;
 
 export class RefusedCallError extends Error {
   override name = "RefusedCallError";

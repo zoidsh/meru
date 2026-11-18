@@ -25,6 +25,7 @@ import {
 import { Kbd } from "#ui/kbd.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
+import { keepFocus } from "./keep-focus.ts";
 import { OverlayCard } from "./overlay-card.tsx";
 import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
@@ -32,10 +33,6 @@ import { TitlebarButton } from "./titlebar-button.tsx";
 
 const focus = (input: HTMLInputElement | null) => {
   input?.focus();
-};
-
-const keepFocus = (event: { preventDefault: () => void }) => {
-  event.preventDefault();
 };
 
 type Launcher = Extract<ShellState["overlay"], { kind: "open-app" }>;

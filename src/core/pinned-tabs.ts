@@ -11,10 +11,3 @@ export const selectPinnedCommandId = (position: number) =>
  * Command or Control with a digit selects a profile.
  */
 export const pinnedShortcut = (position: number) => `Control+Shift+${position}`;
-
-/**
- * Whether the pinned tile at `index` of `count` spans both columns of the
- * wide sidebar's two: the last of an odd count, alone in its row.
- */
-export const spansPinnedRow = (index: number, count: number) =>
-  count % 2 === 1 && index === count - 1;

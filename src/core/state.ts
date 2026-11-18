@@ -180,7 +180,8 @@ export const gmailTab = (): Tab => ({
  * in the file, absent included, reads as not, and stays as found until the
  * tab is pinned or unpinned.
  */
-export const isPinned = (tab: Tab) => tab.pinned === true;
+export const isPinned = (tab: { id: string; pinned?: unknown }) =>
+  tab.pinned === true;
 
 /** Whether a pinned tab loads at launch, before it is first selected. */
 export const opensAtLaunch = (tab: Tab) =>

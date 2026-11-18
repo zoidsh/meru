@@ -4,6 +4,7 @@ import { isGmailHash } from "#core/gmail-hash.ts";
 import { HOOK_NAMES } from "#core/gmail-hooks.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
+import { describeSender } from "#platform/ipc.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
 import type { SenderRegistry } from "./senders.ts";
@@ -25,10 +26,6 @@ export interface GmailPageDeps {
   onRefused?: (origin: string | undefined) => void;
   log: (message: string) => void;
 }
-
-/** A frame's origin carries no path, query or fragment, so it can be logged. */
-const describeSender = ({ webContentsId, isMainFrame, origin }: IpcSender) =>
-  `webContents ${webContentsId} (${isMainFrame ? "main frame" : "subframe"}, ${origin ?? "no origin"})`;
 
 const describeHealth = (health: GmailHealth) => {
   const failing = (["broken", "absent"] as const)

@@ -1,5 +1,5 @@
 import { splitBoxes } from "./split.ts";
-import { knownTabs } from "./state.ts";
+import { isPinned, knownTabs } from "./state.ts";
 import type { Profile, Tab } from "./state.ts";
 
 interface DrawnTab {
@@ -18,8 +18,6 @@ export interface SidebarLayout<T extends DrawnTab> {
   /** Each drawn box's tabs in its own order, in the splits' order. */
   boxes: T[][];
 }
-
-const isPinned = (tab: DrawnTab) => tab.pinned === true;
 
 /**
  * The sidebar's two areas as drawn, from the shown tabs in stored order and
@@ -82,4 +80,60 @@ export const drawnTabs = (profile: Pick<Profile, "tabs" | "splits">): Tab[] => {
   );
 
   return itemTabs([...pinned, ...listed]);
+};
+
+/**
+ * Whether the pinned tile at `index` of `count` spans both columns of the
+ * wide sidebar's two: the last of an odd count, alone in its row.
+ */
+export const spansPinnedRow = (index: number, count: number) =>
+  count % 2 === 1 && index === count - 1;
+
+/**
+ * The height of `count` tabs, the list keeping room for up to three, and the
+ * inset above the first.
+ */
+export const listRoom = (count: number, gap: number) => {
+  const rows = Math.min(count, 3);
+
+  return rows === 0 ? 0 : 6 + rows * 32 + (rows - 1) * gap;
+};
+
+/**
+ * Left or Right on the wide pinned tile at `index`: the index of the other
+ * tile of its row, should the key point at it. A row holds an even index and
+ * the next.
+ */
+export const sideways = (index: number, key: "ArrowLeft" | "ArrowRight") => {
+  const right = key === "ArrowRight";
+
+  if (right !== (index % 2 === 0)) {
+    return;
+  }
+
+  return right ? index + 1 : index - 1;
+};
+
+/** The keys and modifiers of a key press. */
+interface KeyPress {
+  key: string;
+  altKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
+}
+
+/**
+ * Alt with Up or Down on a focused tab, or Left or Right on a tile of the
+ * wide pinned grid, which moves it a place back or on in its area: Option
+ * on macOS. Base UI's tablist leaves arrows with a modifier alone.
+ */
+export const moveStep = (event: KeyPress, grid: boolean) => {
+  const steps: Record<string, number> = grid
+    ? { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -1, ArrowRight: 1 }
+    : { ArrowUp: -1, ArrowDown: 1 };
+
+  return event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey
+    ? steps[event.key]
+    : undefined;
 };

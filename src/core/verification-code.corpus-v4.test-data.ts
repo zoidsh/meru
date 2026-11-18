@@ -5,7 +5,7 @@
 // wrong today, and the test asserts its `answer`, so a change that fixes or
 // worsens it is loud.
 
-import type { CorpusEntry } from "./verification-code.corpus.ts";
+import type { CorpusEntry } from "./verification-code.corpus.test-data.ts";
 
 export interface V4CorpusEntry extends CorpusEntry {
   knownMiss?: { answer: string | null; why: string };

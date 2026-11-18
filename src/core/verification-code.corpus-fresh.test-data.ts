@@ -7,7 +7,7 @@
 // 150 entries: 84 codes, 66 non-codes. One marked `knownMiss` gets its answer
 // wrong today, as in v4's corpus, and the test asserts `knownMiss.answer`.
 
-import type { V4CorpusEntry } from "./verification-code.corpus-v4.ts";
+import type { V4CorpusEntry } from "./verification-code.corpus-v4.test-data.ts";
 
 export interface FreshEntry extends V4CorpusEntry {
   note: string;
