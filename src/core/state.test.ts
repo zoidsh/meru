@@ -6,6 +6,7 @@ import {
   adjacentProfile,
   canRemoveProfile,
   DEFAULT_PROFILE_NAME,
+  STATE_VERSION,
   PROFILE_NAME_MAX_LENGTH,
   createInitialState,
   decodeState,
@@ -1159,4 +1160,13 @@ describe("a profile's tabbed inbox in the state", () => {
       });
     }
   );
+});
+
+describe("the state file's version", () => {
+  it("stays 1", () => {
+    expect(
+      STATE_VERSION,
+      "a store's version never changes: its shape only grows, read leniently (see the comment at the constant)"
+    ).toBe(1);
+  });
 });

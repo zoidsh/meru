@@ -8,6 +8,12 @@ import type { SoundChoice } from "./sounds.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
 
+/**
+ * Never changes. An older integer here reads as unreadable, so a bump would
+ * set every person's settings aside. The shape only grows, a new field
+ * optional and read leniently, so every build reads every file written
+ * before it.
+ */
 export const SETTINGS_VERSION = 1;
 
 /** Names of the file's own, which no setting may take. */

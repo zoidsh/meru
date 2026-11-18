@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   SETTINGS,
+  SETTINGS_VERSION,
   decodeSettings,
   readSetting,
   writeSetting,
@@ -193,5 +194,14 @@ describe("setting declarations", () => {
     } satisfies SettingDeclarations;
 
     expect(Object.keys({ ...declared, ...profiles })).toHaveLength(3);
+  });
+});
+
+describe("the settings file's version", () => {
+  it("stays 1", () => {
+    expect(
+      SETTINGS_VERSION,
+      "a store's version never changes: its shape only grows, read leniently (see the comment at the constant)"
+    ).toBe(1);
   });
 });

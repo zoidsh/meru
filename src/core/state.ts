@@ -8,6 +8,12 @@ import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
 import type { Rectangle } from "./window-bounds.ts";
 
+/**
+ * Never changes. An older integer here reads as unreadable, so a bump would
+ * set every person's file aside, and with the profiles their sign-ins. The
+ * shape only grows, a new field optional and read leniently, so every build
+ * reads every file written before it.
+ */
 export const STATE_VERSION = 1;
 
 /** What v3 names its first account; kept in English and translated when shown. */
