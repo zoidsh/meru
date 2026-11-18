@@ -27,8 +27,8 @@ const scrollIntoScroller = (
 /**
  * The selected tab's ref: keeps it in view, `margin` clear of the edges of
  * the element it scrolls in, when it becomes selected and whenever that
- * element changes size, or with `followTabs` any tab in it, as a mark that
- * appears on another tab pushes this one along. Made once per margin, outside
+ * element changes size, or with `followTabs` any tab in it or added to it,
+ * as a mark that appears on another tab pushes this one along. Made once per margin, outside
  * a render, since a new ref each render would run again.
  */
 export const keepInViewBy =
@@ -49,14 +49,27 @@ export const keepInViewBy =
     // Observing reports the current size at once, which scrolls it into view.
     observer.observe(scroller);
 
+    // A tab added later, as a profile is, is followed too; observing it
+    // reports its size at once, which counts the push it gives.
+    const added = new MutationObserver((records) => {
+      for (const node of records.flatMap((record) => [...record.addedNodes])) {
+        if (node instanceof Element) {
+          observer.observe(node);
+        }
+      }
+    });
+
     if (followTabs) {
       for (const each of scroller.children) {
         observer.observe(each);
       }
+
+      added.observe(scroller, { childList: true });
     }
 
     return () => {
       observer.disconnect();
+      added.disconnect();
     };
   };
 

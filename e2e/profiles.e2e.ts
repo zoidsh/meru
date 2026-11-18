@@ -410,6 +410,16 @@ test("at a narrow width with many profiles, the row scrolls with an arrow over e
   });
   await expect.poll(clearOfFades).toBe(true);
 
+  // A button added before it after the selection, as a profile added later
+  // is, pushes it along too; it stays clear.
+  await profileButton(shell, "Profile 8").evaluate((button) => {
+    const added = button.cloneNode(true);
+
+    added.textContent = "WWWWWWWWWWWW";
+    button.before(added);
+  });
+  await expect.poll(clearOfFades).toBe(true);
+
   // The arrow scrolls by most of the row.
   const scrolled = () =>
     profileRow(shell).evaluate((row) => Math.round(row.scrollLeft));
