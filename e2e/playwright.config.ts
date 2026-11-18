@@ -22,6 +22,7 @@ const NEEDS_THE_FOCUS = [
   "**/split-resize.e2e.ts",
   "**/split-drags.e2e.ts",
   "**/split-view-drags.e2e.ts",
+  "**/split-several.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 

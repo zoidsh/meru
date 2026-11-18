@@ -573,7 +573,7 @@ const withSplit = (standIn: StandIn, root: unknown, selected: string) => ({
         { id: "o", app: "docs", url: standIn.driveUrl, title: "" },
       ],
       selectedTabId: selected,
-      split: { root },
+      splits: [{ root }],
     },
   ],
   selectedProfileId: "p",
@@ -667,11 +667,12 @@ test("a sleeping pane in a split", async ({
 
 /**
  * Gmail, Drive and Meet pinned, then Calendar, Sheets, Drive and Slides,
- * with `root` as the split and Calendar selected; no app has two tabs
- * that are not pinned, so the sidebar starts narrow. Only Gmail, Calendar
- * and Drive go in a pane, whose stand-ins their apps claim.
+ * with a split of each of `roots` and Calendar selected; no app has two
+ * tabs that are not pinned, so the sidebar starts narrow. Only Gmail,
+ * Calendar and Drive go in a pane that shows, whose stand-ins their apps
+ * claim.
  */
-const withBox = (standIn: StandIn, root: unknown) => ({
+const withBox = (standIn: StandIn, ...roots: unknown[]) => ({
   profiles: [
     {
       id: "p",
@@ -704,7 +705,7 @@ const withBox = (standIn: StandIn, root: unknown) => ({
         { id: "l", app: "slides", url: standIn.driveUrl, title: "Pitch" },
       ],
       selectedTabId: "c1",
-      split: { root },
+      splits: roots.map((root) => ({ root })),
     },
   ],
   selectedProfileId: "p",
@@ -769,6 +770,61 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
   await shell.getByRole("button", { name: "Widen sidebar" }).click();
   await rest(shell);
   await shootEachWay(app, shell, "split-box-pinned-wide");
+});
+
+test("two splits' boxes, both in the list, and one in the pinned area with one in the list, narrow and wide", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const shown = {
+    direction: "row",
+    children: [pane(0.5, "c1"), pane(0.5, "d1")],
+  };
+
+  // Sheets and Slides never show, so never load Google's own pages.
+  await writeState(
+    userDataDir,
+    withBox(standIn, shown, {
+      direction: "row",
+      children: [pane(0.5, "s"), pane(0.5, "l")],
+    })
+  );
+
+  const first = await launch(launchApp, userDataDir);
+
+  await findPage(first.app, standIn.calendarUrl);
+  await findPage(first.app, standIn.driveUrl);
+  await rest(first.shell);
+  await shootEachWay(first.app, first.shell, "split-boxes-list-narrow");
+  await first.shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await rest(first.shell);
+  await shootEachWay(first.app, first.shell, "split-boxes-list-wide");
+  await first.app.close();
+
+  await writeState(
+    userDataDir,
+    withBox(standIn, shown, {
+      direction: "row",
+      children: [pane(0.5, "k2"), pane(0.5, "s")],
+    })
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+
+  if ((await narrow.count()) > 0) {
+    await narrow.click();
+  }
+
+  await rest(shell);
+  await shootEachWay(app, shell, "split-boxes-pinned-narrow");
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await rest(shell);
+  await shootEachWay(app, shell, "split-boxes-pinned-wide");
 });
 
 test("a tab dragged in the split's box: the inset line among its tabs, and the ring on a tab of it", async ({
@@ -934,7 +990,7 @@ test("uneven panes with a gap's handle hovered and focused, and a maximized spli
     ...maximized,
     profiles: maximized.profiles.map((profile) => ({
       ...profile,
-      split: { ...profile.split, maximized: true },
+      splits: profile.splits.map((split) => ({ ...split, maximized: true })),
     })),
   });
 
