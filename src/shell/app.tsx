@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { viewFrame } from "#core/layout.ts";
+import { sidebarWidth } from "#core/sidebar.ts";
 
 import { NothingOpen } from "./nothing-open.tsx";
 import { OverlayLayer } from "./overlay.tsx";
@@ -120,7 +121,12 @@ export const App = () => {
         style={{ "--tint": selected?.color } as CSSProperties}
         className="flex h-full flex-col bg-shell"
       >
-        <Titlebar sidebarShown={sidebar !== "hidden"} />
+        <Titlebar
+          sidebarShown={sidebar !== "hidden"}
+          profilesFrom={
+            sidebar === "wide" ? sidebarWidth(sidebar) + inset.left : undefined
+          }
+        />
         <div className="flex min-h-0 flex-1">
           {tabs && sidebar !== "hidden" && (
             <Sidebar

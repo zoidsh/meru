@@ -1,6 +1,13 @@
 import type { Page } from "@playwright/test";
 
-import { expect, findPage, test, writeState } from "./lib/app.ts";
+import {
+  clickMenuItem,
+  expect,
+  findPage,
+  readViews,
+  test,
+  writeState,
+} from "./lib/app.ts";
 
 const titlebar = (shell: Page) =>
   shell.getByRole("banner", { name: "Title bar" });
@@ -202,4 +209,70 @@ test("each control's title names it and its shortcut, a narrow tab's names the t
     shell.getByRole("button", { name: "Narrow sidebar" })
   ).toBeAttached();
   await expect(calendar).not.toHaveAttribute("title");
+});
+
+test("with the sidebar wide the first profile button starts where the page does; narrow and hidden, the profiles follow the page's navigation one gap after it", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p0",
+        name: "Home",
+        // A tab beside Gmail, so the sidebar shows.
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
+        ],
+        selectedTabId: "gmail",
+      },
+      { id: "p1", name: "Work" },
+    ],
+    selectedProfileId: "p0",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const bar = titlebar(shell);
+  const first = bar
+    .getByRole("group", { name: "Profiles" })
+    .getByRole("button", { name: /^Home/u });
+  const reload = bar.getByRole("button", { name: "Reload" });
+  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+  const pageLeft = async () => {
+    const { views } = await readViews(app);
+
+    return views.find((view) => view.visible)?.bounds.x;
+  };
+  const profilesLeft = async () => {
+    const box = await first.boundingBox();
+
+    return box?.x;
+  };
+  // From the navigation's last button to the first profile.
+  const afterNavigation = async () => {
+    const button = await reload.boundingBox();
+    const profile = await first.boundingBox();
+
+    return (profile?.x ?? 0) - (button?.x ?? 0) - (button?.width ?? 0);
+  };
+
+  await findPage(app, standIn.url);
+
+  if ((await narrow.count()) === 0) {
+    await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  }
+
+  await expect.poll(pageLeft).toBe(224);
+  await expect.poll(profilesLeft).toBe(224);
+
+  await narrow.click();
+  await expect.poll(pageLeft).toBe(64);
+  await expect.poll(afterNavigation).toBe(8);
+
+  await clickMenuItem(app, "sidebar.toggle");
+  await expect.poll(pageLeft).toBe(8);
+  await expect.poll(afterNavigation).toBe(8);
 });

@@ -372,7 +372,12 @@ const ProfileButton = ({
       ref={selected ? keepClearOfFades : undefined}
       // A long name is cut short, so other profiles stay in reach; the
       // tooltip has it whole.
-      className={cn("max-w-40 flex-none gap-1 px-2.5", asleep && "opacity-50")}
+      // Filled to its edge, under its transparent border, so the selected
+      // one's fill lines up with the page below it.
+      className={cn(
+        "max-w-40 flex-none gap-1 bg-clip-border px-2.5",
+        asleep && "opacity-50"
+      )}
       onFocus={onFocus}
       onBlur={(event) => {
         if (
@@ -611,9 +616,18 @@ const DoNotDisturbButton = () => {
  * The row across the top: the sidebar toggle and the page's navigation, the
  * profiles, a gap that drags the window, then New tab while the sidebar is
  * hidden, the unified inbox and Do Not Disturb. The whole of it drags the
- * window but for its controls.
+ * window but for its controls. With `profilesFrom`, the content area's left
+ * edge while the sidebar is wide, the profiles start there, the left group
+ * widening to reach it; where the group is wider, they follow it a button
+ * gap after.
  */
-export const Titlebar = ({ sidebarShown }: { sidebarShown: boolean }) => {
+export const Titlebar = ({
+  sidebarShown,
+  profilesFrom,
+}: {
+  sidebarShown: boolean;
+  profilesFrom?: number | undefined;
+}) => {
   const { t } = useLingui();
   const profiles = useShellState("profiles");
   const inbox = useShellState("inbox");
@@ -630,9 +644,23 @@ export const Titlebar = ({ sidebarShown }: { sidebarShown: boolean }) => {
       })}
       data-tinted
       style={{ height: TITLEBAR_HEIGHT }}
-      className="flex shrink-0 items-center bg-shell px-2 [app-region:drag] in-data-[platform=darwin]:pl-20"
+      className="flex shrink-0 items-center bg-shell pr-2 pl-(--titlebar-start) [--titlebar-start:0.5rem] [app-region:drag] in-data-[platform=darwin]:[--titlebar-start:5rem]"
     >
-      <div className="mr-2 flex items-center gap-1">
+      {/* Wide, the navigation's buttons on macOS end 4px short of the
+          page, so the profiles come one button gap after them there. */}
+      <div
+        style={
+          profilesFrom === undefined
+            ? undefined
+            : {
+                minWidth: `calc(${profilesFrom}px - var(--titlebar-start) - 0.25rem)`,
+              }
+        }
+        className={cn(
+          "flex shrink-0 items-center gap-1",
+          profilesFrom === undefined ? "mr-2" : "mr-1"
+        )}
+      >
         <SidebarToggle shown={sidebarShown} shortcuts={shortcuts} />
         <FrontNavigationButtons shortcuts={shortcuts} />
       </div>
