@@ -386,7 +386,7 @@ describe(createTabViews, () => {
     expect(window.tabs.focuser()).toBeUndefined();
   });
 
-  it("selects a pane's tab when the person presses on its page, but not when its page takes focus, as one can as it first loads", async () => {
+  it("selects a pane's tab when the person presses on its page, but not when its page takes focus, as one can as it first loads, giving focus back to the selected pane", async () => {
     const [profile, other] = initial.profiles as [
       State["profiles"][number],
       State["profiles"][number],
@@ -414,17 +414,19 @@ describe(createTabViews, () => {
       },
     });
     const selected = () => window.profiles.get().profiles[0]?.selectedTabId;
+    const gmail = window.viewOf("persist:a", 0);
     const calendar = window.viewOf("persist:a", 1);
 
     calendar?.options.onFocus();
     await vi.advanceTimersByTimeAsync(0);
 
-    const afterFocus = selected();
+    // Focus alone selects nothing, and the selected pane takes it back.
+    const afterFocus = [selected(), gmail?.focuses, calendar?.focuses];
 
     calendar?.options.onPointerDown();
     await vi.advanceTimersByTimeAsync(0);
 
-    expect([afterFocus, selected()]).toStrictEqual(["gmail", "c1"]);
+    expect([afterFocus, selected()]).toStrictEqual([["gmail", 1, 0], "c1"]);
   });
 
   it("gives another profile's selected tab a view of its session when that profile is selected", async () => {
