@@ -740,6 +740,7 @@ const start = async () => {
       tabs: views,
       inbox,
       openApp,
+      openGmail: showGmail.jumpTo,
       window: shell.window,
       sidebar,
       focus,

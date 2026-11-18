@@ -176,6 +176,11 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    openGmail: (request) => {
+      calls.push(["openGmail", request]);
+
+      return Promise.resolve();
+    },
   };
 
   serveShellContract({

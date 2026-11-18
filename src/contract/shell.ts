@@ -99,6 +99,11 @@ export const SHELL_CALLS = {
     request: z.object({ appId: z.enum(APP_IDS) }),
     response: z.undefined(),
   },
+  /**
+   * Selects the profile's Gmail, opening it at its home where it was closed,
+   * which Google sends to its sign-in page while the account is signed out.
+   */
+  openGmail: { request: z.object({ profileId }), response: z.undefined() },
 } as const satisfies Record<
   ShellCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }

@@ -99,6 +99,11 @@ const setup = ({
         return Promise.resolve();
       },
     },
+    openGmail: (profileId) => {
+      calls.push(["openGmail", profileId]);
+
+      return Promise.resolve();
+    },
     window: {
       showContextMenu: (items) => menus.push(items.filter(isItem)),
     },
@@ -416,6 +421,14 @@ describe("Open app in the shell", () => {
       ["app.open"],
       [["openApp", "drive"]],
     ]);
+  });
+
+  it("hands Sign in's profile to what opens its Gmail", async () => {
+    const shell = setup();
+
+    await shell.handlers.openGmail({ profileId: "b" });
+
+    expect(shell.calls).toStrictEqual([["openGmail", "b"]]);
   });
 });
 

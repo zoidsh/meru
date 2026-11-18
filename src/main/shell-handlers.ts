@@ -32,6 +32,8 @@ export interface ShellHandlersDeps {
   tabs: { retry: (key: TabKey) => void };
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   openApp: Pick<OpenApp, "choose">;
+  /** Selects the profile's Gmail as the tray's profile item does. */
+  openGmail: (profileId: string) => Promise<unknown>;
   window: Pick<AppWindow, "showContextMenu">;
   sidebar: Pick<Sidebar, "current" | "toggleWidth">;
   focus: Pick<Focus, "focus">;
@@ -160,6 +162,7 @@ export const createShellHandlers = ({
   tabs,
   inbox,
   openApp,
+  openGmail,
   window,
   sidebar,
   focus,
@@ -260,5 +263,8 @@ export const createShellHandlers = ({
   },
   openApp: async ({ appId }) => {
     await openApp.choose(appId);
+  },
+  openGmail: async ({ profileId }) => {
+    await openGmail(profileId);
   },
 });
