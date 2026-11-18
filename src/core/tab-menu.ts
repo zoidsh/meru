@@ -131,7 +131,7 @@ export const tabMenuItems = (
       id: "openInBrowser",
       enabled: URL.canParse(tab.url) && isWebUrl(new URL(tab.url)),
     },
-    { id: "pin", enabled: !own },
+    { id: "pin", enabled: true },
     ...(pinned
       ? [
           {

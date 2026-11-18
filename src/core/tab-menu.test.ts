@@ -66,7 +66,7 @@ describe(tabMenuItems, () => {
       "splitDown",
       "maximize off",
       "separate off",
-      "moveToNewWindow off",
+      "moveToNewWindow",
       "closeOthers off",
       "closeBelow off",
     ]);

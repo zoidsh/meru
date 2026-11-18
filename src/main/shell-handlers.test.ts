@@ -799,7 +799,7 @@ describe("the overlay slice", () => {
         { id: "splitDown", enabled: true },
         { id: "maximize", enabled: false },
         { id: "separate", enabled: false },
-        { id: "moveToNewWindow", enabled: false },
+        { id: "moveToNewWindow", enabled: true },
         { id: "closeOthers", enabled: false },
         { id: "closeBelow", enabled: false },
       ],

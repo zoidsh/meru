@@ -201,9 +201,8 @@ export const closeTab = (
     };
   });
 
-/** A tab that is not pinned can go to a window of its own. */
-export const canMoveToOwnWindow = (tab: Tab) =>
-  !isPinned(tab) && !inOwnWindow(tab);
+/** Any tab, pinned or not, can go to a window of its own, keeping its pin. */
+export const canMoveToOwnWindow = (tab: Tab) => !inOwnWindow(tab);
 
 /**
  * Moves the tab to a window of its own: a tab in a split leaves it first, as
