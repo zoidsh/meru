@@ -36,7 +36,7 @@ test("a profile with no app open says Sign in required while its account is sign
     )
   ).toBeVisible();
   await expect(
-    signInRequired.getByRole("button", { name: "Open app" })
+    signInRequired.getByRole("button", { name: "New tab" })
   ).toBeVisible();
 
   await signIn(app, standIn, "p0");
@@ -49,7 +49,7 @@ test("a profile with no app open says Sign in required while its account is sign
   await expect(
     nothingOpen.getByText("Open Gmail, Calendar or another Google app in Home.")
   ).toBeVisible();
-  await expect(nothingOpen.getByRole("button")).toHaveText([/^Open app/u]);
+  await expect(nothingOpen.getByRole("button")).toHaveText([/^New tab/u]);
 
   await clickMenuItem(app, "profile.next");
   await expect(

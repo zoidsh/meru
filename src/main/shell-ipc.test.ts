@@ -251,11 +251,6 @@ const setup = () => {
 
       return Promise.resolve();
     },
-    toggleBookmarks: (request) => {
-      calls.push(["toggleBookmarks", request]);
-
-      return Promise.resolve();
-    },
     openBookmark: (request) => {
       calls.push(["openBookmark", request]);
 
@@ -436,7 +431,7 @@ describe(serveShellContract, () => {
     ]);
   });
 
-  it("passes Open app's choice of a registered app and refuses any other", async () => {
+  it("passes New tab's choice of a registered app and refuses any other", async () => {
     const shell = setup();
     const refusals = await Promise.allSettled(
       [{}, { appId: "tasks" }, { appId: "https://example.com/" }].map(

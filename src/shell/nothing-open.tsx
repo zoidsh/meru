@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { CircleAlertIcon, LayoutGridIcon } from "lucide-react";
+import { CircleAlertIcon, PlusIcon } from "lucide-react";
 import { useId } from "react";
 
 import { Button } from "#ui/button.tsx";
@@ -16,7 +16,7 @@ import { OpenAppPanelButton } from "./open-app.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
 
 /**
- * The page area of a profile with no tab: Open app, or, while its Google
+ * The page area of a profile with no tab: New tab, or, while its Google
  * account is signed out, Sign in first.
  */
 export const NothingOpen = () => {
@@ -63,7 +63,7 @@ export const NothingOpen = () => {
             {signedOut ? (
               <CircleAlertIcon aria-hidden className="text-destructive" />
             ) : (
-              <LayoutGridIcon aria-hidden />
+              <PlusIcon aria-hidden />
             )}
           </EmptyMedia>
           <EmptyTitle>

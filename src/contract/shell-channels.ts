@@ -29,7 +29,6 @@ export const SHELL_CALL_NAMES = [
   "openInboxMessage",
   "runInboxAction",
   "toggleOpenApp",
-  "toggleBookmarks",
   "openBookmark",
   "removeBookmark",
   "toggleTabBookmark",

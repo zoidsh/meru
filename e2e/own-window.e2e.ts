@@ -934,7 +934,7 @@ test("Gmail, unpinned, moves to its own window and goes on counting and notifyin
   await expect.poll(() => readUnreadTotal(app)).toBe(2);
   await expect.poll(() => notified(app)).toContain("Sender 2");
 
-  // Open app's card takes the focus into the main window; then the
+  // New tab's card takes the focus into the main window; then the
   // notification's click opens the message in Gmail's own window and gives
   // that window the focus, the main window keeping its tab.
   await clickMenuItem(app, "app.open");

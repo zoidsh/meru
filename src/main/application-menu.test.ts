@@ -30,7 +30,6 @@ const contextOf = (): CommandContext => ({
   findable: false,
   canFindAgain: false,
   bookmarked: undefined,
-  bookmarksOpen: false,
 });
 
 const template = (platform: Platform, context = contextOf()) =>
@@ -244,9 +243,8 @@ describe(buildMenuTemplate, () => {
         .filter((item) => item.type !== "separator")
         .map(({ id, label, accelerator }) => [id, label, accelerator])
     ).toStrictEqual([
-      ["app.open", "Open App…", "CommandOrControl+T"],
+      ["app.open", "New Tab…", "CommandOrControl+T"],
       ["tab.bookmark", "Bookmark Tab", "CommandOrControl+D"],
-      ["bookmarks.toggle", "Bookmarks…", "CommandOrControl+Alt+B"],
       ["tab.next", expect.any(String), expect.any(String)],
       ["tab.previous", expect.any(String), expect.any(String)],
       ["tab.pinned.1", "Gmail", "Control+Shift+1"],
@@ -401,7 +399,6 @@ const setup = () => {
       findable: false,
       canFindAgain: false,
       bookmarked: undefined,
-      bookmarksOpen: false,
     }),
     actions,
     locale: () => "en",

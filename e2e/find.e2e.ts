@@ -495,7 +495,7 @@ test("with the find field focused, the zoom keys zoom the page under the bar, no
   await expect(field).toBeFocused();
 });
 
-test("a tab put to sleep closes the bar and has no Find, nor does a page under Open app", async ({
+test("a tab put to sleep closes the bar and has no Find, nor does a page under New tab", async ({
   launchApp,
   standIn,
   userDataDir,

@@ -160,18 +160,18 @@ const setup = ({
 
         return Promise.resolve();
       },
-    },
-    bookmarks: {
-      choose: (id) => {
+      chooseBookmark: (id) => {
         calls.push(["openBookmark", id]);
 
         return Promise.resolve();
       },
-      remove: (id) => {
+      removeBookmark: (id) => {
         calls.push(["removeBookmark", id]);
 
         return Promise.resolve();
       },
+    },
+    bookmarks: {
       toggle: (key, announce) => {
         calls.push(["toggleBookmark", key, announce]);
 
@@ -765,7 +765,7 @@ describe("the overlay slice", () => {
     expect(overlaySlice(undefined)).toStrictEqual({ kind: "none" });
   });
 
-  it("lists the Bookmarks overlay's profile's rows, and names the page a bookmark toast tells of", () => {
+  it("lists New tab's profile's bookmarks beside its apps, and names the page a bookmark toast tells of", () => {
     const row = {
       id: "b1",
       title: "Week",
@@ -791,12 +791,12 @@ describe("the overlay slice", () => {
       ).overlay;
 
     expect([
-      slice({ kind: "bookmarks", profileId: "b" }),
-      slice({ kind: "bookmarks", profileId: "gone" }),
+      slice({ kind: "open-app", profileId: "b" }),
+      slice({ kind: "open-app", profileId: "gone" }),
       slice({ kind: "toast", message: "bookmarked", title: "Week" }),
       slice({ kind: "toast", message: "bookmark-removed" }),
     ]).toStrictEqual([
-      { kind: "bookmarks", profileId: "b", bookmarks: [row] },
+      expect.objectContaining({ kind: "open-app", bookmarks: [row] }),
       { kind: "none" },
       { kind: "toast", message: "bookmarked", title: "Week" },
       { kind: "toast", message: "bookmark-removed", title: null },
@@ -816,7 +816,7 @@ describe("the overlay slice", () => {
     ).toStrictEqual({ kind: "rename-profile", profileId: "b", name: "Work" });
   });
 
-  it("lists what Open app's profile can open, by id and name", () => {
+  it("lists what New tab's profile can open, by id and name, and its bookmarks", () => {
     expect(overlaySlice({ kind: "open-app", profileId: "a" })).toStrictEqual({
       kind: "open-app",
       profileId: "a",
@@ -824,6 +824,7 @@ describe("the overlay slice", () => {
         id,
         name,
       })),
+      bookmarks: [],
       split: null,
     });
   });
@@ -860,8 +861,8 @@ const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
     APPS
   ).doNotDisturb;
 
-describe("Open app in the shell", () => {
-  it("toggles through the registry's command and hands a choice to Open app", async () => {
+describe("New tab in the shell", () => {
+  it("toggles through the registry's command and hands a choice to New tab", async () => {
     const shell = setup();
 
     await shell.handlers.toggleOpenApp({});
@@ -891,7 +892,6 @@ describe("Open app in the shell", () => {
       },
     });
 
-    await shell.handlers.toggleBookmarks({});
     await shell.handlers.openBookmark({ id: "b1" });
     await shell.handlers.removeBookmark({ id: "b2" });
     await shell.handlers.toggleTabBookmark({ profileId: "a", tabId: "c1" });
@@ -899,7 +899,7 @@ describe("Open app in the shell", () => {
     await shell.handlers.toggleTabBookmark({ profileId: "a", tabId: "gone" });
 
     expect([shell.ran, shell.calls, shell.logged]).toStrictEqual([
-      ["bookmarks.toggle"],
+      [],
       [
         ["openBookmark", "b1"],
         ["removeBookmark", "b2"],

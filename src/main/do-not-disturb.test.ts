@@ -208,7 +208,6 @@ const labels = (context: Partial<CommandContext>) =>
       findable: false,
       canFindAgain: false,
       bookmarked: undefined,
-      bookmarksOpen: false,
       ...context,
     },
     "en-GB",

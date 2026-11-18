@@ -680,7 +680,7 @@ const start = async () => {
     },
     onStrayFocus: focus.giveBack,
     // At launch and after a switch, typing reaches the page without a click;
-    // with no tab open, the shell, whose Open app is what there is to do.
+    // with no tab open, the shell, whose New tab is what there is to do.
     onFront: () => {
       focus.focus([{ kind: "front" }, { kind: "shell" }]);
     },
@@ -875,6 +875,9 @@ const start = async () => {
     overlays,
     openTab: views.open,
     splitTab: profiles.splitTab,
+    selectTab: views.select,
+    showOwnWindow,
+    removeBookmark: profiles.removeBookmark,
     pageSize: () =>
       contentViewBounds(shell.window.getContentAreaSize(), sidebar.current()),
     log: console.error,
@@ -890,10 +893,6 @@ const start = async () => {
       ...views.page(key),
     }),
     toggle: profiles.toggleBookmark,
-    remove: profiles.removeBookmark,
-    selectTab: views.select,
-    showOwnWindow,
-    openTab: views.open,
     log: console.error,
   });
 
@@ -1037,7 +1036,6 @@ const start = async () => {
             : views.ownWindowFocuser(ownWindow) !== undefined,
         canFindAgain: find.canGoOn(ownWindow),
         bookmarked: bookmarks.acting(ownWindow),
-        bookmarksOpen: bookmarks.isOpen(),
       };
     },
     actions: {
@@ -1102,7 +1100,6 @@ const start = async () => {
       openFind: find.open,
       findAgain: find.again,
       toggleBookmark: bookmarks.toggle,
-      setBookmarksOpen: bookmarks.setOpen,
     },
     locale: () => i18n.locale,
     setMenu: setApplicationMenu,

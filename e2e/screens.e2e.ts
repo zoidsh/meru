@@ -379,7 +379,7 @@ test("the rename profile overlay", async ({
 
 // Its button, in the titlebar and below the narrow and wide sidebar's last
 // tab, is in the window shots above.
-test("the Open app overlay", async ({ launchApp, userDataDir, standIn }) => {
+test("the New tab overlay", async ({ launchApp, userDataDir, standIn }) => {
   const { app, shell } = await launch(launchApp, userDataDir);
   const overlay = await findOverlayDocument(app);
 
@@ -391,9 +391,9 @@ test("the Open app overlay", async ({ launchApp, userDataDir, standIn }) => {
       ?.click(undefined, BrowserWindow.getAllWindows()[0]);
   });
   await expect(
-    overlay.getByRole("combobox", { name: "Open app" })
+    overlay.getByRole("combobox", { name: "New tab" })
   ).toBeFocused();
-  await shootEachWay(app, shell, "open-app");
+  await shootEachWay(app, shell, "new-tab");
 });
 
 const nothingOpen = (id: string, name: string) => ({
@@ -1271,18 +1271,15 @@ const withBookmarks = (standIn: StandIn, more: object[] = []) => ({
   selectedProfileId: "p",
 });
 
-const openBookmarks = async (app: ElectronApplication, overlay: Page) => {
-  await app.evaluate(({ Menu, BrowserWindow }) => {
+/** Runs a command from the application menu, as its shortcut would. */
+const runMenuItem = (app: ElectronApplication, id: string) =>
+  app.evaluate(({ Menu, BrowserWindow }, item) => {
     Menu.getApplicationMenu()
-      ?.getMenuItemById("bookmarks.toggle")
+      ?.getMenuItemById(item)
       ?.click(undefined, BrowserWindow.getAllWindows()[0]);
-  });
-  await expect(
-    overlay.getByRole("dialog", { name: "Bookmarks" })
-  ).toBeVisible();
-};
+  }, id);
 
-test("the Bookmarks overlay with bookmarks and with none", async ({
+test("the New tab launcher with its apps and bookmarks, filtered to bookmarks, with no results, and as Open in split", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -1319,30 +1316,30 @@ test("the Bookmarks overlay with bookmarks and with none", async ({
 
   const { app, shell } = await launch(launchApp, userDataDir);
   const overlay = await findOverlayDocument(app);
+  const field = overlay.getByRole("combobox", { name: "New tab" });
 
   await findPage(app, standIn.calendarUrl);
   await rest(shell);
-  await openBookmarks(app, overlay);
-  await expect(overlay.getByRole("option")).toHaveCount(5);
-  await shootEachWay(app, shell, "bookmarks");
-  await app.close();
+  await runMenuItem(app, "app.open");
+  await expect(field).toBeFocused();
+  await shootEachWay(app, shell, "new-tab-bookmarks");
 
-  await writeState(userDataDir, {
-    ...withBookmarks(standIn),
-    profiles: withBookmarks(standIn).profiles.map((profile) => ({
-      ...profile,
-      bookmarks: [],
-    })),
-  });
+  await field.fill("plan");
+  await expect(overlay.getByRole("option")).toHaveText([/^Q4 planning/u]);
+  await shootEachWay(app, shell, "new-tab-bookmarks-filtered");
 
-  const empty = await launch(launchApp, userDataDir);
-  const emptyOverlay = await findOverlayDocument(empty.app);
+  await field.fill("zz");
+  await expect(overlay.getByText("No results.")).toBeVisible();
+  await shootEachWay(app, shell, "new-tab-no-results");
 
-  await findPage(empty.app, standIn.calendarUrl);
-  await rest(empty.shell);
-  await openBookmarks(empty.app, emptyOverlay);
-  await expect(emptyOverlay.getByText("No bookmarks yet")).toBeVisible();
-  await shootEachWay(empty.app, empty.shell, "bookmarks-empty");
+  await runMenuItem(app, "app.open");
+  await expect(overlay.getByRole("dialog")).toHaveCount(0);
+  await runMenuItem(app, "tab.splitRight");
+  await expect(
+    overlay.getByRole("dialog", { name: "Open in split" })
+  ).toBeVisible();
+  await expect(overlay.getByText("Bookmarks", { exact: true })).toBeVisible();
+  await shootEachWay(app, shell, "new-tab-split");
 });
 
 test("a wide row bookmarked at rest, and a row's bookmark button on hover", async ({

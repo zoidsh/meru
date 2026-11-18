@@ -224,19 +224,17 @@ export const SHELL_CALLS = {
     }),
     response: z.undefined(),
   },
-  /** Opens Open app, or closes it, as its buttons ask. */
+  /** Opens New tab, the launcher, or closes it, as its buttons ask. */
   toggleOpenApp: { request: none, response: z.undefined() },
-  /** Opens the Bookmarks overlay, or closes it, as its titlebar button asks. */
-  toggleBookmarks: { request: none, response: z.undefined() },
   /**
-   * Opens a bookmark the open Bookmarks overlay lists, selecting a tab
-   * already at its page, and closes the overlay.
+   * Opens a bookmark the open launcher lists, selecting a tab already at
+   * its page, and closes the launcher.
    */
   openBookmark: {
     request: z.object({ id: bookmarkId }),
     response: z.undefined(),
   },
-  /** Removes a bookmark the open Bookmarks overlay lists, which stays open. */
+  /** Removes a bookmark the open launcher lists, which stays open. */
   removeBookmark: {
     request: z.object({ id: bookmarkId }),
     response: z.undefined(),
@@ -246,7 +244,7 @@ export const SHELL_CALLS = {
    * wide sidebar or its own window's star asks.
    */
   toggleTabBookmark: { request: tabKey, response: z.undefined() },
-  /** Opens a tab of an app that the open Open app lists, and closes it. */
+  /** Opens a tab of an app that the open launcher lists, and closes it. */
   openApp: {
     request: z.object({ appId: z.enum(APP_IDS) }),
     response: z.undefined(),
@@ -480,19 +478,6 @@ export const SHELL_STATE = {
       profileId,
       /** What the profile can open, in the registry's order. */
       apps: z.array(z.object({ id: z.enum(APP_IDS), name: z.string() })),
-      /** Open in split, putting the pick that way of the focused pane. */
-      split: z.nullable(z.enum(PANE_DIRECTIONS)),
-    }),
-    /** A short notice, which takes no focus and closes by itself. */
-    z.object({
-      kind: z.literal("toast"),
-      message: z.enum(TOAST_MESSAGES),
-      /** The page a bookmark notice names. */
-      title: z.nullable(z.string()),
-    }),
-    z.object({
-      kind: z.literal("bookmarks"),
-      profileId,
       /** The profile's bookmarks, in the order they were saved. */
       bookmarks: z.array(
         z.object({
@@ -503,6 +488,15 @@ export const SHELL_STATE = {
           appName: z.string(),
         })
       ),
+      /** Open in split, putting the pick that way of the focused pane. */
+      split: z.nullable(z.enum(PANE_DIRECTIONS)),
+    }),
+    /** A short notice, which takes no focus and closes by itself. */
+    z.object({
+      kind: z.literal("toast"),
+      message: z.enum(TOAST_MESSAGES),
+      /** The page a bookmark notice names. */
+      title: z.nullable(z.string()),
     }),
     /**
      * What a tab dragged over the page area would do: the zone that lights

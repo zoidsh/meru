@@ -65,7 +65,6 @@ const setup = (initial: State = twoProfiles) => {
   let findable = false;
   let canFindAgain = false;
   let bookmarked: boolean | undefined;
-  let bookmarksOpen = false;
   const bookmarkToggles: string[] = [];
   const actions: CommandActions = {
     toggleBookmark: (key, announce) => {
@@ -73,9 +72,6 @@ const setup = (initial: State = twoProfiles) => {
       bookmarked = bookmarked === undefined ? undefined : !bookmarked;
 
       return Promise.resolve();
-    },
-    setBookmarksOpen: (open) => {
-      bookmarksOpen = open;
     },
     toggleSidebar: () => {
       sidebarShown = !sidebarShown;
@@ -159,7 +155,6 @@ const setup = (initial: State = twoProfiles) => {
     findable,
     canFindAgain,
     bookmarked,
-    bookmarksOpen,
   });
 
   onTestFinished(doNotDisturb.dispose);
@@ -185,7 +180,6 @@ const setup = (initial: State = twoProfiles) => {
       bookmarked = next;
     },
     bookmarkToggles,
-    bookmarksOpen: () => bookmarksOpen,
     renames,
     navigations,
     openAppOpen: () => openAppOpen,
@@ -489,7 +483,7 @@ describe("the command registry", () => {
     expect(app.isAvailable("profile.next")).toBeTruthy();
   });
 
-  it("opens Open app, and closes it when run again", async () => {
+  it("opens New tab, and closes it when run again", async () => {
     const app = setup();
 
     await app.run("app.open");
@@ -534,23 +528,6 @@ describe("the command registry", () => {
       true,
       ["gmail announced", "c1"],
     ]);
-  });
-
-  it("opens Bookmarks, and closes it when run again, only from the main window", async () => {
-    const app = setup();
-
-    await app.run("bookmarks.toggle");
-
-    const opened = app.bookmarksOpen();
-
-    await app.run("bookmarks.toggle");
-    app.setOwnWindow({ profileId: "a", tabId: "c1" });
-
-    expect([
-      opened,
-      app.bookmarksOpen(),
-      app.isAvailable("bookmarks.toggle"),
-    ]).toStrictEqual([true, false, false]);
   });
 
   it("opens the rename of the selected profile", async () => {

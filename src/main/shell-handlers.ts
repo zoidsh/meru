@@ -71,8 +71,8 @@ export interface ShellHandlersDeps {
     action: Parameters<ShellCalls["navigate"]>[0]["action"]
   ) => Promise<unknown>;
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
-  openApp: Pick<OpenApp, "choose">;
-  bookmarks: Pick<Bookmarks, "choose" | "remove" | "toggle">;
+  openApp: Pick<OpenApp, "choose" | "chooseBookmark" | "removeBookmark">;
+  bookmarks: Pick<Bookmarks, "toggle">;
   tabMenu: Pick<TabMenu, "open" | "openOwnWindow">;
   panes: Pick<PaneResizer, "resize" | "evenOut">;
   profileMenu: Pick<ProfileMenu, "open">;
@@ -126,7 +126,7 @@ const shellFind = (
 
 type BookmarkRows = Extract<
   ShellState["overlay"],
-  { kind: "bookmarks" }
+  { kind: "open-app" }
 >["bookmarks"];
 
 const shellOverlay = (
@@ -170,10 +170,7 @@ const shellOverlay = (
 /** An overlay over a profile, which shows nothing once that profile is gone. */
 const shellProfileOverlay = (
   state: State,
-  overlay: Extract<
-    Overlay,
-    { kind: "bookmarks" | "open-app" | "rename-profile" }
-  >,
+  overlay: Extract<Overlay, { kind: "open-app" | "rename-profile" }>,
   apps: readonly App[],
   bookmarkRows: (profileId: string) => BookmarkRows
 ): ShellState["overlay"] => {
@@ -185,14 +182,6 @@ const shellProfileOverlay = (
     return { kind: "none" };
   }
 
-  if (overlay.kind === "bookmarks") {
-    return {
-      kind: "bookmarks",
-      profileId: profile.id,
-      bookmarks: bookmarkRows(profile.id),
-    };
-  }
-
   return overlay.kind === "open-app"
     ? {
         kind: "open-app",
@@ -201,6 +190,7 @@ const shellProfileOverlay = (
           ? splittableApps(apps, profile)
           : openableApps(apps, profile)
         ).map(({ id, name }) => ({ id, name })),
+        bookmarks: bookmarkRows(profile.id),
         split: overlay.split ?? null,
       }
     : {
@@ -254,7 +244,7 @@ export const shellState = (
      * be; none can be without it.
      */
     bookmarked?: (key: TabKey) => boolean | undefined;
-    /** The rows of the Bookmarks overlay over the profile. */
+    /** The profile's bookmarks as New tab lists them. */
     bookmarks?: (profileId: string) => BookmarkRows;
   },
   overlay: Overlay | undefined,
@@ -265,7 +255,7 @@ export const shellState = (
     ShellState,
     "sidebar" | "shortcuts" | "ariaShortcuts" | "navigation" | "windows"
   >,
-  /** The registry, or the suite's stand-ins for it, which Open app lists. */
+  /** The registry, or the suite's stand-ins for it, which New tab lists. */
   apps: readonly App[]
 ): ShellState => {
   const profile = selectedProfile(state);
@@ -558,16 +548,11 @@ export const createShellHandlers = ({
   openApp: async ({ appId }) => {
     await openApp.choose(appId);
   },
-  toggleBookmarks: () => {
-    runCommand("bookmarks.toggle");
-
-    return Promise.resolve();
-  },
   openBookmark: async ({ id }) => {
-    await bookmarks.choose(id);
+    await openApp.chooseBookmark(id);
   },
   removeBookmark: async ({ id }) => {
-    await bookmarks.remove(id);
+    await openApp.removeBookmark(id);
   },
   // Only the main window's row announces it; a tab's own window shows its star.
   toggleTabBookmark: async (key) => {

@@ -199,7 +199,7 @@ describe(sidebarDrop, () => {
 
 describe("sidebarDrop with the box all the pinned area holds", () => {
   // The box of pinned a and b first in the pinned area, with no list
-  // drawn, then Open app at 200.
+  // drawn, then New tab at 200.
   const a = tile("a", 16, 6);
   const b = tile("b", 16, 46);
   const box = { left: 13, top: 0, right: 51, bottom: 84 };

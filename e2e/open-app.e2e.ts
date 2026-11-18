@@ -57,7 +57,7 @@ const readTabs = async (userDataDir: string) => {
   return profiles[0]?.tabs.map((tab) => tab.app);
 };
 
-test("Cmd or Ctrl+T opens Open app over the page, listing every app but the profile's Gmail; typing filters, the arrows and Enter open one as a tab with its page focused, and a second press closes it", async ({
+test("Cmd or Ctrl+T opens New tab over the page, listing every app but the profile's Gmail; typing filters, the arrows and Enter open one as a tab with its page focused, and a second press closes it", async ({
   app,
   shell,
   standIn,
@@ -66,13 +66,15 @@ test("Cmd or Ctrl+T opens Open app over the page, listing every app but the prof
   await findPage(app, standIn.url);
   const overlay = await findOverlayDocument(app);
   const overlayHasFocus = await followRealFocus(overlay);
-  const field = overlay.getByRole("combobox", { name: "Open app" });
+  const field = overlay.getByRole("combobox", { name: "New tab" });
 
   await pressOpenApp(app, standIn.url);
-  await expect(overlay.getByRole("dialog", { name: "Open app" })).toBeVisible();
+  await expect(overlay.getByRole("dialog", { name: "New tab" })).toBeVisible();
   await expect(field).toBeFocused();
   await expect.poll(overlayHasFocus).toBeTruthy();
-  await expect(overlay.getByRole("listbox", { name: "Apps" })).toBeVisible();
+  await expect(
+    overlay.getByRole("listbox", { name: "Apps and bookmarks" })
+  ).toBeVisible();
   await expect(options(overlay)).toHaveText([
     "Calendar",
     "Drive",
@@ -83,7 +85,7 @@ test("Cmd or Ctrl+T opens Open app over the page, listing every app but the prof
   ]);
 
   await field.fill("zz");
-  await expect(overlay.getByText("No apps found.")).toBeVisible();
+  await expect(overlay.getByText("No results.")).toBeVisible();
   await expect(options(overlay)).toHaveCount(0);
 
   await field.fill("S");
@@ -141,7 +143,7 @@ test("Cmd or Ctrl+T opens Open app over the page, listing every app but the prof
     .toStrictEqual(["gmail", "calendar", "drive"]);
 });
 
-test("Open app is first in the titlebar's right-hand group while the sidebar is hidden and below the last tab while it shows, pressed while open; a second click closes it, and Escape gives focus back to the page", async ({
+test("New tab is first in the titlebar's right-hand group while the sidebar is hidden and below the last tab while it shows, pressed while open; a second click closes it, and Escape gives focus back to the page", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -160,11 +162,11 @@ test("Open app is first in the titlebar's right-hand group while the sidebar is 
   const gmailHasFocus = await followRealFocus(gmail);
   const overlay = await findOverlayDocument(app);
   const header = shell.getByRole("banner", { name: "Title bar" });
-  const titlebarButton = header.getByRole("button", { name: "Open app" });
+  const titlebarButton = header.getByRole("button", { name: "New tab" });
   const sidebar = shell.getByRole("tablist", { name: "Tabs" });
-  const dialog = overlay.getByRole("dialog", { name: "Open app" });
+  const dialog = overlay.getByRole("dialog", { name: "New tab" });
 
-  await expect(titlebarButton).toHaveAttribute("title", /^Open app \(.+T\)$/u);
+  await expect(titlebarButton).toHaveAttribute("title", /^New tab \(.+T\)$/u);
 
   const [open, inbox] = await Promise.all(
     [titlebarButton, header.getByRole("button", { name: "Unified inbox" })].map(
@@ -194,7 +196,7 @@ test("Open app is first in the titlebar's right-hand group while the sidebar is 
   await expect(sidebar).toBeVisible();
   await expect(titlebarButton).toHaveCount(0);
 
-  const sidebarButton = shell.getByRole("button", { name: "Open app" });
+  const sidebarButton = shell.getByRole("button", { name: "New tab" });
 
   await expect(sidebarButton).toHaveCount(1);
   await sidebarButton.click();
@@ -204,14 +206,14 @@ test("Open app is first in the titlebar's right-hand group while the sidebar is 
   await expect(dialog).toHaveCount(0);
 
   await shell.getByRole("button", { name: "Widen sidebar" }).click();
-  await expect(sidebarButton).toHaveText("Open app");
+  await expect(sidebarButton).toHaveText("New tab");
 
   await header.getByRole("button", { name: "Sidebar", exact: true }).click();
   await expect(sidebar).toHaveCount(0);
   await expect(titlebarButton).toBeVisible();
 });
 
-test("Gmail, unpinned, closes like any tab, leaving No apps open, focus in the shell and Close Tab off, and Open app there lists it to open again; a relaunch keeps it all", async ({
+test("Gmail, unpinned, closes like any tab, leaving No apps open, focus in the shell and Close Tab off, and New tab there lists it to open again; a relaunch keeps it all", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -280,10 +282,10 @@ test("Gmail, unpinned, closes like any tab, leaving No apps open, focus in the s
   await expect(
     secondShell
       .getByRole("banner", { name: "Title bar" })
-      .getByRole("button", { name: "Open app" })
+      .getByRole("button", { name: "New tab" })
   ).toBeVisible();
   await nothingOpen(secondShell)
-    .getByRole("button", { name: "Open app" })
+    .getByRole("button", { name: "New tab" })
     .click();
   await expect(options(secondOverlay)).toHaveText([
     "Gmail",
@@ -327,7 +329,7 @@ const focusHolders = async (pages: Record<string, Page>) => {
   return holding.flat();
 };
 
-test("Open app's field has focus over a split whose other page takes focus as it loads and whenever it loses it, and keeps it once the pages settle", async ({
+test("New tab's field has focus over a split whose other page takes focus as it loads and whenever it loses it, and keeps it once the pages settle", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -411,8 +413,8 @@ test("Open app's field has focus over a split whose other page takes focus as it
     .poll(() => grabby.evaluate(() => document.activeElement?.id))
     .toBe("grabby");
   await pressOpenApp(app, grabbyUrl);
-  await expect(overlay.getByRole("dialog", { name: "Open app" })).toBeVisible();
-  await keepsFocus(overlay.getByRole("combobox", { name: "Open app" }));
+  await expect(overlay.getByRole("dialog", { name: "New tab" })).toBeVisible();
+  await keepsFocus(overlay.getByRole("combobox", { name: "New tab" }));
 
   await overlay.keyboard.press("Escape");
   await expect(overlay.getByRole("dialog")).toHaveCount(0);

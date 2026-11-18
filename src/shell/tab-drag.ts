@@ -150,7 +150,7 @@ export const useTabDrag = ({
   };
 
   /**
-   * With no list drawn, the sidebar below the pinned area and Open app
+   * With no list drawn, the sidebar below the pinned area and New tab
    * after it, where a tab not pinned lands at the list's end.
    */
   const noListAt = (current: Drag, bounds: Box) => {

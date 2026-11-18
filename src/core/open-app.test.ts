@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "./apps.ts";
-import { filterApps, openableApps, splittableApps } from "./open-app.ts";
+import {
+  filterApps,
+  launcherItems,
+  openableApps,
+  splittableApps,
+} from "./open-app.ts";
 import { gmailTab, newProfile } from "./state.ts";
 
 const ids = (apps: readonly { id: string }[]) => apps.map((app) => app.id);
@@ -93,6 +98,39 @@ describe(filterApps, () => {
       ["docs"],
       ["sheets"],
       [],
+    ]);
+  });
+});
+
+describe(launcherItems, () => {
+  const apps = [
+    { id: "calendar", name: "Calendar" },
+    { id: "docs", name: "Docs" },
+  ];
+  const bookmarks = [
+    { id: "w", title: "Week", appName: "Calendar" },
+    { id: "p", title: "Plan", appName: "Docs" },
+    { id: "d", title: "Docs style guide", appName: "Drive" },
+  ];
+  const listed = (query: string) => {
+    const items = launcherItems(apps, bookmarks, query);
+
+    return [ids(items.apps), ids(items.bookmarks)];
+  };
+
+  it("lists every app and bookmark for nothing typed, in their order", () => {
+    expect(listed(" ")).toStrictEqual([
+      ["calendar", "docs"],
+      ["w", "p", "d"],
+    ]);
+  });
+
+  it("keeps the apps by name and the bookmarks by title or app's name, in any case", () => {
+    expect(["docs", "WEEK", "drive", "x"].map(listed)).toStrictEqual([
+      [["docs"], ["p", "d"]],
+      [[], ["w"]],
+      [[], ["d"]],
+      [[], []],
     ]);
   });
 });

@@ -4,7 +4,7 @@ import { knownTabs } from "./state.ts";
 import type { Profile } from "./state.ts";
 
 /**
- * What Open app lists for a profile, in the registry's order: every app but
+ * What New tab lists for a profile, in the registry's order: every app but
  * a single-instance one the profile has a tab of already.
  */
 export const openableApps = <Listed extends Pick<App, "id" | "singleInstance">>(
@@ -41,6 +41,9 @@ export const splittableApps = <
   return apps.filter((app) => !(app.singleInstance && inPanes.has(app.id)));
 };
 
+const holds = (text: string, typed: string) =>
+  text.toLocaleLowerCase().includes(typed);
+
 /** Those whose name holds what was typed, in any case; all for nothing typed. */
 export const filterApps = <Listed extends Pick<App, "name">>(
   apps: readonly Listed[],
@@ -48,5 +51,34 @@ export const filterApps = <Listed extends Pick<App, "name">>(
 ): Listed[] => {
   const typed = query.trim().toLocaleLowerCase();
 
-  return apps.filter((app) => app.name.toLocaleLowerCase().includes(typed));
+  return apps.filter((app) => holds(app.name, typed));
+};
+
+/** A bookmark as the launcher lists it, with its app's name. */
+export interface LauncherBookmark {
+  title: string;
+  appName: string;
+}
+
+/**
+ * What the launcher lists for what was typed: the apps whose name holds
+ * it, then the bookmarks whose title or app's name does, each in its order.
+ */
+export const launcherItems = <
+  ListedApp extends Pick<App, "name">,
+  ListedBookmark extends LauncherBookmark,
+>(
+  apps: readonly ListedApp[],
+  bookmarks: readonly ListedBookmark[],
+  query: string
+) => {
+  const typed = query.trim().toLocaleLowerCase();
+
+  return {
+    apps: filterApps(apps, query),
+    bookmarks: bookmarks.filter(
+      (bookmark) =>
+        holds(bookmark.title, typed) || holds(bookmark.appName, typed)
+    ),
+  };
 };

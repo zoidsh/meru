@@ -21,7 +21,6 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
 
-import { BookmarksButton } from "./bookmarks.tsx";
 import { isMenuKey, wholePoint } from "./context-menu.ts";
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
@@ -610,7 +609,7 @@ const DoNotDisturbButton = () => {
 
 /**
  * The row across the top: the sidebar toggle and the page's navigation, the
- * profiles, a gap that drags the window, then Open app while the sidebar is
+ * profiles, a gap that drags the window, then New tab while the sidebar is
  * hidden, the unified inbox and Do Not Disturb. The whole of it drags the
  * window but for its controls.
  */
@@ -649,7 +648,6 @@ export const Titlebar = ({ sidebarShown }: { sidebarShown: boolean }) => {
           profileCount={profileCount}
           shortcut={shortcuts?.["inbox.toggle"]}
         />
-        <BookmarksButton />
         <DoNotDisturbButton />
       </div>
     </header>

@@ -189,10 +189,15 @@ msgstr "Add Profile"
 msgid "Along the whole view"
 msgstr "Along the whole view"
 
-#. Accessible name of the list of Google's apps under the Open app search field, read by screen readers
+#. Heading of the group of Google's apps in the New tab launcher
 #: src/shell/open-app.tsx
 msgid "Apps"
 msgstr "Apps"
+
+#. Accessible name of the list under the New tab launcher's search field, read by screen readers
+#: src/shell/open-app.tsx
+msgid "Apps and bookmarks"
+msgstr "Apps and bookmarks"
 
 #. Button on a new email notification that archives the email. Gmail's own word for the action
 #: src/main/notifications.ts
@@ -232,11 +237,6 @@ msgstr "Beside the focused pane"
 msgid "Bookmark {title}"
 msgstr "Bookmark {title}"
 
-#. Shown in the Bookmarks overlay when the selected profile has no bookmarks
-#: src/shell/bookmarks.tsx
-msgid "Bookmark a page from its tab's menu or with the shortcut."
-msgstr "Bookmark a page from its tab's menu or with the shortcut."
-
 #. Short notice at the foot of the window once the selected tab's page is no longer bookmarked
 #: src/shell/toast.tsx
 msgid "Bookmark removed"
@@ -266,21 +266,10 @@ msgstr "Bookmark Tab"
 msgid "Bookmarked {page}"
 msgstr "Bookmarked {page}"
 
-#. Title of the overlay over the page that lists the selected profile's bookmarks
-#: src/shell/bookmarks.tsx
+#. Heading of the group of the profile's bookmarks in the New tab launcher
+#: src/shell/open-app.tsx
 msgid "Bookmarks"
 msgstr "Bookmarks"
-
-#. Accessible name and tooltip of the button in the title bar that lists the selected profile's bookmarks over the page
-#: src/shell/bookmarks.tsx
-msgctxt "button"
-msgid "Bookmarks"
-msgstr "Bookmarks"
-
-#. Menu item in the Tabs menu that lists the selected profile's bookmarks over the page
-#: src/main/commands.ts
-msgid "Bookmarks…"
-msgstr "Bookmarks…"
 
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
@@ -623,25 +612,36 @@ msgstr "Narrow sidebar"
 msgid "New message"
 msgstr "New message"
 
+#. Name of the launcher over the page that lists Google's apps and the profile's bookmarks, to open one as a tab
+#: src/shell/open-app.tsx
+msgid "New tab"
+msgstr "New tab"
+
+#. Name of the button, in the sidebar, the title bar or the page area of a profile with no app open, that opens the launcher listing Google's apps and the profile's bookmarks, to open one as a tab; also the tooltip of the first two
+#: src/shell/open-app.tsx
+msgctxt "button"
+msgid "New tab"
+msgstr "New tab"
+
+#. Menu item in the Tabs menu that lists Google's apps and the selected profile's bookmarks over the page, to open one as a tab
+#: src/main/commands.ts
+msgid "New Tab…"
+msgstr "New Tab…"
+
 #. Button in the find bar that shows the match after this one
 #: src/shell/find-bar.tsx
 msgid "Next match"
 msgstr "Next match"
-
-#. Said in the list of Google's apps over the page when none has a name holding what was typed
-#: src/shell/open-app.tsx
-msgid "No apps found."
-msgstr "No apps found."
 
 #. Heading in the page area of a profile with no app open, such as after its last tab was closed
 #: src/shell/nothing-open.tsx
 msgid "No apps open"
 msgstr "No apps open"
 
-#. Heading of the Bookmarks overlay when the selected profile has no bookmarks
-#: src/shell/bookmarks.tsx
-msgid "No bookmarks yet"
-msgstr "No bookmarks yet"
+#. Said in the New tab launcher when no app or bookmark matches what was typed
+#: src/shell/open-app.tsx
+msgid "No results."
+msgstr "No results."
 
 #. Item of the Saved Searches menu, not clickable, while the selected profile has none
 #: src/main/application-menu.ts
@@ -678,21 +678,10 @@ msgstr "On Until {time}"
 msgid "On Until Turned Off"
 msgstr "On Until Turned Off"
 
-#. Name and placeholder of the search field over the page that lists Google's apps, to open one as a tab
+#. Placeholder of the search field of the New tab launcher, which filters Google's apps and the profile's bookmarks
 #: src/shell/open-app.tsx
-msgid "Open app"
-msgstr "Open app"
-
-#. Name of the button, in the sidebar, the title bar or the page area of a profile with no app open, that lists Google's apps over the page to open one as a tab; also the tooltip of the first two
-#: src/shell/open-app.tsx
-msgctxt "button"
-msgid "Open app"
-msgstr "Open app"
-
-#. Menu item in the Tabs menu that lists Google's apps over the page, to open one as a tab in the selected profile
-#: src/main/commands.ts
-msgid "Open App…"
-msgstr "Open App…"
+msgid "Open app or bookmark"
+msgstr "Open app or bookmark"
 
 #. Checkbox item of a pinned tab's context menu: whether it loads when Meru starts rather than when first selected
 #. Menu item in the Tabs menu, checked while the selected pinned tab loads when Meru starts rather than when first selected
@@ -716,7 +705,7 @@ msgstr "Open Gmail, Calendar or another Google app in this profile."
 msgid "Open in default browser"
 msgstr "Open in default browser"
 
-#. Heading over the list of Google's apps whose pick opens in a new pane of the split view
+#. Heading over the list of Google's apps and bookmarks whose pick opens in a new pane of the split view
 #: src/shell/open-app.tsx
 msgid "Open in split"
 msgstr "Open in split"
@@ -794,11 +783,11 @@ msgstr "Reload"
 msgid "Remove {name}?"
 msgstr "Remove {name}?"
 
-#. Accessible name and tooltip of the cross on a row of the Bookmarks overlay, which deletes that bookmark
+#. Accessible name and tooltip of the cross on a bookmark's row in the New tab launcher, which deletes that bookmark
 #. Item of a tab's context menu, in place of Bookmark tab while its page is bookmarked, that removes that bookmark
 #. Tooltip of the filled bookmark button on a tab's row in the wide sidebar, which removes its page's bookmark
 #: src/main/tab-menu.ts
-#: src/shell/bookmarks.tsx
+#: src/shell/open-app.tsx
 #: src/shell/tab-strip.tsx
 msgid "Remove bookmark"
 msgstr "Remove bookmark"

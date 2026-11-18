@@ -29,8 +29,6 @@ export type Overlay =
    * names the page a bookmark notice is about.
    */
   | { kind: "toast"; message: ToastMessage; title?: string }
-  /** The profile's bookmarks, to open or remove. */
-  | { kind: "bookmarks"; profileId: string }
   /**
    * What a tab dragged over the page area would do there, lit up over the
    * pages; it takes no focus, and the drag in the shell keeps the pointer.
@@ -76,7 +74,7 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
     case "inbox": {
       return "wide";
     }
-    case "bookmarks": {
+    case "open-app": {
       return "medium";
     }
     default: {
@@ -135,8 +133,8 @@ const selection = (state: State) => {
 
 /**
  * The overlay open after `event`. What is underneath changing, another
- * profile or tab selected, closes the rename panel, Open app, Bookmarks
- * and the find bar, as does their profile going. The unified inbox,
+ * profile or tab selected, closes the rename panel, New tab and the find
+ * bar, as does their profile going. The unified inbox,
  * over every profile, keeps its own rules.
  */
 export const transitionOverlay = (

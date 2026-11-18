@@ -1,17 +1,19 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
-import { Columns2Icon, LayoutGridIcon, Rows2Icon } from "lucide-react";
+import { Columns2Icon, PlusIcon, Rows2Icon, XIcon } from "lucide-react";
 import { useId, useState } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
-import { filterApps } from "#core/open-app.ts";
+import { launcherItems } from "#core/open-app.ts";
 import { Button } from "#ui/button.tsx";
 import {
   Command,
   CommandEmpty,
+  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandShortcut,
 } from "#ui/command.tsx";
 import { Kbd } from "#ui/kbd.tsx";
 
@@ -25,24 +27,59 @@ const focus = (input: HTMLInputElement | null) => {
   input?.focus();
 };
 
+const keepFocus = (event: { preventDefault: () => void }) => {
+  event.preventDefault();
+};
+
+type Launcher = Extract<ShellState["overlay"], { kind: "open-app" }>;
+
+const appValue = (id: string) => `app:${id}`;
+const bookmarkValue = (id: string) => `bookmark:${id}`;
+
 /**
- * The apps the profile can open, filtered by what is typed; Up, Down and
- * Enter or a click choose one. The list is filtered here by `filterApps`
- * rather than by cmdk's fuzzy score, so it keeps the registry's order. As
- * Open in split it says so in a header, with where the pick goes.
+ * The item the highlight moves to once bookmark `id` is removed: the next
+ * listed, else the one before.
  */
-export const OpenAppOverlay = ({
-  apps,
-  split,
-}: Extract<ShellState["overlay"], { kind: "open-app" }>) => {
+const afterRemoving = (values: readonly string[], id: string) => {
+  const index = values.indexOf(bookmarkValue(id));
+
+  return values[index + 1] ?? values[index - 1] ?? "";
+};
+
+/**
+ * New tab, the launcher: the apps the profile can open and its bookmarks,
+ * in two groups filtered by what is typed, the Bookmarks group absent
+ * while none is listed. Up, Down and Enter or a click choose one across
+ * both; a bookmark's cross removes it, the field keeping its text and the
+ * focus. The list is filtered here by `launcherItems` rather than by cmdk's
+ * fuzzy score, so it keeps each group's order. As Open in split it says so
+ * in a header, with where the pick goes.
+ */
+export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
   const { t } = useLingui();
   const headingId = useId();
   const [query, setQuery] = useState("");
+  const listed = launcherItems(apps, bookmarks, query);
+  const values = [
+    ...listed.apps.map((app) => appValue(app.id)),
+    ...listed.bookmarks.map((bookmark) => bookmarkValue(bookmark.id)),
+  ];
+  const [highlighted, setHighlighted] = useState(values[0] ?? "");
   const label = t({
-    message: "Open app",
+    message: "New tab",
     comment:
-      "Name and placeholder of the search field over the page that lists Google's apps, to open one as a tab",
+      "Name of the launcher over the page that lists Google's apps and the profile's bookmarks, to open one as a tab",
   });
+  const removeLabel = t({
+    message: "Remove bookmark",
+    comment:
+      "Accessible name and tooltip of the cross on a bookmark's row in the New tab launcher, which deletes that bookmark",
+  });
+
+  const remove = (id: string) => {
+    setHighlighted(afterRemoving(values, id));
+    shellCalls().removeBookmark({ id });
+  };
 
   return (
     <OverlayCard kind="open-app" labelledBy={headingId}>
@@ -57,7 +94,7 @@ export const OpenAppOverlay = ({
             ) : (
               <Rows2Icon aria-hidden />
             )}
-            <Trans comment="Heading over the list of Google's apps whose pick opens in a new pane of the split view">
+            <Trans comment="Heading over the list of Google's apps and bookmarks whose pick opens in a new pane of the split view">
               Open in split
             </Trans>
           </h2>
@@ -81,13 +118,19 @@ export const OpenAppOverlay = ({
       <Command
         shouldFilter={false}
         label={label}
+        value={highlighted}
+        onValueChange={setHighlighted}
         className="rounded-none! bg-transparent p-0 [&_[data-slot=command-input-wrapper]]:p-0 [&_[data-slot=command-input-wrapper]]:pb-1"
       >
         <CommandInput
           ref={focus}
           value={query}
           onValueChange={setQuery}
-          placeholder={label}
+          placeholder={t({
+            message: "Open app or bookmark",
+            comment:
+              "Placeholder of the search field of the New tab launcher, which filters Google's apps and the profile's bookmarks",
+          })}
           autoComplete="off"
           spellCheck={false}
           // Not by viewport: this document's is the overlay's own view.
@@ -95,29 +138,84 @@ export const OpenAppOverlay = ({
         />
         <CommandList
           label={t({
-            message: "Apps",
+            message: "Apps and bookmarks",
             comment:
-              "Accessible name of the list of Google's apps under the Open app search field, read by screen readers",
+              "Accessible name of the list under the New tab launcher's search field, read by screen readers",
           })}
         >
           <CommandEmpty>
-            <Trans comment="Said in the list of Google's apps over the page when none has a name holding what was typed">
-              No apps found.
+            <Trans comment="Said in the New tab launcher when no app or bookmark matches what was typed">
+              No results.
             </Trans>
           </CommandEmpty>
-          {filterApps(apps, query).map((app) => (
-            <CommandItem
-              key={app.id}
-              value={app.id}
-              className="h-8 rounded-[10px]"
-              onSelect={() => {
-                shellCalls().openApp({ appId: app.id });
-              }}
+          {listed.apps.length > 0 && (
+            <CommandGroup
+              heading={t({
+                message: "Apps",
+                comment:
+                  "Heading of the group of Google's apps in the New tab launcher",
+              })}
+              className="p-0"
             >
-              <AppIcon app={app.id} aria-hidden />
-              {app.name}
-            </CommandItem>
-          ))}
+              {listed.apps.map((app) => (
+                <CommandItem
+                  key={app.id}
+                  value={appValue(app.id)}
+                  className="h-8 rounded-[10px]"
+                  onSelect={() => {
+                    shellCalls().openApp({ appId: app.id });
+                  }}
+                >
+                  <AppIcon app={app.id} aria-hidden />
+                  {app.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {listed.bookmarks.length > 0 && (
+            <CommandGroup
+              heading={t({
+                message: "Bookmarks",
+                comment:
+                  "Heading of the group of the profile's bookmarks in the New tab launcher",
+              })}
+              className="p-0"
+            >
+              {listed.bookmarks.map((bookmark) => (
+                <CommandItem
+                  key={bookmark.id}
+                  value={bookmarkValue(bookmark.id)}
+                  className="h-8 rounded-[10px]"
+                  onSelect={() => {
+                    shellCalls().openBookmark({ id: bookmark.id });
+                  }}
+                >
+                  <AppIcon app={bookmark.app} aria-hidden />
+                  <span className="min-w-0 flex-1 truncate">
+                    {bookmark.title}
+                  </span>
+                  <CommandShortcut className="flex shrink-0 items-center gap-2 tracking-normal">
+                    {bookmark.appName}
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      tabIndex={-1}
+                      aria-label={removeLabel}
+                      title={removeLabel}
+                      className="-my-1 opacity-0 group-hover/command-item:opacity-100 group-data-selected/command-item:opacity-100 hover:bg-secondary"
+                      onMouseDown={keepFocus}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        remove(bookmark.id);
+                      }}
+                    >
+                      <XIcon />
+                    </Button>
+                  </CommandShortcut>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </Command>
     </OverlayCard>
@@ -128,10 +226,10 @@ const useOpenAppButton = () => {
   const { t } = useLingui();
   const shortcutTitle = useShortcutTitle();
   const label = t({
-    message: "Open app",
+    message: "New tab",
     context: "button",
     comment:
-      "Name of the button, in the sidebar, the title bar or the page area of a profile with no app open, that lists Google's apps over the page to open one as a tab; also the tooltip of the first two",
+      "Name of the button, in the sidebar, the title bar or the page area of a profile with no app open, that opens the launcher listing Google's apps and the profile's bookmarks, to open one as a tab; also the tooltip of the first two",
   });
   const shortcut = useShellState("shortcuts")?.["app.open"];
 
@@ -146,7 +244,7 @@ const useOpenAppButton = () => {
   };
 };
 
-/** Open app in the title bar, first of its right-hand group, while the sidebar is hidden. */
+/** New tab in the title bar, first of its right-hand group, while the sidebar is hidden. */
 export const OpenAppTitlebarButton = () => {
   const { label, shortcut, open, toggle } = useOpenAppButton();
 
@@ -158,12 +256,12 @@ export const OpenAppTitlebarButton = () => {
       shortcut={shortcut}
       onClick={toggle}
     >
-      <LayoutGridIcon />
+      <PlusIcon />
     </TitlebarButton>
   );
 };
 
-/** Open app in the page area of a profile with no tab, its shortcut beside it. */
+/** New tab in the page area of a profile with no tab, its shortcut beside it. */
 export const OpenAppPanelButton = ({
   variant,
 }: {
@@ -185,7 +283,7 @@ export const OpenAppPanelButton = ({
   );
 };
 
-/** Open app below the sidebar's last tab: a tile when narrow, a row when wide. */
+/** New tab below the sidebar's last tab: a tile when narrow, a row when wide. */
 export const OpenAppSidebarButton = ({ wide }: { wide: boolean }) => {
   const { label, title, open, toggle } = useOpenAppButton();
 
@@ -203,7 +301,7 @@ export const OpenAppSidebarButton = ({ wide }: { wide: boolean }) => {
       )}
       onClick={toggle}
     >
-      <LayoutGridIcon aria-hidden />
+      <PlusIcon aria-hidden />
       <span className={wide ? "truncate" : "sr-only"}>{label}</span>
     </Button>
   );

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
+import { bookmarks } from "#core/bookmarks.ts";
 import type { Overlay } from "#core/overlay.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -14,7 +15,8 @@ const two: State = {
   selectedProfileId: "b",
 };
 
-const setup = (initial?: Overlay, state: State = two, pageSize?: Size) => {
+const setup = (initial?: Overlay, start: State = two, pageSize?: Size) => {
+  let state = start;
   let open = initial;
   const events: unknown[] = [];
   const openApp = createOpenApp({
@@ -41,11 +43,62 @@ const setup = (initial?: Overlay, state: State = two, pageSize?: Size) => {
 
       return Promise.resolve();
     },
+    selectTab: (key) => {
+      events.push(["select", key.tabId]);
+
+      return Promise.resolve();
+    },
+    showOwnWindow: (key) => {
+      events.push(["own window", key.tabId]);
+    },
+    removeBookmark: (profileId, id) => {
+      state = {
+        ...state,
+        profiles: state.profiles.map((profile) =>
+          profile.id === profileId
+            ? {
+                ...profile,
+                bookmarks: bookmarks(state, profileId).filter(
+                  (bookmark) => bookmark.id !== id
+                ),
+              }
+            : profile
+        ),
+      };
+
+      return Promise.resolve();
+    },
     pageSize: () => pageSize ?? { width: 1000, height: 700 },
     log: () => false,
   });
 
-  return { openApp, events };
+  return { openApp, events, state: () => state };
+};
+
+const WEEK = "https://calendar.google.com/calendar/u/0/r/week";
+const DOC = "https://docs.google.com/document/d/abc/edit";
+const SHEET = "https://docs.google.com/spreadsheets/d/xyz/edit";
+
+/** Profile `a` with tabs at the week, in the main window, and the doc, in its own; and a bookmark of each and of a sheet. */
+const withBookmarks: State = {
+  version: 1,
+  profiles: [
+    {
+      ...newProfile("a", "Default"),
+      tabs: [
+        gmailTab(),
+        { id: "c1", app: "calendar", url: WEEK, title: "Week" },
+        { id: "d1", app: "docs", url: DOC, title: "Plan", ownWindow: true },
+      ],
+      selectedTabId: "gmail",
+      bookmarks: [
+        { id: "w", url: WEEK, title: "Week", app: "calendar" },
+        { id: "p", url: DOC, title: "Plan", app: "docs" },
+        { id: "s", url: SHEET, title: "Budget", app: "sheets" },
+      ],
+    },
+  ],
+  selectedProfileId: "a",
 };
 
 describe(createOpenApp, () => {
@@ -141,5 +194,67 @@ describe(createOpenApp, () => {
       ],
       [["close"], ["open", { kind: "toast", message: "no-room" }]],
     ]);
+  });
+
+  it("chooses a bookmark, closing: the tab at its page, its own window's, or a new tab of its app", async () => {
+    const { openApp, events } = setup(undefined, withBookmarks);
+
+    for (const id of ["w", "p", "s"]) {
+      openApp.setOpen(true);
+      // oxlint-disable-next-line no-await-in-loop -- one choice at a time
+      await openApp.chooseBookmark(id);
+    }
+
+    const opened = ["open", { kind: "open-app", profileId: "a" }];
+
+    expect(events).toStrictEqual([
+      opened,
+      ["close"],
+      ["select", "c1"],
+      opened,
+      ["close"],
+      ["own window", "d1"],
+      opened,
+      ["close"],
+      ["tab", "a", "sheets", SHEET],
+    ]);
+  });
+
+  it("opens a bookmark as Open in split in the new pane as a new tab, though a tab is at its page, or says there is no room", async () => {
+    const roomy = setup(
+      { kind: "open-app", profileId: "a", split: "row" },
+      withBookmarks
+    );
+    const shrunk = setup(
+      { kind: "open-app", profileId: "a", split: "column" },
+      withBookmarks,
+      { width: 400, height: 400 }
+    );
+
+    await roomy.openApp.chooseBookmark("w");
+    await shrunk.openApp.chooseBookmark("w");
+
+    expect([roomy.events, shrunk.events]).toStrictEqual([
+      [["close"], ["tab", "a", "calendar", WEEK, "row"]],
+      [["close"], ["open", { kind: "toast", message: "no-room" }]],
+    ]);
+  });
+
+  it("removes a bookmark it lists, staying open, and refuses either with nothing open or for a bookmark the profile has not", async () => {
+    const listed = setup({ kind: "open-app", profileId: "a" }, withBookmarks);
+    const closed = setup({ kind: "inbox" }, withBookmarks);
+
+    await listed.openApp.removeBookmark("p");
+    await listed.openApp.chooseBookmark("gone");
+    await closed.openApp.removeBookmark("w");
+    await closed.openApp.chooseBookmark("w");
+
+    expect([
+      listed.openApp.isOpen(),
+      bookmarks(listed.state(), "a").map(({ id }) => id),
+      listed.events,
+      bookmarks(closed.state(), "a").map(({ id }) => id),
+      closed.events,
+    ]).toStrictEqual([true, ["w", "s"], [], ["w", "p", "s"], []]);
   });
 });

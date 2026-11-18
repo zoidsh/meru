@@ -63,7 +63,7 @@ export interface CommandContext {
   doNotDisturb: DoNotDisturb | undefined;
   /** Whether the unified inbox is open over the page. */
   inboxOpen: boolean;
-  /** Whether Open app is open over the page. */
+  /** Whether New tab, the launcher, is open over the page. */
   openAppOpen: boolean;
   /** Whether the sidebar shows. */
   sidebarShown: boolean;
@@ -88,8 +88,6 @@ export interface CommandContext {
    * bookmarked, as a Gmail, sleeping, loading or failed page.
    */
   bookmarked: boolean | undefined;
-  /** Whether the Bookmarks overlay is open over the page. */
-  bookmarksOpen: boolean;
 }
 
 /** What commands do, each through the module that owns it. */
@@ -121,7 +119,7 @@ export interface CommandActions {
   switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
   /** Shows the unified inbox, or puts the tab back. */
   setInboxOpen: (open: boolean) => void;
-  /** Opens Open app over the selected profile's page, or closes it. */
+  /** Opens New tab over the selected profile's page, or closes it. */
   setOpenAppOpen: (open: boolean) => void;
   /**
    * Opens Open in split, whose pick goes in a new pane that way of the
@@ -151,8 +149,6 @@ export interface CommandActions {
    * toast says which.
    */
   toggleBookmark: (key: TabKey, announce: boolean) => Promise<unknown>;
-  /** Opens the Bookmarks overlay over the selected profile, or closes it. */
-  setBookmarksOpen: (open: boolean) => void;
 }
 
 export interface Command {
@@ -520,9 +516,9 @@ export const COMMANDS: readonly Command[] = [
     id: "app.open",
     title: () =>
       t({
-        message: "Open App…",
+        message: "New Tab…",
         comment:
-          "Menu item in the Tabs menu that lists Google's apps over the page, to open one as a tab in the selected profile",
+          "Menu item in the Tabs menu that lists Google's apps and the selected profile's bookmarks over the page, to open one as a tab",
       }),
     shortcut: {
       darwin: "CommandOrControl+T",
@@ -568,27 +564,6 @@ export const COMMANDS: readonly Command[] = [
     // A tab's own window shows its star, so only the main window announces it.
     run: (context, { toggleBookmark }) =>
       toggleBookmark(actingTab(context), context.ownWindow === undefined),
-  },
-  {
-    id: "bookmarks.toggle",
-    title: () =>
-      t({
-        message: "Bookmarks…",
-        comment:
-          "Menu item in the Tabs menu that lists the selected profile's bookmarks over the page",
-      }),
-    shortcut: {
-      darwin: "CommandOrControl+Alt+B",
-      win32: "CommandOrControl+Alt+B",
-      linux: "CommandOrControl+Alt+B",
-    },
-    once: true,
-    // A second time closes it, as a second click on its button does.
-    run: ({ bookmarksOpen }, { setBookmarksOpen }) => {
-      setBookmarksOpen(!bookmarksOpen);
-
-      return Promise.resolve();
-    },
   },
   {
     id: "tab.splitRight",

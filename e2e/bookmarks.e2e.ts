@@ -44,9 +44,6 @@ const press = (
 const pressBookmark = (app: ElectronApplication, url: string) =>
   press(app, url, "D", [command]);
 
-const pressBookmarks = (app: ElectronApplication, url: string) =>
-  press(app, url, "B", [command, "alt"]);
-
 interface StoredBookmark {
   id: string;
   url: string;
@@ -59,6 +56,7 @@ interface Stored {
     tabs: { id: string; app: string; url: string }[];
     selectedTabId: string;
     bookmarks?: StoredBookmark[];
+    splits?: unknown[];
   }[];
 }
 
@@ -308,12 +306,13 @@ test("the wide row's bookmark button shows on hover and bookmarks that row's pag
   );
 });
 
-test("Bookmarks lists the profile's bookmarks, opens one with the keyboard or the pointer, selecting a tab already at its page or opening a new one, and removes one in place with either", async ({
-  launchApp,
-  userDataDir,
-  standIn,
-}) => {
-  await seed(userDataDir, standIn, {
+/** Gmail and Calendar, Gmail selected, with three bookmarks and `fields`. */
+const seedLauncher = (
+  userDataDir: string,
+  standIn: StandIn,
+  fields: object = {}
+) =>
+  seed(userDataDir, standIn, {
     tabs: [
       { id: "gmail", app: "gmail", url: standIn.url, title: "" },
       { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
@@ -324,83 +323,179 @@ test("Bookmarks lists the profile's bookmarks, opens one with the keyboard or th
       { id: "b2", url: standIn.driveUrl, title: "Files", app: "drive" },
       { id: "b3", url: `${standIn.driveUrl}#x`, title: "Shared", app: "drive" },
     ],
+    ...fields,
+  });
+
+/** New tab's card, field, options and groups in the overlay's document. */
+const launcher = (overlay: Page, name = "New tab") => {
+  const card = overlay.getByRole("dialog", { name });
+
+  return {
+    card,
+    field: card.getByRole("combobox"),
+    options: card.getByRole("option"),
+    apps: card.getByRole("group", { name: "Apps" }),
+    bookmarks: card.getByRole("group", { name: "Bookmarks" }),
+    selected: card.getByRole("option", { selected: true }),
+  };
+};
+
+const APP_NAMES = ["Calendar", "Drive", "Docs", "Sheets", "Slides", "Meet"];
+
+test("New tab lists the apps, then the profile's bookmarks; typing filters both, a bookmark by its title or its app's name, a group with no match gone with its heading, and No results with none; one keyboard list runs across both", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedLauncher(userDataDir, standIn);
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const { card, field, options, apps, bookmarks, selected } = launcher(overlay);
+
+  await findPage(app, standIn.url);
+  await clickMenuItem(app, "app.open");
+  await expect(field).toBeFocused();
+  await expect(field).toHaveAttribute("placeholder", "Open app or bookmark");
+  await expect(apps.getByRole("option")).toHaveText(APP_NAMES);
+  await expect(bookmarks.getByRole("option")).toHaveText([
+    /^Week\s*Calendar$/u,
+    /^Files\s*Drive$/u,
+    /^Shared\s*Drive$/u,
+  ]);
+
+  // Down past the last app highlights the first bookmark, its heading shown.
+  for (const _name of APP_NAMES) {
+    // oxlint-disable-next-line no-await-in-loop -- one key at a time
+    await field.press("ArrowDown");
+  }
+
+  await expect(selected).toHaveText(/^Week/u);
+  await expect(card.getByText("Bookmarks", { exact: true })).toBeInViewport();
+  await field.press("ArrowUp");
+  await expect(selected).toHaveText("Meet");
+
+  await field.fill("drive");
+  await expect(apps.getByRole("option")).toHaveText(["Drive"]);
+  await expect(bookmarks.getByRole("option")).toHaveText([
+    /^Files/u,
+    /^Shared/u,
+  ]);
+
+  await field.fill("WEEK");
+  await expect(apps).toHaveCount(0);
+  await expect(card.getByText("Apps", { exact: true })).toHaveCount(0);
+  await expect(options).toHaveText([/^Week/u]);
+
+  await field.fill("zz");
+  await expect(card.getByText("No results.", { exact: true })).toBeVisible();
+  await expect(apps).toHaveCount(0);
+  await expect(bookmarks).toHaveCount(0);
+});
+
+test("choosing a bookmark in New tab closes it and selects the tab at its page, brings forward the window of one in its own, or opens a new tab of its app", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedLauncher(userDataDir, standIn, {
+    tabs: [
+      { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+      { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
+      {
+        id: "d",
+        app: "drive",
+        url: standIn.driveUrl,
+        title: "",
+        ownWindow: true,
+        windowBounds: { x: 120, y: 120, width: 900, height: 600 },
+      },
+    ],
   });
 
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
   const overlay = await findOverlayDocument(app);
-  const card = overlay.getByRole("dialog", { name: "Bookmarks" });
-  const rows = card.getByRole("option");
-  const inCard = () =>
-    overlay.evaluate(() => document.activeElement?.closest("dialog") !== null);
+  const { card, field, options } = launcher(overlay);
 
   await findPage(app, standIn.url);
-  await pressBookmarks(app, standIn.url);
-  await expect(card).toBeVisible();
-  await expect(rows).toHaveText([
-    /^Week\s*Calendar/u,
-    /^Files\s*Drive/u,
-    /^Shared\s*Drive/u,
-  ]);
-  await expect.poll(inCard).toBe(true);
-
-  await overlay.keyboard.press("ArrowDown");
-  await expect(card.getByRole("option", { selected: true })).toHaveText(
-    /^Files/u
-  );
-  await overlay.keyboard.press("Enter");
   await findPage(app, standIn.driveUrl);
+
+  // A new tab where no tab is at the page, the keyboard choosing.
+  await clickMenuItem(app, "app.open");
+  await field.fill("shared");
+  await field.press("Enter");
   await expect(card).toHaveCount(0);
+  await findPage(app, `${standIn.driveUrl}#x`);
   await expect
     .poll(() => readTabApps(userDataDir))
-    .toStrictEqual(["gmail", "calendar", "drive"]);
+    .toStrictEqual(["gmail", "calendar", "drive", "drive"]);
 
-  // The titlebar's button opens it too; the keyboard removes in place.
-  await shell.getByRole("button", { name: "Bookmarks" }).click();
-  await expect(card).toBeVisible();
-  await overlay.keyboard.press("ArrowDown");
-  await overlay.keyboard.press("ArrowDown");
-  await overlay.keyboard.press("Delete");
-  await expect(rows).toHaveText([/^Week/u, /^Files/u]);
-  await expect(card).toBeVisible();
-  await expect.poll(inCard).toBe(true);
-  await expect(card.getByRole("option", { selected: true })).toHaveText(
-    /^Files/u
-  );
-
-  // The pointer removes with the row's cross, keeping the card and its focus.
-  await rows.filter({ hasText: "Files" }).hover();
-  await card
-    .getByRole("option", { name: /Files/u })
-    .getByRole("button", { name: "Remove bookmark" })
-    .click();
-  await expect(rows).toHaveText([/^Week/u]);
-  await expect.poll(inCard).toBe(true);
-  await expect
-    .poll(() => readBookmarks(userDataDir))
-    .toStrictEqual(["calendar Week"]);
-
-  // A tab already at the page is selected rather than another opened.
-  await rows.filter({ hasText: "Week" }).click();
+  // The tab already at the page, by the pointer.
+  await clickMenuItem(app, "app.open");
+  await options.filter({ hasText: "Week" }).click();
   await expect(card).toHaveCount(0);
   await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"
   );
+
+  // The tab in its own window, which opens nothing new.
+  await clickMenuItem(app, "app.open");
+  await options.filter({ hasText: "Files" }).click();
+  await expect(card).toHaveCount(0);
   expect(await readTabApps(userDataDir)).toStrictEqual([
     "gmail",
     "calendar",
     "drive",
+    "drive",
   ]);
-
-  // A second press closes it.
-  await clickMenuItem(app, "bookmarks.toggle");
-  await expect(card).toBeVisible();
-  await clickMenuItem(app, "bookmarks.toggle");
-  await expect(card).toHaveCount(0);
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
 });
 
-test("Bookmarks with none says how to add one", async ({
+test("a bookmark's cross in New tab removes it, the launcher staying open with its text, focus and a highlight on the next row; Delete and Backspace only edit the text", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedLauncher(userDataDir, standIn);
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const { card, field, options, selected } = launcher(overlay);
+
+  await findPage(app, standIn.url);
+  await clickMenuItem(app, "app.open");
+  await field.fill("drive");
+  await expect(options).toHaveText(["Drive", /^Files/u, /^Shared/u]);
+
+  const files = options.filter({ hasText: "Files" });
+
+  await files.hover();
+  await files.getByRole("button", { name: "Remove bookmark" }).click();
+  await expect(options).toHaveText(["Drive", /^Shared/u]);
+  await expect(card).toBeVisible();
+  await expect(field).toBeFocused();
+  await expect(field).toHaveValue("drive");
+  await expect(selected).toHaveText(/^Shared/u);
+  await expect
+    .poll(() => readBookmarks(userDataDir))
+    .toStrictEqual(["calendar Week", "drive Shared"]);
+
+  await field.press("Backspace");
+  await field.press("Delete");
+  await expect(field).toHaveValue("driv");
+  await expect(options).toHaveText(["Drive", /^Shared/u]);
+  expect(await readBookmarks(userDataDir)).toStrictEqual([
+    "calendar Week",
+    "drive Shared",
+  ]);
+});
+
+test("New tab with no bookmarks has no Bookmarks group, its Apps heading still shown", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -409,17 +504,55 @@ test("Bookmarks with none says how to add one", async ({
 
   const app = await launchApp();
   const overlay = await findOverlayDocument(app);
-  const card = overlay.getByRole("dialog", { name: "Bookmarks" });
+  const { field, apps, bookmarks, card } = launcher(overlay);
 
   await findPage(app, standIn.calendarUrl);
-  await clickMenuItem(app, "bookmarks.toggle");
-  await expect(card.getByText("No bookmarks yet")).toBeVisible();
-  await expect(
-    card.getByText("Bookmark a page from its tab's menu or with the shortcut.")
-  ).toBeVisible();
-  await expect(card.getByRole("option")).toHaveCount(0);
-  await overlay.keyboard.press("Escape");
+  await clickMenuItem(app, "app.open");
+  await expect(field).toBeFocused();
+  await expect(apps).toBeVisible();
+  await expect(card.getByText("Apps", { exact: true })).toBeVisible();
+  await expect(bookmarks).toHaveCount(0);
+  await expect(card.getByText("Bookmarks", { exact: true })).toHaveCount(0);
+});
+
+test("Open in split lists the bookmarks too, and one chosen opens as a new tab in the new pane though a tab is at its page, moving nothing", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seed(userDataDir, standIn, {
+    bookmarks: [
+      { id: "b2", url: standIn.driveUrl, title: "Files", app: "drive" },
+    ],
+  });
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const { card, bookmarks } = launcher(overlay, "Open in split");
+
+  await findPage(app, standIn.calendarUrl);
+  await clickMenuItem(app, "tab.splitRight");
+  await expect(card).toBeVisible();
+  await bookmarks.getByRole("option", { name: /^Files/u }).click();
   await expect(card).toHaveCount(0);
+  await expect
+    .poll(async () => {
+      const profile = await readProfile(userDataDir);
+
+      return {
+        tabs: profile?.tabs.map(({ app: tabApp, url }) => [tabApp, url]),
+        splits: profile?.splits?.length ?? 0,
+      };
+    })
+    .toStrictEqual({
+      tabs: [
+        ["gmail", standIn.url],
+        ["calendar", expect.any(String)],
+        ["drive", standIn.driveUrl],
+        ["drive", standIn.driveUrl],
+      ],
+      splits: 1,
+    });
 });
 
 test("a tab's own window shows its star first in the titlebar's right group, which bookmarks its page, filled, and Cmd or Ctrl+D there removes it", async ({
@@ -498,8 +631,8 @@ test("bookmarks outlast a restart", async ({
   const overlay = await findOverlayDocument(second);
 
   await findPage(second, standIn.calendarUrl);
-  await clickMenuItem(second, "bookmarks.toggle");
-  await expect(
-    overlay.getByRole("dialog", { name: "Bookmarks" }).getByRole("option")
-  ).toHaveText([new RegExp(`^${CALENDAR_TITLE}\\s*Calendar`, "u")]);
+  await clickMenuItem(second, "app.open");
+  await expect(launcher(overlay).bookmarks.getByRole("option")).toHaveText([
+    new RegExp(`^${CALENDAR_TITLE}\\s*Calendar`, "u"),
+  ]);
 });

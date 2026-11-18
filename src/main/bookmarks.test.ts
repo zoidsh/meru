@@ -53,7 +53,6 @@ const setup = (state: State = initial, overlay?: Overlay) => {
   });
   let open = overlay;
   const pages = new Map<string, PageNow>();
-  const events: unknown[] = [];
   const bookmarks = createBookmarks({
     apps: APPS,
     state: profiles.get,
@@ -61,34 +60,16 @@ const setup = (state: State = initial, overlay?: Overlay) => {
       open: (next) => {
         open = next;
       },
-      close: () => {
-        open = undefined;
-      },
       current: () => open,
     },
     page: (key) => pages.get(tabKey(key)) ?? { live: true, loading: false },
     toggle: profiles.toggleBookmark,
-    remove: profiles.removeBookmark,
-    selectTab: (key) => {
-      events.push(["select", key.tabId]);
-
-      return Promise.resolve();
-    },
-    showOwnWindow: (key) => {
-      events.push(["own window", key.tabId]);
-    },
-    openTab: (profileId, app, url) => {
-      events.push(["open", profileId, app.id, url]);
-
-      return Promise.resolve();
-    },
     log: () => false,
   });
 
   return {
     bookmarks,
     profiles,
-    events,
     overlay: () => open,
     setPage: (key: TabKey, page: PageNow) => pages.set(tabKey(key), page),
   };
@@ -253,65 +234,15 @@ describe(createBookmarks, () => {
     ]);
   });
 
-  it("lists the rows with their apps' names, and removes one with the overlay staying open", async () => {
-    const { bookmarks, overlay } = setup();
+  it("lists the rows with their apps' names", async () => {
+    const { bookmarks } = setup();
 
     await bookmarks.toggle(CALENDAR, false);
     await bookmarks.toggle(DOCS, false);
-    bookmarks.setOpen(true);
 
-    const rows = bookmarks.rows("a");
-
-    await bookmarks.remove(rows[0]?.id ?? "");
-
-    expect([rows, bookmarks.rows("a"), overlay()]).toStrictEqual([
-      [
-        { id: "id1", title: "Week", app: "calendar", appName: "Calendar" },
-        { id: "id2", title: "Plan", app: "docs", appName: "Docs" },
-      ],
-      [{ id: "id2", title: "Plan", app: "docs", appName: "Docs" }],
-      { kind: "bookmarks", profileId: "a" },
+    expect(bookmarks.rows("a")).toStrictEqual([
+      { id: "id1", title: "Week", app: "calendar", appName: "Calendar" },
+      { id: "id2", title: "Plan", app: "docs", appName: "Docs" },
     ]);
-  });
-
-  it("chooses a row: the tab at its page, its own window's, or a new tab, closing the overlay", async () => {
-    const { bookmarks, profiles, events, overlay } = setup();
-
-    await bookmarks.toggle(CALENDAR, false);
-    await bookmarks.toggle(DOCS, false);
-    await profiles.updatePages([{ ...CALENDAR, url: `${WEEK}#today` }]);
-    await profiles.updatePages([{ ...CALENDAR, url: WEEK }]);
-    bookmarks.setOpen(true);
-    await bookmarks.choose("id1");
-
-    const closed = overlay();
-
-    bookmarks.setOpen(true);
-    await bookmarks.choose("id2");
-    await profiles.updatePages([{ ...CALENDAR, url: `${WEEK}#today` }]);
-    bookmarks.setOpen(true);
-    await bookmarks.choose("id1");
-    await bookmarks.choose("id1");
-
-    expect([closed, overlay(), events]).toStrictEqual([
-      undefined,
-      undefined,
-      [
-        ["select", "c1"],
-        ["own window", "d1"],
-        ["open", "a", "calendar", WEEK],
-      ],
-    ]);
-  });
-
-  it("selects a sleeping tab at the page, which wakes it", async () => {
-    const { bookmarks, events, setPage } = setup();
-
-    await bookmarks.toggle(CALENDAR, false);
-    setPage(CALENDAR, { live: false, loading: false });
-    bookmarks.setOpen(true);
-    await bookmarks.choose("id1");
-
-    expect(events).toStrictEqual([["select", "c1"]]);
   });
 });

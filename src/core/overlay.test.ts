@@ -169,13 +169,12 @@ describe(coversPage, () => {
           "open-app",
           "inbox",
           "rename-profile",
-          "bookmarks",
           "find",
           "toast",
           "drop",
         ] as const
       ).map((kind) => coversPage({ kind }))
-    ).toStrictEqual([true, true, true, true, false, false, false]);
+    ).toStrictEqual([true, true, true, false, false, false]);
     expect(coversPage(undefined)).toBeFalsy();
   });
 });
@@ -183,20 +182,20 @@ describe(coversPage, () => {
 describe(staysOpenOutside, () => {
   it("is the find bar alone", () => {
     expect(
-      (["find", "open-app", "inbox", "bookmarks", "toast"] as const).map(
-        (kind) => staysOpenOutside({ kind })
+      (["find", "open-app", "inbox", "toast"] as const).map((kind) =>
+        staysOpenOutside({ kind })
       )
-    ).toStrictEqual([true, false, false, false, false]);
+    ).toStrictEqual([true, false, false, false]);
   });
 });
 
 describe(overlayWidth, () => {
-  it("is wide for the unified inbox and narrow for the rename panel and Open app", () => {
+  it("is wide for the unified inbox, medium for the New tab launcher and narrow for the rename panel", () => {
     expect([
       overlayWidth({ kind: "inbox" }),
-      overlayWidth(renameA),
       overlayWidth(openAppA),
-    ]).toStrictEqual(["wide", "narrow", "narrow"]);
+      overlayWidth(renameA),
+    ]).toStrictEqual(["wide", "medium", "narrow"]);
   });
 });
 
