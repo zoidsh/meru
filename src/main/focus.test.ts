@@ -107,4 +107,36 @@ describe(createFocus, () => {
 
     expect(focus.focused()).toStrictEqual(overlay);
   });
+
+  it("gives focus taken unasked back to what held it, an overlay keeping it, or the front page", () => {
+    const { focus, focused, window, present } = setup();
+
+    window.focused = true;
+    focus.giveBack();
+    focus.noteFocused(overlay);
+    focus.giveBack();
+    present.delete("overlay");
+    focus.giveBack();
+
+    expect(focused).toStrictEqual(["front", "overlay", "front"]);
+  });
+
+  it("gives nothing back while the window is in the background until it comes forward, and leaves a move already waiting", () => {
+    const { focus, focused, window, emit } = setup();
+
+    focus.noteFocused(overlay);
+    focus.giveBack();
+
+    const behind = [...focused];
+
+    window.focused = true;
+    emit("focus");
+    window.focused = false;
+    focus.focus([{ kind: "shell" }]);
+    focus.giveBack();
+    window.focused = true;
+    emit("focus");
+
+    expect([behind, focused]).toStrictEqual([[], ["overlay", "shell"]]);
+  });
 });

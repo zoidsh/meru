@@ -532,6 +532,7 @@ const start = async () => {
     onFocus: () => {
       focus.noteFocused({ kind: "front" });
     },
+    onStrayFocus: focus.giveBack,
     // At launch and after a switch, typing reaches the page without a click;
     // with no tab open, the shell, whose Open app is what there is to do.
     onFront: () => {

@@ -71,6 +71,23 @@ export const createFocus = ({
       pending = preferences;
       flush();
     },
+    /**
+     * Gives focus back to the web contents that held it, or the front tab's
+     * view, after one took it unasked, as a pane's page can as it first
+     * loads; a move already waiting for the window wins.
+     */
+    giveBack: () => {
+      if (pending) {
+        return;
+      }
+
+      pending = [
+        ...(focused ? [focused] : []),
+        { kind: "front" },
+        { kind: "shell" },
+      ];
+      flush();
+    },
   };
 };
 

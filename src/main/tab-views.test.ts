@@ -83,6 +83,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
   let profilesAdded = 0;
   const pageChanges: TabKey[] = [];
   const loads: { key: TabKey; page: LoadedPage }[] = [];
+  const focusEvents: string[] = [];
 
   const profiles = createProfiles({
     initial: state,
@@ -195,7 +196,12 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
       prepared.push([partition, views.length]);
     },
     updatePages: profiles.updatePages,
-    onFocus: () => false,
+    onFocus: () => {
+      focusEvents.push("front");
+    },
+    onStrayFocus: () => {
+      focusEvents.push("stray");
+    },
     onFront: () => {
       fronts += 1;
     },
@@ -242,6 +248,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     profilesAdded: () => profilesAdded,
     pageChanges,
     loads,
+    focusEvents,
     setSidebar: (next: SidebarState) => {
       sidebar = next;
       tabs.relayout();
@@ -386,7 +393,7 @@ describe(createTabViews, () => {
     expect(window.tabs.focuser()).toBeUndefined();
   });
 
-  it("selects a pane's tab when the person presses on its page, but not when its page takes focus, as one can as it first loads, giving focus back to the selected pane", async () => {
+  it("selects a pane's tab when the person presses on its page, but not when its page takes focus, as one can as it first loads, telling of that focus as taken unasked and focusing no view itself", async () => {
     const [profile, other] = initial.profiles as [
       State["profiles"][number],
       State["profiles"][number],
@@ -417,16 +424,26 @@ describe(createTabViews, () => {
     const gmail = window.viewOf("persist:a", 0);
     const calendar = window.viewOf("persist:a", 1);
 
+    gmail?.options.onFocus();
     calendar?.options.onFocus();
     await vi.advanceTimersByTimeAsync(0);
 
-    // Focus alone selects nothing, and the selected pane takes it back.
-    const afterFocus = [selected(), gmail?.focuses, calendar?.focuses];
+    // Focus alone selects nothing, and no view is focused here: main gives
+    // focus back once the window may take it.
+    const afterFocus = [
+      selected(),
+      gmail?.focuses,
+      calendar?.focuses,
+      [...window.focusEvents],
+    ];
 
     calendar?.options.onPointerDown();
     await vi.advanceTimersByTimeAsync(0);
 
-    expect([afterFocus, selected()]).toStrictEqual([["gmail", 1, 0], "c1"]);
+    expect([afterFocus, selected()]).toStrictEqual([
+      ["gmail", 0, 0, ["front", "stray"]],
+      "c1",
+    ]);
   });
 
   it("gives another profile's selected tab a view of its session when that profile is selected", async () => {

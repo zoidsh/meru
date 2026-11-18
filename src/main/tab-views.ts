@@ -73,6 +73,12 @@ export interface TabViewsDeps {
   /** Told when a tab's page gains keyboard focus, the front one's alone. */
   onFocus: () => void;
   /**
+   * Told when a shown pane's page other than the front one takes keyboard
+   * focus unasked, as on Linux one does as it first loads, so focus goes
+   * back where it was rather than to a pane the selection left.
+   */
+  onStrayFocus: () => void;
+  /**
    * Told when another tab comes to the front, the first one included, and
    * when the front tab's page is put to sleep or woken.
    */
@@ -146,6 +152,7 @@ export const createTabViews = ({
   prepareSession,
   updatePages,
   onFocus,
+  onStrayFocus,
   onFront,
   onPageChange,
   onLoaded,
@@ -575,14 +582,12 @@ export const createTabViews = ({
         onEvent(key, tabKeyed, event);
       },
       onKey: handleKey,
-      // On Linux a pane's page takes focus as it first loads, which would
-      // leave the keys going to a pane other than the selected one; the
-      // front pane takes it back, and a press, below, selects the pane.
+      // A press, below, selects the pane; focus alone does not.
       onFocus: () => {
-        onFocus();
-
         if (key !== front && shownKeys.has(key) && front !== undefined) {
-          tabs.get(front)?.view.focus();
+          onStrayFocus();
+        } else {
+          onFocus();
         }
       },
       onPointerDown: () => {
