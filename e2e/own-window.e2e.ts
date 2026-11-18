@@ -23,6 +23,7 @@ import {
   STAND_IN_TITLE,
   listing,
   message,
+  messageLink,
 } from "./lib/stand-in.ts";
 
 const isMacOS = process.platform === "darwin";
@@ -465,6 +466,40 @@ test("Gmail, unpinned, moves to its own window and goes on counting and notifyin
   });
   await expect.poll(() => readUnreadTotal(app)).toBe(2);
   await expect.poll(() => notified(app)).toContain("Sender 2");
+
+  // Open app's card takes the focus into the main window; then the
+  // notification's click opens the message in Gmail's own window and gives
+  // that window the focus, the main window keeping its tab.
+  await clickMenuItem(app, "app.open");
+  await expect.poll(() => menuEnabled(app, "tab.moveToMainWindow")).toBeFalsy();
+  await app.evaluate((_electron, title) => {
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as {
+        title: string;
+        click: () => void;
+      }[]
+    )
+      .find((notification) => notification.title === title)
+      ?.click();
+  }, "Sender 2");
+  await expect.poll(() => gmail.url()).toBe(messageLink(standIn.url, "2"));
+  await expect
+    .poll(() => menuEnabled(app, "tab.moveToMainWindow"))
+    .toBeTruthy();
+  expect(await ownWindowPage(app)).toBe(gmail.url());
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect
+    .poll(async () => {
+      const { profiles } = await readState<{
+        profiles: { selectedTabId: string }[];
+      }>(userDataDir);
+
+      return profiles[0]?.selectedTabId;
+    })
+    .toBe("c");
 
   const popoutUrl = `${standIn.url}${POPOUT_PATH.slice(1)}`;
 
