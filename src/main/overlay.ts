@@ -8,7 +8,7 @@ import type { OverlayView } from "#platform/overlay-view.ts";
 
 import type { Focus } from "./focus.ts";
 
-/** How long a toast shows, as Sonner's own default. */
+/** How long a toast shows. */
 export const TOAST_DURATION = 4000;
 
 export interface OverlaysDeps {

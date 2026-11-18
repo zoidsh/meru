@@ -163,6 +163,19 @@ export default defineConfig({
       rules: { "react/jsx-no-literals": "off" },
     },
     {
+      // As the CLI writes it: default `render` buttons, which React
+      // Compiler cannot reorder, the close button's English "Close toast",
+      // which nothing of ours shows since main closes the toast, and its
+      // manager's two hooks taken by member access.
+      files: ["src/ui/toast.tsx"],
+      rules: {
+        "react/todo": "off",
+        "react/no-object-type-as-default-prop": "off",
+        "react/jsx-no-literals": "off",
+        "prefer-destructuring": "off",
+      },
+    },
+    {
       files: ["e2e/**"],
       rules: {
         "no-restricted-properties": [

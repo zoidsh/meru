@@ -193,7 +193,7 @@ export const OverlayLayer = () => {
       break;
     }
     case "toast": {
-      drawn = <Toast {...open} />;
+      drawn = <Toast {...open} target={target} />;
       break;
     }
     case "drop": {

@@ -1,28 +1,44 @@
-// Bundled, since the styles Sonner injects inline are refused by the
-// shell's content security policy.
-import "sonner/dist/styles.css";
 import { useLingui } from "@lingui/react/macro";
 import { useEffect } from "react";
-import type { CSSProperties } from "react";
-import { Toaster, toast } from "sonner";
 
 import type { ShellState } from "#contract/shell.ts";
+import {
+  Toast as ToastRoot,
+  ToastContent,
+  ToastPortal,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+  createToastManager,
+  useToastManager,
+} from "#ui/toast.tsx";
 
-const TOASTER_STYLE = {
-  "--normal-bg": "var(--popover)",
-  "--normal-text": "var(--popover-foreground)",
-  "--normal-border": "var(--border)",
-  "--border-radius": "var(--radius)",
-} as CSSProperties;
+const notices = createToastManager();
+
+const NoticeList = () => {
+  const { toasts } = useToastManager();
+
+  return toasts.map((notice) => (
+    <ToastRoot key={notice.id} toast={notice}>
+      <ToastContent>
+        <ToastTitle />
+      </ToastContent>
+    </ToastRoot>
+  ));
+};
 
 /**
  * A short notice, drawn in the overlay's view, which main sizes to the toast
- * alone and closes once it has been read; Sonner keeps it until then, so it
+ * alone and closes once it has been read; it never closes itself, so it
  * does not slide away from a view still shown.
  */
 export const Toast = ({
   message,
-}: Extract<ShellState["overlay"], { kind: "toast" }>) => {
+  target,
+}: Extract<ShellState["overlay"], { kind: "toast" }> & {
+  /** The overlay's document, which the toast is portalled into. */
+  target: Document;
+}) => {
   const { t } = useLingui();
   const text = {
     "no-room": t({
@@ -33,21 +49,20 @@ export const Toast = ({
   }[message];
 
   useEffect(() => {
-    const id = toast(text, { duration: Number.POSITIVE_INFINITY });
+    const id = notices.add({ title: text, timeout: 0 });
 
     return () => {
-      toast.dismiss(id);
+      notices.close(id);
     };
   }, [text]);
 
-  // No hotkey: the overlay's document never has the keyboard while a toast shows.
   return (
-    <Toaster
-      position="bottom-right"
-      offset={16}
-      mobileOffset={16}
-      hotkey={[]}
-      style={TOASTER_STYLE}
-    />
+    <ToastProvider toastManager={notices}>
+      <ToastPortal container={target.body}>
+        <ToastViewport>
+          <NoticeList />
+        </ToastViewport>
+      </ToastPortal>
+    </ToastProvider>
   );
 };
