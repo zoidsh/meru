@@ -266,7 +266,7 @@ describe("an end no date holds", () => {
         shellState(
           decoded.value,
           () => ({ kind: "live" }),
-          { selectedAsleep: false, panes: null },
+          { selectedAsleep: false, panes: null, handles: [] },
           undefined,
           () => ({ status: "unknown", unreadCount: null }),
           current,

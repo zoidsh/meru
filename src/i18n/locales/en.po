@@ -648,6 +648,11 @@ msgctxt "inbox action"
 msgid "Report spam"
 msgstr "Report spam"
 
+#. Accessible name of the gap between two panes of a split view, which a drag or the arrow keys move to resize them
+#: src/shell/pane-handle.tsx
+msgid "Resize panes"
+msgstr "Resize panes"
+
 #. Menu item in the Saved Searches menu that keeps the search Gmail shows now, to run again later
 #: src/main/commands.ts
 msgid "Save Current Search"

@@ -72,6 +72,7 @@ import { createMailPoller } from "./mail.ts";
 import { createMailNotifications } from "./notifications.ts";
 import { createOpenApp } from "./open-app.ts";
 import { createOverlays } from "./overlay.ts";
+import { createPaneResize } from "./pane-resize.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfileMenu } from "./profile-menu.ts";
 import { createProfiles } from "./profiles.ts";
@@ -801,6 +802,13 @@ const start = async () => {
 
   const shortcuts = shellShortcuts(COMMANDS, platform);
   const ariaShortcuts = shellShortcuts(COMMANDS, platform, true);
+  const paneResize = createPaneResize({
+    state: profiles.get,
+    resizeSplit: profiles.resizeSplit,
+    areaSize: views.areaSize,
+    preview: views.preview,
+    log: console.error,
+  });
   const tabMenu = createTabMenu({
     state: profiles.get,
     apps,
@@ -836,6 +844,7 @@ const start = async () => {
       inbox,
       openApp,
       tabMenu,
+      panes: paneResize,
       profileMenu,
       openGmail: showGmail.jumpTo,
       window: shell.window,
@@ -850,7 +859,11 @@ const start = async () => {
         shellState(
           profiles.get(),
           views.status,
-          { selectedAsleep: views.frontAsleep(), panes: views.panes() },
+          {
+            selectedAsleep: views.frontAsleep(),
+            panes: views.panes(),
+            handles: views.handles(),
+          },
           overlays.current(),
           mail.mail,
           doNotDisturb.current(),

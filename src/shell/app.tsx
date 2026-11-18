@@ -7,6 +7,7 @@ import { viewFrame } from "#core/layout.ts";
 
 import { NothingOpen } from "./nothing-open.tsx";
 import { OverlayLayer } from "./overlay.tsx";
+import { PaneHandle } from "./pane-handle.tsx";
 import { SleepingTab } from "./sleeping-tab.tsx";
 import { sleepingSelectedTab } from "./sleeping.ts";
 import { useShellState } from "./sync.ts";
@@ -44,7 +45,7 @@ const Page = ({ tabs, radius }: { tabs: Tabs | undefined; radius: number }) => {
  * The page area holding a split: each pane a rounded page where main places
  * its view, one pixel inside it, so the focused pane's ring, drawn over
  * whatever the pane shows, is seen around its view; the shell shows through
- * the gaps.
+ * the gaps, each a handle that resizes the panes beside it.
  */
 const Panes = ({
   tabs,
@@ -89,6 +90,9 @@ const Panes = ({
         </div>
       );
     })}
+    {tabs.handles.map((handle) => (
+      <PaneHandle key={`${handle.before}|${handle.after}`} handle={handle} />
+    ))}
   </div>
 );
 

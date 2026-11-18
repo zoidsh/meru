@@ -1,7 +1,7 @@
 import { Mutex } from "es-toolkit";
 
 import type { App } from "#core/apps.ts";
-import type { PaneDirection } from "#core/pane-tree.ts";
+import type { PaneDirection, Split } from "#core/pane-tree.ts";
 import { removeSavedSearch, saveSearch } from "#core/saved-searches.ts";
 import {
   addProfile,
@@ -24,6 +24,7 @@ import {
   closeTab,
   moveTab,
   openTab,
+  resizeSplit,
   selectTab,
   separateTab,
   setOpenAtLaunch,
@@ -210,6 +211,8 @@ export const createProfiles = ({
       exclusive(() => commit(splitTab(state, key, direction))),
     separateTab: (key: TabKey) =>
       exclusive(() => commit(separateTab(state, key))),
+    resizeSplit: (profileId: string, split: Split) =>
+      exclusive(() => commit(resizeSplit(state, profileId, split))),
     moveTab: (key: TabKey, before?: string) =>
       exclusive(() => commit(moveTab(state, key, before))),
     closeOtherTabs: (key: TabKey) =>

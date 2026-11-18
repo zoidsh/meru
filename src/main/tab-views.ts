@@ -4,8 +4,8 @@ import type { KeyInput } from "#core/accelerator.ts";
 import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
-import { FOCUS_RING } from "#core/pane-tree.ts";
-import type { PaneDirection } from "#core/pane-tree.ts";
+import { FOCUS_RING, paneHandles, paneTabs } from "#core/pane-tree.ts";
+import type { PaneDirection, PaneHandle, PaneTree } from "#core/pane-tree.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { isAsleep, knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -15,7 +15,7 @@ import { findTab, newTabId, tabKey } from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
 import { placeShown, planViews } from "#core/views.ts";
 import type { ViewPlan } from "#core/views.ts";
-import type { Rectangle } from "#core/window-bounds.ts";
+import type { Rectangle, Size } from "#core/window-bounds.ts";
 import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
 import type { WindowOpenRoute } from "#core/window-open.ts";
 import type {
@@ -91,6 +91,9 @@ export interface ShellPane extends Rectangle {
   asleep: boolean;
 }
 
+/** A gap between panes on screen, placed in the page area. */
+export type ShellHandle = Omit<PaneHandle, "bounds" | "span"> & Rectangle;
+
 /** What of a tab's view a reader of its page gets. */
 export type LoadedPage = Pick<ContentView, "url" | "evaluate">;
 
@@ -164,7 +167,25 @@ export const createTabViews = ({
   let front: string | undefined;
   /** The tabs on screen and the split that places them, as last planned. */
   let onScreen: Pick<ViewPlan, "shown" | "panes"> = { shown: [] };
+  /**
+   * The panes' tree as a gap's drag has it, which places them until the
+   * drag ends and its result is stored.
+   */
+  let preview: PaneTree | undefined;
   let shownKeys = new Set<string>();
+
+  const laidOut = (): Pick<ViewPlan, "shown" | "panes"> =>
+    preview && onScreen.panes ? { ...onScreen, panes: preview } : onScreen;
+
+  /** The page area, whose top left is 0, 0. */
+  const pageArea = (): Rectangle => {
+    const { width, height } = contentViewBounds(
+      window.getContentAreaSize(),
+      sidebar()
+    );
+
+    return { x: 0, y: 0, width, height };
+  };
 
   /**
    * A view on its own fills the page area; a pane's is inset by the focus
@@ -175,7 +196,7 @@ export const createTabViews = ({
     const { radius } = viewFrame(sidebar());
     const profileId = onScreen.shown[0]?.profileId;
     const pane = onScreen.panes
-      ? placeShown(onScreen, area).find(
+      ? placeShown(laidOut(), area).find(
           ({ tabId }) =>
             profileId !== undefined && tabKey({ profileId, tabId }) === key
         )
@@ -671,6 +692,13 @@ export const createTabViews = ({
     onScreen = { shown: next.shown, ...(next.panes && { panes: next.panes }) };
     shownKeys = new Set(next.shown.map(tabKey));
 
+    if (
+      preview &&
+      !isEqual(next.panes && paneTabs(next.panes), paneTabs(preview))
+    ) {
+      preview = undefined;
+    }
+
     return moved;
   };
 
@@ -870,18 +898,48 @@ export const createTabViews = ({
         return null;
       }
 
-      const { width, height } = contentViewBounds(
-        window.getContentAreaSize(),
-        sidebar()
-      );
+      return placeShown(laidOut(), pageArea()).map(({ tabId, bounds }) => ({
+        tabId,
+        ...bounds,
+        asleep: sleeping.has(tabKey({ profileId, tabId })),
+      }));
+    },
+    /** The gaps between the panes on screen, each a handle; none without. */
+    handles: (): ShellHandle[] => {
+      const { panes } = laidOut();
 
-      return placeShown(onScreen, { x: 0, y: 0, width, height }).map(
-        ({ tabId, bounds }) => ({
-          tabId,
-          ...bounds,
-          asleep: sleeping.has(tabKey({ profileId, tabId })),
-        })
-      );
+      return panes
+        ? paneHandles(panes, pageArea()).map(
+            ({ bounds, span: _span, ...handle }) => ({ ...handle, ...bounds })
+          )
+        : [];
+    },
+    /** The page area's size, which the panes share. */
+    areaSize: (): Size => {
+      const { width, height } = pageArea();
+
+      return { width, height };
+    },
+    /**
+     * Places the panes as `tree`, the panes on screen with other sizes, while
+     * a gap is dragged; `undefined` places them as stored again. Nothing
+     * for a tree of other panes.
+     */
+    preview: (tree: PaneTree | undefined) => {
+      const next =
+        tree &&
+        onScreen.panes &&
+        isEqual(paneTabs(tree), paneTabs(onScreen.panes))
+          ? tree
+          : undefined;
+
+      if (isEqual(next, preview)) {
+        return;
+      }
+
+      preview = next;
+      placeAll();
+      notify();
     },
     /** Each tab's status; one with no view, asleep or never loaded, is unloaded. */
     status: (key: TabKey): TabStatus =>

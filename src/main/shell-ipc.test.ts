@@ -27,6 +27,7 @@ const TABS: ShellState["tabs"] = {
   selectedTabId: "gmail",
   selectedAsleep: false,
   panes: null,
+  handles: [],
   box: null,
   tabs: [
     {
@@ -112,6 +113,16 @@ const setup = () => {
   senders.register(OVERLAY, { role: "overlay" });
 
   const handlers: ShellHandlers = {
+    resizePanes: (request) => {
+      calls.push(["resizePanes", request]);
+
+      return Promise.resolve();
+    },
+    evenOutPanes: (request) => {
+      calls.push(["evenOutPanes", request]);
+
+      return Promise.resolve();
+    },
     selectProfile: (request) => {
       calls.push(["selectProfile", request]);
 

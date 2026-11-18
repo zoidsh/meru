@@ -39,6 +39,18 @@ const setup = ({
   const logged: string[] = [];
 
   const handlers = createShellHandlers({
+    panes: {
+      resize: (request) => {
+        calls.push(["resize", request]);
+
+        return Promise.resolve();
+      },
+      evenOut: (request) => {
+        calls.push(["evenOut", request]);
+
+        return Promise.resolve();
+      },
+    },
     profiles: {
       get: () => state,
       select: (profileId) => {
@@ -320,7 +332,7 @@ const boxOf = (selectedTabId: string, split = true) =>
       ],
     },
     () => ({ kind: "live" }),
-    { selectedAsleep: false, panes: null },
+    { selectedAsleep: false, panes: null, handles: [] },
     undefined,
     () => NO_MAIL,
     undefined,
@@ -341,7 +353,7 @@ describe(shellState, () => {
           ],
         },
         () => ({ kind: "live" }),
-        { selectedAsleep: false, panes: null },
+        { selectedAsleep: false, panes: null, handles: [] },
         undefined,
         (profileId) =>
           profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL,
@@ -402,7 +414,7 @@ describe(shellState, () => {
         },
         ({ profileId, tabId }) =>
           statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
-        { selectedAsleep: true, panes: null },
+        { selectedAsleep: true, panes: null, handles: [] },
         undefined,
         () => NO_MAIL,
         undefined,
@@ -442,6 +454,7 @@ describe(shellState, () => {
         },
       ],
       panes: null,
+      handles: [],
       box: null,
     });
   });
@@ -459,7 +472,7 @@ const overlaySlice = (open: Overlay | undefined) =>
   shellState(
     two,
     () => ({ kind: "live" }),
-    { selectedAsleep: false, panes: null },
+    { selectedAsleep: false, panes: null, handles: [] },
     open,
     () => NO_MAIL,
     undefined,
@@ -578,7 +591,7 @@ const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
   shellState(
     two,
     () => ({ kind: "live" }),
-    { selectedAsleep: false, panes: null },
+    { selectedAsleep: false, panes: null, handles: [] },
     undefined,
     () => NO_MAIL,
     doNotDisturb,

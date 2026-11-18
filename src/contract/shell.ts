@@ -67,6 +67,27 @@ export const SHELL_CALLS = {
     request: z.object({ profileId, tabId, before: z.optional(tabId) }),
     response: z.undefined(),
   },
+  /**
+   * Moves the gap between the selected profile's panes of `before` and
+   * `after`, the first tabs on each side of it, `by` pixels from where it
+   * stood when the gesture began; each move places the pages, and the last,
+   * `done`, is stored.
+   */
+  resizePanes: {
+    request: z.object({
+      before: tabId,
+      after: tabId,
+      by: z.int(),
+      gesture: z.int().check(z.nonnegative()),
+      done: z.boolean(),
+    }),
+    response: z.undefined(),
+  },
+  /** Gives the split where the two panes part equal shares. */
+  evenOutPanes: {
+    request: z.object({ before: tabId, after: tabId }),
+    response: z.undefined(),
+  },
   /** Loads a tab that failed or crashed again, now. */
   retryTab: { request: tabKey, response: z.undefined() },
   /**
@@ -209,6 +230,25 @@ export const SHELL_STATE = {
           asleep: z.boolean(),
         })
       )
+    ),
+    /**
+     * Each gap between the panes on screen, in the page area: the first tab
+     * on each side, which name it to `resizePanes`, the way it moves, and
+     * the length before it with the least and most that may become.
+     */
+    handles: z.array(
+      z.object({
+        before: tabId,
+        after: tabId,
+        direction: z.enum(PANE_DIRECTIONS),
+        x: coordinate,
+        y: coordinate,
+        width: coordinate,
+        height: coordinate,
+        size: coordinate,
+        minimum: coordinate,
+        maximum: coordinate,
+      })
     ),
     /**
      * The profile's split's tabs, in the order of its box in the sidebar,

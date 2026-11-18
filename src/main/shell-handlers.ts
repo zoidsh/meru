@@ -22,6 +22,7 @@ import type { Inbox } from "./inbox.ts";
 import type { Mail } from "./mail.ts";
 import type { OpenApp } from "./open-app.ts";
 import type { Overlays } from "./overlay.ts";
+import type { PaneResizer } from "./pane-resize.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { ProfileMenu } from "./profile-menu.ts";
 import type { Profiles } from "./profiles.ts";
@@ -43,6 +44,7 @@ export interface ShellHandlersDeps {
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   openApp: Pick<OpenApp, "choose">;
   tabMenu: Pick<TabMenu, "open" | "run">;
+  panes: Pick<PaneResizer, "resize" | "evenOut">;
   profileMenu: Pick<ProfileMenu, "open" | "run">;
   /** Selects the profile's Gmail as the tray's profile item does. */
   openGmail: (profileId: string) => Promise<unknown>;
@@ -190,6 +192,7 @@ export const shellState = (
     /** Whether the selected tab was put to sleep, and so has no page. */
     selectedAsleep: boolean;
     panes: ShellState["tabs"]["panes"];
+    handles: ShellState["tabs"]["handles"];
   },
   overlay: Overlay | undefined,
   mail: (profileId: string) => Mail,
@@ -229,6 +232,7 @@ export const shellState = (
         ),
       })),
       panes: page.panes,
+      handles: page.handles,
       box: boxOrder(profile) ?? null,
     },
     doNotDisturb: {
@@ -248,6 +252,7 @@ export const createShellHandlers = ({
   inbox,
   openApp,
   tabMenu,
+  panes,
   profileMenu,
   openGmail,
   window,
@@ -283,6 +288,12 @@ export const createShellHandlers = ({
     if (sidebar.current() === "hidden") {
       focus.focus([{ kind: "front" }, { kind: "shell" }]);
     }
+  },
+  resizePanes: async (request) => {
+    await panes.resize(request);
+  },
+  evenOutPanes: async (request) => {
+    await panes.evenOut(request);
   },
   retryTab: (key) => {
     tabs.retry(key);
