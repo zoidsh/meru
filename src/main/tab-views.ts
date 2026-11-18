@@ -196,6 +196,11 @@ export const createTabViews = ({
   /** The profiles whose Open at Launch tabs were opened this session. */
   const launched = new Set<string>();
   /**
+   * The Open at Launch tabs opened that are still loading; the next
+   * profile's open once none is.
+   */
+  const launchLoading = new Set<string>();
+  /**
    * The tabs put to sleep, which stay without a view while they are selected,
    * until woken. Not kept across launches.
    */
@@ -400,6 +405,23 @@ export const createTabViews = ({
     }
   };
 
+  /**
+   * Takes the tab out of the launch's loading ones once it is no longer
+   * loading, and opens the next profile's Open at Launch tabs on the next
+   * turn, so no plan is made from inside one being applied.
+   */
+  const settleLaunch = (key: string) => {
+    if (tabs.get(key)?.status.kind === "loading") {
+      return;
+    }
+
+    if (launchLoading.delete(key) && launchLoading.size === 0) {
+      setTimeout(() => {
+        reconcile(state());
+      }, 0);
+    }
+  };
+
   const dispatch = (key: string, event: TabEvent) => {
     const tab = tabs.get(key);
 
@@ -412,6 +434,7 @@ export const createTabViews = ({
 
     // Committed first, so no reader an effect reaches sees the status left.
     tab.status = next.status;
+    settleLaunch(key);
 
     for (const effect of next.effects) {
       run(key, tab, effect, from, () => {
@@ -669,6 +692,7 @@ export const createTabViews = ({
 
   const close = (key: string, tab: TabView) => {
     tabs.delete(key);
+    settleLaunch(key);
     forget(key);
     clearTimeout(tab.retry);
     closeView(key, tab.view);
@@ -735,21 +759,28 @@ export const createTabViews = ({
       }
     }
 
-    const planned = planViews(current, [...tabs.keys()], launched, sleeping);
+    const waiting = launchLoading.size > 0;
+    const planned = planViews(
+      current,
+      [...tabs.keys()],
+      launched,
+      sleeping,
+      waiting
+    );
     const selected = planned.front && tabKey(planned.front);
 
     return selected !== front &&
       selected !== undefined &&
       sleeping.delete(selected)
-      ? planViews(current, [...tabs.keys()], launched, sleeping)
+      ? planViews(current, [...tabs.keys()], launched, sleeping, waiting)
       : planned;
   };
 
   /**
    * Takes away a view the window should no longer have: a sleeping
    * profile's tab sleeps, keeping its place, as Sleep would put it, and any
-   * other is closed. A sleeping profile's Open at Launch tabs open again, as
-   * at its first selection, once it wakes.
+   * other is closed. A sleeping profile's Open at Launch tabs open again, in
+   * their turn, once it wakes.
    */
   const drop = (current: State, key: string, tab: TabView) => {
     const profile = current.profiles.find(
@@ -847,6 +878,23 @@ export const createTabViews = ({
     return moved;
   };
 
+  const openLaunchTabs = (next: ViewPlan) => {
+    for (const profileId of next.launched) {
+      launched.add(profileId);
+    }
+
+    // A sleeping tab among them has no view to load.
+    for (const key of next.opening.map(tabKey)) {
+      if (tabs.has(key)) {
+        launchLoading.add(key);
+      }
+    }
+
+    for (const key of next.opening) {
+      dispatch(tabKey(key), { kind: "open" });
+    }
+  };
+
   /** Creates, closes, shows and hides views until the window matches. */
   const apply = (current: State) => {
     for (const profile of current.profiles) {
@@ -882,13 +930,7 @@ export const createTabViews = ({
       }
     }
 
-    for (const profileId of next.launched) {
-      launched.add(profileId);
-    }
-
-    for (const key of next.opening) {
-      dispatch(tabKey(key), { kind: "open" });
-    }
+    openLaunchTabs(next);
 
     // Another front, or the front tab woken with a new view to load.
     const frontMoved =

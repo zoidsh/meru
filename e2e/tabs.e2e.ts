@@ -362,7 +362,7 @@ test("a tab whose renderer is killed says it stopped working, and reloads on the
 
 const pinned = (openAtLaunch: boolean) => ({ pinned: true, openAtLaunch });
 
-test("the selected profile's Open at Launch tabs load at launch and another profile's when it is first selected, a pinned tab with it off only once selected, and a relaunch keeps the switch", async ({
+test("the selected profile's Open at Launch tabs load at launch and then another awake profile's, a pinned tab with it off only once selected, and a relaunch keeps the switch", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -415,10 +415,11 @@ test("the selected profile's Open at Launch tabs load at launch and another prof
 
   const first = await launchApp();
 
+  // Default's Calendar and Drive, then, once they loaded, Work's two.
   await findPage(first, standIn.driveUrl);
   await expect
     .poll(requests)
-    .toStrictEqual({ gmail: 0, calendar: 1, drive: 1 });
+    .toStrictEqual({ gmail: 1, calendar: 2, drive: 1 });
 
   await clickMenuItem(first, "tab.previous");
   await expect
@@ -435,12 +436,14 @@ test("the selected profile's Open at Launch tabs load at launch and another prof
   await clickMenuItem(first, "tab.previous");
   await expect
     .poll(requests)
-    .toStrictEqual({ gmail: 1, calendar: 1, drive: 1 });
+    .toStrictEqual({ gmail: 2, calendar: 2, drive: 1 });
 
+  // Work's loaded already, so selecting it loads nothing.
   await clickMenuItem(first, "profile.next");
   await expect
-    .poll(requests)
-    .toStrictEqual({ gmail: 2, calendar: 2, drive: 1 });
+    .poll(() => readState<{ selectedProfileId: string }>(userDataDir))
+    .toMatchObject({ selectedProfileId: "b" });
+  expect(requests()).toStrictEqual({ gmail: 2, calendar: 2, drive: 1 });
   await expect
     .poll(async () => {
       const { profiles, selectedProfileId } = await readState<{
@@ -485,8 +488,8 @@ test("the selected profile's Open at Launch tabs load at launch and another prof
     ]);
   await first.close();
 
-  // Work's two load at launch; Default's Gmail once Default is selected,
-  // and its Calendar, switched off, not at all.
+  // Work's two load at launch, Default none: its Gmail once Default is
+  // selected, and its Calendar, switched off, not at all.
   const second = await launchApp();
 
   await expect

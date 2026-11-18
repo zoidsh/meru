@@ -48,8 +48,11 @@ const plan = (
   current: State,
   existing: string[] = [],
   launched: string[] = [],
-  sleeping: string[] = []
-) => planViews(current, existing, new Set(launched), new Set(sleeping));
+  sleeping: string[] = [],
+  // Earlier Open at Launch tabs still loading, so another profile's wait.
+  waiting = true
+) =>
+  planViews(current, existing, new Set(launched), new Set(sleeping), waiting);
 
 describe(planViews, () => {
   it("at first gives the selected tab a view and opens the selected profile's Open at Launch tabs alone", () => {
@@ -68,20 +71,49 @@ describe(planViews, () => {
     ]);
   });
 
-  it("opens another profile's Open at Launch tabs, every one, when it is first selected, and a profile's only once", () => {
+  it("opens the next awake profile's Open at Launch tabs, every one, once no earlier ones are loading, one profile at a time and each only once", () => {
+    const whileLoading = plan(state, ["a/gmail", "a/a1"], ["a"]);
+    const toB = plan(state, ["a/gmail", "a/a1"], ["a"], [], false);
+    const toC = plan(state, keys(toB.views), ["a", "b"], [], false);
+    const done = plan(state, keys(toC.views), ["a", "b", "c"], [], false);
+
+    expect([keys(whileLoading.opening), whileLoading.launched]).toStrictEqual([
+      [],
+      [],
+    ]);
+    expect([keys(toB.opening), toB.launched, keys(toB.views)]).toStrictEqual([
+      ["b/gmail", "b/b2"],
+      ["b"],
+      ["a/gmail", "a/a1", "b/gmail", "b/b2"],
+    ]);
+    expect([keys(toC.opening), toC.launched]).toStrictEqual([[], ["c"]]);
+    expect([keys(done.opening), done.launched]).toStrictEqual([[], []]);
+  });
+
+  it("opens a profile's Open at Launch tabs at once when it is selected before its turn, while others are loading", () => {
     const toB = plan(
       { ...state, selectedProfileId: "b" },
       ["a/gmail", "a/a1"],
       ["a"]
     );
-    const backToA = plan(state, keys(toB.views), ["a", "b"]);
 
     expect([keys(toB.opening), toB.launched, keys(toB.views)]).toStrictEqual([
       ["b/gmail", "b/b2"],
       ["b"],
       ["a/gmail", "a/a1", "b/gmail", "b/b1", "b/b2"],
     ]);
-    expect([keys(backToA.opening), backToA.launched]).toStrictEqual([[], []]);
+  });
+
+  it("never opens a sleeping profile's Open at Launch tabs", () => {
+    const asleepB: State = {
+      ...state,
+      profiles: state.profiles.map((profile) =>
+        profile.id === "b" ? { ...profile, asleep: true } : profile
+      ),
+    };
+    const next = plan(asleepB, ["a/gmail", "a/a1"], ["a"], [], false);
+
+    expect([keys(next.opening), next.launched]).toStrictEqual([[], ["c"]]);
   });
 
   it("has no front for a profile with no tab", () => {

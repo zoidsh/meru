@@ -366,6 +366,26 @@ describe(createTabViews, () => {
     });
   });
 
+  it("opens the next profile's Open at Launch tabs only once the selected profile's have loaded", async () => {
+    const window = await setup();
+
+    expect(window.viewOf("persist:b")).toBeUndefined();
+
+    window.emit(window.viewOf("persist:a"), { kind: "loaded" });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect([
+      window.live(),
+      window.tabs.status({ profileId: "b", tabId: "gmail" }),
+    ]).toStrictEqual([
+      [
+        ["persist:a", GMAIL, true],
+        ["persist:b", GMAIL, false],
+      ],
+      { kind: "loading" },
+    ]);
+  });
+
   it("answers the front tab's history and load, null under the unified inbox, moves only the front view, and tells of every load", async () => {
     const window = await setup();
     const gmail = window.viewOf("persist:a");
@@ -1149,8 +1169,12 @@ describe(createTabViews, () => {
     // Selecting what is selected already, as a click on it does, wakes it.
     await window.tabs.select(gmail);
 
+    // Gmail done loading, the next profile's Open at Launch Gmail opened.
     expect([window.live(), window.fronts()]).toStrictEqual([
-      [["persist:a", GMAIL, true]],
+      [
+        ["persist:a", GMAIL, true],
+        ["persist:b", GMAIL, false],
+      ],
       3,
     ]);
     expect(window.tabs.focuser()).toBeDefined();
@@ -1266,7 +1290,11 @@ describe(createTabViews, () => {
     window.tabs.sleep(gmail);
     window.tabs.reloadFront();
 
-    expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+    // Gmail put to sleep is no longer loading, so the next profile's opened.
+    expect(window.live()).toStrictEqual([
+      ["persist:a", GMAIL, true],
+      ["persist:b", GMAIL, false],
+    ]);
 
     await window.tabs.reload(calendar);
 
@@ -1277,6 +1305,7 @@ describe(createTabViews, () => {
       "c1",
       [
         ["persist:a", GMAIL, false],
+        ["persist:b", GMAIL, false],
         ["persist:a", CALENDAR, true],
       ],
     ]);
@@ -1294,7 +1323,10 @@ describe(createTabViews, () => {
       await window.tabs.open("a", gmailApp, link);
     }
 
-    expect(window.live()).toStrictEqual([["persist:a", link, true]]);
+    expect(window.live()).toStrictEqual([
+      ["persist:a", link, true],
+      ["persist:b", GMAIL, false],
+    ]);
     expect(window.viewOf("persist:a")?.loaded).toStrictEqual([link]);
   });
 

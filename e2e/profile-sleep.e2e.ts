@@ -105,7 +105,7 @@ test("Sleep in a background profile's menu closes its views and renderer and dim
   const shell = await findPage(app, "meru-app:");
   const work = profileButton(shell, "Work");
 
-  // Work's Gmail loads on its first selection.
+  // Work's Gmail loads at launch, once Home's has.
   await work.click();
   await profileButton(shell, "Home").click();
   await expect
@@ -201,7 +201,10 @@ test("Sleep Profile on the selected profile selects the first awake one in the r
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
 
-  await expect.poll(() => viewPartitions(app)).toStrictEqual(["persist:p1"]);
+  // Work's Gmail first, then the others' in turn.
+  await expect
+    .poll(() => viewPartitions(app))
+    .toStrictEqual(["persist:p1", "persist:p0", "persist:p2"]);
   expect(await readMenuItem(app, "profile.sleep")).toMatchObject({
     label: "Sleep Profile",
     enabled: true,
@@ -217,7 +220,9 @@ test("Sleep Profile on the selected profile selects the first awake one in the r
   await expect
     .poll(() => shownViews(app))
     .toStrictEqual([{ url: standIn.url, partition: "persist:p0" }]);
-  await expect.poll(() => viewPartitions(app)).toStrictEqual(["persist:p0"]);
+  await expect
+    .poll(() => viewPartitions(app))
+    .toStrictEqual(["persist:p0", "persist:p2"]);
 
   await clickMenuItem(app, "profile.next");
 

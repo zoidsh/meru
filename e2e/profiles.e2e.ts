@@ -157,7 +157,7 @@ test("switching back shows the first view in the content rectangle and hides the
   expect(standIn.cookieHeaders).toHaveLength(2);
 });
 
-test("a relaunch restores both profiles and the selection, and creates only the selected profile's view", async ({
+test("a relaunch restores both profiles and the selection, showing the selected profile's view and loading the other's behind it", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -188,13 +188,19 @@ test("a relaunch restores both profiles and the selection, and creates only the 
     "aria-pressed",
     "true"
   );
-  await expect.poll(() => standIn.cookieHeaders.length).toBe(3);
+  await expect.poll(() => standIn.cookieHeaders.length).toBe(4);
 
   const { views } = await readProfileViews(second);
+  const other = saved.profiles.find(
+    ({ id }) => id !== saved.selectedProfileId
+  )?.id;
 
   expect(
     views.map(({ profileId, visible }) => ({ profileId, visible }))
-  ).toStrictEqual([{ profileId: saved.selectedProfileId, visible: true }]);
+  ).toStrictEqual([
+    { profileId: saved.selectedProfileId, visible: true },
+    { profileId: other, visible: false },
+  ]);
   expect(await readState(userDataDir)).toStrictEqual(saved);
 });
 

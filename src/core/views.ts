@@ -25,14 +25,27 @@ export const placeShown = (
     : plan.shown.map(({ tabId }) => ({ tabId, bounds: area }));
 
 /**
- * Whether a profile's Open at Launch tabs open now, once a session: the
- * selected profile's, so each profile's open when it is first selected and
- * launch loads no page for the others, whose mail needs none. The selected
- * profile is never asleep, so a sleeping profile's tabs wait until it is
- * woken.
+ * The profile whose Open at Launch tabs open now, once a session: the
+ * selected profile's first, as soon as it has not had them, then each other
+ * awake profile's in order, one profile at a time, while no other's are
+ * still loading (`waiting`), so a launch with many profiles does not load
+ * every page at once. A sleeping profile's tabs wait until it is woken.
  */
-export const opensLaunchTabs = (profile: Profile, state: State) =>
-  profile.id === state.selectedProfileId;
+export const nextLaunch = (
+  state: State,
+  launched: ReadonlySet<string>,
+  waiting: boolean
+): Profile | undefined => {
+  const due = (profile: Profile) =>
+    !launched.has(profile.id) && !isAsleep(state, profile);
+  const selected = selectedProfile(state);
+
+  if (due(selected)) {
+    return selected;
+  }
+
+  return waiting ? undefined : state.profiles.find(due);
+};
 
 export interface ViewPlan {
   /** The tabs that have a view, in the order of the profiles and their tabs. */
@@ -57,7 +70,7 @@ export interface ViewPlan {
   windows: TabKey[];
   /** Open at Launch tabs to load now, without showing them. */
   opening: TabKey[];
-  /** The profiles whose Open at Launch tabs those are, opened once. */
+  /** The profile whose Open at Launch tabs those are, opened once. */
   launched: string[];
 }
 
@@ -67,14 +80,16 @@ export interface ViewPlan {
  * until it is closed or put to sleep, or its profile is removed or put to
  * sleep: a sleeping profile has no view at all. `existing` is the keys of
  * the tabs that have a view now, `launched` the profiles whose Open
- * at Launch tabs were opened this session, and `sleeping` the tabs put to
- * sleep, which stay without a view even on screen.
+ * at Launch tabs were opened this session, `sleeping` the tabs put to
+ * sleep, which stay without a view even on screen, and `waiting` whether
+ * Open at Launch tabs opened before are still loading.
  */
 export const planViews = (
   state: State,
   existing: readonly string[],
   launched: ReadonlySet<string>,
-  sleeping: ReadonlySet<string> = new Set()
+  sleeping: ReadonlySet<string> = new Set(),
+  waiting = false
 ): ViewPlan => {
   const profile = selectedProfile(state);
   const shown = knownTabs(profile);
@@ -88,10 +103,8 @@ export const planViews = (
   const onScreen: TabKey[] = panes
     ? paneTabs(panes).map((tabId) => ({ profileId: profile.id, tabId }))
     : alone;
-  const launching = state.profiles.filter(
-    (candidate) =>
-      !launched.has(candidate.id) && opensLaunchTabs(candidate, state)
-  );
+  const next = nextLaunch(state, launched, waiting);
+  const launching = next ? [next] : [];
   const opening = launching.flatMap((candidate) =>
     knownTabs(candidate)
       .filter(opensAtLaunch)
