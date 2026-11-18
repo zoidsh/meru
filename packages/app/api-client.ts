@@ -11,4 +11,4 @@ const apiUrl = process.env.MERU_API_URL || undefined;
 
 export const apiClient = createMeruApiSafeClient(apiUrl);
 
-export const apiFallbackClient = createMeruApiSafeClient("https://api.meruapp.io/rpc");
+export const apiFallbackClient = createMeruApiSafeClient("https://api.getmeru.app/rpc");
