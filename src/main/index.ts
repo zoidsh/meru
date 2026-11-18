@@ -5,7 +5,6 @@ import { isEqual } from "es-toolkit";
 import { findApp } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
 import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
-import { ROTATING_COOKIE } from "#core/keep-alive.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import {
@@ -33,7 +32,6 @@ import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
-import { createKeepAlivePages } from "#platform/keep-alive.ts";
 import { createNetwork } from "#platform/network.ts";
 import { createOwnWindowFactory } from "#platform/own-window.ts";
 import { createPower } from "#platform/power.ts";
@@ -57,7 +55,6 @@ import { createGmailNavigation } from "./gmail-navigation.ts";
 import { serveGmailContract } from "./gmail-page.ts";
 import { createInboxTypes } from "./inbox-types.ts";
 import { createInbox } from "./inbox.ts";
-import { createKeepAlive } from "./keep-alive.ts";
 import { createMailActions } from "./mail-actions.ts";
 import { createMailPoller } from "./mail.ts";
 import { createMailNotifications } from "./notifications.ts";
@@ -87,6 +84,7 @@ import {
   createUserStyles,
 } from "./user-styles.ts";
 import { revealWindow } from "./windows.ts";
+import { wireKeepAlive } from "./wiring/keep-alive.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import {
@@ -838,26 +836,17 @@ const start = async () => {
   // After the views, so focus handed back finds the new front tab's.
   profiles.onChange(overlays.follow);
 
-  const keepAlive = createKeepAlive({
-    pages: createKeepAlivePages(),
-    profileIds: () => profiles.get().profiles.map((profile) => profile.id),
-    hasView: views.hasView,
-    signedOut: (profileId) => mail.mail(profileId).status === "signedOut",
-    isOnline: network.isOnline,
-    prepareSession: (partition) => {
-      sessions.guard(partition, (ask) => allowsPermission(apps, ask));
-    },
-    url: keepAliveUrl,
-    cookie: ROTATING_COOKIE,
-    timing: keepAliveTiming,
-    now: Date.now,
-    log: console.error,
+  wireKeepAlive({
+    apps,
+    lifecycle,
+    sessions,
+    network,
+    profiles,
+    views,
+    mail,
+    keepAliveUrl,
+    keepAliveTiming,
   });
-
-  // After the views, so a profile given one closes its keep-alive.
-  profiles.onChange(keepAlive.follow);
-  views.onChange(keepAlive.follow);
-  lifecycle.onBeforeQuit(keepAlive.dispose);
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
 
