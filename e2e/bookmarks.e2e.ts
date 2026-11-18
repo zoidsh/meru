@@ -498,10 +498,27 @@ test("choosing a bookmark in New tab closes it and selects the tab at its page, 
     "true"
   );
 
-  // The tab in its own window, which opens nothing new.
+  // The tab in its own window, whose window comes forward and opens
+  // nothing new. Move to Main Window acts on the own window that has the
+  // focus, so it is enabled once that window is the one shown, as it is not
+  // while the card holds the main window's focus.
   await clickMenuItem(app, "app.open");
+  await expect
+    .poll(async () => {
+      const { enabled } = await readMenuItem(app, "tab.moveToMainWindow");
+
+      return enabled;
+    })
+    .toBeFalsy();
   await options.filter({ hasText: "Files" }).click();
   await expect(card).toHaveCount(0);
+  await expect
+    .poll(async () => {
+      const { enabled } = await readMenuItem(app, "tab.moveToMainWindow");
+
+      return enabled;
+    })
+    .toBeTruthy();
   expect(await readTabApps(userDataDir)).toStrictEqual([
     "gmail",
     "calendar",
