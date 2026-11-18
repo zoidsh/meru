@@ -83,15 +83,17 @@ export const createFocus = ({
   window.on("focus", flush);
   window.on("show", flush);
 
+  const noteFocused = (target: FocusTarget) => {
+    focused = target;
+
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+
   return {
     /** Told by each web contents as it gains focus. */
-    noteFocused: (target: FocusTarget) => {
-      focused = target;
-
-      for (const listener of listeners) {
-        listener();
-      }
-    },
+    noteFocused,
     /** Told each time a web contents gains focus. */
     onFocused: (listener: () => void) => {
       listeners.add(listener);
@@ -115,11 +117,7 @@ export const createFocus = ({
         return;
       }
 
-      focused = { kind: "front" };
-
-      for (const listener of listeners) {
-        listener();
-      }
+      noteFocused({ kind: "front" });
     },
     /**
      * Gives focus back to the main window's web contents that held it, or
