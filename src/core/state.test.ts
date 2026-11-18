@@ -29,6 +29,7 @@ import {
   setTabbedInbox,
   sleepProfile,
   wakeProfile,
+  canSleepProfile,
   sortProfilesToClear,
   switchDoNotDisturb,
   withAProfile,
@@ -556,9 +557,20 @@ describe(addProfile, () => {
 /** The ids of the sleeping profiles, then the selected one. */
 const sleepers = (state: State | undefined) =>
   state && [
-    state.profiles.filter(isAsleep).map((profile) => profile.id),
+    state.profiles
+      .filter((profile) => isAsleep(state, profile))
+      .map((profile) => profile.id),
     state.selectedProfileId,
   ];
+
+/** `three` with the profiles given stored asleep, keys as a file has them. */
+const storedAsleep = (ids: string[], selectedProfileId = "b"): State => ({
+  ...three,
+  profiles: three.profiles.map((profile) =>
+    ids.includes(profile.id) ? { ...profile, asleep: true } : profile
+  ),
+  selectedProfileId,
+});
 
 describe(selectProfile, () => {
   it("selects a listed profile, and changes nothing for the selected one or another", () => {
@@ -567,58 +579,71 @@ describe(selectProfile, () => {
     expect(selectProfile(three, "missing")).toBeUndefined();
   });
 
-  it("wakes the profile it selects, the selected one asleep included", () => {
-    const cAsleep = sleepProfile(three, "c");
-    const allAsleep = sleepProfile(
-      sleepProfile(sleepProfile(three, "a") ?? three, "c") ?? three,
-      "b"
-    );
+  it("wakes the profile it selects, dropping its key", () => {
+    const selected = selectProfile(storedAsleep(["a", "c"]), "c");
 
-    expect([
-      sleepers(selectProfile(cAsleep ?? three, "c")),
-      sleepers(selectProfile(allAsleep ?? three, "b")),
-    ]).toStrictEqual([
-      [[], "c"],
-      [["a", "c"], "b"],
+    expect([sleepers(selected), selected?.profiles[2]]).toStrictEqual([
+      [["a"], "c"],
+      newProfile("c", "Profile 3"),
+    ]);
+  });
+
+  it("drops the key of a profile a file stored asleep while selected as another is selected, so it stays awake", () => {
+    const selected = selectProfile(storedAsleep(["b"]), "a");
+
+    expect([sleepers(selected), selected?.profiles[1]]).toStrictEqual([
+      [[], "a"],
+      newProfile("b", "Profile 2"),
     ]);
   });
 });
 
-describe(sleepProfile, () => {
-  const asleep = sleepers;
-
-  it("puts a background profile to sleep, leaving the selection", () => {
-    expect(asleep(sleepProfile(three, "a"))).toStrictEqual([["a"], "b"]);
-  });
-
-  it("selects the next awake profile in the row when the selected one sleeps, wrapping round", () => {
-    const cAsleep = sleepProfile(three, "c") ?? three;
+describe(canSleepProfile, () => {
+  it("lets an awake profile sleep while another stays awake, and never the last awake one", () => {
+    const aAsleep = storedAsleep(["a"]);
 
     expect([
-      asleep(sleepProfile(three, "b")),
-      asleep(sleepProfile(cAsleep, "b")),
-      asleep(sleepProfile({ ...three, selectedProfileId: "c" }, "c")),
+      canSleepProfile(three, "a"),
+      canSleepProfile(three, "b"),
+      canSleepProfile(aAsleep, "c"),
+      canSleepProfile(sleepProfile(aAsleep, "c") ?? three, "b"),
+      canSleepProfile(aAsleep, "a"),
+      canSleepProfile(
+        createInitialState(() => "only"),
+        "only"
+      ),
+      canSleepProfile(three, "missing"),
+    ]).toStrictEqual([true, true, true, false, false, false, false]);
+  });
+});
+
+describe(sleepProfile, () => {
+  it("puts a background profile to sleep, leaving the selection", () => {
+    expect(sleepers(sleepProfile(three, "a"))).toStrictEqual([["a"], "b"]);
+  });
+
+  it("selects the first awake profile in the row when the selected one sleeps", () => {
+    expect([
+      sleepers(sleepProfile(three, "b")),
+      sleepers(sleepProfile(storedAsleep(["a"]), "b")),
+      sleepers(sleepProfile({ ...three, selectedProfileId: "c" }, "c")),
     ]).toStrictEqual([
-      [["b"], "c"],
-      [["b", "c"], "a"],
+      [["b"], "a"],
+      [["a", "b"], "c"],
       [["c"], "a"],
     ]);
   });
 
-  it("keeps the only awake profile selected as it sleeps", () => {
-    const only = createInitialState(() => "only");
-
-    expect(asleep(sleepProfile(only, "only"))).toStrictEqual([
-      ["only"],
-      "only",
-    ]);
-  });
-
-  it("changes nothing for a profile asleep already or not listed", () => {
-    expect(
-      sleepProfile(sleepProfile(three, "a") ?? three, "a")
-    ).toBeUndefined();
-    expect(sleepProfile(three, "missing")).toBeUndefined();
+  it("refuses the last awake profile, a profile asleep already and one not listed", () => {
+    expect([
+      sleepProfile(storedAsleep(["a", "c"]), "b"),
+      sleepProfile(
+        createInitialState(() => "only"),
+        "only"
+      ),
+      sleepProfile(storedAsleep(["a"]), "a"),
+      sleepProfile(three, "missing"),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined]);
   });
 });
 
@@ -649,16 +674,39 @@ describe(isAsleep, () => {
       throw new Error("The state did not decode");
     }
 
-    expect(decoded.value.profiles.map(isAsleep)).toStrictEqual([
-      true,
-      false,
-      false,
-    ]);
+    expect(
+      decoded.value.profiles.map((profile) => isAsleep(decoded.value, profile))
+    ).toStrictEqual([true, false, false]);
     expect(
       (
         encodeState(decoded.value) as { profiles: Record<string, unknown>[] }
       ).profiles.map((profile) => profile.asleep)
     ).toStrictEqual([true, "yes", undefined]);
+  });
+
+  it("reads the selected profile awake when a file stores it asleep, every profile asleep included, and writes its key back as found", () => {
+    const decoded = decodeState({
+      version: 1,
+      profiles: [
+        { id: "a", name: "A", asleep: true },
+        { id: "b", name: "B", asleep: true },
+      ],
+      selectedProfileId: "b",
+    });
+
+    if (decoded.kind !== "read") {
+      throw new Error("The state did not decode");
+    }
+
+    expect([
+      sleepers(decoded.value),
+      (
+        encodeState(decoded.value) as { profiles: Record<string, unknown>[] }
+      ).profiles.map((profile) => profile.asleep),
+    ]).toStrictEqual([
+      [["a"], "b"],
+      [true, true],
+    ]);
   });
 });
 

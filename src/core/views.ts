@@ -11,11 +11,11 @@ import type { TabKey } from "./tabs.ts";
 /**
  * Whether a profile's Open at Launch tabs open now, once a session: the
  * selected profile's, so each profile's open when it is first selected and
- * launch loads no page for the others, whose mail needs none. A sleeping
- * profile's wait until it is woken.
+ * launch loads no page for the others, whose mail needs none. The selected
+ * profile is never asleep, so a sleeping profile's wait until it is woken.
  */
 export const opensLaunchTabs = (profile: Profile, state: State) =>
-  profile.id === state.selectedProfileId && !isAsleep(profile);
+  profile.id === state.selectedProfileId;
 
 export interface ViewPlan {
   /** The tabs that have a view, in the order of the profiles and their tabs. */
@@ -45,10 +45,9 @@ export const planViews = (
 ): ViewPlan => {
   const profile = selectedProfile(state);
   const shown = knownTabs(profile);
-  const front =
-    !isAsleep(profile) && shown.some((tab) => tab.id === profile.selectedTabId)
-      ? { profileId: profile.id, tabId: profile.selectedTabId }
-      : undefined;
+  const front = shown.some((tab) => tab.id === profile.selectedTabId)
+    ? { profileId: profile.id, tabId: profile.selectedTabId }
+    : undefined;
   const launching = state.profiles.filter(
     (candidate) =>
       !launched.has(candidate.id) && opensLaunchTabs(candidate, state)
@@ -68,7 +67,7 @@ export const planViews = (
 
   return {
     views: state.profiles.flatMap((candidate) =>
-      (isAsleep(candidate) ? [] : knownTabs(candidate))
+      (isAsleep(state, candidate) ? [] : knownTabs(candidate))
         .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
         .filter((key) => kept.has(tabKey(key)))
     ),

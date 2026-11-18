@@ -1043,37 +1043,36 @@ describe(createTabViews, () => {
     ]);
   });
 
-  it("leaves the only profile put to sleep with no view and no front, and wakes it when it is selected", async () => {
+  it("keeps the only profile awake, its views in place, when asked to put it to sleep", async () => {
     const window = await setup({
       state: { ...initial, profiles: initial.profiles.slice(0, 1) },
     });
 
     await window.profiles.sleep("a");
 
-    expect([
-      window.live(),
-      window.tabs.focuser(),
-      window.tabs.navigation(),
-      window.tabs.frontAsleep(),
-      window.profiles.get().selectedProfileId,
-    ]).toStrictEqual([[], undefined, null, false, "a"]);
-
-    await window.profiles.select("a");
-
     expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
   });
 
-  it("loads nothing of a profile stored asleep, even selected, until it is woken", async () => {
+  it("loads a profile stored asleep while selected, which reads as awake, and nothing of one stored asleep in the background, even after the selection moves", async () => {
     const window = await setup({
       state: {
         ...initial,
-        profiles: initial.profiles.map((profile) =>
-          profile.id === "a" ? { ...profile, asleep: true } : profile
-        ),
+        profiles: initial.profiles.map((profile) => ({
+          ...profile,
+          asleep: true,
+        })),
       },
     });
 
-    expect([window.live(), window.views]).toStrictEqual([[], []]);
+    expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+
+    // Its key goes as the selection moves, so it stays awake.
+    await window.profiles.select("b");
+
+    expect(window.live()).toStrictEqual([
+      ["persist:a", GMAIL, false],
+      ["persist:b", GMAIL, true],
+    ]);
   });
 
   it("reloads the front tab's page where it is, and a failed one from its URL", async () => {

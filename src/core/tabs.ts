@@ -114,7 +114,7 @@ export const selectTab = (
   { profileId, tabId }: TabKey
 ): State | undefined =>
   updateProfile(state, profileId, (profile) =>
-    (profile.selectedTabId !== tabId || isAsleep(profile)) &&
+    (profile.selectedTabId !== tabId || isAsleep(state, profile)) &&
     knownTabs(profile).some((tab) => tab.id === tabId)
       ? { ...awake(profile), selectedTabId: tabId }
       : undefined

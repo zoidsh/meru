@@ -422,23 +422,9 @@ export const nextProfileName = (
   return name(n);
 };
 
-/** Appends a profile and selects it. */
-export const addProfile = (state: State, profile: Profile): State => ({
-  ...state,
-  profiles: [...state.profiles, profile],
-  selectedProfileId: profile.id,
-});
-
-/**
- * Whether the profile is put to sleep: it has no pages, but its mail is
- * still checked. Anything but `true` in the file, absent included, reads as
- * awake, and stays as found until the profile is put to sleep or woken.
- */
-export const isAsleep = (profile: Profile) => profile.asleep === true;
-
-/** The profile awake, its key gone, as a profile never put to sleep has none. */
+/** The profile with no sleep key, as a profile never put to sleep has none. */
 export const awake = (profile: Profile): Profile => {
-  if (!isAsleep(profile)) {
+  if (profile.asleep === undefined) {
     return profile;
   }
 
@@ -448,15 +434,48 @@ export const awake = (profile: Profile): Profile => {
 };
 
 /**
- * Wakes the profile if it sleeps, as anything that shows it or opens a page
- * in it does; nothing when it is awake or not listed.
+ * The state with `profileId` selected, its sleep key gone, and the key of
+ * the profile it takes over from too: one the file stored asleep while
+ * selected read as awake, and stays so once another is selected.
+ */
+const withSelected = (state: State, profileId: string): State => ({
+  ...state,
+  profiles: state.profiles.map((profile) =>
+    profile.id === profileId || profile.id === state.selectedProfileId
+      ? awake(profile)
+      : profile
+  ),
+  selectedProfileId: profileId,
+});
+
+/** Appends a profile and selects it. */
+export const addProfile = (state: State, profile: Profile): State =>
+  withSelected(
+    { ...state, profiles: [...state.profiles, profile] },
+    profile.id
+  );
+
+/**
+ * Whether the profile is put to sleep: it has no pages, but its mail is
+ * still checked. The selected profile is always awake, since the last awake
+ * profile cannot sleep and sleeping the selected one selects another; one a
+ * file stores asleep while selected, hand-edited or with every profile
+ * asleep, reads as awake, its key kept as found until it is selected away
+ * from or woken. Anything but `true` reads as awake and stays as found too.
+ */
+export const isAsleep = (state: State, profile: Profile) =>
+  profile.asleep === true && profile.id !== state.selectedProfileId;
+
+/**
+ * Wakes the profile if it sleeps, as anything that opens a page in it does;
+ * nothing when it is awake or not listed.
  */
 export const wakeProfile = (
   state: State,
   profileId: string
 ): State | undefined =>
   state.profiles.some(
-    (profile) => profile.id === profileId && isAsleep(profile)
+    (profile) => profile.id === profileId && isAsleep(state, profile)
   )
     ? {
         ...state,
@@ -469,54 +488,51 @@ export const wakeProfile = (
 /**
  * Selects the profile, waking it, so selecting is how every way to a
  * sleeping profile wakes it. Nothing when there is no such profile, or it is
- * selected and awake.
+ * selected already.
  */
 export const selectProfile = (
   state: State,
   profileId: string
-): State | undefined => {
-  const woken = wakeProfile(state, profileId);
-
-  if (woken) {
-    return { ...woken, selectedProfileId: profileId };
-  }
-
-  return state.selectedProfileId !== profileId &&
-    state.profiles.some((profile) => profile.id === profileId)
-    ? { ...state, selectedProfileId: profileId }
+): State | undefined =>
+  state.selectedProfileId !== profileId &&
+  state.profiles.some((profile) => profile.id === profileId)
+    ? withSelected(state, profileId)
     : undefined;
-};
+
+/** Whether the profile can be put to sleep: it is awake and not the last awake. */
+export const canSleepProfile = (state: State, profileId: string) =>
+  state.profiles.some(
+    (profile) => profile.id === profileId && !isAsleep(state, profile)
+  ) &&
+  state.profiles.some(
+    (profile) => profile.id !== profileId && !isAsleep(state, profile)
+  );
 
 /**
- * Puts the profile to sleep. Asleep, the selected profile gives way to the
- * next awake one in the row, wrapping round, and stays selected when no
- * other is awake. Nothing when it sleeps already or is not listed.
+ * Puts the profile to sleep; the selected profile gives way to the first
+ * awake one in the row. Nothing when it cannot sleep.
  */
 export const sleepProfile = (
   state: State,
   profileId: string
 ): State | undefined => {
-  const index = state.profiles.findIndex((profile) => profile.id === profileId);
-  const profile = state.profiles[index];
-
-  if (!profile || isAsleep(profile)) {
+  if (!canSleepProfile(state, profileId)) {
     return;
   }
 
-  const profiles = state.profiles.map((candidate) =>
-    candidate === profile ? { ...candidate, asleep: true } : candidate
+  const first = state.profiles.find(
+    (profile) => profile.id !== profileId && !isAsleep(state, profile)
   );
-  const next =
-    state.selectedProfileId === profileId
-      ? [...profiles.slice(index + 1), ...profiles.slice(0, index)].find(
-          (candidate) => !isAsleep(candidate)
-        )
-      : undefined;
 
   return {
     ...state,
-    profiles,
-    selectedProfileId: next?.id ?? state.selectedProfileId,
+    profiles: state.profiles.map((profile) =>
+      profile.id === profileId ? { ...profile, asleep: true } : profile
+    ),
+    selectedProfileId:
+      state.selectedProfileId === profileId && first
+        ? first.id
+        : state.selectedProfileId,
   };
 };
 
@@ -545,13 +561,12 @@ export const removeProfile = (
   const profiles = state.profiles.filter((profile) => profile.id !== profileId);
   const neighbour = profiles[Math.min(index, profiles.length - 1)];
 
+  const kept = { ...state, profiles };
+
   return {
-    ...state,
-    profiles,
-    selectedProfileId:
-      state.selectedProfileId === profileId && neighbour
-        ? neighbour.id
-        : state.selectedProfileId,
+    ...(state.selectedProfileId === profileId && neighbour
+      ? withSelected(kept, neighbour.id)
+      : kept),
     profilesToClear: [
       ...(state.profilesToClear ?? []).filter((id) => id !== profileId),
       profileId,

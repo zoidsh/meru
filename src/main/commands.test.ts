@@ -281,34 +281,25 @@ describe("the command registry", () => {
     expect(app.profiles.get().selectedProfileId).toBe("a");
   });
 
-  it("puts the selected profile to sleep, which selects the next awake one, and wakes it as the only one awake, labelled as it is, with no shortcut", async () => {
+  it("puts the selected profile to sleep, which selects the first awake one, and is disabled for the last awake one, with no shortcut", async () => {
     const app = setup();
-    const label = () => commandOf("profile.sleep").label?.(app.context());
-    const asleep = () =>
-      app.profiles
-        .get()
-        .profiles.filter(isAsleep)
+    const asleep = () => {
+      const state = app.profiles.get();
+
+      return state.profiles
+        .filter((profile) => isAsleep(state, profile))
         .map((profile) => profile.id);
+    };
+
+    expect(app.isAvailable("profile.sleep")).toBeTruthy();
 
     await app.run("profile.sleep");
 
     expect([
-      label(),
       asleep(),
       app.profiles.get().selectedProfileId,
-    ]).toStrictEqual(["Sleep Profile", ["a"], "b"]);
-
-    await app.run("profile.sleep");
-
-    expect([
-      label(),
-      asleep(),
-      app.profiles.get().selectedProfileId,
-    ]).toStrictEqual(["Wake Profile", ["a", "b"], "b"]);
-
-    await app.run("profile.sleep");
-
-    expect([label(), asleep()]).toStrictEqual(["Sleep Profile", ["a"]]);
+      app.isAvailable("profile.sleep"),
+    ]).toStrictEqual([["a"], "b", false]);
     expect(commandOf("profile.sleep").shortcut).toBeUndefined();
   });
 
@@ -324,7 +315,10 @@ describe("the command registry", () => {
 
           return [
             app.profiles.get().selectedProfileId,
-            app.profiles.get().profiles.filter(isAsleep).length,
+            app.profiles
+              .get()
+              .profiles.filter((profile) => profile.asleep !== undefined)
+              .length,
           ];
         }
       )

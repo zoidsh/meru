@@ -144,21 +144,25 @@ describe(buildMenuTemplate, () => {
     ]);
   });
 
-  it("offers Wake Profile in place of Sleep Profile while the selected profile sleeps", () => {
+  it("disables Sleep Profile for the last awake profile", () => {
     expect(
-      [false, true].map(
-        (asleep) =>
+      [
+        [newProfile("a", "Default")],
+        [newProfile("a", "Default"), newProfile("b", "Work")],
+        [
+          newProfile("a", "Default"),
+          { ...newProfile("b", "Work"), asleep: true },
+        ],
+      ].map(
+        (profiles) =>
           submenu(
             template("darwin", {
               ...contextOf(),
-              state: {
-                ...oneProfile,
-                profiles: [{ ...newProfile("a", "Default"), asleep }],
-              },
+              state: { ...oneProfile, profiles },
             }).at(-2) ?? {}
-          ).find((item) => item.id === "profile.sleep")?.label
+          ).find((item) => item.id === "profile.sleep")?.enabled
       )
-    ).toStrictEqual(["Sleep Profile", "Wake Profile"]);
+    ).toStrictEqual([false, true, false]);
   });
 
   it("lists each pinned tab with a shortcut by its app in the Tabs menu, between the tab steps and Sleep Tab", () => {

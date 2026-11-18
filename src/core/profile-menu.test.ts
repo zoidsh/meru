@@ -26,6 +26,18 @@ describe(profileMenuItems, () => {
       undefined,
     ]);
   });
+
+  it("offers Sleep disabled for the last awake profile", () => {
+    const asleep = sleepProfile(two, "b") ?? two;
+
+    expect([
+      profileMenuItems(asleep, "a"),
+      profileMenuItems({ ...two, profiles: [newProfile("a", "Default")] }, "a"),
+    ]).toStrictEqual([
+      [{ id: "sleep", enabled: false }],
+      [{ id: "sleep", enabled: false }],
+    ]);
+  });
 });
 
 describe(profileMenuAt, () => {

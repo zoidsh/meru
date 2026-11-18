@@ -199,7 +199,7 @@ export const shellState = (
         name: profileDisplayName(candidate),
         color: profileColor(state, candidate.id),
         mail: mail(candidate.id),
-        asleep: isAsleep(candidate),
+        asleep: isAsleep(state, candidate),
       })),
       selectedProfileId: state.selectedProfileId,
     },

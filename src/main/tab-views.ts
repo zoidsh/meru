@@ -592,7 +592,7 @@ export const createTabViews = ({
       (candidate) => candidate.id === tab.key.profileId
     );
 
-    if (profile && isAsleep(profile) && findTab(current, tab.key)) {
+    if (profile && isAsleep(current, profile) && findTab(current, tab.key)) {
       dispatch(key, { kind: "sleep" });
     }
 
@@ -604,7 +604,7 @@ export const createTabViews = ({
 
   const reconcile = (current: State) => {
     for (const profile of current.profiles) {
-      if (isAsleep(profile)) {
+      if (isAsleep(current, profile)) {
         launched.delete(profile.id);
       }
     }

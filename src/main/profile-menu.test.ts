@@ -46,11 +46,13 @@ const setup = () => {
       logs.push(message);
     },
   });
-  const asleep = () =>
-    profiles
-      .get()
-      .profiles.filter(isAsleep)
+  const asleep = () => {
+    const state = profiles.get();
+
+    return state.profiles
+      .filter((profile) => isAsleep(state, profile))
       .map((profile) => profile.id);
+  };
 
   return { menu, profiles, events, logs, asleep };
 };
@@ -108,6 +110,19 @@ describe(createProfileMenu, () => {
         "Refused the profile menu's sleep with no profile menu open",
         "Refused the profile menu's wake, which it does not offer",
       ],
+    ]);
+  });
+
+  it("refuses Sleep for the last awake profile", async () => {
+    const { menu, profiles, logs, asleep } = setup();
+
+    await profiles.sleep("b");
+    menu.open({ profileId: "a", x: 20, y: 20 });
+    await menu.run("sleep");
+
+    expect([asleep(), logs]).toStrictEqual([
+      ["b"],
+      ["Refused the profile menu's sleep, which it does not offer"],
     ]);
   });
 });

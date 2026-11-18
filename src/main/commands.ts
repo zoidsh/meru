@@ -27,7 +27,7 @@ import {
 import {
   adjacentProfile,
   canRemoveProfile,
-  isAsleep,
+  canSleepProfile,
   isPinned,
   knownTabs,
   opensAtLaunch,
@@ -555,25 +555,9 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Menu item in the Window menu that closes every page of the selected profile until it is woken, its mail still checked",
       }),
-    label(context) {
-      return isAsleep(selectedProfile(context.state))
-        ? t({
-            message: "Wake Profile",
-            comment:
-              "Menu item in the Window menu, in place of Sleep Profile while the selected profile sleeps, that loads its pages again",
-          })
-        : this.title();
-    },
-    run: async ({ state }, { sleepProfile, selectProfile, setInboxOpen }) => {
-      const profile = selectedProfile(state);
-
-      if (isAsleep(profile)) {
-        await selectProfile(profile.id);
-        setInboxOpen(false);
-      } else {
-        await sleepProfile(profile.id);
-      }
-    },
+    // The selected profile is always awake; the last awake one cannot sleep.
+    isAvailable: ({ state }) => canSleepProfile(state, state.selectedProfileId),
+    run: ({ state }, { sleepProfile }) => sleepProfile(state.selectedProfileId),
   },
   {
     id: "profile.add",

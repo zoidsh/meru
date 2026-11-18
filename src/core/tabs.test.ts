@@ -441,7 +441,9 @@ describe("a sleeping profile's tabs", () => {
         selectTab(slept, { profileId: "a", tabId: "c" }),
         selectTab(slept, { profileId: "a", tabId: "gmail" }),
         openTab(slept, "a", calendar, calendar.home, () => "new")?.state,
-      ].map((next) => next && isAsleep(next.profiles[0] ?? newProfile("", "")))
+      ].map(
+        (next) => next && isAsleep(next, next.profiles[0] ?? newProfile("", ""))
+      )
     ).toStrictEqual([false, false, false]);
   });
 
@@ -449,7 +451,7 @@ describe("a sleeping profile's tabs", () => {
     const moved = closeTab(slept, { profileId: "a", tabId: "c" });
 
     expect(
-      moved && isAsleep(moved.profiles[0] ?? newProfile("", ""))
+      moved && isAsleep(moved, moved.profiles[0] ?? newProfile("", ""))
     ).toBeTruthy();
   });
 });

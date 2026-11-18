@@ -64,11 +64,6 @@ msgstr "{name} couldn’t load"
 msgid "{name} is signed out."
 msgstr "{name} is signed out."
 
-#. Heading of the page area while the selected profile sleeps, its pages closed and its mail still checked; {name} is the profile's name
-#: src/shell/sleeping-profile.tsx
-msgid "{name} is sleeping"
-msgstr "{name} is sleeping"
-
 #. Explanation under the offline heading in place of a tab's page; {name} is the app, such as Gmail or Calendar
 #: src/shell/tab-strip.tsx
 msgid "{name} loads by itself when you’re back online."
@@ -833,20 +828,13 @@ msgid "View"
 msgstr "View"
 
 #. Button in place of a sleeping tab's page that loads it again
-#. Button in the page area of a sleeping profile that loads its pages again
 #. Item of a sleeping profile's context menu, in place of Sleep, that selects the profile and loads its pages again
 #. Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it
 #: src/shell/profile-menu.tsx
-#: src/shell/sleeping-profile.tsx
 #: src/shell/sleeping-tab.tsx
 #: src/shell/tab-menu.tsx
 msgid "Wake"
 msgstr "Wake"
-
-#. Menu item in the Window menu, in place of Sleep Profile while the selected profile sleeps, that loads its pages again
-#: src/main/commands.ts
-msgid "Wake Profile"
-msgstr "Wake Profile"
 
 #. Menu item in the Tabs menu, in place of Sleep Tab while the selected tab sleeps, that loads its page again
 #: src/main/commands.ts
