@@ -86,12 +86,7 @@ export const transitionOverlay = (
 /** The name the shell's `window.open` gives the overlay's document. */
 export const OVERLAY_FRAME_NAME = "meru-overlay";
 
-/** The name it gives the document its tooltips are drawn in, above the page. */
-export const TOOLTIP_FRAME_NAME = "meru-tooltip";
-
-export type ShellDocumentName =
-  | typeof OVERLAY_FRAME_NAME
-  | typeof TOOLTIP_FRAME_NAME;
+export type ShellDocumentName = typeof OVERLAY_FRAME_NAME;
 
 /**
  * Which of its own blank documents the shell opens, if it asks for one: the
@@ -105,7 +100,6 @@ export const shellDocumentName = ({
   url: string;
   frameName: string;
 }): ShellDocumentName | undefined =>
-  url === "about:blank" &&
-  (frameName === OVERLAY_FRAME_NAME || frameName === TOOLTIP_FRAME_NAME)
+  url === "about:blank" && frameName === OVERLAY_FRAME_NAME
     ? frameName
     : undefined;

@@ -7,12 +7,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { _electron, expect, test as base } from "@playwright/test";
-import type {
-  ElectronApplication,
-  Locator,
-  Page,
-  TestInfo,
-} from "@playwright/test";
+import type { ElectronApplication, Page, TestInfo } from "@playwright/test";
 import { delay, withTimeout } from "es-toolkit";
 
 import { DEV_IDENTITY } from "#core/app-identity.ts";
@@ -170,11 +165,11 @@ export const findPage = async (app: ElectronApplication, prefix: string) => {
 
 /**
  * A blank document the shell opened under `name` and draws into: the
- * overlay's, or the tooltips'. A page's own blank windows have no such name.
+ * overlay's. A page's own blank windows have no such name.
  */
 export const findShellDocument = async (
   app: ElectronApplication,
-  name: "meru-overlay" | "meru-tooltip"
+  name: "meru-overlay"
 ) => {
   const find = async () => {
     const blank = app
@@ -197,73 +192,6 @@ export const findShellDocument = async (
     .toBe(true);
 
   return found as Page;
-};
-
-/**
- * The view the shell's tooltips are drawn in: whether it shows, where, and
- * whether it is above every other view of the window.
- */
-export const readTooltipView = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow }) => {
-    const window = BrowserWindow.getAllWindows().find((candidate) =>
-      candidate.webContents.getURL().startsWith("meru-app:")
-    );
-    const children = window?.contentView.children ?? [];
-    // A crashed page's frame throws when read.
-    // oxlint-disable-next-line unicorn/consistent-function-scoping -- runs in main, which sees nothing outside
-    const nameOf = (view: Electron.View) => {
-      try {
-        return (view as Electron.WebContentsView).webContents?.mainFrame.name;
-      } catch {
-        return "";
-      }
-    };
-    const index = children.findIndex((view) => nameOf(view) === "meru-tooltip");
-    const view = children[index];
-
-    return {
-      visible: view?.getVisible() ?? false,
-      bounds: view?.getBounds(),
-      onTop: index !== -1 && index === children.length - 1,
-    };
-  });
-
-/**
- * Opens `trigger`'s tooltip by the pointer coming onto its centre from away,
- * so it enters even when the pointer is already there after a click.
- */
-export const pointAt = async (trigger: Locator) => {
-  const { mouse } = trigger.page();
-
-  await expect(trigger).toBeVisible();
-  await mouse.move(1, 1);
-
-  const box = await trigger.boundingBox();
-
-  if (!box) {
-    throw new Error("The tooltip's trigger has no box to point at");
-  }
-
-  await mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
-    steps: 4,
-  });
-};
-
-/**
- * Waits until a tooltip saying `text` shows above the page: drawn in the
- * tooltips' document, with its view shown and on top.
- */
-export const expectTooltip = async (app: ElectronApplication, text: string) => {
-  const tooltips = await findShellDocument(app, "meru-tooltip");
-
-  await expect(tooltips.getByText(text)).toBeVisible();
-  await expect
-    .poll(async () => {
-      const { visible, onTop } = await readTooltipView(app);
-
-      return visible && onTop;
-    })
-    .toBe(true);
 };
 
 /**

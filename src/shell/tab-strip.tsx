@@ -16,11 +16,9 @@ import { APPS, findApp, isAppId } from "#core/apps.ts";
 import { sidebarWidth } from "#core/sidebar.ts";
 import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
-import { TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
 import { keepInView } from "./keep-in-view.ts";
-import { ShellTooltip, ShellTooltipContent } from "./shell-tooltip.tsx";
 import { shellCalls } from "./sync.ts";
 import { UnreadBadge } from "./unread-badge.tsx";
 
@@ -219,31 +217,31 @@ export const Sidebar = ({
 
               // One element tree in either width, so a tab keeps its
               // element, and with it focus, as the sidebar changes width.
+              // Wide, its title shows in full and needs no tooltip.
               return (
-                <ShellTooltip key={tab.id} disabled={wide}>
-                  <TooltipTrigger render={<Tabs.Tab {...tabProps} />}>
-                    {(wide || live) && isAppId(tab.app) && (
-                      <AppIcon app={tab.app} aria-hidden />
-                    )}
-                    <span
-                      className={
-                        wide ? "min-w-0 flex-1 truncate text-left" : "sr-only"
-                      }
-                    >
-                      {title}
-                    </span>
-                    <TabStatusIcon status={tab.status} />
-                    {!wide && tab.app === "gmail" && (
-                      <UnreadBadge
-                        count={unreadCount}
-                        className="pointer-events-none absolute -top-1.5 -right-2 px-1"
-                      />
-                    )}
-                  </TooltipTrigger>
-                  <ShellTooltipContent side="right">
+                <Tabs.Tab
+                  key={tab.id}
+                  {...tabProps}
+                  title={wide ? undefined : title}
+                >
+                  {(wide || live) && isAppId(tab.app) && (
+                    <AppIcon app={tab.app} aria-hidden />
+                  )}
+                  <span
+                    className={
+                      wide ? "min-w-0 flex-1 truncate text-left" : "sr-only"
+                    }
+                  >
                     {title}
-                  </ShellTooltipContent>
-                </ShellTooltip>
+                  </span>
+                  <TabStatusIcon status={tab.status} />
+                  {!wide && tab.app === "gmail" && (
+                    <UnreadBadge
+                      count={unreadCount}
+                      className="pointer-events-none absolute -top-1.5 -right-2 px-1"
+                    />
+                  )}
+                </Tabs.Tab>
               );
             })}
           </Tabs.List>
@@ -318,24 +316,19 @@ export const Sidebar = ({
           wide ? "justify-end" : "justify-center"
         )}
       >
-        <ShellTooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={widthLabel}
-                className="text-muted-foreground"
-                onClick={() => {
-                  shellCalls().toggleSidebarWidth({});
-                }}
-              />
-            }
-          >
-            {wide ? <ChevronsLeftIcon /> : <ChevronsRightIcon />}
-          </TooltipTrigger>
-          <ShellTooltipContent side="right">{widthLabel}</ShellTooltipContent>
-        </ShellTooltip>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          // Its title names it; an equal aria-label would be read twice,
+          // as name and description.
+          title={widthLabel}
+          className="text-muted-foreground"
+          onClick={() => {
+            shellCalls().toggleSidebarWidth({});
+          }}
+        >
+          {wide ? <ChevronsLeftIcon /> : <ChevronsRightIcon />}
+        </Button>
       </div>
     </Tabs.Root>
   );

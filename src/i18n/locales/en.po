@@ -27,6 +27,11 @@ msgstr "{count, plural, one {# unread message} other {# unread messages}}"
 msgid "{hours, plural, one {For # Hour} other {For # Hours}}"
 msgstr "{hours, plural, one {For # Hour} other {For # Hours}}"
 
+#. Tooltip of a control that has a keyboard shortcut: {label} is what the control does, {shortcut} its keys as the platform writes them, such as ⌘R or Ctrl+R
+#: src/shell/shortcut-title.ts
+msgid "{label} ({shortcut})"
+msgstr "{label} ({shortcut})"
+
 #. Shown on an unread badge when more messages are unread than the number before the plus
 #. Shown on an unread badge, on a profile's tab in the title bar or on Gmail's tab, when more messages are unread than the number before the plus
 #: src/main/badge.ts
@@ -64,7 +69,7 @@ msgstr "{name} loads by itself when you’re back online."
 msgid "{name} stopped working"
 msgstr "{name} stopped working"
 
-#. Accessible name of a profile's button in the title bar while its Google account is signed out, read by screen readers
+#. Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out
 #: src/shell/titlebar.tsx
 msgid "{name}, sign in required"
 msgstr "{name}, sign in required"
@@ -534,11 +539,6 @@ msgstr "Sidebar"
 msgctxt "View menu"
 msgid "Sidebar"
 msgstr "Sidebar"
-
-#. Tooltip of a profile's button in the title bar, and said by screen readers, while its Google account is signed out
-#: src/shell/titlebar.tsx
-msgid "Sign in required"
-msgstr "Sign in required"
 
 #. Accessible name and tooltip of the title bar button that stops the page loading, shown in place of Reload while it loads
 #. Menu item in the View menu that stops the selected tab's page loading

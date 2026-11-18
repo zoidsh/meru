@@ -6,15 +6,11 @@ const isCI = Boolean(process.env.CI);
 
 /**
  * On Windows and Linux every launch of the suite's app takes the desktop's
- * focus, and an overlay, the unified inbox among them, closes and a tooltip
- * hides when its window loses it, so these run alone, after the rest. On
+ * focus, and an overlay, the unified inbox among them, closes when its window
+ * loses it, so these run alone, after the rest. On
  * macOS the suite's app is never activated.
  */
-const NEEDS_THE_FOCUS = [
-  "**/overlay.e2e.ts",
-  "**/inbox.e2e.ts",
-  "**/tooltips.e2e.ts",
-];
+const NEEDS_THE_FOCUS = ["**/overlay.e2e.ts", "**/inbox.e2e.ts"];
 const takesTheFocus = process.platform !== "darwin";
 
 export default defineConfig({

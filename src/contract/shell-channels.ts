@@ -8,8 +8,6 @@ export const SHELL_CALL_NAMES = [
   "retryTab",
   "renameProfile",
   "closeOverlay",
-  "showTooltip",
-  "hideTooltip",
   "toggleSidebar",
   "navigate",
   "toggleSidebarWidth",

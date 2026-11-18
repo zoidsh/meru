@@ -1,11 +1,9 @@
 import { cn } from "cn";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps } from "react";
 
 import { Button } from "#ui/button.tsx";
-import { Kbd } from "#ui/kbd.tsx";
-import { TooltipTrigger } from "#ui/tooltip.tsx";
 
-import { ShellTooltip, ShellTooltipContent } from "./shell-tooltip.tsx";
+import { useShortcutTitle } from "./shortcut-title.ts";
 
 /**
  * An icon button of the titlebar: ghost, or secondary while pressed or its
@@ -17,40 +15,39 @@ export const TitlebarButton = ({
   shortcut,
   pressed,
   className,
-  children,
   ...props
-}: Omit<ComponentProps<typeof Button>, "aria-label" | "aria-pressed"> & {
+}: Omit<
+  ComponentProps<typeof Button>,
+  "aria-label" | "aria-pressed" | "title"
+> & {
   /** The accessible name. */
   label: string;
   /** What the tooltip says, where it says more than the name. */
-  tooltip?: ReactNode;
+  tooltip?: string;
   /** As the `shortcuts` slice gives it. */
   shortcut?: string | undefined;
   /** Set for a button that is on or off; left out for one that acts. */
   pressed?: boolean;
-}) => (
-  <ShellTooltip>
-    <TooltipTrigger
-      render={
-        <Button
-          variant={pressed ? "secondary" : "ghost"}
-          size="icon-sm"
-          aria-label={label}
-          aria-pressed={pressed}
-          className={cn(
-            "[app-region:no-drag]",
-            !pressed && "text-muted-foreground",
-            className
-          )}
-          {...props}
-        />
-      }
-    >
-      {children}
-    </TooltipTrigger>
-    <ShellTooltipContent side="bottom">
-      {tooltip}
-      {shortcut && <Kbd>{shortcut}</Kbd>}
-    </ShellTooltipContent>
-  </ShellTooltip>
-);
+}) => {
+  const shortcutTitle = useShortcutTitle();
+  const title = shortcutTitle(tooltip, shortcut);
+
+  return (
+    <Button
+      variant={pressed ? "secondary" : "ghost"}
+      size="icon-sm"
+      // Chromium reads a title that differs from the aria-label as the
+      // description; an equal one would be read twice, so the title alone
+      // names the button then.
+      aria-label={title === label ? undefined : label}
+      aria-pressed={pressed}
+      title={title}
+      className={cn(
+        "[app-region:no-drag]",
+        !pressed && "text-muted-foreground",
+        className
+      )}
+      {...props}
+    />
+  );
+};

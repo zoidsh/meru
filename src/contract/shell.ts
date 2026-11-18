@@ -5,7 +5,6 @@ import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
-import { TOOLTIP_SIDES } from "#core/tooltip.ts";
 
 import { NAVIGATE_ACTIONS } from "./shell-channels.ts";
 import type { ShellCallName } from "./shell-channels.ts";
@@ -16,9 +15,6 @@ export type { ShellCallName } from "./shell-channels.ts";
 const profileId = z.string().check(z.minLength(1));
 
 const none = z.object({});
-
-/** Wider or taller than any tooltip the shell draws, which is `max-w-xs`. */
-const TOOLTIP_MAX_SIZE = 640;
 
 /** A Gmail message id as the feed's link carries it, lowercase hex. */
 const messageId = z.string().check(z.regex(/^[\da-f]{1,32}$/u));
@@ -63,23 +59,6 @@ export const SHELL_CALLS = {
     response: z.undefined(),
   },
   closeOverlay: { request: none, response: z.undefined() },
-  /**
-   * Shows the tooltips' view around a tooltip at this rectangle of the
-   * window's content, on this side of its trigger, which the shell has
-   * drawn into its document.
-   */
-  showTooltip: {
-    request: z.object({
-      x: z.int(),
-      y: z.int(),
-      width: z.int().check(z.positive(), z.maximum(TOOLTIP_MAX_SIZE)),
-      height: z.int().check(z.positive(), z.maximum(TOOLTIP_MAX_SIZE)),
-      /** Which side of its trigger it is on. */
-      side: z.enum(TOOLTIP_SIDES),
-    }),
-    response: z.undefined(),
-  },
-  hideTooltip: { request: none, response: z.undefined() },
   /** Shows the sidebar or hides it, as the titlebar's toggle asks. */
   toggleSidebar: { request: none, response: z.undefined() },
   /** Back, Forward, Reload or Stop on the front tab, as the titlebar asks. */

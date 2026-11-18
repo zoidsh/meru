@@ -31,11 +31,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "#ui/empty.tsx";
-import { Kbd } from "#ui/kbd.tsx";
-import { TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { OverlayCard } from "./overlay-card.tsx";
-import { ShellTooltip, ShellTooltipContent } from "./shell-tooltip.tsx";
+import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
 
@@ -234,6 +232,7 @@ const InboxRow = ({
   onSelect: () => void;
   onKeyDown: (event: KeyboardEvent<HTMLTableRowElement>) => void;
 }) => {
+  const shortcutTitle = useShortcutTitle();
   const { short, full } = dates(row.issued);
   const sender = row.senderName || row.senderAddress;
   // Each cell draws the row's fill, as a table row has no rounded corners.
@@ -306,38 +305,30 @@ const InboxRow = ({
         {/* Not hit-testable while hidden, so a click there opens the row. */}
         <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center gap-0.5 rounded-r-[10px] bg-linear-to-r from-transparent to-muted to-[16px] pl-4 opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-data-selected:pointer-events-auto group-data-selected:opacity-100">
           {ACTIONS.map((action) => (
-            <ShellTooltip key={action}>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    // The list's keys are the keyboard's way to them.
-                    tabIndex={-1}
-                    aria-label={labels[action]}
-                    aria-keyshortcuts={ACTION_SHORTCUTS[action]}
-                    // Keeps focus on the row, which the keys act from.
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                    }}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      shellCalls().runInboxAction({
-                        profileId: row.profileId,
-                        messageId: row.messageId,
-                        action,
-                      });
-                    }}
-                  />
-                }
-              >
-                {ACTION_ICONS[action]}
-              </TooltipTrigger>
-              <ShellTooltipContent side="top">
-                {labels[action]}
-                <Kbd>{ACTION_KEY_LABELS[action]}</Kbd>
-              </ShellTooltipContent>
-            </ShellTooltip>
+            <Button
+              key={action}
+              variant="ghost"
+              size="icon-xs"
+              // The list's keys are the keyboard's way to them.
+              tabIndex={-1}
+              aria-label={labels[action]}
+              aria-keyshortcuts={ACTION_SHORTCUTS[action]}
+              title={shortcutTitle(labels[action], ACTION_KEY_LABELS[action])}
+              // Keeps focus on the row, which the keys act from.
+              onMouseDown={(event) => {
+                event.preventDefault();
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+                shellCalls().runInboxAction({
+                  profileId: row.profileId,
+                  messageId: row.messageId,
+                  action,
+                });
+              }}
+            >
+              {ACTION_ICONS[action]}
+            </Button>
           ))}
         </span>
       </td>

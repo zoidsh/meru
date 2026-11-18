@@ -4,10 +4,8 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
   expect,
-  expectTooltip,
   findPage,
   findShellDocument,
-  pointAt,
   test,
   writeSettings,
   writeState,
@@ -78,7 +76,7 @@ test("the window with the sidebar narrow, wide and hidden", async ({
   });
 
   const { app, shell } = await launch(launchApp, userDataDir);
-  // Away from every control, so no tooltip or hover shows in the picture.
+  // Away from every control, so no hover shows in the picture.
   const rest = () => shell.mouse.move(700, 20);
 
   await findPage(app, standIn.url);
@@ -167,23 +165,6 @@ test("the rename profile overlay", async ({
   });
   await expect(field).toBeFocused();
   await shootEachWay(app, shell, "rename");
-});
-
-test("a titlebar tooltip over the page", async ({
-  launchApp,
-  userDataDir,
-  standIn,
-}) => {
-  const { app, shell } = await launch(launchApp, userDataDir);
-  const reload = shell
-    .getByRole("banner", { name: "Title bar" })
-    .getByRole("button", { name: "Reload" });
-
-  await findPage(app, standIn.url);
-  await expect(reload).toBeEnabled();
-  await pointAt(reload);
-  await expectTooltip(app, "Reload");
-  await shootEachWay(app, shell, "tooltip");
 });
 
 test("a thread with every thread feature on", async ({

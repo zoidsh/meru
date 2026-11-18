@@ -3,11 +3,9 @@ import { I18nProvider } from "@lingui/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { TOOLTIP_FRAME_NAME } from "#core/overlay.ts";
 import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
 
 import { App } from "./app.tsx";
-import { openShellDocument } from "./shell-document.ts";
 import { playSounds } from "./sound.ts";
 
 const root = document.querySelector("#root");
@@ -25,9 +23,6 @@ const language = resolveLanguage([
 activateLanguage(language);
 document.documentElement.lang = language;
 playSounds(window.meru);
-// Opened now rather than at the first tooltip: opening a window while the
-// pointer is pressed loses the click.
-openShellDocument(TOOLTIP_FRAME_NAME);
 
 createRoot(root).render(
   <StrictMode>

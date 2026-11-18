@@ -118,3 +118,86 @@ test("with two profiles the row's tab stop follows the selection once focus leav
   // Work's Gmail page has no history yet.
   await expect(back).toBeDisabled();
 });
+
+/** A shortcut as the platform writes it: `mac` on macOS, `other` elsewhere. */
+const keys = (mac: string, other: string) =>
+  process.platform === "darwin" ? mac : other;
+
+test("each control's title names it and its shortcut, a narrow tab's names the tab, and Chromium adds a title only where it says more than the name", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p0",
+        name: "Home",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
+        ],
+        selectedTabId: "gmail",
+      },
+      { id: "p1", name: "Work" },
+    ],
+    selectedProfileId: "p0",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const bar = titlebar(shell);
+  const reload = bar.getByRole("button", { name: "Reload" });
+  const reloadTitle = `Reload (${keys("⌘R", "Ctrl+R")})`;
+  // Alt and the digit on Linux.
+  const workKeys =
+    { darwin: "⌘2", linux: "Alt+2" }[process.platform as string] ?? "Ctrl+2";
+
+  await findPage(app, standIn.url);
+  await expect(reload).toBeEnabled();
+  await expect(reload).toHaveAttribute("title", reloadTitle);
+  await expect(bar.getByRole("button", { name: "Sidebar" })).toHaveAttribute(
+    "title",
+    `Hide sidebar (${keys("⌘S", "Ctrl+S")})`
+  );
+  // The stand-in signs in no session of Work's, so its title says so too.
+  await expect(
+    bar
+      .getByRole("group", { name: "Profiles" })
+      .getByRole("button", { name: /^Work/u })
+  ).toHaveAttribute("title", `Work, sign in required (${workKeys})`);
+
+  const calendar = shell
+    .getByRole("tablist", { name: "Tabs" })
+    .getByRole("tab")
+    .nth(1);
+  const calendarTitle = (await calendar.textContent()) ?? "";
+
+  expect(calendarTitle).not.toBe("");
+  await expect(calendar).toHaveAttribute("title", calendarTitle);
+
+  // Chromium reads a title as the description only where it differs from
+  // the accessible name, so a screen reader never says one twice.
+  const session = await shell.context().newCDPSession(shell);
+  const description = async (name: string) => {
+    const { result } = await session.send("Runtime.evaluate", {
+      expression: "document",
+    });
+    const { nodes } = await session.send("Accessibility.queryAXTree", {
+      objectId: result.objectId ?? "",
+      accessibleName: name,
+      role: "button",
+    });
+
+    return nodes[0]?.description?.value ?? "";
+  };
+
+  await expect.poll(() => description("Reload")).toBe(reloadTitle);
+  await expect.poll(() => description("Widen sidebar")).toBe("");
+
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await expect(
+    shell.getByRole("button", { name: "Narrow sidebar" })
+  ).toBeAttached();
+  await expect(calendar).not.toHaveAttribute("title");
+});

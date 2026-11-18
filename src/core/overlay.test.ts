@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
-  TOOLTIP_FRAME_NAME,
   overlayWidth,
   shellDocumentName,
   transitionOverlay,
@@ -103,17 +102,12 @@ describe(overlayWidth, () => {
 });
 
 describe(shellDocumentName, () => {
-  it("names only the overlay's and the tooltips' blank documents", () => {
+  it("names only the overlay's blank document", () => {
     expect(
-      [OVERLAY_FRAME_NAME, TOOLTIP_FRAME_NAME, "", "elsewhere"].map(
-        (frameName) => shellDocumentName({ url: "about:blank", frameName })
+      [OVERLAY_FRAME_NAME, "meru-tooltip", "", "elsewhere"].map((frameName) =>
+        shellDocumentName({ url: "about:blank", frameName })
       )
-    ).toStrictEqual([
-      OVERLAY_FRAME_NAME,
-      TOOLTIP_FRAME_NAME,
-      undefined,
-      undefined,
-    ]);
+    ).toStrictEqual([OVERLAY_FRAME_NAME, undefined, undefined, undefined]);
     expect(
       [
         "https://mail.google.com/",

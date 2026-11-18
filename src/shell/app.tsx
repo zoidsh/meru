@@ -2,7 +2,6 @@ import { useLingui } from "@lingui/react/macro";
 import type { CSSProperties } from "react";
 
 import { viewFrame } from "#core/layout.ts";
-import { TooltipProvider } from "#ui/tooltip.tsx";
 
 import { OverlayLayer } from "./overlay.tsx";
 import { useShellState } from "./sync.ts";
@@ -20,7 +19,7 @@ export const App = () => {
   );
 
   return (
-    <TooltipProvider>
+    <>
       {/* The selected profile's colour, which `styles.css` mixes into the shell's greys. */}
       <div
         data-tint
@@ -61,6 +60,6 @@ export const App = () => {
         </div>
         <OverlayLayer />
       </div>
-    </TooltipProvider>
+    </>
   );
 };

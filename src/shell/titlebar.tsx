@@ -20,12 +20,10 @@ import type { ShellState } from "#contract/shell.ts";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
-import { Kbd } from "#ui/kbd.tsx";
-import { TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
-import { ShellTooltip, ShellTooltipContent } from "./shell-tooltip.tsx";
+import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
 import { UnreadBadge } from "./unread-badge.tsx";
@@ -237,20 +235,16 @@ const ProfileButton = ({
   onLeave: () => void;
 }) => {
   const { t } = useLingui();
+  const shortcutTitle = useShortcutTitle();
   const signedOut = mail.status === "signedOut";
   const count = mail.unreadCount ?? 0;
-  const signInRequired = t({
-    message: "Sign in required",
-    comment:
-      "Tooltip of a profile's button in the title bar, and said by screen readers, while its Google account is signed out",
-  });
   let label: string | undefined;
 
   if (signedOut) {
     label = t({
       message: `${name}, sign in required`,
       comment:
-        "Accessible name of a profile's button in the title bar while its Google account is signed out, read by screen readers",
+        "Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out",
     });
   } else if (count > 0) {
     label = t({
@@ -264,56 +258,44 @@ const ProfileButton = ({
   }
 
   return (
-    <ShellTooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            variant={selected ? "secondary" : "ghost"}
-            size="sm"
-            aria-pressed={selected}
-            aria-label={label}
-            tabIndex={focusable ? 0 : -1}
-            ref={selected ? keepClearOfFades : undefined}
-            // A long name is cut short, so other profiles stay in reach; the
-            // tooltip has it whole.
-            className="max-w-40 flex-none gap-1 px-2.5"
-            onFocus={onFocus}
-            onBlur={(event) => {
-              if (
-                !event.currentTarget
-                  .closest("fieldset")
-                  ?.contains(event.relatedTarget)
-              ) {
-                onLeave();
-              }
-            }}
-            onKeyDown={moveFocus}
-            onClick={() => {
-              shellCalls().selectProfile({ profileId: id });
-            }}
-          />
+    <Button
+      variant={selected ? "secondary" : "ghost"}
+      size="sm"
+      aria-pressed={selected}
+      aria-label={label}
+      title={shortcutTitle(signedOut && label ? label : name, shortcut)}
+      tabIndex={focusable ? 0 : -1}
+      ref={selected ? keepClearOfFades : undefined}
+      // A long name is cut short, so other profiles stay in reach; the
+      // tooltip has it whole.
+      className="max-w-40 flex-none gap-1 px-2.5"
+      onFocus={onFocus}
+      onBlur={(event) => {
+        if (
+          !event.currentTarget
+            .closest("fieldset")
+            ?.contains(event.relatedTarget)
+        ) {
+          onLeave();
         }
-      >
-        <span
-          aria-hidden
-          className="mr-0.5 size-2 shrink-0 rounded-full"
-          style={{ backgroundColor: color }}
-        />
-        <span className="truncate">{name}</span>
-        {signedOut ? (
-          <CircleAlertIcon aria-hidden className="size-3.5 text-destructive" />
-        ) : (
-          <UnreadBadge count={count} />
-        )}
-      </TooltipTrigger>
-      <ShellTooltipContent side="bottom">
-        <span className="flex flex-col">
-          <span className="break-all">{name}</span>
-          {signedOut && <span>{signInRequired}</span>}
-        </span>
-        {shortcut && <Kbd>{shortcut}</Kbd>}
-      </ShellTooltipContent>
-    </ShellTooltip>
+      }}
+      onKeyDown={moveFocus}
+      onClick={() => {
+        shellCalls().selectProfile({ profileId: id });
+      }}
+    >
+      <span
+        aria-hidden
+        className="mr-0.5 size-2 shrink-0 rounded-full"
+        style={{ backgroundColor: color }}
+      />
+      <span className="truncate">{name}</span>
+      {signedOut ? (
+        <CircleAlertIcon aria-hidden className="size-3.5 text-destructive" />
+      ) : (
+        <UnreadBadge count={count} />
+      )}
+    </Button>
   );
 };
 
@@ -413,25 +395,20 @@ const ProfileRow = ({
                   : "right-0 justify-end bg-linear-to-l"
               )}
             >
-              <ShellTooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      tabIndex={-1}
-                      aria-label={label}
-                      className="text-muted-foreground"
-                      onClick={() => {
-                        scrollBy(direction);
-                      }}
-                    />
-                  }
-                >
-                  {icon}
-                </TooltipTrigger>
-                <ShellTooltipContent side="bottom">{label}</ShellTooltipContent>
-              </ShellTooltip>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                tabIndex={-1}
+                // Its title names it; an equal aria-label would be read
+                // twice, as name and description.
+                title={label}
+                className="text-muted-foreground"
+                onClick={() => {
+                  scrollBy(direction);
+                }}
+              >
+                {icon}
+              </Button>
             </div>
           )
       )}
