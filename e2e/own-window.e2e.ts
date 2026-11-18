@@ -263,9 +263,10 @@ const firstWindowBounds = async (app: ElectronApplication) => {
 };
 
 /**
- * The shell's page loaded again after its process died. Playwright holds a
- * page whose process crashed as crashed for good, though Chromium loads it
- * again in the same target, so it is reached over a connection of its own.
+ * The shell's page loaded again after its process died, and what closes
+ * the connection reaching it. Playwright holds a page whose process crashed
+ * as crashed for good, though Chromium loads it again in the same target, so
+ * it is reached over a connection of its own.
  */
 const reachShell = async (userDataDir: string) => {
   // Chromium writes the port it picked there, the suite asking for any.
@@ -288,8 +289,20 @@ const reachShell = async (userDataDir: string) => {
     })
     .toBe("complete");
 
-  return found as Page;
+  return {
+    page: found as Page,
+    close: () => browser.close(),
+  };
 };
+
+/** Kills the shell's renderer, as a crash does. */
+const crashShell = (app: ElectronApplication) =>
+  app.evaluate(({ webContents }) => {
+    webContents
+      .getAllWebContents()
+      .find((contents) => contents.getURL().startsWith("meru-app:"))
+      ?.forcefullyCrashRenderer();
+  });
 
 /** A mark the page keeps only while it is not loaded again. */
 const mark = (page: Page) =>
@@ -345,7 +358,7 @@ const pageOpen = (app: ElectronApplication, url: string) =>
     url
   );
 
-test("Move to New Window puts the selected tab's page in a window of its own as it was, marks its tab and selects the next; the shell's renderer dying, the shell comes back with its sidebar, titlebar and the window's titlebar, no card left open, the pages not loaded again", async ({
+test("Move to New Window puts the selected tab's page in a window of its own as it was, marks its tab and selects the next; the shell's renderer dying, the shell comes back with its sidebar, its titlebar, the window's titlebar and both find bars with their words and counts, the window's taking the keys again, no card left open, the pages not loaded again", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -398,41 +411,39 @@ test("Move to New Window puts the selected tab's page in a window of its own as 
   // One profile has no badge.
   await expect(header.getByText("Default")).toHaveCount(0);
 
-  // The shell's renderer dying with New tab open, the shell comes back in a
-  // new one and the pages, in processes of their own, stay as they were.
+  // The shell's renderer dying with the window's find bar holding the keys,
+  // the shell comes back in a new one with its sidebar, titlebar and the
+  // window's titlebar and bar, which takes the keys again, and the pages, in
+  // processes of their own, stay as they were.
   const drive = await findPage(app, standIn.driveUrl);
-  const newTab = shell.getByRole("button", { name: "New tab" });
-
-  const oldOverlay = await findOverlayDocument(app);
 
   await mark(drive);
-  await newTab.click();
-  await expect(
-    oldOverlay.getByRole("dialog", { name: "New tab" })
-  ).toBeVisible();
-  await expect(newTab).toHaveAttribute("aria-pressed", "true");
+  await press(app, standIn.calendarUrl, "F");
+
+  const windowFind = findParts(await findWindowFind(app));
+
+  await expect(windowFind.field).toBeFocused();
+  await windowFind.field.pressSequentially(FIND_WORD);
+  await expect(windowFind.count).toHaveText(`1/${FIND_MATCHES}`);
 
   const { calendar: calendarLoads, drive: driveLoads } = standIn.requests();
+  const oldOverlay = await findOverlayDocument(app);
 
-  await app.evaluate(({ webContents }) => {
-    webContents
-      .getAllWebContents()
-      .find((contents) => contents.getURL().startsWith("meru-app:"))
-      ?.forcefullyCrashRenderer();
-  });
+  await crashShell(app);
 
-  const reloaded = await reachShell(userDataDir);
+  const first = await reachShell(userDataDir);
 
-  await expect(tab(reloaded, DRIVE_TITLE)).toHaveAttribute(
+  await expect(tab(first.page, DRIVE_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"
   );
   await expect(
-    reloaded.getByRole("banner", { name: "Title bar" })
+    first.page.getByRole("banner", { name: "Title bar" })
   ).toBeVisible();
-  await expect(tab(reloaded, CALENDAR_TITLE)).toHaveAccessibleDescription(
+  await expect(tab(first.page, CALENDAR_TITLE)).toHaveAccessibleDescription(
     `${CALENDAR_TITLE} · in its own window`
   );
+
   const newTitlebar = await findTitlebar(app);
 
   await expect(
@@ -442,6 +453,16 @@ test("Move to New Window puts the selected tab's page in a window of its own as 
   ).toBeVisible();
   expect(titlebar.isClosed()).toBeTruthy();
   expect(oldOverlay.isClosed()).toBeTruthy();
+
+  const backDocument = await findWindowFind(app);
+  const backHasFocus = await followRealFocus(backDocument);
+  const back = findParts(backDocument);
+
+  await expect(back.field).toHaveValue(FIND_WORD);
+  await expect(back.count).toHaveText(`1/${FIND_MATCHES}`);
+  await expect(back.field).toBeFocused();
+  await expect.poll(backHasFocus).toBeTruthy();
+  expect(await ownWindowPage(app)).toBe(calendar.url());
   expect(await marked(calendar)).toBe(42);
   expect(await marked(drive)).toBe(42);
   expect(standIn.requests()).toMatchObject({
@@ -449,19 +470,47 @@ test("Move to New Window puts the selected tab's page in a window of its own as 
     drive: driveLoads,
   });
 
-  // New tab's card went with the old renderer, and main knows it.
-  const reloadedNewTab = reloaded.getByRole("button", { name: "New tab" });
+  // Dying again with the main window's find bar open under New tab's card,
+  // the card is gone and stays gone, main knowing it, and the bar, which
+  // main keeps, is back with its word and count. A card closed gives the
+  // keys to the main window's front page, so Find opens its bar there.
+  const firstNewTab = first.page.getByRole("button", { name: "New tab" });
+  const firstOverlay = await findOverlayDocument(app);
+  const firstFind = findParts(firstOverlay);
+
+  await firstNewTab.click();
+  await firstOverlay.keyboard.press("Escape");
+  await expect.poll(() => menuEnabled(app, "tab.moveToNewWindow")).toBeTruthy();
+  await clickMenuItem(app, "tab.find");
+  await firstFind.field.pressSequentially("stand-in");
+  await expect(firstFind.count).toHaveText(/^1\/\d+$/u);
+
+  const counted = (await firstFind.count.textContent()) ?? "";
+
+  await firstNewTab.click();
+  await expect(
+    firstOverlay.getByRole("dialog", { name: "New tab" })
+  ).toBeVisible();
+  await expect(firstNewTab).toHaveAttribute("aria-pressed", "true");
+  await first.close();
+  await crashShell(app);
+
+  const second = await reachShell(userDataDir);
+  const newTab = second.page.getByRole("button", { name: "New tab" });
   const overlay = await findOverlayDocument(app);
   const card = overlay.getByRole("dialog", { name: "New tab" });
+  const { field, count } = findParts(overlay);
 
-  await expect(reloadedNewTab).toHaveAttribute("aria-pressed", "false");
+  await expect(field).toHaveValue("stand-in");
+  await expect(count).toHaveText(counted);
+  await expect(newTab).toHaveAttribute("aria-pressed", "false");
   await expect(card).toHaveCount(0);
-  expect(await overlayShown(app)).toBeFalsy();
-  await reloadedNewTab.click();
+  await newTab.click();
   await expect(card).toBeVisible();
   await overlay.keyboard.press("Escape");
   await expect(card).toHaveCount(0);
-  await expect.poll(() => overlayShown(app)).toBeFalsy();
+  await expect(count).toHaveText(counted);
+  await second.close();
 });
 
 test("Cmd or Ctrl+Shift+N in the page moves it; a click on its tab focuses that page and selects nothing; Cmd or Ctrl+Shift+M there moves it back, selected", async ({
@@ -962,38 +1011,6 @@ test("a restart opens the window again where it was, without taking the foregrou
   await expect.poll(() => firstWindowBounds(again)).toStrictEqual(stored);
   expect(await ownWindowPage(again)).toBe(standIn.calendarUrl);
   await findTitlebar(again);
-});
-
-test("with the shell's renderer gone and loaded again, the window's page keeps its state and its titlebar comes back", async ({
-  launchApp,
-  userDataDir,
-  standIn,
-}) => {
-  const { app, calendar } = await launch(launchApp, userDataDir, standIn);
-
-  await clickMenuItem(app, "tab.moveToNewWindow");
-  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
-
-  const first = await findTitlebar(app);
-
-  await mark(calendar);
-  await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0]?.webContents.forcefullyCrashRenderer();
-  });
-  await expect.poll(() => first.isClosed()).toBeTruthy();
-  await app.evaluate(({ BrowserWindow }) => {
-    BrowserWindow.getAllWindows()[0]?.webContents.reload();
-  });
-
-  const titlebar = await findTitlebar(app);
-
-  await expect(
-    titlebar
-      .getByRole("banner", { name: "Title bar" })
-      .getByText(CALENDAR_TITLE)
-  ).toBeVisible();
-  expect(await marked(calendar)).toBe(42);
-  expect(await ownWindowPage(app)).toBe(calendar.url());
 });
 
 test("Gmail, unpinned, moves to its own window and goes on counting and notifying its mail and opening and closing its pop-outs", async ({
