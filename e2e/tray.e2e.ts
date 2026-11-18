@@ -5,6 +5,7 @@ import { DEV_IDENTITY } from "#core/app-identity.ts";
 import {
   expect,
   findPage,
+  shownViews,
   test,
   writeSettings,
   writeState,
@@ -223,6 +224,52 @@ test("shows the total on the badge and the tray, clears both at zero, and jumps 
     })
   ).toHaveAttribute("aria-selected", "true");
   await expect.poll(() => windowVisible(app)).toBeTruthy();
+});
+
+test("the tray opens Gmail at its home in a profile where Gmail was closed", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      { id: "p0", name: "Home" },
+      {
+        id: "p1",
+        name: "Work",
+        tabs: [
+          {
+            id: "calendar",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: CALENDAR_TITLE,
+          },
+        ],
+        selectedTabId: "calendar",
+      },
+    ],
+    selectedProfileId: "p0",
+  });
+  await writeSettings(userDataDir, { tray: true });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+
+  await findPage(app, standIn.url);
+  await clickTrayItem(app, "Work");
+
+  await expect(profileTab(shell, "Work")).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  await expect(
+    shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { selected: true })
+  ).toHaveAccessibleName(STAND_IN_TITLE);
+  await expect
+    .poll(() => shownViews(app))
+    .toStrictEqual([{ url: standIn.url, partition: "persist:p1" }]);
 });
 
 test("closing the window with the tray shown hides it, and the tray's Show or a second launch brings it back", async ({

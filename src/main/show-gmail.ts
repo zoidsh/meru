@@ -10,6 +10,8 @@ export interface ShowGmailDeps {
   selectProfile: (profileId: string) => Promise<unknown>;
   /** Puts the tab back in place of the unified inbox, if it is open. */
   closeInbox: () => void;
+  /** Gmail's home, or the suite's stand-in's, where a closed Gmail opens. */
+  home: string;
   log: (message: string) => void;
 }
 
@@ -25,6 +27,7 @@ export const createShowGmail = ({
   selectTab,
   selectProfile,
   closeInbox,
+  home,
   log,
 }: ShowGmailDeps) => {
   const isListed = (profileId: string) =>
@@ -55,8 +58,9 @@ export const createShowGmail = ({
       return true;
     },
     /**
-     * Selects the profile's Gmail tab and then the profile, in that order so
-     * no view is made for the tab it had selected.
+     * Selects the profile's Gmail tab, or opens Gmail at its home where it
+     * was closed, and then the profile, in that order so no view is made for
+     * the tab it had selected.
      */
     jumpTo: async (profileId: string) => {
       const profile = state().profiles.find(
@@ -67,6 +71,8 @@ export const createShowGmail = ({
 
       if (gmailTab) {
         await selectTab({ profileId, tabId: gmailTab.id });
+      } else if (profile) {
+        await openInGmailTab(profileId, home);
       }
 
       await selectProfile(profileId);

@@ -34,6 +34,7 @@ const setup = ({ fails = false } = {}) => {
     closeInbox: () => {
       calls.push(["closeInbox"]);
     },
+    home: "https://mail.google.com/mail/u/0",
     log: (message) => {
       calls.push(["log", message]);
     },
@@ -42,6 +43,16 @@ const setup = ({ fails = false } = {}) => {
   return {
     show,
     calls,
+    closeGmail: (profileId: string) => {
+      state = {
+        ...state,
+        profiles: state.profiles.map((profile) =>
+          profile.id === profileId
+            ? { ...profile, tabs: [], selectedTabId: "" }
+            : profile
+        ),
+      };
+    },
     remove: (profileId: string) => {
       state = {
         ...state,
@@ -90,6 +101,19 @@ describe(createShowGmail, () => {
     expect(app.calls).toStrictEqual([
       ["selectTab", { profileId: "a", tabId: "gmail" }],
       ["selectProfile", "a"],
+      ["closeInbox"],
+    ]);
+  });
+
+  it("opens Gmail at its home in a profile where it was closed, before selecting the profile", async () => {
+    const app = setup();
+
+    app.closeGmail("b");
+    await app.show.jumpTo("b");
+
+    expect(app.calls).toStrictEqual([
+      ["open", "b", "https://mail.google.com/mail/u/0"],
+      ["selectProfile", "b"],
       ["closeInbox"],
     ]);
   });

@@ -520,6 +520,7 @@ const start = async () => {
       // oxlint-disable-next-line no-use-before-define -- the inbox opens messages through this
       inbox.setOpen(false);
     },
+    home: gmailHome,
     log: console.error,
   });
   const gmailPage = serveGmailPage({
