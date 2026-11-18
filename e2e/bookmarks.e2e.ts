@@ -358,6 +358,7 @@ test("New tab lists the apps, then the profile's bookmarks; typing filters both,
   await clickMenuItem(app, "app.open");
   await expect(field).toBeFocused();
   await expect(field).toHaveAttribute("placeholder", "Open app or bookmark");
+  await expect(card.getByRole("separator")).toHaveCount(1);
   await expect(apps.getByRole("option")).toHaveText(APP_NAMES);
   await expect(bookmarks.getByRole("option")).toHaveText([
     /^Week\s*Calendar$/u,
@@ -385,9 +386,11 @@ test("New tab lists the apps, then the profile's bookmarks; typing filters both,
     /^Files/u,
     /^Shared/u,
   ]);
+  await expect(card.getByRole("separator")).toHaveCount(1);
 
   await field.fill("WEEK");
   await expect(apps).toHaveCount(0);
+  await expect(card.getByRole("separator")).toHaveCount(0);
   await expect(card.getByText("Apps", { exact: true })).toHaveCount(0);
   await expect(options).toHaveText([/^Week/u]);
 
@@ -629,9 +632,12 @@ test("New tab with no bookmarks says so in its Bookmarks group, a line that is n
   await field.press("End");
   await expect(selected).toHaveText("Meet");
 
+  await expect(card.getByRole("separator")).toHaveCount(1);
+
   await field.fill("cal");
   await expect(bookmarks).toHaveCount(0);
   await expect(apps.getByRole("option")).toHaveText(["Calendar"]);
+  await expect(card.getByRole("separator")).toHaveCount(0);
 
   await field.fill("zz");
   await expect(card.getByText("No results.", { exact: true })).toBeVisible();

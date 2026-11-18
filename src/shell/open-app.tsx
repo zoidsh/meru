@@ -19,6 +19,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
   CommandShortcut,
 } from "#ui/command.tsx";
 import { Kbd } from "#ui/kbd.tsx";
@@ -63,6 +64,8 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
   // A line in place of the group's rows, which is no result: typing hides
   // it, as it hides a group with no match.
   const noBookmarksYet = bookmarks.length === 0 && query.trim() === "";
+  const appsShown = listed.apps.length > 0;
+  const bookmarksShown = listed.bookmarks.length > 0 || noBookmarksYet;
   const label = t({
     message: "New tab",
     comment:
@@ -168,7 +171,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
               No results.
             </Trans>
           </CommandEmpty>
-          {listed.apps.length > 0 && (
+          {appsShown && (
             <CommandGroup
               heading={t({
                 message: "Apps",
@@ -192,7 +195,12 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
               ))}
             </CommandGroup>
           )}
-          {(listed.bookmarks.length > 0 || noBookmarksYet) && (
+          {appsShown && bookmarksShown && (
+            // cmdk hides a separator while there is a search, which here
+            // filters nothing of its own.
+            <CommandSeparator alwaysRender className="my-1" />
+          )}
+          {bookmarksShown && (
             <CommandGroup
               heading={t({
                 message: "Bookmarks",
