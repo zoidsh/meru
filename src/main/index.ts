@@ -787,6 +787,7 @@ const start = async () => {
         shellState(
           profiles.get(),
           views.status,
+          views.frontAsleep(),
           overlays.current(),
           mail.mail,
           doNotDisturb.current(),

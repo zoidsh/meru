@@ -110,6 +110,65 @@ const countRenderers = (app: ElectronApplication) =>
 const sleepingPane = (shell: Page, title: string) =>
   shell.getByRole("region", { name: `${title} is sleeping` });
 
+/**
+ * Notes, from now on, whether the sleeping pane is ever drawn, however
+ * briefly; `seen` reads it.
+ */
+const watchForPane = async (shell: Page) => {
+  await shell.evaluate(() => {
+    Reflect.set(window, "paneSeen", false);
+    new MutationObserver(() => {
+      if (document.querySelector("[data-sleeping-tab]")) {
+        Reflect.set(window, "paneSeen", true);
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+
+  return () => shell.evaluate(() => Reflect.get(window, "paneSeen"));
+};
+
+const focusOnBody = (shell: Page) =>
+  shell.evaluate(() => document.activeElement === document.body);
+
+test("selecting a tab that is not loaded, by a click or Enter, loads it without the sleeping pane ever showing, focus staying off the page's body", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+
+  await choose(app, shell, STAND_IN_TITLE, "Sleep");
+  await expect(tab(shell, STAND_IN_TITLE)).toHaveCSS("opacity", "0.5");
+
+  const seen = await watchForPane(shell);
+
+  // Never loaded: Drive's pinned tile.
+  await tab(shell, DRIVE_TITLE).click();
+  await findPage(app, standIn.driveUrl);
+  await expect(tab(shell, DRIVE_TITLE)).toHaveCSS("opacity", "1");
+  await expect(tab(shell, DRIVE_TITLE)).toBeFocused();
+
+  // Put to sleep in the background, then chosen with Enter.
+  await tab(shell, STAND_IN_TITLE).focus();
+  await tab(shell, STAND_IN_TITLE).press("Enter");
+  await expect(tab(shell, STAND_IN_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect
+    .poll(() => readTabViews(app))
+    .toContainEqual({ url: standIn.url, visible: true });
+
+  // Back to Calendar, loaded, and to the profile's tab after a relayout.
+  await tab(shell, CALENDAR_TITLE).click();
+  await expect
+    .poll(() => readTabViews(app))
+    .toContainEqual({ url: standIn.calendarUrl, visible: true });
+
+  expect(await seen()).toBe(false);
+  expect(await focusOnBody(shell)).toBe(false);
+});
+
 test("Sleep closes a background tab's view and renderer and dims its tile, which says it sleeps, and a click wakes it where it was", async ({
   launchApp,
   standIn,
@@ -198,10 +257,25 @@ test("Sleep on the selected tab keeps it selected, with the sleeping pane in pla
       { url: nextWeek, visible: true },
     ]);
 
-  // The Tabs menu's Sleep Tab does the same, and Reload wakes it.
+  // The Tabs menu's Sleep Tab does the same, and Reload wakes it, from the
+  // menu or the titlebar, where Back and Forward stay disabled.
   await clickMenuItem(app, "tab.sleep");
   await expect(pane).toBeVisible();
   await clickMenuItem(app, "tab.reload");
+  await expect(pane).toHaveCount(0);
+  await expect
+    .poll(() => readTabViews(app))
+    .toContainEqual({ url: nextWeek, visible: true });
+
+  const bar = shell.getByRole("banner", { name: "Title bar" });
+  const reload = bar.getByRole("button", { name: "Reload" });
+
+  await clickMenuItem(app, "tab.sleep");
+  await expect(pane).toBeVisible();
+  await expect(reload).toBeEnabled();
+  await expect(bar.getByRole("button", { name: "Back" })).toBeDisabled();
+  await expect(bar.getByRole("button", { name: "Forward" })).toBeDisabled();
+  await reload.click();
   await expect(pane).toHaveCount(0);
   await expect
     .poll(() => readTabViews(app))

@@ -163,6 +163,8 @@ export const shellShortcuts = (
 export const shellState = (
   state: State,
   status: (key: TabKey) => TabStatus,
+  /** Whether the selected tab was put to sleep, and so has no page. */
+  selectedAsleep: boolean,
   overlay: Overlay | undefined,
   mail: (profileId: string) => Mail,
   doNotDisturb: DoNotDisturb | undefined,
@@ -189,6 +191,7 @@ export const shellState = (
     tabs: {
       profileId: profile.id,
       selectedTabId: profile.selectedTabId,
+      selectedAsleep,
       tabs: knownTabs(profile).map((tab) => ({
         id: tab.id,
         app: tab.app,

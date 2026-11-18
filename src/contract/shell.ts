@@ -157,6 +157,11 @@ export const SHELL_STATE = {
   tabs: z.object({
     profileId,
     selectedTabId: z.string(),
+    /**
+     * Whether the selected tab was put to sleep while selected, so the page
+     * area shows the sleeping pane; a tab selected while unloaded is loading.
+     */
+    selectedAsleep: z.boolean(),
     tabs: z.array(
       z.object({
         id: z.string(),

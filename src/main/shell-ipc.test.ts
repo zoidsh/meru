@@ -25,6 +25,7 @@ const asSender = (sender: number | IpcSender): IpcSender =>
 const TABS: ShellState["tabs"] = {
   profileId: "a",
   selectedTabId: "gmail",
+  selectedAsleep: false,
   tabs: [
     {
       id: "gmail",

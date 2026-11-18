@@ -292,6 +292,7 @@ describe(shellState, () => {
           ],
         },
         () => ({ kind: "live" }),
+        false,
         undefined,
         (profileId) =>
           profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL,
@@ -345,6 +346,7 @@ describe(shellState, () => {
         },
         ({ profileId, tabId }) =>
           statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
+        true,
         undefined,
         () => NO_MAIL,
         undefined,
@@ -355,6 +357,7 @@ describe(shellState, () => {
     ).toStrictEqual({
       profileId: "a",
       selectedTabId: "c1",
+      selectedAsleep: true,
       tabs: [
         {
           id: "gmail",
@@ -390,6 +393,7 @@ const overlaySlice = (open: Overlay | undefined) =>
   shellState(
     two,
     () => ({ kind: "live" }),
+    false,
     open,
     () => NO_MAIL,
     undefined,
@@ -478,6 +482,7 @@ const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
   shellState(
     two,
     () => ({ kind: "live" }),
+    false,
     undefined,
     () => NO_MAIL,
     doNotDisturb,

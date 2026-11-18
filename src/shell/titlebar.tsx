@@ -85,6 +85,9 @@ const NavigationButtons = ({
 }) => {
   const { t } = useLingui();
   const navigation = useShellState("navigation") ?? null;
+  const tabs = useShellState("tabs");
+  const inboxOpen = useShellState("inbox")?.open ?? false;
+  const reloadWakes = (tabs?.selectedAsleep ?? false) && !inboxOpen;
   const loading = navigation?.loading ?? false;
   const reloadLabel = loading
     ? t({
@@ -131,7 +134,8 @@ const NavigationButtons = ({
       <TitlebarButton
         label={reloadLabel}
         shortcut={loading ? undefined : shortcuts?.["tab.reload"]}
-        disabled={navigation === null}
+        // Reload wakes a sleeping selected tab, which has no page.
+        disabled={navigation === null && !reloadWakes}
         onClick={() => {
           shellCalls().navigate({ action: loading ? "stop" : "reload" });
         }}

@@ -1,13 +1,10 @@
 import type { ShellState } from "#contract/shell.ts";
 
 /**
- * The selected tab when it sleeps. Selecting a tab loads it, so only one put
- * to sleep while selected stays selected with no page.
+ * The selected tab while it was put to sleep selected, which main says
+ * apart from a tab selected while unloaded, which is about to load.
  */
-export const sleepingSelectedTab = (tabs: ShellState["tabs"]) => {
-  const tab = tabs.tabs.find(
-    (candidate) => candidate.id === tabs.selectedTabId
-  );
-
-  return tab?.status.kind === "unloaded" ? tab : undefined;
-};
+export const sleepingSelectedTab = (tabs: ShellState["tabs"]) =>
+  tabs.selectedAsleep
+    ? tabs.tabs.find((candidate) => candidate.id === tabs.selectedTabId)
+    : undefined;
