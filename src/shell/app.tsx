@@ -34,7 +34,10 @@ const Page = ({ tabs, radius }: { tabs: Tabs | undefined; radius: number }) => {
       {tabs?.tabs.length === 0 && <NothingOpen />}
       {tabs && tabs.tabs.length > 0 && (
         <>
-          <TabProblem tabs={tabs} />
+          <TabProblem
+            profileId={tabs.profileId}
+            tab={tabs.tabs.find(({ id }) => id === tabs.selectedTabId)}
+          />
           {asleep && (
             <SleepingTab profileId={tabs.profileId} tab={asleep} selected />
           )}
@@ -82,7 +85,7 @@ const Panes = ({
               "after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-foreground/24 after:ring-inset dark:after:ring-foreground/26"
           )}
         >
-          <TabProblem tabs={tabs} tabId={pane.tabId} />
+          <TabProblem profileId={tabs.profileId} tab={tab} />
           {tab && pane.asleep && (
             <SleepingTab
               profileId={tabs.profileId}

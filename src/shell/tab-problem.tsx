@@ -18,21 +18,19 @@ const isProblem = (status: ShellTab["status"]): status is Problem =>
   status.kind === "failed" || status.kind === "crashed";
 
 /**
- * Where the tab's view would be, the selected tab's or a pane's, which is
- * hidden while its page failed or crashed, so this is what shows. Its
- * heading is also said by a screen reader as it appears, and not again while
- * retries come and go.
+ * Where the tab's view would be, the selected tab's, a pane's or a tab's own
+ * window's, which is hidden while its page failed or crashed, so this is what
+ * shows. Its heading is also said by a screen reader as it appears, and not
+ * again while retries come and go.
  */
 export const TabProblem = ({
-  tabs,
-  tabId,
+  profileId,
+  tab,
 }: {
-  tabs: ShellState["tabs"];
-  tabId?: string;
+  profileId: string;
+  tab: Pick<ShellTab, "id" | "app" | "status"> | undefined;
 }) => {
   const { t } = useLingui();
-  const shown = tabId ?? tabs.selectedTabId;
-  const tab = tabs.tabs.find((candidate) => candidate.id === shown);
   const status = tab && isProblem(tab.status) ? tab.status : undefined;
   const name = tab ? appName(tab.app) : "";
   let heading: string | undefined;
@@ -62,7 +60,7 @@ export const TabProblem = ({
       <output className="sr-only">{heading}</output>
       {tab && status && heading && (
         <ProblemPanel
-          tabKey={{ profileId: tabs.profileId, tabId: tab.id }}
+          tabKey={{ profileId, tabId: tab.id }}
           name={name}
           status={status}
           heading={heading}

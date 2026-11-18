@@ -21,6 +21,7 @@ import {
   subscribeShellDocuments,
 } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
+import { TabProblem } from "./tab-problem.tsx";
 import { tabTitle } from "./tab-strip.tsx";
 import { NavigationButtons } from "./titlebar.tsx";
 
@@ -102,8 +103,13 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
         <div
           data-page-area
           style={{ borderRadius: OWN_WINDOW_RADIUS }}
-          className="flex-1 bg-background"
-        />
+          className="flex-1 overflow-hidden bg-background"
+        >
+          <TabProblem
+            profileId={own.profileId}
+            tab={{ id: own.tabId, app: own.app, status: own.status }}
+          />
+        </div>
       </div>
     </div>
   );
