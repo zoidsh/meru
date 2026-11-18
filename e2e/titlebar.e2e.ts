@@ -158,7 +158,7 @@ test("each control's title names it and its shortcut, a narrow tab's names the t
   await expect(reload).toHaveAttribute("title", reloadTitle);
   await expect(bar.getByRole("button", { name: "Sidebar" })).toHaveAttribute(
     "title",
-    `Hide sidebar (${keys("⌘S", "Ctrl+S")})`
+    `Hide sidebar (${keys("⌃⌘L", "Ctrl+Alt+D")})`
   );
   // The stand-in signs in no session of Work's, so its title says so too.
   await expect(

@@ -1,5 +1,6 @@
 import { describe, expect, it, onTestFinished } from "vitest";
 
+import { matchesAccelerator } from "#core/accelerator.ts";
 import { savedSearches } from "#core/saved-searches.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -134,7 +135,7 @@ describe("the command registry", () => {
     }
   });
 
-  it("shows or hides the sidebar on Cmd or Ctrl+S, checked while it shows", async () => {
+  it("shows or hides the sidebar on Ctrl+Cmd+L, or Ctrl+Alt+D, checked while it shows", async () => {
     const app = setup();
 
     expect(app.isChecked("sidebar.toggle")).toBeFalsy();
@@ -143,11 +144,39 @@ describe("the command registry", () => {
 
     expect(app.isChecked("sidebar.toggle")).toBeTruthy();
     expect(commandOf("sidebar.toggle").shortcut).toStrictEqual({
-      darwin: "CommandOrControl+S",
-      win32: "CommandOrControl+S",
-      linux: "CommandOrControl+S",
+      darwin: "Control+Command+L",
+      win32: "Control+Alt+D",
+      linux: "Control+Alt+D",
     });
   });
+
+  it.each(["darwin", "win32", "linux"] as const)(
+    "leaves Cmd or Ctrl+S to the page on %s, where Google's apps save with it",
+    (platform) => {
+      const isMacOS = platform === "darwin";
+      const save = {
+        type: "keyDown",
+        key: "s",
+        code: "KeyS",
+        control: !isMacOS,
+        shift: false,
+        alt: false,
+        meta: isMacOS,
+        isAutoRepeat: false,
+      };
+
+      expect(
+        COMMANDS.filter(({ shortcut }) => {
+          const accelerator = shortcut?.[platform];
+
+          return (
+            accelerator !== undefined &&
+            matchesAccelerator(accelerator, save, isMacOS)
+          );
+        }).map(({ id }) => id)
+      ).toStrictEqual([]);
+    }
+  );
 
   it("closes the selected tab, but never Gmail's", async () => {
     const app = setup();

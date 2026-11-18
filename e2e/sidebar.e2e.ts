@@ -87,3 +87,62 @@ test("the sidebar is hidden for one tab, narrow for two apps and wide for two ta
   await toggle.click();
   await expectSidebar(app, shell, "wide", 224);
 });
+
+/** Presses `keyCode` with `modifiers` in the page at `url`, as the system hands keys to it. */
+const pressInPage = (
+  app: ElectronApplication,
+  url: string,
+  keyCode: string,
+  modifiers: ("meta" | "control" | "alt")[]
+) =>
+  app.evaluate(
+    ({ webContents }, request) => {
+      const page = webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.getURL().startsWith(request.url));
+
+      for (const type of ["keyDown", "keyUp"] as const) {
+        page?.sendInputEvent({
+          type,
+          keyCode: request.keyCode,
+          modifiers: request.modifiers,
+        });
+      }
+    },
+    { url, keyCode, modifiers }
+  );
+
+test("Cmd or Ctrl+S reaches the page, where Google's apps save, and Ctrl+Cmd+L, or Ctrl+Alt+D, shows the sidebar", async ({
+  app,
+  shell,
+  standIn,
+}) => {
+  const isMacOS = process.platform === "darwin";
+  const gmail = await findPage(app, standIn.url);
+
+  await gmail.evaluate(() => {
+    const seen: string[] = [];
+
+    Reflect.set(globalThis, "seenKeys", seen);
+    document.addEventListener("keydown", (event) => {
+      if (event.metaKey || event.ctrlKey) {
+        seen.push(event.key.toLowerCase());
+      }
+    });
+  });
+  await expectSidebar(app, shell, "hidden", 8);
+
+  await pressInPage(app, standIn.url, "S", [isMacOS ? "meta" : "control"]);
+  await expect
+    .poll(() => gmail.evaluate(() => Reflect.get(globalThis, "seenKeys")))
+    .toContain("s");
+  await expectSidebar(app, shell, "hidden", 8);
+
+  await pressInPage(
+    app,
+    standIn.url,
+    isMacOS ? "L" : "D",
+    isMacOS ? ["control", "meta"] : ["control", "alt"]
+  );
+  await expectSidebar(app, shell, "narrow", 64);
+});
