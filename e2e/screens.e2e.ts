@@ -1061,6 +1061,59 @@ test("the toast refusing a split in a small window", async ({
   }
 });
 
+test("the bookmark toast with a 280-character title, cut to one line", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, withBookmarks(standIn));
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const overlay = await findOverlayDocument(app);
+  const calendar = await findPage(app, standIn.calendarUrl);
+  const title = "Quarterly planning review ".repeat(11).slice(0, 280);
+
+  expect(title).toHaveLength(280);
+  await calendar.evaluate(
+    ({ next }) => {
+      history.pushState({}, "", "#long");
+      document.title = next;
+    },
+    { next: title }
+  );
+
+  for (const theme of THEMES) {
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await emulateTheme(app, theme);
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await app.evaluate(({ Menu, BrowserWindow }) => {
+      Menu.getApplicationMenu()
+        ?.getMenuItemById("tab.bookmark")
+        ?.click(undefined, BrowserWindow.getAllWindows()[0]);
+    });
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await expect(
+      overlay.getByText(`Bookmarked ${title}`, { exact: true })
+    ).toBeVisible();
+    // Lets the toast slide in.
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await delay(600);
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await shootWindow(app, shell, shotPath("toast-bookmarked-long", theme));
+    // Removed again, so the next theme's press bookmarks it anew.
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await app.evaluate(({ Menu, BrowserWindow }) => {
+      Menu.getApplicationMenu()
+        ?.getMenuItemById("tab.bookmark")
+        ?.click(undefined, BrowserWindow.getAllWindows()[0]);
+    });
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await expect(
+      overlay.getByText("Bookmark removed", { exact: true })
+    ).toBeVisible();
+  }
+});
+
 /** Calendar in its own window, Drive selected, in each named profile. */
 const withOwnWindow = (standIn: StandIn, names: string[]) => ({
   profiles: names.map((name, index) => ({
