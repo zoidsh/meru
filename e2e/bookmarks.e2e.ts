@@ -364,7 +364,10 @@ test("New tab lists the apps, then the profile's bookmarks; typing filters both,
     /^Shared\s*Drive$/u,
   ]);
 
-  // Down past the last app highlights the first bookmark, its heading shown.
+  // Home first, since the pointer resting over the card may have
+  // highlighted a row; then down past the last app to the first bookmark.
+  await field.press("Home");
+  await expect(selected).toHaveText("Calendar");
   for (const _name of APP_NAMES) {
     // oxlint-disable-next-line no-await-in-loop -- one key at a time
     await field.press("ArrowDown");
