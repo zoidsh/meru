@@ -89,6 +89,16 @@ msgstr "{productName} could not start"
 msgid "{title} · sign in required"
 msgstr "{title} · sign in required"
 
+#. Said by screen readers when a tab cannot move up with the keyboard, being first among the pinned tabs or the other tabs; {title} is the tab's title
+#: src/shell/tab-strip.tsx
+msgid "{title}, already first"
+msgstr "{title}, already first"
+
+#. Said by screen readers when a tab cannot move down with the keyboard, being last among the pinned tabs or the other tabs; {title} is the tab's title
+#: src/shell/tab-strip.tsx
+msgid "{title}, already last"
+msgstr "{title}, already last"
+
 #. Said by screen readers after a tab is moved with the keyboard; {title} is the tab's title, {position} its place among the pinned tabs or the other tabs, and {count} how many there are
 #: src/shell/tab-strip.tsx
 msgid "{title}, position {position} of {count}"

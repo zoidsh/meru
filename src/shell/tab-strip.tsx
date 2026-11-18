@@ -209,8 +209,8 @@ interface TabButtonProps {
   onPointerDown: (event: PointerEvent<HTMLElement>) => void;
   /** Whether a click ends a drag rather than selecting. */
   isDragClick: () => boolean;
-  /** Moves the tab a place back or on in its area. */
-  onMoveBy: (step: number) => void;
+  /** Moves the tab a place back or on in its area; says whether it could. */
+  onMoveBy: (step: number) => boolean;
   /** Left or Right on a wide pinned tile, toward the other tile of its row. */
   onSideways?:
     | ((tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => void)
@@ -277,9 +277,10 @@ const TabButton = ({
       onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
         const step = moveStep(event, cell);
 
-        if (step !== undefined) {
+        // A tab at its area's end leaves the key alone: Alt+Left and
+        // Alt+Right are also Back and Forward on Windows and Linux.
+        if (step !== undefined && onMoveBy(step)) {
           event.preventDefault();
-          onMoveBy(step);
 
           return;
         }
@@ -294,6 +295,10 @@ const TabButton = ({
 
         if (
           onSideways &&
+          !event.altKey &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey &&
           (event.key === "ArrowLeft" || event.key === "ArrowRight")
         ) {
           event.preventDefault();
@@ -490,10 +495,28 @@ export const Sidebar = ({
     const to = area.indexOf(tab) + step;
 
     if (to < 0 || to >= area.length) {
-      return;
+      const title = tabTitle(tab);
+
+      announcement.current?.replaceChildren(
+        step < 0
+          ? t({
+              message: `${title}, already first`,
+              comment:
+                "Said by screen readers when a tab cannot move up with the keyboard, being first among the pinned tabs or the other tabs; {title} is the tab's title",
+            })
+          : t({
+              message: `${title}, already last`,
+              comment:
+                "Said by screen readers when a tab cannot move down with the keyboard, being last among the pinned tabs or the other tabs; {title} is the tab's title",
+            })
+      );
+
+      return false;
     }
 
     move(tab.id, area[step < 0 ? to : to + 1]?.id, true);
+
+    return true;
   };
 
   const drag = useTabDrag({
@@ -534,9 +557,7 @@ export const Sidebar = ({
         drag.onPointerDown(tab.id, event);
       }}
       isDragClick={drag.isDragClick}
-      onMoveBy={(step) => {
-        moveBy(tab, step);
-      }}
+      onMoveBy={(step) => moveBy(tab, step)}
       onSideways={wide && tab.pinned ? sideways : undefined}
     />
   );
