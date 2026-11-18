@@ -18,7 +18,7 @@ How to work:
 - Build the simplest thing that meets the spec. Prefer what a tool or library already does to code of our own, and fewer files and concepts to more. When the spec itself asks for something a simpler design would cover, say so to the architect before building it.
 - Stay inside the files and packages the spec puts in scope. Something outside it that needs changing is a finding for your report, not a change to make.
 - v3 lives on the `main` branch and is a template for behaviour only. Read it with `git show main:<path>` when the spec points at it. Never copy its code: write the logic again in this codebase's shape. Data the spec lists is copied as it is.
-- Write the tests with the code. A test proves behaviour a user or a caller depends on; do not test that a mock was called or that a constant equals itself.
+- Write the tests with the code. A test proves behaviour a user or a caller depends on; do not test that a mock was called or that a constant equals itself. Use no mocks unless nothing else would do, as CLAUDE.md says: a hand-written fake of a `platform` interface is the seam.
 - Look up the current documentation of any library or tool before using an API you are not certain of. These tools move fast and what you remember may be a version behind.
 - Every user-visible string is wrapped for translation, and every control has an accessible role and name.
 - Run the checks `CLAUDE.md` lists and the spec's proof before you commit. A failing check is yours to fix, never to skip or silence, and a commit hook is never bypassed.

@@ -18,6 +18,8 @@ Setup is `mise install`, then `pnpm install --frozen-lockfile`; after changing a
 
 Run `pnpm check` and `pnpm test` before committing, and `pnpm test:e2e` when a change shows in a window.
 
+Tests use no mocks unless nothing else would do: no `vi.mock`, and no `vi.fn` or `vi.spyOn` standing in for a module of ours. Pure logic is tested directly, and a feature against a hand-written fake of the `platform` interface it takes; code that seems to need a mock takes that interface as an argument instead. Fake timers are fine. A mock that is truly needed carries a comment saying why.
+
 ## Layout
 
 One package; each area is a folder under `src` with its tests beside the code: `core` (pure logic, no Electron), `contract` (the IPC calls and state each renderer may use, importing only `core`), `platform` (thin adapters over Electron, each behind an exported interface so features test against fakes), `main` (entry and composition root), `preload` (`shell` for the shell, `gmail` for Gmail's page, which `pnpm build` holds to a byte budget and lint keeps free of `zod`), `shell` (the React and Tailwind renderer), `i18n` (languages and catalogs, nothing of Electron) and `ui` (shadcn components and `styles.css`). An import across areas uses the subpath alias, `#core/app-url.ts`; one within an area is relative; both keep the `.ts` extension. `oxlint.config.ts` enforces the boundaries.

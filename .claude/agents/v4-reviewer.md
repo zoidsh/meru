@@ -16,7 +16,7 @@ What to do:
 1. Run the checks `CLAUDE.md` lists and the spec's proof yourself, and keep the output.
 2. Read every changed line. Ask of each part: does it do what the spec says, does it fit the architecture doc, and what input, order of events or failure would break it?
 3. Try to break it. Write a throwaway test or script for a case you suspect and run it. Look hardest at teardown (does anything outlive its scope), error paths (what state is left after a throw), boundaries between packages (does `core` import Electron, does a surface reach a call it does not own), and anything the tests do not cover.
-4. Read the tests as critically as the code. A test that cannot fail, or that proves a mock was called, is a finding.
+4. Read the tests as critically as the code. A test that cannot fail, or that proves a mock was called, is a finding. So is a `vi.mock`, `vi.fn` or `vi.spyOn` where a fake of a `platform` interface would do.
 5. Look for what could be simpler: code that a tool or library already provides, machinery built for a case that cannot happen, an abstraction with one user, a guard that duplicates another. Something that works but is more than the problem needs is a finding, and when you report a defect, prefer a fix that removes code to one that adds it.
 6. Check the rules that are held by review alone: strings wrapped for translation, every control with an accessible role and name, no v3 code copied, comments that say only what the code cannot.
 
