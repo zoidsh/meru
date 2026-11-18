@@ -1,5 +1,6 @@
 import type { BaseWindow, BaseWindowConstructorOptions } from "electron";
 
+import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
 
 import { viewHost } from "./view-host.ts";
@@ -16,6 +17,21 @@ export interface BaseWindowOptions {
   backgroundColor: string;
 }
 
+/**
+ * The macOS traffic lights' height, as measured from a capture on macOS 27;
+ * Electron offers no way to read it, and it differs between versions.
+ */
+const TRAFFIC_LIGHTS_HEIGHT = 14;
+
+/**
+ * Where the traffic lights go over a page-drawn titlebar: centred in its
+ * height, level with its buttons, which `hiddenInset` alone sets 2 higher.
+ */
+const TRAFFIC_LIGHTS = {
+  x: 12,
+  y: (TITLEBAR_HEIGHT - TRAFFIC_LIGHTS_HEIGHT) / 2,
+};
+
 /** Electron's options for one, hidden until shown. */
 export const baseWindowOptions = (
   options: BaseWindowOptions
@@ -26,6 +42,9 @@ export const baseWindowOptions = (
   minHeight: options.minimumSize.height,
   show: false,
   titleBarStyle: options.titleBarStyle,
+  ...(options.titleBarStyle === "hiddenInset" && {
+    trafficLightPosition: TRAFFIC_LIGHTS,
+  }),
   backgroundColor: options.backgroundColor,
   // Windows and Linux show the application menu's bar only while Alt is held
   // or after it is pressed, so the content keeps its height.
