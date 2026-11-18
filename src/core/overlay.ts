@@ -11,7 +11,11 @@ import { findTab } from "./tabs.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** The short notices a toast gives, by name. */
-export const TOAST_MESSAGES = ["no-room"] as const;
+export const TOAST_MESSAGES = [
+  "no-room",
+  "bookmarked",
+  "bookmark-removed",
+] as const;
 
 export type ToastMessage = (typeof TOAST_MESSAGES)[number];
 
@@ -23,8 +27,13 @@ export type Overlay =
    * split, whose pick goes in a new pane that way of the focused one.
    */
   | { kind: "open-app"; profileId: string; split?: PaneDirection }
-  /** A short notice at the page area's foot, which takes no focus. */
-  | { kind: "toast"; message: ToastMessage }
+  /**
+   * A short notice at the page area's foot, which takes no focus; `title`
+   * names the page a bookmark notice is about.
+   */
+  | { kind: "toast"; message: ToastMessage; title?: string }
+  /** The profile's bookmarks, to open or remove. */
+  | { kind: "bookmarks"; profileId: string }
   /**
    * What a tab dragged over the page area would do there, lit up over the
    * pages; it takes no focus, and the drag in the shell keeps the pointer.
@@ -97,6 +106,9 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
   switch (overlay.kind) {
     case "inbox": {
       return "wide";
+    }
+    case "bookmarks": {
+      return "medium";
     }
     default: {
       return "narrow";

@@ -115,6 +115,8 @@ export interface Profile {
   tabbedInbox?: unknown;
   /** The profile's saved searches; read through `savedSearches`. */
   savedSearches?: unknown;
+  /** The profile's bookmarks; read through `bookmarks`. */
+  bookmarks?: unknown;
   /** `true` while the profile is put to sleep; read through `isAsleep`. */
   asleep?: unknown;
   /**
