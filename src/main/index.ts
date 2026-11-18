@@ -70,6 +70,7 @@ import { zoomFocused } from "#platform/zoom.ts";
 
 import { createApplicationMenu } from "./application-menu.ts";
 import { createUnreadBadge } from "./badge.ts";
+import { createBookmarks } from "./bookmarks.ts";
 import { createCatchUp } from "./catch-up.ts";
 import { COMMANDS } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
@@ -868,6 +869,22 @@ const start = async () => {
     log: console.error,
   });
 
+  const bookmarks = createBookmarks({
+    apps,
+    state: profiles.get,
+    overlays,
+    page: (key) => ({
+      live: views.status(key).kind === "live",
+      loading: views.navigation(key)?.loading ?? false,
+    }),
+    toggle: profiles.toggleBookmark,
+    remove: profiles.removeBookmark,
+    selectTab: views.select,
+    showOwnWindow,
+    openTab: views.open,
+    log: console.error,
+  });
+
   if (gmail && mailActions) {
     const mailNotifications = createMailNotifications({
       // The suite's build captures every notification, so a test never puts
@@ -1007,6 +1024,8 @@ const start = async () => {
             ? views.findable() !== undefined && !coversPage(overlays.current())
             : views.ownWindowFocuser(ownWindow) !== undefined,
         canFindAgain: find.canGoOn(ownWindow),
+        bookmarked: bookmarks.acting(ownWindow),
+        bookmarksOpen: bookmarks.isOpen(),
       };
     },
     actions: {
@@ -1070,6 +1089,8 @@ const start = async () => {
       removeSavedSearch: profiles.removeSavedSearch,
       openFind: find.open,
       findAgain: find.again,
+      toggleBookmark: bookmarks.toggle,
+      setBookmarksOpen: bookmarks.setOpen,
     },
     locale: () => i18n.locale,
     setMenu: setApplicationMenu,
@@ -1164,6 +1185,7 @@ const start = async () => {
       },
       inbox,
       openApp,
+      bookmarks,
       tabMenu,
       panes: paneResize,
       pageSize: () =>
@@ -1187,6 +1209,8 @@ const start = async () => {
             panes: views.panes(),
             handles: views.handles(),
             find: find.current(),
+            bookmarked: bookmarks.bookmarked,
+            bookmarks: bookmarks.rows,
           },
           overlays.current(),
           mail.mail,
@@ -1210,6 +1234,7 @@ const start = async () => {
                       title: tab.title,
                       status: shellTabStatus(views.status(key)),
                       navigation,
+                      bookmarked: bookmarks.bookmarked(key) ?? null,
                       find: bar
                         ? {
                             term: bar.term,

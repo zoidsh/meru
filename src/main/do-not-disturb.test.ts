@@ -207,6 +207,8 @@ const labels = (context: Partial<CommandContext>) =>
       selectedTabAsleep: false,
       findable: false,
       canFindAgain: false,
+      bookmarked: undefined,
+      bookmarksOpen: false,
       ...context,
     },
     "en-GB",

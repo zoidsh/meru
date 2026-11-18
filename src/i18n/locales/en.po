@@ -227,6 +227,17 @@ msgstr "Below the focused pane"
 msgid "Beside the focused pane"
 msgstr "Beside the focused pane"
 
+#. Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile
+#. Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile
+#: src/main/commands.ts
+msgid "Bookmark Tab"
+msgstr "Bookmark Tab"
+
+#. Menu item in the Tabs menu that lists the selected profile's bookmarks over the page
+#: src/main/commands.ts
+msgid "Bookmarks…"
+msgstr "Bookmarks…"
+
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
 msgid "Bring All to Front"
@@ -728,6 +739,11 @@ msgstr "Reload"
 #: src/main/profile-copy.ts
 msgid "Remove {name}?"
 msgstr "Remove {name}?"
+
+#. Menu item in the Tabs menu, in place of Bookmark Tab while the selected tab's page is bookmarked
+#: src/main/commands.ts
+msgid "Remove Bookmark"
+msgstr "Remove Bookmark"
 
 #. Button in the dialog that confirms removing a profile
 #: src/main/profile-copy.ts

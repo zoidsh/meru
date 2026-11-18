@@ -81,6 +81,15 @@ export interface CommandContext {
   findable: boolean;
   /** Whether Find Next and Previous have a term to go on with on that page. */
   canFindAgain: boolean;
+  /**
+   * Whether the page Bookmark Tab acts on is bookmarked: the page of the tab
+   * whose own window has focus, else the selected tab's, the focused pane's
+   * in a split, with no card or menu over it. `undefined` while it cannot be
+   * bookmarked, as a Gmail, sleeping, loading or failed page.
+   */
+  bookmarked: boolean | undefined;
+  /** Whether the Bookmarks overlay is open over the page. */
+  bookmarksOpen: boolean;
 }
 
 /** What commands do, each through the module that owns it. */
@@ -137,6 +146,13 @@ export interface CommandActions {
   openFind: (key?: TabKey) => void;
   /** Goes to the next or previous match, opening the bar if it is closed. */
   findAgain: (forward: boolean, key?: TabKey) => void;
+  /**
+   * Bookmark Tab or Remove Bookmark on the tab's page; with `announce`, a
+   * toast says which.
+   */
+  toggleBookmark: (key: TabKey, announce: boolean) => Promise<unknown>;
+  /** Opens the Bookmarks overlay over the selected profile, or closes it. */
+  setBookmarksOpen: (open: boolean) => void;
 }
 
 export interface Command {
@@ -517,6 +533,59 @@ export const COMMANDS: readonly Command[] = [
     // A second time closes it, as a second click on its button does.
     run: ({ openAppOpen }, { setOpenAppOpen }) => {
       setOpenAppOpen(!openAppOpen);
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.bookmark",
+    inOwnWindow: true,
+    title: () =>
+      t({
+        message: "Bookmark Tab",
+        comment:
+          "Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile",
+      }),
+    label: ({ bookmarked }) =>
+      bookmarked === true
+        ? t({
+            message: "Remove Bookmark",
+            comment:
+              "Menu item in the Tabs menu, in place of Bookmark Tab while the selected tab's page is bookmarked",
+          })
+        : t({
+            message: "Bookmark Tab",
+            comment:
+              "Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile",
+          }),
+    shortcut: {
+      darwin: "CommandOrControl+D",
+      win32: "CommandOrControl+D",
+      linux: "CommandOrControl+D",
+    },
+    isAvailable: ({ bookmarked }) => bookmarked !== undefined,
+    once: true,
+    // A tab's own window shows its star, so only the main window announces it.
+    run: (context, { toggleBookmark }) =>
+      toggleBookmark(actingTab(context), context.ownWindow === undefined),
+  },
+  {
+    id: "bookmarks.toggle",
+    title: () =>
+      t({
+        message: "Bookmarks…",
+        comment:
+          "Menu item in the Tabs menu that lists the selected profile's bookmarks over the page",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+Alt+B",
+      win32: "CommandOrControl+Alt+B",
+      linux: "CommandOrControl+Alt+B",
+    },
+    once: true,
+    // A second time closes it, as a second click on its button does.
+    run: ({ bookmarksOpen }, { setBookmarksOpen }) => {
+      setBookmarksOpen(!bookmarksOpen);
 
       return Promise.resolve();
     },

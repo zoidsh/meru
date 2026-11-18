@@ -37,6 +37,7 @@ const TABS: ShellState["tabs"] = {
       pinned: true,
       ownWindow: false,
       status: { kind: "live" },
+      bookmarked: null,
     },
   ],
 };
@@ -247,6 +248,26 @@ const setup = () => {
     },
     toggleOpenApp: (request) => {
       calls.push(["toggleOpenApp", request]);
+
+      return Promise.resolve();
+    },
+    toggleBookmarks: (request) => {
+      calls.push(["toggleBookmarks", request]);
+
+      return Promise.resolve();
+    },
+    openBookmark: (request) => {
+      calls.push(["openBookmark", request]);
+
+      return Promise.resolve();
+    },
+    removeBookmark: (request) => {
+      calls.push(["removeBookmark", request]);
+
+      return Promise.resolve();
+    },
+    toggleTabBookmark: (request) => {
+      calls.push(["toggleTabBookmark", request]);
 
       return Promise.resolve();
     },

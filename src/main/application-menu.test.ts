@@ -29,6 +29,8 @@ const contextOf = (): CommandContext => ({
   selectedTabAsleep: false,
   findable: false,
   canFindAgain: false,
+  bookmarked: undefined,
+  bookmarksOpen: false,
 });
 
 const template = (platform: Platform, context = contextOf()) =>
@@ -243,6 +245,8 @@ describe(buildMenuTemplate, () => {
         .map(({ id, label, accelerator }) => [id, label, accelerator])
     ).toStrictEqual([
       ["app.open", "Open App…", "CommandOrControl+T"],
+      ["tab.bookmark", "Bookmark Tab", "CommandOrControl+D"],
+      ["bookmarks.toggle", "Bookmarks…", "CommandOrControl+Alt+B"],
       ["tab.next", expect.any(String), expect.any(String)],
       ["tab.previous", expect.any(String), expect.any(String)],
       ["tab.pinned.1", "Gmail", "Control+Shift+1"],
@@ -396,6 +400,8 @@ const setup = () => {
       selectedTabAsleep: false,
       findable: false,
       canFindAgain: false,
+      bookmarked: undefined,
+      bookmarksOpen: false,
     }),
     actions,
     locale: () => "en",

@@ -160,6 +160,23 @@ const setup = ({
         return Promise.resolve();
       },
     },
+    bookmarks: {
+      choose: (id) => {
+        calls.push(["openBookmark", id]);
+
+        return Promise.resolve();
+      },
+      remove: (id) => {
+        calls.push(["removeBookmark", id]);
+
+        return Promise.resolve();
+      },
+      toggle: (key, announce) => {
+        calls.push(["toggleBookmark", key, announce]);
+
+        return Promise.resolve();
+      },
+    },
     tabMenu: {
       open: (request) => {
         calls.push(["openTabMenu", request]);
@@ -664,7 +681,12 @@ describe(shellState, () => {
         },
         ({ profileId, tabId }) =>
           statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
-        { selectedAsleep: true, panes: null, handles: [] },
+        {
+          selectedAsleep: true,
+          panes: null,
+          handles: [],
+          bookmarked: ({ tabId }) => (tabId === "c1" ? true : undefined),
+        },
         undefined,
         () => NO_MAIL,
         undefined,
@@ -684,6 +706,7 @@ describe(shellState, () => {
           pinned: true,
           ownWindow: false,
           status: { kind: "unloaded" },
+          bookmarked: null,
         },
         {
           id: "c1",
@@ -696,6 +719,7 @@ describe(shellState, () => {
             reason: "ERR_INTERNET_DISCONNECTED",
             retrying: false,
           },
+          bookmarked: true,
         },
         {
           id: "d1",
@@ -704,6 +728,7 @@ describe(shellState, () => {
           pinned: false,
           ownWindow: false,
           status: { kind: "crashed" },
+          bookmarked: null,
         },
       ],
       panes: null,
@@ -739,6 +764,44 @@ const overlaySlice = (open: Overlay | undefined) =>
 describe("the overlay slice", () => {
   it("is none while nothing is open", () => {
     expect(overlaySlice(undefined)).toStrictEqual({ kind: "none" });
+  });
+
+  it("lists the Bookmarks overlay's profile's rows, and names the page a bookmark toast tells of", () => {
+    const row = {
+      id: "b1",
+      title: "Week",
+      app: "calendar" as const,
+      appName: "Calendar",
+    };
+    const slice = (open: Overlay) =>
+      shellState(
+        two,
+        () => ({ kind: "live" }),
+        {
+          selectedAsleep: false,
+          panes: null,
+          handles: [],
+          bookmarks: (profileId) => (profileId === "b" ? [row] : []),
+        },
+        open,
+        () => NO_MAIL,
+        undefined,
+        CLOSED_INBOX,
+        CHROME,
+        APPS
+      ).overlay;
+
+    expect([
+      slice({ kind: "bookmarks", profileId: "b" }),
+      slice({ kind: "bookmarks", profileId: "gone" }),
+      slice({ kind: "toast", message: "bookmarked", title: "Week" }),
+      slice({ kind: "toast", message: "bookmark-removed" }),
+    ]).toStrictEqual([
+      { kind: "bookmarks", profileId: "b", bookmarks: [row] },
+      { kind: "none" },
+      { kind: "toast", message: "bookmarked", title: "Week" },
+      { kind: "toast", message: "bookmark-removed", title: null },
+    ]);
   });
 
   it("names the profile being renamed as shown, Default translated", () => {
@@ -867,6 +930,43 @@ describe("Open app in the shell", () => {
     expect([shell.ran, shell.calls]).toStrictEqual([
       ["app.open"],
       [["openApp", "drive"]],
+    ]);
+  });
+
+  it("hands Bookmarks' rows to the bookmarks, and a row's bookmark button too, announced only in the main window", async () => {
+    const shell = setup({
+      state: {
+        ...two,
+        profiles: [
+          {
+            ...newProfile("a", "Default"),
+            tabs: [
+              gmailTab(),
+              { id: "c1", app: "calendar", url: "", title: "" },
+              { id: "d1", app: "docs", url: "", title: "", ownWindow: true },
+            ],
+          },
+          newProfile("b", "Work"),
+        ],
+      },
+    });
+
+    await shell.handlers.toggleBookmarks({});
+    await shell.handlers.openBookmark({ id: "b1" });
+    await shell.handlers.removeBookmark({ id: "b2" });
+    await shell.handlers.toggleTabBookmark({ profileId: "a", tabId: "c1" });
+    await shell.handlers.toggleTabBookmark({ profileId: "a", tabId: "d1" });
+    await shell.handlers.toggleTabBookmark({ profileId: "a", tabId: "gone" });
+
+    expect([shell.ran, shell.calls, shell.logged]).toStrictEqual([
+      ["bookmarks.toggle"],
+      [
+        ["openBookmark", "b1"],
+        ["removeBookmark", "b2"],
+        ["toggleBookmark", { profileId: "a", tabId: "c1" }, true],
+        ["toggleBookmark", { profileId: "a", tabId: "d1" }, false],
+      ],
+      ["Refused to bookmark tab a/gone, which is gone"],
     ]);
   });
 

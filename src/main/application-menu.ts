@@ -364,6 +364,9 @@ export const buildMenuTemplate = ({
     submenu: [
       ...item("app.open"),
       separator,
+      ...item("tab.bookmark"),
+      ...item("bookmarks.toggle"),
+      separator,
       ...item("tab.next"),
       ...item("tab.previous"),
       separator,

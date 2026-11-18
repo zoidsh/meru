@@ -26,6 +26,7 @@ import { inViewReach, viewDrop } from "#core/view-drop.ts";
 import type { Size } from "#core/window-bounds.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
+import type { Bookmarks } from "./bookmarks.ts";
 import type { Command } from "./commands.ts";
 import type { Find } from "./find.ts";
 import type { Focus } from "./focus.ts";
@@ -72,6 +73,7 @@ export interface ShellHandlersDeps {
   ) => Promise<unknown>;
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   openApp: Pick<OpenApp, "choose">;
+  bookmarks: Pick<Bookmarks, "choose" | "remove" | "toggle">;
   tabMenu: Pick<TabMenu, "open" | "run">;
   panes: Pick<PaneResizer, "resize" | "evenOut">;
   profileMenu: Pick<ProfileMenu, "open" | "run">;
@@ -149,12 +151,18 @@ const shellFind = (
       }
     : { kind: "none" };
 
+type BookmarkRows = Extract<
+  ShellState["overlay"],
+  { kind: "bookmarks" }
+>["bookmarks"];
+
 const shellOverlay = (
   state: State,
   overlay: Overlay | undefined,
   status: (key: TabKey) => TabStatus,
   apps: readonly App[],
-  find: FindBar | undefined
+  find: FindBar | undefined,
+  bookmarkRows: (profileId: string) => BookmarkRows
 ): ShellState["overlay"] => {
   if (overlay?.kind === "inbox") {
     return { kind: "inbox" };
@@ -169,7 +177,11 @@ const shellOverlay = (
   }
 
   if (overlay?.kind === "toast") {
-    return { kind: "toast", message: overlay.message };
+    return {
+      kind: "toast",
+      message: overlay.message,
+      title: overlay.title ?? null,
+    };
   }
 
   if (overlay?.kind === "drop") {
@@ -181,12 +193,35 @@ const shellOverlay = (
     };
   }
 
-  const profile =
-    overlay &&
-    state.profiles.find((candidate) => candidate.id === overlay.profileId);
+  return overlay
+    ? shellProfileOverlay(state, overlay, apps, bookmarkRows)
+    : { kind: "none" };
+};
 
-  if (!overlay || !profile) {
+/** An overlay over a profile, which shows nothing once that profile is gone. */
+const shellProfileOverlay = (
+  state: State,
+  overlay: Extract<
+    Overlay,
+    { kind: "bookmarks" | "profile-menu" | "open-app" | "rename-profile" }
+  >,
+  apps: readonly App[],
+  bookmarkRows: (profileId: string) => BookmarkRows
+): ShellState["overlay"] => {
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === overlay.profileId
+  );
+
+  if (!profile) {
     return { kind: "none" };
+  }
+
+  if (overlay.kind === "bookmarks") {
+    return {
+      kind: "bookmarks",
+      profileId: profile.id,
+      bookmarks: bookmarkRows(profile.id),
+    };
   }
 
   if (overlay.kind === "profile-menu") {
@@ -256,6 +291,13 @@ export const shellState = (
     handles: ShellState["tabs"]["handles"];
     /** The find bar, while it is open over a page. */
     find?: FindBar | undefined;
+    /**
+     * Whether the tab's page is bookmarked, or `undefined` while it cannot
+     * be; none can be without it.
+     */
+    bookmarked?: (key: TabKey) => boolean | undefined;
+    /** The rows of the Bookmarks overlay over the profile. */
+    bookmarks?: (profileId: string) => BookmarkRows;
   },
   overlay: Overlay | undefined,
   mail: (profileId: string) => Mail,
@@ -294,6 +336,8 @@ export const shellState = (
         status: shellTabStatus(
           status({ profileId: profile.id, tabId: tab.id })
         ),
+        bookmarked:
+          page.bookmarked?.({ profileId: profile.id, tabId: tab.id }) ?? null,
       })),
       panes: page.panes,
       handles: page.handles,
@@ -303,7 +347,14 @@ export const shellState = (
       on: doNotDisturb !== undefined,
       until: doNotDisturb?.until ?? null,
     },
-    overlay: shellOverlay(state, overlay, status, apps, page.find),
+    overlay: shellOverlay(
+      state,
+      overlay,
+      status,
+      apps,
+      page.find,
+      page.bookmarks ?? (() => [])
+    ),
     inbox,
     ...fixed,
   };
@@ -318,6 +369,7 @@ export const createShellHandlers = ({
   navigateTab,
   inbox,
   openApp,
+  bookmarks,
   tabMenu,
   panes,
   pageSize,
@@ -543,6 +595,31 @@ export const createShellHandlers = ({
   },
   openApp: async ({ appId }) => {
     await openApp.choose(appId);
+  },
+  toggleBookmarks: () => {
+    runCommand("bookmarks.toggle");
+
+    return Promise.resolve();
+  },
+  openBookmark: async ({ id }) => {
+    await bookmarks.choose(id);
+  },
+  removeBookmark: async ({ id }) => {
+    await bookmarks.remove(id);
+  },
+  // Only the main window's row announces it; a tab's own window shows its star.
+  toggleTabBookmark: async (key) => {
+    const tab = findTab(profiles.get(), key);
+
+    if (!tab) {
+      log(
+        `Refused to bookmark tab ${key.profileId}/${key.tabId}, which is gone`
+      );
+
+      return;
+    }
+
+    await bookmarks.toggle(key, !inOwnWindow(tab));
   },
   openGmail: async ({ profileId }) => {
     await openGmail(profileId);

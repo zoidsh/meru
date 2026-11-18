@@ -35,6 +35,14 @@ const tabId = z.string().check(z.minLength(1));
 
 const tabKey = z.object({ profileId, tabId });
 
+const bookmarkId = z.string().check(z.minLength(1));
+
+/**
+ * Whether the tab's page is bookmarked, or `null` while it cannot be, as a
+ * Gmail, sleeping, failed or loading tab's.
+ */
+const bookmarked = z.nullable(z.boolean());
+
 /** A point of the window's content area, in whole CSS pixels. */
 const coordinate = z.int().check(z.nonnegative());
 
@@ -218,6 +226,26 @@ export const SHELL_CALLS = {
   },
   /** Opens Open app, or closes it, as its buttons ask. */
   toggleOpenApp: { request: none, response: z.undefined() },
+  /** Opens the Bookmarks overlay, or closes it, as its titlebar button asks. */
+  toggleBookmarks: { request: none, response: z.undefined() },
+  /**
+   * Opens a bookmark the open Bookmarks overlay lists, selecting a tab
+   * already at its page, and closes the overlay.
+   */
+  openBookmark: {
+    request: z.object({ id: bookmarkId }),
+    response: z.undefined(),
+  },
+  /** Removes a bookmark the open Bookmarks overlay lists, which stays open. */
+  removeBookmark: {
+    request: z.object({ id: bookmarkId }),
+    response: z.undefined(),
+  },
+  /**
+   * Bookmark Tab or Remove Bookmark on the tab's page, as its button in the
+   * wide sidebar or its own window's star asks.
+   */
+  toggleTabBookmark: { request: tabKey, response: z.undefined() },
   /** Opens a tab of an app that the open Open app lists, and closes it. */
   openApp: {
     request: z.object({ appId: z.enum(APP_IDS) }),
@@ -295,6 +323,7 @@ export const SHELL_STATE = {
         /** Moved to a window of its own, its page there. */
         ownWindow: z.boolean(),
         status: tabStatus,
+        bookmarked,
       })
     ),
     /**
@@ -357,6 +386,7 @@ export const SHELL_STATE = {
         canGoForward: z.boolean(),
         loading: z.boolean(),
       }),
+      bookmarked,
       /** Its find bar while it is open, drawn over the page in that window. */
       find: z.nullable(
         z.object({
@@ -459,6 +489,22 @@ export const SHELL_STATE = {
     z.object({
       kind: z.literal("toast"),
       message: z.enum(TOAST_MESSAGES),
+      /** The page a bookmark notice names. */
+      title: z.nullable(z.string()),
+    }),
+    z.object({
+      kind: z.literal("bookmarks"),
+      profileId,
+      /** The profile's bookmarks, in the order they were saved. */
+      bookmarks: z.array(
+        z.object({
+          id: bookmarkId,
+          title: z.string(),
+          app: z.enum(APP_IDS),
+          /** The app's name, beside the title. */
+          appName: z.string(),
+        })
+      ),
     }),
     /**
      * What a tab dragged over the page area would do: the zone that lights

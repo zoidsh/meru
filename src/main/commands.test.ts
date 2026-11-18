@@ -64,7 +64,19 @@ const setup = (initial: State = twoProfiles) => {
   const finds: string[] = [];
   let findable = false;
   let canFindAgain = false;
+  let bookmarked: boolean | undefined;
+  let bookmarksOpen = false;
+  const bookmarkToggles: string[] = [];
   const actions: CommandActions = {
+    toggleBookmark: (key, announce) => {
+      bookmarkToggles.push(`${key.tabId}${announce ? " announced" : ""}`);
+      bookmarked = bookmarked === undefined ? undefined : !bookmarked;
+
+      return Promise.resolve();
+    },
+    setBookmarksOpen: (open) => {
+      bookmarksOpen = open;
+    },
     toggleSidebar: () => {
       sidebarShown = !sidebarShown;
     },
@@ -146,6 +158,8 @@ const setup = (initial: State = twoProfiles) => {
     selectedTabAsleep,
     findable,
     canFindAgain,
+    bookmarked,
+    bookmarksOpen,
   });
 
   onTestFinished(doNotDisturb.dispose);
@@ -167,6 +181,11 @@ const setup = (initial: State = twoProfiles) => {
     setOwnWindow: (key: TabKey | undefined) => {
       ownWindow = key;
     },
+    setBookmarked: (next: boolean | undefined) => {
+      bookmarked = next;
+    },
+    bookmarkToggles,
+    bookmarksOpen: () => bookmarksOpen,
     renames,
     navigations,
     openAppOpen: () => openAppOpen,
@@ -484,6 +503,54 @@ describe("the command registry", () => {
       opened,
       app.openAppOpen(),
     ]).toStrictEqual([true, true, false]);
+  });
+
+  it("bookmarks the selected tab's page, announced, and its own window's, not, only while it can be bookmarked", async () => {
+    const app = setup();
+    const label = () => commandOf("tab.bookmark").label?.(app.context());
+    const unavailable = [app.isAvailable("tab.bookmark"), label()];
+
+    app.setBookmarked(false);
+
+    const offered = [app.isAvailable("tab.bookmark"), label()];
+
+    await app.run("tab.bookmark");
+
+    const bookmarked = label();
+
+    app.setOwnWindow({ profileId: "a", tabId: "c1" });
+    await app.run("tab.bookmark");
+
+    expect([
+      unavailable,
+      offered,
+      bookmarked,
+      app.isAvailable("tab.bookmark"),
+      app.bookmarkToggles,
+    ]).toStrictEqual([
+      [false, "Bookmark Tab"],
+      [true, "Bookmark Tab"],
+      "Remove Bookmark",
+      true,
+      ["gmail announced", "c1"],
+    ]);
+  });
+
+  it("opens Bookmarks, and closes it when run again, only from the main window", async () => {
+    const app = setup();
+
+    await app.run("bookmarks.toggle");
+
+    const opened = app.bookmarksOpen();
+
+    await app.run("bookmarks.toggle");
+    app.setOwnWindow({ profileId: "a", tabId: "c1" });
+
+    expect([
+      opened,
+      app.bookmarksOpen(),
+      app.isAvailable("bookmarks.toggle"),
+    ]).toStrictEqual([true, false, false]);
   });
 
   it("opens the rename of the selected profile", async () => {

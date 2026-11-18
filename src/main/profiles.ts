@@ -1,6 +1,8 @@
 import { Mutex } from "es-toolkit";
 
 import type { App } from "#core/apps.ts";
+import { removeBookmark, toggleBookmark } from "#core/bookmarks.ts";
+import type { BookmarkedPage } from "#core/bookmarks.ts";
 import type { PaneDirection, Split } from "#core/pane-tree.ts";
 import { removeSavedSearch, saveSearch } from "#core/saved-searches.ts";
 import {
@@ -283,6 +285,20 @@ export const createProfiles = ({
       exclusive(() => commit(saveSearch(state, profileId, query, newId))),
     removeSavedSearch: (profileId: string, searchId: string) =>
       exclusive(() => commit(removeSavedSearch(state, profileId, searchId))),
+    /**
+     * Bookmarks the page in the profile, or removes its bookmark; says
+     * whether it is bookmarked now, or nothing when nothing changed.
+     */
+    toggleBookmark: (profileId: string, page: BookmarkedPage) =>
+      exclusive(async () => {
+        const toggled = toggleBookmark(state, profileId, page, newId);
+
+        return toggled && (await commit(toggled.state))
+          ? toggled.bookmarked
+          : undefined;
+      }),
+    removeBookmark: (profileId: string, id: string) =>
+      exclusive(() => commit(removeBookmark(state, profileId, id))),
     /** On until `until`, `null` for until turned off, or off with `undefined`. */
     switchDoNotDisturb: (until: number | null | undefined) =>
       exclusive(() => commit(switchDoNotDisturb(state, until))),
