@@ -1,5 +1,6 @@
 import { plural, t } from "@lingui/core/macro";
 
+import { APPS, findApp } from "#core/apps.ts";
 import {
   COMPOSE_HASH,
   SETTINGS_HASH,
@@ -8,6 +9,11 @@ import {
 } from "#core/gmail-hash.ts";
 import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
 import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
+import {
+  PINNED_SHORTCUT_COUNT,
+  pinnedShortcut,
+  selectPinnedCommandId,
+} from "#core/pinned-tabs.ts";
 import type { Platform } from "#core/platform.ts";
 import {
   PROFILE_SHORTCUT_COUNT,
@@ -569,6 +575,46 @@ export const COMMANDS: readonly Command[] = [
 
         if (profile) {
           await selectProfile(profile.id);
+          setInboxOpen(false);
+        }
+      },
+    };
+  }),
+  ...Array.from({ length: PINNED_SHORTCUT_COUNT }, (_, index): Command => {
+    const position = index + 1;
+    const pinnedTab = (state: State) =>
+      knownTabs(selectedProfile(state)).filter(isPinned)[index];
+
+    return {
+      id: selectPinnedCommandId(position),
+      title: () =>
+        t({
+          message: `Select Pinned Tab ${position}`,
+          comment:
+            "Command that selects the selected profile's pinned tab at this place in the sidebar's pinned area, counting from 1; the Tabs menu shows the tab's app instead",
+        }),
+      // The app's name rather than the tab's title, which changes as its
+      // page does and would set the menu again each time.
+      label: ({ state }) => {
+        const tab = pinnedTab(state);
+
+        return (tab && findApp(APPS, tab.app)?.name) ?? tab?.app ?? "";
+      },
+      shortcut: {
+        darwin: pinnedShortcut(position),
+        win32: pinnedShortcut(position),
+        linux: pinnedShortcut(position),
+      },
+      isAvailable: ({ state }) => pinnedTab(state) !== undefined,
+      once: true,
+      run: async ({ state }, { selectTab, setInboxOpen }) => {
+        const tab = pinnedTab(state);
+
+        if (tab) {
+          await selectTab({
+            profileId: state.selectedProfileId,
+            tabId: tab.id,
+          });
           setInboxOpen(false);
         }
       },

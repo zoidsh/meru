@@ -361,6 +361,41 @@ describe("the command registry", () => {
     expect(app.isChecked("inbox.toggle")).toBeFalsy();
   });
 
+  it("selects the selected profile's first nine pinned tabs by place, labelled by their app, offering each only while it exists", async () => {
+    const app = setup();
+    const label = (id: string) => commandOf(id).label?.(app.context());
+
+    await app.run("tab.next");
+    await app.profiles.setPinned({ profileId: "a", tabId: "c1" }, true);
+
+    expect([
+      [1, 2, 3].map((position) => app.isAvailable(`tab.pinned.${position}`)),
+      label("tab.pinned.1"),
+      label("tab.pinned.2"),
+    ]).toStrictEqual([[true, true, false], "Gmail", "Calendar"]);
+    expect([
+      COMMANDS.filter((command) => command.id.startsWith("tab.pinned.")).length,
+      commandOf("tab.pinned.9").shortcut,
+    ]).toStrictEqual([
+      9,
+      {
+        darwin: "Control+Shift+9",
+        win32: "Control+Shift+9",
+        linux: "Control+Shift+9",
+      },
+    ]);
+
+    await app.run("inbox.toggle");
+    await app.run("tab.pinned.1");
+
+    expect(selected(app.profiles.get())).toStrictEqual(["a", "gmail"]);
+    expect(app.isChecked("inbox.toggle")).toBeFalsy();
+
+    await app.run("profile.select.2");
+
+    expect(app.isAvailable("tab.pinned.2")).toBeFalsy();
+  });
+
   it("removes the selected profile, offered only while another is left", async () => {
     const app = setup();
 

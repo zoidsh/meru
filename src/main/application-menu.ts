@@ -4,8 +4,13 @@ import { isEqual } from "es-toolkit";
 
 import { matchesAccelerator } from "#core/accelerator.ts";
 import type { KeyInput } from "#core/accelerator.ts";
+import {
+  PINNED_SHORTCUT_COUNT,
+  selectPinnedCommandId,
+} from "#core/pinned-tabs.ts";
 import type { Platform } from "#core/platform.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
+import { isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import { menuText } from "#core/tray.ts";
 
 import { savedSearchCommands } from "./commands.ts";
@@ -313,6 +318,15 @@ export const buildMenuTemplate = ({
     ],
   };
 
+  // Each pinned tab with a shortcut, by its app's name, as the profiles are.
+  const pinnedCount = Math.min(
+    knownTabs(selectedProfile(context.state)).filter(isPinned).length,
+    PINNED_SHORTCUT_COUNT
+  );
+  const pinnedItems = Array.from({ length: pinnedCount }, (_, index) =>
+    item(selectPinnedCommandId(index + 1))
+  ).flat();
+
   const tabsMenu: MenuItemConstructorOptions = {
     label: t({
       message: "Tabs",
@@ -324,6 +338,7 @@ export const buildMenuTemplate = ({
       ...item("tab.next"),
       ...item("tab.previous"),
       separator,
+      ...(pinnedItems.length > 0 ? [...pinnedItems, separator] : []),
       ...item("tab.pin"),
       ...item("tab.openAtLaunch", "checkbox"),
       separator,

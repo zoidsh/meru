@@ -549,6 +549,11 @@ msgstr "Select Next Profile"
 msgid "Select Next Tab"
 msgstr "Select Next Tab"
 
+#. Command that selects the selected profile's pinned tab at this place in the sidebar's pinned area, counting from 1; the Tabs menu shows the tab's app instead
+#: src/main/commands.ts
+msgid "Select Pinned Tab {position}"
+msgstr "Select Pinned Tab {position}"
+
 #. Menu item in the Window menu that selects the profile left of the selected one, or the last before the first
 #: src/main/commands.ts
 msgid "Select Previous Profile"

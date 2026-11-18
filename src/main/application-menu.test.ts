@@ -142,6 +142,48 @@ describe(buildMenuTemplate, () => {
     ]);
   });
 
+  it("lists each pinned tab with a shortcut by its app in the Tabs menu, between the tab steps and Pin Tab", () => {
+    const context: CommandContext = {
+      ...contextOf(),
+      state: {
+        ...oneProfile,
+        profiles: [
+          {
+            ...newProfile("a", "Default"),
+            tabs: [
+              gmailTab(),
+              { id: "c1", app: "calendar", url: "", title: "Week" },
+              {
+                id: "d1",
+                app: "drive",
+                url: "",
+                title: "",
+                pinned: true,
+                openAtLaunch: false,
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const tabs = submenu(template("darwin", context)[4] ?? {});
+
+    expect(
+      tabs
+        .filter((item) => item.type !== "separator")
+        .map(({ id, label, accelerator }) => [id, label, accelerator])
+    ).toStrictEqual([
+      ["app.open", "Open App…", "CommandOrControl+T"],
+      ["tab.next", expect.any(String), expect.any(String)],
+      ["tab.previous", expect.any(String), expect.any(String)],
+      ["tab.pinned.1", "Gmail", "Control+Shift+1"],
+      ["tab.pinned.2", "Drive", "Control+Shift+2"],
+      ["tab.pin", "Unpin Tab", undefined],
+      ["tab.openAtLaunch", "Open at Launch", undefined],
+      ["tab.close", expect.any(String), expect.any(String)],
+    ]);
+  });
+
   it("lists the selected profile's saved searches by name, to run and to remove, with & kept as text", () => {
     const context: CommandContext = {
       ...contextOf(),
