@@ -65,7 +65,7 @@ test("the view sits as the shell draws it, on the shell grey the window has too 
       const probe = document.createElement("div");
 
       probe.style.backgroundColor =
-        "color-mix(in oklab, rgb(235, 235, 235), #2d52d2 6%)";
+        "color-mix(in oklab, rgb(235, 235, 235), #2d52d2 12%)";
       document.body.append(probe);
 
       const expected = getComputedStyle(probe).backgroundColor;

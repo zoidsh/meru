@@ -33,25 +33,33 @@
 
 /*
  * Ours too: the profile tint. Where `data-tint` sets `--tint` to the selected
- * profile's colour, the shell grey takes 6% of it, and the titlebar and the
- * sidebar, marked `data-tinted`, mix it into their hover (7%), selected and
- * outline (8%) fills. The page and overlays keep their own greys.
+ * profile's colour, the shell grey takes 12% of it, and the titlebar and the
+ * sidebar, marked `data-tinted`, mix it into their hover (14%), selected and
+ * outline (16%) fills. The page and overlays keep their own greys.
  * Mixed here and not in `[data-tinted]`, where a token naming itself would be
  * a cycle. Mixed in oklab, since in oklch shadcn's greys, `oklch(L 0 0)`, name
  * a hue of 0 that pulls every tint's hue toward it, which is pink.
  */
 [data-tint] {
-  --tint-shell: color-mix(in oklab, var(--shell), var(--tint, var(--shell)) 6%);
-  --tint-hover: color-mix(in oklab, var(--muted), var(--tint, var(--muted)) 7%);
+  --tint-shell: color-mix(
+    in oklab,
+    var(--shell),
+    var(--tint, var(--shell)) 12%
+  );
+  --tint-hover: color-mix(
+    in oklab,
+    var(--muted),
+    var(--tint, var(--muted)) 14%
+  );
   --tint-selected: color-mix(
     in oklab,
     var(--secondary),
-    var(--tint, var(--secondary)) 8%
+    var(--tint, var(--secondary)) 16%
   );
   --tint-outline: color-mix(
     in oklab,
     var(--border),
-    var(--tint, var(--border)) 8%
+    var(--tint, var(--border)) 16%
   );
 }
 
