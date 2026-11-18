@@ -25,6 +25,7 @@ const NEEDS_THE_FOCUS = [
   "**/split-several.e2e.ts",
   "**/find.e2e.ts",
   "**/own-window.e2e.ts",
+  "**/bookmarks.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 
