@@ -223,6 +223,54 @@ export const updatePages = (
   return changed ? { ...state, profiles } : undefined;
 };
 
+/**
+ * Moves a shown tab of the selected profile within its area, the pinned
+ * tabs or the rest, to just before the tab `before` names, or after the
+ * area's last tab when it names none. Every other entry, those not shown
+ * included, keeps its place among its neighbours. Nothing across areas, for
+ * a tab that is not shown, or for a move that leaves the area's order as it
+ * was.
+ */
+export const moveTab = (
+  state: State,
+  { profileId, tabId }: TabKey,
+  before?: string
+): State | undefined =>
+  profileId === state.selectedProfileId && tabId !== before
+    ? updateProfile(state, profileId, (profile) => {
+        const shown = knownTabs(profile);
+        const tab = shown.find((candidate) => candidate.id === tabId);
+
+        if (!tab) {
+          return;
+        }
+
+        const area = shown.filter(
+          (candidate) => isPinned(candidate) === isPinned(tab)
+        );
+        const target =
+          before === undefined
+            ? undefined
+            : area.find((candidate) => candidate.id === before);
+
+        if (before !== undefined && !target) {
+          return;
+        }
+
+        const rest = profile.tabs.filter((entry) => entry !== tab);
+        // An area of this tab alone has no other to follow; the order check
+        // below then finds nothing changed.
+        const last = area.findLast((candidate) => candidate !== tab) ?? tab;
+        const at = target ? rest.indexOf(target) : rest.indexOf(last) + 1;
+        const tabs = rest.toSpliced(at, 0, tab);
+        const order = tabs.filter((entry) => area.includes(entry as Tab));
+
+        return order.every((entry, index) => entry === area[index])
+          ? undefined
+          : { ...profile, tabs };
+      })
+    : undefined;
+
 export const findTab = (state: State, { profileId, tabId }: TabKey) => {
   const profile = state.profiles.find(
     (candidate) => candidate.id === profileId

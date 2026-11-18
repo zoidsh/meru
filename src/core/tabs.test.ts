@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { APPS, findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
-import { gmailTab, isTab, newProfile } from "./state.ts";
+import { decodeState, gmailTab, isTab, newProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
 import {
   adjacentTab,
   closeTab,
+  moveTab,
   openTab,
   selectTab,
   setOpenAtLaunch,
@@ -262,6 +263,88 @@ describe(setPinned, () => {
       setPinned(before, { profileId: "p", tabId: "c1" }, false),
       setPinned(before, { profileId: "p", tabId: "t9" }, true),
     ]).toStrictEqual([undefined, undefined, undefined]);
+  });
+});
+
+describe(moveTab, () => {
+  // Gmail and Drive pinned, Calendar, Docs and Sheets listed, with an entry
+  // that does not parse after Calendar and a Tasks tab of an app this build
+  // does not know after Docs, neither shown.
+  const decoded = decodeState({
+    version: 1,
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          gmailTab(),
+          tab("c", "calendar"),
+          { id: 7 },
+          { ...tab("d", "drive"), pinned: true },
+          tab("o", "docs"),
+          tab("t", "tasks"),
+          tab("s", "sheets"),
+        ],
+        selectedTabId: "gmail",
+      },
+      { id: "q", name: "Work", tabs: [gmailTab()], selectedTabId: "gmail" },
+    ],
+    selectedProfileId: "p",
+  });
+  const before = decoded.kind === "read" ? decoded.value : state([]);
+
+  /** Every entry's id after the move, `?` for the one that does not parse. */
+  const moved = (tabId: string, target?: string, profileId = "p") => {
+    const next = moveTab(before, { profileId, tabId }, target);
+
+    return next?.profiles[0]?.tabs.map((entry) =>
+      isTab(entry) ? entry.id : "?"
+    );
+  };
+
+  it("moves a listed tab up, down and to either end of the list", () => {
+    expect([
+      moved("o", "c"),
+      moved("c", "s"),
+      moved("s", "c"),
+      moved("c"),
+    ]).toStrictEqual([
+      ["gmail", "o", "c", "?", "d", "t", "s"],
+      ["gmail", "?", "d", "o", "t", "c", "s"],
+      ["gmail", "s", "c", "?", "d", "o", "t"],
+      ["gmail", "?", "d", "o", "t", "s", "c"],
+    ]);
+  });
+
+  it("moves a pinned tab within the pinned area", () => {
+    expect([moved("d", "gmail"), moved("gmail")]).toStrictEqual([
+      ["d", "gmail", "c", "?", "o", "t", "s"],
+      ["c", "?", "d", "gmail", "o", "t", "s"],
+    ]);
+  });
+
+  it("refuses a move across areas, onto itself, to its own place, of a tab not shown or of a profile not selected", () => {
+    expect([
+      moved("c", "d"),
+      moved("d", "c"),
+      moved("c", "c"),
+      moved("c", "o"),
+      moved("s"),
+      moved("t", "c"),
+      moved("c", "t"),
+      moved("gone", "c"),
+      moved("gmail", undefined, "q"),
+    ]).toStrictEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
   });
 });
 
