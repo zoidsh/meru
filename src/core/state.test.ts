@@ -345,7 +345,8 @@ describe("decoding tabs", () => {
       profiles: [
         {
           ...newProfile("p", "Default"),
-          tabs: [{ ...gmailTab(), ownWindow: true }],
+          // Unpinned, since a pinned app cannot be moved.
+          tabs: [{ ...gmailTab(), pinned: false, ownWindow: true }],
         },
       ],
       selectedProfileId: "p",
