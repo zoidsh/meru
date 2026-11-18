@@ -137,15 +137,6 @@ const selectedTitle = (shell: Page) =>
     .getByRole("tab", { selected: true })
     .textContent();
 
-/** Gives the page at `url` keyboard focus, as a click in it would. */
-const focusPage = (app: ElectronApplication, url: string) =>
-  app.evaluate(({ webContents }, prefix) => {
-    webContents
-      .getAllWebContents()
-      .find((candidate) => candidate.getURL().startsWith(prefix))
-      ?.focus();
-  }, url);
-
 const urlOf = (app: ElectronApplication, prefix: string) =>
   app.evaluate(
     ({ webContents }, start) =>
@@ -177,7 +168,7 @@ const savedSelected = async (userDataDir: string) => {
   return profiles[0]?.selectedTabId;
 };
 
-test("Split right picks an app from Open in split and shows it beside the page, ringed as focused; Split down nests; focus in a pane selects its tab, and Back and Reload act on that pane alone", async ({
+test("Split right picks an app from Open in split and shows it beside the page, ringed as focused; Split down nests; a click in a pane selects its tab, and Back and Reload act on that pane alone", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -246,7 +237,7 @@ test("Split right picks an app from Open in split and shows it beside the page, 
     "true"
   );
 
-  await focusPage(app, standIn.calendarUrl);
+  await calendar.mouse.click(40, 200);
   await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"

@@ -575,10 +575,10 @@ export const createTabViews = ({
         onEvent(key, tabKeyed, event);
       },
       onKey: handleKey,
-      onFocus: () => {
-        onFocus();
-
-        // A click in another pane, or focus arriving in its page, focuses it.
+      onFocus,
+      // A press in another pane focuses it. Focus alone does not: on Linux a
+      // pane's page takes it as it first loads.
+      onPointerDown: () => {
         if (key !== front && shownKeys.has(key)) {
           void selectTab(tabKeyed);
         }

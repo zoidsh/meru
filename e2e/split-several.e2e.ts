@@ -1,4 +1,5 @@
 import type { ElectronApplication, Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import {
   clickMenuItem,
@@ -165,6 +166,27 @@ const dropOnto = async (shell: Page, tabId: string, onto: string) => {
   await shell.mouse.move(to.x, to.y, { steps: 8 });
   await expect.poll(() => markShown(shell)).toBe("ring");
   await shell.mouse.up();
+};
+
+/**
+ * Waits for `urls` to show, then sees `tabId` stay selected for half a
+ * second: a pane's page loading for the first time, which on Linux takes
+ * keyboard focus, does not select its tab.
+ */
+const keepsSelected = async (
+  app: ElectronApplication,
+  shell: Page,
+  tabId: string,
+  urls: string[]
+) => {
+  await expect.poll(() => shownUrls(app)).toStrictEqual(urls);
+
+  for (let check = 0; check < 5; check += 1) {
+    // oxlint-disable-next-line no-await-in-loop -- one check after another
+    expect(await selected(shell)).toBe(tabId);
+    // oxlint-disable-next-line no-await-in-loop -- spaced out over half a second
+    await delay(100);
+  }
 };
 
 /** Splits the focused pane that way with the app picked from Open in split. */
@@ -379,14 +401,8 @@ test("a tab dragged from one box onto a tab of another joins that split, the fir
       ["c", "o", "gmail"],
       ["s", "d"],
     ]);
-  // On Linux `s`'s page, loading for the first time, takes keyboard focus,
-  // which selects its tab; once both pages show, a click settles which
-  // pane Gmail goes below.
-  await expect
-    .poll(() => shownUrls(app))
-    .toStrictEqual([standIn.driveUrl, standIn.driveUrl]);
-  await select(shell, "d");
   await expect.poll(() => selected(shell)).toBe("d");
+  await keepsSelected(app, shell, "d", [standIn.driveUrl, standIn.driveUrl]);
   await splitFromMenu(app, "down", "Gmail");
   await expect
     .poll(() => storedPanes(userDataDir))

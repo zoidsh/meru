@@ -57,8 +57,13 @@ export interface ContentViewOptions {
    * further, to the page or to the application menu.
    */
   onKey: (input: KeyInput) => boolean;
-  /** Told when the page gains keyboard focus. */
+  /**
+   * Told when the page gains keyboard focus, for any reason: a page can take
+   * it as it first loads.
+   */
   onFocus: () => void;
+  /** Told when the person presses on the page, by mouse or by touch. */
+  onPointerDown: () => void;
 }
 
 /** Where the page can go in its history, and whether it is loading now. */
@@ -257,6 +262,11 @@ export const addContentView = (
     }
   });
   webContents.on("focus", options.onFocus);
+  webContents.on("input-event", (_event, input) => {
+    if (input.type === "mouseDown" || input.type === "gestureTapDown") {
+      options.onPointerDown();
+    }
+  });
   reportEvents(webContents, options.onEvent);
   routeWindowOpens(webContents, options, children);
   window.contentView.addChildView(view);
