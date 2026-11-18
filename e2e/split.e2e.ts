@@ -169,6 +169,14 @@ const savedSplit = async (userDataDir: string) => {
   return profiles[0]?.splits?.[0];
 };
 
+const savedSelected = async (userDataDir: string) => {
+  const { profiles } = await readState<{ profiles: SavedProfile[] }>(
+    userDataDir
+  );
+
+  return profiles[0]?.selectedTabId;
+};
+
 test("Split right picks an app from Open in split and shows it beside the page, ringed as focused; Split down nests; focus in a pane selects its tab, and Back and Reload act on that pane alone", async ({
   launchApp,
   standIn,
@@ -313,6 +321,7 @@ test("selecting a tab outside the split shows it alone and a tab in it brings th
         ],
       },
     });
+  await expect.poll(() => savedSelected(userDataDir)).toBe("c");
   await first.close();
 
   const app = await launchApp();

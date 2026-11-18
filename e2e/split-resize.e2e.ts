@@ -97,6 +97,14 @@ const storedSplit = async (userDataDir: string) => {
   return profiles[0]?.splits?.[0];
 };
 
+const storedSelected = async (userDataDir: string) => {
+  const { profiles } = await readState<{
+    profiles: { selectedTabId: string }[];
+  }>(userDataDir);
+
+  return profiles[0]?.selectedTabId;
+};
+
 const storedShares = async (userDataDir: string) => {
   const split = await storedSplit(userDataDir);
 
@@ -262,6 +270,10 @@ test("dragging a gap resizes the pages beside it as it moves and stops at each p
 
   const widths = await paneWidths(shell);
 
+  // Closed only once the release is stored, which a relaunch reads.
+  await expect
+    .poll(() => storedShares(userDataDir).then((shares) => shares?.[0]))
+    .toBeLessThan(0.5);
   await first.close();
 
   const app = await launchApp();
@@ -406,6 +418,10 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
     "aria-selected",
     "true"
   );
+  await expect
+    .poll(() => storedSplit(userDataDir).then((split) => split?.maximized))
+    .toBe(true);
+  await expect.poll(() => storedSelected(userDataDir)).toBe("gmail");
   await first.close();
 
   const app = await launchApp();

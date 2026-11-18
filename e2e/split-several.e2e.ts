@@ -296,6 +296,11 @@ test("a second split starts from Split right beside a tab in none and from a dro
   expect(await readMenuLabel(first, "tab.maximize")).toBe("Maximize Pane");
   expect(await storedSizes(userDataDir)).toStrictEqual(sizes);
 
+  // Closed only once the selection is stored, which a relaunch reads.
+  await expect
+    .poll(() => stored(userDataDir).then((profile) => profile?.selectedTabId))
+    .toBe("d");
+
   const before = await stored(userDataDir);
 
   await first.close();
