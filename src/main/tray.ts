@@ -30,8 +30,11 @@ export interface TrayDeps {
   /** The profile's count as its feed last gave it. */
   unread: (profileId: string) => number | null;
   window: Pick<AppWindow, "isVisible" | "isMinimized" | "hide">;
-  /** Shows the window, through `revealWindow`. */
-  reveal: () => void;
+  /**
+   * Shows the window, through `revealWindow`; with a profile, the one
+   * that shows its Gmail, its own or the main one.
+   */
+  reveal: (profileId?: string) => void;
   /** Selects the profile and its Gmail tab. */
   jumpTo: (profileId: string) => Promise<void>;
   quit: () => void;
@@ -102,7 +105,7 @@ export const createTray = ({
       }
     }
 
-    reveal();
+    reveal(profileId);
   };
 
   const label = (entry: TrayEntry & { kind: "profile" }) => {

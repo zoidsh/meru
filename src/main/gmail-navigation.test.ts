@@ -20,8 +20,8 @@ const setup = (pageIsUp: boolean) => {
 
       return Promise.resolve();
     },
-    reveal: () => {
-      calls.push("reveal");
+    reveal: (profileId) => {
+      calls.push(`reveal ${profileId}`);
     },
     home: "https://mail.google.com/mail/u/0",
   });
@@ -38,7 +38,7 @@ describe(createGmailNavigation, () => {
     expect(calls).toStrictEqual([
       "send p1 #search/%22x%22",
       "jump p1",
-      "reveal",
+      "reveal p1",
     ]);
   });
 
@@ -50,7 +50,7 @@ describe(createGmailNavigation, () => {
     expect(calls).toStrictEqual([
       "send p1 #settings",
       "open p1 https://mail.google.com/mail/u/0#settings",
-      "reveal",
+      "reveal p1",
     ]);
   });
 });

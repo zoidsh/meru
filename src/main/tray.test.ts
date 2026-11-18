@@ -134,8 +134,8 @@ const setup = ({
         visible = false;
       },
     },
-    reveal: () => {
-      calls.push("reveal");
+    reveal: (profileId) => {
+      calls.push(profileId === undefined ? "reveal" : `reveal ${profileId}`);
       visible = true;
       minimized = false;
     },
@@ -308,7 +308,7 @@ describe(createTray, () => {
     clickLabel(app.icon()?.contextMenu, "Work");
     await settle();
 
-    expect(app.calls).toStrictEqual(["jump p1", "reveal"]);
+    expect(app.calls).toStrictEqual(["jump p1", "reveal p1"]);
   });
 
   it("hides a shown window and reveals a hidden one from its toggle and its click", () => {
@@ -342,7 +342,7 @@ describe(createTray, () => {
     jumping.icon()?.click?.();
     await settle();
 
-    expect(jumping.calls).toStrictEqual(["jump p1", "reveal"]);
+    expect(jumping.calls).toStrictEqual(["jump p1", "reveal p1"]);
   });
 
   it("brings a minimized window back rather than hiding it, from its click and its menu", () => {

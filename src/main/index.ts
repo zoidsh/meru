@@ -741,9 +741,7 @@ const start = async () => {
     // The person asked for it from the menu or a shortcut, so, as a
     // notification's click, it may take the foreground; never under the
     // background flag.
-    reveal: () => {
-      revealWindow(shell.window, background);
-    },
+    reveal: revealGmail,
     home: gmailHome,
   });
 
@@ -1192,7 +1190,13 @@ const start = async () => {
     state: profiles.get,
     unread,
     window: shell.window,
-    reveal,
+    reveal: (profileId) => {
+      if (profileId === undefined) {
+        reveal();
+      } else {
+        revealGmail(profileId);
+      }
+    },
     jumpTo: showGmail.jumpTo,
     quit: lifecycle.quit,
     log: console.error,

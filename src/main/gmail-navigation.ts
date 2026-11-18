@@ -5,8 +5,11 @@ export interface GmailNavigationDeps {
   jumpTo: (profileId: string) => Promise<unknown>;
   /** Loads `url` in the profile's Gmail tab, selected as `jumpTo` selects it. */
   openMessage: (profileId: string, url: string) => Promise<unknown>;
-  /** Shows the window if it is hidden or minimized, as a notification's click does. */
-  reveal: () => void;
+  /**
+   * Brings forward the window that shows the profile's Gmail, its own or
+   * the main one, as a notification's click does.
+   */
+  reveal: (profileId: string) => void;
   /** Gmail's home, or the suite's stand-in's. */
   home: string;
 }
@@ -23,5 +26,5 @@ export const createGmailNavigation =
       ? jumpTo(profileId)
       : openMessage(profileId, `${home}${hash}`));
     // On macOS a closed window is only hidden, and would go on hiding the page.
-    reveal();
+    reveal(profileId);
   };
