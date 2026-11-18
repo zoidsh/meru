@@ -265,7 +265,7 @@ test("a restart keeps a profile asleep, loading nothing of it until it is select
   const shell = await findPage(second, "meru-app:");
 
   await expect(profileButton(shell, "Work")).toHaveAccessibleName(
-    "Work, asleep"
+    "Work, asleep, sign in required"
   );
   await expect.poll(() => viewPartitions(second)).toStrictEqual(["persist:p0"]);
 
