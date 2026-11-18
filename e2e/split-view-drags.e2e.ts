@@ -401,3 +401,36 @@ test("over a maximized split, which shows as one pane, a tab takes half the view
     )
     .toBe(3);
 });
+
+test("a tab dropped on the page of a tab shown alone in no split starts a second split, the first kept", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seed(userDataDir, standIn, row("c", "d"));
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const overlay = await findOverlayDocument(app);
+
+  await findPage(app, standIn.calendarUrl);
+  await sizeWindow(app, 1000, 700);
+
+  const alone = await pointOf(shell, tab("o"), 0.5, 0.5);
+
+  await shell.mouse.click(alone.x, alone.y);
+  await expect.poll(() => storedSelected(userDataDir)).toBe("o");
+  await holdOver(shell, "s", await pointOf(shell, AREA, 0.9, 0.5));
+  await expect
+    .poll(() => zoneShown(overlay).then((zone) => zone !== "none" && zone.kind))
+    .toBe("pane");
+  await shell.mouse.up();
+  await expect
+    .poll(() =>
+      stored(userDataDir).then((profile) =>
+        profile?.splits?.map(({ root }) => describeTree(root))
+      )
+    )
+    .toStrictEqual(["row(c d)", "row(o s)"]);
+  expect(await storedSelected(userDataDir)).toBe("s");
+});
