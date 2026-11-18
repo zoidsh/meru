@@ -207,9 +207,7 @@ export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
         });
       },
       reload: () => {
-        if (!window.isDestroyed()) {
-          webContents.reload();
-        }
+        webContents.reload();
       },
       isFullScreen: () => window.isFullScreen(),
       leaveFullScreen: (then) => {
