@@ -290,6 +290,15 @@ const tabVariant = (selected: boolean, pinned: boolean) => {
   return pinned ? "outline" : "ghost";
 };
 
+/**
+ * A fill to the tab's edge, under its transparent border, so what is seen of
+ * a hovered or selected tab is its box: 4px from a split box's edge and one
+ * stack gap from its neighbours. An outlined tile's border already shows
+ * where it ends.
+ */
+const tabFill = (selected: boolean, pinned: boolean) =>
+  tabVariant(selected, pinned) === "outline" ? undefined : "bg-clip-border";
+
 /** At the corner of Gmail's tile: the unread count, or the sign-in mark in its place. */
 const GmailMark = ({
   unreadCount,
@@ -503,6 +512,7 @@ const TabButton = ({
         // last row a pixel past its viewport, which the Scroll Area then
         // takes for overflow and keeps showing a bar for.
         "relative font-medium active:not-aria-[haspopup]:translate-y-0",
+        tabFill(selected, tab.pinned),
         cell && "w-full",
         spansRow && "col-span-2",
         !tile && rowLayout(roomy),
@@ -753,12 +763,11 @@ const SplitBox = ({
       data-maximized={maximized || undefined}
       data-drop-id={dropId}
       className={cn(
-        // Only a fill reaching into the gaps around it, so its tabs keep
-        // the stack's column and pitch; a box right after another starts
-        // where its gap does, so their edges stand as far apart as a box's
-        // from a tab.
-        "-mx-[3px] flex flex-col rounded-[12px] px-[3px] [[data-split-box]+&]:mt-0",
-        wide ? "-my-px py-px" : "-my-[3px] py-[3px]",
+        // 4px of fill around its tabs on every side, reaching that far into
+        // the side gutters so its tabs keep the stack's column; above and
+        // below it takes room, so its edge stands one stack gap from its
+        // neighbours.
+        "-mx-1 flex flex-col rounded-[12px] p-1",
         maximized
           ? "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_85%)]"
           : "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)]",
@@ -1180,8 +1189,15 @@ export const Sidebar = ({
   // Reaching into the sidebar's padding far enough to centre the bar in it,
   // and above the first tab, padded back inside the viewport so the tabs stay
   // where they were and a mark or cross at a corner is not clipped.
-  const scroller = cn("-mt-1.5 min-h-0", wide ? "-mr-2.5" : "-mr-3", SCROLLBAR);
-  const inset = cn("pt-1.5", wide ? "pr-2.5" : "pr-3");
+  // Room around the tabs inside the scroller, which clips: above for a
+  // tile's badge, at the left for a split's box reaching into the gutter,
+  // and at the right for the scrollbar.
+  const scroller = cn(
+    "-mt-1.5 -ml-1 min-h-0",
+    wide ? "-mr-2.5" : "-mr-3",
+    SCROLLBAR
+  );
+  const inset = cn("pt-1.5 pl-1", wide ? "pr-2.5" : "pr-3");
 
   return (
     <Tabs.Root

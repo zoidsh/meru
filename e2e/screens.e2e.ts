@@ -786,6 +786,53 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
   await shootEachWay(app, shell, "split-box-pinned-wide");
 });
 
+/** Rests the pointer on the middle of a tab, so it shows its hover. */
+const hoverTab = async (shell: Page, tabId: string) => {
+  const point = await shell.evaluate((id) => {
+    const box = document
+      .querySelector(`[data-split-box] [data-tab-id="${id}"]`)
+      ?.getBoundingClientRect();
+
+    return {
+      x: (box?.left ?? 0) + (box?.width ?? 0) / 2,
+      y: (box?.top ?? 0) + (box?.height ?? 0) / 2,
+    };
+  }, tabId);
+
+  await shell.mouse.move(point.x, point.y);
+};
+
+test("a split's box first in the list, its last tab hovered, narrow and wide", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(
+    userDataDir,
+    withBox(standIn, {
+      direction: "row",
+      children: [pane(0.5, "c1"), pane(0.5, "d1")],
+    })
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+
+  if ((await narrow.count()) > 0) {
+    await narrow.click();
+  }
+
+  await hoverTab(shell, "d1");
+  await shootEachWay(app, shell, "split-box-hover-narrow");
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await expect(narrow).toHaveCount(1);
+  await hoverTab(shell, "d1");
+  await shootEachWay(app, shell, "split-box-hover-wide");
+});
+
 test("two splits' boxes, both in the list, and one in the pinned area with one in the list, narrow and wide", async ({
   launchApp,
   userDataDir,
