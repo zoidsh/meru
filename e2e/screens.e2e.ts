@@ -1,6 +1,7 @@
 // Pictures for a person to look at, taken with MERU_E2E_SHOTS=1; they assert
 // nothing of what they show.
 import type { ElectronApplication, Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import {
   expect,
@@ -553,4 +554,155 @@ test("Gmail's pop-out, which shows Gmail's page alone", async ({
   const popout = await findPage(app, `${standIn.url}${POPOUT_PATH.slice(1)}`);
 
   await popout.screenshot({ path: shotPath("popout") });
+});
+
+const pane = (size: number, inner: unknown) => ({ size, pane: inner });
+
+/** Calendar, Drive and Gmail with `root` as their split, `selected` focused. */
+const withSplit = (standIn: StandIn, root: unknown, selected: string) => ({
+  profiles: [
+    {
+      id: "p",
+      name: "Default",
+      tabs: [
+        { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+        { id: "c1", app: "calendar", url: standIn.calendarUrl, title: "" },
+        { id: "d1", app: "drive", url: standIn.driveUrl, title: "" },
+        // Outside the split, and never loaded.
+        { id: "o", app: "docs", url: standIn.driveUrl, title: "" },
+      ],
+      selectedTabId: selected,
+      split: { root, focused: selected },
+    },
+  ],
+  selectedProfileId: "p",
+});
+
+test("split panes: two side by side, and three nested with the sidebar narrow and wide", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(
+    userDataDir,
+    withSplit(
+      standIn,
+      { direction: "row", children: [pane(0.5, "c1"), pane(0.5, "d1")] },
+      "d1"
+    )
+  );
+
+  const first = await launch(launchApp, userDataDir);
+
+  await findPage(first.app, standIn.calendarUrl);
+  await findPage(first.app, standIn.driveUrl);
+  await first.shell.mouse.move(700, 20);
+  await shootEachWay(first.app, first.shell, "split-two");
+  await first.app.close();
+
+  await writeState(
+    userDataDir,
+    withSplit(
+      standIn,
+      {
+        direction: "row",
+        children: [
+          pane(0.5, "c1"),
+          pane(0.5, {
+            direction: "column",
+            children: [pane(0.5, "d1"), pane(0.5, "gmail")],
+          }),
+        ],
+      },
+      "gmail"
+    )
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const rest = () => shell.mouse.move(700, 20);
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+  await findPage(app, standIn.url);
+  await rest();
+  await shootEachWay(app, shell, "split-nested-narrow");
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await rest();
+  await shootEachWay(app, shell, "split-nested-wide");
+});
+
+test("a sleeping pane in a split", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(
+    userDataDir,
+    withSplit(
+      standIn,
+      { direction: "row", children: [pane(0.5, "c1"), pane(0.5, "gmail")] },
+      "c1"
+    )
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.url);
+  await shell
+    .getByRole("tablist", { name: "Tabs" })
+    .getByRole("tab", { name: STAND_IN_TITLE, exact: true })
+    .click({ button: "right" });
+
+  const overlay = await findOverlayDocument(app);
+
+  await overlay.getByRole("menuitem", { name: "Sleep", exact: true }).click();
+  await expect(
+    shell.getByRole("region", { name: `${STAND_IN_TITLE} is sleeping` })
+  ).toBeVisible();
+  await shell.mouse.move(700, 20);
+  await shootEachWay(app, shell, "split-sleeping");
+});
+
+/** Asks for a split the window has no room for, which shows the toast. */
+const refuseSplit = async (app: ElectronApplication, overlay: Page) => {
+  await app.evaluate(({ Menu, BrowserWindow }) => {
+    Menu.getApplicationMenu()
+      ?.getMenuItemById("tab.splitDown")
+      ?.click(undefined, BrowserWindow.getAllWindows()[0]);
+  });
+  await expect(
+    overlay.getByText("Not enough room to split", { exact: true })
+  ).toBeVisible();
+  // Lets the toast slide in.
+  await delay(600);
+
+  return overlay.getByText("Not enough room to split", { exact: true });
+};
+
+test("the toast refusing a split in a small window", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const overlay = await findOverlayDocument(app);
+
+  await findPage(app, standIn.url);
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
+  });
+  await shell.mouse.move(300, 20);
+
+  for (const theme of THEMES) {
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await emulateTheme(app, theme);
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    const toast = await refuseSplit(app, overlay);
+
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await shootWindow(app, shell, shotPath("toast", theme));
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await expect(toast).toHaveCount(0, { timeout: 8000 });
+  }
 });
