@@ -137,20 +137,30 @@ export default defineConfig({
     {
       // The shadcn CLI writes these components, and they stay as it writes
       // them, so the rules its style breaks are off here. A label is tied to
-      // its control where it is used, through `htmlFor`. Their few literal
-      // strings, such as Dialog's screen-reader "Close", are English only, so
-      // nothing of ours shows a part that holds one.
+      // its control where it is used, through `htmlFor`.
       files: ["src/ui/**"],
       rules: {
         "jsx-a11y/label-has-associated-control": "off",
-        "jsx-a11y/prefer-tag-over-role": "off",
-        "jsx-a11y/click-events-have-key-events": "off",
-        "jsx-a11y/no-noninteractive-element-interactions": "off",
-        "react/jsx-no-literals": "off",
         "func-style": "off",
         "no-use-before-define": "off",
         "import/consistent-type-specifier-style": "off",
       },
+    },
+    {
+      // Input Group's addon is a `role="group"` div that focuses its input on
+      // a click, as the CLI writes it.
+      files: ["src/ui/input-group.tsx"],
+      rules: {
+        "jsx-a11y/prefer-tag-over-role": "off",
+        "jsx-a11y/click-events-have-key-events": "off",
+        "jsx-a11y/no-noninteractive-element-interactions": "off",
+      },
+    },
+    {
+      // Its screen-reader "Close" is English only, so nothing of ours shows
+      // the close button; any other English text in `src/ui` still fails.
+      files: ["src/ui/dialog.tsx"],
+      rules: { "react/jsx-no-literals": "off" },
     },
     {
       files: ["e2e/**"],
