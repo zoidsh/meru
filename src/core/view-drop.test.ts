@@ -162,15 +162,48 @@ describe(viewDrop, () => {
     ]).toStrictEqual([undefined, undefined]);
   });
 
-  it("splits the focused pane a maximized split shows alone, which restores it", () => {
-    const maximized = profile("a", { ...split("a", "b"), maximized: true });
-    const drop = viewDrop(maximized, WIDE, { x: 100, y: 400 }, "c");
+  it("gives a maximized split's half to the tab and the other half to the whole split, restored", () => {
+    const maximized = profile("a", {
+      ...split("a", "b", "c"),
+      maximized: true,
+    });
+    const drop = viewDrop(maximized, WIDE, { x: 100, y: 400 }, "d");
+    const root = drop?.next.split?.root;
 
-    expect(drop && paneTabs((drop.next.split as Split).root)).toStrictEqual([
-      "c",
-      "a",
-      "b",
-    ]);
+    expect(drop).toMatchObject({
+      kind: "pane",
+      side: "left",
+      zone: { x: 0, y: 0, width: 600, height: 800 },
+      fits: false,
+    });
+    expect(root && paneTabs(root)).toStrictEqual(["d", "a", "b", "c"]);
+    expect(
+      typeof root === "object" &&
+        root.children.map(({ size }) => Math.round(size * 1000))
+    ).toStrictEqual([500, 167, 167, 167]);
     expect(drop && isMaximized(drop.next)).toBeFalsy();
+    expect(aim(maximized, 600, 700, "d")).toStrictEqual([
+      "pane",
+      "bottom",
+      true,
+      ["a", "b", "c", "d"],
+    ]);
+  });
+
+  it("takes a tab of a maximized split out of its pane first, and lands nothing over the page it shows", () => {
+    const maximized = profile("a", {
+      ...split("a", "b", "c"),
+      maximized: true,
+    });
+
+    expect([
+      aim(maximized, 1100, 400, "b"),
+      aim(
+        profile("b", { ...split("a", "b", "c"), maximized: true }),
+        600,
+        400,
+        "b"
+      ),
+    ]).toStrictEqual([["pane", "right", true, ["a", "c", "b"]], undefined]);
   });
 });

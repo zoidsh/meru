@@ -3,6 +3,7 @@ import { minBy } from "es-toolkit";
 import { paneRectangles } from "./pane-tree.ts";
 import type { PaneDirection, PaneRectangle } from "./pane-tree.ts";
 import {
+  isMaximized,
   shownPanes,
   splitAlongEdge,
   splitBeside,
@@ -114,7 +115,8 @@ const alongEdge = (
  * of left, right, top and bottom where two are as near, takes the tab along
  * it beside everything else on screen. Elsewhere the nearest half of the
  * pane under the pointer splits that pane that way, a tab shown alone being
- * a pane filling the area. Nothing over the tab's own page, in a gap, or
+ * a pane filling the area, and so a maximized split, whose other half the
+ * whole split takes, restored. Nothing over the tab's own page, in a gap, or
  * where the split would be refused, as beside a tab outside the profile's
  * split while it has one.
  */
@@ -159,13 +161,19 @@ export const viewDrop = (
     top: down,
     bottom: 1 - down,
   });
-  const next = splitBeside(
-    profile,
-    tabId,
-    pane.tabId,
-    directionOf(side),
-    isFirst(side)
-  );
+  const direction = directionOf(side);
+  // A maximized split looks like one pane, so its half takes the tab and
+  // the whole split, restored, takes the other half.
+  const next = isMaximized(profile)
+    ? splitAlongEdge(
+        profile,
+        tabId,
+        direction,
+        isFirst(side),
+        direction === "row" ? size.width : size.height,
+        1 / 2
+      )
+    : splitBeside(profile, tabId, pane.tabId, direction, isFirst(side));
 
   return next
     ? {

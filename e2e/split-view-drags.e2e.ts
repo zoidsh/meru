@@ -25,10 +25,15 @@ const row = (...tabIds: string[]): Tree => ({
 
 /**
  * Gmail, pinned, then Calendar, selected, and three Drive tabs, `o`, `d`
- * and `s`, with `root` as their split if given; only the stand-ins' apps
- * load in a pane, so the tests find a tab by its id.
+ * and `s`, with `root` as their split if given, maximized if asked; only
+ * the stand-ins' apps load in a pane, so the tests find a tab by its id.
  */
-const seed = (userDataDir: string, standIn: StandIn, root?: Tree) =>
+const seed = (
+  userDataDir: string,
+  standIn: StandIn,
+  root?: Tree,
+  maximized = false
+) =>
   writeState(userDataDir, {
     profiles: [
       {
@@ -53,7 +58,7 @@ const seed = (userDataDir: string, standIn: StandIn, root?: Tree) =>
           { id: "s", app: "drive", url: standIn.driveUrl, title: "Drive s" },
         ],
         selectedTabId: "c",
-        ...(root && { split: { root } }),
+        ...(root && { split: { root, ...(maximized && { maximized }) } }),
       },
     ],
     selectedProfileId: "p",
@@ -61,7 +66,7 @@ const seed = (userDataDir: string, standIn: StandIn, root?: Tree) =>
 
 interface Stored {
   selectedTabId: string;
-  split?: { root: Tree };
+  split?: { root: Tree; maximized?: boolean };
 }
 
 const stored = async (userDataDir: string) => {
@@ -324,4 +329,47 @@ test("near the view's outer edge a tab goes along it with a third of the view; a
   await expect.poll(() => zoneShown(overlay)).toBe("none");
   await shell.mouse.up();
   expect(await storedTree(userDataDir)).toBe("row(o c d)");
+});
+
+test("over a maximized split, which shows as one pane, a tab takes half the view and the whole split, restored, the other half", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seed(userDataDir, standIn, row("c", "d"), true);
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const overlay = await findOverlayDocument(app);
+
+  await findPage(app, standIn.calendarUrl);
+  await sizeWindow(app, 1000, 700);
+
+  const [width, height] = await areaSize(shell);
+  const half = Math.round(height / 2);
+
+  await holdOver(shell, "o", await pointOf(shell, AREA, 0.5, 0.8));
+  await expect
+    .poll(() => zoneShown(overlay))
+    .toMatchObject({
+      kind: "pane",
+      label: "Split this pane",
+      rect: [0, height - half, width, half],
+    });
+  await shell.mouse.up();
+  await expect.poll(() => storedTree(userDataDir)).toBe("column(row(c d) o)");
+
+  const { split } = (await stored(userDataDir)) ?? {};
+
+  expect(split?.maximized).toBeUndefined();
+  expect(split?.root.children.map(({ size }) => size)).toStrictEqual([
+    0.5, 0.5,
+  ]);
+  await expect
+    .poll(() =>
+      readViews(app).then(
+        ({ views }) => views.filter((view) => view.visible).length
+      )
+    )
+    .toBe(3);
 });
