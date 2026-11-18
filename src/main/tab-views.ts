@@ -130,6 +130,9 @@ export type LoadedPage = Pick<ContentView, "url" | "evaluate">;
 /** How long after a page's request to add an account another is dropped. */
 const ADD_PROFILE_PAUSE_MS = 1000;
 
+/** The longest a profile's Open at Launch tabs hold back the next one's. */
+export const LAUNCH_TURN_MS = 15_000;
+
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -197,9 +200,15 @@ export const createTabViews = ({
   const launched = new Set<string>();
   /**
    * The Open at Launch tabs opened that are still loading; the next
-   * profile's open once none is.
+   * profile's open once none is, or once the turn's cap is up.
    */
   const launchLoading = new Set<string>();
+  /**
+   * Ends a profile's turn should its tabs still load after
+   * `LAUNCH_TURN_MS`, since a page can stay loading for good, waiting on
+   * a request that never ends, and would hold back every later profile.
+   */
+  let launchCap: ReturnType<typeof setTimeout> | undefined;
   /**
    * The tabs put to sleep, which stay without a view while they are selected,
    * until woken. Not kept across launches.
@@ -416,10 +425,17 @@ export const createTabViews = ({
     }
 
     if (launchLoading.delete(key) && launchLoading.size === 0) {
-      setTimeout(() => {
-        reconcile(state());
-      }, 0);
+      endLaunchTurn();
     }
+  };
+
+  const endLaunchTurn = () => {
+    clearTimeout(launchCap);
+    launchCap = undefined;
+    launchLoading.clear();
+    setTimeout(() => {
+      reconcile(state());
+    }, 0);
   };
 
   const dispatch = (key: string, event: TabEvent) => {
@@ -888,6 +904,11 @@ export const createTabViews = ({
       if (tabs.has(key)) {
         launchLoading.add(key);
       }
+    }
+
+    if (next.launched.length > 0) {
+      clearTimeout(launchCap);
+      launchCap = setTimeout(endLaunchTurn, LAUNCH_TURN_MS);
     }
 
     for (const key of next.opening) {

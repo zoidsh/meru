@@ -17,7 +17,7 @@ import type {
 
 import { createProfiles } from "./profiles.ts";
 import { createSenderRegistry } from "./senders.ts";
-import { createTabViews } from "./tab-views.ts";
+import { LAUNCH_TURN_MS, createTabViews } from "./tab-views.ts";
 import type { LoadedPage } from "./tab-views.ts";
 
 const GMAIL = "https://mail.google.com/mail/u/0";
@@ -384,6 +384,22 @@ describe(createTabViews, () => {
       ],
       { kind: "loading" },
     ]);
+  });
+
+  it("opens the next profile's Open at Launch tabs once the selected profile's turn is up, though its page is still loading", async () => {
+    const window = await setup();
+
+    await vi.advanceTimersByTimeAsync(LAUNCH_TURN_MS - 1);
+
+    expect(window.viewOf("persist:b")).toBeUndefined();
+
+    // The cap, then the next turn's plan, a timer of 0 that fires 1ms on.
+    await vi.advanceTimersByTimeAsync(2);
+
+    expect([
+      window.tabs.status({ profileId: "a", tabId: "gmail" }),
+      window.tabs.status({ profileId: "b", tabId: "gmail" }),
+    ]).toStrictEqual([{ kind: "loading" }, { kind: "loading" }]);
   });
 
   it("answers the front tab's history and load, null under the unified inbox, moves only the front view, and tells of every load", async () => {
@@ -996,7 +1012,11 @@ describe(createTabViews, () => {
 
     expect(calendar?.closed).toBeTruthy();
     expect(calendar?.loaded).toHaveLength(1);
-    expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+    // The next profile's Gmail, its turn come with the minute.
+    expect(window.live()).toStrictEqual([
+      ["persist:a", GMAIL, true],
+      ["persist:b", GMAIL, false],
+    ]);
   });
 
   it("leaves no front, telling of it, and nothing to focus once the last tab closes", async () => {
@@ -1138,12 +1158,17 @@ describe(createTabViews, () => {
 
     expect([first?.closed, first?.loaded]).toStrictEqual([true, [CALENDAR]]);
     expect(window.tabs.status(calendar)).toStrictEqual({ kind: "unloaded" });
-    expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+    // The next profile's Gmail, its turn come with the minute.
+    expect(window.live()).toStrictEqual([
+      ["persist:a", GMAIL, true],
+      ["persist:b", GMAIL, false],
+    ]);
 
     await window.tabs.select(calendar);
 
     expect(window.live()).toStrictEqual([
       ["persist:a", GMAIL, false],
+      ["persist:b", GMAIL, false],
       ["persist:a", elsewhere, true],
     ]);
   });
