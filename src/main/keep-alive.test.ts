@@ -14,7 +14,10 @@ const COOKIE = "rotating";
 
 /** A cookie jar per partition and the pages opened in it, by hand. */
 const createFakePages = (expiries: Record<string, number>) => {
-  const listeners = new Map<string, Set<(expiresAt: number) => void>>();
+  const listeners = new Map<
+    string,
+    Set<(expiresAt: number | undefined) => void>
+  >();
   const opened: { partition: string; url: string; closed: boolean }[] = [];
   const pages: KeepAlivePages = {
     readExpiries: (partition, name) =>
@@ -55,6 +58,12 @@ const createFakePages = (expiries: Record<string, number>) => {
     rotate: (partition: string) => {
       for (const listener of listeners.get(partition) ?? []) {
         listener(Date.now() + ROTATION_LIFETIME);
+      }
+    },
+    /** The session removes the cookie, as signing out does. */
+    remove: (partition: string) => {
+      for (const listener of listeners.get(partition) ?? []) {
+        listener(undefined);
       }
     },
     watching: (partition: string) => listeners.get(partition)?.size ?? 0,
@@ -242,6 +251,23 @@ describe(createKeepAlive, () => {
     vi.setSystemTime(Date.now() + 7 * DAY);
     await vi.advanceTimersByTimeAsync(HOUR);
     expect(run.open()).toStrictEqual(["persist:a"]);
+  });
+
+  it("forgets when a profile's cookie rotated once it is removed, until it is set again", async () => {
+    const run = setup();
+
+    // Once the expiry at launch is read.
+    await vi.advanceTimersByTimeAsync(0);
+    run.remove("persist:a");
+    await vi.advanceTimersByTimeAsync(DAY);
+    expect(run.opened).toHaveLength(0);
+
+    run.rotate("persist:a");
+    vi.setSystemTime(Date.now() + 3 * DAY);
+    await vi.advanceTimersByTimeAsync(HOUR);
+    expect(run.opened.map(({ partition }) => partition)).toStrictEqual([
+      "persist:a",
+    ]);
   });
 
   it("opens nothing of a profile never signed in", async () => {

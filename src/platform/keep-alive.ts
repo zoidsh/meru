@@ -9,12 +9,14 @@ export interface KeepAlivePages {
   readExpiries: (partition: string, name: string) => Promise<number[]>;
   /**
    * Called with the expiry, in ms, each time a persistent cookie of `name` is
-   * set in the partition; never with its value. Returns what stops it.
+   * set in the partition, and with nothing when one is removed other than by
+   * being set anew, as signing out does; never with its value. Returns what
+   * stops it.
    */
   watchCookie: (
     partition: string,
     name: string,
-    listener: (expiresAt: number) => void
+    listener: (expiresAt: number | undefined) => void
   ) => () => void;
   /**
    * Loads `url` in the partition in a view no window shows, muted, with no
@@ -46,14 +48,17 @@ export const createKeepAlivePages = (): KeepAlivePages => ({
     const changed = (
       _event: Electron.Event,
       cookie: Electron.Cookie,
-      _cause: string,
+      cause: string,
       removed: boolean
     ) => {
-      if (
-        cookie.name === name &&
-        !removed &&
-        cookie.expirationDate !== undefined
-      ) {
+      if (cookie.name !== name) {
+        return;
+      }
+
+      // A rotation removes the old value as "overwrite" before it sets the new.
+      if (removed && cause !== "overwrite") {
+        listener(undefined);
+      } else if (!removed && cookie.expirationDate !== undefined) {
         listener(cookie.expirationDate * SECOND);
       }
     };

@@ -134,6 +134,13 @@ export const createKeepAlive = ({
     watches.set(
       profileId,
       pages.watchCookie(partition, cookie, (expiresAt) => {
+        // Signed out: nothing to keep alive until a sign-in sets it again.
+        if (expiresAt === undefined) {
+          rotated.delete(profileId);
+
+          return;
+        }
+
         noteRotation(profileId, expiresAt - ROTATION_LIFETIME);
         failed.delete(profileId);
 
