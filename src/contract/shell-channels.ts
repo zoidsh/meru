@@ -16,6 +16,8 @@ export const SHELL_CALL_NAMES = [
   "setInboxOpen",
   "openInboxMessage",
   "runInboxAction",
+  "toggleOpenApp",
+  "openApp",
 ] as const;
 
 /** What the titlebar's navigation buttons ask of the front tab. */

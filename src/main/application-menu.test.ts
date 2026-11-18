@@ -22,6 +22,7 @@ const contextOf = (): CommandContext => ({
   state: oneProfile,
   doNotDisturb: undefined,
   inboxOpen: false,
+  openAppOpen: false,
   sidebarShown: false,
   navigation: null,
 });
@@ -266,6 +267,7 @@ const setup = () => {
       doNotDisturb: undefined,
       navigation: { canGoBack: false, canGoForward: false, loading: false },
       inboxOpen,
+      openAppOpen: false,
       sidebarShown: false,
     }),
     actions,

@@ -351,6 +351,11 @@ msgstr "Narrow sidebar"
 msgid "New message"
 msgstr "New message"
 
+#. Said in the list of Google's apps over the page when none has a name holding what was typed
+#: src/shell/open-app.tsx
+msgid "No apps found."
+msgstr "No apps found."
+
 #. Item of the Saved Searches menu, not clickable, while the selected profile has none
 #: src/main/application-menu.ts
 msgid "No Saved Searches"
@@ -370,6 +375,22 @@ msgstr "On Until {time}"
 #: src/main/do-not-disturb.ts
 msgid "On Until Turned Off"
 msgstr "On Until Turned Off"
+
+#. Name and placeholder of the search field over the page that lists Google's apps, to open one as a tab
+#: src/shell/open-app.tsx
+msgid "Open app"
+msgstr "Open app"
+
+#. Name and tooltip of the button, in the sidebar or the title bar, that lists Google's apps over the page to open one as a tab
+#: src/shell/open-app.tsx
+msgctxt "button"
+msgid "Open app"
+msgstr "Open app"
+
+#. Menu item in the Tabs menu that lists Google's apps over the page, to open one as a tab in the selected profile
+#: src/main/commands.ts
+msgid "Open App…"
+msgstr "Open App…"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts

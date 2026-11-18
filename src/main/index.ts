@@ -60,6 +60,7 @@ import { createInbox } from "./inbox.ts";
 import { createMailActions } from "./mail-actions.ts";
 import { createMailPoller } from "./mail.ts";
 import { createMailNotifications } from "./notifications.ts";
+import { createOpenApp } from "./open-app.ts";
 import { createOverlays } from "./overlay.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfiles } from "./profiles.ts";
@@ -595,6 +596,14 @@ const start = async () => {
 
   mail.onPoll(inbox.polled);
 
+  const openApp = createOpenApp({
+    apps,
+    state: profiles.get,
+    overlays,
+    openTab: views.open,
+    log: console.error,
+  });
+
   if (gmail && mailActions) {
     const mailNotifications = createMailNotifications({
       // The suite's build captures every notification, so a test never puts
@@ -663,6 +672,7 @@ const start = async () => {
       state: profiles.get(),
       doNotDisturb: doNotDisturb.current(),
       inboxOpen: inbox.isOpen(),
+      openAppOpen: openApp.isOpen(),
       sidebarShown: sidebar.current() !== "hidden",
       navigation: views.navigation(),
     }),
@@ -688,6 +698,7 @@ const start = async () => {
           ? doNotDisturb.switchOff()
           : doNotDisturb.switchOn(choice),
       setInboxOpen: inbox.setOpen,
+      setOpenAppOpen: openApp.setOpen,
       toggleSidebar: sidebar.toggleShown,
       navigateGmail,
       saveSearch: profiles.saveSearch,
@@ -724,6 +735,7 @@ const start = async () => {
       overlays,
       tabs: views,
       inbox,
+      openApp,
       window: shell.window,
       sidebar,
       focus,
@@ -744,7 +756,8 @@ const start = async () => {
             sidebar: { state: sidebar.current() },
             shortcuts,
             navigation: views.navigation(),
-          }
+          },
+          apps
         ),
       onChange: (listener) => {
         profiles.onChange(listener);

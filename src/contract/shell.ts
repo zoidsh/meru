@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import { APP_IDS } from "#core/apps.ts";
 import { MAIL_STATUSES } from "#core/feed.ts";
 import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
@@ -89,6 +90,13 @@ export const SHELL_CALLS = {
       messageId,
       action: z.enum(MAIL_ACTIONS),
     }),
+    response: z.undefined(),
+  },
+  /** Opens Open app, or closes it, as its buttons ask. */
+  toggleOpenApp: { request: none, response: z.undefined() },
+  /** Opens a tab of an app that the open Open app lists, and closes it. */
+  openApp: {
+    request: z.object({ appId: z.enum(APP_IDS) }),
     response: z.undefined(),
   },
 } as const satisfies Record<
@@ -199,6 +207,12 @@ export const SHELL_STATE = {
       profileId,
       /** The profile's name as shown, which the field starts with. */
       name: z.string(),
+    }),
+    z.object({
+      kind: z.literal("open-app"),
+      profileId,
+      /** What the profile can open, in the registry's order. */
+      apps: z.array(z.object({ id: z.enum(APP_IDS), name: z.string() })),
     }),
   ]),
 } as const;

@@ -45,6 +45,7 @@ const setup = (initial: State = twoProfiles) => {
   });
   let reloads = 0;
   let inboxOpen = false;
+  let openAppOpen = false;
   const renames: string[] = [];
   const navigations: string[] = [];
   let sidebarShown = false;
@@ -77,6 +78,9 @@ const setup = (initial: State = twoProfiles) => {
     setInboxOpen: (open) => {
       inboxOpen = open;
     },
+    setOpenAppOpen: (open) => {
+      openAppOpen = open;
+    },
     switchDoNotDisturb: (choice) =>
       choice === "off"
         ? doNotDisturb.switchOff()
@@ -93,6 +97,7 @@ const setup = (initial: State = twoProfiles) => {
     state: profiles.get(),
     doNotDisturb: doNotDisturb.current(),
     inboxOpen,
+    openAppOpen,
     sidebarShown,
     navigation,
   });
@@ -108,6 +113,7 @@ const setup = (initial: State = twoProfiles) => {
     },
     renames,
     navigations,
+    openAppOpen: () => openAppOpen,
     context,
     actions,
     isAvailable: (id: string) => commandOf(id).isAvailable?.(context()) ?? true,
@@ -229,6 +235,22 @@ describe("the command registry", () => {
 
     expect(app.profiles.get().profiles).toHaveLength(2);
     expect(app.isAvailable("profile.next")).toBeTruthy();
+  });
+
+  it("opens Open app, and closes it when run again", async () => {
+    const app = setup();
+
+    await app.run("app.open");
+
+    const opened = app.openAppOpen();
+
+    await app.run("app.open");
+
+    expect([
+      app.isAvailable("app.open"),
+      opened,
+      app.openAppOpen(),
+    ]).toStrictEqual([true, true, false]);
   });
 
   it("opens the rename of the selected profile", async () => {

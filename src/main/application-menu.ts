@@ -319,6 +319,8 @@ export const buildMenuTemplate = ({
       comment: "Name of the menu of commands on the selected profile's tabs",
     }),
     submenu: [
+      ...item("app.open"),
+      separator,
       ...item("tab.next"),
       ...item("tab.previous"),
       separator,

@@ -36,6 +36,8 @@ export interface CommandContext {
   doNotDisturb: DoNotDisturb | undefined;
   /** Whether the unified inbox is open over the page. */
   inboxOpen: boolean;
+  /** Whether Open app is open over the page. */
+  openAppOpen: boolean;
   /** Whether the sidebar shows. */
   sidebarShown: boolean;
   /** The front tab's page, or `null` with none or under the unified inbox. */
@@ -60,6 +62,8 @@ export interface CommandActions {
   switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
   /** Shows the unified inbox, or puts the tab back. */
   setInboxOpen: (open: boolean) => void;
+  /** Opens Open app over the selected profile's page, or closes it. */
+  setOpenAppOpen: (open: boolean) => void;
   /** Shows the sidebar where it is hidden, else hides it. */
   toggleSidebar: () => void;
   /** Shows the profile's Gmail tab and sends its page to `hash`. */
@@ -337,6 +341,27 @@ export const COMMANDS: readonly Command[] = [
     isAvailable: ({ navigation }) => navigation?.loading ?? false,
     run: (_context, { stopLoading }) => {
       stopLoading();
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "app.open",
+    title: () =>
+      t({
+        message: "Open App…",
+        comment:
+          "Menu item in the Tabs menu that lists Google's apps over the page, to open one as a tab in the selected profile",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+T",
+      win32: "CommandOrControl+T",
+      linux: "CommandOrControl+T",
+    },
+    once: true,
+    // A second time closes it, as a second click on its button does.
+    run: ({ openAppOpen }, { setOpenAppOpen }) => {
+      setOpenAppOpen(!openAppOpen);
 
       return Promise.resolve();
     },

@@ -1,5 +1,7 @@
 import type { ShellState } from "#contract/shell.ts";
 import { formatAccelerator } from "#core/accelerator.ts";
+import type { App } from "#core/apps.ts";
+import { openableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
@@ -14,6 +16,7 @@ import type { Command } from "./commands.ts";
 import type { Focus } from "./focus.ts";
 import type { Inbox } from "./inbox.ts";
 import type { Mail } from "./mail.ts";
+import type { OpenApp } from "./open-app.ts";
 import type { Overlays } from "./overlay.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
@@ -28,6 +31,7 @@ export interface ShellHandlersDeps {
   overlays: Pick<Overlays, "open" | "close" | "current">;
   tabs: { retry: (key: TabKey) => void };
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
+  openApp: Pick<OpenApp, "choose">;
   window: Pick<AppWindow, "showContextMenu">;
   sidebar: Pick<Sidebar, "current" | "toggleWidth">;
   focus: Pick<Focus, "focus">;
@@ -60,7 +64,8 @@ const shellTabStatus = (status: TabStatus): ShellTabStatus => {
 
 const shellOverlay = (
   state: State,
-  overlay: Overlay | undefined
+  overlay: Overlay | undefined,
+  apps: readonly App[]
 ): ShellState["overlay"] => {
   if (overlay?.kind === "inbox") {
     return { kind: "inbox" };
@@ -70,13 +75,21 @@ const shellOverlay = (
     overlay &&
     state.profiles.find((candidate) => candidate.id === overlay.profileId);
 
-  return profile
+  if (!overlay || !profile) {
+    return { kind: "none" };
+  }
+
+  return overlay.kind === "open-app"
     ? {
+        kind: "open-app",
+        profileId: profile.id,
+        apps: openableApps(apps, profile).map(({ id, name }) => ({ id, name })),
+      }
+    : {
         kind: "rename-profile",
         profileId: profile.id,
         name: profileDisplayName(profile),
-      }
-    : { kind: "none" };
+      };
 };
 
 /** The registry's shortcuts as the shell shows them, by command id. */
@@ -102,7 +115,9 @@ export const shellState = (
   mail: (profileId: string) => Mail,
   doNotDisturb: DoNotDisturb | undefined,
   inbox: ShellState["inbox"],
-  fixed: Pick<ShellState, "sidebar" | "shortcuts" | "navigation">
+  fixed: Pick<ShellState, "sidebar" | "shortcuts" | "navigation">,
+  /** The registry, or the suite's stand-ins for it, which Open app lists. */
+  apps: readonly App[]
 ): ShellState => {
   const profile = selectedProfile(state);
 
@@ -133,7 +148,7 @@ export const shellState = (
       on: doNotDisturb !== undefined,
       until: doNotDisturb?.until ?? null,
     },
-    overlay: shellOverlay(state, overlay),
+    overlay: shellOverlay(state, overlay, apps),
     inbox,
     ...fixed,
   };
@@ -144,6 +159,7 @@ export const createShellHandlers = ({
   overlays,
   tabs,
   inbox,
+  openApp,
   window,
   sidebar,
   focus,
@@ -236,5 +252,13 @@ export const createShellHandlers = ({
   },
   runInboxAction: async ({ profileId, messageId, action }) => {
     await inbox.runAction(profileId, messageId, action);
+  },
+  toggleOpenApp: () => {
+    runCommand("app.open");
+
+    return Promise.resolve();
+  },
+  openApp: async ({ appId }) => {
+    await openApp.choose(appId);
   },
 });

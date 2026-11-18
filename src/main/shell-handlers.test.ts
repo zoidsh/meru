@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { APPS } from "#core/apps.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
@@ -87,6 +88,13 @@ const setup = ({
       },
       runAction: (profileId, messageId, action) => {
         calls.push(["action", profileId, messageId, action]);
+
+        return Promise.resolve();
+      },
+    },
+    openApp: {
+      choose: (appId) => {
+        calls.push(["openApp", appId]);
 
         return Promise.resolve();
       },
@@ -248,7 +256,8 @@ describe(shellState, () => {
           profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL,
         undefined,
         CLOSED_INBOX,
-        CHROME
+        CHROME,
+        APPS
       ).profiles
     ).toStrictEqual({
       profiles: [
@@ -299,7 +308,8 @@ describe(shellState, () => {
         () => NO_MAIL,
         undefined,
         CLOSED_INBOX,
-        CHROME
+        CHROME,
+        APPS
       ).tabs
     ).toStrictEqual({
       profileId: "a",
@@ -343,7 +353,8 @@ const overlaySlice = (open: Overlay | undefined) =>
     () => NO_MAIL,
     undefined,
     CLOSED_INBOX,
-    CHROME
+    CHROME,
+    APPS
   ).overlay;
 
 describe("the overlay slice", () => {
@@ -364,6 +375,17 @@ describe("the overlay slice", () => {
     ).toStrictEqual({ kind: "rename-profile", profileId: "b", name: "Work" });
   });
 
+  it("lists what Open app's profile can open, by id and name", () => {
+    expect(overlaySlice({ kind: "open-app", profileId: "a" })).toStrictEqual({
+      kind: "open-app",
+      profileId: "a",
+      apps: APPS.filter(({ id }) => id !== "gmail").map(({ id, name }) => ({
+        id,
+        name,
+      })),
+    });
+  });
+
   it("is none for a profile that is gone", () => {
     expect(
       overlaySlice({ kind: "rename-profile", profileId: "gone" })
@@ -379,8 +401,23 @@ const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
     () => NO_MAIL,
     doNotDisturb,
     CLOSED_INBOX,
-    CHROME
+    CHROME,
+    APPS
   ).doNotDisturb;
+
+describe("Open app in the shell", () => {
+  it("toggles through the registry's command and hands a choice to Open app", async () => {
+    const shell = setup();
+
+    await shell.handlers.toggleOpenApp({});
+    await shell.handlers.openApp({ appId: "drive" });
+
+    expect([shell.ran, shell.calls]).toStrictEqual([
+      ["app.open"],
+      [["openApp", "drive"]],
+    ]);
+  });
+});
 
 describe("the sidebar's toggles", () => {
   it("show or hide it through the registry's command, and narrow or widen it", async () => {

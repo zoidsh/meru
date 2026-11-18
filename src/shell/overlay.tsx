@@ -1,5 +1,6 @@
 import { Trans } from "@lingui/react/macro";
 import { useEffect, useId } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import type { ShellState } from "#contract/shell.ts";
@@ -8,6 +9,7 @@ import { Input } from "#ui/input.tsx";
 import { Label } from "#ui/label.tsx";
 
 import { Inbox } from "./inbox.tsx";
+import { OpenAppOverlay } from "./open-app.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
@@ -141,12 +143,21 @@ export const OverlayLayer = () => {
     return null;
   }
 
-  return createPortal(
-    open.kind === "inbox" ? (
-      inbox?.open && <Inbox inbox={inbox} />
-    ) : (
-      <RenameProfile key={open.profileId} {...open} />
-    ),
-    target.body
-  );
+  let drawn: ReactNode;
+
+  switch (open.kind) {
+    case "inbox": {
+      drawn = inbox?.open && <Inbox inbox={inbox} />;
+      break;
+    }
+    case "open-app": {
+      drawn = <OpenAppOverlay key={open.profileId} {...open} />;
+      break;
+    }
+    default: {
+      drawn = <RenameProfile key={open.profileId} {...open} />;
+    }
+  }
+
+  return createPortal(drawn, target.body);
 };

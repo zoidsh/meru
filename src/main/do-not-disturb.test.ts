@@ -201,6 +201,7 @@ const labels = (context: Partial<CommandContext>) =>
       doNotDisturb: undefined,
       navigation: null,
       inboxOpen: false,
+      openAppOpen: false,
       sidebarShown: false,
       ...context,
     },
@@ -268,7 +269,8 @@ describe("an end no date holds", () => {
           () => ({ status: "unknown", unreadCount: null }),
           current,
           { open: false, profiles: [], rows: [], notice: null },
-          { sidebar: { state: "hidden" }, shortcuts: {}, navigation: null }
+          { sidebar: { state: "hidden" }, shortcuts: {}, navigation: null },
+          []
         ).doNotDisturb
       ).toStrictEqual({ on: false, until: null });
       doNotDisturb.dispose();

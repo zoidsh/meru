@@ -166,6 +166,16 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    toggleOpenApp: (request) => {
+      calls.push(["toggleOpenApp", request]);
+
+      return Promise.resolve();
+    },
+    openApp: (request) => {
+      calls.push(["openApp", request]);
+
+      return Promise.resolve();
+    },
   };
 
   serveShellContract({
@@ -303,6 +313,29 @@ describe(serveShellContract, () => {
         "runInboxAction",
         { profileId: "a", messageId: "18c2f0a9", action: "archive" },
       ],
+    ]);
+  });
+
+  it("passes Open app's choice of a registered app and refuses any other", async () => {
+    const shell = setup();
+    const refusals = await Promise.allSettled(
+      [{}, { appId: "tasks" }, { appId: "https://example.com/" }].map(
+        (request) => shell.call(SHELL, "openApp", request)
+      )
+    );
+
+    await shell.call(SHELL, "openApp", { appId: "calendar" });
+
+    expect([
+      refusals.map(
+        (result) =>
+          result.status === "rejected" &&
+          result.reason instanceof RefusedCallError
+      ),
+      shell.calls,
+    ]).toStrictEqual([
+      [true, true, true],
+      [["openApp", { appId: "calendar" }]],
     ]);
   });
 
