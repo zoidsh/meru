@@ -24,7 +24,7 @@ import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
-import { isMenuKey, wholePoint } from "./context-menu.ts";
+import { isKeyMadeMenu, isMenuKey, wholePoint } from "./context-menu.ts";
 import { keepInView } from "./keep-in-view.ts";
 import { OpenAppSidebarButton } from "./open-app.tsx";
 import { useShortcutTitle } from "./shortcut-title.ts";
@@ -444,6 +444,11 @@ const TabButton = ({
       ref={selected ? keepInView : undefined}
       onContextMenu={(event: MouseEvent<HTMLElement>) => {
         event.preventDefault();
+
+        if (isKeyMadeMenu(event)) {
+          return;
+        }
+
         openTabMenu(profileId, tab.id, event.clientX, event.clientY);
       }}
       onPointerDown={onPointerDown}

@@ -21,7 +21,7 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
 
-import { isMenuKey, wholePoint } from "./context-menu.ts";
+import { isKeyMadeMenu, isMenuKey, wholePoint } from "./context-menu.ts";
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
 import { OpenAppTitlebarButton } from "./open-app.tsx";
@@ -403,6 +403,11 @@ const ProfileButton = ({
       }}
       onContextMenu={(event) => {
         event.preventDefault();
+
+        if (isKeyMadeMenu(event)) {
+          return;
+        }
+
         openProfileMenu(id, event.clientX, event.clientY);
       }}
       onClick={() => {

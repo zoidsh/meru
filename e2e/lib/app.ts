@@ -7,7 +7,12 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { _electron, expect, test as base } from "@playwright/test";
-import type { ElectronApplication, Page, TestInfo } from "@playwright/test";
+import type {
+  ElectronApplication,
+  Locator,
+  Page,
+  TestInfo,
+} from "@playwright/test";
 import { delay, withTimeout } from "es-toolkit";
 
 import { DEV_IDENTITY } from "#core/app-identity.ts";
@@ -413,6 +418,37 @@ export const openContextMenu = async (
   }
 
   return menu;
+};
+
+/**
+ * Sends `control` the buttonless `contextmenu` Chromium on Windows sends on a
+ * menu key's release, then right-clicks it, and expects the click's menu
+ * alone: a control that opens its menu on the key's press drops the other.
+ */
+export const expectKeyMadeMenuDropped = async (
+  app: ElectronApplication,
+  control: Locator
+) => {
+  const before = await contextMenuCount(app);
+
+  await control.evaluate((element) => {
+    element.dispatchEvent(
+      new PointerEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        button: -1,
+        clientX: 1,
+        clientY: 1,
+      })
+    );
+  });
+
+  const clicked = await openContextMenu(app, () =>
+    control.click({ button: "right" })
+  );
+
+  expect(clicked.at).not.toStrictEqual({ x: 1, y: 1 });
+  expect(await contextMenuCount(app)).toBe(before + 1);
 };
 
 /** Chooses the enabled item with this label of the last native menu. */

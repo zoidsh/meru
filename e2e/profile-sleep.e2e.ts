@@ -4,6 +4,7 @@ import {
   chooseContextMenuItem,
   clickMenuItem,
   expect,
+  expectKeyMadeMenuDropped,
   findPage,
   openContextMenu,
   readMenuItem,
@@ -368,4 +369,5 @@ test("Shift+F10 and the Menu key on a focused profile button pop its menu up bel
 
   expect(keyed.items).toStrictEqual(["Sleep"]);
   await expect(work).toBeFocused();
+  await expectKeyMadeMenuDropped(app, work);
 });

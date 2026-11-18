@@ -3,6 +3,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import {
   chooseContextMenuItem,
   expect,
+  expectKeyMadeMenuDropped,
   findPage,
   openContextMenu,
   readOpenedExternally,
@@ -222,6 +223,7 @@ test("Shift+F10 and the Menu key on a focused tab pop its menu up beside it, and
 
   expect(keyed.items[0]).toBe("Wake");
   await expect(drive).toBeFocused();
+  await expectKeyMadeMenuDropped(app, drive);
 });
 
 test("Reload, Copy URL and Open in default browser act on the menu's tab and select nothing", async ({
