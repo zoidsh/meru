@@ -173,6 +173,63 @@ for (const { count, signedIn } of [
   });
 }
 
+test("the line a dragged tab would land at, in the list and in the wide pinned grid", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, withPinned(standIn, 3));
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const tab = (name: string) =>
+    shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { name, exact: true });
+
+  /** Drags `from` to `share` of the way across and down `over`, and holds it there. */
+  const hold = async (
+    from: string,
+    over: string,
+    across: number,
+    down: number
+  ) => {
+    const start = await tab(from).boundingBox();
+    const end = await tab(over).boundingBox();
+
+    await shell.mouse.move(
+      (start?.x ?? 0) + (start?.width ?? 0) / 2,
+      (start?.y ?? 0) + (start?.height ?? 0) / 2
+    );
+    await shell.mouse.down();
+    await shell.mouse.move(
+      (end?.x ?? 0) + (end?.width ?? 0) * across,
+      (end?.y ?? 0) + (end?.height ?? 0) * down,
+      { steps: 8 }
+    );
+  };
+
+  const letGo = async () => {
+    await shell.keyboard.press("Escape");
+    await shell.mouse.up();
+  };
+
+  await findPage(app, standIn.driveUrl);
+  await findPage(app, standIn.url);
+
+  await hold("Sheets", "Docs", 0.5, 0.1);
+  await shootEachWay(app, shell, "drag-list");
+  await letGo();
+
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await hold("Drive stand-in", "Calendar", 0.1, 0.5);
+  await shootEachWay(app, shell, "drag-pinned-wide");
+  await letGo();
+
+  await hold("Sheets", "Docs", 0.5, 0.1);
+  await shootEachWay(app, shell, "drag-list-wide");
+  await letGo();
+});
+
 test("a tab's menu on a pinned tile and on a listed tab", async ({
   launchApp,
   userDataDir,
