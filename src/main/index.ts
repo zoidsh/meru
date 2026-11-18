@@ -432,6 +432,8 @@ const start = async () => {
     view.onFocus(() => {
       focus.noteFocused({ kind: "overlay" });
     });
+    // oxlint-disable-next-line no-use-before-define -- no key reaches the overlay before the menu exists
+    view.onKey((input) => menu.handleKey(input));
     overlays.adopt(view);
   });
   shell.window.onPageFocus(() => {

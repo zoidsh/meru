@@ -67,6 +67,7 @@ const setup = () => {
         focus.noteFocused({ kind: "overlay" });
       },
       onFocus: () => false,
+      onKey: () => false,
       onGone: (listener) => {
         destroy = listener;
       },

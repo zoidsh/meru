@@ -1,6 +1,7 @@
 import { WebContentsView } from "electron";
 import type { BrowserWindow, WebContents } from "electron";
 
+import type { KeyInput } from "#core/accelerator.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
 
 /**
@@ -18,6 +19,11 @@ export interface OverlayView {
   focus: () => void;
   /** Told when its page gains keyboard focus. */
   onFocus: (listener: () => void) => void;
+  /**
+   * Hears each key before the page does; one it says it handled goes no
+   * further, to the page or to the application menu.
+   */
+  onKey: (listener: (input: KeyInput) => boolean) => void;
   /** Told once, when its page is closed or destroyed. */
   onGone: (listener: () => void) => void;
   /** Closes its page and takes it off the window. */
@@ -79,6 +85,13 @@ export const adoptOverlayView = (
     focus: () => webContents.focus(),
     onFocus: (listener) => {
       webContents.on("focus", listener);
+    },
+    onKey: (listener) => {
+      webContents.on("before-input-event", (event, input) => {
+        if (listener(input)) {
+          event.preventDefault();
+        }
+      });
     },
     onGone: (listener) => {
       goneListeners.add(listener);
