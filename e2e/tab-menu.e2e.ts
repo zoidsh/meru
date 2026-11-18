@@ -185,10 +185,15 @@ test("Shift+F10 and the Menu key on a focused tab open its menu beside it", asyn
 
   const overlay = await findOverlayDocument(app);
   const menu = overlay.getByRole("menu", { name: DRIVE_TITLE });
-  const box = await menu.boundingBox();
-  const tile = await drive.boundingBox();
 
   await expect(menu).toBeVisible();
+  // It grows in from its corner, so its box is only where it rests after.
+  await menu.evaluate((element) =>
+    Promise.all(element.getAnimations().map(({ finished }) => finished))
+  );
+
+  const box = await menu.boundingBox();
+  const tile = await drive.boundingBox();
   // At the tile's right edge, to the pixel the point is rounded to.
   expect(
     Math.abs((box?.x ?? 0) - (tile?.x ?? 0) - (tile?.width ?? 0))
@@ -200,7 +205,7 @@ test("Shift+F10 and the Menu key on a focused tab open its menu beside it", asyn
   await expect(menu).toBeVisible();
 });
 
-test("a click beside the menu closes it and reaches nothing under the pointer", async ({
+test("a click beside the menu, on the overlay that covers the whole content area, closes it, selects nothing and gives focus back to the tab", async ({
   launchApp,
   standIn,
   userDataDir,
