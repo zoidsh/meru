@@ -33,13 +33,6 @@ import { NavigationButtons } from "./titlebar.tsx";
 
 type OwnWindow = ShellState["windows"][number];
 
-/**
- * A tab's own window as the shell draws it, behind the page main places in
- * it: the titlebar, with the page's navigation, the profile's badge where
- * there are two or more profiles, the app's icon and the page's title, and
- * at its right the bookmark star and More options, and the shell grey with the profile's tint around the page. The whole
- * titlebar drags the window but for its controls.
- */
 /** More options, last in the titlebar, whose native menu main pops up under it. */
 const MoreOptionsButton = ({
   profileId,
@@ -73,6 +66,14 @@ const MoreOptionsButton = ({
   );
 };
 
+/**
+ * A tab's own window as the shell draws it, behind the page main places in
+ * it: the titlebar, with the page's navigation, the profile's badge where
+ * there are two or more profiles, the app's icon and the page's title, and
+ * at its right the bookmark star and More options, and the shell grey with
+ * the profile's tint around the page. The whole titlebar drags the window
+ * but for its controls.
+ */
 const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
   const { t } = useLingui();
   const profiles = useShellState("profiles");
