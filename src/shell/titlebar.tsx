@@ -196,8 +196,11 @@ const useClippedEnds = (scroller: HTMLElement | null) => {
   return clipped;
 };
 
-/** The selected profile scrolls clear of the fade over a clipped end, `w-10`. */
-const keepClearOfFades = keepInViewBy(40);
+/**
+ * The selected profile scrolls clear of the fade over a clipped end, `w-10`,
+ * and stays so as a profile before it widens with its sign-in mark.
+ */
+const keepClearOfFades = keepInViewBy(40, true);
 
 /** Left and Right, Home and End, move focus within the row. */
 const moveFocus = (event: KeyboardEvent<HTMLElement>) => {

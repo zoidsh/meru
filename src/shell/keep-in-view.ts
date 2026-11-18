@@ -27,28 +27,37 @@ const scrollIntoScroller = (
 /**
  * The selected tab's ref: keeps it in view, `margin` clear of the edges of
  * the element it scrolls in, when it becomes selected and whenever that
- * element changes size. Made once per margin, outside a render, since a new
- * ref each render would run again.
+ * element changes size, or with `followTabs` any tab in it, as a mark that
+ * appears on another tab pushes this one along. Made once per margin, outside
+ * a render, since a new ref each render would run again.
  */
-export const keepInViewBy = (margin: number) => (tab: HTMLElement | null) => {
-  const scroller = tab?.closest<HTMLElement>(
-    "[data-tab-scroller], [data-slot=scroll-area-viewport]"
-  );
+export const keepInViewBy =
+  (margin: number, followTabs = false) =>
+  (tab: HTMLElement | null) => {
+    const scroller = tab?.closest<HTMLElement>(
+      "[data-tab-scroller], [data-slot=scroll-area-viewport]"
+    );
 
-  if (!tab || !scroller) {
-    return;
-  }
+    if (!tab || !scroller) {
+      return;
+    }
 
-  const observer = new ResizeObserver(() => {
-    scrollIntoScroller(tab, scroller, margin);
-  });
+    const observer = new ResizeObserver(() => {
+      scrollIntoScroller(tab, scroller, margin);
+    });
 
-  // Observing reports the current size at once, which scrolls it into view.
-  observer.observe(scroller);
+    // Observing reports the current size at once, which scrolls it into view.
+    observer.observe(scroller);
 
-  return () => {
-    observer.disconnect();
+    if (followTabs) {
+      for (const each of scroller.children) {
+        observer.observe(each);
+      }
+    }
+
+    return () => {
+      observer.disconnect();
+    };
   };
-};
 
 export const keepInView = keepInViewBy(0);

@@ -403,6 +403,13 @@ test("at a narrow width with many profiles, the row scrolls with an arrow over e
 
   await expect.poll(clearOfFades).toBe(true);
 
+  // A profile before it growing, as one does when the mark of its signed-out
+  // account appears after the selection, pushes it along; it stays clear.
+  await profileButton(shell, "Profile 8").evaluate((button) => {
+    button.append("WWWWWW");
+  });
+  await expect.poll(clearOfFades).toBe(true);
+
   // The arrow scrolls by most of the row.
   const scrolled = () =>
     profileRow(shell).evaluate((row) => Math.round(row.scrollLeft));
