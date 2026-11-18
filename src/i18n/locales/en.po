@@ -237,11 +237,6 @@ msgstr "Beside the focused pane"
 msgid "Bookmark {title}"
 msgstr "Bookmark {title}"
 
-#. Muted hint beside No bookmarks yet in the New tab launcher; {bookmarkShortcut} is Bookmark Tab's shortcut, such as ⌘D
-#: src/shell/open-app.tsx
-msgid "Bookmark a page with {bookmarkShortcut}"
-msgstr "Bookmark a page with {bookmarkShortcut}"
-
 #. Short notice at the foot of the window once the selected tab's page is no longer bookmarked
 #: src/shell/toast.tsx
 msgid "Bookmark removed"

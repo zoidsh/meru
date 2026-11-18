@@ -621,9 +621,7 @@ test("New tab with no bookmarks says so in its Bookmarks group, a line that is n
   await expect(card.getByText("Apps", { exact: true })).toBeVisible();
   await expect(card.getByText("Bookmarks", { exact: true })).toBeVisible();
   await expect(none).toBeVisible();
-  await expect(
-    bookmarks.getByText(/^Bookmark a page with .+D$/u)
-  ).toBeVisible();
+  await expect(bookmarks.getByText(/^Bookmark a page/u)).toHaveCount(0);
   await expect(bookmarks.getByRole("option")).toHaveCount(0);
   await expect(options).toHaveCount(APP_NAMES.length);
 
