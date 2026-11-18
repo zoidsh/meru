@@ -30,6 +30,8 @@ const CODES: Record<string, string> = {
 
 const codeOf = (key: string) => CODES[key];
 
+const DIGIT = /^\d$/u;
+
 type Modifier = "control" | "shift" | "alt" | "meta";
 
 const modifierOf = (part: string, isMacOS: boolean): Modifier | undefined => {
@@ -94,10 +96,15 @@ export const matchesAccelerator = (
     (modifier) => wanted[modifier] === input[modifier]
   );
 
+  // A digit typed names itself, as on a layout whose digit row types other
+  // digits with Shift, where by place it would also match another.
+  const byPlace =
+    !DIGIT.test(input.key) &&
+    codeOf(key) !== undefined &&
+    input.code === codeOf(key);
+
   return (
-    sameModifiers &&
-    (input.key.toLowerCase() === key.toLowerCase() ||
-      (codeOf(key) !== undefined && input.code === codeOf(key)))
+    sameModifiers && (input.key.toLowerCase() === key.toLowerCase() || byPlace)
   );
 };
 

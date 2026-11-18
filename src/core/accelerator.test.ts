@@ -103,6 +103,15 @@ describe(matchesAccelerator, () => {
     ).toBeTruthy();
   });
 
+  it("matches a digit typed by that digit alone, as on Programmer Dvorak, whose Shift and 2 types 7", () => {
+    const sevenOnTwo = press("7", "Digit2", { control: true, shift: true });
+
+    expect([
+      matchesAccelerator("Control+Shift+7", sevenOnTwo, true),
+      matchesAccelerator("Control+Shift+2", sevenOnTwo, true),
+    ]).toStrictEqual([true, false]);
+  });
+
   it("acts on the press alone", () => {
     expect(
       matchesAccelerator(
