@@ -13,15 +13,13 @@ import {
   useToastManager,
 } from "#ui/toast.tsx";
 
-import { CARD_SHADOW } from "./card-shadow.ts";
-
 const notices = createToastManager();
 
 const NoticeList = () => {
   const { toasts } = useToastManager();
 
   return toasts.map((notice) => (
-    <ToastRoot key={notice.id} toast={notice} className={CARD_SHADOW}>
+    <ToastRoot key={notice.id} toast={notice}>
       <ToastContent>
         {/* A one-line toast fills the view main sizes for it, so a long page
             title is cut to that line, keeping "Bookmarked" in sight. */}
