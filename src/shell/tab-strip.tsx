@@ -6,6 +6,7 @@ import {
   ChevronsRightIcon,
   CircleAlertIcon,
   LoaderCircleIcon,
+  Minimize2Icon,
   XIcon,
 } from "lucide-react";
 import { useId, useLayoutEffect, useRef, useState } from "react";
@@ -24,6 +25,7 @@ import { AppIcon } from "./app-icon.tsx";
 import { isMenuKey, useMenuReturn, wholePoint } from "./context-menu.ts";
 import { keepInView } from "./keep-in-view.ts";
 import { OpenAppSidebarButton } from "./open-app.tsx";
+import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { useTabDrag } from "./tab-drag.ts";
 import { UnreadBadge } from "./unread-badge.tsx";
@@ -448,6 +450,8 @@ export const Sidebar = ({
   signedOut: boolean;
 }) => {
   const { t } = useLingui();
+  const shortcuts = useShellState("shortcuts");
+  const shortcutTitle = useShortcutTitle();
   const { profileId } = tabs;
   const [hovered, setHovered] = useState<string>();
   const wide = state === "wide";
@@ -746,6 +750,54 @@ export const Sidebar = ({
   );
 
   const boxPinned = boxTabs.filter((tab) => tab.pinned);
+  const restoreLabel = t({
+    message: "Restore panes",
+    comment:
+      "Accessible name and tooltip of the button in the sidebar's box of a split view, while one pane shows alone, that shows every pane again",
+  });
+  const restoreTitle = shortcutTitle(restoreLabel, shortcuts?.["tab.maximize"]);
+
+  // Out of the tab order and hidden from assistive technology, as a tab's
+  // cross is, since a tablist holds only tabs; Restore Panes in the menu
+  // and its shortcut reach it from the keyboard.
+  const restore = () => {
+    const [first] = boxTabs;
+
+    return (
+      first && (
+        <Button
+          key="restore"
+          variant="ghost"
+          size={wide ? "sm" : "icon-sm"}
+          aria-hidden
+          aria-label={wide ? undefined : restoreLabel}
+          tabIndex={-1}
+          title={restoreTitle}
+          onMouseDown={keepFocus}
+          onClick={() => {
+            shellCalls().maximizePane({
+              profileId,
+              tabId: first.id,
+              on: false,
+            });
+          }}
+          className={cn(
+            "font-medium text-muted-foreground",
+            wide && "w-full justify-start gap-2"
+          )}
+        >
+          <Minimize2Icon />
+          {wide && (
+            <span className="min-w-0 flex-1 truncate text-left">
+              <Trans comment="Label of the button in the wide sidebar's box of a split view while one pane shows alone; a click shows every pane again">
+                Maximized · Restore
+              </Trans>
+            </span>
+          )}
+        </Button>
+      )
+    );
+  };
 
   // Its tabs are not the area's own, so a drag passes them by; in the list
   // the box is one place to land above or below, standing for its first
@@ -754,9 +806,13 @@ export const Sidebar = ({
     <div
       key="split box"
       data-split-box
+      data-maximized={tabs.maximized || undefined}
       data-drop-id={inList ? boxFirst : undefined}
       className={cn(
-        "-mx-[3px] flex flex-col rounded-[12px] bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)] p-[3px]",
+        "-mx-[3px] flex flex-col rounded-[12px] p-[3px]",
+        tabs.maximized
+          ? "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_85%)]"
+          : "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)]",
         wide ? "col-span-2 gap-1" : "items-center gap-2"
       )}
     >
@@ -773,6 +829,7 @@ export const Sidebar = ({
         boxPinned.map((tab) => button(tab, true))
       )}
       {boxTabs.filter((tab) => !tab.pinned).map(listedTab)}
+      {tabs.maximized && restore()}
     </div>
   );
 

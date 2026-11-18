@@ -204,6 +204,7 @@ describe(buildMenuTemplate, () => {
       ["tab.sleep", "Sleep Tab", undefined],
       ["tab.splitRight", "Split Right", "CommandOrControl+Alt+N"],
       ["tab.splitDown", "Split Down", "CommandOrControl+Alt+Shift+N"],
+      ["tab.maximize", "Maximize Pane", "CommandOrControl+Shift+Enter"],
       ["tab.separate", "Separate from Split", undefined],
       ["tab.pin", "Unpin Tab", undefined],
       ["tab.openAtLaunch", "Open at Launch", undefined],

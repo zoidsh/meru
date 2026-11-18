@@ -98,6 +98,7 @@ const setup = (initial: State = twoProfiles) => {
       splits.push(direction);
     },
     separateTab: profiles.separateTab,
+    maximizePane: profiles.maximizePane,
     switchDoNotDisturb: (choice) =>
       choice === "off"
         ? doNotDisturb.switchOff()
@@ -582,6 +583,32 @@ describe("the command registry", () => {
     );
     expect(commandOf("tab.splitDown").shortcut?.darwin).toBe(
       "CommandOrControl+Alt+Shift+N"
+    );
+  });
+
+  it("maximizes the focused pane and restores the panes, labelled as it is, only in a split", async () => {
+    const app = setup();
+    const label = () => commandOf("tab.maximize").label?.(app.context());
+    const maximized = () => app.profiles.get().profiles[0]?.split?.maximized;
+
+    expect(app.isAvailable("tab.maximize")).toBeFalsy();
+
+    await app.profiles.splitTab({ profileId: "a", tabId: "c1" }, "row");
+
+    expect([app.isAvailable("tab.maximize"), label()]).toStrictEqual([
+      true,
+      "Maximize Pane",
+    ]);
+
+    await app.run("tab.maximize");
+
+    expect([maximized(), label()]).toStrictEqual([true, "Restore Panes"]);
+
+    await app.run("tab.maximize");
+
+    expect([maximized(), label()]).toStrictEqual([undefined, "Maximize Pane"]);
+    expect(commandOf("tab.maximize").shortcut?.darwin).toBe(
+      "CommandOrControl+Shift+Enter"
     );
   });
 

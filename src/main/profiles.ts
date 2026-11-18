@@ -22,6 +22,7 @@ import type { State } from "#core/state.ts";
 import { closeOtherTabs, closeTabsBelow } from "#core/tab-menu.ts";
 import {
   closeTab,
+  maximizePane,
   moveTab,
   openTab,
   resizeSplit,
@@ -211,6 +212,8 @@ export const createProfiles = ({
       exclusive(() => commit(splitTab(state, key, direction))),
     separateTab: (key: TabKey) =>
       exclusive(() => commit(separateTab(state, key))),
+    maximizePane: (key: TabKey, on: boolean) =>
+      exclusive(() => commit(maximizePane(state, key, on))),
     resizeSplit: (profileId: string, split: Split) =>
       exclusive(() => commit(resizeSplit(state, profileId, split))),
     moveTab: (key: TabKey, before?: string) =>

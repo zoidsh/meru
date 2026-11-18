@@ -26,7 +26,12 @@ import {
   savedSearchName,
   savedSearches,
 } from "#core/saved-searches.ts";
-import { isInSplit, splitTarget } from "#core/split.ts";
+import {
+  isInSplit,
+  isMaximized,
+  splitPanes,
+  splitTarget,
+} from "#core/split.ts";
 import {
   adjacentProfile,
   canRemoveProfile,
@@ -91,6 +96,8 @@ export interface CommandActions {
   openSplit: (direction: PaneDirection) => void;
   /** Takes the tab out of its split; it stays selected and shows alone. */
   separateTab: (key: TabKey) => Promise<unknown>;
+  /** Shows the tab's pane alone, selected, the split kept, or every pane again. */
+  maximizePane: (key: TabKey, on: boolean) => Promise<unknown>;
   /** Shows the sidebar where it is hidden, else hides it. */
   toggleSidebar: () => void;
   /** Shows the profile's Gmail tab and sends its page to `hash`. */
@@ -455,6 +462,34 @@ export const COMMANDS: readonly Command[] = [
       return isInSplit(profile, profile.selectedTabId);
     },
     run: ({ state }, { separateTab }) => separateTab(selectedTab(state)),
+  },
+  {
+    id: "tab.maximize",
+    title: () =>
+      t({
+        message: "Maximize Pane",
+        comment:
+          "Menu item in the Tabs menu that shows the focused pane of a split view alone, keeping the split",
+      }),
+    label(context) {
+      return isMaximized(selectedProfile(context.state))
+        ? t({
+            message: "Restore Panes",
+            comment:
+              "Menu item in the Tabs menu, in place of Maximize Pane while one pane shows alone, that shows every pane of the split again",
+          })
+        : this.title();
+    },
+    shortcut: {
+      darwin: "CommandOrControl+Shift+Enter",
+      win32: "CommandOrControl+Shift+Enter",
+      linux: "CommandOrControl+Shift+Enter",
+    },
+    isAvailable: ({ state }) =>
+      splitPanes(selectedProfile(state)) !== undefined,
+    once: true,
+    run: ({ state }, { maximizePane }) =>
+      maximizePane(selectedTab(state), !isMaximized(selectedProfile(state))),
   },
   {
     id: "tab.next",

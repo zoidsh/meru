@@ -775,6 +775,7 @@ const start = async () => {
       setOpenAppOpen: openApp.setOpen,
       openSplit: openApp.openSplit,
       separateTab: profiles.separateTab,
+      maximizePane: profiles.maximizePane,
       toggleSidebar: sidebar.toggleShown,
       navigateGmail,
       saveSearch: profiles.saveSearch,

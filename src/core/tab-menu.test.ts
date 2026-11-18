@@ -64,6 +64,7 @@ describe(tabMenuItems, () => {
       "openAtLaunch on",
       "splitRight",
       "splitDown",
+      "maximize off",
       "separate off",
       "closeOthers off",
       "closeBelow off",
@@ -82,6 +83,7 @@ describe(tabMenuItems, () => {
       "pin",
       "splitRight",
       "splitDown",
+      "maximize off",
       "separate off",
       "close",
       "closeOthers",
@@ -107,14 +109,24 @@ describe(tabMenuItems, () => {
       })),
     };
     const splitItems = (tabId: string) =>
-      offered(current, tabId)?.filter(
-        (item) => item.startsWith("split") || item.startsWith("separate")
+      offered(current, tabId)?.filter((item) =>
+        /^(?:split|separate|maximize|restore)/u.test(item)
       );
+    const maximized: State = {
+      ...current,
+      profiles: current.profiles.map((profile) => ({
+        ...profile,
+        ...(profile.split && { split: { ...profile.split, maximized: true } }),
+      })),
+    };
 
     expect([splitItems("c"), splitItems("d")]).toStrictEqual([
-      ["splitRight", "splitDown", "separate"],
-      ["splitRight off", "splitDown off", "separate off"],
+      ["splitRight", "splitDown", "maximize", "separate"],
+      ["splitRight off", "splitDown off", "maximize off", "separate off"],
     ]);
+    expect(
+      offered(maximized, "c")?.filter((item) => item.startsWith("restore"))
+    ).toStrictEqual(["restore"]);
   });
 
   it("has nothing below the last tab, and counts below as the sidebar draws, pinned first", () => {

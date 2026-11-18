@@ -7,7 +7,7 @@ import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
 import { profileMenuItems } from "#core/profile-menu.ts";
-import { boxOrder } from "#core/split.ts";
+import { boxOrder, isMaximized } from "#core/split.ts";
 import { isAsleep, isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
@@ -33,7 +33,7 @@ import type { TabMenu } from "./tab-menu.ts";
 export interface ShellHandlersDeps {
   profiles: Pick<
     Profiles,
-    "get" | "select" | "rename" | "closeTab" | "moveTab"
+    "get" | "select" | "rename" | "closeTab" | "moveTab" | "maximizePane"
   >;
   overlays: Pick<Overlays, "open" | "close" | "current">;
   /** Selecting a tab through them wakes it if it sleeps. */
@@ -234,6 +234,7 @@ export const shellState = (
       panes: page.panes,
       handles: page.handles,
       box: boxOrder(profile) ?? null,
+      maximized: isMaximized(profile),
     },
     doNotDisturb: {
       on: doNotDisturb !== undefined,
@@ -294,6 +295,9 @@ export const createShellHandlers = ({
   },
   evenOutPanes: async (request) => {
     await panes.evenOut(request);
+  },
+  maximizePane: async ({ profileId, tabId, on }) => {
+    await profiles.maximizePane({ profileId, tabId }, on);
   },
   retryTab: (key) => {
     tabs.retry(key);

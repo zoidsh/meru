@@ -770,6 +770,52 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
   await shootEachWay(app, shell, "split-box-pinned-wide");
 });
 
+test("uneven panes with a gap's handle hovered, and a maximized split's box, narrow and wide", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(
+    userDataDir,
+    withSplit(
+      standIn,
+      { direction: "row", children: [pane(0.7, "c1"), pane(0.3, "d1")] },
+      "c1"
+    )
+  );
+
+  const first = await launch(launchApp, userDataDir);
+  const handle = first.shell.getByRole("separator", { name: "Resize panes" });
+
+  await findPage(first.app, standIn.calendarUrl);
+  await findPage(first.app, standIn.driveUrl);
+  await handle.hover();
+  await shootEachWay(first.app, first.shell, "split-uneven");
+  await first.app.close();
+
+  const maximized = withBox(standIn, {
+    direction: "row",
+    children: [pane(0.5, "d1"), pane(0.5, "c1")],
+  });
+
+  await writeState(userDataDir, {
+    ...maximized,
+    profiles: maximized.profiles.map((profile) => ({
+      ...profile,
+      split: { ...profile.split, maximized: true },
+    })),
+  });
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+
+  await findPage(app, standIn.calendarUrl);
+  await rest(shell);
+  await shootEachWay(app, shell, "split-maximized-narrow");
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await rest(shell);
+  await shootEachWay(app, shell, "split-maximized-wide");
+});
+
 /** Asks for a split the window has no room for, which shows the toast. */
 const refuseSplit = async (app: ElectronApplication, overlay: Page) => {
   await app.evaluate(({ Menu, BrowserWindow }) => {

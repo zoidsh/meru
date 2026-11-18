@@ -71,6 +71,7 @@ const setup = ({ held = false } = {}) => {
       closeOtherTabs: (each) => recorded("closeOthers")(key(each)),
       closeTabsBelow: (each) => recorded("closeBelow")(key(each)),
       separateTab: (each) => recorded("separate")(key(each)),
+      maximizePane: (each, on) => recorded("maximize")(key(each), on),
     },
     isLoaded: (each) => each.tabId !== "x",
     reload: (each) => recorded("reload")(key(each)),

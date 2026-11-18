@@ -88,6 +88,14 @@ export const SHELL_CALLS = {
     request: z.object({ before: tabId, after: tabId }),
     response: z.undefined(),
   },
+  /**
+   * Shows the pane of a tab in the profile's split alone, selecting it, or
+   * every pane again, as the box's Restore asks.
+   */
+  maximizePane: {
+    request: z.object({ profileId, tabId, on: z.boolean() }),
+    response: z.undefined(),
+  },
   /** Loads a tab that failed or crashed again, now. */
   retryTab: { request: tabKey, response: z.undefined() },
   /**
@@ -255,6 +263,8 @@ export const SHELL_STATE = {
      * whichever tab is selected; `null` without a split.
      */
     box: z.nullable(z.array(tabId)),
+    /** Whether the split shows its focused pane alone. */
+    maximized: z.boolean(),
   }),
   /** How the sidebar shows, which also sets where the content view sits. */
   sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),

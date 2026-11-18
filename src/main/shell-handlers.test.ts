@@ -68,6 +68,11 @@ const setup = ({
 
         return Promise.resolve(true);
       },
+      maximizePane: (key, on) => {
+        calls.push(["maximize", key, on]);
+
+        return Promise.resolve(true);
+      },
       moveTab: (key, before) => {
         calls.push(["move", key, before]);
 
@@ -456,6 +461,7 @@ describe(shellState, () => {
       panes: null,
       handles: [],
       box: null,
+      maximized: false,
     });
   });
 
@@ -550,6 +556,7 @@ describe("the overlay slice", () => {
         { id: "openAtLaunch", enabled: true, checked: true },
         { id: "splitRight", enabled: true },
         { id: "splitDown", enabled: true },
+        { id: "maximize", enabled: false },
         { id: "separate", enabled: false },
         { id: "closeOthers", enabled: false },
         { id: "closeBelow", enabled: false },

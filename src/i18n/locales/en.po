@@ -446,6 +446,21 @@ msgstr "Mark as Read"
 msgid "Mark as Spam"
 msgstr "Mark as Spam"
 
+#. Item of a tab's context menu in a split view that shows the tab's pane alone, keeping the split
+#: src/shell/tab-menu.tsx
+msgid "Maximize pane"
+msgstr "Maximize pane"
+
+#. Menu item in the Tabs menu that shows the focused pane of a split view alone, keeping the split
+#: src/main/commands.ts
+msgid "Maximize Pane"
+msgstr "Maximize Pane"
+
+#. Label of the button in the wide sidebar's box of a split view while one pane shows alone; a click shows every pane again
+#: src/shell/tab-strip.tsx
+msgid "Maximized · Restore"
+msgstr "Maximized · Restore"
+
 #. Explanation under the heading in place of a tab's page that could not load
 #: src/shell/tab-strip.tsx
 msgid "Meru keeps trying by itself."
@@ -652,6 +667,18 @@ msgstr "Report spam"
 #: src/shell/pane-handle.tsx
 msgid "Resize panes"
 msgstr "Resize panes"
+
+#. Accessible name and tooltip of the button in the sidebar's box of a split view, while one pane shows alone, that shows every pane again
+#. Item of a tab's context menu, in place of Maximize pane while one pane shows alone, that shows every pane of the split again
+#: src/shell/tab-menu.tsx
+#: src/shell/tab-strip.tsx
+msgid "Restore panes"
+msgstr "Restore panes"
+
+#. Menu item in the Tabs menu, in place of Maximize Pane while one pane shows alone, that shows every pane of the split again
+#: src/main/commands.ts
+msgid "Restore Panes"
+msgstr "Restore Panes"
 
 #. Menu item in the Saved Searches menu that keeps the search Gmail shows now, to run again later
 #: src/main/commands.ts

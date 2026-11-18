@@ -343,6 +343,7 @@ export const buildMenuTemplate = ({
       separator,
       ...item("tab.splitRight"),
       ...item("tab.splitDown"),
+      ...item("tab.maximize"),
       ...item("tab.separate"),
       separator,
       ...item("tab.pin"),

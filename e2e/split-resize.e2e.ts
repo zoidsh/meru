@@ -1,15 +1,18 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  clickMenuItem,
   expect,
+  findOverlayDocument,
   findPage,
+  readMenuLabel,
   readState,
   readViews,
   test,
   writeState,
 } from "./lib/app.ts";
 import type { StandIn } from "./lib/stand-in.ts";
-import { CALENDAR_TITLE, DRIVE_TITLE } from "./lib/stand-in.ts";
+import { CALENDAR_TITLE, DRIVE_TITLE, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
 const MINIMUM = 240;
 const STEP = 24;
@@ -30,7 +33,12 @@ const row = (...children: [number, string][]): Tree => ({
 });
 
 /** Calendar, selected, beside Gmail as `root` has them, and Drive outside. */
-const seed = (userDataDir: string, standIn: StandIn, root: Tree) =>
+const seed = (
+  userDataDir: string,
+  standIn: StandIn,
+  root: Tree,
+  maximized = false
+) =>
   writeState(userDataDir, {
     profiles: [
       {
@@ -47,10 +55,16 @@ const seed = (userDataDir: string, standIn: StandIn, root: Tree) =>
           { id: "d", app: "drive", url: standIn.driveUrl, title: DRIVE_TITLE },
         ],
         selectedTabId: "c",
-        split: { root },
+        split: { root, ...(maximized && { maximized }) },
       },
     ],
     selectedProfileId: "p",
+  });
+
+const tab = (shell: Page, title: string) =>
+  shell.getByRole("tablist", { name: "Tabs" }).getByRole("tab", {
+    name: title,
+    exact: true,
   });
 
 const handle = (shell: Page) =>
@@ -77,7 +91,7 @@ const paneWidths = (shell: Page) =>
 
 const storedSplit = async (userDataDir: string) => {
   const { profiles } = await readState<{
-    profiles: { split?: { root: Tree } }[];
+    profiles: { split?: { root: Tree; maximized?: unknown } }[];
   }>(userDataDir);
 
   return profiles[0]?.split;
@@ -97,6 +111,32 @@ const middleOf = async (shell: Page) => {
     y: (box?.y ?? 0) + (box?.height ?? 0) / 2,
   };
 };
+
+/** Presses Maximize's shortcut in the page at `url`, as the system hands it the key. */
+const pressMaximize = (app: ElectronApplication, url: string) =>
+  app.evaluate(
+    ({ webContents }, { prefix, mac }) => {
+      const view = webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.getURL().startsWith(prefix));
+
+      for (const type of ["keyDown", "keyUp"] as const) {
+        view?.sendInputEvent({
+          type,
+          keyCode: "Enter",
+          modifiers: [mac ? "meta" : "control", "shift"],
+        });
+      }
+    },
+    { prefix: url, mac: process.platform === "darwin" }
+  );
+
+const boxFill = (shell: Page) =>
+  shell.evaluate(() => {
+    const box = document.querySelector("[data-split-box]");
+
+    return box ? getComputedStyle(box).backgroundColor : undefined;
+  });
 
 test("dragging a gap resizes the pages beside it as it moves and stops at each pane's minimum; a double-click evens them out; a relaunch keeps the sizes", async ({
   launchApp,
@@ -227,4 +267,129 @@ test("a focused gap moves a step with an arrow key, to each minimum with Home an
   await shell.keyboard.press("Enter");
   await expect.poll(() => paneWidths(shell)).toStrictEqual([left, right]);
   await expect.poll(() => storedShares(userDataDir)).toStrictEqual([0.5, 0.5]);
+});
+
+test("Maximize from its shortcut shows the focused pane alone, the others kept loaded; another tab of the box shows maximized; the box's Restore brings every pane back; the tab menu maximizes its tab; a relaunch keeps it", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seed(userDataDir, standIn, row([0.5, "c"], [0.5, "gmail"]));
+
+  const first = await launchApp();
+  const shell = await findPage(first, "meru-app:");
+  const restore = shell.getByRole("button", {
+    name: "Restore panes",
+    includeHidden: true,
+  });
+
+  await findPage(first, standIn.url);
+  await expect.poll(() => shownWidths(first)).toHaveLength(2);
+
+  const evenFill = await boxFill(shell);
+
+  expect(await readMenuLabel(first, "tab.maximize")).toBe("Maximize Pane");
+  await pressMaximize(first, standIn.calendarUrl);
+  await expect
+    .poll(() => shownWidths(first).then((shown) => shown.map(({ url }) => url)))
+    .toStrictEqual([standIn.calendarUrl]);
+  await expect
+    .poll(() => readViews(first).then(({ views }) => views.length))
+    .toBe(2);
+  await expect(handle(shell)).toHaveCount(0);
+  await expect(restore).toBeVisible();
+  await expect.poll(() => boxFill(shell)).not.toBe(evenFill);
+  await expect
+    .poll(() => readMenuLabel(first, "tab.maximize"))
+    .toBe("Restore Panes");
+  await expect
+    .poll(() => storedSplit(userDataDir).then((split) => split?.maximized))
+    .toBe(true);
+
+  await tab(shell, STAND_IN_TITLE).click();
+  await expect
+    .poll(() => shownWidths(first).then((shown) => shown.map(({ url }) => url)))
+    .toStrictEqual([standIn.url]);
+
+  await tab(shell, DRIVE_TITLE).click();
+  await findPage(first, standIn.driveUrl);
+  await expect
+    .poll(() => shownWidths(first).then((shown) => shown.map(({ url }) => url)))
+    .toStrictEqual([standIn.driveUrl]);
+  // Restore needs no tab of the split selected, and selects none.
+  await restore.click();
+  await expect(restore).toHaveCount(0);
+  await expect(tab(shell, DRIVE_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect.poll(() => boxFill(shell)).toBe(evenFill);
+
+  await tab(shell, CALENDAR_TITLE).click();
+  await expect.poll(() => shownWidths(first)).toHaveLength(2);
+
+  await tab(shell, STAND_IN_TITLE).click({ button: "right" });
+
+  const overlay = await findOverlayDocument(first);
+
+  await overlay.getByRole("menuitem", { name: /^Maximize pane/u }).click();
+  await expect
+    .poll(() => shownWidths(first).then((shown) => shown.map(({ url }) => url)))
+    .toStrictEqual([standIn.url]);
+  await expect(tab(shell, STAND_IN_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await first.close();
+
+  const app = await launchApp();
+  const again = await findPage(app, "meru-app:");
+
+  await findPage(app, standIn.url);
+  await expect(
+    again.getByRole("button", { name: "Restore panes", includeHidden: true })
+  ).toBeVisible();
+  await expect
+    .poll(() => shownWidths(app).then((shown) => shown.map(({ url }) => url)))
+    .toStrictEqual([standIn.url]);
+
+  const menu = await findOverlayDocument(app);
+
+  await tab(again, STAND_IN_TITLE).click({ button: "right" });
+  await menu.getByRole("menuitem", { name: /^Restore panes/u }).click();
+  await expect.poll(() => shownWidths(app)).toHaveLength(2);
+  await findPage(app, standIn.calendarUrl);
+});
+
+test("Maximize is unavailable outside a split, where its shortcut does nothing", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seed(userDataDir, standIn, row([0.5, "c"], [0.5, "gmail"]), true);
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+
+  await findPage(app, standIn.calendarUrl);
+  await expect
+    .poll(() => shownWidths(app).then((shown) => shown.map(({ url }) => url)))
+    .toStrictEqual([standIn.calendarUrl]);
+
+  await clickMenuItem(app, "tab.separate");
+  await expect.poll(() => storedSplit(userDataDir)).toBeUndefined();
+  await expect
+    .poll(() =>
+      app.evaluate(
+        ({ Menu }) =>
+          Menu.getApplicationMenu()?.getMenuItemById("tab.maximize")?.enabled
+      )
+    )
+    .toBe(false);
+  await pressMaximize(app, standIn.calendarUrl);
+  await expect.poll(() => storedSplit(userDataDir)).toBeUndefined();
+  await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
 });

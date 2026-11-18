@@ -29,6 +29,7 @@ const TABS: ShellState["tabs"] = {
   panes: null,
   handles: [],
   box: null,
+  maximized: false,
   tabs: [
     {
       id: "gmail",
@@ -115,6 +116,11 @@ const setup = () => {
   const handlers: ShellHandlers = {
     resizePanes: (request) => {
       calls.push(["resizePanes", request]);
+
+      return Promise.resolve();
+    },
+    maximizePane: (request) => {
+      calls.push(["maximizePane", request]);
 
       return Promise.resolve();
     },

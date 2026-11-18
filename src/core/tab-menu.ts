@@ -3,7 +3,7 @@ import type { App } from "./apps.ts";
 import { drawnTabs } from "./drawn-tabs.ts";
 import { isWebUrl } from "./google-redirect.ts";
 import { menuPointInside } from "./overlay.ts";
-import { isInSplit } from "./split.ts";
+import { isInSplit, isMaximized, splitPanes } from "./split.ts";
 import { isPinned, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 import { canCloseTab, closeTab, findTab } from "./tabs.ts";
@@ -22,6 +22,8 @@ export const TAB_MENU_ITEMS = [
   "openAtLaunch",
   "splitRight",
   "splitDown",
+  "maximize",
+  "restore",
   "separate",
   "close",
   "closeOthers",
@@ -38,7 +40,7 @@ export const TAB_MENU_GROUPS: readonly (readonly TabMenuItemId[])[] = [
   ["sleep", "wake"],
   ["reload", "duplicate", "copyUrl", "openInBrowser"],
   ["pin", "openAtLaunch"],
-  ["splitRight", "splitDown", "separate"],
+  ["splitRight", "splitDown", "maximize", "restore", "separate"],
   ["close", "closeOthers", "closeBelow"],
 ];
 
@@ -47,6 +49,8 @@ export const TAB_MENU_COMMANDS: Partial<Record<TabMenuItemId, string>> = {
   reload: "tab.reload",
   splitRight: "tab.splitRight",
   splitDown: "tab.splitDown",
+  maximize: "tab.maximize",
+  restore: "tab.maximize",
   close: "tab.close",
 };
 
@@ -83,7 +87,8 @@ const belowOf = (profile: Profile, tab: Tab) => {
  * wakes one asleep. Duplicate needs an app that can have more than one tab;
  * a pinned tab has Open at Launch and no Close tab. Split right and Split
  * down split beside the tab, so not beside one outside the profile's split;
- * Separate from split takes one in it out.
+ * Maximize pane, or Restore panes while the split is maximized, and Separate
+ * from split take one in it.
  */
 export const tabMenuItems = (
   state: State,
@@ -102,6 +107,8 @@ export const tabMenuItems = (
   const pinned = isPinned(tab);
   const paned = isInSplit(profile, tab.id);
   const splitsBeside = paned || profile.split === undefined;
+  const maximizes =
+    paned && splitPanes({ ...profile, selectedTabId: tab.id }) !== undefined;
 
   return [
     { id: loaded ? "sleep" : "wake", enabled: true },
@@ -124,6 +131,7 @@ export const tabMenuItems = (
       : []),
     { id: "splitRight", enabled: splitsBeside },
     { id: "splitDown", enabled: splitsBeside },
+    { id: isMaximized(profile) ? "restore" : "maximize", enabled: maximizes },
     { id: "separate", enabled: paned },
     ...(canCloseTab(tab) ? [{ id: "close" as const, enabled: true }] : []),
     { id: "closeOthers", enabled: othersOf(profile, tab).length > 0 },

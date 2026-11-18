@@ -4,6 +4,8 @@ import {
   CopyPlusIcon,
   ExternalLinkIcon,
   LinkIcon,
+  Maximize2Icon,
+  Minimize2Icon,
   PinIcon,
   PinOffIcon,
   PowerIcon,
@@ -147,6 +149,26 @@ export const TabMenu = ({
             message: "Split down",
             comment:
               "Item of a tab's context menu that lists apps to open in a new pane below the tab's",
+          }),
+        };
+      }
+      case "maximize": {
+        return {
+          icon: <Maximize2Icon />,
+          text: t({
+            message: "Maximize pane",
+            comment:
+              "Item of a tab's context menu in a split view that shows the tab's pane alone, keeping the split",
+          }),
+        };
+      }
+      case "restore": {
+        return {
+          icon: <Minimize2Icon />,
+          text: t({
+            message: "Restore panes",
+            comment:
+              "Item of a tab's context menu, in place of Maximize pane while one pane shows alone, that shows every pane of the split again",
           }),
         };
       }

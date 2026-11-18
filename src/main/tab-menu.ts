@@ -29,6 +29,7 @@ export interface TabMenuDeps {
     | "closeOtherTabs"
     | "closeTabsBelow"
     | "separateTab"
+    | "maximizePane"
   >;
   /** Opens Open in split beside or below the selected tab's pane. */
   openSplit: (direction: PaneDirection) => void;
@@ -139,6 +140,11 @@ export const createTabMenu = ({
       }
       case "separate": {
         await profiles.separateTab(key);
+        break;
+      }
+      case "maximize":
+      case "restore": {
+        await profiles.maximizePane(key, item === "maximize");
         break;
       }
       default: {
