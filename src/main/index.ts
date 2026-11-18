@@ -2,16 +2,10 @@ import path from "node:path";
 
 import { isEqual } from "es-toolkit";
 
-import { APPS, findApp, isAppId, standInApps } from "#core/apps.ts";
-import type { AppId } from "#core/apps.ts";
+import { findApp } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
 import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
-import {
-  KEEP_ALIVE_TIMING,
-  KEEP_ALIVE_URL,
-  ROTATING_COOKIE,
-} from "#core/keep-alive.ts";
-import type { KeepAliveTiming } from "#core/keep-alive.ts";
+import { ROTATING_COOKIE } from "#core/keep-alive.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import {
@@ -34,30 +28,15 @@ import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { totalUnread } from "#core/unread.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
-import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
-import { createBadge, createCapturedBadge } from "#platform/badge.ts";
-import {
-  createCapturedClipboard,
-  createClipboard,
-} from "#platform/clipboard.ts";
-import {
-  createCapturedContextMenus,
-  createContextMenus,
-} from "#platform/context-menu.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
 import { createKeepAlivePages } from "#platform/keep-alive.ts";
-import { keepToLoopback } from "#platform/loopback-only.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
-import {
-  createCapturedNotifier,
-  createNotifier,
-} from "#platform/notifications.ts";
 import { createOwnWindowFactory } from "#platform/own-window.ts";
 import { createPower } from "#platform/power.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
@@ -65,10 +44,6 @@ import { createSessions } from "#platform/sessions.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTextFile, readTextUpTo } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
-import {
-  createCapturedTrayFactory,
-  createTrayFactory,
-} from "#platform/tray.ts";
 import { createWindowFactory } from "#platform/window.ts";
 import { zoomFocused } from "#platform/zoom.ts";
 
@@ -120,17 +95,10 @@ import { serveShellContract } from "./shell-ipc.ts";
 import { createShellWindow, hideOnClose } from "./shell-window.ts";
 import { createShowGmail } from "./show-gmail.ts";
 import { createSidebar } from "./sidebar.ts";
-import { createSoundOutput } from "./sounds.ts";
-import type { SoundOutput } from "./sounds.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
 import { createTabMenu } from "./tab-menu.ts";
 import { createTabViews } from "./tab-views.ts";
-import {
-  captureGmailPage,
-  captureSounds,
-  exposeTestSettings,
-} from "./test-hooks.ts";
 import { createTray } from "./tray.ts";
 import {
   USER_STYLES_FILE_NAME,
@@ -138,6 +106,17 @@ import {
   createUserStyles,
 } from "./user-styles.ts";
 import { revealWindow } from "./windows.ts";
+import {
+  exposeSettingsToSuite,
+  gmailPageCapture,
+  soundOutput,
+  suiteRunsInBackground,
+  systemBadge,
+  systemClipboard,
+  systemNotifier,
+  systemTrays,
+  testBuildSetup,
+} from "./wiring/test-build.ts";
 import { createZoom } from "./zoom.ts";
 
 const APP_SCHEME = "meru-app";
@@ -147,60 +126,8 @@ const SHELL_HOST = "shell";
 /** The longest a quit waits for the last writes of the state. */
 const QUIT_WAIT_MS = 3000;
 
-/**
- * A JSON object of app ids and the stand-in URL each loads in its place, and
- * under `signIn` the stand-in for sign-in's origin.
- */
-const readStandIns = (json: string | undefined) => {
-  const urls: Partial<Record<AppId, string>> = {};
-  let signIn: string | undefined;
-
-  for (const [id, url] of Object.entries(
-    JSON.parse(json ?? "{}") as Record<string, unknown>
-  )) {
-    if (typeof url !== "string") {
-      continue;
-    }
-
-    if (isAppId(id)) {
-      urls[id] = url;
-    } else if (id === "signIn") {
-      signIn = new URL(url).origin;
-    }
-  }
-
-  return { urls, signIn };
-};
-
-// The suite's stand-ins for the apps and for sign-in, which only its build
-// reads.
-const standIns = MERU_E2E_BUILD
-  ? readStandIns(process.env.MERU_TEST_APP_URLS)
-  : undefined;
-const apps = standIns ? standInApps(standIns.urls) : APPS;
-
-// The suite never reaches the network: whatever its stand-ins do not serve is
-// refused and said, so no test loads a real Google page.
-if (MERU_E2E_BUILD) {
-  keepToLoopback();
-}
-const signInOrigins = standIns?.signIn ? [standIns.signIn] : SIGN_IN_ORIGINS;
-// The sign-in stand-in's rotation page sets the cookie as Google's does.
-const keepAliveUrl = standIns?.signIn
-  ? `${standIns.signIn}/RotateCookiesPage`
-  : KEEP_ALIVE_URL;
-
-/** Seconds in place of days, for the suite's tests of it alone. */
-const keepAliveTiming: KeepAliveTiming =
-  MERU_E2E_BUILD && process.env.MERU_TEST_KEEP_ALIVE === "1"
-    ? { age: 2000, firstCheck: 500, interval: 500, timeout: 5000, retry: 2000 }
-    : KEEP_ALIVE_TIMING;
-
-// The suite's build records each menu, so a test never puts one on the
-// screen, which would bring the app forward.
-const contextMenus = MERU_E2E_BUILD
-  ? createCapturedContextMenus()
-  : createContextMenus();
+const { apps, signInOrigins, keepAliveUrl, keepAliveTiming, contextMenus } =
+  testBuildSetup();
 
 /** v3's account id, so a profile id is the account id v3 would have made. */
 const newId = () => crypto.randomUUID();
@@ -214,18 +141,6 @@ const inOwnWindow = (key: TabKey): FocusTarget[] => [
 /** The role's own key on Windows and Linux, Ctrl+Shift+I, is the unified inbox's. */
 const devToolsAccelerator = (platform: Platform) =>
   platform === "darwin" ? "Alt+Command+I" : "F12";
-
-/**
- * The suite's build, always under the background flag, captures each sound
- * in place of playing it and leaves each notification's `silent` as decided,
- * since its notifier shows nothing and its tests read the decision.
- */
-const soundOutput = (
-  options: Parameters<typeof createSoundOutput>[0]
-): SoundOutput =>
-  MERU_E2E_BUILD
-    ? { quiet: false, play: captureSounds() }
-    : createSoundOutput(options);
 
 /**
  * Gmail's page contract, its switches following the settings, which the
@@ -245,10 +160,7 @@ const serveGmailPage = ({
   settings: SettingsStore;
   userStyles: () => Promise<string>;
 }) => {
-  // The suite switches settings while the app runs, as a settings page will.
-  if (MERU_E2E_BUILD) {
-    exposeTestSettings(settings);
-  }
+  exposeSettingsToSuite(settings);
 
   if (gmailOrigin === undefined) {
     return { catchUp: createCatchUp(() => false), navigate: () => false };
@@ -261,7 +173,7 @@ const serveGmailPage = ({
     gmailOrigin,
     features: () => gmailFeatures(settings.get),
     userStyles,
-    ...(MERU_E2E_BUILD && captureGmailPage()),
+    ...gmailPageCapture(),
     log: console.error,
   });
 
@@ -321,10 +233,7 @@ const resolveShell = () => {
 const start = async () => {
   const shellSource = resolveShell();
 
-  // The suite's app is never used by anyone, so it never comes in front of
-  // whatever someone is working in, whatever a test shows or focuses.
-  const isTestBackground =
-    MERU_E2E_BUILD && process.env.MERU_TEST_BACKGROUND === "1";
+  const isTestBackground = suiteRunsInBackground();
 
   if (isTestBackground) {
     lifecycle.preventActivation();
@@ -630,11 +539,7 @@ const start = async () => {
   power.onResume(doNotDisturb.resume);
 
   const systemBrowser = createSystemBrowser();
-  // The suite's build never writes the clipboard, which the whole desktop
-  // shares.
-  const clipboard = MERU_E2E_BUILD
-    ? createCapturedClipboard()
-    : createClipboard();
+  const clipboard = systemClipboard();
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
   ]);
@@ -903,9 +808,7 @@ const start = async () => {
 
   if (gmail && mailActions) {
     const mailNotifications = createMailNotifications({
-      // The suite's build captures every notification, so a test never puts
-      // one on the desktop.
-      notifier: MERU_E2E_BUILD ? createCapturedNotifier() : createNotifier(),
+      notifier: systemNotifier(),
       clipboard,
       extractCode: extractVerificationCode,
       setting: settings.get,
@@ -1284,11 +1187,7 @@ const start = async () => {
   };
   const unread = (profileId: string) => mail.mail(profileId).unreadCount;
   const tray = createTray({
-    // The suite's build captures its tray, so a test never puts one in the
-    // menu bar or the notification area.
-    trays: MERU_E2E_BUILD
-      ? createCapturedTrayFactory()
-      : createTrayFactory(path.join(import.meta.dirname, "tray")),
+    trays: systemTrays(),
     platform,
     productName: lifecycle.name,
     setting: settings.get,
@@ -1308,7 +1207,7 @@ const start = async () => {
     log: console.error,
   });
   const badge = createUnreadBadge({
-    badge: MERU_E2E_BUILD ? createCapturedBadge() : createBadge(shell.window),
+    badge: systemBadge(shell.window),
     platform,
     enabled: () => settings.get("unreadBadge"),
     total: () =>
