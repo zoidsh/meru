@@ -34,6 +34,19 @@ export const wireShellDocuments = ({
   /** The web contents of the shell's documents open now, which never zoom. */
   const shellDocumentIds = new Set<number>();
 
+  /** The tab whose own window's find bar last gained focus, until anything else does. */
+  let findFocused: string | undefined;
+
+  focus.onFocused(() => {
+    findFocused = undefined;
+  });
+  // A bar that held the keys as the shell went takes them again once back.
+  shell.window.onPageGone(() => {
+    if (findFocused !== undefined) {
+      barsAwaited.add(findFocused);
+    }
+  });
+
   shell.window.onShellDocument((view, frameName) => {
     const id = view.webContentsId;
 
@@ -49,6 +62,7 @@ export const wireShellDocuments = ({
       // Keys there act on that window's tab, as in its page.
       view.onFocus(() => {
         focus.noteFocused({ kind: "window", key: findWindow });
+        findFocused = tabKey(findWindow);
       });
       ownWindows.adoptFind(findWindow, view);
 
