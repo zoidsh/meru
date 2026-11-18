@@ -337,6 +337,9 @@ test("Maximize from its shortcut shows the focused pane alone, the others kept l
   await findPage(first, standIn.url);
   await expect.poll(() => shownWidths(first)).toHaveLength(2);
 
+  // The box is drawn once the shell has the tabs, which the views need not wait for.
+  await expect.poll(() => boxFill(shell)).toBeDefined();
+
   const evenFill = await boxFill(shell);
 
   expect(await readMenuLabel(first, "tab.maximize")).toBe("Maximize Pane");
