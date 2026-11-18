@@ -93,6 +93,16 @@ describe(matchesAccelerator, () => {
     ).toBeFalsy();
   });
 
+  it("matches a digit by where it is, since Shift types its symbol", () => {
+    expect(
+      matchesAccelerator(
+        "Control+Shift+2",
+        press("@", "Digit2", { control: true, shift: true }),
+        true
+      )
+    ).toBeTruthy();
+  });
+
   it("acts on the press alone", () => {
     expect(
       matchesAccelerator(

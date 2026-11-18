@@ -15,11 +15,17 @@ export interface KeyInput {
   isAutoRepeat: boolean;
 }
 
-/** Where the punctuation a shortcut names sits, for those that have one. */
+/**
+ * Where the punctuation and digits a shortcut names sit, for those that have
+ * one; with Shift a digit types its symbol, such as `@` for 2.
+ */
 const CODES: Record<string, string> = {
   ",": "Comma",
   "[": "BracketLeft",
   "]": "BracketRight",
+  ...Object.fromEntries(
+    Array.from({ length: 10 }, (_, digit) => [`${digit}`, `Digit${digit}`])
+  ),
 };
 
 const codeOf = (key: string) => CODES[key];
