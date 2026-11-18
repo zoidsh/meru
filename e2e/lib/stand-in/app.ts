@@ -42,6 +42,8 @@ import {
   POPOUT_TITLE,
   POPUP_PATH,
   POPUP_TITLE,
+  ROTATION_PATH,
+  ROTATION_TITLE,
   SIGN_IN_PATH,
   SIGN_IN_TITLE,
   gmailWindowLinks,
@@ -86,6 +88,8 @@ export interface StandIn {
   popupUrl: string;
   /** The sign-in stand-in's page, on an origin of its own. */
   signInUrl: string;
+  /** The `Cookie` header of each request for the rotation page, in order. */
+  rotationCookieHeaders: () => string[];
   /**
    * Has the Gmail stand-in's feed answer the session whose `account` cookie
    * is `account` this way, and `""` every session with no such cookie; one
@@ -321,6 +325,7 @@ export const startStandIn = async (): Promise<StandIn> => {
   const signInServer = await listen(
     () => ({
       [POPUP_PATH]: page(POPUP_TITLE, ELSEWHERE_LINK),
+      [ROTATION_PATH]: page(ROTATION_TITLE, ""),
       // An Upgrade button no Gmail hide may reach off Gmail's origin.
       [SIGN_IN_PATH]: page(
         SIGN_IN_TITLE,
@@ -352,6 +357,10 @@ export const startStandIn = async (): Promise<StandIn> => {
     get cookieHeaders() {
       return gmail.requests.map((request) => request.cookie);
     },
+    rotationCookieHeaders: () =>
+      signInServer.requests
+        .filter((request) => request.path.startsWith(ROTATION_PATH))
+        .map((request) => request.cookie),
     get popupCookieHeaders() {
       return signInServer.requests.map((request) => request.cookie);
     },

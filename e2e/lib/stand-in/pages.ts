@@ -36,6 +36,11 @@ export const SIGN_IN_PATH = "/signin";
 
 export const SIGN_IN_TITLE = "Sign-in stand-in";
 
+/** The page Meru's keep-alive loads on sign-in's origin, as Google's has it. */
+export const ROTATION_PATH = "/RotateCookiesPage";
+
+export const ROTATION_TITLE = "Rotation stand-in";
+
 export const page = (title: string, links: string) => `<!doctype html>
 <html lang="en">
   <head><meta charset="utf-8"><title>${title}</title></head>

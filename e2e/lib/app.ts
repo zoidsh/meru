@@ -349,8 +349,11 @@ interface AppFixtures {
   userDataDir: string;
   /** Served in place of Gmail to every app the test launches. */
   standIn: StandIn;
-  /** Launches the app on the test's user data; closed when the test ends. */
-  launchApp: () => Promise<ElectronApplication>;
+  /**
+   * Launches the app on the test's user data, with `env` added to its
+   * environment; closed when the test ends.
+   */
+  launchApp: (env?: Record<string, string>) => Promise<ElectronApplication>;
   app: ElectronApplication;
   /** The shell window, once it has loaded. */
   shell: Page;
@@ -391,11 +394,11 @@ export const test = base.extend<AppFixtures>({
     const apps: ElectronApplication[] = [];
 
     try {
-      await use(async () => {
+      await use(async (added = {}) => {
         const app = await _electron.launch({
           executablePath,
           args: launchArgs(userDataDir),
-          env: { ...env, MERU_TEST_APP_URLS: standIn.appUrls },
+          env: { ...env, ...added, MERU_TEST_APP_URLS: standIn.appUrls },
         });
         const { pid } = app.process();
 
