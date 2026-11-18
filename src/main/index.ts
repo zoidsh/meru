@@ -1,10 +1,7 @@
 import path from "node:path";
 
-import { isEqual } from "es-toolkit";
-
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
-import { tabKey } from "#core/tabs.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
@@ -19,12 +16,12 @@ import { createWindowFactory } from "#platform/window.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
-import { createFind } from "./find.ts";
 import { createFocus } from "./focus.ts";
 import { createOverlays } from "./overlay.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { createShellWindow } from "./shell-window.ts";
 import { createTabViews } from "./tab-views.ts";
+import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
 import { wireLauncher } from "./wiring/launcher.ts";
@@ -332,40 +329,7 @@ const start = async () => {
     log: console.error,
   });
 
-  const find = createFind({
-    pages: views,
-    overlays,
-    focus,
-    windows: {
-      focusBar: (key) => {
-        if (ownWindows.findFocuser(key)) {
-          focus.focusInWindow(key, [{ kind: "windowFind", key }]);
-        } else {
-          barsAwaited.add(tabKey(key));
-        }
-      },
-      focusPage: (key) => {
-        barsAwaited.delete(tabKey(key));
-        focus.focusInWindow(key, [{ kind: "window", key }]);
-      },
-    },
-  });
-
-  overlays.onChange(find.follow);
-  views.onChange(find.follow);
-
-  // The find bar sits on its pane, which moves with the split; the views
-  // also change on every page event, which must not move it.
-  let panesLaidOut = views.panes();
-
-  views.onChange(() => {
-    const panes = views.panes();
-
-    if (!isEqual(panes, panesLaidOut)) {
-      panesLaidOut = panes;
-      overlays.relayout();
-    }
-  });
+  const find = wireFind({ views, overlays, focus, ownWindows, barsAwaited });
 
   const { showGmail, navigateGmail, mailActions, inbox } = wireGmail({
     lifecycle,
