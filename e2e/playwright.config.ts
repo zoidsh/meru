@@ -7,8 +7,9 @@ const isCI = Boolean(process.env.CI);
 /**
  * On Windows and Linux every launch of the suite's app takes the desktop's
  * focus, and an overlay, the unified inbox and the menus among them,
- * closes when its window loses it, so these run alone, after the rest. On
- * macOS the suite's app is never activated.
+ * closes when its window loses it, and a test that follows real focus sees
+ * it taken, so these run alone, after the rest. On macOS the suite's app is
+ * never activated.
  */
 const NEEDS_THE_FOCUS = [
   "**/overlay.e2e.ts",
@@ -17,6 +18,7 @@ const NEEDS_THE_FOCUS = [
   "**/tab-menu.e2e.ts",
   "**/tab-sleep.e2e.ts",
   "**/profile-sleep.e2e.ts",
+  "**/split.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 
