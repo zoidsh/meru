@@ -21,6 +21,8 @@ import {
   withSplit,
 } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
+import { viewDrop } from "./view-drop.ts";
+import type { Size } from "./window-bounds.ts";
 
 /** A tab is named by its profile and its id, which is unique only within it. */
 export interface TabKey {
@@ -414,6 +416,22 @@ export const splitOntoTab = (
   updateProfile(state, profileId, (profile) =>
     splitBeside(profile, tabId, target, "row")
   );
+
+/**
+ * A tab dropped over the page area of `size` at `point`, as `viewDrop`
+ * says; nothing where it lands nothing or leaves no room.
+ */
+export const dropInView = (
+  state: State,
+  { profileId, tabId }: TabKey,
+  size: Size,
+  point: { x: number; y: number }
+): State | undefined =>
+  updateProfile(state, profileId, (profile) => {
+    const drop = viewDrop(profile, size, point, tabId);
+
+    return drop?.fits ? drop.next : undefined;
+  });
 
 export const findTab = (state: State, { profileId, tabId }: TabKey) => {
   const profile = state.profiles.find(

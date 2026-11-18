@@ -1,4 +1,7 @@
 import {
+  PANE_GAP,
+  PANE_MINIMUM,
+  addAlongEdge,
   addPane,
   evenOut,
   paneHandles,
@@ -323,6 +326,66 @@ export const splitBeside = (
           ...(profile.split && restored(profile.split)),
           root,
         }),
+        selectedTabId: tabId,
+      };
+};
+
+/**
+ * The profile with `tabId` in a new pane along one edge of everything on
+ * screen, `direction` of it and first or last, selected: a third of
+ * `length`, the page area's along that way, or as much as a pane's minimum
+ * takes where a third is less. A tab with a pane already leaves it first.
+ * Nothing for a tab not shown, nothing else on screen to sit beside, or a
+ * tab shown alone while a split it is not in exists, since a profile has
+ * one split.
+ */
+export const splitAlongEdge = (
+  profile: Profile,
+  tabId: string,
+  direction: PaneDirection,
+  first: boolean,
+  length: number
+): Profile | undefined => {
+  const shown = new Set(knownTabs(profile).map((tab) => tab.id));
+  const { split, selectedTabId } = profile;
+
+  if (
+    !shown.has(tabId) ||
+    !shown.has(selectedTabId) ||
+    (split && !isInSplit(profile, selectedTabId))
+  ) {
+    return undefined;
+  }
+
+  const base = split ? removePane(split.root, tabId) : selectedTabId;
+
+  if (base === undefined || base === tabId) {
+    return undefined;
+  }
+
+  // The gaps along the edge's way once the new pane joins: a split the same
+  // way takes it in among its children.
+  const gaps =
+    typeof base !== "string" && base.direction === direction
+      ? base.children.length
+      : 1;
+  const share = Math.max(
+    1 / 3,
+    (PANE_MINIMUM + 1) / Math.max(1, length - gaps * PANE_GAP)
+  );
+  // Under the minimum anyway where it takes nearly all, which the fit refuses.
+  const root = addAlongEdge(
+    base,
+    tabId,
+    direction,
+    first,
+    Math.min(share, 0.9)
+  );
+
+  return typeof root === "string"
+    ? undefined
+    : {
+        ...withSplit(profile, { ...(split && restored(split)), root }),
         selectedTabId: tabId,
       };
 };
