@@ -174,7 +174,8 @@ test("each control's title names it and its shortcut, a narrow tab's names the t
   const calendarTitle = (await calendar.textContent()) ?? "";
 
   expect(calendarTitle).not.toBe("");
-  await expect(calendar).toHaveAttribute("title", calendarTitle);
+  // Never selected, so never loaded: asleep.
+  await expect(calendar).toHaveAttribute("title", `${calendarTitle} · asleep`);
 
   // Chromium reads a title as the description unless the name came from
   // content with the same text; an aria-label equal to the title would have

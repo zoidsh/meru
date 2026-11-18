@@ -164,7 +164,7 @@ test("a right-click on a tab opens its menu reaching over the sidebar, where the
     process.platform === "darwin" ? "Meta+R" : "Control+R"
   );
   await overlay.keyboard.press("ArrowDown");
-  await expect(item(overlay, "Reload")).toBeFocused();
+  await expect(item(overlay, "Wake")).toBeFocused();
   await overlay.keyboard.press("c");
   await expect(item(overlay, "Copy URL")).toBeFocused();
   await overlay.keyboard.press("Escape");
