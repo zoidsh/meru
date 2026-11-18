@@ -23,8 +23,6 @@ import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
 import { placeShown, planViews } from "#core/views.ts";
 import type { ViewPlan } from "#core/views.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
-import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
-import type { WindowOpenRoute } from "#core/window-open.ts";
 import type {
   ContentView,
   ContentViewEvent,
@@ -40,6 +38,7 @@ import { createLaunchTurn } from "./launch-turn.ts";
 import type { OwnWindowPlace, OwnWindows } from "./own-windows.ts";
 import { createPageWriter } from "./page-writer.ts";
 import type { SenderRegistry } from "./senders.ts";
+import { createWindowOpenRouting } from "./window-open-routing.ts";
 
 export interface TabViewsDeps {
   window: Pick<
@@ -129,9 +128,6 @@ export { LAUNCH_TURN_MS } from "./launch-turn.ts";
 
 /** What of a tab's view a reader of its page gets. */
 export type LoadedPage = Pick<ContentView, "url" | "evaluate">;
-
-/** How long after a page's request to add an account another is dropped. */
-const ADD_PROFILE_PAUSE_MS = 1000;
 
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -512,14 +508,6 @@ export const createTabViews = ({
     }
   };
 
-  const openInSystemBrowser = async (url: string) => {
-    try {
-      await systemBrowser.open(url);
-    } catch (error) {
-      log(`The system browser did not open a link: ${describe(error)}`);
-    }
-  };
-
   /**
    * The URL waits for the tab's next load. Committing the tab makes it the
    * front one, whose first load takes the URL; a tab that was loaded already
@@ -560,52 +548,15 @@ export const createTabViews = ({
     }
   };
 
-  /** A page can ask for many at once and needs no click to ask. */
-  let addingProfile = false;
-
-  const addProfileFromPage = async () => {
-    if (addingProfile) {
-      log("Dropped a repeated request to add an account");
-
-      return;
-    }
-
-    addingProfile = true;
-
-    try {
-      await addProfile();
-    } catch (error) {
-      log(`Adding a profile for a new account failed: ${describe(error)}`);
-    } finally {
-      setTimeout(() => {
-        addingProfile = false;
-      }, ADD_PROFILE_PAUSE_MS);
-    }
-  };
-
-  const follow = (route: WindowOpenRoute, url: string, profileId: string) => {
-    switch (route.kind) {
-      case "system-browser": {
-        openInSystemBrowser(route.url);
-        break;
-      }
-      case "tab": {
-        openAsTab(profileId, route.app, url);
-        break;
-      }
-      case "add-profile": {
-        addProfileFromPage();
-        break;
-      }
-      case "deny": {
-        log("Refused a window a page asked for");
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  };
+  const routing = createWindowOpenRouting({
+    apps,
+    signInOrigins,
+    systemBrowser,
+    openerApp: (key) => findTab(state(), key)?.app ?? "",
+    openAsTab,
+    addProfile,
+    log,
+  });
 
   const create = (key: string, tabKeyed: TabKey) => {
     const partition = profilePartition(tabKeyed.profileId);
@@ -613,37 +564,12 @@ export const createTabViews = ({
     prepareSession(partition);
 
     const preload = preloadFor(findTab(state(), tabKeyed)?.app ?? "");
-    const opening = () => ({
-      signInOrigins,
-      apps,
-      openerApp: findTab(state(), tabKeyed)?.app ?? "",
-    });
     const view = window.addContentView({
       partition,
       ...(preload !== undefined && { preload }),
       background,
-      onWindowOpen: (url) => {
-        const route = routeWindowOpen(url, opening());
-
-        follow(route, url, tabKeyed.profileId);
-
-        return route.kind === "child-window" ? "allow" : "deny";
-      },
-      onChildNavigation: (url) => {
-        if (allowsChildNavigation(url, opening())) {
-          return "allow";
-        }
-
-        const route = routeWindowOpen(url, opening());
-
-        log("Kept a window a page opened from leaving its app");
-
-        if (route.kind !== "child-window" && route.kind !== "deny") {
-          follow(route, url, tabKeyed.profileId);
-        }
-
-        return "deny";
-      },
+      onWindowOpen: (url) => routing.onWindowOpen(tabKeyed, url),
+      onChildNavigation: (url) => routing.onChildNavigation(tabKeyed, url),
       onWebContents: (webContentsId, role) =>
         senders.register(webContentsId, { role, ...tabKeyed }),
       onEvent: (event) => {
