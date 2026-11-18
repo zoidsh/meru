@@ -4,7 +4,6 @@ import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
-import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
@@ -13,8 +12,6 @@ import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
-import { createContentSecurityPolicy } from "./content-security-policy.ts";
-import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
 import { createOverlays } from "./overlay.ts";
@@ -31,6 +28,7 @@ import { wireNotifications } from "./wiring/notifications.ts";
 import { wireOwnWindows } from "./wiring/own-windows.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import { wireShellDocuments } from "./wiring/shell-documents.ts";
+import { APP_SCHEME, resolveShell } from "./wiring/shell-source.ts";
 import { wireStores } from "./wiring/stores.ts";
 import {
   suiteRunsInBackground,
@@ -38,10 +36,6 @@ import {
   testBuildSetup,
 } from "./wiring/test-build.ts";
 import { wireTray } from "./wiring/tray.ts";
-
-const APP_SCHEME = "meru-app";
-
-const SHELL_HOST = "shell";
 
 const { apps, signInOrigins, keepAliveUrl, keepAliveTiming, contextMenus } =
   testBuildSetup();
@@ -63,34 +57,6 @@ process.on("uncaughtException", failures.report);
 process.on("unhandledRejection", failures.report);
 
 lifecycle.onBeforeQuit(failures.markQuitting);
-
-const resolveShell = () => {
-  if (MERU_BUILD_MODE === "dev") {
-    const devServer = readDevServer(process.env);
-
-    return {
-      url: devServer.url,
-      apply: () => {
-        createDevServerPolicy().apply({
-          origin: new URL(devServer.url).origin,
-          contentSecurityPolicy: createDevContentSecurityPolicy(devServer),
-        });
-      },
-    };
-  }
-
-  return {
-    url: `${APP_SCHEME}://${SHELL_HOST}/index.html`,
-    apply: (appProtocol: ReturnType<typeof createAppProtocol>) => {
-      appProtocol.serve({
-        scheme: APP_SCHEME,
-        root: import.meta.dirname,
-        hosts: [SHELL_HOST],
-        contentSecurityPolicy: createContentSecurityPolicy(),
-      });
-    },
-  };
-};
 
 const start = async () => {
   const shellSource = resolveShell();
