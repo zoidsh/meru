@@ -12,7 +12,7 @@ import type { Focus } from "./focus.ts";
 export const TOAST_DURATION = 4000;
 
 export interface OverlaysDeps {
-  focus: Pick<Focus, "focus">;
+  focus: Pick<Focus, "focus" | "focused">;
   /** Main's state when the overlays start following it. */
   initial: State;
   /** Where the view sits while `overlay` is open, as the window is now. */
@@ -52,7 +52,10 @@ export const createOverlays = ({
 
   /** Gives back the focus `closed` took, as its kind does; a toast took none. */
   const giveBack = (closed: Overlay | undefined, toPage: boolean) => {
-    if (!closed || takesNoFocus(closed)) {
+    // A tab's own window that took the focus since, as a notification's
+    // click on Gmail there does, keeps it: the main window's page taking it
+    // back would bring the main window forward over it.
+    if (!closed || takesNoFocus(closed) || focus.focused()?.kind === "window") {
       return;
     }
 

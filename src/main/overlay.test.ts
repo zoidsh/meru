@@ -115,6 +115,18 @@ describe(createOverlays, () => {
     expect(overlays.current()).toBeUndefined();
   });
 
+  it("gives no focus back on close once a tab's own window has taken it", () => {
+    const { overlays, focus, events } = setup();
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open(renameA);
+    focus.noteFocused({ kind: "window", key: { profileId: "a", tabId: "t" } });
+    overlays.close();
+
+    expect(events.at(-1)).toBe("shell told closed");
+    expect(focus.focused()?.kind).toBe("window");
+  });
+
   it("shows a toast without taking focus, and gives none back when it closes by itself", () => {
     vi.useFakeTimers();
 
