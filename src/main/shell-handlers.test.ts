@@ -302,7 +302,7 @@ describe(shellState, () => {
           ],
         },
         () => ({ kind: "live" }),
-        false,
+        { selectedAsleep: false, panes: null },
         undefined,
         (profileId) =>
           profileId === "a" ? { status: "ok", unreadCount: 4 } : NO_MAIL,
@@ -363,7 +363,7 @@ describe(shellState, () => {
         },
         ({ profileId, tabId }) =>
           statuses[`${profileId}/${tabId}`] ?? { kind: "unloaded" },
-        true,
+        { selectedAsleep: true, panes: null },
         undefined,
         () => NO_MAIL,
         undefined,
@@ -402,6 +402,7 @@ describe(shellState, () => {
           status: { kind: "crashed" },
         },
       ],
+      panes: null,
     });
   });
 });
@@ -410,7 +411,7 @@ const overlaySlice = (open: Overlay | undefined) =>
   shellState(
     two,
     () => ({ kind: "live" }),
-    false,
+    { selectedAsleep: false, panes: null },
     open,
     () => NO_MAIL,
     undefined,
@@ -445,6 +446,19 @@ describe("the overlay slice", () => {
         id,
         name,
       })),
+      split: null,
+    });
+  });
+
+  it("lists, for Open in split, every app but Gmail where its tab is the one the pane goes beside", () => {
+    expect(
+      overlaySlice({ kind: "open-app", profileId: "b", split: "row" })
+    ).toMatchObject({
+      apps: APPS.filter(({ id }) => id !== "gmail").map(({ id, name }) => ({
+        id,
+        name,
+      })),
+      split: "row",
     });
   });
 
@@ -473,6 +487,9 @@ describe("the overlay slice", () => {
         { id: "openInBrowser", enabled: true },
         { id: "pin", enabled: true },
         { id: "openAtLaunch", enabled: true, checked: true },
+        { id: "splitRight", enabled: true },
+        { id: "splitDown", enabled: true },
+        { id: "separate", enabled: false },
         { id: "closeOthers", enabled: false },
         { id: "closeBelow", enabled: false },
       ],
@@ -513,7 +530,7 @@ const doNotDisturbSlice = (doNotDisturb: State["doNotDisturb"]) =>
   shellState(
     two,
     () => ({ kind: "live" }),
-    false,
+    { selectedAsleep: false, panes: null },
     undefined,
     () => NO_MAIL,
     doNotDisturb,

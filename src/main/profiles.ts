@@ -1,6 +1,7 @@
 import { Mutex } from "es-toolkit";
 
 import type { App } from "#core/apps.ts";
+import type { PaneDirection } from "#core/pane-tree.ts";
 import { removeSavedSearch, saveSearch } from "#core/saved-searches.ts";
 import {
   addProfile,
@@ -24,8 +25,10 @@ import {
   moveTab,
   openTab,
   selectTab,
+  separateTab,
   setOpenAtLaunch,
   setPinned,
+  splitTab,
   updatePages,
 } from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
@@ -185,15 +188,28 @@ export const createProfiles = ({
       app: App,
       url: string,
       tabId: string,
-      after?: string
+      after?: string,
+      split?: PaneDirection
     ) =>
       exclusive(async (): Promise<OpenedTab | undefined> => {
-        const opened = openTab(state, profileId, app, url, () => tabId, after);
+        const opened = openTab(
+          state,
+          profileId,
+          app,
+          url,
+          () => tabId,
+          after,
+          split
+        );
 
         return opened && (await commit(opened.state)) ? opened : undefined;
       }),
     selectTab: (key: TabKey) => exclusive(() => commit(selectTab(state, key))),
     closeTab: (key: TabKey) => exclusive(() => commit(closeTab(state, key))),
+    splitTab: (key: TabKey, direction: PaneDirection) =>
+      exclusive(() => commit(splitTab(state, key, direction))),
+    separateTab: (key: TabKey) =>
+      exclusive(() => commit(separateTab(state, key))),
     moveTab: (key: TabKey, before?: string) =>
       exclusive(() => commit(moveTab(state, key, before))),
     closeOtherTabs: (key: TabKey) =>

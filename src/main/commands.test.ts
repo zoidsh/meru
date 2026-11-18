@@ -53,6 +53,7 @@ const setup = (initial: State = twoProfiles) => {
   let selectedTabAsleep = false;
   const moves: string[] = [];
   const sleeps: string[] = [];
+  const splits: string[] = [];
   const actions: CommandActions = {
     toggleSidebar: () => {
       sidebarShown = !sidebarShown;
@@ -93,6 +94,10 @@ const setup = (initial: State = twoProfiles) => {
     setOpenAppOpen: (open) => {
       openAppOpen = open;
     },
+    openSplit: (direction) => {
+      splits.push(direction);
+    },
+    separateTab: profiles.separateTab,
     switchDoNotDisturb: (choice) =>
       choice === "off"
         ? doNotDisturb.switchOff()
@@ -122,6 +127,7 @@ const setup = (initial: State = twoProfiles) => {
     reloads: () => reloads,
     moves,
     sleeps,
+    splits,
     setNavigation: (next: Navigation | null) => {
       navigation = next;
     },
@@ -513,6 +519,39 @@ describe("the command registry", () => {
 
     expect([label(), app.sleeps]).toStrictEqual(["Sleep Tab", [gmail]]);
     expect(commandOf("tab.sleep").shortcut).toBeUndefined();
+  });
+
+  it("splits right and down beside the selected tab, separates the focused pane's, and splits nothing beside a tab outside the split", async () => {
+    const app = setup();
+    const offered = () =>
+      ["tab.splitRight", "tab.splitDown", "tab.separate"].map((id) =>
+        app.isAvailable(id)
+      );
+
+    expect(offered()).toStrictEqual([true, true, false]);
+
+    await app.run("tab.splitRight");
+    await app.run("tab.splitDown");
+    await app.profiles.splitTab({ profileId: "a", tabId: "c1" }, "row");
+
+    expect([offered(), app.splits]).toStrictEqual([
+      [true, true, true],
+      ["row", "column"],
+    ]);
+
+    await app.profiles.selectTab({ profileId: "a", tabId: "gmail" });
+    await app.run("tab.separate");
+
+    expect([offered(), app.profiles.get().profiles[0]?.split]).toStrictEqual([
+      [true, true, false],
+      undefined,
+    ]);
+    expect(commandOf("tab.splitRight").shortcut?.darwin).toBe(
+      "CommandOrControl+Alt+N"
+    );
+    expect(commandOf("tab.splitDown").shortcut?.darwin).toBe(
+      "CommandOrControl+Alt+Shift+N"
+    );
   });
 
   it("offers Back, Forward, Reload and Stop as the front tab's page allows, and none with no page", async () => {

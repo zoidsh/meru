@@ -2,6 +2,7 @@ import { findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
 import { isWebUrl } from "./google-redirect.ts";
 import { menuPointInside } from "./overlay.ts";
+import { focusSelected, isInSplit } from "./split.ts";
 import { isPinned, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 import { canCloseTab, closeTab, findTab } from "./tabs.ts";
@@ -18,6 +19,9 @@ export const TAB_MENU_ITEMS = [
   "openInBrowser",
   "pin",
   "openAtLaunch",
+  "splitRight",
+  "splitDown",
+  "separate",
   "close",
   "closeOthers",
   "closeBelow",
@@ -26,19 +30,22 @@ export const TAB_MENU_ITEMS = [
 export type TabMenuItemId = (typeof TAB_MENU_ITEMS)[number];
 
 /**
- * The menu's groups, drawn with a separator between each; the groups that
- * the split commands and Move to new window bring fit between them.
+ * The menu's groups, drawn with a separator between each; Move to new
+ * window's group fits before Close tab's.
  */
 export const TAB_MENU_GROUPS: readonly (readonly TabMenuItemId[])[] = [
   ["sleep", "wake"],
   ["reload", "duplicate", "copyUrl", "openInBrowser"],
   ["pin", "openAtLaunch"],
+  ["splitRight", "splitDown", "separate"],
   ["close", "closeOthers", "closeBelow"],
 ];
 
 /** The registry command whose shortcut an item shows, for those that have one. */
 export const TAB_MENU_COMMANDS: Partial<Record<TabMenuItemId, string>> = {
   reload: "tab.reload",
+  splitRight: "tab.splitRight",
+  splitDown: "tab.splitDown",
   close: "tab.close",
 };
 
@@ -83,7 +90,9 @@ const belowOf = (profile: Profile, tab: Tab) => {
  * What the tab's menu offers, in order; nothing for a tab that is not
  * shown. A tab with a page offers Sleep, one without, asleep, Wake; Reload
  * wakes one asleep. Duplicate needs an app that can have more than one tab;
- * a pinned tab has Open at Launch and no Close tab.
+ * a pinned tab has Open at Launch and no Close tab. Split right and Split
+ * down split beside the tab, so not beside one outside the profile's split;
+ * Separate from split takes one in it out.
  */
 export const tabMenuItems = (
   state: State,
@@ -100,6 +109,8 @@ export const tabMenuItems = (
 
   const app = findApp(apps, tab.app);
   const pinned = isPinned(tab);
+  const paned = isInSplit(profile, tab.id);
+  const splitsBeside = paned || profile.split === undefined;
 
   return [
     { id: loaded ? "sleep" : "wake", enabled: true },
@@ -120,6 +131,9 @@ export const tabMenuItems = (
           },
         ]
       : []),
+    { id: "splitRight", enabled: splitsBeside },
+    { id: "splitDown", enabled: splitsBeside },
+    { id: "separate", enabled: paned },
     ...(canCloseTab(tab) ? [{ id: "close" as const, enabled: true }] : []),
     { id: "closeOthers", enabled: othersOf(profile, tab).length > 0 },
     { id: "closeBelow", enabled: belowOf(profile, tab).length > 0 },
@@ -169,7 +183,7 @@ const closeAll = (
         ...next,
         profiles: next.profiles.map((profile) =>
           profile.id === key.profileId
-            ? { ...profile, selectedTabId: key.tabId }
+            ? focusSelected({ ...profile, selectedTabId: key.tabId })
             : profile
         ),
       }

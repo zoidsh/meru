@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
-import { LayoutGridIcon } from "lucide-react";
+import { Columns2Icon, LayoutGridIcon, Rows2Icon } from "lucide-react";
 import { useId, useState } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
@@ -28,10 +28,12 @@ const focus = (input: HTMLInputElement | null) => {
 /**
  * The apps the profile can open, filtered by what is typed; Up, Down and
  * Enter or a click choose one. The list is filtered here by `filterApps`
- * rather than by cmdk's fuzzy score, so it keeps the registry's order.
+ * rather than by cmdk's fuzzy score, so it keeps the registry's order. As
+ * Open in split it says so in a header, with where the pick goes.
  */
 export const OpenAppOverlay = ({
   apps,
+  split,
 }: Extract<ShellState["overlay"], { kind: "open-app" }>) => {
   const { t } = useLingui();
   const headingId = useId();
@@ -44,9 +46,38 @@ export const OpenAppOverlay = ({
 
   return (
     <OverlayCard kind="open-app" labelledBy={headingId}>
-      <h2 id={headingId} className="sr-only">
-        {label}
-      </h2>
+      {split ? (
+        <header className="flex h-11 shrink-0 items-center justify-between gap-2 pr-2 pl-3">
+          <h2
+            id={headingId}
+            className="flex items-center gap-2 text-base leading-5 font-medium [&_svg]:size-4"
+          >
+            {split === "row" ? (
+              <Columns2Icon aria-hidden />
+            ) : (
+              <Rows2Icon aria-hidden />
+            )}
+            <Trans comment="Heading over the list of Google's apps whose pick opens in a new pane of the split view">
+              Open in split
+            </Trans>
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {split === "row" ? (
+              <Trans comment="Under the Open in split heading: the app picked opens in a new pane to the right of the focused one">
+                Beside the focused pane
+              </Trans>
+            ) : (
+              <Trans comment="Under the Open in split heading: the app picked opens in a new pane under the focused one">
+                Below the focused pane
+              </Trans>
+            )}
+          </p>
+        </header>
+      ) : (
+        <h2 id={headingId} className="sr-only">
+          {label}
+        </h2>
+      )}
       <Command
         shouldFilter={false}
         label={label}

@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import {
+  Columns2Icon,
   CopyPlusIcon,
   ExternalLinkIcon,
   LinkIcon,
@@ -7,6 +8,8 @@ import {
   PinOffIcon,
   PowerIcon,
   RotateCwIcon,
+  Rows2Icon,
+  UnlinkIcon,
   XIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -124,6 +127,36 @@ export const TabMenu = ({
             message: "Open at Launch",
             comment:
               "Checkbox item of a pinned tab's context menu: whether it loads when Meru starts rather than when first selected",
+          }),
+        };
+      }
+      case "splitRight": {
+        return {
+          icon: <Columns2Icon />,
+          text: t({
+            message: "Split right",
+            comment:
+              "Item of a tab's context menu that lists apps to open in a new pane to the right of the tab's",
+          }),
+        };
+      }
+      case "splitDown": {
+        return {
+          icon: <Rows2Icon />,
+          text: t({
+            message: "Split down",
+            comment:
+              "Item of a tab's context menu that lists apps to open in a new pane below the tab's",
+          }),
+        };
+      }
+      case "separate": {
+        return {
+          icon: <UnlinkIcon />,
+          text: t({
+            message: "Separate from split",
+            comment:
+              "Item of a tab's context menu that takes it out of the split view, to show alone",
           }),
         };
       }

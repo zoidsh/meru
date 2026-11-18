@@ -2,7 +2,7 @@ import type { ShellState } from "#contract/shell.ts";
 import { ariaKeyShortcut, formatAccelerator } from "#core/accelerator.ts";
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
-import { openableApps } from "#core/open-app.ts";
+import { openableApps, splittableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
@@ -115,6 +115,10 @@ const shellOverlay = (
     return shellTabMenu(state, overlay, status, apps);
   }
 
+  if (overlay?.kind === "toast") {
+    return { kind: "toast", message: overlay.message };
+  }
+
   const profile =
     overlay &&
     state.profiles.find((candidate) => candidate.id === overlay.profileId);
@@ -138,7 +142,11 @@ const shellOverlay = (
     ? {
         kind: "open-app",
         profileId: profile.id,
-        apps: openableApps(apps, profile).map(({ id, name }) => ({ id, name })),
+        apps: (overlay.split
+          ? splittableApps(apps, profile)
+          : openableApps(apps, profile)
+        ).map(({ id, name }) => ({ id, name })),
+        split: overlay.split ?? null,
       }
     : {
         kind: "rename-profile",
@@ -177,8 +185,11 @@ export const shellShortcuts = (
 export const shellState = (
   state: State,
   status: (key: TabKey) => TabStatus,
-  /** Whether the selected tab was put to sleep, and so has no page. */
-  selectedAsleep: boolean,
+  page: {
+    /** Whether the selected tab was put to sleep, and so has no page. */
+    selectedAsleep: boolean;
+    panes: ShellState["tabs"]["panes"];
+  },
   overlay: Overlay | undefined,
   mail: (profileId: string) => Mail,
   doNotDisturb: DoNotDisturb | undefined,
@@ -206,7 +217,7 @@ export const shellState = (
     tabs: {
       profileId: profile.id,
       selectedTabId: profile.selectedTabId,
-      selectedAsleep,
+      selectedAsleep: page.selectedAsleep,
       tabs: knownTabs(profile).map((tab) => ({
         id: tab.id,
         app: tab.app,
@@ -216,6 +227,7 @@ export const shellState = (
           status({ profileId: profile.id, tabId: tab.id })
         ),
       })),
+      panes: page.panes,
     },
     doNotDisturb: {
       on: doNotDisturb !== undefined,

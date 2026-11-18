@@ -1,3 +1,6 @@
+import { paneRectangles, paneTabs } from "./pane-tree.ts";
+import type { PaneRectangle, PaneTree } from "./pane-tree.ts";
+import { shownSplit } from "./split.ts";
 import {
   isAsleep,
   knownTabs,
@@ -7,6 +10,18 @@ import {
 import type { Profile, State } from "./state.ts";
 import { tabKey } from "./tabs.ts";
 import type { TabKey } from "./tabs.ts";
+
+/**
+ * Where each shown tab's view sits in the page area `area`: the whole of it
+ * for a tab alone, else its pane's rectangle.
+ */
+export const placeShown = (
+  plan: Pick<ViewPlan, "shown" | "panes">,
+  area: PaneRectangle["bounds"]
+): PaneRectangle[] =>
+  plan.panes
+    ? paneRectangles(plan.panes, area)
+    : plan.shown.map(({ tabId }) => ({ tabId, bounds: area }));
 
 /**
  * Whether a profile's Open at Launch tabs open now, once a session: the
@@ -23,6 +38,13 @@ export interface ViewPlan {
   views: TabKey[];
   /** The selected tab of the selected profile, unless it has none or sleeps. */
   front?: TabKey;
+  /**
+   * The tabs on screen: every pane's while the front tab is in its profile's
+   * split, in reading order, else the front tab alone.
+   */
+  shown: TabKey[];
+  /** The split's tree while it shows, which places the shown views. */
+  panes?: PaneTree;
   /** Open at Launch tabs to load now, without showing them. */
   opening: TabKey[];
   /** The profiles whose Open at Launch tabs those are, opened once. */
@@ -49,6 +71,11 @@ export const planViews = (
   const front = shown.some((tab) => tab.id === profile.selectedTabId)
     ? { profileId: profile.id, tabId: profile.selectedTabId }
     : undefined;
+  const split = front && shownSplit(profile);
+  const alone = front ? [front] : [];
+  const onScreen: TabKey[] = split
+    ? paneTabs(split.root).map((tabId) => ({ profileId: profile.id, tabId }))
+    : alone;
   const launching = state.profiles.filter(
     (candidate) =>
       !launched.has(candidate.id) && opensLaunchTabs(candidate, state)
@@ -59,11 +86,9 @@ export const planViews = (
       .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
   );
   const kept = new Set(
-    [
-      ...existing,
-      ...opening.map(tabKey),
-      ...(front ? [tabKey(front)] : []),
-    ].filter((key) => !sleeping.has(key))
+    [...existing, ...opening.map(tabKey), ...onScreen.map(tabKey)].filter(
+      (key) => !sleeping.has(key)
+    )
   );
 
   return {
@@ -73,6 +98,8 @@ export const planViews = (
         .filter((key) => kept.has(tabKey(key)))
     ),
     ...(front && { front }),
+    shown: onScreen,
+    ...(split && { panes: split.root }),
     opening,
     launched: launching.map((candidate) => candidate.id),
   };

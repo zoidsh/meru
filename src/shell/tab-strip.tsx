@@ -8,7 +8,7 @@ import {
   LoaderCircleIcon,
   XIcon,
 } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent, PointerEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
@@ -796,15 +796,21 @@ const isProblem = (status: ShellTab["status"]): status is Problem =>
   status.kind === "failed" || status.kind === "crashed";
 
 /**
- * Where the selected tab's view would be, which is hidden while its page
- * failed or crashed, so this is what shows. Its heading is also said by a
- * screen reader as it appears, and not again while retries come and go.
+ * Where the tab's view would be, the selected tab's or a pane's, which is
+ * hidden while its page failed or crashed, so this is what shows. Its
+ * heading is also said by a screen reader as it appears, and not again while
+ * retries come and go.
  */
-export const TabProblem = ({ tabs }: { tabs: ShellState["tabs"] }) => {
+export const TabProblem = ({
+  tabs,
+  tabId,
+}: {
+  tabs: ShellState["tabs"];
+  tabId?: string;
+}) => {
   const { t } = useLingui();
-  const tab = tabs.tabs.find(
-    (candidate) => candidate.id === tabs.selectedTabId
-  );
+  const shown = tabId ?? tabs.selectedTabId;
+  const tab = tabs.tabs.find((candidate) => candidate.id === shown);
   const status = tab && isProblem(tab.status) ? tab.status : undefined;
   const name = tab ? appName(tab.app) : "";
   let heading: string | undefined;
@@ -856,16 +862,17 @@ const ProblemPanel = ({
   heading: string;
 }) => {
   const { t } = useLingui();
+  const headingId = useId();
 
   return (
     <section
-      aria-labelledby="tab-problem-heading"
+      aria-labelledby={headingId}
       className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center"
     >
       <CircleAlertIcon aria-hidden className="size-8 text-muted-foreground" />
       {status.kind === "failed" ? (
         <>
-          <h1 id="tab-problem-heading" className="text-lg font-semibold">
+          <h1 id={headingId} className="text-lg font-semibold">
             {heading}
           </h1>
           <p className="max-w-sm text-sm text-muted-foreground">
@@ -904,7 +911,7 @@ const ProblemPanel = ({
         </>
       ) : (
         <>
-          <h1 id="tab-problem-heading" className="text-lg font-semibold">
+          <h1 id={headingId} className="text-lg font-semibold">
             {heading}
           </h1>
           <p className="max-w-sm text-sm text-muted-foreground">

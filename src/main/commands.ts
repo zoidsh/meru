@@ -9,6 +9,7 @@ import {
 } from "#core/gmail-hash.ts";
 import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
 import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
+import type { PaneDirection } from "#core/pane-tree.ts";
 import {
   PINNED_SHORTCUT_COUNT,
   pinnedShortcut,
@@ -24,6 +25,7 @@ import {
   savedSearchName,
   savedSearches,
 } from "#core/saved-searches.ts";
+import { isInSplit, splitTarget } from "#core/split.ts";
 import {
   adjacentProfile,
   canRemoveProfile,
@@ -81,6 +83,13 @@ export interface CommandActions {
   setInboxOpen: (open: boolean) => void;
   /** Opens Open app over the selected profile's page, or closes it. */
   setOpenAppOpen: (open: boolean) => void;
+  /**
+   * Opens Open in split, whose pick goes in a new pane that way of the
+   * focused one, or says there is no room.
+   */
+  openSplit: (direction: PaneDirection) => void;
+  /** Takes the tab out of its split; it stays selected and shows alone. */
+  separateTab: (key: TabKey) => Promise<unknown>;
   /** Shows the sidebar where it is hidden, else hides it. */
   toggleSidebar: () => void;
   /** Shows the profile's Gmail tab and sends its page to `hash`. */
@@ -386,6 +395,65 @@ export const COMMANDS: readonly Command[] = [
 
       return Promise.resolve();
     },
+  },
+  {
+    id: "tab.splitRight",
+    title: () =>
+      t({
+        message: "Split Right",
+        comment:
+          "Menu item in the Tabs menu that lists apps to open in a new pane to the right of the focused one",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+Alt+N",
+      win32: "CommandOrControl+Alt+N",
+      linux: "CommandOrControl+Alt+N",
+    },
+    isAvailable: ({ state }) =>
+      splitTarget(selectedProfile(state)) !== undefined,
+    once: true,
+    run: (_context, { openSplit }) => {
+      openSplit("row");
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.splitDown",
+    title: () =>
+      t({
+        message: "Split Down",
+        comment:
+          "Menu item in the Tabs menu that lists apps to open in a new pane below the focused one",
+      }),
+    shortcut: {
+      darwin: "CommandOrControl+Alt+Shift+N",
+      win32: "CommandOrControl+Alt+Shift+N",
+      linux: "CommandOrControl+Alt+Shift+N",
+    },
+    isAvailable: ({ state }) =>
+      splitTarget(selectedProfile(state)) !== undefined,
+    once: true,
+    run: (_context, { openSplit }) => {
+      openSplit("column");
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "tab.separate",
+    title: () =>
+      t({
+        message: "Separate from Split",
+        comment:
+          "Menu item in the Tabs menu that takes the focused pane's tab out of its split, to show alone",
+      }),
+    isAvailable: ({ state }) => {
+      const profile = selectedProfile(state);
+
+      return isInSplit(profile, profile.selectedTabId);
+    },
+    run: ({ state }, { separateTab }) => separateTab(selectedTab(state)),
   },
   {
     id: "tab.next",

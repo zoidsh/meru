@@ -1,5 +1,6 @@
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
+import type { PaneDirection } from "#core/pane-tree.ts";
 import { isPinned } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { duplicatePlace, tabMenuAt, tabMenuItems } from "#core/tab-menu.ts";
@@ -27,7 +28,10 @@ export interface TabMenuDeps {
     | "closeTab"
     | "closeOtherTabs"
     | "closeTabsBelow"
+    | "separateTab"
   >;
+  /** Opens Open in split beside or below the selected tab's pane. */
+  openSplit: (direction: PaneDirection) => void;
   /** Whether the tab has a page, else it sleeps. */
   isLoaded: (key: TabKey) => boolean;
   /** Loads the tab's page again, or wakes and selects it where it sleeps. */
@@ -66,6 +70,7 @@ export const createTabMenu = ({
   sleep,
   wake,
   openTab,
+  openSplit,
   clipboard,
   systemBrowser,
   log,
@@ -123,6 +128,17 @@ export const createTabMenu = ({
       }
       case "closeOthers": {
         await profiles.closeOtherTabs(key);
+        break;
+      }
+      case "splitRight":
+      case "splitDown": {
+        // Beside this tab, which selecting focuses.
+        await wake(key);
+        openSplit(item === "splitRight" ? "row" : "column");
+        break;
+      }
+      case "separate": {
+        await profiles.separateTab(key);
         break;
       }
       default: {

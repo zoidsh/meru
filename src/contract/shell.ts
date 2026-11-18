@@ -4,6 +4,8 @@ import { APP_IDS } from "#core/apps.ts";
 import { MAIL_STATUSES } from "#core/feed.ts";
 import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
+import { TOAST_MESSAGES } from "#core/overlay.ts";
+import { PANE_DIRECTIONS } from "#core/pane-tree.ts";
 import { PROFILE_MENU_ITEMS } from "#core/profile-menu.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
@@ -190,6 +192,24 @@ export const SHELL_STATE = {
         status: tabStatus,
       })
     ),
+    /**
+     * While the selected tab is in its profile's split, every pane, each
+     * where it sits in the page area, whose top left is 0, 0; the selected
+     * tab's pane has focus. `null` while a tab shows alone.
+     */
+    panes: z.nullable(
+      z.array(
+        z.object({
+          tabId,
+          x: coordinate,
+          y: coordinate,
+          width: coordinate,
+          height: coordinate,
+          /** Put to sleep: the pane shows the sleeping placeholder. */
+          asleep: z.boolean(),
+        })
+      )
+    ),
   }),
   /** How the sidebar shows, which also sets where the content view sits. */
   sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),
@@ -276,6 +296,13 @@ export const SHELL_STATE = {
       profileId,
       /** What the profile can open, in the registry's order. */
       apps: z.array(z.object({ id: z.enum(APP_IDS), name: z.string() })),
+      /** Open in split, putting the pick that way of the focused pane. */
+      split: z.nullable(z.enum(PANE_DIRECTIONS)),
+    }),
+    /** A short notice, which takes no focus and closes by itself. */
+    z.object({
+      kind: z.literal("toast"),
+      message: z.enum(TOAST_MESSAGES),
     }),
     z.object({
       kind: z.literal("tab-menu"),

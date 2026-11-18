@@ -52,6 +52,15 @@ describe(transitionOverlay, () => {
     expect(transitionOverlay(opened, { kind: "close" })).toBeUndefined();
   });
 
+  it("keeps a toast open through a change of state, until it is replaced or closes", () => {
+    const toast: Overlay = { kind: "toast", message: "no-room" };
+
+    expect([
+      changed(toast, selectProfile(two, "b")),
+      transitionOverlay(toast, { kind: "open", overlay: openAppA }),
+    ]).toStrictEqual([toast, openAppA]);
+  });
+
   it("closes when another profile is selected", () => {
     expect(
       [renameA, openAppA].map((open) => changed(open, selectProfile(two, "b")))
@@ -161,6 +170,20 @@ describe(overlayRectangle, () => {
       { x: 64, y: 40, width: 928, height: 652 },
       { x: 0, y: 0, width: 1000, height: 700 },
       { x: 0, y: 0, width: 1000, height: 700 },
+    ]);
+  });
+
+  it("puts a toast's view in the page area's bottom right corner, no larger than the area", () => {
+    expect([
+      overlayRectangle({ width: 1000, height: 700 }, "narrow", {
+        kind: "toast",
+      }),
+      overlayRectangle({ width: 300, height: 100 }, "hidden", {
+        kind: "toast",
+      }),
+    ]).toStrictEqual([
+      { x: 592, y: 604, width: 400, height: 88 },
+      { x: 8, y: 40, width: 284, height: 52 },
     ]);
   });
 });

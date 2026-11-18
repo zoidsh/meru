@@ -13,23 +13,25 @@ import {
 } from "#ui/empty.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
-import { sleepingSelectedTab } from "./sleeping.ts";
 import { shellCalls } from "./sync.ts";
 import { tabTitle } from "./tab-strip.tsx";
 
 /**
- * Where the selected tab's view was before it was put to sleep: its app,
- * that it sleeps, and Wake, which takes focus as it appears.
+ * Where a tab's view was before it was put to sleep, the selected tab's or
+ * a pane's: its app, that it sleeps, and Wake, which takes focus as it
+ * appears for the selected tab.
  */
-export const SleepingTab = ({ tabs }: { tabs: ShellState["tabs"] }) => {
+export const SleepingTab = ({
+  profileId,
+  tab,
+  selected,
+}: {
+  profileId: string;
+  tab: ShellState["tabs"]["tabs"][number];
+  selected: boolean;
+}) => {
   const { t } = useLingui();
   const headingId = useId();
-  const tab = sleepingSelectedTab(tabs);
-
-  if (!tab) {
-    return null;
-  }
-
   const title = tabTitle(tab);
 
   return (
@@ -61,12 +63,9 @@ export const SleepingTab = ({ tabs }: { tabs: ShellState["tabs"] }) => {
             variant="outline"
             size="sm"
             // oxlint-disable-next-line jsx-a11y/no-autofocus -- Sleep from the menu leaves nothing else to do here
-            autoFocus
+            autoFocus={selected}
             onClick={() => {
-              shellCalls().selectTab({
-                profileId: tabs.profileId,
-                tabId: tab.id,
-              });
+              shellCalls().selectTab({ profileId, tabId: tab.id });
             }}
           >
             <Trans comment="Button in place of a sleeping tab's page that loads it again">

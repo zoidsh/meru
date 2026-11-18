@@ -1,4 +1,5 @@
 import { contentViewBounds } from "./layout.ts";
+import type { PaneDirection } from "./pane-tree.ts";
 import type { ProfileMenuRequest } from "./profile-menu.ts";
 import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
@@ -7,11 +8,21 @@ import type { TabMenuRequest } from "./tab-menu.ts";
 import { findTab } from "./tabs.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
 
+/** The short notices a toast gives, by name. */
+export const TOAST_MESSAGES = ["no-room"] as const;
+
+export type ToastMessage = (typeof TOAST_MESSAGES)[number];
+
 /** What an overlay over the content views shows; one at a time. */
 export type Overlay =
   | { kind: "rename-profile"; profileId: string }
-  /** Lists the apps the profile can open a tab of. */
-  | { kind: "open-app"; profileId: string }
+  /**
+   * Lists the apps the profile can open a tab of; with `split`, as Open in
+   * split, whose pick goes in a new pane that way of the focused one.
+   */
+  | { kind: "open-app"; profileId: string; split?: PaneDirection }
+  /** A short notice at the page area's foot, which takes no focus. */
+  | { kind: "toast"; message: ToastMessage }
   | { kind: "inbox" }
   /** A tab's context menu, at the point it was asked for. */
   | ({ kind: "tab-menu" } & TabMenuRequest)
@@ -42,6 +53,9 @@ export const menuPointInside = (
   x <= contentSize.width &&
   y <= contentSize.height;
 
+/** The view a toast is drawn in, at the page area's bottom right corner. */
+export const TOAST_VIEW = { width: 400, height: 88 } as const;
+
 /** The card's width for each width class, in CSS pixels. */
 export const OVERLAY_WIDTHS = { narrow: 320, medium: 448, wide: 704 } as const;
 
@@ -64,16 +78,34 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
  * area, so the card can be placed in it by CSS and a press beside it lands
  * in the view, which closes it; a menu's over the window's whole content
  * area, titlebar and sidebar too, so it can reach over them from the tab it
- * belongs to and takes the press that closes it.
+ * belongs to and takes the press that closes it; a toast's only where the
+ * toast is, so the pages beside it take their own presses.
  */
 export const overlayRectangle = (
   contentSize: Size,
   sidebar: SidebarState,
   overlay: Pick<Overlay, "kind">
-): Rectangle =>
-  isMenu(overlay)
-    ? { x: 0, y: 0, ...contentSize }
-    : contentViewBounds(contentSize, sidebar);
+): Rectangle => {
+  if (isMenu(overlay)) {
+    return { x: 0, y: 0, ...contentSize };
+  }
+
+  const area = contentViewBounds(contentSize, sidebar);
+
+  if (overlay.kind !== "toast") {
+    return area;
+  }
+
+  const width = Math.min(TOAST_VIEW.width, area.width);
+  const height = Math.min(TOAST_VIEW.height, area.height);
+
+  return {
+    x: area.x + area.width - width,
+    y: area.y + area.height - height,
+    width,
+    height,
+  };
+};
 
 export type OverlayEvent =
   /** Replaces whatever is open. */
@@ -106,7 +138,7 @@ export const transitionOverlay = (
       return undefined;
     }
     default: {
-      if (current?.kind === "inbox") {
+      if (current?.kind === "inbox" || current?.kind === "toast") {
         return current;
       }
 

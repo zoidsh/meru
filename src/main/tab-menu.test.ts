@@ -70,6 +70,7 @@ const setup = ({ held = false } = {}) => {
       closeTab: (each) => recorded("close")(key(each)),
       closeOtherTabs: (each) => recorded("closeOthers")(key(each)),
       closeTabsBelow: (each) => recorded("closeBelow")(key(each)),
+      separateTab: (each) => recorded("separate")(key(each)),
     },
     isLoaded: (each) => each.tabId !== "x",
     reload: (each) => recorded("reload")(key(each)),
@@ -77,6 +78,9 @@ const setup = ({ held = false } = {}) => {
       done.push(["sleep", key(each)]);
     },
     wake: (each) => recorded("wake")(key(each)),
+    openSplit: (direction) => {
+      done.push(["openSplit", direction]);
+    },
     openTab: async (profileId, app, url, after) => {
       await recorded("openTab")(profileId, app.id, url, after);
 

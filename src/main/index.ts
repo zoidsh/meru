@@ -10,6 +10,7 @@ import {
   ROTATING_COOKIE,
 } from "#core/keep-alive.ts";
 import type { KeepAliveTiming } from "#core/keep-alive.ts";
+import { contentViewBounds } from "#core/layout.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
@@ -638,6 +639,9 @@ const start = async () => {
     state: profiles.get,
     overlays,
     openTab: views.open,
+    splitTab: profiles.splitTab,
+    pageSize: () =>
+      contentViewBounds(shell.window.getContentAreaSize(), sidebar.current()),
     log: console.error,
   });
 
@@ -761,6 +765,8 @@ const start = async () => {
           : doNotDisturb.switchOn(choice),
       setInboxOpen: inbox.setOpen,
       setOpenAppOpen: openApp.setOpen,
+      openSplit: openApp.openSplit,
+      separateTab: profiles.separateTab,
       toggleSidebar: sidebar.toggleShown,
       navigateGmail,
       saveSearch: profiles.saveSearch,
@@ -799,6 +805,7 @@ const start = async () => {
     sleep: views.sleep,
     wake: views.select,
     openTab: views.open,
+    openSplit: openApp.openSplit,
     clipboard,
     systemBrowser,
     log: console.error,
@@ -836,7 +843,7 @@ const start = async () => {
         shellState(
           profiles.get(),
           views.status,
-          views.frontAsleep(),
+          { selectedAsleep: views.frontAsleep(), panes: views.panes() },
           overlays.current(),
           mail.mail,
           doNotDisturb.current(),

@@ -131,6 +131,61 @@ describe(planViews, () => {
     expect(keys(plan(asleepA).views)).toStrictEqual(keys(plan(state).views));
   });
 
+  it("shows every pane of the split while the selected tab is in it, placed by its tree, and the tab alone outside it", () => {
+    const root = {
+      direction: "row" as const,
+      children: [
+        { size: 0.5, pane: "a1" },
+        { size: 0.5, pane: "gmail" },
+      ],
+    };
+    const split = (selectedTabId: string): State => ({
+      ...state,
+      profiles: state.profiles.map((profile) =>
+        profile.id === "a"
+          ? { ...profile, selectedTabId, split: { root, focused: "a1" } }
+          : profile
+      ),
+    });
+    const inside = plan(split("a1"), [], ["a"]);
+    const outside = plan(split("a3"), ["a/gmail", "a/a1"], ["a"]);
+
+    expect([
+      keys(inside.shown),
+      inside.panes,
+      keys(inside.views),
+    ]).toStrictEqual([["a/a1", "a/gmail"], root, ["a/gmail", "a/a1"]]);
+    expect([
+      keys(outside.shown),
+      outside.panes,
+      keys(outside.views),
+    ]).toStrictEqual([["a/a3"], undefined, ["a/gmail", "a/a1", "a/a3"]]);
+  });
+
+  it("keeps a sleeping pane on screen without a view, so its placeholder shows in its place", () => {
+    const root = {
+      direction: "column" as const,
+      children: [
+        { size: 0.5, pane: "a1" },
+        { size: 0.5, pane: "gmail" },
+      ],
+    };
+    const split: State = {
+      ...state,
+      profiles: state.profiles.map((profile) =>
+        profile.id === "a"
+          ? { ...profile, split: { root, focused: "a1" } }
+          : profile
+      ),
+    };
+    const sleeping = plan(split, ["a/gmail", "a/a1"], ["a"], ["a/gmail"]);
+
+    expect([keys(sleeping.shown), keys(sleeping.views)]).toStrictEqual([
+      ["a/a1", "a/gmail"],
+      ["a/a1"],
+    ]);
+  });
+
   it("never gives a tab of an app this build does not know a view", () => {
     expect(keys(plan(state, ["a/a2"], ["a"]).views)).toStrictEqual(["a/a1"]);
   });

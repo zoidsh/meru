@@ -192,6 +192,16 @@ msgstr "Asleep"
 msgid "Back"
 msgstr "Back"
 
+#. Under the Open in split heading: the app picked opens in a new pane under the focused one
+#: src/shell/open-app.tsx
+msgid "Below the focused pane"
+msgstr "Below the focused pane"
+
+#. Under the Open in split heading: the app picked opens in a new pane to the right of the focused one
+#: src/shell/open-app.tsx
+msgid "Beside the focused pane"
+msgstr "Beside the focused pane"
+
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
 msgid "Bring All to Front"
@@ -471,6 +481,11 @@ msgstr "No Saved Searches"
 msgid "No unread messages"
 msgstr "No unread messages"
 
+#. Short notice at the foot of the window when a split would leave a pane too small
+#: src/shell/toast.tsx
+msgid "Not enough room to split"
+msgstr "Not enough room to split"
+
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
 #: src/main/do-not-disturb.ts
 msgid "On Until {time}"
@@ -518,6 +533,11 @@ msgstr "Open Gmail, Calendar or another Google app in this profile."
 #: src/shell/tab-menu.tsx
 msgid "Open in default browser"
 msgstr "Open in default browser"
+
+#. Heading over the list of Google's apps whose pick opens in a new pane of the split view
+#: src/shell/open-app.tsx
+msgid "Open in split"
+msgstr "Open in split"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -673,6 +693,16 @@ msgstr "Select Previous Tab"
 msgid "Select Profile {position}"
 msgstr "Select Profile {position}"
 
+#. Item of a tab's context menu that takes it out of the split view, to show alone
+#: src/shell/tab-menu.tsx
+msgid "Separate from split"
+msgstr "Separate from split"
+
+#. Menu item in the Tabs menu that takes the focused pane's tab out of its split, to show alone
+#: src/main/commands.ts
+msgid "Separate from Split"
+msgstr "Separate from Split"
+
 #. The macOS app menu's submenu of system services, named as macOS names it
 #: src/main/application-menu.ts
 msgid "Services"
@@ -731,6 +761,26 @@ msgstr "Sleep Profile"
 #: src/main/commands.ts
 msgid "Sleep Tab"
 msgstr "Sleep Tab"
+
+#. Item of a tab's context menu that lists apps to open in a new pane below the tab's
+#: src/shell/tab-menu.tsx
+msgid "Split down"
+msgstr "Split down"
+
+#. Menu item in the Tabs menu that lists apps to open in a new pane below the focused one
+#: src/main/commands.ts
+msgid "Split Down"
+msgstr "Split Down"
+
+#. Item of a tab's context menu that lists apps to open in a new pane to the right of the tab's
+#: src/shell/tab-menu.tsx
+msgid "Split right"
+msgstr "Split right"
+
+#. Menu item in the Tabs menu that lists apps to open in a new pane to the right of the focused one
+#: src/main/commands.ts
+msgid "Split Right"
+msgstr "Split Right"
 
 #. Accessible name and tooltip of the title bar button that stops the page loading, shown in place of Reload while it loads
 #. Menu item in the View menu that stops the selected tab's page loading

@@ -26,6 +26,7 @@ const TABS: ShellState["tabs"] = {
   profileId: "a",
   selectedTabId: "gmail",
   selectedAsleep: false,
+  panes: null,
   tabs: [
     {
       id: "gmail",

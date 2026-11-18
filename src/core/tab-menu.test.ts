@@ -62,6 +62,9 @@ describe(tabMenuItems, () => {
       "openInBrowser",
       "pin",
       "openAtLaunch on",
+      "splitRight",
+      "splitDown",
+      "separate off",
       "closeOthers off",
       "closeBelow off",
     ]);
@@ -77,9 +80,41 @@ describe(tabMenuItems, () => {
       "copyUrl",
       "openInBrowser",
       "pin",
+      "splitRight",
+      "splitDown",
+      "separate off",
       "close",
       "closeOthers",
       "closeBelow",
+    ]);
+  });
+
+  it("offers Separate from split for a tab in the split, and no split beside a tab outside it", () => {
+    const split = state([tab("c", "calendar"), tab("d", "drive")]);
+    const current: State = {
+      ...split,
+      profiles: split.profiles.map((profile) => ({
+        ...profile,
+        split: {
+          root: {
+            direction: "row",
+            children: [
+              { size: 0.5, pane: "gmail" },
+              { size: 0.5, pane: "c" },
+            ],
+          },
+          focused: "gmail",
+        },
+      })),
+    };
+    const splitItems = (tabId: string) =>
+      offered(current, tabId)?.filter(
+        (item) => item.startsWith("split") || item.startsWith("separate")
+      );
+
+    expect([splitItems("c"), splitItems("d")]).toStrictEqual([
+      ["splitRight", "splitDown", "separate"],
+      ["splitRight off", "splitDown off", "separate off"],
     ]);
   });
 

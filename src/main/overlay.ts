@@ -8,6 +8,9 @@ import type { OverlayView } from "#platform/overlay-view.ts";
 
 import type { Focus } from "./focus.ts";
 
+/** How long a toast shows, as Sonner's own default. */
+export const TOAST_DURATION = 4000;
+
 export interface OverlaysDeps {
   focus: Pick<Focus, "focus">;
   /** Main's state when the overlays start following it. */
@@ -26,7 +29,8 @@ export interface OverlaysDeps {
  * left in the titlebar would leave Gmail's keys dead. A menu is the
  * exception: it gives focus to the shell, which puts it back on the control
  * the menu was opened on, unless the window losing focus closed it or
- * another profile was selected, which give focus to the page.
+ * another profile was selected, which give focus to the page. A toast takes
+ * no focus and gives none back, and closes by itself after a few seconds.
  */
 export const createOverlays = ({
   focus,
@@ -38,6 +42,7 @@ export const createOverlays = ({
   let view: OverlayView | undefined;
   let open: Overlay | undefined;
   let state = initial;
+  let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
   const notify = () => {
     for (const listener of listeners) {
@@ -52,19 +57,37 @@ export const createOverlays = ({
       return;
     }
 
+    clearTimeout(toastTimer);
     view.setBounds(bounds(overlay));
     view.show();
     open = overlay;
-    focus.focus([{ kind: "overlay" }]);
+
+    if (overlay.kind === "toast") {
+      toastTimer = setTimeout(() => {
+        if (open === overlay) {
+          // oxlint-disable-next-line no-use-before-define -- the toast's timer closes it
+          hide();
+        }
+      }, TOAST_DURATION);
+    } else {
+      focus.focus([{ kind: "overlay" }]);
+    }
+
     notify();
   };
 
   const hide = ({ toPage = false } = {}) => {
     const closed = open;
 
+    clearTimeout(toastTimer);
     open = undefined;
     view?.hide();
     notify();
+
+    if (closed?.kind === "toast") {
+      return;
+    }
+
     focus.focus(
       isMenu(closed) && !toPage
         ? [{ kind: "shell" }]

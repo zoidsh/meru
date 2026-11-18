@@ -1,7 +1,11 @@
+import { isEqual } from "es-toolkit";
+
 import type { KeyInput } from "#core/accelerator.ts";
 import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
+import { FOCUS_RING } from "#core/pane-tree.ts";
+import type { PaneDirection } from "#core/pane-tree.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { isAsleep, knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -9,7 +13,9 @@ import { showsView, transition } from "#core/tab-machine.ts";
 import type { TabEffect, TabEvent, TabStatus } from "#core/tab-machine.ts";
 import { findTab, newTabId, tabKey } from "#core/tabs.ts";
 import type { OpenedTab, PageUpdate, TabKey } from "#core/tabs.ts";
-import { planViews } from "#core/views.ts";
+import { placeShown, planViews } from "#core/views.ts";
+import type { ViewPlan } from "#core/views.ts";
+import type { Rectangle } from "#core/window-bounds.ts";
 import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
 import type { WindowOpenRoute } from "#core/window-open.ts";
 import type {
@@ -49,7 +55,8 @@ export interface TabViewsDeps {
     app: App,
     url: string,
     tabId: string,
-    after?: string
+    after?: string,
+    split?: PaneDirection
   ) => Promise<OpenedTab | undefined>;
   /** Makes the tab its profile's selected one. */
   selectTab: (key: TabKey) => Promise<unknown>;
@@ -75,6 +82,13 @@ export interface TabViewsDeps {
   /** Told when a tab's page finishes a load, with what can read it. */
   onLoaded: (key: TabKey, page: LoadedPage) => void;
   log: (message: string) => void;
+}
+
+/** A pane on screen, placed in the page area. */
+export interface ShellPane extends Rectangle {
+  tabId: string;
+  /** Put to sleep, so the shell draws its sleeping placeholder there. */
+  asleep: boolean;
 }
 
 /** What of a tab's view a reader of its page gets. */
@@ -148,15 +162,44 @@ export const createTabViews = ({
    */
   const sleeping = new Set<string>();
   let front: string | undefined;
+  /** The tabs on screen and the split that places them, as last planned. */
+  let onScreen: Pick<ViewPlan, "shown" | "panes"> = { shown: [] };
+  let shownKeys = new Set<string>();
 
-  const place = (view: ContentView) => {
-    view.setBounds(contentViewBounds(window.getContentAreaSize(), sidebar()));
-    view.setBorderRadius(viewFrame(sidebar()).radius);
+  /**
+   * A view on its own fills the page area; a pane's is inset by the focus
+   * ring's width, so the shell's ring around the focused one shows.
+   */
+  const place = (key: string, view: ContentView) => {
+    const area = contentViewBounds(window.getContentAreaSize(), sidebar());
+    const { radius } = viewFrame(sidebar());
+    const profileId = onScreen.shown[0]?.profileId;
+    const pane = onScreen.panes
+      ? placeShown(onScreen, area).find(
+          ({ tabId }) =>
+            profileId !== undefined && tabKey({ profileId, tabId }) === key
+        )
+      : undefined;
+
+    if (pane) {
+      const { x, y, width, height } = pane.bounds;
+
+      view.setBounds({
+        x: x + FOCUS_RING,
+        y: y + FOCUS_RING,
+        width: Math.max(0, width - 2 * FOCUS_RING),
+        height: Math.max(0, height - 2 * FOCUS_RING),
+      });
+      view.setBorderRadius(radius - FOCUS_RING);
+    } else {
+      view.setBounds(area);
+      view.setBorderRadius(radius);
+    }
   };
 
   const placeAll = () => {
-    for (const tab of tabs.values()) {
-      place(tab.view);
+    for (const [key, tab] of tabs) {
+      place(key, tab.view);
     }
   };
 
@@ -174,9 +217,9 @@ export const createTabViews = ({
     }
   };
 
-  /** The one test of whether a view shows: the front tab's, while its page can. */
+  /** The one test of whether a view shows: a tab on screen's, while its page can. */
   const shows = (key: string, tab: TabView) =>
-    key === front && showsView(tab.status);
+    shownKeys.has(key) && showsView(tab.status);
 
   const showFront = () => {
     for (const [key, tab] of tabs) {
@@ -390,7 +433,8 @@ export const createTabViews = ({
     profileId: string,
     app: App,
     url: string,
-    after?: string
+    after?: string,
+    split?: PaneDirection
   ) => {
     const profile = state().profiles.find(
       (candidate) => candidate.id === profileId
@@ -407,7 +451,7 @@ export const createTabViews = ({
     wake(key);
 
     try {
-      const opened = await openTab(profileId, app, url, tabId, after);
+      const opened = await openTab(profileId, app, url, tabId, after, split);
 
       if (!opened) {
         pendingUrls.delete(key);
@@ -510,10 +554,17 @@ export const createTabViews = ({
         onEvent(key, tabKeyed, event);
       },
       onKey: handleKey,
-      onFocus,
+      onFocus: () => {
+        onFocus();
+
+        // A click in another pane, or focus arriving in its page, focuses it.
+        if (key !== front && shownKeys.has(key)) {
+          void selectTab(tabKeyed);
+        }
+      },
     });
 
-    place(view);
+    place(key, view);
 
     return view;
   };
@@ -542,7 +593,16 @@ export const createTabViews = ({
 
   const frontTab = () => (front === undefined ? undefined : tabs.get(front));
 
-  window.onContentAreaResize(placeAll);
+  /** Places every view again; the shell hears of the panes' new places. */
+  const relayout = () => {
+    placeAll();
+
+    if (onScreen.panes) {
+      notify();
+    }
+  };
+
+  window.onContentAreaResize(relayout);
 
   network.onOnline(() => {
     for (const key of tabs.keys()) {
@@ -601,6 +661,28 @@ export const createTabViews = ({
     }
   };
 
+  /** Takes what the plan shows; says whether that moves any view. */
+  const putOnScreen = (next: ViewPlan) => {
+    // Only panes place a view anywhere but the whole page area.
+    const moved =
+      !isEqual(next.panes, onScreen.panes) ||
+      (next.panes !== undefined && !isEqual(next.shown, onScreen.shown));
+
+    onScreen = { shown: next.shown, ...(next.panes && { panes: next.panes }) };
+    shownKeys = new Set(next.shown.map(tabKey));
+
+    return moved;
+  };
+
+  /** The other panes' pages load as they come on screen with the split. */
+  const openPanes = (created: ReadonlySet<string>) => {
+    for (const key of shownKeys) {
+      if (key !== front && created.has(key)) {
+        dispatch(key, { kind: "open" });
+      }
+    }
+  };
+
   /** Creates, closes, shows and hides views until the window matches. */
   const reconcile = (current: State) => {
     for (const profile of current.profiles) {
@@ -621,6 +703,8 @@ export const createTabViews = ({
         changed = true;
       }
     }
+
+    const placesChanged = putOnScreen(next);
 
     for (const [key, tabKeyed] of planned) {
       if (!tabs.has(key)) {
@@ -651,6 +735,12 @@ export const createTabViews = ({
 
     if ((frontChanged || frontWoken) && front !== undefined) {
       dispatch(front, { kind: "select" });
+    }
+
+    openPanes(created);
+
+    if (placesChanged) {
+      placeAll();
     }
 
     showFront();
@@ -757,7 +847,7 @@ export const createTabViews = ({
       frontTab()?.view.stop();
     },
     /** Places every view again, as the sidebar now has it, loading nothing. */
-    relayout: placeAll,
+    relayout,
     /** What focuses the front tab's view; nothing unless it is showing. */
     focuser: () => {
       const tab = front === undefined ? undefined : tabs.get(front);
@@ -770,6 +860,30 @@ export const createTabViews = ({
     hasView: (profileId: string) =>
       [...tabs.values()].some((tab) => tab.key.profileId === profileId),
     /** Each tab's status; one with no view, asleep or never loaded, is unloaded. */
+    /**
+     * The panes on screen while a split shows, each where it sits in the
+     * page area and whether its tab was put to sleep; `null` otherwise.
+     */
+    panes: (): ShellPane[] | null => {
+      const profileId = onScreen.shown[0]?.profileId;
+
+      if (!onScreen.panes || profileId === undefined) {
+        return null;
+      }
+
+      const { width, height } = contentViewBounds(
+        window.getContentAreaSize(),
+        sidebar()
+      );
+
+      return placeShown(onScreen, { x: 0, y: 0, width, height }).map(
+        ({ tabId, bounds }) => ({
+          tabId,
+          ...bounds,
+          asleep: sleeping.has(tabKey({ profileId, tabId })),
+        })
+      );
+    },
     status: (key: TabKey): TabStatus =>
       tabs.get(tabKey(key))?.status ?? { kind: "unloaded" },
     onChange: (listener: () => void) => {
