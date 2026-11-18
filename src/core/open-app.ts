@@ -54,6 +54,30 @@ export const filterApps = <Listed extends Pick<App, "name">>(
   return apps.filter((app) => holds(app.name, typed));
 };
 
+/** The launcher's item for app `id`. */
+export const appValue = (id: string) => `app:${id}`;
+
+/** The launcher's item for bookmark `id`. */
+export const bookmarkValue = (id: string) => `bookmark:${id}`;
+
+/** The bookmark the launcher's item `value` is, if it is one. */
+export const bookmarkOfValue = (value: string) =>
+  value.startsWith("bookmark:") ? value.slice("bookmark:".length) : undefined;
+
+/**
+ * The item the highlight moves to once bookmark `id` is removed from the
+ * listed `values`: the next, else the one before, else none.
+ */
+export const afterRemoving = (values: readonly string[], id: string) => {
+  const index = values.indexOf(bookmarkValue(id));
+
+  if (index === -1) {
+    return values[0] ?? "";
+  }
+
+  return values[index + 1] ?? values[index - 1] ?? "";
+};
+
 /** A bookmark as the launcher lists it, with its app's name. */
 export interface LauncherBookmark {
   title: string;

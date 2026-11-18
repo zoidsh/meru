@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { APPS } from "./apps.ts";
 import {
+  afterRemoving,
+  bookmarkOfValue,
   filterApps,
   launcherItems,
   openableApps,
@@ -132,5 +134,33 @@ describe(launcherItems, () => {
       [[], ["d"]],
       [[], []],
     ]);
+  });
+});
+
+describe(afterRemoving, () => {
+  const values = ["app:calendar", "bookmark:a", "bookmark:b", "bookmark:c"];
+
+  it("moves to the next item, else the one before, else none", () => {
+    expect([
+      afterRemoving(values, "a"),
+      afterRemoving(values, "c"),
+      afterRemoving(["bookmark:a"], "a"),
+    ]).toStrictEqual(["bookmark:b", "bookmark:b", ""]);
+  });
+
+  it("moves to the first item for a bookmark not listed", () => {
+    expect([
+      afterRemoving(values, "gone"),
+      afterRemoving([], "gone"),
+    ]).toStrictEqual(["app:calendar", ""]);
+  });
+});
+
+describe(bookmarkOfValue, () => {
+  it("gives a bookmark item's id, and nothing for an app's", () => {
+    expect([
+      bookmarkOfValue("bookmark:a"),
+      bookmarkOfValue("app:calendar"),
+    ]).toStrictEqual(["a", undefined]);
   });
 });

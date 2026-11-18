@@ -514,12 +514,19 @@ test("choosing a bookmark in New tab closes it and selects the tab at its page, 
   );
 });
 
-test("a bookmark's cross in New tab removes it, the launcher staying open with its text, focus and a highlight on the next row; Delete and Backspace only edit the text", async ({
+test("a bookmark's cross in New tab, or Shift+Delete or Shift+Backspace on the highlighted one, removes it, the launcher staying open with its text, focus and a highlight on the next row; plain Delete and Backspace only edit the text", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  await seedLauncher(userDataDir, standIn);
+  await seedLauncher(userDataDir, standIn, {
+    bookmarks: [
+      { id: "b1", url: standIn.calendarUrl, title: "Week", app: "calendar" },
+      { id: "b2", url: standIn.driveUrl, title: "Files", app: "drive" },
+      { id: "b3", url: `${standIn.driveUrl}#x`, title: "Shared", app: "drive" },
+      { id: "b4", url: `${standIn.driveUrl}#y`, title: "Recent", app: "drive" },
+    ],
+  });
 
   const app = await launchApp();
   const overlay = await findOverlayDocument(app);
@@ -528,29 +535,55 @@ test("a bookmark's cross in New tab removes it, the launcher staying open with i
   await findPage(app, standIn.url);
   await clickMenuItem(app, "app.open");
   await field.fill("drive");
-  await expect(options).toHaveText(["Drive", /^Files/u, /^Shared/u]);
+  await expect(options).toHaveText([
+    "Drive",
+    /^Files/u,
+    /^Shared/u,
+    /^Recent/u,
+  ]);
+  await expect(card.getByRole("listbox")).toHaveAccessibleDescription(
+    "Shift+Delete removes the highlighted bookmark"
+  );
+
+  // The cross is the pointer's alone: no row has a button to reach.
+  await expect(options.getByRole("button")).toHaveCount(0);
+
+  // The keyboard puts the highlight on Files, which the pointer, coming to
+  // its cross, keeps there.
+  await field.press("Home");
+  await field.press("ArrowDown");
+  await expect(selected).toHaveText(/^Files/u);
 
   const files = options.filter({ hasText: "Files" });
 
-  await files.hover();
-  await files.getByRole("button", { name: "Remove bookmark" }).click();
-  await expect(options).toHaveText(["Drive", /^Shared/u]);
+  await files.getByTitle("Remove bookmark").click();
+  await expect(options).toHaveText(["Drive", /^Shared/u, /^Recent/u]);
   await expect(card).toBeVisible();
   await expect(field).toBeFocused();
   await expect(field).toHaveValue("drive");
   await expect(selected).toHaveText(/^Shared/u);
   await expect
     .poll(() => readBookmarks(userDataDir))
-    .toStrictEqual(["calendar Week", "drive Shared"]);
+    .toStrictEqual(["calendar Week", "drive Shared", "drive Recent"]);
+
+  await field.press("Shift+Delete");
+  await expect(options).toHaveText(["Drive", /^Recent/u]);
+  await expect(field).toHaveValue("drive");
+  await expect(selected).toHaveText(/^Recent/u);
+
+  await field.press("Shift+Backspace");
+  await expect(options).toHaveText(["Drive"]);
+  await expect(field).toHaveValue("drive");
+  await expect(selected).toHaveText("Drive");
+  await expect
+    .poll(() => readBookmarks(userDataDir))
+    .toStrictEqual(["calendar Week"]);
 
   await field.press("Backspace");
   await field.press("Delete");
   await expect(field).toHaveValue("driv");
-  await expect(options).toHaveText(["Drive", /^Shared/u]);
-  expect(await readBookmarks(userDataDir)).toStrictEqual([
-    "calendar Week",
-    "drive Shared",
-  ]);
+  await expect(options).toHaveText(["Drive"]);
+  expect(await readBookmarks(userDataDir)).toStrictEqual(["calendar Week"]);
 });
 
 test("New tab with no bookmarks says so in its Bookmarks group, a line that is no row to choose and no result, gone once something is typed", async ({

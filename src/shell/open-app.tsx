@@ -4,7 +4,13 @@ import { Columns2Icon, PlusIcon, Rows2Icon, XIcon } from "lucide-react";
 import { useId, useState } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
-import { launcherItems } from "#core/open-app.ts";
+import {
+  afterRemoving,
+  appValue,
+  bookmarkOfValue,
+  bookmarkValue,
+  launcherItems,
+} from "#core/open-app.ts";
 import { Button } from "#ui/button.tsx";
 import {
   Command,
@@ -33,25 +39,14 @@ const keepFocus = (event: { preventDefault: () => void }) => {
 
 type Launcher = Extract<ShellState["overlay"], { kind: "open-app" }>;
 
-const appValue = (id: string) => `app:${id}`;
-const bookmarkValue = (id: string) => `bookmark:${id}`;
-
-/**
- * The item the highlight moves to once bookmark `id` is removed: the next
- * listed, else the one before.
- */
-const afterRemoving = (values: readonly string[], id: string) => {
-  const index = values.indexOf(bookmarkValue(id));
-
-  return values[index + 1] ?? values[index - 1] ?? "";
-};
-
 /**
  * New tab, the launcher: the apps the profile can open and its bookmarks,
- * in two groups filtered by what is typed, the Bookmarks group absent
- * while none is listed. Up, Down and Enter or a click choose one across
- * both; a bookmark's cross removes it, the field keeping its text and the
- * focus. The list is filtered here by `launcherItems` rather than by cmdk's
+ * in two groups filtered by what is typed. Up, Down and Enter or a click
+ * choose one across both. A bookmark's cross, for the pointer, and
+ * Shift+Delete or Shift+Backspace on the highlighted one remove it, the
+ * field keeping its text and the focus; the cross is hidden from assistive
+ * technology, since a button inside an option can be reached neither by
+ * the keyboard nor by a screen reader, and the list says the keys once. The list is filtered here by `launcherItems` rather than by cmdk's
  * fuzzy score, so it keeps each group's order. As Open in split it says so
  * in a header, with where the pick goes.
  */
@@ -77,12 +72,27 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
   const removeLabel = t({
     message: "Remove bookmark",
     comment:
-      "Accessible name and tooltip of the cross on a bookmark's row in the New tab launcher, which deletes that bookmark",
+      "Tooltip of the cross on a bookmark's row in the New tab launcher, which deletes that bookmark",
   });
 
   const remove = (id: string) => {
     setHighlighted(afterRemoving(values, id));
     shellCalls().removeBookmark({ id });
+  };
+
+  // Chrome's key for removing a suggestion; plain Delete and Backspace edit.
+  const removeHighlighted = (event: React.KeyboardEvent) => {
+    const id = bookmarkOfValue(highlighted);
+
+    if (
+      event.shiftKey &&
+      (event.key === "Delete" || event.key === "Backspace") &&
+      id !== undefined &&
+      values.includes(highlighted)
+    ) {
+      event.preventDefault();
+      remove(id);
+    }
   };
 
   return (
@@ -124,6 +134,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
         label={label}
         value={highlighted}
         onValueChange={setHighlighted}
+        onKeyDown={removeHighlighted}
         className="min-h-0 rounded-none! bg-transparent p-0 [&_[data-slot=command-input-wrapper]]:p-0 [&_[data-slot=command-input-wrapper]]:pb-1"
       >
         <CommandInput
@@ -146,6 +157,11 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
             message: "Apps and bookmarks",
             comment:
               "Accessible name of the list under the New tab launcher's search field, read by screen readers",
+          })}
+          aria-description={t({
+            message: "Shift+Delete removes the highlighted bookmark",
+            comment:
+              "Read by screen readers once for the New tab launcher's list: the key that deletes the bookmark highlighted in it",
           })}
         >
           <CommandEmpty>
@@ -223,7 +239,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
                       variant="ghost"
                       size="icon-xs"
                       tabIndex={-1}
-                      aria-label={removeLabel}
+                      aria-hidden
                       title={removeLabel}
                       className="-my-1 opacity-0 group-hover/command-item:opacity-100 group-data-selected/command-item:opacity-100 hover:bg-secondary"
                       onMouseDown={keepFocus}

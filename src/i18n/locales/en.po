@@ -766,7 +766,7 @@ msgstr "Reload"
 msgid "Remove {name}?"
 msgstr "Remove {name}?"
 
-#. Accessible name and tooltip of the cross on a bookmark's row in the New tab launcher, which deletes that bookmark
+#. Tooltip of the cross on a bookmark's row in the New tab launcher, which deletes that bookmark
 #. Tooltip of the filled bookmark button on a tab's row in the wide sidebar, which removes its page's bookmark
 #: src/shell/open-app.tsx
 #: src/shell/tab-strip.tsx
@@ -899,6 +899,11 @@ msgstr "Separate from Split"
 #: src/main/application-menu.ts
 msgid "Services"
 msgstr "Services"
+
+#. Read by screen readers once for the New tab launcher's list: the key that deletes the bookmark highlighted in it
+#: src/shell/open-app.tsx
+msgid "Shift+Delete removes the highlighted bookmark"
+msgstr "Shift+Delete removes the highlighted bookmark"
 
 #. Tray menu item that brings Meru's window back; {productName} is Meru
 #: src/main/tray.ts
