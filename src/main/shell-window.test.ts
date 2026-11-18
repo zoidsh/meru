@@ -12,11 +12,8 @@ import type {
   WindowOptions,
 } from "#platform/window.ts";
 
-import {
-  createShellWindow,
-  hideOnClose,
-  revealWindow,
-} from "./shell-window.ts";
+import { createShellWindow, hideOnClose } from "./shell-window.ts";
+import { revealWindow } from "./windows.ts";
 
 const createFakeWindow = () => {
   const listeners = new Map<WindowLoadEvent, () => void>();
@@ -28,6 +25,7 @@ const createFakeWindow = () => {
     | ((event: { preventDefault: () => void }) => void)
     | undefined;
   let sessionEnd: (() => void) | undefined;
+  let closed: (() => void) | undefined;
 
   const window: AppWindow = {
     loadURL: () => Promise.resolve(),
@@ -62,6 +60,14 @@ const createFakeWindow = () => {
     onClose: (listener) => {
       closeListener = listener;
     },
+    onClosed: (listener) => {
+      closed = listener;
+    },
+    onFocus: () => false,
+    onBoundsChange: () => false,
+    setTitle: () => false,
+    getBounds: () => ({ x: 0, y: 0, width: 1280, height: 800 }),
+    destroy: () => false,
     isFullScreen: () => fullScreen,
     leaveFullScreen: (then) => {
       calls.push("leaveFullScreen");
@@ -128,6 +134,10 @@ const createFakeWindow = () => {
           prevented = true;
         },
       });
+
+      if (!prevented) {
+        closed?.();
+      }
 
       return prevented;
     },
@@ -264,9 +274,17 @@ describe(revealWindow, () => {
 
 const follow = (platform: Platform, trayShown: () => boolean) => {
   const fake = createFakeWindow();
-  const closing = hideOnClose({ window: fake.window, platform, trayShown });
+  let quits = 0;
+  const closing = hideOnClose({
+    window: fake.window,
+    platform,
+    trayShown,
+    quit: () => {
+      quits += 1;
+    },
+  });
 
-  return { ...fake, ...closing };
+  return { ...fake, ...closing, quits: () => quits };
 };
 
 describe(hideOnClose, () => {
@@ -297,7 +315,27 @@ describe(hideOnClose, () => {
     shell.markQuitting();
 
     expect(shell.close()).toBeFalsy();
-    expect(shell.calls).toStrictEqual([]);
+    expect([shell.calls, shell.quits()]).toStrictEqual([[], 0]);
+  });
+
+  it("quits Meru on Windows and Linux when the window closes with no tray to bring it back, a tab's own window open or not", () => {
+    for (const platform of ["win32", "linux"] as const) {
+      const shell = follow(platform, () => false);
+
+      shell.close();
+
+      expect(shell.quits()).toBe(1);
+    }
+  });
+
+  it("never quits Meru on macOS, where closing hides the window, nor where the tray shows", () => {
+    const mac = follow("darwin", () => false);
+    const tray = follow("linux", () => true);
+
+    mac.close();
+    tray.close();
+
+    expect([mac.quits(), tray.quits()]).toStrictEqual([0, 0]);
   });
 
   it("lets a shutdown or sign-out close it", () => {

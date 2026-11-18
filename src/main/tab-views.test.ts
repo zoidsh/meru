@@ -99,6 +99,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
   const windowEvents: string[] = [];
   let hosts = MAIN_HOST;
   let ownWindowResize: ((key: TabKey) => void) | undefined;
+  let mainDestroyed = false;
 
   const profiles = createProfiles({
     initial: state,
@@ -140,7 +141,14 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     },
     window: {
       host: { hostId: MAIN_HOST },
-      getContentAreaSize: () => size,
+      isDestroyed: () => mainDestroyed,
+      getContentAreaSize: () => {
+        if (mainDestroyed) {
+          throw new Error("Object has been destroyed");
+        }
+
+        return size;
+      },
       onContentAreaResize: (listener) => {
         resize = listener;
       },
@@ -255,6 +263,9 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     onOwnWindowFocus: (key) => {
       focusEvents.push(`window ${tabKey(key)}`);
     },
+    onMoved: (key) => {
+      windowEvents.push(`moved ${tabKey(key)}`);
+    },
     onStrayFocus: () => {
       focusEvents.push("stray");
     },
@@ -307,6 +318,9 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     ownWindows,
     windowEvents,
     resizeOwnWindow: (key: TabKey) => ownWindowResize?.(key),
+    destroyMain: () => {
+      mainDestroyed = true;
+    },
     fronts: () => fronts,
     profilesAdded: () => profilesAdded,
     pageChanges,
@@ -584,7 +598,7 @@ describe(createTabViews, () => {
       [2, { x: 8, y: 40, width: 984, height: 652 }, true, [calendar], true],
       [MAIN_HOST, true, 1, 0],
       [],
-      ["open a/c1", "close a/c1"],
+      ["open a/c1", "moved a/c1", "moved a/c1", "close a/c1"],
     ]);
   });
 
@@ -601,7 +615,7 @@ describe(createTabViews, () => {
     expect([opened, view?.closed, window.windowEvents]).toStrictEqual([
       [2, [CALENDAR], true],
       true,
-      ["open a/c1", "close a/c1"],
+      ["open a/c1", "moved a/c1", "close a/c1"],
     ]);
   });
 
@@ -627,6 +641,20 @@ describe(createTabViews, () => {
     ]).toStrictEqual([["window a/c1"], "gmail", true, 1]);
   });
 
+  it("throws nothing and places nothing once the main window is gone, as Meru quits", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await window.profiles.moveToOwnWindow(calendar);
+    window.destroyMain();
+    window.resizeTo({ width: 900, height: 600 });
+
+    await expect(
+      window.profiles.moveToMainWindow(calendar, false)
+    ).resolves.toBeTruthy();
+    expect(window.windowEvents).toStrictEqual(["open a/c1", "moved a/c1"]);
+  });
+
   it("closes a sleeping profile's own windows, the tab back in the main window with its view closed", async () => {
     const window = await setup();
     const calendar = { profileId: "a", tabId: "c1" };
@@ -643,7 +671,7 @@ describe(createTabViews, () => {
       window.profiles
         .get()
         .profiles[0]?.tabs.some((each) => "ownWindow" in each),
-    ]).toStrictEqual([true, ["open a/c1", "close a/c1"], false]);
+    ]).toStrictEqual([true, ["open a/c1", "moved a/c1", "close a/c1"], false]);
   });
 
   it("gives another profile's selected tab a view of its session when that profile is selected", async () => {

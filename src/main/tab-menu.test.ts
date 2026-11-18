@@ -72,10 +72,9 @@ const setup = ({ held = false } = {}) => {
       closeTabsBelow: (each) => recorded("closeBelow")(key(each)),
       separateTab: (each) => recorded("separate")(key(each)),
       maximizePane: (each, on) => recorded("maximize")(key(each), on),
-      moveToOwnWindow: (each) => recorded("moveToOwnWindow")(key(each)),
-      moveToMainWindow: (each, select) =>
-        recorded("moveToMainWindow")(key(each), select),
     },
+    moveToOwnWindow: (each) => recorded("moveToOwnWindow")(key(each)),
+    moveToMainWindow: (each) => recorded("moveToMainWindow")(key(each)),
     isLoaded: (each) => each.tabId !== "x",
     reload: (each) => recorded("reload")(key(each)),
     sleep: (each) => {

@@ -167,6 +167,8 @@ export const createProfiles = ({
 
   return {
     get: () => state,
+    /** Settles once every change asked for so far is written, for a quit to wait on. */
+    settled: () => exclusive(() => Promise.resolve()),
     onChange: (listener: (state: State) => void) => {
       listeners.add(listener);
     },

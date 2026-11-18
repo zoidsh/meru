@@ -2,10 +2,11 @@ import { isShellDocument } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 import { closeHides } from "#core/tray.ts";
-import { resolveWindowBounds } from "#core/window-bounds.ts";
 import type { Displays } from "#platform/displays.ts";
 import type { Theme } from "#platform/theme.ts";
 import type { AppWindow, WindowFactory } from "#platform/window.ts";
+
+import { openingOptions } from "./windows.ts";
 
 export interface ShellWindowDeps {
   windows: WindowFactory;
@@ -42,18 +43,18 @@ export const createShellWindow = ({
   theme,
 }: ShellWindowDeps) => {
   const window = windows.create({
-    title,
-    bounds: resolveWindowBounds({
+    // Where the main window was is not kept: it opens at its default size.
+    ...openingOptions({
+      displays,
       saved: undefined,
-      displays: displays.getAll(),
       defaultSize: DEFAULT_SIZE,
       minimumSize: MINIMUM_SIZE,
+      title,
+      isMacOS,
+      backgroundColor: windowBackground(theme.isDark()),
     }),
-    minimumSize: MINIMUM_SIZE,
-    titleBarStyle: isMacOS ? "hiddenInset" : "default",
     preloadPath,
     contentUrl: url,
-    backgroundColor: windowBackground(theme.isDark()),
     isShellDocument,
   });
 
@@ -83,47 +84,34 @@ export const createShellWindow = ({
   return { window, load: () => window.loadURL(url) };
 };
 
-/**
- * Brings the window back, hidden or minimized: for a second launch, the Dock,
- * the tray and a notification's click. In the background it is only shown,
- * never focused, so Meru never takes the foreground.
- */
-export const revealWindow = (window: AppWindow, background: boolean) => {
-  if (window.isDestroyed()) {
-    return;
-  }
-
-  if (window.isMinimized()) {
-    window.restore();
-  }
-
-  if (background) {
-    window.showInactive();
-  } else {
-    window.show();
-    window.focus();
-  }
-};
-
 export interface HideOnCloseDeps {
   window: Pick<
     AppWindow,
-    "onClose" | "hide" | "isFullScreen" | "leaveFullScreen" | "onSessionEnd"
+    | "onClose"
+    | "onClosed"
+    | "hide"
+    | "isFullScreen"
+    | "leaveFullScreen"
+    | "onSessionEnd"
   >;
   platform: Platform;
   /** Read at each close, as the setting may have changed. */
   trayShown: () => boolean;
+  quit: () => void;
 }
 
 /**
  * Closing the window hides it where something can bring it back, until Meru
- * quits. A quit marks itself before the window closes; one that closes the
- * windows first, as an update's install does, must call `markQuitting`.
+ * quits; where nothing could, closing it quits Meru, whatever tab is in a
+ * window of its own, which stays there for the next launch. A quit marks
+ * itself before the window closes; one that closes the windows first, as an
+ * update's install does, must call `markQuitting`.
  */
 export const hideOnClose = ({
   window,
   platform,
   trayShown,
+  quit,
 }: HideOnCloseDeps) => {
   let quitting = false;
 
@@ -147,6 +135,12 @@ export const hideOnClose = ({
     }
 
     window.hide();
+  });
+  // A tab's own window would keep Meru running with no main window.
+  window.onClosed(() => {
+    if (!quitting) {
+      quit();
+    }
   });
   // A shutdown or sign-out waits on every window that will not close.
   window.onSessionEnd(markQuitting);

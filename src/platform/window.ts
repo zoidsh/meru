@@ -3,26 +3,18 @@ import type { WebContents } from "electron";
 
 import { isSameSite } from "#core/app-url.ts";
 import type { Bitmap } from "#core/badge-image.ts";
-import type { Rectangle, Size } from "#core/window-bounds.ts";
 
+import { baseWindowOptions, plainWindow } from "./base-window.ts";
+import type { BaseWindowOptions, PlainWindow } from "./base-window.ts";
 import { addContentView } from "./content-view.ts";
 import type { ContentView, ContentViewOptions } from "./content-view.ts";
 import { adoptOverlayView } from "./overlay-view.ts";
 import type { OverlayView } from "./overlay-view.ts";
-import { viewHost } from "./view-host.ts";
-import type { ViewHost } from "./view-host.ts";
 
-export interface WindowOptions {
-  title: string;
-  bounds: Rectangle;
-  minimumSize: Size;
-  /** `hiddenInset` keeps the macOS traffic lights over a page-drawn titlebar. */
-  titleBarStyle: "default" | "hiddenInset";
+export interface WindowOptions extends BaseWindowOptions {
   preloadPath: string;
   /** The window may navigate only within this URL's scheme and host. */
   contentUrl: string;
-  /** Shown where the page has not painted, as `#rrggbb`. */
-  backgroundColor: string;
   /**
    * Whether the page is opening one of its own documents, which becomes a
    * view of the window's, hidden until shown; every other open is refused.
@@ -60,19 +52,11 @@ export type WindowFocusEvent =
   | "minimize"
   | "restore";
 
-export interface AppWindow {
+/** The main window, the shell's page and the views put in it. */
+export interface AppWindow extends PlainWindow {
   readonly webContentsId: number;
-  /** What its content views are put back in from a tab's own window. */
-  readonly host: ViewHost;
   loadURL: (url: string) => Promise<void>;
   once: (event: WindowLoadEvent, listener: () => void) => void;
-  show: () => void;
-  showInactive: () => void;
-  hide: () => void;
-  focus: () => void;
-  /** Whether keys go to this window, which an inactive app never is. */
-  isFocused: () => boolean;
-  isVisible: () => boolean;
   on: (event: WindowFocusEvent, listener: () => void) => void;
   /**
    * Gives the page keyboard focus. Electron brings the window forward and
@@ -91,16 +75,9 @@ export interface AppWindow {
   ) => void;
   /** Told when the page's document goes, loaded anew or its process gone. */
   onPageGone: (listener: () => void) => void;
-  restore: () => void;
-  isMinimized: () => boolean;
-  isDestroyed: () => boolean;
-  /** Told as the window is asked to close; `preventDefault` keeps it open. */
-  onClose: (listener: (event: { preventDefault: () => void }) => void) => void;
   isFullScreen: () => boolean;
   /** Leaves full screen, then runs `then` once the window has. */
   leaveFullScreen: (then: () => void) => void;
-  /** Windows alone: the session ends, for a shutdown, restart or sign-out. */
-  onSessionEnd: (listener: () => void) => void;
   /**
    * Windows alone: a small image over the taskbar button, one bitmap for
    * each scale; nothing takes it away.
@@ -109,10 +86,6 @@ export interface AppWindow {
     images: readonly Bitmap[] | undefined,
     description: string
   ) => void;
-  setBackgroundColor: (color: string) => void;
-  /** The area child views are laid out in, below any menu bar. */
-  getContentAreaSize: () => Size;
-  onContentAreaResize: (listener: () => void) => void;
   addContentView: (options: ContentViewOptions) => ContentView;
   /** A native menu at the pointer. */
   showContextMenu: (items: ContextMenuItem[]) => void;
@@ -127,16 +100,7 @@ export interface WindowFactory {
 export const createWindowFactory = (): WindowFactory => ({
   create: (options) => {
     const window = new BrowserWindow({
-      title: options.title,
-      ...options.bounds,
-      minWidth: options.minimumSize.width,
-      minHeight: options.minimumSize.height,
-      show: false,
-      titleBarStyle: options.titleBarStyle,
-      backgroundColor: options.backgroundColor,
-      // Windows and Linux show the application menu's bar only while Alt is
-      // held or after it is pressed, so the content keeps its height.
-      autoHideMenuBar: true,
+      ...baseWindowOptions(options),
       webPreferences: {
         preload: options.preloadPath,
         contextIsolation: true,
@@ -217,8 +181,8 @@ export const createWindowFactory = (): WindowFactory => ({
     );
 
     return {
+      ...plainWindow(window),
       webContentsId: webContents.id,
-      host: viewHost(window),
       loadURL: (url) => window.loadURL(url),
       once: (event, listener) => {
         if (event === "ready-to-show") {
@@ -227,12 +191,6 @@ export const createWindowFactory = (): WindowFactory => ({
           webContents.once("did-finish-load", listener);
         }
       },
-      show: () => window.show(),
-      showInactive: () => window.showInactive(),
-      hide: () => window.hide(),
-      focus: () => window.focus(),
-      isFocused: () => window.isFocused(),
-      isVisible: () => window.isVisible(),
       on: (event, listener) => {
         window.on(event as "focus", listener);
       },
@@ -246,19 +204,10 @@ export const createWindowFactory = (): WindowFactory => ({
       onPageGone: (listener) => {
         pageGoneListeners.add(listener);
       },
-      restore: () => window.restore(),
-      isMinimized: () => window.isMinimized(),
-      isDestroyed: () => window.isDestroyed(),
-      onClose: (listener) => {
-        window.on("close", listener);
-      },
       isFullScreen: () => window.isFullScreen(),
       leaveFullScreen: (then) => {
         window.once("leave-full-screen", then);
         window.setFullScreen(false);
-      },
-      onSessionEnd: (listener) => {
-        window.on("session-end", listener);
       },
       setOverlayIcon: (images, description) => {
         if (process.platform !== "win32") {
@@ -290,19 +239,6 @@ export const createWindowFactory = (): WindowFactory => ({
         }
 
         window.setOverlayIcon(image, description);
-      },
-      setBackgroundColor: (color) => {
-        window.setBackgroundColor(color);
-      },
-      // The root view rather than the window's content size, which on
-      // Windows changes after a hidden window is first shown with no `resize`.
-      getContentAreaSize: () => {
-        const { width, height } = window.contentView.getBounds();
-
-        return { width, height };
-      },
-      onContentAreaResize: (listener) => {
-        window.contentView.on("bounds-changed", listener);
       },
       addContentView: (contentViewOptions) =>
         addContentView(window, contentViewOptions),

@@ -6,8 +6,9 @@ import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
+import type { BaseWindowOptions } from "#platform/base-window.ts";
 import type { OverlayView } from "#platform/overlay-view.ts";
-import type { OwnWindow, OwnWindowOptions } from "#platform/own-window.ts";
+import type { OwnWindow } from "#platform/own-window.ts";
 
 import { createOwnWindows } from "./own-windows.ts";
 
@@ -37,7 +38,7 @@ const stateWith = (ownWindow: boolean): State => ({
 });
 
 interface FakeWindow {
-  options: OwnWindowOptions;
+  options: BaseWindowOptions;
   calls: string[];
   bounds: Rectangle;
   minimized: boolean;
@@ -45,12 +46,14 @@ interface FakeWindow {
   resize: () => void;
   move: () => void;
   focus: () => void;
+  endSession: () => void;
   /** Asks it to close by its control; says whether it was kept open. */
   close: () => boolean;
 }
 
-const setup = ({ background = true } = {}) => {
+const setup = ({ background = true, holdSaves = false } = {}) => {
   let state = stateWith(true);
+  const heldSaves: (() => void)[] = [];
   let color = "#eeeeee";
   const created: FakeWindow[] = [];
   const movedBack: string[] = [];
@@ -70,6 +73,7 @@ const setup = ({ background = true } = {}) => {
           resize: noop,
           move: noop,
           focus: noop,
+          endSession: noop,
           close: () => false,
         };
         const window: OwnWindow = {
@@ -77,7 +81,9 @@ const setup = ({ background = true } = {}) => {
           show: () => fake.calls.push("show"),
           showInactive: () => fake.calls.push("showInactive"),
           focus: () => fake.calls.push("focus"),
+          hide: () => fake.calls.push("hide"),
           isFocused: () => false,
+          isVisible: () => true,
           isMinimized: () => fake.minimized,
           restore: () => fake.calls.push("restore"),
           setTitle: (title) => fake.calls.push(`title ${title}`),
@@ -109,6 +115,10 @@ const setup = ({ background = true } = {}) => {
           onFocus: (listener) => {
             fake.focus = listener;
           },
+          onClosed: noop,
+          onSessionEnd: (listener) => {
+            fake.endSession = listener;
+          },
           destroy: () => {
             fake.destroyed = true;
           },
@@ -138,7 +148,15 @@ const setup = ({ background = true } = {}) => {
     saveBounds: (key, bounds) => {
       saved.push([tabKey(key), bounds]);
 
-      return Promise.resolve();
+      if (!holdSaves) {
+        return Promise.resolve();
+      }
+
+      const { promise, resolve } = Promise.withResolvers<undefined>();
+
+      heldSaves.push(() => resolve(undefined));
+
+      return promise;
     },
     onFocus: (key) => focused.push(tabKey(key)),
     log: noop,
@@ -153,6 +171,11 @@ const setup = ({ background = true } = {}) => {
     saved,
     focused,
     resized,
+    finishSaves: () => {
+      for (const finish of heldSaves) {
+        finish();
+      }
+    },
     /** The tab back in the main window, as moving it back leaves it. */
     moveBackInState: () => {
       state = stateWith(false);
@@ -202,8 +225,8 @@ describe(createOwnWindows, () => {
     vi.useRealTimers();
   });
 
-  it("opens a tab's window once, where it last was, titled after its page and shown without focus in the background", () => {
-    const { windows, created } = setup();
+  it("opens a tab's window once, where it last was, titled after its page and shown without focus, in the foreground too", () => {
+    const { windows, created } = setup({ background: false });
     const first = windows.open(CALENDAR);
     const again = windows.open(CALENDAR);
     const [window] = created;
@@ -248,12 +271,12 @@ describe(createOwnWindows, () => {
     quiet.windows.reveal(CALENDAR);
 
     expect([window?.calls, quiet.created[0]?.calls]).toStrictEqual([
-      ["show", "restore", "show", "focus"],
+      ["showInactive", "restore", "show", "focus"],
       ["showInactive", "showInactive"],
     ]);
   });
 
-  it("keeps a window open when closed by its control, puts its tab back, and closes it once the tab is back", () => {
+  it("keeps a window open when closed by its control, puts its tab back, and closes it once the tab is back", async () => {
     const { windows, created, movedBack, moveBackInState } = setup();
 
     windows.open(CALENDAR);
@@ -262,6 +285,7 @@ describe(createOwnWindows, () => {
 
     moveBackInState();
     windows.close(CALENDAR);
+    await vi.advanceTimersByTimeAsync(0);
 
     expect([
       kept,
@@ -271,18 +295,53 @@ describe(createOwnWindows, () => {
     ]).toStrictEqual([true, ["p/c1"], true, false]);
   });
 
-  it("closes at once a window whose tab has left it", () => {
-    const { windows, created, movedBack, moveBackInState } = setup();
+  it("closes a window its tab has left, or whose move back left nothing to close it, once the move is done", async () => {
+    const { windows, created, moveBackInState } = setup();
 
     windows.open(CALENDAR);
     moveBackInState();
     const [window] = created;
+    const kept = window?.close();
 
-    expect([window?.close(), window?.destroyed, movedBack]).toStrictEqual([
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect([kept, window?.destroyed, windows.isOpen(CALENDAR)]).toStrictEqual([
       true,
       true,
-      [],
+      false,
     ]);
+  });
+
+  it("treats the session ending as a quit: every window closes with its tab kept", () => {
+    const { windows, created, movedBack } = setup();
+
+    windows.open(CALENDAR);
+    const [window] = created;
+
+    window?.endSession();
+
+    expect([window?.close(), movedBack]).toStrictEqual([false, []]);
+  });
+
+  it("settles a quit's wait once each save of where a window is has", async () => {
+    const steps: string[] = [];
+    const { windows, created, finishSaves } = setup({ holdSaves: true });
+
+    windows.open(CALENDAR);
+    created[0]?.move();
+    windows.markQuitting();
+
+    const waiting = (async () => {
+      await windows.saved();
+      steps.push("settled");
+    })();
+
+    await vi.advanceTimersByTimeAsync(0);
+    steps.push("checked");
+    finishSaves();
+    await waiting;
+
+    expect(steps).toStrictEqual(["checked", "settled"]);
   });
 
   it("while quitting lets each window close with its tab kept where it is, and saves where it was", () => {

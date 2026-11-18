@@ -43,7 +43,11 @@ import type { SenderRegistry } from "./senders.ts";
 export interface TabViewsDeps {
   window: Pick<
     AppWindow,
-    "host" | "getContentAreaSize" | "onContentAreaResize" | "addContentView"
+    | "host"
+    | "getContentAreaSize"
+    | "onContentAreaResize"
+    | "addContentView"
+    | "isDestroyed"
   >;
   /** The tabs' own windows, which their views are put in. */
   ownWindows: Pick<OwnWindows, "open" | "close" | "onResize">;
@@ -86,6 +90,8 @@ export interface TabViewsDeps {
   onFocus: () => void;
   /** Told when the page of a tab in its own window gains keyboard focus. */
   onOwnWindowFocus: (key: TabKey) => void;
+  /** Told when a tab's page moves to its own window or back to the main one. */
+  onMoved: (key: TabKey) => void;
   /**
    * Told when a shown pane's page other than the front one takes keyboard
    * focus unasked, as on Linux one does as it first loads, so focus goes
@@ -172,6 +178,7 @@ export const createTabViews = ({
   updatePages,
   onFocus,
   onOwnWindowFocus,
+  onMoved,
   onStrayFocus,
   onFront,
   onPageChange,
@@ -675,6 +682,10 @@ export const createTabViews = ({
 
   /** Places every view again; the shell hears of the panes' new places. */
   const relayout = () => {
+    if (window.isDestroyed()) {
+      return;
+    }
+
     placeAll();
 
     if (onScreen.panes) {
@@ -806,6 +817,7 @@ export const createTabViews = ({
       if (tab) {
         tab.view.moveTo(window.host);
         place(key, tab.view);
+        onMoved(own.key);
       }
 
       ownWindows.close(own.key);
@@ -824,6 +836,7 @@ export const createTabViews = ({
       inWindows.set(key, { ...own, key: keyed });
       tab.view.moveTo(own.host);
       place(key, tab.view);
+      onMoved(keyed);
       moved = true;
 
       if (created.has(key)) {
@@ -835,7 +848,7 @@ export const createTabViews = ({
   };
 
   /** Creates, closes, shows and hides views until the window matches. */
-  const reconcile = (current: State) => {
+  const apply = (current: State) => {
     for (const profile of current.profiles) {
       if (isAsleep(current, profile)) {
         launched.delete(profile.id);
@@ -905,6 +918,13 @@ export const createTabViews = ({
     // shell's titlebars the windows.
     if (changed || frontMoved || placesChanged || windowsChanged) {
       notify();
+    }
+  };
+
+  const reconcile = (current: State) => {
+    // Meru is quitting once the main window is gone; its views go with it.
+    if (!window.isDestroyed()) {
+      apply(current);
     }
   };
 

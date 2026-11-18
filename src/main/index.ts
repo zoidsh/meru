@@ -106,11 +106,7 @@ import {
   shellTabStatus,
 } from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
-import {
-  createShellWindow,
-  hideOnClose,
-  revealWindow,
-} from "./shell-window.ts";
+import { createShellWindow, hideOnClose } from "./shell-window.ts";
 import { createShowGmail } from "./show-gmail.ts";
 import { createSidebar } from "./sidebar.ts";
 import { createSoundOutput } from "./sounds.ts";
@@ -130,10 +126,15 @@ import {
   USER_STYLES_MAX_BYTES,
   createUserStyles,
 } from "./user-styles.ts";
+import { revealWindow } from "./windows.ts";
+import { createZoom } from "./zoom.ts";
 
 const APP_SCHEME = "meru-app";
 
 const SHELL_HOST = "shell";
+
+/** The longest a quit waits for the last writes of the state. */
+const QUIT_WAIT_MS = 3000;
 
 /**
  * A JSON object of app ids and the stand-in URL each loads in its place, and
@@ -471,10 +472,22 @@ const start = async () => {
   profiles.onChange(ownWindows.retitle);
   // Before the windows close, so closing them leaves their tabs where they are.
   lifecycle.onBeforeQuit(ownWindows.markQuitting);
+  shell.window.onSessionEnd(ownWindows.markQuitting);
+  // Where each window was, saved as they close, and any other change still
+  // being written.
+  lifecycle.holdQuitFor(
+    () => Promise.allSettled([ownWindows.saved(), profiles.settled()]),
+    QUIT_WAIT_MS
+  );
 
-  let overlayContentsId: number | undefined;
+  /** The web contents of the shell's documents open now, which never zoom. */
+  const shellDocumentIds = new Set<number>();
 
   shell.window.onShellDocument((view, frameName) => {
+    const id = view.webContentsId;
+
+    shellDocumentIds.add(id);
+    view.onGone(() => shellDocumentIds.delete(id));
     // None has a bridge of its own; the shell draws into each.
     view.onGone(senders.register(view.webContentsId, { role: "overlay" }));
     // oxlint-disable-next-line no-use-before-define -- no key reaches a document before the menu exists
@@ -497,7 +510,6 @@ const start = async () => {
       return;
     }
 
-    overlayContentsId = view.webContentsId;
     view.onFocus(() => {
       focus.noteFocused({ kind: "overlay" });
     });
@@ -606,6 +618,11 @@ const start = async () => {
     },
     onOwnWindowFocus: (key) => {
       focus.noteFocused({ kind: "window", key });
+    },
+    // Its bar stays behind: the search ends and the page is cleared.
+    onMoved: (key) => {
+      // oxlint-disable-next-line no-use-before-define -- no tab moves before startup ends
+      find.moved(key);
     },
     onStrayFocus: focus.giveBack,
     // At launch and after a switch, typing reaches the page without a click;
@@ -847,15 +864,49 @@ const start = async () => {
       : undefined;
   };
 
+  /**
+   * Brings a tab's own window forward with keys going to its page, as Move
+   * to New Window and a click on its tab do. Focusing a page activates the
+   * app, so only where it is in front or can never be activated.
+   */
+  const showOwnWindow = (key: TabKey) => {
+    ownWindows.reveal(key);
+
+    if (!background || isTestBackground) {
+      views.ownWindowFocuser(key)?.();
+    }
+  };
+
+  const moveToOwnWindow = async (key: TabKey) => {
+    const moved = await profiles.moveToOwnWindow(key);
+
+    if (moved) {
+      showOwnWindow(key);
+    }
+
+    return moved;
+  };
+
+  /** Puts the tab back selected, showing the main window should it be hidden. */
+  const moveToMainWindow = async (key: TabKey) => {
+    const moved = await profiles.moveToMainWindow(key, true);
+
+    if (moved) {
+      revealWindow(shell.window, background);
+    }
+
+    return moved;
+  };
+
   const menu = createApplicationMenu({
     platform,
-    // A tab's page or the shell, whichever has focus; the find bar's view,
-    // or none, zooms the page it sits over.
-    zoom: (change) => {
-      if (!zoomFocused(change, (id) => id !== overlayContentsId)) {
+    zoom: createZoom({
+      zoomFocused,
+      isShellDocument: (id) => shellDocumentIds.has(id),
+      zoomPage: (change) => {
         views.zoomFront(change, focusedOwnWindow());
-      }
-    },
+      },
+    }),
     appName: lifecycle.name,
     commands: COMMANDS,
     context: () => {
@@ -896,9 +947,18 @@ const start = async () => {
       stopLoading: () => {
         views.stopFront(focusedOwnWindow());
       },
-      moveToOwnWindow: profiles.moveToOwnWindow,
-      moveToMainWindow: (key) => profiles.moveToMainWindow(key, true),
-      selectTab: views.select,
+      moveToOwnWindow,
+      moveToMainWindow,
+      // A pinned tab's shortcut brings its own window forward, as its click does.
+      selectTab: async (key) => {
+        if (views.windowTabs().some((each) => tabKey(each) === tabKey(key))) {
+          showOwnWindow(key);
+
+          return;
+        }
+
+        await views.select(key);
+      },
       sleepTab: views.sleep,
       closeTab: profiles.closeTab,
       setTabPinned: profiles.setPinned,
@@ -972,6 +1032,8 @@ const start = async () => {
     contentSize: () => shell.window.getContentAreaSize(),
     overlays,
     profiles,
+    moveToOwnWindow,
+    moveToMainWindow,
     isLoaded: (key) => views.status(key).kind !== "unloaded",
     reload: views.reload,
     sleep: views.sleep,
@@ -999,15 +1061,7 @@ const start = async () => {
       overlays,
       find,
       tabs: views,
-      revealOwnWindow: (key) => {
-        ownWindows.reveal(key);
-
-        // Focusing a page activates the app, so only where it is in front
-        // or can never be activated.
-        if (!background || isTestBackground) {
-          views.ownWindowFocuser(key)?.();
-        }
-      },
+      revealOwnWindow: showOwnWindow,
       navigateTab: async (key, action) => {
         switch (action) {
           case "back": {
@@ -1154,6 +1208,7 @@ const start = async () => {
     window: shell.window,
     platform,
     trayShown: tray.isShown,
+    quit: lifecycle.quit,
   });
 
   lifecycle.onBeforeQuit(() => {

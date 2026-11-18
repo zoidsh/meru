@@ -30,9 +30,11 @@ export interface TabMenuDeps {
     | "closeTabsBelow"
     | "separateTab"
     | "maximizePane"
-    | "moveToOwnWindow"
-    | "moveToMainWindow"
   >;
+  /** Moves the tab to its own window and brings that forward. */
+  moveToOwnWindow: (key: TabKey) => Promise<unknown>;
+  /** Puts the tab back in the main window, selected. */
+  moveToMainWindow: (key: TabKey) => Promise<unknown>;
   /** Opens Open in split beside or below the selected tab's pane. */
   openSplit: (direction: PaneDirection) => void;
   /** Whether the tab has a page, else it sleeps. */
@@ -68,6 +70,8 @@ export const createTabMenu = ({
   contentSize,
   overlays,
   profiles,
+  moveToOwnWindow,
+  moveToMainWindow,
   isLoaded,
   reload,
   sleep,
@@ -106,10 +110,10 @@ export const createTabMenu = ({
         return profiles.maximizePane(key, item === "maximize");
       }
       case "moveToNewWindow": {
-        return profiles.moveToOwnWindow(key);
+        return moveToOwnWindow(key);
       }
       case "moveToMainWindow": {
-        return profiles.moveToMainWindow(key, true);
+        return moveToMainWindow(key);
       }
       default: {
         return null;

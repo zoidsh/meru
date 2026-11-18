@@ -1,4 +1,5 @@
 import { app } from "electron";
+import { delay } from "es-toolkit";
 
 export interface AppLifecycle {
   readonly name: string;
@@ -14,6 +15,11 @@ export interface AppLifecycle {
   onActivate: (listener: () => void) => void;
   /** Also fires for a quit that SIGINT or SIGTERM starts. */
   onBeforeQuit: (listener: () => void) => void;
+  /**
+   * Holds a quit, once its windows have closed, until `work` settles or
+   * `limitMs` passes, then quits; the quit's listeners run again then.
+   */
+  holdQuitFor: (work: () => Promise<unknown>, limitMs: number) => void;
   setAppUserModelId: (id: string) => void;
   /** The system's languages, most preferred first. */
   preferredLanguages: () => string[];
@@ -48,6 +54,29 @@ export const createAppLifecycle = (): AppLifecycle => ({
   },
   onBeforeQuit: (listener) => {
     app.on("before-quit", listener);
+  },
+  holdQuitFor: (work, limitMs) => {
+    let held = false;
+
+    app.on("will-quit", (event) => {
+      if (held) {
+        return;
+      }
+
+      held = true;
+      event.preventDefault();
+      void (async () => {
+        await Promise.race([
+          work().catch(() => false),
+          // A write that hangs never keeps Meru from quitting.
+          delay(limitMs),
+        ]);
+        // Electron ignores a quit asked for in the turn whose quit was held.
+        setTimeout(() => {
+          app.quit();
+        }, 0);
+      })();
+    });
   },
   setAppUserModelId: (id) => app.setAppUserModelId(id),
   preferredLanguages: () => app.getPreferredSystemLanguages(),

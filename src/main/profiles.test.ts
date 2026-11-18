@@ -95,6 +95,18 @@ describe(createProfiles, () => {
     ]);
   });
 
+  it("settles only once every change asked for before has been written", async () => {
+    const { profiles, steps } = setup();
+    const changes = [profiles.select("a"), profiles.add()];
+
+    await profiles.settled();
+    steps.push("settled");
+    await Promise.all(changes);
+
+    expect(steps.at(-1)).toBe("settled");
+    expect(steps.filter((step) => step.startsWith("save"))).toHaveLength(2);
+  });
+
   it("selects another listed profile, and writes nothing for the selected one or an unknown one", async () => {
     const { profiles, steps } = setup();
 
