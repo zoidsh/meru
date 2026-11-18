@@ -361,7 +361,7 @@ test("the titlebar with two profiles, and with more than fit", async ({
   await shootEachWay(two.app, two.shell, "titlebar-two");
 });
 
-test("a sleeping profile in the titlebar, a profile's menu, and the sleeping pane of the last profile put to sleep", async ({
+test("a sleeping profile in the titlebar, and its menu", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -407,22 +407,6 @@ test("a sleeping profile in the titlebar, a profile's menu, and the sleeping pan
   await shootEachWay(app, shell, "profile-menu");
   await work.overlay.keyboard.press("Escape");
   await expect(work.menu).toHaveCount(0);
-
-  for (const name of ["Personal", "Dev"]) {
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    const { overlay, menu } = await menuOf(name);
-
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    await overlay.getByRole("menuitem", { name: "Sleep", exact: true }).click();
-    // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-    await expect(menu).toHaveCount(0);
-  }
-
-  await expect(
-    shell.getByRole("region", { name: "Dev is sleeping" })
-  ).toBeVisible();
-  await rest();
-  await shootEachWay(app, shell, "profile-sleeping");
 });
 
 test("the rename profile overlay", async ({

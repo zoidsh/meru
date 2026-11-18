@@ -5,32 +5,19 @@ import {
   expect,
   findOverlayDocument,
   findPage,
-  readMenuLabel,
+  readMenuItem,
   readState,
   readViews,
   shownViews,
   test,
   writeState,
 } from "./lib/app.ts";
-import {
-  ANY_SESSION,
-  CALENDAR_TITLE,
-  STAND_IN_TITLE,
-  listing,
-  message,
-  messageLink,
-} from "./lib/stand-in.ts";
+import { ANY_SESSION, listing, message, messageLink } from "./lib/stand-in.ts";
 
 const profileButton = (shell: Page, name: string) =>
   shell
     .getByRole("group", { name: "Profiles" })
     .getByRole("button", { name: new RegExp(`^${name}`, "u") });
-
-const tab = (shell: Page, title: string) =>
-  shell.getByRole("tablist", { name: "Tabs" }).getByRole("tab", {
-    name: title,
-    exact: true,
-  });
 
 /** The partition of each content view, in the window's order. */
 const viewPartitions = async (app: ElectronApplication) => {
@@ -87,9 +74,6 @@ const choose = async (
   await overlay.getByRole("menuitem", { name: label, exact: true }).click();
   await expect(menu).toHaveCount(0);
 };
-
-const sleepingPane = (shell: Page, name: string) =>
-  shell.getByRole("region", { name: `${name} is sleeping` });
 
 test("Sleep in a background profile's menu closes its views and renderer and dims its button, whose badge keeps counting, and a notification's click wakes and selects it", async ({
   launchApp,
@@ -157,7 +141,7 @@ test("Sleep in a background profile's menu closes its views and renderer and dim
     ]);
 });
 
-test("Sleep Profile on the selected profile selects the next awake one, wrapping round, and stepping back onto it wakes it", async ({
+test("Sleep Profile on the selected profile selects the first awake one in the row, and Next Profile landing on it wakes it", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -166,6 +150,7 @@ test("Sleep Profile on the selected profile selects the next awake one, wrapping
     profiles: [
       { id: "p0", name: "Home" },
       { id: "p1", name: "Work" },
+      { id: "p2", name: "Dev" },
     ],
     selectedProfileId: "p1",
   });
@@ -174,7 +159,10 @@ test("Sleep Profile on the selected profile selects the next awake one, wrapping
   const shell = await findPage(app, "meru-app:");
 
   await expect.poll(() => viewPartitions(app)).toStrictEqual(["persist:p1"]);
-  expect(await readMenuLabel(app, "profile.sleep")).toBe("Sleep Profile");
+  expect(await readMenuItem(app, "profile.sleep")).toMatchObject({
+    label: "Sleep Profile",
+    enabled: true,
+  });
 
   await clickMenuItem(app, "profile.sleep");
 
@@ -200,27 +188,14 @@ test("Sleep Profile on the selected profile selects the next awake one, wrapping
     .toStrictEqual([{ url: standIn.url, partition: "persist:p1" }]);
 });
 
-test("the only profile put to sleep stays selected, with its sleeping pane and its tabs asleep, and Wake loads them again", async ({
+test("Sleep is disabled for the last awake profile, in its menu and the Window menu, and with a single profile", async ({
   launchApp,
-  standIn,
   userDataDir,
 }) => {
   await writeState(userDataDir, {
     profiles: [
-      {
-        id: "p0",
-        name: "Home",
-        tabs: [
-          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
-          {
-            id: "c",
-            app: "calendar",
-            url: standIn.calendarUrl,
-            title: CALENDAR_TITLE,
-          },
-        ],
-        selectedTabId: "c",
-      },
+      { id: "p0", name: "Home" },
+      { id: "p1", name: "Work", asleep: true },
     ],
     selectedProfileId: "p0",
   });
@@ -228,70 +203,96 @@ test("the only profile put to sleep stays selected, with its sleeping pane and i
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
 
-  await findPage(app, standIn.calendarUrl);
-  await clickMenuItem(app, "profile.sleep");
-
-  const pane = sleepingPane(shell, "Home");
-  const wake = pane.getByRole("button", { name: "Wake" });
-
-  await expect(pane).toBeVisible();
-  await expect(wake).toBeFocused();
-  await expect(tab(shell, CALENDAR_TITLE)).toHaveCSS("opacity", "0.5");
-  await expect(tab(shell, STAND_IN_TITLE)).toHaveCSS("opacity", "0.5");
-  await expect.poll(() => viewPartitions(app)).toStrictEqual([]);
+  await expect(profileButton(shell, "Work")).toHaveCSS("opacity", "0.5");
   await expect
-    .poll(() => readMenuLabel(app, "profile.sleep"))
-    .toBe("Wake Profile");
+    .poll(() => readMenuItem(app, "profile.sleep"))
+    .toMatchObject({ label: "Sleep Profile", enabled: false });
 
-  await wake.click();
+  await profileButton(shell, "Home").click({ button: "right" });
 
-  await expect(pane).toHaveCount(0);
-  await expect
-    .poll(() => shownViews(app))
-    .toStrictEqual([{ url: standIn.calendarUrl, partition: "persist:p0" }]);
-  await expect(tab(shell, CALENDAR_TITLE)).toHaveCSS("opacity", "1");
-  await expect
-    .poll(() => readMenuLabel(app, "profile.sleep"))
-    .toBe("Sleep Profile");
-});
+  const overlay = await findOverlayDocument(app);
 
-test("a restart keeps a profile asleep, loading nothing of it until it is woken", async ({
-  launchApp,
-  standIn,
-  userDataDir,
-}) => {
+  await expect(overlay.getByRole("menu", { name: "Home" })).toBeVisible();
+  await expect(
+    overlay.getByRole("menuitem", { name: "Sleep", exact: true })
+  ).toBeDisabled();
+  await overlay.keyboard.press("Escape");
+  await app.close();
+
   await writeState(userDataDir, {
     profiles: [{ id: "p0", name: "Home" }],
     selectedProfileId: "p0",
   });
 
+  const single = await launchApp();
+
+  await findPage(single, "meru-app:");
+  await expect
+    .poll(() => readMenuItem(single, "profile.sleep"))
+    .toMatchObject({ enabled: false });
+});
+
+test("a restart keeps a profile asleep, loading nothing of it until it is selected, and a file storing the selected one asleep loads it awake", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      { id: "p0", name: "Home" },
+      { id: "p1", name: "Work" },
+    ],
+    selectedProfileId: "p0",
+  });
+
   const first = await launchApp();
+  const firstShell = await findPage(first, "meru-app:");
 
   await findPage(first, standIn.url);
-  await clickMenuItem(first, "profile.sleep");
+  await choose(first, firstShell, "Work", "Sleep");
   await expect
     .poll(async () => {
       const { profiles } = await readState<{
         profiles: { asleep?: boolean }[];
       }>(userDataDir);
 
-      return profiles[0]?.asleep;
+      return profiles.map((profile) => profile.asleep);
     })
-    .toBe(true);
+    .toStrictEqual([undefined, true]);
   await first.close();
 
   const second = await launchApp();
   const shell = await findPage(second, "meru-app:");
-  const pane = sleepingPane(shell, "Home");
 
-  await expect(pane).toBeVisible();
-  expect(await viewPartitions(second)).toStrictEqual([]);
+  await expect(profileButton(shell, "Work")).toHaveAccessibleName(
+    "Work, asleep"
+  );
+  await expect.poll(() => viewPartitions(second)).toStrictEqual(["persist:p0"]);
 
-  await pane.getByRole("button", { name: "Wake" }).click();
+  await profileButton(shell, "Work").click();
 
   await expect
     .poll(() => shownViews(second))
+    .toStrictEqual([{ url: standIn.url, partition: "persist:p1" }]);
+  await second.close();
+
+  // Every profile asleep, as a hand-edited file could have them.
+  await writeState(userDataDir, {
+    profiles: [
+      { id: "p0", name: "Home", asleep: true },
+      { id: "p1", name: "Work", asleep: true },
+    ],
+    selectedProfileId: "p0",
+  });
+
+  const third = await launchApp();
+  const thirdShell = await findPage(third, "meru-app:");
+
+  await expect
+    .poll(() => shownViews(third))
     .toStrictEqual([{ url: standIn.url, partition: "persist:p0" }]);
+  await expect(profileButton(thirdShell, "Home")).toHaveCSS("opacity", "1");
+  await expect(profileButton(thirdShell, "Work")).toHaveCSS("opacity", "0.5");
 });
 
 test("Shift+F10 and the Menu key on a focused profile button open its menu below it, and Escape gives focus back to the button", async ({
