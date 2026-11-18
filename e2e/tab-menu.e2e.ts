@@ -78,11 +78,8 @@ const openMenu = async (
   return { overlay, menu };
 };
 
-/** An item by its label, which its shortcut follows in its name. */
 const item = (overlay: Page, label: string) =>
-  overlay.getByRole("menuitem", {
-    name: new RegExp(`^${label}(?:$| [^a-z])`, "u"),
-  });
+  overlay.getByRole("menuitem", { name: label, exact: true });
 
 /** Opens the tab's menu and chooses the item. */
 const choose = async (
@@ -147,12 +144,14 @@ test("a right-click on a tab opens its menu reaching over the sidebar, where the
         (sidebar?.x ?? 0) + (sidebar?.width ?? 0)
   ).toBeTruthy();
 
+  await expect(item(overlay, "Reload")).toHaveAttribute(
+    "aria-keyshortcuts",
+    process.platform === "darwin" ? "Meta+R" : "Control+R"
+  );
   await overlay.keyboard.press("ArrowDown");
   await expect(item(overlay, "Reload")).toBeFocused();
   await overlay.keyboard.press("c");
-  await expect(
-    overlay.getByRole("menuitem", { name: "Copy URL" })
-  ).toBeFocused();
+  await expect(item(overlay, "Copy URL")).toBeFocused();
   await overlay.keyboard.press("Escape");
   await expect(menu).toHaveCount(0);
   await expect(tab(shell, DRIVE_TITLE)).toBeFocused();

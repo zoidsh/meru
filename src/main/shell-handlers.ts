@@ -1,5 +1,5 @@
 import type { ShellState } from "#contract/shell.ts";
-import { formatAccelerator } from "#core/accelerator.ts";
+import { ariaKeyShortcut, formatAccelerator } from "#core/accelerator.ts";
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { openableApps } from "#core/open-app.ts";
@@ -129,17 +129,28 @@ const shellOverlay = (
       };
 };
 
-/** The registry's shortcuts as the shell shows them, by command id. */
+/**
+ * The registry's shortcuts as the shell shows them, or with `aria` as
+ * `aria-keyshortcuts` names them, by command id.
+ */
 export const shellShortcuts = (
   commands: readonly Pick<Command, "id" | "shortcut">[],
-  platform: Platform
+  platform: Platform,
+  aria = false
 ): ShellState["shortcuts"] =>
   Object.fromEntries(
     commands.flatMap(({ id, shortcut }) => {
       const accelerator = shortcut?.[platform];
 
       return accelerator
-        ? [[id, formatAccelerator(accelerator, platform)]]
+        ? [
+            [
+              id,
+              aria
+                ? ariaKeyShortcut(accelerator, platform)
+                : formatAccelerator(accelerator, platform),
+            ],
+          ]
         : [];
     })
   );
@@ -152,7 +163,10 @@ export const shellState = (
   mail: (profileId: string) => Mail,
   doNotDisturb: DoNotDisturb | undefined,
   inbox: ShellState["inbox"],
-  fixed: Pick<ShellState, "sidebar" | "shortcuts" | "navigation">,
+  fixed: Pick<
+    ShellState,
+    "sidebar" | "shortcuts" | "ariaShortcuts" | "navigation"
+  >,
   /** The registry, or the suite's stand-ins for it, which Open app lists. */
   apps: readonly App[]
 ): ShellState => {

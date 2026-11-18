@@ -64,6 +64,7 @@ const setup = () => {
     tabs: TABS,
     sidebar: { state: "hidden" },
     shortcuts: {},
+    ariaShortcuts: {},
     navigation: null,
     doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },

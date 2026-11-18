@@ -54,6 +54,7 @@ export const TabMenu = ({
 }) => {
   const { t } = useLingui();
   const shortcuts = useShellState("shortcuts");
+  const ariaShortcuts = useShellState("ariaShortcuts");
   const offered = new Map(menu.items.map((item) => [item.id, item]));
 
   const label = (id: TabMenuItemId): { icon?: ReactNode; text: string } => {
@@ -198,6 +199,9 @@ export const TabMenu = ({
                     key={id}
                     disabled={!enabled}
                     inset={!icon}
+                    aria-keyshortcuts={
+                      command ? ariaShortcuts?.[command] : undefined
+                    }
                     onClick={() => {
                       run(id);
                     }}
@@ -205,7 +209,9 @@ export const TabMenu = ({
                     {icon}
                     {text}
                     {shortcut && (
-                      <DropdownMenuShortcut>{shortcut}</DropdownMenuShortcut>
+                      <DropdownMenuShortcut aria-hidden>
+                        {shortcut}
+                      </DropdownMenuShortcut>
                     )}
                   </DropdownMenuItem>
                 ) : (

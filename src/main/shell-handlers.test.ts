@@ -233,6 +233,7 @@ const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
 const CHROME = {
   sidebar: { state: "hidden" },
   shortcuts: {},
+  ariaShortcuts: {},
   navigation: null,
 } as const;
 

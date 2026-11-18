@@ -168,6 +168,11 @@ export const SHELL_STATE = {
    */
   shortcuts: z.record(z.string(), z.string()),
   /**
+   * The same shortcuts as `aria-keyshortcuts` names them, such as
+   * `Shift+Meta+W`, by command id.
+   */
+  ariaShortcuts: z.record(z.string(), z.string()),
+  /**
    * Where the front tab's page can go and whether it is loading, for the
    * titlebar's Back, Forward and Reload; `null` with no front tab or under
    * the unified inbox.

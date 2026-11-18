@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { formatAccelerator, matchesAccelerator } from "./accelerator.ts";
+import {
+  ariaKeyShortcut,
+  formatAccelerator,
+  matchesAccelerator,
+} from "./accelerator.ts";
 import type { KeyInput } from "./accelerator.ts";
 
 const press = (
@@ -120,6 +124,27 @@ describe(matchesAccelerator, () => {
         true
       )
     ).toBeFalsy();
+  });
+});
+
+describe(ariaKeyShortcut, () => {
+  it("names the keys as aria-keyshortcuts does, Command as Meta on macOS and Control elsewhere", () => {
+    expect(
+      [
+        "CmdOrCtrl+R",
+        "CommandOrControl+Shift+W",
+        "Alt+Up",
+        "Ctrl+Shift+Tab",
+      ].map((accelerator) => [
+        ariaKeyShortcut(accelerator, "darwin"),
+        ariaKeyShortcut(accelerator, "linux"),
+      ])
+    ).toStrictEqual([
+      ["Meta+R", "Control+R"],
+      ["Shift+Meta+W", "Control+Shift+W"],
+      ["Alt+ArrowUp", "Alt+ArrowUp"],
+      ["Control+Shift+Tab", "Control+Shift+Tab"],
+    ]);
   });
 });
 

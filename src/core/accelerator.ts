@@ -142,6 +142,51 @@ const MAC_KEYS: Record<string, string> = {
 
 const OTHER_KEYS: Record<string, string> = { plus: "+" };
 
+/** Named keys as `aria-keyshortcuts` names them, by Electron's name, lower case. */
+const ARIA_KEYS: Record<string, string> = {
+  up: "ArrowUp",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+  right: "ArrowRight",
+  backspace: "Backspace",
+  delete: "Delete",
+  enter: "Enter",
+  return: "Enter",
+  escape: "Escape",
+  esc: "Escape",
+  tab: "Tab",
+  space: "Space",
+  plus: "+",
+};
+
+const ARIA_MODIFIERS = [
+  ["control", "Control"],
+  ["alt", "Alt"],
+  ["shift", "Shift"],
+  ["meta", "Meta"],
+] as const;
+
+/**
+ * An Electron accelerator as `aria-keyshortcuts` names it on `platform`:
+ * `Shift+Meta+W` on macOS for `CommandOrControl+Shift+W`, `Control+Shift+W`
+ * elsewhere.
+ */
+export const ariaKeyShortcut = (accelerator: string, platform: Platform) => {
+  const parts = accelerator.split("+");
+  const key = parts.pop() ?? "";
+  const held = new Set(
+    parts.map((part) => modifierOf(part, platform === "darwin"))
+  );
+
+  return [
+    ...ARIA_MODIFIERS.filter(([modifier]) => held.has(modifier)).map(
+      ([, name]) => name
+    ),
+    ARIA_KEYS[key.toLowerCase()] ??
+      (key.length === 1 ? key.toUpperCase() : key),
+  ].join("+");
+};
+
 /**
  * An Electron accelerator as a person reads it on `platform`: `⇧⌘W` on
  * macOS, `Ctrl+Shift+W` elsewhere.

@@ -739,6 +739,7 @@ const start = async () => {
   views.onChange(menu.refresh);
 
   const shortcuts = shellShortcuts(COMMANDS, platform);
+  const ariaShortcuts = shellShortcuts(COMMANDS, platform, true);
   const tabMenu = createTabMenu({
     state: profiles.get,
     apps,
@@ -784,6 +785,7 @@ const start = async () => {
           {
             sidebar: { state: sidebar.current() },
             shortcuts,
+            ariaShortcuts,
             navigation: views.navigation(),
           },
           apps

@@ -269,7 +269,12 @@ describe("an end no date holds", () => {
           () => ({ status: "unknown", unreadCount: null }),
           current,
           { open: false, profiles: [], rows: [], notice: null },
-          { sidebar: { state: "hidden" }, shortcuts: {}, navigation: null },
+          {
+            sidebar: { state: "hidden" },
+            shortcuts: {},
+            ariaShortcuts: {},
+            navigation: null,
+          },
           []
         ).doNotDisturb
       ).toStrictEqual({ on: false, until: null });

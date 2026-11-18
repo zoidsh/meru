@@ -54,6 +54,7 @@ const connect = () => {
     "tabs",
     "sidebar",
     "shortcuts",
+    "ariaShortcuts",
     "navigation",
     "doNotDisturb",
     "overlay",
