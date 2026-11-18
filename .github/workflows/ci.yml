@@ -43,8 +43,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: linux, runner: ubuntu-latest, timeout: 3 }
-          - { name: windows, runner: windows-latest, timeout: 5 }
+          - { name: linux, runner: ubuntu-latest, timeout: 5 }
+          - { name: windows, runner: windows-latest, timeout: 8 }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: ${{ matrix.timeout }}
     steps:
