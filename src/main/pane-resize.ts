@@ -1,7 +1,12 @@
 import { Mutex } from "es-toolkit";
 
-import type { PaneTree, Split } from "#core/pane-tree.ts";
-import { evenedSplit, resizedSplit, splitPanes } from "#core/split.ts";
+import type { PaneGapEnd, PaneTree, Split } from "#core/pane-tree.ts";
+import {
+  evenedSplit,
+  gapTravel,
+  resizedSplit,
+  splitPanes,
+} from "#core/split.ts";
 import { selectedProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { Size } from "#core/window-bounds.ts";
@@ -22,6 +27,11 @@ export interface PaneResize {
   after: string;
   /** Pixels along the split since the gesture began, toward `after`. */
   by: number;
+  /**
+   * In place of `by`, as Home and End ask: the length before the gap at its
+   * least or most, measured from the split as stored.
+   */
+  to?: PaneGapEnd | undefined;
   /** Names the gesture; a new one starts from the split as stored. */
   gesture: number;
   /** The last move of the gesture, whose result is stored. */
@@ -60,6 +70,7 @@ export const createPaneResize = ({
     before,
     after,
     by,
+    to,
     gesture: id,
     done,
   }: PaneResize) => {
@@ -73,9 +84,13 @@ export const createPaneResize = ({
       };
     }
 
+    const { base } = gesture ?? {};
+    const travel =
+      base && to ? gapTravel(profile, base, areaSize(), before, after, to) : by;
     const next =
-      gesture &&
-      resizedSplit(profile, gesture.base, areaSize(), before, after, by);
+      base &&
+      travel !== undefined &&
+      resizedSplit(profile, base, areaSize(), before, after, travel);
 
     if (!next) {
       log(`Refused to resize the panes at ${before}|${after}`);
@@ -94,7 +109,10 @@ export const createPaneResize = ({
     gesture = undefined;
 
     try {
-      await resizeSplit(profile.id, next);
+      // A press that moved nothing stores nothing.
+      if (next !== base) {
+        await resizeSplit(profile.id, next);
+      }
     } finally {
       preview(undefined);
     }

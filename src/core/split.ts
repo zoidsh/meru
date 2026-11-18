@@ -1,6 +1,7 @@
 import {
   addPane,
   evenOut,
+  paneHandles,
   paneTabs,
   panesFit,
   partingShare,
@@ -8,7 +9,13 @@ import {
   resizePanes,
   withPartingShare,
 } from "./pane-tree.ts";
-import type { PaneDirection, PaneSplit, PaneTree, Split } from "./pane-tree.ts";
+import type {
+  PaneDirection,
+  PaneGapEnd,
+  PaneSplit,
+  PaneTree,
+  Split,
+} from "./pane-tree.ts";
 import { isPinned, knownTabs, withSplit } from "./state.ts";
 import type { Profile } from "./state.ts";
 import type { Size } from "./window-bounds.ts";
@@ -223,21 +230,49 @@ export const resizedSplit = (
   by: number
 ): Split | undefined => {
   const shown = splitPanes({ ...profile, split: base });
-  const share =
+  const resized =
     shown === undefined
       ? undefined
-      : partingShare(
-          resizePanes(shown, area, before, after, by),
-          before,
-          after
-        );
+      : resizePanes(shown, area, before, after, by);
+  const share =
+    resized === undefined ? undefined : partingShare(resized, before, after);
 
-  return share === undefined
-    ? undefined
+  if (share === undefined) {
+    return undefined;
+  }
+
+  // A gap left where it was stores nothing.
+  return resized === shown
+    ? base
     : {
         ...base,
         root: withPartingShare(base.root, before, after, share) as PaneSplit,
       };
+};
+
+/**
+ * How far the gap between the panes of `before` and `after` moves to take
+ * the length before it to its least or most, as `split` shows in a page area
+ * of `area`; nothing when it does not show or has no such gap.
+ */
+export const gapTravel = (
+  profile: Profile,
+  split: Split,
+  area: Size,
+  before: string,
+  after: string,
+  to: PaneGapEnd
+): number | undefined => {
+  const shown = splitPanes({ ...profile, split });
+  const handle =
+    shown === undefined
+      ? undefined
+      : paneHandles(shown, { x: 0, y: 0, ...area }).find(
+          (candidate) =>
+            candidate.before === before && candidate.after === after
+        );
+
+  return handle && handle[to] - handle.size;
 };
 
 /** The split where the panes of `before` and `after` part, evened out. */

@@ -5,7 +5,7 @@ import { MAIL_STATUSES } from "#core/feed.ts";
 import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import { TOAST_MESSAGES } from "#core/overlay.ts";
-import { PANE_DIRECTIONS } from "#core/pane-tree.ts";
+import { PANE_DIRECTIONS, PANE_GAP_ENDS } from "#core/pane-tree.ts";
 import { PROFILE_MENU_ITEMS } from "#core/profile-menu.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
@@ -78,6 +78,8 @@ export const SHELL_CALLS = {
       before: tabId,
       after: tabId,
       by: z.int(),
+      /** In place of `by`, Home's and End's: to the least or most it may be. */
+      to: z.optional(z.enum(PANE_GAP_ENDS)),
       gesture: z.int().check(z.nonnegative()),
       done: z.boolean(),
     }),

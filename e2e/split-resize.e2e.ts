@@ -255,10 +255,13 @@ test("a focused gap moves a step with an arrow key, to each minimum with Home an
     .toStrictEqual([left - STEP, right + STEP]);
   // Up and Down move a gap between panes stacked, not this one.
   await shell.keyboard.press("ArrowDown");
+  // End straight after a step, before the step's sizes come back.
+  await shell.keyboard.press("ArrowRight");
   await shell.keyboard.press("End");
   await expect
     .poll(() => paneWidths(shell))
     .toStrictEqual([total - MINIMUM, MINIMUM]);
+  await shell.keyboard.press("ArrowRight");
   await shell.keyboard.press("Home");
   await expect
     .poll(() => paneWidths(shell))

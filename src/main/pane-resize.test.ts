@@ -124,6 +124,31 @@ describe(createPaneResize, () => {
     ]);
   });
 
+  it("takes Home and End from the split as stored, after a step sent just before", async () => {
+    const { resizer, split } = setup();
+
+    await Promise.all([
+      resizer.resize(move(100, 1, true)),
+      resizer.resize({ ...move(0, 2, true), to: "minimum" }),
+    ]);
+
+    expect(sizes(split()?.root)).toStrictEqual([0.24, 0.76]);
+
+    await resizer.resize({ ...move(0, 3, true), to: "maximum" });
+
+    expect(sizes(split()?.root)).toStrictEqual([0.76, 0.24]);
+  });
+
+  it("stores nothing for a press that moved nothing, or moved and came back", async () => {
+    const { resizer, stored } = setup();
+
+    await resizer.resize(move(0, 1, true));
+    await resizer.resize(move(60, 2));
+    await resizer.resize(move(0, 2, true));
+
+    expect(stored).toStrictEqual([]);
+  });
+
   it("evens out the split where the two part", async () => {
     const { resizer, split } = setup();
 

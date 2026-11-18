@@ -251,6 +251,11 @@ const minimumLength = (tree: PaneTree, direction: PaneDirection): number => {
   return length + PANE_GAP * (tree.children.length - 1);
 };
 
+/** Where Home and End take a gap: the length before it at its least or most. */
+export const PANE_GAP_ENDS = ["minimum", "maximum"] as const;
+
+export type PaneGapEnd = (typeof PANE_GAP_ENDS)[number];
+
 /** The gap between two neighbouring children of a split, which resizes them. */
 export interface PaneHandle {
   /**
@@ -419,7 +424,8 @@ export const withPartingShare = (
 /**
  * The tree laid out in `size` with the gap between `before` and `after`
  * moved `by` pixels along its split, as far as its handle's minimum and
- * maximum let it; unchanged where there is no such gap.
+ * maximum let it; unchanged, the very tree, where there is no such gap or
+ * the gap stays where it is.
  */
 export const resizePanes = (
   tree: PaneTree,
@@ -438,7 +444,10 @@ export const resizePanes = (
 
   const next = clamp(handle.size + by, handle.minimum, handle.maximum);
 
-  return withPartingShare(tree, before, after, next / handle.span);
+  // Shares worked back from whole pixels would differ in their last digits.
+  return next === handle.size
+    ? tree
+    : withPartingShare(tree, before, after, next / handle.span);
 };
 
 /** The tree with the split where `before` and `after` part evened out. */

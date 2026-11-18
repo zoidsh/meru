@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
+import type { PaneGapEnd } from "#core/pane-tree.ts";
 
 import { shellCalls } from "./sync.ts";
 
@@ -74,7 +75,20 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
   const at = (event: PointerEvent) => (across ? event.clientX : event.clientY);
 
   const step = (by: number) => {
-    send(Math.round(by), nextGesture(), true);
+    send(by, nextGesture(), true);
+  };
+
+  // Main measures these from the split as stored, which a step just sent
+  // may not yet have reached this handle's numbers.
+  const stepTo = (to: PaneGapEnd) => {
+    shellCalls().resizePanes({
+      before,
+      after,
+      by: 0,
+      to,
+      gesture: nextGesture(),
+      done: true,
+    });
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -91,11 +105,11 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
         break;
       }
       case "Home": {
-        step(handle.minimum - handle.size);
+        stepTo("minimum");
         break;
       }
       case "End": {
-        step(handle.maximum - handle.size);
+        stepTo("maximum");
         break;
       }
       case "Enter": {
