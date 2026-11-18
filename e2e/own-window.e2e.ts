@@ -266,9 +266,24 @@ const firstWindowBounds = async (app: ElectronApplication) => {
  * The shell's page loaded again after its process died, and what closes
  * the connection reaching it. Playwright holds a page whose process crashed
  * as crashed for good, though Chromium loads it again in the same target, so
- * it is reached over a connection of its own.
+ * it is reached over a connection of its own, made once main has it loaded:
+ * one made while it is still gone holds it crashed in turn.
  */
-const reachShell = async (userDataDir: string) => {
+const reachShell = async (app: ElectronApplication, userDataDir: string) => {
+  await expect
+    .poll(() =>
+      app.evaluate(({ webContents }) => {
+        const shell = webContents
+          .getAllWebContents()
+          .find((contents) => contents.getURL().startsWith("meru-app:"));
+
+        return shell && !shell.isCrashed() && !shell.isLoading()
+          ? shell.executeJavaScript("document.readyState").catch(() => "gone")
+          : "gone";
+      })
+    )
+    .toBe("complete");
+
   // Chromium writes the port it picked there, the suite asking for any.
   const active = await readFile(
     path.join(userDataDir, "DevToolsActivePort"),
@@ -431,7 +446,7 @@ test("Move to New Window puts the selected tab's page in a window of its own as 
 
   await crashShell(app);
 
-  const first = await reachShell(userDataDir);
+  const first = await reachShell(app, userDataDir);
 
   await expect(tab(first.page, DRIVE_TITLE)).toHaveAttribute(
     "aria-selected",
@@ -495,7 +510,7 @@ test("Move to New Window puts the selected tab's page in a window of its own as 
   await first.close();
   await crashShell(app);
 
-  const second = await reachShell(userDataDir);
+  const second = await reachShell(app, userDataDir);
   const newTab = second.page.getByRole("button", { name: "New tab" });
   const overlay = await findOverlayDocument(app);
   const card = overlay.getByRole("dialog", { name: "New tab" });
