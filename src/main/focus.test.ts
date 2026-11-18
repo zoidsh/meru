@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createFocus } from "./focus.ts";
 import type { FocusTarget } from "./focus.ts";
@@ -122,7 +122,9 @@ describe(createFocus, () => {
     expect(focused).toStrictEqual(["front", "overlay", "front"]);
   });
 
-  it("notes the front page gaining focus, but while a card or a menu covers the pages gives it to the overlay", () => {
+  it("notes the front page gaining focus, but while a card or a menu covers the pages gives it to the overlay on the next turn", () => {
+    vi.useFakeTimers();
+
     const { focus, focused, window } = setup();
 
     window.focused = true;
@@ -132,21 +134,33 @@ describe(createFocus, () => {
     focus.noteFocused(overlay);
     window.covered = true;
     focus.frontFocused();
+    const atOnce = [...focused];
 
-    expect([noted, focus.focused(), focused]).toStrictEqual([
+    vi.runAllTimers();
+    vi.useRealTimers();
+
+    expect([noted, focus.focused(), atOnce, focused]).toStrictEqual([
       { kind: "front" },
       overlay,
+      [],
       ["overlay"],
     ]);
   });
 
-  it("gives focus another page took unasked to the overlay while a card or a menu covers the pages", () => {
+  it("gives focus another page took unasked to the overlay while a card or a menu covers the pages, unless it has closed by then", () => {
+    vi.useFakeTimers();
+
     const { focus, focused, window } = setup();
 
     window.focused = true;
     window.covered = true;
     focus.noteFocused({ kind: "front" });
     focus.giveBack();
+    vi.runAllTimers();
+    focus.giveBack();
+    window.covered = false;
+    vi.runAllTimers();
+    vi.useRealTimers();
 
     expect(focused).toStrictEqual(["overlay"]);
   });

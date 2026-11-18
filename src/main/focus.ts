@@ -66,6 +66,20 @@ export const createFocus = ({
     }
   };
 
+  /**
+   * Gives focus a page took back to the overlay covering it, on the next
+   * turn: on Linux a focus moved while the page's own gain is still being
+   * told of is lost.
+   */
+  const takeBackForOverlay = () => {
+    setTimeout(() => {
+      if (overlayCoversPages()) {
+        pending = [{ kind: "overlay" }];
+        flush();
+      }
+    }, 0);
+  };
+
   window.on("focus", flush);
   window.on("show", flush);
 
@@ -96,8 +110,7 @@ export const createFocus = ({
      */
     frontFocused: () => {
       if (overlayCoversPages()) {
-        pending = [{ kind: "overlay" }];
-        flush();
+        takeBackForOverlay();
 
         return;
       }
@@ -121,8 +134,7 @@ export const createFocus = ({
       }
 
       if (overlayCoversPages()) {
-        pending = [{ kind: "overlay" }];
-        flush();
+        takeBackForOverlay();
 
         return;
       }
