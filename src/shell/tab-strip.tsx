@@ -9,7 +9,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { KeyboardEvent, MouseEvent } from "react";
+import type { KeyboardEvent, MouseEvent, PointerEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { APPS, findApp, isAppId } from "#core/apps.ts";
@@ -22,6 +22,7 @@ import { AppIcon } from "./app-icon.tsx";
 import { keepInView } from "./keep-in-view.ts";
 import { OpenAppSidebarButton } from "./open-app.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
+import { useTabDrag } from "./tab-drag.ts";
 import { UnreadBadge } from "./unread-badge.tsx";
 
 type ShellTab = ShellState["tabs"]["tabs"][number];
@@ -142,6 +143,21 @@ const sideways = (tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => {
   }
 };
 
+/**
+ * Alt with Up or Down on a focused tab, or Left or Right on a tile of the
+ * wide pinned grid, which moves it a place back or on in its area: Option
+ * on macOS. Base UI's tablist leaves arrows with a modifier alone.
+ */
+const moveStep = (event: KeyboardEvent, grid: boolean) => {
+  const steps: Record<string, number> = grid
+    ? { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -1, ArrowRight: 1 }
+    : { ArrowUp: -1, ArrowDown: 1 };
+
+  return event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey
+    ? steps[event.key]
+    : undefined;
+};
+
 const tabVariant = (selected: boolean, pinned: boolean) => {
   if (selected) {
     return "secondary";
@@ -189,6 +205,12 @@ interface TabButtonProps {
     onPointerLeave: () => void;
   };
   onDelete: (tab: HTMLElement) => void;
+  /** Starts dragging the tab, should the pointer move far enough. */
+  onPointerDown: (event: PointerEvent<HTMLElement>) => void;
+  /** Whether a click ends a drag rather than selecting. */
+  isDragClick: () => boolean;
+  /** Moves the tab a place back or on in its area. */
+  onMoveBy: (step: number) => void;
   /** Left or Right on a wide pinned tile, toward the other tile of its row. */
   onSideways?:
     | ((tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => void)
@@ -206,6 +228,9 @@ const TabButton = ({
   signedOut,
   hover,
   onDelete,
+  onPointerDown,
+  isDragClick,
+  onMoveBy,
   onSideways,
 }: TabButtonProps) => {
   const { t } = useLingui();
@@ -235,16 +260,30 @@ const TabButton = ({
         event.preventDefault();
         openTabMenu(profileId, tab.id, event.clientX, event.clientY);
       }}
-      // The tabs tell only of a change; asking for the selected tab still
-      // shows it in place of the unified inbox.
-      onClick={
-        selected
-          ? () => {
-              shellCalls().selectTab({ profileId, tabId: tab.id });
-            }
-          : undefined
-      }
+      onPointerDown={onPointerDown}
+      onClick={(event) => {
+        if (isDragClick()) {
+          event.preventBaseUIHandler();
+
+          return;
+        }
+
+        // The tabs tell only of a change; asking for the selected tab still
+        // shows it in place of the unified inbox.
+        if (selected) {
+          shellCalls().selectTab({ profileId, tabId: tab.id });
+        }
+      }}
       onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
+        const step = moveStep(event, cell);
+
+        if (step !== undefined) {
+          event.preventDefault();
+          onMoveBy(step);
+
+          return;
+        }
+
         if (isMenuKey(event)) {
           event.preventDefault();
 
@@ -336,7 +375,10 @@ export const Sidebar = ({
   // which drops the focus it had; the list gives it back to the selected tab.
   const list = useRef<HTMLDivElement>(null);
   const focusInList = useRef(false);
-  const pinnedIds = pinned.map((tab) => tab.id).join(" ");
+  const pinnedIds = pinned
+    .map((tab) => tab.id)
+    .toSorted()
+    .join(" ");
   const drawnPinned = useRef(pinnedIds);
 
   useLayoutEffect(() => {
@@ -380,6 +422,89 @@ export const Sidebar = ({
     }
   });
 
+  // A tab moved by the keyboard, or dragged, keeps focus, which the list
+  // drawn in its new order may have dropped, and the keyboard's move is said.
+  const sidebar = useRef<HTMLDivElement>(null);
+  const moving = useRef<{ tabId: string; announce: boolean }>(undefined);
+  // Written in place rather than through state, as the list is drawn.
+  const announcement = useRef<HTMLOutputElement>(null);
+  const order = tabs.tabs.map((tab) => tab.id).join(" ");
+  const drawnOrder = useRef(order);
+
+  useLayoutEffect(() => {
+    if (drawnOrder.current === order) {
+      return;
+    }
+
+    drawnOrder.current = order;
+
+    const moved = moving.current;
+
+    moving.current = undefined;
+
+    const tab = tabs.tabs.find((candidate) => candidate.id === moved?.tabId);
+
+    if (!moved || !tab) {
+      return;
+    }
+
+    const element = list.current?.querySelector<HTMLElement>(
+      `[data-tab-id="${CSS.escape(tab.id)}"]`
+    );
+
+    if (element && document.activeElement === document.body) {
+      element.focus();
+    }
+
+    if (moved.announce) {
+      const area = tab.pinned ? pinned : listed;
+      const title = tabTitle(tab);
+      const position = area.indexOf(tab) + 1;
+      const count = area.length;
+
+      announcement.current?.replaceChildren(
+        t({
+          message: `${title}, position ${position} of ${count}`,
+          comment:
+            "Said by screen readers after a tab is moved with the keyboard; {title} is the tab's title, {position} its place among the pinned tabs or the other tabs, and {count} how many there are",
+        })
+      );
+    }
+  });
+
+  const move = (
+    tabId: string,
+    before: string | undefined,
+    announce: boolean
+  ) => {
+    moving.current = { tabId, announce };
+    shellCalls().moveTab({
+      profileId,
+      tabId,
+      ...(before !== undefined && { before }),
+    });
+  };
+
+  const moveBy = (tab: ShellTab, step: number) => {
+    const area = tab.pinned ? pinned : listed;
+    const to = area.indexOf(tab) + step;
+
+    if (to < 0 || to >= area.length) {
+      return;
+    }
+
+    move(tab.id, area[step < 0 ? to : to + 1]?.id, true);
+  };
+
+  const drag = useTabDrag({
+    sidebar,
+    blocked: overlay !== undefined && overlay.kind !== "none",
+    tabIds: tabs.tabs.map((tab) => tab.id),
+    onMove: (tabId, before) => {
+      move(tabId, before, false);
+    },
+  });
+
   const hover = (tabId: string) => ({
     onPointerEnter: () => {
       setHovered(tabId);
@@ -405,6 +530,13 @@ export const Sidebar = ({
         neighbourOf(element)?.focus();
         close(tab.id);
       }}
+      onPointerDown={(event) => {
+        drag.onPointerDown(tab.id, event);
+      }}
+      isDragClick={drag.isDragClick}
+      onMoveBy={(step) => {
+        moveBy(tab, step);
+      }}
       onSideways={wide && tab.pinned ? sideways : undefined}
     />
   );
@@ -429,6 +561,7 @@ export const Sidebar = ({
 
   return (
     <Tabs.Root
+      ref={sidebar}
       data-tinted
       orientation="vertical"
       value={tabs.selectedTabId}
@@ -468,6 +601,7 @@ export const Sidebar = ({
             {/* One parent in either width, so a tile keeps its element,
                 and with it focus, as the width changes. */}
             <div
+              data-tab-area="pinned"
               className={cn(
                 wide
                   ? "grid grid-cols-2 gap-x-2 gap-y-1"
@@ -486,6 +620,7 @@ export const Sidebar = ({
           >
             <div className={cn("relative", inset)}>
               <div
+                data-tab-area="listed"
                 className={cn(
                   "flex flex-col",
                   wide ? "gap-1" : "items-center gap-2"
@@ -562,6 +697,19 @@ export const Sidebar = ({
           </ScrollArea>
         )}
       </Tabs.List>
+      <output ref={announcement} className="sr-only" />
+      {drag.line && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed z-50 rounded-[1px] bg-foreground"
+          style={{
+            left: drag.line.left,
+            top: drag.line.top,
+            width: drag.line.right - drag.line.left,
+            height: drag.line.bottom - drag.line.top,
+          }}
+        />
+      )}
       <div
         className={cn("flex shrink-0", wide ? "pt-1" : "justify-center pt-2")}
       >
