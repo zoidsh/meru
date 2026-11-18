@@ -176,8 +176,9 @@ test("each control's title names it and its shortcut, a narrow tab's names the t
   expect(calendarTitle).not.toBe("");
   await expect(calendar).toHaveAttribute("title", calendarTitle);
 
-  // Chromium reads a title as the description only where it differs from
-  // the accessible name, so a screen reader never says one twice.
+  // Chromium reads a title as the description unless the name came from
+  // content with the same text; an aria-label equal to the title would have
+  // it read twice, so such a button has the title alone.
   const session = await shell.context().newCDPSession(shell);
   const description = async (name: string) => {
     const { result } = await session.send("Runtime.evaluate", {

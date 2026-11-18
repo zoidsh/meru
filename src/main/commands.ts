@@ -234,9 +234,10 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Menu item in the View menu, checked while the list of the profile's tabs shows down the left of the window",
       }),
-    // Free in every Google app on each platform, Cmd or Ctrl+S being Save
-    // in Docs, Sheets and Slides. The letters differ because Ctrl+Cmd+D is
-    // macOS's Look Up, and Ctrl+Alt+L is taken on Windows by Drive.
+    // Free in every Google app on each platform: Cmd or Ctrl+S is Save in
+    // Docs, Sheets and Slides, and Ctrl+Cmd+S and Ctrl+Alt+S are Meet's and
+    // Drive's. The letters differ because Ctrl+Cmd+D is macOS's Look Up, and
+    // Ctrl+Alt+L is taken on Windows by Drive.
     shortcut: {
       darwin: "Control+Command+L",
       win32: "Control+Alt+D",

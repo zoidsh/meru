@@ -35,7 +35,7 @@
  * Ours too: the profile tint. Where `data-tint` sets `--tint` to the selected
  * profile's colour, the shell grey takes 6% of it, and the titlebar and the
  * sidebar, marked `data-tinted`, mix it into their hover (7%), selected and
- * outline (8%) fills. The page, overlays and tooltips keep their own greys.
+ * outline (8%) fills. The page and overlays keep their own greys.
  * Mixed here and not in `[data-tinted]`, where a token naming itself would be
  * a cycle. Mixed in oklab, since in oklch shadcn's greys, `oklch(L 0 0)`, name
  * a hue of 0 that pulls every tint's hue toward it, which is pink.
