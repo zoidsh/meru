@@ -36,6 +36,7 @@ import type { SystemBrowser } from "#platform/system-browser.ts";
 import type { AppWindow } from "#platform/window.ts";
 import type { ZoomChange } from "#platform/zoom.ts";
 
+import { createLaunchTurn } from "./launch-turn.ts";
 import type { OwnWindowPlace, OwnWindows } from "./own-windows.ts";
 import { createPageWriter } from "./page-writer.ts";
 import type { SenderRegistry } from "./senders.ts";
@@ -124,14 +125,13 @@ export interface ShellPane extends Rectangle {
 /** A gap between panes on screen, placed in the page area. */
 export type ShellHandle = Omit<PaneHandle, "bounds"> & Rectangle;
 
+export { LAUNCH_TURN_MS } from "./launch-turn.ts";
+
 /** What of a tab's view a reader of its page gets. */
 export type LoadedPage = Pick<ContentView, "url" | "evaluate">;
 
 /** How long after a page's request to add an account another is dropped. */
 const ADD_PROFILE_PAUSE_MS = 1000;
-
-/** The longest a profile's Open at Launch tabs hold back the next one's. */
-export const LAUNCH_TURN_MS = 15_000;
 
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -198,19 +198,13 @@ export const createTabViews = ({
   /** The URL a tab's view was asked to load, until its page commits one. */
   const asked = new Map<string, string>();
   const listeners = new Set<() => void>();
-  /** The profiles whose Open at Launch tabs were opened this session. */
-  const launched = new Set<string>();
-  /**
-   * The Open at Launch tabs opened that are still loading; the next
-   * profile's open once none is, or once the turn's cap is up.
-   */
-  const launchLoading = new Set<string>();
-  /**
-   * Ends a profile's turn should its tabs still load after
-   * `LAUNCH_TURN_MS`, since a page can stay loading for good, waiting on
-   * a request that never ends, and would hold back every later profile.
-   */
-  let launchCap: ReturnType<typeof setTimeout> | undefined;
+  const launch = createLaunchTurn({
+    isLoading: (key) => tabs.get(key)?.status.kind === "loading",
+    hasView: (key) => tabs.has(key),
+    onTurnEnd: () => {
+      reconcile(state());
+    },
+  });
   /**
    * The tabs put to sleep, which stay without a view while they are selected,
    * until woken. Not kept across launches.
@@ -416,30 +410,6 @@ export const createTabViews = ({
     }
   };
 
-  /**
-   * Takes the tab out of the launch's loading ones once it is no longer
-   * loading, and opens the next profile's Open at Launch tabs on the next
-   * turn, so no plan is made from inside one being applied.
-   */
-  const settleLaunch = (key: string) => {
-    if (tabs.get(key)?.status.kind === "loading") {
-      return;
-    }
-
-    if (launchLoading.delete(key) && launchLoading.size === 0) {
-      endLaunchTurn();
-    }
-  };
-
-  const endLaunchTurn = () => {
-    clearTimeout(launchCap);
-    launchCap = undefined;
-    launchLoading.clear();
-    setTimeout(() => {
-      reconcile(state());
-    }, 0);
-  };
-
   const dispatch = (key: string, event: TabEvent) => {
     const tab = tabs.get(key);
 
@@ -452,7 +422,7 @@ export const createTabViews = ({
 
     // Committed first, so no reader an effect reaches sees the status left.
     tab.status = next.status;
-    settleLaunch(key);
+    launch.settle(key);
 
     for (const effect of next.effects) {
       run(key, tab, effect, from, () => {
@@ -722,7 +692,7 @@ export const createTabViews = ({
 
   const close = (key: string, tab: TabView) => {
     tabs.delete(key);
-    settleLaunch(key);
+    launch.settle(key);
     forget(key);
     clearTimeout(tab.retry);
     closeView(key, tab.view);
@@ -789,11 +759,11 @@ export const createTabViews = ({
       }
     }
 
-    const waiting = launchLoading.size > 0;
+    const waiting = launch.waiting();
     const planned = planViews(
       current,
       [...tabs.keys()],
-      launched,
+      launch.launched,
       sleeping,
       waiting
     );
@@ -802,7 +772,7 @@ export const createTabViews = ({
     return selected !== front &&
       selected !== undefined &&
       sleeping.delete(selected)
-      ? planViews(current, [...tabs.keys()], launched, sleeping, waiting)
+      ? planViews(current, [...tabs.keys()], launch.launched, sleeping, waiting)
       : planned;
   };
 
@@ -909,21 +879,7 @@ export const createTabViews = ({
   };
 
   const openLaunchTabs = (next: ViewPlan) => {
-    for (const profileId of next.launched) {
-      launched.add(profileId);
-    }
-
-    // A sleeping tab among them has no view to load.
-    for (const key of next.opening.map(tabKey)) {
-      if (tabs.has(key)) {
-        launchLoading.add(key);
-      }
-    }
-
-    if (next.launched.length > 0) {
-      clearTimeout(launchCap);
-      launchCap = setTimeout(endLaunchTurn, LAUNCH_TURN_MS);
-    }
+    launch.begin(next);
 
     for (const key of next.opening) {
       dispatch(tabKey(key), { kind: "open" });
@@ -934,7 +890,7 @@ export const createTabViews = ({
   const apply = (current: State) => {
     for (const profile of current.profiles) {
       if (isAsleep(current, profile)) {
-        launched.delete(profile.id);
+        launch.again(profile.id);
       }
     }
 
