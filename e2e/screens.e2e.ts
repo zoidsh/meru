@@ -20,6 +20,7 @@ import {
 import {
   ANY_SESSION,
   DARK_PARTS,
+  DRIVE_TITLE,
   POPOUT_PATH,
   STAND_IN_TITLE,
   THREAD_PARTS,
@@ -269,6 +270,39 @@ test("a tab's menu on a pinned tile and on a listed tab", async ({
     // oxlint-disable-next-line no-await-in-loop -- one menu at a time
     await expect(menu).toHaveCount(0);
   }
+});
+
+test("sleeping tiles and rows, and the sleeping pane of the selected tab put to sleep, wide and narrow", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  standIn.setFeed(ANY_SESSION, { unreadCount: 3 });
+  await writeState(userDataDir, withPinned(standIn, 2));
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const list = shell.getByRole("tablist", { name: "Tabs" });
+  const rest = () => shell.mouse.move(700, 20);
+
+  await findPage(app, standIn.driveUrl);
+  await findPage(app, standIn.url);
+  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await list.getByRole("tab", { name: DRIVE_TITLE, exact: true }).click({
+    button: "right",
+  });
+
+  const overlay = await findOverlayDocument(app);
+
+  await overlay.getByRole("menuitem", { name: "Sleep", exact: true }).click();
+  await expect(
+    shell.getByRole("button", { name: "Wake", exact: true })
+  ).toBeFocused();
+  await rest();
+  await shootEachWay(app, shell, "sleeping-wide");
+
+  await shell.getByRole("button", { name: "Narrow sidebar" }).click();
+  await rest();
+  await shootEachWay(app, shell, "sleeping-narrow");
 });
 
 test("the titlebar with two profiles, and with more than fit", async ({

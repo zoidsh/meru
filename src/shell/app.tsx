@@ -5,6 +5,7 @@ import { viewFrame } from "#core/layout.ts";
 
 import { NothingOpen } from "./nothing-open.tsx";
 import { OverlayLayer } from "./overlay.tsx";
+import { SleepingTab } from "./sleeping-tab.tsx";
 import { useShellState } from "./sync.ts";
 import { Sidebar, TabProblem } from "./tab-strip.tsx";
 import { Titlebar } from "./titlebar.tsx";
@@ -60,7 +61,10 @@ export const App = () => {
                 (tabs.tabs.length === 0 ? (
                   <NothingOpen />
                 ) : (
-                  <TabProblem tabs={tabs} />
+                  <>
+                    <TabProblem tabs={tabs} />
+                    <SleepingTab tabs={tabs} />
+                  </>
                 ))}
             </div>
           </main>

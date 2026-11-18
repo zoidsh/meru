@@ -84,10 +84,25 @@ msgstr "{name}'s Google account is signed out, so its mail is not checked."
 msgid "{productName} could not start"
 msgstr "{productName} could not start"
 
+#. Tooltip of a tile in the sidebar while its tab sleeps: put to sleep, or not opened yet since Meru started; {title} is the tab's title
+#: src/shell/tab-strip.tsx
+msgid "{title} · asleep"
+msgstr "{title} · asleep"
+
+#. Tooltip of Gmail's tile in the sidebar while it sleeps and the profile's Google account is signed out; {title} is the tab's title
+#: src/shell/tab-strip.tsx
+msgid "{title} · asleep · sign in required"
+msgstr "{title} · asleep · sign in required"
+
 #. Tooltip of Gmail's tile in the sidebar while the profile's Google account is signed out; {title} is the tab's title
 #: src/shell/tab-strip.tsx
 msgid "{title} · sign in required"
 msgstr "{title} · sign in required"
+
+#. Heading in place of the selected tab's page after it was put to sleep; {title} is the tab's title or else its app's name
+#: src/shell/sleeping-tab.tsx
+msgid "{title} is sleeping"
+msgstr "{title} is sleeping"
 
 #. Said by screen readers when a tab cannot move up with the keyboard, being first among the pinned tabs or the other tabs; {title} is the tab's title
 #: src/shell/tab-strip.tsx
@@ -139,6 +154,11 @@ msgstr "Archive"
 msgctxt "inbox action"
 msgid "Archive"
 msgstr "Archive"
+
+#. Said by screen readers after a sidebar row's title while its tab sleeps: put to sleep, or not opened yet since Meru started
+#: src/shell/tab-strip.tsx
+msgid "Asleep"
+msgstr "Asleep"
 
 #. Accessible name and tooltip of the title bar button that goes to the page the tab showed before
 #. Menu item in the View menu that goes to the page the selected tab showed before
@@ -785,7 +805,9 @@ msgstr "Verification code {verificationCode}"
 msgid "View"
 msgstr "View"
 
+#. Button in place of a sleeping tab's page that loads it again
 #. Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it
+#: src/shell/sleeping-tab.tsx
 #: src/shell/tab-menu.tsx
 msgid "Wake"
 msgstr "Wake"

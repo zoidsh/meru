@@ -29,7 +29,8 @@ type ShellTab = ShellState["tabs"]["tabs"][number];
 
 const appName = (app: string) => findApp(APPS, app)?.name ?? app;
 
-const tabTitle = (tab: ShellTab) => tab.title || appName(tab.app);
+export const tabTitle = (tab: Pick<ShellTab, "title" | "app">) =>
+  tab.title || appName(tab.app);
 
 // The Scroll Area's bar is styled from here, as `src/ui` stays as the CLI
 // wrote it: an 8px thumb, shown while the pointer is over a list that
@@ -83,6 +84,35 @@ const TabStatusIcon = ({ status }: { status: ShellTab["status"] }) => {
       return null;
     }
   }
+};
+
+/** A tile's title, then "asleep" and "sign in required" as they apply. */
+const useTooltip = (title: string, asleep: boolean, mustSignIn: boolean) => {
+  const { t } = useLingui();
+
+  if (asleep && mustSignIn) {
+    return t({
+      message: `${title} · asleep · sign in required`,
+      comment:
+        "Tooltip of Gmail's tile in the sidebar while it sleeps and the profile's Google account is signed out; {title} is the tab's title",
+    });
+  }
+
+  if (asleep) {
+    return t({
+      message: `${title} · asleep`,
+      comment:
+        "Tooltip of a tile in the sidebar while its tab sleeps: put to sleep, or not opened yet since Meru started; {title} is the tab's title",
+    });
+  }
+
+  return mustSignIn
+    ? t({
+        message: `${title} · sign in required`,
+        comment:
+          "Tooltip of Gmail's tile in the sidebar while the profile's Google account is signed out; {title} is the tab's title",
+      })
+    : title;
 };
 
 /** The tab after or before `tab` in the tablist, to take focus as it closes. */
@@ -235,18 +265,17 @@ const TabButton = ({
 }: TabButtonProps) => {
   const { t } = useLingui();
   const title = tabTitle(tab);
-  const live = tab.status.kind === "live" || tab.status.kind === "unloaded";
+  const asleep = tab.status.kind === "unloaded";
+  const live = tab.status.kind === "live" || asleep;
   const marked = tile && tab.app === "gmail";
   // Unlike the name, which stays the title; Chromium then reads it as the
   // tile's description.
-  const tooltip =
-    marked && signedOut
-      ? t({
-          message: `${title} · sign in required`,
-          comment:
-            "Tooltip of Gmail's tile in the sidebar while the profile's Google account is signed out; {title} is the tab's title",
-        })
-      : title;
+  const tooltip = useTooltip(title, asleep, marked && signedOut);
+  const asleepDescription = t({
+    message: "Asleep",
+    comment:
+      "Said by screen readers after a sidebar row's title while its tab sleeps: put to sleep, or not opened yet since Meru started",
+  });
 
   // One element tree in either width, so a tab keeps its element, and with
   // it focus, as the sidebar changes width. A row shows its title in full
@@ -315,6 +344,8 @@ const TabButton = ({
       }}
       {...hover}
       title={tile ? tooltip : undefined}
+      // A tile's tooltip says so; a row, which has none, is described.
+      aria-description={!tile && asleep ? asleepDescription : undefined}
       className={cn(
         buttonVariants({
           variant: tabVariant(selected, tab.pinned),
@@ -327,7 +358,8 @@ const TabButton = ({
         cell && "w-full",
         spansRow && "col-span-2",
         !tile && "w-full justify-start gap-2 pr-8",
-        !selected && "text-muted-foreground"
+        !selected && "text-muted-foreground",
+        asleep && "opacity-50"
       )}
     >
       {(!tile || live) && isAppId(tab.app) && (
@@ -408,7 +440,8 @@ export const Sidebar = ({
   });
 
   // Closing a tab's menu gives focus back to the shell, which puts it on
-  // the tab the menu was opened on, or on the selected tab once that is gone.
+  // the tab the menu was opened on, or on the selected tab once that is gone,
+  // unless the item gave it to the page area, as Sleep gives it to Wake.
   const overlay = useShellState("overlay");
   const menuTab = overlay?.kind === "tab-menu" ? overlay.tabId : undefined;
   const lastMenuTab = useRef<string>(undefined);
@@ -418,7 +451,11 @@ export const Sidebar = ({
 
     lastMenuTab.current = menuTab;
 
-    if (menuTab === undefined && tabId !== undefined) {
+    if (
+      menuTab === undefined &&
+      tabId !== undefined &&
+      !document.activeElement?.closest("[data-sleeping-tab]")
+    ) {
       (
         list.current?.querySelector<HTMLElement>(
           `[data-tab-id="${CSS.escape(tabId)}"]`
