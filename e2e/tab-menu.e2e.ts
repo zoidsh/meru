@@ -74,6 +74,12 @@ const openMenu = async (
   const menu = overlay.getByRole("menu", { name: title });
 
   await expect(menu).toBeVisible();
+  // A key pressed before the menu takes focus goes nowhere.
+  await expect
+    .poll(() =>
+      menu.evaluate((element) => element.contains(document.activeElement))
+    )
+    .toBe(true);
 
   return { overlay, menu };
 };
