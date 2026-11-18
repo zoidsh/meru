@@ -33,10 +33,13 @@ const setup = () => {
   let front: TabKey | undefined = mail;
   const withPages = new Set(["a/gmail", "a/c1", "a/w"]);
   const inWindows = new Set(["a/w"]);
+  /** Tabs whose pages failed or crashed, which show none. */
+  const broken = new Set<string>();
   let requestId = 0;
 
   const focus = createFocus({
     window: { isFocused: () => true, isVisible: () => true, on: () => false },
+    ownWindow: () => ({ isFocused: () => false, isVisible: () => false }),
     focusWhileInactive: false,
     overlayCoversPages: () => false,
     resolve: (target) =>
@@ -87,12 +90,11 @@ const setup = () => {
       stopFindInPage: (key, keepSelection) => {
         asked.push(`${key.tabId} stop${keepSelection ? " kept" : ""}`);
       },
-      windowTabs: () =>
-        [...inWindows].map((id) => {
-          const [profileId = "", tabId = ""] = id.split("/");
+      showsInWindow: (key) => {
+        const id = `${key.profileId}/${key.tabId}`;
 
-          return { profileId, tabId };
-        }),
+        return inWindows.has(id) && withPages.has(id) && !broken.has(id);
+      },
     },
     overlays,
     focus,
@@ -123,6 +125,18 @@ const setup = () => {
       find.follow();
     },
     lastId: () => requestId,
+    /** The tab's page fails or crashes, or shows again. */
+    breakPage: (key: TabKey, isBroken: boolean) => {
+      const id = `${key.profileId}/${key.tabId}`;
+
+      if (isBroken) {
+        broken.add(id);
+      } else {
+        broken.delete(id);
+      }
+
+      find.follow();
+    },
     /** Puts the tab back in the main window, as Move to Main Window does. */
     moveBack: (key: TabKey) => {
       inWindows.delete(`${key.profileId}/${key.tabId}`);
@@ -143,23 +157,40 @@ describe(createFind, () => {
     expect([
       overlays.current(),
       find.current(),
-      find
-        .windowBars()
-        .map(({ key, term, ordinal, matches }) => [
-          key.tabId,
-          term,
-          ordinal,
-          matches,
-        ]),
+      [find.bar(ownTab)].map(
+        (bar) => bar && [bar.key.tabId, bar.term, bar.ordinal, bar.matches]
+      ),
       focused,
     ]).toStrictEqual([undefined, undefined, [["w", "pear", 1, 2]], ["bar w"]]);
 
     find.close(ownTab);
 
-    expect([find.windowBars(), focused.at(-1), asked.at(-1)]).toStrictEqual([
-      [],
+    expect([find.bar(ownTab), focused.at(-1), asked.at(-1)]).toStrictEqual([
+      undefined,
       "page w",
       "w stop kept",
+    ]);
+  });
+
+  it("hides the own window's bar while its page failed or crashed, and shows it again with its term once the page does", () => {
+    const { find, breakPage, dropPage } = setup();
+
+    find.open(ownTab);
+    find.type("pear", ownTab);
+    breakPage(ownTab, true);
+
+    const hidden = find.bar(ownTab);
+
+    breakPage(ownTab, false);
+
+    const back = find.bar(ownTab)?.term;
+
+    dropPage(ownTab);
+
+    expect([hidden, back, find.bar(ownTab)]).toStrictEqual([
+      undefined,
+      "pear",
+      undefined,
     ]);
   });
 
@@ -171,10 +202,10 @@ describe(createFind, () => {
     moveBack(ownTab);
 
     expect([
-      find.windowBars(),
+      find.bar(ownTab),
       asked.at(-1),
       find.canGoOn(ownTab),
-    ]).toStrictEqual([[], "w stop", false]);
+    ]).toStrictEqual([undefined, "w stop", false]);
   });
 
   it("opens the bar over the front tab's page in the overlay, focused, and shows what the page finds", () => {

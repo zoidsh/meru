@@ -199,7 +199,8 @@ const titlebar = (): FakeTitlebar => {
     gone: noop,
     view: {
       webContentsId: 9,
-      setBounds: ({ width, height }) => calls.push(`bounds ${width}x${height}`),
+      setBounds: ({ x, y, width, height }) =>
+        calls.push(`bounds ${x},${y} ${width}x${height}`),
       show: () => calls.push("show"),
       hide: () => calls.push("hide"),
       moveUnder: ({ hostId }) => calls.push(`under ${hostId}`),
@@ -403,12 +404,12 @@ describe(createOwnWindows, () => {
     windows.close(CALENDAR);
 
     expect([first.calls, second.calls]).toStrictEqual([
-      ["under 2", "bounds 900x600", "bounds 900x600"],
-      ["under 2", "bounds 900x600", "close"],
+      ["under 2", "bounds 0,0 900x600", "bounds 0,0 900x600"],
+      ["under 2", "bounds 0,0 900x600", "close"],
     ]);
   });
 
-  it("puts the shell's find bar over the page at its top right, focused, follows the window's size, and closes it with the window", () => {
+  it("puts the shell's find bar over the page at its top right, follows the window's width, offers what focuses it, and closes it with the window", () => {
     const { windows, created } = setup();
 
     windows.open(CALENDAR);
@@ -417,14 +418,30 @@ describe(createOwnWindows, () => {
     const stray = titlebar();
 
     windows.adoptFind(CALENDAR, bar.view);
-    windows.focusFind(CALENDAR);
-    window?.resize();
+    windows.findFocuser(CALENDAR)?.();
+
+    if (window) {
+      window.bounds = { ...window.bounds, width: 1000 };
+      window.resize();
+    }
+
     windows.close(CALENDAR);
     windows.adoptFind(CALENDAR, stray.view);
 
-    expect([bar.calls, stray.calls]).toStrictEqual([
-      ["over 2", "bounds 353x40", "focus", "focus", "bounds 353x40", "close"],
+    expect([
+      bar.calls,
+      stray.calls,
+      windows.findFocuser(CALENDAR),
+    ]).toStrictEqual([
+      [
+        "over 2",
+        "bounds 531,48 353x40",
+        "focus",
+        "bounds 631,48 353x40",
+        "close",
+      ],
       ["close"],
+      undefined,
     ]);
   });
 

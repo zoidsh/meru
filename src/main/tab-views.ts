@@ -1094,6 +1094,13 @@ export const createTabViews = ({
     },
     /** The tabs whose views are in their own windows. */
     windowTabs: (): TabKey[] => [...inWindows.values()].map(({ key }) => key),
+    /** Whether the tab's page is in its own window and shows there. */
+    showsInWindow: (key: TabKey) => {
+      const keyed = tabKey(key);
+      const tab = tabs.get(keyed);
+
+      return inWindows.has(keyed) && tab !== undefined && shows(keyed, tab);
+    },
     /** What focuses the page in the tab's own window, while it shows. */
     ownWindowFocuser: (key: TabKey) => {
       const keyed = tabKey(key);

@@ -78,6 +78,7 @@ import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
 import { createFind } from "./find.ts";
 import { createFocus } from "./focus.ts";
+import type { FocusTarget } from "./focus.ts";
 import { createGmailNavigation } from "./gmail-navigation.ts";
 import { serveGmailContract } from "./gmail-page.ts";
 import { createInboxTypes } from "./inbox-types.ts";
@@ -191,6 +192,12 @@ const keepAliveTiming: KeepAliveTiming =
 
 /** v3's account id, so a profile id is the account id v3 would have made. */
 const newId = () => crypto.randomUUID();
+
+/** Where keys go in a tab's own window: its find bar while open, else its page. */
+const inOwnWindow = (key: TabKey): FocusTarget[] => [
+  { kind: "windowFind", key },
+  { kind: "window", key },
+];
 
 /** The role's own key on Windows and Linux, Ctrl+Shift+I, is the unified inbox's. */
 const devToolsAccelerator = (platform: Platform) =>
@@ -419,6 +426,8 @@ const start = async () => {
     focusWhileInactive: isTestBackground,
     // oxlint-disable-next-line no-use-before-define -- asked as focus moves, once both exist
     overlayCoversPages: () => coversPage(overlays.current()),
+    // oxlint-disable-next-line no-use-before-define -- asked as focus moves, once both exist
+    ownWindow: (key) => ownWindows.window(key),
     resolve: (target) => {
       switch (target.kind) {
         case "shell": {
@@ -431,6 +440,13 @@ const start = async () => {
         case "window": {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
           return views.ownWindowFocuser(target.key);
+        }
+        case "windowFind": {
+          // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
+          return find.bar(target.key)
+            ? // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
+              ownWindows.findFocuser(target.key)
+            : undefined;
         }
         default: {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
@@ -466,10 +482,11 @@ const start = async () => {
     backgroundColor: () => windowBackground(theme.isDark()),
     closeTab: profiles.closeTab,
     saveBounds: profiles.setOwnWindowBounds,
-    // Keys go to its page, as they go to the front tab's in the main window.
+    // Keys go to its find bar while that is open, else its page, as in the
+    // main window, so typing after switching back never reaches the page's
+    // own shortcuts.
     onFocus: (key) => {
-      // oxlint-disable-next-line no-use-before-define -- no window opens before the views exist
-      views.ownWindowFocuser(key)?.();
+      focus.focusInWindow(key, inOwnWindow(key));
     },
     log: console.error,
   });
@@ -507,6 +524,13 @@ const start = async () => {
         focus.noteFocused({ kind: "window", key: findWindow });
       });
       ownWindows.adoptFind(findWindow, view);
+
+      // oxlint-disable-next-line no-use-before-define -- no document opens before startup ends
+      if (barsAwaited.delete(tabKey(findWindow))) {
+        focus.focusInWindow(findWindow, [
+          { kind: "windowFind", key: findWindow },
+        ]);
+      }
 
       return;
     }
@@ -679,7 +703,7 @@ const start = async () => {
     ownWindows.reveal(key);
 
     if (!background || isTestBackground) {
-      views.ownWindowFocuser(key)?.();
+      focus.focusInWindow(key, inOwnWindow(key));
     }
   };
 
@@ -697,14 +721,24 @@ const start = async () => {
     }
   };
 
+  /** Tabs in their own windows whose find bar's view, still to come, takes focus. */
+  const barsAwaited = new Set<string>();
+
   const find = createFind({
     pages: views,
     overlays,
     focus,
     windows: {
-      focusBar: ownWindows.focusFind,
+      focusBar: (key) => {
+        if (ownWindows.findFocuser(key)) {
+          focus.focusInWindow(key, [{ kind: "windowFind", key }]);
+        } else {
+          barsAwaited.add(tabKey(key));
+        }
+      },
       focusPage: (key) => {
-        views.ownWindowFocuser(key)?.();
+        barsAwaited.delete(tabKey(key));
+        focus.focusInWindow(key, [{ kind: "window", key }]);
       },
     },
   });
@@ -1166,9 +1200,7 @@ const start = async () => {
             windows: views.windowTabs().flatMap((key) => {
               const tab = findTab(profiles.get(), key);
               const navigation = views.navigation(key);
-              const bar = find
-                .windowBars()
-                .find((open) => tabKey(open.key) === tabKey(key));
+              const bar = find.bar(key);
 
               return tab && navigation
                 ? [

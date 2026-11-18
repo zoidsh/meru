@@ -486,6 +486,177 @@ test("Cmd or Ctrl+F in a tab's own window opens its find bar over that page's to
   await expect(again.field).toBeFocused();
 });
 
+/** Tells the tab's own window it came forward, as the system would. */
+const ownWindowComesForward = (app: ElectronApplication) =>
+  app.evaluate(({ BaseWindow, BrowserWindow }) => {
+    BaseWindow.getAllWindows()
+      .find((window) => !(window instanceof BrowserWindow))
+      ?.emit("focus");
+  });
+
+/** Gives the page under `url` focus, as a click in it would. */
+const focusPage = (app: ElectronApplication, url: string) =>
+  app.evaluate(({ webContents }, wanted) => {
+    webContents
+      .getAllWebContents()
+      .find((contents) => contents.getURL().startsWith(wanted))
+      ?.focus();
+  }, url);
+
+test("the tab's own window coming forward gives the keys to its find bar while that is open, else to its page", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, calendar } = await launch(launchApp, userDataDir, standIn);
+  const calendarHasFocus = await followRealFocus(calendar);
+
+  await pressShifted(app, standIn.calendarUrl, "N");
+  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
+  await press(app, standIn.calendarUrl, "F");
+
+  const document = await findWindowFind(app);
+  const findHasFocus = await followRealFocus(document);
+
+  await expect.poll(findHasFocus).toBeTruthy();
+
+  // A click on the page, then the window left and come back to.
+  await focusPage(app, standIn.calendarUrl);
+  await expect.poll(calendarHasFocus).toBeTruthy();
+  await ownWindowComesForward(app);
+  await expect.poll(findHasFocus).toBeTruthy();
+  expect(await calendarHasFocus()).toBeFalsy();
+
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "Escape", { plain: true });
+  await expect.poll(() => ownWindowFindOpen(app)).toBe(false);
+  await expect.poll(calendarHasFocus).toBeTruthy();
+  await ownWindowComesForward(app);
+  await expect.poll(calendarHasFocus).toBeTruthy();
+});
+
+test("closing the window by its control or putting its profile to sleep with its find bar open closes the bar's document with it, the shell erring nowhere", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
+        selectedTabId: "gmail",
+      },
+      {
+        id: "q",
+        name: "Work",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: "",
+            ownWindow: true,
+          },
+          {
+            id: "d",
+            app: "drive",
+            url: standIn.driveUrl,
+            title: "",
+            ownWindow: true,
+          },
+        ],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "q",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const errors: string[] = [];
+
+  shell.on("pageerror", (error) => errors.push(error.message));
+  await expect.poll(() => ownWindowCount(app)).toBe(2);
+
+  /** Opens the find bar in the first own window, its tab clicked first. */
+  const openFind = async () => {
+    await shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { name: CALENDAR_TITLE, exact: true })
+      .click();
+    await press(app, standIn.calendarUrl, "F");
+
+    const document = await findWindowFind(app);
+
+    document.on("pageerror", (error) => errors.push(error.message));
+    await expect(findParts(document).field).toBeFocused();
+
+    return document;
+  };
+
+  const first = await openFind();
+
+  // Calendar's window, as its close button asks it, Drive's staying.
+  await app.evaluate(({ BaseWindow, BrowserWindow }, prefix) => {
+    setTimeout(() => {
+      BaseWindow.getAllWindows()
+        .find(
+          (window) =>
+            !(window instanceof BrowserWindow) &&
+            window.contentView.children.some((view) =>
+              (
+                view as Electron.WebContentsView
+              ).webContents.mainFrame.name.startsWith(prefix)
+            )
+        )
+        ?.close();
+    }, 0);
+  }, OWN_WINDOW_FIND_FRAME_PREFIX);
+  await expect.poll(() => ownWindowCount(app)).toBe(1);
+  await expect.poll(() => first.isClosed()).toBe(true);
+  await expect(
+    shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { name: CALENDAR_TITLE, exact: true })
+  ).toHaveCount(0);
+
+  // Drive's window, its bar open, goes as its profile sleeps.
+  await shell
+    .getByRole("tablist", { name: "Tabs" })
+    .getByRole("tab", { name: DRIVE_TITLE, exact: true })
+    .click();
+  await press(app, standIn.driveUrl, "F");
+
+  const second = await findWindowFind(app);
+
+  second.on("pageerror", (error) => errors.push(error.message));
+  await expect(findParts(second).field).toBeFocused();
+
+  // Focus back in the main window, where Sleep Profile is offered.
+  await shell
+    .getByRole("tablist", { name: "Tabs" })
+    .getByRole("tab")
+    .first()
+    .click();
+  await clickMenuItem(app, "profile.sleep");
+  await expect.poll(() => ownWindowCount(app)).toBe(0);
+  await expect.poll(() => second.isClosed()).toBe(true);
+  await expect
+    .poll(() =>
+      app.evaluate(
+        ({ webContents }, prefix) =>
+          webContents
+            .getAllWebContents()
+            .some((contents) => contents.mainFrame.name.startsWith(prefix)),
+        OWN_WINDOW_FIND_FRAME_PREFIX
+      )
+    )
+    .toBe(false);
+  expect(errors).toStrictEqual([]);
+});
+
 const cycle = async (open: () => Promise<void>, close: () => Promise<void>) => {
   await open();
   await close();
@@ -525,7 +696,8 @@ test("the shell's renderer lets go of the documents of find bars and titlebars c
 
   const findOpen = async () => {
     await press(app, standIn.calendarUrl, "F");
-    await expect.poll(() => ownWindowFindOpen(app)).toBe(true);
+    // Its keys are heard once the shell has drawn it.
+    await expect(findParts(await findWindowFind(app)).field).toBeFocused();
   };
   const findClose = async () => {
     await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "Escape", { plain: true });

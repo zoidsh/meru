@@ -8,6 +8,8 @@ const setup = ({ focusWhileInactive = false } = {}) => {
   const listeners = new Map<string, (() => void)[]>();
   const focused: string[] = [];
   const window = { focused: false, visible: false, covered: false };
+  /** The tab's own window, while it is open. */
+  const own = { open: true, focused: false, visible: true };
   /** The web contents there to focus, by name; a gone one is missing. */
   const present = new Set(["shell", "overlay", "front", "window"]);
 
@@ -27,6 +29,10 @@ const setup = ({ focusWhileInactive = false } = {}) => {
           }
         : undefined,
     overlayCoversPages: () => window.covered,
+    ownWindow: () =>
+      own.open
+        ? { isFocused: () => own.focused, isVisible: () => own.visible }
+        : undefined,
   });
 
   const emit = (event: string) => {
@@ -35,12 +41,42 @@ const setup = ({ focusWhileInactive = false } = {}) => {
     }
   };
 
-  return { focus, focused, window, present, emit };
+  return { focus, focused, window, own, present, emit };
 };
 
 const overlay: FocusTarget = { kind: "overlay" };
 
+const OWN = { profileId: "p", tabId: "w" };
+
 describe(createFocus, () => {
+  it("moves focus within a tab's own window only while that window holds the keys, or shows where focus may move while inactive, never bringing it forward", () => {
+    const { focus, focused, own, present } = setup();
+    const both: FocusTarget[] = [
+      { kind: "windowFind", key: OWN },
+      { kind: "window", key: OWN },
+    ];
+
+    present.add("windowFind");
+    focus.focusInWindow(OWN, both);
+    own.focused = true;
+    focus.focusInWindow(OWN, both);
+    present.delete("windowFind");
+    focus.focusInWindow(OWN, both);
+    own.open = false;
+    focus.focusInWindow(OWN, both);
+
+    const inactive = setup({ focusWhileInactive: true });
+
+    inactive.focus.focusInWindow(OWN, both);
+    inactive.own.visible = false;
+    inactive.focus.focusInWindow(OWN, both);
+
+    expect([focused, inactive.focused]).toStrictEqual([
+      ["windowFind", "window"],
+      ["window"],
+    ]);
+  });
+
   it("focuses the first preference there to focus, at once while the window has focus", () => {
     const { focus, focused, window, present } = setup();
 

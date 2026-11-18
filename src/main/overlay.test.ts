@@ -24,6 +24,7 @@ const setup = () => {
   let bounds = { x: 0, y: 0, width: 100, height: 50 };
 
   const focus = createFocus({
+    ownWindow: () => ({ isFocused: () => false, isVisible: () => false }),
     window: { isFocused: () => true, isVisible: () => true, on: () => false },
     focusWhileInactive: false,
     overlayCoversPages: () => false,

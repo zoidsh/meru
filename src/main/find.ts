@@ -5,12 +5,7 @@ import {
   shownBar,
   transitionFind,
 } from "#core/find.ts";
-import type {
-  FindBar,
-  FindEffect,
-  FindEvent,
-  FoundInPage,
-} from "#core/find.ts";
+import type { FindEffect, FindEvent, FoundInPage } from "#core/find.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { FindOptions } from "#platform/content-view.ts";
@@ -31,8 +26,11 @@ export interface FindDeps {
       options: FindOptions
     ) => number | undefined;
     stopFindInPage: (key: TabKey, keepSelection: boolean) => void;
-    /** The tabs whose pages are in windows of their own. */
-    windowTabs: () => TabKey[];
+    /**
+     * Whether the tab's page is in a window of its own and shows there,
+     * not failed, crashed or loading its first document.
+     */
+    showsInWindow: (key: TabKey) => boolean;
   };
   overlays: Pick<Overlays, "open" | "close" | "current">;
   focus: Pick<Focus, "focus">;
@@ -216,14 +214,18 @@ export const createFind = ({ pages, overlays, focus, windows }: FindDeps) => {
     follow,
     /** The bar that shows, the front tab's while it is open. */
     current: () => shownBar(state),
-    /** The open bar of each tab in its own window, by its key. */
-    windowBars: (): FindBar[] =>
-      pages.windowTabs().flatMap((key) => openBar(state, key) ?? []),
+    /**
+     * The open bar of the tab in its own window, while its page shows
+     * there; one over a failed or crashed page waits, as the front tab's
+     * does in the main window.
+     */
+    bar: (key: TabKey) =>
+      pages.showsInWindow(key) ? openBar(state, key) : undefined,
     /**
      * Whether Find Next and Previous have a term to go on with, on the
      * front tab or the tab in its own window `key` names.
      */
-    canGoOn: (key?: TabKey) => canGoOn(state, key ?? state.front),
+    canGoOn: (key?: TabKey) => canGoOn(state, key),
     onChange: (listener: () => void) => {
       listeners.add(listener);
     },

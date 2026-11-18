@@ -89,7 +89,8 @@ export const createOwnWindows = ({
     return tab?.title || (tab && findApp(apps, tab.app)?.name) || "";
   };
 
-  const placeTitlebar = (entry: Entry) => {
+  /** Places the window's titlebar and find bar as its size has it now. */
+  const placeDocuments = (entry: Entry) => {
     const { width, height } = entry.window.getContentAreaSize();
 
     entry.titlebar?.setBounds({ x: 0, y: 0, width, height });
@@ -179,7 +180,7 @@ export const createOwnWindows = ({
     };
 
     window.onContentAreaResize(() => {
-      placeTitlebar(entry);
+      placeDocuments(entry);
 
       for (const listener of resizeListeners) {
         listener(key);
@@ -262,12 +263,13 @@ export const createOwnWindows = ({
         }
       });
       view.moveUnder(entry.window.host);
-      placeTitlebar(entry);
+      placeDocuments(entry);
     },
     /**
      * Puts the shell's find bar document for the tab's window over its
-     * page, at the page's top right, and gives its field focus; one for a
-     * window that is not open is closed. It goes as the shell closes it.
+     * page, at the page's top right; one for a window that is not open is
+     * closed. It goes as the shell closes it. Focus is the caller's, as
+     * the focus module's rules allow.
      */
     adoptFind: (key: TabKey, view: OverlayView) => {
       const entry = entries.get(tabKey(key));
@@ -289,13 +291,12 @@ export const createOwnWindows = ({
         }
       });
       view.moveOver(entry.window.host);
-      placeTitlebar(entry);
-      view.focus();
+      placeDocuments(entry);
     },
-    /** Gives the tab's window's find bar focus, while it is there. */
-    focusFind: (key: TabKey) => {
-      entries.get(tabKey(key))?.find?.focus();
-    },
+    /** What focuses the tab's window's find bar, while it is there. */
+    findFocuser: (key: TabKey) => entries.get(tabKey(key))?.find?.focus,
+    /** The tab's window, while it is open, for whether it holds the keys. */
+    window: (key: TabKey) => entries.get(tabKey(key))?.window,
     /** Titles each window after its page, as its tab is. */
     retitle: () => {
       for (const entry of entries.values()) {

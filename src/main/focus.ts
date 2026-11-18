@@ -1,4 +1,5 @@
 import type { TabKey } from "#core/tabs.ts";
+import type { PlainWindow } from "#platform/base-window.ts";
 import type { AppWindow } from "#platform/window.ts";
 
 /** A web contents of the app's windows that can hold keyboard focus. */
@@ -8,7 +9,9 @@ export type FocusTarget =
   /** The selected tab's view, whichever that is when focus moves. */
   | { kind: "front" }
   /** The page of a tab in its own window, or that window's titlebar. */
-  | { kind: "window"; key: TabKey };
+  | { kind: "window"; key: TabKey }
+  /** The find bar of a tab's own window, while it is open there. */
+  | { kind: "windowFind"; key: TabKey };
 
 export interface FocusDeps {
   window: Pick<AppWindow, "isFocused" | "isVisible" | "on">;
@@ -25,6 +28,10 @@ export interface FocusDeps {
    * clicked through, so a page that takes focus took it unasked.
    */
   overlayCoversPages: () => boolean;
+  /** A tab's own window, while it is open. */
+  ownWindow: (
+    key: TabKey
+  ) => Pick<PlainWindow, "isFocused" | "isVisible"> | undefined;
 }
 
 /**
@@ -37,6 +44,7 @@ export const createFocus = ({
   focusWhileInactive,
   resolve,
   overlayCoversPages,
+  ownWindow,
 }: FocusDeps) => {
   let focused: FocusTarget | undefined;
   let pending: readonly FocusTarget[] | undefined;
@@ -104,6 +112,18 @@ export const createFocus = ({
     focus: (preferences: readonly FocusTarget[]) => {
       pending = preferences;
       flush();
+    },
+    /**
+     * Focuses the first of `preferences` there to focus in the tab's own
+     * window, only while that window holds the keys, so it never brings
+     * the window forward; it is asked again as the window comes forward.
+     */
+    focusInWindow: (key: TabKey, preferences: readonly FocusTarget[]) => {
+      const own = ownWindow(key);
+
+      if (own && (own.isFocused() || (focusWhileInactive && own.isVisible()))) {
+        apply(preferences);
+      }
     },
     /**
      * Told as the main window's front page gains focus: noted, unless a card
