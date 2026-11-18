@@ -28,6 +28,7 @@ import type {
 import type { Network } from "#platform/network.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 import type { AppWindow } from "#platform/window.ts";
+import type { ZoomChange } from "#platform/zoom.ts";
 
 import { createPageWriter } from "./page-writer.ts";
 import type { SenderRegistry } from "./senders.ts";
@@ -898,6 +899,10 @@ export const createTabViews = ({
     },
     stopFront: () => {
       frontTab()?.view.stop();
+    },
+    /** Zooms the front tab's page, the focused pane's in a split. */
+    zoomFront: (change: ZoomChange) => {
+      frontTab()?.view.zoom(change);
     },
     /** Places every view again, as the sidebar now has it, loading nothing. */
     relayout,

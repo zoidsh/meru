@@ -21,6 +21,8 @@ export interface KeyInput {
  */
 const CODES: Record<string, string> = {
   ",": "Comma",
+  "-": "Minus",
+  "=": "Equal",
   "[": "BracketLeft",
   "]": "BracketRight",
   ...Object.fromEntries(

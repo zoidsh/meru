@@ -12,6 +12,7 @@ import type { Platform } from "#core/platform.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import { menuText } from "#core/tray.ts";
+import type { ZoomChange } from "#platform/zoom.ts";
 
 import { savedSearchCommands } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
@@ -27,11 +28,24 @@ export interface MenuTemplateInput {
   run: (command: Command) => void;
   /** The app's language, which times are written in. */
   locale: string;
+  /** Actual Size, Zoom In and Zoom Out. */
+  zoom: (change: ZoomChange) => void;
   /** Ends the View menu; given by a development build alone. */
   developerTools?: MenuItemConstructorOptions;
 }
 
 const separator: MenuItemConstructorOptions = { type: "separator" };
+
+/**
+ * The zoom items' keys as a view hears them; `=`, which carries `+`, zooms
+ * in with Shift or without.
+ */
+const ZOOM_KEYS: readonly (readonly [string, ZoomChange])[] = [
+  ["CommandOrControl+0", "reset"],
+  ["CommandOrControl+=", "in"],
+  ["CommandOrControl+Shift+=", "in"],
+  ["CommandOrControl+-", "out"],
+];
 
 /**
  * Meru's application menu: its own items from the registry, which a platform
@@ -45,6 +59,7 @@ export const buildMenuTemplate = ({
   context,
   run,
   locale,
+  zoom,
   developerTools,
 }: MenuTemplateInput): MenuItemConstructorOptions[] => {
   const isMacOS = platform === "darwin";
@@ -232,31 +247,41 @@ export const buildMenuTemplate = ({
       ...item("tab.reload"),
       ...item("tab.stop"),
       separator,
-      // Each acts on the web contents with focus: a tab's page, or the shell.
+      // Not the zoom roles, which zoom whatever has focus, the find bar's
+      // view among them; the roles' own keys.
       {
         label: t({
           message: "Actual Size",
           comment:
             "Menu item in the View menu that sets the page's zoom back to 100%",
         }),
-        role: "resetZoom",
         id: "view.resetZoom",
+        accelerator: "CommandOrControl+0",
+        click: () => {
+          zoom("reset");
+        },
       },
       {
         label: t({
           message: "Zoom In",
           comment: "Menu item in the View menu that makes the page larger",
         }),
-        role: "zoomIn",
         id: "view.zoomIn",
+        accelerator: "CommandOrControl+Plus",
+        click: () => {
+          zoom("in");
+        },
       },
       {
         label: t({
           message: "Zoom Out",
           comment: "Menu item in the View menu that makes the page smaller",
         }),
-        role: "zoomOut",
         id: "view.zoomOut",
+        accelerator: "CommandOrControl+-",
+        click: () => {
+          zoom("out");
+        },
       },
       separator,
       {
@@ -464,6 +489,7 @@ export const buildMenuTemplate = ({
 
 export interface ApplicationMenuDeps {
   platform: Platform;
+  zoom: (change: ZoomChange) => void;
   developerTools?: MenuItemConstructorOptions;
   appName: string;
   commands: readonly Command[];
@@ -483,6 +509,7 @@ const describe = (error: unknown) =>
  */
 export const createApplicationMenu = ({
   platform,
+  zoom,
   developerTools,
   appName,
   commands,
@@ -545,6 +572,7 @@ export const createApplicationMenu = ({
           run(command);
         },
         locale: locale(),
+        zoom,
         ...(developerTools && { developerTools }),
       })
     );
@@ -571,10 +599,10 @@ export const createApplicationMenu = ({
       build(false);
     },
     /**
-     * Runs the available command whose shortcut a key in a page is, since
-     * the menu hears only what reaches it, which focus inside a page's view
-     * does not promise. Says whether it was one; a held key repeating a
-     * command that runs once is one, run no further.
+     * Runs the available command whose shortcut a key in a page is, or
+     * zooms, since the menu hears only what reaches it, which focus inside a
+     * page's view does not promise. Says whether it was one; a held key
+     * repeating a command that runs once is one, run no further.
      */
     handleKey: (input: KeyInput) => {
       const current = context();
@@ -592,7 +620,18 @@ export const createApplicationMenu = ({
         run(command);
       }
 
-      return command !== undefined;
+      const zoomed =
+        command === undefined
+          ? ZOOM_KEYS.find(([accelerator]) =>
+              matchesAccelerator(accelerator, input, platform === "darwin")
+            )
+          : undefined;
+
+      if (zoomed) {
+        zoom(zoomed[1]);
+      }
+
+      return command !== undefined || zoomed !== undefined;
     },
   };
 };

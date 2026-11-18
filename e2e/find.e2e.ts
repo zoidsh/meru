@@ -96,6 +96,21 @@ const press = (
     }
   );
 
+/** The zoom level of the page whose URL starts with `target`, or the overlay's view. */
+const zoomOf = (app: ElectronApplication, target: string) =>
+  app.evaluate(
+    ({ webContents }, wanted) =>
+      webContents
+        .getAllWebContents()
+        .find((candidate) =>
+          wanted === "overlay"
+            ? candidate.mainFrame.name === "meru-overlay"
+            : candidate.getURL().startsWith(wanted)
+        )
+        ?.getZoomLevel(),
+    target
+  );
+
 /** Where the overlay's view sits and whether it shows. */
 const readOverlayView = (app: ElectronApplication) =>
   app.evaluate(({ BrowserWindow }) => {
@@ -452,6 +467,32 @@ test("in a split the bar searches the focused pane from its top right; focusing 
   expect(
     near(await barCorner(app), await pageCorner(app, standIn.calendarUrl))
   ).toBe(true);
+});
+
+test("with the find field focused, the zoom keys zoom the page under the bar, not the bar", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const { app, field } = await launch(launchApp, userDataDir, standIn);
+
+  await press(app, standIn.calendarUrl, "F");
+  await expect(field).toBeFocused();
+
+  await press(app, "overlay", "=");
+  await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0.5);
+  expect([
+    await zoomOf(app, "overlay"),
+    await zoomOf(app, "meru-app:"),
+  ]).toStrictEqual([0, 0]);
+
+  await press(app, "overlay", "-");
+  await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0);
+  await press(app, "overlay", "=");
+  await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0.5);
+  await press(app, "overlay", "0");
+  await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0);
+  await expect(field).toBeFocused();
 });
 
 test("a tab put to sleep closes the bar and has no Find, nor does a page under Open app", async ({

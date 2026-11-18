@@ -38,6 +38,7 @@ const template = (platform: Platform, context = contextOf()) =>
     context,
     run: () => false,
     locale: "en",
+    zoom: () => false,
   });
 
 const submenu = (menu: MenuItemConstructorOptions) =>
@@ -63,12 +64,45 @@ describe(buildMenuTemplate, () => {
     const menus = template("darwin");
 
     expect(labels(menus)).toContain("Help");
-    // Command+Q, Command+W and the zoom keys.
+    // Command+Q and Command+W.
     expect(
-      ["quit", "close", "zoomIn"].map(
-        (role) => itemOf(menus, role)?.accelerator
-      )
-    ).toStrictEqual([undefined, undefined, undefined]);
+      ["quit", "close"].map((role) => itemOf(menus, role)?.accelerator)
+    ).toStrictEqual([undefined, undefined]);
+  });
+
+  it("zooms through its own items on the zoom roles' keys, which main points at the page", () => {
+    const zoomed: string[] = [];
+    const menus = buildMenuTemplate({
+      platform: "darwin",
+      appName: "Meru",
+      commands: COMMANDS,
+      context: contextOf(),
+      run: () => false,
+      locale: "en",
+      zoom: (change) => zoomed.push(change),
+    });
+    const items = ["view.resetZoom", "view.zoomIn", "view.zoomOut"].map((id) =>
+      itemOf(menus, id)
+    );
+
+    for (const item of items) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the click takes no arguments of ours
+      const click = item?.click as (() => void) | undefined;
+
+      click?.();
+    }
+
+    expect([
+      items.map((item) => [item?.role, item?.accelerator]),
+      zoomed,
+    ]).toStrictEqual([
+      [
+        [undefined, "CommandOrControl+0"],
+        [undefined, "CommandOrControl+Plus"],
+        [undefined, "CommandOrControl+-"],
+      ],
+      ["reset", "in", "out"],
+    ]);
   });
 
   it.each(["win32", "linux"] as const)(
@@ -103,6 +137,7 @@ describe(buildMenuTemplate, () => {
       context: contextOf(),
       run: () => false,
       locale: "en",
+      zoom: () => false,
       developerTools: { role: "toggleDevTools" },
     });
 
@@ -325,6 +360,7 @@ const setup = () => {
   let reloads = 0;
   let inboxOpen = false;
   const selected: string[] = [];
+  const zoomed: string[] = [];
   const actions = {
     setInboxOpen: (open: boolean) => {
       inboxOpen = open;
@@ -355,6 +391,7 @@ const setup = () => {
     }),
     actions,
     locale: () => "en",
+    zoom: (change) => zoomed.push(change),
     setMenu: (next) => set.push(next),
     log: () => false,
   });
@@ -364,6 +401,7 @@ const setup = () => {
     menu,
     reloads: () => reloads,
     selected,
+    zoomed,
     setState: (next: State) => {
       state = next;
       menu.refresh();
@@ -464,6 +502,29 @@ describe(createApplicationMenu, () => {
     expect(key("KeyX", { meta: true })).toBeFalsy();
     // There is no other profile to select.
     expect(key("BracketRight", { meta: true, shift: true })).toBeFalsy();
+  });
+
+  it("zooms on the zoom keys a view hears, = with or without Shift zooming in", () => {
+    const app = setup();
+    const press = (key: string, code: string, shift = false) =>
+      app.menu.handleKey({
+        type: "keyDown",
+        key,
+        code,
+        control: false,
+        shift,
+        alt: false,
+        meta: true,
+        isAutoRepeat: false,
+      });
+
+    expect([
+      press("=", "Equal"),
+      press("+", "Equal", true),
+      press("-", "Minus"),
+      press("0", "Digit0"),
+    ]).toStrictEqual([true, true, true, true]);
+    expect(app.zoomed).toStrictEqual(["in", "in", "out", "reset"]);
   });
 
   it("runs a held key's command once where repeating it would step on", () => {

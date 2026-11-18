@@ -58,6 +58,7 @@ import {
   createTrayFactory,
 } from "#platform/tray.ts";
 import { createWindowFactory } from "#platform/window.ts";
+import { zoomFocused } from "#platform/zoom.ts";
 
 import { createApplicationMenu } from "./application-menu.ts";
 import { createUnreadBadge } from "./badge.ts";
@@ -437,7 +438,10 @@ const start = async () => {
     log: console.error,
   });
 
+  let overlayContentsId: number | undefined;
+
   shell.window.onOverlayDocument((view) => {
+    overlayContentsId = view.webContentsId;
     // It has no bridge of its own; the shell draws into it.
     view.onGone(senders.register(view.webContentsId, { role: "overlay" }));
     view.onFocus(() => {
@@ -779,6 +783,13 @@ const start = async () => {
 
   const menu = createApplicationMenu({
     platform,
+    // A tab's page or the shell, whichever has focus; the find bar's view,
+    // or none, zooms the page it sits over.
+    zoom: (change) => {
+      if (!zoomFocused(change, (id) => id !== overlayContentsId)) {
+        views.zoomFront(change);
+      }
+    },
     appName: lifecycle.name,
     commands: COMMANDS,
     context: () => ({

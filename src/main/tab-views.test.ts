@@ -166,6 +166,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           stopFindInPage: (keepSelection) => {
             view.finds.push(`stop ${keepSelection}`);
           },
+          zoom: (change) => view.moves.push(`zoom ${change}`),
         };
       },
     },
@@ -341,11 +342,16 @@ describe(createTabViews, () => {
     window.tabs.goBack();
     window.tabs.goForward();
     window.tabs.stopFront();
+    window.tabs.zoomFront("in");
     await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
     window.tabs.goBack();
+    window.tabs.zoomFront("reset");
 
-    expect(gmail?.moves).toStrictEqual(["back", "forward", "stop"]);
-    expect(window.viewOf("persist:a", 1)?.moves).toStrictEqual(["back"]);
+    expect(gmail?.moves).toStrictEqual(["back", "forward", "stop", "zoom in"]);
+    expect(window.viewOf("persist:a", 1)?.moves).toStrictEqual([
+      "back",
+      "zoom reset",
+    ]);
 
     window.setInboxOpen(true);
 

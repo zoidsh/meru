@@ -5,6 +5,9 @@ import type { KeyInput } from "#core/accelerator.ts";
 import type { FoundInPage } from "#core/find.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
 
+import { zoomContents } from "./zoom.ts";
+import type { ZoomChange } from "./zoom.ts";
+
 /** What the view's page did, as Meru tracks it. */
 export type ContentViewEvent =
   /** The main frame finished loading; an error page's finish follows a failure. */
@@ -125,6 +128,7 @@ export interface ContentView {
    * active match selected in the page.
    */
   stopFindInPage: (keepSelection: boolean) => void;
+  zoom: (change: ZoomChange) => void;
   /** Closes the page and every window it opened, and takes it off the window. */
   close: () => void;
 }
@@ -353,6 +357,9 @@ export const addContentView = (
       webContents.stopFindInPage(
         keepSelection ? "keepSelection" : "clearSelection"
       );
+    },
+    zoom: (change) => {
+      zoomContents(webContents, change);
     },
     close,
   };

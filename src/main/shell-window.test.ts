@@ -96,6 +96,7 @@ const createFakeWindow = () => {
       focus: () => false,
       findInPage: () => 0,
       stopFindInPage: () => false,
+      zoom: () => false,
     }),
     webContentsId: 1,
     showContextMenu: () => false,
