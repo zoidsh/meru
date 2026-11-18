@@ -27,7 +27,8 @@ export const NothingOpen = () => {
     (candidate) => candidate.id === profiles.selectedProfileId
   );
 
-  if (!profile) {
+  // Until the first poll ends either state could be the wrong one.
+  if (!profile || profile.mail.status === "unknown") {
     return null;
   }
 

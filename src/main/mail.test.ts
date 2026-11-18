@@ -284,6 +284,28 @@ describe(createMailPoller, () => {
     expect(poller.entries("a")).toStrictEqual([]);
   });
 
+  it("stays signed out through a failure, telling no one, until a poll reads the feed", async () => {
+    const { poller, answer, changes } = setup();
+
+    poller.reconcile(["a"]);
+    await answer("a", { kind: "signedOut" });
+    changes.mockClear();
+    await vi.advanceTimersByTimeAsync(SIGNED_OUT_INTERVAL);
+    await answer("a", FAILED);
+
+    expect(poller.mail("a")).toStrictEqual({
+      status: "signedOut",
+      unreadCount: null,
+    });
+    expect(changes).not.toHaveBeenCalled();
+
+    poller.poke("a");
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
+    await answer("a", feed(2));
+
+    expect(poller.mail("a")).toStrictEqual({ status: "ok", unreadCount: 2 });
+  });
+
   it("backs off from failures, 30 s doubling to 5 min, and resets on success", async () => {
     const { poller, answer, fetchesOf } = setup();
     const gaps: number[] = [];

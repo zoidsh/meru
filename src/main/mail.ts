@@ -134,7 +134,12 @@ export const createMailPoller = ({
         break;
       }
       default: {
-        polled.status = "failed";
+        // A failure, such as being offline, says nothing of the session, so
+        // a signed-out one stays signed out until a poll reads its feed.
+        if (polled.status !== "signedOut") {
+          polled.status = "failed";
+        }
+
         polled.failures += 1;
         break;
       }

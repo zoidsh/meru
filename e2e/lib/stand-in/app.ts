@@ -123,6 +123,8 @@ export interface StandIn {
    * returned function sends them.
    */
   holdActions: () => () => void;
+  /** Has the feed keep each answer until the returned function sends them. */
+  holdFeeds: () => () => void;
   /** Refuses connections to the Gmail stand-in until it answers again. */
   refuse: () => Promise<void>;
   answer: () => Promise<void>;
@@ -150,6 +152,7 @@ export const startStandIn = async (): Promise<StandIn> => {
   let inboxType: string | undefined;
   let refreshAct = "20";
   let held: (() => void)[] | undefined;
+  let heldFeeds: (() => void)[] | undefined;
   const send = (answer: () => void) => {
     if (held) {
       held.push(answer);
@@ -210,6 +213,39 @@ export const startStandIn = async (): Promise<StandIn> => {
       });
     });
   };
+  const answerFeed = (
+    request: IncomingMessage,
+    response: ServerResponse,
+    path: string
+  ) => {
+    const answer = feeds.get(accountOf(request) ?? "") ?? { redirect: true };
+
+    if ("redirect" in answer) {
+      response.writeHead(302, { Location: `${origins.signIn}signin` }).end();
+    } else if (path === PRIMARY_FEED_PATH && answer.primary === undefined) {
+      response.writeHead(404, { "Content-Type": "text/html" }).end();
+    } else {
+      const mail = answer.mail ?? DEFAULT_MAIL;
+      const named =
+        path === PRIMARY_FEED_PATH ? answer.primary : answer.important;
+      const listed =
+        path === FEED_PATH
+          ? mail
+          : mail.filter((entry) => named?.includes(entry.id));
+
+      response
+        .writeHead(200, {
+          "Content-Type": "application/atom+xml; charset=utf-8",
+        })
+        .end(
+          feed(
+            path === FEED_PATH ? answer.unreadCount : listed.length,
+            listed,
+            origins.gmail
+          )
+        );
+    }
+  };
   const answerMail = (request: IncomingMessage, response: ServerResponse) => {
     if (request.url === POPOUT_REDIRECT_PATH) {
       response.writeHead(302, { Location: ELSEWHERE_URL }).end();
@@ -236,34 +272,14 @@ export const startStandIn = async (): Promise<StandIn> => {
       return false;
     }
 
-    const answer = feeds.get(accountOf(request) ?? "") ?? { redirect: true };
-
     feedLabels.push(path === FEED_PATH ? "" : path.slice(FEED_PATH.length + 1));
 
-    if ("redirect" in answer) {
-      response.writeHead(302, { Location: `${origins.signIn}signin` }).end();
-    } else if (path === PRIMARY_FEED_PATH && answer.primary === undefined) {
-      response.writeHead(404, { "Content-Type": "text/html" }).end();
+    if (heldFeeds) {
+      heldFeeds.push(() => {
+        answerFeed(request, response, path);
+      });
     } else {
-      const mail = answer.mail ?? DEFAULT_MAIL;
-      const named =
-        path === PRIMARY_FEED_PATH ? answer.primary : answer.important;
-      const listed =
-        path === FEED_PATH
-          ? mail
-          : mail.filter((entry) => named?.includes(entry.id));
-
-      response
-        .writeHead(200, {
-          "Content-Type": "application/atom+xml; charset=utf-8",
-        })
-        .end(
-          feed(
-            path === FEED_PATH ? answer.unreadCount : listed.length,
-            listed,
-            origins.gmail
-          )
-        );
+      answerFeed(request, response, path);
     }
 
     return true;
@@ -356,6 +372,19 @@ export const startStandIn = async (): Promise<StandIn> => {
     refusedActions,
     failActions: (account) => {
       failing.add(account);
+    },
+    holdFeeds: () => {
+      heldFeeds = [];
+
+      return () => {
+        const answers = heldFeeds ?? [];
+
+        heldFeeds = undefined;
+
+        for (const answer of answers) {
+          answer();
+        }
+      };
     },
     holdActions: () => {
       held = [];

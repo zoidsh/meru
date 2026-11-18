@@ -81,3 +81,28 @@ test("a profile with no app open says Sign in required while its account is sign
       [["gmail"], "gmail"],
     ]);
 });
+
+test("a profile with no app open shows nothing there until its first poll ends", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [{ id: "p0", name: "Home", tabs: [], selectedTabId: "" }],
+    selectedProfileId: "p0",
+  });
+
+  const release = standIn.holdFeeds();
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const content = shell.getByRole("main", { name: "Content" });
+
+  await expect.poll(() => standIn.feedLabels.length).toBeGreaterThan(0);
+  await expect(content.getByRole("heading")).toHaveCount(0);
+
+  release();
+
+  await expect(
+    content.getByRole("region", { name: "Sign in required" })
+  ).toBeVisible();
+});
