@@ -211,9 +211,9 @@ export type BookmarkChoice =
    * Selects the profile's tab already at its URL, waking it if it sleeps,
    * or brings forward its own window if it is in one.
    */
-  | { kind: "select"; key: TabKey; ownWindow: boolean }
+  | { kind: "select"; bookmark: Bookmark; key: TabKey; ownWindow: boolean }
   /** Opens its URL as a new tab of its app, selected. */
-  | { kind: "open"; app: AppId; url: string };
+  | { kind: "open"; bookmark: Bookmark };
 
 /**
  * What choosing the profile's bookmark `id` does: a tab of the profile at
@@ -241,8 +241,9 @@ export const chooseBookmark = (
   return open
     ? {
         kind: "select",
+        bookmark,
         key: { profileId, tabId: open.id },
         ownWindow: inOwnWindow(open),
       }
-    : { kind: "open", app: bookmark.app, url: bookmark.url };
+    : { kind: "open", bookmark };
 };

@@ -220,11 +220,13 @@ describe(chooseBookmark, () => {
     ]).toStrictEqual([
       {
         kind: "select",
+        bookmark: saved[0],
         key: { profileId: PROFILE, tabId: "c" },
         ownWindow: false,
       },
       {
         kind: "select",
+        bookmark: saved[1],
         key: { profileId: PROFILE, tabId: "e" },
         ownWindow: true,
       },
@@ -241,7 +243,7 @@ describe(chooseBookmark, () => {
       chooseBookmark(state, PROFILE, "missing"),
       chooseBookmark(state, OTHER, "w"),
     ]).toStrictEqual([
-      { kind: "open", app: "calendar", url: WEEK },
+      { kind: "open", bookmark: saved[0] },
       undefined,
       undefined,
     ]);

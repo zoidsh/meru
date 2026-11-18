@@ -1,6 +1,6 @@
 import type { App } from "#core/apps.ts";
 import { findApp } from "#core/apps.ts";
-import { bookmarks, chooseBookmark } from "#core/bookmarks.ts";
+import { chooseBookmark } from "#core/bookmarks.ts";
 import { openableApps, splittableApps } from "#core/open-app.ts";
 import type { PaneDirection } from "#core/pane-tree.ts";
 import { splitFits, splitTarget } from "#core/split.ts";
@@ -170,13 +170,10 @@ export const createOpenApp = ({
         state().profiles.find(
           ({ id: candidate }) => candidate === open.profileId
         );
-      const bookmark =
-        profile &&
-        bookmarks(state(), profile.id).find((saved) => saved.id === id);
-      const app = bookmark && findApp(apps, bookmark.app);
       const choice = profile && chooseBookmark(state(), profile.id, id);
+      const app = choice && findApp(apps, choice.bookmark.app);
 
-      if (!open || !profile || !bookmark || !app || !choice) {
+      if (!open || !profile || !choice || !app) {
         log("Refused to open a bookmark the open launcher does not list");
 
         return;
@@ -186,7 +183,13 @@ export const createOpenApp = ({
 
       if (open.split) {
         if (fits(profile, open.split)) {
-          await openTab(profile.id, app, bookmark.url, undefined, open.split);
+          await openTab(
+            profile.id,
+            app,
+            choice.bookmark.url,
+            undefined,
+            open.split
+          );
         }
       } else if (choice.kind === "select") {
         if (choice.ownWindow) {
@@ -195,7 +198,7 @@ export const createOpenApp = ({
           await selectTab(choice.key);
         }
       } else {
-        await openTab(profile.id, app, bookmark.url);
+        await openTab(profile.id, app, choice.bookmark.url);
       }
     },
     /** Removes a bookmark the open launcher lists, which stays open. */
