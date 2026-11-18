@@ -95,6 +95,26 @@ describe(tabMenuItems, () => {
     ]).toStrictEqual(["closeBelow off", "closeBelow", "closeBelow"]);
   });
 
+  it("offers Open in default browser only for a page on the web", () => {
+    const current = state([
+      { ...tab("b", "drive"), url: "about:blank" },
+      { ...tab("f", "drive"), url: "file:///etc/hosts" },
+      { ...tab("h", "drive"), url: "http://example.com/" },
+    ]);
+
+    expect(
+      ["b", "f", "h"].map((tabId) =>
+        offered(current, tabId)?.find((item) =>
+          item.startsWith("openInBrowser")
+        )
+      )
+    ).toStrictEqual([
+      "openInBrowser off",
+      "openInBrowser off",
+      "openInBrowser",
+    ]);
+  });
+
   it("offers nothing for a tab that is not shown", () => {
     expect(offered(state([]), "gone")).toBeUndefined();
   });
@@ -110,6 +130,19 @@ describe(tabMenuAt, () => {
       { profileId: "p", tabId: "gmail", x: 0, y: 0 },
       { profileId: "p", tabId: "gmail", x: 800, y: 600 },
     ]);
+  });
+
+  it("refuses a tab of a profile that is not selected", () => {
+    const current = state([]);
+    const other = { ...newProfile("q", "Work"), tabs: [gmailTab()] };
+
+    expect(
+      tabMenuAt(
+        { ...current, profiles: [...current.profiles, other] },
+        { profileId: "q", tabId: "gmail", x: 10, y: 10 },
+        size
+      )
+    ).toBeUndefined();
   });
 
   it("refuses a point outside or between pixels, and a tab that is not shown", () => {

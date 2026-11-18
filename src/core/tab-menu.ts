@@ -1,5 +1,6 @@
 import { findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
+import { isWebUrl } from "./google-redirect.ts";
 import { isPinned, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 import { canCloseTab, closeTab, findTab } from "./tabs.ts";
@@ -99,7 +100,10 @@ export const tabMenuItems = (
     { id: "reload", enabled: loaded },
     { id: "duplicate", enabled: app !== undefined && !app.singleInstance },
     { id: "copyUrl", enabled: true },
-    { id: "openInBrowser", enabled: true },
+    {
+      id: "openInBrowser",
+      enabled: URL.canParse(tab.url) && isWebUrl(new URL(tab.url)),
+    },
     { id: "pin", enabled: true },
     ...(pinned
       ? [
@@ -117,8 +121,8 @@ export const tabMenuItems = (
 };
 
 /**
- * The menu for a tab asked for at a point, if the tab is shown and the
- * point in the content area, in whole CSS pixels.
+ * The menu for a tab asked for at a point, if the tab is shown, of the
+ * selected profile, and the point in the content area, in whole CSS pixels.
  */
 export const tabMenuAt = (
   state: State,
@@ -134,7 +138,9 @@ export const tabMenuAt = (
     x <= contentSize.width &&
     y <= contentSize.height;
 
-  return inside && findTab(state, { profileId, tabId })
+  return inside &&
+    profileId === state.selectedProfileId &&
+    findTab(state, { profileId, tabId })
     ? { profileId, tabId, x, y }
     : undefined;
 };

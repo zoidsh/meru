@@ -161,7 +161,7 @@ describe(createTabMenu, () => {
     ]);
   });
 
-  it("refuses what the menu does not offer its tab, and a page that is not on the web, and still closes", async () => {
+  it("refuses what the menu does not offer its tab, such as a page that is not on the web, and still closes", async () => {
     const { choose } = setup();
 
     expect([
@@ -178,7 +178,10 @@ describe(createTabMenu, () => {
         ["closed"],
       ],
       [
-        ["log", "Refused to open a tab's page that is not on the web outside"],
+        [
+          "log",
+          "Refused the tab menu's openInBrowser, which it does not offer",
+        ],
         ["closed"],
       ],
     ]);

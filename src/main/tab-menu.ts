@@ -43,16 +43,6 @@ export interface TabMenuDeps {
   log: (message: string) => void;
 }
 
-const isWebUrl = (url: string) => {
-  try {
-    const { protocol } = new URL(url);
-
-    return protocol === "https:" || protocol === "http:";
-  } catch {
-    return false;
-  }
-};
-
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -100,12 +90,7 @@ export const createTabMenu = ({
         break;
       }
       case "openInBrowser": {
-        if (isWebUrl(tab.url)) {
-          await systemBrowser.open(tab.url);
-        } else {
-          log("Refused to open a tab's page that is not on the web outside");
-        }
-
+        await systemBrowser.open(tab.url);
         break;
       }
       case "pin": {
