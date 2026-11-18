@@ -50,12 +50,27 @@ export const createOverlays = ({
     }
   };
 
+  /** Gives back the focus `closed` took, as its kind does; a toast took none. */
+  const giveBack = (closed: Overlay | undefined, toPage: boolean) => {
+    if (!closed || closed.kind === "toast") {
+      return;
+    }
+
+    focus.focus(
+      isMenu(closed) && !toPage
+        ? [{ kind: "shell" }]
+        : [{ kind: "front" }, { kind: "shell" }]
+    );
+  };
+
   const show = (overlay: Overlay) => {
     if (!view) {
       log(`The ${overlay.kind} overlay has no view to open in yet`);
 
       return;
     }
+
+    const replaced = open;
 
     clearTimeout(toastTimer);
     view.setBounds(bounds(overlay));
@@ -74,6 +89,11 @@ export const createOverlays = ({
     }
 
     notify();
+
+    if (overlay.kind === "toast") {
+      // A toast takes no focus, so what it replaced gives its own back.
+      giveBack(replaced, false);
+    }
   };
 
   const hide = ({ toPage = false } = {}) => {
@@ -83,16 +103,7 @@ export const createOverlays = ({
     open = undefined;
     view?.hide();
     notify();
-
-    if (closed?.kind === "toast") {
-      return;
-    }
-
-    focus.focus(
-      isMenu(closed) && !toPage
-        ? [{ kind: "shell" }]
-        : [{ kind: "front" }, { kind: "shell" }]
-    );
+    giveBack(closed, toPage);
   };
 
   const dispatch = (event: OverlayEvent, closing = {}) => {

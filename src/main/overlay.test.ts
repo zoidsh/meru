@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { newProfile, selectProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createFocus } from "./focus.ts";
-import { createOverlays } from "./overlay.ts";
+import { TOAST_DURATION, createOverlays } from "./overlay.ts";
 
 const two: State = {
   version: 1,
@@ -110,6 +110,58 @@ describe(createOverlays, () => {
       "focus front",
     ]);
     expect(overlays.current()).toBeUndefined();
+  });
+
+  it("shows a toast without taking focus, and gives none back when it closes by itself", () => {
+    vi.useFakeTimers();
+
+    const { overlays, focus, events } = setup();
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open({ kind: "toast", message: "no-room" });
+    vi.advanceTimersByTime(TOAST_DURATION);
+
+    expect(events).toStrictEqual([
+      "bounds 100",
+      "show",
+      "shell told toast",
+      "hide",
+      "shell told closed",
+    ]);
+    vi.useRealTimers();
+  });
+
+  it("gives back the focus a card or a menu took when a toast replaces it", () => {
+    const { overlays, focus, events } = setup();
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open({
+      kind: "tab-menu",
+      profileId: "a",
+      tabId: "gmail",
+      x: 10,
+      y: 60,
+    });
+    events.length = 0;
+    overlays.open({ kind: "toast", message: "no-room" });
+
+    expect(events).toStrictEqual([
+      "bounds 100",
+      "show",
+      "shell told toast",
+      "focus shell",
+    ]);
+
+    overlays.open(renameA);
+    events.length = 0;
+    overlays.open({ kind: "toast", message: "no-room" });
+
+    expect(events).toStrictEqual([
+      "bounds 100",
+      "show",
+      "shell told toast",
+      "focus front",
+    ]);
   });
 
   it("gives focus to the shell when a tab's menu closes, which puts it on the menu's tab", () => {

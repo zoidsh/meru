@@ -399,7 +399,19 @@ test("a pane's tab put to sleep shows the sleeping placeholder in its pane, and 
     .toStrictEqual([standIn.calendarUrl, standIn.url]);
 });
 
-test("a split that would leave a pane under the minimum is refused with a toast, which takes no focus and closes by itself", async ({
+/**
+ * As `overlay.e2e.ts`: whether the page holds Chromium's keyboard focus, with
+ * Playwright's emulation, which has every page claim it, off.
+ */
+const followRealFocus = async (page: Page) => {
+  const cdp = await page.context().newCDPSession(page);
+
+  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
+
+  return () => page.evaluate(() => document.hasFocus());
+};
+
+test("a split that would leave a pane under the minimum is refused with a toast, which takes no focus, gives back what a menu or a card it replaces took, and closes by itself", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -408,10 +420,35 @@ test("a split that would leave a pane under the minimum is refused with a toast,
 
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
-
   const overlay = await findOverlayDocument(app);
+  const calendar = await findPage(app, standIn.calendarUrl);
+  const calendarHasFocus = await followRealFocus(calendar);
 
-  await findPage(app, standIn.calendarUrl);
+  // The app is never active, so the system names no focused web contents;
+  // each one's own focus event, which main follows too, says which has it.
+  await app.evaluate(({ webContents }) => {
+    for (const each of webContents.getAllWebContents()) {
+      each.on("focus", () => {
+        Reflect.set(globalThis, "lastFocused", each.getURL());
+      });
+    }
+  });
+
+  const where = async () => {
+    const url = await app.evaluate(
+      () => Reflect.get(globalThis, "lastFocused") as string | undefined
+    );
+
+    // Nothing has moved focus since the page took it at launch.
+    if (url === undefined || url.startsWith(standIn.calendarUrl)) {
+      return (await calendarHasFocus()) ? "calendar" : "calendar, not real";
+    }
+
+    return url === "about:blank" ? "overlay" : url.split(":")[0];
+  };
+  const toast = overlay.getByText("Not enough room to split", { exact: true });
+  const calendarTab = tab(shell, CALENDAR_TITLE);
+
   // The window's least size, whose page area is too short for two panes.
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
@@ -419,19 +456,39 @@ test("a split that would leave a pane under the minimum is refused with a toast,
   await expect
     .poll(() => readViews(app).then(({ area }) => area.height))
     .toBe(480);
-  await shell.getByRole("tab", { name: CALENDAR_TITLE, exact: true }).focus();
+  await expect.poll(where).toBe("calendar");
+
+  // With nothing open, the page keeps its focus throughout.
   await clickMenuItem(app, "tab.splitDown");
-
-  const toast = overlay.getByText("Not enough room to split", { exact: true });
-
   await expect(toast).toBeVisible();
   await expect(overlay.getByRole("dialog")).toHaveCount(0);
-  await expect(
-    shell.getByRole("tab", { name: CALENDAR_TITLE, exact: true })
-  ).toBeFocused();
+  await expect.poll(where).toBe("calendar");
   await expect(toast).toHaveCount(0, { timeout: 8000 });
+  expect(await where()).toBe("calendar");
+
+  // From the tab's menu, which had focus: back on the menu's tab.
+  await calendarTab.click({ button: "right" });
   await expect(
-    shell.getByRole("tab", { name: CALENDAR_TITLE, exact: true })
-  ).toBeFocused();
+    overlay.getByRole("menu", { name: CALENDAR_TITLE })
+  ).toBeVisible();
+  await expect.poll(where).toBe("overlay");
+  await overlay
+    .getByRole("menuitem", { name: "Split down", exact: true })
+    .click();
+  await expect(toast).toBeVisible();
+  await expect.poll(where).toBe("meru-app");
+  await expect(calendarTab).toBeFocused();
+  await expect(toast).toHaveCount(0, { timeout: 8000 });
+
+  // Over the rename card, which had focus: back in the page.
+  await clickMenuItem(app, "profile.rename");
+  await expect(
+    overlay.getByRole("dialog", { name: "Rename profile" })
+  ).toBeVisible();
+  await expect.poll(where).toBe("overlay");
+  await clickMenuItem(app, "tab.splitDown");
+  await expect(toast).toBeVisible();
+  await expect.poll(where).toBe("calendar");
+
   expect(await savedSplit(userDataDir)).toBeUndefined();
 });
