@@ -26,7 +26,6 @@ import {
 import type { State } from "#core/state.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
-import { totalUnread } from "#core/unread.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
 import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
@@ -48,7 +47,6 @@ import { createWindowFactory } from "#platform/window.ts";
 import { zoomFocused } from "#platform/zoom.ts";
 
 import { createApplicationMenu } from "./application-menu.ts";
-import { createUnreadBadge } from "./badge.ts";
 import { createBookmarks } from "./bookmarks.ts";
 import { createCatchUp } from "./catch-up.ts";
 import { COMMANDS } from "./commands.ts";
@@ -92,14 +90,13 @@ import {
   shellTabStatus,
 } from "./shell-handlers.ts";
 import { serveShellContract } from "./shell-ipc.ts";
-import { createShellWindow, hideOnClose } from "./shell-window.ts";
+import { createShellWindow } from "./shell-window.ts";
 import { createShowGmail } from "./show-gmail.ts";
 import { createSidebar } from "./sidebar.ts";
 import { STATE_FILE_NAME, saveState } from "./state-store.ts";
 import { loadStores } from "./stores.ts";
 import { createTabMenu } from "./tab-menu.ts";
 import { createTabViews } from "./tab-views.ts";
-import { createTray } from "./tray.ts";
 import {
   USER_STYLES_FILE_NAME,
   USER_STYLES_MAX_BYTES,
@@ -111,12 +108,11 @@ import {
   gmailPageCapture,
   soundOutput,
   suiteRunsInBackground,
-  systemBadge,
   systemClipboard,
   systemNotifier,
-  systemTrays,
   testBuildSetup,
 } from "./wiring/test-build.ts";
+import { wireTray } from "./wiring/tray.ts";
 import { createZoom } from "./zoom.ts";
 
 const APP_SCHEME = "meru-app";
@@ -1182,83 +1178,19 @@ const start = async () => {
     log: console.error,
   });
 
-  const reveal = () => {
-    revealWindow(shell.window, background);
-  };
-  const unread = (profileId: string) => mail.mail(profileId).unreadCount;
-  const tray = createTray({
-    trays: systemTrays(),
+  wireTray({
     platform,
-    productName: lifecycle.name,
-    setting: settings.get,
-    isDark: theme.isDark,
-    state: profiles.get,
-    unread,
-    window: shell.window,
-    reveal: (profileId) => {
-      if (profileId === undefined) {
-        reveal();
-      } else {
-        revealGmail(profileId);
-      }
-    },
-    jumpTo: showGmail.jumpTo,
-    quit: lifecycle.quit,
-    log: console.error,
-  });
-  const badge = createUnreadBadge({
-    badge: systemBadge(shell.window),
-    platform,
-    enabled: () => settings.get("unreadBadge"),
-    total: () =>
-      totalUnread(profiles.get().profiles.map((profile) => unread(profile.id))),
-  });
-  const showUnread = () => {
-    tray.update();
-    badge.update();
-  };
-
-  mail.onChange(showUnread);
-  profiles.onChange(showUnread);
-  settings.onChange("unreadBadge", badge.update);
-  settings.onChange("trayIconColor", tray.update);
-  settings.onChange("trayUnreadCount", tray.update);
-  settings.onChange("tray", () => {
-    tray.update();
-
-    // Off, the tray can no longer bring a hidden window back on Windows and
-    // Linux.
-    if (!tray.isShown() && !isMacOS && !shell.window.isVisible()) {
-      reveal();
-    }
-  });
-  theme.onChange(tray.update);
-  // The menu's Show or Hide follows the window.
-  shell.window.on("show", tray.update);
-  shell.window.on("hide", tray.update);
-  shell.window.on("minimize", tray.update);
-  shell.window.on("restore", tray.update);
-  showUnread();
-
-  const closing = hideOnClose({
-    window: shell.window,
-    platform,
-    trayShown: tray.isShown,
-    quit: lifecycle.quit,
-  });
-
-  lifecycle.onBeforeQuit(() => {
-    closing.markQuitting();
-    doNotDisturb.dispose();
-    badge.close();
-    tray.close();
-  });
-
-  lifecycle.onActivate(reveal);
-  lifecycle.onSecondInstance(reveal);
-
-  lifecycle.onWindowAllClosed(() => {
-    lifecycle.quit();
+    isMacOS,
+    background,
+    lifecycle,
+    settings,
+    theme,
+    profiles,
+    mail,
+    shell,
+    showGmail,
+    revealGmail,
+    doNotDisturb,
   });
 
   await shell.load();
