@@ -2,8 +2,10 @@ import { isEqual } from "es-toolkit";
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 
-import { tabDrop } from "#core/tab-drop.ts";
-import type { Box, Drop } from "#core/tab-drop.ts";
+import { sidebarDrop } from "#core/tab-drop.ts";
+import type { Box, DropTile, SidebarDrop } from "#core/tab-drop.ts";
+
+import { followPointer } from "./follow-pointer.ts";
 
 /** How far the pointer moves, across and down together, before a press drags. */
 const THRESHOLD = 6;
@@ -14,12 +16,12 @@ const SCROLL_STEP = 8;
 
 interface Drag {
   tabId: string;
-  element: HTMLElement;
+  pinned: boolean;
   point: { x: number; y: number };
   live: boolean;
   /** Escape or the window losing focus ended it before the pointer came up. */
   cancelled: boolean;
-  drop: Drop | undefined;
+  drop: SidebarDrop | undefined;
   frame: number | undefined;
   stop: () => void;
 }
@@ -27,34 +29,59 @@ interface Drag {
 const inside = (box: Box, { x, y }: { x: number; y: number }) =>
   x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
 
+const boxOf = (element: Element): Box => {
+  const { left, top, right, bottom } = element.getBoundingClientRect();
+
+  return { left, top, right, bottom };
+};
+
+const tilesOf = (parent: Element): DropTile[] =>
+  [...parent.querySelectorAll<HTMLElement>(":scope > [data-drop-id]")].map(
+    (tile) => ({ id: tile.dataset.dropId ?? "", box: boxOf(tile) })
+  );
+
+/** What shows where a drag would land: a line between places, or a ring on a tab. */
+export interface DragMark {
+  kind: "line" | "ring";
+  box: Box;
+}
+
 /**
- * Dragging a tab to another place in its area of the sidebar, the pinned
- * tiles or the list, which the area's element marks with `data-tab-area`.
- * A press drags once the pointer has moved a few pixels, so a click still
- * selects; the pointer is captured, so the drag keeps hearing it over the
- * page's view beside the sidebar and beyond the window. Releasing outside
- * the sidebar, Escape, the window losing focus and anything that takes the
- * pointer away end it with no move.
+ * Dragging a tab in the sidebar: to another place in its area, the pinned
+ * tiles or the list, which the area's element marks with `data-tab-area`;
+ * onto another tab, which splits the two; within the split's box, marked
+ * `data-split-box`, among its tabs; or out of it. A press drags once the
+ * pointer has moved a few pixels, so a click still selects; the pointer is
+ * captured, so the drag keeps hearing it over the page's view beside the
+ * sidebar and beyond the window. Releasing where nothing would land,
+ * Escape, the window losing focus and anything that takes the pointer away
+ * end it with nothing changed.
  */
 export const useTabDrag = ({
   sidebar,
   blocked,
   tabIds,
-  onMove,
+  split,
+  onDrop,
 }: {
   sidebar: RefObject<HTMLElement | null>;
   /** While an overlay is open, which a drag cannot start under. */
   blocked: boolean;
   /** The profile's tabs, so a drag whose tab goes ends. */
   tabIds: readonly string[];
-  onMove: (tabId: string, before: string | undefined) => void;
+  /** Whether the profile has a split, which a tab outside it cannot join. */
+  split: boolean;
+  onDrop: (tabId: string, drop: SidebarDrop) => void;
 }) => {
-  const [line, setLine] = useState<Box>();
+  const [mark, setMark] = useState<DragMark>();
   const drag = useRef<Drag>(undefined);
   const swallowClick = useRef(false);
 
+  /** The area the tab lands in: its own, the pinned tiles or the list. */
   const areaOf = (current: Drag) => {
-    const area = current.element.closest<HTMLElement>("[data-tab-area]");
+    const area = sidebar.current?.querySelector<HTMLElement>(
+      `[data-tab-area="${current.pinned ? "pinned" : "listed"}"]`
+    );
     const scroller = area?.closest<HTMLElement>('[data-slot="scroll-area"]');
     const viewport = area?.closest<HTMLElement>(
       '[data-slot="scroll-area-viewport"]'
@@ -65,49 +92,106 @@ export const useTabDrag = ({
       : undefined;
   };
 
-  /** Where the drag would land with the pointer where it is. */
-  const aim = (current: Drag) => {
+  /**
+   * The places of the area the tab lands in while the pointer is over it;
+   * the empty sidebar below the list counts as the list's end, and for a
+   * pinned tab leaving the box, as the pinned area's.
+   */
+  const placesAt = (current: Drag, bounds: Box, boxed: boolean) => {
     const parts = areaOf(current);
-    const bounds = sidebar.current?.getBoundingClientRect();
 
-    if (!parts || !bounds) {
+    if (!parts) {
       return;
     }
 
-    const own = parts.scroller.getBoundingClientRect();
-    // The empty sidebar below the list counts as the list's end.
+    const own = boxOf(parts.scroller);
     const region = {
       left: bounds.left,
       top: own.top,
       right: bounds.right,
-      bottom:
-        parts.area.dataset.tabArea === "listed" ? bounds.bottom : own.bottom,
+      bottom: current.pinned && !boxed ? own.bottom : bounds.bottom,
     };
 
-    if (!inside(region, current.point)) {
+    return inside(region, current.point) ? tilesOf(parts.area) : undefined;
+  };
+
+  /**
+   * With no list drawn, as when every tab not pinned is in a box among the
+   * pinned tiles, the sidebar below the pinned area is the list's end, a
+   * tab not pinned landing there by a line above Open app.
+   */
+  const listEnd = (current: Drag, bounds: Box): SidebarDrop | undefined => {
+    const root = sidebar.current;
+    const end = root?.querySelector("[data-list-end]");
+    const pinned = root
+      ?.querySelector('[data-tab-area="pinned"]')
+      ?.closest('[data-slot="scroll-area"]');
+
+    if (current.pinned || areaOf(current) || !end || !pinned) {
       return;
     }
 
-    return tabDrop(
-      [
-        ...parts.area.querySelectorAll<HTMLElement>(":scope > [data-drop-id]"),
-      ].map((tile) => ({
-        id: tile.dataset.dropId ?? "",
-        box: tile.getBoundingClientRect(),
-      })),
-      current.tabId,
-      current.point
+    const top = boxOf(pinned).bottom;
+    const { left, right, top: endTop } = boxOf(end);
+    const y = (top + endTop) / 2 - 1;
+
+    return inside({ ...bounds, top }, current.point)
+      ? {
+          kind: "move",
+          before: undefined,
+          line: { left: left - 3, top: y, right: right + 3, bottom: y + 2 },
+        }
+      : undefined;
+  };
+
+  /** Where the drag would land with the pointer where it is. */
+  const aim = (current: Drag) => {
+    const root = sidebar.current;
+    const box = root?.querySelector("[data-split-box]") ?? undefined;
+
+    if (!root) {
+      return;
+    }
+
+    const bounds = boxOf(root);
+    const tabs = [...root.querySelectorAll<HTMLElement>("[data-tab-id]")].map(
+      (tab) => ({
+        id: tab.dataset.tabId ?? "",
+        box: boxOf(tab),
+        boxed: box?.contains(tab) ?? false,
+      })
+    );
+
+    const boxed = tabs.some((tab) => tab.id === current.tabId && tab.boxed);
+
+    return (
+      sidebarDrop({
+        dragged: { id: current.tabId, pinned: current.pinned, boxed },
+        point: current.point,
+        tabs,
+        split,
+        box: box && { box: boxOf(box), rows: tilesOf(box) },
+        area: placesAt(current, bounds, boxed),
+      }) ?? listEnd(current, bounds)
     );
   };
 
-  /** Sets the line, redrawing the sidebar only when it moves. */
-  const draw = (next: Box | undefined) => {
-    setLine((previous) => (isEqual(previous, next) ? previous : next));
+  /** Sets the mark, redrawing the sidebar only when it moves. */
+  const draw = (next: DragMark | undefined) => {
+    setMark((previous) => (isEqual(previous, next) ? previous : next));
   };
 
   const show = (current: Drag) => {
     current.drop = current.cancelled ? undefined : aim(current);
-    draw(current.drop?.line);
+
+    const { drop } = current;
+
+    draw(
+      drop &&
+        (drop.kind === "onto"
+          ? { kind: "ring", box: drop.ring }
+          : { kind: "line", box: drop.line })
+    );
   };
 
   const scroll = (current: Drag) => {
@@ -173,7 +257,7 @@ export const useTabDrag = ({
     }
 
     if (dropped && current.live && current.drop) {
-      onMove(current.tabId, current.drop.before);
+      onDrop(current.tabId, current.drop);
     }
   };
 
@@ -195,6 +279,7 @@ export const useTabDrag = ({
 
   const onPointerDown = (
     tabId: string,
+    pinned: boolean,
     event: ReactPointerEvent<HTMLElement>
   ) => {
     // A press left over from a drag whose release never came.
@@ -210,14 +295,7 @@ export const useTabDrag = ({
     const start = { x: event.clientX, y: event.clientY };
 
     const move = (next: PointerEvent) => {
-      if (next.pointerId !== pointerId || drag.current !== current) {
-        return;
-      }
-
-      // A release that never reached the shell.
-      if (next.buttons === 0) {
-        finish(false);
-
+      if (drag.current !== current) {
         return;
       }
 
@@ -237,7 +315,7 @@ export const useTabDrag = ({
         try {
           element.setPointerCapture(pointerId);
         } catch {
-          // Gone already, which `lostpointercapture` does not then say.
+          // The pointer is gone already, which its release or loss then ends.
         }
 
         scroll(current);
@@ -247,21 +325,13 @@ export const useTabDrag = ({
     };
 
     const up = (next: PointerEvent) => {
-      if (next.pointerId === pointerId) {
-        // Where it lands is where the pointer is let go.
-        if (current.live) {
-          current.point = { x: next.clientX, y: next.clientY };
-          show(current);
-        }
-
-        finish(true);
+      // Where it lands is where the pointer is let go.
+      if (current.live) {
+        current.point = { x: next.clientX, y: next.clientY };
+        show(current);
       }
-    };
 
-    const lost = (next: PointerEvent) => {
-      if (next.pointerId === pointerId) {
-        finish(false);
-      }
+      finish(true);
     };
 
     const key = (next: KeyboardEvent) => {
@@ -274,7 +344,7 @@ export const useTabDrag = ({
 
     const current: Drag = {
       tabId,
-      element,
+      pinned,
       point: start,
       live: false,
       cancelled: false,
@@ -285,31 +355,31 @@ export const useTabDrag = ({
           cancelAnimationFrame(current.frame);
         }
 
-        removeListeners();
-      },
-    };
+        stopFollowing();
+        globalThis.removeEventListener("keydown", key, true);
+        globalThis.removeEventListener("blur", cancel);
 
-    const removeListeners = () => {
-      globalThis.removeEventListener("pointermove", move);
-      globalThis.removeEventListener("pointerup", up);
-      globalThis.removeEventListener("pointercancel", lost);
-      element.removeEventListener("lostpointercapture", lost);
-      globalThis.removeEventListener("keydown", key, true);
-      globalThis.removeEventListener("blur", cancel);
+        if (element.hasPointerCapture(pointerId)) {
+          element.releasePointerCapture(pointerId);
+        }
+      },
     };
 
     drag.current = current;
 
-    globalThis.addEventListener("pointermove", move);
-    globalThis.addEventListener("pointerup", up);
-    globalThis.addEventListener("pointercancel", lost);
-    element.addEventListener("lostpointercapture", lost);
+    const stopFollowing = followPointer(globalThis, pointerId, {
+      move,
+      up,
+      lost: () => {
+        finish(false);
+      },
+    });
     globalThis.addEventListener("keydown", key, true);
     globalThis.addEventListener("blur", cancel);
   };
 
   return {
-    line,
+    mark,
     onPointerDown,
     /** Whether a click is the end of a drag, which selects nothing. */
     isDragClick: () => swallowClick.current,

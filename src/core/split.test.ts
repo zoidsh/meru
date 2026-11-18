@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { APPS, findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
+import { paneTabs as paneTabsOf } from "./pane-tree.ts";
 import type { PaneTree, Split } from "./pane-tree.ts";
 import {
   boxOrder,
@@ -9,10 +10,13 @@ import {
   isMaximized,
   resizedSplit,
   shownPanes,
+  splitBeside,
   splitFits,
   splitPanes,
+  splitRoomy,
   splitTarget,
   splitWith,
+  withBoxMove,
   withMaximized,
   withoutPane,
 } from "./split.ts";
@@ -21,9 +25,12 @@ import type { Profile, State, Tab } from "./state.ts";
 import {
   closeTab,
   maximizePane,
+  moveInBox,
+  moveTab,
   openTab,
   resizeSplit,
   separateTab,
+  splitOntoTab,
   splitTab,
 } from "./tabs.ts";
 import { planViews } from "./views.ts";
@@ -590,5 +597,208 @@ describe(resizeSplit, () => {
     expect(
       of(readBack(structuredClone(encodeState(resized as State))))?.split
     ).toStrictEqual(uneven);
+  });
+});
+
+const leaves = (next: Profile | undefined) =>
+  next?.split && paneTabsOf(next.split.root);
+
+const order = (next: State | undefined) =>
+  next?.profiles[0]?.tabs.flatMap((each) => ("id" in each ? [each.id] : []));
+
+describe(splitBeside, () => {
+  it("starts a split with the tab beside a lone target, on the side asked, selected", () => {
+    expect([
+      of(state(splitBeside(profile("a"), "b", "a", "row") as Profile)),
+      of(state(splitBeside(profile("a"), "b", "c", "column", true) as Profile)),
+    ]).toStrictEqual([
+      { selected: "b", split: split("a", "b") },
+      {
+        selected: "b",
+        split: {
+          root: {
+            direction: "column",
+            children: [
+              { size: 0.5, pane: "b" },
+              { size: 0.5, pane: "c" },
+            ],
+          },
+        },
+      },
+    ]);
+  });
+
+  it("puts the tab beside a target in the split, and moves a tab of the split there from its own pane", () => {
+    expect([
+      splitBeside(profile("a", split("a", "b")), "c", "b", "row")?.split,
+      splitBeside(profile("a", split("a", "b", "c")), "a", "c", "row")?.split,
+      splitBeside(profile("a", split("a", "b")), "a", "b", "row")?.split,
+    ]).toStrictEqual([
+      {
+        root: {
+          direction: "row",
+          children: [
+            { size: 0.5, pane: "a" },
+            { size: 0.25, pane: "b" },
+            { size: 0.25, pane: "c" },
+          ],
+        },
+      },
+      {
+        root: {
+          direction: "row",
+          children: [
+            { size: 0.5, pane: "b" },
+            { size: 0.25, pane: "c" },
+            { size: 0.25, pane: "a" },
+          ],
+        },
+      },
+      split("b", "a"),
+    ]);
+  });
+
+  it("ends Maximize, which any change to the split does", () => {
+    expect(
+      splitBeside(
+        profile("a", { ...split("a", "b"), maximized: true }),
+        "c",
+        "a",
+        "row"
+      )?.split?.maximized
+    ).toBeUndefined();
+  });
+
+  it("refuses a tab put beside itself, a tab or target not shown, and a target outside the split while there is one", () => {
+    expect([
+      splitBeside(profile("a"), "a", "a", "row"),
+      splitBeside(profile("a"), "gone", "a", "row"),
+      splitBeside(profile("a"), "a", "gone", "row"),
+      splitBeside(profile("a", split("a", "b")), "c", "d", "row"),
+      splitBeside(profile("a", split("a", "b")), "a", "d", "row"),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined, undefined]);
+  });
+});
+
+describe(splitRoomy, () => {
+  it("fits every pane on screen at the minimum, and anything with no split on screen", () => {
+    const three = profile("a", split("a", "b", "c"));
+
+    expect([
+      splitRoomy(three, { width: 736, height: 600 }),
+      splitRoomy(three, { width: 735, height: 600 }),
+      splitRoomy(profile("d", split("a", "b", "c")), {
+        width: 100,
+        height: 100,
+      }),
+    ]).toStrictEqual([true, false, true]);
+  });
+});
+
+describe(withBoxMove, () => {
+  const tabs = [tab("a"), tab("b"), tab("c"), { ...tab("p"), pinned: true }];
+  const stored: Split = {
+    root: {
+      direction: "row",
+      children: [
+        { size: 0.2, pane: "a" },
+        { size: 0.3, pane: "p" },
+        {
+          size: 0.5,
+          pane: {
+            direction: "column",
+            children: [
+              { size: 0.6, pane: "b" },
+              { size: 0.4, pane: "c" },
+            ],
+          },
+        },
+      ],
+    },
+  };
+
+  it("moves the tab among the box's unpinned tabs, the panes taking them in the new order with every split and size kept", () => {
+    const moved = withBoxMove(profile("a", stored, tabs), "c", "a");
+
+    expect([
+      leaves(moved),
+      leaves(withBoxMove(profile("a", stored, tabs), "a")),
+      moved?.split?.root.children.map((child) => child.size),
+    ]).toStrictEqual([
+      ["c", "p", "a", "b"],
+      ["b", "p", "c", "a"],
+      [0.2, 0.3, 0.5],
+    ]);
+  });
+
+  it("moves no pinned tab, nothing above one, and nothing to where it stands", () => {
+    expect([
+      withBoxMove(profile("a", stored, tabs), "p", "a"),
+      withBoxMove(profile("a", stored, tabs), "a", "p"),
+      withBoxMove(profile("a", stored, tabs), "a", "b"),
+      withBoxMove(profile("a", stored, tabs), "c"),
+      withBoxMove(profile("a", stored, tabs), "d"),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined, undefined]);
+  });
+});
+
+describe("the sidebar's drops on a split", () => {
+  it("splits a tab dropped onto another, the dragged one on the right; a pinned tab keeps its pin", () => {
+    const pinned = [tab("a"), { ...tab("b"), pinned: true }];
+    const next = splitOntoTab(
+      state(profile("a", undefined, pinned)),
+      key("b"),
+      "a"
+    );
+
+    expect([
+      of(next),
+      next?.profiles[0]?.tabs.find((each) => "id" in each && each.id === "b"),
+    ]).toStrictEqual([
+      { selected: "b", split: split("a", "b") },
+      { ...tab("b"), pinned: true },
+    ]);
+  });
+
+  it("refuses a drop onto a tab outside the split while there is one", () => {
+    expect(
+      splitOntoTab(state(profile("a", split("a", "b"))), key("c"), "d")
+    ).toBeUndefined();
+  });
+
+  it("moves a tab of the box among the others, its pane with it", () => {
+    expect(
+      of(moveInBox(state(profile("a", split("a", "b", "c"))), key("c"), "a"))
+    ).toStrictEqual({ selected: "a", split: split("c", "a", "b") });
+  });
+
+  it("takes a tab moved out of the box out of the split, to its place in the list, above or below the box", () => {
+    const three = state(profile("a", split("b", "c", "d")));
+
+    expect([
+      [
+        order(moveTab(three, key("c"), "a")),
+        of(moveTab(three, key("c"), "a"))?.split,
+      ],
+      [
+        order(moveTab(three, key("b"), "b")),
+        of(moveTab(three, key("b"), "b"))?.split,
+      ],
+      [order(moveTab(three, key("c"))), of(moveTab(three, key("c")))?.split],
+    ]).toStrictEqual([
+      [["gmail", "c", "a", "b", "d"], split("b", "d")],
+      [["gmail", "a", "b", "c", "d"], split("c", "d")],
+      [["gmail", "a", "b", "d", "c"], split("b", "d")],
+    ]);
+  });
+
+  it("takes a pinned tab moved out of the box out of the split, pinned still", () => {
+    const tabs = [tab("a"), { ...tab("b"), pinned: true }, tab("c")];
+    const next = moveTab(state(profile("a", split("b", "c"), tabs)), key("b"));
+
+    expect([
+      of(next)?.split,
+      next?.profiles[0]?.tabs.find((each) => "id" in each && each.id === "b"),
+    ]).toStrictEqual([undefined, { ...tab("b"), pinned: true }]);
   });
 });

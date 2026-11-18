@@ -7,13 +7,14 @@ import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
 import { profileMenuItems } from "#core/profile-menu.ts";
-import { boxOrder, isMaximized } from "#core/split.ts";
+import { boxOrder, isMaximized, splitRoomy } from "#core/split.ts";
 import { isAsleep, isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import { tabMenuItems } from "#core/tab-menu.ts";
-import { findTab } from "#core/tabs.ts";
+import { findTab, splitOntoTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
+import type { Size } from "#core/window-bounds.ts";
 import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
 
 import type { Command } from "./commands.ts";
@@ -33,8 +34,17 @@ import type { TabMenu } from "./tab-menu.ts";
 export interface ShellHandlersDeps {
   profiles: Pick<
     Profiles,
-    "get" | "select" | "rename" | "closeTab" | "moveTab" | "maximizePane"
+    | "get"
+    | "select"
+    | "rename"
+    | "closeTab"
+    | "moveTab"
+    | "moveInBox"
+    | "splitOntoTab"
+    | "maximizePane"
   >;
+  /** The page area's size, which a split's panes must fit. */
+  pageSize: () => Size;
   overlays: Pick<Overlays, "open" | "close" | "current">;
   /** Selecting a tab through them wakes it if it sleeps. */
   tabs: {
@@ -254,6 +264,7 @@ export const createShellHandlers = ({
   openApp,
   tabMenu,
   panes,
+  pageSize,
   profileMenu,
   openGmail,
   window,
@@ -281,6 +292,36 @@ export const createShellHandlers = ({
         `Refused to move tab ${profileId}/${tabId} of a profile not selected`
       );
     }
+  },
+  moveInBox: async ({ profileId, tabId, before }) => {
+    if (profileId === profiles.get().selectedProfileId) {
+      await profiles.moveInBox({ profileId, tabId }, before);
+    } else {
+      log(
+        `Refused to move tab ${profileId}/${tabId} of a profile not selected`
+      );
+    }
+  },
+  splitOntoTab: async ({ profileId, tabId, target }) => {
+    const state = profiles.get();
+
+    if (profileId !== state.selectedProfileId) {
+      log(
+        `Refused to split tab ${profileId}/${tabId} of a profile not selected`
+      );
+
+      return;
+    }
+
+    const next = splitOntoTab(state, { profileId, tabId }, target);
+
+    if (next && !splitRoomy(selectedProfile(next), pageSize())) {
+      overlays.open({ kind: "toast", message: "no-room" });
+
+      return;
+    }
+
+    await profiles.splitOntoTab({ profileId, tabId }, target);
   },
   closeTab: async (key) => {
     await profiles.closeTab(key);

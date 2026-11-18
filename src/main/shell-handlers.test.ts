@@ -28,6 +28,7 @@ const setup = ({
   state = two,
   overlay = undefined as Overlay | undefined,
   sidebar = "narrow" as SidebarState,
+  pageSize = { width: 1000, height: 600 },
 } = {}) => {
   const renamed: [string, string][] = [];
   let open = overlay;
@@ -78,7 +79,18 @@ const setup = ({
 
         return Promise.resolve(true);
       },
+      moveInBox: (key, before) => {
+        calls.push(["moveInBox", key, before]);
+
+        return Promise.resolve(true);
+      },
+      splitOntoTab: (key, target) => {
+        calls.push(["splitOnto", key, target]);
+
+        return Promise.resolve(true);
+      },
     },
+    pageSize: () => pageSize,
     overlays: {
       open: (next) => {
         open = next;
@@ -249,6 +261,46 @@ describe(createShellHandlers, () => {
     expect([shell.calls, shell.logged]).toStrictEqual([
       [["move", { profileId: "a", tabId: "t1" }, "gmail"]],
       ["Refused to move tab b/gmail of a profile not selected"],
+    ]);
+  });
+
+  it("splits a tab dropped onto another where the panes fit, and otherwise opens the no-room toast", async () => {
+    const tabs: State = {
+      ...two,
+      profiles: [
+        {
+          ...newProfile("a", "Default"),
+          tabs: [
+            gmailTab(),
+            { id: "t1", app: "calendar", url: "https://c.test/", title: "" },
+          ],
+        },
+      ],
+    };
+    const roomy = setup({ state: tabs });
+    const cramped = setup({
+      state: tabs,
+      pageSize: { width: 487, height: 600 },
+    });
+    const key = { profileId: "a", tabId: "t1" };
+
+    await roomy.handlers.splitOntoTab({ ...key, target: "gmail" });
+    await cramped.handlers.splitOntoTab({ ...key, target: "gmail" });
+    await roomy.handlers.moveInBox({ ...key, before: "gmail" });
+
+    expect([
+      roomy.calls,
+      roomy.overlays,
+      cramped.calls,
+      cramped.overlays,
+    ]).toStrictEqual([
+      [
+        ["splitOnto", key, "gmail"],
+        ["moveInBox", key, "gmail"],
+      ],
+      [],
+      [],
+      [{ kind: "toast", message: "no-room" }],
     ]);
   });
 

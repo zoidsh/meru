@@ -61,10 +61,28 @@ export const SHELL_CALLS = {
   closeTab: { request: tabKey, response: z.undefined() },
   /**
    * Moves a tab of the selected profile within its area, the pinned tabs or
-   * the rest, to just before the tab `before` names, or to the area's end.
+   * the rest, to just before the tab `before` names, or to the area's end;
+   * a tab of the split leaves it on the way.
    */
   moveTab: {
     request: z.object({ profileId, tabId, before: z.optional(tabId) }),
+    response: z.undefined(),
+  },
+  /**
+   * Moves a tab of the selected profile's split box that is not pinned among
+   * the box's other such tabs, to just before `before` or after the last,
+   * its pane with it.
+   */
+  moveInBox: {
+    request: z.object({ profileId, tabId, before: z.optional(tabId) }),
+    response: z.undefined(),
+  },
+  /**
+   * Puts a tab of the selected profile dropped onto `target` in the sidebar
+   * in a new pane right of the target's, or shows that there is no room.
+   */
+  splitOntoTab: {
+    request: z.object({ profileId, tabId, target: tabId }),
     response: z.undefined(),
   },
   /**

@@ -681,6 +681,7 @@ export const Sidebar = ({
   const layout = sidebarLayout(tabs.tabs, tabs.box ?? undefined);
   const boxed = new Set(layout.box.map((tab) => tab.id));
   const boxPinned = layout.pinned.some((item) => item.kind === "box");
+  const boxRows = layout.box.filter((tab) => !tab.pinned);
   // A box in the pinned area is always first, so no tab moves past it.
   const pinnedTabs = layout.pinned.flatMap((item) =>
     item.kind === "tab" ? [item] : []
@@ -755,7 +756,12 @@ export const Sidebar = ({
   const moving = useRef<{ tabId: string; announce: boolean }>(undefined);
   // Written in place rather than through state, as the list is drawn.
   const announcement = useRef<HTMLOutputElement>(null);
-  const order = tabs.tabs.map((tab) => tab.id).join(" ");
+  // The box's order too, which a move within it changes alone.
+  const order = [
+    ...tabs.tabs.map((tab) => tab.id),
+    "in the box:",
+    ...layout.box.map((tab) => tab.id),
+  ].join(" ");
   const drawnOrder = useRef(order);
 
   useLayoutEffect(() => {
@@ -784,7 +790,9 @@ export const Sidebar = ({
     }
 
     if (moved.announce) {
-      const area = itemTabs(areaOf(tab).filter((item) => item.kind === "tab"));
+      const area = boxed.has(tab.id)
+        ? boxRows
+        : itemTabs(areaOf(tab).filter((item) => item.kind === "tab"));
       const title = tabTitle(tab);
       const position = area.indexOf(tab) + 1;
       const count = area.length;
@@ -812,17 +820,31 @@ export const Sidebar = ({
     });
   };
 
+  const moveInBox = (tabId: string, before: string | undefined) => {
+    shellCalls().moveInBox({
+      profileId,
+      tabId,
+      ...(before !== undefined && { before }),
+    });
+  };
+
   const moveBy = (tab: ShellTab, step: number) => {
-    // A tab in the box keeps the place its pane gives it.
-    if (boxed.has(tab.id)) {
+    // A pinned tab in the box keeps its place; another moves among the
+    // box's others, its pane with it.
+    if (boxed.has(tab.id) && tab.pinned) {
       return false;
     }
 
+    const inBox = boxed.has(tab.id);
     const area = areaOf(tab);
     const to =
-      area.findIndex((item) => item.kind === "tab" && item.tab === tab) + step;
+      (inBox
+        ? boxRows.indexOf(tab)
+        : area.findIndex((item) => item.kind === "tab" && item.tab === tab)) +
+      step;
+    const length = inBox ? boxRows.length : area.length;
 
-    if (to < 0 || to >= area.length) {
+    if (to < 0 || to >= length) {
       const title = tabTitle(tab);
 
       announcement.current?.replaceChildren(
@@ -842,7 +864,12 @@ export const Sidebar = ({
       return false;
     }
 
-    move(tab.id, placeOf(area[step < 0 ? to : to + 1]), true);
+    if (inBox) {
+      moving.current = { tabId: tab.id, announce: true };
+      moveInBox(tab.id, boxRows[step < 0 ? to : to + 1]?.id);
+    } else {
+      move(tab.id, placeOf(area[step < 0 ? to : to + 1]), true);
+    }
 
     return true;
   };
@@ -851,8 +878,22 @@ export const Sidebar = ({
     sidebar,
     blocked: overlay !== undefined && overlay.kind !== "none",
     tabIds: tabs.tabs.map((tab) => tab.id),
-    onMove: (tabId, before) => {
-      move(tabId, before, false);
+    split: layout.box.length > 0,
+    onDrop: (tabId, drop) => {
+      switch (drop.kind) {
+        case "onto": {
+          shellCalls().splitOntoTab({ profileId, tabId, target: drop.target });
+          break;
+        }
+        case "box": {
+          moving.current = { tabId, announce: false };
+          moveInBox(tabId, drop.before);
+          break;
+        }
+        default: {
+          move(tabId, drop.before, false);
+        }
+      }
     },
   });
 
@@ -893,9 +934,7 @@ export const Sidebar = ({
         close(tab.id);
       }}
       onPointerDown={(event) => {
-        if (!boxed.has(tab.id)) {
-          drag.onPointerDown(tab.id, event);
-        }
+        drag.onPointerDown(tab.id, tab.pinned, event);
       }}
       isDragClick={drag.isDragClick}
       onMoveBy={(step) => moveBy(tab, step)}
@@ -1034,19 +1073,26 @@ export const Sidebar = ({
         )}
       </Tabs.List>
       <output ref={announcement} className="sr-only" />
-      {drag.line && (
+      {drag.mark && (
         <div
           aria-hidden
-          className="pointer-events-none fixed z-50 rounded-[1px] bg-foreground"
+          data-drag-mark={drag.mark.kind}
+          className={cn(
+            "pointer-events-none fixed z-50",
+            drag.mark.kind === "line"
+              ? "rounded-[1px] bg-foreground"
+              : "rounded-md shadow-[inset_0_0_0_2px_var(--foreground)]"
+          )}
           style={{
-            left: drag.line.left,
-            top: drag.line.top,
-            width: drag.line.right - drag.line.left,
-            height: drag.line.bottom - drag.line.top,
+            left: drag.mark.box.left,
+            top: drag.mark.box.top,
+            width: drag.mark.box.right - drag.mark.box.left,
+            height: drag.mark.box.bottom - drag.mark.box.top,
           }}
         />
       )}
       <div
+        data-list-end
         className={cn("flex shrink-0", wide ? "pt-1" : "justify-center pt-2")}
       >
         <OpenAppSidebarButton wide={wide} />

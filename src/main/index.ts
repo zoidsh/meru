@@ -848,6 +848,8 @@ const start = async () => {
       openApp,
       tabMenu,
       panes: paneResize,
+      pageSize: () =>
+        contentViewBounds(shell.window.getContentAreaSize(), sidebar.current()),
       profileMenu,
       openGmail: showGmail.jumpTo,
       window: shell.window,

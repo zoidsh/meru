@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { tabDrop } from "./tab-drop.ts";
+import { sidebarDrop, tabDrop } from "./tab-drop.ts";
 import type { DropTile } from "./tab-drop.ts";
 
 const tile = (
@@ -55,14 +55,16 @@ describe(tabDrop, () => {
       where(column, "a", 30, 38),
       where(column, "a", 30, 42),
       where(column, "b", 30, 70),
-      where(column, "gone", 30, 75),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined, undefined]);
+  });
+
+  it("lands a tab from outside the tiles anywhere between them, having no place of its own", () => {
+    expect([
+      where(column, "", 30, 38),
+      where(column, "", 30, 75),
     ]).toStrictEqual([
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
+      ["b", { left: 13, top: 35, right: 51, bottom: 37 }],
+      ["c", { left: 13, top: 75, right: 51, bottom: 77 }],
     ]);
   });
 
@@ -79,6 +81,85 @@ describe(tabDrop, () => {
       ["c", { left: 131, top: 0, right: 133, bottom: 32 }],
       ["c", { left: -3, top: 33, right: 131, bottom: 35 }],
       ["end", { left: -3, top: 69, right: 131, bottom: 71 }],
+    ]);
+  });
+});
+
+describe(sidebarDrop, () => {
+  // a, then the box of b and c, then d, down a 32px-wide list.
+  const a = tile("a", 16, 0);
+  const b = tile("b", 16, 46);
+  const c = tile("c", 16, 86);
+  const d = tile("d", 16, 136);
+  const box = {
+    box: { left: 13, top: 40, right: 51, bottom: 124 },
+    rows: [b, c],
+  };
+  const tabs = [
+    { ...a, boxed: false },
+    { ...b, boxed: true },
+    { ...c, boxed: true },
+    { ...d, boxed: false },
+  ];
+  const area = [a, { id: "b", box: box.box }, d];
+  const drop = (
+    id: string,
+    y: number,
+    { boxed = false, pinned = false, split = true } = {}
+  ) => {
+    const result = sidebarDrop({
+      dragged: { id, pinned, boxed },
+      point: { x: 30, y },
+      tabs,
+      split,
+      box,
+      area,
+    });
+
+    return (
+      result && [
+        result.kind,
+        "target" in result ? result.target : (result.before ?? "end"),
+      ]
+    );
+  };
+
+  it("rings a tab under the middle of the pointer, unless a split exists that it is not in", () => {
+    expect([
+      drop("a", 150, { split: false }),
+      drop("a", 150),
+      drop("a", 100),
+      drop("d", 60),
+    ]).toStrictEqual([["onto", "d"], undefined, ["onto", "c"], ["onto", "b"]]);
+  });
+
+  it("moves a tab of the box among its tabs by an inset line, and a pinned one of it not at all", () => {
+    expect([
+      drop("c", 50, { boxed: true }),
+      drop("b", 110, { boxed: true }),
+      drop("b", 60, { boxed: true }),
+      drop("b", 110, { boxed: true, pinned: true }),
+    ]).toStrictEqual([["box", "b"], ["box", "end"], undefined, undefined]);
+  });
+
+  it("moves a tab of the box out of it by a line outside it: above it, below it and at the end", () => {
+    expect([
+      drop("b", 2, { boxed: true }),
+      drop("b", 42, { boxed: true }),
+      drop("c", 122, { boxed: true }),
+      drop("c", 300, { boxed: true }),
+    ]).toStrictEqual([
+      ["move", "a"],
+      ["move", "b"],
+      ["move", "d"],
+      ["move", "end"],
+    ]);
+  });
+
+  it("moves a tab outside past the box as past one place", () => {
+    expect([drop("a", 130), drop("d", 42)]).toStrictEqual([
+      ["move", "d"],
+      ["move", "b"],
     ]);
   });
 });

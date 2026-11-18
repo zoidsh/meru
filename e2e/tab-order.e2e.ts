@@ -184,6 +184,14 @@ test("a pinned tile moves within the narrow pinned column and the wide pinned gr
   ]);
 
   await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  // The tiles grow with the sidebar, so they are measured once it is wide.
+  await expect
+    .poll(() =>
+      tab(shell, STAND_IN_TITLE)
+        .boundingBox()
+        .then((box) => box?.width)
+    )
+    .toBeGreaterThan(64);
   // Docs and Gmail share the first row, Drive spans the second: Drive to the
   // right of Gmail, then Docs below Drive.
   await drag(
@@ -221,7 +229,7 @@ test("a pinned tile moves within the narrow pinned column and the wide pinned gr
   ]);
 });
 
-test("a drag across areas, onto a tile's middle, into the page or ended with Escape moves nothing, and a short press still selects", async ({
+test("a drag across areas, into the page or ended with Escape moves nothing, and a short press still selects", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -238,11 +246,6 @@ test("a drag across areas, onto a tile's middle, into the page or ended with Esc
     shell,
     tab(shell, DRIVE_TITLE),
     await pointOf(tab(shell, CALENDAR_TITLE), 0.5, 0.9)
-  );
-  await drag(
-    shell,
-    tab(shell, SLIDES),
-    await pointOf(tab(shell, CALENDAR_TITLE), 0.5, 0.5)
   );
   await drag(shell, tab(shell, SLIDES), { x: 600, y: 300 });
   await hold(

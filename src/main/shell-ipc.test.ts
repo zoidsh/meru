@@ -154,6 +154,16 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    moveInBox: (request) => {
+      calls.push(["moveInBox", request]);
+
+      return Promise.resolve();
+    },
+    splitOntoTab: (request) => {
+      calls.push(["splitOntoTab", request]);
+
+      return Promise.resolve();
+    },
     retryTab: (request) => {
       calls.push(["retryTab", request]);
 

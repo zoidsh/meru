@@ -6,8 +6,10 @@ import { paneTabs } from "./pane-tree.ts";
 import type { PaneDirection, Split } from "./pane-tree.ts";
 import {
   isInSplit,
+  splitBeside,
   splitTarget,
   splitWith,
+  withBoxMove,
   withMaximized,
   withoutPane,
 } from "./split.ts";
@@ -318,24 +320,43 @@ export const updatePages = (
 };
 
 /**
+ * The tab `before` names as a tab moving out of the split lands before it:
+ * a tab of the box stands for the box, which the sidebar draws where its
+ * first stored tab other than the moving one stands.
+ */
+const placeBefore = (
+  profile: Profile,
+  tabId: string,
+  before: string | undefined
+) =>
+  before !== undefined && isInSplit(profile, before)
+    ? (knownTabs(profile).find(
+        (tab) => tab.id !== tabId && isInSplit(profile, tab.id)
+      )?.id ?? before)
+    : before;
+
+/**
  * Moves a shown tab of the selected profile within its area, the pinned
  * tabs or the rest, to just before the tab `before` names, or after the
- * area's last tab when it names none. Every other entry, those not shown
+ * area's last tab when it names none. A tab in the split leaves it on the
+ * way, its space going to the panes beside it, and lands before the box
+ * where `before` is a tab of the box. Every other entry, those not shown
  * included, keeps its place among its neighbours. Nothing across areas, for
- * a tab that is not shown, or for a move that leaves the area's order as it
- * was.
+ * a tab that is not shown, or for a move that changes nothing.
  */
 export const moveTab = (
   state: State,
   { profileId, tabId }: TabKey,
   before?: string
 ): State | undefined =>
-  profileId === state.selectedProfileId && tabId !== before
+  profileId === state.selectedProfileId
     ? updateProfile(state, profileId, (profile) => {
         const shown = knownTabs(profile);
         const tab = shown.find((candidate) => candidate.id === tabId);
+        const leaving = isInSplit(profile, tabId);
+        const place = leaving ? placeBefore(profile, tabId, before) : before;
 
-        if (!tab) {
+        if (!tab || place === tabId) {
           return;
         }
 
@@ -343,15 +364,16 @@ export const moveTab = (
           (candidate) => isPinned(candidate) === isPinned(tab)
         );
         const target =
-          before === undefined
+          place === undefined
             ? undefined
-            : area.find((candidate) => candidate.id === before);
+            : area.find((candidate) => candidate.id === place);
 
-        if (before !== undefined && !target) {
+        if (place !== undefined && !target) {
           return;
         }
 
-        const rest = profile.tabs.filter((entry) => entry !== tab);
+        const base = leaving ? withoutPane(profile, tabId).profile : profile;
+        const rest = base.tabs.filter((entry) => entry !== tab);
         // An area of this tab alone has no other to follow; the order check
         // below then finds nothing changed.
         const last = area.findLast((candidate) => candidate !== tab) ?? tab;
@@ -359,11 +381,39 @@ export const moveTab = (
         const tabs = rest.toSpliced(at, 0, tab);
         const order = tabs.filter((entry) => area.includes(entry as Tab));
 
-        return order.every((entry, index) => entry === area[index])
-          ? undefined
-          : { ...profile, tabs };
+        if (order.every((entry, index) => entry === area[index])) {
+          return leaving ? base : undefined;
+        }
+
+        return { ...base, tabs };
       })
     : undefined;
+
+/**
+ * Moves a tab of the split's box that is not pinned among the box's other
+ * such tabs, to just before `before` or after the last, its pane with it.
+ */
+export const moveInBox = (
+  state: State,
+  { profileId, tabId }: TabKey,
+  before?: string
+): State | undefined =>
+  updateProfile(state, profileId, (profile) =>
+    withBoxMove(profile, tabId, before)
+  );
+
+/**
+ * A tab dropped onto another in the sidebar: in a new pane right of the
+ * other's, selected, starting a split where there is none.
+ */
+export const splitOntoTab = (
+  state: State,
+  { profileId, tabId }: TabKey,
+  target: string
+): State | undefined =>
+  updateProfile(state, profileId, (profile) =>
+    splitBeside(profile, tabId, target, "row")
+  );
 
 export const findTab = (state: State, { profileId, tabId }: TabKey) => {
   const profile = state.profiles.find(

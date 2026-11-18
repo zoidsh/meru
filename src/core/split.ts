@@ -6,6 +6,7 @@ import {
   panesFit,
   partingShare,
   removePane,
+  renamePanes,
   resizePanes,
   withPartingShare,
 } from "./pane-tree.ts";
@@ -284,3 +285,110 @@ export const evenedSplit = (
   ...split,
   root: evenOut(split.root, before, after) as PaneSplit,
 });
+
+/**
+ * The profile with `tabId` in a new pane `direction` of `target`'s, before
+ * it with `first`, and selected, which focuses it; a tab with a pane already
+ * leaves it first, its space going to the panes beside it. Nothing for a tab
+ * put beside itself, a tab or target not shown, or a target outside the
+ * split while there is one, since a profile has one split.
+ */
+export const splitBeside = (
+  profile: Profile,
+  tabId: string,
+  target: string,
+  direction: PaneDirection,
+  first = false
+): Profile | undefined => {
+  const shown = new Set(knownTabs(profile).map((tab) => tab.id));
+
+  if (
+    tabId === target ||
+    !shown.has(tabId) ||
+    !shown.has(target) ||
+    (profile.split && !isInSplit(profile, target))
+  ) {
+    return undefined;
+  }
+
+  const base = profile.split
+    ? (removePane(profile.split.root, tabId) ?? target)
+    : target;
+  const root = addPane(base, target, tabId, direction, first);
+
+  return typeof root === "string"
+    ? undefined
+    : {
+        ...withSplit(profile, {
+          ...(profile.split && restored(profile.split)),
+          root,
+        }),
+        selectedTabId: tabId,
+      };
+};
+
+/**
+ * Whether every pane of the profile's split, as it shows with the selected
+ * tab's pane focused, is at least the minimum each way in a page area of
+ * `size`; with no split on screen there is nothing to fit.
+ */
+export const splitRoomy = (
+  profile: Pick<Profile, "split" | "selectedTabId" | "tabs">,
+  size: Size
+) => {
+  const panes = splitPanes(profile);
+
+  return panes === undefined || panesFit(panes, size);
+};
+
+/**
+ * The profile with `tabId`, a tab of the split's box that is not pinned,
+ * moved among those tabs to just before `before`, or after the last, and
+ * its pane with it: those tabs' panes take them in their new order, so the
+ * splits and their sizes stay. Nothing for a pinned tab, which keeps its
+ * place, or a move that changes nothing.
+ */
+export const withBoxMove = (
+  profile: Profile,
+  tabId: string,
+  before?: string
+): Profile | undefined => {
+  const { split } = profile;
+  const box = boxOrder(profile) ?? [];
+  const pinned = new Set(
+    knownTabs(profile)
+      .filter((tab) => isPinned(tab))
+      .map((tab) => tab.id)
+  );
+  const rows = box.filter((each) => !pinned.has(each));
+
+  if (
+    !split ||
+    !rows.includes(tabId) ||
+    before === tabId ||
+    (before !== undefined && !rows.includes(before))
+  ) {
+    return undefined;
+  }
+
+  const rest = rows.filter((each) => each !== tabId);
+  const order = rest.toSpliced(
+    before === undefined ? rest.length : rest.indexOf(before),
+    0,
+    tabId
+  );
+
+  if (order.every((each, index) => each === rows[index])) {
+    return undefined;
+  }
+
+  const renamed = new Map(rows.map((each, index) => [each, order[index]]));
+
+  return withSplit(profile, {
+    ...restored(split),
+    root: renamePanes(
+      split.root,
+      (each) => renamed.get(each) ?? each
+    ) as PaneSplit,
+  });
+};

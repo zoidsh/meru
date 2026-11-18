@@ -20,6 +20,7 @@ import {
 } from "./lib/shots.ts";
 import {
   ANY_SESSION,
+  CALENDAR_TITLE,
   DARK_PARTS,
   DRIVE_TITLE,
   POPOUT_PATH,
@@ -768,6 +769,59 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
   await shell.getByRole("button", { name: "Widen sidebar" }).click();
   await rest(shell);
   await shootEachWay(app, shell, "split-box-pinned-wide");
+});
+
+test("a tab dragged in the split's box: the inset line among its tabs, and the ring on a tab of it", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(
+    userDataDir,
+    withBox(standIn, {
+      direction: "row",
+      children: [pane(0.5, "d1"), pane(0.5, "c1")],
+    })
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const tab = (name: string) =>
+    shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { name, exact: true });
+
+  /** Drags `from` to `down` of the way down `over`, and holds it there. */
+  const hold = async (from: string, over: string, down: number) => {
+    const start = await tab(from).boundingBox();
+    const end = await tab(over).boundingBox();
+
+    await shell.mouse.move(
+      (start?.x ?? 0) + (start?.width ?? 0) / 2,
+      (start?.y ?? 0) + (start?.height ?? 0) / 2
+    );
+    await shell.mouse.down();
+    await shell.mouse.move(
+      (end?.x ?? 0) + (end?.width ?? 0) / 2,
+      (end?.y ?? 0) + (end?.height ?? 0) * down,
+      { steps: 8 }
+    );
+  };
+
+  const letGo = async () => {
+    await shell.keyboard.press("Escape");
+    await shell.mouse.up();
+  };
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+
+  await hold(CALENDAR_TITLE, DRIVE_TITLE, 0.2);
+  await shootEachWay(app, shell, "drag-split-box-line");
+  await letGo();
+
+  await hold("Budget", DRIVE_TITLE, 0.5);
+  await shootEachWay(app, shell, "drag-split-ring");
+  await letGo();
 });
 
 test("uneven panes with a gap's handle hovered and focused, and a maximized split's box, narrow and wide", async ({

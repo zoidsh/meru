@@ -566,25 +566,6 @@ const sidebarOrder = (shell: Page) =>
     };
   });
 
-const storedOrder = async (userDataDir: string) => {
-  const { profiles } = await readState<{
-    profiles: { tabs: { id: string }[] }[];
-  }>(userDataDir);
-
-  return profiles[0]?.tabs.map((each) => each.id);
-};
-
-/** Records, for `prevented`, whether each key pressed in the shell was taken. */
-const followPrevented = (shell: Page) =>
-  shell.evaluate(() => {
-    globalThis.addEventListener("keydown", (event) => {
-      Reflect.set(globalThis, "meruPrevented", event.defaultPrevented);
-    });
-  });
-
-const prevented = (shell: Page) =>
-  shell.evaluate(() => Reflect.get(globalThis, "meruPrevented") as boolean);
-
 /** A point of the box, `down` of the way from its top. */
 const pointOfBox = (shell: Page, down: number) =>
   shell.evaluate((share) => {
@@ -621,7 +602,7 @@ const middleOf = async (target: Locator, down = 0.5) => {
   };
 };
 
-test("a split's tabs sit in one box in the list where its first tab was, in reading order; selecting one shows the split focused on it, one outside shows alone; neither the keyboard nor a drag moves them", async ({
+test("a split's tabs sit in one box in the list where its first tab was, in reading order; selecting one shows the split focused on it, one outside shows alone", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -643,39 +624,6 @@ test("a split's tabs sit in one box in the list where its first tab was, in read
       area: "listed",
     });
   await expect(calendar).toHaveAccessibleDescription("In split view");
-
-  // Each press on its own, so a move and its way back cannot pass for none:
-  // a move takes the key at once.
-  await followPrevented(shell);
-  await calendar.focus();
-
-  for (const key of ["Alt+ArrowUp", "Alt+ArrowDown"]) {
-    // oxlint-disable-next-line no-await-in-loop -- one press at a time
-    await calendar.press(key);
-    // oxlint-disable-next-line no-await-in-loop -- one press at a time
-    expect(await prevented(shell)).toBe(false);
-    // oxlint-disable-next-line no-await-in-loop -- one press at a time
-    expect(await sidebarOrder(shell)).toMatchObject({ tabs: order });
-  }
-
-  await expect(calendar).toBeFocused();
-
-  const from = await middleOf(calendar);
-  const to = await middleOf(tab(shell, LISTED_SHEETS), 0.9);
-
-  await shell.mouse.move(from.x, from.y);
-  await shell.mouse.down();
-  await shell.mouse.move(to.x, to.y, { steps: 8 });
-  await shell.mouse.up();
-
-  expect(await sidebarOrder(shell)).toMatchObject({ tabs: order });
-  expect(await storedOrder(userDataDir)).toStrictEqual([
-    "gmail",
-    "k",
-    "c",
-    "o",
-    "d",
-  ]);
 
   // Gmail, outside the split; a Sheets tab would load Google's own page,
   // since its stand-in address is not one Sheets claims.
@@ -830,9 +778,7 @@ test("a tab outside moves past a box in the list as past one place, above or bel
   await slides.press("Alt+ArrowUp");
   await drawn("s", "d", "c", "o");
 
-  // The box's top and bottom edges are the gaps above and below it; its
-  // middle lands nothing.
-  await dragTo(shell, sheets, await pointOfBox(shell, 0.5));
+  // The box's top and bottom edges are the gaps above and below it.
   await dragTo(shell, sheets, await pointOfBox(shell, 0.05));
   await drawn("s", "o", "d", "c");
   await dragTo(shell, sheets, await pointOfBox(shell, 0.95));

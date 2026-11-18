@@ -23,6 +23,7 @@ import { closeOtherTabs, closeTabsBelow } from "#core/tab-menu.ts";
 import {
   closeTab,
   maximizePane,
+  moveInBox,
   moveTab,
   openTab,
   resizeSplit,
@@ -30,6 +31,7 @@ import {
   separateTab,
   setOpenAtLaunch,
   setPinned,
+  splitOntoTab,
   splitTab,
   updatePages,
 } from "#core/tabs.ts";
@@ -218,6 +220,10 @@ export const createProfiles = ({
       exclusive(() => commit(resizeSplit(state, profileId, split))),
     moveTab: (key: TabKey, before?: string) =>
       exclusive(() => commit(moveTab(state, key, before))),
+    moveInBox: (key: TabKey, before?: string) =>
+      exclusive(() => commit(moveInBox(state, key, before))),
+    splitOntoTab: (key: TabKey, target: string) =>
+      exclusive(() => commit(splitOntoTab(state, key, target))),
     closeOtherTabs: (key: TabKey) =>
       exclusive(() => commit(closeOtherTabs(state, key))),
     closeTabsBelow: (key: TabKey) =>
