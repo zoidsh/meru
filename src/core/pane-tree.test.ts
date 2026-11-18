@@ -4,12 +4,15 @@ import {
   PANE_GAP,
   PANE_MINIMUM,
   addPane,
+  evenOut,
+  paneHandles,
   paneRectangles,
   paneTabs,
   panesFit,
   readPaneTree,
   readSplit,
   removePane,
+  resizePanes,
 } from "./pane-tree.ts";
 import type { PaneTree } from "./pane-tree.ts";
 
@@ -213,6 +216,189 @@ describe(readSplit, () => {
       { kind: "none" },
       { kind: "as-found" },
       { kind: "as-found" },
+    ]);
+  });
+});
+
+const sizes = (tree: PaneTree): unknown =>
+  typeof tree === "string"
+    ? tree
+    : tree.children.map((child) => [child.size, sizes(child.pane)]);
+
+describe(paneHandles, () => {
+  it("puts a handle in each gap, outer splits first, named by the first tab on each side", () => {
+    const handles = paneHandles(nested, {
+      x: 0,
+      y: 0,
+      width: 1008,
+      height: 708,
+    });
+
+    expect(
+      handles.map(({ before, after, direction, bounds }) => ({
+        before,
+        after,
+        direction,
+        bounds,
+      }))
+    ).toStrictEqual([
+      {
+        before: "a",
+        after: "b",
+        direction: "row",
+        bounds: { x: 500, y: 0, width: PANE_GAP, height: 708 },
+      },
+      {
+        before: "b",
+        after: "c",
+        direction: "column",
+        bounds: { x: 508, y: 350, width: 500, height: PANE_GAP },
+      },
+      {
+        before: "c",
+        after: "d",
+        direction: "row",
+        bounds: { x: 754, y: 358, width: PANE_GAP, height: 350 },
+      },
+    ]);
+  });
+
+  it("lets a side shrink to the least its own panes take", () => {
+    const [outer] = paneHandles(nested, {
+      x: 0,
+      y: 0,
+      width: 1008,
+      height: 708,
+    });
+
+    expect(outer).toMatchObject({
+      size: 500,
+      span: 1000,
+      minimum: PANE_MINIMUM,
+      maximum: 1000 - (2 * PANE_MINIMUM + PANE_GAP),
+    });
+  });
+
+  it("never makes a side already under its minimum any smaller", () => {
+    const [handle] = paneHandles(row([0.5, "a"], [0.5, "b"]), {
+      x: 0,
+      y: 0,
+      width: 308,
+      height: 400,
+    });
+
+    expect(handle).toMatchObject({ size: 150, minimum: 150, maximum: 150 });
+  });
+});
+
+const two = row([0.5, "a"], [0.5, "b"]);
+const size = { width: 1008, height: 700 };
+
+/** The two panes' widths once the gap between them moved `by`. */
+const widthsAfter = (by: number) =>
+  paneRectangles(resizePanes(two, size, "a", "b", by), {
+    x: 0,
+    y: 0,
+    ...size,
+  }).map(({ bounds }) => bounds.width);
+
+describe(resizePanes, () => {
+  it("moves the gap between two panes and shares their space anew", () => {
+    expect(sizes(resizePanes(two, size, "a", "b", 100))).toStrictEqual([
+      [0.6, "a"],
+      [0.4, "b"],
+    ]);
+  });
+
+  it("moves a pane against a nested split, whose own shares stay", () => {
+    const moved = resizePanes(nested, size, "a", "b", -100);
+
+    expect(sizes(moved)).toStrictEqual([
+      [0.4, "a"],
+      [
+        0.6,
+        [
+          [0.5, "b"],
+          [
+            0.5,
+            [
+              [0.5, "c"],
+              [0.5, "d"],
+            ],
+          ],
+        ],
+      ],
+    ]);
+  });
+
+  it("stops at each side's minimum", () => {
+    expect([widthsAfter(-1000), widthsAfter(1000)]).toStrictEqual([
+      [PANE_MINIMUM, 1000 - PANE_MINIMUM],
+      [1000 - PANE_MINIMUM, PANE_MINIMUM],
+    ]);
+  });
+
+  it("in a window already too small, keeps the shares and refuses to shrink a pane further", () => {
+    const small = { width: 408, height: 300 };
+    const uneven = row([0.4, "a"], [0.6, "b"]);
+
+    expect([
+      sizes(resizePanes(uneven, small, "a", "b", -50)),
+      sizes(resizePanes(uneven, small, "a", "b", 50)),
+    ]).toStrictEqual([sizes(uneven), sizes(uneven)]);
+  });
+
+  it("leaves a tree without such a gap as it is", () => {
+    expect([
+      resizePanes(two, size, "b", "a", 50),
+      resizePanes(nested, size, "a", "c", 50),
+    ]).toStrictEqual([two, nested]);
+  });
+});
+
+describe(evenOut, () => {
+  it("gives the children of the split where the two part equal shares, the rest kept", () => {
+    const uneven = row(
+      [0.2, "a"],
+      [0.8, column([0.7, "b"], [0.3, row([0.9, "c"], [0.1, "d"])])]
+    );
+
+    expect([
+      sizes(evenOut(uneven, "a", "b")),
+      sizes(evenOut(uneven, "c", "d")),
+    ]).toStrictEqual([
+      [
+        [0.5, "a"],
+        [
+          0.5,
+          [
+            [0.7, "b"],
+            [
+              0.3,
+              [
+                [0.9, "c"],
+                [0.1, "d"],
+              ],
+            ],
+          ],
+        ],
+      ],
+      [
+        [0.2, "a"],
+        [
+          0.8,
+          [
+            [0.7, "b"],
+            [
+              0.3,
+              [
+                [0.5, "c"],
+                [0.5, "d"],
+              ],
+            ],
+          ],
+        ],
+      ],
     ]);
   });
 });

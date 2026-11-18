@@ -1,4 +1,13 @@
-import { addPane, paneTabs, panesFit, removePane } from "./pane-tree.ts";
+import {
+  addPane,
+  evenOut,
+  paneTabs,
+  panesFit,
+  partingShare,
+  removePane,
+  resizePanes,
+  withPartingShare,
+} from "./pane-tree.ts";
 import type { PaneDirection, PaneSplit, PaneTree, Split } from "./pane-tree.ts";
 import { isPinned, knownTabs, withSplit } from "./state.ts";
 import type { Profile } from "./state.ts";
@@ -14,13 +23,20 @@ export const splitTabs = (profile: Pick<Profile, "split">): string[] =>
 export const isInSplit = (profile: Pick<Profile, "split">, tabId: string) =>
   splitTabs(profile).includes(tabId);
 
+/** Whether the focused pane shows alone, the split kept. */
+export const isMaximized = (profile: Pick<Profile, "split">) =>
+  profile.split?.maximized === true;
+
+/** The split without its Maximize, which any change to it ends. */
+const restored = ({ maximized: _maximized, ...split }: Split): Split => split;
+
 /**
- * The panes on screen while the selected tab is in the split, the focused
- * one being the selected tab's: the stored tree without the panes of tabs
- * this build does not show, which stay stored for a build that does. None
- * when fewer than two are left.
+ * The split's panes while the selected tab is in it, the focused one being
+ * the selected tab's: the stored tree without the panes of tabs this build
+ * does not show, which stay stored for a build that does. None when fewer
+ * than two are left. Maximized or not.
  */
-export const shownPanes = (
+export const splitPanes = (
   profile: Pick<Profile, "split" | "selectedTabId" | "tabs">
 ): PaneTree | undefined => {
   if (!profile.split || !isInSplit(profile, profile.selectedTabId)) {
@@ -38,6 +54,12 @@ export const shownPanes = (
 
   return typeof shown === "string" ? undefined : shown;
 };
+
+/** The panes on screen: the split's, unless the focused one shows alone. */
+export const shownPanes = (
+  profile: Pick<Profile, "split" | "selectedTabId" | "tabs">
+): PaneTree | undefined =>
+  isMaximized(profile) ? undefined : splitPanes(profile);
 
 /**
  * The tabs of the split's box in the sidebar, in the box's order: its pinned
@@ -91,7 +113,7 @@ export const splitFits = (
   return (
     target !== undefined &&
     panesFit(
-      addPane(shownPanes(profile) ?? target, target, NEW_PANE, direction),
+      addPane(splitPanes(profile) ?? target, target, NEW_PANE, direction),
       size
     )
   );
@@ -119,7 +141,7 @@ export const splitWith = (
   }
 
   const split: Split = {
-    ...profile.split,
+    ...(profile.split && restored(profile.split)),
     root: addPane(
       profile.split?.root ?? target,
       target,
@@ -159,7 +181,71 @@ export const withoutPane = (
     profile:
       root === undefined || typeof root === "string"
         ? withSplit(profile, undefined)
-        : withSplit(profile, { ...split, root }),
+        : withSplit(profile, { ...restored(split), root }),
     ...(next !== undefined && { next }),
   };
 };
+
+/**
+ * The profile's split with the focused pane shown alone, or all its panes
+ * again, whichever tab is selected; nothing while the selected tab's pane is
+ * not on screen to maximize, or when it is already so.
+ */
+export const withMaximized = (
+  profile: Profile,
+  on: boolean
+): Profile | undefined => {
+  const { split } = profile;
+
+  if (!split || isMaximized(profile) === on || (on && !splitPanes(profile))) {
+    return undefined;
+  }
+
+  return withSplit(
+    profile,
+    on ? { ...split, maximized: true } : restored(split)
+  );
+};
+
+/**
+ * `base`, a split of the profile's, with the gap between the panes of
+ * `before` and `after` moved `by` pixels as it shows in a page area of
+ * `area`, as far as each side's minimum lets it; nothing when it does not
+ * show or has no such gap. The share the move gives each side is carried to
+ * the stored tree, whose panes of tabs not shown keep theirs.
+ */
+export const resizedSplit = (
+  profile: Profile,
+  base: Split,
+  area: Size,
+  before: string,
+  after: string,
+  by: number
+): Split | undefined => {
+  const shown = splitPanes({ ...profile, split: base });
+  const share =
+    shown === undefined
+      ? undefined
+      : partingShare(
+          resizePanes(shown, area, before, after, by),
+          before,
+          after
+        );
+
+  return share === undefined
+    ? undefined
+    : {
+        ...base,
+        root: withPartingShare(base.root, before, after, share) as PaneSplit,
+      };
+};
+
+/** The split where the panes of `before` and `after` part, evened out. */
+export const evenedSplit = (
+  split: Split,
+  before: string,
+  after: string
+): Split => ({
+  ...split,
+  root: evenOut(split.root, before, after) as PaneSplit,
+});

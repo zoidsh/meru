@@ -1,3 +1,5 @@
+import { clamp, sumBy } from "es-toolkit";
+
 import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** Between two panes, in CSS pixels. */
@@ -169,6 +171,28 @@ export interface PaneRectangle {
   bounds: Rectangle;
 }
 
+/** Where each child of `split` sits in `area`, with `PANE_GAP` between them. */
+const childAreas = (split: PaneSplit, area: Rectangle): Rectangle[] => {
+  const row = split.direction === "row";
+  const length = row ? area.width : area.height;
+  const gaps = PANE_GAP * (split.children.length - 1);
+  const pieces = cut(
+    Math.max(0, length - gaps),
+    split.children.map((child) => child.size)
+  );
+  let offset = row ? area.x : area.y;
+
+  return pieces.map((piece) => {
+    const bounds: Rectangle = row
+      ? { ...area, x: offset, width: piece }
+      : { ...area, y: offset, height: piece };
+
+    offset += piece + PANE_GAP;
+
+    return bounds;
+  });
+};
+
 /**
  * Where each pane sits in `area`, in reading order, with `PANE_GAP` between
  * neighbours; the panes and gaps of a split fill its length exactly.
@@ -181,26 +205,227 @@ export const paneRectangles = (
     return [{ tabId: tree, bounds: area }];
   }
 
-  const row = tree.direction === "row";
-  const length = row ? area.width : area.height;
-  const gaps = PANE_GAP * (tree.children.length - 1);
-  const pieces = cut(
-    Math.max(0, length - gaps),
-    tree.children.map((child) => child.size)
+  const areas = childAreas(tree, area);
+
+  return tree.children.flatMap((child, index) =>
+    paneRectangles(child.pane, areas[index] ?? area)
   );
-  let offset = row ? area.x : area.y;
-
-  return tree.children.flatMap((child, index) => {
-    const piece = pieces[index] ?? 0;
-    const bounds: Rectangle = row
-      ? { ...area, x: offset, width: piece }
-      : { ...area, y: offset, height: piece };
-
-    offset += piece + PANE_GAP;
-
-    return paneRectangles(child.pane, bounds);
-  });
 };
+
+/** The least length `tree` takes along `direction`, its gaps included. */
+const minimumLength = (tree: PaneTree, direction: PaneDirection): number => {
+  if (typeof tree === "string") {
+    return PANE_MINIMUM;
+  }
+
+  const lengths = tree.children.map((child) =>
+    minimumLength(child.pane, direction)
+  );
+
+  return tree.direction === direction
+    ? sumBy(lengths, (length) => length) + PANE_GAP * (tree.children.length - 1)
+    : Math.max(...lengths);
+};
+
+/** The gap between two neighbouring children of a split, which resizes them. */
+export interface PaneHandle {
+  /**
+   * The first tab, in reading order, of the child before the gap and of the
+   * one after it, which together name the gap.
+   */
+  before: string;
+  after: string;
+  /** The split's: a `row` split's gap moves across, a `column` one's down. */
+  direction: PaneDirection;
+  /** The gap itself. */
+  bounds: Rectangle;
+  /** The length of the child before the gap along the split. */
+  size: number;
+  /** The two children's lengths together, which a move shares out anew. */
+  span: number;
+  /**
+   * The least and most that length may become: neither child below its
+   * minimum, unless it is already, when it is not made any smaller.
+   */
+  minimum: number;
+  maximum: number;
+}
+
+const firstTab = (tree: PaneTree): string =>
+  typeof tree === "string" ? tree : firstTab(tree.children[0]?.pane ?? "");
+
+/** Every gap of the tree laid out in `area`, outer splits' first. */
+export const paneHandles = (tree: PaneTree, area: Rectangle): PaneHandle[] => {
+  if (typeof tree === "string") {
+    return [];
+  }
+
+  const row = tree.direction === "row";
+  const areas = childAreas(tree, area);
+  const length = (bounds: Rectangle) => (row ? bounds.width : bounds.height);
+  const own = tree.children.slice(1).flatMap((next, index): PaneHandle[] => {
+    const child = tree.children[index];
+    const first = areas[index];
+    const second = areas[index + 1];
+
+    if (!child || !first || !second) {
+      return [];
+    }
+
+    const size = length(first);
+    const span = size + length(second);
+    const leastAfter = minimumLength(next.pane, tree.direction);
+
+    return [
+      {
+        before: firstTab(child.pane),
+        after: firstTab(next.pane),
+        direction: tree.direction,
+        bounds: row
+          ? { ...first, x: first.x + first.width, width: PANE_GAP }
+          : { ...first, y: first.y + first.height, height: PANE_GAP },
+        size,
+        span,
+        minimum: Math.min(size, minimumLength(child.pane, tree.direction)),
+        maximum: span - Math.min(length(second), leastAfter),
+      },
+    ];
+  });
+
+  return [
+    ...own,
+    ...tree.children.flatMap((child, index) =>
+      paneHandles(child.pane, areas[index] ?? area)
+    ),
+  ];
+};
+
+const holds = (tree: PaneTree, tab: string): boolean =>
+  typeof tree === "string"
+    ? tree === tab
+    : tree.children.some((child) => holds(child.pane, tab));
+
+/**
+ * The tree with the split where `before` and `after` part, the one that holds
+ * them in two of its children, changed by `change`, given those children's
+ * places; unchanged when they never part, or `after` comes first.
+ */
+const atParting = (
+  tree: PaneTree,
+  before: string,
+  after: string,
+  change: (split: PaneSplit, first: number, second: number) => PaneSplit
+): PaneTree => {
+  if (typeof tree === "string") {
+    return tree;
+  }
+
+  const first = tree.children.findIndex((child) => holds(child.pane, before));
+  const second = tree.children.findIndex((child) => holds(child.pane, after));
+
+  if (first === -1 || second === -1 || second < first) {
+    return tree;
+  }
+
+  if (first < second) {
+    return change(tree, first, second);
+  }
+
+  return {
+    ...tree,
+    children: tree.children.map((child, index) =>
+      index === first
+        ? { ...child, pane: atParting(child.pane, before, after, change) }
+        : child
+    ),
+  };
+};
+
+/**
+ * The share of the two children where `before` and `after` part that goes
+ * to `before`'s; `undefined` when they never part.
+ */
+export const partingShare = (
+  tree: PaneTree,
+  before: string,
+  after: string
+): number | undefined => {
+  let share: number | undefined;
+
+  atParting(tree, before, after, (split, first, second) => {
+    const a = split.children[first]?.size ?? 0;
+    const b = split.children[second]?.size ?? 0;
+
+    share = a + b > 0 ? a / (a + b) : 0.5;
+
+    return split;
+  });
+
+  return share;
+};
+
+/**
+ * The tree with the two children where `before` and `after` part sharing
+ * what they had, `share` of it to `before`'s; every other share, the
+ * children's own splits' included, stays.
+ */
+export const withPartingShare = (
+  tree: PaneTree,
+  before: string,
+  after: string,
+  share: number
+): PaneTree =>
+  atParting(tree, before, after, (split, first, second) => {
+    const a = split.children[first]?.size ?? 0;
+    const b = split.children[second]?.size ?? 0;
+    const sizes = new Map([
+      [first, (a + b) * share],
+      [second, (a + b) * (1 - share)],
+    ]);
+
+    return {
+      ...split,
+      children: split.children.map((child, index) => ({
+        ...child,
+        size: sizes.get(index) ?? child.size,
+      })),
+    };
+  });
+
+/**
+ * The tree laid out in `size` with the gap between `before` and `after`
+ * moved `by` pixels along its split, as far as its handle's minimum and
+ * maximum let it; unchanged where there is no such gap.
+ */
+export const resizePanes = (
+  tree: PaneTree,
+  size: Size,
+  before: string,
+  after: string,
+  by: number
+): PaneTree => {
+  const handle = paneHandles(tree, { x: 0, y: 0, ...size }).find(
+    (candidate) => candidate.before === before && candidate.after === after
+  );
+
+  if (!handle || handle.span <= 0) {
+    return tree;
+  }
+
+  const next = clamp(handle.size + by, handle.minimum, handle.maximum);
+
+  return withPartingShare(tree, before, after, next / handle.span);
+};
+
+/** The tree with the split where `before` and `after` part evened out. */
+export const evenOut = (tree: PaneTree, before: string, after: string) =>
+  atParting(tree, before, after, (split) => ({
+    ...split,
+    children: split.children.map((child) => ({
+      ...child,
+      size: 1 / split.children.length,
+    })),
+  }));
 
 /** Whether every pane is at least `PANE_MINIMUM` each way in an area of `size`. */
 export const panesFit = (tree: PaneTree, size: Size) =>
@@ -284,9 +509,14 @@ export const readPaneTree = (
   return tree === MISSING ? "none left" : tree;
 };
 
-/** A profile's panes, stored on it: the tree and the pane last focused. */
+/** A profile's panes, stored on it. */
 export interface Split {
   root: PaneSplit;
+  /**
+   * `true` while the focused pane shows alone, the split kept; anything else
+   * reads as not and is kept as found.
+   */
+  maximized?: unknown;
 }
 
 /**

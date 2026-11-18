@@ -5,15 +5,28 @@ import type { App } from "./apps.ts";
 import type { PaneTree, Split } from "./pane-tree.ts";
 import {
   boxOrder,
+  evenedSplit,
+  isMaximized,
+  resizedSplit,
   shownPanes,
   splitFits,
+  splitPanes,
   splitTarget,
   splitWith,
+  withMaximized,
   withoutPane,
 } from "./split.ts";
 import { decodeState, encodeState, gmailTab, newProfile } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
-import { closeTab, openTab, separateTab, splitTab } from "./tabs.ts";
+import {
+  closeTab,
+  maximizePane,
+  openTab,
+  resizeSplit,
+  separateTab,
+  splitTab,
+} from "./tabs.ts";
+import { planViews } from "./views.ts";
 
 const app = (id: string) => findApp(APPS, id) as App;
 
@@ -353,5 +366,229 @@ describe("a stored split", () => {
     expect(
       (encodeState(read as State) as typeof stored).profiles[0]?.split
     ).toStrictEqual({ root: 5 });
+  });
+});
+
+const maximized = (...tabs: string[]): Split => ({
+  ...split(...tabs),
+  maximized: true,
+});
+
+const shares = (tree: PaneTree | undefined): unknown =>
+  typeof tree === "object"
+    ? tree.children.map((child) => [
+        Math.round(child.size * 1000) / 1000,
+        shares(child.pane),
+      ])
+    : tree;
+
+describe(withMaximized, () => {
+  it("shows the focused pane alone with the split kept, and all of them again", () => {
+    const on = withMaximized(profile("b", split("a", "b")), true);
+
+    expect([
+      on?.split,
+      on && shownPanes(on),
+      on && splitPanes(on),
+      on && withMaximized(on, false)?.split,
+    ]).toStrictEqual([
+      maximized("a", "b"),
+      undefined,
+      row("a", "b"),
+      split("a", "b"),
+    ]);
+  });
+
+  it("does nothing outside a split, or when it is already so", () => {
+    expect([
+      withMaximized(profile("c", split("a", "b")), true),
+      withMaximized(profile("a"), true),
+      withMaximized(profile("a", split("a", "b")), false),
+      withMaximized(profile("a", maximized("a", "b")), true),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined]);
+  });
+
+  it("reads only true as maximized", () => {
+    expect(
+      [true, "yes", 1, undefined].map((value) =>
+        isMaximized({ split: { ...split("a", "b"), maximized: value } })
+      )
+    ).toStrictEqual([true, false, false, false]);
+  });
+});
+
+describe("a maximized split", () => {
+  it("plans the focused pane's view alone, the others kept and hidden", () => {
+    const current = state(profile("b", maximized("a", "b")));
+    const planned = planViews(current, ["p/a", "p/b"], new Set(["p"]));
+
+    expect([
+      planned.front,
+      planned.shown,
+      planned.panes,
+      planned.views.map(({ tabId }) => tabId),
+    ]).toStrictEqual([key("b"), [key("b")], undefined, ["a", "b"]]);
+  });
+
+  it("selecting another of its tabs shows that one maximized", () => {
+    const current = state(profile("a", maximized("a", "b")));
+
+    expect(planViews(current, [], new Set(["p"])).shown).toStrictEqual([
+      key("a"),
+    ]);
+  });
+
+  it("is restored by a split, a separate and a close", () => {
+    const current = state(profile("b", maximized("a", "b", "c")));
+
+    expect([
+      of(splitTab(current, key("d"), "row"))?.split?.maximized,
+      of(separateTab(current, key("c")))?.split,
+      of(closeTab(current, key("c")))?.split,
+    ]).toStrictEqual([undefined, split("a", "b"), split("a", "b")]);
+  });
+
+  it("is restored while a tab outside the split is selected", () => {
+    expect(
+      of(
+        maximizePane(state(profile("c", maximized("a", "b"))), key("a"), false)
+      )
+    ).toStrictEqual({ selected: "c", split: split("a", "b") });
+  });
+
+  it("is maximized and restored by its tab, which Maximize selects", () => {
+    const current = state(profile("a", split("a", "b")));
+    const on = maximizePane(current, key("b"), true);
+
+    expect([
+      of(on),
+      on && of(maximizePane(on, key("a"), false)),
+      maximizePane(current, key("c"), true),
+    ]).toStrictEqual([
+      { selected: "b", split: maximized("a", "b") },
+      { selected: "b", split: split("a", "b") },
+      undefined,
+    ]);
+  });
+
+  it("comes back from the file maximized, and keeps what is not true as found", () => {
+    const stored = (value: unknown) =>
+      structuredClone(
+        encodeState(
+          state(profile("a", { ...split("a", "b"), maximized: value }))
+        )
+      );
+
+    expect([
+      of(readBack(stored(true)))?.split,
+      of(readBack(stored("later")))?.split,
+    ]).toStrictEqual([
+      maximized("a", "b"),
+      { ...split("a", "b"), maximized: "later" },
+    ]);
+  });
+});
+
+describe(resizedSplit, () => {
+  const area = { width: 1008, height: 700 };
+
+  it("moves the gap as it shows, from the gesture's start", () => {
+    const base = split("a", "b");
+    const current = profile("a", base);
+
+    expect([
+      shares(resizedSplit(current, base, area, "a", "b", 100)?.root),
+      shares(resizedSplit(current, base, area, "a", "b", -2000)?.root),
+    ]).toStrictEqual([
+      [
+        [0.6, "a"],
+        [0.4, "b"],
+      ],
+      [
+        [0.24, "a"],
+        [0.76, "b"],
+      ],
+    ]);
+  });
+
+  it("leaves the share of a pane this build does not show as stored, and has no gap beside it", () => {
+    const base = split("a", "x", "b");
+    const current = profile("a", base, [tab("a"), tab("b"), later]);
+
+    expect(resizedSplit(current, base, area, "a", "x", 100)).toBeUndefined();
+    expect(
+      shares(resizedSplit(current, base, area, "a", "b", 100)?.root)
+    ).toStrictEqual([
+      [0.4, "a"],
+      [0.333, "x"],
+      [0.267, "b"],
+    ]);
+  });
+
+  it("keeps a maximized split's other keys", () => {
+    const base = { ...maximized("a", "b"), later: 1 };
+
+    expect(
+      resizedSplit(profile("a", base), base, area, "a", "b", 100)
+    ).toMatchObject({ maximized: true, later: 1 });
+  });
+
+  it("is nothing while the split does not show", () => {
+    const base = split("a", "b");
+
+    expect(
+      resizedSplit(profile("c", base), base, area, "a", "b", 100)
+    ).toBeUndefined();
+  });
+});
+
+describe(evenedSplit, () => {
+  it("evens out the split where the two part", () => {
+    const uneven: Split = {
+      root: {
+        direction: "row",
+        children: [
+          { size: 0.7, pane: "a" },
+          { size: 0.3, pane: "b" },
+        ],
+      },
+    };
+
+    expect(evenedSplit(uneven, "a", "b")).toStrictEqual(split("a", "b"));
+  });
+});
+
+describe(resizeSplit, () => {
+  const uneven: Split = {
+    root: {
+      direction: "row",
+      children: [
+        { size: 0.7, pane: "a" },
+        { size: 0.3, pane: "b" },
+      ],
+    },
+  };
+
+  it("stores new sizes for the same panes, and nothing else", () => {
+    const current = state(profile("a", split("a", "b")));
+
+    expect([
+      of(resizeSplit(current, "p", uneven))?.split,
+      resizeSplit(current, "p", split("a", "b")),
+      resizeSplit(current, "p", split("a", "c")),
+      resizeSplit(state(profile("a")), "p", uneven),
+    ]).toStrictEqual([uneven, undefined, undefined, undefined]);
+  });
+
+  it("stores them through the file", () => {
+    const resized = resizeSplit(
+      state(profile("a", split("a", "b"))),
+      "p",
+      uneven
+    );
+
+    expect(
+      of(readBack(structuredClone(encodeState(resized as State))))?.split
+    ).toStrictEqual(uneven);
   });
 });

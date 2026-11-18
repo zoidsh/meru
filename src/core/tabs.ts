@@ -1,8 +1,23 @@
+import { isEqual } from "es-toolkit";
+
 import type { App } from "./apps.ts";
 import { drawnTabs } from "./drawn-tabs.ts";
-import type { PaneDirection } from "./pane-tree.ts";
-import { isInSplit, splitTarget, splitWith, withoutPane } from "./split.ts";
-import { GMAIL_TAB_ID, isPinned, isTab, knownTabs } from "./state.ts";
+import { paneTabs } from "./pane-tree.ts";
+import type { PaneDirection, Split } from "./pane-tree.ts";
+import {
+  isInSplit,
+  splitTarget,
+  splitWith,
+  withMaximized,
+  withoutPane,
+} from "./split.ts";
+import {
+  GMAIL_TAB_ID,
+  isPinned,
+  isTab,
+  knownTabs,
+  withSplit,
+} from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 
 /** A tab is named by its profile and its id, which is unique only within it. */
@@ -186,6 +201,40 @@ export const separateTab = (
 ): State | undefined =>
   updateProfile(state, profileId, (profile) =>
     isInSplit(profile, tabId) ? withoutPane(profile, tabId).profile : undefined
+  );
+
+/**
+ * Maximize shows the tab's pane alone, selecting it, and keeps the split;
+ * Restore brings every pane back and selects nothing. Nothing for a tab
+ * outside the split, or when it is already so.
+ */
+export const maximizePane = (
+  state: State,
+  { profileId, tabId }: TabKey,
+  on: boolean
+): State | undefined =>
+  updateProfile(state, profileId, (profile) =>
+    isInSplit(profile, tabId)
+      ? withMaximized(on ? { ...profile, selectedTabId: tabId } : profile, on)
+      : undefined
+  );
+
+/**
+ * The profile's split with new sizes, resized or evened out; nothing when it
+ * no longer holds the same panes, as when one closed meanwhile, or when
+ * nothing changes.
+ */
+export const resizeSplit = (
+  state: State,
+  profileId: string,
+  split: Split
+): State | undefined =>
+  updateProfile(state, profileId, (profile) =>
+    profile.split &&
+    !isEqual(profile.split, split) &&
+    isEqual(paneTabs(profile.split.root), paneTabs(split.root))
+      ? withSplit(profile, split)
+      : undefined
   );
 
 const updateTab = (
