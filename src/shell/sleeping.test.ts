@@ -19,6 +19,7 @@ const tabs = (selectedAsleep: boolean): ShellState["tabs"] => ({
       pinned: false,
       ownWindow: false,
       status: { kind: "unloaded" },
+      bookmarked: null,
     },
     {
       id: "s",
@@ -27,6 +28,7 @@ const tabs = (selectedAsleep: boolean): ShellState["tabs"] => ({
       pinned: true,
       ownWindow: false,
       status: { kind: "unloaded" },
+      bookmarked: null,
     },
   ],
 });

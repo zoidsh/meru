@@ -34,17 +34,29 @@ const NoticeList = () => {
  */
 export const Toast = ({
   message,
+  title,
   target,
 }: Extract<ShellState["overlay"], { kind: "toast" }> & {
   /** The overlay's document, which the toast is portalled into. */
   target: Document;
 }) => {
   const { t } = useLingui();
+  const page = title ?? "";
   const text = {
     "no-room": t({
       message: "Not enough room to split",
       comment:
         "Short notice at the foot of the window when a split would leave a pane too small",
+    }),
+    bookmarked: t({
+      message: `Bookmarked ${page}`,
+      comment:
+        "Short notice at the foot of the window once the selected tab's page is bookmarked; {page} is the page's title",
+    }),
+    "bookmark-removed": t({
+      message: "Bookmark removed",
+      comment:
+        "Short notice at the foot of the window once the selected tab's page is no longer bookmarked",
     }),
   }[message];
 

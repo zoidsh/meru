@@ -3,6 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 import {
   AppWindowIcon,
+  BookmarkIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
   CircleAlertIcon,
@@ -341,6 +342,10 @@ const OwnWindowMark = ({ shown, tile }: { shown: boolean; tile: boolean }) => {
 const isAsleepTab = (tab: ShellTab) =>
   !tab.ownWindow && tab.status.kind === "unloaded";
 
+/** A row's layout, its right end left to its cross, and its bookmark button if `roomy`. */
+const rowLayout = (roomy: boolean) =>
+  cn("w-full justify-start gap-2", roomy ? "pr-[62px]" : "pr-8");
+
 interface TabButtonProps {
   tab: ShellTab;
   /**
@@ -377,6 +382,8 @@ interface TabButtonProps {
   onSideways?:
     | ((tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => void)
     | undefined;
+  /** A row whose bookmark button shows beside its cross, which needs room for both. */
+  roomy?: boolean | undefined;
 }
 
 const TabButton = ({
@@ -397,6 +404,7 @@ const TabButton = ({
   isDragClick,
   onMoveBy,
   onSideways,
+  roomy = false,
 }: TabButtonProps) => {
   const title = tabTitle(tab);
   const { ownWindow } = tab;
@@ -497,7 +505,7 @@ const TabButton = ({
         "relative font-medium active:not-aria-[haspopup]:translate-y-0",
         cell && "w-full",
         spansRow && "col-span-2",
-        !tile && "w-full justify-start gap-2 pr-8",
+        !tile && rowLayout(roomy),
         !selected && "text-muted-foreground",
         boxed &&
           !selected &&
@@ -524,24 +532,107 @@ interface Hover {
 }
 
 /**
- * A listed tab with its cross, which lies over it for the pointer alone,
- * out of the tab order and hidden from assistive technology, since a
- * tablist holds only tabs.
+ * Whether a listed tab's wide row has a bookmark button: its page can be
+ * bookmarked and shows in the main window.
+ */
+export const hasBookmarkButton = (tab: ShellTab, wide: boolean) =>
+  wide && !tab.pinned && !tab.ownWindow && tab.bookmarked !== null;
+
+/**
+ * A row's bookmark button, at its right end with the cross moved beside it:
+ * shown on hover, and kept at rest, its icon filled and muted, while the
+ * tab's page is bookmarked.
+ */
+const RowBookmarkButton = ({
+  profileId,
+  tab,
+  hovered,
+  hover,
+  shortcut,
+}: {
+  profileId: string;
+  tab: ShellTab;
+  hovered: boolean;
+  hover: Hover;
+  /** Bookmark Tab's, named while the tab is the one it acts on. */
+  shortcut: string | undefined;
+}) => {
+  const { t } = useLingui();
+  const shortcutTitle = useShortcutTitle();
+  const title = tabTitle(tab);
+  const on = tab.bookmarked === true;
+  const tooltip = on
+    ? t({
+        message: "Remove bookmark",
+        comment:
+          "Tooltip of the filled bookmark button on a tab's row in the wide sidebar, which removes its page's bookmark",
+      })
+    : t({
+        message: "Bookmark tab",
+        comment:
+          "Tooltip of the bookmark button on a tab's row in the wide sidebar, which saves its page as a bookmark",
+      });
+
+  return (
+    <Button
+      variant="secondary"
+      size="icon-xs"
+      tabIndex={-1}
+      aria-label={
+        on
+          ? t({
+              message: `Remove bookmark of ${title}`,
+              comment:
+                "Accessible name of the filled bookmark button on a tab's row; {title} is the tab's title",
+            })
+          : t({
+              message: `Bookmark ${title}`,
+              comment:
+                "Accessible name of the bookmark button on a tab's row, which saves its page as a bookmark; {title} is the tab's title",
+            })
+      }
+      aria-pressed={on}
+      title={shortcutTitle(tooltip, shortcut)}
+      {...hover}
+      onMouseDown={keepFocus}
+      className={cn(
+        "pointer-events-auto opacity-0 [&_svg]:size-3",
+        (hovered || on) && "opacity-100",
+        on && !hovered && "bg-transparent text-muted-foreground",
+        on && "[&_svg]:fill-current"
+      )}
+      onClick={() => {
+        shellCalls().toggleTabBookmark({ profileId, tabId: tab.id });
+      }}
+    >
+      <BookmarkIcon />
+    </Button>
+  );
+};
+
+/**
+ * A listed tab with its cross, and in a wide row its bookmark button,
+ * which lie over it for the pointer alone, out of the tab order and hidden
+ * from assistive technology, since a tablist holds only tabs.
  */
 const ListedTab = ({
+  profileId,
   tab,
   wide,
   hovered,
   hover,
   onClose,
+  bookmarkShortcut,
   children,
 }: {
+  profileId: string;
   tab: ShellTab;
   wide: boolean;
   /** Whether the pointer is over the tab or its cross, which shows it. */
   hovered: boolean;
   hover: Hover;
   onClose: () => void;
+  bookmarkShortcut: string | undefined;
   /** The tab's own button. */
   children: ReactNode;
 }) => {
@@ -563,25 +654,36 @@ const ListedTab = ({
         aria-hidden
         className={cn(
           "pointer-events-none absolute inset-0",
-          wide && "flex items-center justify-end pr-1"
+          wide && "flex items-center justify-end gap-1 pr-1"
         )}
       >
         {wide ? (
-          <Button
-            variant="secondary"
-            size="icon-xs"
-            tabIndex={-1}
-            aria-label={closeLabel}
-            {...hover}
-            onMouseDown={keepFocus}
-            className={cn(
-              "pointer-events-auto opacity-0",
-              hovered && "opacity-100"
+          <>
+            <Button
+              variant="secondary"
+              size="icon-xs"
+              tabIndex={-1}
+              aria-label={closeLabel}
+              {...hover}
+              onMouseDown={keepFocus}
+              className={cn(
+                "pointer-events-auto opacity-0",
+                hovered && "opacity-100"
+              )}
+              onClick={onClose}
+            >
+              <XIcon />
+            </Button>
+            {hasBookmarkButton(tab, wide) && (
+              <RowBookmarkButton
+                profileId={profileId}
+                tab={tab}
+                hovered={hovered}
+                hover={hover}
+                shortcut={bookmarkShortcut}
+              />
             )}
-            onClick={onClose}
-          >
-            <XIcon />
-          </Button>
+          </>
         ) : (
           // Below shadcn's smallest button, kept from v3 to fit a tile's
           // corner.
@@ -752,6 +854,7 @@ export const Sidebar = ({
   const { t } = useLingui();
   const { profileId } = tabs;
   const [hovered, setHovered] = useState<string>();
+  const shortcuts = useShellState("shortcuts");
   const wide = state === "wide";
   const gap = wide ? 4 : 8;
   const pinned = tabs.tabs.filter((tab) => tab.pinned);
@@ -1015,6 +1118,7 @@ export const Sidebar = ({
       spansRow = false,
       grid = false,
       dropId = undefined as string | undefined,
+      roomy = false,
     } = {}
   ) => (
     <TabButton
@@ -1041,12 +1145,14 @@ export const Sidebar = ({
       isDragClick={drag.isDragClick}
       onMoveBy={(step) => moveBy(tab, step)}
       onSideways={grid ? sideways : undefined}
+      roomy={roomy}
     />
   );
 
   const listedTab = (tab: ShellTab) => (
     <ListedTab
       key={tab.id}
+      profileId={profileId}
       tab={tab}
       wide={wide}
       hovered={hovered === tab.id}
@@ -1054,8 +1160,13 @@ export const Sidebar = ({
       onClose={() => {
         close(tab.id);
       }}
+      bookmarkShortcut={
+        tab.id === tabs.selectedTabId ? shortcuts?.["tab.bookmark"] : undefined
+      }
     >
-      {button(tab, !wide)}
+      {button(tab, !wide, {
+        roomy: hovered === tab.id && hasBookmarkButton(tab, wide),
+      })}
     </ListedTab>
   );
 

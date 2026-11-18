@@ -21,6 +21,7 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
 
+import { BookmarksButton } from "./bookmarks.tsx";
 import { isMenuKey, useMenuReturn, wholePoint } from "./context-menu.ts";
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
@@ -660,6 +661,7 @@ export const Titlebar = ({ sidebarShown }: { sidebarShown: boolean }) => {
           profileCount={profileCount}
           shortcut={shortcuts?.["inbox.toggle"]}
         />
+        <BookmarksButton />
         <DoNotDisturbButton />
       </div>
     </header>

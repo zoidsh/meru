@@ -227,11 +227,53 @@ msgstr "Below the focused pane"
 msgid "Beside the focused pane"
 msgstr "Beside the focused pane"
 
+#. Accessible name of the bookmark button on a tab's row, which saves its page as a bookmark; {title} is the tab's title
+#: src/shell/tab-strip.tsx
+msgid "Bookmark {title}"
+msgstr "Bookmark {title}"
+
+#. Shown in the Bookmarks overlay when the selected profile has no bookmarks
+#: src/shell/bookmarks.tsx
+msgid "Bookmark a page from its tab's menu or with the shortcut."
+msgstr "Bookmark a page from its tab's menu or with the shortcut."
+
+#. Short notice at the foot of the window once the selected tab's page is no longer bookmarked
+#: src/shell/toast.tsx
+msgid "Bookmark removed"
+msgstr "Bookmark removed"
+
+#. Tooltip of the bookmark button on a tab's row in the wide sidebar, which saves its page as a bookmark
+#: src/shell/tab-strip.tsx
+msgid "Bookmark tab"
+msgstr "Bookmark tab"
+
+#. Accessible name and tooltip of the bookmark button in the title bar of a tab's own window, which saves its page as a bookmark
+#: src/shell/bookmarks.tsx
+msgctxt "button"
+msgid "Bookmark tab"
+msgstr "Bookmark tab"
+
 #. Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile
 #. Menu item in the Tabs menu that saves the selected tab's page as a bookmark of its profile
 #: src/main/commands.ts
 msgid "Bookmark Tab"
 msgstr "Bookmark Tab"
+
+#. Short notice at the foot of the window once the selected tab's page is bookmarked; {page} is the page's title
+#: src/shell/toast.tsx
+msgid "Bookmarked {page}"
+msgstr "Bookmarked {page}"
+
+#. Title of the overlay over the page that lists the selected profile's bookmarks
+#: src/shell/bookmarks.tsx
+msgid "Bookmarks"
+msgstr "Bookmarks"
+
+#. Accessible name and tooltip of the button in the title bar that lists the selected profile's bookmarks over the page
+#: src/shell/bookmarks.tsx
+msgctxt "button"
+msgid "Bookmarks"
+msgstr "Bookmarks"
 
 #. Menu item in the Tabs menu that lists the selected profile's bookmarks over the page
 #: src/main/commands.ts
@@ -589,6 +631,11 @@ msgstr "No apps found."
 msgid "No apps open"
 msgstr "No apps open"
 
+#. Heading of the Bookmarks overlay when the selected profile has no bookmarks
+#: src/shell/bookmarks.tsx
+msgid "No bookmarks yet"
+msgstr "No bookmarks yet"
+
 #. Item of the Saved Searches menu, not clickable, while the selected profile has none
 #: src/main/application-menu.ts
 msgid "No Saved Searches"
@@ -740,10 +787,28 @@ msgstr "Reload"
 msgid "Remove {name}?"
 msgstr "Remove {name}?"
 
+#. Accessible name and tooltip of the cross on a row of the Bookmarks overlay, which deletes that bookmark
+#. Tooltip of the filled bookmark button on a tab's row in the wide sidebar, which removes its page's bookmark
+#: src/shell/bookmarks.tsx
+#: src/shell/tab-strip.tsx
+msgid "Remove bookmark"
+msgstr "Remove bookmark"
+
+#. Accessible name and tooltip of the filled bookmark button in the title bar of a tab's own window, which removes its page's bookmark
+#: src/shell/bookmarks.tsx
+msgctxt "button"
+msgid "Remove bookmark"
+msgstr "Remove bookmark"
+
 #. Menu item in the Tabs menu, in place of Bookmark Tab while the selected tab's page is bookmarked
 #: src/main/commands.ts
 msgid "Remove Bookmark"
 msgstr "Remove Bookmark"
+
+#. Accessible name of the filled bookmark button on a tab's row; {title} is the tab's title
+#: src/shell/tab-strip.tsx
+msgid "Remove bookmark of {title}"
+msgstr "Remove bookmark of {title}"
 
 #. Button in the dialog that confirms removing a profile
 #: src/main/profile-copy.ts

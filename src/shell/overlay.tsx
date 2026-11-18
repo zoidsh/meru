@@ -10,6 +10,7 @@ import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Input } from "#ui/input.tsx";
 import { Label } from "#ui/label.tsx";
 
+import { BookmarksOverlay } from "./bookmarks.tsx";
 import { DropZone } from "./drop-zone.tsx";
 import { FindBar } from "./find-bar.tsx";
 import { Inbox } from "./inbox.tsx";
@@ -170,6 +171,10 @@ export const OverlayLayer = () => {
           {...open}
         />
       );
+      break;
+    }
+    case "bookmarks": {
+      drawn = <BookmarksOverlay key={open.profileId} {...open} />;
       break;
     }
     case "tab-menu": {

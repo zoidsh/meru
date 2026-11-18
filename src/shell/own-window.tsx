@@ -15,6 +15,7 @@ import {
 import { Badge } from "#ui/badge.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
+import { OwnWindowBookmarkButton } from "./bookmarks.tsx";
 import { FindBar } from "./find-bar.tsx";
 import {
   closeShellDocument,
@@ -32,8 +33,8 @@ type OwnWindow = ShellState["windows"][number];
 /**
  * A tab's own window as the shell draws it, behind the page main places in
  * it: the titlebar, with the page's navigation, the profile's badge where
- * there are two or more profiles, and the app's icon and the page's title,
- * and the shell grey with the profile's tint around the page. The whole
+ * there are two or more profiles, the app's icon and the page's title, and
+ * at its right the bookmark star, and the shell grey with the profile's tint around the page. The whole
  * titlebar drags the window but for its controls.
  */
 const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
@@ -92,6 +93,13 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
           </span>
         </div>
         <div aria-hidden className="h-full min-w-16 flex-1" />
+        <div className="flex items-center gap-1">
+          <OwnWindowBookmarkButton
+            profileId={own.profileId}
+            tabId={own.tabId}
+            bookmarked={own.bookmarked}
+          />
+        </div>
       </header>
       {/* Where main places the page, by the same measurements. */}
       <div
