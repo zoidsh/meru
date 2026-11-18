@@ -7,6 +7,7 @@ import {
   findPage,
   readMenuItem,
   readState,
+  sizeWindow,
   test,
   writeState,
 } from "./lib/app.ts";
@@ -394,6 +395,60 @@ test("New tab lists the apps, then the profile's bookmarks; typing filters both,
   await expect(card.getByText("No results.", { exact: true })).toBeVisible();
   await expect(apps).toHaveCount(0);
   await expect(bookmarks).toHaveCount(0);
+});
+
+test("New tab's list grows to 480px and, in a short window, stops 16px above the page area's bottom, scrolling", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedLauncher(userDataDir, standIn, {
+    bookmarks: Array.from({ length: 20 }, (_, index) => ({
+      id: `b${index}`,
+      url: `${standIn.calendarUrl}#${index}`,
+      title: `Week ${index}`,
+      app: "calendar",
+    })),
+  });
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const { card, field } = launcher(overlay);
+  const measure = () =>
+    overlay.evaluate(() => {
+      const dialog = document.querySelector("dialog");
+      const list = document.querySelector("[cmdk-list]");
+
+      return {
+        list: list?.getBoundingClientRect().height ?? 0,
+        scrolls: list ? list.scrollHeight > list.clientHeight : false,
+        gap: innerHeight - (dialog?.getBoundingClientRect().bottom ?? 0),
+      };
+    });
+
+  await findPage(app, standIn.url);
+  await sizeWindow(app, 1000, 720);
+  await clickMenuItem(app, "app.open");
+  await expect(field).toBeFocused();
+  await expect
+    .poll(async () => {
+      const { list } = await measure();
+
+      return list;
+    })
+    .toBe(480);
+
+  await clickMenuItem(app, "app.open");
+  await expect(card).toHaveCount(0);
+  await sizeWindow(app, 1000, 480);
+  await clickMenuItem(app, "app.open");
+  await expect(field).toBeFocused();
+
+  const short = await measure();
+
+  expect(short.list).toBeLessThan(480);
+  expect(short.scrolls).toBeTruthy();
+  expect(short.gap).toBeGreaterThanOrEqual(16);
 });
 
 test("choosing a bookmark in New tab closes it and selects the tab at its page, brings forward the window of one in its own, or opens a new tab of its app", async ({

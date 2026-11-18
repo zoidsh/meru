@@ -120,7 +120,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
         label={label}
         value={highlighted}
         onValueChange={setHighlighted}
-        className="rounded-none! bg-transparent p-0 [&_[data-slot=command-input-wrapper]]:p-0 [&_[data-slot=command-input-wrapper]]:pb-1"
+        className="min-h-0 rounded-none! bg-transparent p-0 [&_[data-slot=command-input-wrapper]]:p-0 [&_[data-slot=command-input-wrapper]]:pb-1"
       >
         <CommandInput
           ref={focus}
@@ -137,6 +137,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
           className="text-sm"
         />
         <CommandList
+          className="max-h-120 min-h-0"
           label={t({
             message: "Apps and bookmarks",
             comment:
