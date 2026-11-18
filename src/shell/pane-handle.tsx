@@ -212,7 +212,13 @@ export const PaneHandle = ({ handle }: { handle: Handle }) => {
           });
         }
       }}
-      onPointerUp={() => {
+      onPointerUp={(event) => {
+        // Where it is let go, which a move Chromium held for the next frame
+        // may not have told.
+        if (drag.current) {
+          drag.current.by = Math.round(at(event) - drag.current.start);
+        }
+
         end(true);
       }}
       onPointerCancel={() => {

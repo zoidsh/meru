@@ -112,6 +112,32 @@ const middleOf = async (shell: Page) => {
   };
 };
 
+/**
+ * Presses at `from` and lets go `by` pixels across with no move between, as
+ * when Chromium holds the moves for a frame the release comes before.
+ */
+const releaseUntold = async (
+  shell: Page,
+  from: { x: number; y: number },
+  by: number
+) => {
+  const cdp = await shell.context().newCDPSession(shell);
+  const press = { y: from.y, button: "left", clickCount: 1 } as const;
+
+  await cdp.send("Input.dispatchMouseEvent", {
+    ...press,
+    type: "mousePressed",
+    x: from.x,
+    buttons: 1,
+  });
+  await cdp.send("Input.dispatchMouseEvent", {
+    ...press,
+    type: "mouseReleased",
+    x: from.x + by,
+    buttons: 0,
+  });
+};
+
 /** Presses Maximize's shortcut in the page at `url`, as the system hands it the key. */
 const pressMaximize = (app: ElectronApplication, url: string) =>
   app.evaluate(
@@ -205,6 +231,15 @@ test("dragging a gap resizes the pages beside it as it moves and stops at each p
       { url: standIn.calendarUrl, width: left?.width },
       { url: standIn.url, width: right?.width },
     ]);
+
+  // A release lands where it is let go, though no move told of it.
+  await releaseUntold(shell, await middleOf(shell), -40);
+
+  await expect
+    .poll(() => paneWidths(shell))
+    .toStrictEqual([(left?.width ?? 0) + 2 - 40, (right?.width ?? 0) + 2 + 40]);
+  await handle(shell).dblclick();
+  await expect.poll(() => storedShares(userDataDir)).toStrictEqual([0.5, 0.5]);
 
   const uneven = await middleOf(shell);
 
