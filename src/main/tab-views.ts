@@ -86,6 +86,14 @@ const ADD_PROFILE_PAUSE_MS = 1000;
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
+/**
+ * Chromium's error page, shown once a load failed and until the next one
+ * starts, and a crashed page are not where the tab is. A retry's page is,
+ * and its title can come before it finishes loading.
+ */
+const isWhereTabIs = (status: TabStatus) =>
+  status.kind !== "crashed" && !(status.kind === "failed" && !status.retrying);
+
 interface TabView {
   key: TabKey;
   view: ContentView;
@@ -218,9 +226,15 @@ export const createTabViews = ({
         tab.view.reload();
         break;
       }
-      // Where the page was stays in the page writer, to be written and loaded
-      // from on wake.
+      // Wakes where the page is now, by `restoreUrl`'s rule: the page writer
+      // may not have put it in state yet.
       case "discard": {
+        const app = findApp(apps, findTab(state(), tab.key)?.app ?? "");
+
+        if (app && !pendingUrls.has(key) && isWhereTabIs(tab.status)) {
+          pendingUrls.set(key, restoreUrl(apps, app, tab.view.url()));
+        }
+
         tabs.delete(key);
         clearTimeout(tab.retry);
         // oxlint-disable-next-line no-use-before-define -- as Close closes a view
@@ -263,19 +277,10 @@ export const createTabViews = ({
     }
   };
 
-  /**
-   * Chromium's error page, shown once a load failed and until the next one
-   * starts, and a crashed page are not where the tab is. A retry's page is,
-   * and its title can come before it finishes loading.
-   */
   const showsPage = (key: string) => {
     const status = tabs.get(key)?.status;
 
-    return (
-      status !== undefined &&
-      status.kind !== "crashed" &&
-      !(status.kind === "failed" && !status.retrying)
-    );
+    return status !== undefined && isWhereTabIs(status);
   };
 
   const onEvent = (key: string, tabKeyed: TabKey, event: ContentViewEvent) => {

@@ -850,6 +850,26 @@ describe(createTabViews, () => {
     expect(window.tabs.focuser()).toBeDefined();
   });
 
+  it("wakes a tab where its page was, even before that was written to state", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+    const later = `${CALENDAR}?day=3`;
+
+    await window.profiles.selectTab(calendar);
+
+    const view = window.viewOf("persist:a", 1);
+
+    window.emit(view, { kind: "loaded" });
+    window.emit(view, { kind: "navigated", url: `${CALENDAR}?day=2` });
+    // The fake's page is where it last loaded.
+    view?.loaded.push(later);
+    window.emit(view, { kind: "navigated", url: later });
+    window.tabs.sleep(calendar);
+    window.tabs.reloadFront();
+
+    expect(window.viewOf("persist:a", 1)?.loaded).toStrictEqual([later]);
+  });
+
   it("wakes the sleeping front tab by Reload, and selects and wakes a background one by its Reload", async () => {
     const window = await setup();
     const gmail = { profileId: "a", tabId: "gmail" };
