@@ -2,12 +2,9 @@ import { findRectangle } from "./find.ts";
 import { contentViewBounds } from "./layout.ts";
 import { ownWindowFindOfFrame, ownWindowOfFrame } from "./own-window.ts";
 import type { PaneDirection } from "./pane-tree.ts";
-import type { ProfileMenuRequest } from "./profile-menu.ts";
 import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
-import type { TabMenuRequest } from "./tab-menu.ts";
-import { findTab } from "./tabs.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** The short notices a toast gives, by name. */
@@ -40,23 +37,11 @@ export type Overlay =
    */
   | { kind: "drop"; zone: Rectangle; along: "pane" | "edge"; fits: boolean }
   | { kind: "inbox" }
-  /** A tab's context menu, at the point it was asked for. */
-  | ({ kind: "tab-menu" } & TabMenuRequest)
-  /** A profile button's context menu, at the point it was asked for. */
-  | ({ kind: "profile-menu" } & ProfileMenuRequest)
   /**
    * The find bar over a tab's page, the focused pane's in a split, which
    * takes focus but stays while the page is pressed or the window loses it.
    */
   | { kind: "find"; profileId: string; tabId: string };
-
-/**
- * The overlays that are menus: drawn at a point over the whole content area,
- * and on closing giving focus back to the control they were opened on.
- */
-export const MENU_KINDS = ["tab-menu", "profile-menu"] as const;
-
-export type MenuKind = (typeof MENU_KINDS)[number];
 
 /** Whether an overlay leaves focus where it is, taking none and giving none back. */
 export const takesNoFocus = (overlay: Pick<Overlay, "kind"> | undefined) =>
@@ -71,27 +56,11 @@ export const staysOpenOutside = (overlay: Pick<Overlay, "kind"> | undefined) =>
   overlay?.kind === "find";
 
 /**
- * Whether an overlay is a card or a menu over the page, which takes the keys
- * a page's commands would; the find bar, a toast and a drop's zone are not.
+ * Whether an overlay is a card over the page, which takes the keys a page's
+ * commands would; the find bar, a toast and a drop's zone are not.
  */
 export const coversPage = (overlay: Pick<Overlay, "kind"> | undefined) =>
   overlay !== undefined && overlay.kind !== "find" && !takesNoFocus(overlay);
-
-export const isMenu = (overlay: Pick<Overlay, "kind"> | undefined) =>
-  overlay !== undefined &&
-  (MENU_KINDS as readonly string[]).includes(overlay.kind);
-
-/** Whether a menu's point lies in the content area, in whole CSS pixels. */
-export const menuPointInside = (
-  { x, y }: { x: number; y: number },
-  contentSize: Size
-) =>
-  Number.isInteger(x) &&
-  Number.isInteger(y) &&
-  x >= 0 &&
-  y >= 0 &&
-  x <= contentSize.width &&
-  y <= contentSize.height;
 
 /** The view a toast is drawn in, at the page area's bottom right corner. */
 export const TOAST_VIEW = { width: 400, height: 88 } as const;
@@ -119,12 +88,10 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
 /**
  * Where the overlay's view sits while one is open: a card's over the page
  * area, so the card can be placed in it by CSS and a press beside it lands
- * in the view, which closes it; a menu's over the window's whole content
- * area, titlebar and sidebar too, so it can reach over them from the tab it
- * belongs to and takes the press that closes it; a toast's only where the
- * toast is, so the pages beside it take their own presses, as does the find
- * bar's, at the top right of `pane`, the focused one placed in the page area,
- * or of the page area outside a split.
+ * in the view, which closes it; a toast's only where the toast is, so the
+ * pages beside it take their own presses, as does the find bar's, at the
+ * top right of `pane`, the focused one placed in the page area, or of the
+ * page area outside a split.
  */
 export const overlayRectangle = (
   contentSize: Size,
@@ -132,10 +99,6 @@ export const overlayRectangle = (
   overlay: Pick<Overlay, "kind">,
   pane?: Rectangle
 ): Rectangle => {
-  if (isMenu(overlay)) {
-    return { x: 0, y: 0, ...contentSize };
-  }
-
   const area = contentViewBounds(contentSize, sidebar);
 
   if (overlay.kind === "find") {
@@ -172,8 +135,8 @@ const selection = (state: State) => {
 
 /**
  * The overlay open after `event`. What is underneath changing, another
- * profile or tab selected, closes the rename panel, Open app, a tab's menu
- * and the find bar, as does their profile going, and the menu's tab. The unified inbox,
+ * profile or tab selected, closes the rename panel, Open app, Bookmarks
+ * and the find bar, as does their profile going. The unified inbox,
  * over every profile, keeps its own rules.
  */
 export const transitionOverlay = (
@@ -199,10 +162,7 @@ export const transitionOverlay = (
       if (
         !current ||
         selection(event.previous) !== selection(event.next) ||
-        !event.next.profiles.some(
-          (profile) => profile.id === current.profileId
-        ) ||
-        (current.kind === "tab-menu" && !findTab(event.next, current))
+        !event.next.profiles.some((profile) => profile.id === current.profileId)
       ) {
         return undefined;
       }

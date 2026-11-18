@@ -1,8 +1,9 @@
 import { findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
+import { menuOfGroups, menuPointInside } from "./context-menu.ts";
+import type { MenuEntry, MenuItemEntry, MenuPoint } from "./context-menu.ts";
 import { drawnTabs } from "./drawn-tabs.ts";
 import { isWebUrl } from "./google-redirect.ts";
-import { menuPointInside } from "./overlay.ts";
 import { isInSplit, isMaximized, splitPanes } from "./split.ts";
 import { inOwnWindow, isPinned, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
@@ -19,7 +20,10 @@ export const TAB_MENU_ITEMS = [
   "copyUrl",
   "openInBrowser",
   "pin",
+  "unpin",
   "openAtLaunch",
+  "bookmark",
+  "removeBookmark",
   "splitRight",
   "splitDown",
   "maximize",
@@ -34,39 +38,28 @@ export const TAB_MENU_ITEMS = [
 
 export type TabMenuItemId = (typeof TAB_MENU_ITEMS)[number];
 
-/** The menu's groups, drawn with a separator between each. */
-export const TAB_MENU_GROUPS: readonly (readonly TabMenuItemId[])[] = [
-  ["sleep", "wake"],
-  ["reload", "duplicate", "copyUrl", "openInBrowser"],
-  ["pin", "openAtLaunch"],
-  ["splitRight", "splitDown", "maximize", "restore", "separate"],
-  ["moveToNewWindow", "moveToMainWindow"],
-  ["close", "closeOthers", "closeBelow"],
-];
+/** What More options in a tab's own window holds, in the design's order. */
+export const OWN_WINDOW_MENU_ITEMS = [
+  "moveToMainWindow",
+  "openAtLaunch",
+  "copyUrl",
+  "openInBrowser",
+] as const satisfies readonly TabMenuItemId[];
 
-/** The registry command whose shortcut an item shows, for those that have one. */
-export const TAB_MENU_COMMANDS: Partial<Record<TabMenuItemId, string>> = {
-  reload: "tab.reload",
-  splitRight: "tab.splitRight",
-  splitDown: "tab.splitDown",
-  maximize: "tab.maximize",
-  restore: "tab.maximize",
-  moveToNewWindow: "tab.moveToNewWindow",
-  moveToMainWindow: "tab.moveToMainWindow",
-  close: "tab.close",
-};
+export type OwnWindowMenuItemId = (typeof OWN_WINDOW_MENU_ITEMS)[number];
 
-export interface TabMenuItem {
-  id: TabMenuItemId;
-  enabled: boolean;
-  /** For a checkbox item, whether it is on. */
-  checked?: boolean;
-}
+/** A tab's menu asked for at a point of its window's content area. */
+export interface TabMenuRequest extends TabKey, MenuPoint {}
 
-/** A context menu asked for at a point of the window's content area. */
-export interface TabMenuRequest extends TabKey {
-  x: number;
-  y: number;
+/** What the tab's page is now, which some items follow. */
+export interface TabPage {
+  /** Whether it has a page, else it sleeps. */
+  loaded: boolean;
+  /**
+   * Whether its page is bookmarked, or `undefined` while it cannot be, as a
+   * Gmail, sleeping, loading or failed page.
+   */
+  bookmarked: boolean | undefined;
 }
 
 const profileOf = (state: State, profileId: string) =>
@@ -83,24 +76,46 @@ const belowOf = (profile: Profile, tab: Tab) => {
   return order.slice(order.indexOf(tab) + 1).filter(canCloseTab);
 };
 
+type Item = MenuItemEntry<TabMenuItemId>;
+
+const item = (
+  id: TabMenuItemId,
+  enabled: boolean,
+  more: Pick<Item, "checked" | "command"> = {}
+): Item => ({ kind: "item", id, enabled, ...more });
+
+const opensInBrowser = (tab: Tab) =>
+  URL.canParse(tab.url) && isWebUrl(new URL(tab.url));
+
+/** Bookmark tab or Remove bookmark, while the page can be bookmarked. */
+const bookmarkItems = (bookmarked: boolean | undefined): Item[] =>
+  bookmarked === undefined
+    ? []
+    : [
+        item(bookmarked ? "removeBookmark" : "bookmark", true, {
+          command: "tab.bookmark",
+        }),
+      ];
+
 /**
- * What the tab's menu offers, in order; nothing for a tab that is not
- * shown. A tab with a page offers Sleep, one without, asleep, Wake; Reload
- * wakes one asleep. Duplicate needs an app that can have more than one tab;
- * a pinned tab has Open at Launch and no Close tab. Split right and Split
- * down split beside the tab, starting a split where it is in none; Maximize
- * pane, or Restore panes while its split is maximized, and Separate from
- * split take one in a split. A tab that is not pinned can move to a new
- * window; one in its own window offers Move to main window in its place,
- * no Sleep or Wake, since it never sleeps, and neither splitting nor
+ * The tab's context menu, in the design's groups; nothing for a tab that is
+ * not shown. A tab with a page offers Sleep, one without, asleep, Wake;
+ * Reload wakes one asleep. Duplicate needs an app that can have more than
+ * one tab; a pinned tab has Unpin, Open at Launch and no Close tab. Bookmark
+ * tab or Remove bookmark is there while the page can be bookmarked. Split
+ * right and Split down split beside the tab, starting a split where it is in
+ * none; Maximize pane, or Restore panes while its split is maximized, and
+ * Separate from split take one in a split. A tab that is not pinned can move
+ * to a new window; one in its own window offers Move to main window in its
+ * place, no Sleep or Wake, since it never sleeps, and neither splitting nor
  * pinning, which are the main window's.
  */
-export const tabMenuItems = (
+export const tabMenu = (
   state: State,
   key: TabKey,
   apps: readonly App[],
-  loaded: boolean
-): TabMenuItem[] | undefined => {
+  page: TabPage
+): MenuEntry<TabMenuItemId>[] | undefined => {
   const profile = profileOf(state, key.profileId);
   const tab = findTab(state, key);
 
@@ -115,51 +130,84 @@ export const tabMenuItems = (
   const asSelected = { ...profile, selectedTabId: tab.id };
   const maximizes = paned && splitPanes(asSelected) !== undefined;
 
+  return menuOfGroups<TabMenuItemId>([
+    own ? [] : [item(page.loaded ? "sleep" : "wake", true)],
+    [
+      item("reload", true, { command: "tab.reload" }),
+      item("duplicate", app !== undefined && !app.singleInstance),
+      item("copyUrl", true),
+      item("openInBrowser", opensInBrowser(tab)),
+    ],
+    [
+      item(pinned ? "unpin" : "pin", !own, { command: "tab.pin" }),
+      ...(pinned
+        ? [item("openAtLaunch", true, { checked: tab.openAtLaunch === true })]
+        : []),
+      ...bookmarkItems(page.bookmarked),
+    ],
+    [
+      item("splitRight", !own, { command: "tab.splitRight" }),
+      item("splitDown", !own, { command: "tab.splitDown" }),
+      item(isMaximized(asSelected) ? "restore" : "maximize", maximizes, {
+        command: "tab.maximize",
+      }),
+      item("separate", paned, { command: "tab.separate" }),
+    ],
+    [
+      own
+        ? item("moveToMainWindow", true, { command: "tab.moveToMainWindow" })
+        : item("moveToNewWindow", canMoveToOwnWindow(tab), {
+            command: "tab.moveToNewWindow",
+          }),
+    ],
+    [
+      ...(canCloseTab(tab)
+        ? [item("close", true, { command: "tab.close" })]
+        : []),
+      item("closeOthers", othersOf(profile, tab).length > 0),
+      item("closeBelow", belowOf(profile, tab).length > 0),
+    ],
+  ]);
+};
+
+/**
+ * More options in the titlebar of the tab's own window: Move to main
+ * window, Open at Launch, which only a pinned tab has and so is never on
+ * there, since a pinned tab never moves to a window of its own, Copy URL
+ * and Open in default browser. Nothing for a tab not in its own window.
+ */
+export const ownWindowMenu = (
+  state: State,
+  key: TabKey
+): MenuEntry<OwnWindowMenuItemId>[] | undefined => {
+  const tab = findTab(state, key);
+
+  if (!tab || !inOwnWindow(tab)) {
+    return;
+  }
+
   return [
-    ...(own
-      ? []
-      : [
-          {
-            id: loaded ? ("sleep" as const) : ("wake" as const),
-            enabled: true,
-          },
-        ]),
-    { id: "reload", enabled: true },
-    { id: "duplicate", enabled: app !== undefined && !app.singleInstance },
-    { id: "copyUrl", enabled: true },
     {
-      id: "openInBrowser",
-      enabled: URL.canParse(tab.url) && isWebUrl(new URL(tab.url)),
+      kind: "item",
+      id: "moveToMainWindow",
+      enabled: true,
+      command: "tab.moveToMainWindow",
     },
-    { id: "pin", enabled: !own },
-    ...(pinned
-      ? [
-          {
-            id: "openAtLaunch" as const,
-            enabled: true,
-            checked: tab.openAtLaunch === true,
-          },
-        ]
-      : []),
-    { id: "splitRight", enabled: !own },
-    { id: "splitDown", enabled: !own },
     {
-      id: isMaximized(asSelected) ? "restore" : "maximize",
-      enabled: maximizes,
+      kind: "item",
+      id: "openAtLaunch",
+      enabled: isPinned(tab),
+      checked: tab.openAtLaunch === true,
     },
-    { id: "separate", enabled: paned },
-    own
-      ? { id: "moveToMainWindow" as const, enabled: true }
-      : { id: "moveToNewWindow" as const, enabled: canMoveToOwnWindow(tab) },
-    ...(canCloseTab(tab) ? [{ id: "close" as const, enabled: true }] : []),
-    { id: "closeOthers", enabled: othersOf(profile, tab).length > 0 },
-    { id: "closeBelow", enabled: belowOf(profile, tab).length > 0 },
+    { kind: "item", id: "copyUrl", enabled: true },
+    { kind: "item", id: "openInBrowser", enabled: opensInBrowser(tab) },
   ];
 };
 
 /**
  * The menu for a tab asked for at a point, if the tab is shown, of the
- * selected profile, and the point in the content area, in whole CSS pixels.
+ * selected profile or in its own window, and the point in the content
+ * area, in whole CSS pixels.
  */
 export const tabMenuAt = (
   state: State,
@@ -167,10 +215,11 @@ export const tabMenuAt = (
   contentSize: Size
 ): TabMenuRequest | undefined => {
   const { profileId, tabId, x, y } = request;
+  const tab = findTab(state, { profileId, tabId });
 
   return menuPointInside(request, contentSize) &&
-    profileId === state.selectedProfileId &&
-    findTab(state, { profileId, tabId })
+    tab &&
+    (profileId === state.selectedProfileId || inOwnWindow(tab))
     ? { profileId, tabId, x, y }
     : undefined;
 };

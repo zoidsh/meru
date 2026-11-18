@@ -24,7 +24,7 @@ import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
-import { isMenuKey, useMenuReturn, wholePoint } from "./context-menu.ts";
+import { isMenuKey, wholePoint } from "./context-menu.ts";
 import { keepInView } from "./keep-in-view.ts";
 import { OpenAppSidebarButton } from "./open-app.tsx";
 import { useShortcutTitle } from "./shortcut-title.ts";
@@ -923,28 +923,6 @@ export const Sidebar = ({
   });
 
   const overlay = useShellState("overlay");
-
-  // Back on the tab its menu was opened on, or the selected tab once that
-  // is gone, unless the item gave focus to the page area, as Sleep gives it
-  // to Wake.
-  useMenuReturn(
-    "tab-menu",
-    (menu) => menu.tabId,
-    (tabId) => {
-      if (document.activeElement?.closest("[data-sleeping-tab]")) {
-        return;
-      }
-
-      (
-        list.current?.querySelector<HTMLElement>(
-          `[data-tab-id="${CSS.escape(tabId)}"]`
-        ) ??
-        list.current?.querySelector<HTMLElement>(
-          '[role="tab"][aria-selected="true"]'
-        )
-      )?.focus();
-    }
-  );
 
   // A tab moved by the keyboard, or dragged, keeps focus, which the list
   // drawn in its new order may have dropped, and the keyboard's move is said.

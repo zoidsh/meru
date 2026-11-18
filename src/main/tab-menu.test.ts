@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
-import type { Overlay } from "#core/overlay.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
+import type { ContextMenuItem, MenuPoint } from "#platform/context-menu.ts";
 
 import { createTabMenu } from "./tab-menu.ts";
 
-const state: State = {
+const initial: State = {
   version: 1,
   profiles: [
     {
@@ -22,6 +22,13 @@ const state: State = {
           title: "Week",
         },
         { id: "x", app: "drive", url: "about:blank", title: "Blank" },
+        {
+          id: "w",
+          app: "docs",
+          url: "https://docs.google.com/document/d/1",
+          title: "Notes",
+          ownWindow: true,
+        },
       ],
       selectedTabId: "gmail",
     },
@@ -33,14 +40,34 @@ const key = (each: TabKey) => `${each.profileId}/${each.tabId}`;
 
 const at = (tabId: string) => ({ profileId: "p", tabId, x: 20, y: 80 });
 
-/**
- * The menu over fakes that record what each item reaches, in order; with
- * `held`, opening a tab waits for `release`.
- */
-const setup = ({ held = false } = {}) => {
+interface Popup {
+  window: string;
+  items: readonly ContextMenuItem[];
+  at: MenuPoint | undefined;
+}
+
+/** A window that records each menu popped up in it. */
+const menuWindow = (name: string, popups: Popup[]) => ({
+  getContentAreaSize: () => ({ width: 800, height: 600 }),
+  showContextMenu: (items: readonly ContextMenuItem[], point?: MenuPoint) => {
+    popups.push({ window: name, items, at: point });
+  },
+});
+
+const CHECKS = { true: " [x]", false: " [ ]", undefined: "" } as const;
+
+/** The labels of a popup, "—" a line, "(off)" a disabled item, "[x]" a checked one. */
+const labels = (popup: Popup | undefined) =>
+  popup?.items.map((item) =>
+    "type" in item
+      ? "—"
+      : `${item.label}${item.enabled ? "" : " (off)"}${CHECKS[`${item.checked}`]}${item.accelerator ? ` ${item.accelerator}` : ""}`
+  );
+
+/** The menus over fakes that record what each item reaches, in order. */
+const setup = ({ state = initial, bookmarked = false } = {}) => {
   const done: unknown[] = [];
-  let open: Overlay | undefined;
-  const { promise: released, resolve: release } = Promise.withResolvers();
+  const popups: Popup[] = [];
   const recorded =
     (name: string) =>
     (...args: unknown[]) => {
@@ -48,21 +75,24 @@ const setup = ({ held = false } = {}) => {
 
       return Promise.resolve(true);
     };
+  let current = state;
 
   const menu = createTabMenu({
-    state: () => state,
+    state: () => current,
     apps: APPS,
-    contentSize: () => ({ width: 800, height: 600 }),
-    overlays: {
-      open: (next) => {
-        open = next;
-        done.push(["open", next]);
+    window: menuWindow("main", popups),
+    ownWindow: (each) =>
+      each.tabId === "w" ? menuWindow("own", popups) : undefined,
+    accelerator: (command) =>
+      ({
+        "tab.close": "CommandOrControl+W",
+        "tab.reload": "CommandOrControl+R",
+      })[command],
+    bookmarks: {
+      bookmarked: (each) => (each.tabId === "gmail" ? undefined : bookmarked),
+      toggle: async (each, announce) => {
+        await recorded("bookmark")(key(each), announce);
       },
-      close: () => {
-        open = undefined;
-        done.push(["closed"]);
-      },
-      current: () => open,
     },
     profiles: {
       setPinned: (each, pinned) => recorded("pinned")(key(each), pinned),
@@ -84,13 +114,8 @@ const setup = ({ held = false } = {}) => {
     openSplit: (direction) => {
       done.push(["openSplit", direction]);
     },
-    openTab: async (profileId, app, url, after) => {
-      await recorded("openTab")(profileId, app.id, url, after);
-
-      if (held) {
-        await released;
-      }
-    },
+    openTab: (profileId, app, url, after) =>
+      recorded("openTab")(profileId, app.id, url, after),
     clipboard: {
       writeText: async (text) => {
         await recorded("clipboard")(text);
@@ -104,30 +129,40 @@ const setup = ({ held = false } = {}) => {
     log: (message) => done.push(["log", message]),
   });
 
-  /** Opens the menu on the tab, runs the item and gives what it reached. */
-  const choose = async (
-    tabId: string,
-    item: Parameters<typeof menu.run>[0]
-  ) => {
-    menu.open(at(tabId));
+  /** Clicks the item labelled so in the last popup, and gives what it reached. */
+  const click = async (label: string) => {
+    const item = popups
+      .at(-1)
+      ?.items.find(
+        (candidate) => !("type" in candidate) && candidate.label === label
+      );
+
     done.length = 0;
-    await menu.run(item);
 
-    return done;
+    if (item && !("type" in item)) {
+      await item.click?.();
+    }
+
+    return [...done];
   };
 
-  /** Opens another overlay, as the shell would while an item runs. */
-  const cover = (next: Overlay) => {
-    open = next;
-    done.push(["open", next]);
+  /** Opens the tab's menu, chooses the item and gives what it reached. */
+  const choose = (tabId: string, label: string) => {
+    menu.open(at(tabId));
+
+    return click(label);
   };
 
-  return { menu, done, choose, release, cover };
+  const setState = (next: State) => {
+    current = next;
+  };
+
+  return { menu, done, popups, click, choose, setState };
 };
 
 describe(createTabMenu, () => {
-  it("opens over a shown tab at a point inside the content area, and refuses any other", () => {
-    const { menu, done } = setup();
+  it("pops up a shown tab's menu in the main window at the point asked for, and refuses any other", () => {
+    const { menu, done, popups } = setup();
 
     menu.open({ ...at("c"), x: 900 });
     menu.open(at("gone"));
@@ -136,54 +171,99 @@ describe(createTabMenu, () => {
     expect(done).toStrictEqual([
       ["log", "Refused a menu for tab p/c at 900,80"],
       ["log", "Refused a menu for tab p/gone at 20,80"],
-      ["open", { kind: "tab-menu", ...at("c") }],
+    ]);
+    expect(
+      popups.map(({ window, at: point }) => [window, point])
+    ).toStrictEqual([["main", { x: 20, y: 80 }]]);
+    expect(labels(popups[0])).toStrictEqual([
+      "Sleep",
+      "—",
+      "Reload CommandOrControl+R",
+      "Duplicate",
+      "Copy URL",
+      "Open in default browser",
+      "—",
+      "Pin",
+      "Bookmark tab",
+      "—",
+      "Split right",
+      "Split down",
+      "Maximize pane (off)",
+      "Separate from split (off)",
+      "—",
+      "Move to new window",
+      "—",
+      "Close tab CommandOrControl+W",
+      "Close other tabs",
+      "Close tabs below",
     ]);
   });
 
-  it("runs each item on the menu's tab, which need not be selected, and closes the menu", async () => {
+  it("names Gmail's items Unpin and Open at Launch, checked, with no bookmark item", () => {
+    const { menu, popups } = setup();
+
+    menu.open(at("gmail"));
+
+    expect(labels(popups[0])?.slice(6, 9)).toStrictEqual([
+      "—",
+      "Unpin",
+      "Open at Launch [x]",
+    ]);
+    expect(labels(popups[0])).not.toContain("Bookmark tab");
+  });
+
+  it("runs each item on the menu's tab, which need not be selected", async () => {
     const { choose } = setup();
     const ran = [];
 
-    for (const item of [
-      "sleep",
-      "reload",
-      "duplicate",
-      "copyUrl",
-      "openInBrowser",
-      "pin",
-      "close",
-      "closeOthers",
-      "closeBelow",
-    ] as const) {
+    for (const label of [
+      "Sleep",
+      "Reload",
+      "Duplicate",
+      "Copy URL",
+      "Open in default browser",
+      "Pin",
+      "Bookmark tab",
+      "Split right",
+      "Move to new window",
+      "Close tab",
+      "Close other tabs",
+      "Close tabs below",
+    ]) {
       // oxlint-disable-next-line no-await-in-loop -- one menu at a time
-      ran.push([...(await choose("c", item))]);
+      ran.push(await choose("c", label));
     }
 
     expect(ran).toStrictEqual([
-      [["sleep", "p/c"], ["closed"]],
-      [["reload", "p/c"], ["closed"]],
+      [["sleep", "p/c"]],
+      [["reload", "p/c"]],
+      [["openTab", "p", "calendar", "https://calendar.google.com/r/week", "c"]],
+      [["clipboard", "https://calendar.google.com/r/week"]],
+      [["browser", "https://calendar.google.com/r/week"]],
+      [["pinned", "p/c", true]],
+      [["bookmark", "p/c", true]],
       [
-        ["openTab", "p", "calendar", "https://calendar.google.com/r/week", "c"],
-        ["closed"],
+        ["wake", "p/c"],
+        ["openSplit", "row"],
       ],
-      [["clipboard", "https://calendar.google.com/r/week"], ["closed"]],
-      [["browser", "https://calendar.google.com/r/week"], ["closed"]],
-      [["pinned", "p/c", true], ["closed"]],
-      [["close", "p/c"], ["closed"]],
-      [["closeOthers", "p/c"], ["closed"]],
-      [["closeBelow", "p/c"], ["closed"]],
+      [["moveToOwnWindow", "p/c"]],
+      [["close", "p/c"]],
+      [["closeOthers", "p/c"]],
+      [["closeBelow", "p/c"]],
     ]);
   });
 
-  it("unpins a pinned tab and switches its Open at Launch", async () => {
-    const { choose } = setup();
+  it("unpins a pinned tab, switches its Open at Launch, and removes a bookmark", async () => {
+    const { choose } = setup({ bookmarked: true });
 
     expect([
-      [...(await choose("gmail", "pin"))],
-      [...(await choose("gmail", "openAtLaunch"))],
+      await choose("gmail", "Unpin"),
+      await choose("gmail", "Open at Launch"),
+      await choose("c", "Remove bookmark"),
     ]).toStrictEqual([
-      [["pinned", "p/gmail", false], ["closed"]],
-      [["openAtLaunch", "p/gmail", false], ["closed"]],
+      [["pinned", "p/gmail", false]],
+      [["openAtLaunch", "p/gmail", false]],
+      [["bookmark", "p/c", true]],
     ]);
   });
 
@@ -191,65 +271,66 @@ describe(createTabMenu, () => {
     const { choose } = setup();
 
     expect([
-      [...(await choose("x", "wake"))],
-      [...(await choose("x", "reload"))],
-    ]).toStrictEqual([
-      [["wake", "p/x"], ["closed"]],
-      [["reload", "p/x"], ["closed"]],
-    ]);
+      await choose("x", "Wake"),
+      await choose("x", "Reload"),
+    ]).toStrictEqual([[["wake", "p/x"]], [["reload", "p/x"]]]);
   });
 
-  it("refuses what the menu does not offer its tab, such as a page that is not on the web, and still closes", async () => {
-    const { choose } = setup();
-
-    expect([
-      [...(await choose("gmail", "duplicate"))],
-      [...(await choose("x", "sleep"))],
-      [...(await choose("x", "openInBrowser"))],
-    ]).toStrictEqual([
-      [
-        ["log", "Refused the tab menu's duplicate, which it does not offer"],
-        ["closed"],
-      ],
-      [
-        ["log", "Refused the tab menu's sleep, which it does not offer"],
-        ["closed"],
-      ],
-      [
-        [
-          "log",
-          "Refused the tab menu's openInBrowser, which it does not offer",
-        ],
-        ["closed"],
-      ],
-    ]);
-  });
-
-  it("runs one item at a time, and leaves open what opened while it ran", async () => {
-    const { menu, done, release, cover } = setup({ held: true });
+  it("refuses an item the menu no longer offers once it is chosen", async () => {
+    const { menu, click, setState } = setup();
 
     menu.open(at("c"));
-    done.length = 0;
-    const first = menu.run("duplicate");
-    await menu.run("duplicate");
-    cover({ kind: "rename-profile", profileId: "p" });
-    release(undefined);
-    await first;
+    setState({
+      ...initial,
+      profiles: initial.profiles.map((profile) => ({
+        ...profile,
+        tabs: profile.tabs.filter((each) => !("id" in each) || each.id !== "c"),
+      })),
+    });
 
-    expect(done).toStrictEqual([
-      ["openTab", "p", "calendar", "https://calendar.google.com/r/week", "c"],
-      ["log", "Refused the tab menu's duplicate while another item runs"],
-      ["open", { kind: "rename-profile", profileId: "p" }],
+    await expect(click("Close tab")).resolves.toStrictEqual([
+      ["log", "Refused the tab menu's close, which it does not offer"],
     ]);
   });
 
-  it("refuses an item with no menu open", async () => {
-    const { menu, done } = setup();
+  it("pops up More options in the tab's own window, and moves it back to the main window", async () => {
+    const { menu, popups, click } = setup();
 
-    await menu.run("close");
+    menu.openOwnWindow({ ...at("w"), x: 760, y: 40 });
 
-    expect(done).toStrictEqual([
-      ["log", "Refused the tab menu's close with no tab menu open"],
+    expect([popups[0]?.window, popups[0]?.at, labels(popups[0])]).toStrictEqual(
+      [
+        "own",
+        { x: 760, y: 40 },
+        [
+          "Move to main window",
+          "Open at Launch (off) [ ]",
+          "Copy URL",
+          "Open in default browser",
+        ],
+      ]
+    );
+    expect([
+      await click("Copy URL"),
+      await click("Move to main window"),
+    ]).toStrictEqual([
+      [["clipboard", "https://docs.google.com/document/d/1"]],
+      [["moveToMainWindow", "p/w"]],
+    ]);
+  });
+
+  it("refuses More options for a tab with no own window open, or a point outside it", () => {
+    const { menu, done, popups } = setup();
+
+    menu.openOwnWindow(at("c"));
+    menu.openOwnWindow({ ...at("w"), y: 601 });
+
+    expect([popups, done]).toStrictEqual([
+      [],
+      [
+        ["log", "Refused a menu for tab p/c at 20,80"],
+        ["log", "Refused a menu for tab p/w at 20,601"],
+      ],
     ]);
   });
 });

@@ -3,6 +3,11 @@ import type { BaseWindow, BaseWindowConstructorOptions } from "electron";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import type { Rectangle, Size } from "#core/window-bounds.ts";
 
+import type {
+  ContextMenuItem,
+  ContextMenus,
+  MenuPoint,
+} from "./context-menu.ts";
 import { viewHost } from "./view-host.ts";
 import type { ViewHost } from "./view-host.ts";
 
@@ -83,9 +88,14 @@ export interface PlainWindow {
   /** Closes it at once, asking nothing. */
   destroy: () => void;
   isDestroyed: () => boolean;
+  /** A native menu at `at` in its content area, or at the pointer. */
+  showContextMenu: (items: readonly ContextMenuItem[], at?: MenuPoint) => void;
 }
 
-export const plainWindow = (window: BaseWindow): PlainWindow => ({
+export const plainWindow = (
+  window: BaseWindow,
+  menus: ContextMenus
+): PlainWindow => ({
   host: viewHost(window),
   show: () => window.show(),
   showInactive: () => window.showInactive(),
@@ -130,4 +140,7 @@ export const plainWindow = (window: BaseWindow): PlainWindow => ({
     }
   },
   isDestroyed: () => window.isDestroyed(),
+  showContextMenu: (items, at) => {
+    menus.popup(window, items, at);
+  },
 });

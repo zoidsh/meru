@@ -1,6 +1,5 @@
 import type { ShellCalls, ShellState } from "#contract/shell.ts";
 import { ariaKeyShortcut, formatAccelerator } from "#core/accelerator.ts";
-import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import type { FindBar } from "#core/find.ts";
 import { viewFrame } from "#core/layout.ts";
@@ -8,7 +7,6 @@ import { openableApps, splittableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
-import { profileMenuItems } from "#core/profile-menu.ts";
 import { splitBoxes, splitRoomy } from "#core/split.ts";
 import {
   inOwnWindow,
@@ -19,12 +17,12 @@ import {
 } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
-import { tabMenuItems } from "#core/tab-menu.ts";
 import { findTab, isMainWindowTab, splitOntoTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { inViewReach, viewDrop } from "#core/view-drop.ts";
 import type { Size } from "#core/window-bounds.ts";
-import type { AppWindow, ContextMenuItem } from "#platform/window.ts";
+import type { ContextMenuItem } from "#platform/context-menu.ts";
+import type { AppWindow } from "#platform/window.ts";
 
 import type { Bookmarks } from "./bookmarks.ts";
 import type { Command } from "./commands.ts";
@@ -74,9 +72,9 @@ export interface ShellHandlersDeps {
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   openApp: Pick<OpenApp, "choose">;
   bookmarks: Pick<Bookmarks, "choose" | "remove" | "toggle">;
-  tabMenu: Pick<TabMenu, "open" | "run">;
+  tabMenu: Pick<TabMenu, "open" | "openOwnWindow">;
   panes: Pick<PaneResizer, "resize" | "evenOut">;
-  profileMenu: Pick<ProfileMenu, "open" | "run">;
+  profileMenu: Pick<ProfileMenu, "open">;
   /** Selects the profile's Gmail as the tray's profile item does. */
   openGmail: (profileId: string) => Promise<unknown>;
   window: Pick<AppWindow, "showContextMenu">;
@@ -107,32 +105,6 @@ export const shellTabStatus = (status: TabStatus): ShellTabStatus => {
       return { kind: status.kind };
     }
   }
-};
-
-const shellTabMenu = (
-  state: State,
-  overlay: Extract<Overlay, { kind: "tab-menu" }>,
-  status: (key: TabKey) => TabStatus,
-  apps: readonly App[]
-): ShellState["overlay"] => {
-  const { profileId, tabId, x, y } = overlay;
-  const tab = findTab(state, overlay);
-  const items =
-    tab &&
-    tabMenuItems(state, overlay, apps, status(overlay).kind !== "unloaded");
-
-  return tab && items
-    ? {
-        kind: "tab-menu",
-        profileId,
-        tabId,
-        x,
-        y,
-        title: tab.title || (findApp(apps, tab.app)?.name ?? tab.app),
-        pinned: isPinned(tab),
-        items,
-      }
-    : { kind: "none" };
 };
 
 const shellFind = (
@@ -172,10 +144,6 @@ const shellOverlay = (
     return shellFind(overlay, find);
   }
 
-  if (overlay?.kind === "tab-menu") {
-    return shellTabMenu(state, overlay, status, apps);
-  }
-
   if (overlay?.kind === "toast") {
     return {
       kind: "toast",
@@ -203,7 +171,7 @@ const shellProfileOverlay = (
   state: State,
   overlay: Extract<
     Overlay,
-    { kind: "bookmarks" | "profile-menu" | "open-app" | "rename-profile" }
+    { kind: "bookmarks" | "open-app" | "rename-profile" }
   >,
   apps: readonly App[],
   bookmarkRows: (profileId: string) => BookmarkRows
@@ -221,17 +189,6 @@ const shellProfileOverlay = (
       kind: "bookmarks",
       profileId: profile.id,
       bookmarks: bookmarkRows(profile.id),
-    };
-  }
-
-  if (overlay.kind === "profile-menu") {
-    return {
-      kind: "profile-menu",
-      profileId: profile.id,
-      x: overlay.x,
-      y: overlay.y,
-      title: profileDisplayName(profile),
-      items: profileMenuItems(state, profile.id) ?? [],
     };
   }
 
@@ -629,15 +586,14 @@ export const createShellHandlers = ({
 
     return Promise.resolve();
   },
-  runTabMenuItem: async ({ item }) => {
-    await tabMenu.run(item);
+  openOwnWindowMenu: (request) => {
+    tabMenu.openOwnWindow(request);
+
+    return Promise.resolve();
   },
   openProfileMenu: (request) => {
     profileMenu.open(request);
 
     return Promise.resolve();
-  },
-  runProfileMenuItem: async ({ item }) => {
-    await profileMenu.run(item);
   },
 });

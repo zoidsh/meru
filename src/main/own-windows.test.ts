@@ -83,6 +83,7 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
           focus: () => fake.calls.push("focus"),
           hide: () => fake.calls.push("hide"),
           isFocused: () => false,
+          showContextMenu: () => fake.calls.push("menu"),
           isVisible: () => true,
           isMinimized: () => fake.minimized,
           restore: () => fake.calls.push("restore"),

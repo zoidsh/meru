@@ -1,4 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
+import { EllipsisVerticalIcon } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
@@ -16,6 +17,7 @@ import { Badge } from "#ui/badge.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
 import { OwnWindowBookmarkButton } from "./bookmarks.tsx";
+import { wholePoint } from "./context-menu.ts";
 import { FindBar } from "./find-bar.tsx";
 import {
   closeShellDocument,
@@ -26,6 +28,7 @@ import {
 import { shellCalls, useShellState } from "./sync.ts";
 import { TabProblem } from "./tab-problem.tsx";
 import { tabTitle } from "./tab-strip.tsx";
+import { TitlebarButton } from "./titlebar-button.tsx";
 import { NavigationButtons } from "./titlebar.tsx";
 
 type OwnWindow = ShellState["windows"][number];
@@ -34,9 +37,42 @@ type OwnWindow = ShellState["windows"][number];
  * A tab's own window as the shell draws it, behind the page main places in
  * it: the titlebar, with the page's navigation, the profile's badge where
  * there are two or more profiles, the app's icon and the page's title, and
- * at its right the bookmark star, and the shell grey with the profile's tint around the page. The whole
+ * at its right the bookmark star and More options, and the shell grey with the profile's tint around the page. The whole
  * titlebar drags the window but for its controls.
  */
+/** More options, last in the titlebar, whose native menu main pops up under it. */
+const MoreOptionsButton = ({
+  profileId,
+  tabId,
+}: {
+  profileId: string;
+  tabId: string;
+}) => {
+  const { t } = useLingui();
+
+  return (
+    <TitlebarButton
+      label={t({
+        message: "More options",
+        comment:
+          "Accessible name and tooltip of the button at the right of a tab's own window's title bar that opens a menu: Move to main window, Copy URL and the like",
+      })}
+      aria-haspopup="menu"
+      onClick={(event) => {
+        const { left, bottom } = event.currentTarget.getBoundingClientRect();
+
+        shellCalls().openOwnWindowMenu({
+          profileId,
+          tabId,
+          ...wholePoint(left, bottom),
+        });
+      }}
+    >
+      <EllipsisVerticalIcon />
+    </TitlebarButton>
+  );
+};
+
 const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
   const { t } = useLingui();
   const profiles = useShellState("profiles");
@@ -99,6 +135,7 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
             tabId={own.tabId}
             bookmarked={own.bookmarked}
           />
+          <MoreOptionsButton profileId={own.profileId} tabId={own.tabId} />
         </div>
       </header>
       {/* Where main places the page, by the same measurements. */}

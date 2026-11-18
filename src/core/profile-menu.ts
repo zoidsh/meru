@@ -1,4 +1,5 @@
-import { menuPointInside } from "./overlay.ts";
+import { menuPointInside } from "./context-menu.ts";
+import type { MenuEntry, MenuPoint } from "./context-menu.ts";
 import { canSleepProfile, isAsleep } from "./state.ts";
 import type { State } from "./state.ts";
 import type { Size } from "./window-bounds.ts";
@@ -8,26 +9,19 @@ export const PROFILE_MENU_ITEMS = ["sleep", "wake"] as const;
 
 export type ProfileMenuItemId = (typeof PROFILE_MENU_ITEMS)[number];
 
-export interface ProfileMenuItem {
-  id: ProfileMenuItemId;
-  enabled: boolean;
-}
-
 /** A profile's menu asked for at a point of the window's content area. */
-export interface ProfileMenuRequest {
+export interface ProfileMenuRequest extends MenuPoint {
   profileId: string;
-  x: number;
-  y: number;
 }
 
 /**
- * What the profile's menu offers: Wake while it sleeps, else Sleep, disabled
- * for the last awake profile; nothing for a profile not listed.
+ * The profile's menu: Wake while it sleeps, else Sleep, disabled for the
+ * last awake profile; nothing for a profile not listed.
  */
-export const profileMenuItems = (
+export const profileMenu = (
   state: State,
   profileId: string
-): ProfileMenuItem[] | undefined => {
+): MenuEntry<ProfileMenuItemId>[] | undefined => {
   const profile = state.profiles.find(
     (candidate) => candidate.id === profileId
   );
@@ -37,8 +31,14 @@ export const profileMenuItems = (
   }
 
   return isAsleep(state, profile)
-    ? [{ id: "wake", enabled: true }]
-    : [{ id: "sleep", enabled: canSleepProfile(state, profileId) }];
+    ? [{ kind: "item", id: "wake", enabled: true }]
+    : [
+        {
+          kind: "item",
+          id: "sleep",
+          enabled: canSleepProfile(state, profileId),
+        },
+      ];
 };
 
 /**

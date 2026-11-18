@@ -242,7 +242,9 @@ msgstr "Bookmark a page from its tab's menu or with the shortcut."
 msgid "Bookmark removed"
 msgstr "Bookmark removed"
 
+#. Item of a tab's context menu that adds its page to the profile's bookmarks
 #. Tooltip of the bookmark button on a tab's row in the wide sidebar, which saves its page as a bookmark
+#: src/main/tab-menu.ts
 #: src/shell/tab-strip.tsx
 msgid "Bookmark tab"
 msgstr "Bookmark tab"
@@ -303,12 +305,12 @@ msgid "Close {title}"
 msgstr "Close {title}"
 
 #. Item of a tab's context menu that closes every other tab of the profile but pinned ones
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Close other tabs"
 msgstr "Close other tabs"
 
 #. Item of a tab's context menu that closes it
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Close tab"
 msgstr "Close tab"
 
@@ -318,7 +320,7 @@ msgid "Close Tab"
 msgstr "Close Tab"
 
 #. Item of a tab's context menu that closes the tabs below it in the sidebar but pinned ones
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Close tabs below"
 msgstr "Close tabs below"
 
@@ -350,7 +352,7 @@ msgid "Copy"
 msgstr "Copy"
 
 #. Item of a tab's context menu that copies its page's address
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Copy URL"
 msgstr "Copy URL"
 
@@ -428,7 +430,7 @@ msgid "Do Not Disturb is on until turned off"
 msgstr "Do Not Disturb is on until turned off"
 
 #. Item of a tab's context menu that opens another tab of the same app at the same page
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Duplicate"
 msgstr "Duplicate"
 
@@ -557,7 +559,7 @@ msgid "Mark as Spam"
 msgstr "Mark as Spam"
 
 #. Item of a tab's context menu in a split view that shows the tab's pane alone, keeping the split
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Maximize pane"
 msgstr "Maximize pane"
 
@@ -586,8 +588,13 @@ msgstr "Meru signs out of this profile and deletes its data on this device. Your
 msgid "Minimize"
 msgstr "Minimize"
 
+#. Accessible name and tooltip of the button at the right of a tab's own window's title bar that opens a menu: Move to main window, Copy URL and the like
+#: src/shell/own-window.tsx
+msgid "More options"
+msgstr "More options"
+
 #. Item of a tab's context menu, for a tab in a window of its own, that puts its page back in the main window and closes that window
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Move to main window"
 msgstr "Move to main window"
 
@@ -597,7 +604,7 @@ msgid "Move to Main Window"
 msgstr "Move to Main Window"
 
 #. Item of a tab's context menu that moves its page into a window of its own, the tab staying in the sidebar
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Move to new window"
 msgstr "Move to new window"
 
@@ -690,7 +697,7 @@ msgstr "Open App…"
 #. Checkbox item of a pinned tab's context menu: whether it loads when Meru starts rather than when first selected
 #. Menu item in the Tabs menu, checked while the selected pinned tab loads when Meru starts rather than when first selected
 #: src/main/commands.ts
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Open at Launch"
 msgstr "Open at Launch"
 
@@ -705,7 +712,7 @@ msgid "Open Gmail, Calendar or another Google app in this profile."
 msgstr "Open Gmail, Calendar or another Google app in this profile."
 
 #. Item of a tab's context menu that opens its page in the system's web browser
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Open in default browser"
 msgstr "Open in default browser"
 
@@ -725,7 +732,7 @@ msgid "Paste and Match Style"
 msgstr "Paste and Match Style"
 
 #. Item of a tab's context menu that pins it to the top of the sidebar, which keeps it from closing
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Pin"
 msgstr "Pin"
 
@@ -776,7 +783,7 @@ msgstr "Redo"
 #. Item of a tab's context menu that loads its page again
 #. Menu item in the View menu that loads the selected tab again
 #: src/main/commands.ts
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 #: src/shell/tab-problem.tsx
 #: src/shell/titlebar.tsx
 msgid "Reload"
@@ -788,7 +795,9 @@ msgid "Remove {name}?"
 msgstr "Remove {name}?"
 
 #. Accessible name and tooltip of the cross on a row of the Bookmarks overlay, which deletes that bookmark
+#. Item of a tab's context menu, in place of Bookmark tab while its page is bookmarked, that removes that bookmark
 #. Tooltip of the filled bookmark button on a tab's row in the wide sidebar, which removes its page's bookmark
+#: src/main/tab-menu.ts
 #: src/shell/bookmarks.tsx
 #: src/shell/tab-strip.tsx
 msgid "Remove bookmark"
@@ -848,7 +857,7 @@ msgstr "Resize panes"
 
 #. Accessible name and tooltip of the button in the sidebar's box of a split view, while one pane shows alone, that shows every pane again
 #. Item of a tab's context menu, in place of Maximize pane while one pane shows alone, that shows every pane of the split again
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 #: src/shell/tab-strip.tsx
 msgid "Restore panes"
 msgstr "Restore panes"
@@ -914,7 +923,7 @@ msgid "Select Profile {position}"
 msgstr "Select Profile {position}"
 
 #. Item of a tab's context menu that takes it out of the split view, to show alone
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Separate from split"
 msgstr "Separate from split"
 
@@ -967,8 +976,8 @@ msgstr "Sign in required"
 
 #. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
-#: src/shell/profile-menu.tsx
-#: src/shell/tab-menu.tsx
+#: src/main/profile-menu.ts
+#: src/main/tab-menu.ts
 msgid "Sleep"
 msgstr "Sleep"
 
@@ -983,7 +992,7 @@ msgid "Sleep Tab"
 msgstr "Sleep Tab"
 
 #. Item of a tab's context menu that lists apps to open in a new pane below the tab's
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Split down"
 msgstr "Split down"
 
@@ -993,7 +1002,7 @@ msgid "Split Down"
 msgstr "Split Down"
 
 #. Item of a tab's context menu that lists apps to open in a new pane to the right of the tab's
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Split right"
 msgstr "Split right"
 
@@ -1075,7 +1084,7 @@ msgid "Unified Inbox"
 msgstr "Unified Inbox"
 
 #. Item of a pinned tab's context menu that unpins it, so it can close
-#: src/shell/tab-menu.tsx
+#: src/main/tab-menu.ts
 msgid "Unpin"
 msgstr "Unpin"
 
@@ -1122,9 +1131,9 @@ msgstr "View"
 #. Button in place of a sleeping tab's page that loads it again
 #. Item of a sleeping profile's context menu, in place of Sleep, that selects the profile and loads its pages again
 #. Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it
-#: src/shell/profile-menu.tsx
+#: src/main/profile-menu.ts
+#: src/main/tab-menu.ts
 #: src/shell/sleeping-tab.tsx
-#: src/shell/tab-menu.tsx
 msgid "Wake"
 msgstr "Wake"
 

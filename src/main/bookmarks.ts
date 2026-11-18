@@ -100,7 +100,7 @@ export const createBookmarks = ({
      * Whether the page Bookmark Tab acts on is bookmarked, or `undefined`
      * while it cannot be: the page of the tab whose own window `ownWindow`
      * names, else the selected tab's in the main window, the focused pane's
-     * in a split, while no card or menu covers it.
+     * in a split, while no card covers it.
      */
     acting: (ownWindow: TabKey | undefined) => {
       if (ownWindow) {
@@ -117,7 +117,7 @@ export const createBookmarks = ({
     },
     /**
      * Bookmark Tab or Remove Bookmark on the tab's page; with `announce`, a
-     * toast says which, unless a card or a menu covers the page.
+     * toast says which, unless a card covers the page.
      */
     toggle: async (key: TabKey, announce: boolean) => {
       const bookmarkable = pageOf(key);

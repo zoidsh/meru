@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, dialog, nativeImage } from "electron";
+import { BrowserWindow, dialog, nativeImage } from "electron";
 import type { WebContents } from "electron";
 
 import { isSameSite } from "#core/app-url.ts";
@@ -8,6 +8,7 @@ import { baseWindowOptions, plainWindow } from "./base-window.ts";
 import type { BaseWindowOptions, PlainWindow } from "./base-window.ts";
 import { addContentView } from "./content-view.ts";
 import type { ContentView, ContentViewOptions } from "./content-view.ts";
+import type { ContextMenus } from "./context-menu.ts";
 import { adoptOverlayView } from "./overlay-view.ts";
 import type { OverlayView } from "./overlay-view.ts";
 
@@ -21,15 +22,6 @@ export interface WindowOptions extends BaseWindowOptions {
    */
   isShellDocument: (request: { url: string; frameName: string }) => boolean;
 }
-
-export type ContextMenuItem =
-  | {
-      label: string;
-      enabled: boolean;
-      /** None for a line that only says something. */
-      click?: () => void;
-    }
-  | { type: "separator" };
 
 export interface Confirmation {
   message: string;
@@ -87,8 +79,6 @@ export interface AppWindow extends PlainWindow {
     description: string
   ) => void;
   addContentView: (options: ContentViewOptions) => ContentView;
-  /** A native menu at the pointer. */
-  showContextMenu: (items: ContextMenuItem[]) => void;
   /** A native warning, modal to the window, with cancel the default. */
   confirm: (confirmation: Confirmation) => Promise<boolean>;
 }
@@ -97,7 +87,7 @@ export interface WindowFactory {
   create: (options: WindowOptions) => AppWindow;
 }
 
-export const createWindowFactory = (): WindowFactory => ({
+export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
   create: (options) => {
     const window = new BrowserWindow({
       ...baseWindowOptions(options),
@@ -181,7 +171,7 @@ export const createWindowFactory = (): WindowFactory => ({
     );
 
     return {
-      ...plainWindow(window),
+      ...plainWindow(window, menus),
       webContentsId: webContents.id,
       loadURL: (url) => window.loadURL(url),
       once: (event, listener) => {
@@ -242,9 +232,6 @@ export const createWindowFactory = (): WindowFactory => ({
       },
       addContentView: (contentViewOptions) =>
         addContentView(window, contentViewOptions),
-      showContextMenu: (items) => {
-        Menu.buildFromTemplate(items).popup({ window });
-      },
       confirm: async ({ message, detail, confirmLabel, cancelLabel }) => {
         const { response } = await dialog.showMessageBox(window, {
           type: "warning",

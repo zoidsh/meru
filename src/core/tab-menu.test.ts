@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "./apps.ts";
+import type { MenuEntry } from "./context-menu.ts";
 import { gmailTab, isTab, newProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
 import {
   closeOtherTabs,
   closeTabsBelow,
   duplicatePlace,
+  ownWindowMenu,
+  tabMenu,
   tabMenuAt,
-  tabMenuItems,
 } from "./tab-menu.ts";
+import type { TabPage } from "./tab-menu.ts";
 
 const tab = (id: string, app: string, pinned = false): Tab => ({
   id,
@@ -35,10 +38,24 @@ const state = (tabs: Tab[], selectedTabId = "gmail"): State => ({
   selectedProfileId: "p",
 });
 
-const offered = (current: State, tabId: string, loaded = true) =>
-  tabMenuItems(current, { profileId: "p", tabId }, APPS, loaded)?.map(
-    ({ id, enabled, checked }) =>
-      `${id}${enabled ? "" : " off"}${checked === undefined ? "" : ` ${checked ? "on" : "unchecked"}`}`
+type Entry = MenuEntry<string>;
+
+/** A menu as text: each item's id, " off" while disabled, its check, "|" a line. */
+const shown = (menu: readonly Entry[] | undefined) =>
+  menu?.map((entry) =>
+    entry.kind === "separator"
+      ? "|"
+      : `${entry.id}${entry.enabled ? "" : " off"}${entry.checked === undefined ? "" : ` ${entry.checked ? "on" : "unchecked"}`}`
+  );
+
+const offered = (current: State, tabId: string, page?: TabPage) =>
+  shown(
+    tabMenu(
+      current,
+      { profileId: "p", tabId },
+      APPS,
+      page ?? { loaded: true, bookmarked: false }
+    )
   );
 
 const ids = (next: State | undefined) => {
@@ -52,44 +69,131 @@ const ids = (next: State | undefined) => {
   );
 };
 
-describe(tabMenuItems, () => {
-  it("offers Gmail alone, pinned, no Duplicate, no Close tab and nothing to close beside it", () => {
-    expect(offered(state([]), "gmail")).toStrictEqual([
+describe(tabMenu, () => {
+  it("offers Gmail, pinned, Unpin and Open at Launch, no Duplicate, no Bookmark, no Close tab and nothing to close beside it", () => {
+    expect(
+      offered(state([]), "gmail", { loaded: true, bookmarked: undefined })
+    ).toStrictEqual([
       "sleep",
+      "|",
       "reload",
       "duplicate off",
       "copyUrl",
       "openInBrowser",
-      "pin",
+      "|",
+      "unpin",
       "openAtLaunch on",
+      "|",
       "splitRight",
       "splitDown",
       "maximize off",
       "separate off",
+      "|",
       "moveToNewWindow off",
+      "|",
       "closeOthers off",
       "closeBelow off",
     ]);
   });
 
-  it("offers a listed tab Duplicate and Close tab but no Open at Launch, and Wake in place of Sleep without a page", () => {
+  it("offers a listed tab Pin, Bookmark tab, Duplicate and Close tab but no Open at Launch, and Wake in place of Sleep without a page", () => {
     expect(
-      offered(state([tab("c", "calendar"), tab("d", "drive")]), "c", false)
+      offered(state([tab("c", "calendar"), tab("d", "drive")]), "c", {
+        loaded: false,
+        bookmarked: undefined,
+      })
     ).toStrictEqual([
       "wake",
+      "|",
       "reload",
       "duplicate",
       "copyUrl",
       "openInBrowser",
+      "|",
       "pin",
+      "|",
       "splitRight",
       "splitDown",
       "maximize off",
       "separate off",
+      "|",
       "moveToNewWindow",
+      "|",
       "close",
       "closeOthers",
       "closeBelow",
+    ]);
+  });
+
+  it("offers Bookmark tab for a page not bookmarked, Remove bookmark for one that is, and neither while it cannot be", () => {
+    const current = state([tab("c", "calendar")]);
+    const bookmarkItems = (bookmarked: boolean | undefined) =>
+      offered(current, "c", { loaded: true, bookmarked })?.filter((each) =>
+        /bookmark/iu.test(each)
+      );
+
+    expect([
+      bookmarkItems(false),
+      bookmarkItems(true),
+      bookmarkItems(undefined),
+    ]).toStrictEqual([["bookmark"], ["removeBookmark"], []]);
+  });
+
+  it("names each item's command, which an item acting in main alone lacks", () => {
+    const commands = Object.fromEntries(
+      (
+        tabMenu(
+          state([tab("c", "calendar")]),
+          { profileId: "p", tabId: "c" },
+          APPS,
+          { loaded: true, bookmarked: false }
+        ) ?? []
+      ).flatMap((entry) =>
+        entry.kind === "item" ? [[entry.id, entry.command ?? null]] : []
+      )
+    );
+
+    expect(commands).toStrictEqual({
+      sleep: null,
+      reload: "tab.reload",
+      duplicate: null,
+      copyUrl: null,
+      openInBrowser: null,
+      pin: "tab.pin",
+      bookmark: "tab.bookmark",
+      splitRight: "tab.splitRight",
+      splitDown: "tab.splitDown",
+      maximize: "tab.maximize",
+      separate: "tab.separate",
+      moveToNewWindow: "tab.moveToNewWindow",
+      close: "tab.close",
+      closeOthers: null,
+      closeBelow: null,
+    });
+  });
+
+  it("offers a tab in its own window Move to main window, without Sleep, pinning or splitting", () => {
+    const current = state([{ ...tab("c", "calendar"), ownWindow: true }]);
+
+    expect(offered(current, "c")).toStrictEqual([
+      "reload",
+      "duplicate",
+      "copyUrl",
+      "openInBrowser",
+      "|",
+      "pin off",
+      "bookmark",
+      "|",
+      "splitRight off",
+      "splitDown off",
+      "maximize off",
+      "separate off",
+      "|",
+      "moveToMainWindow",
+      "|",
+      "close",
+      "closeOthers off",
+      "closeBelow off",
     ]);
   });
 
@@ -174,6 +278,31 @@ describe(tabMenuItems, () => {
   });
 });
 
+describe(ownWindowMenu, () => {
+  it("offers Move to main window, Open at Launch never on there, Copy URL and Open in default browser", () => {
+    const current = state([{ ...tab("c", "calendar"), ownWindow: true }]);
+
+    expect(
+      shown(ownWindowMenu(current, { profileId: "p", tabId: "c" }))
+    ).toStrictEqual([
+      "moveToMainWindow",
+      "openAtLaunch off unchecked",
+      "copyUrl",
+      "openInBrowser",
+    ]);
+  });
+
+  it("offers nothing for a tab in the main window or not shown", () => {
+    expect([
+      ownWindowMenu(state([tab("c", "calendar")]), {
+        profileId: "p",
+        tabId: "c",
+      }),
+      ownWindowMenu(state([]), { profileId: "p", tabId: "gone" }),
+    ]).toStrictEqual([undefined, undefined]);
+  });
+});
+
 describe(tabMenuAt, () => {
   const size = { width: 800, height: 600 };
   const at = (x: number, y: number, tabId = "gmail") =>
@@ -186,17 +315,18 @@ describe(tabMenuAt, () => {
     ]);
   });
 
-  it("refuses a tab of a profile that is not selected", () => {
+  it("takes a tab of a profile that is not selected only in its own window", () => {
     const current = state([]);
-    const other = { ...newProfile("q", "Work"), tabs: [gmailTab()] };
+    const other = {
+      ...newProfile("q", "Work"),
+      tabs: [gmailTab(), { ...tab("c", "calendar"), ownWindow: true }],
+    };
+    const both = { ...current, profiles: [...current.profiles, other] };
 
-    expect(
-      tabMenuAt(
-        { ...current, profiles: [...current.profiles, other] },
-        { profileId: "q", tabId: "gmail", x: 10, y: 10 },
-        size
-      )
-    ).toBeUndefined();
+    expect([
+      tabMenuAt(both, { profileId: "q", tabId: "gmail", x: 10, y: 10 }, size),
+      tabMenuAt(both, { profileId: "q", tabId: "c", x: 10, y: 10 }, size),
+    ]).toStrictEqual([undefined, { profileId: "q", tabId: "c", x: 10, y: 10 }]);
   });
 
   it("refuses a point outside or between pixels, and a tab that is not shown", () => {

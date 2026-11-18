@@ -169,27 +169,10 @@ describe(createOverlays, () => {
     ]);
   });
 
-  it("gives back the focus a card or a menu took when a toast replaces it", () => {
+  it("gives back the focus a card took when a toast replaces it", () => {
     const { overlays, focus, events } = setup();
 
     focus.noteFocused({ kind: "front" });
-    overlays.open({
-      kind: "tab-menu",
-      profileId: "a",
-      tabId: "gmail",
-      x: 10,
-      y: 60,
-    });
-    events.length = 0;
-    overlays.open({ kind: "toast", message: "no-room" });
-
-    expect(events).toStrictEqual([
-      "bounds 100",
-      "show",
-      "shell told toast",
-      "focus shell",
-    ]);
-
     overlays.open(renameA);
     events.length = 0;
     overlays.open({ kind: "toast", message: "no-room" });
@@ -200,62 +183,6 @@ describe(createOverlays, () => {
       "shell told toast",
       "focus front",
     ]);
-  });
-
-  it("gives focus to the shell when a tab's menu closes, which puts it on the menu's tab", () => {
-    const { overlays, focus, events } = setup();
-
-    focus.noteFocused({ kind: "front" });
-    overlays.open({
-      kind: "tab-menu",
-      profileId: "a",
-      tabId: "gmail",
-      x: 10,
-      y: 60,
-    });
-    events.length = 0;
-    overlays.close();
-
-    expect(events).toStrictEqual(["hide", "shell told closed", "focus shell"]);
-  });
-
-  it("gives focus to the shell when a profile's menu closes, which puts it on the profile's button", () => {
-    const { overlays, focus, events } = setup();
-
-    focus.noteFocused({ kind: "front" });
-    overlays.open({ kind: "profile-menu", profileId: "b", x: 120, y: 20 });
-    events.length = 0;
-    overlays.close();
-
-    expect(events).toStrictEqual(["hide", "shell told closed", "focus shell"]);
-  });
-
-  it("gives focus to the page when the window losing focus closes a tab's menu", () => {
-    const { overlays, focus, events } = setup();
-
-    focus.noteFocused({ kind: "front" });
-    overlays.open({
-      kind: "tab-menu",
-      profileId: "a",
-      tabId: "gmail",
-      x: 10,
-      y: 60,
-    });
-    events.length = 0;
-    overlays.close({ toPage: true });
-
-    expect(events).toStrictEqual(["hide", "shell told closed", "focus front"]);
-  });
-
-  it("gives focus to the page when another profile selected closes a profile's menu", () => {
-    const { overlays, focus, events } = setup();
-
-    focus.noteFocused({ kind: "front" });
-    overlays.open({ kind: "profile-menu", profileId: "a", x: 120, y: 20 });
-    events.length = 0;
-    overlays.follow(selectProfile(two, "b") as State);
-
-    expect(events).toStrictEqual(["hide", "shell told closed", "focus front"]);
   });
 
   it("replaces an open overlay with the next, and gives focus to the page, not the shell whose button opened it", () => {

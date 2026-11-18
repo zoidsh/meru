@@ -24,7 +24,7 @@ export interface FocusDeps {
   /** What focuses `target`; nothing when it is gone or not showing. */
   resolve: (target: FocusTarget) => (() => void) | undefined;
   /**
-   * Whether a card or a menu is open over the pages, which no page can be
+   * Whether a card is open over the pages, which no page can be
    * clicked through, so a page that takes focus took it unasked.
    */
   overlayCoversPages: () => boolean;
@@ -127,7 +127,7 @@ export const createFocus = ({
     },
     /**
      * Told as the main window's front page gains focus: noted, unless a card
-     * or a menu covers the pages, which takes it back, as a page that grabs
+     * covers the pages, which takes it back, as a page that grabs
      * focus for a field of its own would leave the card's field dead.
      */
     frontFocused: () => {
@@ -144,7 +144,7 @@ export const createFocus = ({
      * the front tab's view, after one took it unasked, as a pane's page can
      * as it first loads; a move already waiting for the window wins. Never
      * to a tab's own window, which would come forward over the main one.
-     * While a card or a menu covers the pages, the overlay takes it.
+     * While a card covers the pages, the overlay takes it.
      */
     giveBack: () => {
       if (pending) {

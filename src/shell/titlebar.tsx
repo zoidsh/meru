@@ -22,7 +22,7 @@ import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
 
 import { BookmarksButton } from "./bookmarks.tsx";
-import { isMenuKey, useMenuReturn, wholePoint } from "./context-menu.ts";
+import { isMenuKey, wholePoint } from "./context-menu.ts";
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
 import { OpenAppTitlebarButton } from "./open-app.tsx";
@@ -442,20 +442,6 @@ const ProfileRow = ({
     focused !== undefined && ids.includes(focused)
       ? focused
       : profiles.selectedProfileId;
-
-  // Back on the button its menu was opened on, or the selected profile's
-  // once that is gone.
-  useMenuReturn(
-    "profile-menu",
-    (menu) => menu.profileId,
-    (profileId) => {
-      (
-        scroller?.querySelector<HTMLElement>(
-          `[data-profile-id="${CSS.escape(profileId)}"]`
-        ) ?? scroller?.querySelector<HTMLElement>('[aria-pressed="true"]')
-      )?.focus();
-    }
-  );
 
   const scrollBy = (direction: -1 | 1) => {
     if (scroller) {

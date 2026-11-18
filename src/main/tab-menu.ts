@@ -1,26 +1,41 @@
+import { t } from "@lingui/core/macro";
+
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
+import { menuItem, menuPointInside } from "#core/context-menu.ts";
+import type { MenuEntry } from "#core/context-menu.ts";
 import type { PaneDirection } from "#core/pane-tree.ts";
-import { isPinned } from "#core/state.ts";
 import type { State } from "#core/state.ts";
-import { duplicatePlace, tabMenuAt, tabMenuItems } from "#core/tab-menu.ts";
+import {
+  duplicatePlace,
+  ownWindowMenu,
+  tabMenu,
+  tabMenuAt,
+} from "#core/tab-menu.ts";
 import type { TabMenuItemId, TabMenuRequest } from "#core/tab-menu.ts";
 import { findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
-import type { Size } from "#core/window-bounds.ts";
+import type { PlainWindow } from "#platform/base-window.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 
-import type { Overlays } from "./overlay.ts";
+import type { Bookmarks } from "./bookmarks.ts";
+import { nativeMenu } from "./context-menu.ts";
 import type { Profiles } from "./profiles.ts";
+
+type MenuWindow = Pick<PlainWindow, "showContextMenu" | "getContentAreaSize">;
 
 export interface TabMenuDeps {
   state: () => State;
   /** The registry, or the suite's stand-ins for it. */
   apps: readonly App[];
-  /** The window's content area, which a menu's point must lie in. */
-  contentSize: () => Size;
-  overlays: Pick<Overlays, "open" | "close" | "current">;
+  /** The main window, whose sidebar asks for a tab's menu. */
+  window: MenuWindow;
+  /** The tab's own window while it is open, whose titlebar has More options. */
+  ownWindow: (key: TabKey) => MenuWindow | undefined;
+  /** The shortcut the registry gives a command on this platform, if any. */
+  accelerator: (command: string) => string | undefined;
+  bookmarks: Pick<Bookmarks, "bookmarked" | "toggle">;
   profiles: Pick<
     Profiles,
     | "setPinned"
@@ -59,16 +74,149 @@ export interface TabMenuDeps {
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
+/** Each item's label, in the person's language as it is when called. */
+const LABELS: Record<TabMenuItemId, () => string> = {
+  sleep: () =>
+    t({
+      message: "Sleep",
+      comment:
+        "Item of a tab's context menu that frees its page until it is woken, keeping its place",
+    }),
+  wake: () =>
+    t({
+      message: "Wake",
+      comment:
+        "Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it",
+    }),
+  reload: () =>
+    t({
+      message: "Reload",
+      comment: "Item of a tab's context menu that loads its page again",
+    }),
+  duplicate: () =>
+    t({
+      message: "Duplicate",
+      comment:
+        "Item of a tab's context menu that opens another tab of the same app at the same page",
+    }),
+  copyUrl: () =>
+    t({
+      message: "Copy URL",
+      comment: "Item of a tab's context menu that copies its page's address",
+    }),
+  openInBrowser: () =>
+    t({
+      message: "Open in default browser",
+      comment:
+        "Item of a tab's context menu that opens its page in the system's web browser",
+    }),
+  pin: () =>
+    t({
+      message: "Pin",
+      comment:
+        "Item of a tab's context menu that pins it to the top of the sidebar, which keeps it from closing",
+    }),
+  unpin: () =>
+    t({
+      message: "Unpin",
+      comment:
+        "Item of a pinned tab's context menu that unpins it, so it can close",
+    }),
+  openAtLaunch: () =>
+    t({
+      message: "Open at Launch",
+      comment:
+        "Checkbox item of a pinned tab's context menu: whether it loads when Meru starts rather than when first selected",
+    }),
+  bookmark: () =>
+    t({
+      message: "Bookmark tab",
+      comment:
+        "Item of a tab's context menu that adds its page to the profile's bookmarks",
+    }),
+  removeBookmark: () =>
+    t({
+      message: "Remove bookmark",
+      comment:
+        "Item of a tab's context menu, in place of Bookmark tab while its page is bookmarked, that removes that bookmark",
+    }),
+  splitRight: () =>
+    t({
+      message: "Split right",
+      comment:
+        "Item of a tab's context menu that lists apps to open in a new pane to the right of the tab's",
+    }),
+  splitDown: () =>
+    t({
+      message: "Split down",
+      comment:
+        "Item of a tab's context menu that lists apps to open in a new pane below the tab's",
+    }),
+  maximize: () =>
+    t({
+      message: "Maximize pane",
+      comment:
+        "Item of a tab's context menu in a split view that shows the tab's pane alone, keeping the split",
+    }),
+  restore: () =>
+    t({
+      message: "Restore panes",
+      comment:
+        "Item of a tab's context menu, in place of Maximize pane while one pane shows alone, that shows every pane of the split again",
+    }),
+  separate: () =>
+    t({
+      message: "Separate from split",
+      comment:
+        "Item of a tab's context menu that takes it out of the split view, to show alone",
+    }),
+  moveToNewWindow: () =>
+    t({
+      message: "Move to new window",
+      comment:
+        "Item of a tab's context menu that moves its page into a window of its own, the tab staying in the sidebar",
+    }),
+  moveToMainWindow: () =>
+    t({
+      message: "Move to main window",
+      comment:
+        "Item of a tab's context menu, for a tab in a window of its own, that puts its page back in the main window and closes that window",
+    }),
+  close: () =>
+    t({
+      message: "Close tab",
+      comment: "Item of a tab's context menu that closes it",
+    }),
+  closeOthers: () =>
+    t({
+      message: "Close other tabs",
+      comment:
+        "Item of a tab's context menu that closes every other tab of the profile but pinned ones",
+    }),
+  closeBelow: () =>
+    t({
+      message: "Close tabs below",
+      comment:
+        "Item of a tab's context menu that closes the tabs below it in the sidebar but pinned ones",
+    }),
+};
+
+const label = (id: TabMenuItemId) => LABELS[id]();
+
 /**
- * A tab's context menu, drawn by the shell in the overlay's view: opened at
- * the point the shell names for a tab that is shown, and each item run on
- * that tab, which need not be the selected one and is not selected by it.
+ * A tab's context menu, from its row or tile in the main window's sidebar,
+ * and More options in its own window's titlebar: native menus popped up at
+ * the point the shell names, for a tab that is shown, each item run on that
+ * tab, which need not be the selected one and is not selected by it. An item
+ * runs only if the menu offers it, enabled, when it is chosen.
  */
 export const createTabMenu = ({
   state,
   apps,
-  contentSize,
-  overlays,
+  window,
+  ownWindow,
+  accelerator,
+  bookmarks,
   profiles,
   moveToOwnWindow,
   moveToMainWindow,
@@ -82,8 +230,6 @@ export const createTabMenu = ({
   systemBrowser,
   log,
 }: TabMenuDeps) => {
-  let running = false;
-
   const split = async (key: TabKey, direction: "row" | "column") => {
     // Beside this tab, which selecting focuses.
     await wake(key);
@@ -166,8 +312,14 @@ export const createTabMenu = ({
         await systemBrowser.open(tab.url);
         break;
       }
-      case "pin": {
-        await profiles.setPinned(key, !isPinned(tab));
+      case "pin":
+      case "unpin": {
+        await profiles.setPinned(key, item === "pin");
+        break;
+      }
+      case "bookmark":
+      case "removeBookmark": {
+        await bookmarks.toggle(key, true);
         break;
       }
       case "openAtLaunch": {
@@ -188,63 +340,86 @@ export const createTabMenu = ({
     }
   };
 
+  const menuOf = (key: TabKey) =>
+    tabMenu(state(), key, apps, {
+      loaded: isLoaded(key),
+      bookmarked: bookmarks.bookmarked(key),
+    });
+
+  /** Runs the item if the menu `current` gives now still offers it, enabled. */
+  const choose = async <Id extends TabMenuItemId>(
+    current: () => readonly MenuEntry<Id>[] | undefined,
+    item: Id,
+    key: TabKey
+  ) => {
+    try {
+      if (menuItem(current(), item)?.enabled) {
+        await act(item, key);
+      } else {
+        log(`Refused the tab menu's ${item}, which it does not offer`);
+      }
+    } catch (error) {
+      log(`The tab menu's ${item} failed: ${describe(error)}`);
+    }
+  };
+
+  const popup = <Id extends TabMenuItemId>(
+    target: MenuWindow,
+    current: () => readonly MenuEntry<Id>[] | undefined,
+    request: TabMenuRequest
+  ) => {
+    const key = { profileId: request.profileId, tabId: request.tabId };
+    const entries = current();
+
+    if (!entries) {
+      return;
+    }
+
+    target.showContextMenu(
+      nativeMenu(entries, {
+        label,
+        accelerator,
+        choose: (item) => choose(current, item, key),
+      }),
+      { x: request.x, y: request.y }
+    );
+  };
+
+  const refuse = (request: TabMenuRequest) => {
+    log(
+      `Refused a menu for tab ${request.profileId}/${request.tabId} at ${request.x},${request.y}`
+    );
+  };
+
   return {
+    /** The tab's menu, from the main window's sidebar. */
     open: (request: TabMenuRequest) => {
-      const at = tabMenuAt(state(), request, contentSize());
+      const at = tabMenuAt(state(), request, window.getContentAreaSize());
 
       if (!at) {
-        log(
-          `Refused a menu for tab ${request.profileId}/${request.tabId} at ${request.x},${request.y}`
-        );
+        refuse(request);
 
         return;
       }
 
-      overlays.open({ kind: "tab-menu", ...at });
+      popup(window, () => menuOf(at), at);
     },
-    /**
-     * Runs the item on the open menu's tab, if the menu offers it, and closes
-     * that menu, one item at a time.
-     */
-    run: async (item: TabMenuItemId) => {
-      const open = overlays.current();
+    /** More options, from the titlebar of the tab's own window. */
+    openOwnWindow: (request: TabMenuRequest) => {
+      const key = { profileId: request.profileId, tabId: request.tabId };
+      const target = ownWindow(key);
 
-      if (open?.kind !== "tab-menu") {
-        log(`Refused the tab menu's ${item} with no tab menu open`);
-
-        return;
-      }
-
-      // A second press before main closes the menu would run it again.
-      if (running) {
-        log(`Refused the tab menu's ${item} while another item runs`);
+      if (
+        !target ||
+        !ownWindowMenu(state(), key) ||
+        !menuPointInside(request, target.getContentAreaSize())
+      ) {
+        refuse(request);
 
         return;
       }
 
-      running = true;
-
-      const key = { profileId: open.profileId, tabId: open.tabId };
-      const offered = tabMenuItems(state(), key, apps, isLoaded(key))?.find(
-        (candidate) => candidate.id === item
-      );
-
-      try {
-        if (offered?.enabled) {
-          await act(item, key);
-        } else {
-          log(`Refused the tab menu's ${item}, which it does not offer`);
-        }
-      } catch (error) {
-        log(`The tab menu's ${item} failed: ${describe(error)}`);
-      } finally {
-        running = false;
-
-        // Whatever opened while a slow item ran is not this menu's to close.
-        if (overlays.current() === open) {
-          overlays.close();
-        }
-      }
+      popup(target, () => ownWindowMenu(state(), key), request);
     },
   };
 };

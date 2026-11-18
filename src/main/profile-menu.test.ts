@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { Overlay } from "#core/overlay.ts";
 import { isAsleep, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import type { ContextMenuItem, MenuPoint } from "#platform/context-menu.ts";
 
 import { createProfileMenu } from "./profile-menu.ts";
 import { createProfiles } from "./profiles.ts";
@@ -13,11 +13,10 @@ const two: State = {
   selectedProfileId: "a",
 };
 
-/** The menu over the real profiles, saving nowhere, and an overlay that records. */
+/** The menu over the real profiles, saving nowhere, and a window that records each popup. */
 const setup = () => {
   const logs: string[] = [];
-  const events: unknown[] = [];
-  let open: Overlay | undefined;
+  const popups: { items: readonly ContextMenuItem[]; at?: MenuPoint }[] = [];
   const profiles = createProfiles({
     initial: two,
     save: () => Promise.resolve(),
@@ -29,17 +28,11 @@ const setup = () => {
   });
   const menu = createProfileMenu({
     state: profiles.get,
-    contentSize: () => ({ width: 800, height: 600 }),
-    overlays: {
-      open: (next) => {
-        open = next;
-        events.push(["open", next]);
+    window: {
+      getContentAreaSize: () => ({ width: 800, height: 600 }),
+      showContextMenu: (items, at) => {
+        popups.push({ items, ...(at && { at }) });
       },
-      close: () => {
-        open = undefined;
-        events.push(["closed"]);
-      },
-      current: () => open,
     },
     profiles,
     log: (message) => {
@@ -53,74 +46,70 @@ const setup = () => {
       .filter((profile) => isAsleep(state, profile))
       .map((profile) => profile.id);
   };
+  const shown = () =>
+    popups
+      .at(-1)
+      ?.items.map((item) =>
+        "type" in item ? "—" : `${item.label}${item.enabled ? "" : " (off)"}`
+      );
+  /** Opens the profile's menu and clicks its only item. */
+  const choose = async (profileId: string) => {
+    menu.open({ profileId, x: 120, y: 20 });
 
-  return { menu, profiles, events, logs, asleep };
+    const [item] = popups.at(-1)?.items ?? [];
+
+    if (item && !("type" in item)) {
+      await item.click?.();
+    }
+  };
+
+  return { menu, profiles, popups, logs, asleep, shown, choose };
 };
 
 describe(createProfileMenu, () => {
-  it("opens at the point asked for a listed profile, and refuses one outside the content area", () => {
-    const { menu, events, logs } = setup();
+  it("pops up at the point asked for a listed profile, and refuses one outside the content area", () => {
+    const { menu, popups, logs, shown } = setup();
 
     menu.open({ profileId: "b", x: 120, y: 20 });
     menu.open({ profileId: "b", x: 900, y: 20 });
 
-    expect([events, logs]).toStrictEqual([
-      [["open", { kind: "profile-menu", profileId: "b", x: 120, y: 20 }]],
+    expect([popups.map(({ at }) => at), shown(), logs]).toStrictEqual([
+      [{ x: 120, y: 20 }],
+      ["Sleep"],
       ["Refused a menu for profile b at 900,20"],
     ]);
   });
 
-  it("puts its profile to sleep, leaving the selection, and closes", async () => {
-    const { menu, profiles, events, asleep } = setup();
+  it("puts its profile to sleep, leaving the selection", async () => {
+    const { profiles, asleep, choose } = setup();
 
-    menu.open({ profileId: "b", x: 120, y: 20 });
-    await menu.run("sleep");
-
-    expect([
-      asleep(),
-      profiles.get().selectedProfileId,
-      events.at(-1),
-    ]).toStrictEqual([["b"], "a", ["closed"]]);
-  });
-
-  it("wakes its sleeping profile by selecting it", async () => {
-    const { menu, profiles, asleep } = setup();
-
-    await profiles.sleep("b");
-    menu.open({ profileId: "b", x: 120, y: 20 });
-    await menu.run("wake");
+    await choose("b");
 
     expect([asleep(), profiles.get().selectedProfileId]).toStrictEqual([
-      [],
-      "b",
+      ["b"],
+      "a",
     ]);
   });
 
-  it("refuses an item it does not offer, or with no profile menu open, and still closes its own", async () => {
-    const { menu, events, logs, asleep } = setup();
-
-    await menu.run("sleep");
-    menu.open({ profileId: "b", x: 120, y: 20 });
-    await menu.run("wake");
-
-    expect([asleep(), events.at(-1), logs]).toStrictEqual([
-      [],
-      ["closed"],
-      [
-        "Refused the profile menu's sleep with no profile menu open",
-        "Refused the profile menu's wake, which it does not offer",
-      ],
-    ]);
-  });
-
-  it("refuses Sleep for the last awake profile", async () => {
-    const { menu, profiles, logs, asleep } = setup();
+  it("offers Wake for its sleeping profile, which selects it", async () => {
+    const { profiles, asleep, shown, choose } = setup();
 
     await profiles.sleep("b");
-    menu.open({ profileId: "a", x: 20, y: 20 });
-    await menu.run("sleep");
+    await choose("b");
 
-    expect([asleep(), logs]).toStrictEqual([
+    expect([shown(), asleep(), profiles.get().selectedProfileId]).toStrictEqual(
+      [["Wake"], [], "b"]
+    );
+  });
+
+  it("offers Sleep disabled for the last awake profile, and refuses it", async () => {
+    const { profiles, logs, asleep, shown, choose } = setup();
+
+    await profiles.sleep("b");
+    await choose("a");
+
+    expect([shown(), asleep(), logs]).toStrictEqual([
+      ["Sleep (off)"],
       ["b"],
       ["Refused the profile menu's sleep, which it does not offer"],
     ]);

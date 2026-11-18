@@ -7,10 +7,8 @@ import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import { TOAST_MESSAGES } from "#core/overlay.ts";
 import { PANE_DIRECTIONS, PANE_GAP_ENDS } from "#core/pane-tree.ts";
-import { PROFILE_MENU_ITEMS } from "#core/profile-menu.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
-import { TAB_MENU_ITEMS } from "#core/tab-menu.ts";
 
 import { NAVIGATE_ACTIONS } from "./shell-channels.ts";
 import type { ShellCallName } from "./shell-channels.ts";
@@ -45,10 +43,6 @@ const bookmarked = z.nullable(z.boolean());
 
 /** A point of the window's content area, in whole CSS pixels. */
 const coordinate = z.int().check(z.nonnegative());
-
-const tabMenuItem = z.enum(TAB_MENU_ITEMS);
-
-const profileMenuItem = z.enum(PROFILE_MENU_ITEMS);
 
 const tabStatus = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unloaded") }),
@@ -257,29 +251,27 @@ export const SHELL_CALLS = {
    */
   openGmail: { request: z.object({ profileId }), response: z.undefined() },
   /**
-   * Opens the tab's context menu at a point of the content area, which main
-   * refuses outside it or for a tab that is not shown.
+   * Pops up the tab's context menu at a point of the main window's content
+   * area, which main refuses outside it or for a tab that is not shown.
    */
   openTabMenu: {
     request: z.object({ profileId, tabId, x: coordinate, y: coordinate }),
     response: z.undefined(),
   },
-  /** Runs an item of the open tab menu on its tab, and closes the menu. */
-  runTabMenuItem: {
-    request: z.object({ item: tabMenuItem }),
+  /**
+   * Pops up More options at a point of the content area of the tab's own
+   * window, which main refuses outside it or for a tab in none.
+   */
+  openOwnWindowMenu: {
+    request: z.object({ profileId, tabId, x: coordinate, y: coordinate }),
     response: z.undefined(),
   },
   /**
-   * Opens a profile button's context menu at a point of the content area,
+   * Pops up a profile button's context menu at a point of the content area,
    * which main refuses outside it or for a profile not listed.
    */
   openProfileMenu: {
     request: z.object({ profileId, x: coordinate, y: coordinate }),
-    response: z.undefined(),
-  },
-  /** Runs an item of the open profile menu on its profile, and closes the menu. */
-  runProfileMenuItem: {
-    request: z.object({ item: profileMenuItem }),
     response: z.undefined(),
   },
 } as const satisfies Record<
@@ -521,25 +513,6 @@ export const SHELL_STATE = {
       along: z.enum(["pane", "edge"]),
       fits: z.boolean(),
     }),
-    z.object({
-      kind: z.literal("tab-menu"),
-      profileId,
-      tabId,
-      /** Where it was asked for, in the content area, which the menu's view covers. */
-      x: coordinate,
-      y: coordinate,
-      /** The tab's title, which names the menu. */
-      title: z.string(),
-      pinned: z.boolean(),
-      /** What it offers, in order. */
-      items: z.array(
-        z.object({
-          id: tabMenuItem,
-          enabled: z.boolean(),
-          checked: z.optional(z.boolean()),
-        })
-      ),
-    }),
     /** The find bar over the tab's page, the focused pane's in a split. */
     z.object({
       kind: z.literal("find"),
@@ -551,17 +524,6 @@ export const SHELL_STATE = {
       matches: z.int().check(z.nonnegative()),
       /** Changes on each open, which selects the field's text again. */
       opened: z.int().check(z.nonnegative()),
-    }),
-    z.object({
-      kind: z.literal("profile-menu"),
-      profileId,
-      /** Where it was asked for, in the content area, which the menu's view covers. */
-      x: coordinate,
-      y: coordinate,
-      /** The profile's name as shown, which names the menu. */
-      title: z.string(),
-      /** What it offers, in order. */
-      items: z.array(z.object({ id: profileMenuItem, enabled: z.boolean() })),
     }),
   ]),
 } as const;

@@ -8,7 +8,7 @@ import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
-import type { ContextMenuItem } from "#platform/window.ts";
+import type { ContextMenuItem } from "#platform/context-menu.ts";
 
 import {
   createShellHandlers,
@@ -181,20 +181,13 @@ const setup = ({
       open: (request) => {
         calls.push(["openTabMenu", request]);
       },
-      run: (item) => {
-        calls.push(["runTabMenuItem", item]);
-
-        return Promise.resolve();
+      openOwnWindow: (request) => {
+        calls.push(["openOwnWindowMenu", request]);
       },
     },
     profileMenu: {
       open: (request) => {
         calls.push(["openProfileMenu", request]);
-      },
-      run: (item) => {
-        calls.push(["runProfileMenuItem", item]);
-
-        return Promise.resolve();
       },
     },
     openGmail: (profileId) => {
@@ -841,69 +834,10 @@ describe("the overlay slice", () => {
     });
   });
 
-  it("gives a tab's menu its point, the tab's title or else its app's name, and what it offers", () => {
-    expect(
-      overlaySlice({
-        kind: "tab-menu",
-        profileId: "a",
-        tabId: "gmail",
-        x: 10,
-        y: 60,
-      })
-    ).toStrictEqual({
-      kind: "tab-menu",
-      profileId: "a",
-      tabId: "gmail",
-      x: 10,
-      y: 60,
-      title: "Gmail",
-      pinned: true,
-      items: [
-        { id: "sleep", enabled: true },
-        { id: "reload", enabled: true },
-        { id: "duplicate", enabled: false },
-        { id: "copyUrl", enabled: true },
-        { id: "openInBrowser", enabled: true },
-        { id: "pin", enabled: true },
-        { id: "openAtLaunch", enabled: true, checked: true },
-        { id: "splitRight", enabled: true },
-        { id: "splitDown", enabled: true },
-        { id: "maximize", enabled: false },
-        { id: "separate", enabled: false },
-        { id: "moveToNewWindow", enabled: false },
-        { id: "closeOthers", enabled: false },
-        { id: "closeBelow", enabled: false },
-      ],
-    });
-    expect(
-      overlaySlice({
-        kind: "tab-menu",
-        profileId: "a",
-        tabId: "gone",
-        x: 10,
-        y: 60,
-      })
-    ).toStrictEqual({ kind: "none" });
-  });
-
-  it("gives a profile's menu its point, the profile's name, and Sleep", () => {
-    expect(
-      overlaySlice({ kind: "profile-menu", profileId: "b", x: 120, y: 20 })
-    ).toStrictEqual({
-      kind: "profile-menu",
-      profileId: "b",
-      x: 120,
-      y: 20,
-      title: "Work",
-      items: [{ id: "sleep", enabled: true }],
-    });
-  });
-
   it("is none for a profile that is gone", () => {
-    expect([
-      overlaySlice({ kind: "rename-profile", profileId: "gone" }),
-      overlaySlice({ kind: "profile-menu", profileId: "gone", x: 1, y: 1 }),
-    ]).toStrictEqual([{ kind: "none" }, { kind: "none" }]);
+    expect(
+      overlaySlice({ kind: "rename-profile", profileId: "gone" })
+    ).toStrictEqual({ kind: "none" });
   });
 });
 
@@ -970,30 +904,26 @@ describe("Open app in the shell", () => {
     ]);
   });
 
-  it("hands a tab menu's point and its item to the tab menu", async () => {
+  it("hands a tab's menu and More options their tab and point", async () => {
     const shell = setup();
     const request = { profileId: "a", tabId: "gmail", x: 4, y: 50 };
 
     await shell.handlers.openTabMenu(request);
-    await shell.handlers.runTabMenuItem({ item: "pin" });
+    await shell.handlers.openOwnWindowMenu({ ...request, x: 700 });
 
     expect(shell.calls).toStrictEqual([
       ["openTabMenu", request],
-      ["runTabMenuItem", "pin"],
+      ["openOwnWindowMenu", { ...request, x: 700 }],
     ]);
   });
 
-  it("hands a profile menu's point and its item to the profile menu", async () => {
+  it("hands a profile menu's point to the profile menu", async () => {
     const shell = setup();
     const request = { profileId: "b", x: 120, y: 20 };
 
     await shell.handlers.openProfileMenu(request);
-    await shell.handlers.runProfileMenuItem({ item: "sleep" });
 
-    expect(shell.calls).toStrictEqual([
-      ["openProfileMenu", request],
-      ["runProfileMenuItem", "sleep"],
-    ]);
+    expect(shell.calls).toStrictEqual([["openProfileMenu", request]]);
   });
 
   it("hands Sign in's profile to what opens its Gmail", async () => {

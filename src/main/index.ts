@@ -42,6 +42,10 @@ import {
   createCapturedClipboard,
   createClipboard,
 } from "#platform/clipboard.ts";
+import {
+  createCapturedContextMenus,
+  createContextMenus,
+} from "#platform/context-menu.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
@@ -74,6 +78,7 @@ import { createBookmarks } from "./bookmarks.ts";
 import { createCatchUp } from "./catch-up.ts";
 import { COMMANDS } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
+import { commandAccelerator } from "./context-menu.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createFailures } from "./failures.ts";
@@ -190,6 +195,12 @@ const keepAliveTiming: KeepAliveTiming =
   MERU_E2E_BUILD && process.env.MERU_TEST_KEEP_ALIVE === "1"
     ? { age: 2000, firstCheck: 500, interval: 500, timeout: 5000, retry: 2000 }
     : KEEP_ALIVE_TIMING;
+
+// The suite's build records each menu, so a test never puts one on the
+// screen, which would bring the app forward.
+const contextMenus = MERU_E2E_BUILD
+  ? createCapturedContextMenus()
+  : createContextMenus();
 
 /** v3's account id, so a profile id is the account id v3 would have made. */
 const newId = () => crypto.randomUUID();
@@ -408,7 +419,7 @@ const start = async () => {
   const theme = createTheme();
   const displays = createDisplays();
   const shell = createShellWindow({
-    windows: createWindowFactory(),
+    windows: createWindowFactory(contextMenus),
     displays,
     title: lifecycle.name,
     url: shellUrl.href,
@@ -474,7 +485,7 @@ const start = async () => {
   });
 
   const ownWindows = createOwnWindows({
-    windows: createOwnWindowFactory(),
+    windows: createOwnWindowFactory(contextMenus),
     displays,
     apps,
     state: profiles.get,
@@ -563,7 +574,7 @@ const start = async () => {
   });
   shell.window.on("blur", () => {
     if (!staysOpenOutside(overlays.current())) {
-      overlays.close({ toPage: true });
+      overlays.close();
     }
   });
   shell.window.onContentAreaResize(overlays.relayout);
@@ -1131,8 +1142,10 @@ const start = async () => {
   const tabMenu = createTabMenu({
     state: profiles.get,
     apps,
-    contentSize: () => shell.window.getContentAreaSize(),
-    overlays,
+    window: shell.window,
+    ownWindow: (key) => ownWindows.window(key),
+    accelerator: commandAccelerator(COMMANDS, platform),
+    bookmarks,
     profiles,
     moveToOwnWindow,
     moveToMainWindow,
@@ -1148,8 +1161,7 @@ const start = async () => {
   });
   const profileMenu = createProfileMenu({
     state: profiles.get,
-    contentSize: () => shell.window.getContentAreaSize(),
-    overlays,
+    window: shell.window,
     profiles,
     log: console.error,
   });

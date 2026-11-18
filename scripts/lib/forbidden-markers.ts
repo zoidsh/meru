@@ -54,6 +54,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may capture clipboard writes in place of making them",
     },
     {
+      marker: "meruTestContextMenus",
+      why: "only the end-to-end build may capture its menus in place of showing them",
+    },
+    {
       marker: "meruTestSounds",
       why: "only the end-to-end build may capture sounds in place of playing them",
     },

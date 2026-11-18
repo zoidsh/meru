@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { profileMenuAt, profileMenuItems } from "./profile-menu.ts";
+import { profileMenuAt, profileMenu } from "./profile-menu.ts";
 import { newProfile, sleepProfile } from "./state.ts";
 import type { State } from "./state.ts";
 
@@ -10,19 +10,19 @@ const two: State = {
   selectedProfileId: "a",
 };
 
-describe(profileMenuItems, () => {
+describe(profileMenu, () => {
   it("offers Sleep for an awake profile, selected or not, Wake for one asleep, and nothing for one not listed", () => {
     const asleep = sleepProfile(two, "b") ?? two;
 
     expect([
-      profileMenuItems(two, "a"),
-      profileMenuItems(two, "b"),
-      profileMenuItems(asleep, "b"),
-      profileMenuItems(two, "missing"),
+      profileMenu(two, "a"),
+      profileMenu(two, "b"),
+      profileMenu(asleep, "b"),
+      profileMenu(two, "missing"),
     ]).toStrictEqual([
-      [{ id: "sleep", enabled: true }],
-      [{ id: "sleep", enabled: true }],
-      [{ id: "wake", enabled: true }],
+      [{ kind: "item", id: "sleep", enabled: true }],
+      [{ kind: "item", id: "sleep", enabled: true }],
+      [{ kind: "item", id: "wake", enabled: true }],
       undefined,
     ]);
   });
@@ -31,11 +31,11 @@ describe(profileMenuItems, () => {
     const asleep = sleepProfile(two, "b") ?? two;
 
     expect([
-      profileMenuItems(asleep, "a"),
-      profileMenuItems({ ...two, profiles: [newProfile("a", "Default")] }, "a"),
+      profileMenu(asleep, "a"),
+      profileMenu({ ...two, profiles: [newProfile("a", "Default")] }, "a"),
     ]).toStrictEqual([
-      [{ id: "sleep", enabled: false }],
-      [{ id: "sleep", enabled: false }],
+      [{ kind: "item", id: "sleep", enabled: false }],
+      [{ kind: "item", id: "sleep", enabled: false }],
     ]);
   });
 });

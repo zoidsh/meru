@@ -16,10 +16,8 @@ import { FindBar } from "./find-bar.tsx";
 import { Inbox } from "./inbox.tsx";
 import { OpenAppOverlay } from "./open-app.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
-import { ProfileMenu } from "./profile-menu.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
-import { TabMenu } from "./tab-menu.tsx";
 import { Toast } from "./toast.tsx";
 
 /** Stable, so a render of the field does not select what is typed again. */
@@ -175,26 +173,6 @@ export const OverlayLayer = () => {
     }
     case "bookmarks": {
       drawn = <BookmarksOverlay key={open.profileId} {...open} />;
-      break;
-    }
-    case "tab-menu": {
-      drawn = (
-        <TabMenu
-          key={`${open.profileId}/${open.tabId}/${open.x},${open.y}`}
-          menu={open}
-          target={target}
-        />
-      );
-      break;
-    }
-    case "profile-menu": {
-      drawn = (
-        <ProfileMenu
-          key={`${open.profileId}/${open.x},${open.y}`}
-          menu={open}
-          target={target}
-        />
-      );
       break;
     }
     case "toast": {

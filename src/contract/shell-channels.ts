@@ -36,9 +36,8 @@ export const SHELL_CALL_NAMES = [
   "openApp",
   "openGmail",
   "openTabMenu",
-  "runTabMenuItem",
+  "openOwnWindowMenu",
   "openProfileMenu",
-  "runProfileMenuItem",
 ] as const;
 
 /** What the titlebar's navigation buttons ask of the front tab. */

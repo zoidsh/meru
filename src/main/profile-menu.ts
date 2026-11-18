@@ -1,19 +1,21 @@
-import { profileMenuAt, profileMenuItems } from "#core/profile-menu.ts";
+import { t } from "@lingui/core/macro";
+
+import { menuItem } from "#core/context-menu.ts";
+import { profileMenu, profileMenuAt } from "#core/profile-menu.ts";
 import type {
   ProfileMenuItemId,
   ProfileMenuRequest,
 } from "#core/profile-menu.ts";
 import type { State } from "#core/state.ts";
-import type { Size } from "#core/window-bounds.ts";
+import type { PlainWindow } from "#platform/base-window.ts";
 
-import type { Overlays } from "./overlay.ts";
+import { nativeMenu } from "./context-menu.ts";
 import type { Profiles } from "./profiles.ts";
 
 export interface ProfileMenuDeps {
   state: () => State;
-  /** The window's content area, which a menu's point must lie in. */
-  contentSize: () => Size;
-  overlays: Pick<Overlays, "open" | "close" | "current">;
+  /** The main window, whose sidebar asks for a profile's menu. */
+  window: Pick<PlainWindow, "showContextMenu" | "getContentAreaSize">;
   profiles: Pick<Profiles, "select" | "sleep">;
   log: (message: string) => void;
 }
@@ -21,24 +23,50 @@ export interface ProfileMenuDeps {
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
+const label = (id: ProfileMenuItemId) =>
+  id === "sleep"
+    ? t({
+        message: "Sleep",
+        comment:
+          "Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked",
+      })
+    : t({
+        message: "Wake",
+        comment:
+          "Item of a sleeping profile's context menu, in place of Sleep, that selects the profile and loads its pages again",
+      });
+
 /**
- * A profile button's context menu, drawn by the shell in the overlay's view:
- * Sleep, or Wake, which selects the profile as every way to it does.
+ * A profile button's context menu, a native menu popped up at the point the
+ * shell names: Sleep, or Wake, which selects the profile as every way to it
+ * does. An item runs only if the menu offers it, enabled, when it is chosen.
  */
 export const createProfileMenu = ({
   state,
-  contentSize,
-  overlays,
+  window,
   profiles,
   log,
 }: ProfileMenuDeps) => {
-  let running = false;
+  const choose = async (profileId: string, item: ProfileMenuItemId) => {
+    try {
+      if (!menuItem(profileMenu(state(), profileId), item)?.enabled) {
+        log(`Refused the profile menu's ${item}, which it does not offer`);
+      } else if (item === "sleep") {
+        await profiles.sleep(profileId);
+      } else {
+        await profiles.select(profileId);
+      }
+    } catch (error) {
+      log(`The profile menu's ${item} failed: ${describe(error)}`);
+    }
+  };
 
   return {
     open: (request: ProfileMenuRequest) => {
-      const at = profileMenuAt(state(), request, contentSize());
+      const at = profileMenuAt(state(), request, window.getContentAreaSize());
+      const entries = at && profileMenu(state(), at.profileId);
 
-      if (!at) {
+      if (!at || !entries) {
         log(
           `Refused a menu for profile ${request.profileId} at ${request.x},${request.y}`
         );
@@ -46,52 +74,13 @@ export const createProfileMenu = ({
         return;
       }
 
-      overlays.open({ kind: "profile-menu", ...at });
-    },
-    /**
-     * Runs the item on the open menu's profile, if the menu offers it, and
-     * closes that menu, one item at a time.
-     */
-    run: async (item: ProfileMenuItemId) => {
-      const open = overlays.current();
-
-      if (open?.kind !== "profile-menu") {
-        log(`Refused the profile menu's ${item} with no profile menu open`);
-
-        return;
-      }
-
-      // A second press before main closes the menu would run it again.
-      if (running) {
-        log(`Refused the profile menu's ${item} while another item runs`);
-
-        return;
-      }
-
-      running = true;
-
-      const offered = profileMenuItems(state(), open.profileId)?.find(
-        (candidate) => candidate.id === item
+      window.showContextMenu(
+        nativeMenu(entries, {
+          label,
+          choose: (item) => choose(at.profileId, item),
+        }),
+        { x: at.x, y: at.y }
       );
-
-      try {
-        if (!offered?.enabled) {
-          log(`Refused the profile menu's ${item}, which it does not offer`);
-        } else if (item === "sleep") {
-          await profiles.sleep(open.profileId);
-        } else {
-          await profiles.select(open.profileId);
-        }
-      } catch (error) {
-        log(`The profile menu's ${item} failed: ${describe(error)}`);
-      } finally {
-        running = false;
-
-        // Whatever opened while a slow item ran is not this menu's to close.
-        if (overlays.current() === open) {
-          overlays.close();
-        }
-      }
     },
   };
 };

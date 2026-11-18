@@ -7,7 +7,7 @@ import {
 } from "#core/notification-gate.ts";
 import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
-import type { ContextMenuItem } from "#platform/window.ts";
+import type { ContextMenuItem } from "#platform/context-menu.ts";
 
 import { doNotDisturbCommandId, isCommandAvailable } from "./commands.ts";
 import type { Command, CommandContext } from "./commands.ts";
