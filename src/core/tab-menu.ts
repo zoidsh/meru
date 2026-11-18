@@ -1,6 +1,7 @@
 import { findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
 import { isWebUrl } from "./google-redirect.ts";
+import { menuPointInside } from "./overlay.ts";
 import { isPinned, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
 import { canCloseTab, closeTab, findTab } from "./tabs.ts";
@@ -135,15 +136,8 @@ export const tabMenuAt = (
   contentSize: Size
 ): TabMenuRequest | undefined => {
   const { profileId, tabId, x, y } = request;
-  const inside =
-    Number.isInteger(x) &&
-    Number.isInteger(y) &&
-    x >= 0 &&
-    y >= 0 &&
-    x <= contentSize.width &&
-    y <= contentSize.height;
 
-  return inside &&
+  return menuPointInside(request, contentSize) &&
     profileId === state.selectedProfileId &&
     findTab(state, { profileId, tabId })
     ? { profileId, tabId, x, y }

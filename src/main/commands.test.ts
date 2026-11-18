@@ -2,7 +2,7 @@ import { describe, expect, it, onTestFinished } from "vitest";
 
 import { matchesAccelerator } from "#core/accelerator.ts";
 import { savedSearches } from "#core/saved-searches.ts";
-import { gmailTab, newProfile } from "#core/state.ts";
+import { gmailTab, isAsleep, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { Navigation } from "#platform/content-view.ts";
 
@@ -81,6 +81,7 @@ const setup = (initial: State = twoProfiles) => {
     setTabPinned: profiles.setPinned,
     setTabOpenAtLaunch: profiles.setOpenAtLaunch,
     selectProfile: profiles.select,
+    sleepProfile: profiles.sleep,
     addProfile: profiles.add,
     removeProfile: (profileId) => profiles.remove(profileId),
     openRenameProfile: (profileId) => {
@@ -278,6 +279,62 @@ describe("the command registry", () => {
     expect(app.profiles.get().selectedProfileId).toBe("b");
     await app.run("profile.next");
     expect(app.profiles.get().selectedProfileId).toBe("a");
+  });
+
+  it("puts the selected profile to sleep, which selects the next awake one, and wakes it as the only one awake, labelled as it is, with no shortcut", async () => {
+    const app = setup();
+    const label = () => commandOf("profile.sleep").label?.(app.context());
+    const asleep = () =>
+      app.profiles
+        .get()
+        .profiles.filter(isAsleep)
+        .map((profile) => profile.id);
+
+    await app.run("profile.sleep");
+
+    expect([
+      label(),
+      asleep(),
+      app.profiles.get().selectedProfileId,
+    ]).toStrictEqual(["Sleep Profile", ["a"], "b"]);
+
+    await app.run("profile.sleep");
+
+    expect([
+      label(),
+      asleep(),
+      app.profiles.get().selectedProfileId,
+    ]).toStrictEqual(["Wake Profile", ["a", "b"], "b"]);
+
+    await app.run("profile.sleep");
+
+    expect([label(), asleep()]).toStrictEqual(["Sleep Profile", ["a"]]);
+    expect(commandOf("profile.sleep").shortcut).toBeUndefined();
+  });
+
+  it("steps onto a sleeping profile with next, previous or its place, waking it", async () => {
+    // Each its own app, so they may run side by side.
+    const after = await Promise.all(
+      ["profile.next", "profile.previous", "profile.select.2"].map(
+        async (id) => {
+          const app = setup();
+
+          await app.profiles.sleep("b");
+          await app.run(id);
+
+          return [
+            app.profiles.get().selectedProfileId,
+            app.profiles.get().profiles.filter(isAsleep).length,
+          ];
+        }
+      )
+    );
+
+    expect(after).toStrictEqual([
+      ["b", 0],
+      ["b", 0],
+      ["b", 0],
+    ]);
   });
 
   it("offers the next tab or profile only when there is another", async () => {

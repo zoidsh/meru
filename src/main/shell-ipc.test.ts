@@ -41,8 +41,20 @@ const NO_MAIL = { status: "unknown", unreadCount: null } as const;
 
 const profilesSlice = (selectedProfileId: string) => ({
   profiles: [
-    { id: "a", name: "Default", color: "#2d52d2", mail: NO_MAIL },
-    { id: "b", name: "Profile 2", color: "#ff6227", mail: NO_MAIL },
+    {
+      id: "a",
+      name: "Default",
+      color: "#2d52d2",
+      mail: NO_MAIL,
+      asleep: false,
+    },
+    {
+      id: "b",
+      name: "Profile 2",
+      color: "#ff6227",
+      mail: NO_MAIL,
+      asleep: false,
+    },
   ],
   selectedProfileId,
 });
@@ -195,6 +207,16 @@ const setup = () => {
     },
     runTabMenuItem: (request) => {
       calls.push(["runTabMenuItem", request]);
+
+      return Promise.resolve();
+    },
+    openProfileMenu: (request) => {
+      calls.push(["openProfileMenu", request]);
+
+      return Promise.resolve();
+    },
+    runProfileMenuItem: (request) => {
+      calls.push(["runProfileMenuItem", request]);
 
       return Promise.resolve();
     },
@@ -386,6 +408,33 @@ describe(serveShellContract, () => {
       [
         ["openTabMenu", { ...tab, x: 12, y: 40 }],
         ["runTabMenuItem", { item: "closeBelow" }],
+      ],
+    ]);
+  });
+
+  it("passes a profile menu at a whole point of the window and an item it can hold, and refuses any other", async () => {
+    const shell = setup();
+    const refusals = await Promise.allSettled([
+      shell.call(SHELL, "openProfileMenu", { profileId: "b", x: 1.5, y: 2 }),
+      shell.call(SHELL, "openProfileMenu", { profileId: "", x: 1, y: 2 }),
+      shell.call(SHELL, "runProfileMenuItem", { item: "reload" }),
+    ]);
+
+    await shell.call(SHELL, "openProfileMenu", { profileId: "b", x: 12, y: 4 });
+    await shell.call(SHELL, "runProfileMenuItem", { item: "wake" });
+
+    expect([
+      refusals.map(
+        (result) =>
+          result.status === "rejected" &&
+          result.reason instanceof RefusedCallError
+      ),
+      shell.calls,
+    ]).toStrictEqual([
+      [true, true, true],
+      [
+        ["openProfileMenu", { profileId: "b", x: 12, y: 4 }],
+        ["runProfileMenuItem", { item: "wake" }],
       ],
     ]);
   });

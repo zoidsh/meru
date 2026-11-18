@@ -36,6 +36,7 @@ export const SleepingTab = ({ tabs }: { tabs: ShellState["tabs"] }) => {
     <section
       aria-labelledby={headingId}
       data-sleeping-tab
+      data-sleeping-pane
       className="flex h-full rounded-[inherit] bg-shell ring-1 ring-border ring-inset"
     >
       <Empty>

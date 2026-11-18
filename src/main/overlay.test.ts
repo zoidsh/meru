@@ -129,6 +129,17 @@ describe(createOverlays, () => {
     expect(events).toStrictEqual(["hide", "shell told closed", "focus shell"]);
   });
 
+  it("gives focus to the shell when a profile's menu closes, which puts it on the profile's button", () => {
+    const { overlays, focus, events } = setup();
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open({ kind: "profile-menu", profileId: "b", x: 120, y: 20 });
+    events.length = 0;
+    overlays.close();
+
+    expect(events).toStrictEqual(["hide", "shell told closed", "focus shell"]);
+  });
+
   it("gives focus to the page when the window losing focus closes a tab's menu", () => {
     const { overlays, focus, events } = setup();
 

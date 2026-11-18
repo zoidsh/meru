@@ -1,6 +1,6 @@
 import { isEqual } from "es-toolkit";
 
-import { transitionOverlay } from "#core/overlay.ts";
+import { isMenu, transitionOverlay } from "#core/overlay.ts";
 import type { Overlay, OverlayEvent } from "#core/overlay.ts";
 import type { State } from "#core/state.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
@@ -23,9 +23,9 @@ export interface OverlaysDeps {
  * the shell hears of it; closing hides it and gives focus to the selected
  * tab's view, or the shell when there is none. Never back to the shell when
  * the shell had it: that is the button that opened the overlay, and focus
- * left in the titlebar would leave Gmail's keys dead. A tab's menu is the
- * exception: it gives focus to the shell, which puts it on the tab the menu
- * was opened on, unless the window losing focus closed it.
+ * left in the titlebar would leave Gmail's keys dead. A menu is the
+ * exception: it gives focus to the shell, which puts it back on the control
+ * the menu was opened on, unless the window losing focus closed it.
  */
 export const createOverlays = ({
   focus,
@@ -65,7 +65,7 @@ export const createOverlays = ({
     view?.hide();
     notify();
     focus.focus(
-      closed?.kind === "tab-menu" && !blurred
+      isMenu(closed) && !blurred
         ? [{ kind: "shell" }]
         : [{ kind: "front" }, { kind: "shell" }]
     );

@@ -3,13 +3,20 @@ import { describe, expect, it } from "vitest";
 import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
+  isMenu,
+  menuPointInside,
   overlayRectangle,
   overlayWidth,
   isOverlayDocument,
   transitionOverlay,
 } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
-import { newProfile, removeProfile, selectProfile } from "./state.ts";
+import {
+  newProfile,
+  removeProfile,
+  selectProfile,
+  sleepProfile,
+} from "./state.ts";
 import type { State } from "./state.ts";
 import { closeTab, openTab, selectTab } from "./tabs.ts";
 
@@ -22,6 +29,7 @@ const two: State = {
 const renameA: Overlay = { kind: "rename-profile", profileId: "a" };
 const renameB: Overlay = { kind: "rename-profile", profileId: "b" };
 const openAppA: Overlay = { kind: "open-app", profileId: "a" };
+const menuB: Overlay = { kind: "profile-menu", profileId: "b", x: 120, y: 20 };
 
 const changed = (current: Overlay | undefined, next: State | undefined) =>
   transitionOverlay(current, {
@@ -76,6 +84,7 @@ describe(transitionOverlay, () => {
     const withoutB = removeProfile(two, "b") as State;
 
     expect(changed(renameB, withoutB)).toBeUndefined();
+    expect(changed(menuB, withoutB)).toBeUndefined();
   });
 
   it("closes a tab's menu when its tab goes, and keeps it through a change of another", () => {
@@ -114,6 +123,13 @@ describe(transitionOverlay, () => {
     ]).toStrictEqual([undefined, menu]);
   });
 
+  it("keeps a profile's menu through its profile put to sleep in the background, and closes it when the selection moves", () => {
+    expect([
+      changed(menuB, sleepProfile(two, "b")),
+      changed(menuB, sleepProfile(two, "a")),
+    ]).toStrictEqual([menuB, undefined]);
+  });
+
   it("keeps the unified inbox open through another profile selected, which closes it itself", () => {
     expect(changed({ kind: "inbox" }, selectProfile(two, "b"))).toStrictEqual({
       kind: "inbox",
@@ -140,10 +156,45 @@ describe(overlayRectangle, () => {
     expect([
       overlayRectangle(size, "narrow", { kind: "open-app" }),
       overlayRectangle(size, "narrow", { kind: "tab-menu" }),
+      overlayRectangle(size, "narrow", { kind: "profile-menu" }),
     ]).toStrictEqual([
       { x: 64, y: 40, width: 928, height: 652 },
       { x: 0, y: 0, width: 1000, height: 700 },
+      { x: 0, y: 0, width: 1000, height: 700 },
     ]);
+  });
+});
+
+describe(isMenu, () => {
+  it("is a tab's or a profile's menu, and no card", () => {
+    expect(
+      (
+        [
+          "tab-menu",
+          "profile-menu",
+          "inbox",
+          "open-app",
+          "rename-profile",
+        ] as const
+      ).map((kind) => isMenu({ kind }))
+    ).toStrictEqual([true, true, false, false, false]);
+    expect(isMenu(undefined)).toBeFalsy();
+  });
+});
+
+describe(menuPointInside, () => {
+  it("takes a whole point of the content area, its edges included", () => {
+    const size = { width: 100, height: 50 };
+
+    expect(
+      [
+        { x: 0, y: 0 },
+        { x: 100, y: 50 },
+        { x: 101, y: 0 },
+        { x: 0, y: -1 },
+        { x: 0.5, y: 0 },
+      ].map((point) => menuPointInside(point, size))
+    ).toStrictEqual([true, true, false, false, false]);
   });
 });
 

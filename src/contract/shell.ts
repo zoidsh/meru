@@ -4,6 +4,7 @@ import { APP_IDS } from "#core/apps.ts";
 import { MAIL_STATUSES } from "#core/feed.ts";
 import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
+import { PROFILE_MENU_ITEMS } from "#core/profile-menu.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { TAB_MENU_ITEMS } from "#core/tab-menu.ts";
@@ -35,6 +36,8 @@ const tabKey = z.object({ profileId, tabId });
 const coordinate = z.int().check(z.nonnegative());
 
 const tabMenuItem = z.enum(TAB_MENU_ITEMS);
+
+const profileMenuItem = z.enum(PROFILE_MENU_ITEMS);
 
 const tabStatus = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unloaded") }),
@@ -133,6 +136,19 @@ export const SHELL_CALLS = {
     request: z.object({ item: tabMenuItem }),
     response: z.undefined(),
   },
+  /**
+   * Opens a profile button's context menu at a point of the content area,
+   * which main refuses outside it or for a profile not listed.
+   */
+  openProfileMenu: {
+    request: z.object({ profileId, x: coordinate, y: coordinate }),
+    response: z.undefined(),
+  },
+  /** Runs an item of the open profile menu on its profile, and closes the menu. */
+  runProfileMenuItem: {
+    request: z.object({ item: profileMenuItem }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   ShellCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -149,6 +165,8 @@ export const SHELL_STATE = {
         color: z.string(),
         /** What the profile's feed last said; no count until one is read. */
         mail: z.object({ status: mailStatus, unreadCount }),
+        /** Put to sleep: no pages, its mail still checked. */
+        asleep: z.boolean(),
       })
     ),
     selectedProfileId: profileId,
@@ -277,6 +295,17 @@ export const SHELL_STATE = {
           checked: z.optional(z.boolean()),
         })
       ),
+    }),
+    z.object({
+      kind: z.literal("profile-menu"),
+      profileId,
+      /** Where it was asked for, in the content area, which the menu's view covers. */
+      x: coordinate,
+      y: coordinate,
+      /** The profile's name as shown, which names the menu. */
+      title: z.string(),
+      /** What it offers, in order. */
+      items: z.array(z.object({ id: profileMenuItem, enabled: z.boolean() })),
     }),
   ]),
 } as const;

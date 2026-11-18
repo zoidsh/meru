@@ -5,6 +5,7 @@ import { viewFrame } from "#core/layout.ts";
 
 import { NothingOpen } from "./nothing-open.tsx";
 import { OverlayLayer } from "./overlay.tsx";
+import { SleepingProfile } from "./sleeping-profile.tsx";
 import { SleepingTab } from "./sleeping-tab.tsx";
 import { useShellState } from "./sync.ts";
 import { Sidebar, TabProblem } from "./tab-strip.tsx";
@@ -57,7 +58,11 @@ export const App = () => {
               style={{ borderRadius: radius }}
               className="min-w-0 flex-1 overflow-hidden bg-background"
             >
+              {selected?.asleep && (
+                <SleepingProfile profileId={selected.id} name={selected.name} />
+              )}
               {tabs &&
+                !selected?.asleep &&
                 (tabs.tabs.length === 0 ? (
                   <NothingOpen />
                 ) : (

@@ -63,6 +63,7 @@ import { createMailNotifications } from "./notifications.ts";
 import { createOpenApp } from "./open-app.ts";
 import { createOverlays } from "./overlay.ts";
 import { automaticProfileName } from "./profile-copy.ts";
+import { createProfileMenu } from "./profile-menu.ts";
 import { createProfiles } from "./profiles.ts";
 import type { Profiles } from "./profiles.ts";
 import { createRemoveProfile } from "./remove-profile.ts";
@@ -705,6 +706,7 @@ const start = async () => {
       setTabPinned: profiles.setPinned,
       setTabOpenAtLaunch: profiles.setOpenAtLaunch,
       selectProfile: profiles.select,
+      sleepProfile: profiles.sleep,
       addProfile: profiles.add,
       removeProfile: createRemoveProfile({
         profiles,
@@ -762,6 +764,13 @@ const start = async () => {
     systemBrowser,
     log: console.error,
   });
+  const profileMenu = createProfileMenu({
+    state: profiles.get,
+    contentSize: () => shell.window.getContentAreaSize(),
+    overlays,
+    profiles,
+    log: console.error,
+  });
 
   serveShellContract({
     ipc,
@@ -774,6 +783,7 @@ const start = async () => {
       inbox,
       openApp,
       tabMenu,
+      profileMenu,
       openGmail: showGmail.jumpTo,
       window: shell.window,
       sidebar,

@@ -12,6 +12,11 @@ msgstr ""
 msgid "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
 msgstr "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
 
+#. Accessible name of a sleeping profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, that it sleeps, then how many messages are unread
+#: src/shell/titlebar.tsx
+msgid "{count, plural, one {{name}, asleep, # unread message} other {{name}, asleep, # unread messages}}"
+msgstr "{count, plural, one {{name}, asleep, # unread message} other {{name}, asleep, # unread messages}}"
+
 #. Title of the one notification for several emails that arrived at once in a profile, which opens its inbox when clicked
 #: src/main/notifications.ts
 msgid "{count, plural, one {# new message} other {# new messages}}"
@@ -59,6 +64,11 @@ msgstr "{name} couldn’t load"
 msgid "{name} is signed out."
 msgstr "{name} is signed out."
 
+#. Heading of the page area while the selected profile sleeps, its pages closed and its mail still checked; {name} is the profile's name
+#: src/shell/sleeping-profile.tsx
+msgid "{name} is sleeping"
+msgstr "{name} is sleeping"
+
 #. Explanation under the offline heading in place of a tab's page; {name} is the app, such as Gmail or Calendar
 #: src/shell/tab-strip.tsx
 msgid "{name} loads by itself when you’re back online."
@@ -68,6 +78,16 @@ msgstr "{name} loads by itself when you’re back online."
 #: src/shell/tab-strip.tsx
 msgid "{name} stopped working"
 msgstr "{name} stopped working"
+
+#. Tooltip of a profile's button in the title bar while it sleeps: its pages are closed, its mail still checked
+#: src/shell/titlebar.tsx
+msgid "{name}, asleep"
+msgstr "{name}, asleep"
+
+#. Accessible name and tooltip of a profile's button in the title bar while it sleeps and its Google account is signed out
+#: src/shell/titlebar.tsx
+msgid "{name}, asleep, sign in required"
+msgstr "{name}, asleep, sign in required"
 
 #. Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out
 #: src/shell/titlebar.tsx
@@ -690,10 +710,17 @@ msgstr "Sign in"
 msgid "Sign in required"
 msgstr "Sign in required"
 
+#. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
+#: src/shell/profile-menu.tsx
 #: src/shell/tab-menu.tsx
 msgid "Sleep"
 msgstr "Sleep"
+
+#. Menu item in the Window menu that closes every page of the selected profile until it is woken, its mail still checked
+#: src/main/commands.ts
+msgid "Sleep Profile"
+msgstr "Sleep Profile"
 
 #. Menu item in the Tabs menu that frees the selected tab's page until it is woken, keeping its place
 #: src/main/commands.ts
@@ -806,11 +833,20 @@ msgid "View"
 msgstr "View"
 
 #. Button in place of a sleeping tab's page that loads it again
+#. Button in the page area of a sleeping profile that loads its pages again
+#. Item of a sleeping profile's context menu, in place of Sleep, that selects the profile and loads its pages again
 #. Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it
+#: src/shell/profile-menu.tsx
+#: src/shell/sleeping-profile.tsx
 #: src/shell/sleeping-tab.tsx
 #: src/shell/tab-menu.tsx
 msgid "Wake"
 msgstr "Wake"
+
+#. Menu item in the Window menu, in place of Sleep Profile while the selected profile sleeps, that loads its pages again
+#: src/main/commands.ts
+msgid "Wake Profile"
+msgstr "Wake Profile"
 
 #. Menu item in the Tabs menu, in place of Sleep Tab while the selected tab sleeps, that loads its page again
 #: src/main/commands.ts

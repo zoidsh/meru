@@ -21,6 +21,7 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
 
+import { isMenuKey, useMenuReturn, wholePoint } from "./context-menu.ts";
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
 import { OpenAppTitlebarButton } from "./open-app.tsx";
@@ -222,8 +223,71 @@ const moveFocus = (event: KeyboardEvent<HTMLElement>) => {
 
 type ShellProfile = ShellState["profiles"]["profiles"][number];
 
+/**
+ * A profile button's accessible name and tooltip: its name, then "asleep" and
+ * "sign in required" as they apply, and for the name its unread count.
+ */
+const useProfileLabels = (
+  name: string,
+  asleep: boolean,
+  signedOut: boolean,
+  count: number
+) => {
+  const { t } = useLingui();
+  let tooltip = name;
+
+  if (asleep && signedOut) {
+    tooltip = t({
+      message: `${name}, asleep, sign in required`,
+      comment:
+        "Accessible name and tooltip of a profile's button in the title bar while it sleeps and its Google account is signed out",
+    });
+  } else if (asleep) {
+    tooltip = t({
+      message: `${name}, asleep`,
+      comment:
+        "Tooltip of a profile's button in the title bar while it sleeps: its pages are closed, its mail still checked",
+    });
+  } else if (signedOut) {
+    tooltip = t({
+      message: `${name}, sign in required`,
+      comment:
+        "Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out",
+    });
+  }
+
+  if (signedOut || count === 0) {
+    return { label: tooltip === name ? undefined : tooltip, tooltip };
+  }
+
+  const label = asleep
+    ? t({
+        message: plural(count, {
+          one: `${name}, asleep, # unread message`,
+          other: `${name}, asleep, # unread messages`,
+        }),
+        comment:
+          "Accessible name of a sleeping profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, that it sleeps, then how many messages are unread",
+      })
+    : t({
+        message: plural(count, {
+          one: `${name}, # unread message`,
+          other: `${name}, # unread messages`,
+        }),
+        comment:
+          "Accessible name of a profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, then how many messages are unread",
+      });
+
+  return { label, tooltip };
+};
+
+/** Asks for the profile's menu at a point of the window. */
+const openProfileMenu = (profileId: string, x: number, y: number) => {
+  shellCalls().openProfileMenu({ profileId, ...wholePoint(x, y) });
+};
+
 const ProfileButton = ({
-  profile: { id, name, color, mail },
+  profile: { id, name, color, mail, asleep },
   selected,
   focusable,
   shortcut,
@@ -239,28 +303,10 @@ const ProfileButton = ({
   /** Focus moved out of the row. */
   onLeave: () => void;
 }) => {
-  const { t } = useLingui();
   const shortcutTitle = useShortcutTitle();
   const signedOut = mail.status === "signedOut";
   const count = mail.unreadCount ?? 0;
-  let label: string | undefined;
-
-  if (signedOut) {
-    label = t({
-      message: `${name}, sign in required`,
-      comment:
-        "Accessible name and tooltip of a profile's button in the title bar while its Google account is signed out",
-    });
-  } else if (count > 0) {
-    label = t({
-      message: plural(count, {
-        one: `${name}, # unread message`,
-        other: `${name}, # unread messages`,
-      }),
-      comment:
-        "Accessible name of a profile's button in the title bar while its inbox has unread mail, read by screen readers: the profile's name, then how many messages are unread",
-    });
-  }
+  const { label, tooltip } = useProfileLabels(name, asleep, signedOut, count);
 
   return (
     <Button
@@ -268,12 +314,13 @@ const ProfileButton = ({
       size="sm"
       aria-pressed={selected}
       aria-label={label}
-      title={shortcutTitle(signedOut && label ? label : name, shortcut)}
+      title={shortcutTitle(tooltip, shortcut)}
       tabIndex={focusable ? 0 : -1}
+      data-profile-id={id}
       ref={selected ? keepClearOfFades : undefined}
       // A long name is cut short, so other profiles stay in reach; the
       // tooltip has it whole.
-      className="max-w-40 flex-none gap-1 px-2.5"
+      className={cn("max-w-40 flex-none gap-1 px-2.5", asleep && "opacity-50")}
       onFocus={onFocus}
       onBlur={(event) => {
         if (
@@ -284,7 +331,23 @@ const ProfileButton = ({
           onLeave();
         }
       }}
-      onKeyDown={moveFocus}
+      onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => {
+        if (isMenuKey(event)) {
+          event.preventDefault();
+
+          const { left, bottom } = event.currentTarget.getBoundingClientRect();
+
+          openProfileMenu(id, left, bottom);
+
+          return;
+        }
+
+        moveFocus(event);
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        openProfileMenu(id, event.clientX, event.clientY);
+      }}
       onClick={() => {
         shellCalls().selectProfile({ profileId: id });
       }}
@@ -326,6 +389,20 @@ const ProfileRow = ({
     focused !== undefined && ids.includes(focused)
       ? focused
       : profiles.selectedProfileId;
+
+  // Back on the button its menu was opened on, or the selected profile's
+  // once that is gone.
+  useMenuReturn(
+    "profile-menu",
+    (menu) => menu.profileId,
+    (profileId) => {
+      (
+        scroller?.querySelector<HTMLElement>(
+          `[data-profile-id="${CSS.escape(profileId)}"]`
+        ) ?? scroller?.querySelector<HTMLElement>('[aria-pressed="true"]')
+      )?.focus();
+    }
+  );
 
   const scrollBy = (direction: -1 | 1) => {
     if (scroller) {

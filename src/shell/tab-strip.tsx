@@ -8,7 +8,7 @@ import {
   LoaderCircleIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent, PointerEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
@@ -19,6 +19,7 @@ import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
+import { isMenuKey, useMenuReturn, wholePoint } from "./context-menu.ts";
 import { keepInView } from "./keep-in-view.ts";
 import { OpenAppSidebarButton } from "./open-app.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
@@ -137,24 +138,15 @@ const listRoom = (count: number, gap: number) => {
   return rows === 0 ? 0 : 6 + rows * 32 + (rows - 1) * gap;
 };
 
-/** Asks for the tab's context menu at a point of the window, in whole CSS pixels. */
+/** Asks for the tab's context menu at a point of the window. */
 const openTabMenu = (
   profileId: string,
   tabId: string,
   x: number,
   y: number
 ) => {
-  shellCalls().openTabMenu({
-    profileId,
-    tabId,
-    x: Math.max(0, Math.round(x)),
-    y: Math.max(0, Math.round(y)),
-  });
+  shellCalls().openTabMenu({ profileId, tabId, ...wholePoint(x, y) });
 };
-
-/** Shift+F10 or the Menu key, which open a focused tab's menu beside it. */
-const isMenuKey = (event: KeyboardEvent) =>
-  event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey);
 
 /** A press that leaves focus where it was, for a control hidden from assistive technology. */
 const keepFocus = (event: { preventDefault: () => void }) => {
@@ -439,23 +431,14 @@ export const Sidebar = ({
     }
   });
 
-  // Closing a tab's menu gives focus back to the shell, which puts it on
-  // the tab the menu was opened on, or on the selected tab once that is gone,
-  // unless the item gave it to the page area, as Sleep gives it to Wake.
   const overlay = useShellState("overlay");
-  const menuTab = overlay?.kind === "tab-menu" ? overlay.tabId : undefined;
-  const lastMenuTab = useRef<string>(undefined);
 
-  useEffect(() => {
-    const tabId = lastMenuTab.current;
-
-    lastMenuTab.current = menuTab;
-
-    if (
-      menuTab === undefined &&
-      tabId !== undefined &&
-      !document.activeElement?.closest("[data-sleeping-tab]")
-    ) {
+  // Back on the tab its menu was opened on, or the selected tab once that
+  // is gone.
+  useMenuReturn(
+    "tab-menu",
+    (menu) => menu.tabId,
+    (tabId) => {
       (
         list.current?.querySelector<HTMLElement>(
           `[data-tab-id="${CSS.escape(tabId)}"]`
@@ -465,7 +448,7 @@ export const Sidebar = ({
         )
       )?.focus();
     }
-  });
+  );
 
   // A tab moved by the keyboard, or dragged, keeps focus, which the list
   // drawn in its new order may have dropped, and the keyboard's move is said.

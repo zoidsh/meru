@@ -137,10 +137,28 @@ describe(buildMenuTemplate, () => {
       ["profile.select.2", "Work", "CommandOrControl+2"],
       ["profile.next", "Select Next Profile", "Command+Shift+]"],
       ["profile.previous", "Select Previous Profile", "Command+Shift+["],
+      ["profile.sleep", "Sleep Profile", undefined],
       ["profile.add", "Add Profile", undefined],
       ["profile.rename", "Rename Profile…", undefined],
       ["profile.remove", "Remove Profile…", undefined],
     ]);
+  });
+
+  it("offers Wake Profile in place of Sleep Profile while the selected profile sleeps", () => {
+    expect(
+      [false, true].map(
+        (asleep) =>
+          submenu(
+            template("darwin", {
+              ...contextOf(),
+              state: {
+                ...oneProfile,
+                profiles: [{ ...newProfile("a", "Default"), asleep }],
+              },
+            }).at(-2) ?? {}
+          ).find((item) => item.id === "profile.sleep")?.label
+      )
+    ).toStrictEqual(["Sleep Profile", "Wake Profile"]);
   });
 
   it("lists each pinned tab with a shortcut by its app in the Tabs menu, between the tab steps and Sleep Tab", () => {

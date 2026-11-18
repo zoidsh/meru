@@ -11,6 +11,7 @@ const slice = (selectedProfileId: string) => ({
       name: "Default",
       color: "#2d52d2",
       mail: { status: "unknown" as const, unreadCount: null },
+      asleep: false,
     },
   ],
   selectedProfileId,

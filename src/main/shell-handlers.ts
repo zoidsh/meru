@@ -6,7 +6,8 @@ import { openableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
-import { isPinned, knownTabs, selectedProfile } from "#core/state.ts";
+import { profileMenuItems } from "#core/profile-menu.ts";
+import { isAsleep, isPinned, knownTabs, selectedProfile } from "#core/state.ts";
 import type { DoNotDisturb, State } from "#core/state.ts";
 import type { TabStatus } from "#core/tab-machine.ts";
 import { tabMenuItems } from "#core/tab-menu.ts";
@@ -21,6 +22,7 @@ import type { Mail } from "./mail.ts";
 import type { OpenApp } from "./open-app.ts";
 import type { Overlays } from "./overlay.ts";
 import { profileDisplayName } from "./profile-copy.ts";
+import type { ProfileMenu } from "./profile-menu.ts";
 import type { Profiles } from "./profiles.ts";
 import type { ShellHandlers } from "./shell-ipc.ts";
 import type { Sidebar } from "./sidebar.ts";
@@ -40,6 +42,7 @@ export interface ShellHandlersDeps {
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   openApp: Pick<OpenApp, "choose">;
   tabMenu: Pick<TabMenu, "open" | "run">;
+  profileMenu: Pick<ProfileMenu, "open" | "run">;
   /** Selects the profile's Gmail as the tray's profile item does. */
   openGmail: (profileId: string) => Promise<unknown>;
   window: Pick<AppWindow, "showContextMenu">;
@@ -120,6 +123,17 @@ const shellOverlay = (
     return { kind: "none" };
   }
 
+  if (overlay.kind === "profile-menu") {
+    return {
+      kind: "profile-menu",
+      profileId: profile.id,
+      x: overlay.x,
+      y: overlay.y,
+      title: profileDisplayName(profile),
+      items: profileMenuItems(state, profile.id) ?? [],
+    };
+  }
+
   return overlay.kind === "open-app"
     ? {
         kind: "open-app",
@@ -185,6 +199,7 @@ export const shellState = (
         name: profileDisplayName(candidate),
         color: profileColor(state, candidate.id),
         mail: mail(candidate.id),
+        asleep: isAsleep(candidate),
       })),
       selectedProfileId: state.selectedProfileId,
     },
@@ -219,6 +234,7 @@ export const createShellHandlers = ({
   inbox,
   openApp,
   tabMenu,
+  profileMenu,
   openGmail,
   window,
   sidebar,
@@ -340,5 +356,13 @@ export const createShellHandlers = ({
   },
   runTabMenuItem: async ({ item }) => {
     await tabMenu.run(item);
+  },
+  openProfileMenu: (request) => {
+    profileMenu.open(request);
+
+    return Promise.resolve();
+  },
+  runProfileMenuItem: async ({ item }) => {
+    await profileMenu.run(item);
   },
 });

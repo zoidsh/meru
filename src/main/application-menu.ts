@@ -370,6 +370,8 @@ export const buildMenuTemplate = ({
     ...item("profile.next"),
     ...item("profile.previous"),
     separator,
+    ...item("profile.sleep"),
+    separator,
     ...item("profile.add"),
     ...item("profile.rename"),
     ...item("profile.remove"),

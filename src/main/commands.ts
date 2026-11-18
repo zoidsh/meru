@@ -27,6 +27,7 @@ import {
 import {
   adjacentProfile,
   canRemoveProfile,
+  isAsleep,
   isPinned,
   knownTabs,
   opensAtLaunch,
@@ -66,7 +67,9 @@ export interface CommandActions {
   closeTab: (key: TabKey) => Promise<unknown>;
   setTabPinned: (key: TabKey, pinned: boolean) => Promise<unknown>;
   setTabOpenAtLaunch: (key: TabKey, on: boolean) => Promise<unknown>;
+  /** Selects the profile, waking it if it sleeps. */
   selectProfile: (profileId: string) => Promise<unknown>;
+  sleepProfile: (profileId: string) => Promise<unknown>;
   addProfile: () => Promise<unknown>;
   /** Asks to remove the profile, and removes it once confirmed. */
   removeProfile: (profileId: string) => Promise<unknown>;
@@ -543,6 +546,34 @@ export const COMMANDS: readonly Command[] = [
     isAvailable: hasOtherProfile,
     once: true,
     run: selectAdjacentProfile(-1),
+  },
+  {
+    id: "profile.sleep",
+    title: () =>
+      t({
+        message: "Sleep Profile",
+        comment:
+          "Menu item in the Window menu that closes every page of the selected profile until it is woken, its mail still checked",
+      }),
+    label(context) {
+      return isAsleep(selectedProfile(context.state))
+        ? t({
+            message: "Wake Profile",
+            comment:
+              "Menu item in the Window menu, in place of Sleep Profile while the selected profile sleeps, that loads its pages again",
+          })
+        : this.title();
+    },
+    run: async ({ state }, { sleepProfile, selectProfile, setInboxOpen }) => {
+      const profile = selectedProfile(state);
+
+      if (isAsleep(profile)) {
+        await selectProfile(profile.id);
+        setInboxOpen(false);
+      } else {
+        await sleepProfile(profile.id);
+      }
+    },
   },
   {
     id: "profile.add",

@@ -9,48 +9,23 @@ import {
   RotateCwIcon,
   XIcon,
 } from "lucide-react";
-import { Fragment } from "react";
 import type { ReactNode } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { TAB_MENU_COMMANDS, TAB_MENU_GROUPS } from "#core/tab-menu.ts";
 import type { TabMenuItemId } from "#core/tab-menu.ts";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "#ui/dropdown-menu.tsx";
 
+import { OverlayMenu } from "./overlay-menu.tsx";
+import type { OverlayMenuItem } from "./overlay-menu.tsx";
 import { shellCalls, useShellState } from "./sync.ts";
 
 type TabMenuOverlay = Extract<ShellState["overlay"], { kind: "tab-menu" }>;
-
-const close = () => {
-  shellCalls().closeOverlay({});
-};
-
-// The prototype's corners and muted icons, and its tick on the left in the
-// icon slot, where shadcn's checkbox item has it on the right.
-const ITEM = "rounded-md [&_svg]:text-muted-foreground";
-const CHECKBOX_ITEM = `${ITEM} pr-2 *:data-[slot=dropdown-menu-checkbox-item-indicator]:right-auto *:data-[slot=dropdown-menu-checkbox-item-indicator]:left-2`;
 
 const run = (item: TabMenuItemId) => {
   shellCalls().runTabMenuItem({ item });
 };
 
-/**
- * A tab's context menu, drawn open in the overlay's document, whose view
- * covers the window's content area: shadcn's dropdown menu, since it opens
- * where its trigger is, and here its trigger is an empty mark at the point,
- * the one in the shell's document being out of its reach. Its content is
- * portalled through an outer portal into this document, since Base UI's own
- * would go to the shell's.
- */
+/** A tab's context menu, its items in the design's groups. */
 export const TabMenu = ({
   menu,
   target,
@@ -183,87 +158,31 @@ export const TabMenu = ({
   };
 
   const groups = TAB_MENU_GROUPS.map((group) =>
-    group.flatMap((id) => offered.get(id) ?? [])
-  ).filter((group) => group.length > 0);
+    group.flatMap((id): OverlayMenuItem<TabMenuItemId>[] => {
+      const item = offered.get(id);
+      const command = TAB_MENU_COMMANDS[id];
+
+      return item
+        ? [
+            {
+              ...item,
+              ...label(id),
+              shortcut: command && shortcuts?.[command],
+              ariaShortcut: command && ariaShortcuts?.[command],
+            },
+          ]
+        : [];
+    })
+  );
 
   return (
-    <DropdownMenu
-      open
-      onOpenChange={(open, { reason }) => {
-        // A chosen item is main's to act on, and main closes the menu after,
-        // so focus goes back to the tab as it is then.
-        if (!open && reason !== "item-press") {
-          close();
-        }
-      }}
-    >
-      <DropdownMenuTrigger
-        render={<span aria-hidden />}
-        nativeButton={false}
-        tabIndex={-1}
-        className="pointer-events-none fixed size-0"
-        style={{ left: menu.x, top: menu.y }}
-      />
-      <DropdownMenuPortal container={target.body}>
-        <DropdownMenuContent
-          aria-label={menu.title}
-          // A press here is the menu's own, which the overlay's closer leaves.
-          data-overlay-card
-          // Main gives focus back to the tab when the overlay closes.
-          finalFocus={false}
-          sideOffset={0}
-          className="w-auto min-w-56 rounded-lg"
-        >
-          {groups.map((group, index) => (
-            <Fragment key={group[0]?.id}>
-              {index > 0 && <DropdownMenuSeparator />}
-              {group.map(({ id, enabled, checked }) => {
-                const { icon, text } = label(id);
-                const command = TAB_MENU_COMMANDS[id];
-                const shortcut = command && shortcuts?.[command];
-
-                return checked === undefined ? (
-                  <DropdownMenuItem
-                    key={id}
-                    disabled={!enabled}
-                    // shadcn styles the attribute's presence, so an item
-                    // with an icon leaves it out rather than set it false.
-                    {...(!icon && { inset: true })}
-                    className={ITEM}
-                    aria-keyshortcuts={
-                      command ? ariaShortcuts?.[command] : undefined
-                    }
-                    onClick={() => {
-                      run(id);
-                    }}
-                  >
-                    {icon}
-                    {text}
-                    {shortcut && (
-                      <DropdownMenuShortcut aria-hidden>
-                        {shortcut}
-                      </DropdownMenuShortcut>
-                    )}
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuCheckboxItem
-                    key={id}
-                    checked={checked}
-                    disabled={!enabled}
-                    inset
-                    className={CHECKBOX_ITEM}
-                    onCheckedChange={() => {
-                      run(id);
-                    }}
-                  >
-                    {text}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-            </Fragment>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
-    </DropdownMenu>
+    <OverlayMenu
+      title={menu.title}
+      x={menu.x}
+      y={menu.y}
+      groups={groups}
+      target={target}
+      run={run}
+    />
   );
 };

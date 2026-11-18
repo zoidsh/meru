@@ -1,4 +1,5 @@
 import { contentViewBounds } from "./layout.ts";
+import type { ProfileMenuRequest } from "./profile-menu.ts";
 import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
@@ -13,7 +14,33 @@ export type Overlay =
   | { kind: "open-app"; profileId: string }
   | { kind: "inbox" }
   /** A tab's context menu, at the point it was asked for. */
-  | ({ kind: "tab-menu" } & TabMenuRequest);
+  | ({ kind: "tab-menu" } & TabMenuRequest)
+  /** A profile button's context menu, at the point it was asked for. */
+  | ({ kind: "profile-menu" } & ProfileMenuRequest);
+
+/**
+ * The overlays that are menus: drawn at a point over the whole content area,
+ * and on closing giving focus back to the control they were opened on.
+ */
+export const MENU_KINDS = ["tab-menu", "profile-menu"] as const;
+
+export type MenuKind = (typeof MENU_KINDS)[number];
+
+export const isMenu = (overlay: Pick<Overlay, "kind"> | undefined) =>
+  overlay !== undefined &&
+  (MENU_KINDS as readonly string[]).includes(overlay.kind);
+
+/** Whether a menu's point lies in the content area, in whole CSS pixels. */
+export const menuPointInside = (
+  { x, y }: { x: number; y: number },
+  contentSize: Size
+) =>
+  Number.isInteger(x) &&
+  Number.isInteger(y) &&
+  x >= 0 &&
+  y >= 0 &&
+  x <= contentSize.width &&
+  y <= contentSize.height;
 
 /** The card's width for each width class, in CSS pixels. */
 export const OVERLAY_WIDTHS = { narrow: 320, medium: 448, wide: 704 } as const;
@@ -44,7 +71,7 @@ export const overlayRectangle = (
   sidebar: SidebarState,
   overlay: Pick<Overlay, "kind">
 ): Rectangle =>
-  overlay.kind === "tab-menu"
+  isMenu(overlay)
     ? { x: 0, y: 0, ...contentSize }
     : contentViewBounds(contentSize, sidebar);
 

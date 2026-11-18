@@ -11,6 +11,7 @@ import { Label } from "#ui/label.tsx";
 import { Inbox } from "./inbox.tsx";
 import { OpenAppOverlay } from "./open-app.tsx";
 import { OverlayCard } from "./overlay-card.tsx";
+import { ProfileMenu } from "./profile-menu.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TabMenu } from "./tab-menu.tsx";
@@ -159,6 +160,16 @@ export const OverlayLayer = () => {
       drawn = (
         <TabMenu
           key={`${open.profileId}/${open.tabId}/${open.x},${open.y}`}
+          menu={open}
+          target={target}
+        />
+      );
+      break;
+    }
+    case "profile-menu": {
+      drawn = (
+        <ProfileMenu
+          key={`${open.profileId}/${open.x},${open.y}`}
           menu={open}
           target={target}
         />

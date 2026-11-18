@@ -115,6 +115,16 @@ const setup = ({
         return Promise.resolve();
       },
     },
+    profileMenu: {
+      open: (request) => {
+        calls.push(["openProfileMenu", request]);
+      },
+      run: (item) => {
+        calls.push(["runProfileMenuItem", item]);
+
+        return Promise.resolve();
+      },
+    },
     openGmail: (profileId) => {
       calls.push(["openGmail", profileId]);
 
@@ -281,14 +291,14 @@ describe(shellShortcuts, () => {
 });
 
 describe(shellState, () => {
-  it("gives the shell the profiles with names to show, their colours by place, and their mail, and nothing else of them", () => {
+  it("gives the shell the profiles with names to show, their colours by place, their mail and whether each sleeps, and nothing else of them", () => {
     expect(
       shellState(
         {
           ...two,
           profiles: [
             { ...newProfile("a", "Default"), color: "teal" },
-            newProfile("b", "Work"),
+            { ...newProfile("b", "Work"), asleep: true },
           ],
         },
         () => ({ kind: "live" }),
@@ -308,8 +318,15 @@ describe(shellState, () => {
           name: "Default",
           color: "#2d52d2",
           mail: { status: "ok", unreadCount: 4 },
+          asleep: false,
         },
-        { id: "b", name: "Work", color: "#ff6227", mail: NO_MAIL },
+        {
+          id: "b",
+          name: "Work",
+          color: "#ff6227",
+          mail: NO_MAIL,
+          asleep: true,
+        },
       ],
       selectedProfileId: "a",
     });
@@ -471,10 +488,24 @@ describe("the overlay slice", () => {
     ).toStrictEqual({ kind: "none" });
   });
 
-  it("is none for a profile that is gone", () => {
+  it("gives a profile's menu its point, the profile's name, and Sleep", () => {
     expect(
-      overlaySlice({ kind: "rename-profile", profileId: "gone" })
-    ).toStrictEqual({ kind: "none" });
+      overlaySlice({ kind: "profile-menu", profileId: "b", x: 120, y: 20 })
+    ).toStrictEqual({
+      kind: "profile-menu",
+      profileId: "b",
+      x: 120,
+      y: 20,
+      title: "Work",
+      items: [{ id: "sleep", enabled: true }],
+    });
+  });
+
+  it("is none for a profile that is gone", () => {
+    expect([
+      overlaySlice({ kind: "rename-profile", profileId: "gone" }),
+      overlaySlice({ kind: "profile-menu", profileId: "gone", x: 1, y: 1 }),
+    ]).toStrictEqual([{ kind: "none" }, { kind: "none" }]);
   });
 });
 
@@ -514,6 +545,19 @@ describe("Open app in the shell", () => {
     expect(shell.calls).toStrictEqual([
       ["openTabMenu", request],
       ["runTabMenuItem", "pin"],
+    ]);
+  });
+
+  it("hands a profile menu's point and its item to the profile menu", async () => {
+    const shell = setup();
+    const request = { profileId: "b", x: 120, y: 20 };
+
+    await shell.handlers.openProfileMenu(request);
+    await shell.handlers.runProfileMenuItem({ item: "sleep" });
+
+    expect(shell.calls).toStrictEqual([
+      ["openProfileMenu", request],
+      ["runProfileMenuItem", "sleep"],
     ]);
   });
 
