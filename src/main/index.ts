@@ -2,7 +2,6 @@ import path from "node:path";
 
 import { isEqual } from "es-toolkit";
 
-import { contentViewBounds } from "#core/layout.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import {
   OVERLAY_FRAME_NAME,
@@ -32,7 +31,6 @@ import { createTextFile } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
-import { createBookmarks } from "./bookmarks.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
@@ -41,7 +39,6 @@ import { createFind } from "./find.ts";
 import { createFocus } from "./focus.ts";
 import type { FocusTarget } from "./focus.ts";
 import { createMailNotifications } from "./notifications.ts";
-import { createOpenApp } from "./open-app.ts";
 import { createOverlays } from "./overlay.ts";
 import { createOwnWindows } from "./own-windows.ts";
 import { automaticProfileName } from "./profile-copy.ts";
@@ -60,6 +57,7 @@ import { createTabViews } from "./tab-views.ts";
 import { revealWindow } from "./windows.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
+import { wireLauncher } from "./wiring/launcher.ts";
 import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
@@ -560,36 +558,14 @@ const start = async () => {
     revealGmail,
   });
 
-  const livePageUrl = (key: TabKey) =>
-    views.status(key).kind === "live"
-      ? views.page(key)?.url || undefined
-      : undefined;
-  const openApp = createOpenApp({
+  const { livePageUrl, openApp, bookmarks } = wireLauncher({
     apps,
-    state: profiles.get,
+    shell,
+    sidebar,
+    profiles,
+    views,
     overlays,
-    openTab: views.open,
-    splitTab: profiles.splitTab,
-    selectTab: views.select,
     showOwnWindow,
-    removeBookmark: profiles.removeBookmark,
-    pageUrl: livePageUrl,
-    pageSize: () =>
-      contentViewBounds(shell.window.getContentAreaSize(), sidebar.current()),
-    log: console.error,
-  });
-
-  const bookmarks = createBookmarks({
-    apps,
-    state: profiles.get,
-    overlays,
-    page: (key) => ({
-      live: views.status(key).kind === "live",
-      loading: views.navigation(key)?.loading ?? false,
-      ...views.page(key),
-    }),
-    toggle: profiles.toggleBookmark,
-    log: console.error,
   });
 
   if (gmail && mailActions) {
