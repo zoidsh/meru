@@ -6,13 +6,24 @@ import {
   expect,
   findPage,
   readState,
+  readUnreadTotal,
   readViews,
   test,
+  writeSettings,
   writeState,
 } from "./lib/app.ts";
 import { findTitlebar, readOwnWindows } from "./lib/own-window.ts";
 import type { StandIn } from "./lib/stand-in.ts";
-import { CALENDAR_TITLE, DRIVE_TITLE } from "./lib/stand-in.ts";
+import {
+  ANY_SESSION,
+  CALENDAR_TITLE,
+  DRIVE_TITLE,
+  POPOUT_PATH,
+  POPOUT_TITLE,
+  STAND_IN_TITLE,
+  listing,
+  message,
+} from "./lib/stand-in.ts";
 
 const isMacOS = process.platform === "darwin";
 
@@ -115,12 +126,13 @@ const storedTab = async (userDataDir: string, tabId: string) => {
   return profiles[0]?.tabs.find((each) => each.id === tabId);
 };
 
-/** The Calendar tab's field as stored. */
+/** A tab's field as stored, the Calendar tab's unless named. */
 const storedField = async (
   userDataDir: string,
-  field: "ownWindow" | "windowBounds"
+  field: "ownWindow" | "windowBounds",
+  tabId = "c"
 ) => {
-  const stored = await storedTab(userDataDir, "c");
+  const stored = await storedTab(userDataDir, tabId);
 
   return stored?.[field];
 };
@@ -143,8 +155,11 @@ const mark = (page: Page) =>
     Reflect.set(window, "meruMark", 42);
   });
 
+/** The mark, or none while the page is loading again. */
 const marked = (page: Page) =>
-  page.evaluate(() => Reflect.get(window, "meruMark") as unknown);
+  page
+    .evaluate(() => Reflect.get(window, "meruMark") as unknown)
+    .catch(() => null);
 
 test("Move to New Window puts the selected tab's page in a window of its own as it was, marks its tab and selects the next", async ({
   launchApp,
@@ -216,8 +231,11 @@ test("Cmd or Ctrl+Shift+N in the page moves it; a click on its tab focuses that 
   await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
 
   // The suite's app is never active, so no window of it is the key one, and
-  // the page's focus shows in the commands that now act on its window.
-  await expect.poll(() => menuEnabled(app, "tab.moveToMainWindow")).toBeFalsy();
+  // the page's focus shows in the commands that now act on its window: the
+  // moved page has it at once, and keeps it as its tab is clicked.
+  await expect
+    .poll(() => menuEnabled(app, "tab.moveToMainWindow"))
+    .toBeTruthy();
   await tab(shell, CALENDAR_TITLE).click();
   await expect
     .poll(() => menuEnabled(app, "tab.moveToMainWindow"))
@@ -374,4 +392,135 @@ test("with the shell's renderer gone and loaded again, the window's page keeps i
   ).toBeVisible();
   expect(await marked(calendar)).toBe(42);
   expect(await ownWindowPage(app)).toBe(calendar.url());
+});
+
+/** The titles of the notifications the suite's build captured in place of showing. */
+const notified = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as { title: string }[]
+    ).map(({ title }) => title)
+  );
+
+/** Asks a window to close, as its close button does: the main one or the tab's own. */
+const closeWindow = (app: ElectronApplication, which: "main" | "own") =>
+  app.evaluate(({ BaseWindow, BrowserWindow }, wanted) => {
+    setTimeout(() => {
+      BaseWindow.getAllWindows()
+        .find((window) =>
+          wanted === "main"
+            ? window instanceof BrowserWindow &&
+              window.webContents.getURL().startsWith("meru-app:")
+            : !(window instanceof BrowserWindow)
+        )
+        ?.close();
+    }, 0);
+  }, which);
+
+const mainWindowVisible = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().some(
+      (window) =>
+        window.webContents.getURL().startsWith("meru-app:") &&
+        window.isVisible()
+    )
+  );
+
+test("Gmail, pinned, moves to its own window keeping its pin and its mark on the tile, and goes on counting and notifying its mail and opening and closing its pop-outs", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seed(userDataDir, standIn, { selectedTabId: "gmail" });
+  standIn.setFeed(ANY_SESSION, listing("1"));
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const gmail = await findPage(app, standIn.url);
+
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
+  await clickMenuItem(app, "tab.moveToNewWindow");
+  await expect.poll(() => ownWindowPage(app)).toBe(gmail.url());
+  await expect
+    .poll(() => storedField(userDataDir, "ownWindow", "gmail"))
+    .toBe(true);
+  await expect(
+    shell.getByRole("tab", { name: STAND_IN_TITLE, exact: true })
+  ).toHaveAttribute("title", `${STAND_IN_TITLE} · in its own window`);
+
+  standIn.setFeed(ANY_SESSION, {
+    unreadCount: 2,
+    mail: [message("2"), message("1")],
+  });
+  await app.evaluate(({ powerMonitor }) => {
+    powerMonitor.emit("resume");
+  });
+  await expect.poll(() => readUnreadTotal(app)).toBe(2);
+  await expect.poll(() => notified(app)).toContain("Sender 2");
+
+  const popoutUrl = `${standIn.url}${POPOUT_PATH.slice(1)}`;
+
+  await gmail.getByRole("button", { name: "Pop out compose" }).click();
+
+  const popout = await findPage(app, popoutUrl);
+
+  await expect(
+    popout.getByRole("heading", { name: POPOUT_TITLE })
+  ).toBeVisible();
+  // The click closes its own page, which Playwright can report as a failed click.
+  await popout
+    .getByRole("button", { name: "Send" })
+    .click()
+    .catch(() => null);
+  await expect.poll(() => popout.isClosed()).toBeTruthy();
+  expect(await ownWindowPage(app)).toBe(gmail.url());
+});
+
+test("with the tray off on Windows and Linux, closing the main window quits Meru, the tab staying in its own window for the next launch", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  test.skip(isMacOS, "On macOS closing the main window hides it");
+  await writeSettings(userDataDir, { tray: false });
+
+  const { app, calendar } = await launch(launchApp, userDataDir, standIn);
+  const closed = app.waitForEvent("close");
+
+  await clickMenuItem(app, "tab.moveToNewWindow");
+  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
+  await expect.poll(() => storedField(userDataDir, "ownWindow")).toBe(true);
+  await closeWindow(app, "main");
+  await closed;
+
+  expect(await storedField(userDataDir, "ownWindow")).toBe(true);
+});
+
+test("on macOS closing the main window hides it, the tab's own window still closes by its control, and Move to Main Window shows the main window again", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  test.skip(!isMacOS, "Elsewhere closing the main window can quit");
+
+  const { app, calendar } = await launch(launchApp, userDataDir, standIn);
+
+  await clickMenuItem(app, "tab.moveToNewWindow");
+  await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
+  await closeWindow(app, "main");
+  await expect.poll(() => mainWindowVisible(app)).toBeFalsy();
+
+  await closeWindow(app, "own");
+  await expect.poll(() => ownWindowCount(app)).toBe(0);
+  await expect
+    .poll(() => storedField(userDataDir, "ownWindow"))
+    .toBeUndefined();
+  expect(await mainWindowVisible(app)).toBeFalsy();
+
+  // Calendar came back unselected, so Drive, selected, is the one to move.
+  await clickMenuItem(app, "tab.moveToNewWindow");
+  await expect.poll(() => ownWindowPage(app)).toBe(standIn.driveUrl);
+  await clickMenuItem(app, "tab.moveToMainWindow");
+  await expect.poll(() => mainWindowVisible(app)).toBeTruthy();
+  await expect.poll(() => ownWindowCount(app)).toBe(0);
 });
