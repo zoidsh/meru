@@ -3,7 +3,7 @@ import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
 import type { SidebarState } from "#core/sidebar.ts";
-import { knownTabs, profilePartition } from "#core/state.ts";
+import { isAsleep, knownTabs, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { showsView, transition } from "#core/tab-machine.ts";
 import type { TabEffect, TabEvent, TabStatus } from "#core/tab-machine.ts";
@@ -581,7 +581,34 @@ export const createTabViews = ({
   };
 
   /** Creates, closes, shows and hides views until the window matches. */
+  /**
+   * Takes away a view the window should no longer have: a sleeping
+   * profile's tab sleeps, keeping its place, as Sleep would put it, and any
+   * other is closed. A sleeping profile's Open at Launch tabs open again, as
+   * at its first selection, once it wakes.
+   */
+  const drop = (current: State, key: string, tab: TabView) => {
+    const profile = current.profiles.find(
+      (candidate) => candidate.id === tab.key.profileId
+    );
+
+    if (profile && isAsleep(profile) && findTab(current, tab.key)) {
+      dispatch(key, { kind: "sleep" });
+    }
+
+    // A view that had not started a load has no page to keep.
+    if (tabs.get(key) === tab) {
+      close(key, tab);
+    }
+  };
+
   const reconcile = (current: State) => {
+    for (const profile of current.profiles) {
+      if (isAsleep(profile)) {
+        launched.delete(profile.id);
+      }
+    }
+
     const next = plan(current);
     const selected = next.front && tabKey(next.front);
     const planned = new Map(next.views.map((key) => [tabKey(key), key]));
@@ -590,7 +617,7 @@ export const createTabViews = ({
 
     for (const [key, tab] of tabs) {
       if (!planned.has(key)) {
-        close(key, tab);
+        drop(current, key, tab);
         changed = true;
       }
     }

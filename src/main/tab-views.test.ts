@@ -1016,6 +1016,66 @@ describe(createTabViews, () => {
     ]);
   });
 
+  it("puts a background profile to sleep, every view of it gone and its place kept, and wakes it at its first selection's tabs", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+    const later = `${CALENDAR}?day=4`;
+
+    await window.profiles.selectTab(calendar);
+
+    const view = window.viewOf("persist:a", 1);
+
+    window.emit(view, { kind: "navigated", url: later });
+    window.emit(view, { kind: "loaded" });
+    await window.profiles.select("b");
+    await window.profiles.sleep("a");
+
+    expect(window.live()).toStrictEqual([["persist:b", GMAIL, true]]);
+    expect(window.tabs.status(calendar)).toStrictEqual({ kind: "unloaded" });
+
+    // Calendar, selected, loads where it was, and Gmail opens at launch again.
+    await window.profiles.select("a");
+
+    expect(window.live()).toStrictEqual([
+      ["persist:b", GMAIL, false],
+      ["persist:a", GMAIL, false],
+      ["persist:a", later, true],
+    ]);
+  });
+
+  it("leaves the only profile put to sleep with no view and no front, and wakes it when it is selected", async () => {
+    const window = await setup({
+      state: { ...initial, profiles: initial.profiles.slice(0, 1) },
+    });
+
+    await window.profiles.sleep("a");
+
+    expect([
+      window.live(),
+      window.tabs.focuser(),
+      window.tabs.navigation(),
+      window.tabs.frontAsleep(),
+      window.profiles.get().selectedProfileId,
+    ]).toStrictEqual([[], undefined, null, false, "a"]);
+
+    await window.profiles.select("a");
+
+    expect(window.live()).toStrictEqual([["persist:a", GMAIL, true]]);
+  });
+
+  it("loads nothing of a profile stored asleep, even selected, until it is woken", async () => {
+    const window = await setup({
+      state: {
+        ...initial,
+        profiles: initial.profiles.map((profile) =>
+          profile.id === "a" ? { ...profile, asleep: true } : profile
+        ),
+      },
+    });
+
+    expect([window.live(), window.views]).toStrictEqual([[], []]);
+  });
+
   it("reloads the front tab's page where it is, and a failed one from its URL", async () => {
     const window = await setup();
     const gmail = window.viewOf("persist:a");

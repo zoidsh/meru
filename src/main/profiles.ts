@@ -13,6 +13,7 @@ import {
   renameProfile,
   selectProfile,
   setTabbedInbox,
+  sleepProfile,
   sortProfilesToClear,
   switchDoNotDisturb,
 } from "#core/state.ts";
@@ -157,8 +158,12 @@ export const createProfiles = ({
     onChange: (listener: (state: State) => void) => {
       listeners.add(listener);
     },
+    /** Selects the profile, waking it if it sleeps. */
     select: (profileId: string) =>
       exclusive(() => commit(selectProfile(state, profileId))),
+    /** Puts the profile to sleep, selecting the next awake one if it was selected. */
+    sleep: (profileId: string) =>
+      exclusive(() => commit(sleepProfile(state, profileId))),
     add: () =>
       exclusive(() =>
         commit(
