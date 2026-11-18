@@ -66,6 +66,17 @@ const readOverlayView = (app: ElectronApplication) =>
     };
   });
 
+/** Whether main has the overlay's view as the one keys go to. */
+const overlayIsFocused = (app: ElectronApplication) =>
+  app.evaluate(({ webContents }) =>
+    webContents
+      .getAllWebContents()
+      .some(
+        (contents) =>
+          contents.mainFrame.name === "meru-overlay" && contents.isFocused()
+      )
+  );
+
 /** As the system hands keys to the page, which Playwright's keyboard is not. */
 const typeInto = (app: ElectronApplication, url: string, text: string) =>
   app.evaluate(
@@ -191,7 +202,10 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   await expect.poll(() => readNames(userDataDir)).toStrictEqual(["Work"]);
   await expectClosed(app, overlay);
   await expect.poll(gmailHasFocus).toBeTruthy();
-  expect(await overlayHasFocus()).toBeFalsy();
+  // Asked of main, not of the overlay's document, which on Linux, hidden
+  // while it had focus, can go on believing it has it though main has moved
+  // focus, where the keys go, to the page.
+  expect(await overlayIsFocused(app)).toBe(false);
 
   // The page kept its own focused field.
   await typeInto(app, standIn.url, "hi");
