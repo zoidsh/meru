@@ -33,6 +33,11 @@ const close = () => {
   shellCalls().closeOverlay({});
 };
 
+// The prototype's corners and muted icons, and its tick on the left in the
+// icon slot, where shadcn's checkbox item has it on the right.
+const ITEM = "rounded-md [&_svg]:text-muted-foreground";
+const CHECKBOX_ITEM = `${ITEM} pr-2 *:data-[slot=dropdown-menu-checkbox-item-indicator]:right-auto *:data-[slot=dropdown-menu-checkbox-item-indicator]:left-2`;
+
 const run = (item: TabMenuItemId) => {
   shellCalls().runTabMenuItem({ item });
 };
@@ -186,7 +191,7 @@ export const TabMenu = ({
           // Main gives focus back to the tab when the overlay closes.
           finalFocus={false}
           sideOffset={0}
-          className="w-auto min-w-56"
+          className="w-auto min-w-56 rounded-lg"
         >
           {groups.map((group, index) => (
             <Fragment key={group[0]?.id}>
@@ -200,7 +205,10 @@ export const TabMenu = ({
                   <DropdownMenuItem
                     key={id}
                     disabled={!enabled}
-                    inset={!icon}
+                    // shadcn styles the attribute's presence, so an item
+                    // with an icon leaves it out rather than set it false.
+                    {...(!icon && { inset: true })}
+                    className={ITEM}
                     aria-keyshortcuts={
                       command ? ariaShortcuts?.[command] : undefined
                     }
@@ -222,6 +230,7 @@ export const TabMenu = ({
                     checked={checked}
                     disabled={!enabled}
                     inset
+                    className={CHECKBOX_ITEM}
                     onCheckedChange={() => {
                       run(id);
                     }}
