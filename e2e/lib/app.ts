@@ -15,6 +15,7 @@ import { REFUSED_MARKER } from "#core/loopback.ts";
 
 import { startStandIn } from "./stand-in.ts";
 import type { StandIn } from "./stand-in.ts";
+import { shootWindow } from "./window-shot.ts";
 
 const run = promisify(execFile);
 
@@ -116,7 +117,7 @@ const killAll = async (userDataDir: string, pids: number[]) => {
   );
 };
 
-const saveFailure = async (app: ElectronApplication, testInfo: TestInfo) => {
+const saveTrace = async (app: ElectronApplication, testInfo: TestInfo) => {
   const tracePath = testInfo.outputPath("trace.zip");
 
   try {
@@ -125,28 +126,71 @@ const saveFailure = async (app: ElectronApplication, testInfo: TestInfo) => {
       path: tracePath,
       contentType: "application/zip",
     });
-    await Promise.all(
-      app
-        .windows()
-        .filter((window) => !window.isClosed())
-        .map(async (window, index) => {
-          const shotPath = testInfo.outputPath(`window-${index + 1}.png`);
-
-          // The overlay's page has no size while it is closed.
-          if ((await window.evaluate(() => innerWidth * innerHeight)) === 0) {
-            return;
-          }
-
-          await window.screenshot({ path: shotPath });
-          await testInfo.attach(`window ${index + 1}`, {
-            path: shotPath,
-            contentType: "image/png",
-          });
-        })
-    );
   } catch (error) {
     // An app that died mid-test has nothing left to record.
-    console.warn(`Kept no trace or screenshot: ${String(error)}`);
+    console.warn(`Kept no trace: ${String(error)}`);
+  }
+};
+
+/** Runs `save`, warning rather than failing where the app has nothing left to give. */
+const keep = async (what: string, save: () => Promise<unknown>) => {
+  try {
+    await save();
+  } catch (error) {
+    console.warn(`Kept no ${what}: ${String(error)}`);
+  }
+};
+
+/**
+ * What a failed test's app showed: the whole window drawn as a person sees
+ * it, each view over the shell, and the accessibility tree of the shell and
+ * of the overlay's document, which holds the toast, the menus and the
+ * cards; Playwright's own report has the shell's tree alone. `name` tells
+ * a test's second app from its first.
+ */
+const saveFailure = async (
+  app: ElectronApplication,
+  testInfo: TestInfo,
+  name: string
+) => {
+  const pages = app.windows().filter((page) => !page.isClosed());
+  const shell = pages.find((page) => page.url().startsWith("meru-app:"));
+  const names = await Promise.all(
+    pages.map((page) =>
+      page.url() === "about:blank"
+        ? page.evaluate(() => window.name).catch(() => "")
+        : ""
+    )
+  );
+  const overlay = pages[names.indexOf("meru-overlay")];
+  const attach = async (label: string, file: string, contentType: string) => {
+    await testInfo.attach(`${name} ${label}`, {
+      path: testInfo.outputPath(`${name}-${file}`),
+      contentType,
+    });
+  };
+
+  if (shell) {
+    await keep("window picture", async () => {
+      await shootWindow(app, shell, testInfo.outputPath(`${name}-window.png`));
+      await attach("window", "window.png", "image/png");
+    });
+  }
+
+  for (const [label, page] of [
+    ["shell", shell],
+    ["overlay", overlay],
+  ] as const) {
+    if (page) {
+      // oxlint-disable-next-line no-await-in-loop -- one file after the other
+      await keep(`${label} tree`, async () => {
+        await writeFile(
+          testInfo.outputPath(`${name}-${label}-aria.yml`),
+          await page.ariaSnapshot()
+        );
+        await attach(`${label} tree`, `${label}-aria.yml`, "text/yaml");
+      });
+    }
   }
 };
 
@@ -413,7 +457,7 @@ export const test = base.extend<AppFixtures>({
       await standIn.close();
     }
   },
-  launchApp: async ({ userDataDir, launched, standIn }, use) => {
+  launchApp: async ({ userDataDir, launched, standIn }, use, testInfo) => {
     const apps: ElectronApplication[] = [];
     // Every request the app's build refused for leaving this machine.
     const refused: string[] = [];
@@ -445,6 +489,13 @@ export const test = base.extend<AppFixtures>({
         return app;
       });
     } finally {
+      if (testInfo.status !== testInfo.expectedStatus) {
+        for (const [index, app] of apps.entries()) {
+          // oxlint-disable-next-line no-await-in-loop -- one app's pictures at a time
+          await saveFailure(app, testInfo, `app-${index + 1}`);
+        }
+      }
+
       // A close that hangs, as on a blocking dialog, is not waited out: the
       // user data directory's teardown kills whatever is left.
       await Promise.all(
@@ -468,7 +519,7 @@ export const test = base.extend<AppFixtures>({
     await use(app);
 
     if (testInfo.status !== testInfo.expectedStatus) {
-      await saveFailure(app, testInfo);
+      await saveTrace(app, testInfo);
     }
   },
   shell: async ({ app }, use) => {
