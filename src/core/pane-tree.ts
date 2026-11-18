@@ -79,41 +79,39 @@ const normalize = (tree: PaneTree): PaneTree => {
 };
 
 /**
- * Puts `tab` beside the pane of `target` in `direction`, after it, the two
- * sharing what `target` had. Unchanged when `target` has no pane.
+ * Puts `tab` beside the pane of `target` in `direction`, after it or with
+ * `first` before it, the two sharing what `target` had. Unchanged when
+ * `target` has no pane.
  */
 export const addPane = (
   tree: PaneTree,
   target: string,
   tab: string,
-  direction: PaneDirection
+  direction: PaneDirection,
+  first = false
 ): PaneTree => {
+  const pair = (size: number) =>
+    first
+      ? [
+          { size, pane: tab },
+          { size, pane: target },
+        ]
+      : [
+          { size, pane: target },
+          { size, pane: tab },
+        ];
+
   if (typeof tree === "string") {
-    return tree === target
-      ? {
-          direction,
-          children: [
-            { size: 0.5, pane: target },
-            { size: 0.5, pane: tab },
-          ],
-        }
-      : tree;
+    return tree === target ? { direction, children: pair(0.5) } : tree;
   }
 
   const index = tree.children.findIndex((child) => child.pane === target);
   const found = tree.children[index];
 
   if (found && tree.direction === direction) {
-    const half = { size: found.size / 2 };
-
     return {
       direction,
-      children: tree.children.toSpliced(
-        index,
-        1,
-        { ...half, pane: target },
-        { ...half, pane: tab }
-      ),
+      children: tree.children.toSpliced(index, 1, ...pair(found.size / 2)),
     };
   }
 
@@ -121,10 +119,46 @@ export const addPane = (
     direction: tree.direction,
     children: tree.children.map((child) => ({
       size: child.size,
-      pane: addPane(child.pane, target, tab, direction),
+      pane: addPane(child.pane, target, tab, direction, first),
     })),
   });
 };
+
+/**
+ * Puts `tab` along one edge of the whole tree, `direction` of it, first or
+ * last, with `share` of the length and the rest, its own shares kept, the
+ * remainder.
+ */
+export const addAlongEdge = (
+  tree: PaneTree,
+  tab: string,
+  direction: PaneDirection,
+  first: boolean,
+  share: number
+): PaneTree => {
+  const edge = { size: share, pane: tab };
+  const rest = { size: 1 - share, pane: tree };
+
+  return normalize({
+    direction,
+    children: first ? [edge, rest] : [rest, edge],
+  });
+};
+
+/** The tree with each pane's tab named anew by `rename`, its shape and shares kept. */
+export const renamePanes = (
+  tree: PaneTree,
+  rename: (tab: string) => string
+): PaneTree =>
+  typeof tree === "string"
+    ? rename(tree)
+    : {
+        direction: tree.direction,
+        children: tree.children.map((child) => ({
+          size: child.size,
+          pane: renamePanes(child.pane, rename),
+        })),
+      };
 
 /**
  * The tree without the pane of `tab`, whose share goes to the panes beside

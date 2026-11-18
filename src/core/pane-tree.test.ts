@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   PANE_GAP,
   PANE_MINIMUM,
+  addAlongEdge,
   addPane,
   evenOut,
   paneHandles,
@@ -12,6 +13,7 @@ import {
   readPaneTree,
   readSplit,
   removePane,
+  renamePanes,
   resizePanes,
 } from "./pane-tree.ts";
 import type { PaneTree } from "./pane-tree.ts";
@@ -83,6 +85,47 @@ describe(addPane, () => {
 
   it("leaves a tree without the target as it was", () => {
     expect(addPane(nested, "x", "e", "row")).toStrictEqual(nested);
+  });
+});
+
+describe("addPane first", () => {
+  it("puts the tab before its target, the two sharing what the target had", () => {
+    expect([
+      addPane("a", "a", "b", "row", true),
+      addPane(row([0.6, "a"], [0.4, "b"]), "b", "c", "row", true),
+      addPane(row([0.6, "a"], [0.4, "b"]), "a", "c", "column", true),
+    ]).toStrictEqual([
+      row([0.5, "b"], [0.5, "a"]),
+      row([0.6, "a"], [0.2, "c"], [0.2, "b"]),
+      row([0.6, column([0.5, "c"], [0.5, "a"])], [0.4, "b"]),
+    ]);
+  });
+});
+
+describe(addAlongEdge, () => {
+  it("puts the tab along the whole tree's edge with its share, the rest keeping theirs in proportion", () => {
+    expect([
+      addAlongEdge(row([0.5, "a"], [0.5, "b"]), "c", "column", true, 0.25),
+      addAlongEdge(row([0.5, "a"], [0.5, "b"]), "c", "row", false, 0.25),
+      addAlongEdge("a", "c", "row", true, 0.25),
+    ]).toStrictEqual([
+      column([0.25, "c"], [0.75, row([0.5, "a"], [0.5, "b"])]),
+      row([0.375, "a"], [0.375, "b"], [0.25, "c"]),
+      row([0.25, "c"], [0.75, "a"]),
+    ]);
+  });
+});
+
+describe(renamePanes, () => {
+  it("swaps two panes' tabs, keeping the shape and every share", () => {
+    expect(
+      renamePanes(nested, (tab) => ({ b: "d", d: "b" })[tab] ?? tab)
+    ).toStrictEqual(
+      row(
+        [0.5, "a"],
+        [0.5, column([0.5, "d"], [0.5, row([0.5, "c"], [0.5, "b"])])]
+      )
+    );
   });
 });
 
