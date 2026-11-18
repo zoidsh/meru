@@ -40,15 +40,17 @@ export const newTabId = (app: App, newId: () => string) =>
   app.id === "gmail" ? GMAIL_TAB_ID : newId();
 
 /**
- * Opens `url` as a tab of `app` in the profile, selected: appended, or for a
- * single-instance app with a tab already, that tab, given the URL.
+ * Opens `url` as a tab of `app` in the profile, selected: appended, or put
+ * right after the tab `after` names, or for a single-instance app with a tab
+ * already, that tab, given the URL.
  */
 export const openTab = (
   state: State,
   profileId: string,
   app: App,
   url: string,
-  newId: () => string
+  newId: () => string,
+  after?: string
 ): OpenedTab | undefined => {
   let opened: Omit<OpenedTab, "state"> | undefined;
 
@@ -80,9 +82,14 @@ export const openTab = (
 
     opened = { tabId: tab.id };
 
+    const before = profile.tabs.findIndex(
+      (entry) => isTab(entry) && entry.id === after
+    );
+    const at = before === -1 ? profile.tabs.length : before + 1;
+
     return {
       ...profile,
-      tabs: [...profile.tabs, tab],
+      tabs: profile.tabs.toSpliced(at, 0, tab),
       selectedTabId: tab.id,
     };
   });

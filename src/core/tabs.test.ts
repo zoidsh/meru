@@ -53,6 +53,19 @@ const ids = (next: State | undefined) => {
   );
 };
 
+/** Opens a second Calendar after the tab named. */
+const openedAfter = (name: string) =>
+  ids(
+    openTab(
+      state([tab("c1", "calendar"), tab("d1", "drive")]),
+      "p",
+      app("calendar"),
+      "https://calendar.google.com/2",
+      () => "c2",
+      name
+    )?.state
+  );
+
 describe(openTab, () => {
   it("appends a tab of the app at the URL, selected, in that profile only", () => {
     const opened = openTab(
@@ -72,6 +85,13 @@ describe(openTab, () => {
       title: "",
     });
     expect(tabsOf(opened?.state, "q")?.tabs).toHaveLength(1);
+  });
+
+  it("puts the new tab right after the one named, or last where none is", () => {
+    expect([openedAfter("c1"), openedAfter("gone")]).toStrictEqual([
+      [["gmail", "c1", "c2", "d1"], "c2"],
+      [["gmail", "c1", "d1", "c2"], "c2"],
+    ]);
   });
 
   it("opens a second tab of an app that may have more than one", () => {
