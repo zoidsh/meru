@@ -27,14 +27,13 @@ import type { State } from "#core/state.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
-import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
+import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createDevServerPolicy } from "#platform/dev-server.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
 import { createKeepAlivePages } from "#platform/keep-alive.ts";
-import { setApplicationMenu } from "#platform/menu.ts";
 import { createNetwork } from "#platform/network.ts";
 import { createOwnWindowFactory } from "#platform/own-window.ts";
 import { createPower } from "#platform/power.ts";
@@ -44,12 +43,9 @@ import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTextFile, readTextUpTo } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
-import { zoomFocused } from "#platform/zoom.ts";
 
-import { createApplicationMenu } from "./application-menu.ts";
 import { createBookmarks } from "./bookmarks.ts";
 import { createCatchUp } from "./catch-up.ts";
-import { COMMANDS } from "./commands.ts";
 import { createContentSecurityPolicy } from "./content-security-policy.ts";
 import { createDevContentSecurityPolicy, readDevServer } from "./dev-server.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
@@ -71,7 +67,6 @@ import { createOwnWindows } from "./own-windows.ts";
 import { automaticProfileName } from "./profile-copy.ts";
 import { createProfiles } from "./profiles.ts";
 import type { Profiles } from "./profiles.ts";
-import { createRemoveProfile } from "./remove-profile.ts";
 import { createSenderRegistry } from "./senders.ts";
 import type { SenderRegistry } from "./senders.ts";
 import {
@@ -92,6 +87,7 @@ import {
   createUserStyles,
 } from "./user-styles.ts";
 import { revealWindow } from "./windows.ts";
+import { wireMenu } from "./wiring/menu.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import {
   exposeSettingsToSuite,
@@ -103,7 +99,6 @@ import {
   testBuildSetup,
 } from "./wiring/test-build.ts";
 import { wireTray } from "./wiring/tray.ts";
-import { createZoom } from "./zoom.ts";
 
 const APP_SCHEME = "meru-app";
 
@@ -123,10 +118,6 @@ const inOwnWindow = (key: TabKey): FocusTarget[] => [
   { kind: "windowFind", key },
   { kind: "window", key },
 ];
-
-/** The role's own key on Windows and Linux, Ctrl+Shift+I, is the unified inbox's. */
-const devToolsAccelerator = (platform: Platform) =>
-  platform === "darwin" ? "Alt+Command+I" : "F12";
 
 /**
  * Gmail's page contract, its switches following the settings, which the
@@ -870,155 +861,25 @@ const start = async () => {
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
 
-  /** The tab whose own window has focus, its page or its titlebar. */
-  const focusedOwnWindow = (): TabKey | undefined => {
-    const focused = focus.focused();
-
-    return focused?.kind === "window" &&
-      views.windowTabs().some((key) => tabKey(key) === tabKey(focused.key))
-      ? focused.key
-      : undefined;
-  };
-
-  const moveToOwnWindow = async (key: TabKey) => {
-    const moved = await profiles.moveToOwnWindow(key);
-
-    if (moved) {
-      showOwnWindow(key);
-    }
-
-    return moved;
-  };
-
-  /** Puts the tab back selected, showing the main window should it be hidden. */
-  const moveToMainWindow = async (key: TabKey) => {
-    const moved = await profiles.moveToMainWindow(key, true);
-
-    if (moved) {
-      revealWindow(shell.window, background);
-    }
-
-    return moved;
-  };
-
-  const menu = createApplicationMenu({
+  const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({
     platform,
-    zoom: createZoom({
-      zoomFocused,
-      isShellDocument: (id) => shellDocumentIds.has(id),
-      zoomPage: (change) => {
-        views.zoomFront(change, focusedOwnWindow());
-      },
-    }),
-    appName: lifecycle.name,
-    commands: COMMANDS,
-    context: () => {
-      const ownWindow = focusedOwnWindow();
-
-      return {
-        state: profiles.get(),
-        ownWindow,
-        doNotDisturb: doNotDisturb.current(),
-        inboxOpen: inbox.isOpen(),
-        openAppOpen: openApp.isOpen(),
-        sidebarShown: sidebar.current() !== "hidden",
-        navigation: views.navigation(ownWindow),
-        selectedTabAsleep: ownWindow === undefined && views.frontAsleep(),
-        findable:
-          ownWindow === undefined
-            ? views.findable() !== undefined && !coversPage(overlays.current())
-            : views.ownWindowFocuser(ownWindow) !== undefined,
-        canFindAgain: find.canGoOn(ownWindow),
-        bookmarked: bookmarks.acting(ownWindow),
-      };
-    },
-    actions: {
-      reloadSelectedTab: () => {
-        const ownWindow = focusedOwnWindow();
-
-        if (ownWindow) {
-          void views.reload(ownWindow);
-        } else {
-          views.reloadFront();
-        }
-      },
-      goBack: () => {
-        views.goBack(focusedOwnWindow());
-      },
-      goForward: () => {
-        views.goForward(focusedOwnWindow());
-      },
-      stopLoading: () => {
-        views.stopFront(focusedOwnWindow());
-      },
-      moveToOwnWindow,
-      moveToMainWindow,
-      // A pinned tab's shortcut brings its own window forward, as its click does.
-      selectTab: async (key) => {
-        if (views.windowTabs().some((each) => tabKey(each) === tabKey(key))) {
-          showOwnWindow(key);
-
-          return;
-        }
-
-        await views.select(key);
-      },
-      sleepTab: views.sleep,
-      closeTab: profiles.closeTab,
-      setTabPinned: profiles.setPinned,
-      setTabOpenAtLaunch: profiles.setOpenAtLaunch,
-      selectProfile: profiles.select,
-      sleepProfile: profiles.sleep,
-      addProfile: profiles.add,
-      removeProfile: createRemoveProfile({
-        profiles,
-        window: shell.window,
-        log: console.error,
-      }),
-      openRenameProfile: (profileId) => {
-        overlays.open({ kind: "rename-profile", profileId });
-      },
-      switchDoNotDisturb: (choice) =>
-        choice === "off"
-          ? doNotDisturb.switchOff()
-          : doNotDisturb.switchOn(choice),
-      setInboxOpen: inbox.setOpen,
-      setOpenAppOpen: openApp.setOpen,
-      openSplit: openApp.openSplit,
-      separateTab: profiles.separateTab,
-      maximizePane: profiles.maximizePane,
-      toggleSidebar: sidebar.toggleShown,
-      navigateGmail,
-      saveSearch: profiles.saveSearch,
-      removeSavedSearch: profiles.removeSavedSearch,
-      openFind: find.open,
-      findAgain: find.again,
-      toggleBookmark: bookmarks.toggle,
-    },
-    locale: () => i18n.locale,
-    setMenu: setApplicationMenu,
-    ...(MERU_BUILD_MODE === "dev" && {
-      developerTools: {
-        role: "toggleDevTools" as const,
-        accelerator: devToolsAccelerator(platform),
-      },
-    }),
-    log: console.error,
+    background,
+    lifecycle,
+    shell,
+    shellDocumentIds,
+    profiles,
+    views,
+    overlays,
+    focus,
+    find,
+    sidebar,
+    inbox,
+    doNotDisturb,
+    openApp,
+    bookmarks,
+    navigateGmail,
+    showOwnWindow,
   });
-
-  profiles.onChange(menu.refresh);
-  inbox.onChange(menu.refresh);
-  // Opening and closing the inbox, which Back, Forward and Reload follow.
-  overlays.onChange(menu.refresh);
-  sidebar.onChange(menu.refresh);
-  // A term remembered, which Find Next and Previous need.
-  find.onChange(menu.refresh);
-  // A load starting or stopping, or the history moving, changes what Back,
-  // Forward and Stop offer.
-  views.onChange(menu.refresh);
-  // Focus moving between the main window and a tab's own window changes
-  // which commands run.
-  focus.onFocused(menu.refresh);
 
   wireShellContract({
     platform,
