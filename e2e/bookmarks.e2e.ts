@@ -153,7 +153,6 @@ test("Cmd or Ctrl+D bookmarks the selected tab's page with a toast and removes i
   const bookmarked = rowButton(shell, `Remove bookmark of ${CALENDAR_TITLE}`);
 
   await expect(bookmarked).toHaveCSS("opacity", "1");
-  await expect(bookmarked).toHaveAttribute("aria-pressed", "true");
   await expect
     .poll(() => readBookmarkItem(app))
     .toStrictEqual({ label: "Remove Bookmark", enabled: true });

@@ -591,7 +591,6 @@ const RowBookmarkButton = ({
                 "Accessible name of the bookmark button on a tab's row, which saves its page as a bookmark; {title} is the tab's title",
             })
       }
-      aria-pressed={on}
       title={shortcutTitle(tooltip, shortcut)}
       {...hover}
       onMouseDown={keepFocus}
