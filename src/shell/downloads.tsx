@@ -232,7 +232,8 @@ const DownloadRow = ({
       <td className="w-px rounded-r-sm pr-2 pl-2 group-hover:bg-muted/60 group-focus-visible:bg-muted group-data-selected:bg-muted">
         <span className="flex items-center justify-end gap-0.5">
           {row.state === "progressing" && (
-            // As Reload turns into Stop: a spinner until pointed at.
+            // As Reload turns into Stop: a spinner until pointed at; the
+            // keyboard's highlight leaves it, Delete cancelling instead.
             <Button
               variant="ghost"
               size="icon-xs"
@@ -247,11 +248,11 @@ const DownloadRow = ({
             >
               <LoaderCircleIcon
                 aria-hidden
-                className="animate-spin group-hover:hidden group-data-selected:hidden"
+                className="animate-spin group-hover:hidden group-focus-visible/button:hidden"
               />
               <XIcon
                 aria-hidden
-                className="hidden group-hover:block group-data-selected:block"
+                className="hidden group-hover:block group-focus-visible/button:block"
               />
             </Button>
           )}
@@ -393,7 +394,9 @@ export const Downloads = ({ downloads }: { downloads: DownloadsState }) => {
     } else if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
 
-      if (selected.state !== "progressing") {
+      if (selected.state === "progressing") {
+        shellCalls().cancelDownload({ id: selected.id });
+      } else {
         shellCalls().removeDownload({ id: selected.id });
       }
     }

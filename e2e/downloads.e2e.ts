@@ -333,7 +333,7 @@ test("reads a finished file no longer in its folder as moved or deleted, and ope
   expect(await readOpened(app)).toStrictEqual([path.join(folder, "kept.pdf")]);
 });
 
-test("moves through the list with the keys, opens with Enter, removes with Delete, and clears all but those running", async ({
+test("moves through the list with the keys, opens with Enter, cancels a running download or removes another with Delete, and clears all but those running", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -350,23 +350,34 @@ test("moves through the list with the keys, opens with Enter, removes with Delet
     ]
   );
   const running = DOWNLOAD_FILES.stalled.name;
+  const cancelled = "backup (1).zip";
 
   await download("stalled");
+  await download("stalled");
   await openCard(shell, overlay);
-  await expect(row(overlay, running)).toBeFocused();
-  await expectFileNames(overlay, [running, "a.pdf", "b.pdf", "c.pdf", "d.pdf"]);
+  await expect(row(overlay, cancelled)).toBeFocused();
+  await expectFileNames(overlay, [
+    cancelled,
+    running,
+    "a.pdf",
+    "b.pdf",
+    "c.pdf",
+    "d.pdf",
+  ]);
 
   await overlay.keyboard.press("ArrowDown");
-  await expect(row(overlay, "a.pdf")).toBeFocused();
+  await expect(row(overlay, running)).toBeFocused();
   await overlay.keyboard.press("End");
   await expect(row(overlay, "d.pdf")).toBeFocused();
   await overlay.keyboard.press("Home");
-  await expect(row(overlay, running)).toBeFocused();
+  await expect(row(overlay, cancelled)).toBeFocused();
 
-  // A running download is not taken off the list, nor cancelled.
+  // A running download is cancelled, and stays listed.
   await overlay.keyboard.press("Delete");
+  await expect(row(overlay, cancelled)).toContainText("Cancelled · now");
   await expect(row(overlay, running)).toContainText("Starting…");
 
+  await overlay.keyboard.press("ArrowDown");
   await overlay.keyboard.press("ArrowDown");
   await overlay.keyboard.press("ArrowDown");
   await expect(row(overlay, "b.pdf")).toBeFocused();
@@ -513,9 +524,7 @@ test("draws the titlebar button and the card in every state, light and dark", as
   await openCard(shell, overlay);
   await expect(row(overlay, "archive (1).zip")).toContainText("20 of 40 kB");
   await expect(row(overlay, "Old notes.txt")).toContainText("Moved or deleted");
-  // The selection on the last row, so the rows shot show none.
-  await overlay.keyboard.press("End");
-  await expect(row(overlay, "Old notes.txt")).toBeFocused();
+  // The first row selected, as on opening: a running one keeps its spinner.
   await restPointer(overlay);
 
   for (const theme of THEMES) {
