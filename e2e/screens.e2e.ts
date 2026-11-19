@@ -1,5 +1,8 @@
 // Pictures for a person to look at, taken with MERU_E2E_SHOTS=1; they assert
 // nothing of what they show.
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
 import type { ElectronApplication, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
@@ -15,6 +18,7 @@ import {
 } from "./lib/app.ts";
 import {
   findTitlebar,
+  findWindowDownloads,
   findWindowFind,
   readOwnWindows,
 } from "./lib/own-window.ts";
@@ -1321,6 +1325,49 @@ test("the find bar over a tab's page in its own window", async ({
   ).toBeVisible();
   await titlebar.mouse.move(600, 300);
   await shootOwnWindowEachWay(app, shell, "own-window-find");
+});
+
+test("the Downloads card over a tab's page in its own window", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  // Where the suite's build saves downloads.
+  const folder = path.join(userDataDir, "Downloads");
+  const files = [
+    { name: "minutes.pdf", state: "completed", age: 5 * 60_000 },
+    { name: "backup.zip", state: "failed", age: 2 * 60 * 60_000 },
+  ];
+
+  await mkdir(folder, { recursive: true });
+  await writeFile(path.join(folder, "minutes.pdf"), Buffer.alloc(2048, 1));
+  await writeState(userDataDir, {
+    ...withOwnWindow(standIn, ["Default"]),
+    downloads: files.map(({ name, state, age }, index) => ({
+      id: `d${index}`,
+      fileName: name,
+      path: path.join(folder, name),
+      size: 2048,
+      startedAt: Date.now() - age,
+      state,
+    })),
+  });
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const titlebar = await ownWindowDrawn(app);
+
+  await titlebar
+    .getByRole("banner", { name: "Title bar" })
+    .getByRole("button", { name: "Downloads", exact: true })
+    .click();
+
+  const document = await findWindowDownloads(app);
+
+  await expect(
+    document.getByRole("dialog", { name: "Downloads" }).getByRole("row")
+  ).toHaveCount(2);
+  await titlebar.mouse.move(600, 300);
+  await shootOwnWindowEachWay(app, shell, "own-window-downloads");
 });
 
 /** Gmail, Calendar, selected, and Drive, Calendar's page bookmarked, with `more` after it. */
