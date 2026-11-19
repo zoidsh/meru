@@ -173,6 +173,11 @@ const setup = ({
       },
       webContentsId: () => (open ? 7 : undefined),
     },
+    // Every tab but "closed" has its own window open, its card document 9.
+    windows: {
+      isOpen: (key) => key.tabId !== "closed",
+      webContentsId: () => 9,
+    },
     newId: () => {
       ids += 1;
 
@@ -584,6 +589,88 @@ describe("the card", () => {
     expect(downloads.shellSlice().rows.map(({ state }) => state)).toStrictEqual(
       ["completed", "gone"]
     );
+  });
+
+  it("opens in a tab's own window, moving there from the main window and back, there being one card", async () => {
+    const { downloads, calls } = setup({
+      entries: [entry("here")],
+      onDisk: ["/Downloads/here.pdf"],
+    });
+    const own = { profileId: "p", tabId: "t" };
+    const where = () => {
+      const { open, window } = downloads.shellSlice();
+
+      return [open, window, downloads.isOpen()];
+    };
+
+    downloads.setOpen(true);
+    downloads.setOpen(true, own);
+    const inWindow = where();
+
+    downloads.setOpen(true, own);
+    downloads.setOpen(true);
+    const inMain = where();
+
+    downloads.setOpen(true, own);
+    downloads.setOpen(false);
+    await settle();
+
+    expect([inWindow, inMain, where(), calls]).toStrictEqual([
+      [true, own, true],
+      [true, null, true],
+      [false, null, false],
+      ["overlay open", "overlay close", "overlay open", "overlay close"],
+    ]);
+  });
+
+  it("counts a finished download as seen once the card opens in a tab's own window", async () => {
+    const { downloads } = setup();
+    const item = fakeItem();
+
+    downloads.take(item);
+    item.end("completed");
+    await settle();
+    const before = downloads.shellSlice().button.kind;
+
+    downloads.setOpen(true, { profileId: "p", tabId: "t" });
+
+    expect([before, downloads.shellSlice().button.kind]).toStrictEqual([
+      "finished",
+      "plain",
+    ]);
+  });
+
+  it("opens in no window that is not open, and closes in a window only where it is", () => {
+    const { downloads } = setup();
+    const own = { profileId: "p", tabId: "t" };
+
+    downloads.setOpen(true, { profileId: "p", tabId: "closed" });
+    const closed = downloads.isOpen();
+
+    downloads.setOpen(true, own);
+    downloads.closeIn({ profileId: "p", tabId: "other" });
+    const elsewhere = downloads.window();
+
+    downloads.closeIn(own);
+
+    expect([closed, elsewhere, downloads.window()]).toStrictEqual([
+      false,
+      own,
+      undefined,
+    ]);
+  });
+
+  it("drags from the card's document in a tab's own window while it is open there", async () => {
+    const { downloads, calls } = setup({
+      entries: [entry("here")],
+      onDisk: ["/Downloads/here.pdf"],
+    });
+
+    downloads.setOpen(true, { profileId: "p", tabId: "t" });
+    await settle();
+    downloads.drag("here");
+
+    expect(calls).toStrictEqual(["drag /Downloads/here.pdf from 9"]);
   });
 
   it("drags nothing while the card is closed, or one not finished", async () => {

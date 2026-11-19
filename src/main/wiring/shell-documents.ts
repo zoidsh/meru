@@ -1,5 +1,9 @@
 import { OVERLAY_FRAME_NAME, staysOpenOutside } from "#core/overlay.ts";
-import { ownWindowFindOfFrame, ownWindowOfFrame } from "#core/own-window.ts";
+import {
+  ownWindowDownloadsOfFrame,
+  ownWindowFindOfFrame,
+  ownWindowOfFrame,
+} from "#core/own-window.ts";
 import { tabKey } from "#core/tabs.ts";
 
 import type { createApplicationMenu } from "../application-menu.ts";
@@ -71,6 +75,21 @@ export const wireShellDocuments = ({
           { kind: "windowFind", key: findWindow },
         ]);
       }
+
+      return;
+    }
+
+    const cardWindow = ownWindowDownloadsOfFrame(frameName);
+
+    if (cardWindow) {
+      view.onFocus(() => {
+        focus.noteFocused({ kind: "window", key: cardWindow });
+      });
+      ownWindows.adoptCard(cardWindow, view);
+      // Opened from that window, so it takes the keys there as it comes.
+      focus.focusInWindow(cardWindow, [
+        { kind: "windowCard", key: cardWindow },
+      ]);
 
       return;
     }

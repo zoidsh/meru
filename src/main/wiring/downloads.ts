@@ -1,14 +1,18 @@
 import type { Platform } from "#core/platform.ts";
+import { tabKey } from "#core/tabs.ts";
 import { createDownloadSessions } from "#platform/downloads.ts";
 import type { Notifier } from "#platform/notifications.ts";
 
 import { createDownloadNotifications } from "../download-notifications.ts";
 import { createDownloads } from "../downloads.ts";
+import type { Focus } from "../focus.ts";
 import type { Overlays } from "../overlay.ts";
+import type { OwnWindows } from "../own-windows.ts";
 import type { Profiles } from "../profiles.ts";
 import type { SettingsStore } from "../settings.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import { revealWindow } from "../windows.ts";
+import { inOwnWindow } from "./own-windows.ts";
 import { downloadFiles, downloadSignals } from "./test-build.ts";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -26,6 +30,8 @@ export const wireDownloads = ({
   profiles,
   settings,
   overlays,
+  ownWindows,
+  focus,
   notifier,
   newId,
 }: {
@@ -36,6 +42,8 @@ export const wireDownloads = ({
   profiles: Profiles;
   settings: SettingsStore;
   overlays: Overlays;
+  ownWindows: OwnWindows;
+  focus: Focus;
   notifier: Notifier;
   newId: () => string;
 }) => {
@@ -55,6 +63,10 @@ export const wireDownloads = ({
         overlays.close();
       },
       webContentsId: overlays.webContentsId,
+    },
+    windows: {
+      isOpen: ownWindows.isOpen,
+      webContentsId: ownWindows.cardContentsId,
     },
     newId,
     log: console.error,
@@ -79,6 +91,24 @@ export const wireDownloads = ({
   });
 
   downloads.onEnded(notifications.ended);
+  // In a tab's own window the card goes as the window loses the keys, as
+  // the main window's does, and with the window.
+  ownWindows.onBlur(downloads.closeIn);
+  ownWindows.onClosed(downloads.closeIn);
+
+  // Keys go back to the window's page, or its find bar, as the card there
+  // closes or moves away.
+  let cardWindow = downloads.window();
+
+  downloads.onChange(() => {
+    const was = cardWindow;
+
+    cardWindow = downloads.window();
+
+    if (was && (!cardWindow || tabKey(cardWindow) !== tabKey(was))) {
+      focus.focusInWindow(was, inOwnWindow(was));
+    }
+  });
   void downloads.start();
   setInterval(() => {
     void downloads.prune();

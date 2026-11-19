@@ -17,6 +17,8 @@ import {
 import type { DownloadEntry } from "#core/downloads.ts";
 import type { Platform } from "#core/platform.ts";
 import type { State } from "#core/state.ts";
+import { tabKey } from "#core/tabs.ts";
+import type { TabKey } from "#core/tabs.ts";
 import type {
   DownloadEnd,
   DownloadFiles,
@@ -39,13 +41,19 @@ export interface DownloadsDeps {
   commit: (change: (state: State) => State | undefined) => Promise<unknown>;
   files: DownloadFiles;
   signals: DownloadSignals;
-  /** The overlay it shows in, which keeps whether it is open. */
+  /** The main window's overlay it shows in there, which keeps whether it is open. */
   overlay: {
     isOpen: () => boolean;
     open: () => void;
     close: () => void;
-    /** The web contents of the document the card is drawn in, if any. */
+    /** The web contents of the overlay's document, if any. */
     webContentsId: () => number | undefined;
+  };
+  /** The tabs' own windows, each of which shows it in a document of its own. */
+  windows: {
+    isOpen: (key: TabKey) => boolean;
+    /** The web contents of the window's card document, once it is there. */
+    webContentsId: (key: TabKey) => number | undefined;
   };
   newId: () => string;
   now?: () => number;
@@ -95,6 +103,7 @@ export const createDownloads = ({
   files,
   signals,
   overlay,
+  windows,
   newId,
   now = Date.now,
   repeat = repeatEvery,
@@ -105,6 +114,8 @@ export const createDownloads = ({
   const running = new Map<string, Running>();
   /** Finished entries whose file was not there when last looked for. */
   const gone = new Set<string>();
+  /** The tab whose own window shows the card, while it is open there. */
+  let inWindow: TabKey | undefined;
   /** Bytes of those that finished since nothing last ran. */
   let finishedBytes = 0;
   let unseen = false;
@@ -300,21 +311,56 @@ export const createDownloads = ({
       removeDownloads(current, (entry) => expired(entry, now()))
     );
 
-  const isOpen = () => overlay.isOpen();
+  const isOpen = () => inWindow !== undefined || overlay.isOpen();
 
-  const setOpen = (open: boolean) => {
-    if (open === isOpen()) {
+  const isOpenIn = (window: TabKey | undefined) =>
+    window === undefined
+      ? inWindow === undefined && overlay.isOpen()
+      : inWindow !== undefined && tabKey(inWindow) === tabKey(window);
+
+  /** Closes it wherever it is. */
+  const close = () => {
+    if (inWindow !== undefined) {
+      inWindow = undefined;
+    } else if (overlay.isOpen()) {
+      overlay.close();
+    } else {
       return;
     }
 
-    if (open) {
-      unseen = false;
-      overlay.open();
-      void checkFiles();
-    } else {
-      overlay.close();
+    notify();
+  };
+
+  /**
+   * Opens it in the main window, or in the tab's own window `window` names,
+   * from wherever it was, there being one card; or closes it wherever it is.
+   * Opening it anywhere counts a finished download as seen.
+   */
+  const setOpen = (open: boolean, window?: TabKey) => {
+    if (!open) {
+      close();
+
+      return;
     }
 
+    if (isOpenIn(window) || (window && !windows.isOpen(window))) {
+      return;
+    }
+
+    unseen = false;
+
+    if (window) {
+      if (overlay.isOpen()) {
+        overlay.close();
+      }
+
+      inWindow = window;
+    } else {
+      inWindow = undefined;
+      overlay.open();
+    }
+
+    void checkFiles();
     notify();
   };
 
@@ -341,11 +387,12 @@ export const createDownloads = ({
         : { kind: "running", progress: share };
 
     if (!isOpen()) {
-      return { open: false, button, rows: [] };
+      return { open: false, window: null, button, rows: [] };
     }
 
     return {
       open: true,
+      window: inWindow ?? null,
       button,
       rows: listed().map((entry) => {
         const live = running.get(entry.id)?.item;
@@ -375,6 +422,14 @@ export const createDownloads = ({
     prune,
     isOpen,
     setOpen,
+    /** The tab whose own window shows the card, while it is open there. */
+    window: () => inWindow,
+    /** Closes it if the tab's own window shows it, as that window goes or loses the keys. */
+    closeIn: (window: TabKey) => {
+      if (isOpenIn(window)) {
+        close();
+      }
+    },
     shellSlice,
     onChange: (listener: () => void) => {
       listeners.add(listener);
@@ -421,7 +476,9 @@ export const createDownloads = ({
      */
     drag: (id: string) => {
       const entry = finished(id);
-      const from = overlay.webContentsId();
+      const from = inWindow
+        ? windows.webContentsId(inWindow)
+        : overlay.webContentsId();
 
       if (!entry || from === undefined) {
         return;

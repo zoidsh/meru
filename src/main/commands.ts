@@ -123,7 +123,8 @@ export interface CommandActions {
   switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
   /** Shows the unified inbox, or puts the tab back. */
   setInboxOpen: (open: boolean) => void;
-  setDownloadsOpen: (open: boolean) => void;
+  /** Opens the Downloads card, in the tab's own window `window` names if any, or closes it. */
+  setDownloadsOpen: (open: boolean, window?: TabKey) => void;
   /** Opens New tab over the selected profile's page, or closes it. */
   setOpenAppOpen: (open: boolean) => void;
   /**
@@ -391,8 +392,9 @@ export const COMMANDS: readonly Command[] = [
       }),
     // No key until the keymap is decided.
     isChecked: ({ downloadsOpen }) => downloadsOpen,
-    run: ({ downloadsOpen }, { setDownloadsOpen }) => {
-      setDownloadsOpen(!downloadsOpen);
+    // In the window that holds the keys, a tab's own one included.
+    run: ({ downloadsOpen, ownWindow }, { setDownloadsOpen }) => {
+      setDownloadsOpen(!downloadsOpen, ownWindow);
 
       return Promise.resolve();
     },

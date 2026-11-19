@@ -10,6 +10,7 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import {
   OWN_WINDOW_INSET,
   OWN_WINDOW_RADIUS,
+  ownWindowDownloadsFrameName,
   ownWindowFindFrameName,
   ownWindowFrameName,
 } from "#core/own-window.ts";
@@ -18,6 +19,7 @@ import { Badge } from "#ui/badge.tsx";
 import { AppIcon } from "./app-icon.tsx";
 import { OwnWindowBookmarkButton } from "./bookmarks.tsx";
 import { wholePoint } from "./context-menu.ts";
+import { Downloads, DownloadsButton } from "./downloads.tsx";
 import { FindBar } from "./find-bar.tsx";
 import {
   closeShellDocument,
@@ -70,14 +72,15 @@ const MoreOptionsButton = ({
  * A tab's own window as the shell draws it, behind the page main places in
  * it: the titlebar, with the page's navigation, the profile's badge where
  * there are two or more profiles, the app's icon and the page's title, and
- * at its right the bookmark star and More options, and the shell grey with
- * the profile's tint around the page. The whole titlebar drags the window
+ * at its right the bookmark star, Downloads and More options, and the shell
+ * grey with the profile's tint around the page. The whole titlebar drags the window
  * but for its controls.
  */
 const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
   const { t } = useLingui();
   const profiles = useShellState("profiles");
   const shortcuts = useShellState("shortcuts");
+  const downloads = useShellState("downloads");
   const profile = profiles?.profiles.find(({ id }) => id === own.profileId);
   const title = tabTitle(own);
 
@@ -135,6 +138,10 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
             profileId={own.profileId}
             tabId={own.tabId}
             bookmarked={own.bookmarked}
+          />
+          <DownloadsButton
+            downloads={downloads}
+            window={{ profileId: own.profileId, tabId: own.tabId }}
           />
           <MoreOptionsButton profileId={own.profileId} tabId={own.tabId} />
         </div>
@@ -233,12 +240,102 @@ const OwnWindowFind = ({
     : null;
 };
 
+const closeDownloads = () => {
+  shellCalls().setDownloadsOpen({ open: false });
+};
+
+/**
+ * The Downloads card in a tab's own window, in a document of its own that
+ * main lays over the whole page while the card is open there, as the main
+ * window's overlay covers its pages. Escape in it, a press beside the card
+ * and a press on the window's titlebar but on its Downloads button close it.
+ */
+const OwnWindowDownloads = ({ own }: { own: OwnWindow }) => {
+  const name = ownWindowDownloadsFrameName(own);
+  const target = useSyncExternalStore(subscribeShellDocuments, () =>
+    shellDocument(name)
+  );
+  const titlebar = useSyncExternalStore(subscribeShellDocuments, () =>
+    shellDocument(ownWindowFrameName(own))
+  );
+  const downloads = useShellState("downloads");
+
+  useEffect(() => {
+    openShellDocument(name);
+
+    return () => {
+      closeShellDocument(name);
+    };
+  }, [name]);
+
+  useEffect(() => {
+    if (!target) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        closeDownloads();
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      // Of another document, so not an instance of this one's Element.
+      const pressed = event.target as Partial<Element> | null;
+
+      if (!pressed?.closest?.("[data-overlay-card]")) {
+        closeDownloads();
+      }
+    };
+
+    target.addEventListener("keydown", onKeyDown);
+    target.addEventListener("pointerdown", onPointerDown);
+
+    return () => {
+      target.removeEventListener("keydown", onKeyDown);
+      target.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [target]);
+
+  useEffect(() => {
+    if (!titlebar) {
+      return;
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      const pressed = event.target as Partial<Element> | null;
+
+      if (!pressed?.closest?.('[data-opens="downloads"]')) {
+        closeDownloads();
+      }
+    };
+
+    titlebar.addEventListener("pointerdown", onPointerDown);
+
+    return () => {
+      titlebar.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [titlebar]);
+
+  return target && downloads?.open
+    ? createPortal(<Downloads downloads={downloads} />, target.body)
+    : null;
+};
+
 /** The frame of each tab's own window, in a document of the shell's each. */
 export const OwnWindows = () => {
   const windows = useShellState("windows") ?? [];
 
   return windows.flatMap((own) => [
     <OwnWindowDocument key={ownWindowFrameName(own)} own={own} />,
+    ...(own.downloads
+      ? [
+          <OwnWindowDownloads
+            key={ownWindowDownloadsFrameName(own)}
+            own={own}
+          />,
+        ]
+      : []),
     ...(own.find
       ? [
           <OwnWindowFind

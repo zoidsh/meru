@@ -80,6 +80,8 @@ export interface PlainWindow {
   onClosed: (listener: () => void) => void;
   /** Told when it becomes the window keys go to. */
   onFocus: (listener: () => void) => void;
+  /** Told when keys stop going to it. */
+  onBlur: (listener: () => void) => void;
   /** Windows alone: the session ends, for a shutdown, restart or sign-out. */
   onSessionEnd: (listener: () => void) => void;
   /** Closes it at once, asking nothing. */
@@ -127,6 +129,9 @@ export const plainWindow = (
   },
   onFocus: (listener) => {
     window.on("focus", listener);
+  },
+  onBlur: (listener) => {
+    window.on("blur", listener);
   },
   onSessionEnd: (listener) => {
     window.on("session-end", listener);

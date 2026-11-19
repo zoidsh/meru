@@ -13,6 +13,7 @@ import {
 import type { Overlay } from "./overlay.ts";
 import {
   OWN_WINDOW_FRAME_PREFIX,
+  ownWindowDownloadsFrameName,
   ownWindowFindFrameName,
   ownWindowFrameName,
 } from "./own-window.ts";
@@ -200,18 +201,19 @@ describe(overlayWidth, () => {
 });
 
 describe(isShellDocument, () => {
-  it("is only the overlay's blank document or an own window's titlebar or find bar", () => {
+  it("is only the overlay's blank document or an own window's titlebar, find bar or Downloads card", () => {
     expect(
       [
         OVERLAY_FRAME_NAME,
         ownWindowFrameName({ profileId: "a", tabId: "t" }),
         ownWindowFindFrameName({ profileId: "a", tabId: "t" }),
+        ownWindowDownloadsFrameName({ profileId: "a", tabId: "t" }),
         `${OWN_WINDOW_FRAME_PREFIX}["a"]`,
         "another-name",
         "",
         "elsewhere",
       ].map((frameName) => isShellDocument({ url: "about:blank", frameName }))
-    ).toStrictEqual([true, true, true, false, false, false, false]);
+    ).toStrictEqual([true, true, true, true, false, false, false, false]);
     expect(
       [
         "https://mail.google.com/",

@@ -501,6 +501,7 @@ const CHROME = {
   windows: [] as ShellState["windows"],
   downloads: {
     open: false,
+    window: null,
     button: { kind: "plain" },
     rows: [],
   } as ShellState["downloads"],

@@ -14,6 +14,12 @@ export const OWN_WINDOW_FRAME_PREFIX = "meru-window:";
  */
 export const OWN_WINDOW_FIND_FRAME_PREFIX = "meru-window-find:";
 
+/**
+ * The start of the name of the document a tab's own window shows the
+ * Downloads card in, over the page while the card is open there.
+ */
+export const OWN_WINDOW_DOWNLOADS_FRAME_PREFIX = "meru-window-downloads:";
+
 const frameName = (prefix: string, { profileId, tabId }: TabKey) =>
   `${prefix}${JSON.stringify([profileId, tabId])}`;
 
@@ -22,6 +28,9 @@ export const ownWindowFrameName = (key: TabKey) =>
 
 export const ownWindowFindFrameName = (key: TabKey) =>
   frameName(OWN_WINDOW_FIND_FRAME_PREFIX, key);
+
+export const ownWindowDownloadsFrameName = (key: TabKey) =>
+  frameName(OWN_WINDOW_DOWNLOADS_FRAME_PREFIX, key);
 
 const keyOfFrame = (prefix: string, name: string): TabKey | undefined => {
   if (!name.startsWith(prefix)) {
@@ -48,6 +57,10 @@ export const ownWindowOfFrame = (name: string) =>
 /** The tab whose own window's find bar a frame name is, if it is one. */
 export const ownWindowFindOfFrame = (name: string) =>
   keyOfFrame(OWN_WINDOW_FIND_FRAME_PREFIX, name);
+
+/** The tab whose own window's Downloads card a frame name is, if it is one. */
+export const ownWindowDownloadsOfFrame = (name: string) =>
+  keyOfFrame(OWN_WINDOW_DOWNLOADS_FRAME_PREFIX, name);
 
 /** How far the page sits in from a tab's own window's sides and bottom. */
 export const OWN_WINDOW_INSET = 8;

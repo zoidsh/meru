@@ -557,8 +557,8 @@ export const createShellHandlers = ({
   runInboxAction: async ({ profileId, messageId, action }) => {
     await inbox.runAction(profileId, messageId, action);
   },
-  setDownloadsOpen: ({ open }) => {
-    downloads.setOpen(open);
+  setDownloadsOpen: ({ open, window: ownWindow }) => {
+    downloads.setOpen(open, ownWindow);
 
     return Promise.resolve();
   },

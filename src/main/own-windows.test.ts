@@ -46,6 +46,7 @@ interface FakeWindow {
   resize: () => void;
   move: () => void;
   focus: () => void;
+  blur: () => void;
   endSession: () => void;
   /** Asks it to close by its control; says whether it was kept open. */
   close: () => boolean;
@@ -73,6 +74,7 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
           resize: noop,
           move: noop,
           focus: noop,
+          blur: noop,
           endSession: noop,
           close: () => false,
         };
@@ -115,6 +117,9 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
           },
           onFocus: (listener) => {
             fake.focus = listener;
+          },
+          onBlur: (listener) => {
+            fake.blur = listener;
           },
           onClosed: noop,
           onSessionEnd: (listener) => {
@@ -443,6 +448,50 @@ describe(createOwnWindows, () => {
       ],
       ["close"],
       undefined,
+    ]);
+  });
+
+  it("puts the shell's Downloads card over the whole page, follows the window's size, offers what focuses it and its web contents, and closes it with the window, telling of that and of the window losing the keys", () => {
+    const { windows, created } = setup();
+    const blurred: string[] = [];
+    const closed: string[] = [];
+
+    windows.onBlur((key) => blurred.push(tabKey(key)));
+    windows.onClosed((key) => closed.push(tabKey(key)));
+    windows.open(CALENDAR);
+    const [window] = created;
+    const card = titlebar();
+
+    windows.adoptCard(CALENDAR, card.view);
+    windows.cardFocuser(CALENDAR)?.();
+    const contents = windows.cardContentsId(CALENDAR);
+
+    if (window) {
+      window.bounds = { ...window.bounds, width: 1000 };
+      window.resize();
+      window.blur();
+    }
+
+    windows.close(CALENDAR);
+
+    expect([
+      card.calls,
+      contents,
+      windows.cardContentsId(CALENDAR),
+      blurred,
+      closed,
+    ]).toStrictEqual([
+      [
+        "over 2",
+        "bounds 8,40 884x552",
+        "focus",
+        "bounds 8,40 984x552",
+        "close",
+      ],
+      9,
+      undefined,
+      ["p/c1"],
+      ["p/c1"],
     ]);
   });
 

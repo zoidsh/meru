@@ -88,7 +88,12 @@ const setup = () => {
     doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },
     inbox: { open: false, profiles: [], rows: [], notice: null },
-    downloads: { open: false, button: { kind: "plain" }, rows: [] },
+    downloads: {
+      open: false,
+      window: null,
+      button: { kind: "plain" },
+      rows: [],
+    },
   };
 
   const ipc: Ipc = {

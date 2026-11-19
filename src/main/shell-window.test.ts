@@ -66,6 +66,7 @@ const createFakeWindow = () => {
       closed = listener;
     },
     onFocus: () => false,
+    onBlur: () => false,
     onBoundsChange: () => false,
     setTitle: () => false,
     getBounds: () => ({ x: 0, y: 0, width: 1280, height: 800 }),

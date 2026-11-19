@@ -11,7 +11,9 @@ export type FocusTarget =
   /** The page of a tab in its own window, or that window's titlebar. */
   | { kind: "window"; key: TabKey }
   /** The find bar of a tab's own window, while it is open there. */
-  | { kind: "windowFind"; key: TabKey };
+  | { kind: "windowFind"; key: TabKey }
+  /** The Downloads card in a tab's own window, while it is open there. */
+  | { kind: "windowCard"; key: TabKey };
 
 export interface FocusDeps {
   window: Pick<AppWindow, "isFocused" | "isVisible" | "on">;

@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
+import { tabKey } from "#core/tabs.ts";
 import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
@@ -159,6 +160,15 @@ const start = async () => {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
           return views.ownWindowFocuser(target.key);
         }
+        case "windowCard": {
+          // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
+          const shown = downloads.window();
+
+          return shown && tabKey(shown) === tabKey(target.key)
+            ? // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
+              ownWindows.cardFocuser(target.key)
+            : undefined;
+        }
         case "windowFind": {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
           return find.bar(target.key)
@@ -190,20 +200,6 @@ const start = async () => {
     log: console.error,
   });
 
-  // One for every kind, so the suite's build captures them in one list.
-  const notifier = systemNotifier();
-  const { downloads, watch: watchDownloads } = wireDownloads({
-    platform,
-    isMacOS,
-    background,
-    shell,
-    profiles,
-    settings,
-    overlays,
-    notifier,
-    newId,
-  });
-
   const { ownWindows, showOwnWindow, revealGmail } = wireOwnWindows({
     apps,
     isMacOS,
@@ -216,6 +212,22 @@ const start = async () => {
     shell,
     profiles,
     focus,
+  });
+
+  // One for every kind, so the suite's build captures them in one list.
+  const notifier = systemNotifier();
+  const { downloads, watch: watchDownloads } = wireDownloads({
+    platform,
+    isMacOS,
+    background,
+    shell,
+    profiles,
+    settings,
+    overlays,
+    ownWindows,
+    focus,
+    notifier,
+    newId,
   });
 
   const { shellDocumentIds, barsAwaited } = wireShellDocuments({

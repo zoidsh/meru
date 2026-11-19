@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import {
+  OWN_WINDOW_DOWNLOADS_FRAME_PREFIX,
   OWN_WINDOW_FIND_FRAME_PREFIX,
   OWN_WINDOW_FRAME_PREFIX,
 } from "#core/own-window.ts";
@@ -38,6 +39,10 @@ export const findTitlebar = (app: ElectronApplication) =>
 /** The find bar document of the tab's own window, while its bar is open. */
 export const findWindowFind = (app: ElectronApplication) =>
   findDocument(app, OWN_WINDOW_FIND_FRAME_PREFIX);
+
+/** The Downloads card document of the tab's own window, while it is open there. */
+export const findWindowDownloads = (app: ElectronApplication) =>
+  findDocument(app, OWN_WINDOW_DOWNLOADS_FRAME_PREFIX);
 
 const findDocument = async (app: ElectronApplication, prefix: string) => {
   let found: Page | undefined;

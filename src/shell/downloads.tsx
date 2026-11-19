@@ -496,18 +496,27 @@ export const Downloads = ({ downloads }: { downloads: DownloadsState }) => {
 };
 
 /**
- * The titlebar's button that opens the Downloads card, or closes it. While
+ * The titlebar's button that opens the Downloads card in its window, the
+ * main one or the tab's own one `window` names, or closes it there. While
  * anything downloads the icon fills with green from the top as the total
  * does, and pulses green while a size is not known; once one finished, it is
- * green until the card is opened.
+ * green until the card is opened anywhere.
  */
 export const DownloadsButton = ({
   downloads,
+  window: ownWindow,
 }: {
   downloads: DownloadsState | undefined;
+  window?: { profileId: string; tabId: string };
 }) => {
   const { t, i18n } = useLingui();
-  const open = downloads?.open ?? false;
+  const shownIn = downloads?.open ? downloads.window : undefined;
+  const open =
+    shownIn !== undefined &&
+    (ownWindow === undefined
+      ? shownIn === null
+      : shownIn?.profileId === ownWindow.profileId &&
+        shownIn.tabId === ownWindow.tabId);
   const button = downloads?.button ?? { kind: "plain" };
   const label = t({
     message: "Downloads",
@@ -558,7 +567,10 @@ export const DownloadsButton = ({
       label={label}
       aria-description={description}
       onClick={() => {
-        shellCalls().setDownloadsOpen({ open: !open });
+        shellCalls().setDownloadsOpen({
+          open: !open,
+          ...(ownWindow && { window: ownWindow }),
+        });
       }}
     >
       <span className="relative inline-flex">

@@ -49,6 +49,8 @@ interface Entry {
   titlebar: OverlayView | undefined;
   /** The find bar's view, over the page while the bar is open. */
   find: OverlayView | undefined;
+  /** The Downloads card's view, over the page while the card is open there. */
+  card: OverlayView | undefined;
   saveBounds: ReturnType<typeof keepBounds>;
 }
 
@@ -80,6 +82,8 @@ export const createOwnWindows = ({
 }: OwnWindowsDeps) => {
   const entries = new Map<string, Entry>();
   const resizeListeners = new Set<(key: TabKey) => void>();
+  const blurListeners = new Set<(key: TabKey) => void>();
+  const closedListeners = new Set<(key: TabKey) => void>();
   const saving = new Set<Promise<unknown>>();
   let quitting = false;
 
@@ -89,14 +93,42 @@ export const createOwnWindows = ({
     return tab?.title || (tab && findApp(apps, tab.app)?.name) || "";
   };
 
-  /** Places the window's titlebar and find bar as its size has it now. */
+  /** Places the window's documents as its size has it now. */
   const placeDocuments = (entry: Entry) => {
-    const { width, height } = entry.window.getContentAreaSize();
+    const size = entry.window.getContentAreaSize();
 
-    entry.titlebar?.setBounds({ x: 0, y: 0, width, height });
-    entry.find?.setBounds(
-      findRectangle(ownWindowPageBounds({ width, height }), undefined)
-    );
+    entry.titlebar?.setBounds({ x: 0, y: 0, ...size });
+    entry.find?.setBounds(findRectangle(ownWindowPageBounds(size), undefined));
+    // Over the whole page, as the main window's overlay covers its pages,
+    // so a press beside the card closes it rather than reaching the page.
+    entry.card?.setBounds(ownWindowPageBounds(size));
+  };
+
+  /**
+   * Puts a document of the shell's over the window's page, in place of the
+   * one in `slot` before; one for a window that is not open is closed.
+   */
+  const adoptOver = (key: TabKey, view: OverlayView, slot: "find" | "card") => {
+    const entry = entries.get(tabKey(key));
+
+    if (!entry) {
+      view.close();
+
+      return;
+    }
+
+    if (entry[slot] !== view) {
+      entry[slot]?.close();
+    }
+
+    entry[slot] = view;
+    view.onGone(() => {
+      if (entry[slot] === view) {
+        entry[slot] = undefined;
+      }
+    });
+    view.moveOver(entry.window.host);
+    placeDocuments(entry);
   };
 
   const save = (key: TabKey, bounds: Rectangle) => {
@@ -126,7 +158,12 @@ export const createOwnWindows = ({
     entry.saveBounds.flush();
     entry.titlebar?.close();
     entry.find?.close();
+    entry.card?.close();
     entry.window.destroy();
+
+    for (const listener of closedListeners) {
+      listener(key);
+    }
   };
 
   /**
@@ -174,6 +211,7 @@ export const createOwnWindows = ({
       window,
       titlebar: undefined,
       find: undefined,
+      card: undefined,
       saveBounds: keepBounds(window, (bounds) => {
         save(key, bounds);
       }),
@@ -188,6 +226,11 @@ export const createOwnWindows = ({
     });
     window.onFocus(() => {
       onFocus(key);
+    });
+    window.onBlur(() => {
+      for (const listener of blurListeners) {
+        listener(key);
+      }
     });
     window.onClose((event) => {
       if (quitting) {
@@ -272,29 +315,23 @@ export const createOwnWindows = ({
      * the focus module's rules allow.
      */
     adoptFind: (key: TabKey, view: OverlayView) => {
-      const entry = entries.get(tabKey(key));
-
-      if (!entry) {
-        view.close();
-
-        return;
-      }
-
-      if (entry.find !== view) {
-        entry.find?.close();
-      }
-
-      entry.find = view;
-      view.onGone(() => {
-        if (entry.find === view) {
-          entry.find = undefined;
-        }
-      });
-      view.moveOver(entry.window.host);
-      placeDocuments(entry);
+      adoptOver(key, view, "find");
+    },
+    /**
+     * Puts the shell's Downloads card document for the tab's window over its
+     * whole page; one for a window that is not open is closed. It goes as
+     * the shell closes it. Focus is the caller's.
+     */
+    adoptCard: (key: TabKey, view: OverlayView) => {
+      adoptOver(key, view, "card");
     },
     /** What focuses the tab's window's find bar, while it is there. */
     findFocuser: (key: TabKey) => entries.get(tabKey(key))?.find?.focus,
+    /** What focuses the tab's window's Downloads card, while it is there. */
+    cardFocuser: (key: TabKey) => entries.get(tabKey(key))?.card?.focus,
+    /** The web contents of the tab's window's Downloads card, while it is there. */
+    cardContentsId: (key: TabKey) =>
+      entries.get(tabKey(key))?.card?.webContentsId,
     /** The tab's window, while it is open, for whether it holds the keys. */
     window: (key: TabKey) => entries.get(tabKey(key))?.window,
     /** Titles each window after its page, as its tab is. */
@@ -312,6 +349,14 @@ export const createOwnWindows = ({
     /** Told when a window's content area changes size, which its page follows. */
     onResize: (listener: (key: TabKey) => void) => {
       resizeListeners.add(listener);
+    },
+    /** Told when keys stop going to a tab's window. */
+    onBlur: (listener: (key: TabKey) => void) => {
+      blurListeners.add(listener);
+    },
+    /** Told when a tab's window closes, its tab back in the main window or gone. */
+    onClosed: (listener: (key: TabKey) => void) => {
+      closedListeners.add(listener);
     },
     markQuitting,
     /** Settles once every save of where a window is has, for a quit to wait on. */

@@ -5,6 +5,8 @@ import path from "node:path";
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
 import { delay, escapeRegExp } from "es-toolkit";
 
+import { OWN_WINDOW_DOWNLOADS_FRAME_PREFIX } from "#core/own-window.ts";
+
 import {
   clickMenuItem,
   expect,
@@ -15,6 +17,11 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import {
+  findTitlebar,
+  findWindowDownloads,
+  readOwnWindows,
+} from "./lib/own-window.ts";
 import {
   THEMES,
   emulateTheme,
@@ -569,6 +576,101 @@ test("drags a finished row out as its file, and reads one no longer there as mov
   expect(await readDragged(app)).toStrictEqual([path.join(folder, "kept.pdf")]);
   // A drag is no click: nothing opened.
   expect(await readOpened(app)).toStrictEqual([]);
+});
+
+/** Whether the own window has a Downloads card document over its page. */
+const windowCardOpen = async (app: ElectronApplication) => {
+  const [window] = await readOwnWindows(app);
+
+  return (
+    window?.views.some((view) =>
+      view.name.startsWith(OWN_WINDOW_DOWNLOADS_FRAME_PREFIX)
+    ) ?? false
+  );
+};
+
+test("opens the card in a tab's own window from its titlebar, the one card moving between windows, closing on Escape or a press beside it, and counting a finish as seen", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, download, overlay, folder } = await launch(
+    launchApp,
+    userDataDir,
+    standIn,
+    [{ fileName: "kept.pdf", state: "completed" }],
+    {
+      profiles: [
+        {
+          id: "p0",
+          name: "Home",
+          tabs: [
+            { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+            {
+              id: "c",
+              app: "calendar",
+              url: standIn.calendarUrl,
+              title: "",
+              ownWindow: true,
+            },
+          ],
+          selectedTabId: "gmail",
+        },
+      ],
+    }
+  );
+  const titlebar = await findTitlebar(app);
+  const inWindow = downloadsButton(titlebar);
+  const inMain = downloadsButton(shell);
+
+  await download("small");
+  await expect(inWindow).toHaveAttribute("data-downloads", "finished");
+  await expect(inMain).toHaveAttribute("data-downloads", "finished");
+
+  await inWindow.click();
+
+  let document = await findWindowDownloads(app);
+
+  await expect(row(document, "kept.pdf")).toContainText("1 kB · ");
+  await expect(row(document, DOWNLOAD_FILES.small.name)).toBeFocused();
+  await expect(inWindow).toHaveAttribute("aria-pressed", "true");
+  await expect(inMain).toHaveAttribute("aria-pressed", "false");
+  // Seen in any window: neither button is green any more.
+  await expect(inWindow).toHaveAttribute("data-downloads", "plain");
+  await expect(inMain).toHaveAttribute("data-downloads", "plain");
+  // The main window's overlay shows nothing.
+  await expect(card(overlay)).toBeHidden();
+
+  await dragOut(document, row(document, "kept.pdf"));
+  await expect
+    .poll(() => readDragged(app))
+    .toStrictEqual([path.join(folder, "kept.pdf")]);
+
+  // Its keydown closes the document, which a keyup would then not reach.
+  await document.keyboard.down("Escape");
+  await expect.poll(() => windowCardOpen(app)).toBe(false);
+  await expect(inWindow).toHaveAttribute("aria-pressed", "false");
+
+  // Its button again closes it, and opening in the main window moves it there.
+  await inWindow.click();
+  document = await findWindowDownloads(app);
+  await expect(card(document)).toBeVisible();
+  await inWindow.click();
+  await expect.poll(() => windowCardOpen(app)).toBe(false);
+
+  await inWindow.click();
+  await findWindowDownloads(app);
+  await openCard(shell, overlay);
+  await expect.poll(() => windowCardOpen(app)).toBe(false);
+  await expect(inMain).toHaveAttribute("aria-pressed", "true");
+  await expect(inWindow).toHaveAttribute("aria-pressed", "false");
+
+  await inWindow.click();
+  document = await findWindowDownloads(app);
+  await expect(card(overlay)).toBeHidden();
+  await document.mouse.move(8, 8);
+  await document.mouse.down();
+  await expect.poll(() => windowCardOpen(app)).toBe(false);
 });
 
 test("moves through the list with the keys, opens with Enter, cancels a running download or removes another with Delete, and clears all but those running", async ({

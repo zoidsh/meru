@@ -1,6 +1,10 @@
 import { findRectangle } from "./find.ts";
 import { contentViewBounds } from "./layout.ts";
-import { ownWindowFindOfFrame, ownWindowOfFrame } from "./own-window.ts";
+import {
+  ownWindowDownloadsOfFrame,
+  ownWindowFindOfFrame,
+  ownWindowOfFrame,
+} from "./own-window.ts";
 import type { PaneDirection } from "./pane-tree.ts";
 import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
@@ -197,4 +201,5 @@ export const isShellDocument = ({
   url === "about:blank" &&
   (frameName === OVERLAY_FRAME_NAME ||
     ownWindowOfFrame(frameName) !== undefined ||
-    ownWindowFindOfFrame(frameName) !== undefined);
+    ownWindowFindOfFrame(frameName) !== undefined ||
+    ownWindowDownloadsOfFrame(frameName) !== undefined);

@@ -1,7 +1,7 @@
 import type { App } from "#core/apps.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import type { Platform } from "#core/platform.ts";
-import { findTab } from "#core/tabs.ts";
+import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { createClipboard } from "#platform/clipboard.ts";
 import type { createIpc } from "#platform/ipc.ts";
@@ -210,6 +210,7 @@ export const wireShellContract = ({
               const tab = findTab(profiles.get(), key);
               const navigation = views.navigation(key);
               const bar = find.bar(key);
+              const card = downloads.window();
 
               return tab && navigation
                 ? [
@@ -220,6 +221,8 @@ export const wireShellContract = ({
                       status: shellTabStatus(views.status(key)),
                       navigation,
                       bookmarked: bookmarks.bookmarked(key) ?? null,
+                      downloads:
+                        card !== undefined && tabKey(card) === tabKey(key),
                       find: bar
                         ? {
                             term: bar.term,

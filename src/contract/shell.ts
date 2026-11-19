@@ -228,9 +228,15 @@ export const SHELL_CALLS = {
     }),
     response: z.undefined(),
   },
-  /** Opens the Downloads card, or closes it. */
+  /**
+   * Opens the Downloads card, in the main window or in the tab's own window
+   * `window` names, moving it there from wherever it was; or closes it.
+   */
   setDownloadsOpen: {
-    request: z.object({ open: z.boolean() }),
+    request: z.object({
+      open: z.boolean(),
+      window: z.optional(z.object({ profileId, tabId })),
+    }),
     response: z.undefined(),
   },
   /** Opens a finished download in its default app, closing the card. */
@@ -406,6 +412,8 @@ export const SHELL_STATE = {
         loading: z.boolean(),
       }),
       bookmarked,
+      /** Whether the Downloads card is open in it, drawn over the page. */
+      downloads: z.boolean(),
       /** Its find bar while it is open, drawn over the page in that window. */
       find: z.nullable(
         z.object({
@@ -488,10 +496,12 @@ export const SHELL_STATE = {
   }),
   /**
    * Downloads: what the titlebar's button shows, and the list, newest
-   * first, sent only while the card is open.
+   * first, sent only while the card is open, in the main window or in the
+   * tab's own window `window` names.
    */
   downloads: z.object({
     open: z.boolean(),
+    window: z.nullable(z.object({ profileId, tabId })),
     button: z.discriminatedUnion("kind", [
       z.object({ kind: z.literal("plain") }),
       /** One finished since the card was last opened, and nothing runs. */

@@ -17,8 +17,12 @@ import { revealWindow } from "../windows.ts";
 /** The longest a quit waits for the last writes of the state. */
 const QUIT_WAIT_MS = 3000;
 
-/** Where keys go in a tab's own window: its find bar while open, else its page. */
-const inOwnWindow = (key: TabKey): FocusTarget[] => [
+/**
+ * Where keys go in a tab's own window: its Downloads card while open there,
+ * else its find bar while open, else its page.
+ */
+export const inOwnWindow = (key: TabKey): FocusTarget[] => [
+  { kind: "windowCard", key },
   { kind: "windowFind", key },
   { kind: "window", key },
 ];

@@ -282,7 +282,12 @@ describe("an end no date holds", () => {
             ariaShortcuts: {},
             navigation: null,
             windows: [],
-            downloads: { open: false, button: { kind: "plain" }, rows: [] },
+            downloads: {
+              open: false,
+              window: null,
+              button: { kind: "plain" },
+              rows: [],
+            },
           },
           []
         ).doNotDisturb
