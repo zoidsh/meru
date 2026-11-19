@@ -330,6 +330,18 @@ const isAsleepTab = (tab: ShellTab) =>
 const rowLayout = (roomy: boolean) =>
   cn("w-full justify-start gap-2", roomy ? "pr-[62px]" : "pr-8");
 
+/**
+ * A narrow tile fills its cell, `w-8`; a wide one, a cell of the pinned grid,
+ * takes the rows' height.
+ */
+const tabSize = (tile: boolean, cell: boolean) => {
+  if (!tile) {
+    return "sm";
+  }
+
+  return cell ? "icon-sm" : "icon";
+};
+
 interface TabButtonProps {
   tab: ShellTab;
   /**
@@ -486,7 +498,7 @@ const TabButton = ({
       className={cn(
         buttonVariants({
           variant: tabVariant(selected, tab.pinned),
-          size: tile ? "icon-sm" : "sm",
+          size: tabSize(tile, cell),
         }),
         // No pressed nudge: a held tab, as in a drag, would push the list's
         // last row a pixel past its viewport, which the Scroll Area then
