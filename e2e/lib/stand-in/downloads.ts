@@ -38,10 +38,19 @@ export const DOWNLOAD_LINKS = {
   unsized: "Download the stream",
 } as const satisfies Record<DownloadFile, string>;
 
+/**
+ * A link on the page to the small file on the Drive stand-in, in a tab of
+ * its own, which a download is all its page ever does.
+ */
+export const DOWNLOAD_IN_TAB_LINK = "Get the report from Drive";
+
 const isFile = (name: string): name is DownloadFile => name in DOWNLOAD_FILES;
 
-/** The files the stand-in serves and the page linking to them. */
-export const createDownloadFiles = () => {
+/**
+ * The files the stand-in serves and the page linking to them, and to the
+ * small one at `drive`'s origin too, which serves them alike.
+ */
+export const createDownloadFiles = (drive: () => string) => {
   const held = new Map<DownloadFile, (() => void)[]>();
   let broken = false;
 
@@ -54,11 +63,12 @@ export const createDownloadFiles = () => {
         .end(
           page(
             DOWNLOADS_TITLE,
-            Object.entries(DOWNLOAD_LINKS)
-              .map(
+            [
+              ...Object.entries(DOWNLOAD_LINKS).map(
                 ([file, label]) => `<a href="${FILES_PATH}${file}">${label}</a>`
-              )
-              .join("\n    ")
+              ),
+              `<a href="${drive()}${FILES_PATH.slice(1)}small" target="_blank">${DOWNLOAD_IN_TAB_LINK}</a>`,
+            ].join("\n    ")
           )
         );
 

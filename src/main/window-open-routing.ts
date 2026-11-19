@@ -30,7 +30,8 @@ export const createWindowOpenRouting = ({
   systemBrowser: SystemBrowser;
   /** The app of the tab whose page asks, or "" once it is gone. */
   openerApp: (key: TabKey) => string;
-  openAsTab: (profileId: string, app: App, url: string) => Promise<void>;
+  /** Opens `url` as a tab of `app`, from the page of the tab `from`. */
+  openAsTab: (from: TabKey, app: App, url: string) => Promise<void>;
   addProfile: () => Promise<unknown>;
   log: (message: string) => void;
 }) => {
@@ -65,14 +66,14 @@ export const createWindowOpenRouting = ({
     }
   };
 
-  const follow = (route: WindowOpenRoute, url: string, profileId: string) => {
+  const follow = (route: WindowOpenRoute, url: string, from: TabKey) => {
     switch (route.kind) {
       case "system-browser": {
         openInSystemBrowser(route.url);
         break;
       }
       case "tab": {
-        openAsTab(profileId, route.app, url);
+        openAsTab(from, route.app, url);
         break;
       }
       case "add-profile": {
@@ -103,7 +104,7 @@ export const createWindowOpenRouting = ({
     ): WindowOpenAnswer => {
       const route = routeWindowOpen(url, opening(tabKeyed), asked);
 
-      follow(route, url, tabKeyed.profileId);
+      follow(route, url, tabKeyed);
 
       if (route.kind === "child-window") {
         return "allow";
@@ -125,7 +126,7 @@ export const createWindowOpenRouting = ({
         route.kind !== "download" &&
         route.kind !== "deny"
       ) {
-        follow(route, url, tabKeyed.profileId);
+        follow(route, url, tabKeyed);
       }
 
       return "deny";

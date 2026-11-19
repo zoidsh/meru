@@ -258,6 +258,7 @@ const start = async () => {
     state: profiles.get,
     openTab: profiles.openTab,
     selectTab: profiles.selectTab,
+    closeTab: profiles.closeTab,
     newId,
     addProfile: async () => {
       await profiles.add();
@@ -271,7 +272,10 @@ const start = async () => {
     preloadFor: (app) => preloads.get(app),
     prepareSession: (partition) => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
-      watchDownloads(partition);
+      watchDownloads(partition, (webContentsId) => {
+        // oxlint-disable-next-line no-use-before-define -- no download starts before a view exists
+        views.closeIfOnlyDownloading(webContentsId);
+      });
     },
     updatePages: profiles.updatePages,
     onFocus: () => {

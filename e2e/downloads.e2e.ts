@@ -23,7 +23,11 @@ import {
   shotPath,
 } from "./lib/shots.ts";
 import type { DownloadFile, StandIn } from "./lib/stand-in.ts";
-import { DOWNLOAD_FILES, DOWNLOAD_LINKS } from "./lib/stand-in.ts";
+import {
+  DOWNLOAD_FILES,
+  DOWNLOAD_IN_TAB_LINK,
+  DOWNLOAD_LINKS,
+} from "./lib/stand-in.ts";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -242,6 +246,7 @@ const launch = async (
   return {
     app,
     shell,
+    gmail,
     download,
     overlay: await findOverlayDocument(app),
     folder,
@@ -434,6 +439,33 @@ test("tells of a finished download, whose button shows the file in its folder, a
     .toStrictEqual({ title: "Download failed", body: failed, actions: [] });
   await clickNotification(app, 1);
   await expect(row(overlay, failed)).toContainText("Failed · now");
+});
+
+test("closes a tab a link opened only to download, the file saved and Gmail selected again", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { gmail, folder } = await launch(launchApp, userDataDir, standIn);
+  const tabs = async () => {
+    const { profiles } = await readState<{
+      profiles: { tabs: { app: string }[]; selectedTabId: string }[];
+    }>(userDataDir);
+
+    return profiles.map(({ tabs: kept, selectedTabId }) => [
+      kept.map((tab) => tab.app),
+      selectedTabId,
+    ]);
+  };
+
+  await gmail.getByRole("link", { name: DOWNLOAD_IN_TAB_LINK }).click();
+  await expect.poll(() => listedCount(userDataDir)).toBe(1);
+
+  // Only a Drive tab could have asked Drive for it, and it went once it did.
+  await expect.poll(tabs).toStrictEqual([[["gmail"], "gmail"]]);
+  await expect
+    .poll(() => exists(path.join(folder, DOWNLOAD_FILES.small.name)))
+    .toBe(true);
 });
 
 test("holds a download's notification under Do Not Disturb", async ({

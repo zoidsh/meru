@@ -262,7 +262,7 @@ export const startStandIn = async (): Promise<StandIn> => {
         );
     }
   };
-  const downloadFiles = createDownloadFiles();
+  const downloadFiles = createDownloadFiles(() => origins.drive);
   const answerMail = (request: IncomingMessage, response: ServerResponse) => {
     if (downloadFiles.answer(request, response)) {
       return true;
@@ -349,7 +349,8 @@ export const startStandIn = async (): Promise<StandIn> => {
       "/": page(DRIVE_TITLE, ""),
       [GRABBY_PATH]: page(GRABBY_TITLE, GRABBY_FIELD),
     }),
-    current
+    current,
+    downloadFiles.answer
   );
   const signInServer = await listen(
     () => ({

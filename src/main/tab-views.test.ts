@@ -64,6 +64,7 @@ interface FakeView {
   finds: string[];
   /** The window it is in: the main window's 1, or a tab's own. */
   host: number;
+  webContentsId: number;
 }
 
 /** The main window's host. */
@@ -167,10 +168,12 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
           moves: [],
           finds: [],
           host: MAIN_HOST,
+          webContentsId: 0,
         };
 
-        views.push(view);
         webContentsIds += 1;
+        view.webContentsId = webContentsIds;
+        views.push(view);
         options.onWebContents(webContentsIds, "content-view");
 
         return {
@@ -238,6 +241,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     sidebar: () => sidebar,
     openTab: profiles.openTab,
     selectTab: profiles.selectTab,
+    closeTab: profiles.closeTab,
     newId: () => {
       ids += 1;
 
@@ -837,6 +841,59 @@ describe(createTabViews, () => {
     ]).toStrictEqual(["download", "allow", "allow", "deny"]);
     await vi.advanceTimersByTimeAsync(0);
     expect(window.opened).toStrictEqual([viewer]);
+  });
+
+  it("closes a tab a link opened whose page started a download before it showed anything, selecting the tab of that link again", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+
+    gmail?.options.onWindowOpen("https://drive.google.com/uc?export=download");
+    await vi.advanceTimersByTimeAsync(0);
+
+    const opened = window.viewOf("persist:a", 1);
+
+    expect(window.profiles.get().profiles[0]?.selectedTabId).toBe("new-1");
+    window.tabs.closeIfOnlyDownloading(opened?.webContentsId ?? 0);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const [profile] = window.profiles.get().profiles;
+
+    expect([
+      profile && knownTabs(profile).map((tab) => tab.id),
+      profile?.selectedTabId,
+      window.logs.at(-1),
+    ]).toStrictEqual([
+      ["gmail", "c1"],
+      "gmail",
+      "Closed a tab opened only to start a download",
+    ]);
+  });
+
+  it("keeps a tab whose page showed before it downloaded, and one no link opened", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+
+    gmail?.options.onWindowOpen("https://drive.google.com/file/d/1");
+    await vi.advanceTimersByTimeAsync(0);
+
+    const opened = window.viewOf("persist:a", 1);
+
+    window.emit(opened, {
+      kind: "navigated",
+      url: "https://drive.google.com/file/d/1",
+      inPage: false,
+    });
+    window.tabs.closeIfOnlyDownloading(opened?.webContentsId ?? 0);
+    window.tabs.closeIfOnlyDownloading(gmail?.webContentsId ?? 0);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const [profile] = window.profiles.get().profiles;
+
+    expect(profile && knownTabs(profile).map((tab) => tab.id)).toStrictEqual([
+      "gmail",
+      "c1",
+      "new-1",
+    ]);
   });
 
   it("sends Gmail's tab to a Gmail link another tab opens", async () => {

@@ -34,9 +34,13 @@ export interface DownloadItem {
 export interface DownloadSessions {
   /**
    * Hands `take` each download the partition's session starts, from any of
-   * its pages. Once per session; later calls change nothing.
+   * its pages, with the id of the webContents it started in. Once per
+   * session; later calls change nothing.
    */
-  watch: (partition: string, take: (item: DownloadItem) => void) => void;
+  watch: (
+    partition: string,
+    take: (item: DownloadItem, startedIn: number) => void
+  ) => void;
 }
 
 const wrap = (item: Electron.DownloadItem): DownloadItem => {
@@ -96,8 +100,8 @@ export const createDownloadSessions = (): DownloadSessions => {
       }
 
       watched.add(watching);
-      watching.on("will-download", (_event, item) => {
-        take(wrap(item));
+      watching.on("will-download", (_event, item, webContents) => {
+        take(wrap(item), webContents.id);
       });
     },
   };

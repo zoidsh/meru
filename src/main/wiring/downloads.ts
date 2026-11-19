@@ -85,8 +85,12 @@ export const wireDownloads = ({
 
   return {
     downloads,
-    watch: (partition: string) => {
-      sessions.watch(partition, downloads.take);
+    /** `started` hears of each download after it is taken, by the webContents it began in. */
+    watch: (partition: string, started: (webContentsId: number) => void) => {
+      sessions.watch(partition, (item, startedIn) => {
+        downloads.take(item);
+        started(startedIn);
+      });
     },
   };
 };

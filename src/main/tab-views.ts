@@ -74,6 +74,7 @@ export interface TabViewsDeps {
   ) => Promise<OpenedTab | undefined>;
   /** Makes the tab its profile's selected one. */
   selectTab: (key: TabKey) => Promise<unknown>;
+  closeTab: (key: TabKey) => Promise<unknown>;
   newId: () => string;
   /** Answers Google's "Add another account". */
   addProfile: () => Promise<unknown>;
@@ -168,6 +169,7 @@ export const createTabViews = ({
   sidebar,
   openTab,
   selectTab,
+  closeTab,
   newId,
   addProfile,
   handleKey,
@@ -214,6 +216,10 @@ export const createTabViews = ({
   let shownKeys = new Set<string>();
   /** The tabs whose views are in their own windows, and where. */
   const inWindows = new Map<string, OwnWindowPlace & { key: TabKey }>();
+  /** Each tab's own page, by its webContents' id. */
+  const pageViews = new Map<number, string>();
+  /** A tab a page's link opened, and the tab of that page. */
+  const openedFrom = new Map<string, TabKey>();
 
   const laidOut = (): Pick<ViewPlan, "shown" | "panes"> =>
     preview && onScreen.panes ? { ...onScreen, panes: preview } : onScreen;
@@ -515,7 +521,8 @@ export const createTabViews = ({
     app: App,
     url: string,
     after?: string,
-    split?: PaneDirection
+    split?: PaneDirection,
+    from?: TabKey
   ) => {
     const profile = state().profiles.find(
       (candidate) => candidate.id === profileId
@@ -526,6 +533,10 @@ export const createTabViews = ({
         : undefined;
     const tabId = existing?.id ?? newTabId(app, newId);
     const key = tabKey({ profileId, tabId });
+
+    if (from && !existing) {
+      openedFrom.set(key, from);
+    }
 
     pendingUrls.set(key, url);
     // oxlint-disable-next-line no-use-before-define -- the link wakes the tab it opens in
@@ -550,7 +561,8 @@ export const createTabViews = ({
     signInOrigins,
     systemBrowser,
     openerApp: (key) => findTab(state(), key)?.app ?? "",
-    openAsTab,
+    openAsTab: (from, app, url) =>
+      openAsTab(from.profileId, app, url, undefined, undefined, from),
     addProfile,
     log,
   });
@@ -568,8 +580,21 @@ export const createTabViews = ({
       onWindowOpen: (url, request) =>
         routing.onWindowOpen(tabKeyed, url, request),
       onChildNavigation: (url) => routing.onChildNavigation(tabKeyed, url),
-      onWebContents: (webContentsId, role) =>
-        senders.register(webContentsId, { role, ...tabKeyed }),
+      onWebContents: (webContentsId, role) => {
+        const drop = senders.register(webContentsId, { role, ...tabKeyed });
+
+        if (role !== "content-view") {
+          return drop;
+        }
+
+        pageViews.set(webContentsId, key);
+
+        return () => {
+          pageViews.delete(webContentsId);
+          openedFrom.delete(key);
+          drop();
+        };
+      },
       onEvent: (event) => {
         onEvent(key, tabKeyed, event);
       },
@@ -903,6 +928,35 @@ export const createTabViews = ({
 
   return {
     reconcile,
+    /**
+     * Closes a tab a link opened whose page started a download before it
+     * committed, so it has nothing to show, and selects the tab of the page
+     * that opened it again.
+     */
+    closeIfOnlyDownloading: (webContentsId: number) => {
+      const key = pageViews.get(webContentsId);
+      const from = key === undefined ? undefined : openedFrom.get(key);
+      const tab = key === undefined ? undefined : tabs.get(key);
+
+      if (!from || !tab || tab.view.url() !== "") {
+        return;
+      }
+
+      log("Closed a tab opened only to start a download");
+      void (async () => {
+        try {
+          await closeTab(tab.key);
+
+          if (findTab(state(), from)) {
+            await selectTab(from);
+          }
+        } catch (error) {
+          log(
+            `A tab opened only to download did not close: ${describe(error)}`
+          );
+        }
+      })();
+    },
     /**
      * Opens `url` as a tab of `app` in the profile, selected there, or sends
      * a single-instance app's one tab to it, loading it in the view now or
