@@ -77,7 +77,7 @@ export const FindBar = ({
       aria-label={label}
       data-overlay-card
       // No shadow: the view ends at the bar's edge and would cut it off.
-      className="fixed inset-0 flex items-center gap-1 rounded-3xl border border-foreground/10 bg-popover p-1 text-popover-foreground"
+      className="fixed inset-0 flex items-center gap-1 rounded-xl border border-foreground/10 bg-popover p-1 text-popover-foreground"
     >
       <Input
         // Each open gives the field focus, the caret after its term.

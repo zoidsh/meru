@@ -257,7 +257,7 @@ const InboxRow = ({
     >
       {/* Named by the profile's name inside, which the rule does not read. */}
       {/* oxlint-disable-next-line jsx-a11y/control-has-associated-label */}
-      <td className={cn(cell, "rounded-l-xl pl-2")}>
+      <td className={cn(cell, "rounded-l-sm pl-2")}>
         <span className="flex items-center gap-3">
           <span
             aria-hidden
@@ -292,7 +292,7 @@ const InboxRow = ({
           )}
         </span>
       </td>
-      <td className={cn(cell, "relative rounded-r-xl pr-2 pl-3 text-right")}>
+      <td className={cn(cell, "relative rounded-r-sm pr-2 pl-3 text-right")}>
         <time
           dateTime={new Date(row.issued).toISOString()}
           title={full}
@@ -301,7 +301,7 @@ const InboxRow = ({
           {short}
         </time>
         {/* Not hit-testable while hidden, so a click there opens the row. */}
-        <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center gap-0.5 rounded-r-xl bg-linear-to-r from-transparent to-muted to-[16px] pl-4 opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-data-selected:pointer-events-auto group-data-selected:opacity-100">
+        <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center gap-0.5 rounded-r-sm bg-linear-to-r from-transparent to-muted to-[16px] pl-4 opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-data-selected:pointer-events-auto group-data-selected:opacity-100">
           {ACTIONS.map((action) => (
             <Button
               key={action}
@@ -476,7 +476,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
       <output
         aria-live="polite"
         className={cn(
-          "mx-1 mt-1 rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive",
+          "mx-1 mt-1 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive",
           !failure && "sr-only"
         )}
       >

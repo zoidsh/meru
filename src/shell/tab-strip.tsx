@@ -1284,9 +1284,14 @@ export const Sidebar = ({
           data-drag-mark={drag.mark.kind}
           className={cn(
             "pointer-events-none fixed z-50",
-            drag.mark.kind === "line"
-              ? "rounded-[1px] bg-foreground"
-              : "rounded-2xl shadow-[inset_0_0_0_2px_var(--foreground)]"
+            drag.mark.kind === "line" && "rounded-[1px] bg-foreground",
+            drag.mark.kind === "ring" &&
+              "shadow-[inset_0_0_0_2px_var(--foreground)]",
+            // The ring takes the corner of the tab it lies on: Button's
+            // `icon` for a narrow tile, its `sm` and `icon-sm` for a wide
+            // row or pinned tile.
+            drag.mark.kind === "ring" &&
+              (wide ? "rounded-[min(var(--radius-md),12px)]" : "rounded-lg")
           )}
           style={{
             left: drag.mark.box.left,
