@@ -63,6 +63,13 @@ const repeatEvery = (run: () => void) => {
   };
 };
 
+/** The name a site gave, never a path out of the folder. */
+const safeName = (fileName: string) => {
+  const name = path.basename(fileName);
+
+  return name === "" || name === "." || name === ".." ? "download" : name;
+};
+
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -116,12 +123,19 @@ export const createDownloads = ({
       finishedBytes
     );
 
+  let shown: number | null | undefined;
+
   const showProgress = () => {
-    signals.progress(progress());
+    const share = progress();
+
+    if (share !== shown) {
+      shown = share;
+      signals.progress(share);
+    }
   };
 
-  // Chromium tells of progress only as it writes, which leaves bytes that
-  // arrived before the item was taken untold until more come.
+  // Read on a beat rather than on Chromium's progress events, which leave
+  // bytes that arrived before the item was taken untold until more come.
   const refresh = () => {
     showProgress();
     notify();
@@ -148,9 +162,12 @@ export const createDownloads = ({
       files.taken(path.join(folder, fileName));
   };
 
-  const ended = async (id: string, item: DownloadItem, end: DownloadEnd) => {
-    const entry = running.get(id);
-
+  const ended = async (
+    id: string,
+    item: DownloadItem,
+    filePath: string,
+    end: DownloadEnd
+  ) => {
     running.delete(id);
 
     if (end === "completed") {
@@ -164,21 +181,17 @@ export const createDownloads = ({
     watchRunning();
     showProgress();
 
-    if (!entry) {
-      return;
-    }
-
     if (end === "completed") {
       // Before anything can open it.
       await files
-        .quarantine(entry.path, new Date(now()))
+        .quarantine(filePath, new Date(now()))
         .catch((error: unknown) => {
           log(`A download was not quarantined: ${describe(error)}`);
         });
 
       // The Dock tells nothing a window in front already shows.
       if (!signals.focused()) {
-        signals.landed(entry.path);
+        signals.landed(filePath);
       }
 
       if (!overlay.isOpen()) {
@@ -186,7 +199,7 @@ export const createDownloads = ({
       }
     } else {
       // Chromium removes its partial file; this covers one it left.
-      await files.remove(entry.path).catch((error: unknown) => {
+      await files.remove(filePath).catch((error: unknown) => {
         log(`A stopped download's file was not removed: ${describe(error)}`);
       });
     }
@@ -208,7 +221,7 @@ export const createDownloads = ({
     const id = newId();
     const folder = files.folder();
     const fileName = unusedName(
-      withExtension(item.fileName, item.mimeType),
+      withExtension(safeName(item.fileName), item.mimeType),
       pathTaken(folder)
     );
     const filePath = path.join(folder, fileName);
@@ -216,9 +229,8 @@ export const createDownloads = ({
     item.saveTo(filePath);
     running.set(id, { item, path: filePath });
     watchRunning();
-    item.onProgress(refresh);
     item.onDone((end) => {
-      void ended(id, item, end);
+      void ended(id, item, filePath, end);
     });
 
     const entry: DownloadEntry = {

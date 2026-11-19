@@ -27,7 +27,6 @@ export interface DownloadItem {
   saveTo: (file: string) => void;
   /** Stops it; Chromium removes what it had written. */
   cancel: () => void;
-  onProgress: (listener: () => void) => void;
   /** Once, however it ends. */
   onDone: (listener: (end: DownloadEnd) => void) => void;
 }
@@ -78,13 +77,6 @@ const wrap = (item: Electron.DownloadItem): DownloadItem => {
     },
     cancel: () => {
       item.cancel();
-    },
-    onProgress: (listener) => {
-      item.on("updated", (_event, state) => {
-        if (state === "progressing") {
-          listener();
-        }
-      });
     },
     onDone: (listener) => {
       ended.add(listener);

@@ -42,7 +42,7 @@ const entry = (
 interface FakeItem extends DownloadItem {
   savedTo: string | undefined;
   cancelled: boolean;
-  /** Bytes in so far, as a progress event tells. */
+  /** Bytes in so far, read on the next beat. */
   arrive: (bytes: number) => void;
   end: (how: DownloadEnd) => void;
 }
@@ -53,7 +53,6 @@ const fakeItem = ({
   mimeType = "application/pdf",
   total = 1000,
 }: { fileName?: string; mimeType?: string; total?: number } = {}) => {
-  const progress = new Set<() => void>();
   const done = new Set<(end: DownloadEnd) => void>();
   let received = 0;
   const item: FakeItem = {
@@ -71,18 +70,11 @@ const fakeItem = ({
       item.cancelled = true;
       item.end("cancelled");
     },
-    onProgress: (listener) => {
-      progress.add(listener);
-    },
     onDone: (listener) => {
       done.add(listener);
     },
     arrive: (bytes) => {
       received = bytes;
-
-      for (const listener of progress) {
-        listener();
-      }
     },
     end: (how) => {
       for (const listener of done) {
@@ -261,6 +253,15 @@ describe("taking a download", () => {
     expect(item.savedTo).toBe("/Downloads/Report.pdf");
   });
 
+  it("takes only the last part of a name that reaches out of the folder", () => {
+    const { downloads } = setup();
+    const item = fakeItem({ fileName: "../x.pdf" });
+
+    downloads.take(item);
+
+    expect(item.savedTo).toBe("/Downloads/x.pdf");
+  });
+
   it("gives a name without an extension the one of its type", () => {
     const { downloads } = setup();
     const item = fakeItem({ fileName: "invoice" });
@@ -273,7 +274,7 @@ describe("taking a download", () => {
 
 describe("the total and the button", () => {
   it("fills with the total of those running, and none once all ended", async () => {
-    const { downloads, progress, land } = setup();
+    const { downloads, progress, land, beat } = setup();
     const first = fakeItem({ total: 1000 });
     const second = fakeItem({ fileName: "b.pdf", total: 3000 });
 
@@ -281,6 +282,7 @@ describe("the total and the button", () => {
     downloads.take(second);
     first.arrive(1000);
     second.arrive(1000);
+    beat();
 
     expect(progress.at(-1)).toBe(0.5);
     expect(downloads.shellSlice().button).toStrictEqual({
@@ -307,12 +309,18 @@ describe("the total and the button", () => {
     const item = fakeItem({ total: 1000 });
 
     downloads.take(item);
-    // Arrived with no progress event, as before Chromium writes it.
-    item.received = () => 250;
+    item.arrive(250);
     beat();
 
     expect(progress.at(-1)).toBe(0.25);
     expect(repeating.size).toBe(1);
+
+    // A beat that finds nothing new leaves the Dock's bar alone.
+    const told = progress.length;
+
+    beat();
+
+    expect(progress).toHaveLength(told);
 
     item.end("completed");
     await settle();
