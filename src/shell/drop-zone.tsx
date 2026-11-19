@@ -2,6 +2,7 @@ import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 
 import type { ShellState } from "#contract/shell.ts";
+import { Badge } from "#ui/badge.tsx";
 
 /**
  * What a tab dragged over the pages would do, drawn in the overlay's view
@@ -59,14 +60,17 @@ export const DropZone = ({
           "bg-black/35 outline-2 -outline-offset-2 outline-white/85 outline-dashed"
       )}
     >
-      <span
+      {/* Secondary, the variant whose fill is opaque, so it reads over any
+          page; the destructive one is see-through. */}
+      <Badge
+        variant="secondary"
         className={cn(
-          "absolute top-1/2 left-1/2 -translate-1/2 rounded-md bg-popover px-2 py-1 text-xs leading-4 font-medium whitespace-nowrap text-popover-foreground shadow-md ring-1 ring-foreground/10",
+          "absolute top-1/2 left-1/2 -translate-1/2",
           !fits && "text-destructive"
         )}
       >
         {label}
-      </span>
+      </Badge>
     </div>
   );
 };
