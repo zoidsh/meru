@@ -50,6 +50,14 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may capture its tray in place of showing one",
     },
     {
+      marker: "meruTestDownloadFiles",
+      why: "only the end-to-end build may save downloads in a folder of its own and capture what it opens in place of opening it",
+    },
+    {
+      marker: "meruTestDownloadSignals",
+      why: "only the end-to-end build may capture Dock and taskbar progress in place of showing it",
+    },
+    {
       marker: "meruTestClipboard",
       why: "only the end-to-end build may capture clipboard writes in place of making them",
     },
