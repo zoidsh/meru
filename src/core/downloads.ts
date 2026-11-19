@@ -169,7 +169,8 @@ const INNER_EXTENSIONS = new Set(["tar"]);
 
 /**
  * The name split where a counter goes: before its extension, a compound one
- * kept whole, and after an earlier counter, which is returned to count on.
+ * kept whole. A number in brackets the name already ends in is part of it,
+ * as Chrome has it: a second `Tax return (2023).pdf` is `Tax return (2023) (1).pdf`.
  */
 const splitName = (fileName: string) => {
   const parts = fileName.split(".");
@@ -183,20 +184,13 @@ const splitName = (fileName: string) => {
 
   const stem = parts.slice(0, at).join(".");
   const extension = at < parts.length ? `.${parts.slice(at).join(".")}` : "";
-  const counted = /^(?<base>.*) \((?<count>\d+)\)$/u.exec(stem);
 
-  return counted?.groups
-    ? {
-        base: counted.groups.base ?? "",
-        count: Number(counted.groups.count),
-        extension,
-      }
-    : { base: stem, count: 0, extension };
+  return { base: stem, extension };
 };
 
 /**
  * `fileName`, or the first of `name (1).ext`, `name (2).ext` and on that is
- * not taken; a name that already ends in a counter counts on from it.
+ * not taken.
  */
 export const unusedName = (
   fileName: string,
@@ -206,9 +200,9 @@ export const unusedName = (
     return fileName;
   }
 
-  const { base, count, extension } = splitName(fileName);
+  const { base, extension } = splitName(fileName);
 
-  for (let next = count + 1; ; next += 1) {
+  for (let next = 1; ; next += 1) {
     const candidate = `${base} (${next})${extension}`;
 
     if (!taken(candidate)) {

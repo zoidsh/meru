@@ -168,8 +168,10 @@ describe("naming a download", () => {
     );
   });
 
-  it("counts on from a counter the name already has", () => {
-    expect(unusedName("a (3).pdf", takenOf("a (3).pdf"))).toBe("a (4).pdf");
+  it("keeps a number in brackets the name already has, as Chrome does", () => {
+    expect(
+      unusedName("Tax return (2023).pdf", takenOf("Tax return (2023).pdf"))
+    ).toBe("Tax return (2023) (1).pdf");
   });
 
   it("names one without an extension, or hidden, by its whole name", () => {
