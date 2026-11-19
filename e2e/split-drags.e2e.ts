@@ -381,8 +381,8 @@ test("a tab dragged out of the box by a full-width line leaves the split for tha
     .poll(() => drawn(shell).then(({ box }) => box))
     .toStrictEqual(["gmail", "c", "o", "d"]);
 
-  // Pinned, the box is first in the pinned area, and the list holds `s`
-  // alone: `o` above it, then `d` below it, at the list's end.
+  // Pinned, the box stands at Gmail's place, all the pinned area holds, and
+  // the list holds `s` alone: `o` above it, then `d` below it, at the list's end.
   await dragTo(shell, "o", await pointOf(shell, "s", 0.1));
   await expect
     .poll(() => storedPanes(userDataDir))

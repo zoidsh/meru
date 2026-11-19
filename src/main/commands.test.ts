@@ -621,7 +621,7 @@ describe("the command registry", () => {
     expect(app.isAvailable("tab.pinned.2")).toBeFalsy();
   });
 
-  it("numbers the pinned tabs as drawn, a split's box holding one first", () => {
+  it("numbers the pinned tabs as drawn, a split's box at its pinned tab's place, Gmail first where it stands first", () => {
     const app = setup({
       ...twoProfiles,
       profiles: [
@@ -649,8 +649,8 @@ describe("the command registry", () => {
     const label = (id: string) => commandOf(id).label?.(app.context());
 
     expect([label("tab.pinned.1"), label("tab.pinned.2")]).toStrictEqual([
-      "Drive",
       "Gmail",
+      "Drive",
     ]);
   });
 

@@ -7,10 +7,13 @@ interface DrawnTab {
   pinned?: boolean | undefined;
 }
 
-/** One place in an area of the sidebar: a tab, or a split's box of tabs. */
+/**
+ * One place in an area of the sidebar: a tab, or a split's box of tabs,
+ * which stands at the place of `place`, one of its tabs.
+ */
 export type SidebarItem<T extends DrawnTab> =
   | { kind: "tab"; tab: T }
-  | { kind: "box"; tabs: T[] };
+  | { kind: "box"; tabs: T[]; place: T };
 
 export interface SidebarLayout<T extends DrawnTab> {
   pinned: SidebarItem<T>[];
@@ -21,10 +24,11 @@ export interface SidebarLayout<T extends DrawnTab> {
 
 /**
  * The sidebar's two areas as drawn, from the shown tabs in stored order and
- * each split's box in its own order, in the splits' order. Every box
- * holding a pinned tab goes first in the pinned area, in the splits' order,
- * before the plain pinned tiles; any other goes in the list where its first
- * tab stands. A box of fewer than two shown tabs is none.
+ * each split's box in its own order, in the splits' order. A box stands
+ * where its first pinned tab stands, in the pinned area, and one with none
+ * where its first tab stands, in the list; its other tabs have no place of
+ * their own, so forming a split moves nothing ahead of the tabs above it. A
+ * box of fewer than two shown tabs is none.
  */
 export const sidebarLayout = <T extends DrawnTab>(
   tabs: readonly T[],
@@ -37,26 +41,32 @@ export const sidebarLayout = <T extends DrawnTab>(
     .filter((box) => box.length > 1);
   const items = new Map(
     drawnBoxes.flatMap((box) => {
-      const item: SidebarItem<T> = { kind: "box", tabs: box };
+      const stored = tabs.filter((tab) => box.includes(tab));
+      const place = stored.find(isPinned) ?? stored[0];
+
+      if (!place) {
+        return [];
+      }
+
+      const item: SidebarItem<T> = { kind: "box", tabs: box, place };
 
       return box.map((tab) => [tab.id, item] as const);
     })
   );
   const layout: SidebarLayout<T> = {
-    pinned: drawnBoxes
-      .filter((box) => box.some(isPinned))
-      .map((box) => items.get(box[0]?.id ?? "") as SidebarItem<T>),
+    pinned: [],
     listed: [],
     boxes: drawnBoxes,
   };
 
   for (const tab of tabs) {
     const item = items.get(tab.id);
+    const area = layout[isPinned(tab) ? "pinned" : "listed"];
 
     if (!item) {
-      layout[isPinned(tab) ? "pinned" : "listed"].push({ kind: "tab", tab });
-    } else if (!layout.pinned.includes(item) && !layout.listed.includes(item)) {
-      layout.listed.push(item);
+      area.push({ kind: "tab", tab });
+    } else if (item.kind === "box" && item.place === tab) {
+      area.push(item);
     }
   }
 
@@ -83,8 +93,29 @@ export const drawnTabs = (profile: Pick<Profile, "tabs" | "splits">): Tab[] => {
 };
 
 /**
- * Whether the pinned tile at `index` of `count` spans both columns of the
- * wide sidebar's two: the last of an odd count, alone in its row.
+ * The pinned area's tiles in runs, each box between two runs: the wide
+ * sidebar's grid gives a box a row of its own and fills rows with each run
+ * anew.
+ */
+export const pinnedRuns = <T extends DrawnTab>(
+  items: readonly SidebarItem<T>[]
+): T[][] => {
+  const runs: T[][] = [[]];
+
+  for (const item of items) {
+    if (item.kind === "box") {
+      runs.push([]);
+    } else {
+      runs.at(-1)?.push(item.tab);
+    }
+  }
+
+  return runs.filter((run) => run.length > 0);
+};
+
+/**
+ * Whether the pinned tile at `index` of a run of `count` spans both columns
+ * of the wide sidebar's two: the last of an odd count, alone in its row.
  */
 export const spansPinnedRow = (index: number, count: number) =>
   count % 2 === 1 && index === count - 1;

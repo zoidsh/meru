@@ -197,8 +197,72 @@ describe(sidebarDrop, () => {
   });
 });
 
+describe("sidebarDrop with a box between pinned tiles", () => {
+  // Pinned g, the box of pinned p and a not pinned, and pinned r, down a
+  // 32px-wide column.
+  const g = tile("g", 16, 0);
+  const p = tile("p", 16, 46);
+  const a = tile("a", 16, 86);
+  const r = tile("r", 16, 132);
+  const box = { left: 13, top: 40, right: 51, bottom: 124 };
+  const tabs = [
+    { ...g, inBox: undefined },
+    { ...p, inBox: 0 },
+    { ...a, inBox: 0 },
+    { ...r, inBox: undefined },
+  ];
+  const drop = (id: string, y: number) => {
+    const inBox = tabs.find((each) => each.id === id)?.inBox;
+    const result = sidebarDrop({
+      dragged: { id, pinned: id !== "a", inBox },
+      point: { x: 30, y },
+      tabs,
+      boxes: [{ box, rows: [a] }],
+      area: [g, { id: "p", box }, r],
+    });
+
+    return (
+      result && [
+        result.kind,
+        "target" in result ? result.target : (result.before ?? "end"),
+      ]
+    );
+  };
+
+  it("moves a tile past the box as past one place, above it or below it", () => {
+    expect([
+      drop("r", 36),
+      drop("r", 2),
+      drop("g", 128),
+      drop("g", 200),
+      drop("r", 128),
+    ]).toStrictEqual([
+      ["move", "p"],
+      ["move", "g"],
+      ["move", "r"],
+      ["move", "end"],
+      undefined,
+    ]);
+  });
+
+  it("rings a tab of the box under a tile dragged onto it", () => {
+    expect([drop("r", 62), drop("g", 102)]).toStrictEqual([
+      ["onto", "p"],
+      ["onto", "a"],
+    ]);
+  });
+
+  it("moves a pinned tab of the box out of it above or below it, and not at all within it", () => {
+    expect([drop("p", 36), drop("p", 128), drop("p", 62)]).toStrictEqual([
+      ["move", "p"],
+      ["move", "r"],
+      undefined,
+    ]);
+  });
+});
+
 describe("sidebarDrop with the box all the pinned area holds", () => {
-  // The box of pinned a and b first in the pinned area, with no list
+  // The box of pinned a and b, all the pinned area holds, with no list
   // drawn, then New tab at 200.
   const a = tile("a", 16, 6);
   const b = tile("b", 16, 46);
@@ -217,7 +281,7 @@ describe("sidebarDrop with the box all the pinned area holds", () => {
       point: { x: 30, y },
       tabs,
       boxes: [{ box, rows: pinned ? [] : [b] }],
-      area: withArea ? [] : undefined,
+      area: withArea ? [{ id: "a", box }] : undefined,
       noList: pinned ? undefined : noList,
     });
 

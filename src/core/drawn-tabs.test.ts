@@ -4,6 +4,7 @@ import {
   drawnTabs,
   listRoom,
   moveStep,
+  pinnedRuns,
   sidebarLayout,
   sideways,
   spansPinnedRow,
@@ -62,19 +63,57 @@ describe(sidebarLayout, () => {
     ]);
   });
 
-  it("puts every box holding a pinned tab first in the pinned area, in the splits' order", () => {
+  it("puts a box holding a pinned tab in the pinned area where that tab stands, below the pinned tabs above it", () => {
+    expect([layout(["q", "c"]), layout(["p", "a"])]).toStrictEqual([
+      [
+        ["g", "p", "[q c]"],
+        ["a", "b", "n"],
+      ],
+      [
+        ["g", "[p a]", "q"],
+        ["b", "c", "n"],
+      ],
+    ]);
+  });
+
+  it("puts a box where its first pinned tab stands, whatever its own order and wherever its other tabs stand", () => {
+    expect([layout(["q", "g"]), layout(["c", "q", "p"])]).toStrictEqual([
+      [
+        ["[q g]", "p"],
+        ["a", "b", "c", "n"],
+      ],
+      [
+        ["g", "[c q p]"],
+        ["a", "b", "n"],
+      ],
+    ]);
+  });
+
+  it("puts two boxes each at its own place, in the pinned area and the list", () => {
     expect([
       layout(["q", "c"], ["p", "a"]),
       layout(["q", "c"], ["n", "a"]),
     ]).toStrictEqual([
       [
-        ["[q c]", "[p a]", "g"],
+        ["g", "[p a]", "[q c]"],
         ["b", "n"],
       ],
       [
-        ["[q c]", "g", "p"],
+        ["g", "p", "[q c]"],
         ["[n a]", "b"],
       ],
+    ]);
+  });
+
+  it("leaves a tab not pinned in the list where it stands, a pinned one first in a box below it", () => {
+    const { pinned, listed } = sidebarLayout(
+      [tab("g"), tab("p", true), tab("a"), tab("b")],
+      [["p", "a"]]
+    );
+
+    expect([names(pinned), names(listed)]).toStrictEqual([
+      ["[p a]"],
+      ["g", "b"],
     ]);
   });
 
@@ -149,6 +188,44 @@ describe(drawnTabs, () => {
         ],
       }).map(({ id }) => id)
     ).toStrictEqual(["gmail", "c", "a", "n", "b"]);
+  });
+});
+
+describe(pinnedRuns, () => {
+  it("is the pinned tiles in runs between boxes, each run filling the wide grid's rows anew", () => {
+    const { pinned } = sidebarLayout(
+      [
+        tab("g", true),
+        tab("p", true),
+        tab("q", true),
+        tab("r", true),
+        tab("a"),
+      ],
+      [["p", "a"]]
+    );
+    const runs = pinnedRuns(pinned);
+
+    expect([
+      runs.map((run) => run.map(({ id }) => id)),
+      runs.map((run) =>
+        run.map((_, index) => spansPinnedRow(index, run.length))
+      ),
+      pinnedRuns([]),
+    ]).toStrictEqual([[["g"], ["q", "r"]], [[true], [false, false]], []]);
+  });
+
+  it("starts with a box first, and ends with one last, with no empty run", () => {
+    const { pinned } = sidebarLayout(
+      [tab("g", true), tab("p", true), tab("q", true), tab("a"), tab("b")],
+      [
+        ["g", "a"],
+        ["q", "b"],
+      ]
+    );
+
+    expect(
+      pinnedRuns(pinned).map((run) => run.map(({ id }) => id))
+    ).toStrictEqual([["p"]]);
   });
 });
 

@@ -997,4 +997,38 @@ describe("the sidebar's drops on a split", () => {
       next?.profiles[0]?.tabs.find((each) => "id" in each && each.id === "b"),
     ]).toStrictEqual([undefined, { ...tab("b"), pinned: true }]);
   });
+
+  it("lands a pinned tab moved out above its own box before the box's next pinned tab, or where it stood with none left pinned", () => {
+    const pinned = (id: string) => ({ ...tab(id), pinned: true });
+    const two = state(
+      profile("a", split("d", "b", "a"), [
+        pinned("a"),
+        pinned("b"),
+        tab("c"),
+        tab("d"),
+      ])
+    );
+    const one = state(
+      profile("a", split("c", "b", "d"), [
+        pinned("a"),
+        tab("c"),
+        pinned("b"),
+        tab("d"),
+      ])
+    );
+
+    expect([
+      [
+        order(moveTab(two, key("a"), "a")),
+        of(moveTab(two, key("a"), "a"))?.split,
+      ],
+      [
+        order(moveTab(one, key("b"), "b")),
+        of(moveTab(one, key("b"), "b"))?.split,
+      ],
+    ]).toStrictEqual([
+      [["gmail", "a", "b", "c", "d"], split("d", "b")],
+      [["gmail", "a", "c", "b", "d"], split("c", "d")],
+    ]);
+  });
 });

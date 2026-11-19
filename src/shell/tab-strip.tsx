@@ -20,6 +20,7 @@ import {
   itemTabs,
   listRoom,
   moveStep,
+  pinnedRuns,
   sidebarLayout,
   sideways,
   spansPinnedRow,
@@ -242,18 +243,48 @@ const openTabMenu = (
   shellCalls().openTabMenu({ profileId, tabId, ...wholePoint(x, y) });
 };
 
+const isTile = (element: Element | null): element is HTMLElement =>
+  element instanceof HTMLElement && element.getAttribute("role") === "tab";
+
+const boxesIn = (items: SidebarItem<ShellTab>[]) =>
+  items.filter((item) => item.kind === "box");
+
+// Where a tab moved beside a box lands: next to the tab whose place the box
+// takes.
+const placeOf = (item: SidebarItem<ShellTab> | undefined) =>
+  item?.kind === "box" ? item.place.id : item?.tab.id;
+
+/** The tile and the tiles beside it in the grid with no split's box between. */
+const runOf = (tab: HTMLElement) => {
+  const run = [tab];
+
+  for (
+    let element = tab.previousElementSibling;
+    isTile(element);
+    element = element.previousElementSibling
+  ) {
+    run.unshift(element);
+  }
+
+  for (
+    let element = tab.nextElementSibling;
+    isTile(element);
+    element = element.nextElementSibling
+  ) {
+    run.push(element);
+  }
+
+  return run;
+};
+
 /** Left or Right on a wide pinned tile: the other tile of its row, if any. */
 const focusSideways = (tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => {
-  // The tiles alone: a split's box before them in the grid is no tile.
-  const tiles = [
-    ...(tab.parentElement?.querySelectorAll<HTMLElement>(
-      ':scope > [role="tab"]'
-    ) ?? []),
-  ];
-  const other = sideways(tiles.indexOf(tab), key);
+  // A box takes a row of its own, and the tiles after it fill rows anew.
+  const run = runOf(tab);
+  const other = sideways(run.indexOf(tab), key);
 
   if (other !== undefined) {
-    tiles[other]?.focus();
+    run[other]?.focus();
   }
 };
 
@@ -712,9 +743,8 @@ const ListedTab = ({
  * A split's box: its pinned tabs as tiles, then its other tabs, then,
  * while the split shows one pane alone, the button that restores the rest,
  * selecting `restoring`. Its tabs are not the area's own, so a drag passes
- * them by; in the list the box is one place to land above or below,
- * standing for its first stored tab, and in the pinned area, where the
- * boxes come first, none.
+ * them by; the box is one place of its area to land above or below,
+ * standing for the tab whose place it takes.
  */
 const SplitBox = ({
   tabs,
@@ -868,24 +898,17 @@ export const Sidebar = ({
   const boxed = new Set(boxOfTab.keys());
   const boxRowsOf = (tab: ShellTab) =>
     (boxOfTab.get(tab.id) ?? []).filter((each) => !each.pinned);
-  // Boxes in the pinned area come first, so no tab moves past them.
-  const pinnedBoxes = layout.pinned.flatMap((item) =>
-    item.kind === "box" ? [item.tabs] : []
+  // Counted run by run: a box takes a row of its own.
+  const spanning = new Set(
+    pinnedRuns(layout.pinned).flatMap((run) =>
+      run.filter((_, index) => spansPinnedRow(index, run.length))
+    )
   );
-  const listedBoxes = layout.listed.filter((item) => item.kind === "box");
-  const pinnedTabs = layout.pinned.flatMap((item) =>
-    item.kind === "tab" ? [item] : []
-  );
-  // Where a tab moved beside a box lands: next to its first stored tab,
-  // since the box stands where that one does.
-  const firstOf = (box: readonly ShellTab[]) =>
-    tabs.tabs.find((tab) => box.includes(tab))?.id;
-  const placeOf = (item: SidebarItem<ShellTab> | undefined) =>
-    item?.kind === "box" ? firstOf(item.tabs) : item?.tab.id;
   const maximizedOf = (box: readonly ShellTab[]) =>
     tabs.boxes.find((each) => each.tabs.includes(box[0]?.id ?? ""))
       ?.maximized === true;
-  const areaOf = (tab: ShellTab) => (tab.pinned ? pinnedTabs : layout.listed);
+  const areaOf = (tab: ShellTab) =>
+    tab.pinned ? layout.pinned : layout.listed;
   const close = (tabId: string) => {
     shellCalls().closeTab({ profileId, tabId });
   };
@@ -1150,17 +1173,21 @@ export const Sidebar = ({
 
   // Keyed by its place among the area's boxes, which a move within it
   // keeps, so a moved tab keeps its focus; a split has no id of its own.
-  const box = (tabsOfBox: ShellTab[], inList: boolean, place: number) => (
+  const box = (
+    item: Extract<SidebarItem<ShellTab>, { kind: "box" }>,
+    items: SidebarItem<ShellTab>[],
+    inList: boolean
+  ) => (
     <SplitBox
-      key={`split box ${inList ? "listed" : "pinned"} ${place}`}
-      tabs={tabsOfBox}
+      key={`split box ${inList ? "listed" : "pinned"} ${boxesIn(items).indexOf(item)}`}
+      tabs={item.tabs}
       profileId={profileId}
       restoring={
-        tabsOfBox.find((tab) => tab.id === tabs.selectedTabId) ?? tabsOfBox[0]
+        item.tabs.find((tab) => tab.id === tabs.selectedTabId) ?? item.tabs[0]
       }
       wide={wide}
-      maximized={maximizedOf(tabsOfBox)}
-      dropId={inList ? firstOf(tabsOfBox) : undefined}
+      maximized={maximizedOf(item.tabs)}
+      dropId={item.place.id}
       tile={(tab, cell) => button(tab, true, cell)}
       listed={listedTab}
     />
@@ -1241,14 +1268,14 @@ export const Sidebar = ({
                 inset
               )}
             >
-              {pinnedBoxes.map((each, place) => box(each, false, place))}
-              {pinnedTabs.map(({ tab }, index) =>
-                button(tab, true, {
-                  // Counted among the tiles alone: the box takes its own row.
-                  spansRow: wide && spansPinnedRow(index, pinnedTabs.length),
-                  grid: wide,
-                  dropId: tab.id,
-                })
+              {layout.pinned.map((item) =>
+                item.kind === "box"
+                  ? box(item, layout.pinned, false)
+                  : button(item.tab, true, {
+                      spansRow: wide && spanning.has(item.tab),
+                      grid: wide,
+                      dropId: item.tab.id,
+                    })
               )}
             </div>
           </ScrollArea>
@@ -1270,7 +1297,7 @@ export const Sidebar = ({
             >
               {layout.listed.map((item) =>
                 item.kind === "box"
-                  ? box(item.tabs, true, listedBoxes.indexOf(item))
+                  ? box(item, layout.listed, true)
                   : listedTab(item.tab)
               )}
             </div>

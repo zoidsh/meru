@@ -490,6 +490,11 @@ test("a split that would leave a pane under the minimum is refused with a toast,
 });
 
 const PINNED_DOCS = "Docs pinned";
+const PINNED_SHEETS = "Sheets pinned";
+// Drive's, as a pinned tab a showing split holds: a Docs tab would load
+// Google's own page, since the stand-in's address is not one Docs claims.
+const PINNED_DRIVE = "Drive pinned";
+const PINNED_FILES = "Files pinned";
 const SLIDES = "Slides listed";
 const LISTED_SHEETS = "Sheets listed";
 
@@ -664,7 +669,7 @@ test("a split's tabs sit in one box in the list where its first tab was, in read
     });
 });
 
-test("a split holding a pinned tab puts its box first in the pinned area, its pinned tabs first, narrow and wide; separating ends it", async ({
+test("a split holding a pinned tab puts its box at that tab's place in the pinned area, its pinned tabs first, narrow and wide; separating ends it", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -706,6 +711,121 @@ test("a split holding a pinned tab puts its box first in the pinned area, its pi
       box: [],
       area: undefined,
     });
+});
+
+test("a split holding a pinned tab below another stands at that tab's place in the pinned area, narrow and wide; a tile moves past it as past one place, by the keyboard and by a drag, and dropped onto it joins it", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          {
+            id: "gmail",
+            app: "gmail",
+            url: standIn.url,
+            title: "",
+            pinned: true,
+          },
+          {
+            id: "k",
+            app: "drive",
+            url: standIn.driveUrl,
+            title: PINNED_DRIVE,
+            pinned: true,
+          },
+          {
+            id: "q",
+            app: "drive",
+            url: standIn.driveUrl,
+            title: PINNED_FILES,
+            pinned: true,
+          },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: CALENDAR_TITLE,
+          },
+          {
+            id: "o",
+            app: "sheets",
+            url: standIn.driveUrl,
+            title: LISTED_SHEETS,
+          },
+        ],
+        selectedTabId: "c",
+        splits: [{ root: row("k", "c") }],
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const files = tab(shell, PINNED_FILES);
+  const drawn = (...ids: string[]) =>
+    expect
+      .poll(() => sidebarOrder(shell).then(({ tabs }) => tabs))
+      .toStrictEqual([...ids, "o"]);
+  // Gmail's tile above the box, the box's top below the tile's bottom.
+  const boxBelowGmail = () =>
+    shell.evaluate(() => {
+      const gmail = document
+        .querySelector('[data-tab-area="pinned"] > [data-tab-id="gmail"]')
+        ?.getBoundingClientRect();
+      const box = document
+        .querySelector("[data-split-box]")
+        ?.getBoundingClientRect();
+
+      return gmail && box ? box.top >= gmail.bottom : undefined;
+    });
+
+  await findPage(app, standIn.calendarUrl);
+  await expect
+    .poll(() => sidebarOrder(shell))
+    .toStrictEqual({
+      tabs: ["gmail", "k", "c", "q", "o"],
+      box: ["k", "c"],
+      area: "pinned",
+    });
+  expect(await boxBelowGmail()).toBe(true);
+
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
+  await expect(
+    shell.getByRole("button", { name: "Collapse sidebar" })
+  ).toHaveCount(1);
+  await drawn("gmail", "k", "c", "q");
+  expect(await boxBelowGmail()).toBe(true);
+  await shell.getByRole("button", { name: "Collapse sidebar" }).click();
+
+  await files.focus();
+  await files.press("Alt+ArrowUp");
+  await drawn("gmail", "q", "k", "c");
+  await expect(files).toBeFocused();
+  await files.press("Alt+ArrowUp");
+  await drawn("q", "gmail", "k", "c");
+  await files.press("Alt+ArrowDown");
+  await drawn("gmail", "q", "k", "c");
+  await files.press("Alt+ArrowDown");
+  await drawn("gmail", "k", "c", "q");
+  await expect(files).toBeFocused();
+
+  // The box's top and bottom edges are the gaps above and below it.
+  await dragTo(shell, files, await pointOfBox(shell, 0.05));
+  await drawn("gmail", "q", "k", "c");
+  await dragTo(shell, files, await pointOfBox(shell, 0.95));
+  await drawn("gmail", "k", "c", "q");
+
+  await dragTo(shell, files, await middleOf(tab(shell, CALENDAR_TITLE)));
+  await expect
+    .poll(() => sidebarOrder(shell).then(({ box }) => box.toSorted()))
+    .toStrictEqual(["c", "k", "q"]);
+  await drawn("gmail", "k", "q", "c");
 });
 
 test("a tab outside moves past a box in the list as past one place, above or below it and never into it, by the keyboard and by a drag", async ({
@@ -785,7 +905,7 @@ test("a tab outside moves past a box in the list as past one place, above or bel
   await drawn("s", "d", "c", "o");
 });
 
-test("Left and Right in the wide pinned grid go between the two tiles of a row, counted after a box first in the pinned area", async ({
+test("Left and Right in the wide pinned grid go between the two tiles of a row, the tiles after a box filling rows anew", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -811,8 +931,8 @@ test("Left and Right in the wide pinned grid go between the two tiles of a row, 
             title: "",
             pinned: true,
           },
-          pinnedTab("k", "docs", PINNED_DOCS),
-          pinnedTab("q", "sheets", "Sheets pinned"),
+          pinnedTab("k", "drive", PINNED_DRIVE),
+          pinnedTab("q", "sheets", PINNED_SHEETS),
           pinnedTab("r", "slides", "Slides pinned"),
           {
             id: "c",
@@ -822,7 +942,7 @@ test("Left and Right in the wide pinned grid go between the two tiles of a row, 
           },
         ],
         selectedTabId: "c",
-        splits: [{ root: row("c", "gmail") }],
+        splits: [{ root: row("k", "c") }],
       },
     ],
     selectedProfileId: "p",
@@ -830,25 +950,27 @@ test("Left and Right in the wide pinned grid go between the two tiles of a row, 
 
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
-  const docs = tab(shell, PINNED_DOCS);
-  const sheets = tab(shell, "Sheets pinned");
+  const sheets = tab(shell, PINNED_SHEETS);
   const slides = tab(shell, "Slides pinned");
 
   await findPage(app, standIn.calendarUrl);
   await shell.getByRole("button", { name: "Expand sidebar" }).click();
+  // Gmail alone in its row, the box in its own, then Sheets and Slides.
   await expect
     .poll(() => sidebarOrder(shell))
-    .toMatchObject({ area: "pinned", box: ["gmail", "c"] });
+    .toStrictEqual({
+      tabs: ["gmail", "k", "c", "q", "r"],
+      box: ["k", "c"],
+      area: "pinned",
+    });
 
-  await docs.focus();
-  await docs.press("ArrowRight");
+  await sheets.focus();
+  await sheets.press("ArrowLeft");
   await expect(sheets).toBeFocused();
   await sheets.press("ArrowRight");
-  await expect(sheets).toBeFocused();
-  await sheets.press("ArrowLeft");
-  await expect(docs).toBeFocused();
-  await slides.focus();
-  await slides.press("ArrowRight");
-  await slides.press("ArrowLeft");
   await expect(slides).toBeFocused();
+  await slides.press("ArrowRight");
+  await expect(slides).toBeFocused();
+  await slides.press("ArrowLeft");
+  await expect(sheets).toBeFocused();
 });

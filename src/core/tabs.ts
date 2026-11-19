@@ -424,22 +424,34 @@ export const updatePages = (
 };
 
 /**
- * The tab `before` names as a tab moving out of its split lands before it:
+ * The tab `before` names as `tab` moving out of its split lands before it:
  * a tab of a box stands for that box, which the sidebar draws where its
- * first stored tab other than the moving one stands.
+ * first pinned tab other than the moving one stands, else its first such.
+ * A box left in the other area is no place in this one, so the tab stays
+ * where it is.
  */
 const placeBefore = (
   profile: Profile,
-  tabId: string,
+  tab: Tab,
   before: string | undefined
 ) => {
   const box = before === undefined ? undefined : splitOf(profile, before);
-  const boxed = new Set(box ? paneTabs(box.root) : []);
 
-  return box
-    ? (knownTabs(profile).find((tab) => tab.id !== tabId && boxed.has(tab.id))
-        ?.id ?? before)
-    : before;
+  if (!box) {
+    return before;
+  }
+
+  const boxed = new Set(paneTabs(box.root));
+  const others = knownTabs(profile).filter(
+    (other) => other !== tab && boxed.has(other.id)
+  );
+  const place = others.find(isPinned) ?? others[0];
+
+  if (!place) {
+    return before;
+  }
+
+  return isPinned(place) === isPinned(tab) ? place.id : tab.id;
 };
 
 /**
@@ -461,10 +473,15 @@ export const moveTab = (
         const shown = knownTabs(profile);
         const tab = shown.find((candidate) => candidate.id === tabId);
         const leaving = isInSplit(profile, tabId);
-        const place = leaving ? placeBefore(profile, tabId, before) : before;
 
-        if (!tab || place === tabId) {
+        if (!tab) {
           return;
+        }
+
+        const place = leaving ? placeBefore(profile, tab, before) : before;
+
+        if (place === tabId) {
+          return leaving ? withoutPane(profile, tabId).profile : undefined;
         }
 
         const area = shown.filter(

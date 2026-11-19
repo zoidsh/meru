@@ -205,8 +205,8 @@ export interface SidebarDropInput {
   boxes: readonly DropBox[];
   /**
    * The places of the area the dragged tab moves in, the pinned tiles or the
-   * list, while the pointer is over it; none elsewhere. A box first in the
-   * pinned area is none of its places.
+   * list, while the pointer is over it, each box one of them; none
+   * elsewhere.
    */
   area?: readonly DropTile[] | undefined;
   /**
@@ -301,23 +301,16 @@ const onto = (target: DropTarget): SidebarDrop => ({
 const areaMove = ({
   dragged,
   point,
-  boxes,
   area,
   noList,
-}: Omit<SidebarDropInput, "tabs">): SidebarDrop | undefined => {
-  const own = dragged.inBox === undefined ? undefined : boxes[dragged.inBox];
-  // A tab of a box has no place of its own among the area's: the box
-  // stands for its first stored tab, which may be this one.
-  const line = area && tabDrop(area, own ? "" : dragged.id, point);
+}: Omit<SidebarDropInput, "tabs" | "boxes">): SidebarDrop | undefined => {
+  // A tab of a box has no place of its own among the area's: the box's
+  // place is that of one of its tabs, which may be this one.
+  const line =
+    area && tabDrop(area, dragged.inBox === undefined ? dragged.id : "", point);
 
   if (line) {
     return { kind: "move", before: line.before, line: line.line };
-  }
-
-  // A pinned tab of a box, where boxes are all the pinned area holds,
-  // lands after its box.
-  if (own && area?.length === 0) {
-    return endLine(own.box, own.box.bottom + GAP / 2);
   }
 
   if (!dragged.pinned && noList && inside(noList.below, point)) {
@@ -371,5 +364,5 @@ export const sidebarDrop = ({
     }
   }
 
-  return areaMove({ dragged, point, boxes, area, noList });
+  return areaMove({ dragged, point, area, noList });
 };

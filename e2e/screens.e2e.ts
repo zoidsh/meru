@@ -888,6 +888,37 @@ test("two splits' boxes, both in the list, and one in the pinned area with one i
   await shootEachWay(app, shell, "split-boxes-pinned-wide");
 });
 
+test("a split's box at its pinned tab's place, between pinned tiles, narrow and wide", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  // The pinned Drive tab boxed with Calendar, below Gmail and above Meet.
+  await writeState(
+    userDataDir,
+    withBox(standIn, {
+      direction: "row",
+      children: [pane(0.5, "k"), pane(0.5, "c1")],
+    })
+  );
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const narrow = shell.getByRole("button", { name: "Collapse sidebar" });
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+
+  if ((await narrow.count()) > 0) {
+    await narrow.click();
+  }
+
+  await rest(shell);
+  await shootEachWay(app, shell, "split-place-narrow");
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
+  await rest(shell);
+  await shootEachWay(app, shell, "split-place-wide");
+});
+
 test("a tab dragged in the split's box: the inset line among its tabs, and the ring on a tab of it", async ({
   launchApp,
   userDataDir,
