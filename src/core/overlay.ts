@@ -142,8 +142,8 @@ const selection = (state: State) => {
 /**
  * The overlay open after `event`. What is underneath changing, another
  * profile or tab selected, closes the rename panel, New tab and the find
- * bar, as does their profile going. The unified inbox,
- * over every profile, keeps its own rules.
+ * bar, as does their profile going. The unified inbox and Downloads, each
+ * over every profile, keep their own rules.
  */
 export const transitionOverlay = (
   current: Overlay | undefined,
