@@ -10,6 +10,7 @@ import {
   findOverlayDocument,
   findPage,
   readMenuItem,
+  readState,
   test,
   writeState,
 } from "./lib/app.ts";
@@ -75,6 +76,13 @@ const menuChecked = async (app: ElectronApplication, id: string) => {
   const { checked } = await readMenuItem(app, id);
 
   return checked;
+};
+
+/** How many downloads `state.json` lists. */
+const listedCount = async (userDataDir: string) => {
+  const { downloads } = await readState<{ downloads?: unknown[] }>(userDataDir);
+
+  return downloads?.length ?? 0;
 };
 
 const exists = async (file: string) => {
@@ -157,11 +165,24 @@ const launch = async (
 
   await gmail.goto(standIn.downloadsUrl);
 
-  return { app, shell, gmail, overlay: await findOverlayDocument(app), folder };
-};
+  /**
+   * Clicks the file's link and waits until main has taken the download,
+   * which Chromium decides on later than the click on Linux.
+   */
+  const download = async (file: DownloadFile) => {
+    const before = await listedCount(userDataDir);
 
-const download = async (gmail: Page, file: DownloadFile) => {
-  await gmail.getByRole("link", { name: DOWNLOAD_LINKS[file] }).click();
+    await gmail.getByRole("link", { name: DOWNLOAD_LINKS[file] }).click();
+    await expect.poll(() => listedCount(userDataDir)).toBe(before + 1);
+  };
+
+  return {
+    app,
+    shell,
+    download,
+    overlay: await findOverlayDocument(app),
+    folder,
+  };
 };
 
 const openCard = async (shell: Page, overlay: Page) => {
@@ -174,7 +195,7 @@ test("shows a download's progress on the titlebar button, the Dock and the card,
   userDataDir,
   standIn,
 }) => {
-  const { app, shell, gmail, overlay, folder } = await launch(
+  const { app, shell, download, overlay, folder } = await launch(
     launchApp,
     userDataDir,
     standIn
@@ -183,7 +204,7 @@ test("shows a download's progress on the titlebar button, the Dock and the card,
   const saved = path.join(folder, DOWNLOAD_FILES.slow.name);
 
   await expect(button).toHaveAttribute("data-downloads", "plain");
-  await download(gmail, "slow");
+  await download("slow");
 
   await expect(button).toHaveAttribute("data-downloads", "running");
   await expect(button).toHaveAccessibleDescription("50% downloaded");
@@ -222,20 +243,20 @@ test("pulses the button while a size is not known, and names a second file of th
   userDataDir,
   standIn,
 }) => {
-  const { app, shell, gmail, overlay, folder } = await launch(
+  const { app, shell, download, overlay, folder } = await launch(
     launchApp,
     userDataDir,
     standIn
   );
 
-  await download(gmail, "unsized");
+  await download("unsized");
   await expect(downloadsButton(shell)).toHaveAccessibleDescription(
     "Downloading"
   );
   await expect.poll(() => readProgress(app)).toContain(null);
 
-  await download(gmail, "small");
-  await download(gmail, "small");
+  await download("small");
+  await download("small");
   await openCard(shell, overlay);
   await expect(row(overlay, "report (1).pdf")).toContainText("2 kB");
   expect(await exists(path.join(folder, "report.pdf"))).toBeTruthy();
@@ -256,13 +277,13 @@ test("cancels a running download from its row, which stays listed as cancelled w
   userDataDir,
   standIn,
 }) => {
-  const { shell, gmail, overlay, folder } = await launch(
+  const { shell, download, overlay, folder } = await launch(
     launchApp,
     userDataDir,
     standIn
   );
 
-  await download(gmail, "stalled");
+  await download("stalled");
   await openCard(shell, overlay);
 
   const running = row(overlay, DOWNLOAD_FILES.stalled.name);
@@ -317,7 +338,7 @@ test("moves through the list with the keys, opens with Enter, removes with Delet
   userDataDir,
   standIn,
 }) => {
-  const { app, shell, gmail, overlay, folder } = await launch(
+  const { app, shell, download, overlay, folder } = await launch(
     launchApp,
     userDataDir,
     standIn,
@@ -330,7 +351,7 @@ test("moves through the list with the keys, opens with Enter, removes with Delet
   );
   const running = DOWNLOAD_FILES.stalled.name;
 
-  await download(gmail, "stalled");
+  await download("stalled");
   await openCard(shell, overlay);
   await expect(row(overlay, running)).toBeFocused();
   await expectFileNames(overlay, [running, "a.pdf", "b.pdf", "c.pdf", "d.pdf"]);
@@ -439,7 +460,7 @@ test("draws the titlebar button and the card in every state, light and dark", as
   onlyWithShots();
 
   const now = Date.now();
-  const { app, shell, gmail, overlay } = await launch(
+  const { app, shell, download, overlay } = await launch(
     launchApp,
     userDataDir,
     standIn,
@@ -474,11 +495,11 @@ test("draws the titlebar button and the card in every state, light and dark", as
 
   await shootButton(shell, app, "plain");
 
-  await download(gmail, "slow");
+  await download("slow");
   await expect(button).toHaveAccessibleDescription("50% downloaded");
   await shootButton(shell, app, "half");
 
-  await download(gmail, "unsized");
+  await download("unsized");
   await expect(button).toHaveAccessibleDescription("Downloading");
   await shootButton(shell, app, "pulsing");
 
@@ -487,8 +508,8 @@ test("draws the titlebar button and the card in every state, light and dark", as
   await expect(button).toHaveAttribute("data-downloads", "finished");
   await shootButton(shell, app, "green");
 
-  await download(gmail, "stalled");
-  await download(gmail, "slow");
+  await download("stalled");
+  await download("slow");
   await openCard(shell, overlay);
   await expect(row(overlay, "archive (1).zip")).toContainText("20 of 40 kB");
   await expect(row(overlay, "Old notes.txt")).toContainText("Moved or deleted");

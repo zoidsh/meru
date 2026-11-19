@@ -40,6 +40,8 @@ export interface DownloadsDeps {
   };
   newId: () => string;
   now?: () => number;
+  /** Runs `run` again and again until the returned function stops it. */
+  repeat?: (run: () => void) => () => void;
   log: (message: string) => void;
 }
 
@@ -49,6 +51,17 @@ interface Running {
   item: DownloadItem;
   path: string;
 }
+
+/** How often the progress shown is read again while anything runs. */
+export const PROGRESS_INTERVAL = 500;
+
+const repeatEvery = (run: () => void) => {
+  const timer = setInterval(run, PROGRESS_INTERVAL);
+
+  return () => {
+    clearInterval(timer);
+  };
+};
 
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -68,6 +81,7 @@ export const createDownloads = ({
   overlay,
   newId,
   now = Date.now,
+  repeat = repeatEvery,
   log,
 }: DownloadsDeps) => {
   const listeners = new Set<() => void>();
@@ -77,6 +91,7 @@ export const createDownloads = ({
   /** Bytes of those that finished since nothing last ran. */
   let finishedBytes = 0;
   let unseen = false;
+  let stopRepeating: (() => void) | undefined;
 
   const notify = () => {
     for (const listener of listeners) {
@@ -105,6 +120,22 @@ export const createDownloads = ({
     signals.progress(progress());
   };
 
+  // Chromium tells of progress only as it writes, which leaves bytes that
+  // arrived before the item was taken untold until more come.
+  const refresh = () => {
+    showProgress();
+    notify();
+  };
+
+  const watchRunning = () => {
+    if (running.size > 0) {
+      stopRepeating ??= repeat(refresh);
+    } else {
+      stopRepeating?.();
+      stopRepeating = undefined;
+    }
+  };
+
   const pathTaken = (folder: string) => {
     const held = new Set(
       [...running.values()].map((each) =>
@@ -130,6 +161,7 @@ export const createDownloads = ({
       finishedBytes = 0;
     }
 
+    watchRunning();
     showProgress();
 
     if (!entry) {
@@ -183,10 +215,8 @@ export const createDownloads = ({
 
     item.saveTo(filePath);
     running.set(id, { item, path: filePath });
-    item.onProgress(() => {
-      showProgress();
-      notify();
-    });
+    watchRunning();
+    item.onProgress(refresh);
     item.onDone((end) => {
       void ended(id, item, end);
     });

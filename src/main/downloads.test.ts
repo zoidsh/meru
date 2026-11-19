@@ -113,6 +113,7 @@ const setup = ({
   let ids = 0;
   let saving: Promise<unknown> = Promise.resolve();
   const disk = new Set(onDisk);
+  const repeating = new Set<() => void>();
   const calls: string[] = [];
   const progress: (number | null | undefined)[] = [];
   const files: DownloadFiles = {
@@ -182,6 +183,13 @@ const setup = ({
       return `d${ids}`;
     },
     now: () => NOW,
+    repeat: (run) => {
+      repeating.add(run);
+
+      return () => {
+        repeating.delete(run);
+      };
+    },
     log: (message) => {
       calls.push(`log ${message}`);
     },
@@ -195,6 +203,13 @@ const setup = ({
     progress,
     disk,
     history: () => historyOf(state),
+    /** One beat of what repeats while anything runs. */
+    beat: () => {
+      for (const run of repeating) {
+        run();
+      }
+    },
+    repeating,
     land: (file: string) => {
       disk.add(file);
     },
@@ -285,6 +300,24 @@ describe("the total and the button", () => {
     await settle();
 
     expect(progress.at(-1)).toBeUndefined();
+  });
+
+  it("reads the progress again while anything runs, and stops once nothing does", async () => {
+    const { downloads, progress, beat, repeating } = setup();
+    const item = fakeItem({ total: 1000 });
+
+    downloads.take(item);
+    // Arrived with no progress event, as before Chromium writes it.
+    item.received = () => 250;
+    beat();
+
+    expect(progress.at(-1)).toBe(0.25);
+    expect(repeating.size).toBe(1);
+
+    item.end("completed");
+    await settle();
+
+    expect(repeating.size).toBe(0);
   });
 
   it("reads as unknown while a size is not known", () => {
