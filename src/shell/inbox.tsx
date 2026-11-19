@@ -494,9 +494,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
               comment:
                 "Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers",
             })}
-            aria-describedby={
-              rows.length === 0 && checked ? emptyId : undefined
-            }
+            aria-describedby={rows.length === 0 ? emptyId : undefined}
             tabIndex={rows.length === 0 ? 0 : -1}
             className="w-full table-fixed border-separate border-spacing-0 outline-none"
           >
@@ -535,26 +533,41 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
               })}
             </tbody>
           </table>
-          {rows.length === 0 && checked && (
+          {rows.length === 0 && (
+            // "No unread" only once a feed has been read; before that, signed
+            // out, loading or offline, nothing is known.
             <Empty id={emptyId}>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <InboxIcon />
                 </EmptyMedia>
                 <EmptyTitle>
-                  {t({
-                    message: "No unread messages",
-                    comment:
-                      "Heading of the unified inbox when no profile has unread mail",
-                  })}
+                  {checked
+                    ? t({
+                        message: "No unread messages",
+                        comment:
+                          "Heading of the unified inbox when no profile has unread mail",
+                      })
+                    : t({
+                        message: "No mail to show yet",
+                        comment:
+                          "Heading of the unified inbox before any profile's mail has been read, as when none is signed in or Meru is offline",
+                      })}
                 </EmptyTitle>
                 <EmptyDescription>
-                  {t({
-                    message:
-                      "Unread mail from all your profiles shows here. A message leaves the list once you read it.",
-                    comment:
-                      "Shown in the unified inbox when no profile has unread mail",
-                  })}
+                  {checked
+                    ? t({
+                        message:
+                          "Unread mail from all your profiles shows here. A message leaves the list once you read it.",
+                        comment:
+                          "Shown in the unified inbox when no profile has unread mail",
+                      })
+                    : t({
+                        message:
+                          "Unread mail appears here once a profile is signed in to Gmail.",
+                        comment:
+                          "Shown in the unified inbox before any profile's mail has been read, as when none is signed in or Meru is offline",
+                      })}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>

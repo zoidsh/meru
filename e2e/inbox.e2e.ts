@@ -184,6 +184,41 @@ test("lists every profile's mail newest first in an overlay over the page, says 
   await expect(shell.getByRole("button", { name: "Reload" })).toBeEnabled();
 });
 
+/** The empty inbox: before any feed has been read, and once one read none unread. */
+const emptyTitle = (overlay: Page, title: string) =>
+  overlay.getByRole("dialog", { name: "Unified inbox" }).getByText(title);
+
+test("says it has no mail to show yet while no profile's feed has been read, and that nothing is unread once one has", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: PROFILES,
+    selectedProfileId: "p0",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const overlay = await findOverlayDocument(app);
+
+  await findPage(app, standIn.url);
+  // An empty grid has no height, so the open card is told by its words.
+  await inboxButton(shell).click();
+  await expect(emptyTitle(overlay, "No mail to show yet")).toBeVisible();
+  await expect(grid(overlay)).toHaveAccessibleDescription(
+    "No mail to show yet Unread mail appears here once a profile is signed in to Gmail."
+  );
+  await expect(emptyTitle(overlay, "No unread messages")).toHaveCount(0);
+
+  standIn.setFeed("persist:p0", { unreadCount: 0, mail: [] });
+  await signIn(app, standIn, "p0");
+  await pollAll(app);
+
+  await expect(emptyTitle(overlay, "No unread messages")).toBeVisible();
+  await expect(emptyTitle(overlay, "No mail to show yet")).toHaveCount(0);
+});
+
 test("opens the selected row's message with Enter in its profile's Gmail, selecting the profile, and a click opens one too", async ({
   launchApp,
   userDataDir,
@@ -425,6 +460,51 @@ const SHOT_MAIL: StandInMail[] = [
     issued: "2025-06-30T09:00:00Z",
   },
 ];
+
+test("draws the empty inbox before and after a feed has been read, light and dark", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  onlyWithShots();
+
+  await writeState(userDataDir, {
+    profiles: PROFILES,
+    selectedProfileId: "p0",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const overlay = await findOverlayDocument(app);
+
+  await findPage(app, standIn.url);
+  // An empty grid has no height, so the open card is told by its words.
+  await inboxButton(shell).click();
+  await expect(emptyTitle(overlay, "No mail to show yet")).toBeVisible();
+
+  for (const theme of THEMES) {
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await emulateTheme(app, theme);
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await shootWindow(
+      app,
+      shell,
+      shotPath("inbox-empty-unread-unknown", theme)
+    );
+  }
+
+  standIn.setFeed("persist:p0", { unreadCount: 0, mail: [] });
+  await signIn(app, standIn, "p0");
+  await pollAll(app);
+  await expect(emptyTitle(overlay, "No unread messages")).toBeVisible();
+
+  for (const theme of THEMES) {
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await emulateTheme(app, theme);
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await shootWindow(app, shell, shotPath("inbox-empty", theme));
+  }
+});
 
 test("draws the inbox, light and dark", async ({
   launchApp,
