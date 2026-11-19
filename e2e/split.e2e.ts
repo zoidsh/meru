@@ -1,5 +1,7 @@
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
 
+import { PANE_GAP, PANE_MINIMUM } from "#core/pane-tree.ts";
+
 import {
   chooseContextMenuItem,
   clickMenuItem,
@@ -759,7 +761,19 @@ test("a split holding a pinned tab below another stands at that tab's place in t
           },
         ],
         selectedTabId: "c",
-        splits: [{ root: row("k", "c") }],
+        // Calendar's pane is halved by the drop onto it, so it is drawn wide
+        // enough for two even in the window a 1024px screen leaves.
+        splits: [
+          {
+            root: {
+              direction: "row",
+              children: [
+                { size: 0.4, pane: "k" },
+                { size: 0.6, pane: "c" },
+              ],
+            },
+          },
+        ],
       },
     ],
     selectedProfileId: "p",
@@ -826,6 +840,12 @@ test("a split holding a pinned tab below another stands at that tab's place in t
   await drawn("gmail", "q", "k", "c");
   await dragTo(shell, files, await pointOfBox(shell, 0.95));
   await drawn("gmail", "k", "c", "q");
+
+  const panes = await drawnPanes(shell);
+
+  expect(
+    panes.find((pane) => pane.tabId === "c")?.bounds.width
+  ).toBeGreaterThanOrEqual(2 * PANE_MINIMUM + PANE_GAP);
 
   await dragTo(shell, files, await middleOf(tab(shell, CALENDAR_TITLE)));
   await expect
