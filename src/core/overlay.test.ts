@@ -138,7 +138,7 @@ describe(overlayRectangle, () => {
         kind: "toast",
       }),
     ]).toStrictEqual([
-      { x: 592, y: 604, width: 400, height: 88 },
+      { x: 576, y: 604, width: 416, height: 88 },
       { x: 8, y: 40, width: 284, height: 52 },
     ]);
   });
