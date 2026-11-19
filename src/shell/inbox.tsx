@@ -32,10 +32,10 @@ import {
   EmptyTitle,
 } from "#ui/empty.tsx";
 
-import { OverlayCard } from "./overlay-card.tsx";
 import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
+import { TitledOverlay, TitledOverlayBody } from "./titled-overlay.tsx";
 
 type InboxState = ShellState["inbox"];
 type Row = InboxState["rows"][number];
@@ -457,108 +457,112 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
   };
 
   return (
-    <OverlayCard kind="inbox" labelledBy={headingId}>
-      <header className="flex h-11 shrink-0 items-center gap-2 pr-2 pl-3">
-        <h2 id={headingId} className="text-base leading-5 font-medium">
-          {t({
-            message: "Unified inbox",
-            comment:
-              "Title of the overlay over the page that lists every profile's unread mail",
-          })}
-        </h2>
-        {rows.length > 0 && (
+    <TitledOverlay
+      kind="inbox"
+      titleId={headingId}
+      title={t({
+        message: "Unified inbox",
+        comment:
+          "Title of the overlay over the page that lists every profile's unread mail",
+      })}
+      action={
+        rows.length > 0 && (
           <Badge variant="secondary" className="tabular-nums">
             {rows.length}
           </Badge>
-        )}
-      </header>
-      <div className="-mx-1 h-px shrink-0 bg-foreground/10" />
-      <output
-        aria-live="polite"
-        className={cn(
-          "mx-1 mt-1 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive",
-          !failure && "sr-only"
-        )}
-      >
-        {failure}
-      </output>
-      <div className="min-h-0 overflow-y-auto pt-1">
-        <table
-          ref={gridRef}
-          // A data grid the keys move through, as ARIA's grid pattern has it.
-          // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
-          role="grid"
-          aria-label={t({
-            message: "Unread messages",
-            comment:
-              "Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers",
-          })}
-          aria-describedby={rows.length === 0 && checked ? emptyId : undefined}
-          tabIndex={rows.length === 0 ? 0 : -1}
-          className="w-full table-fixed border-separate border-spacing-0 outline-none"
+        )
+      }
+    >
+      <TitledOverlayBody>
+        <output
+          aria-live="polite"
+          className={cn(
+            "mb-1 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive",
+            !failure && "sr-only"
+          )}
         >
-          <colgroup>
-            <col className="w-[92px]" />
-            <col className="w-[152px]" />
-            <col />
-            <col className="w-20" />
-          </colgroup>
-          <tbody>
-            {rows.map((row, index) => {
-              const key = keyOf(row);
-
-              return (
-                <InboxRow
-                  key={key}
-                  row={row}
-                  profileName={names.get(row.profileId) ?? ""}
-                  profileColor={colorOf(row.profileId)}
-                  dates={dates}
-                  labels={labels}
-                  selected={key === selectedRowKey}
-                  rowRef={(element) => {
-                    if (element) {
-                      rowRefs.current.set(key, element);
-                    } else {
-                      rowRefs.current.delete(key);
-                    }
-                  }}
-                  onSelect={() => {
-                    select(index);
-                  }}
-                  onKeyDown={onKeyDown}
-                />
-              );
+          {failure}
+        </output>
+        <div className="min-h-0 overflow-y-auto">
+          <table
+            ref={gridRef}
+            // A data grid the keys move through, as ARIA's grid pattern has it.
+            // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
+            role="grid"
+            aria-label={t({
+              message: "Unread messages",
+              comment:
+                "Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers",
             })}
-          </tbody>
-        </table>
-        {rows.length === 0 && checked && (
-          <Empty id={emptyId}>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <InboxIcon />
-              </EmptyMedia>
-              <EmptyTitle>
-                {t({
-                  message: "No unread messages",
-                  comment:
-                    "Heading of the unified inbox when no profile has unread mail",
-                })}
-              </EmptyTitle>
-              <EmptyDescription>
-                {t({
-                  message:
-                    "Unread mail from all your profiles shows here. A message leaves the list once you read it.",
-                  comment:
-                    "Shown in the unified inbox when no profile has unread mail",
-                })}
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        )}
-        <MoreNotes profiles={profiles} />
-      </div>
-    </OverlayCard>
+            aria-describedby={
+              rows.length === 0 && checked ? emptyId : undefined
+            }
+            tabIndex={rows.length === 0 ? 0 : -1}
+            className="w-full table-fixed border-separate border-spacing-0 outline-none"
+          >
+            <colgroup>
+              <col className="w-[92px]" />
+              <col className="w-[152px]" />
+              <col />
+              <col className="w-20" />
+            </colgroup>
+            <tbody>
+              {rows.map((row, index) => {
+                const key = keyOf(row);
+
+                return (
+                  <InboxRow
+                    key={key}
+                    row={row}
+                    profileName={names.get(row.profileId) ?? ""}
+                    profileColor={colorOf(row.profileId)}
+                    dates={dates}
+                    labels={labels}
+                    selected={key === selectedRowKey}
+                    rowRef={(element) => {
+                      if (element) {
+                        rowRefs.current.set(key, element);
+                      } else {
+                        rowRefs.current.delete(key);
+                      }
+                    }}
+                    onSelect={() => {
+                      select(index);
+                    }}
+                    onKeyDown={onKeyDown}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
+          {rows.length === 0 && checked && (
+            <Empty id={emptyId}>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <InboxIcon />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {t({
+                    message: "No unread messages",
+                    comment:
+                      "Heading of the unified inbox when no profile has unread mail",
+                  })}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {t({
+                    message:
+                      "Unread mail from all your profiles shows here. A message leaves the list once you read it.",
+                    comment:
+                      "Shown in the unified inbox when no profile has unread mail",
+                  })}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
+          <MoreNotes profiles={profiles} />
+        </div>
+      </TitledOverlayBody>
+    </TitledOverlay>
   );
 };
 
