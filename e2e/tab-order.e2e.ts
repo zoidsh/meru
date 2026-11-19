@@ -183,7 +183,7 @@ test("a pinned tile moves within the narrow pinned column and the wide pinned gr
     ...LISTED,
   ]);
 
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   // The tiles grow with the sidebar, so they are measured once it is wide.
   await expect
     .poll(() =>
@@ -312,7 +312,7 @@ test("Alt with the arrows moves a focused tab within its area, keeping focus, an
   ]);
   await expect(sheets).toBeFocused();
 
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
 
   const gmail = tab(shell, STAND_IN_TITLE);
 

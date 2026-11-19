@@ -202,11 +202,11 @@ test("each control's title names it and its shortcut, a narrow tab's names the t
   };
 
   await expect.poll(() => description("Reload")).toBe(reloadTitle);
-  await expect.poll(() => description("Widen sidebar")).toBe("");
+  await expect.poll(() => description("Expand sidebar")).toBe("");
 
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await expect(
-    shell.getByRole("button", { name: "Narrow sidebar" })
+    shell.getByRole("button", { name: "Collapse sidebar" })
   ).toBeAttached();
   await expect(calendar).not.toHaveAttribute("title");
 });
@@ -240,7 +240,7 @@ test("with the sidebar wide the first profile button starts where the page does;
     .getByRole("group", { name: "Profiles" })
     .getByRole("button", { name: /^Home/u });
   const reload = bar.getByRole("button", { name: "Reload" });
-  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+  const narrow = shell.getByRole("button", { name: "Collapse sidebar" });
   const pageLeft = async () => {
     const { views } = await readViews(app);
 
@@ -262,7 +262,7 @@ test("with the sidebar wide the first profile button starts where the page does;
   await findPage(app, standIn.url);
 
   if ((await narrow.count()) === 0) {
-    await shell.getByRole("button", { name: "Widen sidebar" }).click();
+    await shell.getByRole("button", { name: "Expand sidebar" }).click();
   }
 
   await expect.poll(pageLeft).toBe(224);

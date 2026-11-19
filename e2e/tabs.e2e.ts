@@ -136,12 +136,12 @@ test("a link opens a tab of its app in the same session, selected; a link to Gma
     CALENDAR_TITLE,
   ]);
   await expect(
-    shell.getByRole("button", { name: "Narrow sidebar" })
+    shell.getByRole("button", { name: "Collapse sidebar" })
   ).toBeAttached();
   await tabs(shell).nth(2).press("Delete");
   await expect(tabs(shell)).toHaveText([STAND_IN_TITLE, CALENDAR_TITLE]);
   await expect(
-    shell.getByRole("button", { name: "Widen sidebar" })
+    shell.getByRole("button", { name: "Expand sidebar" })
   ).toBeAttached();
   await expect(tab(shell, CALENDAR_TITLE)).toBeFocused();
 

@@ -98,7 +98,7 @@ test("the window with the sidebar narrow, wide and hidden", async ({
   await findPage(app, standIn.url);
   await shootEachWay(app, shell, "window-narrow");
 
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest();
   await shootEachWay(app, shell, "window-wide");
 
@@ -180,7 +180,7 @@ for (const { count, signedIn } of [
     await rest();
     await shootEachWay(app, shell, `${surface}-narrow`);
 
-    await shell.getByRole("button", { name: "Widen sidebar" }).click();
+    await shell.getByRole("button", { name: "Expand sidebar" }).click();
     await rest();
     await shootEachWay(app, shell, `${surface}-wide`);
   });
@@ -233,7 +233,7 @@ test("the line a dragged tab would land at, in the list and in the wide pinned g
   await shootEachWay(app, shell, "drag-list");
   await letGo();
 
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await hold("Drive stand-in", "Calendar", 0.1, 0.5);
   await shootEachWay(app, shell, "drag-pinned-wide");
   await letGo();
@@ -257,7 +257,7 @@ test("sleeping tiles and rows, and the sleeping pane of the selected tab put to 
 
   await findPage(app, standIn.driveUrl);
   await findPage(app, standIn.url);
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await openContextMenu(app, () =>
     list.getByRole("tab", { name: DRIVE_TITLE, exact: true }).click({
       button: "right",
@@ -270,7 +270,7 @@ test("sleeping tiles and rows, and the sleeping pane of the selected tab put to 
   await rest();
   await shootEachWay(app, shell, "sleeping-wide");
 
-  await shell.getByRole("button", { name: "Narrow sidebar" }).click();
+  await shell.getByRole("button", { name: "Collapse sidebar" }).click();
   await rest();
   await shootEachWay(app, shell, "sleeping-narrow");
 });
@@ -574,7 +574,7 @@ test("split panes: two side by side, and three nested with the sidebar narrow an
   await findPage(app, standIn.url);
   await rest();
   await shootEachWay(app, shell, "split-nested-narrow");
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest();
   await shootEachWay(app, shell, "split-nested-wide");
 });
@@ -747,7 +747,7 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
   await findPage(first.app, standIn.driveUrl);
   await rest(first.shell);
   await shootEachWay(first.app, first.shell, "split-box-list-narrow");
-  await first.shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await first.shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest(first.shell);
   await shootEachWay(first.app, first.shell, "split-box-list-wide");
   await first.app.close();
@@ -767,7 +767,7 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
   );
 
   const { app, shell } = await launch(launchApp, userDataDir);
-  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+  const narrow = shell.getByRole("button", { name: "Collapse sidebar" });
 
   await findPage(app, standIn.calendarUrl);
   await findPage(app, standIn.driveUrl);
@@ -781,7 +781,7 @@ test("a split's box in the sidebar, in the list and in the pinned area, narrow a
 
   await rest(shell);
   await shootEachWay(app, shell, "split-box-pinned-narrow");
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest(shell);
   await shootEachWay(app, shell, "split-box-pinned-wide");
 });
@@ -816,7 +816,7 @@ test("a split's box first in the list, its last tab hovered, narrow and wide", a
   );
 
   const { app, shell } = await launch(launchApp, userDataDir);
-  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+  const narrow = shell.getByRole("button", { name: "Collapse sidebar" });
 
   await findPage(app, standIn.calendarUrl);
   await findPage(app, standIn.driveUrl);
@@ -827,7 +827,7 @@ test("a split's box first in the list, its last tab hovered, narrow and wide", a
 
   await hoverTab(shell, "d1");
   await shootEachWay(app, shell, "split-box-hover-narrow");
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await expect(narrow).toHaveCount(1);
   await hoverTab(shell, "d1");
   await shootEachWay(app, shell, "split-box-hover-wide");
@@ -858,7 +858,7 @@ test("two splits' boxes, both in the list, and one in the pinned area with one i
   await findPage(first.app, standIn.driveUrl);
   await rest(first.shell);
   await shootEachWay(first.app, first.shell, "split-boxes-list-narrow");
-  await first.shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await first.shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest(first.shell);
   await shootEachWay(first.app, first.shell, "split-boxes-list-wide");
   await first.app.close();
@@ -872,7 +872,7 @@ test("two splits' boxes, both in the list, and one in the pinned area with one i
   );
 
   const { app, shell } = await launch(launchApp, userDataDir);
-  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+  const narrow = shell.getByRole("button", { name: "Collapse sidebar" });
 
   await findPage(app, standIn.calendarUrl);
   await findPage(app, standIn.driveUrl);
@@ -883,7 +883,7 @@ test("two splits' boxes, both in the list, and one in the pinned area with one i
 
   await rest(shell);
   await shootEachWay(app, shell, "split-boxes-pinned-narrow");
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest(shell);
   await shootEachWay(app, shell, "split-boxes-pinned-wide");
 });
@@ -1060,7 +1060,7 @@ test("uneven panes with a gap's handle hovered and focused, and a maximized spli
   await findPage(app, standIn.calendarUrl);
   await rest(shell);
   await shootEachWay(app, shell, "split-maximized-narrow");
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest(shell);
   await shootEachWay(app, shell, "split-maximized-wide");
 });
@@ -1234,7 +1234,7 @@ test("a tab in its own window with one profile and with two, and its mark in the
 
   await rest(shell);
   await shootEachWay(app, shell, "own-window-mark-narrow");
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest(shell);
   await shootEachWay(app, shell, "own-window-mark-wide");
   await app.close();
@@ -1400,7 +1400,7 @@ test("a wide row bookmarked at rest, and a row's bookmark button on hover", asyn
   const tabs = shell.getByRole("tablist", { name: "Tabs" });
 
   await findPage(app, standIn.calendarUrl);
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   // Drive's page loads once shown, so its row can be bookmarked too.
   await tabs.getByRole("tab", { name: "Drive", exact: true }).click();
   await findPage(app, standIn.driveUrl);

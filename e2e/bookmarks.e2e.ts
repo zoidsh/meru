@@ -131,7 +131,7 @@ test("Cmd or Ctrl+D bookmarks the selected tab's page with a toast and removes i
   const notices = overlay.getByRole("region", { name: "Notifications" });
 
   await findPage(app, standIn.calendarUrl);
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest(shell);
   await expect
     .poll(() => readBookmarkItem(app))
@@ -246,7 +246,7 @@ test("Cmd or Ctrl+D with the find bar open bookmarks the page without a toast, t
   const bar = overlay.getByRole("search", { name: "Find in page" });
 
   await findPage(app, standIn.calendarUrl);
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await expect
     .poll(() => readBookmarkItem(app))
     .toStrictEqual({ label: "Bookmark Tab", enabled: true });
@@ -279,7 +279,7 @@ test("the wide row's bookmark button shows on hover and bookmarks that row's pag
   const shell = await findPage(app, "meru-app:");
 
   await findPage(app, standIn.calendarUrl);
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await rest(shell);
 
   // Drive's page loads once it is first shown, and names its tab.

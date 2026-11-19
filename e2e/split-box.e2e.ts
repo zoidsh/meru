@@ -156,7 +156,7 @@ test("a split's box in the sidebar holds its tabs 4px in from each edge, in the 
 
   const app = await launchApp();
   const shell = await findPage(app, "meru-app:");
-  const narrow = shell.getByRole("button", { name: "Narrow sidebar" });
+  const narrow = shell.getByRole("button", { name: "Collapse sidebar" });
 
   await findPage(app, standIn.calendarUrl);
   await findPage(app, standIn.driveUrl);
@@ -169,7 +169,7 @@ test("a split's box in the sidebar holds its tabs 4px in from each edge, in the 
   // The shell may still be drawing the new width.
   await expect(() => expectBoxDrawn(shell, 8)).toPass();
 
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await expect(narrow).toHaveCount(1);
   await hoverLastInBox(shell);
   await expect(() => expectBoxDrawn(shell, 4)).toPass();

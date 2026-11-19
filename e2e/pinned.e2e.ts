@@ -139,12 +139,12 @@ test("a pinned tile keeps focus as the sidebar widens, where Left and Right cros
   await drive.focus();
   // A click in the page, which unlike the pointer's leaves focus where it is.
   await shell
-    .getByRole("button", { name: "Widen sidebar" })
+    .getByRole("button", { name: "Expand sidebar" })
     .evaluate((button) => {
       (button as HTMLElement).click();
     });
   await expect(
-    shell.getByRole("button", { name: "Narrow sidebar" })
+    shell.getByRole("button", { name: "Collapse sidebar" })
   ).toBeAttached();
   await expect(drive).toBeFocused();
 

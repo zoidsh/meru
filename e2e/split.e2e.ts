@@ -683,7 +683,7 @@ test("a split holding a pinned tab puts its box first in the pinned area, its pi
   await findPage(app, standIn.url);
   await expect.poll(() => sidebarOrder(shell)).toStrictEqual(boxed);
 
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   // A tile's tooltip, which is its description, is said first.
   await expect(tab(shell, STAND_IN_TITLE)).toHaveAccessibleDescription(
     `${STAND_IN_TITLE} · sign in required, in split view`
@@ -835,7 +835,7 @@ test("Left and Right in the wide pinned grid go between the two tiles of a row, 
   const slides = tab(shell, "Slides pinned");
 
   await findPage(app, standIn.calendarUrl);
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await expect
     .poll(() => sidebarOrder(shell))
     .toMatchObject({ area: "pinned", box: ["gmail", "c"] });

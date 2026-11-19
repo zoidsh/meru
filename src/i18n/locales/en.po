@@ -346,6 +346,11 @@ msgstr "Close Tabs Below"
 msgid "Close Window"
 msgstr "Close Window"
 
+#. Accessible name and tooltip of the button at the foot of the wide list of tabs that collapses it to a narrow column of icons alone
+#: src/shell/tab-strip.tsx
+msgid "Collapse sidebar"
+msgstr "Collapse sidebar"
+
 #. Menu item in the Mail menu that opens a new message in the selected profile's Gmail
 #: src/main/commands.ts
 msgid "Compose"
@@ -479,6 +484,11 @@ msgstr "Edit"
 msgctxt "Windows"
 msgid "Exit"
 msgstr "Exit"
+
+#. Accessible name and tooltip of the button at the foot of the narrow list of tabs that expands it to a wide list showing each tab's title
+#: src/shell/tab-strip.tsx
+msgid "Expand sidebar"
+msgstr "Expand sidebar"
 
 #. Second line of a download in the Downloads card that was interrupted, before when it started
 #: src/shell/downloads.tsx
@@ -648,11 +658,6 @@ msgstr "Move to New Window"
 #: src/shell/downloads.tsx
 msgid "Moved or deleted"
 msgstr "Moved or deleted"
-
-#. Accessible name and tooltip of the button at the foot of the wide list of tabs that makes it narrow, showing icons alone
-#: src/shell/tab-strip.tsx
-msgid "Narrow sidebar"
-msgstr "Narrow sidebar"
 
 #. Title of a notification for an email that arrived, when the person chose not to show who sent it
 #: src/main/notifications.ts
@@ -1194,11 +1199,6 @@ msgstr "Wake"
 #: src/main/commands.ts
 msgid "Wake Tab"
 msgstr "Wake Tab"
-
-#. Accessible name and tooltip of the button at the foot of the narrow list of tabs that makes it wide, showing each tab's title
-#: src/shell/tab-strip.tsx
-msgid "Widen sidebar"
-msgstr "Widen sidebar"
 
 #. Name of the Window menu
 #: src/main/application-menu.ts

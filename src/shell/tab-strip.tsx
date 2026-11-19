@@ -1168,14 +1168,14 @@ export const Sidebar = ({
 
   const widthLabel = wide
     ? t({
-        message: "Narrow sidebar",
+        message: "Collapse sidebar",
         comment:
-          "Accessible name and tooltip of the button at the foot of the wide list of tabs that makes it narrow, showing icons alone",
+          "Accessible name and tooltip of the button at the foot of the wide list of tabs that collapses it to a narrow column of icons alone",
       })
     : t({
-        message: "Widen sidebar",
+        message: "Expand sidebar",
         comment:
-          "Accessible name and tooltip of the button at the foot of the narrow list of tabs that makes it wide, showing each tab's title",
+          "Accessible name and tooltip of the button at the foot of the narrow list of tabs that expands it to a wide list showing each tab's title",
       });
 
   // Reaching into the sidebar's padding far enough to centre the bar in it,

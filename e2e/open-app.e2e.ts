@@ -211,7 +211,7 @@ test("New tab is first in the titlebar's right-hand group while the sidebar is h
   await sidebarButton.click();
   await expect(dialog).toHaveCount(0);
 
-  await shell.getByRole("button", { name: "Widen sidebar" }).click();
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
   await expect(sidebarButton).toHaveText("New tab");
 
   await header.getByRole("button", { name: "Sidebar", exact: true }).click();
