@@ -163,12 +163,28 @@ const sharedFiles = (folder: string) => ({
   quarantine,
 });
 
+const revealInFinder = async (file: string) => {
+  try {
+    await run("/usr/bin/open", ["-R", file]);
+  } catch (error) {
+    console.error("Could not show a download in Finder", error);
+  }
+};
+
 export const createDownloadFiles = (): DownloadFiles => ({
   ...sharedFiles(app.getPath("downloads")),
   open: (file) => {
     void shell.openPath(file);
   },
   showInFolder: (file) => {
+    if (process.platform === "darwin") {
+      // showItemInFolder leaves Finder behind when chosen from a notification,
+      // while Meru is not the frontmost app.
+      void revealInFinder(file);
+
+      return;
+    }
+
     shell.showItemInFolder(file);
   },
 });

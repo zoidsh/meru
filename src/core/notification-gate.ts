@@ -65,7 +65,7 @@ export const isDoNotDisturbOn = (
   (doNotDisturb.until === null || doNotDisturb.until > time);
 
 /** Every kind a notification may be; each later kind joins here. */
-export type NotificationKind = "newMail" | "verificationCode";
+export type NotificationKind = "newMail" | "verificationCode" | "download";
 
 export type HoldReason = "off" | "doNotDisturb" | "quietHours";
 
@@ -75,7 +75,7 @@ export type NotificationDecision =
 
 export interface NotificationGates {
   kind: NotificationKind;
-  /** The switch for every new-mail notification. */
+  /** The switch for every notification of its kind. */
   notifications: boolean;
   quietHours: readonly QuietWindow[];
   doNotDisturb: DoNotDisturb | undefined;

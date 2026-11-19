@@ -3,6 +3,7 @@ import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
 import type { createClipboard } from "#platform/clipboard.ts";
 import type { createIpc } from "#platform/ipc.ts";
+import type { Notifier } from "#platform/notifications.ts";
 
 import type { createMailActions } from "../mail-actions.ts";
 import type { MailPoller } from "../mail.ts";
@@ -11,7 +12,7 @@ import type { Profiles } from "../profiles.ts";
 import type { SettingsStore } from "../settings.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import type { createShowGmail } from "../show-gmail.ts";
-import { soundOutput, systemNotifier } from "./test-build.ts";
+import { soundOutput } from "./test-build.ts";
 
 /**
  * A notification for new mail, with its sound and its actions, where there
@@ -31,6 +32,7 @@ export const wireNotifications = ({
   showGmail,
   revealGmail,
   clipboard,
+  notifier,
 }: {
   isMacOS: boolean;
   background: boolean;
@@ -45,10 +47,11 @@ export const wireNotifications = ({
   showGmail: ReturnType<typeof createShowGmail>;
   revealGmail: (profileId: string) => void;
   clipboard: ReturnType<typeof createClipboard>;
+  notifier: Notifier;
 }) => {
   if (gmail && mailActions) {
     const mailNotifications = createMailNotifications({
-      notifier: systemNotifier(),
+      notifier,
       clipboard,
       extractCode: extractVerificationCode,
       setting: settings.get,

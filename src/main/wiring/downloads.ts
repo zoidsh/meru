@@ -1,30 +1,42 @@
 import type { Platform } from "#core/platform.ts";
 import { createDownloadSessions } from "#platform/downloads.ts";
+import type { Notifier } from "#platform/notifications.ts";
 
+import { createDownloadNotifications } from "../download-notifications.ts";
 import { createDownloads } from "../downloads.ts";
 import type { Overlays } from "../overlay.ts";
 import type { Profiles } from "../profiles.ts";
+import type { SettingsStore } from "../settings.ts";
 import type { createShellWindow } from "../shell-window.ts";
+import { revealWindow } from "../windows.ts";
 import { downloadFiles, downloadSignals } from "./test-build.ts";
 
 const DAY = 24 * 60 * 60 * 1000;
 
 /**
- * Downloads from every profile's session, their history in the state, and
- * the card they are listed in. `watch` is called for each session before a
- * page of it loads.
+ * Downloads from every profile's session, their history in the state, the
+ * card they are listed in and the notification each that ends gives. `watch`
+ * is called for each session before a page of it loads.
  */
 export const wireDownloads = ({
   platform,
+  isMacOS,
+  background,
   shell,
   profiles,
+  settings,
   overlays,
+  notifier,
   newId,
 }: {
   platform: Platform;
+  isMacOS: boolean;
+  background: boolean;
   shell: ReturnType<typeof createShellWindow>;
   profiles: Profiles;
+  settings: SettingsStore;
   overlays: Overlays;
+  notifier: Notifier;
   newId: () => string;
 }) => {
   const sessions = createDownloadSessions();
@@ -47,6 +59,25 @@ export const wireDownloads = ({
     log: console.error,
   });
 
+  const notifications = createDownloadNotifications({
+    notifier,
+    isMacOS,
+    quiet: background,
+    quietHours: () => settings.get("quietHours"),
+    doNotDisturb: () => profiles.get().doNotDisturb,
+    now: () => new Date(),
+    showInFolder: (id) => {
+      void downloads.showInFolder(id);
+    },
+    showList: () => {
+      // The person asked by clicking; never under the background flag.
+      revealWindow(shell.window, background);
+      downloads.setOpen(true);
+    },
+    log: console.error,
+  });
+
+  downloads.onEnded(notifications.ended);
   void downloads.start();
   setInterval(() => {
     void downloads.prune();

@@ -441,6 +441,32 @@ describe("a download ending", () => {
     expect(calls).toStrictEqual(["remove /Downloads/report.pdf"]);
     expect(history()[0]).toMatchObject({ state: "failed" });
   });
+
+  it("tells of each as it ends, under the name it was saved as, once listed so", async () => {
+    const { downloads, history } = setup();
+    const told: [string, string, string, string | undefined][] = [];
+    const finished = fakeItem();
+    const clashing = fakeItem();
+
+    downloads.onEnded(({ id, fileName, end }) => {
+      told.push([
+        id,
+        fileName,
+        end,
+        history().find((listed) => listed.id === id)?.state,
+      ]);
+    });
+    downloads.take(finished);
+    downloads.take(clashing);
+    finished.end("completed");
+    clashing.end("failed");
+    await settle();
+
+    expect(told).toStrictEqual([
+      ["d1", "report.pdf", "completed", "completed"],
+      ["d2", "report (1).pdf", "failed", "failed"],
+    ]);
+  });
 });
 
 describe("the card", () => {

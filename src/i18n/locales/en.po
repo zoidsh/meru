@@ -460,6 +460,16 @@ msgstr "Do Not Disturb is on until {time}"
 msgid "Do Not Disturb is on until turned off"
 msgstr "Do Not Disturb is on until turned off"
 
+#. Title of the system notification when a download stops before it is done; the file's name is its text
+#: src/main/download-notifications.ts
+msgid "Download failed"
+msgstr "Download failed"
+
+#. Title of the system notification when a download is done; {fileName} is the file's name
+#: src/main/download-notifications.ts
+msgid "Downloaded {fileName}"
+msgstr "Downloaded {fileName}"
+
 #. Accessible name of the Downloads card's list, read by screen readers
 #: src/shell/downloads.tsx
 msgid "Downloaded files"
@@ -1002,6 +1012,16 @@ msgstr "Show {productName}"
 #: src/main/application-menu.ts
 msgid "Show All"
 msgstr "Show All"
+
+#. Button on the macOS notification of a finished download that shows the file in Finder
+#: src/main/download-notifications.ts
+msgid "Show in Finder"
+msgstr "Show in Finder"
+
+#. Button on the Windows and Linux notification of a finished download that shows the file in its folder
+#: src/main/download-notifications.ts
+msgid "Show in folder"
+msgstr "Show in folder"
 
 #. Tooltip of the title bar button that shows the list of tabs down the left of the window
 #: src/shell/titlebar.tsx

@@ -57,6 +57,59 @@ const readOpened = async (app: ElectronApplication) => {
   return files.opened.map(canonical);
 };
 
+/** The files the test build showed in their folder in place of the system. */
+const readShown = async (app: ElectronApplication) => {
+  const files = await app.evaluate(
+    () => Reflect.get(globalThis, "meruTestDownloadFiles") as CapturedFiles
+  );
+
+  return files.shown.map(canonical);
+};
+
+interface CapturedNotification {
+  title: string;
+  body: string;
+  actions?: string[];
+  click: () => void;
+  act: (index: number) => void;
+}
+
+/** What the suite's build captured in place of showing, in order. */
+const readNotifications = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as CapturedNotification[]
+    ).map(({ title, body, actions }) => ({
+      title,
+      body,
+      actions: actions ?? [],
+    }))
+  );
+
+const clickNotification = (app: ElectronApplication, index: number) =>
+  app.evaluate((_electron, at) => {
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as CapturedNotification[]
+    )[at]?.click();
+  }, index);
+
+const actOnNotification = (
+  app: ElectronApplication,
+  index: number,
+  action: number
+) =>
+  app.evaluate(
+    (_electron, [at, button]) => {
+      (
+        Reflect.get(
+          globalThis,
+          "meruTestNotifications"
+        ) as CapturedNotification[]
+      )[at]?.act(button);
+    },
+    [index, action] as const
+  );
+
 /** Each progress the Dock or taskbar was given, in order. */
 const readProgress = (app: ElectronApplication) =>
   app.evaluate(
@@ -139,7 +192,8 @@ const launch = async (
   launchApp: () => Promise<ElectronApplication>,
   userDataDir: string,
   standIn: StandIn,
-  seeded: Seeded[] = []
+  seeded: Seeded[] = [],
+  state: Record<string, unknown> = {}
 ) => {
   const folder = downloadsFolder(userDataDir);
 
@@ -165,6 +219,7 @@ const launch = async (
       startedAt: entry.startedAt ?? Date.now() - (index + 1) * 60_000,
       state: entry.state,
     })),
+    ...state,
   });
 
   const app = await launchApp();
@@ -340,6 +395,64 @@ test("lists a download whose connection drops as failed, with no partial file le
 
   await expect(row(overlay, failed)).toContainText("Failed · now");
   await expect.poll(() => readdir(folder)).toStrictEqual([]);
+});
+
+test("tells of a finished download, whose button shows the file in its folder, and of a failed one, which opens the card", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, download, overlay, folder } = await launch(
+    launchApp,
+    userDataDir,
+    standIn
+  );
+  const finished = DOWNLOAD_FILES.small.name;
+  const failed = DOWNLOAD_FILES.broken.name;
+  const label =
+    process.platform === "darwin" ? "Show in Finder" : "Show in folder";
+
+  await download("small");
+  await expect
+    .poll(() => readNotifications(app))
+    .toStrictEqual([
+      { title: `Downloaded ${finished}`, body: "", actions: [label] },
+    ]);
+  await actOnNotification(app, 0, 0);
+  await expect
+    .poll(() => readShown(app))
+    .toStrictEqual([path.join(folder, finished)]);
+
+  await download("broken");
+  standIn.releaseDownload("broken");
+  await expect
+    .poll(async () => {
+      const notifications = await readNotifications(app);
+
+      return notifications.at(1);
+    })
+    .toStrictEqual({ title: "Download failed", body: failed, actions: [] });
+  await clickNotification(app, 1);
+  await expect(row(overlay, failed)).toContainText("Failed · now");
+});
+
+test("holds a download's notification under Do Not Disturb", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, download, overlay } = await launch(
+    launchApp,
+    userDataDir,
+    standIn,
+    [],
+    { doNotDisturb: { until: null } }
+  );
+
+  await download("small");
+  await openCard(shell, overlay);
+  await expect(row(overlay, DOWNLOAD_FILES.small.name)).toContainText("now");
+  expect(await readNotifications(app)).toStrictEqual([]);
 });
 
 test("reads a finished file no longer in its folder as moved or deleted, and opens one that is", async ({

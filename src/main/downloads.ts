@@ -24,6 +24,13 @@ import type {
   DownloadSignals,
 } from "#platform/downloads.ts";
 
+/** A download as it ended, under the name it was saved as. */
+export interface EndedDownload {
+  id: string;
+  fileName: string;
+  end: DownloadEnd;
+}
+
 export interface DownloadsDeps {
   platform: Platform;
   /** Main's state, which holds the history. */
@@ -92,6 +99,7 @@ export const createDownloads = ({
   log,
 }: DownloadsDeps) => {
   const listeners = new Set<() => void>();
+  const endListeners = new Set<(ended: EndedDownload) => void>();
   const running = new Map<string, Running>();
   /** Finished entries whose file was not there when last looked for. */
   const gone = new Set<string>();
@@ -211,6 +219,10 @@ export const createDownloads = ({
       })
     );
     notify();
+
+    for (const listener of endListeners) {
+      listener({ id, fileName: path.basename(filePath), end });
+    }
   };
 
   /**
@@ -364,6 +376,10 @@ export const createDownloads = ({
     shellSlice,
     onChange: (listener: () => void) => {
       listeners.add(listener);
+    },
+    /** Told of each download as it finishes, fails or is cancelled. */
+    onEnded: (listener: (ended: EndedDownload) => void) => {
+      endListeners.add(listener);
     },
     /** In its default app, closing the card; a file gone is marked so. */
     openFile: async (id: string) => {

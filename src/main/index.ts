@@ -35,6 +35,7 @@ import { wireStores } from "./wiring/stores.ts";
 import {
   suiteRunsInBackground,
   systemClipboard,
+  systemNotifier,
   testBuildSetup,
 } from "./wiring/test-build.ts";
 import { wireTray } from "./wiring/tray.ts";
@@ -189,11 +190,17 @@ const start = async () => {
     log: console.error,
   });
 
+  // One for every kind, so the suite's build captures them in one list.
+  const notifier = systemNotifier();
   const { downloads, watch: watchDownloads } = wireDownloads({
     platform,
+    isMacOS,
+    background,
     shell,
     profiles,
+    settings,
     overlays,
+    notifier,
     newId,
   });
 
@@ -350,6 +357,7 @@ const start = async () => {
     showGmail,
     revealGmail,
     clipboard,
+    notifier,
   });
 
   views.reconcile(profiles.get());
