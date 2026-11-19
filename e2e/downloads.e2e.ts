@@ -671,6 +671,16 @@ test("opens the card in a tab's own window from its titlebar, the one card movin
   await document.mouse.move(8, 8);
   await document.mouse.down();
   await expect.poll(() => windowCardOpen(app)).toBe(false);
+
+  // A press on the titlebar closes it too; released away from Reload, it
+  // reloads nothing.
+  await inWindow.click();
+  await findWindowDownloads(app);
+  await titlebar.getByRole("button", { name: "Reload" }).hover();
+  await titlebar.mouse.down();
+  await expect.poll(() => windowCardOpen(app)).toBe(false);
+  await titlebar.mouse.move(0, 0);
+  await titlebar.mouse.up();
 });
 
 test("moves through the list with the keys, opens with Enter, cancels a running download or removes another with Delete, and clears all but those running", async ({

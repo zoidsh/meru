@@ -5,7 +5,10 @@ import { chromium } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { FIND_INSET } from "#core/find.ts";
-import { OWN_WINDOW_FIND_FRAME_PREFIX } from "#core/own-window.ts";
+import {
+  OWN_WINDOW_DOWNLOADS_FRAME_PREFIX,
+  OWN_WINDOW_FIND_FRAME_PREFIX,
+} from "#core/own-window.ts";
 
 import {
   clickMenuItem,
@@ -22,6 +25,7 @@ import {
 } from "./lib/app.ts";
 import {
   findTitlebar,
+  findWindowDownloads,
   findWindowFind,
   readOwnWindows,
 } from "./lib/own-window.ts";
@@ -205,6 +209,17 @@ const ownWindowFindOpen = async (app: ElectronApplication) => {
   return (
     window?.views.some((view) =>
       view.name.startsWith(OWN_WINDOW_FIND_FRAME_PREFIX)
+    ) ?? false
+  );
+};
+
+/** Whether the own window has a Downloads card view. */
+const ownWindowCardOpen = async (app: ElectronApplication) => {
+  const [window] = await readOwnWindows(app);
+
+  return (
+    window?.views.some((view) =>
+      view.name.startsWith(OWN_WINDOW_DOWNLOADS_FRAME_PREFIX)
     ) ?? false
   );
 };
@@ -841,12 +856,12 @@ const shellDocuments = async (shell: Page) => {
   return documents;
 };
 
-test("the shell's renderer lets go of the documents of find bars and titlebars closed, over thirty rounds of each", async ({
+test("the shell's renderer lets go of the documents of find bars, Downloads cards and titlebars closed, over thirty rounds of each", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
 
   const { app, shell, calendar } = await launch(
     launchApp,
@@ -879,6 +894,31 @@ test("the shell's renderer lets go of the documents of find bars and titlebars c
 
   const afterFind = await shellDocuments(shell);
 
+  const titlebar = await findTitlebar(app);
+  const downloads = titlebar.getByRole("button", {
+    name: "Downloads",
+    exact: true,
+  });
+  const cardOpen = async () => {
+    await downloads.click();
+    await findWindowDownloads(app);
+  };
+  const cardClose = async () => {
+    await downloads.click();
+    await expect.poll(() => ownWindowCardOpen(app)).toBe(false);
+  };
+
+  await cycle(cardOpen, cardClose);
+
+  const beforeCard = await shellDocuments(shell);
+
+  for (let round = 0; round < 30; round += 1) {
+    // oxlint-disable-next-line no-await-in-loop -- one round after another
+    await cycle(cardOpen, cardClose);
+  }
+
+  const afterCard = await shellDocuments(shell);
+
   const windowOpen = async () => {
     await pressShifted(app, standIn.calendarUrl, "N");
     await expect.poll(() => ownWindowCount(app)).toBe(1);
@@ -900,9 +940,13 @@ test("the shell's renderer lets go of the documents of find bars and titlebars c
   const afterWindows = await shellDocuments(shell);
 
   console.log(
-    `shell documents: find ${beforeFind} -> ${afterFind}, windows ${beforeWindows} -> ${afterWindows}`
+    `shell documents: find ${beforeFind} -> ${afterFind}, card ${beforeCard} -> ${afterCard}, windows ${beforeWindows} -> ${afterWindows}`
   );
-  expect([afterFind, afterWindows]).toStrictEqual([beforeFind, beforeWindows]);
+  expect([afterFind, afterCard, afterWindows]).toStrictEqual([
+    beforeFind,
+    beforeCard,
+    beforeWindows,
+  ]);
 });
 
 test("moving a tab back to the main window with its find bar open closes the bar with its document; the main window opens none", async ({
