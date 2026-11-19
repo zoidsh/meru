@@ -1,5 +1,4 @@
 import type { Platform } from "#core/platform.ts";
-import type { TabKey } from "#core/tabs.ts";
 import { createDownloadSessions } from "#platform/downloads.ts";
 import type { Notifier } from "#platform/notifications.ts";
 
@@ -93,31 +92,14 @@ export const wireDownloads = ({
   downloads.onEnded(notifications.ended);
   // In a tab's own window the card goes as the window loses the keys, as
   // the main window's does, and with the window.
-  let closingWithWindow = false;
-  const closeWithWindow = (key: TabKey) => {
-    closingWithWindow = true;
-    downloads.closeIn(key);
-    closingWithWindow = false;
-  };
-
-  ownWindows.onBlur(closeWithWindow);
-  ownWindows.onClosed(closeWithWindow);
-
-  // Keys go back to the window's page, or its find bar, as the card there is
-  // closed from within it. Not as it moves to another window, which takes the
-  // keys, nor as the window loses them: focusing the page then raises the
-  // window where the test build may focus an inactive one, as on Linux, over
-  // the window just clicked.
-  let cardWindow = downloads.window();
-
-  downloads.onChange(() => {
-    const was = cardWindow;
-
-    cardWindow = downloads.window();
-
-    if (was && !cardWindow && !downloads.isOpen() && !closingWithWindow) {
-      focus.focusInWindow(was, inOwnWindow(was));
-    }
+  ownWindows.onBlur(downloads.closeIn);
+  ownWindows.onClosed(downloads.closeIn);
+  // Keys go back to the window's page or find bar only as the card is closed
+  // from within it: as the window loses them, focusing its page would raise
+  // it over the window just clicked where the test build focuses an inactive
+  // window, as on Linux.
+  downloads.onClosedIn((key) => {
+    focus.focusInWindow(key, inOwnWindow(key));
   });
   void downloads.start();
   setInterval(() => {

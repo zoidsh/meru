@@ -678,6 +678,23 @@ describe("the card", () => {
     ]);
   });
 
+  it("tells of the window it was closed in from within, not of one losing the keys or one it moved from", () => {
+    const { downloads } = setup();
+    const own = { profileId: "p", tabId: "t" };
+    const told: unknown[] = [];
+
+    downloads.onClosedIn((window) => told.push(window));
+    downloads.setOpen(true, own);
+    downloads.closeIn(own);
+    downloads.setOpen(true, own);
+    downloads.setOpen(true);
+    downloads.setOpen(false);
+    downloads.setOpen(true, own);
+    downloads.setOpen(false);
+
+    expect(told).toStrictEqual([own]);
+  });
+
   it("drags from the card's document in a tab's own window while it is open there", async () => {
     const { downloads, calls } = setup({
       entries: [entry("here")],

@@ -111,6 +111,7 @@ export const createDownloads = ({
 }: DownloadsDeps) => {
   const listeners = new Set<() => void>();
   const endListeners = new Set<(ended: EndedDownload) => void>();
+  const closedInListeners = new Set<(window: TabKey) => void>();
   const running = new Map<string, Running>();
   /** Finished entries whose file was not there when last looked for. */
   const gone = new Set<string>();
@@ -318,9 +319,14 @@ export const createDownloads = ({
       ? inWindow === undefined && overlay.isOpen()
       : inWindow !== undefined && tabKey(inWindow) === tabKey(window);
 
-  /** Closes it wherever it is. */
-  const close = () => {
-    if (inWindow !== undefined) {
+  /**
+   * Closes it wherever it is; `fromWithin` when that was asked in its window,
+   * not by the window losing the keys or going.
+   */
+  const close = (fromWithin: boolean) => {
+    const was = inWindow;
+
+    if (was !== undefined) {
       inWindow = undefined;
     } else if (overlay.isOpen()) {
       overlay.close();
@@ -329,6 +335,12 @@ export const createDownloads = ({
     }
 
     notify();
+
+    if (was !== undefined && fromWithin) {
+      for (const listener of closedInListeners) {
+        listener(was);
+      }
+    }
   };
 
   /**
@@ -338,7 +350,7 @@ export const createDownloads = ({
    */
   const setOpen = (open: boolean, window?: TabKey) => {
     if (!open) {
-      close();
+      close(true);
 
       return;
     }
@@ -427,8 +439,12 @@ export const createDownloads = ({
     /** Closes it if the tab's own window shows it, as that window goes or loses the keys. */
     closeIn: (window: TabKey) => {
       if (isOpenIn(window)) {
-        close();
+        close(false);
       }
+    },
+    /** Told of the tab whose own window the card was closed in from within. */
+    onClosedIn: (listener: (window: TabKey) => void) => {
+      closedInListeners.add(listener);
     },
     shellSlice,
     onChange: (listener: () => void) => {
