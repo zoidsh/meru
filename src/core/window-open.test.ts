@@ -199,6 +199,11 @@ describe(routeWindowOpen, () => {
     expect(route(PDF_VIEWER)).toBe("child-window");
     expect(route(PDF_VIEWER, fromCalendar)).toBe("child-window");
     expect(
+      route(
+        "https://doc-0o-5c-apps-viewer.googleusercontent.com/viewer/secure/pdf"
+      )
+    ).toBe("child-window");
+    expect(
       routeWindowOpen(PDF_VIEWER, fromGmail, { inBackground: true })
     ).toStrictEqual({ kind: "system-browser", url: PDF_VIEWER });
 
@@ -206,6 +211,9 @@ describe(routeWindowOpen, () => {
       "https://1a2b-apps-viewer.googleusercontent.com/viewer/other",
       "https://googleusercontent.com.example.com/viewer/secure/pdf/1",
       "http://1a2b-apps-viewer.googleusercontent.com/viewer/secure/pdf/1",
+      "https://1a2b-apps-viewer.googleusercontent.com/viewer/secure/pdfx/1",
+      "https://lh3.googleusercontent.com/viewer/secure/pdf/1",
+      "https://apps-viewer.googleusercontent.com.example.com/viewer/secure/pdf/1",
     ]) {
       expect(route(url)).toBe("system-browser");
     }

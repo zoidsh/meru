@@ -56,11 +56,14 @@ const isChatAttachment = (url: URL) =>
   url.hostname === "chat.google.com" &&
   /^\/u\/\d+\/api\/get_attachment_url(?:\/|$)/u.test(url.pathname);
 
-/** Google's secure PDF viewer, which a Drive or Chat attachment opens in. */
+/**
+ * Google's secure PDF viewer, which a Gmail, Drive or Chat attachment opens
+ * in, served from a `doc-<n>-<n>-apps-viewer` host of googleusercontent.com.
+ */
 const isSecurePdfViewer = (url: URL) =>
   url.protocol === "https:" &&
-  url.hostname.endsWith(".googleusercontent.com") &&
-  url.pathname.startsWith("/viewer/secure/pdf");
+  url.hostname.endsWith("-apps-viewer.googleusercontent.com") &&
+  /^\/viewer\/secure\/pdf(?:\/|$)/u.test(url.pathname);
 
 /** Gmail's inbox at `/`, `/mail/u/<n>` or `/mail/u/<n>/`, with no query. */
 const isInboxRoot = (url: URL) =>
