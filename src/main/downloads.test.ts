@@ -640,6 +640,24 @@ describe("the card", () => {
     ]);
   });
 
+  it("stays plain when one finishes with the card open in a tab's own window", async () => {
+    const { downloads } = setup();
+    const item = fakeItem();
+
+    downloads.setOpen(true, { profileId: "p", tabId: "t" });
+    downloads.take(item);
+    item.end("completed");
+    await settle();
+    const open = downloads.shellSlice().button.kind;
+
+    downloads.setOpen(false);
+
+    expect([open, downloads.shellSlice().button.kind]).toStrictEqual([
+      "plain",
+      "plain",
+    ]);
+  });
+
   it("opens in no window that is not open, and closes in a window only where it is", () => {
     const { downloads } = setup();
     const own = { profileId: "p", tabId: "t" };

@@ -215,7 +215,7 @@ export const createDownloads = ({
         signals.landed(filePath);
       }
 
-      if (!overlay.isOpen()) {
+      if (!isOpen()) {
         unseen = true;
       }
     } else {
