@@ -22,6 +22,7 @@ import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { Button } from "#ui/button.tsx";
 
 import { isKeyMadeMenu, isMenuKey, wholePoint } from "./context-menu.ts";
+import { DownloadsButton } from "./downloads.tsx";
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
 import { OpenAppTitlebarButton } from "./open-app.tsx";
@@ -637,6 +638,7 @@ export const Titlebar = ({
   const profiles = useShellState("profiles");
   const inbox = useShellState("inbox");
   const shortcuts = useShellState("shortcuts");
+  const downloads = useShellState("downloads");
   const profileCount = profiles?.profiles.length ?? 0;
 
   return (
@@ -681,6 +683,7 @@ export const Titlebar = ({
           profileCount={profileCount}
           shortcut={shortcuts?.["inbox.toggle"]}
         />
+        <DownloadsButton downloads={downloads} />
         <DoNotDisturbButton />
       </div>
     </header>

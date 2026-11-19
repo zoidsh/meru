@@ -85,6 +85,11 @@ export interface AppWindow extends PlainWindow {
     images: readonly Bitmap[] | undefined,
     description: string
   ) => void;
+  /**
+   * The share done on the Dock icon or taskbar button, from 0 to 1; `null`
+   * for a bar that moves without a share, `undefined` for none.
+   */
+  setProgressBar: (progress: number | null | undefined) => void;
   addContentView: (options: ContentViewOptions) => ContentView;
   /** A native warning, modal to the window, with cancel the default. */
   confirm: (confirmation: Confirmation) => Promise<boolean>;
@@ -244,6 +249,13 @@ export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
         }
 
         window.setOverlayIcon(image, description);
+      },
+      // Electron reads above 1 as indeterminate and below 0 as none.
+      setProgressBar: (progress) => {
+        window.setProgressBar(
+          progress === undefined ? -1 : (progress ?? 2),
+          progress === null ? { mode: "indeterminate" } : undefined
+        );
       },
       addContentView: (contentViewOptions) =>
         addContentView(window, contentViewOptions),

@@ -65,6 +65,8 @@ export interface CommandContext {
   doNotDisturb: DoNotDisturb | undefined;
   /** Whether the unified inbox is open over the page. */
   inboxOpen: boolean;
+  /** Whether the Downloads card is open over the page. */
+  downloadsOpen: boolean;
   /** Whether New tab, the launcher, is open over the page. */
   openAppOpen: boolean;
   /** Whether the sidebar shows. */
@@ -121,6 +123,7 @@ export interface CommandActions {
   switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
   /** Shows the unified inbox, or puts the tab back. */
   setInboxOpen: (open: boolean) => void;
+  setDownloadsOpen: (open: boolean) => void;
   /** Opens New tab over the selected profile's page, or closes it. */
   setOpenAppOpen: (open: boolean) => void;
   /**
@@ -374,6 +377,22 @@ export const COMMANDS: readonly Command[] = [
     once: true,
     run: ({ inboxOpen }, { setInboxOpen }) => {
       setInboxOpen(!inboxOpen);
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "downloads.toggle",
+    title: () =>
+      t({
+        message: "Downloads",
+        comment:
+          "Menu item in the View menu, checked while the list of downloaded files is open over the page",
+      }),
+    // No key until the keymap is decided.
+    isChecked: ({ downloadsOpen }) => downloadsOpen,
+    run: ({ downloadsOpen }, { setDownloadsOpen }) => {
+      setDownloadsOpen(!downloadsOpen);
 
       return Promise.resolve();
     },

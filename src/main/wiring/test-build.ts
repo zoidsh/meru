@@ -16,6 +16,12 @@ import {
   createCapturedContextMenus,
   createContextMenus,
 } from "#platform/context-menu.ts";
+import {
+  createCapturedDownloadFiles,
+  createCapturedDownloadSignals,
+  createDownloadFiles,
+  createDownloadSignals,
+} from "#platform/downloads.ts";
 import { keepToLoopback } from "#platform/loopback-only.ts";
 import {
   createCapturedNotifier,
@@ -159,3 +165,18 @@ export const systemTrays = () =>
 /** The suite's build records the badge in place of drawing it. */
 export const systemBadge = (window: Parameters<typeof createBadge>[0]) =>
   MERU_E2E_BUILD ? createCapturedBadge() : createBadge(window);
+
+/**
+ * The suite's build saves downloads in its user data folder, never the real
+ * Downloads, and records each file it would open or show.
+ */
+export const downloadFiles = () =>
+  MERU_E2E_BUILD ? createCapturedDownloadFiles() : createDownloadFiles();
+
+/** The suite's build records the Dock's and taskbar's progress and bounce. */
+export const downloadSignals = (
+  window: Parameters<typeof createDownloadSignals>[0]
+) =>
+  MERU_E2E_BUILD
+    ? createCapturedDownloadSignals()
+    : createDownloadSignals(window);

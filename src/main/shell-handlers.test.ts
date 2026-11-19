@@ -139,6 +139,34 @@ const setup = ({
         return Promise.resolve();
       },
     },
+    downloads: {
+      setOpen: (next) => {
+        calls.push(["downloads", next]);
+      },
+      openFile: (id) => {
+        calls.push(["openDownload", id]);
+
+        return Promise.resolve();
+      },
+      showInFolder: (id) => {
+        calls.push(["showDownload", id]);
+
+        return Promise.resolve();
+      },
+      cancel: (id) => {
+        calls.push(["cancelDownload", id]);
+      },
+      remove: (id) => {
+        calls.push(["removeDownload", id]);
+
+        return Promise.resolve();
+      },
+      clear: () => {
+        calls.push(["clearDownloads"]);
+
+        return Promise.resolve();
+      },
+    },
     inbox: {
       setOpen: (next) => {
         calls.push(["inbox", next]);
@@ -468,6 +496,11 @@ const CHROME = {
   ariaShortcuts: {},
   navigation: null,
   windows: [] as ShellState["windows"],
+  downloads: {
+    open: false,
+    button: { kind: "plain" },
+    rows: [],
+  } as ShellState["downloads"],
 } as const;
 
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;

@@ -79,6 +79,7 @@ const createFakeWindow = () => {
       sessionEnd = listener;
     },
     setOverlayIcon: () => false,
+    setProgressBar: () => {},
     setBackgroundColor: (color) => {
       calls.push(`setBackgroundColor ${color}`);
     },

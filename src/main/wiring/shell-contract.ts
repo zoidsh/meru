@@ -12,6 +12,7 @@ import type { Bookmarks } from "../bookmarks.ts";
 import { COMMANDS } from "../commands.ts";
 import { commandAccelerator } from "../context-menu.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
+import type { Downloads } from "../downloads.ts";
 import type { Find } from "../find.ts";
 import type { Focus } from "../focus.ts";
 import type { Inbox } from "../inbox.ts";
@@ -55,6 +56,7 @@ export const wireShellContract = ({
   focus,
   sidebar,
   inbox,
+  downloads,
   mail,
   doNotDisturb,
   openApp,
@@ -82,6 +84,7 @@ export const wireShellContract = ({
   focus: Focus;
   sidebar: Sidebar;
   inbox: Inbox;
+  downloads: Downloads;
   mail: MailPoller;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   openApp: OpenApp;
@@ -164,6 +167,7 @@ export const wireShellContract = ({
         }
       },
       inbox,
+      downloads,
       openApp,
       bookmarks,
       tabMenu,
@@ -201,6 +205,7 @@ export const wireShellContract = ({
             shortcuts,
             ariaShortcuts,
             navigation: views.navigation(),
+            downloads: downloads.shellSlice(),
             windows: views.windowTabs().flatMap((key) => {
               const tab = findTab(profiles.get(), key);
               const navigation = views.navigation(key);
@@ -237,6 +242,7 @@ export const wireShellContract = ({
         overlays.onChange(listener);
         find.onChange(listener);
         inbox.onChange(listener);
+        downloads.onChange(listener);
         sidebar.onChange(listener);
       },
     },

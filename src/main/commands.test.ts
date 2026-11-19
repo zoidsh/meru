@@ -142,12 +142,14 @@ const setup = (initial: State = twoProfiles) => {
     moveToMainWindow: async (key) => {
       await profiles.moveToMainWindow(key, true);
     },
+    setDownloadsOpen: () => {},
   };
   const context = (): CommandContext => ({
     state: profiles.get(),
     ownWindow,
     doNotDisturb: doNotDisturb.current(),
     inboxOpen,
+    downloadsOpen: false,
     openAppOpen,
     sidebarShown,
     navigation,

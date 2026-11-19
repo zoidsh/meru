@@ -202,6 +202,7 @@ const labels = (context: Partial<CommandContext>) =>
       doNotDisturb: undefined,
       navigation: null,
       inboxOpen: false,
+      downloadsOpen: false,
       openAppOpen: false,
       sidebarShown: false,
       selectedTabAsleep: false,
@@ -281,6 +282,7 @@ describe("an end no date holds", () => {
             ariaShortcuts: {},
             navigation: null,
             windows: [],
+            downloads: { open: false, button: { kind: "plain" }, rows: [] },
           },
           []
         ).doNotDisturb

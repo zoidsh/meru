@@ -35,6 +35,10 @@ const tabKey = z.object({ profileId, tabId });
 
 const bookmarkId = z.string().check(z.minLength(1));
 
+const download = z.object({ id: z.string().check(z.minLength(1)) });
+
+const bytes = z.number().check(z.nonnegative());
+
 /**
  * Whether the tab's page is bookmarked, or `null` while it cannot be, as a
  * Gmail, sleeping, failed or loading tab's.
@@ -224,6 +228,20 @@ export const SHELL_CALLS = {
     }),
     response: z.undefined(),
   },
+  /** Opens the Downloads card, or closes it. */
+  setDownloadsOpen: {
+    request: z.object({ open: z.boolean() }),
+    response: z.undefined(),
+  },
+  /** Opens a finished download in its default app, closing the card. */
+  openDownload: { request: download, response: z.undefined() },
+  /** Shows a finished download in its folder. */
+  showDownload: { request: download, response: z.undefined() },
+  cancelDownload: { request: download, response: z.undefined() },
+  /** Takes a download off the list; a running one is not. */
+  removeDownload: { request: download, response: z.undefined() },
+  /** Takes every download off the list but those running. */
+  clearDownloads: { request: none, response: z.undefined() },
   /** Opens New tab, the launcher, or closes it, as its buttons ask. */
   toggleOpenApp: { request: none, response: z.undefined() },
   /**
@@ -463,10 +481,47 @@ export const SHELL_STATE = {
       })
     ),
   }),
+  /**
+   * Downloads: what the titlebar's button shows, and the list, newest
+   * first, sent only while the card is open.
+   */
+  downloads: z.object({
+    open: z.boolean(),
+    button: z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("plain") }),
+      /** One finished since the card was last opened, and nothing runs. */
+      z.object({ kind: z.literal("finished") }),
+      /** The share of everything running, `null` while a size is not known. */
+      z.object({
+        kind: z.literal("running"),
+        progress: z.nullable(z.number().check(z.gte(0), z.lte(1))),
+      }),
+    ]),
+    rows: z.array(
+      z.object({
+        id: z.string().check(z.minLength(1)),
+        fileName: z.string(),
+        /** `gone` is a finished one whose file is no longer where it landed. */
+        state: z.enum([
+          "progressing",
+          "completed",
+          "failed",
+          "cancelled",
+          "gone",
+        ]),
+        received: bytes,
+        /** 0 while not known. */
+        total: bytes,
+        /** In milliseconds since the epoch. */
+        startedAt: z.number(),
+      })
+    ),
+  }),
   /** What the overlay over the content views shows, if anything. */
   overlay: z.discriminatedUnion("kind", [
     z.object({ kind: z.literal("none") }),
     z.object({ kind: z.literal("inbox") }),
+    z.object({ kind: z.literal("downloads") }),
     z.object({
       kind: z.literal("rename-profile"),
       profileId,

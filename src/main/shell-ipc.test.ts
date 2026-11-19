@@ -88,6 +88,7 @@ const setup = () => {
     doNotDisturb: { on: false, until: null },
     overlay: { kind: "none" },
     inbox: { open: false, profiles: [], rows: [], notice: null },
+    downloads: { open: false, button: { kind: "plain" }, rows: [] },
   };
 
   const ipc: Ipc = {
@@ -238,6 +239,36 @@ const setup = () => {
     },
     openInboxMessage: (request) => {
       calls.push(["openInboxMessage", request]);
+
+      return Promise.resolve();
+    },
+    setDownloadsOpen: (request) => {
+      calls.push(["setDownloadsOpen", request]);
+
+      return Promise.resolve();
+    },
+    openDownload: (request) => {
+      calls.push(["openDownload", request]);
+
+      return Promise.resolve();
+    },
+    showDownload: (request) => {
+      calls.push(["showDownload", request]);
+
+      return Promise.resolve();
+    },
+    cancelDownload: (request) => {
+      calls.push(["cancelDownload", request]);
+
+      return Promise.resolve();
+    },
+    removeDownload: (request) => {
+      calls.push(["removeDownload", request]);
+
+      return Promise.resolve();
+    },
+    clearDownloads: (request) => {
+      calls.push(["clearDownloads", request]);
 
       return Promise.resolve();
     },

@@ -31,16 +31,19 @@
 
 /*
  * Ours as well: the shell's grey behind the titlebar and the strip, which
- * `SHELL_GREY` in `src/core/shell-grey.ts` gives the window too, so a
+ * `SHELL_GREY` in `src/core/shell-grey.ts` gives the window too, and the
+ * green of a finished download, which shadcn has no token for, so a
  * regenerated theme keeps these blocks.
  */
 :root {
   --shell: #ebebeb;
+  --success: oklch(0.52 0.14 150);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --shell: #1d1d1d;
+    --success: oklch(0.76 0.15 150);
   }
 }
 
@@ -102,6 +105,7 @@
 
 @theme inline {
   --color-shell: var(--tint-shell, var(--shell));
+  --color-success: var(--success);
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);

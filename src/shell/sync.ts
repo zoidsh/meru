@@ -59,6 +59,7 @@ const connect = () => {
     "doNotDisturb",
     "overlay",
     "inbox",
+    "downloads",
     "windows",
   ]);
 

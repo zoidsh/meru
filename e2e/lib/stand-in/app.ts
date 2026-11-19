@@ -10,6 +10,8 @@ import {
   actionOf,
 } from "./actions.ts";
 import type { StandInAction } from "./actions.ts";
+import { DOWNLOADS_PATH, createDownloadFiles } from "./downloads.ts";
+import type { DownloadFile } from "./downloads.ts";
 import {
   ACCOUNT_COOKIE,
   DEFAULT_MAIL,
@@ -84,6 +86,10 @@ export interface StandIn {
   url: string;
   calendarUrl: string;
   driveUrl: string;
+  /** The Gmail stand-in's page linking to files to download. */
+  downloadsUrl: string;
+  /** Sends the rest of each download of `file` under way. */
+  releaseDownload: (file: DownloadFile) => void;
   /** What the app is given as `MERU_TEST_APP_URLS`. */
   appUrls: string;
   /** The `Cookie` header of each request for the Gmail stand-in, in order. */
@@ -256,7 +262,12 @@ export const startStandIn = async (): Promise<StandIn> => {
         );
     }
   };
+  const downloadFiles = createDownloadFiles();
   const answerMail = (request: IncomingMessage, response: ServerResponse) => {
+    if (downloadFiles.answer(request, response)) {
+      return true;
+    }
+
     if (request.url === POPOUT_REDIRECT_PATH) {
       response.writeHead(302, { Location: ELSEWHERE_URL }).end();
 
@@ -364,6 +375,8 @@ export const startStandIn = async (): Promise<StandIn> => {
     url: gmail.url(),
     calendarUrl: calendar.url(),
     driveUrl: drive.url(),
+    downloadsUrl: `${gmail.url()}${DOWNLOADS_PATH.slice(1)}`,
+    releaseDownload: downloadFiles.release,
     popupUrl: `${signInServer.url()}${POPUP_PATH.slice(1)}`,
     signInUrl: `${signInServer.url()}${SIGN_IN_PATH.slice(1)}`,
     appUrls: JSON.stringify({

@@ -241,6 +241,7 @@ export const buildMenuTemplate = ({
     submenu: [
       ...item("sidebar.toggle", "checkbox"),
       ...item("inbox.toggle", "checkbox"),
+      ...item("downloads.toggle", "checkbox"),
       separator,
       ...item("tab.back"),
       ...item("tab.forward"),

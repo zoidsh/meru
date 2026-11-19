@@ -299,6 +299,9 @@ export const createProfiles = ({
       }),
     removeBookmark: (profileId: string, id: string) =>
       exclusive(() => commit(removeBookmark(state, profileId, id))),
+    /** Saves the change one returns; nothing for none. */
+    change: (next: (current: State) => State | undefined) =>
+      exclusive(() => commit(next(state))),
     /** On until `until`, `null` for until turned off, or off with `undefined`. */
     switchDoNotDisturb: (until: number | null | undefined) =>
       exclusive(() => commit(switchDoNotDisturb(state, until))),

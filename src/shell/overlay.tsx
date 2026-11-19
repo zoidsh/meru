@@ -10,6 +10,7 @@ import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Input } from "#ui/input.tsx";
 import { Label } from "#ui/label.tsx";
 
+import { Downloads } from "./downloads.tsx";
 import { DropZone } from "./drop-zone.tsx";
 import { FindBar } from "./find-bar.tsx";
 import { Inbox } from "./inbox.tsx";
@@ -144,6 +145,7 @@ const useCloseOnShellPress = (kind: Overlay["kind"] | undefined) => {
 export const OverlayLayer = () => {
   const overlay = useShellState("overlay");
   const inbox = useShellState("inbox");
+  const downloads = useShellState("downloads");
   const target = openOverlayDocument();
   const open = overlay && overlay.kind !== "none" ? overlay : undefined;
 
@@ -159,6 +161,10 @@ export const OverlayLayer = () => {
   switch (open.kind) {
     case "inbox": {
       drawn = inbox?.open && <Inbox inbox={inbox} />;
+      break;
+    }
+    case "downloads": {
+      drawn = downloads?.open && <Downloads downloads={downloads} />;
       break;
     }
     case "open-app": {

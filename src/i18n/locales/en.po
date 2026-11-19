@@ -27,6 +27,11 @@ msgstr "{count, plural, one {# new message} other {# new messages}}"
 msgid "{count, plural, one {# unread message} other {# unread messages}}"
 msgstr "{count, plural, one {# unread message} other {# unread messages}}"
 
+#. How much of a running download has arrived, in the Downloads card, such as 12.4 of 48 MB; done is a number, total a size with its unit
+#: src/shell/downloads.tsx
+msgid "{done} of {total}"
+msgstr "{done} of {total}"
+
 #. Item in the Do Not Disturb menu that holds notifications for this many hours
 #: src/main/commands.ts
 msgid "{hours, plural, one {For # Hour} other {For # Hours}}"
@@ -119,6 +124,11 @@ msgstr "{productName} could not draw its window"
 msgid "{productName} could not start"
 msgstr "{productName} could not start"
 
+#. Read by screen readers on the title bar's Downloads button while downloads run, such as 40% downloaded
+#: src/shell/downloads.tsx
+msgid "{share} downloaded"
+msgstr "{share} downloaded"
+
 #. Tooltip of a tile in the sidebar while its tab sleeps: put to sleep, or not opened yet since Meru started; {title} is the tab's title
 #: src/shell/tab-strip.tsx
 msgid "{title} · asleep"
@@ -173,6 +183,11 @@ msgstr "{told}, in split view, maximized"
 #: src/shell/inbox.tsx
 msgid "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
 msgstr "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
+
+#. Read by screen readers on the title bar's Downloads button, green once a download finished and the list has not been opened since
+#: src/shell/downloads.tsx
+msgid "A download finished"
+msgstr "A download finished"
 
 #. Menu item in the macOS app menu that shows the app's version; {appName} is the app's name
 #: src/main/application-menu.ts
@@ -282,6 +297,22 @@ msgstr "Bring All to Front"
 #: src/main/profile-copy.ts
 msgid "Cancel"
 msgstr "Cancel"
+
+#. Button on a running download in the Downloads card that stops it; it shows a spinner until pointed at
+#: src/shell/downloads.tsx
+msgid "Cancel download"
+msgstr "Cancel download"
+
+#. Second line of a download in the Downloads card that was cancelled, before when it started
+#: src/shell/downloads.tsx
+msgctxt "download"
+msgid "Cancelled"
+msgstr "Cancelled"
+
+#. Button in the Downloads card's header that takes every download off the list but those still running
+#: src/shell/downloads.tsx
+msgid "Clear all"
+msgstr "Clear all"
 
 #. Button in the find bar that ends the search and hides the bar
 #. Menu item in the Window menu that closes the window
@@ -415,6 +446,24 @@ msgstr "Do Not Disturb is on until {time}"
 msgid "Do Not Disturb is on until turned off"
 msgstr "Do Not Disturb is on until turned off"
 
+#. Accessible name of the Downloads card's list, read by screen readers
+#: src/shell/downloads.tsx
+msgid "Downloaded files"
+msgstr "Downloaded files"
+
+#. Read by screen readers on the title bar's Downloads button while a download whose size is not known runs
+#: src/shell/downloads.tsx
+msgid "Downloading"
+msgstr "Downloading"
+
+#. Accessible name and tooltip of the Downloads button in the title bar, pressed while the list of downloaded files shows
+#. Menu item in the View menu, checked while the list of downloaded files is open over the page
+#. Title of the overlay over the page that lists the files downloaded in every profile
+#: src/main/commands.ts
+#: src/shell/downloads.tsx
+msgid "Downloads"
+msgstr "Downloads"
+
 #. Item of a tab's context menu that opens another tab of the same app at the same page
 #: src/main/tab-menu.ts
 msgid "Duplicate"
@@ -430,6 +479,17 @@ msgstr "Edit"
 msgctxt "Windows"
 msgid "Exit"
 msgstr "Exit"
+
+#. Second line of a download in the Downloads card that was interrupted, before when it started
+#: src/shell/downloads.tsx
+msgctxt "download"
+msgid "Failed"
+msgstr "Failed"
+
+#. Shown in the Downloads card when nothing is listed
+#: src/shell/downloads.tsx
+msgid "Files you download appear here for 30 days."
+msgstr "Files you download appear here for 30 days."
 
 #. Name and placeholder of the field in the small bar over the page that searches the page's text
 #: src/shell/find-bar.tsx
@@ -584,6 +644,11 @@ msgstr "Move to Main Window"
 msgid "Move to New Window"
 msgstr "Move to New Window"
 
+#. Second line of a finished download in the Downloads card whose file is no longer where it was saved
+#: src/shell/downloads.tsx
+msgid "Moved or deleted"
+msgstr "Moved or deleted"
+
 #. Accessible name and tooltip of the button at the foot of the wide list of tabs that makes it narrow, showing icons alone
 #: src/shell/tab-strip.tsx
 msgid "Narrow sidebar"
@@ -624,6 +689,11 @@ msgstr "No apps open"
 #: src/shell/open-app.tsx
 msgid "No bookmarks yet"
 msgstr "No bookmarks yet"
+
+#. Heading of the Downloads card when nothing is listed
+#: src/shell/downloads.tsx
+msgid "No downloads yet"
+msgstr "No downloads yet"
 
 #. Said in the New tab launcher when no app or bookmark matches what was typed
 #: src/shell/open-app.tsx
@@ -788,6 +858,11 @@ msgstr "Remove Bookmark"
 #: src/shell/tab-strip.tsx
 msgid "Remove bookmark of {title}"
 msgstr "Remove bookmark of {title}"
+
+#. Button on a download in the Downloads card that takes it off the list, leaving the file
+#: src/shell/downloads.tsx
+msgid "Remove from the list"
+msgstr "Remove from the list"
 
 #. Button in the dialog that confirms removing a profile
 #: src/main/profile-copy.ts
@@ -973,6 +1048,11 @@ msgstr "Split Right"
 #: src/shell/drop-zone.tsx
 msgid "Split this pane"
 msgstr "Split this pane"
+
+#. Second line of a download in the Downloads card before anything of it has arrived
+#: src/shell/downloads.tsx
+msgid "Starting…"
+msgstr "Starting…"
 
 #. Accessible name and tooltip of the title bar button that stops the page loading, shown in place of Reload while it loads
 #. Menu item in the View menu that stops the selected tab's page loading

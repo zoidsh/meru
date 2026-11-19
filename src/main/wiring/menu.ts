@@ -11,6 +11,7 @@ import { createApplicationMenu } from "../application-menu.ts";
 import type { Bookmarks } from "../bookmarks.ts";
 import { COMMANDS } from "../commands.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
+import type { Downloads } from "../downloads.ts";
 import type { Find } from "../find.ts";
 import type { Focus } from "../focus.ts";
 import type { createGmailNavigation } from "../gmail-navigation.ts";
@@ -47,6 +48,7 @@ export const wireMenu = ({
   find,
   sidebar,
   inbox,
+  downloads,
   doNotDisturb,
   openApp,
   bookmarks,
@@ -65,6 +67,7 @@ export const wireMenu = ({
   find: Find;
   sidebar: Sidebar;
   inbox: Inbox;
+  downloads: Downloads;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   openApp: OpenApp;
   bookmarks: Bookmarks;
@@ -121,6 +124,7 @@ export const wireMenu = ({
         ownWindow,
         doNotDisturb: doNotDisturb.current(),
         inboxOpen: inbox.isOpen(),
+        downloadsOpen: downloads.isOpen(),
         openAppOpen: openApp.isOpen(),
         sidebarShown: sidebar.current() !== "hidden",
         navigation: views.navigation(ownWindow),
@@ -184,6 +188,7 @@ export const wireMenu = ({
           ? doNotDisturb.switchOff()
           : doNotDisturb.switchOn(choice),
       setInboxOpen: inbox.setOpen,
+      setDownloadsOpen: downloads.setOpen,
       setOpenAppOpen: openApp.setOpen,
       openSplit: openApp.openSplit,
       separateTab: profiles.separateTab,

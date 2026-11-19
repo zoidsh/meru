@@ -18,6 +18,7 @@ import { createOverlays } from "./overlay.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { createShellWindow } from "./shell-window.ts";
 import { createTabViews } from "./tab-views.ts";
+import { wireDownloads } from "./wiring/downloads.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
@@ -188,6 +189,14 @@ const start = async () => {
     log: console.error,
   });
 
+  const { downloads, watch: watchDownloads } = wireDownloads({
+    platform,
+    shell,
+    profiles,
+    overlays,
+    newId,
+  });
+
   const { ownWindows, showOwnWindow, revealGmail } = wireOwnWindows({
     apps,
     isMacOS,
@@ -256,6 +265,7 @@ const start = async () => {
     preloadFor: (app) => preloads.get(app),
     prepareSession: (partition) => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
+      watchDownloads(partition);
     },
     updatePages: profiles.updatePages,
     onFocus: () => {
@@ -377,6 +387,7 @@ const start = async () => {
     find,
     sidebar,
     inbox,
+    downloads,
     doNotDisturb,
     openApp,
     bookmarks,
@@ -399,6 +410,7 @@ const start = async () => {
     focus,
     sidebar,
     inbox,
+    downloads,
     mail,
     doNotDisturb,
     openApp,

@@ -35,6 +35,7 @@ export type Overlay =
    */
   | { kind: "drop"; zone: Rectangle; along: "pane" | "edge"; fits: boolean }
   | { kind: "inbox" }
+  | { kind: "downloads" }
   /**
    * The find bar over a tab's page, the focused pane's in a split, which
    * takes focus but stays while the page is pressed or the window loses it.
@@ -80,7 +81,8 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
     case "inbox": {
       return "wide";
     }
-    case "open-app": {
+    case "open-app":
+    case "downloads": {
       return "medium";
     }
     default: {
@@ -157,6 +159,7 @@ export const transitionOverlay = (
     default: {
       if (
         current?.kind === "inbox" ||
+        current?.kind === "downloads" ||
         current?.kind === "toast" ||
         current?.kind === "drop"
       ) {

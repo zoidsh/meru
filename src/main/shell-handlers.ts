@@ -27,6 +27,7 @@ import type { AppWindow } from "#platform/window.ts";
 
 import type { Bookmarks } from "./bookmarks.ts";
 import type { Command } from "./commands.ts";
+import type { Downloads } from "./downloads.ts";
 import type { Find } from "./find.ts";
 import type { Focus } from "./focus.ts";
 import type { Inbox } from "./inbox.ts";
@@ -71,6 +72,10 @@ export interface ShellHandlersDeps {
     action: Parameters<ShellCalls["navigate"]>[0]["action"]
   ) => Promise<unknown>;
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
+  downloads: Pick<
+    Downloads,
+    "setOpen" | "openFile" | "showInFolder" | "cancel" | "remove" | "clear"
+  >;
   openApp: Pick<OpenApp, "choose" | "chooseBookmark" | "removeBookmark">;
   bookmarks: Pick<Bookmarks, "toggle">;
   tabMenu: Pick<TabMenu, "open" | "openOwnWindow">;
@@ -137,8 +142,8 @@ const shellOverlay = (
   find: FindBar | undefined,
   bookmarkRows: (profileId: string) => BookmarkRows
 ): ShellState["overlay"] => {
-  if (overlay?.kind === "inbox") {
-    return { kind: "inbox" };
+  if (overlay?.kind === "inbox" || overlay?.kind === "downloads") {
+    return { kind: overlay.kind };
   }
 
   if (overlay?.kind === "find") {
@@ -253,7 +258,12 @@ export const shellState = (
   inbox: ShellState["inbox"],
   fixed: Pick<
     ShellState,
-    "sidebar" | "shortcuts" | "ariaShortcuts" | "navigation" | "windows"
+    | "sidebar"
+    | "shortcuts"
+    | "ariaShortcuts"
+    | "navigation"
+    | "windows"
+    | "downloads"
   >,
   /** The registry, or the suite's stand-ins for it, which New tab lists. */
   apps: readonly App[]
@@ -316,6 +326,7 @@ export const createShellHandlers = ({
   revealOwnWindow,
   navigateTab,
   inbox,
+  downloads,
   openApp,
   bookmarks,
   tabMenu,
@@ -539,6 +550,28 @@ export const createShellHandlers = ({
   },
   runInboxAction: async ({ profileId, messageId, action }) => {
     await inbox.runAction(profileId, messageId, action);
+  },
+  setDownloadsOpen: ({ open }) => {
+    downloads.setOpen(open);
+
+    return Promise.resolve();
+  },
+  openDownload: async ({ id }) => {
+    await downloads.openFile(id);
+  },
+  showDownload: async ({ id }) => {
+    await downloads.showInFolder(id);
+  },
+  cancelDownload: ({ id }) => {
+    downloads.cancel(id);
+
+    return Promise.resolve();
+  },
+  removeDownload: async ({ id }) => {
+    await downloads.remove(id);
+  },
+  clearDownloads: async () => {
+    await downloads.clear();
   },
   toggleOpenApp: () => {
     runCommand("app.open");
