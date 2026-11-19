@@ -243,9 +243,6 @@ const openTabMenu = (
   shellCalls().openTabMenu({ profileId, tabId, ...wholePoint(x, y) });
 };
 
-const isTile = (element: Element | null): element is HTMLElement =>
-  element instanceof HTMLElement && element.getAttribute("role") === "tab";
-
 const boxesIn = (items: SidebarItem<ShellTab>[]) =>
   items.filter((item) => item.kind === "box");
 
@@ -253,40 +250,6 @@ const boxesIn = (items: SidebarItem<ShellTab>[]) =>
 // takes.
 const placeOf = (item: SidebarItem<ShellTab> | undefined) =>
   item?.kind === "box" ? item.place.id : item?.tab.id;
-
-/** The tile and the tiles beside it in the grid with no split's box between. */
-const runOf = (tab: HTMLElement) => {
-  const run = [tab];
-
-  for (
-    let element = tab.previousElementSibling;
-    isTile(element);
-    element = element.previousElementSibling
-  ) {
-    run.unshift(element);
-  }
-
-  for (
-    let element = tab.nextElementSibling;
-    isTile(element);
-    element = element.nextElementSibling
-  ) {
-    run.push(element);
-  }
-
-  return run;
-};
-
-/** Left or Right on a wide pinned tile: the other tile of its row, if any. */
-const focusSideways = (tab: HTMLElement, key: "ArrowLeft" | "ArrowRight") => {
-  // A box takes a row of its own, and the tiles after it fill rows anew.
-  const run = runOf(tab);
-  const other = sideways(run.indexOf(tab), key);
-
-  if (other !== undefined) {
-    run[other]?.focus();
-  }
-};
 
 const tabVariant = (selected: boolean, pinned: boolean) => {
   if (selected) {
@@ -898,9 +861,10 @@ export const Sidebar = ({
   const boxed = new Set(boxOfTab.keys());
   const boxRowsOf = (tab: ShellTab) =>
     (boxOfTab.get(tab.id) ?? []).filter((each) => !each.pinned);
-  // Counted run by run: a box takes a row of its own.
+  // A box takes a row of its own, and the tiles after it fill rows anew.
+  const runs = pinnedRuns(layout.pinned);
   const spanning = new Set(
-    pinnedRuns(layout.pinned).flatMap((run) =>
+    runs.flatMap((run) =>
       run.filter((_, index) => spansPinnedRow(index, run.length))
     )
   );
@@ -989,18 +953,20 @@ export const Sidebar = ({
     }
 
     if (moved.announce) {
+      // A box counts as one place, as the keyboard's moves go past it.
       const area = boxed.has(tab.id)
-        ? boxRowsOf(tab)
-        : itemTabs(areaOf(tab).filter((item) => item.kind === "tab"));
+        ? boxRowsOf(tab).map((each) => ({ kind: "tab" as const, tab: each }))
+        : areaOf(tab);
       const title = tabTitle(tab);
-      const position = area.indexOf(tab) + 1;
+      const position =
+        area.findIndex((item) => item.kind === "tab" && item.tab === tab) + 1;
       const count = area.length;
 
       announcement.current?.replaceChildren(
         t({
           message: `${title}, position ${position} of ${count}`,
           comment:
-            "Said by screen readers after a tab is moved with the keyboard; {title} is the tab's title, {position} its place among the pinned tabs or the other tabs, and {count} how many there are",
+            "Said by screen readers after a tab is moved with the keyboard; {title} is the tab's title, {position} its place among the pinned tabs or the other tabs, a split's box counting as one, and {count} how many places there are",
         })
       );
     }
@@ -1112,6 +1078,19 @@ export const Sidebar = ({
     },
   });
 
+  /** Left or Right on a wide pinned tile: the other tile of its row, if any. */
+  const focusSideways = (tab: ShellTab, key: "ArrowLeft" | "ArrowRight") => {
+    const run = runs.find((each) => each.includes(tab)) ?? [];
+    const index = sideways(run.indexOf(tab), key);
+    const other = index === undefined ? undefined : run[index];
+
+    if (other) {
+      list.current
+        ?.querySelector<HTMLElement>(`[data-tab-id="${CSS.escape(other.id)}"]`)
+        ?.focus();
+    }
+  };
+
   const button = (
     tab: ShellTab,
     tile: boolean,
@@ -1145,7 +1124,13 @@ export const Sidebar = ({
       }}
       isDragClick={drag.isDragClick}
       onMoveBy={(step) => moveBy(tab, step)}
-      onSideways={grid ? focusSideways : undefined}
+      onSideways={
+        grid
+          ? (_element, key) => {
+              focusSideways(tab, key);
+            }
+          : undefined
+      }
       roomy={roomy}
     />
   );

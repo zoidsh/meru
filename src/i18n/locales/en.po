@@ -169,7 +169,7 @@ msgstr "{title}, already first"
 msgid "{title}, already last"
 msgstr "{title}, already last"
 
-#. Said by screen readers after a tab is moved with the keyboard; {title} is the tab's title, {position} its place among the pinned tabs or the other tabs, and {count} how many there are
+#. Said by screen readers after a tab is moved with the keyboard; {title} is the tab's title, {position} its place among the pinned tabs or the other tabs, a split's box counting as one, and {count} how many places there are
 #: src/shell/tab-strip.tsx
 msgid "{title}, position {position} of {count}"
 msgstr "{title}, position {position} of {count}"

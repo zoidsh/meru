@@ -39,34 +39,27 @@ export const sidebarLayout = <T extends DrawnTab>(
       box.flatMap((tabId) => tabs.find((tab) => tab.id === tabId) ?? [])
     )
     .filter((box) => box.length > 1);
-  const items = new Map(
-    drawnBoxes.flatMap((box) => {
-      const stored = tabs.filter((tab) => box.includes(tab));
-      const place = stored.find(isPinned) ?? stored[0];
-
-      if (!place) {
-        return [];
-      }
-
-      const item: SidebarItem<T> = { kind: "box", tabs: box, place };
-
-      return box.map((tab) => [tab.id, item] as const);
-    })
+  const boxOf = new Map(
+    drawnBoxes.flatMap((box) => box.map((tab) => [tab.id, box] as const))
   );
+  const placed = new Set<T[]>();
   const layout: SidebarLayout<T> = {
     pinned: [],
     listed: [],
     boxes: drawnBoxes,
   };
 
+  // In stored order, a box's first pinned tab comes before its other
+  // pinned ones, and a box with none is placed at its first tab.
   for (const tab of tabs) {
-    const item = items.get(tab.id);
+    const box = boxOf.get(tab.id);
     const area = layout[isPinned(tab) ? "pinned" : "listed"];
 
-    if (!item) {
+    if (!box) {
       area.push({ kind: "tab", tab });
-    } else if (item.kind === "box" && item.place === tab) {
-      area.push(item);
+    } else if (!placed.has(box) && (isPinned(tab) || !box.some(isPinned))) {
+      placed.add(box);
+      area.push({ kind: "box", tabs: box, place: tab });
     }
   }
 

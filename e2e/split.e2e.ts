@@ -803,17 +803,23 @@ test("a split holding a pinned tab below another stands at that tab's place in t
   expect(await boxBelowGmail()).toBe(true);
   await shell.getByRole("button", { name: "Collapse sidebar" }).click();
 
+  // The box counts as one place in what is said, as in the moves.
+  const said = shell.getByRole("status").filter({ hasText: "position" });
+
   await files.focus();
   await files.press("Alt+ArrowUp");
   await drawn("gmail", "q", "k", "c");
   await expect(files).toBeFocused();
+  await expect(said).toHaveText(`${PINNED_FILES}, position 2 of 3`);
   await files.press("Alt+ArrowUp");
   await drawn("q", "gmail", "k", "c");
+  await expect(said).toHaveText(`${PINNED_FILES}, position 1 of 3`);
   await files.press("Alt+ArrowDown");
   await drawn("gmail", "q", "k", "c");
   await files.press("Alt+ArrowDown");
   await drawn("gmail", "k", "c", "q");
   await expect(files).toBeFocused();
+  await expect(said).toHaveText(`${PINNED_FILES}, position 3 of 3`);
 
   // The box's top and bottom edges are the gaps above and below it.
   await dragTo(shell, files, await pointOfBox(shell, 0.05));
