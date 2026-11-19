@@ -1,4 +1,4 @@
-import { useLingui } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 import {
   DownloadIcon,
@@ -124,34 +124,27 @@ const RowDetail = ({ row, now }: { row: Row; now: number }) => {
       });
     }
     case "completed": {
-      return `${size(row.total)} · ${when}`;
+      const saved = size(row.total);
+
+      return t({
+        message: `${saved} · ${when}`,
+        comment:
+          "Second line of a finished download in the Downloads card, such as 2.4 MB · 2 hours ago; {saved} is its size with its unit, {when} when it started, such as 2 hours ago or yesterday",
+      });
     }
     case "failed": {
-      const after = ` · ${when}`;
-
       return (
-        <>
-          <span className="text-destructive">
-            {t({
-              message: "Failed",
-              context: "download",
-              comment:
-                "Second line of a download in the Downloads card that was interrupted, before when it started",
-            })}
-          </span>
-          {after}
-        </>
+        <Trans comment="Second line of a download in the Downloads card that was interrupted, such as Failed · 2 hours ago, Failed in the destructive colour; {when} is when it started, such as 2 hours ago or yesterday">
+          <span className="text-destructive">Failed</span> · {when}
+        </Trans>
       );
     }
     case "cancelled": {
-      const cancelled = t({
-        message: "Cancelled",
-        context: "download",
+      return t({
+        message: `Cancelled · ${when}`,
         comment:
-          "Second line of a download in the Downloads card that was cancelled, before when it started",
+          "Second line of a download in the Downloads card that was cancelled, such as Cancelled · 2 hours ago; {when} is when it started, such as 2 hours ago or yesterday",
       });
-
-      return `${cancelled} · ${when}`;
     }
     default: {
       return t({
@@ -248,12 +241,9 @@ const DownloadRow = ({
             >
               <LoaderCircleIcon
                 aria-hidden
-                className="animate-spin group-hover:hidden group-focus-visible/button:hidden"
+                className="animate-spin group-hover:hidden"
               />
-              <XIcon
-                aria-hidden
-                className="hidden group-hover:block group-focus-visible/button:block"
-              />
+              <XIcon aria-hidden className="hidden group-hover:block" />
             </Button>
           )}
           {row.state === "completed" && (

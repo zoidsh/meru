@@ -124,6 +124,11 @@ msgstr "{productName} could not draw its window"
 msgid "{productName} could not start"
 msgstr "{productName} could not start"
 
+#. Second line of a finished download in the Downloads card, such as 2.4 MB · 2 hours ago; {saved} is its size with its unit, {when} when it started, such as 2 hours ago or yesterday
+#: src/shell/downloads.tsx
+msgid "{saved} · {when}"
+msgstr "{saved} · {when}"
+
 #. Read by screen readers on the title bar's Downloads button while downloads run, such as 40% downloaded
 #: src/shell/downloads.tsx
 msgid "{share} downloaded"
@@ -183,6 +188,11 @@ msgstr "{told}, in split view, maximized"
 #: src/shell/inbox.tsx
 msgid "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
 msgstr "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
+
+#. Second line of a download in the Downloads card that was interrupted, such as Failed · 2 hours ago, Failed in the destructive colour; {when} is when it started, such as 2 hours ago or yesterday
+#: src/shell/downloads.tsx
+msgid "<0>Failed</0> · {when}"
+msgstr "<0>Failed</0> · {when}"
 
 #. Read by screen readers on the title bar's Downloads button, green once a download finished and the list has not been opened since
 #: src/shell/downloads.tsx
@@ -303,11 +313,10 @@ msgstr "Cancel"
 msgid "Cancel download"
 msgstr "Cancel download"
 
-#. Second line of a download in the Downloads card that was cancelled, before when it started
+#. Second line of a download in the Downloads card that was cancelled, such as Cancelled · 2 hours ago; {when} is when it started, such as 2 hours ago or yesterday
 #: src/shell/downloads.tsx
-msgctxt "download"
-msgid "Cancelled"
-msgstr "Cancelled"
+msgid "Cancelled · {when}"
+msgstr "Cancelled · {when}"
 
 #. Button in the Downloads card's header that takes every download off the list but those still running
 #: src/shell/downloads.tsx
@@ -489,12 +498,6 @@ msgstr "Exit"
 #: src/shell/tab-strip.tsx
 msgid "Expand sidebar"
 msgstr "Expand sidebar"
-
-#. Second line of a download in the Downloads card that was interrupted, before when it started
-#: src/shell/downloads.tsx
-msgctxt "download"
-msgid "Failed"
-msgstr "Failed"
 
 #. Shown in the Downloads card when nothing is listed
 #: src/shell/downloads.tsx
