@@ -1,4 +1,11 @@
-import { mkdir, realpath, rm, stat, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readdir,
+  realpath,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
@@ -305,6 +312,33 @@ test("cancels a running download from its row, which stays listed as cancelled w
   expect(
     await exists(path.join(folder, DOWNLOAD_FILES.stalled.name))
   ).toBeFalsy();
+});
+
+test("lists a download whose connection drops as failed, with no partial file left", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { shell, download, overlay, folder } = await launch(
+    launchApp,
+    userDataDir,
+    standIn
+  );
+  const failed = DOWNLOAD_FILES.broken.name;
+
+  await download("broken");
+  await expect(downloadsButton(shell)).toHaveAccessibleDescription(
+    "50% downloaded"
+  );
+  standIn.releaseDownload("broken");
+  await expect(downloadsButton(shell)).toHaveAttribute(
+    "data-downloads",
+    "plain"
+  );
+  await openCard(shell, overlay);
+
+  await expect(row(overlay, failed)).toContainText("Failed · now");
+  await expect.poll(() => readdir(folder)).toStrictEqual([]);
 });
 
 test("reads a finished file no longer in its folder as moved or deleted, and opens one that is", async ({

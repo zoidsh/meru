@@ -10,12 +10,15 @@ export const DOWNLOADS_TITLE = "Downloads stand-in";
 /**
  * Each file the page links to: `small` arrives at once; `slow` sends its
  * first half and the rest when released; `unsized` the same, naming no size;
- * `stalled` sends nothing past its headers until released.
+ * `stalled` sends nothing past its headers until released; `broken` sends
+ * its first half and, released, drops the connection, as it then does to
+ * every request for it, Chromium's own attempts to resume included.
  */
 export const DOWNLOAD_FILES = {
   small: { name: "report.pdf", size: 2048, type: "application/pdf" },
   slow: { name: "archive.zip", size: 40_000, type: "application/zip" },
   stalled: { name: "backup.zip", size: 12_000, type: "application/zip" },
+  broken: { name: "minutes.pdf", size: 40_000, type: "application/pdf" },
   unsized: {
     name: "stream.bin",
     size: 30_000,
@@ -31,6 +34,7 @@ export const DOWNLOAD_LINKS = {
   small: "Download the report",
   slow: "Download the archive",
   stalled: "Download the backup",
+  broken: "Download the minutes",
   unsized: "Download the stream",
 } as const satisfies Record<DownloadFile, string>;
 
@@ -39,6 +43,7 @@ const isFile = (name: string): name is DownloadFile => name in DOWNLOAD_FILES;
 /** The files the stand-in serves and the page linking to them. */
 export const createDownloadFiles = () => {
   const held = new Map<DownloadFile, (() => void)[]>();
+  let broken = false;
 
   const answer = (request: IncomingMessage, response: ServerResponse) => {
     const path = request.url ?? "";
@@ -68,6 +73,12 @@ export const createDownloadFiles = () => {
       return false;
     }
 
+    if (file === "broken" && broken) {
+      request.socket.destroy();
+
+      return true;
+    }
+
     const { name, size, type } = DOWNLOAD_FILES[file];
 
     response.writeHead(200, {
@@ -93,7 +104,12 @@ export const createDownloadFiles = () => {
     const rest = held.get(file) ?? [];
 
     rest.push(() => {
-      response.end(Buffer.alloc(size - half, 1));
+      if (file === "broken") {
+        broken = true;
+        response.destroy();
+      } else {
+        response.end(Buffer.alloc(size - half, 1));
+      }
     });
     held.set(file, rest);
 
@@ -102,7 +118,7 @@ export const createDownloadFiles = () => {
 
   return {
     answer,
-    /** Sends the rest of each `file` under way. */
+    /** Sends the rest of each `file` under way, or drops a broken one. */
     release: (file: DownloadFile) => {
       const rest = held.get(file) ?? [];
 

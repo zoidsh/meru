@@ -88,7 +88,7 @@ export interface StandIn {
   driveUrl: string;
   /** The Gmail stand-in's page linking to files to download. */
   downloadsUrl: string;
-  /** Sends the rest of each download of `file` under way. */
+  /** Sends the rest of each download of `file` under way, or drops a broken one. */
   releaseDownload: (file: DownloadFile) => void;
   /** What the app is given as `MERU_TEST_APP_URLS`. */
   appUrls: string;
