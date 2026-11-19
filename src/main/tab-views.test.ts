@@ -869,6 +869,27 @@ describe(createTabViews, () => {
     ]);
   });
 
+  it("leaves the selection where it is when a download-only tab closes after another was selected", async () => {
+    const window = await setup();
+    const gmail = window.viewOf("persist:a");
+
+    gmail?.options.onWindowOpen("https://drive.google.com/uc?export=download");
+    await vi.advanceTimersByTimeAsync(0);
+
+    const opened = window.viewOf("persist:a", 1);
+
+    await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
+    window.tabs.closeIfOnlyDownloading(opened?.webContentsId ?? 0);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const [profile] = window.profiles.get().profiles;
+
+    expect([
+      profile && knownTabs(profile).map((tab) => tab.id),
+      profile?.selectedTabId,
+    ]).toStrictEqual([["gmail", "c1"], "c1"]);
+  });
+
   it("keeps a tab whose page showed before it downloaded, and one no link opened", async () => {
     const window = await setup();
     const gmail = window.viewOf("persist:a");

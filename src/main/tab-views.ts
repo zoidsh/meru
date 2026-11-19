@@ -931,7 +931,7 @@ export const createTabViews = ({
     /**
      * Closes a tab a link opened whose page started a download before it
      * committed, so it has nothing to show, and selects the tab of the page
-     * that opened it again.
+     * that opened it again if it was still the one selected.
      */
     closeIfOnlyDownloading: (webContentsId: number) => {
       const key = pageViews.get(webContentsId);
@@ -942,12 +942,18 @@ export const createTabViews = ({
         return;
       }
 
+      const current = state();
+      const wasSelected =
+        current.selectedProfileId === tab.key.profileId &&
+        current.profiles.find((profile) => profile.id === tab.key.profileId)
+          ?.selectedTabId === tab.key.tabId;
+
       log("Closed a tab opened only to start a download");
       void (async () => {
         try {
           await closeTab(tab.key);
 
-          if (findTab(state(), from)) {
+          if (wasSelected && findTab(state(), from)) {
             await selectTab(from);
           }
         } catch (error) {
