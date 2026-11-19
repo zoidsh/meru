@@ -565,7 +565,8 @@ export const createTabViews = ({
       partition,
       ...(preload !== undefined && { preload }),
       background,
-      onWindowOpen: (url) => routing.onWindowOpen(tabKeyed, url),
+      onWindowOpen: (url, request) =>
+        routing.onWindowOpen(tabKeyed, url, request),
       onChildNavigation: (url) => routing.onChildNavigation(tabKeyed, url),
       onWebContents: (webContentsId, role) =>
         senders.register(webContentsId, { role, ...tabKeyed }),

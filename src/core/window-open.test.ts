@@ -20,6 +20,12 @@ const route = (url: string, context = fromGmail) =>
 
 const GMAIL = "https://mail.google.com/mail/u/0";
 
+const CHAT_ATTACHMENT =
+  "https://chat.google.com/u/0/api/get_attachment_url?url_type=DOWNLOAD_URL&attachment_token=x";
+
+const PDF_VIEWER =
+  "https://1a2b-apps-viewer.googleusercontent.com/viewer/secure/pdf/3c4d/5e6f/*/7a8b?jsapi=1";
+
 describe(routeWindowOpen, () => {
   it("opens Google's sign-in as a child window", () => {
     for (const url of [
@@ -170,6 +176,41 @@ describe(routeWindowOpen, () => {
     ).toBe("add-profile");
   });
 
+  it("has the page download a Google Chat attachment, which no window would paint", () => {
+    for (const url of [
+      CHAT_ATTACHMENT,
+      "https://chat.google.com/u/2/api/get_attachment_url",
+    ]) {
+      expect(route(url)).toBe("download");
+      expect(route(url, fromCalendar)).toBe("download");
+    }
+
+    for (const url of [
+      "https://chat.google.com/u/0/api/get_attachment_urls",
+      "https://chat.google.com/api/get_attachment_url",
+      "https://chat.google.com.example.com/u/0/api/get_attachment_url",
+      "https://example.com/chat.google.com/u/0/api/get_attachment_url",
+    ]) {
+      expect(route(url)).toBe("system-browser");
+    }
+  });
+
+  it("opens Google's secure PDF viewer as a window, unless asked for behind the page", () => {
+    expect(route(PDF_VIEWER)).toBe("child-window");
+    expect(route(PDF_VIEWER, fromCalendar)).toBe("child-window");
+    expect(
+      routeWindowOpen(PDF_VIEWER, fromGmail, { inBackground: true })
+    ).toStrictEqual({ kind: "system-browser", url: PDF_VIEWER });
+
+    for (const url of [
+      "https://1a2b-apps-viewer.googleusercontent.com/viewer/other",
+      "https://googleusercontent.com.example.com/viewer/secure/pdf/1",
+      "http://1a2b-apps-viewer.googleusercontent.com/viewer/secure/pdf/1",
+    ]) {
+      expect(route(url)).toBe("system-browser");
+    }
+  });
+
   it("refuses every other scheme, credentials and what is not a URL", () => {
     for (const url of [
       "about:blank",
@@ -215,6 +256,7 @@ describe(allowsChildNavigation, () => {
       `${GMAIL}/popout?ver=1`,
       `${GMAIL}/?view=lg`,
       "https://accounts.google.com/v3/signin/identifier",
+      PDF_VIEWER,
     ]) {
       expect(allowsChildNavigation(url, fromGmail)).toBeTruthy();
     }
@@ -242,6 +284,7 @@ describe(allowsChildNavigation, () => {
       "http://mail.google.com/mail/u/0/",
       "https://user@mail.google.com/mail/u/0/",
       "https://mail.google.com.example.com/",
+      CHAT_ATTACHMENT,
       `${"javascript"}:alert(1)`,
       "about:blank",
       "",

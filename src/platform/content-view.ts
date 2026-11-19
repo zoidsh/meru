@@ -39,9 +39,13 @@ export interface ContentViewOptions {
    * Answers each window the page asks to open, and each one a window it opened
    * asks for in turn. An allowed one opens in the session as a window of its
    * own, never attached to the view's, so hiding that leaves it; it closes
-   * with the view.
+   * with the view. One answered with a download is downloaded by the page
+   * that asked, and opens nothing.
    */
-  onWindowOpen: (url: string) => "allow" | "deny";
+  onWindowOpen: (
+    url: string,
+    asked?: { inBackground: boolean }
+  ) => WindowOpenAnswer;
   /**
    * Answers each place a window the page opened is about to go, its first
    * load and redirects included; a refused one stays where it was.
@@ -77,6 +81,8 @@ export interface ContentViewOptions {
    */
   onFound: (result: FoundInPage) => void;
 }
+
+export type WindowOpenAnswer = "allow" | "deny" | "download";
 
 export interface FindOptions {
   /** Starts a new search; without it, steps to the next or previous match. */
@@ -201,14 +207,22 @@ const routeWindowOpens = (
   const { onWindowOpen, onChildNavigation, background, onWebContents } =
     options;
 
-  webContents.setWindowOpenHandler(({ url }) =>
-    onWindowOpen(url) === "allow"
+  webContents.setWindowOpenHandler(({ url, disposition }) => {
+    const answer = onWindowOpen(url, {
+      inBackground: disposition === "background-tab",
+    });
+
+    if (answer === "download") {
+      webContents.downloadURL(url);
+    }
+
+    return answer === "allow"
       ? {
           action: "allow",
           overrideBrowserWindowOptions: { show: !background },
         }
-      : { action: "deny" }
-  );
+      : { action: "deny" };
+  });
   webContents.on("did-create-window", (child) => {
     children.add(child);
     child.once("closed", () => children.delete(child));

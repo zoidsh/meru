@@ -823,6 +823,22 @@ describe(createTabViews, () => {
     expect(window.opened).toStrictEqual([]);
   });
 
+  it("has the page download a Chat attachment, and opens the PDF viewer as a window unless asked for behind the page", async () => {
+    const window = await setup();
+    const { onWindowOpen } = window.viewOf("persist:a")?.options ?? {};
+    const viewer =
+      "https://1a2b-apps-viewer.googleusercontent.com/viewer/secure/pdf/1";
+
+    expect([
+      onWindowOpen?.("https://chat.google.com/u/0/api/get_attachment_url?x=1"),
+      onWindowOpen?.(viewer),
+      onWindowOpen?.(viewer, { inBackground: false }),
+      onWindowOpen?.(viewer, { inBackground: true }),
+    ]).toStrictEqual(["download", "allow", "allow", "deny"]);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(window.opened).toStrictEqual([viewer]);
+  });
+
   it("sends Gmail's tab to a Gmail link another tab opens", async () => {
     const window = await setup();
     const gmail = window.viewOf("persist:a");

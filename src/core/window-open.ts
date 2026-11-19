@@ -10,10 +10,11 @@ import {
  * What happens to a window a page in a content view, or a window it opened,
  * asks to open: a window of its own in the same session, a tab of an app in
  * the same profile, a hand-off of `url` to the system browser, a new profile,
- * or nothing.
+ * a download the asking page starts, or nothing.
  */
 export type WindowOpenRoute =
   | { kind: "child-window" }
+  | { kind: "download" }
   | { kind: "tab"; app: App }
   | { kind: "system-browser"; url: string }
   | { kind: "add-profile" }
@@ -47,13 +48,33 @@ const isAddSession = (url: URL, signInOrigins: readonly string[]) => {
   );
 };
 
+/**
+ * A Google Chat attachment: a download behind a Chat address, so a window or
+ * tab opened for it would never paint.
+ */
+const isChatAttachment = (url: URL) =>
+  url.hostname === "chat.google.com" &&
+  /^\/u\/\d+\/api\/get_attachment_url(?:\/|$)/u.test(url.pathname);
+
+/** Google's secure PDF viewer, which a Drive or Chat attachment opens in. */
+const isSecurePdfViewer = (url: URL) =>
+  url.protocol === "https:" &&
+  url.hostname.endsWith(".googleusercontent.com") &&
+  url.pathname.startsWith("/viewer/secure/pdf");
+
 /** Gmail's inbox at `/`, `/mail/u/<n>` or `/mail/u/<n>/`, with no query. */
 const isInboxRoot = (url: URL) =>
   !url.search && /^\/(?:mail\/u\/\d+\/?)?$/u.test(url.pathname);
 
 export const routeWindowOpen = (
   url: string,
-  { signInOrigins, apps, openerApp }: WindowOpenContext
+  { signInOrigins, apps, openerApp }: WindowOpenContext,
+  {
+    inBackground = false,
+  }: {
+    /** Asked for as a tab behind the page, as a middle click asks. */
+    inBackground?: boolean;
+  } = {}
 ): WindowOpenRoute => {
   const parsed = parseWebUrl(url);
 
@@ -66,6 +87,16 @@ export const routeWindowOpen = (
   }
 
   if (signInOrigins.includes(parsed.origin)) {
+    return { kind: "child-window" };
+  }
+
+  if (isChatAttachment(parsed)) {
+    return { kind: "download" };
+  }
+
+  // A window would come in front of the page, which a tab behind it asks not
+  // to; the system browser opens that one.
+  if (isSecurePdfViewer(parsed) && !inBackground) {
     return { kind: "child-window" };
   }
 
@@ -90,9 +121,9 @@ export const routeWindowOpen = (
 };
 
 /**
- * Whether a window a page opened may go to `url` itself: sign-in, or a page
- * of the app whose tab opened it. Anything else, "Add another account"
- * included, is routed as a window open.
+ * Whether a window a page opened may go to `url` itself: sign-in, Google's
+ * secure PDF viewer, or a page of the app whose tab opened it. Anything else,
+ * "Add another account" included, is routed as a window open.
  */
 export const allowsChildNavigation = (
   url: string,
@@ -104,6 +135,7 @@ export const allowsChildNavigation = (
     parsed !== undefined &&
     !isAddSession(parsed, signInOrigins) &&
     (signInOrigins.includes(parsed.origin) ||
+      isSecurePdfViewer(parsed) ||
       appForUrl(apps, url)?.id === openerApp)
   );
 };

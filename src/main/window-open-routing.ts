@@ -2,6 +2,7 @@ import type { App } from "#core/apps.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
 import type { WindowOpenRoute } from "#core/window-open.ts";
+import type { WindowOpenAnswer } from "#platform/content-view.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 
 /** How long after a page's request to add an account another is dropped. */
@@ -13,7 +14,7 @@ const describe = (error: unknown) =>
 /**
  * Where a window a tab's page opens goes, and where a link a child window
  * follows out of its app goes instead: the system browser, a tab of the
- * profile, a new profile for another account, or nowhere.
+ * profile, a new profile for another account, a download, or nowhere.
  */
 export const createWindowOpenRouting = ({
   apps,
@@ -95,12 +96,20 @@ export const createWindowOpenRouting = ({
   });
 
   return {
-    onWindowOpen: (tabKeyed: TabKey, url: string) => {
-      const route = routeWindowOpen(url, opening(tabKeyed));
+    onWindowOpen: (
+      tabKeyed: TabKey,
+      url: string,
+      asked?: { inBackground: boolean }
+    ): WindowOpenAnswer => {
+      const route = routeWindowOpen(url, opening(tabKeyed), asked);
 
       follow(route, url, tabKeyed.profileId);
 
-      return route.kind === "child-window" ? "allow" : "deny";
+      if (route.kind === "child-window") {
+        return "allow";
+      }
+
+      return route.kind === "download" ? "download" : "deny";
     },
     onChildNavigation: (tabKeyed: TabKey, url: string) => {
       if (allowsChildNavigation(url, opening(tabKeyed))) {
@@ -111,7 +120,11 @@ export const createWindowOpenRouting = ({
 
       log("Kept a window a page opened from leaving its app");
 
-      if (route.kind !== "child-window" && route.kind !== "deny") {
+      if (
+        route.kind !== "child-window" &&
+        route.kind !== "download" &&
+        route.kind !== "deny"
+      ) {
         follow(route, url, tabKeyed.profileId);
       }
 
