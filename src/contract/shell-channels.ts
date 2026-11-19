@@ -31,6 +31,7 @@ export const SHELL_CALL_NAMES = [
   "setDownloadsOpen",
   "openDownload",
   "showDownload",
+  "dragDownload",
   "cancelDownload",
   "removeDownload",
   "clearDownloads",

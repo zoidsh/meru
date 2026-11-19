@@ -54,6 +54,7 @@ export const wireDownloads = ({
       close: () => {
         overlays.close();
       },
+      webContentsId: overlays.webContentsId,
     },
     newId,
     log: console.error,

@@ -44,6 +44,8 @@ export interface DownloadsDeps {
     isOpen: () => boolean;
     open: () => void;
     close: () => void;
+    /** The web contents of the document the card is drawn in, if any. */
+    webContentsId: () => number | undefined;
   };
   newId: () => string;
   now?: () => number;
@@ -407,6 +409,27 @@ export const createDownloads = ({
 
       if (await files.exists(entry.path)) {
         files.showInFolder(entry.path);
+      } else {
+        gone.add(id);
+        notify();
+      }
+    },
+    /**
+     * Drags the finished file from the card's document, the row's own drag
+     * having been cancelled for it; a file gone is marked so. Its presence is
+     * read at once, as the pointer is still down.
+     */
+    drag: (id: string) => {
+      const entry = finished(id);
+      const from = overlay.webContentsId();
+
+      if (!entry || from === undefined) {
+        return;
+      }
+
+      if (files.taken(entry.path)) {
+        gone.delete(id);
+        files.drag(entry.path, from);
       } else {
         gone.add(id);
         notify();

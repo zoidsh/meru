@@ -133,6 +133,9 @@ const setup = ({
     showInFolder: (file) => {
       calls.push(`show ${file}`);
     },
+    drag: (file, from) => {
+      calls.push(`drag ${file} from ${from}`);
+    },
   };
   const signals: DownloadSignals = {
     progress: (share) => {
@@ -168,6 +171,7 @@ const setup = ({
         open = false;
         calls.push("overlay close");
       },
+      webContentsId: () => (open ? 7 : undefined),
     },
     newId: () => {
       ids += 1;
@@ -562,6 +566,38 @@ describe("the card", () => {
     await downloads.showInFolder("here");
 
     expect(calls).toStrictEqual(["show /Downloads/here.pdf"]);
+  });
+
+  it("drags a finished file out of the card's document, and marks one no longer there gone", async () => {
+    const { downloads, calls } = setup({
+      entries: [entry("here"), entry("moved")],
+      onDisk: ["/Downloads/here.pdf"],
+    });
+
+    downloads.setOpen(true);
+    await settle();
+    calls.length = 0;
+    downloads.drag("here");
+    downloads.drag("moved");
+
+    expect(calls).toStrictEqual(["drag /Downloads/here.pdf from 7"]);
+    expect(downloads.shellSlice().rows.map(({ state }) => state)).toStrictEqual(
+      ["completed", "gone"]
+    );
+  });
+
+  it("drags nothing while the card is closed, or one not finished", async () => {
+    const { downloads, calls } = setup({
+      entries: [entry("here"), entry("failed", { state: "failed" })],
+      onDisk: ["/Downloads/here.pdf", "/Downloads/failed.pdf"],
+    });
+
+    downloads.drag("here");
+    downloads.setOpen(true);
+    await settle();
+    downloads.drag("failed");
+
+    expect(calls).toStrictEqual(["overlay open"]);
   });
 
   it("removes one entry, but never one running", async () => {

@@ -156,6 +156,8 @@ export const createOverlays = ({
       state = next;
       dispatch({ kind: "state-changed", previous, next });
     },
+    /** The web contents of the view the overlay document shows in, once adopted. */
+    webContentsId: () => view?.webContentsId,
     /** Places the view again, as the window now has it. */
     relayout: () => {
       if (open && view) {

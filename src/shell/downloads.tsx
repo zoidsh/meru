@@ -200,6 +200,12 @@ const DownloadRow = ({
       className="group cursor-default text-sm outline-none"
       onFocus={onSelect}
       onKeyDown={onKeyDown}
+      draggable={row.state === "completed"}
+      // The system drags the file itself, which only main can start.
+      onDragStart={(event) => {
+        event.preventDefault();
+        shellCalls().dragDownload({ id: row.id });
+      }}
       onClick={() => {
         if (row.state === "completed") {
           shellCalls().openDownload({ id: row.id });

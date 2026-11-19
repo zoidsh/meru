@@ -237,6 +237,11 @@ export const SHELL_CALLS = {
   openDownload: { request: download, response: z.undefined() },
   /** Shows a finished download in its folder. */
   showDownload: { request: download, response: z.undefined() },
+  /**
+   * Drags a finished download's file out of the card, from the drag the
+   * row started and cancelled.
+   */
+  dragDownload: { request: download, response: z.undefined() },
   cancelDownload: { request: download, response: z.undefined() },
   /** Takes a download off the list; a running one is not. */
   removeDownload: { request: download, response: z.undefined() },

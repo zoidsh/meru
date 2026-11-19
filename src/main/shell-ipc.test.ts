@@ -257,6 +257,11 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    dragDownload: (request) => {
+      calls.push(["dragDownload", request]);
+
+      return Promise.resolve();
+    },
     cancelDownload: (request) => {
       calls.push(["cancelDownload", request]);
 

@@ -2,7 +2,7 @@ import { realpathSync } from "node:fs";
 import { mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { ElectronApplication, Locator, Page } from "@playwright/test";
 import { delay, escapeRegExp } from "es-toolkit";
 
 import {
@@ -34,6 +34,7 @@ const DAY = 24 * 60 * 60 * 1000;
 interface CapturedFiles {
   opened: string[];
   shown: string[];
+  dragged: string[];
 }
 
 interface CapturedSignals {
@@ -68,6 +69,27 @@ const readShown = async (app: ElectronApplication) => {
   );
 
   return files.shown.map(canonical);
+};
+
+/** The files the test build dragged in place of the system's drag. */
+const readDragged = async (app: ElectronApplication) => {
+  const files = await app.evaluate(
+    () => Reflect.get(globalThis, "meruTestDownloadFiles") as CapturedFiles
+  );
+
+  return files.dragged.map(canonical);
+};
+
+/** Presses on the row and moves the pointer away with it held. */
+const dragOut = async (overlay: Page, target: Locator) => {
+  const box = await target.boundingBox();
+  const x = (box?.x ?? 0) + 40;
+  const y = (box?.y ?? 0) + (box?.height ?? 0) / 2;
+
+  await overlay.mouse.move(x, y);
+  await overlay.mouse.down();
+  await overlay.mouse.move(x + 60, y + 60, { steps: 6 });
+  await overlay.mouse.up();
 };
 
 interface CapturedNotification {
@@ -511,6 +533,42 @@ test("reads a finished file no longer in its folder as moved or deleted, and ope
 
   await expect(card(overlay)).toBeHidden();
   expect(await readOpened(app)).toStrictEqual([path.join(folder, "kept.pdf")]);
+});
+
+test("drags a finished row out as its file, and reads one no longer there as moved or deleted", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, overlay, folder } = await launch(
+    launchApp,
+    userDataDir,
+    standIn,
+    [
+      { fileName: "kept.pdf", state: "completed" },
+      { fileName: "moved.pdf", state: "completed" },
+      { fileName: "failed.pdf", state: "failed" },
+    ]
+  );
+
+  await openCard(shell, overlay);
+  await expect(row(overlay, "moved.pdf")).toContainText("1 kB · ");
+  await rm(path.join(folder, "moved.pdf"), { force: true });
+
+  await dragOut(overlay, row(overlay, "kept.pdf"));
+  await expect
+    .poll(() => readDragged(app))
+    .toStrictEqual([path.join(folder, "kept.pdf")]);
+
+  await dragOut(overlay, row(overlay, "moved.pdf"));
+  await expect(row(overlay, "moved.pdf")).toContainText("Moved or deleted");
+
+  await dragOut(overlay, row(overlay, "failed.pdf"));
+  // A failed row has no file to drag, and the card stays open.
+  await expect(card(overlay)).toBeVisible();
+  expect(await readDragged(app)).toStrictEqual([path.join(folder, "kept.pdf")]);
+  // A drag is no click: nothing opened.
+  expect(await readOpened(app)).toStrictEqual([]);
 });
 
 test("moves through the list with the keys, opens with Enter, cancels a running download or removes another with Delete, and clears all but those running", async ({

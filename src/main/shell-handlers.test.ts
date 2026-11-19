@@ -153,6 +153,9 @@ const setup = ({
 
         return Promise.resolve();
       },
+      drag: (id) => {
+        calls.push(["dragDownload", id]);
+      },
       cancel: (id) => {
         calls.push(["cancelDownload", id]);
       },

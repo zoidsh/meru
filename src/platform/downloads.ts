@@ -4,7 +4,14 @@ import { access, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { BaseWindow, app, session, shell } from "electron";
+import {
+  BaseWindow,
+  app,
+  nativeImage,
+  session,
+  shell,
+  webContents,
+} from "electron";
 
 import type { AppWindow } from "./window.ts";
 
@@ -100,8 +107,8 @@ export const createDownloadSessions = (): DownloadSessions => {
       }
 
       watched.add(watching);
-      watching.on("will-download", (_event, item, webContents) => {
-        take(wrap(item), webContents.id);
+      watching.on("will-download", (_event, item, startedIn) => {
+        take(wrap(item), startedIn.id);
       });
     },
   };
@@ -127,6 +134,11 @@ export interface DownloadFiles {
   /** In its default app. */
   open: (file: string) => void;
   showInFolder: (file: string) => void;
+  /**
+   * Starts the system's drag of the file from the web contents whose page
+   * the pointer is down in, its icon the file's own.
+   */
+  drag: (file: string, webContentsId: number) => void;
 }
 
 const exists = async (file: string) => {
@@ -175,6 +187,36 @@ const revealInFinder = async (file: string) => {
   }
 };
 
+/**
+ * What the drag shows where the system has no icon for the file: a page with
+ * its corner folded, 24px square. macOS refuses a drag without an icon.
+ */
+const FALLBACK_DRAG_ICON =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABFklEQVR4nN3RzysEcRjH8afd1kE5ODg4ODgoBwcHRSFEfs0f4V9x9D+478HZqCmllB+llFLYqG1mWzTM0jhY6vtWa5GDnhnPiXe9Ls/38Dl8Rf5d3j3LXoPIa8CPEpyXcOElrOQemI+JFu4gs5jVXAOzt6CpNKGcwtzH7Ya1zAPTddA8vLqWjdQx075N1TOOTESgiV/cp/KjY7J9H69l+JOxKmium+6b9cS17qNVztWBkSvQ7KeO6PnLwZN7f7vEqQPDFbAQraEzsBCtwVOwEK2BE7AQrf5jsBCtviOwEK3eQ7AQrZ49sBCt7l2wEK2uHbAQrc5tsBCtUkDUEcBvlAJCdaDos1TwCQtbkItPWNxkUR34c70BSSmcO++HIKkAAAAASUVORK5CYII=";
+
+const dragIcon = async (file: string) => {
+  try {
+    const icon = await app.getFileIcon(file, { size: "normal" });
+
+    if (!icon.isEmpty()) {
+      return icon;
+    }
+  } catch {
+    // Linux may know no icon for it.
+  }
+
+  return nativeImage.createFromDataURL(FALLBACK_DRAG_ICON);
+};
+
+const startDrag = async (file: string, webContentsId: number) => {
+  const icon = await dragIcon(file);
+  const from = webContents.fromId(webContentsId);
+
+  if (from && !from.isDestroyed()) {
+    from.startDrag({ file, icon });
+  }
+};
+
 export const createDownloadFiles = (): DownloadFiles => ({
   ...sharedFiles(app.getPath("downloads")),
   open: (file) => {
@@ -191,12 +233,16 @@ export const createDownloadFiles = (): DownloadFiles => ({
 
     shell.showItemInFolder(file);
   },
+  drag: (file, webContentsId) => {
+    void startDrag(file, webContentsId);
+  },
 });
 
-/** What the end-to-end build would have opened, in order. */
+/** What the end-to-end build would have opened, shown and dragged, in order. */
 export interface CapturedDownloadFiles {
   opened: string[];
   shown: string[];
+  dragged: string[];
 }
 
 /**
@@ -205,7 +251,11 @@ export interface CapturedDownloadFiles {
  * the main process's global under `meruTestDownloadFiles`.
  */
 export const createCapturedDownloadFiles = (): DownloadFiles => {
-  const captured: CapturedDownloadFiles = { opened: [], shown: [] };
+  const captured: CapturedDownloadFiles = {
+    opened: [],
+    shown: [],
+    dragged: [],
+  };
 
   Reflect.set(globalThis, "meruTestDownloadFiles", captured);
 
@@ -216,6 +266,9 @@ export const createCapturedDownloadFiles = (): DownloadFiles => {
     },
     showInFolder: (file) => {
       captured.shown.push(file);
+    },
+    drag: (file) => {
+      captured.dragged.push(file);
     },
   };
 };

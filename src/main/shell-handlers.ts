@@ -74,7 +74,13 @@ export interface ShellHandlersDeps {
   inbox: Pick<Inbox, "setOpen" | "openMessage" | "runAction">;
   downloads: Pick<
     Downloads,
-    "setOpen" | "openFile" | "showInFolder" | "cancel" | "remove" | "clear"
+    | "setOpen"
+    | "openFile"
+    | "showInFolder"
+    | "drag"
+    | "cancel"
+    | "remove"
+    | "clear"
   >;
   openApp: Pick<OpenApp, "choose" | "chooseBookmark" | "removeBookmark">;
   bookmarks: Pick<Bookmarks, "toggle">;
@@ -561,6 +567,11 @@ export const createShellHandlers = ({
   },
   showDownload: async ({ id }) => {
     await downloads.showInFolder(id);
+  },
+  dragDownload: ({ id }) => {
+    downloads.drag(id);
+
+    return Promise.resolve();
   },
   cancelDownload: ({ id }) => {
     downloads.cancel(id);
