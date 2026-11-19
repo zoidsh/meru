@@ -1,11 +1,5 @@
-import {
-  mkdir,
-  readdir,
-  realpath,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { realpathSync } from "node:fs";
+import { mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
@@ -44,18 +38,24 @@ interface CapturedSignals {
 }
 
 /**
- * Where the test build saves downloads, in place of the system's folder, as
- * main names it: past the link macOS puts before the temporary folder.
+ * A path in one spelling for each file, as main and the test may name it
+ * apart: past the link macOS puts before the temporary folder, and with
+ * Windows' long names where one folder has a short 8.3 name too.
  */
-const downloadsFolder = async (userDataDir: string) =>
-  path.join(await realpath(userDataDir), "Downloads");
+const canonical = (file: string) => realpathSync.native(file);
+
+/** Where the test build saves downloads, in place of the system's folder. */
+const downloadsFolder = (userDataDir: string) =>
+  path.join(canonical(userDataDir), "Downloads");
 
 /** The files the test build opened in place of handing them to the system. */
-const readOpened = (app: ElectronApplication) =>
-  app.evaluate(
-    () =>
-      (Reflect.get(globalThis, "meruTestDownloadFiles") as CapturedFiles).opened
+const readOpened = async (app: ElectronApplication) => {
+  const files = await app.evaluate(
+    () => Reflect.get(globalThis, "meruTestDownloadFiles") as CapturedFiles
   );
+
+  return files.opened.map(canonical);
+};
 
 /** Each progress the Dock or taskbar was given, in order. */
 const readProgress = (app: ElectronApplication) =>
@@ -66,12 +66,13 @@ const readProgress = (app: ElectronApplication) =>
   );
 
 /** Each file the Dock was told landed. */
-const readLanded = (app: ElectronApplication) =>
-  app.evaluate(
-    () =>
-      (Reflect.get(globalThis, "meruTestDownloadSignals") as CapturedSignals)
-        .landed
+const readLanded = async (app: ElectronApplication) => {
+  const signals = await app.evaluate(
+    () => Reflect.get(globalThis, "meruTestDownloadSignals") as CapturedSignals
   );
+
+  return signals.landed.map(canonical);
+};
 
 const sizeOf = async (file: string) => {
   const { size } = await stat(file);
@@ -140,7 +141,7 @@ const launch = async (
   standIn: StandIn,
   seeded: Seeded[] = []
 ) => {
-  const folder = await downloadsFolder(userDataDir);
+  const folder = downloadsFolder(userDataDir);
 
   await mkdir(folder, { recursive: true });
   await Promise.all(
