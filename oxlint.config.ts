@@ -26,6 +26,8 @@ const ELECTRON_TYPES_ONLY = {
 
 export default defineConfig({
   extends: [core, react, vitest],
+  // Installed by `skills add shadcn/ui` and kept as it comes.
+  ignorePatterns: [".claude/skills/shadcn/**"],
   overrides: [
     {
       files: ["src/**"],
