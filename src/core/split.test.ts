@@ -769,6 +769,13 @@ const leaves = (next: Profile | undefined) =>
 const order = (next: State | undefined) =>
   next?.profiles[0]?.tabs.flatMap((each) => ("id" in each ? [each.id] : []));
 
+/** The order and split after `tabId` moves out of its split before `before`. */
+const movedOut = (from: State, tabId: string, before: string) => {
+  const next = moveTab(from, key(tabId), before);
+
+  return [order(next), of(next)?.split];
+};
+
 describe(splitBeside, () => {
   it("starts a split with the tab beside a lone target, on the side asked, selected", () => {
     expect([
@@ -998,37 +1005,30 @@ describe("the sidebar's drops on a split", () => {
     ]).toStrictEqual([undefined, { ...tab("b"), pinned: true }]);
   });
 
-  it("lands a pinned tab moved out above its own box before the box's next pinned tab, or where it stood with none left pinned", () => {
+  it("keeps a tab moved out above its own box where it stands when the box stands at its place, with a tab between it and the box's others", () => {
     const pinned = (id: string) => ({ ...tab(id), pinned: true });
-    const two = state(
-      profile("a", split("d", "b", "a"), [
-        pinned("a"),
-        pinned("b"),
-        tab("c"),
-        tab("d"),
+    // Pinned p, x and q and a not pinned, the box of p, q and a drawn at
+    // p's place, above x.
+    const spread = state(
+      profile("p", split("p", "q", "a"), [
+        pinned("p"),
+        pinned("x"),
+        pinned("q"),
+        tab("a"),
       ])
     );
-    const one = state(
-      profile("a", split("c", "b", "d"), [
-        pinned("a"),
-        tab("c"),
-        pinned("b"),
-        tab("d"),
-      ])
+    // c, x and a in the list, the box of c and a drawn at c's place.
+    const listed = state(
+      profile("c", split("c", "a"), [tab("c"), tab("x"), tab("a")])
     );
-
     expect([
-      [
-        order(moveTab(two, key("a"), "a")),
-        of(moveTab(two, key("a"), "a"))?.split,
-      ],
-      [
-        order(moveTab(one, key("b"), "b")),
-        of(moveTab(one, key("b"), "b"))?.split,
-      ],
+      movedOut(spread, "p", "p"),
+      movedOut(spread, "q", "p"),
+      movedOut(listed, "c", "c"),
     ]).toStrictEqual([
-      [["gmail", "a", "b", "c", "d"], split("d", "b")],
-      [["gmail", "a", "c", "b", "d"], split("c", "d")],
+      [["gmail", "p", "x", "q", "a"], split("q", "a")],
+      [["gmail", "q", "p", "x", "a"], split("p", "a")],
+      [["gmail", "c", "x", "a"], undefined],
     ]);
   });
 });
