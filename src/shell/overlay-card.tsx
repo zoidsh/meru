@@ -28,7 +28,7 @@ export const OverlayCard = ({
       data-overlay-card
       style={{ width: OVERLAY_WIDTHS[overlayWidth({ kind })] }}
       className={cn(
-        "pointer-events-auto relative m-0 flex max-h-full max-w-full flex-col overflow-hidden rounded-[14px] border-0 bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10",
+        "pointer-events-auto relative m-0 flex max-h-full max-w-full flex-col overflow-hidden rounded-[14px] border-0 bg-popover p-1 text-popover-foreground ring-1 ring-foreground/10",
         className
       )}
     >

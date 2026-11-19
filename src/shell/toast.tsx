@@ -19,7 +19,7 @@ const NoticeList = () => {
   const { toasts } = useToastManager();
 
   return toasts.map((notice) => (
-    <ToastRoot key={notice.id} toast={notice}>
+    <ToastRoot key={notice.id} toast={notice} className="shadow-none">
       <ToastContent>
         {/* A one-line toast fills the view main sizes for it, so a long page
             title is cut to that line, keeping "Bookmarked" in sight. */}
