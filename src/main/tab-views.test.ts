@@ -88,7 +88,6 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
   let webContentsIds = 10;
   let ids = 0;
   let fronts = 0;
-  let inboxOpen = false;
   let profilesAdded = 0;
   const pageChanges: TabKey[] = [];
   const loads: { key: TabKey; page: LoadedPage }[] = [];
@@ -237,7 +236,6 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     senders,
     state: profiles.get,
     sidebar: () => sidebar,
-    inboxOpen: () => inboxOpen,
     openTab: profiles.openTab,
     selectTab: profiles.selectTab,
     newId: () => {
@@ -335,9 +333,6 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
       size = next;
       resize?.();
     },
-    setInboxOpen: (open: boolean) => {
-      inboxOpen = open;
-    },
   };
 };
 
@@ -402,7 +397,7 @@ describe(createTabViews, () => {
     ]).toStrictEqual([{ kind: "loading" }, { kind: "loading" }]);
   });
 
-  it("answers the front tab's history and load, null under the unified inbox, moves only the front view, and tells of every load", async () => {
+  it("answers the front tab's history and load, moves only the front view, and tells of every load", async () => {
     const window = await setup();
     const gmail = window.viewOf("persist:a");
     let changes = 0;
@@ -447,10 +442,6 @@ describe(createTabViews, () => {
       "back",
       "zoom reset",
     ]);
-
-    window.setInboxOpen(true);
-
-    expect(window.tabs.navigation()).toBeNull();
   });
 
   it("searches a tab's page, tells of its answers, and offers only a front page that shows to search", async () => {
@@ -474,16 +465,9 @@ describe(createTabViews, () => {
       [{ key, result: { requestId: 1, ordinal: 1, matches: 3 } }],
     ]);
 
-    window.setInboxOpen(true);
-    const underInbox = window.tabs.findable();
-
-    window.setInboxOpen(false);
     window.tabs.sleep(key);
 
-    expect([underInbox, window.tabs.findable()]).toStrictEqual([
-      undefined,
-      undefined,
-    ]);
+    expect(window.tabs.findable()).toBeUndefined();
   });
 
   it("gives Gmail's view Gmail's preload and another app's view none", async () => {

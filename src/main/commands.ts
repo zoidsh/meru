@@ -73,7 +73,7 @@ export interface CommandContext {
   sidebarShown: boolean;
   /**
    * The page of the tab whose own window has focus, else the front tab's,
-   * or `null` with none or under the unified inbox.
+   * or `null` with none.
    */
   navigation: Navigation | null;
   /** Whether the selected tab was put to sleep, and so has no page. */
@@ -407,8 +407,8 @@ export const COMMANDS: readonly Command[] = [
       linux: "CommandOrControl+R",
     },
     // A sleeping tab has no page, and Reload wakes it.
-    isAvailable: ({ navigation, selectedTabAsleep, inboxOpen }) =>
-      navigation !== null || (selectedTabAsleep && !inboxOpen),
+    isAvailable: ({ navigation, selectedTabAsleep }) =>
+      navigation !== null || selectedTabAsleep,
     run: (_context, { reloadSelectedTab }) => {
       reloadSelectedTab();
 

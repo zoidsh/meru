@@ -173,14 +173,13 @@ const FrontNavigationButtons = ({
 }) => {
   const navigation = useShellState("navigation") ?? null;
   const tabs = useShellState("tabs");
-  const inboxOpen = useShellState("inbox")?.open ?? false;
 
   return (
     <NavigationButtons
       shortcuts={shortcuts}
       navigation={navigation}
       // Reload wakes a sleeping selected tab, which has no page.
-      reloadWakes={(tabs?.selectedAsleep ?? false) && !inboxOpen}
+      reloadWakes={tabs?.selectedAsleep ?? false}
       navigate={(action) => {
         shellCalls().navigate({ action });
       }}

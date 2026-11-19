@@ -63,8 +63,6 @@ export interface TabViewsDeps {
   state: () => State;
   /** The sidebar as it is now; `relayout` follows a change. */
   sidebar: () => SidebarState;
-  /** Whether the unified inbox is open, under which the front tab offers no navigation. */
-  inboxOpen: () => boolean;
   /** Opens the tab, under `tabId` when it is a new one, after the tab `after` names. */
   openTab: (
     profileId: string,
@@ -168,7 +166,6 @@ export const createTabViews = ({
   senders,
   state,
   sidebar,
-  inboxOpen,
   openTab,
   selectTab,
   newId,
@@ -964,16 +961,10 @@ export const createTabViews = ({
     },
     /**
      * Where the page of the tab `key` names, or of the front tab, can go and
-     * whether it loads, or `null` with no such page; the front tab has none
-     * under the unified inbox.
+     * whether it loads, or `null` with no such page.
      */
-    navigation: (key?: TabKey): Navigation | null => {
-      const tab = target(key);
-
-      return tab && (key !== undefined || !inboxOpen())
-        ? tab.view.navigation()
-        : null;
-    },
+    navigation: (key?: TabKey): Navigation | null =>
+      target(key)?.view.navigation() ?? null,
     /** Each on the page of the tab `key` names, or of the front tab. */
     goBack: (key?: TabKey) => {
       target(key)?.view.goBack();
@@ -1017,13 +1008,13 @@ export const createTabViews = ({
         : undefined;
     },
     /**
-     * The front tab, while its page shows and no unified inbox covers it;
-     * a tab asleep, failed or not yet loaded has no page to search.
+     * The front tab, while its page shows; a tab asleep, failed or not yet
+     * loaded has no page to search.
      */
     findable: (): TabKey | undefined => {
       const tab = frontTab();
 
-      return front !== undefined && tab && shows(front, tab) && !inboxOpen()
+      return front !== undefined && tab && shows(front, tab)
         ? tab.key
         : undefined;
     },

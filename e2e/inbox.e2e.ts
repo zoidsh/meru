@@ -147,7 +147,6 @@ test("lists every profile's mail newest first in an overlay over the page, says 
 }) => {
   const { app, shell, overlay } = await launch(launchApp, userDataDir, standIn);
   const home = [{ url: standIn.url, partition: "persist:p0" }];
-  const back = shell.getByRole("button", { name: "Back" });
 
   standIn.setFeed("persist:p1", { unreadCount: 40, mail: WORK_MAIL });
   await pollAll(app);
@@ -169,11 +168,10 @@ test("lists every profile's mail newest first in an overlay over the page, says 
   await expect(
     overlay.getByText("Work: the newest 1 of 40 unread")
   ).toBeVisible();
-  // The page stays in view under it, and Back, Forward and Reload wait.
+  // The page stays in view under it, and Reload stays live for it.
   expect(await overlayShown(app)).toBeTruthy();
   await expect.poll(() => shownViews(app)).toStrictEqual(home);
-  await expect(back).toBeDisabled();
-  await expect(shell.getByRole("button", { name: "Reload" })).toBeDisabled();
+  await expect(shell.getByRole("button", { name: "Reload" })).toBeEnabled();
   // Opening put focus on the first row.
   await expect(grid(overlay).getByRole("row").first()).toBeFocused();
 
@@ -182,6 +180,33 @@ test("lists every profile's mail newest first in an overlay over the page, says 
   await expect(grid(overlay)).toBeHidden();
   await expect.poll(() => overlayShown(app)).toBeFalsy();
   await expect(shell.getByRole("button", { name: "Reload" })).toBeEnabled();
+});
+
+test("reloads the page under it, as under any other overlay, and stays open", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, overlay } = await launch(launchApp, userDataDir, standIn);
+  const gmail = await findPage(app, standIn.url);
+
+  standIn.setFeed("persist:p1", { unreadCount: 1, mail: WORK_MAIL });
+  await pollAll(app);
+  await openInbox(shell, overlay);
+  await expect(shell.getByRole("button", { name: "Reload" })).toBeEnabled();
+
+  await gmail.evaluate(() => Reflect.set(window, "kept", true));
+  await clickMenuItem(app, "tab.reload");
+  await expect
+    .poll(() =>
+      gmail
+        .evaluate(() => Reflect.get(window, "kept") === true)
+        // Asked while the page reloads.
+        .catch(() => true)
+    )
+    .toBe(false);
+  await expect(grid(overlay)).toBeVisible();
+  expect(await overlayShown(app)).toBeTruthy();
 });
 
 /** The empty inbox: before any feed has been read, and once one read none unread. */

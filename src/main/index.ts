@@ -249,7 +249,6 @@ const start = async () => {
     network,
     senders,
     state: profiles.get,
-    inboxOpen: () => overlays.current()?.kind === "inbox",
     openTab: profiles.openTab,
     selectTab: profiles.selectTab,
     newId,
