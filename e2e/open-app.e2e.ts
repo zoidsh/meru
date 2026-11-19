@@ -149,6 +149,59 @@ test("Cmd or Ctrl+T opens New tab over the page, listing every app but the profi
     .toStrictEqual(["gmail", "calendar", "drive"]);
 });
 
+test("New tab is spaced as shadcn's Command: field and rows 8px in from the card, 4px between a group's last row and the line under it", async ({
+  app,
+  standIn,
+}) => {
+  await findPage(app, standIn.url);
+
+  const overlay = await findOverlayDocument(app);
+
+  await pressOpenApp(app, standIn.url);
+  await expect(overlay.getByRole("dialog", { name: "New tab" })).toBeVisible();
+
+  const spacing = await overlay.evaluate(() => {
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- runs in the page, which sees nothing outside
+    const rect = (selector: string) => {
+      const found = document.querySelector(selector);
+
+      if (!found) {
+        throw new Error(`Nothing is ${selector}`);
+      }
+
+      return found.getBoundingClientRect();
+    };
+    const card = rect("[data-overlay-card]");
+    const field = rect(
+      "[data-slot=command-input-wrapper] [data-slot=input-group]"
+    );
+    const items = [...document.querySelectorAll("[data-slot=command-item]")];
+    const lastApp = items.at(-1)?.getBoundingClientRect();
+    const line = rect("[data-slot=command-separator]");
+    const heading = [...document.querySelectorAll("[cmdk-group-heading]")]
+      .at(-1)
+      ?.getBoundingClientRect();
+
+    return {
+      fieldLeft: field.left - card.left,
+      fieldTop: field.top - card.top,
+      rowLeft: (lastApp?.left ?? 0) - card.left,
+      rowRight: card.right - (lastApp?.right ?? 0),
+      aboveLine: line.top - (lastApp?.bottom ?? 0),
+      belowLine: (heading?.top ?? 0) - line.bottom,
+    };
+  });
+
+  expect(spacing).toStrictEqual({
+    fieldLeft: 8,
+    fieldTop: 8,
+    rowLeft: 8,
+    rowRight: 8,
+    aboveLine: 4,
+    belowLine: 4,
+  });
+});
+
 test("New tab is first in the titlebar's right-hand group while the sidebar is hidden and below the last tab while it shows, pressed while open; a second click closes it, and Escape gives focus back to the page", async ({
   launchApp,
   standIn,

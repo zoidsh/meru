@@ -97,7 +97,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
   return (
     <OverlayCard kind="open-app" labelledBy={headingId}>
       {split ? (
-        <header className="flex h-11 shrink-0 items-center justify-between gap-2 pr-2 pl-3">
+        <header className="flex h-12 shrink-0 items-center justify-between gap-2 pr-3 pl-4">
           <h2
             id={headingId}
             className="flex items-center gap-2 text-base leading-5 font-medium [&_svg]:size-4"
@@ -134,7 +134,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
         value={highlighted}
         onValueChange={setHighlighted}
         onKeyDown={removeHighlighted}
-        className="min-h-0 rounded-none! bg-transparent p-0 [&_[data-slot=command-input-wrapper]]:p-0 [&_[data-slot=command-input-wrapper]]:pb-1"
+        className="min-h-0"
       >
         <CommandInput
           ref={focus}
@@ -175,7 +175,6 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
                 comment:
                   "Heading of the group of Google's apps in the New tab launcher",
               })}
-              className="p-0"
             >
               {listed.apps.map((app) => (
                 <CommandItem
@@ -203,7 +202,6 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
                 comment:
                   "Heading of the group of the profile's bookmarks in the New tab launcher",
               })}
-              className="p-0"
             >
               {noBookmarksYet && (
                 <p className="flex h-8 items-center px-2 text-sm text-muted-foreground">

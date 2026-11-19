@@ -36,7 +36,7 @@ const RenameProfile = ({
   return (
     <OverlayCard kind="rename-profile" labelledBy={headingId}>
       <form
-        className="flex flex-col gap-2 p-2"
+        className="flex flex-col gap-2 p-3"
         onSubmit={(event) => {
           event.preventDefault();
 
