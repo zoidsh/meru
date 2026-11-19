@@ -112,7 +112,7 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
           />
         </div>
         {profile && (profiles?.profiles.length ?? 0) >= 2 && (
-          <Badge variant="secondary" className="flex-none gap-1">
+          <Badge variant="secondary" className="flex-none">
             <span
               aria-hidden
               className="size-2 shrink-0 rounded-full"

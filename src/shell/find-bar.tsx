@@ -77,7 +77,7 @@ export const FindBar = ({
       aria-label={label}
       data-overlay-card
       // No shadow: the view ends at the bar's edge and would cut it off.
-      className="fixed inset-0 flex items-center gap-1 rounded-[10px] border border-foreground/10 bg-popover p-1 text-popover-foreground"
+      className="fixed inset-0 flex items-center gap-1 rounded-3xl border border-foreground/10 bg-popover p-1 text-popover-foreground"
     >
       <Input
         // Each open gives the field focus, the caret after its term.
@@ -90,7 +90,7 @@ export const FindBar = ({
         autoComplete="off"
         spellCheck={false}
         // Not by viewport: this document's is the overlay's own view.
-        className="h-8 min-w-0 flex-1 border-0 bg-transparent px-2 text-sm shadow-none select-text focus-visible:ring-0 dark:bg-transparent"
+        className="min-w-0 flex-1 text-sm select-text"
         onChange={(event) => {
           setTerm(event.target.value);
           shellCalls().findInPage({

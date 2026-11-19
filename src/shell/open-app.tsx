@@ -181,7 +181,6 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
                 <CommandItem
                   key={app.id}
                   value={appValue(app.id)}
-                  className="h-8 rounded-[10px]"
                   onSelect={() => {
                     shellCalls().openApp({ appId: app.id });
                   }}
@@ -195,7 +194,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
           {appsShown && bookmarksShown && (
             // cmdk hides a separator while there is a search, which here
             // filters nothing of its own.
-            <CommandSeparator alwaysRender className="my-1" />
+            <CommandSeparator alwaysRender />
           )}
           {bookmarksShown && (
             <CommandGroup
@@ -217,7 +216,6 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
                 <CommandItem
                   key={bookmark.id}
                   value={bookmarkValue(bookmark.id)}
-                  className="h-8 rounded-[10px]"
                   onSelect={() => {
                     shellCalls().openBookmark({ id: bookmark.id });
                   }}
@@ -234,7 +232,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
                       tabIndex={-1}
                       aria-hidden
                       title={removeLabel}
-                      className="-my-1 opacity-0 group-hover/command-item:opacity-100 group-data-selected/command-item:opacity-100 hover:bg-secondary"
+                      className="-my-1 opacity-0 group-hover/command-item:opacity-100 group-data-selected/command-item:opacity-100"
                       onMouseDown={keepFocus}
                       onClick={(event) => {
                         event.stopPropagation();

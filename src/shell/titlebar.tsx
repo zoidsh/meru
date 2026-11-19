@@ -375,7 +375,7 @@ const ProfileButton = ({
       // Filled to its edge, under its transparent border, so the selected
       // one's fill lines up with the page below it.
       className={cn(
-        "max-w-40 flex-none gap-1 bg-clip-border px-2.5",
+        "max-w-40 flex-none bg-clip-border",
         asleep && "opacity-50"
       )}
       onFocus={onFocus}

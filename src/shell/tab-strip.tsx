@@ -597,7 +597,7 @@ const RowBookmarkButton = ({
       {...hover}
       onMouseDown={keepFocus}
       className={cn(
-        "pointer-events-auto opacity-0 [&_svg]:size-3",
+        "pointer-events-auto opacity-0",
         (hovered || on) && "opacity-100",
         on && !hovered && "bg-transparent text-muted-foreground",
         on && "[&_svg]:fill-current"
@@ -1286,7 +1286,7 @@ export const Sidebar = ({
             "pointer-events-none fixed z-50",
             drag.mark.kind === "line"
               ? "rounded-[1px] bg-foreground"
-              : "rounded-md shadow-[inset_0_0_0_2px_var(--foreground)]"
+              : "rounded-2xl shadow-[inset_0_0_0_2px_var(--foreground)]"
           )}
           style={{
             left: drag.mark.box.left,

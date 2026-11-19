@@ -43,7 +43,7 @@ export const SleepingTab = ({
       <Empty>
         <EmptyHeader>
           {isAppId(tab.app) && (
-            <EmptyMedia variant="icon" className="bg-secondary">
+            <EmptyMedia variant="icon">
               <AppIcon app={tab.app} aria-hidden />
             </EmptyMedia>
           )}
