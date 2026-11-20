@@ -531,6 +531,50 @@ export const retitle = (page: Page, title: string) =>
     document.title = next;
   }, title);
 
+/**
+ * Of a titled overlay's list, the index of each row marked selected and of
+ * each whose first cell is drawn filled, which a list keeps to one and the
+ * same.
+ */
+export const readListHighlight = (grid: Locator) =>
+  grid.evaluate((table) => {
+    const rows = [...table.querySelectorAll("tr")];
+    const indexes = (marked: (row: HTMLTableRowElement) => boolean) =>
+      rows.flatMap((row, index) => (marked(row) ? [index] : []));
+    const transparent = "rgba(0, 0, 0, 0)";
+
+    return {
+      selected: indexes((row) => row.getAttribute("aria-selected") === "true"),
+      filled: indexes((row) => {
+        const cell = row.querySelector("td");
+
+        return (
+          cell !== null &&
+          getComputedStyle(cell).backgroundColor !== transparent
+        );
+      }),
+    };
+  });
+
+/**
+ * Whether a row's button is drawn, which Playwright's visibility does not
+ * tell: a row hides its buttons by opacity, theirs or a wrapper's.
+ */
+export const isDrawn = (button: Locator) =>
+  button.evaluate((element) => {
+    for (
+      let node: Element | null = element;
+      node && node.tagName !== "TR";
+      node = node.parentElement
+    ) {
+      if (getComputedStyle(node).opacity === "0") {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
 /** Seeds `state.json` before a launch; the store's current version is 1. */
 export const writeState = (userDataDir: string, state: object) =>
   writeFile(

@@ -8,14 +8,7 @@ import {
   OctagonAlertIcon,
   Trash2Icon,
 } from "lucide-react";
-import {
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useId, useMemo } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
@@ -32,6 +25,8 @@ import {
   EmptyTitle,
 } from "#ui/empty.tsx";
 
+import { useListSelection } from "./list-selection.ts";
+import type { ListRowProps } from "./list-selection.ts";
 import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
@@ -217,9 +212,7 @@ const InboxRow = ({
   profileColor,
   dates,
   labels,
-  selected,
-  rowRef,
-  onSelect,
+  selection,
   onKeyDown,
 }: {
   row: Row;
@@ -227,26 +220,20 @@ const InboxRow = ({
   profileColor: string | undefined;
   dates: Dates;
   labels: ActionLabels;
-  selected: boolean;
-  rowRef: (element: HTMLTableRowElement | null) => void;
-  onSelect: () => void;
+  selection: ListRowProps;
   onKeyDown: (event: KeyboardEvent<HTMLTableRowElement>) => void;
 }) => {
   const shortcutTitle = useShortcutTitle();
   const { short, full } = dates(row.issued);
   const sender = row.senderName || row.senderAddress;
-  // Each cell draws the row's fill, as a table row has no rounded corners.
-  const cell =
-    "h-8 py-0 group-hover:bg-muted/60 group-focus-visible:bg-muted group-data-selected:bg-muted";
+  // Each cell draws the row's fill, as a table row has no rounded corners,
+  // in a selected CommandItem's colour and radius.
+  const cell = "h-8 py-0 group-data-selected:bg-muted";
 
   return (
     <tr
-      ref={rowRef}
-      tabIndex={selected ? 0 : -1}
-      aria-selected={selected}
-      data-selected={selected || undefined}
+      {...selection}
       className="group cursor-default text-sm outline-none"
-      onFocus={onSelect}
       onKeyDown={onKeyDown}
       onClick={() => {
         shellCalls().openInboxMessage({
@@ -296,12 +283,12 @@ const InboxRow = ({
         <time
           dateTime={new Date(row.issued).toISOString()}
           title={full}
-          className="text-xs whitespace-nowrap text-muted-foreground tabular-nums group-hover:invisible group-data-selected:invisible"
+          className="text-xs whitespace-nowrap text-muted-foreground tabular-nums group-data-selected:invisible"
         >
           {short}
         </time>
         {/* Not hit-testable while hidden, so a click there opens the row. */}
-        <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center gap-0.5 rounded-r-sm bg-linear-to-r from-transparent to-muted to-[16px] pl-4 opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-data-selected:pointer-events-auto group-data-selected:opacity-100">
+        <span className="pointer-events-none absolute inset-y-0 right-1 flex items-center gap-0.5 rounded-r-sm bg-linear-to-r from-transparent to-muted to-[16px] pl-4 opacity-0 group-data-selected:pointer-events-auto group-data-selected:opacity-100">
           {ACTIONS.map((action) => (
             <Button
               key={action}
@@ -343,14 +330,11 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
   const { t } = useLingui();
   const { rows, profiles } = inbox;
   const colors = useShellState("profiles");
-  // The index stands in once its row is gone, so the row that took its
-  // place is selected.
-  const [selection, setSelection] = useState({ key: "", index: 0 });
+  const { gridRef, selectedIndex, move, rowProps } = useListSelection(
+    rows.map(keyOf)
+  );
   const headingId = useId();
   const emptyId = useId();
-  const gridRef = useRef<HTMLTableElement>(null);
-  const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
-  const focusedOnOpen = useRef(false);
   const failure = useFailureText(inbox.notice, profiles);
   const dates = useDates();
   const labels = useActionLabels();
@@ -363,64 +347,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
   const colorOf = (profileId: string) =>
     colors?.profiles.find((profile) => profile.id === profileId)?.color;
 
-  const foundIndex = rows.findIndex((row) => keyOf(row) === selection.key);
-  const selectedIndex =
-    foundIndex === -1 ? Math.min(selection.index, rows.length - 1) : foundIndex;
   const selected = rows[selectedIndex];
-  const selectedRowKey = selected && keyOf(selected);
-  const select = (index: number) => {
-    const row = rows[index];
-
-    if (row) {
-      setSelection({ key: keyOf(row), index });
-    }
-  };
-
-  // A row an action took away hands focus, which would fall to the
-  // document's body, to the row that took its place.
-  useLayoutEffect(() => {
-    const grid = gridRef.current;
-    const active = grid?.ownerDocument.activeElement;
-    const inList =
-      active === grid?.ownerDocument.body || (active && grid?.contains(active));
-
-    if (!inList) {
-      return;
-    }
-
-    const element =
-      selectedRowKey === undefined ? grid : rowRefs.current.get(selectedRowKey);
-
-    element?.focus({ preventScroll: true });
-    element?.scrollIntoView({ block: "nearest" });
-  }, [selectedRowKey]);
-
-  // Opening puts focus on the first row, or the list when there is none;
-  // later rows keep the selection.
-  useEffect(() => {
-    if (focusedOnOpen.current) {
-      return;
-    }
-
-    focusedOnOpen.current = true;
-
-    const element =
-      selectedRowKey === undefined
-        ? gridRef.current
-        : rowRefs.current.get(selectedRowKey);
-
-    element?.focus({ preventScroll: true });
-  }, [selectedRowKey]);
-
-  const move = (index: number) => {
-    const next = Math.max(0, Math.min(index, rows.length - 1));
-    const row = rows[next];
-
-    if (row) {
-      select(next);
-      rowRefs.current.get(keyOf(row))?.focus();
-    }
-  };
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     // The window's shortcuts go to the menu.
@@ -516,17 +443,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
                     profileColor={colorOf(row.profileId)}
                     dates={dates}
                     labels={labels}
-                    selected={key === selectedRowKey}
-                    rowRef={(element) => {
-                      if (element) {
-                        rowRefs.current.set(key, element);
-                      } else {
-                        rowRefs.current.delete(key);
-                      }
-                    }}
-                    onSelect={() => {
-                      select(index);
-                    }}
+                    selection={rowProps(key, index)}
                     onKeyDown={onKeyDown}
                   />
                 );

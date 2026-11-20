@@ -7,7 +7,7 @@ import {
   LoaderCircleIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { KeyboardEvent } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
@@ -21,6 +21,8 @@ import {
   EmptyTitle,
 } from "#ui/empty.tsx";
 
+import { useListSelection } from "./list-selection.ts";
+import type { ListRowProps } from "./list-selection.ts";
 import { shellCalls } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
 import { TitledOverlay, TitledOverlayBody } from "./titled-overlay.tsx";
@@ -165,16 +167,12 @@ const keepFocus = (event: { preventDefault: () => void }) => {
 const DownloadRow = ({
   row,
   now,
-  selected,
-  rowRef,
-  onSelect,
+  selection,
   onKeyDown,
 }: {
   row: Row;
   now: number;
-  selected: boolean;
-  rowRef: (element: HTMLTableRowElement | null) => void;
-  onSelect: () => void;
+  selection: ListRowProps;
   onKeyDown: (event: KeyboardEvent<HTMLTableRowElement>) => void;
 }) => {
   const { t } = useLingui();
@@ -190,16 +188,15 @@ const DownloadRow = ({
       "Button on a running download in the Downloads card that stops it; it shows a spinner until pointed at",
   });
   const showLabel = showInFolderLabel(t);
-  const shown = "group-hover:opacity-100 group-data-selected:opacity-100";
+  const shown = "group-data-selected:opacity-100";
+  // Each cell draws the row's fill, as a table row has no rounded corners,
+  // in a selected CommandItem's colour and radius.
+  const fill = "group-data-selected:bg-muted";
 
   return (
     <tr
-      ref={rowRef}
-      tabIndex={selected ? 0 : -1}
-      aria-selected={selected}
-      data-selected={selected || undefined}
+      {...selection}
       className="group cursor-default text-sm outline-none"
-      onFocus={onSelect}
       onKeyDown={onKeyDown}
       draggable={row.state === "completed"}
       // The system drags the file itself, which only main can start.
@@ -213,7 +210,7 @@ const DownloadRow = ({
         }
       }}
     >
-      <td className="rounded-l-sm py-1.5 pl-2 group-hover:bg-muted/60 group-focus-visible:bg-muted group-data-selected:bg-muted">
+      <td className={cn("rounded-l-sm py-1.5 pl-2", fill)}>
         <span className="flex min-w-0 items-center gap-2">
           <FileIcon
             aria-hidden
@@ -229,7 +226,7 @@ const DownloadRow = ({
           </span>
         </span>
       </td>
-      <td className="w-px rounded-r-sm pr-2 pl-2 group-hover:bg-muted/60 group-focus-visible:bg-muted group-data-selected:bg-muted">
+      <td className={cn("w-px rounded-r-sm pr-2 pl-2", fill)}>
         <span className="flex items-center justify-end gap-0.5">
           {row.state === "progressing" && (
             // As Reload turns into Stop: a spinner until pointed at; the
@@ -302,69 +299,12 @@ export const Downloads = ({ downloads }: { downloads: DownloadsState }) => {
   const { t } = useLingui();
   const { rows } = downloads;
   const now = useNow();
-  const [selection, setSelection] = useState({ id: "", index: 0 });
+  const { gridRef, selectedIndex, move, rowProps } = useListSelection(
+    rows.map((row) => row.id)
+  );
   const titleId = useId();
   const emptyId = useId();
-  const gridRef = useRef<HTMLTableElement>(null);
-  const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
-  const focusedOnOpen = useRef(false);
-
-  const foundIndex = rows.findIndex((row) => row.id === selection.id);
-  const selectedIndex =
-    foundIndex === -1 ? Math.min(selection.index, rows.length - 1) : foundIndex;
   const selected = rows[selectedIndex];
-  const selectedId = selected?.id;
-  const select = (index: number) => {
-    const row = rows[index];
-
-    if (row) {
-      setSelection({ id: row.id, index });
-    }
-  };
-
-  // A row taken off the list hands focus to the one that took its place.
-  useLayoutEffect(() => {
-    const grid = gridRef.current;
-    const active = grid?.ownerDocument.activeElement;
-    const inList =
-      active === grid?.ownerDocument.body || (active && grid?.contains(active));
-
-    if (!inList) {
-      return;
-    }
-
-    const element =
-      selectedId === undefined ? grid : rowRefs.current.get(selectedId);
-
-    element?.focus({ preventScroll: true });
-    element?.scrollIntoView({ block: "nearest" });
-  }, [selectedId]);
-
-  // Opening puts focus on the first row, or the list when there is none.
-  useEffect(() => {
-    if (focusedOnOpen.current) {
-      return;
-    }
-
-    focusedOnOpen.current = true;
-
-    const element =
-      selectedId === undefined
-        ? gridRef.current
-        : rowRefs.current.get(selectedId);
-
-    element?.focus({ preventScroll: true });
-  }, [selectedId]);
-
-  const move = (index: number) => {
-    const next = Math.max(0, Math.min(index, rows.length - 1));
-    const row = rows[next];
-
-    if (row) {
-      select(next);
-      rowRefs.current.get(row.id)?.focus();
-    }
-  };
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     // The window's shortcuts go to the menu.
@@ -451,17 +391,7 @@ export const Downloads = ({ downloads }: { downloads: DownloadsState }) => {
                   key={row.id}
                   row={row}
                   now={now}
-                  selected={row.id === selectedId}
-                  rowRef={(element) => {
-                    if (element) {
-                      rowRefs.current.set(row.id, element);
-                    } else {
-                      rowRefs.current.delete(row.id);
-                    }
-                  }}
-                  onSelect={() => {
-                    select(index);
-                  }}
+                  selection={rowProps(row.id, index)}
                   onKeyDown={onKeyDown}
                 />
               ))}

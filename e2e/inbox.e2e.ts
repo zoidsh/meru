@@ -1,10 +1,13 @@
 import type { ElectronApplication, Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import {
   clickMenuItem,
   expect,
   findPage,
   findOverlayDocument,
+  isDrawn,
+  readListHighlight,
   readState,
   shownViews,
   test,
@@ -284,6 +287,59 @@ test("opens the selected row's message with Enter in its profile's Gmail, select
     .toStrictEqual([
       { url: messageLink(standIn.url, "a3"), partition: "persist:p0" },
     ]);
+});
+
+test("moves the one selected row to the pointer as it moves over a row, showing only that row's actions, keeping it as the pointer leaves and as the keys go on from there", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { shell, overlay } = await launch(launchApp, userDataDir, standIn);
+  const list = grid(overlay);
+  const inboxRow = (subject: string) =>
+    list.getByRole("row", { name: new RegExp(subject, "u") });
+
+  await openInbox(shell, overlay);
+  await expect
+    .poll(() => subjects(overlay))
+    .toStrictEqual(["Subject a1", "Subject b2", "Subject a3"]);
+  expect(await readListHighlight(list)).toStrictEqual({
+    selected: [0],
+    filled: [0],
+  });
+
+  await inboxRow("Subject a3").hover();
+  await expect(inboxRow("Subject a3")).toBeFocused();
+  expect(await readListHighlight(list)).toStrictEqual({
+    selected: [2],
+    filled: [2],
+  });
+  await expect
+    .poll(() =>
+      isDrawn(inboxRow("Subject a3").getByRole("button", { name: "Archive" }))
+    )
+    .toBe(true);
+  await expect
+    .poll(() =>
+      isDrawn(inboxRow("Subject a1").getByRole("button", { name: "Archive" }))
+    )
+    .toBe(false);
+
+  await overlay.mouse.move(4, 4);
+  expect(await readListHighlight(list)).toStrictEqual({
+    selected: [2],
+    filled: [2],
+  });
+
+  await inboxRow("Subject a1").hover();
+  await overlay.keyboard.press("ArrowDown");
+  await expect(inboxRow("Subject b2")).toBeFocused();
+  // The pointer, still over the first row, takes nothing back.
+  await delay(200);
+  expect(await readListHighlight(list)).toStrictEqual({
+    selected: [1],
+    filled: [1],
+  });
 });
 
 test("opens a row's message in Gmail where its profile's Gmail was closed", async ({

@@ -12,6 +12,8 @@ import {
   expect,
   findOverlayDocument,
   findPage,
+  isDrawn,
+  readListHighlight,
   readMenuItem,
   readState,
   test,
@@ -683,6 +685,69 @@ test("opens the card in a tab's own window from its titlebar, the one card movin
   await titlebar.mouse.up();
 });
 
+test("moves the one selected row to the pointer as it moves over a row, keeping it as the pointer leaves and as the keys go on from there", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { shell, overlay } = await launch(launchApp, userDataDir, standIn, [
+    { fileName: "a.pdf", state: "completed" },
+    { fileName: "b.pdf", state: "completed" },
+    { fileName: "c.pdf", state: "failed" },
+    { fileName: "d.pdf", state: "completed" },
+  ]);
+  const list = grid(overlay);
+
+  await openCard(shell, overlay);
+  await expectFileNames(overlay, ["a.pdf", "b.pdf", "c.pdf", "d.pdf"]);
+  expect(await readListHighlight(list)).toStrictEqual({
+    selected: [0],
+    filled: [0],
+  });
+
+  // One that does nothing when chosen is selected all the same.
+  await row(overlay, "c.pdf").hover();
+  await expect(row(overlay, "c.pdf")).toBeFocused();
+  expect(await readListHighlight(list)).toStrictEqual({
+    selected: [2],
+    filled: [2],
+  });
+  await expect
+    .poll(() =>
+      isDrawn(
+        row(overlay, "c.pdf").getByRole("button", {
+          name: "Remove from the list",
+        })
+      )
+    )
+    .toBe(true);
+  await expect
+    .poll(() =>
+      isDrawn(
+        row(overlay, "a.pdf").getByRole("button", {
+          name: "Remove from the list",
+        })
+      )
+    )
+    .toBe(false);
+
+  await overlay.mouse.move(4, 4);
+  expect(await readListHighlight(list)).toStrictEqual({
+    selected: [2],
+    filled: [2],
+  });
+
+  await row(overlay, "b.pdf").hover();
+  await overlay.keyboard.press("ArrowDown");
+  await expect(row(overlay, "c.pdf")).toBeFocused();
+  // The pointer, still over b.pdf, takes nothing back.
+  await delay(200);
+  expect(await readListHighlight(list)).toStrictEqual({
+    selected: [2],
+    filled: [2],
+  });
+});
+
 test("moves through the list with the keys, opens with Enter, cancels a running download or removes another with Delete, and clears all but those running", async ({
   launchApp,
   userDataDir,
@@ -882,6 +947,12 @@ test("draws the titlebar button and the card in every state, light and dark", as
     await emulateTheme(app, theme);
     // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
     await restPointer(overlay);
+    // The first row selected again, after the rows the last scheme pointed at.
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await overlay.keyboard.press("Home");
+    // The buttons of the row it leaves fade out.
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await delay(300);
     // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
     await shootWindow(app, shell, shotPath("downloads", theme));
 
@@ -889,17 +960,24 @@ test("draws the titlebar button and the card in every state, light and dark", as
       ["running", "archive (1).zip"],
       ["finished", "Quarterly report.pdf"],
     ] as const) {
+      // Another row selected, by the pointer passing over it.
+      // oxlint-disable-next-line no-await-in-loop -- one row at a time
+      await row(overlay, "Old notes.txt").hover();
       // oxlint-disable-next-line no-await-in-loop -- one row at a time
       await restPointer(overlay);
       // oxlint-disable-next-line no-await-in-loop -- one row at a time
       await row(overlay, fileName).screenshot({
         path: shotPath(`downloads-row-${name}-rest`, theme),
       });
+      // Selected by the pointer over it, so a running one shows Cancel.
       // oxlint-disable-next-line no-await-in-loop -- one row at a time
       await row(overlay, fileName).hover();
+      // Its buttons fade in.
+      // oxlint-disable-next-line no-await-in-loop -- one row at a time
+      await delay(300);
       // oxlint-disable-next-line no-await-in-loop -- one row at a time
       await row(overlay, fileName).screenshot({
-        path: shotPath(`downloads-row-${name}-hover`, theme),
+        path: shotPath(`downloads-row-${name}-selected`, theme),
       });
     }
   }
