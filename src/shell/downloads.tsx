@@ -214,7 +214,7 @@ const DownloadRow = ({
         <span className="flex min-w-0 items-center gap-2">
           <FileIcon
             aria-hidden
-            className="size-4 shrink-0 text-muted-foreground"
+            className="size-4 shrink-0 text-muted-foreground group-data-selected:text-foreground"
           />
           <span className="flex min-w-0 flex-col">
             <span className={cn("truncate", ended && "text-muted-foreground")}>
