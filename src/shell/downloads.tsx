@@ -355,6 +355,8 @@ export const Downloads = ({ downloads }: { downloads: DownloadsState }) => {
           <Button
             variant="ghost"
             size="xs"
+            // Its fill ends where a row's does, 8px from the card's edge.
+            className="-mr-2"
             disabled={!clearable}
             onClick={() => {
               shellCalls().clearDownloads({});
