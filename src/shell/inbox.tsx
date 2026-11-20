@@ -392,7 +392,7 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
         comment:
           "Title of the overlay over the page that lists every profile's unread mail",
       })}
-      action={
+      beside={
         rows.length > 0 && (
           <Badge variant="secondary" className="tabular-nums">
             {rows.length}

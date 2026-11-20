@@ -19,12 +19,15 @@ export const TitledOverlay = ({
   kind,
   title,
   titleId,
+  beside,
   action,
   children,
 }: {
   kind: Overlay["kind"];
   title: ReactNode;
   titleId: string;
+  /** Shown right after the title, as a count of what the list holds. */
+  beside?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
 }) => (
@@ -42,7 +45,10 @@ export const TitledOverlay = ({
       <Card>
         <CardHeader>
           <CardTitle>
-            <h2 id={titleId}>{title}</h2>
+            <span className="flex items-center gap-2">
+              <h2 id={titleId}>{title}</h2>
+              {beside}
+            </span>
           </CardTitle>
           {action && <CardAction>{action}</CardAction>}
         </CardHeader>
