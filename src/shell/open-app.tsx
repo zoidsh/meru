@@ -204,7 +204,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
                     tabIndex={-1}
                     aria-hidden
                     title={removeLabel}
-                    className="-my-1 opacity-0 group-hover/command-item:opacity-100 group-data-selected/command-item:opacity-100"
+                    className="-my-1 opacity-0 group-data-selected/command-item:opacity-100"
                     onMouseDown={keepFocus}
                     onClick={(event) => {
                       event.stopPropagation();
