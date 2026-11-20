@@ -413,7 +413,8 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
         >
           {failure}
         </output>
-        <div className="min-h-0 overflow-y-auto">
+        {/* Its scrollbar hidden, as CommandList's is. */}
+        <div className="no-scrollbar min-h-0 overflow-y-auto">
           <table
             ref={gridRef}
             // A data grid the keys move through, as ARIA's grid pattern has it.
