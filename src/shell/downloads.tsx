@@ -350,6 +350,11 @@ export const Downloads = ({ downloads }: { downloads: DownloadsState }) => {
         comment:
           "Title of the overlay over the page that lists the files downloaded in every profile",
       })}
+      description={t({
+        message: "Kept for 30 days",
+        comment:
+          "Under the Downloads title: how long a downloaded file stays in the list below",
+      })}
       action={
         rows.length > 0 && (
           <Button

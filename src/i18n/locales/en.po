@@ -7,6 +7,12 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#. Under the Unified inbox title: how many unread messages the list below shows
+#. placeholder {0}: rows.length
+#: src/shell/inbox.tsx
+msgid "{0, plural, one {# message} other {# messages}}"
+msgstr "{0, plural, one {# message} other {# messages}}"
+
 #. Accessible name of a profile's button in the title bar, read by screen readers, while its inbox has unread mail; {name} is the profile's name, # how many messages are unread
 #: src/shell/titlebar.tsx
 msgid "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
@@ -595,6 +601,11 @@ msgstr "It’s back in the list."
 #: src/shell/tab-problem.tsx
 msgid "Its page quit unexpectedly. Reload it to carry on."
 msgstr "Its page quit unexpectedly. Reload it to carry on."
+
+#. Under the Downloads title: how long a downloaded file stays in the list below
+#: src/shell/downloads.tsx
+msgid "Kept for 30 days"
+msgstr "Kept for 30 days"
 
 #. Said by screen readers of the gap between two panes side by side: how much of the two the left one takes; {percent} is a percentage, such as 60%
 #: src/shell/pane-handle.tsx

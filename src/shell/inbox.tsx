@@ -15,7 +15,6 @@ import type { ShellState } from "#contract/shell.ts";
 import { inboxKeyCommand } from "#core/inbox-keys.ts";
 import { dateForm, inboxKey } from "#core/inbox.ts";
 import type { MailAction } from "#core/mail-actions.ts";
-import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
 import {
   Empty,
@@ -392,12 +391,16 @@ export const Inbox = ({ inbox }: { inbox: InboxState }) => {
         comment:
           "Title of the overlay over the page that lists every profile's unread mail",
       })}
-      beside={
-        rows.length > 0 && (
-          <Badge variant="secondary" className="tabular-nums">
-            {rows.length}
-          </Badge>
-        )
+      description={
+        rows.length > 0 &&
+        t({
+          message: plural(rows.length, {
+            one: "# message",
+            other: "# messages",
+          }),
+          comment:
+            "Under the Unified inbox title: how many unread messages the list below shows",
+        })
       }
     >
       <TitledOverlayBody>
