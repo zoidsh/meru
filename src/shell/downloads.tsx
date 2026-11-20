@@ -57,7 +57,8 @@ const useFormats = () => {
     return new Intl.NumberFormat(locale, {
       style: "unit",
       unit,
-      unitDisplay: "short",
+      // Short, a byte reads "24 byte" in English.
+      unitDisplay: unit === "byte" ? "long" : "short",
       maximumFractionDigits: 1,
     }).format(bytes / divisor);
   };
