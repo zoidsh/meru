@@ -13,15 +13,14 @@ import {
 
 /**
  * The header's height: the title's line, under it the header's gap and the
- * description's line, or beside an action the gap alone, as the action spans
- * a second row.
+ * description's line, or beside an action alone that action's 28px.
  */
 const headerHeight = (description: boolean, action: boolean) => {
   if (description) {
     return 46;
   }
 
-  return action ? 26 : 22;
+  return action ? 28 : 22;
 };
 
 /**
