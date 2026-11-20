@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { PointerEvent } from "react";
 
 /**
  * The one selected row of a titled overlay's list, as a Command list has its
@@ -99,8 +100,12 @@ export const useListSelection = (keys: readonly string[]) => {
       onFocus: () => {
         select(index);
       },
-      onPointerMove: () => {
-        if (!selected) {
+      onPointerMove: (event: PointerEvent) => {
+        // Chromium makes up a move with none where the cursor rests as
+        // what is under it changes, as the card opening over it.
+        const moved = event.movementX !== 0 || event.movementY !== 0;
+
+        if (moved && !selected) {
           scrollToSelected.current = false;
           select(index);
         }

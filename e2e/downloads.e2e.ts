@@ -705,6 +705,9 @@ test("moves the one selected row to the pointer as it moves over a row, keeping 
     filled: [0],
   });
 
+  // The pointer arrives in the card; the first move a page hears tells no
+  // movement, as Chromium's own made-up moves do not.
+  await overlay.mouse.move(4, 4);
   // One that does nothing when chosen is selected all the same.
   await row(overlay, "c.pdf").hover();
   await expect(row(overlay, "c.pdf")).toBeFocused();

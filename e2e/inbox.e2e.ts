@@ -308,6 +308,9 @@ test("moves the one selected row to the pointer as it moves over a row, showing 
     filled: [0],
   });
 
+  // The pointer arrives in the card; the first move a page hears tells no
+  // movement, as Chromium's own made-up moves do not.
+  await overlay.mouse.move(4, 4);
   await inboxRow("Subject a3").hover();
   await expect(inboxRow("Subject a3")).toBeFocused();
   expect(await readListHighlight(list)).toStrictEqual({
