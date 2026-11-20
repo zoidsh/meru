@@ -54,12 +54,13 @@ export const TitledOverlay = ({
 
 /**
  * What a titled overlay holds: as tall as its content and at most the room
- * the Card leaves, reaching out of CardContent's padding to 8px from the
- * Card's edge so a row's fill sits there. The room left is the Card's
- * padding above and below, its gap and its header beside a 24px action.
+ * the Card leaves, reaching out of CardContent's padding and the Card's
+ * below to 8px from the Card's edge so a row's fill sits there. The room left
+ * is the Card's padding above, the 8px below, its gap and its header beside a
+ * 24px action.
  */
 export const TitledOverlayBody = ({ children }: { children: ReactNode }) => (
-  <div className="-mx-2 flex max-h-[calc(100cqh-74px)] min-h-0 flex-col">
+  <div className="-mx-2 -mb-2 flex max-h-[calc(100cqh-66px)] min-h-0 flex-col">
     {children}
   </div>
 );
