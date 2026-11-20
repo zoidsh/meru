@@ -358,8 +358,8 @@ export const Downloads = ({ downloads }: { downloads: DownloadsState }) => {
       action={
         rows.length > 0 && (
           <Button
-            variant="ghost"
-            size="xs"
+            variant="outline"
+            size="sm"
             disabled={!clearable}
             onClick={() => {
               shellCalls().clearDownloads({});
