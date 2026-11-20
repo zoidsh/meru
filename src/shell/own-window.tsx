@@ -14,6 +14,7 @@ import {
   ownWindowFindFrameName,
   ownWindowFrameName,
 } from "#core/own-window.ts";
+import { titlebarStart } from "#core/titlebar.ts";
 import { Badge } from "#ui/badge.tsx";
 
 import { AppIcon } from "./app-icon.tsx";
@@ -21,6 +22,7 @@ import { OwnWindowBookmarkButton } from "./bookmarks.tsx";
 import { wholePoint } from "./context-menu.ts";
 import { Downloads, DownloadsButton } from "./downloads.tsx";
 import { FindBar } from "./find-bar.tsx";
+import { shellPlatform } from "./platform.ts";
 import {
   closeShellDocument,
   openShellDocument,
@@ -97,8 +99,11 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
             "Accessible name of the strip across the top of the window, read by screen readers",
         })}
         data-tinted
-        style={{ height: TITLEBAR_HEIGHT }}
-        className="flex shrink-0 items-center gap-2 bg-shell px-2 [app-region:drag] in-data-[platform=darwin]:pl-20"
+        style={{
+          height: TITLEBAR_HEIGHT,
+          paddingLeft: titlebarStart(shellPlatform()),
+        }}
+        className="flex shrink-0 items-center gap-2 bg-shell pr-2 [app-region:drag]"
       >
         <div className="flex items-center gap-1">
           <NavigationButtons

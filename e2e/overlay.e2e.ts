@@ -2,6 +2,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
 import { overlayRectangle } from "#core/overlay.ts";
+import type { Platform } from "#core/platform.ts";
 
 import {
   clickMenuItem,
@@ -189,9 +190,14 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
     sharesShellProcess: true,
   });
   expect(view.bounds).toStrictEqual(
-    overlayRectangle(view.area ?? { width: 0, height: 0 }, "hidden", {
-      kind: "rename-profile",
-    })
+    overlayRectangle(
+      view.area ?? { width: 0, height: 0 },
+      "hidden",
+      process.platform as Platform,
+      {
+        kind: "rename-profile",
+      }
+    )
   );
 
   await overlay.keyboard.type("  Work ");

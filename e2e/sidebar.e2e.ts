@@ -2,9 +2,13 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { isEqual } from "es-toolkit";
 
 import { contentViewBounds } from "#core/layout.ts";
+import type { Platform } from "#core/platform.ts";
+import { sidebarWidth } from "#core/sidebar.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 
 import { expect, findPage, readViews, test, writeState } from "./lib/app.ts";
+
+const platform = process.platform as Platform;
 
 /** Where the shown view sits, beside what the window's content area is. */
 const frontView = async (app: ElectronApplication) => {
@@ -26,7 +30,10 @@ const expectSidebar = async (
     .poll(async () => {
       const { bounds, area } = await frontView(app);
 
-      return [bounds?.x, isEqual(bounds, contentViewBounds(area, state))];
+      return [
+        bounds?.x,
+        isEqual(bounds, contentViewBounds(area, state, platform)),
+      ];
     })
     .toStrictEqual([left, true]);
   await expect(shell.getByRole("tablist", { name: "Tabs" })).toHaveCount(
@@ -74,12 +81,18 @@ test("the sidebar is hidden for one tab, narrow for two apps and wide for two ta
   await expectSidebar(app, shell, "hidden", 8);
 
   await profile("Two").click();
-  await expectSidebar(app, shell, "narrow", 64);
+  await expectSidebar(app, shell, "narrow", sidebarWidth("narrow", platform));
+
+  const toggle = shell.getByRole("button", { name: "Sidebar", exact: true });
+  const toggleBox = await toggle.boundingBox();
+  const { bounds } = await frontView(app);
+
+  // Elsewhere the toggle sits 8px from the window's edge, too near to line
+  // the page up with, so the column keeps its own width.
+  expect(bounds?.x).toBe(platform === "darwin" ? toggleBox?.x : 64);
 
   await profile("Three").click();
   await expectSidebar(app, shell, "wide", 224);
-
-  const toggle = shell.getByRole("button", { name: "Sidebar", exact: true });
 
   await toggle.click();
   await expectSidebar(app, shell, "hidden", 8);
@@ -144,5 +157,5 @@ test("Cmd or Ctrl+S reaches the page, where Google's apps save, and Ctrl+Cmd+L, 
     isMacOS ? "L" : "D",
     isMacOS ? ["control", "meta"] : ["control", "alt"]
   );
-  await expectSidebar(app, shell, "narrow", 64);
+  await expectSidebar(app, shell, "narrow", sidebarWidth("narrow", platform));
 });

@@ -2,6 +2,7 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { contentViewBounds } from "#core/layout.ts";
+import type { Platform } from "#core/platform.ts";
 
 import {
   expect,
@@ -38,7 +39,11 @@ test("shows the stand-in in the content rectangle below the titlebar and 8px fro
 
   const { area, views } = await readViews(app);
 
-  const bounds = contentViewBounds(area, "hidden");
+  const bounds = contentViewBounds(
+    area,
+    "hidden",
+    process.platform as Platform
+  );
 
   expect(views.map((each) => each.bounds)).toStrictEqual([bounds]);
   expect(

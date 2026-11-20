@@ -26,7 +26,7 @@ import {
   spansPinnedRow,
 } from "#core/drawn-tabs.ts";
 import type { SidebarItem } from "#core/drawn-tabs.ts";
-import { sidebarWidth } from "#core/sidebar.ts";
+import { NARROW_TILE, sidebarWidth } from "#core/sidebar.ts";
 import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
 
@@ -35,6 +35,7 @@ import { isKeyMadeMenu, isMenuKey, wholePoint } from "./context-menu.ts";
 import { keepFocus } from "./keep-focus.ts";
 import { keepInView } from "./keep-in-view.ts";
 import { OpenAppSidebarButton } from "./open-app.tsx";
+import { shellPlatform } from "./platform.ts";
 import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { useTabDrag } from "./tab-drag.ts";
@@ -1196,12 +1197,14 @@ export const Sidebar = ({
   // Room around the tabs inside the scroller, which clips: above for a
   // tile's badge, at the left for a split's box reaching into the gutter,
   // and at the right for the scrollbar.
-  const scroller = cn(
-    "-mt-1.5 -ml-1 min-h-0",
-    wide ? "-mr-2.5" : "-mr-3",
-    SCROLLBAR
-  );
-  const inset = cn("pt-1.5 pl-1", wide ? "pr-2.5" : "pr-3");
+  // Narrow, the padding centres a tile's width in the column, however wide
+  // the platform makes it; the scroller reaches half of it and the bar's
+  // half width into the right one.
+  const width = sidebarWidth(state, shellPlatform());
+  const padding = wide ? 12 : (width - NARROW_TILE) / 2;
+  const reach = padding / 2 + 4;
+  const scroller = cn("-mt-1.5 -ml-1 min-h-0", SCROLLBAR);
+  const inset = "pt-1.5 pl-1";
 
   return (
     <Tabs.Root
@@ -1212,11 +1215,8 @@ export const Sidebar = ({
       onValueChange={(tabId: string) => {
         shellCalls().selectTab({ profileId, tabId });
       }}
-      style={{ width: sidebarWidth(state) }}
-      className={cn(
-        "group/sidebar flex min-h-0 shrink-0 flex-col py-3",
-        wide ? "px-3" : "px-4"
-      )}
+      style={{ width, paddingInline: padding }}
+      className="group/sidebar flex min-h-0 shrink-0 flex-col py-3"
     >
       <Tabs.List
         ref={list}
@@ -1241,7 +1241,10 @@ export const Sidebar = ({
         className={cn("flex min-h-0 shrink flex-col", wide ? "gap-1" : "gap-2")}
       >
         {layout.pinned.length > 0 && (
-          <ScrollArea className={cn(scroller, "shrink")}>
+          <ScrollArea
+            style={{ marginRight: -reach }}
+            className={cn(scroller, "shrink")}
+          >
             {/* One parent in either width, so a tile keeps its element,
                 and with it focus, as the width changes. */}
             <div
@@ -1252,6 +1255,7 @@ export const Sidebar = ({
                   : "flex flex-col items-center gap-2",
                 inset
               )}
+              style={{ paddingRight: reach }}
             >
               {layout.pinned.map((item) =>
                 item.kind === "box"
@@ -1269,6 +1273,7 @@ export const Sidebar = ({
           <ScrollArea
             style={{
               minHeight: listRoom(itemTabs(layout.listed).length, gap),
+              marginRight: -reach,
             }}
             className={cn(scroller, "shrink-[1000]")}
           >
@@ -1279,6 +1284,7 @@ export const Sidebar = ({
                 wide ? "gap-1" : "items-center gap-2",
                 inset
               )}
+              style={{ paddingRight: reach }}
             >
               {layout.listed.map((item) =>
                 item.kind === "box"

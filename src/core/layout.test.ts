@@ -1,22 +1,31 @@
 import { describe, expect, it } from "vitest";
 
 import { contentViewBounds, viewFrame } from "./layout.ts";
+import { titlebarStart } from "./titlebar.ts";
 
 const WINDOW = { width: 1280, height: 800 };
 
 describe(contentViewBounds, () => {
   it("sits flush below the 40px titlebar and beside the sidebar, 8px from the window's right edge and its bottom", () => {
     expect([
-      contentViewBounds(WINDOW, "narrow"),
-      contentViewBounds(WINDOW, "wide"),
+      contentViewBounds(WINDOW, "narrow", "linux"),
+      contentViewBounds(WINDOW, "wide", "linux"),
     ]).toStrictEqual([
       { x: 64, y: 40, width: 1208, height: 752 },
       { x: 224, y: 40, width: 1048, height: 752 },
     ]);
   });
 
+  it("starts at the sidebar toggle's left edge while the sidebar is narrow", () => {
+    expect(
+      (["darwin", "win32", "linux"] as const).map(
+        (platform) => contentViewBounds(WINDOW, "narrow", platform).x
+      )
+    ).toStrictEqual([titlebarStart("darwin"), 64, 64]);
+  });
+
   it("keeps 8px from the window's left edge too while the sidebar is hidden", () => {
-    expect(contentViewBounds(WINDOW, "hidden")).toStrictEqual({
+    expect(contentViewBounds(WINDOW, "hidden", "darwin")).toStrictEqual({
       x: 8,
       y: 40,
       width: 1264,
@@ -25,7 +34,11 @@ describe(contentViewBounds, () => {
   });
 
   it("never gives a negative size", () => {
-    const bounds = contentViewBounds({ width: 100, height: 30 }, "wide");
+    const bounds = contentViewBounds(
+      { width: 100, height: 30 },
+      "wide",
+      "darwin"
+    );
 
     expect([bounds.width, bounds.height]).toStrictEqual([0, 0]);
   });

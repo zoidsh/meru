@@ -1,7 +1,9 @@
 import { isEqual } from "es-toolkit";
 
+import type { Platform } from "./platform.ts";
 import { isPinned, knownTabs, selectedProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
+import { titlebarStart } from "./titlebar.ts";
 
 export const SIDEBAR_STATES = ["hidden", "narrow", "wide"] as const;
 
@@ -13,7 +15,18 @@ const WIDTHS: Record<SidebarState, number> = {
   wide: 224,
 };
 
-export const sidebarWidth = (state: SidebarState) => WIDTHS[state];
+/**
+ * Narrow, as wide as the titlebar's start, so the page's left edge lines up
+ * with the sidebar toggle above it. Where the toggle sits at the window's
+ * edge, on Windows and Linux, that would leave no column, so it keeps 64.
+ */
+export const sidebarWidth = (state: SidebarState, platform: Platform) =>
+  state === "narrow"
+    ? Math.max(WIDTHS.narrow, titlebarStart(platform))
+    : WIDTHS[state];
+
+/** A narrow tile's size, which the narrow column centres. */
+export const NARROW_TILE = 32;
 
 /**
  * What the person chose by hand: shown or hidden by the titlebar's toggle,

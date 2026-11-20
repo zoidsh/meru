@@ -14,11 +14,12 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { KeyboardEvent } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 
 import type { ShellCalls, ShellState } from "#contract/shell.ts";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
+import { titlebarStart } from "#core/titlebar.ts";
 import { Button } from "#ui/button.tsx";
 
 import { isKeyMadeMenu, isMenuKey, wholePoint } from "./context-menu.ts";
@@ -26,6 +27,7 @@ import { DownloadsButton } from "./downloads.tsx";
 import { InboxButton } from "./inbox.tsx";
 import { keepInViewBy } from "./keep-in-view.ts";
 import { OpenAppTitlebarButton } from "./open-app.tsx";
+import { shellPlatform } from "./platform.ts";
 import { useShortcutTitle } from "./shortcut-title.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
@@ -641,7 +643,7 @@ export const Titlebar = ({
   const profileCount = profiles?.profiles.length ?? 0;
 
   return (
-    // The preload stamps data-platform; the traffic lights take the left end on macOS.
+    // The traffic lights take the left end on macOS.
     <header
       aria-label={t({
         message: "Title bar",
@@ -649,8 +651,13 @@ export const Titlebar = ({
           "Accessible name of the strip across the top of the window, read by screen readers",
       })}
       data-tinted
-      style={{ height: TITLEBAR_HEIGHT }}
-      className="flex shrink-0 items-center bg-shell pr-2 pl-(--titlebar-start) [--titlebar-start:0.5rem] [app-region:drag] in-data-[platform=darwin]:[--titlebar-start:5rem]"
+      style={
+        {
+          height: TITLEBAR_HEIGHT,
+          "--titlebar-start": `${titlebarStart(shellPlatform())}px`,
+        } as CSSProperties
+      }
+      className="flex shrink-0 items-center bg-shell pr-2 pl-(--titlebar-start) [app-region:drag]"
     >
       {/* Wide, the navigation's buttons on macOS end 4px short of the
           page, so the profiles come one button gap after them there. */}

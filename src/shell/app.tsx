@@ -10,6 +10,7 @@ import { NothingOpen } from "./nothing-open.tsx";
 import { OverlayLayer } from "./overlay.tsx";
 import { OwnWindows } from "./own-window.tsx";
 import { PaneHandle } from "./pane-handle.tsx";
+import { shellPlatform } from "./platform.ts";
 import { SleepingTab } from "./sleeping-tab.tsx";
 import { sleepingSelectedTab } from "./sleeping.ts";
 import { useShellState } from "./sync.ts";
@@ -124,7 +125,9 @@ export const App = () => {
         <Titlebar
           sidebarShown={sidebar !== "hidden"}
           profilesFrom={
-            sidebar === "wide" ? sidebarWidth(sidebar) + inset.left : undefined
+            sidebar === "wide"
+              ? sidebarWidth(sidebar, shellPlatform()) + inset.left
+              : undefined
           }
         />
         <div className="flex min-h-0 flex-1">

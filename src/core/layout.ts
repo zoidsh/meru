@@ -1,3 +1,4 @@
+import type { Platform } from "./platform.ts";
 import { sidebarWidth } from "./sidebar.ts";
 import type { SidebarState } from "./sidebar.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
@@ -25,10 +26,11 @@ export const viewFrame = (sidebar: SidebarState): ViewFrame => ({
 /** Where the content view sits in a window's content area. */
 export const contentViewBounds = (
   contentSize: Size,
-  sidebar: SidebarState
+  sidebar: SidebarState,
+  platform: Platform
 ): Rectangle => {
   const { inset } = viewFrame(sidebar);
-  const x = sidebarWidth(sidebar) + inset.left;
+  const x = sidebarWidth(sidebar, platform) + inset.left;
   const y = TITLEBAR_HEIGHT + inset.top;
 
   return {

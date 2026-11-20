@@ -8,6 +8,7 @@ import { contentViewBounds, viewFrame } from "#core/layout.ts";
 import { OWN_WINDOW_RADIUS } from "#core/own-window.ts";
 import { FOCUS_RING, paneHandles, paneTabs } from "#core/pane-tree.ts";
 import type { PaneDirection, PaneHandle, PaneTree } from "#core/pane-tree.ts";
+import type { Platform } from "#core/platform.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import {
   inOwnWindow,
@@ -63,6 +64,8 @@ export interface TabViewsDeps {
   state: () => State;
   /** The sidebar as it is now; `relayout` follows a change. */
   sidebar: () => SidebarState;
+  /** Where the narrow sidebar's width comes from. */
+  platform: Platform;
   /** Opens the tab, under `tabId` when it is a new one, after the tab `after` names. */
   openTab: (
     profileId: string,
@@ -167,6 +170,7 @@ export const createTabViews = ({
   senders,
   state,
   sidebar,
+  platform,
   openTab,
   selectTab,
   closeTab,
@@ -228,7 +232,8 @@ export const createTabViews = ({
   const pageArea = (): Rectangle => {
     const { width, height } = contentViewBounds(
       window.getContentAreaSize(),
-      sidebar()
+      sidebar(),
+      platform
     );
 
     return { x: 0, y: 0, width, height };
@@ -248,7 +253,11 @@ export const createTabViews = ({
       return;
     }
 
-    const area = contentViewBounds(window.getContentAreaSize(), sidebar());
+    const area = contentViewBounds(
+      window.getContentAreaSize(),
+      sidebar(),
+      platform
+    );
     const { radius } = viewFrame(sidebar());
     const profileId = onScreen.shown[0]?.profileId;
     const pane = onScreen.panes

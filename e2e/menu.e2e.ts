@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { contentViewBounds } from "#core/layout.ts";
+import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 
 import {
@@ -54,7 +55,7 @@ test("the view sits as the shell draws it, on the shell grey the window has too 
   expect(menuBarVisible).toBe(process.platform === "darwin");
   expect(area).toStrictEqual(content);
   expect(views.map((view) => view.bounds)).toStrictEqual([
-    contentViewBounds(area, "hidden"),
+    contentViewBounds(area, "hidden", process.platform as Platform),
   ]);
   await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px");
   // Playwright emulates the light theme in the page, not in main. The first

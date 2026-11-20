@@ -6,6 +6,7 @@ import {
   ownWindowOfFrame,
 } from "./own-window.ts";
 import type { PaneDirection } from "./pane-tree.ts";
+import type { Platform } from "./platform.ts";
 import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
@@ -106,10 +107,11 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
 export const overlayRectangle = (
   contentSize: Size,
   sidebar: SidebarState,
+  platform: Platform,
   overlay: Pick<Overlay, "kind">,
   pane?: Rectangle
 ): Rectangle => {
-  const area = contentViewBounds(contentSize, sidebar);
+  const area = contentViewBounds(contentSize, sidebar, platform);
 
   if (overlay.kind === "find") {
     return findRectangle(area, pane);

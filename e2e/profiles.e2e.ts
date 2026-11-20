@@ -2,6 +2,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { isEqual } from "es-toolkit";
 
 import { contentViewBounds } from "#core/layout.ts";
+import type { Platform } from "#core/platform.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import {
@@ -108,12 +109,20 @@ test("adding a profile draws the profile row, the new one selected, and a view i
   expect(views).toStrictEqual([
     {
       profileId: first,
-      bounds: contentViewBounds(content, "hidden"),
+      bounds: contentViewBounds(
+        content,
+        "hidden",
+        process.platform as Platform
+      ),
       visible: false,
     },
     {
       profileId: second,
-      bounds: contentViewBounds(content, "hidden"),
+      bounds: contentViewBounds(
+        content,
+        "hidden",
+        process.platform as Platform
+      ),
       visible: true,
     },
   ]);
@@ -146,7 +155,10 @@ test("switching back shows the first view in the content rectangle and hides the
 
       return views.map((view) => ({
         ...view,
-        inContent: isEqual(view.bounds, contentViewBounds(content, "hidden")),
+        inContent: isEqual(
+          view.bounds,
+          contentViewBounds(content, "hidden", process.platform as Platform)
+        ),
       }));
     })
     .toMatchObject([

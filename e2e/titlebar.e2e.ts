@@ -1,5 +1,8 @@
 import type { Page } from "@playwright/test";
 
+import type { Platform } from "#core/platform.ts";
+import { sidebarWidth } from "#core/sidebar.ts";
+
 import {
   clickMenuItem,
   expect,
@@ -269,7 +272,9 @@ test("with the sidebar wide the first profile button starts where the page does;
   await expect.poll(profilesLeft).toBe(224);
 
   await narrow.click();
-  await expect.poll(pageLeft).toBe(64);
+  await expect
+    .poll(pageLeft)
+    .toBe(sidebarWidth("narrow", process.platform as Platform));
   await expect.poll(afterNavigation).toBe(8);
 
   await clickMenuItem(app, "sidebar.toggle");

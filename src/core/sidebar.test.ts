@@ -10,6 +10,7 @@ import {
 } from "./sidebar.ts";
 import { gmailTab, newProfile } from "./state.ts";
 import type { State } from "./state.ts";
+import { titlebarStart } from "./titlebar.ts";
 
 const apps = (...names: string[]) =>
   names.map((app, index) => ({ id: `t${index}`, app, url: "", title: "" }));
@@ -70,10 +71,26 @@ describe(sidebarState, () => {
 });
 
 describe(sidebarWidth, () => {
-  it("is 0, 64 or 224", () => {
+  it("is 0, 64 or 224 where the toggle starts at the window's edge", () => {
     expect(
-      (["hidden", "narrow", "wide"] as const).map(sidebarWidth)
-    ).toStrictEqual([0, 64, 224]);
+      (["hidden", "narrow", "wide"] as const).map((state) => [
+        sidebarWidth(state, "win32"),
+        sidebarWidth(state, "linux"),
+      ])
+    ).toStrictEqual([
+      [0, 0],
+      [64, 64],
+      [224, 224],
+    ]);
+  });
+
+  it("is narrow as wide as the titlebar's start on macOS, so the page lines up with the sidebar toggle", () => {
+    expect([
+      sidebarWidth("hidden", "darwin"),
+      sidebarWidth("narrow", "darwin"),
+      sidebarWidth("wide", "darwin"),
+    ]).toStrictEqual([0, titlebarStart("darwin"), 224]);
+    expect(titlebarStart("darwin")).toBe(80);
   });
 });
 

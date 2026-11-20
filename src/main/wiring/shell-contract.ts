@@ -173,7 +173,11 @@ export const wireShellContract = ({
       tabMenu,
       panes: paneResize,
       pageSize: () =>
-        contentViewBounds(shell.window.getContentAreaSize(), sidebar.current()),
+        contentViewBounds(
+          shell.window.getContentAreaSize(),
+          sidebar.current(),
+          platform
+        ),
       profileMenu,
       openGmail: showGmail.jumpTo,
       window: shell.window,

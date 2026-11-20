@@ -1,5 +1,6 @@
 import type { App } from "#core/apps.ts";
 import { contentViewBounds } from "#core/layout.ts";
+import type { Platform } from "#core/platform.ts";
 import type { TabKey } from "#core/tabs.ts";
 
 import { createBookmarks } from "../bookmarks.ts";
@@ -12,6 +13,7 @@ import type { createTabViews } from "../tab-views.ts";
 
 /** New tab and Open in split, and the bookmarks they list. */
 export const wireLauncher = ({
+  platform,
   apps,
   shell,
   sidebar,
@@ -20,6 +22,7 @@ export const wireLauncher = ({
   overlays,
   showOwnWindow,
 }: {
+  platform: Platform;
   apps: readonly App[];
   shell: ReturnType<typeof createShellWindow>;
   sidebar: Sidebar;
@@ -43,7 +46,11 @@ export const wireLauncher = ({
     removeBookmark: profiles.removeBookmark,
     pageUrl: livePageUrl,
     pageSize: () =>
-      contentViewBounds(shell.window.getContentAreaSize(), sidebar.current()),
+      contentViewBounds(
+        shell.window.getContentAreaSize(),
+        sidebar.current(),
+        platform
+      ),
     log: console.error,
   });
 

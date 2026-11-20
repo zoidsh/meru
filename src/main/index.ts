@@ -191,6 +191,7 @@ const start = async () => {
       overlayRectangle(
         shell.window.getContentAreaSize(),
         sidebar.current(),
+        platform,
         overlay,
         overlay.kind === "find"
           ? // oxlint-disable-next-line no-use-before-define -- placed as the overlay opens, once both exist
@@ -259,6 +260,7 @@ const start = async () => {
   ]);
   const views = createTabViews({
     sidebar: sidebar.current,
+    platform,
     window: shell.window,
     ownWindows,
     apps,
@@ -350,6 +352,7 @@ const start = async () => {
   });
 
   const { livePageUrl, openApp, bookmarks } = wireLauncher({
+    platform,
     apps,
     shell,
     sidebar,

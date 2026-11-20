@@ -239,6 +239,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     senders,
     state: profiles.get,
     sidebar: () => sidebar,
+    platform: "linux",
     openTab: profiles.openTab,
     selectTab: profiles.selectTab,
     closeTab: profiles.closeTab,
