@@ -662,6 +662,13 @@ test("Open in split lists the bookmarks too, and one chosen opens as a new tab i
   await findPage(app, standIn.calendarUrl);
   await clickMenuItem(app, "tab.splitRight");
   await expect(card).toBeVisible();
+  // The Card's header, as the other titled cards have it.
+  await expect(
+    card.getByRole("heading", { level: 2, name: "Open in split" })
+  ).toBeVisible();
+  await expect(
+    card.getByText("Beside the focused pane", { exact: true })
+  ).toBeVisible();
   await bookmarks.getByRole("option", { name: /^Files/u }).click();
   await expect(card).toHaveCount(0);
   await expect

@@ -77,10 +77,24 @@ export const TitledOverlay = ({
  * What a titled overlay holds: as tall as its content and at most the room
  * the Card leaves, reaching out of CardContent's padding and the Card's
  * below to 8px from the Card's edge so a row's fill sits there. The room left
- * is the Card's padding above, the 8px below, its gap and its header.
+ * is the Card's padding above, the 8px below, its gap and its header. A
+ * Command reaches to 4px from the edge, since its groups' own 4px puts its
+ * rows at the 8px they have in the launcher with no title.
  */
-export const TitledOverlayBody = ({ children }: { children: ReactNode }) => (
-  <div className="-mx-2 -mb-2 flex max-h-[calc(100cqh-40px-var(--titled-header))] min-h-0 flex-col">
+export const TitledOverlayBody = ({
+  bleed = "rows",
+  children,
+}: {
+  bleed?: "rows" | "command";
+  children: ReactNode;
+}) => (
+  <div
+    className={
+      bleed === "rows"
+        ? "-mx-2 -mb-2 flex max-h-[calc(100cqh-40px-var(--titled-header))] min-h-0 flex-col"
+        : "-mx-3 -mb-3 flex max-h-[calc(100cqh-36px-var(--titled-header))] min-h-0 flex-col"
+    }
+  >
     {children}
   </div>
 );
