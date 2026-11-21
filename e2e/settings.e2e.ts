@@ -872,13 +872,19 @@ test("under Do Not Disturb Show test notification is disabled, says why to the p
     `Show a test notification to see how notifications appear. ${reason}`
   );
 
+  const tooltip = page.getByRole("tooltip");
+
+  await expect(tooltip).toHaveCount(0);
   await button.hover();
-  await expect(page.getByText(reason, { exact: true }).last()).toBeVisible();
+  await expect(tooltip).toHaveText(reason);
   await button.click({ force: true });
 
   await page.mouse.move(0, 0);
-  await button.focus();
-  await expect(page.getByText(reason, { exact: true }).last()).toBeVisible();
+  await expect(tooltip).toHaveCount(0);
+  await page.getByRole("button", { name: "Add quiet hours" }).focus();
+  await page.keyboard.press("Tab");
+  await expect(button).toBeFocused();
+  await expect(tooltip).toHaveText(reason);
   await page.keyboard.press("Enter");
 
   expect([await notifications(app), errors]).toStrictEqual([[], []]);
@@ -1178,13 +1184,7 @@ test.describe("shots", () => {
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await button.hover();
       // oxlint-disable-next-line no-await-in-loop -- one after another
-      await expect(
-        page
-          .getByText("Turn off Do Not Disturb to show a test notification.", {
-            exact: true,
-          })
-          .last()
-      ).toBeVisible();
+      await expect(page.getByRole("tooltip")).toBeVisible();
       // Lets the tooltip's opening animation finish.
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await delay(500);

@@ -553,7 +553,10 @@ export const NotificationsPage = () => {
                           "Button in Settings that shows a sample new mail notification, as the settings above would show one",
                       })}
                     </TooltipTrigger>
-                    <TooltipContent>{testBlocked}</TooltipContent>
+                    {/* Base UI gives its popup no role of its own. */}
+                    <TooltipContent role="tooltip">
+                      {testBlocked}
+                    </TooltipContent>
                     {doNotDisturb.on && (
                       <span id={testBlockedId} className="sr-only">
                         {testBlocked}
