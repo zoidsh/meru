@@ -9,7 +9,8 @@ const single = (value: number | readonly number[]) =>
 
 /**
  * The volume, written only once a drag or a key press is committed. It shows
- * the value being dragged until main sends back a new one.
+ * the value being set until main sends back the last one committed, since
+ * main's answer to an earlier commit of a quick run would step it back.
  */
 export const VolumeSlider = ({
   labelId,
@@ -23,11 +24,16 @@ export const VolumeSlider = ({
   onCommit: (volume: number) => void;
 }) => {
   const [moving, setMoving] = useState<number>();
+  const [committed, setCommitted] = useState<number>();
   const [sent, setSent] = useState(volume);
 
   if (sent !== volume) {
     setSent(volume);
-    setMoving(undefined);
+
+    if (volume === committed) {
+      setMoving(undefined);
+      setCommitted(undefined);
+    }
   }
 
   // The Slider fills its container, and the row's control column is only as
@@ -47,6 +53,7 @@ export const VolumeSlider = ({
           setMoving(single(value));
         }}
         onValueCommitted={(value) => {
+          setCommitted(single(value));
           onCommit(single(value));
         }}
       />
