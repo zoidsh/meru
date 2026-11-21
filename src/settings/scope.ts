@@ -52,10 +52,6 @@ export const effectiveSettings = (
   profile: ListedProfile | undefined
 ): PageSettings => ({ ...settings, ...profile?.overrides });
 
-/** Whether the scope switcher's segments, laid out whole, need more than the room. */
-export const foldsIntoMenu = (listWidth: number, room: number) =>
-  listWidth > room;
-
 const daysText = (window: QuietWindow, locale: string) => {
   const days = new Set(quietDays(window));
   const are = (wanted: readonly number[]) =>

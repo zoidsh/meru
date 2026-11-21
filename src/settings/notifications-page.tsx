@@ -149,9 +149,7 @@ export const NotificationsPage = () => {
     : undefined;
   // With one profile the page edits the app value and shows that profile's,
   // which main makes the same at each change.
-  const values = multi
-    ? effectiveSettings(settings, profile)
-    : effectiveSettings(settings, profiles[0]);
+  const values = effectiveSettings(settings, multi ? profile : profiles[0]);
   const pausedLine = multi
     ? t({
         message: "Off for all profiles",

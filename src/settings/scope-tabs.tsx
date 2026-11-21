@@ -13,7 +13,7 @@ import {
 } from "#ui/dropdown-menu.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/tabs.tsx";
 
-import { foldsIntoMenu, overrideCount } from "./scope.ts";
+import { overrideCount } from "./scope.ts";
 import type { ListedProfile, Scope } from "./scope.ts";
 
 /** The folded trigger's value while All profiles is chosen, which it never selects. */
@@ -64,7 +64,7 @@ export const ScopeTabs = ({
     }
 
     const check = () => {
-      setFolded(foldsIntoMenu(measure.offsetWidth, root.clientWidth));
+      setFolded(measure.offsetWidth > root.clientWidth);
     };
     const observer = new ResizeObserver(check);
 

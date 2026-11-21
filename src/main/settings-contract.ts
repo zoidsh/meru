@@ -85,10 +85,9 @@ export const settingsHandlers = ({
   return {
     update: async (change) => {
       const { key, value } = change as SettingChange;
-      const ids = listedIds(profiles);
-      const [lone] = ids;
+      const [lone, ...others] = listedIds(profiles);
 
-      await (ids.length === 1 && lone !== undefined
+      await (lone !== undefined && others.length === 0
         ? store.updateForProfile(key, value, lone)
         : store.update(key, () => value));
     },

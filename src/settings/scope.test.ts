@@ -8,7 +8,6 @@ import {
   differingProfiles,
   differsText,
   effectiveSettings,
-  foldsIntoMenu,
   overrideCount,
   shownScope,
   splitDiffering,
@@ -89,16 +88,6 @@ describe(effectiveSettings, () => {
       effectiveSettings(APP, undefined),
       overrideCount(work),
     ]).toStrictEqual(["chime", true, APP, 1]);
-  });
-});
-
-describe(foldsIntoMenu, () => {
-  it("folds the segments only when laid out whole they need more than the room", () => {
-    expect([
-      foldsIntoMenu(400, 532),
-      foldsIntoMenu(532, 532),
-      foldsIntoMenu(533, 532),
-    ]).toStrictEqual([false, false, true]);
   });
 });
 
