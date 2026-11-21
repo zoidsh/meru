@@ -53,8 +53,12 @@ export const VolumeSlider = ({
           setMoving(single(value));
         }}
         onValueCommitted={(value) => {
-          setCommitted(single(value));
-          onCommit(single(value));
+          const next = single(value);
+
+          // Main sends nothing back for a value it already holds.
+          setCommitted(next === volume ? undefined : next);
+          setMoving(next === volume ? undefined : next);
+          onCommit(next);
         }}
       />
     </div>
