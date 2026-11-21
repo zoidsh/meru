@@ -13,8 +13,10 @@ import {
   copyTrayImages,
   identityFor,
   outDir,
+  RENDERERS,
+  rendererRoot,
+  rendererViteConfig,
   repositoryRoot,
-  shellViteConfig,
   writeAppManifest,
 } from "./lib/bundles.ts";
 import {
@@ -31,12 +33,15 @@ await cleanOutDir(target);
 
 await Promise.all([
   ...appBundles(target).map((options) => bundle(options)),
-  buildRenderer({
-    configFile: shellViteConfig,
-    mode: "production",
-    logLevel: "warn",
-    build: { outDir: path.join(out, "shell"), emptyOutDir: true },
-  }),
+  ...RENDERERS.map((renderer) =>
+    buildRenderer({
+      configFile: rendererViteConfig,
+      root: rendererRoot(renderer),
+      mode: "production",
+      logLevel: "warn",
+      build: { outDir: path.join(out, renderer), emptyOutDir: true },
+    })
+  ),
   writeAppManifest(target),
   copyTrayImages(target),
 ]);

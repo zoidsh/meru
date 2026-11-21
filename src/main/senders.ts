@@ -2,6 +2,7 @@ import type { IpcSender } from "#platform/ipc.ts";
 
 export type SenderIdentity =
   | { role: "shell" }
+  | { role: "settings" }
   /** The shell's overlay document, which the shell draws into; never a caller. */
   | { role: "overlay" }
   | { role: "content-view"; profileId: string; tabId: string }

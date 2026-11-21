@@ -155,6 +155,8 @@ export interface CommandActions {
    * toast says which.
    */
   toggleBookmark: (key: TabKey, announce: boolean) => Promise<unknown>;
+  /** Opens the Settings window, or brings the open one forward. */
+  openSettings: () => void;
 }
 
 export interface Command {
@@ -332,6 +334,26 @@ export const savedSearchCommands = (state: State) =>
  * the command.
  */
 export const COMMANDS: readonly Command[] = [
+  {
+    id: "app.settings",
+    inOwnWindow: true,
+    title: () =>
+      t({
+        message: "Settings…",
+        comment: "Menu item in the app menu that opens the Settings window",
+      }),
+    shortcut: {
+      darwin: "Command+,",
+      win32: "Control+,",
+      linux: "Control+,",
+    },
+    once: true,
+    run: (_context, { openSettings }) => {
+      openSettings();
+
+      return Promise.resolve();
+    },
+  },
   {
     id: "sidebar.toggle",
     title: () =>

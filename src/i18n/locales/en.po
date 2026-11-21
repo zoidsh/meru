@@ -205,6 +205,11 @@ msgstr "<0>Failed</0> · {when}"
 msgid "A download finished"
 msgstr "A download finished"
 
+#. Description of the Notifications switch in Settings
+#: src/settings/notifications-page.tsx
+msgid "A notification for each new message."
+msgstr "A notification for each new message."
+
 #. Menu item in the macOS app menu that shows the app's version; {appName} is the app's name
 #: src/main/application-menu.ts
 msgid "About {appName}"
@@ -219,6 +224,11 @@ msgstr "Actual Size"
 #: src/main/commands.ts
 msgid "Add Profile"
 msgstr "Add Profile"
+
+#. Button under the Settings list of quiet hours that adds a window from 22:00 to 07:00 every day
+#: src/settings/quiet-hours-field.tsx
+msgid "Add quiet hours"
+msgstr "Add quiet hours"
 
 #. Label over the band along the window's edge that lights up while a tab is dragged near it; dropping it puts the tab there beside every pane
 #: src/shell/drop-zone.tsx
@@ -252,8 +262,11 @@ msgid "Asleep"
 msgstr "Asleep"
 
 #. Accessible name and tooltip of the title bar button that goes to the page the tab showed before
+#. Accessible name of the Settings window's button that goes back to the section shown before
 #. Menu item in the View menu that goes to the page the selected tab showed before
+#. Tooltip of the Settings window's button that goes back to the section shown before
 #: src/main/commands.ts
+#: src/settings/app.tsx
 #: src/shell/titlebar.tsx
 msgid "Back"
 msgstr "Back"
@@ -304,6 +317,11 @@ msgstr "Bookmarked {page}"
 msgid "Bookmarks"
 msgstr "Bookmarks"
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Breeze"
+msgstr "Breeze"
+
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
 msgid "Bring All to Front"
@@ -323,6 +341,11 @@ msgstr "Cancel download"
 #: src/shell/downloads.tsx
 msgid "Cancelled · {when}"
 msgstr "Cancelled · {when}"
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Chime"
+msgstr "Chime"
 
 #. Button in the Downloads card's header that takes every download off the list but those still running
 #: src/shell/downloads.tsx
@@ -418,10 +441,20 @@ msgstr "Couldn’t move the message to Trash."
 msgid "Couldn’t report the message as spam."
 msgstr "Couldn’t report the message as spam."
 
+#. Label of the switch in Settings that adds unread mail to the number on the app's icon
+#: src/settings/notifications-page.tsx
+msgid "Count unread in the badge"
+msgstr "Count unread in the badge"
+
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Cut"
 msgstr "Cut"
+
+#. Accessible name of the days a window of quiet hours holds on in Settings
+#: src/settings/quiet-hours-field.tsx
+msgid "Days"
+msgstr "Days"
 
 #. Name of the first profile until the person renames it, shown in the title bar
 #: src/main/profile-copy.ts
@@ -444,9 +477,11 @@ msgstr "Delete"
 
 #. Accessible name of the moon button in the title bar that holds new mail notifications, read by screen readers with whether it is pressed
 #. Command that turns Do Not Disturb on until turned off, or off, checked while it holds new mail notifications
+#. Label of the switch in Settings that holds every notification until turned off
 #. Submenu of the app menu with how long to hold new mail notifications for, or to stop
 #: src/main/application-menu.ts
 #: src/main/commands.ts
+#: src/settings/notifications-page.tsx
 #: src/shell/titlebar.tsx
 msgid "Do Not Disturb"
 msgstr "Do Not Disturb"
@@ -493,6 +528,11 @@ msgstr "Downloading"
 #: src/shell/downloads.tsx
 msgid "Downloads"
 msgstr "Downloads"
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Duet"
+msgstr "Duet"
 
 #. Item of a tab's context menu that opens another tab of the same app at the same page
 #: src/main/tab-menu.ts
@@ -541,11 +581,19 @@ msgid "Find…"
 msgstr "Find…"
 
 #. Accessible name and tooltip of the title bar button that goes to the page the tab left by going back
+#. Accessible name of the Settings window's button that goes forward to the section shown after
 #. Menu item in the View menu that goes to the page the selected tab left by going back
+#. Tooltip of the Settings window's button that goes forward to the section shown after
 #: src/main/commands.ts
+#: src/settings/app.tsx
 #: src/shell/titlebar.tsx
 msgid "Forward"
 msgstr "Forward"
+
+#. Accessible name of the time a window of quiet hours starts, in Settings
+#: src/settings/quiet-hours-field.tsx
+msgid "From"
+msgstr "From"
 
 #. Menu item in the Mail menu that opens Gmail's own settings in the selected profile's Gmail tab
 #: src/main/commands.ts
@@ -577,6 +625,16 @@ msgstr "Hide Others"
 msgid "Hide sidebar"
 msgstr "Hide sidebar"
 
+#. Description of the Do Not Disturb switch in Settings while it is off; the moon is the Do Not Disturb button in the main window's title bar
+#: src/settings/do-not-disturb.ts
+msgid "Holds every notification. The moon in the titlebar turns it on for a set time."
+msgstr "Holds every notification. The moon in the titlebar turns it on for a set time."
+
+#. Label of the switch in Settings that limits notifications to mail Gmail marks important
+#: src/settings/notifications-page.tsx
+msgid "Important mail only"
+msgstr "Important mail only"
+
 #. Said by screen readers after a sidebar row's title while its tab is moved to a window of its own, which a click brings forward
 #: src/shell/tab-strip.tsx
 msgid "In its own window"
@@ -607,10 +665,20 @@ msgstr "Its page quit unexpectedly. Reload it to carry on."
 msgid "Kept for 30 days"
 msgstr "Kept for 30 days"
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Knock"
+msgstr "Knock"
+
 #. Said by screen readers of the gap between two panes side by side: how much of the two the left one takes; {percent} is a percentage, such as 60%
 #: src/shell/pane-handle.tsx
 msgid "Left pane {percent}"
 msgstr "Left pane {percent}"
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Linen"
+msgstr "Linen"
 
 #. Said by screen readers after a tab's title while its page loads
 #: src/shell/tab-strip.tsx
@@ -683,6 +751,11 @@ msgstr "Move to New Window"
 msgid "Moved or deleted"
 msgstr "Moved or deleted"
 
+#. Title of the group of Settings for how new mail is announced
+#: src/settings/notifications-page.tsx
+msgid "New mail"
+msgstr "New mail"
+
 #. Title of a notification for an email that arrived, when the person chose not to show who sent it
 #: src/main/notifications.ts
 msgid "New message"
@@ -729,6 +802,11 @@ msgstr "No downloads yet"
 msgid "No mail to show yet"
 msgstr "No mail to show yet"
 
+#. Shown in place of the Settings window's sections when none matches the search
+#: src/settings/app.tsx
+msgid "No results"
+msgstr "No results"
+
 #. Said in the New tab launcher when no app or bookmark matches what was typed
 #: src/shell/open-app.tsx
 msgid "No results."
@@ -744,6 +822,11 @@ msgstr "No Saved Searches"
 msgid "No unread messages"
 msgstr "No unread messages"
 
+#. Choice of the Sound menu in Settings: no sound with a notification
+#: src/settings/notifications-page.tsx
+msgid "None"
+msgstr "None"
+
 #. Label over the part of the window a tab dragged there would take, when dropping it would leave a pane too small, so it does nothing
 #: src/shell/drop-zone.tsx
 msgid "Not enough room"
@@ -755,19 +838,55 @@ msgid "Not enough room to split"
 msgstr "Not enough room to split"
 
 #. Accessible name of the region at the foot of the window that holds Meru's short notices, such as one saying there is not enough room to split
+#. Label of the switch in Settings that shows a notification for new mail
+#. Name of the Settings section for notifications, the unread badge and Do Not Disturb, in its list and as its title
+#: src/settings/app.tsx
+#: src/settings/notifications-page.tsx
 #: src/shell/toast.tsx
 msgid "Notifications"
 msgstr "Notifications"
+
+#. Description of Quiet hours in Settings; a window is one of the listed spans of time
+#: src/settings/quiet-hours-field.tsx
+msgid "Notifications wait until a window ends."
+msgstr "Notifications wait until a window ends."
+
+#. Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting says
+#. Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting says
+#: src/settings/notifications-page.tsx
+#: src/settings/quiet-hours-field.tsx
+msgid "Off while Do Not Disturb is on"
+msgstr "Off while Do Not Disturb is on"
 
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
 #: src/main/do-not-disturb.ts
 msgid "On Until {time}"
 msgstr "On Until {time}"
 
+#. Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30
+#: src/settings/do-not-disturb.ts
+msgid "On until {time}. Holds every notification."
+msgstr "On until {time}. Holds every notification."
+
+#. Description of the Do Not Disturb switch in Settings while it is on until midnight
+#: src/settings/do-not-disturb.ts
+msgid "On until tomorrow. Holds every notification."
+msgstr "On until tomorrow. Holds every notification."
+
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications until the person turns it off
 #: src/main/do-not-disturb.ts
 msgid "On Until Turned Off"
 msgstr "On Until Turned Off"
+
+#. Description of the Do Not Disturb switch in Settings while it is on with no end
+#: src/settings/do-not-disturb.ts
+msgid "On until you turn it off. Holds every notification."
+msgstr "On until you turn it off. Holds every notification."
+
+#. Description of the Important mail only switch in Settings
+#: src/settings/notifications-page.tsx
+msgid "Only mail Gmail marks important gets a notification."
+msgstr "Only mail Gmail marks important gets a notification."
 
 #. Placeholder of the search field of the New tab launcher, which filters Google's apps and the profile's bookmarks
 #: src/shell/open-app.tsx
@@ -834,6 +953,16 @@ msgstr "Profile {n}"
 msgid "Profiles"
 msgstr "Profiles"
 
+#. Label of the list in Settings of the times when new mail notifications wait
+#: src/settings/quiet-hours-field.tsx
+msgid "Quiet hours"
+msgstr "Quiet hours"
+
+#. Accessible name of one window in the Settings list of quiet hours; {place} is its place in the list, from 1
+#: src/settings/quiet-hours-field.tsx
+msgid "Quiet hours {place}"
+msgstr "Quiet hours {place}"
+
 #. Tray menu item that quits Meru
 #: src/main/tray.ts
 msgctxt "Linux"
@@ -864,6 +993,11 @@ msgstr "Redo"
 #: src/shell/titlebar.tsx
 msgid "Reload"
 msgstr "Reload"
+
+#. Tooltip of the button that removes one window of quiet hours in Settings
+#: src/settings/quiet-hours-field.tsx
+msgid "Remove"
+msgstr "Remove"
 
 #. Question in the dialog that confirms removing a profile; {name} is the profile's name
 #: src/main/profile-copy.ts
@@ -907,6 +1041,11 @@ msgstr "Remove Profile"
 #: src/main/commands.ts
 msgid "Remove Profile…"
 msgstr "Remove Profile…"
+
+#. Accessible name of the button that removes one window of quiet hours in Settings; {place} is its place in the list, from 1
+#: src/settings/quiet-hours-field.tsx
+msgid "Remove quiet hours {place}"
+msgstr "Remove quiet hours {place}"
 
 #. Submenu of the Saved Searches menu listing each saved search, to remove the one chosen
 #: src/main/application-menu.ts
@@ -964,6 +1103,16 @@ msgstr "Scroll profiles left"
 msgid "Scroll profiles right"
 msgstr "Scroll profiles right"
 
+#. Placeholder of the field atop the Settings window's sections that filters them by name
+#: src/settings/app.tsx
+msgid "Search"
+msgstr "Search"
+
+#. Accessible name of the field atop the Settings window's sections that filters them by name
+#: src/settings/app.tsx
+msgid "Search settings"
+msgstr "Search settings"
+
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Select All"
@@ -1009,6 +1158,21 @@ msgstr "Separate from Split"
 msgid "Services"
 msgstr "Services"
 
+#. Title of the Settings window
+#: src/settings/app.tsx
+msgid "Settings"
+msgstr "Settings"
+
+#. Accessible name of the list of sections down the left of the Settings window
+#: src/settings/app.tsx
+msgid "Settings sections"
+msgstr "Settings sections"
+
+#. Menu item in the app menu that opens the Settings window
+#: src/main/commands.ts
+msgid "Settings…"
+msgstr "Settings…"
+
 #. Read by screen readers once for the New tab launcher's list: the key that deletes the bookmark highlighted in it
 #: src/shell/open-app.tsx
 msgid "Shift+Delete removes the highlighted bookmark"
@@ -1034,10 +1198,30 @@ msgstr "Show in Finder"
 msgid "Show in folder"
 msgstr "Show in folder"
 
+#. Label of the switch in Settings that lists unread mail in the Unified inbox, the list of every profile's unread mail
+#: src/settings/notifications-page.tsx
+msgid "Show in the Unified inbox"
+msgstr "Show in the Unified inbox"
+
 #. Tooltip of the title bar button that shows the list of tabs down the left of the window
 #: src/shell/titlebar.tsx
 msgid "Show sidebar"
 msgstr "Show sidebar"
+
+#. Label of the switch in Settings that names who sent the mail in its notification
+#: src/settings/notifications-page.tsx
+msgid "Show the sender"
+msgstr "Show the sender"
+
+#. Label of the switch in Settings that shows the mail's subject in its notification
+#: src/settings/notifications-page.tsx
+msgid "Show the subject"
+msgstr "Show the subject"
+
+#. Label of the switch in Settings that shows the start of the mail's text in its notification
+#: src/settings/notifications-page.tsx
+msgid "Show the summary"
+msgstr "Show the summary"
 
 #. Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed
 #: src/shell/titlebar.tsx
@@ -1078,6 +1262,11 @@ msgstr "Sleep Profile"
 msgid "Sleep Tab"
 msgstr "Sleep Tab"
 
+#. Label of the menu in Settings choosing the sound a new mail notification makes
+#: src/settings/notifications-page.tsx
+msgid "Sound"
+msgstr "Sound"
+
 #. Menu item, in the Tabs menu and a tab's context menu, that lists apps and bookmarks to open in a new pane below the tab's
 #: src/main/menu-labels.ts
 msgid "Split Down"
@@ -1110,6 +1299,11 @@ msgstr "Stop"
 msgid "Stopped working"
 msgstr "Stopped working"
 
+#. Choice of the Sound menu in Settings: the system's own notification sound
+#: src/settings/notifications-page.tsx
+msgid "System"
+msgstr "System"
+
 #. Accessible name of the list of the profile's tabs down the left of the window, read by screen readers
 #. Name of the menu of commands on the selected profile's tabs
 #: src/main/application-menu.ts
@@ -1127,12 +1321,24 @@ msgstr "The window stopped drawing several times in a row, so {productName} will
 msgid "This data was saved by a newer version. Open it with that version, or update to it."
 msgstr "This data was saved by a newer version. Open it with that version, or update to it."
 
+#. Accessible name of the strip across the top of the Settings window, read by screen readers
 #. Accessible name of the strip across the top of the window, read by screen readers
 #. Accessible name of the strip across the top of the window, read by screen readers
+#: src/settings/app.tsx
 #: src/shell/own-window.tsx
 #: src/shell/titlebar.tsx
 msgid "Title bar"
 msgstr "Title bar"
+
+#. Between the start and end times of a window of quiet hours in Settings, as in 22:00 to 07:00
+#: src/settings/quiet-hours-field.tsx
+msgid "to"
+msgstr "to"
+
+#. Accessible name of the time a window of quiet hours ends, in Settings
+#: src/settings/quiet-hours-field.tsx
+msgid "To"
+msgstr "To"
 
 #. Menu item in the View menu that makes the window fill the screen, or stop filling it
 #: src/main/application-menu.ts
@@ -1180,6 +1386,21 @@ msgstr "Unpin"
 msgid "Unpin Tab"
 msgstr "Unpin Tab"
 
+#. Title of the group of Settings for how unread mail is counted and listed
+#: src/settings/notifications-page.tsx
+msgid "Unread mail"
+msgstr "Unread mail"
+
+#. Description of the Count unread in the badge switch in Settings on Windows and Linux
+#: src/settings/notifications-page.tsx
+msgid "Unread mail adds to the number on the app's icon."
+msgstr "Unread mail adds to the number on the app's icon."
+
+#. Description of the Count unread in the badge switch in Settings on macOS; the Dock is where macOS shows the app's icon
+#: src/settings/notifications-page.tsx
+msgid "Unread mail adds to the number on the Dock icon."
+msgstr "Unread mail adds to the number on the Dock icon."
+
 #. Shown in the unified inbox before any profile's mail has been read, as when none is signed in or Meru is offline
 #: src/shell/inbox.tsx
 msgid "Unread mail appears here once a profile is signed in to Gmail."
@@ -1189,6 +1410,11 @@ msgstr "Unread mail appears here once a profile is signed in to Gmail."
 #: src/shell/inbox.tsx
 msgid "Unread mail from all your profiles shows here. A message leaves the list once you read it."
 msgstr "Unread mail from all your profiles shows here. A message leaves the list once you read it."
+
+#. Description of the Show in the Unified inbox switch in Settings
+#: src/settings/notifications-page.tsx
+msgid "Unread mail is listed with the other profiles'."
+msgstr "Unread mail is listed with the other profiles'."
 
 #. Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers
 #: src/shell/inbox.tsx
@@ -1233,6 +1459,11 @@ msgstr "Wake"
 #: src/main/commands.ts
 msgid "Wake Tab"
 msgstr "Wake Tab"
+
+#. Title of the group of Settings for what a new mail notification says
+#: src/settings/notifications-page.tsx
+msgid "What a notification shows"
+msgstr "What a notification shows"
 
 #. Name of the Window menu
 #: src/main/application-menu.ts

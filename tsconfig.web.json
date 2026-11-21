@@ -8,5 +8,12 @@
     "types": ["vite/client"],
     "jsx": "react-jsx"
   },
-  "include": ["src/shell", "src/ui", "src/core", "src/contract", "src/i18n"]
+  "include": [
+    "src/shell",
+    "src/settings",
+    "src/ui",
+    "src/core",
+    "src/contract",
+    "src/i18n"
+  ]
 }

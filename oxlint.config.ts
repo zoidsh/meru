@@ -118,6 +118,32 @@ export default defineConfig({
       },
     },
     {
+      // A renderer reaches main only through its preload's bridge, and no
+      // renderer another's code.
+      files: ["src/shell/**", "src/settings/**"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "electron",
+                message:
+                  "A renderer imports nothing of Electron, types included.",
+              },
+            ],
+            patterns: [
+              {
+                regex: "^#(?!(core|contract|i18n|ui)/)",
+                message: "A renderer imports only core, contract, i18n and ui.",
+              },
+              NO_RELATIVE_CROSSING,
+            ],
+          },
+        ],
+      },
+    },
+    {
       // Catches a renderer's text left unwrapped for translation: a JSX text
       // child, or a literal in an attribute a person reads. Copy in any other
       // attribute, and in main, is left to review.

@@ -1,5 +1,6 @@
 import type { ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import path from "node:path";
 
 import { Mutex } from "es-toolkit";
 import { watch } from "rolldown";
@@ -12,7 +13,8 @@ import {
   cleanOutDir,
   copyTrayImages,
   outDir,
-  shellViteConfig,
+  rendererViteConfig,
+  repositoryRoot,
   writeAppManifest,
 } from "./lib/bundles.ts";
 import { exitCodeFor } from "./lib/launch-args.ts";
@@ -148,7 +150,9 @@ setup = (async () => {
   await copyTrayImages("dev");
 
   vite = await createServer({
-    configFile: shellViteConfig,
+    configFile: rendererViteConfig,
+    // One server for every renderer, each under its folder's name.
+    root: path.join(repositoryRoot, "src"),
     mode: "development",
     html: { cspNonce: nonce },
     server: {
@@ -167,7 +171,7 @@ setup = (async () => {
     throw new Error("The Vite dev server reported no URL");
   }
 
-  console.log(`Shell dev server: ${devServerUrl}`);
+  console.log(`Renderers' dev server: ${devServerUrl}`);
 
   if (isStopping) {
     return;

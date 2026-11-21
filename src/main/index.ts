@@ -28,6 +28,7 @@ import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireNotifications } from "./wiring/notifications.ts";
 import { wireOwnWindows } from "./wiring/own-windows.ts";
+import { wireSettingsWindow } from "./wiring/settings-window.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import { wireShellDocuments } from "./wiring/shell-documents.ts";
 import { wireShellRecovery } from "./wiring/shell-recovery.ts";
@@ -118,8 +119,13 @@ const start = async () => {
 
   shellUrl.searchParams.set("lang", language);
 
+  const settingsUrl = new URL(shellSource.settingsUrl);
+
+  settingsUrl.searchParams.set("lang", language);
+
   // Built by hand: URL's `origin` is "null" for a scheme it does not know.
   const shellOrigin = `${shellUrl.protocol}//${shellUrl.host}`;
+  const settingsOrigin = `${settingsUrl.protocol}//${settingsUrl.host}`;
   const ipc = createIpc();
 
   const theme = createTheme();
@@ -400,6 +406,22 @@ const start = async () => {
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
 
+  const { openSettings } = wireSettingsWindow({
+    isMacOS,
+    background,
+    lifecycle,
+    contextMenus,
+    displays,
+    theme,
+    url: settingsUrl.href,
+    origin: settingsOrigin,
+    ipc,
+    senders,
+    settings,
+    profiles,
+    doNotDisturb,
+  });
+
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({
     platform,
     background,
@@ -419,6 +441,7 @@ const start = async () => {
     bookmarks,
     navigateGmail,
     showOwnWindow,
+    openSettings,
   });
 
   wireShellContract({

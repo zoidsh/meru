@@ -54,6 +54,7 @@ export const wireMenu = ({
   bookmarks,
   navigateGmail,
   showOwnWindow,
+  openSettings,
 }: {
   platform: Platform;
   background: boolean;
@@ -73,6 +74,7 @@ export const wireMenu = ({
   bookmarks: Bookmarks;
   navigateGmail: ReturnType<typeof createGmailNavigation>;
   showOwnWindow: (key: TabKey) => void;
+  openSettings: () => void;
 }) => {
   /** The tab whose own window has focus, its page or its titlebar. */
   const focusedOwnWindow = (): TabKey | undefined => {
@@ -200,6 +202,7 @@ export const wireMenu = ({
       openFind: find.open,
       findAgain: find.again,
       toggleBookmark: bookmarks.toggle,
+      openSettings,
     },
     locale: () => i18n.locale,
     setMenu: setApplicationMenu,

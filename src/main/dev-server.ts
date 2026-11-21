@@ -6,7 +6,10 @@ import { serializePolicy, LOCKED_DOWN } from "./content-security-policy.ts";
  */
 
 export interface DevServer {
-  /** Where the shell is served from, such as `http://127.0.0.1:3000/`. */
+  /**
+   * Where the renderers are served from, such as `http://127.0.0.1:3000/`,
+   * each under its folder's name.
+   */
   url: string;
   /** Vite stamps it on the scripts and styles it injects. */
   nonce: string;

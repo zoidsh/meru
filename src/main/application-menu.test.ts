@@ -124,6 +124,17 @@ describe(buildMenuTemplate, () => {
     }
   );
 
+  it("puts Settings in the app menu, after About on macOS and first elsewhere", () => {
+    expect(
+      (["darwin", "win32"] as const).map((platform) =>
+        outline(template(platform))[0]?.[1]?.slice(0, 3)
+      )
+    ).toStrictEqual([
+      ["about", "app.settings", undefined],
+      ["app.settings", undefined, "quit"],
+    ]);
+  });
+
   it("ends the Edit menu with Find, Find Next and Find Previous", () => {
     expect(outline(template("darwin"))[1]?.[1]?.slice(-3)).toStrictEqual([
       "tab.find",

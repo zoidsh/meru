@@ -134,6 +134,8 @@ export const buildMenuTemplate = ({
             role: "about",
           },
           separator,
+          ...item("app.settings"),
+          separator,
           doNotDisturb,
           separator,
           {
@@ -172,7 +174,7 @@ export const buildMenuTemplate = ({
           separator,
           quit,
         ]
-      : [doNotDisturb, separator, quit],
+      : [...item("app.settings"), separator, doNotDisturb, separator, quit],
   };
 
   const editMenu: MenuItemConstructorOptions = {

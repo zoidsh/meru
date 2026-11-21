@@ -22,7 +22,17 @@ export const repositoryRoot = path.resolve(import.meta.dirname, "..", "..");
 export const outDir = (target: BuildTarget) =>
   path.join(repositoryRoot, "out", target);
 
-export const shellViteConfig = path.join(repositoryRoot, "vite.config.ts");
+/** Vite's config for every renderer; its root is the shell's folder. */
+export const rendererViteConfig = path.join(repositoryRoot, "vite.config.ts");
+
+/**
+ * Each renderer, built from its folder under `src` into the folder of the
+ * same name in the output, which the app's scheme serves as a host of its own.
+ */
+export const RENDERERS = ["shell", "settings"] as const;
+
+export const rendererRoot = (renderer: (typeof RENDERERS)[number]) =>
+  path.join(repositoryRoot, "src", renderer);
 
 /** Only `prod` builds a release; `pnpm start` runs the same build. */
 export const identityFor = (target: BuildTarget) =>
@@ -115,6 +125,23 @@ export const appBundles = (target: BuildTarget): BuildOptions[] => {
       external: ["electron"],
       output: {
         file: path.join(outDir(target), "preload-shell.cjs"),
+        format: "cjs",
+        minify,
+        sourcemap: mode === "dev",
+      },
+    },
+    {
+      input: path.join(
+        repositoryRoot,
+        "src",
+        "preload",
+        "settings",
+        "index.ts"
+      ),
+      platform: "browser",
+      external: ["electron"],
+      output: {
+        file: path.join(outDir(target), "preload-settings.cjs"),
         format: "cjs",
         minify,
         sourcemap: mode === "dev",

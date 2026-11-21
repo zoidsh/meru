@@ -6,7 +6,7 @@
 export const FORBIDDEN_IN_PROD: readonly { marker: string; why: string }[] = [
   {
     marker: "MERU_DEV_SERVER_URL",
-    why: "a production build must never load the shell from a dev server",
+    why: "a production build must never load a renderer from a dev server",
   },
   {
     marker: "MERU_DEV_CSP_NONCE",

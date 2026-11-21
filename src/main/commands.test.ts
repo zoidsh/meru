@@ -66,7 +66,11 @@ const setup = (initial: State = twoProfiles) => {
   let canFindAgain = false;
   let bookmarked: boolean | undefined;
   const bookmarkToggles: string[] = [];
+  let settingsOpened = 0;
   const actions: CommandActions = {
+    openSettings: () => {
+      settingsOpened += 1;
+    },
     toggleBookmark: (key, announce) => {
       bookmarkToggles.push(`${key.tabId}${announce ? " announced" : ""}`);
       bookmarked = bookmarked === undefined ? undefined : !bookmarked;
@@ -185,6 +189,7 @@ const setup = (initial: State = twoProfiles) => {
     renames,
     navigations,
     openAppOpen: () => openAppOpen,
+    settingsOpened: () => settingsOpened,
     context,
     actions,
     isAvailable: (id: string) => isCommandAvailable(commandOf(id), context()),
@@ -529,6 +534,26 @@ describe("the command registry", () => {
       "Remove Bookmark",
       true,
       ["gmail announced", "c1"],
+    ]);
+  });
+
+  it("opens Settings on Cmd or Ctrl+comma, from a tab's own window too", async () => {
+    const app = setup();
+    const command = COMMANDS.find(
+      (candidate) => candidate.id === "app.settings"
+    );
+
+    await app.run("app.settings");
+    app.setOwnWindow({ profileId: "a", tabId: "a1" });
+
+    expect([
+      app.isAvailable("app.settings"),
+      app.settingsOpened(),
+      command?.shortcut,
+    ]).toStrictEqual([
+      true,
+      1,
+      { darwin: "Command+,", win32: "Control+,", linux: "Control+," },
     ]);
   });
 
