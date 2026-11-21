@@ -170,6 +170,7 @@ export const ScopeTabs = ({
                         <DropdownMenuRadioItem
                           key={profile.id}
                           value={profile.id}
+                          closeOnClick
                         >
                           <ProfileDot color={profile.color} />
                           <span className="truncate">{profile.name}</span>

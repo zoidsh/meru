@@ -525,6 +525,8 @@ test("long-named profiles fold into one menu beside All profiles, whose choice s
     .click();
 
   await expect(scopeTab(page, third)).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(scopeTab(page, third)).toBeFocused();
   await expect(
     page.getByText(`Changes here apply to ${third} alone.`)
   ).toBeVisible();
