@@ -15,16 +15,9 @@ import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
 
 const SETTINGS_URL = "meru-app://settings/";
 
-/** How many Settings windows are open. */
-const settingsWindows = (app: ElectronApplication) =>
-  app.evaluate(
-    ({ BrowserWindow }, url) =>
-      BrowserWindow.getAllWindows().filter(
-        (window) =>
-          !window.isDestroyed() && window.webContents.getURL().startsWith(url)
-      ).length,
-    SETTINGS_URL
-  );
+/** How many windows are open, the main one among them. */
+const windowCount = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
 
 /** Runs Settings… from the app menu, and gives the Settings window's page. */
 const openSettings = async (app: ElectronApplication) => {
@@ -92,15 +85,15 @@ test("Settings… opens one Settings window, which closes and opens again", asyn
 
   await clickMenuItem(app, "app.settings");
 
-  expect(await settingsWindows(app)).toBe(1);
+  expect(await windowCount(app)).toBe(2);
 
   await page.close();
 
-  await expect.poll(() => settingsWindows(app)).toBe(0);
+  await expect.poll(() => windowCount(app)).toBe(1);
 
   await openSettings(app);
 
-  expect(await settingsWindows(app)).toBe(1);
+  expect(await windowCount(app)).toBe(2);
 });
 
 test("a switch writes the app value, which a restart keeps", async ({
