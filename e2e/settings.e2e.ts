@@ -509,6 +509,14 @@ test("long-named profiles fold into one menu beside All profiles, whose choice s
   await expect(
     page.getByRole("tablist", { name: "Scope" }).getByRole("tab")
   ).toHaveText(["All profiles", "Choose a profile"]);
+  // The unseen copy the fold is measured on widens nothing.
+  expect(
+    await page.getByRole("tabpanel").evaluate((panel) => {
+      const scroller = panel.closest(".overflow-y-auto") ?? panel;
+
+      return scroller.scrollWidth - scroller.clientWidth;
+    })
+  ).toBe(0);
 
   await menuTab.click();
   await page

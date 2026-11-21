@@ -93,19 +93,23 @@ export const ScopeTabs = ({
 
   return (
     <div ref={rootRef} className="relative">
-      {/* The segments laid out whole, unseen, to measure against the room. */}
+      {/*
+        The segments laid out whole, unseen, to measure against the room; the
+        outer box takes no size, so the copy never widens the page.
+      */}
       <div
-        ref={measureRef}
         aria-hidden
         inert
-        className="invisible absolute top-0 left-0 w-max"
+        className="invisible absolute top-0 left-0 size-0 overflow-hidden"
       >
-        <Tabs value="all">
-          <TabsList>
-            <TabsTrigger value="all">{allProfiles}</TabsTrigger>
-            {segments}
-          </TabsList>
-        </Tabs>
+        <div ref={measureRef} className="w-max">
+          <Tabs value="all">
+            <TabsList>
+              <TabsTrigger value="all">{allProfiles}</TabsTrigger>
+              {segments}
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
       <Tabs
         value={scope}
