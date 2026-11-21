@@ -165,6 +165,25 @@ export default defineConfig({
       rules: { "react/jsx-no-literals": "off" },
     },
     {
+      // As the CLI writes it: a Field is a `role="group"` div, its errors
+      // are typed and compared loosely.
+      files: ["src/ui/field.tsx"],
+      rules: {
+        "jsx-a11y/prefer-tag-over-role": "off",
+        "typescript/array-type": "off",
+        eqeqeq: "off",
+      },
+    },
+    {
+      // As the CLI writes it: an inline type import of the toggle's variants,
+      // and the group's context built at each render.
+      files: ["src/ui/toggle-group.tsx"],
+      rules: {
+        "typescript/no-import-type-side-effects": "off",
+        "react/jsx-no-constructed-context-values": "off",
+      },
+    },
+    {
       // As the CLI writes it: default `render` buttons, which React
       // Compiler cannot reorder, the close button's English "Close toast",
       // which nothing of ours shows since main closes the toast, and its
