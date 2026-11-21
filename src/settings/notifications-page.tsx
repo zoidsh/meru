@@ -4,6 +4,7 @@ import { useId } from "react";
 import type { ReactNode } from "react";
 
 import type { PageSettings } from "#contract/settings.ts";
+import { NOTIFICATION_SOUNDS } from "#core/sounds.ts";
 import type { SoundChoice } from "#core/sounds.ts";
 import { Card, CardContent, CardHeader, CardTitle } from "#ui/card.tsx";
 import {
@@ -32,11 +33,7 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 const SOUND_ORDER: readonly SoundChoice[] = [
   "none",
   "system",
-  "breeze",
-  "chime",
-  "duet",
-  "knock",
-  "linen",
+  ...NOTIFICATION_SOUNDS,
 ];
 
 type BooleanKey = {
