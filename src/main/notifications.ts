@@ -185,12 +185,14 @@ export const createMailNotifications = ({
    * Shows it, held by its profile until it is gone or the profile is, with
    * the sound `notificationSound` and the quiet period since the last sound
    * give it. With no profile it has the app's sound, and no profile's
-   * removal closes it.
+   * removal closes it. One asked for always sounds and starts no quiet
+   * period, so it neither waits on mail's sound nor silences the next.
    */
   const showFor = (
     profileId: string | undefined,
     content: NotificationContent,
-    events: Omit<NotificationEvents, "onGone">
+    events: Omit<NotificationEvents, "onGone">,
+    asked = false
   ) => {
     const held =
       (profileId === undefined ? undefined : shown.get(profileId)) ??
@@ -199,7 +201,7 @@ export const createMailNotifications = ({
     const sound = decideSound(
       setting("notificationSound", profileId),
       time,
-      lastSoundAt
+      asked ? undefined : lastSoundAt
     );
     let notification: ShownNotification | undefined;
 
@@ -227,7 +229,7 @@ export const createMailNotifications = ({
 
     held.add(notification);
 
-    if (sounds(sound)) {
+    if (sounds(sound) && !asked) {
       lastSoundAt = time;
     }
 
@@ -538,7 +540,8 @@ export const createMailNotifications = ({
       showFor(
         profileId,
         subtitle === undefined ? { title, body } : { title, subtitle, body },
-        { onClick: noop }
+        { onClick: noop },
+        true
       );
     },
     /** Forgets each profile no longer listed and closes its notifications. */

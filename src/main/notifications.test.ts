@@ -1094,6 +1094,25 @@ describe("the test notification", () => {
     ]);
   });
 
+  it("always sounds and starts no quiet period, so tests 2 s apart both sound and new mail right after one still does", async () => {
+    const app = setup();
+
+    app.set("notificationSound", "chime");
+    await app.notifications.polled("a", feed(entry("1")));
+    app.notifications.showTest(undefined);
+    app.advance(2000);
+    app.notifications.showTest("a");
+    await app.notifications.polled("a", feed(entry("2"), entry("1")));
+
+    expect([
+      app.played.map((request) => request.sound),
+      app.shown.map(({ silent }) => silent),
+    ]).toStrictEqual([
+      ["chime", "chime", "chime"],
+      [true, true, true],
+    ]);
+  });
+
   it("opens nothing when clicked, and shows nothing for a profile no longer listed", () => {
     const app = setup({ state: two });
 
