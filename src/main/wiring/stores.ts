@@ -11,6 +11,7 @@ import { createProfiles } from "../profiles.ts";
 import {
   SETTINGS_FILE_NAME,
   createSettingsStore,
+  followRemovedProfiles,
   saveSettings,
 } from "../settings.ts";
 import { createSidebar } from "../sidebar.ts";
@@ -68,6 +69,8 @@ export const wireStores = async ({
     platform,
     log: console.error,
   });
+
+  followRemovedProfiles({ settings, profiles, log: console.error });
 
   // Not awaited: the window must not wait on a clear that hangs, and no view
   // can hold these sessions, whose profiles are no longer listed.

@@ -1,13 +1,19 @@
 import path from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Settings } from "#core/settings.ts";
+import { newProfile } from "#core/state.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { StartupError } from "./failures.ts";
-import { createSettingsStore, openSettings } from "./settings.ts";
+import { createProfiles } from "./profiles.ts";
+import {
+  createSettingsStore,
+  followRemovedProfiles,
+  openSettings,
+} from "./settings.ts";
 
 const SETTINGS_PATH = path.join("/data", "Meru Dev", "settings.json");
 
@@ -155,5 +161,106 @@ describe(createSettingsStore, () => {
     ).rejects.toThrow("disk full");
     expect(settings.get("trayIconColor")).toBe("system");
     expect(heard).toStrictEqual([]);
+  });
+
+  it("reads a profile's own value, and writes it without touching the app value", async () => {
+    const { settings, saved } = setup({ version: 1, later: 1 });
+    const read = () => [
+      settings.get("notifications"),
+      settings.get("notifications", "p"),
+      settings.get("notifications", "q"),
+    ];
+
+    await settings.setOverride("p", "notifications", false);
+
+    expect(read()).toStrictEqual([true, false, true]);
+
+    await settings.update("notifications", () => false);
+    await settings.setOverride("p", "notifications", true);
+
+    expect(read()).toStrictEqual([false, true, false]);
+    expect(settings.overridingProfiles("notifications")).toStrictEqual(["p"]);
+
+    await settings.clearOverride("p", "notifications");
+
+    expect(read()).toStrictEqual([false, false, false]);
+    expect(saved.at(-1)).toStrictEqual({
+      version: 1,
+      later: 1,
+      notifications: false,
+    });
+  });
+
+  it("announces a key when a profile's value of it changes, and not otherwise", async () => {
+    const { settings } = setup({
+      version: 1,
+      profiles: { p: { unreadBadge: false } },
+    });
+    const heard: string[] = [];
+
+    settings.onChange("unreadBadge", () => heard.push("unreadBadge"));
+    settings.onChange("notifications", () => heard.push("notifications"));
+
+    await settings.setOverride("q", "unreadBadge", false);
+    // Equal to what the profile read already: nothing it reads changed.
+    await settings.setOverride("r", "unreadBadge", true);
+    await settings.setOverride("p", "unreadBadge", false);
+    // Every profile overriding it, or one following it, hears the app value.
+    await settings.update("unreadBadge", () => false);
+    await settings.clearOverride("q", "unreadBadge");
+    await settings.clearOverride("p", "unreadBadge");
+    await settings.removeProfile("r");
+
+    expect(heard).toStrictEqual(["unreadBadge", "unreadBadge", "unreadBadge"]);
+  });
+
+  it("deletes a profile's entry on its removal, keeping the rest of the file", async () => {
+    const { settings, saved } = setup({
+      version: 1,
+      later: 1,
+      profiles: { p: { notifications: false, later: 2 }, q: "odd" },
+    });
+    const heard: string[] = [];
+
+    settings.onChange("notifications", () => heard.push("notifications"));
+    await settings.removeProfile("p");
+
+    expect(saved).toStrictEqual([
+      { version: 1, later: 1, profiles: { q: "odd" } },
+    ]);
+    expect(heard).toStrictEqual(["notifications"]);
+  });
+});
+
+describe(followRemovedProfiles, () => {
+  it("deletes a removed profile's overrides from the file once its removal is committed", async () => {
+    const { settings, saved } = setup({
+      version: 1,
+      profiles: { a: { unreadBadge: false }, b: { notifications: false } },
+    });
+    const profiles = createProfiles({
+      initial: {
+        version: 1,
+        profiles: [newProfile("a", "Default"), newProfile("b", "Work")],
+        selectedProfileId: "a",
+      },
+      save: () => Promise.resolve(),
+      newId: () => "c",
+      profileName: (n) => `Profile ${n}`,
+      clearSession: () => Promise.resolve(),
+      now: () => 0,
+      log: () => {},
+    });
+
+    followRemovedProfiles({ settings, profiles, log: () => {} });
+    await profiles.add();
+    await profiles.remove("b");
+    await vi.waitFor(() => {
+      expect(saved).toHaveLength(1);
+    });
+
+    expect(saved).toStrictEqual([
+      { version: 1, profiles: { a: { unreadBadge: false } } },
+    ]);
   });
 });

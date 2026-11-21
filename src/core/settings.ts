@@ -23,6 +23,8 @@ export interface SettingDefinition<Value = unknown> {
   schema: z.ZodMiniType<Value>;
   /** The same everywhere, or chosen by the platform Meru runs on. */
   default: Value | ((platform: Platform) => Value);
+  /** A profile may hold a value of its own, which it reads in place of the app's. */
+  overridable?: true;
 }
 
 /** What `SETTINGS` may declare: any name but the file's own. */
@@ -30,6 +32,11 @@ export type SettingDeclarations = Record<string, SettingDefinition> &
   Partial<Record<(typeof RESERVED_SETTING_NAMES)[number], never>>;
 
 const setting = <Value>(definition: SettingDefinition<Value>) => definition;
+
+const overridable = <Value>(definition: SettingDefinition<Value>) => ({
+  ...definition,
+  overridable: true as const,
+});
 
 export const TRAY_ICON_COLORS = ["system", "light", "dark"] as const;
 
@@ -47,24 +54,24 @@ export type VerificationCodeCopyMode =
 /** Every setting, declared once. */
 export const SETTINGS = {
   /** A notification for mail that arrives. */
-  notifications: setting<boolean>({
+  notifications: overridable<boolean>({
     schema: z.boolean(),
     default: true,
   }),
-  notificationSender: setting<boolean>({
+  notificationSender: overridable<boolean>({
     schema: z.boolean(),
     default: true,
   }),
-  notificationSubject: setting<boolean>({
+  notificationSubject: overridable<boolean>({
     schema: z.boolean(),
     default: true,
   }),
-  notificationSummary: setting<boolean>({
+  notificationSummary: overridable<boolean>({
     schema: z.boolean(),
     default: true,
   }),
   /** Notifies only the new mail Gmail's Important feed also lists. */
-  notificationImportantOnly: setting<boolean>({
+  notificationImportantOnly: overridable<boolean>({
     schema: z.boolean(),
     default: false,
   }),
@@ -72,7 +79,7 @@ export const SETTINGS = {
    * When new-mail notifications are held. A list where one window does not
    * parse is read as none, so nothing is held by a value Meru cannot read.
    */
-  quietHours: setting<QuietWindow[]>({
+  quietHours: overridable<QuietWindow[]>({
     schema: z.array(quietWindowSchema),
     default: [],
   }),
@@ -80,7 +87,7 @@ export const SETTINGS = {
    * What a new-mail or verification-code notification sounds like: one of
    * Meru's own sounds, the system's, or none.
    */
-  notificationSound: setting<SoundChoice>({
+  notificationSound: overridable<SoundChoice>({
     schema: z.enum(SOUND_CHOICES),
     default: "linen",
   }),
@@ -139,7 +146,12 @@ export const SETTINGS = {
     default: false,
   }),
   /** The Dock badge, the taskbar overlay or the launcher's count. */
-  unreadBadge: setting<boolean>({
+  unreadBadge: overridable<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /** The profile's mail is listed in the Unified inbox. */
+  unifiedInbox: overridable<boolean>({
     schema: z.boolean(),
     default: true,
   }),
@@ -197,6 +209,18 @@ export type SettingValue<Key extends SettingKey> = Exclude<
 
 export const SETTING_KEYS = Object.keys(SETTINGS) as SettingKey[];
 
+/** The settings a profile may hold a value of its own for. */
+export type OverridableSettingKey = {
+  [Key in SettingKey]: (typeof SETTINGS)[Key] extends { overridable: true }
+    ? Key
+    : never;
+}[SettingKey];
+
+export const OVERRIDABLE_SETTING_KEYS = SETTING_KEYS.filter(
+  (key): key is OverridableSettingKey =>
+    (SETTINGS[key] as SettingDefinition).overridable === true
+);
+
 /**
  * The file as it was found, with whatever the person set since. Values are
  * parsed when read, so one that does not parse, a key this build does not
@@ -219,13 +243,63 @@ export const createInitialSettings = (): Settings => ({
 export const decodeSettings = (value: unknown): Decoded<Settings> =>
   decodeVersioned(value, SETTINGS_VERSION, settingsSchema);
 
-/** The value the file holds where it parses, else the platform's default. */
+const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** The file's `profiles`, where it is an object. */
+const profileEntries = (settings: Settings) =>
+  isRecord(settings.profiles) ? settings.profiles : undefined;
+
+/** The profile's overrides, where its entry is an object. */
+const profileEntry = (settings: Settings, profileId: string) => {
+  const entries = profileEntries(settings);
+  const entry =
+    entries && Object.hasOwn(entries, profileId)
+      ? entries[profileId]
+      : undefined;
+
+  return isRecord(entry) ? entry : undefined;
+};
+
+const parseValue = (key: SettingKey, value: unknown) =>
+  (SETTINGS[key] as SettingDefinition).schema.safeParse(value);
+
+/** The profile's own value of the key, where it holds one that parses. */
+const parsedOverride = (
+  settings: Settings,
+  profileId: string,
+  key: SettingKey
+) => {
+  const entry = profileEntry(settings, profileId);
+  const parsed =
+    entry && Object.hasOwn(entry, key)
+      ? parseValue(key, entry[key])
+      : undefined;
+
+  return parsed?.success ? parsed : undefined;
+};
+
+/**
+ * The value the file holds where it parses, else the platform's default.
+ * With a profile, an overridable key reads that profile's value where it
+ * holds one that parses, else the app's.
+ */
 export const readSetting = <Key extends SettingKey>(
   settings: Settings,
   key: Key,
-  platform: Platform
+  platform: Platform,
+  profileId?: string
 ): SettingValue<Key> => {
   const definition: SettingDefinition = SETTINGS[key];
+
+  if (profileId !== undefined && definition.overridable) {
+    const override = parsedOverride(settings, profileId, key);
+
+    if (override) {
+      return override.data as SettingValue<Key>;
+    }
+  }
+
   const parsed = definition.schema.safeParse(settings[key]);
 
   if (parsed.success) {
@@ -245,3 +319,86 @@ export const writeSetting = <Key extends SettingKey>(
   key: Key,
   value: SettingValue<Key>
 ): Settings => ({ ...settings, [key]: value });
+
+/** `profiles` as `entries` leaves it, absent once it holds none. */
+const withEntries = (
+  settings: Settings,
+  entries: Readonly<Record<string, unknown>>
+): Settings => {
+  if (Object.keys(entries).length > 0) {
+    return { ...settings, profiles: entries };
+  }
+
+  const { profiles: _dropped, ...rest } = settings;
+
+  return rest as Settings;
+};
+
+/**
+ * Sets the profile's own value, even one equal to the app's; everything else
+ * in the file stays as it was. A `profiles` or an entry that is not an object
+ * gives way to one.
+ */
+export const writeOverride = <Key extends OverridableSettingKey>(
+  settings: Settings,
+  profileId: string,
+  key: Key,
+  value: SettingValue<Key>
+): Settings => ({
+  ...settings,
+  profiles: {
+    ...profileEntries(settings),
+    [profileId]: { ...profileEntry(settings, profileId), [key]: value },
+  },
+});
+
+/** Deletes the profile's own value; an entry or `profiles` left empty goes. */
+export const clearOverride = (
+  settings: Settings,
+  profileId: string,
+  key: OverridableSettingKey
+): Settings => {
+  const entries = profileEntries(settings);
+  const entry = profileEntry(settings, profileId);
+
+  if (!entries || !entry || !Object.hasOwn(entry, key)) {
+    return settings;
+  }
+
+  const { [key]: _cleared, ...rest } = entry;
+  const { [profileId]: _entry, ...others } = entries;
+
+  return withEntries(
+    settings,
+    Object.keys(rest).length > 0 ? { ...others, [profileId]: rest } : others
+  );
+};
+
+/** Deletes the profile's entry; a `profiles` left empty goes. */
+export const clearProfileOverrides = (
+  settings: Settings,
+  profileId: string
+): Settings => {
+  const entries = profileEntries(settings);
+
+  if (!entries || !Object.hasOwn(entries, profileId)) {
+    return settings;
+  }
+
+  const { [profileId]: _entry, ...others } = entries;
+
+  return withEntries(settings, others);
+};
+
+/** The ids whose entry holds a value of the key that parses. */
+export const overridingProfiles = (
+  settings: Settings,
+  key: OverridableSettingKey
+) =>
+  Object.keys(profileEntries(settings) ?? {}).filter(
+    (profileId) => parsedOverride(settings, profileId, key) !== undefined
+  );
+
+/** The ids `profiles` has an entry for, whatever it holds. */
+export const profilesWithEntries = (settings: Settings) =>
+  Object.keys(profileEntries(settings) ?? {});

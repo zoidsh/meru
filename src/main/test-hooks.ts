@@ -3,7 +3,11 @@
 
 import type { GmailHealth } from "#contract/gmail.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
-import type { SettingKey, SettingValue } from "#core/settings.ts";
+import type {
+  OverridableSettingKey,
+  SettingKey,
+  SettingValue,
+} from "#core/settings.ts";
 import type { TabKey } from "#core/tabs.ts";
 
 import type { SettingsStore } from "./settings.ts";
@@ -44,10 +48,20 @@ export const captureSounds = () => {
   };
 };
 
-/** Sets a setting as a settings page would, under `meruTestSettings`. */
+/**
+ * Sets a setting, or a profile's own value of one, as a settings page would,
+ * under `meruTestSettings`.
+ */
 export const exposeTestSettings = (settings: SettingsStore) => {
   Reflect.set(globalThis, "meruTestSettings", {
     set: <Key extends SettingKey>(key: Key, value: SettingValue<Key>) =>
       settings.update(key, () => value),
+    setOverride: <Key extends OverridableSettingKey>(
+      profileId: string,
+      key: Key,
+      value: SettingValue<Key>
+    ) => settings.setOverride(profileId, key, value),
+    clearOverride: (profileId: string, key: OverridableSettingKey) =>
+      settings.clearOverride(profileId, key),
   });
 };
