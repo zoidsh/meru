@@ -163,6 +163,30 @@ test("Ctrl+W closes the Settings window on Windows and Linux", async ({
   await expect.poll(() => windowCount(app)).toBe(1);
 });
 
+test("the Settings page loads and opens a menu under the strict policy with no console error", async ({
+  app,
+}) => {
+  const page = await openSettings(app);
+  const errors: string[] = [];
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      errors.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => {
+    errors.push(error.message);
+  });
+
+  // The listeners missed the first load.
+  await page.reload();
+  await page.getByRole("combobox", { name: "Sound" }).click();
+  await expect(page.getByRole("option", { name: "Chime" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  expect(errors).toStrictEqual([]);
+});
+
 test("a switch writes the app value, which a restart keeps", async ({
   launchApp,
   userDataDir,

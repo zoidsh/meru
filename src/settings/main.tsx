@@ -1,4 +1,5 @@
 import "#ui/styles.css";
+import { CSPProvider } from "@base-ui/react/csp-provider";
 import { I18nProvider } from "@lingui/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -24,8 +25,11 @@ document.documentElement.lang = language;
 
 createRoot(root).render(
   <StrictMode>
-    <I18nProvider i18n={i18n}>
-      <App />
-    </I18nProvider>
+    {/* The policy refuses inline styles; styles.css carries the one rule Base UI's would add. */}
+    <CSPProvider disableStyleElements>
+      <I18nProvider i18n={i18n}>
+        <App />
+      </I18nProvider>
+    </CSPProvider>
   </StrictMode>
 );
