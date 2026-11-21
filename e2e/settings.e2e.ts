@@ -158,7 +158,11 @@ test("Ctrl+W closes the Settings window on Windows and Linux", async ({
 
   const page = await openSettings(app);
 
-  await page.keyboard.press("Control+KeyW");
+  try {
+    await page.keyboard.press("Control+KeyW");
+  } catch {
+    // The page is gone before the key comes back up; the count below is the check.
+  }
 
   await expect.poll(() => windowCount(app)).toBe(1);
 });
