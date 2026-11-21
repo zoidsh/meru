@@ -1,0 +1,162 @@
+import { describe, expect, it } from "vitest";
+
+import type { Settings } from "#core/settings.ts";
+import { newProfile } from "#core/state.ts";
+import type { State } from "#core/state.ts";
+
+import { createDoNotDisturb } from "./do-not-disturb.ts";
+import { createProfiles } from "./profiles.ts";
+import { readSettingsState, settingsHandlers } from "./settings-contract.ts";
+import { createSettingsStore } from "./settings.ts";
+
+const stateOf = (...names: string[]): State => ({
+  version: 1,
+  profiles: names.map((name) => newProfile(name.toLowerCase(), name)),
+  selectedProfileId: names[0]?.toLowerCase() ?? "",
+});
+
+const setup = (state: State, initial?: Settings) => {
+  const saved: unknown[] = [];
+  const announced: string[] = [];
+  const settings = createSettingsStore({
+    initial: initial ?? { version: 1 },
+    save: (next) => {
+      saved.push(structuredClone(next));
+
+      return Promise.resolve();
+    },
+    platform: "darwin",
+    log: () => false,
+  });
+  const profiles = createProfiles({
+    initial: state,
+    save: () => Promise.resolve(),
+    newId: () => "new",
+    profileName: (n) => `Profile ${n}`,
+    clearSession: () => Promise.resolve(),
+    now: Date.now,
+    log: () => false,
+  });
+  const doNotDisturb = createDoNotDisturb({
+    profiles,
+    now: () => new Date(),
+    log: () => false,
+  });
+  const deps = { settings, profiles, doNotDisturb };
+
+  settings.onChange("notificationSender", () =>
+    announced.push("notificationSender")
+  );
+
+  return {
+    handlers: settingsHandlers(deps),
+    read: () => readSettingsState(deps),
+    saved,
+    announced,
+    dispose: doNotDisturb.dispose,
+  };
+};
+
+describe(settingsHandlers, () => {
+  it("sets and clears a listed profile's own value, leaving the app value", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.setOverride({
+      profileId: "work",
+      key: "notificationSender",
+      value: false,
+    });
+
+    const set = app.saved.at(-1);
+
+    await app.handlers.clearOverride({
+      profileId: "work",
+      key: "notificationSender",
+    });
+
+    expect([set, app.saved.at(-1)]).toStrictEqual([
+      { version: 1, profiles: { work: { notificationSender: false } } },
+      { version: 1 },
+    ]);
+    app.dispose();
+  });
+
+  it("refuses a profile that is not listed, writing nothing", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await expect(
+      app.handlers.setOverride({
+        profileId: "gone",
+        key: "notificationSender",
+        value: false,
+      })
+    ).rejects.toThrow("No listed profile has the id gone");
+    await expect(
+      app.handlers.clearOverride({ profileId: "gone", key: "unreadBadge" })
+    ).rejects.toThrow("No listed profile has the id gone");
+    expect(app.saved).toStrictEqual([]);
+    app.dispose();
+  });
+
+  it("with two profiles sets the app value alone", async () => {
+    const app = setup(stateOf("Home", "Work"), {
+      version: 1,
+      profiles: { work: { notificationSender: false } },
+    });
+
+    await app.handlers.update({ key: "notificationSender", value: false });
+
+    expect(app.saved).toStrictEqual([
+      {
+        version: 1,
+        notificationSender: false,
+        profiles: { work: { notificationSender: false } },
+      },
+    ]);
+    app.dispose();
+  });
+
+  it("with one profile sets the app value and deletes that profile's own value of the key, in one save and one announcement", async () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      profiles: { work: { notificationSender: false, unreadBadge: false } },
+    });
+
+    await app.handlers.update({ key: "notificationSender", value: true });
+
+    expect([app.saved, app.announced]).toStrictEqual([
+      [
+        {
+          version: 1,
+          notificationSender: true,
+          profiles: { work: { unreadBadge: false } },
+        },
+      ],
+      ["notificationSender"],
+    ]);
+    app.dispose();
+  });
+});
+
+describe(readSettingsState, () => {
+  it("lists the profiles in order with their name, colour and the values of their own that parse, never an unlisted id's", () => {
+    const app = setup(stateOf("Home", "Work"), {
+      version: 1,
+      profiles: {
+        work: { notificationSound: "chime", notifications: "maybe" },
+        gone: { notifications: false },
+      },
+    });
+
+    expect(app.read().profiles).toStrictEqual([
+      { id: "home", name: "Home", color: "#2d52d2", overrides: {} },
+      {
+        id: "work",
+        name: "Work",
+        color: "#ff6227",
+        overrides: { notificationSound: "chime" },
+      },
+    ]);
+    app.dispose();
+  });
+});

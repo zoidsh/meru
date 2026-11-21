@@ -19,7 +19,7 @@ const connect = () => {
   connection ??= createContractSync<SettingsState>(bridge(), [
     "settings",
     "doNotDisturb",
-    "profileCount",
+    "profiles",
   ]);
 
   return connection;

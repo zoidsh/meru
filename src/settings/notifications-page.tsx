@@ -107,9 +107,9 @@ export const NotificationsPage = () => {
   const { t, i18n } = useLingui();
   const settings = useSettingsState("settings");
   const doNotDisturb = useSettingsState("doNotDisturb");
-  const profileCount = useSettingsState("profileCount");
+  const profiles = useSettingsState("profiles");
 
-  if (!settings || !doNotDisturb || profileCount === undefined) {
+  if (!settings || !doNotDisturb || !profiles) {
     return null;
   }
 
@@ -376,7 +376,7 @@ export const NotificationsPage = () => {
                         "Description of the Count unread in the badge switch in Settings on Windows and Linux",
                     })
               ),
-              ...(profileCount >= 2
+              ...(profiles.length >= 2
                 ? [
                     switchRow(
                       "unifiedInbox",

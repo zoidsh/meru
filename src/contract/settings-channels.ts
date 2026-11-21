@@ -3,7 +3,12 @@
 
 import { contractChannels } from "./channels.ts";
 
-export const SETTINGS_CALL_NAMES = ["update", "setDoNotDisturb"] as const;
+export const SETTINGS_CALL_NAMES = [
+  "update",
+  "setOverride",
+  "clearOverride",
+  "setDoNotDisturb",
+] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];
 

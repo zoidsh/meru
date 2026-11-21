@@ -25,10 +25,18 @@ export type PageSettings = {
   [Key in PageSettingKey]: SettingValue<Key>;
 };
 
+/** The values a profile holds of its own, of the page's settings. */
+export type PageOverrides = Partial<PageSettings>;
+
 /** One setting's new app value, the key naming which schema checks it. */
 export type SettingChange = {
   [Key in PageSettingKey]: { key: Key; value: SettingValue<Key> };
 }[PageSettingKey];
+
+/** One setting's new value of the profile's own. */
+export type OverrideChange = SettingChange & { profileId: string };
+
+const profileId = z.string().check(z.minLength(1));
 
 const schemaOf = (key: PageSettingKey) =>
   SETTINGS[key].schema as z.ZodMiniType<unknown>;
@@ -39,14 +47,41 @@ const settingChange = z.union(
   )
 ) as unknown as z.ZodMiniType<SettingChange>;
 
+const overrideChange = z.union(
+  PAGE_SETTING_KEYS.map((key) =>
+    z.object({ profileId, key: z.literal(key), value: schemaOf(key) })
+  )
+) as unknown as z.ZodMiniType<OverrideChange>;
+
+const pageSettingsShape = Object.fromEntries(
+  PAGE_SETTING_KEYS.map((key) => [key, schemaOf(key)])
+);
+
 const pageSettings = z.object(
-  Object.fromEntries(PAGE_SETTING_KEYS.map((key) => [key, schemaOf(key)]))
+  pageSettingsShape
 ) as unknown as z.ZodMiniType<PageSettings>;
+
+const pageOverrides = z.partial(
+  z.object(pageSettingsShape)
+) as unknown as z.ZodMiniType<PageOverrides>;
 
 /** Each call the Settings window may make, with what main accepts of it. */
 export const SETTINGS_CALLS = {
   /** Sets the app value of one of the page's settings. */
   update: { request: settingChange, response: z.undefined() },
+  /**
+   * Sets a listed profile's own value of one of the page's settings, even
+   * one equal to the app's.
+   */
+  setOverride: { request: overrideChange, response: z.undefined() },
+  /** Deletes a listed profile's own value, so it reads the app's again. */
+  clearOverride: {
+    request: z.object({
+      profileId,
+      key: z.enum(PAGE_SETTING_KEYS as [PageSettingKey, ...PageSettingKey[]]),
+    }),
+    response: z.undefined(),
+  },
   /** Turns Do Not Disturb on until turned off, or off. */
   setDoNotDisturb: {
     request: z.object({ on: z.boolean() }),
@@ -66,8 +101,19 @@ export const SETTINGS_STATE = {
     on: z.boolean(),
     until: z.nullable(z.number()),
   }),
-  /** How many profiles there are, since some rows show only with two or more. */
-  profileCount: z.int().check(z.nonnegative()),
+  /**
+   * The profiles, in the titlebar's order, each with the values of the
+   * page's settings it holds of its own that parse.
+   */
+  profiles: z.array(
+    z.object({
+      id: profileId,
+      name: z.string(),
+      /** As the shell draws its dot. */
+      color: z.string(),
+      overrides: pageOverrides,
+    })
+  ),
 } as const;
 
 export type SettingsCalls = ContractCalls<typeof SETTINGS_CALLS>;
