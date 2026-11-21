@@ -40,6 +40,7 @@ const APP: PageSettings = {
   notificationSound: "linen",
   unreadBadge: true,
   unifiedInbox: true,
+  notificationSoundVolume: 1,
 };
 
 describe(isScoped, () => {

@@ -13,28 +13,41 @@ import type { SettingsCallName } from "./settings-channels.ts";
 
 export { SETTINGS_CALL_NAMES, SETTINGS_CHANNELS } from "./settings-channels.ts";
 
+/** The page's settings that only the app holds, never a profile. */
+const APP_ONLY_PAGE_KEYS = ["notificationSoundVolume"] as const;
+
 /**
  * The settings the Notifications page edits: those a profile may hold a
- * value of its own for, every one of them a notification's or the badge's.
+ * value of its own for, every one of them a notification's or the badge's,
+ * and the app-only ones.
  */
-export const PAGE_SETTING_KEYS = OVERRIDABLE_SETTING_KEYS;
+export const PAGE_SETTING_KEYS = [
+  ...OVERRIDABLE_SETTING_KEYS,
+  ...APP_ONLY_PAGE_KEYS,
+];
 
-export type PageSettingKey = OverridableSettingKey;
+export type PageSettingKey =
+  | OverridableSettingKey
+  | (typeof APP_ONLY_PAGE_KEYS)[number];
 
 export type PageSettings = {
   [Key in PageSettingKey]: SettingValue<Key>;
 };
 
 /** The values a profile holds of its own, of the page's settings. */
-export type PageOverrides = Partial<PageSettings>;
+export type PageOverrides = Partial<Pick<PageSettings, OverridableSettingKey>>;
+
+type ChangeOf<Keys extends PageSettingKey> = {
+  [Key in Keys]: { key: Key; value: SettingValue<Key> };
+}[Keys];
 
 /** One setting's new app value, the key naming which schema checks it. */
-export type SettingChange = {
-  [Key in PageSettingKey]: { key: Key; value: SettingValue<Key> };
-}[PageSettingKey];
+export type SettingChange = ChangeOf<PageSettingKey>;
 
 /** One setting's new value of the profile's own. */
-export type OverrideChange = SettingChange & { profileId: string };
+export type OverrideChange = ChangeOf<OverridableSettingKey> & {
+  profileId: string;
+};
 
 const profileId = z.string().check(z.minLength(1));
 
@@ -48,21 +61,20 @@ const settingChange = z.union(
 ) as unknown as z.ZodMiniType<SettingChange>;
 
 const overrideChange = z.union(
-  PAGE_SETTING_KEYS.map((key) =>
+  OVERRIDABLE_SETTING_KEYS.map((key) =>
     z.object({ profileId, key: z.literal(key), value: schemaOf(key) })
   )
 ) as unknown as z.ZodMiniType<OverrideChange>;
 
-const pageSettingsShape = Object.fromEntries(
-  PAGE_SETTING_KEYS.map((key) => [key, schemaOf(key)])
-);
+const shapeOf = (keys: readonly PageSettingKey[]) =>
+  Object.fromEntries(keys.map((key) => [key, schemaOf(key)]));
 
 const pageSettings = z.object(
-  pageSettingsShape
+  shapeOf(PAGE_SETTING_KEYS)
 ) as unknown as z.ZodMiniType<PageSettings>;
 
 const pageOverrides = z.partial(
-  z.object(pageSettingsShape)
+  z.object(shapeOf(OVERRIDABLE_SETTING_KEYS))
 ) as unknown as z.ZodMiniType<PageOverrides>;
 
 /** Each call the Settings window may make, with what main accepts of it. */
@@ -78,7 +90,12 @@ export const SETTINGS_CALLS = {
   clearOverride: {
     request: z.object({
       profileId,
-      key: z.enum(PAGE_SETTING_KEYS as [PageSettingKey, ...PageSettingKey[]]),
+      key: z.enum(
+        OVERRIDABLE_SETTING_KEYS as [
+          OverridableSettingKey,
+          ...OverridableSettingKey[],
+        ]
+      ),
     }),
     response: z.undefined(),
   },

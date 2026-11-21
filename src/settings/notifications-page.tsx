@@ -3,11 +3,8 @@ import { cn } from "cn";
 import { useId, useState } from "react";
 import type { ReactNode } from "react";
 
-import type {
-  PageSettingKey,
-  PageSettings,
-  SettingChange,
-} from "#contract/settings.ts";
+import type { PageSettings, SettingChange } from "#contract/settings.ts";
+import type { OverridableSettingKey } from "#core/settings.ts";
 import { NOTIFICATION_SOUNDS } from "#core/sounds.ts";
 import type { SoundChoice } from "#core/sounds.ts";
 import { Card, CardContent, CardHeader, CardTitle } from "#ui/card.tsx";
@@ -48,6 +45,8 @@ import {
 } from "./scope.ts";
 import type { Scope } from "./scope.ts";
 import { settingsCalls, useSettingsState } from "./sync.ts";
+import { VolumeSlider } from "./volume-slider.tsx";
+import { volumeSound } from "./volume.ts";
 
 /** In the order the Sound menu lists them. */
 const SOUND_ORDER: readonly SoundChoice[] = [
@@ -70,6 +69,7 @@ const SettingRow = ({
   description,
   paused,
   scope,
+  disabled = false,
   children,
 }: {
   label: string;
@@ -77,6 +77,7 @@ const SettingRow = ({
   /** The line saying Do Not Disturb outranks it, while it does. */
   paused: string | undefined;
   scope: RowScope;
+  disabled?: boolean;
   children: (ids: { label: string; description: string }) => ReactNode;
 }) => {
   const labelId = useId();
@@ -88,7 +89,11 @@ const SettingRow = ({
   const dims = paused !== undefined;
 
   return (
-    <Field orientation="horizontal" className="relative">
+    <Field
+      orientation="horizontal"
+      className="relative"
+      data-disabled={disabled || undefined}
+    >
       {scope.bar && <OverrideBar color={scope.bar} />}
       <FieldContent>
         <FieldLabel id={labelId} className={cn(dims && "opacity-50")}>
@@ -193,7 +198,7 @@ export const NotificationsPage = () => {
     }),
   };
 
-  const write = <Key extends PageSettingKey>(
+  const write = <Key extends OverridableSettingKey>(
     key: Key,
     value: PageSettings[Key]
   ) => {
@@ -205,7 +210,7 @@ export const NotificationsPage = () => {
   };
 
   /** What the row adds in the scope shown; nothing while the page has no scopes. */
-  const rowScope = (key: PageSettingKey, label: string): RowScope => {
+  const rowScope = (key: OverridableSettingKey, label: string): RowScope => {
     if (!scoped) {
       return {};
     }
@@ -275,6 +280,13 @@ export const NotificationsPage = () => {
     message: "Sound",
     comment:
       "Label of the menu in Settings choosing the sound a new mail notification makes",
+  });
+  const volumeApplies =
+    volumeSound(settings.notificationSound, profiles) !== undefined;
+  const volumeLabel = t({
+    message: "Volume",
+    comment:
+      "Label of the slider in Settings setting how loud Meru's own notification sounds play",
   });
   const quietHoursLabel = t({
     message: "Quiet hours",
@@ -399,6 +411,31 @@ export const NotificationsPage = () => {
                   </Select>
                 )}
               </SettingRow>,
+              ...(profile
+                ? []
+                : [
+                    <SettingRow
+                      key="notificationSoundVolume"
+                      label={volumeLabel}
+                      paused={paused}
+                      scope={{}}
+                      disabled={!volumeApplies}
+                    >
+                      {(ids) => (
+                        <VolumeSlider
+                          labelId={ids.label}
+                          volume={settings.notificationSoundVolume}
+                          disabled={!volumeApplies}
+                          onCommit={(volume) => {
+                            void calls.update({
+                              key: "notificationSoundVolume",
+                              value: volume,
+                            });
+                          }}
+                        />
+                      )}
+                    </SettingRow>,
+                  ]),
               <QuietHoursField
                 key="quietHours"
                 label={quietHoursLabel}

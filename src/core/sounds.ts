@@ -11,6 +11,11 @@ export const NOTIFICATION_SOUNDS = [
 
 export type NotificationSound = (typeof NOTIFICATION_SOUNDS)[number];
 
+export const isNotificationSound = (
+  choice: unknown
+): choice is NotificationSound =>
+  (NOTIFICATION_SOUNDS as readonly unknown[]).includes(choice);
+
 /** One of Meru's sounds, the system's own, or none. */
 export const SOUND_CHOICES = [
   ...NOTIFICATION_SOUNDS,

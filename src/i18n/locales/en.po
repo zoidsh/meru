@@ -1561,6 +1561,11 @@ msgstr "Verification code {verificationCode}"
 msgid "View"
 msgstr "View"
 
+#. Label of the slider in Settings setting how loud Meru's own notification sounds play
+#: src/settings/notifications-page.tsx
+msgid "Volume"
+msgstr "Volume"
+
 #. Button in place of a sleeping tab's page that loads it again
 #. Item of a sleeping profile's context menu, in place of Sleep, that selects the profile and loads its pages again
 #. Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it

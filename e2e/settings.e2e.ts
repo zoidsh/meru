@@ -249,8 +249,8 @@ test("Do Not Disturb from the titlebar turns the row on and pauses the rows it o
   await expect(
     page.getByText("On until you turn it off. Holds every notification.")
   ).toBeVisible();
-  // Notifications, Important mail only, Sound and Quiet hours.
-  await expect(pausedLines(page)).toHaveCount(4);
+  // Notifications, Important mail only, Sound, Volume and Quiet hours.
+  await expect(pausedLines(page)).toHaveCount(5);
   await expect(
     page.getByRole("switch", { name: "Notifications" })
   ).toBeChecked();
@@ -576,7 +576,7 @@ test("with two profiles Do Not Disturb holds whatever a profile sets, lives unde
     )
   ).toBeVisible();
   await page.getByRole("switch", { name: "Do Not Disturb" }).click();
-  await expect(offForAll).toHaveCount(4);
+  await expect(offForAll).toHaveCount(5);
 
   await scopeTab(page, "Work").click();
 
@@ -636,6 +636,90 @@ test("one profile that holds a value of its own has the switcher until its last 
   await expect(page.getByText(/profile/u)).toHaveCount(0);
 });
 
+test("the volume slider writes the app volume when a drag or a key press is committed", async ({
+  app,
+  userDataDir,
+}) => {
+  const page = await openSettings(app);
+
+  await setSetting(app, "notificationSound", "chime");
+  const volume = page.getByRole("slider", { name: "Volume" });
+
+  await expect(volume).toHaveAttribute("aria-valuetext", "100%");
+
+  await volume.focus();
+  await page.keyboard.press("ArrowLeft");
+
+  await expect
+    .poll(() => readStoredSetting(userDataDir, "notificationSoundVolume"))
+    .toBe(0.95);
+
+  const box = await page
+    .getByRole("group", { name: "Volume", exact: true })
+    .boundingBox();
+
+  if (!box) {
+    throw new Error("The volume slider has no box");
+  }
+
+  const y = box.y + box.height / 2;
+
+  await page.mouse.move(box.x + box.width - 1, y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.6, y, { steps: 5 });
+  await page.mouse.move(box.x + box.width * 0.3, y, { steps: 5 });
+
+  await expect(volume).not.toHaveAttribute("aria-valuetext", "95%");
+  expect(await readStoredSetting(userDataDir, "notificationSoundVolume")).toBe(
+    0.95
+  );
+
+  await page.mouse.up();
+
+  await expect
+    .poll(() => readStoredSetting(userDataDir, "notificationSoundVolume"))
+    .not.toBe(0.95);
+  await expect(volume).toHaveAttribute(
+    "aria-valuetext",
+    `${Math.round(
+      ((await readStoredSetting(
+        userDataDir,
+        "notificationSoundVolume"
+      )) as number) * 100
+    )}%`
+  );
+});
+
+test("the volume is disabled while no sound of Meru's is chosen, unless a profile chooses one, and absent from a profile's scope", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+  const volume = page.getByRole("slider", { name: "Volume" });
+
+  await setSetting(app, "notificationSound", "none");
+  await expect(volume).toBeDisabled();
+  await setSetting(app, "notificationSound", "system");
+  await expect(volume).toBeDisabled();
+
+  await app.evaluate(async () => {
+    const settings = Reflect.get(globalThis, "meruTestSettings") as {
+      setOverride: (id: string, key: string, value: unknown) => Promise<void>;
+    };
+
+    await settings.setOverride("work", "notificationSound", "knock");
+  });
+  await expect(volume).toBeEnabled();
+
+  await scopeTab(page, "Work").click();
+  await expect(page.getByRole("combobox", { name: "Sound" })).toBeVisible();
+  await expect(volume).toHaveCount(0);
+});
+
 test.describe("shots", () => {
   test.beforeEach(onlyWithShots);
 
@@ -664,7 +748,7 @@ test.describe("shots", () => {
 
     await emulateTheme(app, "light");
     await page.getByRole("switch", { name: "Do Not Disturb" }).click();
-    await expect(pausedLines(page)).toHaveCount(4);
+    await expect(pausedLines(page)).toHaveCount(5);
     // Lets the switch's transition finish.
     await delay(500);
     await page.screenshot({

@@ -19,7 +19,9 @@ describe("the settings contract", () => {
         value: [{ start: "22:00", end: "07:00", days: [1, 2] }],
       }),
       update({ key: "unifiedInbox", value: true }),
-    ]).toStrictEqual([true, true, true, true]);
+      update({ key: "notificationSoundVolume", value: 0.05 }),
+      update({ key: "notificationSoundVolume", value: 1 }),
+    ]).toStrictEqual([true, true, true, true, true, true]);
   });
 
   it("refuses a value of the wrong kind, a setting off the page and anything malformed", () => {
@@ -33,12 +35,14 @@ describe("the settings contract", () => {
         key: "quietHours",
         value: [{ start: "22:00", end: "07:00", days: [7] }],
       }),
-      update({ key: "notificationSoundVolume", value: 0.5 }),
+      update({ key: "notificationSoundVolume", value: 0 }),
+      update({ key: "notificationSoundVolume", value: 1.5 }),
       update({ key: "trayIcon", value: false }),
       update({ key: "version", value: 2 }),
       update({ value: true }),
       update(undefined),
     ]).toStrictEqual([
+      false,
       false,
       false,
       false,
@@ -71,9 +75,15 @@ describe("the settings contract", () => {
       setOverride({ profileId: "work", key: "notifications", value: "no" }),
       setOverride({ profileId: "", key: "notifications", value: false }),
       setOverride({ key: "notifications", value: false }),
+      setOverride({
+        profileId: "work",
+        key: "notificationSoundVolume",
+        value: 0.5,
+      }),
       clearOverride({ profileId: "work", key: "verificationCodes" }),
+      clearOverride({ profileId: "work", key: "notificationSoundVolume" }),
       clearOverride({ profileId: "work" }),
-    ]).toStrictEqual([false, false, false, false, false, false]);
+    ]).toStrictEqual([false, false, false, false, false, false, false, false]);
   });
 
   it("sends each profile's own values of the page's settings, only those", () => {
@@ -90,8 +100,12 @@ describe("the settings contract", () => {
       profiles.safeParse([
         { ...work, overrides: { notificationSound: "trumpet" } },
       ]).success,
-      profiles.parse([{ ...work, overrides: { trayIcon: "dark" } }])[0]
-        ?.overrides,
+      profiles.parse([
+        {
+          ...work,
+          overrides: { trayIcon: "dark", notificationSoundVolume: 0.5 },
+        },
+      ])[0]?.overrides,
     ]).toStrictEqual([true, false, {}]);
   });
 
@@ -118,6 +132,7 @@ describe("the settings contract", () => {
       notificationSound: "linen",
       unreadBadge: true,
       unifiedInbox: true,
+      notificationSoundVolume: 0.5,
     };
 
     expect([

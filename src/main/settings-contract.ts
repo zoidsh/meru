@@ -10,6 +10,8 @@ import type {
 } from "#contract/settings.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
 import { profileColor } from "#core/profile-color.ts";
+import { OVERRIDABLE_SETTING_KEYS } from "#core/settings.ts";
+import type { OverridableSettingKey } from "#core/settings.ts";
 import type { State } from "#core/state.ts";
 
 import type { ContractHandlers } from "./contract-ipc.ts";
@@ -41,7 +43,7 @@ interface LooseStore {
   ) => Promise<void>;
   setOverride: (
     profileId: string,
-    key: PageSettingKey,
+    key: OverridableSettingKey,
     value: PageSettings[PageSettingKey]
   ) => Promise<void>;
 }
@@ -98,7 +100,10 @@ export const readSettingsState = ({
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
   const overriding = new Map(
-    PAGE_SETTING_KEYS.map((key) => [key, settings.overridingProfiles(key)])
+    OVERRIDABLE_SETTING_KEYS.map((key) => [
+      key,
+      settings.overridingProfiles(key),
+    ])
   );
   const current = doNotDisturb.current();
 
@@ -112,7 +117,7 @@ export const readSettingsState = ({
       name: profileDisplayName(profile),
       color: profileColor(state, profile.id),
       overrides: Object.fromEntries(
-        PAGE_SETTING_KEYS.filter((key) =>
+        OVERRIDABLE_SETTING_KEYS.filter((key) =>
           overriding.get(key)?.includes(profile.id)
         ).map((key) => [key, store.get(key, profile.id)])
       ) as PageOverrides,
