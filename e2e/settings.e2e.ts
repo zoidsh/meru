@@ -804,14 +804,14 @@ test("with no sound of Meru's for the app, a volume commit plays the first profi
     .toStrictEqual([{ sound: "linen", volume: 0.95 }]);
 });
 
-test("Show test notification shows the stand-in as the app's settings show mail, with its sound, even under Do Not Disturb", async ({
+test("Show test notification shows the stand-in as the app's settings show mail, with its sound, even in quiet hours", async ({
   app,
 }) => {
   const page = await openSettings(app);
 
   await page.getByRole("switch", { name: "Show the sender" }).click();
-  await page.getByRole("switch", { name: "Do Not Disturb" }).click();
-  await expect(pausedLines(page)).toHaveCount(5);
+  await setSetting(app, "notifications", false);
+  await setSetting(app, "quietHours", [{ start: "00:00", end: "00:00" }]);
   await setSetting(app, "notificationSoundVolume", 0.4);
   await setSetting(app, "notificationSound", "breeze");
   await page.getByRole("button", { name: "Show test notification" }).click();
@@ -827,6 +827,44 @@ test("Show test notification shows the stand-in as the app's settings show mail,
       },
     ]);
   expect(await sounds(app)).toStrictEqual([{ sound: "breeze", volume: 0.4 }]);
+});
+
+test("under Do Not Disturb Show test notification is disabled, says why to the pointer, the keyboard and assistive technology, and shows nothing", async ({
+  app,
+}) => {
+  const page = await openSettings(app);
+  const errors: string[] = [];
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      errors.push(message.text());
+    }
+  });
+
+  const button = page.getByRole("button", { name: "Show test notification" });
+  const reason = "Turn off Do Not Disturb to show a test notification.";
+
+  await expect(button).toBeEnabled();
+  await page.getByRole("switch", { name: "Do Not Disturb" }).click();
+
+  await expect(button).toBeDisabled();
+  await expect(button).toHaveAccessibleDescription(
+    `Show a test notification to see how notifications appear. ${reason}`
+  );
+
+  await button.hover();
+  await expect(page.getByText(reason, { exact: true }).last()).toBeVisible();
+  await button.click({ force: true });
+
+  await page.mouse.move(0, 0);
+  await button.focus();
+  await expect(page.getByText(reason, { exact: true }).last()).toBeVisible();
+  await page.keyboard.press("Enter");
+
+  expect([await notifications(app), errors]).toStrictEqual([[], []]);
+
+  await page.getByRole("switch", { name: "Do Not Disturb" }).click();
+  await expect(button).toBeEnabled();
 });
 
 test("in a profile's scope the test notification is that profile's, as its own settings show mail", async ({
@@ -1103,6 +1141,39 @@ test.describe("shots", () => {
       await page.screenshot({
         path: shotPath("settings-scope-lone-profile", theme),
       });
+    }
+
+    await scopeTab(page, "All profiles").click();
+    await page.getByRole("switch", { name: "Do Not Disturb" }).click();
+
+    const button = page.getByRole("button", { name: "Show test notification" });
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await button.evaluate((element) => {
+        element.scrollIntoView({ block: "center" });
+      });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await button.hover();
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await expect(
+        page
+          .getByText("Turn off Do Not Disturb to show a test notification.", {
+            exact: true,
+          })
+          .last()
+      ).toBeVisible();
+      // Lets the tooltip's opening animation finish.
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await delay(500);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({
+        path: shotPath("settings-test-notification-blocked", theme),
+      });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.mouse.move(0, 0);
     }
   });
 });

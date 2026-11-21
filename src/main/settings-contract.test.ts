@@ -88,6 +88,18 @@ describe(settingsHandlers, () => {
     app.dispose();
   });
 
+  it("refuses a test notification while Do Not Disturb holds", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.setDoNotDisturb({ on: true });
+
+    await expect(
+      app.handlers.showTestNotification({ profileId: null })
+    ).rejects.toThrow("Do Not Disturb holds every notification");
+    expect(app.tested).toStrictEqual([]);
+    app.dispose();
+  });
+
   it("previews a sound at the app's volume, even while Do Not Disturb holds", async () => {
     const app = setup(stateOf("Work"), {
       version: 1,

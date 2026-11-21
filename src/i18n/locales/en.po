@@ -1490,6 +1490,11 @@ msgstr "Trying again…"
 msgid "Turn Off"
 msgstr "Turn Off"
 
+#. Tooltip and description of the disabled Show test notification button in Settings while Do Not Disturb holds every notification
+#: src/settings/notifications-page.tsx
+msgid "Turn off Do Not Disturb to show a test notification."
+msgstr "Turn off Do Not Disturb to show a test notification."
+
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Undo"

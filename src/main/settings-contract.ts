@@ -108,6 +108,11 @@ export const settingsHandlers = ({
           assertListed(profiles, profileId);
         }
 
+        // Tim's call: the page disables the button while Do Not Disturb holds.
+        if (doNotDisturb.current() !== undefined) {
+          throw new Error("Do Not Disturb holds every notification");
+        }
+
         showTestNotification(profileId ?? undefined);
       }),
   };

@@ -5,6 +5,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
+import { TooltipProvider } from "#ui/tooltip.tsx";
 
 import { App } from "./app.tsx";
 
@@ -28,7 +29,9 @@ createRoot(root).render(
     {/* The policy refuses inline styles; styles.css carries the one rule Base UI's would add. */}
     <CSPProvider disableStyleElements>
       <I18nProvider i18n={i18n}>
-        <App />
+        <TooltipProvider>
+          <App />
+        </TooltipProvider>
       </I18nProvider>
     </CSPProvider>
   </StrictMode>

@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "#ui/select.tsx";
 import { Switch } from "#ui/switch.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { doNotDisturbCaption } from "./do-not-disturb.ts";
 import { QuietHoursField } from "./quiet-hours-field.tsx";
@@ -137,6 +138,7 @@ export const NotificationsPage = () => {
   const doNotDisturb = useSettingsState("doNotDisturb");
   const profiles = useSettingsState("profiles");
   const [chosenScope, setChosenScope] = useState<Scope>("all");
+  const testBlockedId = useId();
 
   if (!settings || !doNotDisturb || !profiles) {
     return null;
@@ -282,6 +284,11 @@ export const NotificationsPage = () => {
     message: "Sound",
     comment:
       "Label of the menu in Settings choosing the sound a new mail notification makes",
+  });
+  const testBlocked = t({
+    message: "Turn off Do Not Disturb to show a test notification.",
+    comment:
+      "Tooltip and description of the disabled Show test notification button in Settings while Do Not Disturb holds every notification",
   });
   const volumeHeardIn = volumeSound(settings.notificationSound, profiles);
   const shownSound = values.notificationSound;
@@ -494,22 +501,44 @@ export const NotificationsPage = () => {
                 scope={{}}
               >
                 {(ids) => (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    aria-describedby={ids.description || undefined}
-                    onClick={() => {
-                      void calls.showTestNotification({
-                        profileId: profile?.id ?? null,
-                      });
-                    }}
-                  >
-                    {t({
-                      message: "Show test notification",
-                      comment:
-                        "Button in Settings that shows a sample new mail notification, as the settings above would show one",
-                    })}
-                  </Button>
+                  // Disabled under Do Not Disturb yet still focusable, so its
+                  // tooltip reaches the keyboard too; shadcn's Button dims
+                  // only a `:disabled` one, hence the class.
+                  <Tooltip disabled={!doNotDisturb.on}>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={doNotDisturb.on}
+                          focusableWhenDisabled
+                          className="aria-disabled:opacity-50"
+                          aria-describedby={
+                            [ids.description, doNotDisturb.on && testBlockedId]
+                              .filter(Boolean)
+                              .join(" ") || undefined
+                          }
+                          onClick={() => {
+                            void calls.showTestNotification({
+                              profileId: profile?.id ?? null,
+                            });
+                          }}
+                        />
+                      }
+                    >
+                      {t({
+                        message: "Show test notification",
+                        comment:
+                          "Button in Settings that shows a sample new mail notification, as the settings above would show one",
+                      })}
+                    </TooltipTrigger>
+                    <TooltipContent>{testBlocked}</TooltipContent>
+                    {doNotDisturb.on && (
+                      <span id={testBlockedId} className="sr-only">
+                        {testBlocked}
+                      </span>
+                    )}
+                  </Tooltip>
                 )}
               </SettingRow>,
             ]}

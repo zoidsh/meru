@@ -115,7 +115,8 @@ export const SETTINGS_CALLS = {
   },
   /**
    * Shows a stand-in for new mail as a listed profile's settings show it, or
-   * the app's for `null`, whatever holds notifications.
+   * the app's for `null`, whatever quiet hours or a setting say; refused
+   * while Do Not Disturb holds.
    */
   showTestNotification: {
     request: z.object({ profileId: z.nullable(profileId) }),
