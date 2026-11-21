@@ -18,6 +18,7 @@ import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { SettingsStore } from "./settings.ts";
+import type { SoundOutput } from "./sounds.ts";
 
 export interface SettingsContractDeps {
   settings: Pick<
@@ -29,6 +30,7 @@ export interface SettingsContractDeps {
     ReturnType<typeof createDoNotDisturb>,
     "current" | "switchOn" | "switchOff"
   >;
+  sound: Pick<SoundOutput, "play">;
 }
 
 /** The checks keep each key's value to its own type, which a loop over keys loses. */
@@ -66,6 +68,7 @@ export const settingsHandlers = ({
   settings,
   profiles,
   doNotDisturb,
+  sound,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -88,6 +91,15 @@ export const settingsHandlers = ({
     // On from here holds until turned off; the durations are the titlebar's.
     setDoNotDisturb: ({ on }) =>
       on ? doNotDisturb.switchOn(UNTIL_OFF) : doNotDisturb.switchOff(),
+    // Asked for, so no gate of a notification's holds it.
+    previewSound: ({ sound: name }) => {
+      sound.play({
+        sound: name,
+        volume: settings.get("notificationSoundVolume"),
+      });
+
+      return Promise.resolve();
+    },
   };
 };
 
@@ -96,7 +108,7 @@ export const readSettingsState = ({
   settings,
   profiles,
   doNotDisturb,
-}: SettingsContractDeps): SettingsState => {
+}: Omit<SettingsContractDeps, "sound">): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
   const overriding = new Map(

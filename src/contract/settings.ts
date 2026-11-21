@@ -2,6 +2,7 @@ import { z } from "zod/mini";
 
 import { OVERRIDABLE_SETTING_KEYS, SETTINGS } from "#core/settings.ts";
 import type { OverridableSettingKey, SettingValue } from "#core/settings.ts";
+import { NOTIFICATION_SOUNDS } from "#core/sounds.ts";
 
 import type {
   ContractBridge,
@@ -102,6 +103,14 @@ export const SETTINGS_CALLS = {
   /** Turns Do Not Disturb on until turned off, or off. */
   setDoNotDisturb: {
     request: z.object({ on: z.boolean() }),
+    response: z.undefined(),
+  },
+  /**
+   * Plays one of Meru's sounds once at the app's volume, as a notification's
+   * would, even while Do Not Disturb or quiet hours hold.
+   */
+  previewSound: {
+    request: z.object({ sound: z.enum(NOTIFICATION_SOUNDS) }),
     response: z.undefined(),
   },
 } as const satisfies Record<

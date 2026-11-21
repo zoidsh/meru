@@ -35,6 +35,7 @@ import { wireShellRecovery } from "./wiring/shell-recovery.ts";
 import { APP_SCHEME, resolveShell } from "./wiring/shell-source.ts";
 import { wireStores } from "./wiring/stores.ts";
 import {
+  soundOutput,
   suiteRunsInBackground,
   systemClipboard,
   systemNotifier,
@@ -368,12 +369,18 @@ const start = async () => {
     showOwnWindow,
   });
 
+  // One for both, since the suite's build captures what the last one made.
+  const sound = soundOutput({
+    ipc,
+    shellId: shell.window.webContentsId,
+    shellOrigin,
+    background,
+    log: console.error,
+  });
+
   wireNotifications({
     isMacOS,
-    background,
-    ipc,
-    shell,
-    shellOrigin,
+    sound,
     settings,
     profiles,
     mail,
@@ -421,6 +428,7 @@ const start = async () => {
       settings,
       profiles,
       doNotDisturb,
+      sound,
     });
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({

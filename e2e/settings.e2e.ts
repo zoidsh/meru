@@ -94,6 +94,13 @@ const setSetting = (app: ElectronApplication, key: string, value: unknown) =>
     { key, value }
   );
 
+// The suite's build captures each sound on `meruTestSounds` in place of
+// playing it, so nothing here is heard.
+const sounds = (app: ElectronApplication) =>
+  app.evaluate(() => [
+    ...(Reflect.get(globalThis, "meruTestSounds") as unknown[]),
+  ]);
+
 const pausedLines = (page: Page) =>
   page.getByText("Off while Do Not Disturb is on");
 
@@ -674,11 +681,25 @@ test("the volume slider writes the app volume when a drag or a key press is comm
     0.95
   );
 
+  expect(await sounds(app)).toStrictEqual([{ sound: "chime", volume: 0.95 }]);
+
   await page.mouse.up();
 
   await expect
     .poll(() => readStoredSetting(userDataDir, "notificationSoundVolume"))
     .not.toBe(0.95);
+
+  const dragged = await readStoredSetting(
+    userDataDir,
+    "notificationSoundVolume"
+  );
+
+  await expect
+    .poll(() => sounds(app))
+    .toStrictEqual([
+      { sound: "chime", volume: 0.95 },
+      { sound: "chime", volume: dragged },
+    ]);
   await expect(volume).toHaveAttribute(
     "aria-valuetext",
     `${Math.round(
@@ -688,6 +709,81 @@ test("the volume slider writes the app volume when a drag or a key press is comm
       )) as number) * 100
     )}%`
   );
+});
+
+test("choosing one of Meru's sounds, Play sound and a volume commit each play the sound at the app's volume; System and None play nothing", async ({
+  app,
+  userDataDir,
+}) => {
+  const page = await openSettings(app);
+
+  await setSetting(app, "notificationSoundVolume", 0.5);
+  const sound = page.getByRole("combobox", { name: "Sound" });
+  const play = page.getByRole("button", { name: "Play sound" });
+  const choose = async (name: string) => {
+    await sound.click();
+    await page.getByRole("option", { name, exact: true }).click();
+    await expect(sound).toContainText(name);
+  };
+
+  await choose("Knock");
+  await expect
+    .poll(() => sounds(app))
+    .toStrictEqual([{ sound: "knock", volume: 0.5 }]);
+
+  await choose("System");
+  await expect(play).toBeDisabled();
+  await choose("None");
+  await expect(play).toBeDisabled();
+  expect(await sounds(app)).toHaveLength(1);
+
+  await choose("Duet");
+  await play.click();
+  await expect
+    .poll(() => sounds(app))
+    .toStrictEqual([
+      { sound: "knock", volume: 0.5 },
+      { sound: "duet", volume: 0.5 },
+      { sound: "duet", volume: 0.5 },
+    ]);
+
+  await page.getByRole("slider", { name: "Volume" }).focus();
+  await page.keyboard.press("ArrowRight");
+
+  await expect.poll(() => sounds(app)).toHaveLength(4);
+
+  const played = await sounds(app);
+
+  expect([
+    played.at(-1),
+    await readStoredSetting(userDataDir, "notificationSoundVolume"),
+  ]).toStrictEqual([{ sound: "duet", volume: 0.55 }, 0.55]);
+});
+
+test("with no sound of Meru's for the app, a volume commit plays the first profile's own", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work", "Club"]);
+  await writeSettings(userDataDir, {
+    notificationSound: "system",
+    profiles: {
+      home: { notificationSound: "none" },
+      work: { notificationSound: "linen" },
+      club: { notificationSound: "breeze" },
+    },
+  });
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+
+  await page.getByRole("slider", { name: "Volume" }).focus();
+  await page.keyboard.press("ArrowLeft");
+
+  await expect
+    .poll(() => sounds(app))
+    .toStrictEqual([{ sound: "linen", volume: 0.95 }]);
 });
 
 test("the volume is disabled while no sound of Meru's is chosen, unless a profile chooses one, and absent from a profile's scope", async ({
@@ -853,6 +949,70 @@ test.describe("shots", () => {
       await menuPage.keyboard.press("Escape");
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await expect(menuPage.getByRole("menu")).toHaveCount(0);
+    }
+  });
+
+  test("the New mail card with Volume and Play sound, and one profile that holds a value of its own, light and dark", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await seedProfiles(userDataDir, standIn, ["Work"]);
+    await writeSettings(userDataDir, {
+      notificationSound: "chime",
+      notificationSoundVolume: 0.6,
+    });
+
+    const app = await launchApp();
+    const page = await openSettings(app);
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.getByText("Volume").evaluate((label) => {
+        label.scrollIntoView({ block: "center" });
+      });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({ path: shotPath("settings-new-mail", theme) });
+    }
+
+    await app.evaluate(async () => {
+      const settings = Reflect.get(globalThis, "meruTestSettings") as {
+        setOverride: (id: string, key: string, value: unknown) => Promise<void>;
+      };
+
+      await settings.setOverride("work", "notificationSound", "knock");
+    });
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await scopeTab(page, "All profiles").click();
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.getByRole("tablist", { name: "Scope" }).evaluate((tabs) => {
+        // To the top of the page, which scrolls in its own box.
+        for (let box = tabs.parentElement; box; box = box.parentElement) {
+          box.scrollTop = 0;
+        }
+      });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await expect(page.getByText("Differs in 1 profile:")).toBeVisible();
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({ path: shotPath("settings-scope-lone", theme) });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await scopeTab(page, "Work").click();
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page
+        .getByText("Set for Work. App setting is Chime.")
+        .evaluate((line) => {
+          line.scrollIntoView({ block: "center" });
+        });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({
+        path: shotPath("settings-scope-lone-profile", theme),
+      });
     }
   });
 });

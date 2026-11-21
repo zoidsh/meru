@@ -2,7 +2,6 @@ import type { App } from "#core/apps.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
 import type { createClipboard } from "#platform/clipboard.ts";
-import type { createIpc } from "#platform/ipc.ts";
 import type { Notifier } from "#platform/notifications.ts";
 
 import type { createMailActions } from "../mail-actions.ts";
@@ -10,9 +9,8 @@ import type { MailPoller } from "../mail.ts";
 import { createMailNotifications } from "../notifications.ts";
 import type { Profiles } from "../profiles.ts";
 import type { SettingsStore } from "../settings.ts";
-import type { createShellWindow } from "../shell-window.ts";
 import type { createShowGmail } from "../show-gmail.ts";
-import { soundOutput } from "./test-build.ts";
+import type { SoundOutput } from "../sounds.ts";
 
 /**
  * A notification for new mail, with its sound and its actions, where there
@@ -20,10 +18,7 @@ import { soundOutput } from "./test-build.ts";
  */
 export const wireNotifications = ({
   isMacOS,
-  background,
-  ipc,
-  shell,
-  shellOrigin,
+  sound,
   settings,
   profiles,
   mail,
@@ -35,10 +30,7 @@ export const wireNotifications = ({
   notifier,
 }: {
   isMacOS: boolean;
-  background: boolean;
-  ipc: ReturnType<typeof createIpc>;
-  shell: ReturnType<typeof createShellWindow>;
-  shellOrigin: string;
+  sound: SoundOutput;
   settings: SettingsStore;
   profiles: Profiles;
   mail: MailPoller;
@@ -79,13 +71,7 @@ export const wireNotifications = ({
           ? new Set(outcome.feed.entries.map((entry) => entry.id))
           : null;
       },
-      sound: soundOutput({
-        ipc,
-        shellId: shell.window.webContentsId,
-        shellOrigin,
-        background,
-        log: console.error,
-      }),
+      sound,
       log: console.error,
     });
 

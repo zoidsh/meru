@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { Settings } from "#core/settings.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -42,7 +43,17 @@ const setup = (state: State, initial?: Settings) => {
     now: () => new Date(),
     log: () => false,
   });
-  const deps = { settings, profiles, doNotDisturb };
+  const played: SoundRequest[] = [];
+  const deps = {
+    settings,
+    profiles,
+    doNotDisturb,
+    sound: {
+      play: (request: SoundRequest) => {
+        played.push(request);
+      },
+    },
+  };
 
   settings.onChange("notificationSender", () =>
     announced.push("notificationSender")
@@ -53,11 +64,26 @@ const setup = (state: State, initial?: Settings) => {
     read: () => readSettingsState(deps),
     saved,
     announced,
+    played,
     dispose: doNotDisturb.dispose,
   };
 };
 
 describe(settingsHandlers, () => {
+  it("previews a sound at the app's volume, even while Do Not Disturb holds", async () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      notificationSoundVolume: 0.4,
+      profiles: { work: { notificationSound: "duet" } },
+    });
+
+    await app.handlers.setDoNotDisturb({ on: true });
+    await app.handlers.previewSound({ sound: "knock" });
+
+    expect(app.played).toStrictEqual([{ sound: "knock", volume: 0.4 }]);
+    app.dispose();
+  });
+
   it("sets and clears a listed profile's own value, leaving the app value", async () => {
     const app = setup(stateOf("Home", "Work"));
 

@@ -8,6 +8,7 @@ export const SETTINGS_CALL_NAMES = [
   "setOverride",
   "clearOverride",
   "setDoNotDisturb",
+  "previewSound",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

@@ -22,6 +22,7 @@ import { readSettingsState, settingsHandlers } from "../settings-contract.ts";
 import { createSettingsWindow } from "../settings-window.ts";
 import type { SettingsStore } from "../settings.ts";
 import { createRendererRecovery } from "../shell-recovery.ts";
+import type { SoundOutput } from "../sounds.ts";
 import { openingOptions } from "../windows.ts";
 
 /** As the approved prototype draws it. */
@@ -46,6 +47,7 @@ export const wireSettingsWindow = ({
   settings,
   profiles,
   doNotDisturb,
+  sound,
 }: {
   isMacOS: boolean;
   background: boolean;
@@ -61,6 +63,7 @@ export const wireSettingsWindow = ({
   settings: SettingsStore;
   profiles: Profiles;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
+  sound: Pick<SoundOutput, "play">;
 }) => {
   const windows = createWindowFactory(contextMenus);
 
@@ -111,7 +114,7 @@ export const wireSettingsWindow = ({
     calls: SETTINGS_CALLS,
     slices: SETTINGS_STATE,
     channels: SETTINGS_CHANNELS,
-    handlers: settingsHandlers({ settings, profiles, doNotDisturb }),
+    handlers: settingsHandlers({ settings, profiles, doNotDisturb, sound }),
     state: {
       read: () => readSettingsState({ settings, profiles, doNotDisturb }),
       onChange: (listener) => {

@@ -1021,6 +1021,11 @@ msgstr "Pin"
 msgid "Pin Tab"
 msgstr "Pin Tab"
 
+#. Name of the button in Settings beside the Sound menu that plays the chosen sound once
+#: src/settings/notifications-page.tsx
+msgid "Play sound"
+msgstr "Play sound"
+
 #. Button in the find bar that shows the match before this one
 #: src/shell/find-bar.tsx
 msgid "Previous match"

@@ -1,12 +1,14 @@
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
+import { PlayIcon } from "lucide-react";
 import { useId, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { PageSettings, SettingChange } from "#contract/settings.ts";
 import type { OverridableSettingKey } from "#core/settings.ts";
-import { NOTIFICATION_SOUNDS } from "#core/sounds.ts";
+import { NOTIFICATION_SOUNDS, isNotificationSound } from "#core/sounds.ts";
 import type { SoundChoice } from "#core/sounds.ts";
+import { Button } from "#ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "#ui/card.tsx";
 import {
   Field,
@@ -281,8 +283,8 @@ export const NotificationsPage = () => {
     comment:
       "Label of the menu in Settings choosing the sound a new mail notification makes",
   });
-  const volumeApplies =
-    volumeSound(settings.notificationSound, profiles) !== undefined;
+  const volumeHeardIn = volumeSound(settings.notificationSound, profiles);
+  const shownSound = values.notificationSound;
   const volumeLabel = t({
     message: "Volume",
     comment:
@@ -381,34 +383,57 @@ export const NotificationsPage = () => {
                 scope={rowScope("notificationSound", soundLabel)}
               >
                 {(ids) => (
-                  <Select
-                    items={SOUND_ORDER.map((sound) => ({
-                      value: sound,
-                      label: soundNames[sound],
-                    }))}
-                    value={values.notificationSound}
-                    onValueChange={(value) => {
-                      if (value !== null) {
-                        write("notificationSound", value);
-                      }
-                    }}
-                  >
-                    <SelectTrigger
-                      aria-labelledby={ids.label}
-                      className="min-w-28"
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t({
+                        message: "Play sound",
+                        comment:
+                          "Name of the button in Settings beside the Sound menu that plays the chosen sound once",
+                      })}
+                      disabled={!isNotificationSound(shownSound)}
+                      onClick={() => {
+                        if (isNotificationSound(shownSound)) {
+                          void calls.previewSound({ sound: shownSound });
+                        }
+                      }}
                     >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent alignItemWithTrigger={false}>
-                      <SelectGroup>
-                        {SOUND_ORDER.map((sound) => (
-                          <SelectItem key={sound} value={sound}>
-                            {soundNames[sound]}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                      <PlayIcon />
+                    </Button>
+                    <Select
+                      items={SOUND_ORDER.map((sound) => ({
+                        value: sound,
+                        label: soundNames[sound],
+                      }))}
+                      value={values.notificationSound}
+                      onValueChange={(value) => {
+                        if (value !== null) {
+                          write("notificationSound", value);
+                        }
+
+                        if (isNotificationSound(value)) {
+                          void calls.previewSound({ sound: value });
+                        }
+                      }}
+                    >
+                      <SelectTrigger
+                        aria-labelledby={ids.label}
+                        className="min-w-28"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent alignItemWithTrigger={false}>
+                        <SelectGroup>
+                          {SOUND_ORDER.map((sound) => (
+                            <SelectItem key={sound} value={sound}>
+                              {soundNames[sound]}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </>
                 )}
               </SettingRow>,
               ...(profile
@@ -419,18 +444,24 @@ export const NotificationsPage = () => {
                       label={volumeLabel}
                       paused={paused}
                       scope={{}}
-                      disabled={!volumeApplies}
+                      disabled={!volumeHeardIn}
                     >
                       {(ids) => (
                         <VolumeSlider
                           labelId={ids.label}
                           volume={settings.notificationSoundVolume}
-                          disabled={!volumeApplies}
-                          onCommit={(volume) => {
-                            void calls.update({
+                          disabled={!volumeHeardIn}
+                          onCommit={async (volume) => {
+                            await calls.update({
                               key: "notificationSoundVolume",
                               value: volume,
                             });
+
+                            if (volumeHeardIn) {
+                              await calls.previewSound({
+                                sound: volumeHeardIn,
+                              });
+                            }
                           }}
                         />
                       )}

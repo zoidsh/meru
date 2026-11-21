@@ -120,6 +120,20 @@ describe("the settings contract", () => {
     ]).toStrictEqual([true, true, false, false]);
   });
 
+  it("previews one of Meru's sounds, never the system's, none or another", () => {
+    const previewSound = accepts(SETTINGS_CALLS.previewSound.request);
+
+    expect([
+      previewSound({ sound: "chime" }),
+      previewSound({ sound: "linen" }),
+      previewSound({ sound: "system" }),
+      previewSound({ sound: "none" }),
+      previewSound({ sound: "trumpet" }),
+      previewSound({ sound: "chime", volume: 2 }),
+      previewSound({}),
+    ]).toStrictEqual([true, true, false, false, false, true, false]);
+  });
+
   it("sends the page's settings, and only them", () => {
     const { settings } = SETTINGS_STATE;
     const values = {
