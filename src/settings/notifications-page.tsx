@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
+import { noop } from "es-toolkit";
 import { PlayIcon } from "lucide-react";
 import { useId, useState } from "react";
 import type { ReactNode } from "react";
@@ -208,8 +209,10 @@ export const NotificationsPage = () => {
   ) => {
     const change = { key, value } as SettingChange;
 
+    // Main refuses a profile removed since the page last heard, and the
+    // page then shows main's state, so a refusal needs no more.
     void (profile
-      ? calls.setOverride({ ...change, profileId: profile.id })
+      ? calls.setOverride({ ...change, profileId: profile.id }).catch(noop)
       : calls.update(change));
   };
 
@@ -246,7 +249,7 @@ export const NotificationsPage = () => {
         <ResetButton
           label={label}
           onClick={() => {
-            void calls.clearOverride({ profileId: profile.id, key });
+            calls.clearOverride({ profileId: profile.id, key }).catch(noop);
           }}
         />
       ),
@@ -520,9 +523,13 @@ export const NotificationsPage = () => {
                             .filter(Boolean)
                             .join(" ")}
                           onClick={() => {
-                            void calls.showTestNotification({
-                              profileId: profile?.id ?? null,
-                            });
+                            // Refused when Do Not Disturb turned on just
+                            // before the click, which the button then shows.
+                            calls
+                              .showTestNotification({
+                                profileId: profile?.id ?? null,
+                              })
+                              .catch(noop);
                           }}
                         />
                       }
