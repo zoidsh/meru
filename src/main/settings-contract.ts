@@ -20,12 +20,7 @@ import type { SettingsStore } from "./settings.ts";
 export interface SettingsContractDeps {
   settings: Pick<
     SettingsStore,
-    | "get"
-    | "update"
-    | "updateForProfile"
-    | "setOverride"
-    | "clearOverride"
-    | "overridingProfiles"
+    "get" | "update" | "setOverride" | "clearOverride" | "overridingProfiles"
   >;
   profiles: { get: () => Pick<State, "profiles"> };
   doNotDisturb: Pick<
@@ -43,11 +38,6 @@ interface LooseStore {
   update: (
     key: PageSettingKey,
     change: () => PageSettings[PageSettingKey]
-  ) => Promise<void>;
-  updateForProfile: (
-    key: PageSettingKey,
-    value: PageSettings[PageSettingKey],
-    profileId: string
   ) => Promise<void>;
   setOverride: (
     profileId: string,
@@ -69,12 +59,7 @@ const assertListed = (
   }
 };
 
-/**
- * What the Settings window's calls do. With one profile the page edits the
- * app value and shows that profile's, so an app value set then also deletes
- * the profile's own value of the key, or the page would show what main does
- * not use.
- */
+/** What the Settings window's calls do. */
 export const settingsHandlers = ({
   settings,
   profiles,
@@ -85,11 +70,8 @@ export const settingsHandlers = ({
   return {
     update: async (change) => {
       const { key, value } = change as SettingChange;
-      const [lone, ...others] = listedIds(profiles);
 
-      await (lone !== undefined && others.length === 0
-        ? store.updateForProfile(key, value, lone)
-        : store.update(key, () => value));
+      await store.update(key, () => value);
     },
     setOverride: async (change) => {
       const { profileId, key, value } = change as OverrideChange;

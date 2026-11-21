@@ -8,6 +8,7 @@ import {
   differingProfiles,
   differsText,
   effectiveSettings,
+  isScoped,
   overrideCount,
   shownScope,
   splitDiffering,
@@ -41,6 +42,17 @@ const APP: PageSettings = {
   unifiedInbox: true,
 };
 
+describe(isScoped, () => {
+  it("has scopes with two profiles, or one that holds a value of its own", () => {
+    expect([
+      isScoped([profile("home"), profile("work")]),
+      isScoped([profile("work", { notifications: false })]),
+      isScoped([profile("work")]),
+      isScoped([]),
+    ]).toStrictEqual([true, true, false, false]);
+  });
+});
+
 describe(shownScope, () => {
   it("keeps a listed profile's scope, and falls back to All profiles once it goes or one profile is left", () => {
     const two = [profile("home"), profile("work")];
@@ -49,8 +61,9 @@ describe(shownScope, () => {
       shownScope("work", two),
       shownScope("gone", two),
       shownScope("work", [profile("work")]),
+      shownScope("work", [profile("work", { unreadBadge: false })]),
       shownScope("all", two),
-    ]).toStrictEqual(["work", "all", "all", "all"]);
+    ]).toStrictEqual(["work", "all", "all", "work", "all"]);
   });
 });
 

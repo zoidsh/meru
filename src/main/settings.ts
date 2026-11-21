@@ -139,18 +139,6 @@ export const createSettingsStore = ({
       commit((current) =>
         writeSetting(current, key, change(readSetting(current, key, platform)))
       ),
-    /**
-     * Sets the app value and deletes the profile's own value of the key, as
-     * one change.
-     */
-    updateForProfile: <Key extends OverridableSettingKey>(
-      key: Key,
-      value: SettingValue<Key>,
-      profileId: string
-    ) =>
-      commit((current) =>
-        clearOverride(writeSetting(current, key, value), profileId, key)
-      ),
     /** Sets the profile's own value, even one equal to the app's. */
     setOverride: <Key extends OverridableSettingKey>(
       profileId: string,

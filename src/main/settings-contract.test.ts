@@ -116,10 +116,10 @@ describe(settingsHandlers, () => {
     app.dispose();
   });
 
-  it("with one profile sets the app value and deletes that profile's own value of the key, in one save and one announcement", async () => {
+  it("with one profile sets the app value alone, leaving the profile's own", async () => {
     const app = setup(stateOf("Work"), {
       version: 1,
-      profiles: { work: { notificationSender: false, unreadBadge: false } },
+      profiles: { work: { notificationSender: false } },
     });
 
     await app.handlers.update({ key: "notificationSender", value: true });
@@ -129,16 +129,28 @@ describe(settingsHandlers, () => {
         {
           version: 1,
           notificationSender: true,
-          profiles: { work: { unreadBadge: false } },
+          profiles: { work: { notificationSender: false } },
         },
       ],
-      ["notificationSender"],
+      [],
     ]);
     app.dispose();
   });
 });
 
 describe(readSettingsState, () => {
+  it("sends a lone profile no own value of a key off the page or one that does not parse", () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      profiles: { work: { trayIcon: "dark", notifications: "maybe" } },
+    });
+
+    expect(app.read().profiles).toStrictEqual([
+      { id: "work", name: "Work", color: "#2d52d2", overrides: {} },
+    ]);
+    app.dispose();
+  });
+
   it("lists the profiles in order with their name, colour and the values of their own that parse, never an unlisted id's", () => {
     const app = setup(stateOf("Home", "Work"), {
       version: 1,

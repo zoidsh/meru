@@ -43,6 +43,7 @@ import {
   appValueText,
   differingProfiles,
   effectiveSettings,
+  isScoped,
   shownScope,
 } from "./scope.ts";
 import type { Scope } from "./scope.ts";
@@ -135,7 +136,7 @@ export const NotificationsPage = () => {
   }
 
   const calls = settingsCalls();
-  const multi = profiles.length >= 2;
+  const scoped = isScoped(profiles);
   const scope = shownScope(chosenScope, profiles);
 
   // A scope that fell back stays fallen back, even once its profile's id
@@ -144,13 +145,9 @@ export const NotificationsPage = () => {
     setChosenScope(scope);
   }
 
-  const profile = multi
-    ? profiles.find((candidate) => candidate.id === scope)
-    : undefined;
-  // With one profile the page edits the app value and shows that profile's,
-  // which main makes the same at each change.
-  const values = effectiveSettings(settings, multi ? profile : profiles[0]);
-  const pausedLine = multi
+  const profile = profiles.find((candidate) => candidate.id === scope);
+  const values = effectiveSettings(settings, profile);
+  const pausedLine = scoped
     ? t({
         message: "Off for all profiles",
         comment:
@@ -207,9 +204,9 @@ export const NotificationsPage = () => {
       : calls.update(change));
   };
 
-  /** What the row adds in the scope shown; nothing with one profile. */
+  /** What the row adds in the scope shown; nothing while the page has no scopes. */
   const rowScope = (key: PageSettingKey, label: string): RowScope => {
-    if (!multi) {
+    if (!scoped) {
       return {};
     }
 
@@ -302,7 +299,7 @@ export const NotificationsPage = () => {
                   description={doNotDisturbCaption(
                     doNotDisturb,
                     i18n.locale,
-                    multi
+                    scoped
                   )}
                   paused={undefined}
                   scope={{}}
@@ -491,7 +488,7 @@ export const NotificationsPage = () => {
                         "Description of the Count unread in the badge switch in Settings on Windows and Linux",
                     })
               ),
-              ...(multi
+              ...(scoped
                 ? [
                     switchRow(
                       "unifiedInbox",
@@ -526,7 +523,7 @@ export const NotificationsPage = () => {
     </>
   );
 
-  if (!multi) {
+  if (!scoped) {
     return cards;
   }
 

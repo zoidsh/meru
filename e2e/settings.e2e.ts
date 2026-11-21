@@ -591,27 +591,49 @@ test("with two profiles Do Not Disturb holds whatever a profile sets, lives unde
   await expect(offForAll).toHaveCount(4);
 });
 
-test("with one profile the page shows that profile's value, and a change sets the app value and drops the profile's own", async ({
+test("one profile that holds a value of its own has the switcher until its last one goes, and All profiles changes the app value alone", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
   await seedProfiles(userDataDir, standIn, ["Work"]);
-  await writeSettings(userDataDir, {
-    profiles: { work: { notificationSender: false, unreadBadge: false } },
-  });
 
-  const page = await openSettings(await launchApp());
+  const app = await launchApp();
+  const page = await openSettings(app);
   const sender = page.getByRole("switch", { name: "Show the sender" });
 
-  await expect(sender).not.toBeChecked();
+  await expect(page.getByRole("tablist")).toHaveCount(0);
+  await app.evaluate(async () => {
+    const settings = Reflect.get(globalThis, "meruTestSettings") as {
+      setOverride: (id: string, key: string, value: unknown) => Promise<void>;
+    };
+
+    await settings.setOverride("work", "notificationSender", false);
+  });
+
+  await expect(
+    page.getByRole("tablist", { name: "Scope" }).getByRole("tab")
+  ).toHaveText(["All profiles", "Work"]);
+  await expect(page.getByText("Differs in 1 profile:")).toBeVisible();
+
   await sender.click();
 
-  await expect(sender).toBeChecked();
+  await expect(sender).not.toBeChecked();
   await expect
-    .poll(() => storedOverrides(userDataDir))
-    .toStrictEqual({ work: { unreadBadge: false } });
-  expect(await readStoredSetting(userDataDir, "notificationSender")).toBe(true);
+    .poll(() => readStoredSetting(userDataDir, "notificationSender"))
+    .toBe(false);
+  expect(await storedOverrides(userDataDir)).toStrictEqual({
+    work: { notificationSender: false },
+  });
+
+  await scopeTab(page, "Work").click();
+  await page
+    .getByRole("button", { name: "Use app setting for Show the sender" })
+    .click();
+
+  await expect(page.getByRole("tablist")).toHaveCount(0);
+  await expect.poll(() => storedOverrides(userDataDir)).toBeUndefined();
+  await expect(page.getByText(/profile/u)).toHaveCount(0);
 });
 
 test.describe("shots", () => {

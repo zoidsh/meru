@@ -20,14 +20,14 @@ const isMidnight = (time: number) => {
 /**
  * What the Do Not Disturb row says: off, what it holds and where the timed
  * choices are; on, when it ends first, as the titlebar names the end. With
- * more than one profile it says it holds whatever a profile sets.
+ * scopes it says it holds whatever a profile sets.
  */
 export const doNotDisturbCaption = (
   { on, until }: SettingsState["doNotDisturb"],
   locale: string,
-  multi = false
+  scoped = false
 ) => {
-  const holds = multi
+  const holds = scoped
     ? t({
         message: "Holds every notification, whatever a profile sets.",
         comment:

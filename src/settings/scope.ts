@@ -18,15 +18,27 @@ export type Scope = string;
 /** How many profiles a row names before it counts the rest. */
 export const SHOWN_DIFFERING = 3;
 
+/** How many of the page's settings the profile holds of its own. */
+export const overrideCount = (profile: ListedProfile) =>
+  Object.keys(profile.overrides).length;
+
 /**
- * The scope to show: the chosen one while its profile is listed and there is
- * more than one, else All profiles.
+ * Whether the page has scopes: with two or more profiles, or one that still
+ * holds a value of its own, until it holds none.
+ */
+export const isScoped = (profiles: readonly ListedProfile[]) =>
+  profiles.length >= 2 ||
+  profiles.some((profile) => overrideCount(profile) > 0);
+
+/**
+ * The scope to show: the chosen one while the page has scopes and its
+ * profile is listed, else All profiles.
  */
 export const shownScope = (
   scope: Scope,
   profiles: readonly ListedProfile[]
 ): Scope =>
-  profiles.length >= 2 && profiles.some((profile) => profile.id === scope)
+  isScoped(profiles) && profiles.some((profile) => profile.id === scope)
     ? scope
     : "all";
 
@@ -41,10 +53,6 @@ export const splitDiffering = (differing: readonly ListedProfile[]) => ({
   shown: differing.slice(0, SHOWN_DIFFERING),
   more: Math.max(0, differing.length - SHOWN_DIFFERING),
 });
-
-/** How many of the page's settings the profile holds of its own. */
-export const overrideCount = (profile: ListedProfile) =>
-  Object.keys(profile.overrides).length;
 
 /** The values the profile reads: its own where it holds one, else the app's. */
 export const effectiveSettings = (
