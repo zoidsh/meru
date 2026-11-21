@@ -4,8 +4,9 @@ import { SHELL_CHANNELS } from "#contract/shell.ts";
 import type { ShellState } from "#contract/shell.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
+import { RefusedCallError } from "./contract-ipc.ts";
 import { createSenderRegistry } from "./senders.ts";
-import { RefusedCallError, serveShellContract } from "./shell-ipc.ts";
+import { serveShellContract } from "./shell-ipc.ts";
 import type { ShellHandlers } from "./shell-ipc.ts";
 
 const SHELL = 1;

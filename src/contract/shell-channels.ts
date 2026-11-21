@@ -1,6 +1,8 @@
 // Apart from the schemas in shell.ts, so the shell's preload, which needs only
 // these names, carries no zod.
 
+import { contractChannels } from "./channels.ts";
+
 export const SHELL_CALL_NAMES = [
   "selectProfile",
   "selectTab",
@@ -52,11 +54,7 @@ export const NAVIGATE_ACTIONS = ["back", "forward", "reload", "stop"] as const;
 export type ShellCallName = (typeof SHELL_CALL_NAMES)[number];
 
 export const SHELL_CHANNELS = {
-  call: (name: ShellCallName) => `shell:call:${name}`,
-  /** Renderer to main: the handshake, naming the slices. */
-  sync: "shell:sync",
-  /** Main to renderer: each `ShellSyncMessage`. */
-  state: "shell:state",
+  ...contractChannels<ShellCallName>("shell"),
   /** Main to renderer: a `SoundRequest` to play now. */
   sound: "shell:sound",
 } as const;

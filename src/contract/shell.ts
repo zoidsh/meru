@@ -10,6 +10,12 @@ import { PANE_DIRECTIONS, PANE_GAP_ENDS } from "#core/pane-tree.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
+import type {
+  ContractBridge,
+  ContractCalls,
+  ContractState,
+  SyncMessage,
+} from "./contract.ts";
 import { NAVIGATE_ACTIONS } from "./shell-channels.ts";
 import type { ShellCallName } from "./shell-channels.ts";
 
@@ -598,40 +604,16 @@ export const SHELL_STATE = {
   ]),
 } as const;
 
-export type ShellCalls = {
-  [Name in ShellCallName]: (
-    request: z.input<(typeof SHELL_CALLS)[Name]["request"]>
-  ) => Promise<z.output<(typeof SHELL_CALLS)[Name]["response"]>>;
-};
+export type ShellCalls = ContractCalls<typeof SHELL_CALLS>;
 
 export type ShellSliceName = keyof typeof SHELL_STATE;
 
-export type ShellState = {
-  [Name in ShellSliceName]: z.output<(typeof SHELL_STATE)[Name]>;
-};
+export type ShellState = ContractState<typeof SHELL_STATE>;
 
-/** Main to renderer, in order: one snapshot after the handshake, then patches. */
-export type ShellSyncMessage =
-  | { kind: "snapshot"; slices: Partial<ShellState> }
-  | {
-      [Name in ShellSliceName]: {
-        kind: "patch";
-        slice: Name;
-        value: ShellState[Name];
-      };
-    }[ShellSliceName];
+export type ShellSyncMessage = SyncMessage<ShellState>;
 
 /** What the shell's preload exposes on `window.meru`, and nothing else. */
-export interface ShellBridge {
-  calls: ShellCalls;
-  /**
-   * Starts the handshake for `slices`; `listener` gets the snapshot, then a
-   * patch per change. Returns what stops listening.
-   */
-  sync: (
-    slices: readonly ShellSliceName[],
-    listener: (message: ShellSyncMessage) => void
-  ) => () => void;
+export interface ShellBridge extends ContractBridge<ShellCalls, ShellState> {
   /**
    * `listener` gets each sound main asks for, unchecked, which
    * `soundRequestSchema` validates. Returns what stops listening.

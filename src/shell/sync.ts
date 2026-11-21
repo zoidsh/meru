@@ -5,40 +5,7 @@ import type {
   ShellSliceName,
   ShellState,
 } from "#contract/shell.ts";
-
-/**
- * The copy of main's state that the handshake brought and each patch since
- * replaced a slice of; nothing until the snapshot arrives.
- */
-export const createShellSync = (
-  bridge: Pick<ShellBridge, "sync">,
-  slices: readonly ShellSliceName[]
-) => {
-  let state: Partial<ShellState> = {};
-  const listeners = new Set<() => void>();
-
-  bridge.sync(slices, (message) => {
-    state =
-      message.kind === "snapshot"
-        ? message.slices
-        : { ...state, [message.slice]: message.value };
-
-    for (const listener of listeners) {
-      listener();
-    }
-  });
-
-  return {
-    subscribe: (listener: () => void) => {
-      listeners.add(listener);
-
-      return () => {
-        listeners.delete(listener);
-      };
-    },
-    read: <Name extends ShellSliceName>(slice: Name) => state[slice],
-  };
-};
+import { createContractSync } from "#contract/sync.ts";
 
 declare global {
   interface Window {
@@ -46,10 +13,10 @@ declare global {
   }
 }
 
-let connection: ReturnType<typeof createShellSync> | undefined;
+let connection: ReturnType<typeof createContractSync<ShellState>> | undefined;
 
 const connect = () => {
-  connection ??= createShellSync(window.meru, [
+  connection ??= createContractSync<ShellState>(window.meru, [
     "profiles",
     "tabs",
     "sidebar",

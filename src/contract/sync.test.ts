@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { ShellSyncMessage } from "#contract/shell.ts";
-
-import { createShellSync } from "./sync.ts";
+import type { ShellState, ShellSyncMessage } from "./shell.ts";
+import { createContractSync } from "./sync.ts";
 
 const slice = (selectedProfileId: string) => ({
   profiles: [
@@ -17,11 +16,11 @@ const slice = (selectedProfileId: string) => ({
   selectedProfileId,
 });
 
-describe(createShellSync, () => {
+describe(createContractSync, () => {
   it("starts the handshake for its slices, has nothing until the snapshot, then follows each patch", () => {
     let deliver: ((message: ShellSyncMessage) => void) | undefined;
     const asked: unknown[] = [];
-    const sync = createShellSync(
+    const sync = createContractSync<ShellState>(
       {
         sync: (slices, listener) => {
           asked.push(slices);
