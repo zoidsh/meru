@@ -101,6 +101,24 @@ const sounds = (app: ElectronApplication) =>
     ...(Reflect.get(globalThis, "meruTestSounds") as unknown[]),
   ]);
 
+/** What each notification the suite's notifier captured shows. */
+const notifications = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as {
+        title: string;
+        subtitle?: string;
+        body: string;
+        actions?: string[];
+      }[]
+    ).map(({ title, subtitle, body, actions }) => ({
+      title,
+      subtitle,
+      body,
+      actions,
+    }))
+  );
+
 const pausedLines = (page: Page) =>
   page.getByText("Off while Do Not Disturb is on");
 
@@ -786,6 +804,68 @@ test("with no sound of Meru's for the app, a volume commit plays the first profi
     .toStrictEqual([{ sound: "linen", volume: 0.95 }]);
 });
 
+test("Show test notification shows the stand-in as the app's settings show mail, with its sound, even under Do Not Disturb", async ({
+  app,
+}) => {
+  const page = await openSettings(app);
+
+  await page.getByRole("switch", { name: "Show the sender" }).click();
+  await page.getByRole("switch", { name: "Do Not Disturb" }).click();
+  await expect(pausedLines(page)).toHaveCount(5);
+  await setSetting(app, "notificationSoundVolume", 0.4);
+  await setSetting(app, "notificationSound", "breeze");
+  await page.getByRole("button", { name: "Show test notification" }).click();
+
+  await expect
+    .poll(() => notifications(app))
+    .toStrictEqual([
+      {
+        title: "New message",
+        subtitle: undefined,
+        body: "Your test notification request\nThis is what a new email notification looks like.",
+        actions: undefined,
+      },
+    ]);
+  expect(await sounds(app)).toStrictEqual([{ sound: "breeze", volume: 0.4 }]);
+});
+
+test("in a profile's scope the test notification is that profile's, as its own settings show mail", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+  await writeSettings(userDataDir, {
+    profiles: { work: { notificationSubject: false } },
+  });
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+
+  await scopeTab(page, "Work").click();
+  await page.getByRole("button", { name: "Show test notification" }).click();
+
+  const summary = "This is what a new email notification looks like.";
+
+  await expect
+    .poll(() => notifications(app))
+    .toStrictEqual([
+      process.platform === "darwin"
+        ? {
+            title: "Tim from Meru",
+            subtitle: "Work",
+            body: summary,
+            actions: undefined,
+          }
+        : {
+            title: "Tim from Meru",
+            subtitle: undefined,
+            body: `Work\n${summary}`,
+            actions: undefined,
+          },
+    ]);
+});
+
 test("the volume is disabled while no sound of Meru's is chosen, unless a profile chooses one, and absent from a profile's scope", async ({
   launchApp,
   userDataDir,
@@ -952,7 +1032,7 @@ test.describe("shots", () => {
     }
   });
 
-  test("the New mail card with Volume and Play sound, and one profile that holds a value of its own, light and dark", async ({
+  test("the New mail card with Volume, Play sound and Test notification, and one profile that holds a value of its own, light and dark", async ({
     launchApp,
     userDataDir,
     standIn,
@@ -975,6 +1055,16 @@ test.describe("shots", () => {
       });
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page.screenshot({ path: shotPath("settings-new-mail", theme) });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page
+        .getByRole("button", { name: "Show test notification" })
+        .evaluate((button) => {
+          button.scrollIntoView({ block: "center" });
+        });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({
+        path: shotPath("settings-test-notification", theme),
+      });
     }
 
     await app.evaluate(async () => {

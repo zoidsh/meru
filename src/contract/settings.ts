@@ -113,6 +113,14 @@ export const SETTINGS_CALLS = {
     request: z.object({ sound: z.enum(NOTIFICATION_SOUNDS) }),
     response: z.undefined(),
   },
+  /**
+   * Shows a stand-in for new mail as a listed profile's settings show it, or
+   * the app's for `null`, whatever holds notifications.
+   */
+  showTestNotification: {
+    request: z.object({ profileId: z.nullable(profileId) }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }

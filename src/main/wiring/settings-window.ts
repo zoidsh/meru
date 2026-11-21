@@ -48,6 +48,7 @@ export const wireSettingsWindow = ({
   profiles,
   doNotDisturb,
   sound,
+  showTestNotification,
 }: {
   isMacOS: boolean;
   background: boolean;
@@ -64,6 +65,7 @@ export const wireSettingsWindow = ({
   profiles: Profiles;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   sound: Pick<SoundOutput, "play">;
+  showTestNotification: (profileId: string | undefined) => void;
 }) => {
   const windows = createWindowFactory(contextMenus);
 
@@ -114,7 +116,13 @@ export const wireSettingsWindow = ({
     calls: SETTINGS_CALLS,
     slices: SETTINGS_STATE,
     channels: SETTINGS_CHANNELS,
-    handlers: settingsHandlers({ settings, profiles, doNotDisturb, sound }),
+    handlers: settingsHandlers({
+      settings,
+      profiles,
+      doNotDisturb,
+      sound,
+      showTestNotification,
+    }),
     state: {
       read: () => readSettingsState({ settings, profiles, doNotDisturb }),
       onChange: (listener) => {

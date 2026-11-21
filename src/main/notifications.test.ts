@@ -1022,3 +1022,85 @@ describe("sounds", () => {
     expect(app.played).toStrictEqual([{ sound: "chime", volume: 0.5 }]);
   });
 });
+
+describe("the test notification", () => {
+  it("shows the stand-in as the app's settings show mail, with the app's sound, whatever holds notifications", () => {
+    const app = setup({
+      state: two,
+      doNotDisturb: { until: null },
+    });
+
+    app.set("notifications", false);
+    app.set("notificationSender", false);
+    app.set("notificationSound", "duet");
+    app.set("notificationSoundVolume", 0.3);
+    app.set("quietHours", [
+      { start: "00:00", end: "00:00", days: [0, 1, 2, 3, 4, 5, 6] },
+    ]);
+    app.override("b", "notificationSound", "knock");
+    app.notifications.showTest(undefined);
+
+    expect([app.shown, app.played]).toStrictEqual([
+      [
+        expect.objectContaining({
+          title: "New message",
+          body: "Your test notification request\nThis is what a new email notification looks like.",
+          silent: true,
+        }),
+      ],
+      [{ sound: "duet", volume: 0.3 }],
+    ]);
+    expect(app.shown[0]).not.toHaveProperty("subtitle");
+    expect(app.shown[0]).not.toHaveProperty("actions");
+  });
+
+  it("shows it as a profile's settings show mail, named where new mail names its profile, with its sound", () => {
+    const app = setup({ state: two });
+
+    app.override("b", "notificationSubject", false);
+    app.override("b", "notificationSound", "system");
+    app.notifications.showTest("b");
+
+    expect([app.shown, app.played]).toStrictEqual([
+      [
+        expect.objectContaining({
+          title: "Tim from Meru",
+          subtitle: "Work",
+          body: "This is what a new email notification looks like.",
+          silent: false,
+        }),
+      ],
+      [],
+    ]);
+  });
+
+  it("names no profile with one listed, and puts the name in the text where there is no subtitle", () => {
+    const lone = setup();
+
+    lone.notifications.showTest("a");
+
+    const plain = setup({ state: two, hasSubtitle: false });
+
+    plain.notifications.showTest("b");
+
+    expect([
+      lone.shown[0]?.title,
+      lone.shown[0]?.subtitle,
+      plain.shown[0]?.body,
+    ]).toStrictEqual([
+      "Tim from Meru",
+      undefined,
+      "Work\nYour test notification request\nThis is what a new email notification looks like.",
+    ]);
+  });
+
+  it("opens nothing when clicked, and shows nothing for a profile no longer listed", () => {
+    const app = setup({ state: two });
+
+    app.notifications.showTest("gone");
+    app.notifications.showTest(undefined);
+    app.shown[0]?.events.onClick();
+
+    expect([app.shown.length, app.opened]).toStrictEqual([1, []]);
+  });
+});

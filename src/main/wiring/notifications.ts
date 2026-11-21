@@ -1,3 +1,5 @@
+import { noop } from "es-toolkit";
+
 import type { App } from "#core/apps.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
@@ -14,7 +16,7 @@ import type { SoundOutput } from "../sounds.ts";
 
 /**
  * A notification for new mail, with its sound and its actions, where there
- * is a Gmail to open it in.
+ * is a Gmail to open it in, and the test notification Settings asks for.
  */
 export const wireNotifications = ({
   isMacOS,
@@ -41,45 +43,49 @@ export const wireNotifications = ({
   clipboard: ReturnType<typeof createClipboard>;
   notifier: Notifier;
 }) => {
-  if (gmail && mailActions) {
-    const mailNotifications = createMailNotifications({
-      notifier,
-      clipboard,
-      extractCode: extractVerificationCode,
-      setting: settings.get,
-      state: profiles.get,
-      hasSubtitle: isMacOS,
-      inbox: gmail.home,
-      open: async (profileId, url) => {
-        if (!(await showGmail.openMessage(profileId, url))) {
-          return;
-        }
-
-        // The one place main takes the foreground, since the person asked
-        // for it by clicking; never under the background flag.
-        revealGmail(profileId);
-      },
-      act: (profileId, action, messageId) => {
-        void mailActions.run(profileId, action, messageId);
-      },
-      doNotDisturb: () => profiles.get().doNotDisturb,
-      now: () => new Date(),
-      important: async (profileId) => {
-        const outcome = await mail.readLabel(profileId, IMPORTANT_LABEL);
-
-        return outcome.kind === "feed"
-          ? new Set(outcome.feed.entries.map((entry) => entry.id))
-          : null;
-      },
-      sound,
-      log: console.error,
-    });
-
-    // A removed profile's actions stop here, before its data is cleared.
-    profiles.onChange(mailActions.follow);
-    mail.onPoll((profileId, outcome, _startedAt, label) => {
-      void mailNotifications.polled(profileId, outcome, label);
-    });
-    profiles.onChange(mailNotifications.follow);
+  if (!gmail || !mailActions) {
+    return { showTestNotification: noop };
   }
+
+  const mailNotifications = createMailNotifications({
+    notifier,
+    clipboard,
+    extractCode: extractVerificationCode,
+    setting: settings.get,
+    state: profiles.get,
+    hasSubtitle: isMacOS,
+    inbox: gmail.home,
+    open: async (profileId, url) => {
+      if (!(await showGmail.openMessage(profileId, url))) {
+        return;
+      }
+
+      // The one place main takes the foreground, since the person asked
+      // for it by clicking; never under the background flag.
+      revealGmail(profileId);
+    },
+    act: (profileId, action, messageId) => {
+      void mailActions.run(profileId, action, messageId);
+    },
+    doNotDisturb: () => profiles.get().doNotDisturb,
+    now: () => new Date(),
+    important: async (profileId) => {
+      const outcome = await mail.readLabel(profileId, IMPORTANT_LABEL);
+
+      return outcome.kind === "feed"
+        ? new Set(outcome.feed.entries.map((entry) => entry.id))
+        : null;
+    },
+    sound,
+    log: console.error,
+  });
+
+  // A removed profile's actions stop here, before its data is cleared.
+  profiles.onChange(mailActions.follow);
+  mail.onPoll((profileId, outcome, _startedAt, label) => {
+    void mailNotifications.polled(profileId, outcome, label);
+  });
+  profiles.onChange(mailNotifications.follow);
+
+  return { showTestNotification: mailNotifications.showTest };
 };

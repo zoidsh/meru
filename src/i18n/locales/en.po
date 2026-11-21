@@ -1288,6 +1288,11 @@ msgstr "Show {name}"
 msgid "Show {productName}"
 msgstr "Show {productName}"
 
+#. Description of the Test notification row in Settings
+#: src/settings/notifications-page.tsx
+msgid "Show a test notification to see how notifications appear."
+msgstr "Show a test notification to see how notifications appear."
+
 #. Menu item in the macOS app menu that shows every hidden app again
 #: src/main/application-menu.ts
 msgid "Show All"
@@ -1312,6 +1317,11 @@ msgstr "Show in the Unified inbox"
 #: src/shell/titlebar.tsx
 msgid "Show sidebar"
 msgstr "Show sidebar"
+
+#. Button in Settings that shows a sample new mail notification, as the settings above would show one
+#: src/settings/notifications-page.tsx
+msgid "Show test notification"
+msgstr "Show test notification"
 
 #. Label of the switch in Settings that names who sent the mail in its notification
 #: src/settings/notifications-page.tsx
@@ -1416,6 +1426,11 @@ msgstr "System"
 msgid "Tabs"
 msgstr "Tabs"
 
+#. Label of the row in Settings whose button shows a sample new mail notification
+#: src/settings/notifications-page.tsx
+msgid "Test notification"
+msgstr "Test notification"
+
 #. Body of the error dialog shown when the app's window keeps failing to draw; {productName} is the app's name
 #: src/main/shell-recovery.ts
 msgid "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
@@ -1425,6 +1440,16 @@ msgstr "The window stopped drawing several times in a row, so {productName} will
 #: src/main/store-file.ts
 msgid "This data was saved by a newer version. Open it with that version, or update to it."
 msgstr "This data was saved by a newer version. Open it with that version, or update to it."
+
+#. Start of the stand-in email's text in the test notification Settings shows
+#: src/main/notifications.ts
+msgid "This is what a new email notification looks like."
+msgstr "This is what a new email notification looks like."
+
+#. Sender of the stand-in email in the test notification Settings shows: a person's name and the app's
+#: src/main/notifications.ts
+msgid "Tim from Meru"
+msgstr "Tim from Meru"
 
 #. Accessible name of the strip across the top of the Settings window, read by screen readers
 #. Accessible name of the strip across the top of the window, read by screen readers
@@ -1609,6 +1634,11 @@ msgstr "Window"
 #: src/shell/tab-problem.tsx
 msgid "You’re offline"
 msgstr "You’re offline"
+
+#. Subject of the stand-in email in the test notification Settings shows
+#: src/main/notifications.ts
+msgid "Your test notification request"
+msgstr "Your test notification request"
 
 #. Menu item in the macOS Window menu that toggles the window between its size and filling the screen
 #: src/main/application-menu.ts

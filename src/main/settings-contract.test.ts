@@ -44,6 +44,7 @@ const setup = (state: State, initial?: Settings) => {
     log: () => false,
   });
   const played: SoundRequest[] = [];
+  const tested: (string | undefined)[] = [];
   const deps = {
     settings,
     profiles,
@@ -52,6 +53,9 @@ const setup = (state: State, initial?: Settings) => {
       play: (request: SoundRequest) => {
         played.push(request);
       },
+    },
+    showTestNotification: (profileId: string | undefined) => {
+      tested.push(profileId);
     },
   };
 
@@ -65,11 +69,25 @@ const setup = (state: State, initial?: Settings) => {
     saved,
     announced,
     played,
+    tested,
     dispose: doNotDisturb.dispose,
   };
 };
 
 describe(settingsHandlers, () => {
+  it("shows a test notification for the app or a listed profile, never an unlisted one", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.showTestNotification({ profileId: null });
+    await app.handlers.showTestNotification({ profileId: "work" });
+
+    await expect(
+      app.handlers.showTestNotification({ profileId: "gone" })
+    ).rejects.toThrow("No listed profile has the id gone");
+    expect(app.tested).toStrictEqual([undefined, "work"]);
+    app.dispose();
+  });
+
   it("previews a sound at the app's volume, even while Do Not Disturb holds", async () => {
     const app = setup(stateOf("Work"), {
       version: 1,

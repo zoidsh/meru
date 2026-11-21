@@ -378,7 +378,7 @@ const start = async () => {
     log: console.error,
   });
 
-  wireNotifications({
+  const { showTestNotification } = wireNotifications({
     isMacOS,
     sound,
     settings,
@@ -429,6 +429,7 @@ const start = async () => {
       profiles,
       doNotDisturb,
       sound,
+      showTestNotification,
     });
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({

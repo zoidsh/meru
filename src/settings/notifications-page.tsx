@@ -477,6 +477,41 @@ export const NotificationsPage = () => {
                   write("quietHours", [...value]);
                 }}
               />,
+              <SettingRow
+                key="testNotification"
+                label={t({
+                  message: "Test notification",
+                  comment:
+                    "Label of the row in Settings whose button shows a sample new mail notification",
+                })}
+                description={t({
+                  message:
+                    "Show a test notification to see how notifications appear.",
+                  comment:
+                    "Description of the Test notification row in Settings",
+                })}
+                paused={undefined}
+                scope={{}}
+              >
+                {(ids) => (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-describedby={ids.description || undefined}
+                    onClick={() => {
+                      void calls.showTestNotification({
+                        profileId: profile?.id ?? null,
+                      });
+                    }}
+                  >
+                    {t({
+                      message: "Show test notification",
+                      comment:
+                        "Button in Settings that shows a sample new mail notification, as the settings above would show one",
+                    })}
+                  </Button>
+                )}
+              </SettingRow>,
             ]}
           </Rows>
         </CardContent>

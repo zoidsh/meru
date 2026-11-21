@@ -1,4 +1,5 @@
 import { plural, t } from "@lingui/core/macro";
+import { noop } from "es-toolkit";
 
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
@@ -126,6 +127,29 @@ const copy = (): NotificationCopy => ({
     }),
 });
 
+/** The message a test notification stands in for. */
+const testEntry = (): FeedEntry => ({
+  id: "",
+  link: "",
+  subject: t({
+    message: "Your test notification request",
+    comment:
+      "Subject of the stand-in email in the test notification Settings shows",
+  }),
+  summary: t({
+    message: "This is what a new email notification looks like.",
+    comment:
+      "Start of the stand-in email's text in the test notification Settings shows",
+  }),
+  senderName: t({
+    message: "Tim from Meru",
+    comment:
+      "Sender of the stand-in email in the test notification Settings shows: a person's name and the app's",
+  }),
+  senderAddress: "",
+  issued: 0,
+});
+
 /**
  * Notifies the mail each poll of a profile finds new, as `takeNewMail`
  * decides, and opens it in its profile when one is clicked. One for a
@@ -160,14 +184,17 @@ export const createMailNotifications = ({
   /**
    * Shows it, held by its profile until it is gone or the profile is, with
    * the sound `notificationSound` and the quiet period since the last sound
-   * give it.
+   * give it. With no profile it has the app's sound, and no profile's
+   * removal closes it.
    */
   const showFor = (
-    profileId: string,
+    profileId: string | undefined,
     content: NotificationContent,
     events: Omit<NotificationEvents, "onGone">
   ) => {
-    const held = shown.get(profileId) ?? new Set<ShownNotification>();
+    const held =
+      (profileId === undefined ? undefined : shown.get(profileId)) ??
+      new Set<ShownNotification>();
     const time = now().getTime();
     const sound = decideSound(
       setting("notificationSound", profileId),
@@ -176,7 +203,10 @@ export const createMailNotifications = ({
     );
     let notification: ShownNotification | undefined;
 
-    shown.set(profileId, held);
+    if (profileId !== undefined) {
+      shown.set(profileId, held);
+    }
+
     notification = notifier.show(
       { ...content, silent: output.quiet || sound.silent },
       {
@@ -208,6 +238,24 @@ export const createMailNotifications = ({
       });
     }
   };
+
+  /** What the profile's settings show of a message, or the app's with none. */
+  const optionsFor = (
+    profileId: string | undefined,
+    named: Profile | undefined
+  ): NoticeOptions => ({
+    parts: {
+      sender: setting("notificationSender", profileId),
+      subject: setting("notificationSubject", profileId),
+      summary: setting("notificationSummary", profileId),
+    },
+    profileName:
+      named && state().profiles.length > 1
+        ? profileDisplayName(named)
+        : undefined,
+    hasSubtitle,
+    copy: copy(),
+  });
 
   const show = (profileId: string, notice: Notice) => {
     const { link, messageId, ...content } = notice;
@@ -393,18 +441,6 @@ export const createMailNotifications = ({
 
       seen.set(profileId, taken.seen);
 
-      const optionsFor = (named: Profile): NoticeOptions => ({
-        parts: {
-          sender: setting("notificationSender", profileId),
-          subject: setting("notificationSubject", profileId),
-          summary: setting("notificationSummary", profileId),
-        },
-        profileName:
-          state().profiles.length > 1 ? profileDisplayName(named) : undefined,
-        hasSubtitle,
-        copy: copy(),
-      });
-
       // Ahead of every hold and of Important only, which a code passes, and
       // never told as one of many or counted toward that.
       let fresh: FeedEntry[] = [];
@@ -417,7 +453,7 @@ export const createMailNotifications = ({
         if (code === undefined) {
           fresh.push(entry);
         } else {
-          void showCode(profileId, entry, code, optionsFor(profile));
+          void showCode(profileId, entry, code, optionsFor(profileId, profile));
         }
       }
 
@@ -470,9 +506,40 @@ export const createMailNotifications = ({
         return;
       }
 
-      for (const notice of noticesFor(fresh, optionsFor(stillListed))) {
+      for (const notice of noticesFor(
+        fresh,
+        optionsFor(profileId, stillListed)
+      )) {
         show(profileId, notice);
       }
+    },
+    /**
+     * Shows a stand-in for new mail as the profile's settings show it, or
+     * the app's with none, with its sound, whatever holds notifications,
+     * since the person asked for it. A click opens nothing.
+     */
+    showTest: (profileId: string | undefined) => {
+      const named = state().profiles.find(
+        (candidate) => candidate.id === profileId
+      );
+
+      if (profileId !== undefined && !named) {
+        return;
+      }
+
+      const [notice] = noticesFor([testEntry()], optionsFor(profileId, named));
+
+      if (!notice) {
+        return;
+      }
+
+      const { title, subtitle, body } = notice;
+
+      showFor(
+        profileId,
+        subtitle === undefined ? { title, body } : { title, subtitle, body },
+        { onClick: noop }
+      );
     },
     /** Forgets each profile no longer listed and closes its notifications. */
     follow: (current: State) => {

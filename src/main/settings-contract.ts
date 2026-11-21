@@ -31,6 +31,8 @@ export interface SettingsContractDeps {
     "current" | "switchOn" | "switchOff"
   >;
   sound: Pick<SoundOutput, "play">;
+  /** For a profile, or the app with none. */
+  showTestNotification: (profileId: string | undefined) => void;
 }
 
 /** The checks keep each key's value to its own type, which a loop over keys loses. */
@@ -69,6 +71,7 @@ export const settingsHandlers = ({
   profiles,
   doNotDisturb,
   sound,
+  showTestNotification,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -92,14 +95,21 @@ export const settingsHandlers = ({
     setDoNotDisturb: ({ on }) =>
       on ? doNotDisturb.switchOn(UNTIL_OFF) : doNotDisturb.switchOff(),
     // Asked for, so no gate of a notification's holds it.
-    previewSound: ({ sound: name }) => {
-      sound.play({
-        sound: name,
-        volume: settings.get("notificationSoundVolume"),
-      });
+    previewSound: ({ sound: name }) =>
+      Promise.try(() => {
+        sound.play({
+          sound: name,
+          volume: settings.get("notificationSoundVolume"),
+        });
+      }),
+    showTestNotification: ({ profileId }) =>
+      Promise.try(() => {
+        if (profileId !== null) {
+          assertListed(profiles, profileId);
+        }
 
-      return Promise.resolve();
-    },
+        showTestNotification(profileId ?? undefined);
+      }),
   };
 };
 
@@ -108,7 +118,10 @@ export const readSettingsState = ({
   settings,
   profiles,
   doNotDisturb,
-}: Omit<SettingsContractDeps, "sound">): SettingsState => {
+}: Pick<
+  SettingsContractDeps,
+  "settings" | "profiles" | "doNotDisturb"
+>): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
   const overriding = new Map(

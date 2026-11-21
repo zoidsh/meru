@@ -134,6 +134,18 @@ describe("the settings contract", () => {
     ]).toStrictEqual([true, true, false, false, false, true, false]);
   });
 
+  it("shows a test notification for the app or a profile named by its id", () => {
+    const showTest = accepts(SETTINGS_CALLS.showTestNotification.request);
+
+    expect([
+      showTest({ profileId: null }),
+      showTest({ profileId: "work" }),
+      showTest({ profileId: "" }),
+      showTest({ profileId: 3 }),
+      showTest({}),
+    ]).toStrictEqual([true, true, false, false, false]);
+  });
+
   it("sends the page's settings, and only them", () => {
     const { settings } = SETTINGS_STATE;
     const values = {
