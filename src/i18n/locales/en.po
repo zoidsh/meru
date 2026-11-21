@@ -155,6 +155,11 @@ msgstr "{saved} · {when}"
 msgid "{share} downloaded"
 msgstr "{share} downloaded"
 
+#. A window of quiet hours in the Settings caption naming the app setting; {start} and {end} are times such as 22:00 and 07:00, {days} when, such as every day or weekdays
+#: src/settings/scope.ts
+msgid "{start}–{end} {days}"
+msgstr "{start}–{end} {days}"
+
 #. Tooltip of a tile in the sidebar while its tab sleeps: put to sleep, or not opened yet since Meru started; {title} is the tab's title
 #: src/shell/tab-strip.tsx
 msgid "{title} · asleep"

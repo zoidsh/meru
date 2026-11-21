@@ -101,7 +101,13 @@ const windowText = (window: QuietWindow, locale: string) => {
     });
   }
 
-  return `${window.start}–${window.end} ${days}`;
+  const { start, end } = window;
+
+  return t({
+    message: `${start}–${end} ${days}`,
+    comment:
+      "A window of quiet hours in the Settings caption naming the app setting; {start} and {end} are times such as 22:00 and 07:00, {days} when, such as every day or weekdays",
+  });
 };
 
 /**
