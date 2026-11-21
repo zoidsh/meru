@@ -22,4 +22,14 @@ describe(doNotDisturbCaption, () => {
       "On until 14:30. Holds every notification.",
     ]);
   });
+
+  it("with more than one profile says it holds whatever a profile sets", () => {
+    expect([
+      doNotDisturbCaption({ on: false, until: null }, "en-GB", true),
+      doNotDisturbCaption({ on: true, until: null }, "en-GB", true),
+    ]).toStrictEqual([
+      "Holds every notification, whatever a profile sets. The moon in the titlebar turns it on for a set time.",
+      "On until you turn it off. Holds every notification, whatever a profile sets.",
+    ]);
+  });
 });

@@ -30,6 +30,8 @@ import {
   setQuietDays,
   setQuietTime,
 } from "./quiet-hours.ts";
+import type { RowScope } from "./row-scope.tsx";
+import { OverrideBar } from "./row-scope.tsx";
 
 /** A Sunday, from which each weekday's name is read in the person's language. */
 const A_SUNDAY = Date.UTC(2026, 10, 15);
@@ -78,52 +80,52 @@ const TimeSelect = ({
 /**
  * Quiet hours as a list of windows, each with its days, from and to, and a
  * remove button, with Add quiet hours under them. Every edit writes the
- * whole list.
+ * whole list. Use app setting sits in the row's head.
  */
 export const QuietHoursField = ({
+  label,
   list,
   paused,
+  scope,
   onChange,
 }: {
+  label: string;
   list: readonly QuietWindow[];
-  paused: boolean;
+  /** The line saying Do Not Disturb outranks it, while it does. */
+  paused: string | undefined;
+  scope: RowScope;
   onChange: (list: readonly QuietWindow[]) => void;
 }) => {
   const { t, i18n } = useLingui();
   const labelId = useId();
+  const dims = paused !== undefined;
 
   return (
-    <Field orientation="vertical" aria-labelledby={labelId} className="gap-3">
-      <FieldContent>
-        <FieldLabel id={labelId} className={cn(paused && "opacity-50")}>
-          {t({
-            message: "Quiet hours",
-            comment:
-              "Label of the list in Settings of the times when new mail notifications wait",
-          })}
-        </FieldLabel>
-        <FieldDescription className={cn(paused && "opacity-50")}>
-          {t({
-            message: "Notifications wait until a window ends.",
-            comment:
-              "Description of Quiet hours in Settings; a window is one of the listed spans of time",
-          })}
-        </FieldDescription>
-        {paused && (
-          <FieldDescription>
+    <Field
+      orientation="vertical"
+      aria-labelledby={labelId}
+      className="relative gap-3"
+    >
+      {scope.bar && <OverrideBar color={scope.bar} />}
+      <div className="flex items-start gap-2">
+        <FieldContent>
+          <FieldLabel id={labelId} className={cn(dims && "opacity-50")}>
+            {label}
+          </FieldLabel>
+          <FieldDescription className={cn(dims && "opacity-50")}>
             {t({
-              message: "Off while Do Not Disturb is on",
+              message: "Notifications wait until a window ends.",
               comment:
-                "Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting says",
+                "Description of Quiet hours in Settings; a window is one of the listed spans of time",
             })}
           </FieldDescription>
-        )}
-      </FieldContent>
+          {paused && <FieldDescription>{paused}</FieldDescription>}
+          {scope.line}
+        </FieldContent>
+        {scope.reset}
+      </div>
       <div
-        className={cn(
-          "flex flex-col items-start gap-2",
-          paused && "opacity-50"
-        )}
+        className={cn("flex flex-col items-start gap-2", dims && "opacity-50")}
       >
         {list.map((window, index) => {
           const place = index + 1;

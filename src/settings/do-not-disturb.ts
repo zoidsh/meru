@@ -19,34 +19,46 @@ const isMidnight = (time: number) => {
 
 /**
  * What the Do Not Disturb row says: off, what it holds and where the timed
- * choices are; on, when it ends first, as the titlebar names the end.
+ * choices are; on, when it ends first, as the titlebar names the end. With
+ * more than one profile it says it holds whatever a profile sets.
  */
 export const doNotDisturbCaption = (
   { on, until }: SettingsState["doNotDisturb"],
-  locale: string
+  locale: string,
+  multi = false
 ) => {
+  const holds = multi
+    ? t({
+        message: "Holds every notification, whatever a profile sets.",
+        comment:
+          "What the Do Not Disturb switch in Settings does, with more than one profile",
+      })
+    : t({
+        message: "Holds every notification.",
+        comment: "What the Do Not Disturb switch in Settings does",
+      });
+
   if (!on) {
     return t({
-      message:
-        "Holds every notification. The moon in the titlebar turns it on for a set time.",
+      message: `${holds} The moon in the titlebar turns it on for a set time.`,
       comment:
-        "Description of the Do Not Disturb switch in Settings while it is off; the moon is the Do Not Disturb button in the main window's title bar",
+        "Description of the Do Not Disturb switch in Settings while it is off; {holds} is what it does, such as Holds every notification. The moon is the Do Not Disturb button in the main window's title bar",
     });
   }
 
   if (until === null) {
     return t({
-      message: "On until you turn it off. Holds every notification.",
+      message: `On until you turn it off. ${holds}`,
       comment:
-        "Description of the Do Not Disturb switch in Settings while it is on with no end",
+        "Description of the Do Not Disturb switch in Settings while it is on with no end; {holds} is what it does, such as Holds every notification.",
     });
   }
 
   if (isMidnight(until)) {
     return t({
-      message: "On until tomorrow. Holds every notification.",
+      message: `On until tomorrow. ${holds}`,
       comment:
-        "Description of the Do Not Disturb switch in Settings while it is on until midnight",
+        "Description of the Do Not Disturb switch in Settings while it is on until midnight; {holds} is what it does, such as Holds every notification.",
     });
   }
 
@@ -56,8 +68,8 @@ export const doNotDisturbCaption = (
   }).format(until);
 
   return t({
-    message: `On until ${time}. Holds every notification.`,
+    message: `On until ${time}. ${holds}`,
     comment:
-      "Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30",
+      "Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30, and {holds} what it does, such as Holds every notification.",
   });
 };

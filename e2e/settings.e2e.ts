@@ -10,8 +10,10 @@ import {
   findPage,
   test,
   writeSettings,
+  writeState,
 } from "./lib/app.ts";
 import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
+import type { StandIn } from "./lib/stand-in.ts";
 
 const SETTINGS_URL = "meru-app://settings/";
 
@@ -295,6 +297,285 @@ test("quiet hours are added, a day changed and removed, each edit writing the wh
   await expect.poll(quietHours).toStrictEqual([]);
 });
 
+/** Seeds `state.json` with a profile per name, each with Gmail at the stand-in. */
+const seedProfiles = (
+  userDataDir: string,
+  standIn: StandIn,
+  names: readonly string[],
+  selected = 0
+) => {
+  const ids = names.map((name) => name.toLowerCase().replaceAll(" ", "-"));
+
+  return writeState(userDataDir, {
+    profiles: names.map((name, index) => ({
+      id: ids[index],
+      name,
+      tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
+      selectedTabId: "gmail",
+    })),
+    selectedProfileId: ids[selected],
+  });
+};
+
+const scopeTab = (page: Page, name: string) =>
+  page
+    .getByRole("tablist", { name: "Scope" })
+    .getByRole("tab", { name, exact: true });
+
+/** The profiles' own values as `settings.json` holds them. */
+const storedOverrides = (userDataDir: string) =>
+  readStoredSetting(userDataDir, "profiles");
+
+/**
+ * Stands in for the native confirmation of Remove Profile, which would show
+ * on the desktop, answering it with its first button.
+ */
+const confirmRemovals = (app: ElectronApplication) =>
+  app.evaluate(({ dialog }) => {
+    dialog.showMessageBox = (() =>
+      Promise.resolve({
+        response: 0,
+        checkboxChecked: false,
+      })) as unknown as typeof dialog.showMessageBox;
+  });
+
+test("with one profile there is no scope switcher, and with two it offers All profiles and each profile", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const first = await launchApp();
+  const one = await openSettings(first);
+
+  await expect(one.getByRole("tablist")).toHaveCount(0);
+  await expect(one.getByText(/profile/u)).toHaveCount(0);
+
+  await first.close();
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const page = await openSettings(await launchApp());
+
+  await expect(
+    page.getByRole("tablist", { name: "Scope" }).getByRole("tab")
+  ).toHaveText(["All profiles", "Home", "Work"]);
+  await expect(scopeTab(page, "All profiles")).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect(
+    page.getByText("Every profile uses these, unless it sets its own.")
+  ).toBeVisible();
+});
+
+test("in a profile's scope a switch sets the profile's own value, All profiles names it, and Use app setting removes it", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const page = await openSettings(await launchApp());
+  const sender = page.getByRole("switch", { name: "Show the sender" });
+
+  await scopeTab(page, "Work").click();
+  await expect(
+    page.getByText("Changes here apply to Work alone.")
+  ).toBeVisible();
+  await expect(sender).toBeChecked();
+  await sender.click();
+
+  await expect(sender).not.toBeChecked();
+  await expect
+    .poll(() => storedOverrides(userDataDir))
+    .toStrictEqual({ work: { notificationSender: false } });
+  expect(
+    await readStoredSetting(userDataDir, "notificationSender")
+  ).toBeUndefined();
+  await expect(
+    page.getByText("Set for Work. App setting is On.")
+  ).toBeVisible();
+
+  await scopeTab(page, "All profiles").click();
+  await expect(sender).toBeChecked();
+  await expect(page.getByText("Differs in 1 profile:")).toBeVisible();
+  await page.getByRole("button", { name: "Show Work" }).click();
+  await expect(scopeTab(page, "Work")).toHaveAttribute("aria-selected", "true");
+
+  await page
+    .getByRole("button", { name: "Use app setting for Show the sender" })
+    .click();
+
+  await expect(sender).toBeChecked();
+  await expect.poll(() => storedOverrides(userDataDir)).toBeUndefined();
+  await expect(
+    page.getByRole("button", { name: /^Use app setting for/u })
+  ).toHaveCount(0);
+
+  await scopeTab(page, "All profiles").click();
+  await expect(page.getByText(/^Differs in/u)).toHaveCount(0);
+});
+
+test("a profile's quiet hours are its own whole list, the app's left as it was", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const page = await openSettings(await launchApp());
+
+  await scopeTab(page, "Home").click();
+  await page.getByRole("button", { name: "Add quiet hours" }).click();
+
+  await expect
+    .poll(() => storedOverrides(userDataDir))
+    .toStrictEqual({
+      home: { quietHours: [{ start: "22:00", end: "07:00" }] },
+    });
+  expect(await readStoredSetting(userDataDir, "quietHours")).toBeUndefined();
+  await expect(
+    page.getByText("Set for Home. App setting is none.")
+  ).toBeVisible();
+});
+
+test("a profile's own value set elsewhere shows in the open window", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+
+  await app.evaluate(async () => {
+    const settings = Reflect.get(globalThis, "meruTestSettings") as {
+      setOverride: (id: string, key: string, value: unknown) => Promise<void>;
+    };
+
+    await settings.setOverride("home", "notificationSound", "chime");
+  });
+
+  await expect(page.getByText("Differs in 1 profile:")).toBeVisible();
+  await page.getByRole("button", { name: "Show Home" }).click();
+  await expect(
+    page.getByText("Set for Home. App setting is Linen.")
+  ).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Sound" })).toHaveText(
+    /^Chime/u
+  );
+});
+
+test("removing the profile whose scope is shown falls back to All profiles, and with one profile left to no switcher", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work", "Travel"], 1);
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+
+  await confirmRemovals(app);
+  await scopeTab(page, "Work").click();
+  await clickMenuItem(app, "profile.remove");
+
+  await expect(scopeTab(page, "Work")).toHaveCount(0);
+  await expect(scopeTab(page, "All profiles")).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+
+  await clickMenuItem(app, "profile.remove");
+
+  await expect(page.getByRole("tablist")).toHaveCount(0);
+});
+
+test("long-named profiles fold into one menu beside All profiles, whose choice shows that profile's scope", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const names = [1, 2, 3, 4, 5, 6].map(
+    (place) => `Rather long profile name ${place}`
+  );
+  const third = "Rather long profile name 3";
+
+  await seedProfiles(userDataDir, standIn, names);
+
+  const page = await openSettings(await launchApp());
+  const menuTab = scopeTab(page, "Choose a profile");
+
+  await expect(
+    page.getByRole("tablist", { name: "Scope" }).getByRole("tab")
+  ).toHaveText(["All profiles", "Choose a profile"]);
+
+  await menuTab.click();
+  await page
+    .getByRole("menu", { name: "Profiles" })
+    .getByRole("menuitemradio", { name: third })
+    .click();
+
+  await expect(scopeTab(page, third)).toHaveAttribute("aria-selected", "true");
+  await expect(
+    page.getByText(`Changes here apply to ${third} alone.`)
+  ).toBeVisible();
+});
+
+test("with two profiles Do Not Disturb holds whatever a profile sets, lives under All profiles, and dims a profile's rows too", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const page = await openSettings(await launchApp());
+  const offForAll = page.getByText("Off for all profiles");
+
+  await expect(
+    page.getByText(
+      "Holds every notification, whatever a profile sets. The moon in the titlebar turns it on for a set time."
+    )
+  ).toBeVisible();
+  await page.getByRole("switch", { name: "Do Not Disturb" }).click();
+  await expect(offForAll).toHaveCount(4);
+
+  await scopeTab(page, "Work").click();
+
+  await expect(
+    page.getByRole("switch", { name: "Do Not Disturb" })
+  ).toHaveCount(0);
+  await expect(
+    page.getByText(
+      "Do Not Disturb is the same for every profile, under All profiles."
+    )
+  ).toBeVisible();
+  await expect(offForAll).toHaveCount(4);
+});
+
+test("with one profile the page shows that profile's value, and a change sets the app value and drops the profile's own", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Work"]);
+  await writeSettings(userDataDir, {
+    profiles: { work: { notificationSender: false, unreadBadge: false } },
+  });
+
+  const page = await openSettings(await launchApp());
+  const sender = page.getByRole("switch", { name: "Show the sender" });
+
+  await expect(sender).not.toBeChecked();
+  await sender.click();
+
+  await expect(sender).toBeChecked();
+  await expect
+    .poll(() => storedOverrides(userDataDir))
+    .toStrictEqual({ work: { unreadBadge: false } });
+  expect(await readStoredSetting(userDataDir, "notificationSender")).toBe(true);
+});
+
 test.describe("shots", () => {
   test.beforeEach(onlyWithShots);
 
@@ -341,5 +622,93 @@ test.describe("shots", () => {
     await page.screenshot({
       path: shotPath("settings-notifications-quiet-hours"),
     });
+  });
+
+  test("the scope switcher light and dark: All profiles with differing rows, a profile's scope, and the folded menu open", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await seedProfiles(userDataDir, standIn, ["Home", "Work", "Travel"]);
+    await writeSettings(userDataDir, {
+      profiles: {
+        work: {
+          notificationSound: "chime",
+          notificationSender: false,
+          quietHours: [{ start: "09:00", end: "17:00", days: [1, 2, 3, 4, 5] }],
+        },
+        travel: { notificationSender: false },
+      },
+    });
+
+    const app = await launchApp();
+    const page = await openSettings(app);
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await scopeTab(page, "All profiles").click();
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.getByText("Differs in 2 profiles:").evaluate((line) => {
+        line.scrollIntoView({ block: "center" });
+      });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({ path: shotPath("settings-scope-all", theme) });
+
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await scopeTab(page, "Work").click();
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page
+        .getByText("Set for Work. App setting is Linen.")
+        .evaluate((line) => {
+          line.scrollIntoView({ block: "center" });
+        });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({
+        path: shotPath("settings-scope-profile", theme),
+      });
+    }
+
+    await app.close();
+    await seedProfiles(
+      userDataDir,
+      standIn,
+      [1, 2, 3, 4, 5, 6].map((place) => `Rather long profile name ${place}`)
+    );
+    await writeSettings(userDataDir, {
+      profiles: {
+        "rather-long-profile-name-2": { notificationSender: false },
+        "rather-long-profile-name-5": {
+          notificationSender: false,
+          unreadBadge: false,
+        },
+      },
+    });
+
+    const folded = await launchApp();
+    const menuPage = await openSettings(folded);
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(folded, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await scopeTab(menuPage, "Choose a profile").click();
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await expect(
+        menuPage.getByRole("menu", { name: "Profiles" })
+      ).toBeVisible();
+      // Lets the menu's opening animation finish.
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await delay(500);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await menuPage.screenshot({
+        path: shotPath("settings-scope-menu", theme),
+      });
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await menuPage.keyboard.press("Escape");
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await expect(menuPage.getByRole("menu")).toHaveCount(0);
+    }
   });
 });

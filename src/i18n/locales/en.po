@@ -28,15 +28,30 @@ msgstr "{count, plural, one {{name}, asleep, # unread message} other {{name}, as
 msgid "{count, plural, one {# new message} other {# new messages}}"
 msgstr "{count, plural, one {# new message} other {# new messages}}"
 
+#. How many settings a profile sets for itself, beside its name in the Settings scope switcher's menu
+#: src/settings/scope-tabs.tsx
+msgid "{count, plural, one {# override} other {# overrides}}"
+msgstr "{count, plural, one {# override} other {# overrides}}"
+
 #. Read out by a screen reader for the unread badge on Meru's taskbar button on Windows
 #: src/main/badge.ts
 msgid "{count, plural, one {# unread message} other {# unread messages}}"
 msgstr "{count, plural, one {# unread message} other {# unread messages}}"
 
+#. Muted line under a setting in Settings' All profiles, before a badge naming each profile that sets its own value; # is how many
+#: src/settings/scope.ts
+msgid "{count, plural, one {Differs in # profile:} other {Differs in # profiles:}}"
+msgstr "{count, plural, one {Differs in # profile:} other {Differs in # profiles:}}"
+
 #. How much of a running download has arrived, in the Downloads card, such as 12.4 of 48 MB; done is a number, total a size with its unit
 #: src/shell/downloads.tsx
 msgid "{done} of {total}"
 msgstr "{done} of {total}"
+
+#. Description of the Do Not Disturb switch in Settings while it is off; {holds} is what it does, such as Holds every notification. The moon is the Do Not Disturb button in the main window's title bar
+#: src/settings/do-not-disturb.ts
+msgid "{holds} The moon in the titlebar turns it on for a set time."
+msgstr "{holds} The moon in the titlebar turns it on for a set time."
 
 #. Item in the Do Not Disturb menu that holds notifications for this many hours
 #: src/main/commands.ts
@@ -230,10 +245,25 @@ msgstr "Add Profile"
 msgid "Add quiet hours"
 msgstr "Add quiet hours"
 
+#. A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the app setting; {days} is when, such as every day or weekdays
+#: src/settings/scope.ts
+msgid "all day {days}"
+msgstr "all day {days}"
+
+#. First segment of the scope switcher atop a Settings page: the app setting every profile uses unless it sets its own
+#: src/settings/scope-tabs.tsx
+msgid "All profiles"
+msgstr "All profiles"
+
 #. Label over the band along the window's edge that lights up while a tab is dragged near it; dropping it puts the tab there beside every pane
 #: src/shell/drop-zone.tsx
 msgid "Along the whole view"
 msgstr "Along the whole view"
+
+#. After the badges naming the first three profiles that set their own value of a setting in Settings; {more} is how many others do
+#: src/settings/row-scope.tsx
+msgid "and {more} more"
+msgstr "and {more} more"
 
 #. Heading of the group of Google's apps in the New tab launcher
 #: src/shell/open-app.tsx
@@ -342,10 +372,20 @@ msgstr "Cancel download"
 msgid "Cancelled · {when}"
 msgstr "Cancelled · {when}"
 
+#. Line under the Settings scope switcher while one profile's scope is chosen; {chosenName} is the profile's name
+#: src/settings/scope-tabs.tsx
+msgid "Changes here apply to {chosenName} alone."
+msgstr "Changes here apply to {chosenName} alone."
+
 #. Name of a notification sound, picked in Settings
 #: src/settings/notifications-page.tsx
 msgid "Chime"
 msgstr "Chime"
+
+#. Segment of the Settings scope switcher that opens the list of profiles when their names do not fit
+#: src/settings/scope-tabs.tsx
+msgid "Choose a profile"
+msgstr "Choose a profile"
 
 #. Button in the Downloads card's header that takes every download off the list but those still running
 #: src/shell/downloads.tsx
@@ -501,6 +541,11 @@ msgstr "Do Not Disturb is on until {time}"
 msgid "Do Not Disturb is on until turned off"
 msgstr "Do Not Disturb is on until turned off"
 
+#. Line under the cards of the Notifications page in Settings while one profile's scope is chosen
+#: src/settings/notifications-page.tsx
+msgid "Do Not Disturb is the same for every profile, under All profiles."
+msgstr "Do Not Disturb is the same for every profile, under All profiles."
+
 #. Title of the system notification when a download stops before it is done; the file's name is its text
 #: src/main/download-notifications.ts
 msgid "Download failed"
@@ -543,6 +588,16 @@ msgstr "Duplicate"
 #: src/main/application-menu.ts
 msgid "Edit"
 msgstr "Edit"
+
+#. Days of a window of quiet hours, in the Settings caption naming the app setting, as in 22:00–07:00 every day
+#: src/settings/scope.ts
+msgid "every day"
+msgstr "every day"
+
+#. Line under the Settings scope switcher while All profiles is chosen
+#: src/settings/scope-tabs.tsx
+msgid "Every profile uses these, unless it sets its own."
+msgstr "Every profile uses these, unless it sets its own."
 
 #. Tray menu item that quits Meru
 #: src/main/tray.ts
@@ -625,10 +680,15 @@ msgstr "Hide Others"
 msgid "Hide sidebar"
 msgstr "Hide sidebar"
 
-#. Description of the Do Not Disturb switch in Settings while it is off; the moon is the Do Not Disturb button in the main window's title bar
+#. What the Do Not Disturb switch in Settings does, with more than one profile
 #: src/settings/do-not-disturb.ts
-msgid "Holds every notification. The moon in the titlebar turns it on for a set time."
-msgstr "Holds every notification. The moon in the titlebar turns it on for a set time."
+msgid "Holds every notification, whatever a profile sets."
+msgstr "Holds every notification, whatever a profile sets."
+
+#. What the Do Not Disturb switch in Settings does
+#: src/settings/do-not-disturb.ts
+msgid "Holds every notification."
+msgstr "Holds every notification."
 
 #. Label of the switch in Settings that limits notifications to mail Gmail marks important
 #: src/settings/notifications-page.tsx
@@ -822,6 +882,11 @@ msgstr "No Saved Searches"
 msgid "No unread messages"
 msgstr "No unread messages"
 
+#. The app setting of quiet hours when it has no window, in the Settings caption: App setting is none.
+#: src/settings/scope.ts
+msgid "none"
+msgstr "none"
+
 #. Choice of the Sound menu in Settings: no sound with a notification
 #: src/settings/notifications-page.tsx
 msgid "None"
@@ -851,37 +916,50 @@ msgstr "Notifications"
 msgid "Notifications wait until a window ends."
 msgstr "Notifications wait until a window ends."
 
-#. Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting says
+#. A switch's app setting in the Settings caption under a profile's own value: App setting is Off.
+#: src/settings/scope.ts
+msgid "Off"
+msgstr "Off"
+
+#. Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting or a profile says
+#: src/settings/notifications-page.tsx
+msgid "Off for all profiles"
+msgstr "Off for all profiles"
+
 #. Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting says
 #: src/settings/notifications-page.tsx
-#: src/settings/quiet-hours-field.tsx
 msgid "Off while Do Not Disturb is on"
 msgstr "Off while Do Not Disturb is on"
+
+#. A switch's app setting in the Settings caption under a profile's own value: App setting is On.
+#: src/settings/scope.ts
+msgid "On"
+msgstr "On"
 
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
 #: src/main/do-not-disturb.ts
 msgid "On Until {time}"
 msgstr "On Until {time}"
 
-#. Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30
+#. Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30, and {holds} what it does, such as Holds every notification.
 #: src/settings/do-not-disturb.ts
-msgid "On until {time}. Holds every notification."
-msgstr "On until {time}. Holds every notification."
+msgid "On until {time}. {holds}"
+msgstr "On until {time}. {holds}"
 
-#. Description of the Do Not Disturb switch in Settings while it is on until midnight
+#. Description of the Do Not Disturb switch in Settings while it is on until midnight; {holds} is what it does, such as Holds every notification.
 #: src/settings/do-not-disturb.ts
-msgid "On until tomorrow. Holds every notification."
-msgstr "On until tomorrow. Holds every notification."
+msgid "On until tomorrow. {holds}"
+msgstr "On until tomorrow. {holds}"
 
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications until the person turns it off
 #: src/main/do-not-disturb.ts
 msgid "On Until Turned Off"
 msgstr "On Until Turned Off"
 
-#. Description of the Do Not Disturb switch in Settings while it is on with no end
+#. Description of the Do Not Disturb switch in Settings while it is on with no end; {holds} is what it does, such as Holds every notification.
 #: src/settings/do-not-disturb.ts
-msgid "On until you turn it off. Holds every notification."
-msgstr "On until you turn it off. Holds every notification."
+msgid "On until you turn it off. {holds}"
+msgstr "On until you turn it off. {holds}"
 
 #. Description of the Important mail only switch in Settings
 #: src/settings/notifications-page.tsx
@@ -948,13 +1026,15 @@ msgstr "Previous match"
 msgid "Profile {n}"
 msgstr "Profile {n}"
 
+#. Accessible name of the menu of profiles in the Settings scope switcher
 #. Accessible name of the row of profile buttons in the title bar, read by screen readers
+#: src/settings/scope-tabs.tsx
 #: src/shell/titlebar.tsx
 msgid "Profiles"
 msgstr "Profiles"
 
 #. Label of the list in Settings of the times when new mail notifications wait
-#: src/settings/quiet-hours-field.tsx
+#: src/settings/notifications-page.tsx
 msgid "Quiet hours"
 msgstr "Quiet hours"
 
@@ -1093,6 +1173,11 @@ msgstr "Save Current Search"
 msgid "Saved Searches"
 msgstr "Saved Searches"
 
+#. Accessible name of the switcher atop a Settings page choosing whether it edits every profile's setting or one profile's own
+#: src/settings/scope-tabs.tsx
+msgid "Scope"
+msgstr "Scope"
+
 #. Accessible name and tooltip of the arrow over the left end of the title bar's row of profiles, when some do not fit
 #: src/shell/titlebar.tsx
 msgid "Scroll profiles left"
@@ -1158,6 +1243,11 @@ msgstr "Separate from Split"
 msgid "Services"
 msgstr "Services"
 
+#. Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value every other profile uses, such as On, Chime or 22:00–07:00 every day
+#: src/settings/row-scope.tsx
+msgid "Set for {name}. App setting is {appValue}."
+msgstr "Set for {name}. App setting is {appValue}."
+
 #. Title of the Settings window
 #: src/settings/app.tsx
 msgid "Settings"
@@ -1177,6 +1267,11 @@ msgstr "Settings…"
 #: src/shell/open-app.tsx
 msgid "Shift+Delete removes the highlighted bookmark"
 msgstr "Shift+Delete removes the highlighted bookmark"
+
+#. Accessible name of the badge under a Settings row that switches to the profile's scope; {name} is the profile's name
+#: src/settings/row-scope.tsx
+msgid "Show {name}"
+msgstr "Show {name}"
 
 #. Tray menu item that brings Meru's window back; {productName} is Meru
 #: src/main/tray.ts
@@ -1436,6 +1531,21 @@ msgstr "Until Turned Off"
 msgid "Upper pane {percent}"
 msgstr "Upper pane {percent}"
 
+#. Button under a Settings row in a profile's scope that drops the profile's own value so it follows the app setting again
+#: src/settings/row-scope.tsx
+msgid "Use app setting"
+msgstr "Use app setting"
+
+#. Accessible name of the button under a Settings row in a profile's scope that drops the profile's own value; {label} is the row's label
+#: src/settings/row-scope.tsx
+msgid "Use app setting for {label}"
+msgstr "Use app setting for {label}"
+
+#. Caption under a Settings row in a profile's scope while the profile has no value of its own
+#: src/settings/row-scope.tsx
+msgid "Using app setting"
+msgstr "Using app setting"
+
 #. Text of the notification for an email that carries a one-time code, which its Copy button copies. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts
 msgid "Verification code {verificationCode}"
@@ -1459,6 +1569,16 @@ msgstr "Wake"
 #: src/main/commands.ts
 msgid "Wake Tab"
 msgstr "Wake Tab"
+
+#. Days of a window of quiet hours, Monday to Friday, in the Settings caption naming the app setting, as in 22:00–07:00 weekdays
+#: src/settings/scope.ts
+msgid "weekdays"
+msgstr "weekdays"
+
+#. Days of a window of quiet hours, Saturday and Sunday, in the Settings caption naming the app setting, as in 22:00–07:00 weekends
+#: src/settings/scope.ts
+msgid "weekends"
+msgstr "weekends"
 
 #. Title of the group of Settings for what a new mail notification says
 #: src/settings/notifications-page.tsx
