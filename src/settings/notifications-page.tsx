@@ -137,6 +137,13 @@ export const NotificationsPage = () => {
   const calls = settingsCalls();
   const multi = profiles.length >= 2;
   const scope = shownScope(chosenScope, profiles);
+
+  // A scope that fell back stays fallen back, even once its profile's id
+  // could show again.
+  if (scope !== chosenScope) {
+    setChosenScope(scope);
+  }
+
   const profile = multi
     ? profiles.find((candidate) => candidate.id === scope)
     : undefined;

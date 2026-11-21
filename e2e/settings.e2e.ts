@@ -491,6 +491,34 @@ test("removing the profile whose scope is shown falls back to All profiles, and 
   await expect(page.getByRole("tablist")).toHaveCount(0);
 });
 
+test("a scope that fell back to All profiles stays there when a profile is added", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+
+  await confirmRemovals(app);
+  await scopeTab(page, "Work").click();
+  // Removes Home, the selected profile, leaving Work alone.
+  await clickMenuItem(app, "profile.remove");
+  await expect(page.getByRole("tablist")).toHaveCount(0);
+
+  await clickMenuItem(app, "profile.add");
+
+  await expect(scopeTab(page, "All profiles")).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await expect(scopeTab(page, "Work")).toHaveAttribute(
+    "aria-selected",
+    "false"
+  );
+});
+
 test("long-named profiles fold into one menu beside All profiles, whose choice shows that profile's scope", async ({
   launchApp,
   userDataDir,
