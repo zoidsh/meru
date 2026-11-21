@@ -11,7 +11,7 @@ import type {
   PageSettings,
   SettingChange,
 } from "#contract/settings.ts";
-import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
+import { UNTIL_OFF } from "#core/notification-gate.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { ContextMenus } from "#platform/context-menu.ts";
@@ -130,9 +130,7 @@ export const wireSettingsWindow = ({
       // On from here holds until turned off; the durations are the
       // titlebar's.
       setDoNotDisturb: ({ on }) =>
-        on
-          ? doNotDisturb.switchOn(DO_NOT_DISTURB_DURATIONS[0])
-          : doNotDisturb.switchOff(),
+        on ? doNotDisturb.switchOn(UNTIL_OFF) : doNotDisturb.switchOff(),
     },
     state: {
       read: () => {

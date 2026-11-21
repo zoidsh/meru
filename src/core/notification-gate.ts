@@ -129,9 +129,12 @@ export const importantOnly = (
     ? [...fresh]
     : fresh.filter((entry) => important.has(entry.id));
 
+/** On until turned off, as the moon's click and the Settings switch put it. */
+export const UNTIL_OFF = { id: "untilOff" } as const;
+
 /** How long Do Not Disturb may be switched on for, in its menus' order. */
 export const DO_NOT_DISTURB_DURATIONS = [
-  { id: "untilOff" },
+  UNTIL_OFF,
   { id: "5m", minutes: 5 },
   { id: "10m", minutes: 10 },
   { id: "15m", minutes: 15 },

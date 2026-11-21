@@ -8,7 +8,10 @@ import {
   searchHash,
   searchQueryOf,
 } from "#core/gmail-hash.ts";
-import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
+import {
+  DO_NOT_DISTURB_DURATIONS,
+  UNTIL_OFF,
+} from "#core/notification-gate.ts";
 import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
 import type { PaneDirection } from "#core/pane-tree.ts";
 import {
@@ -1024,9 +1027,7 @@ export const COMMANDS: readonly Command[] = [
       }),
     isChecked: doNotDisturbHolds,
     run: (context, { switchDoNotDisturb }) =>
-      switchDoNotDisturb(
-        doNotDisturbHolds(context) ? "off" : DO_NOT_DISTURB_DURATIONS[0]
-      ),
+      switchDoNotDisturb(doNotDisturbHolds(context) ? "off" : UNTIL_OFF),
   },
   {
     id: "doNotDisturb.off",
