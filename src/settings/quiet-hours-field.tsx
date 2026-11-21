@@ -24,6 +24,7 @@ import { ToggleGroup, ToggleGroupItem } from "#ui/toggle-group.tsx";
 import {
   WEEK,
   addQuietWindow,
+  dayName,
   quietDays,
   quietTimesWith,
   removeQuietWindow,
@@ -32,14 +33,6 @@ import {
 } from "./quiet-hours.ts";
 import type { RowScope } from "./row-scope.tsx";
 import { OverrideBar } from "./row-scope.tsx";
-
-/** A Sunday, from which each weekday's name is read in the person's language. */
-const A_SUNDAY = Date.UTC(2026, 10, 15);
-
-const dayName = (locale: string, day: number, weekday: "narrow" | "long") =>
-  new Intl.DateTimeFormat(locale, { weekday, timeZone: "UTC" }).format(
-    A_SUNDAY + day * 86_400_000
-  );
 
 const TimeSelect = ({
   value,

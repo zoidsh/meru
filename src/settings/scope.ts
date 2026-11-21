@@ -8,7 +8,7 @@ import type {
 import type { QuietWindow } from "#core/notification-gate.ts";
 import type { SoundChoice } from "#core/sounds.ts";
 
-import { WEEK, quietDays } from "./quiet-hours.ts";
+import { WEEK, dayName, quietDays } from "./quiet-hours.ts";
 
 export type ListedProfile = SettingsState["profiles"][number];
 
@@ -56,14 +56,6 @@ export const effectiveSettings = (
 export const foldsIntoMenu = (listWidth: number, room: number) =>
   listWidth > room;
 
-/** A Sunday, from which each weekday's name is read in the person's language. */
-const A_SUNDAY = Date.UTC(2026, 10, 15);
-
-const shortDay = (locale: string, day: number) =>
-  new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(
-    A_SUNDAY + day * 86_400_000
-  );
-
 const daysText = (window: QuietWindow, locale: string) => {
   const days = new Set(quietDays(window));
   const are = (wanted: readonly number[]) =>
@@ -94,7 +86,7 @@ const daysText = (window: QuietWindow, locale: string) => {
   }
 
   return WEEK.filter((day) => days.has(day))
-    .map((day) => shortDay(locale, day))
+    .map((day) => dayName(locale, day, "short"))
     .join(", ");
 };
 

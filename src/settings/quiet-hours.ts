@@ -3,6 +3,19 @@ import type { QuietWindow } from "#core/notification-gate.ts";
 /** Days as the gate counts them, 0 Sunday to 6 Saturday, in the order shown. */
 export const WEEK = [1, 2, 3, 4, 5, 6, 0] as const;
 
+/** A Sunday, from which each weekday's name is read in the person's language. */
+const A_SUNDAY = Date.UTC(2026, 10, 15);
+
+/** The day's name in the person's language, `day` as the gate counts it. */
+export const dayName = (
+  locale: string,
+  day: number,
+  weekday: "narrow" | "short" | "long"
+) =>
+  new Intl.DateTimeFormat(locale, { weekday, timeZone: "UTC" }).format(
+    A_SUNDAY + day * 86_400_000
+  );
+
 /** What Add quiet hours appends: the night, every day. */
 export const NEW_QUIET_WINDOW: QuietWindow = { start: "22:00", end: "07:00" };
 
