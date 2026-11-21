@@ -699,7 +699,9 @@ test("the volume slider writes the app volume when a drag or a key press is comm
     0.95
   );
 
-  expect(await sounds(app)).toStrictEqual([{ sound: "chime", volume: 0.95 }]);
+  await expect
+    .poll(() => sounds(app))
+    .toStrictEqual([{ sound: "chime", volume: 0.95 }]);
 
   await page.mouse.up();
 
@@ -776,6 +778,24 @@ test("choosing one of Meru's sounds, Play sound and a volume commit each play th
     played.at(-1),
     await readStoredSetting(userDataDir, "notificationSoundVolume"),
   ]).toStrictEqual([{ sound: "duet", volume: 0.55 }, 0.55]);
+
+  // Held, an arrow key commits each step; only the last step is heard.
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+
+  await expect
+    .poll(() => readStoredSetting(userDataDir, "notificationSoundVolume"))
+    .toBe(0.7);
+  await expect.poll(() => sounds(app)).toHaveLength(5);
+  await delay(500);
+
+  const settled = await sounds(app);
+
+  expect([settled.length, settled.at(-1)]).toStrictEqual([
+    5,
+    { sound: "duet", volume: 0.7 },
+  ]);
 });
 
 test("with no sound of Meru's for the app, a volume commit plays the first profile's own", async ({

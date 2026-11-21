@@ -1,14 +1,14 @@
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
-import { noop } from "es-toolkit";
+import { debounce, noop } from "es-toolkit";
 import { PlayIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { PageSettings, SettingChange } from "#contract/settings.ts";
 import type { OverridableSettingKey } from "#core/settings.ts";
 import { NOTIFICATION_SOUNDS, isNotificationSound } from "#core/sounds.ts";
-import type { SoundChoice } from "#core/sounds.ts";
+import type { NotificationSound, SoundChoice } from "#core/sounds.ts";
 import { Button } from "#ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "#ui/card.tsx";
 import {
@@ -58,6 +58,12 @@ const SOUND_ORDER: readonly SoundChoice[] = [
   "system",
   ...NOTIFICATION_SOUNDS,
 ];
+
+/**
+ * How long after the last committed volume its preview waits, so a held
+ * arrow key, which commits each step, plays one sound and not a pile of them.
+ */
+const VOLUME_PREVIEW_WAIT = 250;
 
 type BooleanKey = {
   [Key in keyof PageSettings]: PageSettings[Key] extends boolean ? Key : never;
@@ -140,6 +146,15 @@ export const NotificationsPage = () => {
   const profiles = useSettingsState("profiles");
   const [chosenScope, setChosenScope] = useState<Scope>("all");
   const testBlockedId = useId();
+  const previewVolume = useMemo(
+    () =>
+      debounce((sound: NotificationSound) => {
+        void settingsCalls().previewSound({ sound });
+      }, VOLUME_PREVIEW_WAIT),
+    []
+  );
+
+  useEffect(() => previewVolume.cancel, [previewVolume]);
 
   if (!settings || !doNotDisturb || !profiles) {
     return null;
@@ -468,9 +483,7 @@ export const NotificationsPage = () => {
                             });
 
                             if (volumeHeardIn) {
-                              await calls.previewSound({
-                                sound: volumeHeardIn,
-                              });
+                              previewVolume(volumeHeardIn);
                             }
                           }}
                         />
