@@ -98,6 +98,11 @@ export const createSettingsStore = ({
 
     try {
       const next = change(settings);
+
+      if (next === settings) {
+        return;
+      }
+
       const changed = SETTING_KEYS.filter((key) =>
         differs(settings, next, key)
       );
