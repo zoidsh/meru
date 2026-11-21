@@ -210,6 +210,11 @@ export default defineConfig({
       },
     },
     {
+      // As the CLI writes it: the thumbs counted through a nested ternary.
+      files: ["src/ui/slider.tsx"],
+      rules: { "no-nested-ternary": "off" },
+    },
+    {
       // As the CLI writes it: default `render` buttons, which React
       // Compiler cannot reorder, the close button's English "Close toast",
       // which nothing of ours shows since main closes the toast, and its
