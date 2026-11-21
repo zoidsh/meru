@@ -513,11 +513,12 @@ export const NotificationsPage = () => {
                           disabled={doNotDisturb.on}
                           focusableWhenDisabled
                           className="aria-disabled:opacity-50"
-                          aria-describedby={
-                            [ids.description, doNotDisturb.on && testBlockedId]
-                              .filter(Boolean)
-                              .join(" ") || undefined
-                          }
+                          aria-describedby={[
+                            ids.description,
+                            doNotDisturb.on && testBlockedId,
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
                           onClick={() => {
                             void calls.showTestNotification({
                               profileId: profile?.id ?? null,
