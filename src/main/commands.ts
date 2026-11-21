@@ -64,6 +64,12 @@ export interface CommandContext {
    * there act on; `undefined` while the main window has it.
    */
   ownWindow: TabKey | undefined;
+  /**
+   * Whether the Settings window has focus. It has no page, so the page's
+   * fields read as `NO_PAGE`, and only what runs in a tab's own window and
+   * needs no tab is offered.
+   */
+  settingsFocused: boolean;
   /** Do Not Disturb while it holds, else `undefined`. */
   doNotDisturb: DoNotDisturb | undefined;
   /** Whether the unified inbox is open over the page. */
@@ -186,12 +192,22 @@ export interface Command {
   run: (context: CommandContext, actions: CommandActions) => Promise<unknown>;
 }
 
+/** The page's fields of a context whose focused window has no page. */
+export const NO_PAGE = {
+  navigation: null,
+  selectedTabAsleep: false,
+  findable: false,
+  canFindAgain: false,
+  bookmarked: undefined,
+} as const satisfies Partial<CommandContext>;
+
 /** Whether the command can run now, in the window that has focus. */
 export const isCommandAvailable = (
   command: Pick<Command, "isAvailable" | "inOwnWindow">,
   context: CommandContext
 ) =>
-  (context.ownWindow === undefined || command.inOwnWindow === true) &&
+  (command.inOwnWindow === true ||
+    (context.ownWindow === undefined && !context.settingsFocused)) &&
   (command.isAvailable?.(context) ?? true);
 
 const selectedTab = (state: State): TabKey => {
@@ -732,7 +748,7 @@ export const COMMANDS: readonly Command[] = [
     isAvailable: (context) => {
       const tab = findTab(context.state, actingTab(context));
 
-      return tab !== undefined && canCloseTab(tab);
+      return !context.settingsFocused && tab !== undefined && canCloseTab(tab);
     },
     once: true,
     run: (context, { closeTab }) => closeTab(actingTab(context)),

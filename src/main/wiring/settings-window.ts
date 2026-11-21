@@ -158,5 +158,9 @@ export const wireSettingsWindow = ({
     log: console.error,
   });
 
-  return { openSettings: settingsWindow.open };
+  return {
+    openSettings: settingsWindow.open,
+    settingsFocused: settingsWindow.isFocused,
+    onSettingsFocusChange: settingsWindow.onFocusChange,
+  };
 };

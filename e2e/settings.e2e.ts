@@ -19,6 +19,30 @@ const SETTINGS_URL = "meru-app://settings/";
 const windowCount = (app: ElectronApplication) =>
   app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
 
+/**
+ * Tells the Settings window it gained or lost focus, as the system would; the
+ * suite's app is never the active app, so the system never does.
+ */
+const emitSettingsFocus = (app: ElectronApplication, event: "focus" | "blur") =>
+  app.evaluate(
+    ({ BrowserWindow }, { url, name }) => {
+      BrowserWindow.getAllWindows()
+        .find((window) => window.webContents.getURL().startsWith(url))
+        ?.emit(name);
+    },
+    { url: SETTINGS_URL, name: event }
+  );
+
+/** Whether the application menu's items are enabled, by id. */
+const menuEnabled = (app: ElectronApplication, ids: readonly string[]) =>
+  app.evaluate(
+    ({ Menu }, itemIds) =>
+      itemIds.map(
+        (id) => Menu.getApplicationMenu()?.getMenuItemById(id)?.enabled
+      ),
+    ids
+  );
+
 /** Runs Settings… from the app menu, and gives the Settings window's page. */
 const openSettings = async (app: ElectronApplication) => {
   // The menu is set once startup has wired it.
@@ -94,6 +118,49 @@ test("Settings… opens one Settings window, which closes and opens again", asyn
   await openSettings(app);
 
   expect(await windowCount(app)).toBe(2);
+});
+
+test("with Settings focused, the menu's commands on a tab are disabled, so Back leaves the front tab's page where it was, and come back once it loses focus", async ({
+  app,
+  standIn,
+}) => {
+  const gmail = await findPage(app, standIn.url);
+  const later = new URL("#later", gmail.url()).href;
+  const ids = ["tab.back", "tab.reload", "tab.close", "app.settings"];
+
+  await gmail.evaluate(() => {
+    history.pushState({}, "", "#later");
+  });
+  await expect.poll(() => menuEnabled(app, ["tab.back"])).toStrictEqual([true]);
+
+  await openSettings(app);
+  await emitSettingsFocus(app, "focus");
+
+  await expect
+    .poll(() => menuEnabled(app, ids))
+    .toStrictEqual([false, false, false, true]);
+  expect(gmail.url()).toBe(later);
+
+  await emitSettingsFocus(app, "blur");
+
+  await expect
+    .poll(() => menuEnabled(app, ["tab.back", "tab.reload", "app.settings"]))
+    .toStrictEqual([true, true, true]);
+});
+
+test("Ctrl+W closes the Settings window on Windows and Linux", async ({
+  app,
+}) => {
+  test.skip(
+    process.platform === "darwin",
+    "macOS closes it on Cmd+W through the menu's Close Window"
+  );
+
+  const page = await openSettings(app);
+
+  await page.keyboard.press("Control+KeyW");
+
+  await expect.poll(() => windowCount(app)).toBe(1);
 });
 
 test("a switch writes the app value, which a restart keeps", async ({

@@ -1,19 +1,24 @@
 import { describe, expect, it } from "vitest";
 
-import type { WindowLoadEvent } from "#platform/window.ts";
+import type { WindowFocusEvent, WindowLoadEvent } from "#platform/window.ts";
 
 import { createSettingsWindow } from "./settings-window.ts";
 import type { SettingsWindowHandle } from "./settings-window.ts";
 
 const setup = (background = false) => {
   const calls: string[] = [];
-  const windows: { close: () => void; load: () => void }[] = [];
+  const windows: {
+    close: () => void;
+    load: () => void;
+    emit: (event: WindowFocusEvent) => void;
+  }[] = [];
   let nextId = 10;
 
   const settings = createSettingsWindow({
     create: () => {
       const id = nextId;
       const loadListeners: (() => void)[] = [];
+      const focusListeners: [WindowFocusEvent, () => void][] = [];
       let closed: (() => void) | undefined;
       let destroyed = false;
 
@@ -39,6 +44,9 @@ const setup = (background = false) => {
         onClosed: (listener) => {
           closed = listener;
         },
+        on: (event, listener) => {
+          focusListeners.push([event, listener]);
+        },
       };
 
       windows.push({
@@ -49,6 +57,13 @@ const setup = (background = false) => {
         load: () => {
           for (const listener of loadListeners) {
             listener();
+          }
+        },
+        emit: (event) => {
+          for (const [each, listener] of focusListeners) {
+            if (each === event) {
+              listener();
+            }
           }
         },
       });
@@ -106,6 +121,24 @@ describe(createSettingsWindow, () => {
         "load 11 meru-app://settings/index.html",
       ],
       11,
+    ]);
+  });
+
+  it("tells whether it is the window keys go to, and of each change, until it closes", () => {
+    const { settings, windows } = setup();
+    const seen: boolean[] = [];
+
+    settings.onFocusChange(() => seen.push(settings.isFocused()));
+    settings.open();
+    windows[0]?.emit("focus");
+    windows[0]?.emit("focus");
+    windows[0]?.emit("blur");
+    windows[0]?.emit("focus");
+    windows[0]?.close();
+
+    expect([seen, settings.isFocused()]).toStrictEqual([
+      [true, false, true, false],
+      false,
     ]);
   });
 

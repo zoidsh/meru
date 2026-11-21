@@ -21,6 +21,7 @@ const oneProfile: State = {
 const contextOf = (): CommandContext => ({
   state: oneProfile,
   ownWindow: undefined,
+  settingsFocused: false,
   doNotDisturb: undefined,
   inboxOpen: false,
   downloadsOpen: false,
@@ -402,6 +403,7 @@ const setup = () => {
     context: () => ({
       state,
       ownWindow: undefined,
+      settingsFocused: false,
       doNotDisturb: undefined,
       navigation: { canGoBack: false, canGoForward: false, loading: false },
       inboxOpen,

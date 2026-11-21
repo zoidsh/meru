@@ -9,7 +9,7 @@ import { zoomFocused } from "#platform/zoom.ts";
 
 import { createApplicationMenu } from "../application-menu.ts";
 import type { Bookmarks } from "../bookmarks.ts";
-import { COMMANDS } from "../commands.ts";
+import { COMMANDS, NO_PAGE } from "../commands.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Downloads } from "../downloads.ts";
 import type { Find } from "../find.ts";
@@ -55,6 +55,8 @@ export const wireMenu = ({
   navigateGmail,
   showOwnWindow,
   openSettings,
+  settingsFocused,
+  onSettingsFocusChange,
 }: {
   platform: Platform;
   background: boolean;
@@ -75,6 +77,9 @@ export const wireMenu = ({
   navigateGmail: ReturnType<typeof createGmailNavigation>;
   showOwnWindow: (key: TabKey) => void;
   openSettings: () => void;
+  /** Whether the Settings window has the keys. */
+  settingsFocused: () => boolean;
+  onSettingsFocusChange: (listener: () => void) => void;
 }) => {
   /** The tab whose own window has focus, its page or its titlebar. */
   const focusedOwnWindow = (): TabKey | undefined => {
@@ -119,25 +124,33 @@ export const wireMenu = ({
     appName: lifecycle.name,
     commands: COMMANDS,
     context: () => {
-      const ownWindow = focusedOwnWindow();
-
-      return {
+      const inSettings = settingsFocused();
+      const ownWindow = inSettings ? undefined : focusedOwnWindow();
+      const base = {
         state: profiles.get(),
         ownWindow,
+        settingsFocused: inSettings,
         doNotDisturb: doNotDisturb.current(),
         inboxOpen: inbox.isOpen(),
         downloadsOpen: downloads.isOpen(),
         openAppOpen: openApp.isOpen(),
         sidebarShown: sidebar.current() !== "hidden",
-        navigation: views.navigation(ownWindow),
-        selectedTabAsleep: ownWindow === undefined && views.frontAsleep(),
-        findable:
-          ownWindow === undefined
-            ? views.findable() !== undefined && !coversPage(overlays.current())
-            : views.ownWindowFocuser(ownWindow) !== undefined,
-        canFindAgain: find.canGoOn(ownWindow),
-        bookmarked: bookmarks.acting(ownWindow),
       };
+
+      return inSettings
+        ? { ...base, ...NO_PAGE }
+        : {
+            ...base,
+            navigation: views.navigation(ownWindow),
+            selectedTabAsleep: ownWindow === undefined && views.frontAsleep(),
+            findable:
+              ownWindow === undefined
+                ? views.findable() !== undefined &&
+                  !coversPage(overlays.current())
+                : views.ownWindowFocuser(ownWindow) !== undefined,
+            canFindAgain: find.canGoOn(ownWindow),
+            bookmarked: bookmarks.acting(ownWindow),
+          };
     },
     actions: {
       reloadSelectedTab: () => {
@@ -228,6 +241,7 @@ export const wireMenu = ({
   // Focus moving between the main window and a tab's own window changes
   // which commands run.
   focus.onFocused(menu.refresh);
+  onSettingsFocusChange(menu.refresh);
 
   return { menu, moveToOwnWindow, moveToMainWindow };
 };

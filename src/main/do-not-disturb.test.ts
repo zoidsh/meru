@@ -199,6 +199,7 @@ const labels = (context: Partial<CommandContext>) =>
     {
       state: one,
       ownWindow: undefined,
+      settingsFocused: false,
       doNotDisturb: undefined,
       navigation: null,
       inboxOpen: false,

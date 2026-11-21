@@ -14,6 +14,7 @@ export type SettingsWindowHandle = Pick<
   | "isMinimized"
   | "restore"
   | "onClosed"
+  | "on"
 >;
 
 export interface SettingsWindowDeps<Window extends SettingsWindowHandle> {
@@ -42,6 +43,20 @@ export const createSettingsWindow = <Window extends SettingsWindowHandle>({
   log,
 }: SettingsWindowDeps<Window>) => {
   let current: Window | undefined;
+  let focused = false;
+  const focusListeners = new Set<() => void>();
+
+  const setFocused = (next: boolean) => {
+    if (focused === next) {
+      return;
+    }
+
+    focused = next;
+
+    for (const listener of focusListeners) {
+      listener();
+    }
+  };
 
   const load = async (window: Window) => {
     try {
@@ -69,7 +84,14 @@ export const createSettingsWindow = <Window extends SettingsWindowHandle>({
 
       if (current === window) {
         current = undefined;
+        setFocused(false);
       }
+    });
+    window.on("focus", () => {
+      setFocused(true);
+    });
+    window.on("blur", () => {
+      setFocused(false);
     });
     prepare(window);
 
@@ -93,5 +115,11 @@ export const createSettingsWindow = <Window extends SettingsWindowHandle>({
     open,
     /** The open window, if any. */
     current: () => (current && !current.isDestroyed() ? current : undefined),
+    /** Whether it is the window keys go to. */
+    isFocused: () => focused,
+    /** Tells of `isFocused` changing. */
+    onFocusChange: (listener: () => void) => {
+      focusListeners.add(listener);
+    },
   };
 };

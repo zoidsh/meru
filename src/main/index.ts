@@ -406,21 +406,22 @@ const start = async () => {
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
 
-  const { openSettings } = wireSettingsWindow({
-    isMacOS,
-    background,
-    lifecycle,
-    contextMenus,
-    displays,
-    theme,
-    url: settingsUrl.href,
-    origin: settingsOrigin,
-    ipc,
-    senders,
-    settings,
-    profiles,
-    doNotDisturb,
-  });
+  const { openSettings, settingsFocused, onSettingsFocusChange } =
+    wireSettingsWindow({
+      isMacOS,
+      background,
+      lifecycle,
+      contextMenus,
+      displays,
+      theme,
+      url: settingsUrl.href,
+      origin: settingsOrigin,
+      ipc,
+      senders,
+      settings,
+      profiles,
+      doNotDisturb,
+    });
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({
     platform,
@@ -442,6 +443,8 @@ const start = async () => {
     navigateGmail,
     showOwnWindow,
     openSettings,
+    settingsFocused,
+    onSettingsFocusChange,
   });
 
   wireShellContract({

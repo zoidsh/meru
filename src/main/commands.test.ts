@@ -11,6 +11,7 @@ import {
   COMMANDS,
   currentSearch,
   isCommandAvailable,
+  NO_PAGE,
   savedSearchCommands,
 } from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
@@ -58,6 +59,7 @@ const setup = (initial: State = twoProfiles) => {
   let navigation: Navigation | null = null;
   let selectedTabAsleep = false;
   let ownWindow: TabKey | undefined;
+  let settingsFocused = false;
   const moves: string[] = [];
   const sleeps: string[] = [];
   const splits: string[] = [];
@@ -148,20 +150,29 @@ const setup = (initial: State = twoProfiles) => {
     },
     setDownloadsOpen: () => {},
   };
-  const context = (): CommandContext => ({
-    state: profiles.get(),
-    ownWindow,
-    doNotDisturb: doNotDisturb.current(),
-    inboxOpen,
-    downloadsOpen: false,
-    openAppOpen,
-    sidebarShown,
-    navigation,
-    selectedTabAsleep,
-    findable,
-    canFindAgain,
-    bookmarked,
-  });
+  const context = (): CommandContext => {
+    const base = {
+      state: profiles.get(),
+      ownWindow: settingsFocused ? undefined : ownWindow,
+      settingsFocused,
+      doNotDisturb: doNotDisturb.current(),
+      inboxOpen,
+      downloadsOpen: false,
+      openAppOpen,
+      sidebarShown,
+    };
+
+    return settingsFocused
+      ? { ...base, ...NO_PAGE }
+      : {
+          ...base,
+          navigation,
+          selectedTabAsleep,
+          findable,
+          canFindAgain,
+          bookmarked,
+        };
+  };
 
   onTestFinished(doNotDisturb.dispose);
 
@@ -181,6 +192,9 @@ const setup = (initial: State = twoProfiles) => {
     },
     setOwnWindow: (key: TabKey | undefined) => {
       ownWindow = key;
+    },
+    setSettingsFocused: (next: boolean) => {
+      settingsFocused = next;
     },
     setBookmarked: (next: boolean | undefined) => {
       bookmarked = next;
@@ -534,6 +548,51 @@ describe("the command registry", () => {
       "Remove Bookmark",
       true,
       ["gmail announced", "c1"],
+    ]);
+  });
+
+  it("while Settings has focus offers nothing that acts on a tab or the main window, so the front tab stays where it was", () => {
+    const app = setup();
+
+    app.setNavigation({ canGoBack: true, canGoForward: true, loading: true });
+    app.setFind(true, true);
+    app.setBookmarked(false);
+    app.setSettingsFocused(true);
+
+    expect(
+      [
+        "tab.back",
+        "tab.forward",
+        "tab.reload",
+        "tab.stop",
+        "tab.find",
+        "tab.findNext",
+        "tab.findPrevious",
+        "tab.bookmark",
+        "tab.close",
+        "tab.next",
+        "sidebar.toggle",
+        "profile.add",
+        "app.settings",
+        "doNotDisturb.toggle",
+        "doNotDisturb.30m",
+      ].map((id) => [id, Boolean(app.isAvailable(id))])
+    ).toStrictEqual([
+      ["tab.back", false],
+      ["tab.forward", false],
+      ["tab.reload", false],
+      ["tab.stop", false],
+      ["tab.find", false],
+      ["tab.findNext", false],
+      ["tab.findPrevious", false],
+      ["tab.bookmark", false],
+      ["tab.close", false],
+      ["tab.next", false],
+      ["sidebar.toggle", false],
+      ["profile.add", false],
+      ["app.settings", true],
+      ["doNotDisturb.toggle", true],
+      ["doNotDisturb.30m", true],
     ]);
   });
 
