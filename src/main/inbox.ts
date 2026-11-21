@@ -21,6 +21,8 @@ export interface InboxDeps {
   open: (profileId: string, url: string) => Promise<void>;
   /** Gmail's inbox, which a message opens at when its link is not Gmail's. */
   inbox: string;
+  /** Whether the profile's mail is listed, read each time the inbox is drawn. */
+  includes: (profileId: string) => boolean;
   /** Main's state when the inbox starts following it. */
   initial: State;
   /** The overlay it shows in, which keeps whether it is open. */
@@ -58,6 +60,7 @@ export const createInbox = ({
   run,
   open,
   inbox,
+  includes,
   initial,
   overlay,
   now = Date.now,
@@ -82,9 +85,13 @@ export const createInbox = ({
     }
   };
 
-  /** The entry, if the profile's feed reads and lists the message. */
+  /** The listed profiles whose mail the inbox shows. */
+  const included = () =>
+    state.profiles.filter((profile) => includes(profile.id));
+
+  /** The entry, if the profile's mail is shown and its feed lists the message. */
   const listed = (profileId: string, messageId: string) =>
-    state.profiles.some((profile) => profile.id === profileId) &&
+    included().some((profile) => profile.id === profileId) &&
     mail.mail(profileId).status === "ok"
       ? mail.entries(profileId).find((entry) => entry.id === messageId)
       : undefined;
@@ -117,7 +124,7 @@ export const createInbox = ({
         return CLOSED;
       }
 
-      const profiles = state.profiles.map((profile) => {
+      const profiles = included().map((profile) => {
         const { status, unreadCount } = mail.mail(profile.id);
 
         return {
@@ -243,6 +250,12 @@ export const createInbox = ({
       if (!inboxAvailable(next)) {
         close();
       } else if (isOpen()) {
+        notify();
+      }
+    },
+    /** Told when which profiles it shows may have changed. */
+    refresh: () => {
+      if (isOpen()) {
         notify();
       }
     },

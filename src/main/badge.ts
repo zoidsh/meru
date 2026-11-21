@@ -2,7 +2,7 @@ import { plural, t } from "@lingui/core/macro";
 
 import { drawUnreadBadge } from "#core/badge-image.ts";
 import type { Platform } from "#core/platform.ts";
-import { MAX_SHOWN_UNREAD } from "#core/unread.ts";
+import { MAX_SHOWN_UNREAD, totalUnread } from "#core/unread.ts";
 import type { Badge } from "#platform/badge.ts";
 
 /** Windows' overlay is 16 logical pixels; the second is for a 200% display. */
@@ -21,17 +21,27 @@ export const unreadText = (count: number) =>
 export interface UnreadBadgeDeps {
   badge: Badge;
   platform: Platform;
-  /** Read at each update, so turning it off clears the badge at once. */
-  enabled: () => boolean;
-  total: () => number;
+  /** The listed profiles' ids. */
+  profiles: () => readonly string[];
+  /** The profile's unread count, `null` while it is not known. */
+  unread: (profileId: string) => number | null;
+  /**
+   * Whether the profile's unread mail adds to the badge, read at each update
+   * so turning it off takes the profile's mail off at once.
+   */
+  counted: (profileId: string) => boolean;
 }
 
-/** Shows the total unread count on the app's icon, and nothing at zero. */
+/**
+ * Shows the unread count of the profiles that count toward it on the app's
+ * icon, and nothing at zero.
+ */
 export const createUnreadBadge = ({
   badge,
   platform,
-  enabled,
-  total,
+  profiles,
+  unread,
+  counted,
 }: UnreadBadgeDeps) => {
   let shownCount = 0;
   let closed = false;
@@ -43,7 +53,7 @@ export const createUnreadBadge = ({
         return;
       }
 
-      const count = enabled() ? total() : 0;
+      const count = totalUnread(profiles().filter(counted).map(unread));
 
       if (count === shownCount) {
         return;

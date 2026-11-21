@@ -198,6 +198,7 @@ export const wireGmail = ({
       }
     },
     inbox: gmailHome,
+    includes: (profileId) => settings.get("unifiedInbox", profileId),
     initial: profiles.get(),
     overlay: {
       isOpen: () => overlays.current()?.kind === "inbox",
@@ -212,6 +213,7 @@ export const wireGmail = ({
   });
 
   mail.onPoll(inbox.polled);
+  settings.onChange("unifiedInbox", inbox.refresh);
 
   return { showGmail, navigateGmail, mailActions, inbox };
 };

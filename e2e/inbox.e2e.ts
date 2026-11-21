@@ -138,6 +138,26 @@ const launch = async (
   return { app, shell, overlay: await findOverlayDocument(app) };
 };
 
+/** Gives the profile its own value of the inbox setting, or takes it away. */
+const setInboxOverride = (
+  app: ElectronApplication,
+  profileId: string,
+  listed: boolean | undefined
+) =>
+  app.evaluate(
+    async (_electron, [id, value]) => {
+      const settings = Reflect.get(globalThis, "meruTestSettings") as {
+        setOverride: (id: string, key: string, value: unknown) => Promise<void>;
+        clearOverride: (id: string, key: string) => Promise<void>;
+      };
+
+      await (value === undefined
+        ? settings.clearOverride(id, "unifiedInbox")
+        : settings.setOverride(id, "unifiedInbox", value));
+    },
+    [profileId, listed] as const
+  );
+
 const openInbox = async (shell: Page, overlay: Page) => {
   await inboxButton(shell).click();
   await expect(grid(overlay)).toBeVisible();
@@ -183,6 +203,32 @@ test("lists every profile's mail newest first in an overlay over the page, says 
   await expect(grid(overlay)).toBeHidden();
   await expect.poll(() => overlayShown(app)).toBeFalsy();
   await expect(shell.getByRole("button", { name: "Reload" })).toBeEnabled();
+});
+
+test("leaves out an open inbox's rows of a profile set to stay out of it, and lists them again once that goes", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, overlay } = await launch(launchApp, userDataDir, standIn);
+
+  await openInbox(shell, overlay);
+  await expect
+    .poll(() => subjects(overlay))
+    .toStrictEqual(["Subject a1", "Subject b2", "Subject a3"]);
+
+  await setInboxOverride(app, "p1", false);
+
+  await expect
+    .poll(() => subjects(overlay))
+    .toStrictEqual(["Subject a1", "Subject a3"]);
+  await expect(grid(overlay).getByText("Work")).toHaveCount(0);
+
+  await setInboxOverride(app, "p1", undefined);
+
+  await expect
+    .poll(() => subjects(overlay))
+    .toStrictEqual(["Subject a1", "Subject b2", "Subject a3"]);
 });
 
 test("reloads the page under it, as under any other overlay, and stays open", async ({

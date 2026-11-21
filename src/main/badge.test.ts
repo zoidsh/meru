@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { Platform } from "#core/platform.ts";
+import { createInitialSettings } from "#core/settings.ts";
 import type { BadgeContent } from "#platform/badge.ts";
 
 import { createUnreadBadge, unreadText } from "./badge.ts";
+import { createSettingsStore } from "./settings.ts";
 
 const setup = (platform: Platform = "darwin") => {
   const shown: (BadgeContent | undefined)[] = [];
@@ -17,8 +19,9 @@ const setup = (platform: Platform = "darwin") => {
       },
     },
     platform,
-    enabled: () => enabled,
-    total: () => total,
+    profiles: () => ["a"],
+    unread: () => total,
+    counted: () => enabled,
   });
 
   return {
@@ -99,5 +102,43 @@ describe(createUnreadBadge, () => {
     app.setEnabled(true);
 
     expect(app.texts()).toStrictEqual(["2", undefined]);
+  });
+
+  it("leaves out a profile whose own setting keeps it from the badge, and counts it again once that goes", async () => {
+    const shown: (BadgeContent | undefined)[] = [];
+    const unread: Record<string, number | null> = { a: 3, b: 4, c: null };
+    const settings = createSettingsStore({
+      initial: createInitialSettings(),
+      save: () => Promise.resolve(),
+      platform: "darwin",
+      log: () => {},
+    });
+    const badge = createUnreadBadge({
+      badge: {
+        show: (content) => {
+          shown.push(content);
+        },
+      },
+      platform: "darwin",
+      profiles: () => Object.keys(unread),
+      unread: (profileId) => unread[profileId] ?? null,
+      counted: (profileId) => settings.get("unreadBadge", profileId),
+    });
+
+    settings.onChange("unreadBadge", badge.update);
+    badge.update();
+    await settings.setOverride("b", "unreadBadge", false);
+    await settings.update("unreadBadge", () => false);
+    await settings.setOverride("a", "unreadBadge", true);
+    await settings.clearOverride("b", "unreadBadge");
+    await settings.update("unreadBadge", () => true);
+
+    expect(shown.map((content) => content?.text)).toStrictEqual([
+      "7",
+      "3",
+      undefined,
+      "3",
+      "7",
+    ]);
   });
 });

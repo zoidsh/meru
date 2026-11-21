@@ -1,5 +1,4 @@
 import type { Platform } from "#core/platform.ts";
-import { totalUnread } from "#core/unread.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { createTheme } from "#platform/theme.ts";
 
@@ -73,9 +72,9 @@ export const wireTray = ({
   const badge = createUnreadBadge({
     badge: systemBadge(shell.window),
     platform,
-    enabled: () => settings.get("unreadBadge"),
-    total: () =>
-      totalUnread(profiles.get().profiles.map((profile) => unread(profile.id))),
+    profiles: () => profiles.get().profiles.map((profile) => profile.id),
+    unread,
+    counted: (profileId) => settings.get("unreadBadge", profileId),
   });
   const showUnread = () => {
     tray.update();

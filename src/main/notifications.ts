@@ -40,8 +40,14 @@ export interface MailNotificationsDeps {
   clipboard: Clipboard;
   /** The digits of the code `[subject, summary]` carries, if any. */
   extractCode: (texts: readonly string[]) => string | undefined;
-  /** Read as each notification is made, so a change applies to the next. */
-  setting: <Key extends SettingKey>(key: Key) => SettingValue<Key>;
+  /**
+   * Read as each notification is made, so a change applies to the next; with
+   * a profile, that profile's value where it holds one of its own.
+   */
+  setting: <Key extends SettingKey>(
+    key: Key,
+    profileId?: string
+  ) => SettingValue<Key>;
   state: () => State;
   /** Whether the system shows a subtitle, as macOS does. */
   hasSubtitle: boolean;
@@ -163,7 +169,11 @@ export const createMailNotifications = ({
   ) => {
     const held = shown.get(profileId) ?? new Set<ShownNotification>();
     const time = now().getTime();
-    const sound = decideSound(setting("notificationSound"), time, lastSoundAt);
+    const sound = decideSound(
+      setting("notificationSound", profileId),
+      time,
+      lastSoundAt
+    );
     let notification: ShownNotification | undefined;
 
     shown.set(profileId, held);
@@ -273,8 +283,8 @@ export const createMailNotifications = ({
   ) => {
     const decision = decideNotification({
       kind: "verificationCode",
-      notifications: setting("notifications"),
-      quietHours: setting("quietHours"),
+      notifications: setting("notifications", profileId),
+      quietHours: setting("quietHours", profileId),
       doNotDisturb: doNotDisturb(),
       now: momentOf(now()),
     });
@@ -385,9 +395,9 @@ export const createMailNotifications = ({
 
       const optionsFor = (named: Profile): NoticeOptions => ({
         parts: {
-          sender: setting("notificationSender"),
-          subject: setting("notificationSubject"),
-          summary: setting("notificationSummary"),
+          sender: setting("notificationSender", profileId),
+          subject: setting("notificationSubject", profileId),
+          summary: setting("notificationSummary", profileId),
         },
         profileName:
           state().profiles.length > 1 ? profileDisplayName(named) : undefined,
@@ -418,8 +428,8 @@ export const createMailNotifications = ({
       const held = () => {
         const decision = decideNotification({
           kind: "newMail",
-          notifications: setting("notifications"),
-          quietHours: setting("quietHours"),
+          notifications: setting("notifications", profileId),
+          quietHours: setting("quietHours", profileId),
           doNotDisturb: doNotDisturb(),
           now: momentOf(now()),
         });
@@ -437,7 +447,7 @@ export const createMailNotifications = ({
         return;
       }
 
-      if (setting("notificationImportantOnly")) {
+      if (setting("notificationImportantOnly", profileId)) {
         const ids = await important(profileId);
 
         if (ids === null) {

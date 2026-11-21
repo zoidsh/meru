@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { FeedEntry, FeedOutcome, MailStatus } from "#core/feed.ts";
 import type { ActionOutcome, MailAction } from "#core/mail-actions.ts";
+import { createInitialSettings } from "#core/settings.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createInbox } from "./inbox.ts";
+import { createSettingsStore } from "./settings.ts";
 
 const GMAIL = "https://mail.google.com/mail/u/0/";
 
@@ -52,6 +54,12 @@ const setup = (initial: State = two) => {
   const overlay = { open: false, opens: 0, closes: 0 };
   let changes = 0;
   let clock = 1000;
+  const settings = createSettingsStore({
+    initial: createInitialSettings(),
+    save: () => Promise.resolve(),
+    platform: "darwin",
+    log: (message) => logs.push(message),
+  });
 
   const inbox = createInbox({
     mail: {
@@ -74,6 +82,7 @@ const setup = (initial: State = two) => {
       return Promise.resolve();
     },
     inbox: GMAIL,
+    includes: (profileId) => settings.get("unifiedInbox", profileId),
     initial,
     overlay: {
       isOpen: () => overlay.open,
@@ -93,12 +102,14 @@ const setup = (initial: State = two) => {
   inbox.onChange(() => {
     changes += 1;
   });
+  settings.onChange("unifiedInbox", inbox.refresh);
 
   const rows = () =>
     inbox.shellSlice().rows.map((row) => `${row.profileId}/${row.messageId}`);
 
   return {
     inbox,
+    settings,
     feeds,
     runs,
     opened,
@@ -147,6 +158,28 @@ describe(createInbox, () => {
       },
       { id: "b", name: "Work", status: "ok", unreadCount: 1, listed: 1 },
     ]);
+  });
+
+  it("leaves out the mail of a profile whose own setting keeps it from the inbox, and shows it again once that goes", async () => {
+    const app = setup();
+
+    app.inbox.setOpen(true);
+    await app.settings.setOverride("b", "unifiedInbox", false);
+
+    expect([
+      app.rows(),
+      app.inbox.shellSlice().profiles.map((profile) => profile.id),
+      app.changes(),
+    ]).toStrictEqual([["a/a1", "a/a2"], ["a"], 1]);
+
+    await app.inbox.openMessage("b", "b1");
+
+    expect(app.opened).toStrictEqual([]);
+
+    await app.settings.clearOverride("b", "unifiedInbox");
+
+    expect(app.rows()).toStrictEqual(["a/a1", "b/b1", "a/a2"]);
+    expect(app.changes()).toBe(2);
   });
 
   it("opens its overlay once and closes it once, however often asked", () => {

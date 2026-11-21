@@ -4,8 +4,17 @@ import { describe, expect, it } from "vitest";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import type { MailAction } from "#core/mail-actions.ts";
-import { SETTINGS } from "#core/settings.ts";
-import type { SettingKey } from "#core/settings.ts";
+import {
+  createInitialSettings,
+  readSetting,
+  writeOverride,
+} from "#core/settings.ts";
+import type {
+  OverridableSettingKey,
+  SettingKey,
+  SettingValue,
+  Settings,
+} from "#core/settings.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type {
@@ -74,7 +83,7 @@ const setup = ({
   const askedImportant: string[] = [];
   const opened: [string, string][] = [];
   const acted: [string, MailAction, string][] = [];
-  const settings = new Map<SettingKey, unknown>();
+  let settings: Settings = createInitialSettings();
   const played: SoundRequest[] = [];
   let clock = now;
   let showing = supported;
@@ -113,8 +122,8 @@ const setup = ({
     // Fixed, so these tests prove the path and not the extractor.
     extractCode: ([subject, summary]) =>
       subject === CODE_SUBJECT ? /\d{6}/u.exec(summary ?? "")?.[0] : undefined,
-    setting: (key) =>
-      (settings.has(key) ? settings.get(key) : SETTINGS[key].default) as never,
+    setting: (key, profileId) =>
+      readSetting(settings, key, "darwin", profileId),
     state: () => current,
     hasSubtitle,
     inbox: INBOX,
@@ -172,7 +181,14 @@ const setup = ({
       doNotDisturb = next;
     },
     set: (key: SettingKey, value: unknown) => {
-      settings.set(key, value);
+      settings = { ...settings, [key]: value };
+    },
+    override: <Key extends OverridableSettingKey>(
+      profileId: string,
+      key: Key,
+      value: SettingValue<Key>
+    ) => {
+      settings = writeOverride(settings, profileId, key, value);
     },
     setState: (next: State) => {
       current = next;
@@ -956,5 +972,53 @@ describe("sounds", () => {
 
     expect(silences(app.shown)).toStrictEqual([true, true]);
     expect(app.played).toStrictEqual([{ sound: "chime", volume: 1 }]);
+  });
+
+  it("reads notifications, quiet hours and what shows for the profile the mail is in", () => {
+    const app = setup({ state: two });
+
+    app.override("b", "notifications", false);
+    app.override("a", "notificationSender", false);
+    app.notifications.polled("a", feed());
+    app.notifications.polled("b", feed());
+    app.notifications.polled("a", feed(entry("1")));
+    app.notifications.polled("b", feed(entry("2")));
+
+    expect(app.shown.map(({ title }) => title)).toStrictEqual(["New message"]);
+
+    app.set("notifications", false);
+    app.override("b", "notifications", true);
+    app.notifications.polled("a", feed(entry("3"), entry("1")));
+    app.notifications.polled("b", feed(entry("4"), entry("2")));
+
+    expect(app.shown.map(({ title }) => title)).toStrictEqual([
+      "New message",
+      "Sender 4",
+    ]);
+  });
+
+  it("holds a profile's mail by its own quiet hours, which replace the app's whole", () => {
+    // 14:00 on a Tuesday.
+    const app = setup({ state: two });
+
+    app.set("quietHours", [{ start: "13:00", end: "15:00" }]);
+    app.override("b", "quietHours", [{ start: "22:00", end: "07:00" }]);
+    app.notifications.polled("a", feed());
+    app.notifications.polled("b", feed());
+    app.notifications.polled("a", feed(entry("1")));
+    app.notifications.polled("b", feed(entry("2")));
+
+    expect(app.shown.map(({ title }) => title)).toStrictEqual(["Sender 2"]);
+  });
+
+  it("plays the sound the profile the mail is in sets, at the app's volume", () => {
+    const app = setup({ state: two });
+
+    app.set("notificationSoundVolume", 0.5);
+    app.override("b", "notificationSound", "chime");
+    app.notifications.polled("b", feed());
+    app.notifications.polled("b", feed(entry("1")));
+
+    expect(app.played).toStrictEqual([{ sound: "chime", volume: 0.5 }]);
   });
 });
