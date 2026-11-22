@@ -1,7 +1,7 @@
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
-import { hasTabbedInbox, profilePartition } from "#core/state.ts";
+import { checksMail, hasTabbedInbox, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -67,7 +67,12 @@ export const wireMailFeed = ({
     log: console.error,
   });
   const pollProfiles = (current: State) => {
-    mail.reconcile(current.profiles.map((profile) => profile.id));
+    mail.reconcile(
+      current.profiles.map((profile) => profile.id),
+      current.profiles
+        .filter((profile) => !checksMail(profile))
+        .map((profile) => profile.id)
+    );
   };
 
   // A removed profile's polling stops here, before its data is cleared.

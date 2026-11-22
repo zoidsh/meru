@@ -399,6 +399,27 @@ describe(createMailNotifications, () => {
 
     expect(shown).toHaveLength(2);
   });
+
+  it("closes the notifications of a profile whose mail is no longer checked, and only records its first feed once checked again", () => {
+    const { notifications, shown, setState } = setup({ state: two });
+    const unchecked = {
+      ...two,
+      profiles: two.profiles.map((profile) =>
+        profile.id === "b" ? { ...profile, checkMail: false } : profile
+      ),
+    };
+
+    notifications.polled("b", feed());
+    notifications.polled("b", feed(entry("2")));
+    setState(unchecked);
+
+    const closed = shown.map((notification) => notification.closed);
+
+    setState(two);
+    notifications.polled("b", feed(entry("3"), entry("2")));
+
+    expect([closed, shown.length]).toStrictEqual([[true], 1]);
+  });
 });
 
 const titles = (shown: Shown[]) =>

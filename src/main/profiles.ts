@@ -20,6 +20,7 @@ import {
   setProfileColor,
   selectProfile,
   setTabbedInbox,
+  setCheckMail,
   sleepProfile,
   sortProfilesToClear,
   switchDoNotDisturb,
@@ -205,6 +206,9 @@ export const createProfiles = ({
     /** Nothing when it is not listed or has the colour stored already. */
     setColor: (profileId: string, color: ProfileColorName) =>
       exclusive(() => commit(setProfileColor(state, profileId, color))),
+    /** Nothing when it is not listed or its Check mail is already so. */
+    setCheckMail: (profileId: string, on: boolean) =>
+      exclusive(() => commit(setCheckMail(state, profileId, on))),
     /** Nothing when the name is empty, too long or the one it has. */
     rename: (profileId: string, name: string) =>
       exclusive(() => commit(renameProfile(state, profileId, name))),

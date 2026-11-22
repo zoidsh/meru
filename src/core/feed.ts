@@ -61,8 +61,17 @@ export const isSectioned = (value: unknown) => value === "SECTIONED";
 export const inboxLabel = (sectioned: boolean) =>
   sectioned ? PRIMARY_LABEL : undefined;
 
-/** Where a profile's feed stands, `unknown` until its first poll ends. */
-export const MAIL_STATUSES = ["unknown", "ok", "signedOut", "failed"] as const;
+/**
+ * Where a profile's feed stands, `unknown` until its first poll ends, and
+ * `notChecked` while its Check mail is off.
+ */
+export const MAIL_STATUSES = [
+  "unknown",
+  "ok",
+  "signedOut",
+  "failed",
+  "notChecked",
+] as const;
 
 export type MailStatus = (typeof MAIL_STATUSES)[number];
 

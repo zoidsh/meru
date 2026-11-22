@@ -575,6 +575,42 @@ describe(createMailPoller, () => {
     expect(changes).toHaveBeenCalledOnce();
   });
 
+  it("stops polling a profile whose mail is not checked, clearing what it read at once, and polls it at once when checked again", async () => {
+    const { poller, answer, fetchesOf, changes } = setup();
+
+    poller.reconcile(["a", "b"]);
+    await answer("a", feed(4, "me@example.org"));
+    await answer("b", feed(1));
+    changes.mockClear();
+    poller.reconcile(["a", "b"], ["a"]);
+
+    const off = [
+      poller.mail("a"),
+      poller.entries("a"),
+      poller.address("a"),
+      changes.mock.calls.length,
+    ];
+
+    poller.pokeAll();
+    await vi.advanceTimersByTimeAsync(SIGNED_OUT_INTERVAL * 2);
+
+    const fetchedWhileOff = fetchesOf("a");
+
+    poller.reconcile(["a", "b"]);
+
+    expect([
+      off,
+      fetchedWhileOff,
+      fetchesOf("a"),
+      poller.mail("a").status,
+    ]).toStrictEqual([
+      [{ status: "notChecked", unreadCount: null }, [], undefined, 1],
+      1,
+      2,
+      "unknown",
+    ]);
+  });
+
   it("tells each poll's outcome as it ends, failures included, but none of a removed profile", async () => {
     const { poller, answer } = setup();
     const polls: [string, FeedOutcome][] = [];

@@ -23,6 +23,7 @@ import type {
 } from "#core/notifications.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { decideSound, sounds } from "#core/sounds.ts";
+import { checksMail } from "#core/state.ts";
 import type { DoNotDisturb, Profile, State } from "#core/state.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type {
@@ -544,9 +545,17 @@ export const createMailNotifications = ({
         true
       );
     },
-    /** Forgets each profile no longer listed and closes its notifications. */
+    /**
+     * Forgets each profile no longer listed, or whose mail is no longer
+     * checked, and closes its notifications; checked again, its first feed
+     * is only recorded, so mail that came meanwhile is not told.
+     */
     follow: (current: State) => {
-      const listed = new Set(current.profiles.map((profile) => profile.id));
+      const listed = new Set(
+        current.profiles
+          .filter((profile) => checksMail(profile))
+          .map((profile) => profile.id)
+      );
 
       for (const profileId of new Set([...seen.keys(), ...shown.keys()])) {
         if (!listed.has(profileId)) {

@@ -5,6 +5,7 @@ import {
   addProfile,
   adjacentProfile,
   canRemoveProfile,
+  checksMail,
   DEFAULT_PROFILE_NAME,
   STATE_VERSION,
   PROFILE_NAME_MAX_LENGTH,
@@ -28,6 +29,7 @@ import {
   ownWindowBounds,
   profilePartition,
   removeProfile,
+  setCheckMail,
   renameProfile,
   selectProfile,
   selectedProfile,
@@ -1252,6 +1254,51 @@ describe("stored colours this build cannot read", () => {
         ["D", 7],
       ],
     ]);
+  });
+});
+
+const storedCheckMail = (state: State | undefined) =>
+  ((state && encodeState(state)) as { profiles: { checkMail?: unknown }[] })
+    .profiles[0]?.checkMail;
+
+describe(setCheckMail, () => {
+  const decodedWith = (checkMail: unknown) => {
+    const decoded = decodeState({
+      ...valid,
+      profiles: valid.profiles.map((profile, index) =>
+        index === 0 ? { ...profile, checkMail } : profile
+      ),
+    });
+
+    if (decoded.kind !== "read") {
+      throw new Error(decoded.kind);
+    }
+
+    return decoded.value;
+  };
+  const workId = valid.profiles[0]?.id ?? "";
+
+  it("reads only false as off, and writes anything else back as found", () => {
+    const maybe = decodedWith("maybe");
+    const [work] = maybe.profiles;
+
+    expect([
+      work && checksMail(work),
+      storedCheckMail(maybe),
+      storedCheckMail(setCheckMail(maybe, workId, true) ?? maybe),
+    ]).toStrictEqual([true, "maybe", "maybe"]);
+  });
+
+  it("stores false when turned off and drops the key when turned on again", () => {
+    const off = setCheckMail(decodedWith("maybe"), workId, false);
+    const on = off && setCheckMail(off, workId, true);
+
+    expect([
+      storedCheckMail(off),
+      on && Object.hasOwn(on.profiles[0] ?? {}, "checkMail"),
+      off && setCheckMail(off, workId, false),
+      setCheckMail(decodedWith(false), "gone", true),
+    ]).toStrictEqual([false, false, undefined, undefined]);
   });
 });
 

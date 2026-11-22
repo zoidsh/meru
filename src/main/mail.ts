@@ -68,6 +68,7 @@ interface Polled extends Mail {
 }
 
 const NO_MAIL: Mail = { status: "unknown", unreadCount: null };
+const NOT_CHECKED: Mail = { status: "notChecked", unreadCount: null };
 
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -102,6 +103,8 @@ export const createMailPoller = ({
   log,
 }: MailPollerDeps) => {
   const polls = new Map<string, Polled>();
+  /** Listed profiles whose Check mail is off, polled by no one. */
+  let notChecked = new Set<string>();
   const listeners = new Set<() => void>();
   const pollListeners = new Set<PollListener>();
 
@@ -282,28 +285,43 @@ export const createMailPoller = ({
   const stop = (profileId: string, polled: Polled) => {
     polls.delete(profileId);
     clearTimeout(polled.timer);
-    polled.inFlight?.abort(new Error("profile removed"));
+    polled.inFlight?.abort(
+      new Error("profile removed or its mail not checked")
+    );
   };
 
   return {
-    /** Polls each listed profile not yet polled, and stops every other. */
-    reconcile: (profileIds: readonly string[]) => {
-      let removed = false;
+    /**
+     * Polls each listed profile not yet polled whose mail is checked, at
+     * once, and stops every other, forgetting what its feed read.
+     */
+    reconcile: (
+      profileIds: readonly string[],
+      unchecked: readonly string[] = []
+    ) => {
+      const next = new Set(
+        profileIds.filter((profileId) => unchecked.includes(profileId))
+      );
+      let changed =
+        next.size !== notChecked.size ||
+        [...next].some((profileId) => !notChecked.has(profileId));
+
+      notChecked = next;
 
       for (const [profileId, polled] of polls) {
-        if (!profileIds.includes(profileId)) {
+        if (!profileIds.includes(profileId) || next.has(profileId)) {
           stop(profileId, polled);
-          removed = true;
+          changed = true;
         }
       }
 
       for (const profileId of profileIds) {
-        if (!polls.has(profileId)) {
+        if (!polls.has(profileId) && !next.has(profileId)) {
           start(profileId);
         }
       }
 
-      if (removed) {
+      if (changed) {
         notify();
       }
     },
@@ -334,9 +352,11 @@ export const createMailPoller = ({
     mail: (profileId: string): Mail => {
       const polled = polls.get(profileId);
 
-      return polled
-        ? { status: polled.status, unreadCount: polled.unreadCount }
-        : NO_MAIL;
+      if (polled) {
+        return { status: polled.status, unreadCount: polled.unreadCount };
+      }
+
+      return notChecked.has(profileId) ? NOT_CHECKED : NO_MAIL;
     },
     /**
      * Reads the feed of one of a polled profile's labels within a poll's

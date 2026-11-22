@@ -129,6 +129,8 @@ export interface Profile {
   asleep?: unknown;
   /** The name of one of the palette's colours; read through `profileColor`. */
   color?: unknown;
+  /** `false` while the profile's mail is not checked; read through `checksMail`. */
+  checkMail?: unknown;
   /**
    * The profile's splits, each holding tabs no other does, repaired as
    * read; set through `withSplit`.
@@ -973,6 +975,41 @@ export const setTabbedInbox = (
         ),
       }
     : undefined;
+
+/**
+ * Whether the profile's mail is checked. Only `false` turns it off; anything
+ * else, absent included, reads as on and stays as found until it is turned
+ * off.
+ */
+export const checksMail = (profile: Profile) => profile.checkMail !== false;
+
+/**
+ * Turns the profile's Check mail on, dropping the key, or off, storing
+ * `false`. Nothing when there is no such profile or it already reads so.
+ */
+export const setCheckMail = (
+  state: State,
+  profileId: string,
+  on: boolean
+): State | undefined => {
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === profileId
+  );
+
+  if (!profile || checksMail(profile) === on) {
+    return;
+  }
+
+  const { checkMail: _off, ...rest } = profile;
+  const next: Profile = on ? rest : { ...profile, checkMail: false };
+
+  return {
+    ...state,
+    profiles: state.profiles.map((candidate) =>
+      candidate.id === profileId ? next : candidate
+    ),
+  };
+};
 
 /**
  * Switches Do Not Disturb on until `until`, `null` for until turned off, or
