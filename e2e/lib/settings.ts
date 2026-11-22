@@ -92,14 +92,11 @@ export const confirmRemovals = (app: ElectronApplication, confirm = true) =>
         | undefined) ?? [];
 
     Reflect.set(globalThis, "meruTestConfirmations", asked);
-    dialog.showMessageBox = ((
-      window: unknown,
-      options: { message: string }
-    ) => {
-      asked.push([
-        options.message,
-        window instanceof BrowserWindow ? window.getTitle() : undefined,
-      ]);
+    dialog.showMessageBox = ((window: unknown, options: object) => {
+      asked.push({
+        ...options,
+        window: window instanceof BrowserWindow ? window.getTitle() : undefined,
+      });
 
       return Promise.resolve({
         response: answer ? 0 : 1,
@@ -107,6 +104,15 @@ export const confirmRemovals = (app: ElectronApplication, confirm = true) =>
       });
     }) as unknown as typeof dialog.showMessageBox;
   }, confirm);
+
+/** Each confirmation asked so far: its options and the title of its window. */
+export const askedRemovals = (app: ElectronApplication) =>
+  app.evaluate(
+    () =>
+      (Reflect.get(globalThis, "meruTestConfirmations") as
+        | unknown[]
+        | undefined) ?? []
+  );
 
 const sections = (page: Page) =>
   page.getByRole("navigation", { name: "Settings sections" });

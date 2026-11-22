@@ -29,7 +29,11 @@ import {
   findWindowFind,
   readOwnWindows,
 } from "./lib/own-window.ts";
-import { openSettings, removeProfileInSettings } from "./lib/settings.ts";
+import {
+  confirmRemovals,
+  openSettings,
+  removeProfileInSettings,
+} from "./lib/settings.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import {
   ANY_SESSION,
@@ -1281,14 +1285,7 @@ test("removing a profile closes its tabs' own windows with their pages", async (
   await findPage(app, standIn.calendarUrl);
   await expect.poll(() => ownWindowPage(app)).toBe(standIn.calendarUrl);
 
-  // Stands in for the native confirmation, which would show on the desktop.
-  await app.evaluate(({ dialog }) => {
-    dialog.showMessageBox = (() =>
-      Promise.resolve({
-        response: 0,
-        checkboxChecked: false,
-      })) as typeof dialog.showMessageBox;
-  });
+  await confirmRemovals(app);
   await removeProfileInSettings(await openSettings(app), "Work");
 
   await expect.poll(() => ownWindowCount(app)).toBe(0);

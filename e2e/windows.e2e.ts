@@ -7,7 +7,11 @@ import {
   stubSystemBrowser,
   test,
 } from "./lib/app.ts";
-import { openSettings, removeProfileInSettings } from "./lib/settings.ts";
+import {
+  confirmRemovals,
+  openSettings,
+  removeProfileInSettings,
+} from "./lib/settings.ts";
 import {
   ELSEWHERE_URL,
   FULL_MESSAGE_PATH,
@@ -224,14 +228,7 @@ test("keeps a pop-out open while the main window is hidden, and closes it with i
 
   await expect(profile("Profile 2")).toHaveAttribute("aria-pressed", "true");
 
-  // The confirmation would show on the desktop.
-  await app.evaluate(({ dialog }) => {
-    dialog.showMessageBox = (() =>
-      Promise.resolve({
-        response: 0,
-        checkboxChecked: false,
-      })) as typeof dialog.showMessageBox;
-  });
+  await confirmRemovals(app);
   await profile("Default").click();
   await expect(profile("Default")).toHaveAttribute("aria-pressed", "true");
   await removeProfileInSettings(await openSettings(app), "Default");

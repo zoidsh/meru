@@ -2,6 +2,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { clickMenuItem, expect, findPage, readState, test } from "./lib/app.ts";
 import {
+  askedRemovals,
   confirmRemovals,
   emitSettingsFocus,
   menuEnabled,
@@ -260,7 +261,9 @@ test("Remove profile asks; Cancel keeps the profile, and confirming removes it a
 
   await expect
     .poll(() => askedRemovals(app))
-    .toStrictEqual([["Remove Work?", "Settings"]]);
+    .toStrictEqual([
+      expect.objectContaining({ message: "Remove Work?", window: "Settings" }),
+    ]);
   await expect(settingsTitle(page)).toHaveText("Work");
   await expect(titlebarProfiles(shell)).toHaveText(["Home", "Work"]);
 
@@ -349,12 +352,6 @@ test("the Window menu no longer adds, renames or removes a profile, which Settin
   expect(labels).not.toContain("Rename Profile…");
   expect(labels).not.toContain("Remove Profile…");
 });
-
-/** What each removal's confirmation asked, and of which window. */
-const askedRemovals = (app: ElectronApplication) =>
-  app.evaluate(
-    () => Reflect.get(globalThis, "meruTestConfirmations") as unknown[]
-  );
 
 test.describe("shots", () => {
   test.beforeEach(onlyWithShots);

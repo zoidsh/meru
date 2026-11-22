@@ -15,6 +15,8 @@ import {
 } from "./lib/app.ts";
 import {
   addProfileInSettings,
+  askedRemovals,
+  confirmRemovals,
   profileRow as settingsProfileRow,
   removeProfileInSettings,
 } from "./lib/settings.ts";
@@ -223,25 +225,6 @@ test("a relaunch restores both profiles and the selection, showing the selected 
   expect(await readState(userDataDir)).toStrictEqual(saved);
 });
 
-/**
- * Stands in for the native confirmation, which would show on the desktop: it
- * is recorded and answered with `response`.
- */
-const stubConfirmation = (app: ElectronApplication, response: number) =>
-  app.evaluate(({ dialog }, answer) => {
-    const confirmations: unknown[] = [];
-
-    Reflect.set(globalThis, "confirmations", confirmations);
-    dialog.showMessageBox = ((...args: unknown[]) => {
-      confirmations.push(args.at(-1));
-
-      return Promise.resolve({ response: answer, checkboxChecked: false });
-    }) as typeof dialog.showMessageBox;
-  }, response);
-
-const readConfirmations = (app: ElectronApplication) =>
-  app.evaluate(() => Reflect.get(globalThis, "confirmations") as unknown[]);
-
 const readProfileIds = async (userDataDir: string) => {
   const { profiles } = await readState(userDataDir);
 
@@ -272,12 +255,12 @@ test("removing the selected profile in Settings, once confirmed, removes its but
     .poll(() => readCookies(app, ids[1], standIn.url))
     .toStrictEqual([STAND_IN_COOKIE]);
 
-  await stubConfirmation(app, 0);
+  await confirmRemovals(app);
   await removeProfileInSettings(settings, "Profile 2");
 
   // One profile left draws no row.
   await expect(profileRow(shell)).toHaveCount(0);
-  expect(await readConfirmations(app)).toStrictEqual([
+  expect(await askedRemovals(app)).toStrictEqual([
     expect.objectContaining({
       message: "Remove Profile 2?",
       buttons: ["Remove Profile", "Cancel"],
@@ -317,11 +300,11 @@ test("cancelling the confirmation keeps the profile", async ({
 
   const settings = await addProfile(app, shell);
 
-  await stubConfirmation(app, 1);
+  await confirmRemovals(app, false);
   await removeProfileInSettings(settings, "Profile 2");
 
   await expect
-    .poll(() => readConfirmations(app))
+    .poll(() => askedRemovals(app))
     .toStrictEqual([expect.objectContaining({ message: "Remove Profile 2?" })]);
 
   // Main applies changes in order, so once this selection shows, a removal
