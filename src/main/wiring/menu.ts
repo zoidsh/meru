@@ -217,7 +217,7 @@ export const wireMenu = ({
       maximizePane: profiles.maximizePane,
       toggleSidebar: sidebar.toggleShown,
       navigateGmail,
-      saveSearch: profiles.saveSearch,
+      addSavedSearch: profiles.addSavedSearch,
       removeSavedSearch: profiles.removeSavedSearch,
       openFind: find.open,
       findAgain: find.again,

@@ -6,7 +6,12 @@ import type { BookmarkedPage } from "#core/bookmarks.ts";
 import type { PaneDirection, Split } from "#core/pane-tree.ts";
 import { firstUnusedColor } from "#core/profile-color.ts";
 import type { ProfileColorName } from "#core/profile-color.ts";
-import { removeSavedSearch, saveSearch } from "#core/saved-searches.ts";
+import {
+  addSavedSearch,
+  removeSavedSearch,
+  renameSavedSearch,
+} from "#core/saved-searches.ts";
+import type { SavedSearchRefusal } from "#core/saved-searches.ts";
 import {
   addProfile,
   forgetEndedDoNotDisturb,
@@ -300,9 +305,23 @@ export const createProfiles = ({
     /** Writes only a change, so a page saying the same again costs nothing. */
     setTabbedInbox: (profileId: string, tabbed: boolean) =>
       exclusive(() => commit(setTabbedInbox(state, profileId, tabbed))),
-    /** Nothing when it cannot be saved, as when the profile has it already. */
-    saveSearch: (profileId: string, query: string) =>
-      exclusive(() => commit(saveSearch(state, profileId, query, newId))),
+    /** Why the search cannot be added, or nothing once it is. */
+    addSavedSearch: (profileId: string, query: string, name?: string) =>
+      exclusive(async (): Promise<SavedSearchRefusal | undefined> => {
+        const added = addSavedSearch(state, profileId, { query, name }, newId);
+
+        if ("refused" in added) {
+          return added.refused;
+        }
+
+        await commit(added.state);
+
+        return undefined;
+      }),
+    renameSavedSearch: (profileId: string, searchId: string, name: string) =>
+      exclusive(() =>
+        commit(renameSavedSearch(state, profileId, searchId, name))
+      ),
     removeSavedSearch: (profileId: string, searchId: string) =>
       exclusive(() => commit(removeSavedSearch(state, profileId, searchId))),
     /**

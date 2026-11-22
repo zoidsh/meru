@@ -25,8 +25,8 @@ import {
   selectProfileCommandId,
 } from "#core/profile-shortcuts.ts";
 import {
-  canSaveSearch,
   savedSearchName,
+  savedSearchRefusal,
   savedSearches,
 } from "#core/saved-searches.ts";
 import {
@@ -146,7 +146,7 @@ export interface CommandActions {
   /** Shows the profile's Gmail tab and sends its page to `hash`. */
   navigateGmail: (profileId: string, hash: string) => Promise<unknown>;
   /** Adds `query` to the profile's saved searches, if it can be saved. */
-  saveSearch: (profileId: string, query: string) => Promise<unknown>;
+  addSavedSearch: (profileId: string, query: string) => Promise<unknown>;
   removeSavedSearch: (profileId: string, searchId: string) => Promise<unknown>;
   /**
    * Opens the find bar over the front tab's page, or over the page of the
@@ -977,15 +977,15 @@ export const COMMANDS: readonly Command[] = [
 
       return (
         query !== undefined &&
-        canSaveSearch(state, state.selectedProfileId, query)
+        savedSearchRefusal(state, state.selectedProfileId, query) === undefined
       );
     },
-    run: ({ state }, { saveSearch }) => {
+    run: ({ state }, { addSavedSearch }) => {
       const query = currentSearch(state);
 
       return query === undefined
         ? Promise.resolve()
-        : saveSearch(state.selectedProfileId, query);
+        : addSavedSearch(state.selectedProfileId, query);
     },
   },
   {

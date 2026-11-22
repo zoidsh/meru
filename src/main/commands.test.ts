@@ -127,7 +127,7 @@ const setup = (initial: State = twoProfiles) => {
 
       return Promise.resolve();
     },
-    saveSearch: profiles.saveSearch,
+    addSavedSearch: profiles.addSavedSearch,
     removeSavedSearch: profiles.removeSavedSearch,
     openFind: (key) => {
       finds.push(`open${key ? ` ${key.tabId}` : ""}`);

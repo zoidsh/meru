@@ -87,26 +87,54 @@ export const savedSearchName = ({ label, query }: SavedSearch) => {
 };
 
 /**
- * Whether `query` can be saved for the profile: it is a query a saved search
- * holds, none of the profile's has it already, there is room, and the list in
- * the file is one this build can add to.
+ * Why a search cannot be added: no query, one the profile has already
+ * (compared after trimming, as Gmail's own text), a list at its most, or
+ * a query, name or list this build cannot write.
  */
-export const canSaveSearch = (
+export type SavedSearchRefusal = "empty" | "duplicate" | "full" | "unwritable";
+
+/**
+ * A saved search's name as typed, without control characters and trimmed,
+ * as a profile's is; `""` when it is empty and nothing when it is too long
+ * or not well formed.
+ */
+const cleanName = (name: string) => {
+  const cleaned = name.replaceAll(/\p{Cc}/gu, "").trim();
+
+  return cleaned.length <= SAVED_SEARCH_LABEL_MAX_LENGTH &&
+    cleaned.isWellFormed()
+    ? cleaned
+    : undefined;
+};
+
+/** Why `query` cannot be added to the profile's searches, if it cannot. */
+export const savedSearchRefusal = (
   state: State,
   profileId: string,
   query: string
-) => {
+): SavedSearchRefusal | undefined => {
+  if (query.trim() === "") {
+    return "empty";
+  }
+
   const normalized = normalizeQuery(query);
   const entries = stored(state, profileId);
+
+  if (
+    normalized === undefined ||
+    !state.profiles.some((profile) => profile.id === profileId) ||
+    !(entries === undefined || Array.isArray(entries))
+  ) {
+    return "unwritable";
+  }
+
   const searches = savedSearches(state, profileId);
 
-  return (
-    normalized !== undefined &&
-    state.profiles.some((profile) => profile.id === profileId) &&
-    (entries === undefined || Array.isArray(entries)) &&
-    searches.length < SAVED_SEARCHES_MAX &&
-    !searches.some((search) => search.query.trim() === normalized)
-  );
+  if (searches.some((search) => search.query.trim() === normalized)) {
+    return "duplicate";
+  }
+
+  return searches.length < SAVED_SEARCHES_MAX ? undefined : "full";
 };
 
 const withSearches = (
@@ -129,21 +157,70 @@ const withSearches = (
   }),
 });
 
-/** The search saved last, unnamed; nothing when it cannot be saved. */
-export const saveSearch = (
+/**
+ * The profile's searches with `query` added last, trimmed, named `name`
+ * when one is given that is not empty; else why it cannot be added.
+ */
+export const addSavedSearch = (
   state: State,
   profileId: string,
-  query: string,
+  { query, name = "" }: { query: string; name?: string | undefined },
   newId: () => string
-): State | undefined => {
-  const normalized = normalizeQuery(query);
+): { state: State } | { refused: SavedSearchRefusal } => {
+  const refused = savedSearchRefusal(state, profileId, query);
+  const label = cleanName(name);
 
-  return normalized !== undefined && canSaveSearch(state, profileId, query)
-    ? withSearches(state, profileId, (entries) => [
-        ...entries,
-        { id: newId(), query: normalized },
-      ])
-    : undefined;
+  if (refused) {
+    return { refused };
+  }
+
+  if (label === undefined) {
+    return { refused: "unwritable" };
+  }
+
+  return {
+    state: withSearches(state, profileId, (entries) => [
+      ...entries,
+      { id: newId(), query: query.trim(), ...(label && { label }) },
+    ]),
+  };
+};
+
+/**
+ * The profile's search whose id is `searchId` named `name`, an empty one
+ * clearing its name so the query stands in. Nothing when there is no such
+ * search shown, the name cannot be written or is the one it has.
+ */
+export const renameSavedSearch = (
+  state: State,
+  profileId: string,
+  searchId: string,
+  name: string
+): State | undefined => {
+  const label = cleanName(name);
+  const search = savedSearches(state, profileId).find(
+    (candidate) => candidate.id === searchId
+  );
+
+  if (!search || label === undefined || label === (search.label ?? "")) {
+    return;
+  }
+
+  return withSearches(state, profileId, (entries) => {
+    const index = entries.findIndex(
+      (entry) => readable(entry)?.id === searchId
+    );
+
+    return entries.map((entry, at) => {
+      if (at !== index) {
+        return entry;
+      }
+
+      const { label: _old, ...rest } = entry as SavedSearch;
+
+      return label ? { ...rest, label } : rest;
+    });
+  });
 };
 
 /**

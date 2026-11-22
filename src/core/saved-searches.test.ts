@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import { SEARCH_QUERY_MAX_LENGTH } from "./gmail-hash.ts";
 import {
   SAVED_SEARCHES_MAX,
-  canSaveSearch,
+  addSavedSearch,
   removeSavedSearch,
-  saveSearch,
+  renameSavedSearch,
   savedSearchName,
+  savedSearchRefusal,
   savedSearches,
 } from "./saved-searches.ts";
 import { decodeState, encodeState } from "./state.ts";
@@ -104,18 +105,22 @@ describe(savedSearches, () => {
 
     expect(savedSearches(state, PROFILE)).toStrictEqual([]);
     expect(written(state)).toStrictEqual({ id: "a", query: "x" });
-    expect(canSaveSearch(state, PROFILE, "x")).toBeFalsy();
-    expect(saveSearch(state, PROFILE, "x", newId)).toBeUndefined();
+    expect(savedSearchRefusal(state, PROFILE, "x")).toBe("unwritable");
   });
 });
 
-describe(saveSearch, () => {
+const added = (result: ReturnType<typeof addSavedSearch>) =>
+  "state" in result ? result.state : undefined;
+
+describe(addSavedSearch, () => {
   it("adds the query, trimmed and unnamed, to the profile's list alone", () => {
-    const state = saveSearch(
-      stateWith(),
-      PROFILE,
-      '  subject:"out of office" ',
-      () => "new"
+    const state = added(
+      addSavedSearch(
+        stateWith(),
+        PROFILE,
+        { query: '  subject:"out of office" ' },
+        () => "new"
+      )
     );
 
     expect(state && savedSearches(state, PROFILE)).toStrictEqual([
@@ -124,8 +129,42 @@ describe(saveSearch, () => {
     expect(state && savedSearches(state, OTHER)).toStrictEqual([]);
   });
 
+  it("names it by the name trimmed and without control characters, an empty one naming nothing", () => {
+    const named = added(
+      addSavedSearch(
+        stateWith(),
+        PROFILE,
+        { query: "x", name: " \u0007Receipts " },
+        () => "a"
+      )
+    );
+    const unnamed = added(
+      addSavedSearch(
+        stateWith(),
+        PROFILE,
+        { query: "x", name: "  " },
+        () => "a"
+      )
+    );
+
+    expect([
+      named && written(named),
+      unnamed && written(unnamed),
+    ]).toStrictEqual([
+      [{ id: "a", query: "x", label: "Receipts" }],
+      [{ id: "a", query: "x" }],
+    ]);
+  });
+
   it("adds after the entries that do not parse, which stay", () => {
-    const state = saveSearch(stateWith(["garbage"]), PROFILE, "x", () => "new");
+    const state = added(
+      addSavedSearch(
+        stateWith(["garbage"]),
+        PROFILE,
+        { query: "x" },
+        () => "new"
+      )
+    );
 
     expect(state && written(state)).toStrictEqual([
       "garbage",
@@ -133,7 +172,7 @@ describe(saveSearch, () => {
     ]);
   });
 
-  it("refuses a query saved already, an empty, overlong or ill-formed one, an unknown profile and a full list", () => {
+  it("says why it refuses an empty or repeated query, a full list and what it cannot write", () => {
     const state = stateWith([{ id: "a", query: "x" }]);
     const full = stateWith(
       Array.from({ length: SAVED_SEARCHES_MAX }, (_, index) => ({
@@ -141,23 +180,102 @@ describe(saveSearch, () => {
         query: `q${index}`,
       }))
     );
+    const refusal = (on: State, query: string, name?: string) => {
+      const result = addSavedSearch(on, PROFILE, { query, name }, newId);
+
+      return "refused" in result ? result.refused : undefined;
+    };
+
+    expect([
+      refusal(state, "  "),
+      refusal(state, " x "),
+      refusal(full, "y"),
+      refusal(state, "a".repeat(SEARCH_QUERY_MAX_LENGTH + 1)),
+      refusal(state, "x\uD800"),
+      refusal(state, "y", "n".repeat(65)),
+      refusal(stateWith("kept"), "y"),
+      addSavedSearch(state, "gone", { query: "y" }, newId),
+      refusal(state, "X"),
+      refusal(state, "x  y"),
+    ]).toStrictEqual([
+      "empty",
+      "duplicate",
+      "full",
+      "unwritable",
+      "unwritable",
+      "unwritable",
+      "unwritable",
+      { refused: "unwritable" },
+      undefined,
+      undefined,
+    ]);
+  });
+});
+
+describe(savedSearchRefusal, () => {
+  it("allows what the profile does not have, on that profile alone", () => {
+    const state = stateWith([{ id: "a", query: "x" }]);
+
+    expect([
+      savedSearchRefusal(state, PROFILE, "x"),
+      savedSearchRefusal(state, OTHER, "x"),
+    ]).toStrictEqual(["duplicate", undefined]);
+  });
+});
+
+describe(renameSavedSearch, () => {
+  const entries = [
+    { id: "a", query: "x", extra: 1 },
+    { id: "b", query: "y", label: "Old" },
+  ];
+
+  it("names the search, trimmed, keeping keys it does not know", () => {
+    const state = renameSavedSearch(stateWith(entries), PROFILE, "a", " New ");
+
+    expect(state && written(state)).toStrictEqual([
+      { id: "a", query: "x", extra: 1, label: "New" },
+      entries[1],
+    ]);
+  });
+
+  it("clears the name with an empty one, so the query stands in", () => {
+    const state = renameSavedSearch(stateWith(entries), PROFILE, "b", "  ");
+
+    expect(state && written(state)).toStrictEqual([
+      entries[0],
+      { id: "b", query: "y" },
+    ]);
+  });
+
+  it("renames only the shown one of two searches with one id", () => {
+    const state = renameSavedSearch(
+      stateWith([
+        { id: "a", query: "x" },
+        { id: "a", query: "z" },
+      ]),
+      PROFILE,
+      "a",
+      "N"
+    );
+
+    expect(state && written(state)).toStrictEqual([
+      { id: "a", query: "x", label: "N" },
+      { id: "a", query: "z" },
+    ]);
+  });
+
+  it("changes nothing for an unknown search or profile, the same name or one too long", () => {
+    const state = stateWith(entries);
 
     expect(
       [
-        saveSearch(state, PROFILE, " x ", newId),
-        saveSearch(state, PROFILE, "  ", newId),
-        saveSearch(
-          state,
-          PROFILE,
-          "a".repeat(SEARCH_QUERY_MAX_LENGTH + 1),
-          newId
-        ),
-        saveSearch(state, PROFILE, "x\uD800", newId),
-        saveSearch(state, "gone", "y", newId),
-        saveSearch(full, PROFILE, "y", newId),
+        renameSavedSearch(state, PROFILE, "gone", "N"),
+        renameSavedSearch(state, "gone", "a", "N"),
+        renameSavedSearch(state, PROFILE, "b", " Old "),
+        renameSavedSearch(state, PROFILE, "a", ""),
+        renameSavedSearch(state, PROFILE, "a", "n".repeat(65)),
       ].every((next) => next === undefined)
     ).toBeTruthy();
-    expect(saveSearch(state, OTHER, "x", newId)).toBeDefined();
   });
 });
 
