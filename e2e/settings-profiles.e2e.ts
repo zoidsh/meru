@@ -220,6 +220,11 @@ test("a profile's handle moves it with the arrow keys, which the titlebar and st
   const handle = page.getByRole("button", { name: "Move Travel" });
 
   await openProfiles(page);
+  // A press on the handle that never drags leaves the row as it was.
+  await handle.click();
+  await expect(
+    profileList(page).getByRole("listitem").filter({ hasText: "Travel" })
+  ).toHaveAttribute("draggable", "false");
   await handle.focus();
   await handle.press("ArrowUp");
 

@@ -234,6 +234,11 @@ export const ProfilesPage = ({
                       onPointerDown={() => {
                         setDraggable(profile.id);
                       }}
+                      // A press that never becomes a drag would otherwise
+                      // leave the whole row draggable.
+                      onPointerUp={() => {
+                        setDraggable(undefined);
+                      }}
                       onKeyDown={(event) => {
                         onGripKey(event, profile, index);
                       }}
