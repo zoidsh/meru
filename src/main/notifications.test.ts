@@ -545,6 +545,28 @@ describe("what holds a new mail notification", () => {
 
     expect(app.shown).toStrictEqual([]);
   });
+
+  it("shows nothing for a profile whose Check mail went off while the Important feed was read", async () => {
+    const answer = Promise.withResolvers<ReadonlySet<string>>();
+    const app = setup({ important: () => answer.promise });
+
+    app.set("notificationImportantOnly", true);
+    await app.notifications.polled("a", feed());
+
+    const polled = app.notifications.polled("a", feed(entry("1")));
+
+    app.setState({
+      ...one,
+      profiles: one.profiles.map((profile) => ({
+        ...profile,
+        checkMail: false,
+      })),
+    });
+    answer.resolve(new Set(["1"]));
+    await polled;
+
+    expect(app.shown).toStrictEqual([]);
+  });
 });
 
 /** A message the fake extractor reads `CODE` from. */

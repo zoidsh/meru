@@ -176,6 +176,14 @@ export const createMailNotifications = ({
   log,
 }: MailNotificationsDeps) => {
   const seen = new Map<string, Seen>();
+  /**
+   * The profile while it is listed and its mail is checked, asked again
+   * after each wait, so nothing shows once either has stopped meanwhile.
+   */
+  const checkedProfile = (profileId: string) =>
+    state().profiles.find(
+      (candidate) => candidate.id === profileId && checksMail(candidate)
+    );
   /** The label whose feed each profile's last feed came from. */
   const feedLabels = new Map<string, string | undefined>();
   const shown = new Map<string, Set<ShownNotification>>();
@@ -353,7 +361,7 @@ export const createMailNotifications = ({
 
       const copied = await copyCode(profileId, code, entry.id);
 
-      if (!state().profiles.some((profile) => profile.id === profileId)) {
+      if (!checkedProfile(profileId)) {
         return;
       }
 
@@ -419,8 +427,7 @@ export const createMailNotifications = ({
      * is something to notify.
      */
     polled: async (profileId: string, outcome: FeedOutcome, label?: string) => {
-      const listed = () =>
-        state().profiles.find((candidate) => candidate.id === profileId);
+      const listed = () => checkedProfile(profileId);
 
       const profile = listed();
 
