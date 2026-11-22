@@ -203,6 +203,16 @@ export const settingsHandlers = ({
     setAsleep: async ({ profileId, asleep }) => {
       assertListed(profiles, profileId);
 
+      const state = profiles.get();
+      const profile = state.profiles.find(
+        (candidate) => candidate.id === profileId
+      );
+
+      // A switch pressed twice quickly asks again for what is already so.
+      if (profile && isAsleep(state, profile) === asleep) {
+        return;
+      }
+
       if (!asleep) {
         await profiles.select(profileId);
 

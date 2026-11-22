@@ -545,6 +545,20 @@ describe("the Settings window's Check mail and Sleep", () => {
     app.dispose();
   });
 
+  it("does nothing when asked for the state a profile is already in", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.setAsleep({ profileId: "work", asleep: true });
+    await app.handlers.setAsleep({ profileId: "work", asleep: true });
+    await app.handlers.setAsleep({ profileId: "home", asleep: false });
+
+    expect([
+      app.read().profiles.map((profile) => profile.asleep),
+      app.profiles.get().selectedProfileId,
+    ]).toStrictEqual([[false, true], "home"]);
+    app.dispose();
+  });
+
   it("puts a profile to sleep, refuses the last awake one, and wakes one by selecting it", async () => {
     const app = setup(stateOf("Home", "Work"));
     const asleep = () => app.read().profiles.map((profile) => profile.asleep);
