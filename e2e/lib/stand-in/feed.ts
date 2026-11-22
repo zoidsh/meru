@@ -84,7 +84,7 @@ const escapeXml = (text: string) =>
 /**
  * A feed as Gmail writes one: its title names the account, as "Gmail - Inbox
  * for <address>", or for a label's feed "Gmail - Label '<label>' for
- * <address>" (verified against a signed-in account, 22 November 2026).
+ * <address>".
  */
 export const feed = (
   unreadCount: number,
