@@ -10,6 +10,9 @@ export const SETTINGS_CALL_NAMES = [
   "setDoNotDisturb",
   "previewSound",
   "showTestNotification",
+  "openPage",
+  "goBack",
+  "goForward",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

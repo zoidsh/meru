@@ -8,6 +8,7 @@ import type { State } from "#core/state.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createProfiles } from "./profiles.ts";
 import { readSettingsState, settingsHandlers } from "./settings-contract.ts";
+import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
 
 const stateOf = (...names: string[]): State => ({
@@ -45,6 +46,7 @@ const setup = (state: State, initial?: Settings) => {
   });
   const played: SoundRequest[] = [];
   const tested: (string | undefined)[] = [];
+  const pages = createSettingsPages();
   const deps = {
     settings,
     profiles,
@@ -54,6 +56,7 @@ const setup = (state: State, initial?: Settings) => {
         played.push(request);
       },
     },
+    pages,
     showTestNotification: (profileId: string | undefined) => {
       tested.push(profileId);
     },
@@ -190,6 +193,54 @@ describe(settingsHandlers, () => {
       ],
       [],
     ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's pages", () => {
+  it("opens a listed profile's page inside Profiles, and steps back and forward", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.openPage({ section: "profiles", profileId: null });
+    await app.handlers.openPage({ section: "profiles", profileId: "work" });
+    await app.handlers.goBack({});
+
+    const back = app.read().page;
+
+    await app.handlers.goForward({});
+
+    expect([back, app.read().page]).toStrictEqual([
+      {
+        section: "profiles",
+        profileId: null,
+        canGoBack: true,
+        canGoForward: true,
+      },
+      {
+        section: "profiles",
+        profileId: "work",
+        canGoBack: true,
+        canGoForward: false,
+      },
+    ]);
+    app.dispose();
+  });
+
+  it("refuses the page of an unlisted profile, or a profile's page outside Profiles", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await expect(
+      app.handlers.openPage({ section: "profiles", profileId: "gone" })
+    ).rejects.toThrow("No listed profile has the id gone");
+    await expect(
+      app.handlers.openPage({ section: "notifications", profileId: "work" })
+    ).rejects.toThrow("Only Profiles holds a profile's page");
+    expect(app.read().page).toStrictEqual({
+      section: "notifications",
+      profileId: null,
+      canGoBack: false,
+      canGoForward: false,
+    });
     app.dispose();
   });
 });

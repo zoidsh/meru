@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import { SETTINGS_SECTIONS } from "#core/settings-pages.ts";
 import { OVERRIDABLE_SETTING_KEYS, SETTINGS } from "#core/settings.ts";
 import type { OverridableSettingKey, SettingValue } from "#core/settings.ts";
 import { NOTIFICATION_SOUNDS } from "#core/sounds.ts";
@@ -51,6 +52,14 @@ export type OverrideChange = ChangeOf<OverridableSettingKey> & {
 };
 
 const profileId = z.string().check(z.minLength(1));
+
+const none = z.object({});
+
+const page = z.object({
+  section: z.enum(SETTINGS_SECTIONS),
+  /** A profile's page inside Profiles, else `null` for the section itself. */
+  profileId: z.nullable(profileId),
+});
 
 const schemaOf = (key: PageSettingKey) =>
   SETTINGS[key].schema as z.ZodMiniType<unknown>;
@@ -122,6 +131,14 @@ export const SETTINGS_CALLS = {
     request: z.object({ profileId: z.nullable(profileId) }),
     response: z.undefined(),
   },
+  /**
+   * Shows a page after the one shown, dropping those ahead; a profile's page
+   * only for a listed profile, inside Profiles.
+   */
+  openPage: { request: page, response: z.undefined() },
+  /** One page back, as the menu's Back does with the window focused. */
+  goBack: { request: none, response: z.undefined() },
+  goForward: { request: none, response: z.undefined() },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -149,6 +166,12 @@ export const SETTINGS_STATE = {
       overrides: pageOverrides,
     })
   ),
+  /** The page shown, and whether Back and Forward have one to go to. */
+  page: z.object({
+    ...page.shape,
+    canGoBack: z.boolean(),
+    canGoForward: z.boolean(),
+  }),
 } as const;
 
 export type SettingsCalls = ContractCalls<typeof SETTINGS_CALLS>;

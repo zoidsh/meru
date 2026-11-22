@@ -166,4 +166,17 @@ describe("the settings contract", () => {
       Object.keys(settings.parse({ ...values, trayIcon: true })).toSorted(),
     ]).toStrictEqual([true, Object.keys(values).toSorted()]);
   });
+
+  it("takes a section, or a profile's page, to open", () => {
+    const openPage = accepts(SETTINGS_CALLS.openPage.request);
+
+    expect([
+      openPage({ section: "profiles", profileId: null }),
+      openPage({ section: "profiles", profileId: "work" }),
+      openPage({ section: "notifications", profileId: null }),
+      openPage({ section: "general", profileId: null }),
+      openPage({ section: "profiles", profileId: "" }),
+      openPage({ section: "profiles" }),
+    ]).toStrictEqual([true, true, true, false, false, false]);
+  });
 });

@@ -19,6 +19,7 @@ import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Profiles } from "../profiles.ts";
 import type { SenderRegistry } from "../senders.ts";
 import { readSettingsState, settingsHandlers } from "../settings-contract.ts";
+import { createSettingsPages } from "../settings-pages.ts";
 import { createSettingsWindow } from "../settings-window.ts";
 import type { SettingsStore } from "../settings.ts";
 import { createRendererRecovery } from "../shell-recovery.ts";
@@ -68,6 +69,7 @@ export const wireSettingsWindow = ({
   showTestNotification: (profileId: string | undefined) => void;
 }) => {
   const windows = createWindowFactory(contextMenus);
+  const pages = createSettingsPages();
 
   const settingsWindow = createSettingsWindow({
     create: () =>
@@ -90,6 +92,7 @@ export const wireSettingsWindow = ({
     register: (webContentsId) =>
       senders.register(webContentsId, { role: "settings" }),
     prepare: (window) => {
+      pages.reset();
       createRendererRecovery({
         window,
         name: "The Settings window's renderer",
@@ -99,6 +102,10 @@ export const wireSettingsWindow = ({
       });
     },
     log: console.error,
+  });
+
+  profiles.onChange(() => {
+    pages.follow(profiles.get().profiles.map((profile) => profile.id));
   });
 
   theme.onChange(() => {
@@ -121,16 +128,19 @@ export const wireSettingsWindow = ({
       profiles,
       doNotDisturb,
       sound,
+      pages,
       showTestNotification,
     }),
     state: {
-      read: () => readSettingsState({ settings, profiles, doNotDisturb }),
+      read: () =>
+        readSettingsState({ settings, profiles, doNotDisturb, pages }),
       onChange: (listener) => {
         for (const key of PAGE_SETTING_KEYS) {
           settings.onChange(key, listener);
         }
 
         profiles.onChange(listener);
+        pages.onChange(listener);
       },
     },
     log: console.error,
@@ -140,5 +150,6 @@ export const wireSettingsWindow = ({
     openSettings: settingsWindow.open,
     settingsFocused: settingsWindow.isFocused,
     onSettingsFocusChange: settingsWindow.onFocusChange,
+    settingsPages: pages,
   };
 };

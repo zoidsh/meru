@@ -10,6 +10,7 @@ import type { LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
+import type { SettingsSection } from "#core/settings-pages.ts";
 import { Button } from "#ui/button.tsx";
 import {
   InputGroup,
@@ -18,12 +19,13 @@ import {
 } from "#ui/input-group.tsx";
 
 import { NotificationsPage } from "./notifications-page.tsx";
+import { settingsCalls, useSettingsState } from "./sync.ts";
 
 /** The nav's width, which the titlebar's buttons start after. */
 const NAV_WIDTH = 212;
 
 interface Section {
-  id: string;
+  id: SettingsSection;
   icon: LucideIcon;
   /** The tile's colour behind the icon. */
   tile: string;
@@ -36,21 +38,26 @@ const SECTIONS: readonly Section[] = [
 
 export const App = () => {
   const { t } = useLingui();
-  const [history, setHistory] = useState({ ids: ["notifications"], at: 0 });
+  const page = useSettingsState("page");
   const [query, setQuery] = useState("");
 
-  const titles: Record<string, string> = {
+  const titles: Record<SettingsSection, string> = {
+    profiles: t({
+      message: "Profiles",
+      comment:
+        "Name of the Settings section listing the profiles, in its list and as its title",
+    }),
     notifications: t({
       message: "Notifications",
       comment:
         "Name of the Settings section for notifications, the unread badge and Do Not Disturb, in its list and as its title",
     }),
   };
-  const sectionId = history.ids[history.at] ?? "notifications";
-  const title = titles[sectionId] ?? "";
+  const sectionId = page?.section ?? "notifications";
+  const title = titles[sectionId];
   const needle = query.trim().toLocaleLowerCase();
   const shown = SECTIONS.filter((section) =>
-    (titles[section.id] ?? "").toLocaleLowerCase().includes(needle)
+    titles[section.id].toLocaleLowerCase().includes(needle)
   );
 
   const settingsTitle = t({
@@ -62,16 +69,7 @@ export const App = () => {
     document.title = settingsTitle;
   }, [settingsTitle]);
 
-  const go = (id: string) => {
-    if (id === sectionId) {
-      return;
-    }
-
-    setHistory(({ ids, at }) => ({
-      ids: [...ids.slice(0, at + 1), id],
-      at: at + 1,
-    }));
-  };
+  const calls = settingsCalls();
 
   return (
     <div className="flex h-screen flex-col bg-shell text-foreground select-none">
@@ -97,9 +95,9 @@ export const App = () => {
             comment:
               "Tooltip of the Settings window's button that goes back to the section shown before",
           })}
-          disabled={history.at === 0}
+          disabled={!page?.canGoBack}
           onClick={() => {
-            setHistory(({ ids, at }) => ({ ids, at: Math.max(0, at - 1) }));
+            void calls.goBack({});
           }}
           className="[app-region:no-drag]"
         >
@@ -118,12 +116,9 @@ export const App = () => {
             comment:
               "Tooltip of the Settings window's button that goes forward to the section shown after",
           })}
-          disabled={history.at >= history.ids.length - 1}
+          disabled={!page?.canGoForward}
           onClick={() => {
-            setHistory(({ ids, at }) => ({
-              ids,
-              at: Math.min(ids.length - 1, at + 1),
-            }));
+            void calls.goForward({});
           }}
           className="[app-region:no-drag]"
         >
@@ -174,7 +169,7 @@ export const App = () => {
                   size="sm"
                   aria-current={id === sectionId ? "page" : undefined}
                   onClick={() => {
-                    go(id);
+                    void calls.openPage({ section: id, profileId: null });
                   }}
                   className="w-full justify-start gap-2 pl-1"
                 >

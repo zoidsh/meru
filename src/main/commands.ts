@@ -67,9 +67,11 @@ export interface CommandContext {
   /**
    * Whether the Settings window has focus. It has no page, so the page's
    * fields read as `NO_PAGE`, and only what runs in a tab's own window and
-   * needs no tab is offered.
+   * needs no tab is offered, Back and Forward stepping its own history.
    */
   settingsFocused: boolean;
+  /** While the Settings window has focus, where its history can step; else `undefined`. */
+  settingsHistory: { canGoBack: boolean; canGoForward: boolean } | undefined;
   /** Do Not Disturb while it holds, else `undefined`. */
   doNotDisturb: DoNotDisturb | undefined;
   /** Whether the unified inbox is open over the page. */
@@ -468,7 +470,8 @@ export const COMMANDS: readonly Command[] = [
           "Menu item in the View menu that goes to the page the selected tab showed before",
       }),
     shortcut: { darwin: "Command+[", win32: "Alt+Left", linux: "Alt+Left" },
-    isAvailable: ({ navigation }) => navigation?.canGoBack ?? false,
+    isAvailable: ({ navigation, settingsHistory }) =>
+      (settingsHistory ?? navigation)?.canGoBack ?? false,
     run: (_context, { goBack }) => {
       goBack();
 
@@ -485,7 +488,8 @@ export const COMMANDS: readonly Command[] = [
           "Menu item in the View menu that goes to the page the selected tab left by going back",
       }),
     shortcut: { darwin: "Command+]", win32: "Alt+Right", linux: "Alt+Right" },
-    isAvailable: ({ navigation }) => navigation?.canGoForward ?? false,
+    isAvailable: ({ navigation, settingsHistory }) =>
+      (settingsHistory ?? navigation)?.canGoForward ?? false,
     run: (_context, { goForward }) => {
       goForward();
 

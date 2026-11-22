@@ -60,6 +60,7 @@ const setup = (initial: State = twoProfiles) => {
   let selectedTabAsleep = false;
   let ownWindow: TabKey | undefined;
   let settingsFocused = false;
+  let settingsHistory = { canGoBack: false, canGoForward: false };
   const moves: string[] = [];
   const sleeps: string[] = [];
   const splits: string[] = [];
@@ -155,6 +156,7 @@ const setup = (initial: State = twoProfiles) => {
       state: profiles.get(),
       ownWindow: settingsFocused ? undefined : ownWindow,
       settingsFocused,
+      settingsHistory: settingsFocused ? settingsHistory : undefined,
       doNotDisturb: doNotDisturb.current(),
       inboxOpen,
       downloadsOpen: false,
@@ -195,6 +197,9 @@ const setup = (initial: State = twoProfiles) => {
     },
     setSettingsFocused: (next: boolean) => {
       settingsFocused = next;
+    },
+    setSettingsHistory: (next: typeof settingsHistory) => {
+      settingsHistory = next;
     },
     setBookmarked: (next: boolean | undefined) => {
       bookmarked = next;
@@ -594,6 +599,20 @@ describe("the command registry", () => {
       ["doNotDisturb.toggle", true],
       ["doNotDisturb.30m", true],
     ]);
+  });
+
+  it("while Settings has focus offers Back and Forward as its own history can step, whatever the front tab's can", () => {
+    const app = setup();
+
+    app.setNavigation({ canGoBack: true, canGoForward: true, loading: false });
+    app.setSettingsFocused(true);
+    app.setSettingsHistory({ canGoBack: true, canGoForward: false });
+
+    expect([
+      app.isAvailable("tab.back"),
+      app.isAvailable("tab.forward"),
+      app.isAvailable("tab.reload"),
+    ]).toStrictEqual([true, false, false]);
   });
 
   it("opens Settings on Cmd or Ctrl+comma, from a tab's own window too", async () => {

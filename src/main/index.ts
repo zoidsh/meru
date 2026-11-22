@@ -413,24 +413,28 @@ const start = async () => {
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
 
-  const { openSettings, settingsFocused, onSettingsFocusChange } =
-    wireSettingsWindow({
-      isMacOS,
-      background,
-      lifecycle,
-      contextMenus,
-      displays,
-      theme,
-      url: settingsUrl.href,
-      origin: settingsOrigin,
-      ipc,
-      senders,
-      settings,
-      profiles,
-      doNotDisturb,
-      sound,
-      showTestNotification,
-    });
+  const {
+    openSettings,
+    settingsFocused,
+    onSettingsFocusChange,
+    settingsPages,
+  } = wireSettingsWindow({
+    isMacOS,
+    background,
+    lifecycle,
+    contextMenus,
+    displays,
+    theme,
+    url: settingsUrl.href,
+    origin: settingsOrigin,
+    ipc,
+    senders,
+    settings,
+    profiles,
+    doNotDisturb,
+    sound,
+    showTestNotification,
+  });
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({
     platform,
@@ -454,6 +458,7 @@ const start = async () => {
     openSettings,
     settingsFocused,
     onSettingsFocusChange,
+    settingsPages,
   });
 
   wireShellContract({

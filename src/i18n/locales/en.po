@@ -1038,6 +1038,8 @@ msgstr "Profile {n}"
 
 #. Accessible name of the menu of profiles in the Settings scope switcher
 #. Accessible name of the row of profile buttons in the title bar, read by screen readers
+#. Name of the Settings section listing the profiles, in its list and as its title
+#: src/settings/app.tsx
 #: src/settings/scope-tabs.tsx
 #: src/shell/titlebar.tsx
 msgid "Profiles"

@@ -20,6 +20,7 @@ import type { OpenApp } from "../open-app.ts";
 import type { Overlays } from "../overlay.ts";
 import type { Profiles } from "../profiles.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
+import type { SettingsPages } from "../settings-pages.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import type { Sidebar } from "../sidebar.ts";
 import type { createTabViews } from "../tab-views.ts";
@@ -57,6 +58,7 @@ export const wireMenu = ({
   openSettings,
   settingsFocused,
   onSettingsFocusChange,
+  settingsPages,
 }: {
   platform: Platform;
   background: boolean;
@@ -80,6 +82,7 @@ export const wireMenu = ({
   /** Whether the Settings window has the keys. */
   settingsFocused: () => boolean;
   onSettingsFocusChange: (listener: () => void) => void;
+  settingsPages: SettingsPages;
 }) => {
   /** The tab whose own window has focus, its page or its titlebar. */
   const focusedOwnWindow = (): TabKey | undefined => {
@@ -130,6 +133,12 @@ export const wireMenu = ({
         state: profiles.get(),
         ownWindow,
         settingsFocused: inSettings,
+        settingsHistory: inSettings
+          ? {
+              canGoBack: settingsPages.canGoBack(),
+              canGoForward: settingsPages.canGoForward(),
+            }
+          : undefined,
         doNotDisturb: doNotDisturb.current(),
         inboxOpen: inbox.isOpen(),
         downloadsOpen: downloads.isOpen(),
@@ -163,10 +172,18 @@ export const wireMenu = ({
         }
       },
       goBack: () => {
-        views.goBack(focusedOwnWindow());
+        if (settingsFocused()) {
+          settingsPages.step(-1);
+        } else {
+          views.goBack(focusedOwnWindow());
+        }
       },
       goForward: () => {
-        views.goForward(focusedOwnWindow());
+        if (settingsFocused()) {
+          settingsPages.step(1);
+        } else {
+          views.goForward(focusedOwnWindow());
+        }
       },
       stopLoading: () => {
         views.stopFront(focusedOwnWindow());
@@ -242,6 +259,7 @@ export const wireMenu = ({
   // which commands run.
   focus.onFocused(menu.refresh);
   onSettingsFocusChange(menu.refresh);
+  settingsPages.onChange(menu.refresh);
 
   return { menu, moveToOwnWindow, moveToMainWindow };
 };

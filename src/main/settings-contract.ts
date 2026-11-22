@@ -17,6 +17,7 @@ import type { State } from "#core/state.ts";
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
 import { profileDisplayName } from "./profile-copy.ts";
+import type { SettingsPages } from "./settings-pages.ts";
 import type { SettingsStore } from "./settings.ts";
 import type { SoundOutput } from "./sounds.ts";
 
@@ -31,6 +32,10 @@ export interface SettingsContractDeps {
     "current" | "switchOn" | "switchOff"
   >;
   sound: Pick<SoundOutput, "play">;
+  pages: Pick<
+    SettingsPages,
+    "current" | "canGoBack" | "canGoForward" | "open" | "step"
+  >;
   /** For a profile, or the app with none. */
   showTestNotification: (profileId: string | undefined) => void;
 }
@@ -71,6 +76,7 @@ export const settingsHandlers = ({
   profiles,
   doNotDisturb,
   sound,
+  pages,
   showTestNotification,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
@@ -116,6 +122,26 @@ export const settingsHandlers = ({
 
         showTestNotification(profileId ?? undefined);
       }),
+    openPage: (page) =>
+      Promise.try(() => {
+        if (page.profileId !== null) {
+          if (page.section !== "profiles") {
+            throw new Error("Only Profiles holds a profile's page");
+          }
+
+          assertListed(profiles, page.profileId);
+        }
+
+        pages.open(page);
+      }),
+    goBack: () =>
+      Promise.try(() => {
+        pages.step(-1);
+      }),
+    goForward: () =>
+      Promise.try(() => {
+        pages.step(1);
+      }),
   };
 };
 
@@ -124,9 +150,10 @@ export const readSettingsState = ({
   settings,
   profiles,
   doNotDisturb,
+  pages,
 }: Pick<
   SettingsContractDeps,
-  "settings" | "profiles" | "doNotDisturb"
+  "settings" | "profiles" | "doNotDisturb" | "pages"
 >): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
@@ -153,5 +180,10 @@ export const readSettingsState = ({
         ).map((key) => [key, store.get(key, profile.id)])
       ) as PageOverrides,
     })),
+    page: {
+      ...pages.current(),
+      canGoBack: pages.canGoBack(),
+      canGoForward: pages.canGoForward(),
+    },
   };
 };
