@@ -117,21 +117,22 @@ const parseEntry = (entry: TNode): FeedEntry | undefined => {
 };
 
 /**
- * The address in a feed's title, which Gmail writes as "Gmail - Inbox for
- * <address>" or "Gmail - Label '…' for <address>", read as the one word
- * holding an `@` rather than by the words around it, which may be
- * translated; nothing for a title with none, or with more than one.
+ * An address as Gmail's accounts have them, ASCII on both sides, so the
+ * brackets and words a translated title puts around it, full-width ones
+ * included, are never part of it.
  */
-export const addressOfTitle = (title: string | undefined) => {
-  const words = (title ?? "")
-    .split(/\s+/u)
-    .map((word) => word.replaceAll(/^[(<"']+|[)>"'.,;:]+$/gu, ""))
-    .filter((word) => word.includes("@"));
-  const [word] = words;
+const ADDRESS = /[\w.!#$%&'*+/=?^`{|}~-]+@[\w-]+(?:\.[\w-]+)+/gu;
 
-  return words.length === 1 && word && /^[^@]+@[^@]+$/u.test(word)
-    ? word
-    : undefined;
+/**
+ * The address in a feed's title, which Gmail writes as "Gmail - Inbox for
+ * <address>" or "Gmail - Label '…' for <address>", found by its shape
+ * rather than by the words around it, which may be translated; nothing for
+ * a title with none, or with more than one.
+ */
+const addressOfTitle = (title: string | undefined) => {
+  const found = (title ?? "").match(ADDRESS) ?? [];
+
+  return found.length === 1 ? found[0] : undefined;
 };
 
 /**

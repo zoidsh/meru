@@ -176,11 +176,15 @@ describe("the signed-in account's address", () => {
       addressIn("Gmail - Label &#39;^sq_ig_i_personal&#39; for me@example.com"),
       addressIn("Gmail - Boîte de réception de moi@exemple.fr"),
       addressIn("Gmail – 受信トレイ (me@example.co.jp)"),
+      addressIn("Gmail – 受信トレイ（me@example.co.jp）"),
+      addressIn("Inbox:me+tag@example.org."),
     ]).toStrictEqual([
       "me@example.com",
       "me@example.com",
       "moi@exemple.fr",
       "me@example.co.jp",
+      "me@example.co.jp",
+      "me+tag@example.org",
     ]);
   });
 
