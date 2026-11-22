@@ -93,6 +93,9 @@ describe("the settings contract", () => {
       name: "Work",
       color: "#ff6227",
       colorName: "orange",
+      asleep: false,
+      checkMail: true,
+      mail: { status: "ok", address: "work@example.org" },
       overrides: { notificationSound: "chime" },
     };
 
@@ -108,6 +111,47 @@ describe("the settings contract", () => {
         },
       ])[0]?.overrides,
     ]).toStrictEqual([true, false, {}]);
+  });
+
+  it("tells a profile's mail by one of its statuses, with an address or null", () => {
+    const [entry] = SETTINGS_STATE.profiles.parse([
+      {
+        id: "work",
+        name: "Work",
+        color: "#ff6227",
+        colorName: "orange",
+        asleep: true,
+        checkMail: false,
+        mail: { status: "notChecked", address: null },
+        overrides: {},
+      },
+    ]);
+    const withMail = (mail: unknown) =>
+      SETTINGS_STATE.profiles.safeParse([{ ...entry, mail }]).success;
+
+    expect([
+      entry?.mail,
+      withMail({ status: "signedOut", address: null }),
+      withMail({ status: "asleep", address: null }),
+      withMail({ status: "ok" }),
+    ]).toStrictEqual([
+      { status: "notChecked", address: null },
+      true,
+      false,
+      false,
+    ]);
+  });
+
+  it("sets a listed profile's Check mail and sleep by its id and a boolean", () => {
+    const setCheckMail = accepts(SETTINGS_CALLS.setCheckMail.request);
+    const setAsleep = accepts(SETTINGS_CALLS.setAsleep.request);
+
+    expect([
+      setCheckMail({ profileId: "work", on: false }),
+      setCheckMail({ profileId: "", on: false }),
+      setAsleep({ profileId: "work", asleep: true }),
+      setAsleep({ profileId: "work", asleep: "yes" }),
+    ]).toStrictEqual([true, false, true, false]);
   });
 
   it("switches Do Not Disturb on or off and nothing else", () => {
