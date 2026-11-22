@@ -78,4 +78,15 @@ describe(withColorsStored, () => {
       ).map((profile) => profile.color)
     ).toStrictEqual([undefined, "orange"]);
   });
+
+  it("leaves a stored colour it cannot read as found", () => {
+    expect(
+      withColorsStored({
+        profiles: [
+          { ...newProfile("a", "a"), color: "red" },
+          { ...newProfile("b", "b"), color: 7 },
+        ],
+      }).map((profile) => profile.color)
+    ).toStrictEqual(["red", 7]);
+  });
 });

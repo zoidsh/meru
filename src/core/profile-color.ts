@@ -68,14 +68,16 @@ export const firstUnusedColor = (
 
 /**
  * The profiles with the colour of each from place `from` on stored, so a
- * change of their places changes no colour that came from a place.
+ * change of their places changes no colour that came from a place. A stored
+ * value this build cannot read is left as found, since `state.json` keeps
+ * what it does not understand; that profile follows its new place here.
  */
 export const withColorsStored = (
   state: Pick<State, "profiles">,
   from = 0
 ): Profile[] =>
   state.profiles.map((profile, index) =>
-    index < from || isProfileColorName(profile.color)
+    index < from || profile.color !== undefined
       ? profile
       : { ...profile, color: profileColorName(state, profile.id) }
   );

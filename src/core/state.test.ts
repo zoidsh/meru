@@ -1208,6 +1208,53 @@ describe(moveProfile, () => {
   });
 });
 
+const storedColors = (state: State | undefined) =>
+  (
+    (state && encodeState(state)) as {
+      profiles: { name: string; color?: unknown }[];
+    }
+  ).profiles.map((profile) => [profile.name, profile.color]);
+
+describe("stored colours this build cannot read", () => {
+  const stored = {
+    version: 1,
+    profiles: [
+      { id: "a", name: "A" },
+      { name: "Unreadable" },
+      { id: "b", name: "B", color: "red" },
+      { id: "c", name: "C" },
+      { id: "d", name: "D", color: 7 },
+    ],
+    selectedProfileId: "a",
+  };
+
+  it("keeps them as found when another profile moves or is removed", () => {
+    const decoded = decodeState(stored);
+
+    if (decoded.kind !== "read") {
+      throw new Error(decoded.kind);
+    }
+
+    const moved = moveProfile(decoded.value, "c", 0);
+    const removed = moved && removeProfile(moved, "a");
+    expect([storedColors(moved), storedColors(removed)]).toStrictEqual([
+      [
+        ["C", "green"],
+        ["Unreadable", undefined],
+        ["A", "blue"],
+        ["B", "red"],
+        ["D", 7],
+      ],
+      [
+        ["C", "green"],
+        ["Unreadable", undefined],
+        ["B", "red"],
+        ["D", 7],
+      ],
+    ]);
+  });
+});
+
 describe(setProfileColor, () => {
   it("stores the colour, and nothing for a profile not listed or one with it stored", () => {
     const set = setProfileColor(three, "b", "violet");
