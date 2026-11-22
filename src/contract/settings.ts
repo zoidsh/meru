@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import { MAIL_STATUSES } from "#core/feed.ts";
 import { PROFILE_COLOR_NAMES } from "#core/profile-color.ts";
 import { SETTINGS_SECTIONS } from "#core/settings-pages.ts";
 import { OVERRIDABLE_SETTING_KEYS, SETTINGS } from "#core/settings.ts";
@@ -164,6 +165,19 @@ export const SETTINGS_CALLS = {
    * the profile once confirmed; refused for the last profile.
    */
   removeProfile: { request: z.object({ profileId }), response: z.undefined() },
+  /** Turns a listed profile's Check mail on or off. */
+  setCheckMail: {
+    request: z.object({ profileId, on: z.boolean() }),
+    response: z.undefined(),
+  },
+  /**
+   * Puts a listed profile to sleep, refused for the last awake one, or wakes
+   * it by selecting it in the main window, as every way to it does.
+   */
+  setAsleep: {
+    request: z.object({ profileId, asleep: z.boolean() }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -190,6 +204,16 @@ export const SETTINGS_STATE = {
       color: z.string(),
       /** Which of the eight that is. */
       colorName: z.enum(PROFILE_COLOR_NAMES),
+      asleep: z.boolean(),
+      checkMail: z.boolean(),
+      /**
+       * Where its feed stands, and the signed-in account's address once a
+       * feed has given it, `null` before that and once signed out.
+       */
+      mail: z.object({
+        status: z.enum(MAIL_STATUSES),
+        address: z.nullable(z.string()),
+      }),
       overrides: pageOverrides,
     })
   ),

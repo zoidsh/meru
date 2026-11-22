@@ -23,6 +23,9 @@ const profile = (
   name: id,
   color: "#2d52d2",
   colorName: "blue",
+  asleep: false,
+  checkMail: true,
+  mail: { status: "unknown", address: null },
   overrides,
 });
 

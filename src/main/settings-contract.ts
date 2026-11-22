@@ -12,10 +12,12 @@ import { UNTIL_OFF } from "#core/notification-gate.ts";
 import { profileColor, profileColorName } from "#core/profile-color.ts";
 import { OVERRIDABLE_SETTING_KEYS } from "#core/settings.ts";
 import type { OverridableSettingKey } from "#core/settings.ts";
+import { canSleepProfile, checksMail, isAsleep } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
+import type { MailPoller } from "./mail.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
 import type { SettingsPages } from "./settings-pages.ts";
@@ -27,9 +29,13 @@ export interface SettingsContractDeps {
     SettingsStore,
     "get" | "update" | "setOverride" | "clearOverride" | "overridingProfiles"
   >;
-  profiles: Pick<Profiles, "rename" | "move" | "setColor"> & {
-    get: () => Pick<State, "profiles">;
+  profiles: Pick<
+    Profiles,
+    "rename" | "move" | "setColor" | "setCheckMail" | "sleep" | "select"
+  > & {
+    get: () => State;
   };
+  mail: Pick<MailPoller, "mail" | "address">;
   /** Adds a profile and selects it, closing what stands over the new one. */
   addProfile: () => Promise<string | undefined>;
   /** Asks to remove the profile, and removes it once confirmed. */
@@ -190,6 +196,25 @@ export const settingsHandlers = ({
 
       await removeProfile(profileId);
     },
+    setCheckMail: async ({ profileId, on }) => {
+      assertListed(profiles, profileId);
+      await profiles.setCheckMail(profileId, on);
+    },
+    setAsleep: async ({ profileId, asleep }) => {
+      assertListed(profiles, profileId);
+
+      if (!asleep) {
+        await profiles.select(profileId);
+
+        return;
+      }
+
+      if (!canSleepProfile(profiles.get(), profileId)) {
+        throw new Error("The last awake profile cannot sleep");
+      }
+
+      await profiles.sleep(profileId);
+    },
   };
 };
 
@@ -197,11 +222,12 @@ export const settingsHandlers = ({
 export const readSettingsState = ({
   settings,
   profiles,
+  mail,
   doNotDisturb,
   pages,
 }: Pick<
   SettingsContractDeps,
-  "settings" | "profiles" | "doNotDisturb" | "pages"
+  "settings" | "profiles" | "mail" | "doNotDisturb" | "pages"
 >): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
@@ -223,6 +249,12 @@ export const readSettingsState = ({
       name: profileDisplayName(profile),
       color: profileColor(state, profile.id),
       colorName: profileColorName(state, profile.id),
+      asleep: isAsleep(state, profile),
+      checkMail: checksMail(profile),
+      mail: {
+        status: mail.mail(profile.id).status,
+        address: mail.address(profile.id) ?? null,
+      },
       overrides: Object.fromEntries(
         OVERRIDABLE_SETTING_KEYS.filter((key) =>
           overriding.get(key)?.includes(profile.id)

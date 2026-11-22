@@ -438,6 +438,7 @@ const start = async () => {
     settings,
     profiles,
     addProfile,
+    mail,
     doNotDisturb,
     sound,
     showTestNotification,

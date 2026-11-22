@@ -18,6 +18,8 @@ export const SETTINGS_CALL_NAMES = [
   "setProfileColor",
   "moveProfile",
   "removeProfile",
+  "setCheckMail",
+  "setAsleep",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

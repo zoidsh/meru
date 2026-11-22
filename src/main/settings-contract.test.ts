@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { SoundRequest } from "#contract/shell-sound.ts";
+import type { FeedOutcome } from "#core/feed.ts";
 import type { Settings } from "#core/settings.ts";
-import { newProfile } from "#core/state.ts";
+import { checksMail, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createDoNotDisturb } from "./do-not-disturb.ts";
+import { createMailPoller } from "./mail.ts";
 import { createProfiles } from "./profiles.ts";
 import { createRemoveProfile } from "./remove-profile.ts";
 import { readSettingsState, settingsHandlers } from "./settings-contract.ts";
@@ -48,6 +50,18 @@ const setup = (state: State, initial?: Settings) => {
   const played: SoundRequest[] = [];
   const tested: (string | undefined)[] = [];
   const pages = createSettingsPages();
+  // Each profile's feed answers at once with what the test puts here.
+  const feeds = new Map<string, FeedOutcome>();
+  const mail = createMailPoller({
+    fetchFeed: (profileId) =>
+      Promise.resolve(
+        feeds.get(profileId) ?? { kind: "failed", reason: "no feed" }
+      ),
+    // No profile's inbox has a label here.
+    inboxLabel: (profileId) => new Map<string, string>().get(profileId),
+    isOnline: () => true,
+    log: () => false,
+  });
   const asked: string[] = [];
   // What the composition root's add does beside adding, as closing the inbox.
   const addedBy: string[] = [];
@@ -55,6 +69,7 @@ const setup = (state: State, initial?: Settings) => {
   const deps = {
     settings,
     profiles,
+    mail,
     addProfile: async () => {
       const profileId = await profiles.add();
 
@@ -102,7 +117,26 @@ const setup = (state: State, initial?: Settings) => {
       confirms = next;
     },
     profiles,
-    dispose: doNotDisturb.dispose,
+    /** Polls the listed profiles' feeds, which answer with these, and lets each answer land. */
+    poll: async (answers: Record<string, FeedOutcome>) => {
+      for (const [profileId, outcome] of Object.entries(answers)) {
+        feeds.set(profileId, outcome);
+      }
+
+      mail.reconcile(
+        profiles.get().profiles.map((profile) => profile.id),
+        profiles
+          .get()
+          .profiles.filter((profile) => !checksMail(profile))
+          .map((profile) => profile.id)
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    },
+    dispose: () => {
+      doNotDisturb.dispose();
+      mail.reconcile([]);
+    },
   };
 };
 
@@ -297,6 +331,9 @@ describe("the Settings window's profile calls", () => {
         name: "Profile 2",
         color: "oklch(0.72 0.19 150)",
         colorName: "green",
+        asleep: false,
+        checkMail: true,
+        mail: { status: "unknown", address: null },
         overrides: {},
       },
       {
@@ -404,6 +441,9 @@ describe(readSettingsState, () => {
         name: "Work",
         color: "#2d52d2",
         colorName: "blue",
+        asleep: false,
+        checkMail: true,
+        mail: { status: "unknown", address: null },
         overrides: {},
       },
     ]);
@@ -425,6 +465,9 @@ describe(readSettingsState, () => {
         name: "Home",
         color: "#2d52d2",
         colorName: "blue",
+        asleep: false,
+        checkMail: true,
+        mail: { status: "unknown", address: null },
         overrides: {},
       },
       {
@@ -432,8 +475,99 @@ describe(readSettingsState, () => {
         name: "Work",
         color: "#ff6227",
         colorName: "orange",
+        asleep: false,
+        checkMail: true,
+        mail: { status: "unknown", address: null },
         overrides: { notificationSound: "chime" },
       },
+    ]);
+    app.dispose();
+  });
+
+  it("tells each profile's sleep, Check mail, mail status and the address its feed gave", async () => {
+    const state = stateOf("Home", "Work", "Club");
+    const app = setup({
+      ...state,
+      profiles: state.profiles.map((profile) => {
+        if (profile.id === "work") {
+          return { ...profile, asleep: true };
+        }
+
+        return profile.id === "club"
+          ? { ...profile, checkMail: false }
+          : profile;
+      }),
+    });
+
+    await app.poll({
+      home: {
+        kind: "feed",
+        feed: { unreadCount: 0, entries: [], address: "me@example.org" },
+      },
+      work: { kind: "signedOut" },
+    });
+
+    expect(
+      app
+        .read()
+        .profiles.map(({ id, asleep, checkMail, mail }) => [
+          id,
+          asleep,
+          checkMail,
+          mail,
+        ])
+    ).toStrictEqual([
+      ["home", false, true, { status: "ok", address: "me@example.org" }],
+      ["work", true, true, { status: "signedOut", address: null }],
+      ["club", false, false, { status: "notChecked", address: null }],
+    ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Check mail and Sleep", () => {
+  it("turns a listed profile's Check mail off and on, and refuses an unlisted one", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.setCheckMail({ profileId: "work", on: false });
+
+    const off = app.profiles.get().profiles[1]?.checkMail;
+
+    await app.handlers.setCheckMail({ profileId: "work", on: true });
+
+    expect([
+      off,
+      Object.hasOwn(app.profiles.get().profiles[1] ?? {}, "checkMail"),
+      await app.handlers
+        .setCheckMail({ profileId: "gone", on: false })
+        .catch((error: unknown) => (error as Error).message),
+    ]).toStrictEqual([false, false, "No listed profile has the id gone"]);
+    app.dispose();
+  });
+
+  it("puts a profile to sleep, refuses the last awake one, and wakes one by selecting it", async () => {
+    const app = setup(stateOf("Home", "Work"));
+    const asleep = () => app.read().profiles.map((profile) => profile.asleep);
+
+    await app.handlers.setAsleep({ profileId: "work", asleep: true });
+
+    const workAsleep = asleep();
+    const refused = await app.handlers
+      .setAsleep({ profileId: "home", asleep: true })
+      .catch((error: unknown) => (error as Error).message);
+
+    await app.handlers.setAsleep({ profileId: "work", asleep: false });
+
+    expect([
+      workAsleep,
+      refused,
+      asleep(),
+      app.profiles.get().selectedProfileId,
+    ]).toStrictEqual([
+      [false, true],
+      "The last awake profile cannot sleep",
+      [false, false],
+      "work",
     ]);
     app.dispose();
   });

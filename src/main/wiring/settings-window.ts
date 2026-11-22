@@ -16,6 +16,7 @@ import { createWindowFactory } from "#platform/window.ts";
 
 import { serveContract } from "../contract-ipc.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
+import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
 import type { SenderRegistry } from "../senders.ts";
@@ -49,6 +50,7 @@ export const wireSettingsWindow = ({
   settings,
   profiles,
   addProfile,
+  mail,
   doNotDisturb,
   sound,
   showTestNotification,
@@ -68,6 +70,7 @@ export const wireSettingsWindow = ({
   profiles: Profiles;
   /** Adds a profile and selects it, as every other way to add one does. */
   addProfile: () => Promise<string | undefined>;
+  mail: MailPoller;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   sound: Pick<SoundOutput, "play">;
   showTestNotification: (profileId: string | undefined) => void;
@@ -131,6 +134,7 @@ export const wireSettingsWindow = ({
       settings,
       profiles,
       addProfile,
+      mail,
       doNotDisturb,
       sound,
       pages,
@@ -148,13 +152,14 @@ export const wireSettingsWindow = ({
     }),
     state: {
       read: () =>
-        readSettingsState({ settings, profiles, doNotDisturb, pages }),
+        readSettingsState({ settings, profiles, mail, doNotDisturb, pages }),
       onChange: (listener) => {
         for (const key of PAGE_SETTING_KEYS) {
           settings.onChange(key, listener);
         }
 
         profiles.onChange(listener);
+        mail.onChange(listener);
         pages.onChange(listener);
       },
     },
