@@ -234,9 +234,12 @@ const SearchRow = ({
 /** Search and Name, saved together or refused with the reason under Search. */
 const AddForm = ({
   profileId,
+  searchInput,
   onClose,
 }: {
   profileId: string;
+  /** The card's, so removing the last row can put focus here. */
+  searchInput: RefObject<HTMLInputElement | null>;
   onClose: () => void;
 }) => {
   const { t } = useLingui();
@@ -247,14 +250,13 @@ const AddForm = ({
     reason: SavedSearchRefusal;
     attempt: number;
   }>();
-  const searchInput = useRef<HTMLInputElement>(null);
   const searchId = useId();
   const nameId = useId();
   const errorId = useId();
 
   useEffect(() => {
     searchInput.current?.focus();
-  }, []);
+  }, [searchInput]);
 
   const reasons: Record<SavedSearchRefusal, string> = {
     empty: t({
@@ -409,8 +411,10 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
   const [adding, setAdding] = useState(false);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const addButton = useRef<HTMLButtonElement>(null);
-  // Where focus goes once the render it waits for is done.
-  const [focusNext, setFocusNext] = useState<string>();
+  const searchInput = useRef<HTMLInputElement>(null);
+  // Where focus goes once the render it waits for is done, a new object for
+  // each request so one asked for again runs again.
+  const [focusNext, setFocusNext] = useState<{ target: string }>();
   const searches = profile.savedSearches;
 
   useEffect(() => {
@@ -418,8 +422,12 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
       return;
     }
 
+    const targets: Record<string, HTMLElement | null | undefined> = {
+      add: addButton.current,
+      search: searchInput.current,
+    };
     const target =
-      focusNext === "add" ? addButton.current : buttons.current.get(focusNext);
+      targets[focusNext.target] ?? buttons.current.get(focusNext.target);
 
     if (target) {
       target.focus();
@@ -430,7 +438,15 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
   const remove = (search: ListedSearch, index: number) => {
     const next = searches[index + 1];
 
-    setFocusNext(next ? `remove:${next.id}` : "add");
+    let target = "add";
+
+    if (next) {
+      target = `remove:${next.id}`;
+    } else if (adding) {
+      target = "search";
+    }
+
+    setFocusNext({ target });
     settingsCalls()
       .removeSavedSearch({ profileId: profile.id, searchId: search.id })
       .catch(noop);
@@ -476,7 +492,7 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
                   setEditing(undefined);
 
                   if (byKey) {
-                    setFocusNext(`rename:${search.id}`);
+                    setFocusNext({ target: `rename:${search.id}` });
                   }
                 }}
                 onRemove={() => {
@@ -498,9 +514,10 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
         {adding ? (
           <AddForm
             profileId={profile.id}
+            searchInput={searchInput}
             onClose={() => {
               setAdding(false);
-              setFocusNext("add");
+              setFocusNext({ target: "add" });
             }}
           />
         ) : (

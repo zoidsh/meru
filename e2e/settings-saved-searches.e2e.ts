@@ -231,6 +231,42 @@ test("renames by Enter and by leaving the field, keeps the name on Escape, clear
   await expect.poll(() => menuSearches(app)).toStrictEqual(["has:attachment"]);
 });
 
+test("removing the last row with the add form open focuses Search, and Save or Cancel then focuses Add saved search", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seed(userDataDir, standIn, [
+    { id: "a", query: "is:unread" },
+    { id: "b", query: "in:sent" },
+  ]);
+
+  const app = await launchApp();
+  const page = await openHome(app);
+
+  await button(page, "Add saved search").click();
+  await button(page, "Remove in:sent").click();
+  await expect(row(page, "in:sent")).toHaveCount(0);
+  await expect(searchField(page)).toBeFocused();
+  await searchField(page).fill("is:starred");
+  await addForm(page).getByRole("button", { name: "Save" }).click();
+  await expect(button(page, "Add saved search")).toBeFocused();
+
+  await button(page, "Add saved search").click();
+  await button(page, "Remove is:starred").click();
+  await expect(row(page, "is:starred")).toHaveCount(0);
+  await expect(searchField(page)).toBeFocused();
+  await addForm(page).getByRole("button", { name: "Cancel" }).click();
+  await expect(button(page, "Add saved search")).toBeFocused();
+
+  await button(page, "Add saved search").click();
+  await button(page, "Remove is:unread").click();
+  await expect(row(page, "is:unread")).toHaveCount(0);
+  await expect(searchField(page)).toBeFocused();
+  await searchField(page).press("Escape");
+  await expect(button(page, "Add saved search")).toBeFocused();
+});
+
 test("a search saved from Gmail's menu shows on the open page", async ({
   launchApp,
   standIn,
