@@ -118,6 +118,54 @@ test("a profile is renamed on Enter and on leaving the field; Escape puts the na
     .toStrictEqual(["Home", "Office"]);
 });
 
+test("a typed name is saved when the page is left without leaving the field, by the menu's Back or by closing the window, and Escape still discards it", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+  const name = nameField(page);
+
+  await openProfiles(page);
+  await profileRow(page, "Work").click();
+  await name.fill("Side project");
+  await name.press("Escape");
+  await name.fill("Office");
+  await emitSettingsFocus(app, "focus");
+  await clickMenuItem(app, "tab.back");
+
+  await expect(settingsTitle(page)).toHaveText("Profiles");
+  await expect
+    .poll(() => storedProfiles(userDataDir, "name"))
+    .toStrictEqual(["Home", "Office"]);
+
+  await profileRow(page, "Home").click();
+  await name.fill("House");
+  await name.press("Escape");
+  await clickMenuItem(app, "tab.back");
+  await expect(settingsTitle(page)).toHaveText("Profiles");
+
+  // Main takes the calls in order, so a rename sent as the page went would
+  // show in the title of the page opened after it.
+  await profileRow(page, "Home").click();
+  await expect(settingsTitle(page)).toHaveText("Home");
+  await name.fill("Family");
+  await app.evaluate(({ BrowserWindow }) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (window.webContents.getURL().startsWith("meru-app://settings")) {
+        window.close();
+      }
+    }
+  });
+
+  await expect
+    .poll(() => storedProfiles(userDataDir, "name"))
+    .toStrictEqual(["Family", "Office"]);
+});
+
 test("a colour chosen changes the titlebar's dot, and a restart keeps it", async ({
   launchApp,
   userDataDir,

@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
 import { CheckIcon } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { SettingsState } from "#contract/settings.ts";
@@ -51,8 +51,8 @@ const Row = ({
 };
 
 /**
- * The name as typed until it is saved on Enter or on leaving the field;
- * Escape puts back the stored one.
+ * The name as typed until it is saved on Enter, on leaving the field or on
+ * leaving the page; Escape puts back the stored one.
  */
 const NameInput = ({
   profile,
@@ -95,6 +95,23 @@ const NameInput = ({
         setDraft(undefined);
       });
   };
+
+  // Leaving the page by the menu's Back or by closing the window blurs
+  // nothing, so what is typed is saved as the field or the document goes.
+  const saveOnLeaving = useEffectEvent(save);
+
+  useEffect(() => {
+    const onPageHide = () => {
+      saveOnLeaving();
+    };
+
+    window.addEventListener("pagehide", onPageHide);
+
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      saveOnLeaving();
+    };
+  }, []);
 
   return (
     <Input
