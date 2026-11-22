@@ -7,7 +7,7 @@ import type { State } from "./state.ts";
 export const SAVED_SEARCHES_MAX = 100;
 
 /** The longest name a saved search takes, as a profile's. */
-const SAVED_SEARCH_LABEL_MAX_LENGTH = 64;
+export const SAVED_SEARCH_LABEL_MAX_LENGTH = 64;
 
 /** How much of a long name a menu shows. */
 const SHOWN_NAME_MAX_LENGTH = 60;

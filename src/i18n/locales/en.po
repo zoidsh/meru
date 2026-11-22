@@ -255,6 +255,12 @@ msgstr "Add profile"
 msgid "Add quiet hours"
 msgstr "Add quiet hours"
 
+#. Button on a profile's page in Settings that opens the fields to add a saved search
+#. Name of the group of fields in Settings that adds a saved search to a profile
+#: src/settings/saved-searches-card.tsx
+msgid "Add saved search"
+msgstr "Add saved search"
+
 #. A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the app setting; {days} is when, such as every day or weekdays
 #: src/settings/scope.ts
 msgid "all day {days}"
@@ -379,8 +385,10 @@ msgstr "Breeze"
 msgid "Bring All to Front"
 msgstr "Bring All to Front"
 
+#. Button in Settings that closes the fields of a new saved search without adding it
 #. Button in the dialog that confirms removing a profile, which keeps it
 #: src/main/profile-copy.ts
+#: src/settings/saved-searches-card.tsx
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -631,6 +639,11 @@ msgstr "Duplicate"
 msgid "Edit"
 msgstr "Edit"
 
+#. Shown under the Search field in Settings when Save is pressed with it empty
+#: src/settings/saved-searches-card.tsx
+msgid "Enter a search."
+msgstr "Enter a search."
+
 #. Days of a window of quiet hours, in the Settings caption naming the app setting, as in 22:00–07:00 every day
 #: src/settings/scope.ts
 msgid "every day"
@@ -807,6 +820,11 @@ msgstr "Kept for 30 days"
 msgid "Knock"
 msgstr "Knock"
 
+#. Example Gmail query in the empty Search field of a new saved search; Gmail's operators (label:, is:) stay as they are, the label name may be translated
+#: src/settings/saved-searches-card.tsx
+msgid "label:receipts is:unread"
+msgstr "label:receipts is:unread"
+
 #. Said by screen readers of the gap between two panes side by side: how much of the two the left one takes; {percent} is a percentage, such as 60%
 #: src/shell/pane-handle.tsx
 msgid "Left pane {percent}"
@@ -904,9 +922,16 @@ msgid "Moved or deleted"
 msgstr "Moved or deleted"
 
 #. Label of a profile's name on its page in Settings
+#. Label of the field in Settings that takes the name of a new saved search
 #: src/settings/profile-page.tsx
+#: src/settings/saved-searches-card.tsx
 msgid "Name"
 msgstr "Name"
+
+#. Name of the field that renames a saved search in Settings; shown is its name, else its Gmail query
+#: src/settings/saved-searches-card.tsx
+msgid "Name of {shown}"
+msgstr "Name of {shown}"
 
 #. Title of the group of Settings for how new mail is announced
 #: src/settings/notifications-page.tsx
@@ -973,6 +998,11 @@ msgstr "No results."
 #: src/main/application-menu.ts
 msgid "No Saved Searches"
 msgstr "No Saved Searches"
+
+#. Shown in the Saved searches card on a profile's page in Settings while it has none
+#: src/settings/saved-searches-card.tsx
+msgid "No saved searches yet. Save a search from the Mail menu, or add one here."
+msgstr "No saved searches yet. Save a search from the Mail menu, or add one here."
 
 #. Heading of the unified inbox when no profile has unread mail
 #: src/shell/inbox.tsx
@@ -1118,6 +1148,11 @@ msgstr "Open in Default Browser"
 msgid "Open in split"
 msgstr "Open in split"
 
+#. Placeholder of the Name field of a new saved search in Settings, which may stay empty
+#: src/settings/saved-searches-card.tsx
+msgid "Optional"
+msgstr "Optional"
+
 #. Name of a profile's colour
 #: src/settings/profile-page.tsx
 msgid "Orange"
@@ -1215,8 +1250,10 @@ msgstr "Redo"
 msgid "Reload"
 msgstr "Reload"
 
+#. Tooltip of the button in Settings that removes a saved search
 #. Tooltip of the button that removes one window of quiet hours in Settings
 #: src/settings/quiet-hours-field.tsx
+#: src/settings/saved-searches-card.tsx
 msgid "Remove"
 msgstr "Remove"
 
@@ -1224,6 +1261,11 @@ msgstr "Remove"
 #: src/main/profile-copy.ts
 msgid "Remove {name}?"
 msgstr "Remove {name}?"
+
+#. Button in Settings that removes a saved search at once; shown is its name, else its Gmail query
+#: src/settings/saved-searches-card.tsx
+msgid "Remove {shown}"
+msgstr "Remove {shown}"
 
 #. Tooltip of the cross on a bookmark's row in the New tab launcher, which deletes that bookmark
 #. Tooltip of the filled bookmark button on a tab's row in the wide sidebar, which removes its page's bookmark
@@ -1278,6 +1320,16 @@ msgstr "Remove quiet hours {place}"
 msgid "Remove Saved Search"
 msgstr "Remove Saved Search"
 
+#. Tooltip of the button in Settings that renames a saved search
+#: src/settings/saved-searches-card.tsx
+msgid "Rename"
+msgstr "Rename"
+
+#. Button in Settings that renames a saved search; shown is its name, else its Gmail query
+#: src/settings/saved-searches-card.tsx
+msgid "Rename {shown}"
+msgstr "Rename {shown}"
+
 #. Button on a message in the unified inbox that reports it as spam. Gmail's own words for the action
 #: src/shell/inbox.tsx
 msgctxt "inbox action"
@@ -1299,10 +1351,25 @@ msgstr "Restore panes"
 msgid "Restore Panes"
 msgstr "Restore Panes"
 
+#. Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them
+#: src/settings/saved-searches-card.tsx
+msgid "Run from Saved Searches in the Mail menu while Gmail is open in this profile."
+msgstr "Run from Saved Searches in the Mail menu while Gmail is open in this profile."
+
+#. Button in Settings that adds the saved search typed above
+#: src/settings/saved-searches-card.tsx
+msgid "Save"
+msgstr "Save"
+
 #. Menu item in the Saved Searches menu that keeps the search Gmail shows now, to run again later
 #: src/main/commands.ts
 msgid "Save Current Search"
 msgstr "Save Current Search"
+
+#. Title of the card on a profile's page in Settings that lists its saved Gmail searches
+#: src/settings/saved-searches-card.tsx
+msgid "Saved searches"
+msgstr "Saved searches"
 
 #. Submenu of the Mail menu listing the selected profile's saved Gmail searches, each of which runs its search
 #: src/main/application-menu.ts
@@ -1324,8 +1391,10 @@ msgstr "Scroll profiles left"
 msgid "Scroll profiles right"
 msgstr "Scroll profiles right"
 
+#. Label of the field in Settings that takes the Gmail query of a new saved search
 #. Placeholder of the field atop the Settings window's sections that filters them by name
 #: src/settings/app.tsx
+#: src/settings/saved-searches-card.tsx
 msgid "Search"
 msgstr "Search"
 
@@ -1588,6 +1657,21 @@ msgstr "This data was saved by a newer version. Open it with that version, or up
 #: src/main/notifications.ts
 msgid "This is what a new email notification looks like."
 msgstr "This is what a new email notification looks like."
+
+#. Shown under the Search field in Settings when the profile cannot keep another saved search
+#: src/settings/saved-searches-card.tsx
+msgid "This profile has {SAVED_SEARCHES_MAX} saved searches, the most it can keep."
+msgstr "This profile has {SAVED_SEARCHES_MAX} saved searches, the most it can keep."
+
+#. Shown under the Search field in Settings when the search cannot be saved for another reason
+#: src/settings/saved-searches-card.tsx
+msgid "This search can't be saved."
+msgstr "This search can't be saved."
+
+#. Shown under the Search field in Settings when the profile has a saved search with the same Gmail query
+#: src/settings/saved-searches-card.tsx
+msgid "This search is saved already."
+msgstr "This search is saved already."
 
 #. Sender of the stand-in email in the test notification Settings shows: a person's name and the app's
 #: src/main/notifications.ts

@@ -22,6 +22,7 @@ import { Input } from "#ui/input.tsx";
 import { Switch } from "#ui/switch.tsx";
 import { ToggleGroup, ToggleGroupItem } from "#ui/toggle-group.tsx";
 
+import { SavedSearchesCard } from "./saved-searches-card.tsx";
 import { AccountLine, accountShown } from "./signed-in.tsx";
 import { settingsCalls } from "./sync.ts";
 
@@ -144,7 +145,10 @@ const NameInput = ({
   );
 };
 
-/** A profile's own page inside Profiles: its name, its colour and its removal. */
+/**
+ * A profile's own page inside Profiles: its name, colour, mail and sleep, its
+ * saved searches and its removal.
+ */
 export const ProfilePage = ({
   profile,
   count,
@@ -373,6 +377,7 @@ export const ProfilePage = ({
           </FieldGroup>
         </CardContent>
       </Card>
+      <SavedSearchesCard profile={profile} />
       <Card>
         <CardContent>
           <Row
