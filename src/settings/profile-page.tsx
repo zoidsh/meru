@@ -19,8 +19,10 @@ import {
   FieldSeparator,
 } from "#ui/field.tsx";
 import { Input } from "#ui/input.tsx";
+import { Switch } from "#ui/switch.tsx";
 import { ToggleGroup, ToggleGroupItem } from "#ui/toggle-group.tsx";
 
+import { AccountLine, accountShown } from "./signed-in.tsx";
 import { settingsCalls } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
@@ -28,17 +30,19 @@ type ListedProfile = SettingsState["profiles"][number];
 const Row = ({
   label,
   description,
+  disabled = false,
   children,
 }: {
   label: string;
   description: string;
+  disabled?: boolean;
   children: (ids: { label: string; description: string }) => ReactNode;
 }) => {
   const labelId = useId();
   const descriptionId = useId();
 
   return (
-    <Field orientation="horizontal">
+    <Field orientation="horizontal" data-disabled={disabled || undefined}>
       <FieldContent>
         <FieldLabel id={labelId}>{label}</FieldLabel>
         <FieldDescription id={descriptionId}>{description}</FieldDescription>
@@ -144,6 +148,7 @@ const NameInput = ({
 export const ProfilePage = ({
   profile,
   count,
+  lastAwake,
   focusName,
   onNameFocused,
   onRemoveAsked,
@@ -151,6 +156,8 @@ export const ProfilePage = ({
   profile: ListedProfile;
   /** How many profiles there are. */
   count: number;
+  /** Whether it is the one profile awake, which cannot sleep. */
+  lastAwake: boolean;
   /** Whether to focus the name with its text chosen, as for one just added. */
   focusName: boolean;
   onNameFocused: () => void;
@@ -170,9 +177,69 @@ export const ProfilePage = ({
     violet: t({ message: "Violet", comment: "Name of a profile's colour" }),
   };
   const removable = count > 1;
+  const many = count > 1;
+  let checkMailDescription: string;
+
+  if (profile.checkMail) {
+    checkMailDescription = many
+      ? t({
+          message:
+            "Its unread count, notifications and place in the Unified inbox come from this.",
+          comment:
+            "Description of Check mail, turned on, on a profile's page in Settings when there are several profiles",
+        })
+      : t({
+          message: "Its unread count and notifications come from this.",
+          comment:
+            "Description of Check mail, turned on, on the only profile's page in Settings, which has no Unified inbox",
+        });
+  } else {
+    checkMailDescription = many
+      ? t({
+          message:
+            "Off: no unread count, no notifications, and nothing in the Unified inbox.",
+          comment:
+            "Description of Check mail, turned off, on a profile's page in Settings when there are several profiles",
+        })
+      : t({
+          message: "Off: no unread count and no notifications.",
+          comment:
+            "Description of Check mail, turned off, on the only profile's page in Settings, which has no Unified inbox",
+        });
+  }
+
+  const stillChecked = profile.checkMail
+    ? ` ${t({
+        message: "Its mail is still checked.",
+        comment:
+          "Second sentence of Sleep's description on a profile's page in Settings, while its Check mail is on",
+      })}`
+    : "";
+  let sleepDescription: string;
+
+  if (lastAwake) {
+    sleepDescription = t({
+      message: "The last awake profile can't sleep.",
+      comment:
+        "Description of Sleep on a profile's page in Settings, whose switch is disabled since every other profile sleeps",
+    });
+  } else if (profile.asleep) {
+    sleepDescription = `${t({
+      message: "Its pages stay closed until it is selected again.",
+      comment:
+        "Description of Sleep, turned on, on a profile's page in Settings",
+    })}${stillChecked}`;
+  } else {
+    sleepDescription = `${t({
+      message: "Closes its pages until it is selected again.",
+      comment:
+        "Description of Sleep, turned off, on a profile's page in Settings",
+    })}${stillChecked}`;
+  }
 
   return (
     <>
+      {accountShown(profile) && <AccountLine profile={profile} />}
       <Card>
         <CardContent>
           <FieldGroup>
@@ -253,6 +320,56 @@ export const ProfilePage = ({
                 </ToggleGroup>
               )}
             </Row>
+            <FieldSeparator />
+            <Row
+              label={t({
+                message: "Check mail",
+                comment:
+                  "Label of the switch on a profile's page in Settings that turns checking its mail on or off",
+              })}
+              description={checkMailDescription}
+            >
+              {(ids) => (
+                <Switch
+                  checked={profile.checkMail}
+                  aria-labelledby={ids.label}
+                  aria-describedby={ids.description}
+                  onCheckedChange={(on) => {
+                    calls
+                      .setCheckMail({ profileId: profile.id, on })
+                      .catch(noop);
+                  }}
+                />
+              )}
+            </Row>
+            {many && (
+              <>
+                <FieldSeparator />
+                <Row
+                  label={t({
+                    message: "Sleep",
+                    comment:
+                      "Label of the switch on a profile's page in Settings that puts it to sleep or wakes it",
+                  })}
+                  description={sleepDescription}
+                  disabled={lastAwake}
+                >
+                  {(ids) => (
+                    <Switch
+                      checked={profile.asleep}
+                      disabled={lastAwake}
+                      aria-labelledby={ids.label}
+                      aria-describedby={ids.description}
+                      onCheckedChange={(asleep) => {
+                        calls
+                          .setAsleep({ profileId: profile.id, asleep })
+                          .catch(noop);
+                      }}
+                    />
+                  )}
+                </Row>
+              </>
+            )}
           </FieldGroup>
         </CardContent>
       </Card>

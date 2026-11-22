@@ -1,23 +1,31 @@
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "cn";
 import { noop } from "es-toolkit";
-import { ChevronRightIcon, GripVerticalIcon, PlusIcon } from "lucide-react";
+import {
+  ChevronRightIcon,
+  GripVerticalIcon,
+  MoonIcon,
+  PlusIcon,
+} from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import type { DragEvent, KeyboardEvent } from "react";
 
 import type { SettingsState } from "#contract/settings.ts";
+import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
 import { Card, CardContent } from "#ui/card.tsx";
 import {
   Item,
   ItemActions,
   ItemContent,
+  ItemDescription,
   ItemGroup,
   ItemMedia,
   ItemTitle,
 } from "#ui/item.tsx";
 
 import { ProfileDot } from "./scope-tabs.tsx";
+import { AccountSummary, accountShown } from "./signed-in.tsx";
 import { settingsCalls } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
@@ -53,6 +61,7 @@ export const ProfilesPage = ({
   const { t } = useLingui();
   const calls = settingsCalls();
   const helpId = useId();
+  const rowIds = useId();
   const [announcement, setAnnouncement] = useState("");
   const [dragged, setDragged] = useState<string>();
   const [draggable, setDraggable] = useState<string>();
@@ -184,6 +193,10 @@ export const ProfilesPage = ({
           >
             {profiles.map((profile, index) => {
               const { name } = profile;
+              const titleId = `${rowIds}-${profile.id}-title`;
+              const aboutId = `${rowIds}-${profile.id}-about`;
+              const asleepId = `${rowIds}-${profile.id}-asleep`;
+              const shown = accountShown(profile);
 
               return (
                 // The row is where a dragged handle drops, and the handle
@@ -270,17 +283,42 @@ export const ProfilesPage = ({
                         profileId: profile.id,
                       });
                     }}
+                    // Named by the profile alone, so its address and badge
+                    // are read after it rather than as its name.
+                    aria-labelledby={titleId}
+                    aria-describedby={
+                      [shown && aboutId, profile.asleep && asleepId]
+                        .filter(Boolean)
+                        .join(" ") || undefined
+                    }
                     className="min-w-0 flex-1 text-left hover:bg-muted"
                   >
                     <ItemMedia>
                       <ProfileDot color={profile.color} />
                     </ItemMedia>
                     <ItemContent className="min-w-0">
-                      <ItemTitle className="max-w-full">
+                      <ItemTitle id={titleId} className="max-w-full">
                         {profile.name}
                       </ItemTitle>
+                      {shown && (
+                        <ItemDescription id={aboutId}>
+                          <span className="flex items-center gap-1.5">
+                            <AccountSummary profile={profile} />
+                          </span>
+                        </ItemDescription>
+                      )}
                     </ItemContent>
                     <ItemActions className="text-muted-foreground">
+                      {profile.asleep && (
+                        <Badge id={asleepId} variant="outline">
+                          <MoonIcon data-icon="inline-start" />
+                          {t({
+                            message: "Asleep",
+                            comment:
+                              "Badge on a sleeping profile's row in Settings' list of profiles",
+                          })}
+                        </Badge>
+                      )}
                       <ChevronRightIcon aria-hidden className="size-4" />
                     </ItemActions>
                   </Item>

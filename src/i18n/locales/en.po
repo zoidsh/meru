@@ -301,7 +301,9 @@ msgctxt "inbox action"
 msgid "Archive"
 msgstr "Archive"
 
+#. Badge on a sleeping profile's row in Settings' list of profiles
 #. Said by screen readers after a sidebar row's title while its tab sleeps: put to sleep, or not opened yet since Meru started
+#: src/settings/profiles-page.tsx
 #: src/shell/tab-strip.tsx
 msgid "Asleep"
 msgstr "Asleep"
@@ -397,6 +399,11 @@ msgstr "Cancelled · {when}"
 msgid "Changes here apply to {chosenName} alone."
 msgstr "Changes here apply to {chosenName} alone."
 
+#. Label of the switch on a profile's page in Settings that turns checking its mail on or off
+#: src/settings/profile-page.tsx
+msgid "Check mail"
+msgstr "Check mail"
+
 #. Name of a notification sound, picked in Settings
 #: src/settings/notifications-page.tsx
 msgid "Chime"
@@ -443,6 +450,11 @@ msgstr "Close Tabs Below"
 #: src/main/application-menu.ts
 msgid "Close Window"
 msgstr "Close Window"
+
+#. Description of Sleep, turned off, on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Closes its pages until it is selected again."
+msgstr "Closes its pages until it is selected again."
 
 #. Accessible name and tooltip of the button at the foot of the wide list of tabs that collapses it to a narrow column of icons alone
 #: src/shell/tab-strip.tsx
@@ -760,10 +772,30 @@ msgstr "It’s back in the list."
 msgid "Its dot, and the titlebar's and sidebar's tint while it is selected."
 msgstr "Its dot, and the titlebar's and sidebar's tint while it is selected."
 
+#. Second sentence of Sleep's description on a profile's page in Settings, while its Check mail is on
+#: src/settings/profile-page.tsx
+msgid "Its mail is still checked."
+msgstr "Its mail is still checked."
+
 #. Explanation under the heading in place of a tab's page that crashed
 #: src/shell/tab-problem.tsx
 msgid "Its page quit unexpectedly. Reload it to carry on."
 msgstr "Its page quit unexpectedly. Reload it to carry on."
+
+#. Description of Sleep, turned on, on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Its pages stay closed until it is selected again."
+msgstr "Its pages stay closed until it is selected again."
+
+#. Description of Check mail, turned on, on the only profile's page in Settings, which has no Unified inbox
+#: src/settings/profile-page.tsx
+msgid "Its unread count and notifications come from this."
+msgstr "Its unread count and notifications come from this."
+
+#. Description of Check mail, turned on, on a profile's page in Settings when there are several profiles
+#: src/settings/profile-page.tsx
+msgid "Its unread count, notifications and place in the Unified inbox come from this."
+msgstr "Its unread count, notifications and place in the Unified inbox come from this."
 
 #. Under the Downloads title: how long a downloaded file stays in the list below
 #: src/shell/downloads.tsx
@@ -967,6 +999,16 @@ msgstr "Not enough room"
 msgid "Not enough room to split"
 msgstr "Not enough room to split"
 
+#. Under a profile's name in Settings' list of profiles, when its Google account is signed out
+#: src/settings/signed-in.tsx
+msgid "Not signed in"
+msgstr "Not signed in"
+
+#. Line at the top of a profile's page in Settings, when its Google account is signed out
+#: src/settings/signed-in.tsx
+msgid "Not signed in to Google, so its mail is not checked."
+msgstr "Not signed in to Google, so its mail is not checked."
+
 #. Accessible name of the region at the foot of the window that holds Meru's short notices, such as one saying there is not enough room to split
 #. Label of the switch in Settings that shows a notification for new mail
 #. Name of the Settings section for notifications, the unread badge and Do Not Disturb, in its list and as its title
@@ -995,6 +1037,16 @@ msgstr "Off for all profiles"
 #: src/settings/notifications-page.tsx
 msgid "Off while Do Not Disturb is on"
 msgstr "Off while Do Not Disturb is on"
+
+#. Description of Check mail, turned off, on the only profile's page in Settings, which has no Unified inbox
+#: src/settings/profile-page.tsx
+msgid "Off: no unread count and no notifications."
+msgstr "Off: no unread count and no notifications."
+
+#. Description of Check mail, turned off, on a profile's page in Settings when there are several profiles
+#: src/settings/profile-page.tsx
+msgid "Off: no unread count, no notifications, and nothing in the Unified inbox."
+msgstr "Off: no unread count, no notifications, and nothing in the Unified inbox."
 
 #. A switch's app setting in the Settings caption under a profile's own value: App setting is On.
 #: src/settings/scope.ts
@@ -1434,6 +1486,11 @@ msgstr "Sign in"
 msgid "Sign in required"
 msgstr "Sign in required"
 
+#. Line at the top of a profile's page in Settings; {address} is the email address of the Google account the profile is signed in to
+#: src/settings/signed-in.tsx
+msgid "Signed in to Google as {address}."
+msgstr "Signed in to Google as {address}."
+
 #. Description of Remove profile on a profile's page in Settings
 #: src/settings/profile-page.tsx
 msgid "Signs out of this profile and deletes its data on this device. Your Google account isn't affected."
@@ -1441,8 +1498,10 @@ msgstr "Signs out of this profile and deletes its data on this device. Your Goog
 
 #. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
+#. Label of the switch on a profile's page in Settings that puts it to sleep or wakes it
 #: src/main/profile-menu.ts
 #: src/main/tab-menu.ts
+#: src/settings/profile-page.tsx
 msgid "Sleep"
 msgstr "Sleep"
 
@@ -1509,6 +1568,11 @@ msgstr "Tabs"
 #: src/settings/notifications-page.tsx
 msgid "Test notification"
 msgstr "Test notification"
+
+#. Description of Sleep on a profile's page in Settings, whose switch is disabled since every other profile sleeps
+#: src/settings/profile-page.tsx
+msgid "The last awake profile can't sleep."
+msgstr "The last awake profile can't sleep."
 
 #. Body of the error dialog shown when the app's window keeps failing to draw; {productName} is the app's name
 #: src/main/shell-recovery.ts

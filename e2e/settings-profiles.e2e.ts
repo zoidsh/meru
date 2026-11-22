@@ -237,10 +237,11 @@ test("a profile's handle moves it with the arrow keys, which the titlebar and st
   await handle.press("ArrowUp");
 
   await expect(titlebarProfiles(shell)).toHaveText(["Travel", "Home", "Work"]);
+  // Each row reads its name, then what is known of its account.
   await expect(profileList(page).getByRole("listitem")).toHaveText([
-    "Travel",
-    "Home",
-    "Work",
+    /^Travel/u,
+    /^Home/u,
+    /^Work/u,
   ]);
   await expect
     .poll(() => storedProfiles(userDataDir, "id"))
@@ -277,8 +278,8 @@ test("Remove profile asks; Cancel keeps the profile, and confirming removes it a
 
   await expect(settingsTitle(page)).toHaveText("Profiles");
   await expect(profileList(page).getByRole("listitem")).toHaveText([
-    "Home",
-    "Travel",
+    /^Home/u,
+    /^Travel/u,
   ]);
   await expect(profileRow(page, "Travel")).toBeFocused();
   await expect(titlebarProfiles(shell)).toHaveText(["Home", "Travel"]);
