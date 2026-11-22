@@ -144,6 +144,11 @@ test("Check mail off clears the titlebar's count and the profile's inbox rows an
   await expect(profileTab(shell, "Work")).toHaveAccessibleName(
     "Work, 2 unread messages"
   );
+  await inboxButton.click();
+  await expect(rows.filter({ hasText: "Subject b2" })).toHaveCount(1);
+  await inboxButton.click();
+  await expect(rows).toHaveCount(0);
+
   // Mail that came while it was off is not told; what comes after is.
   standIn.setFeed("persist:work", listing("b3", "b2", "b1"));
   await pollAll(app);

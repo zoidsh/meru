@@ -611,6 +611,35 @@ describe(createMailPoller, () => {
     ]);
   });
 
+  it("drops what a poll in flight reads once the profile's mail is not checked, however often it was switched", async () => {
+    const { poller, fetches } = setup();
+
+    poller.reconcile(["a"], []);
+    poller.reconcile(["a"], ["a"]);
+    poller.reconcile(["a"], []);
+    poller.reconcile(["a"], ["a"]);
+
+    for (const pending of fetches) {
+      pending.resolve(feed(3, "me@example.org"));
+    }
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+    expect([
+      fetches.length,
+      fetches.every((made) => made.signal.aborted),
+      poller.mail("a"),
+      poller.address("a"),
+      poller.entries("a"),
+    ]).toStrictEqual([
+      2,
+      true,
+      { status: "notChecked", unreadCount: null },
+      undefined,
+      [],
+    ]);
+  });
+
   it("tells each poll's outcome as it ends, failures included, but none of a removed profile", async () => {
     const { poller, answer } = setup();
     const polls: [string, FeedOutcome][] = [];
