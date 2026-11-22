@@ -269,6 +269,35 @@ test("removing the last row with the add form open focuses Search, and Save or C
   await expect(button(page, "Add saved search")).toBeFocused();
 });
 
+test("a long query shows two lines, the whole of it in its title", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const query = Array.from({ length: 40 }, (_, at) => `label:l${at}`).join(" ");
+
+  await seed(userDataDir, standIn, [
+    { id: "a", query },
+    { id: "b", query, label: "Long" },
+  ]);
+
+  const app = await launchApp();
+  const page = await openHome(app);
+  const lines = (shown: string) =>
+    row(page, shown)
+      .getByTitle(query, { exact: true })
+      .evaluate(
+        (element) =>
+          element.getBoundingClientRect().height /
+          Number(getComputedStyle(element).lineHeight.replace("px", ""))
+      );
+
+  expect([
+    Math.round(await lines(query)),
+    Math.round(await lines("Long")),
+  ]).toStrictEqual([2, 2]);
+});
+
 test("a search saved from Gmail's menu shows on the open page", async ({
   launchApp,
   standIn,

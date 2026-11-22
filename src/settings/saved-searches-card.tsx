@@ -162,11 +162,20 @@ const SearchRow = ({
           />
         ) : (
           <FieldLabel id={labelId} className="wrap-anywhere">
-            {shown}
+            {search.name === null ? (
+              <span className="line-clamp-2" title={search.query}>
+                {search.query}
+              </span>
+            ) : (
+              shown
+            )}
           </FieldLabel>
         )}
         {(search.name !== null || editing) && (
-          <FieldDescription className="font-mono text-[12.5px] wrap-anywhere">
+          <FieldDescription
+            className="line-clamp-2 font-mono text-[12.5px] wrap-anywhere"
+            title={search.query}
+          >
             {search.query}
           </FieldDescription>
         )}
