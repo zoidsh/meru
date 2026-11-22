@@ -13,6 +13,11 @@ export const SETTINGS_CALL_NAMES = [
   "openPage",
   "goBack",
   "goForward",
+  "addProfile",
+  "renameProfile",
+  "setProfileColor",
+  "moveProfile",
+  "removeProfile",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

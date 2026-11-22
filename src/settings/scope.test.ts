@@ -18,7 +18,13 @@ import type { ListedProfile } from "./scope.ts";
 const profile = (
   id: string,
   overrides: ListedProfile["overrides"] = {}
-): ListedProfile => ({ id, name: id, color: "#2d52d2", overrides });
+): ListedProfile => ({
+  id,
+  name: id,
+  color: "#2d52d2",
+  colorName: "blue",
+  overrides,
+});
 
 const SOUNDS: Record<SoundChoice, string> = {
   none: "None",

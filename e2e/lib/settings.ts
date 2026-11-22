@@ -79,14 +79,31 @@ export const scopeTab = (page: Page, name: string) =>
     .getByRole("tab", { name, exact: true });
 
 /**
- * Stands in for the native confirmation of Remove Profile, which would show
- * on the desktop, answering it with its first button.
+ * Stands in for the native confirmation of a profile's removal, which would
+ * show on the desktop: answers it with its first button, Remove Profile, or
+ * with Cancel, and keeps on `meruTestConfirmations` what each asked and
+ * the title of the window it showed on.
  */
-export const confirmRemovals = (app: ElectronApplication) =>
-  app.evaluate(({ dialog }) => {
-    dialog.showMessageBox = (() =>
-      Promise.resolve({
-        response: 0,
+export const confirmRemovals = (app: ElectronApplication, confirm = true) =>
+  app.evaluate(({ dialog, BrowserWindow }, answer) => {
+    const asked: unknown[] =
+      (Reflect.get(globalThis, "meruTestConfirmations") as
+        | unknown[]
+        | undefined) ?? [];
+
+    Reflect.set(globalThis, "meruTestConfirmations", asked);
+    dialog.showMessageBox = ((
+      window: unknown,
+      options: { message: string }
+    ) => {
+      asked.push([
+        options.message,
+        window instanceof BrowserWindow ? window.getTitle() : undefined,
+      ]);
+
+      return Promise.resolve({
+        response: answer ? 0 : 1,
         checkboxChecked: false,
-      })) as unknown as typeof dialog.showMessageBox;
-  });
+      });
+    }) as unknown as typeof dialog.showMessageBox;
+  }, confirm);

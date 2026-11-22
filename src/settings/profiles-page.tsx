@@ -1,0 +1,276 @@
+import { useLingui } from "@lingui/react/macro";
+import { cn } from "cn";
+import { noop } from "es-toolkit";
+import { ChevronRightIcon, GripVerticalIcon, PlusIcon } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import type { DragEvent, KeyboardEvent } from "react";
+
+import type { SettingsState } from "#contract/settings.ts";
+import { Button } from "#ui/button.tsx";
+import { Card, CardContent } from "#ui/card.tsx";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "#ui/item.tsx";
+
+import { ProfileDot } from "./scope-tabs.tsx";
+import { settingsCalls } from "./sync.ts";
+
+type ListedProfile = SettingsState["profiles"][number];
+
+interface Drop {
+  profileId: string;
+  before: boolean;
+}
+
+/**
+ * The profiles in the titlebar's order, each opening its own page, moved by
+ * the handle before it; Add profile under them.
+ */
+export const ProfilesPage = ({
+  profiles,
+  onAdded,
+}: {
+  profiles: readonly ListedProfile[];
+  /** With the new profile's id, once its page is to show. */
+  onAdded: (profileId: string) => void;
+}) => {
+  const { t } = useLingui();
+  const calls = settingsCalls();
+  const helpId = useId();
+  const [announcement, setAnnouncement] = useState("");
+  const [dragged, setDragged] = useState<string>();
+  const [draggable, setDraggable] = useState<string>();
+  const [drop, setDrop] = useState<Drop>();
+  const grips = useRef(new Map<string, HTMLButtonElement>());
+  // A row moved while its handle has focus is put back in the DOM, which
+  // drops the focus.
+  const refocus = useRef<{ profileId: string; toIndex: number }>(undefined);
+  const many = profiles.length > 1;
+
+  useEffect(() => {
+    const moved = refocus.current;
+
+    if (moved && profiles[moved.toIndex]?.id === moved.profileId) {
+      grips.current.get(moved.profileId)?.focus();
+      refocus.current = undefined;
+    }
+  }, [profiles]);
+
+  const move = (profile: ListedProfile, toIndex: number) => {
+    if (
+      toIndex < 0 ||
+      toIndex >= profiles.length ||
+      profiles[toIndex]?.id === profile.id
+    ) {
+      return;
+    }
+
+    const { name } = profile;
+    const place = toIndex + 1;
+    const count = profiles.length;
+
+    const moved = t({
+      message: `${name} is now ${place} of ${count} in the titlebar.`,
+      comment:
+        "Read by screen readers after a profile is moved in Settings' list of profiles; {place} is its new place from 1 and {count} how many profiles there are",
+    });
+
+    refocus.current =
+      document.activeElement === grips.current.get(profile.id)
+        ? { profileId: profile.id, toIndex }
+        : undefined;
+    calls
+      .moveProfile({ profileId: profile.id, toIndex })
+      .then(() => setAnnouncement(moved))
+      .catch(noop);
+  };
+
+  const onGripKey = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    profile: ListedProfile,
+    index: number
+  ) => {
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+      return;
+    }
+
+    event.preventDefault();
+    move(profile, index + (event.key === "ArrowUp" ? -1 : 1));
+  };
+
+  const endDrag = () => {
+    setDragged(undefined);
+    setDraggable(undefined);
+    setDrop(undefined);
+  };
+
+  const onDragOver = (event: DragEvent<HTMLDivElement>, profileId: string) => {
+    if (dragged === undefined) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const box = event.currentTarget.getBoundingClientRect();
+    const before = event.clientY < box.top + box.height / 2;
+
+    if (drop?.profileId !== profileId || drop.before !== before) {
+      setDrop({ profileId, before });
+    }
+  };
+
+  const onDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    const from = profiles.findIndex((profile) => profile.id === dragged);
+    const target = profiles.findIndex(
+      (profile) => profile.id === drop?.profileId
+    );
+    const profile = profiles[from];
+
+    if (profile && target !== -1 && drop) {
+      const to = target + (drop.before ? 0 : 1);
+
+      move(profile, from < to ? to - 1 : to);
+    }
+
+    endDrag();
+  };
+
+  return (
+    <>
+      <Card>
+        <CardContent>
+          <ItemGroup
+            aria-label={t({
+              message: "Profiles",
+              comment:
+                "Accessible name of the list of profiles in Settings' Profiles section",
+            })}
+          >
+            {profiles.map((profile, index) => {
+              const { name } = profile;
+
+              return (
+                // The row is where a dragged handle drops, and the handle
+                // moves it by keyboard too. Item Group is a `role="list"`
+                // div, so the row is no `li`.
+                // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+                <div
+                  key={profile.id}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+                  role="listitem"
+                  draggable={draggable === profile.id}
+                  onDragStart={(event) => {
+                    setDragged(profile.id);
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", profile.id);
+                  }}
+                  onDragOver={(event) => {
+                    onDragOver(event, profile.id);
+                  }}
+                  onDrop={onDrop}
+                  onDragEnd={endDrag}
+                  className={cn(
+                    "flex items-center gap-1 rounded-lg",
+                    dragged === profile.id && "opacity-50",
+                    drop?.profileId === profile.id &&
+                      (drop.before
+                        ? "shadow-[0_-2px_0_var(--foreground)]"
+                        : "shadow-[0_2px_0_var(--foreground)]")
+                  )}
+                >
+                  {many && (
+                    <Button
+                      ref={(element) => {
+                        if (element) {
+                          grips.current.set(profile.id, element);
+                        } else {
+                          grips.current.delete(profile.id);
+                        }
+                      }}
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t({
+                        message: `Move ${name}`,
+                        comment:
+                          "Accessible name of the handle before a profile in Settings' list, which moves it by dragging or the up and down arrows; {name} is the profile's name",
+                      })}
+                      aria-describedby={helpId}
+                      onPointerDown={() => {
+                        setDraggable(profile.id);
+                      }}
+                      onKeyDown={(event) => {
+                        onGripKey(event, profile, index);
+                      }}
+                      className="cursor-grab text-muted-foreground"
+                    >
+                      <GripVerticalIcon />
+                    </Button>
+                  )}
+                  {/* Item fills on hover only as a link, so the row asks for it here. */}
+                  <Item
+                    size="sm"
+                    // Named by the profile's name inside it.
+                    // oxlint-disable-next-line jsx-a11y/control-has-associated-label
+                    render={<button type="button" />}
+                    onClick={() => {
+                      void calls.openPage({
+                        section: "profiles",
+                        profileId: profile.id,
+                      });
+                    }}
+                    className="min-w-0 flex-1 text-left hover:bg-muted"
+                  >
+                    <ItemMedia>
+                      <ProfileDot color={profile.color} />
+                    </ItemMedia>
+                    <ItemContent className="min-w-0">
+                      <ItemTitle className="max-w-full">
+                        {profile.name}
+                      </ItemTitle>
+                    </ItemContent>
+                    <ItemActions className="text-muted-foreground">
+                      <ChevronRightIcon aria-hidden className="size-4" />
+                    </ItemActions>
+                  </Item>
+                </div>
+              );
+            })}
+          </ItemGroup>
+        </CardContent>
+      </Card>
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            calls.addProfile({}).then(onAdded).catch(noop);
+          }}
+        >
+          <PlusIcon data-icon="inline-start" />
+          {t({
+            message: "Add profile",
+            comment:
+              "Button under Settings' list of profiles that adds one and opens its page",
+          })}
+        </Button>
+      </div>
+      {many && (
+        <p id={helpId} className="px-1 text-sm text-muted-foreground">
+          {t({
+            message:
+              "In the titlebar's order. Drag a profile by its handle, or focus the handle and press the up or down arrow, to move it.",
+            comment: "Line under Settings' list of profiles",
+          })}
+        </p>
+      )}
+      <output className="sr-only">{announcement}</output>
+    </>
+  );
+};

@@ -210,6 +210,11 @@ export default defineConfig({
       },
     },
     {
+      // As the CLI writes it: an Item Group is a `role="list"` div.
+      files: ["src/ui/item.tsx"],
+      rules: { "jsx-a11y/prefer-tag-over-role": "off" },
+    },
+    {
       // As the CLI writes it: the thumbs counted through a nested ternary.
       files: ["src/ui/slider.tsx"],
       rules: { "no-nested-ternary": "off" },

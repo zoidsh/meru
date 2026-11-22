@@ -9,7 +9,7 @@ import type {
   SettingsState,
 } from "#contract/settings.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
-import { profileColor } from "#core/profile-color.ts";
+import { profileColor, profileColorName } from "#core/profile-color.ts";
 import { OVERRIDABLE_SETTING_KEYS } from "#core/settings.ts";
 import type { OverridableSettingKey } from "#core/settings.ts";
 import type { State } from "#core/state.ts";
@@ -17,6 +17,7 @@ import type { State } from "#core/state.ts";
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
 import { profileDisplayName } from "./profile-copy.ts";
+import type { Profiles } from "./profiles.ts";
 import type { SettingsPages } from "./settings-pages.ts";
 import type { SettingsStore } from "./settings.ts";
 import type { SoundOutput } from "./sounds.ts";
@@ -26,7 +27,11 @@ export interface SettingsContractDeps {
     SettingsStore,
     "get" | "update" | "setOverride" | "clearOverride" | "overridingProfiles"
   >;
-  profiles: { get: () => Pick<State, "profiles"> };
+  profiles: Pick<Profiles, "add" | "rename" | "move" | "setColor"> & {
+    get: () => Pick<State, "profiles">;
+  };
+  /** Asks to remove the profile, and removes it once confirmed. */
+  removeProfile: (profileId: string) => Promise<void>;
   doNotDisturb: Pick<
     ReturnType<typeof createDoNotDisturb>,
     "current" | "switchOn" | "switchOff"
@@ -57,12 +62,12 @@ interface LooseStore {
   ) => Promise<void>;
 }
 
-const listedIds = (profiles: SettingsContractDeps["profiles"]) =>
+const listedIds = (profiles: Pick<SettingsContractDeps["profiles"], "get">) =>
   profiles.get().profiles.map((profile) => profile.id);
 
 /** Throws unless the profile is one the page lists. */
 const assertListed = (
-  profiles: SettingsContractDeps["profiles"],
+  profiles: Pick<SettingsContractDeps["profiles"], "get">,
   profileId: string
 ) => {
   if (!listedIds(profiles).includes(profileId)) {
@@ -78,6 +83,7 @@ export const settingsHandlers = ({
   sound,
   pages,
   showTestNotification,
+  removeProfile,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -142,6 +148,45 @@ export const settingsHandlers = ({
       Promise.try(() => {
         pages.step(1);
       }),
+    addProfile: async () => {
+      const profileId = await profiles.add();
+
+      if (profileId === undefined) {
+        throw new Error("The profile was not added");
+      }
+
+      pages.open({ section: "profiles", profileId });
+
+      return profileId;
+    },
+    renameProfile: async ({ profileId, name }) => {
+      assertListed(profiles, profileId);
+      await profiles.rename(profileId, name);
+    },
+    setProfileColor: async ({ profileId, color }) => {
+      assertListed(profiles, profileId);
+      await profiles.setColor(profileId, color);
+    },
+    moveProfile: async ({ profileId, toIndex }) => {
+      assertListed(profiles, profileId);
+
+      const count = profiles.get().profiles.length;
+
+      if (toIndex >= count) {
+        throw new Error(`No place ${toIndex} among ${count} profiles`);
+      }
+
+      await profiles.move(profileId, toIndex);
+    },
+    removeProfile: async ({ profileId }) => {
+      assertListed(profiles, profileId);
+
+      if (profiles.get().profiles.length < 2) {
+        throw new Error("The last profile cannot be removed");
+      }
+
+      await removeProfile(profileId);
+    },
   };
 };
 
@@ -174,6 +219,7 @@ export const readSettingsState = ({
       id: profile.id,
       name: profileDisplayName(profile),
       color: profileColor(state, profile.id),
+      colorName: profileColorName(state, profile.id),
       overrides: Object.fromEntries(
         OVERRIDABLE_SETTING_KEYS.filter((key) =>
           overriding.get(key)?.includes(profile.id)

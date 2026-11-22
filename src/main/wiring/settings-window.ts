@@ -17,6 +17,7 @@ import { createWindowFactory } from "#platform/window.ts";
 import { serveContract } from "../contract-ipc.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Profiles } from "../profiles.ts";
+import { createRemoveProfile } from "../remove-profile.ts";
 import type { SenderRegistry } from "../senders.ts";
 import { readSettingsState, settingsHandlers } from "../settings-contract.ts";
 import { createSettingsPages } from "../settings-pages.ts";
@@ -130,6 +131,16 @@ export const wireSettingsWindow = ({
       sound,
       pages,
       showTestNotification,
+      // The system's confirmation shows as a sheet on the window that asked.
+      removeProfile: async (profileId) => {
+        const window = settingsWindow.current();
+
+        if (window) {
+          await createRemoveProfile({ profiles, window, log: console.error })(
+            profileId
+          );
+        }
+      },
     }),
     state: {
       read: () =>

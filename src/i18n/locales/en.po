@@ -95,6 +95,11 @@ msgstr "{name} ({count})"
 msgid "{name} couldn’t load"
 msgstr "{name} couldn’t load"
 
+#. Read by screen readers after a profile is moved in Settings' list of profiles; {place} is its new place from 1 and {count} how many profiles there are
+#: src/settings/profiles-page.tsx
+msgid "{name} is now {place} of {count} in the titlebar."
+msgstr "{name} is now {place} of {count} in the titlebar."
+
 #. Second sentence after an action in the unified inbox failed because the profile's Google account is signed out; {name} is the profile
 #: src/shell/inbox.tsx
 msgid "{name} is signed out."
@@ -240,6 +245,11 @@ msgstr "About {appName}"
 msgid "Actual Size"
 msgstr "Actual Size"
 
+#. Button under Settings' list of profiles that adds one and opens its page
+#: src/settings/profiles-page.tsx
+msgid "Add profile"
+msgstr "Add profile"
+
 #. Menu item in the Window menu that adds a profile, signed in to no account yet, and selects it
 #: src/main/commands.ts
 msgid "Add Profile"
@@ -264,6 +274,11 @@ msgstr "All profiles"
 #: src/shell/drop-zone.tsx
 msgid "Along the whole view"
 msgstr "Along the whole view"
+
+#. Name of a profile's colour
+#: src/settings/profile-page.tsx
+msgid "Amber"
+msgstr "Amber"
 
 #. After the badges naming the first three profiles that set their own value of a setting in Settings; {more} is how many others do
 #: src/settings/row-scope.tsx
@@ -315,6 +330,11 @@ msgstr "Below the focused pane"
 #: src/shell/open-app.tsx
 msgid "Beside the focused pane"
 msgstr "Beside the focused pane"
+
+#. Name of a profile's colour
+#: src/settings/profile-page.tsx
+msgid "Blue"
+msgstr "Blue"
 
 #. Accessible name of the bookmark button on a tab's row, which saves its page as a bookmark; {title} is the tab's title
 #: src/shell/tab-strip.tsx
@@ -434,6 +454,11 @@ msgstr "Close Window"
 msgid "Collapse sidebar"
 msgstr "Collapse sidebar"
 
+#. Label of a profile's colour on its page in Settings
+#: src/settings/profile-page.tsx
+msgid "Colour"
+msgstr "Colour"
+
 #. Menu item in the Mail menu that opens a new message in the selected profile's Gmail
 #: src/main/commands.ts
 msgid "Compose"
@@ -495,6 +520,11 @@ msgstr "Count unread in the badge"
 #: src/main/application-menu.ts
 msgid "Cut"
 msgstr "Cut"
+
+#. Name of a profile's colour
+#: src/settings/profile-page.tsx
+msgid "Cyan"
+msgstr "Cyan"
 
 #. Accessible name of the days a window of quiet hours holds on in Settings
 #: src/settings/quiet-hours-field.tsx
@@ -660,6 +690,11 @@ msgstr "From"
 msgid "Gmail Settings"
 msgstr "Gmail Settings"
 
+#. Name of a profile's colour
+#: src/settings/profile-page.tsx
+msgid "Green"
+msgstr "Green"
+
 #. Name of the Help menu
 #: src/main/application-menu.ts
 msgid "Help"
@@ -715,10 +750,20 @@ msgstr "In split view"
 msgid "In split view, maximized"
 msgstr "In split view, maximized"
 
+#. Line under Settings' list of profiles
+#: src/settings/profiles-page.tsx
+msgid "In the titlebar's order. Drag a profile by its handle, or focus the handle and press the up or down arrow, to move it."
+msgstr "In the titlebar's order. Drag a profile by its handle, or focus the handle and press the up or down arrow, to move it."
+
 #. Second sentence after an action in the unified inbox failed: the message shows in the list again
 #: src/shell/inbox.tsx
 msgid "It’s back in the list."
 msgstr "It’s back in the list."
+
+#. Description of a profile's colour on its page in Settings
+#: src/settings/profile-page.tsx
+msgid "Its dot, and the titlebar's and sidebar's tint while it is selected."
+msgstr "Its dot, and the titlebar's and sidebar's tint while it is selected."
 
 #. Explanation under the heading in place of a tab's page that crashed
 #: src/shell/tab-problem.tsx
@@ -739,6 +784,11 @@ msgstr "Knock"
 #: src/shell/pane-handle.tsx
 msgid "Left pane {percent}"
 msgstr "Left pane {percent}"
+
+#. Name of a profile's colour
+#: src/settings/profile-page.tsx
+msgid "Lime"
+msgstr "Lime"
 
 #. Name of a notification sound, picked in Settings
 #: src/settings/notifications-page.tsx
@@ -786,6 +836,11 @@ msgstr "Maximized · Restore"
 msgid "Meru keeps trying by itself."
 msgstr "Meru keeps trying by itself."
 
+#. Description of Remove profile on the page of the only profile in Settings, whose button is disabled
+#: src/settings/profile-page.tsx
+msgid "Meru needs at least one profile, so the last can't be removed."
+msgstr "Meru needs at least one profile, so the last can't be removed."
+
 #. Explanation in the dialog that confirms removing a profile
 #: src/main/profile-copy.ts
 msgid "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected."
@@ -801,6 +856,11 @@ msgstr "Minimize"
 msgid "More options"
 msgstr "More options"
 
+#. Accessible name of the handle before a profile in Settings' list, which moves it by dragging or the up and down arrows; {name} is the profile's name
+#: src/settings/profiles-page.tsx
+msgid "Move {name}"
+msgstr "Move {name}"
+
 #. Menu item, in the Tabs menu, a tab's context menu and More options of a tab's own window, that puts its page back in the main window and closes that window
 #: src/main/menu-labels.ts
 msgid "Move to Main Window"
@@ -815,6 +875,11 @@ msgstr "Move to New Window"
 #: src/shell/downloads.tsx
 msgid "Moved or deleted"
 msgstr "Moved or deleted"
+
+#. Label of a profile's name on its page in Settings
+#: src/settings/profile-page.tsx
+msgid "Name"
+msgstr "Name"
 
 #. Title of the group of Settings for how new mail is announced
 #: src/settings/notifications-page.tsx
@@ -941,6 +1006,11 @@ msgstr "Off while Do Not Disturb is on"
 msgid "On"
 msgstr "On"
 
+#. Description of a profile's name on its page in Settings
+#: src/settings/profile-page.tsx
+msgid "On its button in the titlebar."
+msgstr "On its button in the titlebar."
+
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
 #: src/main/do-not-disturb.ts
 msgid "On Until {time}"
@@ -1001,6 +1071,11 @@ msgstr "Open in Default Browser"
 msgid "Open in split"
 msgstr "Open in split"
 
+#. Name of a profile's colour
+#: src/settings/profile-page.tsx
+msgid "Orange"
+msgstr "Orange"
+
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Paste"
@@ -1021,6 +1096,11 @@ msgstr "Pin"
 msgid "Pin Tab"
 msgstr "Pin Tab"
 
+#. Name of a profile's colour
+#: src/settings/profile-page.tsx
+msgid "Pink"
+msgstr "Pink"
+
 #. Name of the button in Settings beside the Sound menu that plays the chosen sound once
 #: src/settings/notifications-page.tsx
 msgid "Play sound"
@@ -1036,10 +1116,12 @@ msgstr "Previous match"
 msgid "Profile {n}"
 msgstr "Profile {n}"
 
+#. Accessible name of the list of profiles in Settings' Profiles section
 #. Accessible name of the menu of profiles in the Settings scope switcher
 #. Accessible name of the row of profile buttons in the title bar, read by screen readers
 #. Name of the Settings section listing the profiles, in its list and as its title
 #: src/settings/app.tsx
+#: src/settings/profiles-page.tsx
 #: src/settings/scope-tabs.tsx
 #: src/shell/titlebar.tsx
 msgid "Profiles"
@@ -1124,10 +1206,20 @@ msgstr "Remove bookmark of {title}"
 msgid "Remove from the list"
 msgstr "Remove from the list"
 
+#. Label of the row on a profile's page in Settings that removes it
+#: src/settings/profile-page.tsx
+msgid "Remove profile"
+msgstr "Remove profile"
+
 #. Button in the dialog that confirms removing a profile
 #: src/main/profile-copy.ts
 msgid "Remove Profile"
 msgstr "Remove Profile"
+
+#. Button on a profile's page in Settings that asks to remove it
+#: src/settings/profile-page.tsx
+msgid "Remove profile…"
+msgstr "Remove profile…"
 
 #. Menu item in the Window menu that asks to remove the selected profile, signing out of it and deleting its data on this device
 #: src/main/commands.ts
@@ -1361,6 +1453,11 @@ msgstr "Sign in"
 #: src/shell/nothing-open.tsx
 msgid "Sign in required"
 msgstr "Sign in required"
+
+#. Description of Remove profile on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Signs out of this profile and deletes its data on this device. Your Google account isn't affected."
+msgstr "Signs out of this profile and deletes its data on this device. Your Google account isn't affected."
 
 #. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
@@ -1597,6 +1694,11 @@ msgstr "Verification code {verificationCode}"
 #: src/main/application-menu.ts
 msgid "View"
 msgstr "View"
+
+#. Name of a profile's colour
+#: src/settings/profile-page.tsx
+msgid "Violet"
+msgstr "Violet"
 
 #. Label of the slider in Settings setting how loud Meru's own notification sounds play
 #: src/settings/notifications-page.tsx

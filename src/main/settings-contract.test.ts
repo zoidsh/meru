@@ -7,6 +7,7 @@ import type { State } from "#core/state.ts";
 
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createProfiles } from "./profiles.ts";
+import { createRemoveProfile } from "./remove-profile.ts";
 import { readSettingsState, settingsHandlers } from "./settings-contract.ts";
 import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
@@ -47,6 +48,8 @@ const setup = (state: State, initial?: Settings) => {
   const played: SoundRequest[] = [];
   const tested: (string | undefined)[] = [];
   const pages = createSettingsPages();
+  const asked: string[] = [];
+  let confirms = true;
   const deps = {
     settings,
     profiles,
@@ -60,6 +63,17 @@ const setup = (state: State, initial?: Settings) => {
     showTestNotification: (profileId: string | undefined) => {
       tested.push(profileId);
     },
+    removeProfile: createRemoveProfile({
+      profiles,
+      window: {
+        confirm: ({ message }) => {
+          asked.push(message);
+
+          return Promise.resolve(confirms);
+        },
+      },
+      log: () => false,
+    }),
   };
 
   settings.onChange("notificationSender", () =>
@@ -73,6 +87,11 @@ const setup = (state: State, initial?: Settings) => {
     announced,
     played,
     tested,
+    asked,
+    confirming: (next: boolean) => {
+      confirms = next;
+    },
+    profiles,
     dispose: doNotDisturb.dispose,
   };
 };
@@ -245,6 +264,121 @@ describe("the Settings window's pages", () => {
   });
 });
 
+describe("the Settings window's profile calls", () => {
+  it("adds a profile, selected, with the first colour unused, and shows its page", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.openPage({ section: "profiles", profileId: null });
+
+    const profileId = await app.handlers.addProfile({});
+
+    expect([
+      profileId,
+      app.profiles.get().selectedProfileId,
+      app.read().profiles.at(-1),
+      app.read().page,
+    ]).toStrictEqual([
+      "new",
+      "new",
+      {
+        id: "new",
+        name: "Profile 2",
+        color: "oklch(0.72 0.19 150)",
+        colorName: "green",
+        overrides: {},
+      },
+      {
+        section: "profiles",
+        profileId: "new",
+        canGoBack: true,
+        canGoForward: false,
+      },
+    ]);
+    app.dispose();
+  });
+
+  it("renames, recolours and moves a listed profile", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.renameProfile({ profileId: "work", name: "  Job " });
+    await app.handlers.renameProfile({ profileId: "work", name: "   " });
+    await app.handlers.setProfileColor({ profileId: "work", color: "violet" });
+    await app.handlers.moveProfile({ profileId: "work", toIndex: 0 });
+
+    expect(
+      app
+        .read()
+        .profiles.map(({ id, name, colorName }) => [id, name, colorName])
+    ).toStrictEqual([
+      ["work", "Job", "violet"],
+      ["home", "Home", "blue"],
+    ]);
+    app.dispose();
+  });
+
+  it("refuses an unlisted profile and a place past the last, changing nothing", async () => {
+    const app = setup(stateOf("Home", "Work"));
+    const before = app.read().profiles;
+
+    const refusals = await Promise.all(
+      [
+        app.handlers.renameProfile({ profileId: "gone", name: "Job" }),
+        app.handlers.setProfileColor({ profileId: "gone", color: "lime" }),
+        app.handlers.moveProfile({ profileId: "gone", toIndex: 0 }),
+        app.handlers.moveProfile({ profileId: "home", toIndex: 2 }),
+        app.handlers.removeProfile({ profileId: "gone" }),
+      ].map((call) =>
+        call
+          .then(() => "done")
+          .catch((error: unknown) =>
+            error instanceof Error ? error.message : error
+          )
+      )
+    );
+
+    expect(refusals).toStrictEqual([
+      "No listed profile has the id gone",
+      "No listed profile has the id gone",
+      "No listed profile has the id gone",
+      "No place 2 among 2 profiles",
+      "No listed profile has the id gone",
+    ]);
+    expect([app.read().profiles, app.asked]).toStrictEqual([before, []]);
+    app.dispose();
+  });
+
+  it("removes a profile once confirmed, its page leaving the history, and keeps it when not", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.openPage({ section: "profiles", profileId: null });
+    await app.handlers.openPage({ section: "profiles", profileId: "work" });
+    app.confirming(false);
+    await app.handlers.removeProfile({ profileId: "work" });
+
+    const kept = app.read().profiles.length;
+
+    app.confirming(true);
+    await app.handlers.removeProfile({ profileId: "work" });
+
+    expect([
+      kept,
+      app.read().profiles.map(({ id }) => id),
+      app.asked,
+    ]).toStrictEqual([2, ["home"], ["Remove Work?", "Remove Work?"]]);
+    app.dispose();
+  });
+
+  it("refuses to remove the last profile, asking nothing", async () => {
+    const app = setup(stateOf("Home"));
+
+    await expect(
+      app.handlers.removeProfile({ profileId: "home" })
+    ).rejects.toThrow("The last profile cannot be removed");
+    expect(app.asked).toStrictEqual([]);
+    app.dispose();
+  });
+});
+
 describe(readSettingsState, () => {
   it("sends a lone profile no own value of a key off the page or one that does not parse", () => {
     const app = setup(stateOf("Work"), {
@@ -253,7 +387,13 @@ describe(readSettingsState, () => {
     });
 
     expect(app.read().profiles).toStrictEqual([
-      { id: "work", name: "Work", color: "#2d52d2", overrides: {} },
+      {
+        id: "work",
+        name: "Work",
+        color: "#2d52d2",
+        colorName: "blue",
+        overrides: {},
+      },
     ]);
     app.dispose();
   });
@@ -268,11 +408,18 @@ describe(readSettingsState, () => {
     });
 
     expect(app.read().profiles).toStrictEqual([
-      { id: "home", name: "Home", color: "#2d52d2", overrides: {} },
+      {
+        id: "home",
+        name: "Home",
+        color: "#2d52d2",
+        colorName: "blue",
+        overrides: {},
+      },
       {
         id: "work",
         name: "Work",
         color: "#ff6227",
+        colorName: "orange",
         overrides: { notificationSound: "chime" },
       },
     ]);

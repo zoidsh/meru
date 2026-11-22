@@ -6,7 +6,13 @@ import { volumeSound } from "./volume.ts";
 const profile = (
   id: string,
   overrides: ListedProfile["overrides"] = {}
-): ListedProfile => ({ id, name: id, color: "#2d52d2", overrides });
+): ListedProfile => ({
+  id,
+  name: id,
+  color: "#2d52d2",
+  colorName: "blue",
+  overrides,
+});
 
 describe(volumeSound, () => {
   it("is the app's sound when it is one of Meru's, else the first profile's own of Meru's", () => {

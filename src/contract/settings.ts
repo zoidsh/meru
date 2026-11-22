@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import { PROFILE_COLOR_NAMES } from "#core/profile-color.ts";
 import { SETTINGS_SECTIONS } from "#core/settings-pages.ts";
 import { OVERRIDABLE_SETTING_KEYS, SETTINGS } from "#core/settings.ts";
 import type { OverridableSettingKey, SettingValue } from "#core/settings.ts";
@@ -139,6 +140,30 @@ export const SETTINGS_CALLS = {
   /** One page back, as the menu's Back does with the window focused. */
   goBack: { request: none, response: z.undefined() },
   goForward: { request: none, response: z.undefined() },
+  /**
+   * Adds a profile, selected in the main window, and shows its page;
+   * answers its id.
+   */
+  addProfile: { request: none, response: profileId },
+  /** By core's rules: trimmed, and empty or too long changes nothing. */
+  renameProfile: {
+    request: z.object({ profileId, name: z.string() }),
+    response: z.undefined(),
+  },
+  setProfileColor: {
+    request: z.object({ profileId, color: z.enum(PROFILE_COLOR_NAMES) }),
+    response: z.undefined(),
+  },
+  /** To a place in the titlebar's order, counted from 0. */
+  moveProfile: {
+    request: z.object({ profileId, toIndex: z.int().check(z.gte(0)) }),
+    response: z.undefined(),
+  },
+  /**
+   * Asks with the system's confirmation on the Settings window, and removes
+   * the profile once confirmed; refused for the last profile.
+   */
+  removeProfile: { request: z.object({ profileId }), response: z.undefined() },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -163,6 +188,8 @@ export const SETTINGS_STATE = {
       name: z.string(),
       /** As the shell draws its dot. */
       color: z.string(),
+      /** Which of the eight that is. */
+      colorName: z.enum(PROFILE_COLOR_NAMES),
       overrides: pageOverrides,
     })
   ),

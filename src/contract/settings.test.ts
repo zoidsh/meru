@@ -92,6 +92,7 @@ describe("the settings contract", () => {
       id: "work",
       name: "Work",
       color: "#ff6227",
+      colorName: "orange",
       overrides: { notificationSound: "chime" },
     };
 
@@ -178,5 +179,36 @@ describe("the settings contract", () => {
       openPage({ section: "profiles", profileId: "" }),
       openPage({ section: "profiles" }),
     ]).toStrictEqual([true, true, true, false, false, false]);
+  });
+
+  it("takes a profile's new name, one of the eight colours, and a place from 0", () => {
+    const rename = accepts(SETTINGS_CALLS.renameProfile.request);
+    const color = accepts(SETTINGS_CALLS.setProfileColor.request);
+    const move = accepts(SETTINGS_CALLS.moveProfile.request);
+    const remove = accepts(SETTINGS_CALLS.removeProfile.request);
+
+    expect([
+      rename({ profileId: "work", name: "Job" }),
+      rename({ profileId: "work" }),
+      color({ profileId: "work", color: "violet" }),
+      color({ profileId: "work", color: "teal" }),
+      color({ profileId: "work", color: "#2d52d2" }),
+      move({ profileId: "work", toIndex: 0 }),
+      move({ profileId: "work", toIndex: -1 }),
+      move({ profileId: "work", toIndex: 1.5 }),
+      remove({ profileId: "work" }),
+      remove({ profileId: "" }),
+    ]).toStrictEqual([
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+    ]);
   });
 });

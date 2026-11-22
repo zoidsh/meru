@@ -13,10 +13,13 @@ import type { Ipc, IpcSender } from "#platform/ipc.ts";
 import { describeSender } from "./senders.ts";
 import type { SenderIdentity, SenderRegistry } from "./senders.ts";
 
+/** Each call's handler, answering the renderer what its response holds, nothing for most. */
 export type ContractHandlers<Calls extends CallSchemas> = {
   [Name in keyof Calls]: (
     request: z.output<Calls[Name]["request"]>
-  ) => Promise<void>;
+  ) => z.input<Calls[Name]["response"]> extends undefined
+    ? Promise<void>
+    : Promise<z.input<Calls[Name]["response"]>>;
 };
 
 export interface ContractStateSource<State> {
@@ -106,10 +109,10 @@ export const serveContract = <
 
         const handler = handlers[name as keyof Calls] as (
           request: unknown
-        ) => Promise<void>;
+        ) => Promise<unknown>;
 
         try {
-          await handler(request.data);
+          return await handler(request.data);
         } catch (error) {
           log(
             `${name} failed: ${error instanceof Error ? error.message : String(error)}`
