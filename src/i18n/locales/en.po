@@ -307,9 +307,9 @@ msgid "Asleep"
 msgstr "Asleep"
 
 #. Accessible name and tooltip of the title bar button that goes to the page the tab showed before
-#. Accessible name of the Settings window's button that goes back to the section shown before
+#. Accessible name of the Settings window's button that goes back to the page shown before, a section or a profile's page
 #. Menu item in the View menu that goes to the page the selected tab showed before
-#. Tooltip of the Settings window's button that goes back to the section shown before
+#. Tooltip of the Settings window's button that goes back to the page shown before, a section or a profile's page
 #: src/main/commands.ts
 #: src/settings/app.tsx
 #: src/shell/titlebar.tsx
@@ -666,9 +666,9 @@ msgid "Find…"
 msgstr "Find…"
 
 #. Accessible name and tooltip of the title bar button that goes to the page the tab left by going back
-#. Accessible name of the Settings window's button that goes forward to the section shown after
+#. Accessible name of the Settings window's button that goes forward to the page shown after, a section or a profile's page
 #. Menu item in the View menu that goes to the page the selected tab left by going back
-#. Tooltip of the Settings window's button that goes forward to the section shown after
+#. Tooltip of the Settings window's button that goes forward to the page shown after, a section or a profile's page
 #: src/main/commands.ts
 #: src/settings/app.tsx
 #: src/shell/titlebar.tsx

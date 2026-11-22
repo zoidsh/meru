@@ -104,12 +104,12 @@ export const App = () => {
           aria-label={t({
             message: "Back",
             comment:
-              "Accessible name of the Settings window's button that goes back to the section shown before",
+              "Accessible name of the Settings window's button that goes back to the page shown before, a section or a profile's page",
           })}
           title={t({
             message: "Back",
             comment:
-              "Tooltip of the Settings window's button that goes back to the section shown before",
+              "Tooltip of the Settings window's button that goes back to the page shown before, a section or a profile's page",
           })}
           disabled={!page?.canGoBack}
           onClick={() => {
@@ -125,12 +125,12 @@ export const App = () => {
           aria-label={t({
             message: "Forward",
             comment:
-              "Accessible name of the Settings window's button that goes forward to the section shown after",
+              "Accessible name of the Settings window's button that goes forward to the page shown after, a section or a profile's page",
           })}
           title={t({
             message: "Forward",
             comment:
-              "Tooltip of the Settings window's button that goes forward to the section shown after",
+              "Tooltip of the Settings window's button that goes forward to the page shown after, a section or a profile's page",
           })}
           disabled={!page?.canGoForward}
           onClick={() => {
