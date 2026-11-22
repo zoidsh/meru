@@ -265,6 +265,16 @@ const start = async () => {
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
   ]);
+  // A new profile is selected, so an open unified inbox would stand over it;
+  // a page's Add another account and Settings' Add profile both close it.
+  const addProfile = async () => {
+    const profileId = await profiles.add();
+
+    // oxlint-disable-next-line no-use-before-define -- no profile is added before the inbox exists
+    inbox.setOpen(false);
+
+    return profileId;
+  };
   const views = createTabViews({
     sidebar: sidebar.current,
     platform,
@@ -281,11 +291,7 @@ const start = async () => {
     selectTab: profiles.selectTab,
     closeTab: profiles.closeTab,
     newId,
-    addProfile: async () => {
-      await profiles.add();
-      // oxlint-disable-next-line no-use-before-define -- as the shell's Add Profile, adding closes the inbox
-      inbox.setOpen(false);
-    },
+    addProfile,
     // No key reaches a view before the menu below exists, as nothing between
     // them awaits.
     // oxlint-disable-next-line no-use-before-define -- the menu runs the views' commands
@@ -431,6 +437,7 @@ const start = async () => {
     senders,
     settings,
     profiles,
+    addProfile,
     doNotDisturb,
     sound,
     showTestNotification,

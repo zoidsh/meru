@@ -27,9 +27,11 @@ export interface SettingsContractDeps {
     SettingsStore,
     "get" | "update" | "setOverride" | "clearOverride" | "overridingProfiles"
   >;
-  profiles: Pick<Profiles, "add" | "rename" | "move" | "setColor"> & {
+  profiles: Pick<Profiles, "rename" | "move" | "setColor"> & {
     get: () => Pick<State, "profiles">;
   };
+  /** Adds a profile and selects it, closing what stands over the new one. */
+  addProfile: () => Promise<string | undefined>;
   /** Asks to remove the profile, and removes it once confirmed. */
   removeProfile: (profileId: string) => Promise<void>;
   doNotDisturb: Pick<
@@ -79,6 +81,7 @@ const assertListed = (
 export const settingsHandlers = ({
   settings,
   profiles,
+  addProfile,
   doNotDisturb,
   sound,
   pages,
@@ -149,7 +152,7 @@ export const settingsHandlers = ({
         pages.step(1);
       }),
     addProfile: async () => {
-      const profileId = await profiles.add();
+      const profileId = await addProfile();
 
       if (profileId === undefined) {
         throw new Error("The profile was not added");

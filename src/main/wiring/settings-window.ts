@@ -48,6 +48,7 @@ export const wireSettingsWindow = ({
   senders,
   settings,
   profiles,
+  addProfile,
   doNotDisturb,
   sound,
   showTestNotification,
@@ -65,6 +66,8 @@ export const wireSettingsWindow = ({
   senders: SenderRegistry;
   settings: SettingsStore;
   profiles: Profiles;
+  /** Adds a profile and selects it, as every other way to add one does. */
+  addProfile: () => Promise<string | undefined>;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   sound: Pick<SoundOutput, "play">;
   showTestNotification: (profileId: string | undefined) => void;
@@ -127,6 +130,7 @@ export const wireSettingsWindow = ({
     handlers: settingsHandlers({
       settings,
       profiles,
+      addProfile,
       doNotDisturb,
       sound,
       pages,

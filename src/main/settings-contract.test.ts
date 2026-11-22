@@ -49,10 +49,19 @@ const setup = (state: State, initial?: Settings) => {
   const tested: (string | undefined)[] = [];
   const pages = createSettingsPages();
   const asked: string[] = [];
+  // What the composition root's add does beside adding, as closing the inbox.
+  const addedBy: string[] = [];
   let confirms = true;
   const deps = {
     settings,
     profiles,
+    addProfile: async () => {
+      const profileId = await profiles.add();
+
+      addedBy.push("addProfile");
+
+      return profileId;
+    },
     doNotDisturb,
     sound: {
       play: (request: SoundRequest) => {
@@ -88,6 +97,7 @@ const setup = (state: State, initial?: Settings) => {
     played,
     tested,
     asked,
+    addedBy,
     confirming: (next: boolean) => {
       confirms = next;
     },
@@ -265,7 +275,7 @@ describe("the Settings window's pages", () => {
 });
 
 describe("the Settings window's profile calls", () => {
-  it("adds a profile, selected, with the first colour unused, and shows its page", async () => {
+  it("adds a profile through the app's one add, selected, with the first colour unused, and shows its page", async () => {
     const app = setup(stateOf("Home", "Work"));
 
     await app.handlers.openPage({ section: "profiles", profileId: null });
@@ -274,11 +284,13 @@ describe("the Settings window's profile calls", () => {
 
     expect([
       profileId,
+      app.addedBy,
       app.profiles.get().selectedProfileId,
       app.read().profiles.at(-1),
       app.read().page,
     ]).toStrictEqual([
       "new",
+      ["addProfile"],
       "new",
       {
         id: "new",

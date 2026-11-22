@@ -14,6 +14,7 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
+import { openProfiles, openSettings } from "./lib/settings.ts";
 import {
   THEMES,
   emulateTheme,
@@ -203,6 +204,25 @@ test("lists every profile's mail newest first in an overlay over the page, says 
   await expect(grid(overlay)).toBeHidden();
   await expect.poll(() => overlayShown(app)).toBeFalsy();
   await expect(shell.getByRole("button", { name: "Reload" })).toBeEnabled();
+});
+
+test("Add profile in Settings closes an open inbox, as a page's Add another account does, since the new profile is selected", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell, overlay } = await launch(launchApp, userDataDir, standIn);
+  const page = await openSettings(app);
+
+  await openProfiles(page);
+  await openInbox(shell, overlay);
+  await page.getByRole("button", { name: "Add profile" }).click();
+
+  await expect(grid(overlay)).toBeHidden();
+  await expect(profileTab(shell, "Profile 2")).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
 });
 
 test("leaves out an open inbox's rows of a profile set to stay out of it, and lists them again once that goes", async ({
