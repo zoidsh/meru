@@ -4,6 +4,8 @@ import type { App } from "#core/apps.ts";
 import { removeBookmark, toggleBookmark } from "#core/bookmarks.ts";
 import type { BookmarkedPage } from "#core/bookmarks.ts";
 import type { PaneDirection, Split } from "#core/pane-tree.ts";
+import { firstUnusedColor } from "#core/profile-color.ts";
+import type { ProfileColorName } from "#core/profile-color.ts";
 import { removeSavedSearch, saveSearch } from "#core/saved-searches.ts";
 import {
   addProfile,
@@ -12,8 +14,10 @@ import {
   newProfile,
   nextProfileName,
   profilePartition,
+  moveProfile,
   removeProfile,
   renameProfile,
+  setProfileColor,
   selectProfile,
   setTabbedInbox,
   sleepProfile,
@@ -180,15 +184,27 @@ export const createProfiles = ({
     /** Puts the profile to sleep, selecting the next awake one if it was selected. */
     sleep: (profileId: string) =>
       exclusive(() => commit(sleepProfile(state, profileId))),
+    /**
+     * Adds a profile, selected, with the first colour no profile has; gives
+     * its id, or nothing when it could not be saved.
+     */
     add: () =>
-      exclusive(() =>
-        commit(
-          addProfile(
-            state,
-            newProfile(newId(), nextProfileName(state, profileName))
-          )
-        )
-      ),
+      exclusive(async () => {
+        const profile = {
+          ...newProfile(newId(), nextProfileName(state, profileName)),
+          color: firstUnusedColor(state),
+        };
+
+        return (await commit(addProfile(state, profile)))
+          ? profile.id
+          : undefined;
+      }),
+    /** Nothing when it is not listed, the index is outside the row, or it is there. */
+    move: (profileId: string, toIndex: number) =>
+      exclusive(() => commit(moveProfile(state, profileId, toIndex))),
+    /** Nothing when it is not listed or has the colour stored already. */
+    setColor: (profileId: string, color: ProfileColorName) =>
+      exclusive(() => commit(setProfileColor(state, profileId, color))),
     /** Nothing when the name is empty, too long or the one it has. */
     rename: (profileId: string, name: string) =>
       exclusive(() => commit(renameProfile(state, profileId, name))),

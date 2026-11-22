@@ -21,6 +21,7 @@ import {
   isPinned,
   isTab,
   knownTabs,
+  moveProfile,
   newProfile,
   nextProfileName,
   opensAtLaunch,
@@ -30,6 +31,7 @@ import {
   renameProfile,
   selectProfile,
   selectedProfile,
+  setProfileColor,
   setTabbedInbox,
   sleepProfile,
   canSleepProfile,
@@ -823,7 +825,17 @@ describe(removeProfile, () => {
     ]).toStrictEqual([
       [["c"], "a"],
       [["a", "d"], "c"],
-      newProfile("c", "Profile 3"),
+      { ...newProfile("c", "Profile 3"), color: "green" },
+    ]);
+  });
+
+  it("stores the colours of the profiles after it, so they keep theirs", () => {
+    expect([
+      removeProfile(three, "a")?.profiles.map((profile) => profile.color),
+      removeProfile(three, "c")?.profiles.map((profile) => profile.color),
+    ]).toStrictEqual([
+      ["orange", "green"],
+      [undefined, undefined],
     ]);
   });
 
@@ -1168,5 +1180,46 @@ describe("the state file's version", () => {
       STATE_VERSION,
       "a store's version never changes: its shape only grows, read leniently (see the comment at the constant)"
     ).toBe(1);
+  });
+});
+
+describe(moveProfile, () => {
+  it("moves a profile in the row, storing the colours of those that change places", () => {
+    const moved = moveProfile(three, "a", 2);
+
+    expect(
+      moved?.profiles.map((profile) => [profile.id, profile.color])
+    ).toStrictEqual([
+      ["b", "orange"],
+      ["c", "green"],
+      ["a", "blue"],
+    ]);
+    expect(moved?.selectedProfileId).toBe(three.selectedProfileId);
+  });
+
+  it("refuses a profile not listed, an index outside the row and the place it has", () => {
+    expect([
+      moveProfile(three, "gone", 0),
+      moveProfile(three, "a", 3),
+      moveProfile(three, "a", -1),
+      moveProfile(three, "a", 1.5),
+      moveProfile(three, "b", 1),
+    ]).toStrictEqual([undefined, undefined, undefined, undefined, undefined]);
+  });
+});
+
+describe(setProfileColor, () => {
+  it("stores the colour, and nothing for a profile not listed or one with it stored", () => {
+    const set = setProfileColor(three, "b", "violet");
+
+    expect(set?.profiles.map((profile) => profile.color)).toStrictEqual([
+      undefined,
+      "violet",
+      undefined,
+    ]);
+    expect([
+      set && setProfileColor(set, "b", "violet"),
+      setProfileColor(three, "gone", "violet"),
+    ]).toStrictEqual([undefined, undefined]);
   });
 });

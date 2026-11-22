@@ -80,19 +80,40 @@ const setup = ({
 };
 
 describe(createProfiles, () => {
-  it("adds a profile with a new id and the next name, selected, saved before it shows", async () => {
+  it("adds a profile with a new id, the next name and the first colour no profile has, selected, saved before it shows", async () => {
     const { profiles, steps } = setup();
 
-    await expect(profiles.add()).resolves.toBeTruthy();
+    await expect(profiles.add()).resolves.toBe("new-1");
 
-    expect(profiles.get().profiles.at(-1)).toStrictEqual(
-      newProfile("new-1", "Profile 3")
-    );
+    expect(profiles.get().profiles.at(-1)).toStrictEqual({
+      ...newProfile("new-1", "Profile 3"),
+      color: "green",
+    });
     expect(profiles.get().selectedProfileId).toBe("new-1");
     expect(steps).toStrictEqual([
       "save a,b,new-1 to clear []",
       "views a,b,new-1",
     ]);
+  });
+
+  it("moves a profile and stores a colour, saved, and writes nothing for an unknown one", async () => {
+    const { profiles, steps } = setup();
+
+    const results = [
+      await profiles.move("b", 0),
+      await profiles.setColor("a", "violet"),
+      await profiles.setColor("gone", "violet"),
+      await profiles.move("gone", 0),
+    ];
+
+    expect(results).toStrictEqual([true, true, false, false]);
+    expect(
+      profiles.get().profiles.map((profile) => [profile.id, profile.color])
+    ).toStrictEqual([
+      ["b", "orange"],
+      ["a", "violet"],
+    ]);
+    expect(steps.filter((step) => step.startsWith("save"))).toHaveLength(2);
   });
 
   it("settles only once every change asked for before has been written", async () => {

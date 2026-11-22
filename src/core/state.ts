@@ -4,6 +4,8 @@ import { z } from "zod/mini";
 import { APPS, isAppId } from "./apps.ts";
 import { paneTabs, readSplit } from "./pane-tree.ts";
 import type { Split } from "./pane-tree.ts";
+import { withColorsStored } from "./profile-color.ts";
+import type { ProfileColorName } from "./profile-color.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
 import type { Rectangle } from "./window-bounds.ts";
@@ -125,6 +127,8 @@ export interface Profile {
   bookmarks?: unknown;
   /** `true` while the profile is put to sleep; read through `isAsleep`. */
   asleep?: unknown;
+  /** The name of one of the palette's colours; read through `profileColor`. */
+  color?: unknown;
   /**
    * The profile's splits, each holding tabs no other does, repaired as
    * read; set through `withSplit`.
@@ -762,7 +766,10 @@ export const removeProfile = (
   }
 
   const index = state.profiles.findIndex((profile) => profile.id === profileId);
-  const profiles = state.profiles.filter((profile) => profile.id !== profileId);
+  // Stored first, since the profiles after it take new places.
+  const profiles = withColorsStored(state, index + 1).filter(
+    (profile) => profile.id !== profileId
+  );
   const neighbour = profiles[Math.min(index, profiles.length - 1)];
 
   const kept = { ...state, profiles };
@@ -779,6 +786,62 @@ export const removeProfile = (
       ...(state.profilesToClear ?? []).filter((id) => id !== profileId),
       profileId,
     ],
+  };
+};
+
+/**
+ * Moves the profile to `toIndex` in the row, the colours of the profiles
+ * that change places stored first so none follows its new place. Nothing when it is not listed, the index is
+ * outside the row, or it is there already.
+ */
+export const moveProfile = (
+  state: State,
+  profileId: string,
+  toIndex: number
+): State | undefined => {
+  const from = state.profiles.findIndex((profile) => profile.id === profileId);
+
+  if (
+    from === -1 ||
+    !Number.isInteger(toIndex) ||
+    toIndex < 0 ||
+    toIndex >= state.profiles.length ||
+    toIndex === from
+  ) {
+    return;
+  }
+
+  const profiles = withColorsStored(state, Math.min(from, toIndex));
+  const [moved] = profiles.splice(from, 1);
+
+  if (!moved) {
+    return;
+  }
+
+  profiles.splice(toIndex, 0, moved);
+
+  return { ...state, profiles };
+};
+
+/** Stores the profile's colour; nothing when it is not listed or has it stored. */
+export const setProfileColor = (
+  state: State,
+  profileId: string,
+  color: ProfileColorName
+): State | undefined => {
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === profileId
+  );
+
+  if (!profile || profile.color === color) {
+    return;
+  }
+
+  return {
+    ...state,
+    profiles: state.profiles.map((candidate) =>
+      candidate.id === profileId ? { ...candidate, color } : candidate
+    ),
   };
 };
 
