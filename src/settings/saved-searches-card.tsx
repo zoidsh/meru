@@ -1,15 +1,8 @@
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
 import { PencilIcon, PlusIcon, XIcon } from "lucide-react";
-import {
-  useEffect,
-  useEffectEvent,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import type { KeyboardEvent } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
+import type { KeyboardEvent, RefObject } from "react";
 
 import type { SettingsState } from "#contract/settings.ts";
 import { SEARCH_QUERY_MAX_LENGTH } from "#core/gmail-hash.ts";
@@ -148,7 +141,7 @@ const SearchRow = ({
   onRename: () => void;
   onRenamed: (byKey: boolean) => void;
   onRemove: () => void;
-  buttons: Map<string, HTMLButtonElement>;
+  buttons: RefObject<Map<string, HTMLButtonElement>>;
 }) => {
   const { t } = useLingui();
   const labelId = useId();
@@ -182,9 +175,9 @@ const SearchRow = ({
         <Button
           ref={(button) => {
             if (button) {
-              buttons.set(`rename:${search.id}`, button);
+              buttons.current.set(`rename:${search.id}`, button);
             } else {
-              buttons.delete(`rename:${search.id}`);
+              buttons.current.delete(`rename:${search.id}`);
             }
           }}
           variant="ghost"
@@ -206,9 +199,9 @@ const SearchRow = ({
         <Button
           ref={(button) => {
             if (button) {
-              buttons.set(`remove:${search.id}`, button);
+              buttons.current.set(`remove:${search.id}`, button);
             } else {
-              buttons.delete(`remove:${search.id}`);
+              buttons.current.delete(`remove:${search.id}`);
             }
           }}
           variant="ghost"
@@ -408,8 +401,7 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
   const { t } = useLingui();
   const [editing, setEditing] = useState<string>();
   const [adding, setAdding] = useState(false);
-  // Filled by the rows' ref callbacks, read only in effects and handlers.
-  const buttons = useMemo(() => new Map<string, HTMLButtonElement>(), []);
+  const buttons = useRef(new Map<string, HTMLButtonElement>());
   const addButton = useRef<HTMLButtonElement>(null);
   // Where focus goes once the render it waits for is done.
   const [focusNext, setFocusNext] = useState<string>();
@@ -421,13 +413,13 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
     }
 
     const target =
-      focusNext === "add" ? addButton.current : buttons.get(focusNext);
+      focusNext === "add" ? addButton.current : buttons.current.get(focusNext);
 
     if (target) {
       target.focus();
       setFocusNext(undefined);
     }
-  }, [focusNext, buttons]);
+  }, [focusNext]);
 
   const remove = (search: ListedSearch, index: number) => {
     const next = searches[index + 1];
