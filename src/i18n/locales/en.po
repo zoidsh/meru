@@ -1658,10 +1658,10 @@ msgstr "This data was saved by a newer version. Open it with that version, or up
 msgid "This is what a new email notification looks like."
 msgstr "This is what a new email notification looks like."
 
-#. Shown under the Search field in Settings when the profile cannot keep another saved search
+#. Shown under the Search field in Settings when the profile cannot keep another saved search; {most} is how many a profile can keep
 #: src/settings/saved-searches-card.tsx
-msgid "This profile has {SAVED_SEARCHES_MAX} saved searches, the most it can keep."
-msgstr "This profile has {SAVED_SEARCHES_MAX} saved searches, the most it can keep."
+msgid "This profile has {most} saved searches, the most it can keep."
+msgstr "This profile has {most} saved searches, the most it can keep."
 
 #. Shown under the Search field in Settings when the search cannot be saved for another reason
 #: src/settings/saved-searches-card.tsx

@@ -161,6 +161,8 @@ test("refuses an empty and a repeated search with the reason under Search, and C
   );
 
   await searchField(page).fill(" is:unread");
+  await expect(reason).toHaveCount(0);
+  await expect(searchField(page)).not.toHaveAttribute("aria-invalid");
   await searchField(page).press("Enter");
   await expect(reason).toHaveText("This search is saved already.");
   await expect(searchField(page)).toBeFocused();

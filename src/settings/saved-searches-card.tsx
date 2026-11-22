@@ -250,6 +250,7 @@ const AddForm = ({
     reason: SavedSearchRefusal;
     attempt: number;
   }>();
+  const attempts = useRef(0);
   const searchId = useId();
   const nameId = useId();
   const errorId = useId();
@@ -258,6 +259,7 @@ const AddForm = ({
     searchInput.current?.focus();
   }, [searchInput]);
 
+  const most = SAVED_SEARCHES_MAX;
   const reasons: Record<SavedSearchRefusal, string> = {
     empty: t({
       message: "Enter a search.",
@@ -270,9 +272,9 @@ const AddForm = ({
         "Shown under the Search field in Settings when the profile has a saved search with the same Gmail query",
     }),
     full: t({
-      message: `This profile has ${SAVED_SEARCHES_MAX} saved searches, the most it can keep.`,
+      message: `This profile has ${most} saved searches, the most it can keep.`,
       comment:
-        "Shown under the Search field in Settings when the profile cannot keep another saved search",
+        "Shown under the Search field in Settings when the profile cannot keep another saved search; {most} is how many a profile can keep",
     }),
     unwritable: t({
       message: "This search can't be saved.",
@@ -294,7 +296,8 @@ const AddForm = ({
       return;
     }
 
-    setRefusal((last) => ({ reason, attempt: (last?.attempt ?? 0) + 1 }));
+    attempts.current += 1;
+    setRefusal({ reason, attempt: attempts.current });
     searchInput.current?.focus();
   };
 
@@ -345,6 +348,7 @@ const AddForm = ({
             aria-describedby={refusal ? errorId : undefined}
             onChange={(event) => {
               setQuery(event.target.value);
+              setRefusal(undefined);
             }}
             onKeyDown={onKeyDown}
           />
