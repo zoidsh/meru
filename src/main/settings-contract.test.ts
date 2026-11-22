@@ -334,6 +334,7 @@ describe("the Settings window's profile calls", () => {
         asleep: false,
         checkMail: true,
         mail: { status: "unknown", address: null },
+        savedSearches: [],
         overrides: {},
       },
       {
@@ -444,6 +445,7 @@ describe(readSettingsState, () => {
         asleep: false,
         checkMail: true,
         mail: { status: "unknown", address: null },
+        savedSearches: [],
         overrides: {},
       },
     ]);
@@ -468,6 +470,7 @@ describe(readSettingsState, () => {
         asleep: false,
         checkMail: true,
         mail: { status: "unknown", address: null },
+        savedSearches: [],
         overrides: {},
       },
       {
@@ -478,6 +481,7 @@ describe(readSettingsState, () => {
         asleep: false,
         checkMail: true,
         mail: { status: "unknown", address: null },
+        savedSearches: [],
         overrides: { notificationSound: "chime" },
       },
     ]);
@@ -582,6 +586,128 @@ describe("the Settings window's Check mail and Sleep", () => {
       "The last awake profile cannot sleep",
       [false, false],
       "work",
+    ]);
+    app.dispose();
+  });
+});
+
+const searched = (...searches: Record<string, string>[]): State => {
+  const state = stateOf("Home", "Work");
+
+  return {
+    ...state,
+    profiles: state.profiles.map((profile) =>
+      profile.id === "home" ? { ...profile, savedSearches: searches } : profile
+    ),
+  };
+};
+const refusal = async (promise: Promise<unknown>) => {
+  try {
+    await promise;
+
+    return "done";
+  } catch (error) {
+    return (error as Error).message;
+  }
+};
+
+describe("the Settings window's saved searches", () => {
+  it("adds a search named or not, and sends each with its name or null", async () => {
+    const app = setup(searched({ id: "a", query: "is:starred" }));
+
+    const answer = await app.handlers.addSavedSearch({
+      profileId: "home",
+      query: " has:attachment ",
+      name: " Files ",
+    });
+
+    expect([
+      answer,
+      app.read().profiles.map((profile) => profile.savedSearches),
+    ]).toStrictEqual([
+      null,
+      [
+        [
+          { id: "a", query: "is:starred", name: null },
+          { id: "new", query: "has:attachment", name: "Files" },
+        ],
+        [],
+      ],
+    ]);
+    app.dispose();
+  });
+
+  it("answers why it refuses an empty or repeated query, and throws for an unlisted profile", async () => {
+    const app = setup(searched({ id: "a", query: "is:starred" }));
+
+    expect([
+      await app.handlers.addSavedSearch({
+        profileId: "home",
+        query: "  ",
+        name: "",
+      }),
+      await app.handlers.addSavedSearch({
+        profileId: "home",
+        query: "is:starred ",
+        name: "Again",
+      }),
+      await refusal(
+        app.handlers.addSavedSearch({ profileId: "gone", query: "x", name: "" })
+      ),
+      app.read().profiles[0]?.savedSearches.length,
+    ]).toStrictEqual([
+      "empty",
+      "duplicate",
+      "No listed profile has the id gone",
+      1,
+    ]);
+    app.dispose();
+  });
+
+  it("renames, clears a name and removes a search, refusing an unknown search or profile", async () => {
+    const app = setup(
+      searched(
+        { id: "a", query: "is:starred" },
+        { id: "b", query: "is:unread", label: "Unread" }
+      )
+    );
+
+    await app.handlers.renameSavedSearch({
+      profileId: "home",
+      searchId: "a",
+      name: "Starred",
+    });
+    await app.handlers.renameSavedSearch({
+      profileId: "home",
+      searchId: "b",
+      name: "",
+    });
+
+    const renamed = app.read().profiles[0]?.savedSearches;
+
+    await app.handlers.removeSavedSearch({ profileId: "home", searchId: "a" });
+
+    expect([
+      renamed,
+      app.read().profiles[0]?.savedSearches,
+      await refusal(
+        app.handlers.renameSavedSearch({
+          profileId: "work",
+          searchId: "b",
+          name: "N",
+        })
+      ),
+      await refusal(
+        app.handlers.removeSavedSearch({ profileId: "gone", searchId: "b" })
+      ),
+    ]).toStrictEqual([
+      [
+        { id: "a", query: "is:starred", name: "Starred" },
+        { id: "b", query: "is:unread", name: null },
+      ],
+      [{ id: "b", query: "is:unread", name: null }],
+      "No saved search of work has the id b",
+      "No listed profile has the id gone",
     ]);
     app.dispose();
   });

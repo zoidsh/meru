@@ -91,7 +91,14 @@ export const savedSearchName = ({ label, query }: SavedSearch) => {
  * (compared after trimming, as Gmail's own text), a list at its most, or
  * a query, name or list this build cannot write.
  */
-export type SavedSearchRefusal = "empty" | "duplicate" | "full" | "unwritable";
+export const SAVED_SEARCH_REFUSALS = [
+  "empty",
+  "duplicate",
+  "full",
+  "unwritable",
+] as const;
+
+export type SavedSearchRefusal = (typeof SAVED_SEARCH_REFUSALS)[number];
 
 /**
  * A saved search's name as typed, without control characters and trimmed,

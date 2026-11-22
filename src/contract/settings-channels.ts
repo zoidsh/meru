@@ -20,6 +20,9 @@ export const SETTINGS_CALL_NAMES = [
   "removeProfile",
   "setCheckMail",
   "setAsleep",
+  "addSavedSearch",
+  "renameSavedSearch",
+  "removeSavedSearch",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

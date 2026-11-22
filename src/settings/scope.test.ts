@@ -26,6 +26,7 @@ const profile = (
   asleep: false,
   checkMail: true,
   mail: { status: "unknown", address: null },
+  savedSearches: [],
   overrides,
 });
 

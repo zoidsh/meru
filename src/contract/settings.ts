@@ -2,6 +2,7 @@ import { z } from "zod/mini";
 
 import { MAIL_STATUSES } from "#core/feed.ts";
 import { PROFILE_COLOR_NAMES } from "#core/profile-color.ts";
+import { SAVED_SEARCH_REFUSALS } from "#core/saved-searches.ts";
 import { SETTINGS_SECTIONS } from "#core/settings-pages.ts";
 import { OVERRIDABLE_SETTING_KEYS, SETTINGS } from "#core/settings.ts";
 import type { OverridableSettingKey, SettingValue } from "#core/settings.ts";
@@ -56,6 +57,8 @@ export type OverrideChange = ChangeOf<OverridableSettingKey> & {
 const profileId = z.string().check(z.minLength(1));
 
 const none = z.object({});
+
+const searchId = z.string().check(z.minLength(1));
 
 const page = z.object({
   section: z.enum(SETTINGS_SECTIONS),
@@ -178,6 +181,24 @@ export const SETTINGS_CALLS = {
     request: z.object({ profileId, asleep: z.boolean() }),
     response: z.undefined(),
   },
+  /**
+   * Adds a search last in a listed profile's list, named when `name` is not
+   * empty; answers why it cannot be added, else `null`.
+   */
+  addSavedSearch: {
+    request: z.object({ profileId, query: z.string(), name: z.string() }),
+    response: z.nullable(z.enum(SAVED_SEARCH_REFUSALS)),
+  },
+  /** By core's rules: trimmed, and empty clears the name. */
+  renameSavedSearch: {
+    request: z.object({ profileId, searchId, name: z.string() }),
+    response: z.undefined(),
+  },
+  /** At once, asking nothing. */
+  removeSavedSearch: {
+    request: z.object({ profileId, searchId }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -214,6 +235,14 @@ export const SETTINGS_STATE = {
         status: z.enum(MAIL_STATUSES),
         address: z.nullable(z.string()),
       }),
+      /** Its saved searches that read, in their order; `name` `null` for none. */
+      savedSearches: z.array(
+        z.object({
+          id: searchId,
+          query: z.string(),
+          name: z.nullable(z.string()),
+        })
+      ),
       overrides: pageOverrides,
     })
   ),

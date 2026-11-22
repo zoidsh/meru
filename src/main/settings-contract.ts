@@ -10,6 +10,7 @@ import type {
 } from "#contract/settings.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
 import { profileColor, profileColorName } from "#core/profile-color.ts";
+import { savedSearches } from "#core/saved-searches.ts";
 import { OVERRIDABLE_SETTING_KEYS } from "#core/settings.ts";
 import type { OverridableSettingKey } from "#core/settings.ts";
 import { canSleepProfile, checksMail, isAsleep } from "#core/state.ts";
@@ -31,7 +32,15 @@ export interface SettingsContractDeps {
   >;
   profiles: Pick<
     Profiles,
-    "rename" | "move" | "setColor" | "setCheckMail" | "sleep" | "select"
+    | "rename"
+    | "move"
+    | "setColor"
+    | "setCheckMail"
+    | "sleep"
+    | "select"
+    | "addSavedSearch"
+    | "renameSavedSearch"
+    | "removeSavedSearch"
   > & {
     get: () => State;
   };
@@ -80,6 +89,23 @@ const assertListed = (
 ) => {
   if (!listedIds(profiles).includes(profileId)) {
     throw new Error(`No listed profile has the id ${profileId}`);
+  }
+};
+
+/** Throws unless the listed profile shows a saved search with the id. */
+const assertSearch = (
+  profiles: Pick<SettingsContractDeps["profiles"], "get">,
+  profileId: string,
+  searchId: string
+) => {
+  assertListed(profiles, profileId);
+
+  if (
+    !savedSearches(profiles.get(), profileId).some(
+      (search) => search.id === searchId
+    )
+  ) {
+    throw new Error(`No saved search of ${profileId} has the id ${searchId}`);
   }
 };
 
@@ -225,6 +251,19 @@ export const settingsHandlers = ({
 
       await profiles.sleep(profileId);
     },
+    addSavedSearch: async ({ profileId, query, name }) => {
+      assertListed(profiles, profileId);
+
+      return (await profiles.addSavedSearch(profileId, query, name)) ?? null;
+    },
+    renameSavedSearch: async ({ profileId, searchId, name }) => {
+      assertSearch(profiles, profileId, searchId);
+      await profiles.renameSavedSearch(profileId, searchId, name);
+    },
+    removeSavedSearch: async ({ profileId, searchId }) => {
+      assertSearch(profiles, profileId, searchId);
+      await profiles.removeSavedSearch(profileId, searchId);
+    },
   };
 };
 
@@ -265,6 +304,9 @@ export const readSettingsState = ({
         status: mail.mail(profile.id).status,
         address: mail.address(profile.id) ?? null,
       },
+      savedSearches: savedSearches(state, profile.id).map(
+        ({ id, query, label }) => ({ id, query, name: label?.trim() || null })
+      ),
       overrides: Object.fromEntries(
         OVERRIDABLE_SETTING_KEYS.filter((key) =>
           overriding.get(key)?.includes(profile.id)

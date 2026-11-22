@@ -96,6 +96,7 @@ describe("the settings contract", () => {
       asleep: false,
       checkMail: true,
       mail: { status: "ok", address: "work@example.org" },
+      savedSearches: [],
       overrides: { notificationSound: "chime" },
     };
 
@@ -123,6 +124,7 @@ describe("the settings contract", () => {
         asleep: true,
         checkMail: false,
         mail: { status: "notChecked", address: null },
+        savedSearches: [],
         overrides: {},
       },
     ]);
@@ -152,6 +154,61 @@ describe("the settings contract", () => {
       setAsleep({ profileId: "work", asleep: true }),
       setAsleep({ profileId: "work", asleep: "yes" }),
     ]).toStrictEqual([true, false, true, false]);
+  });
+
+  it("adds, renames and removes a saved search by the profile's and the search's ids", () => {
+    const add = accepts(SETTINGS_CALLS.addSavedSearch.request);
+    const answer = accepts(SETTINGS_CALLS.addSavedSearch.response);
+    const rename = accepts(SETTINGS_CALLS.renameSavedSearch.request);
+    const remove = accepts(SETTINGS_CALLS.removeSavedSearch.request);
+
+    expect([
+      add({ profileId: "work", query: "is:unread", name: "" }),
+      add({ profileId: "work", query: "is:unread" }),
+      answer(null),
+      answer("duplicate"),
+      answer("taken"),
+      rename({ profileId: "work", searchId: "s1", name: "Unread" }),
+      rename({ profileId: "work", searchId: "", name: "Unread" }),
+      remove({ profileId: "work", searchId: "s1" }),
+      remove({ profileId: "work" }),
+    ]).toStrictEqual([
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+    ]);
+  });
+
+  it("sends a profile's saved searches with a name or null", () => {
+    const { profiles } = SETTINGS_STATE;
+    const withSearches = (savedSearches: unknown) =>
+      profiles.safeParse([
+        {
+          id: "work",
+          name: "Work",
+          color: "#ff6227",
+          colorName: "orange",
+          asleep: false,
+          checkMail: true,
+          mail: { status: "ok", address: null },
+          savedSearches,
+          overrides: {},
+        },
+      ]).success;
+
+    expect([
+      withSearches([
+        { id: "a", query: "is:unread", name: null },
+        { id: "b", query: "has:attachment", name: "Files" },
+      ]),
+      withSearches([{ id: "a", query: "is:unread" }]),
+    ]).toStrictEqual([true, false]);
   });
 
   it("switches Do Not Disturb on or off and nothing else", () => {
