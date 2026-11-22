@@ -208,6 +208,8 @@ test("renames by Enter and by leaving the field, keeps the name on Escape, clear
   await nameOf("Files").press("Tab");
   await expect(row(page, "Documents")).toBeVisible();
 
+  // Sent before the rename below, so its menu shows whether it removed one.
+  await button(page, "Remove Unread").dispatchEvent("click", { detail: 2 });
   await button(page, "Rename Documents").click();
   await nameOf("Documents").fill("");
   await nameOf("Documents").press("Enter");

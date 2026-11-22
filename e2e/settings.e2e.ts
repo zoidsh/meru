@@ -263,6 +263,11 @@ test("quiet hours are added, a day changed and removed, each edit writing the wh
     .poll(quietHours)
     .toStrictEqual([{ start: "22:00", end: "07:00" }]);
 
+  // A second click of a double-click would remove the window now under the
+  // pointer; the change of day after it shows it removed nothing.
+  await window
+    .getByRole("button", { name: "Remove quiet hours 1" })
+    .dispatchEvent("click", { detail: 2 });
   await window.getByRole("button", { name: "Saturday" }).click();
 
   await expect(

@@ -206,8 +206,13 @@ export const QuietHoursField = ({
                   comment:
                     "Tooltip of the button that removes one window of quiet hours in Settings",
                 })}
-                onClick={() => {
-                  onChange(removeQuietWindow(list, index));
+                onClick={(event) => {
+                  // The next window moves under the pointer, so a
+                  // double-click would remove it too; a key press has a
+                  // detail of 0.
+                  if (event.detail <= 1) {
+                    onChange(removeQuietWindow(list, index));
+                  }
                 }}
               >
                 <XIcon />

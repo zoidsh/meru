@@ -216,7 +216,13 @@ const SearchRow = ({
             comment:
               "Tooltip of the button in Settings that removes a saved search",
           })}
-          onClick={onRemove}
+          onClick={(event) => {
+            // The next row moves under the pointer, so a double-click would
+            // remove it too; a key press has a detail of 0.
+            if (event.detail <= 1) {
+              onRemove();
+            }
+          }}
         >
           <XIcon />
         </Button>
