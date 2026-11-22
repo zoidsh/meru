@@ -114,7 +114,7 @@ describe(createMailPoller, () => {
   it("polls a page change's profile once Gmail has had time to sync, a burst as one", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(1));
     await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
     poller.pokeForPage("a");
@@ -132,7 +132,7 @@ describe(createMailPoller, () => {
   it("still waits 5 s after the last poll for a page change", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(1));
     poller.pokeForPage("a");
     await vi.advanceTimersByTimeAsync(POKE_THROTTLE - 1);
@@ -147,7 +147,7 @@ describe(createMailPoller, () => {
   it("polls every profile at the start, then 30 s after each poll ends", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a", "b"]);
+    poller.reconcile(["a", "b"], []);
 
     expect([fetchesOf("a"), fetchesOf("b")]).toStrictEqual([1, 1]);
 
@@ -167,7 +167,7 @@ describe(createMailPoller, () => {
   it("knows no count until the first poll ends", () => {
     const { poller } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
 
     expect(poller.mail("a")).toStrictEqual({
       status: "unknown",
@@ -178,7 +178,7 @@ describe(createMailPoller, () => {
   it("holds the count of an answered feed and tells only of a change", async () => {
     const { poller, answer, changes } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
 
     await answer("a", feed(3));
 
@@ -204,7 +204,7 @@ describe(createMailPoller, () => {
     poller.onPoll((profileId, _outcome, _startedAt, label) => {
       heard.push([profileId, label]);
     });
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(3));
     labels.set("a", "^sq_ig_i_personal");
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
@@ -229,7 +229,7 @@ describe(createMailPoller, () => {
       heard.push(label);
     });
     labels.set("a", "^sq_ig_i_personal");
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", { kind: "failed", reason: "HTTP 404" });
 
     expect(fetches.map(({ label }) => label)).toStrictEqual([
@@ -254,7 +254,7 @@ describe(createMailPoller, () => {
     const { poller, fetches, labels, answer } = setup();
 
     labels.set("a", "^sq_ig_i_personal");
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", FAILED);
 
     expect(fetches).toHaveLength(1);
@@ -264,7 +264,7 @@ describe(createMailPoller, () => {
   it("keeps the count through a failure and clears it once signed out", async () => {
     const { poller, answer } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(3));
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
     await answer("a", FAILED);
@@ -289,7 +289,7 @@ describe(createMailPoller, () => {
     const { poller, answer, changes, logs } = setup();
     const seen: (string | undefined)[] = [];
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     seen.push(poller.address("a"));
     await answer("a", feed(3, "me@example.org"));
     seen.push(poller.address("a"));
@@ -323,7 +323,7 @@ describe(createMailPoller, () => {
   it("stays signed out through a failure, telling no one, until a poll reads the feed", async () => {
     const { poller, answer, changes } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", { kind: "signedOut" });
     changes.mockClear();
     await vi.advanceTimersByTimeAsync(SIGNED_OUT_INTERVAL);
@@ -346,7 +346,7 @@ describe(createMailPoller, () => {
     const { poller, answer, fetchesOf } = setup();
     const gaps: number[] = [];
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
 
     for (let index = 0; index < 6; index += 1) {
       const before = fetchesOf("a");
@@ -382,7 +382,7 @@ describe(createMailPoller, () => {
   it("counts a fetch that rejects or takes over 15 s as failed", async () => {
     const { poller, fetches, fetchesOf } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     fetches[0]?.reject(new Error("net::ERR_CONNECTION_RESET"));
     await vi.advanceTimersByTimeAsync(0);
 
@@ -401,7 +401,7 @@ describe(createMailPoller, () => {
   it("polls every 5 min while signed out", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", { kind: "signedOut" });
     await vi.advanceTimersByTimeAsync(SIGNED_OUT_INTERVAL - 1);
 
@@ -415,7 +415,7 @@ describe(createMailPoller, () => {
   it("polls on a poke no sooner than 5 s after the last poll ended, a burst as one", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(1));
 
     for (let index = 0; index < 5; index += 1) {
@@ -442,7 +442,7 @@ describe(createMailPoller, () => {
   it("polls at once on a poke long after the last poll", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(1));
     await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
     poller.poke("a");
@@ -454,7 +454,7 @@ describe(createMailPoller, () => {
   it("costs a poll every 5 s at most while the title keeps changing", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(1));
 
     for (let tick = 0; tick < 40; tick += 1) {
@@ -472,7 +472,7 @@ describe(createMailPoller, () => {
   it("never polls a profile twice at once, and polls once more after a poke in flight", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     poller.poke("a");
     poller.poke("a");
     await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
@@ -494,7 +494,7 @@ describe(createMailPoller, () => {
   it("pokes every profile at once", async () => {
     const { poller, answer, fetchesOf } = setup();
 
-    poller.reconcile(["a", "b"]);
+    poller.reconcile(["a", "b"], []);
     await answer("a", feed(1));
     await answer("b", feed(1));
     poller.pokeAll();
@@ -506,7 +506,7 @@ describe(createMailPoller, () => {
   it("skips a poll due while offline and polls on the next timer once back, with no poke", async () => {
     const { poller, answer, fetchesOf, goOffline, goOnline } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(1));
     goOffline();
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
@@ -525,7 +525,7 @@ describe(createMailPoller, () => {
     const { poller, answer, fetchesOf, changes, goOffline, goOnline } = setup();
 
     goOffline();
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await vi.advanceTimersByTimeAsync(0);
 
     expect([fetchesOf("a"), poller.mail("a").status]).toStrictEqual([
@@ -544,7 +544,7 @@ describe(createMailPoller, () => {
   it("polls at once when poked as the network returns", async () => {
     const { poller, answer, fetchesOf, goOffline, goOnline } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(1));
     goOffline();
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
@@ -558,8 +558,8 @@ describe(createMailPoller, () => {
   it("stops a removed profile's polling, aborts its poll and drops its result", async () => {
     const { poller, fetches, fetchesOf, changes } = setup();
 
-    poller.reconcile(["a"]);
-    poller.reconcile([]);
+    poller.reconcile(["a"], []);
+    poller.reconcile([], []);
 
     expect(fetches[0]?.signal.aborted).toBeTruthy();
 
@@ -578,7 +578,7 @@ describe(createMailPoller, () => {
   it("stops polling a profile whose mail is not checked, clearing what it read at once, and polls it at once when checked again", async () => {
     const { poller, answer, fetchesOf, changes } = setup();
 
-    poller.reconcile(["a", "b"]);
+    poller.reconcile(["a", "b"], []);
     await answer("a", feed(4, "me@example.org"));
     await answer("b", feed(1));
     changes.mockClear();
@@ -596,7 +596,7 @@ describe(createMailPoller, () => {
 
     const fetchedWhileOff = fetchesOf("a");
 
-    poller.reconcile(["a", "b"]);
+    poller.reconcile(["a", "b"], []);
 
     expect([
       off,
@@ -616,11 +616,11 @@ describe(createMailPoller, () => {
     const polls: [string, FeedOutcome][] = [];
 
     poller.onPoll((profileId, outcome) => polls.push([profileId, outcome]));
-    poller.reconcile(["a", "b"]);
+    poller.reconcile(["a", "b"], []);
     await answer("a", feed(1));
     await answer("b", FAILED);
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
-    poller.reconcile(["b"]);
+    poller.reconcile(["b"], []);
     await answer("a", feed(2));
 
     expect(polls).toStrictEqual([
@@ -635,7 +635,7 @@ describe(createMailPoller, () => {
     const before = Date.now();
 
     poller.onPoll((_profileId, _outcome, startedAt) => started.push(startedAt));
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await vi.advanceTimersByTimeAsync(1000);
     await answer("a", feed(1));
 
@@ -645,7 +645,7 @@ describe(createMailPoller, () => {
   it("logs the status and count, never what a message says", async () => {
     const { poller, answer, logs } = setup();
 
-    poller.reconcile(["a"]);
+    poller.reconcile(["a"], []);
     await answer("a", feed(2));
 
     expect(logs).toStrictEqual(["Mail of profile a: ok, 2 unread"]);

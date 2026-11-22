@@ -297,7 +297,7 @@ export const createMailPoller = ({
      */
     reconcile: (
       profileIds: readonly string[],
-      unchecked: readonly string[] = []
+      unchecked: readonly string[]
     ) => {
       const next = new Set(
         profileIds.filter((profileId) => unchecked.includes(profileId))

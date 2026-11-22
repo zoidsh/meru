@@ -135,7 +135,7 @@ const setup = (state: State, initial?: Settings) => {
     },
     dispose: () => {
       doNotDisturb.dispose();
-      mail.reconcile([]);
+      mail.reconcile([], []);
     },
   };
 };
