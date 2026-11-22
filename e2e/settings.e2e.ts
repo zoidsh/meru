@@ -10,62 +10,20 @@ import {
   findPage,
   test,
   writeSettings,
-  writeState,
 } from "./lib/app.ts";
+import {
+  confirmRemovals,
+  emitSettingsFocus,
+  menuEnabled,
+  openSettings,
+  scopeTab,
+  seedProfiles,
+} from "./lib/settings.ts";
 import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
-import type { StandIn } from "./lib/stand-in.ts";
-
-const SETTINGS_URL = "meru-app://settings/";
 
 /** How many windows are open, the main one among them. */
 const windowCount = (app: ElectronApplication) =>
   app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
-
-/**
- * Tells the Settings window it gained or lost focus, as the system would; the
- * suite's app is never the active app, so the system never does.
- */
-const emitSettingsFocus = (app: ElectronApplication, event: "focus" | "blur") =>
-  app.evaluate(
-    ({ BrowserWindow }, { url, name }) => {
-      BrowserWindow.getAllWindows()
-        .find((window) => window.webContents.getURL().startsWith(url))
-        ?.emit(name);
-    },
-    { url: SETTINGS_URL, name: event }
-  );
-
-/** Whether the application menu's items are enabled, by id. */
-const menuEnabled = (app: ElectronApplication, ids: readonly string[]) =>
-  app.evaluate(
-    ({ Menu }, itemIds) =>
-      itemIds.map(
-        (id) => Menu.getApplicationMenu()?.getMenuItemById(id)?.enabled
-      ),
-    ids
-  );
-
-/** Runs Settings… from the app menu, and gives the Settings window's page. */
-const openSettings = async (app: ElectronApplication) => {
-  // The menu is set once startup has wired it.
-  await expect
-    .poll(() =>
-      app.evaluate(
-        ({ Menu }) =>
-          Menu.getApplicationMenu()?.getMenuItemById("app.settings") !== null
-      )
-    )
-    .toBe(true);
-  await clickMenuItem(app, "app.settings");
-
-  const page = await findPage(app, SETTINGS_URL);
-
-  await expect(
-    page.getByRole("switch", { name: "Do Not Disturb" })
-  ).toBeVisible();
-
-  return page;
-};
 
 /** One value of `settings.json` as the app wrote it, or nothing before its first write. */
 const readStoredSetting = async (userDataDir: string, key: string) => {
@@ -323,46 +281,9 @@ test("quiet hours are added, a day changed and removed, each edit writing the wh
 });
 
 /** Seeds `state.json` with a profile per name, each with Gmail at the stand-in. */
-const seedProfiles = (
-  userDataDir: string,
-  standIn: StandIn,
-  names: readonly string[],
-  selected = 0
-) => {
-  const ids = names.map((name) => name.toLowerCase().replaceAll(" ", "-"));
-
-  return writeState(userDataDir, {
-    profiles: names.map((name, index) => ({
-      id: ids[index],
-      name,
-      tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
-      selectedTabId: "gmail",
-    })),
-    selectedProfileId: ids[selected],
-  });
-};
-
-const scopeTab = (page: Page, name: string) =>
-  page
-    .getByRole("tablist", { name: "Scope" })
-    .getByRole("tab", { name, exact: true });
-
 /** The profiles' own values as `settings.json` holds them. */
 const storedOverrides = (userDataDir: string) =>
   readStoredSetting(userDataDir, "profiles");
-
-/**
- * Stands in for the native confirmation of Remove Profile, which would show
- * on the desktop, answering it with its first button.
- */
-const confirmRemovals = (app: ElectronApplication) =>
-  app.evaluate(({ dialog }) => {
-    dialog.showMessageBox = (() =>
-      Promise.resolve({
-        response: 0,
-        checkboxChecked: false,
-      })) as unknown as typeof dialog.showMessageBox;
-  });
 
 test("with one profile there is no scope switcher, and with two it offers All profiles and each profile", async ({
   launchApp,
