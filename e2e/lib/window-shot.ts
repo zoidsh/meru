@@ -82,9 +82,9 @@ export const shootWindow = async (
   shell: Page,
   file: string
 ) => {
-  const layers = await app.evaluate(async ({ BrowserWindow }) => {
-    const window = BrowserWindow.getAllWindows().find((candidate) =>
-      candidate.webContents.getURL().startsWith("meru-app:")
+  const layers = await app.evaluate(async ({ BrowserWindow }, shellUrl) => {
+    const window = BrowserWindow.getAllWindows().find(
+      (candidate) => candidate.webContents.getURL() === shellUrl
     );
 
     if (!window) {
@@ -111,7 +111,7 @@ export const shootWindow = async (
         }))
       ),
     };
-  });
+  }, shell.url());
 
   await compose(shell, layers, file);
 };

@@ -32,7 +32,6 @@ const setup = ({
   sidebar = "narrow" as SidebarState,
   pageSize = { width: 1000, height: 600 },
 } = {}) => {
-  const renamed: [string, string][] = [];
   let open = overlay;
   const overlays: (Overlay | "closed")[] = [];
   const calls: unknown[] = [];
@@ -59,11 +58,6 @@ const setup = ({
       get: () => state,
       select: (profileId) => {
         calls.push(["selectProfile", profileId]);
-
-        return Promise.resolve(true);
-      },
-      rename: (profileId, name) => {
-        renamed.push([profileId, name]);
 
         return Promise.resolve(true);
       },
@@ -259,7 +253,6 @@ const setup = ({
   return {
     handlers,
     logged,
-    renamed,
     overlays,
     calls,
     menus,
@@ -270,43 +263,6 @@ const setup = ({
 };
 
 describe(createShellHandlers, () => {
-  it("renames the profile whose rename is open and closes it", async () => {
-    const shell = setup({
-      overlay: { kind: "rename-profile", profileId: "b" },
-    });
-
-    await shell.handlers.renameProfile({ profileId: "b", name: " Home " });
-
-    expect(shell.renamed).toStrictEqual([["b", " Home "]]);
-    expect(shell.overlays).toStrictEqual(["closed"]);
-  });
-
-  it("keeps the first profile's stored name when its shown name is left as it was", async () => {
-    const shell = setup({
-      overlay: { kind: "rename-profile", profileId: "a" },
-    });
-
-    await shell.handlers.renameProfile({ profileId: "a", name: "Default " });
-
-    expect(shell.renamed).toStrictEqual([]);
-    expect(shell.overlays).toStrictEqual(["closed"]);
-  });
-
-  it("refuses to rename a profile whose rename is not open", async () => {
-    const shell = setup({
-      overlay: { kind: "rename-profile", profileId: "a" },
-    });
-
-    await shell.handlers.renameProfile({ profileId: "b", name: "Home" });
-
-    expect(shell.renamed).toStrictEqual([]);
-    expect(shell.overlays).toStrictEqual([]);
-
-    await shell.handlers.closeOverlay({});
-
-    expect(shell.overlays).toStrictEqual(["closed"]);
-  });
-
   it("closes the find bar through find, which ends its search", async () => {
     const shell = setup({
       overlay: { kind: "find", profileId: "a", tabId: "gmail" },
@@ -840,19 +796,6 @@ describe("the overlay slice", () => {
     ]);
   });
 
-  it("names the profile being renamed as shown, Default translated", () => {
-    expect(
-      overlaySlice({ kind: "rename-profile", profileId: "a" })
-    ).toStrictEqual({
-      kind: "rename-profile",
-      profileId: "a",
-      name: "Default",
-    });
-    expect(
-      overlaySlice({ kind: "rename-profile", profileId: "b" })
-    ).toStrictEqual({ kind: "rename-profile", profileId: "b", name: "Work" });
-  });
-
   it("lists what New tab's profile can open, by id and name, and its bookmarks", () => {
     expect(overlaySlice({ kind: "open-app", profileId: "a" })).toStrictEqual({
       kind: "open-app",
@@ -879,9 +822,9 @@ describe("the overlay slice", () => {
   });
 
   it("is none for a profile that is gone", () => {
-    expect(
-      overlaySlice({ kind: "rename-profile", profileId: "gone" })
-    ).toStrictEqual({ kind: "none" });
+    expect(overlaySlice({ kind: "open-app", profileId: "gone" })).toStrictEqual(
+      { kind: "none" }
+    );
   });
 });
 

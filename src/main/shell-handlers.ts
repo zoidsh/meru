@@ -47,7 +47,6 @@ export interface ShellHandlersDeps {
     Profiles,
     | "get"
     | "select"
-    | "rename"
     | "closeTab"
     | "moveTab"
     | "moveInBox"
@@ -181,7 +180,7 @@ const shellOverlay = (
 /** An overlay over a profile, which shows nothing once that profile is gone. */
 const shellProfileOverlay = (
   state: State,
-  overlay: Extract<Overlay, { kind: "open-app" | "rename-profile" }>,
+  overlay: Extract<Overlay, { kind: "open-app" }>,
   apps: readonly App[],
   bookmarkRows: (profileId: string) => BookmarkRows
 ): ShellState["overlay"] => {
@@ -193,22 +192,16 @@ const shellProfileOverlay = (
     return { kind: "none" };
   }
 
-  return overlay.kind === "open-app"
-    ? {
-        kind: "open-app",
-        profileId: profile.id,
-        apps: (overlay.split
-          ? splittableApps(apps, profile)
-          : openableApps(apps, profile)
-        ).map(({ id, name }) => ({ id, name })),
-        bookmarks: bookmarkRows(profile.id),
-        split: overlay.split ?? null,
-      }
-    : {
-        kind: "rename-profile",
-        profileId: profile.id,
-        name: profileDisplayName(profile),
-      };
+  return {
+    kind: "open-app",
+    profileId: profile.id,
+    apps: (overlay.split
+      ? splittableApps(apps, profile)
+      : openableApps(apps, profile)
+    ).map(({ id, name }) => ({ id, name })),
+    bookmarks: bookmarkRows(profile.id),
+    split: overlay.split ?? null,
+  };
 };
 
 /** Keys a control in the shell acts on that are no command's, by Electron's name. */
@@ -467,28 +460,6 @@ export const createShellHandlers = ({
     tabs.retry(key);
 
     return Promise.resolve();
-  },
-  renameProfile: async ({ profileId, name }) => {
-    const open = overlays.current();
-    const profile = profiles
-      .get()
-      .profiles.find((candidate) => candidate.id === profileId);
-
-    if (open?.kind !== "rename-profile" || open.profileId !== profileId) {
-      log(`Refused to rename profile ${profileId}, whose rename is not open`);
-
-      return;
-    }
-
-    try {
-      // The field starts with the name as shown, which for the first
-      // profile is "Default" translated; left so, it stays in English.
-      if (profile && name.trim() !== profileDisplayName(profile)) {
-        await profiles.rename(profileId, name);
-      }
-    } finally {
-      overlays.close();
-    }
   },
   closeOverlay: () => {
     if (overlays.current()?.kind === "find") {

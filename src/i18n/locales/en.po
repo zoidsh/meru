@@ -250,11 +250,6 @@ msgstr "Actual Size"
 msgid "Add profile"
 msgstr "Add profile"
 
-#. Menu item in the Window menu that adds a profile, signed in to no account yet, and selects it
-#: src/main/commands.ts
-msgid "Add Profile"
-msgstr "Add Profile"
-
 #. Button under the Settings list of quiet hours that adds a window from 22:00 to 07:00 every day
 #: src/settings/quiet-hours-field.tsx
 msgid "Add quiet hours"
@@ -1221,11 +1216,6 @@ msgstr "Remove Profile"
 msgid "Remove profile…"
 msgstr "Remove profile…"
 
-#. Menu item in the Window menu that asks to remove the selected profile, signing out of it and deleting its data on this device
-#: src/main/commands.ts
-msgid "Remove Profile…"
-msgstr "Remove Profile…"
-
 #. Accessible name of the button that removes one window of quiet hours in Settings; {place} is its place in the list, from 1
 #: src/settings/quiet-hours-field.tsx
 msgid "Remove quiet hours {place}"
@@ -1235,16 +1225,6 @@ msgstr "Remove quiet hours {place}"
 #: src/main/application-menu.ts
 msgid "Remove Saved Search"
 msgstr "Remove Saved Search"
-
-#. Heading of the small panel over the page with a field for a profile's new name, and the field's label
-#: src/shell/overlay.tsx
-msgid "Rename profile"
-msgstr "Rename profile"
-
-#. Menu item in the Window menu that shows a field to change the selected profile's name
-#: src/main/commands.ts
-msgid "Rename Profile…"
-msgstr "Rename Profile…"
 
 #. Button on a message in the unified inbox that reports it as spam. Gmail's own words for the action
 #: src/shell/inbox.tsx

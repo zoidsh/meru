@@ -16,7 +16,6 @@ export const SHELL_CALL_NAMES = [
   "evenOutPanes",
   "maximizePane",
   "retryTab",
-  "renameProfile",
   "closeOverlay",
   "findInPage",
   "findStep",

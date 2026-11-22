@@ -27,9 +27,8 @@ const two: State = {
   selectedProfileId: "a",
 };
 
-const renameA: Overlay = { kind: "rename-profile", profileId: "a" };
-const renameB: Overlay = { kind: "rename-profile", profileId: "b" };
 const openAppA: Overlay = { kind: "open-app", profileId: "a" };
+const openAppB: Overlay = { kind: "open-app", profileId: "b" };
 const findA: Overlay = { kind: "find", profileId: "a", tabId: "gmail" };
 
 const changed = (current: Overlay | undefined, next: State | undefined) =>
@@ -43,13 +42,13 @@ describe(transitionOverlay, () => {
   it("opens one, replaces it with the next, and closes", () => {
     const opened = transitionOverlay(undefined, {
       kind: "open",
-      overlay: renameA,
+      overlay: openAppA,
     });
 
-    expect(opened).toStrictEqual(renameA);
+    expect(opened).toStrictEqual(openAppA);
     expect(
-      transitionOverlay(opened, { kind: "open", overlay: renameB })
-    ).toStrictEqual(renameB);
+      transitionOverlay(opened, { kind: "open", overlay: findA })
+    ).toStrictEqual(findA);
     expect(transitionOverlay(opened, { kind: "close" })).toBeUndefined();
   });
 
@@ -64,10 +63,8 @@ describe(transitionOverlay, () => {
 
   it("closes when another profile is selected", () => {
     expect(
-      [renameA, openAppA, findA].map((open) =>
-        changed(open, selectProfile(two, "b"))
-      )
-    ).toStrictEqual([undefined, undefined, undefined]);
+      [openAppA, findA].map((open) => changed(open, selectProfile(two, "b")))
+    ).toStrictEqual([undefined, undefined]);
   });
 
   it("closes when another tab of the profile is selected", () => {
@@ -86,7 +83,7 @@ describe(transitionOverlay, () => {
     }) as State;
 
     expect(
-      [renameA, { ...findA, tabId: "cal" } as const].map((open) =>
+      [openAppA, { ...findA, tabId: "cal" } as const].map((open) =>
         transitionOverlay(open, {
           kind: "state-changed",
           previous: withCalendar,
@@ -99,7 +96,7 @@ describe(transitionOverlay, () => {
   it("closes when its profile goes", () => {
     const withoutB = removeProfile(two, "b") as State;
 
-    expect(changed(renameB, withoutB)).toBeUndefined();
+    expect(changed(openAppB, withoutB)).toBeUndefined();
   });
 
   it("keeps the unified inbox open through another profile selected, which closes it itself", () => {
@@ -114,9 +111,9 @@ describe(transitionOverlay, () => {
       profiles: [newProfile("a", "Work"), newProfile("b", "Profile 2")],
     };
 
-    expect(changed(renameA, renamed)).toStrictEqual(renameA);
-    expect(changed(renameB, renamed)).toStrictEqual(renameB);
     expect(changed(openAppA, renamed)).toStrictEqual(openAppA);
+    expect(changed(openAppB, renamed)).toStrictEqual(openAppB);
+    expect(changed(findA, renamed)).toStrictEqual(findA);
     expect(changed(undefined, renamed)).toBeUndefined();
   });
 });
@@ -167,14 +164,7 @@ describe(coversPage, () => {
   it("is a card, never the find bar, a toast or a drop", () => {
     expect(
       (
-        [
-          "open-app",
-          "inbox",
-          "rename-profile",
-          "find",
-          "toast",
-          "drop",
-        ] as const
+        ["open-app", "inbox", "downloads", "find", "toast", "drop"] as const
       ).map((kind) => coversPage({ kind }))
     ).toStrictEqual([true, true, true, false, false, false]);
     expect(coversPage(undefined)).toBeFalsy();
@@ -192,12 +182,12 @@ describe(staysOpenOutside, () => {
 });
 
 describe(overlayWidth, () => {
-  it("is wide for the unified inbox, medium for the New tab launcher and narrow for the rename panel", () => {
+  it("is wide for the unified inbox, medium for New tab and Downloads", () => {
     expect([
       overlayWidth({ kind: "inbox" }),
       overlayWidth(openAppA),
-      overlayWidth(renameA),
-    ]).toStrictEqual(["wide", "medium", "narrow"]);
+      overlayWidth({ kind: "downloads" }),
+    ]).toStrictEqual(["wide", "medium", "medium"]);
   });
 });
 

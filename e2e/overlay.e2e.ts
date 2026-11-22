@@ -9,8 +9,6 @@ import {
   expect,
   findPage,
   findOverlayDocument,
-  readMenuLabel,
-  readState,
   test,
 } from "./lib/app.ts";
 import { CALENDAR_TITLE, DRAFT_LABEL } from "./lib/stand-in.ts";
@@ -27,14 +25,6 @@ const followRealFocus = async (page: Page) => {
   await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
 
   return () => page.evaluate(() => document.hasFocus());
-};
-
-const readNames = async (userDataDir: string) => {
-  const { profiles } = await readState<{ profiles: { name: string }[] }>(
-    userDataDir
-  );
-
-  return profiles.map((profile) => profile.name);
 };
 
 /** The overlay's view, the page the shell's own frame opened by that name. */
@@ -124,10 +114,11 @@ const keyInOverlay = (
   );
 
 const field = (overlay: Page) =>
-  overlay.getByRole("textbox", { name: "Rename profile" });
+  overlay.getByRole("combobox", { name: "New tab" });
 
+/** Opens New tab, a card over the page, from the menu. */
 const openFromMenu = async (app: ElectronApplication, overlay: Page) => {
-  await clickMenuItem(app, "profile.rename");
+  await clickMenuItem(app, "app.open");
   await expect(field(overlay)).toBeFocused();
 };
 
@@ -138,11 +129,10 @@ const expectClosed = async (app: ElectronApplication, overlay: Page) => {
   expect(view.visible).toBeFalsy();
 };
 
-test("at launch the page has focus; Rename from the Window menu shows the name selected over it in the shell's process, Enter renames, and focus goes back to the page", async ({
+test("at launch the page has focus; New tab from the menu shows its card over it in the shell's process, Escape closes it, and focus goes back to the page", async ({
   app,
   shell,
   standIn,
-  userDataDir,
 }) => {
   const gmail = await findPage(app, standIn.url);
   const overlay = await findOverlayDocument(app);
@@ -168,17 +158,8 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   await draft.focus();
   await openFromMenu(app, overlay);
 
-  await expect(
-    overlay.getByRole("dialog", { name: "Rename profile" })
-  ).toBeVisible();
-  await expect(overlay.getByText("Rename profile")).toBeVisible();
-  await expect(field(overlay)).toHaveValue("Default");
-  expect(
-    await field(overlay).evaluate((input: HTMLInputElement) => [
-      input.selectionStart,
-      input.selectionEnd,
-    ])
-  ).toStrictEqual([0, "Default".length]);
+  await expect(overlay.getByRole("dialog", { name: "New tab" })).toBeVisible();
+  await expect(field(overlay)).toHaveValue("");
   await expect.poll(overlayHasFocus).toBeTruthy();
   expect(await gmailHasFocus()).toBeFalsy();
 
@@ -195,17 +176,13 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
       "hidden",
       process.platform as Platform,
       {
-        kind: "rename-profile",
+        kind: "open-app",
       }
     )
   );
 
-  await overlay.keyboard.type("  Work ");
-  await overlay.keyboard.press("Enter");
+  await overlay.keyboard.press("Escape");
 
-  // With one profile the titlebar has no row; the Window menu names it.
-  await expect.poll(() => readMenuLabel(app, "profile.select.1")).toBe("Work");
-  await expect.poll(() => readNames(userDataDir)).toStrictEqual(["Work"]);
   await expectClosed(app, overlay);
   await expect.poll(gmailHasFocus).toBeTruthy();
   // Asked of main, not of the overlay's document, which on Linux, hidden
@@ -218,31 +195,30 @@ test("at launch the page has focus; Rename from the Window menu shows the name s
   await expect(draft).toHaveValue("hi");
 
   // Opening a page by the overlay's own name leaves the overlay's document,
-  // which draws the next rename. Last, and read through `evaluate`, since
+  // which draws the next card. Last, and read through `evaluate`, since
   // Playwright waits on the refused navigation as though it were under way.
   await shell.evaluate(() => {
     window.open("https://example.com/", "meru-overlay");
   });
-  await clickMenuItem(app, "profile.rename");
+  await clickMenuItem(app, "app.open");
   await expect
     .poll(() =>
       overlay.evaluate(() => [
-        document.body.textContent,
-        document.activeElement?.getAttribute("name"),
+        document.querySelector("h2")?.textContent,
+        document.activeElement?.getAttribute("role"),
       ])
     )
-    .toStrictEqual(["Rename profile", "name"]);
+    .toStrictEqual(["New tab", "combobox"]);
   expect(await readOverlayView(app)).toMatchObject({
     url: "about:blank",
     visible: true,
   });
 });
 
-test("Escape, a click beside the card, a tab switch and the window losing focus each close it and leave the name", async ({
+test("Escape, a click beside the card, a tab switch and the window losing focus each close it", async ({
   app,
   shell,
   standIn,
-  userDataDir,
 }) => {
   const gmail = await findPage(app, standIn.url);
   const draft = gmail.getByRole("textbox", { name: DRAFT_LABEL });
@@ -255,24 +231,16 @@ test("Escape, a click beside the card, a tab switch and the window losing focus 
 
   const overlay = await findOverlayDocument(app);
 
-  // Emptied, Escape keeps the name.
   await openFromMenu(app, overlay);
   expect(
     await overlay
-      .getByRole("dialog", { name: "Rename profile" })
+      .getByRole("dialog", { name: "New tab" })
       .evaluate((card) => [
         getComputedStyle(card).backgroundColor,
         getComputedStyle(card.ownerDocument.body).backgroundColor,
       ])
   ).toStrictEqual(["oklch(1 0 0)", "rgba(0, 0, 0, 0)"]);
-  await field(overlay).fill("");
   await overlay.keyboard.press("Escape");
-  await expectClosed(app, overlay);
-
-  // Enter on an empty field changes nothing either.
-  await openFromMenu(app, overlay);
-  await field(overlay).fill(" ");
-  await overlay.keyboard.press("Enter");
   await expectClosed(app, overlay);
 
   // A click beside the card, over the page, closes it and stops there.
@@ -308,12 +276,9 @@ test("Escape, a click beside the card, a tab switch and the window losing focus 
   ).toBeVisible();
   expect(await calendarHasFocus()).toBeFalsy();
   await expect.poll(await followRealFocus(gmail)).toBeTruthy();
-
-  expect(await readMenuLabel(app, "profile.select.1")).toBe("Default");
-  expect(await readNames(userDataDir)).toStrictEqual(["Default"]);
 });
 
-test("in the rename field a plain letter types, and a command's key acts once on the tab underneath", async ({
+test("in New tab's field a plain letter types, and a command's key acts once on the tab underneath", async ({
   app,
   shell,
   standIn,

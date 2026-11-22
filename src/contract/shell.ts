@@ -8,7 +8,6 @@ import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import { TOAST_MESSAGES } from "#core/overlay.ts";
 import { PANE_DIRECTIONS, PANE_GAP_ENDS } from "#core/pane-tree.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
-import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import type {
   ContractBridge,
@@ -154,17 +153,6 @@ export const SHELL_CALLS = {
   },
   /** Loads a tab that failed or crashed again, now. */
   retryTab: { request: tabKey, response: z.undefined() },
-  /**
-   * Names the profile, from its rename overlay, and closes the overlay; a
-   * name left empty or as it was changes nothing.
-   */
-  renameProfile: {
-    request: z.object({
-      profileId,
-      name: z.string().check(z.maxLength(PROFILE_NAME_MAX_LENGTH)),
-    }),
-    response: z.undefined(),
-  },
   closeOverlay: { request: none, response: z.undefined() },
   /**
    * The find bar's term as typed, searched for in its page; empty clears
@@ -543,12 +531,6 @@ export const SHELL_STATE = {
     z.object({ kind: z.literal("none") }),
     z.object({ kind: z.literal("inbox") }),
     z.object({ kind: z.literal("downloads") }),
-    z.object({
-      kind: z.literal("rename-profile"),
-      profileId,
-      /** The profile's name as shown, which the field starts with. */
-      name: z.string(),
-    }),
     z.object({
       kind: z.literal("open-app"),
       profileId,

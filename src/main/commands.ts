@@ -37,7 +37,6 @@ import {
 } from "#core/split.ts";
 import {
   adjacentProfile,
-  canRemoveProfile,
   canSleepProfile,
   isPinned,
   knownTabs,
@@ -125,11 +124,6 @@ export interface CommandActions {
   /** Selects the profile, waking it if it sleeps. */
   selectProfile: (profileId: string) => Promise<unknown>;
   sleepProfile: (profileId: string) => Promise<unknown>;
-  addProfile: () => Promise<unknown>;
-  /** Asks to remove the profile, and removes it once confirmed. */
-  removeProfile: (profileId: string) => Promise<unknown>;
-  /** Opens the overlay with a field for the profile's name. */
-  openRenameProfile: (profileId: string) => void;
   /** Switches Do Not Disturb on for the duration, or off. */
   switchDoNotDisturb: (choice: DoNotDisturbDuration | "off") => Promise<void>;
   /** Shows the unified inbox, or puts the tab back. */
@@ -873,48 +867,6 @@ export const COMMANDS: readonly Command[] = [
     // The selected profile is always awake; the last awake one cannot sleep.
     isAvailable: ({ state }) => canSleepProfile(state, state.selectedProfileId),
     run: ({ state }, { sleepProfile }) => sleepProfile(state.selectedProfileId),
-  },
-  {
-    id: "profile.add",
-    title: () =>
-      t({
-        message: "Add Profile",
-        comment:
-          "Menu item in the Window menu that adds a profile, signed in to no account yet, and selects it",
-      }),
-    once: true,
-    run: async (_context, { addProfile, setInboxOpen }) => {
-      await addProfile();
-      setInboxOpen(false);
-    },
-  },
-  {
-    id: "profile.rename",
-    title: () =>
-      t({
-        message: "Rename Profile…",
-        comment:
-          "Menu item in the Window menu that shows a field to change the selected profile's name",
-      }),
-    run: ({ state }, { openRenameProfile }) => {
-      openRenameProfile(state.selectedProfileId);
-
-      return Promise.resolve();
-    },
-  },
-  {
-    id: "profile.remove",
-    title: () =>
-      t({
-        message: "Remove Profile…",
-        comment:
-          "Menu item in the Window menu that asks to remove the selected profile, signing out of it and deleting its data on this device",
-      }),
-    isAvailable: ({ state }) =>
-      canRemoveProfile(state, state.selectedProfileId),
-    once: true,
-    run: ({ state }, { removeProfile }) =>
-      removeProfile(state.selectedProfileId),
   },
   // v3's: Alt on Linux, whose desktops take Ctrl with a digit.
   ...Array.from({ length: PROFILE_SHORTCUT_COUNT }, (_, index): Command => {

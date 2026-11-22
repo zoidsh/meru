@@ -474,9 +474,4 @@ test("New tab's field has focus over a split whose other page takes focus as it 
   await pressOpenApp(app, grabbyUrl);
   await expect(overlay.getByRole("dialog", { name: "New tab" })).toBeVisible();
   await keepsFocus(overlay.getByRole("combobox", { name: "New tab" }));
-
-  await overlay.keyboard.press("Escape");
-  await expect(overlay.getByRole("dialog")).toHaveCount(0);
-  await clickMenuItem(app, "profile.rename");
-  await keepsFocus(overlay.getByRole("textbox", { name: "Rename profile" }));
 });

@@ -362,25 +362,6 @@ test("a sleeping profile in the titlebar", async ({
   await shootEachWay(app, shell, "titlebar-sleeping");
 });
 
-test("the rename profile overlay", async ({
-  launchApp,
-  userDataDir,
-  standIn,
-}) => {
-  const { app, shell } = await launch(launchApp, userDataDir);
-  const overlay = await findOverlayDocument(app);
-  const field = overlay.getByRole("textbox", { name: "Rename profile" });
-
-  await findPage(app, standIn.url);
-  await app.evaluate(({ Menu, BrowserWindow }) => {
-    Menu.getApplicationMenu()
-      ?.getMenuItemById("profile.rename")
-      ?.click(undefined, BrowserWindow.getAllWindows()[0]);
-  });
-  await expect(field).toBeFocused();
-  await shootEachWay(app, shell, "rename");
-});
-
 // Its button, in the titlebar and below the narrow and wide sidebar's last
 // tab, is in the window shots above.
 test("the New tab overlay", async ({ launchApp, userDataDir, standIn }) => {

@@ -412,7 +412,7 @@ test("a profile's own value set elsewhere shows in the open window", async ({
   );
 });
 
-test("removing the profile whose scope is shown falls back to All profiles, and with one profile left to no switcher", async ({
+test("a profile removed in Profiles leaves the Notifications page's scopes, and with one profile left the switcher goes", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -421,23 +421,32 @@ test("removing the profile whose scope is shown falls back to All profiles, and 
 
   const app = await launchApp();
   const page = await openSettings(app);
+  const sections = page.getByRole("navigation", { name: "Settings sections" });
+  const remove = async (name: string) => {
+    await sections.getByRole("button", { name: "Profiles" }).click();
+    await page
+      .getByRole("list", { name: "Profiles" })
+      .getByRole("button", { name, exact: true })
+      .click();
+    await page.getByRole("button", { name: "Remove profile…" }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Profiles"
+    );
+    await sections.getByRole("button", { name: "Notifications" }).click();
+  };
 
   await confirmRemovals(app);
-  await scopeTab(page, "Work").click();
-  await clickMenuItem(app, "profile.remove");
+  await remove("Work");
 
   await expect(scopeTab(page, "Work")).toHaveCount(0);
-  await expect(scopeTab(page, "All profiles")).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
+  await expect(scopeTab(page, "Travel")).toBeVisible();
 
-  await clickMenuItem(app, "profile.remove");
+  await remove("Travel");
 
   await expect(page.getByRole("tablist")).toHaveCount(0);
 });
 
-test("a scope that fell back to All profiles stays there when a profile is added", async ({
+test("a profile a Gmail page adds joins the scopes, the scope shown staying", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -445,24 +454,15 @@ test("a scope that fell back to All profiles stays there when a profile is added
   await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
 
   const app = await launchApp();
+  const gmail = await findPage(app, standIn.url);
   const page = await openSettings(app);
 
-  await confirmRemovals(app);
   await scopeTab(page, "Work").click();
-  // Removes Home, the selected profile, leaving Work alone.
-  await clickMenuItem(app, "profile.remove");
-  await expect(page.getByRole("tablist")).toHaveCount(0);
+  // Google's Add another account, which a profile of its own takes.
+  await gmail.getByRole("link", { name: "Add another account" }).click();
 
-  await clickMenuItem(app, "profile.add");
-
-  await expect(scopeTab(page, "All profiles")).toHaveAttribute(
-    "aria-selected",
-    "true"
-  );
-  await expect(scopeTab(page, "Work")).toHaveAttribute(
-    "aria-selected",
-    "false"
-  );
+  await expect(scopeTab(page, "Profile 2")).toBeVisible();
+  await expect(scopeTab(page, "Work")).toHaveAttribute("aria-selected", "true");
 });
 
 test("long-named profiles fold into one menu beside All profiles, whose choice shows that profile's scope", async ({

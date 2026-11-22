@@ -53,7 +53,6 @@ const setup = (initial: State = twoProfiles) => {
   let reloads = 0;
   let inboxOpen = false;
   let openAppOpen = false;
-  const renames: string[] = [];
   const navigations: string[] = [];
   let sidebarShown = false;
   let navigation: Navigation | null = null;
@@ -108,11 +107,6 @@ const setup = (initial: State = twoProfiles) => {
     setTabOpenAtLaunch: profiles.setOpenAtLaunch,
     selectProfile: profiles.select,
     sleepProfile: profiles.sleep,
-    addProfile: profiles.add,
-    removeProfile: (profileId) => profiles.remove(profileId),
-    openRenameProfile: (profileId) => {
-      renames.push(profileId);
-    },
     setInboxOpen: (open) => {
       inboxOpen = open;
     },
@@ -205,7 +199,6 @@ const setup = (initial: State = twoProfiles) => {
       bookmarked = next;
     },
     bookmarkToggles,
-    renames,
     navigations,
     openAppOpen: () => openAppOpen,
     settingsOpened: () => settingsOpened,
@@ -341,7 +334,6 @@ describe("the command registry", () => {
       "tab.next",
       "tab.splitRight",
       "tab.moveToNewWindow",
-      "profile.add",
       "sidebar.toggle",
     ].map((id) => [id, Boolean(app.isAvailable(id))]);
 
@@ -362,7 +354,6 @@ describe("the command registry", () => {
         ["tab.next", false],
         ["tab.splitRight", false],
         ["tab.moveToNewWindow", false],
-        ["profile.add", false],
         ["sidebar.toggle", false],
       ],
       ["gmail"],
@@ -503,7 +494,7 @@ describe("the command registry", () => {
       expect(app.isAvailable(id)).toBeFalsy();
     }
 
-    await app.run("profile.add");
+    await app.profiles.add();
 
     expect(app.profiles.get().profiles).toHaveLength(2);
     expect(app.isAvailable("profile.next")).toBeTruthy();
@@ -577,7 +568,7 @@ describe("the command registry", () => {
         "tab.close",
         "tab.next",
         "sidebar.toggle",
-        "profile.add",
+        "profile.sleep",
         "app.settings",
         "doNotDisturb.toggle",
         "doNotDisturb.30m",
@@ -594,7 +585,7 @@ describe("the command registry", () => {
       ["tab.close", false],
       ["tab.next", false],
       ["sidebar.toggle", false],
-      ["profile.add", false],
+      ["profile.sleep", false],
       ["app.settings", true],
       ["doNotDisturb.toggle", true],
       ["doNotDisturb.30m", true],
@@ -633,15 +624,6 @@ describe("the command registry", () => {
       1,
       { darwin: "Command+,", win32: "Control+,", linux: "Control+," },
     ]);
-  });
-
-  it("opens the rename of the selected profile", async () => {
-    const app = setup();
-
-    await app.run("profile.add");
-    await app.run("profile.rename");
-
-    expect(app.renames).toStrictEqual(["new"]);
   });
 
   it("opens and closes the unified inbox, offered only with another profile or while it is open", async () => {
@@ -757,20 +739,7 @@ describe("the command registry", () => {
     ]);
   });
 
-  it("removes the selected profile, offered only while another is left", async () => {
-    const app = setup();
-
-    expect(app.isAvailable("profile.remove")).toBeTruthy();
-
-    await app.run("profile.remove");
-
-    expect(app.profiles.get().profiles.map(({ id }) => id)).toStrictEqual([
-      "b",
-    ]);
-    expect(app.isAvailable("profile.remove")).toBeFalsy();
-  });
-
-  it.each(["tab.next", "profile.next", "profile.add"])(
+  it.each(["tab.next", "profile.next"])(
     "closes the unified inbox on %s",
     async (id) => {
       const app = setup();

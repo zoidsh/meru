@@ -19,7 +19,6 @@ import type { Inbox } from "../inbox.ts";
 import type { OpenApp } from "../open-app.ts";
 import type { Overlays } from "../overlay.ts";
 import type { Profiles } from "../profiles.ts";
-import { createRemoveProfile } from "../remove-profile.ts";
 import type { SettingsPages } from "../settings-pages.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import type { Sidebar } from "../sidebar.ts";
@@ -206,15 +205,6 @@ export const wireMenu = ({
       setTabOpenAtLaunch: profiles.setOpenAtLaunch,
       selectProfile: profiles.select,
       sleepProfile: profiles.sleep,
-      addProfile: profiles.add,
-      removeProfile: createRemoveProfile({
-        profiles,
-        window: shell.window,
-        log: console.error,
-      }),
-      openRenameProfile: (profileId) => {
-        overlays.open({ kind: "rename-profile", profileId });
-      },
       switchDoNotDisturb: (choice) =>
         choice === "off"
           ? doNotDisturb.switchOff()

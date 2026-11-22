@@ -199,9 +199,6 @@ describe(buildMenuTemplate, () => {
       ["profile.next", "Select Next Profile", "Command+Shift+]"],
       ["profile.previous", "Select Previous Profile", "Command+Shift+["],
       ["profile.sleep", "Sleep Profile", undefined],
-      ["profile.add", "Add Profile", undefined],
-      ["profile.rename", "Rename Profile…", undefined],
-      ["profile.remove", "Remove Profile…", undefined],
     ]);
   });
 

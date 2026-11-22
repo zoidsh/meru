@@ -26,6 +26,9 @@ const run = promisify(execFile);
 
 const repositoryRoot = path.resolve(import.meta.dirname, "..", "..");
 
+/** Where the shell's page is served from; the Settings window's is another of the app's. */
+export const SHELL_URL = "meru-app://shell";
+
 const { productName } = DEV_IDENTITY;
 
 const unpackedExecutable = () => {
@@ -163,7 +166,7 @@ const saveFailure = async (
   name: string
 ) => {
   const pages = app.windows().filter((page) => !page.isClosed());
-  const shell = pages.find((page) => page.url().startsWith("meru-app:"));
+  const shell = pages.find((page) => page.url().startsWith(SHELL_URL));
   const names = await Promise.all(
     pages.map((page) =>
       page.url() === "about:blank"
@@ -253,9 +256,9 @@ export const findOverlayDocument = async (app: ElectronApplication) => {
  * whether it shows. The overlay's view, which the shell opened, is left out.
  */
 export const readViews = (app: ElectronApplication) =>
-  app.evaluate(({ BrowserWindow }) => {
+  app.evaluate(({ BrowserWindow }, shellUrl) => {
     const window = BrowserWindow.getAllWindows().find((candidate) =>
-      candidate.webContents.getURL().startsWith("meru-app:")
+      candidate.webContents.getURL().startsWith(shellUrl)
     );
 
     if (!window) {
@@ -282,7 +285,7 @@ export const readViews = (app: ElectronApplication) =>
           visible: view.getVisible(),
         })),
     };
-  });
+  }, SHELL_URL);
 
 /** The URL and session of each view that shows. */
 export const shownViews = async (app: ElectronApplication) => {
@@ -708,7 +711,7 @@ export const test = base.extend<AppFixtures>({
     }
   },
   shell: async ({ app }, use) => {
-    await use(await findPage(app, "meru-app:"));
+    await use(await findPage(app, SHELL_URL));
   },
   spawnApp: async ({ userDataDir, launched, standIn }, use) => {
     await use(() => {

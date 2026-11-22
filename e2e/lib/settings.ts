@@ -107,3 +107,44 @@ export const confirmRemovals = (app: ElectronApplication, confirm = true) =>
       });
     }) as unknown as typeof dialog.showMessageBox;
   }, confirm);
+
+const sections = (page: Page) =>
+  page.getByRole("navigation", { name: "Settings sections" });
+
+/** Shows a section of the Settings window from its nav. */
+export const openSection = (page: Page, name: string) =>
+  sections(page).getByRole("button", { name }).click();
+
+export const profileList = (page: Page) =>
+  page.getByRole("list", { name: "Profiles" });
+
+/** Shows the Profiles list. */
+export const openProfiles = async (page: Page) => {
+  await openSection(page, "Profiles");
+  await expect(profileList(page)).toBeVisible();
+};
+
+/** The row in the Profiles list that opens the profile's page. */
+export const profileRow = (page: Page, name: string) =>
+  profileList(page).getByRole("button", { name, exact: true });
+
+/** Adds a profile with Add profile in Settings, which opens its page. */
+export const addProfileInSettings = async (app: ElectronApplication) => {
+  const page = await openSettings(app);
+
+  await openProfiles(page);
+  await page.getByRole("button", { name: "Add profile" }).click();
+  await expect(page.getByRole("textbox", { name: "Name" })).toBeFocused();
+
+  return page;
+};
+
+/**
+ * Presses Remove profile… on the profile's page in Settings; the
+ * confirmation is to be stood in for first.
+ */
+export const removeProfileInSettings = async (page: Page, name: string) => {
+  await openProfiles(page);
+  await profileRow(page, name).click();
+  await page.getByRole("button", { name: "Remove profile…" }).click();
+};

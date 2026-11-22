@@ -6,7 +6,6 @@ import type { Platform } from "#core/platform.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 
 import {
-  clickMenuItem,
   expect,
   findPage,
   readState as readSavedState,
@@ -14,6 +13,11 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import {
+  addProfileInSettings,
+  profileRow as settingsProfileRow,
+  removeProfileInSettings,
+} from "./lib/settings.ts";
 import { STAND_IN_COOKIE, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
 interface SavedState {
@@ -65,10 +69,13 @@ const profileButton = (shell: Page, name: string) =>
     name: new RegExp(`^${name}(,|$)`, "u"),
   });
 
-/** Adds a profile from the Window menu, the titlebar having no button for it. */
+/** Adds a profile in Settings, the titlebar having no button for it. */
 const addProfile = async (app: ElectronApplication, shell: Page) => {
-  await clickMenuItem(app, "profile.add");
+  const settings = await addProfileInSettings(app);
+
   await expect(profileTabs(shell)).toHaveCount(2);
+
+  return settings;
 };
 
 test("adding a profile draws the profile row, the new one selected, and a view in a session of its own", async ({
@@ -235,14 +242,6 @@ const stubConfirmation = (app: ElectronApplication, response: number) =>
 const readConfirmations = (app: ElectronApplication) =>
   app.evaluate(() => Reflect.get(globalThis, "confirmations") as unknown[]);
 
-/** Whether the Window menu offers its item now. */
-const menuOffers = (app: ElectronApplication, id: string) =>
-  app.evaluate(
-    ({ Menu }, itemId) =>
-      Menu.getApplicationMenu()?.getMenuItemById(itemId)?.enabled,
-    id
-  );
-
 const readProfileIds = async (userDataDir: string) => {
   const { profiles } = await readState(userDataDir);
 
@@ -255,14 +254,16 @@ const readViewList = async (app: ElectronApplication) => {
   return views;
 };
 
-test("removing the selected profile from the Window menu, once confirmed, removes its button, its view and its session's cookie", async ({
+test("removing the selected profile in Settings, once confirmed, removes its button, its view and its session's cookie", async ({
   app,
   shell,
   standIn,
   userDataDir,
 }) => {
   await findPage(app, standIn.url);
-  await addProfile(app, shell);
+
+  const settings = await addProfile(app, shell);
+
   await expect.poll(() => standIn.cookieHeaders.length).toBe(2);
 
   const ids = (await readProfileIds(userDataDir)) as [string, string];
@@ -272,8 +273,7 @@ test("removing the selected profile from the Window menu, once confirmed, remove
     .toStrictEqual([STAND_IN_COOKIE]);
 
   await stubConfirmation(app, 0);
-  expect(await menuOffers(app, "profile.remove")).toBeTruthy();
-  await clickMenuItem(app, "profile.remove");
+  await removeProfileInSettings(settings, "Profile 2");
 
   // One profile left draws no row.
   await expect(profileRow(shell)).toHaveCount(0);
@@ -301,7 +301,10 @@ test("removing the selected profile from the Window menu, once confirmed, remove
   ]);
 
   // The last profile cannot be removed.
-  await expect.poll(() => menuOffers(app, "profile.remove")).toBeFalsy();
+  await settingsProfileRow(settings, "Default").click();
+  await expect(
+    settings.getByRole("button", { name: "Remove profile…" })
+  ).toBeDisabled();
 });
 
 test("cancelling the confirmation keeps the profile", async ({
@@ -311,9 +314,11 @@ test("cancelling the confirmation keeps the profile", async ({
   userDataDir,
 }) => {
   await findPage(app, standIn.url);
-  await addProfile(app, shell);
+
+  const settings = await addProfile(app, shell);
+
   await stubConfirmation(app, 1);
-  await clickMenuItem(app, "profile.remove");
+  await removeProfileInSettings(settings, "Profile 2");
 
   await expect
     .poll(() => readConfirmations(app))

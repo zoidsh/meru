@@ -478,11 +478,9 @@ test("a split that would leave a pane under the minimum is refused with a toast,
   await expect.poll(where).toBe("calendar");
   await expect(toast).toHaveCount(0, { timeout: 8000 });
 
-  // Over the rename card, which had focus: back in the page.
-  await clickMenuItem(app, "profile.rename");
-  await expect(
-    overlay.getByRole("dialog", { name: "Rename profile" })
-  ).toBeVisible();
+  // Over New tab's card, which had focus: back in the page.
+  await clickMenuItem(app, "app.open");
+  await expect(overlay.getByRole("dialog", { name: "New tab" })).toBeVisible();
   await expect.poll(where).toBe("overlay");
   await clickMenuItem(app, "tab.splitDown");
   await expect(toast).toBeVisible();

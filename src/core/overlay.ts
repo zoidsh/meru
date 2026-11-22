@@ -23,7 +23,6 @@ export type ToastMessage = (typeof TOAST_MESSAGES)[number];
 
 /** What an overlay over the content views shows; one at a time. */
 export type Overlay =
-  | { kind: "rename-profile"; profileId: string }
   /**
    * Lists the apps the profile can open a tab of; with `split`, as Open in
    * split, whose pick goes in a new pane that way of the focused one.
@@ -76,25 +75,13 @@ export const coversPage = (overlay: Pick<Overlay, "kind"> | undefined) =>
 export const TOAST_VIEW = { width: 416, height: 88 } as const;
 
 /** The card's width for each width class, in CSS pixels. */
-export const OVERLAY_WIDTHS = { narrow: 320, medium: 448, wide: 704 } as const;
+export const OVERLAY_WIDTHS = { medium: 448, wide: 704 } as const;
 
 export type OverlayWidth = keyof typeof OVERLAY_WIDTHS;
 
 /** Each overlay's width class. */
-export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth => {
-  switch (overlay.kind) {
-    case "inbox": {
-      return "wide";
-    }
-    case "open-app":
-    case "downloads": {
-      return "medium";
-    }
-    default: {
-      return "narrow";
-    }
-  }
-};
+export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth =>
+  overlay.kind === "inbox" ? "wide" : "medium";
 
 /**
  * Where the overlay's view sits while one is open: a card's over the page
@@ -147,8 +134,8 @@ const selection = (state: State) => {
 
 /**
  * The overlay open after `event`. What is underneath changing, another
- * profile or tab selected, closes the rename panel, New tab and the find
- * bar, as does their profile going. The unified inbox and Downloads, each
+ * profile or tab selected, closes New tab and the find bar, as does their
+ * profile going. The unified inbox and Downloads, each
  * over every profile, keep their own rules.
  */
 export const transitionOverlay = (

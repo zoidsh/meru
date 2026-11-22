@@ -5,7 +5,10 @@ import {
   confirmRemovals,
   emitSettingsFocus,
   menuEnabled,
+  openProfiles,
   openSettings,
+  profileList,
+  profileRow,
   scopeTab,
   seedProfiles,
 } from "./lib/settings.ts";
@@ -17,17 +20,6 @@ interface SavedState {
 
 const sections = (page: Page) =>
   page.getByRole("navigation", { name: "Settings sections" });
-
-const openProfiles = async (page: Page) => {
-  await sections(page).getByRole("button", { name: "Profiles" }).click();
-  await expect(profileList(page)).toBeVisible();
-};
-
-const profileList = (page: Page) =>
-  page.getByRole("list", { name: "Profiles" });
-
-const profileRow = (page: Page, name: string) =>
-  profileList(page).getByRole("button", { name, exact: true });
 
 const settingsTitle = (page: Page) => page.getByRole("heading", { level: 1 });
 
@@ -287,6 +279,27 @@ test("Back and Forward step between the list and a profile's page, by button and
 
   await clickMenuItem(app, "tab.forward");
   await expect(settingsTitle(page)).toHaveText("Profiles");
+});
+
+test("the Window menu no longer adds, renames or removes a profile, which Settings does", async ({
+  app,
+}) => {
+  const windowLabels = () =>
+    app.evaluate(({ Menu }) =>
+      (
+        Menu.getApplicationMenu()?.items.find((item) => item.label === "Window")
+          ?.submenu?.items ?? []
+      ).map((item) => item.label)
+    );
+
+  // The menu is set once startup has wired it.
+  await expect.poll(windowLabels).toContain("Sleep Profile");
+
+  const labels = await windowLabels();
+
+  expect(labels).not.toContain("Add Profile");
+  expect(labels).not.toContain("Rename Profile…");
+  expect(labels).not.toContain("Remove Profile…");
 });
 
 /** What each removal's confirmation asked, and of which window. */

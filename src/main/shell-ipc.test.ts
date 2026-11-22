@@ -208,11 +208,6 @@ const setup = () => {
 
       return Promise.resolve();
     },
-    renameProfile: (request) => {
-      calls.push(["renameProfile", request]);
-
-      return Promise.resolve();
-    },
     closeOverlay: (request) => {
       calls.push(["closeOverlay", request]);
 

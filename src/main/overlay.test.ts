@@ -54,7 +54,7 @@ const setup = () => {
     const current = overlays.current();
 
     events.push(
-      `shell told ${current?.kind === "rename-profile" ? current.profileId : (current?.kind ?? "closed")}`
+      `shell told ${current?.kind === "open-app" ? current.profileId : (current?.kind ?? "closed")}`
     );
   });
 
@@ -95,15 +95,15 @@ const setup = () => {
   };
 };
 
-const renameA = { kind: "rename-profile", profileId: "a" } as const;
-const renameB = { kind: "rename-profile", profileId: "b" } as const;
+const openAppA = { kind: "open-app", profileId: "a" } as const;
+const openAppB = { kind: "open-app", profileId: "b" } as const;
 
 describe(createOverlays, () => {
   it("shows and focuses the view before the shell hears, and hides it and gives focus back on close", () => {
     const { overlays, focus, events } = setup();
 
     focus.noteFocused({ kind: "front" });
-    overlays.open(renameA);
+    overlays.open(openAppA);
     overlays.close();
 
     expect(events).toStrictEqual([
@@ -122,7 +122,7 @@ describe(createOverlays, () => {
     const { overlays, focus, events } = setup();
 
     focus.noteFocused({ kind: "front" });
-    overlays.open(renameA);
+    overlays.open(openAppA);
     focus.noteFocused({ kind: "window", key: { profileId: "a", tabId: "t" } });
     overlays.close();
 
@@ -174,7 +174,7 @@ describe(createOverlays, () => {
     const { overlays, focus, events } = setup();
 
     focus.noteFocused({ kind: "front" });
-    overlays.open(renameA);
+    overlays.open(openAppA);
     events.length = 0;
     overlays.open({ kind: "toast", message: "no-room" });
 
@@ -190,8 +190,8 @@ describe(createOverlays, () => {
     const { overlays, focus, events } = setup();
 
     focus.noteFocused({ kind: "shell" });
-    overlays.open(renameA);
-    overlays.open(renameB);
+    overlays.open(openAppA);
+    overlays.open(openAppB);
     events.length = 0;
     overlays.close();
 
@@ -202,7 +202,7 @@ describe(createOverlays, () => {
     const { overlays, focus, events, present } = setup();
 
     focus.noteFocused({ kind: "front" });
-    overlays.open(renameA);
+    overlays.open(openAppA);
     present.delete("front");
     events.length = 0;
     overlays.close();
@@ -217,10 +217,10 @@ describe(createOverlays, () => {
       profiles: [newProfile("a", "Work"), two.profiles[1]],
     } as State;
 
-    overlays.open(renameA);
+    overlays.open(openAppA);
     overlays.follow(renamed);
 
-    expect(overlays.current()).toStrictEqual(renameA);
+    expect(overlays.current()).toStrictEqual(openAppA);
 
     overlays.follow(selectProfile(renamed, "b") as State);
 
@@ -231,9 +231,9 @@ describe(createOverlays, () => {
     const { overlays, events } = setup();
 
     overlays.close();
-    overlays.open(renameA);
+    overlays.open(openAppA);
     events.length = 0;
-    overlays.open(renameA);
+    overlays.open(openAppA);
 
     expect(events).toStrictEqual([]);
   });
@@ -242,15 +242,15 @@ describe(createOverlays, () => {
     const { overlays, events, destroy, adopt } = setup();
 
     destroy();
-    overlays.open(renameA);
+    overlays.open(openAppA);
 
     expect(overlays.current()).toBeUndefined();
     expect(events).toStrictEqual([
-      "log The rename-profile overlay has no view to open in yet",
+      "log The open-app overlay has no view to open in yet",
     ]);
 
     adopt();
-    overlays.open(renameA);
+    overlays.open(openAppA);
     destroy();
 
     expect(overlays.current()).toBeUndefined();
@@ -273,7 +273,7 @@ describe(createOverlays, () => {
     const { overlays, events, resize } = setup();
 
     overlays.relayout();
-    overlays.open(renameB);
+    overlays.open(openAppB);
     resize({ x: 0, y: 0, width: 50, height: 50 });
     overlays.relayout();
 

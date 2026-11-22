@@ -1,13 +1,13 @@
 import type { ElectronApplication } from "@playwright/test";
 
 import {
-  clickMenuItem,
   expect,
   findPage,
   readOpenedExternally,
   stubSystemBrowser,
   test,
 } from "./lib/app.ts";
+import { openSettings, removeProfileInSettings } from "./lib/settings.ts";
 import {
   ELSEWHERE_URL,
   FULL_MESSAGE_PATH,
@@ -234,9 +234,17 @@ test("keeps a pop-out open while the main window is hidden, and closes it with i
   });
   await profile("Default").click();
   await expect(profile("Default")).toHaveAttribute("aria-pressed", "true");
-  await clickMenuItem(app, "profile.remove");
+  await removeProfileInSettings(await openSettings(app), "Default");
 
+  // The main window and Settings are left.
   await expect
-    .poll(() => readWindows(app))
-    .toStrictEqual([expect.stringMatching(/^meru-app:/u)]);
+    .poll(async () => {
+      const urls = await readWindows(app);
+
+      return urls.toSorted();
+    })
+    .toStrictEqual([
+      expect.stringMatching(/^meru-app:\/\/settings/u),
+      expect.stringMatching(/^meru-app:\/\/shell/u),
+    ]);
 });

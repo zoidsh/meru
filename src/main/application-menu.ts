@@ -413,10 +413,6 @@ export const buildMenuTemplate = ({
     ...item("profile.previous"),
     separator,
     ...item("profile.sleep"),
-    separator,
-    ...item("profile.add"),
-    ...item("profile.rename"),
-    ...item("profile.remove"),
   ];
 
   const windowMenu: MenuItemConstructorOptions = {

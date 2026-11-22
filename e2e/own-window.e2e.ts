@@ -29,6 +29,7 @@ import {
   findWindowFind,
   readOwnWindows,
 } from "./lib/own-window.ts";
+import { openSettings, removeProfileInSettings } from "./lib/settings.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import {
   ANY_SESSION,
@@ -1288,7 +1289,7 @@ test("removing a profile closes its tabs' own windows with their pages", async (
         checkboxChecked: false,
       })) as typeof dialog.showMessageBox;
   });
-  await clickMenuItem(app, "profile.remove");
+  await removeProfileInSettings(await openSettings(app), "Work");
 
   await expect.poll(() => ownWindowCount(app)).toBe(0);
   await expect.poll(() => pageOpen(app, standIn.calendarUrl)).toBeFalsy();
