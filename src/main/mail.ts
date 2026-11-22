@@ -51,6 +51,11 @@ export const PAGE_SYNC_WAIT = MERU_E2E_BUILD ? 200 : 2000;
 
 interface Polled extends Mail {
   entries: readonly FeedEntry[];
+  /**
+   * The signed-in account's address the last feed read gave: kept through a
+   * failure, gone once signed out; held in memory only, never logged.
+   */
+  address: string | undefined;
   failures: number;
   timer: ReturnType<typeof setTimeout> | undefined;
   /** When `timer` fires, in milliseconds since the epoch. */
@@ -117,12 +122,14 @@ export const createMailPoller = ({
       status: polled.status,
       unreadCount: polled.unreadCount,
     };
+    const addressBefore = polled.address;
 
     switch (outcome.kind) {
       case "feed": {
         polled.status = "ok";
         polled.unreadCount = outcome.feed.unreadCount;
         polled.entries = outcome.feed.entries;
+        polled.address = outcome.feed.address;
         polled.failures = 0;
         break;
       }
@@ -130,6 +137,7 @@ export const createMailPoller = ({
         polled.status = "signedOut";
         polled.unreadCount = null;
         polled.entries = [];
+        polled.address = undefined;
         polled.failures = 0;
         break;
       }
@@ -156,6 +164,8 @@ export const createMailPoller = ({
       log(
         `Mail of profile ${profileId}: ${polled.status}${polled.unreadCount === null ? "" : `, ${polled.unreadCount} unread`}${outcome.kind === "failed" ? ` (${outcome.reason})` : ""}`
       );
+      notify();
+    } else if (addressBefore !== polled.address) {
       notify();
     }
   };
@@ -256,6 +266,7 @@ export const createMailPoller = ({
     const polled: Polled = {
       ...NO_MAIL,
       entries: [],
+      address: undefined,
       failures: 0,
       timer: undefined,
       dueAt: 0,
@@ -349,6 +360,8 @@ export const createMailPoller = ({
         return { kind: "failed", reason: describe(error) };
       }
     },
+    /** The signed-in account's address, once a feed has given it. */
+    address: (profileId: string) => polls.get(profileId)?.address,
     /** The unread messages the last feed listed, for the features built on it. */
     entries: (profileId: string): readonly FeedEntry[] =>
       polls.get(profileId)?.entries ?? [],

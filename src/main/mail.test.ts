@@ -12,10 +12,11 @@ import {
   createMailPoller,
 } from "./mail.ts";
 
-const feed = (unreadCount: number): FeedOutcome => ({
+const feed = (unreadCount: number, address?: string): FeedOutcome => ({
   kind: "feed",
   feed: {
     unreadCount,
+    ...(address === undefined ? {} : { address }),
     entries: [
       {
         id: "m1",
@@ -282,6 +283,41 @@ describe(createMailPoller, () => {
       unreadCount: null,
     });
     expect(poller.entries("a")).toStrictEqual([]);
+  });
+
+  it("holds the account's address a feed gave through a failure, drops it once signed out, and never logs it", async () => {
+    const { poller, answer, changes, logs } = setup();
+    const seen: (string | undefined)[] = [];
+
+    poller.reconcile(["a"]);
+    seen.push(poller.address("a"));
+    await answer("a", feed(3, "me@example.org"));
+    seen.push(poller.address("a"));
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+    await answer("a", FAILED);
+    seen.push(poller.address("a"));
+
+    changes.mockClear();
+    poller.poke("a");
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
+    await answer("a", feed(3, "other@example.org"));
+    seen.push(poller.address("a"));
+
+    expect(changes).toHaveBeenCalledOnce();
+
+    poller.poke("a");
+    await vi.advanceTimersByTimeAsync(POKE_THROTTLE);
+    await answer("a", { kind: "signedOut" });
+    seen.push(poller.address("a"));
+
+    expect(seen).toStrictEqual([
+      undefined,
+      "me@example.org",
+      "me@example.org",
+      "other@example.org",
+      undefined,
+    ]);
+    expect(logs.join("\n")).not.toMatch(/example\.org/u);
   });
 
   it("stays signed out through a failure, telling no one, until a poll reads the feed", async () => {

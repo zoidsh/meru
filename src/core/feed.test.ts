@@ -35,10 +35,11 @@ ${link(id)}
 
 const feed = (
   fullcount: string,
-  entries = ""
+  entries = "",
+  title = "Gmail - Inbox for me@example.com"
 ) => `<?xml version="1.0" encoding="UTF-8"?>
 <feed version="0.3" xmlns="http://purl.org/atom/ns#">
-<title>Gmail - Inbox for me@example.com</title>
+<title>${title}</title>
 <tagline>New messages in your Gmail Inbox</tagline>
 <fullcount>${fullcount}</fullcount>
 <link rel="alternate" href="https://mail.google.com/mail/u/0" type="text/html" />
@@ -68,6 +69,7 @@ describe(parseFeed, () => {
       )
     ).toStrictEqual({
       unreadCount: 42,
+      address: "me@example.com",
       entries: [
         {
           id: "19a0000000000001",
@@ -94,6 +96,7 @@ describe(parseFeed, () => {
   it("reads a feed with nothing unread", () => {
     expect(parseFeed(feed("0"))).toStrictEqual({
       unreadCount: 0,
+      address: "me@example.com",
       entries: [],
     });
   });
@@ -164,11 +167,52 @@ describe(parseFeed, () => {
   });
 });
 
+const addressIn = (title: string) => parseFeed(feed("0", "", title))?.address;
+
+describe("the signed-in account's address", () => {
+  it("is the word holding an @ in the feed's title, whatever its language or label", () => {
+    expect([
+      addressIn("Gmail - Inbox for me@example.com"),
+      addressIn("Gmail - Label &#39;^sq_ig_i_personal&#39; for me@example.com"),
+      addressIn("Gmail - Boîte de réception de moi@exemple.fr"),
+      addressIn("Gmail – 受信トレイ (me@example.co.jp)"),
+    ]).toStrictEqual([
+      "me@example.com",
+      "me@example.com",
+      "moi@exemple.fr",
+      "me@example.co.jp",
+    ]);
+  });
+
+  it("is nothing for a title with no address, two, or a malformed one, and the feed still reads", () => {
+    const parsed = [
+      "Gmail - Inbox",
+      "a@b.com and c@d.com",
+      "Inbox for @",
+      "me@@example.com",
+      "",
+    ].map((title) => parseFeed(feed("2", "", title)));
+
+    expect(
+      parsed.map((read) => [read?.unreadCount, read?.address])
+    ).toStrictEqual([
+      [2, undefined],
+      [2, undefined],
+      [2, undefined],
+      [2, undefined],
+      [2, undefined],
+    ]);
+  });
+});
+
 describe(feedOutcome, () => {
   it("reads a feed", () => {
     expect(
       feedOutcome({ kind: "response", status: 200, body: feed("3") })
-    ).toStrictEqual({ kind: "feed", feed: { unreadCount: 3, entries: [] } });
+    ).toStrictEqual({
+      kind: "feed",
+      feed: { unreadCount: 3, address: "me@example.com", entries: [] },
+    });
   });
 
   it.each([

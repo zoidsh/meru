@@ -257,7 +257,14 @@ export const startStandIn = async (): Promise<StandIn> => {
           feed(
             path === FEED_PATH ? answer.unreadCount : listed.length,
             listed,
-            origins.gmail
+            origins.gmail,
+            {
+              address: answer.address,
+              label:
+                path === FEED_PATH
+                  ? undefined
+                  : path.slice(FEED_PATH.length + 1),
+            }
           )
         );
     }

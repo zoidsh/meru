@@ -20,6 +20,8 @@ export interface Feed {
   /** Gmail's `fullcount`: every unread message, not only the entries listed. */
   unreadCount: number;
   entries: FeedEntry[];
+  /** The signed-in account's address, where the feed's title gives one. */
+  address?: string;
 }
 
 /** What a fetch of the feed came to. */
@@ -106,6 +108,24 @@ const parseEntry = (entry: TNode): FeedEntry | undefined => {
 };
 
 /**
+ * The address in a feed's title, which Gmail writes as "Gmail - Inbox for
+ * <address>" or "Gmail - Label '…' for <address>", read as the one word
+ * holding an `@` rather than by the words around it, which may be
+ * translated; nothing for a title with none, or with more than one.
+ */
+export const addressOfTitle = (title: string | undefined) => {
+  const words = (title ?? "")
+    .split(/\s+/u)
+    .map((word) => word.replaceAll(/^[(<"']+|[)>"'.,;:]+$/gu, ""))
+    .filter((word) => word.includes("@"));
+  const [word] = words;
+
+  return words.length === 1 && word && /^[^@]+@[^@]+$/u.test(word)
+    ? word
+    : undefined;
+};
+
+/**
  * The unread count and entries of an Atom feed of Gmail's, or nothing for
  * text that is no such feed, such as the sign-in page. An entry that does
  * not parse is left out.
@@ -131,8 +151,11 @@ export const parseFeed = (text: string): Feed | undefined => {
     return;
   }
 
+  const address = addressOfTitle(textOf(childNamed(feed, "title")));
+
   return {
     unreadCount,
+    ...(address === undefined ? {} : { address }),
     entries: feed.children
       .filter(isNode)
       .filter((child) => child.tagName === "entry")

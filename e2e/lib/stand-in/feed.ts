@@ -53,11 +53,16 @@ export const listing = (...ids: string[]) => ({
 export type FeedAnswer =
   | {
       unreadCount: number;
+      /** The address the feed's title names, as Gmail's does; `STAND_IN_ADDRESS` when not given. */
+      address?: string;
       mail?: StandInMail[];
       important?: string[];
       primary?: string[];
     }
   | { redirect: true };
+
+/** The address a feed's title names when its answer gives none. */
+export const STAND_IN_ADDRESS = "stand-in@example.com";
 
 export const DEFAULT_MAIL: StandInMail[] = [
   {
@@ -76,13 +81,25 @@ export const messageLink = (gmailUrl: string, id: string) =>
 const escapeXml = (text: string) =>
   text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
+/**
+ * A feed as Gmail writes one: its title names the account, as "Gmail - Inbox
+ * for <address>", or for a label's feed "Gmail - Label '<label>' for
+ * <address>" (verified against a signed-in account, 22 November 2026).
+ */
 export const feed = (
   unreadCount: number,
   mail: StandInMail[],
-  gmailUrl: string
+  gmailUrl: string,
+  {
+    address = STAND_IN_ADDRESS,
+    label,
+  }: {
+    address?: string | undefined;
+    label?: string | undefined;
+  } = {}
 ) => `<?xml version="1.0" encoding="UTF-8"?>
 <feed version="0.3" xmlns="http://purl.org/atom/ns#">
-<title>Gmail - Inbox for stand-in@example.com</title>
+<title>${label === undefined ? "Gmail - Inbox" : `Gmail - Label &#39;${escapeXml(label)}&#39;`} for ${escapeXml(address)}</title>
 <fullcount>${unreadCount}</fullcount>
 ${mail
   .map(
