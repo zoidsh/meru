@@ -460,8 +460,11 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
       <CardContent className="flex flex-col gap-4">
         {searches.length > 0 ? (
           <FieldGroup>
-            {searches.map((search, index) => [
-              index > 0 && <FieldSeparator key={`separator:${search.id}`} />,
+            {/* Flat and keyed, so a row keeps its element, and focus, as one before it goes. */}
+            {searches.flatMap((search, index) => [
+              ...(index > 0
+                ? [<FieldSeparator key={`separator:${search.id}`} />]
+                : []),
               <SearchRow
                 key={search.id}
                 profileId={profile.id}

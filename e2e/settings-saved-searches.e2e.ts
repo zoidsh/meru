@@ -216,11 +216,13 @@ test("renames by Enter and by leaving the field, keeps the name on Escape, clear
     .poll(() => menuSearches(app))
     .toStrictEqual(["Unread", "has:attachment", "in:sent"]);
 
+  // Focus is checked once the row has gone, which redraws the rows after it.
   await button(page, "Remove Unread").click();
+  await expect(row(page, "Unread")).toHaveCount(0);
   await expect(button(page, "Remove has:attachment")).toBeFocused();
   await button(page, "Remove in:sent").click();
+  await expect(row(page, "in:sent")).toHaveCount(0);
   await expect(button(page, "Add saved search")).toBeFocused();
-  await expect(row(page, "Unread")).toHaveCount(0);
   await expect
     .poll(() => readSaved(userDataDir))
     .toStrictEqual([{ id: "b", query: "has:attachment" }]);
