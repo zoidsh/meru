@@ -22,6 +22,12 @@ import { settingsCalls } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
 
+/** A profile whose removal was asked for, at its place in the list then. */
+export interface RemovedProfile {
+  profileId: string;
+  index: number;
+}
+
 interface Drop {
   profileId: string;
   before: boolean;
@@ -34,10 +40,15 @@ interface Drop {
 export const ProfilesPage = ({
   profiles,
   onAdded,
+  removed,
+  onRemovalSeen,
 }: {
   profiles: readonly ListedProfile[];
   /** With the new profile's id, once its page is to show. */
   onAdded: (profileId: string) => void;
+  /** Focus goes to the row in its place once it is gone. */
+  removed: RemovedProfile | undefined;
+  onRemovalSeen: () => void;
 }) => {
   const { t } = useLingui();
   const calls = settingsCalls();
@@ -47,6 +58,7 @@ export const ProfilesPage = ({
   const [draggable, setDraggable] = useState<string>();
   const [drop, setDrop] = useState<Drop>();
   const grips = useRef(new Map<string, HTMLButtonElement>());
+  const rows = useRef(new Map<string, HTMLButtonElement>());
   // A row moved while its handle has focus is put back in the DOM, which
   // drops the focus.
   const refocus = useRef<{ profileId: string; toIndex: number }>(undefined);
@@ -60,6 +72,23 @@ export const ProfilesPage = ({
       refocus.current = undefined;
     }
   }, [profiles]);
+
+  // A confirmed removal shows this list with the focused button gone.
+  useEffect(() => {
+    if (!removed) {
+      return;
+    }
+
+    if (!profiles.some((profile) => profile.id === removed.profileId)) {
+      const next = profiles[Math.min(removed.index, profiles.length - 1)];
+
+      if (next) {
+        rows.current.get(next.id)?.focus();
+      }
+    }
+
+    onRemovalSeen();
+  }, [removed, profiles, onRemovalSeen]);
 
   const move = (profile: ListedProfile, toIndex: number) => {
     if (
@@ -216,9 +245,20 @@ export const ProfilesPage = ({
                   {/* Item fills on hover only as a link, so the row asks for it here. */}
                   <Item
                     size="sm"
-                    // Named by the profile's name inside it.
-                    // oxlint-disable-next-line jsx-a11y/control-has-associated-label
-                    render={<button type="button" />}
+                    render={
+                      // Named by the profile's name inside it.
+                      // oxlint-disable-next-line jsx-a11y/control-has-associated-label
+                      <button
+                        type="button"
+                        ref={(element) => {
+                          if (element) {
+                            rows.current.set(profile.id, element);
+                          } else {
+                            rows.current.delete(profile.id);
+                          }
+                        }}
+                      />
+                    }
                     onClick={() => {
                       void calls.openPage({
                         section: "profiles",

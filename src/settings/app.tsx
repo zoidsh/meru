@@ -22,6 +22,7 @@ import {
 import { NotificationsPage } from "./notifications-page.tsx";
 import { ProfilePage } from "./profile-page.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
+import type { RemovedProfile } from "./profiles-page.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
 
 /** The nav's width, which the titlebar's buttons start after. */
@@ -48,6 +49,12 @@ export const App = () => {
   const [added, setAdded] = useState<string>();
   const nameFocused = useCallback(() => {
     setAdded(undefined);
+  }, []);
+  // The profile whose removal was asked for and its place, so the list
+  // shown once it is gone puts focus on the row in its place.
+  const [removing, setRemoving] = useState<RemovedProfile>();
+  const removalSeen = useCallback(() => {
+    setRemoving(undefined);
   }, []);
   const [query, setQuery] = useState("");
 
@@ -229,9 +236,20 @@ export const App = () => {
                     count={profiles.length}
                     focusName={added === profile.id}
                     onNameFocused={nameFocused}
+                    onRemoveAsked={() => {
+                      setRemoving({
+                        profileId: profile.id,
+                        index: profiles.indexOf(profile),
+                      });
+                    }}
                   />
                 ) : (
-                  <ProfilesPage profiles={profiles} onAdded={setAdded} />
+                  <ProfilesPage
+                    profiles={profiles}
+                    onAdded={setAdded}
+                    removed={removing}
+                    onRemovalSeen={removalSeen}
+                  />
                 ))}
             </div>
           </div>

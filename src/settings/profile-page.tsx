@@ -146,6 +146,7 @@ export const ProfilePage = ({
   count,
   focusName,
   onNameFocused,
+  onRemoveAsked,
 }: {
   profile: ListedProfile;
   /** How many profiles there are. */
@@ -153,6 +154,8 @@ export const ProfilePage = ({
   /** Whether to focus the name with its text chosen, as for one just added. */
   focusName: boolean;
   onNameFocused: () => void;
+  /** Before the removal is asked for, which may be confirmed or not. */
+  onRemoveAsked: () => void;
 }) => {
   const { t } = useLingui();
   const calls = settingsCalls();
@@ -284,6 +287,7 @@ export const ProfilePage = ({
                 disabled={!removable}
                 aria-describedby={ids.description}
                 onClick={() => {
+                  onRemoveAsked();
                   calls.removeProfile({ profileId: profile.id }).catch(noop);
                 }}
               >

@@ -242,12 +242,12 @@ test("a profile's handle moves it with the arrow keys, which the titlebar and st
     .toStrictEqual(["travel", "home", "work"]);
 });
 
-test("Remove profile asks; Cancel keeps the profile, and confirming removes it and goes back to the list", async ({
+test("Remove profile asks; Cancel keeps the profile, and confirming removes it and goes back to the list, focus on the row in its place", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+  await seedProfiles(userDataDir, standIn, ["Home", "Work", "Travel"]);
 
   const app = await launchApp();
   const shell = await shellOf(app);
@@ -265,14 +265,18 @@ test("Remove profile asks; Cancel keeps the profile, and confirming removes it a
       expect.objectContaining({ message: "Remove Work?", window: "Settings" }),
     ]);
   await expect(settingsTitle(page)).toHaveText("Work");
-  await expect(titlebarProfiles(shell)).toHaveText(["Home", "Work"]);
+  await expect(titlebarProfiles(shell)).toHaveText(["Home", "Work", "Travel"]);
 
   await confirmRemovals(app, true);
   await remove.click();
 
   await expect(settingsTitle(page)).toHaveText("Profiles");
-  await expect(profileList(page).getByRole("listitem")).toHaveText(["Home"]);
-  await expect(titlebarProfiles(shell)).toHaveCount(0);
+  await expect(profileList(page).getByRole("listitem")).toHaveText([
+    "Home",
+    "Travel",
+  ]);
+  await expect(profileRow(page, "Travel")).toBeFocused();
+  await expect(titlebarProfiles(shell)).toHaveText(["Home", "Travel"]);
   await expect(forward(page)).toBeDisabled();
 });
 
