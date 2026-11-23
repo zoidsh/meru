@@ -4,6 +4,7 @@ import { APPS, findApp } from "./apps.ts";
 import {
   addProfile,
   adjacentProfile,
+  canDisableProfile,
   canRemoveProfile,
   checksMail,
   DEFAULT_PROFILE_NAME,
@@ -11,6 +12,7 @@ import {
   PROFILE_NAME_MAX_LENGTH,
   createInitialState,
   decodeState,
+  enabledProfiles,
   encodeState,
   forgetEndedDoNotDisturb,
   forgetProfilesToClear,
@@ -19,6 +21,7 @@ import {
   hasTabbedInbox,
   inOwnWindow,
   isAsleep,
+  isDisabled,
   isPinned,
   isTab,
   knownTabs,
@@ -34,6 +37,7 @@ import {
   selectProfile,
   selectedProfile,
   setProfileColor,
+  setProfileEnabled,
   setTabbedInbox,
   sleepProfile,
   canSleepProfile,
@@ -1315,5 +1319,149 @@ describe(setProfileColor, () => {
       set && setProfileColor(set, "b", "violet"),
       setProfileColor(three, "gone", "violet"),
     ]).toStrictEqual([undefined, undefined]);
+  });
+});
+
+/** `three` with the profiles given stored as a file has them. */
+const stored = (
+  keys: Record<string, Record<string, unknown>>,
+  selectedProfileId = "b"
+): State => ({
+  ...three,
+  profiles: three.profiles.map((profile) => ({
+    ...profile,
+    ...keys[profile.id],
+  })),
+  selectedProfileId,
+});
+const off = (state: State | undefined) =>
+  state?.profiles
+    .filter((profile) => isDisabled(state, profile))
+    .map((profile) => profile.id);
+
+describe("a profile turned off", () => {
+  it("reads only true as off, never for the selected profile, and writes anything else back as found", () => {
+    const decoded = decodeState({
+      ...valid,
+      profiles: valid.profiles.map((profile, index) => ({
+        ...profile,
+        disabled: index === 0 ? "maybe" : true,
+      })),
+    });
+    const state = decoded.kind === "read" ? decoded.value : three;
+
+    expect([
+      off(state),
+      off(stored({ a: { disabled: true }, c: { disabled: 1 } })),
+      (encodeState(state) as State).profiles.map((profile) => profile.disabled),
+    ]).toStrictEqual([[], ["a"], ["maybe", true]]);
+  });
+
+  it("turns a profile off and on, keeping its sleep and data, and never the last enabled", () => {
+    const sleeping = stored({ a: { asleep: true, savedSearches: ["kept"] } });
+    const turnedOff = setProfileEnabled(sleeping, "a", false);
+    const turnedOn = turnedOff && setProfileEnabled(turnedOff, "a", true);
+    const lone = stored({ a: { disabled: true }, c: { disabled: true } });
+
+    expect([
+      off(turnedOff),
+      turnedOn?.profiles[0],
+      setProfileEnabled(three, "a", true),
+      setProfileEnabled(turnedOff ?? three, "a", false),
+      canDisableProfile(lone, "b"),
+      setProfileEnabled(lone, "b", false),
+      setProfileEnabled(three, "gone", false),
+    ]).toStrictEqual([
+      ["a"],
+      { ...newProfile("a", "Default"), asleep: true, savedSearches: ["kept"] },
+      undefined,
+      undefined,
+      false,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it("gives the selection to the first enabled awake profile, else wakes the first enabled one", () => {
+    const awakeLeft = setProfileEnabled(three, "b", false);
+    const noneAwake = setProfileEnabled(
+      stored({ a: { asleep: true }, c: { asleep: true } }),
+      "b",
+      false
+    );
+    const skipsOff = setProfileEnabled(
+      stored({ a: { disabled: true } }),
+      "b",
+      false
+    );
+
+    expect([
+      ids(awakeLeft),
+      ids(noneAwake),
+      noneAwake?.profiles[0]?.asleep,
+      ids(skipsOff),
+    ]).toStrictEqual([
+      [["a", "b", "c"], "a"],
+      [["a", "b", "c"], "a"],
+      undefined,
+      [["a", "b", "c"], "c"],
+    ]);
+  });
+
+  it("returns its tabs in windows of their own to the main window", () => {
+    const moved: State = {
+      ...three,
+      profiles: three.profiles.map((profile) =>
+        profile.id === "c"
+          ? {
+              ...profile,
+              tabs: [
+                ...profile.tabs,
+                { ...tab("t1", "calendar"), ownWindow: true },
+              ],
+            }
+          : profile
+      ),
+    };
+    const turnedOff = setProfileEnabled(moved, "c", false);
+
+    expect(turnedOff?.profiles[2]?.tabs.at(-1)).toStrictEqual(
+      tab("t1", "calendar")
+    );
+  });
+
+  it("cannot be selected, slept beside, or reached by the next profile, and the last enabled cannot be removed", () => {
+    const aOff = stored({ a: { disabled: true } });
+    const onlyBOn = stored({ a: { disabled: true }, c: { disabled: true } });
+
+    expect([
+      selectProfile(aOff, "a"),
+      enabledProfiles(aOff).map((profile) => profile.id),
+      canSleepProfile(
+        stored({ a: { disabled: true }, c: { asleep: true } }),
+        "b"
+      ),
+      adjacentProfile(aOff, 1),
+      adjacentProfile(aOff, 2),
+      canRemoveProfile(onlyBOn, "b"),
+      canRemoveProfile(onlyBOn, "a"),
+      ids(removeProfile(stored({ c: { disabled: true } }), "b")),
+      ids(
+        removeProfile(
+          stored({ a: { disabled: true }, c: { asleep: true } }),
+          "b"
+        )
+      ),
+    ]).toStrictEqual([
+      undefined,
+      ["b", "c"],
+      false,
+      "c",
+      "b",
+      false,
+      true,
+      [["a", "c"], "a"],
+      [["a", "c"], "c"],
+    ]);
   });
 });

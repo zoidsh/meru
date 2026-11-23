@@ -131,6 +131,8 @@ export interface Profile {
   color?: unknown;
   /** `false` while the profile's mail is not checked; read through `checksMail`. */
   checkMail?: unknown;
+  /** `true` while the profile is turned off in Settings; read through `isDisabled`. */
+  disabled?: unknown;
   /**
    * The profile's splits, each holding tabs no other does, repaired as
    * read; set through `withSplit`.
@@ -675,27 +677,70 @@ export const isAsleep = (state: State, profile: Profile) =>
   profile.asleep === true && profile.id !== state.selectedProfileId;
 
 /**
+ * Whether the profile is turned off: it has no pages, its mail is not
+ * checked and it cannot be selected, its data and `asleep` kept for when it
+ * is turned on. The selected profile is always enabled, since the last
+ * enabled profile cannot be turned off and turning off the selected one
+ * selects another; one a file stores disabled while selected reads as
+ * enabled, as `isAsleep` reads it. Anything but `true` reads as enabled and
+ * stays as found.
+ */
+export const isDisabled = (state: State, profile: Profile) =>
+  profile.disabled === true && profile.id !== state.selectedProfileId;
+
+/** The profiles that are turned on, in the titlebar's order. */
+export const enabledProfiles = (state: State) =>
+  state.profiles.filter((profile) => !isDisabled(state, profile));
+
+/** Whether the profile has no pages: asleep, or turned off. */
+export const hasNoPages = (state: State, profile: Profile) =>
+  isAsleep(state, profile) || isDisabled(state, profile);
+
+/**
+ * The profile selection moves to when `profileId` gives way: `preferred`
+ * when it is enabled and awake, else the first enabled awake one, else
+ * `preferred` or the first enabled one, which selecting wakes.
+ */
+const giveWay = (state: State, profileId: string, preferred?: Profile) => {
+  const others = enabledProfiles(state).filter(
+    (profile) => profile.id !== profileId
+  );
+  const kept = others.find((profile) => profile.id === preferred?.id);
+
+  if (kept && !isAsleep(state, kept)) {
+    return kept;
+  }
+
+  return (
+    others.find((profile) => !isAsleep(state, profile)) ?? kept ?? others[0]
+  );
+};
+
+/**
  * Selects the profile, waking it, so selecting is how every way to a
- * sleeping profile wakes it. Nothing when there is no such profile, or it is
- * selected already.
+ * sleeping profile wakes it. Nothing when there is no such profile, it is
+ * turned off, or it is selected already.
  */
 export const selectProfile = (
   state: State,
   profileId: string
 ): State | undefined =>
   state.selectedProfileId !== profileId &&
-  state.profiles.some((profile) => profile.id === profileId)
+  enabledProfiles(state).some((profile) => profile.id === profileId)
     ? withSelected(state, profileId)
     : undefined;
 
-/** Whether the profile can be put to sleep: it is awake and not the last awake. */
-export const canSleepProfile = (state: State, profileId: string) =>
-  state.profiles.some(
-    (profile) => profile.id === profileId && !isAsleep(state, profile)
-  ) &&
-  state.profiles.some(
-    (profile) => profile.id !== profileId && !isAsleep(state, profile)
-  );
+/**
+ * Whether the profile can be put to sleep: it is enabled and awake, and not
+ * the last enabled awake one.
+ */
+export const canSleepProfile = (state: State, profileId: string) => {
+  const awakeIds = enabledProfiles(state)
+    .filter((profile) => !isAsleep(state, profile))
+    .map((profile) => profile.id);
+
+  return awakeIds.includes(profileId) && awakeIds.length > 1;
+};
 
 /** The profile with every tab in a window of its own back in the main window. */
 const withoutOwnWindows = (profile: Profile): Profile =>
@@ -727,9 +772,7 @@ export const sleepProfile = (
     return;
   }
 
-  const first = state.profiles.find(
-    (profile) => profile.id !== profileId && !isAsleep(state, profile)
-  );
+  const first = giveWay(state, profileId);
 
   return {
     ...state,
@@ -745,15 +788,32 @@ export const sleepProfile = (
   };
 };
 
-/** Whether the profile is listed and some other profile would be left. */
-export const canRemoveProfile = (state: State, profileId: string) =>
-  state.profiles.some((profile) => profile.id === profileId) &&
-  state.profiles.some((profile) => profile.id !== profileId);
+/**
+ * Whether the profile is listed and an enabled profile would be left: one
+ * that is turned off can go while another is listed, one that is on only
+ * while another is on.
+ */
+export const canRemoveProfile = (state: State, profileId: string) => {
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === profileId
+  );
+
+  if (!profile) {
+    return false;
+  }
+
+  const pool = isDisabled(state, profile)
+    ? state.profiles
+    : enabledProfiles(state);
+
+  return pool.some((candidate) => candidate.id !== profileId);
+};
 
 /**
  * Removing the selected profile selects the one to its right, or to its left
- * when it was the last, unless that one sleeps: then the first awake profile,
- * as putting it to sleep does, and with none awake that one, woken. Removing
+ * when it was the last, unless that one sleeps or is turned off: then the
+ * first enabled awake profile, as putting it to sleep does, and with none
+ * awake the first enabled one, woken. Removing
  * another leaves the selection alone. The id goes on the list of profiles
  * whose data is to be deleted. Every entry with the id goes, so a
  * hand-edited file listing it twice never keeps a profile whose data is about
@@ -775,10 +835,7 @@ export const removeProfile = (
   const neighbour = profiles[Math.min(index, profiles.length - 1)];
 
   const kept = { ...state, profiles };
-  const next =
-    neighbour && !isAsleep(state, neighbour)
-      ? neighbour
-      : (profiles.find((profile) => !isAsleep(state, profile)) ?? neighbour);
+  const next = giveWay(state, profileId, neighbour);
 
   return {
     ...(state.selectedProfileId === profileId && next
@@ -892,14 +949,14 @@ export const selectedProfile = (state: State): Profile => {
 };
 
 /**
- * The profile `offset` places from the selected one, wrapping round as v3
- * does; nothing when there is only the one.
+ * The enabled profile `offset` places from the selected one, wrapping round
+ * as v3 does; nothing when there is only the one.
  */
 export const adjacentProfile = (
   state: State,
   offset: number
 ): string | undefined => {
-  const { profiles } = state;
+  const profiles = enabledProfiles(state);
   const index = profiles.findIndex(
     (profile) => profile.id === state.selectedProfileId
   );
@@ -1034,3 +1091,61 @@ export const forgetEndedDoNotDisturb = (state: State, time: number): State =>
   state.doNotDisturb.until <= time
     ? switchDoNotDisturb(state, undefined)
     : state;
+
+/**
+ * Turns the profile on, or off: its tabs in windows of their own back in the
+ * main window, closed with the rest, its data and `asleep` kept, and the
+ * selection, when it was selected, given to the first enabled awake profile,
+ * else the first enabled one, woken. Nothing when it is not listed, is
+ * already so, or is the last enabled one.
+ */
+export const setProfileEnabled = (
+  state: State,
+  profileId: string,
+  enabled: boolean
+): State | undefined => {
+  const profile = state.profiles.find(
+    (candidate) => candidate.id === profileId
+  );
+
+  if (!profile || isDisabled(state, profile) !== enabled) {
+    return;
+  }
+
+  if (enabled) {
+    const { disabled: _disabled, ...rest } = profile;
+
+    return {
+      ...state,
+      profiles: state.profiles.map((candidate) =>
+        candidate === profile ? (rest as Profile) : candidate
+      ),
+    };
+  }
+
+  const next = giveWay(state, profileId);
+
+  if (!next) {
+    return;
+  }
+
+  const turnedOff = {
+    ...state,
+    profiles: state.profiles.map((candidate) =>
+      candidate === profile
+        ? { ...withoutOwnWindows(candidate), disabled: true }
+        : candidate
+    ),
+  };
+
+  return state.selectedProfileId === profileId
+    ? withSelected(turnedOff, next.id)
+    : turnedOff;
+};
+
+/** Whether the profile can be turned off: it is on and not the last on. */
+export const canDisableProfile = (state: State, profileId: string) => {
+  const ids = enabledProfiles(state).map((profile) => profile.id);
+
+  return ids.includes(profileId) && ids.length > 1;
+};
