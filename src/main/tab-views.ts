@@ -1053,16 +1053,27 @@ export const createTabViews = ({
     },
     /**
      * Loads each of the profile's pages again, so none runs on data that was
-     * deleted, and gives the front tab its page again if it was put to sleep.
+     * deleted, and gives each tab shown in the main window its page again,
+     * the front tab and the panes beside it, if it was put to sleep.
      */
     reloadProfile: (profileId: string) => {
       for (const key of pagesOf(profileId)) {
         dispatch(tabKey(key), { kind: "reload" });
       }
 
-      // The main window's front tab is the selected profile's.
-      if (front !== undefined && state().selectedProfileId === profileId) {
-        wake(front);
+      // What the main window shows is the selected profile's.
+      if (state().selectedProfileId !== profileId) {
+        return;
+      }
+
+      let woken = false;
+
+      for (const key of shownKeys) {
+        woken = sleeping.delete(key) || woken;
+      }
+
+      if (woken) {
+        reconcile(state());
       }
     },
     /**

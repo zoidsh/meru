@@ -1286,6 +1286,56 @@ describe(createTabViews, () => {
     ]);
   });
 
+  it("gives both panes of a split their pages again after putting all but Gmail's to sleep", async () => {
+    const [profile, other] = initial.profiles as [
+      State["profiles"][number],
+      State["profiles"][number],
+    ];
+    const window = await setup({
+      state: {
+        ...initial,
+        profiles: [
+          {
+            ...profile,
+            splits: [
+              {
+                root: {
+                  direction: "row",
+                  children: [
+                    { size: 0.5, pane: "gmail" },
+                    { size: 0.5, pane: "c1" },
+                  ],
+                },
+              },
+            ],
+          },
+          other,
+        ],
+      },
+    });
+
+    // Gmail in front, so the calendar is only the pane beside it.
+    await window.profiles.selectTab({ profileId: "a", tabId: "gmail" });
+    window.tabs.sleepAllButGmail("a");
+
+    const asleep = window
+      .live()
+      .filter(([partition]) => partition === "persist:a");
+
+    window.tabs.reloadProfile("a");
+
+    expect([
+      asleep,
+      window.live().filter(([partition]) => partition === "persist:a"),
+    ]).toStrictEqual([
+      [["persist:a", GMAIL, true]],
+      [
+        ["persist:a", GMAIL, true],
+        ["persist:a", CALENDAR, true],
+      ],
+    ]);
+  });
+
   it("puts a background tab to sleep, closing its view and any retry, and loads it where it was when it is selected", async () => {
     const window = await setup();
     const calendar = { profileId: "a", tabId: "c1" };
