@@ -1336,6 +1336,24 @@ describe(createTabViews, () => {
     ]);
   });
 
+  it("keeps the page of a tab in its own window through putting a profile's pages to sleep, and reloads it after", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await window.profiles.selectTab(calendar);
+
+    const view = window.viewOf("persist:a", 1);
+
+    await window.profiles.moveToOwnWindow(calendar);
+    window.tabs.sleepAllButGmail("a");
+
+    const kept = [view?.closed, window.tabs.windowTabs()];
+
+    window.tabs.reloadProfile("a");
+
+    expect([kept, view?.reloads]).toStrictEqual([[false, [calendar]], 1]);
+  });
+
   it("puts a background tab to sleep, closing its view and any retry, and loads it where it was when it is selected", async () => {
     const window = await setup();
     const calendar = { profileId: "a", tabId: "c1" };
