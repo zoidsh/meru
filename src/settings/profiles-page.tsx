@@ -26,12 +26,7 @@ import {
 } from "#ui/item.tsx";
 
 import { ProfileDot } from "./scope-tabs.tsx";
-import {
-  AccountSummary,
-  SignInButton,
-  accountShown,
-  signedOut,
-} from "./signed-in.tsx";
+import { AccountSummary, accountShown } from "./signed-in.tsx";
 import { settingsCalls } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
@@ -346,10 +341,6 @@ export const ProfilesPage = ({
                       <ChevronRightIcon aria-hidden className="size-4" />
                     </ItemActions>
                   </Item>
-                  {/* After the row, since its own button cannot hold one. */}
-                  {signedOut(profile) && (
-                    <SignInButton profile={profile} named />
-                  )}
                 </div>
               );
             })}

@@ -23,38 +23,17 @@ const SignedOutMark = () => (
   <CircleAlertIcon aria-hidden className="size-3.5 shrink-0 text-destructive" />
 );
 
-/** Whether the mail check found the profile signed out, which Sign in answers. */
-export const signedOut = ({ mail }: ListedProfile) =>
-  mail.status === "signedOut";
-
 /**
  * Selects the profile in the main window and shows its Gmail tab, where
  * Google's own sign-in is; Settings collects nothing.
  */
-export const SignInButton = ({
-  profile,
-  named = false,
-}: {
-  profile: ListedProfile;
-  /** Named after the profile, as in the list, where each row has one. */
-  named?: boolean;
-}) => {
+const SignInButton = ({ profile }: { profile: ListedProfile }) => {
   const { t } = useLingui();
-  const { name } = profile;
 
   return (
     <Button
       variant="outline"
       size="sm"
-      aria-label={
-        named
-          ? t({
-              message: `Sign in to ${name}`,
-              comment:
-                "Accessible name of Sign in after a signed-out profile's row in Settings' list of profiles; {name} is the profile's name",
-            })
-          : undefined
-      }
       onClick={() => {
         settingsCalls().signIn({ profileId: profile.id }).catch(noop);
       }}

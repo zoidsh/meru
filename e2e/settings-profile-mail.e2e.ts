@@ -176,7 +176,7 @@ test("the list and a profile's page show the signed-in address, Not signed in fo
   await expect(pageLine(page, /@/u)).toHaveCount(0);
 });
 
-test("Sign in selects a signed-out profile, waking it, and shows its Gmail tab; a profile whose mail is not checked offers none", async ({
+test("Sign in on a signed-out profile's page selects it, waking it, and shows its Gmail tab; the list and a profile whose mail is not checked offer none", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -187,16 +187,21 @@ test("Sign in selects a signed-out profile, waking it, and shows its Gmail tab; 
     { id: "club", name: "Club", checkMail: false },
   ]);
   const page = await openSettings(app);
+  const signIn = page.getByRole("button", { name: /sign in/iu });
 
   await openProfiles(page);
   await expect(profileRow(page, "Work")).toHaveAccessibleDescription(
     "Not signed in Asleep"
   );
-  await expect(page.getByRole("button", { name: /^Sign in to/u })).toHaveCount(
-    1
-  );
+  await expect(signIn).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Sign in to Work" }).click();
+  await profileRow(page, "Club").click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Club");
+  await expect(signIn).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Back" }).click();
+  await profileRow(page, "Work").click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
 
   await expect(profileTab(shell, "Work")).toHaveAttribute(
     "aria-pressed",
@@ -212,9 +217,6 @@ test("Sign in selects a signed-out profile, waking it, and shows its Gmail tab; 
       );
     })
     .toStrictEqual([true]);
-
-  await profileRow(page, "Work").click();
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 });
 
 test.describe("shots", () => {

@@ -1636,11 +1636,6 @@ msgstr "Sign in"
 msgid "Sign in required"
 msgstr "Sign in required"
 
-#. Accessible name of Sign in after a signed-out profile's row in Settings' list of profiles; {name} is the profile's name
-#: src/settings/signed-in.tsx
-msgid "Sign in to {name}"
-msgstr "Sign in to {name}"
-
 #. Line at the top of a profile's page in Settings; {address} is the email address of the Google account the profile is signed in to
 #: src/settings/signed-in.tsx
 msgid "Signed in to Google as {address}."
