@@ -14,13 +14,14 @@ import {
 import { OverrideBar } from "./row-scope.tsx";
 import type { RowScope } from "./row-scope.tsx";
 
+/** A row's scope while its page has none. */
+const NO_SCOPE: RowScope = {};
+
 /**
  * A row of the page: its label and descriptions, and its control. While Do
  * Not Disturb outranks it, it dims, says so and still works. In a profile's
  * scope or under All profiles it carries what `scope` adds.
  */
-/** A row's scope while its page has none. */
-const NO_SCOPE: RowScope = {};
 
 export const SettingRow = ({
   label,
