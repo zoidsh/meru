@@ -1,7 +1,7 @@
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
-import { checksMail, hasTabbedInbox, profilePartition } from "#core/state.ts";
+import { hasTabbedInbox, mailChecked, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -70,7 +70,7 @@ export const wireMailFeed = ({
     mail.reconcile(
       current.profiles.map((profile) => profile.id),
       current.profiles
-        .filter((profile) => !checksMail(profile))
+        .filter((profile) => !mailChecked(current, profile))
         .map((profile) => profile.id)
     );
   };

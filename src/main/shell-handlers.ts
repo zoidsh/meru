@@ -10,6 +10,7 @@ import type { Platform } from "#core/platform.ts";
 import { profileColor } from "#core/profile-color.ts";
 import { splitBoxes, splitRoomy } from "#core/split.ts";
 import {
+  enabledProfiles,
   inOwnWindow,
   isAsleep,
   isPinned,
@@ -271,7 +272,7 @@ export const shellState = (
 
   return {
     profiles: {
-      profiles: state.profiles.map((candidate) => ({
+      profiles: enabledProfiles(state).map((candidate) => ({
         id: candidate.id,
         name: profileDisplayName(candidate),
         color: profileColor(state, candidate.id),

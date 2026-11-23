@@ -4,6 +4,7 @@ import { afterPoll, inboxKey, inboxRows } from "#core/inbox.ts";
 import type { PendingAction } from "#core/inbox.ts";
 import type { ActionOutcome, MailAction } from "#core/mail-actions.ts";
 import { messageUrl } from "#core/notifications.ts";
+import { enabledProfiles } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import type { MailPoller } from "./mail.ts";
@@ -45,7 +46,7 @@ const CLOSED: ShellState["inbox"] = {
 };
 
 /** The inbox is for more than one profile, as v3's is. */
-const inboxAvailable = (state: State) => state.profiles.length > 1;
+const inboxAvailable = (state: State) => enabledProfiles(state).length > 1;
 
 /**
  * The unified inbox, an overlay: the rows it shows,
@@ -87,7 +88,7 @@ export const createInbox = ({
 
   /** The listed profiles whose mail the inbox shows. */
   const included = () =>
-    state.profiles.filter((profile) => includes(profile.id));
+    enabledProfiles(state).filter((profile) => includes(profile.id));
 
   /** The entry, if the profile's mail is shown and its feed lists the message. */
   const listed = (profileId: string, messageId: string) =>

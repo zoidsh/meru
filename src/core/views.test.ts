@@ -163,6 +163,20 @@ describe(planViews, () => {
     expect(keys(plan(asleepA).views)).toStrictEqual(keys(plan(state).views));
   });
 
+  it("gives a profile turned off no view, at launch or after, and its Open at Launch tabs again once it is on", () => {
+    const offB = {
+      ...state,
+      profiles: state.profiles.map((profile) =>
+        profile.id === "b" ? { ...profile, disabled: true } : profile
+      ),
+    };
+
+    expect([
+      keys(plan(offB, ["b/gmail", "b/b1"], ["a"], [], false).views),
+      keys(plan(state, [], ["a"], [], false).views),
+    ]).toStrictEqual([["a/a1"], ["a/a1", "b/gmail", "b/b2"]]);
+  });
+
   it("shows every pane of the split while the selected tab is in it, placed by its tree, and the tab alone outside it", () => {
     const root = {
       direction: "row" as const,

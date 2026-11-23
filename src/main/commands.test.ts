@@ -428,6 +428,39 @@ describe("the command registry", () => {
     expect(app.profiles.get().selectedProfileId).toBe("a");
   });
 
+  it("skips a profile turned off by place, next and previous, and counts only those on for the inbox", async () => {
+    const app = setup({
+      ...twoProfiles,
+      profiles: [...twoProfiles.profiles, newProfile("c", "Profile 3")],
+    });
+
+    await app.profiles.setEnabled("b", false);
+
+    const shortcuts = [
+      app.isAvailable("profile.select.2"),
+      app.isAvailable("profile.select.3"),
+      app.isAvailable("inbox.toggle"),
+    ];
+
+    await app.run("profile.select.2");
+
+    const byPlace = app.profiles.get().selectedProfileId;
+
+    await app.run("profile.previous");
+
+    const previous = app.profiles.get().selectedProfileId;
+
+    await app.profiles.setEnabled("c", false);
+
+    expect([
+      shortcuts,
+      byPlace,
+      previous,
+      app.isAvailable("inbox.toggle"),
+      app.isAvailable("profile.next"),
+    ]).toStrictEqual([[true, false, true], "c", "a", false, false]);
+  });
+
   it("puts the selected profile to sleep, which selects the first awake one, and is disabled for the last awake one, with no shortcut", async () => {
     const app = setup();
     const asleep = () => {

@@ -2,6 +2,7 @@ import type { App } from "#core/apps.ts";
 import { ROTATING_COOKIE } from "#core/keep-alive.ts";
 import type { KeepAliveTiming } from "#core/keep-alive.ts";
 import { allowsPermission } from "#core/permissions.ts";
+import { enabledProfiles } from "#core/state.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import { createKeepAlivePages } from "#platform/keep-alive.ts";
 import type { createNetwork } from "#platform/network.ts";
@@ -39,7 +40,8 @@ export const wireKeepAlive = ({
 }) => {
   const keepAlive = createKeepAlive({
     pages: createKeepAlivePages(),
-    profileIds: () => profiles.get().profiles.map((profile) => profile.id),
+    profileIds: () =>
+      enabledProfiles(profiles.get()).map((profile) => profile.id),
     hasView: views.hasView,
     signedOut: (profileId) => mail.mail(profileId).status === "signedOut",
     isOnline: network.isOnline,

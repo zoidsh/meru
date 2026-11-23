@@ -26,6 +26,7 @@ import {
   selectProfile,
   setTabbedInbox,
   setCheckMail,
+  setProfileEnabled,
   sleepProfile,
   sortProfilesToClear,
   switchDoNotDisturb,
@@ -214,6 +215,9 @@ export const createProfiles = ({
     /** Nothing when it is not listed or its Check mail is already so. */
     setCheckMail: (profileId: string, on: boolean) =>
       exclusive(() => commit(setCheckMail(state, profileId, on))),
+    /** Nothing when it is so already, or it is the last enabled profile. */
+    setEnabled: (profileId: string, enabled: boolean) =>
+      exclusive(() => commit(setProfileEnabled(state, profileId, enabled))),
     /** Nothing when the name is empty, too long or the one it has. */
     rename: (profileId: string, name: string) =>
       exclusive(() => commit(renameProfile(state, profileId, name))),

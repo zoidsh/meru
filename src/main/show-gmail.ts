@@ -1,4 +1,4 @@
-import { knownTabs } from "#core/state.ts";
+import { enabledProfiles, knownTabs } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
 
@@ -31,7 +31,7 @@ export const createShowGmail = ({
   log,
 }: ShowGmailDeps) => {
   const isListed = (profileId: string) =>
-    state().profiles.some((profile) => profile.id === profileId);
+    enabledProfiles(state()).some((profile) => profile.id === profileId);
 
   return {
     /**

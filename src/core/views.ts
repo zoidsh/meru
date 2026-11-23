@@ -3,7 +3,7 @@ import type { PaneRectangle, PaneTree } from "./pane-tree.ts";
 import { shownPanes } from "./split.ts";
 import {
   inOwnWindow,
-  isAsleep,
+  hasNoPages,
   knownTabs,
   opensAtLaunch,
   selectedProfile,
@@ -37,7 +37,7 @@ export const nextLaunch = (
   waiting: boolean
 ): Profile | undefined => {
   const due = (profile: Profile) =>
-    !launched.has(profile.id) && !isAsleep(state, profile);
+    !launched.has(profile.id) && !hasNoPages(state, profile);
   const selected = selectedProfile(state);
 
   if (due(selected)) {
@@ -112,7 +112,7 @@ export const planViews = (
   );
   const opensNow = new Set(launching.map((candidate) => candidate.id));
   const windows = state.profiles.flatMap((candidate) =>
-    !isAsleep(state, candidate) &&
+    !hasNoPages(state, candidate) &&
     (launched.has(candidate.id) || opensNow.has(candidate.id))
       ? knownTabs(candidate)
           .filter(inOwnWindow)
@@ -128,7 +128,7 @@ export const planViews = (
 
   return {
     views: state.profiles.flatMap((candidate) =>
-      (isAsleep(state, candidate) ? [] : knownTabs(candidate))
+      (hasNoPages(state, candidate) ? [] : knownTabs(candidate))
         .map((tab) => ({ profileId: candidate.id, tabId: tab.id }))
         .filter((key) => kept.has(tabKey(key)))
     ),

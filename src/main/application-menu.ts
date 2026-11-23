@@ -10,7 +10,12 @@ import {
 } from "#core/pinned-tabs.ts";
 import type { Platform } from "#core/platform.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
-import { isPinned, knownTabs, selectedProfile } from "#core/state.ts";
+import {
+  enabledProfiles,
+  isPinned,
+  knownTabs,
+  selectedProfile,
+} from "#core/state.ts";
 import { menuText } from "#core/tray.ts";
 import type { ZoomChange } from "#platform/zoom.ts";
 
@@ -399,11 +404,12 @@ export const buildMenuTemplate = ({
   };
 
   // Each profile with a shortcut, by the name the title bar shows.
-  const profileSelectItems = context.state.profiles.flatMap((profile, index) =>
-    item(selectProfileCommandId(index + 1)).map((each) => ({
-      ...each,
-      label: profileDisplayName(profile),
-    }))
+  const profileSelectItems = enabledProfiles(context.state).flatMap(
+    (profile, index) =>
+      item(selectProfileCommandId(index + 1)).map((each) => ({
+        ...each,
+        label: profileDisplayName(profile),
+      }))
   );
 
   const profileItems = [
@@ -529,7 +535,7 @@ export const createApplicationMenu = ({
   // it lists.
   const offered = (current: CommandContext) => [
     current.doNotDisturb?.until,
-    current.state.profiles.map((profile) => profile.name),
+    enabledProfiles(current.state).map((profile) => profile.name),
     savedSearchCommands(current.state).map(({ open }) => [
       open.id,
       open.title(),

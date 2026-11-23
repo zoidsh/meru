@@ -37,6 +37,7 @@ import {
 } from "#core/split.ts";
 import {
   adjacentProfile,
+  enabledProfiles,
   canSleepProfile,
   isPinned,
   knownTabs,
@@ -410,7 +411,7 @@ export const COMMANDS: readonly Command[] = [
     },
     // Available while open too, so its key and item close it.
     isAvailable: ({ state, inboxOpen }) =>
-      inboxOpen || state.profiles.length > 1,
+      inboxOpen || enabledProfiles(state).length > 1,
     isChecked: ({ inboxOpen }) => inboxOpen,
     once: true,
     run: ({ inboxOpen }, { setInboxOpen }) => {
@@ -885,10 +886,10 @@ export const COMMANDS: readonly Command[] = [
         win32: `CommandOrControl+${position}`,
         linux: `Alt+${position}`,
       },
-      isAvailable: ({ state }) => state.profiles.length > index,
+      isAvailable: ({ state }) => enabledProfiles(state).length > index,
       once: true,
       run: async ({ state }, { selectProfile, setInboxOpen }) => {
-        const profile = state.profiles[index];
+        const profile = enabledProfiles(state)[index];
 
         if (profile) {
           await selectProfile(profile.id);

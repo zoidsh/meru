@@ -3,6 +3,7 @@ import { isEqual } from "es-toolkit";
 
 import type { Platform } from "#core/platform.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
+import { enabledProfiles } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import {
   menuText,
@@ -90,7 +91,7 @@ export const createTray = ({
   let shown: { image: string; title: string; menu?: TrayEntry[] } | undefined;
 
   const profiles = (): TrayProfile[] =>
-    state().profiles.map((profile) => ({
+    enabledProfiles(state()).map((profile) => ({
       id: profile.id,
       name: profileDisplayName(profile),
       unreadCount: unread(profile.id),

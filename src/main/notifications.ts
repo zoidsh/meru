@@ -23,7 +23,7 @@ import type {
 } from "#core/notifications.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { decideSound, sounds } from "#core/sounds.ts";
-import { checksMail } from "#core/state.ts";
+import { enabledProfiles, mailChecked } from "#core/state.ts";
 import type { DoNotDisturb, Profile, State } from "#core/state.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type {
@@ -182,7 +182,8 @@ export const createMailNotifications = ({
    */
   const checkedProfile = (profileId: string) =>
     state().profiles.find(
-      (candidate) => candidate.id === profileId && checksMail(candidate)
+      (candidate) =>
+        candidate.id === profileId && mailChecked(state(), candidate)
     );
   /** The label whose feed each profile's last feed came from. */
   const feedLabels = new Map<string, string | undefined>();
@@ -261,7 +262,7 @@ export const createMailNotifications = ({
       summary: setting("notificationSummary", profileId),
     },
     profileName:
-      named && state().profiles.length > 1
+      named && enabledProfiles(state()).length > 1
         ? profileDisplayName(named)
         : undefined,
     hasSubtitle,
@@ -560,7 +561,7 @@ export const createMailNotifications = ({
     follow: (current: State) => {
       const listed = new Set(
         current.profiles
-          .filter((profile) => checksMail(profile))
+          .filter((profile) => mailChecked(current, profile))
           .map((profile) => profile.id)
       );
 

@@ -1040,6 +1040,10 @@ export const setTabbedInbox = (
  */
 export const checksMail = (profile: Profile) => profile.checkMail !== false;
 
+/** Whether Meru checks the profile's mail: Check mail on, and turned on. */
+export const mailChecked = (state: State, profile: Profile) =>
+  checksMail(profile) && !isDisabled(state, profile);
+
 /**
  * Turns the profile's Check mail on, dropping the key, or off, storing
  * `false`. Nothing when there is no such profile or it already reads so.

@@ -12,7 +12,7 @@ import type { Platform } from "#core/platform.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import {
   inOwnWindow,
-  isAsleep,
+  hasNoPages,
   knownTabs,
   profilePartition,
 } from "#core/state.ts";
@@ -745,7 +745,7 @@ export const createTabViews = ({
       (candidate) => candidate.id === tab.key.profileId
     );
 
-    if (profile && isAsleep(current, profile) && findTab(current, tab.key)) {
+    if (profile && hasNoPages(current, profile) && findTab(current, tab.key)) {
       dispatch(key, { kind: "sleep" });
     }
 
@@ -847,7 +847,7 @@ export const createTabViews = ({
   /** Creates, closes, shows and hides views until the window matches. */
   const apply = (current: State) => {
     for (const profile of current.profiles) {
-      if (isAsleep(current, profile)) {
+      if (hasNoPages(current, profile)) {
         launch.again(profile.id);
       }
     }
