@@ -107,6 +107,7 @@ const stateOf = (...names: string[]): State => {
 const setup = ({
   platform = "darwin" as Platform,
   names = ["Home", "Work"],
+  disabled = [] as string[],
   settings = {} as Record<string, unknown>,
 } = {}) => {
   const fake = createFakeTrays();
@@ -124,7 +125,18 @@ const setup = ({
     setting: <Key extends SettingKey>(key: Key): SettingValue<Key> =>
       readSetting(values, key, platform),
     isDark: () => dark,
-    state: () => stateOf(...names),
+    state: () => {
+      const state = stateOf(...names);
+
+      return {
+        ...state,
+        profiles: state.profiles.map((profile) =>
+          disabled.includes(profile.id)
+            ? { ...profile, disabled: true }
+            : profile
+        ),
+      };
+    },
     unread: (profileId) => counts.get(profileId) ?? null,
     window: {
       isVisible: () => visible,
@@ -299,6 +311,22 @@ describe(createTray, () => {
     app.count("p0", 2);
 
     expect(labels(app.icon()?.contextMenu)?.[0]).toBe("R&&D (2)");
+  });
+
+  it("leaves a profile turned off out of its menu", () => {
+    const app = setup({
+      platform: "linux",
+      names: ["Home", "Work", "Club"],
+      disabled: ["p1"],
+    });
+
+    app.tray.update();
+
+    expect(
+      labels(app.icon()?.contextMenu)?.filter((label) =>
+        ["Home", "Work", "Club"].includes(label)
+      )
+    ).toStrictEqual(["Home", "Club"]);
   });
 
   it("jumps to a profile from its item and reveals the window", async () => {

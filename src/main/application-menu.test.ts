@@ -202,6 +202,31 @@ describe(buildMenuTemplate, () => {
     ]);
   });
 
+  it("leaves a profile turned off out of the Window menu, the next one taking its place and shortcut", () => {
+    const context: CommandContext = {
+      ...contextOf(),
+      state: {
+        ...oneProfile,
+        profiles: [
+          newProfile("a", "Default"),
+          { ...newProfile("b", "Work"), disabled: true },
+          newProfile("c", "Club"),
+        ],
+      },
+    };
+    const menus = template("darwin", context);
+    const selectItems = submenu(menus.at(-2) ?? {}).filter(
+      (item) => item.id?.startsWith("profile.select.") ?? false
+    );
+
+    expect(
+      selectItems.map(({ id, label, accelerator }) => [id, label, accelerator])
+    ).toStrictEqual([
+      ["profile.select.1", "Default", "CommandOrControl+1"],
+      ["profile.select.2", "Club", "CommandOrControl+2"],
+    ]);
+  });
+
   it("disables Sleep Profile for the last awake profile", () => {
     expect(
       [

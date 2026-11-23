@@ -279,6 +279,26 @@ describe(createMailNotifications, () => {
     });
   });
 
+  it("names no profile when the only other one is turned off", () => {
+    const app = setup({
+      state: {
+        ...two,
+        profiles: [
+          newProfile("a", "Default"),
+          { ...newProfile("b", "Work"), disabled: true },
+        ],
+      },
+    });
+
+    app.notifications.polled("a", feed());
+    app.notifications.polled("a", feed(entry("1")));
+
+    expect([app.shown[0]?.title, app.shown[0]?.subtitle]).toStrictEqual([
+      "Sender 1",
+      undefined,
+    ]);
+  });
+
   it("shows none while off, still recording what was seen", () => {
     const { notifications, shown, set } = setup();
 
