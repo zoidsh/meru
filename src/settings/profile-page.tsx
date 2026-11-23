@@ -185,7 +185,7 @@ export const ProfilePage = ({
     violet: t({ message: "Violet", comment: "Name of a profile's colour" }),
   };
   // Said until the page is left, as v3's toast was shown once.
-  const [deletedFor, setDeletedFor] = useState<string>();
+  const [deleted, setDeleted] = useState(false);
   const removable = count > 1 && !lastEnabled;
   const many = count > 1;
   const off = !profile.enabled;
@@ -496,7 +496,7 @@ export const ProfilePage = ({
                   "Label of the row on a profile's page in Settings that deletes its browsing data",
               })}
               description={
-                deletedFor === profile.id
+                deleted
                   ? t({
                       message: "Browsing data deleted.",
                       comment:
@@ -516,7 +516,7 @@ export const ProfilePage = ({
                   name={profile.name}
                   describedBy={ids.description}
                   onDeleted={() => {
-                    setDeletedFor(profile.id);
+                    setDeleted(true);
                   }}
                 />
               )}
