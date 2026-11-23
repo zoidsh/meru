@@ -13,7 +13,14 @@ import { profileColor, profileColorName } from "#core/profile-color.ts";
 import { savedSearches } from "#core/saved-searches.ts";
 import { OVERRIDABLE_SETTING_KEYS } from "#core/settings.ts";
 import type { OverridableSettingKey } from "#core/settings.ts";
-import { canSleepProfile, checksMail, isAsleep } from "#core/state.ts";
+import {
+  canDisableProfile,
+  canRemoveProfile,
+  canSleepProfile,
+  checksMail,
+  isAsleep,
+  isDisabled,
+} from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import type { ContractHandlers } from "./contract-ipc.ts";
@@ -41,6 +48,7 @@ export interface SettingsContractDeps {
     | "addSavedSearch"
     | "renameSavedSearch"
     | "removeSavedSearch"
+    | "setEnabled"
   > & {
     get: () => State;
   };
@@ -216,8 +224,8 @@ export const settingsHandlers = ({
     removeProfile: async ({ profileId }) => {
       assertListed(profiles, profileId);
 
-      if (profiles.get().profiles.length < 2) {
-        throw new Error("The last profile cannot be removed");
+      if (!canRemoveProfile(profiles.get(), profileId)) {
+        throw new Error("The last enabled profile cannot be removed");
       }
 
       await removeProfile(profileId);
@@ -237,6 +245,10 @@ export const settingsHandlers = ({
       // A switch pressed twice quickly asks again for what is already so.
       if (profile && isAsleep(state, profile) === asleep) {
         return;
+      }
+
+      if (profile && isDisabled(state, profile)) {
+        throw new Error("A profile turned off neither sleeps nor wakes");
       }
 
       if (!asleep) {
@@ -263,6 +275,24 @@ export const settingsHandlers = ({
     removeSavedSearch: async ({ profileId, searchId }) => {
       assertSearch(profiles, profileId, searchId);
       await profiles.removeSavedSearch(profileId, searchId);
+    },
+    setProfileEnabled: async ({ profileId, enabled }) => {
+      assertListed(profiles, profileId);
+
+      if (!enabled && !canDisableProfile(profiles.get(), profileId)) {
+        const profile = profiles
+          .get()
+          .profiles.find((candidate) => candidate.id === profileId);
+
+        // Pressed twice quickly, it asks again for what is already so.
+        if (profile && isDisabled(profiles.get(), profile)) {
+          return;
+        }
+
+        throw new Error("The last enabled profile cannot be turned off");
+      }
+
+      await profiles.setEnabled(profileId, enabled);
     },
   };
 };
@@ -298,6 +328,7 @@ export const readSettingsState = ({
       name: profileDisplayName(profile),
       color: profileColor(state, profile.id),
       colorName: profileColorName(state, profile.id),
+      enabled: !isDisabled(state, profile),
       asleep: isAsleep(state, profile),
       checkMail: checksMail(profile),
       mail: {

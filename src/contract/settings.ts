@@ -199,6 +199,14 @@ export const SETTINGS_CALLS = {
     request: z.object({ profileId, searchId }),
     response: z.undefined(),
   },
+  /**
+   * Turns a listed profile on or off; refused for the last enabled one, and
+   * turning off the selected one selects another.
+   */
+  setProfileEnabled: {
+    request: z.object({ profileId, enabled: z.boolean() }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -225,6 +233,8 @@ export const SETTINGS_STATE = {
       color: z.string(),
       /** Which of the eight that is. */
       colorName: z.enum(PROFILE_COLOR_NAMES),
+      /** `false` while turned off, with no pages, mail or place in the titlebar. */
+      enabled: z.boolean(),
       asleep: z.boolean(),
       checkMail: z.boolean(),
       /**

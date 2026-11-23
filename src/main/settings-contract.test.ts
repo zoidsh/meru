@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { FeedOutcome } from "#core/feed.ts";
 import type { Settings } from "#core/settings.ts";
-import { checksMail, newProfile } from "#core/state.ts";
+import { mailChecked, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createDoNotDisturb } from "./do-not-disturb.ts";
@@ -127,7 +127,7 @@ const setup = (state: State, initial?: Settings) => {
         profiles.get().profiles.map((profile) => profile.id),
         profiles
           .get()
-          .profiles.filter((profile) => !checksMail(profile))
+          .profiles.filter((profile) => !mailChecked(profiles.get(), profile))
           .map((profile) => profile.id)
       );
       await Promise.resolve();
@@ -331,6 +331,7 @@ describe("the Settings window's profile calls", () => {
         name: "Profile 2",
         color: "oklch(0.72 0.19 150)",
         colorName: "green",
+        enabled: true,
         asleep: false,
         checkMail: true,
         mail: { status: "unknown", address: null },
@@ -423,7 +424,7 @@ describe("the Settings window's profile calls", () => {
 
     await expect(
       app.handlers.removeProfile({ profileId: "home" })
-    ).rejects.toThrow("The last profile cannot be removed");
+    ).rejects.toThrow("The last enabled profile cannot be removed");
     expect(app.asked).toStrictEqual([]);
     app.dispose();
   });
@@ -442,6 +443,7 @@ describe(readSettingsState, () => {
         name: "Work",
         color: "#2d52d2",
         colorName: "blue",
+        enabled: true,
         asleep: false,
         checkMail: true,
         mail: { status: "unknown", address: null },
@@ -467,6 +469,7 @@ describe(readSettingsState, () => {
         name: "Home",
         color: "#2d52d2",
         colorName: "blue",
+        enabled: true,
         asleep: false,
         checkMail: true,
         mail: { status: "unknown", address: null },
@@ -478,6 +481,7 @@ describe(readSettingsState, () => {
         name: "Work",
         color: "#ff6227",
         colorName: "orange",
+        enabled: true,
         asleep: false,
         checkMail: true,
         mail: { status: "unknown", address: null },
@@ -708,6 +712,96 @@ describe("the Settings window's saved searches", () => {
       [{ id: "b", query: "is:unread", name: null }],
       "No saved search of work has the id b",
       "No listed profile has the id gone",
+    ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Enabled", () => {
+  it("turns a profile off, which stops its mail and gives the selection away, and on again as it was", async () => {
+    const app = setup(stateOf("Home", "Work", "Club"));
+
+    await app.poll({
+      home: {
+        kind: "feed",
+        feed: { unreadCount: 0, entries: [], address: "home@example.org" },
+      },
+      work: {
+        kind: "feed",
+        feed: { unreadCount: 0, entries: [], address: "work@example.org" },
+      },
+      club: { kind: "signedOut" },
+    });
+    await app.profiles.sleep("club");
+    await app.handlers.setProfileEnabled({ profileId: "home", enabled: false });
+    await app.poll({
+      work: {
+        kind: "feed",
+        feed: { unreadCount: 0, entries: [], address: "work@example.org" },
+      },
+    });
+
+    const off = app
+      .read()
+      .profiles.map((profile) => [
+        profile.id,
+        profile.enabled,
+        profile.asleep,
+        profile.mail.status,
+      ]);
+    const selected = app.profiles.get().selectedProfileId;
+
+    await app.handlers.setProfileEnabled({ profileId: "home", enabled: true });
+    await app.poll({
+      home: {
+        kind: "feed",
+        feed: { unreadCount: 0, entries: [], address: "home@example.org" },
+      },
+    });
+
+    expect([
+      off,
+      selected,
+      app.read().profiles[0]?.enabled,
+      app.read().profiles[0]?.mail.status,
+    ]).toStrictEqual([
+      [
+        ["home", false, false, "notChecked"],
+        ["work", true, false, "ok"],
+        ["club", true, true, "signedOut"],
+      ],
+      "work",
+      true,
+      "ok",
+    ]);
+    app.dispose();
+  });
+
+  it("refuses the last enabled profile, to turn off or remove, and an unlisted one", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.setProfileEnabled({ profileId: "work", enabled: false });
+    // Asked twice, as a switch pressed twice quickly asks.
+    await app.handlers.setProfileEnabled({ profileId: "work", enabled: false });
+
+    expect([
+      await refusal(
+        app.handlers.setProfileEnabled({ profileId: "home", enabled: false })
+      ),
+      await refusal(app.handlers.removeProfile({ profileId: "home" })),
+      await refusal(
+        app.handlers.setAsleep({ profileId: "work", asleep: true })
+      ),
+      await refusal(
+        app.handlers.setProfileEnabled({ profileId: "gone", enabled: true })
+      ),
+      app.read().profiles.map((profile) => profile.enabled),
+    ]).toStrictEqual([
+      "The last enabled profile cannot be turned off",
+      "The last enabled profile cannot be removed",
+      "A profile turned off neither sleeps nor wakes",
+      "No listed profile has the id gone",
+      [true, false],
     ]);
     app.dispose();
   });

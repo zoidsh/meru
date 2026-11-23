@@ -11,6 +11,7 @@ const profile = (
   name: id,
   color: "#2d52d2",
   colorName: "blue",
+  enabled: true,
   asleep: false,
   checkMail: true,
   mail: { status: "unknown", address: null },

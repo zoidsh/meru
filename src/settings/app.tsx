@@ -236,7 +236,9 @@ export const App = () => {
                     count={profiles.length}
                     lastAwake={
                       !profile.asleep &&
-                      profiles.filter((listed) => !listed.asleep).length === 1
+                      profiles.filter(
+                        (listed) => listed.enabled && !listed.asleep
+                      ).length === 1
                     }
                     focusName={added === profile.id}
                     onNameFocused={nameFocused}

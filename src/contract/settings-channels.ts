@@ -23,6 +23,7 @@ export const SETTINGS_CALL_NAMES = [
   "addSavedSearch",
   "renameSavedSearch",
   "removeSavedSearch",
+  "setProfileEnabled",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];
