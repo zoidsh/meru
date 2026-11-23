@@ -66,7 +66,7 @@ describe(createDeleteBrowsingData, () => {
     );
   });
 
-  it("rejects when the session could not clear, its pages reloaded and no poll asked for", async () => {
+  it("rejects when the session could not clear, its pages reloaded and its mail polled, since cookies may have gone", async () => {
     const { steps, deleteData } = setup(true);
 
     await expect(
@@ -76,6 +76,16 @@ describe(createDeleteBrowsingData, () => {
       "sleep all but Gmail of work",
       "clear persist:work cookies,localStorage,indexedDB,serviceWorkers,fileSystems,backgroundFetch",
       "reload work",
+      "poll work",
     ]);
+  });
+
+  it("polls nothing when clearing the cache alone fails", async () => {
+    const { steps, deleteData } = setup(true);
+
+    await expect(
+      deleteData("work", { cookies: false, cache: true })
+    ).rejects.toThrow("the session refused");
+    expect(steps).toStrictEqual(["clear persist:work cache", "reload work"]);
   });
 });

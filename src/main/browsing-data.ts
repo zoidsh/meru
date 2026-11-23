@@ -37,11 +37,11 @@ export const createDeleteBrowsingData =
       await sessions.clearData(profilePartition(profileId), dataTypes);
     } finally {
       views.reloadProfile(profileId);
-    }
 
-    // Signed out now, which the mail check would otherwise learn only at its
-    // next poll.
-    if (kinds.cookies) {
-      mail.poke(profileId);
+      // Signed out now, which the mail check would otherwise learn only at
+      // its next poll; a clear that failed may have got as far as cookies.
+      if (kinds.cookies) {
+        mail.poke(profileId);
+      }
     }
   };
