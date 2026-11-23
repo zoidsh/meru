@@ -307,10 +307,11 @@ describe("the settings contract", () => {
       openPage({ section: "profiles", profileId: null }),
       openPage({ section: "profiles", profileId: "work" }),
       openPage({ section: "notifications", profileId: null }),
+      openPage({ section: "gmail", profileId: null }),
       openPage({ section: "general", profileId: null }),
       openPage({ section: "profiles", profileId: "" }),
       openPage({ section: "profiles" }),
-    ]).toStrictEqual([true, true, true, false, false, false]);
+    ]).toStrictEqual([true, true, true, true, false, false, false]);
   });
 
   it("takes a profile's new name, one of the eight colours, and a place from 0", () => {

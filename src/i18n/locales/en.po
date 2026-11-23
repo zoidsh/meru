@@ -245,10 +245,20 @@ msgstr "A download finished"
 msgid "A notification for each new message."
 msgstr "A notification for each new message."
 
+#. Description of the Find codes in new mail switch in Settings; quiet hours and Do Not Disturb are the Notifications page's settings of those names
+#: src/settings/gmail-page.tsx
+msgid "A notification shows the code, even during quiet hours or Do Not Disturb."
+msgstr "A notification shows the code, even during quiet hours or Do Not Disturb."
+
 #. Menu item in the macOS app menu that shows the app's version; {appName} is the app's name
 #: src/main/application-menu.ts
 msgid "About {appName}"
 msgstr "About {appName}"
+
+#. Description of the Attachments at the top switch in Settings
+#: src/settings/gmail-page.tsx
+msgid "Above each message's text, rather than below it."
+msgstr "Above each message's text, rather than below it."
 
 #. Menu item in the View menu that sets the page's zoom back to 100%
 #: src/main/application-menu.ts
@@ -317,12 +327,22 @@ msgctxt "inbox action"
 msgid "Archive"
 msgstr "Archive"
 
+#. Choice of the Copy the code menu in Settings: the code is copied as soon as the email with it arrives
+#: src/settings/gmail-page.tsx
+msgid "As soon as it arrives"
+msgstr "As soon as it arrives"
+
 #. Badge on a sleeping profile's row in Settings' list of profiles
 #. Said by screen readers after a sidebar row's title while its tab sleeps: put to sleep, or not opened yet since Meru started
 #: src/settings/profiles-page.tsx
 #: src/shell/tab-strip.tsx
 msgid "Asleep"
 msgstr "Asleep"
+
+#. Label of the switch in Settings that shows each Gmail message's attachments above its text
+#: src/settings/gmail-page.tsx
+msgid "Attachments at the top"
+msgstr "Attachments at the top"
 
 #. Accessible name and tooltip of the title bar button that goes to the page the tab showed before
 #. Accessible name of the Settings window's button that goes back to the page shown before, a section or a profile's page
@@ -429,6 +449,11 @@ msgstr "Cancelled · {when}"
 msgid "Changes here apply to {chosenName} alone."
 msgstr "Changes here apply to {chosenName} alone."
 
+#. Description of the Gmail's page group in Settings: these settings change only what Meru shows, never Gmail's own settings
+#: src/settings/gmail-page.tsx
+msgid "Changes what Meru shows, not your Gmail settings."
+msgstr "Changes what Meru shows, not your Gmail settings."
+
 #. Label of the switch on a profile's page in Settings that turns checking its mail on or off
 #: src/settings/profile-page.tsx
 msgid "Check mail"
@@ -511,6 +536,11 @@ msgstr "Compose"
 msgid "Content"
 msgstr "Content"
 
+#. Title of the group of Settings for how Gmail shows an open conversation
+#: src/settings/gmail-page.tsx
+msgid "Conversations"
+msgstr "Conversations"
+
 #. Checkbox in the Delete browsing data dialog in Settings, as in Chrome's own dialog
 #: src/settings/delete-browsing-data.tsx
 msgid "Cookies and other site data"
@@ -527,6 +557,11 @@ msgstr "Copied verification code {verificationCode}"
 #: src/main/notifications.ts
 msgid "Copy"
 msgstr "Copy"
+
+#. Label of the menu in Settings choosing when a verification code is copied
+#: src/settings/gmail-page.tsx
+msgid "Copy the code"
+msgstr "Copy the code"
 
 #. Item of a tab's context menu that copies its page's address
 #: src/main/tab-menu.ts
@@ -572,6 +607,11 @@ msgstr "Cut"
 #: src/settings/profile-page.tsx
 msgid "Cyan"
 msgstr "Cyan"
+
+#. Description of the Extend Gmail's Dark theme switch in Settings; Dark is the name of Gmail's theme, and Meru's is the theme chosen in Meru
+#: src/settings/gmail-page.tsx
+msgid "Darkens what Gmail's Dark theme leaves white. Only while Gmail's own theme is Dark, whatever Meru's."
+msgstr "Darkens what Gmail's Dark theme leaves white. Only while Gmail's own theme is Dark, whatever Meru's."
 
 #. Accessible name of the days a window of quiet hours holds on in Settings
 #: src/settings/quiet-hours-field.tsx
@@ -729,10 +769,20 @@ msgstr "Exit"
 msgid "Expand sidebar"
 msgstr "Expand sidebar"
 
+#. Label of the switch in Settings that darkens what Gmail's own Dark theme leaves white; Dark is the name of Gmail's theme, as Gmail writes it
+#: src/settings/gmail-page.tsx
+msgid "Extend Gmail's Dark theme"
+msgstr "Extend Gmail's Dark theme"
+
 #. Shown in the Downloads card when nothing is listed
 #: src/shell/downloads.tsx
 msgid "Files you download appear here for 30 days."
 msgstr "Files you download appear here for 30 days."
+
+#. Label of the switch in Settings that looks for a verification code in each new email
+#: src/settings/gmail-page.tsx
+msgid "Find codes in new mail"
+msgstr "Find codes in new mail"
 
 #. Name and placeholder of the field in the small bar over the page that searches the page's text
 #: src/shell/find-bar.tsx
@@ -769,10 +819,30 @@ msgstr "Forward"
 msgid "From"
 msgstr "From"
 
+#. Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name
+#: src/settings/app.tsx
+msgid "Gmail"
+msgstr "Gmail"
+
 #. Menu item in the Mail menu that opens Gmail's own settings in the selected profile's Gmail tab
 #: src/main/commands.ts
 msgid "Gmail Settings"
 msgstr "Gmail Settings"
+
+#. Description of the Hide the Upgrade button switch in Settings
+#: src/settings/gmail-page.tsx
+msgid "Gmail's own button, at the top of the page."
+msgstr "Gmail's own button, at the top of the page."
+
+#. Title of the group of Settings that hide or change parts of Gmail's own page
+#: src/settings/gmail-page.tsx
+msgid "Gmail's page"
+msgstr "Gmail's page"
+
+#. Description of the Hide promotional banners switch in Settings; Workspace is Google Workspace, kept as Google names it
+#: src/settings/gmail-page.tsx
+msgid "Google's offers above the message list, such as Workspace upgrades."
+msgstr "Google's offers above the message list, such as Workspace upgrades."
 
 #. Name of a profile's colour
 #: src/settings/profile-page.tsx
@@ -799,10 +869,30 @@ msgstr "Hide {productName}"
 msgid "Hide Others"
 msgstr "Hide Others"
 
+#. Label of the switch in Settings that hides Google's promotional banners on Gmail's page
+#: src/settings/gmail-page.tsx
+msgid "Hide promotional banners"
+msgstr "Hide promotional banners"
+
 #. Tooltip of the title bar button that hides the list of tabs down the left of the window
 #: src/shell/titlebar.tsx
 msgid "Hide sidebar"
 msgstr "Hide sidebar"
+
+#. Label of the switch in Settings that hides the Gmail logo on Gmail's page
+#: src/settings/gmail-page.tsx
+msgid "Hide the Gmail logo"
+msgstr "Hide the Gmail logo"
+
+#. Label of the switch in Settings that hides the footer Gmail shows under its message list
+#: src/settings/gmail-page.tsx
+msgid "Hide the inbox footer"
+msgstr "Hide the inbox footer"
+
+#. Label of the switch in Settings that hides Gmail's own Upgrade button; Upgrade is the label of Gmail's button, written as Gmail writes it, not Meru Pro's
+#: src/settings/gmail-page.tsx
+msgid "Hide the Upgrade button"
+msgstr "Hide the Upgrade button"
 
 #. What the Do Not Disturb switch in Settings does, with more than one profile
 #: src/settings/do-not-disturb.ts
@@ -818,6 +908,11 @@ msgstr "Holds every notification."
 #: src/settings/notifications-page.tsx
 msgid "Important mail only"
 msgstr "Important mail only"
+
+#. Description of the Newest message first switch in Settings
+#: src/settings/gmail-page.tsx
+msgid "In an open conversation. On screen only: Gmail's order is unchanged."
+msgstr "In an open conversation. On screen only: Gmail's order is unchanged."
 
 #. Said by screen readers after a sidebar row's title while its tab is moved to a window of its own, which a click brings forward
 #: src/shell/tab-strip.tsx
@@ -838,6 +933,11 @@ msgstr "In split view, maximized"
 #: src/settings/profiles-page.tsx
 msgid "In the titlebar's order. Drag a profile by its handle, or focus the handle and press the up or down arrow, to move it."
 msgstr "In the titlebar's order. Drag a profile by its handle, or focus the handle and press the up or down arrow, to move it."
+
+#. Description of the Move to Trash after copying switch in Settings: it takes the place of marking the email read, and a code found by mistake can move a real email
+#: src/settings/gmail-page.tsx
+msgid "Instead of marking it read. A wrong guess can move a real email."
+msgstr "Instead of marking it read. A wrong guess can move a real email."
 
 #. Second sentence after an action in the unified inbox failed: the message shows in the list again
 #: src/shell/inbox.tsx
@@ -925,6 +1025,11 @@ msgstr "Mark as read"
 msgid "Mark as Read"
 msgstr "Mark as Read"
 
+#. Label of the switch in Settings that marks the email with a verification code read once the code is copied
+#: src/settings/gmail-page.tsx
+msgid "Mark as read after copying"
+msgstr "Mark as read after copying"
+
 #. Button on a new email notification that reports the email as spam. Gmail's own words for the action
 #: src/main/notifications.ts
 msgid "Mark as Spam"
@@ -995,6 +1100,11 @@ msgstr "Move to Main Window"
 msgid "Move to New Window"
 msgstr "Move to New Window"
 
+#. Label of the switch in Settings that moves the email with a verification code to Trash once the code is copied; Trash is Gmail's folder of that name
+#: src/settings/gmail-page.tsx
+msgid "Move to Trash after copying"
+msgstr "Move to Trash after copying"
+
 #. Second line of a finished download in the Downloads card whose file is no longer where it was saved
 #: src/shell/downloads.tsx
 msgid "Moved or deleted"
@@ -1011,6 +1121,11 @@ msgstr "Name"
 #: src/settings/saved-searches-card.tsx
 msgid "Name of {shown}"
 msgstr "Name of {shown}"
+
+#. Description of the Mark as read after copying switch in Settings
+#: src/settings/gmail-page.tsx
+msgid "Never before its code is copied."
+msgstr "Never before its code is copied."
 
 #. Title of the group of Settings for how new mail is announced
 #: src/settings/notifications-page.tsx
@@ -1037,6 +1152,11 @@ msgstr "New tab"
 #: src/main/commands.ts
 msgid "New Tab…"
 msgstr "New Tab…"
+
+#. Label of the switch in Settings that shows an open Gmail conversation with its latest message at the top
+#: src/settings/gmail-page.tsx
+msgid "Newest message first"
+msgstr "Newest message first"
 
 #. Button in the find bar that shows the match after this one
 #: src/shell/find-bar.tsx
@@ -1617,6 +1737,11 @@ msgstr "Show the subject"
 msgid "Show the summary"
 msgstr "Show the summary"
 
+#. Label of the switch in Settings that shows the quoted text Gmail trims; trimmed content is Gmail's own name for it
+#: src/settings/gmail-page.tsx
+msgid "Show trimmed content"
+msgstr "Show trimmed content"
+
 #. Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed
 #: src/shell/titlebar.tsx
 msgctxt "title bar button"
@@ -1717,6 +1842,11 @@ msgstr "Stop"
 msgid "Stopped working"
 msgstr "Stopped working"
 
+#. Description of the Hide the inbox footer switch in Settings: what Gmail's footer shows
+#: src/settings/gmail-page.tsx
+msgid "Storage, policies and account activity, under the message list."
+msgstr "Storage, policies and account activity, under the message list."
+
 #. Choice of the Sound menu in Settings: the system's own notification sound
 #: src/settings/notifications-page.tsx
 msgid "System"
@@ -1738,6 +1868,16 @@ msgstr "Test notification"
 #: src/settings/profile-page.tsx
 msgid "The last awake profile can't sleep."
 msgstr "The last awake profile can't sleep."
+
+#. Description of the Hide the Gmail logo switch in Settings
+#: src/settings/gmail-page.tsx
+msgid "The logo in the top left corner."
+msgstr "The logo in the top left corner."
+
+#. Description of the Show trimmed content switch in Settings; ••• is the label of Gmail's button that shows trimmed content, kept as is
+#: src/settings/gmail-page.tsx
+msgid "The quoted text Gmail folds behind its ••• button."
+msgstr "The quoted text Gmail folds behind its ••• button."
 
 #. Body of the error dialog shown when the app's window keeps failing to draw; {productName} is the app's name
 #: src/main/shell-recovery.ts
@@ -1822,6 +1962,11 @@ msgstr "Turn Off"
 #: src/settings/notifications-page.tsx
 msgid "Turn off Do Not Disturb to show a test notification."
 msgstr "Turn off Do Not Disturb to show a test notification."
+
+#. Description of a verification code setting on the Gmail page in Settings while Find codes in new mail, the switch above it, is off
+#: src/settings/gmail-page.tsx
+msgid "Turn on Find codes in new mail to use this."
+msgstr "Turn on Find codes in new mail to use this."
 
 #. Description of Enabled, turned on, on a profile's page in Settings
 #: src/settings/profile-page.tsx
@@ -1924,6 +2069,11 @@ msgstr "Using app setting"
 msgid "Verification code {verificationCode}"
 msgstr "Verification code {verificationCode}"
 
+#. Title of the group of Settings for one-time codes found in new mail
+#: src/settings/gmail-page.tsx
+msgid "Verification codes"
+msgstr "Verification codes"
+
 #. Name of the View menu
 #: src/main/application-menu.ts
 msgid "View"
@@ -1968,10 +2118,20 @@ msgstr "weekends"
 msgid "What a notification shows"
 msgstr "What a notification shows"
 
+#. Choice of the Copy the code menu in Settings: the code is copied when the Copy button on its notification is pressed
+#: src/settings/gmail-page.tsx
+msgid "When you press Copy"
+msgstr "When you press Copy"
+
 #. Name of the Window menu
 #: src/main/application-menu.ts
 msgid "Window"
 msgstr "Window"
+
+#. Description of the Copy the code menu in Settings; Copy is the label of the button on the verification code notification
+#: src/settings/gmail-page.tsx
+msgid "With the notification's Copy button, or as soon as the email arrives."
+msgstr "With the notification's Copy button, or as soon as the email arrives."
 
 #. Heading shown in place of a tab's page that could not load because the computer is offline
 #: src/shell/tab-problem.tsx

@@ -1,5 +1,9 @@
 /** The Settings window's sections built so far, in the nav's order. */
-export const SETTINGS_SECTIONS = ["profiles", "notifications"] as const;
+export const SETTINGS_SECTIONS = [
+  "profiles",
+  "notifications",
+  "gmail",
+] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 

@@ -19,19 +19,22 @@ import type { RowScope } from "./row-scope.tsx";
  * Not Disturb outranks it, it dims, says so and still works. In a profile's
  * scope or under All profiles it carries what `scope` adds.
  */
+/** A row's scope while its page has none. */
+const NO_SCOPE: RowScope = {};
+
 export const SettingRow = ({
   label,
   description,
   paused,
-  scope,
+  scope = NO_SCOPE,
   disabled = false,
   children,
 }: {
   label: string;
   description?: string | undefined;
   /** The line saying Do Not Disturb outranks it, while it does. */
-  paused: string | undefined;
-  scope: RowScope;
+  paused?: string | undefined;
+  scope?: RowScope;
   disabled?: boolean;
   children: (ids: { label: string; description: string }) => ReactNode;
 }) => {

@@ -4,11 +4,13 @@ import {
   BellIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  MailIcon,
   SearchIcon,
   UsersIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import type { SettingsSection } from "#core/settings-pages.ts";
@@ -19,11 +21,18 @@ import {
   InputGroupInput,
 } from "#ui/input-group.tsx";
 
+import { GmailPage } from "./gmail-page.tsx";
 import { NotificationsPage } from "./notifications-page.tsx";
 import { ProfilePage } from "./profile-page.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
 import type { RemovedProfile } from "./profiles-page.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
+
+/** The sections whose page needs nothing from the window. */
+const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
+  notifications: NotificationsPage,
+  gmail: GmailPage,
+};
 
 /** The nav's width, which the titlebar's buttons start after. */
 const NAV_WIDTH = 212;
@@ -38,7 +47,10 @@ interface Section {
 /** The sections built so far, in the nav's groups. */
 const SECTION_GROUPS: readonly (readonly Section[])[] = [
   [{ id: "profiles", icon: UsersIcon, tile: "bg-[oklch(0.58_0.17_255)]" }],
-  [{ id: "notifications", icon: BellIcon, tile: "bg-[oklch(0.62_0.2_25)]" }],
+  [
+    { id: "notifications", icon: BellIcon, tile: "bg-[oklch(0.62_0.2_25)]" },
+    { id: "gmail", icon: MailIcon, tile: "bg-[oklch(0.62_0.15_230)]" },
+  ],
 ];
 
 export const App = () => {
@@ -69,8 +81,14 @@ export const App = () => {
       comment:
         "Name of the Settings section for notifications, the unread badge and Do Not Disturb, in its list and as its title",
     }),
+    gmail: t({
+      message: "Gmail",
+      comment:
+        "Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name",
+    }),
   };
   const sectionId = page?.section ?? "notifications";
+  const SectionPage = SECTION_PAGES[sectionId];
   const profile =
     sectionId === "profiles" && page?.profileId
       ? profiles?.find((candidate) => candidate.id === page.profileId)
@@ -227,7 +245,7 @@ export const App = () => {
             className="min-w-0 flex-1 overflow-y-auto rounded-lg bg-background p-6 select-text"
           >
             <div className="flex flex-col gap-4">
-              {sectionId === "notifications" && <NotificationsPage />}
+              {SectionPage && <SectionPage />}
               {sectionId === "profiles" &&
                 profiles &&
                 (profile ? (
