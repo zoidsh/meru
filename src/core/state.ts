@@ -1049,6 +1049,21 @@ export const mailChecked = (state: State, profile: Profile) =>
   checksMail(profile) && !isDisabled(state, profile);
 
 /**
+ * What the mail check follows: every listed profile, and those of them whose
+ * mail it does not check, which it stops.
+ */
+export const mailPolls = (state: State) => ({
+  profileIds: state.profiles.map((profile) => profile.id),
+  unchecked: state.profiles
+    .filter((profile) => !mailChecked(state, profile))
+    .map((profile) => profile.id),
+});
+
+/** The profiles a keep-alive may load Google's page in: the enabled ones. */
+export const keptAliveProfileIds = (state: State) =>
+  enabledProfiles(state).map((profile) => profile.id);
+
+/**
  * Turns the profile's Check mail on, dropping the key, or off, storing
  * `false`. Nothing when there is no such profile or it already reads so.
  */

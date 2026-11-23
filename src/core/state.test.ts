@@ -13,6 +13,8 @@ import {
   createInitialState,
   decodeState,
   enabledProfiles,
+  keptAliveProfileIds,
+  mailPolls,
   encodeState,
   forgetEndedDoNotDisturb,
   forgetProfilesToClear,
@@ -1350,6 +1352,15 @@ describe("a profile turned off", () => {
       moved?.profiles.find((profile) => profile.id === "b")?.disabled,
       moved && enabledProfiles(moved).map((profile) => profile.id),
     ]).toStrictEqual([[], [], undefined, ["a", "b", "c"]]);
+  });
+
+  it("stops the mail check of one turned off as of one with Check mail off, and keeps no keep-alive for it", () => {
+    const state = stored({ a: { disabled: true }, c: { checkMail: false } });
+
+    expect([mailPolls(state), keptAliveProfileIds(state)]).toStrictEqual([
+      { profileIds: ["a", "b", "c"], unchecked: ["a", "c"] },
+      ["b", "c"],
+    ]);
   });
 
   it("stays off when the selected profile is turned off, as the selection moves away first", () => {

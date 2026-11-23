@@ -4,7 +4,7 @@ import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import type { FeedOutcome } from "#core/feed.ts";
 import type { Settings } from "#core/settings.ts";
-import { mailChecked, newProfile } from "#core/state.ts";
+import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createDoNotDisturb } from "./do-not-disturb.ts";
@@ -131,13 +131,9 @@ const setup = (state: State, initial?: Settings) => {
         feeds.set(profileId, outcome);
       }
 
-      mail.reconcile(
-        profiles.get().profiles.map((profile) => profile.id),
-        profiles
-          .get()
-          .profiles.filter((profile) => !mailChecked(profiles.get(), profile))
-          .map((profile) => profile.id)
-      );
+      const { profileIds, unchecked } = mailPolls(profiles.get());
+
+      mail.reconcile(profileIds, unchecked);
       await Promise.resolve();
       await Promise.resolve();
     },
