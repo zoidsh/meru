@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { SoundRequest } from "#contract/shell-sound.ts";
+import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import type { FeedOutcome } from "#core/feed.ts";
 import type { Settings } from "#core/settings.ts";
 import { mailChecked, newProfile } from "#core/state.ts";
@@ -66,6 +67,7 @@ const setup = (state: State, initial?: Settings) => {
   // What the composition root's add does beside adding, as closing the inbox.
   const addedBy: string[] = [];
   let confirms = true;
+  const deleted: [string, BrowsingDataKinds][] = [];
   const deps = {
     settings,
     profiles,
@@ -98,6 +100,11 @@ const setup = (state: State, initial?: Settings) => {
       },
       log: () => false,
     }),
+    deleteBrowsingData: (profileId: string, kinds: BrowsingDataKinds) => {
+      deleted.push([profileId, kinds]);
+
+      return Promise.resolve();
+    },
   };
 
   settings.onChange("notificationSender", () =>
@@ -113,6 +120,7 @@ const setup = (state: State, initial?: Settings) => {
     tested,
     asked,
     addedBy,
+    deleted,
     confirming: (next: boolean) => {
       confirms = next;
     },
@@ -802,6 +810,50 @@ describe("the Settings window's Enabled", () => {
       "A profile turned off neither sleeps nor wakes",
       "No listed profile has the id gone",
       [true, false],
+    ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Delete browsing data", () => {
+  it("deletes what a listed profile asks for, a disabled one too, and refuses neither chosen or an unlisted profile", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await app.handlers.setProfileEnabled({ profileId: "work", enabled: false });
+    await app.handlers.deleteBrowsingData({
+      profileId: "home",
+      cookies: false,
+      cache: true,
+    });
+    await app.handlers.deleteBrowsingData({
+      profileId: "work",
+      cookies: true,
+      cache: false,
+    });
+
+    expect([
+      await refusal(
+        app.handlers.deleteBrowsingData({
+          profileId: "home",
+          cookies: false,
+          cache: false,
+        })
+      ),
+      await refusal(
+        app.handlers.deleteBrowsingData({
+          profileId: "gone",
+          cookies: true,
+          cache: true,
+        })
+      ),
+      app.deleted,
+    ]).toStrictEqual([
+      "Neither cookies nor the cache was chosen to delete",
+      "No listed profile has the id gone",
+      [
+        ["home", { cookies: false, cache: true }],
+        ["work", { cookies: true, cache: false }],
+      ],
     ]);
     app.dispose();
   });

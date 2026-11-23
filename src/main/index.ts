@@ -13,6 +13,7 @@ import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
+import { createDeleteBrowsingData } from "./browsing-data.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
 import { createOverlays } from "./overlay.ts";
@@ -442,6 +443,7 @@ const start = async () => {
     doNotDisturb,
     sound,
     showTestNotification,
+    deleteBrowsingData: createDeleteBrowsingData({ sessions, views, mail }),
   });
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({

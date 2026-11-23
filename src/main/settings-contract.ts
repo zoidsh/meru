@@ -8,6 +8,7 @@ import type {
   SETTINGS_CALLS,
   SettingsState,
 } from "#contract/settings.ts";
+import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
 import { profileColor, profileColorName } from "#core/profile-color.ts";
 import { savedSearches } from "#core/saved-searches.ts";
@@ -57,6 +58,11 @@ export interface SettingsContractDeps {
   addProfile: () => Promise<string | undefined>;
   /** Asks to remove the profile, and removes it once confirmed. */
   removeProfile: (profileId: string) => Promise<void>;
+  /** Deletes the kinds of the profile's browsing data asked for. */
+  deleteBrowsingData: (
+    profileId: string,
+    kinds: BrowsingDataKinds
+  ) => Promise<void>;
   doNotDisturb: Pick<
     ReturnType<typeof createDoNotDisturb>,
     "current" | "switchOn" | "switchOff"
@@ -127,6 +133,7 @@ export const settingsHandlers = ({
   pages,
   showTestNotification,
   removeProfile,
+  deleteBrowsingData,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -293,6 +300,15 @@ export const settingsHandlers = ({
       }
 
       await profiles.setEnabled(profileId, enabled);
+    },
+    deleteBrowsingData: async ({ profileId, cookies, cache }) => {
+      assertListed(profiles, profileId);
+
+      if (!cookies && !cache) {
+        throw new Error("Neither cookies nor the cache was chosen to delete");
+      }
+
+      await deleteBrowsingData(profileId, { cookies, cache });
     },
   };
 };

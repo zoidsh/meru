@@ -24,6 +24,7 @@ export const SETTINGS_CALL_NAMES = [
   "renameSavedSearch",
   "removeSavedSearch",
   "setProfileEnabled",
+  "deleteBrowsingData",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

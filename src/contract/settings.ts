@@ -207,6 +207,18 @@ export const SETTINGS_CALLS = {
     request: z.object({ profileId, enabled: z.boolean() }),
     response: z.undefined(),
   },
+  /**
+   * Deletes a listed profile's cookies and other site data, its cache, or
+   * both; refused with neither. Rejects when they could not be deleted.
+   */
+  deleteBrowsingData: {
+    request: z.object({
+      profileId,
+      cookies: z.boolean(),
+      cache: z.boolean(),
+    }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }

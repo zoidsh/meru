@@ -6,6 +6,7 @@ import {
   SETTINGS_CHANNELS,
   SETTINGS_STATE,
 } from "#contract/settings.ts";
+import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { ContextMenus } from "#platform/context-menu.ts";
@@ -54,6 +55,7 @@ export const wireSettingsWindow = ({
   doNotDisturb,
   sound,
   showTestNotification,
+  deleteBrowsingData,
 }: {
   isMacOS: boolean;
   background: boolean;
@@ -74,6 +76,10 @@ export const wireSettingsWindow = ({
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   sound: Pick<SoundOutput, "play">;
   showTestNotification: (profileId: string | undefined) => void;
+  deleteBrowsingData: (
+    profileId: string,
+    kinds: BrowsingDataKinds
+  ) => Promise<void>;
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
@@ -139,6 +145,7 @@ export const wireSettingsWindow = ({
       sound,
       pages,
       showTestNotification,
+      deleteBrowsingData,
       // The system's confirmation shows as a sheet on the window that asked.
       removeProfile: async (profileId) => {
         const window = settingsWindow.current();
