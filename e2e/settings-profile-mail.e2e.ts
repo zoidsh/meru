@@ -1,4 +1,4 @@
-import { expect, findOverlayDocument, test } from "./lib/app.ts";
+import { expect, findOverlayDocument, shownViews, test } from "./lib/app.ts";
 import {
   launchWithMail,
   notified,
@@ -176,6 +176,47 @@ test("the list and a profile's page show the signed-in address, Not signed in fo
   await expect(pageLine(page, /@/u)).toHaveCount(0);
 });
 
+test("Sign in selects a signed-out profile, waking it, and shows its Gmail tab; a profile whose mail is not checked offers none", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell } = await launchWithMail(launchApp, userDataDir, standIn, [
+    { id: "home", name: "Home", feed: listing() },
+    { id: "work", name: "Work", asleep: true },
+    { id: "club", name: "Club", checkMail: false },
+  ]);
+  const page = await openSettings(app);
+
+  await openProfiles(page);
+  await expect(profileRow(page, "Work")).toHaveAccessibleDescription(
+    "Not signed in Asleep"
+  );
+  await expect(page.getByRole("button", { name: /^Sign in to/u })).toHaveCount(
+    1
+  );
+
+  await page.getByRole("button", { name: "Sign in to Work" }).click();
+
+  await expect(profileTab(shell, "Work")).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  await expect
+    .poll(async () => {
+      const shown = await shownViews(app);
+
+      return shown.map(
+        ({ url, partition }) =>
+          partition === "persist:work" && url.startsWith(standIn.url)
+      );
+    })
+    .toStrictEqual([true]);
+
+  await profileRow(page, "Work").click();
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+});
+
 test.describe("shots", () => {
   test.beforeEach(onlyWithShots);
 
@@ -229,6 +270,19 @@ test.describe("shots", () => {
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page.screenshot({
         path: shotPath("settings-profile-page-mail", theme),
+      });
+    }
+
+    await page.getByRole("button", { name: "Back" }).click();
+    await profileRow(page, "Side project").click();
+    await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({
+        path: shotPath("settings-profile-page-signed-out", theme),
       });
     }
   });

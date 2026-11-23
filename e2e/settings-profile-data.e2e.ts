@@ -130,11 +130,15 @@ test("deleting the cache keeps the profile signed in, and deleting cookies signs
   await expect(
     pageLine(page, "Not signed in to Google, so its mail is not checked.")
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 
   await page.getByRole("button", { name: "Back" }).click();
   await expect(profileRow(page, "Work")).toHaveAccessibleDescription(
     "Not signed in"
   );
+  await expect(
+    page.getByRole("button", { name: "Sign in to Work" })
+  ).toBeVisible();
   await expect(profileRow(page, "Home")).toHaveAccessibleDescription(
     "home@example.org"
   );
