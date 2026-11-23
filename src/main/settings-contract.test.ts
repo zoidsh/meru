@@ -378,6 +378,28 @@ describe("the Settings window's profile calls", () => {
     app.dispose();
   });
 
+  it("names no colour for one stored that this build does not know, until one is chosen", async () => {
+    const state = stateOf("Home", "Work", "Club");
+    const [home, work, club] = state.profiles;
+
+    if (!home || !work || !club) {
+      throw new Error("three profiles were made");
+    }
+
+    const app = setup({
+      ...state,
+      profiles: [home, { ...work, color: "teal" }, { ...club, color: "lime" }],
+    });
+    const named = () => app.read().profiles.map(({ colorName }) => colorName);
+
+    expect(named()).toStrictEqual(["blue", null, "lime"]);
+
+    await app.handlers.setProfileColor({ profileId: "work", color: "amber" });
+
+    expect(named()).toStrictEqual(["blue", "amber", "lime"]);
+    app.dispose();
+  });
+
   it("refuses an unlisted profile and a place past the last, changing nothing", async () => {
     const app = setup(stateOf("Home", "Work"));
     const before = app.read().profiles;

@@ -1,6 +1,13 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { clickMenuItem, expect, findPage, readState, test } from "./lib/app.ts";
+import {
+  clickMenuItem,
+  expect,
+  findPage,
+  readState,
+  test,
+  writeState,
+} from "./lib/app.ts";
 import {
   askedRemovals,
   confirmRemovals,
@@ -42,7 +49,10 @@ const titlebarDot = (shell: Page, name: string) =>
 const shellOf = (app: ElectronApplication) => findPage(app, "meru-app://shell");
 
 /** The profiles' ids or names in `state.json`'s order. */
-const storedProfiles = async (userDataDir: string, field: "id" | "name") => {
+const storedProfiles = async (
+  userDataDir: string,
+  field: "id" | "name" | "color"
+) => {
   const { profiles } = await readState<SavedState>(userDataDir);
 
   return profiles.map((profile) => profile[field]);
@@ -181,19 +191,14 @@ test("a colour chosen changes the titlebar's dot, and a restart keeps it", async
   await openProfiles(page);
   await profileRow(page, "Work").click();
 
-  const colour = page.getByRole("group", { name: "Colour" });
+  const colour = page.getByRole("combobox", { name: "Colour" });
 
-  await expect(colour.getByRole("button", { name: "Orange" })).toHaveAttribute(
-    "aria-pressed",
-    "true"
-  );
+  await expect(colour).toContainText("Orange");
 
-  await colour.getByRole("button", { name: "Violet" }).click();
+  await colour.click();
+  await page.getByRole("option", { name: "Violet" }).click();
 
-  await expect(colour.getByRole("button", { name: "Violet" })).toHaveAttribute(
-    "aria-pressed",
-    "true"
-  );
+  await expect(colour).toContainText("Violet");
   await expect
     .poll(() => titlebarDot(shell, "Work"))
     .toBe("oklch(0.58 0.2 285)");
@@ -205,6 +210,43 @@ test("a colour chosen changes the titlebar's dot, and a restart keeps it", async
   await expect
     .poll(async () => titlebarDot(await shellOf(again), "Work"))
     .toBe("oklch(0.58 0.2 285)");
+});
+
+test("a colour stored that this build does not know shows none chosen, and choosing one writes it", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "work",
+        name: "Work",
+        color: "teal",
+        tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "work",
+  });
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+
+  await openProfiles(page);
+  await profileRow(page, "Work").click();
+
+  const colour = page.getByRole("combobox", { name: "Colour" });
+
+  await expect(colour).toContainText("Choose a colour");
+  await colour.click();
+  await expect(page.getByRole("option", { selected: true })).toHaveCount(0);
+  await page.getByRole("option", { name: "Cyan" }).click();
+
+  await expect(colour).toContainText("Cyan");
+  await expect
+    .poll(() => storedProfiles(userDataDir, "color"))
+    .toStrictEqual(["cyan"]);
 });
 
 test("a profile's handle moves it with the arrow keys, which the titlebar and state.json follow and a screen reader hears", async ({
@@ -401,6 +443,20 @@ test.describe("shots", () => {
         path: shotPath("settings-profile-page", theme),
       });
     }
+
+    await page.getByRole("combobox", { name: "Colour" }).click();
+    await expect(page.getByRole("option", { name: "Orange" })).toBeVisible();
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({
+        path: shotPath("settings-profile-page-colour", theme),
+      });
+    }
+
+    await page.keyboard.press("Escape");
 
     await app.close();
     await seedProfiles(userDataDir, standIn, ["Home"]);

@@ -10,7 +10,11 @@ import type {
 } from "#contract/settings.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
-import { profileColor, profileColorName } from "#core/profile-color.ts";
+import {
+  isProfileColorName,
+  profileColor,
+  profileColorName,
+} from "#core/profile-color.ts";
 import { savedSearches } from "#core/saved-searches.ts";
 import { OVERRIDABLE_SETTING_KEYS } from "#core/settings.ts";
 import type { OverridableSettingKey } from "#core/settings.ts";
@@ -363,7 +367,10 @@ export const readSettingsState = ({
       id: profile.id,
       name: profileDisplayName(profile),
       color: profileColor(state, profile.id),
-      colorName: profileColorName(state, profile.id),
+      colorName:
+        profile.color === undefined || isProfileColorName(profile.color)
+          ? profileColorName(state, profile.id)
+          : null,
       enabled: !isDisabled(state, profile),
       asleep: isAsleep(state, profile),
       checkMail: checksMail(profile),

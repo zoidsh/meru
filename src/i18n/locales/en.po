@@ -439,6 +439,11 @@ msgstr "Check mail"
 msgid "Chime"
 msgstr "Chime"
 
+#. Shown in the Colour menu on a profile's page in Settings while the profile's stored colour is one this version does not know
+#: src/settings/profile-page.tsx
+msgid "Choose a colour"
+msgstr "Choose a colour"
+
 #. Segment of the Settings scope switcher that opens the list of profiles when their names do not fit
 #: src/settings/scope-tabs.tsx
 msgid "Choose a profile"

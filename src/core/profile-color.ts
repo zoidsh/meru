@@ -43,11 +43,14 @@ export const profileColorName = (
   return isProfileColorName(stored) ? stored : colorAt(Math.max(0, index));
 };
 
+/** A colour of the palette, as CSS. */
+export const paletteColor = (name: ProfileColorName) => PALETTE[name];
+
 /** A profile's colour, as CSS. */
 export const profileColor = (
   state: Pick<State, "profiles">,
   profileId: string
-) => PALETTE[profileColorName(state, profileId)];
+) => paletteColor(profileColorName(state, profileId));
 
 /**
  * The colour a profile added now takes: the first no listed profile has,

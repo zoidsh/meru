@@ -251,8 +251,11 @@ export const SETTINGS_STATE = {
       name: z.string(),
       /** As the shell draws its dot. */
       color: z.string(),
-      /** Which of the eight that is. */
-      colorName: z.enum(PROFILE_COLOR_NAMES),
+      /**
+       * Which of the eight is stored, else the one its place gives; `null`
+       * while what is stored is one this build does not know.
+       */
+      colorName: z.nullable(z.enum(PROFILE_COLOR_NAMES)),
       /** `false` while turned off, with no pages, mail or place in the titlebar. */
       enabled: z.boolean(),
       asleep: z.boolean(),

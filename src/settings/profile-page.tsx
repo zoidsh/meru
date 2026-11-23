@@ -1,11 +1,11 @@
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
-import { BanIcon, CheckIcon } from "lucide-react";
+import { BanIcon } from "lucide-react";
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { SettingsState } from "#contract/settings.ts";
-import { PROFILE_COLORS, PROFILE_COLOR_NAMES } from "#core/profile-color.ts";
+import { PROFILE_COLOR_NAMES, paletteColor } from "#core/profile-color.ts";
 import type { ProfileColorName } from "#core/profile-color.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Button } from "#ui/button.tsx";
@@ -19,15 +19,38 @@ import {
   FieldSeparator,
 } from "#ui/field.tsx";
 import { Input } from "#ui/input.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#ui/select.tsx";
 import { Switch } from "#ui/switch.tsx";
-import { ToggleGroup, ToggleGroupItem } from "#ui/toggle-group.tsx";
 
 import { DeleteBrowsingData } from "./delete-browsing-data.tsx";
 import { SavedSearchesCard } from "./saved-searches-card.tsx";
+import { ProfileDot } from "./scope-tabs.tsx";
 import { AccountLine, accountShown } from "./signed-in.tsx";
 import { settingsCalls } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
+
+/** A colour's dot and its name, in the Colour menu and on its trigger. */
+const ColorItem = ({
+  name,
+  label,
+}: {
+  name: ProfileColorName;
+  label: string;
+}) => (
+  <>
+    {/* The item's text is a flex row that does not centre its children. */}
+    <ProfileDot color={paletteColor(name)} className="size-2 self-center" />
+    {label}
+  </>
+);
 
 const Row = ({
   label,
@@ -387,47 +410,49 @@ export const ProfilePage = ({
               })}
             >
               {(ids) => (
-                <ToggleGroup
-                  variant="outline"
-                  size="sm"
-                  spacing={0}
-                  aria-labelledby={ids.label}
-                  aria-describedby={ids.description}
-                  value={[profile.colorName]}
-                  onValueChange={([color]) => {
-                    // Pressing the chosen colour leaves it chosen.
-                    if (color !== undefined) {
+                <Select
+                  items={PROFILE_COLOR_NAMES.map((name) => ({
+                    value: name,
+                    label: colorNames[name],
+                  }))}
+                  value={profile.colorName}
+                  onValueChange={(color) => {
+                    if (color !== null) {
                       calls
-                        .setProfileColor({
-                          profileId: profile.id,
-                          color: color as ProfileColorName,
-                        })
+                        .setProfileColor({ profileId: profile.id, color })
                         .catch(noop);
                     }
                   }}
                 >
-                  {PROFILE_COLOR_NAMES.map((name, index) => (
-                    <ToggleGroupItem
-                      key={name}
-                      value={name}
-                      aria-label={colorNames[name]}
-                      title={colorNames[name]}
-                      // Joined items take their padding through the group,
-                      // which a plain px-0 does not outrank.
-                      className="group-data-[spacing=0]/toggle-group:px-0"
-                    >
-                      <span
-                        aria-hidden
-                        className="flex size-4 items-center justify-center rounded-full text-white shadow-[inset_0_0_0_1px_oklch(0_0_0/0.12)]"
-                        style={{ background: PROFILE_COLORS[index] }}
-                      >
-                        {name === profile.colorName && (
-                          <CheckIcon className="size-3" strokeWidth={3.5} />
-                        )}
-                      </span>
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
+                  <SelectTrigger
+                    aria-labelledby={ids.label}
+                    aria-describedby={ids.description}
+                    className="min-w-28"
+                  >
+                    <SelectValue>
+                      {(name: ProfileColorName | null) =>
+                        name === null ? (
+                          t({
+                            message: "Choose a colour",
+                            comment:
+                              "Shown in the Colour menu on a profile's page in Settings while the profile's stored colour is one this version does not know",
+                          })
+                        ) : (
+                          <ColorItem name={name} label={colorNames[name]} />
+                        )
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    <SelectGroup>
+                      {PROFILE_COLOR_NAMES.map((name) => (
+                        <SelectItem key={name} value={name}>
+                          <ColorItem name={name} label={colorNames[name]} />
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               )}
             </Row>
             <FieldSeparator />
