@@ -191,27 +191,47 @@ describe(createSettingsStore, () => {
     });
   });
 
-  it("announces a key when a profile's value of it changes, and not otherwise", async () => {
+  it("announces a key when a profile's value of it changes, or whether the profile holds one, and not otherwise", async () => {
     const { settings } = setup({
       version: 1,
       profiles: { p: { unreadBadge: false } },
     });
     const heard: string[] = [];
+    let step = "";
 
-    settings.onChange("unreadBadge", () => heard.push("unreadBadge"));
-    settings.onChange("notifications", () => heard.push("notifications"));
+    settings.onChange("unreadBadge", () => heard.push(`unreadBadge ${step}`));
+    settings.onChange("notifications", () =>
+      heard.push(`notifications ${step}`)
+    );
 
-    await settings.setOverride("q", "unreadBadge", false);
-    // Equal to what the profile read already: nothing it reads changed.
-    await settings.setOverride("r", "unreadBadge", true);
-    await settings.setOverride("p", "unreadBadge", false);
-    // Every profile overriding it, or one following it, hears the app value.
-    await settings.update("unreadBadge", () => false);
-    await settings.clearOverride("q", "unreadBadge");
-    await settings.clearOverride("p", "unreadBadge");
-    await settings.removeProfile("r");
+    const run = async (name: string, change: () => Promise<void>) => {
+      step = name;
+      await change();
+    };
 
-    expect(heard).toStrictEqual(["unreadBadge", "unreadBadge", "unreadBadge"]);
+    await run("q's own", () => settings.setOverride("q", "unreadBadge", false));
+    await run("r's own, equal to the app's", () =>
+      settings.setOverride("r", "unreadBadge", true)
+    );
+    await run("p's again", () =>
+      settings.setOverride("p", "unreadBadge", false)
+    );
+    await run("the app's", () => settings.update("unreadBadge", () => false));
+    await run("q's cleared, equal to the app's", () =>
+      settings.clearOverride("q", "unreadBadge")
+    );
+    await run("q's cleared again", () =>
+      settings.clearOverride("q", "unreadBadge")
+    );
+    await run("r removed", () => settings.removeProfile("r"));
+
+    expect(heard).toStrictEqual([
+      "unreadBadge q's own",
+      "unreadBadge r's own, equal to the app's",
+      "unreadBadge the app's",
+      "unreadBadge q's cleared, equal to the app's",
+      "unreadBadge r removed",
+    ]);
   });
 
   it("deletes a profile's entry on its removal, keeping the rest of the file", async () => {

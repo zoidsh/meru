@@ -2,6 +2,7 @@ import { Mutex, isEqual } from "es-toolkit";
 
 import type { Platform } from "#core/platform.ts";
 import {
+  OVERRIDABLE_SETTING_KEYS,
   SETTING_KEYS,
   clearOverride,
   clearProfileOverrides,
@@ -53,14 +54,19 @@ export interface SettingsStoreDeps {
   log: (message: string) => void;
 }
 
+const overridable = new Set<SettingKey>(OVERRIDABLE_SETTING_KEYS);
+
+const isOverridable = (key: SettingKey): key is OverridableSettingKey =>
+  overridable.has(key);
+
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
 /**
  * What the person chose: an app value per setting, and a profile's own value
  * of the keys it may override. A change is saved before it is committed, one
- * at a time, and announced to the listeners of each key whose app value or
- * any profile's value it changed.
+ * at a time, and announced to the listeners of each key whose app value, any
+ * profile's value, or set of profiles holding a value of their own it changed.
  */
 export const createSettingsStore = ({
   initial,
@@ -76,8 +82,18 @@ export const createSettingsStore = ({
   const get = <Key extends SettingKey>(key: Key, profileId?: string) =>
     readSetting(settings, key, platform, profileId);
 
-  /** Whether the app's or any profile's value of the key differs between the two. */
+  /**
+   * Whether the app's or any profile's value of the key differs between the
+   * two, or which profiles hold one of their own: Settings shows who
+   * overrides a key, which changes when an override equal to the app value
+   * is set or cleared.
+   */
   const differs = (before: Settings, after: Settings, key: SettingKey) =>
+    (isOverridable(key) &&
+      !isEqual(
+        overridingProfiles(before, key),
+        overridingProfiles(after, key)
+      )) ||
     [
       undefined,
       ...new Set([
