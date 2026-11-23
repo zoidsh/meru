@@ -1,3 +1,4 @@
+import { noop } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import { newProfile } from "#core/state.ts";
@@ -14,6 +15,8 @@ const two: State = {
 const setup = ({ fails = false } = {}) => {
   let state = two;
   const calls: unknown[] = [];
+  // What happens while a profile is being selected.
+  let meanwhile = noop;
   const show = createShowGmail({
     state: () => state,
     openInGmailTab: (profileId, url) => {
@@ -28,6 +31,7 @@ const setup = ({ fails = false } = {}) => {
     },
     selectProfile: (profileId) => {
       calls.push(["selectProfile", profileId]);
+      meanwhile();
 
       return fails ? Promise.reject(new Error("busy")) : Promise.resolve();
     },
@@ -52,6 +56,9 @@ const setup = ({ fails = false } = {}) => {
             : profile
         ),
       };
+    },
+    whileSelecting: (change: () => void) => {
+      meanwhile = change;
     },
     disable: (profileId: string) => {
       state = {
@@ -99,6 +106,19 @@ describe(createShowGmail, () => {
 
     await expect(gone.show.openMessage("b", "u")).resolves.toBeFalsy();
     expect(gone.calls).toStrictEqual([]);
+  });
+
+  it("leaves the inbox and answers false for a profile turned off while it was selected", async () => {
+    const app = setup();
+
+    app.whileSelecting(() => {
+      app.disable("b");
+    });
+
+    await expect(app.show.openMessage("b", "u")).resolves.toBeFalsy();
+    await app.show.jumpTo("b");
+
+    expect(app.calls).not.toContainEqual(["closeInbox"]);
   });
 
   it("leaves a profile turned off as it was, opening and selecting nothing", async () => {

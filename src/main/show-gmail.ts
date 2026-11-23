@@ -54,6 +54,11 @@ export const createShowGmail = ({
         return false;
       }
 
+      // Turned off or removed while it was being shown.
+      if (!isListed(profileId)) {
+        return false;
+      }
+
       closeInbox();
 
       return true;
@@ -81,7 +86,10 @@ export const createShowGmail = ({
       }
 
       await selectProfile(profileId);
-      closeInbox();
+
+      if (isListed(profileId)) {
+        closeInbox();
+      }
     },
   };
 };
