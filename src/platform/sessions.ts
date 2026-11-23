@@ -1,5 +1,6 @@
 import { net, session } from "electron";
 
+import type { BrowsingDataType } from "#core/browsing-data.ts";
 import type { FeedResponse } from "#core/feed.ts";
 import type { ActionResponse } from "#core/mail-actions.ts";
 import type { PermissionAsk } from "#core/permissions.ts";
@@ -7,6 +8,11 @@ import type { PermissionAsk } from "#core/permissions.ts";
 export interface Sessions {
   /** Every kind of data the partition's session holds, cache included. */
   clear: (partition: string) => Promise<void>;
+  /** Only these kinds of data the partition's session holds. */
+  clearData: (
+    partition: string,
+    dataTypes: readonly BrowsingDataType[]
+  ) => Promise<void>;
   /**
    * Answers every permission request and check in the partition's session with
    * `allows`, in place of Electron's default of granting all, and refuses
@@ -135,6 +141,8 @@ export const createSessions = (): Sessions => {
     get: (partition, url, signal) => send(partition, url, undefined, signal),
     post: send,
     clear: (partition) => session.fromPartition(partition).clearData(),
+    clearData: (partition, dataTypes) =>
+      session.fromPartition(partition).clearData({ dataTypes: [...dataTypes] }),
     guard: (partition, allows) => {
       const guarding = session.fromPartition(partition);
 

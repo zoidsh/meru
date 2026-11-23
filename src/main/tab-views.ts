@@ -929,6 +929,32 @@ export const createTabViews = ({
     }
   };
 
+  /**
+   * Frees the tab's page, keeping where it was for when it is selected
+   * again or woken; the front tab stays the front, with no page.
+   */
+  const sleep = (key: TabKey) => {
+    const keyed = tabKey(key);
+
+    // A tab in its own window never sleeps.
+    if (!tabs.has(keyed) || inWindows.has(keyed)) {
+      return;
+    }
+
+    sleeping.add(keyed);
+    dispatch(keyed, { kind: "sleep" });
+
+    if (keyed === front) {
+      onFront();
+    }
+  };
+
+  /** The profile's tabs that have a page now. */
+  const pagesOf = (profileId: string) =>
+    [...tabs.values()]
+      .filter((tab) => tab.key.profileId === profileId)
+      .map((tab) => tab.key);
+
   /** Selects the tab, waking it if it sleeps. */
   const select = async (key: TabKey) => {
     wake(tabKey(key));
@@ -1010,23 +1036,33 @@ export const createTabViews = ({
     select,
     /** Whether the front tab was put to sleep, and so has no page. */
     frontAsleep: () => front !== undefined && !tabs.has(front),
+    sleep,
     /**
-     * Frees the tab's page, keeping where it was for when it is selected
-     * again or woken; the front tab stays the front, with no page.
+     * Puts each of the profile's pages but Gmail's to sleep, so none writes
+     * its site data back while that data is deleted. A tab in its own window
+     * keeps its page, since it never sleeps.
      */
-    sleep: (key: TabKey) => {
-      const keyed = tabKey(key);
+    sleepAllButGmail: (profileId: string) => {
+      const current = state();
 
-      // A tab in its own window never sleeps.
-      if (!tabs.has(keyed) || inWindows.has(keyed)) {
-        return;
+      for (const key of pagesOf(profileId)) {
+        if (findTab(current, key)?.app !== "gmail") {
+          sleep(key);
+        }
+      }
+    },
+    /**
+     * Loads each of the profile's pages again, so none runs on data that was
+     * deleted, and gives the front tab its page again if it was put to sleep.
+     */
+    reloadProfile: (profileId: string) => {
+      for (const key of pagesOf(profileId)) {
+        dispatch(tabKey(key), { kind: "reload" });
       }
 
-      sleeping.add(keyed);
-      dispatch(keyed, { kind: "sleep" });
-
-      if (keyed === front) {
-        onFront();
+      // The main window's front tab is the selected profile's.
+      if (front !== undefined && state().selectedProfileId === profileId) {
+        wake(front);
       }
     },
     /**

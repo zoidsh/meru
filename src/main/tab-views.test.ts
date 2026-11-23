@@ -1245,6 +1245,47 @@ describe(createTabViews, () => {
     }
   });
 
+  it("puts a profile's pages but Gmail's to sleep, then loads its pages again and its front tab woken, leaving another profile's alone", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await window.profiles.selectTab(calendar);
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    const gmail = window.viewOf("persist:a");
+    const first = window.viewOf("persist:a", 1);
+    const other = window.viewOf("persist:b");
+
+    window.tabs.sleepAllButGmail("a");
+
+    const asleep = [gmail?.closed, first?.closed, window.live()];
+
+    window.tabs.reloadProfile("a");
+
+    expect([
+      asleep,
+      gmail?.reloads,
+      other?.reloads,
+      window.live(),
+    ]).toStrictEqual([
+      [
+        false,
+        true,
+        [
+          ["persist:a", GMAIL, false],
+          ["persist:b", GMAIL, false],
+        ],
+      ],
+      1,
+      0,
+      [
+        ["persist:a", GMAIL, false],
+        ["persist:b", GMAIL, false],
+        ["persist:a", CALENDAR, true],
+      ],
+    ]);
+  });
+
   it("puts a background tab to sleep, closing its view and any retry, and loads it where it was when it is selected", async () => {
     const window = await setup();
     const calendar = { profileId: "a", tabId: "c1" };
