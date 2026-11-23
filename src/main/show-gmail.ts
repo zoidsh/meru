@@ -36,9 +36,14 @@ export const createShowGmail = ({
   return {
     /**
      * Shows `url` in the profile's Gmail tab and selects the profile; false
-     * when the profile is gone or was not selected.
+     * when the profile is gone, turned off or was not selected.
      */
     openMessage: async (profileId: string, url: string) => {
+      // A click that comes just after the profile went leaves its tabs alone.
+      if (!isListed(profileId)) {
+        return false;
+      }
+
       await openInGmailTab(profileId, url);
 
       try {
@@ -46,10 +51,6 @@ export const createShowGmail = ({
       } catch (error) {
         log(`A message's profile was not selected: ${String(error)}`);
 
-        return false;
-      }
-
-      if (!isListed(profileId)) {
         return false;
       }
 
@@ -63,6 +64,10 @@ export const createShowGmail = ({
      * the tab it had selected.
      */
     jumpTo: async (profileId: string) => {
+      if (!isListed(profileId)) {
+        return;
+      }
+
       const profile = state().profiles.find(
         (candidate) => candidate.id === profileId
       );
@@ -76,10 +81,7 @@ export const createShowGmail = ({
       }
 
       await selectProfile(profileId);
-
-      if (isListed(profileId)) {
-        closeInbox();
-      }
+      closeInbox();
     },
   };
 };

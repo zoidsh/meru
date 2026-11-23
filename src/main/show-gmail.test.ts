@@ -53,6 +53,14 @@ const setup = ({ fails = false } = {}) => {
         ),
       };
     },
+    disable: (profileId: string) => {
+      state = {
+        ...state,
+        profiles: state.profiles.map((profile) =>
+          profile.id === profileId ? { ...profile, disabled: true } : profile
+        ),
+      };
+    },
     remove: (profileId: string) => {
       state = {
         ...state,
@@ -90,7 +98,18 @@ describe(createShowGmail, () => {
     gone.remove("b");
 
     await expect(gone.show.openMessage("b", "u")).resolves.toBeFalsy();
-    expect(gone.calls).not.toContainEqual(["closeInbox"]);
+    expect(gone.calls).toStrictEqual([]);
+  });
+
+  it("leaves a profile turned off as it was, opening and selecting nothing", async () => {
+    const app = setup();
+
+    app.disable("b");
+
+    await expect(app.show.openMessage("b", "u")).resolves.toBeFalsy();
+    await app.show.jumpTo("b");
+
+    expect(app.calls).toStrictEqual([]);
   });
 
   it("jumps to a profile's Gmail tab before the profile, then closes the inbox", async () => {
@@ -118,12 +137,12 @@ describe(createShowGmail, () => {
     ]);
   });
 
-  it("leaves the inbox when the profile jumped to is gone", async () => {
+  it("does nothing when the profile jumped to is gone", async () => {
     const app = setup();
 
     app.remove("b");
     await app.show.jumpTo("b");
 
-    expect(app.calls).toStrictEqual([["selectProfile", "b"]]);
+    expect(app.calls).toStrictEqual([]);
   });
 });
