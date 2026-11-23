@@ -56,6 +56,7 @@ export const wireSettingsWindow = ({
   sound,
   showTestNotification,
   deleteBrowsingData,
+  signIn,
 }: {
   isMacOS: boolean;
   background: boolean;
@@ -80,6 +81,7 @@ export const wireSettingsWindow = ({
     profileId: string,
     kinds: BrowsingDataKinds
   ) => Promise<void>;
+  signIn: (profileId: string) => Promise<void>;
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
@@ -146,6 +148,7 @@ export const wireSettingsWindow = ({
       pages,
       showTestNotification,
       deleteBrowsingData,
+      signIn,
       // The system's confirmation shows as a sheet on the window that asked.
       removeProfile: async (profileId) => {
         const window = settingsWindow.current();

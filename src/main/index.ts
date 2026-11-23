@@ -444,6 +444,12 @@ const start = async () => {
     sound,
     showTestNotification,
     deleteBrowsingData: createDeleteBrowsingData({ sessions, views, mail }),
+    // Google's sign-in is in the profile's Gmail tab, so the window comes
+    // forward with it, unless the background flags hold it back.
+    signIn: async (profileId) => {
+      await showGmail.jumpTo(profileId);
+      revealGmail(profileId);
+    },
   });
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({

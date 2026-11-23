@@ -219,6 +219,14 @@ export const SETTINGS_CALLS = {
     }),
     response: z.undefined(),
   },
+  /**
+   * Selects a listed profile in the main window, waking it, and shows its
+   * Gmail tab, where Google's sign-in is; refused for one turned off.
+   */
+  signIn: {
+    request: z.object({ profileId }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }

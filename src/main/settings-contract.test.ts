@@ -68,6 +68,7 @@ const setup = (state: State, initial?: Settings) => {
   const addedBy: string[] = [];
   let confirms = true;
   const deleted: [string, BrowsingDataKinds][] = [];
+  const signedIn: string[] = [];
   const deps = {
     settings,
     profiles,
@@ -105,6 +106,11 @@ const setup = (state: State, initial?: Settings) => {
 
       return Promise.resolve();
     },
+    signIn: (profileId: string) => {
+      signedIn.push(profileId);
+
+      return Promise.resolve();
+    },
   };
 
   settings.onChange("notificationSender", () =>
@@ -121,6 +127,7 @@ const setup = (state: State, initial?: Settings) => {
     asked,
     addedBy,
     deleted,
+    signedIn,
     confirming: (next: boolean) => {
       confirms = next;
     },
@@ -850,6 +857,27 @@ describe("the Settings window's Delete browsing data", () => {
         ["home", { cookies: false, cache: true }],
         ["work", { cookies: true, cache: false }],
       ],
+    ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Sign in", () => {
+  it("signs in a listed profile, asleep included, and refuses one turned off or unlisted", async () => {
+    const app = setup(stateOf("Home", "Work", "Club"));
+
+    await app.profiles.sleep("work");
+    await app.handlers.setProfileEnabled({ profileId: "club", enabled: false });
+    await app.handlers.signIn({ profileId: "work" });
+
+    expect([
+      await refusal(app.handlers.signIn({ profileId: "club" })),
+      await refusal(app.handlers.signIn({ profileId: "gone" })),
+      app.signedIn,
+    ]).toStrictEqual([
+      "A profile turned off cannot be signed in to",
+      "No listed profile has the id gone",
+      ["work"],
     ]);
     app.dispose();
   });

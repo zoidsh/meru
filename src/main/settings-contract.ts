@@ -63,6 +63,11 @@ export interface SettingsContractDeps {
     profileId: string,
     kinds: BrowsingDataKinds
   ) => Promise<void>;
+  /**
+   * Selects the profile in the main window and shows its Gmail tab, bringing
+   * the window forward.
+   */
+  signIn: (profileId: string) => Promise<void>;
   doNotDisturb: Pick<
     ReturnType<typeof createDoNotDisturb>,
     "current" | "switchOn" | "switchOff"
@@ -134,6 +139,7 @@ export const settingsHandlers = ({
   showTestNotification,
   removeProfile,
   deleteBrowsingData,
+  signIn,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -309,6 +315,20 @@ export const settingsHandlers = ({
       }
 
       await deleteBrowsingData(profileId, { cookies, cache });
+    },
+    signIn: async ({ profileId }) => {
+      assertListed(profiles, profileId);
+
+      const state = profiles.get();
+      const profile = state.profiles.find(
+        (candidate) => candidate.id === profileId
+      );
+
+      if (profile && isDisabled(state, profile)) {
+        throw new Error("A profile turned off cannot be signed in to");
+      }
+
+      await signIn(profileId);
     },
   };
 };
