@@ -111,7 +111,7 @@ export const createInbox = ({
       }
 
       if (!inboxAvailable(state)) {
-        log("Refused to open the unified inbox with only one profile");
+        log("Refused to open the unified inbox with only one profile enabled");
 
         return;
       }
