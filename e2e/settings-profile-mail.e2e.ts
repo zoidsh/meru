@@ -1,102 +1,24 @@
-import type { ElectronApplication, Page } from "@playwright/test";
-
+import { expect, findOverlayDocument, test } from "./lib/app.ts";
 import {
-  SHELL_URL,
-  expect,
-  findOverlayDocument,
-  findPage,
-  test,
-  writeState,
-} from "./lib/app.ts";
-import { openProfiles, openSettings, profileRow } from "./lib/settings.ts";
+  launchWithMail,
+  notified,
+  openProfiles,
+  openSettings,
+  pageLine,
+  pollAll,
+  profileRow,
+  profileTab,
+  switchNamed,
+} from "./lib/settings.ts";
 import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
-import type { StandIn } from "./lib/stand-in.ts";
-import { signIn } from "./lib/stand-in.ts";
 import { listing } from "./lib/stand-in/feed.ts";
-import type { FeedAnswer } from "./lib/stand-in/feed.ts";
-
-interface Seeded {
-  id: string;
-  name: string;
-  /** What the profile's own session's feed answers; signed out when not given. */
-  feed?: FeedAnswer;
-  asleep?: boolean;
-  checkMail?: boolean;
-}
-
-/**
- * Launches Meru on these profiles, the first selected, each with a feed
- * signed in to the stand-in's as its own account, and waits until every
- * profile signed in has been counted.
- */
-const launchWith = async (
-  launchApp: () => Promise<ElectronApplication>,
-  userDataDir: string,
-  standIn: StandIn,
-  profiles: readonly Seeded[]
-) => {
-  await writeState(userDataDir, {
-    profiles: profiles.map(({ id, name, asleep, checkMail }) => ({
-      id,
-      name,
-      ...(asleep === undefined ? {} : { asleep }),
-      ...(checkMail === undefined ? {} : { checkMail }),
-    })),
-    selectedProfileId: profiles[0]?.id,
-  });
-
-  for (const { id, feed } of profiles) {
-    if (feed) {
-      standIn.setFeed(`persist:${id}`, feed);
-    }
-  }
-
-  const app = await launchApp();
-  const shell = await findPage(app, SHELL_URL);
-
-  for (const { id, feed } of profiles) {
-    if (feed) {
-      // oxlint-disable-next-line no-await-in-loop -- one session after another
-      await signIn(app, standIn, id);
-    }
-  }
-
-  await pollAll(app);
-
-  return { app, shell };
-};
-
-/** Waking polls every profile at once. */
-const pollAll = (app: ElectronApplication) =>
-  app.evaluate(({ powerMonitor }) => {
-    powerMonitor.emit("resume");
-  });
-
-const profileTab = (shell: Page, name: string) =>
-  shell
-    .getByRole("group", { name: "Profiles" })
-    .getByRole("button", { name: new RegExp(`^${name}`, "u") });
-
-/** The titles of the notifications the suite's build captured, in order. */
-const notified = (app: ElectronApplication) =>
-  app.evaluate(() =>
-    (
-      Reflect.get(globalThis, "meruTestNotifications") as { title: string }[]
-    ).map(({ title }) => title)
-  );
-
-const switchNamed = (page: Page, name: string) =>
-  page.getByRole("switch", { name, exact: true });
-
-const pageLine = (page: Page, text: string | RegExp) =>
-  page.getByRole("main").getByText(text);
 
 test("Check mail off clears the titlebar's count and the profile's inbox rows and stops its notifications; on brings them back", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
-  const { app, shell } = await launchWith(launchApp, userDataDir, standIn, [
+  const { app, shell } = await launchWithMail(launchApp, userDataDir, standIn, [
     { id: "home", name: "Home", feed: listing("a1") },
     { id: "work", name: "Work", feed: listing("b1") },
   ]);
@@ -163,7 +85,7 @@ test("Sleep from Settings puts the titlebar's profile to sleep, is disabled for 
   userDataDir,
   standIn,
 }) => {
-  const { app, shell } = await launchWith(launchApp, userDataDir, standIn, [
+  const { app, shell } = await launchWithMail(launchApp, userDataDir, standIn, [
     { id: "home", name: "Home", feed: listing() },
     { id: "work", name: "Work", feed: listing() },
   ]);
@@ -208,7 +130,7 @@ test("the list and a profile's page show the signed-in address, Not signed in fo
   userDataDir,
   standIn,
 }) => {
-  const { app } = await launchWith(launchApp, userDataDir, standIn, [
+  const { app } = await launchWithMail(launchApp, userDataDir, standIn, [
     {
       id: "home",
       name: "Home",
@@ -260,7 +182,7 @@ test.describe("shots", () => {
     userDataDir,
     standIn,
   }) => {
-    const { app } = await launchWith(launchApp, userDataDir, standIn, [
+    const { app } = await launchWithMail(launchApp, userDataDir, standIn, [
       {
         id: "home",
         name: "Home",

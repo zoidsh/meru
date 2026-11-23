@@ -1,7 +1,15 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { clickMenuItem, expect, findPage, writeState } from "./app.ts";
+import {
+  SHELL_URL,
+  clickMenuItem,
+  expect,
+  findPage,
+  writeState,
+} from "./app.ts";
 import type { StandIn } from "./stand-in.ts";
+import { signIn } from "./stand-in.ts";
+import type { FeedAnswer } from "./stand-in/feed.ts";
 
 export const SETTINGS_URL = "meru-app://settings/";
 
@@ -154,3 +162,79 @@ export const removeProfileInSettings = async (page: Page, name: string) => {
   await profileRow(page, name).click();
   await page.getByRole("button", { name: "Remove profile…" }).click();
 };
+
+export interface SeededWithMail {
+  id: string;
+  name: string;
+  /** What the profile's own session's feed answers; signed out when not given. */
+  feed?: FeedAnswer;
+  asleep?: boolean;
+  checkMail?: boolean;
+}
+
+/**
+ * Launches Meru on these profiles, the first selected, each with a feed
+ * signed in to the stand-in's as its own account, and waits until every
+ * profile signed in has been counted.
+ */
+export const launchWithMail = async (
+  launchApp: () => Promise<ElectronApplication>,
+  userDataDir: string,
+  standIn: StandIn,
+  profiles: readonly SeededWithMail[]
+) => {
+  await writeState(userDataDir, {
+    profiles: profiles.map(({ id, name, asleep, checkMail }) => ({
+      id,
+      name,
+      ...(asleep === undefined ? {} : { asleep }),
+      ...(checkMail === undefined ? {} : { checkMail }),
+    })),
+    selectedProfileId: profiles[0]?.id,
+  });
+
+  for (const { id, feed } of profiles) {
+    if (feed) {
+      standIn.setFeed(`persist:${id}`, feed);
+    }
+  }
+
+  const app = await launchApp();
+  const shell = await findPage(app, SHELL_URL);
+
+  for (const { id, feed } of profiles) {
+    if (feed) {
+      // oxlint-disable-next-line no-await-in-loop -- one session after another
+      await signIn(app, standIn, id);
+    }
+  }
+
+  await pollAll(app);
+
+  return { app, shell };
+};
+
+/** Waking polls every profile at once. */
+export const pollAll = (app: ElectronApplication) =>
+  app.evaluate(({ powerMonitor }) => {
+    powerMonitor.emit("resume");
+  });
+
+export const profileTab = (shell: Page, name: string) =>
+  shell
+    .getByRole("group", { name: "Profiles" })
+    .getByRole("button", { name: new RegExp(`^${name}`, "u") });
+
+/** The titles of the notifications the suite's build captured, in order. */
+export const notified = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as { title: string }[]
+    ).map(({ title }) => title)
+  );
+
+export const switchNamed = (page: Page, name: string) =>
+  page.getByRole("switch", { name, exact: true });
+
+export const pageLine = (page: Page, text: string | RegExp) =>
+  page.getByRole("main").getByText(text);
