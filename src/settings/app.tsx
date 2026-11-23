@@ -232,8 +232,6 @@ export const App = () => {
                 profiles &&
                 (profile ? (
                   <ProfilePage
-                    // Another profile's page starts afresh, as leaving one does.
-                    key={profile.id}
                     profile={profile}
                     count={profiles.length}
                     lastAwake={
