@@ -116,9 +116,17 @@ describe(createShowGmail, () => {
     });
 
     await expect(app.show.openMessage("b", "u")).resolves.toBeFalsy();
-    await app.show.jumpTo("b");
-
     expect(app.calls).not.toContainEqual(["closeInbox"]);
+
+    const jumped = setup();
+
+    jumped.whileSelecting(() => {
+      jumped.disable("b");
+    });
+    await jumped.show.jumpTo("b");
+
+    expect(jumped.calls).toContainEqual(["selectProfile", "b"]);
+    expect(jumped.calls).not.toContainEqual(["closeInbox"]);
   });
 
   it("leaves a profile turned off as it was, opening and selecting nothing", async () => {
