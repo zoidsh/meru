@@ -4,6 +4,7 @@ import { noop } from "es-toolkit";
 import {
   ChevronRightIcon,
   GripVerticalIcon,
+  BanIcon,
   MoonIcon,
   PlusIcon,
 } from "lucide-react";
@@ -195,8 +196,9 @@ export const ProfilesPage = ({
               const { name } = profile;
               const titleId = `${rowIds}-${profile.id}-title`;
               const aboutId = `${rowIds}-${profile.id}-about`;
-              const asleepId = `${rowIds}-${profile.id}-asleep`;
-              const shown = accountShown(profile);
+              const badgeId = `${rowIds}-${profile.id}-badge`;
+              const shown = profile.enabled && accountShown(profile);
+              const badged = !profile.enabled || profile.asleep;
 
               return (
                 // The row is where a dragged handle drops, and the handle
@@ -287,17 +289,24 @@ export const ProfilesPage = ({
                     // are read after it rather than as its name.
                     aria-labelledby={titleId}
                     aria-describedby={
-                      [shown && aboutId, profile.asleep && asleepId]
+                      [shown && aboutId, badged && badgeId]
                         .filter(Boolean)
                         .join(" ") || undefined
                     }
                     className="min-w-0 flex-1 text-left hover:bg-muted"
                   >
-                    <ItemMedia>
+                    {/* Dimmed while disabled, as v3 drew a disabled account. */}
+                    <ItemMedia className={cn(!profile.enabled && "opacity-60")}>
                       <ProfileDot color={profile.color} />
                     </ItemMedia>
                     <ItemContent className="min-w-0">
-                      <ItemTitle id={titleId} className="max-w-full">
+                      <ItemTitle
+                        id={titleId}
+                        className={cn(
+                          "max-w-full",
+                          !profile.enabled && "opacity-60"
+                        )}
+                      >
                         {profile.name}
                       </ItemTitle>
                       {shown && (
@@ -309,8 +318,18 @@ export const ProfilesPage = ({
                       )}
                     </ItemContent>
                     <ItemActions className="text-muted-foreground">
-                      {profile.asleep && (
-                        <Badge id={asleepId} variant="outline">
+                      {!profile.enabled && (
+                        <Badge id={badgeId} variant="outline">
+                          <BanIcon data-icon="inline-start" />
+                          {t({
+                            message: "Disabled",
+                            comment:
+                              "Badge on a disabled profile's row in Settings' list of profiles, one turned off by its Enabled switch",
+                          })}
+                        </Badge>
+                      )}
+                      {profile.enabled && profile.asleep && (
+                        <Badge id={badgeId} variant="outline">
                           <MoonIcon data-icon="inline-start" />
                           {t({
                             message: "Asleep",

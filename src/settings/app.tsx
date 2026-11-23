@@ -240,6 +240,10 @@ export const App = () => {
                         (listed) => listed.enabled && !listed.asleep
                       ).length === 1
                     }
+                    lastEnabled={
+                      profile.enabled &&
+                      profiles.filter((listed) => listed.enabled).length === 1
+                    }
                     focusName={added === profile.id}
                     onNameFocused={nameFocused}
                     onRemoveAsked={() => {

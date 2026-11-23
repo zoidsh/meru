@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
-import { CheckIcon } from "lucide-react";
+import { BanIcon, CheckIcon } from "lucide-react";
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -153,6 +153,7 @@ export const ProfilePage = ({
   profile,
   count,
   lastAwake,
+  lastEnabled,
   focusName,
   onNameFocused,
   onRemoveAsked,
@@ -162,6 +163,8 @@ export const ProfilePage = ({
   count: number;
   /** Whether it is the one profile awake, which cannot sleep. */
   lastAwake: boolean;
+  /** Whether it is the one profile enabled, which can be neither turned off nor removed. */
+  lastEnabled: boolean;
   /** Whether to focus the name with its text chosen, as for one just added. */
   focusName: boolean;
   onNameFocused: () => void;
@@ -180,11 +183,19 @@ export const ProfilePage = ({
     amber: t({ message: "Amber", comment: "Name of a profile's colour" }),
     violet: t({ message: "Violet", comment: "Name of a profile's colour" }),
   };
-  const removable = count > 1;
+  const removable = count > 1 && !lastEnabled;
   const many = count > 1;
+  const off = !profile.enabled;
   let checkMailDescription: string;
 
-  if (profile.checkMail) {
+  if (off) {
+    checkMailDescription = t({
+      message:
+        "A disabled profile checks no mail; this applies once it is enabled.",
+      comment:
+        "Description of Check mail on a disabled profile's page in Settings, whose switch is disabled",
+    });
+  } else if (profile.checkMail) {
     checkMailDescription = many
       ? t({
           message:
@@ -221,7 +232,13 @@ export const ProfilePage = ({
     : "";
   let sleepDescription: string;
 
-  if (lastAwake) {
+  if (off) {
+    sleepDescription = t({
+      message: "A disabled profile has no pages.",
+      comment:
+        "Description of Sleep on a disabled profile's page in Settings, whose switch is disabled",
+    });
+  } else if (lastAwake) {
     sleepDescription = t({
       message: "The last awake profile can't sleep.",
       comment:
@@ -241,12 +258,98 @@ export const ProfilePage = ({
     })}${stillChecked}`;
   }
 
+  let enabledDescription: string;
+
+  if (lastEnabled) {
+    enabledDescription = t({
+      message: "Meru needs at least one profile turned on.",
+      comment:
+        "Description of Enabled on the page of the only enabled profile in Settings, whose switch is disabled",
+    });
+  } else if (off) {
+    enabledDescription = t({
+      message:
+        "Off: it stays signed in. Turn it on to put it back in the titlebar.",
+      comment:
+        "Description of Enabled, turned off, on a profile's page in Settings",
+    });
+  } else {
+    enabledDescription = t({
+      message:
+        "Turned off, it stays signed in but leaves the titlebar, the Unified inbox and the profile shortcuts, and its mail is not checked.",
+      comment:
+        "Description of Enabled, turned on, on a profile's page in Settings",
+    });
+  }
+
+  let removeDescription: string;
+
+  if (count === 1) {
+    removeDescription = t({
+      message: "Meru needs at least one profile, so the last can't be removed.",
+      comment:
+        "Description of Remove profile on the page of the only profile in Settings, whose button is disabled",
+    });
+  } else if (lastEnabled) {
+    removeDescription = t({
+      message:
+        "Meru needs at least one profile turned on, so the last can't be removed.",
+      comment:
+        "Description of Remove profile on the page of the only enabled profile in Settings, whose button is disabled",
+    });
+  } else {
+    removeDescription = t({
+      message:
+        "Signs out of this profile and deletes its data on this device. Your Google account isn't affected.",
+      comment: "Description of Remove profile on a profile's page in Settings",
+    });
+  }
+
   return (
     <>
-      {accountShown(profile) && <AccountLine profile={profile} />}
+      {off ? (
+        <p className="flex items-center gap-1.5 px-1 text-sm text-muted-foreground">
+          <BanIcon aria-hidden className="size-3.5 shrink-0" />
+          {t({
+            message:
+              "Disabled: not in the titlebar, the Unified inbox or the profile shortcuts, and its mail is not checked. It stays signed in.",
+            comment: "Line at the top of a disabled profile's page in Settings",
+          })}
+        </p>
+      ) : (
+        accountShown(profile) && <AccountLine profile={profile} />
+      )}
       <Card>
         <CardContent>
           <FieldGroup>
+            {many && (
+              <>
+                <Row
+                  label={t({
+                    message: "Enabled",
+                    comment:
+                      "Label of the switch on a profile's page in Settings that turns the profile off or on; off, it leaves the titlebar and its mail is not checked",
+                  })}
+                  description={enabledDescription}
+                  disabled={lastEnabled}
+                >
+                  {(ids) => (
+                    <Switch
+                      checked={profile.enabled}
+                      disabled={lastEnabled}
+                      aria-labelledby={ids.label}
+                      aria-describedby={ids.description}
+                      onCheckedChange={(enabled) => {
+                        calls
+                          .setProfileEnabled({ profileId: profile.id, enabled })
+                          .catch(noop);
+                      }}
+                    />
+                  )}
+                </Row>
+                <FieldSeparator />
+              </>
+            )}
             <Row
               label={t({
                 message: "Name",
@@ -332,10 +435,12 @@ export const ProfilePage = ({
                   "Label of the switch on a profile's page in Settings that turns checking its mail on or off",
               })}
               description={checkMailDescription}
+              disabled={off}
             >
               {(ids) => (
                 <Switch
                   checked={profile.checkMail}
+                  disabled={off}
                   aria-labelledby={ids.label}
                   aria-describedby={ids.description}
                   onCheckedChange={(on) => {
@@ -356,12 +461,12 @@ export const ProfilePage = ({
                       "Label of the switch on a profile's page in Settings that puts it to sleep or wakes it",
                   })}
                   description={sleepDescription}
-                  disabled={lastAwake}
+                  disabled={lastAwake || off}
                 >
                   {(ids) => (
                     <Switch
-                      checked={profile.asleep}
-                      disabled={lastAwake}
+                      checked={profile.asleep && !off}
+                      disabled={lastAwake || off}
                       aria-labelledby={ids.label}
                       aria-describedby={ids.description}
                       onCheckedChange={(asleep) => {
@@ -386,21 +491,7 @@ export const ProfilePage = ({
               comment:
                 "Label of the row on a profile's page in Settings that removes it",
             })}
-            description={
-              removable
-                ? t({
-                    message:
-                      "Signs out of this profile and deletes its data on this device. Your Google account isn't affected.",
-                    comment:
-                      "Description of Remove profile on a profile's page in Settings",
-                  })
-                : t({
-                    message:
-                      "Meru needs at least one profile, so the last can't be removed.",
-                    comment:
-                      "Description of Remove profile on the page of the only profile in Settings, whose button is disabled",
-                  })
-            }
+            description={removeDescription}
           >
             {(ids) => (
               <Button

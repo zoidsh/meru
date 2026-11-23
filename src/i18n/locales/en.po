@@ -225,6 +225,16 @@ msgstr "{unreadCount, plural, one {{name}: the newest {listed} of # unread} othe
 msgid "<0>Failed</0> · {when}"
 msgstr "<0>Failed</0> · {when}"
 
+#. Description of Check mail on a disabled profile's page in Settings, whose switch is disabled
+#: src/settings/profile-page.tsx
+msgid "A disabled profile checks no mail; this applies once it is enabled."
+msgstr "A disabled profile checks no mail; this applies once it is enabled."
+
+#. Description of Sleep on a disabled profile's page in Settings, whose switch is disabled
+#: src/settings/profile-page.tsx
+msgid "A disabled profile has no pages."
+msgstr "A disabled profile has no pages."
+
 #. Read by screen readers on the title bar's Downloads button, green once a download finished and the list has not been opened since
 #: src/shell/downloads.tsx
 msgid "A download finished"
@@ -565,6 +575,16 @@ msgctxt "inbox action"
 msgid "Delete"
 msgstr "Delete"
 
+#. Badge on a disabled profile's row in Settings' list of profiles, one turned off by its Enabled switch
+#: src/settings/profiles-page.tsx
+msgid "Disabled"
+msgstr "Disabled"
+
+#. Line at the top of a disabled profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Disabled: not in the titlebar, the Unified inbox or the profile shortcuts, and its mail is not checked. It stays signed in."
+msgstr "Disabled: not in the titlebar, the Unified inbox or the profile shortcuts, and its mail is not checked. It stays signed in."
+
 #. Accessible name of the moon button in the title bar that holds new mail notifications, read by screen readers with whether it is pressed
 #. Command that turns Do Not Disturb on until turned off, or off, checked while it holds new mail notifications
 #. Label of the switch in Settings that holds every notification until turned off
@@ -638,6 +658,11 @@ msgstr "Duplicate"
 #: src/main/application-menu.ts
 msgid "Edit"
 msgstr "Edit"
+
+#. Label of the switch on a profile's page in Settings that turns the profile off or on; off, it leaves the titlebar and its mail is not checked
+#: src/settings/profile-page.tsx
+msgid "Enabled"
+msgstr "Enabled"
 
 #. Shown under the Search field in Settings when Save is pressed with it empty
 #: src/settings/saved-searches-card.tsx
@@ -881,6 +906,16 @@ msgstr "Maximized · Restore"
 msgid "Meru keeps trying by itself."
 msgstr "Meru keeps trying by itself."
 
+#. Description of Remove profile on the page of the only enabled profile in Settings, whose button is disabled
+#: src/settings/profile-page.tsx
+msgid "Meru needs at least one profile turned on, so the last can't be removed."
+msgstr "Meru needs at least one profile turned on, so the last can't be removed."
+
+#. Description of Enabled on the page of the only enabled profile in Settings, whose switch is disabled
+#: src/settings/profile-page.tsx
+msgid "Meru needs at least one profile turned on."
+msgstr "Meru needs at least one profile turned on."
+
 #. Description of Remove profile on the page of the only profile in Settings, whose button is disabled
 #: src/settings/profile-page.tsx
 msgid "Meru needs at least one profile, so the last can't be removed."
@@ -1067,6 +1102,11 @@ msgstr "Off for all profiles"
 #: src/settings/notifications-page.tsx
 msgid "Off while Do Not Disturb is on"
 msgstr "Off while Do Not Disturb is on"
+
+#. Description of Enabled, turned off, on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Off: it stays signed in. Turn it on to put it back in the titlebar."
+msgstr "Off: it stays signed in. Turn it on to put it back in the titlebar."
 
 #. Description of Check mail, turned off, on the only profile's page in Settings, which has no Unified inbox
 #: src/settings/profile-page.tsx
@@ -1721,6 +1761,11 @@ msgstr "Turn Off"
 #: src/settings/notifications-page.tsx
 msgid "Turn off Do Not Disturb to show a test notification."
 msgstr "Turn off Do Not Disturb to show a test notification."
+
+#. Description of Enabled, turned on, on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Turned off, it stays signed in but leaves the titlebar, the Unified inbox and the profile shortcuts, and its mail is not checked."
+msgstr "Turned off, it stays signed in but leaves the titlebar, the Unified inbox and the profile shortcuts, and its mail is not checked."
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
