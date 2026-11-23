@@ -1624,7 +1624,9 @@ msgctxt "View menu"
 msgid "Sidebar"
 msgstr "Sidebar"
 
+#. Button in Settings for a profile whose Google account is signed out, which shows Google's sign-in in the main window
 #. Button in the page area of a profile whose Google account is signed out; it opens Gmail, which shows Google's sign-in page
+#: src/settings/signed-in.tsx
 #: src/shell/nothing-open.tsx
 msgid "Sign in"
 msgstr "Sign in"
@@ -1633,6 +1635,11 @@ msgstr "Sign in"
 #: src/shell/nothing-open.tsx
 msgid "Sign in required"
 msgstr "Sign in required"
+
+#. Accessible name of Sign in after a signed-out profile's row in Settings' list of profiles; {name} is the profile's name
+#: src/settings/signed-in.tsx
+msgid "Sign in to {name}"
+msgstr "Sign in to {name}"
 
 #. Line at the top of a profile's page in Settings; {address} is the email address of the Google account the profile is signed in to
 #: src/settings/signed-in.tsx

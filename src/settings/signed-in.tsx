@@ -1,7 +1,11 @@
 import { useLingui } from "@lingui/react/macro";
+import { noop } from "es-toolkit";
 import { CircleAlertIcon } from "lucide-react";
 
 import type { SettingsState } from "#contract/settings.ts";
+import { Button } from "#ui/button.tsx";
+
+import { settingsCalls } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
 
@@ -18,6 +22,51 @@ export const accountShown = ({ mail }: ListedProfile) =>
 const SignedOutMark = () => (
   <CircleAlertIcon aria-hidden className="size-3.5 shrink-0 text-destructive" />
 );
+
+/** Whether the mail check found the profile signed out, which Sign in answers. */
+export const signedOut = ({ mail }: ListedProfile) =>
+  mail.status === "signedOut";
+
+/**
+ * Selects the profile in the main window and shows its Gmail tab, where
+ * Google's own sign-in is; Settings collects nothing.
+ */
+export const SignInButton = ({
+  profile,
+  named = false,
+}: {
+  profile: ListedProfile;
+  /** Named after the profile, as in the list, where each row has one. */
+  named?: boolean;
+}) => {
+  const { t } = useLingui();
+  const { name } = profile;
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      aria-label={
+        named
+          ? t({
+              message: `Sign in to ${name}`,
+              comment:
+                "Accessible name of Sign in after a signed-out profile's row in Settings' list of profiles; {name} is the profile's name",
+            })
+          : undefined
+      }
+      onClick={() => {
+        settingsCalls().signIn({ profileId: profile.id }).catch(noop);
+      }}
+    >
+      {t({
+        message: "Sign in",
+        comment:
+          "Button in Settings for a profile whose Google account is signed out, which shows Google's sign-in in the main window",
+      })}
+    </Button>
+  );
+};
 
 /** On a profile's row in the list: its address, or "Not signed in" after the mark. */
 export const AccountSummary = ({ profile }: { profile: ListedProfile }) => {
@@ -57,13 +106,16 @@ export const AccountLine = ({ profile }: { profile: ListedProfile }) => {
   }
 
   return (
-    <p className="flex items-center gap-1.5 px-1 text-sm text-muted-foreground">
+    <div className="flex items-center gap-1.5 px-1 text-sm text-muted-foreground">
       <SignedOutMark />
-      {t({
-        message: "Not signed in to Google, so its mail is not checked.",
-        comment:
-          "Line at the top of a profile's page in Settings, when its Google account is signed out",
-      })}
-    </p>
+      <p className="flex-1">
+        {t({
+          message: "Not signed in to Google, so its mail is not checked.",
+          comment:
+            "Line at the top of a profile's page in Settings, when its Google account is signed out",
+        })}
+      </p>
+      <SignInButton profile={profile} />
+    </div>
   );
 };
