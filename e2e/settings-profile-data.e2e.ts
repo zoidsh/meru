@@ -139,6 +139,26 @@ test("deleting the cache keeps the profile signed in, and deleting cookies signs
   await expect(
     page.getByRole("button", { name: "Sign in to Work" })
   ).toBeVisible();
+
+  // The other profile's session keeps the stand-in's account cookie, read
+  // there rather than through its status, which a poll that had not yet
+  // landed would not change. Work's pages, reloaded, set the stand-in's
+  // others again.
+  await pollAll(app);
+  await expect
+    .poll(() =>
+      app.evaluate(({ session }) =>
+        Promise.all(
+          ["persist:home", "persist:work"].map((partition) =>
+            session
+              .fromPartition(partition)
+              .cookies.get({})
+              .then((cookies) => cookies.some(({ name }) => name === "account"))
+          )
+        )
+      )
+    )
+    .toStrictEqual([true, false]);
   await expect(profileRow(page, "Home")).toHaveAccessibleDescription(
     "home@example.org"
   );
