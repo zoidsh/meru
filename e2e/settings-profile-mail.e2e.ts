@@ -170,7 +170,9 @@ test("the list and a profile's page show the signed-in address, Not signed in fo
   await page.getByRole("button", { name: "Back" }).click();
   await profileRow(page, "Club").click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Club");
-  await expect(pageLine(page, /signed in/iu)).toHaveCount(0);
+  await expect(
+    pageLine(page, /signed in to google|not signed in/iu)
+  ).toHaveCount(0);
   await expect(pageLine(page, /@/u)).toHaveCount(0);
 });
 

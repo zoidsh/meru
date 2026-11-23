@@ -170,6 +170,7 @@ export interface SeededWithMail {
   feed?: FeedAnswer;
   asleep?: boolean;
   checkMail?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -184,11 +185,12 @@ export const launchWithMail = async (
   profiles: readonly SeededWithMail[]
 ) => {
   await writeState(userDataDir, {
-    profiles: profiles.map(({ id, name, asleep, checkMail }) => ({
+    profiles: profiles.map(({ id, name, asleep, checkMail, disabled }) => ({
       id,
       name,
       ...(asleep === undefined ? {} : { asleep }),
       ...(checkMail === undefined ? {} : { checkMail }),
+      ...(disabled === undefined ? {} : { disabled }),
     })),
     selectedProfileId: profiles[0]?.id,
   });

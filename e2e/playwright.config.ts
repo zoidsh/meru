@@ -15,6 +15,7 @@ const NEEDS_THE_FOCUS = [
   "**/overlay.e2e.ts",
   "**/inbox.e2e.ts",
   "**/settings-profile-mail.e2e.ts",
+  "**/settings-profile-enabled.e2e.ts",
   "**/downloads.e2e.ts",
   "**/open-app.e2e.ts",
   "**/tab-menu.e2e.ts",
