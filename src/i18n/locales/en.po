@@ -395,9 +395,21 @@ msgstr "Breeze"
 msgid "Bring All to Front"
 msgstr "Bring All to Front"
 
+#. Description of Delete browsing data on a profile's page in Settings, once its data was deleted
+#: src/settings/profile-page.tsx
+msgid "Browsing data deleted."
+msgstr "Browsing data deleted."
+
+#. Checkbox in the Delete browsing data dialog in Settings, as in Chrome's own dialog
+#: src/settings/delete-browsing-data.tsx
+msgid "Cached images and files"
+msgstr "Cached images and files"
+
 #. Button in Settings that closes the fields of a new saved search without adding it
+#. Button in the Delete browsing data dialog in Settings that closes it, deleting nothing
 #. Button in the dialog that confirms removing a profile, which keeps it
 #: src/main/profile-copy.ts
+#: src/settings/delete-browsing-data.tsx
 #: src/settings/saved-searches-card.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -494,6 +506,11 @@ msgstr "Compose"
 msgid "Content"
 msgstr "Content"
 
+#. Checkbox in the Delete browsing data dialog in Settings, as in Chrome's own dialog
+#: src/settings/delete-browsing-data.tsx
+msgid "Cookies and other site data"
+msgstr "Cookies and other site data"
+
 #. Text of the notification for an email that carries a one-time code, already copied to the clipboard. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts
 msgid "Copied verification code {verificationCode}"
@@ -574,6 +591,23 @@ msgstr "Delete"
 msgctxt "inbox action"
 msgid "Delete"
 msgstr "Delete"
+
+#. Label of the row on a profile's page in Settings that deletes its browsing data
+#. Title of the dialog in Settings that deletes a profile's browsing data
+#: src/settings/delete-browsing-data.tsx
+#: src/settings/profile-page.tsx
+msgid "Delete browsing data"
+msgstr "Delete browsing data"
+
+#. Button on a profile's page in Settings that opens a dialog asking which of its browsing data to delete
+#: src/settings/delete-browsing-data.tsx
+msgid "Delete browsing data…"
+msgstr "Delete browsing data…"
+
+#. Button in the Delete browsing data dialog in Settings that deletes what is checked
+#: src/settings/delete-browsing-data.tsx
+msgid "Delete data"
+msgstr "Delete data"
 
 #. Badge on a disabled profile's row in Settings' list of profiles, one turned off by its Enabled switch
 #: src/settings/profiles-page.tsx
@@ -900,6 +934,11 @@ msgstr "Maximize Pane"
 #: src/shell/tab-strip.tsx
 msgid "Maximized · Restore"
 msgstr "Maximized · Restore"
+
+#. Under the checkboxes of the Delete browsing data dialog in Settings, when deleting failed
+#: src/settings/delete-browsing-data.tsx
+msgid "Meru couldn't delete this profile's browsing data. Try again."
+msgstr "Meru couldn't delete this profile's browsing data. Try again."
 
 #. Explanation under the heading in place of a tab's page that could not load
 #: src/shell/tab-problem.tsx
@@ -1605,6 +1644,11 @@ msgstr "Signed in to Google as {address}."
 msgid "Signs out of this profile and deletes its data on this device. Your Google account isn't affected."
 msgstr "Signs out of this profile and deletes its data on this device. Your Google account isn't affected."
 
+#. Description of Cookies and other site data in the Delete browsing data dialog; {name} is the profile's name
+#: src/settings/delete-browsing-data.tsx
+msgid "Signs you out of {name}."
+msgstr "Signs you out of {name}."
+
 #. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
 #. Label of the switch on a profile's page in Settings that puts it to sleep or wakes it
@@ -1623,6 +1667,11 @@ msgstr "Sleep Profile"
 #: src/main/commands.ts
 msgid "Sleep Tab"
 msgstr "Sleep Tab"
+
+#. Description of Cached images and files in the Delete browsing data dialog in Settings
+#: src/settings/delete-browsing-data.tsx
+msgid "Some pages may load more slowly the next time."
+msgstr "Some pages may load more slowly the next time."
 
 #. Label of the menu in Settings choosing the sound a new mail notification makes
 #: src/settings/notifications-page.tsx
@@ -1702,6 +1751,11 @@ msgstr "This is what a new email notification looks like."
 #: src/settings/saved-searches-card.tsx
 msgid "This profile has {most} saved searches, the most it can keep."
 msgstr "This profile has {most} saved searches, the most it can keep."
+
+#. Description of Delete browsing data on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "This profile's cookies and site data, or its cached images and files."
+msgstr "This profile's cookies and site data, or its cached images and files."
 
 #. Shown under the Search field in Settings when the search cannot be saved for another reason
 #: src/settings/saved-searches-card.tsx

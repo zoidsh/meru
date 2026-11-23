@@ -22,6 +22,7 @@ import { Input } from "#ui/input.tsx";
 import { Switch } from "#ui/switch.tsx";
 import { ToggleGroup, ToggleGroupItem } from "#ui/toggle-group.tsx";
 
+import { DeleteBrowsingData } from "./delete-browsing-data.tsx";
 import { SavedSearchesCard } from "./saved-searches-card.tsx";
 import { AccountLine, accountShown } from "./signed-in.tsx";
 import { settingsCalls } from "./sync.ts";
@@ -183,6 +184,8 @@ export const ProfilePage = ({
     amber: t({ message: "Amber", comment: "Name of a profile's colour" }),
     violet: t({ message: "Violet", comment: "Name of a profile's colour" }),
   };
+  // Said until the page is left, as v3's toast was shown once.
+  const [deletedFor, setDeletedFor] = useState<string>();
   const removable = count > 1 && !lastEnabled;
   const many = count > 1;
   const off = !profile.enabled;
@@ -485,33 +488,68 @@ export const ProfilePage = ({
       <SavedSearchesCard profile={profile} />
       <Card>
         <CardContent>
-          <Row
-            label={t({
-              message: "Remove profile",
-              comment:
-                "Label of the row on a profile's page in Settings that removes it",
-            })}
-            description={removeDescription}
-          >
-            {(ids) => (
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={!removable}
-                aria-describedby={ids.description}
-                onClick={() => {
-                  onRemoveAsked();
-                  calls.removeProfile({ profileId: profile.id }).catch(noop);
-                }}
-              >
-                {t({
-                  message: "Remove profile…",
-                  comment:
-                    "Button on a profile's page in Settings that asks to remove it",
-                })}
-              </Button>
-            )}
-          </Row>
+          <FieldGroup>
+            <Row
+              label={t({
+                message: "Delete browsing data",
+                comment:
+                  "Label of the row on a profile's page in Settings that deletes its browsing data",
+              })}
+              description={
+                deletedFor === profile.id
+                  ? t({
+                      message: "Browsing data deleted.",
+                      comment:
+                        "Description of Delete browsing data on a profile's page in Settings, once its data was deleted",
+                    })
+                  : t({
+                      message:
+                        "This profile's cookies and site data, or its cached images and files.",
+                      comment:
+                        "Description of Delete browsing data on a profile's page in Settings",
+                    })
+              }
+            >
+              {(ids) => (
+                <DeleteBrowsingData
+                  profileId={profile.id}
+                  name={profile.name}
+                  describedBy={ids.description}
+                  onDeleted={() => {
+                    setDeletedFor(profile.id);
+                  }}
+                />
+              )}
+            </Row>
+            <FieldSeparator />
+            <Row
+              label={t({
+                message: "Remove profile",
+                comment:
+                  "Label of the row on a profile's page in Settings that removes it",
+              })}
+              description={removeDescription}
+            >
+              {(ids) => (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={!removable}
+                  aria-describedby={ids.description}
+                  onClick={() => {
+                    onRemoveAsked();
+                    calls.removeProfile({ profileId: profile.id }).catch(noop);
+                  }}
+                >
+                  {t({
+                    message: "Remove profile…",
+                    comment:
+                      "Button on a profile's page in Settings that asks to remove it",
+                  })}
+                </Button>
+              )}
+            </Row>
+          </FieldGroup>
         </CardContent>
       </Card>
     </>
