@@ -1340,6 +1340,27 @@ const off = (state: State | undefined) =>
     .map((profile) => profile.id);
 
 describe("a profile turned off", () => {
+  it("keeps the selected profile a file stored off enabled once the selection leaves it, its key dropped", () => {
+    const state = stored({ b: { disabled: true } });
+    const moved = selectProfile(state, "a");
+
+    expect([
+      off(state),
+      off(moved),
+      moved?.profiles.find((profile) => profile.id === "b")?.disabled,
+      moved && enabledProfiles(moved).map((profile) => profile.id),
+    ]).toStrictEqual([[], [], undefined, ["a", "b", "c"]]);
+  });
+
+  it("stays off when the selected profile is turned off, as the selection moves away first", () => {
+    const turned = setProfileEnabled(stored({}), "b", false);
+
+    expect([turned?.selectedProfileId, off(turned)]).toStrictEqual([
+      "a",
+      ["b"],
+    ]);
+  });
+
   it("reads only true as off, never for the selected profile, and writes anything else back as found", () => {
     const decoded = decodeState({
       ...valid,

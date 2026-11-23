@@ -632,27 +632,31 @@ export const nextProfileName = (
   return name(n);
 };
 
-/** The profile with no sleep key, as a profile never put to sleep has none. */
-const awake = (profile: Profile): Profile => {
-  if (profile.asleep === undefined) {
+/**
+ * The profile with no sleep or disabled key, as a profile never put to sleep
+ * or turned off has none.
+ */
+const settled = (profile: Profile): Profile => {
+  if (profile.asleep === undefined && profile.disabled === undefined) {
     return profile;
   }
 
-  const { asleep: _asleep, ...rest } = profile;
+  const { asleep: _asleep, disabled: _disabled, ...rest } = profile;
 
   return rest as Profile;
 };
 
 /**
- * The state with `profileId` selected, its sleep key gone, and the key of
- * the profile it takes over from too: one the file stored asleep while
- * selected read as awake, and stays so once another is selected.
+ * The state with `profileId` selected, its sleep and disabled keys gone, and
+ * those of the profile it takes over from too: one the file stored asleep or
+ * disabled while selected read as awake and enabled, and stays so once
+ * another is selected.
  */
 const withSelected = (state: State, profileId: string): State => ({
   ...state,
   profiles: state.profiles.map((profile) =>
     profile.id === profileId || profile.id === state.selectedProfileId
-      ? awake(profile)
+      ? settled(profile)
       : profile
   ),
   selectedProfileId: profileId,
@@ -1133,18 +1137,20 @@ export const setProfileEnabled = (
     return;
   }
 
-  const turnedOff = {
-    ...state,
-    profiles: state.profiles.map((candidate) =>
-      candidate === profile
+  // Selected away from first, which would drop the key set after.
+  const moved =
+    state.selectedProfileId === profileId
+      ? withSelected(state, next.id)
+      : state;
+
+  return {
+    ...moved,
+    profiles: moved.profiles.map((candidate) =>
+      candidate.id === profileId
         ? { ...withoutOwnWindows(candidate), disabled: true }
         : candidate
     ),
   };
-
-  return state.selectedProfileId === profileId
-    ? withSelected(turnedOff, next.id)
-    : turnedOff;
 };
 
 /** Whether the profile can be turned off: it is on and not the last on. */
