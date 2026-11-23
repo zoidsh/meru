@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { GMAIL_PAGE_KEYS } from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import type { FeedOutcome } from "#core/feed.ts";
@@ -459,6 +460,62 @@ describe("the Settings window's profile calls", () => {
       app.handlers.removeProfile({ profileId: "home" })
     ).rejects.toThrow("The last enabled profile cannot be removed");
     expect(app.asked).toStrictEqual([]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Gmail page", () => {
+  it("sends the app value of each of the page's settings, the default where none is stored", () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      hidePromoBanner: false,
+      verificationCodeCopyMode: "immediately",
+      reverseConversation: "sometimes",
+    });
+
+    expect(
+      Object.fromEntries(
+        GMAIL_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
+      )
+    ).toStrictEqual({
+      hideGmailLogo: true,
+      hidePromoBanner: false,
+      hideUpgradeButton: true,
+      hideInboxFooter: true,
+      extendDarkTheme: true,
+      reverseConversation: false,
+      moveAttachmentsToTop: false,
+      showTrimmedContent: false,
+      verificationCodes: true,
+      verificationCodeCopyMode: "immediately",
+      verificationCodeMarkRead: false,
+      verificationCodeTrash: false,
+    });
+    app.dispose();
+  });
+
+  it("writes a switch's and the copy mode's app value, and sends it back", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.update({ key: "hideGmailLogo", value: false });
+    await app.handlers.update({
+      key: "verificationCodeCopyMode",
+      value: "immediately",
+    });
+
+    expect([
+      app.saved.at(-1),
+      app.read().settings.hideGmailLogo,
+      app.read().settings.verificationCodeCopyMode,
+    ]).toStrictEqual([
+      {
+        version: 1,
+        hideGmailLogo: false,
+        verificationCodeCopyMode: "immediately",
+      },
+      false,
+      "immediately",
+    ]);
     app.dispose();
   });
 });

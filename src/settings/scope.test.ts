@@ -52,6 +52,18 @@ const APP: PageSettings = {
   unreadBadge: true,
   unifiedInbox: true,
   notificationSoundVolume: 1,
+  hideGmailLogo: true,
+  hidePromoBanner: true,
+  hideUpgradeButton: true,
+  hideInboxFooter: true,
+  extendDarkTheme: true,
+  reverseConversation: false,
+  moveAttachmentsToTop: false,
+  showTrimmedContent: false,
+  verificationCodes: true,
+  verificationCodeCopyMode: "notificationClick",
+  verificationCodeMarkRead: false,
+  verificationCodeTrash: false,
 };
 
 describe(isScoped, () => {

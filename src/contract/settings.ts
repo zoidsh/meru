@@ -18,13 +18,32 @@ import type { SettingsCallName } from "./settings-channels.ts";
 
 export { SETTINGS_CALL_NAMES, SETTINGS_CHANNELS } from "./settings-channels.ts";
 
-/** The page's settings that only the app holds, never a profile. */
-const APP_ONLY_PAGE_KEYS = ["notificationSoundVolume"] as const;
+/** The Gmail page's settings, in its order; the app holds them, never a profile. */
+export const GMAIL_PAGE_KEYS = [
+  "hideGmailLogo",
+  "hidePromoBanner",
+  "hideUpgradeButton",
+  "hideInboxFooter",
+  "extendDarkTheme",
+  "reverseConversation",
+  "moveAttachmentsToTop",
+  "showTrimmedContent",
+  "verificationCodes",
+  "verificationCodeCopyMode",
+  "verificationCodeMarkRead",
+  "verificationCodeTrash",
+] as const;
+
+/** The pages' settings that only the app holds, never a profile. */
+const APP_ONLY_PAGE_KEYS = [
+  "notificationSoundVolume",
+  ...GMAIL_PAGE_KEYS,
+] as const;
 
 /**
- * The settings the Notifications page edits: those a profile may hold a
- * value of its own for, every one of them a notification's or the badge's,
- * and the app-only ones.
+ * The settings the window's pages edit: those a profile may hold a value of
+ * its own for, every one of them a notification's or the badge's, and the
+ * app-only ones.
  */
 export const PAGE_SETTING_KEYS = [
   ...OVERRIDABLE_SETTING_KEYS,

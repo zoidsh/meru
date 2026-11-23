@@ -52,8 +52,10 @@ const SOUND_ORDER: readonly SoundChoice[] = [
 const VOLUME_PREVIEW_WAIT = 250;
 
 type BooleanKey = {
-  [Key in keyof PageSettings]: PageSettings[Key] extends boolean ? Key : never;
-}[keyof PageSettings];
+  [Key in OverridableSettingKey]: PageSettings[Key] extends boolean
+    ? Key
+    : never;
+}[OverridableSettingKey];
 
 export const NotificationsPage = () => {
   const { t, i18n } = useLingui();
