@@ -197,7 +197,7 @@ export const ProfilesPage = ({
               const titleId = `${rowIds}-${profile.id}-title`;
               const aboutId = `${rowIds}-${profile.id}-about`;
               const badgeId = `${rowIds}-${profile.id}-badge`;
-              const shown = profile.enabled && accountShown(profile);
+              const shown = accountShown(profile);
               const badged = !profile.enabled || profile.asleep;
 
               return (
