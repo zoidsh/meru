@@ -7,6 +7,7 @@ import {
   settingWritable,
 } from "./entitled-settings.ts";
 import type { Capability } from "./entitlement.ts";
+import { gmailFeatures } from "./gmail-hooks.ts";
 import type { SettingKey } from "./settings.ts";
 
 const free = () => false;
@@ -65,6 +66,23 @@ describe(entitledSetting, () => {
       entitledSetting("confirmLinks", true, free),
       entitledSetting("trustedSites", ["https://example.com"], free),
     ]).toStrictEqual([false, ["https://example.com"]]);
+  });
+
+  it("applies none of Gmail's page settings without Meru Pro but the inbox footer's hide, which was never Pro", () => {
+    expect(
+      gmailFeatures((feature) => entitledSetting(feature, true, free))
+    ).toStrictEqual({
+      hideInboxFooter: true,
+      hidePromoBanner: false,
+      hideUpgradeButton: false,
+      reverseConversation: false,
+      moveAttachmentsToTop: false,
+      showTrimmedContent: false,
+      extendDarkTheme: false,
+    });
+    expect(
+      gmailFeatures((feature) => entitledSetting(feature, true, pro))
+    ).toStrictEqual(gmailFeatures(() => true));
   });
 
   it("asks only the capability the setting needs", () => {

@@ -45,6 +45,13 @@ export const GATED_SETTINGS: {
   // Links open without asking; the trusted sites stay as stored, unwritten.
   confirmLinks: { capability: "linkConfirmation", free: () => false },
   trustedSites: { capability: "linkConfirmation" },
+  // The footer's hide was never Pro, so it alone of Gmail's page applies.
+  hidePromoBanner: { capability: "gmailPageSettings", free: () => false },
+  hideUpgradeButton: { capability: "gmailPageSettings", free: () => false },
+  extendDarkTheme: { capability: "gmailPageSettings", free: () => false },
+  reverseConversation: { capability: "gmailPageSettings", free: () => false },
+  moveAttachmentsToTop: { capability: "gmailPageSettings", free: () => false },
+  showTrimmedContent: { capability: "gmailPageSettings", free: () => false },
 };
 
 /** The capability the setting needs, if any. */

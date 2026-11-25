@@ -43,6 +43,7 @@ import {
   BLOCKER_IMAGES,
   BLOCKER_WITHOUT_AD,
   ELSEWHERE_URL,
+  GMAIL_PARTS,
   listing,
 } from "./lib/stand-in.ts";
 import type { BlockerImage, StandIn } from "./lib/stand-in.ts";
@@ -777,6 +778,66 @@ test("the free version opens a page's links without asking, keeps the trusted si
   await expect(badgeOf(page, "Trusted sites")).toHaveCount(0);
   await gmail.getByRole("link", { name: "Another site" }).click();
   await expect.poll(() => linkQuestions(app)).toStrictEqual([ELSEWHERE_URL]);
+});
+
+test("the free version applies none of the Pro Gmail page settings but the footer's hide, shows them as Pro rows with their values kept, and a license applies them at once", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedOneProfile(userDataDir, standIn);
+  await writeSettings(userDataDir, {
+    hideInboxFooter: true,
+    hidePromoBanner: true,
+    hideUpgradeButton: true,
+    reverseConversation: true,
+  });
+
+  const settingsBefore = await readStored(userDataDir, SETTINGS_FILE);
+  const { app, gmail } = await launchFree(launchApp, userDataDir, standIn);
+  const promo = gmail.getByText(GMAIL_PARTS.promo);
+  const upgrade = gmail.getByRole("link", { name: GMAIL_PARTS.upgrade });
+  const footer = gmail.getByRole("link", { name: GMAIL_PARTS.policy });
+
+  await expect(footer).toBeHidden();
+  await expect(promo).toBeVisible();
+  await expect(upgrade).toBeVisible();
+
+  const page = await openSettings(app);
+
+  await openSection(page, "Gmail");
+
+  for (const label of [
+    "Hide promotions",
+    "Hide Upgrade button",
+    "Dark theme for all of Gmail",
+    "Newest message first",
+    "Show attachments first",
+    "Show trimmed content",
+  ]) {
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(switchNamed(page, label)).toBeDisabled();
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(switchNamed(page, label)).not.toBeChecked();
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(badgeOf(page, label)).toBeVisible();
+  }
+
+  await expect(switchNamed(page, "Hide inbox footer")).toBeEnabled();
+  await expect(switchNamed(page, "Hide inbox footer")).toBeChecked();
+  await expect(badgeOf(page, "Hide inbox footer")).toHaveCount(0);
+  await expect(readStored(userDataDir, SETTINGS_FILE)).resolves.toBe(
+    settingsBefore
+  );
+
+  await activate(page);
+  // The same document, never reloaded: main pushes the switches as they change.
+  await expect(promo).toBeHidden();
+  await expect(upgrade).toBeHidden();
+  await openSection(page, "Gmail");
+  await expect(switchNamed(page, "Newest message first")).toBeChecked();
+  await expect(switchNamed(page, "Dark theme for all of Gmail")).toBeEnabled();
+  await expect(badgeOf(page, "Hide promotions")).toHaveCount(0);
 });
 
 test.describe("shots", () => {
