@@ -1110,6 +1110,11 @@ msgstr "Loading"
 msgid "Mail"
 msgstr "Mail"
 
+#. Accessible name of the Manage… button in Settings that opens the list of sites whose links open without asking
+#: src/settings/trusted-sites-dialog.tsx
+msgid "Manage trusted sites"
+msgstr "Manage trusted sites"
+
 #. Button of the Trusted sites row in Settings that opens the list of sites whose links open without asking
 #: src/settings/trusted-sites-dialog.tsx
 msgid "Manage…"

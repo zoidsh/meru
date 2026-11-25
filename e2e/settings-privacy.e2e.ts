@@ -48,7 +48,8 @@ const openPrivacy = async (page: Page) => {
   );
 };
 
-const manage = (page: Page) => page.getByRole("button", { name: "Manage…" });
+const manage = (page: Page) =>
+  page.getByRole("button", { name: "Manage trusted sites" });
 
 const dialog = (page: Page) =>
   page.getByRole("dialog", { name: "Trusted sites" });
@@ -102,7 +103,9 @@ test("opens from the sidebar with its two groups, each holding its rows, and no 
   ).toHaveAccessibleDescription(
     "Meru asks before a link opens in your default browser."
   );
-  await expect(links.getByRole("button", { name: "Manage…" })).toBeEnabled();
+  await expect(
+    links.getByRole("button", { name: "Manage trusted sites" })
+  ).toBeEnabled();
   await expect(manage(page)).toHaveAccessibleDescription(
     "You haven't trusted any sites yet."
   );

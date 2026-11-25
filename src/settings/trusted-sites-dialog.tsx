@@ -60,6 +60,11 @@ export const TrustedSitesDialog = ({
     <Dialog>
       <DialogTrigger
         disabled={disabled}
+        aria-label={t({
+          message: "Manage trusted sites",
+          comment:
+            "Accessible name of the Manage… button in Settings that opens the list of sites whose links open without asking",
+        })}
         aria-describedby={describedBy || undefined}
         render={<Button variant="outline" size="sm" />}
       >
