@@ -8,6 +8,7 @@ import { delay } from "es-toolkit";
 
 import {
   chooseContextMenuItem,
+  clickMenuItem,
   expect,
   findPage,
   findOverlayDocument,
@@ -22,6 +23,7 @@ import {
   findWindowFind,
   readOwnWindows,
 } from "./lib/own-window.ts";
+import { pollAll } from "./lib/settings.ts";
 import {
   THEMES,
   emulateTheme,
@@ -42,8 +44,10 @@ import {
   THREAD_PARTS,
   openDarkThread,
   openThread,
+  signIn,
 } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
+import { listing } from "./lib/stand-in/feed.ts";
 
 test.beforeEach(() => {
   onlyWithShots();
@@ -1515,4 +1519,142 @@ test("a tab's own window with its page bookmarked", async ({
   ).toBeVisible();
   await titlebar.mouse.move(600, 300);
   await shootOwnWindowEachWay(app, shell, "own-window-bookmark");
+});
+
+/** Asks for less than the main window's minimum, which it keeps to, and waits for the shell to follow. */
+const shrinkToMinimum = async (app: ElectronApplication, shell: Page) => {
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setSize(1, 1);
+  });
+  await expect
+    .poll(() => shell.evaluate(() => [window.innerWidth, window.innerHeight]))
+    .toStrictEqual([540, 375]);
+};
+
+test("the smallest window: the sidebar narrow, wide and hidden, with the overlays, the find bar and a toast", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: ["home", "work"].map((id) => ({
+      id,
+      name: id === "home" ? "Home" : "Work",
+      tabs: [
+        { id: `${id}-gmail`, app: "gmail", url: standIn.url, title: "" },
+        {
+          id: `${id}-c1`,
+          app: "calendar",
+          url: standIn.calendarUrl,
+          title: "",
+        },
+        { id: `${id}-d1`, app: "drive", url: standIn.driveUrl, title: "" },
+      ],
+      selectedTabId: `${id}-c1`,
+    })),
+    selectedProfileId: "home",
+  });
+  standIn.setFeed("persist:home", listing("a1", "a2"));
+  standIn.setFeed("persist:work", listing("b1"));
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+  const overlay = await findOverlayDocument(app);
+  const away = () => shell.mouse.move(250, 200);
+
+  await signIn(app, standIn, "home");
+  await signIn(app, standIn, "work");
+  await pollAll(app);
+  await findPage(app, standIn.calendarUrl);
+  await shrinkToMinimum(app, shell);
+  await away();
+  await shootEachWay(app, shell, "smallest-narrow");
+
+  await shell.getByRole("button", { name: "Expand sidebar" }).click();
+  await away();
+  await shootEachWay(app, shell, "smallest-wide");
+
+  await shell.getByRole("button", { name: "Sidebar", exact: true }).click();
+  await away();
+  await shootEachWay(app, shell, "smallest-hidden");
+  await shell.getByRole("button", { name: "Sidebar", exact: true }).click();
+
+  await clickMenuItem(app, "app.open");
+  await expect(
+    overlay.getByRole("combobox", { name: "New tab" })
+  ).toBeFocused();
+  await shootEachWay(app, shell, "smallest-new-tab");
+  await clickMenuItem(app, "app.open");
+
+  await clickMenuItem(app, "inbox.toggle");
+  await expect(
+    overlay
+      .getByRole("dialog", { name: "Unified inbox" })
+      .getByRole("row")
+      .first()
+  ).toBeVisible();
+  await shootEachWay(app, shell, "smallest-inbox");
+  await clickMenuItem(app, "inbox.toggle");
+
+  await clickMenuItem(app, "downloads.toggle");
+  await expect(
+    overlay.getByRole("dialog", { name: "Downloads" })
+  ).toBeVisible();
+  await shootEachWay(app, shell, "smallest-downloads");
+  await clickMenuItem(app, "downloads.toggle");
+
+  await findInPage(app, FIND_WORD, `1/${FIND_MATCHES}`);
+  await shootEachWay(app, shell, "smallest-find");
+  await shell.keyboard.press("Escape");
+
+  for (const theme of THEMES) {
+    // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+    await emulateTheme(app, theme);
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    const toast = await refuseSplit(app, overlay);
+
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await shootWindow(app, shell, shotPath("smallest-toast", theme));
+    // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+    await expect(toast).toHaveCount(0, { timeout: 8000 });
+  }
+});
+
+test("the smallest window: eight profiles in the titlebar, and a split of two with Find over its left pane", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const names = [
+    "Personal",
+    "Dev",
+    "Work",
+    "Side project",
+    "Family",
+    "Community garden volunteers",
+    "Freelance",
+    "School",
+  ];
+  const split = withSplit(
+    standIn,
+    { direction: "row", children: [pane(0.5, "c1"), pane(0.5, "d1")] },
+    "c1"
+  );
+
+  await writeState(userDataDir, {
+    ...split,
+    profiles: [
+      ...split.profiles,
+      ...names.slice(1).map((name, index) => ({ id: `p${index}`, name })),
+    ],
+  });
+
+  const { app, shell } = await launch(launchApp, userDataDir);
+
+  await findPage(app, standIn.calendarUrl);
+  await findPage(app, standIn.driveUrl);
+  await shrinkToMinimum(app, shell);
+  await shell.mouse.move(250, 200);
+  await shootEachWay(app, shell, "smallest-split-titlebar");
+  await findInPage(app, FIND_WORD, `1/${FIND_MATCHES}`);
+  await shootEachWay(app, shell, "smallest-find-split");
 });

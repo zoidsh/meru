@@ -22,10 +22,11 @@ export interface ShellWindowDeps {
 const DEFAULT_SIZE = { width: 1280, height: 800 };
 
 /**
- * Leaves the content view 488px wide beside the strip,
- * about where Gmail's narrowest layout still shows a list.
+ * Chrome's height on macOS. Its 500 width would leave the titlebar's profile
+ * row, with the sidebar hidden and New tab in the titlebar, too narrow to
+ * show a short-named profile clear of the row's arrows.
  */
-const MINIMUM_SIZE = { width: 720, height: 480 };
+const MINIMUM_SIZE = { width: 540, height: 375 };
 
 /**
  * Opens the shell window and shows it once its page can paint: on

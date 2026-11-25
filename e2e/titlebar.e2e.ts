@@ -281,3 +281,95 @@ test("with the sidebar wide the first profile button starts where the page does;
   await expect.poll(pageLeft).toBe(8);
   await expect.poll(afterNavigation).toBe(8);
 });
+
+/** The main window's minimum, outer size. */
+const SMALLEST = [540, 375];
+
+/** The band over a clipped end of the profile row that its arrow and fade cover. */
+const FADE = 40;
+
+test("at its smallest, with the sidebar hidden and two profiles, every titlebar button is in the window and either profile, selected, shows whole clear of the arrows", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: ["Home", "Work"].map((name) => ({
+      id: name.toLowerCase(),
+      name,
+      tabs: [
+        { id: `${name}-gmail`, app: "gmail", url: standIn.url, title: "" },
+      ],
+      selectedTabId: `${name}-gmail`,
+    })),
+    selectedProfileId: "work",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, "meru-app:");
+  const bar = titlebar(shell);
+  const row = bar.getByRole("group", { name: "Profiles" });
+
+  await findPage(app, standIn.url);
+  await expect(
+    bar.getByRole("button", { name: "New tab", exact: true })
+  ).toBeVisible();
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setSize(1, 1);
+  });
+  await expect
+    .poll(() =>
+      app.evaluate(({ BrowserWindow }) =>
+        BrowserWindow.getAllWindows()[0]?.getSize()
+      )
+    )
+    .toStrictEqual(SMALLEST);
+
+  const width = await shell.evaluate(() => window.innerWidth);
+
+  for (const name of [
+    "Sidebar",
+    "Back",
+    "Forward",
+    "Reload",
+    "New tab",
+    "Unified inbox",
+    "Downloads",
+    "Do Not Disturb",
+  ]) {
+    // oxlint-disable-next-line no-await-in-loop -- one button at a time
+    const box = await bar
+      .getByRole("button", { name, exact: true })
+      .boundingBox();
+
+    expect(box ? box.x + box.width : Infinity, name).toBeLessThanOrEqual(width);
+  }
+
+  /** How much of the row's end on `side` an arrow covers, if one shows. */
+  const arrow = async (side: string) =>
+    (await bar
+      .getByRole("button", { name: `Scroll profiles ${side}` })
+      .count()) > 0
+      ? FADE
+      : 0;
+  const clearOfArrows = async (name: string) => {
+    const outer = await row.boundingBox();
+    const inner = await row
+      .getByRole("button", { name: new RegExp(`^${name}`, "u") })
+      .boundingBox();
+    const left = await arrow("left");
+    const right = await arrow("right");
+
+    // A button's width is fractional; the row's is whole.
+    return (
+      outer !== null &&
+      inner !== null &&
+      Math.round(inner.x) >= outer.x + left &&
+      Math.round(inner.x + inner.width) <= outer.x + outer.width - right
+    );
+  };
+
+  await expect.poll(() => clearOfArrows("Work")).toBe(true);
+  await clickMenuItem(app, "profile.select.1");
+  await expect.poll(() => clearOfArrows("Home")).toBe(true);
+});
